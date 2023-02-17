@@ -19,8 +19,6 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JSlider;
 import javax.swing.SwingUtilities;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.AbstractItemDialogPage;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.image.GridBagLayoutModel;
@@ -35,13 +33,11 @@ import org.weasis.dicom.viewer3d.View3DFactory;
 import org.weasis.dicom.viewer3d.vr.RenderingLayer;
 
 public class Viewer3dPrefView extends AbstractItemDialogPage {
-  private static final Logger LOGGER = LoggerFactory.getLogger(Viewer3dPrefView.class);
 
   private final JButton bckColor = new JButton(ResourceUtil.getIcon(ActionIcon.PIPETTE));
   private final JButton lightColor = new JButton(ResourceUtil.getIcon(ActionIcon.PIPETTE));
   private final JSlider sliderStatic = new JSlider(-100, 100, 0);
   private final JSlider sliderDynamic = new JSlider(-100, 100, 0);
-  ;
 
   public Viewer3dPrefView() {
     super(View3DFactory.NAME, 503);

@@ -442,7 +442,6 @@ public class View3DContainer extends ImageViewerPlugin<DicomImageElement>
 
     DicomVolTexture curVolTexture = getVolTexture();
     if (curVolTexture != null) {
-      //   controlAxes = new ControlAxes(series);
       double[] op = curVolTexture.getVolumeGeometry().getOrientationPatient();
       setControlAxesBaseOrientation(curVolTexture.getSeries(), op);
     }
@@ -466,7 +465,6 @@ public class View3DContainer extends ImageViewerPlugin<DicomImageElement>
         vt.setViewType(viewType);
         position++;
         vt.setVolTexture(curVolTexture);
-        //  vt.applyProfile(viewType, controlAxes);
       }
     }
 

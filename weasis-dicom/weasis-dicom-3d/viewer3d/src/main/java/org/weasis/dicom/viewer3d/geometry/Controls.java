@@ -36,7 +36,9 @@ public class Controls implements MouseMotionListener, MouseWheelListener, MouseL
   }
 
   @Override
-  public void mouseMoved(MouseEvent e) {}
+  public void mouseMoved(MouseEvent e) {
+    // Do nothing
+  }
 
   @Override
   public void mouseWheelMoved(MouseWheelEvent e) {
@@ -48,7 +50,9 @@ public class Controls implements MouseMotionListener, MouseWheelListener, MouseL
   }
 
   @Override
-  public void mouseClicked(MouseEvent e) {}
+  public void mouseClicked(MouseEvent e) {
+    // Do nothing
+  }
 
   @Override
   public void mousePressed(MouseEvent e) {
@@ -63,8 +67,12 @@ public class Controls implements MouseMotionListener, MouseWheelListener, MouseL
   }
 
   @Override
-  public void mouseEntered(MouseEvent e) {}
+  public void mouseEntered(MouseEvent e) {
+    // Do nothing
+  }
 
   @Override
-  public void mouseExited(MouseEvent e) {}
+  public void mouseExited(MouseEvent e) {
+    // Do nothing
+  }
 }

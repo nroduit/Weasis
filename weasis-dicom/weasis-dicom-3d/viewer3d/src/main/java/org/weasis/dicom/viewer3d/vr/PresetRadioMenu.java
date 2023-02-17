@@ -11,7 +11,7 @@ package org.weasis.dicom.viewer3d.vr;
 
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.HashMap;
+import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -27,8 +27,9 @@ import org.weasis.dicom.codec.display.Modality;
 
 public class PresetRadioMenu extends GroupRadioMenu<Preset> {
 
-  protected final Map<Modality, List<RadioMenuItem>> menuGroup = new HashMap<>();
+  protected final EnumMap<Modality, List<RadioMenuItem>> menuGroup = new EnumMap<>(Modality.class);
 
+  @Override
   protected void init() {
     for (RadioMenuItem item : itemList) {
       group.remove(item);
@@ -36,7 +37,7 @@ public class PresetRadioMenu extends GroupRadioMenu<Preset> {
     itemList.clear();
     Object selectedItem = dataModel.getSelectedItem();
 
-    Map<Modality, List<Preset>> modalityMap = new HashMap<>();
+    Map<Modality, List<Preset>> modalityMap = new EnumMap<>(Modality.class);
     for (int i = 0; i < dataModel.getSize(); i++) {
       Preset preset = dataModel.getElementAt(i);
       Modality modality = preset.getModality();
@@ -68,7 +69,7 @@ public class PresetRadioMenu extends GroupRadioMenu<Preset> {
   }
 
   public Map<Modality, List<RadioMenuItem>> getMenuGroup() {
-    return new HashMap<>(menuGroup);
+    return new EnumMap<>(menuGroup);
   }
 
   public JPopupMenu createJPopupMenu(Modality curModality) {

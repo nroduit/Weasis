@@ -34,15 +34,15 @@ public abstract class TextureData {
   protected final int format;
   private int id;
 
-  public TextureData(int width, PixelFormat pixelFormat) {
+  protected TextureData(int width, PixelFormat pixelFormat) {
     this(width, 1, 1, pixelFormat);
   }
 
-  public TextureData(int width, int height, PixelFormat pixelFormat) {
+  protected TextureData(int width, int height, PixelFormat pixelFormat) {
     this(width, height, 1, pixelFormat);
   }
 
-  public TextureData(int width, int height, int depth, PixelFormat pixelFormat) {
+  protected TextureData(int width, int height, int depth, PixelFormat pixelFormat) {
     this.width = width;
     this.height = height;
     this.depth = depth;

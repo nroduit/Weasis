@@ -207,16 +207,16 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
                 v.getJComponent().repaint();
               }
             }
-          }
-          if (LayerAnnotation.ANONYM_ANNOTATIONS.equals(selObject.toString())) {
-            // Send message to listeners, only selected view
-            ImageViewerPlugin<DicomImageElement> container =
-                EventManager.getInstance().getSelectedView2dContainer();
-            ViewCanvas<DicomImageElement> v = container.getSelectedImagePane();
-            Series<?> series = (Series<?>) v.getSeries();
-            EventManager.getInstance()
-                .fireSeriesViewerListeners(
-                    new SeriesViewerEvent(container, series, v.getImage(), EVENT.ANONYM));
+            if (LayerAnnotation.ANONYM_ANNOTATIONS.equals(selObject.toString())) {
+              // Send message to listeners, only selected view
+              ImageViewerPlugin<DicomImageElement> container =
+                  EventManager.getInstance().getSelectedView2dContainer();
+              ViewCanvas<DicomImageElement> v = container.getSelectedImagePane();
+              Series<?> series = (Series<?>) v.getSeries();
+              EventManager.getInstance()
+                  .fireSeriesViewerListeners(
+                      new SeriesViewerEvent(container, series, v.getImage(), EVENT.ANONYM));
+            }
           }
         }
       }

@@ -28,6 +28,8 @@ public class OpenglUtils {
 
   private static GLContext glContext;
 
+  private OpenglUtils() {}
+
   public static GLContext getDefaultGlContext() {
     synchronized (OpenglUtils.class) {
       if (glContext == null) {

@@ -30,7 +30,7 @@ import org.weasis.core.util.StringUtil;
 
 public class ShadingPrefDialog extends JDialog {
 
-  private final int MAX_SLIDER_VALUE = 512;
+  private static final int MAX_SLIDER_VALUE = 512;
   private final float ambient;
   private final float diffuse;
   private final float specular;

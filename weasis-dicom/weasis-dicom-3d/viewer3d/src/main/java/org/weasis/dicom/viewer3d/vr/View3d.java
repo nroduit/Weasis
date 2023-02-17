@@ -104,7 +104,7 @@ public class View3d extends VolumeCanvas
     CORONAL,
     SAGITTAL,
     VOLUME3D
-  };
+  }
 
   static final float[] vertexBufferData =
       new float[] {
@@ -405,31 +405,22 @@ public class View3d extends VolumeCanvas
     program.allocateUniform(
         gl2,
         "depthSampleNumber",
-        (gl, loc) -> {
-          gl2.glUniform1i(loc, renderingLayer.getDepthSampleNumber());
-        });
+        (gl, loc) -> gl2.glUniform1i(loc, renderingLayer.getDepthSampleNumber()));
     program.allocateUniform(
-        gl2,
-        "lutShape",
-        (gl, loc) -> {
-          gl2.glUniform1i(loc, renderingLayer.getLutShapeId());
-        });
+        gl2, "lutShape", (gl, loc) -> gl2.glUniform1i(loc, renderingLayer.getLutShapeId()));
 
     program.allocateUniform(
         gl2,
         "backgroundColor",
-        (gl, loc) -> {
-          gl.glUniform3fv(loc, 1, bColor.get(Buffers.newDirectFloatBuffer(3)));
-        });
+        (gl, loc) -> gl.glUniform3fv(loc, 1, bColor.get(Buffers.newDirectFloatBuffer(3))));
 
     for (int i = 0; i < 4; ++i) {
       int val = i;
       program.allocateUniform(
           gl2,
           String.format("lights[%d].position", val),
-          (gl, loc) -> {
-            gl.glUniform4fv(loc, 1, camera.getRayOrigin().get(Buffers.newDirectFloatBuffer(4)));
-          });
+          (gl, loc) ->
+              gl.glUniform4fv(loc, 1, camera.getRayOrigin().get(Buffers.newDirectFloatBuffer(4))));
       program.allocateUniform(
           gl2,
           String.format("lights[%d].diffuse", val),
@@ -464,103 +455,52 @@ public class View3d extends VolumeCanvas
       program.allocateUniform(
           gl2,
           String.format("lights[%d].specularPower", val),
-          (gl, loc) -> {
-            gl.glUniform1f(loc, renderingLayer.getShadingOptions().getSpecularPower());
-          });
+          (gl, loc) -> gl.glUniform1f(loc, renderingLayer.getShadingOptions().getSpecularPower()));
       program.allocateUniform(
           gl2,
           String.format("lights[%d].enabled", val),
-          (gl, loc) -> {
-            gl.glUniform1i(loc, val < 1 ? 1 : 0);
-          });
+          (gl, loc) -> gl.glUniform1i(loc, val < 1 ? 1 : 0));
     }
     program.allocateUniform(
         gl2,
         "lightColor",
-        (gl, loc) -> {
-          gl.glUniform3fv(loc, 1, lColor.get(Buffers.newDirectFloatBuffer(3)));
-        });
+        (gl, loc) -> gl.glUniform3fv(loc, 1, lColor.get(Buffers.newDirectFloatBuffer(3))));
     program.allocateUniform(
-        gl2,
-        "shading",
-        (gl, loc) -> {
-          gl.glUniform1i(loc, renderingLayer.isShading() ? 1 : 0);
-        });
+        gl2, "shading", (gl, loc) -> gl.glUniform1i(loc, renderingLayer.isShading() ? 1 : 0));
     program.allocateUniform(
         gl2,
         "texelSize",
-        (gl, loc) -> {
-          gl.glUniform3fv(
-              loc, 1, volTexture.getNormalizedTexelSize().get(Buffers.newDirectFloatBuffer(3)));
-        });
+        (gl, loc) ->
+            gl.glUniform3fv(
+                loc, 1, volTexture.getNormalizedTexelSize().get(Buffers.newDirectFloatBuffer(3))));
 
     program.allocateUniform(
         gl2,
         "renderingType",
-        (gl, loc) -> {
-          gl.glUniform1i(loc, renderingLayer.getRenderingType().getId());
-        });
-    program.allocateUniform(
-        gl2,
-        "volTexture",
-        (gl, loc) -> {
-          gl.glUniform1i(loc, 0);
-        });
-    program.allocateUniform(
-        gl2,
-        "colorMap",
-        (gl, loc) -> {
-          gl.glUniform1i(loc, 1);
-        });
+        (gl, loc) -> gl.glUniform1i(loc, renderingLayer.getRenderingType().getId()));
+    program.allocateUniform(gl2, "volTexture", (gl, loc) -> gl.glUniform1i(loc, 0));
+    program.allocateUniform(gl2, "colorMap", (gl, loc) -> gl.glUniform1i(loc, 1));
     program.allocateUniform(
         gl2,
         "textureDataType",
-        (gl, loc) -> {
-          gl.glUniform1i(loc, TextureData.getDataType(volTexture.getPixelFormat()));
-        });
+        (gl, loc) -> gl.glUniform1i(loc, TextureData.getDataType(volTexture.getPixelFormat())));
 
     program.allocateUniform(
         gl2,
         "opacityFactor",
-        (gl, loc) -> {
-          gl.glUniform1f(loc, (float) renderingLayer.getOpacity());
-        });
+        (gl, loc) -> gl.glUniform1f(loc, (float) renderingLayer.getOpacity()));
     program.allocateUniform(
-        gl2,
-        "inputLevelMin",
-        (gl, loc) -> {
-          gl.glUniform1f(loc, volTexture.getLevelMin());
-        });
+        gl2, "inputLevelMin", (gl, loc) -> gl.glUniform1f(loc, volTexture.getLevelMin()));
     program.allocateUniform(
-        gl2,
-        "inputLevelMax",
-        (gl, loc) -> {
-          gl.glUniform1f(loc, volTexture.getLevelMax());
-        });
+        gl2, "inputLevelMax", (gl, loc) -> gl.glUniform1f(loc, volTexture.getLevelMax()));
     program.allocateUniform(
-        gl2,
-        "outputLevelMin",
-        (gl, loc) -> {
-          gl.glUniform1f(loc, volumePreset.getColorMin());
-        });
+        gl2, "outputLevelMin", (gl, loc) -> gl.glUniform1f(loc, volumePreset.getColorMin()));
     program.allocateUniform(
-        gl2,
-        "outputLevelMax",
-        (gl, loc) -> {
-          gl.glUniform1f(loc, volumePreset.getColorMax());
-        });
+        gl2, "outputLevelMax", (gl, loc) -> gl.glUniform1f(loc, volumePreset.getColorMax()));
     program.allocateUniform(
-        gl2,
-        "windowWidth",
-        (gl, loc) -> {
-          gl.glUniform1f(loc, renderingLayer.getWindowWidth());
-        });
+        gl2, "windowWidth", (gl, loc) -> gl.glUniform1f(loc, renderingLayer.getWindowWidth()));
     program.allocateUniform(
-        gl2,
-        "windowCenter",
-        (gl, loc) -> {
-          gl.glUniform1f(loc, renderingLayer.getWindowCenter());
-        });
+        gl2, "windowCenter", (gl, loc) -> gl.glUniform1f(loc, renderingLayer.getWindowCenter()));
 
     final IntBuffer intBuffer = IntBuffer.allocate(1);
 
@@ -576,7 +516,7 @@ public class View3d extends VolumeCanvas
     gl2.glBindBuffer(GL.GL_ARRAY_BUFFER, vertexBuffer);
     gl2.glBufferData(
         GL.GL_ARRAY_BUFFER,
-        vertexBufferData.length * Float.BYTES,
+        (long) vertexBufferData.length * Float.BYTES,
         Buffers.newDirectFloatBuffer(vertexBufferData),
         GL.GL_STATIC_DRAW);
   }

@@ -24,7 +24,9 @@ public class ExternalView3DBarFactory implements InsertableFactory {
   }
 
   @Override
-  public void dispose(Insertable component) {}
+  public void dispose(Insertable component) {
+    // Do nothing
+  }
 
   @Override
   public boolean isComponentCreatedByThisFactory(Insertable component) {

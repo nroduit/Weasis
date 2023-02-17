@@ -10,7 +10,7 @@
 package org.weasis.dicom.viewer3d;
 
 import com.jogamp.opengl.GL;
-import com.jogamp.opengl.GL2;
+import com.jogamp.opengl.GL2ES2;
 import com.jogamp.opengl.GLContext;
 import com.jogamp.opengl.Threading;
 import java.awt.Component;
@@ -78,7 +78,6 @@ public class View3DFactory implements SeriesViewerFactory {
   @Override
   public SeriesViewer createSeriesViewer(Map<String, Object> properties) {
     if (isOpenglEnable()) {
-      // GridBagLayoutModel model = View3DContainer.LAYOUT_LIST.get(0);
       GridBagLayoutModel model = View3DContainer.VIEWS_vr;
       String uid = null;
       if (properties != null) {
@@ -194,7 +193,7 @@ public class View3DFactory implements SeriesViewerFactory {
       glContext.makeCurrent();
       GL var2 = glContext.getGL();
       int[] textMax = new int[1];
-      var2.glGetIntegerv(GL2.GL_MAX_3D_TEXTURE_SIZE, textMax, 0);
+      var2.glGetIntegerv(GL2ES2.GL_MAX_3D_TEXTURE_SIZE, textMax, 0);
       openGLInfo =
           new OpenGLInfo(
               var2.glGetString(GL.GL_VERSION),

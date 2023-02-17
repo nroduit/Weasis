@@ -164,8 +164,8 @@ public class VolumeCanvas extends GLJPanel implements Canvas {
     }
   }
 
-  public float getAspectRatio() {
-    return getSurfaceWidth() / (float) getSurfaceHeight();
+  public double getAspectRatio() {
+    return getSurfaceWidth() / (double) getSurfaceHeight();
   }
 
   public void setRotation(Integer val) {
@@ -211,8 +211,8 @@ public class VolumeCanvas extends GLJPanel implements Canvas {
 
   @Override
   public double getBestFitViewScale() {
-    final double viewportWidth = getWidth() - 1;
-    final double viewportHeight = getHeight() - 1;
+    final double viewportWidth = getWidth() - 1.0;
+    final double viewportHeight = getHeight() - 1.0;
     final Rectangle2D modelArea = viewModel.getModelArea();
     double min =
         Math.min(viewportWidth / modelArea.getWidth(), viewportHeight / modelArea.getHeight());

@@ -17,6 +17,8 @@ import org.weasis.dicom.codec.geometry.ImageOrientation;
 
 public class GeometryUtils {
 
+  private GeometryUtils() {}
+
   /**
    * Checks if two image orientation information represent the same orientation plane.
    *

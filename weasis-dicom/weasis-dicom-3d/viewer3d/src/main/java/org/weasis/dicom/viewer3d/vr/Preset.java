@@ -122,11 +122,9 @@ public class Preset extends TextureData {
 
   static void initColors(Preset preset) {
     int width = preset.colorMax - preset.colorMin;
-    int maxRange = width - 1;
 
     for (int i = 0; i < width; i++) {
       int stepX = i + preset.colorMin;
-      float px = ((float) i) / maxRange;
 
       float a = 0.0f;
       int index = getBestIndex(preset.scalarOpacity, stepX);
@@ -139,9 +137,11 @@ public class Preset extends TextureData {
         Vector2f vEnd =
             index + 1 < preset.scalarOpacity.size()
                 ? preset.scalarOpacity.get(index + 1)
-                : new Vector2f(stepX + 1, 1.0f);
+                : new Vector2f(stepX + 1f, 1.0f);
         Vector2f v = linearGradient(vStart, vEnd, stepX);
-        a = v.y;
+        if (v != null) {
+          a = v.y;
+        }
       }
 
       float r = 0.0f;
@@ -160,11 +160,13 @@ public class Preset extends TextureData {
         Vector4f vEnd =
             index + 1 < preset.colorTransfer.size()
                 ? preset.colorTransfer.get(index + 1)
-                : new Vector4f(1.0f, 1.0f, 1.0f, stepX + 1);
+                : new Vector4f(1.0f, 1.0f, 1.0f, stepX + 1f);
         Vector4f v = linearGradient(v1, vEnd, stepX);
-        r = v.x;
-        g = v.y;
-        b = v.z;
+        if (v != null) {
+          r = v.x;
+          g = v.y;
+          b = v.z;
+        }
       }
 
       preset.colors[i * 4] = (byte) Math.round(r * 255);
@@ -325,11 +327,13 @@ public class Preset extends TextureData {
         Vector4f vEnd =
             index + 1 < colorTransfer.size()
                 ? colorTransfer.get(index + 1)
-                : new Vector4f(1.0f, 1.0f, 1.0f, stepX + 1);
+                : new Vector4f(1.0f, 1.0f, 1.0f, stepX + 1f);
         Vector4f v = linearGradient(v1, vEnd, stepX);
-        r = v.x;
-        g = v.y;
-        b = v.z;
+        if (v != null) {
+          r = v.x;
+          g = v.y;
+          b = v.z;
+        }
       }
       g2d.setColor(new Color(r, g, b));
       g2d.drawLine(sx + i, sy, sx + i, sy + iconHeight);

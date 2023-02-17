@@ -41,6 +41,7 @@ import org.weasis.core.api.gui.util.SliderChangeListener;
 import org.weasis.core.api.gui.util.ToggleButtonListener;
 import org.weasis.core.api.image.GridBagLayoutModel;
 import org.weasis.core.api.image.util.Unit;
+import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.SeriesComparator;
 import org.weasis.core.api.service.AuditLog;
@@ -170,12 +171,15 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> {
       public void mouseDragged(MouseEvent e) {
         int buttonMask = getButtonMaskEx();
         if (!e.isConsumed() && (e.getModifiersEx() & buttonMask) != 0) {
-          ViewCanvas panner = getViewCanvas(e);
+          ViewCanvas<? extends ImageElement> panner = getViewCanvas(e);
           if (panner != null) {
             if (pickPoint != null && panner.getViewModel() != null) {
               Point pt = e.getPoint();
               setPoint(
-                  new PanPoint(PanPoint.State.DRAGGING, pt.x - pickPoint.x, pt.y - pickPoint.y));
+                  new PanPoint(
+                      PanPoint.State.DRAGGING,
+                      (double) pt.x - pickPoint.x,
+                      (double) pt.y - pickPoint.y));
               pickPoint = pt;
               panner.addPointerType(ViewCanvas.CENTER_POINTER);
             }
@@ -407,7 +411,9 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> {
   }
 
   @Override
-  public void keyTyped(KeyEvent e) {}
+  public void keyTyped(KeyEvent e) {
+    // Do nothing
+  }
 
   @Override
   public void keyPressed(KeyEvent e) {
@@ -438,7 +444,9 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> {
   }
 
   @Override
-  public void keyReleased(KeyEvent e) {}
+  public void keyReleased(KeyEvent e) {
+    // Do nothing
+  }
 
   @Override
   public void setSelectedView2dContainer(
@@ -549,24 +557,14 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> {
 
     boolean volume = ViewType.VOLUME3D.equals(canvas.getViewType());
     Optional<SliderChangeListener> mipThickness = getAction(ActionVol.MIP_DEPTH);
-    if (volume) {
+    if (!volume) {
       mipThickness.ifPresent(
-          a -> {
-            a.setSliderMinMaxValue(
-                2,
-                cineAction.map(SliderChangeListener::getSliderMax).orElse(1),
-                (Integer) canvas.getActionValue(ActionVol.MIP_DEPTH.cmd()),
-                false);
-          });
-    } else {
-      mipThickness.ifPresent(
-          a -> {
-            a.setSliderMinMaxValue(
-                2,
-                cineAction.map(SliderChangeListener::getSliderMax).orElse(1),
-                (Integer) canvas.getActionValue(ActionVol.MIP_DEPTH.cmd()),
-                false);
-          });
+          a ->
+              a.setSliderMinMaxValue(
+                  2,
+                  cineAction.map(SliderChangeListener::getSliderMax).orElse(1),
+                  (Integer) canvas.getActionValue(ActionVol.MIP_DEPTH.cmd()),
+                  false));
     }
 
     Optional<ToggleButtonListener> volumeLighting = getAction(ActionVol.VOL_SHADING);
@@ -589,7 +587,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> {
     //            mipThickness.ifPresent(
     //                t -> t.enableAction(!volume ||
     // RenderingType.MIP.equals(a.getSelectedItem()))));
-
+    mipThickness.ifPresent(a -> a.enableAction(!volume));
     cineAction.ifPresent(a -> a.enableAction(!volume));
     rotation.ifPresent(a -> a.enableAction(!volume));
 
@@ -615,7 +613,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> {
     return true;
   }
 
-  public void applyDefaultWindowLevel(View3d view3d){
+  public void applyDefaultWindowLevel(View3d view3d) {
     if (view3d == null) {
       return;
     }
@@ -727,9 +725,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> {
         panes.remove(viewPane);
         viewPane.setActionsInView(ActionW.SYNCH_CROSSLINE.cmd(), false);
 
-        if (SynchView.NONE.equals(synchView)
-            || (viewPane instanceof View3d
-                && ((View3d) viewPane).getViewType() == ViewType.VOLUME3D)) {
+        if (SynchView.NONE.equals(synchView) || canvas.getViewType() == ViewType.VOLUME3D) {
           for (int i = 0; i < panes.size(); i++) {
             ViewCanvas<DicomImageElement> pane = panes.get(i);
             pane.getGraphicManager().deleteByLayerType(LayerType.CROSSLINES);
@@ -754,7 +750,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> {
                 if (oldSynch == null || !oldSynch.getMode().equals(synch.getMode())) {
                   oldSynch = synch.copy();
                 }
-                if (pane instanceof View3d && ((View3d) pane).getViewType() != ViewType.VOLUME3D) {
+                if (canvas.getViewType() != ViewType.VOLUME3D) {
                   addPropertyChangeListener(ActionW.SYNCH.cmd(), pane);
                 }
 

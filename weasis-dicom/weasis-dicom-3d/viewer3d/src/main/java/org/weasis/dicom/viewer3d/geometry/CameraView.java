@@ -10,7 +10,7 @@
 package org.weasis.dicom.viewer3d.geometry;
 
 import org.joml.Quaterniond;
-import org.joml.Vector3f;
+import org.joml.Vector3d;
 import org.weasis.dicom.codec.geometry.PatientOrientation.Biped;
 
 public enum CameraView implements View {
@@ -42,12 +42,12 @@ public enum CameraView implements View {
   }
 
   @Override
-  public Vector3f position() {
+  public Vector3d position() {
     return Camera.POSITION_ZERO;
   }
 
   @Override
-  public float zoom() {
+  public double zoom() {
     return Camera.DEFAULT_ZOOM;
   }
 

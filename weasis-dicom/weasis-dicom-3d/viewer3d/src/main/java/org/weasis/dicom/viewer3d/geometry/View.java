@@ -10,14 +10,14 @@
 package org.weasis.dicom.viewer3d.geometry;
 
 import org.joml.Quaterniond;
-import org.joml.Vector3f;
+import org.joml.Vector3d;
 
 public interface View {
   String title();
 
-  Vector3f position();
+  Vector3d position();
 
-  float zoom();
+  double zoom();
 
   Quaterniond rotation();
 }

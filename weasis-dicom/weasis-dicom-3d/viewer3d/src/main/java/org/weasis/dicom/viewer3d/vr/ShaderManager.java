@@ -15,6 +15,9 @@ import java.nio.charset.StandardCharsets;
 import java.util.Scanner;
 
 public class ShaderManager {
+
+  private ShaderManager() {}
+
   public static final String VERTEX_SHADER = "volume.vert";
   public static final String FRAGMENT_SHADER = "volume.frag";
   public static final String COMPUTE_SHADER = "volume.comp";

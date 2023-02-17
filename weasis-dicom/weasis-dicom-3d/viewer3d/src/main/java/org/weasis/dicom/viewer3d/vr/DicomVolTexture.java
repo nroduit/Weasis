@@ -147,7 +147,9 @@ public class DicomVolTexture extends VolumeTexture implements MediaSeriesGroup {
   }
 
   @Override
-  public void dispose() {}
+  public void dispose() {
+    // Do nothing
+  }
 
   @Override
   public boolean matchIdValue(Object valueID) {
@@ -189,7 +191,7 @@ public class DicomVolTexture extends VolumeTexture implements MediaSeriesGroup {
       for (int i = 0; i < presets.size(); i++) {
         PresetWindowLevel p = presets.get(i);
         if (p.getKeyCode() == 0x30) {
-          double ww = volumePreset.getColorMax() - volumePreset.getColorMin();
+          double ww = (double) volumePreset.getColorMax() - volumePreset.getColorMin();
           PresetWindowLevel autoLevel =
               new PresetWindowLevel(
                   "Auto Level [Image]", ww, volumePreset.getColorMin() + ww / 2, LutShape.LINEAR);

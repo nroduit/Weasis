@@ -16,44 +16,41 @@ import static org.joml.Math.toRadians;
 
 import java.awt.event.MouseEvent;
 import java.util.Objects;
-import org.joml.Matrix3f;
-import org.joml.Matrix4f;
+import org.joml.Matrix3d;
+import org.joml.Matrix4d;
 import org.joml.Quaterniond;
-import org.joml.Quaternionf;
-import org.joml.Vector2f;
+import org.joml.Vector2d;
 import org.joml.Vector2i;
-import org.joml.Vector3f;
-import org.joml.Vector4f;
+import org.joml.Vector3d;
+import org.joml.Vector4d;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.dicom.viewer3d.vr.DicomVolTexture;
 import org.weasis.dicom.viewer3d.vr.View3d;
 import org.weasis.dicom.viewer3d.vr.VolumeCanvas;
 
 public class Camera {
-  static final float INITIAL_FOV = 45f;
-  static final float DEFAULT_ZOOM = -4f;
-  static final Vector3f POSITION_ZERO = new Vector3f();
+  static final double INITIAL_FOV = 45;
+  static final double DEFAULT_ZOOM = -4;
+  static final Vector3d POSITION_ZERO = new Vector3d();
 
   private final VolumeCanvas renderer;
   private boolean isAdjusting = false;
-  private final Vector3f position = new Vector3f();
-  private final Quaternionf rotation = new Quaternionf();
-  private float zoomFactor = -1;
-  private final Vector2f prevMousePos = new Vector2f();
+  private final Vector3d position = new Vector3d();
+  private final Quaterniond rotation = new Quaterniond();
+  private double zoomFactor = -1;
+  private final Vector2d prevMousePos = new Vector2d();
 
   // Perspective
-  float zNear = .1f;
-  float zFar = 1000f;
-  float fov = INITIAL_FOV;
+  double zNear = 0.1;
+  double zFar = 1000;
+  double fov = INITIAL_FOV;
 
   // Matrix
-  public static final Matrix4f currentModelMatrix =
-      new Matrix4f()
-          .rotateX((float) Math.toRadians(90))
-          .translate(new Vector3f(-0.5f, -0.5f, -0.5f));
-  Matrix4f viewMatrix = null;
-  Matrix4f projectionMatrix = null;
-  Matrix4f viewProjectionMatrix = null;
+  public static final Matrix4d currentModelMatrix =
+      new Matrix4d().rotateX(Math.toRadians(90)).translate(new Vector3d(-0.5, -0.5, -0.5));
+  Matrix4d viewMatrix = null;
+  Matrix4d projectionMatrix = null;
+  Matrix4d viewProjectionMatrix = null;
 
   public Camera(VolumeCanvas renderer) {
     this(renderer, CameraView.INITIAL);
@@ -86,42 +83,42 @@ public class Camera {
     set(preset.position(), preset.rotation(), preset.zoom());
   }
 
-  public Camera(VolumeCanvas renderer, Vector3f eye, Vector3f viewCenter, Vector3f upDir) {
+  public Camera(VolumeCanvas renderer, Vector3d eye, Vector3d viewCenter, Vector3d upDir) {
     this(renderer, presetFromLookAt(eye, viewCenter, upDir));
   }
 
-  public static View presetFromLookAt(Vector3f eye, Vector3f center, Vector3f up) {
+  public static View presetFromLookAt(Vector3d eye, Vector3d center, Vector3d up) {
     if (up.y() == 1 && eye.get(1) == 0) {
       eye.y += 1.0e-10f;
     }
-    final Vector3f dir = new Vector3f(center).sub(eye);
-    final Vector3f zAxis = new Vector3f(dir).normalize();
+    final Vector3d dir = new Vector3d(center).sub(eye);
+    final Vector3d zAxis = new Vector3d(dir).normalize();
 
-    final Vector3f xAxis = new Vector3f(zAxis).cross(new Vector3f(up).normalize()).normalize();
-    final Vector3f yAxis = new Vector3f(xAxis).cross(zAxis).normalize();
-    xAxis.set(new Vector3f(zAxis).cross(yAxis)).normalize();
+    final Vector3d xAxis = new Vector3d(zAxis).cross(new Vector3d(up).normalize()).normalize();
+    final Vector3d yAxis = new Vector3d(xAxis).cross(zAxis).normalize();
+    xAxis.set(new Vector3d(zAxis).cross(yAxis)).normalize();
     return new ViewData(
         "custom",
-        new Vector3f(center).negate(),
+        new Vector3d(center).negate(),
         new Quaterniond()
-            .setFromNormalized(new Matrix3f(xAxis, yAxis, zAxis).transpose())
+            .setFromNormalized(new Matrix3d(xAxis, yAxis, zAxis).transpose())
             .normalize(),
         -dir.length());
   }
 
-  public Vector3f getPosition() {
+  public Vector3d getPosition() {
     return position;
   }
 
-  public Quaternionf getRotation() {
+  public Quaterniond getRotation() {
     return rotation;
   }
 
-  public float getZoomFactor() {
+  public double getZoomFactor() {
     return zoomFactor;
   }
 
-  public void set(Vector3f position, Quaterniond rotation, float zoom) {
+  public void set(Vector3d position, Quaterniond rotation, double zoom) {
     this.rotation.set(rotation);
     this.zoomFactor = zoom;
     this.position.set(position);
@@ -132,38 +129,38 @@ public class Camera {
     set(preset.position(), preset.rotation(), preset.zoom());
   }
 
-  public Vector2f getPrevMousePos() {
+  public Vector2d getPrevMousePos() {
     return prevMousePos;
   }
 
-  public Matrix4f getViewMatrix() {
+  public Matrix4d getViewMatrix() {
     if (viewMatrix == null) {
       viewMatrix =
-          new Matrix4f()
-              .setTranslation(new Vector3f(0, 0, zoomFactor))
+          new Matrix4d()
+              .setTranslation(new Vector3d(0, 0, zoomFactor))
               .rotate(rotation)
               .translate(position);
     }
 
-    return new Matrix4f(viewMatrix);
+    return new Matrix4d(viewMatrix);
   }
 
-  public Matrix4f getProjectionMatrix() {
+  public Matrix4d getProjectionMatrix() {
     if (projectionMatrix == null) {
-      projectionMatrix = new Matrix4f().setPerspective(fov, renderer.getAspectRatio(), zNear, zFar);
+      projectionMatrix = new Matrix4d().setPerspective(fov, renderer.getAspectRatio(), zNear, zFar);
     }
-    return new Matrix4f(projectionMatrix);
+    return new Matrix4d(projectionMatrix);
   }
 
-  public Matrix4f getViewProjectionMatrix() {
+  public Matrix4d getViewProjectionMatrix() {
     if (viewProjectionMatrix == null) {
-      viewProjectionMatrix = new Matrix4f(getProjectionMatrix()).mul(getViewMatrix());
+      viewProjectionMatrix = new Matrix4d(getProjectionMatrix()).mul(getViewMatrix());
     }
-    return new Matrix4f(viewProjectionMatrix);
+    return new Matrix4d(viewProjectionMatrix);
   }
 
-  public Vector4f getRayOrigin() {
-    return new Vector4f(0f, 0f, 0f, 1f).mul(getViewMatrix().invert());
+  public Vector4d getRayOrigin() {
+    return new Vector4d(0, 0, 0, 1).mul(getViewMatrix().invert());
   }
 
   public boolean isAdjusting() {
@@ -174,12 +171,12 @@ public class Camera {
     isAdjusting = adjusting;
   }
 
-  public float getFieldOfView() {
+  public double getFieldOfView() {
     return fov;
   }
 
-  public float getFocalLength() {
-    return 1.0f / tan(toRadians(getFieldOfView()) / 2f);
+  public double getFocalLength() {
+    return 1.0 / tan(toRadians(getFieldOfView()) / 2.0);
   }
 
   public void init(MouseEvent e) {
@@ -188,15 +185,15 @@ public class Camera {
     updateCameraTransform();
   }
 
-  protected void zoom(float delta) {
+  protected void zoom(double delta) {
     if (zoomFactor + delta >= 0) {
       return;
     }
     setZoomFactor(zoomFactor + delta);
   }
 
-  public void setZoomFactor(float zoomFactor) {
-    renderer.setActionsInView(ActionW.ZOOM.cmd(), (double) zoomFactor);
+  public void setZoomFactor(double zoomFactor) {
+    renderer.setActionsInView(ActionW.ZOOM.cmd(), zoomFactor);
     this.zoomFactor = zoomFactor;
     updateCameraTransform();
   }
@@ -204,22 +201,22 @@ public class Camera {
   public void setRotation(int degree) {
     int last = (Integer) renderer.getActionValue(ActionW.ROTATION.cmd());
     renderer.setActionsInView(ActionW.ROTATION.cmd(), degree);
-    rotation.rotateZ((float) Math.toRadians(last - degree));
+    rotation.rotateZ(Math.toRadians((double) last - degree));
     updateCameraTransform();
   }
 
   public void translate(MouseEvent e) {
-    final Vector2f translationNDC =
-        new Vector2f(screenCoordToNDC(e)).sub(screenCoordToNDC(prevMousePos));
+    final Vector2d translationNDC =
+        new Vector2d(screenCoordToNDC(e)).sub(screenCoordToNDC(prevMousePos));
     prevMousePos.x = e.getX();
     prevMousePos.y = e.getY();
-    final float hh = abs(zoomFactor) * tan(getFieldOfView() * 0.5f);
-    final float hw = hh * renderer.getAspectRatio();
+    double hh = abs(zoomFactor) * tan(getFieldOfView() * 0.5);
+    double hw = hh * renderer.getAspectRatio();
 
-    final Vector4f invTransform =
-        new Matrix4f(getViewMatrix())
+    Vector4d invTransform =
+        new Matrix4d(getViewMatrix())
             .invert()
-            .transform(new Vector4f(translationNDC.x() * hw, translationNDC.y() * hh, 0.0f, 0));
+            .transform(new Vector4d(translationNDC.x() * hw, translationNDC.y() * hh, 0.0, 0));
 
     position.x += invTransform.x;
     position.y += invTransform.y;
@@ -232,7 +229,7 @@ public class Camera {
         new Vector2i(renderer.getSurfaceWidth(), renderer.getSurfaceHeight());
     rotation
         .set(
-            new Quaternionf(ndcToArcBall(boundlessScreenCoordToNDC(e, dimensions)))
+            new Quaterniond(ndcToArcBall(boundlessScreenCoordToNDC(e, dimensions)))
                 .mul(ndcToArcBall(boundlessScreenCoordToNDC(prevMousePos, dimensions)))
                 .mul(rotation))
         .normalize();
@@ -253,16 +250,16 @@ public class Camera {
     viewProjectionMatrix = null;
   }
 
-  private Vector2f screenCoordToNDC(MouseEvent e) {
-    return screenCoordToNDC(new Vector2f(e.getX(), e.getY()));
+  private Vector2d screenCoordToNDC(MouseEvent e) {
+    return screenCoordToNDC(new Vector2d(e.getX(), e.getY()));
   }
 
-  private Vector2f boundlessScreenCoordToNDC(MouseEvent e, Vector2i dimensions) {
-    return boundlessScreenCoordToNDC(new Vector2f(e.getX(), e.getY()), dimensions);
+  private Vector2d boundlessScreenCoordToNDC(MouseEvent e, Vector2i dimensions) {
+    return boundlessScreenCoordToNDC(new Vector2d(e.getX(), e.getY()), dimensions);
   }
 
-  private Vector2f boundlessScreenCoordToNDC(Vector2f mousePos, Vector2i dimensions) {
-    final Vector2f mod = new Vector2f(mousePos);
+  private Vector2d boundlessScreenCoordToNDC(Vector2d mousePos, Vector2i dimensions) {
+    final Vector2d mod = new Vector2d(mousePos);
     mod.x = mod.x() % (dimensions.x());
     mod.y = mod.y() % (dimensions.y());
     if (mousePos.x < 0) {
@@ -274,21 +271,21 @@ public class Camera {
     return screenCoordToNDC(mod);
   }
 
-  private Vector2f screenCoordToNDC(Vector2f mousePos) {
-    return new Vector2f(
-        mousePos.x() * 2.0f / renderer.getSurfaceWidth() - 1.0f,
-        1.0f - 2.0f * mousePos.y() / renderer.getSurfaceHeight());
+  private Vector2d screenCoordToNDC(Vector2d mousePos) {
+    return new Vector2d(
+        mousePos.x() * 2.0 / renderer.getSurfaceWidth() - 1.0,
+        1.0 - 2.0 * mousePos.y() / renderer.getSurfaceHeight());
   }
 
-  public static Quaternionf ndcToArcBall(Vector2f p) {
-    final float dist = p.dot(p);
-    if (dist <= 1.0f) {
+  public static Quaterniond ndcToArcBall(Vector2d p) {
+    double dist = p.dot(p);
+    if (dist <= 1.0) {
       // Inside the sphere
-      return new Quaternionf(p.x(), p.y(), sqrt(1.0f - dist), 0.0f);
+      return new Quaterniond(p.x(), p.y(), sqrt(1.0 - dist), 0.0);
     } else {
       // Outside the sphere
-      final Vector2f proj = new Vector2f(p).normalize();
-      return new Quaternionf(proj.x(), proj.y(), 0.0f, 0.0f);
+      final Vector2d proj = new Vector2d(p).normalize();
+      return new Quaterniond(proj.x(), proj.y(), 0.0, 0.0);
     }
   }
 }

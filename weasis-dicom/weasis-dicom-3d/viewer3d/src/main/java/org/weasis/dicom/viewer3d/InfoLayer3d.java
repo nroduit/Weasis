@@ -14,8 +14,6 @@ import java.awt.Dimension;
 import java.awt.FontMetrics;
 import java.awt.Graphics2D;
 import java.awt.Rectangle;
-import java.awt.geom.Point2D;
-import java.awt.geom.Point2D.Float;
 import org.dcm4che3.data.Tag;
 import org.joml.Vector3d;
 import org.weasis.core.api.gui.util.ActionW;
@@ -52,8 +50,7 @@ import org.weasis.dicom.viewer3d.vr.View3d.ViewType;
 public class InfoLayer3d extends AbstractInfoLayer<DicomImageElement> {
 
   private static final String UNDEFINED = "Undefined"; // NON-NLS
-
-  private final Point2D.Float[] positions = new Float[4];
+  static final double RESCALE = 1.0;
 
   public InfoLayer3d(View3d view3d) {
     this(view3d, false);
@@ -72,37 +69,14 @@ public class InfoLayer3d extends AbstractInfoLayer<DicomImageElement> {
     displayPreferences.put(ROTATION, false);
     displayPreferences.put(FRAME, false);
     displayPreferences.put(PIXEL, true);
-
-    int width = view3d.getWidth();
-    int height = view3d.getHeight();
-    positions[0] = new Point2D.Float(border, border);
-    positions[1] = new Point2D.Float((float) width - border, border);
-    positions[2] = new Point2D.Float((float) width - border, (float) height - border);
-    positions[2] = new Point2D.Float(border, (float) height - border);
   }
 
   public View3d getView2DPane() {
     return (View3d) view2DPane;
   }
 
-  public Float[] getPositions() {
-    return positions;
-  }
-
   protected boolean ownerHasContent() {
     return getView2DPane().isReadyForRendering();
-  }
-
-  private boolean noNullStrings(String[] leftTopRiBot) {
-    if (leftTopRiBot == null) {
-      return false;
-    }
-    for (String string : leftTopRiBot) {
-      if (string == null) {
-        return false;
-      }
-    }
-    return true;
   }
 
   @Override
@@ -124,15 +98,12 @@ public class InfoLayer3d extends AbstractInfoLayer<DicomImageElement> {
         Modality.getModality(TagD.getTagValue(view2DPane.getSeries(), Tag.Modality, String.class));
     ModalityInfoData modality = ModalityView.getModlatityInfos(mod);
 
-    float midX = bound.width / 2f;
-    float midY = bound.height / 2f;
     final int fontHeight = fontMetrics.getHeight();
     thickLength = Math.max(fontHeight, GuiUtils.getScaleLength(5.0));
 
     g2.setPaint(Color.BLACK);
 
     boolean hideMin = !getDisplayPreferences(MIN_ANNOTATIONS);
-    final int midFontHeight = fontHeight - fontMetrics.getDescent();
     float drawY = bound.height - border - GuiUtils.getScaleLength(1.5f); // -1.5 for outline
 
     View3d owner = getView2DPane();
@@ -158,8 +129,6 @@ public class InfoLayer3d extends AbstractInfoLayer<DicomImageElement> {
       if (getDisplayPreferences(LUT)) {
         // drawLUT(g2, bound, fontHeight);
       }
-    } else {
-
     }
 
     drawY -= fontHeight;
@@ -244,7 +213,6 @@ public class InfoLayer3d extends AbstractInfoLayer<DicomImageElement> {
       drawY -= fontHeight;
     }
 
-    positions[3] = new Point2D.Float(border, drawY - GuiUtils.getScaleLength(5));
     if (getDisplayPreferences(ANNOTATIONS)) {
       MediaSeries<DicomImageElement> series = view2DPane.getSeries();
       MediaSeriesGroup study = InfoLayer.getParent(series, DicomModel.study);
@@ -270,7 +238,6 @@ public class InfoLayer3d extends AbstractInfoLayer<DicomImageElement> {
           }
         }
       }
-      positions[0] = new Point2D.Float(border, drawY - fontHeight + GuiUtils.getScaleLength(5));
 
       corner = modality.getCornerInfo(CornerDisplay.TOP_RIGHT);
       drawY = fontHeight;
@@ -299,9 +266,6 @@ public class InfoLayer3d extends AbstractInfoLayer<DicomImageElement> {
           }
         }
       }
-      positions[1] =
-          new Point2D.Float(
-              (float) bound.width - border, drawY - fontHeight + GuiUtils.getScaleLength(5));
 
       drawY = bound.height - border - GuiUtils.getScaleLength(1.5f); // -1.5 for outline
       if (hideMin) {
@@ -333,8 +297,6 @@ public class InfoLayer3d extends AbstractInfoLayer<DicomImageElement> {
         //    drawSeriesInMemoryState(g2, view2DPane.getSeries(), bound.width - border, (int)
         // (drawY));
       }
-      positions[2] =
-          new Point2D.Float((float) bound.width - border, drawY - GuiUtils.getScaleLength(5));
 
       // Boolean synchLink = (Boolean) view2DPane.getActionValue(ActionW.SYNCH_LINK);
       // String str = synchLink != null && synchLink ? "linked" : "unlinked"; // NON-NLS
@@ -367,10 +329,6 @@ public class InfoLayer3d extends AbstractInfoLayer<DicomImageElement> {
           orientation.toString(),
           border,
           bound.height - border - GuiUtils.getScaleLength(1.5f)); // -1.5 for outline
-    } else {
-      positions[0] = new Point2D.Float(border, border);
-      positions[1] = new Point2D.Float((float) bound.width - border, border);
-      positions[2] = new Point2D.Float((float) bound.width - border, (float) bound.height - border);
     }
 
     GuiUtils.resetRenderingHints(g2, oldRenderingHints);
@@ -428,8 +386,8 @@ public class InfoLayer3d extends AbstractInfoLayer<DicomImageElement> {
 
   public double getZoomFactor() {
     Object zoom = getView2DPane().getActionValue(ActionW.ZOOM.cmd());
-    if (zoom instanceof Double) {
-      return Math.abs((Double) zoom);
+    if (zoom instanceof Double val) {
+      return Math.abs(val);
     }
     return 0;
   }
@@ -445,11 +403,11 @@ public class InfoLayer3d extends AbstractInfoLayer<DicomImageElement> {
   }
 
   public double getRescaleX() {
-    return 1.0;
+    return RESCALE;
   }
 
   public double getRescaleY() {
-    return 1.0;
+    return RESCALE;
   }
 
   public String getPixelSizeCalibrationDescription() {
