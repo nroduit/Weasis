@@ -615,16 +615,16 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> {
     return true;
   }
 
-  private void updateWindowLevelComponentsListener(View3d view3d) {
+  public void applyDefaultWindowLevel(View3d view3d){
+    if (view3d == null) {
+      return;
+    }
+
+    int windowValue = view3d.getRenderingLayer().getWindowWidth();
+    int levelValue = view3d.getRenderingLayer().getWindowCenter();
 
     DicomVolTexture volTexture = view3d.getVolTexture();
     if (volTexture != null) {
-      PresetWindowLevel preset = (PresetWindowLevel) view3d.getActionValue(ActionW.PRESET.cmd());
-      boolean pixelPadding = true;
-      int windowValue = view3d.getRenderingLayer().getWindowWidth();
-      int levelValue = view3d.getRenderingLayer().getWindowCenter();
-      LutShape lutShapeItem = view3d.getRenderingLayer().getLutShape();
-
       Optional<SliderChangeListener> windowAction = getAction(ActionW.WINDOW);
       Optional<SliderChangeListener> levelAction = getAction(ActionW.LEVEL);
       if (windowAction.isPresent() && levelAction.isPresent()) {
@@ -635,7 +635,17 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> {
         windowAction.get().setRealMinMaxValue(1.0, window, windowValue, false);
         levelAction.get().setRealMinMaxValue(minLevel, maxLevel, levelValue, false);
       }
+    }
+  }
 
+  private void updateWindowLevelComponentsListener(View3d view3d) {
+
+    DicomVolTexture volTexture = view3d.getVolTexture();
+    if (volTexture != null) {
+      applyDefaultWindowLevel(view3d);
+      PresetWindowLevel preset = (PresetWindowLevel) view3d.getActionValue(ActionW.PRESET.cmd());
+      boolean pixelPadding = true;
+      LutShape lutShapeItem = view3d.getRenderingLayer().getLutShape();
       List<PresetWindowLevel> presetList =
           volTexture.getPresetList(pixelPadding, view3d.getVolumePreset());
 

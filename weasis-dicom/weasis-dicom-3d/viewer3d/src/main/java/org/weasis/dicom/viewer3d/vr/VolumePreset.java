@@ -27,9 +27,6 @@ public class VolumePreset {
   @JsonProperty("scalarOpacity")
   private Float[] scalarOpacity;
 
-  @JsonProperty("gradientOpacity")
-  private Float[] gradientOpacity;
-
   @JsonProperty("shade")
   private boolean shade;
 
@@ -63,10 +60,6 @@ public class VolumePreset {
 
   public Float[] getScalarOpacity() {
     return scalarOpacity;
-  }
-
-  public Float[] getGradientOpacity() {
-    return gradientOpacity;
   }
 
   public boolean isShade() {

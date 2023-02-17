@@ -86,6 +86,7 @@ import org.weasis.core.ui.model.utils.bean.PanPoint.State;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.display.Modality;
 import org.weasis.dicom.viewer3d.ActionVol;
+import org.weasis.dicom.viewer3d.EventManager;
 import org.weasis.dicom.viewer3d.InfoLayer3d;
 import org.weasis.dicom.viewer3d.geometry.Camera;
 import org.weasis.dicom.viewer3d.geometry.Controls;
@@ -133,7 +134,7 @@ public class View3d extends VolumeCanvas
   private final Program quadProgram;
   protected final Controls controls;
   protected final RenderingLayer renderingLayer;
-  private final ImageViewerEventManager<DicomImageElement> eventManager;
+  private final EventManager eventManager;
 
   private int vertexBuffer;
   protected Preset volumePreset;
@@ -143,7 +144,7 @@ public class View3d extends VolumeCanvas
   public View3d(
       ImageViewerEventManager<DicomImageElement> eventManager, DicomVolTexture volTexture) {
     super(null);
-    this.eventManager = eventManager;
+    this.eventManager = (EventManager) eventManager;
     this.texture = new ComputeTexture(this, ComputeTexture.COMPUTE_LOCAL_SIZE);
     this.quadProgram =
         new Program("basic", ShaderManager.VERTEX_SHADER, ShaderManager.FRAGMENT_SHADER);
@@ -646,12 +647,8 @@ public class View3d extends VolumeCanvas
               eventManager
                   .getAction(ActionW.LUT_SHAPE)
                   .ifPresent(a -> a.setSelectedItemWithoutTriggerAction(p.getLutShape()));
-              eventManager
-                  .getAction(ActionW.LEVEL)
-                  .ifPresent(a -> a.setRealValue(p.getLevel(), false));
-              eventManager
-                  .getAction(ActionW.WINDOW)
-                  .ifPresent(a -> a.setRealValue(p.getWindow(), false));
+
+              eventManager.applyDefaultWindowLevel(this);
             });
 
     renderingLayer.applyVolumePreset(volumePreset, false);

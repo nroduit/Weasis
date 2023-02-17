@@ -50,7 +50,6 @@ public class Preset extends TextureData {
 
   private final List<Vector2f> scalarOpacity;
 
-  private final List<Vector2f> gradientOpacity;
   private View3d renderer;
 
   public Preset(VolumePreset v) {
@@ -75,15 +74,6 @@ public class Preset extends TextureData {
                 vColorTransfer[i + 2],
                 vColorTransfer[i + 3],
                 vColorTransfer[i]));
-      }
-    }
-
-    this.gradientOpacity = new ArrayList<>();
-    Float[] vGradientOpacity = v.getGradientOpacity();
-    if (vGradientOpacity.length >= 4) {
-      int start = vGradientOpacity.length % 2 == 0 ? 0 : 1;
-      for (int i = start; i < vGradientOpacity.length; i = i + 2) {
-        gradientOpacity.add(new Vector2f(vGradientOpacity[i], vGradientOpacity[i + 1]));
       }
     }
 
