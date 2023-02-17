@@ -13,7 +13,10 @@ import java.awt.Color;
 import java.util.Objects;
 import org.dcm4che3.data.Tag;
 import org.joml.Vector3d;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.weasis.core.api.media.data.TagReadable;
+import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.codec.TagD;
 
 /**
@@ -22,6 +25,7 @@ import org.weasis.dicom.codec.TagD;
  * Position and Image Orientation (Patient)</a>
  */
 public class PatientOrientation {
+  private static final Logger LOGGER = LoggerFactory.getLogger(PatientOrientation.class);
   public static final Color blue = new Color(44783);
   public static final Color red = new Color(15539236);
   public static final Color green = new Color(897355);
@@ -56,6 +60,17 @@ public class PatientOrientation {
     public Color getColor() {
       return color;
     }
+
+    public static Biped getBiped(String val) {
+      if (StringUtil.hasText(val)) {
+        try {
+          return Biped.valueOf(val);
+        } catch (Exception e) {
+          LOGGER.error("Cannot find Quadruped: {}", val);
+        }
+      }
+      return null;
+    }
   }
 
   public enum Quadruped implements Orientation {
@@ -85,6 +100,17 @@ public class PatientOrientation {
 
     public Color getColor() {
       return color;
+    }
+
+    public static Quadruped getQuadruped(String val) {
+      if (StringUtil.hasText(val)) {
+        try {
+          return Quadruped.valueOf(val);
+        } catch (Exception e) {
+          LOGGER.error("Cannot find Quadruped: {}", val, e);
+        }
+      }
+      return null;
     }
   }
 

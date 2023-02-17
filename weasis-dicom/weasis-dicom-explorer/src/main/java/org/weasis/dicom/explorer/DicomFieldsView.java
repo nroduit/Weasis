@@ -213,7 +213,15 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
     if (dcmObj != null) {
       int[] tags = dcmObj.tags();
       for (int tag : tags) {
-        printElement(model, dcmObj, tag);
+        try {
+          printElement(model, dcmObj, tag);
+        } catch (Exception e) {
+          LOGGER.error("Cannot print tag {}", TagUtils.toString(tag), e);
+          Object[] values = new Object[4];
+          values[0] = TagUtils.toString(tag);
+          values[3] = "CANNOT READ TAG"; // NON-NLS
+          model.addRow(values);
+        }
       }
     }
   }
