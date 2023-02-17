@@ -315,8 +315,9 @@ public class View3d extends VolumeCanvas
       renderingLayer.setEnableRepaint(false);
       int quality = getDefaultQuality();
       renderingLayer.setQuality(quality);
-      eventManager.getAction(ActionVol.VOL_QUALITY).get().setSliderValue(quality, false);
-
+      eventManager
+          .getAction(ActionVol.VOL_QUALITY)
+          .ifPresent(a -> a.setSliderValue(quality, false));
       this.volumePreset = Preset.getDefaultPreset(volTexture.getModality());
       renderingLayer.setEnableRepaint(true);
       setVolumePreset(volumePreset);
@@ -794,10 +795,14 @@ public class View3d extends VolumeCanvas
   }
 
   @Override
-  public void resetZoom() {}
+  public void resetZoom() {
+    camera.resetZoom();
+  }
 
   @Override
-  public void resetPan() {}
+  public void resetPan() {
+    camera.resetPan();
+  }
 
   @Override
   public void reset() {
@@ -808,18 +813,15 @@ public class View3d extends VolumeCanvas
 
     initActionWState();
 
-    String[] resets =
-        new String[] {
-          ActionW.WINLEVEL.cmd(),
-          ActionW.PRESET.cmd(),
-          ActionVol.VOL_OPACITY.cmd(),
-          ActionW.ZOOM.cmd(),
-          ActionW.ROTATION.cmd(),
-          ActionW.PAN.cmd(),
-          ActionW.FLIP.cmd(),
-        };
-
-    resetActions(resets);
+    camera.resetAll();
+    renderingLayer.setEnableRepaint(false);
+    renderingLayer.setRenderingType(RenderingType.COMPOSITE);
+    renderingLayer.setQuality(getDefaultQuality());
+    renderingLayer.setOpacity(1.0);
+    Modality modality = volTexture == null ? null : volTexture.getModality();
+    setVolumePreset(Preset.getDefaultPreset(modality));
+    renderingLayer.setEnableRepaint(true);
+    renderingLayer.fireLayerChanged();
     eventManager.updateComponentsListener(this);
   }
 
@@ -843,7 +845,7 @@ public class View3d extends VolumeCanvas
       resetZoom();
     }
     if (cmd == null || ActionW.ROTATION.cmd().equals(cmd)) {
-      setRotation(0);
+      camera.resetRotation();
     }
     if (cmd == null || ActionW.FLIP.cmd().equals(cmd)) {
       setActionsInView(ActionW.FLIP.cmd(), false);

@@ -24,6 +24,9 @@ import org.joml.Vector2i;
 import org.joml.Vector3d;
 import org.joml.Vector4d;
 import org.weasis.core.api.gui.util.ActionW;
+import org.weasis.dicom.codec.geometry.ImageOrientation;
+import org.weasis.dicom.codec.geometry.ImageOrientation.Plan;
+import org.weasis.dicom.codec.geometry.VectorUtils;
 import org.weasis.dicom.viewer3d.vr.DicomVolTexture;
 import org.weasis.dicom.viewer3d.vr.View3d;
 import org.weasis.dicom.viewer3d.vr.VolumeCanvas;
@@ -61,23 +64,33 @@ public class Camera {
     setCameraView(preset);
   }
 
+  public static Quaterniond getQuaternion(int x, int y, int z) {
+    return new Quaterniond().rotationXYZ(Math.toRadians(x), Math.toRadians(y), Math.toRadians(z));
+  }
+
   public void setCameraView(View preset) {
     if (renderer instanceof View3d view3d) {
       DicomVolTexture volTexture = view3d.getVolTexture();
       if (volTexture != null) {
-        //        double[] or = volTexture.getVolumeGeometry().getOrientationPatient();
-        //        if (or != null && or.length == 6) {
-        //          Vector3d vr = new Vector3d(or);
-        //          Vector3d vc = new Vector3d(or[3], or[4], or[5]);
-        //          Quaterniond quaternionCol = getRotationFromTo(vr, new Vector3d(1.0, 0.0, 0.0),
-        // vc);
-        //          quaternionCol =
-        //              getRotationFromTo(vc, new Vector3d(0.0, 1.0, 0.0), vr)
-        //                  .mul(quaternionCol)
-        //                  .mul(preset.rotation());
-        //          set(preset.position(), quaternionCol, preset.zoom());
-        //          return;
-        //        }
+        double[] or = volTexture.getVolumeGeometry().getOrientationPatient();
+        if (or != null && or.length == 6) {
+          Vector3d vr = new Vector3d(or);
+          Vector3d vc = new Vector3d(or[3], or[4], or[5]);
+
+          // Calculate quaternion from row, column and normal vectors
+          Matrix3d rotMat = new Matrix3d();
+          rotMat.setColumn(0, vr);
+          rotMat.setColumn(1, vc);
+          rotMat.setColumn(2, VectorUtils.computeNormalOfSurface(vr, vc));
+          Quaterniond quaternion = new Quaterniond();
+          quaternion.setFromNormalized(rotMat);
+
+          Plan plan = ImageOrientation.getPlan(vr, vc);
+          quaternion.mul(preset.rotation(plan));
+
+          set(preset.position(), quaternion, preset.zoom());
+          return;
+        }
       }
     }
     set(preset.position(), preset.rotation(), preset.zoom());
@@ -123,10 +136,6 @@ public class Camera {
     this.zoomFactor = zoom;
     this.position.set(position);
     updateCameraTransform();
-  }
-
-  private void setFromPreset(View preset) {
-    set(preset.position(), preset.rotation(), preset.zoom());
   }
 
   public Vector2d getPrevMousePos() {
@@ -198,11 +207,30 @@ public class Camera {
     updateCameraTransform();
   }
 
+  public void resetZoom() {
+    setZoomFactor(CameraView.INITIAL.zoom());
+  }
+
   public void setRotation(int degree) {
     int last = (Integer) renderer.getActionValue(ActionW.ROTATION.cmd());
     renderer.setActionsInView(ActionW.ROTATION.cmd(), degree);
     rotation.rotateZ(Math.toRadians((double) last - degree));
     updateCameraTransform();
+  }
+
+  public void resetRotation() {
+    renderer.setActionsInView(ActionW.ROTATION.cmd(), 0);
+    rotation.set(CameraView.INITIAL.rotation());
+    updateCameraTransform();
+  }
+
+  public void resetPan() {
+    position.set(CameraView.INITIAL.position());
+    updateCameraTransform();
+  }
+
+  public void resetAll() {
+    setCameraView(CameraView.INITIAL);
   }
 
   public void translate(MouseEvent e) {

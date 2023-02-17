@@ -11,6 +11,7 @@ package org.weasis.dicom.viewer3d.geometry;
 
 import org.joml.Quaterniond;
 import org.joml.Vector3d;
+import org.weasis.dicom.codec.geometry.ImageOrientation.Plan;
 
 public interface View {
   String title();
@@ -20,4 +21,6 @@ public interface View {
   double zoom();
 
   Quaterniond rotation();
+
+  Quaterniond rotation(Plan plan);
 }

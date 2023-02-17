@@ -15,6 +15,7 @@ import org.joml.Vector3d;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeries.MEDIA_POSITION;
 import org.weasis.core.api.media.data.TagReadable;
+import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.geometry.PatientOrientation.Biped;
@@ -173,12 +174,15 @@ public abstract class ImageOrientation {
     for (int i = 0; i < 3; ++i) {
       if (absX > .0001 && absX >= absY && absX >= absZ) {
         buffer.append(orientationX.name());
+        buffer.append(StringUtil.SPACE);
         absX = 0;
       } else if (absY > .0001 && absY >= absX && absY >= absZ) {
         buffer.append(orientationY.name());
+        buffer.append(StringUtil.SPACE);
         absY = 0;
       } else if (absZ > .0001 && absZ >= absX && absZ >= absY) {
         buffer.append(orientationZ.name());
+        buffer.append(StringUtil.SPACE);
         absZ = 0;
       } else {
         break;

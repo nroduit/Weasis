@@ -17,6 +17,7 @@ import java.awt.GridBagConstraints;
 import java.awt.Rectangle;
 import java.awt.font.TextAttribute;
 import java.awt.geom.Point2D;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import javax.swing.Icon;
@@ -465,15 +466,16 @@ public class InfoLayer extends AbstractInfoLayer<DicomImageElement> {
       String colLeft = null;
       String rowTop = null;
       boolean quadruped =
-          LangUtil.getNULLtoFalse(
-              TagD.getTagValue(series, Tag.AnatomicalOrientationType, Boolean.class));
+          "QUADRUPED"
+              .equalsIgnoreCase(
+                  TagD.getTagValue(series, Tag.AnatomicalOrientationType, String.class));
       Vector3d vr = ImageOrientation.getRowImagePosition(image);
       Vector3d vc = ImageOrientation.getColumnImagePosition(image);
       if (getDisplayPreferences(IMAGE_ORIENTATION) && vr != null && vc != null) {
         orientation.append(" - ");
         plan = ImageOrientation.getPlan(vr, vc);
         orientation.append(plan);
-        orientation.append(" ");
+        orientation.append(StringUtil.SPACE);
 
         // Set the opposite vector direction (otherwise label should be placed in mid-right and
         // mid-bottom
@@ -520,40 +522,40 @@ public class InfoLayer extends AbstractInfoLayer<DicomImageElement> {
         }
       }
       if (rowTop != null && colLeft != null) {
-        if (colLeft.length() < 1) {
-          colLeft = " ";
-        }
-        if (rowTop.length() < 1) {
-          rowTop = " ";
-        }
+        String[] left = colLeft.split(StringUtil.SPACE);
+        String[] top = rowTop.split(StringUtil.SPACE);
+
         Font oldFont = g2.getFont();
         Font bigFont = oldFont.deriveFont(oldFont.getSize() + 5.0f);
         g2.setFont(bigFont);
         Map<TextAttribute, Object> map = new HashMap<>(1);
         map.put(TextAttribute.SUPERSCRIPT, TextAttribute.SUPERSCRIPT_SUB);
-        String fistLetter = rowTop.substring(0, 1);
-        int shiftX = g2.getFontMetrics().stringWidth(fistLetter);
+        String bigLetter = top.length > 0 && top[0].length() > 0 ? top[0] : StringUtil.SPACE;
+        int shiftX = g2.getFontMetrics().stringWidth(bigLetter);
         int shiftY = fontHeight + GuiUtils.getScaleLength(5);
-        FontTools.paintColorFontOutline(g2, fistLetter, midX - shiftX, shiftY, highlight);
+        FontTools.paintColorFontOutline(g2, bigLetter, midX - shiftX, shiftY, highlight);
         Font subscriptFont = bigFont.deriveFont(map);
-        if (rowTop.length() > 1) {
-          g2.setFont(subscriptFont);
-          FontTools.paintColorFontOutline(g2, rowTop.substring(1), midX, shiftY, highlight);
-          g2.setFont(bigFont);
-        }
-
-        FontTools.paintColorFontOutline(
-            g2,
-            colLeft.substring(0, 1),
-            (float) (border + thickLength),
-            midY + fontHeight / 2.0f,
-            highlight);
-
-        if (colLeft.length() > 1) {
+        if (top.length > 1) {
           g2.setFont(subscriptFont);
           FontTools.paintColorFontOutline(
               g2,
-              colLeft.substring(1),
+              String.join("-", Arrays.copyOfRange(top, 1, top.length)),
+              midX,
+              shiftY,
+              highlight);
+          g2.setFont(bigFont);
+        }
+
+        bigLetter = left.length > 0 && left[0].length() > 0 ? left[0] : StringUtil.SPACE;
+        FontTools.paintColorFontOutline(
+            g2, bigLetter, (float) (border + thickLength), midY + fontHeight / 2.0f, highlight);
+
+        if (left.length > 1) {
+          shiftX = g2.getFontMetrics().stringWidth(bigLetter);
+          g2.setFont(subscriptFont);
+          FontTools.paintColorFontOutline(
+              g2,
+              String.join("-", Arrays.copyOfRange(left, 1, left.length)),
               (float) (border + thickLength + shiftX),
               midY + fontHeight / 2.0f,
               highlight);

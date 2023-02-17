@@ -586,7 +586,7 @@ public class View3DContainer extends ImageViewerPlugin<DicomImageElement>
         Class clazz = Class.forName(type);
         return defaultClass.isAssignableFrom(clazz);
       } catch (Exception e) {
-        e.printStackTrace();
+        LOGGER.error("Checking view type", e);
       }
     }
     return false;
