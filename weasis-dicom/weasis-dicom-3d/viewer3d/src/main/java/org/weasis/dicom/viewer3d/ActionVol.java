@@ -9,11 +9,14 @@
  */
 package org.weasis.dicom.viewer3d;
 
+import java.awt.Cursor;
 import org.weasis.core.api.gui.util.ActionW;
+import org.weasis.core.api.gui.util.Feature;
 import org.weasis.core.api.gui.util.Feature.BasicActionStateValue;
 import org.weasis.core.api.gui.util.Feature.ComboItemListenerValue;
 import org.weasis.core.api.gui.util.Feature.SliderChangeListenerValue;
 import org.weasis.core.api.gui.util.Feature.ToggleButtonListenerValue;
+import org.weasis.dicom.viewer3d.geometry.ArcballMouseListener;
 import org.weasis.dicom.viewer3d.vr.Preset;
 import org.weasis.dicom.viewer3d.vr.RenderingType;
 
@@ -29,6 +32,13 @@ public class ActionVol {
           ActionW.SCROLL_SERIES.getModifier(),
           ActionW.SCROLL_SERIES.getCursor());
 
+  public static final class ControlsListenerValue extends Feature<ArcballMouseListener> {
+    public ControlsListenerValue(
+        String title, String command, int keyEvent, int modifier, Cursor cursor) {
+      super(title, command, keyEvent, modifier, cursor);
+    }
+  }
+
   public static final ComboItemListenerValue<Preset> VOL_PRESET =
       new ComboItemListenerValue<>(ActionW.LUT.getTitle(), "vol.lut", 0, 0, null);
 
@@ -40,6 +50,9 @@ public class ActionVol {
 
   public static final ToggleButtonListenerValue VOL_SHADING =
       new ToggleButtonListenerValue("Shading", "vol.shading", 0, 0, null);
+
+  public static final ToggleButtonListenerValue VOL_PROJECTION =
+      new ToggleButtonListenerValue("Volume Projection", "vol.projection", 0, 0, null);
 
   public static final ComboItemListenerValue<RenderingType> RENDERING_TYPE =
       new ComboItemListenerValue<>("Type", "rendering.type", 0, 0, null);

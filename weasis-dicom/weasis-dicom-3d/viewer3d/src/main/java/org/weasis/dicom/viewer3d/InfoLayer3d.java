@@ -196,7 +196,7 @@ public class InfoLayer3d extends AbstractInfoLayer<DicomImageElement> {
           g2,
           org.weasis.dicom.viewer2d.Messages.getString("InfoLayer.zoom")
               + StringUtil.COLON_AND_SPACE
-              + DecFormatter.percentTwoDecimal(view2DPane.getViewModel().getViewScale()),
+              + DecFormatter.percentTwoDecimal(getView2DPane().getZoom()),
           border,
           drawY);
       drawY -= fontHeight;

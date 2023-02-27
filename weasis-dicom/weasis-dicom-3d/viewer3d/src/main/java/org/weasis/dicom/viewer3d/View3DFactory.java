@@ -43,6 +43,7 @@ import org.weasis.core.ui.editor.SeriesViewerFactory;
 import org.weasis.core.ui.editor.ViewerPluginBuilder;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.editor.image.ViewCanvas;
+import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.codec.DicomMediaIO;
 import org.weasis.dicom.explorer.DicomExplorer;
 import org.weasis.dicom.explorer.DicomModel;
@@ -55,6 +56,7 @@ public class View3DFactory implements SeriesViewerFactory {
 
   public static final String NAME = "3D Viewer";
 
+  public static final String P_DEFAULT_LAYOUT = "default.layout";
   public static final String P_OPENGL_ENABLE = "opengl.enable";
   public static final String P_OPENGL_PREV_INIT = "opengl.prev.init";
 
@@ -75,10 +77,22 @@ public class View3DFactory implements SeriesViewerFactory {
     return NAME;
   }
 
+  public static GridBagLayoutModel getDefaultGridBagLayoutModel() {
+    String defLayout = BundleTools.SYSTEM_PREFERENCES.getProperty(View3DFactory.P_DEFAULT_LAYOUT);
+    if (StringUtil.hasText(defLayout)) {
+      return View3DContainer.LAYOUT_LIST.stream()
+          .filter(g -> defLayout.equals(g.getId()))
+          .findFirst()
+          .orElse(View3DContainer.VIEWS_vr);
+    }
+    return View3DContainer.VIEWS_vr;
+  }
+
   @Override
   public SeriesViewer createSeriesViewer(Map<String, Object> properties) {
     if (isOpenglEnable()) {
-      GridBagLayoutModel model = View3DContainer.VIEWS_vr;
+
+      GridBagLayoutModel model = getDefaultGridBagLayoutModel();
       String uid = null;
       if (properties != null) {
         Object obj = properties.get(org.weasis.core.api.image.GridBagLayoutModel.class.getName());

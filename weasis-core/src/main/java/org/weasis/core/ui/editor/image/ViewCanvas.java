@@ -11,13 +11,18 @@ package org.weasis.core.ui.editor.image;
 
 import java.awt.BasicStroke;
 import java.awt.Color;
+import java.awt.Component;
 import java.awt.Font;
 import java.awt.Graphics2D;
 import java.awt.Point;
+import java.awt.event.ActionListener;
 import java.awt.event.FocusListener;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
+import java.awt.event.MouseMotionListener;
+import java.awt.event.MouseWheelListener;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.Line2D;
 import java.awt.geom.Point2D;
@@ -27,13 +32,20 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
 import javax.swing.Action;
+import javax.swing.BorderFactory;
+import javax.swing.ButtonGroup;
 import javax.swing.JComponent;
 import javax.swing.JPopupMenu;
+import javax.swing.JRadioButtonMenuItem;
+import javax.swing.JSeparator;
+import javax.swing.KeyStroke;
+import javax.swing.border.Border;
 import org.weasis.core.api.gui.Image2DViewer;
 import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.Feature;
 import org.weasis.core.api.gui.util.GuiUtils;
+import org.weasis.core.api.gui.util.GuiUtils.IconColor;
 import org.weasis.core.api.gui.util.MouseActionAdapter;
 import org.weasis.core.api.gui.util.WinUtil;
 import org.weasis.core.api.image.OpManager;
@@ -41,11 +53,15 @@ import org.weasis.core.api.image.WindowOp;
 import org.weasis.core.api.image.ZoomOp.Interpolation;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaSeries;
+import org.weasis.core.ui.Messages;
 import org.weasis.core.ui.editor.image.dockable.MeasureTool;
 import org.weasis.core.ui.model.graphic.Graphic;
 import org.weasis.core.ui.model.layer.LayerAnnotation;
 import org.weasis.core.ui.model.utils.ImageLayerChangeListener;
 import org.weasis.core.ui.model.utils.bean.PanPoint;
+import org.weasis.core.ui.model.utils.bean.PanPoint.State;
+import org.weasis.core.ui.util.TitleMenuItem;
+import org.weasis.core.util.StringUtil;
 
 public interface ViewCanvas<E extends ImageElement>
     extends Canvas,
@@ -59,6 +75,16 @@ public interface ViewCanvas<E extends ImageElement>
   int CENTER_POINTER = 1 << 1;
   int HIGHLIGHTED_POINTER = 1 << 2;
 
+  // Border
+  Border focusBorder =
+      BorderFactory.createMatteBorder(1, 1, 1, 1, IconColor.ACTIONS_YELLOW.getColor());
+  Border viewBorder = BorderFactory.createMatteBorder(1, 1, 1, 1, Color.GRAY);
+
+  // Specific points
+  PanPoint highlightedPosition = new PanPoint(State.CENTER);
+  PanPoint startedDragPoint = new PanPoint(State.DRAGSTART);
+
+  // Graphics for building a pointer
   Color pointerColor1 = Color.black;
   Color pointerColor2 = Color.white;
   Ellipse2D pointerCircle = new Ellipse2D.Double(-27.0, -27.0, 54.0, 54.0);
@@ -132,6 +158,26 @@ public interface ViewCanvas<E extends ImageElement>
     c.addMouseMotionListener(adapter);
   }
 
+  default void disableMouseAndKeyListener(Component c) {
+    MouseListener[] listener = c.getMouseListeners();
+
+    MouseMotionListener[] motionListeners = c.getMouseMotionListeners();
+    KeyListener[] keyListeners = c.getKeyListeners();
+    MouseWheelListener[] wheelListeners = c.getMouseWheelListeners();
+    for (MouseListener mouseListener : listener) {
+      c.removeMouseListener(mouseListener);
+    }
+    for (MouseMotionListener motionListener : motionListeners) {
+      c.removeMouseMotionListener(motionListener);
+    }
+    for (KeyListener keyListener : keyListeners) {
+      c.removeKeyListener(keyListener);
+    }
+    for (MouseWheelListener wheelListener : wheelListeners) {
+      c.removeMouseWheelListener(wheelListener);
+    }
+  }
+
   default void enableMouseAndKeyListener(MouseActions actions) {
     disableMouseAndKeyListener();
     iniDefaultMouseListener();
@@ -188,7 +234,21 @@ public interface ViewCanvas<E extends ImageElement>
 
   void setSeries(MediaSeries<E> newSeries, E selectedMedia);
 
-  void setFocused(Boolean focused);
+  default void setFocused(Boolean focused) {
+    MediaSeries<E> series = getSeries();
+    if (series != null) {
+      series.setFocused(focused);
+    }
+    if (focused && getBorder() == viewBorder) {
+      setBorder(focusBorder);
+    } else if (!focused && getBorder() == focusBorder) {
+      setBorder(viewBorder);
+    }
+  }
+
+  void setBorder(Border focusBorder);
+
+  Border getBorder();
 
   double getRealWorldViewScale();
 
@@ -250,13 +310,15 @@ public interface ViewCanvas<E extends ImageElement>
 
   Point2D getHighlightedPosition();
 
-  default void drawPointer(Graphics2D g, Double x, Double y) {
+  default void drawPointer(Graphics2D g, double x, double y, boolean circle) {
     Object[] oldRenderingHints = GuiUtils.setRenderingHints(g, true, true, false);
     float[] dash = {5.0f};
     g.translate(x, y);
     g.setStroke(new BasicStroke(3.0f));
     g.setPaint(pointerColor1);
-    g.draw(pointerCircle);
+    if (circle) {
+      g.draw(pointerCircle);
+    }
     g.draw(pointerLeft);
     g.draw(pointerRight);
     g.draw(pointerUp);
@@ -265,8 +327,9 @@ public interface ViewCanvas<E extends ImageElement>
     g.setStroke(
         new BasicStroke(1.0f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER, 5.0f, dash, 0.0f));
     g.setPaint(pointerColor2);
-    g.setPaint(pointerColor1);
-    g.draw(pointerCircle);
+    if (circle) {
+      g.draw(pointerCircle);
+    }
     g.draw(pointerLeft);
     g.draw(pointerRight);
     g.draw(pointerUp);
@@ -296,6 +359,62 @@ public interface ViewCanvas<E extends ImageElement>
   JPopupMenu buildGraphicContextMenu(MouseEvent evt, List<Graphic> selected);
 
   JPopupMenu buildContextMenu(MouseEvent evt);
+
+  default JPopupMenu buildLeftMouseActionMenu() {
+    JPopupMenu popupMenu = new JPopupMenu();
+    TitleMenuItem itemTitle =
+        new TitleMenuItem(Messages.getString("left.mouse.actions") + StringUtil.COLON);
+    popupMenu.add(itemTitle);
+    popupMenu.setLabel(MouseActions.T_LEFT);
+    ImageViewerEventManager<E> eventManager = getEventManager();
+    String action = eventManager.getMouseActions().getLeft();
+    ButtonGroup groupButtons = new ButtonGroup();
+    int count = popupMenu.getComponentCount();
+    ImageViewerPlugin<E> view = eventManager.getSelectedView2dContainer();
+    if (view != null) {
+      final ViewerToolBar<?> toolBar = view.getViewerToolBar();
+      if (toolBar != null) {
+        ActionListener leftButtonAction =
+            event -> {
+              if (event.getSource() instanceof JRadioButtonMenuItem item) {
+                toolBar.changeButtonState(MouseActions.T_LEFT, item.getActionCommand());
+              }
+            };
+
+        List<Feature<?>> actionsButtons = ViewerToolBar.actionsButtons;
+        synchronized (actionsButtons) {
+          for (Feature<?> b : actionsButtons) {
+            if (eventManager.isActionEnabled(b)) {
+              JRadioButtonMenuItem radio =
+                  new JRadioButtonMenuItem(b.getTitle(), b.getIcon(), b.cmd().equals(action));
+              GuiUtils.applySelectedIconEffect(radio);
+              radio.setActionCommand(b.cmd());
+              radio.setAccelerator(KeyStroke.getKeyStroke(b.getKeyCode(), b.getModifier()));
+              // Trigger the selected mouse action
+              radio.addActionListener(toolBar);
+              // Update the state of the button in the toolbar
+              radio.addActionListener(leftButtonAction);
+              popupMenu.add(radio);
+              groupButtons.add(radio);
+            }
+          }
+        }
+      }
+    }
+
+    if (count < popupMenu.getComponentCount()) {
+      popupMenu.add(new JSeparator());
+    }
+    return popupMenu;
+  }
+
+  default int addSeparatorToPopupMenu(JPopupMenu popupMenu, int count) {
+    if (count < popupMenu.getComponentCount()) {
+      popupMenu.add(new JSeparator());
+      return popupMenu.getComponentCount();
+    }
+    return count;
+  }
 
   boolean hasValidContent();
 }

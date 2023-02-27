@@ -16,7 +16,6 @@ import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
-import java.awt.event.ActionListener;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.awt.event.FocusEvent;
@@ -32,15 +31,12 @@ import java.util.List;
 import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Optional;
-import javax.swing.ButtonGroup;
 import javax.swing.JComponent;
 import javax.swing.JDialog;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPopupMenu;
-import javax.swing.JRadioButtonMenuItem;
 import javax.swing.JSeparator;
-import javax.swing.KeyStroke;
 import javax.swing.TransferHandler;
 import org.dcm4che3.data.Tag;
 import org.dcm4che3.img.lut.PresetWindowLevel;
@@ -89,7 +85,6 @@ import org.weasis.core.ui.editor.image.SynchEvent;
 import org.weasis.core.ui.editor.image.ViewButton;
 import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.editor.image.ViewerPlugin;
-import org.weasis.core.ui.editor.image.ViewerToolBar;
 import org.weasis.core.ui.model.AbstractGraphicModel;
 import org.weasis.core.ui.model.graphic.DragGraphic;
 import org.weasis.core.ui.model.graphic.Graphic;
@@ -107,7 +102,6 @@ import org.weasis.core.ui.util.TitleMenuItem;
 import org.weasis.core.ui.util.UriListFlavor;
 import org.weasis.core.util.LangUtil;
 import org.weasis.core.util.MathUtil;
-import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.codec.DicomEncapDocSeries;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.DicomSeries;
@@ -1133,61 +1127,15 @@ public class View2d extends DefaultView2d<DicomImageElement> {
   }
 
   public JPopupMenu buildContextMenu(final MouseEvent evt) {
-    JPopupMenu popupMenu = new JPopupMenu();
-    TitleMenuItem itemTitle =
-        new TitleMenuItem(Messages.getString("View2d.left_mouse") + StringUtil.COLON);
-    popupMenu.add(itemTitle);
-    popupMenu.setLabel(MouseActions.T_LEFT);
-    String action = eventManager.getMouseActions().getLeft();
-    ButtonGroup groupButtons = new ButtonGroup();
+    JPopupMenu popupMenu = buildLeftMouseActionMenu();
     int count = popupMenu.getComponentCount();
-    ImageViewerPlugin<DicomImageElement> view = eventManager.getSelectedView2dContainer();
-    if (view != null) {
-      final ViewerToolBar<?> toolBar = view.getViewerToolBar();
-      if (toolBar != null) {
-        ActionListener leftButtonAction =
-            event -> {
-              if (event.getSource() instanceof JRadioButtonMenuItem item) {
-                toolBar.changeButtonState(MouseActions.T_LEFT, item.getActionCommand());
-              }
-            };
-
-        List<Feature<?>> actionsButtons = ViewerToolBar.actionsButtons;
-        synchronized (actionsButtons) {
-          for (Feature<?> b : actionsButtons) {
-            if (eventManager.isActionRegistered(b)) {
-              JRadioButtonMenuItem radio =
-                  new JRadioButtonMenuItem(b.getTitle(), b.getIcon(), b.cmd().equals(action));
-              GuiUtils.applySelectedIconEffect(radio);
-              radio.setActionCommand(b.cmd());
-              radio.setAccelerator(KeyStroke.getKeyStroke(b.getKeyCode(), b.getModifier()));
-              // Trigger the selected mouse action
-              radio.addActionListener(toolBar);
-              // Update the state of the button in the toolbar
-              radio.addActionListener(leftButtonAction);
-              popupMenu.add(radio);
-              groupButtons.add(radio);
-            }
-          }
-        }
-      }
-    }
-
-    if (count < popupMenu.getComponentCount()) {
-      popupMenu.add(new JSeparator());
-      count = popupMenu.getComponentCount();
-    }
 
     if (DefaultView2d.GRAPHIC_CLIPBOARD.hasGraphics()) {
       JMenuItem menuItem = new JMenuItem(Messages.getString("View2d.paste_draw"));
       menuItem.addActionListener(e -> copyGraphicsFromClipboard());
       popupMenu.add(menuItem);
     }
-
-    if (count < popupMenu.getComponentCount()) {
-      popupMenu.add(new JSeparator());
-      count = popupMenu.getComponentCount();
-    }
+    count = addSeparatorToPopupMenu(popupMenu, count);
 
     if (eventManager instanceof EventManager manager) {
       GuiUtils.addItemToMenu(popupMenu, manager.getPresetMenu("weasis.contextmenu.presets"));
@@ -1195,20 +1143,13 @@ public class View2d extends DefaultView2d<DicomImageElement> {
       GuiUtils.addItemToMenu(popupMenu, manager.getLutMenu("weasis.contextmenu.lut"));
       GuiUtils.addItemToMenu(popupMenu, manager.getLutInverseMenu("weasis.contextmenu.invertLut"));
       GuiUtils.addItemToMenu(popupMenu, manager.getFilterMenu("weasis.contextmenu.filter"));
-
-      if (count < popupMenu.getComponentCount()) {
-        popupMenu.add(new JSeparator());
-        count = popupMenu.getComponentCount();
-      }
+      count = addSeparatorToPopupMenu(popupMenu, count);
 
       GuiUtils.addItemToMenu(popupMenu, manager.getZoomMenu("weasis.contextmenu.zoom"));
       GuiUtils.addItemToMenu(
           popupMenu, manager.getOrientationMenu("weasis.contextmenu.orientation"));
       GuiUtils.addItemToMenu(popupMenu, manager.getSortStackMenu("weasis.contextmenu.sortstack"));
-
-      if (count < popupMenu.getComponentCount()) {
-        popupMenu.add(new JSeparator());
-      }
+      addSeparatorToPopupMenu(popupMenu, count);
 
       GuiUtils.addItemToMenu(popupMenu, manager.getResetMenu("weasis.contextmenu.reset"));
     }

@@ -22,5 +22,12 @@ public interface View {
 
   Quaterniond rotation();
 
-  Quaterniond rotation(Plan plan);
+  default Quaterniond rotation(Plan plan) {
+    if (plan == Plan.CORONAL) {
+      return new Quaterniond(rotation()).rotateX(Math.toRadians(270));
+    } else if (plan == Plan.SAGITTAL) {
+      return new Quaterniond(rotation()).rotateX(Math.toRadians(270)).rotateY(Math.toRadians(270));
+    }
+    return rotation();
+  }
 }

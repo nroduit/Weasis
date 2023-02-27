@@ -39,10 +39,8 @@ import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Optional;
 import javax.swing.Action;
-import javax.swing.BorderFactory;
 import javax.swing.JPopupMenu;
 import javax.swing.ToolTipManager;
-import javax.swing.border.Border;
 import org.dcm4che3.img.lut.PresetWindowLevel;
 import org.joml.Vector3f;
 import org.joml.Vector4f;
@@ -51,7 +49,7 @@ import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.Feature;
-import org.weasis.core.api.gui.util.GuiUtils.IconColor;
+import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.MouseActionAdapter;
 import org.weasis.core.api.image.OpManager;
 import org.weasis.core.api.image.ZoomOp.Interpolation;
@@ -59,6 +57,7 @@ import org.weasis.core.api.image.util.ImageLayer;
 import org.weasis.core.api.image.util.MeasurableLayer;
 import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.api.media.data.MediaSeries;
+import org.weasis.core.api.service.AuditLog;
 import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.api.util.FontItem;
 import org.weasis.core.ui.docking.UIManager;
@@ -82,14 +81,13 @@ import org.weasis.core.ui.model.graphic.Graphic;
 import org.weasis.core.ui.model.layer.LayerAnnotation;
 import org.weasis.core.ui.model.layer.LayerType;
 import org.weasis.core.ui.model.utils.bean.PanPoint;
-import org.weasis.core.ui.model.utils.bean.PanPoint.State;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.display.Modality;
 import org.weasis.dicom.viewer3d.ActionVol;
 import org.weasis.dicom.viewer3d.EventManager;
 import org.weasis.dicom.viewer3d.InfoLayer3d;
 import org.weasis.dicom.viewer3d.geometry.Camera;
-import org.weasis.dicom.viewer3d.geometry.Controls;
+import org.weasis.dicom.viewer3d.geometry.CameraView;
 import org.weasis.opencv.data.PlanarImage;
 import org.weasis.opencv.op.lut.LutShape;
 
@@ -116,42 +114,29 @@ public class View3d extends VolumeCanvas
         1.0f, 1.0f
       };
 
-  protected final Border focusBorder =
-      BorderFactory.createMatteBorder(1, 1, 1, 1, IconColor.ACTIONS_YELLOW.getColor());
-  protected final Border viewBorder = BorderFactory.createMatteBorder(1, 1, 1, 1, Color.GRAY);
-
   protected final FocusHandler<DicomImageElement> focusHandler;
   protected final GraphicMouseHandler<DicomImageElement> graphicMouseHandler;
-  private final PanPoint highlightedPosition = new PanPoint(State.CENTER);
-  private final PanPoint startedDragPoint = new PanPoint(State.DRAGSTART);
+
   private int pointerType = 0;
   private LayerAnnotation infoLayer;
   protected final ContextMenuHandler contextMenuHandler;
 
-  private DicomVolTexture volTexture;
   private final ComputeTexture texture;
   private final Program program;
   private final Program quadProgram;
-  protected final Controls controls;
   protected final RenderingLayer renderingLayer;
-  private final EventManager eventManager;
 
   private int vertexBuffer;
   protected Preset volumePreset;
   private ViewType viewType;
-  private double zoomFactor;
 
   public View3d(
       ImageViewerEventManager<DicomImageElement> eventManager, DicomVolTexture volTexture) {
-    super(null);
-    this.eventManager = (EventManager) eventManager;
+    super(eventManager, volTexture, null);
     this.texture = new ComputeTexture(this, ComputeTexture.COMPUTE_LOCAL_SIZE);
     this.quadProgram =
         new Program("basic", ShaderManager.VERTEX_SHADER, ShaderManager.FRAGMENT_SHADER);
     this.program = new Program("compute", ShaderManager.COMPUTE_SHADER);
-    this.controls = new Controls(this);
-
-    this.zoomFactor = -1.0;
     try {
       setSharedContext(OpenglUtils.getDefaultGlContext());
     } catch (Exception e) {
@@ -163,16 +148,11 @@ public class View3d extends VolumeCanvas
     volumePreset.setRequiredBuilding(true);
     volumePreset.setRenderer(this);
 
-    this.volTexture = volTexture;
     this.renderingLayer = new RenderingLayer();
 
     actionsInView.put(ActionVol.ORIENTATION_CUBE.cmd(), false);
     actionsInView.put(ActionVol.HIDE_CROSSHAIR_CENTER.cmd(), true);
     actionsInView.put(ActionVol.RECENTERING_CROSSHAIR.cmd(), false);
-
-    addMouseWheelListener(controls);
-    addMouseMotionListener(controls);
-    addMouseListener(controls);
 
     this.infoLayer = new InfoLayer3d(this);
 
@@ -258,20 +238,8 @@ public class View3d extends VolumeCanvas
     return renderingLayer;
   }
 
-  public DicomVolTexture getVolTexture() {
-    return volTexture;
-  }
-
-  public boolean isReadyForRendering() {
-    return volTexture != null && volTexture.isReadyForDisplay();
-  }
-
   public Camera getCamera() {
     return camera;
-  }
-
-  public Controls getControls() {
-    return controls;
   }
 
   public ViewType getViewType() {
@@ -283,35 +251,13 @@ public class View3d extends VolumeCanvas
   }
 
   public double getZoom() {
-    return zoomFactor;
-  }
-
-  public double getActualDisplayZoom() {
-    return zoomFactor < 0.0
-        ? (double) Math.min(getWidth(), getHeight())
-            / (double) getVolTexture().getMaxDimensionLength()
-        : zoomFactor;
-  }
-
-  public void setZoom(double var1) {
-    setZoom(var1, true);
-  }
-
-  public void setZoom(double var1, boolean var3) {
-    this.zoomFactor = var1;
-    if (var3) {
-      repaint();
-    }
-  }
-
-  public void changeZoom(double var1) {
-    this.zoomFactor += var1;
-    repaint();
+    return camera.getZoomFactor();
   }
 
   public void setVolTexture(DicomVolTexture volTexture) {
     this.volTexture = volTexture;
     if (volTexture != null && viewType == ViewType.VOLUME3D) {
+      camera.setZoomFactor(-getBestFitViewScale());
       renderingLayer.setEnableRepaint(false);
       int quality = getDefaultQuality();
       renderingLayer.setQuality(quality);
@@ -604,7 +550,9 @@ public class View3d extends VolumeCanvas
   }
 
   @Override
-  public void copyActionWState(HashMap<String, Object> actionsInView) {}
+  public void copyActionWState(HashMap<String, Object> actionsInView) {
+    actionsInView.putAll(this.actionsInView);
+  }
 
   @Override
   public ImageViewerEventManager<DicomImageElement> getEventManager() {
@@ -635,24 +583,6 @@ public class View3d extends VolumeCanvas
   }
 
   @Override
-  public void setFocused(Boolean focused) {
-    MediaSeries<DicomImageElement> series = getSeries();
-    if (series != null) {
-      series.setFocused(focused);
-    }
-    if (focused && getBorder() == viewBorder) {
-      setBorder(focusBorder);
-    } else if (!focused && getBorder() == focusBorder) {
-      setBorder(viewBorder);
-    }
-  }
-
-  @Override
-  public double getRealWorldViewScale() {
-    return 0;
-  }
-
-  @Override
   public LayerAnnotation getInfoLayer() {
     return infoLayer;
   }
@@ -666,13 +596,29 @@ public class View3d extends VolumeCanvas
   public void setTileOffset(int tileOffset) {}
 
   @Override
-  public void center() {}
+  public final void center() {
+    setCenter(0.0, 0.0);
+  }
 
   @Override
-  public void setCenter(Double modelOffsetX, Double modelOffsetY) {}
+  public final void setCenter(Double modelOffsetX, Double modelOffsetY) {
+    // Only apply when the panel size is not zero.
+    if (getWidth() != 0 && getHeight() != 0) {
+      getViewModel().setModelOffset(modelOffsetX, modelOffsetY);
+      if (viewType == ViewType.VOLUME3D) {
+        resetPan();
+      }
+    }
+  }
 
   @Override
-  public void moveOrigin(PanPoint point) {}
+  public void moveOrigin(PanPoint point) {
+    if (point != null) {
+      if (PanPoint.State.DRAGGING.equals(point.getState())) {
+        camera.translate(point);
+      }
+    }
+  }
 
   @Override
   public Comparator<DicomImageElement> getCurrentSortComparator() {
@@ -680,7 +626,18 @@ public class View3d extends VolumeCanvas
   }
 
   @Override
-  public void setSelected(Boolean selected) {}
+  public void setSelected(Boolean selected) {
+    setBorder(selected ? focusBorder : viewBorder);
+    // Remove the selection of graphics
+    graphicManager.setSelectedGraphic(null);
+    // Throws to the tool listener the current graphic selection.
+    graphicManager.fireGraphicsSelectionChanged(getImageLayer());
+
+    if (selected && getSeries() != null) {
+      AuditLog.LOGGER.info(
+          "select:series nb:{} viewType:{}", getSeries().getSeriesNumber(), viewType);
+    }
+  }
 
   @Override
   public Font getLayerFont() {
@@ -705,7 +662,9 @@ public class View3d extends VolumeCanvas
   }
 
   @Override
-  public void disableMouseAndKeyListener() {}
+  public void disableMouseAndKeyListener() {
+    ViewCanvas.super.disableMouseAndKeyListener(this);
+  }
 
   @Override
   public void iniDefaultMouseListener() {
@@ -721,21 +680,27 @@ public class View3d extends VolumeCanvas
 
   @Override
   public int getPointerType() {
-    return 0;
+    return pointerType;
   }
 
   @Override
-  public void setPointerType(int pointerType) {}
+  public void setPointerType(int pointerType) {
+    this.pointerType = pointerType;
+  }
 
   @Override
-  public void addPointerType(int i) {}
+  public void addPointerType(int i) {
+    this.pointerType |= i;
+  }
 
   @Override
-  public void resetPointerType(int i) {}
+  public void resetPointerType(int i) {
+    this.pointerType &= ~i;
+  }
 
   @Override
   public Point2D getHighlightedPosition() {
-    return null;
+    return highlightedPosition;
   }
 
   private void drawPointer(Graphics2D g) {
@@ -743,7 +708,7 @@ public class View3d extends VolumeCanvas
       return;
     }
     if ((pointerType & CENTER_POINTER) == CENTER_POINTER) {
-      drawPointer(g, (getWidth() - 1) * 0.5, (getHeight() - 1) * 0.5);
+      drawPointer(g, (getWidth() - 1) * 0.5, (getHeight() - 1) * 0.5, false);
     }
     if ((pointerType & HIGHLIGHTED_POINTER) == HIGHLIGHTED_POINTER
         && highlightedPosition.isHighlightedPosition()) {
@@ -753,7 +718,7 @@ public class View3d extends VolumeCanvas
           modelToViewLength(highlightedPosition.getX() + 0.5 - viewModel.getModelOffsetX());
       double offsetY =
           modelToViewLength(highlightedPosition.getY() + 0.5 - viewModel.getModelOffsetY());
-      drawPointer(g, offsetX, offsetY);
+      drawPointer(g, offsetX, offsetY, true);
     }
   }
 
@@ -768,7 +733,7 @@ public class View3d extends VolumeCanvas
     } else if (command.equals(ActionW.WINLEVEL.cmd())) {
       return getAction(ActionW.LEVEL);
       //    } else if (command.equals(ActionW.CROSSHAIR.cmd())) {
-      //      return crosshairAction;
+      //      return controls;
     }
 
     Optional<Feature<? extends ActionState>> actionKey = eventManager.getActionKey(command);
@@ -796,7 +761,7 @@ public class View3d extends VolumeCanvas
 
   @Override
   public void resetZoom() {
-    camera.resetZoom();
+    zoom(0.0);
   }
 
   @Override
@@ -813,7 +778,8 @@ public class View3d extends VolumeCanvas
 
     initActionWState();
 
-    camera.resetAll();
+    CameraView c = CameraView.INITIAL;
+    camera.set(c.position(), c.rotation(), -getBestFitViewScale(), false);
     renderingLayer.setEnableRepaint(false);
     renderingLayer.setRenderingType(RenderingType.COMPOSITE);
     renderingLayer.setQuality(getDefaultQuality());
@@ -891,7 +857,28 @@ public class View3d extends VolumeCanvas
 
   @Override
   public JPopupMenu buildContextMenu(MouseEvent evt) {
-    return null;
+    JPopupMenu popupMenu = buildLeftMouseActionMenu();
+
+    int count = popupMenu.getComponentCount();
+
+    if (eventManager instanceof EventManager manager) {
+      GuiUtils.addItemToMenu(popupMenu, manager.getPresetMenu(null));
+      GuiUtils.addItemToMenu(popupMenu, manager.getLutShapeMenu(null));
+      GuiUtils.addItemToMenu(popupMenu, manager.getLutMenu(null));
+      count = addSeparatorToPopupMenu(popupMenu, count);
+
+      GuiUtils.addItemToMenu(popupMenu, manager.getVolumeTypeMenu(null));
+      GuiUtils.addItemToMenu(popupMenu, manager.getShadingMenu(null));
+      GuiUtils.addItemToMenu(popupMenu, manager.getSProjectionMenu(null));
+      count = addSeparatorToPopupMenu(popupMenu, count);
+
+      GuiUtils.addItemToMenu(popupMenu, manager.getZoomMenu(null));
+      GuiUtils.addItemToMenu(popupMenu, manager.getOrientationMenu(null));
+      addSeparatorToPopupMenu(popupMenu, count);
+
+      GuiUtils.addItemToMenu(popupMenu, manager.getResetMenu(null));
+    }
+    return popupMenu;
   }
 
   @Override
@@ -960,6 +947,9 @@ public class View3d extends VolumeCanvas
       if (synchData != null && Mode.NONE.equals(synchData.getMode())) {
         return;
       }
+      // Progressive mode for VR
+      boolean forceRepaint = camera.isAdjusting() != synch.isValueIsAdjusting();
+      camera.setAdjusting(synch.isValueIsAdjusting());
 
       for (Entry<String, Object> entry : synch.getEvents().entrySet()) {
         String command = entry.getKey();
@@ -972,9 +962,9 @@ public class View3d extends VolumeCanvas
             //  setSlice((Integer) val);
           }
         } else if (command.equals(ActionW.WINDOW.cmd())) {
-          renderingLayer.setWindowWidth(((Double) val).intValue());
+          renderingLayer.setWindowWidth(((Double) val).intValue(), forceRepaint);
         } else if (command.equals(ActionW.LEVEL.cmd())) {
-          renderingLayer.setWindowCenter(((Double) val).intValue());
+          renderingLayer.setWindowCenter(((Double) val).intValue(), forceRepaint);
         } else if (command.equals(ActionW.PRESET.cmd())) {
           if (val instanceof PresetWindowLevel preset) {
             setPresetWindowLevel(preset, true);
@@ -1039,13 +1029,17 @@ public class View3d extends VolumeCanvas
           }
         } else if (command.equals(ActionVol.VOL_OPACITY.cmd())) {
           if (val instanceof Double opacity) {
-            renderingLayer.setOpacity(opacity);
+            renderingLayer.setOpacity(opacity, forceRepaint);
           }
         } else if (command.equals(ActionVol.VOL_SLICING.cmd())) {
           setActionsInView(ActionVol.VOL_SLICING.cmd(), val, true);
         } else if (command.equals(ActionVol.VOL_SHADING.cmd())) {
           if (val instanceof Boolean shading) {
             renderingLayer.setShading(shading);
+          }
+        } else if (command.equals(ActionVol.VOL_PROJECTION.cmd())) {
+          if (val instanceof Boolean projection) {
+            camera.setOrthographicProjection(projection);
           }
         }
       }

@@ -83,8 +83,14 @@ public class RenderingLayer<E extends ImageElement> {
   }
 
   public void setWindowWidth(int windowWidth) {
+    setWindowWidth(windowWidth, false);
+  }
+
+  public void setWindowWidth(int windowWidth, boolean forceRepaint) {
     if (this.windowWidth != windowWidth) {
       this.windowWidth = windowWidth;
+      fireLayerChanged();
+    } else if (forceRepaint) {
       fireLayerChanged();
     }
   }
@@ -94,8 +100,14 @@ public class RenderingLayer<E extends ImageElement> {
   }
 
   public void setWindowCenter(int windowCenter) {
+    setWindowCenter(windowCenter, false);
+  }
+
+  public void setWindowCenter(int windowCenter, boolean forceRepaint) {
     if (this.windowCenter != windowCenter) {
       this.windowCenter = windowCenter;
+      fireLayerChanged();
+    } else if (forceRepaint) {
       fireLayerChanged();
     }
   }
@@ -135,8 +147,14 @@ public class RenderingLayer<E extends ImageElement> {
   }
 
   public void setOpacity(double opacity) {
+    setOpacity(opacity, false);
+  }
+
+  public void setOpacity(double opacity, boolean forceRepaint) {
     if (this.opacity != opacity) {
       this.opacity = opacity;
+      fireLayerChanged();
+    } else if (forceRepaint) {
       fireLayerChanged();
     }
   }

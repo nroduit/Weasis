@@ -9,8 +9,12 @@
  */
 package org.weasis.dicom.viewer3d.vr;
 
+import static org.weasis.core.ui.editor.image.ViewCanvas.ZOOM_TYPE_CMD;
+
 import com.jogamp.opengl.awt.GLJPanel;
+import java.awt.GraphicsConfiguration;
 import java.awt.Point;
+import java.awt.Window;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
@@ -20,19 +24,30 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import javax.swing.JComponent;
+import javax.swing.SwingUtilities;
+import org.joml.Vector3d;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.model.ViewModel;
 import org.weasis.core.api.gui.model.ViewModelChangeListener;
+import org.weasis.core.api.gui.util.ActionW;
+import org.weasis.core.api.gui.util.SliderChangeListener;
+import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.ui.editor.image.Canvas;
+import org.weasis.core.ui.editor.image.DefaultView2d.ZoomType;
 import org.weasis.core.ui.editor.image.DrawingsKeyListeners;
+import org.weasis.core.ui.editor.image.ImageViewerEventManager;
 import org.weasis.core.ui.editor.image.PropertyChangeHandler;
 import org.weasis.core.ui.editor.image.ViewCanvas;
+import org.weasis.core.ui.editor.image.dockable.MeasureTool;
 import org.weasis.core.ui.model.GraphicModel;
 import org.weasis.core.ui.model.imp.XmlGraphicModel;
 import org.weasis.core.ui.model.layer.GraphicModelChangeListener;
 import org.weasis.core.ui.model.utils.imp.DefaultViewModel;
+import org.weasis.core.ui.pref.Monitor;
 import org.weasis.core.util.MathUtil;
+import org.weasis.dicom.codec.DicomImageElement;
+import org.weasis.dicom.viewer3d.EventManager;
 import org.weasis.dicom.viewer3d.geometry.Camera;
 
 public class VolumeCanvas extends GLJPanel implements Canvas {
@@ -41,8 +56,11 @@ public class VolumeCanvas extends GLJPanel implements Canvas {
 
   private static final double ROUNDING_FACTOR = 0.5;
   protected final Camera camera;
+  protected DicomVolTexture volTexture;
   protected GraphicModel graphicManager;
   protected VolumeViewModel viewModel;
+
+  protected final EventManager eventManager;
   protected final LayerModelHandler layerModelHandler;
   protected final ViewModelHandler viewModelHandler;
   protected final HashMap<String, Object> actionsInView = new HashMap<>();
@@ -51,7 +69,12 @@ public class VolumeCanvas extends GLJPanel implements Canvas {
   protected final DrawingsKeyListeners drawingsKeyListeners;
   protected final PropertyChangeListener graphicsChangeHandler;
 
-  public VolumeCanvas(VolumeViewModel viewModel) {
+  public VolumeCanvas(
+      ImageViewerEventManager<DicomImageElement> eventManager,
+      DicomVolTexture volTexture,
+      VolumeViewModel viewModel) {
+    this.volTexture = volTexture;
+    this.eventManager = (EventManager) eventManager;
     this.camera = new Camera(this);
     this.layerModelHandler = new LayerModelHandler();
 
@@ -164,6 +187,14 @@ public class VolumeCanvas extends GLJPanel implements Canvas {
     }
   }
 
+  public DicomVolTexture getVolTexture() {
+    return volTexture;
+  }
+
+  public boolean isReadyForRendering() {
+    return volTexture != null && volTexture.isReadyForDisplay();
+  }
+
   public double getAspectRatio() {
     return getSurfaceWidth() / (double) getSurfaceHeight();
   }
@@ -180,32 +211,65 @@ public class VolumeCanvas extends GLJPanel implements Canvas {
   @Override
   public void zoom(Double viewScale) {
     boolean defSize = MathUtil.isEqualToZero(viewScale);
+    double ratio = viewScale;
+    if (defSize) {
+      ZoomType type = (ZoomType) actionsInView.get(ZOOM_TYPE_CMD);
+      if (ZoomType.BEST_FIT.equals(type)) {
+        ratio = -getBestFitViewScale();
+      } else if (ZoomType.REAL.equals(type)) {
+        ratio = -getRealWorldViewScale();
+      }
+
+      if (MathUtil.isEqualToZero(ratio)) {
+        ratio = -adjustViewScale(1.0);
+      }
+    }
+
+    camera.setZoomFactor(ratio);
   }
 
   public double getRealWorldViewScale() {
     double viewScale = 0.0;
+    DicomVolTexture vol = getVolTexture();
+    if (vol != null) {
+      Window win = SwingUtilities.getWindowAncestor(this);
+      if (win != null) {
+        GraphicsConfiguration config = win.getGraphicsConfiguration();
+        Monitor monitor = MeasureTool.viewSetting.getMonitor(config.getDevice());
+        if (monitor != null) {
+          double realFactor = monitor.getRealScaleFactor();
+          if (realFactor > 0.0) {
+            Unit imgUnit = vol.getPixelSpacingUnit();
+            if (!Unit.PIXEL.equals(imgUnit)) {
+              viewScale = imgUnit.getConvFactor() * vol.getTexelSize().x / realFactor;
+              viewScale = -adjustViewScale(viewScale);
+            }
+          }
+        }
+      }
+    }
     return viewScale;
   }
 
   protected double adjustViewScale(double viewScale) {
     double ratio = viewScale;
-    if (ratio < DefaultViewModel.SCALE_MIN) {
-      ratio = DefaultViewModel.SCALE_MIN;
-    } else if (ratio > DefaultViewModel.SCALE_MAX) {
-      ratio = DefaultViewModel.SCALE_MAX;
+    if (ratio < Camera.SCALE_MIN) {
+      ratio = Camera.SCALE_MIN;
+    } else if (ratio > Camera.SCALE_MAX) {
+      ratio = Camera.SCALE_MAX;
     }
-    //    Optional<SliderChangeListener> zoom = eventManager.getAction(ActionW.ZOOM);
-    //    if (zoom.isPresent()) {
-    //      SliderChangeListener z = zoom.get();
-    //      // Adjust the best fit value according to the possible range of the model zoom action.
-    //      if (eventManager.getSelectedViewPane() == this) {
-    //        // Set back the value to UI components as this value cannot be computed early.
-    //        z.setRealValue(ratio, false);
-    //        ratio = z.getRealValue();
-    //      } else {
-    //        ratio = z.toModelValue(z.toSliderValue(ratio));
-    //      }
-    //    }
+    Optional<SliderChangeListener> zoom = eventManager.getAction(ActionW.ZOOM);
+    if (zoom.isPresent()) {
+      SliderChangeListener z = zoom.get();
+      // Adjust the best fit value according to the possible range of the model zoom action.
+      if (eventManager.getSelectedViewPane() == this) {
+        // Set back the value to UI components as this value cannot be computed early.
+        z.setRealValue(ratio, false);
+        ratio = z.getRealValue();
+      } else {
+        ratio = z.toModelValue(z.toSliderValue(ratio));
+      }
+    }
     return ratio;
   }
 
@@ -213,15 +277,23 @@ public class VolumeCanvas extends GLJPanel implements Canvas {
   public double getBestFitViewScale() {
     final double viewportWidth = getWidth() - 1.0;
     final double viewportHeight = getHeight() - 1.0;
-    final Rectangle2D modelArea = viewModel.getModelArea();
-    double min =
-        Math.min(viewportWidth / modelArea.getWidth(), viewportHeight / modelArea.getHeight());
-    return cropViewScale(min);
+    Vector3d d = getDisplayDimensions();
+    double min = Math.min(Math.min(viewportWidth / d.x, viewportWidth / d.y), viewportHeight / d.z);
+    return adjustViewScale(Math.sqrt(min * 1.3));
+  }
+
+  public Vector3d getDisplayDimensions() {
+    DicomVolTexture vol = getVolTexture();
+    if (vol != null) {
+      Vector3d v = new Vector3d(volTexture.width, volTexture.height, volTexture.depth);
+      v.mul(vol.getTexelSize());
+      return v;
+    }
+    return new Vector3d(512, 512, 512);
   }
 
   private double cropViewScale(double viewScale) {
-    return DefaultViewModel.cropViewScale(
-        viewScale, viewModel.getViewScaleMin(), viewModel.getViewScaleMax());
+    return DefaultViewModel.cropViewScale(viewScale, Camera.SCALE_MIN, Camera.SCALE_MAX);
   }
 
   @Override

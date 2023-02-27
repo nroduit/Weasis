@@ -477,7 +477,12 @@ void main() {
     intersect(ray, tmin, tmax);
 
     if (renderingType == 4) {
-        pixelVal = slice(ray, tmin, tmax);
+        // pixelVal = slice(ray, tmin, tmax);
+        // use a new matrix with only rotation at the center
+        vec3 origin =  (viewMatrix * vec4(uv, 0.5f, 1.0f)).xyz;
+
+        float pix = getNormalizedWindowLevel(origin);
+        pixelVal = vec4(pix, pix, pix, 1.0f);
     } else {
         // Volume Rendering
         if (tmax >= tmin) {

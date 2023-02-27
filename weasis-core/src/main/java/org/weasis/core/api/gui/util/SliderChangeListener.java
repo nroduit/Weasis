@@ -35,7 +35,7 @@ public abstract class SliderChangeListener extends MouseActionAdapter
   private final DefaultBoundedRangeModel model;
   protected final BasicActionState basicState;
   protected volatile boolean triggerAction = true;
-  protected volatile boolean valueIsAdjusting;
+  protected volatile boolean triggerWhenAdjusting;
   protected Double realMin;
   protected Double realMax;
 
@@ -49,9 +49,9 @@ public abstract class SliderChangeListener extends MouseActionAdapter
       int min,
       int max,
       int value,
-      boolean valueIsAdjusting,
+      boolean triggerWhenAdjusting,
       double mouseSensitivity) {
-    this(action, min, max, value, valueIsAdjusting);
+    this(action, min, max, value, triggerWhenAdjusting);
     setMouseSensitivity(mouseSensitivity);
   }
 
@@ -60,10 +60,10 @@ public abstract class SliderChangeListener extends MouseActionAdapter
       int min,
       int max,
       int value,
-      boolean valueIsAdjusting) {
+      boolean triggerWhenAdjusting) {
     super();
     this.basicState = new BasicActionState(action);
-    this.valueIsAdjusting = valueIsAdjusting;
+    this.triggerWhenAdjusting = triggerWhenAdjusting;
     model = new DefaultBoundedRangeModel(value, 0, min, max);
     model.addChangeListener(this);
   }
@@ -73,11 +73,11 @@ public abstract class SliderChangeListener extends MouseActionAdapter
       double min,
       double max,
       double value,
-      boolean valueIsAdjusting,
+      boolean triggerWhenAdjusting,
       double mouseSensitivity,
       int sliderRange) {
     this.basicState = new BasicActionState(action);
-    this.valueIsAdjusting = valueIsAdjusting;
+    this.triggerWhenAdjusting = triggerWhenAdjusting;
     setMouseSensitivity(mouseSensitivity);
     model = new DefaultBoundedRangeModel(0, 0, 0, sliderRange);
     setRealMinMaxValue(min, max, value, false);
@@ -167,7 +167,7 @@ public abstract class SliderChangeListener extends MouseActionAdapter
     if (triggerChangedEvent) {
       setSliderValue(value);
     } else {
-      boolean adjusting = valueIsAdjusting || !model.getValueIsAdjusting();
+      boolean adjusting = triggerWhenAdjusting || !model.getValueIsAdjusting();
       if (adjusting) {
         boolean oldTrigger = triggerAction;
         triggerAction = false;
@@ -185,7 +185,7 @@ public abstract class SliderChangeListener extends MouseActionAdapter
     if (triggerChangedEvent) {
       setRealValue(value);
     } else {
-      boolean adjusting = valueIsAdjusting || !model.getValueIsAdjusting();
+      boolean adjusting = triggerWhenAdjusting || !model.getValueIsAdjusting();
       if (adjusting) {
         boolean oldTrigger = triggerAction;
         triggerAction = false;
@@ -195,8 +195,8 @@ public abstract class SliderChangeListener extends MouseActionAdapter
     }
   }
 
-  public boolean isValueIsAdjusting() {
-    return valueIsAdjusting;
+  public boolean isTriggerWhenAdjusting() {
+    return triggerWhenAdjusting;
   }
 
   public int getSliderMin() {
@@ -225,7 +225,7 @@ public abstract class SliderChangeListener extends MouseActionAdapter
 
   @Override
   public void stateChanged(ChangeEvent evt) {
-    boolean adjusting = valueIsAdjusting || !model.getValueIsAdjusting();
+    boolean adjusting = triggerWhenAdjusting || !model.getValueIsAdjusting();
     if (triggerAction && adjusting) {
       stateChanged(model);
       AuditLog.LOGGER.info(
@@ -332,6 +332,7 @@ public abstract class SliderChangeListener extends MouseActionAdapter
     if (basicState.isActionEnabled() && !e.isConsumed()) {
       int buttonMask = getButtonMaskEx();
       if ((e.getModifiersEx() & buttonMask) != 0) {
+        model.setValueIsAdjusting(true);
         lastPosition = isMoveOnX() ? e.getX() : e.getY();
         dragAccumulator = getSliderValue();
       }
@@ -351,6 +352,7 @@ public abstract class SliderChangeListener extends MouseActionAdapter
        * multi split container)
        */
       if ((modifier & buttonMask) != 0 && MathUtil.isDifferent(dragAccumulator, Double.MAX_VALUE)) {
+        model.setValueIsAdjusting(true);
         int position = isMoveOnX() ? e.getX() : e.getY();
         int mask = InputEvent.SHIFT_DOWN_MASK | InputEvent.CTRL_DOWN_MASK;
         // Accelerate the action if ctrl or shift is down
@@ -379,6 +381,15 @@ public abstract class SliderChangeListener extends MouseActionAdapter
           setSliderValue((int) Math.floor(dragAccumulator));
         }
       }
+    }
+  }
+
+  @Override
+  public void mouseReleased(MouseEvent e) {
+    if (basicState.isActionEnabled()
+        && !e.isConsumed()
+        && (e.getModifiers() & getButtonMask()) != 0) {
+      model.setValueIsAdjusting(false);
     }
   }
 

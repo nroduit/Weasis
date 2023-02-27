@@ -11,6 +11,7 @@ package org.weasis.dicom.viewer3d;
 
 import java.awt.Component;
 import java.awt.Point;
+import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
@@ -41,7 +42,6 @@ import org.weasis.core.api.gui.util.SliderChangeListener;
 import org.weasis.core.api.gui.util.ToggleButtonListener;
 import org.weasis.core.api.image.GridBagLayoutModel;
 import org.weasis.core.api.image.util.Unit;
-import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.SeriesComparator;
 import org.weasis.core.api.service.AuditLog;
@@ -53,7 +53,6 @@ import org.weasis.core.ui.editor.SeriesViewerEvent;
 import org.weasis.core.ui.editor.SeriesViewerEvent.EVENT;
 import org.weasis.core.ui.editor.image.ImageViewerEventManager;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
-import org.weasis.core.ui.editor.image.MeasureToolBar;
 import org.weasis.core.ui.editor.image.PannerListener;
 import org.weasis.core.ui.editor.image.SynchData;
 import org.weasis.core.ui.editor.image.SynchData.Mode;
@@ -61,7 +60,6 @@ import org.weasis.core.ui.editor.image.SynchEvent;
 import org.weasis.core.ui.editor.image.SynchView;
 import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.editor.image.ZoomToolBar;
-import org.weasis.core.ui.model.graphic.Graphic;
 import org.weasis.core.ui.model.layer.LayerType;
 import org.weasis.core.ui.model.utils.bean.PanPoint;
 import org.weasis.dicom.codec.DicomImageElement;
@@ -70,8 +68,11 @@ import org.weasis.dicom.codec.display.Modality;
 import org.weasis.dicom.viewer2d.Messages;
 import org.weasis.dicom.viewer2d.ResetTools;
 import org.weasis.dicom.viewer2d.View2dContainer;
+import org.weasis.dicom.viewer3d.geometry.ArcballMouseListener;
+import org.weasis.dicom.viewer3d.geometry.Camera;
 import org.weasis.dicom.viewer3d.geometry.CameraView;
 import org.weasis.dicom.viewer3d.geometry.View;
+import org.weasis.dicom.viewer3d.geometry.ViewData;
 import org.weasis.dicom.viewer3d.vr.DicomVolTexture;
 import org.weasis.dicom.viewer3d.vr.Preset;
 import org.weasis.dicom.viewer3d.vr.PresetRadioMenu;
@@ -100,8 +101,8 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> {
     setAction(new BasicActionState(ActionW.WINLEVEL));
     setAction(new BasicActionState(ActionW.CONTEXTMENU));
     setAction(new BasicActionState(ActionW.NO_ACTION));
-    setAction(new BasicActionState(ActionW.DRAW));
-    setAction(new BasicActionState(ActionW.MEASURE));
+    //    setAction(new BasicActionState(ActionW.DRAW));
+    //    setAction(new BasicActionState(ActionW.MEASURE));
 
     setAction(newScrollSeriesAction());
     setAction(newVolumeQualityAction());
@@ -113,9 +114,10 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> {
     setAction(newOpacityAction());
 
     setAction(newFlipAction());
-    setAction(newDrawOnlyOnceAction());
-    setAction(newVolumeSlicingAction());
+    // setAction(newDrawOnlyOnceAction());
+    // setAction(newVolumeSlicingAction());
     setAction(newVolumeShadingAction());
+    setAction(newVolumeProjection());
 
     setAction(newPresetAction());
     setAction(newLutShapeAction());
@@ -127,8 +129,9 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> {
     setAction(newSynchAction(View2dContainer.DEFAULT_SYNCH_LIST.toArray(new SynchView[0])));
     getAction(ActionW.SYNCH)
         .ifPresent(a -> a.setSelectedItemWithoutTriggerAction(SynchView.DEFAULT_STACK));
-    setAction(newMeasurementAction(MeasureToolBar.measureGraphicList.toArray(new Graphic[0])));
-    setAction(newDrawAction(MeasureToolBar.drawGraphicList.toArray(new Graphic[0])));
+    //    setAction(newMeasurementAction(MeasureToolBar.measureGraphicList.toArray(new
+    // Graphic[0])));
+    //    setAction(newDrawAction(MeasureToolBar.drawGraphicList.toArray(new Graphic[0])));
     setAction(newSpatialUnit(Unit.values()));
     setAction(newMipOption());
 
@@ -139,6 +142,11 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> {
     final BundleContext context = FrameworkUtil.getBundle(this.getClass()).getBundleContext();
     Preferences prefs = BundlePreferences.getDefaultPreferences(context);
     zoomSetting.applyPreferences(prefs);
+    // Default 3D mouse actions
+    mouseActions.setLeft(ActionW.ROTATION.cmd());
+    mouseActions.setMiddle(ActionW.PAN.cmd());
+    mouseActions.setRight(ActionW.CONTEXTMENU.cmd());
+    mouseActions.setWheel(ActionW.ZOOM.cmd());
     mouseActions.applyPreferences(prefs);
 
     initializeParameters();
@@ -148,15 +156,22 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> {
     enableActions(false);
   }
 
+  private static View3d getView3d(InputEvent e) {
+    if (e.getSource() instanceof View3d view3d) {
+      return view3d;
+    }
+    return null;
+  }
+
   protected PannerListener buildPanAction() {
     return new PannerListener(ActionW.PAN, null) {
 
       @Override
-      public void pointChanged(Point2D point) {
+      public void pointChanged(Point2D p) {
         firePropertyChange(
             ActionW.SYNCH.cmd(),
             null,
-            new SynchEvent(getSelectedViewPane(), getActionW().cmd(), point));
+            new SynchEvent(getSelectedViewPane(), getActionW().cmd(), p));
       }
 
       @Override
@@ -164,6 +179,29 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> {
         int buttonMask = getButtonMaskEx();
         if ((e.getModifiersEx() & buttonMask) != 0) {
           pickPoint = e.getPoint();
+          View3d view3d = getView3d(e);
+          if (view3d != null) {
+            if (view3d.getViewType() == ViewType.VOLUME3D) {
+              view3d.getCamera().setAdjusting(true);
+              view3d.getCamera().init(e.getPoint());
+            }
+          }
+        }
+      }
+
+      @Override
+      public void mouseReleased(MouseEvent e) {
+        int buttonMask = getButtonMask();
+        if (!e.isConsumed() && (e.getModifiers() & buttonMask) != 0) {
+          View3d view3d = getView3d(e);
+          if (view3d != null) {
+            if (view3d.getViewType() == ViewType.VOLUME3D) {
+              view3d.getCamera().setAdjusting(false);
+              view3d.getCamera().init(e.getPoint());
+            }
+            view3d.resetPointerType(ViewCanvas.CENTER_POINTER);
+            view3d.getJComponent().repaint();
+          }
         }
       }
 
@@ -171,17 +209,23 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> {
       public void mouseDragged(MouseEvent e) {
         int buttonMask = getButtonMaskEx();
         if (!e.isConsumed() && (e.getModifiersEx() & buttonMask) != 0) {
-          ViewCanvas<? extends ImageElement> panner = getViewCanvas(e);
-          if (panner != null) {
-            if (pickPoint != null && panner.getViewModel() != null) {
+          View3d view3d = getView3d(e);
+          if (view3d != null) {
+            if (pickPoint != null && view3d.getViewModel() != null) {
+              view3d.getCamera().setAdjusting(true);
               Point pt = e.getPoint();
-              setPoint(
-                  new PanPoint(
-                      PanPoint.State.DRAGGING,
-                      (double) pt.x - pickPoint.x,
-                      (double) pt.y - pickPoint.y));
+              double x;
+              double y;
+              if (view3d.getViewType() == ViewType.VOLUME3D) {
+                x = pt.getX();
+                y = pt.getY();
+              } else {
+                x = (double) pt.x - pickPoint.x;
+                y = (double) pt.y - pickPoint.y;
+              }
+              setPoint(new PanPoint(PanPoint.State.DRAGGING, x, y));
               pickPoint = pt;
-              panner.addPointerType(ViewCanvas.CENTER_POINTER);
+              view3d.addPointerType(ViewCanvas.CENTER_POINTER);
             }
           }
         }
@@ -206,6 +250,59 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> {
     };
   }
 
+  protected SliderChangeListener newZoomAction() {
+
+    return new SliderChangeListener(
+        ActionW.ZOOM,
+        Camera.SCALE_MIN,
+        Camera.SCALE_MAX,
+        CameraView.INITIAL.zoom(),
+        true,
+        0.3,
+        300) {
+
+      @Override
+      public void stateChanged(BoundedRangeModel model) {
+        firePropertyChange(
+            ActionW.SYNCH.cmd(),
+            null,
+            new SynchEvent(
+                getSelectedViewPane(),
+                getActionW().cmd(),
+                toModelValue(model.getValue()),
+                model.getValueIsAdjusting()));
+      }
+
+      @Override
+      public String getValueToDisplay() {
+        return DecFormatter.percentTwoDecimal(getRealValue());
+      }
+
+      @Override
+      public void mouseWheelMoved(MouseWheelEvent e) {
+        if (basicState.isActionEnabled() && !e.isConsumed()) {
+          setSliderValue(getSliderValue() - e.getWheelRotation() * e.getScrollAmount());
+        }
+      }
+    };
+  }
+
+  protected SliderChangeListener newRotateAction() {
+    return new ArcballMouseListener() {
+      @Override
+      public void stateChanged(BoundedRangeModel model) {
+        firePropertyChange(
+            ActionW.SYNCH.cmd(),
+            null,
+            new SynchEvent(
+                getSelectedViewPane(),
+                getActionW().cmd(),
+                model.getValue(),
+                model.getValueIsAdjusting()));
+      }
+    };
+  }
+
   private SliderChangeListener newVolumeQualityAction() {
     return new SliderChangeListener(ActionVol.VOL_QUALITY, 128, 8192, 1024, false) {
       @Override
@@ -225,7 +322,8 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> {
 
       @Override
       public void stateChanged(BoundedRangeModel model) {
-        updatePreset(getActionW().cmd(), toModelValue(model.getValue()));
+        updatePreset(
+            getActionW().cmd(), toModelValue(model.getValue()), model.getValueIsAdjusting());
       }
     };
   }
@@ -237,12 +335,13 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> {
 
       @Override
       public void stateChanged(BoundedRangeModel model) {
-        updatePreset(getActionW().cmd(), toModelValue(model.getValue()));
+        updatePreset(
+            getActionW().cmd(), toModelValue(model.getValue()), model.getValueIsAdjusting());
       }
     };
   }
 
-  protected void updatePreset(String cmd, Object object) {
+  protected void updatePreset(String cmd, Object object, boolean valueIsAdjusting) {
     String command = cmd;
     final PresetWindowLevel preset;
     Optional<ComboItemListener<Object>> presetAction = getAction(ActionW.PRESET);
@@ -260,7 +359,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> {
       presetAction.ifPresent(a -> a.setSelectedItemWithoutTriggerAction(preset));
     }
 
-    SynchEvent evt = new SynchEvent(getSelectedViewPane(), command, object);
+    SynchEvent evt = new SynchEvent(getSelectedViewPane(), command, object, valueIsAdjusting);
     evt.put(ActionW.PRESET.cmd(), preset);
     firePropertyChange(ActionW.SYNCH.cmd(), null, evt);
   }
@@ -270,7 +369,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> {
 
       @Override
       public void itemStateChanged(Object object) {
-        updatePreset(getActionW().cmd(), object);
+        updatePreset(getActionW().cmd(), object, false);
       }
     };
   }
@@ -281,7 +380,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> {
 
       @Override
       public void itemStateChanged(Object object) {
-        updatePreset(action.cmd(), object);
+        updatePreset(action.cmd(), object, false);
       }
     };
   }
@@ -361,14 +460,18 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> {
   }
 
   private ActionState newOpacityAction() {
-    return new SliderChangeListener(ActionVol.VOL_OPACITY, 0.01, 2.0, 1.0, true, 1.25, 100) {
+    return new SliderChangeListener(ActionVol.VOL_OPACITY, 0.01, 2.0, 1.0, true, 0.3, 300) {
 
       @Override
       public void stateChanged(BoundedRangeModel model) {
         firePropertyChange(
             ActionW.SYNCH.cmd(),
             null,
-            new SynchEvent(getSelectedViewPane(), getActionW().cmd(), getRealValue()));
+            new SynchEvent(
+                getSelectedViewPane(),
+                getActionW().cmd(),
+                getRealValue(),
+                model.getValueIsAdjusting()));
       }
 
       @Override
@@ -380,6 +483,18 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> {
 
   private ToggleButtonListener newVolumeShadingAction() {
     return new ToggleButtonListener(ActionVol.VOL_SHADING, false) {
+      @Override
+      public void actionPerformed(boolean selected) {
+        firePropertyChange(
+            ActionW.SYNCH.cmd(),
+            null,
+            new SynchEvent(getSelectedViewPane(), action.cmd(), selected));
+      }
+    };
+  }
+
+  private ToggleButtonListener newVolumeProjection() {
+    return new ToggleButtonListener(ActionVol.VOL_PROJECTION, false) {
       @Override
       public void actionPerformed(boolean selected) {
         firePropertyChange(
@@ -534,9 +649,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> {
                 a.setSelectedWithoutTriggerAction(
                     (Boolean) canvas.getActionValue(ActionW.FLIP.cmd())));
 
-    getAction(ActionW.ZOOM)
-        .ifPresent(
-            a -> a.setRealValue(Math.abs((Double) canvas.getActionValue(ActionW.ZOOM.cmd()))));
+    getAction(ActionW.ZOOM).ifPresent(a -> a.setRealValue(canvas.getCamera().getZoomFactor()));
     getAction(ActionW.SPATIAL_UNIT)
         .ifPresent(
             a ->
@@ -571,9 +684,12 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> {
     Optional<ToggleButtonListener> volumeSlicing = getAction(ActionVol.VOL_SLICING);
     Optional<SliderChangeListener> volumeQuality = getAction(ActionVol.VOL_QUALITY);
     Optional<SliderChangeListener> volumeOpacity = getAction(ActionVol.VOL_OPACITY);
+    Optional<ToggleButtonListener> volumeProjection = getAction(ActionVol.VOL_PROJECTION);
     if (volume) {
       volumeLighting.ifPresent(a -> a.setSelectedWithoutTriggerAction(rendering.isShading()));
       volumeSlicing.ifPresent(a -> a.setSelectedWithoutTriggerAction(rendering.isSlicing()));
+      volumeProjection.ifPresent(
+          a -> a.setSelectedWithoutTriggerAction(canvas.getCamera().isOrthographicProjection()));
       volumeQuality.ifPresent(a -> a.setSliderValue(rendering.getQuality(), false));
       volumeOpacity.ifPresent(a -> a.setRealValue(rendering.getOpacity(), false));
     }
@@ -581,6 +697,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> {
     volumeSlicing.ifPresent(a -> a.enableAction(volume));
     volumeQuality.ifPresent(a -> a.enableAction(volume));
     volumeOpacity.ifPresent(a -> a.enableAction(volume));
+    volumeProjection.ifPresent(a -> a.enableAction(volume));
 
     //    mipType.ifPresent(
     //        a ->
@@ -589,7 +706,11 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> {
     // RenderingType.MIP.equals(a.getSelectedItem()))));
     mipThickness.ifPresent(a -> a.enableAction(!volume));
     cineAction.ifPresent(a -> a.enableAction(!volume));
-    rotation.ifPresent(a -> a.enableAction(!volume));
+    //    rotation.ifPresent(a -> a.enableAction(!volume));
+    getAction(ActionW.FLIP).ifPresent(a -> a.enableAction(!volume));
+    //    getAction(ActionW.MEASURE).ifPresent(a -> a.enableAction(!volume));
+    //    getAction(ActionW.DRAW).ifPresent(a -> a.enableAction(!volume));
+    getAction(ActionW.CROSSHAIR).ifPresent(a -> a.enableAction(!volume));
 
     getAction(ActionW.SORT_STACK)
         .ifPresent(
@@ -868,7 +989,10 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> {
 
   private JMenuItem createCameraViewMenu(View view, View3d view3d) {
     JMenuItem menuItem = new JMenuItem(view.title());
-    menuItem.addActionListener(e -> view3d.getCamera().setCameraView(view));
+    Camera c = view3d.getCamera();
+    ViewData viewData =
+        new ViewData(view.title(), c.getPosition(), view.rotation(), c.getZoomFactor());
+    menuItem.addActionListener(e -> view3d.getCamera().setCameraView(viewData));
     return menuItem;
   }
 
@@ -937,6 +1061,23 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> {
                 .createUnregisteredJCCheckBoxMenuItem(
                     ActionVol.VOL_SHADING.getTitle()
                     //      , ResourceUtil.getIcon(ActionIcon.VOL_SHADING)
+                    );
+      }
+    }
+    return menu;
+  }
+
+  public JCheckBoxMenuItem getSProjectionMenu(String prop) {
+    JCheckBoxMenuItem menu = null;
+    if (BundleTools.SYSTEM_PREFERENCES.getBooleanProperty(prop, true)) {
+      Optional<ToggleButtonListener> shadingAction = getAction(ActionVol.VOL_PROJECTION);
+      if (shadingAction.isPresent()) {
+        menu =
+            shadingAction
+                .get()
+                .createUnregisteredJCCheckBoxMenuItem(
+                    ActionVol.VOL_PROJECTION.getTitle()
+                    //      , ResourceUtil.getIcon(ActionIcon.VOL_PROJECTION)
                     );
       }
     }

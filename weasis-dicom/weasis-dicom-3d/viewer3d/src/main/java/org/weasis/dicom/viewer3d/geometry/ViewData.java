@@ -11,13 +11,6 @@ package org.weasis.dicom.viewer3d.geometry;
 
 import org.joml.Quaterniond;
 import org.joml.Vector3d;
-import org.weasis.dicom.codec.geometry.ImageOrientation.Plan;
 
 public record ViewData(String title, Vector3d position, Quaterniond rotation, double zoom)
-    implements View {
-
-  @Override
-  public Quaterniond rotation(Plan plan) {
-    return null;
-  }
-}
+    implements View {}

@@ -38,6 +38,8 @@ public class Viewer3dPrefView extends AbstractItemDialogPage {
   private final JButton lightColor = new JButton(ResourceUtil.getIcon(ActionIcon.PIPETTE));
   private final JSlider sliderStatic = new JSlider(-100, 100, 0);
   private final JSlider sliderDynamic = new JSlider(-100, 100, 0);
+  private final JComboBox<GridBagLayoutModel> comboBoxLayouts =
+      new JComboBox<>(View3DContainer.LAYOUT_LIST.toArray(new GridBagLayoutModel[0]));
 
   public Viewer3dPrefView() {
     super(View3DFactory.NAME, 503);
@@ -114,8 +116,8 @@ public class Viewer3dPrefView extends AbstractItemDialogPage {
     view3d.setBorder(GuiUtils.getTitledBorder(View3DFactory.NAME));
 
     JLabel labelLayout = new JLabel("Default layout" + StringUtil.COLON);
-    JComboBox<GridBagLayoutModel> comboBoxLayouts =
-        new JComboBox<>(View3DContainer.LAYOUT_LIST.toArray(new GridBagLayoutModel[0]));
+    setDefaultLayout();
+
     view3d.add(
         GuiUtils.getFlowLayoutPanel(
             FlowLayout.LEADING,
@@ -151,6 +153,13 @@ public class Viewer3dPrefView extends AbstractItemDialogPage {
     getProperties().setProperty(PreferenceDialog.KEY_SHOW_RESTORE, Boolean.TRUE.toString());
   }
 
+  private void setDefaultLayout() {
+    comboBoxLayouts.setSelectedItem(View3DFactory.getDefaultGridBagLayoutModel());
+    if (comboBoxLayouts.getSelectedIndex() < 0) {
+      comboBoxLayouts.setSelectedItem(0);
+    }
+  }
+
   private Color getBackgroundColor() {
     return BundleTools.SYSTEM_PREFERENCES.getColorProperty(RenderingLayer.BCK_COLOR, Color.GRAY);
   }
@@ -161,12 +170,18 @@ public class Viewer3dPrefView extends AbstractItemDialogPage {
 
   @Override
   public void closeAdditionalWindow() {
-    // BundleTools.saveSystemPreferences();
+    BundleTools.SYSTEM_PREFERENCES.put(
+        View3DFactory.P_DEFAULT_LAYOUT,
+        ((GridBagLayoutModel) comboBoxLayouts.getSelectedItem()).getId());
+    BundleTools.saveSystemPreferences();
   }
 
   @Override
   public void resetToDefaultValues() {
     BundleTools.SYSTEM_PREFERENCES.putColorProperty(RenderingLayer.BCK_COLOR, Color.GRAY);
     BundleTools.SYSTEM_PREFERENCES.putColorProperty(RenderingLayer.LIGHT_COLOR, Color.WHITE);
+    BundleTools.SYSTEM_PREFERENCES.put(
+        View3DFactory.P_DEFAULT_LAYOUT, View3DContainer.VIEWS_vr.getId());
+    setDefaultLayout();
   }
 }

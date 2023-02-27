@@ -10,24 +10,25 @@
 package org.weasis.dicom.viewer3d;
 
 import javax.swing.JButton;
+import javax.swing.JToggleButton;
 import javax.swing.SwingUtilities;
 import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.api.util.ResourceUtil.ActionIcon;
-import org.weasis.core.ui.editor.image.ImageViewerEventManager;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.pref.PreferenceDialog;
 import org.weasis.core.ui.util.ColorLayerUI;
 import org.weasis.core.ui.util.WtoolBar;
 import org.weasis.core.util.StringUtil;
+import org.weasis.dicom.codec.DicomImageElement;
 
 public class View3DToolbar extends WtoolBar {
 
   public static final String NAME = View3DFactory.NAME + StringUtil.SPACE + "Bar";
-  private ImageViewerEventManager eventManager;
+  private EventManager eventManager;
 
-  public View3DToolbar(ImageViewerEventManager eventManager, int position) {
+  public View3DToolbar(int position) {
     super(NAME, position);
-    this.eventManager = eventManager;
+    this.eventManager = EventManager.getInstance();
 
     initGui();
   }
@@ -37,9 +38,9 @@ public class View3DToolbar extends WtoolBar {
     refreshBt.setToolTipText("Rebuild the volume");
     refreshBt.addActionListener(
         e -> {
-          ImageViewerPlugin container = EventManager.getInstance().getSelectedView2dContainer();
-          if (container instanceof View3DContainer) {
-            ((View3DContainer) container).reload();
+          ImageViewerPlugin<DicomImageElement> container = eventManager.getSelectedView2dContainer();
+          if (container instanceof View3DContainer view3DContainer) {
+            view3DContainer.reload();
           }
         });
 
@@ -56,5 +57,16 @@ public class View3DToolbar extends WtoolBar {
           ColorLayerUI.showCenterScreen(dialog, layer);
         });
     add(config);
+
+    eventManager
+        .getAction(ActionVol.VOL_PROJECTION)
+        .ifPresent(
+            b -> {
+              JToggleButton toggleButton = new JToggleButton();
+              toggleButton.setToolTipText(ActionVol.VOL_PROJECTION.getTitle());
+              toggleButton.setIcon(ResourceUtil.getToolBarIcon(ActionIcon.LOAD_VOLUME));
+              b.registerActionState(toggleButton);
+              add(toggleButton);
+            });
   }
 }

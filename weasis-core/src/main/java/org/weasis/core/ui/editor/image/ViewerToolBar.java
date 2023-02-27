@@ -229,7 +229,7 @@ public class ViewerToolBar<E extends ImageElement> extends WtoolBar implements A
     ButtonGroup groupButtons = new ButtonGroup();
     synchronized (actionsButtons) {
       for (Feature<?> b : actionsButtons) {
-        if (eventManager.isActionRegistered(b)) {
+        if (eventManager.isActionEnabled(b)) {
           JRadioButtonMenuItem radio =
               new JRadioButtonMenuItem(b.getTitle(), b.getIcon(), b.cmd().equals(action));
           GuiUtils.applySelectedIconEffect(radio);
@@ -253,7 +253,7 @@ public class ViewerToolBar<E extends ImageElement> extends WtoolBar implements A
     popupMouseScroll.setInvoker(dropButton);
     ButtonGroup groupButtons = new ButtonGroup();
     for (Feature<?> actionW : actionsScroll) {
-      if (eventManager.isActionRegistered(actionW)) {
+      if (eventManager.isActionEnabled(actionW)) {
         JRadioButtonMenuItem radio =
             new JRadioButtonMenuItem(
                 actionW.getTitle(), actionW.getIcon(), actionW.cmd().equals(action));

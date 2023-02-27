@@ -84,7 +84,7 @@ public class VolumeTool extends PluginTool {
         .getAction(ActionW.WINDOW)
         .ifPresent(
             sliderItem -> {
-              JSliderW windowSlider = sliderItem.createSlider(2, true);
+              JSliderW windowSlider = sliderItem.createSlider(0, true);
               GuiUtils.setPreferredWidth(windowSlider, 100);
               winLevelPanel.add(windowSlider);
               winLevelPanel.add(GuiUtils.boxVerticalStrut(gabY));
@@ -94,7 +94,7 @@ public class VolumeTool extends PluginTool {
         .getAction(ActionW.LEVEL)
         .ifPresent(
             sliderItem -> {
-              JSliderW levelSlider = sliderItem.createSlider(2, true);
+              JSliderW levelSlider = sliderItem.createSlider(0, true);
               GuiUtils.setPreferredWidth(levelSlider, 100);
               winLevelPanel.add(levelSlider);
               winLevelPanel.add(GuiUtils.boxVerticalStrut(gabY));

@@ -302,13 +302,7 @@ public abstract class ImageViewerEventManager<E extends ImageElement> implements
   protected SliderChangeListener newZoomAction() {
 
     return new SliderChangeListener(
-        ActionW.ZOOM,
-        DefaultViewModel.SCALE_MIN,
-        DefaultViewModel.SCALE_MAX,
-        1.0,
-        true,
-        0.1,
-        100) { // special case will set range -100 to 100
+        ActionW.ZOOM, DefaultViewModel.SCALE_MIN, DefaultViewModel.SCALE_MAX, 1.0, true, 0.3, 300) {
 
       @Override
       public void stateChanged(BoundedRangeModel model) {
@@ -416,8 +410,8 @@ public abstract class ImageViewerEventManager<E extends ImageElement> implements
         DefaultViewModel.SCALE_MAX,
         2.0,
         true,
-        0.1,
-        100) { // special case will set range -100 to 100
+        0.3,
+        300) {
 
       @Override
       public void stateChanged(BoundedRangeModel model) {
@@ -618,6 +612,16 @@ public abstract class ImageViewerEventManager<E extends ImageElement> implements
   public boolean isActionRegistered(Feature<?> feature) {
     if (feature != null) {
       return actions.containsKey(feature);
+    }
+    return false;
+  }
+
+  public boolean isActionEnabled(Feature<?> feature) {
+    if (feature != null) {
+      ActionState action = actions.get(feature);
+      if (action != null) {
+        return action.isActionEnabled();
+      }
     }
     return false;
   }

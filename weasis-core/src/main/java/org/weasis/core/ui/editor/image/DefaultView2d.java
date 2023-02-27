@@ -9,7 +9,6 @@
  */
 package org.weasis.core.ui.editor.image;
 
-import java.awt.Color;
 import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.Font;
@@ -25,11 +24,7 @@ import java.awt.Stroke;
 import java.awt.Window;
 import java.awt.event.FocusEvent;
 import java.awt.event.KeyEvent;
-import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
-import java.awt.event.MouseMotionListener;
-import java.awt.event.MouseWheelListener;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
@@ -43,13 +38,11 @@ import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Optional;
 import javax.swing.Action;
-import javax.swing.BorderFactory;
 import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPopupMenu;
 import javax.swing.SwingUtilities;
 import javax.swing.ToolTipManager;
-import javax.swing.border.Border;
 import org.opencv.core.CvType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -60,7 +53,6 @@ import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.Feature;
 import org.weasis.core.api.gui.util.Filter;
 import org.weasis.core.api.gui.util.GuiUtils;
-import org.weasis.core.api.gui.util.GuiUtils.IconColor;
 import org.weasis.core.api.gui.util.SliderChangeListener;
 import org.weasis.core.api.gui.util.SliderCineListener;
 import org.weasis.core.api.image.AffineTransformOp;
@@ -147,10 +139,6 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
   private final PanPoint highlightedPosition = new PanPoint(State.CENTER);
   private final PanPoint startedDragPoint = new PanPoint(State.DRAGSTART);
   private int pointerType = 0;
-
-  protected final Border focusBorder =
-      BorderFactory.createMatteBorder(1, 1, 1, 1, IconColor.ACTIONS_YELLOW.getColor());
-  protected final Border viewBorder = BorderFactory.createMatteBorder(1, 1, 1, 1, Color.GRAY);
 
   protected final RenderedImageLayer<E> imageLayer;
   protected Panner<E> panner;
@@ -451,18 +439,6 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     // Set the sequence to the state OPEN
     if (newSeries != null) {
       newSeries.setOpen(true);
-    }
-  }
-
-  @Override
-  public void setFocused(Boolean focused) {
-    if (series != null) {
-      series.setFocused(focused);
-    }
-    if (focused && getBorder() == viewBorder) {
-      setBorder(focusBorder);
-    } else if (!focused && getBorder() == focusBorder) {
-      setBorder(viewBorder);
     }
   }
 
@@ -880,9 +856,9 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
   @Override
   public void zoom(Double viewScale) {
     boolean defSize = MathUtil.isEqualToZero(viewScale);
-    ZoomType type = (ZoomType) actionsInView.get(ZOOM_TYPE_CMD);
     double ratio = viewScale;
     if (defSize) {
+      ZoomType type = (ZoomType) actionsInView.get(ZOOM_TYPE_CMD);
       if (ZoomType.BEST_FIT.equals(type)) {
         ratio = -getBestFitViewScale();
       } else if (ZoomType.REAL.equals(type)) {
@@ -1174,23 +1150,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
 
   @Override
   public synchronized void disableMouseAndKeyListener() {
-    MouseListener[] listener = this.getMouseListeners();
-
-    MouseMotionListener[] motionListeners = this.getMouseMotionListeners();
-    KeyListener[] keyListeners = this.getKeyListeners();
-    MouseWheelListener[] wheelListeners = this.getMouseWheelListeners();
-    for (MouseListener mouseListener : listener) {
-      this.removeMouseListener(mouseListener);
-    }
-    for (MouseMotionListener motionListener : motionListeners) {
-      this.removeMouseMotionListener(motionListener);
-    }
-    for (KeyListener keyListener : keyListeners) {
-      this.removeKeyListener(keyListener);
-    }
-    for (MouseWheelListener wheelListener : wheelListeners) {
-      this.removeMouseWheelListener(wheelListener);
-    }
+    ViewCanvas.super.disableMouseAndKeyListener(this);
     Optional.ofNullable(lens).ifPresent(ZoomWin::disableMouseAndKeyListener);
   }
 
@@ -1250,7 +1210,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
       return;
     }
     if ((pointerType & CENTER_POINTER) == CENTER_POINTER) {
-      drawPointer(g, (getWidth() - 1) * 0.5, (getHeight() - 1) * 0.5);
+      drawPointer(g, (getWidth() - 1) * 0.5, (getHeight() - 1) * 0.5, false);
     }
     if ((pointerType & HIGHLIGHTED_POINTER) == HIGHLIGHTED_POINTER
         && highlightedPosition.isHighlightedPosition()) {
@@ -1260,7 +1220,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
           modelToViewLength(highlightedPosition.getX() + 0.5 - viewModel.getModelOffsetX());
       double offsetY =
           modelToViewLength(highlightedPosition.getY() + 0.5 - viewModel.getModelOffsetY());
-      drawPointer(g, offsetX, offsetY);
+      drawPointer(g, offsetX, offsetY, true);
     }
   }
 

@@ -45,7 +45,7 @@ class InfoPanel extends JPanel {
 
     SliderChangeListener sliderListener =
         new SliderChangeListener(
-            ActionW.ZOOM, 1.0, DefaultViewModel.SCALE_MAX, zoomRatio, true, 0.1, 100) {
+            ActionW.ZOOM, 1.0, DefaultViewModel.SCALE_MAX, zoomRatio, true, 0.3, 300) {
 
           @Override
           public void stateChanged(BoundedRangeModel model) {

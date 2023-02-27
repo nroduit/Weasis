@@ -100,10 +100,8 @@ public class ZoomToolBar extends WtoolBar {
           GuiUtils.applySelectedIconEffect(realSizeMenu);
           realSizeMenu.addActionListener(
               e -> {
-                /*
-                 * Pass the value -100.0 (convention: -100.0 => real world size) directly to the property
-                 * change, otherwise the value is adjusted by the BoundedRangeModel
-                 */
+                // Pass the value -100.0 (convention: -100.0 => real world size) directly to the
+                // property change, otherwise the value is adjusted by the BoundedRangeModel
                 eventManager.firePropertyChange(
                     ActionW.SYNCH.cmd(), null, new SynchEvent(null, ActionW.ZOOM.cmd(), -100.0));
                 AuditLog.LOGGER.info("action:{} val:-100.0", ActionW.ZOOM.cmd());
@@ -121,8 +119,7 @@ public class ZoomToolBar extends WtoolBar {
     bestFitMenu.addActionListener(
         e -> {
           // Pass the value -200.0 (convention: -200.0 = > best fit zoom value) directly to the
-          // property change,
-          // otherwise the value is adjusted by the BoundedRangeModel
+          // property change, otherwise the value is adjusted by the BoundedRangeModel
           eventManager.firePropertyChange(
               ActionW.SYNCH.cmd(), null, new SynchEvent(null, ActionW.ZOOM.cmd(), -200.0));
           AuditLog.LOGGER.info("action:{} val:-200.0", ActionW.ZOOM.cmd());

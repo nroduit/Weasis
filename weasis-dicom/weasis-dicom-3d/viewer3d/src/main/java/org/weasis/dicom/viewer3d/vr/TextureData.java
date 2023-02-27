@@ -77,9 +77,11 @@ public abstract class TextureData {
   }
 
   public void init(GL2 gl) {
-    IntBuffer intBuffer = IntBuffer.allocate(1);
-    gl.glGenTextures(1, intBuffer);
-    id = intBuffer.get(0);
+    if (id <= 0) {
+      IntBuffer intBuffer = IntBuffer.allocate(1);
+      gl.glGenTextures(1, intBuffer);
+      id = intBuffer.get(0);
+    }
   }
 
   public abstract void render(GL2 gl);

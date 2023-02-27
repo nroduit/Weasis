@@ -54,8 +54,6 @@ import org.weasis.core.ui.docking.PluginTool;
 import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.SeriesViewerListener;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
-import org.weasis.core.ui.editor.image.MeasureToolBar;
-import org.weasis.core.ui.editor.image.MouseActions;
 import org.weasis.core.ui.editor.image.RotationToolBar;
 import org.weasis.core.ui.editor.image.SynchData;
 import org.weasis.core.ui.editor.image.SynchView;
@@ -113,6 +111,10 @@ public class View3DContainer extends ImageViewerPlugin<DicomImageElement>
 
   public static final GridBagLayoutModel VIEWS_vr =
       new GridBagLayoutModel("vr", "Volume Rendering", 1, 1, View3d.class.getName());
+
+  public static final GridBagLayoutModel VIEWS_vr_1x2 =
+      new GridBagLayoutModel(
+          "vr_1x2", VIEWS_vr.getUIName() + " (1x2)", 1, 2, View3d.class.getName());
   public static final GridBagLayoutModel VIEWS_2x2_mpr =
       new GridBagLayoutModel(new LinkedHashMap<>(4), "mpr4", "MPR and Volume Rendering");
 
@@ -172,8 +174,11 @@ public class View3DContainer extends ImageViewerPlugin<DicomImageElement>
         null);
   }
 
+  //  public static final List<GridBagLayoutModel> LAYOUT_LIST =
+  //      Stream.concat(MPRContainer.LAYOUT_LIST.stream(), Stream.of(VIEWS_2x2_mpr,
+  // VIEWS_vr)).toList();
   public static final List<GridBagLayoutModel> LAYOUT_LIST =
-      Stream.concat(MPRContainer.LAYOUT_LIST.stream(), Stream.of(VIEWS_2x2_mpr, VIEWS_vr)).toList();
+      Stream.of(VIEWS_vr, VIEWS_vr_1x2).toList();
 
   public static final List<Toolbar> TOOLBARS = Collections.synchronizedList(new ArrayList<>());
   public static final List<DockableTool> TOOLS = Collections.synchronizedList(new ArrayList<>());
@@ -199,16 +204,16 @@ public class View3DContainer extends ImageViewerPlugin<DicomImageElement>
     this.factory = new DicomVolTextureFactory();
     initTools();
 
-    final ViewerToolBar toolBar = getViewerToolBar();
-    if (toolBar != null) {
-      String command = ActionW.CROSSHAIR.cmd();
-      MouseActions mouseActions = eventManager.getMouseActions();
-      String lastAction = mouseActions.getAction(MouseActions.T_LEFT);
-      if (!command.equals(lastAction)) {
-        mouseActions.setAction(MouseActions.T_LEFT, command);
-        toolBar.changeButtonState(MouseActions.T_LEFT, command);
-      }
-    }
+    //    final ViewerToolBar toolBar = getViewerToolBar();
+    //    if (toolBar != null) {
+    //      String command = ActionW.CROSSHAIR.cmd();
+    //      MouseActions mouseActions = eventManager.getMouseActions();
+    //      String lastAction = mouseActions.getAction(MouseActions.T_LEFT);
+    //      if (!command.equals(lastAction)) {
+    //        mouseActions.setAction(MouseActions.T_LEFT, command);
+    //        toolBar.changeButtonState(MouseActions.T_LEFT, command);
+    //      }
+    //    }
     factory.addPropertyChangeListener(this);
   }
 
@@ -248,15 +253,15 @@ public class View3DContainer extends ImageViewerPlugin<DicomImageElement>
                 BundleTools.SYSTEM_PREFERENCES,
                 10));
       }
-      if (InsertableUtil.getBooleanProperty(
-          BundleTools.SYSTEM_PREFERENCES,
-          bundleName,
-          componentName,
-          InsertableUtil.getCName(MeasureToolBar.class),
-          key,
-          true)) {
-        TOOLBARS.add(new MeasureToolBar(eventManager, 11));
-      }
+      //      if (InsertableUtil.getBooleanProperty(
+      //          BundleTools.SYSTEM_PREFERENCES,
+      //          bundleName,
+      //          componentName,
+      //          InsertableUtil.getCName(MeasureToolBar.class),
+      //          key,
+      //          true)) {
+      //        TOOLBARS.add(new MeasureToolBar(eventManager, 11));
+      //      }
       if (InsertableUtil.getBooleanProperty(
           BundleTools.SYSTEM_PREFERENCES,
           bundleName,
@@ -291,7 +296,7 @@ public class View3DContainer extends ImageViewerPlugin<DicomImageElement>
           InsertableUtil.getCName(View3DToolbar.class),
           key,
           true)) {
-        TOOLBARS.add(new View3DToolbar(eventManager, 50));
+        TOOLBARS.add(new View3DToolbar(50));
       }
 
       PluginTool tool;
@@ -437,15 +442,9 @@ public class View3DContainer extends ImageViewerPlugin<DicomImageElement>
   protected synchronized void setLayoutModel(GridBagLayoutModel layoutModel) {
     super.setLayoutModel(layoutModel);
 
+    DicomVolTexture curVolTexture = getVolTexture();
     final Map<LayoutConstraints, Component> elements = getLayoutModel().getConstraints();
     Iterator<Component> enumVal = elements.values().iterator();
-
-    DicomVolTexture curVolTexture = getVolTexture();
-    if (curVolTexture != null) {
-      double[] op = curVolTexture.getVolumeGeometry().getOrientationPatient();
-      setControlAxesBaseOrientation(curVolTexture.getSeries(), op);
-    }
-
     int position = 0;
     while (enumVal.hasNext()) {
       Component next = enumVal.next();
@@ -467,12 +466,9 @@ public class View3DContainer extends ImageViewerPlugin<DicomImageElement>
         vt.setVolTexture(curVolTexture);
       }
     }
-
     eventManager.updateComponentsListener(selectedImagePane);
+    repaint();
   }
-
-  protected void setControlAxesBaseOrientation(
-      MediaSeries<DicomImageElement> mediaSeries, double[] op) {}
 
   protected void removeContent(final ObservableEvent event) {
     Object newVal = event.getNewValue();
@@ -492,6 +488,7 @@ public class View3DContainer extends ImageViewerPlugin<DicomImageElement>
         menuRoot.add(new JSeparator());
         GuiUtils.addItemToMenu(menuRoot, manager.getVolumeTypeMenu(null));
         GuiUtils.addItemToMenu(menuRoot, manager.getShadingMenu(null));
+        GuiUtils.addItemToMenu(menuRoot, manager.getSProjectionMenu(null));
         menuRoot.add(new JSeparator());
         GuiUtils.addItemToMenu(menuRoot, manager.getZoomMenu(null));
         GuiUtils.addItemToMenu(menuRoot, manager.getOrientationMenu(null));
@@ -525,7 +522,7 @@ public class View3DContainer extends ImageViewerPlugin<DicomImageElement>
       if (event.getNewValue() instanceof DicomVolTexture texture) {
         for (ViewCanvas<DicomImageElement> view : view2ds) {
           if (view instanceof View3d v) {
-            if(fullyLoaded) {
+            if (fullyLoaded) {
               v.getCamera().resetAll();
               v.setVolTexture(texture);
             } else {
