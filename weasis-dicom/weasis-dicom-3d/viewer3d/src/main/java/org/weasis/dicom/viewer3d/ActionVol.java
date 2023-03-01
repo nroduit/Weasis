@@ -52,7 +52,7 @@ public class ActionVol {
       new ToggleButtonListenerValue("Shading", "vol.shading", 0, 0, null);
 
   public static final ToggleButtonListenerValue VOL_PROJECTION =
-      new ToggleButtonListenerValue("Volume Projection", "vol.projection", 0, 0, null);
+      new ToggleButtonListenerValue("Orthographic Projection", "vol.projection", 0, 0, null);
 
   public static final ComboItemListenerValue<RenderingType> RENDERING_TYPE =
       new ComboItemListenerValue<>("Type", "rendering.type", 0, 0, null);

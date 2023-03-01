@@ -46,7 +46,7 @@ public class Camera {
 
   // Perspective
   private double zNear = 0.1;
-  private double zFar = 1000;
+  private double zFar = 10000;
   private double fov = INITIAL_FOV;
 
   // Zoom
@@ -138,7 +138,8 @@ public class Camera {
     if (this.orthographicProjection != orthographicProjection) {
       this.orthographicProjection = orthographicProjection;
       this.projectionMatrix = null;
-      renderer.display();
+      resetTransformation();
+      setZoomFactor(getZoomFactor());
     }
   }
 
@@ -172,9 +173,8 @@ public class Camera {
     if (projectionMatrix == null) {
       projectionMatrix = new Matrix4d();
       if (orthographicProjection) {
-        double visionSize = renderer.getSurfaceHeight() / 2.0;
-        projectionMatrix.setOrthoSymmetric(
-            renderer.getAspectRatio() * visionSize, visionSize, zNear, zFar);
+        double size = renderer.getSurfaceHeight();
+        projectionMatrix.setOrthoSymmetric(renderer.getAspectRatio() * size, size, zFar, 1);
       } else {
         projectionMatrix.setPerspective(fov, renderer.getAspectRatio(), zNear, zFar);
       }
@@ -222,7 +222,11 @@ public class Camera {
   public void setZoomFactor(double zoomFactor, boolean repaint) {
     renderer.setActionsInView(ActionW.ZOOM.cmd(), zoomFactor);
     this.zoomFactor = Math.abs(zoomFactor);
-    this.internalZoomFactor = -fov * zNear / this.zoomFactor;
+    double ratio = this.zoomFactor;
+    if (orthographicProjection) {
+      ratio /= 3.5;
+    }
+    this.internalZoomFactor = -fov * zNear / ratio;
     if (repaint) {
       updateCameraTransform();
     } else {

@@ -47,7 +47,18 @@ public class View3DToolbar extends WtoolBar {
 
     add(refreshBt);
 
-    JButton config = new JButton(ResourceUtil.getToolBarIcon(ActionIcon.SETTINGS));
+    eventManager
+        .getAction(ActionVol.VOL_PROJECTION)
+        .ifPresent(
+            b -> {
+              JToggleButton toggleButton = new JToggleButton();
+              toggleButton.setToolTipText(ActionVol.VOL_PROJECTION.getTitle());
+              toggleButton.setIcon(ResourceUtil.getToolBarIcon(ActionIcon.ORTHOGRAPHIC));
+              b.registerActionState(toggleButton);
+              add(toggleButton);
+            });
+
+    JButton config = new JButton(ResourceUtil.getToolBarIcon(ActionIcon.VOLUME_SETTINGS));
     config.setToolTipText("3D Settings");
     config.addActionListener(
         e -> {
@@ -58,16 +69,5 @@ public class View3DToolbar extends WtoolBar {
           ColorLayerUI.showCenterScreen(dialog, layer);
         });
     add(config);
-
-    eventManager
-        .getAction(ActionVol.VOL_PROJECTION)
-        .ifPresent(
-            b -> {
-              JToggleButton toggleButton = new JToggleButton();
-              toggleButton.setToolTipText(ActionVol.VOL_PROJECTION.getTitle());
-              toggleButton.setIcon(ResourceUtil.getToolBarIcon(ActionIcon.LOAD_VOLUME));
-              b.registerActionState(toggleButton);
-              add(toggleButton);
-            });
   }
 }
