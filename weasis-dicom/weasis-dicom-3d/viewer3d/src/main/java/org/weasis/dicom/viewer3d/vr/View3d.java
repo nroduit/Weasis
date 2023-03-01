@@ -613,9 +613,9 @@ public class View3d extends VolumeCanvas
     // Only apply when the panel size is not zero.
     if (getWidth() != 0 && getHeight() != 0) {
       getViewModel().setModelOffset(modelOffsetX, modelOffsetY);
-      if (viewType == ViewType.VOLUME3D) {
-        resetPan();
-      }
+      //  if (viewType == ViewType.VOLUME3D) {
+      resetPan();
+      //   }
     }
   }
 
@@ -789,7 +789,6 @@ public class View3d extends VolumeCanvas
     CameraView c = CameraView.INITIAL;
     camera.set(c.position(), c.rotation(), -getBestFitViewScale(), false);
     renderingLayer.setEnableRepaint(false);
-    renderingLayer.setRenderingType(RenderingType.COMPOSITE);
     renderingLayer.setQuality(getDefaultQuality());
     renderingLayer.setOpacity(1.0);
     Modality modality = volTexture == null ? null : volTexture.getModality();
@@ -797,46 +796,6 @@ public class View3d extends VolumeCanvas
     renderingLayer.setEnableRepaint(true);
     renderingLayer.fireLayerChanged();
     eventManager.updateComponentsListener(this);
-  }
-
-  private void resetActions(String[] cmd) {
-    if (cmd == null) {
-      resetAction(null);
-      return;
-    }
-    for (String string : cmd) {
-      resetAction(string);
-    }
-    eventManager.updateComponentsListener(this);
-  }
-
-  public void resetAction(String cmd) {
-    if (cmd == null || ActionW.PAN.cmd().equals(cmd)) {
-      resetPan();
-    }
-    if (cmd == null || ActionW.ZOOM.cmd().equals(cmd)) {
-      setActionsInView(ActionW.ZOOM.cmd(), -100.0D);
-      resetZoom();
-    }
-    if (cmd == null || ActionW.ROTATION.cmd().equals(cmd)) {
-      camera.resetRotation();
-    }
-    if (cmd == null || ActionW.FLIP.cmd().equals(cmd)) {
-      setActionsInView(ActionW.FLIP.cmd(), false);
-    }
-
-    renderingLayer.setEnableRepaint(false);
-    renderingLayer.setRenderingType(RenderingType.COMPOSITE);
-    renderingLayer.setQuality(getDefaultQuality());
-    if (cmd == null || ActionVol.VOL_OPACITY.cmd().equals(cmd)) {
-      renderingLayer.setOpacity(1.0);
-    }
-    if (cmd == null || ActionW.WINLEVEL.cmd().equals(cmd) || ActionW.PRESET.cmd().equals(cmd)) {
-      Modality modality = volTexture == null ? null : volTexture.getModality();
-      setVolumePreset(Preset.getDefaultPreset(modality));
-    }
-    renderingLayer.setEnableRepaint(true);
-    renderingLayer.fireLayerChanged();
   }
 
   @Override
