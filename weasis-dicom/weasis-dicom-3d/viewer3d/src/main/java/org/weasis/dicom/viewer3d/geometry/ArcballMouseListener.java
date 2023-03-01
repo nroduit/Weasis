@@ -115,10 +115,9 @@ public abstract class ArcballMouseListener extends SliderChangeListener implemen
         view3d.getCamera().setAdjusting(false);
         if ((modifier & mask) == mask) {
           view3d.setCursor(null);
-        } else {
-          if (view3d.getViewType() == ViewType.VOLUME3D) {
-            view3d.getCamera().init(e.getPoint());
-          }
+        }
+        if (view3d.getViewType() == ViewType.VOLUME3D) {
+          view3d.getCamera().init(e.getPoint());
         }
       }
     }
