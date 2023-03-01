@@ -113,6 +113,7 @@ public class ResourceUtil {
     NONE("svg/action/none.svg"), // NON-NLS
     OPEN_EXTERNAL("svg/action/openExternal.svg"), // NON-NLS
     OPEN_NEW_TAB("svg/action/openNewTab.svg"), // NON-NLS
+    ORTHOGRAPHIC("svg/action/Orthographic.svg"), // NON-NLS
     PAN("svg/action/pan.svg"), // NON-NLS
     PIPETTE("svg/action/pipette.svg"), // NON-NLS
     PLUS("svg/action/plus.svg"), // NON-NLS
@@ -135,7 +136,8 @@ public class ResourceUtil {
     SYNCH_LARGE("svg/action/synchLarge.svg"), // NON-NLS
     SYNCH_STAR("svg/action/synchStar.svg"), // NON-NLS
     TILE("svg/action/tile.svg"), // NON-NLS
-    VOLUME_RENDERING("svg/action/volumeRendering.svg"), // NON-NLS
+    VOLUME("svg/action/volume.svg"), // NON-NLS
+    VOLUME_SETTINGS("svg/action/volumeSettings.svg"), // NON-NLS
     WINDOW_LEVEL("svg/action/winLevel.svg"), // NON-NLS
     ZOOM("svg/action/zoom.svg"), // NON-NLS
     ZOOM_AREA("svg/action/zoomArea.svg"), // NON-NLS

@@ -35,20 +35,22 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.DataExplorerView;
 import org.weasis.core.api.explorer.ObservableEvent;
+import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.core.api.gui.Insertable.Type;
 import org.weasis.core.api.gui.InsertableUtil;
 import org.weasis.core.api.gui.util.ActionW;
+import org.weasis.core.api.gui.util.BasicActionState;
 import org.weasis.core.api.gui.util.ComboItemListener;
 import org.weasis.core.api.gui.util.Filter;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.SliderChangeListener;
-import org.weasis.core.api.gui.util.SliderCineListener;
 import org.weasis.core.api.gui.util.ToggleButtonListener;
 import org.weasis.core.api.image.GridBagLayoutModel;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.SeriesEvent;
+import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.service.BundlePreferences;
 import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.api.util.ResourceUtil;
@@ -57,7 +59,9 @@ import org.weasis.core.api.util.ResourceUtil.OtherIcon;
 import org.weasis.core.ui.docking.DockableTool;
 import org.weasis.core.ui.docking.PluginTool;
 import org.weasis.core.ui.docking.UIManager;
+import org.weasis.core.ui.editor.SeriesViewerFactory;
 import org.weasis.core.ui.editor.SeriesViewerListener;
+import org.weasis.core.ui.editor.ViewerPluginBuilder;
 import org.weasis.core.ui.editor.image.DefaultView2d;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.editor.image.MeasureToolBar;
@@ -385,31 +389,41 @@ public class View2dContainer extends DicomViewerPlugin implements PropertyChange
     if (menuRoot != null) {
       menuRoot.removeAll();
       if (eventManager instanceof EventManager manager) {
-        JMenu menu = new JMenu(Messages.getString("View2dContainer.3d"));
-        SliderCineListener scrollAction =
-            EventManager.getInstance().getAction(ActionW.SCROLL_SERIES).orElse(null);
-        menu.setEnabled(
-            manager.getSelectedSeries() != null
-                && (scrollAction != null && scrollAction.isActionEnabled()));
+        MediaSeries<DicomImageElement> series = EventManager.getInstance().getSelectedSeries();
+        if (series != null) {
+          JMenu menu = new JMenu("Open in new tab");
+          List<SeriesViewerFactory> plugins =
+              UIManager.getViewerFactoryList(new String[] {series.getMimeType()});
+          for (final SeriesViewerFactory viewerFactory : plugins) {
+            if (viewerFactory.canReadSeries(series)) {
+              JMenuItem menuFactory = new JMenuItem(viewerFactory.getUIName());
+              menuFactory.setIcon(viewerFactory.getIcon());
+              GuiUtils.applySelectedIconEffect(menuFactory);
+              menuFactory.addActionListener(
+                  e ->
+                      ViewerPluginBuilder.openSequenceInPlugin(
+                          viewerFactory,
+                          series,
+                          (DataExplorerModel) series.getTagValue(TagW.ExplorerModel),
+                          false,
+                          false));
+              menu.add(menuFactory);
+            }
+          }
 
-        if (menu.isEnabled()) {
-          JMenuItem mpr =
-              new JMenuItem(
-                  Messages.getString("View2dContainer.mpr"),
-                  ResourceUtil.getIcon(OtherIcon.VIEW_3D));
-          GuiUtils.applySelectedIconEffect(mpr);
-          mpr.addActionListener(Basic3DToolBar.getMprAction());
-          menu.add(mpr);
-
-          JMenuItem mip =
-              new JMenuItem(
-                  Messages.getString("View2dContainer.mip"),
-                  ResourceUtil.getIcon(OtherIcon.VIEW_MIP));
-          GuiUtils.applySelectedIconEffect(mip);
-          mip.addActionListener(Basic3DToolBar.getMipAction());
-          menu.add(mip);
+          BasicActionState volState =
+              EventManager.getInstance().getAction(ActionW.VOLUME).orElse(null);
+          if (volState != null && volState.isActionEnabled()) {
+            JMenuItem mip =
+                new JMenuItem(
+                    Messages.getString("View2dContainer.mip"),
+                    ResourceUtil.getIcon(OtherIcon.VIEW_MIP));
+            GuiUtils.applySelectedIconEffect(mip);
+            mip.addActionListener(Basic3DToolBar.getMipAction());
+            menu.add(mip);
+          }
+          menuRoot.add(menu);
         }
-        menuRoot.add(menu);
         menuRoot.add(new JSeparator());
         GuiUtils.addItemToMenu(menuRoot, manager.getPresetMenu(null));
         GuiUtils.addItemToMenu(menuRoot, manager.getLutShapeMenu(null));

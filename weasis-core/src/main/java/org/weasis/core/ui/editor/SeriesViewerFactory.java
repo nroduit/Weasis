@@ -15,6 +15,7 @@ import java.util.Map;
 import javax.swing.Action;
 import org.weasis.core.api.gui.util.GUIEntry;
 import org.weasis.core.api.media.data.MediaElement;
+import org.weasis.core.api.media.data.MediaSeries;
 
 public interface SeriesViewerFactory extends GUIEntry {
 
@@ -29,6 +30,8 @@ public interface SeriesViewerFactory extends GUIEntry {
   boolean canAddSeries();
 
   boolean canExternalizeSeries();
+
+  boolean canReadSeries(MediaSeries<?> series);
 
   default List<Action> getOpenActions() {
     return Collections.emptyList();

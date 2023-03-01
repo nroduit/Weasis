@@ -61,6 +61,7 @@ public class AffineTransformOp extends AbstractOp {
     Rectangle2D bound = (Rectangle2D) params.get(P_DST_BOUNDS);
 
     if (bound != null
+        && source != null
         && matrix != null
         && (!Arrays.equals(identityMatrix, matrix)
             || MathUtil.isDifferent(source.width(), bound.getWidth())

@@ -17,6 +17,7 @@ import org.weasis.core.api.explorer.DataExplorerView;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.core.api.image.GridBagLayoutModel;
 import org.weasis.core.api.media.data.MediaElement;
+import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.api.util.ResourceUtil.FileIcon;
 import org.weasis.core.ui.docking.UIManager;
@@ -108,6 +109,11 @@ public class WaveFactory implements SeriesViewerFactory {
   @Override
   public boolean canExternalizeSeries() {
     return true;
+  }
+
+  @Override
+  public boolean canReadSeries(MediaSeries<?> series) {
+    return series != null;
   }
 
   // ================================================================================

@@ -240,4 +240,9 @@ public class View2dFactory implements SeriesViewerFactory {
           "last.open.dicom.dir", selectedFiles[0].getParent());
     }
   }
+
+  @Override
+  public boolean canReadSeries(MediaSeries<?> series) {
+    return series != null && series.size(null) > 0;
+  }
 }

@@ -158,6 +158,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
     setAction(new BasicActionState(ActionW.NO_ACTION));
     setAction(new BasicActionState(ActionW.DRAW));
     setAction(new BasicActionState(ActionW.MEASURE));
+    setAction(new BasicActionState(ActionW.VOLUME));
 
     setAction(getMoveTroughSliceAction(20, TIME.SECOND, 0.1));
     setAction(newWindowAction());
@@ -1042,7 +1043,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
             a ->
                 a.setSelectedWithoutTriggerAction(
                     (Boolean) view2d.getActionValue(ActionW.INVERSE_STACK.cmd())));
-
+    getAction(ActionW.VOLUME).ifPresent(a -> a.enableAction(series.size(null) >= 5));
     updateKeyObjectComponentsListener(view2d);
 
     // register all actions for the selected view and for the other views register according to

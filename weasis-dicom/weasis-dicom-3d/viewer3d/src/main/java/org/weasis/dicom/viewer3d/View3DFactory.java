@@ -32,6 +32,7 @@ import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.ComboItemListener;
 import org.weasis.core.api.image.GridBagLayoutModel;
 import org.weasis.core.api.image.LayoutConstraints;
+import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.service.AuditLog;
 import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.api.service.WProperties;
@@ -64,7 +65,7 @@ public class View3DFactory implements SeriesViewerFactory {
 
   @Override
   public Icon getIcon() {
-    return ResourceUtil.getIcon(ActionIcon.VOLUME_RENDERING);
+    return ResourceUtil.getIcon(ActionIcon.VOLUME);
   }
 
   @Override
@@ -183,6 +184,11 @@ public class View3DFactory implements SeriesViewerFactory {
   @Override
   public boolean canExternalizeSeries() {
     return true;
+  }
+
+  @Override
+  public boolean canReadSeries(MediaSeries<?> series) {
+    return series != null && series.size(null) >= 5;
   }
 
   @Override

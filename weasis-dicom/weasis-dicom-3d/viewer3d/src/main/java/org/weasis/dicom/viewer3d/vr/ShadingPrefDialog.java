@@ -50,7 +50,7 @@ public class ShadingPrefDialog extends JDialog {
         ModalityType.APPLICATION_MODAL);
     this.view3d = view3d;
     this.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
-    this.setIconImage(ResourceUtil.getIcon(ActionIcon.VOLUME_RENDERING).getImage());
+    this.setIconImage(ResourceUtil.getIcon(ActionIcon.VOLUME).getImage());
 
     ShadingOptions options = view3d.getRenderingLayer().getShadingOptions();
     this.ambient = options.getAmbient();

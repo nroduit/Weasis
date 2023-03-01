@@ -81,6 +81,20 @@ public class UIManager {
     return null;
   }
 
+  public static SeriesViewerFactory getViewerFactory(Class<? extends SeriesViewerFactory> clazz) {
+    if (clazz != null) {
+      synchronized (UIManager.SERIES_VIEWER_FACTORIES) {
+        List<SeriesViewerFactory> plugins = UIManager.SERIES_VIEWER_FACTORIES;
+        for (final SeriesViewerFactory factory : plugins) {
+          if (clazz.isInstance(factory)) {
+            return factory;
+          }
+        }
+      }
+    }
+    return null;
+  }
+
   public static SeriesViewerFactory getViewerFactory(SeriesViewer seriesViewer) {
     if (seriesViewer != null) {
       synchronized (UIManager.SERIES_VIEWER_FACTORIES) {

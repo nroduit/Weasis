@@ -9,6 +9,7 @@
  */
 package org.weasis.dicom.viewer2d;
 
+import java.util.Objects;
 import java.util.Optional;
 import javax.swing.Icon;
 import javax.swing.JPopupMenu;
@@ -33,12 +34,10 @@ public class LutToolBar extends WtoolBar {
 
   public LutToolBar(final ImageViewerEventManager<DicomImageElement> eventManager, int index) {
     super(Messages.getString("LutToolBar.lookupbar"), index);
-    if (eventManager == null) {
-      throw new IllegalArgumentException("EventManager cannot be null");
-    }
 
     GroupPopup menuPreset = null;
-    Optional<ComboItemListener<Object>> presetAction = eventManager.getAction(ActionW.PRESET);
+    Optional<ComboItemListener<Object>> presetAction =
+        Objects.requireNonNull(eventManager).getAction(ActionW.PRESET);
     if (presetAction.isPresent()) {
       menuPreset = presetAction.get().createGroupRadioMenu();
     }

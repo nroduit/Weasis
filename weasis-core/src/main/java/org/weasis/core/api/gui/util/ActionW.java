@@ -215,4 +215,7 @@ public class ActionW {
           KeyEvent.VK_H,
           0,
           new Cursor(Cursor.CROSSHAIR_CURSOR));
+  public static final BasicActionStateValue VOLUME =
+      new BasicActionStateValue(
+          Messages.getString("ActionW.volume"), "volume.enable", 0, 0, null); // NON-NLS
 }

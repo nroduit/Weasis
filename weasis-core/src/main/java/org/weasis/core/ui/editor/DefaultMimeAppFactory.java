@@ -37,16 +37,10 @@ public class DefaultMimeAppFactory implements SeriesViewerFactory {
             Iterable<MediaElement> list = series.getMedias(null, null);
             synchronized (series) { // NOSONAR lock object is safe
               for (MediaElement m : list) {
-                // As SUN JRE supports only Gnome and responds "true" for
-                // Desktop.isDesktopSupported()
-                // in KDE session, but actually does not support it.
-                // http://bugs.sun.com/view_bug.do?bug_id=6486393
+                // Linux KDE session not supported
+                // https://bugs.java.com/bugdatabase/view_bug.do?bug_id=6486393
                 if (SystemInfo.isLinux) {
                   startAssociatedProgramFromLinux(m.getFile());
-                } else if (SystemInfo.isWindows) {
-                  // Workaround of the bug with mpg file see
-                  // http://bugs.sun.com/view_bug.do?bug_id=6599987
-                  startAssociatedProgramFromWinCMD(m.getFile());
                 } else if (Desktop.isDesktopSupported()) {
                   final Desktop desktop = Desktop.getDesktop();
                   if (desktop.isSupported(Desktop.Action.OPEN)) {
@@ -114,5 +108,10 @@ public class DefaultMimeAppFactory implements SeriesViewerFactory {
   @Override
   public boolean canExternalizeSeries() {
     return false;
+  }
+
+  @Override
+  public boolean canReadSeries(MediaSeries<?> series) {
+    return series != null && series.size(null) > 0;
   }
 }

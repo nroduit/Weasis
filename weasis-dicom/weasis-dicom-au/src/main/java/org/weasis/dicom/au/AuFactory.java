@@ -16,6 +16,7 @@ import org.osgi.service.component.annotations.Deactivate;
 import org.weasis.core.api.explorer.DataExplorerView;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.core.api.image.GridBagLayoutModel;
+import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.api.util.ResourceUtil.OtherIcon;
 import org.weasis.core.ui.docking.UIManager;
@@ -107,6 +108,11 @@ public class AuFactory implements SeriesViewerFactory {
   @Override
   public boolean canExternalizeSeries() {
     return true;
+  }
+
+  @Override
+  public boolean canReadSeries(MediaSeries<?> series) {
+    return series != null;
   }
 
   // ================================================================================

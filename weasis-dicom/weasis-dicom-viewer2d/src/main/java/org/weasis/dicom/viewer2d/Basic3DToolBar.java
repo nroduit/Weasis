@@ -18,11 +18,12 @@ import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.api.util.ResourceUtil.OtherIcon;
+import org.weasis.core.ui.docking.UIManager;
+import org.weasis.core.ui.editor.SeriesViewerFactory;
 import org.weasis.core.ui.editor.ViewerPluginBuilder;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.util.WtoolBar;
-import org.weasis.dicom.explorer.DicomModel;
 import org.weasis.dicom.viewer2d.mip.MipPopup;
 import org.weasis.dicom.viewer2d.mip.MipPopup.MipDialog;
 import org.weasis.dicom.viewer2d.mip.MipView;
@@ -43,9 +44,9 @@ public class Basic3DToolBar<DicomImageElement> extends WtoolBar {
     mipButton.addActionListener(getMipAction());
     add(mipButton);
 
-    // Attach 3D functions to the SCROLL_SERIES actions
+    // Attach 3D functions to the Volume actions
     EventManager.getInstance()
-        .getAction(ActionW.SCROLL_SERIES)
+        .getAction(ActionW.VOLUME)
         .ifPresent(
             s -> {
               s.registerActionState(mprButton);
@@ -55,14 +56,12 @@ public class Basic3DToolBar<DicomImageElement> extends WtoolBar {
 
   public static ActionListener getMprAction() {
     return e -> {
-      EventManager eventManager = EventManager.getInstance();
-      MediaSeries<org.weasis.dicom.codec.DicomImageElement> s = eventManager.getSelectedSeries();
-      // Requires at least 5 images to build the MPR views
-      if (s != null && s.size(null) >= 5) {
-        DataExplorerModel model = (DataExplorerModel) s.getTagValue(TagW.ExplorerModel);
-        if (model instanceof DicomModel) {
-          ViewerPluginBuilder.openSequenceInPlugin(new MPRFactory(), s, model, false, false);
-        }
+      MediaSeries<org.weasis.dicom.codec.DicomImageElement> s =
+          EventManager.getInstance().getSelectedSeries();
+      SeriesViewerFactory factory = UIManager.getViewerFactory(MPRFactory.class);
+      if (factory != null && factory.canReadSeries(s)) {
+        ViewerPluginBuilder.openSequenceInPlugin(
+            factory, s, (DataExplorerModel) s.getTagValue(TagW.ExplorerModel), false, false);
       }
     };
   }

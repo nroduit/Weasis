@@ -193,7 +193,7 @@ public class View3DContainer extends ImageViewerPlugin<DicomImageElement>
         MPRContainer.view1,
         null,
         View3DFactory.NAME,
-        ResourceUtil.getIcon(ActionIcon.VOLUME_RENDERING),
+        ResourceUtil.getIcon(ActionIcon.VOLUME),
         null);
   }
 

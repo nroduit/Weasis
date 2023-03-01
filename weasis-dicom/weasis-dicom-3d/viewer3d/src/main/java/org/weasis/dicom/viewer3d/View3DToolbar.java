@@ -38,7 +38,8 @@ public class View3DToolbar extends WtoolBar {
     refreshBt.setToolTipText("Rebuild the volume");
     refreshBt.addActionListener(
         e -> {
-          ImageViewerPlugin<DicomImageElement> container = eventManager.getSelectedView2dContainer();
+          ImageViewerPlugin<DicomImageElement> container =
+              eventManager.getSelectedView2dContainer();
           if (container instanceof View3DContainer view3DContainer) {
             view3DContainer.reload();
           }
