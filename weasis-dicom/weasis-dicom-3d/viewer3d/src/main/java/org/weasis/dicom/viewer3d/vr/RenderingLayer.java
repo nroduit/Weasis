@@ -18,8 +18,8 @@ public class RenderingLayer<E extends ImageElement> {
 
   public static final String BCK_COLOR = "volume.background.color";
   public static final String LIGHT_COLOR = "volume.light.color";
-  public static final String STATIC_QUALITY = "volume.static.quality";
   public static final String DYNAMIC_QUALITY = "volume.dynamic.quality";
+  public static final int DEFAULT_DYNAMIC_QUALITY = 100;
   private final List<RenderingLayerChangeListener<E>> listenerList;
   protected int depthSampleNumber;
   private int windowWidth;

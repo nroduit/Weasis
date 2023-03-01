@@ -36,8 +36,7 @@ public class Viewer3dPrefView extends AbstractItemDialogPage {
 
   private final JButton bckColor = new JButton(ResourceUtil.getIcon(ActionIcon.PIPETTE));
   private final JButton lightColor = new JButton(ResourceUtil.getIcon(ActionIcon.PIPETTE));
-  private final JSlider sliderStatic = new JSlider(-100, 100, 0);
-  private final JSlider sliderDynamic = new JSlider(-100, 100, 0);
+  private final JSlider sliderDynamic = new JSlider(0, 100, RenderingLayer.DEFAULT_DYNAMIC_QUALITY);
   private final JComboBox<GridBagLayoutModel> comboBoxLayouts =
       new JComboBox<>(View3DContainer.LAYOUT_LIST.toArray(new GridBagLayoutModel[0]));
 
@@ -48,12 +47,13 @@ public class Viewer3dPrefView extends AbstractItemDialogPage {
 
   private void initGUI() {
     int quality =
-        BundleTools.LOCAL_UI_PERSISTENCE.getIntProperty(RenderingLayer.STATIC_QUALITY, 100);
-    sliderStatic.setValue(quality);
-    sliderStatic.addChangeListener(
+        BundleTools.LOCAL_UI_PERSISTENCE.getIntProperty(
+            RenderingLayer.DYNAMIC_QUALITY, RenderingLayer.DEFAULT_DYNAMIC_QUALITY);
+    sliderDynamic.setValue(quality);
+    sliderDynamic.addChangeListener(
         e ->
             BundleTools.LOCAL_UI_PERSISTENCE.putIntProperty(
-                RenderingLayer.STATIC_QUALITY, sliderStatic.getValue()));
+                RenderingLayer.DYNAMIC_QUALITY, sliderDynamic.getValue()));
 
     String pickColor = org.weasis.core.ui.Messages.getString("MeasureTool.pick_color");
     bckColor.setToolTipText(pickColor);
@@ -132,9 +132,6 @@ public class Viewer3dPrefView extends AbstractItemDialogPage {
 
     final JPanel otherPanel = GuiUtils.getVerticalBoxLayoutPanel();
     otherPanel.setBorder(GuiUtils.getTitledBorder("Volume rendering"));
-    otherPanel.add(
-        GuiUtils.getHorizontalBoxLayoutPanel(
-            ITEM_SEPARATOR, new JLabel("Static quality"), sliderStatic));
     otherPanel.add(GuiUtils.boxVerticalStrut(5));
     otherPanel.add(
         GuiUtils.getHorizontalBoxLayoutPanel(
@@ -178,6 +175,7 @@ public class Viewer3dPrefView extends AbstractItemDialogPage {
 
   @Override
   public void resetToDefaultValues() {
+    sliderDynamic.setValue(RenderingLayer.DEFAULT_DYNAMIC_QUALITY);
     BundleTools.SYSTEM_PREFERENCES.putColorProperty(RenderingLayer.BCK_COLOR, Color.GRAY);
     BundleTools.SYSTEM_PREFERENCES.putColorProperty(RenderingLayer.LIGHT_COLOR, Color.WHITE);
     BundleTools.SYSTEM_PREFERENCES.put(

@@ -256,17 +256,21 @@ public class View3d extends VolumeCanvas
 
   public void setVolTexture(DicomVolTexture volTexture) {
     this.volTexture = volTexture;
-    if (volTexture != null && viewType == ViewType.VOLUME3D) {
+    if (volTexture != null) {
       camera.setZoomFactor(-getBestFitViewScale());
-      renderingLayer.setEnableRepaint(false);
-      int quality = getDefaultQuality();
-      renderingLayer.setQuality(quality);
-      eventManager
-          .getAction(ActionVol.VOL_QUALITY)
-          .ifPresent(a -> a.setSliderValue(quality, false));
-      this.volumePreset = Preset.getDefaultPreset(volTexture.getModality());
-      renderingLayer.setEnableRepaint(true);
-      setVolumePreset(volumePreset);
+      if (viewType == ViewType.VOLUME3D) {
+        renderingLayer.setEnableRepaint(false);
+        int quality = getDefaultQuality();
+        renderingLayer.setQuality(quality);
+        eventManager
+            .getAction(ActionVol.VOL_QUALITY)
+            .ifPresent(a -> a.setSliderValue(quality, false));
+        this.volumePreset = Preset.getDefaultPreset(volTexture.getModality());
+        renderingLayer.setEnableRepaint(true);
+        setVolumePreset(volumePreset);
+      } else {
+        display();
+      }
     } else {
       display();
     }
@@ -276,8 +280,8 @@ public class View3d extends VolumeCanvas
     if (volTexture == null) {
       return 0;
     }
-    return Math.min(
-        8192, (int) Math.round(volTexture.getDepth() * volTexture.getTexelSize().z) * 2);
+    double val = Math.max(volTexture.getDepth(), volTexture.getMaxDimensionLength());
+    return Math.min(8192, (int) Math.round(val * Math.sqrt(2.0)));
   }
 
   @Override
@@ -477,7 +481,11 @@ public class View3d extends VolumeCanvas
     if (volTexture.isReadyForDisplay()) {
       int sampleCount = renderingLayer.getQuality();
       if (camera.isAdjusting()) {
-        sampleCount = Math.min(512, Math.max(64, sampleCount / 4));
+        double quality =
+            BundleTools.LOCAL_UI_PERSISTENCE.getIntProperty(
+                    RenderingLayer.DYNAMIC_QUALITY, RenderingLayer.DEFAULT_DYNAMIC_QUALITY)
+                / 100.0;
+        sampleCount = Math.max(64, (int) Math.round(sampleCount * quality));
       }
       renderingLayer.setDepthSampleNumber(sampleCount);
       program.use(gl2);
