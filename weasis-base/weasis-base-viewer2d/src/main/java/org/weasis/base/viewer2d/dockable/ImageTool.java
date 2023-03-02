@@ -177,7 +177,7 @@ public class ImageTool extends PluginTool {
                         FlatSVGIcon icon = ResourceUtil.getIcon(ActionIcon.INVERSE_LUT);
                         JToggleButton checkBox = toggleButton.createJToggleButton(icon);
                         checkBox.setPreferredSize(GuiUtils.getBigIconButtonSize(checkBox));
-                        checkBox.setToolTipText(Messages.getString("ImageTool.inverse"));
+                        checkBox.setToolTipText(toggleButton.getActionW().getTitle());
                         lutPanel.add(checkBox);
                       });
               winLevelPanel.add(lutPanel);

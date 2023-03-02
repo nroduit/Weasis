@@ -40,9 +40,18 @@ uniform float windowCenter;
 uniform bool shading;
 uniform vec3 backgroundColor;
 uniform vec3 lightColor;
-uniform int renderingType;
 uniform bool ditherRay = true;
 uniform float opacityFactor;
+
+// Rendering type
+uniform int renderingType;
+const uint typeComposite = 0x00000000u;
+const uint typeMip = 0x00000001u;
+const uint typeIsoSurface = 0x00000002u;
+const uint typeSlice = 0x00000003u;
+const uint typeSliceAxial = 0x00000004u;
+const uint typeSliceCoronal = 0x00000005u;
+const uint typeSliceSagittal = 0x00000006u;
 
 // Lighting
 const vec4 lightPositionWorld = vec4(10.0, 0, 0, 1.0);
@@ -294,43 +303,6 @@ vec4 rayCastingMip(Ray ray, float tmin, float tmax, vec2 uv) {
     return pixel;
 }
 
-vec4 rayCastingAlphaBlending(Ray ray, float tmin, float tmax, vec2 uv) {
-    vec3 start = (ray.origin.xyz + tmin * ray.direction.xyz + texelSize) / (texelSize + texelSize);
-    vec3 end = (ray.origin.xyz + tmax * ray.direction.xyz + texelSize) / (texelSize + texelSize);
-
-    float len = distance(end, start);
-    int sampleCount = int(float(depthSampleNumber) * len);
-
-    vec4 pxColor = vec4(0.0);
-    vec3 texCoord = vec3(0.0);
-    float pix = 0.0;
-
-    vec3 rayPos = start;
-    float stepSize = 1.0/sampleCount;
-    vec3 stepPos = (end - start) * stepSize;
-    vec3 ditheredRayStep = ditherRay ? stepPos * dithering(uv) : stepPos;
-
-    for (int count = 0; count < sampleCount; count++) {
-        rayPos += stepPos;
-        texCoord = rayPos + ditheredRayStep;
-        pix = getNormalizedWindowLevel(texCoord);
-
-        vec4 pixel = texture(colorMap, vec2(pix, 0.0));
-        if (pix > 0.0) {
-            float alpha = pix - pix * pxColor.a;
-            pxColor.rgb = alpha * pixel.rgb + pxColor.rgb;
-            pxColor.a += alpha;
-        }
-        if (pxColor.a >= 0.99) {
-            break;
-        }
-    }
-    if (pxColor.a >= 0.99) {
-        pxColor.a = 1.0;
-    }
-    return pxColor;
-}
-
 vec4 rayCastingComposite(Ray ray, float tmin, float tmax, vec2 uv) {
     vec3 start = (ray.origin.xyz + tmin * ray.direction.xyz + texelSize) / (texelSize + texelSize);
     vec3 end = (ray.origin.xyz + tmax * ray.direction.xyz + texelSize) / (texelSize + texelSize);
@@ -444,16 +416,13 @@ vec4 rayCastingIsoSurface(Ray ray, float tmin, float tmax, vec2 uv) {
     return pxColor;
 }
 
-vec4 slice(Ray ray, float tmin, float tmax) {
-    vec3 start = (ray.origin.xyz + tmin * ray.direction.xyz + texelSize) / (texelSize + texelSize);
-    if (start.z < 0.5) {
-        start.z += 0.5;
-    } else {
-        start.z -= 0.5;
-    }
-
-    float pix = getNormalizedWindowLevel(start);
-    return vec4(pix, pix, pix, 1.0f);
+vec4 slice(vec2 uv) {
+    vec3 origin =  (viewMatrix * vec4(uv, 0.f, 1.0f)).xyz;
+    float pix = getNormalizedWindowLevel(origin);
+    vec4 pixel =  texture(colorMap, vec2(pix, 0.0));
+    pixel.a = min(pixel.a * opacityFactor, 1.0);
+    return pixel;
+  //  return vec4(pix, pix, pix, 1.0f);
 }
 
 void main() {
@@ -469,33 +438,22 @@ void main() {
     uv.x = (float(pixelCoords.x * 2 - imageDims.x) / imageDims.x);
     uv.y = (float(pixelCoords.y * 2 - imageDims.y) / imageDims.y);
 
-    Ray ray = CreateCameraRay(uv);
-
     vec4 pixelVal = vec4(0);
-    float tmin = 0.0;
-    float tmax = 0.0;
-    intersect(ray, tmin, tmax);
-
-    if (renderingType == 4) {
-        // pixelVal = slice(ray, tmin, tmax);
-        // use a new matrix with only rotation at the center
-        vec3 origin =  (viewMatrix * vec4(uv, 0.5f, 1.0f)).xyz;
-
-        float pix = getNormalizedWindowLevel(origin);
-        pixelVal = vec4(pix, pix, pix, 1.0f);
+    if (renderingType >= typeSlice) {
+        pixelVal = slice(uv);
     } else {
         // Volume Rendering
+        float tmin = 0.0;
+        float tmax = 0.0;
+        Ray ray = CreateCameraRay(uv);
+        intersect(ray, tmin, tmax);
         if (tmax >= tmin) {
-            if (renderingType == 1) {
-                pixelVal = rayCastingAlphaBlending(ray, tmin, tmax, uv);
-            } else if (renderingType == 2) {
+            if (renderingType == typeComposite) {
+                pixelVal = rayCastingComposite(ray, tmin, tmax, uv);
+            } else if (renderingType == typeMip) {
                 pixelVal = rayCastingMip(ray, tmin, tmax, uv);
-            } else if (renderingType == 3) {
+            } else if (renderingType == typeIsoSurface) {
                 pixelVal = rayCastingIsoSurface(ray, tmin, tmax, uv);
-            } else if (renderingType == 5) {
-                pixelVal = rayCastingComposite(ray, tmin, tmax, uv);
-            } else {
-                pixelVal = rayCastingComposite(ray, tmin, tmax, uv);
             }
         }
     }

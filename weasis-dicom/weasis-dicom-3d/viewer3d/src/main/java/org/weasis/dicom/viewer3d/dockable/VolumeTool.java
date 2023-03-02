@@ -10,6 +10,7 @@
 package org.weasis.dicom.viewer3d.dockable;
 
 import bibliothek.gui.dock.common.CLocation;
+import com.formdev.flatlaf.extras.FlatSVGIcon;
 import java.awt.Component;
 import java.awt.Dimension;
 import javax.swing.BorderFactory;
@@ -21,12 +22,14 @@ import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
+import javax.swing.JToggleButton;
 import javax.swing.JViewport;
 import javax.swing.border.Border;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.JSliderW;
 import org.weasis.core.api.util.ResourceUtil;
+import org.weasis.core.api.util.ResourceUtil.ActionIcon;
 import org.weasis.core.api.util.ResourceUtil.OtherIcon;
 import org.weasis.core.ui.docking.PluginTool;
 import org.weasis.core.util.StringUtil;
@@ -129,8 +132,19 @@ public class VolumeTool extends PluginTool {
             comboItem -> {
               JLabel label = new JLabel(ActionVol.VOL_PRESET.getTitle() + StringUtil.COLON);
               JComboBox<?> combo = comboItem.createCombo(140);
-              combo.setMaximumRowCount(10);
-              winLevelPanel.add(GuiUtils.getHorizontalBoxLayoutPanel(5, label, combo));
+              combo.setMaximumRowCount(15);
+              JPanel lutPanel = GuiUtils.getHorizontalBoxLayoutPanel(5, label, combo);
+              EventManager.getInstance()
+                  .getAction(ActionW.INVERT_LUT)
+                  .ifPresent(
+                      toggleButton -> {
+                        FlatSVGIcon icon = ResourceUtil.getIcon(ActionIcon.INVERSE_LUT);
+                        JToggleButton checkBox = toggleButton.createJToggleButton(icon);
+                        checkBox.setPreferredSize(GuiUtils.getBigIconButtonSize(checkBox));
+                        checkBox.setToolTipText(toggleButton.getActionW().getTitle());
+                        lutPanel.add(checkBox);
+                      });
+              winLevelPanel.add(lutPanel);
               winLevelPanel.add(GuiUtils.boxVerticalStrut(gabY));
             });
 
@@ -173,15 +187,6 @@ public class VolumeTool extends PluginTool {
             });
 
     EventManager.getInstance()
-        .getAction(ActionVol.MIP_DEPTH)
-        .ifPresent(
-            s -> {
-              JSliderW slider = s.createSlider(0, true);
-              GuiUtils.setPreferredWidth(slider, 100);
-              volumePanel.add(slider);
-            });
-
-    EventManager.getInstance()
         .getAction(ActionVol.VOL_SHADING)
         .ifPresent(
             b -> {
@@ -198,6 +203,7 @@ public class VolumeTool extends PluginTool {
               JCheckBox box = b.createCheckBox(ActionVol.VOL_SHADING.getTitle());
               volumePanel.add(
                   GuiUtils.getFlowLayoutPanel(box, GuiUtils.boxHorizontalStrut(10), btnOptions));
+              volumePanel.add(GuiUtils.boxVerticalStrut(gabY));
             });
 
     EventManager.getInstance()
@@ -208,6 +214,15 @@ public class VolumeTool extends PluginTool {
               pane.add(b.createCheckBox(ActionVol.VOL_SLICING.getTitle()));
               pane.add(Box.createRigidArea(new Dimension(20, 10)));
               volumePanel.add(pane);
+            });
+
+    EventManager.getInstance()
+        .getAction(ActionVol.MIP_DEPTH)
+        .ifPresent(
+            s -> {
+              JSliderW slider = s.createSlider(0, true);
+              GuiUtils.setPreferredWidth(slider, 100);
+              volumePanel.add(slider);
             });
 
     return volumePanel;

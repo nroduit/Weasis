@@ -13,6 +13,7 @@ import java.util.Objects;
 import java.util.Optional;
 import javax.swing.Icon;
 import javax.swing.JPopupMenu;
+import javax.swing.JToggleButton;
 import javax.swing.KeyStroke;
 import org.dcm4che3.img.lut.PresetWindowLevel;
 import org.weasis.core.api.gui.util.ActionW;
@@ -63,7 +64,7 @@ public class VolLutToolBar extends WtoolBar {
           }
         };
 
-    presetButton.setToolTipText("Presets");
+    presetButton.setToolTipText(ActionW.PRESET.getTitle());
     add(presetButton);
     presetAction.ifPresent(
         objectComboItemListener -> objectComboItemListener.registerActionState(presetButton));
@@ -101,6 +102,12 @@ public class VolLutToolBar extends WtoolBar {
     lutButton.setToolTipText("Volume LUT selection");
     add(lutButton);
     lutAction.ifPresent(c -> c.registerActionState(lutButton));
+
+    final JToggleButton invertButton = new JToggleButton();
+    invertButton.setToolTipText(ActionW.INVERT_LUT.getTitle());
+    invertButton.setIcon(ResourceUtil.getToolBarIcon(ActionIcon.INVERSE_LUT));
+    eventManager.getAction(ActionW.INVERT_LUT).ifPresent(c -> c.registerActionState(invertButton));
+    add(invertButton);
   }
 
   private Icon buildLutIcon() {

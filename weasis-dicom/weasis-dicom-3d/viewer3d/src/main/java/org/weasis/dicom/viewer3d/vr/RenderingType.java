@@ -9,20 +9,25 @@
  */
 package org.weasis.dicom.viewer3d.vr;
 
+import org.weasis.dicom.viewer3d.vr.View3d.ViewType;
+
 public enum RenderingType {
-  COMPOSITE("Composite", 0),
-  MIP("MIP", 2),
-  ISO2("Iso surface", 3),
-  ALPHA("Alpha-blending", 1),
-  SLICE("Slice", 4),
-  SLICE_ORTHO("Orthogonal slices", 5);
+  COMPOSITE("Composite", 0, ViewType.VOLUME3D),
+  MIP("MIP", 1, ViewType.VOLUME3D),
+  ISO2("Iso surface", 2, ViewType.VOLUME3D),
+  SLICE("Slice", 3, ViewType.SLICE);
+//  SLICE_AXIAL("MPR Axial", 4, ViewType.AXIAL),
+//  SLICE_CORONAL("MPR Coronal", 5, ViewType.CORONAL),
+//  SLICE_SAGITTAL("MPR Sagittal", 6, ViewType.SAGITTAL);
 
   final int id;
   final String title;
+  final ViewType viewType;
 
-  RenderingType(String title, int id) {
+  RenderingType(String title, int id, ViewType viewType) {
     this.title = title;
     this.id = id;
+    this.viewType = viewType;
   }
 
   public int getId() {
@@ -31,6 +36,10 @@ public enum RenderingType {
 
   public String getTitle() {
     return title;
+  }
+
+  public ViewType getViewType() {
+    return viewType;
   }
 
   @Override

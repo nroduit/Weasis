@@ -16,6 +16,7 @@ import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
 import java.awt.geom.Point2D;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
@@ -41,6 +42,8 @@ import org.weasis.core.api.gui.util.RadioMenuItem;
 import org.weasis.core.api.gui.util.SliderChangeListener;
 import org.weasis.core.api.gui.util.ToggleButtonListener;
 import org.weasis.core.api.image.GridBagLayoutModel;
+import org.weasis.core.api.image.op.ByteLut;
+import org.weasis.core.api.image.op.ByteLutCollection;
 import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.SeriesComparator;
@@ -121,7 +124,8 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> {
 
     setAction(newPresetAction());
     setAction(newLutShapeAction());
-    setAction(newLutAction());
+    setAction(newPreset3DAction());
+    setAction(newInverseLutAction());
     setAction(newSortStackAction());
     setAction(newInverseStackAction());
     setAction(
@@ -385,7 +389,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> {
     };
   }
 
-  private ComboItemListener<Preset> newLutAction() {
+  private ComboItemListener<Preset> newPreset3DAction() {
     return new ComboItemListener<>(
         ActionVol.VOL_PRESET, Preset.basicPresets.toArray(new Preset[0])) {
 
@@ -393,11 +397,6 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> {
       public void itemStateChanged(Object object) {
         firePropertyChange(
             ActionW.SYNCH.cmd(), null, new SynchEvent(getSelectedViewPane(), action.cmd(), object));
-        // FIXME use dispatch instead of static access
-        //        if (selectedView2dContainer != null) {
-        //          fireSeriesViewerListeners(
-        //              new SeriesViewerEvent(selectedView2dContainer, null, null, EVENT.LUT));
-        //        }
       }
     };
   }
@@ -665,7 +664,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> {
                 1,
                 canvas.getVolTexture().getDepth() // FIXME
                 ,
-                view2d.getFrameIndex(),
+                canvas.getFrameIndex(),
                 false));
 
     boolean volume = ViewType.VOLUME3D.equals(canvas.getViewType());
@@ -685,20 +684,21 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> {
     Optional<SliderChangeListener> volumeQuality = getAction(ActionVol.VOL_QUALITY);
     Optional<SliderChangeListener> volumeOpacity = getAction(ActionVol.VOL_OPACITY);
     Optional<ToggleButtonListener> volumeProjection = getAction(ActionVol.VOL_PROJECTION);
+    Optional<ToggleButtonListener> invertLut = getAction(ActionW.INVERT_LUT);
     if (volume) {
       volumeLighting.ifPresent(a -> a.setSelectedWithoutTriggerAction(rendering.isShading()));
       volumeSlicing.ifPresent(a -> a.setSelectedWithoutTriggerAction(rendering.isSlicing()));
       volumeProjection.ifPresent(
           a -> a.setSelectedWithoutTriggerAction(canvas.getCamera().isOrthographicProjection()));
       volumeQuality.ifPresent(a -> a.setSliderValue(rendering.getQuality(), false));
-      volumeOpacity.ifPresent(a -> a.setRealValue(rendering.getOpacity(), false));
     }
     volumeLighting.ifPresent(a -> a.enableAction(volume));
     volumeSlicing.ifPresent(a -> a.enableAction(volume));
     volumeQuality.ifPresent(a -> a.enableAction(volume));
-    volumeOpacity.ifPresent(a -> a.enableAction(volume));
+    //   volumeOpacity.ifPresent(a -> a.enableAction(volume));
     volumeProjection.ifPresent(a -> a.enableAction(volume));
 
+    volumeOpacity.ifPresent(a -> a.setRealValue(rendering.getOpacity(), false));
     //    mipType.ifPresent(
     //        a ->
     //            mipThickness.ifPresent(
@@ -706,22 +706,28 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> {
     // RenderingType.MIP.equals(a.getSelectedItem()))));
     mipThickness.ifPresent(a -> a.enableAction(!volume));
     cineAction.ifPresent(a -> a.enableAction(!volume));
+    invertLut.ifPresent(a -> a.enableAction(!volume));
     //    rotation.ifPresent(a -> a.enableAction(!volume));
     getAction(ActionW.FLIP).ifPresent(a -> a.enableAction(!volume));
     //    getAction(ActionW.MEASURE).ifPresent(a -> a.enableAction(!volume));
     //    getAction(ActionW.DRAW).ifPresent(a -> a.enableAction(!volume));
     getAction(ActionW.CROSSHAIR).ifPresent(a -> a.enableAction(!volume));
 
+    invertLut.ifPresent(
+        a ->
+            a.setSelectedWithoutTriggerAction(
+                (Boolean) canvas.getActionValue(ActionW.INVERT_LUT.cmd())));
+
     getAction(ActionW.SORT_STACK)
         .ifPresent(
             a ->
                 a.setSelectedItemWithoutTriggerAction(
-                    view2d.getActionValue(ActionW.SORT_STACK.cmd())));
+                    canvas.getActionValue(ActionW.SORT_STACK.cmd())));
     getAction(ActionW.INVERSE_STACK)
         .ifPresent(
             a ->
                 a.setSelectedWithoutTriggerAction(
-                    (Boolean) view2d.getActionValue(ActionW.INVERSE_STACK.cmd())));
+                    (Boolean) canvas.getActionValue(ActionW.INVERSE_STACK.cmd())));
 
     // register all actions for the selected view and for the other views register according to
     // synchview.

@@ -101,6 +101,7 @@ public class View3d extends VolumeCanvas
     AXIAL,
     CORONAL,
     SAGITTAL,
+    SLICE,
     VOLUME3D
   }
 
@@ -972,7 +973,7 @@ public class View3d extends VolumeCanvas
         } else if (command.equals(ActionVol.VOL_PRESET.cmd())) {
           setVolumePreset((Preset) val);
         } else if (command.equals(ActionW.INVERT_LUT.cmd())) {
-          // actionsInView.put(ActionW.INVERT_LUT.cmd(), inverse);
+          actionsInView.put(ActionW.INVERT_LUT.cmd(), val);
           repaint();
         } else if (command.equals(ActionW.SPATIAL_UNIT.cmd())) {
           actionsInView.put(command, val);
@@ -985,6 +986,7 @@ public class View3d extends VolumeCanvas
         } else if (command.equals(ActionVol.RENDERING_TYPE.cmd())) {
           if (val instanceof RenderingType type) {
             renderingLayer.setRenderingType(type);
+            setViewType(type.getViewType());
           }
         } else if (command.equals(ActionVol.MIP_DEPTH.cmd())) {
           if (val instanceof Integer) {
