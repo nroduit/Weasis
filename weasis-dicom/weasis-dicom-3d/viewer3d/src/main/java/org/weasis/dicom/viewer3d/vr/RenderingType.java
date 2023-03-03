@@ -16,9 +16,9 @@ public enum RenderingType {
   MIP("MIP", 1, ViewType.VOLUME3D),
   ISO2("Iso surface", 2, ViewType.VOLUME3D),
   SLICE("Slice", 3, ViewType.SLICE);
-//  SLICE_AXIAL("MPR Axial", 4, ViewType.AXIAL),
-//  SLICE_CORONAL("MPR Coronal", 5, ViewType.CORONAL),
-//  SLICE_SAGITTAL("MPR Sagittal", 6, ViewType.SAGITTAL);
+  //  SLICE_AXIAL("MPR Axial", 4, ViewType.AXIAL),
+  //  SLICE_CORONAL("MPR Coronal", 5, ViewType.CORONAL),
+  //  SLICE_SAGITTAL("MPR Sagittal", 6, ViewType.SAGITTAL);
 
   final int id;
   final String title;

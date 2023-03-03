@@ -21,82 +21,88 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 import javax.swing.Icon;
-import org.joml.Vector2f;
 import org.joml.Vector4f;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.weasis.dicom.codec.display.Modality;
+import org.weasis.dicom.viewer3d.vr.lut.PresetGroup;
+import org.weasis.dicom.viewer3d.vr.lut.PresetPoint;
+import org.weasis.dicom.viewer3d.vr.lut.VolumePreset;
 
 public class Preset extends TextureData {
-
+  private static final Logger LOGGER = LoggerFactory.getLogger(Preset.class);
   public static final List<Preset> basicPresets = loadPresets();
   private final boolean defaultElement;
+  private final List<PresetGroup> groups;
   private boolean requiredBuilding;
   final byte[] colors;
   private final String name;
   private final Modality modality;
 
   private final boolean shade;
-
   private final float specularPower;
-  private final float specular;
-  private final float ambient;
-  private final float diffuse;
+
   private final int colorMin;
   private final int colorMax;
-
-  private final List<Vector4f> colorTransfer;
-
-  private final List<Vector2f> scalarOpacity;
-
+  private final LightingMap lightingMap;
   private View3d renderer;
 
   public Preset(VolumePreset v) {
-    super(v.getColorTransfer().length / 4, PixelFormat.RGBA8);
+    super(256, PixelFormat.RGBA8);
     this.name = v.getName();
     this.modality = Modality.getModality(v.getModality());
     this.defaultElement = v.isDefaultElement();
     this.shade = v.isShade();
     this.specularPower = v.getSpecularPower();
-    this.specular = v.getSpecular();
-    this.ambient = v.getAmbient();
-    this.diffuse = v.getDiffuse();
 
-    this.colorTransfer = new ArrayList<>();
-    Float[] vColorTransfer = v.getColorTransfer();
-    if (vColorTransfer.length >= 4) {
-      int start = vColorTransfer.length % 2 == 0 ? 0 : 1;
-      for (int i = start; i < vColorTransfer.length; i = i + 4) {
-        colorTransfer.add(
-            new Vector4f(
-                vColorTransfer[i + 1],
-                vColorTransfer[i + 2],
-                vColorTransfer[i + 3],
-                vColorTransfer[i]));
-      }
+    this.groups = v.getGroups();
+    if (groups.isEmpty() || groups.stream().anyMatch(g -> g.getPoints().length == 0)) {
+      throw new IllegalArgumentException("empty group or point");
     }
-
-    this.scalarOpacity = new ArrayList<>();
-    Float[] vScalarOpacity = v.getScalarOpacity();
-    if (vScalarOpacity.length >= 4) {
-      int start = vScalarOpacity.length % 2 == 0 ? 0 : 1;
-      for (int i = start; i < vScalarOpacity.length; i = i + 2) {
-        scalarOpacity.add(new Vector2f(vScalarOpacity[i], vScalarOpacity[i + 1]));
-      }
-    }
-
-    this.colorMin = Math.round(scalarOpacity.get(0).x);
-    this.colorMax = Math.round(scalarOpacity.get(scalarOpacity.size() - 1).x);
-    this.colors = new byte[(colorMax - colorMin) * 4];
+    this.colorMin = groups.get(0).getPoints()[0].getIntensity();
+    PresetPoint[] pts = groups.get(groups.size() - 1).getPoints();
+    this.colorMax = pts[pts.length - 1].getIntensity();
+    this.width = colorMax - colorMin;
+    this.colors = new byte[width * 4];
+    this.lightingMap = new LightingMap(hasIdenticalLightingValues() ? 1 : width);
     initColors(this);
   }
 
-  private static int getBestIndex(List<Vector2f> list, int stepX) {
+  private boolean hasIdenticalLightingValues() {
+    float amb = 0.2f;
+    float diff = 0.9f;
+    float spec = 0.2f;
+    boolean init = false;
+    for (PresetGroup g : groups) {
+      for (PresetPoint p : g.getPoints()) {
+        if (!init) {
+          if (p.getAmbient() != null) {
+            init = true;
+            amb = PresetPoint.convertFloat(p.getAmbient(), amb);
+            diff = PresetPoint.convertFloat(p.getDiffuse(), diff);
+            spec = PresetPoint.convertFloat(p.getSpecular(), spec);
+          }
+        } else if (p.getAmbient() != null && p.getAmbient() != amb) {
+          return false;
+        } else if (p.getDiffuse() != null && p.getDiffuse() != diff) {
+          return false;
+        } else if (p.getSpecular() != null && p.getSpecular() != spec) {
+          return false;
+        }
+      }
+    }
+    return true;
+  }
+
+  private static int getBestIndex(List<PresetPoint> points, int stepX) {
     int pos = 0;
-    for (int i = 0; i < list.size(); i++) {
-      Vector2f val = list.get(i);
-      if (Math.round(val.x) <= stepX) {
+    for (int i = 0; i < points.size(); i++) {
+      PresetPoint val = points.get(i);
+      if (val.getIntensity() <= stepX) {
         pos = i;
       } else {
         break;
@@ -106,104 +112,134 @@ public class Preset extends TextureData {
     return pos;
   }
 
-  private static int getBestColorIndex(List<Vector4f> list, int stepX) {
+  private static int getBestColorIndex(List<PresetPoint> points, int stepX) {
     int pos = 0;
-    for (int i = 0; i < list.size(); i++) {
-      Vector4f val = list.get(i);
-      if (Math.round(val.w) <= stepX) {
-        pos = i;
-      } else {
+    for (int i = 0; i < points.size(); i++) {
+      PresetPoint val = points.get(i);
+      if (val.getIntensity() > stepX) {
         break;
       }
+      if (val.getRed() != null) {
+        pos = i;
+      }
     }
-
     return pos;
+  }
+
+  private static PresetPoint getNextColor(List<PresetPoint> points, int stepX, int index) {
+    for (int i = index + 1; i < points.size(); i++) {
+      PresetPoint val = points.get(i);
+      if (val.getIntensity() > stepX && val.getRed() != null) {
+        return val;
+      }
+    }
+    return points.get(index);
   }
 
   static void initColors(Preset preset) {
     int width = preset.colorMax - preset.colorMin;
+    List<PresetPoint> points = new ArrayList<>();
+    preset.groups.forEach(g -> points.addAll(Arrays.asList(g.getPoints())));
 
     for (int i = 0; i < width; i++) {
       int stepX = i + preset.colorMin;
 
-      float a = 0.0f;
-      int index = getBestIndex(preset.scalarOpacity, stepX);
-      Vector2f vStart = preset.scalarOpacity.get(index);
-      int val = Math.round(vStart.x);
+      float a;
+      int index = getBestIndex(points, stepX);
+      PresetPoint vStart = points.get(index);
+      int val = vStart.getIntensity();
       if (val == stepX) {
-        a = vStart.y;
-      }
-      if (val < stepX) {
-        Vector2f vEnd =
-            index + 1 < preset.scalarOpacity.size()
-                ? preset.scalarOpacity.get(index + 1)
-                : new Vector2f(stepX + 1f, 1.0f);
-        Vector2f v = linearGradient(vStart, vEnd, stepX);
-        if (v != null) {
-          a = v.y;
-        }
+        a = vStart.getOpacity();
+      } else if (val < stepX && index + 1 < points.size()) {
+        PresetPoint vEnd = points.get(index + 1);
+        a = linearOpacityGradient(vStart, vEnd, stepX);
+      } else {
+        a = 0.0f;
       }
 
-      float r = 0.0f;
-      float g = 0.0f;
-      float b = 0.0f;
+      float r;
+      float g;
+      float b;
+      float amb;
+      float diff;
+      float spec;
 
-      index = getBestColorIndex(preset.colorTransfer, stepX);
-      Vector4f v1 = preset.colorTransfer.get(index);
-      val = Math.round(v1.w);
+      index = getBestColorIndex(points, stepX);
+      PresetPoint v1 = points.get(index);
+      val = v1.getIntensity();
       if (val == stepX) {
-        r = v1.x;
-        g = v1.y;
-        b = v1.z;
-      }
-      if (val < stepX) {
-        Vector4f vEnd =
-            index + 1 < preset.colorTransfer.size()
-                ? preset.colorTransfer.get(index + 1)
-                : new Vector4f(1.0f, 1.0f, 1.0f, stepX + 1f);
-        Vector4f v = linearGradient(v1, vEnd, stepX);
-        if (v != null) {
-          r = v.x;
-          g = v.y;
-          b = v.z;
-        }
+        r = PresetPoint.convertFloat(v1.getRed(), 0.0f);
+        g = PresetPoint.convertFloat(v1.getGreen(), 0.0f);
+        b = PresetPoint.convertFloat(v1.getBlue(), 0.0f);
+        amb = PresetPoint.convertFloat(v1.getAmbient(), 0.2f);
+        diff = PresetPoint.convertFloat(v1.getDiffuse(), 0.9f);
+        spec = PresetPoint.convertFloat(v1.getSpecular(), 0.2f);
+      } else if (val < stepX && index + 1 < points.size()) {
+        PresetPoint vEnd = getNextColor(points, stepX, index);
+        Vector4f v = linearColorGradient(v1, vEnd, stepX);
+        r = v.x;
+        g = v.y;
+        b = v.z;
+        v = linearLightingGradient(v1, vEnd, stepX);
+        amb = v.x;
+        diff = v.y;
+        spec = v.z;
+      } else {
+        r = 0.0f;
+        g = 0.0f;
+        b = 0.0f;
+        amb = 0.2f;
+        diff = 0.9f;
+        spec = 0.2f;
       }
 
       preset.colors[i * 4] = (byte) Math.round(r * 255);
       preset.colors[i * 4 + 1] = (byte) Math.round(g * 255);
       preset.colors[i * 4 + 2] = (byte) Math.round(b * 255);
       preset.colors[i * 4 + 3] = (byte) Math.round(a * 255);
+
+      preset.lightingMap.setAmbient(i, amb);
+      preset.lightingMap.setDiffuse(i, diff);
+      preset.lightingMap.setSpecular(i, spec);
     }
   }
 
-  public static Vector4f linearGradient(Vector4f vStart, Vector4f vEnd, int stepX) {
-    if (vStart == null || vEnd == null) {
-      return null;
-    }
-
-    int min = Math.round(vStart.w);
-    int max = Math.round(vEnd.w);
-    int n = max - min;
-    float stepR = (vEnd.x - vStart.x) / (n - 1);
-    float stepG = (vEnd.y - vStart.y) / (n - 1);
-    float stepB = (vEnd.z - vStart.z) / (n - 1);
+  public static Vector4f linearColorGradient(PresetPoint vStart, PresetPoint vEnd, int stepX) {
+    int min = vStart.getIntensity();
+    int n = vEnd.getIntensity() - min;
+    float stepR = (vEnd.getRed() - vStart.getRed()) / (n - 1);
+    float stepG = (vEnd.getGreen() - vStart.getGreen()) / (n - 1);
+    float stepB = (vEnd.getBlue() - vStart.getBlue()) / (n - 1);
 
     int pos = stepX - min;
     return new Vector4f(
-        vStart.x + stepR * pos, vStart.y + stepG * pos, vStart.z + stepB * pos, stepX);
+        vStart.getRed() + stepR * pos,
+        vStart.getGreen() + stepG * pos,
+        vStart.getBlue() + stepB * pos,
+        stepX);
   }
 
-  public static Vector2f linearGradient(Vector2f vStart, Vector2f vEnd, int stepX) {
-    if (vStart == null || vEnd == null) {
-      return null;
-    }
+  public static Vector4f linearLightingGradient(PresetPoint vStart, PresetPoint vEnd, int stepX) {
+    int min = vStart.getIntensity();
+    int n = vEnd.getIntensity() - min;
+    float stepA = (vEnd.getAmbient() - vStart.getAmbient()) / (n - 1);
+    float stepD = (vEnd.getDiffuse() - vStart.getDiffuse()) / (n - 1);
+    float stepS = (vEnd.getSpecular() - vStart.getSpecular()) / (n - 1);
 
-    int min = Math.round(vStart.x);
-    int max = Math.round(vEnd.x);
-    int n = max - min;
-    float step = (vEnd.y - vStart.y) / (n - 1);
+    int pos = stepX - min;
+    return new Vector4f(
+        vStart.getAmbient() + stepA * pos,
+        vStart.getDiffuse() + stepD * pos,
+        vStart.getSpecular() + stepS * pos,
+        stepX);
+  }
 
-    return new Vector2f(stepX, vStart.y + step * (stepX - min));
+  public static float linearOpacityGradient(PresetPoint vStart, PresetPoint vEnd, int stepX) {
+    int min = vStart.getIntensity();
+    int n = vEnd.getIntensity() - min;
+    float step = (vEnd.getOpacity() - vStart.getOpacity()) / (n - 1);
+
+    return vStart.getOpacity() + step * (stepX - min);
   }
 
   @Override
@@ -231,18 +267,6 @@ public class Preset extends TextureData {
     return specularPower;
   }
 
-  public float getSpecular() {
-    return specular;
-  }
-
-  public float getAmbient() {
-    return ambient;
-  }
-
-  public float getDiffuse() {
-    return diffuse;
-  }
-
   public boolean isRequiredBuilding() {
     return requiredBuilding;
   }
@@ -264,13 +288,15 @@ public class Preset extends TextureData {
     gl2.glTexImage2D(
         GL.GL_TEXTURE_2D,
         0,
-        GL.GL_RGBA,
-        colors.length / 4,
-        1,
+        internalFormat,
+        width,
+        height,
         0,
-        GL.GL_RGBA,
-        GL.GL_UNSIGNED_BYTE,
+        format,
+        type,
         Buffers.newDirectByteBuffer(colors).rewind());
+
+    lightingMap.init(gl2);
   }
 
   @Override
@@ -279,7 +305,7 @@ public class Preset extends TextureData {
   }
 
   void update(GL2 gl2) {
-    if (renderer != null && (requiredBuilding && renderer.volumePreset != null)) {
+    if (renderer != null && requiredBuilding) {
       this.requiredBuilding = false;
 
       if (gl2 != null) {
@@ -290,13 +316,15 @@ public class Preset extends TextureData {
         gl2.glTexImage2D(
             GL.GL_TEXTURE_2D,
             0,
-            GL.GL_RGBA,
-            renderer.volumePreset.colors.length / 4,
-            1,
+            internalFormat,
+            width,
+            height,
             0,
-            GL.GL_RGBA,
-            GL.GL_UNSIGNED_BYTE,
-            Buffers.newDirectByteBuffer(renderer.volumePreset.colors).rewind());
+            format,
+            type,
+            Buffers.newDirectByteBuffer(colors).rewind());
+
+        lightingMap.update(gl2);
       }
     }
   }
@@ -304,46 +332,47 @@ public class Preset extends TextureData {
   public void drawLutIcon(Graphics2D g2d, Icon icon, int x, int y, int border, boolean markers) {
     int iconWidth = icon.getIconWidth();
     int iconHeight = icon.getIconHeight() - 2 * border;
-    ;
-    int width = colorMax - colorMin;
+    List<PresetPoint> points = new ArrayList<>();
+    groups.forEach(g -> points.addAll(Arrays.asList(g.getPoints())));
 
     int sx = x + border;
     int sy = y + border;
 
     for (int i = 0; i < iconWidth; i++) {
-      float r = 0.0f;
-      float g = 0.0f;
-      float b = 0.0f;
+      float r;
+      float g;
+      float b;
       int stepX = (width * i / iconWidth) + colorMin;
-      int index = getBestColorIndex(colorTransfer, stepX);
-      Vector4f v1 = colorTransfer.get(index);
-      int val = Math.round(v1.w);
+
+      int index = getBestColorIndex(points, stepX);
+      PresetPoint v1 = points.get(index);
+      int val = v1.getIntensity();
       if (val == stepX) {
-        r = v1.x;
-        g = v1.y;
-        b = v1.z;
-      }
-      if (val < stepX) {
-        Vector4f vEnd =
-            index + 1 < colorTransfer.size()
-                ? colorTransfer.get(index + 1)
-                : new Vector4f(1.0f, 1.0f, 1.0f, stepX + 1f);
-        Vector4f v = linearGradient(v1, vEnd, stepX);
-        if (v != null) {
-          r = v.x;
-          g = v.y;
-          b = v.z;
-        }
+        r = PresetPoint.convertFloat(v1.getRed(), 0.0f);
+        g = PresetPoint.convertFloat(v1.getGreen(), 0.0f);
+        b = PresetPoint.convertFloat(v1.getBlue(), 0.0f);
+      } else if (val < stepX) {
+        PresetPoint vEnd = getNextColor(points, stepX, index);
+        Vector4f v = linearColorGradient(v1, vEnd, stepX);
+        r = v.x;
+        g = v.y;
+        b = v.z;
+      } else {
+        r = 0.0f;
+        g = 0.0f;
+        b = 0.0f;
       }
       g2d.setColor(new Color(r, g, b));
       g2d.drawLine(sx + i, sy, sx + i, sy + iconHeight);
     }
 
     if (markers) {
-      for (Vector4f t : colorTransfer) {
-        int index = (Math.round(t.w) - colorMin) * iconWidth / width;
-        g2d.setColor(Color.BLACK);
-        g2d.draw3DRect(sx + index - 1, sy + iconHeight / 2 - 1, 3, 3, true);
+      for (PresetPoint p : points) {
+        if (p.getRed() != null) {
+          int index = (p.getIntensity() - colorMin) * iconWidth / width;
+          g2d.setColor(Color.BLACK);
+          g2d.draw3DRect(sx + index - 1, sy + iconHeight / 2 - 1, 3, 3, true);
+        }
       }
     }
   }
@@ -406,7 +435,15 @@ public class Preset extends TextureData {
           objectMapper.readValue(
               Preset.class.getResourceAsStream("/volumePresets.json"), new TypeReference<>() {});
 
-      list.forEach(p -> presets.add(new Preset(p)));
+      list.forEach(
+          p -> {
+            try {
+              Preset preset = new Preset(p);
+              presets.add(preset);
+            } catch (Exception e) {
+              LOGGER.error("Cannot read the preset {}", p.getName(), e);
+            }
+          });
     } catch (IOException e) {
       throw new RuntimeException(e);
     }

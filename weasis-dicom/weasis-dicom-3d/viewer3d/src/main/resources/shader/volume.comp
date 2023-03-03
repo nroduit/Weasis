@@ -2,8 +2,9 @@
 
 layout (local_size_x = 16, local_size_y = 16) in ;
 layout (rgba32f, binding = 0) uniform image2D outputImage;
-layout (binding = 1) uniform sampler3D volTexture;
-layout (binding = 2) uniform sampler2D colorMap;
+layout (binding = 0) uniform sampler3D volTexture;
+layout (binding = 1) uniform sampler2D colorMap;
+layout (binding = 2) uniform sampler2D lightingMap;
 
 // Texture data type
 uniform int textureDataType;
@@ -66,9 +67,6 @@ struct Ray {
 };
 struct LightParameters {
     vec4 position;
-    vec4 diffuse;
-    vec4 specular;
-    vec4 ambient;
     float specularPower;
     bool enabled;
 };
@@ -197,7 +195,6 @@ float guassianFilter(vec3 uvw, float delta) {
     float dY = delta;
     float dZ = delta;
     float pix = getNormalizedWindowLevel(uvw);
-    pix *= 2;
     pix += getNormalizedWindowLevel(uvw +vec3(+dX,+dY,+dZ));
     pix += getNormalizedWindowLevel(uvw +vec3(+dX,+dY,-dZ));
     pix += getNormalizedWindowLevel(uvw +vec3(+dX,-dY,+dZ));
@@ -206,11 +203,11 @@ float guassianFilter(vec3 uvw, float delta) {
     pix += getNormalizedWindowLevel(uvw +vec3(-dX,+dY,-dZ));
     pix += getNormalizedWindowLevel(uvw +vec3(-dX,-dY,+dZ));
     pix += getNormalizedWindowLevel(uvw +vec3(-dX,-dY,-dZ));
-    return pix/10;
+    return pix/9;
 }
 
 // Computes a simplified lighting equation
-vec3 blinnPhong( vec3 N, vec3 V, vec3 L, int light, vec3 diffuse )
+vec3 blinnPhong( vec3 N, vec3 V, vec3 L, int lightIndex, float pixelValue, vec3 diffuse )
 {
     // Material properties
     vec3 Ka = defaultAmbient;
@@ -222,11 +219,11 @@ vec3 blinnPhong( vec3 N, vec3 V, vec3 L, int light, vec3 diffuse )
 
     // Specular coefficient
     vec3 H = normalize( L + V );
-    float spec_coeff = diff_coeff > 0.0 ? pow( max( dot( H, N ), 0.0 ), lights[light].specularPower ) : 0.0;
+    float spec_coeff = diff_coeff > 0.0 ? pow( max( dot( H, N ), 0.0 ), lights[lightIndex].specularPower ) : 0.0;
 
-    return  Ka * lights[light].ambient.rgb  +
-    Kd * lights[light].diffuse.rgb  * diff_coeff +
-    Ks * lights[light].specular.rgb * spec_coeff ;
+
+    vec4 light =  texture(lightingMap, vec2(pixelValue, 0.0));
+    return  Ka * light.x + Kd * light.y  * diff_coeff + Ks * light.z * spec_coeff ;
 }
 
 // On-the-fly gradient approximation.
@@ -339,7 +336,7 @@ vec4 rayCastingComposite(Ray ray, float tmin, float tmax, vec2 uv) {
                         if ( dot( L, normalPos ) < 0.0 ) {
                             normalPos = -normalPos;
                         }
-                        pxColor.rgb = pixel.rgb * blinnPhong(normalPos, V, L, i, defaultDiffuse) * pixel.a + alpha * pxColor.rgb;
+                        pxColor.rgb = pixel.rgb * blinnPhong(normalPos, V, L, i, pix, defaultDiffuse) * pixel.a + alpha * pxColor.rgb;
                     }
                 }
             } else {
@@ -397,7 +394,7 @@ vec4 rayCastingIsoSurface(Ray ray, float tmin, float tmax, vec2 uv) {
                             normalPos = -normalPos;
                         }
 
-                        pxColor.rgb = pxColor.rgb + blinnPhong(normalPos, V, L, i, diffuse.rgb);
+                        pxColor.rgb = pxColor.rgb + blinnPhong(normalPos, V, L, i, pix, diffuse.rgb);
                     }
                 }
                 pxColor.a = diffuse.a;

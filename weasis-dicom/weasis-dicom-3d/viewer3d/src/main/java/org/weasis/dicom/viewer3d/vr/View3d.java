@@ -43,7 +43,6 @@ import javax.swing.JPopupMenu;
 import javax.swing.ToolTipManager;
 import org.dcm4che3.img.lut.PresetWindowLevel;
 import org.joml.Vector3f;
-import org.joml.Vector4f;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.ActionState;
@@ -373,37 +372,6 @@ public class View3d extends VolumeCanvas
           String.format("lights[%d].position", val),
           (gl, loc) ->
               gl.glUniform4fv(loc, 1, camera.getRayOrigin().get(Buffers.newDirectFloatBuffer(4))));
-      program.allocateUniform(
-          gl2,
-          String.format("lights[%d].diffuse", val),
-          (gl, loc) -> {
-            float diffuse = renderingLayer.getShadingOptions().getDiffuse();
-            gl.glUniform4fv(
-                loc,
-                1,
-                new Vector4f(diffuse, diffuse, diffuse, 1).get(Buffers.newDirectFloatBuffer(4)));
-          });
-      program.allocateUniform(
-          gl2,
-          String.format("lights[%d].specular", val),
-          (gl, loc) -> {
-            float specular = renderingLayer.getShadingOptions().getSpecular();
-            gl.glUniform4fv(
-                loc,
-                1,
-                new Vector4f(specular, specular, specular, 1).get(Buffers.newDirectFloatBuffer(4)));
-          });
-      program.allocateUniform(
-          gl2,
-          String.format("lights[%d].ambient", val),
-          (gl, loc) -> {
-            float ambient = renderingLayer.getShadingOptions().getAmbient();
-            gl.glUniform4fv(
-                loc,
-                1,
-                new Vector4f(ambient, ambient, ambient, 1).get(Buffers.newDirectFloatBuffer(4)));
-          });
-
       program.allocateUniform(
           gl2,
           String.format("lights[%d].specularPower", val),

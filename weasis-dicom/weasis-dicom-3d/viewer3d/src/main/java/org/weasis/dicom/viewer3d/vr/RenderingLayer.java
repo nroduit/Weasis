@@ -207,9 +207,9 @@ public class RenderingLayer<E extends ImageElement> {
     if (p != null) {
       enableRepaint = false;
       setShading(p.isShade());
-      shadingOptions.setSpecular(p.getSpecular());
-      shadingOptions.setAmbient(p.getAmbient());
-      shadingOptions.setDiffuse(p.getDiffuse());
+      shadingOptions.setSpecular(0.2f);
+      shadingOptions.setAmbient(0.2f);
+      shadingOptions.setDiffuse(0.9f);
       shadingOptions.setSpecularPower(p.getSpecularPower());
       enableRepaint = true;
       if (repaint) {
