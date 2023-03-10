@@ -81,7 +81,6 @@ import org.weasis.core.ui.model.layer.LayerAnnotation;
 import org.weasis.core.ui.model.layer.LayerType;
 import org.weasis.core.ui.model.utils.bean.PanPoint;
 import org.weasis.dicom.codec.DicomImageElement;
-import org.weasis.dicom.codec.display.Modality;
 import org.weasis.dicom.viewer3d.ActionVol;
 import org.weasis.dicom.viewer3d.EventManager;
 import org.weasis.dicom.viewer3d.InfoLayer3d;
@@ -144,11 +143,9 @@ public class View3d extends VolumeCanvas
     }
     setLayout(null);
 
+    this.renderingLayer = new RenderingLayer();
     this.volumePreset = Preset.getDefaultPreset(null);
     volumePreset.setRequiredBuilding(true);
-    volumePreset.setRenderer(this);
-
-    this.renderingLayer = new RenderingLayer();
 
     actionsInView.put(ActionVol.ORIENTATION_CUBE.cmd(), false);
     actionsInView.put(ActionVol.HIDE_CROSSHAIR_CENTER.cmd(), true);
@@ -181,7 +178,6 @@ public class View3d extends VolumeCanvas
     actionsInView.put(ActionW.INVERSE_STACK.cmd(), false);
     actionsInView.put(ActionW.FILTERED_SERIES.cmd(), null);
 
-    actionsInView.put(ActionW.INVERT_LUT.cmd(), false);
     actionsInView.put(ActionW.ROTATION.cmd(), 0);
     actionsInView.put(ActionW.FLIP.cmd(), false);
 
@@ -281,7 +277,7 @@ public class View3d extends VolumeCanvas
       return 0;
     }
     double val = Math.max(volTexture.getDepth(), volTexture.getMaxDimensionLength());
-    return Math.min(8192, (int) Math.round(val * Math.sqrt(2.0)));
+    return Math.min(8192, (int) Math.round(val * camera.getFocalLength()));
   }
 
   @Override
@@ -371,7 +367,8 @@ public class View3d extends VolumeCanvas
           gl2,
           String.format("lights[%d].position", val),
           (gl, loc) ->
-              gl.glUniform4fv(loc, 1, camera.getRayOrigin().get(Buffers.newDirectFloatBuffer(4))));
+              gl.glUniform4fv(
+                  loc, 1, camera.getLightOrigin().get(Buffers.newDirectFloatBuffer(4))));
       program.allocateUniform(
           gl2,
           String.format("lights[%d].specularPower", val),
@@ -427,7 +424,7 @@ public class View3d extends VolumeCanvas
     texture.init(gl2);
     volTexture.init(gl2);
     if (volumePreset != null) {
-      volumePreset.init(gl2);
+      volumePreset.init(gl2, renderingLayer.isInvertLut());
     }
 
     quadProgram.init(gl2);
@@ -461,7 +458,7 @@ public class View3d extends VolumeCanvas
       program.setUniforms(gl2);
       volTexture.render(gl2);
       if (volumePreset != null) {
-        volumePreset.render(gl2);
+        volumePreset.render(gl2, renderingLayer.isInvertLut());
       }
       texture.render(gl2);
       quadProgram.use(gl2);
@@ -496,7 +493,6 @@ public class View3d extends VolumeCanvas
 
   public void setVolumePreset(Preset volumePreset) {
     this.volumePreset = Objects.requireNonNull(volumePreset);
-    volumePreset.setRenderer(this);
     volumePreset.setRequiredBuilding(true);
 
     getVolTexture().getPresetList(true, volumePreset).stream()
@@ -755,13 +751,13 @@ public class View3d extends VolumeCanvas
 
     initActionWState();
 
-    CameraView c = CameraView.INITIAL;
+    CameraView c = Camera.getDefaultOrientation();
     camera.set(c.position(), c.rotation(), -getBestFitViewScale(), false);
     renderingLayer.setEnableRepaint(false);
     renderingLayer.setQuality(getDefaultQuality());
     renderingLayer.setOpacity(1.0);
-    Modality modality = volTexture == null ? null : volTexture.getModality();
-    setVolumePreset(Preset.getDefaultPreset(modality));
+    renderingLayer.setInvertLut(false);
+    setVolumePreset(volumePreset);
     renderingLayer.setEnableRepaint(true);
     renderingLayer.fireLayerChanged();
     eventManager.updateComponentsListener(this);
@@ -941,8 +937,12 @@ public class View3d extends VolumeCanvas
         } else if (command.equals(ActionVol.VOL_PRESET.cmd())) {
           setVolumePreset((Preset) val);
         } else if (command.equals(ActionW.INVERT_LUT.cmd())) {
-          actionsInView.put(ActionW.INVERT_LUT.cmd(), val);
-          repaint();
+          if (val instanceof Boolean invertLut) {
+            if (volumePreset != null && renderingLayer.isInvertLut() != invertLut) {
+              volumePreset.setRequiredBuilding(true);
+            }
+            renderingLayer.setInvertLut(invertLut);
+          }
         } else if (command.equals(ActionW.SPATIAL_UNIT.cmd())) {
           actionsInView.put(command, val);
 

@@ -27,12 +27,13 @@ public class RenderingLayer<E extends ImageElement> {
   private boolean shading;
 
   private boolean slicing;
+  private boolean invertLut;
   private int quality;
   private LutShape lutShape;
   private RenderingType renderingType;
   private double opacity;
   private boolean enableRepaint;
-  private ShadingOptions shadingOptions;
+  private final ShadingOptions shadingOptions;
 
   public RenderingLayer() {
     this.listenerList = new ArrayList<>();
@@ -44,6 +45,7 @@ public class RenderingLayer<E extends ImageElement> {
     this.quality = 1024;
     this.renderingType = RenderingType.COMPOSITE;
     this.enableRepaint = true;
+    this.invertLut = false;
     this.shadingOptions = new ShadingOptions(this);
   }
 
@@ -119,6 +121,17 @@ public class RenderingLayer<E extends ImageElement> {
   public void setShading(boolean shading) {
     if (this.shading != shading) {
       this.shading = shading;
+      fireLayerChanged();
+    }
+  }
+
+  public boolean isInvertLut() {
+    return invertLut;
+  }
+
+  public void setInvertLut(boolean invertLut) {
+    if (this.invertLut != invertLut) {
+      this.invertLut = invertLut;
       fireLayerChanged();
     }
   }

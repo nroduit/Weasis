@@ -30,6 +30,8 @@ import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.viewer3d.OpenGLInfo;
 import org.weasis.dicom.viewer3d.View3DContainer;
 import org.weasis.dicom.viewer3d.View3DFactory;
+import org.weasis.dicom.viewer3d.geometry.Camera;
+import org.weasis.dicom.viewer3d.geometry.CameraView;
 import org.weasis.dicom.viewer3d.vr.RenderingLayer;
 
 public class Viewer3dPrefView extends AbstractItemDialogPage {
@@ -39,6 +41,8 @@ public class Viewer3dPrefView extends AbstractItemDialogPage {
   private final JSlider sliderDynamic = new JSlider(0, 100, RenderingLayer.DEFAULT_DYNAMIC_QUALITY);
   private final JComboBox<GridBagLayoutModel> comboBoxLayouts =
       new JComboBox<>(View3DContainer.LAYOUT_LIST.toArray(new GridBagLayoutModel[0]));
+
+  private final JComboBox<CameraView> comboBoxOrientations = new JComboBox<>(CameraView.values());
 
   public Viewer3dPrefView() {
     super(View3DFactory.NAME, 503);
@@ -137,6 +141,16 @@ public class Viewer3dPrefView extends AbstractItemDialogPage {
         GuiUtils.getHorizontalBoxLayoutPanel(
             ITEM_SEPARATOR, new JLabel("Dynamic quality"), sliderDynamic));
 
+    labelLayout = new JLabel("Default orientation" + StringUtil.COLON);
+    otherPanel.add(
+        GuiUtils.getFlowLayoutPanel(
+            FlowLayout.LEADING,
+            ITEM_SEPARATOR_SMALL,
+            ITEM_SEPARATOR,
+            GuiUtils.boxHorizontalStrut(shiftX),
+            labelLayout,
+            comboBoxOrientations));
+
     otherPanel.add(
         GuiUtils.getFlowLayoutPanel(
             new JLabel("Background color"),
@@ -155,6 +169,11 @@ public class Viewer3dPrefView extends AbstractItemDialogPage {
     if (comboBoxLayouts.getSelectedIndex() < 0) {
       comboBoxLayouts.setSelectedItem(0);
     }
+
+    comboBoxOrientations.setSelectedItem(Camera.getDefaultOrientation());
+    if (comboBoxOrientations.getSelectedIndex() < 0) {
+      comboBoxOrientations.setSelectedItem(0);
+    }
   }
 
   private Color getBackgroundColor() {
@@ -170,6 +189,8 @@ public class Viewer3dPrefView extends AbstractItemDialogPage {
     BundleTools.SYSTEM_PREFERENCES.put(
         View3DFactory.P_DEFAULT_LAYOUT,
         ((GridBagLayoutModel) comboBoxLayouts.getSelectedItem()).getId());
+    BundleTools.SYSTEM_PREFERENCES.put(
+        Camera.P_DEFAULT_ORIENTATION, ((CameraView) comboBoxOrientations.getSelectedItem()).name());
     BundleTools.saveSystemPreferences();
   }
 
@@ -180,6 +201,7 @@ public class Viewer3dPrefView extends AbstractItemDialogPage {
     BundleTools.SYSTEM_PREFERENCES.putColorProperty(RenderingLayer.LIGHT_COLOR, Color.WHITE);
     BundleTools.SYSTEM_PREFERENCES.put(
         View3DFactory.P_DEFAULT_LAYOUT, View3DContainer.VIEWS_vr.getId());
+    BundleTools.SYSTEM_PREFERENCES.put(Camera.P_DEFAULT_ORIENTATION, CameraView.INITIAL.name());
     setDefaultLayout();
   }
 }

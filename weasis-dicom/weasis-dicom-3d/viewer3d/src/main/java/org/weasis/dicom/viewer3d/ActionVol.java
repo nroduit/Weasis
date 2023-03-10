@@ -43,7 +43,7 @@ public class ActionVol {
       new ComboItemListenerValue<>(ActionW.LUT.getTitle(), "vol.lut", 0, 0, null);
 
   public static final SliderChangeListenerValue VOL_QUALITY =
-      new SliderChangeListenerValue("Rendering Quality", "vol.quality", 0, 0, null);
+      new SliderChangeListenerValue("Z-axis sampling", "vol.quality", 0, 0, null);
 
   public static final ToggleButtonListenerValue VOL_SLICING =
       new ToggleButtonListenerValue("Slicing", "vol.slicing", 0, 0, null);

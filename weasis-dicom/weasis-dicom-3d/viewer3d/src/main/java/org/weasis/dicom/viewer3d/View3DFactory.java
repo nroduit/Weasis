@@ -57,7 +57,7 @@ public class View3DFactory implements SeriesViewerFactory {
 
   public static final String NAME = "3D Viewer";
 
-  public static final String P_DEFAULT_LAYOUT = "default.layout";
+  public static final String P_DEFAULT_LAYOUT = "volume.default.layout";
   public static final String P_OPENGL_ENABLE = "opengl.enable";
   public static final String P_OPENGL_PREV_INIT = "opengl.prev.init";
 

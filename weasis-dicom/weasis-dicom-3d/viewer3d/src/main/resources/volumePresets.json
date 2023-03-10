@@ -15,9 +15,9 @@
             "red": "0",
             "green": "0",
             "blue": "0",
-            "ambient": "1",
-            "diffuse": "0",
-            "specular": "0"
+            "ambient": "0.1",
+            "diffuse": "0.9",
+            "specular": "0.2"
           },
           {
             "intensity": "512",
@@ -25,9 +25,19 @@
             "red": "1",
             "green": "1",
             "blue": "1",
-            "ambient": "1",
-            "diffuse": "0",
-            "specular": "0"
+            "ambient": "0.1",
+            "diffuse": "0.9",
+            "specular": "0.2"
+          },
+          {
+            "intensity": "3000",
+            "opacity": "1",
+            "red": "1",
+            "green": "1",
+            "blue": "1",
+            "ambient": "0.1",
+            "diffuse": "0.9",
+            "specular": "0.2"
           }
         ]
       }
@@ -49,19 +59,29 @@
             "red": "0",
             "green": "0",
             "blue": "0",
-            "ambient": "1",
-            "diffuse": "0",
-            "specular": "0"
+            "ambient": "0.1",
+            "diffuse": "0.9",
+            "specular": "0.2"
           },
           {
             "intensity": "500",
-            "opacity": "1",
+            "opacity": "0.875",
             "red": "1",
             "green": "1",
             "blue": "1",
-            "ambient": "1",
-            "diffuse": "0",
-            "specular": "0"
+            "ambient": "0.1",
+            "diffuse": "0.9",
+            "specular": "0.2"
+          },
+          {
+            "intensity": "2047",
+            "opacity": "0.875",
+            "red": "1",
+            "green": "1",
+            "blue": "1",
+            "ambient": "0",
+            "diffuse": "1",
+            "specular": "1"
           }
         ]
       }
@@ -183,7 +203,7 @@
     ]
   },
   {
-    "name": "Lungs 2",
+    "name": "Lungs (transparent)",
     "modality": "CT",
     "shade": "true",
     "specularPower": "1",
@@ -495,9 +515,9 @@
           {
             "intensity": "1454",
             "opacity": "0",
-            "red": "0",
-            "green": "0",
-            "blue": "1",
+            "red": "0.223529412",
+            "green": "0.392156863",
+            "blue": "0.552941176",
             "ambient": "0.131",
             "diffuse": "0.879",
             "specular": "0.822"
@@ -505,9 +525,9 @@
           {
             "intensity": "1455",
             "opacity": "1",
-            "red": "0",
-            "green": "0",
-            "blue": "1",
+            "red": "0.223529412",
+            "green": "0.392156863",
+            "blue": "0.552941176",
             "ambient": "0.131",
             "diffuse": "0.879",
             "specular": "0.822"
@@ -515,9 +535,9 @@
           {
             "intensity": "2237",
             "opacity": "1",
-            "red": "0",
-            "green": "0",
-            "blue": "1",
+            "red": "0.223529412",
+            "green": "0.392156863",
+            "blue": "0.552941176",
             "ambient": "0.131",
             "diffuse": "0.879",
             "specular": "0.822"
@@ -525,9 +545,9 @@
           {
             "intensity": "2245",
             "opacity": "0",
-            "red": "0",
-            "green": "0",
-            "blue": "1",
+            "red": "0.223529412",
+            "green": "0.392156863",
+            "blue": "0.552941176",
             "ambient": "0.131",
             "diffuse": "0.879",
             "specular": "0.822"
@@ -650,7 +670,7 @@
     ]
   },
   {
-    "name": "Bones 2",
+    "name": "Bones",
     "modality": "CT",
     "shade": "true",
     "specularPower": "90",
@@ -1352,7 +1372,7 @@
             "blue": "0",
             "ambient": "0",
             "diffuse": "1",
-            "specular": "1"
+            "specular": "0.25"
           },
           {
             "intensity": "320",
@@ -1362,7 +1382,7 @@
             "blue": "1",
             "ambient": "0",
             "diffuse": "1",
-            "specular": "1"
+            "specular": "0.25"
           },
           {
             "intensity": "2047",
@@ -1688,7 +1708,7 @@
     ]
   },
   {
-    "name": "Bones",
+    "name": "Bones (glossy)",
     "modality": "CT",
     "shade": "true",
     "specularPower": "67",
@@ -1734,7 +1754,7 @@
             "blue": "1",
             "ambient": "0",
             "diffuse": "0.765",
-            "specular": "0.765"
+            "specular": "0.25"
           },
           {
             "intensity": "2047",

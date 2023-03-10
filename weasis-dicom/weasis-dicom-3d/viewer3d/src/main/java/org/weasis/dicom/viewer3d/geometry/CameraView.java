@@ -47,7 +47,21 @@ public enum CameraView implements View {
   }
 
   @Override
+  public String toString() {
+    return title;
+  }
+
+  @Override
   public Quaterniond rotation() {
     return rotation;
+  }
+
+  public static CameraView getCameraView(String view) {
+    try {
+      return CameraView.valueOf(view);
+    } catch (Exception ignore) {
+      // Do nothing
+    }
+    return INITIAL;
   }
 }

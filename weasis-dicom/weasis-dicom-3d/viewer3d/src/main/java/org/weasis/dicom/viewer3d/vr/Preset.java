@@ -20,6 +20,7 @@ import java.awt.Component;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.io.IOException;
+import java.nio.IntBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -28,7 +29,9 @@ import javax.swing.Icon;
 import org.joml.Vector4f;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.dicom.codec.display.Modality;
+import org.weasis.dicom.viewer3d.EventManager;
 import org.weasis.dicom.viewer3d.vr.lut.PresetGroup;
 import org.weasis.dicom.viewer3d.vr.lut.PresetPoint;
 import org.weasis.dicom.viewer3d.vr.lut.VolumePreset;
@@ -39,7 +42,8 @@ public class Preset extends TextureData {
   private final boolean defaultElement;
   private final List<PresetGroup> groups;
   private boolean requiredBuilding;
-  final byte[] colors;
+  private final byte[] colors;
+  private byte[] invertColors;
   private final String name;
   private final Modality modality;
 
@@ -49,7 +53,8 @@ public class Preset extends TextureData {
   private final int colorMin;
   private final int colorMax;
   private final LightingMap lightingMap;
-  private View3d renderer;
+
+  private int id2;
 
   public Preset(VolumePreset v) {
     super(256, PixelFormat.RGBA8);
@@ -69,7 +74,7 @@ public class Preset extends TextureData {
     this.width = colorMax - colorMin;
     this.colors = new byte[width * 4];
     this.lightingMap = new LightingMap(hasIdenticalLightingValues() ? 1 : width);
-    initColors(this);
+    initColors(this, false);
   }
 
   private boolean hasIdenticalLightingValues() {
@@ -136,8 +141,11 @@ public class Preset extends TextureData {
     return points.get(index);
   }
 
-  static void initColors(Preset preset) {
-    int width = preset.colorMax - preset.colorMin;
+  static void initColors(Preset preset, boolean inverse) {
+    int width = preset.getWidth();
+    if (inverse && preset.invertColors == null) {
+      preset.invertColors = new byte[width * 4];
+    }
     List<PresetPoint> points = new ArrayList<>();
     preset.groups.forEach(g -> points.addAll(Arrays.asList(g.getPoints())));
 
@@ -193,10 +201,17 @@ public class Preset extends TextureData {
         spec = 0.2f;
       }
 
-      preset.colors[i * 4] = (byte) Math.round(r * 255);
-      preset.colors[i * 4 + 1] = (byte) Math.round(g * 255);
-      preset.colors[i * 4 + 2] = (byte) Math.round(b * 255);
-      preset.colors[i * 4 + 3] = (byte) Math.round(a * 255);
+      if (inverse) {
+        preset.invertColors[i * 4] = (byte) Math.round((1 - r) * 255);
+        preset.invertColors[i * 4 + 1] = (byte) Math.round((1 - g) * 255);
+        preset.invertColors[i * 4 + 2] = (byte) Math.round((1 - b) * 255);
+        preset.invertColors[i * 4 + 3] = (byte) Math.round(a * 255);
+      } else {
+        preset.colors[i * 4] = (byte) Math.round(r * 255);
+        preset.colors[i * 4 + 1] = (byte) Math.round(g * 255);
+        preset.colors[i * 4 + 2] = (byte) Math.round(b * 255);
+        preset.colors[i * 4 + 3] = (byte) Math.round(a * 255);
+      }
 
       preset.lightingMap.setAmbient(i, amb);
       preset.lightingMap.setDiffuse(i, diff);
@@ -277,10 +292,19 @@ public class Preset extends TextureData {
 
   @Override
   public void init(GL2 gl2) {
+    init(gl2, false);
+  }
+
+  public void init(GL2 gl2, boolean inverse) {
     super.init(gl2);
-    initColors(renderer.volumePreset);
+    if (inverse && id2 <= 0) {
+      IntBuffer intBuffer = IntBuffer.allocate(1);
+      gl2.glGenTextures(1, intBuffer);
+      id2 = intBuffer.get(0);
+    }
+    initColors(this, inverse);
     gl2.glActiveTexture(GL.GL_TEXTURE1);
-    gl2.glBindTexture(GL.GL_TEXTURE_2D, getId());
+    gl2.glBindTexture(GL.GL_TEXTURE_2D, inverse ? id2 : getId());
     gl2.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MIN_FILTER, GL.GL_LINEAR);
     gl2.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MAG_FILTER, GL.GL_LINEAR);
     gl2.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_WRAP_S, GL.GL_CLAMP_TO_EDGE);
@@ -294,23 +318,23 @@ public class Preset extends TextureData {
         0,
         format,
         type,
-        Buffers.newDirectByteBuffer(colors).rewind());
+        Buffers.newDirectByteBuffer(inverse ? invertColors : colors).rewind());
 
     lightingMap.init(gl2);
   }
 
   @Override
   public void render(GL2 gl2) {
-    update(gl2);
+    render(gl2, false);
   }
 
-  void update(GL2 gl2) {
-    if (renderer != null && requiredBuilding) {
+  void render(GL2 gl2, boolean inverse) {
+    if (requiredBuilding) {
       this.requiredBuilding = false;
 
       if (gl2 != null) {
-        if (getId() <= 0) {
-          init(gl2);
+        if (getId() <= 0 || (inverse && (invertColors == null || id2 <= 0))) {
+          init(gl2, inverse);
         }
         gl2.glActiveTexture(GL.GL_TEXTURE1);
         gl2.glTexImage2D(
@@ -322,16 +346,26 @@ public class Preset extends TextureData {
             0,
             format,
             type,
-            Buffers.newDirectByteBuffer(colors).rewind());
+            Buffers.newDirectByteBuffer(inverse ? invertColors : colors).rewind());
 
         lightingMap.update(gl2);
       }
     }
   }
 
+  public void destroy(GL2 gl2) {
+    super.destroy(gl2);
+    if (id2 != 0) {
+      gl2.glDeleteTextures(1, new int[] {id2}, 0);
+      id2 = 0;
+    }
+  }
+
   public void drawLutIcon(Graphics2D g2d, Icon icon, int x, int y, int border, boolean markers) {
     int iconWidth = icon.getIconWidth();
     int iconHeight = icon.getIconHeight() - 2 * border;
+    boolean inverse =
+        EventManager.getInstance().getAction(ActionW.INVERT_LUT).orElseThrow().isSelected();
     List<PresetPoint> points = new ArrayList<>();
     groups.forEach(g -> points.addAll(Arrays.asList(g.getPoints())));
 
@@ -361,6 +395,12 @@ public class Preset extends TextureData {
         r = 0.0f;
         g = 0.0f;
         b = 0.0f;
+      }
+
+      if (inverse) {
+        r = 1 - r;
+        g = 1 - g;
+        b = 1 - b;
       }
       g2d.setColor(new Color(r, g, b));
       g2d.drawLine(sx + i, sy, sx + i, sy + iconHeight);
@@ -398,10 +438,6 @@ public class Preset extends TextureData {
         return height;
       }
     };
-  }
-
-  public void setRenderer(View3d renderer) {
-    this.renderer = renderer;
   }
 
   public int getColorMin() {

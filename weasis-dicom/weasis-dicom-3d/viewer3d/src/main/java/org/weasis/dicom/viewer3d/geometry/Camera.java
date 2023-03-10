@@ -24,6 +24,8 @@ import org.joml.Vector2i;
 import org.joml.Vector3d;
 import org.joml.Vector4d;
 import org.weasis.core.api.gui.util.ActionW;
+import org.weasis.core.api.service.BundleTools;
+import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.codec.geometry.ImageOrientation;
 import org.weasis.dicom.codec.geometry.ImageOrientation.Plan;
 import org.weasis.dicom.viewer3d.vr.DicomVolTexture;
@@ -31,6 +33,7 @@ import org.weasis.dicom.viewer3d.vr.View3d;
 import org.weasis.dicom.viewer3d.vr.VolumeCanvas;
 
 public class Camera {
+  public static final String P_DEFAULT_ORIENTATION = "default.vr.orientation";
   public static final double SCALE_MAX = 6.0;
   public static final double SCALE_MIN = 1.0 / SCALE_MAX;
   static final double INITIAL_FOV = 45;
@@ -62,12 +65,20 @@ public class Camera {
   private boolean orthographicProjection;
 
   public Camera(VolumeCanvas renderer) {
-    this(renderer, CameraView.INITIAL);
+    this(renderer, getDefaultOrientation());
   }
 
   public Camera(VolumeCanvas renderer, View preset) {
     this.renderer = Objects.requireNonNull(renderer);
     setCameraView(preset);
+  }
+
+  public static CameraView getDefaultOrientation() {
+    String orientation = BundleTools.SYSTEM_PREFERENCES.getProperty(P_DEFAULT_ORIENTATION);
+    if (StringUtil.hasText(orientation)) {
+      return CameraView.getCameraView(orientation);
+    }
+    return CameraView.INITIAL;
   }
 
   public static Quaterniond getQuaternion(int x, int y, int z) {
@@ -189,7 +200,15 @@ public class Camera {
     return new Matrix4d(viewProjectionMatrix);
   }
 
-  public Vector4d getRayOrigin() {
+  public Vector4d getLightOrigin() {
+    // Vector3d lightPosition = new Vector3d(0, 0, 0);
+    // Matrix4d lightMatrix = new Matrix4d().translate(lightPosition);
+    //
+    // Matrix4d viewInverse = getViewMatrix().invert();
+    // lightMatrix.mul(viewInverse);
+    // Vector3d lightTranslation = new Vector3d();
+    // lightMatrix.getTranslation(lightTranslation);
+    // return new Vector4d(lightTranslation, 1);
     return new Vector4d(0, 0, 0, 1).mul(getViewMatrix().invert());
   }
 
@@ -243,17 +262,17 @@ public class Camera {
 
   public void resetRotation() {
     renderer.setActionsInView(ActionW.ROTATION.cmd(), 0);
-    rotation.set(CameraView.INITIAL.rotation());
+    rotation.set(getDefaultOrientation().rotation());
     updateCameraTransform();
   }
 
   public void resetPan() {
-    position.set(CameraView.INITIAL.position());
+    position.set(getDefaultOrientation().position());
     updateCameraTransform();
   }
 
   public void resetAll() {
-    setCameraView(CameraView.INITIAL);
+    setCameraView(getDefaultOrientation());
   }
 
   public void translate(Point2D p) {

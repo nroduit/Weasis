@@ -392,8 +392,11 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> {
 
       @Override
       public void itemStateChanged(Object object) {
-        firePropertyChange(
-            ActionW.SYNCH.cmd(), null, new SynchEvent(getSelectedViewPane(), action.cmd(), object));
+        ViewCanvas<DicomImageElement> view = getSelectedViewPane();
+        firePropertyChange(ActionW.SYNCH.cmd(), null, new SynchEvent(view, action.cmd(), object));
+        if (view instanceof View3d view3d) {
+          updateWindowLevelComponentsListener(view3d);
+        }
       }
     };
   }
@@ -681,7 +684,6 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> {
     Optional<SliderChangeListener> volumeQuality = getAction(ActionVol.VOL_QUALITY);
     Optional<SliderChangeListener> volumeOpacity = getAction(ActionVol.VOL_OPACITY);
     Optional<ToggleButtonListener> volumeProjection = getAction(ActionVol.VOL_PROJECTION);
-    Optional<ToggleButtonListener> invertLut = getAction(ActionW.INVERT_LUT);
     if (volume) {
       volumeLighting.ifPresent(a -> a.setSelectedWithoutTriggerAction(rendering.isShading()));
       volumeSlicing.ifPresent(a -> a.setSelectedWithoutTriggerAction(rendering.isSlicing()));
@@ -703,17 +705,14 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> {
     // RenderingType.MIP.equals(a.getSelectedItem()))));
     mipThickness.ifPresent(a -> a.enableAction(!volume));
     cineAction.ifPresent(a -> a.enableAction(!volume));
-    invertLut.ifPresent(a -> a.enableAction(!volume));
     //    rotation.ifPresent(a -> a.enableAction(!volume));
     getAction(ActionW.FLIP).ifPresent(a -> a.enableAction(!volume));
     //    getAction(ActionW.MEASURE).ifPresent(a -> a.enableAction(!volume));
     //    getAction(ActionW.DRAW).ifPresent(a -> a.enableAction(!volume));
     getAction(ActionW.CROSSHAIR).ifPresent(a -> a.enableAction(!volume));
 
-    invertLut.ifPresent(
-        a ->
-            a.setSelectedWithoutTriggerAction(
-                (Boolean) canvas.getActionValue(ActionW.INVERT_LUT.cmd())));
+    getAction(ActionW.INVERT_LUT)
+        .ifPresent(a -> a.setSelectedWithoutTriggerAction(rendering.isInvertLut()));
 
     getAction(ActionW.SORT_STACK)
         .ifPresent(
