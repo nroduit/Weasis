@@ -33,7 +33,8 @@ public abstract class PluginTool extends JPanel implements DockableTool {
   private int dockableWidth;
   protected final DefaultSingleCDockable dockable;
   protected POSITION defaultPosition;
-  protected ExtendedMode defaultMode;
+  protected ExtendedMode defaultExtendedMode;
+  protected ExtendedMode previousExtendedMode;
 
   protected PluginTool(String id, String toolName, Type type, int position) {
     this(id, toolName, null, null, type, position);
@@ -51,7 +52,7 @@ public abstract class PluginTool extends JPanel implements DockableTool {
     this.type = type;
     this.toolPosition = position;
     this.defaultPosition = defaultPosition;
-    this.defaultMode = defaultMode;
+    this.defaultExtendedMode = defaultMode;
 
     this.dockable = new DefaultSingleCDockable(id, null, toolName);
     this.dockable.setTitleText(toolName);
@@ -136,7 +137,11 @@ public abstract class PluginTool extends JPanel implements DockableTool {
       GuiUtils.setPreferredWidth(component, dockableWidth, dockableWidth);
       if (dockable.getFocusComponent() == component) {
         UIManager.DOCKING_CONTROL.addDockable(dockable);
-        dockable.setExtendedMode(defaultMode == null ? ExtendedMode.MINIMIZED : defaultMode);
+        ExtendedMode extMode = previousExtendedMode;
+        if (extMode == null) {
+          extMode = defaultExtendedMode;
+        }
+        dockable.setExtendedMode(extMode == null ? ExtendedMode.MINIMIZED : extMode);
       } else {
         dockable.add(component);
         dockable.setFocusComponent(component);
@@ -144,7 +149,8 @@ public abstract class PluginTool extends JPanel implements DockableTool {
         UIManager.DOCKING_CONTROL.addDockable(dockable);
         // dockable.setDefaultLocation(ExtendedMode.MINIMIZED,
         POSITION pos = defaultPosition == null ? POSITION.EAST : defaultPosition;
-        ExtendedMode mode = defaultMode == null ? ExtendedMode.MINIMIZED : defaultMode;
+        ExtendedMode mode =
+            defaultExtendedMode == null ? ExtendedMode.MINIMIZED : defaultExtendedMode;
         CBaseLocation base = CLocation.base(UIManager.BASE_AREA);
 
         CLocation minimizeLocation;
@@ -191,6 +197,7 @@ public abstract class PluginTool extends JPanel implements DockableTool {
 
   @Override
   public void closeDockable() {
+    previousExtendedMode = dockable.getExtendedMode();
     GuiExecutor.instance()
         .execute(
             () -> {

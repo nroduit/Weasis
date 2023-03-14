@@ -602,17 +602,23 @@ public class WeasisWin {
       return;
     }
     ViewerPlugin oldPlugin = selectedPlugin;
-    if (selectedPlugin != null) {
-      selectedPlugin.setSelected(false);
+    if (oldPlugin != null) {
+      oldPlugin.setSelected(false);
     }
     selectedPlugin = plugin;
     selectedPlugin.setSelected(true);
     menuSelectedPlugin.setText(selectedPlugin.getName());
 
-    List<DockableTool> tool = selectedPlugin.getToolPanel();
-    List<DockableTool> oldTool = oldPlugin == null ? null : oldPlugin.getToolPanel();
+    updateTools(oldPlugin, selectedPlugin, false);
 
-    if (tool != oldTool) {
+    updateToolbars(
+        oldPlugin == null ? null : oldPlugin.getToolBar(), selectedPlugin.getToolBar(), false);
+  }
+
+  void updateTools(ViewerPlugin oldPlugin, ViewerPlugin plugin, boolean force) {
+    List<DockableTool> oldTool = oldPlugin == null ? null : oldPlugin.getToolPanel();
+    List<DockableTool> tool = plugin == null ? null : plugin.getToolPanel();
+    if (force || tool != oldTool) {
       if (oldTool != null) {
         for (DockableTool p : oldTool) {
           p.closeDockable();
@@ -626,9 +632,6 @@ public class WeasisWin {
         }
       }
     }
-
-    updateToolbars(
-        oldPlugin == null ? null : oldPlugin.getToolBar(), selectedPlugin.getToolBar(), false);
   }
 
   void updateToolbars(List<Toolbar> oldToolBars, List<Toolbar> toolBars, boolean force) {
