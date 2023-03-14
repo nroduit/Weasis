@@ -10,9 +10,9 @@
 package org.weasis.dicom.viewer3d.vr;
 
 import com.jogamp.opengl.GL;
-import com.jogamp.opengl.GL2;
 import com.jogamp.opengl.GL2ES3;
 import com.jogamp.opengl.GL3;
+import com.jogamp.opengl.GL4;
 
 public class ComputeTexture extends TextureData {
   public static final int COMPUTE_LOCAL_SIZE = 16;
@@ -24,25 +24,25 @@ public class ComputeTexture extends TextureData {
    * @param localSize the size of the shader block (must match to localSize in compute glsl)
    */
   public ComputeTexture(View3d view3d, int localSize) {
-    super(view3d.getWidth(), view3d.getHeight(), PixelFormat.RGBA8);
+    super(view3d.getWidth(), view3d.getHeight(), PixelFormat.RGBA32F);
     this.view3d = view3d;
     this.localSize = localSize;
   }
 
   @Override
-  public void init(GL2 gl2) {
-    super.init(gl2);
+  public void init(GL4 gl4) {
+    super.init(gl4);
     this.width = view3d.getWidth();
     this.height = view3d.getHeight();
 
-    gl2.glActiveTexture(GL.GL_TEXTURE0);
-    gl2.glBindTexture(GL.GL_TEXTURE_2D, getId());
-    gl2.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_WRAP_S, GL.GL_CLAMP_TO_EDGE);
-    gl2.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_WRAP_T, GL.GL_CLAMP_TO_EDGE);
-    gl2.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MAG_FILTER, GL.GL_NEAREST);
-    gl2.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MIN_FILTER, GL.GL_NEAREST);
-    gl2.glTexImage2D(GL.GL_TEXTURE_2D, 0, internalFormat, width, height, 0, format, type, null);
-    gl2.glBindImageTexture(0, getId(), 0, false, 0, GL.GL_WRITE_ONLY, GL.GL_RGBA32F);
+    gl4.glActiveTexture(GL.GL_TEXTURE0);
+    gl4.glBindTexture(GL.GL_TEXTURE_2D, getId());
+    gl4.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_WRAP_S, GL.GL_CLAMP_TO_EDGE);
+    gl4.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_WRAP_T, GL.GL_CLAMP_TO_EDGE);
+    gl4.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MAG_FILTER, GL.GL_NEAREST);
+    gl4.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MIN_FILTER, GL.GL_NEAREST);
+    gl4.glTexImage2D(GL.GL_TEXTURE_2D, 0, internalFormat, width, height, 0, format, type, null);
+    gl4.glBindImageTexture(0, getId(), 0, false, 0, GL.GL_WRITE_ONLY, internalFormat);
 
     // Force to render next time
     this.width = 1;
@@ -61,24 +61,23 @@ public class ComputeTexture extends TextureData {
   }
 
   @Override
-  public void render(GL2 gl2) {
-    if (gl2 == null) {
+  public void render(GL4 gl4) {
+    if (gl4 == null) {
       return;
     }
     if (getId() <= 0) {
-      init(gl2);
+      init(gl4);
     }
 
     if (width != view3d.getWidth() || height != view3d.getHeight()) {
-      gl2.glActiveTexture(GL.GL_TEXTURE0);
-      gl2.glBindTexture(GL.GL_TEXTURE_2D, getId());
+      gl4.glActiveTexture(GL.GL_TEXTURE0);
+      gl4.glBindTexture(GL.GL_TEXTURE_2D, getId());
       this.width = view3d.getWidth();
       this.height = view3d.getHeight();
-      gl2.glTexImage2D(
-          GL.GL_TEXTURE_2D, 0, GL.GL_RGBA32F, width, height, 0, GL.GL_RGBA, GL.GL_FLOAT, null);
+      gl4.glTexImage2D(GL.GL_TEXTURE_2D, 0, internalFormat, width, height, 0, format, type, null);
     }
 
-    GL3 gl3 = gl2.getGL3();
+    GL3 gl3 = gl4.getGL3();
     int workSizeX = Math.max(localSize, nextPowerOfTwo(width));
     int workSizeY = Math.max(localSize, nextPowerOfTwo(height));
     gl3.glDispatchCompute(workSizeX / localSize, workSizeY / localSize, 1);

@@ -62,7 +62,7 @@ public class DicomVolTextureFactory {
     DicomVolTexture volTexture = TEX_CACHE.get(series);
     if (force || volTexture == null || volTexture.getSeriesComparator() != comparator) {
       if (volTexture != null) {
-        volTexture.destroy(OpenglUtils.getGL2());
+        volTexture.destroy(OpenglUtils.getGL4());
       }
 
       DicomImageElement media = series.getMedia(MEDIA_POSITION.FIRST, null, null);

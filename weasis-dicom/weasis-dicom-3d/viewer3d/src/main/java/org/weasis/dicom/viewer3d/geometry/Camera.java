@@ -26,9 +26,8 @@ import org.joml.Vector4d;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.util.StringUtil;
-import org.weasis.dicom.codec.geometry.ImageOrientation;
-import org.weasis.dicom.codec.geometry.ImageOrientation.Plan;
 import org.weasis.dicom.viewer3d.vr.DicomVolTexture;
+import org.weasis.dicom.viewer3d.vr.RenderingType;
 import org.weasis.dicom.viewer3d.vr.View3d;
 import org.weasis.dicom.viewer3d.vr.VolumeCanvas;
 
@@ -44,9 +43,16 @@ public class Camera {
   private boolean isAdjusting = false;
   private final Vector3d position = new Vector3d();
   private final Quaterniond rotation = new Quaterniond();
+  public static final ViewData DEFAULT_SLICE_VIEW =
+      new ViewData(
+          RenderingType.SLICE.getTitle(),
+          new Vector3d(0, 0, 0),
+          getQuaternion(0, 0, 180),
+          DEFAULT_ZOOM);
+  private final Vector3d slicePosition = new Vector3d(DEFAULT_SLICE_VIEW.position());
+  private final Quaterniond sliceRotation = new Quaterniond(DEFAULT_SLICE_VIEW.rotation());
 
-  private final Vector2d prevMousePos = new Vector2d();
-
+  private final Vector3d prevMousePos = new Vector3d();
   // Perspective
   private double zNear = 0.1;
   private double zFar = 10000;
@@ -63,6 +69,7 @@ public class Camera {
   Matrix4d projectionMatrix = null;
   Matrix4d viewProjectionMatrix = null;
   private boolean orthographicProjection;
+  private boolean sliceMode;
 
   public Camera(VolumeCanvas renderer) {
     this(renderer, getDefaultOrientation());
@@ -89,14 +96,8 @@ public class Camera {
     if (renderer instanceof View3d view3d) {
       DicomVolTexture volTexture = view3d.getVolTexture();
       if (volTexture != null) {
-        double[] or = volTexture.getVolumeGeometry().getOrientationPatient();
-        if (or != null && or.length == 6) {
-          Vector3d vr = new Vector3d(or);
-          Vector3d vc = new Vector3d(or[3], or[4], or[5]);
-          Plan plan = ImageOrientation.getPlan(vr, vc);
-          set(preset.position(), preset.rotation(plan), preset.zoom());
-          return;
-        }
+        set(preset.position(), preset.rotation(volTexture.getSlicePlan()), preset.zoom());
+        return;
       }
     }
     set(preset.position(), preset.rotation(), preset.zoom());
@@ -126,11 +127,11 @@ public class Camera {
   }
 
   public Vector3d getPosition() {
-    return position;
+    return sliceMode ? slicePosition : position;
   }
 
   public Quaterniond getRotation() {
-    return rotation;
+    return sliceMode ? sliceRotation : rotation;
   }
 
   public double getZoomFactor() {
@@ -148,7 +149,6 @@ public class Camera {
   public void setOrthographicProjection(boolean orthographicProjection) {
     if (this.orthographicProjection != orthographicProjection) {
       this.orthographicProjection = orthographicProjection;
-      this.projectionMatrix = null;
       resetTransformation();
       setZoomFactor(getZoomFactor());
     }
@@ -159,35 +159,41 @@ public class Camera {
   }
 
   public void set(Vector3d position, Quaterniond rotation, double zoom, boolean repaint) {
-    this.position.set(position);
-    this.rotation.set(rotation);
+    if (sliceMode) {
+      this.slicePosition.set(position);
+      this.sliceRotation.set(rotation);
+    } else {
+      this.position.set(position);
+      this.rotation.set(rotation);
+    }
     setZoomFactor(zoom, repaint);
-  }
-
-  public Vector2d getPrevMousePos() {
-    return prevMousePos;
   }
 
   public Matrix4d getViewMatrix() {
     if (viewMatrix == null) {
-      viewMatrix =
-          new Matrix4d()
-              .setTranslation(new Vector3d(0, 0, internalZoomFactor))
-              .rotate(rotation)
-              .translate(position);
+      if (sliceMode) {
+        viewMatrix = new Matrix4d().rotate(sliceRotation);
+      } else {
+        viewMatrix =
+            new Matrix4d()
+                .setTranslation(new Vector3d(0, 0, internalZoomFactor))
+                .rotate(rotation)
+                .translate(position);
+      }
     }
-
     return new Matrix4d(viewMatrix);
   }
 
   public Matrix4d getProjectionMatrix() {
     if (projectionMatrix == null) {
       projectionMatrix = new Matrix4d();
-      if (orthographicProjection) {
-        double size = renderer.getSurfaceHeight();
-        projectionMatrix.setOrthoSymmetric(renderer.getAspectRatio() * size, size, zFar, 1);
-      } else {
-        projectionMatrix.setPerspective(fov, renderer.getAspectRatio(), zNear, zFar);
+      if (!sliceMode) {
+        if (orthographicProjection) {
+          double size = renderer.getSurfaceHeight();
+          projectionMatrix.setOrthoSymmetric(renderer.getAspectRatio() * size, size, zFar, 1);
+        } else {
+          projectionMatrix.setPerspective(fov, renderer.getAspectRatio(), zNear, zFar);
+        }
       }
     }
     return new Matrix4d(projectionMatrix);
@@ -241,11 +247,13 @@ public class Camera {
   public void setZoomFactor(double zoomFactor, boolean repaint) {
     renderer.setActionsInView(ActionW.ZOOM.cmd(), zoomFactor);
     this.zoomFactor = Math.abs(zoomFactor);
-    double ratio = this.zoomFactor;
-    if (orthographicProjection) {
-      ratio /= 3.5;
+    if (!sliceMode) {
+      double ratio = this.zoomFactor;
+      if (orthographicProjection) {
+        ratio /= 3.5;
+      }
+      this.internalZoomFactor = -fov * zNear / ratio;
     }
-    this.internalZoomFactor = -fov * zNear / ratio;
     if (repaint) {
       updateCameraTransform();
     } else {
@@ -256,18 +264,30 @@ public class Camera {
   public void setRotation(int degree) {
     int last = (Integer) renderer.getActionValue(ActionW.ROTATION.cmd());
     renderer.setActionsInView(ActionW.ROTATION.cmd(), degree);
-    rotation.rotateZ(Math.toRadians((double) last - degree));
+    if (sliceMode) {
+      sliceRotation.rotateAxis(Math.toRadians((double) last - degree), 0, 0, 1);
+    } else {
+      rotation.rotateZ(Math.toRadians((double) last - degree));
+    }
     updateCameraTransform();
   }
 
   public void resetRotation() {
     renderer.setActionsInView(ActionW.ROTATION.cmd(), 0);
-    rotation.set(getDefaultOrientation().rotation());
+    if (sliceMode) {
+      sliceRotation.set(DEFAULT_SLICE_VIEW.rotation());
+    } else {
+      rotation.set(getDefaultOrientation().rotation());
+    }
     updateCameraTransform();
   }
 
   public void resetPan() {
-    position.set(getDefaultOrientation().position());
+    if (sliceMode) {
+      slicePosition.set(DEFAULT_SLICE_VIEW.position());
+    } else {
+      position.set(getDefaultOrientation().position());
+    }
     updateCameraTransform();
   }
 
@@ -288,21 +308,45 @@ public class Camera {
             .invert()
             .transform(new Vector4d(translationNDC.x() * hw, translationNDC.y() * hh, 0.0, 0));
 
-    position.x += invTransform.x;
-    position.y += invTransform.y;
-    position.z += invTransform.z;
+    if (sliceMode) {
+      slicePosition.x += invTransform.x;
+      slicePosition.y += invTransform.y;
+      slicePosition.z += invTransform.z;
+    } else {
+      position.x += invTransform.x;
+      position.y += invTransform.y;
+      position.z += invTransform.z;
+    }
     updateCameraTransform();
   }
 
   public void rotate(Point2D p) {
     final Vector2i dimensions =
         new Vector2i(renderer.getSurfaceWidth(), renderer.getSurfaceHeight());
-    rotation
-        .set(
-            new Quaterniond(ndcToArcBall(boundlessScreenCoordToNDC(p, dimensions)))
-                .mul(ndcToArcBall(boundlessScreenCoordToNDC(prevMousePos, dimensions)))
-                .mul(rotation))
-        .normalize();
+
+    if (sliceMode) {
+      //      Vector3d currPos = new Vector3d(boundlessScreenCoordToNDC(p, dimensions), 0);
+      //      Vector3d prevPos = new Vector3d(boundlessScreenCoordToNDC(prevMousePos, dimensions),
+      // 0);
+      //      double angle = prevPos.angle(currPos);
+      //      Vector3d axis = prevPos.cross(currPos, new Vector3d());
+      //      Quaterniond deltaRotation = new Quaterniond().rotateAxis(angle, axis);
+      //      sliceRotation.mul(deltaRotation).normalize();
+
+      sliceRotation
+          .set(
+              new Quaterniond(ndcToArcBall(boundlessScreenCoordToNDC(p, dimensions)))
+                  .mul(ndcToArcBall(boundlessScreenCoordToNDC(prevMousePos, dimensions)))
+                  .mul(sliceRotation))
+          .normalize();
+    } else {
+      rotation
+          .set(
+              new Quaterniond(ndcToArcBall(boundlessScreenCoordToNDC(p, dimensions)))
+                  .mul(ndcToArcBall(boundlessScreenCoordToNDC(prevMousePos, dimensions)))
+                  .mul(rotation))
+          .normalize();
+    }
 
     prevMousePos.x = p.getX();
     prevMousePos.y = p.getY();
@@ -321,15 +365,15 @@ public class Camera {
   }
 
   private Vector2d screenCoordToNDC(Point2D p) {
-    return screenCoordToNDC(new Vector2d(p.getX(), p.getY()));
+    return screenCoordToNDC(new Vector3d(p.getX(), p.getY(), 0));
   }
 
   private Vector2d boundlessScreenCoordToNDC(Point2D p, Vector2i dimensions) {
-    return boundlessScreenCoordToNDC(new Vector2d(p.getX(), p.getY()), dimensions);
+    return boundlessScreenCoordToNDC(new Vector3d(p.getX(), p.getY(), 0), dimensions);
   }
 
-  private Vector2d boundlessScreenCoordToNDC(Vector2d mousePos, Vector2i dimensions) {
-    final Vector2d mod = new Vector2d(mousePos);
+  private Vector2d boundlessScreenCoordToNDC(Vector3d mousePos, Vector2i dimensions) {
+    final Vector3d mod = new Vector3d(mousePos);
     mod.x = mod.x() % (dimensions.x());
     mod.y = mod.y() % (dimensions.y());
     if (mousePos.x < 0) {
@@ -341,7 +385,7 @@ public class Camera {
     return screenCoordToNDC(mod);
   }
 
-  private Vector2d screenCoordToNDC(Vector2d mousePos) {
+  private Vector2d screenCoordToNDC(Vector3d mousePos) {
     return new Vector2d(
         mousePos.x() * 2.0 / renderer.getSurfaceWidth() - 1.0,
         1.0 - 2.0 * mousePos.y() / renderer.getSurfaceHeight());
@@ -356,6 +400,16 @@ public class Camera {
       // Outside the sphere
       final Vector2d proj = new Vector2d(p).normalize();
       return new Quaterniond(proj.x(), proj.y(), 0.0, 0.0);
+    }
+  }
+
+  public void setSliceMode(boolean sliceMode) {
+    if (this.sliceMode != sliceMode) {
+      this.sliceMode = sliceMode;
+      if (sliceMode) {
+        setCameraView(DEFAULT_SLICE_VIEW);
+      }
+      updateCameraTransform();
     }
   }
 }

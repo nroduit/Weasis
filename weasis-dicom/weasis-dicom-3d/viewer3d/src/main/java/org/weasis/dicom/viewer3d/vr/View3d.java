@@ -11,7 +11,7 @@ package org.weasis.dicom.viewer3d.vr;
 
 import com.jogamp.common.nio.Buffers;
 import com.jogamp.opengl.GL;
-import com.jogamp.opengl.GL2;
+import com.jogamp.opengl.GL4;
 import com.jogamp.opengl.GLAutoDrawable;
 import com.jogamp.opengl.GLEventListener;
 import java.awt.Color;
@@ -85,7 +85,7 @@ import org.weasis.dicom.viewer3d.ActionVol;
 import org.weasis.dicom.viewer3d.EventManager;
 import org.weasis.dicom.viewer3d.InfoLayer3d;
 import org.weasis.dicom.viewer3d.geometry.Camera;
-import org.weasis.dicom.viewer3d.geometry.CameraView;
+import org.weasis.dicom.viewer3d.geometry.View;
 import org.weasis.opencv.data.PlanarImage;
 import org.weasis.opencv.op.lut.LutShape;
 
@@ -218,10 +218,10 @@ public class View3d extends VolumeCanvas
     if (volTexture != null) {
       UIManager.closeSeries(volTexture.getSeries());
     }
-    GL2 gl2 = OpenglUtils.getGL2();
-    program.destroy(gl2);
-    quadProgram.destroy(gl2);
-    texture.destroy(gl2);
+    GL4 gl4 = OpenglUtils.getGL4();
+    program.destroy(gl4);
+    quadProgram.destroy(gl4);
+    texture.destroy(gl4);
     super.disposeView();
   }
 
@@ -244,6 +244,7 @@ public class View3d extends VolumeCanvas
 
   public void setViewType(ViewType viewType) {
     this.viewType = viewType;
+    camera.setSliceMode(viewType != ViewType.VOLUME3D);
   }
 
   public double getZoom() {
@@ -254,19 +255,20 @@ public class View3d extends VolumeCanvas
     this.volTexture = volTexture;
     if (volTexture != null) {
       camera.setZoomFactor(-getBestFitViewScale());
+      renderingLayer.setEnableRepaint(false);
+      Preset preset;
       if (viewType == ViewType.VOLUME3D) {
-        renderingLayer.setEnableRepaint(false);
         int quality = getDefaultQuality();
         renderingLayer.setQuality(quality);
         eventManager
             .getAction(ActionVol.VOL_QUALITY)
             .ifPresent(a -> a.setSliderValue(quality, false));
-        this.volumePreset = Preset.getDefaultPreset(volTexture.getModality());
-        renderingLayer.setEnableRepaint(true);
-        setVolumePreset(volumePreset);
+        preset = Preset.getDefaultPreset(volTexture.getModality());
       } else {
-        display();
+        preset = Preset.getDefaultPreset(null);
       }
+      renderingLayer.setEnableRepaint(true);
+      setVolumePreset(preset);
     } else {
       display();
     }
@@ -314,11 +316,11 @@ public class View3d extends VolumeCanvas
   }
 
   @Override
-  public void init(GLAutoDrawable var1) {
-    initShaders(var1.getGL().getGL2());
+  public void init(GLAutoDrawable glAutoDrawable) {
+    initShaders(glAutoDrawable.getGL().getGL4());
   }
 
-  public void initShaders(GL2 gl2) {
+  public void initShaders(GL4 gl4) {
     Color lightColor =
         BundleTools.SYSTEM_PREFERENCES.getColorProperty(RenderingLayer.LIGHT_COLOR, Color.WHITE);
     Vector3f lColor =
@@ -329,10 +331,10 @@ public class View3d extends VolumeCanvas
     Vector3f bColor =
         new Vector3f(
             bckColor.getRed() / 255f, bckColor.getGreen() / 255f, bckColor.getBlue() / 255f);
-    gl2.glClearColor(bColor.x, bColor.y, bColor.z, 1);
-    program.init(gl2);
+    gl4.glClearColor(bColor.x, bColor.y, bColor.z, 1);
+    program.init(gl4);
     program.allocateUniform(
-        gl2,
+        gl4,
         "viewMatrix",
         (gl, loc) ->
             gl.glUniformMatrix4fv(
@@ -341,7 +343,7 @@ public class View3d extends VolumeCanvas
                 false,
                 camera.getViewMatrix().invert().get(Buffers.newDirectFloatBuffer(16))));
     program.allocateUniform(
-        gl2,
+        gl4,
         "projectionMatrix",
         (gl, loc) ->
             gl.glUniformMatrix4fv(
@@ -350,88 +352,88 @@ public class View3d extends VolumeCanvas
                 false,
                 camera.getProjectionMatrix().invert().get(Buffers.newDirectFloatBuffer(16))));
     program.allocateUniform(
-        gl2,
+        gl4,
         "depthSampleNumber",
-        (gl, loc) -> gl2.glUniform1i(loc, renderingLayer.getDepthSampleNumber()));
+        (gl, loc) -> gl4.glUniform1i(loc, renderingLayer.getDepthSampleNumber()));
     program.allocateUniform(
-        gl2, "lutShape", (gl, loc) -> gl2.glUniform1i(loc, renderingLayer.getLutShapeId()));
+        gl4, "lutShape", (gl, loc) -> gl4.glUniform1i(loc, renderingLayer.getLutShapeId()));
 
     program.allocateUniform(
-        gl2,
+        gl4,
         "backgroundColor",
         (gl, loc) -> gl.glUniform3fv(loc, 1, bColor.get(Buffers.newDirectFloatBuffer(3))));
 
     for (int i = 0; i < 4; ++i) {
       int val = i;
       program.allocateUniform(
-          gl2,
+          gl4,
           String.format("lights[%d].position", val),
           (gl, loc) ->
               gl.glUniform4fv(
                   loc, 1, camera.getLightOrigin().get(Buffers.newDirectFloatBuffer(4))));
       program.allocateUniform(
-          gl2,
+          gl4,
           String.format("lights[%d].specularPower", val),
           (gl, loc) -> gl.glUniform1f(loc, renderingLayer.getShadingOptions().getSpecularPower()));
       program.allocateUniform(
-          gl2,
+          gl4,
           String.format("lights[%d].enabled", val),
           (gl, loc) -> gl.glUniform1i(loc, val < 1 ? 1 : 0));
     }
     program.allocateUniform(
-        gl2,
+        gl4,
         "lightColor",
         (gl, loc) -> gl.glUniform3fv(loc, 1, lColor.get(Buffers.newDirectFloatBuffer(3))));
     program.allocateUniform(
-        gl2, "shading", (gl, loc) -> gl.glUniform1i(loc, renderingLayer.isShading() ? 1 : 0));
+        gl4, "shading", (gl, loc) -> gl.glUniform1i(loc, renderingLayer.isShading() ? 1 : 0));
     program.allocateUniform(
-        gl2,
+        gl4,
         "texelSize",
         (gl, loc) ->
             gl.glUniform3fv(
                 loc, 1, volTexture.getNormalizedTexelSize().get(Buffers.newDirectFloatBuffer(3))));
 
     program.allocateUniform(
-        gl2,
+        gl4,
         "renderingType",
         (gl, loc) -> gl.glUniform1i(loc, renderingLayer.getRenderingType().getId()));
-    program.allocateUniform(gl2, "volTexture", (gl, loc) -> gl.glUniform1i(loc, 0));
-    program.allocateUniform(gl2, "colorMap", (gl, loc) -> gl.glUniform1i(loc, 1));
+    program.allocateUniform(gl4, "volTexture", (gl, loc) -> gl.glUniform1i(loc, 0));
+    program.allocateUniform(gl4, "colorMap", (gl, loc) -> gl.glUniform1i(loc, 1));
     program.allocateUniform(
-        gl2,
+        gl4,
         "textureDataType",
         (gl, loc) -> gl.glUniform1i(loc, TextureData.getDataType(volTexture.getPixelFormat())));
 
     program.allocateUniform(
-        gl2,
+        gl4,
         "opacityFactor",
         (gl, loc) -> gl.glUniform1f(loc, (float) renderingLayer.getOpacity()));
     program.allocateUniform(
-        gl2, "inputLevelMin", (gl, loc) -> gl.glUniform1f(loc, volTexture.getLevelMin()));
+        gl4, "inputLevelMin", (gl, loc) -> gl.glUniform1f(loc, volTexture.getLevelMin()));
     program.allocateUniform(
-        gl2, "inputLevelMax", (gl, loc) -> gl.glUniform1f(loc, volTexture.getLevelMax()));
+        gl4, "inputLevelMax", (gl, loc) -> gl.glUniform1f(loc, volTexture.getLevelMax()));
     program.allocateUniform(
-        gl2, "outputLevelMin", (gl, loc) -> gl.glUniform1f(loc, volumePreset.getColorMin()));
+        gl4, "outputLevelMin", (gl, loc) -> gl.glUniform1f(loc, volumePreset.getColorMin()));
     program.allocateUniform(
-        gl2, "outputLevelMax", (gl, loc) -> gl.glUniform1f(loc, volumePreset.getColorMax()));
+        gl4, "outputLevelMax", (gl, loc) -> gl.glUniform1f(loc, volumePreset.getColorMax()));
     program.allocateUniform(
-        gl2, "windowWidth", (gl, loc) -> gl.glUniform1f(loc, renderingLayer.getWindowWidth()));
+        gl4, "windowWidth", (gl, loc) -> gl.glUniform1f(loc, renderingLayer.getWindowWidth()));
     program.allocateUniform(
-        gl2, "windowCenter", (gl, loc) -> gl.glUniform1f(loc, renderingLayer.getWindowCenter()));
+        gl4, "windowCenter", (gl, loc) -> gl.glUniform1f(loc, renderingLayer.getWindowCenter()));
 
     final IntBuffer intBuffer = IntBuffer.allocate(1);
 
-    texture.init(gl2);
-    volTexture.init(gl2);
+    texture.init(gl4);
+    volTexture.init(gl4);
     if (volumePreset != null) {
-      volumePreset.init(gl2, renderingLayer.isInvertLut());
+      volumePreset.init(gl4, renderingLayer.isInvertLut());
     }
 
-    quadProgram.init(gl2);
-    gl2.glGenBuffers(1, intBuffer);
+    quadProgram.init(gl4);
+    gl4.glGenBuffers(1, intBuffer);
     vertexBuffer = intBuffer.get(0);
-    gl2.glBindBuffer(GL.GL_ARRAY_BUFFER, vertexBuffer);
-    gl2.glBufferData(
+    gl4.glBindBuffer(GL.GL_ARRAY_BUFFER, vertexBuffer);
+    gl4.glBufferData(
         GL.GL_ARRAY_BUFFER,
         (long) vertexBufferData.length * Float.BYTES,
         Buffers.newDirectFloatBuffer(vertexBufferData),
@@ -439,10 +441,10 @@ public class View3d extends VolumeCanvas
   }
 
   public void display(GLAutoDrawable drawable) {
-    render(drawable.getGL().getGL2());
+    render(drawable.getGL().getGL4());
   }
 
-  private void render(GL2 gl2) {
+  private void render(GL4 gl2) {
     gl2.glClear(GL.GL_COLOR_BUFFER_BIT | GL.GL_DEPTH_BUFFER_BIT);
     if (volTexture.isReadyForDisplay()) {
       int sampleCount = renderingLayer.getQuality();
@@ -478,13 +480,13 @@ public class View3d extends VolumeCanvas
   }
 
   public void reshape(GLAutoDrawable drawable, int x, int y, int width, int height) {
-    GL2 gl2 = drawable.getGL().getGL2();
+    GL4 gl2 = drawable.getGL().getGL4();
     gl2.glViewport(0, 0, width, height);
     camera.resetTransformation();
   }
 
   public void dispose(GLAutoDrawable drawable) {
-    GL2 gl2 = drawable.getGL().getGL2();
+    GL4 gl2 = drawable.getGL().getGL4();
     // FIXME destroy when release of cache
     //    if (volTexture != null) {
     //      volTexture.destroy(gl2);
@@ -751,7 +753,8 @@ public class View3d extends VolumeCanvas
 
     initActionWState();
 
-    CameraView c = Camera.getDefaultOrientation();
+    View c =
+        viewType == ViewType.VOLUME3D ? Camera.getDefaultOrientation() : Camera.DEFAULT_SLICE_VIEW;
     camera.set(c.position(), c.rotation(), -getBestFitViewScale(), false);
     renderingLayer.setEnableRepaint(false);
     renderingLayer.setQuality(getDefaultQuality());

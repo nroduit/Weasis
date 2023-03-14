@@ -152,19 +152,19 @@ public final class VolumeBuilder {
     public void publishInOpenGL(PlanarImage imageMLUT, int index) {
       GLContext glContext = OpenglUtils.getDefaultGlContext();
       glContext.makeCurrent();
-      GL4 gl2 = glContext.getGL().getGL4();
-      gl2.glBindTexture(GL2ES2.GL_TEXTURE_3D, volumeBuilder.volTexture.getId());
+      GL4 gl4 = glContext.getGL().getGL4();
+      gl4.glBindTexture(GL2ES2.GL_TEXTURE_3D, volumeBuilder.volTexture.getId());
       GLPixelStorageModes storageModes = new GLPixelStorageModes();
-      storageModes.setPackAlignment(gl2, 1); // buffer has not ending row space
+      storageModes.setPackAlignment(gl4, 1); // buffer has not ending row space
 
       // Use direct native pointer
-      setSubImage3DPointer(gl2, imageMLUT, index);
+      setSubImage3DPointer(gl4, imageMLUT, index);
 
-      // TextureSliceDataBuffer textureSliceData = setSubImage3DBuffer(gl2, imageMLUT, index);
+      // TextureSliceDataBuffer textureSliceData = setSubImage3DBuffer(gl4, imageMLUT, index);
       // textureSliceData.releaseMemory();
 
-      storageModes.restore(gl2);
-      gl2.glFinish();
+      storageModes.restore(gl4);
+      gl4.glFinish();
       glContext.release();
     }
 

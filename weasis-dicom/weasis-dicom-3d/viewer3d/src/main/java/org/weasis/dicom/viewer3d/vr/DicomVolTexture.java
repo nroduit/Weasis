@@ -22,6 +22,7 @@ import java.util.Map;
 import java.util.Objects;
 import org.dcm4che3.data.Tag;
 import org.dcm4che3.img.lut.PresetWindowLevel;
+import org.joml.Vector3d;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.api.media.data.MediaSeries;
@@ -31,6 +32,8 @@ import org.weasis.core.api.media.data.TagW;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.display.Modality;
+import org.weasis.dicom.codec.geometry.ImageOrientation;
+import org.weasis.dicom.codec.geometry.ImageOrientation.Plan;
 import org.weasis.dicom.viewer3d.geometry.VolumeGeometry;
 import org.weasis.opencv.op.lut.DefaultWlPresentation;
 import org.weasis.opencv.op.lut.LutShape;
@@ -269,5 +272,15 @@ public class DicomVolTexture extends VolumeTexture implements MediaSeriesGroup {
 
   public void setPixelSpacingUnit(Unit pixelSpacingUnit) {
     this.pixelSpacingUnit = pixelSpacingUnit;
+  }
+
+  public Plan getSlicePlan() {
+    double[] or = getVolumeGeometry().getOrientationPatient();
+    if (or != null && or.length == 6) {
+      Vector3d vr = new Vector3d(or);
+      Vector3d vc = new Vector3d(or[3], or[4], or[5]);
+      return ImageOrientation.getPlan(vr, vc);
+    }
+    return null;
   }
 }

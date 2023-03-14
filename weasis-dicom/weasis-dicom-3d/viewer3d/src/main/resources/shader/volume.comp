@@ -414,12 +414,15 @@ vec4 rayCastingIsoSurface(Ray ray, float tmin, float tmax, vec2 uv) {
 }
 
 vec4 slice(vec2 uv) {
-    vec3 origin =  (viewMatrix * vec4(uv, 0.f, 1.0f)).xyz;
+    vec3 origin = vec3(uv, 0.5f) * texelSize;
+    origin =  (vec4(origin, 1.0f) * viewMatrix ).xyz;
+    origin.x += 0.5;
+    origin.y += 0.5;
     float pix = getNormalizedWindowLevel(origin);
-    vec4 pixel =  texture(colorMap, vec2(pix, 0.0));
-    pixel.a = min(pixel.a * opacityFactor, 1.0);
-    return pixel;
-  //  return vec4(pix, pix, pix, 1.0f);
+//    vec4 pixel =  texture(colorMap, vec2(pix, 0.0));
+//    pixel.a = min(pixel.a * opacityFactor, 1.0);
+//    return pixel;
+    return vec4(pix, pix, pix, 1.0f);
 }
 
 void main() {

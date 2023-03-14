@@ -9,7 +9,7 @@
  */
 package org.weasis.dicom.viewer3d.vr;
 
-import com.jogamp.opengl.GL2;
+import com.jogamp.opengl.GL4;
 import com.jogamp.opengl.GLCapabilities;
 import com.jogamp.opengl.GLContext;
 import com.jogamp.opengl.GLDrawable;
@@ -44,7 +44,7 @@ public class OpenglUtils {
                 glDrawable.setRealized(true);
                 glContext = glDrawable.createContext(null);
                 //                glContext.makeCurrent();
-                //                initCubeIcons(glContext.getGL().getGL2());
+                //                initCubeIcons(glContext.getGL().getGL4());
                 //                glContext.getGL().glPixelStorei(GL.GL_UNPACK_ALIGNMENT, 1);
                 //                glContext.release();
                 //                TextureIO.setTexRectEnabled(false);
@@ -62,7 +62,7 @@ public class OpenglUtils {
     return glContext;
   }
 
-  public static GL2 getGL2() {
-    return getDefaultGlContext().getGL().getGL2();
+  public static GL4 getGL4() {
+    return getDefaultGlContext().getGL().getGL4();
   }
 }

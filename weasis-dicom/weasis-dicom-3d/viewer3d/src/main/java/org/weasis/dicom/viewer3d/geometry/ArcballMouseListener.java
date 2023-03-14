@@ -17,7 +17,6 @@ import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.MouseActionAdapter;
 import org.weasis.core.api.gui.util.SliderChangeListener;
 import org.weasis.dicom.viewer3d.vr.View3d;
-import org.weasis.dicom.viewer3d.vr.View3d.ViewType;
 
 public abstract class ArcballMouseListener extends SliderChangeListener implements ActionState {
 
@@ -55,7 +54,7 @@ public abstract class ArcballMouseListener extends SliderChangeListener implemen
             if (level != null) {
               level.mouseDragged(e);
             }
-          } else if (view3d.getViewType() == ViewType.VOLUME3D) {
+          } else {
             view3d.getCamera().rotate(e.getPoint());
           }
         }
@@ -93,9 +92,7 @@ public abstract class ArcballMouseListener extends SliderChangeListener implemen
           }
         } else {
           releaseWinLevelAdapter();
-          if (view3d.getViewType() == ViewType.VOLUME3D) {
-            view3d.getCamera().init(e.getPoint());
-          }
+          view3d.getCamera().init(e.getPoint());
         }
       }
     }
@@ -116,9 +113,7 @@ public abstract class ArcballMouseListener extends SliderChangeListener implemen
         if ((modifier & mask) == mask) {
           view3d.setCursor(null);
         }
-        if (view3d.getViewType() == ViewType.VOLUME3D) {
-          view3d.getCamera().init(e.getPoint());
-        }
+        view3d.getCamera().init(e.getPoint());
       }
     }
   }

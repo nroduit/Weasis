@@ -13,7 +13,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jogamp.common.nio.Buffers;
 import com.jogamp.opengl.GL;
-import com.jogamp.opengl.GL2;
+import com.jogamp.opengl.GL4;
 import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Component;
@@ -291,25 +291,25 @@ public class Preset extends TextureData {
   }
 
   @Override
-  public void init(GL2 gl2) {
-    init(gl2, false);
+  public void init(GL4 gl4) {
+    init(gl4, false);
   }
 
-  public void init(GL2 gl2, boolean inverse) {
-    super.init(gl2);
+  public void init(GL4 gl4, boolean inverse) {
+    super.init(gl4);
     if (inverse && id2 <= 0) {
       IntBuffer intBuffer = IntBuffer.allocate(1);
-      gl2.glGenTextures(1, intBuffer);
+      gl4.glGenTextures(1, intBuffer);
       id2 = intBuffer.get(0);
     }
     initColors(this, inverse);
-    gl2.glActiveTexture(GL.GL_TEXTURE1);
-    gl2.glBindTexture(GL.GL_TEXTURE_2D, inverse ? id2 : getId());
-    gl2.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MIN_FILTER, GL.GL_LINEAR);
-    gl2.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MAG_FILTER, GL.GL_LINEAR);
-    gl2.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_WRAP_S, GL.GL_CLAMP_TO_EDGE);
-    gl2.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_WRAP_T, GL.GL_CLAMP_TO_EDGE);
-    gl2.glTexImage2D(
+    gl4.glActiveTexture(GL.GL_TEXTURE1);
+    gl4.glBindTexture(GL.GL_TEXTURE_2D, inverse ? id2 : getId());
+    gl4.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MIN_FILTER, GL.GL_LINEAR);
+    gl4.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MAG_FILTER, GL.GL_LINEAR);
+    gl4.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_WRAP_S, GL.GL_CLAMP_TO_EDGE);
+    gl4.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_WRAP_T, GL.GL_CLAMP_TO_EDGE);
+    gl4.glTexImage2D(
         GL.GL_TEXTURE_2D,
         0,
         internalFormat,
@@ -320,24 +320,24 @@ public class Preset extends TextureData {
         type,
         Buffers.newDirectByteBuffer(inverse ? invertColors : colors).rewind());
 
-    lightingMap.init(gl2);
+    lightingMap.init(gl4);
   }
 
   @Override
-  public void render(GL2 gl2) {
-    render(gl2, false);
+  public void render(GL4 gl4) {
+    render(gl4, false);
   }
 
-  void render(GL2 gl2, boolean inverse) {
+  void render(GL4 gl4, boolean inverse) {
     if (requiredBuilding) {
       this.requiredBuilding = false;
 
-      if (gl2 != null) {
+      if (gl4 != null) {
         if (getId() <= 0 || (inverse && (invertColors == null || id2 <= 0))) {
-          init(gl2, inverse);
+          init(gl4, inverse);
         }
-        gl2.glActiveTexture(GL.GL_TEXTURE1);
-        gl2.glTexImage2D(
+        gl4.glActiveTexture(GL.GL_TEXTURE1);
+        gl4.glTexImage2D(
             GL.GL_TEXTURE_2D,
             0,
             internalFormat,
@@ -348,15 +348,15 @@ public class Preset extends TextureData {
             type,
             Buffers.newDirectByteBuffer(inverse ? invertColors : colors).rewind());
 
-        lightingMap.update(gl2);
+        lightingMap.update(gl4);
       }
     }
   }
 
-  public void destroy(GL2 gl2) {
-    super.destroy(gl2);
+  public void destroy(GL4 gl4) {
+    super.destroy(gl4);
     if (id2 != 0) {
-      gl2.glDeleteTextures(1, new int[] {id2}, 0);
+      gl4.glDeleteTextures(1, new int[] {id2}, 0);
       id2 = 0;
     }
   }

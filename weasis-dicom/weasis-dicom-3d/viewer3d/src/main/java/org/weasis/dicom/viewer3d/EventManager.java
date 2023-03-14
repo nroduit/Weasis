@@ -25,6 +25,7 @@ import javax.swing.DefaultComboBoxModel;
 import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
+import javax.swing.JRadioButtonMenuItem;
 import javax.swing.JSeparator;
 import javax.swing.KeyStroke;
 import org.dcm4che3.img.lut.PresetWindowLevel;
@@ -184,8 +185,8 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> {
           if (view3d != null) {
             if (view3d.getViewType() == ViewType.VOLUME3D) {
               view3d.getCamera().setAdjusting(true);
-              view3d.getCamera().init(e.getPoint());
             }
+            view3d.getCamera().init(e.getPoint());
           }
         }
       }
@@ -198,8 +199,8 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> {
           if (view3d != null) {
             if (view3d.getViewType() == ViewType.VOLUME3D) {
               view3d.getCamera().setAdjusting(false);
-              view3d.getCamera().init(e.getPoint());
             }
+            view3d.getCamera().init(e.getPoint());
             view3d.resetPointerType(ViewCanvas.CENTER_POINTER);
             view3d.getJComponent().repaint();
           }
@@ -215,15 +216,8 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> {
             if (pickPoint != null && view3d.getViewModel() != null) {
               view3d.getCamera().setAdjusting(true);
               Point pt = e.getPoint();
-              double x;
-              double y;
-              if (view3d.getViewType() == ViewType.VOLUME3D) {
-                x = pt.getX();
-                y = pt.getY();
-              } else {
-                x = (double) pt.x - pickPoint.x;
-                y = (double) pt.y - pickPoint.y;
-              }
+              double x = pt.getX();
+              double y = pt.getY();
               setPoint(new PanPoint(PanPoint.State.DRAGGING, x, y));
               pickPoint = pt;
               view3d.addPointerType(ViewCanvas.CENTER_POINTER);
@@ -921,12 +915,13 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> {
   public JMenu getPresetMenu(String prop) {
     JMenu menu = null;
     if (BundleTools.SYSTEM_PREFERENCES.getBooleanProperty(prop, true)) {
-      Optional<ComboItemListener<Object>> presetAction = getAction(ActionW.PRESET);
+      Optional<? extends ComboItemListener<?>> presetAction = getAction(ActionW.PRESET);
       if (presetAction.isPresent()) {
         menu =
             presetAction
                 .get()
                 .createUnregisteredRadioMenu(ActionW.PRESET.getTitle(), ActionW.WINLEVEL.getIcon());
+        GuiUtils.applySelectedIconEffect(menu);
         for (Component mitem : menu.getMenuComponents()) {
           RadioMenuItem ritem = (RadioMenuItem) mitem;
           PresetWindowLevel preset = (PresetWindowLevel) ritem.getUserObject();
@@ -981,25 +976,30 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> {
         menu.setEnabled(view instanceof View3d);
 
         if (view instanceof View3d view3d) {
-          menu.add(createCameraViewMenu(CameraView.INITIAL, view3d));
-          menu.add(createCameraViewMenu(CameraView.LEFT, view3d));
-          menu.add(createCameraViewMenu(CameraView.RIGHT, view3d));
-          menu.add(createCameraViewMenu(CameraView.FRONT, view3d));
-          menu.add(createCameraViewMenu(CameraView.BACK, view3d));
-          menu.add(createCameraViewMenu(CameraView.TOP, view3d));
-          menu.add(createCameraViewMenu(CameraView.BOTTOM, view3d));
+          final ButtonGroup group = new ButtonGroup();
+          menu.add(createCameraViewMenu(CameraView.INITIAL, view3d, group));
+          menu.add(createCameraViewMenu(CameraView.LEFT, view3d, group));
+          menu.add(createCameraViewMenu(CameraView.RIGHT, view3d, group));
+          menu.add(createCameraViewMenu(CameraView.FRONT, view3d, group));
+          menu.add(createCameraViewMenu(CameraView.BACK, view3d, group));
+          menu.add(createCameraViewMenu(CameraView.TOP, view3d, group));
+          menu.add(createCameraViewMenu(CameraView.BOTTOM, view3d, group));
         }
       }
     }
     return menu;
   }
 
-  private JMenuItem createCameraViewMenu(View view, View3d view3d) {
-    JMenuItem menuItem = new JMenuItem(view.title());
+  private JMenuItem createCameraViewMenu(View view, View3d view3d, ButtonGroup group) {
+    JRadioButtonMenuItem menuItem = new JRadioButtonMenuItem(view.title());
     Camera c = view3d.getCamera();
     ViewData viewData =
         new ViewData(view.title(), c.getPosition(), view.rotation(), c.getZoomFactor());
-    menuItem.addActionListener(e -> view3d.getCamera().setCameraView(viewData));
+    menuItem.addActionListener(e -> c.setCameraView(viewData));
+    group.add(menuItem);
+    if (c.getRotation().equals(view.rotation(), 0.01)) {
+      group.setSelected(menuItem.getModel(), true);
+    }
     return menuItem;
   }
 

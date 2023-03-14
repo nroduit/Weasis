@@ -10,9 +10,9 @@
 package org.weasis.dicom.viewer3d.vr;
 
 import com.jogamp.opengl.GL;
-import com.jogamp.opengl.GL2;
 import com.jogamp.opengl.GL2ES2;
 import com.jogamp.opengl.GL2ES3;
+import com.jogamp.opengl.GL4;
 import org.joml.Vector3d;
 
 public class VolumeTexture extends TextureData {
@@ -27,41 +27,41 @@ public class VolumeTexture extends TextureData {
   }
 
   @Override
-  public void init(GL2 gl2) {
-    super.init(gl2);
-    gl2.glActiveTexture(GL.GL_TEXTURE0);
-    gl2.glBindTexture(GL2ES2.GL_TEXTURE_3D, getId());
-    gl2.glTexParameteri(GL2ES2.GL_TEXTURE_3D, GL2ES3.GL_TEXTURE_BASE_LEVEL, 0);
-    gl2.glTexParameteri(GL2ES2.GL_TEXTURE_3D, GL.GL_TEXTURE_MIN_FILTER, GL.GL_LINEAR);
-    gl2.glTexParameteri(GL2ES2.GL_TEXTURE_3D, GL.GL_TEXTURE_MAG_FILTER, GL.GL_LINEAR);
-    gl2.glTexParameteri(GL2ES2.GL_TEXTURE_3D, GL.GL_TEXTURE_WRAP_S, GL.GL_CLAMP_TO_EDGE);
-    gl2.glTexParameteri(GL2ES2.GL_TEXTURE_3D, GL.GL_TEXTURE_WRAP_T, GL.GL_CLAMP_TO_EDGE);
-    gl2.glTexParameteri(GL2ES2.GL_TEXTURE_3D, GL2ES2.GL_TEXTURE_WRAP_R, GL.GL_CLAMP_TO_EDGE);
-    gl2.glTexParameteri(GL2ES2.GL_TEXTURE_3D, GL2ES3.GL_TEXTURE_BASE_LEVEL, 0);
-    gl2.glTexParameteri(GL2ES2.GL_TEXTURE_3D, GL2ES3.GL_TEXTURE_MAX_LEVEL, 0);
-    gl2.glTexImage3D(
+  public void init(GL4 gl4) {
+    super.init(gl4);
+    gl4.glActiveTexture(GL.GL_TEXTURE0);
+    gl4.glBindTexture(GL2ES2.GL_TEXTURE_3D, getId());
+    gl4.glTexParameteri(GL2ES2.GL_TEXTURE_3D, GL2ES3.GL_TEXTURE_BASE_LEVEL, 0);
+    gl4.glTexParameteri(GL2ES2.GL_TEXTURE_3D, GL.GL_TEXTURE_MIN_FILTER, GL.GL_LINEAR);
+    gl4.glTexParameteri(GL2ES2.GL_TEXTURE_3D, GL.GL_TEXTURE_MAG_FILTER, GL.GL_LINEAR);
+    gl4.glTexParameteri(GL2ES2.GL_TEXTURE_3D, GL.GL_TEXTURE_WRAP_S, GL.GL_CLAMP_TO_EDGE);
+    gl4.glTexParameteri(GL2ES2.GL_TEXTURE_3D, GL.GL_TEXTURE_WRAP_T, GL.GL_CLAMP_TO_EDGE);
+    gl4.glTexParameteri(GL2ES2.GL_TEXTURE_3D, GL2ES2.GL_TEXTURE_WRAP_R, GL.GL_CLAMP_TO_EDGE);
+    gl4.glTexParameteri(GL2ES2.GL_TEXTURE_3D, GL2ES3.GL_TEXTURE_BASE_LEVEL, 0);
+    gl4.glTexParameteri(GL2ES2.GL_TEXTURE_3D, GL2ES3.GL_TEXTURE_MAX_LEVEL, 0);
+    gl4.glTexImage3D(
         GL2ES2.GL_TEXTURE_3D, 0, internalFormat, width, height, depth, 0, format, type, null);
 
-    if (gl2.glGetError() != 0) {
+    if (gl4.glGetError() != 0) {
       throw new RuntimeException(
           "Unable to generate 3D texture; OpenGL error: "
-              + jogamp.opengl.glu.error.Error.gluErrorString(gl2.glGetError()));
+              + jogamp.opengl.glu.error.Error.gluErrorString(gl4.glGetError()));
     }
   }
 
-  public void render(GL2 gl2) {
-    update(gl2);
+  public void render(GL4 gl4) {
+    update(gl4);
   }
 
-  private void update(GL2 gl2) {
-    if (gl2 == null || !requiredBuilding) {
+  private void update(GL4 gl4) {
+    if (gl4 == null || !requiredBuilding) {
       return;
     }
     if (getId() <= 0) {
-      init(gl2);
+      init(gl4);
     }
-    gl2.glActiveTexture(GL.GL_TEXTURE0);
-    gl2.glBindTexture(GL2.GL_TEXTURE_3D, getId());
+    gl4.glActiveTexture(GL.GL_TEXTURE0);
+    gl4.glBindTexture(GL2ES2.GL_TEXTURE_3D, getId());
     requiredBuilding = false;
   }
 

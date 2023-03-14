@@ -10,9 +10,9 @@
 package org.weasis.dicom.viewer3d.vr;
 
 import com.jogamp.opengl.GL;
-import com.jogamp.opengl.GL2;
 import com.jogamp.opengl.GL2ES2;
 import com.jogamp.opengl.GL2GL3;
+import com.jogamp.opengl.GL4;
 import java.nio.IntBuffer;
 
 public abstract class TextureData {
@@ -76,19 +76,19 @@ public abstract class TextureData {
     }
   }
 
-  public void init(GL2 gl) {
+  public void init(GL4 gl4) {
     if (id <= 0) {
       IntBuffer intBuffer = IntBuffer.allocate(1);
-      gl.glGenTextures(1, intBuffer);
+      gl4.glGenTextures(1, intBuffer);
       id = intBuffer.get(0);
     }
   }
 
-  public abstract void render(GL2 gl);
+  public abstract void render(GL4 gl4);
 
-  public void destroy(GL2 gl) {
+  public void destroy(GL4 gl4) {
     if (id != 0) {
-      gl.glDeleteTextures(1, new int[] {id}, 0);
+      gl4.glDeleteTextures(1, new int[] {id}, 0);
       id = 0;
     }
   }
