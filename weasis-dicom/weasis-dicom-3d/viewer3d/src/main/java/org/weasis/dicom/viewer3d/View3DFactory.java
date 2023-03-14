@@ -14,13 +14,18 @@ import com.jogamp.opengl.GL2ES2;
 import com.jogamp.opengl.GLContext;
 import com.jogamp.opengl.Threading;
 import java.awt.Component;
+import java.awt.Window;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import javax.swing.Action;
 import javax.swing.Icon;
+import javax.swing.JButton;
+import javax.swing.JLabel;
 import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.SwingUtilities;
 import org.osgi.service.component.ComponentContext;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Deactivate;
@@ -30,6 +35,7 @@ import org.weasis.core.api.explorer.DataExplorerView;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.ComboItemListener;
+import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.image.GridBagLayoutModel;
 import org.weasis.core.api.image.LayoutConstraints;
 import org.weasis.core.api.media.data.MediaSeries;
@@ -44,6 +50,8 @@ import org.weasis.core.ui.editor.SeriesViewerFactory;
 import org.weasis.core.ui.editor.ViewerPluginBuilder;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.editor.image.ViewCanvas;
+import org.weasis.core.ui.pref.PreferenceDialog;
+import org.weasis.core.ui.util.ColorLayerUI;
 import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.codec.DicomMediaIO;
 import org.weasis.dicom.explorer.DicomExplorer;
@@ -55,7 +63,7 @@ import org.weasis.dicom.viewer3d.vr.OpenglUtils;
 public class View3DFactory implements SeriesViewerFactory {
   private static final Logger LOGGER = LoggerFactory.getLogger(View3DFactory.class);
 
-  public static final String NAME = "3D Viewer";
+  public static final String NAME = Messages.getString("3d.viewer");
 
   public static final String P_DEFAULT_LAYOUT = "volume.default.layout";
   public static final String P_OPENGL_ENABLE = "opengl.enable";
@@ -92,7 +100,6 @@ public class View3DFactory implements SeriesViewerFactory {
   @Override
   public SeriesViewer createSeriesViewer(Map<String, Object> properties) {
     if (isOpenglEnable()) {
-
       GridBagLayoutModel model = getDefaultGridBagLayoutModel();
       String uid = null;
       if (properties != null) {
@@ -199,8 +206,7 @@ public class View3DFactory implements SeriesViewerFactory {
   public static OpenGLInfo getOpenGLInfo() {
     if (openGLInfo == null && isOpenglEnable()) {
       BundleTools.LOCAL_UI_PERSISTENCE.putBooleanProperty(P_OPENGL_PREV_INIT, false);
-      // Thread wait for initialization
-      Threading.invoke(true, () -> initOpenGLInfo(), null);
+      Threading.invoke(true, View3DFactory::initOpenGLInfo, null);
     }
     return openGLInfo;
   }
@@ -214,9 +220,10 @@ public class View3DFactory implements SeriesViewerFactory {
       GL var2 = glContext.getGL();
       int[] textMax = new int[1];
       var2.glGetIntegerv(GL2ES2.GL_MAX_3D_TEXTURE_SIZE, textMax, 0);
+      String version = var2.glGetString(GL.GL_VERSION);
       openGLInfo =
           new OpenGLInfo(
-              var2.glGetString(GL.GL_VERSION),
+              StringUtil.hasText(version) ? version : "0",
               glContext.getGLVersion(),
               var2.glGetString(GL.GL_VENDOR),
               var2.glGetString(GL.GL_RENDERER),
@@ -245,7 +252,19 @@ public class View3DFactory implements SeriesViewerFactory {
 
   public static void showOpenglErrorMessage(Component parent) {
     String msg = Messages.getString("View3DFactory.opengl.error.msg");
-    JOptionPane.showMessageDialog(parent, msg);
+    JButton prefButton = new JButton("Check in preferences");
+    prefButton.addActionListener(
+        e -> {
+          SwingUtilities.getWindowAncestor(prefButton).dispose();
+          Window win = UIManager.getApplicationWindow();
+          ColorLayerUI layer = ColorLayerUI.createTransparentLayerUI(win);
+          PreferenceDialog dialog = new PreferenceDialog(win);
+          dialog.showPage(NAME);
+          ColorLayerUI.showCenterScreen(dialog, layer);
+        });
+    JPanel panel =
+        GuiUtils.getVerticalBoxLayoutPanel(GuiUtils.getScaleLength(7), new JLabel(msg), prefButton);
+    JOptionPane.showMessageDialog(parent, panel, "Opengl Error", JOptionPane.ERROR_MESSAGE);
   }
 
   // ================================================================================

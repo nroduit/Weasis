@@ -80,6 +80,13 @@ public class GuiUtils {
   private static final Logger LOGGER = LoggerFactory.getLogger(GuiUtils.class);
 
   public static final String HTML_START = "<html>";
+
+  public static final String HTML_COLOR_START = "<html><font color='";
+
+  public static final String HTML_COLOR_PATTERN =
+      """
+          <html><font color="%s">%s</font></html>
+          """;
   public static final String HTML_END = "</html>";
   public static final String HTML_BR = "<br>";
 

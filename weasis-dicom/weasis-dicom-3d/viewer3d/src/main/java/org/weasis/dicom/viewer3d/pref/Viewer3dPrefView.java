@@ -19,8 +19,10 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JSlider;
 import javax.swing.SwingUtilities;
+import org.osgi.framework.Version;
 import org.weasis.core.api.gui.util.AbstractItemDialogPage;
 import org.weasis.core.api.gui.util.GuiUtils;
+import org.weasis.core.api.gui.util.GuiUtils.IconColor;
 import org.weasis.core.api.image.GridBagLayoutModel;
 import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.api.util.ResourceUtil;
@@ -38,7 +40,8 @@ public class Viewer3dPrefView extends AbstractItemDialogPage {
 
   private final JButton bckColor = new JButton(ResourceUtil.getIcon(ActionIcon.PIPETTE));
   private final JButton lightColor = new JButton(ResourceUtil.getIcon(ActionIcon.PIPETTE));
-  private final JSlider sliderDynamic = new JSlider(0, 100, RenderingLayer.DEFAULT_DYNAMIC_QUALITY);
+  private final JSlider sliderDynamic =
+      new JSlider(0, 100, RenderingLayer.DEFAULT_DYNAMIC_QUALITY_RATE);
   private final JComboBox<GridBagLayoutModel> comboBoxLayouts =
       new JComboBox<>(View3DContainer.LAYOUT_LIST.toArray(new GridBagLayoutModel[0]));
 
@@ -52,7 +55,7 @@ public class Viewer3dPrefView extends AbstractItemDialogPage {
   private void initGUI() {
     int quality =
         BundleTools.LOCAL_UI_PERSISTENCE.getIntProperty(
-            RenderingLayer.DYNAMIC_QUALITY, RenderingLayer.DEFAULT_DYNAMIC_QUALITY);
+            RenderingLayer.DYNAMIC_QUALITY, RenderingLayer.DEFAULT_DYNAMIC_QUALITY_RATE);
     sliderDynamic.setValue(quality);
     sliderDynamic.addChangeListener(
         e ->
@@ -94,7 +97,10 @@ public class Viewer3dPrefView extends AbstractItemDialogPage {
 
     OpenGLInfo info = View3DFactory.getOpenGLInfo();
     if (info == null) {
-      JLabel labelCard = new JLabel("No graphic card found for OpenGL");
+      String alert =
+          GuiUtils.HTML_COLOR_PATTERN.formatted(
+              IconColor.ACTIONS_RED.getHtmlCode(), "No graphic card found for OpenGL");
+      JLabel labelCard = new JLabel(alert);
       openglPanel.add(GuiUtils.getFlowLayoutPanel(labelCard));
     } else {
       JLabel labelCard =
@@ -110,6 +116,36 @@ public class Viewer3dPrefView extends AbstractItemDialogPage {
       openglPanel.add(GuiUtils.getFlowLayoutPanel(labelCard));
       openglPanel.add(GuiUtils.getFlowLayoutPanel(version));
       openglPanel.add(GuiUtils.getFlowLayoutPanel(texture));
+
+      // This minimal version must match with the shader version
+      Version minimalVersion = new Version(4, 3, 0);
+      boolean versionIssue = info.getVersion().compareTo(minimalVersion) < 0;
+      if (versionIssue || info.max3dTextureSize() < RenderingLayer.MAX_QUALITY) {
+        String alert =
+            GuiUtils.HTML_COLOR_PATTERN.formatted(
+                IconColor.ACTIONS_RED.getHtmlCode(), "These capabilities are not sufficient");
+        openglPanel.add(GuiUtils.getFlowLayoutPanel(new JLabel(alert)));
+        if (versionIssue) {
+          alert =
+              GuiUtils.HTML_COLOR_PATTERN
+                  .formatted(
+                      IconColor.ACTIONS_RED.getHtmlCode(), "The version should be at least %s")
+                  .formatted(minimalVersion);
+          openglPanel.add(GuiUtils.getFlowLayoutPanel(new JLabel(alert)));
+        }
+
+        if (info.max3dTextureSize() < RenderingLayer.MAX_QUALITY) {
+          alert =
+              GuiUtils.HTML_COLOR_PATTERN.formatted(
+                  IconColor.ACTIONS_RED.getHtmlCode(),
+                  "Texture 3D has a maximum size of %sx%sx%s"
+                      .formatted(
+                          info.max3dTextureSize(),
+                          info.max3dTextureSize(),
+                          info.max3dTextureSize()));
+          openglPanel.add(GuiUtils.getFlowLayoutPanel(new JLabel(alert)));
+        }
+      }
     }
 
     openglPanel.add(GuiUtils.boxVerticalStrut(ITEM_SEPARATOR));
@@ -196,7 +232,7 @@ public class Viewer3dPrefView extends AbstractItemDialogPage {
 
   @Override
   public void resetToDefaultValues() {
-    sliderDynamic.setValue(RenderingLayer.DEFAULT_DYNAMIC_QUALITY);
+    sliderDynamic.setValue(RenderingLayer.DEFAULT_DYNAMIC_QUALITY_RATE);
     BundleTools.SYSTEM_PREFERENCES.putColorProperty(RenderingLayer.BCK_COLOR, Color.GRAY);
     BundleTools.SYSTEM_PREFERENCES.putColorProperty(RenderingLayer.LIGHT_COLOR, Color.WHITE);
     BundleTools.SYSTEM_PREFERENCES.put(

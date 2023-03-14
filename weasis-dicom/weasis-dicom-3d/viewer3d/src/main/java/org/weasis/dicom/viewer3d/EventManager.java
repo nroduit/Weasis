@@ -305,7 +305,12 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> {
   }
 
   private SliderChangeListener newVolumeQualityAction() {
-    return new SliderChangeListener(ActionVol.VOL_QUALITY, 128, 8192, 1024, false) {
+    return new SliderChangeListener(
+        ActionVol.VOL_QUALITY,
+        RenderingLayer.MIN_QUALITY,
+        RenderingLayer.MAX_QUALITY,
+        1024,
+        false) {
       @Override
       public void stateChanged(BoundedRangeModel model) {
         firePropertyChange(

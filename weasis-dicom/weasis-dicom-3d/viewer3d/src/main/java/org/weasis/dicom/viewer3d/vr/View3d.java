@@ -277,7 +277,7 @@ public class View3d extends VolumeCanvas
       return 0;
     }
     double val = Math.max(volTexture.getDepth(), volTexture.getMaxDimensionLength());
-    return Math.min(8192, (int) Math.round(val * camera.getFocalLength()));
+    return Math.min(RenderingLayer.MAX_QUALITY, (int) Math.round(val * camera.getFocalLength()));
   }
 
   @Override
@@ -449,7 +449,7 @@ public class View3d extends VolumeCanvas
       if (camera.isAdjusting()) {
         double quality =
             BundleTools.LOCAL_UI_PERSISTENCE.getIntProperty(
-                    RenderingLayer.DYNAMIC_QUALITY, RenderingLayer.DEFAULT_DYNAMIC_QUALITY)
+                    RenderingLayer.DYNAMIC_QUALITY, RenderingLayer.DEFAULT_DYNAMIC_QUALITY_RATE)
                 / 100.0;
         sampleCount = Math.max(64, (int) Math.round(sampleCount * quality));
       }

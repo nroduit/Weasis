@@ -9,5 +9,20 @@
  */
 package org.weasis.dicom.viewer3d;
 
+import org.osgi.framework.Version;
+import org.slf4j.LoggerFactory;
+import org.weasis.core.util.StringUtil;
+
 public record OpenGLInfo(
-    String shortVersion, String version, String vendor, String renderer, int max3dTextureSize) {}
+    String shortVersion, String version, String vendor, String renderer, int max3dTextureSize) {
+
+  public Version getVersion() {
+    try {
+      return new Version(shortVersion().split(StringUtil.SPACE)[0]);
+    } catch (Exception e) {
+      LoggerFactory.getLogger(OpenGLInfo.class)
+          .error("Cannot read opengl version {}", shortVersion().split(StringUtil.SPACE)[0]);
+      return new Version(0, 0, 0);
+    }
+  }
+}

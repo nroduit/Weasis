@@ -11,7 +11,7 @@ package org.weasis.dicom.viewer3d.pr;
 
 /**
  * <a
- * href="http://dicom.nema.org/medical/dicom/current/output/chtml/part03/sect_A.80.2.3.html#table_A.80.2.3-1">Volume
+ * href="https://dicom.nema.org/medical/dicom/current/output/chtml/part03/sect_A.80.2.3.html#table_A.80.2.3-1">Volume
  * Rendering Volumetric Presentation State IOD Module Table</a>
  */
 public class VolumeRenderingVolumetricPr {}
