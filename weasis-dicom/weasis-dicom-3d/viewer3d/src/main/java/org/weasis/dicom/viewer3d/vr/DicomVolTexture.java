@@ -177,30 +177,31 @@ public class DicomVolTexture extends VolumeTexture implements MediaSeriesGroup {
 
   @Override
   public void setTagNoNull(TagW tag, Object value) {
-    if (tag != null && value != null) {
-      if (!tag.equals(tagID)) {
-        tags.put(tag, value);
-      }
+    if (tag != null && value != null && !tag.equals(tagID)) {
+      tags.put(tag, value);
     }
   }
 
-  public List<PresetWindowLevel> getPresetList(boolean pixelPadding, Preset volumePreset) {
+  public List<PresetWindowLevel> getPresetList(
+      boolean pixelPadding, Preset volumePreset, boolean originalLut) {
     Object media = series.getMedia(MEDIA_POSITION.MIDDLE, null, null);
 
     if (media instanceof DicomImageElement imgElement) {
       DefaultWlPresentation wlp = new DefaultWlPresentation(null, pixelPadding);
       List<PresetWindowLevel> presets = new ArrayList<>(imgElement.getPresetList(wlp));
-      // Modify auto level according to the volume LUT
-      for (int i = 0; i < presets.size(); i++) {
-        PresetWindowLevel p = presets.get(i);
-        if (p.getKeyCode() == 0x30) {
-          double ww = (double) volumePreset.getColorMax() - volumePreset.getColorMin();
-          PresetWindowLevel autoLevel =
-              new PresetWindowLevel(
-                  "Auto Level [Image]", ww, volumePreset.getColorMin() + ww / 2, LutShape.LINEAR);
-          autoLevel.setKeyCode(0x30);
-          presets.set(i, autoLevel);
-          break;
+      if (!originalLut) {
+        // Modify auto level according to the volume LUT
+        for (int i = 0; i < presets.size(); i++) {
+          PresetWindowLevel p = presets.get(i);
+          if (p.getKeyCode() == 0x30) {
+            double ww = (double) volumePreset.getColorMax() - volumePreset.getColorMin();
+            PresetWindowLevel autoLevel =
+                new PresetWindowLevel(
+                    "Auto Level [Image]", ww, volumePreset.getColorMin() + ww / 2, LutShape.LINEAR);
+            autoLevel.setKeyCode(0x30);
+            presets.set(i, autoLevel);
+            break;
+          }
         }
       }
       return presets;

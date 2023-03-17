@@ -12,6 +12,7 @@ package org.weasis.dicom.viewer3d.vr;
 import java.util.ArrayList;
 import java.util.List;
 import org.weasis.core.api.media.data.ImageElement;
+import org.weasis.dicom.viewer2d.mip.MipView;
 import org.weasis.opencv.op.lut.LutShape;
 
 public class RenderingLayer<E extends ImageElement> {
@@ -34,6 +35,8 @@ public class RenderingLayer<E extends ImageElement> {
   private int quality;
   private LutShape lutShape;
   private RenderingType renderingType;
+  private MipView.Type mipType;
+  private int mipThickness;
   private double opacity;
   private boolean enableRepaint;
   private final ShadingOptions shadingOptions;
@@ -47,6 +50,8 @@ public class RenderingLayer<E extends ImageElement> {
     this.shading = false;
     this.quality = 1024;
     this.renderingType = RenderingType.COMPOSITE;
+    this.mipType = MipView.Type.NONE;
+    this.mipThickness = 1;
     this.enableRepaint = true;
     this.invertLut = false;
     this.shadingOptions = new ShadingOptions(this);
@@ -75,12 +80,35 @@ public class RenderingLayer<E extends ImageElement> {
   public void setRenderingType(RenderingType type) {
     if (this.renderingType != type) {
       this.renderingType = type;
+      this.mipType = type == RenderingType.MIP ? MipView.Type.MAX : MipView.Type.NONE;
       fireLayerChanged();
     }
   }
 
   public RenderingType getRenderingType() {
     return renderingType;
+  }
+
+  public MipView.Type getMipType() {
+    return mipType;
+  }
+
+  public void setMipType(MipView.Type mipType) {
+    if (this.mipType != mipType) {
+      this.mipType = mipType;
+      fireLayerChanged();
+    }
+  }
+
+  public int getMipThickness() {
+    return mipThickness;
+  }
+
+  public void setMipThickness(int mipThickness) {
+    if (this.mipThickness != mipThickness) {
+      this.mipThickness = mipThickness;
+      fireLayerChanged();
+    }
   }
 
   public int getWindowWidth() {

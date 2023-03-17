@@ -25,6 +25,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
 import javax.swing.Icon;
 import org.joml.Vector4f;
 import org.slf4j.Logger;
@@ -39,6 +40,8 @@ import org.weasis.dicom.viewer3d.vr.lut.VolumePreset;
 public class Preset extends TextureData {
   private static final Logger LOGGER = LoggerFactory.getLogger(Preset.class);
   public static final List<Preset> basicPresets = loadPresets();
+
+  public static final Preset originalPreset = getOriginalPreset();
   private final boolean defaultElement;
   private final List<PresetGroup> groups;
   private boolean requiredBuilding;
@@ -58,7 +61,7 @@ public class Preset extends TextureData {
 
   public Preset(VolumePreset v) {
     super(256, PixelFormat.RGBA8);
-    this.name = v.getName();
+    this.name = Objects.requireNonNull(v).getName();
     this.modality = Modality.getModality(v.getModality());
     this.defaultElement = v.isDefaultElement();
     this.shade = v.isShade();
@@ -290,6 +293,10 @@ public class Preset extends TextureData {
     this.requiredBuilding = requiredBuilding;
   }
 
+  public boolean isDefaultForAll() {
+    return modality == Modality.DEFAULT && defaultElement;
+  }
+
   @Override
   public void init(GL4 gl4) {
     init(gl4, false);
@@ -325,34 +332,36 @@ public class Preset extends TextureData {
 
   @Override
   public void render(GL4 gl4) {
-    render(gl4, false);
+    render(gl4, false, false);
   }
 
-  void render(GL4 gl4, boolean inverse) {
-    if (requiredBuilding) {
-      this.requiredBuilding = false;
-
-      if (gl4 != null) {
-        if (getId() <= 0 || (inverse && (invertColors == null || id2 <= 0))) {
-          init(gl4, inverse);
+  void render(GL4 gl4, boolean inverse, boolean originalLut) {
+    if (gl4 != null) {
+      Preset p = originalLut ? originalPreset : this;
+      if (requiredBuilding) {
+        this.requiredBuilding = false;
+        if (p.getId() <= 0 || (inverse && (p.invertColors == null || p.id2 <= 0))) {
+          p.init(gl4, inverse);
         }
-        gl4.glActiveTexture(GL.GL_TEXTURE1);
-        gl4.glTexImage2D(
-            GL.GL_TEXTURE_2D,
-            0,
-            internalFormat,
-            width,
-            height,
-            0,
-            format,
-            type,
-            Buffers.newDirectByteBuffer(inverse ? invertColors : colors).rewind());
-
-        lightingMap.update(gl4);
       }
+
+      gl4.glActiveTexture(GL.GL_TEXTURE1);
+      gl4.glTexImage2D(
+          GL.GL_TEXTURE_2D,
+          0,
+          p.internalFormat,
+          p.width,
+          p.height,
+          0,
+          p.format,
+          p.type,
+          Buffers.newDirectByteBuffer(inverse ? p.invertColors : p.colors).rewind());
+
+      p.lightingMap.update(gl4);
     }
   }
 
+  @Override
   public void destroy(GL4 gl4) {
     super.destroy(gl4);
     if (id2 != 0) {
@@ -463,21 +472,15 @@ public class Preset extends TextureData {
     return defPreset;
   }
 
-  public static List<Preset> loadPresets() {
+  static List<Preset> loadPresets() {
     List<Preset> presets = new ArrayList<>();
     try {
-      ObjectMapper objectMapper = new ObjectMapper();
-      List<VolumePreset> list =
-          objectMapper.readValue(
-              Preset.class.getResourceAsStream("/volumePresets.json"), new TypeReference<>() {});
-
+      List<VolumePreset> list = loadFile("/volumePresets.json");
       list.forEach(
           p -> {
-            try {
-              Preset preset = new Preset(p);
+            Preset preset = buildPreset(p);
+            if (preset != null) {
               presets.add(preset);
-            } catch (Exception e) {
-              LOGGER.error("Cannot read the preset {}", p.getName(), e);
             }
           });
     } catch (IOException e) {
@@ -487,5 +490,28 @@ public class Preset extends TextureData {
         Comparator.comparing(
             o -> (String.format("%03d", o.getModality().ordinal()) + o.getName())));
     return presets;
+  }
+
+  static Preset getOriginalPreset() {
+    try {
+      List<VolumePreset> original = loadFile("/originalLut.json");
+      return buildPreset(original.get(0));
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  static List<VolumePreset> loadFile(String file) throws IOException {
+    ObjectMapper objectMapper = new ObjectMapper();
+    return objectMapper.readValue(Preset.class.getResourceAsStream(file), new TypeReference<>() {});
+  }
+
+  static Preset buildPreset(VolumePreset p) {
+    try {
+      return new Preset(p);
+    } catch (Exception e) {
+      LOGGER.error("Cannot read the preset {}", p.getName(), e);
+    }
+    return null;
   }
 }

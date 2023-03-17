@@ -36,6 +36,7 @@ import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.viewer3d.ActionVol;
 import org.weasis.dicom.viewer3d.EventManager;
 import org.weasis.dicom.viewer3d.Messages;
+import org.weasis.dicom.viewer3d.geometry.Axis;
 import org.weasis.dicom.viewer3d.vr.ShadingPrefDialog;
 import org.weasis.dicom.viewer3d.vr.View3d;
 
@@ -217,12 +218,23 @@ public class VolumeTool extends PluginTool {
             });
 
     EventManager.getInstance()
-        .getAction(ActionVol.MIP_DEPTH)
+        .getAction(ActionVol.MIP_TYPE)
         .ifPresent(
-            s -> {
-              JSliderW slider = s.createSlider(0, true);
-              GuiUtils.setPreferredWidth(slider, 100);
-              volumePanel.add(slider);
+            c -> {
+              JPanel panel = GuiUtils.getHorizontalBoxLayoutPanel(5);
+              EventManager.getInstance()
+                  .getAction(ActionVol.MIP_DEPTH)
+                  .ifPresent(
+                      s -> {
+                        JSliderW slider = s.createSlider(0, true);
+                        GuiUtils.setPreferredWidth(slider, 140);
+                        panel.add(slider);
+                      });
+              JComboBox<?> combo = c.createCombo();
+              GuiUtils.setWidth(combo, 80);
+              panel.add(combo);
+              volumePanel.add(panel);
+              volumePanel.add(GuiUtils.boxVerticalStrut(gabY));
             });
 
     return volumePanel;
@@ -249,9 +261,11 @@ public class VolumeTool extends PluginTool {
         .getAction(ActionW.ROTATION)
         .ifPresent(
             sliderItem -> {
-              JSliderW rotationSlider = sliderItem.createSlider(5, true);
-              GuiUtils.setPreferredWidth(rotationSlider, 100);
-              transform.add(rotationSlider);
+              JSliderW slider = sliderItem.createSlider(5, true);
+              GuiUtils.setPreferredWidth(slider, 140);
+              JComboBox<Axis> comboBox = new JComboBox<>(Axis.values());
+              GuiUtils.setWidth(comboBox, 55);
+              transform.add(GuiUtils.getHorizontalBoxLayoutPanel(5, slider, comboBox));
             });
 
     EventManager.getInstance()

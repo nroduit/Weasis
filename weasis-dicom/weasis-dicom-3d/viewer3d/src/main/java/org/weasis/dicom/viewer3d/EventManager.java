@@ -69,6 +69,7 @@ import org.weasis.dicom.codec.display.Modality;
 import org.weasis.dicom.viewer2d.Messages;
 import org.weasis.dicom.viewer2d.ResetTools;
 import org.weasis.dicom.viewer2d.View2dContainer;
+import org.weasis.dicom.viewer2d.mip.MipView;
 import org.weasis.dicom.viewer3d.geometry.ArcballMouseListener;
 import org.weasis.dicom.viewer3d.geometry.Camera;
 import org.weasis.dicom.viewer3d.geometry.CameraView;
@@ -111,6 +112,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> {
     setAction(newLevelAction());
     setAction(newRotateAction());
     setAction(newZoomAction());
+    setAction(newMipTypeOption());
     setAction(newMipDepthAction());
     setAction(newOpacityAction());
 
@@ -135,7 +137,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> {
     // Graphic[0])));
     //    setAction(newDrawAction(MeasureToolBar.drawGraphicList.toArray(new Graphic[0])));
     setAction(newSpatialUnit(Unit.values()));
-    setAction(newMipOption());
+    setAction(newRenderingTypeOption());
 
     setAction(buildPanAction());
     setAction(newCrosshairAction());
@@ -245,6 +247,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> {
     };
   }
 
+  @Override
   protected SliderChangeListener newZoomAction() {
 
     return new SliderChangeListener(
@@ -282,6 +285,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> {
     };
   }
 
+  @Override
   protected SliderChangeListener newRotateAction() {
     return new ArcballMouseListener() {
       @Override
@@ -429,14 +433,26 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> {
     };
   }
 
-  private ComboItemListener<RenderingType> newMipOption() {
+  private ComboItemListener<RenderingType> newRenderingTypeOption() {
 
     return new ComboItemListener<>(ActionVol.RENDERING_TYPE, RenderingType.values()) {
 
       @Override
       public void itemStateChanged(Object object) {
-        getAction(ActionVol.MIP_DEPTH)
-            .ifPresent(a -> a.enableAction(RenderingType.MIP.equals(object)));
+        ViewCanvas<DicomImageElement> pane = getSelectedViewPane();
+        firePropertyChange(ActionW.SYNCH.cmd(), null, new SynchEvent(pane, action.cmd(), object));
+        // Need to synch the listeners and the components
+        updateComponentsListener(pane);
+      }
+    };
+  }
+
+  private ComboItemListener<MipView.Type> newMipTypeOption() {
+
+    return new ComboItemListener<>(ActionVol.MIP_TYPE, MipView.Type.values()) {
+
+      @Override
+      public void itemStateChanged(Object object) {
         firePropertyChange(
             ActionW.SYNCH.cmd(), null, new SynchEvent(getSelectedViewPane(), action.cmd(), object));
       }
@@ -654,8 +670,11 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> {
                 a.setSelectedItemWithoutTriggerAction(
                     canvas.getActionValue(ActionW.SPATIAL_UNIT.cmd())));
 
-    Optional<ComboItemListener<RenderingType>> mipType = getAction(ActionVol.RENDERING_TYPE);
-    mipType.ifPresent(a -> a.setSelectedItemWithoutTriggerAction(rendering.getRenderingType()));
+    Optional<ComboItemListener<RenderingType>> viewType = getAction(ActionVol.RENDERING_TYPE);
+    viewType.ifPresent(a -> a.setSelectedItemWithoutTriggerAction(rendering.getRenderingType()));
+
+    Optional<ComboItemListener<MipView.Type>> mipType = getAction(ActionVol.MIP_TYPE);
+    mipType.ifPresent(a -> a.setSelectedItemWithoutTriggerAction(rendering.getMipType()));
 
     cineAction.ifPresent(
         a ->
@@ -674,7 +693,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> {
               a.setSliderMinMaxValue(
                   2,
                   cineAction.map(SliderChangeListener::getSliderMax).orElse(1),
-                  (Integer) canvas.getActionValue(ActionVol.MIP_DEPTH.cmd()),
+                  canvas.getRenderingLayer().getMipThickness(),
                   false));
     }
 
@@ -697,11 +716,8 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> {
     volumeProjection.ifPresent(a -> a.enableAction(volume));
 
     volumeOpacity.ifPresent(a -> a.setRealValue(rendering.getOpacity(), false));
-    //    mipType.ifPresent(
-    //        a ->
-    //            mipThickness.ifPresent(
-    //                t -> t.enableAction(!volume ||
-    // RenderingType.MIP.equals(a.getSelectedItem()))));
+    mipType.ifPresent(
+        a -> a.enableAction(!volume || RenderingType.MIP.equals(rendering.getRenderingType())));
     mipThickness.ifPresent(a -> a.enableAction(!volume));
     cineAction.ifPresent(a -> a.enableAction(!volume));
     //    rotation.ifPresent(a -> a.enableAction(!volume));
@@ -767,7 +783,8 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> {
       boolean pixelPadding = true;
       LutShape lutShapeItem = view3d.getRenderingLayer().getLutShape();
       List<PresetWindowLevel> presetList =
-          volTexture.getPresetList(pixelPadding, view3d.getVolumePreset());
+          volTexture.getPresetList(
+              pixelPadding, view3d.getVolumePreset(), view3d.getViewType() != ViewType.VOLUME3D);
 
       Optional<ComboItemListener<Object>> presetAction = getAction(ActionW.PRESET);
       if (presetAction.isPresent()) {
@@ -862,6 +879,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> {
         } else {
           // TODO if Pan is activated than rotation is required
           if (Mode.STACK.equals(synch.getMode())) {
+            boolean sliceMode = canvas.getViewType() == ViewType.SLICE;
             for (int i = 0; i < panes.size(); i++) {
               ViewCanvas<DicomImageElement> pane = panes.get(i);
               pane.getGraphicManager().deleteByLayerType(LayerType.CROSSLINES);
@@ -872,7 +890,9 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> {
                 if (oldSynch == null || !oldSynch.getMode().equals(synch.getMode())) {
                   oldSynch = synch.copy();
                 }
-                if (canvas.getViewType() != ViewType.VOLUME3D) {
+                if (sliceMode
+                    && pane instanceof View3d view3d
+                    && view3d.getViewType() == ViewType.SLICE) {
                   addPropertyChangeListener(ActionW.SYNCH.cmd(), pane);
                 }
 
@@ -1046,12 +1066,25 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> {
     return menu;
   }
 
-  public JMenu getVolumeTypeMenu(String prop) {
+  public JMenu getViewTypeMenu(String prop) {
     JMenu menu = null;
     if (BundleTools.SYSTEM_PREFERENCES.getBooleanProperty(prop, true)) {
-      Optional<ComboItemListener<RenderingType>> lutAction = getAction(ActionVol.RENDERING_TYPE);
-      if (lutAction.isPresent()) {
-        menu = lutAction.get().createUnregisteredRadioMenu(ActionVol.RENDERING_TYPE.getTitle());
+      Optional<ComboItemListener<RenderingType>> viewTypeAction =
+          getAction(ActionVol.RENDERING_TYPE);
+      if (viewTypeAction.isPresent()) {
+        menu =
+            viewTypeAction.get().createUnregisteredRadioMenu(ActionVol.RENDERING_TYPE.getTitle());
+      }
+    }
+    return menu;
+  }
+
+  public JMenu getMipTypeMenu(String prop) {
+    JMenu menu = null;
+    if (BundleTools.SYSTEM_PREFERENCES.getBooleanProperty(prop, true)) {
+      Optional<ComboItemListener<MipView.Type>> viewTypeAction = getAction(ActionVol.MIP_TYPE);
+      if (viewTypeAction.isPresent()) {
+        menu = viewTypeAction.get().createUnregisteredRadioMenu(ActionVol.MIP_TYPE.getTitle());
       }
     }
     return menu;

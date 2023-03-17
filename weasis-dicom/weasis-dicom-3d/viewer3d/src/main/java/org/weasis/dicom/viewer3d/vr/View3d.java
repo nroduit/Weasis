@@ -81,6 +81,7 @@ import org.weasis.core.ui.model.layer.LayerAnnotation;
 import org.weasis.core.ui.model.layer.LayerType;
 import org.weasis.core.ui.model.utils.bean.PanPoint;
 import org.weasis.dicom.codec.DicomImageElement;
+import org.weasis.dicom.viewer2d.mip.MipView;
 import org.weasis.dicom.viewer3d.ActionVol;
 import org.weasis.dicom.viewer3d.EventManager;
 import org.weasis.dicom.viewer3d.InfoLayer3d;
@@ -180,9 +181,6 @@ public class View3d extends VolumeCanvas
 
     actionsInView.put(ActionW.ROTATION.cmd(), 0);
     actionsInView.put(ActionW.FLIP.cmd(), false);
-
-    actionsInView.put(ActionVol.RENDERING_TYPE.cmd(), RenderingType.COMPOSITE);
-    actionsInView.put(ActionVol.MIP_DEPTH.cmd(), 2);
   }
 
   @Override
@@ -397,6 +395,8 @@ public class View3d extends VolumeCanvas
         gl4,
         "renderingType",
         (gl, loc) -> gl.glUniform1i(loc, renderingLayer.getRenderingType().getId()));
+    program.allocateUniform(
+        gl4, "mipType", (gl, loc) -> gl.glUniform1i(loc, renderingLayer.getMipType().getId()));
     program.allocateUniform(gl4, "volTexture", (gl, loc) -> gl.glUniform1i(loc, 0));
     program.allocateUniform(gl4, "colorMap", (gl, loc) -> gl.glUniform1i(loc, 1));
     program.allocateUniform(
@@ -460,7 +460,7 @@ public class View3d extends VolumeCanvas
       program.setUniforms(gl2);
       volTexture.render(gl2);
       if (volumePreset != null) {
-        volumePreset.render(gl2, renderingLayer.isInvertLut());
+        volumePreset.render(gl2, renderingLayer.isInvertLut(), isOriginalLUT());
       }
       texture.render(gl2);
       quadProgram.use(gl2);
@@ -479,6 +479,10 @@ public class View3d extends VolumeCanvas
     }
   }
 
+  public boolean isOriginalLUT() {
+    return viewType != ViewType.VOLUME3D && volumePreset != null && volumePreset.isDefaultForAll();
+  }
+
   public void reshape(GLAutoDrawable drawable, int x, int y, int width, int height) {
     GL4 gl2 = drawable.getGL().getGL4();
     gl2.glViewport(0, 0, width, height);
@@ -493,31 +497,37 @@ public class View3d extends VolumeCanvas
     //    }
   }
 
-  public void setVolumePreset(Preset volumePreset) {
-    this.volumePreset = Objects.requireNonNull(volumePreset);
+  public void setVolumePreset(Preset preset) {
+    this.volumePreset = Objects.requireNonNull(preset);
     volumePreset.setRequiredBuilding(true);
 
-    getVolTexture().getPresetList(true, volumePreset).stream()
-        .filter(p -> p.getKeyCode() == 0x30)
-        .findFirst()
-        .ifPresent(
-            p -> {
-              setPresetWindowLevel(p, false);
-              eventManager
-                  .getAction(ActionW.PRESET)
-                  .ifPresent(a -> a.setSelectedItemWithoutTriggerAction(p));
-              eventManager
-                  .getAction(ActionW.LUT_SHAPE)
-                  .ifPresent(a -> a.setSelectedItemWithoutTriggerAction(p.getLutShape()));
-
-              eventManager.applyDefaultWindowLevel(this);
-            });
-
+    boolean originalLUT = isOriginalLUT();
+    List<PresetWindowLevel> list = getVolTexture().getPresetList(true, volumePreset, originalLUT);
+    if (originalLUT) {
+      if (!list.isEmpty()) {
+        changePresetWindowLevel(list.get(0));
+      }
+    } else {
+      list.stream()
+          .filter(p -> p.getKeyCode() == 0x30)
+          .findFirst()
+          .ifPresent(this::changePresetWindowLevel);
+    }
     renderingLayer.applyVolumePreset(volumePreset, false);
     eventManager
         .getAction(ActionVol.VOL_SHADING)
         .ifPresent(a -> a.setSelectedWithoutTriggerAction(volumePreset.isShade()));
     display();
+  }
+
+  protected void changePresetWindowLevel(PresetWindowLevel p) {
+    setPresetWindowLevel(p, false);
+    eventManager.getAction(ActionW.PRESET).ifPresent(a -> a.setSelectedItemWithoutTriggerAction(p));
+    eventManager
+        .getAction(ActionW.LUT_SHAPE)
+        .ifPresent(a -> a.setSelectedItemWithoutTriggerAction(p.getLutShape()));
+
+    eventManager.applyDefaultWindowLevel(this);
   }
 
   public Preset getVolumePreset() {
@@ -726,6 +736,7 @@ public class View3d extends VolumeCanvas
     return null;
   }
 
+  @Override
   public void resetMouseAdapter() {
     ViewCanvas.super.resetMouseAdapter();
 
@@ -802,7 +813,8 @@ public class View3d extends VolumeCanvas
       GuiUtils.addItemToMenu(popupMenu, manager.getLutMenu(null));
       count = addSeparatorToPopupMenu(popupMenu, count);
 
-      GuiUtils.addItemToMenu(popupMenu, manager.getVolumeTypeMenu(null));
+      GuiUtils.addItemToMenu(popupMenu, manager.getViewTypeMenu(null));
+      GuiUtils.addItemToMenu(popupMenu, manager.getMipTypeMenu(null));
       GuiUtils.addItemToMenu(popupMenu, manager.getShadingMenu(null));
       GuiUtils.addItemToMenu(popupMenu, manager.getSProjectionMenu(null));
       count = addSeparatorToPopupMenu(popupMenu, count);
@@ -910,10 +922,8 @@ public class View3d extends VolumeCanvas
           if (val instanceof LutShape lutShape) {
             renderingLayer.setLutShape(lutShape);
           }
-        } else if (command.equals(ActionW.ROTATION.cmd()) && val instanceof Integer) {
-          setRotation((Integer) val);
-          if (getViewType() != ViewType.VOLUME3D) { // If its not a volumetric view
-          }
+        } else if (command.equals(ActionW.ROTATION.cmd()) && val instanceof Integer rotation) {
+          setRotation(rotation);
         } else if (command.equals(ActionW.RESET.cmd())) {
           reset();
         } else if (command.equals(ActionW.ZOOM.cmd())) {
@@ -956,12 +966,28 @@ public class View3d extends VolumeCanvas
           }
         } else if (command.equals(ActionVol.RENDERING_TYPE.cmd())) {
           if (val instanceof RenderingType type) {
-            renderingLayer.setRenderingType(type);
-            setViewType(type.getViewType());
+            RenderingType oldType = renderingLayer.getRenderingType();
+            if (type != oldType) {
+              renderingLayer.setEnableRepaint(false);
+              renderingLayer.setRenderingType(type);
+              setViewType(type.getViewType());
+              renderingLayer.setEnableRepaint(true);
+              if (type == RenderingType.SLICE) {
+                setVolumePreset(Preset.getDefaultPreset(null));
+              } else if (oldType == RenderingType.SLICE) {
+                setVolumePreset(Preset.getDefaultPreset(volTexture.getModality()));
+              } else {
+                display();
+              }
+            }
           }
         } else if (command.equals(ActionVol.MIP_DEPTH.cmd())) {
-          if (val instanceof Integer) {
-            //    setMipDepth((Integer) val);
+          if (val instanceof Integer thickness) {
+            renderingLayer.setMipThickness(thickness);
+          }
+        } else if (command.equals(ActionVol.MIP_TYPE.cmd())) {
+          if (val instanceof MipView.Type mipType) {
+            renderingLayer.setMipType(mipType);
           }
         } else if (command.equals(ActionVol.VOL_QUALITY.cmd())) {
           if (val instanceof Integer quality) {

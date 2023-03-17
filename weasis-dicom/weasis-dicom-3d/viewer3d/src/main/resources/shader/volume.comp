@@ -54,6 +54,13 @@ const uint typeSliceAxial = 0x00000004u;
 const uint typeSliceCoronal = 0x00000005u;
 const uint typeSliceSagittal = 0x00000006u;
 
+// MIP type
+uniform int mipType;
+const uint mipTypeNone = 0x00000000u;
+const uint mipTypeMin = 0x00000001u;
+const uint mipTypeMean = 0x00000002u;
+const uint mipTypeMax = 0x00000003u;
+
 // Lighting
 const vec4 lightPositionWorld = vec4(10.0, 0, 0, 1.0);
 const vec3 defaultAmbient = lightColor;
@@ -72,6 +79,7 @@ struct LightParameters {
 };
 uniform LightParameters lights[4];
 
+const vec3 sliceOffset = vec3(0.5, 0.5, 0.0);
 
 // *************************************************************************************************
 // Get voxel value from 3D texture
@@ -144,8 +152,8 @@ float getWindowLevelFunc(float pixValue, bool normalize, uint type) {
         float minValue = 0;;
         float maxValue = 0;
         if (type == lutShapeSigmoid) {
-            minValue =  sigmoidLUT(nFactor, outRange, lowLevel);
-            maxValue =  sigmoidLUT(nFactor, outRange, highLevel);
+            minValue = sigmoidLUT(nFactor, outRange, lowLevel);
+            maxValue = sigmoidLUT(nFactor, outRange, highLevel);
         } else if (type == lutShapeLogInv) {
             minValue = exponentialLUT(nFactor, outRange, lowLevel);
             maxValue = exponentialLUT(nFactor, outRange, highLevel);
@@ -161,15 +169,15 @@ float getWindowLevelFunc(float pixValue, bool normalize, uint type) {
 
 float getWindowLevel(vec3 texCoord) {
     float val = getOriginalVoxelValue(getVoxelValue(texCoord));
-    if(lutShape == lutShapeLinear) {
+    if (lutShape == lutShapeLinear) {
         val = getWindowLevelLinear(val);
-    } else if(lutShape == lutShapeSigmoid) {
+    } else if (lutShape == lutShapeSigmoid) {
         val = getWindowLevelFunc(val, false, lutShape);
-    } else if(lutShape == lutShapeSigmoidNorm) {
+    } else if (lutShape == lutShapeSigmoidNorm) {
         val = getWindowLevelFunc(val, true, lutShapeSigmoid);
-    } else if(lutShape == lutShapeLog) {
+    } else if (lutShape == lutShapeLog) {
         val = getWindowLevelFunc(val, true, lutShape);
-    } else if(lutShape == lutShapeLogInv) {
+    } else if (lutShape == lutShapeLogInv) {
         val = getWindowLevelFunc(val, true, lutShape);
     } else {
         val = getWindowLevelLinear(val);
@@ -186,7 +194,7 @@ float getNormalizedWindowLevel(vec3 texCoord) {
 // Ray casting
 // *************************************************************************************************
 
-float dithering(vec2 uv){
+float dithering(vec2 uv) {
     return fract(sin(uv.x * 12.9898 + uv.y * 78.233) * 43758.5453);
 }
 
@@ -195,35 +203,34 @@ float guassianFilter(vec3 uvw, float delta) {
     float dY = delta;
     float dZ = delta;
     float pix = getNormalizedWindowLevel(uvw);
-    pix += getNormalizedWindowLevel(uvw +vec3(+dX,+dY,+dZ));
-    pix += getNormalizedWindowLevel(uvw +vec3(+dX,+dY,-dZ));
-    pix += getNormalizedWindowLevel(uvw +vec3(+dX,-dY,+dZ));
-    pix += getNormalizedWindowLevel(uvw +vec3(+dX,-dY,-dZ));
-    pix += getNormalizedWindowLevel(uvw +vec3(-dX,+dY,+dZ));
-    pix += getNormalizedWindowLevel(uvw +vec3(-dX,+dY,-dZ));
-    pix += getNormalizedWindowLevel(uvw +vec3(-dX,-dY,+dZ));
-    pix += getNormalizedWindowLevel(uvw +vec3(-dX,-dY,-dZ));
-    return pix/9;
+    pix += getNormalizedWindowLevel(uvw + vec3(+ dX, + dY, + dZ));
+    pix += getNormalizedWindowLevel(uvw + vec3(+ dX, + dY, -dZ));
+    pix += getNormalizedWindowLevel(uvw + vec3(+ dX, -dY, + dZ));
+    pix += getNormalizedWindowLevel(uvw + vec3(+ dX, -dY, -dZ));
+    pix += getNormalizedWindowLevel(uvw + vec3(-dX, + dY, + dZ));
+    pix += getNormalizedWindowLevel(uvw + vec3(-dX, + dY, -dZ));
+    pix += getNormalizedWindowLevel(uvw + vec3(-dX, -dY, + dZ));
+    pix += getNormalizedWindowLevel(uvw + vec3(-dX, -dY, -dZ));
+    return pix / 9;
 }
 
 // Computes a simplified lighting equation
-vec3 blinnPhong( vec3 N, vec3 V, vec3 L, int lightIndex, float pixelValue, vec3 diffuse )
-{
+vec3 blinnPhong(vec3 N, vec3 V, vec3 L, int lightIndex, float pixelValue, vec3 diffuse) {
     // Material properties
     vec3 Ka = defaultAmbient;
     vec3 Kd = diffuse;
     vec3 Ks = defaultSpecular;
 
     // Diffuse coefficient
-    float diff_coeff = max( dot( L, N ), 0.0 );
+    float diff_coeff = max(dot(L, N), 0.0);
 
     // Specular coefficient
-    vec3 H = normalize( L + V );
-    float spec_coeff = diff_coeff > 0.0 ? pow( max( dot( H, N ), 0.0 ), lights[lightIndex].specularPower ) : 0.0;
+    vec3 H = normalize(L + V);
+    float spec_coeff = diff_coeff > 0.0 ? pow(max(dot(H, N), 0.0), lights[lightIndex].specularPower) : 0.0;
 
 
-    vec4 light =  texture(lightingMap, vec2(pixelValue, 0.0));
-    return  Ka * light.x + Kd * light.y  * diff_coeff + Ks * light.z * spec_coeff ;
+    vec4 light = texture(lightingMap, vec2(pixelValue, 0.0));
+    return Ka * light.x + Kd * light.y * diff_coeff + Ks * light.z * spec_coeff;
 }
 
 // On-the-fly gradient approximation.
@@ -276,26 +283,47 @@ vec4 rayCastingMip(Ray ray, float tmin, float tmax, vec2 uv) {
     float len = distance(end, start);
     int sampleCount = int(float(depthSampleNumber) * len);
 
-    float maxPix = 0.0;
+    float mipPix = mipType == mipTypeMin ? 1.0 : 0.0;
     vec3 texCoord = vec3(0.0);
     float pix = 0.0;
 
     vec3 rayPos = start;
-    float stepSize = 1.0/sampleCount;
+    float stepSize = 1.0 / sampleCount;
     vec3 stepPos = (end - start) * stepSize;
     vec3 ditheredRayStep = ditherRay ? stepPos * dithering(uv) : stepPos;
 
+    int sumNb = 0;
     for (int count = 0; count < sampleCount; count++) {
         rayPos += stepPos;
         texCoord = rayPos + ditheredRayStep;
         pix = getNormalizedWindowLevel(texCoord);
 
-        maxPix = max(maxPix, pix);
-        if (maxPix >= 0.99) {
-            break;
+        if (mipType == mipTypeMin) {
+            vec4 pixel = texture(colorMap, vec2(pix, 0.0));
+            if (pixel.a > 0.01) {
+                mipPix = min(mipPix, pix);
+                sumNb++;
+            }
+        } else if (mipType == mipTypeMean) {
+            vec4 pixel = texture(colorMap, vec2(pix, 0.0));
+            if (pixel.a > 0.01) {
+                mipPix += pix;
+                sumNb++;
+            }
+        } else {
+            mipPix = max(mipPix, pix);
+            if (mipPix >= 0.99) {
+                break;
+            }
         }
     }
-    vec4 pixel = texture(colorMap, vec2(maxPix, 0.0));
+
+    if (mipType == mipTypeMin && sumNb == 0) {
+        mipPix = 0.0;
+    } else if (mipType == mipTypeMean) {
+        mipPix = sumNb == 0 ? 0.0 : mipPix / float(sumNb);
+    }
+    vec4 pixel = texture(colorMap, vec2(mipPix, 0.0));
     pixel.a = min(pixel.a * opacityFactor, 1.0);
     return pixel;
 }
@@ -312,7 +340,7 @@ vec4 rayCastingComposite(Ray ray, float tmin, float tmax, vec2 uv) {
     float pix = 0.0;
 
     vec3 rayPos = start;
-    float stepSize = 1.0/sampleCount;
+    float stepSize = 1.0 / sampleCount;
     vec3 stepPos = (end - start) * stepSize;
     vec3 ditheredRayStep = ditherRay ? stepPos * dithering(uv) : stepPos;
 
@@ -321,7 +349,7 @@ vec4 rayCastingComposite(Ray ray, float tmin, float tmax, vec2 uv) {
         texCoord = rayPos + ditheredRayStep;
         pix = getNormalizedWindowLevel(texCoord);
         //pix = guassianFilter(texCoord, stepSize);
-        vec4 pixel =  texture(colorMap, vec2(pix, 0.0));
+        vec4 pixel = texture(colorMap, vec2(pix, 0.0));
         pixel.a = min(pixel.a * opacityFactor, 1.0);
 
         if (pixel.a > 0.0) {
@@ -329,11 +357,11 @@ vec4 rayCastingComposite(Ray ray, float tmin, float tmax, vec2 uv) {
             if (shading) {
                 vec3 normalPos = gradient(texCoord, stepSize);
                 for (int i = 0; i < 4; ++i) {
-                    if ( lights[i].enabled ) {
+                    if (lights[i].enabled) {
                         vec3 V = normalize(vec3(viewMatrix * lights[i].position) - texCoord);
                         vec3 L = normalize(lights[i].position.xyz - texCoord);
                         // double sided lighting
-                        if ( dot( L, normalPos ) < 0.0 ) {
+                        if (dot(L, normalPos) < 0.0) {
                             normalPos = -normalPos;
                         }
                         pxColor.rgb = pixel.rgb * blinnPhong(normalPos, V, L, i, pix, defaultDiffuse) * pixel.a + alpha * pxColor.rgb;
@@ -363,7 +391,7 @@ vec4 rayCastingIsoSurface(Ray ray, float tmin, float tmax, vec2 uv) {
     float stepLength = len / float(depthSampleNumber);
 
     vec3 rayPos = start;
-    float stepSize = 1.0/sampleCount;
+    float stepSize = 1.0 / sampleCount;
     vec3 stepPos = (end - start) * stepSize;
     vec3 ditheredRayStep = ditherRay ? stepPos * dithering(uv) : stepPos;
 
@@ -378,19 +406,19 @@ vec4 rayCastingIsoSurface(Ray ray, float tmin, float tmax, vec2 uv) {
         rayPos += stepPos;
         texCoord = rayPos + ditheredRayStep;
         pix = getNormalizedWindowLevel(texCoord);
-        vec4 pixel =  texture(colorMap, vec2(pix, 0.0));
+        vec4 pixel = texture(colorMap, vec2(pix, 0.0));
         bool sign_cur = pix > center;
         if (pixel.a > 0.0) {
             if (sign_cur != prev_sign) {
                 vec3 normalPos = gradient(texCoord, stepSize);
-                vec4 diffuse = texture( colorMap,  vec2(center, 0.0) );
+                vec4 diffuse = texture(colorMap, vec2(center, 0.0));
 
                 for (int i = 0; i < 4; ++i) {
-                    if ( lights[i].enabled ) {
+                    if (lights[i].enabled) {
                         vec3 V = normalize(vec3(viewMatrix * lights[i].position) - texCoord);
-                        vec3 L = normalize( lights[i].position.xyz - texCoord);
+                        vec3 L = normalize(lights[i].position.xyz - texCoord);
                         // double sided lighting
-                        if ( dot( L, normalPos ) < 0.0 ) {
+                        if (dot(L, normalPos) < 0.0) {
                             normalPos = -normalPos;
                         }
 
@@ -414,15 +442,20 @@ vec4 rayCastingIsoSurface(Ray ray, float tmin, float tmax, vec2 uv) {
 }
 
 vec4 slice(vec2 uv) {
-    vec3 origin = vec3(uv, 0.5f) * texelSize;
-    origin =  (vec4(origin, 1.0f) * viewMatrix ).xyz;
-    origin.x += 0.5;
-    origin.y += 0.5;
+    float w = 0.5;
+    vec3 origin = vec3(uv, w) * texelSize;
+    origin = (vec4(origin, 1.0) * viewMatrix).xyz + sliceOffset;
     float pix = getNormalizedWindowLevel(origin);
-//    vec4 pixel =  texture(colorMap, vec2(pix, 0.0));
-//    pixel.a = min(pixel.a * opacityFactor, 1.0);
-//    return pixel;
-    return vec4(pix, pix, pix, 1.0f);
+    if (textureSize(colorMap, 0).x > 2) {
+        vec4 pixel = texture(colorMap, vec2(pix, 0.0));
+        pixel.a = min(pixel.a * opacityFactor, 1.0);
+        return pixel;
+    } else {
+        if(texture(colorMap, vec2(0, 0)).r > 0){
+            pix = 1.0 - pix;
+        }
+        return vec4(pix, pix, pix, 1.0f);
+    }
 }
 
 void main() {

@@ -41,6 +41,7 @@ import org.weasis.dicom.codec.display.ModalityInfoData;
 import org.weasis.dicom.codec.display.ModalityView;
 import org.weasis.dicom.explorer.DicomModel;
 import org.weasis.dicom.viewer2d.InfoLayer;
+import org.weasis.dicom.viewer2d.mip.MipView;
 import org.weasis.dicom.viewer3d.vr.DicomVolTexture;
 import org.weasis.dicom.viewer3d.vr.RenderingLayer;
 import org.weasis.dicom.viewer3d.vr.RenderingType;
@@ -71,6 +72,7 @@ public class InfoLayer3d extends AbstractInfoLayer<DicomImageElement> {
     displayPreferences.put(PIXEL, true);
   }
 
+  @Override
   public View3d getView2DPane() {
     return (View3d) view2DPane;
   }
@@ -335,8 +337,11 @@ public class InfoLayer3d extends AbstractInfoLayer<DicomImageElement> {
   }
 
   private boolean isMipActive() {
-    Object actionValue = view2DPane.getActionValue(ActionVol.RENDERING_TYPE.cmd());
-    return actionValue instanceof RenderingType && RenderingType.MIP.equals(actionValue);
+    return !MipView.Type.NONE.equals(getView2DPane().getRenderingLayer().getMipType());
+  }
+
+  private boolean isSliceActive() {
+    return RenderingType.SLICE.equals(getView2DPane().getRenderingLayer().getRenderingType());
   }
 
   private Object getFrameTagValue(

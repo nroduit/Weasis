@@ -96,7 +96,7 @@ public class View3DContainer extends ImageViewerPlugin<DicomImageElement>
     actions.put(ActionVol.VOL_PRESET.cmd(), true);
     actions.put(ActionW.INVERT_LUT.cmd(), true);
     actions.put(ActionW.FILTER.cmd(), true);
-    actions.put(ActionVol.RENDERING_TYPE.cmd(), true);
+    actions.put(ActionVol.MIP_TYPE.cmd(), true);
     actions.put(ActionVol.MIP_DEPTH.cmd(), true);
     defaultMpr =
         new SynchView(
@@ -486,7 +486,8 @@ public class View3DContainer extends ImageViewerPlugin<DicomImageElement>
         GuiUtils.addItemToMenu(menuRoot, manager.getLutShapeMenu(null));
         GuiUtils.addItemToMenu(menuRoot, manager.getLutMenu(null));
         menuRoot.add(new JSeparator());
-        GuiUtils.addItemToMenu(menuRoot, manager.getVolumeTypeMenu(null));
+        GuiUtils.addItemToMenu(menuRoot, manager.getViewTypeMenu(null));
+        GuiUtils.addItemToMenu(menuRoot, manager.getMipTypeMenu(null));
         GuiUtils.addItemToMenu(menuRoot, manager.getShadingMenu(null));
         GuiUtils.addItemToMenu(menuRoot, manager.getSProjectionMenu(null));
         menuRoot.add(new JSeparator());

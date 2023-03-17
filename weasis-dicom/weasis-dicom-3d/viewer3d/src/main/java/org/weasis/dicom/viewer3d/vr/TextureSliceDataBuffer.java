@@ -15,8 +15,10 @@ import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.ShortBuffer;
+import java.util.List;
 import java.util.Objects;
 import org.opencv.core.CvType;
+import org.opencv.core.Mat;
 import org.weasis.opencv.data.PlanarImage;
 
 public record TextureSliceDataBuffer(Buffer buffer, MemorySession scope) {
@@ -57,6 +59,47 @@ public record TextureSliceDataBuffer(Buffer buffer, MemorySession scope) {
               .put(sSrcData)
               .rewind();
       return new TextureSliceDataBuffer(buffer, scope);
+    } else {
+      throw new IllegalArgumentException("Not supported dataType for LUT transformation:" + image);
+    }
+  }
+
+  public static TextureSliceDataBuffer toImageData(List<Mat> slices) {
+    if (slices.isEmpty()) {
+      throw new IllegalStateException("Cannot process when no slice!");
+    }
+    Mat image = slices.get(0);
+    int channels = CvType.channels(image.type());
+    int cvType = CvType.depth(image.type());
+    long depth = slices.size();
+    int size = image.height() * image.width();
+
+    if (cvType == CvType.CV_8U) {
+      byte[] bSrcData = new byte[size * channels];
+      MemorySession scope = MemorySession.openShared();
+      MemorySegment bufferSegment = MemorySegment.allocateNative(bSrcData.length * depth, scope);
+      ByteBuffer buf = bufferSegment.asByteBuffer().order(ByteOrder.nativeOrder());
+
+      for (Mat slice : slices) {
+        slice.get(0, 0, bSrcData);
+        buf.put(bSrcData);
+      }
+      buf.rewind();
+      return new TextureSliceDataBuffer(buf, scope);
+    } else if (cvType == CvType.CV_16U || cvType == CvType.CV_16S) {
+      short[] sSrcData = new short[size * channels];
+      MemorySession scope = MemorySession.openShared();
+      MemorySegment bufferSegment =
+          MemorySegment.allocateNative(sSrcData.length * depth * 2L, scope);
+      ShortBuffer buf = bufferSegment.asByteBuffer().order(ByteOrder.nativeOrder()).asShortBuffer();
+
+      for (Mat slice : slices) {
+        slice.get(0, 0, sSrcData);
+        buf.put(sSrcData);
+      }
+      buf.rewind();
+
+      return new TextureSliceDataBuffer(buf, scope);
     } else {
       throw new IllegalArgumentException("Not supported dataType for LUT transformation:" + image);
     }

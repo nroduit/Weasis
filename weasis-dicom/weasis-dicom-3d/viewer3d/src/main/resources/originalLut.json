@@ -1,0 +1,35 @@
+[
+  {
+    "name": "Original",
+    "modality": "ALL",
+    "default": "false",
+    "shade": "false",
+    "specularPower": "10",
+    "group": [
+      {
+        "name": "Binary",
+        "point": [
+          {
+            "intensity": "0",
+            "opacity": "0",
+            "red": "0",
+            "green": "0",
+            "blue": "0",
+            "ambient": "0.1",
+            "diffuse": "0.9",
+            "specular": "0.2"
+          }, {
+            "intensity": "2",
+            "opacity": "1",
+            "red": "1",
+            "green": "1",
+            "blue": "1",
+            "ambient": "0.1",
+            "diffuse": "0.9",
+            "specular": "0.2"
+          }
+        ]
+      }
+    ]
+  }
+  ]

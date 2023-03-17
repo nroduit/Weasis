@@ -90,9 +90,9 @@ public class MipPopup {
 
     private void init() {
       final ButtonGroup ratioGroup = new ButtonGroup();
-      JRadioButton rdbtnMinProjection = new JRadioButton(Messages.getString("MipPopup.min"));
-      JRadioButton rdbtnMeanProjection = new JRadioButton(Messages.getString("MipPopup.mean"));
-      JRadioButton rdbtnMaxProjection = new JRadioButton(Messages.getString("MipPopup.max"));
+      JRadioButton rdbtnMinProjection = new JRadioButton(MipView.Type.MIN.getTitle());
+      JRadioButton rdbtnMeanProjection = new JRadioButton(MipView.Type.MEAN.getTitle());
+      JRadioButton rdbtnMaxProjection = new JRadioButton(MipView.Type.MAX.getTitle());
       final JPanel framePanel =
           GuiUtils.getFlowLayoutPanel(
               Insertable.BLOCK_SEPARATOR,

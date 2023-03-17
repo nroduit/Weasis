@@ -17,13 +17,16 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Objects;
 import jogamp.opengl.gl4.GL4bcProcAddressTable;
 import jogamp.opengl.glu.error.Error;
 import org.dcm4che3.data.Tag;
 import org.dcm4che3.img.DicomImageUtils;
 import org.opencv.core.CvType;
+import org.opencv.core.Mat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.media.data.TagW;
@@ -149,6 +152,24 @@ public final class VolumeBuilder {
       return pat.getAddressFor("glTexSubImage3D");
     }
 
+    public void publishVolumeInOpenGL(List<Mat> slices) {
+      if (!slices.isEmpty()) {
+        GLContext glContext = OpenglUtils.getDefaultGlContext();
+        glContext.makeCurrent();
+        GL4 gl4 = glContext.getGL().getGL4();
+        gl4.glBindTexture(GL2ES2.GL_TEXTURE_3D, volumeBuilder.volTexture.getId());
+        GLPixelStorageModes storageModes = new GLPixelStorageModes();
+        storageModes.setPackAlignment(gl4, 1); // buffer has not ending row space
+
+        TextureSliceDataBuffer textureSliceData = setTexImage3DBuffer(gl4, slices);
+        textureSliceData.releaseMemory();
+
+        storageModes.restore(gl4);
+        gl4.glFinish();
+        glContext.release();
+      }
+    }
+
     public void publishInOpenGL(PlanarImage imageMLUT, int index) {
       GLContext glContext = OpenglUtils.getDefaultGlContext();
       glContext.makeCurrent();
@@ -199,13 +220,13 @@ public final class VolumeBuilder {
       return textureSliceData;
     }
 
-    private void setSubImage3DPointer(GL4 gl2, PlanarImage img, int index) {
+    private void setSubImage3DPointer(GL4 gl4, PlanarImage img, int index) {
       DicomVolTexture volTexture = volumeBuilder.volTexture;
 
       TextureSliceDataPointer textureSliceData = TextureSliceDataPointer.toImageData(img);
       try {
         nativeSubImage3DMethod.invoke(
-            gl2,
+            gl4,
             GL2ES2.GL_TEXTURE_3D,
             0,
             0,
@@ -223,9 +244,39 @@ public final class VolumeBuilder {
       }
     }
 
+    private TextureSliceDataBuffer setTexImage3DBuffer(GL4 gl4, List<Mat> slices) {
+      DicomVolTexture volTexture = volumeBuilder.volTexture;
+      TextureSliceDataBuffer textureSliceData = TextureSliceDataBuffer.toImageData(slices);
+      // See https://docs.gl/gl4/glTexSubImage3D
+      gl4.glTexSubImage3D(
+          GL2ES2.GL_TEXTURE_3D,
+          0,
+          0,
+          0,
+          0,
+          volTexture.getWidth(),
+          volTexture.getHeight(),
+          volTexture.getDepth(),
+          volTexture.getFormat(),
+          volTexture.getType(),
+          textureSliceData.buffer());
+      int error;
+      if ((error = gl4.glGetError()) != 0) {
+        LOGGER.error(
+            "Cannot load volume ({} images) in OpenGL texture3D. OpenGL error: {}",
+            volTexture.getDepth(),
+            Error.gluErrorString(error));
+        volumeBuilder.hasError = true;
+        DicomVolTextureFactory.removeFromCache(volTexture);
+        volumeBuilder.stop();
+      }
+      return textureSliceData;
+    }
+
     @Override
     public void run() {
       DicomVolTexture volTexture = volumeBuilder.volTexture;
+      ArrayList<Mat> slices = new ArrayList<>(volTexture.getDepth());
 
       Instant timeStarted = Instant.now();
       double lastPos = 0;
@@ -296,18 +347,27 @@ public final class VolumeBuilder {
             index,
             Duration.between(start, Instant.now()).toMillis());
 
-        start = Instant.now();
-        publishInOpenGL(getSuitableImage(imageMLUT), index);
-        LOGGER.debug(
-            "Time to publish in opengl of {}: {} ms",
-            index,
-            Duration.between(start, Instant.now()).toMillis());
+        slices.add(imageMLUT.toMat());
 
-        if (index > 0 && index % 5 == 0) {
-          volTexture.notifyPartiallyLoaded();
-        }
+        //        start = Instant.now();
+        //        publishInOpenGL(imageMLUT, index);
+        //        LOGGER.debug(
+        //            "Time to publish in opengl of {}: {} ms",
+        //            index,
+        //            Duration.between(start, Instant.now()).toMillis());
+        //
+        //        if (index > 0 && index % 5 == 0) {
+        //          volTexture.notifyPartiallyLoaded();
+        //        }
         index++;
       }
+
+      Instant start = Instant.now();
+      publishVolumeInOpenGL(slices);
+      LOGGER.debug(
+          "Time to load volume in OpenGL  {}: {} ms",
+          index,
+          Duration.between(start, Instant.now()).toMillis());
 
       LOGGER.info(
           "Loading 3D texture time: {} ms",

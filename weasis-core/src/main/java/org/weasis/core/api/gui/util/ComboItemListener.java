@@ -138,7 +138,7 @@ public abstract class ComboItemListener<T> extends BasicActionState
     Object oldSelection = model.getSelectedItem();
     model.removeListDataListener(this);
     model.removeAllElements();
-    if (objects != null && objects.length > 0) {
+    if (objects.length > 0) {
       boolean oldSelectionStillExist = false;
 
       for (T object : objects) {
@@ -179,6 +179,12 @@ public abstract class ComboItemListener<T> extends BasicActionState
     final JToggleButtonGroup<T> group = new JToggleButtonGroup<>();
     registerActionState(group);
     return group;
+  }
+
+  public JComboBox<T> createCombo() {
+    final ComboItems combo = new ComboItems();
+    registerActionState(combo);
+    return combo;
   }
 
   public JComboBox<T> createCombo(int width) {

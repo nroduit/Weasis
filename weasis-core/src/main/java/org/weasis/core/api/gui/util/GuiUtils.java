@@ -323,6 +323,17 @@ public class GuiUtils {
     component.setMaximumSize(new Dimension(Short.MAX_VALUE, dim.height));
   }
 
+  public static void setWidth(Component component, int width) {
+    int sWidth = getScaleLength(width);
+    Dimension dim = component.getMinimumSize();
+    dim.width = sWidth;
+    component.setMinimumSize(dim);
+    dim = component.getPreferredSize();
+    dim.width = sWidth;
+    component.setPreferredSize(dim);
+    component.setMaximumSize(dim);
+  }
+
   public static void setPreferredWidth(Component component, int width) {
     setPreferredWidth(component, width, 50);
   }

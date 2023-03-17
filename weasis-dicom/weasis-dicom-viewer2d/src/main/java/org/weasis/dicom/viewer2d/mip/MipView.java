@@ -64,9 +64,31 @@ public class MipView extends View2d {
           Messages.getString("MipView.img_extend"), "mip_thick", 0, 0, null); // NON-NLS
 
   public enum Type {
-    MIN,
-    MEAN,
-    MAX
+    NONE(Messages.getString("MipPopup.none"), 0),
+    MIN(Messages.getString("MipPopup.min"), 1),
+    MEAN(Messages.getString("MipPopup.mean"), 2),
+    MAX(Messages.getString("MipPopup.max"), 3);
+
+    final String title;
+    final int id;
+
+    Type(String title, int id) {
+      this.title = title;
+      this.id = id;
+    }
+
+    public int getId() {
+      return id;
+    }
+
+    public String getTitle() {
+      return title;
+    }
+
+    @Override
+    public String toString() {
+      return title;
+    }
   }
 
   private Thread process;
