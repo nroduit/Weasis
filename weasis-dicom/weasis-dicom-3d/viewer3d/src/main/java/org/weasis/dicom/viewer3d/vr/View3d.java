@@ -85,6 +85,7 @@ import org.weasis.dicom.viewer2d.mip.MipView;
 import org.weasis.dicom.viewer3d.ActionVol;
 import org.weasis.dicom.viewer3d.EventManager;
 import org.weasis.dicom.viewer3d.InfoLayer3d;
+import org.weasis.dicom.viewer3d.geometry.Axis;
 import org.weasis.dicom.viewer3d.geometry.Camera;
 import org.weasis.dicom.viewer3d.geometry.View;
 import org.weasis.opencv.data.PlanarImage;
@@ -988,6 +989,10 @@ public class View3d extends VolumeCanvas
         } else if (command.equals(ActionVol.MIP_TYPE.cmd())) {
           if (val instanceof MipView.Type mipType) {
             renderingLayer.setMipType(mipType);
+          }
+        } else if (command.equals(ActionVol.VOL_AXIS.cmd())) {
+          if (val instanceof Axis axis) {
+            camera.setRotationAxis(axis);
           }
         } else if (command.equals(ActionVol.VOL_QUALITY.cmd())) {
           if (val instanceof Integer quality) {

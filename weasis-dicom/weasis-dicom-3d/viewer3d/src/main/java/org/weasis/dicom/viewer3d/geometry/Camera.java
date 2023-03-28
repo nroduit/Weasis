@@ -16,6 +16,7 @@ import static org.joml.Math.toRadians;
 
 import java.awt.geom.Point2D;
 import java.util.Objects;
+import org.joml.Math;
 import org.joml.Matrix3d;
 import org.joml.Matrix4d;
 import org.joml.Quaterniond;
@@ -26,6 +27,7 @@ import org.joml.Vector4d;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.util.StringUtil;
+import org.weasis.dicom.viewer3d.EventManager;
 import org.weasis.dicom.viewer3d.vr.DicomVolTexture;
 import org.weasis.dicom.viewer3d.vr.RenderingType;
 import org.weasis.dicom.viewer3d.vr.View3d;
@@ -70,6 +72,7 @@ public class Camera {
   Matrix4d viewProjectionMatrix = null;
   private boolean orthographicProjection;
   private boolean sliceMode;
+  private Axis rotationAxis = Axis.Z;
 
   public Camera(VolumeCanvas renderer) {
     this(renderer, getDefaultOrientation());
@@ -165,8 +168,15 @@ public class Camera {
     } else {
       this.position.set(position);
       this.rotation.set(rotation);
+      updateRotationAction();
     }
     setZoomFactor(zoom, repaint);
+  }
+
+  public void updateRotationAction() {
+    EventManager.getInstance()
+        .getAction(ActionW.ROTATION)
+        .ifPresent(s -> s.setSliderValue(getCurrentAxisRotationInDegrees(), false));
   }
 
   public Matrix4d getViewMatrix() {
@@ -262,22 +272,46 @@ public class Camera {
   }
 
   public void setRotation(int degree) {
-    int last = (Integer) renderer.getActionValue(ActionW.ROTATION.cmd());
-    renderer.setActionsInView(ActionW.ROTATION.cmd(), degree);
     if (sliceMode) {
+      int last = (Integer) renderer.getActionValue(ActionW.ROTATION.cmd());
+      renderer.setActionsInView(ActionW.ROTATION.cmd(), degree);
       sliceRotation.rotateAxis(Math.toRadians((double) last - degree), 0, 0, 1);
     } else {
-      rotation.rotateZ(Math.toRadians((double) last - degree));
+      Vector3d angles = getEulerAnglesXYZ();
+      if (rotationAxis == Axis.X) {
+        if (degree >= 180) {
+          angles.x = Math.toRadians(degree - 360.0);
+        } else {
+          angles.x = Math.toRadians(degree);
+        }
+      } else if (rotationAxis == Axis.Y) {
+        if (degree >= 270) {
+          angles.y = Math.toRadians(degree - 360.0);
+        } else if (degree > 90) {
+          angles.y = Math.toRadians(180 - degree);
+        } else {
+          angles.y = Math.toRadians(degree);
+        }
+      } else {
+        if (degree >= 180) {
+          angles.z = Math.toRadians(degree - 360.0);
+        } else {
+          angles.z = Math.toRadians(degree);
+        }
+      }
+      Quaterniond quat = new Quaterniond().rotationXYZ(angles.x, angles.y, angles.z);
+      rotation.set(quat);
     }
     updateCameraTransform();
   }
 
   public void resetRotation() {
-    renderer.setActionsInView(ActionW.ROTATION.cmd(), 0);
     if (sliceMode) {
+      renderer.setActionsInView(ActionW.ROTATION.cmd(), 0);
       sliceRotation.set(DEFAULT_SLICE_VIEW.rotation());
     } else {
       rotation.set(getDefaultOrientation().rotation());
+      updateRotationAction();
     }
     updateCameraTransform();
   }
@@ -346,6 +380,7 @@ public class Camera {
                   .mul(ndcToArcBall(boundlessScreenCoordToNDC(prevMousePos, dimensions)))
                   .mul(rotation))
           .normalize();
+      updateRotationAction();
     }
 
     prevMousePos.x = p.getX();
@@ -411,5 +446,38 @@ public class Camera {
       }
       updateCameraTransform();
     }
+  }
+
+  public Axis getRotationAxis() {
+    return rotationAxis;
+  }
+
+  public void setRotationAxis(Axis rotationAxis) {
+    this.rotationAxis = rotationAxis;
+  }
+
+  public Vector3d getEulerAnglesXYZ() {
+    Vector3d angles = new Vector3d();
+    rotation.getEulerAnglesXYZ(angles);
+    return angles;
+  }
+
+  public double getCurrentAxisRotation() {
+    Vector3d angles = getEulerAnglesXYZ();
+    if (rotationAxis == Axis.X) {
+      return angles.x;
+    } else if (rotationAxis == Axis.Y) {
+      return angles.y;
+    } else {
+      return angles.z;
+    }
+  }
+
+  public int getCurrentAxisRotationInDegrees() {
+    int rotationAngle = (int) Math.round(Math.toDegrees(getCurrentAxisRotation()));
+    if (rotationAngle < 0) {
+      rotationAngle = (rotationAngle + 360) % 360;
+    }
+    return rotationAngle;
   }
 }

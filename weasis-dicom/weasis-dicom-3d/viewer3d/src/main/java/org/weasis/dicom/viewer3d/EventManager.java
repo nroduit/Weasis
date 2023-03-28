@@ -71,6 +71,7 @@ import org.weasis.dicom.viewer2d.ResetTools;
 import org.weasis.dicom.viewer2d.View2dContainer;
 import org.weasis.dicom.viewer2d.mip.MipView;
 import org.weasis.dicom.viewer3d.geometry.ArcballMouseListener;
+import org.weasis.dicom.viewer3d.geometry.Axis;
 import org.weasis.dicom.viewer3d.geometry.Camera;
 import org.weasis.dicom.viewer3d.geometry.CameraView;
 import org.weasis.dicom.viewer3d.geometry.View;
@@ -121,6 +122,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> {
     // setAction(newVolumeSlicingAction());
     setAction(newVolumeShadingAction());
     setAction(newVolumeProjection());
+    setAction(newAxisRotationAction());
 
     setAction(newPresetAction());
     setAction(newLutShapeAction());
@@ -298,6 +300,24 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> {
                 getActionW().cmd(),
                 model.getValue(),
                 model.getValueIsAdjusting()));
+      }
+    };
+  }
+
+  protected ComboItemListener<Axis> newAxisRotationAction() {
+    return new ComboItemListener<>(ActionVol.VOL_AXIS, Axis.values()) {
+
+      @Override
+      public void itemStateChanged(Object object) {
+        ViewCanvas<DicomImageElement> view = getSelectedViewPane();
+        firePropertyChange(ActionW.SYNCH.cmd(), null, new SynchEvent(view, action.cmd(), object));
+        if (view instanceof View3d view3d) {
+          getAction(ActionW.ROTATION)
+              .ifPresent(
+                  s ->
+                      s.setSliderValue(
+                          view3d.getCamera().getCurrentAxisRotationInDegrees(), false));
+        }
       }
     };
   }
@@ -655,8 +675,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> {
         .ifPresent(a -> a.setSelectedItemWithoutTriggerAction(canvas.getVolumePreset()));
 
     Optional<SliderChangeListener> rotation = getAction(ActionW.ROTATION);
-    rotation.ifPresent(
-        a -> a.setSliderValue((int) Math.toDegrees(canvas.getCamera().getRotation().angle())));
+    rotation.ifPresent(a -> a.setSliderValue(canvas.getCamera().getCurrentAxisRotationInDegrees()));
     getAction(ActionW.FLIP)
         .ifPresent(
             a ->
@@ -702,18 +721,22 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> {
     Optional<SliderChangeListener> volumeQuality = getAction(ActionVol.VOL_QUALITY);
     Optional<SliderChangeListener> volumeOpacity = getAction(ActionVol.VOL_OPACITY);
     Optional<ToggleButtonListener> volumeProjection = getAction(ActionVol.VOL_PROJECTION);
+    Optional<ComboItemListener<Axis>> volumeAxis = getAction(ActionVol.VOL_AXIS);
     if (volume) {
       volumeLighting.ifPresent(a -> a.setSelectedWithoutTriggerAction(rendering.isShading()));
       volumeSlicing.ifPresent(a -> a.setSelectedWithoutTriggerAction(rendering.isSlicing()));
       volumeProjection.ifPresent(
           a -> a.setSelectedWithoutTriggerAction(canvas.getCamera().isOrthographicProjection()));
       volumeQuality.ifPresent(a -> a.setSliderValue(rendering.getQuality(), false));
+      volumeAxis.ifPresent(
+          a -> a.setSelectedItemWithoutTriggerAction(canvas.getCamera().getRotationAxis()));
     }
     volumeLighting.ifPresent(a -> a.enableAction(volume));
     volumeSlicing.ifPresent(a -> a.enableAction(volume));
     volumeQuality.ifPresent(a -> a.enableAction(volume));
     //   volumeOpacity.ifPresent(a -> a.enableAction(volume));
     volumeProjection.ifPresent(a -> a.enableAction(volume));
+    volumeAxis.ifPresent(a -> a.enableAction(volume));
 
     volumeOpacity.ifPresent(a -> a.setRealValue(rendering.getOpacity(), false));
     mipType.ifPresent(

@@ -18,6 +18,7 @@ import org.weasis.core.api.gui.util.Feature.SliderChangeListenerValue;
 import org.weasis.core.api.gui.util.Feature.ToggleButtonListenerValue;
 import org.weasis.dicom.viewer2d.mip.MipView;
 import org.weasis.dicom.viewer3d.geometry.ArcballMouseListener;
+import org.weasis.dicom.viewer3d.geometry.Axis;
 import org.weasis.dicom.viewer3d.vr.Preset;
 import org.weasis.dicom.viewer3d.vr.RenderingType;
 
@@ -42,6 +43,9 @@ public class ActionVol {
 
   public static final ComboItemListenerValue<Preset> VOL_PRESET =
       new ComboItemListenerValue<>(ActionW.LUT.getTitle(), "vol.lut", 0, 0, null);
+
+  public static final ComboItemListenerValue<Axis> VOL_AXIS =
+      new ComboItemListenerValue<>("Axis", "vol.axis", 0, 0, null);
 
   public static final SliderChangeListenerValue VOL_QUALITY =
       new SliderChangeListenerValue("Z-axis sampling", "vol.quality", 0, 0, null);

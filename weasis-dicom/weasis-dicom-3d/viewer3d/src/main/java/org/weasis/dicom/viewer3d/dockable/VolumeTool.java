@@ -36,7 +36,6 @@ import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.viewer3d.ActionVol;
 import org.weasis.dicom.viewer3d.EventManager;
 import org.weasis.dicom.viewer3d.Messages;
-import org.weasis.dicom.viewer3d.geometry.Axis;
 import org.weasis.dicom.viewer3d.vr.ShadingPrefDialog;
 import org.weasis.dicom.viewer3d.vr.View3d;
 
@@ -263,9 +262,17 @@ public class VolumeTool extends PluginTool {
             sliderItem -> {
               JSliderW slider = sliderItem.createSlider(5, true);
               GuiUtils.setPreferredWidth(slider, 140);
-              JComboBox<Axis> comboBox = new JComboBox<>(Axis.values());
-              GuiUtils.setWidth(comboBox, 55);
-              transform.add(GuiUtils.getHorizontalBoxLayoutPanel(5, slider, comboBox));
+              JPanel panel = GuiUtils.getHorizontalBoxLayoutPanel(5, slider);
+              EventManager.getInstance()
+                  .getAction(ActionVol.VOL_AXIS)
+                  .ifPresent(
+                      c -> {
+                        JComboBox<?> combo = c.createCombo();
+                        GuiUtils.setWidth(combo, 55);
+                        panel.add(combo);
+                      });
+
+              transform.add(panel);
             });
 
     EventManager.getInstance()
