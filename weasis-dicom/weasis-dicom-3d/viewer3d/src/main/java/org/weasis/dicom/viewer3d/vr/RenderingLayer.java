@@ -17,9 +17,11 @@ import org.weasis.opencv.op.lut.LutShape;
 
 public class RenderingLayer<E extends ImageElement> {
 
-  public static final String BCK_COLOR = "volume.background.color";
-  public static final String LIGHT_COLOR = "volume.light.color";
-  public static final String DYNAMIC_QUALITY = "volume.dynamic.quality";
+  public static final String P_BCK_COLOR = "volume.background.color";
+  public static final String P_LIGHT_COLOR = "volume.light.color";
+  public static final String P_DYNAMIC_QUALITY = "volume.dynamic.quality";
+  public static final String P_MAX_TEX_XY = "volume.texture.max.xy";
+  public static final String P_MAX_TEX_Z = "volume.texture.max.z";
 
   public static final int MAX_QUALITY = 8192;
   public static final int MIN_QUALITY = 128;

@@ -24,17 +24,22 @@ import org.dcm4che3.data.Tag;
 import org.dcm4che3.img.lut.PresetWindowLevel;
 import org.joml.Vector3d;
 import org.weasis.core.api.gui.util.GuiExecutor;
+import org.weasis.core.api.image.SimpleOpManager;
+import org.weasis.core.api.image.ZoomOp;
+import org.weasis.core.api.image.ZoomOp.Interpolation;
 import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeries.MEDIA_POSITION;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.TagW;
+import org.weasis.core.util.MathUtil;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.display.Modality;
 import org.weasis.dicom.codec.geometry.ImageOrientation;
 import org.weasis.dicom.codec.geometry.ImageOrientation.Plan;
 import org.weasis.dicom.viewer3d.geometry.VolumeGeometry;
+import org.weasis.opencv.data.PlanarImage;
 import org.weasis.opencv.op.lut.DefaultWlPresentation;
 import org.weasis.opencv.op.lut.LutShape;
 
@@ -46,6 +51,8 @@ public class DicomVolTexture extends VolumeTexture implements MediaSeriesGroup {
   private final Comparator<DicomImageElement> seriesComparator;
   private final VolumeGeometry volumeGeometry;
   private final PropertyChangeSupport changeSupport;
+  private final SimpleOpManager manager;
+  private final Vector3d scale;
 
   private String pixelValueUnit;
 
@@ -59,12 +66,23 @@ public class DicomVolTexture extends VolumeTexture implements MediaSeriesGroup {
       int depth,
       PixelFormat pixelFormat,
       MediaSeries<DicomImageElement> series,
-      Comparator<DicomImageElement> sorter,
       PropertyChangeSupport changeSupport) {
+    this(width, height, depth, pixelFormat, series, changeSupport, null, null);
+  }
+
+  public DicomVolTexture(
+      int width,
+      int height,
+      int depth,
+      PixelFormat pixelFormat,
+      MediaSeries<DicomImageElement> series,
+      PropertyChangeSupport changeSupport,
+      Comparator<DicomImageElement> sorter,
+      Vector3d scale) {
     super(width, height, depth, pixelFormat);
     this.volumeGeometry = new VolumeGeometry();
     this.series = Objects.requireNonNull(series);
-    this.changeSupport = changeSupport;
+    this.changeSupport = Objects.requireNonNull(changeSupport);
     this.levelMin = -1024;
     this.levelMax = 3071;
     this.pixelSpacingUnit = Unit.PIXEL;
@@ -84,6 +102,49 @@ public class DicomVolTexture extends VolumeTexture implements MediaSeriesGroup {
     if (pixelValueUnit == null && modality == Modality.CT) {
       pixelValueUnit = "HU";
     }
+
+    this.scale = scale == null ? new Vector3d(1.0) : scale;
+    if (scale != null
+        && (MathUtil.isDifferent(scale.x, 1.0) || MathUtil.isDifferent(scale.y, 1.0))) {
+      this.manager = new SimpleOpManager();
+      ZoomOp node = new ZoomOp();
+      node.setParam(ZoomOp.P_RATIO_X, scale.x);
+      node.setParam(ZoomOp.P_RATIO_Y, scale.y);
+      node.setParam(ZoomOp.P_INTERPOLATION, Interpolation.BILINEAR);
+      manager.addImageOperationAction(node);
+    } else {
+      this.manager = null;
+    }
+  }
+
+  protected List<DicomImageElement> adjustSliceList(List<DicomImageElement> inputList) {
+    if (depth == inputList.size()) {
+      return inputList;
+    }
+    double step = (double) inputList.size() / depth;
+    ArrayList<DicomImageElement> outputList = new ArrayList<>(depth);
+    for (int i = 0; i < depth; i++) {
+      int index = (int) Math.floor(i * step);
+      outputList.add(inputList.get(index));
+    }
+    return outputList;
+  }
+
+  public PlanarImage getModalityLutImage(DicomImageElement image) {
+    PlanarImage output = null;
+    if (image != null) {
+      output = image.getModalityLutImage(null, null);
+      if (manager != null) {
+        manager.setFirstNode(output);
+        output = manager.process();
+        manager.clearNodeIOCache();
+      }
+    }
+    return output;
+  }
+
+  public Vector3d getScale() {
+    return scale;
   }
 
   public Modality getModality() {
@@ -92,6 +153,10 @@ public class DicomVolTexture extends VolumeTexture implements MediaSeriesGroup {
 
   public MediaSeries<DicomImageElement> getSeries() {
     return series;
+  }
+
+  public List<DicomImageElement> getVolumeImages() {
+    return adjustSliceList(series.copyOfMedias(null, seriesComparator));
   }
 
   public int getLevelMin() {
@@ -225,16 +290,6 @@ public class DicomVolTexture extends VolumeTexture implements MediaSeriesGroup {
 
   public VolumeGeometry getVolumeGeometry() {
     return volumeGeometry;
-  }
-
-  public Object getTagValue(TagW tag, int currentSlice) {
-    if (depth == series.size(null)) {
-      Object media = series.getMedia(currentSlice, null, seriesComparator);
-      if (media instanceof DicomImageElement dicomImageElement) {
-        return dicomImageElement.getTagValue(tag);
-      }
-    }
-    return null;
   }
 
   public boolean isPhotometricInterpretationInverse() {

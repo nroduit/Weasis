@@ -75,6 +75,7 @@ import org.weasis.dicom.viewer3d.dockable.DisplayTool;
 import org.weasis.dicom.viewer3d.dockable.VolumeTool;
 import org.weasis.dicom.viewer3d.vr.DicomVolTexture;
 import org.weasis.dicom.viewer3d.vr.DicomVolTextureFactory;
+import org.weasis.dicom.viewer3d.vr.OpenglUtils;
 import org.weasis.dicom.viewer3d.vr.View3d;
 import org.weasis.dicom.viewer3d.vr.View3d.ViewType;
 import org.weasis.dicom.viewer3d.vr.VolumeBuilder;
@@ -382,6 +383,7 @@ public class View3DContainer extends ImageViewerPlugin<DicomImageElement>
         MediaSeries<DicomImageElement> oldSequence = null;
         if (volumeBuilder != null) {
           oldSequence = volumeBuilder.getVolTexture().getSeries();
+          volumeBuilder.getVolTexture().destroy(OpenglUtils.getGL4());
         }
         if (!series.equals(oldSequence)) {
           UIManager.closeSeries(oldSequence);
@@ -417,6 +419,7 @@ public class View3DContainer extends ImageViewerPlugin<DicomImageElement>
   public void reload() {
     if (volumeBuilder != null) {
       MediaSeries<DicomImageElement> oldSequence = volumeBuilder.getVolTexture().getSeries();
+      volumeBuilder.getVolTexture().destroy(OpenglUtils.getGL4());
       // Force to rebuild
       this.volumeBuilder = null;
       addSeries(oldSequence);

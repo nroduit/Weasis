@@ -11,6 +11,8 @@ package org.weasis.dicom.viewer3d.pref;
 
 import java.awt.Color;
 import java.awt.FlowLayout;
+import java.util.ArrayList;
+import java.util.List;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JColorChooser;
@@ -18,6 +20,8 @@ import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JSlider;
+import javax.swing.JSpinner;
+import javax.swing.SpinnerListModel;
 import javax.swing.SwingUtilities;
 import org.osgi.framework.Version;
 import org.weasis.core.api.gui.util.AbstractItemDialogPage;
@@ -46,21 +50,42 @@ public class Viewer3dPrefView extends AbstractItemDialogPage {
       new JComboBox<>(View3DContainer.LAYOUT_LIST.toArray(new GridBagLayoutModel[0]));
 
   private final JComboBox<CameraView> comboBoxOrientations = new JComboBox<>(CameraView.values());
+  private final JSpinner spinnerMaxXY;
+  private final JSpinner spinnerMaxZ;
 
   public Viewer3dPrefView() {
     super(View3DFactory.NAME, 503);
+    List<Integer> list = new ArrayList<>();
+    int maxSize = View3DFactory.getOpenGLInfo().max3dTextureSize();
+    list.add(64);
+    int val = 128;
+    while (val <= maxSize) {
+      list.add(val);
+      val *= 2;
+    }
+    if (list.get(list.size() - 1) != maxSize) {
+      list.add(maxSize);
+    }
+    this.spinnerMaxXY = new JSpinner(new SpinnerListModel(list));
+    this.spinnerMaxZ = new JSpinner(new SpinnerListModel(list));
+    GuiUtils.setSpinnerWidth(spinnerMaxXY, 6);
+    GuiUtils.setSpinnerWidth(spinnerMaxZ, 6);
+    spinnerMaxXY.setValue(
+        BundleTools.LOCAL_UI_PERSISTENCE.getIntProperty(RenderingLayer.P_MAX_TEX_XY, maxSize));
+    spinnerMaxZ.setValue(
+        BundleTools.LOCAL_UI_PERSISTENCE.getIntProperty(RenderingLayer.P_MAX_TEX_Z, maxSize));
     initGUI();
   }
 
   private void initGUI() {
     int quality =
         BundleTools.LOCAL_UI_PERSISTENCE.getIntProperty(
-            RenderingLayer.DYNAMIC_QUALITY, RenderingLayer.DEFAULT_DYNAMIC_QUALITY_RATE);
+            RenderingLayer.P_DYNAMIC_QUALITY, RenderingLayer.DEFAULT_DYNAMIC_QUALITY_RATE);
     sliderDynamic.setValue(quality);
     sliderDynamic.addChangeListener(
         e ->
             BundleTools.LOCAL_UI_PERSISTENCE.putIntProperty(
-                RenderingLayer.DYNAMIC_QUALITY, sliderDynamic.getValue()));
+                RenderingLayer.P_DYNAMIC_QUALITY, sliderDynamic.getValue()));
 
     String pickColor = org.weasis.core.ui.Messages.getString("MeasureTool.pick_color");
     bckColor.setToolTipText(pickColor);
@@ -70,7 +95,7 @@ public class Viewer3dPrefView extends AbstractItemDialogPage {
               JColorChooser.showDialog(
                   SwingUtilities.getWindowAncestor(this), pickColor, getBackgroundColor());
           if (newColor != null) {
-            BundleTools.SYSTEM_PREFERENCES.putColorProperty(RenderingLayer.BCK_COLOR, newColor);
+            BundleTools.SYSTEM_PREFERENCES.putColorProperty(RenderingLayer.P_BCK_COLOR, newColor);
           }
         });
 
@@ -81,7 +106,7 @@ public class Viewer3dPrefView extends AbstractItemDialogPage {
               JColorChooser.showDialog(
                   SwingUtilities.getWindowAncestor(this), pickColor, getLightColor());
           if (newColor != null) {
-            BundleTools.SYSTEM_PREFERENCES.putColorProperty(RenderingLayer.LIGHT_COLOR, newColor);
+            BundleTools.SYSTEM_PREFERENCES.putColorProperty(RenderingLayer.P_LIGHT_COLOR, newColor);
           }
         });
 
@@ -167,6 +192,19 @@ public class Viewer3dPrefView extends AbstractItemDialogPage {
             labelLayout,
             comboBoxLayouts));
     view3d.add(GuiUtils.boxVerticalStrut(ITEM_SEPARATOR));
+
+    JLabel labelTexLimit = new JLabel("Max 3d texture size" + " X/Y" + StringUtil.COLON);
+    view3d.add(
+        GuiUtils.getFlowLayoutPanel(
+            FlowLayout.LEADING,
+            ITEM_SEPARATOR_SMALL,
+            ITEM_SEPARATOR,
+            GuiUtils.boxHorizontalStrut(shiftX),
+            labelTexLimit,
+            spinnerMaxXY,
+            GuiUtils.boxHorizontalStrut(ITEM_SEPARATOR),
+            new JLabel("Z" + StringUtil.COLON),
+            spinnerMaxZ));
     add(view3d);
     add(GuiUtils.boxVerticalStrut(BLOCK_SEPARATOR));
 
@@ -213,11 +251,12 @@ public class Viewer3dPrefView extends AbstractItemDialogPage {
   }
 
   private Color getBackgroundColor() {
-    return BundleTools.SYSTEM_PREFERENCES.getColorProperty(RenderingLayer.BCK_COLOR, Color.GRAY);
+    return BundleTools.SYSTEM_PREFERENCES.getColorProperty(RenderingLayer.P_BCK_COLOR, Color.GRAY);
   }
 
   private Color getLightColor() {
-    return BundleTools.SYSTEM_PREFERENCES.getColorProperty(RenderingLayer.LIGHT_COLOR, Color.GRAY);
+    return BundleTools.SYSTEM_PREFERENCES.getColorProperty(
+        RenderingLayer.P_LIGHT_COLOR, Color.GRAY);
   }
 
   @Override
@@ -227,14 +266,30 @@ public class Viewer3dPrefView extends AbstractItemDialogPage {
         ((GridBagLayoutModel) comboBoxLayouts.getSelectedItem()).getId());
     BundleTools.SYSTEM_PREFERENCES.put(
         Camera.P_DEFAULT_ORIENTATION, ((CameraView) comboBoxOrientations.getSelectedItem()).name());
+    BundleTools.LOCAL_UI_PERSISTENCE.putIntProperty(
+        RenderingLayer.P_MAX_TEX_XY,
+        spinnerMaxXY.getValue() instanceof Integer val
+            ? val
+            : View3DFactory.getOpenGLInfo().max3dTextureSize());
+    BundleTools.LOCAL_UI_PERSISTENCE.putIntProperty(
+        RenderingLayer.P_MAX_TEX_Z,
+        spinnerMaxZ.getValue() instanceof Integer val
+            ? val
+            : View3DFactory.getOpenGLInfo().max3dTextureSize());
     BundleTools.saveSystemPreferences();
   }
 
   @Override
   public void resetToDefaultValues() {
     sliderDynamic.setValue(RenderingLayer.DEFAULT_DYNAMIC_QUALITY_RATE);
-    BundleTools.SYSTEM_PREFERENCES.putColorProperty(RenderingLayer.BCK_COLOR, Color.GRAY);
-    BundleTools.SYSTEM_PREFERENCES.putColorProperty(RenderingLayer.LIGHT_COLOR, Color.WHITE);
+    int maxSize = View3DFactory.getOpenGLInfo().max3dTextureSize();
+    BundleTools.LOCAL_UI_PERSISTENCE.putIntProperty(RenderingLayer.P_MAX_TEX_XY, maxSize);
+    BundleTools.LOCAL_UI_PERSISTENCE.putIntProperty(RenderingLayer.P_MAX_TEX_Z, maxSize);
+
+    spinnerMaxXY.setValue(maxSize);
+    spinnerMaxZ.setValue(maxSize);
+    BundleTools.SYSTEM_PREFERENCES.putColorProperty(RenderingLayer.P_BCK_COLOR, Color.GRAY);
+    BundleTools.SYSTEM_PREFERENCES.putColorProperty(RenderingLayer.P_LIGHT_COLOR, Color.WHITE);
     BundleTools.SYSTEM_PREFERENCES.put(
         View3DFactory.P_DEFAULT_LAYOUT, View3DContainer.VIEWS_vr.getId());
     BundleTools.SYSTEM_PREFERENCES.put(Camera.P_DEFAULT_ORIENTATION, CameraView.INITIAL.name());

@@ -320,12 +320,12 @@ public class View3d extends VolumeCanvas
 
   public void initShaders(GL4 gl4) {
     Color lightColor =
-        BundleTools.SYSTEM_PREFERENCES.getColorProperty(RenderingLayer.LIGHT_COLOR, Color.WHITE);
+        BundleTools.SYSTEM_PREFERENCES.getColorProperty(RenderingLayer.P_LIGHT_COLOR, Color.WHITE);
     Vector3f lColor =
         new Vector3f(
             lightColor.getRed() / 255f, lightColor.getGreen() / 255f, lightColor.getBlue() / 255f);
     Color bckColor =
-        BundleTools.SYSTEM_PREFERENCES.getColorProperty(RenderingLayer.BCK_COLOR, Color.GRAY);
+        BundleTools.SYSTEM_PREFERENCES.getColorProperty(RenderingLayer.P_BCK_COLOR, Color.GRAY);
     Vector3f bColor =
         new Vector3f(
             bckColor.getRed() / 255f, bckColor.getGreen() / 255f, bckColor.getBlue() / 255f);
@@ -451,7 +451,7 @@ public class View3d extends VolumeCanvas
       if (camera.isAdjusting()) {
         double quality =
             BundleTools.LOCAL_UI_PERSISTENCE.getIntProperty(
-                    RenderingLayer.DYNAMIC_QUALITY, RenderingLayer.DEFAULT_DYNAMIC_QUALITY_RATE)
+                    RenderingLayer.P_DYNAMIC_QUALITY, RenderingLayer.DEFAULT_DYNAMIC_QUALITY_RATE)
                 / 100.0;
         sampleCount = Math.max(64, (int) Math.round(sampleCount * quality));
       }

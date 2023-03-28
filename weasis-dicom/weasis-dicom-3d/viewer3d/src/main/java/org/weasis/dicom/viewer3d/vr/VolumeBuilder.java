@@ -18,13 +18,13 @@ import java.lang.reflect.Method;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
 import jogamp.opengl.gl4.GL4bcProcAddressTable;
 import jogamp.opengl.glu.error.Error;
 import org.dcm4che3.data.Tag;
 import org.dcm4che3.img.DicomImageUtils;
+import org.joml.Vector3d;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
 import org.slf4j.Logger;
@@ -152,7 +152,7 @@ public final class VolumeBuilder {
       return pat.getAddressFor("glTexSubImage3D");
     }
 
-    public void publishVolumeInOpenGL(List<Mat> slices) {
+    public void publishVolumeInOpenGL(List<Mat> slices, int offset) {
       if (!slices.isEmpty()) {
         GLContext glContext = OpenglUtils.getDefaultGlContext();
         glContext.makeCurrent();
@@ -161,7 +161,7 @@ public final class VolumeBuilder {
         GLPixelStorageModes storageModes = new GLPixelStorageModes();
         storageModes.setPackAlignment(gl4, 1); // buffer has not ending row space
 
-        TextureSliceDataBuffer textureSliceData = setTexImage3DBuffer(gl4, slices);
+        TextureSliceDataBuffer textureSliceData = setTexImage3DBuffer(gl4, slices, offset);
         textureSliceData.releaseMemory();
 
         storageModes.restore(gl4);
@@ -189,12 +189,14 @@ public final class VolumeBuilder {
       glContext.release();
     }
 
-    private TextureSliceDataBuffer setSubImage3DBuffer(GL4 gl2, PlanarImage img, int index) {
+    private TextureSliceDataBuffer setSubImage3DBuffer(GL4 gl4, PlanarImage img, int index) {
       DicomVolTexture volTexture = volumeBuilder.volTexture;
-
       TextureSliceDataBuffer textureSliceData = TextureSliceDataBuffer.toImageData(img);
+      if (volTexture.getId() <= 0) {
+        volTexture.init(gl4);
+      }
       // See https://docs.gl/gl4/glTexSubImage3D
-      gl2.glTexSubImage3D(
+      gl4.glTexSubImage3D(
           GL2ES2.GL_TEXTURE_3D,
           0,
           0,
@@ -207,14 +209,13 @@ public final class VolumeBuilder {
           volTexture.getType(),
           textureSliceData.buffer());
       int error;
-      if ((error = gl2.glGetError()) != 0) {
+      if ((error = gl4.glGetError()) != 0) {
         LOGGER.error(
             "Cannot load image ({}/{}) in OpenGL texture3D. OpenGL error: {}",
             index,
             volTexture.getDepth(),
             Error.gluErrorString(error));
         volumeBuilder.hasError = true;
-        DicomVolTextureFactory.removeFromCache(volTexture);
         volumeBuilder.stop();
       }
       return textureSliceData;
@@ -222,8 +223,10 @@ public final class VolumeBuilder {
 
     private void setSubImage3DPointer(GL4 gl4, PlanarImage img, int index) {
       DicomVolTexture volTexture = volumeBuilder.volTexture;
-
       TextureSliceDataPointer textureSliceData = TextureSliceDataPointer.toImageData(img);
+      if (volTexture.getId() <= 0) {
+        volTexture.init(gl4);
+      }
       try {
         nativeSubImage3DMethod.invoke(
             gl4,
@@ -244,19 +247,22 @@ public final class VolumeBuilder {
       }
     }
 
-    private TextureSliceDataBuffer setTexImage3DBuffer(GL4 gl4, List<Mat> slices) {
+    private TextureSliceDataBuffer setTexImage3DBuffer(GL4 gl4, List<Mat> slices, int offset) {
       DicomVolTexture volTexture = volumeBuilder.volTexture;
       TextureSliceDataBuffer textureSliceData = TextureSliceDataBuffer.toImageData(slices);
+      if (volTexture.getId() <= 0) {
+        volTexture.init(gl4);
+      }
       // See https://docs.gl/gl4/glTexSubImage3D
       gl4.glTexSubImage3D(
           GL2ES2.GL_TEXTURE_3D,
           0,
           0,
           0,
-          0,
+          offset,
           volTexture.getWidth(),
           volTexture.getHeight(),
-          volTexture.getDepth(),
+          slices.size(),
           volTexture.getFormat(),
           volTexture.getType(),
           textureSliceData.buffer());
@@ -267,7 +273,6 @@ public final class VolumeBuilder {
             volTexture.getDepth(),
             Error.gluErrorString(error));
         volumeBuilder.hasError = true;
-        DicomVolTextureFactory.removeFromCache(volTexture);
         volumeBuilder.stop();
       }
       return textureSliceData;
@@ -276,21 +281,23 @@ public final class VolumeBuilder {
     @Override
     public void run() {
       DicomVolTexture volTexture = volumeBuilder.volTexture;
+      int sliceOffset = 0;
+      long maxMemory = Runtime.getRuntime().maxMemory() / 3;
+      long sumMemory = 0L;
+
       ArrayList<Mat> slices = new ArrayList<>(volTexture.getDepth());
 
       Instant timeStarted = Instant.now();
       double lastPos = 0;
 
-      Iterator<DicomImageElement> iterator =
-          volTexture.getSeries().copyOfMedias(null, volTexture.getSeriesComparator()).iterator();
-      int index = 0;
-      while (iterator.hasNext()) {
+      List<DicomImageElement> list = volTexture.getVolumeImages();
+      for (int i = 0; i < list.size(); i++) {
         if (isInterrupted()) {
           return;
         }
+        DicomImageElement imageElement = list.get(i);
         Instant start = Instant.now();
 
-        DicomImageElement imageElement = iterator.next();
         // Force to get min/max values.
         if (!imageElement.isImageAvailable()) {
           imageElement.getImage();
@@ -310,63 +317,72 @@ public final class VolumeBuilder {
 
         double[] sp = (double[]) imageElement.getTagValue(TagW.SlicePosition);
         if (sp != null) {
-          double pos = (sp[0] + sp[1] + sp[2]);
-          if (index > 0) {
+          Vector3d scale = volTexture.getScale();
+          double pos = sp[0] * scale.x + sp[1] * scale.y + sp[2] * scale.z;
+          if (i > 0) {
             double space = pos - lastPos;
             VolumeGeometry geometry = volTexture.getVolumeGeometry();
             geometry.setLastDepthSpacing(space);
-            geometry.setLastPixelSpacing(GeometryUtils.getPixelSpacing(imageElement));
-
+            double[] pixelSpacing = GeometryUtils.getPixelSpacing(imageElement);
+            if (pixelSpacing != null && pixelSpacing.length > 1) {
+              double[] spacing = new double[2];
+              spacing[0] = pixelSpacing[0] / scale.x;
+              spacing[1] = pixelSpacing[1] / scale.y;
+              geometry.setLastPixelSpacing(spacing);
+            }
             volTexture.setTexelSize(geometry.getDimensionMFactor());
           }
           lastPos = pos;
         }
 
         double[] or = TagD.getTagValue(imageElement, Tag.ImageOrientationPatient, double[].class);
-        if (index == 0 && or != null && or.length == 6) {
+        if (i == 0 && or != null && or.length == 6) {
           volTexture.setPixelSpacingUnit(imageElement.getPixelSpacingUnit());
           volTexture.getVolumeGeometry().setOrientationPatient(or);
         }
 
         LOGGER.debug(
-            "Time preparation of {}: {} ms",
-            index,
-            Duration.between(start, Instant.now()).toMillis());
+            "Time preparation of {}: {} ms", i, Duration.between(start, Instant.now()).toMillis());
 
         start = Instant.now();
-        PlanarImage imageMLUT = imageElement.getModalityLutImage(null, null);
+        PlanarImage imageMLUT = volTexture.getModalityLutImage(imageElement);
         LOGGER.debug(
             "Time to get Modality LUT image  {}: {} ms",
-            index,
+            i,
             Duration.between(start, Instant.now()).toMillis());
 
         start = Instant.now();
         imageMLUT = getSuitableImage(imageMLUT);
         LOGGER.debug(
             "Time to get suitable image  {}: {} ms",
-            index,
+            i,
             Duration.between(start, Instant.now()).toMillis());
 
-        slices.add(imageMLUT.toMat());
+        sumMemory += imageMLUT.physicalBytes();
+        if (sumMemory > maxMemory) {
+          start = Instant.now();
+          publishVolumeInOpenGL(slices, sliceOffset);
+          LOGGER.debug(
+              "Time to load volume ({} to {}) in OpenGL: {} ms",
+              sliceOffset,
+              sliceOffset + slices.size() - 1,
+              Duration.between(start, Instant.now()).toMillis());
 
-        //        start = Instant.now();
-        //        publishInOpenGL(imageMLUT, index);
-        //        LOGGER.debug(
-        //            "Time to publish in opengl of {}: {} ms",
-        //            index,
-        //            Duration.between(start, Instant.now()).toMillis());
-        //
-        //        if (index > 0 && index % 5 == 0) {
-        //          volTexture.notifyPartiallyLoaded();
-        //        }
-        index++;
+          sliceOffset += slices.size();
+          slices.clear();
+          sumMemory = imageMLUT.physicalBytes();
+
+          volTexture.notifyPartiallyLoaded();
+        }
+        slices.add(imageMLUT.toMat());
       }
 
       Instant start = Instant.now();
-      publishVolumeInOpenGL(slices);
+      publishVolumeInOpenGL(slices, sliceOffset);
       LOGGER.debug(
-          "Time to load volume in OpenGL  {}: {} ms",
-          index,
+          "Time to load volume ({} to {}) in OpenGL: {} ms",
+          sliceOffset,
+          sliceOffset + slices.size() - 1,
           Duration.between(start, Instant.now()).toMillis());
 
       LOGGER.info(

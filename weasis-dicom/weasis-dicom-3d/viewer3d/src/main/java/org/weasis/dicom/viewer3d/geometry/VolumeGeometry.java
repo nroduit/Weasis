@@ -17,9 +17,11 @@ public class VolumeGeometry {
   private static final double EPSILON = 1e-3;
   private double[] lastPixelSpacing = null;
   private double lastSpace = 0.0;
+  private double spaceAccumulator = 0.0;
 
   private boolean variablePixelSpacing = false;
   private double[] orientationPatient;
+  private int spaceNumber = 0;
 
   public double[] getPixelSpacing() {
     if (lastPixelSpacing == null) {
@@ -48,10 +50,12 @@ public class VolumeGeometry {
       this.variablePixelSpacing = true;
     }
     this.lastSpace = space;
+    this.spaceNumber++;
+    this.spaceAccumulator += Math.abs(space);
   }
 
   public Vector3d getDimensionMFactor() {
-    double zSpace = Math.abs(lastSpace);
+    double zSpace = spaceAccumulator / spaceNumber;
     double[] spacing = getPixelSpacing();
     if (spacing[0] <= 0 || spacing[1] <= 0 || zSpace <= 0) {
       return new Vector3d(1, 1, 1);

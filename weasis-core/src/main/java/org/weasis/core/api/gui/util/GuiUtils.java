@@ -419,8 +419,14 @@ public class GuiUtils {
 
   public static void setNumberModel(JSpinner spin, int val, int min, int max, int delta) {
     spin.setModel(new SpinnerNumberModel(val < min ? min : Math.min(val, max), min, max, delta));
-    final JFormattedTextField ftf = ((JSpinner.DefaultEditor) spin.getEditor()).getTextField();
+    JFormattedTextField ftf = ((JSpinner.DefaultEditor) spin.getEditor()).getTextField();
     addCheckActionToJFormattedTextField(ftf);
+  }
+
+  public static void setSpinnerWidth(JSpinner spin, int valueWidth) {
+    Component mySpinnerEditor = spin.getEditor();
+    JFormattedTextField ftf = ((JSpinner.DefaultEditor) mySpinnerEditor).getTextField();
+    ftf.setColumns(valueWidth);
   }
 
   public static void formatCheckAction(JSpinner spin) {

@@ -163,6 +163,9 @@ public class View3DFactory implements SeriesViewerFactory {
     if (dicomView != null) {
       dicomView.getDataExplorerModel().removePropertyChangeListener(view3dContainer);
     }
+    if (view3dContainer.volumeBuilder != null) {
+      view3dContainer.volumeBuilder.getVolTexture().destroy(OpenglUtils.getGL4());
+    }
   }
 
   @Override
