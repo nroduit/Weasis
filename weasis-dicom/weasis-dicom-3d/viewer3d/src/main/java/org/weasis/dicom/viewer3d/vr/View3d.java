@@ -40,6 +40,7 @@ import java.util.Objects;
 import java.util.Optional;
 import javax.swing.Action;
 import javax.swing.JPopupMenu;
+import javax.swing.JProgressBar;
 import javax.swing.ToolTipManager;
 import org.dcm4che3.img.lut.PresetWindowLevel;
 import org.joml.Vector3f;
@@ -130,6 +131,7 @@ public class View3d extends VolumeCanvas
   private int vertexBuffer;
   protected Preset volumePreset;
   private ViewType viewType;
+  private JProgressBar progressBar;
 
   public View3d(
       ImageViewerEventManager<DicomImageElement> eventManager, DicomVolTexture volTexture) {
@@ -307,11 +309,30 @@ public class View3d extends VolumeCanvas
       g2d.setFont(getLayerFont());
       infoLayer.paint(g2d);
     }
-    // drawOnTop(g2d);
+    drawOnTop(g2d);
 
     g2d.setFont(defaultFont);
     g2d.setPaint(oldColor);
     g2d.setStroke(oldStroke);
+  }
+
+  protected void drawOnTop(Graphics2D g2d) {
+    final JProgressBar bar = progressBar;
+    if (bar != null && bar.isVisible()) {
+      int shiftX = getWidth() / 2 - progressBar.getWidth() / 2;
+      int shiftY = getHeight() / 2 - progressBar.getHeight() / 2;
+      g2d.translate(shiftX, shiftY);
+      progressBar.paint(g2d);
+      g2d.translate(-shiftX, -shiftY);
+    }
+  }
+
+  public void setProgressBar(JProgressBar bar) {
+    this.progressBar = bar;
+  }
+
+  public JProgressBar getProgressBar() {
+    return progressBar;
   }
 
   @Override

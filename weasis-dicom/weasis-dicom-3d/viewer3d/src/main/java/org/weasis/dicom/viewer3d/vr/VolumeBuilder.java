@@ -13,6 +13,7 @@ import com.jogamp.opengl.GL2ES2;
 import com.jogamp.opengl.GL4;
 import com.jogamp.opengl.GLContext;
 import com.jogamp.opengl.util.GLPixelStorageModes;
+import java.awt.Dimension;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.time.Duration;
@@ -20,6 +21,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import javax.swing.JProgressBar;
 import jogamp.opengl.gl4.GL4bcProcAddressTable;
 import jogamp.opengl.glu.error.Error;
 import org.dcm4che3.data.Tag;
@@ -29,9 +31,13 @@ import org.opencv.core.CvType;
 import org.opencv.core.Mat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.weasis.core.api.gui.util.GuiExecutor;
+import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.media.data.TagW;
+import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.TagD;
+import org.weasis.dicom.viewer3d.EventManager;
 import org.weasis.dicom.viewer3d.geometry.GeometryUtils;
 import org.weasis.dicom.viewer3d.geometry.VolumeGeometry;
 import org.weasis.opencv.data.ImageCV;
@@ -281,11 +287,34 @@ public final class VolumeBuilder {
     @Override
     public void run() {
       DicomVolTexture volTexture = volumeBuilder.volTexture;
+      final int size = volTexture.getDepth();
+
+      ViewCanvas<DicomImageElement> view = EventManager.getInstance().getSelectedViewPane();
+      final JProgressBar bar;
+      if (view instanceof View3d view3d) {
+        bar = new JProgressBar(0, size);
+        Dimension dim = new Dimension(view3d.getWidth() / 2, GuiUtils.getScaleLength(30));
+        bar.setSize(dim);
+        bar.setPreferredSize(dim);
+        bar.setMaximumSize(dim);
+
+        GuiExecutor.instance()
+            .invokeAndWait(
+                () -> {
+                  bar.setValue(0);
+                  bar.setStringPainted(true);
+                  view3d.setProgressBar(bar);
+                  view3d.repaint();
+                });
+      } else {
+        bar = null;
+      }
+
       int sliceOffset = 0;
       long maxMemory = Runtime.getRuntime().maxMemory() / 3;
       long sumMemory = 0L;
 
-      ArrayList<Mat> slices = new ArrayList<>(volTexture.getDepth());
+      ArrayList<Mat> slices = new ArrayList<>(size);
 
       Instant timeStarted = Instant.now();
       double lastPos = 0;
@@ -375,6 +404,14 @@ public final class VolumeBuilder {
           volTexture.notifyPartiallyLoaded();
         }
         slices.add(imageMLUT.toMat());
+        if (bar != null) {
+          GuiExecutor.instance()
+              .execute(
+                  () -> {
+                    bar.setValue(bar.getValue() + 1);
+                    view.getJComponent().repaint();
+                  });
+        }
       }
 
       Instant start = Instant.now();
@@ -389,6 +426,10 @@ public final class VolumeBuilder {
           "Loading 3D texture time: {} ms",
           Duration.between(timeStarted, Instant.now()).toMillis());
       volumeBuilder.completed = true;
+
+      if (view instanceof View3d view3d) {
+        view3d.setProgressBar(null);
+      }
       volTexture.notifyFullyLoaded();
     }
   }
