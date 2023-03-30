@@ -37,7 +37,7 @@ public class OpenglUtils {
           Threading.invoke(
               true,
               () -> {
-                final GLProfile glProfile = GLProfile.get(GLProfile.GL2);
+                final GLProfile glProfile = GLProfile.get(GLProfile.GL4);
                 GLDrawable glDrawable =
                     GLDrawableFactory.getFactory(glProfile)
                         .createOffscreenDrawable(null, new GLCapabilities(glProfile), null, 1, 1);

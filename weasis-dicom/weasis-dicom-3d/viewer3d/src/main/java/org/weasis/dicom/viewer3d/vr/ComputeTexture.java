@@ -11,7 +11,6 @@ package org.weasis.dicom.viewer3d.vr;
 
 import com.jogamp.opengl.GL;
 import com.jogamp.opengl.GL2ES3;
-import com.jogamp.opengl.GL3;
 import com.jogamp.opengl.GL4;
 
 public class ComputeTexture extends TextureData {
@@ -77,10 +76,9 @@ public class ComputeTexture extends TextureData {
       gl4.glTexImage2D(GL.GL_TEXTURE_2D, 0, internalFormat, width, height, 0, format, type, null);
     }
 
-    GL3 gl3 = gl4.getGL3();
     int workSizeX = Math.max(localSize, nextPowerOfTwo(width));
     int workSizeY = Math.max(localSize, nextPowerOfTwo(height));
-    gl3.glDispatchCompute(workSizeX / localSize, workSizeY / localSize, 1);
-    gl3.glMemoryBarrier(GL2ES3.GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
+    gl4.glDispatchCompute(workSizeX / localSize, workSizeY / localSize, 1);
+    gl4.glMemoryBarrier(GL2ES3.GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
   }
 }
