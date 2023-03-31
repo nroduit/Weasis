@@ -64,7 +64,7 @@ public class Program {
       if (success.get(0) != 1) {
         gl4.glGetShaderInfoLog(shaderId, 512, null, openglLog);
         LOGGER.warn(
-            "Not success compiled status of compute shader: {}",
+            "Not success compiled status of shader: {}",
             new String(openglLog.array(), StandardCharsets.UTF_8));
       }
     }
@@ -81,8 +81,7 @@ public class Program {
     gl4.glGetProgramiv(programId, GL2ES2.GL_LINK_STATUS, success);
     if (success.get(0) != 1) {
       gl4.glGetProgramInfoLog(programId, 512, null, openglLog);
-      LOGGER.warn(
-          "Cannot link compute shader: {}", new String(openglLog.array(), StandardCharsets.UTF_8));
+      LOGGER.warn("Cannot link shader: {}", new String(openglLog.array(), StandardCharsets.UTF_8));
     }
 
     for (Map.Entry<Integer, Integer> shaderId : shaderIds.entrySet()) {

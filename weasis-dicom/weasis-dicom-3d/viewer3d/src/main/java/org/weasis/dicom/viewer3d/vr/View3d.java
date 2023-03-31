@@ -140,6 +140,8 @@ public class View3d extends VolumeCanvas
     this.quadProgram =
         new Program("basic", ShaderManager.VERTEX_SHADER, ShaderManager.FRAGMENT_SHADER);
     this.program = new Program("compute", ShaderManager.COMPUTE_SHADER);
+    // this.program =new Program("basic", ShaderManager.OLD_VERTEX_SHADER,
+    // ShaderManager.OLD_FRAGMENT_SHADER);
     try {
       setSharedContext(OpenglUtils.getDefaultGlContext());
     } catch (Exception e) {
@@ -376,7 +378,7 @@ public class View3d extends VolumeCanvas
         "depthSampleNumber",
         (gl, loc) -> gl4.glUniform1i(loc, renderingLayer.getDepthSampleNumber()));
     program.allocateUniform(
-        gl4, "lutShape", (gl, loc) -> gl4.glUniform1i(loc, renderingLayer.getLutShapeId()));
+        gl4, "lutShape", (gl, loc) -> gl4.glUniform1ui(loc, renderingLayer.getLutShapeId()));
 
     program.allocateUniform(
         gl4,
@@ -416,15 +418,15 @@ public class View3d extends VolumeCanvas
     program.allocateUniform(
         gl4,
         "renderingType",
-        (gl, loc) -> gl.glUniform1i(loc, renderingLayer.getRenderingType().getId()));
+        (gl, loc) -> gl.glUniform1ui(loc, renderingLayer.getRenderingType().getId()));
     program.allocateUniform(
-        gl4, "mipType", (gl, loc) -> gl.glUniform1i(loc, renderingLayer.getMipType().getId()));
+        gl4, "mipType", (gl, loc) -> gl.glUniform1ui(loc, renderingLayer.getMipType().getId()));
     program.allocateUniform(gl4, "volTexture", (gl, loc) -> gl.glUniform1i(loc, 0));
     program.allocateUniform(gl4, "colorMap", (gl, loc) -> gl.glUniform1i(loc, 1));
     program.allocateUniform(
         gl4,
         "textureDataType",
-        (gl, loc) -> gl.glUniform1i(loc, TextureData.getDataType(volTexture.getPixelFormat())));
+        (gl, loc) -> gl.glUniform1ui(loc, TextureData.getDataType(volTexture.getPixelFormat())));
 
     program.allocateUniform(
         gl4,

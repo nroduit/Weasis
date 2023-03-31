@@ -1,10 +1,9 @@
-#version 430
+#version 130
 
-layout (local_size_x = 16, local_size_y = 16) in ;
-layout (rgba32f, binding = 0) uniform image2D outputImage;
-layout (binding = 0) uniform sampler3D volTexture;
-layout (binding = 1) uniform sampler2D colorMap;
-layout (binding = 2) uniform sampler2D lightingMap;
+uniform sampler3D volTexture;
+uniform sampler3D colorMap;
+uniform sampler2D lightingMap;
+in vec2 vTexCoord;
 
 #include "voxelUniforms.glsl"
 
@@ -12,11 +11,10 @@ layout (binding = 2) uniform sampler2D lightingMap;
 
 #include "vrFunctions.glsl"
 
-void main() {
-
-    ivec2 pixelCoords = ivec2(gl_GlobalInvocationID.xy);
-
-    ivec2 imageDims = imageSize(outputImage);
+void main(){
+    // vec2 position = (vTexCoord +1.0)/2.0;
+    ivec2 pixelCoords = ivec2(gl_FragCoord.xy);
+    vec2 imageDims = vec2(gl_FragCoord.w, gl_FragCoord.z);
     if (pixelCoords.x >= imageDims.x || pixelCoords.y >= imageDims.y) {
         return;
     }
@@ -44,5 +42,5 @@ void main() {
             }
         }
     }
-    imageStore(outputImage, pixelCoords, pixelVal);
+    gl_FragColor.rgba = pixelVal;
 }
