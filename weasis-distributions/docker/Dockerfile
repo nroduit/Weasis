@@ -1,6 +1,6 @@
 # Based on image: https://github.com/adoptium/containers/blob/main/18/jdk/ubuntu/focal/Dockerfile.releases.full
 # Add libraries required by weasis build: bzip2 unzip xz-utils fakeroot rpm
-FROM ubuntu:20.04
+FROM ubuntu:rolling
 
 ENV LANG='en_US.UTF-8' LANGUAGE='en_US:en' LC_ALL='en_US.UTF-8'
 
