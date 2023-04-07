@@ -9,8 +9,8 @@
  */
 package org.weasis.dicom.viewer3d.vr;
 
+import java.lang.foreign.Arena;
 import java.lang.foreign.MemorySegment;
-import java.lang.foreign.MemorySession;
 import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -21,9 +21,9 @@ import org.opencv.core.CvType;
 import org.opencv.core.Mat;
 import org.weasis.opencv.data.PlanarImage;
 
-public record TextureSliceDataBuffer(Buffer buffer, MemorySession scope) {
+public record TextureSliceDataBuffer(Buffer buffer, Arena scope) {
 
-  public TextureSliceDataBuffer(Buffer buffer, MemorySession scope) {
+  public TextureSliceDataBuffer(Buffer buffer, Arena scope) {
     this.scope = Objects.requireNonNull(scope);
     this.buffer = buffer;
   }
@@ -41,16 +41,17 @@ public record TextureSliceDataBuffer(Buffer buffer, MemorySession scope) {
       byte[] bSrcData = new byte[width * height * channels];
       image.get(0, 0, bSrcData);
       // Allow to be closed in another thread
-      MemorySession scope = MemorySession.openShared();
-      MemorySegment bufferSegment = MemorySegment.allocateNative(bSrcData.length, scope);
+      Arena arena = Arena.openShared();
+      MemorySegment bufferSegment = MemorySegment.allocateNative(bSrcData.length, arena.scope());
       ByteBuffer buffer =
           bufferSegment.asByteBuffer().order(ByteOrder.nativeOrder()).put(bSrcData).rewind();
-      return new TextureSliceDataBuffer(buffer, scope);
+      return new TextureSliceDataBuffer(buffer, arena);
     } else if (cvType == CvType.CV_16U || cvType == CvType.CV_16S) {
       short[] sSrcData = new short[width * height * channels];
       image.get(0, 0, sSrcData);
-      MemorySession scope = MemorySession.openShared();
-      MemorySegment bufferSegment = MemorySegment.allocateNative(sSrcData.length * 2L, scope);
+      Arena arena = Arena.openShared();
+      MemorySegment bufferSegment =
+          MemorySegment.allocateNative(sSrcData.length * 2L, arena.scope());
       ShortBuffer buffer =
           bufferSegment
               .asByteBuffer()
@@ -58,7 +59,7 @@ public record TextureSliceDataBuffer(Buffer buffer, MemorySession scope) {
               .asShortBuffer()
               .put(sSrcData)
               .rewind();
-      return new TextureSliceDataBuffer(buffer, scope);
+      return new TextureSliceDataBuffer(buffer, arena);
     } else {
       throw new IllegalArgumentException("Not supported dataType for LUT transformation:" + image);
     }
@@ -76,8 +77,9 @@ public record TextureSliceDataBuffer(Buffer buffer, MemorySession scope) {
 
     if (cvType == CvType.CV_8U) {
       byte[] bSrcData = new byte[size * channels];
-      MemorySession scope = MemorySession.openShared();
-      MemorySegment bufferSegment = MemorySegment.allocateNative(bSrcData.length * depth, scope);
+      Arena arena = Arena.openShared();
+      MemorySegment bufferSegment =
+          MemorySegment.allocateNative(bSrcData.length * depth, arena.scope());
       ByteBuffer buf = bufferSegment.asByteBuffer().order(ByteOrder.nativeOrder());
 
       for (Mat slice : slices) {
@@ -85,12 +87,12 @@ public record TextureSliceDataBuffer(Buffer buffer, MemorySession scope) {
         buf.put(bSrcData);
       }
       buf.rewind();
-      return new TextureSliceDataBuffer(buf, scope);
+      return new TextureSliceDataBuffer(buf, arena);
     } else if (cvType == CvType.CV_16U || cvType == CvType.CV_16S) {
       short[] sSrcData = new short[size * channels];
-      MemorySession scope = MemorySession.openShared();
+      Arena arena = Arena.openShared();
       MemorySegment bufferSegment =
-          MemorySegment.allocateNative(sSrcData.length * depth * 2L, scope);
+          MemorySegment.allocateNative(sSrcData.length * depth * 2L, arena.scope());
       ShortBuffer buf = bufferSegment.asByteBuffer().order(ByteOrder.nativeOrder()).asShortBuffer();
 
       for (Mat slice : slices) {
@@ -99,7 +101,7 @@ public record TextureSliceDataBuffer(Buffer buffer, MemorySession scope) {
       }
       buf.rewind();
 
-      return new TextureSliceDataBuffer(buf, scope);
+      return new TextureSliceDataBuffer(buf, arena);
     } else {
       throw new IllegalArgumentException("Not supported dataType for LUT transformation:" + image);
     }

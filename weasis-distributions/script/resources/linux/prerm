@@ -17,14 +17,17 @@ set -e
 # the debian-policy package
 
 
-UTILITY_SCRIPTS
+package_type=deb
+DESKTOP_SCRIPTS
+LAUNCHER_AS_SERVICE_SCRIPTS
 
 case "$1" in
     remove|upgrade|deconfigure)
 DESKTOP_COMMANDS_UNINSTALL
-      uninstall_default_mime_handler weasis-Weasis.desktop x-scheme-handler/weasis
-	    rm -f /etc/opt/chrome/policies/managed/weasis.json
-	    rm -f /etc/chromium/policies/managed/weasis.json
+LAUNCHER_AS_SERVICE_COMMANDS_UNINSTALL
+uninstall_default_mime_handler weasis-Weasis.desktop x-scheme-handler/weasis
+rm -f /etc/opt/chrome/policies/managed/weasis.json
+rm -f /etc/chromium/policies/managed/weasis.json
     ;;
 
     failed-upgrade)

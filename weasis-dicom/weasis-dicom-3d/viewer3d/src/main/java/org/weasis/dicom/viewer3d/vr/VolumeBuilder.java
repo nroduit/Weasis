@@ -14,15 +14,12 @@ import com.jogamp.opengl.GL4;
 import com.jogamp.opengl.GLContext;
 import com.jogamp.opengl.util.GLPixelStorageModes;
 import java.awt.Dimension;
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import javax.swing.JProgressBar;
-import jogamp.opengl.gl4.GL4bcProcAddressTable;
 import jogamp.opengl.glu.error.Error;
 import org.dcm4che3.data.Tag;
 import org.dcm4che3.img.DicomImageUtils;
@@ -118,44 +115,10 @@ public final class VolumeBuilder {
 
   private static class TextureLoader extends Thread {
     private final VolumeBuilder volumeBuilder;
-    private final GL4bcProcAddressTable pat;
-    private final Method nativeSubImage3DMethod;
 
     public TextureLoader(VolumeBuilder volumeBuilder) {
       super("Texture 3D loader (OpenGL)");
       this.volumeBuilder = volumeBuilder;
-      GLContext glContext = OpenglUtils.getDefaultGlContext();
-      GL4 gl4 = glContext.getGL().getGL4();
-      try {
-        Field privateField = gl4.getClass().getDeclaredField("_pat");
-        privateField.setAccessible(true);
-        this.pat = (GL4bcProcAddressTable) privateField.get(gl4);
-        this.nativeSubImage3DMethod =
-            gl4.getClass()
-                .getDeclaredMethod(
-                    "dispatch_glTexSubImage3D1",
-                    new Class<?>[] {
-                      int.class,
-                      int.class,
-                      int.class,
-                      int.class,
-                      int.class,
-                      int.class,
-                      int.class,
-                      int.class,
-                      int.class,
-                      int.class,
-                      long.class,
-                      long.class
-                    });
-        nativeSubImage3DMethod.setAccessible(true);
-      } catch (Exception e) {
-        throw new RuntimeException(e);
-      }
-    }
-
-    public long getSubImage3DPointer() {
-      return pat.getAddressFor("glTexSubImage3D");
     }
 
     public void publishVolumeInOpenGL(List<Mat> slices, int offset) {
@@ -173,83 +136,6 @@ public final class VolumeBuilder {
         storageModes.restore(gl4);
         gl4.glFinish();
         glContext.release();
-      }
-    }
-
-    public void publishInOpenGL(PlanarImage imageMLUT, int index) {
-      GLContext glContext = OpenglUtils.getDefaultGlContext();
-      glContext.makeCurrent();
-      GL4 gl4 = glContext.getGL().getGL4();
-      gl4.glBindTexture(GL2ES2.GL_TEXTURE_3D, volumeBuilder.volTexture.getId());
-      GLPixelStorageModes storageModes = new GLPixelStorageModes();
-      storageModes.setPackAlignment(gl4, 1); // buffer has not ending row space
-
-      // Use direct native pointer
-      setSubImage3DPointer(gl4, imageMLUT, index);
-
-      // TextureSliceDataBuffer textureSliceData = setSubImage3DBuffer(gl4, imageMLUT, index);
-      // textureSliceData.releaseMemory();
-
-      storageModes.restore(gl4);
-      gl4.glFinish();
-      glContext.release();
-    }
-
-    private TextureSliceDataBuffer setSubImage3DBuffer(GL4 gl4, PlanarImage img, int index) {
-      DicomVolTexture volTexture = volumeBuilder.volTexture;
-      TextureSliceDataBuffer textureSliceData = TextureSliceDataBuffer.toImageData(img);
-      if (volTexture.getId() <= 0) {
-        volTexture.init(gl4);
-      }
-      // See https://docs.gl/gl4/glTexSubImage3D
-      gl4.glTexSubImage3D(
-          GL2ES2.GL_TEXTURE_3D,
-          0,
-          0,
-          0,
-          index,
-          volTexture.getWidth(),
-          volTexture.getHeight(),
-          1,
-          volTexture.getFormat(),
-          volTexture.getType(),
-          textureSliceData.buffer());
-      int error;
-      if ((error = gl4.glGetError()) != 0) {
-        LOGGER.error(
-            "Cannot load image ({}/{}) in OpenGL texture3D. OpenGL error: {}",
-            index,
-            volTexture.getDepth(),
-            Error.gluErrorString(error));
-        volumeBuilder.hasError = true;
-        volumeBuilder.stop();
-      }
-      return textureSliceData;
-    }
-
-    private void setSubImage3DPointer(GL4 gl4, PlanarImage img, int index) {
-      DicomVolTexture volTexture = volumeBuilder.volTexture;
-      TextureSliceDataPointer textureSliceData = TextureSliceDataPointer.toImageData(img);
-      if (volTexture.getId() <= 0) {
-        volTexture.init(gl4);
-      }
-      try {
-        nativeSubImage3DMethod.invoke(
-            gl4,
-            GL2ES2.GL_TEXTURE_3D,
-            0,
-            0,
-            0,
-            index,
-            volTexture.getWidth(),
-            volTexture.getHeight(),
-            1,
-            volTexture.getFormat(),
-            volTexture.getType(),
-            textureSliceData.address().toRawLongValue(),
-            getSubImage3DPointer());
-      } catch (Exception e) {
-        throw new RuntimeException(e);
       }
     }
 

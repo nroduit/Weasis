@@ -5,7 +5,7 @@
 
 # Specify the required Java version.
 # Only major version is checked. Minor version or any other version string info is left out.
-REQUIRED_TEXT_VERSION=18
+REQUIRED_TEXT_VERSION=20
 
 # Build Parameters
 REVISON_INC="1"
@@ -36,7 +36,7 @@ do
 echo "Usage: package-weasis.sh <options>"
 echo "Sample usages:"
 echo "    Build an installer for the current platform with the minimal required parameters"
-echo "        package-weasis.sh --input /home/user/weasis-native/bin-dist --jdk /home/user/jdk-18"
+echo "        package-weasis.sh --jdk /home/user/jdk-20"
 echo ""
 echo "Options:"
 echo " --help -h
