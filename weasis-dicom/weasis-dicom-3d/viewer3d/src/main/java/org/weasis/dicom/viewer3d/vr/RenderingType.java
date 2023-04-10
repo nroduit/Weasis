@@ -9,13 +9,14 @@
  */
 package org.weasis.dicom.viewer3d.vr;
 
+import org.weasis.dicom.viewer3d.Messages;
 import org.weasis.dicom.viewer3d.vr.View3d.ViewType;
 
 public enum RenderingType {
-  COMPOSITE("Composite", 0, ViewType.VOLUME3D),
-  MIP("MIP", 1, ViewType.VOLUME3D),
-  ISO2("Iso surface", 2, ViewType.VOLUME3D),
-  SLICE("Slice", 3, ViewType.SLICE);
+  COMPOSITE(Messages.getString("composite"), 0, ViewType.VOLUME3D),
+  MIP(Messages.getString("mip"), 1, ViewType.VOLUME3D),
+  ISO2(Messages.getString("iso.surface"), 2, ViewType.VOLUME3D),
+  SLICE(Messages.getString("slice"), 3, ViewType.SLICE);
   //  SLICE_AXIAL("MPR Axial", 4, ViewType.AXIAL),
   //  SLICE_CORONAL("MPR Coronal", 5, ViewType.CORONAL),
   //  SLICE_SAGITTAL("MPR Sagittal", 6, ViewType.SAGITTAL);

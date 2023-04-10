@@ -10,7 +10,7 @@
 package org.weasis.core.api.image;
 
 import java.awt.Rectangle;
-import org.weasis.core.api.Messages;
+import org.weasis.core.Messages;
 import org.weasis.opencv.data.PlanarImage;
 import org.weasis.opencv.op.ImageProcessor;
 

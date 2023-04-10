@@ -33,7 +33,7 @@ import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.api.service.WProperties;
 import org.weasis.core.api.util.LocalUtil;
-import org.weasis.core.ui.Messages;
+import org.weasis.core.Messages;
 import org.weasis.core.util.StringUtil;
 
 public class ProxyPrefView extends AbstractItemDialogPage {

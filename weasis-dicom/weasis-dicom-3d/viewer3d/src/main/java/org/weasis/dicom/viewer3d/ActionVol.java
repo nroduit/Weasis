@@ -45,43 +45,45 @@ public class ActionVol {
       new ComboItemListenerValue<>(ActionW.LUT.getTitle(), "vol.lut", 0, 0, null);
 
   public static final ComboItemListenerValue<Axis> VOL_AXIS =
-      new ComboItemListenerValue<>("Axis", "vol.axis", 0, 0, null);
+      new ComboItemListenerValue<>(Messages.getString("axis"), "vol.axis", 0, 0, null);
 
   public static final SliderChangeListenerValue VOL_QUALITY =
-      new SliderChangeListenerValue("Z-axis sampling", "vol.quality", 0, 0, null);
+      new SliderChangeListenerValue(
+          Messages.getString("z.axis.sampling"), "vol.quality", 0, 0, null);
 
   public static final ToggleButtonListenerValue VOL_SLICING =
-      new ToggleButtonListenerValue("Slicing", "vol.slicing", 0, 0, null);
+      new ToggleButtonListenerValue(Messages.getString("slicing"), "vol.slicing", 0, 0, null);
 
   public static final ToggleButtonListenerValue VOL_SHADING =
-      new ToggleButtonListenerValue("Shading", "vol.shading", 0, 0, null);
+      new ToggleButtonListenerValue(Messages.getString("shading"), "vol.shading", 0, 0, null);
 
   public static final ToggleButtonListenerValue VOL_PROJECTION =
-      new ToggleButtonListenerValue("Orthographic Projection", "vol.projection", 0, 0, null);
+      new ToggleButtonListenerValue(
+          Messages.getString("orthographic.projection"), "vol.projection", 0, 0, null);
 
   public static final ComboItemListenerValue<RenderingType> RENDERING_TYPE =
-      new ComboItemListenerValue<>("Type", "rendering.type", 0, 0, null);
+      new ComboItemListenerValue<>(Messages.getString("type"), "rendering.type", 0, 0, null);
 
   public static final ComboItemListenerValue<MipView.Type> MIP_TYPE =
       new ComboItemListenerValue<>("MIP", "mip.type", 0, 0, null);
 
   public static final SliderChangeListenerValue MIP_DEPTH =
-      new SliderChangeListenerValue("MIP Depth", "mip.depth", 0, 0, null);
+      new SliderChangeListenerValue(Messages.getString("mip.depth"), "mip.depth", 0, 0, null);
 
   public static final SliderChangeListenerValue VOL_OPACITY =
-      new SliderChangeListenerValue("Opacity", "vol.opacity", 0, 0, null);
+      new SliderChangeListenerValue(Messages.getString("opacity"), "vol.opacity", 0, 0, null);
 
   public static final BasicActionStateValue HIDE_CROSSHAIR_CENTER =
       new BasicActionStateValue(
           Messages.getString("hide.crosshair.center"),
-          "crosshair-hide-center",
+          "crosshair-hide-center", // NON-NLS
           0,
           0,
           null); // NON-NLS
 
   public static final BasicActionStateValue RECENTERING_CROSSHAIR =
       new BasicActionStateValue(
-          Messages.getString("recentering.crosshair"), "crosshair-recenter", 0, 0, null); // NON-NLS
+          Messages.getString("recenter.mpr"), "crosshair-recenter", 0, 0, null); // NON-NLS
 
   public static final BasicActionStateValue ORIENTATION_CUBE =
       new BasicActionStateValue(

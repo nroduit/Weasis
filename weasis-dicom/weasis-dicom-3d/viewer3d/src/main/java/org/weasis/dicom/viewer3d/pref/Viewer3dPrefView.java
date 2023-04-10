@@ -33,6 +33,7 @@ import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.api.util.ResourceUtil.ActionIcon;
 import org.weasis.core.ui.pref.PreferenceDialog;
 import org.weasis.core.util.StringUtil;
+import org.weasis.dicom.viewer3d.Messages;
 import org.weasis.dicom.viewer3d.OpenGLInfo;
 import org.weasis.dicom.viewer3d.View3DContainer;
 import org.weasis.dicom.viewer3d.View3DFactory;
@@ -91,7 +92,7 @@ public class Viewer3dPrefView extends AbstractItemDialogPage {
             BundleTools.LOCAL_UI_PERSISTENCE.putIntProperty(
                 RenderingLayer.P_DYNAMIC_QUALITY, sliderDynamic.getValue()));
 
-    String pickColor = org.weasis.core.ui.Messages.getString("MeasureTool.pick_color");
+    String pickColor = org.weasis.core.Messages.getString("MeasureTool.pick_color");
     bckColor.setToolTipText(pickColor);
     bckColor.addActionListener(
         e -> {
@@ -119,8 +120,8 @@ public class Viewer3dPrefView extends AbstractItemDialogPage {
     int shiftX = ITEM_SEPARATOR - ITEM_SEPARATOR_SMALL;
 
     JPanel openglPanel = GuiUtils.getVerticalBoxLayoutPanel();
-    openglPanel.setBorder(GuiUtils.getTitledBorder("OpenGL Support"));
-    JCheckBox enableHA = new JCheckBox("Enable");
+    openglPanel.setBorder(GuiUtils.getTitledBorder(Messages.getString("opengl.support")));
+    JCheckBox enableHA = new JCheckBox(Messages.getString("enable"));
     enableHA.setSelected(View3DFactory.isOpenglEnable());
     openglPanel.add(GuiUtils.getFlowLayoutPanel(enableHA));
 
@@ -128,18 +129,25 @@ public class Viewer3dPrefView extends AbstractItemDialogPage {
     if (info == null) {
       String alert =
           GuiUtils.HTML_COLOR_PATTERN.formatted(
-              IconColor.ACTIONS_RED.getHtmlCode(), "No graphic card found for OpenGL");
+              IconColor.ACTIONS_RED.getHtmlCode(), Messages.getString("no.graphic.card"));
       JLabel labelCard = new JLabel(alert);
       openglPanel.add(GuiUtils.getFlowLayoutPanel(labelCard));
     } else {
       JLabel labelCard =
           new JLabel(
-              "Graphic card" + StringUtil.COLON_AND_SPACE + info.vendor() + ", " + info.renderer());
+              Messages.getString("graphic.card")
+                  + StringUtil.COLON_AND_SPACE
+                  + info.vendor()
+                  + ", "
+                  + info.renderer());
       JLabel version =
-          new JLabel("Driver version" + StringUtil.COLON_AND_SPACE + info.shortVersion());
+          new JLabel(
+              Messages.getString("driver.version")
+                  + StringUtil.COLON_AND_SPACE
+                  + info.shortVersion());
       JLabel texture =
           new JLabel(
-              "Max 3D texture dimension length"
+              Messages.getString("max.3d.texture.dimension.length")
                   + StringUtil.COLON_AND_SPACE
                   + info.max3dTextureSize());
       openglPanel.add(GuiUtils.getFlowLayoutPanel(labelCard));
@@ -152,13 +160,14 @@ public class Viewer3dPrefView extends AbstractItemDialogPage {
       if (versionIssue || info.max3dTextureSize() < RenderingLayer.MAX_QUALITY) {
         String alert =
             GuiUtils.HTML_COLOR_PATTERN.formatted(
-                IconColor.ACTIONS_RED.getHtmlCode(), "These capabilities are not sufficient");
+                IconColor.ACTIONS_RED.getHtmlCode(),
+                Messages.getString("capabilities.not.sufficient"));
         openglPanel.add(GuiUtils.getFlowLayoutPanel(new JLabel(alert)));
         if (versionIssue) {
           alert =
               GuiUtils.HTML_COLOR_PATTERN
                   .formatted(
-                      IconColor.ACTIONS_RED.getHtmlCode(), "The version should be at least %s")
+                      IconColor.ACTIONS_RED.getHtmlCode(), Messages.getString("version.should.be"))
                   .formatted(minimalVersion);
           openglPanel.add(GuiUtils.getFlowLayoutPanel(new JLabel(alert)));
         }
@@ -167,7 +176,7 @@ public class Viewer3dPrefView extends AbstractItemDialogPage {
           alert =
               GuiUtils.HTML_COLOR_PATTERN.formatted(
                   IconColor.ACTIONS_RED.getHtmlCode(),
-                  "Texture 3D has a maximum size of %sx%sx%s"
+                  Messages.getString("texture.maximum.size.of")
                       .formatted(
                           info.max3dTextureSize(),
                           info.max3dTextureSize(),
@@ -184,7 +193,7 @@ public class Viewer3dPrefView extends AbstractItemDialogPage {
     JPanel view3d = GuiUtils.getVerticalBoxLayoutPanel();
     view3d.setBorder(GuiUtils.getTitledBorder(View3DFactory.NAME));
 
-    JLabel labelLayout = new JLabel("Default layout" + StringUtil.COLON);
+    JLabel labelLayout = new JLabel(Messages.getString("default.layout") + StringUtil.COLON);
     setDefaultLayout();
 
     view3d.add(
@@ -197,7 +206,8 @@ public class Viewer3dPrefView extends AbstractItemDialogPage {
             comboBoxLayouts));
     view3d.add(GuiUtils.boxVerticalStrut(ITEM_SEPARATOR));
 
-    JLabel labelTexLimit = new JLabel("Max 3d texture size" + " X/Y" + StringUtil.COLON);
+    JLabel labelTexLimit =
+        new JLabel(Messages.getString("max.texture.size") + " X/Y" + StringUtil.COLON); // NON-NLS
     view3d.add(
         GuiUtils.getFlowLayoutPanel(
             FlowLayout.LEADING,
@@ -207,19 +217,19 @@ public class Viewer3dPrefView extends AbstractItemDialogPage {
             labelTexLimit,
             spinnerMaxXY,
             GuiUtils.boxHorizontalStrut(ITEM_SEPARATOR),
-            new JLabel("Z" + StringUtil.COLON),
+            new JLabel("Z" + StringUtil.COLON), // NON-NLS
             spinnerMaxZ));
     add(view3d);
     add(GuiUtils.boxVerticalStrut(BLOCK_SEPARATOR));
 
     final JPanel otherPanel = GuiUtils.getVerticalBoxLayoutPanel();
-    otherPanel.setBorder(GuiUtils.getTitledBorder("Volume rendering"));
+    otherPanel.setBorder(GuiUtils.getTitledBorder(Messages.getString("volume.rendering")));
     otherPanel.add(GuiUtils.boxVerticalStrut(5));
     otherPanel.add(
         GuiUtils.getHorizontalBoxLayoutPanel(
-            ITEM_SEPARATOR, new JLabel("Dynamic quality"), sliderDynamic));
+            ITEM_SEPARATOR, new JLabel(Messages.getString("dynamic.quality")), sliderDynamic));
 
-    labelLayout = new JLabel("Default orientation" + StringUtil.COLON);
+    labelLayout = new JLabel(Messages.getString("default.orientation") + StringUtil.COLON);
     otherPanel.add(
         GuiUtils.getFlowLayoutPanel(
             FlowLayout.LEADING,
@@ -231,10 +241,10 @@ public class Viewer3dPrefView extends AbstractItemDialogPage {
 
     otherPanel.add(
         GuiUtils.getFlowLayoutPanel(
-            new JLabel("Background color"),
+            new JLabel(Messages.getString("bck.color")),
             bckColor,
             GuiUtils.boxHorizontalStrut(10),
-            new JLabel("Light color"),
+            new JLabel(Messages.getString("light.color")),
             lightColor));
     add(otherPanel);
 

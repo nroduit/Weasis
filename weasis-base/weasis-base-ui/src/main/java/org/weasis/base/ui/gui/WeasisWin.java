@@ -233,7 +233,9 @@ public class WeasisWin {
     frame.setTitle(AppProperties.WEASIS_NAME + " v" + AppProperties.WEASIS_VERSION); // NON-NLS
 
     LogoIcon logoIcon =
-        AppProperties.WEASIS_NAME.endsWith("Dicomizer") ? LogoIcon.SMALL_DICOMIZER : LogoIcon.SMALL;
+        AppProperties.WEASIS_NAME.endsWith("Dicomizer") // NON-NLS
+            ? LogoIcon.SMALL_DICOMIZER
+            : LogoIcon.SMALL;
     // Get larger icon (displayed in system toolbar)
     FlatSVGIcon imageIcon = ResourceUtil.getIcon(logoIcon, 512, 512);
     boolean taskBarIcon = false;
@@ -1037,7 +1039,7 @@ public class WeasisWin {
         };
     DefaultAction preferencesAction =
         new DefaultAction(
-            org.weasis.core.ui.Messages.getString("OpenPreferencesAction.title"), prefAction);
+            org.weasis.core.Messages.getString("OpenPreferencesAction.title"), prefAction);
     preferencesAction.putValue(
         Action.ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_P, InputEvent.ALT_DOWN_MASK));
     menuFile.add(new JMenuItem(preferencesAction));

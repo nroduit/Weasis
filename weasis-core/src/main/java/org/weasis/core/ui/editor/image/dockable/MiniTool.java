@@ -25,7 +25,7 @@ import org.weasis.core.api.gui.util.DropDownButton;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.JSliderW;
 import org.weasis.core.api.gui.util.SliderChangeListener;
-import org.weasis.core.ui.Messages;
+import org.weasis.core.Messages;
 import org.weasis.core.ui.docking.PluginTool;
 
 public abstract class MiniTool extends PluginTool implements ActionListener {

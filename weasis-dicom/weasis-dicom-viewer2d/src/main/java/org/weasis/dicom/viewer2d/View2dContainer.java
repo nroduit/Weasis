@@ -391,7 +391,7 @@ public class View2dContainer extends DicomViewerPlugin implements PropertyChange
       if (eventManager instanceof EventManager manager) {
         MediaSeries<DicomImageElement> series = EventManager.getInstance().getSelectedSeries();
         if (series != null) {
-          JMenu menu = new JMenu("Open in new tab");
+          JMenu menu = new JMenu(Messages.getString("open.new.tab"));
           List<SeriesViewerFactory> plugins =
               UIManager.getViewerFactoryList(new String[] {series.getMimeType()});
           for (final SeriesViewerFactory viewerFactory : plugins) {

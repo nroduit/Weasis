@@ -30,7 +30,7 @@ import org.weasis.core.api.image.op.ByteLutCollection.Lut;
 import org.weasis.core.api.image.util.MeasurableLayer;
 import org.weasis.core.api.image.util.WindLevelParameters;
 import org.weasis.core.api.media.data.ImageElement;
-import org.weasis.core.ui.Messages;
+import org.weasis.core.Messages;
 import org.weasis.opencv.data.ImageCV;
 import org.weasis.opencv.data.LookupTableCV;
 import org.weasis.opencv.data.PlanarImage;

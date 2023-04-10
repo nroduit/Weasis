@@ -16,7 +16,7 @@ import java.util.Map.Entry;
 import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.weasis.core.api.Messages;
+import org.weasis.core.Messages;
 import org.weasis.core.api.image.ImageOpNode.Param;
 import org.weasis.opencv.data.PlanarImage;
 

@@ -55,12 +55,12 @@ import org.weasis.dicom.viewer3d.View3DContainer;
 
 public class DisplayTool extends PluginTool implements SeriesViewerListener {
 
-  public static final String DICOM_ANNOTATIONS = Messages.getString("DisplayTool.dicom_ano");
+  public static final String DICOM_ANNOTATIONS = Messages.getString("dicom.annotations");
 
-  public static final String BUTTON_NAME = Messages.getString("DisplayTool.display");
+  public static final String BUTTON_NAME = Messages.getString("display");
 
   private final JCheckBox applyAllViews =
-      new JCheckBox(Messages.getString("DisplayTool.btn_apply_all"), true);
+      new JCheckBox(Messages.getString("apply.all.views"), true);
   private final CheckboxTree tree;
   private boolean initPathSelection;
   private final DefaultMutableTreeNode rootNode = new DefaultMutableTreeNode("rootNode", true);

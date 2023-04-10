@@ -509,13 +509,13 @@ public class InfoLayer extends AbstractInfoLayer<DicomImageElement> {
             colLeft = po[0];
           } else {
             StringBuilder buf = new StringBuilder();
-            for (String s : po[0].split("(?=\\p{Upper})")) {
+            for (String s : po[0].split("(?=\\p{Upper})")) { // NON-NLS
               buf.append(ImageOrientation.getImageOrientationOpposite(s, quadruped));
             }
             colLeft = buf.toString();
           }
           StringBuilder buf = new StringBuilder();
-          for (String s : po[1].split("(?=\\p{Upper})")) {
+          for (String s : po[1].split("(?=\\p{Upper})")) { // NON-NLS
             buf.append(ImageOrientation.getImageOrientationOpposite(s, quadruped));
           }
           rowTop = buf.toString();

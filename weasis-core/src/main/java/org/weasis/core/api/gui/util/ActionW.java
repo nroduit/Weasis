@@ -11,7 +11,7 @@ package org.weasis.core.api.gui.util;
 
 import java.awt.Cursor;
 import java.awt.event.KeyEvent;
-import org.weasis.core.api.Messages;
+import org.weasis.core.Messages;
 import org.weasis.core.api.gui.util.Feature.BasicActionStateValue;
 import org.weasis.core.api.gui.util.Feature.BooleanValue;
 import org.weasis.core.api.gui.util.Feature.ComboItemListenerValue;

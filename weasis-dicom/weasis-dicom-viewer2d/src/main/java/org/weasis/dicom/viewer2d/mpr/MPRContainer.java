@@ -102,7 +102,7 @@ public class MPRContainer extends DicomViewerPlugin implements PropertyChangeLis
     actions.put(ActionW.FILTER.cmd(), true);
     defaultMpr =
         new SynchView(
-            "MPR synch", // NON-NLS
+            Messages.getString("mpr.synchronisation"),
             "mpr", // NON-NLS
             SynchData.Mode.STACK,
             ActionIcon.TILE,

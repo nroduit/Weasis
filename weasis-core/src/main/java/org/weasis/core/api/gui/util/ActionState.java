@@ -9,7 +9,7 @@
  */
 package org.weasis.core.api.gui.util;
 
-import org.weasis.core.api.Messages;
+import org.weasis.core.Messages;
 
 public interface ActionState {
 

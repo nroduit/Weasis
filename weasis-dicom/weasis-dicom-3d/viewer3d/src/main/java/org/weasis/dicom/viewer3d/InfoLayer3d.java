@@ -135,7 +135,7 @@ public class InfoLayer3d extends AbstractInfoLayer<DicomImageElement> {
 
     drawY -= fontHeight;
     if (imSeries.getVolumeGeometry().isVariablePixelSpacing()) {
-      String message = Messages.getString("InfoLayer3d.SliceSpacingWarning");
+      String message = Messages.getString("non.regular.volume.msg");
       FontTools.paintColorFontOutline(g2, message, border, drawY, IconColor.ACTIONS_RED.getColor());
       drawY -= fontHeight;
     }

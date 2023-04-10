@@ -102,7 +102,7 @@ public class View3DContainer extends ImageViewerPlugin<DicomImageElement>
     actions.put(ActionVol.MIP_DEPTH.cmd(), true);
     defaultMpr =
         new SynchView(
-            "MPR synch", // NON-NLS
+            org.weasis.dicom.viewer2d.Messages.getString("mpr.synchronisation"),
             "mpr", // NON-NLS
             SynchData.Mode.STACK,
             ActionIcon.TILE,
@@ -112,13 +112,17 @@ public class View3DContainer extends ImageViewerPlugin<DicomImageElement>
   public static final List<SynchView> SYNCH_LIST = List.of(SynchView.NONE, defaultMpr);
 
   public static final GridBagLayoutModel VIEWS_vr =
-      new GridBagLayoutModel("vr", "Volume Rendering", 1, 1, View3d.class.getName());
+      new GridBagLayoutModel(
+          "vr", Messages.getString("volume.rendering"), 1, 1, View3d.class.getName()); // NON-NLS
 
   public static final GridBagLayoutModel VIEWS_vr_1x2 =
       new GridBagLayoutModel(
-          "vr_1x2", VIEWS_vr.getUIName() + " (1x2)", 1, 2, View3d.class.getName());
+          "vr_1x2", VIEWS_vr.getUIName() + " (1x2)", 1, 2, View3d.class.getName()); // NON-NLS
   public static final GridBagLayoutModel VIEWS_2x2_mpr =
-      new GridBagLayoutModel(new LinkedHashMap<>(4), "mpr4", "MPR and Volume Rendering");
+      new GridBagLayoutModel(
+          new LinkedHashMap<>(4),
+          "mpr4", // NON-NLS
+          Messages.getString("mpr.volume.rendering"));
 
   static {
     Map<LayoutConstraints, Component> constraints = VIEWS_2x2_mpr.getConstraints();

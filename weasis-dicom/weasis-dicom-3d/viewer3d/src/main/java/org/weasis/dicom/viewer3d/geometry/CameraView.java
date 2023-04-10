@@ -14,9 +14,10 @@ import static org.weasis.dicom.viewer3d.geometry.Camera.getQuaternion;
 import org.joml.Quaterniond;
 import org.joml.Vector3d;
 import org.weasis.dicom.codec.geometry.PatientOrientation.Biped;
+import org.weasis.dicom.viewer3d.Messages;
 
 public enum CameraView implements View {
-  INITIAL("Default", getQuaternion(-75, 0, 25)),
+  INITIAL(Messages.getString("default"), getQuaternion(-75, 0, 25)),
   FRONT(Biped.A.getFullName(), getQuaternion(-90, 0, 0)),
   BACK(Biped.P.getFullName(), getQuaternion(-90, 0, 180)),
   TOP(Biped.H.getFullName(), getQuaternion(0, 0, 180)),

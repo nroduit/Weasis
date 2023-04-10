@@ -71,7 +71,7 @@ import javax.swing.event.HyperlinkListener;
 import javax.swing.text.DefaultFormatterFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.weasis.core.api.Messages;
+import org.weasis.core.Messages;
 import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.api.util.FontItem;
 import org.weasis.core.util.StringUtil;
@@ -81,7 +81,7 @@ public class GuiUtils {
 
   public static final String HTML_START = "<html>";
 
-  public static final String HTML_COLOR_START = "<html><font color='";
+  public static final String HTML_COLOR_START = "<html><font color='"; // NON-NLS
 
   public static final String HTML_COLOR_PATTERN =
       """

@@ -262,7 +262,7 @@ public class DicomVolTexture extends VolumeTexture implements MediaSeriesGroup {
             double ww = (double) volumePreset.getColorMax() - volumePreset.getColorMin();
             PresetWindowLevel autoLevel =
                 new PresetWindowLevel(
-                    "Auto Level [Image]", ww, volumePreset.getColorMin() + ww / 2, LutShape.LINEAR);
+                    "Auto Level [Image]", ww, volumePreset.getColorMin() + ww / 2, LutShape.LINEAR); //NON-NLS
             autoLevel.setKeyCode(0x30);
             presets.set(i, autoLevel);
             break;

@@ -13,7 +13,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map.Entry;
 import java.util.Objects;
-import org.weasis.core.api.Messages;
+import org.weasis.core.Messages;
 
 public class MediaSeriesGroupNode implements MediaSeriesGroup {
 

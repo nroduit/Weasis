@@ -39,7 +39,7 @@ import org.weasis.core.api.gui.util.GuiUtils.IconColor;
 import org.weasis.core.api.image.util.WindLevelParameters;
 import org.weasis.core.api.util.FontItem;
 import org.weasis.core.api.util.FontTools;
-import org.weasis.core.ui.Messages;
+import org.weasis.core.Messages;
 import org.weasis.core.ui.editor.image.HistogramData.Model;
 import org.weasis.core.util.StringUtil;
 import org.weasis.opencv.op.lut.WlParams;

@@ -27,6 +27,7 @@ import org.weasis.core.api.util.FontItem;
 import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.api.util.ResourceUtil.ActionIcon;
 import org.weasis.core.util.StringUtil;
+import org.weasis.dicom.viewer3d.Messages;
 
 public class ShadingPrefDialog extends JDialog {
 
@@ -46,7 +47,7 @@ public class ShadingPrefDialog extends JDialog {
   public ShadingPrefDialog(View3d view3d) {
     super(
         SwingUtilities.getWindowAncestor(view3d),
-        "Shading Options",
+        Messages.getString("shading.options"),
         ModalityType.APPLICATION_MODAL);
     this.view3d = view3d;
     this.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
@@ -78,12 +79,12 @@ public class ShadingPrefDialog extends JDialog {
     // contentPane.add(GuiUtils.boxVerticalStrut(Insertable.BLOCK_SEPARATOR));
     // contentPane.add(specularSlider);
 
-    powerSlider = createSlider("Shininess", 1, 100, realToSliderPowerValue(specularPower));
+    powerSlider = createSlider(Messages.getString("shininess"), 1, 100, realToSliderPowerValue(specularPower));
     contentPane.add(GuiUtils.boxVerticalStrut(Insertable.BLOCK_SEPARATOR));
     contentPane.add(powerSlider);
     updateSliderText();
 
-    JButton restoreButton = new JButton("Restore default values");
+    JButton restoreButton = new JButton(Messages.getString("restore.default.values"));
 
     restoreButton.addActionListener(
         e -> {
@@ -99,9 +100,9 @@ public class ShadingPrefDialog extends JDialog {
         });
     contentPane.add(GuiUtils.getFlowLayoutPanel(FlowLayout.TRAILING, 5, 5, restoreButton));
 
-    JButton okButton = new JButton("OK");
+    JButton okButton = new JButton(Messages.getString("ok"));
     okButton.addActionListener(e -> dispose());
-    JButton cancelButton = new JButton("Cancel");
+    JButton cancelButton = new JButton(Messages.getString("cancel"));
     cancelButton.addActionListener(
         e -> {
           updateValues(specularPower);
@@ -198,8 +199,7 @@ public class ShadingPrefDialog extends JDialog {
     //    SliderChangeListener.updateSliderProperties(specularSlider, result);
 
     powerSlider.setValue(realToSliderPowerValue(specularPower));
-    String result =
-        "Shininess" + StringUtil.COLON_AND_SPACE + DecFormatter.oneDecimal(specularPower);
+    String result = Messages.getString("shininess") + StringUtil.COLON_AND_SPACE + DecFormatter.oneDecimal(specularPower);
     SliderChangeListener.updateSliderProperties(powerSlider, result);
   }
 

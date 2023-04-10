@@ -76,9 +76,9 @@ public class TagD extends TagW {
           .toFormatter();
 
   public enum Sex {
-    SEX_MALE("M", org.weasis.core.api.Messages.getString("TagW.Male")), // NON-NLS
-    SEX_FEMALE("F", org.weasis.core.api.Messages.getString("TagW.female")), // NON-NLS
-    SEX_OTHER("O", org.weasis.core.api.Messages.getString("TagW.other")); // NON-NLS
+    SEX_MALE("M", org.weasis.core.Messages.getString("TagW.Male")), // NON-NLS
+    SEX_FEMALE("F", org.weasis.core.Messages.getString("TagW.female")), // NON-NLS
+    SEX_OTHER("O", org.weasis.core.Messages.getString("TagW.other")); // NON-NLS
 
     private final String value;
     private final String displayValue;

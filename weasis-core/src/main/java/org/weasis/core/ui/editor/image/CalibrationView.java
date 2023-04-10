@@ -30,7 +30,7 @@ import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.util.LocalUtil;
-import org.weasis.core.ui.Messages;
+import org.weasis.core.Messages;
 import org.weasis.core.ui.model.graphic.imp.line.LineGraphic;
 import org.weasis.core.util.MathUtil;
 import org.weasis.core.util.StringUtil;

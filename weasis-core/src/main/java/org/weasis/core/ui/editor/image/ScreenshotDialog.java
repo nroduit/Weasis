@@ -42,7 +42,7 @@ import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.image.SimpleOpManager;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.service.BundleTools;
-import org.weasis.core.ui.Messages;
+import org.weasis.core.Messages;
 import org.weasis.core.ui.util.ColorLayerUI;
 import org.weasis.core.util.StringUtil;
 import org.weasis.opencv.data.PlanarImage;

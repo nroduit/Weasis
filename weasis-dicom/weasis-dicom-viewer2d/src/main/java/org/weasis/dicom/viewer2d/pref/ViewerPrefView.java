@@ -104,7 +104,7 @@ public class ViewerPrefView extends AbstractItemDialogPage {
           }
         });
 
-    String pickColor = org.weasis.core.ui.Messages.getString("MeasureTool.pick_color");
+    String pickColor = org.weasis.core.Messages.getString("MeasureTool.pick_color");
     overlayColor.setToolTipText(pickColor);
     overlayColor.addActionListener(
         e -> {

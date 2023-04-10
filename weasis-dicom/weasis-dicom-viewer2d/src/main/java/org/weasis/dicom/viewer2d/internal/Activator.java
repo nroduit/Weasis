@@ -65,7 +65,8 @@ public class Activator implements BundleActivator, ServiceListener {
     try {
       bundleContext.addServiceListener(
           Activator.this,
-          String.format("(%s=%s)", Constants.OBJECTCLASS, InsertableFactory.class.getName()));
+          String.format(
+              "(%s=%s)", Constants.OBJECTCLASS, InsertableFactory.class.getName())); // NON-NLS
     } catch (InvalidSyntaxException e) {
       LOGGER.error("Add service listener", e);
     }

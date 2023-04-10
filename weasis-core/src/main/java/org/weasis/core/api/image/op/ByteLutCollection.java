@@ -24,7 +24,7 @@ import java.util.function.Supplier;
 import javax.swing.Icon;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.weasis.core.api.Messages;
+import org.weasis.core.Messages;
 import org.weasis.core.util.FileUtil;
 
 /**

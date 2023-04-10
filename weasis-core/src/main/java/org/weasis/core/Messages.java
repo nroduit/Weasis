@@ -7,13 +7,13 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
  */
-package org.weasis.core.api;
+package org.weasis.core;
 
 import java.util.MissingResourceException;
 import java.util.ResourceBundle;
 
 public class Messages {
-  private static final String BUNDLE_NAME = "org.weasis.core.api.messages"; // NON-NLS
+  private static final String BUNDLE_NAME = "org.weasis.core.messages"; // NON-NLS
 
   private static final ResourceBundle RESOURCE_BUNDLE = ResourceBundle.getBundle(BUNDLE_NAME);
 

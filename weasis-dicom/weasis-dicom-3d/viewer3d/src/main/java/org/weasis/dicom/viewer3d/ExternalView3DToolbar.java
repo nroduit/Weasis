@@ -29,7 +29,7 @@ public class ExternalView3DToolbar extends WtoolBar {
     super(View3DFactory.NAME, position);
 
     JButton open = new JButton(ResourceUtil.getToolBarIcon(ActionIcon.VOLUME));
-    open.setToolTipText("Open the series in the 3D viewer");
+    open.setToolTipText(Messages.getString("open.3d.viewer"));
     open.addActionListener(
         e -> {
           MediaSeries<DicomImageElement> s = EventManager.getInstance().getSelectedSeries();

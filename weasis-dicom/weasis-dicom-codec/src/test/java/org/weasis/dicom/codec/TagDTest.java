@@ -21,7 +21,7 @@ import java.util.Date;
 import org.dcm4che3.data.DatePrecision;
 import org.dcm4che3.util.DateUtils;
 import org.junit.jupiter.api.Test;
-import org.weasis.core.api.Messages;
+import org.weasis.core.Messages;
 
 class TagDTest {
 

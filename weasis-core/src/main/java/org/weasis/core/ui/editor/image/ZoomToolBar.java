@@ -24,7 +24,7 @@ import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.service.AuditLog;
 import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.api.util.ResourceUtil.ActionIcon;
-import org.weasis.core.ui.Messages;
+import org.weasis.core.Messages;
 import org.weasis.core.ui.editor.image.dockable.MeasureTool;
 import org.weasis.core.ui.pref.Monitor;
 import org.weasis.core.ui.util.WtoolBar;

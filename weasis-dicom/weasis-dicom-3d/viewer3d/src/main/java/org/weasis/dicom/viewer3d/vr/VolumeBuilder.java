@@ -117,7 +117,7 @@ public final class VolumeBuilder {
     private final VolumeBuilder volumeBuilder;
 
     public TextureLoader(VolumeBuilder volumeBuilder) {
-      super("Texture 3D loader (OpenGL)");
+      super("Texture 3D loader (OpenGL)"); //NON-NLS
       this.volumeBuilder = volumeBuilder;
     }
 

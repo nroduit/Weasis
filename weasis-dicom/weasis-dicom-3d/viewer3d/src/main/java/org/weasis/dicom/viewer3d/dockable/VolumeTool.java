@@ -41,7 +41,7 @@ import org.weasis.dicom.viewer3d.vr.View3d;
 
 public class VolumeTool extends PluginTool {
 
-  public static final String BUTTON_NAME = Messages.getString("ImageTool.title");
+  public static final String BUTTON_NAME = Messages.getString("3d.tool");
 
   private final JScrollPane rootPane = new JScrollPane();
   private final Border spaceY = GuiUtils.getEmptyBorder(15, 3, 0, 3);
@@ -155,7 +155,8 @@ public class VolumeTool extends PluginTool {
     int gabY = 7;
     final JPanel volumePanel = GuiUtils.getVerticalBoxLayoutPanel();
     volumePanel.setBorder(
-        BorderFactory.createCompoundBorder(spaceY, GuiUtils.getTitledBorder("Volume Rendering")));
+        BorderFactory.createCompoundBorder(
+            spaceY, GuiUtils.getTitledBorder(Messages.getString("volume.rendering"))));
 
     EventManager.getInstance()
         .getAction(ActionVol.RENDERING_TYPE)
@@ -192,7 +193,7 @@ public class VolumeTool extends PluginTool {
             b -> {
               JPanel pane = GuiUtils.getFlowLayoutPanel();
               pane.add(b.createCheckBox(ActionVol.VOL_SHADING.getTitle()));
-              JButton btnOptions = new JButton("More Options");
+              JButton btnOptions = new JButton(Messages.getString("more.options"));
               btnOptions.addActionListener(
                   e -> {
                     if (EventManager.getInstance().getSelectedViewPane() instanceof View3d view3d) {

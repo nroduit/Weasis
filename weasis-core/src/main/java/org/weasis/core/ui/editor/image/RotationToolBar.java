@@ -14,7 +14,7 @@ import javax.swing.JToggleButton;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.api.util.ResourceUtil.ActionIcon;
-import org.weasis.core.ui.Messages;
+import org.weasis.core.Messages;
 import org.weasis.core.ui.util.WtoolBar;
 
 public class RotationToolBar extends WtoolBar {

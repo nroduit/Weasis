@@ -15,7 +15,7 @@ import javax.swing.JPanel;
 import org.weasis.core.api.gui.util.AbstractItemDialogPage;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.PageItem;
-import org.weasis.core.ui.Messages;
+import org.weasis.core.Messages;
 
 public class ViewerPrefView extends AbstractItemDialogPage {
 

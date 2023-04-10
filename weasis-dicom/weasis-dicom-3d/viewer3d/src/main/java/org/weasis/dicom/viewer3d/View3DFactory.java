@@ -270,8 +270,8 @@ public class View3DFactory implements SeriesViewerFactory {
   }
 
   public static void showOpenglErrorMessage(Component parent) {
-    String msg = Messages.getString("View3DFactory.opengl.error.msg");
-    JButton prefButton = new JButton("Check in preferences");
+    String msg = Messages.getString("opengl.error.msg");
+    JButton prefButton = new JButton(Messages.getString("check.in.preferences"));
     prefButton.addActionListener(
         e -> {
           SwingUtilities.getWindowAncestor(prefButton).dispose();
@@ -283,7 +283,8 @@ public class View3DFactory implements SeriesViewerFactory {
         });
     JPanel panel =
         GuiUtils.getVerticalBoxLayoutPanel(GuiUtils.getScaleLength(7), new JLabel(msg), prefButton);
-    JOptionPane.showMessageDialog(parent, panel, "Opengl Error", JOptionPane.ERROR_MESSAGE);
+    JOptionPane.showMessageDialog(
+        parent, panel, Messages.getString("opengl.error"), JOptionPane.ERROR_MESSAGE);
   }
 
   // ================================================================================

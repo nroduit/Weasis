@@ -9,7 +9,7 @@
  */
 package org.weasis.core.ui.model.layer;
 
-import org.weasis.core.ui.Messages;
+import org.weasis.core.Messages;
 
 public enum LayerType {
   IMAGE(

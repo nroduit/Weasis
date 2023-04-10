@@ -82,7 +82,7 @@
                   <artifactItem>
                     <groupId>org.weasis</groupId>
                     <artifactId>weasis-i18n-dist</artifactId>
-                    <version>3.0.0-SNAPSHOT</version>
+                    <version>4.0.0-SNAPSHOT</version>
                     <type>zip</type>
                     <outputDirectory>${project.build.directory}/tmp/bundle-i18n</outputDirectory>
                   </artifactItem>
@@ -563,7 +563,7 @@
     <dependency>
       <groupId>org.weasis</groupId>
       <artifactId>weasis-i18n-dist</artifactId>
-      <version>3.0.0-SNAPSHOT</version>
+      <version>4.0.0-SNAPSHOT</version>
       <type>zip</type>
     </dependency>
   </dependencies>

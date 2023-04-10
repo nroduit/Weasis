@@ -36,7 +36,7 @@ import org.weasis.dicom.viewer3d.vr.View3d;
 public class VolLutToolBar extends WtoolBar {
 
   public VolLutToolBar(final ImageViewerEventManager<DicomImageElement> eventManager, int index) {
-    super("Volume Lookup Table Bar", index);
+    super(Messages.getString("volume.lut.bar"), index);
     GroupPopup menuPreset = null;
     Optional<ComboItemListener<Object>> presetAction =
         Objects.requireNonNull(eventManager).getAction(ActionW.PRESET);
@@ -99,7 +99,7 @@ public class VolLutToolBar extends WtoolBar {
           }
         };
 
-    lutButton.setToolTipText("Volume LUT selection");
+    lutButton.setToolTipText(Messages.getString("volume.lut.selection"));
     add(lutButton);
     lutAction.ifPresent(c -> c.registerActionState(lutButton));
 

@@ -11,7 +11,7 @@ package org.weasis.core.ui.model.layer;
 
 import java.awt.Graphics2D;
 import java.awt.Rectangle;
-import org.weasis.core.ui.Messages;
+import org.weasis.core.Messages;
 import org.weasis.core.ui.editor.image.PixelInfo;
 import org.weasis.core.ui.editor.image.ViewCanvas;
 

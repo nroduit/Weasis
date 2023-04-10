@@ -121,7 +121,7 @@ public class Camera {
     final Vector3d yAxis = new Vector3d(xAxis).cross(zAxis).normalize();
     xAxis.set(new Vector3d(zAxis).cross(yAxis)).normalize();
     return new ViewData(
-        "custom",
+        "custom", // NON-NLS
         new Vector3d(center).negate(),
         new Quaterniond()
             .setFromNormalized(new Matrix3d(xAxis, yAxis, zAxis).transpose())

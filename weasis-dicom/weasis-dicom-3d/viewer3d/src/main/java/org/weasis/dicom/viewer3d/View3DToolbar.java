@@ -18,16 +18,13 @@ import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.pref.PreferenceDialog;
 import org.weasis.core.ui.util.ColorLayerUI;
 import org.weasis.core.ui.util.WtoolBar;
-import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.codec.DicomImageElement;
 
 public class View3DToolbar extends WtoolBar {
-
-  public static final String NAME = View3DFactory.NAME + StringUtil.SPACE + "Bar";
   private EventManager eventManager;
 
   public View3DToolbar(int position) {
-    super(NAME, position);
+    super(Messages.getString("3d.viewer.bar"), position);
     this.eventManager = EventManager.getInstance();
 
     initGui();
@@ -35,7 +32,7 @@ public class View3DToolbar extends WtoolBar {
 
   private void initGui() {
     JButton refreshBt = new JButton(ResourceUtil.getToolBarIcon(ActionIcon.LOAD_VOLUME));
-    refreshBt.setToolTipText("Rebuild the volume");
+    refreshBt.setToolTipText(Messages.getString("rebuild.volume"));
     refreshBt.addActionListener(
         e -> {
           ImageViewerPlugin<DicomImageElement> container =
@@ -59,7 +56,7 @@ public class View3DToolbar extends WtoolBar {
             });
 
     JButton config = new JButton(ResourceUtil.getToolBarIcon(ActionIcon.VOLUME_SETTINGS));
-    config.setToolTipText("3D Settings");
+    config.setToolTipText(Messages.getString("3d.settings"));
     config.addActionListener(
         e -> {
           ColorLayerUI layer = ColorLayerUI.createTransparentLayerUI(View3DToolbar.this);

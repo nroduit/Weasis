@@ -17,7 +17,7 @@ import com.github.scribejava.core.model.OAuth2AccessToken;
 import com.github.scribejava.core.oauth.OAuth20Service;
 import java.util.HashMap;
 import java.util.Map;
-import org.weasis.core.api.Messages;
+import org.weasis.core.Messages;
 import org.weasis.core.api.util.SocketUtil;
 
 public class OAuth2ServiceFactory {
