@@ -9,6 +9,7 @@
  */
 package org.weasis.dicom.viewer3d;
 
+import com.jogamp.opengl.GL4;
 import java.awt.Component;
 import java.awt.GridBagConstraints;
 import java.beans.PropertyChangeEvent;
@@ -383,7 +384,10 @@ public class View3DContainer extends ImageViewerPlugin<DicomImageElement>
         MediaSeries<DicomImageElement> oldSequence = null;
         if (volumeBuilder != null) {
           oldSequence = volumeBuilder.getVolTexture().getSeries();
-          volumeBuilder.getVolTexture().destroy(OpenglUtils.getGL4());
+          GL4 gl4 = OpenglUtils.getGL4();
+          if (gl4 != null) {
+            volumeBuilder.getVolTexture().destroy(gl4);
+          }
         }
         if (!series.equals(oldSequence)) {
           UIManager.closeSeries(oldSequence);

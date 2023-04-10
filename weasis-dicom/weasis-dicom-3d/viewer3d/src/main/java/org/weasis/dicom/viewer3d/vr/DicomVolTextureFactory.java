@@ -55,7 +55,7 @@ public class DicomVolTextureFactory {
     DicomImageElement media = series.getMedia(MEDIA_POSITION.FIRST, null, null);
     PlanarImage image = media == null ? null : media.getImage();
     if (image != null) {
-      int maxTexSize = View3DFactory.getOpenGLInfo().max3dTextureSize();
+      int maxTexSize = View3DFactory.getMax3dTextureSize();
       int maxSizeXY =
           BundleTools.LOCAL_UI_PERSISTENCE.getIntProperty(RenderingLayer.P_MAX_TEX_XY, maxTexSize);
       int maxSizeZ =

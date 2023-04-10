@@ -56,7 +56,7 @@ public class Viewer3dPrefView extends AbstractItemDialogPage {
   public Viewer3dPrefView() {
     super(View3DFactory.NAME, 503);
     List<Integer> list = new ArrayList<>();
-    int maxSize = View3DFactory.getOpenGLInfo().max3dTextureSize();
+    int maxSize = View3DFactory.getMax3dTextureSize();
     list.add(64);
     int val = 128;
     while (val <= maxSize) {
@@ -71,9 +71,13 @@ public class Viewer3dPrefView extends AbstractItemDialogPage {
     GuiUtils.setSpinnerWidth(spinnerMaxXY, 6);
     GuiUtils.setSpinnerWidth(spinnerMaxZ, 6);
     spinnerMaxXY.setValue(
-        BundleTools.LOCAL_UI_PERSISTENCE.getIntProperty(RenderingLayer.P_MAX_TEX_XY, maxSize));
+        Math.min(
+            maxSize,
+            BundleTools.LOCAL_UI_PERSISTENCE.getIntProperty(RenderingLayer.P_MAX_TEX_XY, maxSize)));
     spinnerMaxZ.setValue(
-        BundleTools.LOCAL_UI_PERSISTENCE.getIntProperty(RenderingLayer.P_MAX_TEX_Z, maxSize));
+        Math.min(
+            maxSize,
+            BundleTools.LOCAL_UI_PERSISTENCE.getIntProperty(RenderingLayer.P_MAX_TEX_Z, maxSize)));
     initGUI();
   }
 
@@ -268,21 +272,17 @@ public class Viewer3dPrefView extends AbstractItemDialogPage {
         Camera.P_DEFAULT_ORIENTATION, ((CameraView) comboBoxOrientations.getSelectedItem()).name());
     BundleTools.LOCAL_UI_PERSISTENCE.putIntProperty(
         RenderingLayer.P_MAX_TEX_XY,
-        spinnerMaxXY.getValue() instanceof Integer val
-            ? val
-            : View3DFactory.getOpenGLInfo().max3dTextureSize());
+        spinnerMaxXY.getValue() instanceof Integer val ? val : View3DFactory.getMax3dTextureSize());
     BundleTools.LOCAL_UI_PERSISTENCE.putIntProperty(
         RenderingLayer.P_MAX_TEX_Z,
-        spinnerMaxZ.getValue() instanceof Integer val
-            ? val
-            : View3DFactory.getOpenGLInfo().max3dTextureSize());
+        spinnerMaxZ.getValue() instanceof Integer val ? val : View3DFactory.getMax3dTextureSize());
     BundleTools.saveSystemPreferences();
   }
 
   @Override
   public void resetToDefaultValues() {
     sliderDynamic.setValue(RenderingLayer.DEFAULT_DYNAMIC_QUALITY_RATE);
-    int maxSize = View3DFactory.getOpenGLInfo().max3dTextureSize();
+    int maxSize = View3DFactory.getMax3dTextureSize();
     BundleTools.LOCAL_UI_PERSISTENCE.putIntProperty(RenderingLayer.P_MAX_TEX_XY, maxSize);
     BundleTools.LOCAL_UI_PERSISTENCE.putIntProperty(RenderingLayer.P_MAX_TEX_Z, maxSize);
 

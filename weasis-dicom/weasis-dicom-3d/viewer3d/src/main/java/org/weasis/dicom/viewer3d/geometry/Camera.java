@@ -288,7 +288,7 @@ public class Camera {
         if (degree >= 270) {
           angles.y = Math.toRadians(degree - 360.0);
         } else if (degree > 90) {
-          angles.y = Math.toRadians(180 - degree);
+          angles.y = Math.toRadians(180.0 - degree);
         } else {
           angles.y = Math.toRadians(degree);
         }

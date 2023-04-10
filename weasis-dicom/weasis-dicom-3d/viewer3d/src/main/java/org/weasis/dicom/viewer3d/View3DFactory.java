@@ -11,6 +11,7 @@ package org.weasis.dicom.viewer3d;
 
 import com.jogamp.opengl.GL;
 import com.jogamp.opengl.GL2ES2;
+import com.jogamp.opengl.GL4;
 import com.jogamp.opengl.GLContext;
 import com.jogamp.opengl.Threading;
 import java.awt.Component;
@@ -164,7 +165,10 @@ public class View3DFactory implements SeriesViewerFactory {
       dicomView.getDataExplorerModel().removePropertyChangeListener(view3dContainer);
     }
     if (view3dContainer.volumeBuilder != null) {
-      view3dContainer.volumeBuilder.getVolTexture().destroy(OpenglUtils.getGL4());
+      GL4 gl4 = OpenglUtils.getGL4();
+      if (gl4 != null) {
+        view3dContainer.volumeBuilder.getVolTexture().destroy(gl4);
+      }
     }
   }
 
@@ -212,6 +216,18 @@ public class View3DFactory implements SeriesViewerFactory {
       Threading.invoke(true, View3DFactory::initOpenGLInfo, null);
     }
     return openGLInfo;
+  }
+
+  public static int getMax3dTextureSize() {
+    boolean previous =
+        BundleTools.LOCAL_UI_PERSISTENCE.getBooleanProperty(P_OPENGL_PREV_INIT, true);
+    if (previous) {
+      OpenGLInfo info = getOpenGLInfo();
+      if (info != null) {
+        return info.max3dTextureSize();
+      }
+    }
+    return 512;
   }
 
   private static void initOpenGLInfo() {
