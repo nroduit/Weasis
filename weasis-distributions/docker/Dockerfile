@@ -1,4 +1,4 @@
-# Based on image: https://github.com/adoptium/containers/blob/main/18/jdk/ubuntu/focal/Dockerfile.releases.full
+# Based on image: https://github.com/adoptium/containers/blob/main/20/jdk/ubuntu/jammy/Dockerfile.releases.full
 # Add libraries required by weasis build: bzip2 unzip xz-utils fakeroot rpm
 FROM ubuntu:22.04
 

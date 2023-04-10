@@ -1,10 +1,10 @@
 #!/bin/bash
 
 ##### Prerequisites for building multi-architecture binaries #####
-# Required a linux system with x86_64 or amd64 architecture (examples based on Ubuntu)
+# Required a linux system with amd64 architecture (examples based on Ubuntu)
 # Required Docker and qemu (see https://docs.docker.com/desktop/multi-arch/)
 # Required XFS driver for simulating 32-bit file system
-# The script must be executed from weasis-native folder, see Build Weasis: https://nroduit.github.io/en/getting-started/building-weasis/
+# The script must be executed after downloading or building weasis-native.zip
 
 ##### Install prerequisites #####
 # Install docker: https://docs.docker.com/engine/install/
@@ -103,10 +103,10 @@ fi
 
 mount -o loop "$DISK" "$DISK_FOLDER"
 
-rm -Rf "$DISK_FOLDER/script"
+rm -Rf "$DISK_FOLDER/build/script"
+mkdir -p "$DISK_FOLDER/build"
 mkdir -p "$DISK_FOLDER/installer"
-cp -f target/native-dist/weasis-native.zip "$DISK_FOLDER"/
-cp -Rf script "$DISK_FOLDER"/
+cp -Rf ../script "$DISK_FOLDER"/build/
 
 
 IFS=',' read -ra ARCS <<< "$ARC_LIST"
@@ -116,21 +116,22 @@ for arc in "${ARCS[@]}"; do
     continue
   fi
 
-  rm -Rf "$DISK_FOLDER/weasis-native"
-  unzip -o "$DISK_FOLDER/weasis-native.zip" -d "$DISK_FOLDER/weasis-native"
+  # Must be copied for every build as some binaries are remove by script
+  rm -Rf "$DISK_FOLDER/bin-dist"
+  cp -Rf ../../bin-dist "$DISK_FOLDER"/
 
   # Load the local images
   # docker buildx build --load --platform "$arc" -t weasis/builder:latest .
   if [[ "$arc" == *"64"* || "$arc" = "linux/s390x" ]]; then
-    docker run --platform "$arc" -it --rm -v "$PWD/$DISK_FOLDER":/work weasis/builder:latest bash -c "export JAVA_TOOL_OPTIONS=-Djdk.lang.Process.launchMechanism=vfork; cd /work/installer; /work/script/package-weasis.sh --input /work/weasis-native --jdk /opt/java/openjdk/ --temp /work/temp"
+    docker run --platform "$arc" -it --rm -v "$PWD/$DISK_FOLDER":/work weasis/builder:latest bash -c "export JAVA_TOOL_OPTIONS=-Djdk.lang.Process.launchMechanism=vfork; cd /work/installer; /work/build/script/package-weasis.sh --jdk /opt/java/openjdk --temp /work/temp"
   else
     echo "32-bit needs to copy jdk on 32-bit file system"
-    docker run --platform "$arc" -it --rm -v "$PWD/$DISK_FOLDER":/work weasis/builder:latest bash -c "cp -r /opt/java/openjdk /work/; export JAVA_TOOL_OPTIONS=-Djdk.lang.Process.launchMechanism=vfork; cd /work/installer; /work/script/package-weasis.sh --input /work/weasis-native --jdk /work/openjdk/ --temp /work/temp"
+    docker run --platform "$arc" -it --rm -v "$PWD/$DISK_FOLDER":/work weasis/builder:latest bash -c "cp -r /opt/java/openjdk /work/; export JAVA_TOOL_OPTIONS=-Djdk.lang.Process.launchMechanism=vfork; cd /work/installer; /work/build/script/package-weasis.sh --jdk /work/openjdk --temp /work/temp"
   fi
 done
 
-sudo -u "$real_user" mkdir -p "target/installer"
-sudo -u "$real_user" cp -Rf "$DISK_FOLDER/installer/"* "target/installer"
+sudo -u "$real_user" mkdir -p "output-dist"
+sudo -u "$real_user" cp -Rf "$DISK_FOLDER/installer/"* "output-dist"
 
 umount "$DISK_FOLDER"
 rmdir "$DISK_FOLDER"
