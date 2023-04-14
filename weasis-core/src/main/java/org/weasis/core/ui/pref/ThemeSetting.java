@@ -30,13 +30,13 @@ import javax.swing.UIManager;
 import javax.swing.UIManager.LookAndFeelInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.weasis.core.Messages;
 import org.weasis.core.api.gui.util.AbstractItemDialogPage;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.GuiUtils.IconColor;
 import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.api.service.WProperties;
-import org.weasis.core.Messages;
 import org.weasis.core.util.StringUtil;
 
 public class ThemeSetting extends AbstractItemDialogPage {
@@ -64,8 +64,6 @@ public class ThemeSetting extends AbstractItemDialogPage {
       return name;
     }
   }
-
-  private LookInfo oldUILook;
 
   public ThemeSetting() {
     super(PAGE_NAME, 102);
@@ -167,9 +165,6 @@ public class ThemeSetting extends AbstractItemDialogPage {
     } else {
       comboBoxTheme.setSelectedItem(oldLaf);
     }
-    if (firstTime) {
-      oldUILook = oldLaf;
-    }
 
     float scale = parseScaleFactor(preferences.getProperty(FlatSystemProperties.UI_SCALE));
     if (scale <= 0F) {
@@ -224,14 +219,14 @@ public class ThemeSetting extends AbstractItemDialogPage {
     // save preferences
     BundleTools.saveSystemPreferences();
 
-    // Restore old laf to avoid display issues.
-    final String finalLafClassName = oldUILook.className();
     LookAndFeel currentLAF = UIManager.getLookAndFeel();
-    if (currentLAF != null && !finalLafClassName.equals(currentLAF.getClass().getName())) {
+    if (currentLAF != null
+        && look != null
+        && !look.className().equals(currentLAF.getClass().getName())) {
       Runnable runnable =
           () -> {
             try {
-              UIManager.setLookAndFeel(finalLafClassName);
+              UIManager.setLookAndFeel(look.className());
               FlatLaf.updateUI();
             } catch (Exception e) {
               LOGGER.error("Can't change look and feel", e);
@@ -254,7 +249,8 @@ public class ThemeSetting extends AbstractItemDialogPage {
 
   @Override
   public void resetToDefaultValues() {
-    BundleTools.SYSTEM_PREFERENCES.resetProperty("weasis.theme", null);
+    BundleTools.SYSTEM_PREFERENCES.setProperty(
+        "weasis.theme", "org.weasis.launcher.FlatWeasisTheme");
     BundleTools.SYSTEM_PREFERENCES.setProperty(FlatSystemProperties.UI_SCALE, "-1");
     if (SystemInfo.isLinux) {
       BundleTools.SYSTEM_PREFERENCES.setProperty(
