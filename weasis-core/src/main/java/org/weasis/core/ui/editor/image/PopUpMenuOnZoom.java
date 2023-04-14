@@ -19,9 +19,9 @@ import javax.swing.JMenu;
 import javax.swing.JMenuItem;
 import javax.swing.JPopupMenu;
 import javax.swing.JRadioButtonMenuItem;
+import org.weasis.core.Messages;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.SliderChangeListener;
-import org.weasis.core.Messages;
 import org.weasis.core.ui.editor.image.ZoomWin.SyncType;
 
 /**

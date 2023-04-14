@@ -27,13 +27,13 @@ import javax.swing.text.NumberFormatter;
 import net.miginfocom.swing.MigLayout;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.weasis.core.Messages;
 import org.weasis.core.api.gui.util.AbstractItemDialogPage;
 import org.weasis.core.api.gui.util.CryptoHandler;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.api.service.WProperties;
 import org.weasis.core.api.util.LocalUtil;
-import org.weasis.core.Messages;
 import org.weasis.core.util.StringUtil;
 
 public class ProxyPrefView extends AbstractItemDialogPage {

@@ -36,11 +36,14 @@ public class Program {
     this.name = name;
     for (String val : filenames) {
       switch (val.substring(val.lastIndexOf(".") + 1)) {
-        case "frag", "fs" -> shaderCode.put(GL2ES2.GL_FRAGMENT_SHADER, ShaderManager.getCode(val)); //NON-NLS
-        case "vert", "vs" -> shaderCode.put(GL2ES2.GL_VERTEX_SHADER, ShaderManager.getCode(val)); //NON-NLS
-        case "cs", "comp", "compute" -> shaderCode.put( //NON-NLS
+        case "frag", "fs" -> shaderCode.put( // NON-NLS
+            GL2ES2.GL_FRAGMENT_SHADER, ShaderManager.getCode(val));
+        case "vert", "vs" -> shaderCode.put( // NON-NLS
+            GL2ES2.GL_VERTEX_SHADER, ShaderManager.getCode(val));
+        case "cs", "comp", "compute" -> shaderCode.put( // NON-NLS
             GL3ES3.GL_COMPUTE_SHADER, ShaderManager.getCode(val));
-        case "gs", "geom" -> shaderCode.put(GL3ES3.GL_GEOMETRY_SHADER, ShaderManager.getCode(val)); //NON-NLS
+        case "gs", "geom" -> shaderCode.put( // NON-NLS
+            GL3ES3.GL_GEOMETRY_SHADER, ShaderManager.getCode(val));
         default -> throw new UnsupportedOperationException(
             String.format(
                 "Program cannot read the type of shader from file extension of %s ", val));

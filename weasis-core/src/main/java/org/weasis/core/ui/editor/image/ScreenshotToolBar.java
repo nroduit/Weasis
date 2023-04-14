@@ -10,11 +10,11 @@
 package org.weasis.core.ui.editor.image;
 
 import javax.swing.JButton;
+import org.weasis.core.Messages;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.api.util.ResourceUtil.ActionIcon;
-import org.weasis.core.Messages;
 import org.weasis.core.ui.util.WtoolBar;
 
 public class ScreenshotToolBar<I extends ImageElement> extends WtoolBar {

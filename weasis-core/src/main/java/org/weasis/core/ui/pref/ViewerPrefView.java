@@ -12,10 +12,10 @@ package org.weasis.core.ui.pref;
 import java.awt.GridLayout;
 import java.util.List;
 import javax.swing.JPanel;
+import org.weasis.core.Messages;
 import org.weasis.core.api.gui.util.AbstractItemDialogPage;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.PageItem;
-import org.weasis.core.Messages;
 
 public class ViewerPrefView extends AbstractItemDialogPage {
 

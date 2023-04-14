@@ -15,11 +15,11 @@ import java.awt.event.MouseEvent;
 import java.awt.geom.Point2D;
 import java.util.Objects;
 import java.util.Optional;
+import org.weasis.core.Messages;
 import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.Feature;
 import org.weasis.core.api.gui.util.MouseActionAdapter;
 import org.weasis.core.api.media.data.ImageElement;
-import org.weasis.core.Messages;
 import org.weasis.core.ui.model.layer.LayerAnnotation;
 import org.weasis.core.util.StringUtil;
 

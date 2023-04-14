@@ -475,7 +475,7 @@ public class Preset extends TextureData {
   static List<Preset> loadPresets() {
     List<Preset> presets = new ArrayList<>();
     try {
-      List<VolumePreset> list = loadFile("/volumePresets.json"); //NON-NLS
+      List<VolumePreset> list = loadFile("/volumePresets.json"); // NON-NLS
       list.forEach(
           p -> {
             Preset preset = buildPreset(p);
@@ -488,13 +488,13 @@ public class Preset extends TextureData {
     }
     presets.sort(
         Comparator.comparing(
-            o -> (String.format("%03d", o.getModality().ordinal()) + o.getName()))); //NON-NLS
+            o -> (String.format("%03d", o.getModality().ordinal()) + o.getName()))); // NON-NLS
     return presets;
   }
 
   static Preset getOriginalPreset() {
     try {
-      List<VolumePreset> original = loadFile("/originalLut.json"); //NON-NLS
+      List<VolumePreset> original = loadFile("/originalLut.json"); // NON-NLS
       return buildPreset(original.get(0));
     } catch (IOException e) {
       throw new RuntimeException(e);

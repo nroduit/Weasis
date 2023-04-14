@@ -138,8 +138,8 @@ public class View3d extends VolumeCanvas
     super(eventManager, volTexture, null);
     this.texture = new ComputeTexture(this, ComputeTexture.COMPUTE_LOCAL_SIZE);
     this.quadProgram =
-        new Program("basic", ShaderManager.VERTEX_SHADER, ShaderManager.FRAGMENT_SHADER); //NON-NLS
-    this.program = new Program("compute", ShaderManager.COMPUTE_SHADER); //NON-NLS
+        new Program("basic", ShaderManager.VERTEX_SHADER, ShaderManager.FRAGMENT_SHADER); // NON-NLS
+    this.program = new Program("compute", ShaderManager.COMPUTE_SHADER); // NON-NLS
     // this.program =new Program("basic", ShaderManager.OLD_VERTEX_SHADER,
     // ShaderManager.OLD_FRAGMENT_SHADER);
     try {
@@ -389,17 +389,17 @@ public class View3d extends VolumeCanvas
       int val = i;
       program.allocateUniform(
           gl4,
-          String.format("lights[%d].position", val), //NON-NLS
+          String.format("lights[%d].position", val), // NON-NLS
           (gl, loc) ->
               gl.glUniform4fv(
                   loc, 1, camera.getLightOrigin().get(Buffers.newDirectFloatBuffer(4))));
       program.allocateUniform(
           gl4,
-          String.format("lights[%d].specularPower", val), //NON-NLS
+          String.format("lights[%d].specularPower", val), // NON-NLS
           (gl, loc) -> gl.glUniform1f(loc, renderingLayer.getShadingOptions().getSpecularPower()));
       program.allocateUniform(
           gl4,
-          String.format("lights[%d].enabled", val), //NON-NLS
+          String.format("lights[%d].enabled", val), // NON-NLS
           (gl, loc) -> gl.glUniform1i(loc, val < 1 ? 1 : 0));
     }
     program.allocateUniform(

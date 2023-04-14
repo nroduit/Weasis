@@ -53,8 +53,7 @@ public class AnnotationOptionsPanel extends JPanel {
     spUnitAction.ifPresent(
         comboItemListener -> {
           JLabel label =
-              new JLabel(
-                  org.weasis.core.Messages.getString("MeasureTool.unit") + StringUtil.COLON);
+              new JLabel(org.weasis.core.Messages.getString("MeasureTool.unit") + StringUtil.COLON);
           JComboBox<?> unitComboBox = comboItemListener.createCombo(120);
           unitComboBox.setSelectedItem(Unit.PIXEL);
           add(GuiUtils.getFlowLayoutPanel(label, unitComboBox));

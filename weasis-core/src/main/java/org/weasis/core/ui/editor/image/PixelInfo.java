@@ -10,9 +10,9 @@
 package org.weasis.core.ui.editor.image;
 
 import java.awt.Point;
+import org.weasis.core.Messages;
 import org.weasis.core.api.gui.util.DecFormatter;
 import org.weasis.core.api.image.util.Unit;
-import org.weasis.core.Messages;
 
 /** User: boraldo Date: 28.01.14 Time: 15:02 */
 public class PixelInfo {

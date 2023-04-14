@@ -79,7 +79,9 @@ public class ShadingPrefDialog extends JDialog {
     // contentPane.add(GuiUtils.boxVerticalStrut(Insertable.BLOCK_SEPARATOR));
     // contentPane.add(specularSlider);
 
-    powerSlider = createSlider(Messages.getString("shininess"), 1, 100, realToSliderPowerValue(specularPower));
+    powerSlider =
+        createSlider(
+            Messages.getString("shininess"), 1, 100, realToSliderPowerValue(specularPower));
     contentPane.add(GuiUtils.boxVerticalStrut(Insertable.BLOCK_SEPARATOR));
     contentPane.add(powerSlider);
     updateSliderText();
@@ -199,7 +201,10 @@ public class ShadingPrefDialog extends JDialog {
     //    SliderChangeListener.updateSliderProperties(specularSlider, result);
 
     powerSlider.setValue(realToSliderPowerValue(specularPower));
-    String result = Messages.getString("shininess") + StringUtil.COLON_AND_SPACE + DecFormatter.oneDecimal(specularPower);
+    String result =
+        Messages.getString("shininess")
+            + StringUtil.COLON_AND_SPACE
+            + DecFormatter.oneDecimal(specularPower);
     SliderChangeListener.updateSliderProperties(powerSlider, result);
   }
 
