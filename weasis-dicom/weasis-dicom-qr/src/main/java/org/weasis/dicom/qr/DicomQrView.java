@@ -318,7 +318,7 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
     try {
       PluginOpeningStrategy openingStrategy =
           new PluginOpeningStrategy(DownloadManager.getOpeningViewer());
-      openingStrategy.setResetVeto(true);
+      openingStrategy.setFullImportSession(false);
       DataExplorerView dicomView =
           org.weasis.core.ui.docking.UIManager.getExplorerPlugin(DicomExplorer.NAME);
       if (dicomView != null && dicomView.getDataExplorerModel() instanceof DicomModel model) {
@@ -715,9 +715,15 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
                         progressBar.setIndeterminate(false);
                         displayResult(state);
                         if (state.getStatus() != Status.Success) {
-                          LOGGER.error("Dicom cfind error: {}", state.getMessage());
+                          int limit = (Integer) limitSpinner.getValue();
+                          String message =
+                              state.getStatus() == Status.Cancel && limit > 0
+                                  ? "Query has been canceled after %s studies.\nSet the limit to 0 to avoid this constraint."
+                                      .formatted(limit)
+                                  : state.getMessage();
+                          LOGGER.error("Dicom cfind error: {}", message);
                           JOptionPane.showMessageDialog(
-                              this, state.getMessage(), null, JOptionPane.ERROR_MESSAGE);
+                              this, message, null, JOptionPane.ERROR_MESSAGE);
                         }
                       });
             }
