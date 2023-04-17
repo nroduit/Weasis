@@ -58,6 +58,7 @@ import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.DataExplorerView;
 import org.weasis.core.api.explorer.ObservableEvent;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
+import org.weasis.core.api.gui.Insertable;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.gui.util.GuiUtils;
@@ -148,7 +149,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
   }
 
   public DicomExplorer(DicomModel model) {
-    super(BUTTON_NAME, NAME, POSITION.WEST, ExtendedMode.NORMALIZED, PluginTool.Type.EXPLORER, 20);
+    super(BUTTON_NAME, NAME, POSITION.WEST, ExtendedMode.NORMALIZED, Insertable.Type.EXPLORER, 20);
     dockable.setMaximizable(true);
     this.model = model == null ? new DicomModel() : model;
     this.selectionList = new SeriesSelectionModel(selectedPatient);
@@ -395,6 +396,8 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
       List<StudyPane> studies = getStudyPaneList();
       super.removeAll();
       for (StudyPane studyPane : studies) {
+        // Force to resize study pane
+        studyPane.setSize(50, 50);
         studyPane.refreshLayout();
         if (studyPane.getComponentCount() > 0) {
           addPane(studyPane);
