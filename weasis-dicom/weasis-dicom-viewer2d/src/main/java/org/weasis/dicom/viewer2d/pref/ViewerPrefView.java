@@ -36,6 +36,7 @@ import org.weasis.core.api.image.WindowOp;
 import org.weasis.core.api.image.ZoomOp;
 import org.weasis.core.api.image.ZoomOp.Interpolation;
 import org.weasis.core.api.service.BundleTools;
+import org.weasis.core.api.service.WProperties;
 import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.api.util.ResourceUtil.ActionIcon;
 import org.weasis.core.ui.docking.UIManager;
@@ -224,15 +225,12 @@ public class ViewerPrefView extends AbstractItemDialogPage {
     comboBoxInterpolation.setSelectedItem(Interpolation.BILINEAR);
 
     // Get the default server configuration and if no value take the default value in parameter.
-    EventManager eventManager = EventManager.getInstance();
-    eventManager.getOptions().resetProperty(WindowOp.P_APPLY_WL_COLOR, Boolean.TRUE.toString());
+    WProperties properties = EventManager.getInstance().getOptions();
+    properties.resetProperty(WindowOp.P_APPLY_WL_COLOR, Boolean.TRUE.toString());
 
-    checkBoxWLcolor.setSelected(
-        eventManager.getOptions().getBooleanProperty(WindowOp.P_APPLY_WL_COLOR, true));
-    checkBoxLevelInverse.setSelected(
-        eventManager.getOptions().getBooleanProperty(WindowOp.P_INVERSE_LEVEL, true));
-    checkBoxApplyPR.setSelected(
-        eventManager.getOptions().getBooleanProperty(PRManager.PR_APPLY, false));
+    checkBoxWLcolor.setSelected(properties.getBooleanProperty(WindowOp.P_APPLY_WL_COLOR, true));
+    checkBoxLevelInverse.setSelected(properties.getBooleanProperty(WindowOp.P_INVERSE_LEVEL, true));
+    checkBoxApplyPR.setSelected(properties.getBooleanProperty(PRManager.PR_APPLY, false));
     BundleTools.SYSTEM_PREFERENCES.putColorProperty(OverlayOp.OVERLAY_COLOR_KEY, Color.WHITE);
   }
 

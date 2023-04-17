@@ -24,19 +24,24 @@ import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.pref.PreferenceDialog;
 import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.explorer.DicomExplorer;
+import org.weasis.dicom.explorer.DicomSorter;
+import org.weasis.dicom.explorer.DicomSorter.SortingTime;
 import org.weasis.dicom.explorer.HangingProtocols.OpeningViewer;
 import org.weasis.dicom.explorer.Messages;
 
 public class SeriesDownloadPrefView extends AbstractItemDialogPage {
   public static final String DOWNLOAD_IMMEDIATELY = "weasis.download.immediately";
-  public static final String DOWNLOAD__OPEN_MODE = "weasis.download.open.view.mode";
-
+  public static final String DOWNLOAD_OPEN_MODE = "weasis.download.open.view.mode";
+  public static final String STUDY_DATE_SORTING = "weasis.sorting.study.date";
   private final JCheckBox downloadImmediatelyCheckbox =
       new JCheckBox(Messages.getString("SeriesDownloadPrefView.downloadImmediatelyCheckbox"));
   private final JSpinner spinner;
 
   private final JComboBox<OpeningViewer> openingViewerJComboBox =
       new JComboBox<>(OpeningViewer.values());
+
+  private final JComboBox<SortingTime> studyDateSortingComboBox =
+      new JComboBox<>(SortingTime.values());
 
   public SeriesDownloadPrefView() {
     super(Messages.getString("DicomExplorer.title"), 607);
@@ -60,6 +65,12 @@ public class SeriesDownloadPrefView extends AbstractItemDialogPage {
     model.setValue(thumbnailSize);
     add(GuiUtils.getFlowLayoutPanel(ITEM_SEPARATOR_SMALL, ITEM_SEPARATOR, thumbSize, spinner));
 
+    JLabel labelStudyDate = new JLabel("Study date sorting" + StringUtil.COLON);
+    studyDateSortingComboBox.setSelectedItem(DicomSorter.getStudyDateSorting());
+    add(
+        GuiUtils.getFlowLayoutPanel(
+            ITEM_SEPARATOR_SMALL, ITEM_SEPARATOR, labelStudyDate, studyDateSortingComboBox));
+
     JLabel labelOpenPatient =
         new JLabel(Messages.getString("DicomExplorer.open_win") + StringUtil.COLON);
     openingViewerJComboBox.setSelectedItem(getOpeningViewer());
@@ -80,7 +91,7 @@ public class SeriesDownloadPrefView extends AbstractItemDialogPage {
   }
 
   private OpeningViewer getOpeningViewer() {
-    String key = BundleTools.SYSTEM_PREFERENCES.getProperty(DOWNLOAD__OPEN_MODE);
+    String key = BundleTools.SYSTEM_PREFERENCES.getProperty(DOWNLOAD_OPEN_MODE);
     return OpeningViewer.getOpeningViewer(key, OpeningViewer.ALL_PATIENTS);
   }
 
@@ -91,7 +102,11 @@ public class SeriesDownloadPrefView extends AbstractItemDialogPage {
         BundleTools.SYSTEM_PREFERENCES.getBooleanProperty(DOWNLOAD_IMMEDIATELY, true));
 
     BundleTools.SYSTEM_PREFERENCES.resetProperty(
-        DOWNLOAD__OPEN_MODE, OpeningViewer.ALL_PATIENTS.name());
+        STUDY_DATE_SORTING, String.valueOf(SortingTime.CHRONOLOGICAL.getId()));
+    studyDateSortingComboBox.setSelectedItem(DicomSorter.getStudyDateSorting());
+
+    BundleTools.SYSTEM_PREFERENCES.resetProperty(
+        DOWNLOAD_OPEN_MODE, OpeningViewer.ALL_PATIENTS.name());
     openingViewerJComboBox.setSelectedItem(getOpeningViewer());
 
     spinner.setValue(Thumbnail.DEFAULT_SIZE);
@@ -102,9 +117,14 @@ public class SeriesDownloadPrefView extends AbstractItemDialogPage {
     BundleTools.SYSTEM_PREFERENCES.putBooleanProperty(
         DOWNLOAD_IMMEDIATELY, downloadImmediatelyCheckbox.isSelected());
 
+    SortingTime sortingTime = (SortingTime) studyDateSortingComboBox.getSelectedItem();
+    if (sortingTime != null) {
+      BundleTools.SYSTEM_PREFERENCES.putIntProperty(STUDY_DATE_SORTING, sortingTime.getId());
+    }
+
     OpeningViewer openingViewer = (OpeningViewer) openingViewerJComboBox.getSelectedItem();
     if (openingViewer != null) {
-      BundleTools.SYSTEM_PREFERENCES.put(DOWNLOAD__OPEN_MODE, openingViewer.name());
+      BundleTools.SYSTEM_PREFERENCES.put(DOWNLOAD_OPEN_MODE, openingViewer.name());
     }
 
     DataExplorerView dicomView = UIManager.getExplorerPlugin(DicomExplorer.NAME);

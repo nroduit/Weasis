@@ -158,7 +158,7 @@ public class DownloadManager {
 
   public static OpeningViewer getOpeningViewer() {
     String key =
-        BundleTools.SYSTEM_PREFERENCES.getProperty(SeriesDownloadPrefView.DOWNLOAD__OPEN_MODE);
+        BundleTools.SYSTEM_PREFERENCES.getProperty(SeriesDownloadPrefView.DOWNLOAD_OPEN_MODE);
     return OpeningViewer.getOpeningViewer(key, OpeningViewer.ALL_PATIENTS);
   }
 
