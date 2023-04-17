@@ -121,6 +121,7 @@ public class RetrieveTask extends ExplorerTask<ExplorerTask<Boolean, String>, St
 
     DicomParam[] dcmParams = {new DicomParam(Tag.StudyInstanceUID, studies.toArray(new String[0]))};
 
+    File tempFolder = null;
     Object selectedItem = dicomQrView.getComboDestinationNode().getSelectedItem();
     if (selectedItem instanceof final DefaultDicomNode node) {
       DefaultDicomNode callingNode =
@@ -147,7 +148,8 @@ public class RetrieveTask extends ExplorerTask<ExplorerTask<Boolean, String>, St
               LOGGER.error("SOP Class url conversion", e);
             }
           }
-          openingStrategy.setResetVeto(true);
+          tempFolder = DicomQrView.getSessionTempFolder();
+          openingStrategy.setFullImportSession(false);
           progress.addProgressListener(
               p -> {
                 File current = p.getProcessedFile();
@@ -164,11 +166,12 @@ public class RetrieveTask extends ExplorerTask<ExplorerTask<Boolean, String>, St
                   callingNode.getDicomNodeWithOnlyAET(),
                   node.getDicomNode(),
                   progress,
-                  DicomQrView.tempDir,
+                  tempFolder,
                   url,
                   dcmParams);
         } else if (RetrieveType.CMOVE == type) {
           DicomListener dicomListener = dicomQrView.getDicomListener();
+          tempFolder = dicomListener.getStoreSCP().getStorageDir();
           try {
             if (dicomListener == null) {
               errorMessage = Messages.getString("RetrieveTask.msg_start_listener");
@@ -267,12 +270,10 @@ public class RetrieveTask extends ExplorerTask<ExplorerTask<Boolean, String>, St
           LOGGER.error("Dicom retrieve error: {}", errorMessage);
         }
 
-        loadingTask =
-            new LoadLocalDicom(
-                new File[] {new File(DicomQrView.tempDir.getPath())},
-                false,
-                explorerDcmModel,
-                openingStrategy);
+        if (tempFolder != null) {
+          loadingTask =
+              new LoadLocalDicom(new File[] {tempFolder}, false, explorerDcmModel, openingStrategy);
+        }
       }
 
     } else if (selectedItem instanceof DicomWebNode) {

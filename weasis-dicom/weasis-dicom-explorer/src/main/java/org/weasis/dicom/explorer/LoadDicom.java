@@ -58,7 +58,7 @@ public abstract class LoadDicom extends ExplorerTask<Boolean, String> {
   }
 
   protected void startLoadingEvent() {
-    if (!openingStrategy.isResetVeto()) {
+    if (openingStrategy.isFullImportSession()) {
       dicomModel.firePropertyChange(
           new ObservableEvent(ObservableEvent.BasicAction.LOADING_START, dicomModel, null, this));
     }
@@ -67,7 +67,7 @@ public abstract class LoadDicom extends ExplorerTask<Boolean, String> {
   @Override
   protected void done() {
     openingStrategy.reset();
-    if (!openingStrategy.isResetVeto()) {
+    if (openingStrategy.isFullImportSession()) {
       dicomModel.firePropertyChange(
           new ObservableEvent(ObservableEvent.BasicAction.LOADING_STOP, dicomModel, null, this));
       LOGGER.info("End of loading DICOM locally");

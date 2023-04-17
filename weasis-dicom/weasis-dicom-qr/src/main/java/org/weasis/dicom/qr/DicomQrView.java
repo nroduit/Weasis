@@ -217,9 +217,6 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
   private static final String LAST_CALLING_NODE = "lastCallingNode";
   private static final String LAST_RETRIEVE_TYPE = "lastRetrieveType";
   private static final String LAST_RETRIEVE_LIMIT = "lastRetrieveLimit";
-  static final File tempDir =
-      FileUtil.createTempDir(AppProperties.buildAccessibleTempDirectory("tmp", "qr")); // NON-NLS
-
   private final JComboBox<AbstractDicomNode> comboDestinationNode = new JComboBox<>();
   private final JComboBox<SearchParameters> templateComboBox = new JComboBox<>();
   private final JTextField tfSearch = new JTextField(25);
@@ -332,15 +329,20 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
                 DicomModel.LOADING_EXECUTOR.execute(task);
               }
             });
-        dcmListener = new DicomListener(tempDir, progress);
+        dcmListener = new DicomListener(getSessionTempFolder(), progress);
       } else {
-        dcmListener = new DicomListener(tempDir);
+        dcmListener = new DicomListener(getSessionTempFolder());
       }
 
     } catch (RuntimeException e) {
       LOGGER.error("Cannot start DICOM listener", e);
     }
     dicomListener = dcmListener;
+  }
+
+  public static File getSessionTempFolder() {
+    return FileUtil.createTempDir(
+        AppProperties.buildAccessibleTempDirectory("tmp", "qr")); // NON-NLS
   }
 
   public void initGUI() {
