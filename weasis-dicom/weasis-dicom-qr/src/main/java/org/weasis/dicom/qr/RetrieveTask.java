@@ -171,11 +171,11 @@ public class RetrieveTask extends ExplorerTask<ExplorerTask<Boolean, String>, St
                   dcmParams);
         } else if (RetrieveType.CMOVE == type) {
           DicomListener dicomListener = dicomQrView.getDicomListener();
-          tempFolder = dicomListener.getStoreSCP().getStorageDir();
           try {
             if (dicomListener == null) {
               errorMessage = Messages.getString("RetrieveTask.msg_start_listener");
             } else {
+              tempFolder = dicomListener.getStoreSCP().getStorageDir();
               if (dicomListener.isRunning()) {
                 errorMessage = Messages.getString("RetrieveTask.msg_running_listener");
               } else {
