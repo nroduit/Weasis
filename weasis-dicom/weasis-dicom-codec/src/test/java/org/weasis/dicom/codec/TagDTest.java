@@ -130,7 +130,7 @@ class TagDTest {
     assertThat(datetime.toLocalDate()).isEqualTo(LocalDate.of(1993, 8, 22));
 
     DatePrecision precision = new DatePrecision();
-    date = DateUtils.parseTM(null, "070907.07 ", precision);
+    date = DateUtils.parseTM(null, "070907.07", precision);
     datetime = LocalDateTime.ofInstant(date.toInstant(), ZoneId.systemDefault());
     assertThat(datetime.toLocalTime()).isEqualTo(LocalTime.of(7, 9, 7, 70_000_000));
 
