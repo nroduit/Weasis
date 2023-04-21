@@ -30,7 +30,7 @@ Old branches are:
 
 # General Features
 * Flexible integration with PACS, RIS, HIS or PHR  (see [integration documentation](https://nroduit.github.io/en/basics/customize/integration/))
-* Desktop distribution (Windows, Mac OS X, and Linux)
+* Desktop distribution (Windows, macOS, and Linux)
 * Responsive user interface working well on high DPI screens
 * Web access through [weasis protocol](https://nroduit.github.io/en/getting-started/weasis-protocol)
 * [Multi-language support](https://nroduit.github.io/en/getting-started/translating/)

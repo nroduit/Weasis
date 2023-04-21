@@ -773,14 +773,14 @@ public class ConfigData {
         // it in the
         // Bundle-NativeCode tag of the bundle fragment.
         osName = "windows"; // NON-NLS
-      } else if (osName.equals(WeasisLauncher.MAC_OS_X)) {
+      } else if (osName.toLowerCase().startsWith("mac")) {
         osName = "macosx"; // NON-NLS
+      } else if (osName.toLowerCase().startsWith("linux")) {
+        osName = "linux"; // NON-NLS
       } else if (osName.equals("SymbianOS")) {
         osName = "epoc32"; // NON-NLS
       } else if (osName.equals("hp-ux")) {
         osName = "hpux"; // NON-NLS
-      } else if (osName.equals("Mac OS")) { // NON-NLS
-        osName = "macos"; // NON-NLS
       } else if (osName.equals("OS/2")) {
         osName = "os2"; // NON-NLS
       } else if (osName.equals("procnto")) {

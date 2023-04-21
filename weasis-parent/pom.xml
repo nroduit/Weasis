@@ -32,6 +32,8 @@
 
     <osgi.core.version>8.0.0</osgi.core.version>
     <osgi.promise.version>8.1.0</osgi.promise.version>
+    <osgi.annotation.version>8.1.0</osgi.annotation.version>
+    <osgi.component.version>1.5.1</osgi.component.version>
 
     <felix.gogo.version>1.1.6</felix.gogo.version>
     <felix.gogo.shell.version>1.1.4</felix.gogo.shell.version>
@@ -39,7 +41,7 @@
     <felix.bundlerepository.version>2.0.10</felix.bundlerepository.version>
     <felix.configadmin.version>1.9.26</felix.configadmin.version>
     <felix.prefs.version>1.1.0</felix.prefs.version>
-    <felix.scr.version>2.2.0</felix.scr.version>
+    <felix.scr.version>2.2.6</felix.scr.version>
     <felix.metatype.version>1.2.4</felix.metatype.version>
 
     <slf4j.version>1.7.36</slf4j.version>
@@ -52,9 +54,9 @@
     <jaxb.osgi.version>3.0.2</jaxb.osgi.version>
     <joml.version>1.10.5</joml.version>
     <jogamp.version>2.4.0</jogamp.version>
-    <jackson.version>2.14.1</jackson.version>
+    <jackson.version>2.14.2</jackson.version>
     <scribejava.version>8.3.3</scribejava.version>
-    <zip4j.version>2.11.3</zip4j.version>
+    <zip4j.version>2.11.4</zip4j.version>
 
     <assertj.version>3.24.2</assertj.version>
     <mockito.version>5.2.0</mockito.version>
@@ -597,16 +599,30 @@
       <scope>provided</scope>
     </dependency>
     <dependency>
+      <groupId>org.apache.felix</groupId>
+      <artifactId>org.apache.felix.configadmin</artifactId>
+    </dependency>
+    <dependency>
       <groupId>org.osgi</groupId>
-      <artifactId>osgi.cmpn</artifactId>
-      <version>7.0.0</version>
+      <artifactId>org.osgi.service.component</artifactId>
+      <version>${osgi.component.version}</version>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.osgi</groupId>
+      <artifactId>org.osgi.service.component.annotations</artifactId>
+      <version>${osgi.component.version}</version>
       <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>org.osgi</groupId>
       <artifactId>osgi.annotation</artifactId>
-      <version>${osgi.promise.version}</version>
+      <version>${osgi.annotation.version}</version>
       <scope>provided</scope>
+    </dependency>
+    <dependency>
+    <groupId>org.apache.felix</groupId>
+    <artifactId>org.apache.felix.prefs</artifactId>
     </dependency>
 
     <!-- FOR TESTS -->
