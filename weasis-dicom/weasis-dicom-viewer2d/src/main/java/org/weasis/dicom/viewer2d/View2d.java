@@ -358,7 +358,10 @@ public class View2d extends DefaultView2d<DicomImageElement> {
                                     actionsInView.get(ActionW.FILTERED_SERIES.cmd()),
                                 v.getCurrentSortComparator());
                         if (img != null) {
+                          Object oldZoomType = actionsInView.get(ViewCanvas.ZOOM_TYPE_CMD);
+                          view2d.setActionsInView(ViewCanvas.ZOOM_TYPE_CMD, ZoomType.CURRENT);
                           view2d.setImage(img);
+                          view2d.setActionsInView(ViewCanvas.ZOOM_TYPE_CMD, oldZoomType);
                         }
                       }
                     }
