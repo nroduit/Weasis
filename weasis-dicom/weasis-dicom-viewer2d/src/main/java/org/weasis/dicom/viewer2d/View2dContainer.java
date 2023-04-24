@@ -17,6 +17,7 @@ import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Hashtable;
 import java.util.List;
 import java.util.Optional;
 import javax.swing.Action;
@@ -36,7 +37,9 @@ import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.DataExplorerView;
 import org.weasis.core.api.explorer.ObservableEvent;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
+import org.weasis.core.api.gui.Insertable;
 import org.weasis.core.api.gui.Insertable.Type;
+import org.weasis.core.api.gui.InsertableFactory;
 import org.weasis.core.api.gui.InsertableUtil;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.BasicActionState;
@@ -136,6 +139,8 @@ public class View2dContainer extends DicomViewerPlugin implements PropertyChange
   // initialization with a method.
   public static final List<Toolbar> TOOLBARS = Collections.synchronizedList(new ArrayList<>());
   public static final List<DockableTool> TOOLS = Collections.synchronizedList(new ArrayList<>());
+  public static final List<InsertableFactory> TOOL_EXT =
+      Collections.synchronizedList(new ArrayList<>());
   private static volatile boolean initComponents = false;
 
   public View2dContainer() {
@@ -441,9 +446,39 @@ public class View2dContainer extends DicomViewerPlugin implements PropertyChange
     return menuRoot;
   }
 
+  protected MediaSeries<DicomImageElement> getFirstSeries() {
+    for (ViewCanvas<DicomImageElement> v : getImagePanels()) {
+      if (v.getSeries() != null) {
+        return v.getSeries();
+      }
+    }
+    return null;
+  }
+
   @Override
   public List<DockableTool> getToolPanel() {
-    return TOOLS;
+    if (TOOL_EXT.isEmpty()) {
+      return TOOLS;
+    }
+
+    List<DockableTool> list = new ArrayList<>();
+    Hashtable<String, Object> properties = new Hashtable<>();
+    MediaSeries<DicomImageElement> series = getFirstSeries();
+    if (series != null) {
+      properties.put(MediaSeries.class.getName(), series);
+    }
+    for (InsertableFactory factory : TOOL_EXT) {
+      Insertable instance = factory.createInstance(properties);
+      if (instance instanceof DockableTool dockableTool) {
+        list.add(dockableTool);
+      }
+    }
+
+    if (list.isEmpty()) {
+      return TOOLS;
+    }
+    list.addAll(0, TOOLS);
+    return list;
   }
 
   @Override

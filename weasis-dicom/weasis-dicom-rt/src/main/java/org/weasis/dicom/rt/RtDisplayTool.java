@@ -783,10 +783,24 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener {
     }
   }
 
+  public static boolean isCompatible(MediaSeries<?> dcmSeries) {
+    if (dcmSeries != null) {
+      DicomModel dicomModel = (DicomModel) dcmSeries.getTagValue(TagW.ExplorerModel);
+      if (dicomModel != null) {
+        MediaSeriesGroup patient = dicomModel.getParent(dcmSeries, DicomModel.patient);
+        if (patient != null) {
+          return containsRTStruct(dicomModel, patient);
+        }
+      }
+    }
+    return false;
+  }
+
   public void initTreeValues(ViewCanvas<?> viewCanvas) {
     if (viewCanvas != null) {
       MediaSeries<?> dcmSeries = viewCanvas.getSeries();
-      if (dcmSeries != null) {
+      boolean compatible = RtDisplayTool.isCompatible(dcmSeries);
+      if (compatible) {
         DicomModel dicomModel = (DicomModel) dcmSeries.getTagValue(TagW.ExplorerModel);
         if (dicomModel != null) {
           MediaSeriesGroup patient = dicomModel.getParent(dcmSeries, DicomModel.patient);
@@ -807,8 +821,8 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener {
             boolean empty = set.getStructures().isEmpty();
             btnLoad.setEnabled(empty || reload);
             this.rtSet = set;
-
             updateCanvas(viewCanvas);
+            showDockable();
           }
         }
       }
@@ -851,6 +865,18 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener {
         expandTree(tree, dtm);
       }
     }
+  }
+
+  private static boolean containsRTStruct(DicomModel model, MediaSeriesGroup patient) {
+    for (MediaSeriesGroup st : model.getChildren(patient)) {
+      for (MediaSeriesGroup s : model.getChildren(st)) {
+        String modality = TagD.getTagValue(s, Tag.Modality, String.class);
+        if ("RTPLAN".equals(modality) || "RTSTRUCT".equals(modality)) {
+          return true;
+        }
+      }
+    }
+    return false;
   }
 
   private static List<MediaElement> getRelatedSpecialElements(

@@ -72,6 +72,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
@@ -608,19 +609,20 @@ public class WeasisWin {
       oldPlugin.setSelected(false);
     }
     selectedPlugin = plugin;
-    selectedPlugin.setSelected(true);
     menuSelectedPlugin.setText(selectedPlugin.getName());
 
     updateTools(oldPlugin, selectedPlugin, false);
 
     updateToolbars(
         oldPlugin == null ? null : oldPlugin.getToolBar(), selectedPlugin.getToolBar(), false);
+
+    selectedPlugin.setSelected(true);
   }
 
   void updateTools(ViewerPlugin oldPlugin, ViewerPlugin plugin, boolean force) {
     List<DockableTool> oldTool = oldPlugin == null ? null : oldPlugin.getToolPanel();
     List<DockableTool> tool = plugin == null ? null : plugin.getToolPanel();
-    if (force || tool != oldTool) {
+    if (force || !Objects.equals(tool, oldTool)) {
       if (oldTool != null) {
         for (DockableTool p : oldTool) {
           p.closeDockable();

@@ -18,6 +18,7 @@ import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.Insertable;
 import org.weasis.core.api.gui.Insertable.Type;
 import org.weasis.core.api.gui.InsertableFactory;
+import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.dicom.viewer2d.EventManager;
 
 /**
@@ -34,6 +35,14 @@ public class RtDisplayToolFactory implements InsertableFactory {
 
   @Override
   public Insertable createInstance(Hashtable<String, Object> properties) {
+    Object val = properties.get(MediaSeries.class.getName());
+    boolean compatible = false;
+    if (val instanceof MediaSeries<?> mediaSeries) {
+      compatible = RtDisplayTool.isCompatible(mediaSeries);
+    }
+    if (!compatible) {
+      return null;
+    }
     if (toolPane == null) {
       toolPane = new RtDisplayTool();
       EventManager.getInstance().addSeriesViewerListener(toolPane);
@@ -56,7 +65,7 @@ public class RtDisplayToolFactory implements InsertableFactory {
 
   @Override
   public Type getType() {
-    return Type.TOOL;
+    return Type.TOOL_EXT;
   }
 
   // ================================================================================

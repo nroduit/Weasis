@@ -40,7 +40,7 @@ public class BrowsePanel extends JPanel implements IUSBDriveListener {
   public BrowsePanel(AcquireExplorer acquisitionView) {
     setLayout(new BoxLayout(this, BoxLayout.X_AXIS));
     setBorder(GuiUtils.getEmptyBorder(5));
-    try (USBDeviceDetectorManager driveDetector = new USBDeviceDetectorManager(3000)){
+    try (USBDeviceDetectorManager driveDetector = new USBDeviceDetectorManager(3000)) {
       acquisitionView.setSystemDrive(new FileSystemDrive(AcquireExplorer.getLastPath()));
       mediaSourceList.addItem(acquisitionView.getSystemDrive());
       driveDetector.addDriveListener(this);

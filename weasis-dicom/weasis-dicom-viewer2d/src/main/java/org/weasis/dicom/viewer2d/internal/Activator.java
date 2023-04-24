@@ -132,7 +132,7 @@ public class Activator implements BundleActivator, ServiceListener {
     }
   }
 
-  private static void registerComponent(final InsertableFactory factory) {
+  private static void registerComponent(InsertableFactory factory) {
     if (factory == null) {
       return;
     }
@@ -141,6 +141,15 @@ public class Activator implements BundleActivator, ServiceListener {
       registerToolBar(factory.createInstance(null));
     } else if (Type.TOOL.equals(factory.getType())) {
       registerTool(factory.createInstance(null));
+    } else if (Type.TOOL_EXT.equals(factory.getType())) {
+      registerToolExt(factory);
+    }
+  }
+
+  private static void registerToolExt(InsertableFactory factory) {
+    if (!View2dContainer.TOOL_EXT.contains(factory)) {
+      View2dContainer.TOOL_EXT.add(factory);
+      LOGGER.debug("Add Tool Extension [{}] for {}", factory, View2dContainer.class.getName());
     }
   }
 
