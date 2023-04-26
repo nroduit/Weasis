@@ -6,7 +6,7 @@ Weasis is a free medical DICOM viewer used in healthcare by hospitals, health ne
 ![Weasis](weasis-distributions/resources/svg/logo/WeasisAbout.svg)
 
 * [General information](https://nroduit.github.io)
-* [Download binary releases](https://nroduit.github.io/en/getting-started/download)
+* [Download binary releases](https://nroduit.github.io/en/getting-started/download-dicom-viewer)
 * [Live Demo with different datasets](https://nroduit.github.io/en/demo)
 * [Issues](https://github.com/nroduit/Weasis/issues) ([Old Issue Tracker](https://dcm4che.atlassian.net/projects/WEA))
 * Forum: [Google group](https://groups.google.com/forum/#!forum/dcm4che) or [GitHub Discussions](https://github.com/nroduit/Weasis/discussions)
