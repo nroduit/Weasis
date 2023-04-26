@@ -109,7 +109,7 @@ import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.geometry.ImageOrientation;
 import org.weasis.dicom.codec.utils.DicomResource;
 import org.weasis.dicom.viewer2d.mip.MipView;
-import org.weasis.dicom.viewer2d.mpr.MPRContainer;
+import org.weasis.dicom.viewer2d.mpr.MprContainer;
 import org.weasis.dicom.viewer2d.mpr.MprView;
 import org.weasis.opencv.op.ImageConversion;
 import org.weasis.opencv.op.lut.DefaultWlPresentation;
@@ -1406,8 +1406,8 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
       InsertableUtil.savePreferences(View2dContainer.TOOLS, containerNode, Type.TOOL);
 
       InsertableUtil.savePreferences(
-          MPRContainer.TOOLBARS,
-          prefs.node(MPRContainer.class.getSimpleName().toLowerCase()),
+          MprContainer.TOOLBARS,
+          prefs.node(MprContainer.class.getSimpleName().toLowerCase()),
           Type.TOOLBAR);
     }
   }

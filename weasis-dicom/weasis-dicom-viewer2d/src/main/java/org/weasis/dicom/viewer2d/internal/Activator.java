@@ -44,7 +44,7 @@ import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.explorer.DicomExplorer;
 import org.weasis.dicom.viewer2d.EventManager;
 import org.weasis.dicom.viewer2d.View2dContainer;
-import org.weasis.dicom.viewer2d.mpr.MPRContainer;
+import org.weasis.dicom.viewer2d.mpr.MprContainer;
 
 @Header(name = Constants.BUNDLE_ACTIVATOR, value = "${@class}") // NON-NLS
 public class Activator implements BundleActivator, ServiceListener {
@@ -77,13 +77,13 @@ public class Activator implements BundleActivator, ServiceListener {
     // Save preferences
     ImageViewerPlugin<DicomImageElement> container =
         EventManager.getInstance().getSelectedView2dContainer();
-    if (container instanceof MPRContainer) {
+    if (container instanceof MprContainer) {
       // Remove crosshair tool
       container.setSelected(false);
     }
     EventManager.getInstance().savePreferences(bundleContext);
 
-    UIManager.closeSeriesViewerType(MPRContainer.class);
+    UIManager.closeSeriesViewerType(MprContainer.class);
     UIManager.closeSeriesViewerType(View2dContainer.class);
   }
 

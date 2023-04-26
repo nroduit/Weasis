@@ -71,7 +71,7 @@ import org.weasis.dicom.explorer.DicomExplorer;
 import org.weasis.dicom.explorer.DicomModel;
 import org.weasis.dicom.viewer2d.LutToolBar;
 import org.weasis.dicom.viewer2d.View2dContainer;
-import org.weasis.dicom.viewer2d.mpr.MPRContainer;
+import org.weasis.dicom.viewer2d.mpr.MprContainer;
 import org.weasis.dicom.viewer3d.dockable.DisplayTool;
 import org.weasis.dicom.viewer3d.dockable.VolumeTool;
 import org.weasis.dicom.viewer3d.vr.DicomVolTexture;
@@ -181,7 +181,7 @@ public class View3DContainer extends ImageViewerPlugin<DicomImageElement>
   }
 
   //  public static final List<GridBagLayoutModel> LAYOUT_LIST =
-  //      Stream.concat(MPRContainer.LAYOUT_LIST.stream(), Stream.of(VIEWS_2x2_mpr,
+  //      Stream.concat(MprContainer.LAYOUT_LIST.stream(), Stream.of(VIEWS_2x2_mpr,
   // VIEWS_vr)).toList();
   public static final List<GridBagLayoutModel> LAYOUT_LIST =
       Stream.of(VIEWS_vr, VIEWS_vr_1x2).toList();
@@ -196,7 +196,7 @@ public class View3DContainer extends ImageViewerPlugin<DicomImageElement>
 
   public View3DContainer() {
     this(
-        MPRContainer.view1,
+        MprContainer.view1,
         null,
         View3DFactory.NAME,
         ResourceUtil.getIcon(ActionIcon.VOLUME),

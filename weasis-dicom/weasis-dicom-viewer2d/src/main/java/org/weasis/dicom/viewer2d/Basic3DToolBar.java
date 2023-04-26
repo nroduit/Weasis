@@ -27,7 +27,7 @@ import org.weasis.core.ui.util.WtoolBar;
 import org.weasis.dicom.viewer2d.mip.MipPopup;
 import org.weasis.dicom.viewer2d.mip.MipPopup.MipDialog;
 import org.weasis.dicom.viewer2d.mip.MipView;
-import org.weasis.dicom.viewer2d.mpr.MPRFactory;
+import org.weasis.dicom.viewer2d.mpr.MprFactory;
 
 public class Basic3DToolBar<DicomImageElement> extends WtoolBar {
 
@@ -58,7 +58,7 @@ public class Basic3DToolBar<DicomImageElement> extends WtoolBar {
     return e -> {
       MediaSeries<org.weasis.dicom.codec.DicomImageElement> s =
           EventManager.getInstance().getSelectedSeries();
-      SeriesViewerFactory factory = UIManager.getViewerFactory(MPRFactory.class);
+      SeriesViewerFactory factory = UIManager.getViewerFactory(MprFactory.class);
       if (factory != null && factory.canReadSeries(s)) {
         ViewerPluginBuilder.openSequenceInPlugin(
             factory, s, (DataExplorerModel) s.getTagValue(TagW.ExplorerModel), false, false);

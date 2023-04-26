@@ -16,7 +16,7 @@ import org.weasis.core.api.gui.PreferencesPageFactory;
 import org.weasis.core.api.gui.util.AbstractItemDialogPage;
 
 @org.osgi.service.component.annotations.Component(service = PreferencesPageFactory.class)
-public class SeriesDownloadPrefFactory implements PreferencesPageFactory {
+public class DicomExplorerPrefFactory implements PreferencesPageFactory {
 
   @Override
   public AbstractItemDialogPage createInstance(Hashtable<String, Object> properties) {

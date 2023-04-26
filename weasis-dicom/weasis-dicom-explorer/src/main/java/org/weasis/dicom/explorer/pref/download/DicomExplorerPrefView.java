@@ -88,6 +88,8 @@ public class DicomExplorerPrefView extends AbstractItemDialogPage {
 
     getProperties().setProperty(PreferenceDialog.KEY_SHOW_APPLY, Boolean.TRUE.toString());
     getProperties().setProperty(PreferenceDialog.KEY_SHOW_RESTORE, Boolean.TRUE.toString());
+    getProperties()
+        .setProperty(PreferenceDialog.KEY_HELP, "dicom-explorer/#preferences"); // NON-NLS
   }
 
   private OpeningViewer getOpeningViewer() {

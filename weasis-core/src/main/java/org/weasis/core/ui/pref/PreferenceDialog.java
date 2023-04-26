@@ -125,6 +125,7 @@ public class PreferenceDialog extends AbstractWizardDialog {
 
     InsertableUtil.sortInsertable(list);
     for (AbstractItemDialogPage page : list) {
+      page.sortSubPages();
       pagesRoot.add(new DefaultMutableTreeNode(page));
     }
     iniTree();

@@ -94,6 +94,8 @@ import org.weasis.core.ui.model.graphic.imp.line.LineGraphic;
 import org.weasis.core.ui.model.graphic.imp.line.LineWithGapGraphic;
 import org.weasis.core.ui.model.layer.GraphicLayer;
 import org.weasis.core.ui.model.layer.LayerType;
+import org.weasis.core.ui.model.utils.bean.PanPoint;
+import org.weasis.core.ui.model.utils.bean.PanPoint.State;
 import org.weasis.core.ui.model.utils.exceptions.InvalidShapeException;
 import org.weasis.core.ui.model.utils.imp.DefaultViewModel;
 import org.weasis.core.ui.util.ColorLayerUI;
@@ -139,6 +141,8 @@ public class View2d extends DefaultView2d<DicomImageElement> {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(View2d.class);
 
+  public static final String P_CROSSHAIR_CENTER_GAP = "mpr.crosshair.center.gap";
+  public static final String P_CROSSHAIR_MODE = "mpr.crosshair.mode";
   private final Dimension oldSize;
   private final ContextMenuHandler contextMenuHandler;
 
@@ -325,11 +329,11 @@ public class View2d extends DefaultView2d<DicomImageElement> {
               frameIndex);
         } else if (command.equals(ActionW.CROSSHAIR.cmd())
             && series != null
-            && val instanceof Point2D.Double p) {
+            && val instanceof PanPoint p) {
           GeometryOfSlice sliceGeometry = this.getImage().getDispSliceGeometry();
           String fruid = TagD.getTagValue(series, Tag.FrameOfReferenceUID, String.class);
           if (sliceGeometry != null && fruid != null) {
-            Vector3d p3 = Double.isNaN(p.x) ? null : sliceGeometry.getPosition(p);
+            Vector3d p3 = Double.isNaN(p.getX()) ? null : sliceGeometry.getPosition(p);
             ImageViewerPlugin<DicomImageElement> container =
                 this.eventManager.getSelectedView2dContainer();
             if (container != null) {
@@ -377,7 +381,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
                     && fruid.equals(TagD.getTagValue(s, Tag.FrameOfReferenceUID))
                     && LangUtil.getNULLtoTrue(
                         (Boolean) actionsInView.get(LayerType.CROSSLINES.name()))) {
-                  view2d.computeCrosshair(p3);
+                  view2d.computeCrosshair(p3, p);
                   view2d.repaint();
                 }
               }
@@ -819,46 +823,67 @@ public class View2d extends DefaultView2d<DicomImageElement> {
     return null;
   }
 
-  public void computeCrosshair(Vector3d p3) {
+  protected boolean isAutoCenter(Point2D p, int centerGap) {
+    return p.getX() < centerGap
+        || p.getY() < centerGap
+        || p.getX() > getWidth() - centerGap
+        || p.getY() > getHeight() - centerGap;
+  }
+
+  public void computeCrosshair(Vector3d p3, PanPoint panPoint) {
     DicomImageElement image = this.getImage();
     if (image != null) {
-      graphicManager.deleteByLayerType(LayerType.CROSSLINES);
-      GraphicLayer layer = AbstractGraphicModel.getOrBuildLayer(this, LayerType.CROSSLINES);
+      boolean released = panPoint.getState() == State.DRAGEND;
+      if (!released) {
+        graphicManager.deleteByLayerType(LayerType.CROSSLINES);
+      }
       GeometryOfSlice sliceGeometry = image.getDispSliceGeometry();
       if (sliceGeometry != null) {
         SliceOrientation sliceOrientation = this.getSliceOrientation();
         if (sliceOrientation != null && p3 != null) {
           Point2D p = sliceGeometry.getImagePosition(p3);
           if (p != null) {
-            Vector3d dimensions = sliceGeometry.getDimensions();
+            Vector3d dim = sliceGeometry.getDimensions();
             boolean axial = SliceOrientation.AXIAL.equals(sliceOrientation);
             Point2D centerPt = new Point2D.Double(p.getX(), p.getY());
+            int centerGap =
+                eventManager.getOptions().getIntProperty(View2d.P_CROSSHAIR_CENTER_GAP, 40);
+            GraphicLayer layer = AbstractGraphicModel.getOrBuildLayer(this, LayerType.CROSSLINES);
+            if (released) {
+              int mode = eventManager.getOptions().getIntProperty(View2d.P_CROSSHAIR_MODE, 1);
+              if (mode == 2
+                  || mode == 1
+                      && isAutoCenter(
+                          getMouseCoordinatesFromImage(p.getX(), p.getY()), centerGap)) {
+                setCenter(p.getX() - dim.y * 0.5, p.getY() - dim.x * 0.5);
+              }
+            } else {
+              List<Point2D> pts = new ArrayList<>();
+              pts.add(new Point2D.Double(p.getX(), -50.0));
+              pts.add(new Point2D.Double(p.getX(), dim.x + 50));
 
-            List<Point2D> pts = new ArrayList<>();
-            pts.add(new Point2D.Double(p.getX(), 0.0));
-            pts.add(new Point2D.Double(p.getX(), dimensions.x));
+              boolean sagittal = SliceOrientation.SAGITTAL.equals(sliceOrientation);
+              Color color1 = axial ? Biped.A.getColor() : Biped.F.getColor();
+              addCrosshairLine(layer, pts, color1, centerPt, centerGap);
 
-            boolean sagittal = SliceOrientation.SAGITTAL.equals(sliceOrientation);
-            Color color1 = axial ? Biped.A.getColor() : Biped.F.getColor();
-            addCrosshairLine(layer, pts, color1, centerPt);
+              List<Point2D> pts2 = new ArrayList<>();
+              Color color2 = sagittal ? Biped.A.getColor() : Biped.R.getColor();
+              pts2.add(new Point2D.Double(-50.0, p.getY()));
+              pts2.add(new Point2D.Double(dim.y + 50, p.getY()));
+              addCrosshairLine(layer, pts2, color2, centerPt, centerGap);
 
-            List<Point2D> pts2 = new ArrayList<>();
-            Color color2 = sagittal ? Biped.A.getColor() : Biped.R.getColor();
-            pts2.add(new Point2D.Double(0.0, p.getY()));
-            pts2.add(new Point2D.Double(dimensions.y, p.getY()));
-            addCrosshairLine(layer, pts2, color2, centerPt);
-
-            //            PlanarImage dispImg = image.getImage();
-            //            if (dispImg != null) {
-            //              Rectangle2D rect =
-            //                  new Rectangle2D.Double(
-            //                      0,
-            //                      0,
-            //                      dispImg.width() * image.getRescaleX(),
-            //                      dispImg.height() * image.getRescaleY());
-            //              addRectangle(layer, rect, axial ? Biped.F.getColor() : sagittal ?
-            // Biped.R.getColor()  : Biped.A.getColor() );
-            //            }
+              //            PlanarImage dispImg = image.getImage();
+              //            if (dispImg != null) {
+              //              Rectangle2D rect =
+              //                  new Rectangle2D.Double(
+              //                      0,
+              //                      0,
+              //                      dispImg.width() * image.getRescaleX(),
+              //                      dispImg.height() * image.getRescaleY());
+              //              addRectangle(layer, rect, axial ? Biped.F.getColor() : sagittal ?
+              // Biped.R.getColor()  : Biped.A.getColor() );
+              //            }
+            }
           }
         }
       }
@@ -866,14 +891,14 @@ public class View2d extends DefaultView2d<DicomImageElement> {
   }
 
   protected void addCrosshairLine(
-      GraphicLayer layer, List<Point2D> pts, Color color, Point2D center) {
+      GraphicLayer layer, List<Point2D> pts, Color color, Point2D center, int centerGap) {
     if (pts != null && !pts.isEmpty()) {
       try {
         Graphic graphic;
         if (pts.size() == 2) {
           LineWithGapGraphic line = new LineWithGapGraphic();
           line.setCenterGap(center);
-          line.setGapSize(50);
+          line.setGapSize(centerGap);
           graphic = line.buildGraphic(pts);
         } else {
           graphic = new PolygonGraphic().buildGraphic(pts);

@@ -12,6 +12,7 @@ package org.weasis.dicom.viewer2d.mpr;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.GridBagConstraints;
+import java.awt.geom.Point2D;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
@@ -58,6 +59,7 @@ import org.weasis.core.ui.editor.image.SynchView;
 import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.editor.image.ViewerToolBar;
 import org.weasis.core.ui.editor.image.ZoomToolBar;
+import org.weasis.core.ui.model.utils.bean.PanPoint;
 import org.weasis.core.ui.util.ColorLayerUI;
 import org.weasis.core.ui.util.DefaultAction;
 import org.weasis.core.ui.util.PrintDialog;
@@ -83,8 +85,8 @@ import org.weasis.dicom.viewer2d.View2dContainer;
 import org.weasis.dicom.viewer2d.View2dFactory;
 import org.weasis.dicom.viewer2d.mpr.MprView.SliceOrientation;
 
-public class MPRContainer extends DicomViewerPlugin implements PropertyChangeListener {
-  private static final Logger LOGGER = LoggerFactory.getLogger(MPRContainer.class);
+public class MprContainer extends DicomViewerPlugin implements PropertyChangeListener {
+  private static final Logger LOGGER = LoggerFactory.getLogger(MprContainer.class);
 
   static SynchView defaultMpr;
 
@@ -222,16 +224,16 @@ public class MPRContainer extends DicomViewerPlugin implements PropertyChangeLis
   private Thread process;
   private String lastCommand;
 
-  public MPRContainer() {
+  public MprContainer() {
     this(VIEWS_1x1, null);
   }
 
-  public MPRContainer(GridBagLayoutModel layoutModel, String uid) {
+  public MprContainer(GridBagLayoutModel layoutModel, String uid) {
     super(
         EventManager.getInstance(),
         layoutModel,
         uid,
-        MPRFactory.NAME,
+        MprFactory.NAME,
         ResourceUtil.getIcon(OtherIcon.VIEW_3D),
         null);
     setSynchView(SynchView.NONE);
@@ -361,7 +363,7 @@ public class MPRContainer extends DicomViewerPlugin implements PropertyChangeLis
   @Override
   public void close() {
     stopCurrentProcess();
-    MPRFactory.closeSeriesViewer(this);
+    MprFactory.closeSeriesViewer(this);
     super.close();
   }
 
@@ -479,10 +481,10 @@ public class MPRContainer extends DicomViewerPlugin implements PropertyChangeLis
             title,
             ResourceUtil.getIcon(ActionIcon.PRINT),
             event -> {
-              ColorLayerUI layer = ColorLayerUI.createTransparentLayerUI(MPRContainer.this);
+              ColorLayerUI layer = ColorLayerUI.createTransparentLayerUI(MprContainer.this);
               PrintDialog<DicomImageElement> dialog =
                   new PrintDialog<>(
-                      SwingUtilities.getWindowAncestor(MPRContainer.this), title, eventManager);
+                      SwingUtilities.getWindowAncestor(MprContainer.this), title, eventManager);
               ColorLayerUI.showCenterScreen(dialog, layer);
             });
     actions.add(printStd);
@@ -493,10 +495,10 @@ public class MPRContainer extends DicomViewerPlugin implements PropertyChangeLis
             title2,
             null,
             event -> {
-              ColorLayerUI layer = ColorLayerUI.createTransparentLayerUI(MPRContainer.this);
+              ColorLayerUI layer = ColorLayerUI.createTransparentLayerUI(MprContainer.this);
               DicomPrintDialog<?> dialog =
                   new DicomPrintDialog<>(
-                      SwingUtilities.getWindowAncestor(MPRContainer.this), title2, eventManager);
+                      SwingUtilities.getWindowAncestor(MprContainer.this), title2, eventManager);
               ColorLayerUI.showCenterScreen(dialog, layer);
             });
     actions.add(printStd2);
@@ -546,7 +548,7 @@ public class MPRContainer extends DicomViewerPlugin implements PropertyChangeLis
             @Override
             public void run() {
               try {
-                SeriesBuilder.createMissingSeries(this, MPRContainer.this, view);
+                SeriesBuilder.createMissingSeries(this, MprContainer.this, view);
 
                 // Following actions need to be executed in EDT thread
                 GuiExecutor.instance()
@@ -554,7 +556,7 @@ public class MPRContainer extends DicomViewerPlugin implements PropertyChangeLis
                         () -> {
                           eventManager
                               .getAction(ActionW.SYNCH)
-                              .ifPresent(c -> c.setSelectedItem(MPRContainer.defaultMpr));
+                              .ifPresent(c -> c.setSelectedItem(MprContainer.defaultMpr));
 
                           // Set the middle image ( the best choice to propagate the default preset
                           // of non CT modalities)
@@ -565,10 +567,14 @@ public class MPRContainer extends DicomViewerPlugin implements PropertyChangeLis
                           eventManager
                               .getAction(ActionW.CROSSHAIR)
                               .ifPresent(
-                                  i ->
-                                      i.setPoint(
-                                          view.getImageCoordinatesFromMouse(
-                                              view.getWidth() / 2, view.getHeight() / 2)));
+                                  i -> {
+                                    Point2D pt =
+                                        view.getImageCoordinatesFromMouse(
+                                            view.getWidth() / 2, view.getHeight() / 2);
+                                    PanPoint panPoint =
+                                        new PanPoint(PanPoint.State.CENTER, pt.getX(), pt.getY());
+                                    i.setPoint(panPoint);
+                                  });
 
                           // Force to propagate the default preset
                           eventManager

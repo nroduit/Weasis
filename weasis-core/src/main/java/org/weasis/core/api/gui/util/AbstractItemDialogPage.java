@@ -72,6 +72,21 @@ public abstract class AbstractItemDialogPage extends JPanel implements PageItem,
     return new ArrayList<>(subPageList);
   }
 
+  public void sortSubPages() {
+    subPageList.sort(
+        (o1, o2) -> {
+          int val1 =
+              o1 instanceof AbstractItemDialogPage page
+                  ? page.getComponentPosition()
+                  : Integer.MAX_VALUE;
+          int val2 =
+              o2 instanceof AbstractItemDialogPage page
+                  ? page.getComponentPosition()
+                  : Integer.MAX_VALUE;
+          return Integer.compare(val1, val2);
+        });
+  }
+
   public void resetAllSubPagesToDefaultValues() {
     for (PageItem subPage : subPageList) {
       subPage.resetToDefaultValues();

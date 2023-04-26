@@ -48,6 +48,7 @@ import org.weasis.core.ui.editor.SeriesViewerListener;
 import org.weasis.core.ui.editor.image.SynchData.Mode;
 import org.weasis.core.ui.editor.image.dockable.MeasureTool;
 import org.weasis.core.ui.model.graphic.Graphic;
+import org.weasis.core.ui.model.utils.bean.PanPoint;
 import org.weasis.core.ui.model.utils.imp.DefaultViewModel;
 import org.weasis.core.ui.pref.ZoomSetting;
 
@@ -351,7 +352,7 @@ public abstract class ImageViewerEventManager<E extends ImageElement> implements
     return new CrosshairListener(ActionW.CROSSHAIR, null) {
 
       @Override
-      public void pointChanged(Point2D point) {
+      public void pointChanged(PanPoint point) {
         firePropertyChange(
             ActionW.SYNCH.cmd(),
             null,

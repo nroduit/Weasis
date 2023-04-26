@@ -23,6 +23,8 @@ import org.weasis.core.api.gui.util.BasicActionState;
 import org.weasis.core.api.gui.util.Feature;
 import org.weasis.core.api.gui.util.MouseActionAdapter;
 import org.weasis.core.api.service.AuditLog;
+import org.weasis.core.ui.model.utils.bean.PanPoint;
+import org.weasis.core.ui.model.utils.bean.PanPoint.State;
 
 public abstract class CrosshairListener extends MouseActionAdapter
     implements ActionState, KeyListener {
@@ -33,11 +35,11 @@ public abstract class CrosshairListener extends MouseActionAdapter
   private boolean triggerAction = true;
   private Point pickPoint;
 
-  private Point2D point;
+  private PanPoint point;
 
-  protected CrosshairListener(Feature<? extends ActionState> action, Point2D point) {
+  protected CrosshairListener(Feature<? extends ActionState> action, PanPoint point) {
     this.basicState = new BasicActionState(action);
-    this.point = point == null ? new Point2D.Double() : point;
+    this.point = point == null ? new PanPoint(State.CENTER) : point;
   }
 
   @Override
@@ -64,7 +66,7 @@ public abstract class CrosshairListener extends MouseActionAdapter
     return (Point2D) point.clone();
   }
 
-  public void setPoint(Point2D point) {
+  public void setPoint(PanPoint point) {
     if (point != null) {
       this.point = point;
       pointChanged(point);
@@ -86,14 +88,14 @@ public abstract class CrosshairListener extends MouseActionAdapter
     return "x:" + point.getX() + ", y:" + point.getY(); // NON-NLS
   }
 
-  public abstract void pointChanged(Point2D point);
+  public abstract void pointChanged(PanPoint point);
 
   @Override
   public void setButtonMaskEx(int buttonMask) {
     // Zero is used to disable the mouse adapter
     if (buttonMask == 0 && this.buttonMaskEx != 0) {
       // Convention to delete cross-lines on the views when selecting another action
-      this.setPoint(new Point2D.Double(Double.NaN, Double.NaN));
+      this.setPoint(new PanPoint(State.CENTER, Double.NaN, Double.NaN));
     }
     super.setButtonMaskEx(buttonMask);
   }
@@ -138,7 +140,9 @@ public abstract class CrosshairListener extends MouseActionAdapter
 
           if (Objects.nonNull(panner)) {
             pickPoint = e.getPoint();
-            setPoint(panner.getImageCoordinatesFromMouse(e.getX(), e.getY()));
+            Point2D pt = panner.getImageCoordinatesFromMouse(e.getX(), e.getY());
+            PanPoint panPoint = new PanPoint(PanPoint.State.DRAGSTART, pt.getX(), pt.getY());
+            setPoint(panPoint);
           }
         }
       }
@@ -158,7 +162,9 @@ public abstract class CrosshairListener extends MouseActionAdapter
             lev.mouseDragged(e);
           }
         } else if (Objects.nonNull(panner) && Objects.nonNull(pickPoint)) {
-          setPoint(panner.getImageCoordinatesFromMouse(e.getX(), e.getY()));
+          Point2D pt = panner.getImageCoordinatesFromMouse(e.getX(), e.getY());
+          PanPoint panPoint = new PanPoint(State.DRAGGING, pt.getX(), pt.getY());
+          setPoint(panPoint);
         }
       }
     }
@@ -171,6 +177,11 @@ public abstract class CrosshairListener extends MouseActionAdapter
         && !e.isConsumed()
         && (e.getModifiers() & getButtonMask()) != 0) {
       ViewCanvas<?> panner = getViewCanvas(e);
+      if (Objects.nonNull(panner) && Objects.nonNull(pickPoint)) {
+        Point2D pt = panner.getImageCoordinatesFromMouse(e.getX(), e.getY());
+        PanPoint panPoint = new PanPoint(State.DRAGEND, pt.getX(), pt.getY());
+        setPoint(panPoint);
+      }
       Optional.ofNullable(panner).ifPresent(p -> p.getJComponent().repaint());
     }
   }

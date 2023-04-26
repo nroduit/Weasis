@@ -30,7 +30,7 @@ import org.weasis.dicom.viewer2d.Messages;
 import org.weasis.dicom.viewer2d.mpr.MprView.SliceOrientation;
 
 @org.osgi.service.component.annotations.Component(service = SeriesViewerFactory.class)
-public class MPRFactory implements SeriesViewerFactory {
+public class MprFactory implements SeriesViewerFactory {
 
   public static final String NAME = Messages.getString("MPRFactory.title");
 
@@ -51,7 +51,7 @@ public class MPRFactory implements SeriesViewerFactory {
 
   @Override
   public SeriesViewer<?> createSeriesViewer(Map<String, Object> properties) {
-    GridBagLayoutModel model = MPRContainer.view1;
+    GridBagLayoutModel model = MprContainer.view1;
     String uid = null;
     if (properties != null) {
       Object obj = properties.get(org.weasis.core.api.image.GridBagLayoutModel.class.getName());
@@ -65,7 +65,7 @@ public class MPRFactory implements SeriesViewerFactory {
       }
     }
 
-    MPRContainer instance = new MPRContainer(model, uid);
+    MprContainer instance = new MprContainer(model, uid);
     if (properties != null) {
       Object obj = properties.get(DataExplorerModel.class.getName());
       if (obj instanceof DicomModel m) {
@@ -89,7 +89,7 @@ public class MPRFactory implements SeriesViewerFactory {
     return instance;
   }
 
-  public static void closeSeriesViewer(MPRContainer mprContainer) {
+  public static void closeSeriesViewer(MprContainer mprContainer) {
     // Unregister the PropertyChangeListener
     DataExplorerView dicomView = UIManager.getExplorerPlugin(DicomExplorer.NAME);
     if (dicomView != null) {
@@ -104,7 +104,7 @@ public class MPRFactory implements SeriesViewerFactory {
 
   @Override
   public boolean isViewerCreatedByThisFactory(SeriesViewer<? extends MediaElement> viewer) {
-    return viewer instanceof MPRContainer;
+    return viewer instanceof MprContainer;
   }
 
   @Override

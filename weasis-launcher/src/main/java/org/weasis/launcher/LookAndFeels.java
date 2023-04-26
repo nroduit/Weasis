@@ -46,7 +46,7 @@ public final class LookAndFeels {
             "Core Light - FlatIntelliJ", "com.formdev.flatlaf.FlatIntelliJLaf", false); // NON-NLS
     defaultDarkTheme =
         new ReadableLookAndFeelInfo(
-            "Core Dark - Flat Weasis Compact", // NON-NLS
+            "Core Dark - Flat Weasis", // NON-NLS
             "org.weasis.launcher.FlatWeasisTheme",
             true);
     lookAndFeels = buildFlatLookAndFeels();

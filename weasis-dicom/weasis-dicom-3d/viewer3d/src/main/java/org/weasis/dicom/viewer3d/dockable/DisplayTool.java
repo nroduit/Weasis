@@ -68,9 +68,6 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
   private DefaultMutableTreeNode dicomInfo;
   private DefaultMutableTreeNode drawings;
 
-  private DefaultMutableTreeNode crosshairMode;
-
-  private DefaultMutableTreeNode crosshairCenter;
   private DefaultMutableTreeNode minAnnotations;
   private DefaultMutableTreeNode orientationCube;
 
@@ -106,10 +103,6 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
 
     orientationCube = new DefaultMutableTreeNode(ActionVol.ORIENTATION_CUBE, false);
     rootNode.add(orientationCube);
-    crosshairMode = new DefaultMutableTreeNode(ActionVol.HIDE_CROSSHAIR_CENTER, false);
-    rootNode.add(crosshairMode);
-    crosshairCenter = new DefaultMutableTreeNode(ActionVol.RECENTERING_CROSSHAIR, false);
-    rootNode.add(crosshairCenter);
 
     DefaultTreeModel model = new DefaultTreeModel(rootNode, false);
     tree.setModel(model);
@@ -184,14 +177,6 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
             for (ViewCanvas<DicomImageElement> v : views) {
               v.setDrawingsVisibility(selected);
             }
-          } else if (crosshairMode.equals(selObject)) {
-            for (ViewCanvas<DicomImageElement> v : views) {
-              v.setActionsInView(ActionVol.HIDE_CROSSHAIR_CENTER.cmd(), selected, true);
-            }
-          } else if (crosshairCenter.equals(selObject)) {
-            for (ViewCanvas<DicomImageElement> v : views) {
-              v.setActionsInView(ActionVol.RECENTERING_CROSSHAIR.cmd(), selected, true);
-            }
           } else if (orientationCube.equals(selObject)) {
             for (ViewCanvas<DicomImageElement> v : views) {
               v.setActionsInView(ActionVol.ORIENTATION_CUBE.cmd(), selected, true);
@@ -265,14 +250,6 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
         LangUtil.getNULLtoTrue((Boolean) view.getActionValue(ActionW.DRAWINGS.cmd())));
 
     // FIXME store in pref
-    initPathSelection(
-        getTreePath(crosshairMode),
-        LangUtil.getNULLtoTrue(
-            (Boolean) view.getActionValue(ActionVol.HIDE_CROSSHAIR_CENTER.cmd())));
-    initPathSelection(
-        getTreePath(crosshairCenter),
-        LangUtil.getNULLtoFalse(
-            (Boolean) view.getActionValue(ActionVol.RECENTERING_CROSSHAIR.cmd())));
     initPathSelection(
         getTreePath(orientationCube),
         LangUtil.getNULLtoFalse((Boolean) view.getActionValue(ActionVol.ORIENTATION_CUBE.cmd())));

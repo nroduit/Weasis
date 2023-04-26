@@ -73,18 +73,6 @@ public class ActionVol {
   public static final SliderChangeListenerValue VOL_OPACITY =
       new SliderChangeListenerValue(Messages.getString("opacity"), "vol.opacity", 0, 0, null);
 
-  public static final BasicActionStateValue HIDE_CROSSHAIR_CENTER =
-      new BasicActionStateValue(
-          Messages.getString("hide.crosshair.center"),
-          "crosshair-hide-center", // NON-NLS
-          0,
-          0,
-          null); // NON-NLS
-
-  public static final BasicActionStateValue RECENTERING_CROSSHAIR =
-      new BasicActionStateValue(
-          Messages.getString("recenter.mpr"), "crosshair-recenter", 0, 0, null); // NON-NLS
-
   public static final BasicActionStateValue ORIENTATION_CUBE =
       new BasicActionStateValue(
           Messages.getString("orientation.cube"), "crosshair-cube", 0, 0, null); // NON-NLS

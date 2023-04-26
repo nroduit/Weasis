@@ -154,8 +154,6 @@ public class View3d extends VolumeCanvas
     volumePreset.setRequiredBuilding(true);
 
     actionsInView.put(ActionVol.ORIENTATION_CUBE.cmd(), false);
-    actionsInView.put(ActionVol.HIDE_CROSSHAIR_CENTER.cmd(), true);
-    actionsInView.put(ActionVol.RECENTERING_CROSSHAIR.cmd(), false);
 
     this.infoLayer = new InfoLayer3d(this);
 
