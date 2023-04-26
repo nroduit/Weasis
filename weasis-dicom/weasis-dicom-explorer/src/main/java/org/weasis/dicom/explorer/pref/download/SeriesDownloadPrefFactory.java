@@ -20,7 +20,7 @@ public class SeriesDownloadPrefFactory implements PreferencesPageFactory {
 
   @Override
   public AbstractItemDialogPage createInstance(Hashtable<String, Object> properties) {
-    return new SeriesDownloadPrefView();
+    return new DicomExplorerPrefView();
   }
 
   @Override
@@ -28,7 +28,7 @@ public class SeriesDownloadPrefFactory implements PreferencesPageFactory {
 
   @Override
   public boolean isComponentCreatedByThisFactory(Insertable component) {
-    return component instanceof SeriesDownloadPrefView;
+    return component instanceof DicomExplorerPrefView;
   }
 
   @Override

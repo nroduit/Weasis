@@ -16,6 +16,7 @@ import it.cnr.imaa.essi.lablib.gui.checkboxtree.TreeCheckingModel;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
@@ -397,7 +398,11 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener {
     treeStructures.addTreeCheckingListener(this::treeValueChanged);
 
     expandTree(treeStructures, rootNodeStructures);
-    tabbedPane.add(new JScrollPane(treeStructures), nodeStructures.toString());
+    Dimension minimumSize = GuiUtils.getDimension(150, 150);
+    JScrollPane scrollPane = new JScrollPane(treeStructures);
+    scrollPane.setMinimumSize(minimumSize);
+    scrollPane.setPreferredSize(minimumSize);
+    tabbedPane.add(scrollPane, nodeStructures.toString());
   }
 
   public void initIsodosesTree() {
@@ -416,7 +421,11 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener {
     treeIsodoses.addTreeCheckingListener(this::treeValueChanged);
 
     expandTree(treeIsodoses, rootNodeIsodoses);
-    tabbedPane.add(new JScrollPane(treeIsodoses), nodeIsodoses.toString());
+    Dimension minimumSize = GuiUtils.getDimension(150, 150);
+    JScrollPane scrollPane = new JScrollPane(treeIsodoses);
+    scrollPane.setMinimumSize(minimumSize);
+    scrollPane.setPreferredSize(minimumSize);
+    tabbedPane.add(scrollPane, nodeIsodoses.toString());
   }
 
   public JSliderW createTransparencySlider(int labelDivision, boolean displayValueInTitle) {
@@ -758,8 +767,8 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener {
         nodeIsodoses.removeAllChildren();
 
         Plan plan = rtSet.getPlan(selectedPlan);
-        this.lblRtPlanName.setText(plan.getName());
-        this.txtRtPlanDoseValue.setText(String.format("%.0f", plan.getRxDose())); // NON-NLS
+        lblRtPlanName.setText(plan.getName());
+        txtRtPlanDoseValue.setText(String.format("%.0f", plan.getRxDose())); // NON-NLS
 
         Dose planDose = plan.getFirstDose();
         if (planDose != null) {

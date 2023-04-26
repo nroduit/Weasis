@@ -89,7 +89,7 @@ import org.weasis.dicom.explorer.DicomSorter;
 import org.weasis.dicom.explorer.HangingProtocols.OpeningViewer;
 import org.weasis.dicom.explorer.LoadDicomObjects;
 import org.weasis.dicom.explorer.Messages;
-import org.weasis.dicom.explorer.pref.download.SeriesDownloadPrefView;
+import org.weasis.dicom.explorer.pref.download.DicomExplorerPrefView;
 import org.weasis.dicom.explorer.pref.node.AbstractDicomNode;
 import org.weasis.dicom.explorer.pref.node.DicomWebNode;
 import org.weasis.dicom.explorer.pref.node.DicomWebNode.WebType;
@@ -158,7 +158,7 @@ public class DownloadManager {
 
   public static OpeningViewer getOpeningViewer() {
     String key =
-        BundleTools.SYSTEM_PREFERENCES.getProperty(SeriesDownloadPrefView.DOWNLOAD_OPEN_MODE);
+        BundleTools.SYSTEM_PREFERENCES.getProperty(DicomExplorerPrefView.DOWNLOAD_OPEN_MODE);
     return OpeningViewer.getOpeningViewer(key, OpeningViewer.ALL_PATIENTS);
   }
 

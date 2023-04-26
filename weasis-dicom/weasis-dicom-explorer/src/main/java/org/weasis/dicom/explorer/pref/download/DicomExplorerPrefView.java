@@ -29,7 +29,7 @@ import org.weasis.dicom.explorer.DicomSorter.SortingTime;
 import org.weasis.dicom.explorer.HangingProtocols.OpeningViewer;
 import org.weasis.dicom.explorer.Messages;
 
-public class SeriesDownloadPrefView extends AbstractItemDialogPage {
+public class DicomExplorerPrefView extends AbstractItemDialogPage {
   public static final String DOWNLOAD_IMMEDIATELY = "weasis.download.immediately";
   public static final String DOWNLOAD_OPEN_MODE = "weasis.download.open.view.mode";
   public static final String STUDY_DATE_SORTING = "weasis.sorting.study.date";
@@ -43,7 +43,7 @@ public class SeriesDownloadPrefView extends AbstractItemDialogPage {
   private final JComboBox<SortingTime> studyDateSortingComboBox =
       new JComboBox<>(SortingTime.values());
 
-  public SeriesDownloadPrefView() {
+  public DicomExplorerPrefView() {
     super(Messages.getString("DicomExplorer.title"), 607);
 
     int thumbnailSize =
@@ -102,7 +102,7 @@ public class SeriesDownloadPrefView extends AbstractItemDialogPage {
         BundleTools.SYSTEM_PREFERENCES.getBooleanProperty(DOWNLOAD_IMMEDIATELY, true));
 
     BundleTools.SYSTEM_PREFERENCES.resetProperty(
-        STUDY_DATE_SORTING, String.valueOf(SortingTime.CHRONOLOGICAL.getId()));
+        STUDY_DATE_SORTING, String.valueOf(SortingTime.INVERSE_CHRONOLOGICAL.getId()));
     studyDateSortingComboBox.setSelectedItem(DicomSorter.getStudyDateSorting());
 
     BundleTools.SYSTEM_PREFERENCES.resetProperty(

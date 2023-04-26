@@ -23,7 +23,7 @@ import org.weasis.core.api.service.BundleTools;
 import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.explorer.DicomExplorer.SeriesPane;
 import org.weasis.dicom.explorer.DicomExplorer.StudyPane;
-import org.weasis.dicom.explorer.pref.download.SeriesDownloadPrefView;
+import org.weasis.dicom.explorer.pref.download.DicomExplorerPrefView;
 
 public class DicomSorter {
   public enum SortingTime {
@@ -57,7 +57,7 @@ public class DicomSorter {
           return s;
         }
       }
-      return CHRONOLOGICAL;
+      return INVERSE_CHRONOLOGICAL;
     }
   }
 
@@ -285,7 +285,7 @@ public class DicomSorter {
   public static SortingTime getStudyDateSorting() {
     int key =
         BundleTools.SYSTEM_PREFERENCES.getIntProperty(
-            SeriesDownloadPrefView.STUDY_DATE_SORTING, SortingTime.INVERSE_CHRONOLOGICAL.getId());
+            DicomExplorerPrefView.STUDY_DATE_SORTING, SortingTime.INVERSE_CHRONOLOGICAL.getId());
     return SortingTime.valueOf(key);
   }
 }

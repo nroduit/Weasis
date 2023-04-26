@@ -48,7 +48,7 @@ import org.weasis.dicom.explorer.DicomModel;
 import org.weasis.dicom.explorer.ExplorerTask;
 import org.weasis.dicom.explorer.LoadLocalDicom;
 import org.weasis.dicom.explorer.PluginOpeningStrategy;
-import org.weasis.dicom.explorer.pref.download.SeriesDownloadPrefView;
+import org.weasis.dicom.explorer.pref.download.DicomExplorerPrefView;
 import org.weasis.dicom.explorer.pref.node.AbstractDicomNode;
 import org.weasis.dicom.explorer.pref.node.AbstractDicomNode.RetrieveType;
 import org.weasis.dicom.explorer.pref.node.DefaultDicomNode;
@@ -381,7 +381,7 @@ public class RetrieveTask extends ExplorerTask<ExplorerTask<Boolean, String>, St
     Map<String, LoadSeries> loadMap = new HashMap<>();
     boolean startDownloading =
         BundleTools.SYSTEM_PREFERENCES.getBooleanProperty(
-            SeriesDownloadPrefView.DOWNLOAD_IMMEDIATELY, true);
+            DicomExplorerPrefView.DOWNLOAD_IMMEDIATELY, true);
 
     WadoParameters wadoParameters = new WadoParameters("", true, true);
 
