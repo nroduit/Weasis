@@ -35,6 +35,7 @@ import java.awt.Window;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
+import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
@@ -513,6 +514,30 @@ public class GuiUtils {
         JOptionPane.showMessageDialog(
             parent,
             Messages.getString("JMVUtils.browser") + StringUtil.COLON_AND_SPACE + url,
+            Messages.getString("JMVUtils.error"),
+            JOptionPane.ERROR_MESSAGE);
+      }
+    }
+  }
+
+  public static void openSystemExplorer(Component parent, File file) {
+    if (file != null) {
+      if (SystemInfo.isLinux) {
+        try {
+          String[] cmd = new String[] {"xdg-open", file.getPath()}; // NON-NLS
+          Runtime.getRuntime().exec(cmd);
+        } catch (IOException e) {
+          LOGGER.error("Cannot open a file to the system explorer", e);
+        }
+      } else if (Desktop.isDesktopSupported()) {
+        final Desktop desktop = Desktop.getDesktop();
+        if (desktop.isSupported(Desktop.Action.BROWSE_FILE_DIR)) {
+          desktop.browseFileDirectory(file);
+        }
+      } else {
+        JOptionPane.showMessageDialog(
+            parent,
+            Messages.getString("JMVUtils.browser") + StringUtil.COLON_AND_SPACE + file.getPath(),
             Messages.getString("JMVUtils.error"),
             JOptionPane.ERROR_MESSAGE);
       }

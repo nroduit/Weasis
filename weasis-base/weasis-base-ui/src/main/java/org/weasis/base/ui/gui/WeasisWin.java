@@ -771,6 +771,13 @@ public class WeasisWin {
         });
     helpMenuItem.add(updateMenuItem);
 
+    final JMenuItem openLogFolderMenuItem = new JMenuItem("Open the logging folder");
+    openLogFolderMenuItem.addActionListener(
+        e ->
+            GuiUtils.openSystemExplorer(
+                openLogFolderMenuItem, new File(AppProperties.WEASIS_PATH, "log")));
+    helpMenuItem.add(openLogFolderMenuItem);
+
     final JMenuItem reportMenuItem = new JMenuItem(Messages.getString("submit.bug.report"));
     reportMenuItem.addActionListener(
         e -> openBrowser(reportMenuItem, "https://github.com/nroduit/Weasis/issues"));
