@@ -63,6 +63,7 @@ import org.weasis.core.api.util.ThreadUtil;
 import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.SeriesViewerFactory;
 import org.weasis.core.ui.editor.ViewerPluginBuilder;
+import org.weasis.core.util.LangUtil;
 import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.codec.DicomEncapDocElement;
 import org.weasis.dicom.codec.DicomEncapDocSeries;
@@ -870,6 +871,22 @@ public class DicomModel implements TreeModel, DataExplorerModel {
           if (specialElementList == null) {
             specialElementList = new CopyOnWriteArrayList<>();
             initialSeries.setTag(TagW.DicomSpecialElementList, specialElementList);
+            if ("rt/dicom".equals(rMime)) {
+              MediaSeriesGroup st = getParent(initialSeries, DicomModel.study);
+              if (st != null
+                  && !LangUtil.getNULLtoFalse((Boolean) st.getTagValue(TagW.StudyDicomRT))) {
+                st.setTag(TagW.StudyDicomRT, Boolean.TRUE);
+                for (MediaSeriesGroup s : getChildren(st)) {
+                  String modality = TagD.getTagValue(s, Tag.Modality, String.class);
+                  if ("CT".equals(modality)) {
+                    // Force to update the Plugin Tools of the selected Viewer
+                    firePropertyChange(
+                        new ObservableEvent(BasicAction.UPDATE_TOOLS, this, null, this));
+                    break;
+                  }
+                }
+              }
+            }
           } else if ("sr/dicom".equals(rMime) || "wf/dicom".equals(rMime)) { // NON-NLS
             // Split SR series to have only one object by series
             Series<?> s = splitSeries(dicomReader, initialSeries);

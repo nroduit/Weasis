@@ -78,6 +78,7 @@ import org.weasis.core.ui.model.graphic.Graphic;
 import org.weasis.core.ui.model.imp.XmlGraphicModel;
 import org.weasis.core.ui.model.layer.LayerType;
 import org.weasis.core.ui.util.CheckBoxTreeBuilder;
+import org.weasis.core.util.LangUtil;
 import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.DicomSeries;
@@ -792,23 +793,10 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener {
     }
   }
 
-  public static boolean isCompatible(MediaSeries<?> dcmSeries) {
-    if (dcmSeries != null) {
-      DicomModel dicomModel = (DicomModel) dcmSeries.getTagValue(TagW.ExplorerModel);
-      if (dicomModel != null) {
-        MediaSeriesGroup patient = dicomModel.getParent(dcmSeries, DicomModel.patient);
-        if (patient != null) {
-          return containsRTStruct(dicomModel, patient);
-        }
-      }
-    }
-    return false;
-  }
-
   public void initTreeValues(ViewCanvas<?> viewCanvas) {
     if (viewCanvas != null) {
       MediaSeries<?> dcmSeries = viewCanvas.getSeries();
-      boolean compatible = RtDisplayTool.isCompatible(dcmSeries);
+      boolean compatible = RtDisplayTool.isCtLinkedRT(dcmSeries);
       if (compatible) {
         DicomModel dicomModel = (DicomModel) dcmSeries.getTagValue(TagW.ExplorerModel);
         if (dicomModel != null) {
@@ -876,13 +864,13 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener {
     }
   }
 
-  private static boolean containsRTStruct(DicomModel model, MediaSeriesGroup patient) {
-    for (MediaSeriesGroup st : model.getChildren(patient)) {
-      for (MediaSeriesGroup s : model.getChildren(st)) {
-        String modality = TagD.getTagValue(s, Tag.Modality, String.class);
-        if ("RTPLAN".equals(modality) || "RTSTRUCT".equals(modality)) {
-          return true;
-        }
+  public static boolean isCtLinkedRT(MediaSeries<?> dcmSeries) {
+    if (dcmSeries != null) {
+      DicomModel dicomModel = (DicomModel) dcmSeries.getTagValue(TagW.ExplorerModel);
+      if (dicomModel != null) {
+        MediaSeriesGroup study = dicomModel.getParent(dcmSeries, DicomModel.study);
+        return study != null
+            && LangUtil.getNULLtoFalse((Boolean) study.getTagValue(TagW.StudyDicomRT));
       }
     }
     return false;

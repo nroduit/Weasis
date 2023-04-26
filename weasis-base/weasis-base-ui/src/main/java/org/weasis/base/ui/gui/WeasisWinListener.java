@@ -26,6 +26,7 @@ import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.DataExplorerView;
 import org.weasis.core.api.explorer.DataExplorerViewFactory;
 import org.weasis.core.api.explorer.ObservableEvent;
+import org.weasis.core.api.explorer.ObservableEvent.BasicAction;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.core.api.explorer.model.TreeModel;
 import org.weasis.core.api.gui.util.GuiExecutor;
@@ -62,7 +63,7 @@ public class WeasisWinListener implements MainWindowListener {
       return;
     }
 
-    ViewerPlugin selectedPlugin = mainWindow.getSelectedPlugin();
+    ViewerPlugin<?> selectedPlugin = mainWindow.getSelectedPlugin();
     // Get only ObservableEvent
     if (evt instanceof ObservableEvent event) {
       ObservableEvent.BasicAction action = event.getActionCommand();
@@ -90,7 +91,7 @@ public class WeasisWinListener implements MainWindowListener {
             if (selectedPlugin == null || !group.equals(selectedPlugin.getGroupID())) {
               synchronized (UIManager.VIEWER_PLUGINS) {
                 for (int i = UIManager.VIEWER_PLUGINS.size() - 1; i >= 0; i--) {
-                  ViewerPlugin p = UIManager.VIEWER_PLUGINS.get(i);
+                  ViewerPlugin<?> p = UIManager.VIEWER_PLUGINS.get(i);
                   if (group.equals(p.getGroupID())) {
                     p.setSelectedAndGetFocus();
                     break;
@@ -163,18 +164,23 @@ public class WeasisWinListener implements MainWindowListener {
             }
             UIManager.closeSeriesViewer(pluginsToRemove);
           }
+        } else if (BasicAction.UPDATE_TOOLS.equals(action)) {
+          mainWindow.updateTools(selectedPlugin, selectedPlugin, true);
         }
       } else if (event.getSource() instanceof ViewerPlugin) {
         if (ObservableEvent.BasicAction.UPDATE_TOOLBARS.equals(action)) {
-          List toolBars = selectedPlugin == null ? null : selectedPlugin.getToolBar();
+          List<Toolbar> toolBars = selectedPlugin == null ? null : selectedPlugin.getToolBar();
           mainWindow.updateToolbars(toolBars, toolBars, true);
         } else if (ObservableEvent.BasicAction.NULL_SELECTION.equals(action)) {
           mainWindow.setSelectedPlugin(null);
         }
-      } else if (event.getSource() instanceof DataExplorerView
-          && ObservableEvent.BasicAction.NULL_SELECTION.equals(action)) {
-        if (mainWindow.getSelectedPlugin() == null) {
-          mainWindow.setSelectedPlugin(null);
+      } else if (event.getSource() instanceof DataExplorerView) {
+        if (ObservableEvent.BasicAction.NULL_SELECTION.equals(action)) {
+          if (mainWindow.getSelectedPlugin() == null) {
+            mainWindow.setSelectedPlugin(null);
+          }
+        } else if (BasicAction.UPDATE_TOOLS.equals(action)) {
+          mainWindow.updateTools(selectedPlugin, selectedPlugin, true);
         }
       }
     }

@@ -38,7 +38,7 @@ public class RtDisplayToolFactory implements InsertableFactory {
     Object val = properties.get(MediaSeries.class.getName());
     boolean compatible = false;
     if (val instanceof MediaSeries<?> mediaSeries) {
-      compatible = RtDisplayTool.isCompatible(mediaSeries);
+      compatible = RtDisplayTool.isCtLinkedRT(mediaSeries);
     }
     if (!compatible) {
       return null;

@@ -604,7 +604,7 @@ public class WeasisWin {
       selectedPlugin.setSelected(true);
       return;
     }
-    ViewerPlugin oldPlugin = selectedPlugin;
+    ViewerPlugin<?> oldPlugin = selectedPlugin;
     if (oldPlugin != null) {
       oldPlugin.setSelected(false);
     }
@@ -619,7 +619,7 @@ public class WeasisWin {
     selectedPlugin.setSelected(true);
   }
 
-  void updateTools(ViewerPlugin oldPlugin, ViewerPlugin plugin, boolean force) {
+  void updateTools(ViewerPlugin<?> oldPlugin, ViewerPlugin<?> plugin, boolean force) {
     List<DockableTool> oldTool = oldPlugin == null ? null : oldPlugin.getToolPanel();
     List<DockableTool> tool = plugin == null ? null : plugin.getToolPanel();
     if (force || !Objects.equals(tool, oldTool)) {
