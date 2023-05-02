@@ -713,10 +713,8 @@ public class DicomMediaUtils {
         String units = dicomObject.getString(Tag.Units);
         // DICOM $C.8.9.1.1.3 Units
         // The units of the pixel values obtained after conversion from the stored pixel values (SV)
-        // (Pixel
-        // Data (7FE0,0010)) to pixel value units (U), as defined by Rescale Intercept (0028,1052)
-        // and
-        // Rescale Slope (0028,1053). Defined Terms:
+        // (Pixel Data (7FE0,0010)) to pixel value units (U), as defined by Rescale Intercept
+        // (0028,1052) and Rescale Slope (0028,1053). Defined Terms:
         // CNTS = counts
         // NONE = unitless
         // CM2 = centimeter**2

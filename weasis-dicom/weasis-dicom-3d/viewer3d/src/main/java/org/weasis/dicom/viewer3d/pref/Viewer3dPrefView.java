@@ -156,7 +156,7 @@ public class Viewer3dPrefView extends AbstractItemDialogPage {
 
       // This minimal version must match with the shader version
       Version minimalVersion = new Version(4, 3, 0);
-      boolean versionIssue = info.getVersion().compareTo(minimalVersion) < 0;
+      boolean versionIssue = !info.isVersionCompliant();
       if (versionIssue || info.max3dTextureSize() < RenderingLayer.MAX_QUALITY) {
         String alert =
             GuiUtils.HTML_COLOR_PATTERN.formatted(

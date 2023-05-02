@@ -839,6 +839,7 @@ public class View3d extends VolumeCanvas
       GuiUtils.addItemToMenu(popupMenu, manager.getMipTypeMenu(null));
       GuiUtils.addItemToMenu(popupMenu, manager.getShadingMenu(null));
       GuiUtils.addItemToMenu(popupMenu, manager.getSProjectionMenu(null));
+      GuiUtils.addItemToMenu(popupMenu, manager.getSlicingMenu(null));
       count = addSeparatorToPopupMenu(popupMenu, count);
 
       GuiUtils.addItemToMenu(popupMenu, manager.getZoomMenu(null));

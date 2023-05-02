@@ -25,4 +25,10 @@ public record OpenGLInfo(
       return new Version(0, 0, 0);
     }
   }
+
+  public boolean isVersionCompliant() {
+    // Compliant with Compute Shaders
+    Version minimalVersion = new Version(4, 3, 0);
+    return getVersion().compareTo(minimalVersion) >= 0;
+  }
 }

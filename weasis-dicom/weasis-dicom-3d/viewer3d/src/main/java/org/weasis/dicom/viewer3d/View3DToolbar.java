@@ -55,6 +55,17 @@ public class View3DToolbar extends WtoolBar {
               add(toggleButton);
             });
 
+    eventManager
+        .getAction(ActionVol.VOL_SLICING)
+        .ifPresent(
+            b -> {
+              JToggleButton toggleButton = new JToggleButton();
+              toggleButton.setToolTipText(ActionVol.VOL_SLICING.getTitle());
+              toggleButton.setIcon(ResourceUtil.getToolBarIcon(ActionIcon.VOLUME_SLICING));
+              b.registerActionState(toggleButton);
+              add(toggleButton);
+            });
+
     JButton config = new JButton(ResourceUtil.getToolBarIcon(ActionIcon.VOLUME_SETTINGS));
     config.setToolTipText(Messages.getString("3d.settings"));
     config.addActionListener(

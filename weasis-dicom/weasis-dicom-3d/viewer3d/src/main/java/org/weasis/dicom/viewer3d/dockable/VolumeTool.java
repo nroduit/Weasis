@@ -12,9 +12,7 @@ package org.weasis.dicom.viewer3d.dockable;
 import bibliothek.gui.dock.common.CLocation;
 import com.formdev.flatlaf.extras.FlatSVGIcon;
 import java.awt.Component;
-import java.awt.Dimension;
 import javax.swing.BorderFactory;
-import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
@@ -205,16 +203,6 @@ public class VolumeTool extends PluginTool {
               volumePanel.add(
                   GuiUtils.getFlowLayoutPanel(box, GuiUtils.boxHorizontalStrut(10), btnOptions));
               volumePanel.add(GuiUtils.boxVerticalStrut(gabY));
-            });
-
-    EventManager.getInstance()
-        .getAction(ActionVol.VOL_SLICING)
-        .ifPresent(
-            b -> {
-              JPanel pane = GuiUtils.getFlowLayoutPanel();
-              pane.add(b.createCheckBox(ActionVol.VOL_SLICING.getTitle()));
-              pane.add(Box.createRigidArea(new Dimension(20, 10)));
-              volumePanel.add(pane);
             });
 
     EventManager.getInstance()

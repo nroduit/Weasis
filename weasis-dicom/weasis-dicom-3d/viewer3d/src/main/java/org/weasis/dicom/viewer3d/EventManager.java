@@ -995,6 +995,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> {
       if (zoomAction.isPresent()) {
         menu = new JMenu(ActionW.ZOOM.getTitle());
         menu.setIcon(ActionW.ZOOM.getIcon());
+        GuiUtils.applySelectedIconEffect(menu);
         menu.setEnabled(zoomAction.get().isActionEnabled());
 
         if (zoomAction.get().isActionEnabled()) {
@@ -1014,7 +1015,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> {
       if (rotateAction.isPresent()) {
         menu = new JMenu(Messages.getString("View2dContainer.orientation"));
         menu.setIcon(ActionW.ROTATION.getIcon());
-
+        GuiUtils.applySelectedIconEffect(menu);
         ViewCanvas<DicomImageElement> view = getSelectedViewPane();
         menu.setEnabled(view instanceof View3d);
 
@@ -1121,10 +1122,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> {
         menu =
             shadingAction
                 .get()
-                .createUnregisteredJCCheckBoxMenuItem(
-                    ActionVol.VOL_SHADING.getTitle()
-                    //      , ResourceUtil.getIcon(ActionIcon.VOL_SHADING)
-                    );
+                .createUnregisteredJCCheckBoxMenuItem(ActionVol.VOL_SHADING.getTitle());
       }
     }
     return menu;
@@ -1139,9 +1137,24 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> {
             shadingAction
                 .get()
                 .createUnregisteredJCCheckBoxMenuItem(
-                    ActionVol.VOL_PROJECTION.getTitle()
-                    //      , ResourceUtil.getIcon(ActionIcon.VOL_PROJECTION)
-                    );
+                    ActionVol.VOL_PROJECTION.getTitle(),
+                    ResourceUtil.getIcon(ActionIcon.ORTHOGRAPHIC));
+      }
+    }
+    return menu;
+  }
+
+  public JCheckBoxMenuItem getSlicingMenu(String prop) {
+    JCheckBoxMenuItem menu = null;
+    if (BundleTools.SYSTEM_PREFERENCES.getBooleanProperty(prop, true)) {
+      Optional<ToggleButtonListener> shadingAction = getAction(ActionVol.VOL_SLICING);
+      if (shadingAction.isPresent()) {
+        menu =
+            shadingAction
+                .get()
+                .createUnregisteredJCCheckBoxMenuItem(
+                    ActionVol.VOL_SLICING.getTitle(),
+                    ResourceUtil.getIcon(ActionIcon.VOLUME_SLICING));
       }
     }
     return menu;

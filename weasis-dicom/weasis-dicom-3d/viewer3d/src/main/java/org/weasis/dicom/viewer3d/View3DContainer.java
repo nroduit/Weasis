@@ -501,6 +501,7 @@ public class View3DContainer extends ImageViewerPlugin<DicomImageElement>
         GuiUtils.addItemToMenu(menuRoot, manager.getMipTypeMenu(null));
         GuiUtils.addItemToMenu(menuRoot, manager.getShadingMenu(null));
         GuiUtils.addItemToMenu(menuRoot, manager.getSProjectionMenu(null));
+        GuiUtils.addItemToMenu(menuRoot, manager.getSlicingMenu(null));
         menuRoot.add(new JSeparator());
         GuiUtils.addItemToMenu(menuRoot, manager.getZoomMenu(null));
         GuiUtils.addItemToMenu(menuRoot, manager.getOrientationMenu(null));

@@ -258,6 +258,10 @@ public class View3DFactory implements SeriesViewerFactory {
           openGLInfo.vendor(),
           openGLInfo.renderer(),
           openGLInfo.version());
+      if (!openGLInfo.isVersionCompliant()) {
+        throw new IllegalStateException(
+            "OpenGL %s is not compliant with compute shader".formatted(openGLInfo.shortVersion()));
+      }
     } catch (Exception e) {
       BundleTools.LOCAL_UI_PERSISTENCE.putBooleanProperty(P_OPENGL_ENABLE, false);
       BundleTools.LOCAL_UI_PERSISTENCE.putBooleanProperty(P_OPENGL_PREV_INIT, false);
