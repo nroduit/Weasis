@@ -86,6 +86,7 @@ public class KeyObjectToolBar extends WtoolBar {
               toggleKOSelectionBtn.setIcon(KO_STAR_ICON);
               toggleKOSelectionBtn.setSelectedIcon(KO_STAR_ICON_SELECTED);
               b.registerActionState(toggleKOSelectionBtn);
+              add(toggleKOSelectionBtn);
             });
 
     evtMgr

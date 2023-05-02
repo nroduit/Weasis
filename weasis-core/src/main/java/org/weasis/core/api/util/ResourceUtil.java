@@ -138,6 +138,7 @@ public class ResourceUtil {
     TILE("svg/action/tile.svg"), // NON-NLS
     VOLUME("svg/action/volume.svg"), // NON-NLS
     VOLUME_SETTINGS("svg/action/volumeSettings.svg"), // NON-NLS
+    VOLUME_SLICING("svg/action/volumeSlicing.svg"), // NON-NLS
     WINDOW_LEVEL("svg/action/winLevel.svg"), // NON-NLS
     ZOOM("svg/action/zoom.svg"), // NON-NLS
     ZOOM_AREA("svg/action/zoomArea.svg"), // NON-NLS

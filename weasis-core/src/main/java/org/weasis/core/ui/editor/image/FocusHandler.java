@@ -78,13 +78,28 @@ public class FocusHandler<E extends ImageElement> extends MouseActionAdapter {
   }
 
   @Override
-  public void mouseMoved(MouseEvent e) {
-    showPixelInfos(e);
+  public void mouseMoved(MouseEvent evt) {
+    showPixelInfos(evt);
+    for (ViewButton b : viewCanvas.getViewButtons()) {
+      if (b.isVisible()) {
+        boolean hover = b.contains(evt.getPoint());
+        if (hover != b.isHover()) {
+          b.setHover(hover);
+          viewCanvas.getJComponent().repaint();
+        }
+      }
+    }
   }
 
   @Override
-  public void mouseReleased(MouseEvent e) {
+  public void mouseReleased(MouseEvent evt) {
     viewCanvas.getJComponent().setCursor(DefaultView2d.DEFAULT_CURSOR);
+    for (ViewButton b : viewCanvas.getViewButtons()) {
+      if (b.isVisible() && b.contains(evt.getPoint())) {
+        evt.consume();
+        break;
+      }
+    }
   }
 
   protected void showPixelInfos(MouseEvent mouseevent) {

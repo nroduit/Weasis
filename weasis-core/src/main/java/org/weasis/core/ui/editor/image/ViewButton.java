@@ -22,6 +22,7 @@ public class ViewButton extends Rectangle2D.Double implements ShowPopup {
   private final String name;
   private boolean visible;
   private boolean enable;
+  private boolean hover;
   private int position;
 
   public ViewButton(ShowPopup popup, Icon icon, String name) {
@@ -46,6 +47,14 @@ public class ViewButton extends Rectangle2D.Double implements ShowPopup {
 
   public void setEnable(boolean enable) {
     this.enable = enable;
+  }
+
+  public boolean isHover() {
+    return hover;
+  }
+
+  public void setHover(boolean hover) {
+    this.hover = hover;
   }
 
   public Icon getIcon() {

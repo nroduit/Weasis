@@ -21,6 +21,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import javax.swing.Icon;
+import javax.swing.UIManager;
 import org.dcm4che3.data.Tag;
 import org.dcm4che3.img.data.PrDicomObject;
 import org.joml.Vector3d;
@@ -689,12 +690,25 @@ public class InfoLayer extends AbstractInfoLayer<DicomImageElement> {
             b.x = positions[3].x;
             b.y = positions[3].y - icon.getIconHeight();
             positions[3].x += icon.getIconWidth() + space;
-          } else {
-            b.x = midy.x - icon.getIconWidth();
-            b.y = midy.y;
-            midy.y += icon.getIconHeight() + space;
           }
+
+          Color oldColor = g2d.getColor();
+          Color bck;
+          if (b.isHover()) {
+            bck = UIManager.getColor("Button.hoverBackground");
+          } else {
+            bck = UIManager.getColor("Button.background");
+          }
+          g2d.setColor(bck);
+          g2d.fillRoundRect(
+              (int) b.x - 3,
+              (int) b.y - 3,
+              icon.getIconWidth() + 7,
+              icon.getIconHeight() + 7,
+              7,
+              7);
           icon.paintIcon(view2DPane.getJComponent(), g2d, (int) b.x, (int) b.y);
+          g2d.setColor(oldColor);
         }
       }
     }
