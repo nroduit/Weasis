@@ -151,7 +151,6 @@ public class WeasisLauncher {
   public static final String P_WEASIS_MIN_NATIVE_VERSION = "weasis.min.native.version";
   public static final String P_WEASIS_RESOURCES_URL = "weasis.resources.url";
   public static final String F_RESOURCES = "resources"; // NON-NLS
-  static final String MAC_OS_X = "Mac OS X"; // NON-NLS
 
   protected Felix mFelix = null;
   protected ServiceTracker mTracker = null;

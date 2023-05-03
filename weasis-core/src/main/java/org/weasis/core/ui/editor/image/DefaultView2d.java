@@ -9,8 +9,6 @@
  */
 package org.weasis.core.ui.editor.image;
 
-import java.awt.BasicStroke;
-import java.awt.Color;
 import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.Font;
@@ -22,19 +20,12 @@ import java.awt.GridBagConstraints;
 import java.awt.Paint;
 import java.awt.Point;
 import java.awt.Rectangle;
-import java.awt.Shape;
 import java.awt.Stroke;
 import java.awt.Window;
 import java.awt.event.FocusEvent;
 import java.awt.event.KeyEvent;
-import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
-import java.awt.event.MouseMotionListener;
-import java.awt.event.MouseWheelListener;
 import java.awt.geom.AffineTransform;
-import java.awt.geom.Ellipse2D;
-import java.awt.geom.Line2D;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.beans.PropertyChangeEvent;
@@ -47,16 +38,15 @@ import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Optional;
 import javax.swing.Action;
-import javax.swing.BorderFactory;
 import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPopupMenu;
 import javax.swing.SwingUtilities;
 import javax.swing.ToolTipManager;
-import javax.swing.border.Border;
 import org.opencv.core.CvType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.weasis.core.Messages;
 import org.weasis.core.api.gui.Image2DViewer;
 import org.weasis.core.api.gui.model.ViewModel;
 import org.weasis.core.api.gui.util.ActionState;
@@ -64,11 +54,8 @@ import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.Feature;
 import org.weasis.core.api.gui.util.Filter;
 import org.weasis.core.api.gui.util.GuiUtils;
-import org.weasis.core.api.gui.util.GuiUtils.IconColor;
-import org.weasis.core.api.gui.util.MouseActionAdapter;
 import org.weasis.core.api.gui.util.SliderChangeListener;
 import org.weasis.core.api.gui.util.SliderCineListener;
-import org.weasis.core.api.gui.util.WinUtil;
 import org.weasis.core.api.image.AffineTransformOp;
 import org.weasis.core.api.image.FilterOp;
 import org.weasis.core.api.image.ImageOpEvent;
@@ -91,7 +78,6 @@ import org.weasis.core.api.service.AuditLog;
 import org.weasis.core.api.util.FontItem;
 import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.api.util.ResourceUtil.ActionIcon;
-import org.weasis.core.ui.Messages;
 import org.weasis.core.ui.docking.DockableTool;
 import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.SeriesViewerEvent;
@@ -118,7 +104,6 @@ import org.weasis.core.ui.util.MouseEventDouble;
 import org.weasis.core.ui.util.TitleMenuItem;
 import org.weasis.core.util.LangUtil;
 import org.weasis.core.util.MathUtil;
-import org.weasis.core.util.StringUtil;
 import org.weasis.opencv.data.PlanarImage;
 
 /**
@@ -137,17 +122,6 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     REAL
   }
 
-  static final Shape[] pointer;
-
-  static {
-    pointer = new Shape[5];
-    pointer[0] = new Ellipse2D.Double(-27.0, -27.0, 54.0, 54.0);
-    pointer[1] = new Line2D.Double(-40.0, 0.0, -5.0, 0.0);
-    pointer[2] = new Line2D.Double(5.0, 0.0, 40.0, 0.0);
-    pointer[3] = new Line2D.Double(0.0, -40.0, 0.0, -5.0);
-    pointer[4] = new Line2D.Double(0.0, 5.0, 0.0, 40.0);
-  }
-
   public static final GraphicClipboard GRAPHIC_CLIPBOARD = new GraphicClipboard();
 
   public static final Cursor EDIT_CURSOR =
@@ -159,18 +133,12 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
   public static final Cursor MOVE_CURSOR = DefaultView2d.getNewCursor(Cursor.MOVE_CURSOR);
   public static final Cursor DEFAULT_CURSOR = DefaultView2d.getNewCursor(Cursor.DEFAULT_CURSOR);
 
-  protected final FocusHandler focusHandler = new FocusHandler();
-  protected GraphicMouseHandler<E> graphicMouseHandler;
+  protected final FocusHandler<E> focusHandler;
+  protected final GraphicMouseHandler<E> graphicMouseHandler;
 
   private final PanPoint highlightedPosition = new PanPoint(State.CENTER);
   private final PanPoint startedDragPoint = new PanPoint(State.DRAGSTART);
   private int pointerType = 0;
-
-  protected static final Color pointerColor1 = Color.black;
-  protected static final Color pointerColor2 = Color.white;
-  protected final Border focusBorder =
-      BorderFactory.createMatteBorder(1, 1, 1, 1, IconColor.ACTIONS_YELLOW.getColor());
-  protected final Border viewBorder = BorderFactory.createMatteBorder(1, 1, 1, 1, Color.GRAY);
 
   protected final RenderedImageLayer<E> imageLayer;
   protected Panner<E> panner;
@@ -194,10 +162,11 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     this.viewButtons = new ArrayList<>();
     this.tileOffset = 0;
 
-    imageLayer = new RenderedImageLayer<>();
+    this.imageLayer = new RenderedImageLayer<>();
     actionsInView.put(ActionW.LENS.cmd(), false);
     initActionWState();
-    graphicMouseHandler = new GraphicMouseHandler<>(this);
+    this.graphicMouseHandler = new GraphicMouseHandler<>(this);
+    this.focusHandler = new FocusHandler(this);
 
     setBorder(viewBorder);
     setFocusable(true);
@@ -437,7 +406,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
       return;
     }
 
-    closingSeries(oldSequence);
+    UIManager.closeSeries(oldSequence);
 
     initActionWState();
     try {
@@ -470,45 +439,6 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     // Set the sequence to the state OPEN
     if (newSeries != null) {
       newSeries.setOpen(true);
-    }
-  }
-
-  protected void closingSeries(MediaSeries<E> mediaSeries) {
-    if (mediaSeries == null) {
-      return;
-    }
-    boolean open = false;
-    synchronized (UIManager.VIEWER_PLUGINS) {
-      List<ViewerPlugin<?>> plugins = UIManager.VIEWER_PLUGINS;
-      pluginList:
-      for (final ViewerPlugin<?> plugin : plugins) {
-        List<? extends MediaSeries<?>> openSeries = plugin.getOpenSeries();
-        if (openSeries != null) {
-          for (MediaSeries<?> s : openSeries) {
-            if (mediaSeries == s) {
-              // The sequence is still open in another view or plugin
-              open = true;
-              break pluginList;
-            }
-          }
-        }
-      }
-    }
-    mediaSeries.setOpen(open);
-    // TODO setSelected and setFocused must be global to all view as open
-    mediaSeries.setSelected(false, null);
-    mediaSeries.setFocused(false);
-  }
-
-  @Override
-  public void setFocused(Boolean focused) {
-    if (series != null) {
-      series.setFocused(focused);
-    }
-    if (focused && getBorder() == viewBorder) {
-      setBorder(focusBorder);
-    } else if (!focused && getBorder() == focusBorder) {
-      setBorder(viewBorder);
     }
   }
 
@@ -714,18 +644,6 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     return ratio;
   }
 
-  protected boolean isDrawActionActive() {
-    ViewerPlugin<?> container = WinUtil.getParentOfClass(this, ViewerPlugin.class);
-    if (container != null) {
-      final ViewerToolBar<?> toolBar = container.getViewerToolBar();
-      if (toolBar != null) {
-        return toolBar.isCommandActive(ActionW.MEASURE.cmd())
-            || toolBar.isCommandActive(ActionW.DRAW.cmd());
-      }
-    }
-    return false;
-  }
-
   @Override
   public RenderedImageLayer<E> getImageLayer() {
     return imageLayer;
@@ -855,12 +773,6 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
   }
 
   @Override
-  public Font getFont() {
-    // required when used getGraphics().getFont() in DefaultGraphicLabel
-    return MeasureTool.viewSetting.getFont();
-  }
-
-  @Override
   public Font getLayerFont() {
     Font font = FontItem.DEFAULT_SEMIBOLD.getFont();
     return getLayerFont(getFontMetrics(font), getWidth());
@@ -944,9 +856,9 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
   @Override
   public void zoom(Double viewScale) {
     boolean defSize = MathUtil.isEqualToZero(viewScale);
-    ZoomType type = (ZoomType) actionsInView.get(ZOOM_TYPE_CMD);
     double ratio = viewScale;
     if (defSize) {
+      ZoomType type = (ZoomType) actionsInView.get(ZOOM_TYPE_CMD);
       if (ZoomType.BEST_FIT.equals(type)) {
         ratio = -getBestFitViewScale();
       } else if (ZoomType.REAL.equals(type)) {
@@ -1230,7 +1142,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     imageLayer.removeLayerChangeListener(this);
     Optional.ofNullable(lens).ifPresent(l -> l.showLens(false));
     if (series != null) {
-      closingSeries(series);
+      UIManager.closeSeries(series);
       series = null;
     }
     super.disposeView();
@@ -1238,23 +1150,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
 
   @Override
   public synchronized void disableMouseAndKeyListener() {
-    MouseListener[] listener = this.getMouseListeners();
-
-    MouseMotionListener[] motionListeners = this.getMouseMotionListeners();
-    KeyListener[] keyListeners = this.getKeyListeners();
-    MouseWheelListener[] wheelListeners = this.getMouseWheelListeners();
-    for (MouseListener mouseListener : listener) {
-      this.removeMouseListener(mouseListener);
-    }
-    for (MouseMotionListener motionListener : motionListeners) {
-      this.removeMouseMotionListener(motionListener);
-    }
-    for (KeyListener keyListener : keyListeners) {
-      this.removeKeyListener(keyListener);
-    }
-    for (MouseWheelListener wheelListener : wheelListeners) {
-      this.removeMouseWheelListener(wheelListener);
-    }
+    ViewCanvas.super.disableMouseAndKeyListener(this);
     Optional.ofNullable(lens).ifPresent(ZoomWin::disableMouseAndKeyListener);
   }
 
@@ -1314,7 +1210,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
       return;
     }
     if ((pointerType & CENTER_POINTER) == CENTER_POINTER) {
-      drawPointer(g, (getWidth() - 1) * 0.5, (getHeight() - 1) * 0.5);
+      drawPointer(g, (getWidth() - 1) * 0.5, (getHeight() - 1) * 0.5, false);
     }
     if ((pointerType & HIGHLIGHTED_POINTER) == HIGHLIGHTED_POINTER
         && highlightedPosition.isHighlightedPosition()) {
@@ -1324,7 +1220,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
           modelToViewLength(highlightedPosition.getX() + 0.5 - viewModel.getModelOffsetX());
       double offsetY =
           modelToViewLength(highlightedPosition.getY() + 0.5 - viewModel.getModelOffsetY());
-      drawPointer(g, offsetX, offsetY);
+      drawPointer(g, offsetX, offsetY, true);
     }
   }
 
@@ -1354,112 +1250,10 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
   }
 
   @Override
-  public void drawPointer(Graphics2D g, Double x, Double y) {
-    Object[] oldRenderingHints = GuiUtils.setRenderingHints(g, true, true, false);
-    float[] dash = {5.0f};
-    g.translate(x, y);
-    g.setStroke(new BasicStroke(3.0f));
-    g.setPaint(pointerColor1);
-    for (int i = 1; i < pointer.length; i++) {
-      g.draw(pointer[i]);
-    }
-    g.setStroke(
-        new BasicStroke(1.0f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER, 5.0f, dash, 0.0f));
-    g.setPaint(pointerColor2);
-    for (int i = 1; i < pointer.length; i++) {
-      g.draw(pointer[i]);
-    }
-    g.translate(-x, -y);
-    GuiUtils.resetRenderingHints(g, oldRenderingHints);
-  }
-
-  protected void showPixelInfos(MouseEvent mouseevent) {
-    if (infoLayer != null) {
-      Point2D pModel = getImageCoordinatesFromMouse(mouseevent.getX(), mouseevent.getY());
-      Rectangle oldBound = infoLayer.getPixelInfoBound();
-      PixelInfo pixelInfo =
-          getPixelInfo(new Point((int) Math.floor(pModel.getX()), (int) Math.floor(pModel.getY())));
-      oldBound.width =
-          Math.max(
-              oldBound.width,
-              this.getGraphics()
-                      .getFontMetrics()
-                      .stringWidth(
-                          Messages.getString("DefaultView2d.pix")
-                              + StringUtil.COLON_AND_SPACE
-                              + pixelInfo)
-                  + 4);
-      infoLayer.setPixelInfo(pixelInfo);
-      repaint(oldBound);
-    }
-  }
-
-  @Override
   public void focusGained(FocusEvent e) {}
 
   @Override
   public void focusLost(FocusEvent e) {}
-
-  // ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-  class FocusHandler extends MouseActionAdapter {
-
-    @Override
-    public void mousePressed(MouseEvent evt) {
-      ImageViewerPlugin<E> pane = eventManager.getSelectedView2dContainer();
-      if (Objects.isNull(pane)) {
-        return;
-      }
-
-      ViewButton selectedButton = null;
-      // Do select the view when pressing on a view button
-      for (ViewButton b : getViewButtons()) {
-        if (b.isVisible() && b.contains(evt.getPoint())) {
-          selectedButton = b;
-          break;
-        }
-      }
-
-      if (evt.getClickCount() == 2 && selectedButton == null) {
-        pane.maximizedSelectedImagePane(DefaultView2d.this, evt);
-        return;
-      }
-
-      if (pane.isContainingView(DefaultView2d.this)
-          && pane.getSelectedImagePane() != DefaultView2d.this) {
-        // register all actions of the EventManager with this view waiting the focus gained in some
-        // cases is not
-        // enough, because others mouseListeners are triggered before the focus event (that means
-        // before
-        // registering the view in the EventManager)
-        pane.setSelectedImagePane(DefaultView2d.this);
-      }
-      // request the focus even it is the same pane selected
-      requestFocusInWindow();
-
-      // Do select the view when pressing on a view button
-      if (selectedButton != null) {
-        DefaultView2d.this.setCursor(DefaultView2d.DEFAULT_CURSOR);
-        evt.consume();
-        selectedButton.showPopup(evt.getComponent(), evt.getX(), evt.getY());
-        return;
-      }
-
-      Optional<Feature<? extends ActionState>> action =
-          eventManager.getMouseAction(evt.getModifiersEx());
-      DefaultView2d.this.setCursor(
-          action.isPresent() ? action.get().getCursor() : DefaultView2d.DEFAULT_CURSOR);
-    }
-
-    @Override
-    public void mouseMoved(MouseEvent e) {
-      showPixelInfos(e);
-    }
-
-    @Override
-    public void mouseReleased(MouseEvent e) {
-      DefaultView2d.this.setCursor(DefaultView2d.DEFAULT_CURSOR);
-    }
-  }
 
   @Override
   public List<Action> getExportActions() {

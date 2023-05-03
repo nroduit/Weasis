@@ -17,7 +17,7 @@
 
   <properties>
     <jxlayer.version>3.0.4</jxlayer.version>
-    <xchart.version>3.8.2</xchart.version>
+    <xchart.version>3.8.3</xchart.version>
     <LGoodDatePicker.version>11.3.0-r1</LGoodDatePicker.version>
     <lablib-checkboxtree.version>3.3</lablib-checkboxtree.version>
     <VectorGraphics2D.version>0.13</VectorGraphics2D.version>
@@ -50,7 +50,7 @@
             Import-Package: !org.apache.commons.codec.binary;resolution:=optional,com.madgag.gif.fmsware;resolution:=optional,de.rototor.pdfbox.graphics2d;\
             resolution:=optional,org.apache.pdfbox.pdmodel.*;resolution:=optional,\
             !sun.swing,*
-            Export-Package: !org.weasis.core.internal,org.weasis.core.ui.*,org.weasis.core.api.*
+            Export-Package: !org.weasis.core.internal,org.weasis.core.*
             -exportcontents: com.github.scribejava.*,it.cnr.imaa.*,org.jdesktop.jxlayer.*,com.github.lgooddatepicker.*,\
             com.privatejgoodies.*,org.knowm.xchart.*,de.erichseifert.*
           </bnd>
@@ -83,10 +83,6 @@
       <artifactId>org.apache.felix.gogo.runtime</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.apache.felix</groupId>
-      <artifactId>org.apache.felix.prefs</artifactId>
-    </dependency>
-    <dependency>
       <groupId>org.weasis.thirdparty</groupId>
       <artifactId>jaxb-osgi</artifactId>
     </dependency>
@@ -99,10 +95,6 @@
       <groupId>com.github.scribejava</groupId>
       <artifactId>scribejava-java8</artifactId>
       <version>${scribejava.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>org.weasis.thirdparty</groupId>
-      <artifactId>jaxb-osgi</artifactId>
     </dependency>
     <dependency>
       <groupId>org.weasis.thirdparty</groupId>

@@ -72,7 +72,7 @@ public class MprView extends View2d {
   }
 
   @Override
-  protected JPopupMenu buildContextMenu(final MouseEvent evt) {
+  public JPopupMenu buildContextMenu(final MouseEvent evt) {
     ComboItemListener<SeriesComparator<?>> action =
         eventManager.getAction(ActionW.SORT_STACK).orElse(null);
     if (action != null && action.isActionEnabled()) {

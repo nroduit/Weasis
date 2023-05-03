@@ -6,7 +6,7 @@ Weasis is a free medical DICOM viewer used in healthcare by hospitals, health ne
 ![Weasis](weasis-distributions/resources/svg/logo/WeasisAbout.svg)
 
 * [General information](https://nroduit.github.io)
-* [Download binary releases](https://nroduit.github.io/en/getting-started/download)
+* [Download binary releases](https://nroduit.github.io/en/getting-started/download-dicom-viewer)
 * [Live Demo with different datasets](https://nroduit.github.io/en/demo)
 * [Issues](https://github.com/nroduit/Weasis/issues) ([Old Issue Tracker](https://dcm4che.atlassian.net/projects/WEA))
 * Forum: [Google group](https://groups.google.com/forum/#!forum/dcm4che) or [GitHub Discussions](https://github.com/nroduit/Weasis/discussions)
@@ -30,7 +30,7 @@ Old branches are:
 
 # General Features
 * Flexible integration with PACS, RIS, HIS or PHR  (see [integration documentation](https://nroduit.github.io/en/basics/customize/integration/))
-* Desktop distribution (Windows, Mac OS X, and Linux)
+* Desktop distribution (Windows, macOS, and Linux)
 * Responsive user interface working well on high DPI screens
 * Web access through [weasis protocol](https://nroduit.github.io/en/getting-started/weasis-protocol)
 * [Multi-language support](https://nroduit.github.io/en/getting-started/translating/)

@@ -17,11 +17,11 @@ import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JFileChooser;
 import javax.swing.JPanel;
+import org.weasis.core.Messages;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.image.util.WindLevelParameters;
 import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.api.util.ResourceUtil.ActionIcon;
-import org.weasis.core.ui.Messages;
 
 /**
  * @author Nicolas Roduit

@@ -9,7 +9,7 @@
  */
 package org.weasis.core.ui.model.utils;
 
-import org.weasis.core.ui.Messages;
+import org.weasis.core.Messages;
 import org.weasis.core.ui.model.utils.bean.Measurement;
 
 public interface ImageStatistics {

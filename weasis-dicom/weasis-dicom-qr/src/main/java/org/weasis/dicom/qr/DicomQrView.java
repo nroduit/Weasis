@@ -217,9 +217,7 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
   private static final String LAST_CALLING_NODE = "lastCallingNode";
   private static final String LAST_RETRIEVE_TYPE = "lastRetrieveType";
   private static final String LAST_RETRIEVE_LIMIT = "lastRetrieveLimit";
-  static final File tempDir =
-      FileUtil.createTempDir(AppProperties.buildAccessibleTempDirectory("tmp", "qr")); // NON-NLS
-
+  private static final String LAST_SEL_TEMPLATE = "lastSelTemplate";
   private final JComboBox<AbstractDicomNode> comboDestinationNode = new JComboBox<>();
   private final JComboBox<SearchParameters> templateComboBox = new JComboBox<>();
   private final JTextField tfSearch = new JTextField(25);
@@ -318,9 +316,9 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
     try {
       PluginOpeningStrategy openingStrategy =
           new PluginOpeningStrategy(DownloadManager.getOpeningViewer());
-      openingStrategy.setResetVeto(true);
+      openingStrategy.setFullImportSession(false);
       DataExplorerView dicomView =
-          org.weasis.core.ui.docking.UIManager.getExplorerplugin(DicomExplorer.NAME);
+          org.weasis.core.ui.docking.UIManager.getExplorerPlugin(DicomExplorer.NAME);
       if (dicomView != null && dicomView.getDataExplorerModel() instanceof DicomModel model) {
         DicomProgress progress = new DicomProgress();
         progress.addProgressListener(
@@ -332,15 +330,20 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
                 DicomModel.LOADING_EXECUTOR.execute(task);
               }
             });
-        dcmListener = new DicomListener(tempDir, progress);
+        dcmListener = new DicomListener(getSessionTempFolder(), progress);
       } else {
-        dcmListener = new DicomListener(tempDir);
+        dcmListener = new DicomListener(getSessionTempFolder());
       }
 
     } catch (RuntimeException e) {
       LOGGER.error("Cannot start DICOM listener", e);
     }
     dicomListener = dcmListener;
+  }
+
+  public static File getSessionTempFolder() {
+    return FileUtil.createTempDir(
+        AppProperties.buildAccessibleTempDirectory("tmp", "qr")); // NON-NLS
   }
 
   public void initGUI() {
@@ -492,7 +495,7 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
 
     JButton clearBtn = new JButton(Messages.getString("DicomQrView.clear"));
     clearBtn.setToolTipText(Messages.getString("DicomQrView.clear_search"));
-    clearBtn.addActionListener(e -> clearItems());
+    clearBtn.addActionListener(e -> templateComboBox.setSelectedIndex(0));
 
     JButton addButton = new JButton(Messages.getString("save"));
     JButton deleteButton = new JButton(Messages.getString("delete"));
@@ -510,7 +513,10 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
                   JOptionPane.WARNING_MESSAGE);
 
           if (response == 0) {
-            templateComboBox.removeItemAt(templateComboBox.getSelectedIndex());
+            int index = templateComboBox.getSelectedIndex();
+            if (index > 1) {
+              templateComboBox.removeItemAt(index);
+            }
           }
         });
     addButton.addActionListener(
@@ -553,6 +559,7 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
 
   private void applyParametersFromSelected() {
     Object selectedItem = templateComboBox.getSelectedItem();
+    clearItems();
     if (selectedItem instanceof SearchParameters parameters) {
       for (DicomParam dicomParam : parameters.getParameters()) {
         if (dicomParam.getTag() == Tag.ModalitiesInStudy) {
@@ -628,7 +635,6 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
   private void clearItems() {
     tfSearch.setText(null);
     groupMod.selectAll();
-    templateComboBox.setSelectedItem(null);
     startDatePicker.setDate(null);
     endDatePicker.setDate(null);
     currentPeriod = null;
@@ -715,9 +721,15 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
                         progressBar.setIndeterminate(false);
                         displayResult(state);
                         if (state.getStatus() != Status.Success) {
-                          LOGGER.error("Dicom cfind error: {}", state.getMessage());
+                          int limit = (Integer) limitSpinner.getValue();
+                          String message =
+                              state.getStatus() == Status.Cancel && limit > 0
+                                  ? "Query has been canceled after %s studies.\nSet the limit to 0 to avoid this constraint."
+                                      .formatted(limit)
+                                  : state.getMessage();
+                          LOGGER.error("Dicom cfind error: {}", message);
                           JOptionPane.showMessageDialog(
-                              this, state.getMessage(), null, JOptionPane.ERROR_MESSAGE);
+                              this, message, null, JOptionPane.ERROR_MESSAGE);
                         }
                       });
             }
@@ -810,7 +822,12 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
     if (firstTime) {
       initNodeList();
     }
-    clearItems();
+    int lastTemplate =
+        StringUtil.getInt(DicomQrFactory.IMPORT_PERSISTENCE.getProperty(LAST_SEL_TEMPLATE), 0);
+    if (lastTemplate >= templateComboBox.getItemCount()) {
+      lastTemplate = 0;
+    }
+    templateComboBox.setSelectedIndex(lastTemplate);
   }
 
   private void initNodeList() {
@@ -902,6 +919,9 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
     DicomQrFactory.IMPORT_PERSISTENCE.setProperty(
         LAST_RETRIEVE_LIMIT, String.valueOf(limitSpinner.getValue()));
 
+    DicomQrFactory.IMPORT_PERSISTENCE.setProperty(
+        LAST_SEL_TEMPLATE, String.valueOf(templateComboBox.getSelectedIndex()));
+
     saveTemplates(templateComboBox);
   }
 
@@ -918,7 +938,7 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
 
       writer.writeStartDocument("UTF-8", "1.0"); // NON-NLS
       writer.writeStartElement(SearchParameters.T_NODES);
-      for (int i = 0; i < comboBox.getItemCount(); i++) {
+      for (int i = 2; i < comboBox.getItemCount(); i++) {
         SearchParameters node = comboBox.getItemAt(i);
         writer.writeStartElement(SearchParameters.T_NODE);
         node.saveSearchParameters(writer);

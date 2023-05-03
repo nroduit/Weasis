@@ -12,7 +12,7 @@ package org.weasis.core.api.gui.util;
 import javax.swing.SpinnerNumberModel;
 import javax.swing.UIManager;
 import javax.swing.border.TitledBorder;
-import org.weasis.core.api.Messages;
+import org.weasis.core.Messages;
 import org.weasis.core.api.gui.util.GuiUtils.IconColor;
 import org.weasis.core.util.StringUtil;
 

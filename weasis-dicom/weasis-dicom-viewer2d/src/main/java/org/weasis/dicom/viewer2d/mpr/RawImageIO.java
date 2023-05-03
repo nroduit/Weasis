@@ -84,7 +84,7 @@ public class RawImageIO implements DcmMediaReader {
         new BulkData(
             file.toURI().toString(),
             FileRawImage.HEADER_LENGTH,
-            (int) file.length() - FileRawImage.HEADER_LENGTH,
+            file.length() - FileRawImage.HEADER_LENGTH,
             false);
     dcm.setValue(Tag.PixelData, VR.OW, bdl);
     File tmpFile = new File(DicomMediaIO.DICOM_EXPORT_DIR, dcm.getString(Tag.SOPInstanceUID));
@@ -244,7 +244,7 @@ public class RawImageIO implements DcmMediaReader {
         new BulkData(
             file.toURI().toString(),
             FileRawImage.HEADER_LENGTH,
-            (int) file.length() - FileRawImage.HEADER_LENGTH,
+            file.length() - FileRawImage.HEADER_LENGTH,
             false);
     dcm.setValue(Tag.PixelData, VR.OW, bdl);
     header = new DicomMetaData(dcm, UID.ImplicitVRLittleEndian);

@@ -140,7 +140,7 @@ public class View2dFactory implements SeriesViewerFactory {
 
   public static void closeSeriesViewer(View2dContainer view2dContainer) {
     // Unregister the PropertyChangeListener
-    DataExplorerView dicomView = UIManager.getExplorerplugin(DicomExplorer.NAME);
+    DataExplorerView dicomView = UIManager.getExplorerPlugin(DicomExplorer.NAME);
     if (dicomView != null) {
       dicomView.getDataExplorerModel().removePropertyChangeListener(view2dContainer);
     }
@@ -163,7 +163,7 @@ public class View2dFactory implements SeriesViewerFactory {
 
   @Override
   public List<Action> getOpenActions() {
-    DataExplorerView dicomView = UIManager.getExplorerplugin(DicomExplorer.NAME);
+    DataExplorerView dicomView = UIManager.getExplorerPlugin(DicomExplorer.NAME);
     if (dicomView == null) {
       return Collections.singletonList(preferencesAction);
     }
@@ -239,5 +239,10 @@ public class View2dFactory implements SeriesViewerFactory {
       BundleTools.LOCAL_UI_PERSISTENCE.setProperty(
           "last.open.dicom.dir", selectedFiles[0].getParent());
     }
+  }
+
+  @Override
+  public boolean canReadSeries(MediaSeries<?> series) {
+    return series != null && series.size(null) > 0;
   }
 }

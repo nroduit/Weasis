@@ -9,7 +9,7 @@
  */
 package org.weasis.core.ui.editor.image;
 
-import org.weasis.core.ui.Messages;
+import org.weasis.core.Messages;
 
 public enum ResetTools {
   ALL(Messages.getString("ResetTools.all")),

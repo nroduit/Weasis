@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+  <parent>
+    <groupId>org.weasis.thirdparty.org.jogamp</groupId>
+    <artifactId>jogamp-native</artifactId>
+    <!--suppress MavenPropertyInParent -->
+    <version>${revision}${changelist}</version>
+    <relativePath>../pom.xml</relativePath>
+  </parent>
+  <modelVersion>4.0.0</modelVersion>
+  <packaging>jar</packaging>
+  <artifactId>jogamp-macosx-x86-64</artifactId>
+  <name>JOGL - MacOSX x86-64 [${project.artifactId}]</name>
+  <version>${jogamp.version}</version>
+  <properties>
+    <native.configuration>
+      natives/macosx-universal/libgluegen_rt.dylib; \
+      natives/macosx-universal/libjocl.dylib; \
+      natives/macosx-universal/libnativewindow_awt.dylib; \
+      natives/macosx-universal/libnativewindow_macosx.dylib; \
+      natives/macosx-universal/libnewt_head.dylib; \
+      natives/macosx-universal/libjogl_mobile.dylib; \
+      natives/macosx-universal/libjogl_desktop.dylib; \
+      processor=x86-64; osname=MacOSX
+    </native.configuration>
+  </properties>
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-dependency-plugin</artifactId>
+
+        <executions>
+          <execution>
+            <id>copy-dependency</id>
+            <goals>
+              <goal>unpack</goal>
+            </goals>
+
+            <configuration>
+              <artifactItems>
+                <artifactItem>
+                  <groupId>org.jogamp.gluegen</groupId>
+                  <artifactId>gluegen-rt</artifactId>
+                  <version>${jogamp.version}</version>
+                  <classifier>natives-macosx-universal</classifier>
+                  <outputDirectory>target/classes</outputDirectory>
+                </artifactItem>
+
+                <artifactItem>
+                  <groupId>org.jogamp.jogl</groupId>
+                  <artifactId>jogl-all</artifactId>
+                  <version>${jogamp.version}</version>
+                  <classifier>natives-macosx-universal</classifier>
+                  <outputDirectory>target/classes</outputDirectory>
+                </artifactItem>
+
+                <artifactItem>
+                  <groupId>org.jogamp.jocl</groupId>
+                  <artifactId>jocl</artifactId>
+                  <version>${jogamp.version}</version>
+                  <classifier>natives-macosx-universal</classifier>
+                  <outputDirectory>target/classes</outputDirectory>
+                </artifactItem>
+              </artifactItems>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
+</project>

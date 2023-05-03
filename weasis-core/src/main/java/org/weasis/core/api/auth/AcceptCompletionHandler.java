@@ -19,7 +19,7 @@ import java.nio.channels.CompletionHandler;
 import java.nio.charset.StandardCharsets;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.weasis.core.api.Messages;
+import org.weasis.core.Messages;
 import org.weasis.core.util.FileUtil;
 import org.weasis.core.util.StringUtil;
 

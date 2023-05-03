@@ -17,15 +17,19 @@ set -e
 # for details, see https://www.debian.org/doc/debian-policy/ or
 # the debian-policy package
 
+package_type=deb
+LAUNCHER_AS_SERVICE_SCRIPTS
+
 case "$1" in
     configure)
 DESKTOP_COMMANDS_INSTALL
-	    mkdir -p /etc/opt/chrome/policies/managed/
-	    echo '{
-    "URLWhitelist": ["weasis://*"]
+LAUNCHER_AS_SERVICE_COMMANDS_INSTALL
+mkdir -p /etc/opt/chrome/policies/managed/
+echo '{
+    "URLAllowlist": ["weasis://*"]
 }' > /etc/opt/chrome/policies/managed/weasis.json 
-	    mkdir -p /etc/chromium/policies/managed/
-	    cp /etc/opt/chrome/policies/managed/weasis.json /etc/chromium/policies/managed/weasis.json
+mkdir -p /etc/chromium/policies/managed/
+cp /etc/opt/chrome/policies/managed/weasis.json /etc/chromium/policies/managed/weasis.json
     ;;
 
     abort-upgrade|abort-remove|abort-deconfigure)

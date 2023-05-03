@@ -14,7 +14,7 @@ import java.util.Arrays;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
 import org.opencv.core.Size;
-import org.weasis.core.api.Messages;
+import org.weasis.core.Messages;
 import org.weasis.core.util.MathUtil;
 import org.weasis.opencv.data.PlanarImage;
 import org.weasis.opencv.op.ImageProcessor;
@@ -61,6 +61,7 @@ public class AffineTransformOp extends AbstractOp {
     Rectangle2D bound = (Rectangle2D) params.get(P_DST_BOUNDS);
 
     if (bound != null
+        && source != null
         && matrix != null
         && (!Arrays.equals(identityMatrix, matrix)
             || MathUtil.isDifferent(source.width(), bound.getWidth())

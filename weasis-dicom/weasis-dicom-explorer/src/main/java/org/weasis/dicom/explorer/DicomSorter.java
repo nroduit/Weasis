@@ -19,11 +19,48 @@ import org.dcm4che3.data.Tag;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
+import org.weasis.core.api.service.BundleTools;
 import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.explorer.DicomExplorer.SeriesPane;
 import org.weasis.dicom.explorer.DicomExplorer.StudyPane;
+import org.weasis.dicom.explorer.pref.download.DicomExplorerPrefView;
 
 public class DicomSorter {
+  public enum SortingTime {
+    CHRONOLOGICAL(0, "Chronological order"),
+    INVERSE_CHRONOLOGICAL(1, "Reverse chronological order");
+
+    private final int id;
+    private final String title;
+
+    SortingTime(int id, String title) {
+      this.id = id;
+      this.title = title;
+    }
+
+    public int getId() {
+      return id;
+    }
+
+    @Override
+    public String toString() {
+      return title;
+    }
+
+    public String getTitle() {
+      return title;
+    }
+
+    public static SortingTime valueOf(int id) {
+      for (SortingTime s : SortingTime.values()) {
+        if (s.id == id) {
+          return s;
+        }
+      }
+      return INVERSE_CHRONOLOGICAL;
+    }
+  }
+
   private static final Collator collator = Collator.getInstance(Locale.getDefault());
   public static final Comparator<Object> PATIENT_COMPARATOR =
       (o1, o2) -> collator.compare(o1.toString(), o2.toString());
@@ -41,11 +78,14 @@ public class DicomSorter {
         if (o1 instanceof MediaSeriesGroup st1 && o2 instanceof MediaSeriesGroup st2) {
           LocalDateTime date1 = TagD.dateTime(Tag.StudyDate, Tag.StudyTime, st1);
           LocalDateTime date2 = TagD.dateTime(Tag.StudyDate, Tag.StudyTime, st2);
-          // LOGGER.debug("date1: {} date2: {}", date1, date2);
           int c = -1;
           if (date1 != null && date2 != null) {
-            // Reverse chronological order.
-            c = date2.compareTo(date1);
+            if (DicomSorter.getStudyDateSorting() == SortingTime.CHRONOLOGICAL) {
+              c = date1.compareTo(date2);
+            } else {
+              c = date2.compareTo(date1);
+            }
+
             if (c != 0) {
               return c;
             }
@@ -230,13 +270,22 @@ public class DicomSorter {
         return Objects.equals(o1, o2) ? 0 : -1;
       };
 
+  private DicomSorter() {}
+
   private static boolean isDoseReport(MediaSeriesGroup series) {
     String s1 = TagD.getTagValue(series, Tag.SOPClassUID, String.class);
     if (s1 == null || !s1.startsWith("1.2.840.10008.5.1.4.1.1.88")) {
       return false;
     }
     return "1.2.840.10008.5.1.4.1.1.88.67".equals(s1)
-        || "1.2.840.10008.5.1.4.1.1.88.68".equals(s1) // NON-NLS
+        || "1.2.840.10008.5.1.4.1.1.88.68".equals(s1)
         || "1.2.840.10008.5.1.4.1.1.88.73".equals(s1);
+  }
+
+  public static SortingTime getStudyDateSorting() {
+    int key =
+        BundleTools.SYSTEM_PREFERENCES.getIntProperty(
+            DicomExplorerPrefView.STUDY_DATE_SORTING, SortingTime.INVERSE_CHRONOLOGICAL.getId());
+    return SortingTime.valueOf(key);
   }
 }

@@ -72,6 +72,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
@@ -233,7 +234,9 @@ public class WeasisWin {
     frame.setTitle(AppProperties.WEASIS_NAME + " v" + AppProperties.WEASIS_VERSION); // NON-NLS
 
     LogoIcon logoIcon =
-        AppProperties.WEASIS_NAME.endsWith("Dicomizer") ? LogoIcon.SMALL_DICOMIZER : LogoIcon.SMALL;
+        AppProperties.WEASIS_NAME.endsWith("Dicomizer") // NON-NLS
+            ? LogoIcon.SMALL_DICOMIZER
+            : LogoIcon.SMALL;
     // Get larger icon (displayed in system toolbar)
     FlatSVGIcon imageIcon = ResourceUtil.getIcon(logoIcon, 512, 512);
     boolean taskBarIcon = false;
@@ -601,18 +604,25 @@ public class WeasisWin {
       selectedPlugin.setSelected(true);
       return;
     }
-    ViewerPlugin oldPlugin = selectedPlugin;
-    if (selectedPlugin != null) {
-      selectedPlugin.setSelected(false);
+    ViewerPlugin<?> oldPlugin = selectedPlugin;
+    if (oldPlugin != null) {
+      oldPlugin.setSelected(false);
     }
     selectedPlugin = plugin;
-    selectedPlugin.setSelected(true);
     menuSelectedPlugin.setText(selectedPlugin.getName());
 
-    List<DockableTool> tool = selectedPlugin.getToolPanel();
-    List<DockableTool> oldTool = oldPlugin == null ? null : oldPlugin.getToolPanel();
+    updateTools(oldPlugin, selectedPlugin, false);
 
-    if (tool != oldTool) {
+    updateToolbars(
+        oldPlugin == null ? null : oldPlugin.getToolBar(), selectedPlugin.getToolBar(), false);
+
+    selectedPlugin.setSelected(true);
+  }
+
+  void updateTools(ViewerPlugin<?> oldPlugin, ViewerPlugin<?> plugin, boolean force) {
+    List<DockableTool> oldTool = oldPlugin == null ? null : oldPlugin.getToolPanel();
+    List<DockableTool> tool = plugin == null ? null : plugin.getToolPanel();
+    if (force || !Objects.equals(tool, oldTool)) {
       if (oldTool != null) {
         for (DockableTool p : oldTool) {
           p.closeDockable();
@@ -626,9 +636,6 @@ public class WeasisWin {
         }
       }
     }
-
-    updateToolbars(
-        oldPlugin == null ? null : oldPlugin.getToolBar(), selectedPlugin.getToolBar(), false);
   }
 
   void updateToolbars(List<Toolbar> oldToolBars, List<Toolbar> toolBars, boolean force) {
@@ -763,6 +770,13 @@ public class WeasisWin {
           }
         });
     helpMenuItem.add(updateMenuItem);
+
+    final JMenuItem openLogFolderMenuItem = new JMenuItem("Open the logging folder");
+    openLogFolderMenuItem.addActionListener(
+        e ->
+            GuiUtils.openSystemExplorer(
+                openLogFolderMenuItem, new File(AppProperties.WEASIS_PATH, "log")));
+    helpMenuItem.add(openLogFolderMenuItem);
 
     final JMenuItem reportMenuItem = new JMenuItem(Messages.getString("submit.bug.report"));
     reportMenuItem.addActionListener(
@@ -1034,7 +1048,7 @@ public class WeasisWin {
         };
     DefaultAction preferencesAction =
         new DefaultAction(
-            org.weasis.core.ui.Messages.getString("OpenPreferencesAction.title"), prefAction);
+            org.weasis.core.Messages.getString("OpenPreferencesAction.title"), prefAction);
     preferencesAction.putValue(
         Action.ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_P, InputEvent.ALT_DOWN_MASK));
     menuFile.add(new JMenuItem(preferencesAction));

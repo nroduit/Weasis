@@ -39,14 +39,6 @@ public class GraphicMouseHandler<E extends ImageElement> extends MouseActionAdap
   private Draggable ds;
   private final CursorSet cursorSet;
 
-  public GraphicMouseHandler(ViewCanvas<E> vImg, CursorSet cursors) {
-    if (vImg == null) {
-      throw new IllegalArgumentException();
-    }
-    this.vImg = vImg;
-    this.cursorSet = cursors;
-  }
-
   public GraphicMouseHandler(ViewCanvas<E> vImg) {
     this(
         vImg,
@@ -55,6 +47,14 @@ public class GraphicMouseHandler<E extends ImageElement> extends MouseActionAdap
             DefaultView2d.MOVE_CURSOR,
             DefaultView2d.HAND_CURSOR,
             DefaultView2d.EDIT_CURSOR));
+  }
+
+  public GraphicMouseHandler(ViewCanvas<E> vImg, CursorSet cursors) {
+    if (vImg == null) {
+      throw new IllegalArgumentException();
+    }
+    this.vImg = vImg;
+    this.cursorSet = cursors;
   }
 
   public Draggable getDragSequence() {

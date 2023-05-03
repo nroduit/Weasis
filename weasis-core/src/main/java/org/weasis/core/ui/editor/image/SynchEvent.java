@@ -17,18 +17,22 @@ public class SynchEvent {
   private final ViewCanvas<?> view;
   private final Map<String, Object> events;
 
+  private final boolean valueIsAdjusting;
+
   public SynchEvent(ViewCanvas<?> view) {
-    this.view = view;
-    this.events = new HashMap<>();
+    this(view, null, null, false);
   }
 
   public SynchEvent(ViewCanvas<?> view, String command, Object value) {
+    this(view, command, value, false);
+  }
+
+  public SynchEvent(ViewCanvas<?> view, String command, Object value, boolean valueIsAdjusting) {
     this.view = view;
+    this.valueIsAdjusting = valueIsAdjusting;
+    this.events = new HashMap<>();
     if (command != null) {
-      this.events = new HashMap<>(2);
       this.getEvents().put(command, value);
-    } else {
-      this.events = new HashMap<>(8);
     }
   }
 
@@ -42,5 +46,9 @@ public class SynchEvent {
 
   public Map<String, Object> getEvents() {
     return events;
+  }
+
+  public boolean isValueIsAdjusting() {
+    return valueIsAdjusting;
   }
 }

@@ -48,7 +48,7 @@ import org.weasis.dicom.explorer.DicomModel;
 import org.weasis.dicom.explorer.ExplorerTask;
 import org.weasis.dicom.explorer.LoadLocalDicom;
 import org.weasis.dicom.explorer.PluginOpeningStrategy;
-import org.weasis.dicom.explorer.pref.download.SeriesDownloadPrefView;
+import org.weasis.dicom.explorer.pref.download.DicomExplorerPrefView;
 import org.weasis.dicom.explorer.pref.node.AbstractDicomNode;
 import org.weasis.dicom.explorer.pref.node.AbstractDicomNode.RetrieveType;
 import org.weasis.dicom.explorer.pref.node.DefaultDicomNode;
@@ -121,6 +121,7 @@ public class RetrieveTask extends ExplorerTask<ExplorerTask<Boolean, String>, St
 
     DicomParam[] dcmParams = {new DicomParam(Tag.StudyInstanceUID, studies.toArray(new String[0]))};
 
+    File tempFolder = null;
     Object selectedItem = dicomQrView.getComboDestinationNode().getSelectedItem();
     if (selectedItem instanceof final DefaultDicomNode node) {
       DefaultDicomNode callingNode =
@@ -147,7 +148,8 @@ public class RetrieveTask extends ExplorerTask<ExplorerTask<Boolean, String>, St
               LOGGER.error("SOP Class url conversion", e);
             }
           }
-          openingStrategy.setResetVeto(true);
+          tempFolder = DicomQrView.getSessionTempFolder();
+          openingStrategy.setFullImportSession(false);
           progress.addProgressListener(
               p -> {
                 File current = p.getProcessedFile();
@@ -164,7 +166,7 @@ public class RetrieveTask extends ExplorerTask<ExplorerTask<Boolean, String>, St
                   callingNode.getDicomNodeWithOnlyAET(),
                   node.getDicomNode(),
                   progress,
-                  DicomQrView.tempDir,
+                  tempFolder,
                   url,
                   dcmParams);
         } else if (RetrieveType.CMOVE == type) {
@@ -173,6 +175,7 @@ public class RetrieveTask extends ExplorerTask<ExplorerTask<Boolean, String>, St
             if (dicomListener == null) {
               errorMessage = Messages.getString("RetrieveTask.msg_start_listener");
             } else {
+              tempFolder = dicomListener.getStoreSCP().getStorageDir();
               if (dicomListener.isRunning()) {
                 errorMessage = Messages.getString("RetrieveTask.msg_running_listener");
               } else {
@@ -267,12 +270,10 @@ public class RetrieveTask extends ExplorerTask<ExplorerTask<Boolean, String>, St
           LOGGER.error("Dicom retrieve error: {}", errorMessage);
         }
 
-        loadingTask =
-            new LoadLocalDicom(
-                new File[] {new File(DicomQrView.tempDir.getPath())},
-                false,
-                explorerDcmModel,
-                openingStrategy);
+        if (tempFolder != null) {
+          loadingTask =
+              new LoadLocalDicom(new File[] {tempFolder}, false, explorerDcmModel, openingStrategy);
+        }
       }
 
     } else if (selectedItem instanceof DicomWebNode) {
@@ -380,7 +381,7 @@ public class RetrieveTask extends ExplorerTask<ExplorerTask<Boolean, String>, St
     Map<String, LoadSeries> loadMap = new HashMap<>();
     boolean startDownloading =
         BundleTools.SYSTEM_PREFERENCES.getBooleanProperty(
-            SeriesDownloadPrefView.DOWNLOAD_IMMEDIATELY, true);
+            DicomExplorerPrefView.DOWNLOAD_IMMEDIATELY, true);
 
     WadoParameters wadoParameters = new WadoParameters("", true, true);
 

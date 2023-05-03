@@ -16,6 +16,7 @@ import it.cnr.imaa.essi.lablib.gui.checkboxtree.TreeCheckingModel;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
@@ -77,6 +78,7 @@ import org.weasis.core.ui.model.graphic.Graphic;
 import org.weasis.core.ui.model.imp.XmlGraphicModel;
 import org.weasis.core.ui.model.layer.LayerType;
 import org.weasis.core.ui.util.CheckBoxTreeBuilder;
+import org.weasis.core.util.LangUtil;
 import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.DicomSeries;
@@ -397,7 +399,11 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener {
     treeStructures.addTreeCheckingListener(this::treeValueChanged);
 
     expandTree(treeStructures, rootNodeStructures);
-    tabbedPane.add(new JScrollPane(treeStructures), nodeStructures.toString());
+    Dimension minimumSize = GuiUtils.getDimension(150, 150);
+    JScrollPane scrollPane = new JScrollPane(treeStructures);
+    scrollPane.setMinimumSize(minimumSize);
+    scrollPane.setPreferredSize(minimumSize);
+    tabbedPane.add(scrollPane, nodeStructures.toString());
   }
 
   public void initIsodosesTree() {
@@ -416,7 +422,11 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener {
     treeIsodoses.addTreeCheckingListener(this::treeValueChanged);
 
     expandTree(treeIsodoses, rootNodeIsodoses);
-    tabbedPane.add(new JScrollPane(treeIsodoses), nodeIsodoses.toString());
+    Dimension minimumSize = GuiUtils.getDimension(150, 150);
+    JScrollPane scrollPane = new JScrollPane(treeIsodoses);
+    scrollPane.setMinimumSize(minimumSize);
+    scrollPane.setPreferredSize(minimumSize);
+    tabbedPane.add(scrollPane, nodeIsodoses.toString());
   }
 
   public JSliderW createTransparencySlider(int labelDivision, boolean displayValueInTitle) {
@@ -758,8 +768,8 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener {
         nodeIsodoses.removeAllChildren();
 
         Plan plan = rtSet.getPlan(selectedPlan);
-        this.lblRtPlanName.setText(plan.getName());
-        this.txtRtPlanDoseValue.setText(String.format("%.0f", plan.getRxDose())); // NON-NLS
+        lblRtPlanName.setText(plan.getName());
+        txtRtPlanDoseValue.setText(String.format("%.0f", plan.getRxDose())); // NON-NLS
 
         Dose planDose = plan.getFirstDose();
         if (planDose != null) {
@@ -786,7 +796,8 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener {
   public void initTreeValues(ViewCanvas<?> viewCanvas) {
     if (viewCanvas != null) {
       MediaSeries<?> dcmSeries = viewCanvas.getSeries();
-      if (dcmSeries != null) {
+      boolean compatible = RtDisplayTool.isCtLinkedRT(dcmSeries);
+      if (compatible) {
         DicomModel dicomModel = (DicomModel) dcmSeries.getTagValue(TagW.ExplorerModel);
         if (dicomModel != null) {
           MediaSeriesGroup patient = dicomModel.getParent(dcmSeries, DicomModel.patient);
@@ -807,8 +818,8 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener {
             boolean empty = set.getStructures().isEmpty();
             btnLoad.setEnabled(empty || reload);
             this.rtSet = set;
-
             updateCanvas(viewCanvas);
+            showDockable();
           }
         }
       }
@@ -851,6 +862,18 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener {
         expandTree(tree, dtm);
       }
     }
+  }
+
+  public static boolean isCtLinkedRT(MediaSeries<?> dcmSeries) {
+    if (dcmSeries != null) {
+      DicomModel dicomModel = (DicomModel) dcmSeries.getTagValue(TagW.ExplorerModel);
+      if (dicomModel != null) {
+        MediaSeriesGroup study = dicomModel.getParent(dcmSeries, DicomModel.study);
+        return study != null
+            && LangUtil.getNULLtoFalse((Boolean) study.getTagValue(TagW.StudyDicomRT));
+      }
+    }
+    return false;
   }
 
   private static List<MediaElement> getRelatedSpecialElements(

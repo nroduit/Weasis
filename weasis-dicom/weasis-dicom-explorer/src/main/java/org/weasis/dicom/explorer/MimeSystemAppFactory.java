@@ -38,18 +38,13 @@ public class MimeSystemAppFactory implements SeriesViewerFactory {
         }
 
         @Override
-        public void addSeries(MediaSeries series) {
+        public void addSeries(MediaSeries<MediaElement> series) {
           if (series instanceof FilesExtractor extractor) {
-            // As SUN JRE supports only Gnome and responds "true" for Desktop.isDesktopSupported()
-            // in KDE session, but actually does not support it.
-            // http://bugs.sun.com/view_bug.do?bug_id=6486393
+            // Linux KDE session not supported
+            // https://bugs.java.com/bugdatabase/view_bug.do?bug_id=6486393
             for (File file : extractor.getExtractFiles()) {
               if (SystemInfo.isLinux) {
                 startAssociatedProgramFromLinux(file);
-              } else if (SystemInfo.isWindows) {
-                // Workaround of the bug with mpg file see
-                // http://bugs.sun.com/view_bug.do?bug_id=6599987
-                startAssociatedProgramFromWinCMD(file);
               } else if (Desktop.isDesktopSupported()) {
                 final Desktop desktop = Desktop.getDesktop();
                 if (desktop.isSupported(Desktop.Action.OPEN)) {
@@ -65,8 +60,6 @@ public class MimeSystemAppFactory implements SeriesViewerFactory {
           return null;
         }
       };
-
-  public MimeSystemAppFactory() {}
 
   @Override
   public Icon getIcon() {
@@ -112,5 +105,10 @@ public class MimeSystemAppFactory implements SeriesViewerFactory {
   @Override
   public boolean canExternalizeSeries() {
     return false;
+  }
+
+  @Override
+  public boolean canReadSeries(MediaSeries<?> series) {
+    return series instanceof FilesExtractor;
   }
 }

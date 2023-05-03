@@ -67,7 +67,7 @@ public class SeriesBuilder {
   private SeriesBuilder() {}
 
   public static void createMissingSeries(
-      Thread thread, MPRContainer mprContainer, final MprView view) throws Exception {
+      Thread thread, MprContainer mprContainer, final MprView view) throws Exception {
     // TODO test images have all the same size and pixel spacing
     MediaSeries<DicomImageElement> series = view.getSeries();
     if (series != null) {
@@ -240,7 +240,7 @@ public class SeriesBuilder {
                                 mprView.setSeries((MediaSeries<DicomImageElement>) group);
                                 // Copy the synch values from the main view
                                 for (String action :
-                                    MPRContainer.defaultMpr.getSynchData().getActions().keySet()) {
+                                    MprContainer.defaultMpr.getSynchData().getActions().keySet()) {
                                   mprView.setActionsInView(action, view.getActionValue(action));
                                 }
                                 mprView.zoom(mainView.getViewModel().getViewScale());
@@ -339,7 +339,7 @@ public class SeriesBuilder {
                               mprView.setSeries(dicomSeries);
                               // Copy the synch values from the main view
                               for (String action :
-                                  MPRContainer.defaultMpr.getSynchData().getActions().keySet()) {
+                                  MprContainer.defaultMpr.getSynchData().getActions().keySet()) {
                                 mprView.setActionsInView(action, view.getActionValue(action));
                               }
                               mprView.zoom(mainView.getViewModel().getViewScale());
@@ -601,7 +601,8 @@ public class SeriesBuilder {
           if (index > 0) {
             double space = Math.abs(pos - lastPos);
             if (!abort[1]
-                && (MathUtil.isEqualToZero(space) || (index > 1 && lastSpace - space > epsilon))) {
+                && (MathUtil.isEqualToZero(space)
+                    || (index > 1 && Math.abs(lastSpace - space) > epsilon))) {
               confirmMessage(view, Messages.getString("SeriesBuilder.space"), abort);
             }
             lastSpace = space;
@@ -705,7 +706,7 @@ public class SeriesBuilder {
                   JOptionPane.showConfirmDialog(
                       view,
                       message + Messages.getString("SeriesBuilder.add_warn"),
-                      MPRFactory.NAME,
+                      MprFactory.NAME,
                       JOptionPane.YES_NO_OPTION,
                       JOptionPane.QUESTION_MESSAGE);
               if (usrChoice == JOptionPane.NO_OPTION) {

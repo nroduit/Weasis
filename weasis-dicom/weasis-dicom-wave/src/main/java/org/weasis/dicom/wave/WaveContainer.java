@@ -437,8 +437,8 @@ public class WaveContainer extends DicomViewerPlugin implements PropertyChangeLi
             int response =
                 JOptionPane.showConfirmDialog(
                     null,
-                    org.weasis.core.ui.Messages.getString("ImagePrint.issue_desc"),
-                    org.weasis.core.ui.Messages.getString("ImagePrint.status"),
+                    org.weasis.core.Messages.getString("ImagePrint.issue_desc"),
+                    org.weasis.core.Messages.getString("ImagePrint.status"),
                     JOptionPane.YES_NO_OPTION,
                     JOptionPane.WARNING_MESSAGE);
 

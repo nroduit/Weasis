@@ -5,7 +5,7 @@
 
 # Specify the required Java version.
 # Only major version is checked. Minor version or any other version string info is left out.
-REQUIRED_TEXT_VERSION=18
+REQUIRED_TEXT_VERSION=20
 
 # Build Parameters
 REVISON_INC="1"
@@ -36,7 +36,7 @@ do
 echo "Usage: package-weasis.sh <options>"
 echo "Sample usages:"
 echo "    Build an installer for the current platform with the minimal required parameters"
-echo "        package-weasis.sh --input /home/user/weasis-native/bin-dist --jdk /home/user/jdk-18"
+echo "        package-weasis.sh --jdk /home/user/jdk-20"
 echo ""
 echo "Options:"
 echo " --help -h
@@ -232,7 +232,7 @@ else
 fi
 declare -a commonOptions=("--java-options" "-Dgosh.port=17179" \
 "--java-options" "-Djavax.accessibility.assistive_technologies=org.weasis.launcher.EmptyAccessibilityProvider" \
-"--java-options" "-Djavax.accessibility.screen_magnifier_present=false" \
+"--java-options" "-Djavax.accessibility.screen_magnifier_present=false" "--java-options" "--enable-preview" \
 "--java-options" "--add-exports=java.base/sun.net.www.protocol.http=ALL-UNNAMED" "--java-options" "--add-exports=java.base/sun.net.www.protocol.file=ALL-UNNAMED" \
 "--java-options" "--add-exports=java.base/sun.net.www.protocol.https=ALL-UNNAMED" "--java-options" "--add-exports=java.base/sun.net.www.protocol.ftp=ALL-UNNAMED" \
 "--java-options" "--add-exports=java.base/sun.net.www.protocol.jar=ALL-UNNAMED" "--java-options" "--add-exports=jdk.unsupported/sun.misc=ALL-UNNAMED" \
@@ -248,7 +248,7 @@ $JPKGCMD --type app-image --input "$INPUT_DIR" --dest "$OUTPUT_PATH" --name "$NA
 
 if [ "$PACKAGE" = "YES" ] ; then
   VENDOR="Weasis Team"
-  COPYRIGHT="© 2009-2022 Weasis Team"
+  COPYRIGHT="© 2009-2023 Weasis Team"
   if [ "$machine" = "windows" ] ; then
     [ "$arc" = "x86" ]  && UPGRADE_UID="3aedc24e-48a8-4623-ab39-0c3c01c7383b" || UPGRADE_UID="3aedc24e-48a8-4623-ab39-0c3c01c7383a"
     $JPKGCMD --type "msi" --app-image "$IMAGE_PATH" --dest "$OUTPUT_PATH" --name "$NAME" --resource-dir "$RES/msi/${arc}" \

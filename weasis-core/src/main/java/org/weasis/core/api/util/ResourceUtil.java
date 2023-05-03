@@ -97,6 +97,7 @@ public class ResourceUtil {
     IMPORT_IMAGE("svg/action/importImage.svg"), // NON-NLS
     INVERSE_LUT("svg/action/inverseLut.svg"), // NON-NLS
     LAYOUT("svg/action/layout.svg"), // NON-NLS
+    LOAD_VOLUME("svg/action/loadVolume.svg"), // NON-NLS
     LUT("svg/action/lut.svg"), // NON-NLS
     MEASURE("svg/action/measure.svg"), // NON-NLS
     MEASURE_TOP_LEFT("svg/action/measureTopLeft.svg"), // NON-NLS
@@ -112,6 +113,7 @@ public class ResourceUtil {
     NONE("svg/action/none.svg"), // NON-NLS
     OPEN_EXTERNAL("svg/action/openExternal.svg"), // NON-NLS
     OPEN_NEW_TAB("svg/action/openNewTab.svg"), // NON-NLS
+    ORTHOGRAPHIC("svg/action/Orthographic.svg"), // NON-NLS
     PAN("svg/action/pan.svg"), // NON-NLS
     PIPETTE("svg/action/pipette.svg"), // NON-NLS
     PLUS("svg/action/plus.svg"), // NON-NLS
@@ -124,6 +126,7 @@ public class ResourceUtil {
     SELECTION("svg/action/selection.svg"), // NON-NLS
     SELECTION_DELETE("svg/action/selectionDelete.svg"), // NON-NLS
     SEQUENCE("svg/action/sequence.svg"), // NON-NLS
+    SETTINGS("svg/action/settings.svg"), // NON-NLS
     STAR("svg/action/star.svg"), // NON-NLS
     SKIP_END("svg/action/skipEnd.svg"), // NON-NLS
     SKIP_START("svg/action/skipStart.svg"), // NON-NLS
@@ -133,6 +136,9 @@ public class ResourceUtil {
     SYNCH_LARGE("svg/action/synchLarge.svg"), // NON-NLS
     SYNCH_STAR("svg/action/synchStar.svg"), // NON-NLS
     TILE("svg/action/tile.svg"), // NON-NLS
+    VOLUME("svg/action/volume.svg"), // NON-NLS
+    VOLUME_SETTINGS("svg/action/volumeSettings.svg"), // NON-NLS
+    VOLUME_SLICING("svg/action/volumeSlicing.svg"), // NON-NLS
     WINDOW_LEVEL("svg/action/winLevel.svg"), // NON-NLS
     ZOOM("svg/action/zoom.svg"), // NON-NLS
     ZOOM_AREA("svg/action/zoomArea.svg"), // NON-NLS
@@ -161,6 +167,7 @@ public class ResourceUtil {
     IMAGE_EDIT("svg/other/imageEdit.svg"), // NON-NLS
     IMAGE_PRESENTATION("svg/other/imagePresentation.svg"), // NON-NLS
     KEY_IMAGE("svg/other/keyImage.svg"), // NON-NLS
+
     PATIENT("svg/other/patient.svg"), // NON-NLS
     RADIOACTIVE("svg/other/radioactive.svg"), // NON-NLS
     RASTER_IMAGE("svg/other/rasterImage.svg"), // NON-NLS

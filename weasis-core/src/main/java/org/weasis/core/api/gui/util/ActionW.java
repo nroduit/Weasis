@@ -11,7 +11,7 @@ package org.weasis.core.api.gui.util;
 
 import java.awt.Cursor;
 import java.awt.event.KeyEvent;
-import org.weasis.core.api.Messages;
+import org.weasis.core.Messages;
 import org.weasis.core.api.gui.util.Feature.BasicActionStateValue;
 import org.weasis.core.api.gui.util.Feature.BooleanValue;
 import org.weasis.core.api.gui.util.Feature.ComboItemListenerValue;
@@ -215,4 +215,7 @@ public class ActionW {
           KeyEvent.VK_H,
           0,
           new Cursor(Cursor.CROSSHAIR_CURSOR));
+  public static final BasicActionStateValue VOLUME =
+      new BasicActionStateValue(
+          Messages.getString("ActionW.volume"), "volume.enable", 0, 0, null); // NON-NLS
 }

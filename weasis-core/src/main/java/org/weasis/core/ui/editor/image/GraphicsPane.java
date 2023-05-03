@@ -12,18 +12,12 @@ package org.weasis.core.ui.editor.image;
 import java.awt.Graphics;
 import java.awt.Point;
 import java.awt.Rectangle;
-import java.awt.Shape;
-import java.awt.event.KeyEvent;
-import java.awt.event.KeyListener;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.NoninvertibleTransformException;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
-import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -34,16 +28,13 @@ import org.weasis.core.api.gui.Image2DViewer;
 import org.weasis.core.api.gui.model.ViewModel;
 import org.weasis.core.api.gui.model.ViewModelChangeListener;
 import org.weasis.core.api.gui.util.ActionW;
-import org.weasis.core.api.gui.util.GeomUtil;
 import org.weasis.core.api.image.AffineTransformOp;
 import org.weasis.core.api.image.ImageOpNode;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.ui.model.GraphicModel;
-import org.weasis.core.ui.model.graphic.Graphic;
 import org.weasis.core.ui.model.imp.XmlGraphicModel;
 import org.weasis.core.ui.model.layer.GraphicModelChangeListener;
 import org.weasis.core.ui.model.layer.imp.RenderedImageLayer;
-import org.weasis.core.ui.model.utils.imp.DefaultGraphicLabel;
 import org.weasis.core.ui.model.utils.imp.DefaultViewModel;
 import org.weasis.core.util.LangUtil;
 
@@ -61,12 +52,12 @@ public class GraphicsPane extends JComponent implements Canvas {
   protected final LayerModelHandler layerModelHandler;
   protected final ViewModelHandler viewModelHandler;
 
-  protected final DrawingsKeyListeners drawingsKeyListeners = new DrawingsKeyListeners();
+  protected final DrawingsKeyListeners drawingsKeyListeners;
   protected final HashMap<String, Object> actionsInView = new HashMap<>();
   protected final AffineTransform affineTransform = new AffineTransform();
   protected final AffineTransform inverseTransform = new AffineTransform();
 
-  protected final PropertyChangeListener graphicsChangeHandler = new PropertyChangeHandler();
+  protected final PropertyChangeListener graphicsChangeHandler;
 
   public GraphicsPane(ViewModel viewModel) {
     setOpaque(false);
@@ -80,6 +71,8 @@ public class GraphicsPane extends JComponent implements Canvas {
 
     this.viewModel = Optional.ofNullable(viewModel).orElseGet(DefaultViewModel::new);
     this.viewModel.addViewModelChangeListener(viewModelHandler);
+    this.drawingsKeyListeners = new DrawingsKeyListeners(this);
+    this.graphicsChangeHandler = new PropertyChangeHandler(this);
   }
 
   @Override
@@ -98,6 +91,10 @@ public class GraphicsPane extends JComponent implements Canvas {
       this.graphicManager.addChangeListener(layerModelHandler);
       firePropertyChange("graphicManager", graphicManagerOld, this.graphicManager);
     }
+  }
+
+  public DrawingsKeyListeners getDrawingsKeyListeners() {
+    return drawingsKeyListeners;
   }
 
   @Override
@@ -399,192 +396,6 @@ public class GraphicsPane extends JComponent implements Canvas {
     @Override
     public void handleViewModelChanged(ViewModel viewModel) {
       repaint();
-    }
-  }
-
-  /**
-   * The Class DrawingsKeyListeners.
-   *
-   * @author Nicolas Roduit
-   */
-  private class DrawingsKeyListeners implements KeyListener {
-
-    @Override
-    public void keyPressed(KeyEvent e) {
-      if (e.getKeyCode() == KeyEvent.VK_DELETE) {
-        graphicManager.deleteSelectedGraphics(GraphicsPane.this, true);
-      } else if (e.isControlDown() && e.getKeyCode() == KeyEvent.VK_D) {
-        graphicManager.setSelectedGraphic(null);
-      } else if (e.isControlDown() && e.getKeyCode() == KeyEvent.VK_A) {
-        graphicManager.setSelectedAllGraphics();
-      }
-      // FIXME arrows is already used with pan!
-      // else if (e.getKeyCode() == KeyEvent.VK_LEFT) {
-      // layerModel.moveSelectedGraphics(-1, 0);
-      // }
-      // else if (e.getKeyCode() == KeyEvent.VK_UP) {
-      // layerModel.moveSelectedGraphics(0, -1);
-      // }
-      // else if (e.getKeyCode() == KeyEvent.VK_RIGHT) {
-      // layerModel.moveSelectedGraphics(1, 0);
-      // }
-      // else if (e.getKeyCode() == KeyEvent.VK_DOWN) {
-      // layerModel.moveSelectedGraphics(0, 1);
-      // }
-    }
-
-    @Override
-    public void keyReleased(KeyEvent e) {
-      // Do Nothing
-    }
-
-    @Override
-    public void keyTyped(KeyEvent e) {
-      // DO nothing
-    }
-  }
-
-  /**
-   * The Class PropertyChangeHandler.
-   *
-   * @author Nicolas Roduit
-   */
-  class PropertyChangeHandler implements PropertyChangeListener {
-
-    private PropertyChangeHandler() {}
-
-    // This method is called when a property is changed (fired from a graphic)
-    @Override
-    public void propertyChange(PropertyChangeEvent propertychangeevent) {
-      Object obj = propertychangeevent.getSource();
-      String s = propertychangeevent.getPropertyName();
-      if (obj instanceof Graphic graph) {
-        if ("bounds".equals(s)) {
-          graphicBoundsChanged(
-              graph,
-              (Shape) propertychangeevent.getOldValue(),
-              (Shape) propertychangeevent.getNewValue(),
-              getAffineTransform());
-        } else if ("graphicLabel".equals(s)) {
-          labelBoundsChanged(
-              graph,
-              (DefaultGraphicLabel) propertychangeevent.getOldValue(),
-              (DefaultGraphicLabel) propertychangeevent.getNewValue(),
-              getAffineTransform());
-        } else if ("remove".equals(s)) {
-          removeGraphic(graph);
-        } else if ("remove.repaint".equals(s)) {
-          removeGraphicAndRepaint(graph);
-        } else if ("toFront".equals(s)) {
-          toFront(graph);
-        } else if ("toBack".equals(s)) {
-          toBack(graph);
-        }
-      }
-    }
-
-    public void toFront(Graphic graphic) {
-      List<Graphic> list = graphicManager.getModels();
-      synchronized (list) {
-        for (int i = 0; i < list.size(); i++) {
-          if (list.get(i).equals(graphic)) {
-            Collections.rotate(list.subList(i, list.size()), -1);
-            break;
-          }
-        }
-      }
-      repaint();
-    }
-
-    public void toBack(Graphic graphic) {
-      List<Graphic> list = graphicManager.getModels();
-      synchronized (list) {
-        for (int i = 0; i < list.size(); i++) {
-          if (list.get(i).equals(graphic)) {
-            Collections.rotate(list.subList(0, i + 1), 1);
-            break;
-          }
-        }
-      }
-      repaint();
-    }
-
-    public void removeGraphicAndRepaint(Graphic graphic) {
-      removeGraphic(graphic);
-      GraphicsPane.repaint(
-          GraphicsPane.this,
-          graphic.getTransformedBounds(graphic.getShape(), getAffineTransform()));
-    }
-
-    public void removeGraphic(Graphic graphic) {
-      if (graphicManager != null) {
-        graphicManager.removeGraphic(graphic);
-      }
-      graphic.removePropertyChangeListener(graphicsChangeHandler);
-    }
-
-    protected Rectangle rectangleUnion(Rectangle rectangle, Rectangle rectangle1) {
-      if (rectangle == null) {
-        return rectangle1;
-      }
-      return rectangle1 == null ? rectangle : rectangle.union(rectangle1);
-    }
-
-    protected void graphicBoundsChanged(
-        Graphic graphic, Shape oldShape, Shape shape, AffineTransform transform) {
-      if (graphic != null) {
-        if (oldShape == null) {
-          if (shape != null) {
-            Rectangle rect = graphic.getTransformedBounds(shape, transform);
-            GraphicsPane.repaint(GraphicsPane.this, rect);
-          }
-        } else {
-          if (shape == null) {
-            Rectangle rect = graphic.getTransformedBounds(oldShape, transform);
-            GraphicsPane.repaint(GraphicsPane.this, rect);
-          } else {
-            Rectangle rect =
-                rectangleUnion(
-                    graphic.getTransformedBounds(oldShape, transform),
-                    graphic.getTransformedBounds(shape, transform));
-            GraphicsPane.repaint(GraphicsPane.this, rect);
-          }
-        }
-      }
-    }
-
-    protected void labelBoundsChanged(
-        Graphic graphic,
-        DefaultGraphicLabel oldLabel,
-        DefaultGraphicLabel newLabel,
-        AffineTransform transform) {
-
-      if (graphic != null) {
-        boolean oldNull = oldLabel == null || oldLabel.getLabels() == null;
-        boolean newNull = newLabel == null || newLabel.getLabels() == null;
-        if (oldNull) {
-          if (!newNull) {
-            Rectangle2D rect = graphic.getTransformedBounds(newLabel, transform);
-            GeomUtil.growRectangle(rect, 2);
-            GraphicsPane.repaint(GraphicsPane.this, rect.getBounds());
-          }
-        } else {
-          if (newNull) {
-            Rectangle2D rect = graphic.getTransformedBounds(oldLabel, transform);
-            GeomUtil.growRectangle(rect, 2);
-            GraphicsPane.repaint(GraphicsPane.this, rect.getBounds());
-          } else {
-            Rectangle2D newRect = graphic.getTransformedBounds(newLabel, transform);
-            GeomUtil.growRectangle(newRect, 2);
-
-            Rectangle2D oldRect = graphic.getTransformedBounds(oldLabel, transform);
-            GeomUtil.growRectangle(oldRect, 2);
-
-            Rectangle rect = rectangleUnion(oldRect.getBounds(), newRect.getBounds());
-            GraphicsPane.repaint(GraphicsPane.this, rect);
-          }
-        }
-      }
     }
   }
 }

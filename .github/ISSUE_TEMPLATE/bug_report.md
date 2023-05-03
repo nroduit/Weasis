@@ -20,7 +20,7 @@ Steps to reproduce the behavior:
 A clear and concise description of what you expected to happen.
 
 **Desktop (please complete the following information):**
- - OS: [e.g. Mac OS 10.15.1]
+ - OS: [e.g. macOS 10.15.1]
  - Weasis Version [e.g. 3.1.0]
 
 **Additional context**

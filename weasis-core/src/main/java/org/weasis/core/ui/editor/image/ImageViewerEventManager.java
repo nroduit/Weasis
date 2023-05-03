@@ -48,6 +48,7 @@ import org.weasis.core.ui.editor.SeriesViewerListener;
 import org.weasis.core.ui.editor.image.SynchData.Mode;
 import org.weasis.core.ui.editor.image.dockable.MeasureTool;
 import org.weasis.core.ui.model.graphic.Graphic;
+import org.weasis.core.ui.model.utils.bean.PanPoint;
 import org.weasis.core.ui.model.utils.imp.DefaultViewModel;
 import org.weasis.core.ui.pref.ZoomSetting;
 
@@ -302,13 +303,7 @@ public abstract class ImageViewerEventManager<E extends ImageElement> implements
   protected SliderChangeListener newZoomAction() {
 
     return new SliderChangeListener(
-        ActionW.ZOOM,
-        DefaultViewModel.SCALE_MIN,
-        DefaultViewModel.SCALE_MAX,
-        1.0,
-        true,
-        0.1,
-        100) { // special case will set range -100 to 100
+        ActionW.ZOOM, DefaultViewModel.SCALE_MIN, DefaultViewModel.SCALE_MAX, 1.0, true, 0.3, 300) {
 
       @Override
       public void stateChanged(BoundedRangeModel model) {
@@ -357,7 +352,7 @@ public abstract class ImageViewerEventManager<E extends ImageElement> implements
     return new CrosshairListener(ActionW.CROSSHAIR, null) {
 
       @Override
-      public void pointChanged(Point2D point) {
+      public void pointChanged(PanPoint point) {
         firePropertyChange(
             ActionW.SYNCH.cmd(),
             null,
@@ -416,8 +411,8 @@ public abstract class ImageViewerEventManager<E extends ImageElement> implements
         DefaultViewModel.SCALE_MAX,
         2.0,
         true,
-        0.1,
-        100) { // special case will set range -100 to 100
+        0.3,
+        300) {
 
       @Override
       public void stateChanged(BoundedRangeModel model) {
@@ -618,6 +613,16 @@ public abstract class ImageViewerEventManager<E extends ImageElement> implements
   public boolean isActionRegistered(Feature<?> feature) {
     if (feature != null) {
       return actions.containsKey(feature);
+    }
+    return false;
+  }
+
+  public boolean isActionEnabled(Feature<?> feature) {
+    if (feature != null) {
+      ActionState action = actions.get(feature);
+      if (action != null) {
+        return action.isActionEnabled();
+      }
     }
     return false;
   }

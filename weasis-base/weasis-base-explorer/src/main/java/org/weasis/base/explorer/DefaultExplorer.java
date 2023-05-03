@@ -110,7 +110,7 @@ public class DefaultExplorer extends PluginTool implements DataExplorerView {
     // Provide minimum sizes for the two components in the split pane
     Dimension minimumSize = GuiUtils.getDimension(150, 150);
     treePane.setMinimumSize(minimumSize);
-    treePane.setMinimumSize(minimumSize);
+    treePane.setPreferredSize(minimumSize);
 
     jRootPanel.setLayout(new BorderLayout());
     jRootPanel.add(splitPane, BorderLayout.CENTER);

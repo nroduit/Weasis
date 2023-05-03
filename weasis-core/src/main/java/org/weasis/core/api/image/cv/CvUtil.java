@@ -81,20 +81,15 @@ public class CvUtil {
       ImageElement firstImg = sources.get(0);
       PlanarImage img = firstImg.getImage(null, false);
 
-      Integer type = null;
+      Integer type = img.type();
+      ;
       Mat mean = new Mat(img.height(), img.width(), CvType.CV_32F);
       img.toMat().convertTo(mean, CvType.CV_32F);
       int numbSrc = sources.size();
       for (int i = 1; i < numbSrc; i++) {
         ImageElement imgElement = sources.get(i);
         PlanarImage image = imgElement.getImage(null, false);
-        if (image.width() != img.width() && image.height() != img.height()) {
-          continue;
-        }
-        if (type == null) {
-          type = image.type();
-        }
-        if (image instanceof Mat mat) {
+        if (image instanceof Mat mat && image.width() == img.width()) {
           // Accumulate not supported 16-bit signed:
           // https://docs.opencv.org/3.3.0/d7/df3/group__imgproc__motion.html#ga1a567a79901513811ff3b9976923b199
           if (CvType.depth(image.type()) == CvType.CV_16S) {
@@ -106,12 +101,10 @@ public class CvUtil {
           }
         }
       }
-      if (type != null) {
-        ImageCV dstImg = new ImageCV();
-        Core.divide(mean, new Scalar(numbSrc), mean);
-        mean.convertTo(dstImg, type);
-        return dstImg;
-      }
+      ImageCV dstImg = new ImageCV();
+      Core.divide(mean, new Scalar(numbSrc), mean);
+      mean.convertTo(dstImg, type);
+      return dstImg;
     }
     return null;
   }
@@ -127,10 +120,7 @@ public class CvUtil {
       for (int i = 1; i < numbSrc; i++) {
         ImageElement imgElement = sources.get(i);
         PlanarImage image = imgElement.getImage(null, false);
-        if (image.width() != dstImg.width() && image.height() != dstImg.height()) {
-          continue;
-        }
-        if (image instanceof Mat mat) {
+        if (image instanceof Mat mat && image.width() == dstImg.width()) {
           Core.min(dstImg, mat, dstImg);
         }
       }
@@ -150,10 +140,7 @@ public class CvUtil {
       for (int i = 1; i < numbSrc; i++) {
         ImageElement imgElement = sources.get(i);
         PlanarImage image = imgElement.getImage(null, false);
-        if (image.width() != dstImg.width() && image.height() != dstImg.height()) {
-          continue;
-        }
-        if (image instanceof Mat mat) {
+        if (image instanceof Mat mat && image.width() == dstImg.width()) {
           Core.max(dstImg, mat, dstImg);
         }
       }

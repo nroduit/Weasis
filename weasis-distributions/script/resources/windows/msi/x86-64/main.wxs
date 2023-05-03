@@ -65,6 +65,10 @@
     <CustomAction Id="JpDisallowDowngrade" Error="!(loc.DowngradeErrorMessage)" />
     <?endif?>
 
+    <Binary Id="JpCaDll" SourceFile="wixhelper.dll"/>
+
+    <CustomAction Id="JpFindRelatedProducts" BinaryKey="JpCaDll" DllEntry="FindRelatedProductsEx" />
+
     <!-- Standard required root -->
     <Directory Id="TARGETDIR" Name="SourceDir"/>
 
@@ -83,11 +87,17 @@
             <RegistryKey Root="HKLM" Key="SOFTWARE\Microsoft\Internet Explorer\ProtocolExecute\weasis">
               <RegistryValue Type="integer" Name="WarnOnOpen" Value="0" />
             </RegistryKey>
-            <!-- Remove popup on Chrome for weasis protocol -->
-            <RegistryKey Root="HKLM" Key="SOFTWARE\Policies\Google\Chrome\URLWhitelist">
+            <RegistryKey Root="HKLM" Key="SOFTWARE\Policies\Microsoft\Edge\URLAllowlist">
                <RegistryValue Name="787" Type="string" Value="weasis://*"/>
             </RegistryKey>
-            <RegistryKey Root="HKLM" Key="SOFTWARE\Policies\Chromium\URLWhitelist">
+            <!-- Remove popup on Chrome for weasis protocol -->
+            <RegistryKey Root="HKLM" Key="SOFTWARE\Policies\Google\Chrome\URLAllowlist">
+               <RegistryValue Name="787" Type="string" Value="weasis://*"/>
+            </RegistryKey>
+            <RegistryKey Root="HKLM" Key="SOFTWARE\Policies\Chromium\URLAllowlist">
+               <RegistryValue Name="787" Type="string" Value="weasis://*"/>
+            </RegistryKey>
+            <RegistryKey Root="HKLM" Key="SOFTWARE\Policies\Mozilla\Firefox\WebsiteFilter\Exceptions">
                <RegistryValue Name="787" Type="string" Value="weasis://*"/>
             </RegistryKey>
        </Component>
@@ -140,13 +150,18 @@
     <?endif?>
 
       <?ifndef JpAllowUpgrades ?>
-      <Custom Action="JpDisallowUpgrade" After="FindRelatedProducts">JP_UPGRADABLE_FOUND</Custom>
+      <Custom Action="JpDisallowUpgrade" After="JpFindRelatedProducts">JP_UPGRADABLE_FOUND</Custom>
       <?endif?>
       <?ifndef JpAllowDowngrades ?>
-      <Custom Action="JpDisallowDowngrade" After="FindRelatedProducts">JP_DOWNGRADABLE_FOUND</Custom>
+      <Custom Action="JpDisallowDowngrade" After="JpFindRelatedProducts">JP_DOWNGRADABLE_FOUND</Custom>
       <?endif?>
       <RemoveExistingProducts Before="CostInitialize"/>
+      <Custom Action="JpFindRelatedProducts" After="FindRelatedProducts"/>
     </InstallExecuteSequence>
+
+    <InstallUISequence>
+      <Custom Action="JpFindRelatedProducts" After="FindRelatedProducts"/>
+    </InstallUISequence>
 
   </Product>
 </Wix>

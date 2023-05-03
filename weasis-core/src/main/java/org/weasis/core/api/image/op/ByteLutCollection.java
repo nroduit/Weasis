@@ -24,7 +24,7 @@ import java.util.function.Supplier;
 import javax.swing.Icon;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.weasis.core.api.Messages;
+import org.weasis.core.Messages;
 import org.weasis.core.util.FileUtil;
 
 /**
@@ -162,13 +162,13 @@ public class ByteLutCollection {
     }
     int bands = lut.length;
     int dynamic = lut[0].length - 1;
-    byte[][] invertlut = new byte[bands][dynamic + 1];
+    byte[][] invertLut = new byte[bands][dynamic + 1];
     for (int j = 0; j < bands; j++) {
       for (int i = 0; i <= dynamic; i++) {
-        invertlut[j][i] = lut[j][dynamic - i];
+        invertLut[j][i] = lut[j][dynamic - i];
       }
     }
-    return invertlut;
+    return invertLut;
   }
 
   public static void readLutFilesFromResourcesDir(List<ByteLut> luts, File lutFolder) {

@@ -14,17 +14,22 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Paint;
 import java.awt.Stroke;
+import java.awt.event.MouseEvent;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
+import java.util.List;
+import javax.swing.JPopupMenu;
 import javax.swing.ToolTipManager;
 import org.weasis.core.api.gui.model.ViewModel;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.GuiUtils;
+import org.weasis.core.api.gui.util.MouseActionAdapter;
 import org.weasis.core.api.image.ImageOpNode;
 import org.weasis.core.api.image.SimpleOpManager;
 import org.weasis.core.api.image.util.ImageLayer;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.util.FontItem;
+import org.weasis.core.ui.model.graphic.Graphic;
 import org.weasis.core.ui.model.layer.LayerAnnotation;
 
 public class ExportImage<E extends ImageElement> extends DefaultView2d<E> {
@@ -153,5 +158,25 @@ public class ExportImage<E extends ImageElement> extends DefaultView2d<E> {
   @Override
   public void enableMouseAndKeyListener(MouseActions mouseActions) {
     // Do nothing
+  }
+
+  @Override
+  public MouseActionAdapter getMouseAdapter(String command) {
+    return null;
+  }
+
+  @Override
+  public JPopupMenu buildGraphicContextMenu(MouseEvent evt, List<Graphic> selected) {
+    return null;
+  }
+
+  @Override
+  public JPopupMenu buildContextMenu(MouseEvent evt) {
+    return null;
+  }
+
+  @Override
+  public boolean hasValidContent() {
+    return getSourceImage() != null;
   }
 }

@@ -27,13 +27,13 @@ import org.osgi.framework.InvalidSyntaxException;
 import org.osgi.framework.ServiceReference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.weasis.core.Messages;
 import org.weasis.core.api.gui.InsertableUtil;
 import org.weasis.core.api.gui.PreferencesPageFactory;
 import org.weasis.core.api.gui.util.AbstractItemDialogPage;
 import org.weasis.core.api.gui.util.AbstractWizardDialog;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.service.BundleTools;
-import org.weasis.core.ui.Messages;
 import org.weasis.core.util.StringUtil;
 
 public class PreferenceDialog extends AbstractWizardDialog {
@@ -125,6 +125,7 @@ public class PreferenceDialog extends AbstractWizardDialog {
 
     InsertableUtil.sortInsertable(list);
     for (AbstractItemDialogPage page : list) {
+      page.sortSubPages();
       pagesRoot.add(new DefaultMutableTreeNode(page));
     }
     iniTree();

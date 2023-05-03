@@ -144,7 +144,7 @@ public class DicomExport extends AbstractWizardDialog {
     TreeCheckingModel checkingModel = treeModel.getCheckingModel();
     checkingModel.setCheckingMode(CheckingMode.PROPAGATE_PRESERVING_UNCHECK);
 
-    if (UIManager.getExplorerplugin(DicomExplorer.NAME) instanceof DicomExplorer explorer) {
+    if (UIManager.getExplorerPlugin(DicomExplorer.NAME) instanceof DicomExplorer explorer) {
 
       Set<Series<?>> openSeriesSet = explorer.getSelectedPatientOpenSeries();
       Object rootNode = treeModel.getModel().getRoot();

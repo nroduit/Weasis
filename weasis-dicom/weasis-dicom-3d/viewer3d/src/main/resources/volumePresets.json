@@ -1,0 +1,2110 @@
+[
+  {
+    "name": "Grayscale",
+    "modality": "ALL",
+    "default": "true",
+    "shade": "true",
+    "specularPower": "10",
+    "group": [
+      {
+        "name": "Default",
+        "point": [
+          {
+            "intensity": "0",
+            "opacity": "0",
+            "red": "0",
+            "green": "0",
+            "blue": "0",
+            "ambient": "0.1",
+            "diffuse": "0.9",
+            "specular": "0.2"
+          },
+          {
+            "intensity": "512",
+            "opacity": "1",
+            "red": "1",
+            "green": "1",
+            "blue": "1",
+            "ambient": "0.1",
+            "diffuse": "0.9",
+            "specular": "0.2"
+          },
+          {
+            "intensity": "3000",
+            "opacity": "1",
+            "red": "1",
+            "green": "1",
+            "blue": "1",
+            "ambient": "0.1",
+            "diffuse": "0.9",
+            "specular": "0.2"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Grayscale",
+    "modality": "CT",
+    "default": "true",
+    "shade": "true",
+    "specularPower": "10",
+    "group": [
+      {
+        "name": "Default",
+        "point": [
+          {
+            "intensity": "-100",
+            "opacity": "0",
+            "red": "0",
+            "green": "0",
+            "blue": "0",
+            "ambient": "0.1",
+            "diffuse": "0.9",
+            "specular": "0.2"
+          },
+          {
+            "intensity": "500",
+            "opacity": "0.875",
+            "red": "1",
+            "green": "1",
+            "blue": "1",
+            "ambient": "0.1",
+            "diffuse": "0.9",
+            "specular": "0.2"
+          },
+          {
+            "intensity": "2047",
+            "opacity": "0.875",
+            "red": "1",
+            "green": "1",
+            "blue": "1",
+            "ambient": "0",
+            "diffuse": "1",
+            "specular": "1"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Fat",
+    "modality": "CT",
+    "shade": "false",
+    "specularPower": "1",
+    "group": [
+      {
+        "name": "Default",
+        "point": [
+          {
+            "intensity": "-1000",
+            "opacity": "0",
+            "red": "0.3",
+            "green": "0.3",
+            "blue": "1",
+            "ambient": "0.2",
+            "diffuse": "1",
+            "specular": "0"
+          },
+          {
+            "intensity": "-498",
+            "opacity": "0",
+            "red": "0.3",
+            "green": "1",
+            "blue": "0.3",
+            "ambient": "0.2",
+            "diffuse": "1",
+            "specular": "0"
+          },
+          {
+            "intensity": "-100",
+            "opacity": "0"
+          },
+          {
+            "intensity": "-99",
+            "opacity": "0.15",
+            "red": "0",
+            "green": "0",
+            "blue": "1",
+            "ambient": "0.2",
+            "diffuse": "1",
+            "specular": "0"
+          },
+          {
+            "intensity": "-77",
+            "opacity": "0.15",
+            "red": "0",
+            "green": "1",
+            "blue": "0",
+            "ambient": "0.2",
+            "diffuse": "1",
+            "specular": "0"
+          },
+          {
+            "intensity": "-65",
+            "opacity": "0.15",
+            "red": "0.835431",
+            "green": "0.888889",
+            "blue": "0.0165387",
+            "ambient": "0.2",
+            "diffuse": "1",
+            "specular": "0"
+          },
+          {
+            "intensity": "-60",
+            "opacity": "0.15"
+          },
+          {
+            "intensity": "-59",
+            "opacity": "0"
+          },
+          {
+            "intensity": "84",
+            "opacity": "0",
+            "red": "1",
+            "green": "0",
+            "blue": "0",
+            "ambient": "0.2",
+            "diffuse": "1",
+            "specular": "0"
+          },
+          {
+            "intensity": "463",
+            "opacity": "0",
+            "red": "1",
+            "green": "0",
+            "blue": "0",
+            "ambient": "0.2",
+            "diffuse": "1",
+            "specular": "0"
+          },
+          {
+            "intensity": "659",
+            "opacity": "0",
+            "red": "1",
+            "green": "0.912535",
+            "blue": "0.0374849",
+            "ambient": "0.2",
+            "diffuse": "1",
+            "specular": "0"
+          },
+          {
+            "intensity": "2952",
+            "opacity": "0",
+            "red": "1",
+            "green": "0.300267",
+            "blue": "0.299886",
+            "ambient": "0.2",
+            "diffuse": "1",
+            "specular": "0"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Lungs (transparent)",
+    "modality": "CT",
+    "shade": "true",
+    "specularPower": "1",
+    "group": [
+      {
+        "name": "Default",
+        "point": [
+          {
+            "intensity": "-1000",
+            "opacity": "0",
+            "red": "0.3",
+            "green": "0.3",
+            "blue": "1",
+            "ambient": "0.2",
+            "diffuse": "1",
+            "specular": "0"
+          },
+          {
+            "intensity": "-600",
+            "opacity": "0",
+            "red": "0",
+            "green": "0",
+            "blue": "1",
+            "ambient": "0.2",
+            "diffuse": "1",
+            "specular": "0"
+          },
+          {
+            "intensity": "-599",
+            "opacity": "0.15"
+          },
+          {
+            "intensity": "-530",
+            "opacity": "0.15",
+            "red": "0.134704",
+            "green": "0.781726",
+            "blue": "0.0724558",
+            "ambient": "0.2",
+            "diffuse": "1",
+            "specular": "0"
+          },
+          {
+            "intensity": "-460",
+            "opacity": "0.15",
+            "red": "0.929244",
+            "green": "1",
+            "blue": "0.109473",
+            "ambient": "0.2",
+            "diffuse": "1",
+            "specular": "0"
+          },
+          {
+            "intensity": "-400",
+            "opacity": "0.15",
+            "red": "0.888889",
+            "green": "0.254949",
+            "blue": "0.0240258",
+            "ambient": "0.2",
+            "diffuse": "1",
+            "specular": "0"
+          },
+          {
+            "intensity": "-399",
+            "opacity": "0"
+          },
+          {
+            "intensity": "2952",
+            "opacity": "0",
+            "red": "1",
+            "green": "0.3",
+            "blue": "0.3",
+            "ambient": "0.2",
+            "diffuse": "1",
+            "specular": "0"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "MIP",
+    "modality": "CT",
+    "shade": "true",
+    "specularPower": "10",
+    "group": [
+      {
+        "name": "Default",
+        "point": [
+          {
+            "intensity": "-3024",
+            "opacity": "0",
+            "red": "0",
+            "green": "0",
+            "blue": "0",
+            "ambient": "0.1",
+            "diffuse": "0.9",
+            "specular": "0.2"
+          },
+          {
+            "intensity": "-638",
+            "opacity": "0",
+            "red": "1",
+            "green": "1",
+            "blue": "1",
+            "ambient": "0.1",
+            "diffuse": "0.9",
+            "specular": "0.2"
+          },
+          {
+            "intensity": "-700",
+            "opacity": "1",
+            "red": "1",
+            "green": "1",
+            "blue": "1",
+            "ambient": "0.1",
+            "diffuse": "0.9",
+            "specular": "0.2"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "X-ray",
+    "modality": "CT",
+    "shade": "false",
+    "specularPower": "10",
+    "group": [
+      {
+        "name": "Default",
+        "point": [
+          {
+            "intensity": "-3024",
+            "opacity": "0",
+            "red": "1",
+            "green": "1",
+            "blue": "1",
+            "ambient": "0.1",
+            "diffuse": "0.9",
+            "specular": "0.2"
+          },
+          {
+            "intensity": "-200",
+            "opacity": "0"
+          },
+          {
+            "intensity": "1500",
+            "opacity": "0.05"
+          },
+          {
+            "intensity": "3071",
+            "opacity": "0.05",
+            "red": "1",
+            "green": "1",
+            "blue": "1",
+            "ambient": "0.1",
+            "diffuse": "0.9",
+            "specular": "0.2"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Default",
+    "modality": "CT",
+    "default": "true",
+    "shade": "true",
+    "specularPower": "14",
+    "group": [
+      {
+        "name": "Skin",
+        "point": [
+          {
+            "intensity": "-233",
+            "opacity": "0",
+            "red": "0.333333333",
+            "green": "1",
+            "blue": "1",
+            "ambient": "0.28",
+            "diffuse": "0.774",
+            "specular": "0"
+          },
+          {
+            "intensity": "-218",
+            "opacity": "0.8",
+            "red": "0.333333333",
+            "green": "1",
+            "blue": "1",
+            "ambient": "0.28",
+            "diffuse": "0.774",
+            "specular": "0"
+          },
+          {
+            "intensity": "-193",
+            "opacity": "0",
+            "red": "0.333333333",
+            "green": "1",
+            "blue": "1",
+            "ambient": "0.28",
+            "diffuse": "0.774",
+            "specular": "0"
+          }
+        ]
+      },
+      {
+        "name": "Tissue",
+        "point": [
+          {
+            "intensity": "26",
+            "opacity": "0",
+            "red": "0.333333333",
+            "green": "0",
+            "blue": "0",
+            "ambient": "0.204",
+            "diffuse": "0.817",
+            "specular": "0.806"
+          },
+          {
+            "intensity": "77",
+            "opacity": "0.715",
+            "red": "0.42745098",
+            "green": "0",
+            "blue": "0",
+            "ambient": "0.194",
+            "diffuse": "0.806",
+            "specular": "0.817"
+          },
+          {
+            "intensity": "124",
+            "opacity": "0",
+            "red": "1",
+            "green": "0.666666667",
+            "blue": "0",
+            "ambient": "0.226",
+            "diffuse": "1",
+            "specular": "0.774"
+          }
+        ]
+      },
+      {
+        "name": "Default",
+        "point": [
+          {
+            "intensity": "140",
+            "opacity": "0",
+            "red": "0",
+            "green": "0",
+            "blue": "0",
+            "ambient": "0",
+            "diffuse": "1",
+            "specular": "0"
+          },
+          {
+            "intensity": "147",
+            "opacity": "0.309",
+            "red": "1",
+            "green": "0.5",
+            "blue": "0",
+            "ambient": "0",
+            "diffuse": "1",
+            "specular": "0"
+          },
+          {
+            "intensity": "203",
+            "opacity": "0.595",
+            "red": "1",
+            "green": "1",
+            "blue": "0.721568627",
+            "ambient": "0",
+            "diffuse": "1",
+            "specular": "0"
+          },
+          {
+            "intensity": "297",
+            "opacity": "1",
+            "red": "1",
+            "green": "1",
+            "blue": "1",
+            "ambient": "0",
+            "diffuse": "1",
+            "specular": "0"
+          },
+          {
+            "intensity": "1104",
+            "opacity": "0.817",
+            "red": "0.996078431",
+            "green": "0.996078431",
+            "blue": "0.996078431",
+            "ambient": "0",
+            "diffuse": "1",
+            "specular": "0.925"
+          },
+          {
+            "intensity": "1441",
+            "opacity": "0",
+            "red": "1",
+            "green": "1",
+            "blue": "1",
+            "ambient": "0",
+            "diffuse": "1",
+            "specular": "1"
+          }
+        ]
+      },
+      {
+        "name": "Metal",
+        "point": [
+          {
+            "intensity": "1454",
+            "opacity": "0",
+            "red": "0.223529412",
+            "green": "0.392156863",
+            "blue": "0.552941176",
+            "ambient": "0.131",
+            "diffuse": "0.879",
+            "specular": "0.822"
+          },
+          {
+            "intensity": "1455",
+            "opacity": "1",
+            "red": "0.223529412",
+            "green": "0.392156863",
+            "blue": "0.552941176",
+            "ambient": "0.131",
+            "diffuse": "0.879",
+            "specular": "0.822"
+          },
+          {
+            "intensity": "2237",
+            "opacity": "1",
+            "red": "0.223529412",
+            "green": "0.392156863",
+            "blue": "0.552941176",
+            "ambient": "0.131",
+            "diffuse": "0.879",
+            "specular": "0.822"
+          },
+          {
+            "intensity": "2245",
+            "opacity": "0",
+            "red": "0.223529412",
+            "green": "0.392156863",
+            "blue": "0.552941176",
+            "ambient": "0.131",
+            "diffuse": "0.879",
+            "specular": "0.822"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Bones & Skin",
+    "modality": "CT",
+    "shade": "true",
+    "specularPower": "90",
+    "group": [
+      {
+        "name": "Default",
+        "point": [
+          {
+            "intensity": "-684",
+            "opacity": "0",
+            "red": "0",
+            "green": "1",
+            "blue": "1",
+            "ambient": "0",
+            "diffuse": "1",
+            "specular": "0"
+          },
+          {
+            "intensity": "-624",
+            "opacity": "0.044",
+            "red": "0.078431373",
+            "green": "0.921568627",
+            "blue": "0.925490196",
+            "ambient": "0",
+            "diffuse": "1",
+            "specular": "0"
+          },
+          {
+            "intensity": "-610",
+            "opacity": "0.8",
+            "red": "0.145098039",
+            "green": "0.854901961",
+            "blue": "0.862745098",
+            "ambient": "0",
+            "diffuse": "1",
+            "specular": "0"
+          },
+          {
+            "intensity": "-560",
+            "opacity": "0.044",
+            "red": "0.223529412",
+            "green": "0.776470588",
+            "blue": "0.788235294",
+            "ambient": "0",
+            "diffuse": "1",
+            "specular": "0"
+          },
+          {
+            "intensity": "-515",
+            "opacity": "0.044",
+            "red": "0.290196078",
+            "green": "0.709803922",
+            "blue": "0.725490196",
+            "ambient": "0",
+            "diffuse": "0.999",
+            "specular": "0"
+          },
+          {
+            "intensity": "-482",
+            "opacity": "0",
+            "red": "0.325490196",
+            "green": "0.674509804",
+            "blue": "0.690196078",
+            "ambient": "0",
+            "diffuse": "0.999",
+            "specular": "0"
+          },
+          {
+            "intensity": "97",
+            "opacity": "0",
+            "red": "0",
+            "green": "0",
+            "blue": "0",
+            "ambient": "0",
+            "diffuse": "0.999",
+            "specular": "0"
+          },
+          {
+            "intensity": "114",
+            "opacity": "0.036",
+            "red": "1",
+            "green": "0.039215686",
+            "blue": "0.086274510",
+            "ambient": "0",
+            "diffuse": "1",
+            "specular": "0"
+          },
+          {
+            "intensity": "305",
+            "opacity": "0.416",
+            "red": "1",
+            "green": "1",
+            "blue": "0",
+            "ambient": "0",
+            "diffuse": "1",
+            "specular": "1"
+          },
+          {
+            "intensity": "1615",
+            "opacity": "0.623",
+            "red": "0.874509804",
+            "green": "0.874509804",
+            "blue": "0.874509804",
+            "ambient": "0",
+            "diffuse": "1",
+            "specular": "1"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Bones",
+    "modality": "CT",
+    "shade": "true",
+    "specularPower": "90",
+    "group": [
+      {
+        "name": "Default",
+        "point": [
+          {
+            "intensity": "97",
+            "opacity": "0",
+            "red": "1",
+            "green": "0.039215686",
+            "blue": "0.086274510",
+            "ambient": "0",
+            "diffuse": "1",
+            "specular": "0"
+          },
+          {
+            "intensity": "240",
+            "opacity": "0.102",
+            "red": "0.666666667",
+            "green": "0",
+            "blue": "0",
+            "ambient": "0",
+            "diffuse": "1",
+            "specular": "0"
+          },
+          {
+            "intensity": "275",
+            "opacity": "0.595",
+            "red": "1",
+            "green": "1",
+            "blue": "0",
+            "ambient": "0",
+            "diffuse": "1",
+            "specular": "1"
+          },
+          {
+            "intensity": "317",
+            "opacity": "0.744",
+            "red": "1",
+            "green": "1",
+            "blue": "1",
+            "ambient": "0",
+            "diffuse": "1",
+            "specular": "0"
+          },
+          {
+            "intensity": "2075",
+            "opacity": "0.791",
+            "red": "1",
+            "green": "1",
+            "blue": "1",
+            "ambient": "0",
+            "diffuse": "1",
+            "specular": "1"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Endoscopy",
+    "modality": "CT",
+    "shade": "true",
+    "specularPower": "67",
+    "group": [
+      {
+        "name": "Tissue",
+        "point": [
+          {
+            "intensity": "-1024",
+            "opacity": "0.817",
+            "red": "0.666666667",
+            "green": "0",
+            "blue": "0",
+            "ambient": "0",
+            "diffuse": "0.75",
+            "specular": "0.75"
+          },
+          {
+            "intensity": "114",
+            "opacity": "0.817",
+            "red": "0.666666667",
+            "green": "0",
+            "blue": "0",
+            "ambient": "0",
+            "diffuse": "0.75",
+            "specular": "0.75"
+          },
+          {
+            "intensity": "182",
+            "opacity": "0",
+            "red": "0.333333333",
+            "green": "0",
+            "blue": "0",
+            "ambient": "0",
+            "diffuse": "0.75",
+            "specular": "0"
+          }
+        ]
+      },
+      {
+        "name": "Default",
+        "point": [
+          {
+            "intensity": "522",
+            "opacity": "0",
+            "red": "0",
+            "green": "0",
+            "blue": "0",
+            "ambient": "0",
+            "diffuse": "1",
+            "specular": "0"
+          },
+          {
+            "intensity": "529",
+            "opacity": "0.309",
+            "red": "1",
+            "green": "0.5",
+            "blue": "0",
+            "ambient": "0",
+            "diffuse": "1",
+            "specular": "0"
+          },
+          {
+            "intensity": "585",
+            "opacity": "0.595",
+            "red": "1",
+            "green": "1",
+            "blue": "0.721568627",
+            "ambient": "0",
+            "diffuse": "1",
+            "specular": "0"
+          },
+          {
+            "intensity": "679",
+            "opacity": "0.791",
+            "red": "1",
+            "green": "1",
+            "blue": "1",
+            "ambient": "0",
+            "diffuse": "0.765",
+            "specular": "0.765"
+          },
+          {
+            "intensity": "2385",
+            "opacity": "0.791",
+            "red": "1",
+            "green": "1",
+            "blue": "1",
+            "ambient": "0",
+            "diffuse": "1",
+            "specular": "1"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Colonoscopy",
+    "modality": "CT",
+    "shade": "true",
+    "specularPower": "70",
+    "group": [
+      {
+        "name": "Default",
+        "point": [
+          {
+            "intensity": "-1656",
+            "opacity": "0",
+            "red": "0",
+            "green": "0",
+            "blue": "0",
+            "ambient": "1",
+            "diffuse": "1",
+            "specular": "0"
+          },
+          {
+            "intensity": "-717",
+            "opacity": "0",
+            "red": "1",
+            "green": "0.666666667",
+            "blue": "0.498039216",
+            "ambient": "0",
+            "diffuse": "1",
+            "specular": "1"
+          },
+          {
+            "intensity": "-360",
+            "opacity": "0.903",
+            "red": "0.450980392",
+            "green": "0",
+            "blue": "0",
+            "ambient": "0",
+            "diffuse": "1",
+            "specular": "1"
+          },
+          {
+            "intensity": "237",
+            "opacity": "0.954",
+            "red": "0.486274510",
+            "green": "0.321568627",
+            "blue": "0.243137255",
+            "ambient": "0",
+            "diffuse": "1",
+            "specular": "1"
+          },
+          {
+            "intensity": "294",
+            "opacity": "0.954",
+            "red": "0.533333333",
+            "green": "0.352941176",
+            "blue": "0.262745098",
+            "ambient": "0",
+            "diffuse": "1",
+            "specular": "1"
+          },
+          {
+            "intensity": "723",
+            "opacity": "0.913",
+            "red": "0.494117647",
+            "green": "0.239215686",
+            "blue": "0",
+            "ambient": "0",
+            "diffuse": "1",
+            "specular": "1"
+          },
+          {
+            "intensity": "853",
+            "opacity": "0.892",
+            "red": "0.384313725",
+            "green": "0.254901961",
+            "blue": "0.192156863",
+            "ambient": "0",
+            "diffuse": "1",
+            "specular": "1"
+          },
+          {
+            "intensity": "1034",
+            "opacity": "0",
+            "red": "0.415686275",
+            "green": "0.415686275",
+            "blue": "0.415686275",
+            "ambient": "0",
+            "diffuse": "1",
+            "specular": "1"
+          },
+          {
+            "intensity": "1687",
+            "opacity": "0",
+            "red": "1",
+            "green": "0.666666667",
+            "blue": "0",
+            "ambient": "0",
+            "diffuse": "1",
+            "specular": "1"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Philips Fluoroscopy",
+    "modality": "XA",
+    "shade": "true",
+    "specularPower": "10",
+    "group": [
+      {
+        "name": "Default",
+        "point": [
+          {
+            "intensity": "210",
+            "opacity": "0",
+            "red": "1",
+            "green": "1",
+            "blue": "1",
+            "ambient": "1",
+            "diffuse": "0",
+            "specular": "0"
+          },
+          {
+            "intensity": "1043",
+            "opacity": "0.016",
+            "red": "1",
+            "green": "1",
+            "blue": "1",
+            "ambient": "1",
+            "diffuse": "0",
+            "specular": "0"
+          },
+          {
+            "intensity": "1228",
+            "opacity": "0.01",
+            "red": "1",
+            "green": "1",
+            "blue": "1",
+            "ambient": "1",
+            "diffuse": "0",
+            "specular": "0"
+          },
+          {
+            "intensity": "1306",
+            "opacity": "0.016",
+            "red": "1",
+            "green": "1",
+            "blue": "1",
+            "ambient": "1",
+            "diffuse": "0",
+            "specular": "0"
+          },
+          {
+            "intensity": "1349",
+            "opacity": "0.016",
+            "red": "1",
+            "green": "1",
+            "blue": "1",
+            "ambient": "1",
+            "diffuse": "0",
+            "specular": "0"
+          },
+          {
+            "intensity": "1750",
+            "opacity": "0.01",
+            "red": "1",
+            "green": "1",
+            "blue": "1",
+            "ambient": "1",
+            "diffuse": "0",
+            "specular": "0"
+          },
+          {
+            "intensity": "2349",
+            "opacity": "0.027",
+            "red": "1",
+            "green": "1",
+            "blue": "1",
+            "ambient": "1",
+            "diffuse": "0",
+            "specular": "0"
+          },
+          {
+            "intensity": "3749",
+            "opacity": "0.3",
+            "red": "1",
+            "green": "1",
+            "blue": "1",
+            "ambient": "1",
+            "diffuse": "0",
+            "specular": "0"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Philips",
+    "modality": "XA",
+    "shade": "true",
+    "specularPower": "41.6",
+    "group": [
+      {
+        "name": "Default",
+        "point": [
+          {
+            "intensity": "2757",
+            "opacity": "0",
+            "red": "0.333333333",
+            "green": "0",
+            "blue": "0",
+            "ambient": "1",
+            "diffuse": "0",
+            "specular": "0"
+          },
+          {
+            "intensity": "5659",
+            "opacity": "1",
+            "red": "0.603921569",
+            "green": "0.407843137",
+            "blue": "0",
+            "ambient": "0.999",
+            "diffuse": "0.41",
+            "specular": "0.41"
+          },
+          {
+            "intensity": "6895",
+            "opacity": "1",
+            "red": "1",
+            "green": "0.784313725",
+            "blue": "0",
+            "ambient": "1",
+            "diffuse": "1",
+            "specular": "1"
+          },
+          {
+            "intensity": "8292",
+            "opacity": "1",
+            "red": "1",
+            "green": "1",
+            "blue": "0",
+            "ambient": "0.999",
+            "diffuse": "0.632",
+            "specular": "0.632"
+          },
+          {
+            "intensity": "9797",
+            "opacity": "0",
+            "red": "1",
+            "green": "1",
+            "blue": "1",
+            "ambient": "1",
+            "diffuse": "0",
+            "specular": "0"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Siemens",
+    "modality": "XA",
+    "shade": "true",
+    "specularPower": "41.6",
+    "group": [
+      {
+        "name": "Default",
+        "point": [
+          {
+            "intensity": "449",
+            "opacity": "0",
+            "red": "0.333333333",
+            "green": "0",
+            "blue": "0",
+            "ambient": "1",
+            "diffuse": "0",
+            "specular": "0"
+          },
+          {
+            "intensity": "807",
+            "opacity": "1",
+            "red": "0.674509804",
+            "green": "0.513725490",
+            "blue": "0",
+            "ambient": "1",
+            "diffuse": "0.516",
+            "specular": "0.516"
+          },
+          {
+            "intensity": "1270",
+            "opacity": "1",
+            "red": "1",
+            "green": "1",
+            "blue": "0",
+            "ambient": "1",
+            "diffuse": "1",
+            "specular": "1"
+          },
+          {
+            "intensity": "1525",
+            "opacity": "0",
+            "red": "1",
+            "green": "1",
+            "blue": "1",
+            "ambient": "1",
+            "diffuse": "0",
+            "specular": "0"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Transparent Skin",
+    "modality": "CT",
+    "shade": "true",
+    "specularPower": "90",
+    "group": [
+      {
+        "name": "Default",
+        "point": [
+          {
+            "intensity": "-824",
+            "opacity": "0",
+            "red": "0",
+            "green": "0",
+            "blue": "0",
+            "ambient": "0",
+            "diffuse": "1",
+            "specular": "0"
+          },
+          {
+            "intensity": "-771",
+            "opacity": "0",
+            "red": "0.337254902",
+            "green": "0.274509804",
+            "blue": "0.243137255",
+            "ambient": "0",
+            "diffuse": "1",
+            "specular": "0"
+          },
+          {
+            "intensity": "-712",
+            "opacity": "0.429",
+            "red": "1",
+            "green": "0.811764706",
+            "blue": "0.721568627",
+            "ambient": "0",
+            "diffuse": "1",
+            "specular": "0"
+          },
+          {
+            "intensity": "-696",
+            "opacity": "0.114",
+            "red": "0.992156863",
+            "green": "0.764705882",
+            "blue": "0.560784314",
+            "ambient": "0",
+            "diffuse": "1",
+            "specular": "0"
+          },
+          {
+            "intensity": "-542",
+            "opacity": "0",
+            "red": "0.976470588",
+            "green": "0.674509804",
+            "blue": "0.266666667",
+            "ambient": "0",
+            "diffuse": "1",
+            "specular": "0"
+          },
+          {
+            "intensity": "14",
+            "opacity": "0",
+            "red": "0",
+            "green": "0",
+            "blue": "0",
+            "ambient": "0",
+            "diffuse": "1",
+            "specular": "0"
+          },
+          {
+            "intensity": "66",
+            "opacity": "0.112",
+            "red": "0.5",
+            "green": "0",
+            "blue": "0",
+            "ambient": "0",
+            "diffuse": "1",
+            "specular": "0"
+          },
+          {
+            "intensity": "108",
+            "opacity": "0.29",
+            "red": "0.619607843",
+            "green": "0.227450980",
+            "blue": "0.156862745",
+            "ambient": "0",
+            "diffuse": "1",
+            "specular": "0"
+          },
+          {
+            "intensity": "149",
+            "opacity": "0.428",
+            "red": "1",
+            "green": "0.349019608",
+            "blue": "0.274509804",
+            "ambient": "0",
+            "diffuse": "1",
+            "specular": "0"
+          },
+          {
+            "intensity": "208",
+            "opacity": "0.525",
+            "red": "1",
+            "green": "0",
+            "blue": "0",
+            "ambient": "0",
+            "diffuse": "1",
+            "specular": "0"
+          },
+          {
+            "intensity": "271",
+            "opacity": "0.607",
+            "red": "1",
+            "green": "1",
+            "blue": "0",
+            "ambient": "0",
+            "diffuse": "1",
+            "specular": "0"
+          },
+          {
+            "intensity": "333",
+            "opacity": "0.875",
+            "red": "1",
+            "green": "1",
+            "blue": "1",
+            "ambient": "0",
+            "diffuse": "1",
+            "specular": "1"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Skin",
+    "modality": "CT",
+    "shade": "true",
+    "specularPower": "100",
+    "group": [
+      {
+        "name": "Default",
+        "point": [
+          {
+            "intensity": "-837",
+            "opacity": "0",
+            "red": "0",
+            "green": "0",
+            "blue": "0",
+            "ambient": "0",
+            "diffuse": "1",
+            "specular": "0"
+          },
+          {
+            "intensity": "-698",
+            "opacity": "0.203",
+            "red": "1",
+            "green": "0.811764706",
+            "blue": "0.721568627",
+            "ambient": "0",
+            "diffuse": "1",
+            "specular": "0"
+          },
+          {
+            "intensity": "-92",
+            "opacity": "0.303",
+            "red": "1",
+            "green": "0.5",
+            "blue": "0.247058824",
+            "ambient": "0",
+            "diffuse": "1",
+            "specular": "0.303"
+          },
+          {
+            "intensity": "1",
+            "opacity": "0",
+            "red": "0",
+            "green": "0",
+            "blue": "0",
+            "ambient": "0",
+            "diffuse": "1",
+            "specular": "0"
+          },
+          {
+            "intensity": "36",
+            "opacity": "0.187",
+            "red": "0.5",
+            "green": "0",
+            "blue": "0",
+            "ambient": "0",
+            "diffuse": "1",
+            "specular": "0"
+          },
+          {
+            "intensity": "76",
+            "opacity": "0.395",
+            "red": "0.619607843",
+            "green": "0.227450980",
+            "blue": "0.156862745",
+            "ambient": "0",
+            "diffuse": "1",
+            "specular": "0"
+          },
+          {
+            "intensity": "120",
+            "opacity": "0.556",
+            "red": "1",
+            "green": "0.349019608",
+            "blue": "0.274509804",
+            "ambient": "0",
+            "diffuse": "1",
+            "specular": "0"
+          },
+          {
+            "intensity": "177",
+            "opacity": "0.71",
+            "red": "1",
+            "green": "0",
+            "blue": "0",
+            "ambient": "0",
+            "diffuse": "1",
+            "specular": "0"
+          },
+          {
+            "intensity": "221",
+            "opacity": "0.796",
+            "red": "1",
+            "green": "1",
+            "blue": "0",
+            "ambient": "0",
+            "diffuse": "1",
+            "specular": "0.25"
+          },
+          {
+            "intensity": "320",
+            "opacity": "0.875",
+            "red": "1",
+            "green": "1",
+            "blue": "1",
+            "ambient": "0",
+            "diffuse": "1",
+            "specular": "0.25"
+          },
+          {
+            "intensity": "2047",
+            "opacity": "0.875",
+            "red": "1",
+            "green": "1",
+            "blue": "1",
+            "ambient": "0",
+            "diffuse": "1",
+            "specular": "1"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Myocardium",
+    "modality": "CT",
+    "shade": "true",
+    "specularPower": "50.8",
+    "group": [
+      {
+        "name": "Default",
+        "point": [
+          {
+            "intensity": "-2016",
+            "opacity": "0",
+            "red": "0",
+            "green": "0",
+            "blue": "0",
+            "ambient": "1",
+            "diffuse": "1",
+            "specular": "0"
+          },
+          {
+            "intensity": "-343",
+            "opacity": "0",
+            "red": "1",
+            "green": "0.5",
+            "blue": "0",
+            "ambient": "0",
+            "diffuse": "1",
+            "specular": "0"
+          },
+          {
+            "intensity": "-274",
+            "opacity": "0",
+            "red": "0",
+            "green": "0",
+            "blue": "0",
+            "ambient": "0",
+            "diffuse": "1",
+            "specular": "0"
+          },
+          {
+            "intensity": "-104",
+            "opacity": "0",
+            "red": "0.247058824",
+            "green": "0",
+            "blue": "0",
+            "ambient": "0",
+            "diffuse": "1",
+            "specular": "0"
+          },
+          {
+            "intensity": "-20",
+            "opacity": "0",
+            "red": "0.466666667",
+            "green": "0",
+            "blue": "0",
+            "ambient": "0",
+            "diffuse": "1",
+            "specular": "0"
+          },
+          {
+            "intensity": "2",
+            "opacity": "0.193",
+            "red": "0.5",
+            "green": "0",
+            "blue": "0",
+            "ambient": "0",
+            "diffuse": "1",
+            "specular": "0"
+          },
+          {
+            "intensity": "46",
+            "opacity": "0.275",
+            "red": "0.619607843",
+            "green": "0.219607843",
+            "blue": "0.156862745",
+            "ambient": "0",
+            "diffuse": "1",
+            "specular": "1"
+          },
+          {
+            "intensity": "108",
+            "opacity": "0.331",
+            "red": "1",
+            "green": "0",
+            "blue": "0",
+            "ambient": "0",
+            "diffuse": "1",
+            "specular": "1"
+          },
+          {
+            "intensity": "181",
+            "opacity": "0.306",
+            "red": "1",
+            "green": "1",
+            "blue": "0",
+            "ambient": "0",
+            "diffuse": "1",
+            "specular": "0.379"
+          },
+          {
+            "intensity": "216",
+            "opacity": "0.198",
+            "red": "1",
+            "green": "0.333333333",
+            "blue": "0",
+            "ambient": "0",
+            "diffuse": "1",
+            "specular": "0.295"
+          },
+          {
+            "intensity": "233",
+            "opacity": "0",
+            "red": "1",
+            "green": "1",
+            "blue": "1",
+            "ambient": "0",
+            "diffuse": "1",
+            "specular": "0.205"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Heart",
+    "modality": "CT",
+    "shade": "true",
+    "specularPower": "50.8",
+    "group": [
+      {
+        "name": "Default",
+        "point": [
+          {
+            "intensity": "-2018",
+            "opacity": "0",
+            "red": "0",
+            "green": "0",
+            "blue": "0",
+            "ambient": "1",
+            "diffuse": "1",
+            "specular": "0"
+          },
+          {
+            "intensity": "-340",
+            "opacity": "0",
+            "red": "1",
+            "green": "0.5",
+            "blue": "0",
+            "ambient": "0",
+            "diffuse": "1",
+            "specular": "0"
+          },
+          {
+            "intensity": "-271",
+            "opacity": "0",
+            "red": "0",
+            "green": "0",
+            "blue": "0",
+            "ambient": "0",
+            "diffuse": "1",
+            "specular": "0"
+          },
+          {
+            "intensity": "-101",
+            "opacity": "0",
+            "red": "0.247058824",
+            "green": "0",
+            "blue": "0",
+            "ambient": "0",
+            "diffuse": "1",
+            "specular": "0"
+          },
+          {
+            "intensity": "-17",
+            "opacity": "0",
+            "red": "0.466666667",
+            "green": "0",
+            "blue": "0",
+            "ambient": "0",
+            "diffuse": "1",
+            "specular": "0"
+          },
+          {
+            "intensity": "5",
+            "opacity": "0.193",
+            "red": "0.5",
+            "green": "0",
+            "blue": "0",
+            "ambient": "0",
+            "diffuse": "1",
+            "specular": "1"
+          },
+          {
+            "intensity": "109",
+            "opacity": "0.306",
+            "red": "0.619607843",
+            "green": "0.219607843",
+            "blue": "0.156862745",
+            "ambient": "0",
+            "diffuse": "1",
+            "specular": "1"
+          },
+          {
+            "intensity": "200",
+            "opacity": "0.372",
+            "red": "1",
+            "green": "0",
+            "blue": "0",
+            "ambient": "0",
+            "diffuse": "1",
+            "specular": "1"
+          },
+          {
+            "intensity": "307",
+            "opacity": "0.515",
+            "red": "1",
+            "green": "1",
+            "blue": "0",
+            "ambient": "0",
+            "diffuse": "1",
+            "specular": "1"
+          },
+          {
+            "intensity": "398",
+            "opacity": "0.76",
+            "red": "1",
+            "green": "1",
+            "blue": "1",
+            "ambient": "0",
+            "diffuse": "1",
+            "specular": "1"
+          },
+          {
+            "intensity": "2064",
+            "opacity": "0.8",
+            "red": "1",
+            "green": "1",
+            "blue": "1",
+            "ambient": "0",
+            "diffuse": "1",
+            "specular": "0"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Lungs",
+    "modality": "CT",
+    "shade": "true",
+    "specularPower": "10",
+    "group": [
+      {
+        "name": "Default",
+        "point": [
+          {
+            "intensity": "-950",
+            "opacity": "0",
+            "red": "1",
+            "green": "1",
+            "blue": "1",
+            "ambient": "0",
+            "diffuse": "1",
+            "specular": "0"
+          },
+          {
+            "intensity": "-900",
+            "opacity": "0.6",
+            "red": "0.984313725",
+            "green": "0.839215686",
+            "blue": "0.631372549",
+            "ambient": "0",
+            "diffuse": "1",
+            "specular": "0"
+          },
+          {
+            "intensity": "-800",
+            "opacity": "0.5",
+            "red": "0.976470588",
+            "green": "0.674509804",
+            "blue": "0.266666667",
+            "ambient": "0",
+            "diffuse": "1",
+            "specular": "0"
+          },
+          {
+            "intensity": "-600",
+            "opacity": "0.286",
+            "red": "0.5",
+            "green": "0",
+            "blue": "0",
+            "ambient": "0",
+            "diffuse": "1",
+            "specular": "0"
+          },
+          {
+            "intensity": "-300",
+            "opacity": "0",
+            "red": "0",
+            "green": "0",
+            "blue": "0",
+            "ambient": "0",
+            "diffuse": "1",
+            "specular": "0"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Bones (glossy)",
+    "modality": "CT",
+    "shade": "true",
+    "specularPower": "67",
+    "group": [
+      {
+        "name": "Default",
+        "point": [
+          {
+            "intensity": "184",
+            "opacity": "0",
+            "red": "0",
+            "green": "0",
+            "blue": "0",
+            "ambient": "0",
+            "diffuse": "1",
+            "specular": "0"
+          },
+          {
+            "intensity": "191",
+            "opacity": "0.309",
+            "red": "1",
+            "green": "0.5",
+            "blue": "0",
+            "ambient": "0",
+            "diffuse": "1",
+            "specular": "0"
+          },
+          {
+            "intensity": "247",
+            "opacity": "0.595",
+            "red": "1",
+            "green": "1",
+            "blue": "0.721568627",
+            "ambient": "0",
+            "diffuse": "1",
+            "specular": "0"
+          },
+          {
+            "intensity": "341",
+            "opacity": "0.791",
+            "red": "1",
+            "green": "1",
+            "blue": "1",
+            "ambient": "0",
+            "diffuse": "0.765",
+            "specular": "0.25"
+          },
+          {
+            "intensity": "2047",
+            "opacity": "0.791",
+            "red": "1",
+            "green": "1",
+            "blue": "1",
+            "ambient": "0",
+            "diffuse": "1",
+            "specular": "1"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Angiography",
+    "modality": "MR",
+    "shade": "true",
+    "specularPower": "1",
+    "group": [
+      {
+        "name": "Default",
+        "point": [
+          {
+            "intensity": "-2048",
+            "opacity": "0",
+            "red": "0",
+            "green": "0",
+            "blue": "0",
+            "ambient": "0.2",
+            "diffuse": "1",
+            "specular": "0"
+          },
+          {
+            "intensity": "151",
+            "opacity": "0",
+            "red": "0",
+            "green": "0",
+            "blue": "0",
+            "ambient": "0.2",
+            "diffuse": "1",
+            "specular": "0"
+          },
+          {
+            "intensity": "158",
+            "opacity": "0.4375",
+            "red": " 0.74902",
+            "green": "0.376471",
+            "blue": "0",
+            "ambient": "0.2",
+            "diffuse": "1",
+            "specular": "0"
+          },
+          {
+            "intensity": "190",
+            "opacity": "0.580357",
+            "red": "1",
+            "green": "0.866667",
+            "blue": "0.733333",
+            "ambient": "0.2",
+            "diffuse": "1",
+            "specular": "0"
+          },
+          {
+            "intensity": "201",
+            "opacity": "0.732143",
+            "red": "0.937255",
+            "green": "0.937255",
+            "blue": "0.937255",
+            "ambient": "0.2",
+            "diffuse": "1",
+            "specular": "0"
+          },
+          {
+            "intensity": "3661",
+            "opacity": "0.741071",
+            "red": "1",
+            "green": "1",
+            "blue": "1",
+            "ambient": "0.2",
+            "diffuse": "1",
+            "specular": "0"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Default",
+    "modality": "MR",
+    "default": "true",
+    "shade": "true",
+    "specularPower": "1",
+    "group": [
+      {
+        "name": "Default",
+        "point": [
+          {
+            "intensity": "0",
+            "opacity": "0",
+            "red": "0",
+            "green": "0",
+            "blue": "0",
+            "ambient": "0.2",
+            "diffuse": "1",
+            "specular": "0"
+          },
+          {
+            "intensity": "20",
+            "opacity": "0",
+            "red": "0.168627",
+            "green": "0",
+            "blue": "0",
+            "ambient": "0.2",
+            "diffuse": "1",
+            "specular": "0"
+          },
+          {
+            "intensity": "40",
+            "opacity": "0.15",
+            "red": "  0.403922",
+            "green": "0.145098",
+            "blue": "0.0784314",
+            "ambient": "0.2",
+            "diffuse": "1",
+            "specular": "0"
+          },
+          {
+            "intensity": "120",
+            "opacity": "0.3",
+            "red": "0.780392",
+            "green": "0.607843",
+            "blue": "0.380392",
+            "ambient": "0.2",
+            "diffuse": "1",
+            "specular": "0"
+          },
+          {
+            "intensity": "220",
+            "opacity": "0.375",
+            "red": "0.847059",
+            "green": "0.835294",
+            "blue": "0.788235",
+            "ambient": "0.2",
+            "diffuse": "1",
+            "specular": "0"
+          },
+          {
+            "intensity": "1024",
+            "opacity": "0.5",
+            "red": "1",
+            "green": "1",
+            "blue": "1",
+            "ambient": "0.2",
+            "diffuse": "1",
+            "specular": "0"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "MIP",
+    "modality": "MR",
+    "shade": "false",
+    "specularPower": "1",
+    "group": [
+      {
+        "name": "Default",
+        "point": [
+          {
+            "intensity": "0",
+            "opacity": "0",
+            "red": "1",
+            "green": "1",
+            "blue": "1",
+            "ambient": "0.2",
+            "diffuse": "1",
+            "specular": "0"
+          },
+          {
+            "intensity": "98",
+            "opacity": "0",
+            "red": "1",
+            "green": "1",
+            "blue": "1",
+            "ambient": "0.2",
+            "diffuse": "1",
+            "specular": "0"
+          },
+          {
+            "intensity": "417",
+            "opacity": "1",
+            "red": "1",
+            "green": "1",
+            "blue": "1",
+            "ambient": "0.2",
+            "diffuse": "1",
+            "specular": "0"
+          },
+          {
+            "intensity": "2800",
+            "opacity": "1",
+            "red": "1",
+            "green": "1",
+            "blue": "1",
+            "ambient": "0.2",
+            "diffuse": "1",
+            "specular": "0"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "T2-Brain",
+    "modality": "MR",
+    "shade": "true",
+    "specularPower": "40",
+    "group": [
+      {
+        "name": "Default",
+        "point": [
+          {
+            "intensity": "0",
+            "opacity": "0",
+            "red": "0",
+            "green": "0",
+            "blue": "0",
+            "ambient": "0.3",
+            "diffuse": "0.6",
+            "specular": "0.5"
+          },
+          {
+            "intensity": "36",
+            "opacity": "0"
+          },
+          {
+            "intensity": "98",
+            "opacity": "0",
+            "red": "0.956863",
+            "green": "0.839216",
+            "blue": "0.192157",
+            "ambient": "0.3",
+            "diffuse": "0.6",
+            "specular": "0.5"
+          },
+          {
+            "intensity": "218",
+            "opacity": "0.171429"
+          },
+          {
+            "intensity": "412",
+            "opacity": "1",
+            "red": "0",
+            "green": "0.592157",
+            "blue": "0.807843",
+            "ambient": "0.3",
+            "diffuse": "0.6",
+            "specular": "0.5"
+          },
+          {
+            "intensity": "641",
+            "opacity": "1",
+            "red": "1",
+            "green": "1",
+            "blue": "1",
+            "ambient": "0.3",
+            "diffuse": "0.6",
+            "specular": "0.5"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Fetal",
+    "modality": "US",
+    "default": "true",
+    "shade": "true",
+    "specularPower": "10",
+    "group": [
+      {
+        "name": "Default",
+        "point": [
+          {
+            "intensity": "-10",
+            "opacity": "0",
+            "red": "0",
+            "green": "0",
+            "blue": "0",
+            "ambient": "0.1",
+            "diffuse": "0.9",
+            "specular": "0.2"
+          },
+          {
+            "intensity": "0",
+            "opacity": "0",
+            "red": "0",
+            "green": "0",
+            "blue": "0",
+            "ambient": "0.1",
+            "diffuse": "0.9",
+            "specular": "0.2"
+          },
+          {
+            "intensity": "60",
+            "opacity": "0"
+          },
+          {
+            "intensity": "80",
+            "opacity": "0",
+            "red": " 0.54902",
+            "green": "0.25098",
+            "blue": "0.14902",
+            "ambient": "0.1",
+            "diffuse": "0.9",
+            "specular": "0.2"
+          },
+          {
+            "intensity": "102",
+            "opacity": "0.6",
+            "red": "0.882353",
+            "green": "0.603922",
+            "blue": "0.290196",
+            "ambient": "0.1",
+            "diffuse": "0.9",
+            "specular": "0.2"
+          },
+          {
+            "intensity": "120",
+            "opacity": "0.6"
+          },
+          {
+            "intensity": "255",
+            "opacity": "0.8"
+          },
+          {
+            "intensity": "270",
+            "opacity": "0.8",
+            "red": "0.694",
+            "green": "0.478",
+            "blue": "0.396",
+            "ambient": "0.1",
+            "diffuse": "0.9",
+            "specular": "0.2"
+          }
+        ]
+      }
+    ]
+  }
+]

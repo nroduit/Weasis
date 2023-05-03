@@ -32,6 +32,7 @@ import javax.swing.JRadioButtonMenuItem;
 import javax.swing.KeyStroke;
 import javax.swing.UIManager;
 import javax.swing.event.ListDataEvent;
+import org.weasis.core.Messages;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.ComboItemListener;
 import org.weasis.core.api.gui.util.DropButtonIcon;
@@ -45,7 +46,6 @@ import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.service.WProperties;
 import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.api.util.ResourceUtil.ActionIcon;
-import org.weasis.core.ui.Messages;
 import org.weasis.core.ui.util.WtoolBar;
 
 public class ViewerToolBar<E extends ImageElement> extends WtoolBar implements ActionListener {
@@ -229,7 +229,7 @@ public class ViewerToolBar<E extends ImageElement> extends WtoolBar implements A
     ButtonGroup groupButtons = new ButtonGroup();
     synchronized (actionsButtons) {
       for (Feature<?> b : actionsButtons) {
-        if (eventManager.isActionRegistered(b)) {
+        if (eventManager.isActionEnabled(b)) {
           JRadioButtonMenuItem radio =
               new JRadioButtonMenuItem(b.getTitle(), b.getIcon(), b.cmd().equals(action));
           GuiUtils.applySelectedIconEffect(radio);
@@ -253,7 +253,7 @@ public class ViewerToolBar<E extends ImageElement> extends WtoolBar implements A
     popupMouseScroll.setInvoker(dropButton);
     ButtonGroup groupButtons = new ButtonGroup();
     for (Feature<?> actionW : actionsScroll) {
-      if (eventManager.isActionRegistered(actionW)) {
+      if (eventManager.isActionEnabled(actionW)) {
         JRadioButtonMenuItem radio =
             new JRadioButtonMenuItem(
                 actionW.getTitle(), actionW.getIcon(), actionW.cmd().equals(action));
@@ -357,18 +357,18 @@ public class ViewerToolBar<E extends ImageElement> extends WtoolBar implements A
   }
 
   private DropDownButton buildSynchButton() {
-    GroupPopup menu = null;
+    GroupPopup menuLut = null;
     ComboItemListener<SynchView> synch = eventManager.getAction(ActionW.SYNCH).orElse(null);
     SynchView synchView = SynchView.DEFAULT_STACK;
     if (synch != null) {
       if (synch.getSelectedItem() instanceof SynchView sel) {
         synchView = sel;
       }
-      menu = new SynchGroupMenu();
-      synch.registerActionState(menu);
+      menuLut = new SynchGroupMenu();
+      synch.registerActionState(menuLut);
     }
     final DropDownButton button =
-        new DropDownButton(ActionW.SYNCH.cmd(), buildSynchIcon(synchView), menu) {
+        new DropDownButton(ActionW.SYNCH.cmd(), buildSynchIcon(synchView), menuLut) {
           @Override
           protected JPopupMenu getPopupMenu() {
             JPopupMenu menu =

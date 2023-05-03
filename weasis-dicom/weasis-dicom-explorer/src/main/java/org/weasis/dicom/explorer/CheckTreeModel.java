@@ -101,7 +101,7 @@ public class CheckTreeModel {
                 boolean newElement =
                     LangUtil.getNULLtoFalse((Boolean) d.getTagValue(TagW.ObjectToSave));
                 if (newElement) {
-                  buf.append("<html><font color='"); // NON-NLS
+                  buf.append(GuiUtils.HTML_COLOR_START);
                   buf.append(IconColor.ACTIONS_YELLOW.getHtmlCode());
                   buf.append("'><b>NEW </b></font>"); // NON-NLS
                 }
@@ -217,7 +217,7 @@ public class CheckTreeModel {
       StringBuilder buf = new StringBuilder();
       boolean newElement = LangUtil.getNULLtoFalse((Boolean) s.getTagValue(TagW.ObjectToSave));
       if (newElement) {
-        buf.append("<html><font color='"); // NON-NLS
+        buf.append(GuiUtils.HTML_COLOR_START);
         buf.append(IconColor.ACTIONS_YELLOW.getHtmlCode());
         buf.append("'><b>NEW </b></font>"); // NON-NLS
       }

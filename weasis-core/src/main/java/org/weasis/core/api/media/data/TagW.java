@@ -28,7 +28,7 @@ import java.util.stream.Stream;
 import javax.xml.stream.XMLStreamReader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.weasis.core.api.Messages;
+import org.weasis.core.Messages;
 import org.weasis.core.api.util.LocalUtil;
 import org.weasis.core.util.StringUtil;
 
@@ -96,10 +96,8 @@ public class TagW {
   public static final TagW Group =
       new TagW("Group", Messages.getString("TagW.group"), TagType.STRING); // NON-NLS
   // Pseudo unique identifier: as PatientID is not a unique identifier for the patient outside an
-  // institution,
-  // PatientPseudoUID tend to be unique (PatientID, PatientName and PatientBirthDate can be used
-  // simultaneously to
-  // enforce the unique behavior)
+  // institution, PatientPseudoUID tend to be unique (PatientID, PatientName and PatientBirthDate
+  // can be used simultaneously to enforce the unique behavior)
   public static final TagW PatientPseudoUID =
       new TagW("PatientPseudoUID", Messages.getString("TagElement.pat_uid"), TagType.STRING);
   public static final TagW SeriesLoading =
@@ -119,6 +117,7 @@ public class TagW {
   public static final TagW SeriesOpen =
       new TagW("SeriesOpen", Messages.getString("TagElement.open"), TagType.BOOLEAN);
   public static final TagW SeriesFocused = new TagW("SeriesFocused", TagType.BOOLEAN);
+  public static final TagW StudyDicomRT = new TagW("RadiotherapyStudy", TagType.BOOLEAN);
   public static final TagW ImageWidth =
       new TagW("ImageWidth", Messages.getString("TagElement.img_w"), TagType.INTEGER);
   public static final TagW ImageHeight =
@@ -199,6 +198,7 @@ public class TagW {
     addTag(ImageOrientationPlane);
     addTag(ImageWidth);
     addTag(SeriesFocused);
+    addTag(StudyDicomRT);
     addTag(SeriesLoading);
     addTag(SeriesOpen);
     addTag(SeriesSelected);

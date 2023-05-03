@@ -17,6 +17,7 @@ import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Hashtable;
 import java.util.List;
 import java.util.Optional;
 import javax.swing.Action;
@@ -35,20 +36,24 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.DataExplorerView;
 import org.weasis.core.api.explorer.ObservableEvent;
+import org.weasis.core.api.explorer.model.DataExplorerModel;
+import org.weasis.core.api.gui.Insertable;
 import org.weasis.core.api.gui.Insertable.Type;
+import org.weasis.core.api.gui.InsertableFactory;
 import org.weasis.core.api.gui.InsertableUtil;
 import org.weasis.core.api.gui.util.ActionW;
+import org.weasis.core.api.gui.util.BasicActionState;
 import org.weasis.core.api.gui.util.ComboItemListener;
 import org.weasis.core.api.gui.util.Filter;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.SliderChangeListener;
-import org.weasis.core.api.gui.util.SliderCineListener;
 import org.weasis.core.api.gui.util.ToggleButtonListener;
 import org.weasis.core.api.image.GridBagLayoutModel;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.SeriesEvent;
+import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.service.BundlePreferences;
 import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.api.util.ResourceUtil;
@@ -57,7 +62,9 @@ import org.weasis.core.api.util.ResourceUtil.OtherIcon;
 import org.weasis.core.ui.docking.DockableTool;
 import org.weasis.core.ui.docking.PluginTool;
 import org.weasis.core.ui.docking.UIManager;
+import org.weasis.core.ui.editor.SeriesViewerFactory;
 import org.weasis.core.ui.editor.SeriesViewerListener;
+import org.weasis.core.ui.editor.ViewerPluginBuilder;
 import org.weasis.core.ui.editor.image.DefaultView2d;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.editor.image.MeasureToolBar;
@@ -132,6 +139,8 @@ public class View2dContainer extends DicomViewerPlugin implements PropertyChange
   // initialization with a method.
   public static final List<Toolbar> TOOLBARS = Collections.synchronizedList(new ArrayList<>());
   public static final List<DockableTool> TOOLS = Collections.synchronizedList(new ArrayList<>());
+  public static final List<InsertableFactory> TOOL_EXT =
+      Collections.synchronizedList(new ArrayList<>());
   private static volatile boolean initComponents = false;
 
   public View2dContainer() {
@@ -354,7 +363,7 @@ public class View2dContainer extends DicomViewerPlugin implements PropertyChange
       InsertableUtil.sortInsertable(TOOLS);
 
       // Send event to synchronize the series selection.
-      DataExplorerView dicomView = UIManager.getExplorerplugin(DicomExplorer.NAME);
+      DataExplorerView dicomView = UIManager.getExplorerPlugin(DicomExplorer.NAME);
       if (dicomView != null) {
         eventManager.addSeriesViewerListener((SeriesViewerListener) dicomView);
       }
@@ -385,31 +394,41 @@ public class View2dContainer extends DicomViewerPlugin implements PropertyChange
     if (menuRoot != null) {
       menuRoot.removeAll();
       if (eventManager instanceof EventManager manager) {
-        JMenu menu = new JMenu(Messages.getString("View2dContainer.3d"));
-        SliderCineListener scrollAction =
-            EventManager.getInstance().getAction(ActionW.SCROLL_SERIES).orElse(null);
-        menu.setEnabled(
-            manager.getSelectedSeries() != null
-                && (scrollAction != null && scrollAction.isActionEnabled()));
+        MediaSeries<DicomImageElement> series = EventManager.getInstance().getSelectedSeries();
+        if (series != null) {
+          JMenu menu = new JMenu(Messages.getString("open.new.tab"));
+          List<SeriesViewerFactory> plugins =
+              UIManager.getViewerFactoryList(new String[] {series.getMimeType()});
+          for (final SeriesViewerFactory viewerFactory : plugins) {
+            if (viewerFactory.canReadSeries(series)) {
+              JMenuItem menuFactory = new JMenuItem(viewerFactory.getUIName());
+              menuFactory.setIcon(viewerFactory.getIcon());
+              GuiUtils.applySelectedIconEffect(menuFactory);
+              menuFactory.addActionListener(
+                  e ->
+                      ViewerPluginBuilder.openSequenceInPlugin(
+                          viewerFactory,
+                          series,
+                          (DataExplorerModel) series.getTagValue(TagW.ExplorerModel),
+                          false,
+                          false));
+              menu.add(menuFactory);
+            }
+          }
 
-        if (menu.isEnabled()) {
-          JMenuItem mpr =
-              new JMenuItem(
-                  Messages.getString("View2dContainer.mpr"),
-                  ResourceUtil.getIcon(OtherIcon.VIEW_3D));
-          GuiUtils.applySelectedIconEffect(mpr);
-          mpr.addActionListener(Basic3DToolBar.getMprAction());
-          menu.add(mpr);
-
-          JMenuItem mip =
-              new JMenuItem(
-                  Messages.getString("View2dContainer.mip"),
-                  ResourceUtil.getIcon(OtherIcon.VIEW_MIP));
-          GuiUtils.applySelectedIconEffect(mip);
-          mip.addActionListener(Basic3DToolBar.getMipAction());
-          menu.add(mip);
+          BasicActionState volState =
+              EventManager.getInstance().getAction(ActionW.VOLUME).orElse(null);
+          if (volState != null && volState.isActionEnabled()) {
+            JMenuItem mip =
+                new JMenuItem(
+                    Messages.getString("View2dContainer.mip"),
+                    ResourceUtil.getIcon(OtherIcon.VIEW_MIP));
+            GuiUtils.applySelectedIconEffect(mip);
+            mip.addActionListener(Basic3DToolBar.getMipAction());
+            menu.add(mip);
+          }
+          menuRoot.add(menu);
         }
-        menuRoot.add(menu);
         menuRoot.add(new JSeparator());
         GuiUtils.addItemToMenu(menuRoot, manager.getPresetMenu(null));
         GuiUtils.addItemToMenu(menuRoot, manager.getLutShapeMenu(null));
@@ -427,24 +446,45 @@ public class View2dContainer extends DicomViewerPlugin implements PropertyChange
     return menuRoot;
   }
 
+  protected MediaSeries<DicomImageElement> getFirstSeries() {
+    for (ViewCanvas<DicomImageElement> v : getImagePanels()) {
+      if (v.getSeries() != null) {
+        return v.getSeries();
+      }
+    }
+    return null;
+  }
+
   @Override
   public List<DockableTool> getToolPanel() {
-    return TOOLS;
+    if (TOOL_EXT.isEmpty()) {
+      return TOOLS;
+    }
+
+    List<DockableTool> list = new ArrayList<>();
+    Hashtable<String, Object> properties = new Hashtable<>();
+    MediaSeries<DicomImageElement> series = getFirstSeries();
+    if (series != null) {
+      properties.put(MediaSeries.class.getName(), series);
+    }
+    for (InsertableFactory factory : TOOL_EXT) {
+      Insertable instance = factory.createInstance(properties);
+      if (instance instanceof DockableTool dockableTool) {
+        list.add(dockableTool);
+      }
+    }
+
+    if (list.isEmpty()) {
+      return TOOLS;
+    }
+    list.addAll(0, TOOLS);
+    return list;
   }
 
   @Override
   public void close() {
     View2dFactory.closeSeriesViewer(this);
     super.close();
-  }
-
-  private boolean closeIfNoContent() {
-    if (getOpenSeries().isEmpty()) {
-      close();
-      handleFocusAfterClosing();
-      return true;
-    }
-    return false;
   }
 
   @Override
@@ -521,38 +561,7 @@ public class View2dContainer extends DicomViewerPlugin implements PropertyChange
         }
       } else if (ObservableEvent.BasicAction.REMOVE.equals(action)) {
         if (newVal instanceof MediaSeriesGroup group) {
-          // Patient Group
-          if (TagD.getUID(Level.PATIENT).equals(group.getTagID())) {
-            if (group.equals(getGroupID())) {
-              // Close the content of the plug-in
-              close();
-              handleFocusAfterClosing();
-            }
-          }
-          // Study Group
-          else if (TagD.getUID(Level.STUDY).equals(group.getTagID())) {
-            if (event.getSource() instanceof DicomModel model) {
-              for (ViewCanvas<DicomImageElement> v : view2ds) {
-                if (group.equals(model.getParent(v.getSeries(), DicomModel.study))) {
-                  v.setSeries(null);
-                  if (closeIfNoContent()) {
-                    return;
-                  }
-                }
-              }
-            }
-          }
-          // Series Group
-          else if (TagD.getUID(Level.SERIES).equals(group.getTagID())) {
-            for (ViewCanvas<DicomImageElement> v : view2ds) {
-              if (newVal.equals(v.getSeries())) {
-                v.setSeries(null);
-                if (closeIfNoContent()) {
-                  return;
-                }
-              }
-            }
-          }
+          removeViews(this, group, event);
         }
       } else if (ObservableEvent.BasicAction.REPLACE.equals(action)) {
         if (newVal instanceof Series series) {
@@ -607,6 +616,42 @@ public class View2dContainer extends DicomViewerPlugin implements PropertyChange
         // Match using UID of the plugin window and the source event
         if (this.getDockableUID().equals(evt.getSource())) {
           setKOSpecialElement(koSpecialElement, true, true, false);
+        }
+      }
+    }
+  }
+
+  public static void removeViews(
+      ImageViewerPlugin<?> viewerPlugin, MediaSeriesGroup group, ObservableEvent event) {
+    // Patient Group
+    if (TagD.getUID(Level.PATIENT).equals(group.getTagID())) {
+      if (group.equals(viewerPlugin.getGroupID())) {
+        // Close the content of the plug-in
+        viewerPlugin.close();
+        viewerPlugin.handleFocusAfterClosing();
+      }
+    }
+    // Study Group
+    else if (TagD.getUID(Level.STUDY).equals(group.getTagID())) {
+      if (event.getSource() instanceof DicomModel model) {
+        for (ViewCanvas<?> v : viewerPlugin.getImagePanels()) {
+          if (group.equals(model.getParent(v.getSeries(), DicomModel.study))) {
+            v.setSeries(null);
+            if (viewerPlugin.closeIfNoContent()) {
+              return;
+            }
+          }
+        }
+      }
+    }
+    // Series Group
+    else if (TagD.getUID(Level.SERIES).equals(group.getTagID())) {
+      for (ViewCanvas<?> v : viewerPlugin.getImagePanels()) {
+        if (group.equals(v.getSeries())) {
+          v.setSeries(null);
+          if (viewerPlugin.closeIfNoContent()) {
+            return;
+          }
         }
       }
     }

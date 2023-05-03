@@ -82,7 +82,7 @@
                   <artifactItem>
                     <groupId>org.weasis</groupId>
                     <artifactId>weasis-i18n-dist</artifactId>
-                    <version>3.0.0-SNAPSHOT</version>
+                    <version>4.0.0-SNAPSHOT</version>
                     <type>zip</type>
                     <outputDirectory>${project.build.directory}/tmp/bundle-i18n</outputDirectory>
                   </artifactItem>
@@ -196,7 +196,7 @@
                 <artifactItem>
                   <groupId>org.osgi</groupId>
                   <artifactId>osgi.promise</artifactId>
-                  <version>${osgi.cmpn.version}</version>
+                  <version>${osgi.promise.version}</version>
                   <outputDirectory>${tmp.bundle.dir}</outputDirectory>
                 </artifactItem>
                 <artifactItem>
@@ -227,6 +227,12 @@
                   <groupId>org.apache.felix</groupId>
                   <artifactId>org.apache.felix.configadmin</artifactId>
                   <version>${felix.configadmin.version}</version>
+                  <outputDirectory>${tmp.bundle.dir}</outputDirectory>
+                </artifactItem>
+                <artifactItem>
+                  <groupId>org.osgi</groupId>
+                  <artifactId>org.osgi.service.component</artifactId>
+                  <version>${osgi.component.version}</version>
                   <outputDirectory>${tmp.bundle.dir}</outputDirectory>
                 </artifactItem>
 
@@ -323,13 +329,8 @@
                 <artifactItem>
                   <groupId>org.weasis.core</groupId>
                   <artifactId>weasis-core-img</artifactId>
-                  <version>${weasis.core.img.version}-jdk11</version>
-                  <outputDirectory>${tmp.bundle.dir}</outputDirectory>
-                </artifactItem>
-                <artifactItem>
-                  <groupId>org.weasis.opencv</groupId>
-                  <artifactId>weasis-opencv-core-linux-x86</artifactId>
-                  <version>${weasis.opencv.native.version}</version>
+                  <version>${weasis.core.img.version}</version>
+                  <classifier>jdk11</classifier>
                   <outputDirectory>${tmp.bundle.dir}</outputDirectory>
                 </artifactItem>
                 <artifactItem>
@@ -358,12 +359,6 @@
                 </artifactItem>
                 <artifactItem>
                   <groupId>org.weasis.opencv</groupId>
-                  <artifactId>weasis-opencv-core-windows-x86</artifactId>
-                  <version>${weasis.opencv.native.version}</version>
-                  <outputDirectory>${tmp.bundle.dir}</outputDirectory>
-                </artifactItem>
-                <artifactItem>
-                  <groupId>org.weasis.opencv</groupId>
                   <artifactId>weasis-opencv-core-windows-x86-64</artifactId>
                   <version>${weasis.opencv.native.version}</version>
                   <outputDirectory>${tmp.bundle.dir}</outputDirectory>
@@ -380,6 +375,40 @@
                   <outputDirectory>${tmp.bundle.dir}</outputDirectory>
                 </artifactItem>
 
+
+                <!-- ===================================== -->
+                <!-- Weasis 3D Modules -->
+                <!-- ===================================== -->
+                <artifactItem>
+                  <groupId>org.weasis.dicom.3d</groupId>
+                  <artifactId>weasis-dicom-viewer3d</artifactId>
+                  <version>${app.version}</version>
+                  <outputDirectory>${tmp.bundle.dir}</outputDirectory>
+                </artifactItem>
+                <artifactItem>
+                  <groupId>org.weasis.thirdparty.org.jogamp</groupId>
+                  <artifactId>jogamp</artifactId>
+                  <version>${jogamp.version}</version>
+                  <outputDirectory>${tmp.bundle.dir}</outputDirectory>
+                </artifactItem>
+                <artifactItem>
+                  <groupId>org.weasis.thirdparty.org.jogamp</groupId>
+                  <artifactId>jogamp-linux-x86-64</artifactId>
+                  <version>${jogamp.version}</version>
+                  <outputDirectory>${tmp.bundle.dir}</outputDirectory>
+                </artifactItem>
+                <artifactItem>
+                  <groupId>org.weasis.thirdparty.org.jogamp</groupId>
+                  <artifactId>jogamp-macosx-x86-64</artifactId>
+                  <version>${jogamp.version}</version>
+                  <outputDirectory>${tmp.bundle.dir}</outputDirectory>
+                </artifactItem>
+                <artifactItem>
+                  <groupId>org.weasis.thirdparty.org.jogamp</groupId>
+                  <artifactId>jogamp-windows-x86-64</artifactId>
+                  <version>${jogamp.version}</version>
+                  <outputDirectory>${tmp.bundle.dir}</outputDirectory>
+                </artifactItem>
 
                 <!-- ===================================== -->
                 <!-- Weasis Base bundles -->
@@ -540,7 +569,7 @@
     <dependency>
       <groupId>org.weasis</groupId>
       <artifactId>weasis-i18n-dist</artifactId>
-      <version>3.0.0-SNAPSHOT</version>
+      <version>4.0.0-SNAPSHOT</version>
       <type>zip</type>
     </dependency>
   </dependencies>

@@ -11,7 +11,7 @@ package org.weasis.core.api.image.util;
 
 import java.util.ArrayList;
 import java.util.List;
-import org.weasis.core.api.Messages;
+import org.weasis.core.Messages;
 
 public enum Unit {
   PIXEL(-5, Messages.getString("Unit.pix"), Messages.getString("Unit.pix_s"), 1.0),

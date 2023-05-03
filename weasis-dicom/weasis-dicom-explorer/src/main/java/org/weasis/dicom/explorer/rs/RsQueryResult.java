@@ -43,7 +43,7 @@ import org.weasis.dicom.codec.TagD.Level;
 import org.weasis.dicom.codec.utils.DicomMediaUtils;
 import org.weasis.dicom.codec.utils.PatientComparator;
 import org.weasis.dicom.explorer.DicomModel;
-import org.weasis.dicom.explorer.pref.download.SeriesDownloadPrefView;
+import org.weasis.dicom.explorer.pref.download.DicomExplorerPrefView;
 import org.weasis.dicom.explorer.wado.DownloadPriority;
 import org.weasis.dicom.explorer.wado.LoadSeries;
 import org.weasis.dicom.explorer.wado.SeriesInstanceList;
@@ -86,7 +86,7 @@ public class RsQueryResult extends AbstractQueryResult {
             + rsQueryParams.getProperties().getProperty(RsQueryParams.P_ACCEPT_EXT));
     defaultStartDownloading =
         BundleTools.SYSTEM_PREFERENCES.getBooleanProperty(
-            SeriesDownloadPrefView.DOWNLOAD_IMMEDIATELY, true);
+            DicomExplorerPrefView.DOWNLOAD_IMMEDIATELY, true);
   }
 
   private static String multiParams(String query) {

@@ -35,6 +35,7 @@ import java.awt.Window;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
+import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
@@ -71,7 +72,7 @@ import javax.swing.event.HyperlinkListener;
 import javax.swing.text.DefaultFormatterFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.weasis.core.api.Messages;
+import org.weasis.core.Messages;
 import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.api.util.FontItem;
 import org.weasis.core.util.StringUtil;
@@ -80,6 +81,13 @@ public class GuiUtils {
   private static final Logger LOGGER = LoggerFactory.getLogger(GuiUtils.class);
 
   public static final String HTML_START = "<html>";
+
+  public static final String HTML_COLOR_START = "<html><font color='"; // NON-NLS
+
+  public static final String HTML_COLOR_PATTERN =
+      """
+          <html><font color="%s">%s</font></html>
+          """;
   public static final String HTML_END = "</html>";
   public static final String HTML_BR = "<br>";
 
@@ -316,6 +324,17 @@ public class GuiUtils {
     component.setMaximumSize(new Dimension(Short.MAX_VALUE, dim.height));
   }
 
+  public static void setWidth(Component component, int width) {
+    int sWidth = getScaleLength(width);
+    Dimension dim = component.getMinimumSize();
+    dim.width = sWidth;
+    component.setMinimumSize(dim);
+    dim = component.getPreferredSize();
+    dim.width = sWidth;
+    component.setPreferredSize(dim);
+    component.setMaximumSize(dim);
+  }
+
   public static void setPreferredWidth(Component component, int width) {
     setPreferredWidth(component, width, 50);
   }
@@ -401,8 +420,14 @@ public class GuiUtils {
 
   public static void setNumberModel(JSpinner spin, int val, int min, int max, int delta) {
     spin.setModel(new SpinnerNumberModel(val < min ? min : Math.min(val, max), min, max, delta));
-    final JFormattedTextField ftf = ((JSpinner.DefaultEditor) spin.getEditor()).getTextField();
+    JFormattedTextField ftf = ((JSpinner.DefaultEditor) spin.getEditor()).getTextField();
     addCheckActionToJFormattedTextField(ftf);
+  }
+
+  public static void setSpinnerWidth(JSpinner spin, int valueWidth) {
+    Component mySpinnerEditor = spin.getEditor();
+    JFormattedTextField ftf = ((JSpinner.DefaultEditor) mySpinnerEditor).getTextField();
+    ftf.setColumns(valueWidth);
   }
 
   public static void formatCheckAction(JSpinner spin) {
@@ -489,6 +514,30 @@ public class GuiUtils {
         JOptionPane.showMessageDialog(
             parent,
             Messages.getString("JMVUtils.browser") + StringUtil.COLON_AND_SPACE + url,
+            Messages.getString("JMVUtils.error"),
+            JOptionPane.ERROR_MESSAGE);
+      }
+    }
+  }
+
+  public static void openSystemExplorer(Component parent, File file) {
+    if (file != null) {
+      if (SystemInfo.isLinux) {
+        try {
+          String[] cmd = new String[] {"xdg-open", file.getPath()}; // NON-NLS
+          Runtime.getRuntime().exec(cmd);
+        } catch (IOException e) {
+          LOGGER.error("Cannot open a file to the system explorer", e);
+        }
+      } else if (Desktop.isDesktopSupported()) {
+        final Desktop desktop = Desktop.getDesktop();
+        if (desktop.isSupported(Desktop.Action.BROWSE_FILE_DIR)) {
+          desktop.browseFileDirectory(file);
+        }
+      } else {
+        JOptionPane.showMessageDialog(
+            parent,
+            Messages.getString("JMVUtils.browser") + StringUtil.COLON_AND_SPACE + file.getPath(),
             Messages.getString("JMVUtils.error"),
             JOptionPane.ERROR_MESSAGE);
       }

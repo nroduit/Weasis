@@ -28,7 +28,7 @@ import java.util.Random;
 import javax.swing.SwingUtilities;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.weasis.core.api.Messages;
+import org.weasis.core.Messages;
 import org.weasis.core.api.explorer.ObservableEvent;
 import org.weasis.core.api.gui.util.Filter;
 import org.weasis.core.util.LangUtil;

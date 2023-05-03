@@ -11,7 +11,7 @@ package org.weasis.core.api.image;
 
 import java.awt.Dimension;
 import org.opencv.imgproc.Imgproc;
-import org.weasis.core.api.Messages;
+import org.weasis.core.Messages;
 import org.weasis.core.util.MathUtil;
 import org.weasis.opencv.data.PlanarImage;
 import org.weasis.opencv.op.ImageProcessor;

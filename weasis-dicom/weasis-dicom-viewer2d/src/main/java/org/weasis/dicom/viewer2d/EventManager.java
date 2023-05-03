@@ -109,7 +109,7 @@ import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.geometry.ImageOrientation;
 import org.weasis.dicom.codec.utils.DicomResource;
 import org.weasis.dicom.viewer2d.mip.MipView;
-import org.weasis.dicom.viewer2d.mpr.MPRContainer;
+import org.weasis.dicom.viewer2d.mpr.MprContainer;
 import org.weasis.dicom.viewer2d.mpr.MprView;
 import org.weasis.opencv.op.ImageConversion;
 import org.weasis.opencv.op.lut.DefaultWlPresentation;
@@ -158,6 +158,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
     setAction(new BasicActionState(ActionW.NO_ACTION));
     setAction(new BasicActionState(ActionW.DRAW));
     setAction(new BasicActionState(ActionW.MEASURE));
+    setAction(new BasicActionState(ActionW.VOLUME));
 
     setAction(getMoveTroughSliceAction(20, TIME.SECOND, 0.1));
     setAction(newWindowAction());
@@ -787,9 +788,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
   }
 
   @Override
-  public void keyTyped(KeyEvent e) {
-    // Do nothing
-  }
+  public void keyTyped(KeyEvent e) {}
 
   @Override
   public void keyPressed(KeyEvent e) {
@@ -839,9 +838,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
   }
 
   @Override
-  public void keyReleased(KeyEvent e) {
-    // Do nothing
-  }
+  public void keyReleased(KeyEvent e) {}
 
   @Override
   public void setSelectedView2dContainer(
@@ -1046,7 +1043,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
             a ->
                 a.setSelectedWithoutTriggerAction(
                     (Boolean) view2d.getActionValue(ActionW.INVERSE_STACK.cmd())));
-
+    getAction(ActionW.VOLUME).ifPresent(a -> a.enableAction(series.size(null) >= 5));
     updateKeyObjectComponentsListener(view2d);
 
     // register all actions for the selected view and for the other views register according to
@@ -1130,12 +1127,14 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
         }
         Double levelMin = (Double) node.getParam(ActionW.LEVEL_MIN.cmd());
         Double levelMax = (Double) node.getParam(ActionW.LEVEL_MAX.cmd());
+        double levelLow = Math.min(levelValue - windowValue / 2.0, image.getMinValue(wlp));
+        double levelHigh = Math.max(levelValue + windowValue / 2.0, image.getMaxValue(wlp));
         if (levelMin == null || levelMax == null) {
-          minLevel = Math.min(levelValue - windowValue / 2.0, image.getMinValue(wlp));
-          maxLevel = Math.max(levelValue + windowValue / 2.0, image.getMaxValue(wlp));
+          minLevel = levelLow;
+          maxLevel = levelHigh;
         } else {
-          minLevel = Math.min(levelMin, image.getMinValue(wlp));
-          maxLevel = Math.max(levelMax, image.getMaxValue(wlp));
+          minLevel = Math.min(levelMin, levelLow);
+          maxLevel = Math.max(levelMax, levelHigh);
         }
         window = Math.max(windowValue, maxLevel - minLevel);
 
@@ -1407,8 +1406,8 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
       InsertableUtil.savePreferences(View2dContainer.TOOLS, containerNode, Type.TOOL);
 
       InsertableUtil.savePreferences(
-          MPRContainer.TOOLBARS,
-          prefs.node(MPRContainer.class.getSimpleName().toLowerCase()),
+          MprContainer.TOOLBARS,
+          prefs.node(MprContainer.class.getSimpleName().toLowerCase()),
           Type.TOOLBAR);
     }
   }
@@ -1440,7 +1439,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
     JMenu menu = null;
     if (BundleTools.SYSTEM_PREFERENCES.getBooleanProperty(prop, true)) {
       ButtonGroup group = new ButtonGroup();
-      menu = new JMenu(Messages.getString("ResetTools.reset"));
+      menu = new JMenu(ActionW.RESET.getTitle());
       menu.setIcon(ResourceUtil.getIcon(ActionIcon.RESET));
       GuiUtils.applySelectedIconEffect(menu);
       menu.setEnabled(getSelectedSeries() != null);
@@ -1468,8 +1467,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
         menu =
             presetAction
                 .get()
-                .createUnregisteredRadioMenu(
-                    Messages.getString("View2dContainer.presets"), ActionW.WINLEVEL.getIcon());
+                .createUnregisteredRadioMenu(ActionW.PRESET.getTitle(), ActionW.WINLEVEL.getIcon());
         GuiUtils.applySelectedIconEffect(menu);
         for (Component mitem : menu.getMenuComponents()) {
           RadioMenuItem ritem = (RadioMenuItem) mitem;
@@ -1525,7 +1523,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
         menu.setEnabled(rotateAction.get().isActionEnabled());
 
         if (rotateAction.get().isActionEnabled()) {
-          JMenuItem menuItem = new JMenuItem(Messages.getString("ResetTools.reset"));
+          JMenuItem menuItem = new JMenuItem(ActionW.RESET.getTitle());
           menuItem.addActionListener(e -> rotateAction.get().setSliderValue(0));
           menu.add(menuItem);
           menuItem = new JMenuItem(Messages.getString("View2dContainer.-90"));
@@ -1609,7 +1607,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
             lutAction
                 .get()
                 .createUnregisteredRadioMenu(
-                    Messages.getString("ImageTool.lut"), ResourceUtil.getIcon(ActionIcon.LUT));
+                    ActionW.LUT.getTitle(), ResourceUtil.getIcon(ActionIcon.LUT));
       }
     }
     return menu;

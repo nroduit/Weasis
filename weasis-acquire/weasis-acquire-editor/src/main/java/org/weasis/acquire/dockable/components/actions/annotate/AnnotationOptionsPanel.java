@@ -53,8 +53,7 @@ public class AnnotationOptionsPanel extends JPanel {
     spUnitAction.ifPresent(
         comboItemListener -> {
           JLabel label =
-              new JLabel(
-                  org.weasis.core.ui.Messages.getString("MeasureTool.unit") + StringUtil.COLON);
+              new JLabel(org.weasis.core.Messages.getString("MeasureTool.unit") + StringUtil.COLON);
           JComboBox<?> unitComboBox = comboItemListener.createCombo(120);
           unitComboBox.setSelectedItem(Unit.PIXEL);
           add(GuiUtils.getFlowLayoutPanel(label, unitComboBox));
@@ -74,16 +73,16 @@ public class AnnotationOptionsPanel extends JPanel {
 
   private JPanel createLineStylePanel() {
     JLabel label =
-        new JLabel(org.weasis.core.ui.Messages.getString("MeasureToolBar.line") + StringUtil.COLON);
+        new JLabel(org.weasis.core.Messages.getString("MeasureToolBar.line") + StringUtil.COLON);
     JButton button = new JButton(ResourceUtil.getIcon(ActionIcon.PIPETTE));
-    button.setToolTipText(org.weasis.core.ui.Messages.getString("MeasureTool.pick"));
+    button.setToolTipText(org.weasis.core.Messages.getString("MeasureTool.pick"));
     button.addActionListener(
         e -> {
           JButton b = (JButton) e.getSource();
           Color newColor =
               JColorChooser.showDialog(
                   SwingUtilities.getWindowAncestor(AnnotationOptionsPanel.this),
-                  org.weasis.core.ui.Messages.getString("MeasureTool.pick_color"),
+                  org.weasis.core.Messages.getString("MeasureTool.pick_color"),
                   b.getBackground());
           if (newColor != null) {
             b.setBackground(newColor);

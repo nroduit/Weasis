@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+  <parent>
+    <groupId>org.weasis.dicom.3d</groupId>
+    <artifactId>weasis-dicom-3d</artifactId>
+    <!--suppress MavenPropertyInParent -->
+    <version>${revision}${changelist}</version>
+    <relativePath>../pom.xml</relativePath>
+  </parent>
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>org.weasis.thirdparty.org.jogamp</groupId>
+  <artifactId>jogamp-native</artifactId>
+  <name>JOGL plugins [${project.artifactId}]</name>
+  <packaging>pom</packaging>
+
+  <modules>
+    <module>jogamp-linux-aarch64</module>
+    <module>jogamp-linux-armv7a</module>
+    <module>jogamp-linux-x86-64</module>
+    <module>jogamp-macosx-aarch64</module>
+    <module>jogamp-macosx-x86-64</module>
+    <module>jogamp-windows-x86-64</module>
+  </modules>
+
+  <properties>
+    <native.configuration>changeMeInChildModule</native.configuration>
+  </properties>
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>biz.aQute.bnd</groupId>
+        <artifactId>bnd-maven-plugin</artifactId>
+        <configuration>
+          <bnd>
+            Bundle-NativeCode: ${native.configuration}
+            Fragment-Host: jogamp;bundle-version="${jogamp.version}"
+
+            Implementation-Title: Java Bindings for OpenGL Runtime Environment
+            Implementation-Version: ${jogamp.version}
+            Specification-Title: Java Bindings for OpenGL API Specification
+            Specification-Version: ${jogamp.version}
+            Specification-Vendor: JogAmp Community
+          </bnd>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+
+  <dependencies>
+    <dependency>
+      <groupId>org.weasis.thirdparty.org.jogamp</groupId>
+      <artifactId>jogamp</artifactId>
+      <version>${jogamp.version}</version>
+      <scope>provided</scope>
+    </dependency>
+  </dependencies>
+</project>

@@ -107,7 +107,7 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
 
   public static final String LOAD_TYPE_DICOMDIR = "DICOMDIR";
   public static final String LOAD_TYPE_URL = "URL";
-  public static final String LOAD_TYPE_LOCAL = "local";
+  public static final String LOAD_TYPE_LOCAL = "local"; // NON-NLS
   public static final String LOAD_TYPE_WADO = "WADO";
 
   private PluginOpeningStrategy openingStrategy;

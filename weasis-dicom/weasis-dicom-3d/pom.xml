@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+  <parent>
+    <artifactId>weasis-dicom-parent</artifactId>
+    <groupId>org.weasis.dicom</groupId>
+    <!--suppress MavenPropertyInParent -->
+    <version>${revision}${changelist}</version>
+    <relativePath>../weasis-dicom-parent/pom.xml</relativePath>
+  </parent>
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>org.weasis.dicom.3d</groupId>
+  <artifactId>weasis-dicom-3d</artifactId>
+  <packaging>pom</packaging>
+  <name>3D Plug-ins [${project.artifactId}]</name>
+
+  <modules>
+    <module>jogamp</module>
+    <module>jogamp-native</module>
+    <module>viewer3d</module>
+  </modules>
+
+  <dependencies>
+    <dependency>
+      <groupId>org.weasis.core</groupId>
+      <artifactId>weasis-core</artifactId>
+      <version>${project.parent.version}</version>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.weasis.thirdparty</groupId>
+      <artifactId>docking-frames</artifactId>
+    </dependency>
+  </dependencies>
+</project>

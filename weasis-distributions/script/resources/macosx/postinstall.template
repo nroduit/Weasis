@@ -1,0 +1,10 @@
+#!/usr/bin/env sh
+
+chown root:wheel "INSTALL_LOCATION"
+chmod a+rX "INSTALL_LOCATION"
+chmod +r "APP_LOCATION/"*.jar
+
+defaults write com.google.Chrome URLAllowlist -array-add 'weasis://*'
+defaults write com.brave.Browser URLAllowlist -array-add 'weasis://*'
+
+exit 0

@@ -25,12 +25,13 @@ import org.weasis.dicom.explorer.HangingProtocols.OpeningViewer;
 public class PluginOpeningStrategy {
 
   private OpeningViewer openingMode;
-  private boolean resetVeto;
+  private boolean fullImportSession;
 
   private final Set<MediaSeriesGroup> openPatients = Collections.synchronizedSet(new HashSet<>());
 
   public PluginOpeningStrategy(OpeningViewer openingMode) {
     setOpeningMode(openingMode);
+    this.fullImportSession = true;
   }
 
   public OpeningViewer getOpeningMode() {
@@ -45,16 +46,16 @@ public class PluginOpeningStrategy {
     return openPatients.contains(Objects.requireNonNull(patient));
   }
 
-  public boolean isResetVeto() {
-    return resetVeto;
+  public boolean isFullImportSession() {
+    return fullImportSession;
   }
 
-  public void setResetVeto(boolean resetVeto) {
-    this.resetVeto = resetVeto;
+  public void setFullImportSession(boolean fullImportSession) {
+    this.fullImportSession = fullImportSession;
   }
 
   public void reset() {
-    if (!resetVeto) {
+    if (fullImportSession) {
       openPatients.clear();
     }
   }
@@ -64,7 +65,7 @@ public class PluginOpeningStrategy {
   }
 
   public void prepareImport() {
-    if (isRemovingPrevious()) {
+    if (isRemovingPrevious() && (fullImportSession || openPatients.isEmpty())) {
       UIManager.closeSeriesViewer(new ArrayList<>(UIManager.VIEWER_PLUGINS));
     }
   }

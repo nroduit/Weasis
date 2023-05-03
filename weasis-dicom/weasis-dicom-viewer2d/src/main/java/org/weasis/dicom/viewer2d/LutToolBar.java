@@ -9,15 +9,20 @@
  */
 package org.weasis.dicom.viewer2d;
 
+import java.util.Objects;
 import java.util.Optional;
 import javax.swing.Icon;
 import javax.swing.JPopupMenu;
 import javax.swing.JToggleButton;
+import javax.swing.KeyStroke;
+import org.dcm4che3.img.lut.PresetWindowLevel;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.ComboItemListener;
 import org.weasis.core.api.gui.util.DropButtonIcon;
 import org.weasis.core.api.gui.util.DropDownButton;
 import org.weasis.core.api.gui.util.GroupPopup;
+import org.weasis.core.api.gui.util.GroupRadioMenu;
+import org.weasis.core.api.gui.util.RadioMenuItem;
 import org.weasis.core.api.image.op.ByteLut;
 import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.api.util.ResourceUtil.ActionIcon;
@@ -29,28 +34,35 @@ public class LutToolBar extends WtoolBar {
 
   public LutToolBar(final ImageViewerEventManager<DicomImageElement> eventManager, int index) {
     super(Messages.getString("LutToolBar.lookupbar"), index);
-    if (eventManager == null) {
-      throw new IllegalArgumentException("EventManager cannot be null");
-    }
 
-    GroupPopup menu = null;
-    Optional<ComboItemListener<Object>> presetAction = eventManager.getAction(ActionW.PRESET);
+    GroupPopup menuPreset = null;
+    Optional<ComboItemListener<Object>> presetAction =
+        Objects.requireNonNull(eventManager).getAction(ActionW.PRESET);
     if (presetAction.isPresent()) {
-      menu = presetAction.get().createGroupRadioMenu();
+      menuPreset = presetAction.get().createGroupRadioMenu();
     }
 
     final DropDownButton presetButton =
-        new DropDownButton(ActionW.WINLEVEL.cmd(), buildWLIcon(), menu) {
+        new DropDownButton(ActionW.WINLEVEL.cmd(), buildWLIcon(), menuPreset) {
           @Override
           protected JPopupMenu getPopupMenu() {
             JPopupMenu menu =
                 (getMenuModel() == null) ? new JPopupMenu() : getMenuModel().createJPopupMenu();
             menu.setInvoker(this);
+            if (getMenuModel() instanceof GroupRadioMenu) {
+              for (RadioMenuItem item :
+                  ((GroupRadioMenu<?>) getMenuModel()).getRadioMenuItemListCopy()) {
+                PresetWindowLevel preset = (PresetWindowLevel) item.getUserObject();
+                if (preset.getKeyCode() > 0) {
+                  item.setAccelerator(KeyStroke.getKeyStroke(preset.getKeyCode(), 0));
+                }
+              }
+            }
             return menu;
           }
         };
 
-    presetButton.setToolTipText(Messages.getString("LutToolBar.presets"));
+    presetButton.setToolTipText(ActionW.PRESET.getTitle());
     add(presetButton);
     presetAction.ifPresent(
         objectComboItemListener -> objectComboItemListener.registerActionState(presetButton));

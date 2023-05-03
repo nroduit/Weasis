@@ -23,6 +23,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.weasis.core.api.explorer.DataExplorerView;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.gui.util.WinUtil;
+import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.ui.editor.SeriesViewer;
 import org.weasis.core.ui.editor.SeriesViewerFactory;
 import org.weasis.core.ui.editor.image.ViewerPlugin;
@@ -67,12 +68,26 @@ public class UIManager {
     return WinUtil.getParentWindow(UIManager.BASE_AREA);
   }
 
-  public static DataExplorerView getExplorerplugin(String name) {
+  public static DataExplorerView getExplorerPlugin(String name) {
     if (name != null) {
       synchronized (EXPLORER_PLUGINS) {
         for (DataExplorerView view : EXPLORER_PLUGINS) {
           if (name.equals(view.getUIName())) {
             return view;
+          }
+        }
+      }
+    }
+    return null;
+  }
+
+  public static SeriesViewerFactory getViewerFactory(Class<? extends SeriesViewerFactory> clazz) {
+    if (clazz != null) {
+      synchronized (UIManager.SERIES_VIEWER_FACTORIES) {
+        List<SeriesViewerFactory> plugins = UIManager.SERIES_VIEWER_FACTORIES;
+        for (final SeriesViewerFactory factory : plugins) {
+          if (clazz.isInstance(factory)) {
+            return factory;
           }
         }
       }
@@ -152,6 +167,37 @@ public class UIManager {
       return plugins;
     }
     return null;
+  }
+
+  public static boolean isSeriesOpenInViewer(MediaSeries<?> mediaSeries) {
+    if (mediaSeries == null) {
+      return false;
+    }
+    synchronized (UIManager.VIEWER_PLUGINS) {
+      List<ViewerPlugin<?>> plugins = UIManager.VIEWER_PLUGINS;
+      for (final ViewerPlugin<?> plugin : plugins) {
+        List<? extends MediaSeries<?>> openSeries = plugin.getOpenSeries();
+        if (openSeries != null) {
+          for (MediaSeries<?> s : openSeries) {
+            if (mediaSeries == s) {
+              // The sequence is still open in another view or plugin
+              return true;
+            }
+          }
+        }
+      }
+    }
+    return false;
+  }
+
+  public static void closeSeries(MediaSeries<?> mediaSeries) {
+    if (mediaSeries == null) {
+      return;
+    }
+    mediaSeries.setOpen(isSeriesOpenInViewer(mediaSeries));
+    // TODO setSelected and setFocused must be global to all view as open
+    mediaSeries.setSelected(false, null);
+    mediaSeries.setFocused(false);
   }
 
   public static void closeSeriesViewerType(Class<? extends SeriesViewer<?>> clazz) {

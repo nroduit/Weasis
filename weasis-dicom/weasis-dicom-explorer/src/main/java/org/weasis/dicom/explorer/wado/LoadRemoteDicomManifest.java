@@ -37,7 +37,7 @@ import org.weasis.dicom.explorer.DicomModel;
 import org.weasis.dicom.explorer.ExplorerTask;
 import org.weasis.dicom.explorer.Messages;
 import org.weasis.dicom.explorer.PluginOpeningStrategy;
-import org.weasis.dicom.explorer.pref.download.SeriesDownloadPrefView;
+import org.weasis.dicom.explorer.pref.download.DicomExplorerPrefView;
 import org.weasis.dicom.explorer.wado.DownloadManager.PriorityTaskComparator;
 
 public class LoadRemoteDicomManifest extends ExplorerTask<Boolean, String> {
@@ -171,7 +171,7 @@ public class LoadRemoteDicomManifest extends ExplorerTask<Boolean, String> {
       loadSeriesList.addAll(wadoTasks);
       boolean downloadImmediately =
           BundleTools.SYSTEM_PREFERENCES.getBooleanProperty(
-              SeriesDownloadPrefView.DOWNLOAD_IMMEDIATELY, true);
+              DicomExplorerPrefView.DOWNLOAD_IMMEDIATELY, true);
       startDownloadingSeries(wadoTasks, downloadImmediately);
     } catch (URISyntaxException | MalformedURLException e) {
       LOGGER.error("Loading manifest", e);

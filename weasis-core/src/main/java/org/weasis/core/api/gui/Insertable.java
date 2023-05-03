@@ -20,6 +20,7 @@ public interface Insertable {
   enum Type {
     EXPLORER,
     TOOL,
+    TOOL_EXT,
     TOOLBAR,
     EMPTY,
     PREFERENCES

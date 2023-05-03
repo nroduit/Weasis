@@ -44,7 +44,7 @@ import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.explorer.DicomExplorer;
 import org.weasis.dicom.viewer2d.EventManager;
 import org.weasis.dicom.viewer2d.View2dContainer;
-import org.weasis.dicom.viewer2d.mpr.MPRContainer;
+import org.weasis.dicom.viewer2d.mpr.MprContainer;
 
 @Header(name = Constants.BUNDLE_ACTIVATOR, value = "${@class}") // NON-NLS
 public class Activator implements BundleActivator, ServiceListener {
@@ -65,7 +65,8 @@ public class Activator implements BundleActivator, ServiceListener {
     try {
       bundleContext.addServiceListener(
           Activator.this,
-          String.format("(%s=%s)", Constants.OBJECTCLASS, InsertableFactory.class.getName()));
+          String.format(
+              "(%s=%s)", Constants.OBJECTCLASS, InsertableFactory.class.getName())); // NON-NLS
     } catch (InvalidSyntaxException e) {
       LOGGER.error("Add service listener", e);
     }
@@ -76,13 +77,13 @@ public class Activator implements BundleActivator, ServiceListener {
     // Save preferences
     ImageViewerPlugin<DicomImageElement> container =
         EventManager.getInstance().getSelectedView2dContainer();
-    if (container instanceof MPRContainer) {
+    if (container instanceof MprContainer) {
       // Remove crosshair tool
       container.setSelected(false);
     }
     EventManager.getInstance().savePreferences(bundleContext);
 
-    UIManager.closeSeriesViewerType(MPRContainer.class);
+    UIManager.closeSeriesViewerType(MprContainer.class);
     UIManager.closeSeriesViewerType(View2dContainer.class);
   }
 
@@ -131,7 +132,7 @@ public class Activator implements BundleActivator, ServiceListener {
     }
   }
 
-  private static void registerComponent(final InsertableFactory factory) {
+  private static void registerComponent(InsertableFactory factory) {
     if (factory == null) {
       return;
     }
@@ -140,6 +141,15 @@ public class Activator implements BundleActivator, ServiceListener {
       registerToolBar(factory.createInstance(null));
     } else if (Type.TOOL.equals(factory.getType())) {
       registerTool(factory.createInstance(null));
+    } else if (Type.TOOL_EXT.equals(factory.getType())) {
+      registerToolExt(factory);
+    }
+  }
+
+  private static void registerToolExt(InsertableFactory factory) {
+    if (!View2dContainer.TOOL_EXT.contains(factory)) {
+      View2dContainer.TOOL_EXT.add(factory);
+      LOGGER.debug("Add Tool Extension [{}] for {}", factory, View2dContainer.class.getName());
     }
   }
 
@@ -213,7 +223,7 @@ public class Activator implements BundleActivator, ServiceListener {
     ImageViewerPlugin<DicomImageElement> view =
         EventManager.getInstance().getSelectedView2dContainer();
     if (view instanceof View2dContainer) {
-      DataExplorerView dicomView = UIManager.getExplorerplugin(DicomExplorer.NAME);
+      DataExplorerView dicomView = UIManager.getExplorerPlugin(DicomExplorer.NAME);
       DataExplorerModel model = dicomView.getDataExplorerModel();
       if (model != null) {
         model.firePropertyChange(new ObservableEvent(action, view, null, view));
