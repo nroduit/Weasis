@@ -751,6 +751,15 @@ public class WeasisWin {
     helpMenuItem.add(reportMenuItem);
     helpMenuItem.add(new JSeparator());
 
+    final JMenuItem licencesMenuItem = new JMenuItem(Messages.getString("LicencesDialog.title"));
+    licencesMenuItem.addActionListener(e -> {
+      ColorLayerUI layer = ColorLayerUI.createTransparentLayerUI(rootPaneContainer);
+      LicencesDialog dialog = new LicencesDialog(getFrame());
+      ColorLayerUI.showCenterScreen(dialog, layer);
+    });
+    helpMenuItem.add(licencesMenuItem);
+    helpMenuItem.add(new JSeparator());
+
     final JMenuItem aboutMenuItem =
         new JMenuItem(
             String.format(Messages.getString("WeasisAboutBox.about"), AppProperties.WEASIS_NAME));
