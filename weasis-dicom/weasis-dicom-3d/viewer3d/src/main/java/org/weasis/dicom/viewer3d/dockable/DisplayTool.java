@@ -31,7 +31,6 @@ import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import org.weasis.core.api.gui.Insertable;
-import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.api.util.ResourceUtil.OtherIcon;
@@ -46,9 +45,7 @@ import org.weasis.core.ui.editor.image.ViewerPlugin;
 import org.weasis.core.ui.model.layer.AbstractInfoLayer;
 import org.weasis.core.ui.model.layer.LayerAnnotation;
 import org.weasis.core.ui.util.CheckBoxTreeBuilder;
-import org.weasis.core.util.LangUtil;
 import org.weasis.dicom.codec.DicomImageElement;
-import org.weasis.dicom.viewer3d.ActionVol;
 import org.weasis.dicom.viewer3d.EventManager;
 import org.weasis.dicom.viewer3d.Messages;
 import org.weasis.dicom.viewer3d.View3DContainer;
@@ -66,10 +63,10 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
   private final DefaultMutableTreeNode rootNode = new DefaultMutableTreeNode("rootNode", true);
 
   private DefaultMutableTreeNode dicomInfo;
-  private DefaultMutableTreeNode drawings;
+  //  private DefaultMutableTreeNode drawings;
 
   private DefaultMutableTreeNode minAnnotations;
-  private DefaultMutableTreeNode orientationCube;
+  //  private DefaultMutableTreeNode orientationCube;
 
   public DisplayTool(String pluginName) {
     super(BUTTON_NAME, pluginName, Insertable.Type.TOOL, 10);
@@ -90,19 +87,19 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
     minAnnotations = new DefaultMutableTreeNode(LayerAnnotation.MIN_ANNOTATIONS, false);
     dicomInfo.add(minAnnotations);
     dicomInfo.add(new DefaultMutableTreeNode(LayerAnnotation.ANONYM_ANNOTATIONS, false));
-    dicomInfo.add(new DefaultMutableTreeNode(LayerAnnotation.SCALE, true));
-    dicomInfo.add(new DefaultMutableTreeNode(LayerAnnotation.LUT, true));
-    dicomInfo.add(new DefaultMutableTreeNode(LayerAnnotation.IMAGE_ORIENTATION, true));
+    //    dicomInfo.add(new DefaultMutableTreeNode(LayerAnnotation.SCALE, true));
+    //    dicomInfo.add(new DefaultMutableTreeNode(LayerAnnotation.LUT, true));
+    //    dicomInfo.add(new DefaultMutableTreeNode(LayerAnnotation.IMAGE_ORIENTATION, true));
     dicomInfo.add(new DefaultMutableTreeNode(LayerAnnotation.WINDOW_LEVEL, true));
     dicomInfo.add(new DefaultMutableTreeNode(LayerAnnotation.ZOOM, true));
-    dicomInfo.add(new DefaultMutableTreeNode(LayerAnnotation.ROTATION, true));
-    dicomInfo.add(new DefaultMutableTreeNode(LayerAnnotation.PIXEL, true));
+    //    dicomInfo.add(new DefaultMutableTreeNode(LayerAnnotation.ROTATION, true));
+    //    dicomInfo.add(new DefaultMutableTreeNode(LayerAnnotation.PIXEL, true));
     rootNode.add(dicomInfo);
-    drawings = new DefaultMutableTreeNode(ActionW.DRAWINGS, true);
-    rootNode.add(drawings);
+    //    drawings = new DefaultMutableTreeNode(ActionW.DRAWINGS, true);
+    //    rootNode.add(drawings);
 
-    orientationCube = new DefaultMutableTreeNode(ActionVol.ORIENTATION_CUBE, false);
-    rootNode.add(orientationCube);
+    //    orientationCube = new DefaultMutableTreeNode(ActionVol.ORIENTATION_CUBE, false);
+    //    rootNode.add(orientationCube);
 
     DefaultTreeModel model = new DefaultTreeModel(rootNode, false);
     tree.setModel(model);
@@ -173,14 +170,14 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
                 v.getJComponent().repaint();
               }
             }
-          } else if (drawings.equals(selObject)) {
-            for (ViewCanvas<DicomImageElement> v : views) {
-              v.setDrawingsVisibility(selected);
-            }
-          } else if (orientationCube.equals(selObject)) {
-            for (ViewCanvas<DicomImageElement> v : views) {
-              v.setActionsInView(ActionVol.ORIENTATION_CUBE.cmd(), selected, true);
-            }
+            //          } else if (drawings.equals(selObject)) {
+            //            for (ViewCanvas<DicomImageElement> v : views) {
+            //              v.setDrawingsVisibility(selected);
+            //            }
+            //          } else if (orientationCube.equals(selObject)) {
+            //            for (ViewCanvas<DicomImageElement> v : views) {
+            //              v.setActionsInView(ActionVol.ORIENTATION_CUBE.cmd(), selected, true);
+            //            }
           }
         } else if (dicomInfo.equals(parent)) {
           if (selObject != null) {
@@ -245,14 +242,15 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
   }
 
   private void initLayers(ViewCanvas<?> view) {
-    initPathSelection(
-        getTreePath(drawings),
-        LangUtil.getNULLtoTrue((Boolean) view.getActionValue(ActionW.DRAWINGS.cmd())));
-
-    // FIXME store in pref
-    initPathSelection(
-        getTreePath(orientationCube),
-        LangUtil.getNULLtoFalse((Boolean) view.getActionValue(ActionVol.ORIENTATION_CUBE.cmd())));
+    //    initPathSelection(
+    //        getTreePath(drawings),
+    //        LangUtil.getNULLtoTrue((Boolean) view.getActionValue(ActionW.DRAWINGS.cmd())));
+    //
+    //    // FIXME store in pref
+    //    initPathSelection(
+    //        getTreePath(orientationCube),
+    //        LangUtil.getNULLtoFalse((Boolean)
+    // view.getActionValue(ActionVol.ORIENTATION_CUBE.cmd())));
   }
 
   private static TreePath getTreePath(TreeNode node) {
