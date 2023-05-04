@@ -7,7 +7,7 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
  */
-package org.weasis.dicom.explorer.wado;
+package org.weasis.dicom.codec.utils;
 
 import java.util.ArrayList;
 import java.util.Collections;

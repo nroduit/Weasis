@@ -28,6 +28,7 @@ import org.weasis.core.util.FileUtil;
 import org.weasis.core.util.MathUtil;
 import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.codec.TagD.Level;
+import org.weasis.dicom.codec.utils.SeriesInstanceList;
 
 public class DicomSeries extends Series<DicomImageElement> {
   private static final Logger LOGGER = LoggerFactory.getLogger(DicomSeries.class);
@@ -250,6 +251,16 @@ public class DicomSeries extends Series<DicomImageElement> {
       return specialElements.get(0);
     }
     return null;
+  }
+
+  @Override
+  public boolean isSuitableFor3d() {
+    SeriesInstanceList seriesInstanceList =
+        (SeriesInstanceList) getTagValue(TagW.WadoInstanceReferenceList);
+    if (seriesInstanceList != null) {
+      return seriesInstanceList.size() >= 5;
+    }
+    return size(null) >= 5;
   }
 
   public static synchronized void startPreloading(

@@ -202,7 +202,7 @@ public class View3DFactory implements SeriesViewerFactory {
 
   @Override
   public boolean canReadSeries(MediaSeries<?> series) {
-    return series != null && series.size(null) >= 5;
+    return series != null && series.isSuitableFor3d();
   }
 
   @Override

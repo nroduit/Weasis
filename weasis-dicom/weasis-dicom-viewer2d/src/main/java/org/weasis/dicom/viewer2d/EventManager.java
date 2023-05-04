@@ -1043,7 +1043,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
             a ->
                 a.setSelectedWithoutTriggerAction(
                     (Boolean) view2d.getActionValue(ActionW.INVERSE_STACK.cmd())));
-    getAction(ActionW.VOLUME).ifPresent(a -> a.enableAction(series.size(null) >= 5));
+    getAction(ActionW.VOLUME).ifPresent(a -> a.enableAction(series.isSuitableFor3d()));
     updateKeyObjectComponentsListener(view2d);
 
     // register all actions for the selected view and for the other views register according to
