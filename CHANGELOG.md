@@ -1,5 +1,54 @@
 # Changelog
 
+## [Unreleased](https://github.com/nroduit/Weasis/tree/HEAD)
+
+[Full Changelog](https://github.com/nroduit/Weasis/compare/v4.1.0...HEAD)
+
+**Fixed bugs:**
+
+- SUVbw value are different for DRO Washington Image than required per QIBA profile [\#399](https://github.com/nroduit/Weasis/issues/399)
+
+**Merged pull requests:**
+
+- \[Snyk\] Security upgrade ubuntu from 20.04 to rolling [\#384](https://github.com/nroduit/Weasis/pull/384) ([snyk-bot](https://github.com/snyk-bot))
+
+## [v4.1.0](https://github.com/nroduit/Weasis/tree/v4.1.0) (2023-05-08)
+
+[Full Changelog](https://github.com/nroduit/Weasis/compare/v4.0.3...v4.1.0)
+
+**Implemented enhancements:**
+
+- Preference for opening the MPR in a certain layout [\#406](https://github.com/nroduit/Weasis/issues/406)
+- Some viewers do not support the drag and drop of a series [\#405](https://github.com/nroduit/Weasis/issues/405)
+- DICOM ECG measurement [\#403](https://github.com/nroduit/Weasis/issues/403)
+- Persistence of search criteria in the Q/R [\#400](https://github.com/nroduit/Weasis/issues/400)
+- Open log folder from the Help menu [\#398](https://github.com/nroduit/Weasis/issues/398)
+- MPR auto-center options [\#397](https://github.com/nroduit/Weasis/issues/397)
+- Remove popup confirmation for some browsers [\#396](https://github.com/nroduit/Weasis/issues/396)
+- Activate DICOM RT tool panel when loading DICOM RT files [\#395](https://github.com/nroduit/Weasis/issues/395)
+- Add specific message when DICOM Q/R exceeds the limit of the results [\#392](https://github.com/nroduit/Weasis/issues/392)
+- 3D View - Volume Rendering - Part 1 [\#389](https://github.com/nroduit/Weasis/issues/389)
+- Keep the state of the docking panel when switching to a different viewer [\#381](https://github.com/nroduit/Weasis/issues/381)
+- LUT in Enhanced CT is not applied [\#375](https://github.com/nroduit/Weasis/issues/375)
+- Radiograph images suddenly become very bright after slightly lower the window level in Weasis [\#373](https://github.com/nroduit/Weasis/issues/373)
+- Using crosshair resets zoom on images [\#371](https://github.com/nroduit/Weasis/issues/371)
+- Option for sorting studies [\#369](https://github.com/nroduit/Weasis/issues/369)
+
+**Fixed bugs:**
+
+- The control points of the ellipse are not always displayed [\#404](https://github.com/nroduit/Weasis/issues/404)
+- Thumbnails in DICOM Explorer are not aligned correctly  [\#391](https://github.com/nroduit/Weasis/issues/391)
+- Localization does not work for weasis-core-api and weasis-core-ui in Weasis-snapshot after version 4.0.3. [\#386](https://github.com/nroduit/Weasis/issues/386)
+- Weasis and Dicomizer don't start maximized within Compiz \(in MX-Linux\) [\#383](https://github.com/nroduit/Weasis/issues/383)
+- Cannot load DICOM DX with invalid patient orientation [\#376](https://github.com/nroduit/Weasis/issues/376)
+- LUT \(black/white colour scales\) of some plain radiographs becomes inverted after upgrading to Weasis 4.0.3 [\#372](https://github.com/nroduit/Weasis/issues/372)
+- Viewer tabs behavior when opening studies via DICOM get [\#357](https://github.com/nroduit/Weasis/issues/357)
+- A corrupted DICOM file crashes Weasis [\#350](https://github.com/nroduit/Weasis/issues/350)
+
+**Closed issues:**
+
+- Could not find artifact org.weasis.core:weasis-core-img:pom:4.6.0-jdk11 [\#358](https://github.com/nroduit/Weasis/issues/358)
+
 ## [v4.0.3](https://github.com/nroduit/Weasis/tree/v4.0.3) (2022-11-13)
 
 [Full Changelog](https://github.com/nroduit/Weasis/compare/v4.0.2...v4.0.3)
