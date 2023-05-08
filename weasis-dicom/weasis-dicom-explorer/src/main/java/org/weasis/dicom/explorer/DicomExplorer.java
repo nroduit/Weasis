@@ -80,6 +80,7 @@ import org.weasis.core.ui.editor.SeriesViewerEvent;
 import org.weasis.core.ui.editor.SeriesViewerEvent.EVENT;
 import org.weasis.core.ui.editor.SeriesViewerListener;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
+import org.weasis.core.ui.editor.image.SequenceHandler;
 import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.editor.image.ViewerPlugin;
 import org.weasis.core.ui.util.ArrayListComboBoxModel;
@@ -169,6 +170,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
     thumbnailView.getVerticalScrollBar().setUnitIncrement(16);
     thumbnailView.setViewportView(selectedPatient);
     changeToolWindowAnchor(getDockable().getBaseLocation());
+    setTransferHandler(new SeriesHandler());
   }
 
   public SeriesSelectionModel getSelectionList() {
@@ -1122,5 +1124,16 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
   @Override
   public boolean canImportFiles() {
     return true;
+  }
+
+  private class SeriesHandler extends SequenceHandler {
+    public SeriesHandler() {
+      super(false, true);
+    }
+
+    @Override
+    protected boolean dropFiles(List<File> files, TransferSupport support) {
+      return DicomSeriesHandler.dropDicomFiles(files);
+    }
   }
 }

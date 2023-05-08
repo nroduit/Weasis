@@ -46,7 +46,6 @@ import java.awt.Robot;
 import java.awt.Taskbar;
 import java.awt.Taskbar.Feature;
 import java.awt.Toolkit;
-import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
 import java.awt.event.ActionEvent;
 import java.awt.event.InputEvent;
@@ -87,7 +86,6 @@ import javax.swing.Action;
 import javax.swing.Icon;
 import javax.swing.JCheckBox;
 import javax.swing.JCheckBoxMenuItem;
-import javax.swing.JComponent;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JMenu;
@@ -99,7 +97,6 @@ import javax.swing.JPopupMenu;
 import javax.swing.JSeparator;
 import javax.swing.KeyStroke;
 import javax.swing.RootPaneContainer;
-import javax.swing.TransferHandler;
 import javax.swing.TransferHandler.DropLocation;
 import javax.swing.WindowConstants;
 import org.osgi.framework.Version;
@@ -136,6 +133,7 @@ import org.weasis.core.ui.editor.SeriesViewer;
 import org.weasis.core.ui.editor.SeriesViewerFactory;
 import org.weasis.core.ui.editor.ViewerPluginBuilder;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
+import org.weasis.core.ui.editor.image.SequenceHandler;
 import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.editor.image.ViewerPlugin;
 import org.weasis.core.ui.pref.Monitor;
@@ -144,7 +142,6 @@ import org.weasis.core.ui.util.ColorLayerUI;
 import org.weasis.core.ui.util.DefaultAction;
 import org.weasis.core.ui.util.ToolBarContainer;
 import org.weasis.core.ui.util.Toolbar;
-import org.weasis.core.ui.util.UriListFlavor;
 import org.weasis.core.util.LangUtil;
 import org.weasis.core.util.StringUtil;
 import org.weasis.core.util.StringUtil.Suffix;
@@ -331,7 +328,7 @@ public class WeasisWin {
     // this.add(UIManager.EAST_AREA, BorderLayout.EAST);
     rootPaneContainer.getContentPane().add(UIManager.BASE_AREA, BorderLayout.CENTER);
     // Allow dropping series into the empty main area
-    UIManager.MAIN_AREA.getComponent().setTransferHandler(new SequenceHandler());
+    UIManager.MAIN_AREA.getComponent().setTransferHandler(new SeriesHandler());
     UIManager.MAIN_AREA.setLocation(CLocation.base().normalRectangle(0, 0, 1, 1));
     UIManager.MAIN_AREA.setVisible(true);
 
@@ -1059,65 +1056,14 @@ public class WeasisWin {
     menuFile.add(new JMenuItem(exitAction));
   }
 
-  private class SequenceHandler extends TransferHandler {
-
-    public SequenceHandler() {
-      super("series"); // NON-NLS
-    }
+  private class SeriesHandler extends SequenceHandler {
 
     @Override
-    public Transferable createTransferable(JComponent comp) {
-      return null;
-    }
-
-    @Override
-    public boolean canImport(TransferSupport support) {
-      if (!support.isDrop()) {
-        return false;
-      }
-      return support.isDataFlavorSupported(Series.sequenceDataFlavor)
-          || support.isDataFlavorSupported(DataFlavor.javaFileListFlavor)
-          || support.isDataFlavorSupported(UriListFlavor.flavor);
-    }
-
-    @Override
-    public boolean importData(TransferSupport support) {
-      if (!canImport(support)) {
-        return false;
-      }
-
+    protected boolean importDataExt(TransferSupport support) {
       Transferable transferable = support.getTransferable();
-
-      List<File> files = null;
-      // Not supported by some OS
-      if (support.isDataFlavorSupported(DataFlavor.javaFileListFlavor)) {
-        try {
-          files = (List<File>) transferable.getTransferData(DataFlavor.javaFileListFlavor);
-        } catch (Exception e) {
-          LOGGER.error("Get draggable files", e);
-        }
-        return dropFiles(files, support.getDropLocation());
-      }
-      // When dragging a file or group of files
-      // http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=4899516
-      else if (support.isDataFlavorSupported(UriListFlavor.flavor)) {
-        try {
-          // Files with spaces in the filename trigger an error
-          // http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6936006
-          String val = (String) transferable.getTransferData(UriListFlavor.flavor);
-          files = UriListFlavor.textURIListToFileList(val);
-        } catch (Exception e) {
-          LOGGER.error("Get draggable URIs", e);
-        }
-        return dropFiles(files, support.getDropLocation());
-      }
-
       Series seq;
       try {
         seq = (Series) transferable.getTransferData(Series.sequenceDataFlavor);
-        if (seq == null) {
-          return false;
-        }
 
         synchronized (UIManager.SERIES_VIEWER_FACTORIES) {
           for (final SeriesViewerFactory factory : UIManager.SERIES_VIEWER_FACTORIES) {
@@ -1144,63 +1090,65 @@ public class WeasisWin {
       }
       return true;
     }
-  }
 
-  protected boolean dropFiles(final List<File> files, DropLocation dropLocation) {
-    if (files != null) {
-      List<DataExplorerView> explorers = new ArrayList<>(UIManager.EXPLORER_PLUGINS);
-      for (int i = explorers.size() - 1; i >= 0; i--) {
-        if (!explorers.get(i).canImportFiles()) {
-          explorers.remove(i);
-        }
-      }
-
-      final List<File> dirs = new ArrayList<>();
-      Map<Codec, List<File>> codecs = new HashMap<>();
-      for (File file : files) {
-        if (file.isDirectory()) {
-          dirs.add(file);
-          continue;
-        }
-        MediaReader reader = ViewerPluginBuilder.getMedia(file, false);
-        if (reader != null) {
-          Codec c = reader.getCodec();
-          if (c != null) {
-            List<File> cFiles = codecs.computeIfAbsent(c, k -> new ArrayList<>());
-            cFiles.add(file);
+    @Override
+    protected boolean dropFiles(List<File> files, TransferSupport support) {
+      if (files != null) {
+        DropLocation dropLocation = support.getDropLocation();
+        List<DataExplorerView> explorers = new ArrayList<>(UIManager.EXPLORER_PLUGINS);
+        for (int i = explorers.size() - 1; i >= 0; i--) {
+          if (!explorers.get(i).canImportFiles()) {
+            explorers.remove(i);
           }
         }
-      }
 
-      if (!dirs.isEmpty() && !explorers.isEmpty()) {
-        importInExplorer(explorers, dirs, dropLocation);
-      }
-
-      for (Entry<Codec, List<File>> entry : codecs.entrySet()) {
-        final List<File> vals = entry.getValue();
-
-        List<DataExplorerView> exps = new ArrayList<>();
-        for (final DataExplorerView dataExplorerView : explorers) {
-          DataExplorerModel model = dataExplorerView.getDataExplorerModel();
-          if (model != null) {
-            List<Codec> cList = model.getCodecPlugins();
-            if (cList != null && cList.contains(entry.getKey())) {
-              exps.add(dataExplorerView);
+        final List<File> dirs = new ArrayList<>();
+        Map<Codec, List<File>> codecs = new HashMap<>();
+        for (File file : files) {
+          if (file.isDirectory()) {
+            dirs.add(file);
+            continue;
+          }
+          MediaReader reader = ViewerPluginBuilder.getMedia(file, false);
+          if (reader != null) {
+            Codec c = reader.getCodec();
+            if (c != null) {
+              List<File> cFiles = codecs.computeIfAbsent(c, k -> new ArrayList<>());
+              cFiles.add(file);
             }
           }
         }
 
-        if (exps.isEmpty()) {
-          for (File file : vals) {
-            ViewerPluginBuilder.openSequenceInDefaultPlugin(file, true, true);
-          }
-        } else {
-          importInExplorer(exps, vals, dropLocation);
+        if (!dirs.isEmpty() && !explorers.isEmpty()) {
+          importInExplorer(explorers, dirs, dropLocation);
         }
+
+        for (Entry<Codec, List<File>> entry : codecs.entrySet()) {
+          final List<File> vals = entry.getValue();
+
+          List<DataExplorerView> exps = new ArrayList<>();
+          for (final DataExplorerView dataExplorerView : explorers) {
+            DataExplorerModel model = dataExplorerView.getDataExplorerModel();
+            if (model != null) {
+              List<Codec> cList = model.getCodecPlugins();
+              if (cList != null && cList.contains(entry.getKey())) {
+                exps.add(dataExplorerView);
+              }
+            }
+          }
+
+          if (exps.isEmpty()) {
+            for (File file : vals) {
+              ViewerPluginBuilder.openSequenceInDefaultPlugin(file, true, true);
+            }
+          } else {
+            importInExplorer(exps, vals, dropLocation);
+          }
+        }
+        return true;
       }
-      return true;
+      return false;
     }
-    return false;
   }
 
   private void importInExplorer(

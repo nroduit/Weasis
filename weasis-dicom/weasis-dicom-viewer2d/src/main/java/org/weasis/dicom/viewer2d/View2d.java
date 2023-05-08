@@ -14,8 +14,6 @@ import java.awt.Dimension;
 import java.awt.GridBagConstraints;
 import java.awt.Point;
 import java.awt.Rectangle;
-import java.awt.datatransfer.DataFlavor;
-import java.awt.datatransfer.Transferable;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.awt.event.FocusEvent;
@@ -23,7 +21,6 @@ import java.awt.event.MouseEvent;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.beans.PropertyChangeEvent;
-import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
@@ -31,21 +28,16 @@ import java.util.List;
 import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Optional;
-import javax.swing.JComponent;
 import javax.swing.JDialog;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPopupMenu;
 import javax.swing.JSeparator;
-import javax.swing.TransferHandler;
 import org.dcm4che3.data.Tag;
 import org.dcm4che3.img.lut.PresetWindowLevel;
 import org.joml.Vector3d;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.weasis.core.api.explorer.DataExplorerView;
-import org.weasis.core.api.explorer.model.DataExplorerModel;
-import org.weasis.core.api.explorer.model.TreeModel;
 import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.Feature;
@@ -62,16 +54,10 @@ import org.weasis.core.api.image.SimpleOpManager;
 import org.weasis.core.api.image.WindowOp;
 import org.weasis.core.api.image.util.ImageLayer;
 import org.weasis.core.api.media.data.MediaSeries;
-import org.weasis.core.api.media.data.MediaSeriesGroup;
-import org.weasis.core.api.media.data.Series;
-import org.weasis.core.api.media.data.SeriesThumbnail;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.service.AuditLog;
 import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.ui.dialog.MeasureDialog;
-import org.weasis.core.ui.docking.UIManager;
-import org.weasis.core.ui.editor.SeriesViewerFactory;
-import org.weasis.core.ui.editor.ViewerPluginBuilder;
 import org.weasis.core.ui.editor.image.CalibrationView;
 import org.weasis.core.ui.editor.image.ContextMenuHandler;
 import org.weasis.core.ui.editor.image.DefaultView2d;
@@ -84,7 +70,6 @@ import org.weasis.core.ui.editor.image.SynchData.Mode;
 import org.weasis.core.ui.editor.image.SynchEvent;
 import org.weasis.core.ui.editor.image.ViewButton;
 import org.weasis.core.ui.editor.image.ViewCanvas;
-import org.weasis.core.ui.editor.image.ViewerPlugin;
 import org.weasis.core.ui.model.AbstractGraphicModel;
 import org.weasis.core.ui.model.graphic.DragGraphic;
 import org.weasis.core.ui.model.graphic.Graphic;
@@ -101,13 +86,9 @@ import org.weasis.core.ui.model.utils.imp.DefaultViewModel;
 import org.weasis.core.ui.util.ColorLayerUI;
 import org.weasis.core.ui.util.MouseEventDouble;
 import org.weasis.core.ui.util.TitleMenuItem;
-import org.weasis.core.ui.util.UriListFlavor;
 import org.weasis.core.util.LangUtil;
 import org.weasis.core.util.MathUtil;
-import org.weasis.dicom.codec.DicomEncapDocSeries;
 import org.weasis.dicom.codec.DicomImageElement;
-import org.weasis.dicom.codec.DicomSeries;
-import org.weasis.dicom.codec.DicomVideoSeries;
 import org.weasis.dicom.codec.KOSpecialElement;
 import org.weasis.dicom.codec.PRSpecialElement;
 import org.weasis.dicom.codec.PresentationStateReader;
@@ -123,13 +104,8 @@ import org.weasis.dicom.codec.geometry.IntersectSlice;
 import org.weasis.dicom.codec.geometry.IntersectVolume;
 import org.weasis.dicom.codec.geometry.LocalizerPoster;
 import org.weasis.dicom.codec.geometry.PatientOrientation.Biped;
-import org.weasis.dicom.explorer.DicomExplorer;
 import org.weasis.dicom.explorer.DicomModel;
-import org.weasis.dicom.explorer.HangingProtocols.OpeningViewer;
-import org.weasis.dicom.explorer.LoadLocalDicom;
-import org.weasis.dicom.explorer.LocalImport;
-import org.weasis.dicom.explorer.MimeSystemAppFactory;
-import org.weasis.dicom.explorer.SeriesSelectionModel;
+import org.weasis.dicom.explorer.DicomSeriesHandler;
 import org.weasis.dicom.explorer.pr.PrGraphicUtil;
 import org.weasis.dicom.viewer2d.KOComponentFactory.KOViewButton;
 import org.weasis.dicom.viewer2d.KOComponentFactory.KOViewButton.eState;
@@ -174,7 +150,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
   @Override
   public void registerDefaultListeners() {
     super.registerDefaultListeners();
-    setTransferHandler(new SequenceHandler());
+    setTransferHandler(new DicomSeriesHandler(this));
     addComponentListener(
         new ComponentAdapter() {
 
@@ -1188,158 +1164,5 @@ public class View2d extends DefaultView2d<DicomImageElement> {
       popupMenu.add(close);
     }
     return popupMenu;
-  }
-
-  private class SequenceHandler extends TransferHandler {
-
-    public SequenceHandler() {
-      super("series"); // NON-NLS
-    }
-
-    @Override
-    public Transferable createTransferable(JComponent comp) {
-      if (comp instanceof SeriesThumbnail thumbnail) {
-        MediaSeries<?> t = thumbnail.getSeries();
-        if (t instanceof Series) {
-          return t;
-        }
-      }
-      return null;
-    }
-
-    @Override
-    public boolean canImport(TransferSupport support) {
-      if (!support.isDrop()) {
-        return false;
-      }
-      return support.isDataFlavorSupported(Series.sequenceDataFlavor)
-          || support.isDataFlavorSupported(DataFlavor.javaFileListFlavor)
-          || support.isDataFlavorSupported(UriListFlavor.flavor);
-    }
-
-    @Override
-    public boolean importData(TransferSupport support) {
-      if (!canImport(support)) {
-        return false;
-      }
-
-      Transferable transferable = support.getTransferable();
-
-      List<File> files = null;
-      // Not supported by some OS
-      if (support.isDataFlavorSupported(DataFlavor.javaFileListFlavor)) {
-        try {
-          files = (List<File>) transferable.getTransferData(DataFlavor.javaFileListFlavor);
-        } catch (Exception e) {
-          LOGGER.error("Get draggable files", e);
-        }
-        return dropDicomFiles(files);
-      }
-      // When dragging a file or group of files
-      // http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=4899516
-      else if (support.isDataFlavorSupported(UriListFlavor.flavor)) {
-        try {
-          // Files with spaces in the filename trigger an error
-          // http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6936006
-          String val = (String) transferable.getTransferData(UriListFlavor.flavor);
-          files = UriListFlavor.textURIListToFileList(val);
-        } catch (Exception e) {
-          LOGGER.error("Get draggable URIs", e);
-        }
-        return dropDicomFiles(files);
-      }
-
-      DataExplorerView dicomView = UIManager.getExplorerPlugin(DicomExplorer.NAME);
-      DataExplorerModel model;
-      SeriesSelectionModel selList = null;
-      if (dicomView != null) {
-        selList = ((DicomExplorer) dicomView).getSelectionList();
-      }
-      Optional<ViewerPlugin<?>> pluginOp =
-          UIManager.VIEWER_PLUGINS.stream()
-              .filter(p -> p instanceof View2dContainer v && v.isContainingView(View2d.this))
-              .findFirst();
-      if (pluginOp.isEmpty()) {
-        return false;
-      }
-
-      View2dContainer selPlugin = (View2dContainer) pluginOp.get();
-      Series seq;
-      try {
-        seq = (Series) transferable.getTransferData(Series.sequenceDataFlavor);
-        model = (DataExplorerModel) seq.getTagValue(TagW.ExplorerModel);
-        if (seq instanceof DicomSeries && model instanceof TreeModel treeModel) {
-          if (selList != null) {
-            selList.setOpeningSeries(true);
-          }
-          MediaSeriesGroup p1 = treeModel.getParent(seq, model.getTreeModelNodeForNewPlugin());
-          MediaSeriesGroup p2 = null;
-          if (p1 == null) {
-            return false;
-          }
-          if (p1.equals(selPlugin.getGroupID())) {
-            p2 = p1;
-          }
-
-          if (!p1.equals(p2)) {
-            SeriesViewerFactory plugin = UIManager.getViewerFactory(selPlugin);
-            if (plugin != null && !(plugin instanceof MimeSystemAppFactory)) {
-              ViewerPluginBuilder.openSequenceInPlugin(plugin, seq, model, true, true);
-            }
-            return false;
-          }
-        } else if (seq instanceof DicomEncapDocSeries || seq instanceof DicomVideoSeries) {
-          ViewerPluginBuilder.openSequenceInDefaultPlugin(seq, model, true, true);
-          return true;
-        } else {
-          // Not a DICOM Series
-          return false;
-        }
-      } catch (Exception e) {
-        LOGGER.error("Get draggable series", e);
-        return false;
-      } finally {
-        if (selList != null) {
-          selList.setOpeningSeries(false);
-        }
-      }
-      if (selList != null) {
-        selList.setOpeningSeries(true);
-      }
-
-      if (SynchData.Mode.TILE.equals(selPlugin.getSynchView().getSynchData().getMode())) {
-        selPlugin.addSeries(seq);
-        if (selList != null) {
-          selList.setOpeningSeries(false);
-        }
-        return true;
-      }
-
-      setSeries(seq);
-      // Getting the focus has a delay and so it will trigger the view selection later
-      if (selPlugin.isContainingView(View2d.this)) {
-        selPlugin.setSelectedImagePaneFromFocus(View2d.this);
-      }
-      if (selList != null) {
-        selList.setOpeningSeries(false);
-      }
-      return true;
-    }
-
-    private boolean dropDicomFiles(List<File> files) {
-      if (files != null) {
-        DataExplorerView dicomView = UIManager.getExplorerPlugin(DicomExplorer.NAME);
-        if (dicomView == null) {
-          return false;
-        }
-        DicomModel model = (DicomModel) dicomView.getDataExplorerModel();
-        OpeningViewer openingViewer =
-            OpeningViewer.getOpeningViewerByLocalKey(LocalImport.LAST_OPEN_VIEWER_MODE);
-        DicomModel.LOADING_EXECUTOR.execute(
-            new LoadLocalDicom(files.toArray(File[]::new), true, model, openingViewer));
-        return true;
-      }
-      return false;
-    }
   }
 }

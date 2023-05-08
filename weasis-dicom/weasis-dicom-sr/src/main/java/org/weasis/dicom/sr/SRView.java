@@ -11,6 +11,7 @@ package org.weasis.dicom.sr;
 
 import java.awt.BorderLayout;
 import java.beans.PropertyChangeListener;
+import java.io.File;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -44,6 +45,7 @@ import org.weasis.core.ui.editor.SeriesViewerEvent.EVENT;
 import org.weasis.core.ui.editor.SeriesViewerFactory;
 import org.weasis.core.ui.editor.SeriesViewerListener;
 import org.weasis.core.ui.editor.ViewerPluginBuilder;
+import org.weasis.core.ui.editor.image.SequenceHandler;
 import org.weasis.core.ui.editor.image.ViewerPlugin;
 import org.weasis.core.ui.model.GraphicModel;
 import org.weasis.core.ui.model.graphic.Graphic;
@@ -63,6 +65,7 @@ import org.weasis.dicom.codec.macro.SOPInstanceReference;
 import org.weasis.dicom.codec.utils.DicomMediaUtils;
 import org.weasis.dicom.explorer.DicomExplorer;
 import org.weasis.dicom.explorer.DicomModel;
+import org.weasis.dicom.explorer.DicomSeriesHandler;
 import org.weasis.dicom.explorer.HangingProtocols.OpeningViewer;
 import org.weasis.dicom.explorer.LoadDicomObjects;
 import org.weasis.dicom.explorer.MimeSystemAppFactory;
@@ -104,6 +107,7 @@ public class SRView extends JScrollPane implements SeriesViewerListener {
         });
     setPreferredSize(GuiUtils.getDimension(1024, 1024));
     setSeries(series);
+    htmlPanel.setTransferHandler(new SeriesHandler());
   }
 
   public JTextPane getHtmlPanel() {
@@ -385,5 +389,16 @@ public class SRView extends JScrollPane implements SeriesViewerListener {
       }
     }
     return null;
+  }
+
+  private class SeriesHandler extends SequenceHandler {
+    public SeriesHandler() {
+      super(false, true);
+    }
+
+    @Override
+    protected boolean dropFiles(List<File> files, TransferSupport support) {
+      return DicomSeriesHandler.dropDicomFiles(files);
+    }
   }
 }

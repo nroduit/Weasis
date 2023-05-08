@@ -9,7 +9,6 @@
  */
 package org.weasis.acquire.explorer.gui.central.tumbnail;
 
-import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.UnsupportedFlavorException;
 import java.io.File;
@@ -17,7 +16,6 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
 import javax.swing.JComponent;
-import javax.swing.TransferHandler;
 import javax.swing.event.ListSelectionListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,7 +32,7 @@ import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaReader;
 import org.weasis.core.api.media.data.Series;
 import org.weasis.core.ui.editor.ViewerPluginBuilder;
-import org.weasis.core.ui.util.UriListFlavor;
+import org.weasis.core.ui.editor.image.SequenceHandler;
 
 public class AcquireCentralThumbnailPane<E extends MediaElement> extends AThumbnailListPane<E> {
 
@@ -43,7 +41,7 @@ public class AcquireCentralThumbnailPane<E extends MediaElement> extends AThumbn
   public AcquireCentralThumbnailPane(List<E> list, JIThumbnailCache thumbCache) {
     super(new AcquireCentralThumbnailList<>(thumbCache));
     setList(list);
-    setTransferHandler(new SequenceHandler());
+    setTransferHandler(new SeriesHandler());
   }
 
   public void setAcquireTabPanel(AcquireTabPanel acquireTabPanel) {
@@ -78,62 +76,20 @@ public class AcquireCentralThumbnailPane<E extends MediaElement> extends AThumbn
     }
   }
 
-  private class SequenceHandler extends TransferHandler {
-
-    public SequenceHandler() {
-      super("series"); // NON-NLS
-    }
-
-    @Override
-    public Transferable createTransferable(JComponent comp) {
-      return null;
-    }
+  private class SeriesHandler extends SequenceHandler {
 
     @Override
     public boolean canImport(TransferSupport support) {
-      if (!support.isDrop()) {
-        return false;
+      boolean result = super.canImport(support);
+      if (result
+          && AcquireManager.getInstance().getAcquireExplorer().getImportPanel().isLoading()) {
+        result = false;
       }
-      if (AcquireManager.getInstance().getAcquireExplorer().getImportPanel().isLoading()) {
-        return false;
-      }
-      return support.isDataFlavorSupported(Series.sequenceDataFlavor)
-          || support.isDataFlavorSupported(DataFlavor.javaFileListFlavor)
-          || support.isDataFlavorSupported(UriListFlavor.flavor);
+      return result;
     }
 
-    @Override
-    public boolean importData(TransferSupport support) {
-      if (!canImport(support)) {
-        return false;
-      }
-
+    protected boolean importDataExt(TransferSupport support) {
       Transferable transferable = support.getTransferable();
-
-      List<File> files = null;
-      // Not supported on Linux
-      if (support.isDataFlavorSupported(DataFlavor.javaFileListFlavor)) {
-        try {
-          files = (List<File>) transferable.getTransferData(DataFlavor.javaFileListFlavor);
-        } catch (Exception e) {
-          LOGGER.error("Drop image file", e);
-        }
-        return dropDFiles(files);
-      }
-      // When dragging a file or group of files from a Gnome or Kde environment
-      // http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=4899516
-      else if (support.isDataFlavorSupported(UriListFlavor.flavor)) {
-        try {
-          // Files with spaces in the filename trigger an error
-          // http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6936006
-          String val = (String) transferable.getTransferData(UriListFlavor.flavor);
-          files = UriListFlavor.textURIListToFileList(val);
-        } catch (Exception e) {
-          LOGGER.error("Drop image URI", e);
-        }
-        return dropDFiles(files);
-      }
-
       try {
         Object object = transferable.getTransferData(Series.sequenceDataFlavor);
         if (object instanceof Series<?> series) {
@@ -162,22 +118,23 @@ public class AcquireCentralThumbnailPane<E extends MediaElement> extends AThumbn
       }
     }
 
-    private boolean dropDFiles(List<File> files) {
-      if (files != null) {
-        for (File file : files) {
-          MediaReader reader = ViewerPluginBuilder.getMedia(file, false);
-          if (reader != null && !reader.getMediaFragmentMimeType().contains("dicom")) { // NON-NLS
-            MediaElement[] medias = reader.getMediaElement();
-            if (medias != null) {
-              for (MediaElement mediaElement : medias) {
-                addToSeries(mediaElement);
-              }
+    @Override
+    protected boolean dropFiles(List<File> files, TransferSupport support) {
+      if (files == null) {
+        return false;
+      }
+      for (File file : files) {
+        MediaReader reader = ViewerPluginBuilder.getMedia(file, false);
+        if (reader != null && !reader.getMediaFragmentMimeType().contains("dicom")) { // NON-NLS
+          MediaElement[] medias = reader.getMediaElement();
+          if (medias != null) {
+            for (MediaElement mediaElement : medias) {
+              addToSeries(mediaElement);
             }
           }
         }
-        return true;
       }
-      return false;
+      return true;
     }
   }
 }

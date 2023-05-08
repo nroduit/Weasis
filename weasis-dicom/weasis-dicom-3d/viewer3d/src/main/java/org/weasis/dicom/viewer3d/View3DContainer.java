@@ -54,7 +54,6 @@ import org.weasis.core.ui.docking.DockableTool;
 import org.weasis.core.ui.docking.PluginTool;
 import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.SeriesViewerListener;
-import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.editor.image.RotationToolBar;
 import org.weasis.core.ui.editor.image.SynchData;
 import org.weasis.core.ui.editor.image.SynchView;
@@ -68,7 +67,7 @@ import org.weasis.core.ui.util.WtoolBar;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.explorer.DicomExplorer;
-import org.weasis.dicom.explorer.DicomModel;
+import org.weasis.dicom.explorer.DicomViewerPlugin;
 import org.weasis.dicom.viewer2d.LutToolBar;
 import org.weasis.dicom.viewer2d.View2dContainer;
 import org.weasis.dicom.viewer2d.mpr.MprContainer;
@@ -81,8 +80,7 @@ import org.weasis.dicom.viewer3d.vr.View3d;
 import org.weasis.dicom.viewer3d.vr.View3d.ViewType;
 import org.weasis.dicom.viewer3d.vr.VolumeBuilder;
 
-public class View3DContainer extends ImageViewerPlugin<DicomImageElement>
-    implements PropertyChangeListener {
+public class View3DContainer extends DicomViewerPlugin implements PropertyChangeListener {
   private static final Logger LOGGER = LoggerFactory.getLogger(View3DContainer.class);
 
   static SynchView defaultMpr;
@@ -389,7 +387,7 @@ public class View3DContainer extends ImageViewerPlugin<DicomImageElement>
         if (volumeBuilder != null) {
           oldSequence = volumeBuilder.getVolTexture().getSeries();
           GL4 gl4 = OpenglUtils.getGL4();
-          if (gl4 != null) {
+          if (gl4 != null && !series.equals(oldSequence)) {
             volumeBuilder.getVolTexture().destroy(gl4);
           }
         }
@@ -563,22 +561,10 @@ public class View3DContainer extends ImageViewerPlugin<DicomImageElement>
    */
   @Override
   public void setSelected(boolean selected) {
-    EventManager eventManager = EventManager.getInstance();
     if (selected) {
       eventManager.setSelectedView2dContainer(this);
-
-      // Send event to select the related patient in Dicom Explorer.
-      DataExplorerView dicomView = UIManager.getExplorerPlugin(DicomExplorer.NAME);
-      if (dicomView != null && dicomView.getDataExplorerModel() instanceof DicomModel) {
-        dicomView
-            .getDataExplorerModel()
-            .firePropertyChange(
-                new ObservableEvent(ObservableEvent.BasicAction.SELECT, this, null, getGroupID()));
-      }
-
-    } else {
-      eventManager.setSelectedView2dContainer(null);
     }
+    super.setSelected(selected);
   }
 
   @Override

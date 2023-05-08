@@ -11,24 +11,20 @@ package org.weasis.base.viewer2d;
 
 import java.awt.Dimension;
 import java.awt.Rectangle;
-import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.awt.event.FocusEvent;
 import java.awt.event.MouseEvent;
-import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import javax.swing.JComponent;
 import javax.swing.JDialog;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPopupMenu;
 import javax.swing.JSeparator;
-import javax.swing.TransferHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
@@ -58,6 +54,7 @@ import org.weasis.core.ui.editor.image.DefaultView2d;
 import org.weasis.core.ui.editor.image.ImageViewerEventManager;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.editor.image.MouseActions;
+import org.weasis.core.ui.editor.image.SequenceHandler;
 import org.weasis.core.ui.editor.image.SynchData;
 import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.editor.image.ViewerPlugin;
@@ -67,7 +64,6 @@ import org.weasis.core.ui.model.graphic.imp.line.LineGraphic;
 import org.weasis.core.ui.util.ColorLayerUI;
 import org.weasis.core.ui.util.MouseEventDouble;
 import org.weasis.core.ui.util.TitleMenuItem;
-import org.weasis.core.ui.util.UriListFlavor;
 
 public class View2d extends DefaultView2d<ImageElement> {
   private static final Logger LOGGER = LoggerFactory.getLogger(View2d.class);
@@ -93,7 +89,7 @@ public class View2d extends DefaultView2d<ImageElement> {
   public void registerDefaultListeners() {
     buildPanner();
     super.registerDefaultListeners();
-    setTransferHandler(new SequenceHandler());
+    setTransferHandler(new SeriesHandler());
 
     addComponentListener(
         new ComponentAdapter() {
@@ -391,58 +387,15 @@ public class View2d extends DefaultView2d<ImageElement> {
     return popupMenu;
   }
 
-  private class SequenceHandler extends TransferHandler {
+  private class SeriesHandler extends SequenceHandler {
 
-    public SequenceHandler() {
-      super("series"); // NON-NLS
+    public SeriesHandler() {
+      super(true, true);
     }
 
     @Override
-    public Transferable createTransferable(JComponent comp) {
-      return null;
-    }
-
-    @Override
-    public boolean canImport(TransferSupport support) {
-      if (!support.isDrop()) {
-        return false;
-      }
-      return support.isDataFlavorSupported(Series.sequenceDataFlavor)
-          || support.isDataFlavorSupported(DataFlavor.javaFileListFlavor)
-          || support.isDataFlavorSupported(UriListFlavor.flavor);
-    }
-
-    @Override
-    public boolean importData(TransferSupport support) {
-      if (!canImport(support)) {
-        return false;
-      }
-
+    protected boolean importDataExt(TransferSupport support) {
       Transferable transferable = support.getTransferable();
-
-      List<File> files = null;
-      // Not supported by some OS
-      if (support.isDataFlavorSupported(DataFlavor.javaFileListFlavor)) {
-        try {
-          files = (List<File>) transferable.getTransferData(DataFlavor.javaFileListFlavor);
-        } catch (Exception e) {
-          LOGGER.error("Get draggable files", e);
-        }
-        return dropDicomFiles(files);
-      }
-      // When dragging a file or group of files
-      // http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=4899516
-      else if (support.isDataFlavorSupported(UriListFlavor.flavor)) {
-        try {
-          // Files with spaces in the filename trigger an error
-          // http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6936006
-          String val = (String) transferable.getTransferData(UriListFlavor.flavor);
-          files = UriListFlavor.textURIListToFileList(val);
-        } catch (Exception e) {
-          LOGGER.error("Get draggable URIs", e);
-        }
-        return dropDicomFiles(files);
-      }
 
       ImageViewerPlugin<ImageElement> selPlugin = eventManager.getSelectedView2dContainer();
       Series seq;
@@ -464,13 +417,12 @@ public class View2d extends DefaultView2d<ImageElement> {
                 && p1.equals(selPlugin.getGroupID())) {
             } else {
               synchronized (UIManager.VIEWER_PLUGINS) {
-                plugin:
                 for (final ViewerPlugin<?> p : UIManager.VIEWER_PLUGINS) {
                   if (p1.equals(p.getGroupID())) {
                     if (!((View2dContainer) p).isContainingView(View2d.this)) {
                       openPlugin = p;
                     }
-                    break plugin;
+                    break;
                   }
                 }
               }
@@ -510,16 +462,6 @@ public class View2d extends DefaultView2d<ImageElement> {
         selPlugin.setSelectedImagePaneFromFocus(View2d.this);
       }
       return true;
-    }
-
-    private boolean dropDicomFiles(List<File> files) {
-      if (files != null) {
-        for (File file : files) {
-          ViewerPluginBuilder.openSequenceInDefaultPlugin(file, true, true);
-        }
-        return true;
-      }
-      return false;
     }
   }
 }

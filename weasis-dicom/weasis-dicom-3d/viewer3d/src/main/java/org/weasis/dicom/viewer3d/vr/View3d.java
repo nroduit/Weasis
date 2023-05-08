@@ -82,6 +82,7 @@ import org.weasis.core.ui.model.layer.LayerAnnotation;
 import org.weasis.core.ui.model.layer.LayerType;
 import org.weasis.core.ui.model.utils.bean.PanPoint;
 import org.weasis.dicom.codec.DicomImageElement;
+import org.weasis.dicom.explorer.DicomSeriesHandler;
 import org.weasis.dicom.viewer2d.mip.MipView;
 import org.weasis.dicom.viewer3d.ActionVol;
 import org.weasis.dicom.viewer3d.EventManager;
@@ -191,7 +192,7 @@ public class View3d extends VolumeCanvas
     addFocusListener(this);
     ToolTipManager.sharedInstance().registerComponent(this);
     renderingLayer.addLayerChangeListener(this);
-
+    setTransferHandler(new DicomSeriesHandler(this));
     addComponentListener(
         new ComponentAdapter() {
           @Override
