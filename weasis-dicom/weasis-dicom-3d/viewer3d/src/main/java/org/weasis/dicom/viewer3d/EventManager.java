@@ -16,6 +16,7 @@ import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
 import java.awt.geom.Point2D;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
@@ -455,7 +456,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> {
 
   private ComboItemListener<RenderingType> newRenderingTypeOption() {
 
-    return new ComboItemListener<>(ActionVol.RENDERING_TYPE, RenderingType.values()) {
+    return new ComboItemListener<>(ActionVol.RENDERING_TYPE, Arrays.stream(RenderingType.values()).limit(RenderingType.values().length - 1L).toArray(RenderingType[]::new)) {
 
       @Override
       public void itemStateChanged(Object object) {

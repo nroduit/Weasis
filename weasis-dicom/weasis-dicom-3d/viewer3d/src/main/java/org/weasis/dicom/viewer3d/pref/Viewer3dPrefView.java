@@ -250,6 +250,7 @@ public class Viewer3dPrefView extends AbstractItemDialogPage {
 
     add(GuiUtils.boxYLastElement(LAST_FILLER_HEIGHT));
     getProperties().setProperty(PreferenceDialog.KEY_SHOW_RESTORE, Boolean.TRUE.toString());
+    getProperties().setProperty(PreferenceDialog.KEY_HELP, "dicom-3d-viewer"); // NON-NLS
   }
 
   private void setDefaultLayout() {
