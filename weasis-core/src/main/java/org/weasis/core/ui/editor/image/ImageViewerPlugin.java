@@ -110,7 +110,7 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
   public static final GridBagLayoutModel VIEWS_2_f1x2 =
       new GridBagLayoutModel(
           ImageViewerPlugin.class.getResourceAsStream("/config/layoutModel2_f1x2.xml"), // NON-NLS
-          "layout_c1x2", // NON-NLS
+          "layout_r1x2", // NON-NLS
           Messages.getString("ImageViewerPlugin.layout_c1x2"));
   public static final GridBagLayoutModel VIEWS_2x2 =
       new GridBagLayoutModel(

@@ -17,18 +17,23 @@ import javax.swing.JSpinner;
 import javax.swing.SpinnerNumberModel;
 import org.weasis.core.api.gui.util.AbstractItemDialogPage;
 import org.weasis.core.api.gui.util.GuiUtils;
+import org.weasis.core.api.image.GridBagLayoutModel;
 import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.api.service.WProperties;
 import org.weasis.core.ui.pref.PreferenceDialog;
 import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.viewer2d.EventManager;
+import org.weasis.dicom.viewer2d.Messages;
 import org.weasis.dicom.viewer2d.View2d;
+import org.weasis.dicom.viewer2d.mpr.MprContainer;
 import org.weasis.dicom.viewer2d.mpr.MprFactory;
 
 public class MprPrefView extends AbstractItemDialogPage {
 
   private final JComboBox<String> comboBox3DCursorMode;
   private final JSpinner spinnerCrossGapSize;
+  private final JComboBox<GridBagLayoutModel> comboBoxLayouts =
+      new JComboBox<>(MprContainer.LAYOUT_LIST.toArray(new GridBagLayoutModel[0]));
 
   public MprPrefView() {
     super(MprFactory.NAME, 507);
@@ -62,7 +67,7 @@ public class MprPrefView extends AbstractItemDialogPage {
             lblMode,
             comboBox3DCursorMode);
     add(panel1);
-    add(GuiUtils.boxVerticalStrut(BLOCK_SEPARATOR));
+    add(GuiUtils.boxVerticalStrut(ITEM_SEPARATOR));
 
     JLabel labelGapSize = new JLabel("Crosshair gap at the center" + StringUtil.COLON); // NON-NLS
     int gapSize = eventManager.getOptions().getIntProperty(View2d.P_CROSSHAIR_CENTER_GAP, 40);
@@ -75,10 +80,31 @@ public class MprPrefView extends AbstractItemDialogPage {
             GuiUtils.boxHorizontalStrut(shiftX),
             labelGapSize,
             spinnerCrossGapSize));
+    add(GuiUtils.boxVerticalStrut(ITEM_SEPARATOR));
+
+    JLabel labelLayout = new JLabel(Messages.getString("default.layout") + StringUtil.COLON);
+    setDefaultLayout();
+
+    add(
+        GuiUtils.getFlowLayoutPanel(
+            FlowLayout.LEADING,
+            ITEM_SEPARATOR_SMALL,
+            ITEM_SEPARATOR,
+            GuiUtils.boxHorizontalStrut(shiftX),
+            labelLayout,
+            comboBoxLayouts));
+    add(GuiUtils.boxVerticalStrut(ITEM_SEPARATOR));
 
     add(GuiUtils.boxYLastElement(LAST_FILLER_HEIGHT));
     getProperties().setProperty(PreferenceDialog.KEY_SHOW_RESTORE, Boolean.TRUE.toString());
     getProperties().setProperty(PreferenceDialog.KEY_HELP, "mpr"); // NON-NLS
+  }
+
+  private void setDefaultLayout() {
+    comboBoxLayouts.setSelectedItem(MprFactory.getDefaultGridBagLayoutModel());
+    if (comboBoxLayouts.getSelectedIndex() < 0) {
+      comboBoxLayouts.setSelectedItem(0);
+    }
   }
 
   @Override
@@ -89,6 +115,9 @@ public class MprPrefView extends AbstractItemDialogPage {
     eventManager.getOptions().putIntProperty(View2d.P_CROSSHAIR_MODE, mode);
     int gapSize = (int) spinnerCrossGapSize.getValue();
     eventManager.getOptions().putIntProperty(View2d.P_CROSSHAIR_CENTER_GAP, gapSize);
+    BundleTools.SYSTEM_PREFERENCES.put(
+        MprFactory.P_DEFAULT_LAYOUT,
+        ((GridBagLayoutModel) comboBoxLayouts.getSelectedItem()).getId());
 
     BundleTools.saveSystemPreferences();
   }
@@ -103,5 +132,7 @@ public class MprPrefView extends AbstractItemDialogPage {
     properties.resetProperty(View2d.P_CROSSHAIR_CENTER_GAP, null);
     int gapSize = properties.getIntProperty(View2d.P_CROSSHAIR_CENTER_GAP, 40);
     spinnerCrossGapSize.setValue(gapSize);
+    BundleTools.SYSTEM_PREFERENCES.put(MprFactory.P_DEFAULT_LAYOUT, MprContainer.view1.getId());
+    setDefaultLayout();
   }
 }

@@ -17,12 +17,14 @@ import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.core.api.image.GridBagLayoutModel;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaSeries;
+import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.api.util.ResourceUtil.OtherIcon;
 import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.SeriesViewer;
 import org.weasis.core.ui.editor.SeriesViewerFactory;
 import org.weasis.core.ui.editor.ViewerPluginBuilder;
+import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.codec.DicomMediaIO;
 import org.weasis.dicom.explorer.DicomExplorer;
 import org.weasis.dicom.explorer.DicomModel;
@@ -33,6 +35,7 @@ import org.weasis.dicom.viewer2d.mpr.MprView.SliceOrientation;
 public class MprFactory implements SeriesViewerFactory {
 
   public static final String NAME = Messages.getString("MPRFactory.title");
+  public static final String P_DEFAULT_LAYOUT = "mpr.default.layout";
 
   @Override
   public Icon getIcon() {
@@ -49,9 +52,20 @@ public class MprFactory implements SeriesViewerFactory {
     return Messages.getString("MPRFactory.desc");
   }
 
+  public static GridBagLayoutModel getDefaultGridBagLayoutModel() {
+    String defLayout = BundleTools.SYSTEM_PREFERENCES.getProperty(MprFactory.P_DEFAULT_LAYOUT);
+    if (StringUtil.hasText(defLayout)) {
+      return MprContainer.LAYOUT_LIST.stream()
+          .filter(g -> defLayout.equals(g.getId()))
+          .findFirst()
+          .orElse(MprContainer.view1);
+    }
+    return MprContainer.view1;
+  }
+
   @Override
   public SeriesViewer<?> createSeriesViewer(Map<String, Object> properties) {
-    GridBagLayoutModel model = MprContainer.view1;
+    GridBagLayoutModel model = getDefaultGridBagLayoutModel();
     String uid = null;
     if (properties != null) {
       Object obj = properties.get(org.weasis.core.api.image.GridBagLayoutModel.class.getName());

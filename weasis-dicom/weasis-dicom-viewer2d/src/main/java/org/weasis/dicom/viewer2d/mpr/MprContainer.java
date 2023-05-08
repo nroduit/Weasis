@@ -118,7 +118,7 @@ public class MprContainer extends DicomViewerPlugin implements PropertyChangeLis
   protected static final GridBagLayoutModel view2 = VIEWS_2x2_f2.copy();
   protected static final GridBagLayoutModel view3 = VIEWS_2_f1x2.copy();
   public static final GridBagLayoutModel view4 =
-      new GridBagLayoutModel(new LinkedHashMap<>(3), "mpr", "MPR (row 2,1)"); // NON-NLS
+      new GridBagLayoutModel(new LinkedHashMap<>(3), "layout_r2x1", "MPR (row 2,1)"); // NON-NLS
   protected static final GridBagLayoutModel view5 = VIEWS_1x3.copy();
 
   static {
