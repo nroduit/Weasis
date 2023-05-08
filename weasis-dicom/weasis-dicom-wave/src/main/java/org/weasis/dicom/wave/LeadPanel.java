@@ -28,6 +28,7 @@ import java.util.ArrayList;
 import java.util.List;
 import javax.swing.JPanel;
 import org.weasis.core.api.gui.util.GuiUtils;
+import org.weasis.core.api.gui.util.GuiUtils.IconColor;
 import org.weasis.core.ui.editor.image.DefaultView2d;
 import org.weasis.dicom.wave.SignalMarker.Measure;
 
@@ -127,7 +128,13 @@ public class LeadPanel extends JPanel {
             }
 
             if (e.getButton() == MouseEvent.BUTTON1) {
-              setSignalMarker(selectedPosition, SignalMarker.Type.START);
+              if (e.isControlDown()) {
+                setSignalMarker(selectedPosition, SignalMarker.Type.STOP);
+              } else if (e.isShiftDown()) {
+                removeAllMarkers();
+              } else {
+                setSignalMarker(selectedPosition, SignalMarker.Type.START);
+              }
             } else if (e.getButton() == MouseEvent.BUTTON3) {
               setSignalMarker(selectedPosition, SignalMarker.Type.STOP);
             } else if (e.getButton() == MouseEvent.BUTTON2) {
@@ -182,6 +189,7 @@ public class LeadPanel extends JPanel {
     markerAnnotation.setStartValues(null, null);
     markerAnnotation.setStopValues(null, null);
     markerAnnotation.setSelectionValues(null, null, null);
+    view.updateMarkersTable();
     repaint();
   }
 
@@ -216,11 +224,17 @@ public class LeadPanel extends JPanel {
   }
 
   public void setSignalMarker(int position, SignalMarker.Type type) {
+    boolean start = type == SignalMarker.Type.START;
+    if (start) {
+      removeMarkers(measureType, SignalMarker.Type.STOP);
+      markerAnnotation.setStopValues(null, null);
+    } else if (getSignalMarker(measureType, SignalMarker.Type.START) == null) {
+      return;
+    }
     removeMarkers(measureType, type);
 
     markerAnnotation.setSelectionValues(null, null, null);
 
-    boolean start = type == SignalMarker.Type.START;
     if (position < 0 || position >= data.getNbSamplesPerChannel()) {
       if (start) {
         markerAnnotation.setStartValues(null, null);
@@ -230,13 +244,24 @@ public class LeadPanel extends JPanel {
     } else {
       double sec = position / (double) view.getSamplesPerSecond();
       double uV = data.getSample(position, channels);
-      markers.add(new SignalMarker(measureType, type, position));
+      SignalMarker marker = new SignalMarker(measureType, type, position);
+      markers.add(marker);
+      if (!start) {
+        SignalMarker startMarker = getSignalMarker(measureType, SignalMarker.Type.START);
+        if (startMarker != null && position < startMarker.getPosition()) {
+          markerAnnotation.setStopValues(
+              markerAnnotation.getStartSeconds(), markerAnnotation.getStartMilliVolt());
+          marker.setPosition(startMarker.getPosition());
+          startMarker.setPosition(position);
+          start = true;
+        }
+      }
+
       if (start) {
         markerAnnotation.setStartValues(sec, uV / 1000);
       } else {
         markerAnnotation.setStopValues(sec, uV / 1000);
       }
-
       updateSelection();
     }
     view.updateMarkersTable();
@@ -258,7 +283,7 @@ public class LeadPanel extends JPanel {
     int min = Integer.MAX_VALUE;
     int max = Integer.MIN_VALUE;
     for (int i = startPos; i <= stopPos; i++) {
-      int val = data.getRawSample(startPos, channels);
+      int val = data.getRawSample(i, channels);
       if (val < min) {
         min = val;
       }
@@ -357,7 +382,7 @@ public class LeadPanel extends JPanel {
       return;
     }
 
-    Color background = new Color(230, 230, 230, 100);
+    Color background = IconColor.ACTIONS_YELLOW.getColor().brighter();
     g2.setColor(background);
 
     double startX = this.ratioX * (start.getPosition() - sampleOffset);
@@ -373,28 +398,21 @@ public class LeadPanel extends JPanel {
   }
 
   private void drawSignalMarkers(Graphics2D g2, Dimension dim) {
-    drawMarker(g2, Color.BLUE, selectedPosition - sampleOffset, dim);
+    Color color = IconColor.ACTIONS_YELLOW.getColor().darker();
+    g2.setColor(color);
+    g2.setStroke(new BasicStroke(0.9f));
+    drawMarker(g2, selectedPosition - sampleOffset, dim);
     for (SignalMarker marker : markers) {
-      Color color;
-      if (marker.getType() == SignalMarker.Type.START) {
-        color = Color.GREEN;
-      } else {
-        color = Color.CYAN;
-      }
-      drawMarker(g2, color, marker.getPosition() - sampleOffset, dim);
+      drawMarker(g2, marker.getPosition() - sampleOffset, dim);
     }
   }
 
-  private void drawMarker(Graphics2D g2, Color color, int position, Dimension dim) {
+  private void drawMarker(Graphics2D g2, int position, Dimension dim) {
     if (position < 0) {
       return;
     }
-
     double x = this.ratioX * position;
     Line2D line = new Line2D.Double(x, 0, x, dim.height);
-
-    g2.setColor(color);
-    g2.setStroke(new BasicStroke(0.9f));
     g2.draw(line);
   }
 
