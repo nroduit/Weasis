@@ -1,17 +1,5 @@
 # Changelog
 
-## [Unreleased](https://github.com/nroduit/Weasis/tree/HEAD)
-
-[Full Changelog](https://github.com/nroduit/Weasis/compare/v4.1.0...HEAD)
-
-**Fixed bugs:**
-
-- SUVbw value are different for DRO Washington Image than required per QIBA profile [\#399](https://github.com/nroduit/Weasis/issues/399)
-
-**Merged pull requests:**
-
-- \[Snyk\] Security upgrade ubuntu from 20.04 to rolling [\#384](https://github.com/nroduit/Weasis/pull/384) ([snyk-bot](https://github.com/snyk-bot))
-
 ## [v4.1.0](https://github.com/nroduit/Weasis/tree/v4.1.0) (2023-05-08)
 
 [Full Changelog](https://github.com/nroduit/Weasis/compare/v4.0.3...v4.1.0)
@@ -37,6 +25,7 @@
 **Fixed bugs:**
 
 - The control points of the ellipse are not always displayed [\#404](https://github.com/nroduit/Weasis/issues/404)
+- SUVbw value are different for DRO Washington Image than required per QIBA profile [\#399](https://github.com/nroduit/Weasis/issues/399)
 - Thumbnails in DICOM Explorer are not aligned correctly  [\#391](https://github.com/nroduit/Weasis/issues/391)
 - Localization does not work for weasis-core-api and weasis-core-ui in Weasis-snapshot after version 4.0.3. [\#386](https://github.com/nroduit/Weasis/issues/386)
 - Weasis and Dicomizer don't start maximized within Compiz \(in MX-Linux\) [\#383](https://github.com/nroduit/Weasis/issues/383)
