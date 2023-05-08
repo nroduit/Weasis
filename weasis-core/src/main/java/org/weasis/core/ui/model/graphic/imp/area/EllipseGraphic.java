@@ -11,6 +11,7 @@ package org.weasis.core.ui.model.graphic.imp.area;
 
 import jakarta.xml.bind.annotation.XmlRootElement;
 import jakarta.xml.bind.annotation.XmlType;
+import java.awt.Shape;
 import java.awt.geom.Line2D;
 import java.awt.geom.Path2D;
 import java.awt.geom.Point2D;
@@ -25,6 +26,7 @@ import org.weasis.core.api.image.util.MeasurableLayer;
 import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.api.util.ResourceUtil.ActionIcon;
+import org.weasis.core.ui.model.utils.bean.AdvancedShape;
 import org.weasis.core.ui.model.utils.bean.MeasureItem;
 import org.weasis.core.ui.model.utils.bean.Measurement;
 import org.weasis.core.ui.util.MouseEventDouble;
@@ -90,9 +92,15 @@ public class EllipseGraphic extends ObliqueRectangleGraphic {
   public void buildShape(MouseEventDouble mouseEvent) {
     updateTool();
 
+    Shape newShape = null;
     Path2D polygonPath = new Path2D.Double(Path2D.WIND_NON_ZERO, pts.size());
 
     if (lineABvalid) {
+      newShape = new AdvancedShape(this, 2);
+      AdvancedShape aShape = (AdvancedShape) newShape;
+      aShape.addShape(polygonPath);
+      aShape.addShape(new Line2D.Double(ptA, ptB), getDashStroke(1.0f), true);
+
       polygonPath.moveTo(ptA.getX(), ptA.getY());
       if (lineCDvalid) {
         double dist = ptC.distance(ptD);
@@ -130,8 +138,10 @@ public class EllipseGraphic extends ObliqueRectangleGraphic {
         polygonPath.lineTo(ptB.getX(), ptB.getY());
       }
       polygonPath.closePath();
+    } else if (polygonPath.getCurrentPoint() != null) {
+      newShape = polygonPath;
     }
-    setShape(polygonPath, mouseEvent);
+    setShape(newShape, mouseEvent);
     updateLabel(mouseEvent, getDefaultView2d(mouseEvent));
   }
 
