@@ -523,17 +523,14 @@ public class GuiUtils {
   public static void openSystemExplorer(Component parent, File file) {
     if (file != null) {
       if (SystemInfo.isLinux) {
-        try {
-          String[] cmd = new String[] {"xdg-open", file.getPath()}; // NON-NLS
-          Runtime.getRuntime().exec(cmd);
-        } catch (IOException e) {
-          LOGGER.error("Cannot open a file to the system explorer", e);
-        }
-      } else if (Desktop.isDesktopSupported()) {
-        final Desktop desktop = Desktop.getDesktop();
-        if (desktop.isSupported(Desktop.Action.BROWSE_FILE_DIR)) {
-          desktop.browseFileDirectory(file);
-        }
+        openCommand("xdg-open", file); // NON-NLS
+      } else if (Desktop.isDesktopSupported()
+          && Desktop.getDesktop().isSupported(Desktop.Action.BROWSE_FILE_DIR)) {
+        Desktop.getDesktop().browseFileDirectory(file);
+      } else if (SystemInfo.isWindows) {
+        openCommand("explorer", file); // NON-NLS
+      } else if (SystemInfo.isMacOS) {
+        openCommand("/usr/bin/open", file);
       } else {
         JOptionPane.showMessageDialog(
             parent,
@@ -541,6 +538,15 @@ public class GuiUtils {
             Messages.getString("JMVUtils.error"),
             JOptionPane.ERROR_MESSAGE);
       }
+    }
+  }
+
+  private static void openCommand(String cmd, File file) {
+    try {
+      String[] command = new String[] {cmd, file.getPath()}; // NON-NLS
+      Runtime.getRuntime().exec(command);
+    } catch (IOException e) {
+      LOGGER.error("Cannot open a file to the system explorer", e);
     }
   }
 
