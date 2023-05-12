@@ -1,7 +1,7 @@
 name: weasis
 title: Weasis
 base: core20
-version: '4.0.3'
+version: '4.1.0'
 summary: A free/libre/open medical DICOM viewer
 description: |
   Weasis is a multipurpose standalone and web-based DICOM viewer with 
@@ -57,9 +57,9 @@ parts:
   remote-openjdk:
     plugin: dump
     source:
-      - on amd64: https://github.com/adoptium/temurin19-binaries/releases/download/jdk-19.0.1%2B10/OpenJDK19U-jdk_x64_linux_hotspot_19.0.1_10.tar.gz
-      - on arm64: https://github.com/adoptium/temurin19-binaries/releases/download/jdk-19.0.1%2B10/OpenJDK19U-jdk_aarch64_linux_hotspot_19.0.1_10.tar.gz
-      - on armhf: https://github.com/adoptium/temurin19-binaries/releases/download/jdk-19.0.1%2B10/OpenJDK19U-jdk_arm_linux_hotspot_19.0.1_10.tar.gz
+      - on amd64: https://github.com/adoptium/temurin20-binaries/releases/download/jdk-20%2B36/OpenJDK20U-jdk_x64_linux_hotspot_20_36.tar.gz
+      - on arm64: https://github.com/adoptium/temurin20-binaries/releases/download/jdk-20%2B36/OpenJDK20U-jdk_aarch64_linux_hotspot_20_36.tar.gz
+      - on armhf: https://github.com/adoptium/temurin20-binaries/releases/download/jdk20u-2023-04-07-10-00-beta/OpenJDK20U-jdk_arm_linux_hotspot_2023-04-07-10-00.tar.gz
     organize:
       '*': java-runtime/
     override-stage: 'true'
@@ -69,7 +69,7 @@ parts:
     after: [remote-openjdk]
     plugin: dump
     #source: weasis-distributions/target/native-dist/weasis-native.zip
-    source: https://github.com/nroduit/Weasis/releases/download/v4.0.3/weasis-native.zip
+    source: https://github.com/nroduit/Weasis/releases/download/v4.1.0/weasis-native.zip
     organize:
       '*': weasis-native/
     override-stage: 'true'
