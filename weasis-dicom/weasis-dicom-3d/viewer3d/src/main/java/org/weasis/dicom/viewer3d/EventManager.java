@@ -456,7 +456,11 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> {
 
   private ComboItemListener<RenderingType> newRenderingTypeOption() {
 
-    return new ComboItemListener<>(ActionVol.RENDERING_TYPE, Arrays.stream(RenderingType.values()).limit(RenderingType.values().length - 1L).toArray(RenderingType[]::new)) {
+    return new ComboItemListener<>(
+        ActionVol.RENDERING_TYPE,
+        Arrays.stream(RenderingType.values())
+            .limit(RenderingType.values().length - 1L)
+            .toArray(RenderingType[]::new)) {
 
       @Override
       public void itemStateChanged(Object object) {

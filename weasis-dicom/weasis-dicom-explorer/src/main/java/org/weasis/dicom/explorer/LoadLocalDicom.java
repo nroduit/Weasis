@@ -11,13 +11,16 @@ package org.weasis.dicom.explorer;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
+import org.weasis.core.api.explorer.ObservableEvent;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.media.MimeInspector;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaSeries;
+import org.weasis.core.api.media.data.SeriesEvent;
 import org.weasis.core.api.media.data.SeriesThumbnail;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.ui.model.GraphicModel;
@@ -96,15 +99,33 @@ public class LoadLocalDicom extends LoadDicom {
         }
       }
     }
+    updateSeriesThumbnail(thumbs, dicomModel);
+
+    for (File folder : folders) {
+      addSelectionAndNotify(folder.listFiles(), false);
+    }
+  }
+
+  public static void updateSeriesThumbnail(List<SeriesThumbnail> thumbs, DicomModel dicomModel) {
+    if (dicomModel == null || thumbs == null) {
+      return;
+    }
     for (final SeriesThumbnail t : thumbs) {
       MediaSeries<MediaElement> series = t.getSeries();
       // Avoid rebuilding most of CR series thumbnail
-      if (series != null && series.size(null) > 2) {
-        GuiExecutor.instance().execute(t::reBuildThumbnail);
+      if (series != null) {
+        if (series.size(null) > 2) {
+          GuiExecutor.instance().execute(t::reBuildThumbnail);
+        }
+        if (series.isSuitableFor3d()) {
+          dicomModel.firePropertyChange(
+              new ObservableEvent(
+                  ObservableEvent.BasicAction.UPDATE,
+                  series,
+                  null,
+                  new SeriesEvent(SeriesEvent.Action.UPDATE, series, null)));
+        }
       }
-    }
-    for (File folder : folders) {
-      addSelectionAndNotify(folder.listFiles(), false);
     }
   }
 }

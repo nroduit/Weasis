@@ -555,9 +555,15 @@ public class View2dContainer extends DicomViewerPlugin implements PropertyChange
             }
           }
         } else if (ObservableEvent.BasicAction.UPDATE.equals(action)
-            && SeriesEvent.Action.UPDATE.equals(action2)
-            && source instanceof KOSpecialElement) {
-          setKOSpecialElement((KOSpecialElement) source, null, false, param.equals("updateAll"));
+            && SeriesEvent.Action.UPDATE.equals(action2)) {
+          if (source instanceof KOSpecialElement) {
+            setKOSpecialElement((KOSpecialElement) source, null, false, param.equals("updateAll"));
+          } else if (source instanceof DicomSeries dcm) {
+            ViewCanvas<DicomImageElement> view = getSelectedImagePane();
+            if (view != null && view.getSeries() == dcm) {
+              eventManager.updateComponentsListener(view);
+            }
+          }
         }
       } else if (ObservableEvent.BasicAction.REMOVE.equals(action)) {
         if (newVal instanceof MediaSeriesGroup group) {

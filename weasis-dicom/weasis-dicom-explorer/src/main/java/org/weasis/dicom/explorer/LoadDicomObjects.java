@@ -15,9 +15,6 @@ import java.util.Objects;
 import org.dcm4che3.data.Attributes;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
-import org.weasis.core.api.gui.util.GuiExecutor;
-import org.weasis.core.api.media.data.MediaElement;
-import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.SeriesThumbnail;
 import org.weasis.dicom.codec.DicomMediaIO;
 import org.weasis.dicom.explorer.HangingProtocols.OpeningViewer;
@@ -66,14 +63,7 @@ public class LoadDicomObjects extends LoadDicom {
           LOGGER.error("Reading DICOM object", e);
         }
       }
-
-      for (final SeriesThumbnail t : thumbs) {
-        MediaSeries<MediaElement> series = t.getSeries();
-        // Avoid rebuilding most of CR series thumbnail
-        if (series != null && series.size(null) > 2) {
-          GuiExecutor.instance().execute(t::reBuildThumbnail);
-        }
-      }
+      LoadLocalDicom.updateSeriesThumbnail(thumbs, dicomModel);
     }
   }
 }
