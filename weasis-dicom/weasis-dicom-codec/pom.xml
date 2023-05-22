@@ -69,6 +69,14 @@
           <artifactId>weasis-core-img</artifactId>
         </exclusion>
         <exclusion>
+          <groupId>org.weasis.thirdparty.org.opencv</groupId>
+          <artifactId>libopencv_java</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>org.weasis.thirdparty.org.opencv</groupId>
+          <artifactId>opencv_java</artifactId>
+        </exclusion>
+        <exclusion>
           <groupId>junit</groupId>
           <artifactId>junit</artifactId>
         </exclusion>

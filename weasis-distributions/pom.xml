@@ -399,6 +399,18 @@
                 </artifactItem>
                 <artifactItem>
                   <groupId>org.weasis.thirdparty.org.jogamp</groupId>
+                  <artifactId>jogamp-linux-armv7a</artifactId>
+                  <version>${jogamp.version}</version>
+                  <outputDirectory>${tmp.bundle.dir}</outputDirectory>
+                </artifactItem>
+                <artifactItem>
+                  <groupId>org.weasis.thirdparty.org.jogamp</groupId>
+                  <artifactId>jogamp-linux-aarch64</artifactId>
+                  <version>${jogamp.version}</version>
+                  <outputDirectory>${tmp.bundle.dir}</outputDirectory>
+                </artifactItem>
+                <artifactItem>
+                  <groupId>org.weasis.thirdparty.org.jogamp</groupId>
                   <artifactId>jogamp-macosx-x86-64</artifactId>
                   <version>${jogamp.version}</version>
                   <outputDirectory>${tmp.bundle.dir}</outputDirectory>

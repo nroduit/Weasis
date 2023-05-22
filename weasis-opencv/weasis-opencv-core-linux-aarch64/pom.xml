@@ -36,7 +36,7 @@
 									<artifactId>libopencv_java</artifactId>
 									<version>${weasis.opencv.native.version}</version>
 									<type>so</type>
-									<classifier>linux-aarch64</classifier>
+									<classifier>linux-aarch64-dyn</classifier>
 									<overWrite>true</overWrite>
 									<outputDirectory>target/classes</outputDirectory>
 									<destFileName>libopencv_java.so</destFileName>

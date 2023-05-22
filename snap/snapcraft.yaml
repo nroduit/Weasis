@@ -68,6 +68,12 @@ parts:
   remote-weasis-build:
     after: [remote-openjdk]
     plugin: dump
+    stage-packages:
+      - ibc6
+      - xdg-utils
+      - zlib1g
+      - libstdc++6
+      - libgcc1
     #source: weasis-distributions/target/native-dist/weasis-native.zip
     source: https://github.com/nroduit/Weasis/releases/download/v4.1.0/weasis-native.zip
     organize:
