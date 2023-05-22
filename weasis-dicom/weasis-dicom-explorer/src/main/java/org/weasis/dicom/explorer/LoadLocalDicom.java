@@ -71,13 +71,15 @@ public class LoadLocalDicom extends LoadDicom {
       if (isCancelled()) {
         return;
       }
+      if (value == null) {
+        continue;
+      }
 
-      if (value != null && value.isDirectory()) {
+      if (value.isDirectory()) {
         if (firstLevel || recursive) {
           folders.add(value);
         }
-      } else if (value != null
-              && value.canRead()
+      } else if (value.canRead()
               && FileUtil.isFileExtensionMatching(value, DicomCodec.FILE_EXTENSIONS)
           || MimeInspector.isMatchingMimeTypeFromMagicNumber(value, DicomMediaIO.DICOM_MIMETYPE)) {
         DicomMediaIO loader = new DicomMediaIO(value);
