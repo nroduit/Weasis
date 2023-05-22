@@ -192,7 +192,7 @@ rm -f "$INPUT_DIR"/*.jar.pack.gz
 
 # Remove the unrelated native packages
 find "$INPUT_DIR"/bundle/weasis-opencv-core-* -type f ! -name '*-'"${ARC_OS}"'-*'  -exec rm -f {} \;
-find "$INPUT_DIR"/bundle/jogamp-* -type f ! -name '*-'"${ARC_OS}"'-*'  -exec rm -f {} \;
+find "$INPUT_DIR"/bundle/jogamp-* -type f ! -name '*-'"${ARC_OS}"'-*' || "?."'*' -not -name 'jogamp-?.*' -exec rm -f {} \;
 
 # Special case with 32-bit x86 architecture, remove 64-bit lib
 if [ "$arc" = "x86" ] ; then
