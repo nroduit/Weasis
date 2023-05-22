@@ -165,12 +165,11 @@ public class WeasisWinListener implements MainWindowListener {
             UIManager.closeSeriesViewer(pluginsToRemove);
           }
         } else if (BasicAction.UPDATE_TOOLS.equals(action)) {
-          mainWindow.updateTools(selectedPlugin, selectedPlugin, true);
+          UIManager.updateTools(selectedPlugin, selectedPlugin, true);
         }
       } else if (event.getSource() instanceof ViewerPlugin) {
         if (ObservableEvent.BasicAction.UPDATE_TOOLBARS.equals(action)) {
-          List<Toolbar> toolBars = selectedPlugin == null ? null : selectedPlugin.getToolBar();
-          mainWindow.updateToolbars(toolBars, toolBars, true);
+          UIManager.updateToolbars(selectedPlugin, selectedPlugin, true);
         } else if (ObservableEvent.BasicAction.NULL_SELECTION.equals(action)) {
           mainWindow.setSelectedPlugin(null);
         }
@@ -180,7 +179,7 @@ public class WeasisWinListener implements MainWindowListener {
             mainWindow.setSelectedPlugin(null);
           }
         } else if (BasicAction.UPDATE_TOOLS.equals(action)) {
-          mainWindow.updateTools(selectedPlugin, selectedPlugin, true);
+          UIManager.updateTools(selectedPlugin, selectedPlugin, true);
         }
       }
     }

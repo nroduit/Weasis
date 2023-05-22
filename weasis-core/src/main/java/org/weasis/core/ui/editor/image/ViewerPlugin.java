@@ -91,6 +91,9 @@ public abstract class ViewerPlugin<E extends MediaElement> extends JPanel
               if (prevDockable instanceof DefaultCommonDockable defaultCommonDockable
                   && defaultCommonDockable.getDockable()
                       instanceof AbstractCDockable abstractCDockable) {
+                if (abstractCDockable.getFocusComponent() instanceof SeriesViewer<?> plugin) {
+                  UIManager.updateTools(plugin, plugin, true);
+                }
                 abstractCDockable.toFront();
               }
             }
@@ -225,7 +228,9 @@ public abstract class ViewerPlugin<E extends MediaElement> extends JPanel
     @Override
     protected void action() {
       super.action();
-
+      if (dockable.getFocusComponent() instanceof SeriesViewer<?> plugin) {
+        UIManager.updateTools(plugin, closeAll ? null : plugin, true);
+      }
       // We need to access the Core API to find out which other Dockables exist.
       DockStation parent = dockable.intern().getDockParent();
 

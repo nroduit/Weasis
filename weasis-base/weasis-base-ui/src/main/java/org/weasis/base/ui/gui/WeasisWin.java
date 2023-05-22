@@ -71,7 +71,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
@@ -163,8 +162,6 @@ public class WeasisWin {
       };
   private ViewerPlugin<?> selectedPlugin = null;
 
-  private final ToolBarContainer toolbarContainer;
-
   private final List<Runnable> runOnClose = new ArrayList<>();
 
   private final Frame frame;
@@ -222,9 +219,8 @@ public class WeasisWin {
     if (BundleTools.SYSTEM_PREFERENCES.getBooleanProperty("weasis.menu.menubar", true)) {
       rootPaneContainer.getRootPane().setJMenuBar(createMenuBar());
     }
-    toolbarContainer = new ToolBarContainer();
     setSelectedPlugin(null);
-    rootPaneContainer.getContentPane().add(toolbarContainer, BorderLayout.NORTH);
+    rootPaneContainer.getContentPane().add(UIManager.toolbarContainer, BorderLayout.NORTH);
 
     rootPaneContainer.setGlassPane(AppProperties.glassPane);
 
@@ -263,7 +259,7 @@ public class WeasisWin {
   }
 
   public ToolBarContainer getToolbarContainer() {
-    return toolbarContainer;
+    return UIManager.toolbarContainer;
   }
 
   public boolean closeWindow() {
@@ -586,7 +582,7 @@ public class WeasisWin {
 
   public synchronized void setSelectedPlugin(ViewerPlugin plugin) {
     if (plugin == null) {
-      toolbarContainer.registerToolBar(UIManager.EXPLORER_PLUGIN_TOOLBARS);
+      UIManager.toolbarContainer.registerToolBar(UIManager.EXPLORER_PLUGIN_TOOLBARS);
       List<DockableTool> oldTool = selectedPlugin == null ? null : selectedPlugin.getToolPanel();
       if (oldTool != null) {
         for (DockableTool p : oldTool) {
@@ -608,37 +604,10 @@ public class WeasisWin {
     selectedPlugin = plugin;
     menuSelectedPlugin.setText(selectedPlugin.getName());
 
-    updateTools(oldPlugin, selectedPlugin, false);
-
-    updateToolbars(
-        oldPlugin == null ? null : oldPlugin.getToolBar(), selectedPlugin.getToolBar(), false);
+    UIManager.updateTools(oldPlugin, selectedPlugin, false);
+    UIManager.updateToolbars(oldPlugin, selectedPlugin, false);
 
     selectedPlugin.setSelected(true);
-  }
-
-  void updateTools(ViewerPlugin<?> oldPlugin, ViewerPlugin<?> plugin, boolean force) {
-    List<DockableTool> oldTool = oldPlugin == null ? null : oldPlugin.getToolPanel();
-    List<DockableTool> tool = plugin == null ? null : plugin.getToolPanel();
-    if (force || !Objects.equals(tool, oldTool)) {
-      if (oldTool != null) {
-        for (DockableTool p : oldTool) {
-          p.closeDockable();
-        }
-      }
-      if (tool != null) {
-        for (DockableTool p : tool) {
-          if (p.isComponentEnabled()) {
-            p.showDockable();
-          }
-        }
-      }
-    }
-  }
-
-  void updateToolbars(List<Toolbar> oldToolBars, List<Toolbar> toolBars, boolean force) {
-    if (force || toolBars != oldToolBars) {
-      toolbarContainer.registerToolBar(toolBars);
-    }
   }
 
   public void showWindow() {
@@ -860,7 +829,7 @@ public class WeasisWin {
   }
 
   private void buildToolBarSubMenu(final JMenu toolBarMenu) {
-    List<Toolbar> bars = toolbarContainer.getRegisteredToolBars();
+    List<Toolbar> bars = UIManager.toolbarContainer.getRegisteredToolBars();
     for (final Toolbar bar : bars) {
       if (!Insertable.Type.EMPTY.equals(bar.getType())) {
         JCheckBoxMenuItem item =
@@ -868,7 +837,8 @@ public class WeasisWin {
         item.addActionListener(
             e -> {
               if (e.getSource() instanceof JCheckBoxMenuItem menuItem) {
-                toolbarContainer.displayToolbar(bar.getComponent(), menuItem.isSelected());
+                UIManager.toolbarContainer.displayToolbar(
+                    bar.getComponent(), menuItem.isSelected());
               }
             });
         toolBarMenu.add(item);

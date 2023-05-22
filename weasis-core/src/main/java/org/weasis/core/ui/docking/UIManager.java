@@ -19,7 +19,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.Objects;
 import org.weasis.core.api.explorer.DataExplorerView;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.gui.util.WinUtil;
@@ -27,11 +27,12 @@ import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.ui.editor.SeriesViewer;
 import org.weasis.core.ui.editor.SeriesViewerFactory;
 import org.weasis.core.ui.editor.image.ViewerPlugin;
+import org.weasis.core.ui.util.ToolBarContainer;
 import org.weasis.core.ui.util.Toolbar;
 
 public class UIManager {
 
-  public static final AtomicInteger dockableUIGenerator = new AtomicInteger(1);
+  public static final ToolBarContainer toolbarContainer = new ToolBarContainer();
 
   public static final List<ViewerPlugin<?>> VIEWER_PLUGINS =
       Collections.synchronizedList(new ArrayList<>());
@@ -223,6 +224,34 @@ public class UIManager {
                   viewerPlugin.handleFocusAfterClosing();
                 }
               });
+    }
+  }
+
+  public static void updateTools(SeriesViewer<?> oldPlugin, SeriesViewer<?> plugin, boolean force) {
+    List<DockableTool> oldTool = oldPlugin == null ? null : oldPlugin.getToolPanel();
+    List<DockableTool> tool = plugin == null ? null : plugin.getToolPanel();
+    if (force || !Objects.equals(tool, oldTool)) {
+      if (oldTool != null) {
+        for (DockableTool p : oldTool) {
+          p.closeDockable();
+        }
+      }
+      if (tool != null) {
+        for (DockableTool p : tool) {
+          if (p.isComponentEnabled()) {
+            p.showDockable();
+          }
+        }
+      }
+    }
+  }
+
+  public static void updateToolbars(
+      SeriesViewer<?> oldPlugin, SeriesViewer<?> plugin, boolean force) {
+    List<Toolbar> oldToolBars = oldPlugin == null ? null : oldPlugin.getToolBar();
+    List<Toolbar> toolBars = plugin == null ? null : plugin.getToolBar();
+    if (force || toolBars != oldToolBars) {
+      toolbarContainer.registerToolBar(toolBars);
     }
   }
 }
