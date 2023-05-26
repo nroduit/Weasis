@@ -213,7 +213,12 @@ public class View3DFactory implements SeriesViewerFactory {
   public static OpenGLInfo getOpenGLInfo() {
     if (openGLInfo == null && isOpenglEnable()) {
       BundleTools.LOCAL_UI_PERSISTENCE.putBooleanProperty(P_OPENGL_PREV_INIT, false);
-      Threading.invoke(true, View3DFactory::initOpenGLInfo, null);
+      try {
+        Threading.invoke(true, View3DFactory::initOpenGLInfo, null);
+      } catch (Throwable e) {
+        BundleTools.LOCAL_UI_PERSISTENCE.putBooleanProperty(P_OPENGL_ENABLE, false);
+        LOGGER.error("Cannot get basic OpenGL information");
+      }
     }
     return openGLInfo;
   }

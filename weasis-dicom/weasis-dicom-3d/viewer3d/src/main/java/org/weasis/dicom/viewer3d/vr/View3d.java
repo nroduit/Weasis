@@ -513,7 +513,7 @@ public class View3d extends VolumeCanvas
   }
 
   public void dispose(GLAutoDrawable drawable) {
-    GL4 gl2 = drawable.getGL().getGL4();
+    // GL4 gl2 = drawable.getGL().getGL4();
     // FIXME destroy when release of cache
     //    if (volTexture != null) {
     //      volTexture.destroy(gl2);
