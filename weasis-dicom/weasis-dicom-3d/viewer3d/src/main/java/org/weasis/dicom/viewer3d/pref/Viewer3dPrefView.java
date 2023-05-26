@@ -42,7 +42,7 @@ import org.weasis.dicom.viewer3d.geometry.CameraView;
 import org.weasis.dicom.viewer3d.vr.RenderingLayer;
 
 public class Viewer3dPrefView extends AbstractItemDialogPage {
-
+  private final JCheckBox enableOpenGL = new JCheckBox(Messages.getString("enable"));
   private final JButton bckColor = new JButton(ResourceUtil.getIcon(ActionIcon.PIPETTE));
   private final JButton lightColor = new JButton(ResourceUtil.getIcon(ActionIcon.PIPETTE));
   private final JSlider sliderDynamic =
@@ -121,9 +121,8 @@ public class Viewer3dPrefView extends AbstractItemDialogPage {
 
     JPanel openglPanel = GuiUtils.getVerticalBoxLayoutPanel();
     openglPanel.setBorder(GuiUtils.getTitledBorder(Messages.getString("opengl.support")));
-    JCheckBox enableHA = new JCheckBox(Messages.getString("enable"));
-    enableHA.setSelected(View3DFactory.isOpenglEnable());
-    openglPanel.add(GuiUtils.getFlowLayoutPanel(enableHA));
+    enableOpenGL.setSelected(View3DFactory.isOpenglEnable());
+    openglPanel.add(GuiUtils.getFlowLayoutPanel(enableOpenGL));
 
     OpenGLInfo info = View3DFactory.getOpenGLInfo();
     if (info == null) {
@@ -287,16 +286,23 @@ public class Viewer3dPrefView extends AbstractItemDialogPage {
     BundleTools.LOCAL_UI_PERSISTENCE.putIntProperty(
         RenderingLayer.P_MAX_TEX_Z,
         spinnerMaxZ.getValue() instanceof Integer val ? val : View3DFactory.getMax3dTextureSize());
+    boolean openglEnabled = enableOpenGL.isSelected();
+    if (openglEnabled && !View3DFactory.isOpenglEnable()) {
+      BundleTools.LOCAL_UI_PERSISTENCE.putBooleanProperty(View3DFactory.P_OPENGL_PREV_INIT, true);
+    } else if (!openglEnabled) {
+      BundleTools.LOCAL_UI_PERSISTENCE.putBooleanProperty(View3DFactory.P_OPENGL_PREV_INIT, false);
+      BundleTools.LOCAL_UI_PERSISTENCE.putBooleanProperty(View3DFactory.P_OPENGL_ENABLE, false);
+    }
     BundleTools.saveSystemPreferences();
   }
 
   @Override
   public void resetToDefaultValues() {
+    enableOpenGL.setSelected(true);
     sliderDynamic.setValue(RenderingLayer.DEFAULT_DYNAMIC_QUALITY_RATE);
     int maxSize = View3DFactory.getMax3dTextureSize();
     BundleTools.LOCAL_UI_PERSISTENCE.putIntProperty(RenderingLayer.P_MAX_TEX_XY, maxSize);
     BundleTools.LOCAL_UI_PERSISTENCE.putIntProperty(RenderingLayer.P_MAX_TEX_Z, maxSize);
-
     spinnerMaxXY.setValue(maxSize);
     spinnerMaxZ.setValue(maxSize);
     BundleTools.SYSTEM_PREFERENCES.putColorProperty(RenderingLayer.P_BCK_COLOR, Color.GRAY);
