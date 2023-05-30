@@ -73,6 +73,13 @@ public class DicomVolTextureFactory {
         scale.y = Math.abs(media.getRescaleY() * ratio);
         width = (int) (scale.x * width);
         height = (int) (scale.y * height);
+      } else {
+        if (width % 2 != 0) {
+          width -= 1;
+        }
+        if (height % 2 != 0) {
+          height -= 1;
+        }
       }
 
       LOGGER.info("Build volume {}x{}x{}", width, height, depth);

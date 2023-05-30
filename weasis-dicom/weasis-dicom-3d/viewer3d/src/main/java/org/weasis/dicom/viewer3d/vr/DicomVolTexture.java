@@ -23,6 +23,7 @@ import java.util.Objects;
 import org.dcm4che3.data.Tag;
 import org.dcm4che3.img.lut.PresetWindowLevel;
 import org.joml.Vector3d;
+import org.opencv.core.Rect;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.image.SimpleOpManager;
 import org.weasis.core.api.image.ZoomOp;
@@ -39,6 +40,7 @@ import org.weasis.dicom.codec.display.Modality;
 import org.weasis.dicom.codec.geometry.ImageOrientation;
 import org.weasis.dicom.codec.geometry.ImageOrientation.Plan;
 import org.weasis.dicom.viewer3d.geometry.VolumeGeometry;
+import org.weasis.opencv.data.ImageCV;
 import org.weasis.opencv.data.PlanarImage;
 import org.weasis.opencv.op.lut.DefaultWlPresentation;
 import org.weasis.opencv.op.lut.LutShape;
@@ -138,6 +140,10 @@ public class DicomVolTexture extends VolumeTexture implements MediaSeriesGroup {
         manager.setFirstNode(output);
         output = manager.process();
         manager.clearNodeIOCache();
+      } else {
+        if (width != output.width() || height != output.height()) {
+          output = ImageCV.toImageCV(output.toMat().submat(new Rect(0, 0, width, height)));
+        }
       }
     }
     return output;
