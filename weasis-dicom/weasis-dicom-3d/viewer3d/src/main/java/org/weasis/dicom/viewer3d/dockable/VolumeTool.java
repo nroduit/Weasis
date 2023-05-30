@@ -45,7 +45,7 @@ public class VolumeTool extends PluginTool {
   private final Border spaceY = GuiUtils.getEmptyBorder(15, 3, 0, 3);
 
   public VolumeTool(String pluginName) {
-    super(BUTTON_NAME, pluginName, Type.TOOL, 20);
+    super(pluginName, Type.TOOL, 20);
     dockable.setTitleIcon(ResourceUtil.getIcon(OtherIcon.IMAGE_EDIT));
     setDockableWidth(290);
     init();

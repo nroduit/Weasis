@@ -63,7 +63,6 @@ public class DefaultExplorer extends PluginTool implements DataExplorerView {
 
   private static final JIExplorerContext treeContext = new JIExplorerContext();
 
-  public static final String BUTTON_NAME = "Explorer"; // NON-NLS
   public static final String NAME = Messages.getString("DefaultExplorer.name");
   public static final String P_LAST_DIR = "default.explorer.last.dir";
 
@@ -76,7 +75,7 @@ public class DefaultExplorer extends PluginTool implements DataExplorerView {
   private final JPanel jRootPanel = new JPanel();
 
   public DefaultExplorer(final FileTreeModel model, JIThumbnailCache thumbCache) {
-    super(BUTTON_NAME, NAME, POSITION.WEST, ExtendedMode.NORMALIZED, Insertable.Type.EXPLORER, 10);
+    super(NAME, POSITION.WEST, ExtendedMode.NORMALIZED, Insertable.Type.EXPLORER, 10);
     if (model == null) {
       throw new IllegalArgumentException();
     }

@@ -51,7 +51,7 @@ public class EditionTool extends PluginTool implements SeriesViewerListener {
   private final AcquireSubmitButtonsPanel bottomPanel = new AcquireSubmitButtonsPanel();
 
   public EditionTool(Type type) {
-    super(BUTTON_NAME, BUTTON_NAME, POSITION.EAST, ExtendedMode.NORMALIZED, type, 9);
+    super(BUTTON_NAME, POSITION.EAST, ExtendedMode.NORMALIZED, type, 9);
     dockable.setTitleIcon(ResourceUtil.getIcon(OtherIcon.RASTER_IMAGE));
     setDockableWidth(300);
     setLayout(new BorderLayout());

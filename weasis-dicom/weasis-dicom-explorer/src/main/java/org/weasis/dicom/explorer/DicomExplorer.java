@@ -150,7 +150,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
   }
 
   public DicomExplorer(DicomModel model) {
-    super(BUTTON_NAME, NAME, POSITION.WEST, ExtendedMode.NORMALIZED, Insertable.Type.EXPLORER, 20);
+    super(NAME, POSITION.WEST, ExtendedMode.NORMALIZED, Insertable.Type.EXPLORER, 20);
     dockable.setMaximizable(true);
     this.model = model == null ? new DicomModel() : model;
     this.selectionList = new SeriesSelectionModel(selectedPatient);

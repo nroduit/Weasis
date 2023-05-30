@@ -14,6 +14,7 @@ import bibliothek.gui.dock.common.DefaultSingleCDockable;
 import bibliothek.gui.dock.common.location.CBaseLocation;
 import bibliothek.gui.dock.common.mode.ExtendedMode;
 import java.awt.Component;
+import java.util.UUID;
 import javax.swing.JPanel;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.gui.util.GuiUtils;
@@ -36,12 +37,11 @@ public abstract class PluginTool extends JPanel implements DockableTool {
   protected ExtendedMode defaultExtendedMode;
   protected ExtendedMode previousExtendedMode;
 
-  protected PluginTool(String id, String toolName, Type type, int position) {
-    this(id, toolName, null, null, type, position);
+  protected PluginTool(String toolName, Type type, int position) {
+    this(toolName, null, null, type, position);
   }
 
   protected PluginTool(
-      String id,
       String toolName,
       POSITION defaultPosition,
       ExtendedMode defaultMode,
@@ -54,7 +54,7 @@ public abstract class PluginTool extends JPanel implements DockableTool {
     this.defaultPosition = defaultPosition;
     this.defaultExtendedMode = defaultMode;
 
-    this.dockable = new DefaultSingleCDockable(id, null, toolName);
+    this.dockable = new DefaultSingleCDockable(UUID.randomUUID().toString(), null, toolName);
     this.dockable.setTitleText(toolName);
     this.dockable.setExternalizable(false);
     this.dockable.setMaximizable(false);

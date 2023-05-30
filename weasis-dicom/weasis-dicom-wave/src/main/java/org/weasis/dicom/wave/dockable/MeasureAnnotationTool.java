@@ -66,8 +66,7 @@ public class MeasureAnnotationTool extends PluginTool implements SeriesViewerLis
   private JTable tableTag;
 
   public MeasureAnnotationTool() {
-    super(
-        BUTTON_NAME, BUTTON_NAME, POSITION.EAST, ExtendedMode.NORMALIZED, Insertable.Type.TOOL, 30);
+    super(BUTTON_NAME, POSITION.EAST, ExtendedMode.NORMALIZED, Insertable.Type.TOOL, 30);
     this.rootPane = new JScrollPane();
     dockable.setTitleIcon(ResourceUtil.getIcon(ActionIcon.MEASURE));
     rootPane.setBorder(BorderFactory.createEmptyBorder()); // remove default line

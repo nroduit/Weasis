@@ -37,7 +37,7 @@ public abstract class MiniTool extends PluginTool implements ActionListener {
   private boolean vertical = true;
 
   protected MiniTool(String pluginName) {
-    super(BUTTON_NAME, pluginName, POSITION.EAST, ExtendedMode.NORMALIZED, Insertable.Type.TOOL, 5);
+    super(pluginName, POSITION.EAST, ExtendedMode.NORMALIZED, Insertable.Type.TOOL, 5);
     // TODO display a button to minimize or do not display the tab
     dockable.setTitleShown(false);
     setDockableWidth(32);

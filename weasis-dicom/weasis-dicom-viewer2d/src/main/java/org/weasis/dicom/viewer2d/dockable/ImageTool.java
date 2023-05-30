@@ -44,7 +44,7 @@ public class ImageTool extends PluginTool {
   private final Border spaceY = GuiUtils.getEmptyBorder(15, 3, 0, 3);
 
   public ImageTool(String pluginName) {
-    super(BUTTON_NAME, pluginName, Insertable.Type.TOOL, 20);
+    super(pluginName, Insertable.Type.TOOL, 20);
     dockable.setTitleIcon(ResourceUtil.getIcon(OtherIcon.IMAGE_EDIT));
     setDockableWidth(290);
     init();

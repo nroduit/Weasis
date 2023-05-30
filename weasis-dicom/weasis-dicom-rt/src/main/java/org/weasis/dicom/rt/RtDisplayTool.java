@@ -138,7 +138,7 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener {
   private final JSliderW slider;
 
   public RtDisplayTool() {
-    super(BUTTON_NAME, BUTTON_NAME, Insertable.Type.TOOL, 30);
+    super(BUTTON_NAME, Insertable.Type.TOOL, 30);
     this.setLayout(new BorderLayout(0, 0));
     this.rootPane = new JScrollPane();
     this.dockable.setTitleIcon(ResourceUtil.getIcon(OtherIcon.RADIOACTIVE));

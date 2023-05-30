@@ -89,7 +89,7 @@ public class MeasureTool extends PluginTool implements GraphicSelectionListener 
   private List<DragGraphic> selectedGraphic;
 
   public MeasureTool(ImageViewerEventManager<? extends ImageElement> eventManager) {
-    super(BUTTON_NAME, BUTTON_NAME, Insertable.Type.TOOL, 30);
+    super(BUTTON_NAME, Insertable.Type.TOOL, 30);
     this.eventManager = eventManager;
     this.rootPane = new JScrollPane();
     dockable.setTitleIcon(ResourceUtil.getIcon(ActionIcon.MEASURE));
