@@ -25,6 +25,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Optional;
@@ -308,61 +309,8 @@ public class View2d extends DefaultView2d<DicomImageElement> {
             && val instanceof PanPoint p) {
           GeometryOfSlice sliceGeometry = this.getImage().getDispSliceGeometry();
           String fruid = TagD.getTagValue(series, Tag.FrameOfReferenceUID, String.class);
-          if (sliceGeometry != null && fruid != null) {
-            Vector3d p3 = Double.isNaN(p.getX()) ? null : sliceGeometry.getPosition(p);
-            ImageViewerPlugin<DicomImageElement> container =
-                this.eventManager.getSelectedView2dContainer();
-            if (container != null) {
-              List<ViewCanvas<DicomImageElement>> viewPanels = container.getImagePanels();
-              if (p3 != null) {
-                for (ViewCanvas<DicomImageElement> v : viewPanels) {
-                  MediaSeries<DicomImageElement> s = v.getSeries();
-                  if (s == null) {
-                    continue;
-                  }
-                  if (v instanceof View2d view2d
-                      && fruid.equals(TagD.getTagValue(s, Tag.FrameOfReferenceUID))
-                      && v != container.getSelectedImagePane()) {
-                    DicomImageElement imgToUpdate = v.getImage();
-                    if (imgToUpdate != null) {
-                      GeometryOfSlice geometry = imgToUpdate.getDispSliceGeometry();
-                      if (geometry != null) {
-                        Vector3d vn = geometry.getNormal();
-                        // vn.absolute();
-                        double location = p3.x * vn.x + p3.y * vn.y + p3.z * vn.z;
-                        DicomImageElement img =
-                            s.getNearestImage(
-                                location,
-                                0,
-                                (Filter<DicomImageElement>)
-                                    actionsInView.get(ActionW.FILTERED_SERIES.cmd()),
-                                v.getCurrentSortComparator());
-                        if (img != null) {
-                          Object oldZoomType = actionsInView.get(ViewCanvas.ZOOM_TYPE_CMD);
-                          view2d.setActionsInView(ViewCanvas.ZOOM_TYPE_CMD, ZoomType.CURRENT);
-                          view2d.setImage(img);
-                          view2d.setActionsInView(ViewCanvas.ZOOM_TYPE_CMD, oldZoomType);
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-              for (ViewCanvas<DicomImageElement> v : viewPanels) {
-                MediaSeries<DicomImageElement> s = v.getSeries();
-                if (s == null) {
-                  continue;
-                }
-                if (v instanceof View2d view2d
-                    && fruid.equals(TagD.getTagValue(s, Tag.FrameOfReferenceUID))
-                    && LangUtil.getNULLtoTrue(
-                        (Boolean) actionsInView.get(LayerType.CROSSLINES.name()))) {
-                  view2d.computeCrosshair(p3, p);
-                  view2d.repaint();
-                }
-              }
-            }
-          }
+          crosshairAction(
+              sliceGeometry, eventManager.getSelectedView2dContainer(), actionsInView, fruid, p);
         }
       }
     } else if (name.equals(ActionW.IMAGE_SHUTTER.cmd())) {
@@ -381,6 +329,66 @@ public class View2d extends DefaultView2d<DicomImageElement> {
        */
       lens.setCommandFromParentView(name, evt.getNewValue());
       lens.updateZoom();
+    }
+  }
+
+  public static void crosshairAction(
+      GeometryOfSlice sliceGeometry,
+      ImageViewerPlugin<DicomImageElement> container,
+      Map<String, Object> actionsInView,
+      String fruid,
+      PanPoint p) {
+    if (sliceGeometry != null && fruid != null) {
+      Vector3d p3 = Double.isNaN(p.getX()) ? null : sliceGeometry.getPosition(p);
+      if (container != null) {
+        List<ViewCanvas<DicomImageElement>> viewPanels = container.getImagePanels();
+        if (p3 != null) {
+          for (ViewCanvas<DicomImageElement> v : viewPanels) {
+            MediaSeries<DicomImageElement> s = v.getSeries();
+            if (s == null) {
+              continue;
+            }
+            if (v instanceof View2d view2d
+                && fruid.equals(TagD.getTagValue(s, Tag.FrameOfReferenceUID))
+                && v != container.getSelectedImagePane()) {
+              DicomImageElement imgToUpdate = v.getImage();
+              if (imgToUpdate != null) {
+                GeometryOfSlice geometry = imgToUpdate.getDispSliceGeometry();
+                if (geometry != null) {
+                  Vector3d vn = geometry.getNormal();
+                  // vn.absolute();
+                  double location = p3.x * vn.x + p3.y * vn.y + p3.z * vn.z;
+                  DicomImageElement img =
+                      s.getNearestImage(
+                          location,
+                          0,
+                          (Filter<DicomImageElement>)
+                              actionsInView.get(ActionW.FILTERED_SERIES.cmd()),
+                          v.getCurrentSortComparator());
+                  if (img != null) {
+                    Object oldZoomType = actionsInView.get(ViewCanvas.ZOOM_TYPE_CMD);
+                    view2d.setActionsInView(ViewCanvas.ZOOM_TYPE_CMD, ZoomType.CURRENT);
+                    view2d.setImage(img);
+                    view2d.setActionsInView(ViewCanvas.ZOOM_TYPE_CMD, oldZoomType);
+                  }
+                }
+              }
+            }
+          }
+        }
+        for (ViewCanvas<DicomImageElement> v : viewPanels) {
+          MediaSeries<DicomImageElement> s = v.getSeries();
+          if (s == null) {
+            continue;
+          }
+          if (v instanceof View2d view2d
+              && fruid.equals(TagD.getTagValue(s, Tag.FrameOfReferenceUID))
+              && LangUtil.getNULLtoTrue((Boolean) actionsInView.get(LayerType.CROSSLINES.name()))) {
+            view2d.computeCrosshair(p3, p);
+            view2d.repaint();
+          }
+        }
+      }
     }
   }
 

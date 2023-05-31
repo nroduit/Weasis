@@ -37,6 +37,7 @@ import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.Series;
+import org.weasis.core.api.media.data.TagReadable;
 import org.weasis.core.api.media.data.TagView;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.util.FontTools;
@@ -45,6 +46,7 @@ import org.weasis.core.ui.editor.image.ViewButton;
 import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.model.layer.AbstractInfoLayer;
 import org.weasis.core.ui.model.layer.LayerAnnotation;
+import org.weasis.core.ui.model.layer.LayerItem;
 import org.weasis.core.util.LangUtil;
 import org.weasis.core.util.StringUtil;
 import org.weasis.core.util.StringUtil.Suffix;
@@ -79,37 +81,36 @@ public class InfoLayer extends AbstractInfoLayer<DicomImageElement> {
 
   public InfoLayer(ViewCanvas<DicomImageElement> view2DPane, boolean useGlobalPreferences) {
     super(view2DPane, useGlobalPreferences);
-    displayPreferences.put(ANNOTATIONS, true);
-    displayPreferences.put(MIN_ANNOTATIONS, false);
-    displayPreferences.put(ANONYM_ANNOTATIONS, false);
-    displayPreferences.put(SCALE, true);
-    displayPreferences.put(LUT, false);
-    displayPreferences.put(IMAGE_ORIENTATION, true);
-    displayPreferences.put(WINDOW_LEVEL, true);
-    displayPreferences.put(ZOOM, true);
-    displayPreferences.put(ROTATION, false);
-    displayPreferences.put(FRAME, true);
-    displayPreferences.put(PIXEL, true);
-
-    displayPreferences.put(PRELOADING_BAR, true);
+    displayPreferences.put(LayerItem.ANNOTATIONS, true);
+    displayPreferences.put(LayerItem.MIN_ANNOTATIONS, false);
+    displayPreferences.put(LayerItem.ANONYM_ANNOTATIONS, false);
+    displayPreferences.put(LayerItem.SCALE, true);
+    displayPreferences.put(LayerItem.LUT, false);
+    displayPreferences.put(LayerItem.IMAGE_ORIENTATION, true);
+    displayPreferences.put(LayerItem.WINDOW_LEVEL, true);
+    displayPreferences.put(LayerItem.ZOOM, true);
+    displayPreferences.put(LayerItem.ROTATION, false);
+    displayPreferences.put(LayerItem.FRAME, true);
+    displayPreferences.put(LayerItem.PIXEL, true);
+    displayPreferences.put(LayerItem.PRELOADING_BAR, true);
   }
 
   @Override
   public LayerAnnotation getLayerCopy(ViewCanvas view2DPane, boolean useGlobalPreferences) {
     InfoLayer layer = new InfoLayer(view2DPane, useGlobalPreferences);
-    HashMap<String, Boolean> prefs = layer.displayPreferences;
-    prefs.put(ANNOTATIONS, getDisplayPreferences(ANNOTATIONS));
-    prefs.put(ANONYM_ANNOTATIONS, getDisplayPreferences(ANONYM_ANNOTATIONS));
-    prefs.put(IMAGE_ORIENTATION, getDisplayPreferences(IMAGE_ORIENTATION));
-    prefs.put(SCALE, getDisplayPreferences(SCALE));
-    prefs.put(LUT, getDisplayPreferences(LUT));
-    prefs.put(PIXEL, getDisplayPreferences(PIXEL));
-    prefs.put(WINDOW_LEVEL, getDisplayPreferences(WINDOW_LEVEL));
-    prefs.put(ZOOM, getDisplayPreferences(ZOOM));
-    prefs.put(ROTATION, getDisplayPreferences(ROTATION));
-    prefs.put(FRAME, getDisplayPreferences(FRAME));
-    prefs.put(PRELOADING_BAR, getDisplayPreferences(PRELOADING_BAR));
-    prefs.put(MIN_ANNOTATIONS, getDisplayPreferences(MIN_ANNOTATIONS));
+    HashMap<LayerItem, Boolean> prefMap = layer.displayPreferences;
+    setLayerValue(prefMap, LayerItem.ANNOTATIONS);
+    setLayerValue(prefMap, LayerItem.ANONYM_ANNOTATIONS);
+    setLayerValue(prefMap, LayerItem.IMAGE_ORIENTATION);
+    setLayerValue(prefMap, LayerItem.SCALE);
+    setLayerValue(prefMap, LayerItem.LUT);
+    setLayerValue(prefMap, LayerItem.PIXEL);
+    setLayerValue(prefMap, LayerItem.WINDOW_LEVEL);
+    setLayerValue(prefMap, LayerItem.ZOOM);
+    setLayerValue(prefMap, LayerItem.ROTATION);
+    setLayerValue(prefMap, LayerItem.FRAME);
+    setLayerValue(prefMap, LayerItem.PRELOADING_BAR);
+    setLayerValue(prefMap, LayerItem.MIN_ANNOTATIONS);
     return layer;
   }
 
@@ -138,49 +139,16 @@ public class InfoLayer extends AbstractInfoLayer<DicomImageElement> {
 
     g2.setPaint(Color.BLACK);
 
-    boolean hideMin = !getDisplayPreferences(MIN_ANNOTATIONS);
+    boolean hideMin = !getDisplayPreferences(LayerItem.MIN_ANNOTATIONS);
     final int midFontHeight = fontHeight - fontMetrics.getDescent();
     float drawY = bound.height - border - GuiUtils.getScaleLength(1.5f); // -1.5 for outline
 
     if (!image.isReadable()) {
-      String message = Messages.getString("InfoLayer.msg_not_read");
-      float y = midY;
-      FontTools.paintColorFontOutline(
-          g2,
-          message,
-          midX - g2.getFontMetrics().stringWidth(message) / 2.0F,
-          y,
-          IconColor.ACTIONS_RED.getColor());
-      String tsuid = TagD.getTagValue(image, Tag.TransferSyntaxUID, String.class);
-      if (StringUtil.hasText(tsuid)) {
-        tsuid = Messages.getString("InfoLayer.tsuid") + StringUtil.COLON_AND_SPACE + tsuid;
-        y += fontHeight;
-        FontTools.paintColorFontOutline(
-            g2,
-            tsuid,
-            midX - g2.getFontMetrics().stringWidth(tsuid) / 2.0F,
-            y,
-            IconColor.ACTIONS_RED.getColor());
-      }
-
-      String[] desc = image.getMediaReader().getReaderDescription();
-      if (desc != null) {
-        for (String str : desc) {
-          if (StringUtil.hasText(str)) {
-            y += fontHeight;
-            FontTools.paintColorFontOutline(
-                g2,
-                str,
-                midX - g2.getFontMetrics().stringWidth(str) / 2F,
-                y,
-                IconColor.ACTIONS_RED.getColor());
-          }
-        }
-      }
+      paintNotReadable(g2, image, midX, midY, fontHeight);
     }
 
     if (image.isReadable() && view2DPane.getSourceImage() != null) {
-      if (getDisplayPreferences(SCALE)) {
+      if (getDisplayPreferences(LayerItem.SCALE)) {
         PlanarImage source = image.getImage();
         if (source != null) {
           ImageProperties props =
@@ -195,45 +163,13 @@ public class InfoLayer extends AbstractInfoLayer<DicomImageElement> {
           drawScale(g2, bound, fontHeight, props);
         }
       }
-      if (getDisplayPreferences(LUT) && hideMin) {
+      if (getDisplayPreferences(LayerItem.LUT) && hideMin) {
         drawLUT(g2, bound, midFontHeight);
       }
     }
 
-    /*
-     * IHE BIR RAD TF-­‐2: 4.16.4.2.2.5.8
-     *
-     * Whether lossy compression has been applied, derived from Lossy Image 990 Compression (0028,2110),
-     * and if so, the value of Lossy Image Compression Ratio (0028,2112) and Lossy Image Compression Method
-     * (0028,2114), if present (as per FDA Guidance for the Submission Of Premarket Notifications for Medical
-     * Image Management Devices, July 27, 2000).
-     */
     drawY -= fontHeight;
-    if ("01".equals(TagD.getTagValue(image, Tag.LossyImageCompression))) {
-      double[] rates = TagD.getTagValue(image, Tag.LossyImageCompressionRatio, double[].class);
-      StringBuilder buf = new StringBuilder(Messages.getString("InfoLayer.lossy"));
-      buf.append(StringUtil.COLON_AND_SPACE);
-      if (rates != null && rates.length > 0) {
-        for (int i = 0; i < rates.length; i++) {
-          if (i > 0) {
-            buf.append(",");
-          }
-          buf.append(" [");
-          buf.append(Math.round(rates[i]));
-          buf.append(":1");
-          buf.append(']');
-        }
-      } else {
-        String val = TagD.getTagValue(image, Tag.DerivationDescription, String.class);
-        if (val != null) {
-          buf.append(StringUtil.getTruncatedString(val, 25, Suffix.THREE_PTS));
-        }
-      }
-
-      FontTools.paintColorFontOutline(
-          g2, buf.toString(), border, drawY, IconColor.ACTIONS_RED.getColor());
-      drawY -= fontHeight;
-    }
+    drawY = checkAndPaintLossyImage(g2, image, drawY, fontHeight, border);
 
     Integer frame = TagD.getTagValue(image, Tag.InstanceNumber, Integer.class);
     RejectedKOSpecialElement koElement =
@@ -252,7 +188,7 @@ public class InfoLayer extends AbstractInfoLayer<DicomImageElement> {
           IconColor.ACTIONS_RED.getColor());
     }
 
-    if (getDisplayPreferences(PIXEL) && hideMin) {
+    if (getDisplayPreferences(LayerItem.PIXEL) && hideMin) {
       StringBuilder sb = new StringBuilder(Messages.getString("InfoLayer.pixel"));
       sb.append(StringUtil.COLON_AND_SPACE);
       if (pixelInfo != null) {
@@ -269,7 +205,7 @@ public class InfoLayer extends AbstractInfoLayer<DicomImageElement> {
           fontMetrics.stringWidth(str) + GuiUtils.getScaleLength(2),
           fontHeight);
     }
-    if (getDisplayPreferences(WINDOW_LEVEL) && hideMin) {
+    if (getDisplayPreferences(LayerItem.WINDOW_LEVEL) && hideMin) {
       StringBuilder sb = new StringBuilder();
       Number window = (Number) disOp.getParamValue(WindowOp.OP_NAME, ActionW.WINDOW.cmd());
       Number level = (Number) disOp.getParamValue(WindowOp.OP_NAME, ActionW.LEVEL.cmd());
@@ -304,7 +240,7 @@ public class InfoLayer extends AbstractInfoLayer<DicomImageElement> {
       }
       drawY -= fontHeight;
     }
-    if (getDisplayPreferences(ZOOM) && hideMin) {
+    if (getDisplayPreferences(LayerItem.ZOOM) && hideMin) {
       FontTools.paintFontOutline(
           g2,
           Messages.getString("InfoLayer.zoom")
@@ -314,7 +250,7 @@ public class InfoLayer extends AbstractInfoLayer<DicomImageElement> {
           drawY);
       drawY -= fontHeight;
     }
-    if (getDisplayPreferences(ROTATION) && hideMin) {
+    if (getDisplayPreferences(LayerItem.ROTATION) && hideMin) {
       FontTools.paintFontOutline(
           g2,
           Messages.getString("InfoLayer.angle")
@@ -326,7 +262,7 @@ public class InfoLayer extends AbstractInfoLayer<DicomImageElement> {
       drawY -= fontHeight;
     }
 
-    if (getDisplayPreferences(FRAME) && hideMin) {
+    if (getDisplayPreferences(LayerItem.FRAME) && hideMin) {
       StringBuilder buf = new StringBuilder(Messages.getString("InfoLayer.frame"));
       buf.append(StringUtil.COLON_AND_SPACE);
       Integer inst = TagD.getTagValue(image, Tag.InstanceNumber, Integer.class);
@@ -358,12 +294,12 @@ public class InfoLayer extends AbstractInfoLayer<DicomImageElement> {
     Point2D.Float[] positions = new Point2D.Float[4];
     positions[3] = new Point2D.Float(border, drawY - GuiUtils.getScaleLength(5));
 
-    if (getDisplayPreferences(ANNOTATIONS)) {
+    if (getDisplayPreferences(LayerItem.ANNOTATIONS)) {
       Series series = (Series) view2DPane.getSeries();
       MediaSeriesGroup study = getParent(series, DicomModel.study);
       MediaSeriesGroup patient = getParent(series, DicomModel.patient);
       CornerInfoData corner = modality.getCornerInfo(CornerDisplay.TOP_LEFT);
-      boolean anonymize = getDisplayPreferences(ANONYM_ANNOTATIONS);
+      boolean anonymize = getDisplayPreferences(LayerItem.ANONYM_ANNOTATIONS);
       drawY = fontHeight;
       TagView[] infos = corner.getInfos();
       for (TagView tagView : infos) {
@@ -472,7 +408,7 @@ public class InfoLayer extends AbstractInfoLayer<DicomImageElement> {
                   TagD.getTagValue(series, Tag.AnatomicalOrientationType, String.class));
       Vector3d vr = ImageOrientation.getRowImagePosition(image);
       Vector3d vc = ImageOrientation.getColumnImagePosition(image);
-      if (getDisplayPreferences(IMAGE_ORIENTATION) && vr != null && vc != null) {
+      if (getDisplayPreferences(LayerItem.IMAGE_ORIENTATION) && vr != null && vc != null) {
         orientation.append(" - ");
         plan = ImageOrientation.getPlan(vr, vc);
         orientation.append(plan);
@@ -606,9 +542,89 @@ public class InfoLayer extends AbstractInfoLayer<DicomImageElement> {
     return null;
   }
 
+  public static void paintNotReadable(
+      Graphics2D g2, DicomImageElement image, float midX, float midY, float fontHeight) {
+    String message = Messages.getString("InfoLayer.msg_not_read");
+    float y = midY;
+    FontTools.paintColorFontOutline(
+        g2,
+        message,
+        midX - g2.getFontMetrics().stringWidth(message) / 2.0F,
+        y,
+        IconColor.ACTIONS_RED.getColor());
+
+    if (image != null) {
+      String tsuid = TagD.getTagValue(image, Tag.TransferSyntaxUID, String.class);
+      if (StringUtil.hasText(tsuid)) {
+        tsuid = Messages.getString("InfoLayer.tsuid") + StringUtil.COLON_AND_SPACE + tsuid;
+        y += fontHeight;
+        FontTools.paintColorFontOutline(
+            g2,
+            tsuid,
+            midX - g2.getFontMetrics().stringWidth(tsuid) / 2.0F,
+            y,
+            IconColor.ACTIONS_RED.getColor());
+      }
+
+      String[] desc = image.getMediaReader().getReaderDescription();
+      if (desc != null) {
+        for (String str : desc) {
+          if (StringUtil.hasText(str)) {
+            y += fontHeight;
+            FontTools.paintColorFontOutline(
+                g2,
+                str,
+                midX - g2.getFontMetrics().stringWidth(str) / 2F,
+                y,
+                IconColor.ACTIONS_RED.getColor());
+          }
+        }
+      }
+    }
+  }
+
+  public static float checkAndPaintLossyImage(
+      Graphics2D g2d, TagReadable taggable, float drawY, float fontHeight, int border) {
+    /*
+     * IHE BIR RAD TF-­‐2: 4.16.4.2.2.5.8
+     *
+     * Whether lossy compression has been applied, derived from Lossy Image 990 Compression (0028,2110),
+     * and if so, the value of Lossy Image Compression Ratio (0028,2112) and Lossy Image Compression Method
+     * (0028,2114), if present (as per FDA Guidance for the Submission Of Premarket Notifications for Medical
+     * Image Management Devices, July 27, 2000).
+     */
+    if ("01".equals(TagD.getTagValue(taggable, Tag.LossyImageCompression))) {
+      double[] rates = TagD.getTagValue(taggable, Tag.LossyImageCompressionRatio, double[].class);
+      StringBuilder buf = new StringBuilder(Messages.getString("InfoLayer.lossy"));
+      buf.append(StringUtil.COLON_AND_SPACE);
+      if (rates != null && rates.length > 0) {
+        for (int i = 0; i < rates.length; i++) {
+          if (i > 0) {
+            buf.append(",");
+          }
+          buf.append(" [");
+          buf.append(Math.round(rates[i]));
+          buf.append(":1");
+          buf.append(']');
+        }
+      } else {
+        String val = TagD.getTagValue(taggable, Tag.DerivationDescription, String.class);
+        if (val != null) {
+          buf.append(StringUtil.getTruncatedString(val, 25, Suffix.THREE_PTS));
+        }
+      }
+
+      FontTools.paintColorFontOutline(
+          g2d, buf.toString(), border, drawY, IconColor.ACTIONS_RED.getColor());
+      drawY -= fontHeight;
+    }
+    return drawY;
+  }
+
   private void drawSeriesInMemoryState(
       Graphics2D g2d, MediaSeries<DicomImageElement> series, int x, int y) {
-    if (getDisplayPreferences(PRELOADING_BAR) && series instanceof DicomSeries dicomSeries) {
+    if (getDisplayPreferences(LayerItem.PRELOADING_BAR)
+        && series instanceof DicomSeries dicomSeries) {
       boolean[] list = dicomSeries.getImageInMemoryList();
       int maxLength = GuiUtils.getScaleLength(120);
       int height = GuiUtils.getScaleLength(5);

@@ -25,6 +25,7 @@ import org.weasis.core.api.util.FontTools;
 import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.model.layer.AbstractInfoLayer;
 import org.weasis.core.ui.model.layer.LayerAnnotation;
+import org.weasis.core.ui.model.layer.LayerItem;
 import org.weasis.core.util.StringUtil;
 import org.weasis.opencv.data.PlanarImage;
 
@@ -41,28 +42,28 @@ public class InfoLayer extends AbstractInfoLayer<ImageElement> {
 
   public InfoLayer(ViewCanvas<ImageElement> view2DPane, boolean useGlobalPreferences) {
     super(view2DPane, useGlobalPreferences);
-    displayPreferences.put(ANNOTATIONS, true);
-    displayPreferences.put(IMAGE_ORIENTATION, true);
-    displayPreferences.put(SCALE, true);
-    displayPreferences.put(LUT, false);
-    displayPreferences.put(PIXEL, true);
-    displayPreferences.put(WINDOW_LEVEL, true);
-    displayPreferences.put(ZOOM, true);
-    displayPreferences.put(ROTATION, false);
-    displayPreferences.put(FRAME, true);
+    displayPreferences.put(LayerItem.ANNOTATIONS, true);
+    displayPreferences.put(LayerItem.IMAGE_ORIENTATION, true);
+    displayPreferences.put(LayerItem.SCALE, true);
+    displayPreferences.put(LayerItem.LUT, false);
+    displayPreferences.put(LayerItem.PIXEL, true);
+    displayPreferences.put(LayerItem.WINDOW_LEVEL, true);
+    displayPreferences.put(LayerItem.ZOOM, true);
+    displayPreferences.put(LayerItem.ROTATION, false);
+    displayPreferences.put(LayerItem.FRAME, true);
   }
 
   @Override
   public LayerAnnotation getLayerCopy(ViewCanvas view2dPane, boolean useGlobalPreferences) {
     InfoLayer layer = new InfoLayer(view2DPane, useGlobalPreferences);
-    HashMap<String, Boolean> prefs = layer.displayPreferences;
-    prefs.put(ANNOTATIONS, getDisplayPreferences(ANNOTATIONS));
-    prefs.put(SCALE, getDisplayPreferences(SCALE));
-    prefs.put(LUT, getDisplayPreferences(LUT));
-    prefs.put(PIXEL, getDisplayPreferences(PIXEL));
-    prefs.put(WINDOW_LEVEL, getDisplayPreferences(WINDOW_LEVEL));
-    prefs.put(ZOOM, getDisplayPreferences(ZOOM));
-    prefs.put(ROTATION, getDisplayPreferences(ROTATION));
+    HashMap<LayerItem, Boolean> prefMap = layer.displayPreferences;
+    setLayerValue(prefMap, LayerItem.ANNOTATIONS);
+    setLayerValue(prefMap, LayerItem.SCALE);
+    setLayerValue(prefMap, LayerItem.LUT);
+    setLayerValue(prefMap, LayerItem.PIXEL);
+    setLayerValue(prefMap, LayerItem.WINDOW_LEVEL);
+    setLayerValue(prefMap, LayerItem.ZOOM);
+    setLayerValue(prefMap, LayerItem.ROTATION);
     return layer;
   }
 
@@ -114,7 +115,7 @@ public class InfoLayer extends AbstractInfoLayer<ImageElement> {
       }
     }
 
-    if (image.isReadable() && getDisplayPreferences(SCALE)) {
+    if (image.isReadable() && getDisplayPreferences(LayerItem.SCALE)) {
       PlanarImage source = image.getImage();
       if (source != null) {
         ImageProperties props =
@@ -129,11 +130,11 @@ public class InfoLayer extends AbstractInfoLayer<ImageElement> {
         drawScale(g2, bound, fontHeight, props);
       }
     }
-    if (image.isReadable() && getDisplayPreferences(LUT)) {
+    if (image.isReadable() && getDisplayPreferences(LayerItem.LUT)) {
       drawLUT(g2, bound, midFontHeight);
     }
 
-    if (getDisplayPreferences(PIXEL)) {
+    if (getDisplayPreferences(LayerItem.PIXEL)) {
       StringBuilder sb = new StringBuilder(Messages.getString("InfoLayer.pix"));
       sb.append(StringUtil.COLON_AND_SPACE);
       if (pixelInfo != null) {
@@ -150,7 +151,7 @@ public class InfoLayer extends AbstractInfoLayer<ImageElement> {
           fontMetrics.stringWidth(str) + GuiUtils.getScaleLength(2),
           fontHeight);
     }
-    if (getDisplayPreferences(WINDOW_LEVEL)) {
+    if (getDisplayPreferences(LayerItem.WINDOW_LEVEL)) {
       StringBuilder sb = new StringBuilder();
       Number window = (Number) disOp.getParamValue(WindowOp.OP_NAME, ActionW.WINDOW.cmd());
       Number level = (Number) disOp.getParamValue(WindowOp.OP_NAME, ActionW.LEVEL.cmd());
@@ -164,7 +165,7 @@ public class InfoLayer extends AbstractInfoLayer<ImageElement> {
       FontTools.paintFontOutline(g2, sb.toString(), border, drawY);
       drawY -= fontHeight;
     }
-    if (getDisplayPreferences(ZOOM)) {
+    if (getDisplayPreferences(LayerItem.ZOOM)) {
       FontTools.paintFontOutline(
           g2,
           Messages.getString("InfoLayer.zoom")
@@ -174,7 +175,7 @@ public class InfoLayer extends AbstractInfoLayer<ImageElement> {
           drawY);
       drawY -= fontHeight;
     }
-    if (getDisplayPreferences(ROTATION)) {
+    if (getDisplayPreferences(LayerItem.ROTATION)) {
       FontTools.paintFontOutline(
           g2,
           Messages.getString("InfoLayer.angle")
@@ -186,7 +187,7 @@ public class InfoLayer extends AbstractInfoLayer<ImageElement> {
       drawY -= fontHeight;
     }
 
-    if (getDisplayPreferences(FRAME)) {
+    if (getDisplayPreferences(LayerItem.FRAME)) {
       FontTools.paintFontOutline(
           g2,
           Messages.getString("InfoLayer.frame")

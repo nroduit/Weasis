@@ -11,29 +11,13 @@ package org.weasis.core.ui.model.layer;
 
 import java.awt.Graphics2D;
 import java.awt.Rectangle;
-import org.weasis.core.Messages;
 import org.weasis.core.ui.editor.image.PixelInfo;
 import org.weasis.core.ui.editor.image.ViewCanvas;
 
 public interface LayerAnnotation extends Layer {
+  boolean getDisplayPreferences(LayerItem item);
 
-  String ANNOTATIONS = Messages.getString("AnnotationsLayer.anno");
-  String MIN_ANNOTATIONS = Messages.getString("LayerAnnotation.min_anot");
-  String ANONYM_ANNOTATIONS = Messages.getString("AnnotationsLayer.anonym");
-  String SCALE = Messages.getString("AnnotationsLayer.scale");
-  String LUT = Messages.getString("AnnotationsLayer.lut");
-  String IMAGE_ORIENTATION = Messages.getString("AnnotationsLayer.or");
-  String WINDOW_LEVEL = Messages.getString("AnnotationsLayer.wl");
-  String ZOOM = Messages.getString("AnnotationsLayer.zoom");
-  String ROTATION = Messages.getString("AnnotationsLayer.rot");
-  String FRAME = Messages.getString("AnnotationsLayer.fr");
-  String PIXEL = Messages.getString("AnnotationsLayer.pix");
-  String PRELOADING_BAR = Messages.getString("AnnotationsLayer.preload_bar");
-  String KEY_OBJECT = Messages.getString("AnnotationsLayer.ko");
-
-  boolean getDisplayPreferences(String item);
-
-  boolean setDisplayPreferencesValue(String displayItem, boolean selected);
+  boolean setDisplayPreferencesValue(LayerItem displayItem, boolean selected);
 
   Rectangle getPreloadingProgressBound();
 

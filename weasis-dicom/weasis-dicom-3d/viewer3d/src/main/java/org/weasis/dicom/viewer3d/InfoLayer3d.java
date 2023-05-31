@@ -27,10 +27,10 @@ import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.TagView;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.util.FontTools;
-import org.weasis.core.ui.editor.image.PixelInfo;
 import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.model.layer.AbstractInfoLayer;
 import org.weasis.core.ui.model.layer.LayerAnnotation;
+import org.weasis.core.ui.model.layer.LayerItem;
 import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.TagD;
@@ -59,17 +59,17 @@ public class InfoLayer3d extends AbstractInfoLayer<DicomImageElement> {
 
   public InfoLayer3d(View3d view3d, boolean useGlobalPreferences) {
     super(view3d, useGlobalPreferences);
-    displayPreferences.put(ANNOTATIONS, true);
-    displayPreferences.put(MIN_ANNOTATIONS, true);
-    displayPreferences.put(ANONYM_ANNOTATIONS, false);
-    displayPreferences.put(SCALE, true);
-    displayPreferences.put(LUT, false);
-    displayPreferences.put(IMAGE_ORIENTATION, true);
-    displayPreferences.put(WINDOW_LEVEL, true);
-    displayPreferences.put(ZOOM, true);
-    displayPreferences.put(ROTATION, false);
-    displayPreferences.put(FRAME, false);
-    displayPreferences.put(PIXEL, true);
+    displayPreferences.put(LayerItem.ANNOTATIONS, true);
+    displayPreferences.put(LayerItem.MIN_ANNOTATIONS, true);
+    displayPreferences.put(LayerItem.ANONYM_ANNOTATIONS, false);
+    displayPreferences.put(LayerItem.SCALE, true);
+    displayPreferences.put(LayerItem.LUT, false);
+    displayPreferences.put(LayerItem.IMAGE_ORIENTATION, true);
+    displayPreferences.put(LayerItem.WINDOW_LEVEL, true);
+    displayPreferences.put(LayerItem.ZOOM, true);
+    displayPreferences.put(LayerItem.ROTATION, false);
+    displayPreferences.put(LayerItem.FRAME, false);
+    displayPreferences.put(LayerItem.PIXEL, true);
   }
 
   @Override
@@ -82,8 +82,8 @@ public class InfoLayer3d extends AbstractInfoLayer<DicomImageElement> {
   }
 
   @Override
-  public void paint(Graphics2D g2) {
-    FontMetrics fontMetrics = g2.getFontMetrics();
+  public void paint(Graphics2D g2d) {
+    FontMetrics fontMetrics = g2d.getFontMetrics();
     final Rectangle bound = view2DPane.getJComponent().getBounds();
     int minSize =
         fontMetrics.stringWidth(
@@ -94,7 +94,7 @@ public class InfoLayer3d extends AbstractInfoLayer<DicomImageElement> {
     }
 
     Object[] oldRenderingHints =
-        GuiUtils.setRenderingHints(g2, true, false, view2DPane.requiredTextAntialiasing());
+        GuiUtils.setRenderingHints(g2d, true, false, view2DPane.requiredTextAntialiasing());
 
     Modality mod =
         Modality.getModality(TagD.getTagValue(view2DPane.getSeries(), Tag.Modality, String.class));
@@ -103,16 +103,17 @@ public class InfoLayer3d extends AbstractInfoLayer<DicomImageElement> {
     final int fontHeight = fontMetrics.getHeight();
     thickLength = Math.max(fontHeight, GuiUtils.getScaleLength(5.0));
 
-    g2.setPaint(Color.BLACK);
+    g2d.setPaint(Color.BLACK);
 
-    boolean hideMin = !getDisplayPreferences(MIN_ANNOTATIONS);
+    boolean hideMin = !getDisplayPreferences(LayerItem.MIN_ANNOTATIONS);
     float drawY = bound.height - border - GuiUtils.getScaleLength(1.5f); // -1.5 for outline
 
     View3d owner = getView2DPane();
     DicomVolTexture imSeries = owner.getVolTexture();
 
     if (getView2DPane().isReadyForRendering()) {
-      if (getView2DPane().getViewType() != ViewType.VOLUME3D && getDisplayPreferences(SCALE)) {
+      if (getView2DPane().getViewType() != ViewType.VOLUME3D
+          && getDisplayPreferences(LayerItem.SCALE)) {
         Dimension sourceDim = getOwnerContentDimensions();
         ImageProperties props =
             new ImageProperties(
@@ -123,12 +124,12 @@ public class InfoLayer3d extends AbstractInfoLayer<DicomImageElement> {
                 getRescaleY(),
                 getPixelSpacingUnit(),
                 getPixelSizeCalibrationDescription());
-        drawScale(g2, bound, fontHeight, props);
+        drawScale(g2d, bound, fontHeight, props);
       }
-      if (getDisplayPreferences(IMAGE_ORIENTATION)) {
+      if (getDisplayPreferences(LayerItem.IMAGE_ORIENTATION)) {
         //  drawOrientation(g2);
       }
-      if (getDisplayPreferences(LUT)) {
+      if (getDisplayPreferences(LayerItem.LUT)) {
         // drawLUT(g2, bound, fontHeight);
       }
     }
@@ -136,11 +137,12 @@ public class InfoLayer3d extends AbstractInfoLayer<DicomImageElement> {
     drawY -= fontHeight;
     if (imSeries.getVolumeGeometry().isVariablePixelSpacing()) {
       String message = Messages.getString("non.regular.volume.msg");
-      FontTools.paintColorFontOutline(g2, message, border, drawY, IconColor.ACTIONS_RED.getColor());
+      FontTools.paintColorFontOutline(
+          g2d, message, border, drawY, IconColor.ACTIONS_RED.getColor());
       drawY -= fontHeight;
     }
 
-    if (!isVolumetricView() && getDisplayPreferences(PIXEL) && hideMin) {
+    if (!isVolumetricView() && getDisplayPreferences(LayerItem.PIXEL) && hideMin) {
       StringBuilder sb =
           new StringBuilder(org.weasis.dicom.viewer2d.Messages.getString("InfoLayer.pixel"));
       sb.append(StringUtil.COLON_AND_SPACE);
@@ -152,7 +154,7 @@ public class InfoLayer3d extends AbstractInfoLayer<DicomImageElement> {
         sb.append(pixelInfo.getPixelPositionText());
       }
       String str = sb.toString();
-      FontTools.paintFontOutline(g2, str, border, drawY);
+      FontTools.paintFontOutline(g2d, str, border, drawY);
       drawY -= fontHeight;
       pixelInfoBound.setBounds(
           border,
@@ -161,7 +163,7 @@ public class InfoLayer3d extends AbstractInfoLayer<DicomImageElement> {
           fontHeight);
     }
 
-    if (getDisplayPreferences(WINDOW_LEVEL) && hideMin) {
+    if (getDisplayPreferences(LayerItem.WINDOW_LEVEL) && hideMin) {
       StringBuilder sb = new StringBuilder();
       RenderingLayer rendering = owner.getRenderingLayer();
       int window = rendering.getWindowWidth();
@@ -186,16 +188,16 @@ public class InfoLayer3d extends AbstractInfoLayer<DicomImageElement> {
 
       if (outside) {
         FontTools.paintColorFontOutline(
-            g2, sb.toString(), border, drawY, IconColor.ACTIONS_RED.getColor());
+            g2d, sb.toString(), border, drawY, IconColor.ACTIONS_RED.getColor());
       } else {
-        FontTools.paintFontOutline(g2, sb.toString(), border, drawY);
+        FontTools.paintFontOutline(g2d, sb.toString(), border, drawY);
       }
       drawY -= fontHeight;
     }
 
-    if (getDisplayPreferences(ZOOM) && hideMin) {
+    if (getDisplayPreferences(LayerItem.ZOOM) && hideMin) {
       FontTools.paintFontOutline(
-          g2,
+          g2d,
           org.weasis.dicom.viewer2d.Messages.getString("InfoLayer.zoom")
               + StringUtil.COLON_AND_SPACE
               + DecFormatter.percentTwoDecimal(getView2DPane().getZoom()),
@@ -203,9 +205,9 @@ public class InfoLayer3d extends AbstractInfoLayer<DicomImageElement> {
           drawY);
       drawY -= fontHeight;
     }
-    if (getDisplayPreferences(ROTATION) && hideMin) {
+    if (getDisplayPreferences(LayerItem.ROTATION) && hideMin) {
       FontTools.paintFontOutline(
-          g2,
+          g2d,
           org.weasis.dicom.viewer2d.Messages.getString("InfoLayer.angle")
               + StringUtil.COLON_AND_SPACE
               + view2DPane.getActionValue(ActionW.ROTATION.cmd())
@@ -215,12 +217,12 @@ public class InfoLayer3d extends AbstractInfoLayer<DicomImageElement> {
       drawY -= fontHeight;
     }
 
-    if (getDisplayPreferences(ANNOTATIONS)) {
+    if (getDisplayPreferences(LayerItem.ANNOTATIONS)) {
       MediaSeries<DicomImageElement> series = view2DPane.getSeries();
       MediaSeriesGroup study = InfoLayer.getParent(series, DicomModel.study);
       MediaSeriesGroup patient = InfoLayer.getParent(series, DicomModel.patient);
       CornerInfoData corner = modality.getCornerInfo(CornerDisplay.TOP_LEFT);
-      boolean anonymize = getDisplayPreferences(ANONYM_ANNOTATIONS);
+      boolean anonymize = getDisplayPreferences(LayerItem.ANONYM_ANNOTATIONS);
       drawY = fontHeight;
       TagView[] infos = corner.getInfos();
       for (TagView tagView : infos) {
@@ -231,7 +233,7 @@ public class InfoLayer3d extends AbstractInfoLayer<DicomImageElement> {
               if (value != null) {
                 String str = tag.getFormattedTagValue(value, tagView.getFormat());
                 if (StringUtil.hasText(str)) {
-                  FontTools.paintFontOutline(g2, str, border, drawY);
+                  FontTools.paintFontOutline(g2d, str, border, drawY);
                   drawY += fontHeight;
                 }
                 break;
@@ -255,9 +257,9 @@ public class InfoLayer3d extends AbstractInfoLayer<DicomImageElement> {
                   String str = tag.getFormattedTagValue(value, info.getFormat());
                   if (StringUtil.hasText(str)) {
                     FontTools.paintFontOutline(
-                        g2,
+                        g2d,
                         str,
-                        bound.width - g2.getFontMetrics().stringWidth(str) - (float) border,
+                        bound.width - g2d.getFontMetrics().stringWidth(str) - (float) border,
                         drawY);
                     drawY += fontHeight;
                   }
@@ -283,9 +285,9 @@ public class InfoLayer3d extends AbstractInfoLayer<DicomImageElement> {
                   String str = tag.getFormattedTagValue(value, infos[j].getFormat());
                   if (StringUtil.hasText(str)) {
                     FontTools.paintFontOutline(
-                        g2,
+                        g2d,
                         str,
-                        bound.width - g2.getFontMetrics().stringWidth(str) - (float) border,
+                        bound.width - g2d.getFontMetrics().stringWidth(str) - (float) border,
                         drawY);
                     drawY -= fontHeight;
                   }
@@ -312,7 +314,7 @@ public class InfoLayer3d extends AbstractInfoLayer<DicomImageElement> {
       orientation.append("x").append(imSeries.getDepth()); // NON-NLS
       orientation.append(")");
 
-      if (getDisplayPreferences(IMAGE_ORIENTATION)) {
+      if (getDisplayPreferences(LayerItem.IMAGE_ORIENTATION)) {
         //          double[] imagePosition = owner.getImagePatientOrientation();
         //          if (imagePosition != null) {
         //            Plan imgOrientation =
@@ -327,13 +329,13 @@ public class InfoLayer3d extends AbstractInfoLayer<DicomImageElement> {
       }
 
       FontTools.paintFontOutline(
-          g2,
+          g2d,
           orientation.toString(),
           border,
           bound.height - border - GuiUtils.getScaleLength(1.5f)); // -1.5 for outline
     }
 
-    GuiUtils.resetRenderingHints(g2, oldRenderingHints);
+    GuiUtils.resetRenderingHints(g2d, oldRenderingHints);
   }
 
   private boolean isMipActive() {
@@ -427,21 +429,6 @@ public class InfoLayer3d extends AbstractInfoLayer<DicomImageElement> {
   @Override
   public Rectangle getPreloadingProgressBound() {
     return null;
-  }
-
-  @Override
-  public Rectangle getPixelInfoBound() {
-    return pixelInfoBound;
-  }
-
-  @Override
-  public void setPixelInfo(PixelInfo pixelInfo) {
-    this.pixelInfo = pixelInfo;
-  }
-
-  @Override
-  public PixelInfo getPixelInfo() {
-    return pixelInfo;
   }
 
   @Override

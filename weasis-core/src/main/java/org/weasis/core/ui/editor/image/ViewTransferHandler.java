@@ -21,7 +21,7 @@ import javax.swing.JComponent;
 import javax.swing.TransferHandler;
 import org.weasis.core.api.gui.model.ViewModel;
 import org.weasis.core.api.media.data.ImageElement;
-import org.weasis.core.ui.model.layer.LayerAnnotation;
+import org.weasis.core.ui.model.layer.LayerItem;
 import org.weasis.core.ui.model.utils.imp.DefaultViewModel;
 import org.weasis.core.ui.util.ImagePrint;
 import org.weasis.opencv.op.ImageConversion;
@@ -90,7 +90,7 @@ public class ViewTransferHandler extends TransferHandler implements Transferable
     try {
       exportImage
           .getInfoLayer()
-          .setDisplayPreferencesValue(LayerAnnotation.ANONYM_ANNOTATIONS, anonymize);
+          .setDisplayPreferencesValue(LayerItem.ANONYM_ANNOTATIONS, anonymize);
       exportImage.getInfoLayer().setBorder(3);
       Graphics2D g = img.createGraphics();
       if (g != null) {

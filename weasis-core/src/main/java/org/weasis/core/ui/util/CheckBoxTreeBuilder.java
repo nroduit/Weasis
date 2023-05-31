@@ -10,6 +10,10 @@
 package org.weasis.core.ui.util;
 
 import it.cnr.imaa.essi.lablib.gui.checkboxtree.DefaultCheckboxTreeCellRenderer;
+import java.util.Enumeration;
+import javax.swing.JTree;
+import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.TreePath;
 
 public class CheckBoxTreeBuilder {
 
@@ -21,5 +25,17 @@ public class CheckBoxTreeBuilder {
     renderer.setClosedIcon(null);
     renderer.setLeafIcon(null);
     return renderer;
+  }
+
+  public static void expandTree(JTree tree, DefaultMutableTreeNode start) {
+    Enumeration<?> children = start.children();
+    while (children.hasMoreElements()) {
+      Object child = children.nextElement();
+      if (child instanceof DefaultMutableTreeNode dtm && !dtm.isLeaf()) {
+        TreePath tp = new TreePath(dtm.getPath());
+        tree.expandPath(tp);
+        expandTree(tree, dtm);
+      }
+    }
   }
 }

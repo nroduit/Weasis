@@ -30,7 +30,7 @@ import org.weasis.core.api.image.util.ImageLayer;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.util.FontItem;
 import org.weasis.core.ui.model.graphic.Graphic;
-import org.weasis.core.ui.model.layer.LayerAnnotation;
+import org.weasis.core.ui.model.layer.LayerItem;
 
 public class ExportImage<E extends ImageElement> extends DefaultView2d<E> {
 
@@ -48,8 +48,8 @@ public class ExportImage<E extends ImageElement> extends DefaultView2d<E> {
     infoLayer.setVisible(view2d.getInfoLayer().getVisible());
     infoLayer.setShowBottomScale(false);
     // For exporting view, remove Pixel value, Preloading bar, Key Object
-    infoLayer.setDisplayPreferencesValue(LayerAnnotation.PIXEL, false);
-    infoLayer.setDisplayPreferencesValue(LayerAnnotation.PRELOADING_BAR, false);
+    infoLayer.setDisplayPreferencesValue(LayerItem.PIXEL, false);
+    infoLayer.setDisplayPreferencesValue(LayerItem.PRELOADING_BAR, false);
 
     // Copy image operations from view2d
     SimpleOpManager operations = imageLayer.getDisplayOpManager();

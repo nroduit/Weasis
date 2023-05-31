@@ -49,33 +49,12 @@ public abstract class AbstractInfoLayer<E extends ImageElement> extends DefaultU
   protected static final Color highlight = new Color(255, 153, 153);
   public static final String P_ALL_VIEWS = "annotations.all.views";
   public static final AtomicBoolean applyToAllView = new AtomicBoolean(true);
-  public static final Map<String, Boolean> defaultDisplayPreferences = new HashMap<>();
-  private static final Map<String, String> conversionMapForStorage = new HashMap<>();
+  public static final Map<LayerItem, Boolean> defaultDisplayPreferences = new HashMap<>();
 
   static {
-    defaultDisplayPreferences.put(ANNOTATIONS, true);
-    defaultDisplayPreferences.put(MIN_ANNOTATIONS, false);
-    defaultDisplayPreferences.put(ANONYM_ANNOTATIONS, false);
-    defaultDisplayPreferences.put(SCALE, true);
-    defaultDisplayPreferences.put(LUT, false);
-    defaultDisplayPreferences.put(IMAGE_ORIENTATION, true);
-    defaultDisplayPreferences.put(WINDOW_LEVEL, true);
-    defaultDisplayPreferences.put(ZOOM, true);
-    defaultDisplayPreferences.put(ROTATION, false);
-    defaultDisplayPreferences.put(FRAME, true);
-    defaultDisplayPreferences.put(PIXEL, true);
-
-    conversionMapForStorage.put(ANNOTATIONS, "annotations");
-    conversionMapForStorage.put(MIN_ANNOTATIONS, "minAnnotations");
-    conversionMapForStorage.put(ANONYM_ANNOTATIONS, "anonym"); // NON-NLS
-    conversionMapForStorage.put(SCALE, "scale"); // NON-NLS
-    conversionMapForStorage.put(LUT, "lut"); // NON-NLS
-    conversionMapForStorage.put(IMAGE_ORIENTATION, "orientation"); // NON-NLS
-    conversionMapForStorage.put(WINDOW_LEVEL, "wl"); // NON-NLS
-    conversionMapForStorage.put(ZOOM, "zoom"); // NON-NLS
-    conversionMapForStorage.put(ROTATION, "rotation"); // NON-NLS
-    conversionMapForStorage.put(FRAME, "frame"); // NON-NLS
-    conversionMapForStorage.put(PIXEL, "pixel"); // NON-NLS
+    for (LayerItem item : LayerItem.values()) {
+      defaultDisplayPreferences.put(item, item.isVisible());
+    }
   }
 
   protected static final int P_BORDER = 10;
@@ -89,7 +68,7 @@ public abstract class AbstractInfoLayer<E extends ImageElement> extends DefaultU
       Unit pixelUnit,
       String pixelDescription) {}
 
-  protected final HashMap<String, Boolean> displayPreferences = new HashMap<>();
+  protected final HashMap<LayerItem, Boolean> displayPreferences = new HashMap<>();
   protected boolean visible = true;
   protected static final Color color = Color.yellow;
   protected final ViewCanvas<E> view2DPane;
@@ -107,7 +86,7 @@ public abstract class AbstractInfoLayer<E extends ImageElement> extends DefaultU
   }
 
   protected AbstractInfoLayer(ViewCanvas<E> view2DPane, boolean useGlobalPreferences) {
-    this.view2DPane = view2DPane;
+    this.view2DPane = Objects.requireNonNull(view2DPane);
     this.pixelInfoBound = new Rectangle();
     this.preloadingProgressBound = new Rectangle();
     this.useGlobalPreferences = useGlobalPreferences;
@@ -117,14 +96,18 @@ public abstract class AbstractInfoLayer<E extends ImageElement> extends DefaultU
     return view2DPane;
   }
 
+  protected void setLayerValue(HashMap<LayerItem, Boolean> prefMap, LayerItem item) {
+    prefMap.put(item, getDisplayPreferences(item));
+  }
+
   public static void applyPreferences(Preferences prefs) {
     if (prefs != null) {
       Preferences p = prefs.node(ViewSetting.PREFERENCE_NODE);
       Preferences pref = p.node("infolayer"); // NON-NLS
       applyToAllView.set(pref.getBoolean("allViews", true));
 
-      for (Entry<String, Boolean> v : defaultDisplayPreferences.entrySet()) {
-        v.setValue(pref.getBoolean(conversionMapForStorage.get(v.getKey()), v.getValue()));
+      for (Entry<LayerItem, Boolean> v : defaultDisplayPreferences.entrySet()) {
+        v.setValue(pref.getBoolean(v.getKey().getKey(), v.getValue()));
       }
     }
   }
@@ -135,14 +118,13 @@ public abstract class AbstractInfoLayer<E extends ImageElement> extends DefaultU
       Preferences pref = p.node("infolayer"); // NON-NLS
       BundlePreferences.putBooleanPreferences(pref, "allViews", applyToAllView.get());
 
-      for (Entry<String, String> v : conversionMapForStorage.entrySet()) {
-        BundlePreferences.putBooleanPreferences(
-            pref, v.getValue(), defaultDisplayPreferences.get(v.getKey()));
+      for (Entry<LayerItem, Boolean> v : defaultDisplayPreferences.entrySet()) {
+        BundlePreferences.putBooleanPreferences(pref, v.getKey().getKey(), v.getValue());
       }
     }
   }
 
-  public static Boolean setDefaultDisplayPreferencesValue(String item, Boolean selected) {
+  public static Boolean setDefaultDisplayPreferencesValue(LayerItem item, Boolean selected) {
     Boolean selected2 =
         Optional.ofNullable(defaultDisplayPreferences.get(item)).orElse(Boolean.FALSE);
     defaultDisplayPreferences.put(item, selected);
@@ -220,7 +202,7 @@ public abstract class AbstractInfoLayer<E extends ImageElement> extends DefaultU
   }
 
   @Override
-  public boolean getDisplayPreferences(String item) {
+  public boolean getDisplayPreferences(LayerItem item) {
     if (useGlobalPreferences && applyToAllView.get()) {
       return Optional.ofNullable(defaultDisplayPreferences.get(item)).orElse(Boolean.FALSE);
     }
@@ -230,7 +212,7 @@ public abstract class AbstractInfoLayer<E extends ImageElement> extends DefaultU
   }
 
   @Override
-  public boolean setDisplayPreferencesValue(String displayItem, boolean selected) {
+  public boolean setDisplayPreferencesValue(LayerItem displayItem, boolean selected) {
     Boolean selected2 = getDisplayPreferences(displayItem);
     displayPreferences.put(displayItem, selected);
     return !Objects.equals(selected, selected2);
