@@ -11,30 +11,26 @@
 - Value of shininess is out of range [\#423](https://github.com/nroduit/Weasis/issues/423)
 - Cannot activate or deactivate OpenGL from Preferences  [\#421](https://github.com/nroduit/Weasis/issues/421)
 - Can't uninstall package weasis\_4.0.3-1\_amd64 [\#419](https://github.com/nroduit/Weasis/issues/419)
-- The tools associated with a viewer are not updated when closing a tab [\#417](https://github.com/nroduit/Weasis/issues/417)
-- MPR and 3D buttons are sometimes disabled after loading images [\#416](https://github.com/nroduit/Weasis/issues/416)
 - Can't load 3D CT scan with odd size [\#414](https://github.com/nroduit/Weasis/issues/414)
-- The program closes with an error when opening any file [\#410](https://github.com/nroduit/Weasis/issues/410)
 
 **Closed issues:**
 
 - PROBLEM: Weasis can't find my graphic card [\#420](https://github.com/nroduit/Weasis/issues/420)
-- crashing in archlinux when import DICOM [\#411](https://github.com/nroduit/Weasis/issues/411)
-- mv: cannot stat 'build-installer/Weasis-4.0.2.msi': No such file or directory [\#352](https://github.com/nroduit/Weasis/issues/352)
-- Annotations/labels font size [\#246](https://github.com/nroduit/Weasis/issues/246)
-- Print Dialog not come upfront when apply for print. [\#222](https://github.com/nroduit/Weasis/issues/222)
-- Weasis - Sante DICOM Viewer Pro batch studies retrieve iisue [\#188](https://github.com/nroduit/Weasis/issues/188)
-- Error building on FreeBSD [\#175](https://github.com/nroduit/Weasis/issues/175)
-- Query/Retrieve accessible as tool on main window with adjustable presets [\#92](https://github.com/nroduit/Weasis/issues/92)
-- Weasis Viewer does not open new Study Tab if a study was already loaded in Dicom Explorer [\#89](https://github.com/nroduit/Weasis/issues/89)
 
 ## [v4.1.1](https://github.com/nroduit/Weasis/tree/v4.1.1) (2023-05-22)
 
-[Full Changelog](https://github.com/nroduit/Weasis/compare/v4.1.0...v4.1.1)
+[Full Changelog](https://github.com/nroduit/Weasis/compare/v4.1.1...v4.1.0)
 
 **Fixed bugs:**
 
+- The tools associated with a viewer are not updated when closing a tab [\#417](https://github.com/nroduit/Weasis/issues/417)
+- MPR and 3D buttons are sometimes disabled after loading images [\#416](https://github.com/nroduit/Weasis/issues/416)
+- The program closes with an error when opening any file [\#410](https://github.com/nroduit/Weasis/issues/410)
 - SUVbw value are different for DRO Washington Image than required per QIBA profile [\#399](https://github.com/nroduit/Weasis/issues/399)
+
+**Closed issues:**
+
+- crashing in archlinux when import DICOM [\#411](https://github.com/nroduit/Weasis/issues/411)
 
 ## [v4.1.0](https://github.com/nroduit/Weasis/tree/v4.1.0) (2023-05-08)
 
