@@ -116,7 +116,7 @@ public class SearchParameters {
   }
 
   public static void loadSearchParameters(JComboBox<SearchParameters> comboBox) {
-    SearchParameters emptyParameters = new SearchParameters("Empty");
+    SearchParameters emptyParameters = new SearchParameters(Messages.getString("empty"));
     comboBox.addItem(emptyParameters);
 
     SearchParameters todayParameters = new SearchParameters(Period.TODAY.toString());

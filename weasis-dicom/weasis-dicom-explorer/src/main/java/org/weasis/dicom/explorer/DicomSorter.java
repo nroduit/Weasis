@@ -27,8 +27,8 @@ import org.weasis.dicom.explorer.pref.download.DicomExplorerPrefView;
 
 public class DicomSorter {
   public enum SortingTime {
-    CHRONOLOGICAL(0, "Chronological order"),
-    INVERSE_CHRONOLOGICAL(1, "Reverse chronological order");
+    CHRONOLOGICAL(0, Messages.getString("chrono.order")),
+    INVERSE_CHRONOLOGICAL(1, Messages.getString("reverse.chrono.order"));
 
     private final int id;
     private final String title;

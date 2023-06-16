@@ -12,30 +12,32 @@ package org.weasis.core.ui.model.layer;
 import org.weasis.core.Messages;
 
 public enum LayerItem {
-  ANNOTATIONS("annotations", Messages.getString("AnnotationsLayer.anno"), true),
+  ANNOTATIONS("annotations", Messages.getString("AnnotationsLayer.anno"), true), // NON-NLS
 
-  MIN_ANNOTATIONS("minAnnotations", Messages.getString("LayerAnnotation.min_anot"), false),
+  MIN_ANNOTATIONS(
+      "minAnnotations", Messages.getString("LayerAnnotation.min_anot"), false), // NON-NLS
 
-  ANONYM_ANNOTATIONS("anonym", Messages.getString("AnnotationsLayer.anonym"), false),
+  ANONYM_ANNOTATIONS("anonym", Messages.getString("AnnotationsLayer.anonym"), false), // NON-NLS
 
-  SCALE("scale", Messages.getString("AnnotationsLayer.scale"), true),
+  SCALE("scale", Messages.getString("AnnotationsLayer.scale"), true), // NON-NLS
 
-  LUT("lut", Messages.getString("AnnotationsLayer.lut"), false),
+  LUT("lut", Messages.getString("AnnotationsLayer.lut"), false), // NON-NLS
 
-  IMAGE_ORIENTATION("orientation", Messages.getString("AnnotationsLayer.or"), true),
+  IMAGE_ORIENTATION("orientation", Messages.getString("AnnotationsLayer.or"), true), // NON-NLS
 
-  WINDOW_LEVEL("wl", Messages.getString("AnnotationsLayer.wl"), true),
+  WINDOW_LEVEL("wl", Messages.getString("AnnotationsLayer.wl"), true), // NON-NLS
 
-  ZOOM("zoom", Messages.getString("AnnotationsLayer.zoom"), true),
+  ZOOM("zoom", Messages.getString("AnnotationsLayer.zoom"), true), // NON-NLS
 
-  ROTATION("rotation", Messages.getString("AnnotationsLayer.rot"), false),
+  ROTATION("rotation", Messages.getString("AnnotationsLayer.rot"), false), // NON-NLS
 
-  FRAME("frame", Messages.getString("AnnotationsLayer.fr"), true),
+  FRAME("frame", Messages.getString("AnnotationsLayer.fr"), true), // NON-NLS
 
-  PIXEL("pixel", Messages.getString("AnnotationsLayer.pix"), true),
-  PRELOADING_BAR("loading", Messages.getString("AnnotationsLayer.preload_bar"), false),
+  PIXEL("pixel", Messages.getString("AnnotationsLayer.pix"), true), // NON-NLS
 
-  KEY_OBJECT("ko", Messages.getString("AnnotationsLayer.ko"), true);
+  PRELOADING_BAR("loading", Messages.getString("AnnotationsLayer.preload_bar"), false), // NON-NLS
+
+  KEY_OBJECT("ko", Messages.getString("AnnotationsLayer.ko"), true); // NON-NLS
 
   private final String key;
   private final String name;

@@ -65,7 +65,7 @@ public class DicomExplorerPrefView extends AbstractItemDialogPage {
     model.setValue(thumbnailSize);
     add(GuiUtils.getFlowLayoutPanel(ITEM_SEPARATOR_SMALL, ITEM_SEPARATOR, thumbSize, spinner));
 
-    JLabel labelStudyDate = new JLabel("Study date sorting" + StringUtil.COLON);
+    JLabel labelStudyDate = new JLabel(Messages.getString("study.date.sorting") + StringUtil.COLON);
     studyDateSortingComboBox.setSelectedItem(DicomSorter.getStudyDateSorting());
     add(
         GuiUtils.getFlowLayoutPanel(

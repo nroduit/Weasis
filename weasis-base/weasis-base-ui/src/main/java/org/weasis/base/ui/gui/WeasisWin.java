@@ -737,7 +737,8 @@ public class WeasisWin {
         });
     helpMenuItem.add(updateMenuItem);
 
-    final JMenuItem openLogFolderMenuItem = new JMenuItem("Open the logging folder");
+    final JMenuItem openLogFolderMenuItem =
+        new JMenuItem(Messages.getString("open.logging.folder"));
     openLogFolderMenuItem.addActionListener(
         e ->
             GuiUtils.openSystemExplorer(

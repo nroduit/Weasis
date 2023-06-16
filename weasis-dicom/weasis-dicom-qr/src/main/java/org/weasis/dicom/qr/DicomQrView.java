@@ -724,10 +724,9 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
                           int limit = (Integer) limitSpinner.getValue();
                           String message =
                               state.getStatus() == Status.Cancel && limit > 0
-                                  ? "Query has been canceled after %s studies.\nSet the limit to 0 to avoid this constraint."
-                                      .formatted(limit)
+                                  ? Messages.getString("query.canceled.limit").formatted(limit)
                                   : state.getMessage();
-                          LOGGER.error("Dicom cfind error: {}", message);
+                          LOGGER.error("Dicom C-FIND error: {}", message);
                           JOptionPane.showMessageDialog(
                               this, message, null, JOptionPane.ERROR_MESSAGE);
                         }

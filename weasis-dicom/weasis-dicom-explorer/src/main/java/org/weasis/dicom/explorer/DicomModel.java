@@ -871,7 +871,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
           if (specialElementList == null) {
             specialElementList = new CopyOnWriteArrayList<>();
             initialSeries.setTag(TagW.DicomSpecialElementList, specialElementList);
-            if ("rt/dicom".equals(rMime)) {
+            if ("rt/dicom".equals(rMime)) { // NON-NLS
               MediaSeriesGroup st = getParent(initialSeries, DicomModel.study);
               if (st != null
                   && !LangUtil.getNULLtoFalse((Boolean) st.getTagValue(TagW.StudyDicomRT))) {

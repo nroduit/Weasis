@@ -530,7 +530,7 @@ public class GuiUtils {
       } else if (SystemInfo.isWindows) {
         openCommand("explorer", file); // NON-NLS
       } else if (SystemInfo.isMacOS) {
-        openCommand("/usr/bin/open", file);
+        openCommand("/usr/bin/open", file); // NON-NLS
       } else {
         JOptionPane.showMessageDialog(
             parent,
