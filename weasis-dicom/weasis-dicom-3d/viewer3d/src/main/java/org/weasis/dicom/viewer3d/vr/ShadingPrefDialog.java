@@ -186,7 +186,7 @@ public class ShadingPrefDialog extends JDialog {
   }
 
   private float sliderToRealPowerValue(int value) {
-    return (value * 99.0f) / MAX_SLIDER_VALUE  + 1f;
+    return (value * 99.0f) / MAX_SLIDER_VALUE + 1f;
   }
 
   private void updateSliderText() {

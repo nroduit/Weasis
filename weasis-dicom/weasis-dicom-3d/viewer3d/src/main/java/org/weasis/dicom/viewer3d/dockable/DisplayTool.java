@@ -115,31 +115,20 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
     FlowLayout flowLayout = (FlowLayout) panel.getLayout();
     flowLayout.setAlignment(FlowLayout.LEFT);
     add(panel, BorderLayout.NORTH);
-    applyAllViews.setSelected(AbstractInfoLayer.applyToAllView.get());
+    applyAllViews.setSelected(true);
     applyAllViews.addActionListener(
         e -> {
-          AbstractInfoLayer.applyToAllView.set(applyAllViews.isSelected());
-          if (AbstractInfoLayer.applyToAllView.get()) {
-            synchronized (UIManager.VIEWER_PLUGINS) {
-              for (final ViewerPlugin<?> p : UIManager.VIEWER_PLUGINS) {
-                if (p instanceof View3DContainer container) {
-                  container.getImagePanels().forEach(v -> v.getJComponent().repaint());
-                }
-              }
-            }
+          List<ViewCanvas<?>> views = getViews(true);
+          if (applyAllViews.isSelected()) {
+            views.forEach(v -> v.getJComponent().repaint());
           } else {
-            synchronized (UIManager.VIEWER_PLUGINS) {
-              for (final ViewerPlugin<?> p : UIManager.VIEWER_PLUGINS) {
-                if (p instanceof View3DContainer container) {
-                  for (ViewCanvas<?> v : container.getImagePanels()) {
-                    LayerAnnotation layer = v.getInfoLayer();
-                    if (layer != null) {
-                      layer.resetToDefault();
-                    }
+            views.forEach(
+                v -> {
+                  LayerAnnotation layer = v.getInfoLayer();
+                  if (layer != null) {
+                    layer.resetToDefault();
                   }
-                }
-              }
-            }
+                });
           }
         });
     panel.add(applyAllViews);
@@ -158,7 +147,7 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
         parent = path.getParentPath().getLastPathComponent();
       }
 
-      List<ViewCanvas<?>> views = getViews();
+      List<ViewCanvas<?>> views = getViews(applyAllViews.isSelected());
       if (!views.isEmpty()) {
         if (rootNode.equals(parent)) {
           if (dicomInfo.equals(selObject)) {
@@ -293,7 +282,7 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
               && selView.getInfoLayer().getDisplayPreferences(LayerItem.MIN_ANNOTATIONS);
 
       if (checked && !minDisp) {
-        for (ViewCanvas<?> v : getViews()) {
+        for (ViewCanvas<?> v : getViews(applyAllViews.isSelected())) {
           LayerAnnotation layer = v.getInfoLayer();
           if (layer != null) {
             layer.setVisible(true);
@@ -314,9 +303,9 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
     }
   }
 
-  private List<ViewCanvas<?>> getViews() {
+  private List<ViewCanvas<?>> getViews(boolean allVisible) {
     List<ViewCanvas<?>> views;
-    if (applyAllViews.isSelected()) {
+    if (allVisible) {
       views = new ArrayList<>();
       synchronized (UIManager.VIEWER_PLUGINS) {
         for (final ViewerPlugin<?> p : UIManager.VIEWER_PLUGINS) {

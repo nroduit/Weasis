@@ -109,6 +109,23 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
     FlowLayout flowLayout = (FlowLayout) panel.getLayout();
     flowLayout.setAlignment(FlowLayout.LEFT);
     add(panel, BorderLayout.NORTH);
+    applyAllViews.setSelected(true);
+    applyAllViews.addActionListener(
+        e -> {
+          List<ViewCanvas<?>> views = getViews(true);
+
+          if (applyAllViews.isSelected()) {
+            views.forEach(v -> v.getJComponent().repaint());
+          } else {
+            views.forEach(
+                v -> {
+                  LayerAnnotation layer = v.getInfoLayer();
+                  if (layer != null) {
+                    layer.resetToDefault();
+                  }
+                });
+          }
+        });
     panel.add(applyAllViews);
 
     CheckBoxTreeBuilder.expandTree(tree, rootNode);
@@ -184,7 +201,7 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
         parent = path.getParentPath().getLastPathComponent();
       }
 
-      List<ViewCanvas<?>> views = getViews();
+      List<ViewCanvas<?>> views = getViews(applyAllViews.isSelected());
       if (views.isEmpty()) {
         return;
       }
@@ -254,9 +271,9 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
     }
   }
 
-  private List<ViewCanvas<?>> getViews() {
+  private List<ViewCanvas<?>> getViews(boolean allVisible) {
     List<ViewCanvas<?>> views;
-    if (applyAllViews.isSelected()) {
+    if (allVisible) {
       views = new ArrayList<>();
       synchronized (UIManager.VIEWER_PLUGINS) {
         for (final ViewerPlugin<?> p : UIManager.VIEWER_PLUGINS) {

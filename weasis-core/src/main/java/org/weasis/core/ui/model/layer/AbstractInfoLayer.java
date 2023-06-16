@@ -47,7 +47,6 @@ public abstract class AbstractInfoLayer<E extends ImageElement> extends DefaultU
     implements LayerAnnotation {
 
   protected static final Color highlight = new Color(255, 153, 153);
-  public static final String P_ALL_VIEWS = "annotations.all.views";
   public static final AtomicBoolean applyToAllView = new AtomicBoolean(true);
   public static final Map<LayerItem, Boolean> defaultDisplayPreferences = new HashMap<>();
 

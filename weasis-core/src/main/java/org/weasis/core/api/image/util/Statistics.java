@@ -50,26 +50,30 @@ public class Statistics {
     }
   }
 
-  public static double corrCoef(
+  public static double correlationFactor(
       double[] xVal, double[] yVal, double xyStDev, double xMean, double yMean) {
     double r = 0.0D;
-    for (int i = 0; i < xVal.length; i++) {
-      r += ((xVal[i] - xMean) * (yVal[i] - yMean)) / (xyStDev);
+    if (xVal != null && xVal.length > 0 && yVal != null && yVal.length > 0) {
+      for (int i = 0; i < xVal.length; i++) {
+        r += ((xVal[i] - xMean) * (yVal[i] - yMean)) / (xyStDev);
+      }
+      r /= xVal.length;
     }
-    r /= xVal.length;
     return r;
   }
 
-  public static double corrCoef(double[] xVal, double[] yVal) {
+  public static double correlationFactor(double[] xVal, double[] yVal) {
     double r = 0.0D;
-    double mX = mean(xVal);
-    double mY = mean(yVal);
-    double sdX = stDev(xVal, mX);
-    double sdY = stDev(yVal, mY);
-    for (int i = 0; i < xVal.length; i++) {
-      r += ((xVal[i] - mX) * (yVal[i] - mY)) / (sdX * sdY);
+    if (xVal != null && xVal.length > 0 && yVal != null && yVal.length > 0) {
+      double mX = mean(xVal);
+      double mY = mean(yVal);
+      double sdX = stDev(xVal, mX);
+      double sdY = stDev(yVal, mY);
+      for (int i = 0; i < xVal.length; i++) {
+        r += ((xVal[i] - mX) * (yVal[i] - mY)) / (sdX * sdY);
+      }
+      r /= (xVal.length - 1);
     }
-    r /= (xVal.length - 1);
     return r;
   }
 
