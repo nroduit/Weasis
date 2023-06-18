@@ -14,17 +14,11 @@ body:
     placeholder: A clear and concise description of what you observe. If applicable, add the steps to reproduce the behavior and screenshots to illustrate your problem.
    validations:
     required: true
- - type: dropdown
+ - type: input
    id: version
    attributes:
     label: What version of Weasis are you running?
-    multiple: true
-    options:
-     - current SNAPSHOT from github
-     - modified version
-     - latest release
-     - previous release 4.x
-     - previous release 3.x
+    placeholder: ex. 4.1.2, commit 1e3190a...
    validations:
     required: true
  - type: dropdown
