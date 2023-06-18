@@ -11,14 +11,20 @@ body:
    attributes:
     label: Describe the bug. What happened?
     description: Also tell us, what did you expect to happen?
-    placeholder: A clear and concise description of what you observe. If applicable, add the steps to reproduce the behavior and screenshots to illustrate your problem.
+    placeholder: |
+      A clear and concise description of what you observe. 
+      If applicable, add the steps to reproduce the behavior and screenshots to illustrate your problem.
+        1. In this environment...
+        2. With this config...
+        3. Run...
+        4. See error...
    validations:
     required: true
  - type: input
    id: version
    attributes:
     label: What version of Weasis are you running?
-    placeholder: ex. 4.1.2, commit 1e3190a...
+    placeholder: ex. 4.1.2 (from main Window title), commit 1e3190a...
    validations:
     required: true
  - type: dropdown
@@ -37,7 +43,7 @@ body:
    attributes:
     label: Relevant log output
     description: Please copy and paste any relevant [log output from Weasis](https://nroduit.github.io/en/tutorials/logging/) or from the DICOM archive.
-    placeholder: Paste any log output
+    placeholder: Paste any relevant log output
     render: shell
  - type: textarea
    id: context
