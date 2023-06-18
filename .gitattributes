@@ -1,0 +1,7 @@
+# convert all to lf
+* text eol=lf
+
+# convert these to windows line endings
+*.bat   text eol=crlf
+*.cmd   text eol=crlf
+*.ini   text eol=crlf
