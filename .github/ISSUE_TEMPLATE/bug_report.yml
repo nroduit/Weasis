@@ -37,12 +37,12 @@ body:
    attributes:
     label: Relevant log output
     description: Please copy and paste any relevant [log output from Weasis](https://nroduit.github.io/en/tutorials/logging/) or from the DICOM archive.
+    placeholder: Paste any log output
     render: shell
  - type: textarea
    id: context
    attributes:
     label: Additional contextual elements
     description: Add more contextual information about the problem (e.g. for network issue, give information about anti-virus or network security software, firewall, proxy...).
-    placeholder: Contextual elements
-    value: "List of contextual elements (e.g. OS version, type of Weasis installer, Graphic card, OpenGL version...)"
+    placeholder: List of contextual elements (e.g. OS version, type of Weasis installer, Graphic card, OpenGL version...)
 
