@@ -1,0 +1,38 @@
+name: "Feature Request"
+description: Suggest an idea, a feature or an enhancement
+labels: ["Type: Feature", "triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to request a new feature!
+  - type: textarea
+    attributes:
+      label: Is your feature request related to a problem? (optional)
+      placeholder: A clear and concise description of what the issue is. Ex. I'm always frustrated when [...]
+    validations:
+      required: false
+  - type: textarea
+    attributes:
+      label: Description of the new feature/enhancement
+      placeholder: A clear and concise description of what you want to see or to happen.
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Proposed technical implementation details (optional)
+      placeholder: Suggest how this might be implemented.
+    validations:
+      required: false
+  - type: textarea
+    attributes:
+      label: Describe alternatives you've considered (optional)
+      placeholder: A clear and concise description of any alternative solutions or features you've considered.
+    validations:
+      required: false
+  - type: textarea
+    attributes:
+      label: Additional context (optional)
+      placeholder: Add any other contextual information or screenshots about the feature request here.
+    validations:
+      required: false

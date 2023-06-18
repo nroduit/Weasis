@@ -1,8 +1,11 @@
 blank_issues_enabled: true
 contact_links:
+  - name: Frequently Asked Questions (FAQs)
+    url: https://nroduit.github.io/en/faq
+    about: Frequently Asked Questions (FAQs) on Weasis
   - name: Questions or ideas
     url: https://github.com/nroduit/Weasis/discussions
     about: if you have questions, ideas or if you want to tell something about Weasis
   - name: Google group
     url: https://groups.google.com/g/dcm4che
-    about: Discussion about dcm4chee and Weasis    
+    about: Questions and discussions about dcm4che and Weasis
