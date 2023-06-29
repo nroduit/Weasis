@@ -71,6 +71,14 @@
           </execution>
         </executions>
       </plugin>
+        <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-compiler-plugin</artifactId>
+            <configuration>
+                <source>20</source>
+                <target>20</target>
+            </configuration>
+        </plugin>
     </plugins>
   </build>
 </project>
