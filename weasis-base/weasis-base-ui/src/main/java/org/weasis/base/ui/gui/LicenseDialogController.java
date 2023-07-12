@@ -75,12 +75,16 @@ public class LicenseDialogController {
                     } else {
                         writeFileContents(contents);
                     }
+                    JOptionPane.showMessageDialog(null, Messages.getString("LicenseDialog.license.successfully.saved"),
+                            Messages.getString("LicenseDialog.license.successfully.saved.title"), JOptionPane.OK_OPTION);
                 } else {
                     JOptionPane.showMessageDialog(null, Messages.getString("LicenseDialog.license.field.empty"),
                             Messages.getString("LicenseDialog.license.field.empty.title"), JOptionPane.OK_OPTION);
                 }
             } catch (Exception e) {
                 LOGGER.error(e.getMessage(), e);
+                JOptionPane.showMessageDialog(null, Messages.getString("LicenseDialog.error.saving.license"),
+                        Messages.getString("LicenseDialog.error.saving.license.title"), JOptionPane.OK_OPTION);
             }
         });
     }
