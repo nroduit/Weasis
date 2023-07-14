@@ -37,6 +37,7 @@ import org.weasis.core.api.explorer.ObservableEvent;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
+import org.weasis.core.ui.docking.DockableTool;
 import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.SeriesViewer;
 import org.weasis.core.ui.editor.ViewerPluginBuilder;
@@ -78,6 +79,12 @@ public abstract class ViewerPlugin<E extends MediaElement> extends JPanel
           public void close(CDockable dockable) {
             super.close(dockable);
             if (dockable.getFocusComponent() instanceof SeriesViewer<?> seriesViewer) {
+              List<DockableTool> oldTool = seriesViewer.getToolPanel();
+              if (oldTool != null) {
+                for (DockableTool p : oldTool) {
+                  p.closeDockable();
+                }
+              }
               seriesViewer.close();
             }
             Dockable prevDockable =
@@ -92,7 +99,7 @@ public abstract class ViewerPlugin<E extends MediaElement> extends JPanel
                   && defaultCommonDockable.getDockable()
                       instanceof AbstractCDockable abstractCDockable) {
                 if (abstractCDockable.getFocusComponent() instanceof SeriesViewer<?> plugin) {
-                  UIManager.updateTools(plugin, plugin, true);
+                  UIManager.updateTools(null, plugin, true);
                 }
                 abstractCDockable.toFront();
               }
