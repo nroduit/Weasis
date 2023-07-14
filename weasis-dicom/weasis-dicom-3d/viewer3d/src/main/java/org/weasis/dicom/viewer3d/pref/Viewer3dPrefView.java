@@ -289,6 +289,7 @@ public class Viewer3dPrefView extends AbstractItemDialogPage {
     boolean openglEnabled = enableOpenGL.isSelected();
     if (openglEnabled && !View3DFactory.isOpenglEnable()) {
       BundleTools.LOCAL_UI_PERSISTENCE.putBooleanProperty(View3DFactory.P_OPENGL_PREV_INIT, true);
+      BundleTools.LOCAL_UI_PERSISTENCE.putBooleanProperty(View3DFactory.P_OPENGL_ENABLE, true);
     } else if (!openglEnabled) {
       BundleTools.LOCAL_UI_PERSISTENCE.putBooleanProperty(View3DFactory.P_OPENGL_PREV_INIT, false);
       BundleTools.LOCAL_UI_PERSISTENCE.putBooleanProperty(View3DFactory.P_OPENGL_ENABLE, false);
