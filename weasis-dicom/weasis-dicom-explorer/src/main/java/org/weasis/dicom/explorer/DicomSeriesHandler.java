@@ -101,14 +101,13 @@ public class DicomSeriesHandler extends SequenceHandler {
 
               String mime = seq.getMimeType();
               plugin = UIManager.getViewerFactory(mime);
-              if (plugin == null) {
-                plugin = DefaultMimeAppFactory.getInstance();
+              if (plugin != null) {
+                ArrayList<MediaSeries<MediaElement>> list = new ArrayList<>(1);
+                list.add(seq);
+                ViewerPluginBuilder builder = new ViewerPluginBuilder(plugin, list, model, props);
+                ViewerPluginBuilder.openSequenceInPlugin(builder);
               }
 
-              ArrayList<MediaSeries<MediaElement>> list = new ArrayList<>(1);
-              list.add(seq);
-              ViewerPluginBuilder builder = new ViewerPluginBuilder(plugin, list, model, props);
-              ViewerPluginBuilder.openSequenceInPlugin(builder);
             }
             return false;
           }

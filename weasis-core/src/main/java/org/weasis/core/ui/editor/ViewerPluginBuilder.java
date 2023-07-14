@@ -174,9 +174,6 @@ public class ViewerPluginBuilder {
     if (series != null) {
       String mime = series.getMimeType();
       SeriesViewerFactory plugin = UIManager.getViewerFactory(mime);
-      if (plugin == null) {
-        plugin = DefaultMimeAppFactory.getInstance();
-      }
       openSequenceInPlugin(
           plugin,
           series,

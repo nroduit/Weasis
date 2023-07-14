@@ -24,7 +24,7 @@ body:
    id: version
    attributes:
     label: What version of Weasis are you running?
-    placeholder: ex. 4.1.2 (from main Window title), commit 1e3190a...
+    placeholder: ex. *4.1.2* (from the main window title) or commit *1e3190a*...
    validations:
     required: true
  - type: dropdown

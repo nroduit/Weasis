@@ -76,15 +76,12 @@ public class ThumbnailMouseAndKeyAdapter extends MouseAdapter implements KeyList
 
       String mime = series.getMimeType();
       SeriesViewerFactory plugin = UIManager.getViewerFactory(mime);
-      if (plugin == null) {
-        plugin = DefaultMimeAppFactory.getInstance();
+      if (plugin != null) {
+        ArrayList<MediaSeries<MediaElement>> list = new ArrayList<>(1);
+        list.add(series);
+        ViewerPluginBuilder builder = new ViewerPluginBuilder(plugin, list, dicomModel, props);
+        ViewerPluginBuilder.openSequenceInPlugin(builder);
       }
-
-      ArrayList<MediaSeries<MediaElement>> list = new ArrayList<>(1);
-      list.add(series);
-      ViewerPluginBuilder builder = new ViewerPluginBuilder(plugin, list, dicomModel, props);
-      ViewerPluginBuilder.openSequenceInPlugin(builder);
-
       selList.setOpeningSeries(false);
     }
   }
