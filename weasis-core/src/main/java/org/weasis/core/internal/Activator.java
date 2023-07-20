@@ -100,6 +100,8 @@ public class Activator implements BundleActivator, ServiceListener {
     Preferences prefs = BundlePreferences.getDefaultPreferences(bundleContext);
     AbstractInfoLayer.savePreferences(prefs);
     MeasureTool.viewSetting.savePreferences(prefs);
+    prefs.sync(); // Force to save as PreferencesManager (as specific bundle managing preferences)
+
     File dataFolder = AppProperties.getBundleDataFolder(bundleContext);
     if (dataFolder != null) {
       File file = new File(dataFolder, "persistence.properties");
