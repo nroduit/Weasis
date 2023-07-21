@@ -81,6 +81,7 @@ import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.api.service.WProperties;
 import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.api.util.ResourceUtil.ActionIcon;
+import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.SeriesViewerEvent;
 import org.weasis.core.ui.editor.SeriesViewerEvent.EVENT;
 import org.weasis.core.ui.editor.image.ImageViewerEventManager;
@@ -93,6 +94,7 @@ import org.weasis.core.ui.editor.image.SynchData.Mode;
 import org.weasis.core.ui.editor.image.SynchEvent;
 import org.weasis.core.ui.editor.image.SynchView;
 import org.weasis.core.ui.editor.image.ViewCanvas;
+import org.weasis.core.ui.editor.image.ViewerPlugin;
 import org.weasis.core.ui.editor.image.ViewerToolBar;
 import org.weasis.core.ui.editor.image.ZoomToolBar;
 import org.weasis.core.ui.model.graphic.Graphic;
@@ -1193,6 +1195,33 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
     return ImageOrientation.hasSameOrientation(series1, series2);
   }
 
+  protected List<ViewCanvas<DicomImageElement>> getViews(
+      ImageViewerPlugin<DicomImageElement> viewerPlugin,
+      ViewCanvas<DicomImageElement> viewPane,
+      boolean allVisible) {
+    List<ViewCanvas<DicomImageElement>> views;
+    if (viewPane != null && viewPane.getSeries() != null) {
+      views = viewerPlugin.getImagePanels();
+      views.remove(viewPane);
+    } else {
+      return Collections.emptyList();
+    }
+
+    if (allVisible && viewerPlugin instanceof View2dContainer) {
+      synchronized (UIManager.VIEWER_PLUGINS) {
+        for (final ViewerPlugin<?> p : UIManager.VIEWER_PLUGINS) {
+          if (p instanceof View2dContainer plugin
+              && plugin.getDockable().isShowing()
+              && viewerPlugin != plugin
+              && viewerPlugin.getGroupID().equals(plugin.getGroupID())) {
+            views.addAll(plugin.getImagePanels());
+          }
+        }
+      }
+    }
+    return views;
+  }
+
   @Override
   public void updateAllListeners(
       ImageViewerPlugin<DicomImageElement> viewerPlugin, SynchView synchView) {
@@ -1203,9 +1232,10 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
       if (viewPane == null) {
         return;
       }
+      final List<ViewCanvas<DicomImageElement>> panes = getViews(viewerPlugin, viewPane, true);
       SynchData synch = synchView.getSynchData();
       MediaSeries<DicomImageElement> series = viewPane.getSeries();
-      if (series != null) {
+      if (series != null && !panes.isEmpty()) {
         SynchData oldSynch = (SynchData) viewPane.getActionValue(ActionW.SYNCH_LINK.cmd());
         if (oldSynch == null || !oldSynch.getMode().equals(synch.getMode())) {
           oldSynch = synch;
@@ -1222,7 +1252,6 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
         // } else {
         cineAction.ifPresent(a -> a.enableAction(true));
         // }
-        final List<ViewCanvas<DicomImageElement>> panes = viewerPlugin.getImagePanels();
         panes.remove(viewPane);
         viewPane.setActionsInView(ActionW.SYNCH_CROSSLINE.cmd(), false);
 

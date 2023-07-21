@@ -27,7 +27,6 @@ import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.ui.docking.UIManager;
-import org.weasis.core.ui.editor.DefaultMimeAppFactory;
 import org.weasis.core.ui.editor.SeriesViewerFactory;
 import org.weasis.core.ui.editor.ViewerPluginBuilder;
 import org.weasis.core.ui.editor.image.SequenceHandler;
@@ -107,7 +106,6 @@ public class DicomSeriesHandler extends SequenceHandler {
                 ViewerPluginBuilder builder = new ViewerPluginBuilder(plugin, list, model, props);
                 ViewerPluginBuilder.openSequenceInPlugin(builder);
               }
-
             }
             return false;
           }

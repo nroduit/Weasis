@@ -44,7 +44,6 @@ import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.api.util.ResourceUtil.ActionIcon;
 import org.weasis.core.ui.docking.UIManager;
-import org.weasis.core.ui.editor.DefaultMimeAppFactory;
 import org.weasis.core.ui.editor.SeriesViewer;
 import org.weasis.core.ui.editor.SeriesViewerFactory;
 import org.weasis.core.ui.editor.ViewerPluginBuilder;
