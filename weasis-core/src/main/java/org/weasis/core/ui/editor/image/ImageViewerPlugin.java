@@ -660,8 +660,7 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
   }
 
   public void setSynchView(SynchView synchView) {
-    Objects.requireNonNull(synchView);
-    this.synchView = synchView;
+    this.synchView = Objects.requireNonNull(synchView);
     updateTileOffset();
     eventManager.updateAllListeners(this, synchView);
   }

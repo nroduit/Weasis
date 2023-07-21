@@ -1213,7 +1213,8 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
           if (p instanceof View2dContainer plugin
               && plugin.getDockable().isShowing()
               && viewerPlugin != plugin
-              && viewerPlugin.getGroupID().equals(plugin.getGroupID())) {
+              && viewerPlugin.getGroupID().equals(plugin.getGroupID())
+              && Mode.STACK.equals(plugin.getSynchView().getSynchData().getMode())) {
             views.addAll(plugin.getImagePanels());
           }
         }
@@ -1232,10 +1233,9 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
       if (viewPane == null) {
         return;
       }
-      final List<ViewCanvas<DicomImageElement>> panes = getViews(viewerPlugin, viewPane, true);
       SynchData synch = synchView.getSynchData();
       MediaSeries<DicomImageElement> series = viewPane.getSeries();
-      if (series != null && !panes.isEmpty()) {
+      if (series != null) {
         SynchData oldSynch = (SynchData) viewPane.getActionValue(ActionW.SYNCH_LINK.cmd());
         if (oldSynch == null || !oldSynch.getMode().equals(synch.getMode())) {
           oldSynch = synch;
@@ -1252,11 +1252,10 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
         // } else {
         cineAction.ifPresent(a -> a.enableAction(true));
         // }
-        panes.remove(viewPane);
         viewPane.setActionsInView(ActionW.SYNCH_CROSSLINE.cmd(), false);
 
         if (SynchView.NONE.equals(synchView)) {
-          for (ViewCanvas<DicomImageElement> pane : panes) {
+          for (ViewCanvas<DicomImageElement> pane : getViews(viewerPlugin, viewPane, false)) {
             pane.getGraphicManager().deleteByLayerType(LayerType.CROSSLINES);
 
             MediaSeries<DicomImageElement> s = pane.getSeries();
@@ -1286,7 +1285,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
             DicomImageElement img = series.getMedia(MEDIA_POSITION.MIDDLE, null, null);
             double[] val = img == null ? null : (double[]) img.getTagValue(TagW.SlicePosition);
 
-            for (ViewCanvas<DicomImageElement> pane : panes) {
+            for (ViewCanvas<DicomImageElement> pane : getViews(viewerPlugin, viewPane, true)) {
               pane.getGraphicManager().deleteByLayerType(LayerType.CROSSLINES);
 
               MediaSeries<DicomImageElement> s = pane.getSeries();
@@ -1348,6 +1347,8 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
             cineAction.ifPresent(a -> a.stateChanged(a.getSliderModel()));
 
           } else if (Mode.TILE.equals(synch.getMode())) {
+            final List<ViewCanvas<DicomImageElement>> panes =
+                getViews(viewerPlugin, viewPane, false);
             // Limit the scroll
             final int maxShift =
                 series.size(
