@@ -16,10 +16,10 @@ import com.formdev.flatlaf.ui.FlatUIUtils;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
-import java.awt.FlowLayout;
-import java.awt.LayoutManager;
 import java.awt.Point;
 import java.awt.Rectangle;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.awt.font.FontRenderContext;
@@ -38,7 +38,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.FutureTask;
 import javax.swing.Action;
 import javax.swing.BorderFactory;
-import javax.swing.BoxLayout;
 import javax.swing.ButtonGroup;
 import javax.swing.Icon;
 import javax.swing.JButton;
@@ -49,6 +48,7 @@ import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
 import javax.swing.JViewport;
+import javax.swing.ScrollPaneConstants;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.border.TitledBorder;
@@ -169,6 +169,8 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
     thumbnailView.setBorder(BorderFactory.createEmptyBorder()); // remove default line
     thumbnailView.getVerticalScrollBar().setUnitIncrement(16);
     thumbnailView.setViewportView(selectedPatient);
+    thumbnailView.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
+    thumbnailView.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
     changeToolWindowAnchor(getDockable().getBaseLocation());
     setTransferHandler(new SeriesHandler());
   }
@@ -394,13 +396,15 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
     }
 
     private void refreshLayout() {
-      this.setLayout(new BoxLayout(this, verticalLayout ? BoxLayout.Y_AXIS : BoxLayout.X_AXIS));
+      this.setLayout(
+          verticalLayout
+              ? new MigLayout("fillx, flowy, insets 0", "[fill]")
+              : new MigLayout("fillx, flowx, insets 0", "[fill]"));
       List<StudyPane> studies = getStudyPaneList();
       super.removeAll();
       for (StudyPane studyPane : studies) {
         // Force to resize study pane
         studyPane.setSize(50, 50);
-        studyPane.refreshLayout();
         if (studyPane.getComponentCount() > 0) {
           addPane(studyPane);
         }
@@ -415,7 +419,6 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
       if (studies != null) {
         for (StudyPane studyPane : studies) {
           studyPane.showAllSeries();
-          studyPane.refreshLayout();
           if (studyPane.getComponentCount() > 0) {
             addPane(studyPane);
           }
@@ -436,25 +439,35 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
 
   class StudyPane extends JPanel {
 
+    private final JPanel sub = new JPanel(new WrapLayout());
     final MediaSeriesGroup dicomStudy;
     private final TitledBorder title;
 
     public StudyPane(MediaSeriesGroup dicomStudy) {
+      super(new MigLayout("fillx, flowy, insets 0", "[fill]"));
       if (dicomStudy == null) {
         throw new IllegalArgumentException("Study cannot be null");
       }
-      this.setAlignmentX(LEFT_ALIGNMENT);
-      this.setAlignmentY(TOP_ALIGNMENT);
       this.dicomStudy = dicomStudy;
       title = GuiUtils.getTitledBorder(dicomStudy.toString());
       this.setBorder(
           BorderFactory.createCompoundBorder(GuiUtils.getEmptyBorder(0, 3, 0, 3), title));
       this.setFocusable(false);
-      refreshLayout();
+      this.add(sub, "shrinky 100");
+      this.addComponentListener(
+          new ComponentAdapter() {
+            @Override
+            public void componentResized(ComponentEvent e) {
+              WrapLayout wl = (WrapLayout) sub.getLayout();
+              sub.setPreferredSize(wl.preferredLayoutSize(sub));
+              StudyPane.this.revalidate();
+              StudyPane.this.getParent().repaint();
+            }
+          });
     }
 
     public boolean isSeriesVisible(MediaSeriesGroup series) {
-      for (Component c : this.getComponents()) {
+      for (Component c : sub.getComponents()) {
         if (c instanceof SeriesPane seriesPane && seriesPane.isSeries(series)) {
           return true;
         }
@@ -464,7 +477,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
 
     List<SeriesPane> getSeriesPaneList() {
       ArrayList<SeriesPane> seriesPaneList = new ArrayList<>();
-      for (Component c : this.getComponents()) {
+      for (Component c : sub.getComponents()) {
         if (c instanceof SeriesPane seriesPane) {
           seriesPaneList.add(seriesPane);
         }
@@ -472,19 +485,12 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
       return seriesPaneList;
     }
 
-    private void refreshLayout() {
-      LayoutManager layoutManager = getLayout();
-      if (verticalLayout && !(layoutManager instanceof WrapLayout)
-          || !verticalLayout && !(layoutManager instanceof BoxLayout)) {
-        this.setLayout(
-            verticalLayout
-                ? new WrapLayout(FlowLayout.LEFT)
-                : new BoxLayout(this, BoxLayout.X_AXIS));
-      }
+    private void clearAllSeries() {
+      sub.removeAll();
     }
 
     private void showAllSeries() {
-      super.removeAll();
+      clearAllSeries();
       List<SeriesPane> seriesList = study2series.get(dicomStudy);
       if (seriesList != null) {
         int thumbnailSize =
@@ -501,7 +507,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
 
     public void addPane(SeriesPane seriesPane, int index, int thumbnailSize) {
       seriesPane.updateSize(thumbnailSize);
-      add(seriesPane, index);
+      sub.add(seriesPane, index);
       updateText();
     }
 
@@ -521,7 +527,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
 
     public SeriesPane(MediaSeriesGroup sequence) {
       this.sequence = Objects.requireNonNull(sequence);
-      this.setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
+      this.setLayout(new MigLayout("wrap 1", "[center]"));
       this.setBackground(FlatUIUtils.getUIColor(SeriesSelectionModel.BACKGROUND, Color.LIGHT_GRAY));
       int thumbnailSize =
           BundleTools.SYSTEM_PREFERENCES.getIntProperty(Thumbnail.KEY_SIZE, Thumbnail.DEFAULT_SIZE);
@@ -533,8 +539,6 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
         }
         Optional.ofNullable(thumb).ifPresent(this::add);
       }
-      this.setAlignmentX(LEFT_ALIGNMENT);
-      this.setAlignmentY(TOP_ALIGNMENT);
       String desc = TagD.getTagValue(sequence, Tag.SeriesDescription, String.class);
       label = new JLabel(desc == null ? "" : desc, SwingConstants.CENTER);
       label.setFont(FontItem.MINI.getFont());
@@ -751,7 +755,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
     if (repaintStudy) {
       int thumbnailSize =
           BundleTools.SYSTEM_PREFERENCES.getIntProperty(Thumbnail.KEY_SIZE, Thumbnail.DEFAULT_SIZE);
-      studyPane.removeAll();
+      studyPane.clearAllSeries();
       for (int i = 0, k = 1; i < seriesList.size(); i++) {
         SeriesPane s = seriesList.get(i);
         studyPane.addPane(s, i, thumbnailSize);
@@ -792,7 +796,6 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
     } else {
       StudyPane studyPane = getStudyPane(selectedStudy);
       if (studyPane != null) {
-        studyPane.refreshLayout();
         studyPane.showAllSeries();
         selectedPatient.addPane(studyPane);
         studyPane.doLayout();
@@ -850,7 +853,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
         int thumbnailSize =
             BundleTools.SYSTEM_PREFERENCES.getIntProperty(
                 Thumbnail.KEY_SIZE, Thumbnail.DEFAULT_SIZE);
-        studyPane.removeAll();
+        studyPane.clearAllSeries();
         for (int i = 0; i < seriesList.size(); i++) {
           studyPane.addPane(seriesList.get(i), i, thumbnailSize);
         }

@@ -14,6 +14,8 @@ import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Insets;
+import javax.swing.JScrollPane;
+import javax.swing.SwingUtilities;
 
 /** FlowLayout subclass that fully supports wrapping of components. */
 public class WrapLayout extends FlowLayout {
@@ -31,7 +33,7 @@ public class WrapLayout extends FlowLayout {
   /**
    * Constructs a new <code>FlowLayout</code> with the specified alignment and a default 5-unit
    * horizontal and vertical gap. The value of the alignment argument must be one of <code>
-   * WrapLayout</code>, <code>WrapLayout</code> , or <code>WrapLayout</code>.
+   * WrapLayout</code>, <code>WrapLayout</code>, or <code>WrapLayout</code>.
    *
    * @param align the alignment value
    */
@@ -67,7 +69,7 @@ public class WrapLayout extends FlowLayout {
   }
 
   /**
-   * Returns the minimum dimensions needed to draw the <i>visible</i> components contained in the
+   * Returns the minimum dimensions needed to layout the <i>visible</i> components contained in the
    * specified target container.
    *
    * @param target the component which needs to be laid out
@@ -75,19 +77,21 @@ public class WrapLayout extends FlowLayout {
    */
   @Override
   public Dimension minimumLayoutSize(Container target) {
-    return layoutSize(target, false);
+    Dimension minimum = layoutSize(target, false);
+    minimum.width -= (getHgap() + 1);
+    return minimum;
   }
 
   /**
-   * Returns the minimum or preferred dimension needed to draw the target container.
+   * Returns the minimum or preferred dimension needed to layout the target container.
    *
    * @param target target to get layout size for
-   * @param preferred should prefer size be calculated
-   * @return the dimension to draw the target container
+   * @param preferred should preferred size be calculated
+   * @return the dimension to layout the target container
    */
   private Dimension layoutSize(Container target, boolean preferred) {
     synchronized (target.getTreeLock()) {
-      // Each row must fit with the width allocated to the container.
+      //  Each row must fit with the width allocated to the container.
       // When the container width = 0, the preferred width of the container
       // has not yet been calculated so lets ask for the maximum.
 
@@ -143,10 +147,14 @@ public class WrapLayout extends FlowLayout {
 
       // When using a scroll pane or the DecoratedLookAndFeel we need to
       // make sure the preferred size is less than the size of the
-      // target container so shrinking the container size works
+      //  target container so shrinking the container size works
       // correctly. Removing the horizontal gap is an easy way to do this.
 
-      dim.width -= (hgap + 1);
+      Container scrollPane = SwingUtilities.getAncestorOfClass(JScrollPane.class, target);
+
+      if (scrollPane != null && target.isValid()) {
+        dim.width -= (hgap + 1);
+      }
 
       return dim;
     }
@@ -181,12 +189,11 @@ public class WrapLayout extends FlowLayout {
   }
 
   /*
-   * A new row has been completed. Use the dimensions of this row to update the preferred size for the container.
+   *  A new row has been completed. Use the dimensions of this row
+   *  to update the preferred size for the container.
    *
    * @param dim update the width and height when appropriate
-   *
    * @param rowWidth the width of the row to add
-   *
    * @param rowHeight the height of the row to add
    */
   private void addRow(Dimension dim, int rowWidth, int rowHeight) {
