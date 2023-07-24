@@ -80,7 +80,6 @@ public class SplittingRules {
     mrRules.addSingleFrameTags(Tag.ScanOptions, null);
     mrRules.addSingleFrameTags(Tag.RepetitionTime, null);
     mrRules.addSingleFrameTags(Tag.EchoTime, null);
-    mrRules.addSingleFrameTags(Tag.InversionTime, null);
     mrRules.addSingleFrameTags(Tag.FlipAngle, null);
     // Reuse the condition for ImageOrientationPlane
     mrRules.addSingleFrameTags(TagW.ImageOrientationPlane, allOf);
