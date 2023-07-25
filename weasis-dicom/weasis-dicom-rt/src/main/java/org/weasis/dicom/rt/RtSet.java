@@ -245,111 +245,128 @@ public class RtSet {
       StructureSet stucts = new StructureSet(label, datetime);
 
       // Locate the name and number of each ROI
-      for (Attributes ssROIseq : dcmItems.getSequence(Tag.StructureSetROISequence)) {
-        Structure structure = new Structure();
-        structure.setRoiNumber(ssROIseq.getInt(Tag.ROINumber, -1));
-        structure.setRoiName(ssROIseq.getString(Tag.ROIName));
-        stucts.put(structure.getRoiNumber(), new StructureLayer(structure));
+      Sequence structRoiSeq = dcmItems.getSequence(Tag.StructureSetROISequence);
+      if (structRoiSeq != null) {
+        for (Attributes ssROIseq : structRoiSeq) {
+          Structure structure = new Structure();
+          structure.setRoiNumber(ssROIseq.getInt(Tag.ROINumber, -1));
+          structure.setRoiName(ssROIseq.getString(Tag.ROIName));
+          stucts.put(structure.getRoiNumber(), new StructureLayer(structure));
+        }
       }
 
       structures.put(rtElement, stucts);
 
       // Determine the type of each structure (PTV, organ, external, etc)
-      for (Attributes rtROIObsSeq : dcmItems.getSequence(Tag.RTROIObservationsSequence)) {
-        StructureLayer layer = stucts.get(rtROIObsSeq.getInt(Tag.ReferencedROINumber, -1));
-        if (layer != null) {
-          layer.getStructure().setObservationNumber(rtROIObsSeq.getInt(Tag.ObservationNumber, -1));
-          layer
-              .getStructure()
-              .setRtRoiInterpretedType(rtROIObsSeq.getString(Tag.RTROIInterpretedType));
-          layer
-              .getStructure()
-              .setRoiObservationLabel(rtROIObsSeq.getString(Tag.ROIObservationLabel));
+      Sequence roiObsSeq = dcmItems.getSequence(Tag.RTROIObservationsSequence);
+      if (roiObsSeq != null) {
+        for (Attributes rtROIObsSeq : roiObsSeq) {
+          StructureLayer layer = stucts.get(rtROIObsSeq.getInt(Tag.ReferencedROINumber, -1));
+          if (layer != null) {
+            layer
+                .getStructure()
+                .setObservationNumber(rtROIObsSeq.getInt(Tag.ObservationNumber, -1));
+            layer
+                .getStructure()
+                .setRtRoiInterpretedType(rtROIObsSeq.getString(Tag.RTROIInterpretedType));
+            layer
+                .getStructure()
+                .setRoiObservationLabel(rtROIObsSeq.getString(Tag.ROIObservationLabel));
+          }
         }
       }
 
       // The coordinate data of each ROI is stored within ROIContourSequence
-      for (Attributes roiContourSeq : dcmItems.getSequence(Tag.ROIContourSequence)) {
-        StructureLayer layer = stucts.get(roiContourSeq.getInt(Tag.ReferencedROINumber, -1));
-        if (layer == null) {
-          continue;
-        }
+      Sequence roiContSeq = dcmItems.getSequence(Tag.ROIContourSequence);
+      if (roiContSeq != null) {
+        for (Attributes roiContourSeq : roiContSeq) {
+          StructureLayer layer = stucts.get(roiContourSeq.getInt(Tag.ReferencedROINumber, -1));
+          if (layer == null) {
+            continue;
+          }
 
-        // Get the RGB color triplet for the current ROI if it exists
-        String[] valColors = roiContourSeq.getStrings(Tag.ROIDisplayColor);
-        int[] rgb;
-        if (valColors != null && valColors.length == 3) {
-          rgb =
-              new int[] {
-                Integer.parseInt(valColors[0]),
-                Integer.parseInt(valColors[1]),
-                Integer.parseInt(valColors[2])
-              };
-        } else {
-          rgb = new int[] {rand.nextInt(255), rand.nextInt(255), rand.nextInt(255)};
-        }
+          // Get the RGB color triplet for the current ROI if it exists
+          String[] valColors = roiContourSeq.getStrings(Tag.ROIDisplayColor);
+          int[] rgb;
+          if (valColors != null && valColors.length == 3) {
+            rgb =
+                new int[] {
+                  Integer.parseInt(valColors[0]),
+                  Integer.parseInt(valColors[1]),
+                  Integer.parseInt(valColors[2])
+                };
+          } else {
+            rgb = new int[] {rand.nextInt(255), rand.nextInt(255), rand.nextInt(255)};
+          }
 
-        Color color1 = DicomObjectUtil.getRGBColor(0xFFFF, rgb);
-        Color color2 =
-            new Color(
-                color1.getRed(), color1.getGreen(), color1.getBlue(), structureFillTransparency);
-        layer.getStructure().setColor(color2);
+          Color color1 = DicomObjectUtil.getRGBColor(0xFFFF, rgb);
+          Color color2 =
+              new Color(
+                  color1.getRed(), color1.getGreen(), color1.getBlue(), structureFillTransparency);
+          layer.getStructure().setColor(color2);
 
-        Map<KeyDouble, List<Contour>> planes = new HashMap<>();
+          Map<KeyDouble, List<Contour>> planes = new HashMap<>();
 
-        Sequence cseq = roiContourSeq.getSequence(Tag.ContourSequence);
-        if (cseq != null) {
-          // Locate the contour sequence for each referenced ROI
-          for (Attributes contour : cseq) {
-            // For each plane, initialize a new plane dictionary
-            Contour plane = new Contour(layer);
+          Sequence contourSeq = roiContourSeq.getSequence(Tag.ContourSequence);
+          if (contourSeq != null) {
+            // Locate the contour sequence for each referenced ROI
+            for (Attributes contour : contourSeq) {
+              // For each plane, initialize a new plane dictionary
+              Contour plane = new Contour(layer);
 
-            // Determine all the plane properties
-            plane.setGeometricType(contour.getString(Tag.ContourGeometricType));
-            plane.setContourSlabThickness(
-                DicomMediaUtils.getDoubleFromDicomElement(contour, Tag.ContourSlabThickness, null));
-            plane.setContourOffsetVector(
-                DicomMediaUtils.getDoubleArrayFromDicomElement(
-                    contour, Tag.ContourOffsetVector, null));
-            Integer pts =
-                DicomMediaUtils.getIntegerFromDicomElement(contour, Tag.NumberOfContourPoints, -1);
-            plane.setContourPoints(pts);
+              // Determine all the plane properties
+              plane.setGeometricType(contour.getString(Tag.ContourGeometricType));
+              plane.setContourSlabThickness(
+                  DicomMediaUtils.getDoubleFromDicomElement(
+                      contour, Tag.ContourSlabThickness, null));
+              plane.setContourOffsetVector(
+                  DicomMediaUtils.getDoubleArrayFromDicomElement(
+                      contour, Tag.ContourOffsetVector, null));
+              Integer pts =
+                  DicomMediaUtils.getIntegerFromDicomElement(
+                      contour, Tag.NumberOfContourPoints, -1);
+              plane.setContourPoints(pts);
 
-            double[] points = contour.getDoubles(Tag.ContourData);
-            if (points != null && points.length % 3 == 0) {
-              plane.setPoints(points);
-              if (pts == -1) {
-                plane.setContourPoints(points.length / 3);
+              double[] points = contour.getDoubles(Tag.ContourData);
+              if (points != null && points.length % 3 == 0) {
+                plane.setPoints(points);
+                if (pts == -1) {
+                  plane.setContourPoints(points.length / 3);
+                }
               }
-            }
 
-            // Each plane which coincides with an image slice will have a unique ID
-            // take the first one
-            for (Attributes attributes : contour.getSequence(Tag.ContourImageSequence)) {
-              String sopUID = attributes.getString(Tag.ReferencedSOPInstanceUID);
-              if (StringUtil.hasText(sopUID)) {
-                ArrayList<Contour> pls = contourMap.computeIfAbsent(sopUID, k -> new ArrayList<>());
-                pls.add(plane);
+              // Each plane which coincides with an image slice will have a unique ID
+              // take the first one
+              Sequence contImgSeq = contour.getSequence(Tag.ContourImageSequence);
+              if (contImgSeq != null) {
+                for (Attributes attributes : contImgSeq) {
+                  String sopUID = attributes.getString(Tag.ReferencedSOPInstanceUID);
+                  if (StringUtil.hasText(sopUID)) {
+                    ArrayList<Contour> pls =
+                        contourMap.computeIfAbsent(sopUID, k -> new ArrayList<>());
+                    pls.add(plane);
+                  }
+                }
               }
-            }
 
-            // Add each plane to the planes' dictionary of the current ROI
-            KeyDouble z = new KeyDouble(plane.getCoordinateZ());
+              // Add each plane to the planes' dictionary of the current ROI
+              KeyDouble z = new KeyDouble(plane.getCoordinateZ());
 
-            // If there are no contour on specific z position
-            if (!planes.containsKey(z)) {
-              ArrayList<Contour> list = new ArrayList<>();
-              list.add(plane);
-              planes.put(z, list);
+              // If there are no contour on specific z position
+              if (!planes.containsKey(z)) {
+                ArrayList<Contour> list = new ArrayList<>();
+                list.add(plane);
+                planes.put(z, list);
+              }
             }
           }
+
+          // Calculate the plane thickness for the current ROI
+          layer.getStructure().setThickness(calculatePlaneThickness(planes));
+
+          // Add the planes' dictionary to the current ROI
+          layer.getStructure().setPlanes(planes);
         }
-
-        // Calculate the plane thickness for the current ROI
-        layer.getStructure().setThickness(calculatePlaneThickness(planes));
-
-        // Add the planes' dictionary to the current ROI
-        layer.getStructure().setPlanes(planes);
       }
     }
   }
@@ -399,47 +416,50 @@ public class RtSet {
       plan.setRxDose(0.0);
 
       // When DoseReferenceSequence is defined - get prescribed dose from there (in cGy unit)
-      for (Attributes doseRef : dcmItems.getSequence(Tag.DoseReferenceSequence)) {
+      Sequence doseRefSeq = dcmItems.getSequence(Tag.DoseReferenceSequence);
+      if (doseRefSeq != null) {
+        for (Attributes doseRef : doseRefSeq) {
 
-        String doseRefStructType = doseRef.getString(Tag.DoseReferenceStructureType);
+          String doseRefStructType = doseRef.getString(Tag.DoseReferenceStructureType);
 
-        // Prescribed dose in Gy
-        Double targetDose =
-            DicomMediaUtils.getDoubleFromDicomElement(doseRef, Tag.TargetPrescriptionDose, null);
+          // Prescribed dose in Gy
+          Double targetDose =
+              DicomMediaUtils.getDoubleFromDicomElement(doseRef, Tag.TargetPrescriptionDose, null);
 
-        if (targetDose != null) {
+          if (targetDose != null) {
 
-          // DICOM specifies prescription dose In Gy -> convert to cGy
-          double rxDose = targetDose * 100;
+            // DICOM specifies prescription dose In Gy -> convert to cGy
+            double rxDose = targetDose * 100;
 
-          // POINT (dose reference point specified as ROI)
-          if ("POINT".equals(doseRefStructType)) {
-            // NOOP
-            LOGGER.info("Not supported: dose reference point specified as ROI");
-          }
+            // POINT (dose reference point specified as ROI)
+            if ("POINT".equals(doseRefStructType)) {
+              // NOOP
+              LOGGER.info("Not supported: dose reference point specified as ROI");
+            }
 
-          // VOLUME structure is associated with dose (dose reference volume specified as ROI)
-          // SITE structure is associated with dose (dose reference clinical site)
-          // COORDINATES (point specified by Dose Reference Point Coordinates (300A,0018))
-          else if ("VOLUME".equals(doseRefStructType)
-              || "SITE".equals(doseRefStructType)
-              || "COORDINATES".equals(doseRefStructType)) {
+            // VOLUME structure is associated with dose (dose reference volume specified as ROI)
+            // SITE structure is associated with dose (dose reference clinical site)
+            // COORDINATES (point specified by Dose Reference Point Coordinates (300A,0018))
+            else if ("VOLUME".equals(doseRefStructType)
+                || "SITE".equals(doseRefStructType)
+                || "COORDINATES".equals(doseRefStructType)) {
 
-            // Keep the highest prescribed dose
-            if (plan.getRxDose() != null && rxDose > plan.getRxDose()) {
-              plan.setRxDose(rxDose);
+              // Keep the highest prescribed dose
+              if (plan.getRxDose() != null && rxDose > plan.getRxDose()) {
+                plan.setRxDose(rxDose);
 
-              // Add user defined dose description to plan name
-              String doseRefDesc = doseRef.getString(Tag.DoseReferenceDescription);
-              if (StringUtil.hasText(doseRefDesc)) {
-                plan.appendName(doseRefDesc);
+                // Add user defined dose description to plan name
+                String doseRefDesc = doseRef.getString(Tag.DoseReferenceDescription);
+                if (StringUtil.hasText(doseRefDesc)) {
+                  plan.appendName(doseRefDesc);
+                }
               }
             }
           }
+          // TODO: if target prescribed dose is not defined it should be possible to get the dose
+          // value from
+          // Dose Reference Point Coordinates
         }
-        // TODO: if target prescribed dose is not defined it should be possible to get the dose
-        // value from
-        // Dose Reference Point Coordinates
       }
 
       // When fraction group sequence is defined get prescribed dose from there (in cGy unit)
@@ -449,13 +469,16 @@ public class RtSet {
             DicomMediaUtils.getIntegerFromDicomElement(
                 fractionGroup, Tag.NumberOfFractionsPlanned, null);
         if (fx != null) {
-          for (Attributes beam : fractionGroup.getSequence(Tag.ReferencedBeamSequence)) {
-
-            if (beam.contains(Tag.BeamDose) && beam.containsValue(Tag.BeamDose)) {
-              Double rxDose = plan.getRxDose();
-              Double beamDose = DicomMediaUtils.getDoubleFromDicomElement(beam, Tag.BeamDose, null);
-              if (beamDose != null && rxDose != null) {
-                plan.setRxDose(rxDose + (beamDose * fx * 100));
+          Sequence refBeamSeq = fractionGroup.getSequence(Tag.ReferencedBeamSequence);
+          if (refBeamSeq != null) {
+            for (Attributes beam : refBeamSeq) {
+              if (beam.contains(Tag.BeamDose) && beam.containsValue(Tag.BeamDose)) {
+                Double rxDose = plan.getRxDose();
+                Double beamDose =
+                    DicomMediaUtils.getDoubleFromDicomElement(beam, Tag.BeamDose, null);
+                if (beamDose != null && rxDose != null) {
+                  plan.setRxDose(rxDose + (beamDose * fx * 100));
+                }
               }
             }
           }
@@ -480,8 +503,11 @@ public class RtSet {
       // Dose is Referencing Plan
       Plan plan = null;
       String referencedPlanUid = "";
-      for (Attributes refRtPlanSeq : dcmItems.getSequence(Tag.ReferencedRTPlanSequence)) {
-        referencedPlanUid = refRtPlanSeq.getString(Tag.ReferencedSOPInstanceUID);
+      Sequence refPlanSeq = dcmItems.getSequence(Tag.ReferencedRTPlanSequence);
+      if (refPlanSeq != null) {
+        for (Attributes refRtPlanSeq : refPlanSeq) {
+          referencedPlanUid = refRtPlanSeq.getString(Tag.ReferencedSOPInstanceUID);
+        }
       }
 
       // Plan is already loaded
