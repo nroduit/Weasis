@@ -1,168 +1,120 @@
+/*
+ * Copyright (c) 2023 Weasis Team and other contributors.
+ *
+ * This program and the accompanying materials are made available under the terms of the Eclipse
+ * Public License 2.0 which is available at https://www.eclipse.org/legal/epl-2.0, or the Apache
+ * License, Version 2.0 which is available at https://www.apache.org/licenses/LICENSE-2.0.
+ *
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+ */
 package org.weasis.base.ui.gui;
 
-import java.awt.Component;
-import java.awt.Dimension;
+import com.formdev.flatlaf.extras.FlatSVGIcon;
+import java.awt.BorderLayout;
+import java.awt.FlowLayout;
 import java.awt.Frame;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
-import java.awt.Insets;
-import java.awt.event.ActionEvent;
+import java.awt.Image;
 import java.awt.event.WindowEvent;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
-import java.util.stream.Stream;
-
-import javax.swing.AbstractAction;
-import javax.swing.ButtonModel;
-import javax.swing.DefaultButtonModel;
+import javax.swing.Icon;
+import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JDialog;
 import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.JTextArea;
+import javax.swing.JTabbedPane;
+import javax.swing.SwingConstants;
 import javax.swing.WindowConstants;
-import javax.swing.text.PlainDocument;
-
 import org.weasis.base.ui.Messages;
+import org.weasis.core.api.gui.util.AbstractTabLicense;
+import org.weasis.core.api.gui.util.GUIEntry;
+import org.weasis.core.api.gui.util.GuiUtils;
 
 /**
  * @author João Bolsson (joaobolsson@animati.com.br)
  * @author Pedro Costa (pedro.costa@animati.com.br)
  * @version 2023, May 04.
  */
-public class LicencesDialog extends JDialog{
+public class LicencesDialog extends JDialog {
 
-    private final JTextArea textField;
-    private final JScrollPane textScroll;
-    private final JButton btnTest;
-    private final JButton okButton;
-    private final JButton cancelButton;
-    private LicenseDialogController licenseDialogController;
+  private final JButton jButtonClose;
+  private final JTabbedPane tabbedPane;
 
-    /**
-     * Creates a dialog to insert third party licences.
-     *
-     * @param owner Dialog parent.
-     */
-    public LicencesDialog(final Frame owner) {
-        super(owner, Messages.getString("LicencesDialog.title"), true);
+  /**
+   * Creates a dialog to insert third party licences.
+   *
+   * @param owner Dialog parent.
+   * @param list
+   */
+  public LicencesDialog(final Frame owner, List<AbstractTabLicense> list) {
+    super(owner, Messages.getString("LicencesDialog.title"), true);
+    this.jButtonClose = new JButton(Messages.getString("WeasisAboutBox.close"));
+    jButtonClose.addActionListener(e -> close());
+    this.tabbedPane = new JTabbedPane(SwingConstants.LEFT);
+    tabbedPane.putClientProperty("JTabbedPane.showTabSeparators", true);
+    tabbedPane.putClientProperty("JTabbedPane.tabIconPlacement", SwingConstants.TOP);
+    initGUI(list);
+    pack();
+  }
 
-        textField = new JTextArea();
-        textField.setLineWrap(false);
-        textField.setDocument(new PlainDocument());
+  private void initGUI(List<AbstractTabLicense> list) {
+    setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
 
-        textScroll = new JScrollPane(textField);
+    JPanel panelRoot = new JPanel();
+    panelRoot.setLayout(new BorderLayout());
 
-        btnTest = new JButton(Messages.getString("LicencesDialog.btnTest"));
-        DefaultButtonModel newModel = new DefaultButtonModel();
-        newModel.setActionCommand(LicenseDialogController.TEST_COMMAND);
-        newModel.addActionListener(new AbstractAction() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                licenseDialogController.test();
-            }
-        });
-        btnTest.setModel(newModel);
+    int iconSize = GuiUtils.getScaleLength(64);
 
-        okButton = new JButton(Messages.getString("LicencesDialog.btnSave"));
-        newModel = new DefaultButtonModel();
-        newModel.setActionCommand(LicenseDialogController.OK_COMMAND);
-        newModel.addActionListener(new AbstractAction() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                licenseDialogController.save();
-            }
-        });
-        okButton.setModel(newModel);
-
-        cancelButton = new JButton(Messages.getString("LicencesDialog.btnCancel"));
-        newModel = new DefaultButtonModel();
-        newModel.setActionCommand(LicenseDialogController.CANCEL_COMMAND);
-        cancelButton.setModel(newModel);
-
-        licenseDialogController = new LicenseDialogController(textField.getDocument(), getButtonModels(), s -> {
-            if (s == LicenseDialogController.STATUS.START_PROCESSING) {
-                textField.setEnabled(false);
-            } else if (s == LicenseDialogController.STATUS.END_PROCESSING) {
-                textField.setEnabled(true);
-            }
-        });
-
-        initGUI();
-        pack();
-
+    for (AbstractTabLicense tabLicense : list) {
+      addEntry(tabLicense, iconSize);
     }
 
-    private ButtonModel[] getButtonModels() {
-        Component[] components = this.getComponents();
-        List<ButtonModel> bmList = new ArrayList<ButtonModel>();
-        try (Stream<Component> s = Arrays.asList(components).stream()) {
-            s.forEach( c -> {
-                if (c instanceof JButton) {
-                    bmList.add(((JButton)c).getModel());
-                }
-            });
-        }
-        return bmList.toArray(new ButtonModel[bmList.size()]);
+    panelRoot.add(tabbedPane, BorderLayout.CENTER);
+    JPanel jPanelClose = GuiUtils.getFlowLayoutPanel(FlowLayout.TRAILING, 25, 10, jButtonClose);
+    panelRoot.add(jPanelClose, BorderLayout.SOUTH);
+
+    getContentPane().add(panelRoot, null);
+  }
+
+  // Overridden so we can exit when window is closed
+  @Override
+  protected void processWindowEvent(WindowEvent e) {
+    if (WindowEvent.WINDOW_CLOSING == e.getID()) {
+      close();
     }
+    super.processWindowEvent(e);
+  }
 
-    private void initGUI() {
-        setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
+  private void close() {
+    dispose();
+  }
 
-        GridBagLayout gridBagLayout = new GridBagLayout();
-        setLayout(gridBagLayout);
-        setSize(new Dimension(500, 350));
+  private void addEntry(AbstractTabLicense tabLicense, int iconSize) {
+    GUIEntry entry = tabLicense.getGuiEntry();
+    String pattern =
+        """
+                <html><center>%s<br><small>%s</small></center></html>
+                """;
+    tabbedPane.addTab(
+        String.format(pattern, entry.getUIName(), entry.getDescription()),
+        resizeIcon(entry.getIcon(), iconSize),
+        tabLicense);
+  }
 
-        GridBagConstraints gbc_textField = new GridBagConstraints();
-        gbc_textField.anchor = GridBagConstraints.LINE_START;
-        gbc_textField.insets = new Insets(5, 5, 5, 5);
-        gbc_textField.fill = GridBagConstraints.HORIZONTAL;
-        gbc_textField.gridx = 1;
-        gbc_textField.gridy = 0;
-        textScroll.setPreferredSize(new Dimension(400, 200));
-        add(textScroll, gbc_textField);
+  private Icon resizeIcon(Icon icon, int iconSize) {
+    Icon resizeIcon = icon;
+    if (icon.getIconWidth() != iconSize) {
+      int iconHeight = icon.getIconHeight() * iconSize / icon.getIconWidth();
+      if (icon instanceof ImageIcon imageIcon) {
+        Image scaleImage =
+            imageIcon
+                .getImage()
+                .getScaledInstance(iconSize, iconHeight, java.awt.Image.SCALE_SMOOTH);
+        resizeIcon = new ImageIcon(scaleImage);
 
-
-        GridBagConstraints gbc_btnNewButton = new GridBagConstraints();
-        gbc_btnNewButton.gridwidth = 3;
-        gbc_btnNewButton.anchor = GridBagConstraints.WEST;
-        gbc_btnNewButton.insets = new Insets(5, 5, 5, 5);
-        gbc_btnNewButton.gridx = 0;
-        gbc_btnNewButton.gridy = 1;
-        add(btnTest, gbc_btnNewButton);
-        //btnTest.addActionListener(e -> testAction());
-
-        //okButton.addActionListener(e -> okAction());
-
-        cancelButton.addActionListener(e -> close());
-
-        GridBagConstraints gbc_btnOptions = new GridBagConstraints();
-        gbc_btnOptions.gridwidth = 2;
-        gbc_btnOptions.weightx = 1;
-        gbc_btnOptions.anchor = GridBagConstraints.EAST;
-        gbc_btnOptions.insets = new Insets(5, 5, 5, 5);
-        gbc_btnOptions.gridx = 0;
-        gbc_btnOptions.gridy = 1;
-
-        JPanel optionsButtons = new JPanel();
-        optionsButtons.add(cancelButton);
-        optionsButtons.add(okButton);
-
-        add(optionsButtons, gbc_btnOptions);
+      } else if (icon instanceof FlatSVGIcon flatSVGIcon) {
+        resizeIcon = flatSVGIcon.derive(iconSize, iconHeight);
+      }
     }
-
-    // Overridden so we can exit when window is closed
-    @Override
-    protected void processWindowEvent(WindowEvent e) {
-        if (WindowEvent.WINDOW_CLOSING == e.getID()) {
-            close();
-        }
-        super.processWindowEvent(e);
-    }
-
-    private void close() {
-        dispose();
-    }
-
+    return resizeIcon;
+  }
 }

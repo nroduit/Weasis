@@ -58,7 +58,6 @@ public class WeasisAboutBox extends JDialog {
 
   private void init() {
     setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
-    setModal(true);
     JPanel panelRoot = new JPanel();
     panelRoot.setLayout(new BorderLayout());
 

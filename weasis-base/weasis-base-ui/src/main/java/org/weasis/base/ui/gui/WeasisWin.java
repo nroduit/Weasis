@@ -68,6 +68,7 @@ import java.net.http.HttpResponse.BodyHandlers;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Hashtable;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -98,6 +99,10 @@ import javax.swing.KeyStroke;
 import javax.swing.RootPaneContainer;
 import javax.swing.TransferHandler.DropLocation;
 import javax.swing.WindowConstants;
+import org.osgi.framework.BundleContext;
+import org.osgi.framework.FrameworkUtil;
+import org.osgi.framework.InvalidSyntaxException;
+import org.osgi.framework.ServiceReference;
 import org.osgi.framework.Version;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -109,6 +114,8 @@ import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.core.api.explorer.model.TreeModel;
 import org.weasis.core.api.explorer.model.TreeModelNode;
 import org.weasis.core.api.gui.Insertable;
+import org.weasis.core.api.gui.LicenseTabFactory;
+import org.weasis.core.api.gui.util.AbstractTabLicense;
 import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.gui.util.DynamicMenu;
 import org.weasis.core.api.gui.util.GuiExecutor;
@@ -751,14 +758,34 @@ public class WeasisWin {
     helpMenuItem.add(reportMenuItem);
     helpMenuItem.add(new JSeparator());
 
-    final JMenuItem licencesMenuItem = new JMenuItem(Messages.getString("LicencesDialog.title"));
-    licencesMenuItem.addActionListener(e -> {
-      ColorLayerUI layer = ColorLayerUI.createTransparentLayerUI(rootPaneContainer);
-      LicencesDialog dialog = new LicencesDialog(getFrame());
-      ColorLayerUI.showCenterScreen(dialog, layer);
-    });
-    helpMenuItem.add(licencesMenuItem);
-    helpMenuItem.add(new JSeparator());
+    if (BundleTools.SYSTEM_PREFERENCES.getBooleanProperty("weasis.plugins.license", false)) {
+      final JMenuItem licencesMenuItem = new JMenuItem(Messages.getString("LicencesDialog.title"));
+      licencesMenuItem.addActionListener(
+          e -> {
+            ColorLayerUI layer = ColorLayerUI.createTransparentLayerUI(rootPaneContainer);
+            final List<AbstractTabLicense> list = new ArrayList<>();
+            try {
+              BundleContext context = FrameworkUtil.getBundle(this.getClass()).getBundleContext();
+              Hashtable<String, Object> properties = new Hashtable<>();
+              for (ServiceReference<LicenseTabFactory> service :
+                  context.getServiceReferences(LicenseTabFactory.class, null)) {
+                LicenseTabFactory factory = context.getService(service);
+                if (factory != null) {
+                  AbstractTabLicense page = factory.createInstance(properties);
+                  if (page != null) {
+                    list.add(page);
+                  }
+                }
+              }
+            } catch (InvalidSyntaxException ex) {
+              LOGGER.error("Get License from OSGI service", ex);
+            }
+            LicencesDialog dialog = new LicencesDialog(getFrame(), list);
+            ColorLayerUI.showCenterScreen(dialog, layer);
+          });
+      helpMenuItem.add(licencesMenuItem);
+      helpMenuItem.add(new JSeparator());
+    }
 
     final JMenuItem aboutMenuItem =
         new JMenuItem(

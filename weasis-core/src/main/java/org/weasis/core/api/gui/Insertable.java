@@ -23,6 +23,7 @@ public interface Insertable {
     TOOL_EXT,
     TOOLBAR,
     EMPTY,
+    LICENSE,
     PREFERENCES
   }
 
