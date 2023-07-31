@@ -60,11 +60,13 @@ public class BundleTools {
   public static final String LINUX_WINDOWS_DECORATION = "weasis.linux.windows.decoration";
 
   public static final List<Codec> CODEC_PLUGINS = Collections.synchronizedList(new ArrayList<>());
+
   /**
    * This the persistence used at launch which can be stored remotely. These are the preferences
    * necessary for launching unlike the preferences associated with the plugins.
    */
   public static final WProperties SYSTEM_PREFERENCES = new WProperties();
+
   /**
    * This the common local persistence for UI. It should be used only for preferences for which
    * remote storage makes no sense.

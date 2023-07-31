@@ -40,7 +40,7 @@ public class WProperties extends Properties {
     return null;
   }
 
-  // Get value from: 1) Local preferences 2) Java System properties 3) config.properties
+  // Get value from: 1) Local preferences 2) Java System properties 3) base.json
   @Override
   public String getProperty(String key) {
     String value = super.getProperty(key);

@@ -24,6 +24,7 @@ public class AffineTransformOp extends AbstractOp {
   public static final String OP_NAME = Messages.getString("AffineTransformOp.affine_op");
 
   public static final double[] identityMatrix = new double[] {1.0, 0.0, 0.0, 0.0, 1.0, 0.0};
+
   /**
    * Set an affine transformation (Required parameter).
    *

@@ -3,10 +3,6 @@
 #
 # Initial script by Nicolas Roduit
 
-# Specify the required Java version.
-# Only major version is checked. Minor version or any other version string info is left out.
-REQUIRED_TEXT_VERSION=20
-
 # Build Parameters
 REVISON_INC="1"
 PACKAGE=YES
@@ -135,7 +131,7 @@ fi
 # Set custom JDK path (>= JDK 11)
 export JAVA_HOME=$JDK_PATH_UNIX
 
-WEASIS_VERSION=$(grep -i "weasis.version=" "$INPUT_PATH_UNIX/weasis/conf/config.properties" | sed 's/^.*=//')
+WEASIS_VERSION=$(grep -i "weasis.version=" "${curPath}/build.properties" | sed 's/^.*=//')
 
 echo System        = "${ARC_OS}"
 echo JDK path        = "${JDK_PATH_UNIX}"
@@ -146,6 +142,9 @@ then
   echo Input unix path      = "${INPUT_PATH_UNIX}"
 fi
 
+# Specify the required Java version.
+# Only major version is checked. Minor version or any other version string info is left out.
+REQUIRED_TEXT_VERSION=$(grep -i "jdk.version=" "${curPath}/build.properties" | sed 's/^.*=//')
 # Extract major version number for comparisons from the required version string.
 # In order to do that, remove leading "1." if exists, and minor and security versions.
 REQUIRED_MAJOR_VERSION=$(echo $REQUIRED_TEXT_VERSION | sed -e 's/^1\.//' -e 's/\..*//')

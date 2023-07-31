@@ -65,6 +65,7 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
   //  private DefaultMutableTreeNode drawings;
 
   private DefaultMutableTreeNode minAnnotations;
+
   //  private DefaultMutableTreeNode orientationCube;
 
   public DisplayTool(String pluginName) {

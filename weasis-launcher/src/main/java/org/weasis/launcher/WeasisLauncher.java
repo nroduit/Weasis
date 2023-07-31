@@ -108,17 +108,19 @@ public class WeasisLauncher {
 
   /** The property name used to specify whether the launcher should install a shutdown hook. */
   public static final String SHUTDOWN_HOOK_PROP = "felix.shutdown.hook";
+
   /**
    * The property name used to specify a URL to the configuration property file to be used for the
    * created the framework instance.
    */
   public static final String CONFIG_PROPERTIES_PROP = "felix.config.properties";
-  /** The default name used for the configuration properties file. */
-  public static final String CONFIG_PROPERTIES_FILE_VALUE = "config.properties";
-  /** The property name used to specify a URL to the extended property file. */
+
+  /** The default name used for the configuration file. */
+  public static final String CONFIG_PROPERTIES_FILE_VALUE = "base.json";
+
+  /** The property name used to specify a URL to the extended configuration file. */
   public static final String EXTENDED_PROPERTIES_PROP = "felix.extended.config.properties";
-  /** The default name used for the extended properties file. */
-  public static final String EXTENDED_PROPERTIES_FILE_VALUE = "ext-config.properties"; // NON-NLS
+
   /** Name of the configuration directory. */
   public static final String CONFIG_DIRECTORY = "conf";
 
@@ -750,7 +752,7 @@ public class WeasisLauncher {
     // General Preferences priority order:
     // 1) Last value (does not exist for first launch of Weasis in an operating system session).
     // 2) Java System property
-    // 3) Property defined in config.properties or in ext-config.properties
+    // 3) Property defined in base.json or in other profile json files
     // 4) default value
     final String lang =
         getGeneralProperty(

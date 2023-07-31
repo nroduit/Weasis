@@ -133,7 +133,7 @@ public class LanguageSetting extends AbstractItemDialogPage {
     BundleTools.SYSTEM_PREFERENCES.resetProperty("locale.lang.code", "en"); // NON-NLS
     // Reset cache of locale format
     LocalUtil.setLocaleFormat(null);
-    // Reset format to the config.properties value or null (default system value)
+    // Reset format to the base.json value or null (default system value)
     BundleTools.SYSTEM_PREFERENCES.resetProperty("locale.format.code", null);
 
     initialize();

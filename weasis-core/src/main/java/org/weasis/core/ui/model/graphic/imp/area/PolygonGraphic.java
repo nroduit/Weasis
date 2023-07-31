@@ -320,6 +320,7 @@ public class PolygonGraphic extends AbstractDragGraphicArea {
   protected final Area getPathArea() {
     return getPathArea(pts);
   }
+
   /**
    * Construct a polygon Area which represents a non-self-intersecting shape using a path Winding
    * Rule : WIND_NON_ZERO

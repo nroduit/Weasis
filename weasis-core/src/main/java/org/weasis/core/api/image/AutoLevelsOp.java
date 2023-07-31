@@ -20,6 +20,7 @@ import org.weasis.opencv.op.ImageProcessor;
 public class AutoLevelsOp extends AbstractOp {
 
   public static final String OP_NAME = Messages.getString("AutoLevelsOp.auto_ct");
+
   /**
    * Set whether auto levels is applied to the image (Required parameter).
    *

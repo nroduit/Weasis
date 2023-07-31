@@ -160,6 +160,7 @@ public class TagW {
 
   /** DICOM common tags */
   public static final TagW SubseriesInstanceUID = new TagW("SubseriesInstanceUID", TagType.STRING);
+
   // One or more Items shall be included in this sequence
   public static final TagW VOILUTsExplanation =
       new TagW("VOILUTsExplanation", TagType.STRING, 1, Integer.MAX_VALUE);

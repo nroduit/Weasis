@@ -136,6 +136,7 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
 
   /** The current focused <code>ImagePane</code>. The default is 0. */
   protected ViewCanvas<E> selectedImagePane = null;
+
   /** The array of display panes located in this image view panel. */
   protected final ArrayList<ViewCanvas<E>> view2ds;
 
