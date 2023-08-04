@@ -6,7 +6,7 @@
     },
     {
       "code": "felix.auto.start.40",
-      "value": "file:${maven.localRepository}/org/weasis/base/weasis-base-explorer/${app.version}/weasis-base-explorer-${app.version}.jar",
+      "value": "${dollar}{weasis.codebase.url}/bundle/weasis-base-explorer-${app.version}.jar${xz.ext}",
       "description": "Replace DICOM explorer by a standard image explorer"
     },
     {
@@ -28,6 +28,10 @@
     {
       "code": "weasis.name",
       "value": "Weasis Image Explorer"
+    },
+    {
+      "code": "weasis.show.disclaimer",
+      "value": "false"
     },
     {
       "code": "weasis.theme",

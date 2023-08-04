@@ -9,28 +9,28 @@
     },
     {
       "code": "org.osgi.framework.system.packages.extra",
-      "value": "${framework.system.packages.extra.basic}",
+      "value": "${dollar}{framework.system.packages.extra.basic}",
       "description": "List of additional packages for OSGI framework (by default only java.*  is visible in main class loader)",
       "type": "A",
       "category": "FELIX_CONFIG"
     },
     {
       "code": "felix.cache.rootdir",
-      "value": "${user.home}",
+      "value": "${dollar}{user.home}",
       "description": "Base directory of the bundle cache",
       "type": "A",
       "category": "FELIX_CONFIG"
     },
     {
       "code": "org.osgi.framework.storage",
-      "value": "${felix.cache.rootdir}/.weasis/cache-dev",
+      "value": "${dollar}{felix.cache.rootdir}/.weasis/cache",
       "description": "Location of the bundle cache (if not absolute concatenate with felix.cache.rootdir)",
       "type": "A",
       "category": "FELIX_CONFIG"
     },
     {
       "code": "org.osgi.framework.storage.clean",
-      "value": "onFirstInit",
+      "value": "none",
       "description": "Controls whether the bundle cache is flushed the first time the framework is initialized (Possible values are \"none\" and \"onFirstInit\")",
       "type": "A",
       "category": "FELIX_CONFIG"
@@ -51,161 +51,161 @@
     },
     {
       "code": "felix.auto.start.1",
-      "value": "file:${maven.localRepository}/org/apache/felix/org.apache.felix.gogo.runtime/${felix.gogo.version}/org.apache.felix.gogo.runtime-${felix.gogo.version}.jar",
+      "value": "${dollar}{weasis.codebase.url}/bundle/org.apache.felix.gogo.runtime-${felix.gogo.version}.jar${xz.ext}",
       "description": "OSGI runtime",
       "type": "A",
       "category": "FELIX_INSTALL"
     },
     {
       "code": "felix.auto.start.2",
-      "value": "file:${maven.localRepository}/org/slf4j/slf4j-api/${slf4j.version}/slf4j-api-${slf4j.version}.jar file:${maven.localRepository}/org/apache/sling/org.apache.sling.commons.log/${sling.commons.log.version}/org.apache.sling.commons.log-${sling.commons.log.version}.jar",
+      "value": "${dollar}{weasis.codebase.url}/bundle/slf4j-api-${slf4j.version}.jar${xz.ext} ${dollar}{weasis.codebase.url}/bundle/org.apache.sling.commons.log-${sling.commons.log.version}.jar${xz.ext}",
       "description": "OSGI logger",
       "type": "A",
       "category": "FELIX_INSTALL"
     },
     {
       "code": "felix.auto.start.3",
-      "value": "file:${maven.localRepository}/org/apache/felix/org.apache.felix.gogo.command/${felix.gogo.command.version}/org.apache.felix.gogo.command-${felix.gogo.command.version}.jar file:${maven.localRepository}/org/apache/felix/org.apache.felix.gogo.shell/${felix.gogo.shell.version}/org.apache.felix.gogo.shell-${felix.gogo.shell.version}.jar",
+      "value": "${dollar}{weasis.codebase.url}/bundle/org.apache.felix.gogo.command-${felix.gogo.command.version}.jar${xz.ext} ${dollar}{weasis.codebase.url}/bundle/org.apache.felix.gogo.shell-${felix.gogo.shell.version}.jar${xz.ext}",
       "description": "OSGI command and shell",
       "type": "A",
       "category": "FELIX_INSTALL"
     },
     {
       "code": "felix.auto.start.4",
-      "value": "file:${maven.localRepository}/org/apache/felix/org.apache.felix.bundlerepository/${felix.bundlerepository.version}/org.apache.felix.bundlerepository-${felix.bundlerepository.version}.jar file:${maven.localRepository}/org/glassfish/jakarta.json/${javax.json.version}/jakarta.json-${javax.json.version}.jar file:${maven.localRepository}/org/osgi/osgi.promise/${osgi.promise.version}/osgi.promise-${osgi.promise.version}.jar",
+      "value": "${dollar}{weasis.codebase.url}/bundle/org.apache.felix.bundlerepository-${felix.bundlerepository.version}.jar${xz.ext} ${dollar}{weasis.codebase.url}/bundle/jakarta.json-${javax.json.version}.jar${xz.ext} ${dollar}{weasis.codebase.url}/bundle/osgi.promise-${osgi.promise.version}.jar${xz.ext}",
       "description": "OSGI bundle repository",
       "type": "A",
       "category": "FELIX_INSTALL"
     },
     {
       "code": "felix.auto.start.5",
-      "value": "file:${maven.localRepository}/org/osgi/org.osgi.service.component/${osgi.component.version}/org.osgi.service.component-${osgi.component.version}.jar file:${maven.localRepository}/org/apache/felix/org.apache.felix.configadmin/${felix.configadmin.version}/org.apache.felix.configadmin-${felix.configadmin.version}.jar file:${maven.localRepository}/org/apache/felix/org.apache.felix.prefs/${felix.prefs.version}/org.apache.felix.prefs-${felix.prefs.version}.jar file:${maven.localRepository}/org/apache/felix/org.apache.felix.scr/${felix.scr.version}/org.apache.felix.scr-${felix.scr.version}.jar file:${maven.localRepository}/org/apache/felix/org.apache.felix.metatype/${felix.metatype.version}/org.apache.felix.metatype-${felix.metatype.version}.jar",
+      "value": "${dollar}{weasis.codebase.url}/bundle/org.osgi.service.component-${osgi.component.version}.jar${xz.ext} ${dollar}{weasis.codebase.url}/bundle/org.apache.felix.configadmin-${felix.configadmin.version}.jar${xz.ext} ${dollar}{weasis.codebase.url}/bundle/org.apache.felix.prefs-${felix.prefs.version}.jar${xz.ext} ${dollar}{weasis.codebase.url}/bundle/org.apache.felix.scr-${felix.scr.version}.jar${xz.ext} ${dollar}{weasis.codebase.url}/bundle/org.apache.felix.metatype-${felix.metatype.version}.jar${xz.ext}",
       "description": "OSGI configuration and preferences",
       "type": "A",
       "category": "FELIX_INSTALL"
     },
     {
       "code": "felix.auto.start.7",
-      "value": "file:${maven.localRepository}/com/miglayout/miglayout-core/${miglayout.version}/miglayout-core-${miglayout.version}.jar file:${maven.localRepository}/com/miglayout/miglayout-swing/${miglayout.version}/miglayout-swing-${miglayout.version}.jar file:${maven.localRepository}/org/weasis/thirdparty/jaxb-osgi/${jaxb.osgi.version}/jaxb-osgi-${jaxb.osgi.version}.jar",
+      "value": "${dollar}{weasis.codebase.url}/bundle/miglayout-core-${miglayout.version}.jar${xz.ext} ${dollar}{weasis.codebase.url}/bundle/miglayout-swing-${miglayout.version}.jar${xz.ext} ${dollar}{weasis.codebase.url}/bundle/jaxb-osgi-${jaxb.osgi.version}.jar${xz.ext}",
       "description": "JAXB and Miglayout",
       "type": "A",
       "category": "FELIX_INSTALL"
     },
     {
       "code": "felix.auto.start.10",
-      "value": "file:${maven.localRepository}/org/weasis/thirdparty/docking-frames/${dockingframes.version}/docking-frames-${dockingframes.version}.jar file:${maven.localRepository}/org/weasis/core/weasis-core-img/${weasis.core.img.version}/weasis-core-img-${weasis.core.img.version}-jdk11.jar file:${maven.localRepository}/net/lingala/zip4j/zip4j/${zip4j.version}/zip4j-${zip4j.version}.jar file:${maven.localRepository}/org/joml/joml/${joml.version}/joml-${joml.version}.jar",
+      "value": "${dollar}{weasis.codebase.url}/bundle/docking-frames-${dockingframes.version}.jar${xz.ext} ${dollar}{weasis.codebase.url}/bundle/weasis-core-img-${weasis.core.img.version}-jdk11.jar${xz.ext} ${dollar}{weasis.codebase.url}/bundle/zip4j-${zip4j.version}.jar${xz.ext} ${dollar}{weasis.codebase.url}/bundle/joml-${joml.version}.jar${xz.ext}",
       "description": "Docking-frames, core image, joml and zip",
       "type": "A",
       "category": "FELIX_INSTALL"
     },
     {
       "code": "felix.auto.start.12",
-      "value": "file:${maven.localRepository}/org/weasis/core/weasis-core/${app.version}/weasis-core-${app.version}.jar",
+      "value": "${dollar}{weasis.codebase.url}/bundle/weasis-core-${app.version}.jar${xz.ext}",
       "description": "Core",
       "type": "A",
       "category": "FELIX_INSTALL"
     },
     {
       "code": "felix.auto.start.15",
-      "value": "file:${maven.localRepository}/org/weasis/imageio/weasis-imageio-codec/${app.version}/weasis-imageio-codec-${app.version}.jar",
+      "value": "${dollar}{weasis.codebase.url}/bundle/weasis-imageio-codec-${app.version}.jar${xz.ext}",
       "description": "ImageIO codec",
       "type": "A",
       "category": "FELIX_INSTALL"
     },
     {
       "code": "felix.auto.install.23",
-      "value": "file:${maven.localRepository}/org/weasis/opencv/weasis-opencv-core-${native.library.spec}/${weasis.opencv.native.version}/weasis-opencv-core-${native.library.spec}-${weasis.opencv.native.version}.jar",
+      "value": "${dollar}{weasis.codebase.url}/bundle/weasis-opencv-core-${dollar}{native.library.spec}-${weasis.opencv.native.version}.jar${xz.ext}",
       "description": "OpenCV native package",
       "type": "A",
       "category": "FELIX_INSTALL"
     },
     {
       "code": "felix.auto.start.30",
-      "value": "file:${maven.localRepository}/org/weasis/dicom/weasis-dicom-codec/${app.version}/weasis-dicom-codec-${app.version}.jar",
+      "value": "${dollar}{weasis.codebase.url}/bundle/weasis-dicom-codec-${app.version}.jar${xz.ext}",
       "description": "DICOM Codec",
       "type": "A",
       "category": "FELIX_INSTALL"
     },
     {
       "code": "felix.auto.start.35",
-      "value": "file:${maven.localRepository}/com/fasterxml/jackson/core/jackson-annotations/${jackson.version}/jackson-annotations-${jackson.version}.jar file:${maven.localRepository}/com/fasterxml/jackson/core/jackson-core/${jackson.version}/jackson-core-${jackson.version}.jar file:${maven.localRepository}/com/fasterxml/jackson/core/jackson-databind/${jackson.version}/jackson-databind-${jackson.version}.jar",
+      "value": "${dollar}{weasis.codebase.url}/bundle/jackson-annotations-${jackson.version}.jar${xz.ext} ${dollar}{weasis.codebase.url}/bundle/jackson-core-${jackson.version}.jar${xz.ext} ${dollar}{weasis.codebase.url}/bundle/jackson-databind-${jackson.version}.jar${xz.ext}",
       "description": "Jackson databind and annotation",
       "type": "A",
       "category": "FELIX_INSTALL"
     },
     {
       "code": "felix.auto.start.40",
-      "value": "file:${maven.localRepository}/org/weasis/dicom/weasis-dicom-explorer/${app.version}/weasis-dicom-explorer-${app.version}.jar",
+      "value": "${dollar}{weasis.codebase.url}/bundle/weasis-dicom-explorer-${app.version}.jar${xz.ext}",
       "description": "DICOM explorer",
       "type": "A",
       "category": "FELIX_INSTALL"
     },
     {
       "code": "felix.auto.start.60",
-      "value": "file:${maven.localRepository}/org/weasis/base/weasis-base-ui/${app.version}/weasis-base-ui-${app.version}.jar",
+      "value": "${dollar}{weasis.codebase.url}/bundle/weasis-base-ui-${app.version}.jar${xz.ext}",
       "description": "Base user interface",
       "type": "A",
       "category": "FELIX_INSTALL"
     },
     {
       "code": "felix.auto.start.70",
-      "value": "file:${maven.localRepository}/org/weasis/dicom/weasis-dicom-viewer2d/${app.version}/weasis-dicom-viewer2d-${app.version}.jar file:${maven.localRepository}/org/weasis/dicom/weasis-dicom-sr/${app.version}/weasis-dicom-sr-${app.version}.jar",
+      "value": "${dollar}{weasis.codebase.url}/bundle/weasis-dicom-viewer2d-${app.version}.jar${xz.ext} ${dollar}{weasis.codebase.url}/bundle/weasis-dicom-sr-${app.version}.jar${xz.ext}",
       "description": "DICOM Viewer 2D and SR viewer",
       "type": "A",
       "category": "FELIX_INSTALL"
     },
     {
       "code": "felix.auto.start.75",
-      "value": "file:${maven.localRepository}/org/weasis/dicom/weasis-dicom-au/${app.version}/weasis-dicom-au-${app.version}.jar file:${maven.localRepository}/org/weasis/dicom/weasis-dicom-wave/${app.version}/weasis-dicom-wave-${app.version}.jar",
+      "value": "${dollar}{weasis.codebase.url}/bundle/weasis-dicom-au-${app.version}.jar${xz.ext} ${dollar}{weasis.codebase.url}/bundle/weasis-dicom-wave-${app.version}.jar${xz.ext}",
       "description": "DICOM AU and ECG",
       "type": "A",
       "category": "FELIX_INSTALL"
     },
     {
       "code": "felix.auto.start.100",
-      "value": "file:${maven.localRepository}/org/weasis/base/weasis-base-viewer2d/${app.version}/weasis-base-viewer2d-${app.version}.jar",
+      "value": "${dollar}{weasis.codebase.url}/bundle/weasis-base-viewer2d-${app.version}.jar${xz.ext}",
       "description": "Viewer 2D for standard images",
       "type": "A",
       "category": "FELIX_INSTALL"
     },
     {
       "code": "felix.auto.start.110",
-      "value": "file:${maven.localRepository}/org/weasis/dicom/weasis-dicom-send/${app.version}/weasis-dicom-send-${app.version}.jar file:${maven.localRepository}/org/weasis/dicom/weasis-dicom-isowriter/${app.version}/weasis-dicom-isowriter-${app.version}.jar file:${maven.localRepository}/org/weasis/dicom/weasis-dicom-qr/${app.version}/weasis-dicom-qr-${app.version}.jar",
+      "value": "${dollar}{weasis.codebase.url}/bundle/weasis-dicom-send-${app.version}.jar${xz.ext} ${dollar}{weasis.codebase.url}/bundle/weasis-dicom-isowriter-${app.version}.jar${xz.ext} ${dollar}{weasis.codebase.url}/bundle/weasis-dicom-qr-${app.version}.jar${xz.ext}",
       "description": "DICOM send, Q/R and ISO writer",
       "type": "A",
       "category": "FELIX_INSTALL"
     },
     {
       "code": "felix.auto.start.115",
-      "value": "file:${maven.localRepository}/org/weasis/dicom/weasis-dicom-rt/${app.version}/weasis-dicom-rt-${app.version}.jar",
+      "value": "${dollar}{weasis.codebase.url}/bundle/weasis-dicom-rt-${app.version}.jar${xz.ext}",
       "description": "DICOM RT",
       "type": "A",
       "category": "FELIX_INSTALL"
     },
     {
       "code": "felix.auto.start.120",
-      "value": "file:${maven.localRepository}/org/weasis/thirdparty/org/jogamp/jogamp/${jogamp.version}/jogamp-${jogamp.version}.jar file:${maven.localRepository}/org/weasis/dicom/3d/weasis-dicom-viewer3d/${weasis.version}/weasis-dicom-viewer3d-${app.version}.jar",
+      "value": "${dollar}{weasis.codebase.url}/bundle/jogamp-${jogamp.version}.jar${xz.ext} ${dollar}{weasis.codebase.url}/bundle/weasis-dicom-viewer3d-${app.version}.jar${xz.ext}",
       "description": "DICOM Viewer 3D and JOGL",
       "type": "A",
       "category": "FELIX_INSTALL"
     },
     {
       "code": "felix.auto.install.121",
-      "value": "file:${maven.localRepository}/org/weasis/thirdparty/org/jogamp/jogamp-${native.library.spec}/${jogamp.version}/jogamp-${native.library.spec}-${jogamp.version}.jar",
+      "value": "${dollar}{weasis.codebase.url}/bundle/jogamp-${native.library.spec}-${jogamp.version}.jar${xz.ext}",
       "description": "JOGL native package",
       "type": "A",
       "category": "FELIX_INSTALL"
     },
     {
       "code": "felix.log.level",
-      "value": "2",
+      "value": "1",
       "description": "Set the logging levels for OSGI framework  0=None / 1(default)=Error / 2=Warning / 3=Information / 4=Debug",
       "type": "A",
       "category": "LOG"
     },
     {
       "code": "org.apache.sling.commons.log.level",
-      "value": "DEBUG",
+      "value": "INFO",
       "description": "Application logging level. This may be any of the defined logging levels TRACE, DEBUG, INFO, WARN, ERROR",
       "type": "F",
       "category": "LOG"
@@ -240,7 +240,7 @@
     },
     {
       "code": "org.apache.sling.commons.log.stack.limit",
-      "value": "-1",
+      "value": "5",
       "description": "Defines the maximum number of lines for stack trace (0 => NONE, -1 => ALL). Default value is 3",
       "type": "F",
       "category": "LOG"
@@ -265,13 +265,6 @@
       "description": "Minimal required version of the native installer",
       "type": "A",
       "category": "LOCK"
-    },
-    {
-      "code": "maven.local.repo",
-      "value": "${settings.localRepository}",
-      "description": "Use local Maven repository (only for development in local)",
-      "type": "A",
-      "category": "LAUNCH"
     },
     {
       "code": "felix.native.processor.alias.arm_le",
@@ -331,28 +324,28 @@
     },
     {
       "code": "weasis.resources.url",
-      "value": null,
+      "value": "${dollar}{weasis.codebase.url}/resources.zip",
       "description": "Application resources (logo, presets, LUTs, dicom annotations configuration...)\n\"resources.zip\" is downloaded again only when the last modified date has changed",
       "type": "A",
       "category": "LAUNCH"
     },
     {
       "code": "weasis.show.disclaimer",
-      "value": "false",
+      "value": "true",
       "description": "Show a disclaimer at the first launch of Weasis (requires to be accepted to start the application)",
       "type": "A",
       "category": "LAUNCH"
     },
     {
       "code": "weasis.show.release",
-      "value": "false",
+      "value": "true",
       "description": "Show a message when the release has changed",
       "type": "A",
       "category": "LAUNCH"
     },
     {
       "code": "weasis.update.release",
-      "value": "false",
+      "value": "true",
       "description": "Show a message when a new release is available",
       "type": "A",
       "category": "LAUNCH"

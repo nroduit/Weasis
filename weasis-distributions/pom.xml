@@ -69,7 +69,6 @@
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-dependency-plugin</artifactId>
-          <version>3.2.0</version>
           <executions>
             <execution>
               <id>unpack-i18njar</id>
@@ -597,7 +596,7 @@
           <plugin>
             <groupId>org.weasis.maven</groupId>
             <artifactId>build-xz-plugin</artifactId>
-            <version>1.0.0</version>
+            <version>1.1.0</version>
             <executions>
               <execution>
                 <id>xz</id>
@@ -613,6 +612,13 @@
                 </configuration>
               </execution>
             </executions>
+            <dependencies>
+              <dependency>
+                <groupId>org.codehaus.plexus</groupId>
+                <artifactId>plexus-utils</artifactId>
+                <version>4.0.0</version>
+              </dependency>
+            </dependencies>
           </plugin>
         </plugins>
       </build>

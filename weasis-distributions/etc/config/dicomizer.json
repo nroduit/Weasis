@@ -6,7 +6,7 @@
     },
     {
       "code": "felix.auto.start.45",
-      "value": "file:${maven.localRepository}/org/weasis/base/weasis-base-explorer/${app.version}/weasis-base-explorer-${app.version}.jar file:${maven.localRepository}/org/weasis/acquire/weasis-acquire-explorer/${app.version}/weasis-acquire-explorer-${app.version}.jar",
+      "value": "${dollar}{weasis.codebase.url}/bundle/weasis-base-explorer-${app.version}.jar${xz.ext} ${dollar}{weasis.codebase.url}/bundle/weasis-acquire-explorer-${app.version}.jar${xz.ext}",
       "description": "Thumbnail explorer",
       "type": "A",
       "category": "FELIX_INSTALL"
@@ -21,14 +21,14 @@
     },
     {
       "code": "felix.auto.start.85",
-      "value": "file:${maven.localRepository}/org/weasis/acquire/weasis-acquire-editor/${app.version}/weasis-acquire-editor-${app.version}.jar",
+      "value": "${dollar}{weasis.codebase.url}/bundle/weasis-acquire-editor-${app.version}.jar${xz.ext}",
       "description": "Image editor",
       "type": "A",
       "category": "FELIX_INSTALL"
     },
     {
       "code": "felix.auto.start.110",
-      "value": "file:${maven.localRepository}/org/weasis/dicom/weasis-dicom-send/${app.version}/weasis-dicom-send-${app.version}.jar"
+      "value": "${dollar}{weasis.codebase.url}/bundle/weasis-dicom-send-${app.version}.jar${xz.ext}"
     },
     {
       "code": "weasis.name",
@@ -37,6 +37,10 @@
     {
       "code": "weasis.profile",
       "value": "dicomizer"
+    },
+    {
+      "code": "weasis.show.disclaimer",
+      "value": "false"
     },
     {
       "code": "weasis.theme",
@@ -144,7 +148,7 @@
     },
     {
       "code": "weasis.acquire.meta.study.description",
-      "value": "Pictures of follow-up,Pictures of observation,Pictures preoperative,Pictures intraoperative,Pictures postoperative",
+      "value": "",
       "description": "Comma-separated list of study description elements (to obtain a selection in a combo box). Empty value will be an editable text field",
       "type": "A",
       "category": "METADATA"

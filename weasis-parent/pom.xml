@@ -25,7 +25,9 @@
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 
     <app.version>${revision}${changelist}</app.version>
+    <base.minimal.version>4.2.0</base.minimal.version>
     <i18n.version>4.0.0-SNAPSHOT</i18n.version>
+
     <felix.framework.version>7.0.5</felix.framework.version>
     <flatlaf.version>3.1.1</flatlaf.version>
     <miglayout.version>11.0</miglayout.version>
@@ -183,7 +185,7 @@
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-assembly-plugin</artifactId>
-          <version>3.4.2</version>
+          <version>3.5.0</version>
         </plugin>
         <plugin>
           <groupId>org.codehaus.mojo</groupId>

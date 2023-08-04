@@ -41,6 +41,18 @@
       <!-- copy the build scripts -->
       <directory>script</directory>
       <outputDirectory>build/script</outputDirectory>
+      <includes>
+        <include>build.properties</include>
+      </includes>
+      <filtered>true</filtered>
+    </fileSet>
+    <fileSet>
+      <!-- copy the build scripts -->
+      <directory>script</directory>
+      <outputDirectory>build/script</outputDirectory>
+      <excludes>
+        <exclude>build.properties</exclude>
+      </excludes>
     </fileSet>
     <fileSet>
       <!-- copy the build scripts -->

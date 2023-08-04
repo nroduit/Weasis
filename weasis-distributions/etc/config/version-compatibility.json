@@ -75,13 +75,8 @@
     "i18n-version": "4.0.0-SNAPSHOT"
   },
   {
-    "release-version": "4.1.3",
-    "minimal-version": "4.1.0",
-    "i18n-version": "4.0.0-SNAPSHOT"
-  },
-  {
     "release-version": "${app.version}",
-    "minimal-version": "4.2.0",
+    "minimal-version": "${base.minimal.version}",
     "i18n-version": "${i18n.version}"
   }
 ]
