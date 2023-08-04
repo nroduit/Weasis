@@ -48,5 +48,5 @@ public interface MediaReader extends Taggable {
 
   void replaceURI(URI uri);
 
-  boolean buildFile(File ouptut);
+  boolean buildFile(File output);
 }

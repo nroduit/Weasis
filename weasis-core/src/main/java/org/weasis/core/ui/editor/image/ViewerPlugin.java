@@ -77,7 +77,9 @@ public abstract class ViewerPlugin<E extends MediaElement> extends JPanel
         new CCloseAction(UIManager.DOCKING_CONTROL) {
           @Override
           public void close(CDockable dockable) {
+            UIManager.DOCKING_CONTROL.addVetoFocusListener(UIManager.DOCKING_VETO_FOCUS);
             super.close(dockable);
+            UIManager.DOCKING_CONTROL.removeVetoFocusListener(UIManager.DOCKING_VETO_FOCUS);
             if (dockable.getFocusComponent() instanceof SeriesViewer<?> seriesViewer) {
               List<DockableTool> oldTool = seriesViewer.getToolPanel();
               if (oldTool != null) {
@@ -196,7 +198,10 @@ public abstract class ViewerPlugin<E extends MediaElement> extends JPanel
                 UIManager.MAIN_AREA.add(getDockable());
                 dockable.setDefaultLocation(
                     ExtendedMode.NORMALIZED, CLocation.working(UIManager.MAIN_AREA).stack());
+                UIManager.DOCKING_CONTROL.addVetoFocusListener(UIManager.DOCKING_VETO_FOCUS);
                 dockable.setVisible(true);
+                UIManager.DOCKING_CONTROL.removeVetoFocusListener(UIManager.DOCKING_VETO_FOCUS);
+                setSelectedAndGetFocus();
               }
             });
   }

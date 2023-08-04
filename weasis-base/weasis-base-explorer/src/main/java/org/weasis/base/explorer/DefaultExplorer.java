@@ -57,6 +57,7 @@ import org.weasis.core.ui.docking.PluginTool;
 import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.util.DefaultAction;
 import org.weasis.core.ui.util.TitleMenuItem;
+import org.weasis.core.util.StringUtil;
 
 public class DefaultExplorer extends PluginTool implements DataExplorerView {
   private static final Logger LOGGER = LoggerFactory.getLogger(DefaultExplorer.class);
@@ -123,13 +124,16 @@ public class DefaultExplorer extends PluginTool implements DataExplorerView {
   protected void iniLastPath() {
     Path prefDir = null;
     try {
-      prefDir = Paths.get(BundleTools.LOCAL_UI_PERSISTENCE.getProperty(P_LAST_DIR));
+      String dir = BundleTools.LOCAL_UI_PERSISTENCE.getProperty(P_LAST_DIR);
+      if (StringUtil.hasText(dir)) {
+        prefDir = Paths.get(dir);
+      }
     } catch (InvalidPathException e) {
       LOGGER.error("Get last dir path", e);
     }
 
     if (prefDir == null) {
-      prefDir = Paths.get(System.getProperty("user.home"));
+      prefDir = Paths.get(System.getProperty("user.home", ""));
     }
 
     if (Files.isReadable(prefDir) && prefDir.toFile().isDirectory()) {

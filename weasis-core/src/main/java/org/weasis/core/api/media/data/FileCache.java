@@ -13,9 +13,12 @@ import java.io.File;
 import java.nio.file.Paths;
 import java.util.Objects;
 import java.util.Optional;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.weasis.core.util.FileUtil;
 
 public class FileCache {
+  private static final Logger LOGGER = LoggerFactory.getLogger(FileCache.class);
 
   private final MediaReader reader;
   private File originalTempFile;
@@ -40,7 +43,11 @@ public class FileCache {
     if (originalTempFile != null) {
       originalFile = originalTempFile;
     } else if (isLocalFile()) {
-      originalFile = Paths.get(reader.getUri()).toFile();
+      try {
+        originalFile = Paths.get(reader.getUri()).toFile();
+      } catch (Exception e) {
+        LOGGER.error("Cannot convert uri to file: {}", reader.getUri(), e);
+      }
     }
     return Optional.ofNullable(originalFile);
   }
