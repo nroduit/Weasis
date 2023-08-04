@@ -51,7 +51,7 @@ import org.weasis.core.ui.util.CheckBoxTreeBuilder;
 
 public class DisplayTool extends PluginTool implements SeriesViewerListener {
 
-  public static final String BUTTON_NAME = Messages.getString("display");
+  public static final String BUTTON_NAME = Messages.getString("DisplayTool.display");
 
   private final JCheckBox applyAllViews =
       new JCheckBox(Messages.getString("apply.to.all.views"), true);
