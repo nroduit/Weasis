@@ -33,6 +33,7 @@ public class AppPreferences extends HashMap<String, Preference> {
   static final String VAL = "value";
   static final String DESC = "description";
   static final String TYPE = "type";
+  static final String JAVA_TYPE = "JavaType";
   static final String DEFAULT = "defaultValue";
   static final String CATEGORY = "category";
 
@@ -62,11 +63,13 @@ public class AppPreferences extends HashMap<String, Preference> {
       Preference p =
           new Preference(
               code,
-              (String) map.get(VAL),
-              (String) map.get(DESC),
               (String) map.get(TYPE),
-              (String) map.get(DEFAULT),
+              (String) map.get(JAVA_TYPE),
               (String) map.get(CATEGORY));
+
+      p.setValue((String) map.get(VAL));
+      p.setDescription((String) map.get(DESC));
+      p.setDefaultValue((String) map.get(DEFAULT));
       put(code, p);
     }
   }

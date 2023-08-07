@@ -77,6 +77,7 @@
       "value": "11112",
       "description": "Port of DICOM send destination for Dicomizer",
       "type": "A",
+      "JavaType": "INT",
       "category": "DICOM"
     },
     {
@@ -161,6 +162,7 @@
       "value": "false",
       "description": "Base thumbnail explorer",
       "type": "A",
+      "JavaType": "BOOLEAN",
       "category": "FACTORY"
     },
     {
@@ -168,6 +170,7 @@
       "value": "false",
       "description": "Open a file with the default system application",
       "type": "A",
+      "JavaType": "BOOLEAN",
       "category": "FACTORY"
     },
     {
@@ -175,6 +178,7 @@
       "value": "false",
       "description": "DICOM series explorer",
       "type": "A",
+      "JavaType": "BOOLEAN",
       "category": "FACTORY"
     },
     {
@@ -182,6 +186,7 @@
       "value": "false",
       "description": "DICOM Explorer preferences",
       "type": "A",
+      "JavaType": "BOOLEAN",
       "category": "FACTORY"
     },
     {
@@ -189,6 +194,7 @@
       "value": "false",
       "description": "DICOM node list preferences",
       "type": "A",
+      "JavaType": "BOOLEAN",
       "category": "FACTORY"
     },
     {
@@ -200,6 +206,7 @@
       "value": "false",
       "description": "Show the rotation toolbar with base 2D viewer",
       "type": "A",
+      "JavaType": "BOOLEAN",
       "category": "UI"
     },
     {
@@ -207,6 +214,7 @@
       "value": "false",
       "description": "Show the import toolbar with base 2D viewer",
       "type": "A",
+      "JavaType": "BOOLEAN",
       "category": "UI"
     },
     {
@@ -221,6 +229,7 @@
       "value": "false",
       "description": "Show the image tool with base 2D viewer",
       "type": "A",
+      "JavaType": "BOOLEAN",
       "category": "UI"
     },
     {
@@ -228,6 +237,7 @@
       "value": "false",
       "description": "Application",
       "type": "A",
+      "JavaType": "BOOLEAN",
       "category": "UI"
     },
     {
@@ -235,6 +245,7 @@
       "value": "false",
       "description": "Show the layout toolbar",
       "type": "A",
+      "JavaType": "BOOLEAN",
       "category": "UI"
     },
     {
@@ -242,6 +253,7 @@
       "value": "false",
       "description": "Show the synch toolbar",
       "type": "A",
+      "JavaType": "BOOLEAN",
       "category": "UI"
     }
   ]

@@ -40,6 +40,7 @@
       "value": "130",
       "description": "The initial start level of the framework upon startup",
       "type": "A",
+      "JavaType": "INT",
       "category": "FELIX_CONFIG"
     },
     {
@@ -47,6 +48,7 @@
       "value": "300",
       "description": "The start level of newly installed bundles",
       "type": "A",
+      "JavaType": "INT",
       "category": "FELIX_CONFIG"
     },
     {
@@ -201,6 +203,7 @@
       "value": "1",
       "description": "Set the logging levels for OSGI framework  0=None / 1(default)=Error / 2=Warning / 3=Information / 4=Debug",
       "type": "A",
+      "JavaType": "INT",
       "category": "LOG"
     },
     {
@@ -215,6 +218,7 @@
       "value": "false",
       "description": "Activation of rolling log files",
       "type": "F",
+      "JavaType": "BOOLEAN",
       "category": "LOG"
     },
     {
@@ -222,6 +226,7 @@
       "value": "5",
       "description": "The max number of rolling log files",
       "type": "F",
+      "JavaType": "INT",
       "category": "LOG"
     },
     {
@@ -243,6 +248,7 @@
       "value": "5",
       "description": "Defines the maximum number of lines for stack trace (0 => NONE, -1 => ALL). Default value is 3",
       "type": "F",
+      "JavaType": "INT",
       "category": "LOG"
     },
     {
@@ -250,6 +256,7 @@
       "value": "false",
       "description": "Audit log for giving statistics about usage of Weasis",
       "type": "A",
+      "JavaType": "BOOLEAN",
       "category": "LOG"
     },
     {
@@ -278,6 +285,7 @@
       "value": "false",
       "description": "If true, the bundle cache is cleared when the weasis version has changed from the previous launch",
       "type": "A",
+      "JavaType": "BOOLEAN",
       "category": "LAUNCH"
     },
     {
@@ -334,6 +342,7 @@
       "value": "true",
       "description": "Show a disclaimer at the first launch of Weasis (requires to be accepted to start the application)",
       "type": "A",
+      "JavaType": "BOOLEAN",
       "category": "LAUNCH"
     },
     {
@@ -341,6 +350,7 @@
       "value": "true",
       "description": "Show a message when the release has changed",
       "type": "A",
+      "JavaType": "BOOLEAN",
       "category": "LAUNCH"
     },
     {
@@ -348,6 +358,7 @@
       "value": "true",
       "description": "Show a message when a new release is available",
       "type": "A",
+      "JavaType": "BOOLEAN",
       "category": "LAUNCH"
     },
     {
@@ -397,6 +408,7 @@
       "value": "false",
       "description": "Show a message of confirmation when closing the application",
       "type": "F",
+      "JavaType": "BOOLEAN",
       "category": "GENERAL"
     },
     {
@@ -432,6 +444,7 @@
       "value": "true",
       "description": "Start to download series immediately",
       "type": "F",
+      "JavaType": "BOOLEAN",
       "category": "DICOM"
     },
     {
@@ -439,6 +452,7 @@
       "value": "3",
       "description": "The number of concurrently downloaded series",
       "type": "A",
+      "JavaType": "INT",
       "category": "DICOM"
     },
     {
@@ -446,6 +460,7 @@
       "value": "4",
       "description": "The number of concurrently downloaded images in a series",
       "type": "A",
+      "JavaType": "INT",
       "category": "DICOM"
     },
     {
@@ -453,6 +468,7 @@
       "value": "true",
       "description": "Allow applying Window/Level on color images",
       "type": "F",
+      "JavaType": "BOOLEAN",
       "category": "VIEWER"
     },
     {
@@ -460,6 +476,7 @@
       "value": "true",
       "description": "Inverse level direction (moving the cursor down to increase brightness",
       "type": "F",
+      "JavaType": "BOOLEAN",
       "category": "VIEWER"
     },
     {
@@ -467,6 +484,7 @@
       "value": "false",
       "description": "Apply by default the most recent Presentation State to the related image",
       "type": "F",
+      "JavaType": "BOOLEAN",
       "category": "VIEWER"
     },
     {
@@ -474,6 +492,7 @@
       "value": "false",
       "description": "Force to detect a graphic card at every launch",
       "type": "A",
+      "JavaType": "BOOLEAN",
       "category": "VIEWER"
     },
     {
@@ -509,6 +528,7 @@
       "value": "true",
       "description": "Show the import image toolbar and menu",
       "type": "A",
+      "JavaType": "BOOLEAN",
       "category": "UI"
     },
     {
@@ -516,6 +536,7 @@
       "value": "true",
       "description": "Show the DICOM import menu and dialog",
       "type": "A",
+      "JavaType": "BOOLEAN",
       "category": "UI"
     },
     {
@@ -523,6 +544,7 @@
       "value": "true",
       "description": "Show the DICOM Q/R page in the DICOM Export dialog",
       "type": "A",
+      "JavaType": "BOOLEAN",
       "category": "UI"
     },
     {
@@ -530,6 +552,7 @@
       "value": "true",
       "description": "Show the DICOM export menu and dialog",
       "type": "A",
+      "JavaType": "BOOLEAN",
       "category": "UI"
     },
     {
@@ -537,6 +560,7 @@
       "value": "true",
       "description": "Show the send page in the DICOM Export dialog",
       "type": "A",
+      "JavaType": "BOOLEAN",
       "category": "UI"
     },
     {
@@ -544,6 +568,7 @@
       "value": "7170",
       "description": "Show all mouse buttons. Sum of LEFT=1024 + MIDDLE=2048 + RIGHT=4096 + SCROLL=2. Show all:7170 and show none:0.",
       "type": "A",
+      "JavaType": "INT",
       "category": "UI"
     },
     {
@@ -551,6 +576,7 @@
       "value": "false",
       "description": "Show all the cine toolbars",
       "type": "A",
+      "JavaType": "BOOLEAN",
       "category": "UI"
     },
     {
@@ -558,6 +584,7 @@
       "value": "false",
       "description": "Show all the key object toolbars",
       "type": "A",
+      "JavaType": "BOOLEAN",
       "category": "UI"
     },
     {
@@ -565,6 +592,7 @@
       "value": "false",
       "description": "Show the rotation toolbars in DICOM 2D viewer",
       "type": "A",
+      "JavaType": "BOOLEAN",
       "category": "UI"
     },
     {
@@ -572,6 +600,7 @@
       "value": "false",
       "description": "Show LUT Shape in the contextual menu",
       "type": "A",
+      "JavaType": "BOOLEAN",
       "category": "UI"
     },
     {
@@ -579,6 +608,7 @@
       "value": "false",
       "description": "Show LUT in the contextual menu",
       "type": "A",
+      "JavaType": "BOOLEAN",
       "category": "UI"
     },
     {
@@ -586,6 +616,7 @@
       "value": "false",
       "description": "Show Filter in the contextual menu",
       "type": "A",
+      "JavaType": "BOOLEAN",
       "category": "UI"
     }
   ]

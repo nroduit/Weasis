@@ -10,30 +10,24 @@
 package org.weasis.pref;
 
 import java.util.Objects;
+import org.weasis.launcher.Utils;
 
 public class Preference {
   private final String code;
+  private final String type;
+  private final String javaType;
+  private final String category;
   private String value;
-
   private String defaultValue;
   private String description;
 
-  private final String type;
-
-  private final String category;
-
-  public Preference(
-      String code,
-      String value,
-      String defaultValue,
-      String description,
-      String type,
-      String category) {
+  public Preference(String code, String type, String javaType, String category) {
+    if (!Utils.hasText(code)) {
+      throw new IllegalArgumentException("Invalid code");
+    }
     this.code = code;
-    this.value = value;
-    this.defaultValue = defaultValue;
-    this.description = description;
     this.type = type;
+    this.javaType = javaType;
     this.category = category;
   }
 
@@ -73,6 +67,10 @@ public class Preference {
     return category;
   }
 
+  public String getJavaType() {
+    return javaType;
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) {
@@ -82,16 +80,11 @@ public class Preference {
       return false;
     }
     Preference that = (Preference) o;
-    return Objects.equals(code, that.code)
-        && Objects.equals(value, that.value)
-        && Objects.equals(defaultValue, that.defaultValue)
-        && Objects.equals(description, that.description)
-        && Objects.equals(type, that.type)
-        && Objects.equals(category, that.category);
+    return Objects.equals(code, that.code);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(code, value, defaultValue, description, type, category);
+    return Objects.hash(code);
   }
 }
