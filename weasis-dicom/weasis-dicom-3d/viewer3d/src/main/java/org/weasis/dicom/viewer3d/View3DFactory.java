@@ -165,9 +165,13 @@ public class View3DFactory implements SeriesViewerFactory {
       dicomView.getDataExplorerModel().removePropertyChangeListener(view3dContainer);
     }
     if (view3dContainer.volumeBuilder != null) {
-      GL4 gl4 = OpenglUtils.getGL4();
-      if (gl4 != null) {
-        view3dContainer.volumeBuilder.getVolTexture().destroy(gl4);
+      try {
+        GL4 gl4 = OpenglUtils.getGL4();
+        if (gl4 != null) {
+          view3dContainer.volumeBuilder.getVolTexture().destroy(gl4);
+        }
+      } catch (Exception e) {
+        LOGGER.error("Closing viewer", e);
       }
     }
   }
