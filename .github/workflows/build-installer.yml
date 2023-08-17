@@ -16,7 +16,7 @@ jobs:
         uses: actions/setup-java@v3
         with:
           distribution: 'temurin'
-          java-version: '20'
+          java-version: '21-ea'
           cache: 'maven'
 
       - name: Build with Maven
@@ -86,7 +86,7 @@ jobs:
         uses: actions/setup-java@v3
         with:
           distribution: 'temurin'
-          java-version: '20'
+          java-version: '21-ea'
 
       - name: Download weasis-native
         uses: actions/download-artifact@v3
