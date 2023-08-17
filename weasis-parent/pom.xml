@@ -63,6 +63,7 @@
 
     <assertj.version>3.24.2</assertj.version>
     <mockito.version>5.2.0</mockito.version>
+    <byte-buddy.version>1.14.6</byte-buddy.version>
   </properties>
 
   <licenses>
@@ -537,6 +538,11 @@
         <artifactId>mockito-junit-jupiter</artifactId>
         <version>${mockito.version}</version>
         <scope>test</scope>
+      </dependency>
+      <dependency>
+        <groupId>net.bytebuddy</groupId>
+        <artifactId>byte-buddy</artifactId>
+        <version>${byte-buddy.version}</version>
       </dependency>
     </dependencies>
   </dependencyManagement>
