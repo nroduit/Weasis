@@ -172,7 +172,7 @@ public class ConfigData {
     String profile = preferences.getProperty(P_WEASIS_PROFILE, "default");
     addProperty(P_WEASIS_PROFILE, profile);
 
-    String name = preferences.getProperty(P_WEASIS_NAME, "Weasis");
+    String name = preferences.getProperty(P_WEASIS_NAME, "Weasis"); // NON-NLS
     addProperty(P_WEASIS_NAME, name);
 
     String version = preferences.getProperty(P_WEASIS_VERSION, "0.0.0");
@@ -195,7 +195,7 @@ public class ConfigData {
     if (portable != null) {
       LOGGER.log(Level.INFO, "Set default relative folders");
       String pkey = "weasis.portable.dicom.directory";
-      addProperty(pkey, preferences.getProperty(pkey, "dicom,DICOM,IMAGES,images"));
+      addProperty(pkey, preferences.getProperty(pkey, "dicom,DICOM,IMAGES,images")); // NON-NLS
     }
 
     // Set weasis properties to Java System Properties before variables substitution.

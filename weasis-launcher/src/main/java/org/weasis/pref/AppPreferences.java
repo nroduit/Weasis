@@ -29,13 +29,13 @@ public class AppPreferences extends HashMap<String, Preference> {
   private static final Logger LOGGER = System.getLogger(AppPreferences.class.getName());
   private static final String DELIM_START = "${";
   private static final String DELIM_STOP = "}";
-  static final String CODE = "code";
-  static final String VAL = "value";
-  static final String DESC = "description";
-  static final String TYPE = "type";
-  static final String JAVA_TYPE = "JavaType";
-  static final String DEFAULT = "defaultValue";
-  static final String CATEGORY = "category";
+  static final String CODE = "code"; // NON-NLS
+  static final String VAL = "value"; // NON-NLS
+  static final String DESC = "description"; // NON-NLS
+  static final String TYPE = "type"; // NON-NLS
+  static final String JAVA_TYPE = "JavaType"; // NON-NLS
+  static final String DEFAULT = "defaultValue"; // NON-NLS
+  static final String CATEGORY = "category"; // NON-NLS
 
   public AppPreferences() {
     super(50);
