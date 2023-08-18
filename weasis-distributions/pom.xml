@@ -138,6 +138,16 @@
               </regexPropertySettings>
             </configuration>
           </execution>
+          <execution>
+            <id>timestamp-property</id>
+            <goals>
+              <goal>timestamp-property</goal>
+            </goals>
+            <configuration>
+              <name>build.year</name>
+              <pattern>yyyy</pattern>
+            </configuration>
+          </execution>
         </executions>
       </plugin>
 

@@ -35,6 +35,9 @@
       <!-- copy OSGI framework config -->
       <directory>etc/config</directory>
       <outputDirectory>bin-dist/weasis/conf</outputDirectory>
+      <includes>
+        <include>*.json</include>
+      </includes>
       <filtered>true</filtered>
     </fileSet>
     <fileSet>

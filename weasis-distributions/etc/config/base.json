@@ -370,14 +370,14 @@
     },
     {
       "code": "weasis.releasenotes",
-      "value": "https://github.com/nroduit/Weasis/blob/master/CHANGELOG.md#v412-2023-06-16",
+      "value": "${weasis.releasenotes}",
       "description": "Release notes",
       "type": "A",
       "category": "DOC"
     },
     {
       "code": "weasis.copyrights",
-      "value": "© 2009-2023 Weasis Team",
+      "value": "© 2009-${build.year} Weasis Team",
       "description": "Copyrights",
       "type": "A",
       "category": "DOC"
