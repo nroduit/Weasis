@@ -13,13 +13,13 @@ import static org.opencv.core.Core.addWeighted;
 import static org.opencv.core.Core.minMaxLoc;
 import static org.opencv.core.Core.multiply;
 
+import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import org.apache.commons.math3.util.Pair;
 import org.opencv.core.Core;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
@@ -56,8 +56,8 @@ public class Dose extends HashMap<Integer, Dvh> {
   private Map<String, ArrayList<Contour>> isoContourMap = new HashMap<>();
 
   // Dose LUTs
-  private Pair<double[], double[]> doseMmLUT;
-  private Pair<double[], double[]> dosePixLUT;
+  private AbstractMap.SimpleImmutableEntry<double[], double[]> doseMmLUT;
+  private AbstractMap.SimpleImmutableEntry<double[], double[]> dosePixLUT;
 
   public Dose() {
     // Default threshold in mm to determine the max difference from slicePosition to the closest
@@ -176,19 +176,19 @@ public class Dose extends HashMap<Integer, Dvh> {
     this.isoContourMap = isoContourMap;
   }
 
-  public Pair<double[], double[]> getDoseMmLUT() {
+  public AbstractMap.SimpleImmutableEntry<double[], double[]> getDoseMmLUT() {
     return this.doseMmLUT;
   }
 
-  public void setDoseMmLUT(Pair<double[], double[]> lut) {
+  public void setDoseMmLUT(AbstractMap.SimpleImmutableEntry<double[], double[]> lut) {
     this.doseMmLUT = lut;
   }
 
-  public Pair<double[], double[]> getDosePixLUT() {
+  public AbstractMap.SimpleImmutableEntry<double[], double[]> getDosePixLUT() {
     return this.dosePixLUT;
   }
 
-  public void setDosePixLUT(Pair<double[], double[]> lut) {
+  public void setDosePixLUT(AbstractMap.SimpleImmutableEntry<double[], double[]> lut) {
     this.dosePixLUT = lut;
   }
 
@@ -333,24 +333,23 @@ public class Dose extends HashMap<Integer, Dvh> {
   public void initialiseDoseGridToImageGrid(Image patientImage) {
 
     // Transpose the dose grid LUT onto the image grid LUT
-    double[] x = new double[this.doseMmLUT.getFirst().length];
-    for (int i = 0; i < this.doseMmLUT.getFirst().length; i++) {
+    double[] x = new double[this.doseMmLUT.getKey().length];
+    for (int i = 0; i < this.doseMmLUT.getKey().length; i++) {
       x[i] =
-          (this.doseMmLUT.getFirst()[i] - patientImage.getImageLUT().getFirst()[0])
+          (this.doseMmLUT.getKey()[i] - patientImage.getImageLUT().getKey()[0])
               * patientImage.getProne()
               * patientImage.getFeetFirst()
               / patientImage.getImageSpacing().x;
     }
-    double[] y = new double[this.doseMmLUT.getSecond().length];
-    for (int j = 0; j < this.doseMmLUT.getSecond().length; j++) {
+    double[] y = new double[this.doseMmLUT.getValue().length];
+    for (int j = 0; j < this.doseMmLUT.getValue().length; j++) {
       y[j] =
-          (this.doseMmLUT.getSecond()[j])
-              - patientImage.getImageLUT().getSecond()[0]
+          (this.doseMmLUT.getValue()[j])
+              - patientImage.getImageLUT().getValue()[0]
                   * patientImage.getProne()
                   / patientImage.getImageSpacing().y;
     }
-
-    this.dosePixLUT = new Pair<>(x, y);
+    this.dosePixLUT = new AbstractMap.SimpleImmutableEntry<>(x, y);
   }
 
   private MediaElement interpolateDosePlanes(

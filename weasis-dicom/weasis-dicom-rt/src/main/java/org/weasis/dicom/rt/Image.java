@@ -9,7 +9,7 @@
  */
 package org.weasis.dicom.rt;
 
-import org.apache.commons.math3.util.Pair;
+import java.util.AbstractMap;
 import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Tag;
 import org.joml.Vector3d;
@@ -26,7 +26,7 @@ public class Image {
   private Vector3d imageSpacing;
 
   // Image LUT
-  Pair<double[], double[]> imageLUT;
+  AbstractMap.SimpleImmutableEntry<double[], double[]> imageLUT;
 
   public Image(DicomImageElement image) {
     // Determine if the patient is prone or supine
@@ -67,11 +67,11 @@ public class Image {
     return this.imageSpacing;
   }
 
-  public Pair<double[], double[]> getImageLUT() {
+  public AbstractMap.SimpleImmutableEntry<double[], double[]> getImageLUT() {
     return this.imageLUT;
   }
 
-  public void setImageLUT(Pair<double[], double[]> imageLUT) {
+  public void setImageLUT(AbstractMap.SimpleImmutableEntry<double[], double[]> imageLUT) {
     this.imageLUT = imageLUT;
   }
 }
