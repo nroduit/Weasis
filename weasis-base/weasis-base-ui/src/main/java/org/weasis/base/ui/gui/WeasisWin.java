@@ -477,6 +477,9 @@ public class WeasisWin {
     if (gd.length > 1) {
       // dockable.setExternalizable(true);
       Rectangle bound = WinUtil.getClosedScreenBound(rootPaneContainer.getRootPane().getBounds());
+      if(bound == null) {
+        return;
+      }
       // LocationHint hint =
       // new LocationHint(LocationHint.DOCKABLE,
       // bibliothek.gui.dock.action.LocationHint.LEFT_OF_ALL);
