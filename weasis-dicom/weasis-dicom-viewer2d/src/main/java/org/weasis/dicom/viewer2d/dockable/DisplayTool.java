@@ -295,7 +295,8 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
               && checkNode.getUserObject() instanceof LayerItem item) {
             boolean sel =
                 applyAllViews.isSelected()
-                    ? AbstractInfoLayer.defaultDisplayPreferences.getOrDefault(item, Boolean.FALSE)
+                    ? AbstractInfoLayer.getDefaultDisplayPreferences()
+                        .getOrDefault(item, Boolean.FALSE)
                     : layer.getDisplayPreferences(item);
             initPathSelection(getTreePath(checkNode), sel);
           }

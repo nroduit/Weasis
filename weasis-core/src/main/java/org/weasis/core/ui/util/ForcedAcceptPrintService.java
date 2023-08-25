@@ -107,7 +107,6 @@ public class ForcedAcceptPrintService implements PrintService {
    */
   @Override
   public <T extends PrintServiceAttribute> T getAttribute(Class<T> category) {
-
     if (category.equals(PrinterIsAcceptingJobs.class)) {
       // once we've overridden the return value for the PrinterIsAcceptingJobs attribute we're done.
       // put the PrintJob's PrintService back to what it was.

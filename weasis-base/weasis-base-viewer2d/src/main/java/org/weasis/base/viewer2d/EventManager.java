@@ -112,8 +112,8 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
     setAction(newSynchAction(View2dContainer.DEFAULT_SYNCH_LIST.toArray(new SynchView[0])));
     getAction(ActionW.SYNCH)
         .ifPresent(a -> a.setSelectedItemWithoutTriggerAction(SynchView.DEFAULT_STACK));
-    setAction(newMeasurementAction(MeasureToolBar.measureGraphicList.toArray(new Graphic[0])));
-    setAction(newDrawAction(MeasureToolBar.drawGraphicList.toArray(new Graphic[0])));
+    setAction(newMeasurementAction(MeasureToolBar.getMeasureGraphicList().toArray(new Graphic[0])));
+    setAction(newDrawAction(MeasureToolBar.getDrawGraphicList().toArray(new Graphic[0])));
     setAction(newSpatialUnit(Unit.values()));
     setAction(newPanAction());
     setAction(new BasicActionState(ActionW.RESET));

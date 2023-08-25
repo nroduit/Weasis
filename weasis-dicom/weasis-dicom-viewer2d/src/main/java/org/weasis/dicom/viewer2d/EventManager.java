@@ -186,8 +186,8 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
     setAction(newSynchAction(View2dContainer.DEFAULT_SYNCH_LIST.toArray(new SynchView[0])));
     getAction(ActionW.SYNCH)
         .ifPresent(a -> a.setSelectedItemWithoutTriggerAction(SynchView.DEFAULT_STACK));
-    setAction(newMeasurementAction(MeasureToolBar.measureGraphicList.toArray(new Graphic[0])));
-    setAction(newDrawAction(MeasureToolBar.drawGraphicList.toArray(new Graphic[0])));
+    setAction(newMeasurementAction(MeasureToolBar.getMeasureGraphicList().toArray(new Graphic[0])));
+    setAction(newDrawAction(MeasureToolBar.getDrawGraphicList().toArray(new Graphic[0])));
     setAction(newSpatialUnit(Unit.values()));
     setAction(newPanAction());
     setAction(newCrosshairAction());
@@ -1916,7 +1916,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
         final ViewerToolBar toolBar = view.getViewerToolBar();
         if (toolBar != null) {
           // Test if mouse action exist and if not NO_ACTION is set
-          Feature<?> action = toolBar.getAction(ViewerToolBar.actionsButtons, command);
+          Feature<?> action = toolBar.getToolBarAction(command);
           if (action == null) {
             command = ActionW.NO_ACTION.cmd();
           }

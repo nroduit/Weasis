@@ -463,7 +463,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
 
   public void removeSeries(MediaSeriesGroup seriesGroup) {
     if (seriesGroup != null) {
-      if (!DownloadManager.TASKS.isEmpty() && seriesGroup instanceof DicomSeries dicomSeries) {
+      if (!DownloadManager.getTasks().isEmpty() && seriesGroup instanceof DicomSeries dicomSeries) {
         DownloadManager.stopDownloading(dicomSeries, this);
       }
       // remove first series in UI (Dicom Explorer, Viewer using this series)
@@ -480,7 +480,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
 
   public void removeStudy(MediaSeriesGroup studyGroup) {
     if (studyGroup != null) {
-      if (!DownloadManager.TASKS.isEmpty()) {
+      if (!DownloadManager.getTasks().isEmpty()) {
         for (MediaSeriesGroup group : getChildren(studyGroup)) {
           if (group instanceof DicomSeries dicomSeries) {
             DownloadManager.stopDownloading(dicomSeries, this);
@@ -501,7 +501,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
 
   public void removePatient(MediaSeriesGroup patientGroup) {
     if (patientGroup != null) {
-      if (!DownloadManager.TASKS.isEmpty()) {
+      if (!DownloadManager.getTasks().isEmpty()) {
         for (MediaSeriesGroup studyGroup : getChildren(patientGroup)) {
           for (MediaSeriesGroup group : getChildren(studyGroup)) {
             if (group instanceof DicomSeries dicomSeries) {

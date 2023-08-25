@@ -105,7 +105,7 @@ public class DownloadManager {
   private static final Logger LOGGER = LoggerFactory.getLogger(DownloadManager.class);
 
   public static final String CONCURRENT_SERIES = "download.concurrent.series";
-  public static final List<LoadSeries> TASKS = new ArrayList<>();
+  private static final List<LoadSeries> TASKS = new ArrayList<>();
 
   // Executor without concurrency (only one task is executed at the same time)
   private static final BlockingQueue<Runnable> UNIQUE_QUEUE =
@@ -156,6 +156,10 @@ public class DownloadManager {
   }
 
   private DownloadManager() {}
+
+  public static List<LoadSeries> getTasks() {
+    return TASKS;
+  }
 
   public static OpeningViewer getOpeningViewer() {
     String key =
@@ -230,8 +234,8 @@ public class DownloadManager {
 
   public static void stopDownloading(DicomSeries series, DicomModel dicomModel) {
     if (series != null) {
-      synchronized (DownloadManager.TASKS) {
-        for (final LoadSeries loading : DownloadManager.TASKS) {
+      synchronized (DownloadManager.getTasks()) {
+        for (final LoadSeries loading : DownloadManager.getTasks()) {
           if (loading.getDicomSeries() == series) {
             removeLoadSeries(loading, dicomModel);
             removeSeriesInQueue(loading);
@@ -256,7 +260,7 @@ public class DownloadManager {
   }
 
   private static void handleAllSeries(LoadSeriesHandler handler) {
-    for (LoadSeries loadSeries : new ArrayList<>(DownloadManager.TASKS)) {
+    for (LoadSeries loadSeries : new ArrayList<>(DownloadManager.getTasks())) {
       handler.handle(loadSeries);
       Thumbnail thumbnail = (Thumbnail) loadSeries.getDicomSeries().getTagValue(TagW.Thumbnail);
       if (thumbnail != null) {
@@ -284,7 +288,7 @@ public class DownloadManager {
       String path = uri.getPath();
       URLParameters urlParameters =
           new URLParameters(
-              BundleTools.SESSION_TAGS_MANIFEST,
+              null,
               StringUtil.getInt(System.getProperty("UrlConnectionTimeout"), 7000),
               StringUtil.getInt(System.getProperty("UrlReadTimeout"), 15000) * 2);
 

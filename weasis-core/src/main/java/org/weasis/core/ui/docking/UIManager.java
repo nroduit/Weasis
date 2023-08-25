@@ -248,8 +248,8 @@ public class UIManager {
 
   public static void updateToolbars(
       SeriesViewer<?> oldPlugin, SeriesViewer<?> plugin, boolean force) {
-    List<Toolbar> oldToolBars = oldPlugin == null ? null : oldPlugin.getToolBar();
-    List<Toolbar> toolBars = plugin == null ? null : plugin.getToolBar();
+    List<Toolbar> oldToolBars = oldPlugin == null ? null : oldPlugin.getToolBars();
+    List<Toolbar> toolBars = plugin == null ? null : plugin.getToolBars();
     if (force || toolBars != oldToolBars) {
       toolbarContainer.registerToolBar(toolBars);
     }

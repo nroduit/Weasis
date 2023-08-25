@@ -252,7 +252,7 @@ public class StreamBackingStoreImpl implements BackingStore {
   }
 
   private static URLParameters getURLParameters(boolean post) {
-    Map<String, String> map = new HashMap<>(BundleTools.SESSION_TAGS_FILE);
+    Map<String, String> map = new HashMap<>();
     map.put(post ? "Content-Type" : "Accept", "application/xml"); // NON-NLS
     return new URLParameters(map, post);
   }

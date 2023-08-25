@@ -114,11 +114,12 @@ public class MprContainer extends DicomViewerPlugin implements PropertyChangeLis
   public static final List<SynchView> SYNCH_LIST = List.of(SynchView.NONE, defaultMpr);
 
   public static final GridBagLayoutModel view1 =
-      new GridBagLayoutModel(new LinkedHashMap<>(3), "mpr", "MPR (col 1,2)"); // NON-NLS
+      new GridBagLayoutModel(LinkedHashMap.newLinkedHashMap(3), "mpr", "MPR (col 1,2)"); // NON-NLS
   protected static final GridBagLayoutModel view2 = VIEWS_2x2_f2.copy();
   protected static final GridBagLayoutModel view3 = VIEWS_2_f1x2.copy();
   public static final GridBagLayoutModel view4 =
-      new GridBagLayoutModel(new LinkedHashMap<>(3), "layout_r2x1", "MPR (row 2,1)"); // NON-NLS
+      new GridBagLayoutModel(
+          LinkedHashMap.newLinkedHashMap(3), "layout_r2x1", "MPR (row 2,1)"); // NON-NLS
   protected static final GridBagLayoutModel view5 = VIEWS_1x3.copy();
 
   static {
@@ -213,12 +214,11 @@ public class MprContainer extends DicomViewerPlugin implements PropertyChangeLis
       List.of(view1, view2, view3, view4, view5);
 
   // Static tools shared by all the View2dContainer instances, tools are registered when a container
-  // is selected
+  // is selected.
   // Do not initialize tools in a static block (order initialization issue with eventManager), use
-  // instead a lazy
-  // initialization with a method.
+  // instead a lazy initialization with a method.
   public static final List<Toolbar> TOOLBARS = Collections.synchronizedList(new ArrayList<>());
-  public static final List<DockableTool> TOOLS = View2dContainer.TOOLS;
+  protected static final List<DockableTool> TOOLS = View2dContainer.TOOLS;
   private static volatile boolean initComponents = false;
 
   private Thread process;
@@ -461,7 +461,7 @@ public class MprContainer extends DicomViewerPlugin implements PropertyChangeLis
   }
 
   @Override
-  public synchronized List<Toolbar> getToolBar() {
+  public synchronized List<Toolbar> getToolBars() {
     return TOOLBARS;
   }
 

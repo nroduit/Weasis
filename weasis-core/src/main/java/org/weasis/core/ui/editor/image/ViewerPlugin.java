@@ -207,7 +207,7 @@ public abstract class ViewerPlugin<E extends MediaElement> extends JPanel
   }
 
   public ViewerToolBar getViewerToolBar() {
-    List<Toolbar> bars = getToolBar();
+    List<Toolbar> bars = getToolBars();
     if (bars != null) {
       synchronized (bars) {
         for (Toolbar t : bars) {

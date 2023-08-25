@@ -88,8 +88,9 @@ public class WaveContainer extends DicomViewerPlugin implements PropertyChangeLi
   // Do not initialize tools in a static block (order initialization issue with eventManager), use
   // instead a lazy
   // initialization with a method.
-  public static final List<Toolbar> TOOLBARS = Collections.synchronizedList(new ArrayList<>(1));
-  public static final List<DockableTool> TOOLS = Collections.synchronizedList(new ArrayList<>(1));
+  protected static final List<Toolbar> TOOLBARS = Collections.synchronizedList(new ArrayList<>(1));
+  protected static final List<DockableTool> TOOLS =
+      Collections.synchronizedList(new ArrayList<>(1));
   private static volatile boolean initComponents = false;
   static final ImageViewerEventManager<DicomImageElement> ECG_EVENT_MANAGER =
       new ImageViewerEventManager<>() {
@@ -334,7 +335,7 @@ public class WaveContainer extends DicomViewerPlugin implements PropertyChangeLi
   }
 
   @Override
-  public synchronized List<Toolbar> getToolBar() {
+  public synchronized List<Toolbar> getToolBars() {
     return TOOLBARS;
   }
 

@@ -35,7 +35,10 @@ import org.slf4j.LoggerFactory;
 import org.weasis.base.viewer2d.dockable.DisplayTool;
 import org.weasis.base.viewer2d.dockable.ImageTool;
 import org.weasis.core.api.explorer.ObservableEvent;
+import org.weasis.core.api.explorer.ObservableEvent.BasicAction;
+import org.weasis.core.api.gui.Insertable;
 import org.weasis.core.api.gui.Insertable.Type;
+import org.weasis.core.api.gui.InsertableFactory;
 import org.weasis.core.api.gui.InsertableUtil;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.ComboItemListener;
@@ -59,6 +62,7 @@ import org.weasis.core.ui.docking.DockableTool;
 import org.weasis.core.ui.docking.PluginTool;
 import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.SeriesViewerListener;
+import org.weasis.core.ui.editor.ViewerPluginBuilder;
 import org.weasis.core.ui.editor.image.DefaultView2d;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.editor.image.MeasureToolBar;
@@ -105,12 +109,11 @@ public class View2dContainer extends ImageViewerPlugin<ImageElement>
           VIEWS_2x4);
 
   // Static tools shared by all the View2dContainer instances, tools are registered when a container
-  // is selected
+  // is selected.
   // Do not initialize tools in a static block (order initialization issue with eventManager), use
-  // instead a lazy
-  // initialization with a method.
-  public static final List<Toolbar> TOOLBARS = Collections.synchronizedList(new ArrayList<>());
-  public static final List<DockableTool> TOOLS = Collections.synchronizedList(new ArrayList<>());
+  // instead a lazy initialization with a method.
+  protected static final List<Toolbar> TOOLBARS = Collections.synchronizedList(new ArrayList<>());
+  protected static final List<DockableTool> TOOLS = Collections.synchronizedList(new ArrayList<>());
   private static volatile boolean initComponents = false;
 
   public View2dContainer() {
@@ -289,6 +292,80 @@ public class View2dContainer extends ImageViewerPlugin<ImageElement>
     }
   }
 
+  public static void registerToolBar(Insertable instance) {
+    if (instance instanceof Toolbar bar && !View2dContainer.TOOLBARS.contains(instance)) {
+      View2dContainer.TOOLBARS.add(bar);
+      updateViewerUI(ObservableEvent.BasicAction.UPDATE_TOOLBARS);
+      LOGGER.debug("Add Toolbar [{}] for {}", bar, View2dContainer.class.getName());
+    }
+  }
+
+  public static void registerTool(Insertable instance) {
+    if (instance instanceof DockableTool tool && !View2dContainer.TOOLS.contains(instance)) {
+      View2dContainer.TOOLS.add(tool);
+      ImageViewerPlugin<ImageElement> view =
+          EventManager.getInstance().getSelectedView2dContainer();
+      if (view instanceof View2dContainer) {
+        tool.showDockable();
+      }
+      LOGGER.debug("Add Tool [{}] for {}", tool, View2dContainer.class.getName());
+    }
+  }
+
+  public static void unregisterToolBar(InsertableFactory factory, final BundleContext context) {
+    boolean updateGUI = false;
+    synchronized (View2dContainer.TOOLBARS) {
+      for (int i = View2dContainer.TOOLBARS.size() - 1; i >= 0; i--) {
+        Insertable b = View2dContainer.TOOLBARS.get(i);
+        if (factory.isComponentCreatedByThisFactory(b)) {
+          Preferences prefs = BundlePreferences.getDefaultPreferences(context);
+          if (prefs != null) {
+            List<Insertable> list = Collections.singletonList(b);
+            InsertableUtil.savePreferences(
+                list,
+                prefs.node(View2dContainer.class.getSimpleName().toLowerCase()),
+                Type.TOOLBAR);
+          }
+
+          View2dContainer.TOOLBARS.remove(i);
+          factory.dispose(b);
+          updateGUI = true;
+        }
+      }
+    }
+    if (updateGUI) {
+      updateViewerUI(ObservableEvent.BasicAction.UPDATE_TOOLBARS);
+    }
+  }
+
+  protected static void updateViewerUI(BasicAction action) {
+    ImageViewerPlugin<ImageElement> view = EventManager.getInstance().getSelectedView2dContainer();
+    if (view instanceof View2dContainer) {
+      ViewerPluginBuilder.DefaultDataModel.firePropertyChange(
+          new ObservableEvent(action, view, null, view));
+    }
+  }
+
+  public static void unregisterTool(InsertableFactory factory, final BundleContext context) {
+    synchronized (View2dContainer.TOOLS) {
+      for (int i = View2dContainer.TOOLS.size() - 1; i >= 0; i--) {
+        DockableTool t = View2dContainer.TOOLS.get(i);
+        if (factory.isComponentCreatedByThisFactory(t)) {
+          Preferences prefs = BundlePreferences.getDefaultPreferences(context);
+          if (prefs != null) {
+            Preferences containerNode =
+                prefs.node(View2dContainer.class.getSimpleName().toLowerCase());
+            InsertableUtil.savePreferences(Collections.singletonList(t), containerNode, Type.TOOL);
+          }
+
+          View2dContainer.TOOLS.remove(i);
+          factory.dispose(t);
+          t.closeDockable();
+        }
+      }
+    }
+  }
+
   @Override
   public JMenu fillSelectedPluginMenu(JMenu menuRoot) {
     if (menuRoot != null) {
@@ -431,7 +508,7 @@ public class View2dContainer extends ImageViewerPlugin<ImageElement>
   }
 
   @Override
-  public synchronized List<Toolbar> getToolBar() {
+  public synchronized List<Toolbar> getToolBars() {
     return TOOLBARS;
   }
 

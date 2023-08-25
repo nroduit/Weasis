@@ -66,7 +66,7 @@ public class AuContainer extends DicomViewerPlugin implements PropertyChangeList
   // Do not initialize tools in a static block (order initialization issue with eventManager), use
   // instead a lazy
   // initialization with a method.
-  private static final List<Toolbar> TOOLBARS = Collections.synchronizedList(new ArrayList<>(1));
+  protected static final List<Toolbar> TOOLBARS = Collections.synchronizedList(new ArrayList<>(1));
   private static volatile boolean initComponents = false;
 
   static final ImageViewerEventManager<DicomImageElement> AU_EVENT_MANAGER =
@@ -270,7 +270,7 @@ public class AuContainer extends DicomViewerPlugin implements PropertyChangeList
   }
 
   @Override
-  public synchronized List<Toolbar> getToolBar() {
+  public synchronized List<Toolbar> getToolBars() {
     return TOOLBARS;
   }
 

@@ -18,6 +18,7 @@ import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.beans.PropertyChangeListener;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -327,7 +328,7 @@ public class GraphicsPane extends JComponent implements Canvas {
       affineTransform.setTransform(fmx[0], fmx[1], fmx[2], fmx[3], fmx[4], fmx[5]);
 
       // Convert to openCV affine matrix
-      double[] m = new double[] {fmx[0], fmx[2], fmx[4], fmx[1], fmx[3], fmx[5]};
+      List<Double> m = List.of(fmx[0], fmx[2], fmx[4], fmx[1], fmx[3], fmx[5]);
       node.setParam(AffineTransformOp.P_AFFINE_MATRIX, m);
 
       node.setParam(AffineTransformOp.P_DST_BOUNDS, dstBounds);

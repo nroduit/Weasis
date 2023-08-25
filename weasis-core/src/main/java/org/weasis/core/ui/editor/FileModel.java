@@ -21,7 +21,6 @@ import org.weasis.core.api.explorer.ObservableEvent;
 import org.weasis.core.api.explorer.model.AbstractFileModel;
 import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.gui.util.GuiExecutor;
-import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.api.util.ClosableURLConnection;
 import org.weasis.core.api.util.NetworkUtil;
 import org.weasis.core.api.util.URLParameters;
@@ -39,8 +38,7 @@ public class FileModel extends AbstractFileModel {
 
   private File getFile(String url) {
     File outFile;
-    try (ClosableURLConnection http =
-            NetworkUtil.getUrlConnection(url, new URLParameters(BundleTools.SESSION_TAGS_FILE));
+    try (ClosableURLConnection http = NetworkUtil.getUrlConnection(url, new URLParameters());
         InputStream in = http.getInputStream()) {
       outFile = File.createTempFile("img_", FileUtil.getExtension(url), IMAGE_CACHE_DIR);
       LOGGER.debug("Start to download image {} to {}.", url, outFile.getName());

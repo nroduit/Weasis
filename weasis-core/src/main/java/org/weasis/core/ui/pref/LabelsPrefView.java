@@ -52,7 +52,7 @@ public class LabelsPrefView extends AbstractItemDialogPage {
     this.map = new HashMap<>(ImageStatistics.ALL_MEASUREMENTS.length);
     this.viewSetting = Objects.requireNonNull(MeasureTool.viewSetting);
 
-    ArrayList<Graphic> tools = new ArrayList<>(MeasureToolBar.measureGraphicList);
+    ArrayList<Graphic> tools = new ArrayList<>(MeasureToolBar.getMeasureGraphicList());
     tools.remove(0);
     this.comboBoxTool = new JComboBox<>(tools.toArray(Graphic[]::new));
     this.fontItemJComboBox = new JComboBox<>(FontItem.values());
@@ -157,8 +157,8 @@ public class LabelsPrefView extends AbstractItemDialogPage {
   public void closeAdditionalWindow() {
     viewSetting.setFontKey(
         ((FontItem) Objects.requireNonNull(fontItemJComboBox.getSelectedItem())).getKey());
-    MeasureToolBar.measureGraphicList.forEach(
-        g -> MeasureToolBar.applyDefaultSetting(viewSetting, g));
+    MeasureToolBar.getMeasureGraphicList()
+        .forEach(g -> MeasureToolBar.applyDefaultSetting(viewSetting, g));
 
     synchronized (UIManager.VIEWER_PLUGINS) {
       for (int i = UIManager.VIEWER_PLUGINS.size() - 1; i >= 0; i--) {
@@ -179,12 +179,13 @@ public class LabelsPrefView extends AbstractItemDialogPage {
   public void resetToDefaultValues() {
     viewSetting.setFontKey(FontItem.SMALL_SEMIBOLD.getKey());
     initialize();
-    MeasureToolBar.measureGraphicList.forEach(
-        g -> {
-          List<Measurement> list = g.getMeasurementList();
-          Optional.ofNullable(list)
-              .ifPresent(l -> l.forEach(Measurement::resetToGraphicLabelValue));
-        });
+    MeasureToolBar.getMeasureGraphicList()
+        .forEach(
+            g -> {
+              List<Measurement> list = g.getMeasurementList();
+              Optional.ofNullable(list)
+                  .ifPresent(l -> l.forEach(Measurement::resetToGraphicLabelValue));
+            });
 
     selectTool((Graphic) comboBoxTool.getSelectedItem());
 

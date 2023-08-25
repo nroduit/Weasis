@@ -301,7 +301,7 @@ public class SRContainer extends DicomViewerPlugin implements PropertyChangeList
   }
 
   @Override
-  public synchronized List<Toolbar> getToolBar() {
+  public synchronized List<Toolbar> getToolBars() {
     return TOOLBARS;
   }
 

@@ -111,9 +111,8 @@ public class ConvexHull {
    * @param a the origin point of the vector
    * @param b the final point of the vector
    * @param c the point to compute the direction to
-   * @return 1 if c is counter-clockwise, (left) from a-b
-   * @return -1 if c is clockwise, (right) from a-b
-   * @return 0 if c is collinear with a-b
+   * @return 1 if c is counter-clockwise, (left) from a-b, -1 if c is clockwise, (right) from a-b
+   *     and 0 if c is collinear with a-b
    */
   public static int getOrientation(Point2D a, Point2D b, Point2D c) {
     return signum(

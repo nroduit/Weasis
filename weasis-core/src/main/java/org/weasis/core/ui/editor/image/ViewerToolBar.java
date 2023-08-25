@@ -50,7 +50,7 @@ import org.weasis.core.ui.util.WtoolBar;
 
 public class ViewerToolBar<E extends ImageElement> extends WtoolBar implements ActionListener {
 
-  public static final List<Feature<?>> actionsButtons =
+  protected static final List<Feature<?>> actionsButtons =
       Collections.synchronizedList(
           new ArrayList<>(
               Arrays.asList(
@@ -65,7 +65,7 @@ public class ViewerToolBar<E extends ImageElement> extends WtoolBar implements A
                   ActionW.CROSSHAIR,
                   ActionW.NO_ACTION)));
 
-  public static final Feature<?>[] actionsScroll = {
+  protected static final Feature<?>[] actionsScroll = {
     ActionW.SCROLL_SERIES, ActionW.ZOOM, ActionW.ROTATION, ActionW.NO_ACTION
   };
   public static final FlatSVGIcon MouseLeftIcon =
@@ -439,6 +439,10 @@ public class ViewerToolBar<E extends ImageElement> extends WtoolBar implements A
       return mouseWheel;
     }
     return null;
+  }
+
+  public Feature<?> getToolBarAction(String command) {
+    return getAction(actionsButtons, command);
   }
 
   public Feature<?> getAction(List<Feature<?>> buttons, String command) {

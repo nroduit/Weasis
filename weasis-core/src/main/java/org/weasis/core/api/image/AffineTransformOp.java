@@ -10,7 +10,7 @@
 package org.weasis.core.api.image;
 
 import java.awt.geom.Rectangle2D;
-import java.util.Arrays;
+import java.util.List;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
 import org.opencv.core.Size;
@@ -23,7 +23,7 @@ public class AffineTransformOp extends AbstractOp {
 
   public static final String OP_NAME = Messages.getString("AffineTransformOp.affine_op");
 
-  public static final double[] identityMatrix = new double[] {1.0, 0.0, 0.0, 0.0, 1.0, 0.0};
+  public static final List<Double> identityMatrix = List.of(1.0, 0.0, 0.0, 0.0, 1.0, 0.0);
 
   /**
    * Set an affine transformation (Required parameter).
@@ -58,18 +58,18 @@ public class AffineTransformOp extends AbstractOp {
   public void process() throws Exception {
     PlanarImage source = (PlanarImage) params.get(Param.INPUT_IMG);
     PlanarImage result = source;
-    double[] matrix = (double[]) params.get(P_AFFINE_MATRIX);
+    List<Double> matrix = (List<Double>) params.get(P_AFFINE_MATRIX);
     Rectangle2D bound = (Rectangle2D) params.get(P_DST_BOUNDS);
 
     if (bound != null
         && source != null
         && matrix != null
-        && (!Arrays.equals(identityMatrix, matrix)
+        && (!identityMatrix.equals(matrix)
             || MathUtil.isDifferent(source.width(), bound.getWidth())
             || MathUtil.isDifferent(source.height(), bound.getHeight()))) {
       if (bound.getWidth() > 0 && bound.getHeight() > 0) {
         Mat mat = new Mat(2, 3, CvType.CV_64FC1);
-        mat.put(0, 0, matrix);
+        mat.put(0, 0, matrix.stream().mapToDouble(Double::doubleValue).toArray());
         ZoomOp.Interpolation interpolation = (ZoomOp.Interpolation) params.get(P_INTERPOLATION);
         Integer inter = null;
         if (interpolation != null) {

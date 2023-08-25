@@ -69,7 +69,7 @@ public class WrapLayout extends FlowLayout {
   }
 
   /**
-   * Returns the minimum dimensions needed to layout the <i>visible</i> components contained in the
+   * Returns the minimum dimensions needed to lay out the <i>visible</i> components contained in the
    * specified target container.
    *
    * @param target the component which needs to be laid out
@@ -83,11 +83,11 @@ public class WrapLayout extends FlowLayout {
   }
 
   /**
-   * Returns the minimum or preferred dimension needed to layout the target container.
+   * Returns the minimum or preferred dimension needed to lay out the target container.
    *
    * @param target target to get layout size for
    * @param preferred should preferred size be calculated
-   * @return the dimension to layout the target container
+   * @return the dimension to lay out the target container
    */
   private Dimension layoutSize(Container target, boolean preferred) {
     synchronized (target.getTreeLock()) {

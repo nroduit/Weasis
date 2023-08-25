@@ -42,20 +42,6 @@ public class BundleTools {
 
   public static final String P_FORMAT_CODE = "locale.format.code";
 
-  public static final Map<String, String> SESSION_TAGS_MANIFEST = new HashMap<>(3);
-  public static final Map<String, String> SESSION_TAGS_FILE = new HashMap<>(3);
-
-  static {
-    Properties properties = System.getProperties();
-    for (String key : properties.stringPropertyNames()) {
-      if (key.startsWith("TGM-")) { // NON-NLS
-        SESSION_TAGS_MANIFEST.put(key.substring(4), properties.getProperty(key));
-      } else if (key.startsWith("TGF-")) { // NON-NLS
-        SESSION_TAGS_FILE.put(key.substring(4), properties.getProperty(key));
-      }
-    }
-  }
-
   public static final String CONFIRM_CLOSE = "weasis.confirm.closing";
   public static final String LINUX_WINDOWS_DECORATION = "weasis.linux.windows.decoration";
 
@@ -212,7 +198,7 @@ public class BundleTools {
   }
 
   private static URLParameters getURLParameters(boolean post) {
-    Map<String, String> map = new HashMap<>(BundleTools.SESSION_TAGS_FILE);
+    Map<String, String> map = new HashMap<>();
     map.put(post ? "Content-Type" : "Accept", "text/x-java-properties"); // NON-NLS
     return new URLParameters(map, post);
   }

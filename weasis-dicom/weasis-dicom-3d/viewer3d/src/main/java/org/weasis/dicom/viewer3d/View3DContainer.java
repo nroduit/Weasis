@@ -222,7 +222,7 @@ public class View3DContainer extends DicomViewerPlugin implements PropertyChange
   }
 
   @Override
-  public List<Toolbar> getToolBar() {
+  public List<Toolbar> getToolBars() {
     return TOOLBARS;
   }
 

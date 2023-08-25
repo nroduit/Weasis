@@ -76,8 +76,8 @@ public class LoadRemoteDicomManifest extends ExplorerTask<Boolean, String> {
       loadSeriesList.remove(loadSeries);
     }
 
-    if (DownloadManager.TASKS.isEmpty()
-        || DownloadManager.TASKS.stream().allMatch(LoadSeries::isStopped)) {
+    if (DownloadManager.getTasks().isEmpty()
+        || DownloadManager.getTasks().stream().allMatch(LoadSeries::isStopped)) {
       if (!loadSeriesList.isEmpty() && tryDownloadingAgain(null)) {
         LOGGER.info("Try downloading ({}) the missing elements", retryNb.get());
         List<LoadSeries> oldList = new ArrayList<>(loadSeriesList);
@@ -191,7 +191,7 @@ public class LoadRemoteDicomManifest extends ExplorerTask<Boolean, String> {
 
       // Sort tasks from the download priority order (low number has a higher priority), TASKS
       // is sorted from low to high priority.
-      DownloadManager.TASKS.sort(Collections.reverseOrder(new PriorityTaskComparator()));
+      DownloadManager.getTasks().sort(Collections.reverseOrder(new PriorityTaskComparator()));
     }
   }
 }

@@ -39,7 +39,7 @@ public class LabelHighlighted extends JLabel {
     reset();
 
     final String textToMatch = textToHighlight.toLowerCase().trim();
-    if (textToMatch.length() == 0) {
+    if (textToMatch.isEmpty()) {
       return;
     }
 

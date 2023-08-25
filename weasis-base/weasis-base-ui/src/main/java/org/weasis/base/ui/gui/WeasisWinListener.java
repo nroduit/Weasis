@@ -234,7 +234,7 @@ public class WeasisWinListener implements MainWindowListener {
                 mainWindow.getToolbarContainer().registerToolBar(tb);
                 UIManager.VIEWER_PLUGINS.forEach(
                     v ->
-                        v.getToolBar()
+                        v.getToolBars()
                             .removeIf(b -> b.getComponent().getAttachedInsertable() == explorer));
 
                 explorer.dispose();

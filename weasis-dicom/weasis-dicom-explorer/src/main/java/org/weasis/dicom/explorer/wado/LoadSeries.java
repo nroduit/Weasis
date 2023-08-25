@@ -546,12 +546,11 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
   }
 
   private static Map<String, String> getHttpTags(WadoParameters wadoParams) {
-    boolean hasBundleTags = !BundleTools.SESSION_TAGS_FILE.isEmpty();
     boolean hasWadoTags = wadoParams != null && wadoParams.getHttpTaglist() != null;
     boolean hasWadoLogin = wadoParams != null && wadoParams.getWebLogin() != null;
 
-    if (hasWadoTags || hasWadoLogin || hasBundleTags) {
-      HashMap<String, String> map = new HashMap<>(BundleTools.SESSION_TAGS_FILE);
+    if (hasWadoTags || hasWadoLogin) {
+      HashMap<String, String> map = new HashMap<>();
       if (hasWadoTags) {
         for (HttpTag tag : wadoParams.getHttpTaglist()) {
           map.put(tag.getKey(), tag.getValue());
@@ -1196,8 +1195,8 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
         // Set the priority to the current loadingSeries and stop a task.
         p.setPriority(DownloadPriority.COUNTER.getAndDecrement());
         DownloadManager.offerSeriesInQueue(this);
-        synchronized (DownloadManager.TASKS) {
-          for (LoadSeries s : DownloadManager.TASKS) {
+        synchronized (DownloadManager.getTasks()) {
+          for (LoadSeries s : DownloadManager.getTasks()) {
             if (s != this && StateValue.STARTED.equals(s.getState())) {
               cancelAndReplace(s);
               break;
