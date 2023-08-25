@@ -15,8 +15,6 @@ import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Window;
 import java.io.IOException;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.Hashtable;
@@ -66,20 +64,7 @@ public class DicomExport extends AbstractWizardDialog {
     exportButton.addActionListener(e -> exportSelection());
     exportButton.setText(Messages.getString("DicomExport.exp"));
 
-    JButton jButtonHelp = new JButton();
-    jButtonHelp.putClientProperty("JButton.buttonType", "help");
-    jButtonHelp.addActionListener(
-        e -> {
-          try {
-            GuiUtils.openInDefaultBrowser(
-                jButtonHelp,
-                new URL(
-                    GuiUtils.getUICore().getSystemPreferences().getProperty("weasis.help.online")
-                        + "dicom-export/#dicom-export"));
-          } catch (MalformedURLException e1) {
-            LOGGER.error("Cannot open online help", e1);
-          }
-        });
+    JButton jButtonHelp = GuiUtils.createHelpButton("dicom-export/#dicom-export");
 
     jPanelBottom.removeAll();
     jPanelBottom.add(

@@ -12,8 +12,6 @@ package org.weasis.dicom.explorer;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Window;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.util.ArrayList;
 import javax.swing.JButton;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -54,20 +52,8 @@ public class DicomImport extends AbstractWizardDialog {
     JButton importButton = new JButton(Messages.getString("DicomImport.imp"));
     importButton.addActionListener(e -> importSelection());
 
-    JButton jButtonHelp = new JButton();
+    JButton jButtonHelp = GuiUtils.createHelpButton("dicom-import");
     jButtonHelp.putClientProperty("JButton.buttonType", "help");
-    jButtonHelp.addActionListener(
-        e -> {
-          try {
-            GuiUtils.openInDefaultBrowser(
-                jButtonHelp,
-                new URL(
-                    GuiUtils.getUICore().getSystemPreferences().getProperty("weasis.help.online")
-                        + "dicom-import"));
-          } catch (MalformedURLException e1) {
-            LOGGER.error("Cannot open online help", e1);
-          }
-        });
 
     jPanelBottom.removeAll();
     jPanelBottom.add(
