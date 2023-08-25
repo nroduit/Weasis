@@ -213,7 +213,9 @@ public class WeasisWin {
         new WindowAdapter() {
           @Override
           public void windowClosing(WindowEvent e) {
-            closeWindow();
+            if (canBeClosed()) {
+              closeAllRunnable();
+            }
           }
         });
     rootPaneContainer = jFrame;
@@ -268,26 +270,18 @@ public class WeasisWin {
     return GuiUtils.getUICore().getToolbarContainer();
   }
 
-  public boolean closeWindow() {
-    boolean busy = false;
-    if (!busy) {
-      if (GuiUtils.getUICore()
-          .getSystemPreferences()
-          .getBooleanProperty(UICore.CONFIRM_CLOSE, false)) {
-        int option = JOptionPane.showConfirmDialog(frame, Messages.getString("WeasisWin.exit_mes"));
-        if (option == JOptionPane.YES_OPTION) {
-          closeAllRunnable();
-          return true;
-        }
-      } else {
-        closeAllRunnable();
-        return true;
-      }
+  public boolean canBeClosed() {
+    if (GuiUtils.getUICore()
+        .getSystemPreferences()
+        .getBooleanProperty(UICore.CONFIRM_CLOSE, false)) {
+      int option = JOptionPane.showConfirmDialog(frame, Messages.getString("WeasisWin.exit_mes"));
+      return option == JOptionPane.YES_OPTION;
+    } else {
+      return true;
     }
-    return false;
   }
 
-  private void closeAllRunnable() {
+  void closeAllRunnable() {
     WProperties localPersistence = GuiUtils.getUICore().getLocalPersistence();
     localPersistence.putIntProperty("last.window.state", frame.getExtendedState());
     Rectangle rect = frame.getBounds();
@@ -1017,7 +1011,13 @@ public class WeasisWin {
 
     menuFile.add(new JSeparator());
     DefaultAction exitAction =
-        new DefaultAction(Messages.getString("ExitAction.title"), e -> closeWindow());
+        new DefaultAction(
+            Messages.getString("ExitAction.title"),
+            e -> {
+              if (canBeClosed()) {
+                closeAllRunnable();
+              }
+            });
     menuFile.add(new JMenuItem(exitAction));
   }
 

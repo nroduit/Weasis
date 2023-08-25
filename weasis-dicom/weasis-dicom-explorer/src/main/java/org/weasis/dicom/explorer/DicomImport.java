@@ -106,6 +106,7 @@ public class DicomImport extends AbstractWizardDialog {
     try {
       object = jScrollPanePage.getViewport().getComponent(0);
     } catch (Exception ex) {
+      // Do nothing
     }
     if (object instanceof ImportDicom selectedPage) {
       selectedPage.importDICOM(dicomModel, null);
