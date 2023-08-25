@@ -24,7 +24,6 @@ import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.service.AuditLog;
 import org.weasis.core.api.service.AuditLog.LEVEL;
-import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.api.service.WProperties;
 import org.weasis.core.util.StringUtil;
 
@@ -102,7 +101,7 @@ public class LoggingPrefView extends AbstractItemDialogPage {
 
   private static int getIntPreferences(String key, int defaultValue, String removedSuffix) {
     if (key != null) {
-      String s = BundleTools.SYSTEM_PREFERENCES.getProperty(key);
+      String s = GuiUtils.getUICore().getSystemPreferences().getProperty(key);
       if (s != null) {
         if (removedSuffix != null) {
           int index = s.lastIndexOf(removedSuffix);
@@ -121,7 +120,7 @@ public class LoggingPrefView extends AbstractItemDialogPage {
   }
 
   protected void initialize() {
-    WProperties prefs = BundleTools.SYSTEM_PREFERENCES;
+    WProperties prefs = GuiUtils.getUICore().getSystemPreferences();
 
     comboBoxLogLevel.setSelectedItem(LEVEL.getLevel(prefs.getProperty(AuditLog.LOG_LEVEL, "INFO")));
     int limit = getIntPreferences(AuditLog.LOG_STACKTRACE_LIMIT, 3, null);
@@ -145,32 +144,32 @@ public class LoggingPrefView extends AbstractItemDialogPage {
 
   @Override
   public void closeAdditionalWindow() {
+    WProperties preferences = GuiUtils.getUICore().getSystemPreferences();
     String limit = (String) comboBoxStackLimit.getSelectedItem();
-    BundleTools.SYSTEM_PREFERENCES.setProperty(
+    preferences.setProperty(
         AuditLog.LOG_STACKTRACE_LIMIT, StringUtil.hasText(limit) ? limit : "-1");
 
     LEVEL level = (LEVEL) comboBoxLogLevel.getSelectedItem();
     if (level == null) {
       level = LEVEL.INFO;
     }
-    BundleTools.SYSTEM_PREFERENCES.setProperty(AuditLog.LOG_LEVEL, level.toString());
-    BundleTools.SYSTEM_PREFERENCES.putBooleanProperty(
-        AuditLog.LOG_FILE_ACTIVATION, checkboxFileLog.isSelected());
+    preferences.setProperty(AuditLog.LOG_LEVEL, level.toString());
+    preferences.putBooleanProperty(AuditLog.LOG_FILE_ACTIVATION, checkboxFileLog.isSelected());
     String logFile =
         checkboxFileLog.isSelected()
             ? AppProperties.WEASIS_PATH + File.separator + "log" + File.separator + "default.log"
             : ""; // NON-NLS
-    BundleTools.SYSTEM_PREFERENCES.setProperty(AuditLog.LOG_FILE, logFile);
+    preferences.setProperty(AuditLog.LOG_FILE, logFile);
     String fileNb = null;
     String fileSize = null;
     if (checkboxFileLog.isSelected()) {
       fileNb = spinner.getValue().toString();
       fileSize = spinner1.getValue().toString() + "MB";
-      BundleTools.SYSTEM_PREFERENCES.setProperty(AuditLog.LOG_FILE_NUMBER, fileNb);
-      BundleTools.SYSTEM_PREFERENCES.setProperty(AuditLog.LOG_FILE_SIZE, fileSize);
+      preferences.setProperty(AuditLog.LOG_FILE_NUMBER, fileNb);
+      preferences.setProperty(AuditLog.LOG_FILE_SIZE, fileSize);
     }
     String pattern =
-        BundleTools.SYSTEM_PREFERENCES.getProperty(
+        preferences.getProperty(
             AuditLog.LOG_PATTERN, "{0,date,dd.MM.yyyy HH:mm:ss.SSS} *{4}* [{2}] {3}: {5}");
     BundleContext context = FrameworkUtil.getBundle(this.getClass()).getBundleContext();
     AuditLog.createOrUpdateLogger(
@@ -188,11 +187,12 @@ public class LoggingPrefView extends AbstractItemDialogPage {
   @Override
   public void resetToDefaultValues() {
     // Reset properties used by OSGI service (Sling Logger)
-    BundleTools.SYSTEM_PREFERENCES.resetServiceProperty(AuditLog.LOG_STACKTRACE_LIMIT, "3");
-    BundleTools.SYSTEM_PREFERENCES.resetServiceProperty(AuditLog.LOG_LEVEL, "INFO");
-    BundleTools.SYSTEM_PREFERENCES.resetServiceProperty(AuditLog.LOG_FILE, "");
-    BundleTools.SYSTEM_PREFERENCES.resetServiceProperty(AuditLog.LOG_FILE_NUMBER, "5");
-    BundleTools.SYSTEM_PREFERENCES.resetServiceProperty(AuditLog.LOG_FILE_SIZE, "10MB"); // NON-NLS
+    WProperties preferences = GuiUtils.getUICore().getSystemPreferences();
+    preferences.resetServiceProperty(AuditLog.LOG_STACKTRACE_LIMIT, "3");
+    preferences.resetServiceProperty(AuditLog.LOG_LEVEL, "INFO");
+    preferences.resetServiceProperty(AuditLog.LOG_FILE, "");
+    preferences.resetServiceProperty(AuditLog.LOG_FILE_NUMBER, "5");
+    preferences.resetServiceProperty(AuditLog.LOG_FILE_SIZE, "10MB"); // NON-NLS
 
     initialize();
   }

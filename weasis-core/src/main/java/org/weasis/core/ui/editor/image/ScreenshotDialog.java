@@ -42,7 +42,7 @@ import org.weasis.core.api.gui.util.FileFormatFilter;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.image.SimpleOpManager;
 import org.weasis.core.api.media.data.ImageElement;
-import org.weasis.core.api.service.BundleTools;
+import org.weasis.core.api.service.WProperties;
 import org.weasis.core.ui.util.ColorLayerUI;
 import org.weasis.core.util.StringUtil;
 import org.weasis.opencv.data.PlanarImage;
@@ -226,7 +226,8 @@ public class ScreenshotDialog<I extends ImageElement> extends JDialog {
 
   private void saveImageFile(PlanarImage image, boolean mustBeReleased) {
     if (image != null) {
-      String targetDirectoryPath = BundleTools.LOCAL_UI_PERSISTENCE.getProperty(P_LAST_DIR, "");
+      WProperties localPersistence = GuiUtils.getUICore().getLocalPersistence();
+      String targetDirectoryPath = localPersistence.getProperty(P_LAST_DIR, "");
       JFileChooser fileChooser = new JFileChooser(targetDirectoryPath);
       fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
       fileChooser.setAcceptAllFileFilterUsed(false);
@@ -263,8 +264,7 @@ public class ScreenshotDialog<I extends ImageElement> extends JDialog {
           ImageConversion.releasePlanarImage(image);
         }
         if (destinationFile.canRead()) {
-          BundleTools.LOCAL_UI_PERSISTENCE.setProperty(
-              P_LAST_DIR, destinationFile.getParentFile().getPath());
+          localPersistence.setProperty(P_LAST_DIR, destinationFile.getParentFile().getPath());
         }
       }
     }

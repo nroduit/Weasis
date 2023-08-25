@@ -18,7 +18,6 @@ import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.api.util.ResourceUtil.OtherIcon;
-import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.SeriesViewerFactory;
 import org.weasis.core.ui.editor.ViewerPluginBuilder;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
@@ -58,7 +57,7 @@ public class Basic3DToolBar<DicomImageElement> extends WtoolBar {
     return e -> {
       MediaSeries<org.weasis.dicom.codec.DicomImageElement> s =
           EventManager.getInstance().getSelectedSeries();
-      SeriesViewerFactory factory = UIManager.getViewerFactory(MprFactory.class);
+      SeriesViewerFactory factory = GuiUtils.getUICore().getViewerFactory(MprFactory.class);
       if (factory != null && factory.canReadSeries(s)) {
         ViewerPluginBuilder.openSequenceInPlugin(
             factory, s, (DataExplorerModel) s.getTagValue(TagW.ExplorerModel), false, false);

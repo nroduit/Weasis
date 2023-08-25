@@ -85,7 +85,6 @@ import org.weasis.dicom.codec.FileExtractor;
 import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.TransferSyntax;
 import org.weasis.dicom.codec.display.WindowAndPresetsOp;
-import org.weasis.dicom.explorer.internal.Activator;
 import org.weasis.dicom.explorer.pr.DicomPrSerializer;
 import org.weasis.dicom.param.AttributeEditor;
 import org.weasis.dicom.param.DefaultAttributeEditor;
@@ -191,7 +190,7 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
   }
 
   protected Properties getPreferences() {
-    return Activator.IMPORT_EXPORT_PERSISTENCE;
+    return LocalPersistence.getProperties();
   }
 
   protected void showExportingOptions() {

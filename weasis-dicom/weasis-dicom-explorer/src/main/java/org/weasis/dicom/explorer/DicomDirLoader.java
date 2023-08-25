@@ -33,12 +33,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.core.api.gui.util.GuiExecutor;
+import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.MediaSeriesGroupNode;
 import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.media.data.Thumbnail;
-import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.image.ViewerPlugin;
 import org.weasis.dicom.codec.DicomSeries;
 import org.weasis.dicom.codec.TagD;
@@ -98,8 +98,9 @@ public class DicomDirLoader {
       GuiExecutor.instance()
           .execute(
               () -> {
-                synchronized (UIManager.VIEWER_PLUGINS) {
-                  for (final ViewerPlugin p : UIManager.VIEWER_PLUGINS) {
+                List<ViewerPlugin<?>> viewerPlugins = GuiUtils.getUICore().getViewerPlugins();
+                synchronized (viewerPlugins) {
+                  for (final ViewerPlugin p : viewerPlugins) {
                     if (uniquePatient.equals(p.getGroupID())) {
                       p.setSelectedAndGetFocus();
                       break;

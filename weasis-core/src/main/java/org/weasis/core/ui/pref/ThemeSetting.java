@@ -35,7 +35,7 @@ import org.weasis.core.api.gui.util.AbstractItemDialogPage;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.GuiUtils.IconColor;
-import org.weasis.core.api.service.BundleTools;
+import org.weasis.core.api.service.UICore;
 import org.weasis.core.api.service.WProperties;
 import org.weasis.core.util.StringUtil;
 
@@ -140,7 +140,7 @@ public class ThemeSetting extends AbstractItemDialogPage {
   }
 
   protected void initialize(boolean firstTime) {
-    WProperties preferences = BundleTools.SYSTEM_PREFERENCES;
+    WProperties preferences = GuiUtils.getUICore().getSystemPreferences();
 
     String className = preferences.getProperty("weasis.theme");
     if (className == null) {
@@ -177,7 +177,7 @@ public class ThemeSetting extends AbstractItemDialogPage {
 
     if (SystemInfo.isLinux) {
       checkboxDecoration.setSelected(
-          preferences.getBooleanProperty(BundleTools.LINUX_WINDOWS_DECORATION, false));
+          preferences.getBooleanProperty(UICore.LINUX_WINDOWS_DECORATION, false));
     }
   }
 
@@ -212,12 +212,13 @@ public class ThemeSetting extends AbstractItemDialogPage {
 
   @Override
   public void closeAdditionalWindow() {
+    WProperties preferences = GuiUtils.getUICore().getSystemPreferences();
     LookInfo look = (LookInfo) comboBoxTheme.getSelectedItem();
     if (look != null) {
-      BundleTools.SYSTEM_PREFERENCES.setProperty("weasis.theme", look.className());
+      preferences.setProperty("weasis.theme", look.className());
     }
     // save preferences
-    BundleTools.saveSystemPreferences();
+    GuiUtils.getUICore().saveSystemPreferences();
 
     LookAndFeel currentLAF = UIManager.getLookAndFeel();
     if (currentLAF != null
@@ -239,22 +240,21 @@ public class ThemeSetting extends AbstractItemDialogPage {
     if (userScaleRadio.isSelected() && spinner1.getValue() instanceof Integer val) {
       scale = String.valueOf(val / 100.f);
     }
-    BundleTools.SYSTEM_PREFERENCES.setProperty(FlatSystemProperties.UI_SCALE, scale);
+    preferences.setProperty(FlatSystemProperties.UI_SCALE, scale);
 
     if (SystemInfo.isLinux) {
-      BundleTools.SYSTEM_PREFERENCES.putBooleanProperty(
-          BundleTools.LINUX_WINDOWS_DECORATION, checkboxDecoration.isSelected());
+      preferences.putBooleanProperty(
+          UICore.LINUX_WINDOWS_DECORATION, checkboxDecoration.isSelected());
     }
   }
 
   @Override
   public void resetToDefaultValues() {
-    BundleTools.SYSTEM_PREFERENCES.setProperty(
-        "weasis.theme", "org.weasis.launcher.FlatWeasisTheme");
-    BundleTools.SYSTEM_PREFERENCES.setProperty(FlatSystemProperties.UI_SCALE, "-1");
+    WProperties preferences = GuiUtils.getUICore().getSystemPreferences();
+    preferences.setProperty("weasis.theme", "org.weasis.launcher.FlatWeasisTheme");
+    preferences.setProperty(FlatSystemProperties.UI_SCALE, "-1");
     if (SystemInfo.isLinux) {
-      BundleTools.SYSTEM_PREFERENCES.setProperty(
-          BundleTools.LINUX_WINDOWS_DECORATION, Boolean.FALSE.toString());
+      preferences.setProperty(UICore.LINUX_WINDOWS_DECORATION, Boolean.FALSE.toString());
     }
     initialize(false);
   }

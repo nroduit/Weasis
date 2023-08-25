@@ -47,12 +47,11 @@ import org.weasis.core.api.image.LayoutConstraints;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.service.BundlePreferences;
-import org.weasis.core.api.service.BundleTools;
+import org.weasis.core.api.service.WProperties;
 import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.api.util.ResourceUtil.ActionIcon;
 import org.weasis.core.ui.docking.DockableTool;
 import org.weasis.core.ui.docking.PluginTool;
-import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.SeriesViewerListener;
 import org.weasis.core.ui.editor.image.RotationToolBar;
 import org.weasis.core.ui.editor.image.SynchData;
@@ -242,9 +241,10 @@ public class View3DContainer extends DicomViewerPlugin implements PropertyChange
       String bundleName = context.getBundle().getSymbolicName();
       String componentName = InsertableUtil.getCName(this.getClass());
       String key = "enable"; // NON-NLS
+      WProperties preferences = GuiUtils.getUICore().getSystemPreferences();
 
       if (InsertableUtil.getBooleanProperty(
-          BundleTools.SYSTEM_PREFERENCES,
+          preferences,
           bundleName,
           componentName,
           InsertableUtil.getCName(ViewerToolBar.class),
@@ -252,10 +252,7 @@ public class View3DContainer extends DicomViewerPlugin implements PropertyChange
           true)) {
         TOOLBARS.add(
             new ViewerToolBar<>(
-                eventManager,
-                eventManager.getMouseActions().getActiveButtons(),
-                BundleTools.SYSTEM_PREFERENCES,
-                10));
+                eventManager, eventManager.getMouseActions().getActiveButtons(), preferences, 10));
       }
       //      if (InsertableUtil.getBooleanProperty(
       //          BundleTools.SYSTEM_PREFERENCES,
@@ -267,7 +264,7 @@ public class View3DContainer extends DicomViewerPlugin implements PropertyChange
       //        TOOLBARS.add(new MeasureToolBar(eventManager, 11));
       //      }
       if (InsertableUtil.getBooleanProperty(
-          BundleTools.SYSTEM_PREFERENCES,
+          preferences,
           bundleName,
           componentName,
           InsertableUtil.getCName(ZoomToolBar.class),
@@ -276,7 +273,7 @@ public class View3DContainer extends DicomViewerPlugin implements PropertyChange
         TOOLBARS.add(new ZoomToolBar(eventManager, 20, false));
       }
       if (InsertableUtil.getBooleanProperty(
-          BundleTools.SYSTEM_PREFERENCES,
+          preferences,
           bundleName,
           componentName,
           InsertableUtil.getCName(RotationToolBar.class),
@@ -285,7 +282,7 @@ public class View3DContainer extends DicomViewerPlugin implements PropertyChange
         TOOLBARS.add(new RotationToolBar(eventManager, 30));
       }
       if (InsertableUtil.getBooleanProperty(
-          BundleTools.SYSTEM_PREFERENCES,
+          preferences,
           bundleName,
           componentName,
           InsertableUtil.getCName(LutToolBar.class),
@@ -294,7 +291,7 @@ public class View3DContainer extends DicomViewerPlugin implements PropertyChange
         TOOLBARS.add(new VolLutToolBar(eventManager, 40));
       }
       if (InsertableUtil.getBooleanProperty(
-          BundleTools.SYSTEM_PREFERENCES,
+          preferences,
           bundleName,
           componentName,
           InsertableUtil.getCName(View3DToolbar.class),
@@ -306,7 +303,7 @@ public class View3DContainer extends DicomViewerPlugin implements PropertyChange
       PluginTool tool;
 
       if (InsertableUtil.getBooleanProperty(
-          BundleTools.SYSTEM_PREFERENCES,
+          preferences,
           bundleName,
           componentName,
           InsertableUtil.getCName(MiniTool.class),
@@ -328,7 +325,7 @@ public class View3DContainer extends DicomViewerPlugin implements PropertyChange
       }
 
       if (InsertableUtil.getBooleanProperty(
-          BundleTools.SYSTEM_PREFERENCES,
+          preferences,
           bundleName,
           componentName,
           InsertableUtil.getCName(VolumeTool.class),
@@ -338,7 +335,7 @@ public class View3DContainer extends DicomViewerPlugin implements PropertyChange
       }
 
       if (InsertableUtil.getBooleanProperty(
-          BundleTools.SYSTEM_PREFERENCES,
+          preferences,
           bundleName,
           componentName,
           InsertableUtil.getCName(DisplayTool.class),
@@ -350,7 +347,7 @@ public class View3DContainer extends DicomViewerPlugin implements PropertyChange
       }
 
       if (InsertableUtil.getBooleanProperty(
-          BundleTools.SYSTEM_PREFERENCES,
+          preferences,
           bundleName,
           componentName,
           InsertableUtil.getCName(MeasureTool.class),
@@ -363,7 +360,7 @@ public class View3DContainer extends DicomViewerPlugin implements PropertyChange
       InsertableUtil.sortInsertable(TOOLS);
 
       // Send event to synchronize the series selection.
-      DataExplorerView dicomView = UIManager.getExplorerPlugin(DicomExplorer.NAME);
+      DataExplorerView dicomView = GuiUtils.getUICore().getExplorerPlugin(DicomExplorer.NAME);
       if (dicomView != null) {
         eventManager.addSeriesViewerListener((SeriesViewerListener) dicomView);
       }
@@ -392,7 +389,7 @@ public class View3DContainer extends DicomViewerPlugin implements PropertyChange
           }
         }
         if (!series.equals(oldSequence)) {
-          UIManager.closeSeries(oldSequence);
+          GuiUtils.getUICore().closeSeries(oldSequence);
           synchronized (this) {
             this.volumeBuilder = new VolumeBuilder(factory.createImageSeries(series));
             for (ViewCanvas<DicomImageElement> view : view2ds) {

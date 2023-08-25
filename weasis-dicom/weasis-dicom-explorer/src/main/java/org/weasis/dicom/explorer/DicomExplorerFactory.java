@@ -10,6 +10,7 @@
 package org.weasis.dicom.explorer;
 
 import java.util.Hashtable;
+import java.util.List;
 import org.osgi.service.component.ComponentContext;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Deactivate;
@@ -17,8 +18,9 @@ import org.weasis.core.api.explorer.DataExplorerView;
 import org.weasis.core.api.explorer.DataExplorerViewFactory;
 import org.weasis.core.api.explorer.ObservableEvent;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
-import org.weasis.core.ui.docking.UIManager;
+import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.ui.editor.ViewerPluginBuilder;
+import org.weasis.core.ui.util.Toolbar;
 
 @org.osgi.service.component.annotations.Component(service = DataExplorerViewFactory.class)
 public class DicomExplorerFactory implements DataExplorerViewFactory {
@@ -32,8 +34,9 @@ public class DicomExplorerFactory implements DataExplorerViewFactory {
     if (explorer == null) {
       explorer = new DicomExplorer(model);
       model.addPropertyChangeListener(explorer);
-      UIManager.EXPLORER_PLUGIN_TOOLBARS.add(new ImportToolBar(5, explorer));
-      UIManager.EXPLORER_PLUGIN_TOOLBARS.add(new ExportToolBar(7, explorer));
+      List<Toolbar> toolbar = GuiUtils.getUICore().getExplorerPluginToolbars();
+      toolbar.add(new ImportToolBar(5, explorer));
+      toolbar.add(new ExportToolBar(7, explorer));
       ViewerPluginBuilder.DefaultDataModel.firePropertyChange(
           new ObservableEvent(ObservableEvent.BasicAction.NULL_SELECTION, explorer, null, null));
     }
@@ -54,8 +57,9 @@ public class DicomExplorerFactory implements DataExplorerViewFactory {
     if (explorer != null) {
       DataExplorerModel dataModel = explorer.getDataExplorerModel();
       dataModel.removePropertyChangeListener(explorer);
-      UIManager.EXPLORER_PLUGIN_TOOLBARS.removeIf(
-          b -> b.getComponent().getAttachedInsertable() == explorer);
+      GuiUtils.getUICore()
+          .getExplorerPluginToolbars()
+          .removeIf(b -> b.getComponent().getAttachedInsertable() == explorer);
     }
   }
 }

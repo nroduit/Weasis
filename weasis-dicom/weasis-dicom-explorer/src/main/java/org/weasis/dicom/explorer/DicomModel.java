@@ -46,6 +46,7 @@ import org.weasis.core.api.explorer.model.TreeModel;
 import org.weasis.core.api.explorer.model.TreeModelNode;
 import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.gui.util.GuiExecutor;
+import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.media.data.Codec;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaSeries;
@@ -55,12 +56,10 @@ import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.TagView;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.media.data.Thumbnail;
-import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.api.util.GzipManager;
 import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.api.util.ResourceUtil.OtherIcon;
 import org.weasis.core.api.util.ThreadUtil;
-import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.SeriesViewerFactory;
 import org.weasis.core.ui.editor.ViewerPluginBuilder;
 import org.weasis.core.util.LangUtil;
@@ -143,8 +142,9 @@ public class DicomModel implements TreeModel, DataExplorerModel {
   @Override
   public List<Codec> getCodecPlugins() {
     ArrayList<Codec> codecPlugins = new ArrayList<>(1);
-    synchronized (BundleTools.CODEC_PLUGINS) {
-      for (Codec codec : BundleTools.CODEC_PLUGINS) {
+    List<Codec> codecs = GuiUtils.getUICore().getCodecPlugins();
+    synchronized (codecs) {
+      for (Codec codec : codecs) {
         if (codec != null
             && !"JDK ImageIO".equals(codec.getCodecName()) // NON-NLS
             && codec.isMimeTypeSupported(DicomMediaIO.DICOM_MIMETYPE)
@@ -702,7 +702,8 @@ public class DicomModel implements TreeModel, DataExplorerModel {
 
   public void openRelatedSeries(KOSpecialElement koSpecialElement, MediaSeriesGroup patient) {
     if (koSpecialElement != null && patient != null) {
-      SeriesViewerFactory plugin = UIManager.getViewerFactory(DicomMediaIO.SERIES_MIMETYPE);
+      SeriesViewerFactory plugin =
+          GuiUtils.getUICore().getViewerFactory(DicomMediaIO.SERIES_MIMETYPE);
       if (plugin != null && !(plugin instanceof MimeSystemAppFactory)) {
         Set<String> koSet = koSpecialElement.getReferencedSeriesInstanceUIDSet();
         List<MediaSeries<MediaElement>> seriesList = new ArrayList<>();
@@ -836,7 +837,9 @@ public class DicomModel implements TreeModel, DataExplorerModel {
     Thumbnail t = (Thumbnail) dicomSeries.getTagValue(TagW.Thumbnail);
     if (t == null) {
       int thumbnailSize =
-          BundleTools.SYSTEM_PREFERENCES.getIntProperty(Thumbnail.KEY_SIZE, Thumbnail.DEFAULT_SIZE);
+          GuiUtils.getUICore()
+              .getSystemPreferences()
+              .getIntProperty(Thumbnail.KEY_SIZE, Thumbnail.DEFAULT_SIZE);
       t = DicomExplorer.createThumbnail(dicomSeries, this, thumbnailSize);
       dicomSeries.setTag(TagW.Thumbnail, t);
       Optional.ofNullable(t).ifPresent(Thumbnail::repaint);

@@ -47,7 +47,6 @@ import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.GuiUtils.IconColor;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.media.data.TagW.TagType;
-import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.api.util.FontItem;
 import org.weasis.core.api.util.LocalUtil;
 import org.weasis.core.api.util.ResourceUtil;
@@ -310,7 +309,8 @@ public abstract class AcquireMetadataPanel extends JPanel implements TableModelL
     }
 
     public static String[] getValues(String property, String defaultValues) {
-      String values = BundleTools.SYSTEM_PREFERENCES.getProperty(property, defaultValues);
+      String values =
+          GuiUtils.getUICore().getSystemPreferences().getProperty(property, defaultValues);
       if (values == null) {
         return new String[0];
       }

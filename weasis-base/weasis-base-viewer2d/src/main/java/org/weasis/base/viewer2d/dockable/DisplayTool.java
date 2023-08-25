@@ -32,12 +32,12 @@ import org.weasis.base.viewer2d.Messages;
 import org.weasis.base.viewer2d.View2dContainer;
 import org.weasis.core.api.gui.Insertable;
 import org.weasis.core.api.gui.util.ActionW;
+import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.Thumbnailable;
 import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.api.util.ResourceUtil.OtherIcon;
 import org.weasis.core.ui.docking.PluginTool;
-import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.SeriesViewerEvent;
 import org.weasis.core.ui.editor.SeriesViewerEvent.EVENT;
 import org.weasis.core.ui.editor.SeriesViewerListener;
@@ -275,8 +275,9 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
     List<ViewCanvas<?>> views;
     if (allVisible) {
       views = new ArrayList<>();
-      synchronized (UIManager.VIEWER_PLUGINS) {
-        for (final ViewerPlugin<?> p : UIManager.VIEWER_PLUGINS) {
+      List<ViewerPlugin<?>> viewerPlugins = GuiUtils.getUICore().getViewerPlugins();
+      synchronized (viewerPlugins) {
+        for (final ViewerPlugin<?> p : viewerPlugins) {
           if (p instanceof ImageViewerPlugin<?> plugin && plugin.getDockable().isShowing()) {
             views.addAll(plugin.getImagePanels());
           }

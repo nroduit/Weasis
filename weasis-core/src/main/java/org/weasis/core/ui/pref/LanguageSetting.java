@@ -20,7 +20,6 @@ import org.weasis.core.Messages;
 import org.weasis.core.api.gui.util.AbstractItemDialogPage;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.GuiUtils.IconColor;
-import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.api.service.WProperties;
 import org.weasis.core.api.util.LocalUtil;
 import org.weasis.core.util.StringUtil;
@@ -117,7 +116,7 @@ public class LanguageSetting extends AbstractItemDialogPage {
   }
 
   protected void initialize() {
-    WProperties preferences = BundleTools.SYSTEM_PREFERENCES;
+    WProperties preferences = GuiUtils.getUICore().getSystemPreferences();
     comboBoxLang.selectLocale(preferences.getProperty("locale.lang.code"));
     comboBoxFormat.selectLocale();
   }
@@ -125,16 +124,17 @@ public class LanguageSetting extends AbstractItemDialogPage {
   @Override
   public void closeAdditionalWindow() {
     // save preferences
-    BundleTools.saveSystemPreferences();
+    GuiUtils.getUICore().saveSystemPreferences();
   }
 
   @Override
   public void resetToDefaultValues() {
-    BundleTools.SYSTEM_PREFERENCES.resetProperty("locale.lang.code", "en"); // NON-NLS
+    WProperties preferences = GuiUtils.getUICore().getSystemPreferences();
+    preferences.resetProperty("locale.lang.code", "en"); // NON-NLS
     // Reset cache of locale format
     LocalUtil.setLocaleFormat(null);
     // Reset format to the base.json value or null (default system value)
-    BundleTools.SYSTEM_PREFERENCES.resetProperty("locale.format.code", null);
+    preferences.resetProperty("locale.format.code", null);
 
     initialize();
   }

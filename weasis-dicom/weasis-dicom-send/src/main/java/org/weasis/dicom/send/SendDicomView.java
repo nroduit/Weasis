@@ -41,7 +41,6 @@ import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.TagReadable;
 import org.weasis.core.api.media.data.TagW;
-import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.api.util.ThreadUtil;
 import org.weasis.core.ui.model.GraphicModel;
 import org.weasis.core.util.FileUtil;
@@ -179,7 +178,9 @@ public class SendDicomView extends AbstractItemDialogPage implements ExportDicom
       }
 
       String weasisAet =
-          BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.aet", "WEASIS_AE"); // NON-NLS
+          GuiUtils.getUICore()
+              .getSystemPreferences()
+              .getProperty("weasis.aet", "WEASIS_AE"); // NON-NLS
 
       List<String> files = new ArrayList<>();
       files.add(exportDir.getAbsolutePath());

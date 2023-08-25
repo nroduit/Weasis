@@ -9,8 +9,11 @@
  */
 package org.weasis.core.ui.docking;
 
+import bibliothek.gui.dock.common.CContentArea;
+import bibliothek.gui.dock.common.CControl;
 import bibliothek.gui.dock.common.CLocation;
 import bibliothek.gui.dock.common.DefaultSingleCDockable;
+import bibliothek.gui.dock.common.event.CVetoFocusListener;
 import bibliothek.gui.dock.common.location.CBaseLocation;
 import bibliothek.gui.dock.common.mode.ExtendedMode;
 import java.awt.Component;
@@ -132,11 +135,13 @@ public abstract class PluginTool extends JPanel implements DockableTool {
 
   private void updateVisibleState() {
     if (!dockable.isVisible()) {
-      UIManager.DOCKING_CONTROL.addVetoFocusListener(UIManager.DOCKING_VETO_FOCUS);
+      CControl control = GuiUtils.getUICore().getDockingControl();
+      CVetoFocusListener vetoFocus = GuiUtils.getUICore().getDockingVetoFocus();
+      control.addVetoFocusListener(vetoFocus);
       Component component = getToolComponent();
       GuiUtils.setPreferredWidth(component, dockableWidth, dockableWidth);
       if (dockable.getFocusComponent() == component) {
-        UIManager.DOCKING_CONTROL.addDockable(dockable);
+        control.addDockable(dockable);
         ExtendedMode extMode = previousExtendedMode;
         if (extMode == null) {
           extMode = defaultExtendedMode;
@@ -146,12 +151,13 @@ public abstract class PluginTool extends JPanel implements DockableTool {
         dockable.add(component);
         dockable.setFocusComponent(component);
 
-        UIManager.DOCKING_CONTROL.addDockable(dockable);
+        control.addDockable(dockable);
         // dockable.setDefaultLocation(ExtendedMode.MINIMIZED,
         POSITION pos = defaultPosition == null ? POSITION.EAST : defaultPosition;
         ExtendedMode mode =
             defaultExtendedMode == null ? ExtendedMode.MINIMIZED : defaultExtendedMode;
-        CBaseLocation base = CLocation.base(UIManager.BASE_AREA);
+        CContentArea baseArea = GuiUtils.getUICore().getBaseArea();
+        CBaseLocation base = CLocation.base(baseArea);
 
         CLocation minimizeLocation;
         if (pos == POSITION.EAST) {
@@ -165,7 +171,7 @@ public abstract class PluginTool extends JPanel implements DockableTool {
         }
         dockable.setDefaultLocation(ExtendedMode.MINIMIZED, minimizeLocation);
 
-        double w = UIManager.BASE_AREA.getWidth();
+        double w = baseArea.getWidth();
         if (w > 0) {
           double ratio = GuiUtils.getScaleLength(dockableWidth) / w;
           if (ratio > 0.9) {
@@ -191,7 +197,7 @@ public abstract class PluginTool extends JPanel implements DockableTool {
       }
       dockable.setVisible(true);
       dockable.setResizeLocked(true);
-      UIManager.DOCKING_CONTROL.removeVetoFocusListener(UIManager.DOCKING_VETO_FOCUS);
+      control.removeVetoFocusListener(vetoFocus);
     }
   }
 
@@ -201,9 +207,11 @@ public abstract class PluginTool extends JPanel implements DockableTool {
     GuiExecutor.instance()
         .execute(
             () -> {
-              UIManager.DOCKING_CONTROL.addVetoFocusListener(UIManager.DOCKING_VETO_FOCUS);
-              UIManager.DOCKING_CONTROL.removeDockable(dockable);
-              UIManager.DOCKING_CONTROL.removeVetoFocusListener(UIManager.DOCKING_VETO_FOCUS);
+              CControl control = GuiUtils.getUICore().getDockingControl();
+              CVetoFocusListener vetoFocus = GuiUtils.getUICore().getDockingVetoFocus();
+              control.addVetoFocusListener(vetoFocus);
+              control.removeDockable(dockable);
+              control.removeVetoFocusListener(vetoFocus);
             });
   }
 }

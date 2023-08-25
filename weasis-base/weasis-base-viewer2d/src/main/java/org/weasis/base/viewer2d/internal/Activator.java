@@ -26,7 +26,7 @@ import org.weasis.base.viewer2d.View2dContainer;
 import org.weasis.core.api.gui.Insertable.Type;
 import org.weasis.core.api.gui.InsertableFactory;
 import org.weasis.core.api.gui.util.GuiExecutor;
-import org.weasis.core.ui.docking.UIManager;
+import org.weasis.core.api.gui.util.GuiUtils;
 
 @Header(name = Constants.BUNDLE_ACTIVATOR, value = "${@class}") // NON-NLS
 public class Activator implements BundleActivator, ServiceListener {
@@ -39,7 +39,7 @@ public class Activator implements BundleActivator, ServiceListener {
 
     // Instantiate UI components in EDT
     GuiExecutor.instance()
-        .execute(() -> UIManager.EXPLORER_PLUGIN_TOOLBARS.add(new ImportToolBar(3)));
+        .execute(() -> GuiUtils.getUICore().getExplorerPluginToolbars().add(new ImportToolBar(3)));
 
     // Add listener for getting new service events
     try {
@@ -59,8 +59,8 @@ public class Activator implements BundleActivator, ServiceListener {
     if (EventManager.hasBeenInitialized()) {
       EventManager.getInstance().savePreferences(bundleContext);
     }
-    UIManager.EXPLORER_PLUGIN_TOOLBARS.removeIf(ImportToolBar.class::isInstance);
-    UIManager.closeSeriesViewerType(View2dContainer.class);
+    GuiUtils.getUICore().getExplorerPluginToolbars().removeIf(ImportToolBar.class::isInstance);
+    GuiUtils.getUICore().closeSeriesViewerType(View2dContainer.class);
   }
 
   @Override

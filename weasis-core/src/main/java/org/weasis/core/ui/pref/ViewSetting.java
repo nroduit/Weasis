@@ -19,8 +19,8 @@ import java.util.ArrayList;
 import java.util.List;
 import javax.swing.UIManager;
 import org.osgi.service.prefs.Preferences;
+import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.service.BundlePreferences;
-import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.ui.editor.image.MeasureToolBar;
 import org.weasis.core.ui.model.graphic.Graphic;
 import org.weasis.core.ui.model.utils.ImageStatistics;
@@ -137,7 +137,8 @@ public class ViewSetting {
       buf.append("x"); // NON-NLS
       buf.append(b.height);
       buf.append(".pitch");
-      double pitch = BundleTools.LOCAL_UI_PERSISTENCE.getDoubleProperty(buf.toString(), 0.0);
+      double pitch =
+          GuiUtils.getUICore().getLocalPersistence().getDoubleProperty(buf.toString(), 0.0);
       monitor.setRealScaleFactor(pitch);
       monitors.add(monitor);
     }

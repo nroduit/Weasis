@@ -27,6 +27,7 @@ import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.ComboItemListener;
 import org.weasis.core.api.gui.util.FileFormatFilter;
+import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.image.GridBagLayoutModel;
 import org.weasis.core.api.image.LayoutConstraints;
 import org.weasis.core.api.media.MimeInspector;
@@ -35,10 +36,10 @@ import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaReader;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.service.BundleTools;
+import org.weasis.core.api.service.WProperties;
 import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.api.util.ResourceUtil.ActionIcon;
 import org.weasis.core.api.util.ResourceUtil.OtherIcon;
-import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.SeriesViewer;
 import org.weasis.core.ui.editor.SeriesViewerFactory;
 import org.weasis.core.ui.editor.ViewerPluginBuilder;
@@ -154,7 +155,9 @@ public class ViewerFactory implements SeriesViewerFactory {
 
   @Override
   public List<Action> getOpenActions() {
-    if (!BundleTools.SYSTEM_PREFERENCES.getBooleanProperty("weasis.import.images", true)) {
+    if (!GuiUtils.getUICore()
+        .getSystemPreferences()
+        .getBooleanProperty("weasis.import.images", true)) {
       return Collections.emptyList();
     }
     return Collections.singletonList(preferencesAction);
@@ -171,8 +174,8 @@ public class ViewerFactory implements SeriesViewerFactory {
   }
 
   static void getOpenImageAction(ActionEvent e) {
-    String directory =
-        BundleTools.LOCAL_UI_PERSISTENCE.getProperty("last.open.image.dir", ""); // NON-NLS
+    WProperties localPersistence = GuiUtils.getUICore().getLocalPersistence();
+    String directory = localPersistence.getProperty("last.open.image.dir", ""); // NON-NLS
     JFileChooser fileChooser = new JFileChooser(directory);
 
     fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
@@ -180,7 +183,8 @@ public class ViewerFactory implements SeriesViewerFactory {
 
     FileFormatFilter.setImageDecodeFilters(fileChooser);
     File[] selectedFiles;
-    if (fileChooser.showOpenDialog(UIManager.getApplicationWindow()) != JFileChooser.APPROVE_OPTION
+    if (fileChooser.showOpenDialog(GuiUtils.getUICore().getApplicationWindow())
+            != JFileChooser.APPROVE_OPTION
         || (selectedFiles = fileChooser.getSelectedFiles()) == null) {
       return;
     } else {
@@ -225,8 +229,7 @@ public class ViewerFactory implements SeriesViewerFactory {
             Messages.getString("OpenImageAction.open_img"),
             JOptionPane.WARNING_MESSAGE);
       }
-      BundleTools.LOCAL_UI_PERSISTENCE.setProperty(
-          "last.open.image.dir", selectedFiles[0].getParent());
+      localPersistence.setProperty("last.open.image.dir", selectedFiles[0].getParent());
     }
   }
 

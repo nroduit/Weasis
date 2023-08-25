@@ -15,9 +15,9 @@ import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 import org.weasis.core.api.explorer.ObservableEvent;
+import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.Series;
-import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.SeriesViewerFactory;
 import org.weasis.core.ui.editor.ViewerPluginBuilder;
 import org.weasis.dicom.explorer.HangingProtocols.OpeningViewer;
@@ -66,7 +66,8 @@ public class PluginOpeningStrategy {
 
   public void prepareImport() {
     if (isRemovingPrevious() && (fullImportSession || openPatients.isEmpty())) {
-      UIManager.closeSeriesViewer(new ArrayList<>(UIManager.VIEWER_PLUGINS));
+      GuiUtils.getUICore()
+          .closeSeriesViewer(new ArrayList<>(GuiUtils.getUICore().getViewerPlugins()));
     }
   }
 
@@ -83,7 +84,7 @@ public class PluginOpeningStrategy {
     boolean isPatientOpen = containsPatient(patient);
     boolean selectPatient = !isPatientOpen;
     if (!isPatientOpen && canAddNewPatient()) {
-      SeriesViewerFactory plugin = UIManager.getViewerFactory(dicomSeries.getMimeType());
+      SeriesViewerFactory plugin = GuiUtils.getUICore().getViewerFactory(dicomSeries.getMimeType());
       if (plugin != null && !(plugin instanceof MimeSystemAppFactory)) {
         addPatient(patient);
         selectPatient = false;

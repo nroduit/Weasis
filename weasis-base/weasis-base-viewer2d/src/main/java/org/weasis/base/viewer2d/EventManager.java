@@ -54,7 +54,6 @@ import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.service.AuditLog;
 import org.weasis.core.api.service.BundlePreferences;
-import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.api.util.ResourceUtil.ActionIcon;
 import org.weasis.core.ui.editor.SeriesViewerEvent;
@@ -542,7 +541,7 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
 
   public JMenu getResetMenu(String prop) {
     JMenu menu = null;
-    if (BundleTools.SYSTEM_PREFERENCES.getBooleanProperty(prop, true)) {
+    if (GuiUtils.getUICore().getSystemPreferences().getBooleanProperty(prop, true)) {
       ButtonGroup group = new ButtonGroup();
       menu = new JMenu(Messages.getString("ResetTools.reset"));
       menu.setIcon(ResourceUtil.getIcon(ActionIcon.RESET));
@@ -565,7 +564,7 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
 
   public JMenu getZoomMenu(String prop) {
     JMenu menu = null;
-    if (BundleTools.SYSTEM_PREFERENCES.getBooleanProperty(prop, true)) {
+    if (GuiUtils.getUICore().getSystemPreferences().getBooleanProperty(prop, true)) {
       Optional<SliderChangeListener> zoomAction = getAction(ActionW.ZOOM);
       if (zoomAction.isPresent()) {
         menu = new JMenu(ActionW.ZOOM.getTitle());
@@ -585,7 +584,7 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
 
   public JMenu getOrientationMenu(String prop) {
     JMenu menu = null;
-    if (BundleTools.SYSTEM_PREFERENCES.getBooleanProperty(prop, true)) {
+    if (GuiUtils.getUICore().getSystemPreferences().getBooleanProperty(prop, true)) {
       Optional<SliderChangeListener> rotateAction = getAction(ActionW.ROTATION);
       if (rotateAction.isPresent()) {
         menu = new JMenu(Messages.getString("View2dContainer.orientation"));
@@ -656,7 +655,7 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
   // }
 
   public JMenu getLutMenu(String prop) {
-    if (BundleTools.SYSTEM_PREFERENCES.getBooleanProperty(prop, true)) {
+    if (GuiUtils.getUICore().getSystemPreferences().getBooleanProperty(prop, true)) {
       Optional<ComboItemListener<ByteLut>> lutAction = getAction(ActionW.LUT);
       if (lutAction.isPresent()) {
         return lutAction
@@ -670,7 +669,7 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
 
   public JCheckBoxMenuItem getLutInverseMenu(String prop) {
     JCheckBoxMenuItem menu = null;
-    if (BundleTools.SYSTEM_PREFERENCES.getBooleanProperty(prop, true)) {
+    if (GuiUtils.getUICore().getSystemPreferences().getBooleanProperty(prop, true)) {
       Optional<ToggleButtonListener> inverseLutAction = getAction(ActionW.INVERT_LUT);
       if (inverseLutAction.isPresent()) {
         menu =
@@ -684,7 +683,7 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
   }
 
   public JMenu getFilterMenu(String prop) {
-    if (BundleTools.SYSTEM_PREFERENCES.getBooleanProperty(prop, true)) {
+    if (GuiUtils.getUICore().getSystemPreferences().getBooleanProperty(prop, true)) {
       Optional<ComboItemListener<KernelData>> filterAction = getAction(ActionW.FILTER);
       if (filterAction.isPresent()) {
         return filterAction

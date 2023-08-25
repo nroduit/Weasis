@@ -28,7 +28,7 @@ import org.weasis.core.api.gui.util.ComboItemListener;
 import org.weasis.core.api.gui.util.Feature;
 import org.weasis.core.api.gui.util.Feature.BasicActionStateValue;
 import org.weasis.core.api.gui.util.Feature.ComboItemListenerValue;
-import org.weasis.core.api.service.BundleTools;
+import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.ui.editor.image.MeasureToolBar;
 import org.weasis.core.ui.model.graphic.Graphic;
 
@@ -80,8 +80,9 @@ public class EditionToolFactory implements InsertableFactory {
       eventManager.removeAction(ActionW.LUT);
       eventManager.removeAction(ActionW.LAYOUT);
       eventManager.removeAction(ActionW.SYNCH);
-      BundleTools.SYSTEM_PREFERENCES.setProperty(
-          "weasis.contextmenu.close", Boolean.FALSE.toString());
+      GuiUtils.getUICore()
+          .getSystemPreferences()
+          .setProperty("weasis.contextmenu.close", Boolean.FALSE.toString());
 
       eventManager.setAction(new BasicActionState(EDITION));
       eventManager.setAction(

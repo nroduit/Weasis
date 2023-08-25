@@ -18,10 +18,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.acquire.explorer.AcquireManager;
 import org.weasis.acquire.explorer.Messages;
+import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.media.data.TagReadable;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.media.data.Taggable;
-import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.codec.TagD;
 
@@ -141,7 +141,8 @@ public abstract class AcquireMetadataTableModel extends AbstractTableModel {
   }
 
   public static TagW[] getTags(String property, String defaultValues) {
-    String values = BundleTools.SYSTEM_PREFERENCES.getProperty(property, defaultValues);
+    String values =
+        GuiUtils.getUICore().getSystemPreferences().getProperty(property, defaultValues);
     if (values == null) {
       return new TagW[0];
     }

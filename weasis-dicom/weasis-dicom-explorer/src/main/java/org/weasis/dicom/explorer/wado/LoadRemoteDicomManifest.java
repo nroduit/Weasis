@@ -27,9 +27,8 @@ import org.weasis.core.api.explorer.ObservableEvent;
 import org.weasis.core.api.explorer.ObservableEvent.BasicAction;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.core.api.gui.util.GuiExecutor;
-import org.weasis.core.api.service.BundleTools;
+import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.util.NetworkUtil;
-import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.util.StreamIOException;
 import org.weasis.core.util.StringUtil;
 import org.weasis.core.util.StringUtil.Suffix;
@@ -106,7 +105,7 @@ public class LoadRemoteDicomManifest extends ExplorerTask<Boolean, String> {
             () -> {
               int confirm =
                   JOptionPane.showConfirmDialog(
-                      UIManager.getApplicationWindow(),
+                      GuiUtils.getUICore().getApplicationWindow(),
                       getErrorMessage(e),
                       Messages.getString("LoadRemoteDicomManifest.net_err_msg"),
                       JOptionPane.YES_NO_OPTION);
@@ -170,8 +169,9 @@ public class LoadRemoteDicomManifest extends ExplorerTask<Boolean, String> {
 
       loadSeriesList.addAll(wadoTasks);
       boolean downloadImmediately =
-          BundleTools.SYSTEM_PREFERENCES.getBooleanProperty(
-              DicomExplorerPrefView.DOWNLOAD_IMMEDIATELY, true);
+          GuiUtils.getUICore()
+              .getSystemPreferences()
+              .getBooleanProperty(DicomExplorerPrefView.DOWNLOAD_IMMEDIATELY, true);
       startDownloadingSeries(wadoTasks, downloadImmediately);
     } catch (URISyntaxException | MalformedURLException e) {
       LOGGER.error("Loading manifest", e);

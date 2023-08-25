@@ -31,7 +31,6 @@ import org.weasis.core.Messages;
 import org.weasis.core.api.gui.util.AbstractItemDialogPage;
 import org.weasis.core.api.gui.util.CryptoHandler;
 import org.weasis.core.api.gui.util.GuiUtils;
-import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.api.service.WProperties;
 import org.weasis.core.api.util.LocalUtil;
 import org.weasis.core.util.StringUtil;
@@ -129,7 +128,7 @@ public class ProxyPrefView extends AbstractItemDialogPage {
   }
 
   private void initState() {
-    WProperties p = BundleTools.LOCAL_UI_PERSISTENCE;
+    WProperties p = GuiUtils.getUICore().getLocalPersistence();
 
     proxyExceptions.setText(p.getProperty(PROXY_EXCEPTIONS));
 
@@ -240,7 +239,7 @@ public class ProxyPrefView extends AbstractItemDialogPage {
 
   @Override
   public void closeAdditionalWindow() {
-    WProperties p = BundleTools.LOCAL_UI_PERSISTENCE;
+    WProperties p = GuiUtils.getUICore().getLocalPersistence();
     boolean mproxy = proxyConnectionRadio.isSelected();
     p.putBooleanProperty(PROXY_MANUAL, mproxy);
     String exceptions = proxyExceptions.getText();

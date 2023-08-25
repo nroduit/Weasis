@@ -27,8 +27,6 @@ import org.weasis.core.api.gui.util.AbstractItemDialogPage;
 import org.weasis.core.api.gui.util.AbstractWizardDialog;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.PageItem;
-import org.weasis.core.api.service.BundleTools;
-import org.weasis.dicom.explorer.internal.Activator;
 
 public class DicomImport extends AbstractWizardDialog {
   private static final Logger LOGGER = LoggerFactory.getLogger(DicomImport.class);
@@ -64,7 +62,7 @@ public class DicomImport extends AbstractWizardDialog {
             GuiUtils.openInDefaultBrowser(
                 jButtonHelp,
                 new URL(
-                    BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.help.online")
+                    GuiUtils.getUICore().getSystemPreferences().getProperty("weasis.help.online")
                         + "dicom-import"));
           } catch (MalformedURLException e1) {
             LOGGER.error("Cannot open online help", e1);
@@ -84,7 +82,7 @@ public class DicomImport extends AbstractWizardDialog {
 
     initializePages();
     pack();
-    showPage(Activator.IMPORT_EXPORT_PERSISTENCE.getProperty(LAST_PAGE));
+    showPage(LocalPersistence.getProperties().getProperty(LAST_PAGE));
   }
 
   @Override
@@ -145,7 +143,7 @@ public class DicomImport extends AbstractWizardDialog {
   public void dispose() {
     PageItem page = getSelectedPage();
     if (page != null) {
-      Activator.IMPORT_EXPORT_PERSISTENCE.setProperty(LAST_PAGE, page.getTitle());
+      LocalPersistence.getProperties().setProperty(LAST_PAGE, page.getTitle());
     }
     closeAllPages();
     super.dispose();

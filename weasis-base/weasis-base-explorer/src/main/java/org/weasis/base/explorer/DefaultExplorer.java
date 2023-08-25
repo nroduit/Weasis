@@ -52,9 +52,7 @@ import org.weasis.core.api.explorer.DataExplorerView;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.core.api.gui.Insertable;
 import org.weasis.core.api.gui.util.GuiUtils;
-import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.ui.docking.PluginTool;
-import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.util.DefaultAction;
 import org.weasis.core.ui.util.TitleMenuItem;
 import org.weasis.core.util.StringUtil;
@@ -124,7 +122,7 @@ public class DefaultExplorer extends PluginTool implements DataExplorerView {
   protected void iniLastPath() {
     Path prefDir = null;
     try {
-      String dir = BundleTools.LOCAL_UI_PERSISTENCE.getProperty(P_LAST_DIR);
+      String dir = GuiUtils.getUICore().getLocalPersistence().getProperty(P_LAST_DIR);
       if (StringUtil.hasText(dir)) {
         prefDir = Paths.get(dir);
       }
@@ -148,7 +146,7 @@ public class DefaultExplorer extends PluginTool implements DataExplorerView {
   protected void saveLastPath() {
     Path dir = getCurrentDir();
     if (dir != null && Files.isReadable(dir)) {
-      BundleTools.LOCAL_UI_PERSISTENCE.setProperty(P_LAST_DIR, dir.toString());
+      GuiUtils.getUICore().getLocalPersistence().setProperty(P_LAST_DIR, dir.toString());
     }
   }
 
@@ -353,8 +351,9 @@ public class DefaultExplorer extends PluginTool implements DataExplorerView {
       JMenu scan = new JMenu(Messages.getString("DefaultExplorer.import_to"));
       JMenu scansub = new JMenu(Messages.getString("DefaultExplorer.import_sub"));
 
-      synchronized (UIManager.EXPLORER_PLUGINS) {
-        for (final DataExplorerView dataExplorerView : UIManager.EXPLORER_PLUGINS) {
+      List<DataExplorerView> explorerPlugins = GuiUtils.getUICore().getExplorerPlugins();
+      synchronized (explorerPlugins) {
+        for (final DataExplorerView dataExplorerView : explorerPlugins) {
           if (dataExplorerView != DefaultExplorer.this) {
             importAction = true;
             JMenuItem item =

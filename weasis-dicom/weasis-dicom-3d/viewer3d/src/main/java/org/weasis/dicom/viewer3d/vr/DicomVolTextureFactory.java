@@ -18,9 +18,10 @@ import org.dcm4che3.img.stream.ImageDescriptor;
 import org.joml.Vector3d;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeries.MEDIA_POSITION;
-import org.weasis.core.api.service.BundleTools;
+import org.weasis.core.api.service.WProperties;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.SortSeriesStack;
 import org.weasis.dicom.codec.TagD;
@@ -55,11 +56,10 @@ public class DicomVolTextureFactory {
     DicomImageElement media = series.getMedia(MEDIA_POSITION.FIRST, null, null);
     PlanarImage image = media == null ? null : media.getImage();
     if (image != null) {
+      WProperties localPersistence = GuiUtils.getUICore().getLocalPersistence();
       int maxTexSize = View3DFactory.getMax3dTextureSize();
-      int maxSizeXY =
-          BundleTools.LOCAL_UI_PERSISTENCE.getIntProperty(RenderingLayer.P_MAX_TEX_XY, maxTexSize);
-      int maxSizeZ =
-          BundleTools.LOCAL_UI_PERSISTENCE.getIntProperty(RenderingLayer.P_MAX_TEX_Z, maxTexSize);
+      int maxSizeXY = localPersistence.getIntProperty(RenderingLayer.P_MAX_TEX_XY, maxTexSize);
+      int maxSizeZ = localPersistence.getIntProperty(RenderingLayer.P_MAX_TEX_Z, maxTexSize);
       int width = image.width();
       int height = image.height();
       int depth = series.size(null);

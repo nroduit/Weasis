@@ -54,13 +54,12 @@ import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.SeriesEvent;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.service.BundlePreferences;
-import org.weasis.core.api.service.BundleTools;
+import org.weasis.core.api.service.WProperties;
 import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.api.util.ResourceUtil.ActionIcon;
 import org.weasis.core.api.util.ResourceUtil.OtherIcon;
 import org.weasis.core.ui.docking.DockableTool;
 import org.weasis.core.ui.docking.PluginTool;
-import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.SeriesViewerListener;
 import org.weasis.core.ui.editor.ViewerPluginBuilder;
 import org.weasis.core.ui.editor.image.DefaultView2d;
@@ -157,22 +156,23 @@ public class View2dContainer extends ImageViewerPlugin<ImageElement>
       String bundleName = context.getBundle().getSymbolicName();
       String componentName = InsertableUtil.getCName(this.getClass());
       String key = "enable"; // NON-NLS
+      WProperties preferences = GuiUtils.getUICore().getSystemPreferences();
 
       if (InsertableUtil.getBooleanProperty(
-          BundleTools.SYSTEM_PREFERENCES,
+          preferences,
           bundleName,
           componentName,
           InsertableUtil.getCName(ImportToolBar.class),
           key,
           true)) {
         Optional<Toolbar> b =
-            UIManager.EXPLORER_PLUGIN_TOOLBARS.stream()
+            GuiUtils.getUICore().getExplorerPluginToolbars().stream()
                 .filter(ImportToolBar.class::isInstance)
                 .findFirst();
         b.ifPresent(TOOLBARS::add);
       }
       if (InsertableUtil.getBooleanProperty(
-          BundleTools.SYSTEM_PREFERENCES,
+          preferences,
           bundleName,
           componentName,
           InsertableUtil.getCName(ScreenshotToolBar.class),
@@ -181,7 +181,7 @@ public class View2dContainer extends ImageViewerPlugin<ImageElement>
         TOOLBARS.add(new ScreenshotToolBar<>(evtMg, 9));
       }
       if (InsertableUtil.getBooleanProperty(
-          BundleTools.SYSTEM_PREFERENCES,
+          preferences,
           bundleName,
           componentName,
           InsertableUtil.getCName(ViewerToolBar.class),
@@ -189,13 +189,10 @@ public class View2dContainer extends ImageViewerPlugin<ImageElement>
           true)) {
         TOOLBARS.add(
             new ViewerToolBar<>(
-                evtMg,
-                evtMg.getMouseActions().getActiveButtons(),
-                BundleTools.SYSTEM_PREFERENCES,
-                10));
+                evtMg, evtMg.getMouseActions().getActiveButtons(), preferences, 10));
       }
       if (InsertableUtil.getBooleanProperty(
-          BundleTools.SYSTEM_PREFERENCES,
+          preferences,
           bundleName,
           componentName,
           InsertableUtil.getCName(MeasureToolBar.class),
@@ -204,7 +201,7 @@ public class View2dContainer extends ImageViewerPlugin<ImageElement>
         TOOLBARS.add(new MeasureToolBar(evtMg, 11));
       }
       if (InsertableUtil.getBooleanProperty(
-          BundleTools.SYSTEM_PREFERENCES,
+          preferences,
           bundleName,
           componentName,
           InsertableUtil.getCName(ZoomToolBar.class),
@@ -213,7 +210,7 @@ public class View2dContainer extends ImageViewerPlugin<ImageElement>
         TOOLBARS.add(new ZoomToolBar(evtMg, 20, true));
       }
       if (InsertableUtil.getBooleanProperty(
-          BundleTools.SYSTEM_PREFERENCES,
+          preferences,
           bundleName,
           componentName,
           InsertableUtil.getCName(RotationToolBar.class),
@@ -225,7 +222,7 @@ public class View2dContainer extends ImageViewerPlugin<ImageElement>
       PluginTool tool = null;
 
       if (InsertableUtil.getBooleanProperty(
-          BundleTools.SYSTEM_PREFERENCES,
+          preferences,
           bundleName,
           componentName,
           InsertableUtil.getCName(MiniTool.class),
@@ -249,7 +246,7 @@ public class View2dContainer extends ImageViewerPlugin<ImageElement>
       }
 
       if (InsertableUtil.getBooleanProperty(
-          BundleTools.SYSTEM_PREFERENCES,
+          preferences,
           bundleName,
           componentName,
           InsertableUtil.getCName(ImageTool.class),
@@ -260,7 +257,7 @@ public class View2dContainer extends ImageViewerPlugin<ImageElement>
       }
 
       if (InsertableUtil.getBooleanProperty(
-          BundleTools.SYSTEM_PREFERENCES,
+          preferences,
           bundleName,
           componentName,
           InsertableUtil.getCName(DisplayTool.class),
@@ -272,7 +269,7 @@ public class View2dContainer extends ImageViewerPlugin<ImageElement>
       }
 
       if (InsertableUtil.getBooleanProperty(
-          BundleTools.SYSTEM_PREFERENCES,
+          preferences,
           bundleName,
           componentName,
           InsertableUtil.getCName(MeasureTool.class),

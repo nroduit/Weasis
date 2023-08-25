@@ -32,11 +32,9 @@ import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.util.ClosableURLConnection;
 import org.weasis.core.api.util.NetworkUtil;
 import org.weasis.core.api.util.URLParameters;
-import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.util.FileUtil;
 import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.explorer.HangingProtocols.OpeningViewer;
-import org.weasis.dicom.explorer.internal.Activator;
 import org.weasis.dicom.explorer.wado.LoadSeries;
 
 public class DicomZipImport extends AbstractItemDialogPage implements ImportDicom {
@@ -65,7 +63,7 @@ public class DicomZipImport extends AbstractItemDialogPage implements ImportDico
   }
 
   public void browseImgFile() {
-    String directory = Activator.IMPORT_EXPORT_PERSISTENCE.getProperty(LAST_DICOM_ZIP, "");
+    String directory = LocalPersistence.getProperties().getProperty(LAST_DICOM_ZIP, "");
 
     JFileChooser fileChooser = new JFileChooser(directory);
     fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
@@ -75,15 +73,15 @@ public class DicomZipImport extends AbstractItemDialogPage implements ImportDico
         || (selectedFile = fileChooser.getSelectedFile()) == null) {
       fileLabel.setText("");
     } else {
-      Activator.IMPORT_EXPORT_PERSISTENCE.setProperty(LAST_DICOM_ZIP, selectedFile.getParent());
+      LocalPersistence.getProperties().setProperty(LAST_DICOM_ZIP, selectedFile.getParent());
       fileLabel.setText(selectedFile.getPath());
     }
   }
 
   @Override
   public void closeAdditionalWindow() {
-    Activator.IMPORT_EXPORT_PERSISTENCE.setProperty(
-        LAST_DICOM_ZIP_OPEN_MODE, getOpeningViewer().name());
+    LocalPersistence.getProperties()
+        .setProperty(LAST_DICOM_ZIP_OPEN_MODE, getOpeningViewer().name());
   }
 
   private OpeningViewer getOpeningViewer() {
@@ -114,7 +112,7 @@ public class DicomZipImport extends AbstractItemDialogPage implements ImportDico
           panel.add(pass);
           int response =
               JOptionPane.showOptionDialog(
-                  UIManager.getApplicationWindow(),
+                  GuiUtils.getUICore().getApplicationWindow(),
                   panel,
                   Messages.getString("DicomZipImport.title"),
                   JOptionPane.OK_CANCEL_OPTION,

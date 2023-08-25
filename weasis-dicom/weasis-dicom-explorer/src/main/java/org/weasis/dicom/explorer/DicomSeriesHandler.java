@@ -21,12 +21,12 @@ import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.DataExplorerView;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.core.api.explorer.model.TreeModel;
+import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.TagW;
-import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.SeriesViewerFactory;
 import org.weasis.core.ui.editor.ViewerPluginBuilder;
 import org.weasis.core.ui.editor.image.SequenceHandler;
@@ -51,14 +51,14 @@ public class DicomSeriesHandler extends SequenceHandler {
   @Override
   protected boolean importDataExt(TransferSupport support) {
     Transferable transferable = support.getTransferable();
-    DataExplorerView dicomView = UIManager.getExplorerPlugin(DicomExplorer.NAME);
+    DataExplorerView dicomView = GuiUtils.getUICore().getExplorerPlugin(DicomExplorer.NAME);
     DataExplorerModel model;
     SeriesSelectionModel selList = null;
     if (dicomView != null) {
       selList = ((DicomExplorer) dicomView).getSelectionList();
     }
     DicomViewerPlugin selPlugin = null;
-    for (ViewerPlugin<?> p : UIManager.VIEWER_PLUGINS) {
+    for (ViewerPlugin<?> p : GuiUtils.getUICore().getViewerPlugins()) {
       if (p instanceof DicomViewerPlugin v && v.isContainingView(viewCanvas)) {
         selPlugin = v;
       }
@@ -85,7 +85,7 @@ public class DicomSeriesHandler extends SequenceHandler {
           p2 = p1;
         }
 
-        SeriesViewerFactory plugin = UIManager.getViewerFactory(selPlugin);
+        SeriesViewerFactory plugin = GuiUtils.getUICore().getViewerFactory(selPlugin);
         if (plugin != null && !(plugin instanceof MimeSystemAppFactory)) {
           boolean readable = plugin.canReadSeries(seq);
           boolean addSeries = plugin.canAddSeries();
@@ -99,7 +99,7 @@ public class DicomSeriesHandler extends SequenceHandler {
               props.put(ViewerPluginBuilder.OPEN_IN_SELECTION, true);
 
               String mime = seq.getMimeType();
-              plugin = UIManager.getViewerFactory(mime);
+              plugin = GuiUtils.getUICore().getViewerFactory(mime);
               if (plugin != null) {
                 ArrayList<MediaSeries<MediaElement>> list = new ArrayList<>(1);
                 list.add(seq);
@@ -157,7 +157,7 @@ public class DicomSeriesHandler extends SequenceHandler {
 
   public static boolean dropDicomFiles(List<File> files) {
     if (files != null) {
-      DataExplorerView dicomView = UIManager.getExplorerPlugin(DicomExplorer.NAME);
+      DataExplorerView dicomView = GuiUtils.getUICore().getExplorerPlugin(DicomExplorer.NAME);
       if (dicomView == null) {
         return false;
       }

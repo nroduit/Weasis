@@ -16,10 +16,10 @@ import java.util.Locale;
 import java.util.Objects;
 import javax.swing.tree.DefaultMutableTreeNode;
 import org.dcm4che3.data.Tag;
+import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
-import org.weasis.core.api.service.BundleTools;
 import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.explorer.DicomExplorer.SeriesPane;
 import org.weasis.dicom.explorer.DicomExplorer.StudyPane;
@@ -284,8 +284,11 @@ public class DicomSorter {
 
   public static SortingTime getStudyDateSorting() {
     int key =
-        BundleTools.SYSTEM_PREFERENCES.getIntProperty(
-            DicomExplorerPrefView.STUDY_DATE_SORTING, SortingTime.INVERSE_CHRONOLOGICAL.getId());
+        GuiUtils.getUICore()
+            .getSystemPreferences()
+            .getIntProperty(
+                DicomExplorerPrefView.STUDY_DATE_SORTING,
+                SortingTime.INVERSE_CHRONOLOGICAL.getId());
     return SortingTime.valueOf(key);
   }
 }

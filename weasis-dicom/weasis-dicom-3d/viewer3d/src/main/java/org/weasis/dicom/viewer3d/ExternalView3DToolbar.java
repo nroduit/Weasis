@@ -12,11 +12,11 @@ package org.weasis.dicom.viewer3d;
 import javax.swing.JButton;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.core.api.gui.util.ActionW;
+import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.api.util.ResourceUtil.ActionIcon;
-import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.SeriesViewerFactory;
 import org.weasis.core.ui.editor.ViewerPluginBuilder;
 import org.weasis.core.ui.util.WtoolBar;
@@ -33,7 +33,7 @@ public class ExternalView3DToolbar extends WtoolBar {
     open.addActionListener(
         e -> {
           MediaSeries<DicomImageElement> s = EventManager.getInstance().getSelectedSeries();
-          SeriesViewerFactory factory = UIManager.getViewerFactory(View3DFactory.class);
+          SeriesViewerFactory factory = GuiUtils.getUICore().getViewerFactory(View3DFactory.class);
           if (factory != null && factory.canReadSeries(s)) {
             ViewerPluginBuilder.openSequenceInPlugin(
                 factory, s, (DataExplorerModel) s.getTagValue(TagW.ExplorerModel), false, false);

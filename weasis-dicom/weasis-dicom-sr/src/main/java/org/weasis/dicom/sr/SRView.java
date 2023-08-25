@@ -39,7 +39,6 @@ import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.api.util.ResourceUtil.OtherIcon;
-import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.SeriesViewerEvent;
 import org.weasis.core.ui.editor.SeriesViewerEvent.EVENT;
 import org.weasis.core.ui.editor.SeriesViewerFactory;
@@ -147,10 +146,10 @@ public class SRView extends JScrollPane implements SeriesViewerListener {
       return;
     }
     boolean open = false;
-    synchronized (UIManager.VIEWER_PLUGINS) {
-      List<ViewerPlugin<?>> plugins = UIManager.VIEWER_PLUGINS;
+    List<ViewerPlugin<?>> viewerPlugins = GuiUtils.getUICore().getViewerPlugins();
+    synchronized (viewerPlugins) {
       pluginList:
-      for (final ViewerPlugin<?> plugin : plugins) {
+      for (final ViewerPlugin<?> plugin : viewerPlugins) {
         List<? extends MediaSeries<?>> openSeries = plugin.getOpenSeries();
         if (openSeries != null) {
           for (MediaSeries<?> s : openSeries) {
@@ -202,8 +201,7 @@ public class SRView extends JScrollPane implements SeriesViewerListener {
     if (imgRef != null) {
       SOPInstanceReference ref = imgRef.getSopInstanceReference();
       if (ref != null) {
-        DataExplorerView dicomView =
-            org.weasis.core.ui.docking.UIManager.getExplorerPlugin(DicomExplorer.NAME);
+        DataExplorerView dicomView = GuiUtils.getUICore().getExplorerPlugin(DicomExplorer.NAME);
         DicomModel model = null;
         if (dicomView != null) {
           model = (DicomModel) dicomView.getDataExplorerModel();
@@ -228,7 +226,8 @@ public class SRView extends JScrollPane implements SeriesViewerListener {
                       ref.getReferencedSOPClassUID(),
                       ref.getReferencedFrameNumber());
               keyReferences.addKeyObject(koRef);
-              SeriesViewerFactory plugin = UIManager.getViewerFactory(DicomMediaIO.SERIES_MIMETYPE);
+              SeriesViewerFactory plugin =
+                  GuiUtils.getUICore().getViewerFactory(DicomMediaIO.SERIES_MIMETYPE);
               if (plugin != null && !(plugin instanceof MimeSystemAppFactory)) {
                 MediaElement mediaElement =
                     dicomSeries.getMedia(0, keyReferences.getSOPInstanceUIDFilter(), null);

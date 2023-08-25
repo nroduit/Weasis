@@ -15,12 +15,12 @@ import org.osgi.service.component.ComponentContext;
 import org.osgi.service.component.annotations.Deactivate;
 import org.weasis.core.api.explorer.DataExplorerView;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
+import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.image.GridBagLayoutModel;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.api.util.ResourceUtil.FileIcon;
-import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.SeriesViewer;
 import org.weasis.core.ui.editor.SeriesViewerFactory;
 import org.weasis.core.ui.editor.ViewerPluginBuilder;
@@ -80,7 +80,7 @@ public class SRFactory implements SeriesViewerFactory {
 
   public static void closeSeriesViewer(SRContainer mprContainer) {
     // Unregister the PropertyChangeListener
-    DataExplorerView dicomView = UIManager.getExplorerPlugin(DicomExplorer.NAME);
+    DataExplorerView dicomView = GuiUtils.getUICore().getExplorerPlugin(DicomExplorer.NAME);
     if (dicomView != null) {
       dicomView.getDataExplorerModel().removePropertyChangeListener(mprContainer);
     }
@@ -122,6 +122,6 @@ public class SRFactory implements SeriesViewerFactory {
 
   @Deactivate
   protected void deactivate(ComponentContext context) {
-    UIManager.closeSeriesViewerType(SRContainer.class);
+    GuiUtils.getUICore().closeSeriesViewerType(SRContainer.class);
   }
 }

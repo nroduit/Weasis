@@ -14,10 +14,10 @@ import java.util.Optional;
 import javax.xml.stream.XMLStreamReader;
 import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Tag;
+import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.media.data.TagReadable;
 import org.weasis.core.api.media.data.TagUtil;
 import org.weasis.core.api.media.data.TagW;
-import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.util.DateUtil;
@@ -60,7 +60,9 @@ public class PatientComparator {
   public String buildPatientPseudoUID() {
 
     String property =
-        BundleTools.SYSTEM_PREFERENCES.getProperty("patientComparator.buildPatientPseudoUID", null);
+        GuiUtils.getUICore()
+            .getSystemPreferences()
+            .getProperty("patientComparator.buildPatientPseudoUID", null);
 
     if (StringUtil.hasText(property)) {
 

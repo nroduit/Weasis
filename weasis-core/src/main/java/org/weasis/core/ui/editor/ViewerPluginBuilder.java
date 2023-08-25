@@ -24,6 +24,7 @@ import org.weasis.core.api.explorer.ObservableEvent;
 import org.weasis.core.api.explorer.model.AbstractFileModel;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.core.api.gui.util.AppProperties;
+import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.media.MimeInspector;
 import org.weasis.core.api.media.data.Codec;
 import org.weasis.core.api.media.data.FileCache;
@@ -36,7 +37,6 @@ import org.weasis.core.api.media.data.MediaSeriesGroupNode;
 import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.service.BundleTools;
-import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.model.GraphicModel;
 import org.weasis.core.ui.serialize.XmlSerializer;
 
@@ -152,7 +152,7 @@ public class ViewerPluginBuilder {
       }
     }
     for (String mime : mimes) {
-      SeriesViewerFactory plugin = UIManager.getViewerFactory(mime);
+      SeriesViewerFactory plugin = GuiUtils.getUICore().getViewerFactory(mime);
       if (plugin != null) {
         ArrayList<MediaSeries<? extends MediaElement>> seriesList = new ArrayList<>();
         for (MediaSeries<? extends MediaElement> s : series) {
@@ -173,7 +173,7 @@ public class ViewerPluginBuilder {
       boolean removeOldSeries) {
     if (series != null) {
       String mime = series.getMimeType();
-      SeriesViewerFactory plugin = UIManager.getViewerFactory(mime);
+      SeriesViewerFactory plugin = GuiUtils.getUICore().getViewerFactory(mime);
       openSequenceInPlugin(
           plugin,
           series,

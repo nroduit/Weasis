@@ -20,7 +20,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.AbstractItemDialogPage;
 import org.weasis.core.api.gui.util.AbstractWizardDialog;
-import org.weasis.core.api.service.BundleTools;
+import org.weasis.core.api.gui.util.GuiUtils;
+import org.weasis.core.api.service.WProperties;
 import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.api.util.ResourceUtil.ActionIcon;
 import org.weasis.core.ui.util.ColorLayerUI;
@@ -38,15 +39,15 @@ public class ImportToolBar extends WtoolBar {
     setAttachedInsertable(explorer);
 
     final DicomModel model = (DicomModel) explorer.getDataExplorerModel();
-
-    if (BundleTools.SYSTEM_PREFERENCES.getBooleanProperty("weasis.import.dicom", true)) {
+    WProperties preferences = GuiUtils.getUICore().getSystemPreferences();
+    if (preferences.getBooleanProperty("weasis.import.dicom", true)) {
       final JButton btnImport = new JButton(ResourceUtil.getToolBarIcon(ActionIcon.IMPORT_DICOM));
       btnImport.setToolTipText(Messages.getString("ImportToolBar.import_dcm"));
       btnImport.addActionListener(e -> showAction(ImportToolBar.this, model, null, false));
       add(btnImport);
     }
 
-    if (BundleTools.SYSTEM_PREFERENCES.getBooleanProperty("weasis.import.dicom", true)) {
+    if (preferences.getBooleanProperty("weasis.import.dicom", true)) {
       final JButton btnImport = new JButton(ResourceUtil.getToolBarIcon(ActionIcon.IMPORT_CD));
       btnImport.setToolTipText(Messages.getString("ImportToolBar.import_dcm_cd"));
       btnImport.addActionListener(
@@ -120,7 +121,9 @@ public class ImportToolBar extends WtoolBar {
         actionName,
         ResourceUtil.getIcon(ActionIcon.IMPORT_DICOM),
         event -> {
-          if (BundleTools.SYSTEM_PREFERENCES.getBooleanProperty("weasis.import.dicom", true)) {
+          if (GuiUtils.getUICore()
+              .getSystemPreferences()
+              .getBooleanProperty("weasis.import.dicom", true)) {
             showAction(parent, model, null, false);
           } else {
             JOptionPane.showMessageDialog(

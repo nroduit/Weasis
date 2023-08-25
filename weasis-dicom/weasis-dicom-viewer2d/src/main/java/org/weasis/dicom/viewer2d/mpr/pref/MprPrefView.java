@@ -18,7 +18,6 @@ import javax.swing.SpinnerNumberModel;
 import org.weasis.core.api.gui.util.AbstractItemDialogPage;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.image.GridBagLayoutModel;
-import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.api.service.WProperties;
 import org.weasis.core.ui.pref.PreferenceDialog;
 import org.weasis.core.util.StringUtil;
@@ -115,11 +114,13 @@ public class MprPrefView extends AbstractItemDialogPage {
     eventManager.getOptions().putIntProperty(View2d.P_CROSSHAIR_MODE, mode);
     int gapSize = (int) spinnerCrossGapSize.getValue();
     eventManager.getOptions().putIntProperty(View2d.P_CROSSHAIR_CENTER_GAP, gapSize);
-    BundleTools.SYSTEM_PREFERENCES.put(
-        MprFactory.P_DEFAULT_LAYOUT,
-        ((GridBagLayoutModel) comboBoxLayouts.getSelectedItem()).getId());
+    GuiUtils.getUICore()
+        .getSystemPreferences()
+        .put(
+            MprFactory.P_DEFAULT_LAYOUT,
+            ((GridBagLayoutModel) comboBoxLayouts.getSelectedItem()).getId());
 
-    BundleTools.saveSystemPreferences();
+    GuiUtils.getUICore().saveSystemPreferences();
   }
 
   @Override
@@ -132,7 +133,9 @@ public class MprPrefView extends AbstractItemDialogPage {
     properties.resetProperty(View2d.P_CROSSHAIR_CENTER_GAP, null);
     int gapSize = properties.getIntProperty(View2d.P_CROSSHAIR_CENTER_GAP, 40);
     spinnerCrossGapSize.setValue(gapSize);
-    BundleTools.SYSTEM_PREFERENCES.put(MprFactory.P_DEFAULT_LAYOUT, MprContainer.view1.getId());
+    GuiUtils.getUICore()
+        .getSystemPreferences()
+        .put(MprFactory.P_DEFAULT_LAYOUT, MprContainer.view1.getId());
     setDefaultLayout();
   }
 }

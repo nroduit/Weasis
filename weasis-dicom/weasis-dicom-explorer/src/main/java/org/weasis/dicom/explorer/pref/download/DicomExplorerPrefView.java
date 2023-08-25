@@ -19,8 +19,7 @@ import org.weasis.core.api.explorer.DataExplorerView;
 import org.weasis.core.api.gui.util.AbstractItemDialogPage;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.media.data.Thumbnail;
-import org.weasis.core.api.service.BundleTools;
-import org.weasis.core.ui.docking.UIManager;
+import org.weasis.core.api.service.WProperties;
 import org.weasis.core.ui.pref.PreferenceDialog;
 import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.explorer.DicomExplorer;
@@ -45,9 +44,8 @@ public class DicomExplorerPrefView extends AbstractItemDialogPage {
 
   public DicomExplorerPrefView() {
     super(Messages.getString("DicomExplorer.title"), 607);
-
-    int thumbnailSize =
-        BundleTools.SYSTEM_PREFERENCES.getIntProperty(Thumbnail.KEY_SIZE, Thumbnail.DEFAULT_SIZE);
+    WProperties preferences = GuiUtils.getUICore().getSystemPreferences();
+    int thumbnailSize = preferences.getIntProperty(Thumbnail.KEY_SIZE, Thumbnail.DEFAULT_SIZE);
     JLabel thumbSize = new JLabel(Messages.getString("DicomExplorer.thmb_size"));
     SpinnerListModel model =
         new SpinnerListModel(
@@ -79,7 +77,7 @@ public class DicomExplorerPrefView extends AbstractItemDialogPage {
             ITEM_SEPARATOR_SMALL, ITEM_SEPARATOR, labelOpenPatient, openingViewerJComboBox));
 
     downloadImmediatelyCheckbox.setSelected(
-        BundleTools.SYSTEM_PREFERENCES.getBooleanProperty(DOWNLOAD_IMMEDIATELY, true));
+        preferences.getBooleanProperty(DOWNLOAD_IMMEDIATELY, true));
     add(
         GuiUtils.getFlowLayoutPanel(
             ITEM_SEPARATOR_SMALL, ITEM_SEPARATOR, downloadImmediatelyCheckbox));
@@ -93,22 +91,24 @@ public class DicomExplorerPrefView extends AbstractItemDialogPage {
   }
 
   private OpeningViewer getOpeningViewer() {
-    String key = BundleTools.SYSTEM_PREFERENCES.getProperty(DOWNLOAD_OPEN_MODE);
+    String key = GuiUtils.getUICore().getSystemPreferences().getProperty(DOWNLOAD_OPEN_MODE);
     return OpeningViewer.getOpeningViewer(key, OpeningViewer.ALL_PATIENTS);
   }
 
   @Override
   public void resetToDefaultValues() {
-    BundleTools.SYSTEM_PREFERENCES.resetProperty(DOWNLOAD_IMMEDIATELY, Boolean.TRUE.toString());
+    WProperties preferences = GuiUtils.getUICore().getSystemPreferences();
+    GuiUtils.getUICore()
+        .getSystemPreferences()
+        .resetProperty(DOWNLOAD_IMMEDIATELY, Boolean.TRUE.toString());
     downloadImmediatelyCheckbox.setSelected(
-        BundleTools.SYSTEM_PREFERENCES.getBooleanProperty(DOWNLOAD_IMMEDIATELY, true));
+        preferences.getBooleanProperty(DOWNLOAD_IMMEDIATELY, true));
 
-    BundleTools.SYSTEM_PREFERENCES.resetProperty(
+    preferences.resetProperty(
         STUDY_DATE_SORTING, String.valueOf(SortingTime.INVERSE_CHRONOLOGICAL.getId()));
     studyDateSortingComboBox.setSelectedItem(DicomSorter.getStudyDateSorting());
 
-    BundleTools.SYSTEM_PREFERENCES.resetProperty(
-        DOWNLOAD_OPEN_MODE, OpeningViewer.ALL_PATIENTS.name());
+    preferences.resetProperty(DOWNLOAD_OPEN_MODE, OpeningViewer.ALL_PATIENTS.name());
     openingViewerJComboBox.setSelectedItem(getOpeningViewer());
 
     spinner.setValue(Thumbnail.DEFAULT_SIZE);
@@ -116,26 +116,26 @@ public class DicomExplorerPrefView extends AbstractItemDialogPage {
 
   @Override
   public void closeAdditionalWindow() {
-    BundleTools.SYSTEM_PREFERENCES.putBooleanProperty(
-        DOWNLOAD_IMMEDIATELY, downloadImmediatelyCheckbox.isSelected());
+    WProperties preferences = GuiUtils.getUICore().getSystemPreferences();
+    preferences.putBooleanProperty(DOWNLOAD_IMMEDIATELY, downloadImmediatelyCheckbox.isSelected());
 
     SortingTime sortingTime = (SortingTime) studyDateSortingComboBox.getSelectedItem();
     if (sortingTime != null) {
-      BundleTools.SYSTEM_PREFERENCES.putIntProperty(STUDY_DATE_SORTING, sortingTime.getId());
+      preferences.putIntProperty(STUDY_DATE_SORTING, sortingTime.getId());
     }
 
     OpeningViewer openingViewer = (OpeningViewer) openingViewerJComboBox.getSelectedItem();
     if (openingViewer != null) {
-      BundleTools.SYSTEM_PREFERENCES.put(DOWNLOAD_OPEN_MODE, openingViewer.name());
+      preferences.put(DOWNLOAD_OPEN_MODE, openingViewer.name());
     }
 
-    DataExplorerView dicomView = UIManager.getExplorerPlugin(DicomExplorer.NAME);
+    DataExplorerView dicomView = GuiUtils.getUICore().getExplorerPlugin(DicomExplorer.NAME);
     if (dicomView instanceof DicomExplorer explorer) {
       int size = (int) spinner.getValue();
-      BundleTools.SYSTEM_PREFERENCES.putIntProperty(Thumbnail.KEY_SIZE, size);
+      preferences.putIntProperty(Thumbnail.KEY_SIZE, size);
       explorer.updateThumbnailSize(size);
     }
 
-    BundleTools.saveSystemPreferences();
+    GuiUtils.getUICore().saveSystemPreferences();
   }
 }

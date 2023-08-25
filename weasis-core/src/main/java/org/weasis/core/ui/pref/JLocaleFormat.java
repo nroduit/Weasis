@@ -15,7 +15,8 @@ import java.text.Collator;
 import java.util.Arrays;
 import java.util.Locale;
 import javax.swing.JComboBox;
-import org.weasis.core.api.service.BundleTools;
+import org.weasis.core.api.gui.util.GuiUtils;
+import org.weasis.core.api.service.UICore;
 import org.weasis.core.api.util.LocalUtil;
 
 public class JLocaleFormat extends JComboBox<JLocale> implements ItemListener, Refreshable {
@@ -74,10 +75,11 @@ public class JLocaleFormat extends JComboBox<JLocale> implements ItemListener, R
 
   private void setLocalUtil(Locale local) {
     if (local == null) {
-      BundleTools.SYSTEM_PREFERENCES.remove(BundleTools.P_FORMAT_CODE);
+      GuiUtils.getUICore().getSystemPreferences().remove(UICore.P_FORMAT_CODE);
     } else {
-      BundleTools.SYSTEM_PREFERENCES.setProperty(
-          BundleTools.P_FORMAT_CODE, LocalUtil.localeToText(local));
+      GuiUtils.getUICore()
+          .getSystemPreferences()
+          .setProperty(UICore.P_FORMAT_CODE, LocalUtil.localeToText(local));
     }
 
     Locale l = local == null ? null : local.equals(Locale.getDefault()) ? null : local;

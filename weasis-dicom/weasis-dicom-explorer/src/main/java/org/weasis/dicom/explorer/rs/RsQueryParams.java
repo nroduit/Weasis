@@ -26,7 +26,7 @@ import org.weasis.core.api.auth.AuthProvider;
 import org.weasis.core.api.auth.AuthRegistration;
 import org.weasis.core.api.auth.DefaultAuthMethod;
 import org.weasis.core.api.gui.util.GuiExecutor;
-import org.weasis.core.ui.docking.UIManager;
+import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.util.LangUtil;
 import org.weasis.core.util.StringUtil;
 import org.weasis.core.util.StringUtil.Suffix;
@@ -244,7 +244,7 @@ public class RsQueryParams extends ExplorerTask<Boolean, String> {
         .execute(
             () ->
                 JOptionPane.showMessageDialog(
-                    UIManager.BASE_AREA, msg, title, JOptionPane.ERROR_MESSAGE));
+                    GuiUtils.getUICore().getBaseArea(), msg, title, JOptionPane.ERROR_MESSAGE));
   }
 
   private static String getFirstParam(List<String> list) {

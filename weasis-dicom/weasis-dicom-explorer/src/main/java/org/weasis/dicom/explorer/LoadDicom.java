@@ -16,6 +16,7 @@ import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.ObservableEvent;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.core.api.gui.util.GuiExecutor;
+import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.MediaSeriesGroupNode;
@@ -23,7 +24,6 @@ import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.SeriesThumbnail;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.media.data.Thumbnail;
-import org.weasis.core.api.service.BundleTools;
 import org.weasis.dicom.codec.DicomMediaIO;
 import org.weasis.dicom.codec.DicomSpecialElement;
 import org.weasis.dicom.codec.TagD;
@@ -133,8 +133,9 @@ public abstract class LoadDicom extends ExplorerTask<Boolean, String> {
         SeriesThumbnail t = (SeriesThumbnail) dicomSeries.getTagValue(TagW.Thumbnail);
         if (t == null) {
           int thumbnailSize =
-              BundleTools.SYSTEM_PREFERENCES.getIntProperty(
-                  Thumbnail.KEY_SIZE, Thumbnail.DEFAULT_SIZE);
+              GuiUtils.getUICore()
+                  .getSystemPreferences()
+                  .getIntProperty(Thumbnail.KEY_SIZE, Thumbnail.DEFAULT_SIZE);
           t = DicomExplorer.createThumbnail(dicomSeries, dicomModel, thumbnailSize);
           dicomSeries.setTag(TagW.Thumbnail, t);
           if (t != null) {

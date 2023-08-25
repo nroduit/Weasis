@@ -11,8 +11,8 @@ package org.weasis.dicom.viewer2d;
 
 import javax.swing.JButton;
 import org.weasis.core.api.gui.util.ActionW;
+import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.SliderCineListener;
-import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.api.service.WProperties;
 import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.api.util.ResourceUtil.ActionIcon;
@@ -26,7 +26,7 @@ public class CineToolBar extends WtoolBar {
     SliderCineListener sequence =
         EventManager.getInstance().getAction(ActionW.SCROLL_SERIES).orElse(null);
     if (sequence != null) {
-      WProperties p = BundleTools.SYSTEM_PREFERENCES;
+      WProperties p = GuiUtils.getUICore().getSystemPreferences();
       if (p.getBooleanProperty("weasis.cinetoolbar.gotostart", true)) {
         final JButton rwdButton = new JButton();
         rwdButton.setToolTipText(Messages.getString("CineToolBar.start"));

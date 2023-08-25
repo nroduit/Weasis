@@ -26,8 +26,8 @@ import org.weasis.core.api.gui.util.ComboItemListener;
 import org.weasis.core.api.gui.util.DropDownButton;
 import org.weasis.core.api.gui.util.Feature;
 import org.weasis.core.api.gui.util.GroupRadioMenu;
+import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.RadioMenuItem;
-import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.api.service.WProperties;
 import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.api.util.ResourceUtil.ActionIcon;
@@ -62,7 +62,7 @@ public class MeasureToolBar extends WtoolBar {
   private static final List<Graphic> drawGraphicList = new ArrayList<>();
 
   static {
-    WProperties p = BundleTools.SYSTEM_PREFERENCES;
+    WProperties p = GuiUtils.getUICore().getSystemPreferences();
     if (p.getBooleanProperty("weasis.measure.selection", true)) {
       measureGraphicList.add(selectionGraphic);
     }

@@ -14,13 +14,12 @@ import java.util.Map;
 import javax.swing.Icon;
 import org.weasis.core.api.explorer.DataExplorerView;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
+import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.image.GridBagLayoutModel;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaSeries;
-import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.api.util.ResourceUtil.OtherIcon;
-import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.SeriesViewer;
 import org.weasis.core.ui.editor.SeriesViewerFactory;
 import org.weasis.core.ui.editor.ViewerPluginBuilder;
@@ -53,7 +52,8 @@ public class MprFactory implements SeriesViewerFactory {
   }
 
   public static GridBagLayoutModel getDefaultGridBagLayoutModel() {
-    String defLayout = BundleTools.SYSTEM_PREFERENCES.getProperty(MprFactory.P_DEFAULT_LAYOUT);
+    String defLayout =
+        GuiUtils.getUICore().getSystemPreferences().getProperty(MprFactory.P_DEFAULT_LAYOUT);
     if (StringUtil.hasText(defLayout)) {
       return MprContainer.LAYOUT_LIST.stream()
           .filter(g -> defLayout.equals(g.getId()))
@@ -105,7 +105,7 @@ public class MprFactory implements SeriesViewerFactory {
 
   public static void closeSeriesViewer(MprContainer mprContainer) {
     // Unregister the PropertyChangeListener
-    DataExplorerView dicomView = UIManager.getExplorerPlugin(DicomExplorer.NAME);
+    DataExplorerView dicomView = GuiUtils.getUICore().getExplorerPlugin(DicomExplorer.NAME);
     if (dicomView != null) {
       dicomView.getDataExplorerModel().removePropertyChangeListener(mprContainer);
     }

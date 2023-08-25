@@ -15,11 +15,11 @@ import org.osgi.service.component.ComponentContext;
 import org.osgi.service.component.annotations.Deactivate;
 import org.weasis.core.api.explorer.DataExplorerView;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
+import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.image.GridBagLayoutModel;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.api.util.ResourceUtil.OtherIcon;
-import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.SeriesViewer;
 import org.weasis.core.ui.editor.SeriesViewerFactory;
 import org.weasis.core.ui.editor.ViewerPluginBuilder;
@@ -72,14 +72,14 @@ public class AuFactory implements SeriesViewerFactory {
     }
 
     // Close all the other audio views
-    UIManager.closeSeriesViewerType(AuContainer.class);
+    GuiUtils.getUICore().closeSeriesViewerType(AuContainer.class);
 
     return instance;
   }
 
   public static void closeSeriesViewer(AuContainer container) {
     // Unregister the PropertyChangeListener
-    DataExplorerView dicomView = UIManager.getExplorerPlugin(DicomExplorer.NAME);
+    DataExplorerView dicomView = GuiUtils.getUICore().getExplorerPlugin(DicomExplorer.NAME);
     if (dicomView != null) {
       dicomView.getDataExplorerModel().removePropertyChangeListener(container);
     }
@@ -121,6 +121,6 @@ public class AuFactory implements SeriesViewerFactory {
 
   @Deactivate
   protected void deactivate(ComponentContext context) {
-    UIManager.closeSeriesViewerType(AuContainer.class);
+    GuiUtils.getUICore().closeSeriesViewerType(AuContainer.class);
   }
 }

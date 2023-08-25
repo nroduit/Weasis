@@ -43,7 +43,6 @@ import org.weasis.core.api.explorer.ObservableEvent;
 import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.gui.util.FileFormatFilter;
 import org.weasis.core.api.gui.util.GuiUtils;
-import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.util.FileUtil;
 import org.weasis.core.util.StringUtil;
@@ -117,7 +116,7 @@ public class IsoImageExport extends LocalExport {
   }
 
   String getLocalViewerPath() {
-    return BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.codebase.local", null);
+    return GuiUtils.getUICore().getSystemPreferences().getProperty("weasis.codebase.local", null);
   }
 
   @Override

@@ -24,10 +24,10 @@ public interface PageItem {
   String getTitle();
 
   /**
-   * Returns an array of sub-pages this page has. Subpages are displayed in the config dialog's tree
+   * Returns a list of sub-pages this page has. Subpages are displayed in the config dialog's tree
    * view as children of this page.
    *
-   * @return an array of sub-pages or <code>null</code> if no sub-pages are used
+   * @return a list of sub-pages or <code>null</code> if no sub-pages are used
    */
   List<PageItem> getSubPages();
 

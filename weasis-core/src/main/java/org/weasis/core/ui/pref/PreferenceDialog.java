@@ -33,7 +33,6 @@ import org.weasis.core.api.gui.PreferencesPageFactory;
 import org.weasis.core.api.gui.util.AbstractItemDialogPage;
 import org.weasis.core.api.gui.util.AbstractWizardDialog;
 import org.weasis.core.api.gui.util.GuiUtils;
-import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.util.StringUtil;
 
 public class PreferenceDialog extends AbstractWizardDialog {
@@ -150,7 +149,9 @@ public class PreferenceDialog extends AbstractWizardDialog {
                 GuiUtils.openInDefaultBrowser(
                     jButtonHelp,
                     new URL(
-                        BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.help.online")
+                        GuiUtils.getUICore()
+                                .getSystemPreferences()
+                                .getProperty("weasis.help.online")
                             + helpKey));
               } catch (MalformedURLException e1) {
                 LOGGER.error("Cannot open online help", e1);

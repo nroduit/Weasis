@@ -58,9 +58,8 @@ import org.weasis.core.api.image.util.MeasurableLayer;
 import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.service.AuditLog;
-import org.weasis.core.api.service.BundleTools;
+import org.weasis.core.api.service.WProperties;
 import org.weasis.core.api.util.FontItem;
-import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.SeriesViewerEvent;
 import org.weasis.core.ui.editor.SeriesViewerEvent.EVENT;
 import org.weasis.core.ui.editor.image.ContextMenuHandler;
@@ -218,7 +217,7 @@ public class View3d extends VolumeCanvas
     ToolTipManager.sharedInstance().unregisterComponent(this);
     renderingLayer.removeLayerChangeListener(this);
     if (volTexture != null) {
-      UIManager.closeSeries(volTexture.getSeries());
+      GuiUtils.getUICore().closeSeries(volTexture.getSeries());
     }
     GL4 gl4 = OpenglUtils.getGL4();
     program.destroy(gl4);
@@ -342,13 +341,12 @@ public class View3d extends VolumeCanvas
   }
 
   public void initShaders(GL4 gl4) {
-    Color lightColor =
-        BundleTools.SYSTEM_PREFERENCES.getColorProperty(RenderingLayer.P_LIGHT_COLOR, Color.WHITE);
+    WProperties preferences = GuiUtils.getUICore().getSystemPreferences();
+    Color lightColor = preferences.getColorProperty(RenderingLayer.P_LIGHT_COLOR, Color.WHITE);
     Vector3f lColor =
         new Vector3f(
             lightColor.getRed() / 255f, lightColor.getGreen() / 255f, lightColor.getBlue() / 255f);
-    Color bckColor =
-        BundleTools.SYSTEM_PREFERENCES.getColorProperty(RenderingLayer.P_BCK_COLOR, Color.GRAY);
+    Color bckColor = preferences.getColorProperty(RenderingLayer.P_BCK_COLOR, Color.GRAY);
     Vector3f bColor =
         new Vector3f(
             bckColor.getRed() / 255f, bckColor.getGreen() / 255f, bckColor.getBlue() / 255f);
@@ -473,8 +471,11 @@ public class View3d extends VolumeCanvas
       int sampleCount = renderingLayer.getQuality();
       if (camera.isAdjusting()) {
         double quality =
-            BundleTools.LOCAL_UI_PERSISTENCE.getIntProperty(
-                    RenderingLayer.P_DYNAMIC_QUALITY, RenderingLayer.DEFAULT_DYNAMIC_QUALITY_RATE)
+            GuiUtils.getUICore()
+                    .getLocalPersistence()
+                    .getIntProperty(
+                        RenderingLayer.P_DYNAMIC_QUALITY,
+                        RenderingLayer.DEFAULT_DYNAMIC_QUALITY_RATE)
                 / 100.0;
         sampleCount = Math.max(64, (int) Math.round(sampleCount * quality));
       }

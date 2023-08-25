@@ -39,7 +39,6 @@ import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.WinUtil;
 import org.weasis.core.api.media.data.TagW;
-import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.api.util.ThreadUtil;
 import org.weasis.core.util.FileUtil;
 import org.weasis.dicom.explorer.pref.node.AbstractDicomNode;
@@ -108,7 +107,9 @@ public class AcquirePublishPanel extends JPanel {
           params.setConnectOptions(connectOptions);
           DicomNode callingNode =
               new DicomNode(
-                  BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.aet", "WEASIS_AE")); // NON-NLS
+                  GuiUtils.getUICore()
+                      .getSystemPreferences()
+                      .getProperty("weasis.aet", "WEASIS_AE")); // NON-NLS
           try {
             return CStore.process(
                 params, callingNode, destNdde, exportFilesDicomPath, dicomProgress);

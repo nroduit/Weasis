@@ -28,7 +28,6 @@ import org.weasis.core.Messages;
 import org.weasis.core.api.gui.util.AbstractItemDialogPage;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.util.FontItem;
-import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.editor.image.MeasureToolBar;
 import org.weasis.core.ui.editor.image.ViewCanvas;
@@ -160,9 +159,10 @@ public class LabelsPrefView extends AbstractItemDialogPage {
     MeasureToolBar.getMeasureGraphicList()
         .forEach(g -> MeasureToolBar.applyDefaultSetting(viewSetting, g));
 
-    synchronized (UIManager.VIEWER_PLUGINS) {
-      for (int i = UIManager.VIEWER_PLUGINS.size() - 1; i >= 0; i--) {
-        ViewerPlugin<?> p = UIManager.VIEWER_PLUGINS.get(i);
+    List<ViewerPlugin<?>> viewerPlugins = GuiUtils.getUICore().getViewerPlugins();
+    synchronized (viewerPlugins) {
+      for (int i = viewerPlugins.size() - 1; i >= 0; i--) {
+        ViewerPlugin<?> p = viewerPlugins.get(i);
         if (p instanceof ImageViewerPlugin viewerPlugin) {
           for (Object v : viewerPlugin.getImagePanels()) {
             if (v instanceof ViewCanvas<?> view) {
