@@ -1159,7 +1159,11 @@ public class WeasisLauncher {
       String language = System.getProperty("user.language", "en"); // NON-NLS
       String country = System.getProperty("user.country", ""); // NON-NLS
       String variant = System.getProperty("user.variant", ""); // NON-NLS
-      return new Locale(language, country, variant);
+      return new Locale.Builder()
+          .setLanguage(language)
+          .setRegion(country)
+          .setVariant(variant)
+          .build();
     }
 
     String[] val = value.split("_", 3);
@@ -1167,7 +1171,11 @@ public class WeasisLauncher {
     String country = val.length > 1 ? val[1] : "";
     String variant = val.length > 2 ? val[2] : "";
 
-    return new Locale(language, country, variant);
+    return new Locale.Builder()
+        .setLanguage(language)
+        .setRegion(country)
+        .setVariant(variant)
+        .build();
   }
 
   private void registerAdditionalShutdownHook() {

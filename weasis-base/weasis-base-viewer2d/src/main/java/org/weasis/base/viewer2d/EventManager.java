@@ -11,6 +11,7 @@ package org.weasis.base.viewer2d;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.List;
@@ -75,7 +76,7 @@ import org.weasis.opencv.op.lut.DefaultWlPresentation;
 /**
  * The event processing center for this application. This class responses for loading data sets,
  * processing the events from the utility menu that includes changing the operation scope, the
- * layout, window/level, rotation angle, zoom factor, starting/stoping the cining-loop etc.
+ * layout, window/level, rotation angle, zoom factor, starting/stopping the cining-loop etc.
  */
 public class EventManager extends ImageViewerEventManager<ImageElement> implements ActionListener {
 
@@ -598,7 +599,7 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
           menu.add(menuItem);
           menuItem = new JMenuItem(Messages.getString("View2dContainer.-90"));
           menuItem.setIcon(ResourceUtil.getIcon(ActionIcon.ROTATE_COUNTERCLOCKWISE));
-          menuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_L, KeyEvent.ALT_DOWN_MASK));
+          menuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_L, InputEvent.ALT_DOWN_MASK));
           menuItem.addActionListener(
               e ->
                   rotateAction
@@ -607,7 +608,7 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
           menu.add(menuItem);
           menuItem.setIcon(ResourceUtil.getIcon(ActionIcon.ROTATE_CLOCKWISE));
           menuItem = new JMenuItem(Messages.getString("View2dContainer.+90"));
-          menuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_R, KeyEvent.ALT_DOWN_MASK));
+          menuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_R, InputEvent.ALT_DOWN_MASK));
           menuItem.addActionListener(
               e ->
                   rotateAction
@@ -631,7 +632,8 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
                     .createUnregisteredJCCheckBoxMenuItem(
                         Messages.getString("View2dContainer.flip_h"),
                         ResourceUtil.getIcon(ActionIcon.FLIP));
-            menuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F, KeyEvent.ALT_DOWN_MASK));
+            menuItem.setAccelerator(
+                KeyStroke.getKeyStroke(KeyEvent.VK_F, InputEvent.ALT_DOWN_MASK));
             menu.add(menuItem);
           }
         }

@@ -50,15 +50,22 @@ public class LocalUtil {
     String language = val.length > 0 ? val[0] : "";
     String country = val.length > 1 ? val[1] : "";
     String variant = val.length > 2 ? val[2] : "";
-
-    return new Locale(language, country, variant);
+    return new Locale.Builder()
+        .setLanguage(language)
+        .setRegion(country)
+        .setVariant(variant)
+        .build();
   }
 
   public static Locale getSystemLocale() {
     String language = System.getProperty("user.language", "en"); // NON-NLS
     String country = System.getProperty("user.country", ""); // NON-NLS
     String variant = System.getProperty("user.variant", ""); // NON-NLS
-    return new Locale(language, country, variant);
+    return new Locale.Builder()
+        .setLanguage(language)
+        .setRegion(country)
+        .setVariant(variant)
+        .build();
   }
 
   public static synchronized Locale getLocaleFormat() {
