@@ -210,10 +210,13 @@ public class LicenseDialogController implements LicenseController {
   }
 
   private void enable() {
-    licencesItem.getCancelButton().setEnabled(true);
+    licencesItem.getSaveButton().setEnabled(true);
+    licencesItem.getTestButton().setEnabled(true);
   }
 
   private void disable() {
-    licencesItem.getCancelButton().setEnabled(false);
+    licencesItem.getSaveButton().setEnabled(false);
+    licencesItem.getTestButton().setEnabled(false);
   }
+
 }

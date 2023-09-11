@@ -162,6 +162,10 @@ public class AbstractTabLicense extends JPanel implements Insertable {
     return saveButton;
   }
 
+  public JButton getTestButton() {
+      return testButton;
+  }
+
   public GUIEntry getGuiEntry() {
     return guiEntry;
   }
