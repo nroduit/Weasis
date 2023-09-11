@@ -9,7 +9,6 @@
  */
 package org.weasis.core.api.gui.util;
 
-import com.formdev.flatlaf.util.StringUtils;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -18,12 +17,19 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.function.Consumer;
+
 import javax.swing.JOptionPane;
 import javax.swing.text.Document;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.Messages;
 
+import com.formdev.flatlaf.util.StringUtils;
+
+/**
+ * Default behavior for a license controller.
+ */
 public class LicenseDialogController implements LicenseController {
 
   public enum STATUS {
@@ -35,6 +41,7 @@ public class LicenseDialogController implements LicenseController {
 
   static final String CANCEL_COMMAND = "cancel"; // NON-NLS
   static final String OK_COMMAND = "ok"; // NON-NLS
+  static final String TEST_COMMAND = "test";
   private final File licenceFile;
 
   private final AbstractTabLicense licencesItem;
@@ -66,6 +73,18 @@ public class LicenseDialogController implements LicenseController {
     }
   }
 
+  /**
+   * Confirms changes at the user's local installation/PC, by executing the following
+   * steps:
+   * <ol>
+   * <li>Executes the same as the {@link #testButton} button.</li>
+   * <li>Save activation code.</li>
+   * <li>Changes config.properties to add new information about new plugins.</li>
+   * <li>Update UI reading new icon and messages from the remote boot OSGI jar file. This 
+   * jar will be found using the server license field URL.</li>
+   * <li>Ask user to re-start Weasis.</li>
+   * </ol>
+   */
   @Override
   public void save() {
     execute(
@@ -73,46 +92,91 @@ public class LicenseDialogController implements LicenseController {
           try {
             String contents = document.getText(0, document.getLength());
             if (!StringUtils.isEmpty(contents.trim())) {
-              if (licenceFile.exists()) {
-                int option =
-                    JOptionPane.showConfirmDialog(
-                        null,
-                        Messages.getString("license.file.exists"),
+              if (test()) {
+                  if (licenceFile.exists()) {
+                      int option =
+                          JOptionPane.showConfirmDialog(
+                              null,
+                              Messages.getString("license.file.exists"),
+                              Messages.getString("license"),
+                              JOptionPane.YES_NO_OPTION);
+                      if (option == JOptionPane.YES_OPTION) {
+                        generateBackupFile();
+                        writeFileContents(contents);
+                      }
+                    } else {
+                      writeFileContents(contents);
+                    }
+                    JOptionPane.showMessageDialog(
+                        licencesItem,
+                        Messages.getString("license.successfully.saved"),
                         Messages.getString("license"),
-                        JOptionPane.YES_NO_OPTION);
-                if (option == JOptionPane.YES_OPTION) {
-                  generateBackupFile();
-                  writeFileContents(contents);
-                }
-              } else {
-                writeFileContents(contents);
+                        JOptionPane.INFORMATION_MESSAGE);
+                    changeConfigProperties();
+                    updateUI();
+                    askUserToRestart();
+                  } else {
+                    JOptionPane.showMessageDialog(
+                        licencesItem,
+                        Messages.getString("license.field.empty"),
+                        Messages.getString("license"),
+                        JOptionPane.WARNING_MESSAGE);
+                  }
               }
-              JOptionPane.showMessageDialog(
-                  licencesItem,
-                  Messages.getString("license.successfully.saved"),
-                  Messages.getString("license"),
-                  JOptionPane.INFORMATION_MESSAGE);
-            } else {
-              JOptionPane.showMessageDialog(
-                  licencesItem,
-                  Messages.getString("license.field.empty"),
-                  Messages.getString("license"),
-                  JOptionPane.WARNING_MESSAGE);
-            }
           } catch (Exception e) {
             LOGGER.error(e.getMessage(), e);
             JOptionPane.showMessageDialog(
                 licencesItem,
-                Messages.getString("error.saving.license"),
+                Messages.getString("license.error.saving"),
                 Messages.getString("license"),
                 JOptionPane.ERROR_MESSAGE);
           }
         });
   }
 
+  private void askUserToRestart() {
+  }
+
+  private void updateUI() {
+  }
+
+  private void changeConfigProperties() {
+  }
+
+  /**
+   * Do not changes anything at user's local PC/installation. Executes the following steps
+   * just to validate license/activation code.
+   * <ol>
+   * <li>Ping URL at the server license field. The ping needs to return HTTP 200 code in order to move
+   * to next step.</li>
+   * <li>Download the OSGi boot jar file from server license URL, installs and activates it.</li>
+   * <li>Executes a check running a check test method inside the bundle, just to guarantee that the interfaces match.</li>
+   * </ol>
+   */
+  @Override
+  public boolean test() {
+      if (pingLicenseServerURL()) {
+          return downloadBootJarAndTestBundleAccess();
+      } else {
+          JOptionPane.showMessageDialog(
+                  licencesItem,
+                  Messages.getString("license.error.testing"),
+                  Messages.getString("license"),
+                  JOptionPane.ERROR_MESSAGE);
+          return false;
+      }
+  }
+
+  private boolean downloadBootJarAndTestBundleAccess() {
+      return true;
+  }
+
+  private boolean pingLicenseServerURL() {
+    return true;
+  }
+
   @Override
   public void cancel() {
-
   }
 
   private void generateBackupFile() {

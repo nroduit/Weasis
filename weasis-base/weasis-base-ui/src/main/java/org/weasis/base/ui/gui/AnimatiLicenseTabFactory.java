@@ -27,7 +27,7 @@ public class AnimatiLicenseTabFactory implements LicenseTabFactory {
         new GUIEntry() {
           @Override
           public String getUIName() {
-            return "Anitmati";
+            return "Animati";
           }
 
           @Override

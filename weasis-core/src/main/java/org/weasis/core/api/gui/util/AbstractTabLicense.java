@@ -36,8 +36,10 @@ public class AbstractTabLicense extends JPanel implements Insertable {
   protected final JTextField serverTextField;
   protected final JScrollPane textScroll;
   protected final LicenseController licenseController;
-  protected final JButton validateButton;
+
+  protected final JButton saveButton;
   protected final JButton cancelButton;
+  protected final JButton testButton;
   protected final GUIEntry guiEntry;
 
   public AbstractTabLicense(GUIEntry entry) {
@@ -68,8 +70,9 @@ public class AbstractTabLicense extends JPanel implements Insertable {
                       }
                     }));
 
-    validateButton = new JButton(Messages.getString("validate"));
-    cancelButton = new JButton(Messages.getString("cancel"));
+    saveButton = new JButton(Messages.getString("license.btnSave"));
+    cancelButton = new JButton(Messages.getString("license.btnCancel"));
+    testButton = new JButton(Messages.getString("license.btnTest"));
     initGUI();
   }
 
@@ -78,6 +81,17 @@ public class AbstractTabLicense extends JPanel implements Insertable {
     setLayout(new BorderLayout());
 
     DefaultButtonModel newModel = new DefaultButtonModel();
+    newModel.setActionCommand(LicenseDialogController.TEST_COMMAND);
+    newModel.addActionListener(
+        new AbstractAction() {
+          @Override
+          public void actionPerformed(ActionEvent e) {
+            licenseController.test();
+          }
+        });
+    testButton.setModel(newModel);
+
+    newModel = new DefaultButtonModel();
     newModel.setActionCommand(LicenseDialogController.OK_COMMAND);
     newModel.addActionListener(
         new AbstractAction() {
@@ -86,7 +100,7 @@ public class AbstractTabLicense extends JPanel implements Insertable {
             licenseController.save();
           }
         });
-    validateButton.setModel(newModel);
+    saveButton.setModel(newModel);
 
     newModel = new DefaultButtonModel();
     newModel.setActionCommand(LicenseDialogController.CANCEL_COMMAND);
@@ -133,7 +147,8 @@ public class AbstractTabLicense extends JPanel implements Insertable {
             FlowLayout.LEADING,
             15,
             5,
-            validateButton,
+            testButton,
+            saveButton,
             cancelButton,
             new JLabel("Active until " + LocalDate.now()));
     add(jPanelBottom, BorderLayout.SOUTH);
@@ -143,8 +158,8 @@ public class AbstractTabLicense extends JPanel implements Insertable {
     return cancelButton;
   }
 
-  public JButton getValidateButton() {
-    return validateButton;
+  public JButton getSaveButton() {
+    return saveButton;
   }
 
   public GUIEntry getGuiEntry() {
