@@ -80,85 +80,115 @@ public class DicomImageElement extends ImageElement implements DicomElement {
     this.pixelSizeY = 1.0;
     this.pixelSpacingUnit = Unit.PIXEL;
 
-    double[] val = null;
+    double[] val;
     String modality = TagD.getTagValue(mediaIO, Tag.Modality, String.class);
-    if (!"SC".equals(modality) && !"OT".equals(modality)) { // NON-NLS
-      // Physical distance in mm between the center of each pixel (ratio in mm)
-      val = TagD.getTagValue(mediaIO, Tag.PixelSpacing, double[].class);
-      if (val == null || val.length != 2) {
-        val = TagD.getTagValue(mediaIO, Tag.ImagerPixelSpacing, double[].class);
-        // Follows D. Clunie recommendations
-        pixelSizeCalibrationDescription =
-            val == null ? null : Messages.getString("DicomImageElement.detector");
+    // Physical distance in mm between the center of each pixel (ratio in mm)
+    val = TagD.getTagValue(mediaIO, Tag.PixelSpacing, double[].class);
 
-      } else {
-        pixelSizeCalibrationDescription =
-            TagD.getTagValue(mediaIO, Tag.PixelSpacingCalibrationDescription, String.class);
-      }
-      if (val == null || val.length != 2) {
-        val = TagD.getTagValue(mediaIO, Tag.NominalScannedPixelSpacing, double[].class);
-      }
+    if (val == null || val.length != 2) {
+      val = getMagnifiedPixelSpacing("MG".equals(modality));
+    } else {
+      pixelSizeCalibrationDescription =
+          TagD.getTagValue(mediaIO, Tag.PixelSpacingCalibrationDescription, String.class);
+    }
+    if (val == null || val.length != 2) {
+      val = TagD.getTagValue(mediaIO, Tag.NominalScannedPixelSpacing, double[].class);
+      pixelSizeCalibrationDescription = val == null ? null : "At scanner";
+    }
 
-      if (val != null && val.length == 2 && val[0] > 0.0 && val[1] > 0.0) {
-        /*
-         * Pixel Spacing = Row Spacing \ Column Spacing => (Y,X) The first value is the row spacing in mm, that
-         * is the spacing between the centers of adjacent rows, or vertical spacing. Pixel Spacing must be
-         * always positive, but some DICOMs have negative values
-         */
-        setPixelSize(val[1], val[0]);
-        pixelSpacingUnit = Unit.MILLIMETER;
-      }
+    if (val != null && val.length == 2 && val[0] > 0.0 && val[1] > 0.0) {
+      /*
+       * Pixel Spacing = Row Spacing \ Column Spacing => (Y,X) The first value is the row spacing in mm, that
+       * is the spacing between the centers of adjacent rows, or vertical spacing. Pixel Spacing must be
+       * always positive, but some DICOMs have negative values
+       */
+      setPixelSize(val[1], val[0]);
+      pixelSpacingUnit = Unit.MILLIMETER;
+    }
 
-      // DICOM $C.11.1.1.2 Modality LUT and Rescale Type
-      // Specifies the units of the output of the Modality LUT or rescale operation.
-      // Defined Terms:
-      // OD = The number in the LUT represents thousands of optical density. That is, a value of
-      // 2140 represents an optical density of 2.140.
-      // HU = Hounsfield Units (CT)
-      // US = Unspecified
-      // Other values are permitted, but are not defined by the DICOM Standard.
-      pixelValueUnit = TagD.getTagValue(this, Tag.RescaleType, String.class);
-      if (pixelValueUnit == null) {
-        // For some other modalities like PET
-        pixelValueUnit = TagD.getTagValue(this, Tag.Units, String.class);
-      }
-      if (pixelValueUnit == null && "CT".equals(modality)) {
-        pixelValueUnit = "HU";
-      } else if (pixelSpacingUnit == Unit.PIXEL && "US".equals(modality)) {
-        Attributes spatialCalib =
-            Ultrasound.getUniqueSpatialRegion(getMediaReader().getDicomObject());
-        if (spatialCalib != null) {
-          Double calibX =
-              DicomMediaUtils.getDoubleFromDicomElement(spatialCalib, Tag.PhysicalDeltaX, null);
-          Double calibY =
-              DicomMediaUtils.getDoubleFromDicomElement(spatialCalib, Tag.PhysicalDeltaY, null);
-          if (calibX != null && calibY != null) {
-            calibX = Math.abs(calibX);
-            calibY = Math.abs(calibY);
-            // Do not apply when value X and Y are different, otherwise the image will be stretched
-            if (MathUtil.isEqual(calibX, calibY)) {
-              setPixelSize(calibX, calibY);
-              pixelSpacingUnit = Unit.CENTIMETER;
-            }
+    initPixelValueUnit(modality);
+
+    if (val == null) {
+      initPixelAspectRatio();
+    }
+  }
+
+  private void initPixelValueUnit(String modality) {
+    // DICOM $C.11.1.1.2 Modality LUT and Rescale Type
+    // Specifies the units of the output of the Modality LUT or rescale operation.
+    // Defined Terms:
+    // OD = The number in the LUT represents thousands of optical density. That is, a value of
+    // 2140 represents an optical density of 2.140.
+    // HU = Hounsfield Units (CT)
+    // US = Unspecified
+    // Other values are permitted, but are not defined by the DICOM Standard.
+    pixelValueUnit = TagD.getTagValue(this, Tag.RescaleType, String.class);
+    if (pixelValueUnit == null) {
+      // For some other modalities like PET
+      pixelValueUnit = TagD.getTagValue(this, Tag.Units, String.class);
+    }
+    if (pixelValueUnit == null && "CT".equals(modality)) {
+      pixelValueUnit = "HU";
+    } else if (pixelSpacingUnit == Unit.PIXEL && "US".equals(modality)) {
+      Attributes spatialCalibration =
+          Ultrasound.getUniqueSpatialRegion(getMediaReader().getDicomObject());
+      if (spatialCalibration != null) {
+        Double calibX =
+            DicomMediaUtils.getDoubleFromDicomElement(spatialCalibration, Tag.PhysicalDeltaX, null);
+        Double calibY =
+            DicomMediaUtils.getDoubleFromDicomElement(spatialCalibration, Tag.PhysicalDeltaY, null);
+        if (calibX != null && calibY != null) {
+          calibX = Math.abs(calibX);
+          calibY = Math.abs(calibY);
+          // Do not apply when value X and Y are different, otherwise the image will be stretched
+          if (MathUtil.isEqual(calibX, calibY)) {
+            setPixelSize(calibX, calibY);
+            pixelSpacingUnit = Unit.CENTIMETER;
           }
         }
       }
     }
+  }
 
-    if (val == null) {
-      int[] aspects = TagD.getTagValue(mediaIO, Tag.PixelAspectRatio, int[].class);
-      if (aspects != null && aspects.length == 2 && aspects[0] != aspects[1]) {
-        /*
-         * Set the Pixel Aspect Ratio to the pixel size of the image to stretch the rendered image (for having
-         * square pixel on the display image)
-         */
-        if (aspects[1] < aspects[0]) {
-          setPixelSize(1.0, (double) aspects[0] / (double) aspects[1]);
-        } else {
-          setPixelSize((double) aspects[1] / (double) aspects[0], 1.0);
-        }
+  private void initPixelAspectRatio() {
+    int[] aspects = TagD.getTagValue(mediaIO, Tag.PixelAspectRatio, int[].class);
+    if (aspects != null && aspects.length == 2 && aspects[0] != aspects[1]) {
+      /*
+       * Set the Pixel Aspect Ratio to the pixel size of the image to stretch the rendered image (for having
+       * square pixel on the display image)
+       */
+      if (aspects[1] < aspects[0]) {
+        setPixelSize(1.0, (double) aspects[0] / (double) aspects[1]);
+      } else {
+        setPixelSize((double) aspects[1] / (double) aspects[0], 1.0);
       }
     }
+  }
+
+  private double[] getMagnifiedPixelSpacing(boolean useMagnificationFactor) {
+    double[] val = TagD.getTagValue(mediaIO, Tag.ImagerPixelSpacing, double[].class);
+    // Follows D. Clunie recommendations
+    pixelSizeCalibrationDescription =
+        val == null ? null : Messages.getString("DicomImageElement.detector");
+    if (useMagnificationFactor && val != null && val.length == 2 && val[0] > 0.0 && val[1] > 0.0) {
+      Double estimatedFactor =
+          TagD.getTagValue(mediaIO, Tag.EstimatedRadiographicMagnificationFactor, Double.class);
+      if (estimatedFactor == null) {
+        Double distanceSourceToDetector =
+            TagD.getTagValue(mediaIO, Tag.DistanceSourceToDetector, Double.class);
+        Double distanceSourceToPatient =
+            TagD.getTagValue(mediaIO, Tag.DistanceSourceToPatient, Double.class);
+        if (distanceSourceToDetector != null && distanceSourceToPatient != null) {
+          estimatedFactor = distanceSourceToDetector / distanceSourceToPatient;
+        }
+      }
+      if (estimatedFactor != null && estimatedFactor > 0) {
+        val[0] = val[0] / estimatedFactor;
+        val[1] = val[1] / estimatedFactor;
+        pixelSizeCalibrationDescription = "Magnified";
+      }
+    }
+    return val;
   }
 
   /**

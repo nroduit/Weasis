@@ -499,6 +499,9 @@ public class DicomMediaIO implements DcmMediaReader {
       TagD.get(Tag.PixelAspectRatio).readValue(header, this);
       TagD.get(Tag.PixelSpacingCalibrationDescription).readValue(header, this);
       TagD.get(Tag.ImagerPixelSpacing).readValue(header, this);
+      TagD.get(Tag.EstimatedRadiographicMagnificationFactor).readValue(header, this);
+      TagD.get(Tag.DistanceSourceToDetector).readValue(header, this);
+      TagD.get(Tag.DistanceSourceToPatient).readValue(header, this);
       TagD.get(Tag.NominalScannedPixelSpacing).readValue(header, this);
 
       setTag(TagW.ModalityLUTData, desc.getModalityLUT());
