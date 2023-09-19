@@ -339,7 +339,6 @@
                   <groupId>org.weasis.core</groupId>
                   <artifactId>weasis-core-img</artifactId>
                   <version>${weasis.core.img.version}</version>
-                  <classifier>jdk11</classifier>
                   <outputDirectory>${tmp.bundle.dir}</outputDirectory>
                 </artifactItem>
                 <artifactItem>

@@ -66,6 +66,9 @@ public class DicomImageElement extends ImageElement implements DicomElement {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(DicomImageElement.class);
 
+  public static final List<LutShape> DEFAULT_LUT_FUNCTIONS =
+      List.of(
+          LutShape.LINEAR, LutShape.SIGMOID, LutShape.SIGMOID_NORM, LutShape.LOG, LutShape.LOG_INV);
   private DicomImageAdapter adapter = null;
   private Collection<LutShape> lutShapeCollection = null;
 
@@ -356,7 +359,7 @@ public class DicomImageElement extends ImageElement implements DicomElement {
         }
       }
     }
-    lutShapeCollection.addAll(LutShape.DEFAULT_FACTORY_FUNCTIONS);
+    lutShapeCollection.addAll(DicomImageElement.DEFAULT_LUT_FUNCTIONS);
 
     return lutShapeCollection;
   }

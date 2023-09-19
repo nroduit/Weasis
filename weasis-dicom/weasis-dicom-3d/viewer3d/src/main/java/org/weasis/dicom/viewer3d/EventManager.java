@@ -400,7 +400,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> {
 
   private ComboItemListener<LutShape> newLutShapeAction() {
     return new ComboItemListener<>(
-        ActionW.LUT_SHAPE, LutShape.DEFAULT_FACTORY_FUNCTIONS.toArray(new LutShape[0])) {
+        ActionW.LUT_SHAPE, DicomImageElement.DEFAULT_LUT_FUNCTIONS.toArray(new LutShape[0])) {
 
       @Override
       public void itemStateChanged(Object object) {

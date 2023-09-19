@@ -95,7 +95,7 @@
     },
     {
       "code": "felix.auto.start.10",
-      "value": "${dollar}{weasis.codebase.url}/bundle/docking-frames-${dockingframes.version}.jar${xz.ext} ${dollar}{weasis.codebase.url}/bundle/weasis-core-img-${weasis.core.img.version}-jdk11.jar${xz.ext} ${dollar}{weasis.codebase.url}/bundle/zip4j-${zip4j.version}.jar${xz.ext} ${dollar}{weasis.codebase.url}/bundle/joml-${joml.version}.jar${xz.ext}",
+      "value": "${dollar}{weasis.codebase.url}/bundle/docking-frames-${dockingframes.version}.jar${xz.ext} ${dollar}{weasis.codebase.url}/bundle/weasis-core-img-${weasis.core.img.version}.jar${xz.ext} ${dollar}{weasis.codebase.url}/bundle/zip4j-${zip4j.version}.jar${xz.ext} ${dollar}{weasis.codebase.url}/bundle/joml-${joml.version}.jar${xz.ext}",
       "description": "Docking-frames, core image, joml and zip",
       "type": "A",
       "category": "FELIX_INSTALL"
