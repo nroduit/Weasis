@@ -19,6 +19,7 @@ import java.awt.event.ItemEvent;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.time.format.FormatStyle;
 import java.time.temporal.TemporalAdjusters;
 import java.time.temporal.WeekFields;
@@ -26,6 +27,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
+import java.util.Locale.Category;
 import java.util.Objects;
 import java.util.Properties;
 import java.util.concurrent.ExecutorService;
@@ -77,7 +80,6 @@ import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.service.BundlePreferences;
 import org.weasis.core.api.service.WProperties;
-import org.weasis.core.api.util.LocalUtil;
 import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.api.util.ResourceUtil.OtherIcon;
 import org.weasis.core.api.util.ThreadUtil;
@@ -127,7 +129,7 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
 
     CUR_WEEK(
         Messages.getString("DicomQrView.this_week"),
-        LocalDate.now().with(WeekFields.of(LocalUtil.getLocaleFormat()).dayOfWeek(), 1),
+        LocalDate.now().with(WeekFields.of(Locale.getDefault(Category.FORMAT)).dayOfWeek(), 1),
         LocalDate.now()),
 
     CUR_MONTH(
@@ -616,8 +618,8 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
     CalendarUtil.adaptCalendarColors(settings);
 
     JTextField textField = picker.getComponentDateTextField();
-    settings.setFormatForDatesCommonEra(LocalUtil.getDateFormatter(FormatStyle.SHORT));
-    settings.setFormatForDatesBeforeCommonEra(LocalUtil.getDateFormatter(FormatStyle.SHORT));
+    settings.setFormatForDatesCommonEra(DateTimeFormatter.ofLocalizedDate(FormatStyle.SHORT));
+    settings.setFormatForDatesBeforeCommonEra(DateTimeFormatter.ofLocalizedDate(FormatStyle.SHORT));
     GuiUtils.setPreferredWidth(textField, 145);
     picker.addDateChangeListener(dateChangeListener);
 

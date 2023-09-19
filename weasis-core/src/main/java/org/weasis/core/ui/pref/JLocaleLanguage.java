@@ -69,7 +69,7 @@ public class JLocaleLanguage extends JComboBox<JLocale> implements ItemListener,
   public void selectLocale(String locale) {
     Locale sLoc = LocalUtil.textToLocale(locale);
     Object item = getSelectedItem();
-    if (item instanceof JLocale jLocale && sLoc.equals(jLocale.getLocale())) {
+    if (item instanceof JLocale jLocale && sLoc != null && sLoc.equals(jLocale.getLocale())) {
       return;
     }
 

@@ -23,6 +23,7 @@ import java.awt.Rectangle;
 import java.awt.Stroke;
 import java.awt.Window;
 import java.awt.event.ItemEvent;
+import java.text.NumberFormat;
 import java.util.List;
 import java.util.Objects;
 import javax.swing.Box;
@@ -39,7 +40,6 @@ import org.weasis.core.api.gui.util.DecFormatter;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.WinUtil;
 import org.weasis.core.api.image.util.Unit;
-import org.weasis.core.api.util.LocalUtil;
 import org.weasis.core.ui.editor.image.dockable.MeasureTool;
 import org.weasis.core.util.StringUtil;
 
@@ -225,7 +225,7 @@ public class ScreenPrefView extends AbstractItemDialogPage {
 
     private final Cross cross;
     private final JFormattedTextField jTextFieldLineWidth =
-        new JFormattedTextField(LocalUtil.getIntegerInstance());
+        new JFormattedTextField(NumberFormat.getIntegerInstance());
     private final JComboBox<String> jComboBoxType =
         new JComboBox<>(
             new String[] {

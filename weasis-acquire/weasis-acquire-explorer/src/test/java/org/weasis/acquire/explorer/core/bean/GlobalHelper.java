@@ -10,8 +10,8 @@
 package org.weasis.acquire.explorer.core.bean;
 
 import java.time.format.DateTimeFormatter;
+import java.time.format.FormatStyle;
 import java.util.Arrays;
-import java.util.Locale;
 import org.dcm4che3.data.Tag;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -84,9 +84,8 @@ public class GlobalHelper {
     taggable = Mockito.mock(Taggable.class);
 
     Mockito.mockStatic(LocalUtil.class);
-    Mockito.when(LocalUtil.getDateFormatter()).thenReturn(dateformat);
-    Mockito.when(LocalUtil.getDateTimeFormatter()).thenReturn(dateformat);
-    Mockito.when(LocalUtil.getLocaleFormat()).thenReturn(Locale.ENGLISH);
+    Mockito.when(DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM)).thenReturn(dateformat);
+    Mockito.when(DateTimeFormatter.ofLocalizedDateTime(FormatStyle.MEDIUM)).thenReturn(dateformat);
 
     Mockito.mockStatic(TagD.class);
     Arrays.stream(GlobalTag.values()).forEach(GlobalTag::prepareMock);

@@ -43,6 +43,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Properties;
+import java.util.ResourceBundle.Control;
 import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -805,9 +806,10 @@ public class WeasisLauncher {
       // if English no need to load i18n bundle fragments
       modulesi18n.clear();
     } else {
-      String suffix = locale.toString();
-      SwingResources.loadResources("/swing/basic_" + suffix + ".properties"); // NON-NLS
-      SwingResources.loadResources("/swing/synth_" + suffix + ".properties"); // NON-NLS
+      // Get the default i18n suffix for properties files
+      String suffix = Control.getControl(Control.FORMAT_PROPERTIES).toBundleName("", locale);
+      SwingResources.loadResources("/swing/basic" + suffix + ".properties"); // NON-NLS
+      SwingResources.loadResources("/swing/synth" + suffix + ".properties"); // NON-NLS
     }
 
     String nativeLook;
@@ -1150,32 +1152,22 @@ public class WeasisLauncher {
     }
   }
 
+  /**
+   * Returns the <code>Locale</code> value according the IETF BCP 47 language tag or the suffix of
+   * the i18n jars. Null or empty string will return the ENGLISH <code>Locale</code>. The value
+   * "system " returns the system default <code>Locale</code>.
+   *
+   * @return the <code>Locale</code> value
+   */
   public static Locale textToLocale(String value) {
     if (!Utils.hasText(value)) {
       return Locale.ENGLISH;
     }
 
-    if ("system".equals(value)) { // NON-NLS
-      String language = System.getProperty("user.language", "en"); // NON-NLS
-      String country = System.getProperty("user.country", ""); // NON-NLS
-      String variant = System.getProperty("user.variant", ""); // NON-NLS
-      return new Locale.Builder()
-          .setLanguage(language)
-          .setRegion(country)
-          .setVariant(variant)
-          .build();
+    if (!"system".equals(value)) { // NON-NLS
+      return Locale.forLanguageTag(value.replace("_", "-"));
     }
-
-    String[] val = value.split("_", 3);
-    String language = val.length > 0 ? val[0] : "";
-    String country = val.length > 1 ? val[1] : "";
-    String variant = val.length > 2 ? val[2] : "";
-
-    return new Locale.Builder()
-        .setLanguage(language)
-        .setRegion(country)
-        .setVariant(variant)
-        .build();
+    return Locale.getDefault();
   }
 
   private void registerAdditionalShutdownHook() {

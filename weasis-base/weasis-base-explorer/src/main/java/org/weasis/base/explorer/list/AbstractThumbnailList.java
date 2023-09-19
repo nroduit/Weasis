@@ -57,7 +57,6 @@ import org.weasis.core.api.media.data.MediaReader;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.TagUtil;
 import org.weasis.core.api.media.data.TagW;
-import org.weasis.core.api.util.LocalUtil;
 import org.weasis.core.ui.editor.SeriesViewerFactory;
 import org.weasis.core.ui.editor.ViewerPluginBuilder;
 import org.weasis.core.ui.util.DefaultAction;
@@ -69,7 +68,7 @@ public abstract class AbstractThumbnailList<E extends MediaElement> extends JLis
   public static final String SECTION_CHANGED = "SECTION_CHANGED"; // NON-NLS
   public static final String DIRECTORY_SIZE = "DIRECTORY_SIZE"; // NON-NLS
 
-  private static final NumberFormat intGroupFormat = LocalUtil.getIntegerInstance();
+  private static final NumberFormat intGroupFormat = NumberFormat.getIntegerInstance();
 
   static {
     intGroupFormat.setGroupingUsed(true);

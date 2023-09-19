@@ -32,7 +32,6 @@ import org.weasis.core.api.gui.util.AbstractItemDialogPage;
 import org.weasis.core.api.gui.util.CryptoHandler;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.service.WProperties;
-import org.weasis.core.api.util.LocalUtil;
 import org.weasis.core.util.StringUtil;
 
 public class ProxyPrefView extends AbstractItemDialogPage {
@@ -164,7 +163,7 @@ public class ProxyPrefView extends AbstractItemDialogPage {
   }
 
   private static void formatPortTextField(JFormattedTextField port) {
-    NumberFormat portFormat = LocalUtil.getNumberInstance();
+    NumberFormat portFormat = NumberFormat.getNumberInstance();
     portFormat.setMinimumIntegerDigits(0);
     portFormat.setMaximumIntegerDigits(65535);
     portFormat.setMaximumFractionDigits(0);

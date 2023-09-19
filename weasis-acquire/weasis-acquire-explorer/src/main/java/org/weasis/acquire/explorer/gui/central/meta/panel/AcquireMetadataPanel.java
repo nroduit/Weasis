@@ -20,6 +20,8 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.format.DateTimeFormatter;
+import java.time.format.FormatStyle;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -48,7 +50,6 @@ import org.weasis.core.api.gui.util.GuiUtils.IconColor;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.media.data.TagW.TagType;
 import org.weasis.core.api.util.FontItem;
-import org.weasis.core.api.util.LocalUtil;
 import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.ui.util.CalendarUtil;
 import org.weasis.core.ui.util.TableColumnAdjuster;
@@ -282,11 +283,13 @@ public abstract class AcquireMetadataPanel extends JPanel implements TableModelL
 
       CalendarUtil.adaptCalendarColors(settings);
 
-      settings.setFormatForDatesCommonEra(LocalUtil.getDateFormatter());
-      settings.setFormatForDatesBeforeCommonEra(LocalUtil.getDateFormatter());
+      settings.setFormatForDatesCommonEra(DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM));
+      settings.setFormatForDatesBeforeCommonEra(
+          DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM));
 
-      settings.setFormatForDatesCommonEra(LocalUtil.getDateFormatter());
-      settings.setFormatForDatesBeforeCommonEra(LocalUtil.getDateFormatter());
+      settings.setFormatForDatesCommonEra(DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM));
+      settings.setFormatForDatesBeforeCommonEra(
+          DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM));
       return d;
     }
 

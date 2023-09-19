@@ -26,7 +26,6 @@ import javax.swing.WindowConstants;
 import javax.swing.text.NumberFormatter;
 import net.miginfocom.swing.MigLayout;
 import org.weasis.core.api.gui.util.GuiUtils;
-import org.weasis.core.api.util.LocalUtil;
 import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.explorer.Messages;
 import org.weasis.dicom.explorer.pref.node.AbstractDicomNode.UsageType;
@@ -100,7 +99,7 @@ public class DicomNodeDialog extends JDialog {
     panel.add(hostnameTf);
 
     JLabel portLabel = new JLabel(Messages.getString("PrinterDialog.port") + StringUtil.COLON);
-    NumberFormat myFormat = LocalUtil.getNumberInstance();
+    NumberFormat myFormat = NumberFormat.getNumberInstance();
     myFormat.setMinimumIntegerDigits(0);
     myFormat.setMaximumIntegerDigits(65535);
     myFormat.setMaximumFractionDigits(0);

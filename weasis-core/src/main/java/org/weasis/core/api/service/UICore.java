@@ -28,6 +28,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Locale.Category;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Properties;
@@ -121,12 +122,7 @@ public final class UICore {
       }
     }
     String code = systemPreferences.getProperty(UICore.P_FORMAT_CODE);
-    if (StringUtil.hasLength(code)) {
-      Locale l = LocalUtil.textToLocale(code);
-      if (!l.equals(Locale.getDefault())) {
-        LocalUtil.setLocaleFormat(l);
-      }
-    }
+    Locale.setDefault(Category.FORMAT, LocalUtil.textToLocale(code));
 
     String path = systemPreferences.getProperty("weasis.resources.path");
     ResourceUtil.setResourcePath(path);

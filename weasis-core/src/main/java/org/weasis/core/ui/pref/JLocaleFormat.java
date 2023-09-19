@@ -14,6 +14,7 @@ import java.awt.event.ItemListener;
 import java.text.Collator;
 import java.util.Arrays;
 import java.util.Locale;
+import java.util.Locale.Category;
 import javax.swing.JComboBox;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.service.UICore;
@@ -47,7 +48,7 @@ public class JLocaleFormat extends JComboBox<JLocale> implements ItemListener, R
   }
 
   public void selectLocale() {
-    Locale sLoc = LocalUtil.getLocaleFormat();
+    Locale sLoc = Locale.getDefault(Category.FORMAT);
     Object item = getSelectedItem();
     if (item instanceof JLocale jLocale && sLoc.equals(jLocale.getLocale())) {
       return;
@@ -67,23 +68,17 @@ public class JLocaleFormat extends JComboBox<JLocale> implements ItemListener, R
     if (e.getStateChange() == ItemEvent.SELECTED) {
       Object item = e.getItem();
       if (item instanceof JLocale jLocale) {
-        setLocalUtil(jLocale.getLocale());
+        storeLocale(jLocale.getLocale());
         valueHasChanged();
       }
     }
   }
 
-  private void setLocalUtil(Locale local) {
-    if (local == null) {
-      GuiUtils.getUICore().getSystemPreferences().remove(UICore.P_FORMAT_CODE);
-    } else {
-      GuiUtils.getUICore()
-          .getSystemPreferences()
-          .setProperty(UICore.P_FORMAT_CODE, LocalUtil.localeToText(local));
-    }
-
-    Locale l = local == null ? null : local.equals(Locale.getDefault()) ? null : local;
-    LocalUtil.setLocaleFormat(l);
+  private void storeLocale(Locale locale) {
+    GuiUtils.getUICore()
+        .getSystemPreferences()
+        .setProperty(UICore.P_FORMAT_CODE, LocalUtil.localeToText(locale));
+    Locale.setDefault(Locale.Category.FORMAT, locale);
   }
 
   public void refresh() {

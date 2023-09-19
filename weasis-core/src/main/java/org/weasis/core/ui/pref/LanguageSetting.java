@@ -10,8 +10,11 @@
 package org.weasis.core.ui.pref;
 
 import java.awt.FlowLayout;
+import java.text.NumberFormat;
 import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.time.format.FormatStyle;
+import java.util.Locale;
 import javax.swing.JLabel;
 import javax.swing.JTextPane;
 import org.slf4j.Logger;
@@ -21,7 +24,6 @@ import org.weasis.core.api.gui.util.AbstractItemDialogPage;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.GuiUtils.IconColor;
 import org.weasis.core.api.service.WProperties;
-import org.weasis.core.api.util.LocalUtil;
 import org.weasis.core.util.StringUtil;
 
 public class LanguageSetting extends AbstractItemDialogPage {
@@ -102,15 +104,15 @@ public class LanguageSetting extends AbstractItemDialogPage {
             Messages.getString("GeneralSetting.regionalTitle"),
             Messages.getString("GeneralSetting.date"),
             Messages.getString("GeneralSetting.short"),
-            LocalUtil.getDateTimeFormatter(FormatStyle.SHORT).format(now),
+            DateTimeFormatter.ofLocalizedDateTime(FormatStyle.SHORT).format(now),
             Messages.getString("GeneralSetting.medium"),
-            LocalUtil.getDateTimeFormatter(FormatStyle.MEDIUM).format(now),
+            DateTimeFormatter.ofLocalizedDateTime(FormatStyle.MEDIUM).format(now),
             Messages.getString("GeneralSetting.long"),
-            LocalUtil.getDateTimeFormatter(FormatStyle.LONG).format(now),
+            DateTimeFormatter.ofLocalizedDateTime(FormatStyle.LONG).format(now),
             Messages.getString("GeneralSetting.full"),
-            LocalUtil.getDateTimeFormatter(FormatStyle.FULL).format(now),
+            DateTimeFormatter.ofLocalizedDateTime(FormatStyle.FULL).format(now),
             Messages.getString("GeneralSetting.nb"),
-            LocalUtil.getNumberInstance().format(2543456.3465),
+            NumberFormat.getNumberInstance().format(2543456.3465),
             IconColor.ACTIONS_RED.getHtmlCode(),
             Messages.getString("GeneralSetting.alertNote"));
   }
@@ -132,7 +134,7 @@ public class LanguageSetting extends AbstractItemDialogPage {
     WProperties preferences = GuiUtils.getUICore().getSystemPreferences();
     preferences.resetProperty("locale.lang.code", "en"); // NON-NLS
     // Reset cache of locale format
-    LocalUtil.setLocaleFormat(null);
+    Locale.setDefault(Locale.ENGLISH);
     // Reset format to the base.json value or null (default system value)
     preferences.resetProperty("locale.format.code", null);
 
