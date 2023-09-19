@@ -6,8 +6,8 @@ jobs:
   build:
     runs-on: ubuntu-latest
     outputs:
-      version: ${{ steps.stepversion.outputs.version }}
-      cleanversion: ${{ steps.stepcleanversion.outputs.version }}
+      version: ${{ env.WEASIS_VERSION }}
+      cleanversion: ${{ env.WEASIS_CLEAN_VERSION }}
 
     steps:
       - uses: actions/checkout@v3
@@ -36,11 +36,6 @@ jobs:
         run: |
           CVERSION=$(echo $WEASIS_VERSION | sed -e 's/"//g' -e 's/-.*//')
           echo "WEASIS_CLEAN_VERSION=${CVERSION}" >> $GITHUB_ENV
-
-      - id: stepversion
-        run: echo ::set-output name=version::${{ env.WEASIS_VERSION }}
-      - id: stepcleanversion
-        run: echo ::set-output name=version::${{ env.WEASIS_CLEAN_VERSION }}
 
       - name: Upload the weasis package for building the native distribution
         uses: actions/upload-artifact@v3
