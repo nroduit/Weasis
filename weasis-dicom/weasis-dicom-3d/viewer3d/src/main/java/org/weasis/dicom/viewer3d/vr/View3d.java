@@ -964,8 +964,8 @@ public class View3d extends VolumeCanvas
             actionsInView.put(ViewCanvas.ZOOM_TYPE_CMD, zoomType);
           }
         } else if (command.equals(ActionW.PAN.cmd())) {
-          if (val instanceof PanPoint) {
-            moveOrigin((PanPoint) entry.getValue());
+          if (val instanceof PanPoint panPoint) {
+            moveOrigin(panPoint);
           }
         } else if (command.equals(ActionW.FLIP.cmd())) {
           actionsInView.put(ActionW.FLIP.cmd(), val);

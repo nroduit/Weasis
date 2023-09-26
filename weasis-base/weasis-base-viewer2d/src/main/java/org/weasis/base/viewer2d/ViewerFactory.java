@@ -16,14 +16,12 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import javax.swing.Action;
 import javax.swing.Icon;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.ComboItemListener;
 import org.weasis.core.api.gui.util.FileFormatFilter;
@@ -44,7 +42,7 @@ import org.weasis.core.ui.editor.SeriesViewer;
 import org.weasis.core.ui.editor.SeriesViewerFactory;
 import org.weasis.core.ui.editor.ViewerPluginBuilder;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
-import org.weasis.core.ui.editor.image.ViewCanvas;
+import org.weasis.core.ui.editor.image.ImageViewerPlugin.LayoutModel;
 import org.weasis.core.ui.util.DefaultAction;
 
 @org.osgi.service.component.annotations.Component(service = SeriesViewerFactory.class)
@@ -81,36 +79,12 @@ public class ViewerFactory implements SeriesViewerFactory {
 
   @Override
   public SeriesViewer<?> createSeriesViewer(Map<String, Object> properties) {
-    GridBagLayoutModel model = ImageViewerPlugin.VIEWS_1x1;
-    String uid = null;
-    if (properties != null) {
-      Object obj = properties.get(org.weasis.core.api.image.GridBagLayoutModel.class.getName());
-      if (obj instanceof GridBagLayoutModel gridBagLayoutModel) {
-        model = gridBagLayoutModel;
-      } else {
-        obj = properties.get(ViewCanvas.class.getName());
-        if (obj instanceof Integer intVal) {
-          Optional<ComboItemListener<GridBagLayoutModel>> layout =
-              EventManager.getInstance().getAction(ActionW.LAYOUT);
-          if (layout.isPresent()) {
-            model = ImageViewerPlugin.getBestDefaultViewLayout(layout.get(), intVal);
-          }
-        }
-      }
-      // Set UID
-      Object val = properties.get(ViewerPluginBuilder.UID);
-      if (val instanceof String s) {
-        uid = s;
-      }
-    }
-    View2dContainer instance = new View2dContainer(model, uid);
-    if (properties != null) {
-      Object obj = properties.get(DataExplorerModel.class.getName());
-      if (obj instanceof DataExplorerModel m) {
-        // Register the PropertyChangeListener
-        m.addPropertyChangeListener(instance);
-      }
-    }
+    ComboItemListener<GridBagLayoutModel> layoutAction =
+        EventManager.getInstance().getAction(ActionW.LAYOUT).orElse(null);
+    LayoutModel layout =
+        ImageViewerPlugin.getLayoutModel(properties, ImageViewerPlugin.VIEWS_1x1, layoutAction);
+    View2dContainer instance = new View2dContainer(layout.model(), layout.uid());
+    ImageViewerPlugin.registerInDataExplorerModel(properties, instance);
 
     return instance;
   }

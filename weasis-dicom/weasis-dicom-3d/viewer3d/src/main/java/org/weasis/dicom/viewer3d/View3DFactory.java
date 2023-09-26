@@ -19,7 +19,6 @@ import java.awt.Window;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import javax.swing.Action;
 import javax.swing.Icon;
 import javax.swing.JButton;
@@ -33,7 +32,6 @@ import org.osgi.service.component.annotations.Deactivate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.DataExplorerView;
-import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.ComboItemListener;
 import org.weasis.core.api.gui.util.GuiUtils;
@@ -46,15 +44,13 @@ import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.api.util.ResourceUtil.ActionIcon;
 import org.weasis.core.ui.editor.SeriesViewer;
 import org.weasis.core.ui.editor.SeriesViewerFactory;
-import org.weasis.core.ui.editor.ViewerPluginBuilder;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
-import org.weasis.core.ui.editor.image.ViewCanvas;
+import org.weasis.core.ui.editor.image.ImageViewerPlugin.LayoutModel;
 import org.weasis.core.ui.pref.PreferenceDialog;
 import org.weasis.core.ui.util.ColorLayerUI;
 import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.codec.DicomMediaIO;
 import org.weasis.dicom.explorer.DicomExplorer;
-import org.weasis.dicom.explorer.DicomModel;
 import org.weasis.dicom.viewer2d.EventManager;
 import org.weasis.dicom.viewer3d.vr.OpenglUtils;
 
@@ -100,38 +96,14 @@ public class View3DFactory implements SeriesViewerFactory {
   @Override
   public SeriesViewer createSeriesViewer(Map<String, Object> properties) {
     if (isOpenglEnable()) {
-      GridBagLayoutModel model = getDefaultGridBagLayoutModel();
-      String uid = null;
-      if (properties != null) {
-        Object obj = properties.get(org.weasis.core.api.image.GridBagLayoutModel.class.getName());
-        if (obj instanceof GridBagLayoutModel gridBagLayoutModel) {
-          model = gridBagLayoutModel;
-        } else {
-          obj = properties.get(ViewCanvas.class.getName());
-          if (obj instanceof Integer intVal) {
-            Optional<ComboItemListener<GridBagLayoutModel>> layout =
-                EventManager.getInstance().getAction(ActionW.LAYOUT);
-            if (layout.isPresent()) {
-              model = ImageViewerPlugin.getBestDefaultViewLayout(layout.get(), intVal);
-            }
-          }
-        }
-
-        // Set UID
-        Object val = properties.get(ViewerPluginBuilder.UID);
-        if (val instanceof String s) {
-          uid = s;
-        }
-      }
-      View3DContainer instance = new View3DContainer(model, uid, getUIName(), getIcon(), null);
-      if (properties != null) {
-        Object obj = properties.get(DataExplorerModel.class.getName());
-        if (obj instanceof DicomModel m) {
-          // Register the PropertyChangeListener
-          m.addPropertyChangeListener(instance);
-        }
-      }
-
+      ComboItemListener<GridBagLayoutModel> layoutAction =
+          EventManager.getInstance().getAction(ActionW.LAYOUT).orElse(null);
+      LayoutModel layout =
+          ImageViewerPlugin.getLayoutModel(
+              properties, getDefaultGridBagLayoutModel(), layoutAction);
+      View3DContainer instance =
+          new View3DContainer(layout.model(), layout.uid(), getUIName(), getIcon(), null);
+      ImageViewerPlugin.registerInDataExplorerModel(properties, instance);
       return instance;
     }
 
