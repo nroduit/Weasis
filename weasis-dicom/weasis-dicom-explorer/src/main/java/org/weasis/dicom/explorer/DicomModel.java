@@ -65,13 +65,12 @@ import org.weasis.core.ui.editor.ViewerPluginBuilder;
 import org.weasis.core.util.LangUtil;
 import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.codec.DicomEncapDocElement;
-import org.weasis.dicom.codec.DicomEncapDocSeries;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.DicomMediaIO;
 import org.weasis.dicom.codec.DicomSeries;
 import org.weasis.dicom.codec.DicomSpecialElement;
 import org.weasis.dicom.codec.DicomVideoElement;
-import org.weasis.dicom.codec.DicomVideoSeries;
+import org.weasis.dicom.codec.FilesExtractor;
 import org.weasis.dicom.codec.KOSpecialElement;
 import org.weasis.dicom.codec.PRSpecialElement;
 import org.weasis.dicom.codec.RejectedKOSpecialElement;
@@ -856,7 +855,20 @@ public class DicomModel implements TreeModel, DataExplorerModel {
         rebuildSeries(dicomReader, media);
         return true;
       }
-      if (original instanceof DicomSeries initialSeries) {
+
+      if (original instanceof FilesExtractor) {
+        if (original.size(null) > 0) {
+          // Always split when it is a video or an encapsulated document
+          if (media instanceof DicomVideoElement || media instanceof DicomEncapDocElement) {
+            splitSeries(dicomReader, original, media);
+            return true;
+          } else {
+            findMatchingSeriesOrSplit(original, media);
+          }
+        } else {
+          original.addMedia(media);
+        }
+      } else if (original instanceof DicomSeries initialSeries) {
         // Handle cases when the Series is created before getting the image (downloading)
         if (media instanceof DicomVideoElement || media instanceof DicomEncapDocElement) {
           if (original.size(null) > 0) {
@@ -942,18 +954,6 @@ public class DicomModel implements TreeModel, DataExplorerModel {
           // no matching series exists, so split series
           splitSeries(dicomReader, initialSeries, media);
           return true;
-        }
-      } else if (original instanceof DicomVideoSeries || original instanceof DicomEncapDocSeries) {
-        if (original.size(null) > 0) {
-          // Always split when it is a video or an encapsulated document
-          if (media instanceof DicomVideoElement || media instanceof DicomEncapDocElement) {
-            splitSeries(dicomReader, original, media);
-            return true;
-          } else {
-            findMatchingSeriesOrSplit(original, media);
-          }
-        } else {
-          original.addMedia(media);
         }
       }
     }
