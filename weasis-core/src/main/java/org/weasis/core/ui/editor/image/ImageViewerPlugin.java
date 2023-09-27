@@ -411,20 +411,22 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
     for (LayoutConstraints e : elements.keySet()) {
       boolean typeView2d = isViewType(view2dClass, e.getType());
       if (typeView2d) {
-        ViewCanvas<E> oldView;
+        ViewCanvas<E> viewCanvas;
         if (oldViews.isEmpty()) {
-          oldView = createDefaultView(e.getType());
-          if (oldView != null) {
-            oldView.registerDefaultListeners();
+          viewCanvas = createDefaultView(e.getType());
+          if (viewCanvas != null) {
+            viewCanvas.registerDefaultListeners();
           }
         } else {
-          oldView = oldViews.remove(0);
+          viewCanvas = oldViews.remove(0);
         }
-        view2ds.add(oldView);
-        elements.put(e, oldView.getJComponent());
-        grid.add(oldView.getJComponent(), e);
-        if (oldView.getSeries() != null) {
-          oldView.getSeries().setOpen(true);
+        if (viewCanvas != null) {
+          view2ds.add(viewCanvas);
+          elements.put(e, viewCanvas.getJComponent());
+          grid.add(viewCanvas.getJComponent(), e);
+          if (viewCanvas.getSeries() != null) {
+            viewCanvas.getSeries().setOpen(true);
+          }
         }
       } else {
         Component component = createComponent(e.getType());
