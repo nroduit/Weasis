@@ -271,6 +271,16 @@ public class AuContainer extends DicomViewerPlugin implements PropertyChangeList
   }
 
   @Override
+  public Class<?> getSeriesViewerClass() {
+    return AuView.class;
+  }
+
+  @Override
+  public GridBagLayoutModel getDefaultLayoutModel() {
+    return DEFAULT_VIEW;
+  }
+
+  @Override
   public synchronized List<Toolbar> getToolBars() {
     return TOOLBARS;
   }

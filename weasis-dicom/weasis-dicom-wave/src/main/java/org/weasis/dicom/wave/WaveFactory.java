@@ -52,7 +52,7 @@ public class WaveFactory implements SeriesViewerFactory {
   @Override
   public SeriesViewer<? extends MediaElement> createSeriesViewer(Map<String, Object> properties) {
     LayoutModel layout =
-        ImageViewerPlugin.getLayoutModel(properties, WaveContainer.VIEWS_1x1, null);
+        ImageViewerPlugin.getLayoutModel(properties, WaveContainer.DEFAULT_VIEW, null);
     WaveContainer instance = new WaveContainer(layout.model(), layout.uid());
     ImageViewerPlugin.registerInDataExplorerModel(properties, instance);
     return instance;

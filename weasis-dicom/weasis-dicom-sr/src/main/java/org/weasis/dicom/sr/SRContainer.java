@@ -64,7 +64,7 @@ import org.weasis.dicom.explorer.ImportToolBar;
 public class SRContainer extends DicomViewerPlugin implements PropertyChangeListener {
   private static final Logger LOGGER = LoggerFactory.getLogger(SRContainer.class);
 
-  public static final GridBagLayoutModel VIEWS_1x1 =
+  public static final GridBagLayoutModel VIEWS_SR =
       new GridBagLayoutModel(
           "1x1", // NON-NLS
           "1x1", // NON-NLS
@@ -72,7 +72,7 @@ public class SRContainer extends DicomViewerPlugin implements PropertyChangeList
           1,
           SRView.class.getName());
 
-  public static final List<GridBagLayoutModel> LAYOUT_LIST = List.of(VIEWS_1x1);
+  public static final List<GridBagLayoutModel> LAYOUT_LIST = List.of(VIEWS_SR);
 
   public static final List<SynchView> SYNCH_LIST = List.of(SynchView.NONE);
 
@@ -123,7 +123,7 @@ public class SRContainer extends DicomViewerPlugin implements PropertyChangeList
   protected SRView srview;
 
   public SRContainer() {
-    this(VIEWS_1x1, null);
+    this(VIEWS_SR, null);
   }
 
   public SRContainer(GridBagLayoutModel layoutModel, String uid) {
@@ -299,6 +299,16 @@ public class SRContainer extends DicomViewerPlugin implements PropertyChangeList
       LOGGER.error("Cannot create {}", clazz, e);
     }
     return null;
+  }
+
+  @Override
+  public Class<?> getSeriesViewerClass() {
+    return SRView.class;
+  }
+
+  @Override
+  public GridBagLayoutModel getDefaultLayoutModel() {
+    return VIEWS_SR;
   }
 
   @Override

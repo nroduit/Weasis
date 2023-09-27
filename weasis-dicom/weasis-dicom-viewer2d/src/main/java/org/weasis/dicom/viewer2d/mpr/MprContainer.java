@@ -461,6 +461,16 @@ public class MprContainer extends DicomViewerPlugin implements PropertyChangeLis
   }
 
   @Override
+  public Class<?> getSeriesViewerClass() {
+    return view2dClass;
+  }
+
+  @Override
+  public GridBagLayoutModel getDefaultLayoutModel() {
+    return view1;
+  }
+
+  @Override
   public synchronized List<Toolbar> getToolBars() {
     return TOOLBARS;
   }

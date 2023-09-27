@@ -51,7 +51,7 @@ public class SRFactory implements SeriesViewerFactory {
 
   @Override
   public SeriesViewer<?> createSeriesViewer(Map<String, Object> properties) {
-    LayoutModel layout = ImageViewerPlugin.getLayoutModel(properties, SRContainer.VIEWS_1x1, null);
+    LayoutModel layout = ImageViewerPlugin.getLayoutModel(properties, SRContainer.VIEWS_SR, null);
     SRContainer instance = new SRContainer(layout.model(), layout.uid());
     ImageViewerPlugin.registerInDataExplorerModel(properties, instance);
     return instance;

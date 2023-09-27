@@ -505,6 +505,16 @@ public class View2dContainer extends ImageViewerPlugin<ImageElement>
   }
 
   @Override
+  public Class<?> getSeriesViewerClass() {
+    return view2dClass;
+  }
+
+  @Override
+  public GridBagLayoutModel getDefaultLayoutModel() {
+    return VIEWS_1x1;
+  }
+
+  @Override
   public synchronized List<Toolbar> getToolBars() {
     return TOOLBARS;
   }

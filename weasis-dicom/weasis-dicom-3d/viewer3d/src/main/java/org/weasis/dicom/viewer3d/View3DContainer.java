@@ -627,6 +627,16 @@ public class View3DContainer extends DicomViewerPlugin implements PropertyChange
   }
 
   @Override
+  public Class<?> getSeriesViewerClass() {
+    return View3d.class;
+  }
+
+  @Override
+  public GridBagLayoutModel getDefaultLayoutModel() {
+    return VIEWS_vr;
+  }
+
+  @Override
   public WtoolBar getStatusBar() {
     return null;
   }

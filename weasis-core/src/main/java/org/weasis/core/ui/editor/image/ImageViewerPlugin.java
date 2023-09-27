@@ -197,6 +197,10 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
 
   public abstract Component createComponent(String clazz);
 
+  public abstract Class<?> getSeriesViewerClass();
+
+  public abstract GridBagLayoutModel getDefaultLayoutModel();
+
   public ViewCanvas<E> getSelectedImagePane() {
     return selectedImagePane;
   }
@@ -274,7 +278,7 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
       } else {
         obj = properties.get(ViewCanvas.class.getName());
         if (obj instanceof Integer intVal && layoutAction != null) {
-          model = ImageViewerPlugin.getBestDefaultViewLayout(layoutAction, intVal);
+          model = ImageViewerPlugin.getBestDefaultViewLayout(layoutAction, intVal, defaultModel);
         }
       }
 
@@ -763,17 +767,17 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
 
   public GridBagLayoutModel getBestDefaultViewLayout(int size) {
     if (size <= 1) {
-      return VIEWS_1x1;
+      return getDefaultLayoutModel();
     }
     Optional<ComboItemListener<GridBagLayoutModel>> layout = eventManager.getAction(ActionW.LAYOUT);
     if (layout.isPresent()) {
       Object[] list = layout.get().getAllItem();
-      GridBagLayoutModel bestModel = VIEWS_2x2;
+      GridBagLayoutModel bestModel = getDefaultLayoutModel();
       int diff = Integer.MAX_VALUE;
       int diffLayout = Integer.MAX_VALUE;
       for (Object m : list) {
         if (m instanceof GridBagLayoutModel model) {
-          int layoutSize = getViewTypeNumber(model, view2dClass);
+          int layoutSize = getViewTypeNumber(model, getSeriesViewerClass());
           int layoutDiff = Math.abs(layoutSize - size);
           if (layoutSize >= size && layoutDiff <= diff) {
             if (layoutDiff == diff) {
@@ -792,16 +796,17 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
       return bestModel;
     }
 
-    return VIEWS_2x2;
+    return getDefaultLayoutModel();
   }
 
-  public static GridBagLayoutModel getBestDefaultViewLayout(ActionState layout, int size) {
+  public static GridBagLayoutModel getBestDefaultViewLayout(
+      ActionState layout, int size, GridBagLayoutModel defaultModel) {
     if (size <= 1) {
-      return VIEWS_1x1;
+      return defaultModel;
     }
     if (layout instanceof ComboItemListener<?> comboItemListener) {
       Object[] list = comboItemListener.getAllItem();
-      GridBagLayoutModel bestModel = VIEWS_2x2;
+      GridBagLayoutModel bestModel = defaultModel;
       int diffNumber = Integer.MAX_VALUE;
       int diffLayout = Integer.MAX_VALUE;
       for (Object m : list) {
@@ -827,7 +832,7 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
       }
       return bestModel;
     }
-    return VIEWS_2x2;
+    return defaultModel;
   }
 
   public static int getViewTypeNumber(GridBagLayoutModel layout) {

@@ -71,7 +71,7 @@ import org.weasis.dicom.wave.dockable.MeasureAnnotationTool;
 public class WaveContainer extends DicomViewerPlugin implements PropertyChangeListener {
   private static final Logger LOGGER = LoggerFactory.getLogger(WaveContainer.class);
 
-  public static final GridBagLayoutModel VIEWS_1x1 =
+  public static final GridBagLayoutModel DEFAULT_VIEW =
       new GridBagLayoutModel(
           "1x1", // NON-NLS
           "1x1", // NON-NLS
@@ -79,7 +79,7 @@ public class WaveContainer extends DicomViewerPlugin implements PropertyChangeLi
           1,
           WaveView.class.getName()); // NON-NLS
 
-  public static final List<GridBagLayoutModel> LAYOUT_LIST = List.of(VIEWS_1x1);
+  public static final List<GridBagLayoutModel> LAYOUT_LIST = List.of(DEFAULT_VIEW);
 
   public static final List<SynchView> SYNCH_LIST = List.of(SynchView.NONE);
 
@@ -130,7 +130,7 @@ public class WaveContainer extends DicomViewerPlugin implements PropertyChangeLi
   protected WaveView ecgView;
 
   public WaveContainer() {
-    this(VIEWS_1x1, null);
+    this(DEFAULT_VIEW, null);
   }
 
   public WaveContainer(GridBagLayoutModel layoutModel, String uid) {
@@ -333,6 +333,16 @@ public class WaveContainer extends DicomViewerPlugin implements PropertyChangeLi
       LOGGER.error("Cannot create {}", clazz, e);
     }
     return null;
+  }
+
+  @Override
+  public Class<?> getSeriesViewerClass() {
+    return WaveView.class;
+  }
+
+  @Override
+  public GridBagLayoutModel getDefaultLayoutModel() {
+    return DEFAULT_VIEW;
   }
 
   @Override
