@@ -550,8 +550,22 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
           }
 
           DefaultMutableTreeNode node = (DefaultMutableTreeNode) treePath.getLastPathComponent();
+          Object object = node.getUserObject();
 
-          if (node.getUserObject() instanceof DicomImageElement img) {
+          if (object instanceof MediaElement dcm && object instanceof FileExtractor) {
+            File fileSrc = ((FileExtractor) dcm).getExtractFile();
+            if (fileSrc != null) {
+              // Get instance number instead SOPInstanceUID to handle multiframe
+              String instance = instanceFileName(dcm);
+              String path = buildPath(dcm, keepNames, node);
+              File destinationDir = new File(exportDir, path);
+              destinationDir.mkdirs();
+
+              File destinationFile =
+                  new File(destinationDir, instance + FileUtil.getExtension(fileSrc.getName()));
+              FileUtil.nioCopyFile(fileSrc, destinationFile);
+            }
+          } else if (object instanceof DicomImageElement img) {
             // Get instance number instead SOPInstanceUID to handle multiframe
             String instance = instanceFileName(img);
             String path = buildPath(img, keepNames, node);
@@ -590,20 +604,6 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
                   "Cannot export DICOM file to {}: {}",
                   format,
                   img.getFileCache().getOriginalFile().orElse(null));
-            }
-          } else if (node.getUserObject() instanceof MediaElement dcm
-              && node.getUserObject() instanceof FileExtractor) {
-            File fileSrc = ((FileExtractor) dcm).getExtractFile();
-            if (fileSrc != null) {
-              // Get instance number instead SOPInstanceUID to handle multiframe
-              String instance = instanceFileName(dcm);
-              String path = buildPath(dcm, keepNames, node);
-              File destinationDir = new File(exportDir, path);
-              destinationDir.mkdirs();
-
-              File destinationFile =
-                  new File(destinationDir, instance + FileUtil.getExtension(fileSrc.getName()));
-              FileUtil.nioCopyFile(fileSrc, destinationFile);
             }
           }
         }
