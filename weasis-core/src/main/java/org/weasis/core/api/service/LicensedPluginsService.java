@@ -9,6 +9,8 @@
  */
 package org.weasis.core.api.service;
 
+import java.awt.Component;
+
 /**
  * Defines a set of standard methods to be implemented by licensed plugins boot
  * jar. This jar (OSGi module) should then be provided remotely at a license
@@ -34,13 +36,20 @@ public interface LicensedPluginsService {
     /**
      * Read a locally stored license file and send it to a remote address for the
      * first validation.
+     * 
+     * @param licenseContents the license contents
      */
-    void validateLicense() throws Exception;
+    void validateLicense(String licenseContents) throws Exception;
 
     /**
      * Custom code to be executed before ask user to restart Weasis in order to
      * apply new configuration (config.propertes with newly added URLs for plugins.
+     * Method can return true if current version has support to automatically
+     * restart Weasis.
      * 
+     * @param dialogParent the AWT component to be parent of dialog message.
+     * @return true if user has selected, some how, to restart Weasis now. False if
+     *         user decided to restart later.
      */
-    void askUserForRestart() throws Exception;
+    boolean askUserForRestart(Component dialogParent) throws Exception;
 }
