@@ -61,6 +61,7 @@ public class AbstractTabLicense extends JPanel implements Insertable {
             () ->
                 new LicenseDialogController(
                     codeTextField.getDocument(),
+                    serverTextField.getDocument(),
                     this,
                     s -> {
                       if (s == STATUS.START_PROCESSING) {
