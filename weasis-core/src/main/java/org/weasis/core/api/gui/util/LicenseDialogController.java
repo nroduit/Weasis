@@ -29,23 +29,22 @@ import java.nio.file.StandardCopyOption;
 import java.time.Duration;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Optional;
 import java.util.function.BinaryOperator;
 import java.util.function.Consumer;
-import java.util.function.IntBinaryOperator;
 import java.util.stream.Stream;
 
 import javax.swing.JOptionPane;
-import javax.swing.text.BadLocationException;
 import javax.swing.text.Document;
 
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.FrameworkUtil;
+import org.osgi.framework.ServiceReference;
 import org.osgi.framework.startlevel.BundleStartLevel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.Messages;
+import org.weasis.core.api.service.LicensedPluginsService;
 import org.weasis.core.util.StringUtil;
 
 import com.formdev.flatlaf.util.StringUtils;
@@ -73,6 +72,12 @@ public class LicenseDialogController implements LicenseController {
   private final Document codeDocument;
   private final Document serverDocument;
   private final Consumer<STATUS> statusSetter;
+
+  private LicensedPluginsService service;
+
+  private Bundle bundle;
+
+  private boolean tested;
 
   public LicenseDialogController(
       Document codeDocument, Document serverDocument, AbstractTabLicense licencesItem, Consumer<STATUS> statusSetter) {
@@ -129,11 +134,11 @@ public class LicenseDialogController implements LicenseController {
             } else {
               writeFileContents(contents);
             }
-            JOptionPane.showMessageDialog(licencesItem, Messages.getString("license.successfully.saved"),
-                Messages.getString("license"), JOptionPane.INFORMATION_MESSAGE);
             changeConfigProperties();
             updateUI();
             askUserToRestart();
+            JOptionPane.showMessageDialog(licencesItem, Messages.getString("license.successfully.saved"),
+                Messages.getString("license"), JOptionPane.INFORMATION_MESSAGE);
           } else {
             JOptionPane.showMessageDialog(licencesItem, Messages.getString("license.field.empty"),
                 Messages.getString("license"), JOptionPane.WARNING_MESSAGE);
@@ -153,7 +158,10 @@ public class LicenseDialogController implements LicenseController {
   private void updateUI() {
   }
 
-  private void changeConfigProperties() {
+  private void changeConfigProperties() throws Exception {
+    if (service != null) {
+      service.updateConfig();
+    }
   }
 
   /**
@@ -163,30 +171,48 @@ public class LicenseDialogController implements LicenseController {
    * <li>Ping URL at the server license field. The ping needs to return HTTP 200 code in order to move
    * to next step.</li>
    * <li>Download the OSGi boot jar file from server license URL, installs and activates it.</li>
-   * <li>Executes a check running a check test method inside the bundle, just to guarantee that the interfaces match.</li>
+   * <li>Executes a check running a check test method inside the bundle, just to guarantee that the interfaces match.
+   * This implementation implements a check, by: (1) validating each end point need by extensions - 
+   * {@link LicensedPluginsService#validateEndpoints()}; (2) validating the license - 
+   * {@link LicensedPluginsService#validateLicense(String)}</li>
    * </ol>
+   * @see LicenseDialogController#installAndStartBundle(File, String)
    */
   @Override
   public boolean test() {
-    if (pingLicenseServerURL()) {
-      return downloadBootJarAndTestBundleAccess();
-    } else {
-      JOptionPane.showMessageDialog(licencesItem, Messages.getString("license.error.testing"),
-          Messages.getString("license"), JOptionPane.ERROR_MESSAGE);
-      return false;
+    if (tested) return tested;
+    try {
+      String licenseContents = codeDocument.getText(0, codeDocument.getLength());
+      String serverContents = serverDocument.getText(0, serverDocument.getLength());
+      if (StringUtil.hasText(serverContents) && StringUtil.hasText(licenseContents)) {
+        if (pingLicenseServerURL(serverContents)) {
+          boolean download = downloadBootJarAndTestBundleAccess(licenseContents, serverContents);
+          if (!download) {
+            JOptionPane.showMessageDialog(licencesItem, Messages.getString("license.error.downloading"),
+                Messages.getString("license"), JOptionPane.ERROR_MESSAGE);
+          }
+          tested = download;
+          return tested;
+        }
+      }
+    } catch (Exception e) {
+      LOGGER.error(e.getMessage(), e);
     }
+    JOptionPane.showMessageDialog(licencesItem, Messages.getString("license.error.testing"),
+        Messages.getString("license"), JOptionPane.ERROR_MESSAGE);
+    return false;
+
   }
 
-  private boolean downloadBootJarAndTestBundleAccess() {
+  private boolean downloadBootJarAndTestBundleAccess(String licenseContents, String serverContents) {
     boolean result = false;
     try {
-      String licenseServerURL = serverDocument.getText(0, serverDocument.getLength());
-      if (StringUtil.hasText(licenseServerURL)) {
+      if (StringUtil.hasText(serverContents)) {
         HttpClient httpClient = HttpClient.newBuilder().connectTimeout(Duration.ofMinutes(1)).build();
-        HttpRequest request = HttpRequest.newBuilder(URI.create(licenseServerURL)).GET().build();
+        HttpRequest request = HttpRequest.newBuilder(URI.create(serverContents)).GET().build();
         try {
           HttpResponse<InputStream> resp = httpClient.send(request, responseInfo -> {
-            LOGGER.info("Validating URL: {}. Result: {}", licenseServerURL, responseInfo.statusCode());
+            LOGGER.info("Validating URL: {}. Result: {}", serverContents, responseInfo.statusCode());
             return BodySubscribers.ofInputStream();
           });
           int status = resp.statusCode();
@@ -199,7 +225,7 @@ public class LicenseDialogController implements LicenseController {
               Files.copy(bis, f.toPath(), StandardCopyOption.REPLACE_EXISTING);
             }
             LOGGER.info("Boot jar contents successfully copied to file: {}", f.getAbsolutePath());
-            result = installAndStartBundle(new File(f.getAbsolutePath()));
+            result = installAndStartBundle(new File(f.getAbsolutePath()), licenseContents);
           } else {
             LOGGER.error("Error getting plugins boot bundle. Server returned: {}", status);
             result = false;
@@ -209,26 +235,50 @@ public class LicenseDialogController implements LicenseController {
         }
         return result;
       }
-    } catch (BadLocationException e) {
+    } catch (Exception e) {
       LOGGER.error(e.getMessage(), e);
     }
     return result;
   }
 
-  private boolean installAndStartBundle(File file) {
+  /**
+   * Install bundle and activate services on it. After that, locate service
+   * implementing interface {@link LicensedPluginsService} and call methods
+   * <code>validateEndpoints </code>and <code>validateLicense</code>.
+   * 
+   * @param file the local file with bundle contents.
+   * @param licenseContents the licenseContents to be validated
+   * @return <code>true</code> if the whole cycle of installing, activating and validating is completed with success.
+   * <code>False</code>, otherwise.
+   */
+  private boolean installAndStartBundle(File file, String licenseContents) {
     BundleContext context = FrameworkUtil.getBundle(this.getClass()).getBundleContext();
     LOGGER.debug("Bundle context: {}", context);
     try {
-      Bundle bundle = context.installBundle(file.toURI().toURL().toString());
+      bundle = context.installBundle(file.toURI().toURL().toString());
       LOGGER.debug("New bundle: {}", bundle);
       BundleStartLevel bundleStartLevel = bundle.adapt(BundleStartLevel.class);
       int lastStartLevel = getLastStartLevel(context);
       bundleStartLevel.setStartLevel(lastStartLevel + 1);
       bundle.start(Bundle.START_ACTIVATION_POLICY);
       LOGGER.debug("Bundle status: {}", bundle.getState());
+      ServiceReference<LicensedPluginsService> serviceRef = bundle.getBundleContext().getServiceReference(LicensedPluginsService.class);
+      service = bundle.getBundleContext().getService(serviceRef);
+      if (service != null) {
+        service.validateEndpoints();
+        service.validateLicense(licenseContents);
+      }
       return true;
     } catch (Exception e) {
       LOGGER.error(e.getMessage(), e);
+      if (bundle != null) {
+        try {
+          bundle.stop();
+          bundle.uninstall();
+        } catch (Exception e2) {
+          LOGGER.error(e2.getMessage(), e2);
+        }      
+      }
     } 
     return false;
   }
@@ -257,11 +307,10 @@ public class LicenseDialogController implements LicenseController {
     return result;
   }
 
-  private boolean pingLicenseServerURL() {
+  private boolean pingLicenseServerURL(String serverContents) {
     HttpClient httpClient = HttpClient.newBuilder().connectTimeout(Duration.ofMinutes(1)).build();
     try {
-        String licenseServerURL = serverDocument.getText(0, serverDocument.getLength());
-        HttpRequest request = HttpRequest.newBuilder(URI.create(licenseServerURL)).GET().build();
+        HttpRequest request = HttpRequest.newBuilder(URI.create(serverContents)).GET().build();
         HttpResponse<Void> resp = httpClient.send(request, new BodyHandler<Void>() {
             @Override
             public BodySubscriber<Void> apply(final ResponseInfo responseInfo) {
@@ -269,7 +318,7 @@ public class LicenseDialogController implements LicenseController {
             }
         });
         int status = resp.statusCode();
-        LOGGER.info("Validating URL: {}. Result: {}", licenseServerURL, status);
+        LOGGER.info("Validating URL: {}. Result: {}", serverContents, status);
         if (status == SUCCESS_HTTP_STATUS_CODE) {
             return true;
         }
