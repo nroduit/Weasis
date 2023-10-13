@@ -737,8 +737,8 @@ public class WeasisWin {
         e -> openBrowser(reportMenuItem, "https://github.com/nroduit/Weasis/issues"));
     helpMenuItem.add(reportMenuItem);
     helpMenuItem.add(new JSeparator());
-
-    if (BundleTools.SYSTEM_PREFERENCES.getBooleanProperty("weasis.plugins.license", false)) {
+    WProperties p = GuiUtils.getUICore().getSystemPreferences();
+    if (p.getBooleanProperty("weasis.plugins.license", false)) {
       final JMenuItem licencesMenuItem = new JMenuItem(Messages.getString("LicencesDialog.title"));
       licencesMenuItem.addActionListener(
           e -> {
