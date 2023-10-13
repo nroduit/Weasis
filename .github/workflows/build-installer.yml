@@ -16,7 +16,7 @@ jobs:
         uses: actions/setup-java@v3
         with:
           distribution: 'temurin'
-          java-version: '21-ea'
+          java-version: '21'
           cache: 'maven'
 
       - name: Build with Maven
@@ -82,7 +82,7 @@ jobs:
         uses: actions/setup-java@v3
         with:
           distribution: 'temurin'
-          java-version: '21-ea'
+          java-version: '21'
 
       - name: Download weasis-native
         uses: actions/download-artifact@v3
@@ -109,7 +109,7 @@ jobs:
           echo "$(ls ${{ env.WEASIS_INPUT_BIN }}/bundle/)"
 
       - name: Import Developer Certificate
-        uses: apple-actions/import-codesign-certs@v1
+        uses: apple-actions/import-codesign-certs@v2
         if: matrix.wsystem == 'macosx'
         id: cert
         with:
@@ -117,7 +117,7 @@ jobs:
           p12-password: ${{ secrets.MACOS_CERTIFICATE_PWD }}
 
       - name: Import Installer Certificate
-        uses: apple-actions/import-codesign-certs@v1
+        uses: apple-actions/import-codesign-certs@v2
         if: matrix.wsystem == 'macosx'
         with:
           create-keychain: "false"
