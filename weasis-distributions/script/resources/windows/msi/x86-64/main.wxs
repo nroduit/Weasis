@@ -147,7 +147,7 @@
       <?endif?>
       <?ifdef JpUpdateURL ?>
         <Custom Action="JpSetARPURLUPDATEINFO" After="CostFinalize">Not Installed</Custom>
-    <?endif?>
+      <?endif?>
 
       <?ifndef JpAllowUpgrades ?>
       <Custom Action="JpDisallowUpgrade" After="JpFindRelatedProducts">JP_UPGRADABLE_FOUND</Custom>

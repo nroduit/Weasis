@@ -27,11 +27,11 @@ import org.osgi.service.component.annotations.ReferenceCardinality;
 import org.osgi.service.component.annotations.ReferencePolicy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.media.data.Codec;
 import org.weasis.core.api.media.data.MediaReader;
 import org.weasis.core.api.service.AuditLog;
 import org.weasis.core.api.service.BundlePreferences;
-import org.weasis.core.api.service.BundleTools;
 import org.weasis.imageio.codec.ImageioUtil;
 
 @org.osgi.service.component.annotations.Component(service = Codec.class)
@@ -116,7 +116,9 @@ public class DicomCodec implements Codec {
      *     http://healthcaresecprivacy.blogspot.ch/2011/02/creating-and-using-unique-id-uuid-oid.html
      */
     String weasisRootUID =
-        BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.dicom.root.uid", UIDUtils.getRoot());
+        GuiUtils.getUICore()
+            .getSystemPreferences()
+            .getProperty("weasis.dicom.root.uid", UIDUtils.getRoot());
     UIDUtils.setRoot(weasisRootUID);
 
     // Set the default encoding (must contain ASCII)

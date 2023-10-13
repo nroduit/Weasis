@@ -18,11 +18,11 @@ import org.dcm4che3.img.data.OverlayData;
 import org.dcm4che3.img.data.PrDicomObject;
 import org.dcm4che3.img.stream.ImageDescriptor;
 import org.weasis.core.api.gui.util.ActionW;
+import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.image.AbstractOp;
 import org.weasis.core.api.image.ImageOpEvent;
 import org.weasis.core.api.image.ImageOpEvent.OpEvent;
 import org.weasis.core.api.media.data.ImageElement;
-import org.weasis.core.api.service.BundleTools;
 import org.weasis.dicom.codec.DicomMediaIO;
 import org.weasis.dicom.codec.PRSpecialElement;
 import org.weasis.opencv.data.PlanarImage;
@@ -87,7 +87,9 @@ public class OverlayOp extends AbstractOp {
               original = reader.getImageFragment(image, (Integer) image.getKey(), false);
             }
             p.setOverlayColor(
-                BundleTools.SYSTEM_PREFERENCES.getColorProperty(OVERLAY_COLOR_KEY, Color.WHITE));
+                GuiUtils.getUICore()
+                    .getSystemPreferences()
+                    .getColorProperty(OVERLAY_COLOR_KEY, Color.WHITE));
             result = OverlayData.getOverlayImage(original, source, desc, p, frame);
           }
         }

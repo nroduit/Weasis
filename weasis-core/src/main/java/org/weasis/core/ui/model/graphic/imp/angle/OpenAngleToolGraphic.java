@@ -85,6 +85,7 @@ public class OpenAngleToolGraphic extends AbstractDragGraphic {
 
   protected double
       angleDeg; // smallest angle in Degrees in the range of [-180 ; 180] between AB & CD line
+
   // segments
 
   public OpenAngleToolGraphic() {

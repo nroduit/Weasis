@@ -69,12 +69,10 @@ import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.SeriesThumbnail;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.media.data.Thumbnail;
-import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.api.util.FontItem;
 import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.api.util.ResourceUtil.OtherIcon;
 import org.weasis.core.ui.docking.PluginTool;
-import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.SeriesViewer;
 import org.weasis.core.ui.editor.SeriesViewerEvent;
 import org.weasis.core.ui.editor.SeriesViewerEvent.EVENT;
@@ -155,7 +153,9 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
     this.model = model == null ? new DicomModel() : model;
     this.selectionList = new SeriesSelectionModel(selectedPatient);
     int thumbnailSize =
-        BundleTools.SYSTEM_PREFERENCES.getIntProperty(Thumbnail.KEY_SIZE, Thumbnail.DEFAULT_SIZE);
+        GuiUtils.getUICore()
+            .getSystemPreferences()
+            .getIntProperty(Thumbnail.KEY_SIZE, Thumbnail.DEFAULT_SIZE);
     setDockableWidth(Math.max(thumbnailSize, Thumbnail.DEFAULT_SIZE) + 42);
 
     patientCombobox.setMaximumRowCount(15);
@@ -494,8 +494,9 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
       List<SeriesPane> seriesList = study2series.get(dicomStudy);
       if (seriesList != null) {
         int thumbnailSize =
-            BundleTools.SYSTEM_PREFERENCES.getIntProperty(
-                Thumbnail.KEY_SIZE, Thumbnail.DEFAULT_SIZE);
+            GuiUtils.getUICore()
+                .getSystemPreferences()
+                .getIntProperty(Thumbnail.KEY_SIZE, Thumbnail.DEFAULT_SIZE);
         for (int i = 0; i < seriesList.size(); i++) {
           SeriesPane series = seriesList.get(i);
           series.updateSize(thumbnailSize);
@@ -530,7 +531,9 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
       this.setLayout(new MigLayout("wrap 1", "[center]"));
       this.setBackground(FlatUIUtils.getUIColor(SeriesSelectionModel.BACKGROUND, Color.LIGHT_GRAY));
       int thumbnailSize =
-          BundleTools.SYSTEM_PREFERENCES.getIntProperty(Thumbnail.KEY_SIZE, Thumbnail.DEFAULT_SIZE);
+          GuiUtils.getUICore()
+              .getSystemPreferences()
+              .getIntProperty(Thumbnail.KEY_SIZE, Thumbnail.DEFAULT_SIZE);
       if (sequence instanceof Series series) {
         Thumbnail thumb = (Thumbnail) series.getTagValue(TagW.Thumbnail);
         if (thumb == null) {
@@ -754,7 +757,9 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
     }
     if (repaintStudy) {
       int thumbnailSize =
-          BundleTools.SYSTEM_PREFERENCES.getIntProperty(Thumbnail.KEY_SIZE, Thumbnail.DEFAULT_SIZE);
+          GuiUtils.getUICore()
+              .getSystemPreferences()
+              .getIntProperty(Thumbnail.KEY_SIZE, Thumbnail.DEFAULT_SIZE);
       studyPane.clearAllSeries();
       for (int i = 0, k = 1; i < seriesList.size(); i++) {
         SeriesPane s = seriesList.get(i);
@@ -851,8 +856,9 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
       }
       if (selectedPatient.isStudyVisible(study)) {
         int thumbnailSize =
-            BundleTools.SYSTEM_PREFERENCES.getIntProperty(
-                Thumbnail.KEY_SIZE, Thumbnail.DEFAULT_SIZE);
+            GuiUtils.getUICore()
+                .getSystemPreferences()
+                .getIntProperty(Thumbnail.KEY_SIZE, Thumbnail.DEFAULT_SIZE);
         studyPane.clearAllSeries();
         for (int i = 0; i < seriesList.size(); i++) {
           studyPane.addPane(seriesList.get(i), i, thumbnailSize);
@@ -912,7 +918,8 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
             MediaSeriesGroup patient = model.getParent(dcm, DicomModel.patient);
             if (!isSelectedPatient(patient)) {
               modelPatient.setSelectedItem(patient);
-              UIManager.DOCKING_CONTROL
+              GuiUtils.getUICore()
+                  .getDockingControl()
                   .getController()
                   .setFocusedDockable(
                       new DefaultFocusRequest(dockable.intern(), this, false, true, false));

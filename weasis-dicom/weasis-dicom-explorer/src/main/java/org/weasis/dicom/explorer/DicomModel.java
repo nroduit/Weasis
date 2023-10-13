@@ -46,6 +46,7 @@ import org.weasis.core.api.explorer.model.TreeModel;
 import org.weasis.core.api.explorer.model.TreeModelNode;
 import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.gui.util.GuiExecutor;
+import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.media.data.Codec;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaSeries;
@@ -55,24 +56,21 @@ import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.TagView;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.media.data.Thumbnail;
-import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.api.util.GzipManager;
 import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.api.util.ResourceUtil.OtherIcon;
 import org.weasis.core.api.util.ThreadUtil;
-import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.SeriesViewerFactory;
 import org.weasis.core.ui.editor.ViewerPluginBuilder;
 import org.weasis.core.util.LangUtil;
 import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.codec.DicomEncapDocElement;
-import org.weasis.dicom.codec.DicomEncapDocSeries;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.DicomMediaIO;
 import org.weasis.dicom.codec.DicomSeries;
 import org.weasis.dicom.codec.DicomSpecialElement;
 import org.weasis.dicom.codec.DicomVideoElement;
-import org.weasis.dicom.codec.DicomVideoSeries;
+import org.weasis.dicom.codec.FilesExtractor;
 import org.weasis.dicom.codec.KOSpecialElement;
 import org.weasis.dicom.codec.PRSpecialElement;
 import org.weasis.dicom.codec.RejectedKOSpecialElement;
@@ -143,8 +141,9 @@ public class DicomModel implements TreeModel, DataExplorerModel {
   @Override
   public List<Codec> getCodecPlugins() {
     ArrayList<Codec> codecPlugins = new ArrayList<>(1);
-    synchronized (BundleTools.CODEC_PLUGINS) {
-      for (Codec codec : BundleTools.CODEC_PLUGINS) {
+    List<Codec> codecs = GuiUtils.getUICore().getCodecPlugins();
+    synchronized (codecs) {
+      for (Codec codec : codecs) {
         if (codec != null
             && !"JDK ImageIO".equals(codec.getCodecName()) // NON-NLS
             && codec.isMimeTypeSupported(DicomMediaIO.DICOM_MIMETYPE)
@@ -463,7 +462,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
 
   public void removeSeries(MediaSeriesGroup seriesGroup) {
     if (seriesGroup != null) {
-      if (!DownloadManager.TASKS.isEmpty() && seriesGroup instanceof DicomSeries dicomSeries) {
+      if (!DownloadManager.getTasks().isEmpty() && seriesGroup instanceof DicomSeries dicomSeries) {
         DownloadManager.stopDownloading(dicomSeries, this);
       }
       // remove first series in UI (Dicom Explorer, Viewer using this series)
@@ -480,7 +479,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
 
   public void removeStudy(MediaSeriesGroup studyGroup) {
     if (studyGroup != null) {
-      if (!DownloadManager.TASKS.isEmpty()) {
+      if (!DownloadManager.getTasks().isEmpty()) {
         for (MediaSeriesGroup group : getChildren(studyGroup)) {
           if (group instanceof DicomSeries dicomSeries) {
             DownloadManager.stopDownloading(dicomSeries, this);
@@ -501,7 +500,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
 
   public void removePatient(MediaSeriesGroup patientGroup) {
     if (patientGroup != null) {
-      if (!DownloadManager.TASKS.isEmpty()) {
+      if (!DownloadManager.getTasks().isEmpty()) {
         for (MediaSeriesGroup studyGroup : getChildren(patientGroup)) {
           for (MediaSeriesGroup group : getChildren(studyGroup)) {
             if (group instanceof DicomSeries dicomSeries) {
@@ -702,7 +701,8 @@ public class DicomModel implements TreeModel, DataExplorerModel {
 
   public void openRelatedSeries(KOSpecialElement koSpecialElement, MediaSeriesGroup patient) {
     if (koSpecialElement != null && patient != null) {
-      SeriesViewerFactory plugin = UIManager.getViewerFactory(DicomMediaIO.SERIES_MIMETYPE);
+      SeriesViewerFactory plugin =
+          GuiUtils.getUICore().getViewerFactory(DicomMediaIO.SERIES_MIMETYPE);
       if (plugin != null && !(plugin instanceof MimeSystemAppFactory)) {
         Set<String> koSet = koSpecialElement.getReferencedSeriesInstanceUIDSet();
         List<MediaSeries<MediaElement>> seriesList = new ArrayList<>();
@@ -836,7 +836,9 @@ public class DicomModel implements TreeModel, DataExplorerModel {
     Thumbnail t = (Thumbnail) dicomSeries.getTagValue(TagW.Thumbnail);
     if (t == null) {
       int thumbnailSize =
-          BundleTools.SYSTEM_PREFERENCES.getIntProperty(Thumbnail.KEY_SIZE, Thumbnail.DEFAULT_SIZE);
+          GuiUtils.getUICore()
+              .getSystemPreferences()
+              .getIntProperty(Thumbnail.KEY_SIZE, Thumbnail.DEFAULT_SIZE);
       t = DicomExplorer.createThumbnail(dicomSeries, this, thumbnailSize);
       dicomSeries.setTag(TagW.Thumbnail, t);
       Optional.ofNullable(t).ifPresent(Thumbnail::repaint);
@@ -853,7 +855,20 @@ public class DicomModel implements TreeModel, DataExplorerModel {
         rebuildSeries(dicomReader, media);
         return true;
       }
-      if (original instanceof DicomSeries initialSeries) {
+
+      if (original instanceof FilesExtractor) {
+        if (original.size(null) > 0) {
+          // Always split when it is a video or an encapsulated document
+          if (media instanceof DicomVideoElement || media instanceof DicomEncapDocElement) {
+            splitSeries(dicomReader, original, media);
+            return true;
+          } else {
+            findMatchingSeriesOrSplit(original, media);
+          }
+        } else {
+          original.addMedia(media);
+        }
+      } else if (original instanceof DicomSeries initialSeries) {
         // Handle cases when the Series is created before getting the image (downloading)
         if (media instanceof DicomVideoElement || media instanceof DicomEncapDocElement) {
           if (original.size(null) > 0) {
@@ -939,18 +954,6 @@ public class DicomModel implements TreeModel, DataExplorerModel {
           // no matching series exists, so split series
           splitSeries(dicomReader, initialSeries, media);
           return true;
-        }
-      } else if (original instanceof DicomVideoSeries || original instanceof DicomEncapDocSeries) {
-        if (original.size(null) > 0) {
-          // Always split when it is a video or an encapsulated document
-          if (media instanceof DicomVideoElement || media instanceof DicomEncapDocElement) {
-            splitSeries(dicomReader, original, media);
-            return true;
-          } else {
-            findMatchingSeriesOrSplit(original, media);
-          }
-        } else {
-          original.addMedia(media);
         }
       }
     }

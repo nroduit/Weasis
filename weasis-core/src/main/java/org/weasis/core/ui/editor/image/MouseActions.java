@@ -12,9 +12,10 @@ package org.weasis.core.ui.editor.image;
 import java.awt.event.InputEvent;
 import org.osgi.service.prefs.Preferences;
 import org.weasis.core.api.gui.util.ActionW;
+import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.service.AuditLog;
 import org.weasis.core.api.service.BundlePreferences;
-import org.weasis.core.api.service.BundleTools;
+import org.weasis.core.api.service.WProperties;
 
 public class MouseActions {
 
@@ -38,25 +39,18 @@ public class MouseActions {
   private int activeButtons;
 
   public MouseActions(Preferences prefs) {
+    WProperties preferences = GuiUtils.getUICore().getSystemPreferences();
     this.activeButtons =
-        BundleTools.SYSTEM_PREFERENCES.getIntProperty(
+        preferences.getIntProperty(
             "weasis.toolbar.mouse.buttons",
             InputEvent.BUTTON1_DOWN_MASK
                 | InputEvent.BUTTON2_DOWN_MASK
                 | InputEvent.BUTTON3_DOWN_MASK
                 | SCROLL_MASK);
-    this.left =
-        BundleTools.SYSTEM_PREFERENCES.getProperty(
-            "weasis.toolbar.mouse.left", ActionW.WINLEVEL.cmd());
-    this.middle =
-        BundleTools.SYSTEM_PREFERENCES.getProperty(
-            "weasis.toolbar.mouse.middle", ActionW.PAN.cmd());
-    this.right =
-        BundleTools.SYSTEM_PREFERENCES.getProperty(
-            "weasis.toolbar.mouse.right", ActionW.CONTEXTMENU.cmd());
-    this.wheel =
-        BundleTools.SYSTEM_PREFERENCES.getProperty(
-            "weasis.toolbar.mouse.wheel", ActionW.SCROLL_SERIES.cmd());
+    this.left = preferences.getProperty("weasis.toolbar.mouse.left", ActionW.WINLEVEL.cmd());
+    this.middle = preferences.getProperty("weasis.toolbar.mouse.middle", ActionW.PAN.cmd());
+    this.right = preferences.getProperty("weasis.toolbar.mouse.right", ActionW.CONTEXTMENU.cmd());
+    this.wheel = preferences.getProperty("weasis.toolbar.mouse.wheel", ActionW.SCROLL_SERIES.cmd());
 
     applyPreferences(prefs);
 

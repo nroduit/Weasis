@@ -49,6 +49,7 @@ import org.weasis.base.explorer.Messages;
 import org.weasis.base.explorer.ThumbnailRenderer;
 import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.gui.util.GhostGlassPane;
+import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.media.data.Codec;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaElement;
@@ -56,8 +57,6 @@ import org.weasis.core.api.media.data.MediaReader;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.TagUtil;
 import org.weasis.core.api.media.data.TagW;
-import org.weasis.core.api.util.LocalUtil;
-import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.SeriesViewerFactory;
 import org.weasis.core.ui.editor.ViewerPluginBuilder;
 import org.weasis.core.ui.util.DefaultAction;
@@ -69,7 +68,7 @@ public abstract class AbstractThumbnailList<E extends MediaElement> extends JLis
   public static final String SECTION_CHANGED = "SECTION_CHANGED"; // NON-NLS
   public static final String DIRECTORY_SIZE = "DIRECTORY_SIZE"; // NON-NLS
 
-  private static final NumberFormat intGroupFormat = LocalUtil.getIntegerInstance();
+  private static final NumberFormat intGroupFormat = NumberFormat.getIntegerInstance();
 
   static {
     intGroupFormat.setGroupingUsed(true);
@@ -348,7 +347,7 @@ public abstract class AbstractThumbnailList<E extends MediaElement> extends JLis
           }
         }
         for (String mime : mimes) {
-          SeriesViewerFactory plugin = UIManager.getViewerFactory(mime);
+          SeriesViewerFactory plugin = GuiUtils.getUICore().getViewerFactory(mime);
           if (plugin != null) {
             ArrayList<MediaSeries<MediaElement>> seriesList = new ArrayList<>();
             for (MediaSeries s : list) {
@@ -382,7 +381,7 @@ public abstract class AbstractThumbnailList<E extends MediaElement> extends JLis
       for (E m : selMedias) {
         String mime = m.getMimeType();
         if (mime != null) {
-          SeriesViewerFactory plugin = UIManager.getViewerFactory(mime);
+          SeriesViewerFactory plugin = GuiUtils.getUICore().getViewerFactory(mime);
           if (plugin != null) {
             List<MediaSeries<MediaElement>> list =
                 plugins.computeIfAbsent(plugin, k -> new ArrayList<>(modeLayout ? 10 : 1));

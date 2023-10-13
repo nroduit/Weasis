@@ -19,7 +19,6 @@ import java.awt.Window;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import javax.swing.Action;
 import javax.swing.Icon;
 import javax.swing.JButton;
@@ -33,7 +32,6 @@ import org.osgi.service.component.annotations.Deactivate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.DataExplorerView;
-import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.ComboItemListener;
 import org.weasis.core.api.gui.util.GuiUtils;
@@ -41,22 +39,18 @@ import org.weasis.core.api.image.GridBagLayoutModel;
 import org.weasis.core.api.image.LayoutConstraints;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.service.AuditLog;
-import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.api.service.WProperties;
 import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.api.util.ResourceUtil.ActionIcon;
-import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.SeriesViewer;
 import org.weasis.core.ui.editor.SeriesViewerFactory;
-import org.weasis.core.ui.editor.ViewerPluginBuilder;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
-import org.weasis.core.ui.editor.image.ViewCanvas;
+import org.weasis.core.ui.editor.image.ImageViewerPlugin.LayoutModel;
 import org.weasis.core.ui.pref.PreferenceDialog;
 import org.weasis.core.ui.util.ColorLayerUI;
 import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.codec.DicomMediaIO;
 import org.weasis.dicom.explorer.DicomExplorer;
-import org.weasis.dicom.explorer.DicomModel;
 import org.weasis.dicom.viewer2d.EventManager;
 import org.weasis.dicom.viewer3d.vr.OpenglUtils;
 
@@ -88,7 +82,8 @@ public class View3DFactory implements SeriesViewerFactory {
   }
 
   public static GridBagLayoutModel getDefaultGridBagLayoutModel() {
-    String defLayout = BundleTools.SYSTEM_PREFERENCES.getProperty(View3DFactory.P_DEFAULT_LAYOUT);
+    String defLayout =
+        GuiUtils.getUICore().getSystemPreferences().getProperty(View3DFactory.P_DEFAULT_LAYOUT);
     if (StringUtil.hasText(defLayout)) {
       return View3DContainer.LAYOUT_LIST.stream()
           .filter(g -> defLayout.equals(g.getId()))
@@ -101,42 +96,18 @@ public class View3DFactory implements SeriesViewerFactory {
   @Override
   public SeriesViewer createSeriesViewer(Map<String, Object> properties) {
     if (isOpenglEnable()) {
-      GridBagLayoutModel model = getDefaultGridBagLayoutModel();
-      String uid = null;
-      if (properties != null) {
-        Object obj = properties.get(org.weasis.core.api.image.GridBagLayoutModel.class.getName());
-        if (obj instanceof GridBagLayoutModel gridBagLayoutModel) {
-          model = gridBagLayoutModel;
-        } else {
-          obj = properties.get(ViewCanvas.class.getName());
-          if (obj instanceof Integer intVal) {
-            Optional<ComboItemListener<GridBagLayoutModel>> layout =
-                EventManager.getInstance().getAction(ActionW.LAYOUT);
-            if (layout.isPresent()) {
-              model = ImageViewerPlugin.getBestDefaultViewLayout(layout.get(), intVal);
-            }
-          }
-        }
-
-        // Set UID
-        Object val = properties.get(ViewerPluginBuilder.UID);
-        if (val instanceof String s) {
-          uid = s;
-        }
-      }
-      View3DContainer instance = new View3DContainer(model, uid, getUIName(), getIcon(), null);
-      if (properties != null) {
-        Object obj = properties.get(DataExplorerModel.class.getName());
-        if (obj instanceof DicomModel m) {
-          // Register the PropertyChangeListener
-          m.addPropertyChangeListener(instance);
-        }
-      }
-
+      ComboItemListener<GridBagLayoutModel> layoutAction =
+          EventManager.getInstance().getAction(ActionW.LAYOUT).orElse(null);
+      LayoutModel layout =
+          ImageViewerPlugin.getLayoutModel(
+              properties, getDefaultGridBagLayoutModel(), layoutAction);
+      View3DContainer instance =
+          new View3DContainer(layout.model(), layout.uid(), getUIName(), getIcon(), null);
+      ImageViewerPlugin.registerInDataExplorerModel(properties, instance);
       return instance;
     }
 
-    showOpenglErrorMessage(UIManager.BASE_AREA);
+    showOpenglErrorMessage(GuiUtils.getUICore().getBaseArea());
     return null;
   }
 
@@ -160,14 +131,18 @@ public class View3DFactory implements SeriesViewerFactory {
 
   public static void closeSeriesViewer(View3DContainer view3dContainer) {
     // Unregister the PropertyChangeListener
-    DataExplorerView dicomView = UIManager.getExplorerPlugin(DicomExplorer.NAME);
+    DataExplorerView dicomView = GuiUtils.getUICore().getExplorerPlugin(DicomExplorer.NAME);
     if (dicomView != null) {
       dicomView.getDataExplorerModel().removePropertyChangeListener(view3dContainer);
     }
     if (view3dContainer.volumeBuilder != null) {
-      GL4 gl4 = OpenglUtils.getGL4();
-      if (gl4 != null) {
-        view3dContainer.volumeBuilder.getVolTexture().destroy(gl4);
+      try {
+        GL4 gl4 = OpenglUtils.getGL4();
+        if (gl4 != null) {
+          view3dContainer.volumeBuilder.getVolTexture().destroy(gl4);
+        }
+      } catch (Exception e) {
+        LOGGER.error("Closing viewer", e);
       }
     }
   }
@@ -212,11 +187,12 @@ public class View3DFactory implements SeriesViewerFactory {
 
   public static OpenGLInfo getOpenGLInfo() {
     if (openGLInfo == null && isOpenglEnable()) {
-      BundleTools.LOCAL_UI_PERSISTENCE.putBooleanProperty(P_OPENGL_PREV_INIT, false);
+      WProperties localPersistence = GuiUtils.getUICore().getLocalPersistence();
+      localPersistence.putBooleanProperty(P_OPENGL_PREV_INIT, false);
       try {
         Threading.invoke(true, View3DFactory::initOpenGLInfo, null);
       } catch (Throwable e) {
-        BundleTools.LOCAL_UI_PERSISTENCE.putBooleanProperty(P_OPENGL_ENABLE, false);
+        localPersistence.putBooleanProperty(P_OPENGL_ENABLE, false);
         LOGGER.error("Cannot get basic OpenGL information");
       }
     }
@@ -225,7 +201,7 @@ public class View3DFactory implements SeriesViewerFactory {
 
   public static int getMax3dTextureSize() {
     boolean previous =
-        BundleTools.LOCAL_UI_PERSISTENCE.getBooleanProperty(P_OPENGL_PREV_INIT, true);
+        GuiUtils.getUICore().getLocalPersistence().getBooleanProperty(P_OPENGL_PREV_INIT, true);
     if (previous) {
       OpenGLInfo info = getOpenGLInfo();
       if (info != null) {
@@ -236,6 +212,7 @@ public class View3DFactory implements SeriesViewerFactory {
   }
 
   private static void initOpenGLInfo() {
+    WProperties localPersistence = GuiUtils.getUICore().getLocalPersistence();
     try {
       long startTime = System.currentTimeMillis();
       LOGGER.info("Checking 3D capabilities");
@@ -257,7 +234,7 @@ public class View3DFactory implements SeriesViewerFactory {
           "{} 3D initialization time: {} ms",
           AuditLog.MARKER_PERF,
           (System.currentTimeMillis() - startTime));
-      BundleTools.LOCAL_UI_PERSISTENCE.putBooleanProperty(P_OPENGL_PREV_INIT, true);
+      localPersistence.putBooleanProperty(P_OPENGL_PREV_INIT, true);
       LOGGER.info(
           "Video card for OpenGL: {}, {} {}",
           openGLInfo.vendor(),
@@ -268,14 +245,14 @@ public class View3DFactory implements SeriesViewerFactory {
             "OpenGL %s is not compliant with compute shader".formatted(openGLInfo.shortVersion()));
       }
     } catch (Exception e) {
-      BundleTools.LOCAL_UI_PERSISTENCE.putBooleanProperty(P_OPENGL_ENABLE, false);
-      BundleTools.LOCAL_UI_PERSISTENCE.putBooleanProperty(P_OPENGL_PREV_INIT, false);
+      localPersistence.putBooleanProperty(P_OPENGL_ENABLE, false);
+      localPersistence.putBooleanProperty(P_OPENGL_PREV_INIT, false);
       LOGGER.error("Cannot init OpenGL", e);
     }
   }
 
   public static boolean isOpenglEnable() {
-    return BundleTools.LOCAL_UI_PERSISTENCE.getBooleanProperty(P_OPENGL_ENABLE, true);
+    return GuiUtils.getUICore().getLocalPersistence().getBooleanProperty(P_OPENGL_ENABLE, true);
   }
 
   public static void showOpenglErrorMessage(Component parent) {
@@ -284,7 +261,7 @@ public class View3DFactory implements SeriesViewerFactory {
     prefButton.addActionListener(
         e -> {
           SwingUtilities.getWindowAncestor(prefButton).dispose();
-          Window win = UIManager.getApplicationWindow();
+          Window win = GuiUtils.getUICore().getApplicationWindow();
           ColorLayerUI layer = ColorLayerUI.createTransparentLayerUI(win);
           PreferenceDialog dialog = new PreferenceDialog(win);
           dialog.showPage(NAME);
@@ -305,8 +282,8 @@ public class View3DFactory implements SeriesViewerFactory {
     LOGGER.info("3D Viewer is activated");
     System.setProperty("jogl.1thread", "worker"); // TODO set to auto
 
-    WProperties prefs = BundleTools.LOCAL_UI_PERSISTENCE;
-    if (BundleTools.SYSTEM_PREFERENCES.getBooleanProperty("weasis.force.3d", false)) {
+    WProperties prefs = GuiUtils.getUICore().getLocalPersistence();
+    if (GuiUtils.getUICore().getSystemPreferences().getBooleanProperty("weasis.force.3d", false)) {
       prefs.putBooleanProperty(P_OPENGL_PREV_INIT, true);
       prefs.putBooleanProperty(P_OPENGL_ENABLE, true);
     }

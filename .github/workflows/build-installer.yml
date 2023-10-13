@@ -6,8 +6,8 @@ jobs:
   build:
     runs-on: ubuntu-latest
     outputs:
-      version: ${{ steps.stepversion.outputs.version }}
-      cleanversion: ${{ steps.stepcleanversion.outputs.version }}
+      version: ${{ env.WEASIS_VERSION }}
+      cleanversion: ${{ env.WEASIS_CLEAN_VERSION }}
 
     steps:
       - uses: actions/checkout@v3
@@ -16,7 +16,7 @@ jobs:
         uses: actions/setup-java@v3
         with:
           distribution: 'temurin'
-          java-version: '20'
+          java-version: '21'
           cache: 'maven'
 
       - name: Build with Maven
@@ -36,11 +36,6 @@ jobs:
         run: |
           CVERSION=$(echo $WEASIS_VERSION | sed -e 's/"//g' -e 's/-.*//')
           echo "WEASIS_CLEAN_VERSION=${CVERSION}" >> $GITHUB_ENV
-
-      - id: stepversion
-        run: echo ::set-output name=version::${{ env.WEASIS_VERSION }}
-      - id: stepcleanversion
-        run: echo ::set-output name=version::${{ env.WEASIS_CLEAN_VERSION }}
 
       - name: Upload the weasis package for building the native distribution
         uses: actions/upload-artifact@v3
@@ -70,6 +65,7 @@ jobs:
         include:
           - { os: ubuntu-latest, platform: x64, wsystem: linux, warc: x86-64 }
           - { os: macos-latest, platform: x64, wsystem: macosx, warc: x86-64 }
+          - { os: macos-latest-xlarge, platform: arm64, wsystem: macosx, warc: aarch64 }
           #  - { os: windows-latest, platform: x86, wsystem: windows, warc: x86 }
           - { os: windows-latest, platform: x64, wsystem: windows, warc: x86-64 }
 
@@ -86,7 +82,7 @@ jobs:
         uses: actions/setup-java@v3
         with:
           distribution: 'temurin'
-          java-version: '20'
+          java-version: '21'
 
       - name: Download weasis-native
         uses: actions/download-artifact@v3
@@ -113,7 +109,7 @@ jobs:
           echo "$(ls ${{ env.WEASIS_INPUT_BIN }}/bundle/)"
 
       - name: Import Developer Certificate
-        uses: apple-actions/import-codesign-certs@v1
+        uses: apple-actions/import-codesign-certs@v2
         if: matrix.wsystem == 'macosx'
         id: cert
         with:
@@ -121,7 +117,7 @@ jobs:
           p12-password: ${{ secrets.MACOS_CERTIFICATE_PWD }}
 
       - name: Import Installer Certificate
-        uses: apple-actions/import-codesign-certs@v1
+        uses: apple-actions/import-codesign-certs@v2
         if: matrix.wsystem == 'macosx'
         with:
           create-keychain: "false"
@@ -198,7 +194,7 @@ jobs:
               --license-file "${{ env.WEASIS_INPUT }}/Licence.txt" --description "Weasis DICOM viewer" --vendor "${{ env.VENDOR }}" \
               --copyright "${{ env.COPYRIGHT }}" --app-version "${{ env.WEASIS_CLEAN_VERSION }}" --file-associations "${{ env.FILE_ASSOC }}" \
               --linux-app-release "1" --linux-package-name "weasis" --linux-deb-maintainer "Nicolas Roduit" --linux-rpm-license-type "EPL-2.0" \
-              --linux-menu-group "Viewer;MedicalSoftware;Graphics;" --linux-app-category "science" --linux-shortcut --verbose
+              --linux-menu-group "Viewer;MedicalSoftware;Graphics;" --linux-app-category "science" --linux-package-deps "libstdc++6, libgcc1" --linux-shortcut --verbose
               cp ${{ env.WEASIS_OUTPUT }}/*.${installerType} final-dist
             done
           elif [ "$machine" = "macosx" ] ; then

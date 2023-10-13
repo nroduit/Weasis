@@ -49,7 +49,6 @@ import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.TagView;
 import org.weasis.core.api.media.data.TagW;
-import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.SeriesViewerEvent;
 import org.weasis.core.ui.editor.SeriesViewerEvent.EVENT;
 import org.weasis.core.ui.editor.SeriesViewerListener;
@@ -215,10 +214,10 @@ public class WaveView extends JPanel implements SeriesViewerListener {
       return;
     }
     boolean open = false;
-    synchronized (UIManager.VIEWER_PLUGINS) {
-      List<ViewerPlugin<?>> plugins = UIManager.VIEWER_PLUGINS;
+    List<ViewerPlugin<?>> viewerPlugins = GuiUtils.getUICore().getViewerPlugins();
+    synchronized (viewerPlugins) {
       pluginList:
-      for (final ViewerPlugin<?> plugin : plugins) {
+      for (final ViewerPlugin<?> plugin : viewerPlugins) {
         List<? extends MediaSeries<?>> openSeries = plugin.getOpenSeries();
         if (openSeries != null) {
           for (MediaSeries<?> s : openSeries) {
@@ -524,8 +523,7 @@ public class WaveView extends JPanel implements SeriesViewerListener {
   }
 
   private void printHeader(Graphics2D g2, int midWidth) {
-    DataExplorerView dicomView =
-        org.weasis.core.ui.docking.UIManager.getExplorerPlugin(DicomExplorer.NAME);
+    DataExplorerView dicomView = GuiUtils.getUICore().getExplorerPlugin(DicomExplorer.NAME);
     DicomModel model = null;
     if (dicomView != null) {
       model = (DicomModel) dicomView.getDataExplorerModel();

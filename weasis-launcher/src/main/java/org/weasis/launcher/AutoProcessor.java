@@ -35,6 +35,7 @@ public class AutoProcessor {
 
   /** The property name prefix for the launcher's auto-install property. */
   public static final String AUTO_INSTALL_PROP = "felix.auto.install";
+
   /** The property name prefix for the launcher's auto-start property. */
   public static final String AUTO_START_PROP = "felix.auto.start";
 
@@ -126,7 +127,7 @@ public class AutoProcessor {
       }
       try {
         BundleElement b = bundleList.get(bundleName);
-        // Remove the bundles in cache when they are not in the config.properties list
+        // Remove the bundles in cache when they are not in the base.json list
         if (b == null) {
           if (!"System Bundle".equals(bundleName)) { // NON-NLS
             value.uninstall();

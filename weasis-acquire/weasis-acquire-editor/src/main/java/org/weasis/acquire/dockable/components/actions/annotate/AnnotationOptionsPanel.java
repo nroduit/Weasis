@@ -106,9 +106,9 @@ public class AnnotationOptionsPanel extends JPanel {
   }
 
   private void updateMeasureProperties() {
-    MeasureToolBar.measureGraphicList.forEach(
-        g -> MeasureToolBar.applyDefaultSetting(MeasureTool.viewSetting, g));
-    MeasureToolBar.drawGraphicList.forEach(
-        g -> MeasureToolBar.applyDefaultSetting(MeasureTool.viewSetting, g));
+    MeasureToolBar.getMeasureGraphicList()
+        .forEach(g -> MeasureToolBar.applyDefaultSetting(MeasureTool.viewSetting, g));
+    MeasureToolBar.getDrawGraphicList()
+        .forEach(g -> MeasureToolBar.applyDefaultSetting(MeasureTool.viewSetting, g));
   }
 }

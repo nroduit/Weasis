@@ -25,7 +25,7 @@ import org.joml.Vector2i;
 import org.joml.Vector3d;
 import org.joml.Vector4d;
 import org.weasis.core.api.gui.util.ActionW;
-import org.weasis.core.api.service.BundleTools;
+import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.viewer3d.EventManager;
 import org.weasis.dicom.viewer3d.vr.DicomVolTexture;
@@ -84,7 +84,8 @@ public class Camera {
   }
 
   public static CameraView getDefaultOrientation() {
-    String orientation = BundleTools.SYSTEM_PREFERENCES.getProperty(P_DEFAULT_ORIENTATION);
+    String orientation =
+        GuiUtils.getUICore().getSystemPreferences().getProperty(P_DEFAULT_ORIENTATION);
     if (StringUtil.hasText(orientation)) {
       return CameraView.getCameraView(orientation);
     }

@@ -89,7 +89,7 @@ public class RsQuery implements Callable<Boolean> {
       if (query.getValues() != null) {
         for (String v : query.getValues()) {
           if (StringUtil.hasText(v)) {
-            String encode = URLEncoder.encode(v, StandardCharsets.UTF_8.toString());
+            String encode = URLEncoder.encode(v, StandardCharsets.UTF_8);
             joiner.add(encode);
           }
         }

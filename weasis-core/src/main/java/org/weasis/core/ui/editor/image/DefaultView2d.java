@@ -79,7 +79,6 @@ import org.weasis.core.api.util.FontItem;
 import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.api.util.ResourceUtil.ActionIcon;
 import org.weasis.core.ui.docking.DockableTool;
-import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.SeriesViewerEvent;
 import org.weasis.core.ui.editor.SeriesViewerEvent.EVENT;
 import org.weasis.core.ui.editor.image.SynchData.Mode;
@@ -406,7 +405,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
       return;
     }
 
-    UIManager.closeSeries(oldSequence);
+    GuiUtils.getUICore().closeSeries(oldSequence);
 
     initActionWState();
     try {
@@ -1142,7 +1141,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     imageLayer.removeLayerChangeListener(this);
     Optional.ofNullable(lens).ifPresent(l -> l.showLens(false));
     if (series != null) {
-      UIManager.closeSeries(series);
+      GuiUtils.getUICore().closeSeries(series);
       series = null;
     }
     super.disposeView();

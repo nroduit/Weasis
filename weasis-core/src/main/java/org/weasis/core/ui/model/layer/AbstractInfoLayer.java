@@ -16,7 +16,7 @@ import java.awt.GridBagConstraints;
 import java.awt.Rectangle;
 import java.awt.geom.Line2D;
 import java.awt.geom.Rectangle2D;
-import java.util.HashMap;
+import java.util.EnumMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
@@ -48,7 +48,8 @@ public abstract class AbstractInfoLayer<E extends ImageElement> extends DefaultU
 
   protected static final Color highlight = new Color(255, 153, 153);
   public static final AtomicBoolean applyToAllView = new AtomicBoolean(true);
-  public static final Map<LayerItem, Boolean> defaultDisplayPreferences = new HashMap<>();
+  protected static final Map<LayerItem, Boolean> defaultDisplayPreferences =
+      new EnumMap<>(LayerItem.class);
 
   static {
     for (LayerItem item : LayerItem.values()) {
@@ -67,7 +68,7 @@ public abstract class AbstractInfoLayer<E extends ImageElement> extends DefaultU
       Unit pixelUnit,
       String pixelDescription) {}
 
-  protected final HashMap<LayerItem, Boolean> displayPreferences = new HashMap<>();
+  protected final Map<LayerItem, Boolean> displayPreferences = new EnumMap<>(LayerItem.class);
   protected boolean visible = true;
   protected static final Color color = Color.yellow;
   protected final ViewCanvas<E> view2DPane;
@@ -95,8 +96,12 @@ public abstract class AbstractInfoLayer<E extends ImageElement> extends DefaultU
     return view2DPane;
   }
 
-  protected void setLayerValue(HashMap<LayerItem, Boolean> prefMap, LayerItem item) {
+  protected void setLayerValue(Map<LayerItem, Boolean> prefMap, LayerItem item) {
     prefMap.put(item, getDisplayPreferences(item));
+  }
+
+  public static Map<LayerItem, Boolean> getDefaultDisplayPreferences() {
+    return defaultDisplayPreferences;
   }
 
   public static void applyPreferences(Preferences prefs) {

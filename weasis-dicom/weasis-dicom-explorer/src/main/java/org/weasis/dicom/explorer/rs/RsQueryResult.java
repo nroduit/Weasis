@@ -27,11 +27,11 @@ import org.dcm4che3.json.JSONReader.Callback;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.auth.AuthMethod;
+import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.MediaSeriesGroupNode;
 import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.TagW;
-import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.api.util.HttpResponse;
 import org.weasis.core.api.util.NetworkUtil;
 import org.weasis.core.api.util.URLParameters;
@@ -85,8 +85,9 @@ public class RsQueryResult extends AbstractQueryResult {
             + "\";"
             + rsQueryParams.getProperties().getProperty(RsQueryParams.P_ACCEPT_EXT));
     defaultStartDownloading =
-        BundleTools.SYSTEM_PREFERENCES.getBooleanProperty(
-            DicomExplorerPrefView.DOWNLOAD_IMMEDIATELY, true);
+        GuiUtils.getUICore()
+            .getSystemPreferences()
+            .getBooleanProperty(DicomExplorerPrefView.DOWNLOAD_IMMEDIATELY, true);
   }
 
   private static String multiParams(String query) {
@@ -591,8 +592,9 @@ public class RsQueryResult extends AbstractQueryResult {
               dicomSeries,
               rsQueryParams.getDicomModel(),
               authMethod,
-              BundleTools.SYSTEM_PREFERENCES.getIntProperty(
-                  LoadSeries.CONCURRENT_DOWNLOADS_IN_SERIES, 4),
+              GuiUtils.getUICore()
+                  .getSystemPreferences()
+                  .getIntProperty(LoadSeries.CONCURRENT_DOWNLOADS_IN_SERIES, 4),
               true,
               startDownloading);
       loadSeries.setPriority(

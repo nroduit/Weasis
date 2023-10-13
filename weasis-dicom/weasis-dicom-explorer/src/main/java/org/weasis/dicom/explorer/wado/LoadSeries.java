@@ -54,6 +54,7 @@ import org.weasis.core.api.explorer.ObservableEvent;
 import org.weasis.core.api.gui.task.SeriesProgressMonitor;
 import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.gui.util.GuiExecutor;
+import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
@@ -65,7 +66,6 @@ import org.weasis.core.api.media.data.TagW.TagType;
 import org.weasis.core.api.media.data.Thumbnail;
 import org.weasis.core.api.model.PerformanceModel;
 import org.weasis.core.api.service.AuditLog;
-import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.api.util.AuthResponse;
 import org.weasis.core.api.util.ClosableURLConnection;
 import org.weasis.core.api.util.HttpResponse;
@@ -288,7 +288,7 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
           downloadErrors);
 
       if (LOAD_TYPE_WADO.equals(loadType)) {
-        String statisticServicePath = BundleTools.getStatisticServiceUrl();
+        String statisticServicePath = GuiUtils.getUICore().getStatisticServiceUrl();
 
         if (StringUtil.hasText(statisticServicePath)) {
 
@@ -546,12 +546,11 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
   }
 
   private static Map<String, String> getHttpTags(WadoParameters wadoParams) {
-    boolean hasBundleTags = !BundleTools.SESSION_TAGS_FILE.isEmpty();
     boolean hasWadoTags = wadoParams != null && wadoParams.getHttpTaglist() != null;
     boolean hasWadoLogin = wadoParams != null && wadoParams.getWebLogin() != null;
 
-    if (hasWadoTags || hasWadoLogin || hasBundleTags) {
-      HashMap<String, String> map = new HashMap<>(BundleTools.SESSION_TAGS_FILE);
+    if (hasWadoTags || hasWadoLogin) {
+      HashMap<String, String> map = new HashMap<>();
       if (hasWadoTags) {
         for (HttpTag tag : wadoParams.getHttpTaglist()) {
           map.put(tag.getKey(), tag.getValue());
@@ -579,8 +578,9 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
                     (SeriesThumbnail) dicomSeries.getTagValue(TagW.Thumbnail);
                 if (thumbnail == null) {
                   int thumbnailSize =
-                      BundleTools.SYSTEM_PREFERENCES.getIntProperty(
-                          Thumbnail.KEY_SIZE, Thumbnail.DEFAULT_SIZE);
+                      GuiUtils.getUICore()
+                          .getSystemPreferences()
+                          .getIntProperty(Thumbnail.KEY_SIZE, Thumbnail.DEFAULT_SIZE);
                   thumbnail = new SeriesThumbnail(dicomSeries, thumbnailSize);
                 }
                 // In case series is downloaded or canceled
@@ -1196,8 +1196,8 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
         // Set the priority to the current loadingSeries and stop a task.
         p.setPriority(DownloadPriority.COUNTER.getAndDecrement());
         DownloadManager.offerSeriesInQueue(this);
-        synchronized (DownloadManager.TASKS) {
-          for (LoadSeries s : DownloadManager.TASKS) {
+        synchronized (DownloadManager.getTasks()) {
+          for (LoadSeries s : DownloadManager.getTasks()) {
             if (s != this && StateValue.STARTED.equals(s.getState())) {
               cancelAndReplace(s);
               break;

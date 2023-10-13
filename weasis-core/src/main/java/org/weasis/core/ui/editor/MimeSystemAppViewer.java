@@ -68,7 +68,7 @@ public abstract class MimeSystemAppViewer implements SeriesViewer<MediaElement> 
   }
 
   @Override
-  public List<Toolbar> getToolBar() {
+  public List<Toolbar> getToolBars() {
     return null;
   }
 

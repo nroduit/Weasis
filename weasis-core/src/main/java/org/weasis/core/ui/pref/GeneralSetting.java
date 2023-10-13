@@ -19,7 +19,7 @@ import org.weasis.core.Messages;
 import org.weasis.core.api.gui.util.AbstractItemDialogPage;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.PageItem;
-import org.weasis.core.api.service.BundleTools;
+import org.weasis.core.api.service.UICore;
 import org.weasis.core.api.service.WProperties;
 
 public class GeneralSetting extends AbstractItemDialogPage {
@@ -70,9 +70,8 @@ public class GeneralSetting extends AbstractItemDialogPage {
   }
 
   protected void initialize() {
-    WProperties preferences = BundleTools.SYSTEM_PREFERENCES;
-    checkboxConfirmClosing.setSelected(
-        preferences.getBooleanProperty(BundleTools.CONFIRM_CLOSE, false));
+    WProperties preferences = GuiUtils.getUICore().getSystemPreferences();
+    checkboxConfirmClosing.setSelected(preferences.getBooleanProperty(UICore.CONFIRM_CLOSE, false));
   }
 
   @Override
@@ -81,14 +80,16 @@ public class GeneralSetting extends AbstractItemDialogPage {
       subpage.closeAdditionalWindow();
     }
 
-    BundleTools.SYSTEM_PREFERENCES.putBooleanProperty(
-        BundleTools.CONFIRM_CLOSE, checkboxConfirmClosing.isSelected());
+    GuiUtils.getUICore()
+        .getSystemPreferences()
+        .putBooleanProperty(UICore.CONFIRM_CLOSE, checkboxConfirmClosing.isSelected());
   }
 
   @Override
   public void resetToDefaultValues() {
-    BundleTools.SYSTEM_PREFERENCES.resetProperty(
-        BundleTools.CONFIRM_CLOSE, Boolean.FALSE.toString());
+    GuiUtils.getUICore()
+        .getSystemPreferences()
+        .resetProperty(UICore.CONFIRM_CLOSE, Boolean.FALSE.toString());
     initialize();
   }
 }

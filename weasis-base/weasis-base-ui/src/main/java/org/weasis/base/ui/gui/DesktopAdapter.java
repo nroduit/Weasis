@@ -24,7 +24,8 @@ public class DesktopAdapter {
     if (app.isSupported(Desktop.Action.APP_QUIT_HANDLER)) {
       app.setQuitHandler(
           (e, response) -> {
-            if (win.closeWindow()) {
+            if (win.canBeClosed()) {
+              win.closeAllRunnable();
               response.performQuit();
             } else {
               response.cancelQuit();

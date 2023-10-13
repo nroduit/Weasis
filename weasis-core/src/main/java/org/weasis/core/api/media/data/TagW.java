@@ -29,7 +29,6 @@ import javax.xml.stream.XMLStreamReader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.Messages;
-import org.weasis.core.api.util.LocalUtil;
 import org.weasis.core.util.StringUtil;
 
 /**
@@ -160,6 +159,7 @@ public class TagW {
 
   /** DICOM common tags */
   public static final TagW SubseriesInstanceUID = new TagW("SubseriesInstanceUID", TagType.STRING);
+
   // One or more Items shall be included in this sequence
   public static final TagW VOILUTsExplanation =
       new TagW("VOILUTsExplanation", TagType.STRING, 1, Integer.MAX_VALUE);
@@ -494,9 +494,7 @@ public class TagW {
           if (pattern != null) {
             fmLength += pattern.length() + 2;
             try {
-              str =
-                  new DecimalFormat(pattern, LocalUtil.getDecimalFormatSymbols())
-                      .format(Double.parseDouble(str));
+              str = new DecimalFormat(pattern).format(Double.parseDouble(str));
             } catch (NumberFormatException e) {
               LOGGER.warn("Cannot apply pattern to decimal value", e);
             }

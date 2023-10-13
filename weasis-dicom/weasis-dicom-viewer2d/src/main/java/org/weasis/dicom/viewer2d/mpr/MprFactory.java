@@ -13,21 +13,19 @@ import java.awt.Component;
 import java.util.Map;
 import javax.swing.Icon;
 import org.weasis.core.api.explorer.DataExplorerView;
-import org.weasis.core.api.explorer.model.DataExplorerModel;
+import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.image.GridBagLayoutModel;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaSeries;
-import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.api.util.ResourceUtil.OtherIcon;
-import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.SeriesViewer;
 import org.weasis.core.ui.editor.SeriesViewerFactory;
-import org.weasis.core.ui.editor.ViewerPluginBuilder;
+import org.weasis.core.ui.editor.image.ImageViewerPlugin;
+import org.weasis.core.ui.editor.image.ImageViewerPlugin.LayoutModel;
 import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.codec.DicomMediaIO;
 import org.weasis.dicom.explorer.DicomExplorer;
-import org.weasis.dicom.explorer.DicomModel;
 import org.weasis.dicom.viewer2d.Messages;
 import org.weasis.dicom.viewer2d.mpr.MprView.SliceOrientation;
 
@@ -53,7 +51,8 @@ public class MprFactory implements SeriesViewerFactory {
   }
 
   public static GridBagLayoutModel getDefaultGridBagLayoutModel() {
-    String defLayout = BundleTools.SYSTEM_PREFERENCES.getProperty(MprFactory.P_DEFAULT_LAYOUT);
+    String defLayout =
+        GuiUtils.getUICore().getSystemPreferences().getProperty(MprFactory.P_DEFAULT_LAYOUT);
     if (StringUtil.hasText(defLayout)) {
       return MprContainer.LAYOUT_LIST.stream()
           .filter(g -> defLayout.equals(g.getId()))
@@ -65,30 +64,12 @@ public class MprFactory implements SeriesViewerFactory {
 
   @Override
   public SeriesViewer<?> createSeriesViewer(Map<String, Object> properties) {
-    GridBagLayoutModel model = getDefaultGridBagLayoutModel();
-    String uid = null;
-    if (properties != null) {
-      Object obj = properties.get(org.weasis.core.api.image.GridBagLayoutModel.class.getName());
-      if (obj instanceof GridBagLayoutModel layoutModel) {
-        model = layoutModel;
-      }
-      // Set UID
-      Object val = properties.get(ViewerPluginBuilder.UID);
-      if (val instanceof String str) {
-        uid = str;
-      }
-    }
-
-    MprContainer instance = new MprContainer(model, uid);
-    if (properties != null) {
-      Object obj = properties.get(DataExplorerModel.class.getName());
-      if (obj instanceof DicomModel m) {
-        // Register the PropertyChangeListener
-        m.addPropertyChangeListener(instance);
-      }
-    }
+    LayoutModel layout =
+        ImageViewerPlugin.getLayoutModel(properties, getDefaultGridBagLayoutModel(), null);
+    MprContainer instance = new MprContainer(layout.model(), layout.uid());
+    ImageViewerPlugin.registerInDataExplorerModel(properties, instance);
     int index = 0;
-    for (Component val : model.getConstraints().values()) {
+    for (Component val : layout.model().getConstraints().values()) {
       if (val instanceof MprView mprView) {
         SliceOrientation sliceOrientation =
             switch (index) {
@@ -105,7 +86,7 @@ public class MprFactory implements SeriesViewerFactory {
 
   public static void closeSeriesViewer(MprContainer mprContainer) {
     // Unregister the PropertyChangeListener
-    DataExplorerView dicomView = UIManager.getExplorerPlugin(DicomExplorer.NAME);
+    DataExplorerView dicomView = GuiUtils.getUICore().getExplorerPlugin(DicomExplorer.NAME);
     if (dicomView != null) {
       dicomView.getDataExplorerModel().removePropertyChangeListener(mprContainer);
     }

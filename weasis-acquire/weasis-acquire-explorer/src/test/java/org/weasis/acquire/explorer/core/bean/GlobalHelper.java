@@ -9,7 +9,6 @@
  */
 package org.weasis.acquire.explorer.core.bean;
 
-import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.Locale;
 import org.dcm4che3.data.Tag;
@@ -21,12 +20,10 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.media.data.TagW.TagType;
 import org.weasis.core.api.media.data.Taggable;
-import org.weasis.core.api.util.LocalUtil;
 import org.weasis.dicom.codec.TagD;
 
 @ExtendWith(MockitoExtension.class)
 public class GlobalHelper {
-  public static final DateTimeFormatter dateformat = DateTimeFormatter.ofPattern("yyyy-MM-dd");
   protected static String patientIdValue = "12345";
   protected static String patientNameValue = "John DOE"; // NON-NLS
   protected static String issuerOfPatientIdValue = "6789";
@@ -81,12 +78,8 @@ public class GlobalHelper {
 
   @BeforeAll
   static void setUp() {
+    Locale.setDefault(Locale.US);
     taggable = Mockito.mock(Taggable.class);
-
-    Mockito.mockStatic(LocalUtil.class);
-    Mockito.when(LocalUtil.getDateFormatter()).thenReturn(dateformat);
-    Mockito.when(LocalUtil.getDateTimeFormatter()).thenReturn(dateformat);
-    Mockito.when(LocalUtil.getLocaleFormat()).thenReturn(Locale.ENGLISH);
 
     Mockito.mockStatic(TagD.class);
     Arrays.stream(GlobalTag.values()).forEach(GlobalTag::prepareMock);

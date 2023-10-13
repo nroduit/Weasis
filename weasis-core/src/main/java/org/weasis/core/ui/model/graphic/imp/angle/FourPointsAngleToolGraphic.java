@@ -98,6 +98,7 @@ public class FourPointsAngleToolGraphic extends AbstractDragGraphic {
   boolean lineKLvalid;
 
   double angleDeg; // smallest angle in Degrees in the range of [-180 ; 180] between IJ & KL line
+
   // segments
 
   public FourPointsAngleToolGraphic() {

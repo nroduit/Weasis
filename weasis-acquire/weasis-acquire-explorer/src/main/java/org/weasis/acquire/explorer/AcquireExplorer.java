@@ -35,11 +35,10 @@ import org.weasis.core.api.explorer.DataExplorerView;
 import org.weasis.core.api.explorer.ObservableEvent;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.core.api.gui.Insertable;
+import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.TagW;
-import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.ui.docking.PluginTool;
-import org.weasis.core.ui.docking.UIManager;
 
 public class AcquireExplorer extends PluginTool implements DataExplorerView {
 
@@ -78,13 +77,16 @@ public class AcquireExplorer extends PluginTool implements DataExplorerView {
 
     // Remove dropping capabilities in the central area (limit to import
     // from browse panel)
-    UIManager.MAIN_AREA.getComponent().setTransferHandler(null);
+    GuiUtils.getUICore().getMainArea().getComponent().setTransferHandler(null);
   }
 
   public static String getLastPath() {
     String home = System.getProperty("user.home");
     File prefDir =
-        new File(BundleTools.LOCAL_UI_PERSISTENCE.getProperty(AcquireExplorer.P_LAST_DIR, home));
+        new File(
+            GuiUtils.getUICore()
+                .getLocalPersistence()
+                .getProperty(AcquireExplorer.P_LAST_DIR, home));
     if (prefDir.canRead() && prefDir.isDirectory()) {
       return prefDir.getPath();
     }
@@ -95,7 +97,7 @@ public class AcquireExplorer extends PluginTool implements DataExplorerView {
     if (systemDrive != null) {
       File dir = new File(systemDrive.getPath());
       if (dir.canRead()) {
-        BundleTools.LOCAL_UI_PERSISTENCE.setProperty(P_LAST_DIR, dir.getPath());
+        GuiUtils.getUICore().getLocalPersistence().setProperty(P_LAST_DIR, dir.getPath());
       }
     }
   }

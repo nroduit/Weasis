@@ -21,7 +21,6 @@ import java.util.stream.Collectors;
 import javax.swing.JFileChooser;
 import javax.swing.filechooser.FileFilter;
 import org.weasis.core.Messages;
-import org.weasis.core.api.service.BundleTools;
 
 /**
  * The Class FileFormatFilter.
@@ -145,7 +144,7 @@ public class FileFormatFilter extends FileFilter {
   public static void setImageDecodeFilters(JFileChooser chooser) {
     // Get the current available codecs.
     List<String> namesList =
-        BundleTools.CODEC_PLUGINS.stream()
+        GuiUtils.getUICore().getCodecPlugins().stream()
             .flatMap(c -> Arrays.stream(c.getReaderExtensions()))
             .distinct()
             .sorted()

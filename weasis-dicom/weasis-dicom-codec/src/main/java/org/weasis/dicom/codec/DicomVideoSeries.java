@@ -9,100 +9,31 @@
  */
 package org.weasis.dicom.codec;
 
-import java.io.BufferedInputStream;
 import java.io.File;
-import java.io.FileOutputStream;
-import java.io.InputStream;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Map.Entry;
-import org.dcm4che3.data.BulkData;
-import org.dcm4che3.data.Fragments;
 import org.dcm4che3.data.Tag;
-import org.dcm4che3.data.VR;
-import org.dcm4che3.util.StreamUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.gui.util.GuiUtils;
-import org.weasis.core.api.media.data.MediaElement;
-import org.weasis.core.api.media.data.Series;
-import org.weasis.core.api.media.data.TagW;
-import org.weasis.core.util.FileUtil;
+import org.weasis.core.api.media.data.TagView;
 import org.weasis.core.util.StringUtil;
-import org.weasis.dicom.codec.TagD.Level;
 
-public class DicomVideoSeries extends Series<DicomVideoElement> implements FilesExtractor {
-
-  private static final Logger LOGGER = LoggerFactory.getLogger(DicomVideoSeries.class);
-
-  private int width = 256;
-  private int height = 256;
+public class DicomVideoSeries extends DicomSeries implements FilesExtractor {
 
   public DicomVideoSeries(String subseriesInstanceUID) {
-    super(TagW.SubseriesInstanceUID, subseriesInstanceUID, DicomSeries.defaultTagView);
+    super(subseriesInstanceUID);
   }
 
-  public DicomVideoSeries(DicomSeries dicomSeries) {
-    super(
-        TagD.getUID(Level.SERIES),
-        dicomSeries.getTagValue(TagW.SubseriesInstanceUID),
-        DicomSeries.defaultTagView);
-
-    Iterator<Entry<TagW, Object>> iter = dicomSeries.getTagEntrySetIterator();
-    while (iter.hasNext()) {
-      Entry<TagW, Object> e = iter.next();
-      setTag(e.getKey(), e.getValue());
-    }
+  public DicomVideoSeries(
+      String subseriesInstanceUID, List<DicomImageElement> c, TagView displayTag) {
+    super(subseriesInstanceUID, c, displayTag);
   }
 
   @Override
-  public void addMedia(DicomVideoElement media) {
-    if (media != null && media.getMediaReader() instanceof DicomMediaIO dicomImageLoader) {
-      width = TagD.getTagValue(dicomImageLoader, Tag.Columns, Integer.class);
-      height = TagD.getTagValue(dicomImageLoader, Tag.Rows, Integer.class);
-      VR.Holder holder = new VR.Holder();
-      Object pixelData = dicomImageLoader.getDicomObject().getValue(Tag.PixelData, holder);
-      if (pixelData instanceof Fragments fragments) {
-        // Should have only 2 fragments: 1) compression marker 2) video stream
-        // One fragment shall contain the whole video stream.
-        // see http://dicom.nema.org/medical/dicom/current/output/chtml/part05/sect_8.2.5.html
-        for (Object data : fragments) {
-          if (data instanceof BulkData bulkData) {
-            InputStream in = null;
-            FileOutputStream out = null;
-            try {
-              File videoFile =
-                  File.createTempFile("video_", ".mpg", AppProperties.FILE_CACHE_DIR); // NON-NLS
-              in = new BufferedInputStream(bulkData.openStream());
-              out = new FileOutputStream(videoFile);
-              StreamUtils.copy(in, out, bulkData.length());
-              media.setVideoFile(videoFile);
-              this.add(media);
-            } catch (Exception e) {
-              LOGGER.error("Cannot extract video stream", e);
-            } finally {
-              FileUtil.safeClose(out);
-              FileUtil.safeClose(in);
-            }
-          }
-        }
-      }
+  public void addMedia(DicomImageElement media) {
+    if (media instanceof FileExtractor fileExtractor) {
+      fileExtractor.getExtractFile();
     }
-  }
-
-  @Override
-  public MediaElement getFirstSpecialElement() {
-    return null;
-  }
-
-  public int getWidth() {
-    return width;
-  }
-
-  public int getHeight() {
-    return height;
+    super.addMedia(media);
   }
 
   @Override
@@ -135,11 +66,6 @@ public class DicomVideoSeries extends Series<DicomVideoElement> implements Files
   }
 
   @Override
-  public String toString() {
-    return (String) getTagValue(TagW.SubseriesInstanceUID);
-  }
-
-  @Override
   public String getMimeType() {
     return DicomMediaIO.SERIES_VIDEO_MIMETYPE;
   }
@@ -149,7 +75,12 @@ public class DicomVideoSeries extends Series<DicomVideoElement> implements Files
     // Should have only one file as all the DicomVideoElement items are split in subseries
     List<File> files = new ArrayList<>();
     getMedias(null, null)
-        .forEach(dcm -> files.add(dcm.getExtractFile())); // Synchronized iteration with forEach
+        .forEach(
+            dcm -> {
+              if (dcm instanceof FileExtractor fileExtractor) {
+                files.add(fileExtractor.getExtractFile());
+              }
+            }); // Synchronized iteration with forEach
     return files;
   }
 }

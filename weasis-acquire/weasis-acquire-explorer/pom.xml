@@ -38,7 +38,7 @@
         <configuration>
           <bnd>
             -includeresource.all: lib/=target/dependency/;lib:=true
-            Export-Package: !org.weasis.acquire.explorer.gui.control,org.weasis.acquire.explorer.*
+            Export-Package: org.weasis.acquire.explorer.*
           </bnd>
         </configuration>
       </plugin>

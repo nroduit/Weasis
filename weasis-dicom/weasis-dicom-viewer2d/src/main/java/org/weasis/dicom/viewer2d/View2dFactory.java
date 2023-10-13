@@ -17,7 +17,6 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import javax.swing.Action;
 import javax.swing.Icon;
 import javax.swing.JFileChooser;
@@ -26,10 +25,10 @@ import org.dcm4che3.data.Tag;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.DataExplorerView;
-import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.ComboItemListener;
 import org.weasis.core.api.gui.util.FileFormatFilter;
+import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.image.GridBagLayoutModel;
 import org.weasis.core.api.image.LayoutConstraints;
 import org.weasis.core.api.media.MimeInspector;
@@ -39,20 +38,19 @@ import org.weasis.core.api.media.data.MediaReader;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.service.BundleTools;
+import org.weasis.core.api.service.WProperties;
 import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.api.util.ResourceUtil.OtherIcon;
-import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.SeriesViewer;
 import org.weasis.core.ui.editor.SeriesViewerFactory;
 import org.weasis.core.ui.editor.ViewerPluginBuilder;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
-import org.weasis.core.ui.editor.image.ViewCanvas;
+import org.weasis.core.ui.editor.image.ImageViewerPlugin.LayoutModel;
 import org.weasis.core.ui.util.DefaultAction;
 import org.weasis.dicom.codec.DicomCodec;
 import org.weasis.dicom.codec.DicomMediaIO;
 import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.explorer.DicomExplorer;
-import org.weasis.dicom.explorer.DicomModel;
 
 @org.osgi.service.component.annotations.Component(service = SeriesViewerFactory.class)
 public class View2dFactory implements SeriesViewerFactory {
@@ -85,37 +83,14 @@ public class View2dFactory implements SeriesViewerFactory {
 
   @Override
   public SeriesViewer<?> createSeriesViewer(Map<String, Object> properties) {
-    GridBagLayoutModel model = ImageViewerPlugin.VIEWS_1x1;
-    String uid = null;
-    if (properties != null) {
-      Object obj = properties.get(org.weasis.core.api.image.GridBagLayoutModel.class.getName());
-      if (obj instanceof GridBagLayoutModel gridBagLayoutModel) {
-        model = gridBagLayoutModel;
-      } else {
-        obj = properties.get(ViewCanvas.class.getName());
-        if (obj instanceof Integer intVal) {
-          Optional<ComboItemListener<GridBagLayoutModel>> layout =
-              EventManager.getInstance().getAction(ActionW.LAYOUT);
-          if (layout.isPresent()) {
-            model = ImageViewerPlugin.getBestDefaultViewLayout(layout.get(), intVal);
-          }
-        }
-      }
+    ComboItemListener<GridBagLayoutModel> layoutAction =
+        EventManager.getInstance().getAction(ActionW.LAYOUT).orElse(null);
+    LayoutModel layout =
+        ImageViewerPlugin.getLayoutModel(properties, ImageViewerPlugin.VIEWS_1x1, layoutAction);
 
-      // Set UID
-      Object val = properties.get(ViewerPluginBuilder.UID);
-      if (val instanceof String s) {
-        uid = s;
-      }
-    }
-    View2dContainer instance = new View2dContainer(model, uid, getUIName(), getIcon(), null);
-    if (properties != null) {
-      Object obj = properties.get(DataExplorerModel.class.getName());
-      if (obj instanceof DicomModel m) {
-        // Register the PropertyChangeListener
-        m.addPropertyChangeListener(instance);
-      }
-    }
+    View2dContainer instance =
+        new View2dContainer(layout.model(), layout.uid(), getUIName(), getIcon(), null);
+    ImageViewerPlugin.registerInDataExplorerModel(properties, instance);
 
     return instance;
   }
@@ -140,7 +115,7 @@ public class View2dFactory implements SeriesViewerFactory {
 
   public static void closeSeriesViewer(View2dContainer view2dContainer) {
     // Unregister the PropertyChangeListener
-    DataExplorerView dicomView = UIManager.getExplorerPlugin(DicomExplorer.NAME);
+    DataExplorerView dicomView = GuiUtils.getUICore().getExplorerPlugin(DicomExplorer.NAME);
     if (dicomView != null) {
       dicomView.getDataExplorerModel().removePropertyChangeListener(view2dContainer);
     }
@@ -163,7 +138,7 @@ public class View2dFactory implements SeriesViewerFactory {
 
   @Override
   public List<Action> getOpenActions() {
-    DataExplorerView dicomView = UIManager.getExplorerPlugin(DicomExplorer.NAME);
+    DataExplorerView dicomView = GuiUtils.getUICore().getExplorerPlugin(DicomExplorer.NAME);
     if (dicomView == null) {
       return Collections.singletonList(preferencesAction);
     }
@@ -182,8 +157,8 @@ public class View2dFactory implements SeriesViewerFactory {
   }
 
   private static void getOpenImageAction(ActionEvent e) {
-    String directory =
-        BundleTools.LOCAL_UI_PERSISTENCE.getProperty("last.open.dicom.dir", ""); // NON-NLS
+    WProperties localPersistence = GuiUtils.getUICore().getLocalPersistence();
+    String directory = localPersistence.getProperty("last.open.dicom.dir", ""); // NON-NLS
     JFileChooser fileChooser = new JFileChooser(directory);
 
     fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
@@ -195,7 +170,8 @@ public class View2dFactory implements SeriesViewerFactory {
     fileChooser.setFileFilter(filter);
 
     File[] selectedFiles;
-    if (fileChooser.showOpenDialog(UIManager.getApplicationWindow()) != JFileChooser.APPROVE_OPTION
+    if (fileChooser.showOpenDialog(GuiUtils.getUICore().getApplicationWindow())
+            != JFileChooser.APPROVE_OPTION
         || (selectedFiles = fileChooser.getSelectedFiles()) == null) {
       return;
     } else {
@@ -236,8 +212,7 @@ public class View2dFactory implements SeriesViewerFactory {
               JOptionPane.WARNING_MESSAGE);
         }
       }
-      BundleTools.LOCAL_UI_PERSISTENCE.setProperty(
-          "last.open.dicom.dir", selectedFiles[0].getParent());
+      localPersistence.setProperty("last.open.dicom.dir", selectedFiles[0].getParent());
     }
   }
 

@@ -23,6 +23,7 @@ import java.awt.Rectangle;
 import java.awt.Stroke;
 import java.awt.Window;
 import java.awt.event.ItemEvent;
+import java.text.NumberFormat;
 import java.util.List;
 import java.util.Objects;
 import javax.swing.Box;
@@ -39,8 +40,6 @@ import org.weasis.core.api.gui.util.DecFormatter;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.WinUtil;
 import org.weasis.core.api.image.util.Unit;
-import org.weasis.core.api.service.BundleTools;
-import org.weasis.core.api.util.LocalUtil;
 import org.weasis.core.ui.editor.image.dockable.MeasureTool;
 import org.weasis.core.util.StringUtil;
 
@@ -108,8 +107,9 @@ public class ScreenPrefView extends AbstractItemDialogPage {
         e -> {
           if (e.getStateChange() == ItemEvent.SELECTED) {
             JComboBox<?> comboBox = (JComboBox<?>) e.getSource();
-            BundleTools.LOCAL_UI_PERSISTENCE.putIntProperty(
-                "default.monitor", comboBox.getSelectedIndex());
+            GuiUtils.getUICore()
+                .getLocalPersistence()
+                .putIntProperty("default.monitor", comboBox.getSelectedIndex());
           }
         });
 
@@ -127,7 +127,7 @@ public class ScreenPrefView extends AbstractItemDialogPage {
   }
 
   public static int getDefaultMonitor() {
-    return BundleTools.LOCAL_UI_PERSISTENCE.getIntProperty("default.monitor", 0);
+    return GuiUtils.getUICore().getLocalPersistence().getIntProperty("default.monitor", 0);
   }
 
   @Override
@@ -225,7 +225,7 @@ public class ScreenPrefView extends AbstractItemDialogPage {
 
     private final Cross cross;
     private final JFormattedTextField jTextFieldLineWidth =
-        new JFormattedTextField(LocalUtil.getIntegerInstance());
+        new JFormattedTextField(NumberFormat.getIntegerInstance());
     private final JComboBox<String> jComboBoxType =
         new JComboBox<>(
             new String[] {
@@ -306,8 +306,9 @@ public class ScreenPrefView extends AbstractItemDialogPage {
         buf.append("x"); // NON-NLS
         buf.append(b.height);
         buf.append(".pitch");
-        BundleTools.LOCAL_UI_PERSISTENCE.putDoubleProperty(
-            buf.toString(), monitor.getRealScaleFactor());
+        GuiUtils.getUICore()
+            .getLocalPersistence()
+            .putDoubleProperty(buf.toString(), monitor.getRealScaleFactor());
       }
     }
   }

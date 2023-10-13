@@ -12,7 +12,7 @@ package org.weasis.base.viewer2d;
 import java.awt.FontMetrics;
 import java.awt.Graphics2D;
 import java.awt.Rectangle;
-import java.util.HashMap;
+import java.util.Map;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.DecFormatter;
 import org.weasis.core.api.gui.util.Filter;
@@ -56,7 +56,7 @@ public class InfoLayer extends AbstractInfoLayer<ImageElement> {
   @Override
   public LayerAnnotation getLayerCopy(ViewCanvas view2dPane, boolean useGlobalPreferences) {
     InfoLayer layer = new InfoLayer(view2DPane, useGlobalPreferences);
-    HashMap<LayerItem, Boolean> prefMap = layer.displayPreferences;
+    Map<LayerItem, Boolean> prefMap = layer.displayPreferences;
     setLayerValue(prefMap, LayerItem.ANNOTATIONS);
     setLayerValue(prefMap, LayerItem.SCALE);
     setLayerValue(prefMap, LayerItem.LUT);

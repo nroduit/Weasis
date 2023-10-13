@@ -30,14 +30,13 @@ import org.weasis.core.api.explorer.ObservableEvent.BasicAction;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.core.api.explorer.model.TreeModel;
 import org.weasis.core.api.gui.util.GuiExecutor;
+import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.service.BundlePreferences;
-import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.ui.docking.DockableTool;
 import org.weasis.core.ui.docking.PluginTool;
-import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.SeriesViewerFactory;
 import org.weasis.core.ui.editor.ViewerPluginBuilder;
 import org.weasis.core.ui.editor.image.ViewerPlugin;
@@ -72,9 +71,9 @@ public class WeasisWinListener implements MainWindowListener {
         if (ObservableEvent.BasicAction.SELECT.equals(action)) {
           if (source instanceof DataExplorerModel model) {
             DataExplorerView view = null;
-            synchronized (UIManager.EXPLORER_PLUGINS) {
-              List<DataExplorerView> explorers = UIManager.EXPLORER_PLUGINS;
-              for (DataExplorerView dataExplorerView : explorers) {
+            List<DataExplorerView> explorerPlugins = GuiUtils.getUICore().getExplorerPlugins();
+            synchronized (explorerPlugins) {
+              for (DataExplorerView dataExplorerView : explorerPlugins) {
                 if (dataExplorerView.getDataExplorerModel() == model) {
                   view = dataExplorerView;
                   break;
@@ -89,9 +88,10 @@ public class WeasisWinListener implements MainWindowListener {
           else if (source instanceof MediaSeriesGroup group) {
             // If already selected do not reselect or select a second window
             if (selectedPlugin == null || !group.equals(selectedPlugin.getGroupID())) {
-              synchronized (UIManager.VIEWER_PLUGINS) {
-                for (int i = UIManager.VIEWER_PLUGINS.size() - 1; i >= 0; i--) {
-                  ViewerPlugin<?> p = UIManager.VIEWER_PLUGINS.get(i);
+              List<ViewerPlugin<?>> viewerPlugins = GuiUtils.getUICore().getViewerPlugins();
+              synchronized (viewerPlugins) {
+                for (int i = viewerPlugins.size() - 1; i >= 0; i--) {
+                  ViewerPlugin<?> p = viewerPlugins.get(i);
                   if (group.equals(p.getGroupID())) {
                     p.setSelectedAndGetFocus();
                     break;
@@ -154,22 +154,23 @@ public class WeasisWinListener implements MainWindowListener {
           if (source instanceof SeriesViewerFactory viewerFactory) {
             final List<ViewerPlugin<?>> pluginsToRemove = new ArrayList<>();
             String name = viewerFactory.getUIName();
-            synchronized (UIManager.VIEWER_PLUGINS) {
-              for (final ViewerPlugin<?> plugin : UIManager.VIEWER_PLUGINS) {
+            List<ViewerPlugin<?>> viewerPlugins = GuiUtils.getUICore().getViewerPlugins();
+            synchronized (viewerPlugins) {
+              for (final ViewerPlugin<?> plugin : viewerPlugins) {
                 if (name.equals(plugin.getName())) {
                   // Do not close Series directly, it can produce deadlock.
                   pluginsToRemove.add(plugin);
                 }
               }
             }
-            UIManager.closeSeriesViewer(pluginsToRemove);
+            GuiUtils.getUICore().closeSeriesViewer(pluginsToRemove);
           }
         } else if (BasicAction.UPDATE_TOOLS.equals(action)) {
-          UIManager.updateTools(selectedPlugin, selectedPlugin, true);
+          GuiUtils.getUICore().updateTools(selectedPlugin, selectedPlugin, true);
         }
       } else if (event.getSource() instanceof ViewerPlugin) {
         if (ObservableEvent.BasicAction.UPDATE_TOOLBARS.equals(action)) {
-          UIManager.updateToolbars(selectedPlugin, selectedPlugin, true);
+          GuiUtils.getUICore().updateToolbars(selectedPlugin, selectedPlugin, true);
         } else if (ObservableEvent.BasicAction.NULL_SELECTION.equals(action)) {
           mainWindow.setSelectedPlugin(null);
         }
@@ -179,7 +180,7 @@ public class WeasisWinListener implements MainWindowListener {
             mainWindow.setSelectedPlugin(null);
           }
         } else if (BasicAction.UPDATE_TOOLS.equals(action)) {
-          UIManager.updateTools(selectedPlugin, selectedPlugin, true);
+          GuiUtils.getUICore().updateTools(selectedPlugin, selectedPlugin, true);
         }
       }
     }
@@ -211,7 +212,8 @@ public class WeasisWinListener implements MainWindowListener {
       unbind = "removeDataExplorer")
   void addDataExplorer(DataExplorerViewFactory factory) {
 
-    String className1 = BundleTools.SYSTEM_PREFERENCES.getProperty(factory.getClass().getName());
+    String className1 =
+        GuiUtils.getUICore().getSystemPreferences().getProperty(factory.getClass().getName());
     if (!StringUtil.hasText(className1) || Boolean.parseBoolean(className1)) {
       GuiExecutor.instance()
           .execute(() -> registerDataExplorer(factory.createDataExplorerView(null)));
@@ -223,19 +225,23 @@ public class WeasisWinListener implements MainWindowListener {
         .execute(
             () -> {
               final DataExplorerView explorer = factory.createDataExplorerView(null);
-              if (UIManager.EXPLORER_PLUGINS.contains(explorer)) {
+              List<DataExplorerView> explorerPlugins = GuiUtils.getUICore().getExplorerPlugins();
+              if (explorerPlugins.contains(explorer)) {
                 Optional.ofNullable(explorer.getDataExplorerModel())
                     .ifPresent(e -> e.removePropertyChangeListener(this));
-                UIManager.EXPLORER_PLUGINS.remove(explorer);
+                explorerPlugins.remove(explorer);
 
                 // Update toolbar
                 List<Toolbar> tb = mainWindow.getToolbarContainer().getRegisteredToolBars();
                 tb.removeIf(b -> b.getComponent().getAttachedInsertable() == explorer);
                 mainWindow.getToolbarContainer().registerToolBar(tb);
-                UIManager.VIEWER_PLUGINS.forEach(
-                    v ->
-                        v.getToolBar()
-                            .removeIf(b -> b.getComponent().getAttachedInsertable() == explorer));
+                GuiUtils.getUICore()
+                    .getViewerPlugins()
+                    .forEach(
+                        v ->
+                            v.getToolBars()
+                                .removeIf(
+                                    b -> b.getComponent().getAttachedInsertable() == explorer));
 
                 explorer.dispose();
                 LOGGER.info("Unregister data explorer Plug-in: {}", explorer.getUIName());
@@ -244,8 +250,9 @@ public class WeasisWinListener implements MainWindowListener {
   }
 
   void registerDataExplorer(DataExplorerView explorer) {
-    if (explorer != null && !UIManager.EXPLORER_PLUGINS.contains(explorer)) {
-      UIManager.EXPLORER_PLUGINS.add(explorer);
+    List<DataExplorerView> explorerPlugins = GuiUtils.getUICore().getExplorerPlugins();
+    if (explorer != null && !explorerPlugins.contains(explorer)) {
+      explorerPlugins.add(explorer);
       Optional.ofNullable(explorer.getDataExplorerModel())
           .ifPresent(e -> e.addPropertyChangeListener(this));
       if (explorer instanceof final DockableTool dockable) {

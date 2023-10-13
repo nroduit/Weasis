@@ -9,64 +9,69 @@
  */
 package org.weasis.dicom.codec;
 
+import java.io.BufferedInputStream;
 import java.io.File;
+import java.io.FileOutputStream;
+import java.io.InputStream;
 import org.dcm4che3.data.Attributes;
+import org.dcm4che3.data.BulkData;
+import org.dcm4che3.data.Fragments;
 import org.dcm4che3.data.Tag;
-import org.weasis.core.api.image.util.Unit;
-import org.weasis.core.api.media.data.AudioVideoElement;
+import org.dcm4che3.data.VR;
+import org.dcm4che3.util.StreamUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.util.FileUtil;
 
-public class DicomVideoElement extends AudioVideoElement implements FileExtractor, DicomElement {
-
-  public static final String MPEG_MIMETYPE = "video/mpeg";
-
-  private double pixelSizeX = 1.0;
-  private double pixelSizeY = 1.0;
+public class DicomVideoElement extends DicomImageElement implements FileExtractor {
+  private static final Logger LOGGER = LoggerFactory.getLogger(DicomVideoElement.class);
   private File videoFile = null;
-  private Unit pixelSpacingUnit;
 
   public DicomVideoElement(DicomMediaIO mediaIO, Object key) {
     super(mediaIO, key);
-    // Physical distance in mm between the center of each pixel (ratio in mm)
-    double[] val = TagD.getTagValue(mediaIO, Tag.PixelSpacing, double[].class);
-    if (val == null || val.length != 2) {
-      val = TagD.getTagValue(mediaIO, Tag.ImagerPixelSpacing, double[].class);
-    }
-    if (val == null || val.length != 2) {
-      val = TagD.getTagValue(mediaIO, Tag.NominalScannedPixelSpacing, double[].class);
-    }
-    if (val != null) {
-      pixelSizeX = val[0];
-      pixelSizeY = val[1];
-      pixelSpacingUnit = Unit.MILLIMETER;
-    }
-  }
-
-  public double getPixelSizeX() {
-    return pixelSizeX;
-  }
-
-  public double getPixelSizeY() {
-    return pixelSizeY;
-  }
-
-  public Unit getPixelSpacingUnit() {
-    return pixelSpacingUnit;
-  }
-
-  public void setVideoFile(File videoFile) {
-    FileUtil.delete(this.videoFile);
-    this.videoFile = videoFile;
   }
 
   @Override
   public File getExtractFile() {
+    synchronized (this) {
+      if ((videoFile == null || !videoFile.exists()) && getMediaReader() != null) {
+        Attributes dcm = getMediaReader().getDicomObject();
+        if (dcm != null) {
+          VR.Holder holder = new VR.Holder();
+          Object pixelData = dcm.getValue(Tag.PixelData, holder);
+          if (pixelData instanceof Fragments fragments) {
+            readFragments(fragments);
+          }
+        }
+      }
+    }
     return videoFile;
   }
 
-  @Override
-  public DcmMediaReader getMediaReader() {
-    return (DcmMediaReader) super.getMediaReader();
+  private void readFragments(Fragments fragments) {
+    // Should have only 2 fragments: 1) compression marker 2) video stream
+    // One fragment shall contain the whole video stream.
+    // see http://dicom.nema.org/medical/dicom/current/output/chtml/part05/sect_8.2.5.html
+    for (Object data : fragments) {
+      if (data instanceof BulkData bulkData) {
+        InputStream in = null;
+        FileOutputStream out = null;
+        try {
+          File file =
+              File.createTempFile("video_", ".mpg", AppProperties.FILE_CACHE_DIR); // NON-NLS
+          in = new BufferedInputStream(bulkData.openStream());
+          out = new FileOutputStream(file);
+          StreamUtils.copy(in, out, bulkData.length());
+          videoFile = file;
+        } catch (Exception e) {
+          LOGGER.error("Cannot extract video stream", e);
+        } finally {
+          FileUtil.safeClose(out);
+          FileUtil.safeClose(in);
+        }
+      }
+    }
   }
 
   @Override

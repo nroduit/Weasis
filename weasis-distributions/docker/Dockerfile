@@ -1,4 +1,5 @@
-# Based on image: https://github.com/adoptium/containers/blob/main/20/jdk/ubuntu/jammy/Dockerfile.releases.full
+# Based on image: https://github.com/adoptium/containers/blob/main/21/jdk/ubuntu/jammy/Dockerfile.releases.full
+# Additional packages: https://github.com/adoptium/temurin21-binaries/releases
 # Add libraries required by weasis build: bzip2 unzip xz-utils fakeroot rpm
 FROM ubuntu:22.04
 
@@ -9,31 +10,27 @@ ENV PATH $JAVA_HOME/bin:$PATH
 ENV LANG='en_US.UTF-8' LANGUAGE='en_US:en' LC_ALL='en_US.UTF-8'
 
 RUN apt-get update \
-    && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends tzdata curl wget ca-certificates fontconfig locales binutils bzip2 unzip xz-utils fakeroot rpm \
+    && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends tzdata curl wget ca-certificates fontconfig locales p11-kit binutils bzip2 unzip xz-utils fakeroot rpm \
     && echo "en_US.UTF-8 UTF-8" >> /etc/locale.gen \
     && locale-gen en_US.UTF-8 \
     && rm -rf /var/lib/apt/lists/*
 
-ENV JAVA_VERSION jdk-20+36
+ENV JAVA_VERSION jdk-21+35
 
 RUN set -eux; \
     ARCH="$(dpkg --print-architecture)"; \
     case "${ARCH}" in \
        aarch64|arm64) \
-         ESUM='980156d37580bd6fec142e02900497984e94c4b819a0c0eb7ce790bfc7c7d920'; \
-         BINARY_URL='https://github.com/adoptium/temurin20-binaries/releases/download/jdk-20%2B36/OpenJDK20U-jdk_aarch64_linux_hotspot_20_36.tar.gz'; \
+         ESUM='33e440c237438aa2e3866d84ead8d4e00dc0992d98d9fd0ee2fe48192f2dbc4b'; \
+         BINARY_URL='https://github.com/adoptium/temurin21-binaries/releases/download/jdk-21%2B35/OpenJDK21U-jdk_aarch64_linux_hotspot_21_35.tar.gz'; \
          ;; \
        armhf|arm) \
-         ESUM='95528b5b2d2e48eca77f17a1705087ea926b551a3e25c0b84c19acf9235559f6'; \
-         BINARY_URL='https://github.com/adoptium/temurin20-binaries/releases/download/jdk20u-2023-04-07-10-00-beta/OpenJDK20U-jdk_arm_linux_hotspot_2023-04-07-10-00.tar.gz'; \
-         ;; \
-       ppc64el|powerpc:common64) \
-         ESUM='45dde71faf8cbb78fab3c976894259655c8d3de827347f23e0ebe5710921dded'; \
-         BINARY_URL='https://github.com/adoptium/temurin20-binaries/releases/download/jdk-20%2B36/OpenJDK20U-jdk_ppc64le_linux_hotspot_20_36.tar.gz'; \
+         ESUM='43d0e2b021cbe51be30683f550eabe2476b3b21e65986ffe1d929fca10e0a0e6'; \
+         BINARY_URL='https://github.com/adoptium/temurin21-binaries/releases/download/jdk21-2023-08-09-06-56-beta/OpenJDK21U-jdk_arm_linux_hotspot_2023-08-09-06-56.tar.gz'; \
          ;; \
        amd64|i386:x86-64) \
-         ESUM='fb6000faf47fffcda8caf01f60097d582728a6fffb6c1b85c8075c674f0c9281'; \
-         BINARY_URL='https://github.com/adoptium/temurin20-binaries/releases/download/jdk-20%2B36/OpenJDK20U-jdk_x64_linux_hotspot_20_36.tar.gz'; \
+         ESUM='82f64c53acaa045370d6762ebd7441b74e6fda14b464d54d1ff8ca941ec069e6'; \
+         BINARY_URL='https://github.com/adoptium/temurin21-binaries/releases/download/jdk-21%2B35/OpenJDK21U-jdk_x64_linux_hotspot_21_35.tar.gz'; \
          ;; \
        *) \
          echo "Unsupported arch: ${ARCH}"; \
@@ -49,7 +46,7 @@ RUN set -eux; \
 	      --strip-components 1 \
 	      --no-same-owner \
 	  ; \
-    rm -f /tmp/openjdk.tar.gz ${JAVA_HOME}/src.zip; \
+    rm -f /tmp/openjdk.tar.gz ${JAVA_HOME}/lib/src.zip; \
 # https://github.com/docker-library/openjdk/issues/331#issuecomment-498834472
     find "$JAVA_HOME/lib" -name '*.so' -exec dirname '{}' ';' | sort -u > /etc/ld.so.conf.d/docker-openjdk.conf; \
     ldconfig; \

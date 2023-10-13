@@ -11,6 +11,8 @@ package org.weasis.core.ui.editor.image;
 
 import java.awt.geom.Point2D;
 import java.util.List;
+import java.util.Locale;
+import java.util.Locale.Category;
 import java.util.Objects;
 import javax.swing.BoxLayout;
 import javax.swing.ButtonGroup;
@@ -30,7 +32,6 @@ import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaSeries;
-import org.weasis.core.api.util.LocalUtil;
 import org.weasis.core.ui.model.graphic.imp.line.LineGraphic;
 import org.weasis.core.util.MathUtil;
 import org.weasis.core.util.StringUtil;
@@ -73,7 +74,7 @@ public class CalibrationView extends JPanel {
     setBorder(GuiUtils.getEmptyBorder(10, 15, 10, 15));
 
     GuiUtils.setPreferredWidth(jTextFieldLineWidth, 170);
-    jTextFieldLineWidth.setLocale(LocalUtil.getLocaleFormat());
+    jTextFieldLineWidth.setLocale(Locale.getDefault(Category.FORMAT));
     jTextFieldLineWidth.setFormatterFactory(
         DecFormatter.setPreciseDoubleFormat(0.000005d, Double.MAX_VALUE));
     jTextFieldLineWidth.setValue(1.0);

@@ -55,7 +55,7 @@ import org.weasis.core.api.gui.util.WinUtil;
 import org.weasis.core.api.image.ImageOpNode;
 import org.weasis.core.api.image.ZoomOp;
 import org.weasis.core.api.service.BundlePreferences;
-import org.weasis.core.api.service.BundleTools;
+import org.weasis.core.api.service.WProperties;
 import org.weasis.core.api.util.FontItem;
 import org.weasis.core.api.util.ThreadUtil;
 import org.weasis.core.util.StringUtil;
@@ -218,7 +218,7 @@ public class AcquirePublishDialog extends JDialog {
     AbstractDicomNode.addTooltipToComboList(comboNode);
 
     if (!StringUtil.hasText(
-        BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.acquire.dest.host"))) {
+        GuiUtils.getUICore().getSystemPreferences().getProperty("weasis.acquire.dest.host"))) {
       AbstractDicomNode.loadDicomNodes(comboNode, AbstractDicomNode.Type.DICOM, UsageType.STORAGE);
       AbstractDicomNode.loadDicomNodes(comboNode, AbstractDicomNode.Type.WEB, UsageType.STORAGE);
       String desc = MediaImporterFactory.EXPORT_PERSISTENCE.getProperty(LAST_SEL_NODE);
@@ -252,14 +252,10 @@ public class AcquirePublishDialog extends JDialog {
   }
 
   private static AbstractDicomNode getDestinationConfiguration() {
-    String host =
-        BundleTools.SYSTEM_PREFERENCES.getProperty(
-            "weasis.acquire.dest.host", "localhost"); // NON-NLS
-    String aet =
-        BundleTools.SYSTEM_PREFERENCES.getProperty(
-            "weasis.acquire.dest.aet", "DCM4CHEE"); // NON-NLS
-    String port =
-        BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.acquire.dest.port", "11112"); // NON-NLS
+    WProperties preferences = GuiUtils.getUICore().getSystemPreferences();
+    String host = preferences.getProperty("weasis.acquire.dest.host", "localhost"); // NON-NLS
+    String aet = preferences.getProperty("weasis.acquire.dest.aet", "DCM4CHEE"); // NON-NLS
+    String port = preferences.getProperty("weasis.acquire.dest.port", "11112"); // NON-NLS
     return new DefaultDicomNode(
         Messages.getString("AcquirePublishDialog.def_archive"),
         aet,
