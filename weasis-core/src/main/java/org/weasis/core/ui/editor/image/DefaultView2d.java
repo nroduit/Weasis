@@ -985,7 +985,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
 
     Double zoomFactor = (Double) actionsInView.get(ActionW.ZOOM.cmd());
     // Avoid resetting zoom when the mode is not best fit
-    if (zoomFactor != null && zoomFactor >= 0.0) {
+    if (zoomFactor != null ) {
       Object zoomType = actionsInView.get(ViewCanvas.ZOOM_TYPE_CMD);
       actionsInView.put(ViewCanvas.ZOOM_TYPE_CMD, ZoomType.CURRENT);
       setImage(imgElement);
