@@ -1,0 +1,41 @@
+{
+  "weasisPreferences": [
+    {
+      "code": "org.osgi.framework.startlevel.beginning",
+      "value": "110"
+    },
+    {
+      "code": "felix.auto.start.40",
+      "value": "${dollar}{weasis.codebase.url}/bundle/weasis-base-explorer-${app.version}.jar${xz.ext}",
+      "description": "Replace DICOM explorer by a standard image explorer"
+    },
+    {
+      "code": "felix.auto.start.30",
+      "value": ""
+    },
+    {
+      "code": "felix.auto.start.70",
+      "value": ""
+    },
+    {
+      "code": "felix.auto.start.75",
+      "value": ""
+    },
+    {
+      "code": "felix.auto.start.110",
+      "value": ""
+    },
+    {
+      "code": "weasis.name",
+      "value": "Weasis Image Explorer"
+    },
+    {
+      "code": "weasis.show.disclaimer",
+      "value": "false"
+    },
+    {
+      "code": "weasis.theme",
+      "value": "com.formdev.flatlaf.FlatIntelliJLaf"
+    }
+  ]
+}

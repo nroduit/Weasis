@@ -61,12 +61,11 @@ import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.media.data.Taggable;
-import org.weasis.core.api.service.BundleTools;
+import org.weasis.core.api.service.WProperties;
 import org.weasis.core.api.util.ClosableURLConnection;
 import org.weasis.core.api.util.GzipManager;
 import org.weasis.core.api.util.NetworkUtil;
 import org.weasis.core.api.util.URLParameters;
-import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.model.GraphicModel;
 import org.weasis.core.ui.model.layer.GraphicLayer;
@@ -432,20 +431,19 @@ public class AcquireManager {
   }
 
   private static void showWorklist() {
-    String host = BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.acquire.wkl.host");
-    String aet = BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.acquire.wkl.aet");
-    String port = BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.acquire.wkl.port");
+    WProperties preferences = GuiUtils.getUICore().getSystemPreferences();
+    String host = preferences.getProperty("weasis.acquire.wkl.host");
+    String aet = preferences.getProperty("weasis.acquire.wkl.aet");
+    String port = preferences.getProperty("weasis.acquire.wkl.port");
     if (StringUtil.hasText(aet) && StringUtil.hasText(host) && StringUtil.hasText(port)) {
       DicomNode called = new DicomNode(aet, host, Integer.parseInt(port));
       DicomNode calling =
-          new DicomNode(
-              BundleTools.SYSTEM_PREFERENCES.getProperty(
-                  "weasis.acquire.wkl.station.aet", "WEASIS-WL"));
+          new DicomNode(preferences.getProperty("weasis.acquire.wkl.station.aet", "WEASIS-WL"));
 
       try {
         WorklistDialog dialog =
             new WorklistDialog(
-                UIManager.getApplicationWindow(),
+                GuiUtils.getUICore().getApplicationWindow(),
                 Messages.getString("AcquireManager.dcm_worklist"),
                 calling,
                 called);
@@ -586,7 +584,7 @@ public class AcquireManager {
     return Optional.ofNullable(acquireExplorer)
         .map(AcquireExplorer::getCentralPane)
         .map(Component.class::cast)
-        .orElse(UIManager.getApplicationWindow());
+        .orElse(GuiUtils.getUICore().getApplicationWindow());
   }
 
   public AcquireExplorer getAcquireExplorer() {
@@ -697,8 +695,7 @@ public class AcquireManager {
     try {
       URL url = Objects.requireNonNull(uri).toURL();
       LOGGER.debug("Download from URL: {}", url);
-      ClosableURLConnection urlConnection =
-          NetworkUtil.getUrlConnection(url, new URLParameters(BundleTools.SESSION_TAGS_FILE));
+      ClosableURLConnection urlConnection = NetworkUtil.getUrlConnection(url, new URLParameters());
       // note: fastest way to convert inputStream to string according to :
       // http://stackoverflow.com/questions/309424/read-convert-an-inputstream-to-a-string
       try (InputStream inputStream = urlConnection.getInputStream()) {

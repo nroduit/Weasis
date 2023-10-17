@@ -73,7 +73,7 @@ import javax.swing.text.DefaultFormatterFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.Messages;
-import org.weasis.core.api.service.BundleTools;
+import org.weasis.core.api.service.UICore;
 import org.weasis.core.api.util.FontItem;
 import org.weasis.core.util.StringUtil;
 
@@ -92,8 +92,6 @@ public class GuiUtils {
   public static final String HTML_BR = "<br>";
 
   public static final String NEWLINE = "newline"; // NON-NLS
-
-  private GuiUtils() {}
 
   public enum IconColor {
     // see https://jetbrains.design/intellij/principles/icons/#action-icons
@@ -118,6 +116,12 @@ public class GuiUtils {
       return String.format(
           "rgb(%d,%d,%d)", color.getRed(), color.getGreen(), color.getBlue()); // NON-NLS
     }
+  }
+
+  private GuiUtils() {}
+
+  public static UICore getUICore() {
+    return UICore.getInstance();
   }
 
   public static Dimension getBigIconButtonSize(JComponent c) {
@@ -471,21 +475,25 @@ public class GuiUtils {
     return item;
   }
 
-  public static JButton createHelpButton(final String topic, boolean small) {
+  public static JButton createHelpButton(String topic) {
     JButton jButtonHelp = new JButton();
     jButtonHelp.putClientProperty("JButton.buttonType", "help");
-    jButtonHelp.addActionListener(
-        e -> {
-          try {
-            GuiUtils.openInDefaultBrowser(
-                jButtonHelp,
-                new URL(BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.help.online") + topic));
-          } catch (MalformedURLException e1) {
-            LOGGER.error("Cannot open online help", e1);
-          }
-        });
-
+    jButtonHelp.addActionListener(createHelpActionListener(jButtonHelp, topic));
     return jButtonHelp;
+  }
+
+  public static ActionListener createHelpActionListener(JButton jButtonHelp, String topic) {
+    return e -> {
+      try {
+        GuiUtils.openInDefaultBrowser(
+            jButtonHelp,
+            new URL(
+                GuiUtils.getUICore().getSystemPreferences().getProperty("weasis.help.online")
+                    + topic));
+      } catch (MalformedURLException e1) {
+        LOGGER.error("Cannot open online help", e1);
+      }
+    };
   }
 
   public static int getMaxLength(Rectangle bounds) {

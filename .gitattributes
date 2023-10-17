@@ -1,44 +1,74 @@
 ###############################
 # Git Line Endings            #
-###############################
 
 # Set default behaviour to automatically normalize line endings.
 * text=auto eol=lf
-
 # Force batch scripts to always use CRLF line endings so that if a repo is accessed
 # in Windows via a file share from Linux, the scripts will work.
 *.{cmd,[cC][mM][dD]} text eol=crlf
 *.{bat,[bB][aA][tT]} text eol=crlf
-
 # Force bash scripts to always use LF line endings so that if a repo is accessed
 # in Unix via a file share from Windows, the scripts will work.
-*.sh text eol=lf
-
-###############################
-# Git Large File System (LFS) #
-###############################
-
-# Archives
-*.7z filter=lfs diff=lfs merge=lfs -text
-*.br filter=lfs diff=lfs merge=lfs -text
-*.gz filter=lfs diff=lfs merge=lfs -text
-*.tar filter=lfs diff=lfs merge=lfs -text
-*.zip filter=lfs diff=lfs merge=lfs -text
-
-# Documents
-*.pdf filter=lfs diff=lfs merge=lfs -text
-
-# Images
-*.gif filter=lfs diff=lfs merge=lfs -text
-*.ico filter=lfs diff=lfs merge=lfs -text
-*.jpg filter=lfs diff=lfs merge=lfs -text
-*.pdf filter=lfs diff=lfs merge=lfs -text
-*.png filter=lfs diff=lfs merge=lfs -text
-*.psd filter=lfs diff=lfs merge=lfs -text
-*.webp filter=lfs diff=lfs merge=lfs -text
-
-# Fonts
-*.woff2 filter=lfs diff=lfs merge=lfs -text
-
-# Other
-*.exe filter=lfs diff=lfs merge=lfs -text
+*.sh   text eol=lf
+*.bash text eol=lf
+## Binary files should be left untouched
+#
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.tif binary
+*.tiff binary
+*.mov binary
+*.mp4 binary
+*.gz binary
+*.zip binary
+*.7z binary
+*.xz binary
+*.ttf binary
+*.pdf binary
+# git config
+.gitattributes text
+.gitignore text
+# Java sources
+*.java          text diff=java
+*.kt            text diff=kotlin
+*.groovy        text diff=java
+*.scala         text diff=java
+*.gradle        text diff=java
+*.gradle.kts    text diff=kotlin
+# These files are text
+*.css           text diff=css
+*.scss          text diff=css
+*.sass          text
+*.df            text
+*.htm           text diff=html
+*.html          text diff=html
+*.js            text
+*.json          text
+*.properties    text
+*.svg           text
+*.tld           text
+*.tag           text
+*.tagx          text
+*.csv           text eol=crlf
+*.txt           text
+*.xml           text
+*.yaml          text
+*.yml           text
+*.md            text diff=markdown
+*.mdx           text diff=markdown
+# These files are binary and should be left untouched
+# (binary is a macro for -text -diff)
+*.class         binary
+*.dll           binary
+*.dylib         binary
+*.ear           binary
+*.jar           binary
+*.so            binary
+*.war           binary
+*.jks           binary
+# Common build-tool wrapper scripts
+mvnw            text eol=lf
+gradlew         text eol=lf

@@ -13,21 +13,18 @@ import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import javax.swing.text.DefaultFormatterFactory;
 import javax.swing.text.NumberFormatter;
-import org.weasis.core.api.util.LocalUtil;
 
 public class DecFormatter {
 
   private DecFormatter() {}
 
-  private static final NumberFormat df1 = LocalUtil.getNumberInstance(); // 1 decimals
-  private static final NumberFormat df2 = LocalUtil.getNumberInstance(); // 2 decimals
-  private static final NumberFormat df4 = LocalUtil.getNumberInstance(); // 4 decimals
-  private static final NumberFormat percent2 = LocalUtil.getPercentInstance();
-  private static final DecimalFormat decimalAndNumber =
-      new DecimalFormat("#,##0.#", LocalUtil.getDecimalFormatSymbols());
+  private static final NumberFormat df1 = NumberFormat.getNumberInstance(); // 1 decimals
+  private static final NumberFormat df2 = NumberFormat.getNumberInstance(); // 2 decimals
+  private static final NumberFormat df4 = NumberFormat.getNumberInstance(); // 4 decimals
+  private static final NumberFormat percent2 = NumberFormat.getPercentInstance();
+  private static final DecimalFormat decimalAndNumber = new DecimalFormat("#,##0.#");
   // Scientific format with 4 decimals
-  private static final DecimalFormat dfSci =
-      new DecimalFormat("0.####E0", LocalUtil.getDecimalFormatSymbols()); // NON-NLS
+  private static final DecimalFormat dfSci = new DecimalFormat("0.####E0"); // NON-NLS
 
   static {
     df1.setMaximumFractionDigits(1);
@@ -61,12 +58,9 @@ public class DecFormatter {
   }
 
   public static DefaultFormatterFactory setPreciseDoubleFormat(double min, double max) {
-    NumberFormatter displayFormatter =
-        new NumberFormatter(new DecimalFormat("#,##0.##", LocalUtil.getDecimalFormatSymbols()));
+    NumberFormatter displayFormatter = new NumberFormatter(new DecimalFormat("#,##0.##"));
     displayFormatter.setValueClass(Double.class);
-    NumberFormatter editFormatter =
-        new NumberFormatter(
-            new DecimalFormat("#,##0.0#############", LocalUtil.getDecimalFormatSymbols()));
+    NumberFormatter editFormatter = new NumberFormatter(new DecimalFormat("#,##0.0#############"));
     editFormatter.setValueClass(Double.class);
     editFormatter.setMinimum(min);
     editFormatter.setMaximum(max);

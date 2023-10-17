@@ -38,7 +38,8 @@ import org.osgi.service.prefs.BackingStoreException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.AppProperties;
-import org.weasis.core.api.service.BundleTools;
+import org.weasis.core.api.gui.util.GuiUtils;
+import org.weasis.core.api.service.UICore;
 import org.weasis.core.api.util.ClosableURLConnection;
 import org.weasis.core.api.util.NetworkUtil;
 import org.weasis.core.api.util.URLParameters;
@@ -60,10 +61,9 @@ public class StreamBackingStoreImpl implements BackingStore {
 
   private final File prefRootDirectory;
 
-  public StreamBackingStoreImpl(BundleContext context) {
+  public StreamBackingStoreImpl(BundleContext context, String prefDir) {
     this.bundleContext = context;
-    String prefPath = BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.pref.dir");
-    this.prefRootDirectory = new File(prefPath);
+    this.prefRootDirectory = new File(prefDir);
     prefRootDirectory.mkdirs();
   }
 
@@ -145,13 +145,12 @@ public class StreamBackingStoreImpl implements BackingStore {
       return null;
     }
     if (StringUtil.hasText(prefUrl)) {
-
       return String.format(
           "%s?user=%s&profile=%s&module=%s", // NON-NLS
           prefUrl,
-          BundleTools.getEncodedValue(AppProperties.WEASIS_USER),
-          BundleTools.getEncodedValue(AppProperties.WEASIS_PROFILE),
-          BundleTools.getEncodedValue(bundle.getSymbolicName()));
+          UICore.getUrlEncoding(AppProperties.WEASIS_USER),
+          UICore.getUrlEncoding(AppProperties.WEASIS_PROFILE),
+          UICore.getUrlEncoding(bundle.getSymbolicName()));
     }
     return null;
   }
@@ -252,7 +251,7 @@ public class StreamBackingStoreImpl implements BackingStore {
   }
 
   private static URLParameters getURLParameters(boolean post) {
-    Map<String, String> map = new HashMap<>(BundleTools.SESSION_TAGS_FILE);
+    Map<String, String> map = new HashMap<>();
     map.put(post ? "Content-Type" : "Accept", "application/xml"); // NON-NLS
     return new URLParameters(map, post);
   }
@@ -260,10 +259,10 @@ public class StreamBackingStoreImpl implements BackingStore {
   protected PreferencesImpl loadFromService(
       BackingStoreManager manager, PreferencesDescription desc) throws BackingStoreException {
 
-    String prefUrl = BundleTools.getPrefServiceUrl();
+    String prefUrl = GuiUtils.getUICore().getPrefServiceUrl();
 
     if (StringUtil.hasText(prefUrl)
-        && (!BundleTools.isLocalSession() || BundleTools.isStoreLocalSession())) {
+        && (!GuiUtils.getUICore().isLocalSession() || GuiUtils.getUICore().isStoreLocalSession())) {
 
       String serviceURL;
       try {
@@ -353,7 +352,7 @@ public class StreamBackingStoreImpl implements BackingStore {
       LOGGER.error("Cannot store preference file", e);
     }
 
-    String prefUrl = BundleTools.getPrefServiceUrl();
+    String prefUrl = GuiUtils.getUICore().getPrefServiceUrl();
     if (prefUrl != null) {
       try {
         remoteStore(rootPrefs, prefUrl);
@@ -364,7 +363,7 @@ public class StreamBackingStoreImpl implements BackingStore {
   }
 
   private void remoteStore(PreferencesImpl prefs, String prefUrl) throws IOException {
-    if (!BundleTools.isLocalSession() || BundleTools.isStoreLocalSession()) {
+    if (!GuiUtils.getUICore().isLocalSession() || GuiUtils.getUICore().isStoreLocalSession()) {
       File file = getFile(prefs.getDescription());
       if (file != null && file.exists()) {
         URLParameters urlParams = getURLParameters(true);

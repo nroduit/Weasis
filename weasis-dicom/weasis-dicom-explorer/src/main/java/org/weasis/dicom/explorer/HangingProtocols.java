@@ -12,7 +12,6 @@ package org.weasis.dicom.explorer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.util.StringUtil;
-import org.weasis.dicom.explorer.internal.Activator;
 
 public class HangingProtocols {
   private static final Logger LOGGER = LoggerFactory.getLogger(HangingProtocols.class);
@@ -40,7 +39,7 @@ public class HangingProtocols {
     }
 
     public static OpeningViewer getOpeningViewerByLocalKey(String key) {
-      return getOpeningViewer(Activator.IMPORT_EXPORT_PERSISTENCE.getProperty(key), ONE_PATIENT);
+      return getOpeningViewer(LocalPersistence.getProperties().getProperty(key), ONE_PATIENT);
     }
 
     public static OpeningViewer getOpeningViewer(String name, OpeningViewer defaultOpeningViewer) {

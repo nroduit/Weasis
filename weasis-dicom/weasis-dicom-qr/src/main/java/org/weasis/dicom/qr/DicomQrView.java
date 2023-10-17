@@ -19,6 +19,7 @@ import java.awt.event.ItemEvent;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.time.format.FormatStyle;
 import java.time.temporal.TemporalAdjusters;
 import java.time.temporal.WeekFields;
@@ -26,6 +27,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
+import java.util.Locale.Category;
 import java.util.Objects;
 import java.util.Properties;
 import java.util.concurrent.ExecutorService;
@@ -76,7 +79,7 @@ import org.weasis.core.api.gui.util.WinUtil;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.service.BundlePreferences;
-import org.weasis.core.api.util.LocalUtil;
+import org.weasis.core.api.service.WProperties;
 import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.api.util.ResourceUtil.OtherIcon;
 import org.weasis.core.api.util.ThreadUtil;
@@ -126,7 +129,7 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
 
     CUR_WEEK(
         Messages.getString("DicomQrView.this_week"),
-        LocalDate.now().with(WeekFields.of(LocalUtil.getLocaleFormat()).dayOfWeek(), 1),
+        LocalDate.now().with(WeekFields.of(Locale.getDefault(Category.FORMAT)).dayOfWeek(), 1),
         LocalDate.now()),
 
     CUR_MONTH(
@@ -304,8 +307,7 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
 
   public DicomQrView() {
     super(Messages.getString("DicomQrView.title"));
-    int limit =
-        StringUtil.getInt(DicomQrFactory.IMPORT_PERSISTENCE.getProperty(LAST_RETRIEVE_LIMIT), 10);
+    int limit = StringUtil.getInt(getPersistence().getProperty(LAST_RETRIEVE_LIMIT), 10);
     GuiUtils.setNumberModel(limitSpinner, limit, 0, 999, 5);
     GuiUtils.setNumberModel(pageSpinner, 1, 1, 99999, 1);
     SearchParameters.loadSearchParameters(templateComboBox);
@@ -317,8 +319,7 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
       PluginOpeningStrategy openingStrategy =
           new PluginOpeningStrategy(DownloadManager.getOpeningViewer());
       openingStrategy.setFullImportSession(false);
-      DataExplorerView dicomView =
-          org.weasis.core.ui.docking.UIManager.getExplorerPlugin(DicomExplorer.NAME);
+      DataExplorerView dicomView = GuiUtils.getUICore().getExplorerPlugin(DicomExplorer.NAME);
       if (dicomView != null && dicomView.getDataExplorerModel() instanceof DicomModel model) {
         DicomProgress progress = new DicomProgress();
         progress.addProgressListener(
@@ -339,6 +340,10 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
       LOGGER.error("Cannot start DICOM listener", e);
     }
     dicomListener = dcmListener;
+  }
+
+  public static WProperties getPersistence() {
+    return GuiUtils.getUICore().getPluginPersistence(DicomQrView.class.getPackageName());
   }
 
   public static File getSessionTempFolder() {
@@ -613,8 +618,8 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
     CalendarUtil.adaptCalendarColors(settings);
 
     JTextField textField = picker.getComponentDateTextField();
-    settings.setFormatForDatesCommonEra(LocalUtil.getDateFormatter(FormatStyle.SHORT));
-    settings.setFormatForDatesBeforeCommonEra(LocalUtil.getDateFormatter(FormatStyle.SHORT));
+    settings.setFormatForDatesCommonEra(DateTimeFormatter.ofLocalizedDate(FormatStyle.SHORT));
+    settings.setFormatForDatesBeforeCommonEra(DateTimeFormatter.ofLocalizedDate(FormatStyle.SHORT));
     GuiUtils.setPreferredWidth(textField, 145);
     picker.addDateChangeListener(dateChangeListener);
 
@@ -821,8 +826,7 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
     if (firstTime) {
       initNodeList();
     }
-    int lastTemplate =
-        StringUtil.getInt(DicomQrFactory.IMPORT_PERSISTENCE.getProperty(LAST_SEL_TEMPLATE), 0);
+    int lastTemplate = StringUtil.getInt(getPersistence().getProperty(LAST_SEL_TEMPLATE), 0);
     if (lastTemplate >= templateComboBox.getItemCount()) {
       lastTemplate = 0;
     }
@@ -844,7 +848,7 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
     AbstractDicomNode.loadDicomNodes(
         comboDestinationNode, AbstractDicomNode.Type.WEB, UsageType.RETRIEVE, WebType.QIDORS);
     restoreNodeSelection(comboDestinationNode.getModel(), LAST_SEL_NODE);
-    String lastType = DicomQrFactory.IMPORT_PERSISTENCE.getProperty(LAST_RETRIEVE_TYPE);
+    String lastType = getPersistence().getProperty(LAST_RETRIEVE_TYPE);
     if (lastType != null) {
       try {
         comboDicomRetrieveType.setSelectedItem(RetrieveType.valueOf(lastType));
@@ -911,15 +915,14 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
     nodeSelectionPersistence(
         (AbstractDicomNode) comboCallingNode.getSelectedItem(), LAST_CALLING_NODE);
     RetrieveType type = (RetrieveType) comboDicomRetrieveType.getSelectedItem();
+    WProperties persistence = getPersistence();
     if (type != null) {
-      DicomQrFactory.IMPORT_PERSISTENCE.setProperty(LAST_RETRIEVE_TYPE, type.name());
+      persistence.setProperty(LAST_RETRIEVE_TYPE, type.name());
     }
 
-    DicomQrFactory.IMPORT_PERSISTENCE.setProperty(
-        LAST_RETRIEVE_LIMIT, String.valueOf(limitSpinner.getValue()));
+    persistence.setProperty(LAST_RETRIEVE_LIMIT, String.valueOf(limitSpinner.getValue()));
 
-    DicomQrFactory.IMPORT_PERSISTENCE.setProperty(
-        LAST_SEL_TEMPLATE, String.valueOf(templateComboBox.getSelectedIndex()));
+    persistence.setProperty(LAST_SEL_TEMPLATE, String.valueOf(templateComboBox.getSelectedIndex()));
 
     saveTemplates(templateComboBox);
   }
@@ -955,13 +958,13 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
 
   private void nodeSelectionPersistence(AbstractDicomNode node, String key) {
     if (node != null) {
-      DicomQrFactory.IMPORT_PERSISTENCE.setProperty(key, node.getDescription());
+      getPersistence().setProperty(key, node.getDescription());
     }
   }
 
   private void restoreNodeSelection(ComboBoxModel<AbstractDicomNode> model, String key) {
     if (model != null) {
-      String desc = DicomQrFactory.IMPORT_PERSISTENCE.getProperty(key);
+      String desc = getPersistence().getProperty(key);
       if (StringUtil.hasText(desc)) {
         for (int i = 0; i < model.getSize(); i++) {
           if (desc.equals(model.getElementAt(i).getDescription())) {

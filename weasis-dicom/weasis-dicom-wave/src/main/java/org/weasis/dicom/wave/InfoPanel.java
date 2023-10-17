@@ -23,7 +23,6 @@ import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.JSliderW;
 import org.weasis.core.api.gui.util.SliderChangeListener;
 import org.weasis.core.api.util.FontItem;
-import org.weasis.core.api.util.LocalUtil;
 import org.weasis.core.ui.editor.image.ImageViewerEventManager;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.model.utils.imp.DefaultViewModel;
@@ -132,10 +131,8 @@ class InfoPanel extends JPanel {
     max.append(Messages.getString("InfoPanel.max"));
     max.append(StringUtil.COLON_AND_SPACE);
     max.append("-##.#### mV"); // NON-NLS
-    this.minimum.setText(
-        new DecimalFormat(min.toString(), LocalUtil.getDecimalFormatSymbols()).format(minimum));
-    this.maximum.setText(
-        new DecimalFormat(max.toString(), LocalUtil.getDecimalFormatSymbols()).format(maximum));
+    this.minimum.setText(new DecimalFormat(min.toString()).format(minimum));
+    this.maximum.setText(new DecimalFormat(max.toString()).format(maximum));
   }
 
   public void setCurrentValues(double sec, double mV) {

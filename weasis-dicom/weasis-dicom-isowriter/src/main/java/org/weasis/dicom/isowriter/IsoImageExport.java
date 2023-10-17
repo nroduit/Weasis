@@ -43,7 +43,6 @@ import org.weasis.core.api.explorer.ObservableEvent;
 import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.gui.util.FileFormatFilter;
 import org.weasis.core.api.gui.util.GuiUtils;
-import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.util.FileUtil;
 import org.weasis.core.util.StringUtil;
@@ -117,7 +116,7 @@ public class IsoImageExport extends LocalExport {
   }
 
   String getLocalViewerPath() {
-    return BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.codebase.local", null);
+    return GuiUtils.getUICore().getSystemPreferences().getProperty("weasis.codebase.local", null);
   }
 
   @Override
@@ -147,18 +146,21 @@ public class IsoImageExport extends LocalExport {
                 writeOther(this, new File(exportDir, "JPEG"), model, Format.JPEG, new Properties());
               }
 
-              Path appPath = Paths.get(getLocalViewerPath());
-              if (checkBoxAddWeasisViewer.isEnabled()
-                  && checkBoxAddWeasisViewer.isSelected()
-                  && Files.isReadable(appPath)) {
-                Path out = Paths.get(exportDir.toString(), "viewer");
-                Files.createDirectory(out);
-                Path in = appPath.getParent();
-                copyFolder(in, out, StandardCopyOption.COPY_ATTRIBUTES);
-                File autorun = ResourceUtil.getResource("isowriter/Autorun.inf"); // NON-NLS
-                FileUtil.nioCopyFile(autorun, new File(exportDir, "AUTORUN.INF"));
-                File run = ResourceUtil.getResource("isowriter/RUN.bat"); // NON-NLS
-                FileUtil.nioCopyFile(run, new File(exportDir, "RUN.BAT"));
+              String localPath = getLocalViewerPath();
+              if (StringUtil.hasText(localPath)) {
+                Path appPath = Paths.get(localPath);
+                if (checkBoxAddWeasisViewer.isEnabled()
+                    && checkBoxAddWeasisViewer.isSelected()
+                    && Files.isReadable(appPath)) {
+                  Path out = Paths.get(exportDir.toString(), "viewer");
+                  Files.createDirectory(out);
+                  Path in = appPath.getParent();
+                  copyFolder(in, out, StandardCopyOption.COPY_ATTRIBUTES);
+                  File autorun = ResourceUtil.getResource("isowriter/Autorun.inf"); // NON-NLS
+                  FileUtil.nioCopyFile(autorun, new File(exportDir, "AUTORUN.INF"));
+                  File run = ResourceUtil.getResource("isowriter/RUN.bat"); // NON-NLS
+                  FileUtil.nioCopyFile(run, new File(exportDir, "RUN.BAT"));
+                }
               }
 
               if (this.isCancelled()) {

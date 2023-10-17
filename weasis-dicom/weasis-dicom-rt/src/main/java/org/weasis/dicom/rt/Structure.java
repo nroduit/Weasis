@@ -10,9 +10,9 @@
 package org.weasis.dicom.rt;
 
 import java.awt.Color;
+import java.util.AbstractMap;
 import java.util.List;
 import java.util.Map;
-import org.apache.commons.math3.util.Pair;
 import org.weasis.core.util.StringUtil;
 
 /**
@@ -129,7 +129,8 @@ public class Structure {
     this.planes = contours;
   }
 
-  public Pair<Integer, Double> calculateLargestContour(List<Contour> planeContours) {
+  public AbstractMap.SimpleImmutableEntry<Integer, Double> calculateLargestContour(
+      List<Contour> planeContours) {
     double maxContourArea = 0.0;
     int maxContourIndex = 0;
 
@@ -144,7 +145,7 @@ public class Structure {
       }
     }
 
-    return new Pair<>(maxContourIndex, maxContourArea);
+    return new AbstractMap.SimpleImmutableEntry<>(maxContourIndex, maxContourArea);
   }
 
   private double calculateVolume() {
@@ -155,9 +156,10 @@ public class Structure {
     for (List<Contour> structurePlaneContours : this.planes.values()) {
 
       // Calculate the area for each contour in the current plane
-      Pair<Integer, Double> maxContour = this.calculateLargestContour(structurePlaneContours);
-      int maxContourIndex = maxContour.getFirst();
-      double maxContourArea = maxContour.getSecond();
+      AbstractMap.SimpleImmutableEntry<Integer, Double> maxContour =
+          this.calculateLargestContour(structurePlaneContours);
+      int maxContourIndex = maxContour.getKey();
+      double maxContourArea = maxContour.getValue();
 
       for (int i = 0; i < structurePlaneContours.size(); i++) {
         Contour polygon = structurePlaneContours.get(i);

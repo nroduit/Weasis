@@ -12,8 +12,8 @@ package org.weasis.dicom.explorer;
 import javax.swing.Icon;
 import org.weasis.core.api.explorer.DataExplorerView;
 import org.weasis.core.api.explorer.ObservableEvent;
+import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.image.GridBagLayoutModel;
-import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.image.ImageViewerEventManager;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.dicom.codec.DicomImageElement;
@@ -42,7 +42,7 @@ public abstract class DicomViewerPlugin extends ImageViewerPlugin<DicomImageElem
         eventManager.setSelectedView2dContainer(this);
       }
       // Send event to select the related patient in Dicom Explorer.
-      DataExplorerView dicomView = UIManager.getExplorerPlugin(DicomExplorer.NAME);
+      DataExplorerView dicomView = GuiUtils.getUICore().getExplorerPlugin(DicomExplorer.NAME);
       if (dicomView != null && dicomView.getDataExplorerModel() instanceof DicomModel model) {
         model.firePropertyChange(
             new ObservableEvent(ObservableEvent.BasicAction.SELECT, this, null, getGroupID()));

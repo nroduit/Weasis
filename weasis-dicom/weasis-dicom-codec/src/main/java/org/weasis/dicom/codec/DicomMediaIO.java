@@ -52,10 +52,10 @@ import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.SimpleTaggable;
-import org.weasis.core.api.media.data.SoftHashMap;
 import org.weasis.core.api.media.data.TagView;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.service.BundleTools;
+import org.weasis.core.util.SoftHashMap;
 import org.weasis.dicom.codec.TagD.Level;
 import org.weasis.dicom.codec.display.CornerDisplay;
 import org.weasis.dicom.codec.display.Modality;
@@ -499,6 +499,9 @@ public class DicomMediaIO implements DcmMediaReader {
       TagD.get(Tag.PixelAspectRatio).readValue(header, this);
       TagD.get(Tag.PixelSpacingCalibrationDescription).readValue(header, this);
       TagD.get(Tag.ImagerPixelSpacing).readValue(header, this);
+      TagD.get(Tag.EstimatedRadiographicMagnificationFactor).readValue(header, this);
+      TagD.get(Tag.DistanceSourceToDetector).readValue(header, this);
+      TagD.get(Tag.DistanceSourceToPatient).readValue(header, this);
       TagD.get(Tag.NominalScannedPixelSpacing).readValue(header, this);
 
       setTag(TagW.ModalityLUTData, desc.getModalityLUT());

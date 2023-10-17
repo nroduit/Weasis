@@ -58,16 +58,16 @@ public class LineGraphic extends AbstractDragGraphic {
   public static final Measurement AZIMUTH =
       new Measurement(Messages.getString("measure.azimuth"), 7, true, true, false);
 
-  public static final List<Measurement> MEASUREMENT_LIST = new ArrayList<>();
+  protected static final List<Measurement> measurementList = new ArrayList<>();
 
   static {
-    MEASUREMENT_LIST.add(FIRST_POINT_X);
-    MEASUREMENT_LIST.add(FIRST_POINT_Y);
-    MEASUREMENT_LIST.add(LAST_POINT_X);
-    MEASUREMENT_LIST.add(LAST_POINT_Y);
-    MEASUREMENT_LIST.add(LINE_LENGTH);
-    MEASUREMENT_LIST.add(ORIENTATION);
-    MEASUREMENT_LIST.add(AZIMUTH);
+    measurementList.add(FIRST_POINT_X);
+    measurementList.add(FIRST_POINT_Y);
+    measurementList.add(LAST_POINT_X);
+    measurementList.add(LAST_POINT_Y);
+    measurementList.add(LINE_LENGTH);
+    measurementList.add(ORIENTATION);
+    measurementList.add(AZIMUTH);
   }
 
   // Let AB be a simple a line segment
@@ -226,6 +226,6 @@ public class LineGraphic extends AbstractDragGraphic {
 
   @Override
   public List<Measurement> getMeasurementList() {
-    return MEASUREMENT_LIST;
+    return measurementList;
   }
 }

@@ -51,7 +51,6 @@ import org.weasis.core.api.util.FontItem;
 import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.api.util.ResourceUtil.ActionIcon;
 import org.weasis.core.ui.docking.PluginTool;
-import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.image.ImageViewerEventManager;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.editor.image.MeasureToolBar;
@@ -163,9 +162,10 @@ public class MeasureTool extends PluginTool implements GraphicSelectionListener 
           for (Measurement m : ImageStatistics.ALL_MEASUREMENTS) {
             m.setComputed(sel);
           }
-          synchronized (UIManager.VIEWER_PLUGINS) {
-            for (int i = UIManager.VIEWER_PLUGINS.size() - 1; i >= 0; i--) {
-              ViewerPlugin<?> p = UIManager.VIEWER_PLUGINS.get(i);
+          List<ViewerPlugin<?>> viewerPlugins = GuiUtils.getUICore().getViewerPlugins();
+          synchronized (viewerPlugins) {
+            for (int i = viewerPlugins.size() - 1; i >= 0; i--) {
+              ViewerPlugin<?> p = viewerPlugins.get(i);
               if (p instanceof ImageViewerPlugin) {
                 for (ViewCanvas<?> view : ((ImageViewerPlugin<?>) p).getImagePanels()) {
                   if (view != null) {
@@ -204,9 +204,10 @@ public class MeasureTool extends PluginTool implements GraphicSelectionListener 
 
   private static void updateMeasureProperties(final ViewSetting setting) {
     if (setting != null) {
-      MeasureToolBar.measureGraphicList.forEach(
-          g -> MeasureToolBar.applyDefaultSetting(setting, g));
-      MeasureToolBar.drawGraphicList.forEach(g -> MeasureToolBar.applyDefaultSetting(setting, g));
+      MeasureToolBar.getMeasureGraphicList()
+          .forEach(g -> MeasureToolBar.applyDefaultSetting(setting, g));
+      MeasureToolBar.getDrawGraphicList()
+          .forEach(g -> MeasureToolBar.applyDefaultSetting(setting, g));
     }
   }
 

@@ -41,7 +41,6 @@ import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.TagW;
-import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.SeriesViewerEvent;
 import org.weasis.core.ui.editor.SeriesViewerEvent.EVENT;
 import org.weasis.core.ui.editor.SeriesViewerListener;
@@ -122,8 +121,9 @@ public class AuView extends JPanel implements SeriesViewerListener {
       return;
     }
     boolean open = false;
-    synchronized (UIManager.VIEWER_PLUGINS) {
-      List<ViewerPlugin<?>> plugins = UIManager.VIEWER_PLUGINS;
+    List<ViewerPlugin<?>> viewerPlugins = GuiUtils.getUICore().getViewerPlugins();
+    synchronized (viewerPlugins) {
+      List<ViewerPlugin<?>> plugins = viewerPlugins;
       pluginList:
       for (final ViewerPlugin<?> plugin : plugins) {
         List<? extends MediaSeries<?>> openSeries = plugin.getOpenSeries();

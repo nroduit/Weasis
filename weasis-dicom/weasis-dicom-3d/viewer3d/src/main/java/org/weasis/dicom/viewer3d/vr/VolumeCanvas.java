@@ -45,6 +45,7 @@ import org.weasis.core.ui.model.imp.XmlGraphicModel;
 import org.weasis.core.ui.model.layer.GraphicModelChangeListener;
 import org.weasis.core.ui.model.utils.imp.DefaultViewModel;
 import org.weasis.core.ui.pref.Monitor;
+import org.weasis.core.util.LangUtil;
 import org.weasis.core.util.MathUtil;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.viewer3d.EventManager;
@@ -181,7 +182,7 @@ public class VolumeCanvas extends GLJPanel implements Canvas {
   public void setActionsInView(String action, Object value, Boolean repaint) {
     if (action != null) {
       actionsInView.put(action, value);
-      if (repaint) {
+      if (LangUtil.getNULLtoFalse(repaint)) {
         repaint();
       }
     }

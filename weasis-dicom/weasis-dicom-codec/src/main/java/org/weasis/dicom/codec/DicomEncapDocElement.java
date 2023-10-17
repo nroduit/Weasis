@@ -9,13 +9,22 @@
  */
 package org.weasis.dicom.codec;
 
+import java.io.BufferedInputStream;
 import java.io.File;
+import java.io.FileOutputStream;
 import org.dcm4che3.data.Attributes;
+import org.dcm4che3.data.BulkData;
 import org.dcm4che3.data.Tag;
-import org.weasis.core.api.media.data.MediaElement;
+import org.dcm4che3.util.StreamUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.weasis.core.api.gui.util.AppProperties;
+import org.weasis.core.api.media.MimeInspector;
 import org.weasis.core.util.FileUtil;
+import org.weasis.core.util.StringUtil;
 
-public class DicomEncapDocElement extends MediaElement implements FileExtractor, DicomElement {
+public class DicomEncapDocElement extends DicomImageElement implements FileExtractor {
+  private static final Logger LOGGER = LoggerFactory.getLogger(DicomEncapDocElement.class);
   private File document = null;
 
   public DicomEncapDocElement(DicomMediaIO mediaIO, Object key) {
@@ -28,19 +37,42 @@ public class DicomEncapDocElement extends MediaElement implements FileExtractor,
     return val == null ? super.getMimeType() : val;
   }
 
-  public void setDocument(File document) {
-    FileUtil.delete(this.document);
-    this.document = document;
-  }
-
   @Override
   public File getExtractFile() {
+    synchronized (this) {
+      if ((document == null || !document.exists()) && getMediaReader() != null) {
+        String extension = ".tmp";
+        Attributes ds = getMediaReader().getDicomObject();
+        String mime = ds.getString(Tag.MIMETypeOfEncapsulatedDocument);
+        String ext = MimeInspector.getExtensions(mime);
+        if (StringUtil.hasText(extension)) {
+          extension = "." + ext;
+        }
+        // see http://dicom.nema.org/MEDICAL/Dicom/current/output/chtml/part03/sect_C.24.2.html
+        Object data = ds.getValue(Tag.EncapsulatedDocument);
+        readEncapsulatedDocument(data, extension);
+      }
+    }
     return document;
   }
 
-  @Override
-  public DcmMediaReader getMediaReader() {
-    return (DcmMediaReader) super.getMediaReader();
+  private void readEncapsulatedDocument(Object data, String extension) {
+    if (data instanceof BulkData bulkData) {
+      BufferedInputStream in = null;
+      FileOutputStream out = null;
+      try {
+        File file = File.createTempFile("encap_", extension, AppProperties.FILE_CACHE_DIR);
+        in = new BufferedInputStream(bulkData.openStream());
+        out = new FileOutputStream(file);
+        StreamUtils.copy(in, out, bulkData.length());
+        document = file;
+      } catch (Exception e) {
+        LOGGER.error("Cannot extract encapsulated document", e);
+      } finally {
+        FileUtil.safeClose(out);
+        FileUtil.safeClose(in);
+      }
+    }
   }
 
   @Override

@@ -52,6 +52,17 @@
               </resources>
             </configuration>
           </execution>
+          <execution>
+            <id>timestamp-property</id>
+            <goals>
+              <goal>timestamp-property</goal>
+            </goals>
+            <configuration>
+              <name>build.year</name>
+              <locale>en_US</locale>
+              <pattern>yyyy</pattern>
+            </configuration>
+          </execution>
         </executions>
       </plugin>
       <plugin>
@@ -75,9 +86,14 @@
                     <exclude>**/module-info.class</exclude>
                     <exclude>META-INF/LICENSE</exclude>
                     <exclude>META-INF/MANIFEST.MF</exclude>
-                    <exclude>META-INF/*.SF</exclude>
-                    <exclude>META-INF/*.DSA</exclude>
-                    <exclude>META-INF/*.RSA</exclude>
+                  </excludes>
+                </filter>
+                <filter>
+                  <artifact>com.github.weisj:*</artifact>
+                  <excludes>
+                    <exclude>**/module-info.class</exclude>
+                    <exclude>META-INF/LICENSE</exclude>
+                    <exclude>META-INF/MANIFEST.MF</exclude>
                   </excludes>
                 </filter>
                 <filter>
@@ -85,9 +101,6 @@
                   <excludes>
                     <exclude>**/module-info.class</exclude>
                     <exclude>META-INF/MANIFEST.MF</exclude>
-                    <exclude>META-INF/*.SF</exclude>
-                    <exclude>META-INF/*.DSA</exclude>
-                    <exclude>META-INF/*.RSA</exclude>
                   </excludes>
                 </filter>
               </filters>

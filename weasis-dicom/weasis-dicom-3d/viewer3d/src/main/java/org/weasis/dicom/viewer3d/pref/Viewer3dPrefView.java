@@ -28,7 +28,7 @@ import org.weasis.core.api.gui.util.AbstractItemDialogPage;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.GuiUtils.IconColor;
 import org.weasis.core.api.image.GridBagLayoutModel;
-import org.weasis.core.api.service.BundleTools;
+import org.weasis.core.api.service.WProperties;
 import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.api.util.ResourceUtil.ActionIcon;
 import org.weasis.core.ui.pref.PreferenceDialog;
@@ -71,25 +71,24 @@ public class Viewer3dPrefView extends AbstractItemDialogPage {
     this.spinnerMaxZ = new JSpinner(new SpinnerListModel(list));
     GuiUtils.setSpinnerWidth(spinnerMaxXY, 6);
     GuiUtils.setSpinnerWidth(spinnerMaxZ, 6);
+    WProperties localPersistence = GuiUtils.getUICore().getLocalPersistence();
     spinnerMaxXY.setValue(
-        Math.min(
-            maxSize,
-            BundleTools.LOCAL_UI_PERSISTENCE.getIntProperty(RenderingLayer.P_MAX_TEX_XY, maxSize)));
+        Math.min(maxSize, localPersistence.getIntProperty(RenderingLayer.P_MAX_TEX_XY, maxSize)));
     spinnerMaxZ.setValue(
-        Math.min(
-            maxSize,
-            BundleTools.LOCAL_UI_PERSISTENCE.getIntProperty(RenderingLayer.P_MAX_TEX_Z, maxSize)));
+        Math.min(maxSize, localPersistence.getIntProperty(RenderingLayer.P_MAX_TEX_Z, maxSize)));
     initGUI();
   }
 
   private void initGUI() {
+    WProperties preferences = GuiUtils.getUICore().getSystemPreferences();
+    WProperties localPersistence = GuiUtils.getUICore().getLocalPersistence();
     int quality =
-        BundleTools.LOCAL_UI_PERSISTENCE.getIntProperty(
+        localPersistence.getIntProperty(
             RenderingLayer.P_DYNAMIC_QUALITY, RenderingLayer.DEFAULT_DYNAMIC_QUALITY_RATE);
     sliderDynamic.setValue(quality);
     sliderDynamic.addChangeListener(
         e ->
-            BundleTools.LOCAL_UI_PERSISTENCE.putIntProperty(
+            localPersistence.putIntProperty(
                 RenderingLayer.P_DYNAMIC_QUALITY, sliderDynamic.getValue()));
 
     String pickColor = org.weasis.core.Messages.getString("MeasureTool.pick_color");
@@ -100,7 +99,7 @@ public class Viewer3dPrefView extends AbstractItemDialogPage {
               JColorChooser.showDialog(
                   SwingUtilities.getWindowAncestor(this), pickColor, getBackgroundColor());
           if (newColor != null) {
-            BundleTools.SYSTEM_PREFERENCES.putColorProperty(RenderingLayer.P_BCK_COLOR, newColor);
+            preferences.putColorProperty(RenderingLayer.P_BCK_COLOR, newColor);
           }
         });
 
@@ -111,7 +110,7 @@ public class Viewer3dPrefView extends AbstractItemDialogPage {
               JColorChooser.showDialog(
                   SwingUtilities.getWindowAncestor(this), pickColor, getLightColor());
           if (newColor != null) {
-            BundleTools.SYSTEM_PREFERENCES.putColorProperty(RenderingLayer.P_LIGHT_COLOR, newColor);
+            preferences.putColorProperty(RenderingLayer.P_LIGHT_COLOR, newColor);
           }
         });
 
@@ -265,52 +264,58 @@ public class Viewer3dPrefView extends AbstractItemDialogPage {
   }
 
   private Color getBackgroundColor() {
-    return BundleTools.SYSTEM_PREFERENCES.getColorProperty(RenderingLayer.P_BCK_COLOR, Color.GRAY);
+    return GuiUtils.getUICore()
+        .getSystemPreferences()
+        .getColorProperty(RenderingLayer.P_BCK_COLOR, Color.GRAY);
   }
 
   private Color getLightColor() {
-    return BundleTools.SYSTEM_PREFERENCES.getColorProperty(
-        RenderingLayer.P_LIGHT_COLOR, Color.GRAY);
+    return GuiUtils.getUICore()
+        .getSystemPreferences()
+        .getColorProperty(RenderingLayer.P_LIGHT_COLOR, Color.GRAY);
   }
 
   @Override
   public void closeAdditionalWindow() {
-    BundleTools.SYSTEM_PREFERENCES.put(
+    WProperties preferences = GuiUtils.getUICore().getSystemPreferences();
+    WProperties localPersistence = GuiUtils.getUICore().getLocalPersistence();
+    preferences.put(
         View3DFactory.P_DEFAULT_LAYOUT,
         ((GridBagLayoutModel) comboBoxLayouts.getSelectedItem()).getId());
-    BundleTools.SYSTEM_PREFERENCES.put(
+    preferences.put(
         Camera.P_DEFAULT_ORIENTATION, ((CameraView) comboBoxOrientations.getSelectedItem()).name());
-    BundleTools.LOCAL_UI_PERSISTENCE.putIntProperty(
+    localPersistence.putIntProperty(
         RenderingLayer.P_MAX_TEX_XY,
         spinnerMaxXY.getValue() instanceof Integer val ? val : View3DFactory.getMax3dTextureSize());
-    BundleTools.LOCAL_UI_PERSISTENCE.putIntProperty(
+    localPersistence.putIntProperty(
         RenderingLayer.P_MAX_TEX_Z,
         spinnerMaxZ.getValue() instanceof Integer val ? val : View3DFactory.getMax3dTextureSize());
     boolean openglEnabled = enableOpenGL.isSelected();
     if (openglEnabled && !View3DFactory.isOpenglEnable()) {
-      BundleTools.LOCAL_UI_PERSISTENCE.putBooleanProperty(View3DFactory.P_OPENGL_PREV_INIT, true);
-      BundleTools.LOCAL_UI_PERSISTENCE.putBooleanProperty(View3DFactory.P_OPENGL_ENABLE, true);
+      localPersistence.putBooleanProperty(View3DFactory.P_OPENGL_PREV_INIT, true);
+      localPersistence.putBooleanProperty(View3DFactory.P_OPENGL_ENABLE, true);
     } else if (!openglEnabled) {
-      BundleTools.LOCAL_UI_PERSISTENCE.putBooleanProperty(View3DFactory.P_OPENGL_PREV_INIT, false);
-      BundleTools.LOCAL_UI_PERSISTENCE.putBooleanProperty(View3DFactory.P_OPENGL_ENABLE, false);
+      localPersistence.putBooleanProperty(View3DFactory.P_OPENGL_PREV_INIT, false);
+      localPersistence.putBooleanProperty(View3DFactory.P_OPENGL_ENABLE, false);
     }
-    BundleTools.saveSystemPreferences();
+    GuiUtils.getUICore().saveSystemPreferences();
   }
 
   @Override
   public void resetToDefaultValues() {
+    WProperties preferences = GuiUtils.getUICore().getSystemPreferences();
+    WProperties localPersistence = GuiUtils.getUICore().getLocalPersistence();
     enableOpenGL.setSelected(true);
     sliderDynamic.setValue(RenderingLayer.DEFAULT_DYNAMIC_QUALITY_RATE);
     int maxSize = View3DFactory.getMax3dTextureSize();
-    BundleTools.LOCAL_UI_PERSISTENCE.putIntProperty(RenderingLayer.P_MAX_TEX_XY, maxSize);
-    BundleTools.LOCAL_UI_PERSISTENCE.putIntProperty(RenderingLayer.P_MAX_TEX_Z, maxSize);
+    localPersistence.putIntProperty(RenderingLayer.P_MAX_TEX_XY, maxSize);
+    localPersistence.putIntProperty(RenderingLayer.P_MAX_TEX_Z, maxSize);
     spinnerMaxXY.setValue(maxSize);
     spinnerMaxZ.setValue(maxSize);
-    BundleTools.SYSTEM_PREFERENCES.putColorProperty(RenderingLayer.P_BCK_COLOR, Color.GRAY);
-    BundleTools.SYSTEM_PREFERENCES.putColorProperty(RenderingLayer.P_LIGHT_COLOR, Color.WHITE);
-    BundleTools.SYSTEM_PREFERENCES.put(
-        View3DFactory.P_DEFAULT_LAYOUT, View3DContainer.VIEWS_vr.getId());
-    BundleTools.SYSTEM_PREFERENCES.put(Camera.P_DEFAULT_ORIENTATION, CameraView.INITIAL.name());
+    preferences.putColorProperty(RenderingLayer.P_BCK_COLOR, Color.GRAY);
+    preferences.putColorProperty(RenderingLayer.P_LIGHT_COLOR, Color.WHITE);
+    preferences.put(View3DFactory.P_DEFAULT_LAYOUT, View3DContainer.VIEWS_vr.getId());
+    preferences.put(Camera.P_DEFAULT_ORIENTATION, CameraView.INITIAL.name());
     setDefaultLayout();
   }
 }

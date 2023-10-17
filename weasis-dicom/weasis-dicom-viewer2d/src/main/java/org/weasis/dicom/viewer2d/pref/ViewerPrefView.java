@@ -35,11 +35,9 @@ import org.weasis.core.api.image.OpManager;
 import org.weasis.core.api.image.WindowOp;
 import org.weasis.core.api.image.ZoomOp;
 import org.weasis.core.api.image.ZoomOp.Interpolation;
-import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.api.service.WProperties;
 import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.api.util.ResourceUtil.ActionIcon;
-import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.editor.image.ViewerPlugin;
@@ -113,7 +111,9 @@ public class ViewerPrefView extends AbstractItemDialogPage {
               JColorChooser.showDialog(
                   SwingUtilities.getWindowAncestor(this), pickColor, getOverlayColor());
           if (newColor != null) {
-            BundleTools.SYSTEM_PREFERENCES.putColorProperty(OverlayOp.OVERLAY_COLOR_KEY, newColor);
+            GuiUtils.getUICore()
+                .getSystemPreferences()
+                .putColorProperty(OverlayOp.OVERLAY_COLOR_KEY, newColor);
           }
         });
 
@@ -170,8 +170,9 @@ public class ViewerPrefView extends AbstractItemDialogPage {
   }
 
   private Color getOverlayColor() {
-    return BundleTools.SYSTEM_PREFERENCES.getColorProperty(
-        OverlayOp.OVERLAY_COLOR_KEY, Color.WHITE);
+    return GuiUtils.getUICore()
+        .getSystemPreferences()
+        .getColorProperty(OverlayOp.OVERLAY_COLOR_KEY, Color.WHITE);
   }
 
   @Override
@@ -198,8 +199,9 @@ public class ViewerPrefView extends AbstractItemDialogPage {
     }
 
     Interpolation inter = Interpolation.getInterpolation(interpolationPosition);
-    synchronized (UIManager.VIEWER_PLUGINS) {
-      for (final ViewerPlugin<?> p : UIManager.VIEWER_PLUGINS) {
+    List<ViewerPlugin<?>> viewerPlugins = GuiUtils.getUICore().getViewerPlugins();
+    synchronized (viewerPlugins) {
+      for (final ViewerPlugin<?> p : viewerPlugins) {
         if (p instanceof View2dContainer viewer) {
           for (ViewCanvas<DicomImageElement> v : viewer.getImagePanels()) {
             OpManager disOp = v.getDisplayOpManager();
@@ -210,7 +212,7 @@ public class ViewerPrefView extends AbstractItemDialogPage {
       }
     }
 
-    BundleTools.saveSystemPreferences();
+    GuiUtils.getUICore().saveSystemPreferences();
   }
 
   @Override
@@ -231,7 +233,9 @@ public class ViewerPrefView extends AbstractItemDialogPage {
     checkBoxWLcolor.setSelected(properties.getBooleanProperty(WindowOp.P_APPLY_WL_COLOR, true));
     checkBoxLevelInverse.setSelected(properties.getBooleanProperty(WindowOp.P_INVERSE_LEVEL, true));
     checkBoxApplyPR.setSelected(properties.getBooleanProperty(PRManager.PR_APPLY, false));
-    BundleTools.SYSTEM_PREFERENCES.putColorProperty(OverlayOp.OVERLAY_COLOR_KEY, Color.WHITE);
+    GuiUtils.getUICore()
+        .getSystemPreferences()
+        .putColorProperty(OverlayOp.OVERLAY_COLOR_KEY, Color.WHITE);
   }
 
   private void formatSlider(JSlider slider) {

@@ -77,11 +77,9 @@ import org.weasis.core.api.media.data.SeriesComparator;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.service.AuditLog;
 import org.weasis.core.api.service.BundlePreferences;
-import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.api.service.WProperties;
 import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.api.util.ResourceUtil.ActionIcon;
-import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.SeriesViewerEvent;
 import org.weasis.core.ui.editor.SeriesViewerEvent.EVENT;
 import org.weasis.core.ui.editor.image.ImageViewerEventManager;
@@ -186,8 +184,8 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
     setAction(newSynchAction(View2dContainer.DEFAULT_SYNCH_LIST.toArray(new SynchView[0])));
     getAction(ActionW.SYNCH)
         .ifPresent(a -> a.setSelectedItemWithoutTriggerAction(SynchView.DEFAULT_STACK));
-    setAction(newMeasurementAction(MeasureToolBar.measureGraphicList.toArray(new Graphic[0])));
-    setAction(newDrawAction(MeasureToolBar.drawGraphicList.toArray(new Graphic[0])));
+    setAction(newMeasurementAction(MeasureToolBar.getMeasureGraphicList().toArray(new Graphic[0])));
+    setAction(newDrawAction(MeasureToolBar.getDrawGraphicList().toArray(new Graphic[0])));
     setAction(newSpatialUnit(Unit.values()));
     setAction(newPanAction());
     setAction(newCrosshairAction());
@@ -621,7 +619,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
 
   private ComboItemListener<LutShape> newLutShapeAction() {
     return new ComboItemListener<>(
-        ActionW.LUT_SHAPE, LutShape.DEFAULT_FACTORY_FUNCTIONS.toArray(new LutShape[0])) {
+        ActionW.LUT_SHAPE, DicomImageElement.DEFAULT_LUT_FUNCTIONS.toArray(new LutShape[0])) {
 
       @Override
       public void itemStateChanged(Object object) {
@@ -1208,8 +1206,9 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
     }
 
     if (allVisible && viewerPlugin instanceof View2dContainer) {
-      synchronized (UIManager.VIEWER_PLUGINS) {
-        for (final ViewerPlugin<?> p : UIManager.VIEWER_PLUGINS) {
+      List<ViewerPlugin<?>> viewerPlugins = GuiUtils.getUICore().getViewerPlugins();
+      synchronized (viewerPlugins) {
+        for (final ViewerPlugin<?> p : viewerPlugins) {
           if (p instanceof View2dContainer plugin
               && plugin.getDockable().isShowing()
               && viewerPlugin != plugin
@@ -1467,7 +1466,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
 
   public JMenu getResetMenu(String prop) {
     JMenu menu = null;
-    if (BundleTools.SYSTEM_PREFERENCES.getBooleanProperty(prop, true)) {
+    if (GuiUtils.getUICore().getSystemPreferences().getBooleanProperty(prop, true)) {
       ButtonGroup group = new ButtonGroup();
       menu = new JMenu(ActionW.RESET.getTitle());
       menu.setIcon(ResourceUtil.getIcon(ActionIcon.RESET));
@@ -1491,7 +1490,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
 
   public JMenu getPresetMenu(String prop) {
     JMenu menu = null;
-    if (BundleTools.SYSTEM_PREFERENCES.getBooleanProperty(prop, true)) {
+    if (GuiUtils.getUICore().getSystemPreferences().getBooleanProperty(prop, true)) {
       Optional<? extends ComboItemListener<?>> presetAction = getAction(ActionW.PRESET);
       if (presetAction.isPresent()) {
         menu =
@@ -1513,7 +1512,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
 
   public JMenu getLutShapeMenu(String prop) {
     JMenu menu = null;
-    if (BundleTools.SYSTEM_PREFERENCES.getBooleanProperty(prop, true)) {
+    if (GuiUtils.getUICore().getSystemPreferences().getBooleanProperty(prop, true)) {
       Optional<? extends ComboItemListener<?>> lutShapeAction = getAction(ActionW.LUT_SHAPE);
       if (lutShapeAction.isPresent()) {
         menu = lutShapeAction.get().createUnregisteredRadioMenu(ActionW.LUT_SHAPE.getTitle());
@@ -1524,7 +1523,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
 
   public JMenu getZoomMenu(String prop) {
     JMenu menu = null;
-    if (BundleTools.SYSTEM_PREFERENCES.getBooleanProperty(prop, true)) {
+    if (GuiUtils.getUICore().getSystemPreferences().getBooleanProperty(prop, true)) {
       Optional<SliderChangeListener> zoomAction = getAction(ActionW.ZOOM);
       if (zoomAction.isPresent()) {
         menu = new JMenu(ActionW.ZOOM.getTitle());
@@ -1544,7 +1543,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
 
   public JMenu getOrientationMenu(String prop) {
     JMenu menu = null;
-    if (BundleTools.SYSTEM_PREFERENCES.getBooleanProperty(prop, true)) {
+    if (GuiUtils.getUICore().getSystemPreferences().getBooleanProperty(prop, true)) {
       Optional<SliderChangeListener> rotateAction = getAction(ActionW.ROTATION);
       if (rotateAction.isPresent()) {
         menu = new JMenu(Messages.getString("View2dContainer.orientation"));
@@ -1606,7 +1605,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
 
   public JMenu getSortStackMenu(String prop) {
     JMenu menu = null;
-    if (BundleTools.SYSTEM_PREFERENCES.getBooleanProperty(prop, true)) {
+    if (GuiUtils.getUICore().getSystemPreferences().getBooleanProperty(prop, true)) {
       Optional<ComboItemListener<SeriesComparator<?>>> sortStackAction =
           getAction(ActionW.SORT_STACK);
       if (sortStackAction.isPresent()) {
@@ -1630,7 +1629,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
 
   public JMenu getLutMenu(String prop) {
     JMenu menu = null;
-    if (BundleTools.SYSTEM_PREFERENCES.getBooleanProperty(prop, true)) {
+    if (GuiUtils.getUICore().getSystemPreferences().getBooleanProperty(prop, true)) {
       Optional<ComboItemListener<ByteLut>> lutAction = getAction(ActionW.LUT);
       if (lutAction.isPresent()) {
         menu =
@@ -1645,7 +1644,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
 
   public JCheckBoxMenuItem getLutInverseMenu(String prop) {
     JCheckBoxMenuItem menu = null;
-    if (BundleTools.SYSTEM_PREFERENCES.getBooleanProperty(prop, true)) {
+    if (GuiUtils.getUICore().getSystemPreferences().getBooleanProperty(prop, true)) {
       Optional<ToggleButtonListener> inverseLutAction = getAction(ActionW.INVERT_LUT);
       if (inverseLutAction.isPresent()) {
         menu =
@@ -1660,7 +1659,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
 
   public JMenu getFilterMenu(String prop) {
     JMenu menu = null;
-    if (BundleTools.SYSTEM_PREFERENCES.getBooleanProperty(prop, true)) {
+    if (GuiUtils.getUICore().getSystemPreferences().getBooleanProperty(prop, true)) {
       Optional<ComboItemListener<KernelData>> filterAction = getAction(ActionW.FILTER);
       if (filterAction.isPresent()) {
         menu =
@@ -1916,7 +1915,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
         final ViewerToolBar toolBar = view.getViewerToolBar();
         if (toolBar != null) {
           // Test if mouse action exist and if not NO_ACTION is set
-          Feature<?> action = toolBar.getAction(ViewerToolBar.actionsButtons, command);
+          Feature<?> action = toolBar.getToolBarAction(command);
           if (action == null) {
             command = ActionW.NO_ACTION.cmd();
           }

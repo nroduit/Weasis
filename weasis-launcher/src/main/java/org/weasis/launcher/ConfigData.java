@@ -12,7 +12,6 @@ package org.weasis.launcher;
 import static org.weasis.launcher.WeasisLauncher.CONFIG_DIRECTORY;
 import static org.weasis.launcher.WeasisLauncher.CONFIG_PROPERTIES_FILE_VALUE;
 import static org.weasis.launcher.WeasisLauncher.CONFIG_PROPERTIES_PROP;
-import static org.weasis.launcher.WeasisLauncher.EXTENDED_PROPERTIES_FILE_VALUE;
 import static org.weasis.launcher.WeasisLauncher.EXTENDED_PROPERTIES_PROP;
 import static org.weasis.launcher.WeasisLauncher.P_HTTP_AUTHORIZATION;
 import static org.weasis.launcher.WeasisLauncher.P_OS_NAME;
@@ -45,7 +44,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -57,10 +55,11 @@ import javax.xml.stream.XMLInputFactory;
 import javax.xml.stream.XMLStreamConstants;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
-import org.apache.felix.framework.util.Util;
 import org.osgi.framework.Constants;
 import org.osgi.framework.Version;
 import org.weasis.launcher.WeasisLauncher.Type;
+import org.weasis.pref.AppPreferences;
+import org.weasis.pref.Preference;
 
 public class ConfigData {
   private static final Logger LOGGER = System.getLogger(ConfigData.class.getName());
@@ -123,10 +122,10 @@ public class ConfigData {
     applyConfigFromArguments();
 
     // Load all the felix properties
-    Properties felixConfig = loadConfigProperties();
+    AppPreferences preferences = loadConfigProperties();
 
     // Set "application config" properties, but has no effect on those already set
-    initWeasisProperties(felixConfig);
+    initWeasisProperties(preferences);
   }
 
   private String getHttpAgent(String revision, String profile) {
@@ -165,18 +164,18 @@ public class ConfigData {
     return felixProps;
   }
 
-  private void initWeasisProperties(Properties felixConfig) {
+  private void initWeasisProperties(AppPreferences preferences) {
     // Set system property for dynamically loading only native libraries corresponding of the
     // current platform
     setOsgiNativeLibSpecification();
 
-    String profile = felixConfig.getProperty(P_WEASIS_PROFILE, "default");
+    String profile = preferences.getProperty(P_WEASIS_PROFILE, "default");
     addProperty(P_WEASIS_PROFILE, profile);
 
-    String name = felixConfig.getProperty(P_WEASIS_NAME, "Weasis");
+    String name = preferences.getProperty(P_WEASIS_NAME, "Weasis"); // NON-NLS
     addProperty(P_WEASIS_NAME, name);
 
-    String version = felixConfig.getProperty(P_WEASIS_VERSION, "0.0.0");
+    String version = preferences.getProperty(P_WEASIS_VERSION, "0.0.0");
     addProperty(P_WEASIS_VERSION, version);
 
     String codebase = properties.getProperty(P_WEASIS_CODEBASE_URL);
@@ -196,13 +195,13 @@ public class ConfigData {
     if (portable != null) {
       LOGGER.log(Level.INFO, "Set default relative folders");
       String pkey = "weasis.portable.dicom.directory";
-      addProperty(pkey, felixConfig.getProperty(pkey, "dicom,DICOM,IMAGES,images"));
+      addProperty(pkey, preferences.getProperty(pkey, "dicom,DICOM,IMAGES,images")); // NON-NLS
     }
 
     // Set weasis properties to Java System Properties before variables substitution.
     applyConfigToSystemProperties();
 
-    filterConfigProperties(felixConfig);
+    filterConfigProperties(preferences);
     if (LOGGER.isLoggable(Level.TRACE)) {
       felixProps.forEach(
           (k, v) ->
@@ -217,20 +216,19 @@ public class ConfigData {
     LOGGER.log(Level.INFO, "Properties: {0}", properties);
   }
 
-  private void filterConfigProperties(Properties felixConfig) {
+  private void filterConfigProperties(AppPreferences preferences) {
     // Only required for dev purposes (running the app in IDE)
     String mvnRepo =
         System.getProperty(
-            "maven.localRepository", felixConfig.getProperty("maven.local.repo")); // NON-NLS
+            "maven.localRepository", preferences.getProperty("maven.local.repo")); // NON-NLS
     if (mvnRepo != null) {
       System.setProperty("maven.localRepository", Utils.adaptPathToUri(mvnRepo));
     }
 
     // Perform variable substitution for system properties and convert to dictionary.
-
-    for (Enumeration<?> e = felixConfig.propertyNames(); e.hasMoreElements(); ) {
-      String name = (String) e.nextElement();
-      felixProps.put(name, Util.substVars(felixConfig.getProperty(name), name, null, felixConfig));
+    for (Preference p : preferences.values()) {
+      String name = p.getCode();
+      felixProps.put(name, preferences.substVars(p.getValue(), name, null));
     }
   }
 
@@ -275,15 +273,6 @@ public class ConfigData {
       addProperty(CONFIG_PROPERTIES_PROP, configProp);
     }
 
-    String codeBaseExtUrl = properties.getProperty(P_WEASIS_CODEBASE_EXT_URL, "");
-    if (!properties.containsKey(EXTENDED_PROPERTIES_PROP) && Utils.hasText(codeBaseExtUrl)) {
-      String extConfigProp =
-          String.format(
-              "%s/%s/%s", // NON-NLS
-              codeBaseExtUrl, CONFIG_DIRECTORY, EXTENDED_PROPERTIES_FILE_VALUE);
-      addProperty(EXTENDED_PROPERTIES_PROP, extConfigProp);
-    }
-
     configOutput.append("\n  Application local codebase = "); // NON-NLS
     configOutput.append(properties.getProperty(P_WEASIS_CODEBASE_LOCAL));
     configOutput.append("\n  Application codebase URL = "); // NON-NLS
@@ -301,7 +290,6 @@ public class ConfigData {
       addProperty(P_WEASIS_CODEBASE_URL, baseURI);
       baseURI += "/" + CONFIG_DIRECTORY + "/";
       addProperty(CONFIG_PROPERTIES_PROP, baseURI + CONFIG_PROPERTIES_FILE_VALUE);
-      addProperty(EXTENDED_PROPERTIES_PROP, baseURI + EXTENDED_PROPERTIES_FILE_VALUE);
     } catch (Exception e) {
       LOGGER.log(Level.ERROR, "Apply Codebase", e);
     }
@@ -626,51 +614,51 @@ public class ConfigData {
    * Reads application config files and compute WEASIS_CONFIG_HASH to check if those had been
    * updated.
    */
-  public Properties loadConfigProperties() {
+  public AppPreferences loadConfigProperties() {
     URI propURI = getPropertiesURI(CONFIG_PROPERTIES_PROP, CONFIG_PROPERTIES_FILE_VALUE);
-    Properties felixConfig = new Properties();
+    AppPreferences preferences = new AppPreferences();
     // Read the properties file
     if (propURI != null) {
       configOutput.append("\n  Application configuration file = "); // NON-NLS
       configOutput.append(propURI);
-      WeasisLauncher.readProperties(propURI, felixConfig);
+      preferences.readJson(propURI);
 
     } else {
-      LOGGER.log(Level.ERROR, "No config.properties path found, Weasis cannot start!");
+      LOGGER.log(Level.ERROR, "No base.json path found, Weasis cannot start!");
     }
 
-    propURI = getPropertiesURI(EXTENDED_PROPERTIES_PROP, EXTENDED_PROPERTIES_FILE_VALUE);
+    propURI = getPropertiesURI(EXTENDED_PROPERTIES_PROP, null);
     if (propURI != null) {
       configOutput.append("\n  Application extension configuration file = "); // NON-NLS
       configOutput.append(propURI);
       // Extended properties, add or override existing properties
-      WeasisLauncher.readProperties(propURI, felixConfig);
+      preferences.readJson(propURI);
     }
     if (Type.NATIVE.name().equals(System.getProperty("weasis.launch.type"))) {
-      checkMinimalVersion(felixConfig);
+      checkMinimalVersion(preferences);
     }
 
-    if (felixConfig.isEmpty()) {
-      throw new IllegalStateException("Cannot load weasis config!");
+    if (preferences.isEmpty()) {
+      throw new IllegalStateException("Cannot load weasis configuration file!");
     }
 
     // Build a hash the properties just after reading. It will allow comparing with a new app
     // instance.
-    properties.put(P_WEASIS_CONFIG_HASH, String.valueOf(felixConfig.hashCode()));
+    properties.put(P_WEASIS_CONFIG_HASH, String.valueOf(preferences.hashCode()));
 
-    return felixConfig;
+    return preferences;
   }
 
-  private void checkMinimalVersion(Properties felixConfig) {
-    String val = felixConfig.getProperty(WeasisLauncher.P_WEASIS_MIN_NATIVE_VERSION);
+  private void checkMinimalVersion(AppPreferences preferences) {
+    String val = preferences.getProperty(WeasisLauncher.P_WEASIS_MIN_NATIVE_VERSION);
     if (Utils.hasText(val) && getProperty(P_WEASIS_CODEBASE_LOCAL) == null) {
       try {
-        URI propURI = getLocalPropertiesURI(CONFIG_PROPERTIES_PROP, CONFIG_PROPERTIES_FILE_VALUE);
-        Properties localProps = new Properties();
-        WeasisLauncher.readProperties(propURI, localProps);
+        URI propURI = getLocalPropertiesURI(CONFIG_PROPERTIES_FILE_VALUE);
+        AppPreferences localPrefs = new AppPreferences();
+        localPrefs.readJson(propURI);
         Version loc =
             new Version(
-                localProps.getProperty(WeasisLauncher.P_WEASIS_VERSION).replaceFirst("-", "."));
+                localPrefs.getProperty(WeasisLauncher.P_WEASIS_VERSION).replaceFirst("-", "."));
         Version min = new Version(val.replaceFirst("-", "."));
         if (loc.compareTo(min) < 0) {
           LOGGER.log(
@@ -678,10 +666,8 @@ public class ConfigData {
               "Start only with the native plug-ins because the version ({}) is lower the minimal version ({}) required remotely",
               loc,
               min);
-          felixConfig.clear();
-          felixConfig.putAll(localProps);
-          propURI = getLocalPropertiesURI(EXTENDED_PROPERTIES_PROP, EXTENDED_PROPERTIES_FILE_VALUE);
-          WeasisLauncher.readProperties(propURI, felixConfig);
+          preferences.clear();
+          preferences.putAll(localPrefs);
           System.setProperty(WeasisLauncher.P_WEASIS_MIN_NATIVE_VERSION, val);
         }
       } catch (Exception e) {
@@ -706,19 +692,21 @@ public class ConfigData {
         return null;
       }
     } else {
-      propURL = getLocalPropertiesURI(configProp, configFile);
+      propURL = getLocalPropertiesURI(configFile);
     }
     return propURL;
   }
 
-  private URI getLocalPropertiesURI(String configProp, String configFile) {
-    File confDir = new File(findLocalCodebase(), CONFIG_DIRECTORY);
-    try {
-      return new File(confDir, configFile).toURI();
-    } catch (Exception ex) {
-      LOGGER.log(Level.ERROR, configFile, ex);
-      return null;
+  private URI getLocalPropertiesURI(String configFile) {
+    if (Utils.hasText(configFile)) {
+      File confDir = new File(findLocalCodebase(), CONFIG_DIRECTORY);
+      try {
+        return new File(confDir, configFile).toURI();
+      } catch (Exception ex) {
+        LOGGER.log(Level.ERROR, configFile, ex);
+      }
     }
+    return null;
   }
 
   private static String toHex(int val) {

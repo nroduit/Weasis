@@ -13,8 +13,8 @@ import java.util.List;
 import java.util.Properties;
 import org.osgi.service.prefs.Preferences;
 import org.weasis.core.api.gui.Insertable.Type;
+import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.service.BundlePreferences;
-import org.weasis.core.api.service.BundleTools;
 
 public class InsertableUtil {
   public static final String ALL_BUNDLE = "weasis"; // NON-NLS
@@ -51,7 +51,7 @@ public class InsertableUtil {
             if (valString == null) {
               val =
                   getBooleanProperty(
-                      BundleTools.SYSTEM_PREFERENCES,
+                      GuiUtils.getUICore().getSystemPreferences(),
                       bundleName,
                       componentName,
                       nodeName,
@@ -69,7 +69,7 @@ public class InsertableUtil {
             if (valString == null) {
               index =
                   getIntProperty(
-                      BundleTools.SYSTEM_PREFERENCES,
+                      GuiUtils.getUICore().getSystemPreferences(),
                       bundleName,
                       componentName,
                       nodeName,

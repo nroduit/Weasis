@@ -47,11 +47,11 @@ import org.dcm4che3.net.pdu.PresentationContext;
 import org.dcm4che3.util.UIDUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.image.AffineTransformOp;
 import org.weasis.core.api.image.LayoutConstraints;
 import org.weasis.core.api.image.ZoomOp.Interpolation;
 import org.weasis.core.api.media.data.ImageElement;
-import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.ui.editor.image.ExportImage;
 import org.weasis.core.ui.util.ExportLayout;
 import org.weasis.core.ui.util.ImagePrint;
@@ -284,7 +284,9 @@ public class DicomPrint {
     // writeDICOM(new File("/tmp/print.dcm"), dicomImage);
 
     String weasisAet =
-        BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.aet", "WEASIS_AE"); // NON-NLS
+        GuiUtils.getUICore()
+            .getSystemPreferences()
+            .getProperty("weasis.aet", "WEASIS_AE"); // NON-NLS
 
     Device device = new Device(weasisAet);
     ApplicationEntity ae = new ApplicationEntity(weasisAet);

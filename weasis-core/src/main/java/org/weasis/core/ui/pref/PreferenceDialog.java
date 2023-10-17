@@ -13,8 +13,6 @@ import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Window;
 import java.awt.event.ActionListener;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.Hashtable;
 import javax.swing.JButton;
@@ -33,7 +31,6 @@ import org.weasis.core.api.gui.PreferencesPageFactory;
 import org.weasis.core.api.gui.util.AbstractItemDialogPage;
 import org.weasis.core.api.gui.util.AbstractWizardDialog;
 import org.weasis.core.api.gui.util.GuiUtils;
-import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.util.StringUtil;
 
 public class PreferenceDialog extends AbstractWizardDialog {
@@ -144,18 +141,7 @@ public class PreferenceDialog extends AbstractWizardDialog {
       }
       jButtonHelp.setVisible(StringUtil.hasText(helpKey));
       if (jButtonHelp.isVisible()) {
-        jButtonHelp.addActionListener(
-            e -> {
-              try {
-                GuiUtils.openInDefaultBrowser(
-                    jButtonHelp,
-                    new URL(
-                        BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.help.online")
-                            + helpKey));
-              } catch (MalformedURLException e1) {
-                LOGGER.error("Cannot open online help", e1);
-              }
-            });
+        jButtonHelp.addActionListener(GuiUtils.createHelpActionListener(jButtonHelp, helpKey));
       }
     }
   }

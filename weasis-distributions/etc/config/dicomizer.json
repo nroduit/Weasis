@@ -1,0 +1,264 @@
+{
+  "weasisPreferences": [
+    {
+      "code": "org.osgi.framework.startlevel.beginning",
+      "value": "110"
+    },
+    {
+      "code": "felix.auto.start.45",
+      "value": "${dollar}{weasis.codebase.url}/bundle/weasis-base-explorer-${app.version}.jar${xz.ext} ${dollar}{weasis.codebase.url}/bundle/weasis-acquire-explorer-${app.version}.jar${xz.ext}",
+      "description": "Thumbnail explorer",
+      "type": "A",
+      "category": "FELIX_INSTALL"
+    },
+    {
+      "code": "felix.auto.start.70",
+      "value": ""
+    },
+    {
+      "code": "felix.auto.start.75",
+      "value": ""
+    },
+    {
+      "code": "felix.auto.start.85",
+      "value": "${dollar}{weasis.codebase.url}/bundle/weasis-acquire-editor-${app.version}.jar${xz.ext}",
+      "description": "Image editor",
+      "type": "A",
+      "category": "FELIX_INSTALL"
+    },
+    {
+      "code": "felix.auto.start.110",
+      "value": "${dollar}{weasis.codebase.url}/bundle/weasis-dicom-send-${app.version}.jar${xz.ext}"
+    },
+    {
+      "code": "weasis.name",
+      "value": "Weasis Dicomizer"
+    },
+    {
+      "code": "weasis.profile",
+      "value": "dicomizer"
+    },
+    {
+      "code": "weasis.show.disclaimer",
+      "value": "false"
+    },
+    {
+      "code": "weasis.theme",
+      "value": "com.formdev.flatlaf.FlatIntelliJLaf"
+    },
+    {
+      "code": "weasis.toolbar.mouse.left",
+      "value": "measure"
+    },
+    {
+      "code": "weasis.toolbar.mouse.middle",
+      "value": "pan"
+    },
+    {
+      "code": "weasis.toolbar.mouse.right",
+      "value": "contextMenu"
+    },
+    {
+      "code": "weasis.toolbar.mouse.wheel",
+      "value": "zoom"
+    },
+    {
+      "code": "weasis.acquire.dest.host",
+      "value": null,
+      "description": "Hostname of DICOM send destination for Dicomizer. If no value, the list of DICOM nodes for storage is displayed.",
+      "type": "A",
+      "category": "DICOM"
+    },
+    {
+      "code": "weasis.acquire.dest.aet",
+      "value": "DCM4CHEE",
+      "description": "AETitle of DICOM send destination for Dicomizer",
+      "type": "A",
+      "category": "DICOM"
+    },
+    {
+      "code": "weasis.acquire.dest.port",
+      "value": "11112",
+      "description": "Port of DICOM send destination for Dicomizer",
+      "type": "A",
+      "JavaType": "INT",
+      "category": "DICOM"
+    },
+    {
+      "code": "weasis.acquire.meta.global.display",
+      "value": "PatientID,PatientName,PatientBirthDate,PatientSex,AccessionNumber,StudyDescription",
+      "description": "Comma-separated list of patient and study tags which are displayed in UI. When a required tag has no value, it will be displayed.",
+      "type": "A",
+      "category": "METADATA"
+    },
+    {
+      "code": "weasis.acquire.meta.global.edit",
+      "value": "StudyDescription",
+      "description": "Comma-separated list of patient and study tags which are editable in UI. When a required tag has no value, it will be editable.",
+      "type": "A",
+      "category": "METADATA"
+    },
+    {
+      "code": "weasis.acquire.meta.global.required",
+      "value": "PatientID,PatientName,AccessionNumber,StudyDescription",
+      "description": "Comma-separated list of patient and study tags which are required to publish an image",
+      "type": "A",
+      "category": "METADATA"
+    },
+    {
+      "code": "weasis.acquire.meta.series.display",
+      "value": "Modality,OperatorsName,ReferringPhysicianName,BodyPartExamined,SeriesDescription",
+      "description": "Comma-separated list of series tags which are displayed in UI. When a required tag has no value, it will be displayed.",
+      "type": "A",
+      "category": "METADATA"
+    },
+    {
+      "code": "weasis.acquire.meta.series.edit",
+      "value": "ReferringPhysicianName,BodyPartExamined,SeriesDescription",
+      "description": "Comma-separated list of series tags which are editable in UI. When a required tag has no value, it will be editable.",
+      "type": "A",
+      "category": "METADATA"
+    },
+    {
+      "code": "weasis.acquire.meta.series.required",
+      "value": "Modality,SeriesDescription",
+      "description": "Comma-separated list of series tags which are required to publish an image",
+      "type": "A",
+      "category": "METADATA"
+    },
+    {
+      "code": "weasis.acquire.meta.image.display",
+      "value": "ImageComments,ContentDate,ContentTime",
+      "description": "Comma-separated list of image tags which are displayed in UI. When a required tag has no value, it will be displayed.",
+      "type": "A",
+      "category": "METADATA"
+    },
+    {
+      "code": "weasis.acquire.meta.image.edit",
+      "value": "ImageComments,ContentDate,ContentTime",
+      "description": "Comma-separated list of image tags which are editable in UI. When a required tag has no value, it will be editable.",
+      "type": "A",
+      "category": "METADATA"
+    },
+    {
+      "code": "weasis.acquire.meta.image.required",
+      "value": "ContentDate",
+      "description": "Comma-separated list of image tags which are required to publish an image",
+      "type": "A",
+      "category": "METADATA"
+    },
+    {
+      "code": "weasis.acquire.meta.study.description",
+      "value": "",
+      "description": "Comma-separated list of study description elements (to obtain a selection in a combo box). Empty value will be an editable text field",
+      "type": "A",
+      "category": "METADATA"
+    },
+    {
+      "code": "weasis.acquire.meta.series.description",
+      "value": "",
+      "description": "Comma-separated list of series description elements (to obtain a selection in a combo box). Empty value will be an editable text field",
+      "type": "A",
+      "category": "METADATA"
+    },
+    {
+      "code": "org.weasis.base.explorer.DefaultExplorerFactory",
+      "value": "false",
+      "description": "Base thumbnail explorer",
+      "type": "A",
+      "JavaType": "BOOLEAN",
+      "category": "FACTORY"
+    },
+    {
+      "code": "org.weasis.dicom.explorer.MimeSystemAppFactory",
+      "value": "false",
+      "description": "Open a file with the default system application",
+      "type": "A",
+      "JavaType": "BOOLEAN",
+      "category": "FACTORY"
+    },
+    {
+      "code": "org.weasis.dicom.explorer.DicomExplorerFactory",
+      "value": "false",
+      "description": "DICOM series explorer",
+      "type": "A",
+      "JavaType": "BOOLEAN",
+      "category": "FACTORY"
+    },
+    {
+      "code": "org.weasis.dicom.explorer.pref.download.DicomExplorerPrefFactory",
+      "value": "false",
+      "description": "DICOM Explorer preferences",
+      "type": "A",
+      "JavaType": "BOOLEAN",
+      "category": "FACTORY"
+    },
+    {
+      "code": "org.weasis.dicom.explorer.pref.node.DicomNodePrefFactory",
+      "value": "false",
+      "description": "DICOM node list preferences",
+      "type": "A",
+      "JavaType": "BOOLEAN",
+      "category": "FACTORY"
+    },
+    {
+      "code": "weasis.import.images",
+      "value": "false"
+    },
+    {
+      "code": "weasis-base-viewer2d.all.rotationtoolbar.enable",
+      "value": "false",
+      "description": "Show the rotation toolbar with base 2D viewer",
+      "type": "A",
+      "JavaType": "BOOLEAN",
+      "category": "UI"
+    },
+    {
+      "code": "weasis-base-viewer2d.all.importtoolbar.enable",
+      "value": "false",
+      "description": "Show the import toolbar with base 2D viewer",
+      "type": "A",
+      "JavaType": "BOOLEAN",
+      "category": "UI"
+    },
+    {
+      "code": "weasis-base-viewer2d.all.minitool.enable",
+      "value": "false",
+      "description": "Show the mini tool with base 2D viewer",
+      "type": "A",
+      "category": "UI"
+    },
+    {
+      "code": "weasis-base-viewer2d.all.imagetool.enable",
+      "value": "false",
+      "description": "Show the image tool with base 2D viewer",
+      "type": "A",
+      "JavaType": "BOOLEAN",
+      "category": "UI"
+    },
+    {
+      "code": "weasis-base-viewer2d.all.measuretool.enable",
+      "value": "false",
+      "description": "Application",
+      "type": "A",
+      "JavaType": "BOOLEAN",
+      "category": "UI"
+    },
+    {
+      "code": "weasis.toolbar.layout.button",
+      "value": "false",
+      "description": "Show the layout toolbar",
+      "type": "A",
+      "JavaType": "BOOLEAN",
+      "category": "UI"
+    },
+    {
+      "code": "weasis.toolbar.synch.button",
+      "value": "false",
+      "description": "Show the synch toolbar",
+      "type": "A",
+      "JavaType": "BOOLEAN",
+      "category": "UI"
+    }
+  ]
+}

@@ -34,7 +34,7 @@ public interface SeriesViewer<E extends MediaElement> {
 
   JMenu fillSelectedPluginMenu(JMenu menuRoot);
 
-  List<Toolbar> getToolBar();
+  List<Toolbar> getToolBars();
 
   default WtoolBar getStatusBar() {
     return null;

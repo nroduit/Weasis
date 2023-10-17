@@ -108,6 +108,7 @@ public abstract class Feature<T> implements KeyActionValue {
     this.icon = ResourceUtil.getIcon("svg/action/" + command + ".svg"); // NON-NLS
   }
 
+  @SuppressWarnings("unchecked")
   public T getValue(Map<String, Object> map) {
     if (map != null) {
       try {

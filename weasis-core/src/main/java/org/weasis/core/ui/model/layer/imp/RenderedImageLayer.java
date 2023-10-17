@@ -342,17 +342,18 @@ public class RenderedImageLayer<E extends ImageElement> extends DefaultUUID
     // diffRatio));
     // }
 
-    double[] matrix =
-        (double[])
+    List<Double> matrix =
+        (List<Double>)
             disOpManager.getParamValue(
                 AffineTransformOp.OP_NAME, AffineTransformOp.P_AFFINE_MATRIX);
     Rectangle2D bound =
         (Rectangle2D)
             disOpManager.getParamValue(AffineTransformOp.OP_NAME, AffineTransformOp.P_DST_BOUNDS);
-    double ratioX = matrix[0];
-    double ratioY = matrix[4];
-    double offsetX = matrix[2];
-    double offsetY = matrix[5];
+    List<Double> m = new ArrayList<>(matrix);
+    double ratioX = m.get(0);
+    double ratioY = m.get(4);
+    double offsetX = m.get(2);
+    double offsetY = m.get(5);
 
     double imageResX = viewScale;
     double imageResY = viewScale;
@@ -360,25 +361,24 @@ public class RenderedImageLayer<E extends ImageElement> extends DefaultUUID
     // interpolate)
     imageResX = Math.max(imageResX, ratioX);
     imageResY = Math.max(imageResY, ratioY);
-    matrix[0] = imageResX;
-    matrix[4] = imageResY;
+    m.set(0, imageResX);
+    m.set(4, imageResY);
 
     double rx = ratioX / imageResX;
     double ry = ratioY / imageResY;
     Rectangle2D b =
         new Rectangle2D.Double(
             bound.getX() / rx, bound.getY() / ry, bound.getWidth() / rx, bound.getHeight() / ry);
-    matrix[2] = offsetX / rx;
-    matrix[5] = offsetY / ry;
-    disOpManager.setParamValue(
-        AffineTransformOp.OP_NAME, AffineTransformOp.P_AFFINE_MATRIX, matrix);
+    m.set(2, offsetX / rx);
+    m.set(5, offsetY / ry);
+    disOpManager.setParamValue(AffineTransformOp.OP_NAME, AffineTransformOp.P_AFFINE_MATRIX, m);
     disOpManager.setParamValue(AffineTransformOp.OP_NAME, AffineTransformOp.P_DST_BOUNDS, b);
     PlanarImage img = bound.equals(b) ? displayImage : disOpManager.process();
 
-    matrix[0] = ratioX;
-    matrix[4] = ratioY;
-    matrix[2] = offsetX;
-    matrix[5] = offsetY;
+    m.set(0, ratioX);
+    m.set(4, ratioY);
+    m.set(2, offsetX);
+    m.set(5, offsetY);
     disOpManager.setParamValue(
         AffineTransformOp.OP_NAME, AffineTransformOp.P_AFFINE_MATRIX, matrix);
     disOpManager.setParamValue(AffineTransformOp.OP_NAME, AffineTransformOp.P_DST_BOUNDS, bound);

@@ -35,9 +35,9 @@ import org.weasis.core.api.gui.Insertable.Type;
 import org.weasis.core.api.gui.InsertableFactory;
 import org.weasis.core.api.gui.InsertableUtil;
 import org.weasis.core.api.gui.util.GuiExecutor;
+import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.service.BundlePreferences;
 import org.weasis.core.ui.docking.DockableTool;
-import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.util.Toolbar;
 import org.weasis.dicom.codec.DicomImageElement;
@@ -83,8 +83,8 @@ public class Activator implements BundleActivator, ServiceListener {
     }
     EventManager.getInstance().savePreferences(bundleContext);
 
-    UIManager.closeSeriesViewerType(MprContainer.class);
-    UIManager.closeSeriesViewerType(View2dContainer.class);
+    GuiUtils.getUICore().closeSeriesViewerType(MprContainer.class);
+    GuiUtils.getUICore().closeSeriesViewerType(View2dContainer.class);
   }
 
   @Override
@@ -223,7 +223,7 @@ public class Activator implements BundleActivator, ServiceListener {
     ImageViewerPlugin<DicomImageElement> view =
         EventManager.getInstance().getSelectedView2dContainer();
     if (view instanceof View2dContainer) {
-      DataExplorerView dicomView = UIManager.getExplorerPlugin(DicomExplorer.NAME);
+      DataExplorerView dicomView = GuiUtils.getUICore().getExplorerPlugin(DicomExplorer.NAME);
       DataExplorerModel model = dicomView.getDataExplorerModel();
       if (model != null) {
         model.firePropertyChange(new ObservableEvent(action, view, null, view));

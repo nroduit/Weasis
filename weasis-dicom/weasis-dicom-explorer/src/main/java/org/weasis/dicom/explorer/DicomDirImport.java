@@ -36,7 +36,6 @@ import org.weasis.core.api.util.ResourceUtil.ActionIcon;
 import org.weasis.core.api.util.ResourceUtil.OtherIcon;
 import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.explorer.HangingProtocols.OpeningViewer;
-import org.weasis.dicom.explorer.internal.Activator;
 import org.weasis.dicom.explorer.wado.LoadSeries;
 
 public class DicomDirImport extends AbstractItemDialogPage implements ImportDicom {
@@ -70,7 +69,7 @@ public class DicomDirImport extends AbstractItemDialogPage implements ImportDico
           if (dcmdir != null) {
             String path = dcmdir.getPath();
             textField.setText(path);
-            Activator.IMPORT_EXPORT_PERSISTENCE.setProperty(LAST_DICOM_DIR, path);
+            LocalPersistence.getProperties().setProperty(LAST_DICOM_DIR, path);
           }
         });
     checkboxWriteInCache = new JCheckBox(Messages.getString("DicomDirImport.cache"));
@@ -85,7 +84,7 @@ public class DicomDirImport extends AbstractItemDialogPage implements ImportDico
   public void browseDicomDirFile() {
     String directory = getImportPath();
     if (directory == null) {
-      directory = Activator.IMPORT_EXPORT_PERSISTENCE.getProperty(LAST_DICOM_DIR, "");
+      directory = LocalPersistence.getProperties().getProperty(LAST_DICOM_DIR, "");
     }
     JFileChooser fileChooser = new JFileChooser(directory);
     fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
@@ -112,14 +111,14 @@ public class DicomDirImport extends AbstractItemDialogPage implements ImportDico
         && (selectedFile = fileChooser.getSelectedFile()) != null) {
       String path = selectedFile.getPath();
       textField.setText(path);
-      Activator.IMPORT_EXPORT_PERSISTENCE.setProperty(LAST_DICOM_DIR, path);
+      LocalPersistence.getProperties().setProperty(LAST_DICOM_DIR, path);
     }
   }
 
   @Override
   public void closeAdditionalWindow() {
-    Activator.IMPORT_EXPORT_PERSISTENCE.setProperty(
-        LAST_DICOMDIR_OPEN_MODE, getOpeningViewer().name());
+    LocalPersistence.getProperties()
+        .setProperty(LAST_DICOMDIR_OPEN_MODE, getOpeningViewer().name());
   }
 
   private OpeningViewer getOpeningViewer() {
@@ -160,7 +159,7 @@ public class DicomDirImport extends AbstractItemDialogPage implements ImportDico
       }
     }
     if (file != null) {
-      Activator.IMPORT_EXPORT_PERSISTENCE.setProperty(LAST_DICOM_DIR, file.getPath());
+      LocalPersistence.getProperties().setProperty(LAST_DICOM_DIR, file.getPath());
       List<LoadSeries> loadSeries =
           loadDicomDir(file, dicomModel, checkboxWriteInCache.isSelected());
 

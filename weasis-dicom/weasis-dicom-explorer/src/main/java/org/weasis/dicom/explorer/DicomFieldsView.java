@@ -54,7 +54,6 @@ import org.weasis.core.api.media.data.TagView;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.api.util.ResourceUtil.ActionIcon;
-import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.SeriesViewer;
 import org.weasis.core.ui.editor.SeriesViewerEvent;
 import org.weasis.core.ui.editor.SeriesViewerEvent.EVENT;
@@ -415,7 +414,9 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
       frame.getContentPane().add(panel);
       frame.setIconImage(ResourceUtil.getIcon(ActionIcon.METADATA).derive(64, 64).getImage());
       Component c =
-          container instanceof Component component ? component : UIManager.MAIN_AREA.getComponent();
+          container instanceof Component component
+              ? component
+              : GuiUtils.getUICore().getMainArea().getComponent();
       GuiUtils.showCenterScreen(frame, c);
     }
   }

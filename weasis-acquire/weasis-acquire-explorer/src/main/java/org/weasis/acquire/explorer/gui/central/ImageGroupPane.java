@@ -31,14 +31,14 @@ import org.weasis.core.ui.util.WtoolBar;
 
 public class ImageGroupPane extends ViewerPlugin<ImageElement> {
 
-  public final List<Toolbar> toolBar = Collections.synchronizedList(new ArrayList<>(1));
+  protected final List<Toolbar> toolBars = Collections.synchronizedList(new ArrayList<>());
 
   public final AcquireTabPanel tabbedPane;
 
   public ImageGroupPane(String pluginName, JIThumbnailCache thumbCache) {
     super(pluginName);
     this.tabbedPane = new AcquireTabPanel(thumbCache);
-    toolBar.add(ToolBarContainer.EMPTY);
+    toolBars.add(ToolBarContainer.EMPTY);
     init();
   }
 
@@ -78,8 +78,8 @@ public class ImageGroupPane extends ViewerPlugin<ImageElement> {
   }
 
   @Override
-  public synchronized List<Toolbar> getToolBar() {
-    return toolBar;
+  public synchronized List<Toolbar> getToolBars() {
+    return toolBars;
   }
 
   @Override

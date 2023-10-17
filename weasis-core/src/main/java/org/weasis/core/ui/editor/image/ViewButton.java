@@ -14,6 +14,7 @@ import java.awt.GridBagConstraints;
 import java.awt.geom.Rectangle2D;
 import java.util.Objects;
 import javax.swing.Icon;
+import org.weasis.core.api.gui.util.GuiUtils;
 
 public class ViewButton extends Rectangle2D.Double implements ShowPopup {
 
@@ -30,7 +31,11 @@ public class ViewButton extends Rectangle2D.Double implements ShowPopup {
     this.icon = Objects.requireNonNull(icon);
     this.name = Objects.requireNonNull(name);
     this.position = GridBagConstraints.EAST;
-    this.setFrame(0, 0, icon.getIconWidth(), icon.getIconHeight());
+    this.setFrame(
+        0,
+        0,
+        GuiUtils.getScaleLength(icon.getIconWidth()),
+        GuiUtils.getScaleLength(icon.getIconHeight()));
   }
 
   public boolean isVisible() {

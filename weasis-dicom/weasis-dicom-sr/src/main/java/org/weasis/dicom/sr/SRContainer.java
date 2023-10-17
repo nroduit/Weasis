@@ -34,16 +34,16 @@ import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.ObservableEvent;
 import org.weasis.core.api.gui.InsertableUtil;
 import org.weasis.core.api.gui.util.GuiExecutor;
+import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.image.GridBagLayoutModel;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.Series;
-import org.weasis.core.api.service.BundleTools;
+import org.weasis.core.api.service.WProperties;
 import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.api.util.ResourceUtil.ActionIcon;
 import org.weasis.core.api.util.ResourceUtil.FileIcon;
 import org.weasis.core.ui.docking.DockableTool;
-import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.image.ImageViewerEventManager;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.editor.image.SynchView;
@@ -64,7 +64,7 @@ import org.weasis.dicom.explorer.ImportToolBar;
 public class SRContainer extends DicomViewerPlugin implements PropertyChangeListener {
   private static final Logger LOGGER = LoggerFactory.getLogger(SRContainer.class);
 
-  public static final GridBagLayoutModel VIEWS_1x1 =
+  public static final GridBagLayoutModel VIEWS_SR =
       new GridBagLayoutModel(
           "1x1", // NON-NLS
           "1x1", // NON-NLS
@@ -72,7 +72,7 @@ public class SRContainer extends DicomViewerPlugin implements PropertyChangeList
           1,
           SRView.class.getName());
 
-  public static final List<GridBagLayoutModel> LAYOUT_LIST = List.of(VIEWS_1x1);
+  public static final List<GridBagLayoutModel> LAYOUT_LIST = List.of(VIEWS_SR);
 
   public static final List<SynchView> SYNCH_LIST = List.of(SynchView.NONE);
 
@@ -123,7 +123,7 @@ public class SRContainer extends DicomViewerPlugin implements PropertyChangeList
   protected SRView srview;
 
   public SRContainer() {
-    this(VIEWS_1x1, null);
+    this(VIEWS_SR, null);
   }
 
   public SRContainer(GridBagLayoutModel layoutModel, String uid) {
@@ -142,36 +142,37 @@ public class SRContainer extends DicomViewerPlugin implements PropertyChangeList
       String bundleName = context.getBundle().getSymbolicName();
       String componentName = InsertableUtil.getCName(this.getClass());
       String key = "enable"; // NON-NLS
+      WProperties preferences = GuiUtils.getUICore().getSystemPreferences();
 
       if (InsertableUtil.getBooleanProperty(
-          BundleTools.SYSTEM_PREFERENCES,
+          preferences,
           bundleName,
           componentName,
           InsertableUtil.getCName(ImportToolBar.class),
           key,
           true)) {
         Optional<Toolbar> b =
-            UIManager.EXPLORER_PLUGIN_TOOLBARS.stream()
+            GuiUtils.getUICore().getExplorerPluginToolbars().stream()
                 .filter(t -> t instanceof ImportToolBar)
                 .findFirst();
         b.ifPresent(TOOLBARS::add);
       }
       if (InsertableUtil.getBooleanProperty(
-          BundleTools.SYSTEM_PREFERENCES,
+          preferences,
           bundleName,
           componentName,
           InsertableUtil.getCName(ExportToolBar.class),
           key,
           true)) {
         Optional<Toolbar> b =
-            UIManager.EXPLORER_PLUGIN_TOOLBARS.stream()
+            GuiUtils.getUICore().getExplorerPluginToolbars().stream()
                 .filter(t -> t instanceof ExportToolBar)
                 .findFirst();
         b.ifPresent(TOOLBARS::add);
       }
 
       if (InsertableUtil.getBooleanProperty(
-          BundleTools.SYSTEM_PREFERENCES,
+          preferences,
           bundleName,
           componentName,
           InsertableUtil.getCName(SrToolBar.class),
@@ -301,7 +302,17 @@ public class SRContainer extends DicomViewerPlugin implements PropertyChangeList
   }
 
   @Override
-  public synchronized List<Toolbar> getToolBar() {
+  public Class<?> getSeriesViewerClass() {
+    return SRView.class;
+  }
+
+  @Override
+  public GridBagLayoutModel getDefaultLayoutModel() {
+    return VIEWS_SR;
+  }
+
+  @Override
+  public synchronized List<Toolbar> getToolBars() {
     return TOOLBARS;
   }
 

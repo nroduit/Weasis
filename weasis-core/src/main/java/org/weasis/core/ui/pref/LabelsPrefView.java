@@ -28,7 +28,6 @@ import org.weasis.core.Messages;
 import org.weasis.core.api.gui.util.AbstractItemDialogPage;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.util.FontItem;
-import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.editor.image.MeasureToolBar;
 import org.weasis.core.ui.editor.image.ViewCanvas;
@@ -52,7 +51,7 @@ public class LabelsPrefView extends AbstractItemDialogPage {
     this.map = new HashMap<>(ImageStatistics.ALL_MEASUREMENTS.length);
     this.viewSetting = Objects.requireNonNull(MeasureTool.viewSetting);
 
-    ArrayList<Graphic> tools = new ArrayList<>(MeasureToolBar.measureGraphicList);
+    ArrayList<Graphic> tools = new ArrayList<>(MeasureToolBar.getMeasureGraphicList());
     tools.remove(0);
     this.comboBoxTool = new JComboBox<>(tools.toArray(Graphic[]::new));
     this.fontItemJComboBox = new JComboBox<>(FontItem.values());
@@ -157,12 +156,13 @@ public class LabelsPrefView extends AbstractItemDialogPage {
   public void closeAdditionalWindow() {
     viewSetting.setFontKey(
         ((FontItem) Objects.requireNonNull(fontItemJComboBox.getSelectedItem())).getKey());
-    MeasureToolBar.measureGraphicList.forEach(
-        g -> MeasureToolBar.applyDefaultSetting(viewSetting, g));
+    MeasureToolBar.getMeasureGraphicList()
+        .forEach(g -> MeasureToolBar.applyDefaultSetting(viewSetting, g));
 
-    synchronized (UIManager.VIEWER_PLUGINS) {
-      for (int i = UIManager.VIEWER_PLUGINS.size() - 1; i >= 0; i--) {
-        ViewerPlugin<?> p = UIManager.VIEWER_PLUGINS.get(i);
+    List<ViewerPlugin<?>> viewerPlugins = GuiUtils.getUICore().getViewerPlugins();
+    synchronized (viewerPlugins) {
+      for (int i = viewerPlugins.size() - 1; i >= 0; i--) {
+        ViewerPlugin<?> p = viewerPlugins.get(i);
         if (p instanceof ImageViewerPlugin viewerPlugin) {
           for (Object v : viewerPlugin.getImagePanels()) {
             if (v instanceof ViewCanvas<?> view) {
@@ -179,12 +179,13 @@ public class LabelsPrefView extends AbstractItemDialogPage {
   public void resetToDefaultValues() {
     viewSetting.setFontKey(FontItem.SMALL_SEMIBOLD.getKey());
     initialize();
-    MeasureToolBar.measureGraphicList.forEach(
-        g -> {
-          List<Measurement> list = g.getMeasurementList();
-          Optional.ofNullable(list)
-              .ifPresent(l -> l.forEach(Measurement::resetToGraphicLabelValue));
-        });
+    MeasureToolBar.getMeasureGraphicList()
+        .forEach(
+            g -> {
+              List<Measurement> list = g.getMeasurementList();
+              Optional.ofNullable(list)
+                  .ifPresent(l -> l.forEach(Measurement::resetToGraphicLabelValue));
+            });
 
     selectTool((Graphic) comboBoxTool.getSelectedItem());
 

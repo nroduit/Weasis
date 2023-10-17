@@ -14,6 +14,7 @@ import static org.opencv.core.Core.multiply;
 
 import java.awt.Color;
 import java.security.SecureRandom;
+import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -26,11 +27,6 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Random;
 import java.util.stream.DoubleStream;
-import org.apache.commons.math3.analysis.interpolation.LinearInterpolator;
-import org.apache.commons.math3.analysis.polynomials.PolynomialSplineFunction;
-import org.apache.commons.math3.linear.MatrixUtils;
-import org.apache.commons.math3.linear.RealMatrix;
-import org.apache.commons.math3.util.Pair;
 import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Sequence;
 import org.dcm4che3.data.Tag;
@@ -808,8 +804,8 @@ public class RtSet {
                 for (Point point : matOfPoint.toList()) {
                   double[] coordinates = new double[2];
 
-                  coordinates[0] = dose.getDoseMmLUT().getFirst()[(int) point.x];
-                  coordinates[1] = dose.getDoseMmLUT().getSecond()[(int) point.y];
+                  coordinates[0] = dose.getDoseMmLUT().getKey()[(int) point.x];
+                  coordinates[1] = dose.getDoseMmLUT().getValue()[(int) point.y];
 
                   newContour[k] = coordinates[0];
                   newContour[k + 1] = coordinates[1];
@@ -967,14 +963,38 @@ public class RtSet {
       int[] interpolatedX, double[] xCoordinates, double[] yCoordinates) {
     double[] interpolatedY = new double[interpolatedX.length];
 
-    LinearInterpolator li = new LinearInterpolator();
-    PolynomialSplineFunction psf = li.interpolate(xCoordinates, yCoordinates);
+    PolynomialSplineFunction psf = interpolate(xCoordinates, yCoordinates);
 
     for (int i = 0; i <= interpolatedX.length; ++i) {
       interpolatedY[0] = psf.value(interpolatedX[i]);
     }
 
     return interpolatedY;
+  }
+
+  public static PolynomialSplineFunction interpolate(double[] x, double[] y) {
+    if (x.length != y.length || x.length < 2) {
+      throw new IllegalStateException();
+    }
+
+    // Number of intervals
+    int length = x.length - 1;
+
+    // Slope of the lines between the data points
+    final double[] m = new double[length];
+    for (int i = 0; i < length; i++) {
+      m[i] = (y[i + 1] - y[i]) / (x[i + 1] - x[i]);
+    }
+
+    final PolynomialFunction[] polynomials = new PolynomialFunction[length];
+    final double[] coefficients = new double[2];
+    for (int i = 0; i < length; i++) {
+      coefficients[0] = y[i];
+      coefficients[1] = m[i];
+      polynomials[i] = new PolynomialFunction(coefficients);
+    }
+
+    return new PolynomialSplineFunction(x, polynomials);
   }
 
   /**
@@ -1030,8 +1050,9 @@ public class RtSet {
       KeyDouble z = entry.getKey();
 
       // Calculate the area for each contour in the current plane
-      Pair<Integer, Double> maxContour = structure.calculateLargestContour(entry.getValue());
-      int maxContourIndex = maxContour.getFirst();
+      AbstractMap.SimpleImmutableEntry<Integer, Double> maxContour =
+          structure.calculateLargestContour(entry.getValue());
+      int maxContourIndex = maxContour.getKey();
 
       // If dose plane does not exist for z, continue with next plane
       MediaElement dosePlane = dose.getDosePlaneBySlice(z.getValue());
@@ -1096,7 +1117,8 @@ public class RtSet {
     return cumDvh;
   }
 
-  private Pair<double[], double[]> calculatePixelLookupTable(DicomImageElement dicomImage) {
+  private AbstractMap.SimpleImmutableEntry<double[], double[]> calculatePixelLookupTable(
+      DicomImageElement dicomImage) {
 
     double deltaI = dicomImage.getSliceGeometry().getVoxelSpacing().x;
     double deltaJ = dicomImage.getSliceGeometry().getVoxelSpacing().y;
@@ -1113,25 +1135,40 @@ public class RtSet {
       {rowDirection.z * deltaI, columnDirection.z * deltaJ, 0, position.z},
       {0, 0, 0, 1}
     };
-    RealMatrix matrix = MatrixUtils.createRealMatrix(m);
 
     double[] x = new double[dicomImage.getImage().width()];
     // column index to the image plane.
     for (int i = 0; i < dicomImage.getImage().width(); i++) {
-      x[i] =
-          matrix.multiply(MatrixUtils.createColumnRealMatrix(new double[] {i, 0, 0, 1}))
-              .getRow(0)[0];
+      double[][] data = new double[][] {{i}, {0}, {0}, {1}};
+      x[i] = multiplyMatrix(m, data)[0][0];
     }
 
     double[] y = new double[dicomImage.getImage().height()];
     // row index to the image plane
     for (int j = 0; j < dicomImage.getImage().height(); j++) {
-      y[j] =
-          matrix.multiply(MatrixUtils.createColumnRealMatrix(new double[] {0, j, 0, 1}))
-              .getRow(1)[0];
+      double[][] data = new double[][] {{0}, {j}, {0}, {1}};
+      y[j] = multiplyMatrix(m, data)[1][0];
     }
 
-    return new Pair<>(x, y);
+    return new AbstractMap.SimpleImmutableEntry<>(x, y);
+  }
+
+  private double[][] multiplyMatrix(double[][] rotation, double[][] data) {
+    final int nRows = rotation.length;
+    final int nCols = data[0].length;
+    final int nSum = rotation[0].length;
+    final double[][] out = new double[nRows][nCols];
+    for (int row = 0; row < nRows; ++row) {
+      for (int col = 0; col < nCols; ++col) {
+        double sum = 0;
+        for (int i = 0; i < nSum; ++i) {
+          sum += rotation[row][i] * data[i][col];
+        }
+        out[row][col] = sum;
+      }
+    }
+
+    return out;
   }
 
   // TODO: this has to consider all plan doses
@@ -1166,10 +1203,11 @@ public class RtSet {
   // }
   // }
 
-  private Mat calculateContourMask(Pair<double[], double[]> doseMmLUT, Contour contour) {
+  private Mat calculateContourMask(
+      AbstractMap.SimpleImmutableEntry<double[], double[]> doseMmLUT, Contour contour) {
 
-    int cols = doseMmLUT.getFirst().length;
-    int rows = doseMmLUT.getSecond().length;
+    int cols = doseMmLUT.getKey().length;
+    int rows = doseMmLUT.getValue().length;
 
     MatOfPoint2f mop = new MatOfPoint2f();
     mop.fromList(contour.getListOfPoints());
@@ -1180,7 +1218,7 @@ public class RtSet {
       for (int j = 0; j < cols; j++) {
         double distance =
             Imgproc.pointPolygonTest(
-                mop, new Point(doseMmLUT.getFirst()[j], doseMmLUT.getSecond()[i]), false);
+                mop, new Point(doseMmLUT.getKey()[j], doseMmLUT.getValue()[i]), false);
         // TODO: Include the border line as well?
         if (distance > 0) {
           binaryMask.put(i, j, 255);

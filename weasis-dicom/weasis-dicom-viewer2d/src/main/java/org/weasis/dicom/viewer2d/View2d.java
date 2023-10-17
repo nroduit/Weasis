@@ -57,7 +57,6 @@ import org.weasis.core.api.image.util.ImageLayer;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.service.AuditLog;
-import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.ui.dialog.MeasureDialog;
 import org.weasis.core.ui.editor.image.CalibrationView;
 import org.weasis.core.ui.editor.image.ContextMenuHandler;
@@ -1166,7 +1165,9 @@ public class View2d extends DefaultView2d<DicomImageElement> {
       GuiUtils.addItemToMenu(popupMenu, manager.getResetMenu("weasis.contextmenu.reset"));
     }
 
-    if (BundleTools.SYSTEM_PREFERENCES.getBooleanProperty("weasis.contextmenu.close", true)) {
+    if (GuiUtils.getUICore()
+        .getSystemPreferences()
+        .getBooleanProperty("weasis.contextmenu.close", true)) {
       JMenuItem close = new JMenuItem(Messages.getString("View2d.close"));
       close.addActionListener(e -> View2d.this.setSeries(null, null));
       popupMenu.add(close);

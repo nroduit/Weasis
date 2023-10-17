@@ -41,17 +41,16 @@ public record TextureSliceDataBuffer(Buffer buffer, Arena scope) {
       byte[] bSrcData = new byte[width * height * channels];
       image.get(0, 0, bSrcData);
       // Allow to be closed in another thread
-      Arena arena = Arena.openShared();
-      MemorySegment bufferSegment = MemorySegment.allocateNative(bSrcData.length, arena.scope());
+      Arena arena = Arena.ofShared();
+      MemorySegment bufferSegment = arena.allocate(bSrcData.length);
       ByteBuffer buffer =
           bufferSegment.asByteBuffer().order(ByteOrder.nativeOrder()).put(bSrcData).rewind();
       return new TextureSliceDataBuffer(buffer, arena);
     } else if (cvType == CvType.CV_16U || cvType == CvType.CV_16S) {
       short[] sSrcData = new short[width * height * channels];
       image.get(0, 0, sSrcData);
-      Arena arena = Arena.openShared();
-      MemorySegment bufferSegment =
-          MemorySegment.allocateNative(sSrcData.length * 2L, arena.scope());
+      Arena arena = Arena.ofShared();
+      MemorySegment bufferSegment = arena.allocate(sSrcData.length * 2L);
       ShortBuffer buffer =
           bufferSegment
               .asByteBuffer()
@@ -77,9 +76,8 @@ public record TextureSliceDataBuffer(Buffer buffer, Arena scope) {
 
     if (cvType == CvType.CV_8U) {
       byte[] bSrcData = new byte[size * channels];
-      Arena arena = Arena.openShared();
-      MemorySegment bufferSegment =
-          MemorySegment.allocateNative(bSrcData.length * depth, arena.scope());
+      Arena arena = Arena.ofShared();
+      MemorySegment bufferSegment = arena.allocate(bSrcData.length * depth);
       ByteBuffer buf = bufferSegment.asByteBuffer().order(ByteOrder.nativeOrder());
 
       for (Mat slice : slices) {
@@ -90,9 +88,8 @@ public record TextureSliceDataBuffer(Buffer buffer, Arena scope) {
       return new TextureSliceDataBuffer(buf, arena);
     } else if (cvType == CvType.CV_16U || cvType == CvType.CV_16S) {
       short[] sSrcData = new short[size * channels];
-      Arena arena = Arena.openShared();
-      MemorySegment bufferSegment =
-          MemorySegment.allocateNative(sSrcData.length * depth * 2L, arena.scope());
+      Arena arena = Arena.ofShared();
+      MemorySegment bufferSegment = arena.allocate(sSrcData.length * depth * 2L);
       ShortBuffer buf = bufferSegment.asByteBuffer().order(ByteOrder.nativeOrder()).asShortBuffer();
 
       for (Mat slice : slices) {

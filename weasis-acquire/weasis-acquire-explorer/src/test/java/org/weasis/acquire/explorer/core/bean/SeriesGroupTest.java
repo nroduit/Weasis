@@ -12,10 +12,11 @@ package org.weasis.acquire.explorer.core.bean;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.FormatStyle;
 import java.util.Arrays;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import org.weasis.core.api.util.LocalUtil;
 
 class SeriesGroupTest {
 
@@ -34,7 +35,8 @@ class SeriesGroupTest {
   @Test
   void testToString() {
     assertThat(s1.toString()).hasToString("Other"); // NON-NLS
-    assertThat(s2.toString()).hasToString(LocalUtil.getDateTimeFormatter().format(today));
+    assertThat(s2.toString())
+        .hasToString(DateTimeFormatter.ofLocalizedDateTime(FormatStyle.MEDIUM).format(today));
     assertThat(s3.toString()).hasToString(TEST_SERIES);
   }
 

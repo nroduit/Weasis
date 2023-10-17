@@ -98,7 +98,7 @@ public class InfoLayer extends AbstractInfoLayer<DicomImageElement> {
   @Override
   public LayerAnnotation getLayerCopy(ViewCanvas view2DPane, boolean useGlobalPreferences) {
     InfoLayer layer = new InfoLayer(view2DPane, useGlobalPreferences);
-    HashMap<LayerItem, Boolean> prefMap = layer.displayPreferences;
+    Map<LayerItem, Boolean> prefMap = layer.displayPreferences;
     setLayerValue(prefMap, LayerItem.ANNOTATIONS);
     setLayerValue(prefMap, LayerItem.ANONYM_ANNOTATIONS);
     setLayerValue(prefMap, LayerItem.IMAGE_ORIENTATION);

@@ -13,7 +13,7 @@ import java.awt.event.ActionEvent;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.JButton;
-import org.weasis.core.api.service.BundleTools;
+import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.api.util.ResourceUtil.ActionIcon;
 import org.weasis.core.ui.util.WtoolBar;
@@ -23,7 +23,9 @@ public class ImportToolBar extends WtoolBar {
   public ImportToolBar(int index) {
     super(Messages.getString("ImportToolBar.import_img_bar"), index);
 
-    if (BundleTools.SYSTEM_PREFERENCES.getBooleanProperty("weasis.import.images", true)) {
+    if (GuiUtils.getUICore()
+        .getSystemPreferences()
+        .getBooleanProperty("weasis.import.images", true)) {
       AbstractAction action =
           new AbstractAction() {
 

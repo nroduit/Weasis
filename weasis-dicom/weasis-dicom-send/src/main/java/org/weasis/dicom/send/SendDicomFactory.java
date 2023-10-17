@@ -17,8 +17,8 @@ import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Deactivate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.service.BundlePreferences;
-import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.util.FileUtil;
 import org.weasis.dicom.explorer.CheckTreeModel;
 import org.weasis.dicom.explorer.DicomExportFactory;
@@ -35,7 +35,9 @@ public class SendDicomFactory implements DicomExportFactory {
   @Override
   public ExportDicom createDicomExportPage(Hashtable<String, Object> properties) {
     if (properties != null
-        && BundleTools.SYSTEM_PREFERENCES.getBooleanProperty("weasis.export.dicom.send", true)) {
+        && GuiUtils.getUICore()
+            .getSystemPreferences()
+            .getBooleanProperty("weasis.export.dicom.send", true)) {
       DicomModel dicomModel = (DicomModel) properties.get(DicomModel.class.getName());
       CheckTreeModel treeModel = (CheckTreeModel) properties.get(CheckTreeModel.class.getName());
       if (dicomModel != null && treeModel != null) {

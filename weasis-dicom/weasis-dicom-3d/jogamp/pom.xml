@@ -44,7 +44,7 @@
             javafx.*;resolution:=optional,com.jogamp.plugin.ui;resolution:=optional,\
             com.sun.javafx.tk;resolution:=optional,jdk.internal.module;resolution:=optional,*
 
-            -exportcontents:com.jogamp.*,gluegen.*,jogamp.*,jogl.util.*,newt.data*
+            -exportcontents:com.jogamp.*,gluegen.*,jogamp.*
           </bnd>
         </configuration>
       </plugin>

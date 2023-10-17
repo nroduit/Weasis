@@ -32,7 +32,6 @@ import org.weasis.core.api.util.ResourceUtil.ActionIcon;
 import org.weasis.core.util.LangUtil;
 import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.explorer.HangingProtocols.OpeningViewer;
-import org.weasis.dicom.explorer.internal.Activator;
 
 public class LocalImport extends AbstractItemDialogPage implements ImportDicom {
   private static final Logger LOGGER = LoggerFactory.getLogger(LocalImport.class);
@@ -62,8 +61,7 @@ public class LocalImport extends AbstractItemDialogPage implements ImportDicom {
             textField, btnSearch, Messages.getString("LocalImport.imp_files"), LAST_OPEN_DIR));
 
     checkboxSearch.setSelected(
-        LangUtil.geEmptytoTrue(
-            Activator.IMPORT_EXPORT_PERSISTENCE.getProperty(LAST_RECURSIVE_MODE)));
+        LangUtil.geEmptytoTrue(LocalPersistence.getProperties().getProperty(LAST_RECURSIVE_MODE)));
 
     add(GuiUtils.getFlowLayoutPanel(ITEM_SEPARATOR_SMALL, ITEM_SEPARATOR, checkboxSearch));
 
@@ -74,7 +72,7 @@ public class LocalImport extends AbstractItemDialogPage implements ImportDicom {
   static JPanel buildSearchPanel(
       JTextField textField, JButton btnSearch, String title, String key) {
     JLabel lblImportAFolder = new JLabel(title + StringUtil.COLON);
-    textField.setText(Activator.IMPORT_EXPORT_PERSISTENCE.getProperty(key, ""));
+    textField.setText(LocalPersistence.getProperties().getProperty(key, ""));
     textField.putClientProperty(FlatClientProperties.TEXT_FIELD_SHOW_CLEAR_BUTTON, true);
     Dimension dim = textField.getPreferredSize();
     dim.width = 200;
@@ -96,7 +94,7 @@ public class LocalImport extends AbstractItemDialogPage implements ImportDicom {
   public void browseImgFile() {
     String directory = getImportPath();
     if (directory == null) {
-      directory = Activator.IMPORT_EXPORT_PERSISTENCE.getProperty(LAST_OPEN_DIR, "");
+      directory = LocalPersistence.getProperties().getProperty(LAST_OPEN_DIR, "");
     }
     JFileChooser fileChooser = new JFileChooser(directory);
     fileChooser.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);
@@ -118,17 +116,16 @@ public class LocalImport extends AbstractItemDialogPage implements ImportDicom {
         textField.setText(Messages.getString("LocalImport.multi_dir"));
       }
       if (StringUtil.hasText(lastDir)) {
-        Activator.IMPORT_EXPORT_PERSISTENCE.setProperty(LAST_OPEN_DIR, lastDir);
+        LocalPersistence.getProperties().setProperty(LAST_OPEN_DIR, lastDir);
       }
     }
   }
 
   @Override
   public void closeAdditionalWindow() {
-    Activator.IMPORT_EXPORT_PERSISTENCE.setProperty(
-        LAST_OPEN_VIEWER_MODE, getOpeningViewer().name());
-    Activator.IMPORT_EXPORT_PERSISTENCE.setProperty(
-        LAST_RECURSIVE_MODE, String.valueOf(checkboxSearch.isSelected()));
+    LocalPersistence.getProperties().setProperty(LAST_OPEN_VIEWER_MODE, getOpeningViewer().name());
+    LocalPersistence.getProperties()
+        .setProperty(LAST_RECURSIVE_MODE, String.valueOf(checkboxSearch.isSelected()));
   }
 
   private OpeningViewer getOpeningViewer() {
@@ -181,7 +178,7 @@ public class LocalImport extends AbstractItemDialogPage implements ImportDicom {
         lastDir = files[0].getParent();
       }
       if (StringUtil.hasText(lastDir)) {
-        Activator.IMPORT_EXPORT_PERSISTENCE.setProperty(LAST_OPEN_DIR, lastDir);
+        LocalPersistence.getProperties().setProperty(LAST_OPEN_DIR, lastDir);
       }
       DicomModel.LOADING_EXECUTOR.execute(
           new LoadLocalDicom(files, checkboxSearch.isSelected(), dicomModel, getOpeningViewer()));

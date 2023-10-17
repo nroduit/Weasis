@@ -44,9 +44,7 @@ import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.TagW;
-import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.ui.dialog.MeasureDialog;
-import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.ViewerPluginBuilder;
 import org.weasis.core.ui.editor.image.CalibrationView;
 import org.weasis.core.ui.editor.image.ContextMenuHandler;
@@ -379,7 +377,9 @@ public class View2d extends DefaultView2d<ImageElement> {
       GuiUtils.addItemToMenu(popupMenu, manager.getResetMenu("weasis.contextmenu.reset"));
     }
 
-    if (BundleTools.SYSTEM_PREFERENCES.getBooleanProperty("weasis.contextmenu.close", true)) {
+    if (GuiUtils.getUICore()
+        .getSystemPreferences()
+        .getBooleanProperty("weasis.contextmenu.close", true)) {
       JMenuItem close = new JMenuItem(Messages.getString("View2d.close"));
       close.addActionListener(e -> View2d.this.setSeries(null, null));
       popupMenu.add(close);
@@ -416,8 +416,9 @@ public class View2d extends DefaultView2d<ImageElement> {
                 && selPlugin.isContainingView(View2d.this)
                 && p1.equals(selPlugin.getGroupID())) {
             } else {
-              synchronized (UIManager.VIEWER_PLUGINS) {
-                for (final ViewerPlugin<?> p : UIManager.VIEWER_PLUGINS) {
+              List<ViewerPlugin<?>> viewerPlugins = GuiUtils.getUICore().getViewerPlugins();
+              synchronized (viewerPlugins) {
+                for (final ViewerPlugin<?> p : viewerPlugins) {
                   if (p1.equals(p.getGroupID())) {
                     if (!((View2dContainer) p).isContainingView(View2d.this)) {
                       openPlugin = p;

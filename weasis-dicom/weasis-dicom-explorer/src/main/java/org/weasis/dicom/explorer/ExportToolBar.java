@@ -12,7 +12,7 @@ package org.weasis.dicom.explorer;
 import java.awt.Component;
 import javax.swing.JButton;
 import javax.swing.JOptionPane;
-import org.weasis.core.api.service.BundleTools;
+import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.api.util.ResourceUtil.ActionIcon;
 import org.weasis.core.ui.util.DefaultAction;
@@ -26,7 +26,9 @@ public class ExportToolBar extends WtoolBar {
 
     final DicomModel model = (DicomModel) explorer.getDataExplorerModel();
 
-    if (BundleTools.SYSTEM_PREFERENCES.getBooleanProperty("weasis.export.dicom", true)) {
+    if (GuiUtils.getUICore()
+        .getSystemPreferences()
+        .getBooleanProperty("weasis.export.dicom", true)) {
       final JButton btnExport = new JButton(ResourceUtil.getToolBarIcon(ActionIcon.EXPORT_DICOM));
       btnExport.setToolTipText(Messages.getString("ExportToolBar.export_dcm"));
       btnExport.addActionListener(
@@ -41,7 +43,9 @@ public class ExportToolBar extends WtoolBar {
         actionName,
         ResourceUtil.getIcon(ActionIcon.EXPORT_DICOM),
         event -> {
-          if (BundleTools.SYSTEM_PREFERENCES.getBooleanProperty("weasis.export.dicom", true)) {
+          if (GuiUtils.getUICore()
+              .getSystemPreferences()
+              .getBooleanProperty("weasis.export.dicom", true)) {
             ImportToolBar.showAction(
                 parent, model, Messages.getString("LocalExport.local_dev"), true);
           } else {

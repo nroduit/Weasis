@@ -36,9 +36,7 @@ public class CvUtil {
 
   public static void runGarbageCollectorAndWait(long ms) {
     System.gc();
-    System.runFinalization();
     System.gc();
-    System.runFinalization();
     try {
       TimeUnit.MILLISECONDS.sleep(ms);
     } catch (InterruptedException et) {

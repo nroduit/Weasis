@@ -25,7 +25,6 @@ import org.weasis.base.ui.gui.WeasisWin;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.service.BundlePreferences;
 import org.weasis.core.api.service.BundleTools;
-import org.weasis.core.ui.docking.UIManager;
 
 @Header(name = Constants.BUNDLE_ACTIVATOR, value = "${@class}") // NON-NLS
 public class Activator implements BundleActivator {
@@ -35,10 +34,6 @@ public class Activator implements BundleActivator {
   public void start(final BundleContext bundleContext) throws Exception {
     // Starts core bundles for initialization before calling UI components
     Bundle bundle = FrameworkUtil.getBundle(BundleTools.class);
-    if (bundle != null) {
-      bundle.start();
-    }
-    bundle = FrameworkUtil.getBundle(UIManager.class);
     if (bundle != null) {
       bundle.start();
     }

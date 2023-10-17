@@ -26,8 +26,8 @@ import org.weasis.core.api.gui.util.ComboItemListener;
 import org.weasis.core.api.gui.util.DropDownButton;
 import org.weasis.core.api.gui.util.Feature;
 import org.weasis.core.api.gui.util.GroupRadioMenu;
+import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.RadioMenuItem;
-import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.api.service.WProperties;
 import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.api.util.ResourceUtil.ActionIcon;
@@ -58,11 +58,11 @@ public class MeasureToolBar extends WtoolBar {
 
   public static final SelectGraphic selectionGraphic = new SelectGraphic();
 
-  public static final List<Graphic> measureGraphicList = new ArrayList<>();
-  public static final List<Graphic> drawGraphicList = new ArrayList<>();
+  private static final List<Graphic> measureGraphicList = new ArrayList<>();
+  private static final List<Graphic> drawGraphicList = new ArrayList<>();
 
   static {
-    WProperties p = BundleTools.SYSTEM_PREFERENCES;
+    WProperties p = GuiUtils.getUICore().getSystemPreferences();
     if (p.getBooleanProperty("weasis.measure.selection", true)) {
       measureGraphicList.add(selectionGraphic);
     }
@@ -154,7 +154,7 @@ public class MeasureToolBar extends WtoolBar {
     selectionGraphic.setLayerType(LayerType.TEMP_DRAW);
   }
 
-  protected final JButton jButtondelete = new JButton();
+  protected final JButton deleteButton = new JButton();
   protected final ImageViewerEventManager<?> eventManager;
 
   public MeasureToolBar(final ImageViewerEventManager<?> eventManager, int index) {
@@ -175,9 +175,9 @@ public class MeasureToolBar extends WtoolBar {
     draw.ifPresent(comboItemListener -> add(buildButton(comboItemListener)));
 
     if (measure.isPresent() || draw.isPresent()) {
-      jButtondelete.setToolTipText(Messages.getString("MeasureToolBar.del"));
-      jButtondelete.setIcon(ResourceUtil.getToolBarIcon(ActionIcon.SELECTION_DELETE));
-      jButtondelete.addActionListener(
+      deleteButton.setToolTipText(Messages.getString("MeasureToolBar.del"));
+      deleteButton.setIcon(ResourceUtil.getToolBarIcon(ActionIcon.SELECTION_DELETE));
+      deleteButton.addActionListener(
           e -> {
             GraphicModel gm = eventManager.getSelectedViewPane().getGraphicManager();
             if (gm.getSelectedGraphics().isEmpty()) {
@@ -186,11 +186,19 @@ public class MeasureToolBar extends WtoolBar {
             gm.deleteSelectedGraphics(eventManager.getSelectedViewPane(), Boolean.TRUE);
           });
       if (measure.isPresent()) {
-        measure.get().registerActionState(jButtondelete);
+        measure.get().registerActionState(deleteButton);
       } else
-        draw.ifPresent(comboItemListener -> comboItemListener.registerActionState(jButtondelete));
-      add(jButtondelete);
+        draw.ifPresent(comboItemListener -> comboItemListener.registerActionState(deleteButton));
+      add(deleteButton);
     }
+  }
+
+  public static List<Graphic> getDrawGraphicList() {
+    return drawGraphicList;
+  }
+
+  public static List<Graphic> getMeasureGraphicList() {
+    return measureGraphicList;
   }
 
   public static void applyDefaultSetting(ViewSetting setting, Graphic graphic) {

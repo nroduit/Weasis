@@ -3,10 +3,6 @@
 #
 # Initial script by Nicolas Roduit
 
-# Specify the required Java version.
-# Only major version is checked. Minor version or any other version string info is left out.
-REQUIRED_TEXT_VERSION=20
-
 # Build Parameters
 REVISON_INC="1"
 PACKAGE=YES
@@ -135,7 +131,7 @@ fi
 # Set custom JDK path (>= JDK 11)
 export JAVA_HOME=$JDK_PATH_UNIX
 
-WEASIS_VERSION=$(grep -i "weasis.version=" "$INPUT_PATH_UNIX/weasis/conf/config.properties" | sed 's/^.*=//')
+WEASIS_VERSION=$(grep -i "weasis.version=" "${curPath}/build.properties" | sed 's/^.*=//')
 
 echo System        = "${ARC_OS}"
 echo JDK path        = "${JDK_PATH_UNIX}"
@@ -146,6 +142,9 @@ then
   echo Input unix path      = "${INPUT_PATH_UNIX}"
 fi
 
+# Specify the required Java version.
+# Only major version is checked. Minor version or any other version string info is left out.
+REQUIRED_TEXT_VERSION=$(grep -i "jdk.version=" "${curPath}/build.properties" | sed 's/^.*=//')
 # Extract major version number for comparisons from the required version string.
 # In order to do that, remove leading "1." if exists, and minor and security versions.
 REQUIRED_MAJOR_VERSION=$(echo $REQUIRED_TEXT_VERSION | sed -e 's/^1\.//' -e 's/\..*//')
@@ -192,7 +191,7 @@ rm -f "$INPUT_DIR"/*.jar.pack.gz
 
 # Remove the unrelated native packages
 find "$INPUT_DIR"/bundle/weasis-opencv-core-* -type f ! -name '*-'"${ARC_OS}"'-*'  -exec rm -f {} \;
-find "$INPUT_DIR"/bundle/jogamp-* -type f ! -name '*-'"${ARC_OS}"'-*' || "?."'*' -not -name 'jogamp-?.*' -exec rm -f {} \;
+find "$INPUT_DIR"/bundle/jogamp-* -type f ! -name '*-'"${ARC_OS}"'-*' ! -name 'jogamp-[0-9]*' -exec rm -f {} \;
 
 # Special case with 32-bit x86 architecture, remove 64-bit lib
 if [ "$arc" = "x86" ] ; then
@@ -260,11 +259,12 @@ if [ "$PACKAGE" = "YES" ] ; then
   elif [ "$machine" = "linux" ] ; then
     declare -a installerTypes=("deb" "rpm")
     for installerType in "${installerTypes[@]}"; do
+      [ "$installerType" = "deb" ]  && pkgDependencies="libstdc++6, libgcc1" || pkgDependencies=""
       $JPKGCMD --type "$installerType" --app-image "$IMAGE_PATH" --dest "$OUTPUT_PATH"  --name "$NAME" --resource-dir "$RES" \
       --license-file "$INPUT_PATH/Licence.txt" --description "Weasis DICOM viewer" --vendor "$VENDOR" \
       --copyright "$COPYRIGHT" --app-version "$WEASIS_CLEAN_VERSION" --file-associations "${curPath}/file-associations.properties" \
       --linux-app-release "$REVISON_INC" --linux-package-name "weasis" --linux-deb-maintainer "Nicolas Roduit" --linux-rpm-license-type "EPL-2.0" \
-      --linux-menu-group "Viewer;MedicalSoftware;Graphics;" --linux-app-category "science" --linux-package-deps "libstdc++6, libgcc1" \
+      --linux-menu-group "Viewer;MedicalSoftware;Graphics;" --linux-app-category "science" --linux-package-deps "$pkgDependencies" \
       --linux-shortcut "${tmpArgs[@]}" --verbose
       if [ -d "${TEMP_PATH}" ] ; then
         rm -rf "${TEMP_PATH}"

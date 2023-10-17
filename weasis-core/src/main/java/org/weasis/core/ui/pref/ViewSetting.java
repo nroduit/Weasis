@@ -19,8 +19,8 @@ import java.util.ArrayList;
 import java.util.List;
 import javax.swing.UIManager;
 import org.osgi.service.prefs.Preferences;
+import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.service.BundlePreferences;
-import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.ui.editor.image.MeasureToolBar;
 import org.weasis.core.ui.model.graphic.Graphic;
 import org.weasis.core.ui.model.utils.ImageStatistics;
@@ -79,8 +79,8 @@ public class ViewSetting {
       }
 
       // Forget the Selection Graphic
-      for (int i = 1; i < MeasureToolBar.measureGraphicList.size(); i++) {
-        Graphic graph = MeasureToolBar.measureGraphicList.get(i);
+      for (int i = 1; i < MeasureToolBar.getMeasureGraphicList().size(); i++) {
+        Graphic graph = MeasureToolBar.getMeasureGraphicList().get(i);
         List<Measurement> list = graph.getMeasurementList();
         if (list != null && !list.isEmpty()) {
           Preferences gpref = p.node(graph.getClass().getSimpleName());
@@ -137,7 +137,8 @@ public class ViewSetting {
       buf.append("x"); // NON-NLS
       buf.append(b.height);
       buf.append(".pitch");
-      double pitch = BundleTools.LOCAL_UI_PERSISTENCE.getDoubleProperty(buf.toString(), 0.0);
+      double pitch =
+          GuiUtils.getUICore().getLocalPersistence().getDoubleProperty(buf.toString(), 0.0);
       monitor.setRealScaleFactor(pitch);
       monitors.add(monitor);
     }
@@ -176,8 +177,8 @@ public class ViewSetting {
       BundlePreferences.putStringPreferences(stats, "label", buffer.toString()); // NON-NLS
 
       // Forget the Selection Graphic
-      for (int i = 1; i < MeasureToolBar.measureGraphicList.size(); i++) {
-        Graphic graph = MeasureToolBar.measureGraphicList.get(i);
+      for (int i = 1; i < MeasureToolBar.getMeasureGraphicList().size(); i++) {
+        Graphic graph = MeasureToolBar.getMeasureGraphicList().get(i);
         List<Measurement> list = graph.getMeasurementList();
         if (list != null && !list.isEmpty()) {
           Preferences gpref = p.node(graph.getClass().getSimpleName());

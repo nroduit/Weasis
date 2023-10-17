@@ -21,11 +21,11 @@ import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 import java.awt.Stroke;
 import java.awt.geom.Arc2D;
+import java.text.NumberFormat;
 import javax.swing.JProgressBar;
 import javax.swing.Timer;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.util.FontItem;
-import org.weasis.core.api.util.LocalUtil;
 
 public class CircularProgressBar extends JProgressBar {
 
@@ -122,7 +122,7 @@ public class CircularProgressBar extends JProgressBar {
       }
 
       double angle = 360 - this.getValue() * 360.0 / range;
-      String text = LocalUtil.getPercentInstance().format((double) this.getValue() / range);
+      String text = NumberFormat.getPercentInstance().format((double) this.getValue() / range);
       float textGap = GuiUtils.getScaleLength(TEXT_GAP);
       float arcSize = getInsets().top - textGap;
       double shift = arcSize / 2.0;
