@@ -61,7 +61,7 @@ public final class UICore {
   public static final String CONFIRM_CLOSE = "weasis.confirm.closing";
   public static final String LINUX_WINDOWS_DECORATION = "weasis.linux.windows.decoration";
   private static final Logger LOGGER = LoggerFactory.getLogger(UICore.class);
-  private static final UICore INSTANCE = new UICore();
+  private static UICore INSTANCE;
   private final ToolBarContainer toolbarContainer;
   public final List<ViewerPlugin<?>> viewerPlugins;
   private final List<DataExplorerView> explorerPlugins;
@@ -79,7 +79,10 @@ public final class UICore {
   private final HashMap<String, WProperties> pluginPersistenceMap;
   private final File propsFile;
 
-  /** Do not instantiate UICore, get OSGI singleton service from GuiUtils.getUICore() */
+  /**
+   * Do not instantiate UICore, get OSGI singleton service from
+   * GuiUtils.getUICore()
+   */
   private UICore() {
     this.dockingControl = new CControl();
     this.baseArea = dockingControl.getContentArea();
@@ -94,24 +97,22 @@ public final class UICore {
     this.explorerPlugins = Collections.synchronizedList(new ArrayList<>());
     this.explorerPluginToolbars = Collections.synchronizedList(new ArrayList<>());
     this.seriesViewerFactories = Collections.synchronizedList(new ArrayList<>());
-    this.dockingVetoFocus =
-        new CVetoFocusListener() {
+    this.dockingVetoFocus = new CVetoFocusListener() {
 
-          @Override
-          public boolean willLoseFocus(CDockable dockable) {
-            return false;
-          }
+      @Override
+      public boolean willLoseFocus(CDockable dockable) {
+        return false;
+      }
 
-          @Override
-          public boolean willGainFocus(CDockable dockable) {
-            return false;
-          }
-        };
+      @Override
+      public boolean willGainFocus(CDockable dockable) {
+        return false;
+      }
+    };
 
     BundleContext context = AppProperties.getBundleContext();
     readSystemPreferences(context);
-    this.propsFile =
-        new File(systemPreferences.getProperty("weasis.pref.dir"), "weasis.properties");
+    this.propsFile = new File(systemPreferences.getProperty("weasis.pref.dir"), "weasis.properties");
     if (!propsFile.canRead()) {
       try {
         if (!propsFile.createNewFile()) {
@@ -131,7 +132,17 @@ public final class UICore {
     FileUtil.readProperties(new File(dataFolder, "persistence.properties"), localPersistence);
   }
 
+  /**
+   * Return singleton instance. Use method to test first time to avoid inline
+   * initialization at the class init code. This make easier to avoid "default"
+   * class initialization when mocking this class for testing.
+   * 
+   * @return
+   */
   public static UICore getInstance() {
+    if (INSTANCE == null) {
+      INSTANCE = new UICore();
+    }
     return INSTANCE;
   }
 
@@ -142,10 +153,10 @@ public final class UICore {
       if (StringUtil.hasText(pkeys)) {
         for (String key : pkeys.split(",")) {
           systemPreferences.setProperty(key, context.getProperty(key));
-          initialSystemPreferences.setProperty(
-              key, context.getProperty("wp.init." + key)); // NON-NLS
+          initialSystemPreferences.setProperty(key, context.getProperty("wp.init." + key)); // NON-NLS
         }
-        // In case the remote file is empty or has fewer properties than the local file, set a pref
+        // In case the remote file is empty or has fewer properties than the local file,
+        // set a pref
         // to force
         // rewriting both files
         String diffRemote = "wp.init.diff.remote.pref";
@@ -157,12 +168,8 @@ public final class UICore {
 
   private void storeLauncherPref(Properties props, String remotePrefURL) throws IOException {
     if (!isLocalSession() || isStoreLocalSession()) {
-      String sURL =
-          String.format(
-              "%s?user=%s&profile=%s", // NON-NLS
-              remotePrefURL,
-              getUrlEncoding(AppProperties.WEASIS_USER),
-              getUrlEncoding(AppProperties.WEASIS_PROFILE));
+      String sURL = String.format("%s?user=%s&profile=%s", // NON-NLS
+          remotePrefURL, getUrlEncoding(AppProperties.WEASIS_USER), getUrlEncoding(AppProperties.WEASIS_PROFILE));
       URLParameters urlParameters = getURLParameters(true);
       ClosableURLConnection http = NetworkUtil.getUrlConnection(sURL, urlParameters);
       try (OutputStream out = http.getOutputStream()) {
@@ -201,9 +208,7 @@ public final class UICore {
   }
 
   public boolean isStoreLocalSession() {
-    return INSTANCE
-        .getSystemPreferences()
-        .getBooleanProperty("weasis.pref.store.local.session", false);
+    return INSTANCE.getSystemPreferences().getBooleanProperty("weasis.pref.store.local.session", false);
   }
 
   public synchronized void saveSystemPreferences() {
@@ -220,8 +225,7 @@ public final class UICore {
         try {
           storeLauncherPref(systemPreferences, remotePrefURL);
         } catch (Exception e) {
-          LOGGER.error(
-              "Cannot store Launcher preference for user: {}", AppProperties.WEASIS_USER, e);
+          LOGGER.error("Cannot store Launcher preference for user: {}", AppProperties.WEASIS_USER, e);
         }
       }
       initialSystemPreferences.clear();
@@ -274,8 +278,9 @@ public final class UICore {
   }
 
   /**
-   * This the persistence used at launch which can be stored remotely. These are the preferences
-   * necessary for launching unlike the preferences associated with the plugins.
+   * This the persistence used at launch which can be stored remotely. These are
+   * the preferences necessary for launching unlike the preferences associated
+   * with the plugins.
    *
    * @return the properties
    */
@@ -284,8 +289,8 @@ public final class UICore {
   }
 
   /**
-   * This the common local persistence for UI. It should be used only for preferences for which
-   * remote storage makes no sense.
+   * This the common local persistence for UI. It should be used only for
+   * preferences for which remote storage makes no sense.
    *
    * @return the properties
    */
@@ -445,14 +450,12 @@ public final class UICore {
 
   public void closeSeriesViewer(final List<? extends ViewerPlugin<?>> pluginsToRemove) {
     if (pluginsToRemove != null) {
-      GuiExecutor.instance()
-          .execute(
-              () -> {
-                for (final ViewerPlugin<?> viewerPlugin : pluginsToRemove) {
-                  viewerPlugin.close();
-                  viewerPlugin.handleFocusAfterClosing();
-                }
-              });
+      GuiExecutor.instance().execute(() -> {
+        for (final ViewerPlugin<?> viewerPlugin : pluginsToRemove) {
+          viewerPlugin.close();
+          viewerPlugin.handleFocusAfterClosing();
+        }
+      });
     }
   }
 
