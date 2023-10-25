@@ -536,11 +536,8 @@ public class DicomMediaIO implements DcmMediaReader {
           DicomMediaUtils.getIntPixelValue(
               header, Tag.PixelPaddingRangeLimit, pixelRepresentation != 0, bitsStored));
 
-      /*
-       * * @see <a href=
-       * "http://dicom.nema.org/medical/dicom/current/output/chtml/part03/sect_C.7.6.html#sect_C.7.6.1.1.5" >C
-       * .7.6.1.1.5 Lossy Image Compression</a>
-       */
+      // C.7.6.1.1.5 Lossy Image Compression:
+      // https://dicom.nema.org/medical/dicom/current/output/chtml/part03/sect_C.7.6.html#sect_C.7.6.1.1.5"
       setTagNoNull(
           TagD.get(Tag.LossyImageCompression),
           header.getString(
@@ -698,7 +695,7 @@ public class DicomMediaIO implements DcmMediaReader {
           }
           if (numberOfFrame > 1) {
             // IF enhanced DICOM, instance number can be overridden later
-            // IF simple multiframe instance number is necessary
+            // IF simple multi-frame instance number is necessary
             for (int i = 0; i < image.length; i++) {
               image[i].setTag(TagD.get(Tag.InstanceNumber), i + 1);
             }

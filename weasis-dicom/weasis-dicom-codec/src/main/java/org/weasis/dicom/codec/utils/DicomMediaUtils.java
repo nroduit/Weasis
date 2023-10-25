@@ -580,16 +580,14 @@ public class DicomMediaUtils {
 
   public static void writeFunctionalGroupsSequence(Taggable taggable, Attributes dcm) {
     if (dcm != null && taggable != null) {
-      /**
-       * @see - Dicom Standard 2011 - PS 3.3 §C.7.6.16.2.1 Pixel Measures Macro
-       */
+      // C.7.6.16.2.1 Pixel Measures Macro:
+      // https://dicom.nema.org/medical/dicom/2020b/output/chtml/part03/sect_C.7.6.16.2.html#table_C.7.6.16-2
       TagSeq.MacroSeqData data =
           new TagSeq.MacroSeqData(dcm, TagD.getTagFromIDs(Tag.PixelSpacing, Tag.SliceThickness));
       TagD.get(Tag.PixelMeasuresSequence).readValue(data, taggable);
 
-      /**
-       * @see - Dicom Standard 2011 - PS 3.3 §C.7.6.16.2.2 Frame Content Macro
-       */
+      // C.7.6.16.2.2 Frame Content Macro:
+      // https://dicom.nema.org/medical/dicom/2020b/output/chtml/part03/sect_C.7.6.16.2.html#table_C.7.6.16-3
       data =
           new TagSeq.MacroSeqData(
               dcm,
@@ -603,85 +601,60 @@ public class DicomMediaUtils {
       taggable.setTagNoNull(
           TagD.get(Tag.InstanceNumber), taggable.getTagValue(TagD.get(Tag.InStackPositionNumber)));
 
-      /**
-       * @see - Dicom Standard 2011 - PS 3.3 § C.7.6.16.2.3 Plane Position (Patient) Macro
-       */
+      // C.7.6.16.2.3 Plane Position (Patient) Macro:
+      // https://dicom.nema.org/medical/dicom/current/output/chtml/part03/sect_C.7.6.16.2.html#table_C.7.6.16-4
       data = new TagSeq.MacroSeqData(dcm, TagD.getTagFromIDs(Tag.ImagePositionPatient));
       TagD.get(Tag.PlanePositionSequence).readValue(data, taggable);
 
-      /**
-       * @see - Dicom Standard 2011 - PS 3.3 § C.7.6.16.2.4 Plane Orientation (Patient) Macro
-       */
+      // C.7.6.16.2.4 Plane Orientation (Patient) Macro:
+      // https://dicom.nema.org/medical/dicom/current/output/chtml/part03/sect_C.7.6.16.2.html#table_C.7.6.16-5
       data = new TagSeq.MacroSeqData(dcm, TagD.getTagFromIDs(Tag.ImageOrientationPatient));
       TagD.get(Tag.PlaneOrientationSequence).readValue(data, taggable);
       // If not null add ImageOrientationPlane for getting a orientation label.
       taggable.setTagNoNull(TagW.ImageOrientationPlane, ImageOrientation.getPlan(taggable));
 
-      /**
-       * @see - Dicom Standard 2011 - PS 3.3 § C.7.6.16.2.8 Frame Anatomy Macro
-       */
+      // C.7.6.16.2.8 Frame Anatomy Macro:
+      // https://dicom.nema.org/medical/dicom/current/output/chtml/part03/sect_C.7.6.16.2.html#table_C.7.6.16-9
       data = new TagSeq.MacroSeqData(dcm, TagD.getTagFromIDs(Tag.FrameLaterality));
       TagD.get(Tag.FrameAnatomySequence).readValue(data, taggable);
 
-      /**
-       * Specifies the attributes of the Pixel Value Transformation Functional Group. This is
-       * equivalent with the Modality LUT transformation in non Multi-frame IODs. It constrains the
-       * Modality LUT transformation step in the grayscale rendering pipeline to be an identity
-       * transformation.
-       *
-       * @see - Dicom Standard 2011 - PS 3.3 § C.7.6.16.2.9-b Pixel Value Transformation
-       */
+      // C.7.6.16.2.9 Pixel Value Transformation Macro:
+      // https://dicom.nema.org/medical/dicom/current/output/chtml/part03/sect_C.7.6.16.2.html#table_C.7.6.16-10
       Attributes mLutItems = dcm.getNestedDataset(Tag.PixelValueTransformationSequence);
       if (mLutItems != null) {
         ModalityLutModule mlut = new ModalityLutModule(mLutItems);
         taggable.setTag(TagW.ModalityLUTData, mlut);
       }
 
-      /**
-       * Specifies the attributes of the Frame VOI LUT Functional Group. It contains one or more
-       * sets of linear or sigmoid window values and/or one or more sets of lookup tables
-       *
-       * @see - Dicom Standard 2011 - PS 3.3 § C.7.6.16.2.10b Frame VOI LUT With LUT Macro
-       */
+      // C.7.6.16.2.10 Frame VOI LUT Macro:
+      // https://dicom.nema.org/medical/dicom/current/output/chtml/part03/sect_C.7.6.16.2.html#table_C.7.6.16-11
       Attributes vLutItems = dcm.getNestedDataset(Tag.FrameVOILUTSequence);
       if (vLutItems != null) {
         VoiLutModule vlut = new VoiLutModule(vLutItems);
         taggable.setTag(TagW.VOILUTsData, vlut);
       }
 
-      // TODO implement: Frame Pixel Shift, Pixel Intensity Relationship LUT (C.7.6.16-14),
-      // Real World Value Mapping (C.7.6.16-12)
-      // This transformation should be applied in in the pixel value (add a list of transformation
-      // for pixel
-      // statistics)
+      // C.7.6.16.2.15 Patient Orientation in Frame Macro:
+      // https://dicom.nema.org/medical/dicom/current/output/chtml/part03/sect_C.7.6.16.2.html#table_C.7.6.16-16
+      data = new TagSeq.MacroSeqData(dcm, TagD.getTagFromIDs(Tag.PatientOrientation));
+      TagD.get(Tag.PatientOrientationInFrameSequence).readValue(data, taggable);
 
-      /**
-       * Display Shutter Macro Table C.7-17A in PS 3.3
-       *
-       * @see - Dicom Standard 2011 - PS 3.3 § C.7.6.16.2.16 Frame Display Shutter Macro
-       */
+      // C.7.6.16.2.16 Frame Display Shutter:
+      // https://dicom.nema.org/medical/dicom/current/output/chtml/part03/sect_C.7.6.16.2.html#table_C.7.6.16-17
       Attributes macroFrameDisplayShutter = dcm.getNestedDataset(Tag.FrameDisplayShutterSequence);
       if (macroFrameDisplayShutter != null) {
         setShutter(taggable, macroFrameDisplayShutter);
       }
 
-      /**
-       * @see - Dicom Standard 2011 - PS 3.3 §C.8 Frame Type Macro
-       */
-      // Type of Frame. A multivalued attribute analogous to the Image Type (0008,0008).
-      // Enumerated Values and Defined Terms are the same as those for the four values of the Image
-      // Type
-      // (0008,0008) attribute, except that the value MIXED is not allowed. See C.8.16.1 and
-      // C.8.13.3.1.1.
+      // C.8.16.1 Image Type and Frame Type:
+      // https://dicom.nema.org/medical/dicom/current/output/chtml/part03/sect_C.8.16.html#sect_C.8.16.1
       data = new TagSeq.MacroSeqData(dcm, TagD.getTagFromIDs(Tag.FrameType));
-      // C.8.13.5.1 MR Image Frame Type Macro
       TagD.get(Tag.MRImageFrameTypeSequence).readValue(data, taggable);
-      // // C.8.15.3.1 CT Image Frame Type Macro
       TagD.get(Tag.CTImageFrameTypeSequence).readValue(data, taggable);
-      // C.8.14.3.1 MR Spectroscopy Frame Type Macro
       TagD.get(Tag.MRSpectroscopyFrameTypeSequence).readValue(data, taggable);
-      // C.8.22.5.1 PET Frame Type Macro
       TagD.get(Tag.PETFrameTypeSequence).readValue(data, taggable);
+      TagD.get(Tag.XRay3DFrameTypeSequence).readValue(data, taggable);
+      TagD.get(Tag.IntravascularOCTFrameTypeSequence).readValue(data, taggable);
     }
   }
 
