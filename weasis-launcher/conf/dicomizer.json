@@ -190,14 +190,6 @@
       "category": "FACTORY"
     },
     {
-      "code": "org.weasis.dicom.explorer.pref.node.DicomNodePrefFactory",
-      "value": "false",
-      "description": "DICOM node list preferences",
-      "type": "A",
-      "JavaType": "BOOLEAN",
-      "category": "FACTORY"
-    },
-    {
       "code": "weasis.import.images",
       "value": "false"
     },

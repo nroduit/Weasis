@@ -22,6 +22,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.weasis.core.util.StringUtil;
 import org.weasis.launcher.FileUtil;
 import org.weasis.launcher.Utils;
 
@@ -97,6 +98,9 @@ public class AppPreferences extends HashMap<String, Preference> {
       cycleMap = new HashMap<>();
     }
     cycleMap.put(currentKey, currentKey);
+    if (val == null) {
+      return StringUtil.EMPTY_STRING;
+    }
 
     int stopDelim = -1;
     int startDelim = -1;
