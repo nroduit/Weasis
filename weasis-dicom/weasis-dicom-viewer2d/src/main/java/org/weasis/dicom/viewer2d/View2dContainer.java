@@ -277,7 +277,7 @@ public class View2dContainer extends DicomViewerPlugin implements PropertyChange
           InsertableUtil.getCName(Basic3DToolBar.class),
           key,
           true)) {
-        TOOLBARS.add(new Basic3DToolBar<DicomImageElement>(50));
+        TOOLBARS.add(new Basic3DToolBar(50));
       }
       if (InsertableUtil.getBooleanProperty(
           preferences,

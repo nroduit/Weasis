@@ -10,7 +10,7 @@ import javax.swing.JButton;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.ui.util.WtoolBar;
 
-public class SampleToolBar<DicomImageElement> extends WtoolBar {
+public class SampleToolBar extends WtoolBar {
 
     protected SampleToolBar() {
         super("Sample Toolbar", 400);

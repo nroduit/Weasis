@@ -12,7 +12,6 @@ import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.Insertable;
 import org.weasis.core.api.gui.Insertable.Type;
 import org.weasis.core.api.gui.InsertableFactory;
-import org.weasis.dicom.codec.DicomImageElement;
 
 @org.osgi.service.component.annotations.Component(
     service = InsertableFactory.class,
@@ -27,7 +26,7 @@ public class SampleToolbarFactory implements InsertableFactory {
 
     @Override
     public Insertable createInstance(Hashtable<String, Object> properties) {
-        return new SampleToolBar<DicomImageElement>();
+        return new SampleToolBar();
     }
 
     @Override
@@ -48,7 +47,7 @@ public class SampleToolbarFactory implements InsertableFactory {
     // ================================================================================
 
     @Activate
-    protected void activate(ComponentContext context) throws Exception {
+    protected void activate(ComponentContext context) {
         LOGGER.info("Activate the Sample tool bar");
     }
 

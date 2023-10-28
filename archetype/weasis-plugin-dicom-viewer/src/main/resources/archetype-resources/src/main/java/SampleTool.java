@@ -15,12 +15,12 @@ import org.weasis.core.ui.docking.PluginTool;
 
 public class SampleTool extends PluginTool {
 
-    public static final String BUTTON_NAME = "Tool Sample";
+    public static final String BUTTON_NAME = "Sample Tool";
 
     private final JScrollPane rootPane = new JScrollPane();
 
     public SampleTool(Type type) {
-        super(BUTTON_NAME, "Sample Tool", type, 120);
+        super(BUTTON_NAME, type, 120);
         dockable.setTitleIcon(
             new FlatSVGIcon(
                 (Objects.requireNonNull(SampleTool.class.getResource("/icon/svg/tools.svg")))));

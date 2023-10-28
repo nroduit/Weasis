@@ -13,7 +13,7 @@
   <groupId>org.weasis.samples</groupId>
   <artifactId>weasis-plugin-archetype</artifactId>
   <packaging>pom</packaging>
-  <name>Default Plug-ins Achetypes [${project.artifactId}]</name>
+  <name>Default Plug-ins Archetypes [${project.artifactId}]</name>
 
   <modules>
     <module>weasis-plugin-base-viewer</module>
@@ -25,7 +25,7 @@
       <extension>
         <groupId>org.apache.maven.archetype</groupId>
         <artifactId>archetype-packaging</artifactId>
-        <version>3.2.0</version>
+        <version>3.2.1</version>
       </extension>
     </extensions>
 
@@ -33,11 +33,10 @@
       <plugins>
         <plugin>
           <artifactId>maven-archetype-plugin</artifactId>
-          <version>3.2.0</version>
+          <version>3.2.1</version>
           <extensions>true</extensions>
         </plugin>
       </plugins>
     </pluginManagement>
   </build>
-
 </project>
