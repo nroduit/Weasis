@@ -15,7 +15,6 @@ import static org.weasis.launcher.WeasisLauncher.CONFIG_PROPERTIES_PROP;
 import static org.weasis.launcher.WeasisLauncher.EXTENDED_PROPERTIES_PROP;
 import static org.weasis.launcher.WeasisLauncher.P_HTTP_AUTHORIZATION;
 import static org.weasis.launcher.WeasisLauncher.P_OS_NAME;
-import static org.weasis.launcher.WeasisLauncher.P_WEASIS_CODEBASE_EXT_URL;
 import static org.weasis.launcher.WeasisLauncher.P_WEASIS_CODEBASE_LOCAL;
 import static org.weasis.launcher.WeasisLauncher.P_WEASIS_CODEBASE_URL;
 import static org.weasis.launcher.WeasisLauncher.P_WEASIS_CONFIG_HASH;
@@ -306,7 +305,6 @@ public class ConfigData {
           switch (k) {
             case PARAM_CONFIG_URL -> addProperty(P_WEASIS_CONFIG_URL, v.get(0));
             case PARAM_CODEBASE -> addProperty(P_WEASIS_CODEBASE_URL, v.get(0));
-            case PARAM_CODEBASE_EXT -> addProperty(P_WEASIS_CODEBASE_EXT_URL, v.get(0));
             case PARAM_AUTHORIZATION -> addProperty(P_HTTP_AUTHORIZATION, v.get(0));
             case PARAM_PROPERTY -> addProperties(v);
             case PARAM_ARGUMENT -> addArguments(v);

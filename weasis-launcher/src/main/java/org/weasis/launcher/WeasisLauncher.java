@@ -135,7 +135,6 @@ public class WeasisLauncher {
   public static final String P_WEASIS_CODEBASE_LOCAL = "weasis.codebase.local";
   public static final String P_WEASIS_SOURCE_ID = "weasis.source.id";
   public static final String P_WEASIS_CODEBASE_URL = "weasis.codebase.url";
-  public static final String P_WEASIS_CODEBASE_EXT_URL = "weasis.codebase.ext.url";
   public static final String P_WEASIS_CONFIG_HASH = "weasis.config.hash";
   public static final String P_WEASIS_PREFS_URL = "weasis.pref.url";
   public static final String P_WEASIS_CONFIG_URL = "weasis.config.url";
