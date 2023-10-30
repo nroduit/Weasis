@@ -139,15 +139,25 @@ public class LicenseDialogController implements LicenseController {
             askUserToRestart();
             JOptionPane.showMessageDialog(licencesItem, Messages.getString("license.successfully.saved"),
                 Messages.getString("license"), JOptionPane.INFORMATION_MESSAGE);
-          } else {
+          }
+        } else {
             JOptionPane.showMessageDialog(licencesItem, Messages.getString("license.field.empty"),
                 Messages.getString("license"), JOptionPane.WARNING_MESSAGE);
-          }
         }
       } catch (Exception e) {
         LOGGER.error(e.getMessage(), e);
-        JOptionPane.showMessageDialog(licencesItem, Messages.getString("license.error.saving"),
+        String details = (e.getMessage() != null ? e.getMessage() : "");
+        JOptionPane.showMessageDialog(licencesItem, Messages.getString("license.error.saving") + " " + details,
             Messages.getString("license"), JOptionPane.ERROR_MESSAGE);
+      } finally {
+        if (bundle != null) {
+          try {
+            bundle.stop();
+            bundle.uninstall();
+          } catch (Exception e2) {
+            LOGGER.error(e2.getMessage());
+          }
+        }
       }
     });
   }
@@ -181,6 +191,7 @@ public class LicenseDialogController implements LicenseController {
   @Override
   public boolean test() {
     if (tested) return tested;
+    String errorDetails = "";
     try {
       String licenseContents = codeDocument.getText(0, codeDocument.getLength());
       String serverContents = serverDocument.getText(0, serverDocument.getLength());
@@ -197,46 +208,51 @@ public class LicenseDialogController implements LicenseController {
       }
     } catch (Exception e) {
       LOGGER.error(e.getMessage(), e);
+      errorDetails = e.getMessage() != null ? e.getMessage() : "";
+      if (bundle != null) {
+        try {
+          bundle.stop();
+          bundle.uninstall();
+        } catch (Exception e2) {
+          LOGGER.error(e2.getMessage(), e2);
+        }
+      }
     }
-    JOptionPane.showMessageDialog(licencesItem, Messages.getString("license.error.testing"),
+    JOptionPane.showMessageDialog(licencesItem, Messages.getString("license.error.testing") + " " + errorDetails,
         Messages.getString("license"), JOptionPane.ERROR_MESSAGE);
     return false;
 
   }
 
-  private boolean downloadBootJarAndTestBundleAccess(String licenseContents, String serverContents) {
+  private boolean downloadBootJarAndTestBundleAccess(String licenseContents, String serverContents) throws Exception{
     boolean result = false;
-    try {
-      if (StringUtil.hasText(serverContents)) {
-        HttpClient httpClient = HttpClient.newBuilder().connectTimeout(Duration.ofMinutes(1)).build();
-        HttpRequest request = HttpRequest.newBuilder(URI.create(serverContents)).GET().build();
-        try {
-          HttpResponse<InputStream> resp = httpClient.send(request, responseInfo -> {
-            LOGGER.info("Validating URL: {}. Result: {}", serverContents, responseInfo.statusCode());
-            return BodySubscribers.ofInputStream();
-          });
-          int status = resp.statusCode();
-          if (status == SUCCESS_HTTP_STATUS_CODE) {
-            InputStream is = resp.body();
-            File f = Files.createTempFile("plugins-boot", ".jar").toFile();
-            f.deleteOnExit();
-            LOGGER.info("Trying to copy boot jar contents to: {}", f.getAbsolutePath());
-            try (BufferedInputStream bis = new BufferedInputStream(is)) {
-              Files.copy(bis, f.toPath(), StandardCopyOption.REPLACE_EXISTING);
-            }
-            LOGGER.info("Boot jar contents successfully copied to file: {}", f.getAbsolutePath());
-            result = installAndStartBundle(new File(f.getAbsolutePath()), licenseContents);
-          } else {
-            LOGGER.error("Error getting plugins boot bundle. Server returned: {}", status);
-            result = false;
+    if (StringUtil.hasText(serverContents)) {
+      HttpClient httpClient = HttpClient.newBuilder().connectTimeout(Duration.ofMinutes(1)).build();
+      HttpRequest request = HttpRequest.newBuilder(URI.create(serverContents)).GET().build();
+      try {
+        HttpResponse<InputStream> resp = httpClient.send(request, responseInfo -> {
+          LOGGER.info("Validating URL: {}. Result: {}", serverContents, responseInfo.statusCode());
+          return BodySubscribers.ofInputStream();
+        });
+        int status = resp.statusCode();
+        if (status == SUCCESS_HTTP_STATUS_CODE) {
+          InputStream is = resp.body();
+          File f = Files.createTempFile("plugins-boot", ".jar").toFile();
+          f.deleteOnExit();
+          LOGGER.info("Trying to copy boot jar contents to: {}", f.getAbsolutePath());
+          try (BufferedInputStream bis = new BufferedInputStream(is)) {
+            Files.copy(bis, f.toPath(), StandardCopyOption.REPLACE_EXISTING);
           }
-        } catch (IOException | InterruptedException e) {
-          LOGGER.error(e.getMessage(), e);
+          LOGGER.info("Boot jar contents successfully copied to file: {}", f.getAbsolutePath());
+          result = installAndStartBundle(new File(f.getAbsolutePath()), licenseContents);
+        } else {
+          LOGGER.error("Error getting plugins boot bundle. Server returned: {}", status);
+          result = false;
         }
-        return result;
+      } catch (IOException | InterruptedException e) {
+        LOGGER.error(e.getMessage(), e);
       }
-    } catch (Exception e) {
-      LOGGER.error(e.getMessage(), e);
+      return result;
     }
     return result;
   }
@@ -251,36 +267,23 @@ public class LicenseDialogController implements LicenseController {
    * @return <code>true</code> if the whole cycle of installing, activating and validating is completed with success.
    * <code>False</code>, otherwise.
    */
-  private boolean installAndStartBundle(File file, String licenseContents) {
+  private boolean installAndStartBundle(File file, String licenseContents) throws Exception {
     BundleContext context = FrameworkUtil.getBundle(this.getClass()).getBundleContext();
     LOGGER.debug("Bundle context: {}", context);
-    try {
-      bundle = context.installBundle(file.toURI().toURL().toString());
-      LOGGER.debug("New bundle: {}", bundle);
-      BundleStartLevel bundleStartLevel = bundle.adapt(BundleStartLevel.class);
-      int lastStartLevel = getLastStartLevel(context);
-      bundleStartLevel.setStartLevel(lastStartLevel + 1);
-      bundle.start(Bundle.START_ACTIVATION_POLICY);
-      LOGGER.debug("Bundle status: {}", bundle.getState());
-      ServiceReference<LicensedPluginsService> serviceRef = bundle.getBundleContext().getServiceReference(LicensedPluginsService.class);
-      service = bundle.getBundleContext().getService(serviceRef);
-      if (service != null) {
-        service.validateEndpoints();
-        service.validateLicense(licenseContents);
-      }
-      return true;
-    } catch (Exception e) {
-      LOGGER.error(e.getMessage(), e);
-      if (bundle != null) {
-        try {
-          bundle.stop();
-          bundle.uninstall();
-        } catch (Exception e2) {
-          LOGGER.error(e2.getMessage(), e2);
-        }      
-      }
-    } 
-    return false;
+    bundle = context.installBundle(file.toURI().toURL().toString());
+    LOGGER.debug("New bundle: {}", bundle);
+    BundleStartLevel bundleStartLevel = bundle.adapt(BundleStartLevel.class);
+    int lastStartLevel = getLastStartLevel(context);
+    bundleStartLevel.setStartLevel(lastStartLevel + 1);
+    bundle.start(Bundle.START_ACTIVATION_POLICY);
+    LOGGER.debug("Bundle status: {}", bundle.getState());
+    ServiceReference<LicensedPluginsService> serviceRef = bundle.getBundleContext().getServiceReference(LicensedPluginsService.class);
+    service = bundle.getBundleContext().getService(serviceRef);
+    if (service != null) {
+      service.validateEndpoints();
+      service.validateLicense(licenseContents);
+    }
+    return true;
   }
 
   private int getLastStartLevel(BundleContext context) {
