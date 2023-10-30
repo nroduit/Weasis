@@ -141,8 +141,8 @@ public class LicenseDialogController implements LicenseController {
                 Messages.getString("license"), JOptionPane.INFORMATION_MESSAGE);
           }
         } else {
-            JOptionPane.showMessageDialog(licencesItem, Messages.getString("license.field.empty"),
-                Messages.getString("license"), JOptionPane.WARNING_MESSAGE);
+          JOptionPane.showMessageDialog(licencesItem, Messages.getString("license.field.empty"),
+              Messages.getString("license"), JOptionPane.WARNING_MESSAGE);
         }
       } catch (Exception e) {
         LOGGER.error(e.getMessage(), e);
@@ -315,10 +315,10 @@ public class LicenseDialogController implements LicenseController {
     try {
         HttpRequest request = HttpRequest.newBuilder(URI.create(serverContents)).GET().build();
         HttpResponse<Void> resp = httpClient.send(request, new BodyHandler<Void>() {
-            @Override
-            public BodySubscriber<Void> apply(final ResponseInfo responseInfo) {
-                return BodySubscribers.discarding();
-            }
+          @Override
+          public BodySubscriber<Void> apply(final ResponseInfo responseInfo) {
+              return BodySubscribers.discarding();
+          }
         });
         int status = resp.statusCode();
         LOGGER.info("Validating URL: {}. Result: {}", serverContents, status);
