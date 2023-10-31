@@ -171,6 +171,8 @@ public class LicenseDialogController implements LicenseController {
   private void changeConfigProperties() throws Exception {
     if (service != null) {
       service.updateConfig();
+      String version = service.getVersion();
+      licencesItem.setVersionContents(!StringUtils.isEmpty(version) ? version : "");
     }
   }
 

@@ -52,4 +52,11 @@ public interface LicensedPluginsService {
      *         user decided to restart later.
      */
     boolean askUserForRestart(Component dialogParent) throws Exception;
+
+    /**
+     * Gets the version of a package with plugins.
+     *
+     * @return the version of a plugins package implementing this interface.
+     */
+    String getVersion();
 }

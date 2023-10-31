@@ -41,6 +41,8 @@ public class AbstractTabLicense extends JPanel implements Insertable {
   protected final JButton cancelButton;
   protected final JButton testButton;
   protected final GUIEntry guiEntry;
+  private JLabel versionLabel;
+  private JLabel versionContents;
 
   public AbstractTabLicense(GUIEntry entry) {
     this(entry, null);
@@ -74,6 +76,8 @@ public class AbstractTabLicense extends JPanel implements Insertable {
     saveButton = new JButton(Messages.getString("license.btnSave"));
     cancelButton = new JButton(Messages.getString("license.btnCancel"));
     testButton = new JButton(Messages.getString("license.btnTest"));
+    versionLabel = new JLabel(Messages.getString("license.version"));
+    versionContents = new JLabel();
     initGUI();
   }
 
@@ -151,8 +155,13 @@ public class AbstractTabLicense extends JPanel implements Insertable {
             testButton,
             saveButton,
             cancelButton,
-            new JLabel("Active until " + LocalDate.now()));
+            versionLabel,
+            versionContents);
     add(jPanelBottom, BorderLayout.SOUTH);
+  }
+
+  public void setVersionContents(String versionContents) {
+    this.versionContents.setText(versionContents);
   }
 
   public JButton getCancelButton() {
