@@ -12,7 +12,6 @@ package org.weasis.core.api.gui.util;
 import java.awt.BorderLayout;
 import java.awt.FlowLayout;
 import java.awt.event.ActionEvent;
-import java.time.LocalDate;
 import java.util.Locale;
 import java.util.Objects;
 import javax.swing.AbstractAction;
@@ -57,6 +56,12 @@ public class AbstractTabLicense extends JPanel implements Insertable {
     codeTextField.setLineWrap(false);
     codeTextField.setDocument(new PlainDocument());
 
+    saveButton = new JButton(Messages.getString("license.btnSave"));
+    cancelButton = new JButton(Messages.getString("license.btnCancel"));
+    testButton = new JButton(Messages.getString("license.btnTest"));
+    versionLabel = new JLabel(Messages.getString("license.version"));
+    versionContents = new JLabel();
+
     this.licenseController =
         Objects.requireNonNullElseGet(
             licenseController,
@@ -73,11 +78,6 @@ public class AbstractTabLicense extends JPanel implements Insertable {
                       }
                     }));
 
-    saveButton = new JButton(Messages.getString("license.btnSave"));
-    cancelButton = new JButton(Messages.getString("license.btnCancel"));
-    testButton = new JButton(Messages.getString("license.btnTest"));
-    versionLabel = new JLabel(Messages.getString("license.version"));
-    versionContents = new JLabel();
     initGUI();
   }
 
@@ -162,6 +162,10 @@ public class AbstractTabLicense extends JPanel implements Insertable {
 
   public void setVersionContents(String versionContents) {
     this.versionContents.setText(versionContents);
+  }
+
+  public String getVersionContents() {
+    return this.versionContents.getText();
   }
 
   public JButton getCancelButton() {

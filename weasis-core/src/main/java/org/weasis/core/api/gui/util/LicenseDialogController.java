@@ -41,18 +41,22 @@ import org.osgi.framework.BundleContext;
 import org.osgi.framework.FrameworkUtil;
 import org.osgi.framework.ServiceReference;
 import org.osgi.framework.startlevel.BundleStartLevel;
+import org.osgi.service.prefs.Preferences;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.Messages;
+import org.weasis.core.api.service.BundlePreferences;
 import org.weasis.core.api.service.LicensedPluginsService;
 import org.weasis.core.util.StringUtil;
-
-import com.formdev.flatlaf.util.StringUtils;
 
 /**
  * Default behavior for a license controller.
  */
 public class LicenseDialogController implements LicenseController {
+
+  private static final String PLUGINS_PACKAGE_VERSION_PREFERENCE = "plugins.package.version";
+
+  private static final String LICENSE_SEVER_PREFERENCE = "license.sever";
 
   public enum STATUS {
     START_PROCESSING,
@@ -79,6 +83,8 @@ public class LicenseDialogController implements LicenseController {
 
   private boolean tested;
 
+  private Preferences preferences;
+
   public LicenseDialogController(
       Document codeDocument, Document serverDocument, AbstractTabLicense licencesItem, Consumer<STATUS> statusSetter) {
     this.licencesItem = licencesItem;
@@ -95,13 +101,22 @@ public class LicenseDialogController implements LicenseController {
   }
 
   private void readLicenseContents() {
-    if (licenceFile.exists()) {
-      try {
+    try {
+      if (licenceFile.exists()) {
         String licenseContents = Files.readString(licenceFile.toPath());
         codeDocument.insertString(0, licenseContents, null);
-      } catch (Exception e) {
-        LOGGER.error(e.getMessage(), e);
       }
+      Preferences prefs = getPreferences();
+      if (prefs != null) {
+        String server = prefs.get(licencesItem.getPluginName() + "." + LICENSE_SEVER_PREFERENCE, null);
+        if (StringUtil.hasText(server)) {
+          serverDocument.insertString(0, server, null);
+        }
+        String version = prefs.get(licencesItem.getPluginName() + "." + PLUGINS_PACKAGE_VERSION_PREFERENCE, null);
+        licencesItem.setVersionContents(StringUtil.hasText(version) ? version : "");
+      }
+    } catch (Exception e) {
+      LOGGER.error(e.getMessage(), e);
     }
   }
 
@@ -122,7 +137,7 @@ public class LicenseDialogController implements LicenseController {
     execute(controller -> {
       try {
         String contents = codeDocument.getText(0, codeDocument.getLength());
-        if (!StringUtils.isEmpty(contents.trim())) {
+        if (StringUtil.hasText(contents.trim())) {
           if (test()) {
             if (licenceFile.exists()) {
               int option = JOptionPane.showConfirmDialog(null, Messages.getString("license.file.exists"),
@@ -157,13 +172,36 @@ public class LicenseDialogController implements LicenseController {
   }
 
   private void updateUI() {
+    String version = service.getVersion();
+    licencesItem.setVersionContents(StringUtil.hasText(version) ? version : "");
+    try {
+      String serverContents = serverDocument.getText(0, serverDocument.getLength());
+      Preferences prefs = getPreferences();
+      LOGGER.debug("Trying to store preferences at: {}", prefs);
+      if (prefs != null) {
+        BundlePreferences.putStringPreferences(prefs, licencesItem.getPluginName() + "." + LICENSE_SEVER_PREFERENCE, serverContents);
+        BundlePreferences.putStringPreferences(prefs, licencesItem.getPluginName() + "." + PLUGINS_PACKAGE_VERSION_PREFERENCE, version);
+      }
+    } catch (Exception e) {
+      LOGGER.error("Unable to update UI and save license related values: {}", e.getMessage());
+    }
+  }
+
+  private Preferences getPreferences() {
+    if (preferences == null) {
+      Bundle bundle = FrameworkUtil.getBundle(this.getClass());
+      BundleContext context = null;
+      if (bundle != null) {
+          context = bundle.getBundleContext();
+      }
+      preferences = BundlePreferences.getDefaultPreferences(context);
+    }
+    return preferences;
   }
 
   private void changeConfigProperties() throws Exception {
     if (service != null) {
       service.updateConfig();
-      String version = service.getVersion();
-      licencesItem.setVersionContents(!StringUtils.isEmpty(version) ? version : "");
     }
   }
 
