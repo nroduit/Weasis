@@ -149,15 +149,6 @@ public class LicenseDialogController implements LicenseController {
         String details = (e.getMessage() != null ? e.getMessage() : "");
         JOptionPane.showMessageDialog(licencesItem, Messages.getString("license.error.saving") + " " + details,
             Messages.getString("license"), JOptionPane.ERROR_MESSAGE);
-      } finally {
-        if (bundle != null) {
-          try {
-            bundle.stop();
-            bundle.uninstall();
-          } catch (Exception e2) {
-            LOGGER.error(e2.getMessage());
-          }
-        }
       }
     });
   }
