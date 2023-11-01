@@ -33,6 +33,7 @@ import org.weasis.core.api.gui.util.LicenseDialogController.STATUS;
 public class AbstractTabLicense extends JPanel implements Insertable {
   protected final JTextArea codeTextField;
   protected final JTextField serverTextField;
+  protected final JTextField bootJarTextField;
   protected final JScrollPane textScroll;
   protected final LicenseController licenseController;
 
@@ -42,6 +43,7 @@ public class AbstractTabLicense extends JPanel implements Insertable {
   protected final GUIEntry guiEntry;
   private JLabel versionLabel;
   private JLabel versionContents;
+  private JPanel jPanelMiddle;
 
   public AbstractTabLicense(GUIEntry entry) {
     this(entry, null);
@@ -52,6 +54,7 @@ public class AbstractTabLicense extends JPanel implements Insertable {
     this.codeTextField = new JTextArea();
     this.textScroll = new JScrollPane(codeTextField);
     this.serverTextField = new JTextField();
+    this.bootJarTextField = new JTextField();
 
     codeTextField.setLineWrap(false);
     codeTextField.setDocument(new PlainDocument());
@@ -68,7 +71,7 @@ public class AbstractTabLicense extends JPanel implements Insertable {
             () ->
                 new LicenseDialogController(
                     codeTextField.getDocument(),
-                    serverTextField.getDocument(),
+                    bootJarTextField.getDocument(),
                     this,
                     s -> {
                       if (s == STATUS.START_PROCESSING) {
@@ -114,11 +117,11 @@ public class AbstractTabLicense extends JPanel implements Insertable {
     JPanel jPanelServer = new JPanel();
     jPanelServer.setLayout(
         new MigLayout("insets 25lp 10lp 25lp 10lp", "[right]rel[grow,fill]")); // NON-NLS
-    jPanelServer.add(new JLabel("Server address"));
+    jPanelServer.add(new JLabel(Messages.getString("license.server.address")));
     jPanelServer.add(serverTextField);
     final ButtonGroup ratioGroup = new ButtonGroup();
-    JRadioButton codeButton = new JRadioButton("Activation Code");
-    JRadioButton serverButton = new JRadioButton("License Server");
+    JRadioButton codeButton = new JRadioButton(Messages.getString("license.activation.code.button"));
+    JRadioButton serverButton = new JRadioButton(Messages.getString("license.server.button"));
     final JPanel jPanelTop =
         GuiUtils.getFlowLayoutPanel(
             Insertable.BLOCK_SEPARATOR, Insertable.ITEM_SEPARATOR, codeButton, serverButton);
@@ -129,7 +132,7 @@ public class AbstractTabLicense extends JPanel implements Insertable {
         e -> {
           if (e.getSource() instanceof JRadioButton btn && btn.isSelected()) {
             remove(jPanelServer);
-            add(textScroll, BorderLayout.CENTER);
+            add(jPanelMiddle, BorderLayout.CENTER);
             revalidate();
             repaint();
           }
@@ -137,16 +140,25 @@ public class AbstractTabLicense extends JPanel implements Insertable {
     serverButton.addActionListener(
         e -> {
           if (e.getSource() instanceof JRadioButton btn && btn.isSelected()) {
-            remove(textScroll);
+            remove(jPanelMiddle);
             add(jPanelServer, BorderLayout.CENTER);
             revalidate();
             repaint();
           }
         });
-
     add(jPanelTop, BorderLayout.NORTH);
+
+    jPanelMiddle = new JPanel(new BorderLayout());
     textScroll.setPreferredSize(GuiUtils.getDimension(530, 300));
-    add(textScroll, BorderLayout.CENTER);
+    JPanel jPanelBootJarAddress = new JPanel();
+    jPanelBootJarAddress.setLayout(
+        new MigLayout("insets 25lp 10lp 25lp 10lp", "[right]rel[grow,fill]")); // NON-NLS
+    jPanelBootJarAddress.add(new JLabel(Messages.getString("license.boot.jar.address")));
+    jPanelBootJarAddress.add(bootJarTextField);
+    jPanelMiddle.add(jPanelBootJarAddress, BorderLayout.NORTH);
+    jPanelMiddle.add(textScroll, BorderLayout.CENTER);
+    add(jPanelMiddle, BorderLayout.CENTER);
+
     JPanel jPanelBottom =
         GuiUtils.getFlowLayoutPanel(
             FlowLayout.LEADING,
