@@ -14,6 +14,7 @@ import java.awt.FlowLayout;
 import java.awt.event.ActionEvent;
 import java.util.Locale;
 import java.util.Objects;
+
 import javax.swing.AbstractAction;
 import javax.swing.ButtonGroup;
 import javax.swing.DefaultButtonModel;
@@ -25,10 +26,11 @@ import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.text.PlainDocument;
-import net.miginfocom.swing.MigLayout;
+
 import org.weasis.core.Messages;
 import org.weasis.core.api.gui.Insertable;
-import org.weasis.core.api.gui.util.LicenseDialogController.STATUS;
+
+import net.miginfocom.swing.MigLayout;
 
 public class AbstractTabLicense extends JPanel implements Insertable {
   protected final JTextArea codeTextField;
@@ -72,14 +74,7 @@ public class AbstractTabLicense extends JPanel implements Insertable {
                 new LicenseDialogController(
                     codeTextField.getDocument(),
                     bootJarTextField.getDocument(),
-                    this,
-                    s -> {
-                      if (s == STATUS.START_PROCESSING) {
-                        codeTextField.setEnabled(false);
-                      } else if (s == STATUS.END_PROCESSING) {
-                        codeTextField.setEnabled(true);
-                      }
-                    }));
+                    this));
 
     initGUI();
   }
@@ -112,6 +107,14 @@ public class AbstractTabLicense extends JPanel implements Insertable {
 
     newModel = new DefaultButtonModel();
     newModel.setActionCommand(LicenseDialogController.CANCEL_COMMAND);
+    newModel.setEnabled(false);
+    newModel.addActionListener(
+        new AbstractAction() {
+          @Override
+          public void actionPerformed(ActionEvent e) {
+            licenseController.cancel();
+          }
+        });
     cancelButton.setModel(newModel);
 
     JPanel jPanelServer = new JPanel();
@@ -232,5 +235,21 @@ public class AbstractTabLicense extends JPanel implements Insertable {
   @Override
   public void setComponentPosition(int position) {
     // Do nothing
+  }
+
+  public void endProcessing() {
+    saveButton.getModel().setEnabled(true);
+    testButton.getModel().setEnabled(true);
+    cancelButton.getModel().setEnabled(false);
+    codeTextField.setEnabled(true);
+    bootJarTextField.setEnabled(true);
+  }
+
+  public void startProcessing() {
+    saveButton.getModel().setEnabled(false);
+    testButton.getModel().setEnabled(false);
+    cancelButton.getModel().setEnabled(true);
+    codeTextField.setEnabled(false);
+    bootJarTextField.setEnabled(false);
   }
 }

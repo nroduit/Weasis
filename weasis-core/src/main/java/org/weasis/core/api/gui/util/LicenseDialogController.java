@@ -29,11 +29,16 @@ import java.nio.file.StandardCopyOption;
 import java.time.Duration;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.function.BinaryOperator;
-import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.stream.Stream;
 
 import javax.swing.JOptionPane;
+import javax.swing.SwingUtilities;
 import javax.swing.text.Document;
 
 import org.osgi.framework.Bundle;
@@ -54,16 +59,13 @@ import org.weasis.core.util.StringUtil;
  */
 public class LicenseDialogController implements LicenseController {
 
-  private static final String PLUGINS_PACKAGE_VERSION_PREFERENCE = "plugins.package.version";
-
-  private static final String LICENSE_SEVER_PREFERENCE = "license.sever";
-
-  public enum STATUS {
-    START_PROCESSING,
-    END_PROCESSING
-  }
-
   private static final Logger LOGGER = LoggerFactory.getLogger(LicenseDialogController.class);
+
+  private ExecutorService executor = Executors.newFixedThreadPool(5);
+  private Future<Boolean> executionFuture;
+  
+  private static final String PLUGINS_PACKAGE_VERSION_PREFERENCE = "plugins.package.version";
+  private static final String LICENSE_SEVER_PREFERENCE = "license.sever";
 
   private static final int SUCCESS_HTTP_STATUS_CODE = 200;
 
@@ -72,10 +74,9 @@ public class LicenseDialogController implements LicenseController {
   static final String TEST_COMMAND = "test";
   private final File licenceFile;
 
-  private final AbstractTabLicense licencesItem;
+  private final AbstractTabLicense licensesItem;
   private final Document codeDocument;
   private final Document serverDocument;
-  private final Consumer<STATUS> statusSetter;
 
   private LicensedPluginsService service;
 
@@ -85,17 +86,20 @@ public class LicenseDialogController implements LicenseController {
 
   private Preferences preferences;
 
+  private boolean executing = false;
+
+  private boolean canceled;
+
   public LicenseDialogController(
-      Document codeDocument, Document serverDocument, AbstractTabLicense licencesItem, Consumer<STATUS> statusSetter) {
-    this.licencesItem = licencesItem;
+      Document codeDocument, Document serverDocument, AbstractTabLicense licensesItem) {
+    this.licensesItem = licensesItem;
     this.codeDocument = codeDocument;
     this.serverDocument = serverDocument;
-    this.statusSetter = statusSetter;
     this.licenceFile =
         new File(
             AppProperties.WEASIS_PATH
                 + File.separator
-                + licencesItem.getLicenseName()
+                + licensesItem.getLicenseName()
                 + ".license"); // NON-NLS
     readLicenseContents();
   }
@@ -108,15 +112,15 @@ public class LicenseDialogController implements LicenseController {
       }
       Preferences prefs = getPreferences();
       if (prefs != null) {
-        String server = prefs.get(licencesItem.getPluginName() + "." + LICENSE_SEVER_PREFERENCE, null);
+        String server = prefs.get(licensesItem.getPluginName() + "." + LICENSE_SEVER_PREFERENCE, null);
         if (StringUtil.hasText(server)) {
           serverDocument.insertString(0, server, null);
         }
-        String version = prefs.get(licencesItem.getPluginName() + "." + PLUGINS_PACKAGE_VERSION_PREFERENCE, null);
-        licencesItem.setVersionContents(StringUtil.hasText(version) ? version : "");
+        String version = prefs.get(licensesItem.getPluginName() + "." + PLUGINS_PACKAGE_VERSION_PREFERENCE, null);
+        licensesItem.setVersionContents(StringUtil.hasText(version) ? version : "");
       }
     } catch (Exception e) {
-      LOGGER.error(e.getMessage(), e);
+      logErrorMessage(e, null);
     }
   }
 
@@ -152,19 +156,20 @@ public class LicenseDialogController implements LicenseController {
             changeConfigProperties();
             updateUI();
             askUserToRestart();
-            JOptionPane.showMessageDialog(licencesItem, Messages.getString("license.successfully.saved"),
+            JOptionPane.showMessageDialog(licensesItem, Messages.getString("license.successfully.saved"),
                 Messages.getString("license"), JOptionPane.INFORMATION_MESSAGE);
+            return true;
           }
         } else {
-          JOptionPane.showMessageDialog(licencesItem, Messages.getString("license.field.empty"),
+          JOptionPane.showMessageDialog(licensesItem, Messages.getString("license.field.empty"),
               Messages.getString("license"), JOptionPane.WARNING_MESSAGE);
         }
       } catch (Exception e) {
-        LOGGER.error(e.getMessage(), e);
+        logErrorMessage(e, null);
         String details = (e.getMessage() != null ? e.getMessage() : "");
-        JOptionPane.showMessageDialog(licencesItem, Messages.getString("license.error.saving") + " " + details,
-            Messages.getString("license"), JOptionPane.ERROR_MESSAGE);
+        showErrorMessage(Messages.getString("license"), Messages.getString("license.error.saving") + " " + details);
       }
+      return false;
     });
   }
 
@@ -173,17 +178,17 @@ public class LicenseDialogController implements LicenseController {
 
   private void updateUI() {
     String version = service.getVersion();
-    licencesItem.setVersionContents(StringUtil.hasText(version) ? version : "");
+    licensesItem.setVersionContents(StringUtil.hasText(version) ? version : "");
     try {
       String serverContents = serverDocument.getText(0, serverDocument.getLength());
       Preferences prefs = getPreferences();
       LOGGER.debug("Trying to store preferences at: {}", prefs);
       if (prefs != null) {
-        BundlePreferences.putStringPreferences(prefs, licencesItem.getPluginName() + "." + LICENSE_SEVER_PREFERENCE, serverContents);
-        BundlePreferences.putStringPreferences(prefs, licencesItem.getPluginName() + "." + PLUGINS_PACKAGE_VERSION_PREFERENCE, version);
+        BundlePreferences.putStringPreferences(prefs, licensesItem.getPluginName() + "." + LICENSE_SEVER_PREFERENCE, serverContents);
+        BundlePreferences.putStringPreferences(prefs, licensesItem.getPluginName() + "." + PLUGINS_PACKAGE_VERSION_PREFERENCE, version);
       }
     } catch (Exception e) {
-      LOGGER.error("Unable to update UI and save license related values: {}", e.getMessage());
+      logErrorMessage(e, "Unable to update UI and save license related values: {}");
     }
   }
 
@@ -222,6 +227,18 @@ public class LicenseDialogController implements LicenseController {
   @Override
   public boolean test() {
     if (tested) return tested;
+    if (!executing) { // in case call is NOT from save button, we need to create a new thread based processing
+      execute(controller -> {
+        return executeTest();
+      });
+      executor.submit(new LicenseTesterWaitTask(executionFuture));
+      return true;
+    } else {
+      return executeTest();
+    }
+  }
+
+  private boolean executeTest() {
     String errorDetails = "";
     try {
       String licenseContents = codeDocument.getText(0, codeDocument.getLength());
@@ -230,37 +247,33 @@ public class LicenseDialogController implements LicenseController {
         if (pingLicenseServerURL(serverContents)) {
           boolean download = downloadBootJarAndTestBundleAccess(licenseContents, serverContents);
           if (!download) {
-            JOptionPane.showMessageDialog(licencesItem, Messages.getString("license.error.downloading"),
-                Messages.getString("license"), JOptionPane.ERROR_MESSAGE);
+            showErrorMessage(Messages.getString("license"), Messages.getString("license.error.downloading"));
           }
           tested = download;
           return tested;
         }
       }
     } catch (Exception e) {
-      LOGGER.error(e.getMessage(), e);
+      logErrorMessage(e, null);
       errorDetails = e.getMessage() != null ? e.getMessage() : "";
       if (bundle != null) {
         try {
           bundle.stop();
           bundle.uninstall();
         } catch (Exception e2) {
-          LOGGER.error(e2.getMessage(), e2);
+          logErrorMessage(e2, null);
         }
       }
     }
-    JOptionPane.showMessageDialog(licencesItem, Messages.getString("license.error.testing") + " " + errorDetails,
-        Messages.getString("license"), JOptionPane.ERROR_MESSAGE);
+    showErrorMessage(Messages.getString("license"), Messages.getString("license.error.testing") + " " + errorDetails);
     return false;
-
   }
 
   private boolean downloadBootJarAndTestBundleAccess(String licenseContents, String serverContents) throws Exception{
     boolean result = false;
     if (StringUtil.hasText(serverContents)) {
-      HttpClient httpClient = HttpClient.newBuilder().connectTimeout(Duration.ofMinutes(1)).build();
-      HttpRequest request = HttpRequest.newBuilder(URI.create(serverContents)).GET().build();
-      try {
+      try (HttpClient httpClient = HttpClient.newBuilder().connectTimeout(Duration.ofMinutes(1)).build();) {
+        HttpRequest request = HttpRequest.newBuilder(URI.create(serverContents)).GET().build();
         HttpResponse<InputStream> resp = httpClient.send(request, responseInfo -> {
           LOGGER.info("Validating URL: {}. Result: {}", serverContents, responseInfo.statusCode());
           return BodySubscribers.ofInputStream();
@@ -281,7 +294,7 @@ public class LicenseDialogController implements LicenseController {
           result = false;
         }
       } catch (IOException | InterruptedException e) {
-        LOGGER.error(e.getMessage(), e);
+        logErrorMessage(e, null);
       }
       return result;
     }
@@ -342,8 +355,7 @@ public class LicenseDialogController implements LicenseController {
   }
 
   private boolean pingLicenseServerURL(String serverContents) {
-    HttpClient httpClient = HttpClient.newBuilder().connectTimeout(Duration.ofMinutes(1)).build();
-    try {
+    try (HttpClient httpClient = HttpClient.newBuilder().connectTimeout(Duration.ofMinutes(1)).build();) {
         HttpRequest request = HttpRequest.newBuilder(URI.create(serverContents)).GET().build();
         HttpResponse<Void> resp = httpClient.send(request, new BodyHandler<Void>() {
           @Override
@@ -357,13 +369,16 @@ public class LicenseDialogController implements LicenseController {
             return true;
         }
     } catch (Exception e) {
-        LOGGER.error(e.getMessage(), e);
+        logErrorMessage(e, null);
     }
     return false;
   }
 
   @Override
   public void cancel() {
+    canceled = true;
+    executionFuture.cancel(true);
+    enable();
   }
 
   private void generateBackupFile() {
@@ -371,7 +386,7 @@ public class LicenseDialogController implements LicenseController {
       Files.copy(licenceFile.toPath(), Paths.get(licenceFile.getPath() + "-backup"),
           StandardCopyOption.REPLACE_EXISTING);
     } catch (IOException e) {
-      LOGGER.error(e.getMessage(), e);
+      logErrorMessage(e, null);
     }
   }
 
@@ -379,29 +394,116 @@ public class LicenseDialogController implements LicenseController {
     try (FileWriter fw = new FileWriter(licenceFile, StandardCharsets.UTF_8, false)) {
       fw.write(contents);
     } catch (IOException e) {
-      LOGGER.error(e.getMessage(), e);
+      logErrorMessage(e, null);
     }
   }
 
-  private void execute(Consumer<LicenseDialogController> c) {
-    try {
-      statusSetter.accept(STATUS.START_PROCESSING);
-      disable();
-      c.accept(this);
-    } finally {
-      statusSetter.accept(STATUS.END_PROCESSING);
-      enable();
-    }
+  private void execute(Function<LicenseDialogController, Boolean> f) {
+    canceled = false;
+    executionFuture = executor.submit(new ExecutionTask(this, f));
   }
 
   private void enable() {
-    licencesItem.getSaveButton().setEnabled(true);
-    licencesItem.getTestButton().setEnabled(true);
+    licensesItem.endProcessing();
   }
 
   private void disable() {
-    licencesItem.getSaveButton().setEnabled(false);
-    licencesItem.getTestButton().setEnabled(false);
+    licensesItem.startProcessing();
+  }
+
+  private void logProcessingMessage(String message) {
+    
+  }
+
+  private void logItemProcessed() {
+    
+  }
+
+  private void showErrorMessage(String title, String message) {
+    if (!canceled) {
+      if (SwingUtilities.isEventDispatchThread()) {
+        JOptionPane.showMessageDialog(licensesItem, message, title, JOptionPane.ERROR_MESSAGE);
+      } else {
+        SwingUtilities.invokeLater(() -> {
+          JOptionPane.showMessageDialog(licensesItem, message, title, JOptionPane.ERROR_MESSAGE);
+        });
+      }
+    }
+  }
+
+  private void logErrorMessage(Throwable t, String message) {
+    if (canceled) {
+      LOGGER.warn("License processing canceled!");
+      if (message != null) {
+        LOGGER.warn(message, t.getMessage());
+      } else {
+        LOGGER.warn(t.getMessage());
+      }
+    } else {
+      if (message != null) {
+        LOGGER.error(message, t.getMessage());
+      }
+      LOGGER.error(t.getMessage(), t);
+    }
+  }
+
+  private static final class ExecutionTask implements Callable<Boolean> {
+
+    private LicenseDialogController controller;
+    private Function<LicenseDialogController, Boolean> function;
+
+    ExecutionTask(LicenseDialogController controller, Function<LicenseDialogController, Boolean> f) {
+      this.controller = controller;
+      this.function = f;
+    }
+
+    @Override
+    public Boolean call() throws Exception {
+      try {
+        controller.executing = true;
+        SwingUtilities.invokeLater(new Runnable() {
+          @Override
+          public void run() {
+            controller.disable();
+          }
+        });
+        return function.apply(controller);
+      } finally {
+        SwingUtilities.invokeLater(new Runnable() {
+          @Override
+          public void run() {
+            controller.enable();
+          }
+        });
+        controller.executing = false;
+      }
+    }
+  }
+
+  private static final class LicenseTesterWaitTask implements Callable<Boolean> {
+
+    private Future<Boolean> future;
+
+    public LicenseTesterWaitTask(Future<Boolean> future) {
+      this.future = future;
+    }
+
+    @Override
+    public Boolean call() throws Exception {
+      boolean result = true;
+      LOGGER.debug("Executing test in a new thread");
+      try {
+        if (!future.get()) {
+          LOGGER.warn("License processing test failed!");
+          result = false;
+        }
+      } catch (Exception e) {
+        LOGGER.error(e.getMessage(), e);
+        result = false;
+      }
+      return result;
+    }
+
   }
 
 }
