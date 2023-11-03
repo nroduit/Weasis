@@ -361,6 +361,12 @@
                 </artifactItem>
                 <artifactItem>
                   <groupId>org.weasis.opencv</groupId>
+                  <artifactId>weasis-opencv-core-macosx-aarch64</artifactId>
+                  <version>${weasis.opencv.native.version}</version>
+                  <outputDirectory>${tmp.bundle.dir}</outputDirectory>
+                </artifactItem>
+                <artifactItem>
+                  <groupId>org.weasis.opencv</groupId>
                   <artifactId>weasis-opencv-core-macosx-x86-64</artifactId>
                   <version>${weasis.opencv.native.version}</version>
                   <outputDirectory>${tmp.bundle.dir}</outputDirectory>
@@ -414,6 +420,12 @@
                 <artifactItem>
                   <groupId>org.weasis.thirdparty.org.jogamp</groupId>
                   <artifactId>jogamp-linux-aarch64</artifactId>
+                  <version>${jogamp.version}</version>
+                  <outputDirectory>${tmp.bundle.dir}</outputDirectory>
+                </artifactItem>
+                <artifactItem>
+                  <groupId>org.weasis.thirdparty.org.jogamp</groupId>
+                  <artifactId>jogamp-macosx-aarch64</artifactId>
                   <version>${jogamp.version}</version>
                   <outputDirectory>${tmp.bundle.dir}</outputDirectory>
                 </artifactItem>
