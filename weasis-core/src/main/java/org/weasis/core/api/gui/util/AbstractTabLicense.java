@@ -46,6 +46,7 @@ public class AbstractTabLicense extends JPanel implements Insertable {
   private JLabel versionLabel;
   private JLabel versionContents;
   private JPanel jPanelMiddle;
+  private JLabel progressMessageLabel;
 
   public AbstractTabLicense(GUIEntry entry) {
     this(entry, null);
@@ -160,6 +161,12 @@ public class AbstractTabLicense extends JPanel implements Insertable {
     jPanelBootJarAddress.add(bootJarTextField);
     jPanelMiddle.add(jPanelBootJarAddress, BorderLayout.NORTH);
     jPanelMiddle.add(textScroll, BorderLayout.CENTER);
+    JPanel jPanelProgressMessage = new JPanel();
+    jPanelProgressMessage.setLayout(
+        new MigLayout("insets 25lp 10lp 25lp 10lp", "[right]rel[grow,fill]")); // NON-NLS
+    progressMessageLabel = new JLabel(" ");
+    jPanelProgressMessage.add(progressMessageLabel);
+    jPanelMiddle.add(jPanelProgressMessage, BorderLayout.SOUTH);
     add(jPanelMiddle, BorderLayout.CENTER);
 
     JPanel jPanelBottom =
@@ -251,5 +258,9 @@ public class AbstractTabLicense extends JPanel implements Insertable {
     cancelButton.getModel().setEnabled(true);
     codeTextField.setEnabled(false);
     bootJarTextField.setEnabled(false);
+  }
+
+  public void logProgress(String message) {
+    progressMessageLabel.setText(message);
   }
 }

@@ -90,6 +90,8 @@ public class LicenseDialogController implements LicenseController {
 
   private boolean canceled;
 
+  private TaskMonitor taskMonitor;
+
   public LicenseDialogController(
       Document codeDocument, Document serverDocument, AbstractTabLicense licensesItem) {
     this.licensesItem = licensesItem;
@@ -138,6 +140,7 @@ public class LicenseDialogController implements LicenseController {
    */
   @Override
   public void save() {
+    taskMonitor = new TaskMonitor(licensesItem);
     execute(controller -> {
       try {
         String contents = codeDocument.getText(0, codeDocument.getLength());
@@ -177,6 +180,7 @@ public class LicenseDialogController implements LicenseController {
   }
 
   private void updateUI() {
+    taskMonitor.processItem("Updating user interface...");
     String version = service.getVersion();
     licensesItem.setVersionContents(StringUtil.hasText(version) ? version : "");
     try {
@@ -206,6 +210,7 @@ public class LicenseDialogController implements LicenseController {
 
   private void changeConfigProperties() throws Exception {
     if (service != null) {
+      taskMonitor.processItem("Updating local user configuration...");
       service.updateConfig();
     }
   }
@@ -228,6 +233,7 @@ public class LicenseDialogController implements LicenseController {
   public boolean test() {
     if (tested) return tested;
     if (!executing) { // in case call is NOT from save button, we need to create a new thread based processing
+      taskMonitor = new TaskMonitor(licensesItem);
       execute(controller -> {
         return executeTest();
       });
@@ -270,6 +276,7 @@ public class LicenseDialogController implements LicenseController {
   }
 
   private boolean downloadBootJarAndTestBundleAccess(String licenseContents, String serverContents) throws Exception{
+    taskMonitor.processItem("Downloading boot bundle jar...");
     boolean result = false;
     if (StringUtil.hasText(serverContents)) {
       try (HttpClient httpClient = HttpClient.newBuilder().connectTimeout(Duration.ofMinutes(1)).build();) {
@@ -312,6 +319,7 @@ public class LicenseDialogController implements LicenseController {
    * <code>False</code>, otherwise.
    */
   private boolean installAndStartBundle(File file, String licenseContents) throws Exception {
+    taskMonitor.processItem("Installing boot bundle jar...");
     BundleContext context = FrameworkUtil.getBundle(this.getClass()).getBundleContext();
     LOGGER.debug("Bundle context: {}", context);
     bundle = context.installBundle(file.toURI().toURL().toString());
@@ -324,7 +332,9 @@ public class LicenseDialogController implements LicenseController {
     ServiceReference<LicensedPluginsService> serviceRef = bundle.getBundleContext().getServiceReference(LicensedPluginsService.class);
     service = bundle.getBundleContext().getService(serviceRef);
     if (service != null) {
+      taskMonitor.processItem("Validating extensions endpoints...");
       service.validateEndpoints();
+      taskMonitor.processItem("Validating license...");
       service.validateLicense(licenseContents);
     }
     return true;
@@ -355,6 +365,7 @@ public class LicenseDialogController implements LicenseController {
   }
 
   private boolean pingLicenseServerURL(String serverContents) {
+    taskMonitor.processItem("Reaching out boot bundle jar...");
     try (HttpClient httpClient = HttpClient.newBuilder().connectTimeout(Duration.ofMinutes(1)).build();) {
         HttpRequest request = HttpRequest.newBuilder(URI.create(serverContents)).GET().build();
         HttpResponse<Void> resp = httpClient.send(request, new BodyHandler<Void>() {
@@ -391,6 +402,7 @@ public class LicenseDialogController implements LicenseController {
   }
 
   private void writeFileContents(String contents) {
+    taskMonitor.processItem("Writing license contents...");
     try (FileWriter fw = new FileWriter(licenceFile, StandardCharsets.UTF_8, false)) {
       fw.write(contents);
     } catch (IOException e) {
@@ -411,11 +423,7 @@ public class LicenseDialogController implements LicenseController {
     licensesItem.startProcessing();
   }
 
-  private void logProcessingMessage(String message) {
-    
-  }
-
-  private void logItemProcessed() {
+  private void logProgress(String taskMessage) {
     
   }
 
@@ -469,6 +477,7 @@ public class LicenseDialogController implements LicenseController {
         });
         return function.apply(controller);
       } finally {
+        controller.taskMonitor.processItem("License handling process finished!");
         SwingUtilities.invokeLater(new Runnable() {
           @Override
           public void run() {
@@ -502,6 +511,20 @@ public class LicenseDialogController implements LicenseController {
         result = false;
       }
       return result;
+    }
+
+  }
+
+  private static final class TaskMonitor {
+
+    private AbstractTabLicense liensesItem;
+
+    public TaskMonitor(AbstractTabLicense licensesItem) {
+      this.liensesItem = licensesItem;
+    }
+
+    public void processItem(String message) {
+      liensesItem.logProgress(message);
     }
 
   }
