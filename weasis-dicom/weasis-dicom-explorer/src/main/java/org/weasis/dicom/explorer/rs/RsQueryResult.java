@@ -9,6 +9,7 @@
  */
 package org.weasis.dicom.explorer.rs;
 
+import jakarta.json.Json;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URLEncoder;
@@ -19,7 +20,6 @@ import java.util.Date;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
-import javax.json.Json;
 import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Tag;
 import org.dcm4che3.json.JSONReader;

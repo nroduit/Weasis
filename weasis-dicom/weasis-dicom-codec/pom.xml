@@ -82,6 +82,12 @@
         </exclusion>
       </exclusions>
     </dependency>
+    <!-- Add osgi-resource-locator dependency for loading JsonProvider with dcm4che-json -->
+    <dependency>
+      <groupId>org.glassfish.hk2</groupId>
+      <artifactId>osgi-resource-locator</artifactId>
+      <scope>provided</scope>
+    </dependency>
     <dependency>
       <groupId>org.weasis.imageio</groupId>
       <artifactId>weasis-imageio-codec</artifactId>

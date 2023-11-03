@@ -74,7 +74,7 @@
     },
     {
       "code": "felix.auto.start.4",
-      "value": "${dollar}{weasis.codebase.url}/bundle/org.apache.felix.bundlerepository-${felix.bundlerepository.version}.jar${xz.ext} ${dollar}{weasis.codebase.url}/bundle/jakarta.json-${javax.json.version}.jar${xz.ext} ${dollar}{weasis.codebase.url}/bundle/osgi.promise-${osgi.promise.version}.jar${xz.ext}",
+      "value": "${dollar}{weasis.codebase.url}/bundle/org.apache.felix.bundlerepository-${felix.bundlerepository.version}.jar${xz.ext} ${dollar}{weasis.codebase.url}/bundle/jakarta.json-api-${jakarta.json.version}.jar${xz.ext} ${dollar}{weasis.codebase.url}/bundle/parsson-${org.eclipse.parsson.version}.jar${xz.ext} ${dollar}{weasis.codebase.url}/bundle/osgi-resource-locator-${osgi.resource.locator.version}.jar${xz.ext} ${dollar}{weasis.codebase.url}/bundle/osgi.promise-${osgi.promise.version}.jar${xz.ext}",
       "description": "OSGI bundle repository",
       "type": "A",
       "category": "FELIX_INSTALL"

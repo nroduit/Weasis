@@ -459,7 +459,7 @@ public class SeriesBuilder {
           newSeries[i].write(
               ImageProcessor.getRotatedImage(newSeries[i].read(), Core.ROTATE_90_CLOCKWISE));
         } catch (Exception e) {
-          FileUtil.delete(newSeries[i].getFile());
+          FileUtil.delete(newSeries[i].file());
           throw e;
         }
 
@@ -473,7 +473,7 @@ public class SeriesBuilder {
         }
       }
       RawImageIO rawIO = new RawImageIO(newSeries[i], null);
-      rawIO.getFileCache().setOriginalTempFile(newSeries[i].getFile());
+      rawIO.getFileCache().setOriginalTempFile(newSeries[i].file());
       rawIO.setBaseAttributes(cpTags);
 
       // Tags with same values for all the Series
@@ -643,7 +643,7 @@ public class SeriesBuilder {
       for (int i = 0; i < newSeries.length; i++) {
         if (newSeries[i] != null) {
           if (abort[0]) {
-            FileUtil.delete(newSeries[i].getFile());
+            FileUtil.delete(newSeries[i].file());
           } else {
             newSeries[i].write(builImgs[i]);
           }

@@ -179,7 +179,7 @@ public class SeriesBuilder {
             }
           } catch (Exception e) {
             if (raw != null) {
-              FileUtil.delete(raw.getFile());
+              FileUtil.delete(raw.file());
               raw = null;
             }
             LOGGER.error("Writing MIP", e);
@@ -188,7 +188,7 @@ public class SeriesBuilder {
             return;
           }
           RawImageIO rawIO = new RawImageIO(raw, null);
-          rawIO.getFileCache().setOriginalTempFile(raw.getFile());
+          rawIO.getFileCache().setOriginalTempFile(raw.file());
           rawIO.setBaseAttributes(cpTags);
 
           // Tags with same values for all the Series

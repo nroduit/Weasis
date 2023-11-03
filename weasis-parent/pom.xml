@@ -51,22 +51,24 @@
     <slf4j.version>1.7.36</slf4j.version>
     <sling.commons.log.version>3.0.2-r5</sling.commons.log.version>
     <dockingframes.version>1.1.6</dockingframes.version>
-    <weasis-dicom-tools.version>5.30.0</weasis-dicom-tools.version>
-    <weasis.core.img.version>4.8.0.1</weasis.core.img.version>
-    <weasis.opencv.native.version>4.8.0-dcm</weasis.opencv.native.version>
-    <javax.json.version>1.1.6</javax.json.version>
+    <weasis-dicom-tools.version>5.31.1</weasis-dicom-tools.version>
+    <weasis.core.img.version>4.8.1</weasis.core.img.version>
+    <weasis.opencv.native.version>4.8.1-dcm</weasis.opencv.native.version>
+    <jakarta.json.version>2.1.3</jakarta.json.version>
+    <org.eclipse.parsson.version>1.1.5</org.eclipse.parsson.version>
+    <osgi.resource.locator.version>2.5.0-b42</osgi.resource.locator.version>
     <jaxb.osgi.version>4.0.3</jaxb.osgi.version>
     <xml.bind-api.version>4.0.0</xml.bind-api.version>
     <joml.version>1.10.5</joml.version>
     <jogamp.version>2.5.0</jogamp.version>
     <jackson.version>2.15.1</jackson.version>
     <scribejava.version>8.3.3</scribejava.version>
-    <zip4j.version>2.11.4</zip4j.version>
+    <zip4j.version>2.11.5</zip4j.version>
 
     <assertj.version>3.24.2</assertj.version>
     <mockito.version>5.2.0</mockito.version>
     <byte-buddy.version>1.14.6</byte-buddy.version>
-    <byte-buddy-agent.version>1.14.1</byte-buddy-agent.version>
+    <byte-buddy-agent.version>1.14.2</byte-buddy-agent.version>
   </properties>
 
   <licenses>
@@ -505,9 +507,21 @@
         <scope>provided</scope>
       </dependency>
       <dependency>
-        <groupId>org.glassfish</groupId>
-        <artifactId>jakarta.json</artifactId>
-        <version>${javax.json.version}</version>
+        <groupId>jakarta.json</groupId>
+        <artifactId>jakarta.json-api</artifactId>
+        <version>${jakarta.json.version}</version>
+        <scope>provided</scope>
+      </dependency>
+      <dependency>
+        <groupId>org.eclipse.parsson</groupId>
+        <artifactId>parsson</artifactId>
+        <version>${org.eclipse.parsson.version}</version>
+        <scope>provided</scope>
+      </dependency>
+      <dependency>
+        <groupId>org.glassfish.hk2</groupId>
+        <artifactId>osgi-resource-locator</artifactId>
+        <version>${osgi.resource.locator.version}</version>
         <scope>provided</scope>
       </dependency>
       <dependency>
@@ -656,8 +670,8 @@
       <scope>provided</scope>
     </dependency>
     <dependency>
-    <groupId>org.apache.felix</groupId>
-    <artifactId>org.apache.felix.prefs</artifactId>
+      <groupId>org.apache.felix</groupId>
+      <artifactId>org.apache.felix.prefs</artifactId>
     </dependency>
 
     <!-- FOR TESTS -->

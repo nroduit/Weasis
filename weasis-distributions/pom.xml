@@ -261,9 +261,21 @@
                   <outputDirectory>${tmp.bundle.dir}</outputDirectory>
                 </artifactItem>
                 <artifactItem>
-                  <groupId>org.glassfish</groupId>
-                  <artifactId>jakarta.json</artifactId>
-                  <version>${javax.json.version}</version>
+                  <groupId>jakarta.json</groupId>
+                  <artifactId>jakarta.json-api</artifactId>
+                  <version>${jakarta.json.version}</version>
+                  <outputDirectory>${tmp.bundle.dir}</outputDirectory>
+                </artifactItem>
+                <artifactItem>
+                  <groupId>org.eclipse.parsson</groupId>
+                  <artifactId>parsson</artifactId>
+                  <version>${org.eclipse.parsson.version}</version>
+                  <outputDirectory>${tmp.bundle.dir}</outputDirectory>
+                </artifactItem>
+                <artifactItem>
+                  <groupId>org.glassfish.hk2</groupId>
+                  <artifactId>osgi-resource-locator</artifactId>
+                  <version>${osgi.resource.locator.version}</version>
                   <outputDirectory>${tmp.bundle.dir}</outputDirectory>
                 </artifactItem>
                 <artifactItem>

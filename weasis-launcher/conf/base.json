@@ -74,7 +74,7 @@
     },
     {
       "code": "felix.auto.start.4",
-      "value": "file:${maven.localRepository}/org/apache/felix/org.apache.felix.bundlerepository/${felix.bundlerepository.version}/org.apache.felix.bundlerepository-${felix.bundlerepository.version}.jar file:${maven.localRepository}/org/glassfish/jakarta.json/${javax.json.version}/jakarta.json-${javax.json.version}.jar file:${maven.localRepository}/org/osgi/osgi.promise/${osgi.promise.version}/osgi.promise-${osgi.promise.version}.jar",
+      "value": "file:${maven.localRepository}/org/apache/felix/org.apache.felix.bundlerepository/${felix.bundlerepository.version}/org.apache.felix.bundlerepository-${felix.bundlerepository.version}.jar file:${maven.localRepository}/jakarta/json/jakarta.json-api/${jakarta.json.version}/jakarta.json-api-${jakarta.json.version}.jar file:${maven.localRepository}/org/eclipse/parsson/parsson/${org.eclipse.parsson.version}/parsson-${org.eclipse.parsson.version}.jar file:${maven.localRepository}/org/glassfish/hk2/osgi-resource-locator/${osgi.resource.locator.version}/osgi-resource-locator-${osgi.resource.locator.version}.jar file:${maven.localRepository}/org/osgi/osgi.promise/${osgi.promise.version}/osgi.promise-${osgi.promise.version}.jar",
       "description": "OSGI bundle repository",
       "type": "A",
       "category": "FELIX_INSTALL"
