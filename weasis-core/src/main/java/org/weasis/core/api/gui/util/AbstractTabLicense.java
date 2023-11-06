@@ -21,6 +21,7 @@ import javax.swing.DefaultButtonModel;
 import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JProgressBar;
 import javax.swing.JRadioButton;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
@@ -47,6 +48,10 @@ public class AbstractTabLicense extends JPanel implements Insertable {
   private JLabel versionContents;
   private JPanel jPanelMiddle;
   private JLabel progressMessageLabel;
+  private JProgressBar progressBar;
+
+  private int totalTasks = 9;
+  private int currentTask = 0;
 
   public AbstractTabLicense(GUIEntry entry) {
     this(entry, null);
@@ -90,6 +95,7 @@ public class AbstractTabLicense extends JPanel implements Insertable {
         new AbstractAction() {
           @Override
           public void actionPerformed(ActionEvent e) {
+            progressBar.setMaximum(totalTasks);
             licenseController.test();
           }
         });
@@ -101,6 +107,10 @@ public class AbstractTabLicense extends JPanel implements Insertable {
         new AbstractAction() {
           @Override
           public void actionPerformed(ActionEvent e) {
+            if (currentTask != 0) { // if the test was already executed
+              totalTasks = 10;
+            }
+            progressBar.setMaximum(totalTasks);
             licenseController.save();
           }
         });
@@ -162,10 +172,11 @@ public class AbstractTabLicense extends JPanel implements Insertable {
     jPanelMiddle.add(jPanelBootJarAddress, BorderLayout.NORTH);
     jPanelMiddle.add(textScroll, BorderLayout.CENTER);
     JPanel jPanelProgressMessage = new JPanel();
-    jPanelProgressMessage.setLayout(
-        new MigLayout("insets 25lp 10lp 25lp 10lp", "[right]rel[grow,fill]")); // NON-NLS
+    jPanelProgressMessage.setLayout(new BorderLayout()); // NON-NLS
     progressMessageLabel = new JLabel(" ");
-    jPanelProgressMessage.add(progressMessageLabel);
+    progressBar = new JProgressBar();
+    jPanelProgressMessage.add(progressMessageLabel, BorderLayout.NORTH);
+    jPanelProgressMessage.add(progressBar, BorderLayout.CENTER);
     jPanelMiddle.add(jPanelProgressMessage, BorderLayout.SOUTH);
     add(jPanelMiddle, BorderLayout.CENTER);
 
@@ -261,6 +272,8 @@ public class AbstractTabLicense extends JPanel implements Insertable {
   }
 
   public void logProgress(String message) {
-    progressMessageLabel.setText(message);
+    currentTask++;
+    progressBar.setValue(currentTask);
+    progressMessageLabel.setText(currentTask + " of " + totalTasks + ": " +message);
   }
 }
