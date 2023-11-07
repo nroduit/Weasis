@@ -34,7 +34,6 @@ import javax.swing.JMenu;
 import javax.swing.JMenuItem;
 import javax.swing.JSeparator;
 import javax.swing.KeyStroke;
-import javax.swing.SwingUtilities;
 import org.dcm4che3.data.Tag;
 import org.dcm4che3.img.data.PrDicomObject;
 import org.dcm4che3.img.lut.PresetWindowLevel;
@@ -45,6 +44,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.command.Option;
 import org.weasis.core.api.command.Options;
+import org.weasis.core.api.explorer.DataExplorerView;
 import org.weasis.core.api.gui.Insertable.Type;
 import org.weasis.core.api.gui.InsertableUtil;
 import org.weasis.core.api.gui.util.ActionState;
@@ -70,6 +70,7 @@ import org.weasis.core.api.image.op.ByteLut;
 import org.weasis.core.api.image.op.ByteLutCollection;
 import org.weasis.core.api.image.util.KernelData;
 import org.weasis.core.api.image.util.Unit;
+import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeries.MEDIA_POSITION;
 import org.weasis.core.api.media.data.Series;
@@ -98,8 +99,6 @@ import org.weasis.core.ui.editor.image.ZoomToolBar;
 import org.weasis.core.ui.model.graphic.Graphic;
 import org.weasis.core.ui.model.layer.LayerType;
 import org.weasis.core.ui.model.utils.bean.PanPoint;
-import org.weasis.core.ui.util.ColorLayerUI;
-import org.weasis.core.ui.util.PrintDialog;
 import org.weasis.core.util.LangUtil;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.DicomSeries;
@@ -108,6 +107,8 @@ import org.weasis.dicom.codec.SortSeriesStack;
 import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.geometry.ImageOrientation;
 import org.weasis.dicom.codec.utils.DicomResource;
+import org.weasis.dicom.explorer.DicomExplorer;
+import org.weasis.dicom.explorer.DicomExplorer.ListPosition;
 import org.weasis.dicom.viewer2d.mip.MipView;
 import org.weasis.dicom.viewer2d.mpr.MprContainer;
 import org.weasis.dicom.viewer2d.mpr.MprView;
@@ -788,57 +789,119 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
   }
 
   @Override
-  public void keyTyped(KeyEvent e) {}
+  public void keyTyped(KeyEvent e) {
+    // Do nothing
+  }
 
   @Override
   public void keyPressed(KeyEvent e) {
+    if (!commonDisplayShortcuts(e)) {
+      int keyEvent = e.getKeyCode();
+      int modifiers = e.getModifiers();
 
-    int keyEvent = e.getKeyCode();
-    int modifiers = e.getModifiers();
-
-    if (keyEvent == KeyEvent.VK_ESCAPE) {
-      resetDisplay();
-    } else if (keyEvent == ActionW.CINESTART.getKeyCode()
-        && ActionW.CINESTART.getModifier() == modifiers) {
-      Optional<SliderCineListener> cineAction = getAction(ActionW.SCROLL_SERIES);
-      if (cineAction.isPresent() && cineAction.get().isActionEnabled()) {
-        if (cineAction.get().isCining()) {
-          cineAction.get().stop();
+      if (keyEvent == KeyEvent.VK_LEFT && !e.isAltDown()) {
+        if (e.isControlDown()) {
+          moveStudy(ListPosition.PREVIOUS);
         } else {
-          cineAction.get().start();
+          moveSeries(ListPosition.PREVIOUS);
         }
-      }
-    } else if (keyEvent == KeyEvent.VK_P && modifiers == 0) {
-      ImageViewerPlugin<DicomImageElement> view = getSelectedView2dContainer();
-      if (view != null) {
-        ColorLayerUI layer = ColorLayerUI.createTransparentLayerUI(view);
-        PrintDialog dialog =
-            new PrintDialog(
-                SwingUtilities.getWindowAncestor(view),
-                Messages.getString("View2dContainer.print_layout"),
-                this);
-        ColorLayerUI.showCenterScreen(dialog, layer);
-      }
-    } else {
-      Optional<? extends ComboItemListener<?>> presetAction = getAction(ActionW.PRESET);
-      if (modifiers == 0 && presetAction.isPresent() && presetAction.get().isActionEnabled()) {
-        ComboItemListener<?> presetComboListener = presetAction.get();
-        DefaultComboBoxModel<?> model = presetComboListener.getModel();
-        for (int i = 0; i < model.getSize(); i++) {
-          PresetWindowLevel val = (PresetWindowLevel) model.getElementAt(i);
-          if (val.getKeyCode() == keyEvent) {
-            presetComboListener.setSelectedItem(val);
-            return;
-          }
+      } else if (keyEvent == KeyEvent.VK_RIGHT && !e.isAltDown()) {
+        if (e.isControlDown()) {
+          moveStudy(ListPosition.NEXT);
+        } else {
+          moveSeries(ListPosition.NEXT);
         }
+      } else if (keyEvent == KeyEvent.VK_UP && !e.isAltDown() && e.isControlDown()) {
+        movePatient(ListPosition.PREVIOUS);
+      } else if (keyEvent == KeyEvent.VK_DOWN && !e.isAltDown() && e.isControlDown()) {
+        movePatient(ListPosition.NEXT);
+      } else if (keyEvent == KeyEvent.VK_PAGE_UP) {
+        if (e.isControlDown()) {
+          moveStudy(ListPosition.FIRST);
+        } else {
+          moveSeries(ListPosition.FIRST);
+        }
+      } else if (keyEvent == KeyEvent.VK_PAGE_DOWN) {
+        if (e.isControlDown()) {
+          moveStudy(ListPosition.LAST);
+        } else {
+          moveSeries(ListPosition.LAST);
+        }
+      } else if (keyEvent == KeyEvent.VK_HOME && e.isControlDown()) {
+        movePatient(ListPosition.FIRST);
+      } else if (keyEvent == KeyEvent.VK_END && e.isControlDown()) {
+        movePatient(ListPosition.LAST);
+      } else {
+        keyPreset(keyEvent, modifiers);
+        triggerDrawingToolKeyEvent(keyEvent, modifiers);
       }
+    }
+  }
 
-      triggerDrawingToolKeyEvent(keyEvent, modifiers);
+  private DicomExplorer getDicomExplorer() {
+    DataExplorerView dicomView = GuiUtils.getUICore().getExplorerPlugin(DicomExplorer.NAME);
+    if (dicomView instanceof DicomExplorer dicom) {
+      return dicom;
+    }
+    return null;
+  }
+
+  private void movePatient(ListPosition position) {
+    ViewCanvas<DicomImageElement> view = getSelectedViewPane();
+    if (view != null) {
+      DicomExplorer dicom = getDicomExplorer();
+      if (dicom != null) {
+        MediaSeries<? extends MediaElement> series = dicom.movePatient(view, position);
+        ImageViewerPlugin<DicomImageElement> container = getSelectedView2dContainer();
+        fireSeriesViewerListeners(
+            new SeriesViewerEvent(container, series, null, EVENT.SELECT_VIEW));
+      }
+    }
+  }
+
+  private void moveStudy(ListPosition position) {
+    ViewCanvas<DicomImageElement> view = getSelectedViewPane();
+    if (view != null) {
+      DicomExplorer dicom = getDicomExplorer();
+      if (dicom != null) {
+        MediaSeries<? extends MediaElement> series = dicom.moveStudy(view, position);
+        fireSeriesViewerListeners(
+            new SeriesViewerEvent(getSelectedView2dContainer(), series, null, EVENT.SELECT_VIEW));
+      }
+    }
+  }
+
+  private void moveSeries(ListPosition position) {
+    ViewCanvas<DicomImageElement> view = getSelectedViewPane();
+    if (view != null) {
+      DicomExplorer dicom = getDicomExplorer();
+      if (dicom != null) {
+        MediaSeries<? extends MediaElement> series = dicom.moveSeries(view, position);
+        fireSeriesViewerListeners(
+            new SeriesViewerEvent(getSelectedView2dContainer(), series, null, EVENT.SELECT_VIEW));
+      }
     }
   }
 
   @Override
-  public void keyReleased(KeyEvent e) {}
+  public void keyReleased(KeyEvent e) {
+    // Do nothing
+  }
+
+  private void keyPreset(int keyEvent, int modifiers) {
+    Optional<? extends ComboItemListener<?>> presetAction = getAction(ActionW.PRESET);
+    if (modifiers == 0 && presetAction.isPresent() && presetAction.get().isActionEnabled()) {
+      ComboItemListener<?> presetComboListener = presetAction.get();
+      DefaultComboBoxModel<?> model = presetComboListener.getModel();
+      for (int i = 0; i < model.getSize(); i++) {
+        PresetWindowLevel val = (PresetWindowLevel) model.getElementAt(i);
+        if (val.getKeyCode() == keyEvent) {
+          presetComboListener.setSelectedItem(val);
+          return;
+        }
+      }
+    }
+  }
 
   @Override
   public void setSelectedView2dContainer(
@@ -882,9 +945,6 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
       ViewCanvas<DicomImageElement> pane = selectedView2dContainer.getSelectedImagePane();
       if (pane != null) {
         pane.setFocused(true);
-        fireSeriesViewerListeners(
-            new SeriesViewerEvent(
-                selectedView2dContainer, pane.getSeries(), null, EVENT.SELECT_VIEW));
       }
     }
   }

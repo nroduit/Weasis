@@ -426,8 +426,7 @@ public class View2dContainer extends ImageViewerPlugin<ImageElement>
                         series.getImageIndex(img, filter, view2DPane.getCurrentSortComparator());
                     if (imgIndex < 0) {
                       imgIndex = 0;
-                      // add again the series for registering listeners
-                      // (require at least one image)
+                      // Add again the series for registering listeners (require at least one image)
                       view2DPane.setSeries(series, null);
                     }
                     seqAction.get().setSliderMinMaxValue(1, series.size(filter), imgIndex + 1);
@@ -473,8 +472,7 @@ public class View2dContainer extends ImageViewerPlugin<ImageElement>
             MediaSeries<ImageElement> s = v.getSeries();
             if (series.equals(s)) {
               // Set to null to be sure that all parameters from the view are applied again to the
-              // Series
-              // (in case for instance it is the same series with more images)
+              // Series (in case for instance it is the same series with more images)
               v.setSeries(null);
               v.setSeries(series, null);
             }

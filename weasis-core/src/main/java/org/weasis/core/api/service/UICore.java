@@ -9,12 +9,17 @@
  */
 package org.weasis.core.api.service;
 
+import bibliothek.gui.DockStation;
+import bibliothek.gui.Dockable;
+import bibliothek.gui.dock.DockElement;
 import bibliothek.gui.dock.common.CContentArea;
 import bibliothek.gui.dock.common.CControl;
 import bibliothek.gui.dock.common.CWorkingArea;
 import bibliothek.gui.dock.common.event.CVetoFocusListener;
 import bibliothek.gui.dock.common.intern.CDockable;
+import bibliothek.gui.dock.event.KeyboardListener;
 import java.awt.Window;
+import java.awt.event.KeyEvent;
 import java.io.DataOutputStream;
 import java.io.File;
 import java.io.IOException;
@@ -107,6 +112,7 @@ public final class UICore {
             return false;
           }
         };
+    dockingControl.getController().getKeyboardController().addListener(new StackTabSwitcher());
 
     BundleContext context = AppProperties.getBundleContext();
     readSystemPreferences(context);
@@ -182,6 +188,70 @@ public final class UICore {
     Map<String, String> map = new HashMap<>();
     map.put(post ? "Content-Type" : "Accept", "text/x-java-properties"); // NON-NLS
     return new URLParameters(map, post);
+  }
+
+  public static final class StackTabSwitcher implements KeyboardListener {
+    @Override
+    public DockElement getTreeLocation() {
+      return null;
+    }
+
+    @Override
+    public boolean keyPressed(DockElement element, KeyEvent event) {
+      if (event.getKeyCode() == KeyEvent.VK_TAB && event.isControlDown()) {
+        if (event.isShiftDown()) {
+          return shift(element, -1);
+        }
+        return shift(element, 1);
+      }
+      return false;
+    }
+
+    @Override
+    public boolean keyReleased(DockElement element, KeyEvent event) {
+      return false;
+    }
+
+    @Override
+    public boolean keyTyped(DockElement element, KeyEvent event) {
+      return false;
+    }
+
+    private boolean shift(DockElement element, int delta) {
+      // 'element' is the DockElement that currently has the focus. After the
+      // tab changed this could be the DockStation (the parent) itself.
+
+      DockStation parent = element.asDockStation();
+      if (parent == null) {
+        parent = element.asDockable().getDockParent();
+      }
+
+      // we can make the method more general by not checking explicitly whether
+      // the parent is a StackDockStation or not
+      // if( parent instanceof StackDockStation ){
+      if (parent != null) {
+        Dockable focused = parent.getFrontDockable();
+
+        int index = -1;
+        for (int i = 0, n = parent.getDockableCount(); i < n; i++) {
+          if (parent.getDockable(i) == focused) {
+            index = i;
+            break;
+          }
+        }
+        if (index != -1) {
+          index += delta;
+          index %= parent.getDockableCount();
+          if (index < 0) {
+            index += parent.getDockableCount();
+          }
+          Dockable next = parent.getDockable(index);
+          parent.getController().setFocusedDockable(next, true);
+          return true;
+        }
+      }
+      return false;
+    }
   }
 
   public String getPrefServiceUrl() {

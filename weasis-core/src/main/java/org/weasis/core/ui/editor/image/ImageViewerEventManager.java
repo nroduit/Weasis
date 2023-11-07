@@ -10,6 +10,7 @@
 package org.weasis.core.ui.editor.image;
 
 import java.awt.event.InputEvent;
+import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.event.MouseWheelEvent;
 import java.awt.geom.Point2D;
@@ -22,9 +23,11 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import javax.swing.BoundedRangeModel;
+import javax.swing.SwingUtilities;
 import javax.swing.event.SwingPropertyChangeSupport;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.weasis.core.Messages;
 import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.ComboItemListener;
@@ -51,6 +54,8 @@ import org.weasis.core.ui.model.graphic.Graphic;
 import org.weasis.core.ui.model.utils.bean.PanPoint;
 import org.weasis.core.ui.model.utils.imp.DefaultViewModel;
 import org.weasis.core.ui.pref.ZoomSetting;
+import org.weasis.core.ui.util.ColorLayerUI;
+import org.weasis.core.ui.util.PrintDialog;
 
 public abstract class ImageViewerEventManager<E extends ImageElement> implements KeyListener {
   private static final Logger LOGGER = LoggerFactory.getLogger(ImageViewerEventManager.class);
@@ -787,6 +792,58 @@ public abstract class ImageViewerEventManager<E extends ImageElement> implements
         }
       }
     }
+  }
+
+  protected boolean commonDisplayShortcuts(KeyEvent e) {
+    int keyEvent = e.getKeyCode();
+    int modifiers = e.getModifiers();
+
+    if (keyEvent == KeyEvent.VK_ESCAPE) {
+      resetDisplay();
+    } else if (keyEvent == ActionW.CINESTART.getKeyCode()
+        && ActionW.CINESTART.getModifier() == modifiers) {
+      Optional<SliderCineListener> cineAction = getAction(ActionW.SCROLL_SERIES);
+      if (cineAction.isPresent() && cineAction.get().isActionEnabled()) {
+        if (cineAction.get().isCining()) {
+          cineAction.get().stop();
+        } else {
+          cineAction.get().start();
+        }
+      }
+    } else if (keyEvent == KeyEvent.VK_P && modifiers == 0) {
+      ImageViewerPlugin<? extends ImageElement> view = getSelectedView2dContainer();
+      if (view != null) {
+        ColorLayerUI layer = ColorLayerUI.createTransparentLayerUI(view);
+        PrintDialog<?> dialog =
+            new PrintDialog<>(
+                SwingUtilities.getWindowAncestor(view),
+                Messages.getString("ImageViewerPlugin.print_layout"),
+                this);
+        ColorLayerUI.showCenterScreen(dialog, layer);
+      }
+    } else if (keyEvent == KeyEvent.VK_UP && !e.isAltDown() && !e.isControlDown()) {
+      int shift = e.isShiftDown() ? 10 : 1;
+      getAction(ActionW.SCROLL_SERIES).ifPresent(a -> a.setSliderValue(a.getSliderValue() - shift));
+    } else if (keyEvent == KeyEvent.VK_DOWN && !e.isAltDown() && !e.isControlDown()) {
+      int shift = e.isShiftDown() ? 10 : 1;
+      getAction(ActionW.SCROLL_SERIES).ifPresent(a -> a.setSliderValue(a.getSliderValue() + shift));
+    } else if (keyEvent == KeyEvent.VK_HOME && !e.isControlDown()) {
+      getAction(ActionW.SCROLL_SERIES).ifPresent(a -> a.setSliderValue(a.getSliderMin()));
+    } else if (keyEvent == KeyEvent.VK_END && !e.isControlDown()) {
+      getAction(ActionW.SCROLL_SERIES).ifPresent(a -> a.setSliderValue(a.getSliderMax()));
+    } else if (keyEvent == KeyEvent.VK_SUBTRACT && e.isControlDown()) {
+      getAction(ActionW.ZOOM).ifPresent(a -> a.setSliderValue(a.getSliderValue() - 1));
+    } else if (keyEvent == KeyEvent.VK_ADD && e.isControlDown()) {
+      getAction(ActionW.ZOOM).ifPresent(a -> a.setSliderValue(a.getSliderValue() + 1));
+    } else if (keyEvent == KeyEvent.VK_ENTER && e.isControlDown()) {
+      firePropertyChange(
+          ActionW.SYNCH.cmd(),
+          null,
+          new SynchEvent(getSelectedViewPane(), ActionW.ZOOM.cmd(), -200.0));
+    } else {
+      return false;
+    }
+    return true;
   }
 
   protected void triggerDrawingToolKeyEvent(int keyEvent, int modifiers) {

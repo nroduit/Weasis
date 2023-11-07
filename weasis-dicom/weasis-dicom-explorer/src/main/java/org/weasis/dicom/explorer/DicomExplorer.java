@@ -62,6 +62,7 @@ import org.weasis.core.api.gui.Insertable;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.gui.util.GuiUtils;
+import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.MediaSeriesGroupNode;
@@ -85,6 +86,7 @@ import org.weasis.core.ui.util.ArrayListComboBoxModel;
 import org.weasis.core.ui.util.DefaultAction;
 import org.weasis.core.ui.util.TitleMenuItem;
 import org.weasis.core.ui.util.WrapLayout;
+import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.DicomSpecialElement;
 import org.weasis.dicom.codec.KOSpecialElement;
 import org.weasis.dicom.codec.TagD;
@@ -95,6 +97,13 @@ import org.weasis.dicom.explorer.wado.LoadSeries;
 public class DicomExplorer extends PluginTool implements DataExplorerView, SeriesViewerListener {
 
   private static final org.slf4j.Logger LOGGER = LoggerFactory.getLogger(DicomExplorer.class);
+
+  public enum ListPosition {
+    FIRST,
+    PREVIOUS,
+    NEXT,
+    LAST
+  }
 
   public static final String NAME = Messages.getString("DicomExplorer.title");
   public static final String PREFERENCE_NODE = "dicom.explorer";
@@ -122,10 +131,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
   private final transient ItemListener patientChangeListener =
       e -> {
         if (e.getStateChange() == ItemEvent.SELECTED) {
-          Object item = modelPatient.getSelectedItem();
-          if (item instanceof MediaSeriesGroupNode patient) {
-            selectPatient(patient);
-          }
+          selectPatient(getSelectedPatient());
           selectedPatient.revalidate();
           selectedPatient.repaint();
         }
@@ -311,6 +317,258 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
       }
     }
     return null;
+  }
+
+  private MediaSeriesGroupNode getPatient(Object item) {
+    if (item instanceof MediaSeriesGroupNode patient) {
+      return patient;
+    }
+    return null;
+  }
+
+  public MediaSeriesGroupNode getSelectedPatient() {
+    return getPatient(modelPatient.getSelectedItem());
+  }
+
+  public MediaSeries<? extends MediaElement> movePatient(
+      ViewCanvas<DicomImageElement> view, ListPosition position) {
+    if (view != null) {
+      MediaSeriesGroup patientGroup;
+      MediaSeriesGroup seriesGroup;
+      MediaSeriesGroup series = view.getSeries();
+      if (series == null) {
+        seriesGroup = getSeries(null, null, ListPosition.FIRST);
+        MediaSeriesGroup studyGroup = model.getParent(seriesGroup, DicomModel.study);
+        patientGroup = model.getParent(studyGroup, DicomModel.patient);
+      } else {
+        MediaSeriesGroup studyGroup = model.getParent(series, DicomModel.study);
+        patientGroup = model.getParent(studyGroup, DicomModel.patient);
+        seriesGroup = getSeriesGroupFromPatient(patientGroup, position);
+      }
+
+      if (seriesGroup instanceof MediaSeries<?> dicomSeries) {
+        if (isPatientHasOpenSeries(patientGroup)) {
+          displaySeries(view, seriesGroup);
+        } else {
+          ThumbnailMouseAndKeyAdapter.openSeriesInDefaultPlugin(
+              model, (MediaSeries<? extends MediaElement>) dicomSeries);
+        }
+        return (MediaSeries<? extends MediaElement>) dicomSeries;
+      }
+    }
+    return null;
+  }
+
+  public MediaSeriesGroup getSeriesGroupFromPatient(
+      MediaSeriesGroup patientGroup, ListPosition position) {
+    MediaSeriesGroup seriesGroup;
+    if (patientGroup == null) {
+      seriesGroup = getSeries(null, null, ListPosition.FIRST);
+    } else {
+      MediaSeriesGroup patient = getPatientFromList(patientGroup, position);
+      seriesGroup = getSeries(getFirstStudy(patient), null, ListPosition.FIRST);
+    }
+    return seriesGroup;
+  }
+
+  private MediaSeriesGroup getPatientFromList(
+      MediaSeriesGroup patientGroup, ListPosition position) {
+    if (patientGroup == null) {
+      return getSelectedPatient();
+    } else {
+      if (modelPatient.getSize() > 0) {
+        int index = 0;
+        if (position == ListPosition.LAST) {
+          index = modelPatient.getSize() - 1;
+        } else if (position == ListPosition.PREVIOUS) {
+          index = getPatientIndex(patientGroup) - 1;
+        } else if (position == ListPosition.NEXT) {
+          index = getPatientIndex(patientGroup) + 1;
+        }
+        if (index >= 0 && index < modelPatient.getSize()) {
+          Object object = modelPatient.getElementAt(index);
+          if (object instanceof MediaSeriesGroupNode patient) {
+            return patient;
+          }
+        }
+      }
+    }
+    return null;
+  }
+
+  private int getPatientIndex(MediaSeriesGroup patientGroup) {
+    if (patientGroup != null) {
+      synchronized (modelPatient) {
+        for (int i = 0; i < modelPatient.getSize(); i++) {
+          if (patientGroup.equals(modelPatient.getElementAt(i))) {
+            return i;
+          }
+        }
+      }
+    }
+    return 0;
+  }
+
+  private MediaSeriesGroup getFirstStudy(MediaSeriesGroup patientGroup) {
+    List<StudyPane> studyList = getStudyList(patientGroup);
+    if (studyList != null && !studyList.isEmpty()) {
+      return studyList.get(0).dicomStudy;
+    }
+    return null;
+  }
+
+  public MediaSeries<? extends MediaElement> moveStudy(
+      ViewCanvas<DicomImageElement> view, ListPosition position) {
+    if (view != null) {
+      MediaSeriesGroup seriesGroup;
+      MediaSeriesGroup series = view.getSeries();
+      if (series == null) {
+        seriesGroup = getSeries(null, null, ListPosition.FIRST);
+      } else {
+        seriesGroup = getSeriesGroupFromStudy(model.getParent(series, DicomModel.study), position);
+      }
+      return displaySeries(view, seriesGroup);
+    }
+    return null;
+  }
+
+  public MediaSeriesGroup getSeriesGroupFromStudy(
+      MediaSeriesGroup studyGroup, ListPosition position) {
+    MediaSeriesGroup seriesGroup;
+    if (studyGroup == null) {
+      seriesGroup = getSeries(null, null, ListPosition.FIRST);
+    } else {
+      MediaSeriesGroup study = getStudyFromList(studyGroup, position);
+      seriesGroup = getSeries(study, null, ListPosition.FIRST);
+    }
+    return seriesGroup;
+  }
+
+  private List<StudyPane> getStudyList(MediaSeriesGroup patient) {
+    MediaSeriesGroupNode patientNode = getPatient(patient);
+    if (patient == null) {
+      patientNode = getSelectedPatient();
+    }
+    return patient2study.get(patientNode);
+  }
+
+  private MediaSeriesGroup getStudyFromList(MediaSeriesGroup studyGroup, ListPosition position) {
+    MediaSeriesGroup patientGroup = model.getParent(studyGroup, DicomModel.patient);
+    if (patientGroup == null || studyGroup == null) {
+      return getFirstStudy(patientGroup);
+    } else {
+      List<StudyPane> studyPanes = patient2study.get(patientGroup);
+      if (studyPanes != null && !studyPanes.isEmpty()) {
+        int index = 0;
+        if (position == ListPosition.LAST) {
+          index = studyPanes.size() - 1;
+        } else if (position == ListPosition.PREVIOUS) {
+          index = getStudyIndex(studyPanes, studyGroup) - 1;
+        } else if (position == ListPosition.NEXT) {
+          index = getStudyIndex(studyPanes, studyGroup) + 1;
+        }
+        if (index >= 0 && index < studyPanes.size()) {
+          return studyPanes.get(index).dicomStudy;
+        }
+      }
+    }
+    return null;
+  }
+
+  private int getStudyIndex(List<StudyPane> seriesList, MediaSeriesGroup studyGroup) {
+    if (seriesList != null && !seriesList.isEmpty()) {
+      for (int i = 0; i < seriesList.size(); i++) {
+        StudyPane se = seriesList.get(i);
+        if (se.isStudy(studyGroup)) {
+          return i;
+        }
+      }
+    }
+    return 0;
+  }
+
+  public MediaSeries<? extends MediaElement> moveSeries(
+      ViewCanvas<DicomImageElement> view, ListPosition position) {
+    if (view != null) {
+      MediaSeriesGroup seriesGroup = getSeriesGroup(view.getSeries(), position);
+      return displaySeries(view, seriesGroup);
+    }
+    return null;
+  }
+
+  private MediaSeries<? extends MediaElement> displaySeries(
+      ViewCanvas<DicomImageElement> view, MediaSeriesGroup seriesGroup) {
+    if (view != null && seriesGroup instanceof MediaSeries<?> dicomSeries) {
+      view.setSeries(null);
+      view.setSeries((MediaSeries<DicomImageElement>) dicomSeries, null);
+      return (MediaSeries<? extends MediaElement>) dicomSeries;
+    }
+    return null;
+  }
+
+  public MediaSeriesGroup getSeriesGroup(MediaSeriesGroup series, ListPosition position) {
+    MediaSeriesGroup seriesGroup;
+    if (series == null) {
+      seriesGroup = getSeries(null, null, position);
+    } else {
+      MediaSeriesGroup studyGroup = model.getParent(series, DicomModel.study);
+      seriesGroup = getSeries(studyGroup, series, position);
+    }
+    return seriesGroup;
+  }
+
+  private MediaSeriesGroup getSeries(
+      MediaSeriesGroup studyGroup, MediaSeriesGroup series, ListPosition position) {
+    if (studyGroup == null || series == null) {
+      List<StudyPane> studyList;
+      if (studyGroup == null) {
+        studyList = getStudyList(null);
+      } else {
+        return getSeriesFromList(studyGroup, null, ListPosition.FIRST);
+      }
+      if (studyList != null) {
+        for (StudyPane studyPane : studyList) {
+          List<SeriesPane> seriesList = study2series.get(studyPane.dicomStudy);
+          if (seriesList != null && !seriesList.isEmpty()) {
+            return seriesList.get(0).sequence;
+          }
+        }
+      }
+    } else {
+      return getSeriesFromList(studyGroup, series, position);
+    }
+    return null;
+  }
+
+  private MediaSeriesGroup getSeriesFromList(
+      MediaSeriesGroup studyGroup, MediaSeriesGroup series, ListPosition position) {
+    List<SeriesPane> seriesList = study2series.get(studyGroup);
+    if (seriesList != null && !seriesList.isEmpty()) {
+      int index = 0;
+      if (position == ListPosition.LAST) {
+        index = seriesList.size() - 1;
+      } else if (position == ListPosition.PREVIOUS) {
+        index = getSeriesIndex(seriesList, series) - 1;
+      } else if (position == ListPosition.NEXT) {
+        index = getSeriesIndex(seriesList, series) + 1;
+      }
+      if (index >= 0 && index < seriesList.size()) {
+        return seriesList.get(index).sequence;
+      }
+    }
+    return null;
+  }
+
+  private int getSeriesIndex(List<SeriesPane> seriesList, MediaSeriesGroup series) {
+    if (seriesList != null && !seriesList.isEmpty()) {
+      for (int i = 0; i < seriesList.size(); i++) {
+        SeriesPane se = seriesList.get(i);
+        if (se.isSeries(series)) {
+          return i;
+        }
+      }
+    }
+    return 0;
   }
 
   private synchronized SeriesPane createSeriesPaneInstance(
@@ -973,10 +1231,9 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
               updateSplitSeries(series);
             }
           } else if (newVal instanceof KOSpecialElement) {
-            Object item = modelPatient.getSelectedItem();
-            if (item instanceof MediaSeriesGroupNode) {
-              koOpen.setVisible(
-                  DicomModel.hasSpecialElements((MediaSeriesGroup) item, KOSpecialElement.class));
+            MediaSeriesGroupNode patient = getSelectedPatient();
+            if (patient != null) {
+              koOpen.setVisible(DicomModel.hasSpecialElements(patient, KOSpecialElement.class));
             }
           }
         } else if (ObservableEvent.BasicAction.LOADING_START.equals(action)) {
@@ -988,10 +1245,9 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
           if (newVal instanceof ExplorerTask) {
             removeTaskToGlobalProgression((ExplorerTask<?, ?>) newVal);
           }
-          Object item = modelPatient.getSelectedItem();
-          if (item instanceof MediaSeriesGroupNode) {
-            koOpen.setVisible(
-                DicomModel.hasSpecialElements((MediaSeriesGroup) item, KOSpecialElement.class));
+          MediaSeriesGroupNode patient = getSelectedPatient();
+          if (patient != null) {
+            koOpen.setVisible(DicomModel.hasSpecialElements(patient, KOSpecialElement.class));
           }
         }
       } else if (evt.getSource() instanceof SeriesViewer
