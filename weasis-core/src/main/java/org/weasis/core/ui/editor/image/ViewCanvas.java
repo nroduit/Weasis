@@ -9,6 +9,8 @@
  */
 package org.weasis.core.ui.editor.image;
 
+import bibliothek.gui.dock.control.focus.DefaultFocusRequest;
+import bibliothek.gui.dock.control.focus.FocusController;
 import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Component;
@@ -57,6 +59,7 @@ import org.weasis.core.api.image.WindowOp;
 import org.weasis.core.api.image.ZoomOp.Interpolation;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaSeries;
+import org.weasis.core.api.service.UICore;
 import org.weasis.core.ui.editor.image.dockable.MeasureTool;
 import org.weasis.core.ui.model.graphic.Graphic;
 import org.weasis.core.ui.model.layer.LayerAnnotation;
@@ -251,16 +254,24 @@ public interface ViewCanvas<E extends ImageElement>
     }
 
     if (isFocused) {
-      // Delay the request focus
-      Timer timer = new Timer();
-      timer.schedule(
-          new TimerTask() {
-            @Override
-            public void run() {
-              SwingUtilities.invokeLater(() -> getJComponent().requestFocus());
-            }
-          },
-          500);
+      if (WinUtil.getParentOfClass(getJComponent(), ViewerPlugin.class)
+          instanceof ViewerPlugin<?> viewerPlugin) {
+        FocusController focusController =
+            UICore.getInstance().getDockingControl().getController().getFocusController();
+        focusController.focus(
+            new DefaultFocusRequest(viewerPlugin.getDockable().intern(), getJComponent(), true));
+      } else {
+        // Delay the request focus
+        Timer timer = new Timer();
+        timer.schedule(
+            new TimerTask() {
+              @Override
+              public void run() {
+                SwingUtilities.invokeLater(() -> getJComponent().requestFocus());
+              }
+            },
+            500);
+      }
     }
   }
 
