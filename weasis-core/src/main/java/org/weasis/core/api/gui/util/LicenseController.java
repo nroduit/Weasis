@@ -35,4 +35,10 @@ public interface LicenseController {
    * to "install" the new plugins. However, doesn't execute any task that will change local user configuration.
    */
   boolean test();
+
+  /**
+   * Close all operations. Usually called when the window containing the tab associated with
+   * the controller is closed.
+   */
+  void close();
 }

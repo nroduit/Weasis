@@ -244,6 +244,19 @@ public class LicenseDialogController implements LicenseController {
     }
   }
 
+  @Override
+  public void close() {
+    if (bundle != null) {
+      try {
+        LOGGER.debug("Stopping and uninstalling bundle: {}", bundle);
+        bundle.stop();
+        bundle.uninstall();
+      } catch (Exception e2) {
+        logErrorMessage(e2, null);
+      }
+    }
+  }
+
   private boolean executeTest() {
     String errorDetails = "";
     try {
@@ -322,6 +335,7 @@ public class LicenseDialogController implements LicenseController {
     taskMonitor.processItem("Installing boot bundle jar...");
     BundleContext context = FrameworkUtil.getBundle(this.getClass()).getBundleContext();
     LOGGER.debug("Bundle context: {}", context);
+    LOGGER.debug("Bundle: {}", bundle);
     bundle = context.installBundle(file.toURI().toURL().toString());
     LOGGER.debug("New bundle: {}", bundle);
     BundleStartLevel bundleStartLevel = bundle.adapt(BundleStartLevel.class);
@@ -421,10 +435,6 @@ public class LicenseDialogController implements LicenseController {
 
   private void disable() {
     licensesItem.startProcessing();
-  }
-
-  private void logProgress(String taskMessage) {
-    
   }
 
   private void showErrorMessage(String title, String message) {

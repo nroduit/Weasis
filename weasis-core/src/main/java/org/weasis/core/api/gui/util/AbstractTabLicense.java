@@ -34,6 +34,9 @@ import org.weasis.core.api.gui.Insertable;
 import net.miginfocom.swing.MigLayout;
 
 public class AbstractTabLicense extends JPanel implements Insertable {
+
+  private static final int TOTAL_LICENSE_REGISTER_TASKS = 9;
+
   protected final JTextArea codeTextField;
   protected final JTextField serverTextField;
   protected final JTextField bootJarTextField;
@@ -50,7 +53,7 @@ public class AbstractTabLicense extends JPanel implements Insertable {
   private JLabel progressMessageLabel;
   private JProgressBar progressBar;
 
-  private int totalTasks = 9;
+  private int totalTasks = TOTAL_LICENSE_REGISTER_TASKS;
   private int currentTask = 0;
 
   public AbstractTabLicense(GUIEntry entry) {
@@ -108,7 +111,7 @@ public class AbstractTabLicense extends JPanel implements Insertable {
           @Override
           public void actionPerformed(ActionEvent e) {
             if (currentTask != 0) { // if the test was already executed
-              totalTasks = 10;
+              totalTasks = TOTAL_LICENSE_REGISTER_TASKS + 1;
             }
             progressBar.setMaximum(totalTasks);
             licenseController.save();
@@ -156,6 +159,7 @@ public class AbstractTabLicense extends JPanel implements Insertable {
           if (e.getSource() instanceof JRadioButton btn && btn.isSelected()) {
             remove(jPanelMiddle);
             add(jPanelServer, BorderLayout.CENTER);
+            
             revalidate();
             repaint();
           }
@@ -244,6 +248,7 @@ public class AbstractTabLicense extends JPanel implements Insertable {
   public void setComponentEnabled(boolean enabled) {
     // Do nothing
   }
+  
 
   @Override
   public int getComponentPosition() {
@@ -274,6 +279,14 @@ public class AbstractTabLicense extends JPanel implements Insertable {
   public void logProgress(String message) {
     currentTask++;
     progressBar.setValue(currentTask);
-    progressMessageLabel.setText(currentTask + " of " + totalTasks + ": " +message);
+    progressMessageLabel.setText(currentTask + " of " + totalTasks + ": " + message);
+  }
+
+  public void close() {
+    // in case we just tested, we can close close stuff we opened when executing the 
+    // plugin register process
+    if (currentTask < TOTAL_LICENSE_REGISTER_TASKS) { 
+      licenseController.close();
+    }
   }
 }

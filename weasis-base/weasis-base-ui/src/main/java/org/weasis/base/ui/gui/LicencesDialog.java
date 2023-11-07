@@ -16,6 +16,8 @@ import java.awt.Frame;
 import java.awt.Image;
 import java.awt.event.WindowEvent;
 import java.util.List;
+import java.util.Optional;
+
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
@@ -38,6 +40,7 @@ public class LicencesDialog extends JDialog {
 
   private final JButton jButtonClose;
   private final JTabbedPane tabbedPane;
+  private List<AbstractTabLicense> tabsList;
 
   /**
    * Creates a dialog to insert third party licences.
@@ -47,6 +50,7 @@ public class LicencesDialog extends JDialog {
    */
   public LicencesDialog(final Frame owner, List<AbstractTabLicense> list) {
     super(owner, Messages.getString("LicencesDialog.title"), true);
+    this.tabsList = list;
     this.jButtonClose = new JButton(Messages.getString("WeasisAboutBox.close"));
     jButtonClose.addActionListener(e -> close());
     this.tabbedPane = new JTabbedPane(SwingConstants.LEFT);
@@ -85,6 +89,11 @@ public class LicencesDialog extends JDialog {
   }
 
   private void close() {
+    Optional.ofNullable(tabsList).ifPresent(l -> {
+      for (AbstractTabLicense abstractTabLicense : tabsList) {
+        abstractTabLicense.close();
+      }
+    });
     dispose();
   }
 
