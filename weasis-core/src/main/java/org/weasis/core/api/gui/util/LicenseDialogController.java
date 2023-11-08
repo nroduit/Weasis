@@ -158,9 +158,9 @@ public class LicenseDialogController implements LicenseController {
             }
             changeConfigProperties();
             updateUI();
-            askUserToRestart();
             JOptionPane.showMessageDialog(licensesItem, Messages.getString("license.successfully.saved"),
                 Messages.getString("license"), JOptionPane.INFORMATION_MESSAGE);
+            askUserToRestart();
             return true;
           }
         } else {
@@ -176,7 +176,8 @@ public class LicenseDialogController implements LicenseController {
     });
   }
 
-  private void askUserToRestart() {
+  private void askUserToRestart() throws Exception {
+    service.askUserForRestart(licensesItem);
   }
 
   private void updateUI() {
