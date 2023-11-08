@@ -12,6 +12,7 @@ package org.weasis.core.api.gui.util;
 import java.awt.BorderLayout;
 import java.awt.FlowLayout;
 import java.awt.event.ActionEvent;
+import java.util.Collection;
 import java.util.Locale;
 import java.util.Objects;
 
@@ -28,12 +29,21 @@ import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.text.PlainDocument;
 
+import org.osgi.framework.BundleContext;
+import org.osgi.framework.FrameworkUtil;
+import org.osgi.framework.InvalidSyntaxException;
+import org.osgi.framework.ServiceReference;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.weasis.core.Messages;
 import org.weasis.core.api.gui.Insertable;
+import org.weasis.core.api.service.LicensedPluginsService;
 
 import net.miginfocom.swing.MigLayout;
 
 public class AbstractTabLicense extends JPanel implements Insertable {
+
+  private static final Logger LOGGER = LoggerFactory.getLogger(AbstractTabLicense.class);
 
   private static final int TOTAL_LICENSE_REGISTER_TASKS = 9;
 
@@ -102,6 +112,7 @@ public class AbstractTabLicense extends JPanel implements Insertable {
             licenseController.test();
           }
         });
+    newModel.setEnabled(!chekLicenseService());
     testButton.setModel(newModel);
 
     newModel = new DefaultButtonModel();
@@ -117,6 +128,7 @@ public class AbstractTabLicense extends JPanel implements Insertable {
             licenseController.save();
           }
         });
+    newModel.setEnabled(!chekLicenseService());
     saveButton.setModel(newModel);
 
     newModel = new DefaultButtonModel();
@@ -195,6 +207,24 @@ public class AbstractTabLicense extends JPanel implements Insertable {
             versionLabel,
             versionContents);
     add(jPanelBottom, BorderLayout.SOUTH);
+  }
+
+  private boolean chekLicenseService() {
+    BundleContext context = FrameworkUtil.getBundle(this.getClass()).getBundleContext();
+    try {
+      Collection<ServiceReference<LicensedPluginsService>> references = context
+          .getServiceReferences(LicensedPluginsService.class, null);
+      for (ServiceReference<LicensedPluginsService> serviceReference : references) {
+        LicensedPluginsService service = context.getService(serviceReference);
+        if (guiEntry.getUIName().toLowerCase().contains(service.getVendor().toLowerCase())) {
+          return true;
+        }
+      }
+    } catch (InvalidSyntaxException e) {
+      LOGGER.error(e.getMessage(), e);
+    }
+    return false;
+
   }
 
   public void setVersionContents(String versionContents) {

@@ -59,4 +59,11 @@ public interface LicensedPluginsService {
      * @return the version of a plugins package implementing this interface.
      */
     String getVersion();
+
+    /**
+     * Returns the plugins package vendor name.
+     * 
+     * @return the plugins package vendor name.
+     */
+    String getVendor();
 }
