@@ -167,11 +167,11 @@ public final class UICore {
 
   private void storeLauncherPref(Properties props, String remotePrefURL) throws IOException {
     if (!isLocalSession() || isStoreLocalSession()) {
-      String sURL = 
+      String sURL =
           String.format(
               "%s?user=%s&profile=%s", // NON-NLS
-              remotePrefURL, 
-              getUrlEncoding(AppProperties.WEASIS_USER), 
+              remotePrefURL,
+              getUrlEncoding(AppProperties.WEASIS_USER),
               getUrlEncoding(AppProperties.WEASIS_PROFILE));
       URLParameters urlParameters = getURLParameters(true);
       ClosableURLConnection http = NetworkUtil.getUrlConnection(sURL, urlParameters);
