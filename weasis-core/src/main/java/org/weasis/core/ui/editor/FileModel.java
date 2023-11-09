@@ -61,7 +61,7 @@ public class FileModel extends AbstractFileModel {
     };
 
     final Option opt = Options.compile(usage).parse(argv);
-    final List<String> fargs = opt.getList("file");
+    final List<String> fargs = opt.getList("file"); // NON-NLS
     final List<String> uargs = opt.getList("url"); // NON-NLS
 
     if (opt.isSet("help") || (fargs.isEmpty() && uargs.isEmpty())) {
@@ -75,7 +75,7 @@ public class FileModel extends AbstractFileModel {
               dataModel.firePropertyChange(
                   new ObservableEvent(
                       ObservableEvent.BasicAction.SELECT, dataModel, null, dataModel));
-              if (opt.isSet("file")) {
+              if (opt.isSet("file")) { // NON-NLS
                 fargs.stream()
                     .map(File::new)
                     .filter(File::isFile)

@@ -34,45 +34,45 @@ class DicomMediaUtilsTest {
   void testGetPeriod() {
     assertThat(
             DicomMediaUtils.getPeriod(TagD.getDicomDate("19610625"), TagD.getDicomDate("20120624")))
-        .isEqualTo("050Y");
+        .isEqualTo("050Y"); // NON-NLS
     assertThat(
             DicomMediaUtils.getPeriod(TagD.getDicomDate("19610625"), TagD.getDicomDate("20120625")))
-        .isEqualTo("051Y");
+        .isEqualTo("051Y"); // NON-NLS
     assertThat(
             DicomMediaUtils.getPeriod(TagD.getDicomDate("19610714"), TagD.getDicomDate("20120625")))
-        .isEqualTo("050Y");
+        .isEqualTo("050Y"); // NON-NLS
 
     assertThat(
             DicomMediaUtils.getPeriod(TagD.getDicomDate("20120103"), TagD.getDicomDate("20120625")))
-        .isEqualTo("005M");
+        .isEqualTo("005M"); // NON-NLS
     assertThat(
             DicomMediaUtils.getPeriod(TagD.getDicomDate("20120525"), TagD.getDicomDate("20120625")))
-        .isEqualTo("031D");
+        .isEqualTo("031D"); // NON-NLS
     assertThat(
             DicomMediaUtils.getPeriod(TagD.getDicomDate("20120622"), TagD.getDicomDate("20120625")))
-        .isEqualTo("003D");
+        .isEqualTo("003D"); // NON-NLS
 
     assertThat(
             DicomMediaUtils.getPeriod(TagD.getDicomDate("20000229"), TagD.getDicomDate("20110301")))
-        .isEqualTo("011Y");
+        .isEqualTo("011Y"); // NON-NLS
     assertThat(
             DicomMediaUtils.getPeriod(TagD.getDicomDate("20000229"), TagD.getDicomDate("20110228")))
-        .isEqualTo("010Y");
+        .isEqualTo("010Y"); // NON-NLS
     assertThat(
             DicomMediaUtils.getPeriod(TagD.getDicomDate("20000229"), TagD.getDicomDate("20120228")))
-        .isEqualTo("011Y");
+        .isEqualTo("011Y"); // NON-NLS
     assertThat(
             DicomMediaUtils.getPeriod(TagD.getDicomDate("20000229"), TagD.getDicomDate("20120229")))
-        .isEqualTo("012Y");
+        .isEqualTo("012Y"); // NON-NLS
     assertThat(
             DicomMediaUtils.getPeriod(TagD.getDicomDate("20000229"), TagD.getDicomDate("20120301")))
-        .isEqualTo("012Y");
+        .isEqualTo("012Y"); // NON-NLS
     assertThat(
             DicomMediaUtils.getPeriod(TagD.getDicomDate("20000228"), TagD.getDicomDate("20120228")))
-        .isEqualTo("012Y");
+        .isEqualTo("012Y"); // NON-NLS
     assertThat(
             DicomMediaUtils.getPeriod(TagD.getDicomDate("20000228"), TagD.getDicomDate("20120229")))
-        .isEqualTo("012Y");
+        .isEqualTo("012Y"); // NON-NLS
 
     LocalDate date1 = TagD.getDicomDate("20000228");
     LocalDate date2 = TagD.getDicomDate("20122406"); // invalid => null
@@ -83,7 +83,7 @@ class DicomMediaUtilsTest {
   @Test
   void testGetStringFromDicomElement() {
     assertThat(DicomMediaUtils.getStringFromDicomElement(attributes, Tag.ShutterShape))
-        .isEqualTo("RECTANGULAR\\CIRCULAR\\POLYGONAL");
+        .isEqualTo("RECTANGULAR\\CIRCULAR\\POLYGONAL"); // NON-NLS
     assertThat(DicomMediaUtils.getStringFromDicomElement(attributes, Tag.ShutterPresentationValue))
         .isNull();
   }

@@ -21,7 +21,8 @@ public class AppLauncher extends WeasisLauncher implements Singleton.SingletonAp
     // Configuration of java.util.logging.Logger
     try {
       LogManager.getLogManager()
-          .readConfiguration(WeasisLauncher.class.getResourceAsStream("/logging.properties"));
+          .readConfiguration(
+              WeasisLauncher.class.getResourceAsStream("/logging.properties")); // NON-NLS
     } catch (SecurityException | IOException e) {
       e.printStackTrace(); // NOSONAR cannot initialize logger
     }

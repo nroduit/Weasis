@@ -43,33 +43,33 @@ class LocalUtilTest {
     assertSame(Locale.ENGLISH, result);
     assertEquals("en", LocalUtil.localeToText(result));
 
-    result = LocalUtil.textToLocale("system");
+    result = LocalUtil.textToLocale("system"); // NON-NLS
     assertSame(Locale.getDefault(), result);
 
-    result = LocalUtil.textToLocale("test-invalid$");
+    result = LocalUtil.textToLocale("test-invalid$"); // NON-NLS
     assertEquals("test", LocalUtil.localeToText(result));
 
-    result = LocalUtil.textToLocale("en");
+    result = LocalUtil.textToLocale("en"); // NON-NLS
     assertSame(Locale.ENGLISH, result);
     assertEquals("en", LocalUtil.localeToText(result));
 
-    result = LocalUtil.textToLocale("fr_FR");
+    result = LocalUtil.textToLocale("fr_FR"); // NON-NLS
     assertSame(Locale.FRANCE, result);
 
-    result = LocalUtil.textToLocale("zh_Hans");
+    result = LocalUtil.textToLocale("zh_Hans"); // NON-NLS
     String val = control.toBundleName("", result);
     assertEquals("_zh_Hans", val);
-    result = LocalUtil.textToLocale("zh-Hans-TW");
-    val = control.toBundleName("message", result);
+    result = LocalUtil.textToLocale("zh-Hans-TW"); // NON-NLS
+    val = control.toBundleName("message", result); // NON-NLS
     assertEquals("message_zh_Hans_TW", val);
 
     // ISO3 language code: SRP
-    result = LocalUtil.textToLocale("en_BA-SRP");
-    val = control.toBundleName("message", result);
+    result = LocalUtil.textToLocale("en_BA-SRP"); // NON-NLS
+    val = control.toBundleName("message", result); // NON-NLS
     assertEquals("message_en_BA", val);
 
-    result = LocalUtil.textToLocale("sr_Latn");
-    val = control.toBundleName("message", result);
+    result = LocalUtil.textToLocale("sr_Latn"); // NON-NLS
+    val = control.toBundleName("message", result); // NON-NLS
     assertEquals("message_sr_Latn", val);
   }
 
@@ -85,7 +85,7 @@ class LocalUtilTest {
   void testSetLocaleFormat() {
     double number = 2543456.346;
 
-    Locale locale = Locale.of("de", "CH");
+    Locale locale = Locale.of("de", "CH"); // NON-NLS
     Locale.setDefault(Locale.Category.FORMAT, locale);
 
     NumberFormat nf = NumberFormat.getInstance();
@@ -97,7 +97,7 @@ class LocalUtilTest {
         DateTimeFormatter.ofLocalizedDateTime(FormatStyle.FULL)
             .format(ZonedDateTime.of(2021, 11, 25, 15, 39, 59, 0, ZoneId.of("GMT"))));
 
-    locale = Locale.of("fr", "CH");
+    locale = Locale.of("fr", "CH"); // NON-NLS
     Locale.setDefault(Locale.Category.FORMAT, locale);
     nf = NumberFormat.getInstance();
     assertEquals("2 543 456,346", nf.format(number));

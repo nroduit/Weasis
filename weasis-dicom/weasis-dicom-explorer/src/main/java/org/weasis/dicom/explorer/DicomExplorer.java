@@ -702,7 +702,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
     private final TitledBorder title;
 
     public StudyPane(MediaSeriesGroup dicomStudy) {
-      super(new MigLayout("fillx, flowy, insets 0", "[fill]"));
+      super(new MigLayout("fillx, flowy, insets 0", "[fill]")); // NON-NLS
       if (dicomStudy == null) {
         throw new IllegalArgumentException("Study cannot be null");
       }
