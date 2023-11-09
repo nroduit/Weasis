@@ -94,7 +94,7 @@ public final class UICore {
     this.explorerPlugins = Collections.synchronizedList(new ArrayList<>());
     this.explorerPluginToolbars = Collections.synchronizedList(new ArrayList<>());
     this.seriesViewerFactories = Collections.synchronizedList(new ArrayList<>());
-    this.dockingVetoFocus = 
+    this.dockingVetoFocus =
         new CVetoFocusListener() {
 
           @Override
@@ -110,7 +110,7 @@ public final class UICore {
 
     BundleContext context = AppProperties.getBundleContext();
     readSystemPreferences(context);
-    this.propsFile = 
+    this.propsFile =
         new File(systemPreferences.getProperty("weasis.pref.dir"), "weasis.properties");
     if (!propsFile.canRead()) {
       try {
@@ -167,11 +167,12 @@ public final class UICore {
 
   private void storeLauncherPref(Properties props, String remotePrefURL) throws IOException {
     if (!isLocalSession() || isStoreLocalSession()) {
-      String sURL = String.format(
-                              "%s?user=%s&profile=%s", // NON-NLS
-                              remotePrefURL, 
-                              getUrlEncoding(AppProperties.WEASIS_USER), 
-                              getUrlEncoding(AppProperties.WEASIS_PROFILE));
+      String sURL = 
+          String.format(
+              "%s?user=%s&profile=%s", // NON-NLS
+              remotePrefURL, 
+              getUrlEncoding(AppProperties.WEASIS_USER), 
+              getUrlEncoding(AppProperties.WEASIS_PROFILE));
       URLParameters urlParameters = getURLParameters(true);
       ClosableURLConnection http = NetworkUtil.getUrlConnection(sURL, urlParameters);
       try (OutputStream out = http.getOutputStream()) {
