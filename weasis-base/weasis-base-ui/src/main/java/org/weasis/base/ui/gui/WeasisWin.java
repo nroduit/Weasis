@@ -31,10 +31,8 @@ import bibliothek.gui.dock.station.screen.BoundaryRestriction;
 import bibliothek.gui.dock.util.ConfiguredBackgroundPanel;
 import bibliothek.gui.dock.util.DirectWindowProvider;
 import bibliothek.gui.dock.util.DockUtilities;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.formdev.flatlaf.extras.FlatSVGIcon;
-import jakarta.json.Json;
-import jakarta.json.JsonObject;
-import jakarta.json.JsonReader;
 import java.awt.AWTException;
 import java.awt.BorderLayout;
 import java.awt.Component;
@@ -60,7 +58,6 @@ import java.awt.event.WindowEvent;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
-import java.io.StringReader;
 import java.lang.management.ManagementFactory;
 import java.net.MalformedURLException;
 import java.net.URI;
@@ -697,12 +694,12 @@ public class WeasisWin {
     final JMenuItem updateMenuItem = new JMenuItem(Messages.getString("check.for.updates"));
     updateMenuItem.addActionListener(
         e -> {
-          JsonObject object = getLastRelease();
-          if (object != null) {
+          Release release = getLastRelease();
+          if (release != null) {
             Version vOld = AppProperties.getVersion(AppProperties.WEASIS_VERSION);
-            Version vNew = AppProperties.getVersion(object.getString("version"));
+            Version vNew = AppProperties.getVersion(release.getVersion());
             if (vNew.compareTo(vOld) > 0) {
-              openBrowser(updateMenuItem, object.getString("url")); // NON-NLS
+              openBrowser(updateMenuItem, release.getUrl());
             } else {
               GuiExecutor.instance()
                   .execute(
@@ -745,7 +742,17 @@ public class WeasisWin {
     return menuBar;
   }
 
-  private JsonObject getLastRelease() {
+  private Release getRelease(String body) {
+    ObjectMapper mapper = new ObjectMapper();
+    try {
+      return mapper.readValue(body, Release.class);
+    } catch (IOException ex) {
+      LOGGER.error("Cannot read the json response", ex);
+    }
+    return null;
+  }
+
+  private Release getLastRelease() {
     try {
       HttpRequest request =
           HttpRequest.newBuilder()
@@ -759,10 +766,7 @@ public class WeasisWin {
               .followRedirects(HttpClient.Redirect.ALWAYS)
               .build()
               .send(request, BodyHandlers.ofString());
-
-      try (JsonReader jsonReader = Json.createReader(new StringReader(response.body()))) {
-        return jsonReader.readObject();
-      }
+      return getRelease(response.body());
     } catch (IOException | URISyntaxException ex) {
       LOGGER.error("Cannot check release update", ex);
     } catch (InterruptedException ex2) {
@@ -772,10 +776,10 @@ public class WeasisWin {
   }
 
   private void checkReleaseUpdate(Component parent) {
-    JsonObject object = getLastRelease();
-    if (object != null) {
+    Release release = getLastRelease();
+    if (release != null) {
       Version vOld = AppProperties.getVersion(AppProperties.WEASIS_VERSION);
-      Version vNew = AppProperties.getVersion(object.getString("version"));
+      Version vNew = AppProperties.getVersion(release.getVersion());
       if (vNew.compareTo(vOld) > 0) {
         GuiExecutor.instance()
             .execute(
@@ -789,7 +793,7 @@ public class WeasisWin {
                       JOptionPane.showConfirmDialog(
                           parent, panel, Messages.getString("update"), JOptionPane.YES_NO_OPTION);
                   if (confirm == 0) {
-                    openBrowser(parent, object.getString("url")); // NON-NLS
+                    openBrowser(parent, release.getUrl());
                   }
                   if (dontAskMeAgain.isSelected()) {
                     GuiUtils.getUICore()
