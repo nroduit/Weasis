@@ -1,7 +1,7 @@
 name: weasis
 title: Weasis
 base: core20
-version: '4.2.0'
+version: '4.2.1'
 summary: A free/libre/open medical DICOM viewer
 description: |
   Weasis is a multipurpose standalone and web-based DICOM viewer with 
@@ -57,8 +57,8 @@ parts:
   remote-openjdk:
     plugin: dump
     source:
-      - on amd64: https://github.com/adoptium/temurin21-binaries/releases/download/jdk-21%2B35/OpenJDK21U-jdk_x64_linux_hotspot_21_35.tar.gz
-      - on arm64: https://github.com/adoptium/temurin21-binaries/releases/download/jdk-21%2B35/OpenJDK21U-jdk_aarch64_linux_hotspot_21_35.tar.gz
+      - on amd64: https://github.com/adoptium/temurin21-binaries/releases/download/jdk-21.0.1%2B12/OpenJDK21U-jdk_x64_linux_hotspot_21.0.1_12.tar.gz
+      - on arm64: https://github.com/adoptium/temurin21-binaries/releases/download/jdk-21.0.1%2B12/OpenJDK21U-jdk_aarch64_linux_hotspot_21.0.1_12.tar.gz
     organize:
       '*': java-runtime/
     override-stage: 'true'
@@ -74,7 +74,7 @@ parts:
       - libstdc++6
       - libgcc1
     #source: weasis-distributions/target/native-dist/weasis-native.zip
-    source: https://github.com/nroduit/Weasis/releases/download/v4.2.0/weasis-native.zip
+    source: https://github.com/nroduit/Weasis/releases/download/v4.2.1/weasis-native.zip
     organize:
       '*': weasis-native/
     override-stage: 'true'
