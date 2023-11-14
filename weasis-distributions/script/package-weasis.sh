@@ -11,7 +11,7 @@ PACKAGE=YES
 # jdk.unsupported => sun.misc.Signal
 # jdk.localedata => other locale (en_us) data are included in the jdk.localedata
 # jdk.jdwp.agent => package for debugging agent
-JDK_MODULES="java.base,java.compiler,java.datatransfer,java.net.http,java.desktop,java.logging,java.management,java.prefs,java.xml,jdk.localedata,jdk.charsets,jdk.crypto.ec,jdk.crypto.cryptoki,jdk.unsupported,jdk.jdwp.agent"
+JDK_MODULES="java.base,java.compiler,java.datatransfer,java.net.http,java.desktop,java.logging,java.management,java.prefs,java.xml,jdk.localedata,jdk.charsets,jdk.crypto.ec,jdk.crypto.cryptoki,jdk.unsupported,jdk.jdwp.agent,java.sql"
 NAME="Weasis"
 IDENTIFIER="org.weasis.launcher"
 
@@ -230,7 +230,8 @@ else
   declare -a customOptions=("--java-options" "-splash:\$APPDIR/resources/images/about-round.png" )
   declare -a signArgs=()
 fi
-declare -a commonOptions=("--java-options" "-Dgosh.port=17179" \
+declare -a commonOptions=("--java-options" "-Dlicense.check.mode=2" \
+"--java-options" "-Dgosh.port=17179" \
 "--java-options" "-Djavax.accessibility.assistive_technologies=org.weasis.launcher.EmptyAccessibilityProvider" \
 "--java-options" "-Djavax.accessibility.screen_magnifier_present=false" "--java-options" "--enable-preview" \
 "--java-options" "--add-exports=java.base/sun.net.www.protocol.http=ALL-UNNAMED" "--java-options" "--add-exports=java.base/sun.net.www.protocol.file=ALL-UNNAMED" \
