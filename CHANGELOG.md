@@ -1,5 +1,26 @@
 # Changelog
 
+## [v4.2.1](https://github.com/nroduit/Weasis/tree/v4.2.1) (2023-11-11)
+
+[Full Changelog](https://github.com/nroduit/Weasis/compare/v4.2.0...v4.2.1)
+
+**Implemented enhancements:**
+
+- Update to Flatlaf 3.2.5 [\#490](https://github.com/nroduit/Weasis/issues/490)
+- Update weasis-dicom-tools and dcm4chee to 5.31.1 [\#489](https://github.com/nroduit/Weasis/issues/489)
+- Patient/Study/Series/Image navigation via keyboard shortcuts [\#483](https://github.com/nroduit/Weasis/issues/483)
+- \(0018,1114\) EstimatedRadiographicMagnificationFactor is not used when performing measurements [\#465](https://github.com/nroduit/Weasis/issues/465)
+- Use arrow keys to scroll inside stack and change series [\#235](https://github.com/nroduit/Weasis/issues/235)
+
+**Fixed bugs:**
+
+- Wrong color rendering of jpeg2000 with YBR\_FULL  [\#491](https://github.com/nroduit/Weasis/issues/491)
+- Wrong color rendering of  jpeg2000 with YBR\_FULL color model [\#488](https://github.com/nroduit/Weasis/issues/488)
+- Issue of parsing some properties in JSON files  [\#481](https://github.com/nroduit/Weasis/issues/481)
+- 4.2.0 .rpm does not install on Fedora 38, looking for already installed dependencies  [\#467](https://github.com/nroduit/Weasis/issues/467)
+- NULL UICore Instance access problem at UICore Constructor [\#466](https://github.com/nroduit/Weasis/issues/466)
+- Cannot open any images with wayland [\#462](https://github.com/nroduit/Weasis/issues/462)
+
 ## [v4.2.0](https://github.com/nroduit/Weasis/tree/v4.2.0) (2023-08-18)
 
 [Full Changelog](https://github.com/nroduit/Weasis/compare/v4.1.2...v4.2.0)
