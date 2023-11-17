@@ -1007,10 +1007,23 @@ public class DicomModel implements TreeModel, DataExplorerModel {
     return false;
   }
 
+  private static boolean hasSameConcatenationUID(
+      MediaElement firstMedia, final MediaElement media) {
+    if (firstMedia instanceof DicomImageElement && media instanceof DicomImageElement) {
+      String firstConcatenationUID =
+          TagD.getTagValue(firstMedia, Tag.ConcatenationUID, String.class);
+      if (firstConcatenationUID != null) {
+        String concatenationUID = TagD.getTagValue(media, Tag.ConcatenationUID, String.class);
+        return Objects.equals(firstConcatenationUID, concatenationUID);
+      }
+    }
+    return false;
+  }
+
   private static boolean isSimilar(List<Rule> list, Series<?> s, final MediaElement media) {
     final MediaElement firstMedia = s.getMedia(0, null, null);
-    if (firstMedia == null) {
-      // no image
+    if (firstMedia == null || hasSameConcatenationUID(firstMedia, media)) {
+      // No image or has the same concatenation UID
       return true;
     }
     // Not similar when the instances have different classes (even when inheriting class)

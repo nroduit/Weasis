@@ -598,8 +598,13 @@ public class DicomMediaUtils {
                   Tag.TemporalPositionIndex));
       TagD.get(Tag.FrameContentSequence).readValue(data, taggable);
       // If not null override instance number for a better image sorting.
-      taggable.setTagNoNull(
-          TagD.get(Tag.InstanceNumber), taggable.getTagValue(TagD.get(Tag.InStackPositionNumber)));
+      Integer stackPosNb = (Integer) taggable.getTagValue(TagD.get(Tag.InStackPositionNumber));
+      if (stackPosNb != null) {
+        Integer offset =
+            (Integer) taggable.getTagValue(TagD.get(Tag.ConcatenationFrameOffsetNumber));
+        int nb = offset == null ? stackPosNb : offset + stackPosNb;
+        taggable.setTag(TagD.get(Tag.InstanceNumber), nb);
+      }
 
       // C.7.6.16.2.3 Plane Position (Patient) Macro:
       // https://dicom.nema.org/medical/dicom/current/output/chtml/part03/sect_C.7.6.16.2.html#table_C.7.6.16-4

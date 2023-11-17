@@ -56,6 +56,7 @@ import org.weasis.core.api.media.data.TagView;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.util.SoftHashMap;
+import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.codec.TagD.Level;
 import org.weasis.dicom.codec.display.CornerDisplay;
 import org.weasis.dicom.codec.display.Modality;
@@ -445,6 +446,15 @@ public class DicomMediaIO implements DcmMediaReader {
     if (fmi != null) {
       setTagNoNull(TagD.get(Tag.TransferSyntaxUID), fmi.getString(Tag.TransferSyntaxUID));
     }
+
+    String concatenationUID = header.getString(Tag.ConcatenationUID);
+    if (StringUtil.hasText(concatenationUID)) {
+      setTag(TagD.get(Tag.ConcatenationUID), concatenationUID);
+      setTag(
+          TagD.get(Tag.ConcatenationFrameOffsetNumber),
+          header.getInt(Tag.ConcatenationFrameOffsetNumber, 0));
+    }
+
     // -------- End of Mandatory Tags --------
 
     writeImageValues(md);
@@ -697,7 +707,9 @@ public class DicomMediaIO implements DcmMediaReader {
             // IF enhanced DICOM, instance number can be overridden later
             // IF simple multi-frame instance number is necessary
             for (int i = 0; i < image.length; i++) {
-              image[i].setTag(TagD.get(Tag.InstanceNumber), i + 1);
+              Integer offset = (Integer) tags.get(TagD.get(Tag.ConcatenationFrameOffsetNumber));
+              int nb = offset == null ? i + 1 : offset + i + 1;
+              image[i].setTag(TagD.get(Tag.InstanceNumber), nb);
             }
           }
         } else {
