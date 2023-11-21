@@ -14,10 +14,12 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
+import java.awt.Point;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import javax.swing.BorderFactory;
+import javax.swing.JComponent;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
@@ -26,9 +28,11 @@ import javax.swing.JTable;
 import javax.swing.JTextPane;
 import javax.swing.border.EmptyBorder;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableModel;
 import javax.swing.table.TableRowSorter;
 import javax.swing.text.BadLocationException;
+import javax.swing.text.DefaultCaret;
 import javax.swing.text.DefaultHighlighter;
 import javax.swing.text.Style;
 import javax.swing.text.StyleConstants;
@@ -52,6 +56,7 @@ import org.weasis.core.api.media.data.TagReadable;
 import org.weasis.core.api.media.data.TagUtil;
 import org.weasis.core.api.media.data.TagView;
 import org.weasis.core.api.media.data.TagW;
+import org.weasis.core.api.util.FontItem;
 import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.api.util.ResourceUtil.ActionIcon;
 import org.weasis.core.ui.editor.SeriesViewer;
@@ -74,17 +79,19 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
 
   private static final Logger LOGGER = LoggerFactory.getLogger(DicomFieldsView.class);
 
-  private final JScrollPane allPane = new JScrollPane();
-  private final JScrollPane limitedPane = new JScrollPane();
-  private final JTextPane jTextPaneLimited = new JTextPane();
-  private MediaElement currentMedia;
-  private MediaSeries<?> currentSeries;
-  private boolean anonymize = false;
-  private final SeriesViewer<?> viewer;
-
   public static final String[] columns = {
     Messages.getString("tag.id"), "VR", Messages.getString("tag.name"), Messages.getString("value")
   };
+
+  private final JScrollPane allPane = new JScrollPane();
+  private final JScrollPane limitedPane = new JScrollPane();
+  private final JTextPane jTextPaneLimited = new JTextPane();
+  private final SeriesViewer<?> viewer;
+  private MediaElement currentMedia;
+  private MediaSeries<?> currentSeries;
+  private boolean anonymize = false;
+  private MediaSeries<?> series;
+
   private final DefaultTableModel tableModel =
       new DefaultTableModel(columns, 0) {
         @Override
@@ -93,7 +100,20 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
         }
       };
 
-  private final JTable jtable = new JTable(tableModel);
+  private final JTable jtable =
+      new JTable(tableModel) {
+        @Override
+        public Component prepareRenderer(TableCellRenderer renderer, int row, int column) {
+          Component comp = super.prepareRenderer(renderer, row, column);
+
+          // Get tooltip for the row
+          Object value = getValueAt(row, column);
+          if (value != null && comp instanceof JComponent jComponent) {
+            jComponent.setToolTipText(getColumnName(column) + StringUtil.COLON_AND_SPACE + value);
+          }
+          return comp;
+        }
+      };
   private final TagSearchTablePanel tagSearchTablePanel;
   private final TagSearchDocumentPanel tagSearchDocumentPanel;
 
@@ -109,6 +129,9 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
     jTextPaneLimited.setBorder(new EmptyBorder(5, 5, 5, 5));
     jTextPaneLimited.setContentType("text/html");
     jTextPaneLimited.setEditable(false);
+    applyFormatting(jTextPaneLimited.getStyledDocument());
+    DefaultCaret caret = (DefaultCaret) jTextPaneLimited.getCaret();
+    caret.setUpdatePolicy(DefaultCaret.NEVER_UPDATE);
 
     JPanel dump = new JPanel();
     dump.setLayout(new BorderLayout());
@@ -126,6 +149,7 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
     dump.add(tagSearchTablePanel, BorderLayout.NORTH);
     jtable.getTableHeader().setReorderingAllowed(false);
     jtable.setShowVerticalLines(true);
+    jtable.setFont(FontItem.SMALL.getFont());
     dump.add(allPane, BorderLayout.CENTER);
 
     setPreferredSize(GuiUtils.getDimension(400, 300));
@@ -158,22 +182,34 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
     } else {
       displayAllDicomInfo(series, media);
     }
+    this.series = series;
   }
 
   private static void applyFormatting(StyledDocument doc) {
     Color color = FlatUIUtils.getUIColor("TextArea.foreground", Color.DARK_GRAY);
-    Style bold = doc.addStyle("bold", doc.getStyle(StyleContext.DEFAULT_STYLE)); // NON-NLS
-    StyleConstants.setBold(bold, true);
-    StyleConstants.setForeground(bold, color);
-    int fontSize = StyleConstants.getFontSize(bold.getResolveParent());
+    int fontSize = 11; // Scaling is applied automatically to this value
+    Style defaultStyle = doc.getStyle(StyleContext.DEFAULT_STYLE);
+    Style bold = doc.addStyle("normal", defaultStyle); // NON-NLS
     StyleConstants.setFontSize(bold, fontSize);
+    StyleConstants.setForeground(bold, color);
+
+    bold = doc.addStyle("bold", bold); // NON-NLS
+    StyleConstants.setBold(bold, true);
 
     bold = doc.addStyle("h3", bold); // NON-NLS
-    StyleConstants.setFontSize(bold, fontSize + 3);
+    StyleConstants.setFontSize(bold, fontSize + 4);
   }
 
   private void displayAllDicomInfo(MediaSeries<?> series, MediaElement media) {
-    tableModel.setRowCount(0);
+    Point oldPosition = null;
+    boolean init = jtable.getRowCount() == 0;
+    if (!init) {
+      if (Objects.equals(series, this.series)) {
+        oldPosition = allPane.getViewport().getViewPosition();
+      }
+      tableModel.setRowCount(0);
+    }
+
     if (media != null) {
       MediaReader loader = media.getMediaReader();
       if (loader instanceof DicomMediaIO dicomMediaIO) {
@@ -186,10 +222,6 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
         printAttribute(tableModel, reader.getDicomObject());
       }
     }
-    jtable.getColumnModel().getColumn(0).setPreferredWidth(100);
-    jtable.getColumnModel().getColumn(1).setPreferredWidth(30);
-    jtable.getColumnModel().getColumn(2).setPreferredWidth(250);
-    jtable.getColumnModel().getColumn(3).setPreferredWidth(300);
     jtable.getColumnModel().setColumnMargin(GuiUtils.getScaleLength(7));
     int height =
         (jtable.getRowHeight() + jtable.getRowMargin()) * jtable.getRowCount()
@@ -202,10 +234,13 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
     tableContainer.add(jtable.getTableHeader(), BorderLayout.PAGE_START);
     tableContainer.add(jtable, BorderLayout.CENTER);
     tagSearchTablePanel.filter();
-    TableColumnAdjuster.pack(jtable);
     allPane.setViewportView(tableContainer);
+    TableColumnAdjuster.pack(jtable);
     tableContainer.revalidate();
     tableContainer.repaint();
+    if (oldPosition != null) {
+      allPane.getViewport().setViewPosition(oldPosition);
+    }
   }
 
   private static void printAttribute(DefaultTableModel model, Attributes dcmObj) {
@@ -310,8 +345,6 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
 
   private void displayLimitedDicomInfo(MediaSeries<?> series, MediaElement media) {
     StyledDocument doc = jTextPaneLimited.getStyledDocument();
-    applyFormatting(doc);
-    int oldCaretPosition = jTextPaneLimited.getCaretPosition();
     try {
       // clear previous text
       doc.remove(0, doc.getLength());
@@ -330,8 +363,6 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
         }
       }
     }
-    oldCaretPosition = Math.min(oldCaretPosition, doc.getLength());
-    jTextPaneLimited.setCaretPosition(oldCaretPosition);
     tagSearchDocumentPanel.filter();
     limitedPane.setViewportView(jTextPaneLimited);
   }
@@ -360,7 +391,7 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
             Object val = TagUtil.getTagValue(tag, group, currentMedia);
             if (val != null) {
               exist = true;
-              doc.insertString(doc.getLength(), tag.getDisplayedName(), null);
+              doc.insertString(doc.getLength(), tag.getDisplayedName(), doc.getStyle("normal"));
               doc.insertString(
                   doc.getLength(),
                   StringUtil.COLON_AND_SPACE + tag.getFormattedTagValue(val, null) + "\n",

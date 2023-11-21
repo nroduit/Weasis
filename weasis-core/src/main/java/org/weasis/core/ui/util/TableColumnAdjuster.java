@@ -48,11 +48,10 @@ public class TableColumnAdjuster {
         width = Math.max(width, preferredWidth);
       }
     }
-    return width + table.getIntercellSpacing().width;
+    return width + table.getIntercellSpacing().width + 5;
   }
 
   public static void pack(JTable table) {
-
     if (!table.isShowing() || table.getColumnCount() == 0) {
       return;
     }
@@ -66,7 +65,6 @@ public class TableColumnAdjuster {
 
     int extra = table.getVisibleRect().width - total;
     if (extra > 0) {
-
       int bonus = extra / table.getColumnCount();
       for (int i = 0; i < width.length; i++) {
         width[i] += bonus;
