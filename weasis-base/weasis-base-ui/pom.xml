@@ -26,6 +26,42 @@
           </bnd>
         </configuration>
       </plugin>
+      <plugin>
+        <artifactId>maven-resources-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>copy-resources</id>
+            <phase>process-resources</phase>
+            <goals>
+              <goal>copy-resources</goal>
+            </goals>
+            <configuration>
+              <outputDirectory>${basedir}/target/classes</outputDirectory>
+              <resources>
+                <resource>
+                  <!--
+                  For DEV purposes, property files with URLs for boot jars should be created for each plugin
+                  provider. The file name should be the one returned at GUIEntry.getUIName() method
+                  in lower case. See AbstractTabLicense class for details. In production, installer generation
+                  scripts should create these files and copy to target/classes, based on GITHUB secrets.
+                  The file format should be:
+
+                  prod.boot.uris=comma separated list of boot URLs for production (releases)
+                  dev.boot.uris=comma separated list of boot URLs for development (SNAPSHOT)
+
+                  -->
+                  <directory>${user.home}/plugin-providers</directory>
+                  <filtering>true</filtering>
+                  <includes>
+                      <include>*.properties</include>
+                  </includes>
+                </resource>
+              </resources>
+              <overwrite>true</overwrite>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
     </plugins>
   </build>
 

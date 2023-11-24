@@ -27,6 +27,10 @@ import org.weasis.core.ui.util.LicenseBootURLProvider;
 @org.osgi.service.component.annotations.Component(service = LicenseTabFactory.class)
 public class AnimatiLicenseTabFactory implements LicenseTabFactory {
 
+  private static final String USE_DEV_LICENSE_BOOT_URLS = "dev.license.boot.urls";
+  private static final String DEV_BOOT_URIS_PROPERTY = "dev.boot.uris";
+  private static final String PROD_BOOT_URIS_PROPERTY = "prod.boot.uris";
+
   private static List<URI> bootUris;
 
   @Override
@@ -53,10 +57,10 @@ public class AnimatiLicenseTabFactory implements LicenseTabFactory {
         @Override
         public List<URI> getBootURLs() {
           if (bootUris == null) {
-            URI[] uris = loadUrisFromFile(animatiEntry.getUIName().toLowerCase(), "prod.boot.uris");
-            String devBootUrl = System.getProperty("dev.license.boot.urls");
+            URI[] uris = loadUrisFromFile(animatiEntry.getUIName().toLowerCase(), PROD_BOOT_URIS_PROPERTY);
+            String devBootUrl = System.getProperty(USE_DEV_LICENSE_BOOT_URLS);
             if (devBootUrl != null && devBootUrl.equalsIgnoreCase("true")) {
-              uris = loadUrisFromFile(animatiEntry.getUIName().toLowerCase(), "dev.boot.uris");
+              uris = loadUrisFromFile(animatiEntry.getUIName().toLowerCase(), DEV_BOOT_URIS_PROPERTY);
             }
             Optional.ofNullable(uris).ifPresent( u -> {
                 bootUris = Arrays.asList(u);
@@ -67,7 +71,6 @@ public class AnimatiLicenseTabFactory implements LicenseTabFactory {
     };
     return new AbstractTabLicense(animatiEntry, bootUrlProvider);
   }
-
 
   @Override
   public void dispose(Insertable component) {}
