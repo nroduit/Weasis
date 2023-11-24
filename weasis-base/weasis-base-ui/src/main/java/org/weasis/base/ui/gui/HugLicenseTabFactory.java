@@ -40,7 +40,7 @@ public class HugLicenseTabFactory implements LicenseTabFactory {
             return new ImageIcon(HugLicenseTabFactory.this.getClass().getResource("/hug.png"));
           }
         };
-    return new AbstractTabLicense(hugEntry);
+    return new AbstractTabLicense(hugEntry, null);
   }
 
   @Override

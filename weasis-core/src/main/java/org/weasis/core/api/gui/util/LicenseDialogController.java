@@ -52,6 +52,7 @@ import org.slf4j.LoggerFactory;
 import org.weasis.core.Messages;
 import org.weasis.core.api.service.BundlePreferences;
 import org.weasis.core.api.service.LicensedPluginsService;
+import org.weasis.core.ui.util.LicenseBootURLProvider;
 import org.weasis.core.util.StringUtil;
 
 /**
@@ -76,8 +77,7 @@ public class LicenseDialogController implements LicenseController {
 
   private final AbstractTabLicense licensesItem;
   private final Document codeDocument;
-  private final Document serverDocument;
-
+  
   private LicensedPluginsService service;
 
   private Bundle bundle;
@@ -92,11 +92,15 @@ public class LicenseDialogController implements LicenseController {
 
   private TaskMonitor taskMonitor;
 
+  private LicenseBootURLProvider bootUrlProvider;
+
+  private String bootUrl;
+
   public LicenseDialogController(
-      Document codeDocument, Document serverDocument, AbstractTabLicense licensesItem) {
+      Document codeDocument, LicenseBootURLProvider bootUrlProvider, AbstractTabLicense licensesItem) {
     this.licensesItem = licensesItem;
     this.codeDocument = codeDocument;
-    this.serverDocument = serverDocument;
+    this.bootUrlProvider = bootUrlProvider;
     this.licenceFile =
         new File(
             AppProperties.WEASIS_PATH
@@ -114,9 +118,9 @@ public class LicenseDialogController implements LicenseController {
       }
       Preferences prefs = getPreferences();
       if (prefs != null) {
-        String server = prefs.get(licensesItem.getPluginName() + "." + LICENSE_SEVER_PREFERENCE, null);
-        if (StringUtil.hasText(server)) {
-          serverDocument.insertString(0, server, null);
+        String prefsBootUrl = prefs.get(licensesItem.getPluginName() + "." + LICENSE_SEVER_PREFERENCE, null);
+        if (StringUtil.hasText(prefsBootUrl)) {
+          this.bootUrl = prefsBootUrl;
         }
         String version = prefs.get(licensesItem.getPluginName() + "." + PLUGINS_PACKAGE_VERSION_PREFERENCE, null);
         licensesItem.setVersionContents(StringUtil.hasText(version) ? version : "");
@@ -185,7 +189,7 @@ public class LicenseDialogController implements LicenseController {
     String version = service.getVersion();
     licensesItem.setVersionContents(StringUtil.hasText(version) ? version : "");
     try {
-      String serverContents = serverDocument.getText(0, serverDocument.getLength());
+      String serverContents = this.bootUrl;
       Preferences prefs = getPreferences();
       LOGGER.debug("Trying to store preferences at: {}", prefs);
       if (prefs != null) {
@@ -262,16 +266,15 @@ public class LicenseDialogController implements LicenseController {
     String errorDetails = "";
     try {
       String licenseContents = codeDocument.getText(0, codeDocument.getLength());
-      String serverContents = serverDocument.getText(0, serverDocument.getLength());
+      defineBootUrl();
+      String serverContents = this.bootUrl;
       if (StringUtil.hasText(serverContents) && StringUtil.hasText(licenseContents)) {
-        if (pingLicenseServerURL(serverContents)) {
-          boolean download = downloadBootJarAndTestBundleAccess(licenseContents, serverContents);
-          if (!download) {
-            showErrorMessage(Messages.getString("license"), Messages.getString("license.error.downloading"));
-          }
-          tested = download;
-          return tested;
+        boolean download = downloadBootJarAndTestBundleAccess(licenseContents, serverContents);
+        if (!download) {
+          showErrorMessage(Messages.getString("license"), Messages.getString("license.error.downloading"));
         }
+        tested = download;
+        return tested;
       }
     } catch (Exception e) {
       logErrorMessage(e, null);
@@ -287,6 +290,23 @@ public class LicenseDialogController implements LicenseController {
     }
     showErrorMessage(Messages.getString("license"), Messages.getString("license.error.testing") + " " + errorDetails);
     return false;
+  }
+
+  private void defineBootUrl() {
+    if (this.bootUrl == null) {
+      List<URI> bootURLs = bootUrlProvider.getBootURLs();
+      if (bootURLs != null) {
+        for (URI uri : bootURLs) {
+          String uriStr = uri.toString();
+          if (StringUtil.hasText(uriStr)) {
+            if (pingLicenseServerURL(uriStr)) {
+              this.bootUrl = uriStr;
+              break;
+            }
+          }
+        }
+      }
+    }
   }
 
   private boolean downloadBootJarAndTestBundleAccess(String licenseContents, String serverContents) throws Exception{

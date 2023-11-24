@@ -38,6 +38,7 @@ import org.slf4j.LoggerFactory;
 import org.weasis.core.Messages;
 import org.weasis.core.api.gui.Insertable;
 import org.weasis.core.api.service.LicensedPluginsService;
+import org.weasis.core.ui.util.LicenseBootURLProvider;
 
 import net.miginfocom.swing.MigLayout;
 
@@ -49,7 +50,6 @@ public class AbstractTabLicense extends JPanel implements Insertable {
 
   protected final JTextArea codeTextField;
   protected final JTextField serverTextField;
-  protected final JTextField bootJarTextField;
   protected final JScrollPane textScroll;
   protected final LicenseController licenseController;
 
@@ -66,16 +66,15 @@ public class AbstractTabLicense extends JPanel implements Insertable {
   private int totalTasks = TOTAL_LICENSE_REGISTER_TASKS;
   private int currentTask = 0;
 
-  public AbstractTabLicense(GUIEntry entry) {
-    this(entry, null);
+  public AbstractTabLicense(GUIEntry entry, LicenseBootURLProvider provider) {
+    this(entry, provider, null);
   }
 
-  public AbstractTabLicense(GUIEntry entry, LicenseController licenseController) {
+  public AbstractTabLicense(GUIEntry entry, LicenseBootURLProvider bootUrlProvider, LicenseController licenseController) {
     this.guiEntry = entry;
     this.codeTextField = new JTextArea();
     this.textScroll = new JScrollPane(codeTextField);
     this.serverTextField = new JTextField();
-    this.bootJarTextField = new JTextField();
 
     codeTextField.setLineWrap(false);
     codeTextField.setDocument(new PlainDocument());
@@ -92,7 +91,7 @@ public class AbstractTabLicense extends JPanel implements Insertable {
             () ->
                 new LicenseDialogController(
                     codeTextField.getDocument(),
-                    bootJarTextField.getDocument(),
+                    bootUrlProvider,
                     this));
 
     initGUI();
@@ -180,12 +179,12 @@ public class AbstractTabLicense extends JPanel implements Insertable {
 
     jPanelMiddle = new JPanel(new BorderLayout());
     textScroll.setPreferredSize(GuiUtils.getDimension(530, 300));
-    JPanel jPanelBootJarAddress = new JPanel();
-    jPanelBootJarAddress.setLayout(
-        new MigLayout("insets 25lp 10lp 25lp 10lp", "[right]rel[grow,fill]")); // NON-NLS
-    jPanelBootJarAddress.add(new JLabel(Messages.getString("license.boot.jar.address")));
-    jPanelBootJarAddress.add(bootJarTextField);
-    jPanelMiddle.add(jPanelBootJarAddress, BorderLayout.NORTH);
+//    JPanel jPanelBootJarAddress = new JPanel();
+//    jPanelBootJarAddress.setLayout(
+//        new MigLayout("insets 25lp 10lp 25lp 10lp", "[right]rel[grow,fill]")); // NON-NLS
+//    jPanelBootJarAddress.add(new JLabel(Messages.getString("license.boot.jar.address")));
+//    jPanelBootJarAddress.add(bootJarTextField);
+//    jPanelMiddle.add(jPanelBootJarAddress, BorderLayout.NORTH);
     jPanelMiddle.add(textScroll, BorderLayout.CENTER);
     JPanel jPanelProgressMessage = new JPanel();
     jPanelProgressMessage.setLayout(new BorderLayout()); // NON-NLS
@@ -295,7 +294,7 @@ public class AbstractTabLicense extends JPanel implements Insertable {
     testButton.getModel().setEnabled(true);
     cancelButton.getModel().setEnabled(false);
     codeTextField.setEnabled(true);
-    bootJarTextField.setEnabled(true);
+    //bootJarTextField.setEnabled(true);
   }
 
   public void startProcessing() {
@@ -303,7 +302,7 @@ public class AbstractTabLicense extends JPanel implements Insertable {
     testButton.getModel().setEnabled(false);
     cancelButton.getModel().setEnabled(true);
     codeTextField.setEnabled(false);
-    bootJarTextField.setEnabled(false);
+    //bootJarTextField.setEnabled(false);
   }
 
   public void logProgress(String message) {

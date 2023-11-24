@@ -9,7 +9,12 @@
  */
 package org.weasis.base.ui.gui;
 
+import java.net.URI;
+import java.util.Arrays;
 import java.util.Hashtable;
+import java.util.List;
+import java.util.Optional;
+
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import org.weasis.core.api.gui.Insertable;
@@ -17,9 +22,12 @@ import org.weasis.core.api.gui.Insertable.Type;
 import org.weasis.core.api.gui.LicenseTabFactory;
 import org.weasis.core.api.gui.util.AbstractTabLicense;
 import org.weasis.core.api.gui.util.GUIEntry;
+import org.weasis.core.ui.util.LicenseBootURLProvider;
 
 @org.osgi.service.component.annotations.Component(service = LicenseTabFactory.class)
 public class AnimatiLicenseTabFactory implements LicenseTabFactory {
+
+  private static List<URI> bootUris;
 
   @Override
   public AbstractTabLicense createInstance(Hashtable<String, Object> properties) {
@@ -41,8 +49,25 @@ public class AnimatiLicenseTabFactory implements LicenseTabFactory {
                 AnimatiLicenseTabFactory.this.getClass().getResource("/animati.png"));
           }
         };
-    return new AbstractTabLicense(animatiEntry);
+    LicenseBootURLProvider bootUrlProvider = new LicenseBootURLProvider() {
+        @Override
+        public List<URI> getBootURLs() {
+          if (bootUris == null) {
+            URI[] uris = loadUrisFromFile(animatiEntry.getUIName().toLowerCase(), "prod.boot.uris");
+            String devBootUrl = System.getProperty("dev.license.boot.urls");
+            if (devBootUrl != null && devBootUrl.equalsIgnoreCase("true")) {
+              uris = loadUrisFromFile(animatiEntry.getUIName().toLowerCase(), "dev.boot.uris");
+            }
+            Optional.ofNullable(uris).ifPresent( u -> {
+                bootUris = Arrays.asList(u);
+            });
+          }
+          return bootUris;
+        }
+    };
+    return new AbstractTabLicense(animatiEntry, bootUrlProvider);
   }
+
 
   @Override
   public void dispose(Insertable component) {}
