@@ -22,6 +22,7 @@ jobs:
       - name: Build with Maven
         shell: bash
         run: |
+          echo $HOME
           mkdir -p $HOME/plugin-providers
           echo ${{ secrets.ANIMATI_LICENSCE_CONFIG }} > $HOME/plugin-providers/animati.properties
           mvn -B -Dchangelist=-ANIMATI clean install
