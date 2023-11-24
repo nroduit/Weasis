@@ -42,7 +42,7 @@
                   <!--
                   For DEV purposes, property files with URLs for boot jars should be created for each plugin
                   provider. The file name should be the one returned at GUIEntry.getUIName() method
-                  in lower case. See AbstractTabLicense class for details. In production, installer generation
+                  in lower case. See AnimatiLicenseTabFactory class for details. In production, installer generation
                   scripts should create these files and copy to target/classes, based on GITHUB secrets.
                   The file format should be:
 
