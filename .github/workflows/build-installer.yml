@@ -22,8 +22,10 @@ jobs:
       - name: Build with Maven
         shell: bash
         run: |
-          mvn -B clean install
-          mvn -B -P compressXZ -f weasis-distributions clean package
+          mkdir -p $HOME/plugin-providers
+          echo ${{ secrets.ANIMATI_LICENSCE_CONFIG }} > $HOME/plugin-providers/animati.properties
+          mvn -B -Dchangelist=-ANIMATI clean install
+          mvn -B -Dchangelist=-ANIMATI -P compressXZ -f weasis-distributions clean package
 
       - name: Retrieve version
         shell: bash
