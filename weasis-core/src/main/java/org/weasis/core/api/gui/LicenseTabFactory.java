@@ -14,6 +14,7 @@ import java.io.InputStream;
 import java.net.URI;
 import java.util.Hashtable;
 import java.util.Properties;
+import java.util.Random;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,28 +24,46 @@ public interface LicenseTabFactory extends InsertableFactory {
 
   static final Logger LOGGER = LoggerFactory.getLogger(LicenseTabFactory.class);
 
+  static final String keyFileName = "config-key.properties";
+
   @Override
   AbstractTabLicense createInstance(Hashtable<String, Object> properties);
 
   default URI[] loadUrisFromFile(String fileName, String urisPropertyName) {
     String urlsFileName = fileName + ".properties";
     LOGGER.debug("Loading boot URLs resource: {}", urlsFileName);
-    InputStream is = this.getClass().getClassLoader().getResourceAsStream(urlsFileName);
-    LOGGER.debug("Boot URLs file loaded: {}", is);
     Properties p = new Properties();
-    try {
+    try (InputStream is = this.getClass().getClassLoader().getResourceAsStream(urlsFileName)) {
+      LOGGER.debug("Boot URLs file loaded: {}", is);
       p.load(is);
     } catch (IOException e) {
       LOGGER.error(e.getMessage(), e);
       return null;
     }
-    String[] urisStr = p.getProperty(urisPropertyName).split(",");
+    Properties keyProp = new Properties();
+    try (InputStream is = this.getClass().getClassLoader().getResourceAsStream(keyFileName)) {
+      keyProp.load(is);
+    } catch (IOException e) {
+      LOGGER.error(e.getMessage(), e);
+      return null;
+    }
+    String uris = p.getProperty(urisPropertyName);
+    uris = decode(keyProp.getProperty("key"), uris);
+    String[] urisStr = uris.split(",");
     URI[] result = new URI[urisStr.length];
     for (int i = 0; i < urisStr.length; i++) {
       result[i] = URI.create(urisStr[i]);
       LOGGER.trace(urlsFileName);
     }
     return result;
+  }
+
+  private String decode(String key, String value) {
+    Random r = new Random(key.hashCode());
+    StringBuilder switchedString = new StringBuilder();
+    for (int i = 0; i < value.length(); ++i)
+      switchedString.append((char) (value.charAt(i) + (-1) * ((i * r.nextLong() + r.nextLong()) % 8192)));
+    return switchedString.toString();
   }
 
 }

@@ -49,12 +49,18 @@
                   prod.boot.uris=comma separated list of boot URLs for production (releases)
                   dev.boot.uris=comma separated list of boot URLs for development (SNAPSHOT)
 
+                  The contents of this file should be also encoded, before to be transfered to
+                  GitHub secrets. Please, refer to the class LicenseConfigEncoder at src/test area, to
+                  understand how to run the encoding process.
                   -->
                   <directory>${user.home}/plugin-providers</directory>
                   <filtering>true</filtering>
                   <includes>
                       <include>*.properties</include>
                   </includes>
+                  <excludes>
+                      <exclude>*-source.properties</exclude>
+                  </excludes>
                 </resource>
               </resources>
               <overwrite>true</overwrite>
