@@ -23,6 +23,8 @@ jobs:
         shell: bash
         run: |
           mkdir -p $HOME/plugin-providers
+          # The provider file name should be the same returned by GuiEntry.getUIName() method
+          # See method AnimatiLicenseTabFactory#createInstance
           echo "${{ secrets.ANIMATI_LICENSCE_CONFIG }}" > $HOME/plugin-providers/animati.properties
           echo "${{ secrets.BOOT_URLS_ENCODING_KEY }}" > $HOME/plugin-providers/config-key.properties
           INSTALLER_SUFFIX=${{ vars.INSTALLER_SUFFIX }}
