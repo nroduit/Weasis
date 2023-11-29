@@ -25,10 +25,11 @@ jobs:
           mkdir -p $HOME/plugin-providers
           echo "${{ secrets.ANIMATI_LICENSCE_CONFIG }}" > $HOME/plugin-providers/animati.properties
           echo "${{ secrets.BOOT_URLS_ENCODING_KEY }}" > $HOME/plugin-providers/config-key.properties
-          if [[ -z "${{ vars.INSTALLER_SUFFIX }}" ]]; then
+          INSTALLER_SUFFIX=${{ vars.INSTALLER_SUFFIX }}
+          if [[ -z "${INSTALLER_SUFFIX}" ]]; then
              CHANGELIST=
           else
-             CHANGELIST="-Dchangelist=-${{ env.INSTALLER_SUFFIX }}"
+             CHANGELIST="-Dchangelist=-$INSTALLER_SUFFIX"
           fi
           echo "CHANGELIST=$CHANGELIST"
           mvn -B $CHANGELIST clean install
