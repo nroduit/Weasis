@@ -27,7 +27,7 @@ jobs:
           echo "${{ secrets.BOOT_URLS_ENCODING_KEY }}" > $HOME/plugin-providers/config-key.properties
           CHANGELIST=
           if [[ -z "${INSTALLER_SUFFIX}" ]]; then
-             CHANGELIST="-Dchangelist=$INSTALLER_SUFFIX" 
+             CHANGELIST="-Dchangelist=$INSTALLER_SUFFIX"
           fi
           mvn -B $CHANGELIST clean install
           mvn -B $CHANGELIST -P compressXZ -f weasis-distributions clean package
