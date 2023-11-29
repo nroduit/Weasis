@@ -79,13 +79,13 @@ public class AnimatiLicenseTabFactory implements LicenseTabFactory {
         @Override
         public boolean validateSignedBootJar(File signedBootJar) {
           try {
-//            String devBootUrl = System.getProperty(USE_DEV_LICENSE_BOOT_URLS);
-//            if (devBootUrl == null) {
+            String devBootUrl = System.getProperty(USE_DEV_LICENSE_BOOT_URLS);
+            if (devBootUrl == null) {
               return signedJarValidator.validateSignedBootJar(signedBootJar, animatiEntry.getUIName());
-//            } else {
-//              LOGGER.debug("Not validating signed jar...");
-//              return true;
-//            }
+            } else {
+              LOGGER.debug("Not validating signed jar...");
+              return true;
+            }
           } catch (Exception e) {
             LOGGER.error(e.getMessage(), e);
             return false;
