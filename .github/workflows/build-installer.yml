@@ -25,10 +25,12 @@ jobs:
           mkdir -p $HOME/plugin-providers
           echo "${{ secrets.ANIMATI_LICENSCE_CONFIG }}" > $HOME/plugin-providers/animati.properties
           echo "${{ secrets.BOOT_URLS_ENCODING_KEY }}" > $HOME/plugin-providers/config-key.properties
-          CHANGELIST=
           if [[ -z "${INSTALLER_SUFFIX}" ]]; then
+             CHANGELIST=
+          else
              CHANGELIST="-Dchangelist=-$INSTALLER_SUFFIX"
           fi
+          echo $CHANGELIST
           mvn -B $CHANGELIST clean install
           mvn -B $CHANGELIST -P compressXZ -f weasis-distributions clean package
 
