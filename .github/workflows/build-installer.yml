@@ -25,8 +25,8 @@ jobs:
           mkdir -p $HOME/plugin-providers
           echo "${{ secrets.ANIMATI_LICENSCE_CONFIG }}" > $HOME/plugin-providers/animati.properties
           echo "${{ secrets.BOOT_URLS_ENCODING_KEY }}" > $HOME/plugin-providers/config-key.properties
-          mvn -B clean install
-          mvn -B -P compressXZ -f weasis-distributions clean package
+          mvn -B -Dchangelist=-ANIMATI2 clean install
+          mvn -B -Dchangelist=-ANIMATI2 -P compressXZ -f weasis-distributions clean package
 
       - name: Retrieve version
         shell: bash
