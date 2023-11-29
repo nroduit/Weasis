@@ -9,6 +9,7 @@
  */
 package org.weasis.base.ui.gui;
 
+import java.io.File;
 import java.net.URI;
 import java.util.Arrays;
 import java.util.Hashtable;
@@ -17,11 +18,14 @@ import java.util.Optional;
 
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
+
+import org.osgi.service.component.annotations.Reference;
 import org.weasis.core.api.gui.Insertable;
 import org.weasis.core.api.gui.Insertable.Type;
 import org.weasis.core.api.gui.LicenseTabFactory;
 import org.weasis.core.api.gui.util.AbstractTabLicense;
 import org.weasis.core.api.gui.util.GUIEntry;
+import org.weasis.core.api.service.SignedJarValidationService;
 import org.weasis.core.ui.util.LicenseBootURLProvider;
 
 @org.osgi.service.component.annotations.Component(service = LicenseTabFactory.class)
@@ -32,6 +36,9 @@ public class AnimatiLicenseTabFactory implements LicenseTabFactory {
   private static final String PROD_BOOT_URIS_PROPERTY = "prod.boot.uris";
 
   private static List<URI> bootUris;
+
+  @Reference
+  private SignedJarValidationService signedJarValidator;
 
   @Override
   public AbstractTabLicense createInstance(Hashtable<String, Object> properties) {
@@ -67,6 +74,22 @@ public class AnimatiLicenseTabFactory implements LicenseTabFactory {
             });
           }
           return bootUris;
+        }
+
+        @Override
+        public boolean validateSignedBootJar(File signedBootJar) {
+          try {
+//            String devBootUrl = System.getProperty(USE_DEV_LICENSE_BOOT_URLS);
+//            if (devBootUrl == null) {
+              return signedJarValidator.validateSignedBootJar(signedBootJar, animatiEntry.getUIName());
+//            } else {
+//              LOGGER.debug("Not validating signed jar...");
+//              return true;
+//            }
+          } catch (Exception e) {
+            LOGGER.error(e.getMessage(), e);
+            return false;
+          }
         }
     };
     return new AbstractTabLicense(animatiEntry, bootUrlProvider);

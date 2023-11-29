@@ -329,6 +329,10 @@ public class LicenseDialogController implements LicenseController {
             Files.copy(bis, f.toPath(), StandardCopyOption.REPLACE_EXISTING);
           }
           LOGGER.info("Boot jar contents successfully copied to file: {}", f.getAbsolutePath());
+          result = bootUrlProvider.validateSignedBootJar(f);
+          if (!result) {
+            throw new IOException("Error validating security of boot JAR file!");
+          }
           result = installAndStartBundle(new File(f.getAbsolutePath()), licenseContents);
         } else {
           LOGGER.error("Error getting plugins boot bundle. Server returned: {}", status);
