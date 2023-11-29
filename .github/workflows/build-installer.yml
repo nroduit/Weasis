@@ -25,7 +25,7 @@ jobs:
           mkdir -p $HOME/plugin-providers
           echo "${{ secrets.ANIMATI_LICENSCE_CONFIG }}" > $HOME/plugin-providers/animati.properties
           echo "${{ secrets.BOOT_URLS_ENCODING_KEY }}" > $HOME/plugin-providers/config-key.properties
-          if [[ -z "${{ env.INSTALLER_SUFFIX }}" ]]; then
+          if [[ -z "${{ vars.INSTALLER_SUFFIX }}" ]]; then
              CHANGELIST=
           else
              CHANGELIST="-Dchangelist=-${{ env.INSTALLER_SUFFIX }}"
