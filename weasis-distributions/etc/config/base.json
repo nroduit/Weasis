@@ -40,7 +40,7 @@
       "value": "130",
       "description": "The initial start level of the framework upon startup",
       "type": "A",
-      "JavaType": "INT",
+      "javaType": "INT",
       "category": "FELIX_CONFIG"
     },
     {
@@ -48,7 +48,7 @@
       "value": "300",
       "description": "The start level of newly installed bundles",
       "type": "A",
-      "JavaType": "INT",
+      "javaType": "INT",
       "category": "FELIX_CONFIG"
     },
     {
@@ -203,7 +203,7 @@
       "value": "1",
       "description": "Set the logging levels for OSGI framework  0=None / 1(default)=Error / 2=Warning / 3=Information / 4=Debug",
       "type": "A",
-      "JavaType": "INT",
+      "javaType": "INT",
       "category": "LOG"
     },
     {
@@ -218,7 +218,7 @@
       "value": "false",
       "description": "Activation of rolling log files",
       "type": "F",
-      "JavaType": "BOOLEAN",
+      "javaType": "BOOLEAN",
       "category": "LOG"
     },
     {
@@ -226,7 +226,7 @@
       "value": "5",
       "description": "The max number of rolling log files",
       "type": "F",
-      "JavaType": "INT",
+      "javaType": "INT",
       "category": "LOG"
     },
     {
@@ -248,7 +248,7 @@
       "value": "5",
       "description": "Defines the maximum number of lines for stack trace (0 => NONE, -1 => ALL). Default value is 3",
       "type": "F",
-      "JavaType": "INT",
+      "javaType": "INT",
       "category": "LOG"
     },
     {
@@ -256,7 +256,7 @@
       "value": "false",
       "description": "Audit log for giving statistics about usage of Weasis",
       "type": "A",
-      "JavaType": "BOOLEAN",
+      "javaType": "BOOLEAN",
       "category": "LOG"
     },
     {
@@ -285,7 +285,7 @@
       "value": "false",
       "description": "If true, the bundle cache is cleared when the weasis version has changed from the previous launch",
       "type": "A",
-      "JavaType": "BOOLEAN",
+      "javaType": "BOOLEAN",
       "category": "LAUNCH"
     },
     {
@@ -342,7 +342,7 @@
       "value": "true",
       "description": "Show a disclaimer at the first launch of Weasis (requires to be accepted to start the application)",
       "type": "A",
-      "JavaType": "BOOLEAN",
+      "javaType": "BOOLEAN",
       "category": "LAUNCH"
     },
     {
@@ -350,7 +350,7 @@
       "value": "true",
       "description": "Show a message when the release has changed",
       "type": "A",
-      "JavaType": "BOOLEAN",
+      "javaType": "BOOLEAN",
       "category": "LAUNCH"
     },
     {
@@ -358,7 +358,7 @@
       "value": "true",
       "description": "Show a message when a new release is available",
       "type": "A",
-      "JavaType": "BOOLEAN",
+      "javaType": "BOOLEAN",
       "category": "LAUNCH"
     },
     {
@@ -408,7 +408,7 @@
       "value": "false",
       "description": "Show a message of confirmation when closing the application",
       "type": "F",
-      "JavaType": "BOOLEAN",
+      "javaType": "BOOLEAN",
       "category": "GENERAL"
     },
     {

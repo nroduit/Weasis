@@ -34,7 +34,7 @@ public class AppPreferences extends HashMap<String, Preference> {
   static final String VAL = "value"; // NON-NLS
   static final String DESC = "description"; // NON-NLS
   static final String TYPE = "type"; // NON-NLS
-  static final String JAVA_TYPE = "JavaType"; // NON-NLS
+  static final String JAVA_TYPE = "javaType"; // NON-NLS
   static final String DEFAULT = "defaultValue"; // NON-NLS
   static final String CATEGORY = "category"; // NON-NLS
 
