@@ -25,7 +25,7 @@ public class PixelInfoGraphicTest extends GraphicTester<PixelInfoGraphic> {
   private static final String XML_1 = "/graphic/pixel/pixel.graphic.1.xml"; // NON-NLS
 
   static final String BASIC_TPL =
-      "<pixelInfo fill=\"%s\" showLabel=\"%s\" thickness=\"%s\" uuid=\"%s\">" // NON-NLS
+      "<pixelInfo fill=\"%s\" showLabel=\"%s\" thickness=\"%s\" insideOpacity=\"%s\" uuid=\"%s\">" // NON-NLS
           + "<paint rgb=\"%s\"/>" // NON-NLS
           + "<pts/>" // NON-NLS
           + "</pixelInfo>"; // NON-NLS
@@ -58,6 +58,7 @@ public class PixelInfoGraphicTest extends GraphicTester<PixelInfoGraphic> {
       Graphic.DEFAULT_FILLED,
       Graphic.DEFAULT_LABEL_VISIBLE,
       Graphic.DEFAULT_LINE_THICKNESS,
+      Graphic.DEFAULT_INTERIOR_OPACITY,
       getGraphicUuid(),
       WProperties.color2Hexadecimal(Graphic.DEFAULT_COLOR, true)
     };

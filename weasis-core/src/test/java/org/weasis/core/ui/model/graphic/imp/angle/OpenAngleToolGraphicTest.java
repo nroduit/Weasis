@@ -21,7 +21,7 @@ public class OpenAngleToolGraphicTest extends GraphicTester<OpenAngleToolGraphic
   private static final String XML_1 = "/graphic/openAngle/openAngle.graphic.1.xml"; // NON-NLS
 
   public static final String BASIC_TPL =
-      "<openAngle fill=\"%s\" showLabel=\"%s\" thickness=\"%s\" uuid=\"%s\">" // NON-NLS
+      "<openAngle fill=\"%s\" showLabel=\"%s\" thickness=\"%s\" insideOpacity=\"%s\" uuid=\"%s\">" // NON-NLS
           + "<paint rgb=\"%s\"/>" // NON-NLS
           + "<pts/>" // NON-NLS
           + "</openAngle>"; // NON-NLS
@@ -51,6 +51,7 @@ public class OpenAngleToolGraphicTest extends GraphicTester<OpenAngleToolGraphic
       Graphic.DEFAULT_FILLED,
       Graphic.DEFAULT_LABEL_VISIBLE,
       Graphic.DEFAULT_LINE_THICKNESS,
+      Graphic.DEFAULT_INTERIOR_OPACITY,
       getGraphicUuid(),
       WProperties.color2Hexadecimal(Graphic.DEFAULT_COLOR, true)
     };

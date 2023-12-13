@@ -23,7 +23,7 @@ public class PerpendicularLineGraphicTest extends GraphicTester<PerpendicularLin
       "/graphic/perpendicularLine/perpendicularLine.graphic.1.xml"; // NON-NLS
 
   static final String BASIC_TPL =
-      "<perpendicularLine fill=\"%s\" showLabel=\"%s\" thickness=\"%s\" uuid=\"%s\">" // NON-NLS
+      "<perpendicularLine fill=\"%s\" showLabel=\"%s\" thickness=\"%s\" insideOpacity=\"%s\" uuid=\"%s\">" // NON-NLS
           + "<paint rgb=\"%s\"/>" // NON-NLS
           + "<pts/>" // NON-NLS
           + "</perpendicularLine>"; // NON-NLS
@@ -53,6 +53,7 @@ public class PerpendicularLineGraphicTest extends GraphicTester<PerpendicularLin
       Graphic.DEFAULT_FILLED,
       Graphic.DEFAULT_LABEL_VISIBLE,
       Graphic.DEFAULT_LINE_THICKNESS,
+      Graphic.DEFAULT_INTERIOR_OPACITY,
       getGraphicUuid(),
       WProperties.color2Hexadecimal(Graphic.DEFAULT_COLOR, true)
     };

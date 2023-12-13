@@ -24,7 +24,7 @@ public class LineWithGapGraphicTest extends GraphicTester<LineWithGapGraphic> {
   private static final String XML_1 = "/graphic/lineWithGap/lineWithGap.graphic.1.xml"; // NON-NLS
 
   static final String BASIC_TPL =
-      "<lineWithGap gapSize=\"%s\" fill=\"%s\" showLabel=\"%s\" thickness=\"%s\" uuid=\"%s\">" // NON-NLS
+      "<lineWithGap gapSize=\"%s\" fill=\"%s\" showLabel=\"%s\" thickness=\"%s\" insideOpacity=\"%s\" uuid=\"%s\">" // NON-NLS
           + "<paint rgb=\"%s\"/>" // NON-NLS
           + "<pts/>" // NON-NLS
           + "</lineWithGap>"; // NON-NLS
@@ -52,6 +52,7 @@ public class LineWithGapGraphicTest extends GraphicTester<LineWithGapGraphic> {
       Graphic.DEFAULT_FILLED,
       Graphic.DEFAULT_LABEL_VISIBLE,
       Graphic.DEFAULT_LINE_THICKNESS,
+      Graphic.DEFAULT_INTERIOR_OPACITY,
       getGraphicUuid(),
       WProperties.color2Hexadecimal(Graphic.DEFAULT_COLOR, true)
     };
