@@ -88,30 +88,25 @@ public class CheckTreeModel {
 
   private static void buildSeries(DefaultMutableTreeNode studyNode, Series<?> series) {
     DefaultMutableTreeNode seriesNode = new ToolTipTreeNode(series, true);
-    List<DicomSpecialElement> specialElements =
-        (List<DicomSpecialElement>) series.getTagValue(TagW.DicomSpecialElementList);
-    if (specialElements != null) {
-      for (DicomSpecialElement specialElement : specialElements) {
-        seriesNode.add(
-            new DefaultMutableTreeNode(specialElement, false) {
-              @Override
-              public String toString() {
-                DicomSpecialElement d = (DicomSpecialElement) getUserObject();
-                StringBuilder buf = new StringBuilder();
-                boolean newElement =
-                    LangUtil.getNULLtoFalse((Boolean) d.getTagValue(TagW.ObjectToSave));
-                if (newElement) {
-                  buf.append(GuiUtils.HTML_COLOR_START);
-                  buf.append(IconColor.ACTIONS_YELLOW.getHtmlCode());
-                  buf.append("'><b>NEW </b></font>"); // NON-NLS
+    if (series instanceof DicomSeries dicomSeries) {
+      List<DicomSpecialElement> specialElements = dicomSeries.getAllDicomSpecialElement();
+      if (specialElements != null) {
+        for (DicomSpecialElement specialElement : specialElements) {
+          seriesNode.add(
+              new DefaultMutableTreeNode(specialElement, false) {
+                @Override
+                public String toString() {
+                  DicomSpecialElement d = (DicomSpecialElement) getUserObject();
+                  StringBuilder buf = new StringBuilder();
+                  boolean newElement = initToolTipText(d, buf);
+                  buf.append(d.getShortLabel());
+                  if (newElement) {
+                    buf.append(GuiUtils.HTML_END);
+                  }
+                  return buf.toString();
                 }
-                buf.append(d.getShortLabel());
-                if (newElement) {
-                  buf.append(GuiUtils.HTML_END);
-                }
-                return buf.toString();
-              }
-            });
+              });
+        }
       }
     }
 
@@ -201,6 +196,17 @@ public class CheckTreeModel {
     return new DefaultTreeModel(rootNode, false);
   }
 
+  private static boolean initToolTipText(TagReadable tagReadable, StringBuilder buf) {
+    boolean newElement =
+        LangUtil.getNULLtoFalse((Boolean) tagReadable.getTagValue(TagW.ObjectToSave));
+    if (newElement) {
+      buf.append(GuiUtils.HTML_COLOR_START);
+      buf.append(IconColor.ACTIONS_YELLOW.getHtmlCode());
+      buf.append("'><b>NEW </b></font>"); // NON-NLS
+    }
+    return newElement;
+  }
+
   static class ToolTipTreeNode extends DefaultMutableTreeNode {
 
     public ToolTipTreeNode(TagReadable userObject, boolean allowsChildren) {
@@ -215,12 +221,7 @@ public class CheckTreeModel {
     public String toString() {
       MediaSeries<?> s = (MediaSeries<?>) getUserObject();
       StringBuilder buf = new StringBuilder();
-      boolean newElement = LangUtil.getNULLtoFalse((Boolean) s.getTagValue(TagW.ObjectToSave));
-      if (newElement) {
-        buf.append(GuiUtils.HTML_COLOR_START);
-        buf.append(IconColor.ACTIONS_YELLOW.getHtmlCode());
-        buf.append("'><b>NEW </b></font>"); // NON-NLS
-      }
+      boolean newElement = initToolTipText(s, buf);
       buildSeriesEntry(s, buf);
       int child = getChildCount();
       if (newElement) {

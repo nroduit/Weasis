@@ -12,14 +12,8 @@ package org.weasis.dicom.codec;
 import java.io.File;
 import java.io.IOException;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import java.util.SortedSet;
-import java.util.TreeSet;
 import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Tag;
 import org.dcm4che3.data.UID;
@@ -49,14 +43,9 @@ public class DicomSpecialElement extends MediaElement implements DicomElement {
 
         @Override
         public int compare(DicomSpecialElement m1, DicomSpecialElement m2) {
-
-          // Note : Dicom Standard PS3.3 - Table C.17.6-1 KEY OBJECT DOCUMENT SERIES MODULE
-          // ATTRIBUTES
-          //
           // SeriesDate stands for "Date the Series started" and is optional parameter, don't use
-          // this to compare
-          // and prefer "Content Date And Time" Tags (date and time the document content creation
-          // started)
+          // this to compare and prefer "Content Date And Time" Tags (date and time the document
+          // content creation started)
 
           LocalDateTime date1 = TagD.dateTime(Tag.ContentDate, Tag.ContentTime, m1);
           LocalDateTime date2 = TagD.dateTime(Tag.ContentDate, Tag.ContentTime, m2);
@@ -201,125 +190,6 @@ public class DicomSpecialElement extends MediaElement implements DicomElement {
         return true;
       }
     }
-
     return false;
-  }
-
-  /**
-   * @param seriesUID the Series Instance UID
-   * @param specialElements the list of DicomSpecialElement
-   * @return the KOSpecialElement collection for the given parameters, if the referenced seriesUID
-   *     is null all the KOSpecialElement from specialElements collection are returned. In any case
-   *     all the KOSpecialElement that are writable will be added to the returned collection
-   *     whatever is the seriesUID. These KO are part of the new created one's by users of the
-   *     application
-   */
-  public static Collection<KOSpecialElement> getKoSpecialElements(
-      Collection<DicomSpecialElement> specialElements, String seriesUID) {
-
-    if (specialElements == null) {
-      return Collections.emptySet();
-    }
-
-    SortedSet<KOSpecialElement> koElementSet = null;
-
-    for (DicomSpecialElement element : specialElements) {
-
-      if (element instanceof KOSpecialElement koElement) {
-        Set<String> referencedSeriesInstanceUIDSet = koElement.getReferencedSeriesInstanceUIDSet();
-
-        if (seriesUID == null
-            || referencedSeriesInstanceUIDSet.contains(seriesUID)
-            || koElement.getMediaReader().isEditableDicom()) {
-
-          if (koElementSet == null) {
-            koElementSet = new TreeSet<>(ORDER_BY_DATE);
-          }
-          koElementSet.add(koElement);
-        }
-      }
-    }
-    return koElementSet == null ? Collections.emptySet() : koElementSet;
-  }
-
-  public static Collection<RejectedKOSpecialElement> getRejectionKoSpecialElements(
-      Collection<DicomSpecialElement> specialElements, String seriesUID) {
-
-    if (specialElements == null) {
-      return Collections.emptySet();
-    }
-
-    SortedSet<RejectedKOSpecialElement> koElementSet = null;
-
-    for (DicomSpecialElement element : specialElements) {
-
-      if (element instanceof RejectedKOSpecialElement koElement) {
-        Set<String> referencedSeriesInstanceUIDSet = koElement.getReferencedSeriesInstanceUIDSet();
-
-        if (seriesUID == null
-            || referencedSeriesInstanceUIDSet.contains(seriesUID)
-            || koElement.getMediaReader().isEditableDicom()) {
-
-          if (koElementSet == null) {
-            koElementSet = new TreeSet<>(ORDER_BY_DATE);
-          }
-          koElementSet.add(koElement);
-        }
-      }
-    }
-    return koElementSet == null ? Collections.emptySet() : koElementSet;
-  }
-
-  public static RejectedKOSpecialElement getRejectionKoSpecialElement(
-      Collection<DicomSpecialElement> specialElements,
-      String seriesUID,
-      String sopUID,
-      Integer dicomFrameNumber) {
-
-    if (specialElements == null) {
-      return null;
-    }
-    List<RejectedKOSpecialElement> koList = null;
-
-    for (DicomSpecialElement element : specialElements) {
-      if (element instanceof RejectedKOSpecialElement koElement
-          && isSopuidInReferencedSeriesSequence(
-              koElement.getReferencedSOPInstanceUIDObject(seriesUID), sopUID, dicomFrameNumber)) {
-        if (koList == null) {
-          koList = new ArrayList<>();
-        }
-        koList.add(koElement);
-      }
-    }
-
-    if (koList != null) {
-      // return the most recent Rejection Object
-      koList.sort(ORDER_BY_DATE);
-      return koList.get(0);
-    }
-    return null;
-  }
-
-  public static List<PRSpecialElement> getPRSpecialElements(
-      Collection<DicomSpecialElement> specialElements, DicomImageElement img) {
-
-    if (specialElements == null) {
-      return Collections.emptyList();
-    }
-    List<PRSpecialElement> prList = null;
-
-    for (DicomSpecialElement element : specialElements) {
-      if (element instanceof PRSpecialElement prElement
-          && PresentationStateReader.isImageApplicable(prElement, img)) {
-        if (prList == null) {
-          prList = new ArrayList<>();
-        }
-        prList.add(prElement);
-      }
-    }
-    if (prList != null) {
-      prList.sort(ORDER_BY_DATE);
-    }
-    return prList == null ? Collections.emptyList() : prList;
   }
 }

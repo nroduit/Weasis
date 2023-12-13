@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009-2020 Weasis Team and other contributors.
+ * Copyright (c) 2023 Weasis Team and other contributors.
  *
  * This program and the accompanying materials are made available under the terms of the Eclipse
  * Public License 2.0 which is available at https://www.eclipse.org/legal/epl-2.0, or the Apache
@@ -9,15 +9,9 @@
  */
 package org.weasis.dicom.codec;
 
-public interface DicomSpecialElementFactory {
+public class HiddenSpecialElement extends DicomSpecialElement {
 
-  String getSeriesMimeType();
-
-  String[] getModalities();
-
-  default boolean isHidden() {
-    return false;
+  public HiddenSpecialElement(DicomMediaIO mediaIO) {
+    super(mediaIO);
   }
-
-  DicomSpecialElement buildDicomSpecialElement(DicomMediaIO mediaIO);
 }

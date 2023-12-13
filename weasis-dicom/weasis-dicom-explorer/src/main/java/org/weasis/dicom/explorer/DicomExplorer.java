@@ -871,10 +871,10 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
                 selectedPatient == null ? null : selectedPatient.patient;
             if (patient != null && e.getSource() instanceof JButton button) {
               List<KOSpecialElement> list =
-                  DicomModel.getSpecialElements(patient, KOSpecialElement.class);
+                  DicomModel.getHiddenSpecialElements(patient, KOSpecialElement.class);
               if (!list.isEmpty()) {
                 if (list.size() == 1) {
-                  model.openRelatedSeries(list.get(0), patient);
+                  model.openRelatedSeries(list.getFirst(), patient);
                 } else {
                   list.sort(DicomSpecialElement.ORDER_BY_DATE);
                   JPopupMenu popupMenu = new JPopupMenu();
@@ -954,7 +954,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
       }
       studyCombobox.addItemListener(studyItemListener);
       selectStudy();
-      koOpen.setVisible(DicomModel.hasSpecialElements(patient, KOSpecialElement.class));
+      koOpen.setVisible(DicomModel.hasHiddenSpecialElements(patient, KOSpecialElement.class));
       // Send message for selecting related plug-ins window
       model.firePropertyChange(
           new ObservableEvent(ObservableEvent.BasicAction.SELECT, model, null, patient));
@@ -1074,7 +1074,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
   }
 
   private void addDicomSeries(Series<?> series) {
-    if (DicomModel.isSpecialModality(series)) {
+    if (DicomModel.isHiddenModality(series)) {
       // Up to now nothing has to be done in the explorer view about specialModality
       return;
     }
@@ -1212,7 +1212,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
               MediaSeriesGroup study = model.getParent(dcm, DicomModel.study);
               StudyPane studyPane = getStudyPane(study);
               if (studyPane != null) {
-                if (!DicomModel.isSpecialModality(dcm)) {
+                if (!DicomModel.isHiddenModality(dcm)) {
                   SeriesPane pane = getSeriesPane(dcm);
                   if (pane != null) {
                     pane.updateText();
@@ -1233,7 +1233,8 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
           } else if (newVal instanceof KOSpecialElement) {
             MediaSeriesGroupNode patient = getSelectedPatient();
             if (patient != null) {
-              koOpen.setVisible(DicomModel.hasSpecialElements(patient, KOSpecialElement.class));
+              koOpen.setVisible(
+                  DicomModel.hasHiddenSpecialElements(patient, KOSpecialElement.class));
             }
           }
         } else if (ObservableEvent.BasicAction.LOADING_START.equals(action)) {
@@ -1247,7 +1248,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
           }
           MediaSeriesGroupNode patient = getSelectedPatient();
           if (patient != null) {
-            koOpen.setVisible(DicomModel.hasSpecialElements(patient, KOSpecialElement.class));
+            koOpen.setVisible(DicomModel.hasHiddenSpecialElements(patient, KOSpecialElement.class));
           }
         }
       } else if (evt.getSource() instanceof SeriesViewer

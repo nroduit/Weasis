@@ -442,6 +442,14 @@ public class View2dContainer extends DicomViewerPlugin implements PropertyChange
     return menuRoot;
   }
 
+  @Override
+  public void addSeries(MediaSeries<DicomImageElement> sequence) {
+    if (DicomModel.isHiddenModality(sequence)) {
+      return;
+    }
+    super.addSeries(sequence);
+  }
+
   protected MediaSeries<DicomImageElement> getFirstSeries() {
     for (ViewCanvas<DicomImageElement> v : getImagePanels()) {
       if (v.getSeries() != null) {

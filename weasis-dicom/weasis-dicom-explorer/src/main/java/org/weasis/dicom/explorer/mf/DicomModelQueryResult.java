@@ -92,7 +92,7 @@ public class DicomModelQueryResult extends AbstractQueryResult {
               continue;
             }
 
-            if (DicomModel.isSpecialModality((MediaSeries<?>) series)) {
+            if (DicomModel.isHiddenModality((MediaSeries<?>) series)) {
               String seriesInstanceUID =
                   TagD.getTagValue(series, Tag.SeriesInstanceUID, String.class);
               for (DicomSpecialElement spel : dcmSpecElements) {

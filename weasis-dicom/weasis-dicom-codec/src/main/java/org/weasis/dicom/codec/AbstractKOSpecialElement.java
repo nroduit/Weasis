@@ -19,6 +19,8 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.SortedSet;
+import java.util.TreeSet;
 import java.util.stream.Collectors;
 import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Tag;
@@ -29,7 +31,7 @@ import org.weasis.dicom.codec.macro.KODocumentModule;
 import org.weasis.dicom.codec.macro.SOPInstanceReferenceAndMAC;
 import org.weasis.dicom.codec.macro.SeriesAndInstanceReference;
 
-public class AbstractKOSpecialElement extends DicomSpecialElement {
+public class AbstractKOSpecialElement extends HiddenSpecialElement {
 
   public static class Reference {
     private final String studyInstanceUID;
@@ -498,5 +500,90 @@ public class AbstractKOSpecialElement extends DicomSpecialElement {
       result.remove(integer);
     }
     return result.stream().mapToInt(i -> i).toArray();
+  }
+
+  /**
+   * @param seriesUID the Series Instance UID
+   * @param specialElements the list of DicomSpecialElement
+   * @return the KOSpecialElement collection for the given parameters, if the referenced seriesUID
+   *     is null all the KOSpecialElement from specialElements collection are returned. In any case
+   *     all the KOSpecialElement that are writable will be added to the returned collection
+   *     whatever is the seriesUID. These KO are part of the new created one's by users of the
+   *     application
+   */
+  public static Collection<KOSpecialElement> getKoSpecialElements(
+      Collection<KOSpecialElement> specialElements, String seriesUID) {
+
+    if (specialElements == null) {
+      return Collections.emptySet();
+    }
+
+    SortedSet<KOSpecialElement> koElementSet = null;
+    for (KOSpecialElement koElement : specialElements) {
+      Set<String> referencedSeriesInstanceUIDSet = koElement.getReferencedSeriesInstanceUIDSet();
+      if (seriesUID == null
+          || referencedSeriesInstanceUIDSet.contains(seriesUID)
+          || koElement.getMediaReader().isEditableDicom()) {
+
+        if (koElementSet == null) {
+          koElementSet = new TreeSet<>(ORDER_BY_DATE);
+        }
+        koElementSet.add(koElement);
+      }
+    }
+    return koElementSet == null ? Collections.emptySet() : koElementSet;
+  }
+
+  public static Collection<RejectedKOSpecialElement> getRejectionKoSpecialElements(
+      Collection<RejectedKOSpecialElement> specialElements, String seriesUID) {
+
+    if (specialElements == null) {
+      return Collections.emptySet();
+    }
+
+    SortedSet<RejectedKOSpecialElement> sortedSet = null;
+    for (RejectedKOSpecialElement element : specialElements) {
+      Set<String> referencedSeriesInstanceUIDSet = element.getReferencedSeriesInstanceUIDSet();
+
+      if (seriesUID == null
+          || referencedSeriesInstanceUIDSet.contains(seriesUID)
+          || element.getMediaReader().isEditableDicom()) {
+
+        if (sortedSet == null) {
+          sortedSet = new TreeSet<>(ORDER_BY_DATE);
+        }
+        sortedSet.add(element);
+      }
+    }
+    return sortedSet == null ? Collections.emptySet() : sortedSet;
+  }
+
+  public static RejectedKOSpecialElement getRejectionKoSpecialElement(
+      Collection<RejectedKOSpecialElement> specialElements,
+      String seriesUID,
+      String sopUID,
+      Integer dicomFrameNumber) {
+
+    if (specialElements == null) {
+      return null;
+    }
+    List<RejectedKOSpecialElement> koList = null;
+
+    for (RejectedKOSpecialElement koElement : specialElements) {
+      if (isSopuidInReferencedSeriesSequence(
+          koElement.getReferencedSOPInstanceUIDObject(seriesUID), sopUID, dicomFrameNumber)) {
+        if (koList == null) {
+          koList = new ArrayList<>();
+        }
+        koList.add(koElement);
+      }
+    }
+
+    if (koList != null && !koList.isEmpty()) {
+      // return the most recent Rejection Object
+      koList.sort(ORDER_BY_DATE);
+      return koList.getFirst();
+    }
+    return null;
   }
 }

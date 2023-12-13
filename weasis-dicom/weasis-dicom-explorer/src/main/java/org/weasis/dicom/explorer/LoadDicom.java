@@ -25,7 +25,7 @@ import org.weasis.core.api.media.data.SeriesThumbnail;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.media.data.Thumbnail;
 import org.weasis.dicom.codec.DicomMediaIO;
-import org.weasis.dicom.codec.DicomSpecialElement;
+import org.weasis.dicom.codec.HiddenSpecialElement;
 import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.TagD.Level;
 import org.weasis.dicom.explorer.HangingProtocols.OpeningViewer;
@@ -143,13 +143,11 @@ public abstract class LoadDicom extends ExplorerTask<Boolean, String> {
           }
         }
 
-        if (DicomModel.isSpecialModality(dicomSeries)) {
-          dicomModel.addSpecialModality(dicomSeries);
+        if (DicomModel.isHiddenModality(dicomSeries) && medias != null) {
           Arrays.stream(medias)
-              .filter(DicomSpecialElement.class::isInstance)
-              .map(DicomSpecialElement.class::cast)
-              .findFirst()
-              .ifPresent(
+              .filter(HiddenSpecialElement.class::isInstance)
+              .map(HiddenSpecialElement.class::cast)
+              .forEach(
                   d ->
                       dicomModel.firePropertyChange(
                           new ObservableEvent(
@@ -193,13 +191,11 @@ public abstract class LoadDicom extends ExplorerTask<Boolean, String> {
             }
           }
 
-          if (DicomModel.isSpecialModality(dicomSeries)) {
-            dicomModel.addSpecialModality(dicomSeries);
+          if (DicomModel.isHiddenModality(dicomSeries)) {
             Arrays.stream(medias)
-                .filter(DicomSpecialElement.class::isInstance)
-                .map(DicomSpecialElement.class::cast)
-                .findFirst()
-                .ifPresent(
+                .filter(HiddenSpecialElement.class::isInstance)
+                .map(HiddenSpecialElement.class::cast)
+                .forEach(
                     d ->
                         dicomModel.firePropertyChange(
                             new ObservableEvent(

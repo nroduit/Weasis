@@ -24,6 +24,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.BulkData;
@@ -83,6 +84,7 @@ public class DicomMediaIO implements DcmMediaReader {
   public static final String SERIES_MIMETYPE = "series/dicom"; // NON-NLS
   public static final String SERIES_PR_MIMETYPE = "pr/dicom"; // NON-NLS
   public static final String SERIES_KO_MIMETYPE = "ko/dicom"; // NON-NLS
+  public static final String SERIES_SEG_MIMETYPE = "seg/dicom"; // NON-NLS
 
   public static final String SERIES_ENCAP_DOC_MIMETYPE = "encap/dicom"; // NON-NLS
   public static final String UNREADABLE = "unreadable/dicom"; // NON-NLS
@@ -186,13 +188,12 @@ public class DicomMediaIO implements DcmMediaReader {
   }
 
   public static final Map<String, DicomSpecialElementFactory> DCM_ELEMENT_FACTORIES =
-      new HashMap<>();
+      new ConcurrentHashMap<>();
 
   static {
-    /*
-     * DICOM PR and KO are not displayed with a special viewer but are transversally managed objects. So they are
-     * not registered from a viewer.
-     */
+    // The hidden type factories are not displayed with a special viewer but are transversally
+    // managed objects.
+
     DCM_ELEMENT_FACTORIES.put(
         "PR",
         new DicomSpecialElementFactory() {
@@ -208,10 +209,16 @@ public class DicomMediaIO implements DcmMediaReader {
           }
 
           @Override
+          public boolean isHidden() {
+            return true;
+          }
+
+          @Override
           public DicomSpecialElement buildDicomSpecialElement(DicomMediaIO mediaIO) {
             return new PRSpecialElement(mediaIO);
           }
         });
+
     DCM_ELEMENT_FACTORIES.put(
         "KO",
         new DicomSpecialElementFactory() {
@@ -227,11 +234,41 @@ public class DicomMediaIO implements DcmMediaReader {
           }
 
           @Override
+          public boolean isHidden() {
+            return true;
+          }
+
+          @Override
           public DicomSpecialElement buildDicomSpecialElement(DicomMediaIO mediaIO) {
             if (RejectedKOSpecialElement.isRejectionKOS(mediaIO)) {
               return new RejectedKOSpecialElement(mediaIO);
             }
             return new KOSpecialElement(mediaIO);
+          }
+        });
+
+    DCM_ELEMENT_FACTORIES.put(
+        "SEG",
+        new DicomSpecialElementFactory() {
+
+          @Override
+          public String getSeriesMimeType() {
+            return SERIES_SEG_MIMETYPE;
+          }
+
+          @Override
+          public String[] getModalities() {
+            return new String[] {"SEG"};
+          }
+
+          @Override
+          public boolean isHidden() {
+            return true;
+          }
+
+          @Override
+          public DicomSpecialElement buildDicomSpecialElement(DicomMediaIO mediaIO) {
+            return new SegSpecialElement(mediaIO);
           }
         });
   }
@@ -325,7 +362,7 @@ public class DicomMediaIO implements DcmMediaReader {
       return false;
     }
 
-    if (tags.size() == 0) {
+    if (tags.isEmpty()) {
       try {
         DicomMetaData md = readMetaData();
         Attributes fmi = md.getFileMetaInformation();
@@ -347,7 +384,11 @@ public class DicomMediaIO implements DcmMediaReader {
             // MPEG4 AVC/H.264 BD 1.2.840.10008.1.2.4.103
             mimeType = SERIES_VIDEO_MIMETYPE;
           } else {
-            mimeType = IMAGE_MIMETYPE;
+            if ("1.2.840.10008.5.1.4.1.1.66.4".equals(mediaStorageSOPClassUID)) {
+              mimeType = SERIES_SEG_MIMETYPE; // Do not display SEG images
+            } else {
+              mimeType = IMAGE_MIMETYPE;
+            }
           }
         } else {
           boolean special = setDicomSpecialType(header);
@@ -423,7 +464,7 @@ public class DicomMediaIO implements DcmMediaReader {
   }
 
   private void writeInstanceTags(DicomMetaData md) {
-    if (tags.size() > 0 || md == null || md.getDicomObject() == null) {
+    if (!tags.isEmpty() || md == null || md.getDicomObject() == null) {
       return;
     }
     Attributes fmi = md.getFileMetaInformation();
@@ -698,8 +739,9 @@ public class DicomMediaIO implements DcmMediaReader {
       } else if (SERIES_ENCAP_DOC_MIMETYPE.equals(mimeType)) {
         image = new MediaElement[] {new DicomEncapDocElement(this, null)};
       } else {
+        DicomSpecialElementFactory factory = getDicomSpecialElementFactory();
         if (numberOfFrame > 0) {
-          image = new MediaElement[numberOfFrame];
+          image = new MediaElement[factory == null ? numberOfFrame : numberOfFrame + 1];
           for (int i = 0; i < image.length; i++) {
             image[i] = new DicomImageElement(this, i);
           }
@@ -712,23 +754,28 @@ public class DicomMediaIO implements DcmMediaReader {
               image[i].setTag(TagD.get(Tag.InstanceNumber), nb);
             }
           }
-        } else {
-          String modality = TagD.getTagValue(this, Tag.Modality, String.class);
-          if (modality != null) {
-            DicomSpecialElementFactory factory = DCM_ELEMENT_FACTORIES.get(modality);
-            if (factory != null) {
-              image = new MediaElement[1];
-              image[0] = factory.buildDicomSpecialElement(this);
-            }
+          if (factory != null) {
+            image[numberOfFrame] = factory.buildDicomSpecialElement(this);
           }
-          if (image == null) {
+        } else {
+          if (factory == null) {
             // Corrupted image => should have one frame
             image = new MediaElement[0];
+          } else {
+            image = new MediaElement[] {factory.buildDicomSpecialElement(this)};
           }
         }
       }
     }
     return image;
+  }
+
+  private DicomSpecialElementFactory getDicomSpecialElementFactory() {
+    String modality = TagD.getTagValue(this, Tag.Modality, String.class);
+    if (modality != null) {
+      return DCM_ELEMENT_FACTORIES.get(modality);
+    }
+    return null;
   }
 
   @Override
@@ -879,5 +926,15 @@ public class DicomMediaIO implements DcmMediaReader {
     } finally {
       reader.dispose();
     }
+  }
+
+  public static boolean isHiddenModality(String modality) {
+    if (modality != null) {
+      DicomSpecialElementFactory factory = DCM_ELEMENT_FACTORIES.get(modality);
+      if (factory != null) {
+        return factory.isHidden();
+      }
+    }
+    return false;
   }
 }

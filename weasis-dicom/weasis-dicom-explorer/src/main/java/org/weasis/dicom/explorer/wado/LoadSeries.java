@@ -79,7 +79,8 @@ import org.weasis.core.util.FileUtil;
 import org.weasis.core.util.StreamIOException;
 import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.codec.DicomMediaIO;
-import org.weasis.dicom.codec.DicomSpecialElement;
+import org.weasis.dicom.codec.HiddenSeriesManager;
+import org.weasis.dicom.codec.HiddenSpecialElement;
 import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.TagD.Level;
 import org.weasis.dicom.codec.TransferSyntax;
@@ -333,15 +334,13 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
         }
       }
 
-      if (DicomModel.isSpecialModality(dicomSeries)) {
-        dicomModel.addSpecialModality(dicomSeries);
-        List<DicomSpecialElement> list =
-            (List<DicomSpecialElement>) dicomSeries.getTagValue(TagW.DicomSpecialElementList);
+      if (DicomModel.isHiddenModality(dicomSeries)) {
+        List<HiddenSpecialElement> list =
+            HiddenSeriesManager.getInstance().series2Elements.get(seriesUID);
         if (list != null) {
           list.stream()
               .filter(Objects::nonNull)
-              .findFirst()
-              .ifPresent(
+              .forEach(
                   d ->
                       dicomModel.firePropertyChange(
                           new ObservableEvent(

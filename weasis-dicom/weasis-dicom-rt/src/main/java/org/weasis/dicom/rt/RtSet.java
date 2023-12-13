@@ -802,13 +802,8 @@ public class RtSet {
                 int k = 0;
 
                 for (Point point : matOfPoint.toList()) {
-                  double[] coordinates = new double[2];
-
-                  coordinates[0] = dose.getDoseMmLUT().getKey()[(int) point.x];
-                  coordinates[1] = dose.getDoseMmLUT().getValue()[(int) point.y];
-
-                  newContour[k] = coordinates[0];
-                  newContour[k + 1] = coordinates[1];
+                  newContour[k] = dose.getDoseMmLUT().getKey()[(int) point.x];
+                  newContour[k + 1] = dose.getDoseMmLUT().getValue()[(int) point.y];
                   newContour[k + 2] = z.getValue();
                   k += 3;
                 }
