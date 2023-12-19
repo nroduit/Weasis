@@ -387,9 +387,10 @@ public final class GeomUtil {
 
     return switch (ptList.size()) {
       case 3 -> getCircleCenter(ptList.get(0), ptList.get(1), ptList.get(2));
-      case 2 -> new Point2D.Double(
-          (ptList.get(0).getX() + ptList.get(1).getX()) / 2.0,
-          (ptList.get(0).getY() + ptList.get(1).getY()) / 2.0);
+      case 2 ->
+          new Point2D.Double(
+              (ptList.get(0).getX() + ptList.get(1).getX()) / 2.0,
+              (ptList.get(0).getY() + ptList.get(1).getY()) / 2.0);
       default -> null;
     };
   }

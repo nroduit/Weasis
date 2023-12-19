@@ -84,8 +84,8 @@ public class ItemListComboBoxModel<T> extends ItemListModel<T> implements ComboB
             }
             fireIntervalRemoved(ItemListComboBoxModel.this, interval.getMin(), interval.getMax());
           }
-          case CONTENT_CHANGED -> fireContentsChanged(
-              ItemListComboBoxModel.this, interval.getMin(), interval.getMax());
+          case CONTENT_CHANGED ->
+              fireContentsChanged(ItemListComboBoxModel.this, interval.getMin(), interval.getMax());
 
             // note : used by JComboBox only to check if selectedItem has changed but not used by
             // the renderer

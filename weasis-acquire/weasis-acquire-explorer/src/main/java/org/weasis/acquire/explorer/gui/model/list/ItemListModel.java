@@ -64,12 +64,12 @@ public class ItemListModel<T> extends AbstractListModel<T> {
     return evt -> {
       if (evt.getNewValue() instanceof Interval interval) {
         switch (ItemList.eProperty.valueOf(evt.getPropertyName())) {
-          case INTERVAL_ADDED -> fireIntervalAdded(
-              ItemListModel.this, interval.getMin(), interval.getMax());
-          case INTERVAL_REMOVED -> fireIntervalRemoved(
-              ItemListModel.this, interval.getMin(), interval.getMax());
-          case CONTENT_CHANGED -> fireContentsChanged(
-              ItemListModel.this, interval.getMin(), interval.getMax());
+          case INTERVAL_ADDED ->
+              fireIntervalAdded(ItemListModel.this, interval.getMin(), interval.getMax());
+          case INTERVAL_REMOVED ->
+              fireIntervalRemoved(ItemListModel.this, interval.getMin(), interval.getMax());
+          case CONTENT_CHANGED ->
+              fireContentsChanged(ItemListModel.this, interval.getMin(), interval.getMax());
         }
       }
     };

@@ -69,8 +69,8 @@ public class ImagePrint implements Printable {
       case PageFormat.LANDSCAPE -> OrientationRequested.LANDSCAPE;
       case PageFormat.REVERSE_LANDSCAPE -> OrientationRequested.REVERSE_LANDSCAPE;
       case PageFormat.PORTRAIT -> OrientationRequested.PORTRAIT;
-      default -> throw new IllegalArgumentException(
-          "The given value is no valid PageFormat orientation.");
+      default ->
+          throw new IllegalArgumentException("The given value is no valid PageFormat orientation.");
     };
   }
 
