@@ -13,7 +13,6 @@ import bibliothek.gui.dock.common.CLocation;
 import bibliothek.gui.dock.common.mode.ExtendedMode;
 import java.awt.BorderLayout;
 import java.awt.Component;
-import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.util.ArrayList;
 import java.util.List;
@@ -177,15 +176,7 @@ public class MeasureAnnotationTool extends PluginTool implements SeriesViewerLis
       };
       tableTag.setModel(new SimpleTableModel(headers, labels));
       tableTag.getColumnModel().getColumn(1).setCellRenderer(new TagRenderer());
-      int height =
-          (tableTag.getRowHeight() + tableTag.getRowMargin()) * tableTag.getRowCount()
-              + tableTag.getTableHeader().getHeight()
-              + 5;
-      tableTagContainer.setPreferredSize(
-          new Dimension(tableTag.getColumnModel().getTotalColumnWidth(), height));
-      tableTagContainer.add(tableTag.getTableHeader(), BorderLayout.PAGE_START);
-      tableTagContainer.add(tableTag, BorderLayout.CENTER);
-      TableColumnAdjuster.pack(tableTag);
+      TableColumnAdjuster.adjustPreferredSizeForViewPort(tableTag, tableTagContainer);
     } else {
       tableTagContainer.setPreferredSize(GuiUtils.getDimension(50, 50));
     }
@@ -208,15 +199,7 @@ public class MeasureAnnotationTool extends PluginTool implements SeriesViewerLis
       };
       tableMarker.setModel(new SimpleTableModel(headers, labels));
       tableMarker.getColumnModel().getColumn(1).setCellRenderer(new TagRenderer());
-      int height =
-          (tableMarker.getRowHeight() + tableMarker.getRowMargin()) * tableMarker.getRowCount()
-              + tableMarker.getTableHeader().getHeight()
-              + 5;
-      tableMarkerContainer.setPreferredSize(
-          new Dimension(tableMarker.getColumnModel().getTotalColumnWidth(), height));
-      tableMarkerContainer.add(tableMarker.getTableHeader(), BorderLayout.PAGE_START);
-      tableMarkerContainer.add(tableMarker, BorderLayout.CENTER);
-      TableColumnAdjuster.pack(tableMarker);
+      TableColumnAdjuster.adjustPreferredSizeForViewPort(tableMarker, tableMarkerContainer);
     } else {
       tableMarkerContainer.setPreferredSize(GuiUtils.getDimension(50, 50));
     }

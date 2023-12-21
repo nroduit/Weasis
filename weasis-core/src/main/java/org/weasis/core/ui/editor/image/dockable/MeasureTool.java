@@ -13,7 +13,6 @@ import bibliothek.gui.dock.common.CLocation;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
-import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.GridLayout;
 import java.awt.Window;
@@ -278,15 +277,7 @@ public class MeasureTool extends PluginTool implements GraphicSelectionListener 
       };
       jtable.setModel(new SimpleTableModel(headers, getLabels(measList)));
       jtable.getColumnModel().getColumn(1).setCellRenderer(new TableNumberRenderer());
-      int height =
-          (jtable.getRowHeight() + jtable.getRowMargin()) * jtable.getRowCount()
-              + jtable.getTableHeader().getHeight()
-              + 5;
-      tableContainer.setPreferredSize(
-          new Dimension(jtable.getColumnModel().getTotalColumnWidth(), height));
-      tableContainer.add(jtable.getTableHeader(), BorderLayout.PAGE_START);
-      tableContainer.add(jtable, BorderLayout.CENTER);
-      TableColumnAdjuster.pack(jtable);
+      TableColumnAdjuster.adjustPreferredSizeForViewPort(jtable, tableContainer);
     } else {
       tableContainer.setPreferredSize(GuiUtils.getDimension(50, 50));
     }

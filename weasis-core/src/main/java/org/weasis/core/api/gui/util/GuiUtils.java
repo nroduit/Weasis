@@ -619,4 +619,24 @@ public class GuiUtils {
       g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, oldRenderingHints[2]);
     }
   }
+
+  public static int insetWidth(JPanel panel) {
+    if (panel != null) {
+      Insets insets = panel.getInsets();
+      if (insets != null) {
+        return insets.left + insets.right;
+      }
+    }
+    return 0;
+  }
+
+  public static int insetHeight(JPanel panel) {
+    if (panel != null) {
+      Insets insets = panel.getInsets();
+      if (insets != null) {
+        return insets.top + insets.bottom;
+      }
+    }
+    return 0;
+  }
 }

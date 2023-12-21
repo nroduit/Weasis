@@ -36,7 +36,7 @@ public class TagSeq extends TagD {
     if (data instanceof MacroSeqData macro) {
       Object val = getValue(macro.getAttributes());
       if (val instanceof Sequence seq && !seq.isEmpty()) {
-        val = seq.get(0);
+        val = seq.getFirst();
       }
 
       if (val instanceof Attributes dataset) {

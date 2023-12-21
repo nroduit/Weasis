@@ -9,11 +9,15 @@
  */
 package org.weasis.core.ui.util;
 
+import java.awt.BorderLayout;
+import java.awt.Dimension;
 import java.awt.Point;
 import java.awt.Rectangle;
+import javax.swing.JPanel;
 import javax.swing.JTable;
 import javax.swing.table.TableColumn;
 import javax.swing.table.TableColumnModel;
+import org.weasis.core.api.gui.util.GuiUtils;
 
 public class TableColumnAdjuster {
 
@@ -35,6 +39,9 @@ public class TableColumnAdjuster {
       Rectangle rect = table.getVisibleRect();
       int from = table.rowAtPoint(rect.getLocation());
       int to = table.rowAtPoint(new Point((int) rect.getMaxX(), (int) rect.getMaxY())) + 1;
+      if (to == 0) {
+        to = Math.max(to, table.getRowCount());
+      }
 
       for (int row = from; row < to; row++) {
         int preferredWidth =
@@ -48,7 +55,7 @@ public class TableColumnAdjuster {
         width = Math.max(width, preferredWidth);
       }
     }
-    return width + table.getIntercellSpacing().width + 5;
+    return width + table.getIntercellSpacing().width + GuiUtils.getScaleLength(7);
   }
 
   public static void pack(JTable table) {
@@ -80,5 +87,18 @@ public class TableColumnAdjuster {
       table.getTableHeader().setResizingColumn(tableColumn);
       tableColumn.setWidth(width[col]);
     }
+  }
+
+  public static void adjustPreferredSizeForViewPort(JTable jtable, JPanel tableContainer) {
+    pack(jtable);
+    int height =
+        (jtable.getRowHeight() + jtable.getRowMargin()) * jtable.getRowCount()
+            + jtable.getTableHeader().getHeight()
+            + GuiUtils.insetHeight(tableContainer);
+    int width = jtable.getColumnModel().getTotalColumnWidth();
+    tableContainer.setPreferredSize(new Dimension(width, height));
+    tableContainer.add(jtable.getTableHeader(), BorderLayout.PAGE_START);
+    tableContainer.add(jtable, BorderLayout.CENTER);
+    pack(jtable);
   }
 }

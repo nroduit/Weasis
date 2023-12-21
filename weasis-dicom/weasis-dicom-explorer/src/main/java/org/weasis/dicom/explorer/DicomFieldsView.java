@@ -13,7 +13,6 @@ import com.formdev.flatlaf.ui.FlatUIUtils;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
-import java.awt.Dimension;
 import java.awt.Point;
 import java.util.Arrays;
 import java.util.List;
@@ -92,6 +91,7 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
   private boolean anonymize = false;
   private MediaSeries<?> series;
 
+  private JPanel tableContainer;
   private final DefaultTableModel tableModel =
       new DefaultTableModel(columns, 0) {
         @Override
@@ -137,6 +137,10 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
     dump.setLayout(new BorderLayout());
     dump.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
     addTab(Messages.getString("DicomFieldsView.all"), null, dump, null);
+
+    this.tableContainer = new JPanel(new BorderLayout());
+    tableContainer.setPreferredSize(GuiUtils.getDimension(50, 50));
+    tableContainer.setBorder(GuiUtils.getEmptyBorder(3, 3, 0, 3));
     TableRowSorter<TableModel> sorter =
         new TableRowSorter<>(tableModel) {
           @Override
@@ -145,17 +149,26 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
           }
         };
     jtable.setRowSorter(sorter);
-    this.tagSearchTablePanel = new TagSearchTablePanel(jtable);
+    this.tagSearchTablePanel = new TagSearchTablePanel(jtable, tableContainer);
     dump.add(tagSearchTablePanel, BorderLayout.NORTH);
     jtable.getTableHeader().setReorderingAllowed(false);
     jtable.setShowVerticalLines(true);
     jtable.setFont(FontItem.SMALL.getFont());
+    tableContainer.add(jtable.getTableHeader(), BorderLayout.PAGE_START);
+    tableContainer.add(jtable, BorderLayout.CENTER);
+    allPane.setViewportView(tableContainer);
     dump.add(allPane, BorderLayout.CENTER);
-
     setPreferredSize(GuiUtils.getDimension(400, 300));
     setMinimumSize(GuiUtils.getDimension(150, 50));
 
-    this.addChangeListener(changeEvent -> changeDicomInfo(currentSeries, currentMedia));
+    this.addChangeListener(_ -> changeDicomInfo(currentSeries, currentMedia));
+    this.addComponentListener(
+        new java.awt.event.ComponentAdapter() {
+          @Override
+          public void componentResized(java.awt.event.ComponentEvent evt) {
+            TableColumnAdjuster.adjustPreferredSizeForViewPort(jtable, tableContainer);
+          }
+        });
   }
 
   @Override
@@ -201,6 +214,7 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
   }
 
   private void displayAllDicomInfo(MediaSeries<?> series, MediaElement media) {
+    tableContainer.removeAll();
     Point oldPosition = null;
     boolean init = jtable.getRowCount() == 0;
     if (!init) {
@@ -223,21 +237,7 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
       }
     }
     jtable.getColumnModel().setColumnMargin(GuiUtils.getScaleLength(7));
-    int height =
-        (jtable.getRowHeight() + jtable.getRowMargin()) * jtable.getRowCount()
-            + jtable.getTableHeader().getHeight()
-            + 5;
-    JPanel tableContainer = new JPanel();
-    tableContainer.setLayout(new BorderLayout());
-    tableContainer.setPreferredSize(
-        new Dimension(jtable.getColumnModel().getTotalColumnWidth(), height));
-    tableContainer.add(jtable.getTableHeader(), BorderLayout.PAGE_START);
-    tableContainer.add(jtable, BorderLayout.CENTER);
     tagSearchTablePanel.filter();
-    allPane.setViewportView(tableContainer);
-    TableColumnAdjuster.pack(jtable);
-    tableContainer.revalidate();
-    tableContainer.repaint();
     if (oldPosition != null) {
       allPane.getViewport().setViewPosition(oldPosition);
     }

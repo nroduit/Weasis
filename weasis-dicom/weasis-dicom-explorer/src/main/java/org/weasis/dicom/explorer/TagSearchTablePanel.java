@@ -16,6 +16,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.TreeSet;
 import javax.swing.JLabel;
+import javax.swing.JPanel;
 import javax.swing.JTable;
 import javax.swing.JTextField;
 import javax.swing.JToggleButton;
@@ -30,6 +31,7 @@ import org.weasis.core.api.gui.util.WinUtil;
 import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.api.util.ResourceUtil.ActionIcon;
 import org.weasis.core.ui.util.LabelHighlighted;
+import org.weasis.core.ui.util.TableColumnAdjuster;
 
 public class TagSearchTablePanel extends AbstractTagSearchPanel {
 
@@ -39,9 +41,11 @@ public class TagSearchTablePanel extends AbstractTagSearchPanel {
   private final JToggleButton filterButton =
       new JToggleButton(ResourceUtil.getIcon(ActionIcon.FILTER));
   private final JTable table;
+  private final JPanel tableContainer;
 
-  public TagSearchTablePanel(JTable table) {
-    this.table = Objects.requireNonNull(table);
+  public TagSearchTablePanel(JTable jtable, JPanel tableContainer) {
+    this.table = Objects.requireNonNull(jtable);
+    this.tableContainer = Objects.requireNonNull(tableContainer);
     RowSorter<? extends TableModel> sorter = table.getRowSorter();
     if (sorter == null) {
       table.setAutoCreateRowSorter(true);
@@ -123,6 +127,7 @@ public class TagSearchTablePanel extends AbstractTagSearchPanel {
       }
     }
 
+    TableColumnAdjuster.adjustPreferredSizeForViewPort(table, tableContainer);
     table.revalidate();
     table.repaint();
     if (!searchPositions.isEmpty()) {
