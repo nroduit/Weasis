@@ -172,11 +172,10 @@ public class WorklistDialog extends JDialog {
       jtable.getSelectionModel().addListSelectionListener(selectionListener);
     } else {
       if (state.getStatus() != Status.Success) {
-        GuiExecutor.instance()
-            .execute(
-                () ->
-                    JOptionPane.showMessageDialog(
-                        this, state.getMessage(), null, JOptionPane.ERROR_MESSAGE));
+        GuiExecutor.execute(
+            () ->
+                JOptionPane.showMessageDialog(
+                    this, state.getMessage(), null, JOptionPane.ERROR_MESSAGE));
         dispose();
         throw new IllegalStateException(state.getMessage());
       }

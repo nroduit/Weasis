@@ -515,14 +515,13 @@ public final class UICore {
 
   public void closeSeriesViewer(final List<? extends ViewerPlugin<?>> pluginsToRemove) {
     if (pluginsToRemove != null) {
-      GuiExecutor.instance()
-          .execute(
-              () -> {
-                for (final ViewerPlugin<?> viewerPlugin : pluginsToRemove) {
-                  viewerPlugin.close();
-                  viewerPlugin.handleFocusAfterClosing();
-                }
-              });
+      GuiExecutor.execute(
+          () -> {
+            for (final ViewerPlugin<?> viewerPlugin : pluginsToRemove) {
+              viewerPlugin.close();
+              viewerPlugin.handleFocusAfterClosing();
+            }
+          });
     }
   }
 

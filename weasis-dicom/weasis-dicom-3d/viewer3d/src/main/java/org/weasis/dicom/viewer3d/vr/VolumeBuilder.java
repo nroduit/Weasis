@@ -184,14 +184,13 @@ public final class VolumeBuilder {
         bar.setPreferredSize(dim);
         bar.setMaximumSize(dim);
 
-        GuiExecutor.instance()
-            .invokeAndWait(
-                () -> {
-                  bar.setValue(0);
-                  bar.setStringPainted(true);
-                  view3d.setProgressBar(bar);
-                  view3d.repaint();
-                });
+        GuiExecutor.invokeAndWait(
+            () -> {
+              bar.setValue(0);
+              bar.setStringPainted(true);
+              view3d.setProgressBar(bar);
+              view3d.repaint();
+            });
       } else {
         bar = null;
       }
@@ -204,6 +203,10 @@ public final class VolumeBuilder {
 
       Instant timeStarted = Instant.now();
       double lastPos = 0;
+
+      String patientPseudoUID = DicomModel.getPatientPseudoUID(volTexture.getSeries());
+      List<SegSpecialElement> segList =
+          DicomSeries.getHiddenElementsFromPatient(patientPseudoUID, SegSpecialElement.class);
 
       List<DicomImageElement> list = volTexture.getVolumeImages();
       for (int i = 0; i < list.size(); i++) {
@@ -273,6 +276,28 @@ public final class VolumeBuilder {
             i,
             Duration.between(start, Instant.now()).toMillis());
 
+        if (!segList.isEmpty()) {
+          Mat mask = Mat.zeros(imageMLUT.size(), imageMLUT.type());
+          for (SegSpecialElement seg : segList) {
+            if (seg.isVisible() && seg.containsSopInstanceUIDReference(imageElement)) {
+              Collection<EditableContour> contours = seg.getContours(imageElement);
+              if (!contours.isEmpty()) {
+                for (EditableContour c : contours) {
+                  NonEditableGraphic graphic = c.getNonEditableGraphic();
+                  if (graphic != null) {
+                    List<MatOfPoint> pts =
+                        ImageProcessor.transformShapeToContour(graphic.getShape(), false);
+                    // TODO check the limit value
+                    Imgproc.fillPoly(mask, pts, new Scalar(c.getCategory().getId()));
+                  }
+                }
+                // Core.bitwise_and(src, mask, src);
+              }
+            }
+          }
+          imageMLUT = ImageCV.toImageCV(mask);
+        }
+
         sumMemory += imageMLUT.physicalBytes();
         if (sumMemory > maxMemory) {
           start = Instant.now();
@@ -291,12 +316,11 @@ public final class VolumeBuilder {
         }
         slices.add(imageMLUT.toMat());
         if (bar != null) {
-          GuiExecutor.instance()
-              .execute(
-                  () -> {
-                    bar.setValue(bar.getValue() + 1);
-                    view.getJComponent().repaint();
-                  });
+          GuiExecutor.execute(
+              () -> {
+                bar.setValue(bar.getValue() + 1);
+                view.getJComponent().repaint();
+              });
         }
       }
 

@@ -117,7 +117,7 @@ public class LoadLocalDicom extends LoadDicom {
       // Avoid rebuilding most of CR series thumbnail
       if (series != null) {
         if (series.size(null) > 2) {
-          GuiExecutor.instance().execute(t::reBuildThumbnail);
+          GuiExecutor.execute(t::reBuildThumbnail);
         }
         if (series.isSuitableFor3d()) {
           dicomModel.firePropertyChange(

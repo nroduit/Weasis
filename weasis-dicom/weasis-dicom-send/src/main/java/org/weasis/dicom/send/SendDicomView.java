@@ -189,15 +189,13 @@ public class SendDicomView extends AbstractItemDialogPage implements ExportDicom
       DicomProgress dicomProgress = new DicomProgress();
       dicomProgress.addProgressListener(
           p ->
-              GuiExecutor.instance()
-                  .execute(
-                      () -> {
-                        int c =
-                            p.getNumberOfCompletedSuboperations()
-                                + p.getNumberOfFailedSuboperations();
-                        int r = p.getNumberOfRemainingSuboperations();
-                        progressBar.setValue((c * 100) / (c + r));
-                      }));
+              GuiExecutor.execute(
+                  () -> {
+                    int c =
+                        p.getNumberOfCompletedSuboperations() + p.getNumberOfFailedSuboperations();
+                    int r = p.getNumberOfRemainingSuboperations();
+                    progressBar.setValue((c * 100) / (c + r));
+                  }));
       t.addCancelListener(dicomProgress);
 
       Object selectedItem = comboNode.getSelectedItem();
@@ -253,16 +251,15 @@ public class SendDicomView extends AbstractItemDialogPage implements ExportDicom
     if (e != null) {
       LOGGER.error(title, e.getMessage());
     }
-    GuiExecutor.instance()
-        .execute(
-            () ->
-                JOptionPane.showMessageDialog(
-                    exportTree,
-                    state == null
-                        ? Objects.requireNonNull(e).getMessage()
-                        : StringUtil.getTruncatedString(state.getMessage(), 150, Suffix.THREE_PTS),
-                    getTitle(),
-                    JOptionPane.ERROR_MESSAGE));
+    GuiExecutor.execute(
+        () ->
+            JOptionPane.showMessageDialog(
+                exportTree,
+                state == null
+                    ? Objects.requireNonNull(e).getMessage()
+                    : StringUtil.getTruncatedString(state.getMessage(), 150, Suffix.THREE_PTS),
+                getTitle(),
+                JOptionPane.ERROR_MESSAGE));
   }
 
   private void writeDicom(ExplorerTask<Boolean, String> task, File writeDir, CheckTreeModel model)

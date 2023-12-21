@@ -176,14 +176,13 @@ public final class JIThumbnailCache {
           ImageConversion.toBufferedImage(
               (PlanarImage) ImageProcessor.buildThumbnail(img, ThumbnailRenderer.ICON_DIM, true));
 
-      GuiExecutor.instance()
-          .execute(
-              () -> {
-                if (tIcon != null) {
-                  cachedThumbnails.put(diskObject.getMediaURI(), new ThumbnailIcon(tIcon));
-                }
-                thumbnailList.getThumbnailListModel().notifyAsUpdated(index);
-              });
+      GuiExecutor.execute(
+          () -> {
+            if (tIcon != null) {
+              cachedThumbnails.put(diskObject.getMediaURI(), new ThumbnailIcon(tIcon));
+            }
+            thumbnailList.getThumbnailListModel().notifyAsUpdated(index);
+          });
     }
   }
 }

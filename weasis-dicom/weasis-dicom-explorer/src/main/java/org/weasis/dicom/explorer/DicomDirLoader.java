@@ -95,19 +95,18 @@ public class DicomDirLoader {
     if (patient != null) {
       // In case of the patient already exists, select it
       final MediaSeriesGroup uniquePatient = patient;
-      GuiExecutor.instance()
-          .execute(
-              () -> {
-                List<ViewerPlugin<?>> viewerPlugins = GuiUtils.getUICore().getViewerPlugins();
-                synchronized (viewerPlugins) {
-                  for (final ViewerPlugin p : viewerPlugins) {
-                    if (uniquePatient.equals(p.getGroupID())) {
-                      p.setSelectedAndGetFocus();
-                      break;
-                    }
-                  }
+      GuiExecutor.execute(
+          () -> {
+            List<ViewerPlugin<?>> viewerPlugins = GuiUtils.getUICore().getViewerPlugins();
+            synchronized (viewerPlugins) {
+              for (final ViewerPlugin p : viewerPlugins) {
+                if (uniquePatient.equals(p.getGroupID())) {
+                  p.setSelectedAndGetFocus();
+                  break;
                 }
-              });
+              }
+            }
+          });
     }
     for (LoadSeries loadSeries : seriesList) {
       String modality = TagD.getTagValue(loadSeries.getDicomSeries(), Tag.Modality, String.class);

@@ -156,13 +156,12 @@ public abstract class ImageViewerEventManager<E extends ImageElement> implements
           iniSpeed();
 
           while (cining) {
-            GuiExecutor.instance()
-                .execute(
-                    () -> {
-                      int frameIndex = getSliderValue() + 1;
-                      frameIndex = frameIndex > getSliderMax() ? 0 : frameIndex;
-                      setSliderValue(frameIndex);
-                    });
+            GuiExecutor.execute(
+                () -> {
+                  int frameIndex = getSliderValue() + 1;
+                  frameIndex = frameIndex > getSliderMax() ? 0 : frameIndex;
+                  setSliderValue(frameIndex);
+                });
             iteration.incrementAndGet();
 
             // adjust the delay time based on the current performance

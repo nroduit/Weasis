@@ -209,15 +209,14 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
   public void close() {
     super.close();
 
-    GuiExecutor.instance()
-        .execute(
-            () -> {
-              removeComponents();
-              for (ViewCanvas v : view2ds) {
-                resetMaximizedSelectedImagePane(v);
-                v.disposeView();
-              }
-            });
+    GuiExecutor.execute(
+        () -> {
+          removeComponents();
+          for (ViewCanvas v : view2ds) {
+            resetMaximizedSelectedImagePane(v);
+            v.disposeView();
+          }
+        });
   }
 
   /**

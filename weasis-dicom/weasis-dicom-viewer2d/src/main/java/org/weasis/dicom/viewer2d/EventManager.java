@@ -450,14 +450,13 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
           while (cining) {
             long startFrameTime = System.currentTimeMillis();
             // Set the value to SliderCineListener, must be in EDT for refreshing UI correctly
-            GuiExecutor.instance()
-                .invokeAndWait(
-                    () -> {
-                      if (cining) {
-                        int frameIndex = getSliderValue() + 1;
-                        setSliderValue(frameIndex > getSliderMax() ? 0 : frameIndex);
-                      }
-                    });
+            GuiExecutor.invokeAndWait(
+                () -> {
+                  if (cining) {
+                    int frameIndex = getSliderValue() + 1;
+                    setSliderValue(frameIndex > getSliderMax() ? 0 : frameIndex);
+                  }
+                });
             // Time to set the new frame index
             long elapsedFrame = System.currentTimeMillis() - startFrameTime;
             /*
@@ -739,11 +738,11 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
 
   private ComboItemListener<ByteLut> newLutAction() {
     List<ByteLut> luts = new ArrayList<>();
-    luts.add(ByteLutCollection.Lut.GRAY.getByteLut());
+    luts.add(ColorLut.GRAY.getByteLut());
     ByteLutCollection.readLutFilesFromResourcesDir(
         luts, ResourceUtil.getResource(DicomResource.LUTS));
     // Set default first as the list has been sorted
-    luts.add(0, ByteLutCollection.Lut.IMAGE.getByteLut());
+    luts.add(0, ColorLut.IMAGE.getByteLut());
 
     return new ComboItemListener<>(ActionW.LUT, luts.toArray(new ByteLut[0])) {
 
@@ -1753,7 +1752,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
       return;
     }
 
-    GuiExecutor.instance().execute(() -> zoomCommand(opt, args));
+    GuiExecutor.execute(() -> zoomCommand(opt, args));
   }
 
   private void zoomCommand(Option opt, List<String> args) {
@@ -1802,22 +1801,21 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
       return;
     }
 
-    GuiExecutor.instance()
-        .execute(
-            () -> {
-              try {
-                Optional<SliderChangeListener> windowAction = getAction(ActionW.WINDOW);
-                Optional<SliderChangeListener> levelAction = getAction(ActionW.LEVEL);
-                if (windowAction.isPresent() && levelAction.isPresent()) {
-                  int win = windowAction.get().getSliderValue() + Integer.parseInt(args.get(0));
-                  int level = levelAction.get().getSliderValue() + Integer.parseInt(args.get(1));
-                  windowAction.get().setSliderValue(win);
-                  levelAction.get().setSliderValue(level);
-                }
-              } catch (Exception e) {
-                LOGGER.error("Window/level command: {} {}", args.get(0), args.get(1), e);
-              }
-            });
+    GuiExecutor.execute(
+        () -> {
+          try {
+            Optional<SliderChangeListener> windowAction = getAction(ActionW.WINDOW);
+            Optional<SliderChangeListener> levelAction = getAction(ActionW.LEVEL);
+            if (windowAction.isPresent() && levelAction.isPresent()) {
+              int win = windowAction.get().getSliderValue() + Integer.parseInt(args.get(0));
+              int level = levelAction.get().getSliderValue() + Integer.parseInt(args.get(1));
+              windowAction.get().setSliderValue(win);
+              levelAction.get().setSliderValue(level);
+            }
+          } catch (Exception e) {
+            LOGGER.error("Window/level command: {} {}", args.get(0), args.get(1), e);
+          }
+        });
   }
 
   public void move(String[] argv) throws IOException {
@@ -1835,19 +1833,18 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
       return;
     }
 
-    GuiExecutor.instance()
-        .execute(
-            () -> {
-              try {
-                int valx = Integer.parseInt(args.get(0));
-                int valy = Integer.parseInt(args.get(1));
-                getAction(ActionW.PAN)
-                    .ifPresent(a -> a.setPoint(new PanPoint(PanPoint.State.MOVE, valx, valy)));
+    GuiExecutor.execute(
+        () -> {
+          try {
+            int valx = Integer.parseInt(args.get(0));
+            int valy = Integer.parseInt(args.get(1));
+            getAction(ActionW.PAN)
+                .ifPresent(a -> a.setPoint(new PanPoint(PanPoint.State.MOVE, valx, valy)));
 
-              } catch (Exception e) {
-                LOGGER.error("Move (x,y) command: {} {}", args.get(0), args.get(1), e);
-              }
-            });
+          } catch (Exception e) {
+            LOGGER.error("Move (x,y) command: {} {}", args.get(0), args.get(1), e);
+          }
+        });
   }
 
   public void scroll(String[] argv) throws IOException {
@@ -1867,29 +1864,26 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
       return;
     }
 
-    GuiExecutor.instance()
-        .execute(
-            () -> {
-              try {
-                Optional<SliderCineListener> cineAction = getAction(ActionW.SCROLL_SERIES);
-                if (cineAction.isPresent() && cineAction.get().isActionEnabled()) {
-                  SliderCineListener moveTroughSliceAction = cineAction.get();
-                  if (opt.isSet("increase")) { // NON-NLS
-                    moveTroughSliceAction.setSliderValue(
-                        moveTroughSliceAction.getSliderValue()
-                            + opt.getNumber("increase")); // NON-NLS
-                  } else if (opt.isSet("decrease")) { // NON-NLS
-                    moveTroughSliceAction.setSliderValue(
-                        moveTroughSliceAction.getSliderValue()
-                            - opt.getNumber("decrease")); // NON-NLS
-                  } else if (opt.isSet("set")) {
-                    moveTroughSliceAction.setSliderValue(opt.getNumber("set"));
-                  }
-                }
-              } catch (Exception e) {
-                LOGGER.error("Scroll command error:", e);
+    GuiExecutor.execute(
+        () -> {
+          try {
+            Optional<SliderCineListener> cineAction = getAction(ActionW.SCROLL_SERIES);
+            if (cineAction.isPresent() && cineAction.get().isActionEnabled()) {
+              SliderCineListener moveTroughSliceAction = cineAction.get();
+              if (opt.isSet("increase")) { // NON-NLS
+                moveTroughSliceAction.setSliderValue(
+                    moveTroughSliceAction.getSliderValue() + opt.getNumber("increase")); // NON-NLS
+              } else if (opt.isSet("decrease")) { // NON-NLS
+                moveTroughSliceAction.setSliderValue(
+                    moveTroughSliceAction.getSliderValue() - opt.getNumber("decrease")); // NON-NLS
+              } else if (opt.isSet("set")) {
+                moveTroughSliceAction.setSliderValue(opt.getNumber("set"));
               }
-            });
+            }
+          } catch (Exception e) {
+            LOGGER.error("Scroll command error:", e);
+          }
+        });
   }
 
   public void layout(String[] argv) throws IOException {
@@ -1906,29 +1900,28 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
       opt.usage();
       return;
     }
-    GuiExecutor.instance()
-        .execute(
-            () -> {
-              try {
-                if (opt.isSet("number")) { // NON-NLS
-                  if (selectedView2dContainer != null) {
-                    GridBagLayoutModel val1 =
-                        selectedView2dContainer.getBestDefaultViewLayout(
-                            opt.getNumber("number")); // NON-NLS
-                    getAction(ActionW.LAYOUT).ifPresent(a -> a.setSelectedItem(val1));
-                  }
-                } else if (opt.isSet("id")) {
-                  if (selectedView2dContainer != null) {
-                    GridBagLayoutModel val2 = selectedView2dContainer.getViewLayout(opt.get("id"));
-                    if (val2 != null) {
-                      getAction(ActionW.LAYOUT).ifPresent(a -> a.setSelectedItem(val2));
-                    }
-                  }
-                }
-              } catch (Exception e) {
-                LOGGER.error("Layout command error", e);
+    GuiExecutor.execute(
+        () -> {
+          try {
+            if (opt.isSet("number")) { // NON-NLS
+              if (selectedView2dContainer != null) {
+                GridBagLayoutModel val1 =
+                    selectedView2dContainer.getBestDefaultViewLayout(
+                        opt.getNumber("number")); // NON-NLS
+                getAction(ActionW.LAYOUT).ifPresent(a -> a.setSelectedItem(val1));
               }
-            });
+            } else if (opt.isSet("id")) {
+              if (selectedView2dContainer != null) {
+                GridBagLayoutModel val2 = selectedView2dContainer.getViewLayout(opt.get("id"));
+                if (val2 != null) {
+                  getAction(ActionW.LAYOUT).ifPresent(a -> a.setSelectedItem(val2));
+                }
+              }
+            }
+          } catch (Exception e) {
+            LOGGER.error("Layout command error", e);
+          }
+        });
   }
 
   public void mouseLeftAction(String[] argv) throws IOException {
@@ -1946,24 +1939,23 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
       return;
     }
 
-    GuiExecutor.instance()
-        .execute(
-            () -> {
-              String command = args.get(0);
-              if (command != null) {
-                try {
-                  if (command.startsWith("session")) { // NON-NLS
-                    AuditLog.LOGGER.info("source:telnet {}", command);
-                  } else {
-                    AuditLog.LOGGER.info(
-                        "source:telnet mouse:{} action:{}", MouseActions.T_LEFT, command);
-                    excecuteMouseAction(command);
-                  }
-                } catch (Exception e) {
-                  LOGGER.error("Mouse command: {}", command, e);
-                }
+    GuiExecutor.execute(
+        () -> {
+          String command = args.get(0);
+          if (command != null) {
+            try {
+              if (command.startsWith("session")) { // NON-NLS
+                AuditLog.LOGGER.info("source:telnet {}", command);
+              } else {
+                AuditLog.LOGGER.info(
+                    "source:telnet mouse:{} action:{}", MouseActions.T_LEFT, command);
+                excecuteMouseAction(command);
               }
-            });
+            } catch (Exception e) {
+              LOGGER.error("Mouse command: {}", command, e);
+            }
+          }
+        });
   }
 
   private void excecuteMouseAction(String command) {
@@ -2002,30 +1994,29 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
       opt.usage();
       return;
     }
-    GuiExecutor.instance()
-        .execute(
-            () -> {
-              String command = args.get(0);
-              if (command != null) {
-                ImageViewerPlugin<DicomImageElement> view = getSelectedView2dContainer();
-                if (view != null) {
-                  try {
-                    Optional<ComboItemListener<SynchView>> synchAction = getAction(ActionW.SYNCH);
-                    if (synchAction.isPresent()) {
-                      for (SynchView synch : view.getSynchList()) {
-                        if (synch.getCommand().equals(command)) {
-                          synchAction.get().setSelectedItem(synch);
-                          return;
-                        }
-                      }
-                      throw new IllegalArgumentException(command + " not found!");
+    GuiExecutor.execute(
+        () -> {
+          String command = args.get(0);
+          if (command != null) {
+            ImageViewerPlugin<DicomImageElement> view = getSelectedView2dContainer();
+            if (view != null) {
+              try {
+                Optional<ComboItemListener<SynchView>> synchAction = getAction(ActionW.SYNCH);
+                if (synchAction.isPresent()) {
+                  for (SynchView synch : view.getSynchList()) {
+                    if (synch.getCommand().equals(command)) {
+                      synchAction.get().setSelectedItem(synch);
+                      return;
                     }
-                  } catch (Exception e) {
-                    LOGGER.error("Synch command: {}", command, e);
                   }
+                  throw new IllegalArgumentException(command + " not found!");
                 }
+              } catch (Exception e) {
+                LOGGER.error("Synch command: {}", command, e);
               }
-            });
+            }
+          }
+        });
   }
 
   public void reset(String[] argv) throws IOException {
@@ -2044,28 +2035,27 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
       return;
     }
 
-    GuiExecutor.instance()
-        .execute(
-            () -> {
-              if (opt.isSet("all")) { // NON-NLS
-                reset(ResetTools.ALL);
-              } else {
-                for (String command : args) {
-                  try {
-                    if (ActionW.WINLEVEL.cmd().equals(command)) {
-                      reset(ResetTools.WL);
-                    } else if (ActionW.ZOOM.cmd().equals(command)) {
-                      reset(ResetTools.ZOOM);
-                    } else if (ActionW.PAN.cmd().equals(command)) {
-                      reset(ResetTools.PAN);
-                    } else {
-                      LOGGER.warn("Reset command not found: {}", command);
-                    }
-                  } catch (Exception e) {
-                    LOGGER.error("Reset command: {}", command, e);
-                  }
+    GuiExecutor.execute(
+        () -> {
+          if (opt.isSet("all")) { // NON-NLS
+            reset(ResetTools.ALL);
+          } else {
+            for (String command : args) {
+              try {
+                if (ActionW.WINLEVEL.cmd().equals(command)) {
+                  reset(ResetTools.WL);
+                } else if (ActionW.ZOOM.cmd().equals(command)) {
+                  reset(ResetTools.ZOOM);
+                } else if (ActionW.PAN.cmd().equals(command)) {
+                  reset(ResetTools.PAN);
+                } else {
+                  LOGGER.warn("Reset command not found: {}", command);
                 }
+              } catch (Exception e) {
+                LOGGER.error("Reset command: {}", command, e);
               }
-            });
+            }
+          }
+        });
   }
 }

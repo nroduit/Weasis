@@ -1307,24 +1307,22 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
   }
 
   public synchronized void addTaskToGlobalProgression(final ExplorerTask task) {
-    GuiExecutor.instance()
-        .invokeAndWait(
-            () -> {
-              loadingPanel.addTask(task);
-              revalidate();
-              repaint();
-            });
+    GuiExecutor.invokeAndWait(
+        () -> {
+          loadingPanel.addTask(task);
+          revalidate();
+          repaint();
+        });
   }
 
   public synchronized void removeTaskToGlobalProgression(final ExplorerTask task) {
-    GuiExecutor.instance()
-        .invokeAndWait(
-            () -> {
-              if (loadingPanel.removeTask(task)) {
-                revalidate();
-                repaint();
-              }
-            });
+    GuiExecutor.invokeAndWait(
+        () -> {
+          if (loadingPanel.removeTask(task)) {
+            revalidate();
+            repaint();
+          }
+        });
   }
 
   public static SeriesThumbnail createThumbnail(
@@ -1345,7 +1343,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
           return thumb;
         };
     FutureTask<SeriesThumbnail> future = new FutureTask<>(callable);
-    GuiExecutor.instance().invokeAndWait(future);
+    GuiExecutor.invokeAndWait(future);
     SeriesThumbnail result = null;
     try {
       result = future.get();

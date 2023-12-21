@@ -361,7 +361,7 @@ public class SRView extends JScrollPane implements SeriesViewerListener {
 
         LoadDicomObjects loadDicomObjects =
             new LoadDicomObjects(model, OpeningViewer.NONE, attributes);
-        GuiExecutor.instance().invokeAndWait(loadDicomObjects);
+        GuiExecutor.invokeAndWait(loadDicomObjects);
 
         for (KOSpecialElement koElement : DicomModel.getKoSpecialElements(s)) {
           if (koElement.getMediaReader().getDicomObject().equals(attributes)) {

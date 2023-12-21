@@ -189,7 +189,7 @@ public final class KOManager {
     DicomModel dicomModel = (DicomModel) dicomSeries.getTagValue(TagW.ExplorerModel);
     LoadDicomObjects loadDicomObjects =
         new LoadDicomObjects(dicomModel, OpeningViewer.NONE, newDicomKO);
-    GuiExecutor.instance().invokeAndWait(loadDicomObjects);
+    GuiExecutor.invokeAndWait(loadDicomObjects);
 
     for (KOSpecialElement koElement : DicomModel.getKoSpecialElements(dicomSeries)) {
       if (koElement.getMediaReader().getDicomObject().equals(newDicomKO)) {

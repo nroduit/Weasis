@@ -39,30 +39,28 @@ public class Activator implements BundleActivator {
     }
 
     // WeasisWin must be instantiated in the EDT but required to end before the bundle startup
-    GuiExecutor.instance()
-        .invokeAndWait(
-            () -> {
-              final WeasisWin mainWindow = new WeasisWin();
-              // Register "weasis" command
-              Dictionary<String, Object> dict = new Hashtable<>();
-              dict.put(CommandProcessor.COMMAND_SCOPE, "weasis"); // NON-NLS
-              dict.put(
-                  CommandProcessor.COMMAND_FUNCTION, WeasisWin.functions.toArray(new String[0]));
-              bundleContext.registerService(WeasisWin.class.getName(), mainWindow, dict);
-              try {
-                mainWindow.createMainPanel();
-                mainWindow.showWindow();
-              } catch (Exception ex) {
-                // It is better to exit than to let run a zombie process
-                LOGGER.error("Cannot start GUI", ex);
-                System.exit(-1);
-              }
-              MainWindowListener listener =
-                  BundlePreferences.getService(bundleContext, MainWindowListener.class);
-              if (listener != null) {
-                listener.setMainWindow(mainWindow);
-              }
-            });
+    GuiExecutor.invokeAndWait(
+        () -> {
+          final WeasisWin mainWindow = new WeasisWin();
+          // Register "weasis" command
+          Dictionary<String, Object> dict = new Hashtable<>();
+          dict.put(CommandProcessor.COMMAND_SCOPE, "weasis"); // NON-NLS
+          dict.put(CommandProcessor.COMMAND_FUNCTION, WeasisWin.functions.toArray(new String[0]));
+          bundleContext.registerService(WeasisWin.class.getName(), mainWindow, dict);
+          try {
+            mainWindow.createMainPanel();
+            mainWindow.showWindow();
+          } catch (Exception ex) {
+            // It is better to exit than to let run a zombie process
+            LOGGER.error("Cannot start GUI", ex);
+            System.exit(-1);
+          }
+          MainWindowListener listener =
+              BundlePreferences.getService(bundleContext, MainWindowListener.class);
+          if (listener != null) {
+            listener.setMainWindow(mainWindow);
+          }
+        });
   }
 
   @Override

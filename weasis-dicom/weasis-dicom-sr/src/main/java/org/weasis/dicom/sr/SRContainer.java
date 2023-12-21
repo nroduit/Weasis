@@ -216,13 +216,12 @@ public class SRContainer extends DicomViewerPlugin implements PropertyChangeList
     SRFactory.closeSeriesViewer(this);
     super.close();
 
-    GuiExecutor.instance()
-        .execute(
-            () -> {
-              if (srview != null) {
-                srview.dispose();
-              }
-            });
+    GuiExecutor.execute(
+        () -> {
+          if (srview != null) {
+            srview.dispose();
+          }
+        });
   }
 
   @Override

@@ -561,46 +561,44 @@ public class MprContainer extends DicomViewerPlugin implements PropertyChangeLis
                 SeriesBuilder.createMissingSeries(this, MprContainer.this, view);
 
                 // Following actions need to be executed in EDT thread
-                GuiExecutor.instance()
-                    .execute(
-                        () -> {
-                          eventManager
-                              .getAction(ActionW.SYNCH)
-                              .ifPresent(c -> c.setSelectedItem(MprContainer.defaultMpr));
+                GuiExecutor.execute(
+                    () -> {
+                      eventManager
+                          .getAction(ActionW.SYNCH)
+                          .ifPresent(c -> c.setSelectedItem(MprContainer.defaultMpr));
 
-                          // Set the middle image ( the best choice to propagate the default preset
-                          // of non CT modalities)
-                          eventManager
-                              .getAction(ActionW.SCROLL_SERIES)
-                              .ifPresent(s -> s.setSliderValue(s.getSliderMax() / 2));
+                      // Set the middle image ( the best choice to propagate the default preset
+                      // of non CT modalities)
+                      eventManager
+                          .getAction(ActionW.SCROLL_SERIES)
+                          .ifPresent(s -> s.setSliderValue(s.getSliderMax() / 2));
 
-                          eventManager
-                              .getAction(ActionW.CROSSHAIR)
-                              .ifPresent(
-                                  i -> {
-                                    Point2D pt =
-                                        view.getImageCoordinatesFromMouse(
-                                            view.getWidth() / 2, view.getHeight() / 2);
-                                    PanPoint panPoint =
-                                        new PanPoint(PanPoint.State.CENTER, pt.getX(), pt.getY());
-                                    i.setPoint(panPoint);
-                                  });
+                      eventManager
+                          .getAction(ActionW.CROSSHAIR)
+                          .ifPresent(
+                              i -> {
+                                Point2D pt =
+                                    view.getImageCoordinatesFromMouse(
+                                        view.getWidth() / 2, view.getHeight() / 2);
+                                PanPoint panPoint =
+                                    new PanPoint(PanPoint.State.CENTER, pt.getX(), pt.getY());
+                                i.setPoint(panPoint);
+                              });
 
-                          // Force to propagate the default preset
-                          eventManager
-                              .getAction(ActionW.PRESET)
-                              .ifPresent(
-                                  c -> {
-                                    c.setSelectedItemWithoutTriggerAction(null);
-                                    c.setSelectedItem(c.getFirstItem());
-                                  });
-                        });
+                      // Force to propagate the default preset
+                      eventManager
+                          .getAction(ActionW.PRESET)
+                          .ifPresent(
+                              c -> {
+                                c.setSelectedItemWithoutTriggerAction(null);
+                                c.setSelectedItem(c.getFirstItem());
+                              });
+                    });
 
               } catch (final Exception e) {
                 LOGGER.error("Build MPR", e);
                 // Following actions need to be executed in EDT thread
-                GuiExecutor.instance()
-                    .execute(() -> showErrorMessage(view2ds, view, e.getMessage()));
+                GuiExecutor.execute(() -> showErrorMessage(view2ds, view, e.getMessage()));
               }
             }
           };

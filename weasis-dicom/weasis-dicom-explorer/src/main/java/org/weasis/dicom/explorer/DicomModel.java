@@ -1086,14 +1086,13 @@ public class DicomModel implements TreeModel, DataExplorerModel {
       return;
     }
 
-    GuiExecutor.instance()
-        .execute(
-            () -> {
-              firePropertyChange(
-                  new ObservableEvent(
-                      ObservableEvent.BasicAction.SELECT, DicomModel.this, null, DicomModel.this));
-              getCommand(opt, largs, rargs, iargs, wargs, zargs);
-            });
+    GuiExecutor.execute(
+        () -> {
+          firePropertyChange(
+              new ObservableEvent(
+                  ObservableEvent.BasicAction.SELECT, DicomModel.this, null, DicomModel.this));
+          getCommand(opt, largs, rargs, iargs, wargs, zargs);
+        });
   }
 
   private void getCommand(
@@ -1258,28 +1257,27 @@ public class DicomModel implements TreeModel, DataExplorerModel {
       props.setProperty(RsQueryParams.P_OIDC_USER, oidcLogin);
     }
 
-    GuiExecutor.instance()
-        .execute(
-            () -> {
-              firePropertyChange(
-                  new ObservableEvent(
-                      ObservableEvent.BasicAction.SELECT, DicomModel.this, null, DicomModel.this));
-              for (String query : pargs) {
-                List<String> common = opt.getList("header"); // NON-NLS
-                List<String> q = opt.getList("query-header"); // NON-NLS
-                q.addAll(common);
-                List<String> r = opt.getList("retrieve-header"); // NON-NLS
-                r.addAll(common);
-                RsQueryParams rsquery =
-                    new RsQueryParams(
-                        DicomModel.this,
-                        props,
-                        RsQueryParams.getQueryMap(query),
-                        RsQueryParams.getHeaders(q),
-                        RsQueryParams.getHeaders(r));
-                LOADING_EXECUTOR.execute(rsquery);
-              }
-            });
+    GuiExecutor.execute(
+        () -> {
+          firePropertyChange(
+              new ObservableEvent(
+                  ObservableEvent.BasicAction.SELECT, DicomModel.this, null, DicomModel.this));
+          for (String query : pargs) {
+            List<String> common = opt.getList("header"); // NON-NLS
+            List<String> q = opt.getList("query-header"); // NON-NLS
+            q.addAll(common);
+            List<String> r = opt.getList("retrieve-header"); // NON-NLS
+            r.addAll(common);
+            RsQueryParams rsquery =
+                new RsQueryParams(
+                    DicomModel.this,
+                    props,
+                    RsQueryParams.getQueryMap(query),
+                    RsQueryParams.getHeaders(q),
+                    RsQueryParams.getHeaders(r));
+            LOADING_EXECUTOR.execute(rsquery);
+          }
+        });
   }
 
   public void close(String[] argv) throws IOException {
@@ -1300,14 +1298,13 @@ public class DicomModel implements TreeModel, DataExplorerModel {
       return;
     }
 
-    GuiExecutor.instance()
-        .execute(
-            () -> {
-              firePropertyChange(
-                  new ObservableEvent(
-                      ObservableEvent.BasicAction.SELECT, DicomModel.this, null, DicomModel.this));
-              closeCommand(opt, yargs, sargs);
-            });
+    GuiExecutor.execute(
+        () -> {
+          firePropertyChange(
+              new ObservableEvent(
+                  ObservableEvent.BasicAction.SELECT, DicomModel.this, null, DicomModel.this));
+          closeCommand(opt, yargs, sargs);
+        });
   }
 
   private void closeCommand(Option opt, List<String> yargs, List<String> sargs) {

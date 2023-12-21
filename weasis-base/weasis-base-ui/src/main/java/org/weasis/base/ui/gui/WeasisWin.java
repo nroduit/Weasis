@@ -520,17 +520,16 @@ public class WeasisWin {
             CLocation.external(
                 screenBound.x, screenBound.y, screenBound.width - 150, screenBound.height - 150));
         plugin.showDockable();
-        GuiExecutor.instance()
-            .execute(
-                () -> {
-                  if (dock.isVisible()) {
-                    CControl control = GuiUtils.getUICore().getDockingControl();
-                    CVetoFocusListener vetoFocus = GuiUtils.getUICore().getDockingVetoFocus();
-                    control.addVetoFocusListener(vetoFocus);
-                    dock.setExtendedMode(ExtendedMode.MAXIMIZED);
-                    control.removeVetoFocusListener(vetoFocus);
-                  }
-                });
+        GuiExecutor.execute(
+            () -> {
+              if (dock.isVisible()) {
+                CControl control = GuiUtils.getUICore().getDockingControl();
+                CVetoFocusListener vetoFocus = GuiUtils.getUICore().getDockingVetoFocus();
+                control.addVetoFocusListener(vetoFocus);
+                dock.setExtendedMode(ExtendedMode.MAXIMIZED);
+                control.removeVetoFocusListener(vetoFocus);
+              }
+            });
       } else {
         ConfiguredBackgroundPanel parent =
             WinUtil.getParentOfClass(oldWin, ConfiguredBackgroundPanel.class);
@@ -701,14 +700,13 @@ public class WeasisWin {
             if (vNew.compareTo(vOld) > 0) {
               openBrowser(updateMenuItem, release.getUrl());
             } else {
-              GuiExecutor.instance()
-                  .execute(
-                      () ->
-                          JOptionPane.showMessageDialog(
-                              updateMenuItem,
-                              Messages.getString("current.release.latest"),
-                              Messages.getString("update"),
-                              JOptionPane.INFORMATION_MESSAGE));
+              GuiExecutor.execute(
+                  () ->
+                      JOptionPane.showMessageDialog(
+                          updateMenuItem,
+                          Messages.getString("current.release.latest"),
+                          Messages.getString("update"),
+                          JOptionPane.INFORMATION_MESSAGE));
             }
           }
         });
@@ -781,26 +779,25 @@ public class WeasisWin {
       Version vOld = AppProperties.getVersion(AppProperties.WEASIS_VERSION);
       Version vNew = AppProperties.getVersion(release.getVersion());
       if (vNew.compareTo(vOld) > 0) {
-        GuiExecutor.instance()
-            .execute(
-                () -> {
-                  JLabel label = new JLabel(Messages.getString("new.release.available"));
-                  label.setAlignmentX(JLabel.RIGHT_ALIGNMENT);
-                  JCheckBox dontAskMeAgain = new JCheckBox(Messages.getString("don.t.ask.again"));
-                  dontAskMeAgain.setAlignmentX(JLabel.RIGHT_ALIGNMENT);
-                  JPanel panel = GuiUtils.getVerticalBoxLayoutPanel(label, dontAskMeAgain);
-                  int confirm =
-                      JOptionPane.showConfirmDialog(
-                          parent, panel, Messages.getString("update"), JOptionPane.YES_NO_OPTION);
-                  if (confirm == 0) {
-                    openBrowser(parent, release.getUrl());
-                  }
-                  if (dontAskMeAgain.isSelected()) {
-                    GuiUtils.getUICore()
-                        .getSystemPreferences()
-                        .putBooleanProperty("weasis.show.update.next.release", false);
-                  }
-                });
+        GuiExecutor.execute(
+            () -> {
+              JLabel label = new JLabel(Messages.getString("new.release.available"));
+              label.setAlignmentX(JLabel.RIGHT_ALIGNMENT);
+              JCheckBox dontAskMeAgain = new JCheckBox(Messages.getString("don.t.ask.again"));
+              dontAskMeAgain.setAlignmentX(JLabel.RIGHT_ALIGNMENT);
+              JPanel panel = GuiUtils.getVerticalBoxLayoutPanel(label, dontAskMeAgain);
+              int confirm =
+                  JOptionPane.showConfirmDialog(
+                      parent, panel, Messages.getString("update"), JOptionPane.YES_NO_OPTION);
+              if (confirm == 0) {
+                openBrowser(parent, release.getUrl());
+              }
+              if (dontAskMeAgain.isSelected()) {
+                GuiUtils.getUICore()
+                    .getSystemPreferences()
+                    .putBooleanProperty("weasis.show.update.next.release", false);
+              }
+            });
       }
     }
   }
@@ -1216,47 +1213,46 @@ public class WeasisWin {
     if (opt.isSet("quit")) { // NON-NLS
       System.exit(0);
     } else if (opt.isSet("visible")) { // NON-NLS
-      GuiExecutor.instance()
-          .execute(
-              () -> {
-                Frame app = getFrame();
-                app.setVisible(true);
-                int state = app.getExtendedState();
-                state &= ~Frame.ICONIFIED;
-                app.setExtendedState(state);
-                app.setVisible(true);
-                /*
-                 * Sets the window to be "always on top" instead using toFront() method that does not always bring the
-                 * window to the front. It depends on the platform, Windows XP or Ubuntu has the facility to prevent
-                 * windows from stealing focus; instead it flashes the taskbar icon.
-                 */
-                if (app.isAlwaysOnTopSupported()) {
-                  app.setAlwaysOnTop(true);
+      GuiExecutor.execute(
+          () -> {
+            Frame app = getFrame();
+            app.setVisible(true);
+            int state = app.getExtendedState();
+            state &= ~Frame.ICONIFIED;
+            app.setExtendedState(state);
+            app.setVisible(true);
+            /*
+             * Sets the window to be "always on top" instead using toFront() method that does not always bring the
+             * window to the front. It depends on the platform, Windows XP or Ubuntu has the facility to prevent
+             * windows from stealing focus; instead it flashes the taskbar icon.
+             */
+            if (app.isAlwaysOnTopSupported()) {
+              app.setAlwaysOnTop(true);
 
-                  try {
-                    Thread.sleep(500L);
-                    Robot robot = new Robot();
-                    Point old = MouseInfo.getPointerInfo().getLocation();
-                    Point p = app.getLocationOnScreen();
-                    int x = p.x + app.getWidth() / 2;
-                    int y = p.y + app.getHeight() / 2;
-                    robot.mouseMove(x, y);
-                    // Simulate a mouse click
-                    robot.mousePress(InputEvent.BUTTON1_MASK);
-                    robot.mouseRelease(InputEvent.BUTTON1_MASK);
-                    robot.mouseMove(old.x, old.y);
-                  } catch (AWTException e1) {
-                    // DO nothing
-                  } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                  } finally {
-                    app.setAlwaysOnTop(false);
-                  }
+              try {
+                Thread.sleep(500L);
+                Robot robot = new Robot();
+                Point old = MouseInfo.getPointerInfo().getLocation();
+                Point p = app.getLocationOnScreen();
+                int x = p.x + app.getWidth() / 2;
+                int y = p.y + app.getHeight() / 2;
+                robot.mouseMove(x, y);
+                // Simulate a mouse click
+                robot.mousePress(InputEvent.BUTTON1_MASK);
+                robot.mouseRelease(InputEvent.BUTTON1_MASK);
+                robot.mouseMove(old.x, old.y);
+              } catch (AWTException e1) {
+                // DO nothing
+              } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+              } finally {
+                app.setAlwaysOnTop(false);
+              }
 
-                } else {
-                  app.toFront();
-                }
-              });
+            } else {
+              app.toFront();
+            }
+          });
 
     } else {
       opt.usage();

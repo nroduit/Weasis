@@ -187,13 +187,12 @@ public class AuContainer extends DicomViewerPlugin implements PropertyChangeList
     AuFactory.closeSeriesViewer(this);
     super.close();
 
-    GuiExecutor.instance()
-        .execute(
-            () -> {
-              if (auview != null) {
-                auview.dispose();
-              }
-            });
+    GuiExecutor.execute(
+        () -> {
+          if (auview != null) {
+            auview.dispose();
+          }
+        });
   }
 
   @Override

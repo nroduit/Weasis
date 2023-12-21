@@ -90,7 +90,7 @@ public class Activator implements BundleActivator, ServiceListener {
   @Override
   public synchronized void serviceChanged(final ServiceEvent event) {
     // Tools and Toolbars (with non-immediate instance) must be instantiated in the EDT
-    GuiExecutor.instance().execute(() -> dataExplorerChanged(event));
+    GuiExecutor.execute(() -> dataExplorerChanged(event));
   }
 
   private void dataExplorerChanged(final ServiceEvent event) {
@@ -123,8 +123,7 @@ public class Activator implements BundleActivator, ServiceListener {
         if (Boolean.parseBoolean(
             (String) serviceReference.getProperty(View2dContainer.class.getName()))) {
           // Instantiate UI components in EDT
-          GuiExecutor.instance()
-              .execute(() -> registerComponent(bundleContext.getService(serviceReference)));
+          GuiExecutor.execute(() -> registerComponent(bundleContext.getService(serviceReference)));
         }
       }
     } catch (InvalidSyntaxException e1) {

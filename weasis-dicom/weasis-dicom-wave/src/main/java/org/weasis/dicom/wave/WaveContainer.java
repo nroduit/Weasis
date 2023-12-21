@@ -251,13 +251,12 @@ public class WaveContainer extends DicomViewerPlugin implements PropertyChangeLi
     super.close();
     WaveFactory.closeSeriesViewer(this);
 
-    GuiExecutor.instance()
-        .execute(
-            () -> {
-              if (ecgView != null) {
-                ecgView.dispose();
-              }
-            });
+    GuiExecutor.execute(
+        () -> {
+          if (ecgView != null) {
+            ecgView.dispose();
+          }
+        });
   }
 
   @Override

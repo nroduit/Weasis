@@ -139,7 +139,7 @@ public abstract class LoadDicom extends ExplorerTask<Boolean, String> {
           t = DicomExplorer.createThumbnail(dicomSeries, dicomModel, thumbnailSize);
           dicomSeries.setTag(TagW.Thumbnail, t);
           if (t != null) {
-            GuiExecutor.instance().execute(t::repaint);
+            GuiExecutor.execute(t::repaint);
           }
         }
 
@@ -187,7 +187,7 @@ public abstract class LoadDicom extends ExplorerTask<Boolean, String> {
             // Refresh the number of images on the thumbnail
             Thumbnail t = (Thumbnail) dicomSeries.getTagValue(TagW.Thumbnail);
             if (t != null) {
-              GuiExecutor.instance().execute(t::repaint);
+              GuiExecutor.execute(t::repaint);
             }
           }
 

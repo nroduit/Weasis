@@ -176,12 +176,11 @@ public abstract class ViewerPlugin<E extends MediaElement> extends JPanel
 
   @Override
   public void close() {
-    GuiExecutor.instance()
-        .execute(
-            () -> {
-              GuiUtils.getUICore().getViewerPlugins().remove(ViewerPlugin.this);
-              GuiUtils.getUICore().getDockingControl().removeDockable(dockable);
-            });
+    GuiExecutor.execute(
+        () -> {
+          GuiUtils.getUICore().getViewerPlugins().remove(ViewerPlugin.this);
+          GuiUtils.getUICore().getDockingControl().removeDockable(dockable);
+        });
   }
 
   public Component getComponent() {
@@ -193,28 +192,27 @@ public abstract class ViewerPlugin<E extends MediaElement> extends JPanel
   }
 
   public void showDockable() {
-    GuiExecutor.instance()
-        .execute(
-            () -> {
-              if (!dockable.isVisible()) {
-                List<ViewerPlugin<?>> viewerPlugins = GuiUtils.getUICore().getViewerPlugins();
-                if (!viewerPlugins.contains(ViewerPlugin.this)) {
-                  viewerPlugins.add(ViewerPlugin.this);
-                }
-                dockable.add(getComponent());
-                dockable.setFocusComponent(ViewerPlugin.this);
-                CWorkingArea mainArea = GuiUtils.getUICore().getMainArea();
-                mainArea.add(getDockable());
-                dockable.setDefaultLocation(
-                    ExtendedMode.NORMALIZED, CLocation.working(mainArea).stack());
-                CControl control = GuiUtils.getUICore().getDockingControl();
-                CVetoFocusListener vetoFocus = GuiUtils.getUICore().getDockingVetoFocus();
-                control.addVetoFocusListener(vetoFocus);
-                dockable.setVisible(true);
-                control.removeVetoFocusListener(vetoFocus);
-                setSelectedAndGetFocus();
-              }
-            });
+    GuiExecutor.execute(
+        () -> {
+          if (!dockable.isVisible()) {
+            List<ViewerPlugin<?>> viewerPlugins = GuiUtils.getUICore().getViewerPlugins();
+            if (!viewerPlugins.contains(ViewerPlugin.this)) {
+              viewerPlugins.add(ViewerPlugin.this);
+            }
+            dockable.add(getComponent());
+            dockable.setFocusComponent(ViewerPlugin.this);
+            CWorkingArea mainArea = GuiUtils.getUICore().getMainArea();
+            mainArea.add(getDockable());
+            dockable.setDefaultLocation(
+                ExtendedMode.NORMALIZED, CLocation.working(mainArea).stack());
+            CControl control = GuiUtils.getUICore().getDockingControl();
+            CVetoFocusListener vetoFocus = GuiUtils.getUICore().getDockingVetoFocus();
+            control.addVetoFocusListener(vetoFocus);
+            dockable.setVisible(true);
+            control.removeVetoFocusListener(vetoFocus);
+            setSelectedAndGetFocus();
+          }
+        });
   }
 
   public ViewerToolBar getViewerToolBar() {

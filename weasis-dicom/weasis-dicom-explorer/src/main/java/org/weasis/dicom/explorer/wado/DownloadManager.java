@@ -192,12 +192,11 @@ public class DownloadManager {
       if (startLoading) {
         offerSeriesInQueue(series);
       } else {
-        GuiExecutor.instance()
-            .execute(
-                () -> {
-                  series.getProgressBar().setValue(0);
-                  series.stop();
-                });
+        GuiExecutor.execute(
+            () -> {
+              series.getProgressBar().setValue(0);
+              series.stop();
+            });
       }
       if (dicomModel != null) {
         dicomModel.firePropertyChange(
@@ -390,24 +389,23 @@ public class DownloadManager {
       LOGGER.error("{}", message, e);
       final int messageType = JOptionPane.ERROR_MESSAGE;
 
-      GuiExecutor.instance()
-          .execute(
-              () -> {
-                ColorLayerUI layer =
-                    ColorLayerUI.createTransparentLayerUI(GuiUtils.getUICore().getBaseArea());
-                JOptionPane.showOptionDialog(
-                    ColorLayerUI.getContentPane(layer),
-                    StringUtil.getTruncatedString(message, 130, Suffix.THREE_PTS),
-                    null,
-                    JOptionPane.DEFAULT_OPTION,
-                    messageType,
-                    null,
-                    null,
-                    null);
-                if (layer != null) {
-                  layer.hideUI();
-                }
-              });
+      GuiExecutor.execute(
+          () -> {
+            ColorLayerUI layer =
+                ColorLayerUI.createTransparentLayerUI(GuiUtils.getUICore().getBaseArea());
+            JOptionPane.showOptionDialog(
+                ColorLayerUI.getContentPane(layer),
+                StringUtil.getTruncatedString(message, 130, Suffix.THREE_PTS),
+                null,
+                JOptionPane.DEFAULT_OPTION,
+                messageType,
+                null,
+                null,
+                null);
+            if (layer != null) {
+              layer.hideUI();
+            }
+          });
     } finally {
       FileUtil.safeClose(xmler);
       FileUtil.safeClose(stream);
@@ -489,18 +487,16 @@ public class DownloadManager {
                           ? JOptionPane.INFORMATION_MESSAGE
                           : JOptionPane.WARNING_MESSAGE;
 
-              GuiExecutor.instance()
-                  .execute(
-                      () -> {
-                        ColorLayerUI layer =
-                            ColorLayerUI.createTransparentLayerUI(
-                                GuiUtils.getUICore().getBaseArea());
-                        JOptionPane.showMessageDialog(
-                            ColorLayerUI.getContentPane(layer), message, title, messageType);
-                        if (layer != null) {
-                          layer.hideUI();
-                        }
-                      });
+              GuiExecutor.execute(
+                  () -> {
+                    ColorLayerUI layer =
+                        ColorLayerUI.createTransparentLayerUI(GuiUtils.getUICore().getBaseArea());
+                    JOptionPane.showMessageDialog(
+                        ColorLayerUI.getContentPane(layer), message, title, messageType);
+                    if (layer != null) {
+                      layer.hideUI();
+                    }
+                  });
             }
           }
         };
@@ -510,19 +506,18 @@ public class DownloadManager {
     if (patients.size() == 1) {
       // In case of the patient already exists, select it
       final MediaSeriesGroup uniquePatient = patients.iterator().next();
-      GuiExecutor.instance()
-          .execute(
-              () -> {
-                List<ViewerPlugin<?>> viewerPlugins = GuiUtils.getUICore().getViewerPlugins();
-                synchronized (viewerPlugins) {
-                  for (final ViewerPlugin<?> p : viewerPlugins) {
-                    if (uniquePatient.equals(p.getGroupID())) {
-                      p.setSelectedAndGetFocus();
-                      break;
-                    }
-                  }
+      GuiExecutor.execute(
+          () -> {
+            List<ViewerPlugin<?>> viewerPlugins = GuiUtils.getUICore().getViewerPlugins();
+            synchronized (viewerPlugins) {
+              for (final ViewerPlugin<?> p : viewerPlugins) {
+                if (uniquePatient.equals(p.getGroupID())) {
+                  p.setSelectedAndGetFocus();
+                  break;
                 }
-              });
+              }
+            }
+          });
     }
     for (LoadSeries loadSeries : params.getSeriesMap().values()) {
       String modality = TagD.getTagValue(loadSeries.getDicomSeries(), Tag.Modality, String.class);
@@ -794,7 +789,7 @@ public class DownloadManager {
       new KODocumentModule(attributes).setCurrentRequestedProcedureEvidences(referencedStudies);
       LoadDicomObjects loadDicomObjects =
           new LoadDicomObjects(model, OpeningViewer.NONE, attributes);
-      GuiExecutor.instance().invokeAndWait(loadDicomObjects);
+      GuiExecutor.invokeAndWait(loadDicomObjects);
     }
   }
 

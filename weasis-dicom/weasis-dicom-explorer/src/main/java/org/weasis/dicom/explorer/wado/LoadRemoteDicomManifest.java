@@ -100,17 +100,16 @@ public class LoadRemoteDicomManifest extends ExplorerTask<Boolean, String> {
       return true;
     }
     boolean[] ret = {false};
-    GuiExecutor.instance()
-        .invokeAndWait(
-            () -> {
-              int confirm =
-                  JOptionPane.showConfirmDialog(
-                      GuiUtils.getUICore().getApplicationWindow(),
-                      getErrorMessage(e),
-                      Messages.getString("LoadRemoteDicomManifest.net_err_msg"),
-                      JOptionPane.YES_NO_OPTION);
-              ret[0] = JOptionPane.YES_OPTION == confirm;
-            });
+    GuiExecutor.invokeAndWait(
+        () -> {
+          int confirm =
+              JOptionPane.showConfirmDialog(
+                  GuiUtils.getUICore().getApplicationWindow(),
+                  getErrorMessage(e),
+                  Messages.getString("LoadRemoteDicomManifest.net_err_msg"),
+                  JOptionPane.YES_NO_OPTION);
+          ret[0] = JOptionPane.YES_OPTION == confirm;
+        });
     return ret[0];
   }
 

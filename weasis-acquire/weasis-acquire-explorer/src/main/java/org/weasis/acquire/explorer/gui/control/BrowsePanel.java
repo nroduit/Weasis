@@ -87,16 +87,15 @@ public class BrowsePanel extends JPanel implements IUSBDriveListener {
   public void usbDriveEvent(USBStorageEvent event) {
     LOGGER.debug("USB event: {}", event);
 
-    GuiExecutor.instance()
-        .execute(
-            () -> {
-              DeviceEventType eventType = event.getEventType();
-              if (eventType == DeviceEventType.CONNECTED) {
-                addUsbDevice(event.getStorageDevice());
-              } else if (eventType == DeviceEventType.REMOVED) {
-                removeUsbDevice(event.getStorageDevice());
-              }
-            });
+    GuiExecutor.execute(
+        () -> {
+          DeviceEventType eventType = event.getEventType();
+          if (eventType == DeviceEventType.CONNECTED) {
+            addUsbDevice(event.getStorageDevice());
+          } else if (eventType == DeviceEventType.REMOVED) {
+            removeUsbDevice(event.getStorageDevice());
+          }
+        });
   }
 
   private void addUsbDevice(USBStorageDevice storageDevice) {

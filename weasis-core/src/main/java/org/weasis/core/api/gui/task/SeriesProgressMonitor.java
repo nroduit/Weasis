@@ -43,14 +43,13 @@ public class SeriesProgressMonitor extends FilterInputStream {
 
   protected void updateSeriesProgression(long addSize) {
     series.setFileSize(series.getFileSize() + addSize);
-    GuiExecutor.instance()
-        .execute(
-            () -> {
-              Thumbnail thumb = (Thumbnail) series.getTagValue(TagW.Thumbnail);
-              if (thumb != null) {
-                thumb.repaint();
-              }
-            });
+    GuiExecutor.execute(
+        () -> {
+          Thumbnail thumb = (Thumbnail) series.getTagValue(TagW.Thumbnail);
+          if (thumb != null) {
+            thumb.repaint();
+          }
+        });
   }
 
   @Override

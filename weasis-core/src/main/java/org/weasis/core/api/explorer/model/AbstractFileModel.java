@@ -206,39 +206,37 @@ public abstract class AbstractFileModel implements TreeModel, DataExplorerModel 
       return;
     }
 
-    GuiExecutor.instance()
-        .execute(
-            () -> {
-              AbstractFileModel dataModel = AbstractFileModel.this;
-              firePropertyChange(
-                  new ObservableEvent(
-                      ObservableEvent.BasicAction.SELECT, dataModel, null, dataModel));
-              if (opt.isSet("all")) { // NON-NLS
-                for (MediaSeriesGroup g : model.getSuccessors(MediaSeriesGroupNode.rootNode)) {
-                  dataModel.removeTopGroup(g);
-                }
-              } else {
-                if (opt.isSet("group")) { // NON-NLS
+    GuiExecutor.execute(
+        () -> {
+          AbstractFileModel dataModel = AbstractFileModel.this;
+          firePropertyChange(
+              new ObservableEvent(ObservableEvent.BasicAction.SELECT, dataModel, null, dataModel));
+          if (opt.isSet("all")) { // NON-NLS
+            for (MediaSeriesGroup g : model.getSuccessors(MediaSeriesGroupNode.rootNode)) {
+              dataModel.removeTopGroup(g);
+            }
+          } else {
+            if (opt.isSet("group")) { // NON-NLS
 
-                  for (String gUID : gargs) {
-                    dataModel.removeTopGroup(getHierarchyNode(MediaSeriesGroupNode.rootNode, gUID));
-                  }
-                }
+              for (String gUID : gargs) {
+                dataModel.removeTopGroup(getHierarchyNode(MediaSeriesGroupNode.rootNode, gUID));
+              }
+            }
 
-                if (opt.isSet("series")) { // NON-NLS
-                  for (String uid : iargs) {
-                    for (MediaSeriesGroup topGroup :
-                        model.getSuccessors(MediaSeriesGroupNode.rootNode)) {
-                      MediaSeriesGroup s = getHierarchyNode(topGroup, uid);
-                      if (s != null) {
-                        removeSeries(s);
-                        break;
-                      }
-                    }
+            if (opt.isSet("series")) { // NON-NLS
+              for (String uid : iargs) {
+                for (MediaSeriesGroup topGroup :
+                    model.getSuccessors(MediaSeriesGroupNode.rootNode)) {
+                  MediaSeriesGroup s = getHierarchyNode(topGroup, uid);
+                  if (s != null) {
+                    removeSeries(s);
+                    break;
                   }
                 }
               }
-            });
+            }
+          }
+        });
   }
 
   @Override

@@ -480,7 +480,7 @@ public class AcquireManager {
       return;
     }
 
-    GuiExecutor.instance().execute(() -> patientCommand(opt, args.get(0)));
+    GuiExecutor.execute(() -> patientCommand(opt, args.get(0)));
   }
 
   private void patientCommand(Option opt, String arg) {

@@ -191,35 +191,33 @@ public class MipView extends View2d {
             AuditLog.logError(LOGGER, t, "Mip rendering error"); // NON-NLS
           } finally {
             // Following actions need to be executed in EDT thread
-            GuiExecutor.instance()
-                .execute(
-                    () -> {
-                      if (dicoms.size() == 1) {
-                        view.setMip(dicoms.get(0));
-                      } else if (dicoms.size() > 1) {
-                        DicomImageElement dcm = dicoms.get(0);
-                        Series s =
-                            new DicomSeries(
-                                TagD.getTagValue(dcm, Tag.SeriesInstanceUID, String.class));
-                        s.addAll(dicoms);
-                        dcm.getMediaReader().writeMetaData(s);
-                        DataExplorerModel model =
-                            (DataExplorerModel) ser.getTagValue(TagW.ExplorerModel);
-                        if (model instanceof DicomModel dicomModel) {
-                          MediaSeriesGroup study = dicomModel.getParent(ser, DicomModel.study);
-                          if (study != null) {
-                            s.setTag(TagW.ExplorerModel, dicomModel);
-                            dicomModel.addHierarchyNode(study, s);
-                            dicomModel.firePropertyChange(
-                                new ObservableEvent(
-                                    ObservableEvent.BasicAction.ADD, dicomModel, null, s));
-                          }
-
-                          View2dFactory factory = new View2dFactory();
-                          ViewerPluginBuilder.openSequenceInPlugin(factory, s, model, false, false);
-                        }
+            GuiExecutor.execute(
+                () -> {
+                  if (dicoms.size() == 1) {
+                    view.setMip(dicoms.get(0));
+                  } else if (dicoms.size() > 1) {
+                    DicomImageElement dcm = dicoms.get(0);
+                    Series s =
+                        new DicomSeries(TagD.getTagValue(dcm, Tag.SeriesInstanceUID, String.class));
+                    s.addAll(dicoms);
+                    dcm.getMediaReader().writeMetaData(s);
+                    DataExplorerModel model =
+                        (DataExplorerModel) ser.getTagValue(TagW.ExplorerModel);
+                    if (model instanceof DicomModel dicomModel) {
+                      MediaSeriesGroup study = dicomModel.getParent(ser, DicomModel.study);
+                      if (study != null) {
+                        s.setTag(TagW.ExplorerModel, dicomModel);
+                        dicomModel.addHierarchyNode(study, s);
+                        dicomModel.firePropertyChange(
+                            new ObservableEvent(
+                                ObservableEvent.BasicAction.ADD, dicomModel, null, s));
                       }
-                    });
+
+                      View2dFactory factory = new View2dFactory();
+                      ViewerPluginBuilder.openSequenceInPlugin(factory, s, model, false, false);
+                    }
+                  }
+                });
           }
         };
 
