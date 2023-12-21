@@ -33,6 +33,7 @@ import org.weasis.core.api.gui.task.CircularProgressBar;
 import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.gui.util.GuiUtils;
+import org.weasis.core.api.gui.util.WinUtil;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.MediaSeriesGroupNode;
 import org.weasis.core.api.media.data.Series;
@@ -286,7 +287,10 @@ public class RetrieveTask extends ExplorerTask<ExplorerTask<Boolean, String>, St
       GuiExecutor.execute(
           () ->
               JOptionPane.showMessageDialog(
-                  dicomQrView, mes, errorTitle, JOptionPane.ERROR_MESSAGE));
+                  WinUtil.getValidComponent(dicomQrView),
+                  mes,
+                  errorTitle,
+                  JOptionPane.ERROR_MESSAGE));
     }
 
     return loadingTask;
@@ -329,7 +333,10 @@ public class RetrieveTask extends ExplorerTask<ExplorerTask<Boolean, String>, St
       GuiExecutor.execute(
           () ->
               JOptionPane.showMessageDialog(
-                  dicomQrView, message1, null, JOptionPane.ERROR_MESSAGE));
+                  WinUtil.getValidComponent(dicomQrView),
+                  message1,
+                  null,
+                  JOptionPane.ERROR_MESSAGE));
       return null;
     } else if (wadoURLs.size() > 1) {
       GuiExecutor.invokeAndWait(
@@ -337,9 +344,9 @@ public class RetrieveTask extends ExplorerTask<ExplorerTask<Boolean, String>, St
             Object[] options = wadoURLs.toArray();
             Object response =
                 JOptionPane.showInputDialog(
-                    dicomQrView,
+                    WinUtil.getValidComponent(dicomQrView),
                     Messages.getString("RetrieveTask.several_wado_urls"),
-                    wadoURLs.get(0).getWebType().toString(),
+                    wadoURLs.getFirst().getWebType().toString(),
                     JOptionPane.QUESTION_MESSAGE,
                     null,
                     options,

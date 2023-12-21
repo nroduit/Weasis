@@ -703,7 +703,7 @@ public class WeasisWin {
               GuiExecutor.execute(
                   () ->
                       JOptionPane.showMessageDialog(
-                          updateMenuItem,
+                          WinUtil.getValidComponent(updateMenuItem),
                           Messages.getString("current.release.latest"),
                           Messages.getString("update"),
                           JOptionPane.INFORMATION_MESSAGE));

@@ -22,6 +22,7 @@ import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.Filter;
 import org.weasis.core.api.gui.util.GuiExecutor;
+import org.weasis.core.api.gui.util.WinUtil;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.SeriesEvent;
@@ -87,7 +88,7 @@ public final class KOManager {
 
         int response =
             JOptionPane.showOptionDialog(
-                view2d.getJComponent(),
+                WinUtil.getValidComponent(view2d.getJComponent()),
                 message,
                 Messages.getString("KOManager.ko_title"),
                 JOptionPane.YES_NO_OPTION,
@@ -126,7 +127,7 @@ public final class KOManager {
 
           int response =
               JOptionPane.showOptionDialog(
-                  view2d.getJComponent(),
+                  WinUtil.getValidComponent(view2d.getJComponent()),
                   message,
                   Messages.getString("KOManager.ko_title"),
                   JOptionPane.YES_NO_OPTION,
@@ -153,7 +154,7 @@ public final class KOManager {
 
         int response =
             JOptionPane.showOptionDialog(
-                view2d.getJComponent(),
+                WinUtil.getValidComponent(view2d.getJComponent()),
                 message,
                 Messages.getString("KOManager.ko_title"),
                 JOptionPane.YES_NO_OPTION,
@@ -215,7 +216,7 @@ public final class KOManager {
       String description =
           (String)
               JOptionPane.showInputDialog(
-                  parentComponent,
+                  WinUtil.getValidComponent(parentComponent),
                   message,
                   Messages.getString("KOManager.ko_title"),
                   JOptionPane.INFORMATION_MESSAGE,

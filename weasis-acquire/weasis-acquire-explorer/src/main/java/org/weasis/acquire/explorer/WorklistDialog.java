@@ -31,6 +31,7 @@ import org.dcm4che3.net.Status;
 import org.weasis.acquire.explorer.core.bean.DefaultTaggable;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.gui.util.GuiUtils;
+import org.weasis.core.api.gui.util.WinUtil;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.util.FontItem;
 import org.weasis.core.ui.util.SimpleTableModel;
@@ -175,7 +176,10 @@ public class WorklistDialog extends JDialog {
         GuiExecutor.execute(
             () ->
                 JOptionPane.showMessageDialog(
-                    this, state.getMessage(), null, JOptionPane.ERROR_MESSAGE));
+                    WinUtil.getValidComponent(this),
+                    state.getMessage(),
+                    null,
+                    JOptionPane.ERROR_MESSAGE));
         dispose();
         throw new IllegalStateException(state.getMessage());
       }

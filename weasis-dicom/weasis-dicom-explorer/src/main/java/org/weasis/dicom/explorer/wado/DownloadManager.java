@@ -51,6 +51,7 @@ import org.weasis.core.api.explorer.ObservableEvent;
 import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.gui.util.GuiUtils;
+import org.weasis.core.api.gui.util.WinUtil;
 import org.weasis.core.api.media.MimeInspector;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.MediaSeriesGroupNode;
@@ -394,7 +395,7 @@ public class DownloadManager {
             ColorLayerUI layer =
                 ColorLayerUI.createTransparentLayerUI(GuiUtils.getUICore().getBaseArea());
             JOptionPane.showOptionDialog(
-                ColorLayerUI.getContentPane(layer),
+                WinUtil.getValidComponent(ColorLayerUI.getContentPane(layer)),
                 StringUtil.getTruncatedString(message, 130, Suffix.THREE_PTS),
                 null,
                 JOptionPane.DEFAULT_OPTION,

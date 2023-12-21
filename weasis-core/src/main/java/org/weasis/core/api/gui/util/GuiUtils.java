@@ -520,7 +520,7 @@ public class GuiUtils {
         }
       } else {
         JOptionPane.showMessageDialog(
-            parent,
+            WinUtil.getValidComponent(parent),
             Messages.getString("JMVUtils.browser") + StringUtil.COLON_AND_SPACE + url,
             Messages.getString("JMVUtils.error"),
             JOptionPane.ERROR_MESSAGE);
@@ -541,7 +541,7 @@ public class GuiUtils {
         openCommand("/usr/bin/open", file); // NON-NLS
       } else {
         JOptionPane.showMessageDialog(
-            parent,
+            WinUtil.getValidComponent(parent),
             Messages.getString("JMVUtils.browser") + StringUtil.COLON_AND_SPACE + file.getPath(),
             Messages.getString("JMVUtils.error"),
             JOptionPane.ERROR_MESSAGE);

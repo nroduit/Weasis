@@ -271,7 +271,8 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
 
       int response =
           JOptionPane.showOptionDialog(
-              WinUtil.getParentWindow(this), // Use parent because this has large size
+              WinUtil.getValidComponent(
+                  WinUtil.getParentWindow(this)), // Use parent because this has large size
               options.toArray(),
               Messages.getString("LocalExport.export_message"),
               JOptionPane.OK_CANCEL_OPTION,
@@ -332,7 +333,8 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
 
       int response =
           JOptionPane.showOptionDialog(
-              WinUtil.getParentWindow(this), // Use parent because this has large size
+              WinUtil.getValidComponent(
+                  WinUtil.getParentWindow(this)), // Use parent because this has large size
               options.toArray(),
               Messages.getString("LocalExport.export_message"),
               JOptionPane.OK_CANCEL_OPTION,

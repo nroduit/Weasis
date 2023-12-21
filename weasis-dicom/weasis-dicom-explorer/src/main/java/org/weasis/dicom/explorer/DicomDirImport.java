@@ -171,7 +171,7 @@ public class DicomDirImport extends AbstractItemDialogPage implements ImportDico
 
         int response =
             JOptionPane.showConfirmDialog(
-                this,
+                WinUtil.getValidComponent(this),
                 Messages.getString("DicomExplorer.mes_import_manual"),
                 this.getTitle(),
                 JOptionPane.YES_NO_OPTION,

@@ -675,7 +675,7 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
       String message = Messages.getString("DicomQrView.msg_empty_query");
       int response =
           JOptionPane.showOptionDialog(
-              WinUtil.getParentDialog(this),
+              WinUtil.getValidComponent(WinUtil.getParentDialog(this)),
               message,
               getTitle(),
               JOptionPane.YES_NO_OPTION,
@@ -748,7 +748,11 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
                               ? Messages.getString("query.canceled.limit").formatted(limit)
                               : state.getMessage();
                       LOGGER.error("Dicom C-FIND error: {}", message);
-                      JOptionPane.showMessageDialog(this, message, null, JOptionPane.ERROR_MESSAGE);
+                      JOptionPane.showMessageDialog(
+                          WinUtil.getValidComponent(this),
+                          message,
+                          null,
+                          JOptionPane.ERROR_MESSAGE);
                     }
                   });
             }

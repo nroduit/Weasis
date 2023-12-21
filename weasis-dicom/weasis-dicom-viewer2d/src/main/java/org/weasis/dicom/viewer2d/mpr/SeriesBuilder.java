@@ -36,6 +36,7 @@ import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.gui.util.Filter;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.gui.util.GuiUtils;
+import org.weasis.core.api.gui.util.WinUtil;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.TagW;
@@ -696,7 +697,7 @@ public class SeriesBuilder {
         () -> {
           int usrChoice =
               JOptionPane.showConfirmDialog(
-                  view,
+                  WinUtil.getValidComponent(view),
                   message + Messages.getString("SeriesBuilder.add_warn"),
                   MprFactory.NAME,
                   JOptionPane.YES_NO_OPTION,

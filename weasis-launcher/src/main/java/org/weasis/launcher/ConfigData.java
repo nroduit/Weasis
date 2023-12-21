@@ -389,7 +389,7 @@ public class ConfigData {
     Properties p = new Properties();
     FileUtil.readProperties(file, p);
 
-    boolean mproxy = Utils.getEmptytoFalse(p.getProperty("proxy.manual"));
+    boolean mproxy = Utils.getEmptyToFalse(p.getProperty("proxy.manual"));
 
     if (mproxy) {
       String exceptions = p.getProperty("proxy.exceptions");
@@ -420,7 +420,7 @@ public class ConfigData {
         applyProxyProperty("socksProxyPort", p.getProperty("proxy.socks.port"), mproxy); // NON-NLS
       }
 
-      boolean auth = Utils.getEmptytoFalse(p.getProperty("proxy.auth"));
+      boolean auth = Utils.getEmptyToFalse(p.getProperty("proxy.auth"));
       if (auth) {
         String authUser = p.getProperty("proxy.auth.user");
         String authPassword;

@@ -35,6 +35,7 @@ import org.weasis.core.api.explorer.DataExplorerView;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.ComboItemListener;
 import org.weasis.core.api.gui.util.GuiUtils;
+import org.weasis.core.api.gui.util.WinUtil;
 import org.weasis.core.api.image.GridBagLayoutModel;
 import org.weasis.core.api.image.LayoutConstraints;
 import org.weasis.core.api.media.data.MediaSeries;
@@ -270,7 +271,10 @@ public class View3DFactory implements SeriesViewerFactory {
     JPanel panel =
         GuiUtils.getVerticalBoxLayoutPanel(GuiUtils.getScaleLength(7), new JLabel(msg), prefButton);
     JOptionPane.showMessageDialog(
-        parent, panel, Messages.getString("opengl.error"), JOptionPane.ERROR_MESSAGE);
+        WinUtil.getValidComponent(parent),
+        panel,
+        Messages.getString("opengl.error"),
+        JOptionPane.ERROR_MESSAGE);
   }
 
   // ================================================================================

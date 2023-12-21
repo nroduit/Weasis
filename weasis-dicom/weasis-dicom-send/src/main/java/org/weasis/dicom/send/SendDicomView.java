@@ -36,6 +36,7 @@ import org.weasis.core.api.gui.util.AbstractItemDialogPage;
 import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.gui.util.GuiUtils;
+import org.weasis.core.api.gui.util.WinUtil;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.Series;
@@ -254,7 +255,7 @@ public class SendDicomView extends AbstractItemDialogPage implements ExportDicom
     GuiExecutor.execute(
         () ->
             JOptionPane.showMessageDialog(
-                exportTree,
+                WinUtil.getValidComponent(exportTree),
                 state == null
                     ? Objects.requireNonNull(e).getMessage()
                     : StringUtil.getTruncatedString(state.getMessage(), 150, Suffix.THREE_PTS),

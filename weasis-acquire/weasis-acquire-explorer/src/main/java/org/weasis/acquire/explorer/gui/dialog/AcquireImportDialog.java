@@ -32,6 +32,7 @@ import org.weasis.acquire.explorer.Messages;
 import org.weasis.acquire.explorer.core.bean.SeriesGroup;
 import org.weasis.acquire.explorer.gui.control.ImportPanel;
 import org.weasis.core.api.gui.util.GuiUtils;
+import org.weasis.core.api.gui.util.WinUtil;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.service.BundlePreferences;
 import org.weasis.core.util.StringUtil;
@@ -171,7 +172,7 @@ public class AcquireImportDialog extends JDialog implements PropertyChangeListen
           } else {
             seriesType = null;
             JOptionPane.showMessageDialog(
-                this,
+                WinUtil.getValidComponent(this),
                 Messages.getString("AcquireImportDialog.add_name_msg"),
                 Messages.getString("AcquireImportDialog.add_name_title"),
                 JOptionPane.ERROR_MESSAGE);

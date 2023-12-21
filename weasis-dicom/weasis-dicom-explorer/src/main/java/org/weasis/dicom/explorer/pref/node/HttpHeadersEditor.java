@@ -26,6 +26,7 @@ import javax.swing.JScrollPane;
 import javax.swing.ListSelectionModel;
 import javax.swing.WindowConstants;
 import org.weasis.core.api.gui.util.GuiUtils;
+import org.weasis.core.api.gui.util.WinUtil;
 import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.explorer.Messages;
 
@@ -138,7 +139,7 @@ public class HttpHeadersEditor extends JDialog {
 
     List<String> selItems = jList1.getSelectedValuesList();
     if (selItems.size() == 1) {
-      modifiy(selItems.get(0));
+      modify(selItems.getFirst());
     } else {
       JOptionPane.showMessageDialog(
           this,
@@ -161,14 +162,14 @@ public class HttpHeadersEditor extends JDialog {
   }
 
   private void add() {
-    modifiy(null);
+    modify(null);
   }
 
-  private void modifiy(String input) {
+  private void modify(String input) {
     String property =
         (String)
             JOptionPane.showInputDialog(
-                this,
+                WinUtil.getValidComponent(this),
                 Messages.getString("HttpHeadersEditor.msg_keyValue"),
                 this.getTitle(),
                 JOptionPane.PLAIN_MESSAGE,

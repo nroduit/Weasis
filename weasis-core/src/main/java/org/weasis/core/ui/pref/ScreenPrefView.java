@@ -293,7 +293,7 @@ public class ScreenPrefView extends AbstractItemDialogPage {
         }
         cross.repaint();
         JOptionPane.showMessageDialog(
-            this,
+            WinUtil.getValidComponent(this),
             Messages.getString("ScreenPrefView.calib_desc"),
             Messages.getString("ScreenPrefView.sp_calib"),
             JOptionPane.WARNING_MESSAGE);
