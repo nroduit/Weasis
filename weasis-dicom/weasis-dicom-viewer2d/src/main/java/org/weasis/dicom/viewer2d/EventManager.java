@@ -738,11 +738,11 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
 
   private ComboItemListener<ByteLut> newLutAction() {
     List<ByteLut> luts = new ArrayList<>();
-    luts.add(ColorLut.GRAY.getByteLut());
+    luts.add(ByteLutCollection.Lut.GRAY.getByteLut());
     ByteLutCollection.readLutFilesFromResourcesDir(
         luts, ResourceUtil.getResource(DicomResource.LUTS));
     // Set default first as the list has been sorted
-    luts.add(0, ColorLut.IMAGE.getByteLut());
+    luts.add(0, ByteLutCollection.Lut.IMAGE.getByteLut());
 
     return new ComboItemListener<>(ActionW.LUT, luts.toArray(new ByteLut[0])) {
 
