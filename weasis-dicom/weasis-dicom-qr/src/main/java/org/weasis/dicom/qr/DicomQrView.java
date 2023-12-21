@@ -648,12 +648,30 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
     pageSpinner.addChangeListener(queryListener);
   }
 
+  private boolean isEmptyQuery(List<DicomParam> p) {
+    if (p == null || p.isEmpty()) {
+      return true;
+    }
+
+    for (DicomParam param : p) {
+      String[] values = param.getValues();
+      if (values != null) {
+        for (String value : values) {
+          if (StringUtil.hasText(value)) {
+            return false;
+          }
+        }
+      }
+    }
+    return true;
+  }
+
   private void dicomQuery() {
     stopCurrentProcess();
     SearchParameters searchParams = buildCurrentSearchParameters("custom"); // NON-NLS
     List<DicomParam> p = searchParams.getParameters();
 
-    if (p.isEmpty() && (Integer) limitSpinner.getValue() < 1) {
+    if ((Integer) limitSpinner.getValue() < 1 && isEmptyQuery(p)) {
       String message = Messages.getString("DicomQrView.msg_empty_query");
       int response =
           JOptionPane.showOptionDialog(
