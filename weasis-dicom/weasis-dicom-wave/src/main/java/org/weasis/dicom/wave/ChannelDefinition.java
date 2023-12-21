@@ -12,8 +12,8 @@ package org.weasis.dicom.wave;
 import java.util.Objects;
 import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Tag;
+import org.dcm4che3.img.util.DicomUtils;
 import org.weasis.dicom.codec.macro.Code;
-import org.weasis.dicom.codec.utils.DicomMediaUtils;
 
 public class ChannelDefinition {
 
@@ -35,8 +35,7 @@ public class ChannelDefinition {
         Objects.requireNonNull(
             dcm.getNestedDataset(Tag.ChannelSourceSequence), "no ChannelSourceSequence");
     this.lead = Lead.buildLead(new Code(channelSourceSequence));
-    Double chSensisvity =
-        DicomMediaUtils.getDoubleFromDicomElement(dcm, Tag.ChannelSensitivity, null);
+    Double chSensisvity = DicomUtils.getDoubleFromDicomElement(dcm, Tag.ChannelSensitivity, null);
     if (chSensisvity == null) {
       this.baseline = 0.0;
       this.amplitudeUnit =
@@ -45,10 +44,9 @@ public class ChannelDefinition {
               org.weasis.core.api.image.util.Unit.PIXEL.getAbbreviation(),
               1.0);
     } else {
-      this.baseline = DicomMediaUtils.getDoubleFromDicomElement(dcm, Tag.ChannelBaseline, 0.0);
+      this.baseline = DicomUtils.getDoubleFromDicomElement(dcm, Tag.ChannelBaseline, 0.0);
       Double sCorrectionFactor =
-          DicomMediaUtils.getDoubleFromDicomElement(
-              dcm, Tag.ChannelSensitivityCorrectionFactor, 1.0);
+          DicomUtils.getDoubleFromDicomElement(dcm, Tag.ChannelSensitivityCorrectionFactor, 1.0);
       Attributes chs =
           Objects.requireNonNull(
               dcm.getNestedDataset(Tag.ChannelSensitivityUnitsSequence),

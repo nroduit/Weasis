@@ -24,6 +24,7 @@ import org.dcm4che3.img.DicomImageReader;
 import org.dcm4che3.img.Transcoder;
 import org.dcm4che3.img.stream.BytesWithImageDescriptor;
 import org.dcm4che3.img.stream.ImageDescriptor;
+import org.dcm4che3.img.util.DicomUtils;
 import org.dcm4che3.media.DicomDirReader;
 import org.dcm4che3.media.DicomDirWriter;
 import org.dcm4che3.media.RecordFactory;
@@ -200,7 +201,7 @@ public class DicomDirLoader {
           String sopInstanceUID = instance.getString(Tag.ReferencedSOPInstanceUIDInFile);
           if (sopInstanceUID != null) {
             Integer frame =
-                DicomMediaUtils.getIntegerFromDicomElement(instance, Tag.InstanceNumber, null);
+                DicomUtils.getIntegerFromDicomElement(instance, Tag.InstanceNumber, null);
             SopInstance sop = seriesInstanceList.getSopInstance(sopInstanceUID, frame);
             if (sop == null) {
               File file = toFileName(instance, reader);

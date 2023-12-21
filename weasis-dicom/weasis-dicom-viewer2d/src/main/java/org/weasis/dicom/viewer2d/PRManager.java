@@ -29,6 +29,7 @@ import org.dcm4che3.img.data.CIELab;
 import org.dcm4che3.img.data.PrDicomObject;
 import org.dcm4che3.img.lut.PresetWindowLevel;
 import org.dcm4che3.img.util.DicomObjectUtil;
+import org.dcm4che3.img.util.DicomUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.ActionState;
@@ -65,7 +66,6 @@ import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.PRSpecialElement;
 import org.weasis.dicom.codec.PresentationStateReader;
 import org.weasis.dicom.codec.TagD;
-import org.weasis.dicom.codec.utils.DicomMediaUtils;
 import org.weasis.dicom.explorer.DicomModel;
 import org.weasis.dicom.explorer.pr.PrGraphicUtil;
 import org.weasis.opencv.data.PlanarImage;
@@ -337,15 +337,15 @@ public class PRManager {
           layers.add(layer);
 
           Integer grayVal =
-              DicomMediaUtils.getIntegerFromDicomElement(
+              DicomUtils.getIntegerFromDicomElement(
                   glm, Tag.GraphicLayerRecommendedDisplayGrayscaleValue, null);
           int[] colorRgb =
               CIELab.dicomLab2rgb(
-                  DicomMediaUtils.getIntArrayFromDicomElement(
+                  DicomUtils.getIntAyrrayFromDicomElement(
                       glm, Tag.GraphicLayerRecommendedDisplayCIELabValue, null));
           if (colorRgb.length == 0) {
             colorRgb =
-                DicomMediaUtils.getIntArrayFromDicomElement(
+                DicomUtils.getIntAyrrayFromDicomElement(
                     glm, Tag.GraphicLayerRecommendedDisplayRGBValue, null);
             if (colorRgb == null && grayVal == null) {
               Color c =
@@ -378,8 +378,7 @@ public class PRManager {
           if (txos != null) {
             for (Attributes txo : txos) {
               Attributes style = txo.getNestedDataset(Tag.LineStyleSequence);
-              Float thickness =
-                  DicomMediaUtils.getFloatFromDicomElement(style, Tag.LineThickness, 1.0f);
+              Float thickness = DicomUtils.getFloatFromDicomElement(style, Tag.LineThickness, 1.0f);
               if (style != null) {
                 int[] rgb = CIELab.dicomLab2rgb(style.getInts(Tag.PatternOnColorCIELabValue));
                 rgbColor = DicomObjectUtil.getRGBColor(0xFFFF, rgb);

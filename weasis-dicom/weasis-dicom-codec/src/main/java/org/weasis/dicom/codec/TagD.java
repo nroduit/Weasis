@@ -44,6 +44,7 @@ import org.dcm4che3.data.ElementDictionary;
 import org.dcm4che3.data.Tag;
 import org.dcm4che3.data.VR;
 import org.dcm4che3.img.util.DateTimeUtils;
+import org.dcm4che3.img.util.DicomUtils;
 import org.dcm4che3.util.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -291,7 +292,7 @@ public class TagD extends TagW {
     if (isStringFamilyType()) {
       value =
           vmMax > 1
-              ? DicomMediaUtils.getStringArrayFromDicomElement(
+              ? DicomUtils.getStringArrayFromDicomElement(
                   dataset, id, privateCreatorID, (String[]) defaultValue)
               : dataset.getString(privateCreatorID, id, (String) defaultValue);
     } else if (TagType.DICOM_DATE.equals(type)
@@ -306,23 +307,23 @@ public class TagD extends TagW {
     } else if (TagType.INTEGER.equals(type)) {
       value =
           vmMax > 1
-              ? DicomMediaUtils.getIntArrayFromDicomElement(
+              ? DicomUtils.getIntArrayFromDicomElement(
                   dataset, id, privateCreatorID, (int[]) defaultValue)
-              : DicomMediaUtils.getIntegerFromDicomElement(
+              : DicomUtils.getIntegerFromDicomElement(
                   dataset, id, privateCreatorID, (Integer) defaultValue);
     } else if (TagType.FLOAT.equals(type)) {
       value =
           vmMax > 1
-              ? DicomMediaUtils.getFloatArrayFromDicomElement(
+              ? DicomUtils.getFloatArrayFromDicomElement(
                   dataset, id, privateCreatorID, (float[]) defaultValue)
-              : DicomMediaUtils.getFloatFromDicomElement(
+              : DicomUtils.getFloatFromDicomElement(
                   dataset, id, privateCreatorID, (Float) defaultValue);
     } else if (TagType.DOUBLE.equals(type)) {
       value =
           vmMax > 1
-              ? DicomMediaUtils.getDoubleArrayFromDicomElement(
+              ? DicomUtils.getDoubleArrayFromDicomElement(
                   dataset, id, privateCreatorID, (double[]) defaultValue)
-              : DicomMediaUtils.getDoubleFromDicomElement(
+              : DicomUtils.getDoubleFromDicomElement(
                   dataset, id, privateCreatorID, (Double) defaultValue);
     } else if (TagType.DICOM_SEQUENCE.equals(type)) {
       value = dataset.getSequence(privateCreatorID, id);

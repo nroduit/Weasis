@@ -50,7 +50,6 @@ import org.weasis.dicom.codec.display.OverlayOp;
 import org.weasis.dicom.codec.display.ShutterOp;
 import org.weasis.dicom.codec.display.WindowAndPresetsOp;
 import org.weasis.dicom.codec.geometry.GeometryOfSlice;
-import org.weasis.dicom.codec.utils.DicomMediaUtils;
 import org.weasis.dicom.codec.utils.Ultrasound;
 import org.weasis.dicom.param.AttributeEditorContext;
 import org.weasis.opencv.data.ImageCV;
@@ -145,9 +144,9 @@ public class DicomImageElement extends ImageElement implements DicomElement {
           Ultrasound.getUniqueSpatialRegion(getMediaReader().getDicomObject());
       if (spatialCalibration != null) {
         Double calibX =
-            DicomMediaUtils.getDoubleFromDicomElement(spatialCalibration, Tag.PhysicalDeltaX, null);
+            DicomUtils.getDoubleFromDicomElement(spatialCalibration, Tag.PhysicalDeltaX, null);
         Double calibY =
-            DicomMediaUtils.getDoubleFromDicomElement(spatialCalibration, Tag.PhysicalDeltaY, null);
+            DicomUtils.getDoubleFromDicomElement(spatialCalibration, Tag.PhysicalDeltaY, null);
         if (calibX != null && calibY != null) {
           calibX = Math.abs(calibX);
           calibY = Math.abs(calibY);

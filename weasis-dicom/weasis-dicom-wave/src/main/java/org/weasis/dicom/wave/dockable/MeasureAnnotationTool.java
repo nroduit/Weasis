@@ -29,6 +29,7 @@ import javax.swing.table.TableModel;
 import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Sequence;
 import org.dcm4che3.data.Tag;
+import org.dcm4che3.img.util.DicomUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.Insertable;
@@ -47,7 +48,6 @@ import org.weasis.core.ui.util.TableColumnAdjuster;
 import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.codec.DicomSpecialElement;
 import org.weasis.dicom.codec.TagD;
-import org.weasis.dicom.codec.utils.DicomMediaUtils;
 import org.weasis.dicom.explorer.DicomModel;
 import org.weasis.dicom.wave.Messages;
 
@@ -259,20 +259,18 @@ public class MeasureAnnotationTool extends PluginTool implements SeriesViewerLis
 
     if (!chDefSeq.isEmpty()) {
       Attributes item = chDefSeq.get(0);
-      double filterLow =
-          DicomMediaUtils.getDoubleFromDicomElement(item, Tag.FilterLowFrequency, 0.0);
+      double filterLow = DicomUtils.getDoubleFromDicomElement(item, Tag.FilterLowFrequency, 0.0);
       addValueToModel(list, TagD.get(Tag.FilterLowFrequency), filterLow + " Hz"); // NON-NLS
-      double filterHigh =
-          DicomMediaUtils.getDoubleFromDicomElement(item, Tag.FilterHighFrequency, 0.0);
+      double filterHigh = DicomUtils.getDoubleFromDicomElement(item, Tag.FilterHighFrequency, 0.0);
       addValueToModel(list, TagD.get(Tag.FilterHighFrequency), filterHigh + " Hz"); // NON-NLS
       double notchFilter =
-          DicomMediaUtils.getDoubleFromDicomElement(item, Tag.NotchFilterFrequency, 0.0);
+          DicomUtils.getDoubleFromDicomElement(item, Tag.NotchFilterFrequency, 0.0);
       addValueToModel(list, TagD.get(Tag.NotchFilterFrequency), notchFilter + " Hz"); // NON-NLS
 
       for (int i = 1; i < chDefSeq.size(); i++) {
         item = chDefSeq.get(i);
         String title = item.getNestedDataset(Tag.ChannelSourceSequence).getString(Tag.CodeMeaning);
-        double low = DicomMediaUtils.getDoubleFromDicomElement(item, Tag.FilterLowFrequency, 0.0);
+        double low = DicomUtils.getDoubleFromDicomElement(item, Tag.FilterLowFrequency, 0.0);
         if (low != filterLow) {
           addValueToModel(
               list,
@@ -280,7 +278,7 @@ public class MeasureAnnotationTool extends PluginTool implements SeriesViewerLis
               low + " Hz"); // NON-NLS
         }
 
-        double high = DicomMediaUtils.getDoubleFromDicomElement(item, Tag.FilterHighFrequency, 0.0);
+        double high = DicomUtils.getDoubleFromDicomElement(item, Tag.FilterHighFrequency, 0.0);
         if (high != filterHigh) {
           addValueToModel(
               list,
@@ -288,8 +286,7 @@ public class MeasureAnnotationTool extends PluginTool implements SeriesViewerLis
               high + " Hz"); // NON-NLS
         }
 
-        double notch =
-            DicomMediaUtils.getDoubleFromDicomElement(item, Tag.NotchFilterFrequency, 0.0);
+        double notch = DicomUtils.getDoubleFromDicomElement(item, Tag.NotchFilterFrequency, 0.0);
         if (notch != notchFilter) {
           addValueToModel(
               list,

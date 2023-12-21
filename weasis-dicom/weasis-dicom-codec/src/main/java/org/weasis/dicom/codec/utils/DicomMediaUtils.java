@@ -14,7 +14,6 @@ import java.io.InputStream;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
-import java.time.temporal.ChronoUnit;
 import java.time.temporal.TemporalAccessor;
 import java.util.Arrays;
 import java.util.Date;
@@ -39,6 +38,7 @@ import org.dcm4che3.data.VR;
 import org.dcm4che3.img.lut.ModalityLutModule;
 import org.dcm4che3.img.lut.VoiLutModule;
 import org.dcm4che3.img.util.DicomObjectUtil;
+import org.dcm4che3.img.util.DicomUtils;
 import org.dcm4che3.util.ByteUtils;
 import org.dcm4che3.util.TagUtils;
 import org.dcm4che3.util.UIDUtils;
@@ -182,260 +182,6 @@ public class DicomMediaUtils {
     return containsRequiredAttributes(dcmItems, LUTAttributes);
   }
 
-  public static String getStringFromDicomElement(Attributes dicom, int tag) {
-    if (dicom == null || !dicom.containsValue(tag)) {
-      return null;
-    }
-
-    String[] s = dicom.getStrings(tag);
-    if (s == null || s.length == 0) {
-      return null;
-    }
-    if (s.length == 1) {
-      return s[0];
-    }
-    StringBuilder sb = new StringBuilder(s[0]);
-    for (int i = 1; i < s.length; i++) {
-      sb.append("\\").append(s[i]);
-    }
-    return sb.toString();
-  }
-
-  public static String[] getStringArrayFromDicomElement(Attributes dicom, int tag) {
-    return getStringArrayFromDicomElement(dicom, tag, (String) null);
-  }
-
-  public static String[] getStringArrayFromDicomElement(
-      Attributes dicom, int tag, String privateCreatorID) {
-    if (dicom == null || !dicom.containsValue(tag)) {
-      return null;
-    }
-    return dicom.getStrings(privateCreatorID, tag);
-  }
-
-  public static String[] getStringArrayFromDicomElement(
-      Attributes dicom, int tag, String[] defaultValue) {
-    return getStringArrayFromDicomElement(dicom, tag, null, defaultValue);
-  }
-
-  public static String[] getStringArrayFromDicomElement(
-      Attributes dicom, int tag, String privateCreatorID, String[] defaultValue) {
-    if (dicom == null || !dicom.containsValue(tag)) {
-      return defaultValue;
-    }
-    String[] val = dicom.getStrings(privateCreatorID, tag);
-    if (val == null || val.length == 0) {
-      return defaultValue;
-    }
-    return val;
-  }
-
-  public static Date getDateFromDicomElement(Attributes dicom, int tag, Date defaultValue) {
-    if (dicom == null || !dicom.containsValue(tag)) {
-      return defaultValue;
-    }
-    return dicom.getDate(tag, defaultValue);
-  }
-
-  public static Date[] getDatesFromDicomElement(
-      Attributes dicom, int tag, String privateCreatorID, Date[] defaultValue) {
-    if (dicom == null || !dicom.containsValue(tag)) {
-      return defaultValue;
-    }
-    Date[] val = dicom.getDates(privateCreatorID, tag);
-    if (val == null || val.length == 0) {
-      return defaultValue;
-    }
-    return val;
-  }
-
-  public static String getPatientAgeInPeriod(Attributes dicom, int tag, boolean computeOnlyIfNull) {
-    return getPatientAgeInPeriod(dicom, tag, null, null, computeOnlyIfNull);
-  }
-
-  public static String getPatientAgeInPeriod(
-      Attributes dicom,
-      int tag,
-      String privateCreatorID,
-      String defaultValue,
-      boolean computeOnlyIfNull) {
-    if (dicom == null) {
-      return defaultValue;
-    }
-
-    if (computeOnlyIfNull) {
-      String s = dicom.getString(privateCreatorID, tag, defaultValue);
-      if (StringUtil.hasText(s) && StringUtil.hasText(TagD.getDicomPeriod(s))) {
-        return s;
-      }
-    }
-
-    Date date =
-        getDate(
-            dicom,
-            Tag.ContentDate,
-            Tag.AcquisitionDate,
-            Tag.DateOfSecondaryCapture,
-            Tag.SeriesDate,
-            Tag.StudyDate);
-
-    if (date != null) {
-      Date birthdate = dicom.getDate(Tag.PatientBirthDate);
-      if (birthdate != null) {
-        return getPeriod(TagUtil.toLocalDate(birthdate), TagUtil.toLocalDate(date));
-      }
-    }
-    return null;
-  }
-
-  private static Date getDate(Attributes dicom, int... tagID) {
-    Date date;
-    for (int i : tagID) {
-      date = dicom.getDate(i);
-      if (date != null) {
-        return date;
-      }
-    }
-    return null;
-  }
-
-  public static String getPeriod(LocalDate first, LocalDate last) {
-    Objects.requireNonNull(first);
-    Objects.requireNonNull(last);
-
-    long years = ChronoUnit.YEARS.between(first, last);
-    if (years < 2) {
-      long months = ChronoUnit.MONTHS.between(first, last);
-      if (months < 2) {
-        return String.format("%03dD", ChronoUnit.DAYS.between(first, last)); // NON-NLS
-      }
-      return String.format("%03dM", months); // NON-NLS
-    }
-    return String.format("%03dY", years); // NON-NLS
-  }
-
-  public static Float getFloatFromDicomElement(Attributes dicom, int tag, Float defaultValue) {
-    return getFloatFromDicomElement(dicom, tag, null, defaultValue);
-  }
-
-  public static Float getFloatFromDicomElement(
-      Attributes dicom, int tag, String privateCreatorID, Float defaultValue) {
-    if (dicom == null || !dicom.containsValue(tag)) {
-      return defaultValue;
-    }
-    try {
-      return dicom.getFloat(privateCreatorID, tag, defaultValue == null ? 0.0F : defaultValue);
-    } catch (NumberFormatException e) {
-      LOGGER.error("Cannot parse Float of {}: {} ", TagUtils.toString(tag), e.getMessage());
-    }
-    return defaultValue;
-  }
-
-  public static Integer getIntegerFromDicomElement(
-      Attributes dicom, int tag, Integer defaultValue) {
-    return getIntegerFromDicomElement(dicom, tag, null, defaultValue);
-  }
-
-  public static Integer getIntegerFromDicomElement(
-      Attributes dicom, int tag, String privateCreatorID, Integer defaultValue) {
-    if (dicom == null || !dicom.containsValue(tag)) {
-      return defaultValue;
-    }
-    try {
-      return dicom.getInt(privateCreatorID, tag, defaultValue == null ? 0 : defaultValue);
-    } catch (NumberFormatException e) {
-      LOGGER.error("Cannot parse Integer of {}: {} ", TagUtils.toString(tag), e.getMessage());
-    }
-    return defaultValue;
-  }
-
-  public static Long getLongFromDicomElement(Attributes dicom, int tag, Long defaultValue) {
-    return getLongFromDicomElement(dicom, tag, null, defaultValue);
-  }
-
-  public static Long getLongFromDicomElement(
-      Attributes dicom, int tag, String privateCreatorID, Long defaultValue) {
-    if (dicom == null || !dicom.containsValue(tag)) {
-      return defaultValue;
-    }
-    try {
-      return dicom.getLong(privateCreatorID, tag, defaultValue == null ? 0L : defaultValue);
-    } catch (NumberFormatException e) {
-      LOGGER.error("Cannot parse Long of {}: {} ", TagUtils.toString(tag), e.getMessage());
-    }
-    return defaultValue;
-  }
-
-  public static Double getDoubleFromDicomElement(Attributes dicom, int tag, Double defaultValue) {
-    return getDoubleFromDicomElement(dicom, tag, null, defaultValue);
-  }
-
-  public static Double getDoubleFromDicomElement(
-      Attributes dicom, int tag, String privateCreatorID, Double defaultValue) {
-    if (dicom == null || !dicom.containsValue(tag)) {
-      return defaultValue;
-    }
-    try {
-      return dicom.getDouble(privateCreatorID, tag, defaultValue == null ? 0.0 : defaultValue);
-    } catch (NumberFormatException e) {
-      LOGGER.error("Cannot parse Double of {}: {} ", TagUtils.toString(tag), e.getMessage());
-    }
-    return defaultValue;
-  }
-
-  public static int[] getIntArrayFromDicomElement(Attributes dicom, int tag, int[] defaultValue) {
-    return getIntArrayFromDicomElement(dicom, tag, null, defaultValue);
-  }
-
-  public static int[] getIntArrayFromDicomElement(
-      Attributes dicom, int tag, String privateCreatorID, int[] defaultValue) {
-    if (dicom == null || !dicom.containsValue(tag)) {
-      return defaultValue;
-    }
-    try {
-      return dicom.getInts(privateCreatorID, tag);
-    } catch (NumberFormatException e) {
-      LOGGER.error("Cannot parse int[] of {}: {} ", TagUtils.toString(tag), e.getMessage());
-    }
-    return defaultValue;
-  }
-
-  public static float[] getFloatArrayFromDicomElement(
-      Attributes dicom, int tag, float[] defaultValue) {
-    return getFloatArrayFromDicomElement(dicom, tag, null, defaultValue);
-  }
-
-  public static float[] getFloatArrayFromDicomElement(
-      Attributes dicom, int tag, String privateCreatorID, float[] defaultValue) {
-    if (dicom == null || !dicom.containsValue(tag)) {
-      return defaultValue;
-    }
-    try {
-      return dicom.getFloats(privateCreatorID, tag);
-    } catch (NumberFormatException e) {
-      LOGGER.error("Cannot parse float[] of {}: {} ", TagUtils.toString(tag), e.getMessage());
-    }
-    return defaultValue;
-  }
-
-  public static double[] getDoubleArrayFromDicomElement(
-      Attributes dicom, int tag, double[] defaultValue) {
-    return getDoubleArrayFromDicomElement(dicom, tag, null, defaultValue);
-  }
-
-  public static double[] getDoubleArrayFromDicomElement(
-      Attributes dicom, int tag, String privateCreatorID, double[] defaultValue) {
-    if (dicom == null || !dicom.containsValue(tag)) {
-      return defaultValue;
-    }
-    try {
-      return dicom.getDoubles(privateCreatorID, tag);
-    } catch (NumberFormatException e) {
-      LOGGER.error("Cannot parse double[] of {}: {} ", TagUtils.toString(tag), e.getMessage());
-    }
-    return defaultValue;
-  }
-
   public static boolean hasOverlay(Attributes attrs) {
     if (attrs != null) {
       for (int i = 0; i < 16; i++) {
@@ -542,7 +288,7 @@ public class DicomMediaUtils {
       DicomMediaIO.tagManager.readTags(Level.SERIES, header, group);
       // Build patient age if not present
       group.setTagNoNull(
-          TagD.get(Tag.PatientAge), getPatientAgeInPeriod(header, Tag.PatientAge, true));
+          TagD.get(Tag.PatientAge), DicomUtils.getPatientAgeInPeriod(header, Tag.PatientAge, true));
     }
   }
 
@@ -683,7 +429,7 @@ public class DicomMediaUtils {
     // http://qibawiki.rsna.org/index.php?title=Standardized_Uptake_Value_%28SUV%29
     String modality = TagD.getTagValue(taggable, Tag.Modality, String.class);
     if ("PT".equals(modality)) {
-      String correctedImage = getStringFromDicomElement(dicomObject, Tag.CorrectedImage);
+      String correctedImage = DicomUtils.getStringFromDicomElement(dicomObject, Tag.CorrectedImage);
       if (correctedImage != null
           && correctedImage.contains("ATTN")
           && correctedImage.contains("DECY")) { // NON-NLS
@@ -712,22 +458,26 @@ public class DicomMediaUtils {
         // GML = grams/milliliter
         // STDDEV = standard deviations
         if ("BQML".equals(units)) {
-          Float weight = getFloatFromDicomElement(dicomObject, Tag.PatientWeight, 0.0f); // in Kg
+          Float weight =
+              DicomUtils.getFloatFromDicomElement(dicomObject, Tag.PatientWeight, 0.0f); // in Kg
           if (MathUtil.isDifferentFromZero(weight)) {
             Attributes dcm =
                 dicomObject.getNestedDataset(Tag.RadiopharmaceuticalInformationSequence, index);
             if (dcm != null) {
-              Float totalDose = getFloatFromDicomElement(dcm, Tag.RadionuclideTotalDose, null);
-              Float halfLife = getFloatFromDicomElement(dcm, Tag.RadionuclideHalfLife, null);
+              Float totalDose =
+                  DicomUtils.getFloatFromDicomElement(dcm, Tag.RadionuclideTotalDose, null);
+              Float halfLife =
+                  DicomUtils.getFloatFromDicomElement(dcm, Tag.RadionuclideHalfLife, null);
               Date injectTime =
-                  getDateFromDicomElement(dcm, Tag.RadiopharmaceuticalStartTime, null);
+                  DicomUtils.getDateFromDicomElement(dcm, Tag.RadiopharmaceuticalStartTime, null);
               Date injectDateTime =
-                  getDateFromDicomElement(dcm, Tag.RadiopharmaceuticalStartDateTime, null);
+                  DicomUtils.getDateFromDicomElement(
+                      dcm, Tag.RadiopharmaceuticalStartDateTime, null);
               Date acquisitionDateTime =
                   TagUtil.dateTime(
-                      getDateFromDicomElement(dicomObject, Tag.AcquisitionDate, null),
-                      getDateFromDicomElement(dicomObject, Tag.AcquisitionTime, null));
-              Date scanDate = getDateFromDicomElement(dicomObject, Tag.SeriesDate, null);
+                      DicomUtils.getDateFromDicomElement(dicomObject, Tag.AcquisitionDate, null),
+                      DicomUtils.getDateFromDicomElement(dicomObject, Tag.AcquisitionTime, null));
+              Date scanDate = DicomUtils.getDateFromDicomElement(dicomObject, Tag.SeriesDate, null);
               if ("START".equals(dicomObject.getString(Tag.DecayCorrection))
                   && totalDose != null
                   && halfLife != null
@@ -736,13 +486,15 @@ public class DicomMediaUtils {
                 double time = 0.0;
                 long scanDateTime =
                     TagUtil.dateTime(
-                            scanDate, getDateFromDicomElement(dicomObject, Tag.SeriesTime, null))
+                            scanDate,
+                            DicomUtils.getDateFromDicomElement(dicomObject, Tag.SeriesTime, null))
                         .getTime();
                 if (injectDateTime == null) {
                   if (scanDateTime > acquisitionDateTime.getTime()) {
                     // per GE docs, may have been updated during post-processing into new series
                     String privateCreator = dicomObject.getString(0x00090010);
-                    Date privateScanDateTime = getDateFromDicomElement(dcm, 0x0009100d, null);
+                    Date privateScanDateTime =
+                        DicomUtils.getDateFromDicomElement(dcm, 0x0009100d, null);
                     if ("GEMS_PETD_01".equals(privateCreator) // NON-NLS
                         && privateScanDateTime != null) {
                       scanDate = privateScanDateTime;

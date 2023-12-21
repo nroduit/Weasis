@@ -39,6 +39,7 @@ import org.dcm4che3.img.Transcoder;
 import org.dcm4che3.img.data.PrDicomObject;
 import org.dcm4che3.img.stream.DicomFileInputStream;
 import org.dcm4che3.img.stream.ImageDescriptor;
+import org.dcm4che3.img.util.DicomUtils;
 import org.dcm4che3.io.DicomOutputStream;
 import org.opencv.core.Core;
 import org.opencv.core.CvType;
@@ -479,7 +480,7 @@ public class DicomMediaIO implements DcmMediaReader {
     setTag(TagW.PatientPseudoUID, patientComparator.buildPatientPseudoUID());
 
     Integer instNb =
-        DicomMediaUtils.getIntegerFromDicomElement(
+        DicomUtils.getIntegerFromDicomElement(
             header, Tag.InstanceNumber, instanceID.incrementAndGet());
     setTag(TagD.get(Tag.InstanceNumber), instNb);
     setTag(
@@ -563,8 +564,7 @@ public class DicomMediaIO implements DcmMediaReader {
       TagD.get(Tag.Units).readValue(header, this);
       TagD.get(Tag.NumberOfFrames).readValue(header, this);
 
-      int samplesPerPixel =
-          DicomMediaUtils.getIntegerFromDicomElement(header, Tag.SamplesPerPixel, 1);
+      int samplesPerPixel = DicomUtils.getIntegerFromDicomElement(header, Tag.SamplesPerPixel, 1);
       setTag(TagD.get(Tag.SamplesPerPixel), samplesPerPixel);
       String photometricInterpretation =
           header.getString(Tag.PhotometricInterpretation, "MONOCHROME2");

@@ -32,6 +32,7 @@ import org.dcm4che3.data.Sequence;
 import org.dcm4che3.data.Tag;
 import org.dcm4che3.data.UID;
 import org.dcm4che3.img.util.DicomObjectUtil;
+import org.dcm4che3.img.util.DicomUtils;
 import org.joml.Vector3d;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
@@ -48,7 +49,6 @@ import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.codec.DcmMediaReader;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.TagD;
-import org.weasis.dicom.codec.utils.DicomMediaUtils;
 
 /**
  * RtSet is a collection of linked DICOM-RT entities that form the whole treatment case (Plans,
@@ -313,14 +313,12 @@ public class RtSet {
               // Determine all the plane properties
               plane.setGeometricType(contour.getString(Tag.ContourGeometricType));
               plane.setContourSlabThickness(
-                  DicomMediaUtils.getDoubleFromDicomElement(
-                      contour, Tag.ContourSlabThickness, null));
+                  DicomUtils.getDoubleFromDicomElement(contour, Tag.ContourSlabThickness, null));
               plane.setContourOffsetVector(
-                  DicomMediaUtils.getDoubleArrayFromDicomElement(
+                  DicomUtils.getDoubleArrayFromDicomElement(
                       contour, Tag.ContourOffsetVector, null));
               Integer pts =
-                  DicomMediaUtils.getIntegerFromDicomElement(
-                      contour, Tag.NumberOfContourPoints, -1);
+                  DicomUtils.getIntegerFromDicomElement(contour, Tag.NumberOfContourPoints, -1);
               plane.setContourPoints(pts);
 
               double[] points = contour.getDoubles(Tag.ContourData);
@@ -420,7 +418,7 @@ public class RtSet {
 
           // Prescribed dose in Gy
           Double targetDose =
-              DicomMediaUtils.getDoubleFromDicomElement(doseRef, Tag.TargetPrescriptionDose, null);
+              DicomUtils.getDoubleFromDicomElement(doseRef, Tag.TargetPrescriptionDose, null);
 
           if (targetDose != null) {
 
@@ -462,7 +460,7 @@ public class RtSet {
       if (MathUtil.isEqualToZero(plan.getRxDose())) {
         Attributes fractionGroup = dcmItems.getNestedDataset(Tag.FractionGroupSequence);
         Integer fx =
-            DicomMediaUtils.getIntegerFromDicomElement(
+            DicomUtils.getIntegerFromDicomElement(
                 fractionGroup, Tag.NumberOfFractionsPlanned, null);
         if (fx != null) {
           Sequence refBeamSeq = fractionGroup.getSequence(Tag.ReferencedBeamSequence);
@@ -470,8 +468,7 @@ public class RtSet {
             for (Attributes beam : refBeamSeq) {
               if (beam.contains(Tag.BeamDose) && beam.containsValue(Tag.BeamDose)) {
                 Double rxDose = plan.getRxDose();
-                Double beamDose =
-                    DicomMediaUtils.getDoubleFromDicomElement(beam, Tag.BeamDose, null);
+                Double beamDose = DicomUtils.getDoubleFromDicomElement(beam, Tag.BeamDose, null);
                 if (beamDose != null && rxDose != null) {
                   plan.setRxDose(rxDose + (beamDose * fx * 100));
                 }
