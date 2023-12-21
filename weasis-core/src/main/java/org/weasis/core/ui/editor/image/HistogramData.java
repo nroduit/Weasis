@@ -302,7 +302,7 @@ public class HistogramData {
       return Collections.singletonList(hist);
     }
 
-    List<Mat> histograms = new ArrayList<>();
+    List<Mat> histograms = new ArrayList<>(selChannels.length);
     for (int selChannel : selChannels) {
       Mat hist = new Mat();
       Imgproc.calcHist(channels, new MatOfInt(selChannel), msk, hist, histSize, histRange, false);
