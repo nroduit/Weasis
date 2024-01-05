@@ -83,7 +83,7 @@ public class PreferenceDialog extends AbstractWizardDialog {
     list.add(generalSetting);
     ViewerPrefView viewerSetting = new ViewerPrefView();
     list.add(viewerSetting);
-    DicomPrefView dicomPrefView = new DicomPrefView(this);
+    DicomPrefView dicomPrefView = new DicomPrefView();
     list.add(dicomPrefView);
     DrawPrefView drawPrefView = new DrawPrefView(this);
     list.add(drawPrefView);

@@ -212,7 +212,7 @@ public class NetworkUtil {
         }
         c = new URL(redirect).openConnection();
         c.setRequestProperty("Cookie", cookies);
-        if (headers != null && headers.size() > 0) {
+        if (headers != null && !headers.isEmpty()) {
           for (Entry<String, String> element : headers.entrySet()) {
             c.addRequestProperty(element.getKey(), element.getValue());
           }

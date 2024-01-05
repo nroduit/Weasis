@@ -333,9 +333,7 @@ public class FourPointsAngleToolGraphic extends AbstractDragGraphic {
         intersectIJsegment = (r >= 0 && r <= 1); // means IJPline[1].equals(P)
         intersectKLsegment = (s >= 0 && s <= 1); // means KLPline[1].equals(P)
 
-        lineIJP[0] = r >= 0 ? ptI : ptJ;
-        lineIJP[1] = r < 0 ? ptI : r > 1 ? ptJ : ptP;
-        lineIJP[2] = r < 0 ? ptP : r > 1 ? ptP : ptJ;
+        OpenAngleToolGraphic.addToLine(r, lineIJP, ptI, ptJ, ptP);
 
         if (intersectIJsegment && ptP.distance(lineIJP[0]) < ptP.distance(lineIJP[2])) {
           Point2D switchPt = (Point2D) lineIJP[2].clone();
@@ -347,9 +345,7 @@ public class FourPointsAngleToolGraphic extends AbstractDragGraphic {
           lineIJP[0] = switchPt;
         }
 
-        lineKLP[0] = s >= 0 ? ptK : ptL;
-        lineKLP[1] = s < 0 ? ptK : s > 1 ? ptL : ptP;
-        lineKLP[2] = s < 0 ? ptP : s > 1 ? ptP : ptL;
+        OpenAngleToolGraphic.addToLine(s, lineKLP, ptK, ptL, ptP);
 
         if (intersectKLsegment && ptP.distance(lineKLP[0]) < ptP.distance(lineKLP[2])) {
           Point2D switchPt = (Point2D) lineKLP[2].clone();

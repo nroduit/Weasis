@@ -24,6 +24,7 @@ import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.service.BundlePreferences;
 import org.weasis.core.api.util.FontItem;
 import org.weasis.core.ui.editor.image.MeasureToolBar;
+import org.weasis.core.ui.editor.image.dockable.MeasureTool;
 import org.weasis.core.ui.model.graphic.Graphic;
 import org.weasis.core.ui.model.utils.ImageStatistics;
 import org.weasis.core.ui.model.utils.bean.Measurement;
@@ -51,9 +52,10 @@ public class ViewSetting {
     this.basicStatistics = true;
     this.moreStatistics = true;
     spinnerModel.addChangeListener(
-        e -> {
+        _ -> {
           if (spinnerModel.getValue() instanceof Integer intVal) {
             setLineWidth(intVal);
+            MeasureTool.updateMeasureProperties();
           }
         });
   }

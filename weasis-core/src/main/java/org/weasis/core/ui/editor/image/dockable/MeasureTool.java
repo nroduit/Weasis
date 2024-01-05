@@ -173,7 +173,7 @@ public class MeasureTool extends PluginTool implements GraphicSelectionListener 
           Window win = SwingUtilities.getWindowAncestor(MeasureTool.this);
           ColorLayerUI layer = ColorLayerUI.createTransparentLayerUI(win.getParent());
           PreferenceDialog dialog = new PreferenceDialog(win);
-          dialog.showPage(LABEL_PREF_NAME);
+          dialog.showPage(BUTTON_NAME);
           ColorLayerUI.showCenterScreen(dialog, layer);
         });
     transform.add(GuiUtils.getFlowLayoutPanel(btnGeneralOptions));

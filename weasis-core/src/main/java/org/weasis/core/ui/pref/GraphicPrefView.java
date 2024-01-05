@@ -72,7 +72,7 @@ public class GraphicPrefView extends AbstractItemDialogPage {
         _ -> PropertiesDialog.updateSlider(sliderOpacity, PropertiesDialog.FILL_OPACITY));
 
     getProperties().setProperty(PreferenceDialog.KEY_SHOW_RESTORE, Boolean.TRUE.toString());
-    getProperties().setProperty(PreferenceDialog.KEY_HELP, "draw-measure"); // NON-NLS
+    getProperties().setProperty(PreferenceDialog.KEY_HELP, "draw-measure/#preferences"); // NON-NLS
   }
 
   protected void initialize() {
@@ -91,6 +91,7 @@ public class GraphicPrefView extends AbstractItemDialogPage {
     ViewSetting settings = MeasureTool.viewSetting;
     settings.setFilled(checkboxFilled.isSelected());
     settings.setFillOpacity(sliderOpacity.getValue() / 100f);
+    MeasureTool.updateMeasureProperties();
   }
 
   @Override

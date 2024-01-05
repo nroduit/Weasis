@@ -29,6 +29,7 @@ public class DrawPrefView extends AbstractItemDialogPage {
     add(GuiUtils.boxVerticalStrut(BLOCK_SEPARATOR));
 
     add(GuiUtils.boxYLastElement(LAST_FILLER_HEIGHT));
+    getProperties().setProperty(PreferenceDialog.KEY_HELP, "draw-measure"); // NON-NLS
 
     List<AbstractItemDialogPage> childPages = List.of(new GraphicPrefView(), new LabelsPrefView());
     childPages.forEach(p -> addSubPage(p, _ -> dialog.showPage(p.getTitle()), menuPanel));
