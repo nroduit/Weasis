@@ -74,7 +74,7 @@ public abstract class AbstractGraphic extends DefaultUUID implements Graphic {
   protected List<Point2D> pts;
   protected Paint colorPaint = DEFAULT_COLOR;
   protected Float lineThickness = DEFAULT_LINE_THICKNESS;
-  protected Float relativeInteriorOpacity = DEFAULT_INTERIOR_OPACITY;
+  protected Float fillOpacity = DEFAULT_FILL_OPACITY;
   protected Boolean labelVisible = DEFAULT_LABEL_VISIBLE;
   protected Boolean filled = DEFAULT_FILLED;
   protected Integer classID;
@@ -99,7 +99,7 @@ public abstract class AbstractGraphic extends DefaultUUID implements Graphic {
     setPointNumber(graphic.pointNumber);
     setColorPaint(graphic.colorPaint);
     setLineThickness(graphic.lineThickness);
-    setRelativeInteriorOpacity(relativeInteriorOpacity);
+    setFillOpacity(graphic.fillOpacity);
     setLabelVisible(graphic.labelVisible);
     setFilled(graphic.filled);
     setClassID(graphic.classID);
@@ -217,17 +217,16 @@ public abstract class AbstractGraphic extends DefaultUUID implements Graphic {
     }
   }
 
-  @XmlAttribute(name = "insideOpacity")
+  @XmlAttribute(name = "fillOpacity")
   @Override
-  public Float getRelativeInteriorOpacity() {
-    return relativeInteriorOpacity;
+  public Float getFillOpacity() {
+    return fillOpacity;
   }
 
   @Override
-  public void setRelativeInteriorOpacity(Float relativeInteriorOpacity) {
-    if (!Objects.equals(this.relativeInteriorOpacity, relativeInteriorOpacity)) {
-      this.relativeInteriorOpacity =
-          Optional.ofNullable(relativeInteriorOpacity).orElse(DEFAULT_INTERIOR_OPACITY);
+  public void setFillOpacity(Float fillOpacity) {
+    if (!Objects.equals(this.fillOpacity, fillOpacity)) {
+      this.fillOpacity = Optional.ofNullable(fillOpacity).orElse(DEFAULT_FILL_OPACITY);
       fireDrawingChanged();
     }
   }
@@ -438,8 +437,8 @@ public abstract class AbstractGraphic extends DefaultUUID implements Graphic {
       g2d.draw(drawingShape);
 
       if (getFilled()) {
-        if (relativeInteriorOpacity < 1.0f && colorPaint instanceof Color color) {
-          int alpha = (int) (relativeInteriorOpacity * color.getAlpha());
+        if (fillOpacity < 1.0f && colorPaint instanceof Color color) {
+          int alpha = (int) (fillOpacity * color.getAlpha());
           g2d.setPaint(new Color(color.getRed(), color.getGreen(), color.getBlue(), alpha));
         }
         g2d.fill(drawingShape);

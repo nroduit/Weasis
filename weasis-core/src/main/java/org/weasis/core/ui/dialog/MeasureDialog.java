@@ -43,18 +43,21 @@ public class MeasureDialog extends PropertiesDialog {
 
   public void iniGraphicDialog() {
     if (!graphics.isEmpty()) {
-      DragGraphic graphic = graphics.get(0);
+      DragGraphic graphic = graphics.getFirst();
       this.color = (Color) graphic.getColorPaint();
       int width = graphic.getLineThickness().intValue();
       boolean fill = graphic.getFilled();
+      float opacity = graphic.getFillOpacity();
 
       spinnerLineWidth.setValue(width);
       jCheckBoxFilled.setSelected(fill);
+      slicerOpacity.setValue((int) (opacity * 100f));
 
       boolean areaGraphics = false;
       boolean mfill = false;
       boolean mcolor = false;
       boolean mwidth = false;
+      boolean mopacity = false;
       for (DragGraphic g : graphics) {
         if (g instanceof GraphicArea) {
           areaGraphics = true;
@@ -68,6 +71,9 @@ public class MeasureDialog extends PropertiesDialog {
         if (!color.equals(g.getColorPaint())) {
           mcolor = true;
         }
+        if (g.getFillOpacity() != opacity) {
+          mopacity = true;
+        }
       }
 
       checkBoxColor.setEnabled(mcolor);
@@ -80,7 +86,10 @@ public class MeasureDialog extends PropertiesDialog {
       checkBoxFill.setEnabled(mfill);
       jCheckBoxFilled.setEnabled(areaGraphics && !mfill);
 
-      if (graphics.size() == 1 || (!mcolor && !mfill && !mwidth)) {
+      checkBoxFillOpacity.setEnabled(mopacity);
+      slicerOpacity.setEnabled(areaGraphics && !mopacity);
+
+      if (graphics.size() == 1 || (!mcolor && !mfill && !mwidth && !mopacity)) {
         overrideMultipleValues.setVisible(false);
       } else {
         int size = overrideMultipleValues.getPreferredSize().width / 2;
@@ -93,6 +102,8 @@ public class MeasureDialog extends PropertiesDialog {
         panelFilled.add(GuiUtils.boxHorizontalStrut(size));
         panelFilled.add(checkBoxFill);
         panelFilled.add(GuiUtils.boxHorizontalStrut(size));
+        panelOpacity.add(checkBoxFillOpacity);
+        panelOpacity.add(GuiUtils.boxHorizontalStrut(size));
       }
       if (view2D != null
           && graphics.size() == 1
@@ -130,9 +141,12 @@ public class MeasureDialog extends PropertiesDialog {
       if (jCheckBoxFilled.isEnabled()) {
         graphic.setFilled(jCheckBoxFilled.isSelected());
       }
+      if (slicerOpacity.isEnabled()) {
+        graphic.setFillOpacity(slicerOpacity.getValue() / 100f);
+      }
     }
     if (graphics.size() == 1 && view2D != null) {
-      DragGraphic graphic = graphics.get(0);
+      DragGraphic graphic = graphics.getFirst();
       if (graphic instanceof AnnotationGraphic) {
         graphic.setLabel(EscapeChars.convertToLines(textPane.getText()), view2D);
       }

@@ -1121,7 +1121,7 @@ public class WeasisWin {
   private void importInExplorer(
       List<DataExplorerView> exps, final List<File> vals, DropLocation dropLocation) {
     if (exps.size() == 1) {
-      exps.get(0).importFiles(vals.toArray(new File[0]), true);
+      exps.getFirst().importFiles(vals.toArray(new File[0]), true);
     } else {
       Point p;
       if (dropLocation == null) {

@@ -23,7 +23,7 @@ public class ThreePointsCircleGraphicTest extends GraphicTester<ThreePointsCircl
       "/graphic/threePointsCircle/threePointsCircle.graphic.1.xml"; // NON-NLS
 
   static final String BASIC_TPL =
-      "<threePointsCircle fill=\"%s\" showLabel=\"%s\" thickness=\"%s\" insideOpacity=\"%s\" uuid=\"%s\">" // NON-NLS
+      "<threePointsCircle fillOpacity=\"%s\" fill=\"%s\" showLabel=\"%s\" thickness=\"%s\" uuid=\"%s\">" // NON-NLS
           + "<paint rgb=\"%s\"/>" // NON-NLS
           + "<pts/>" // NON-NLS
           + "</threePointsCircle>"; // NON-NLS
@@ -50,10 +50,10 @@ public class ThreePointsCircleGraphicTest extends GraphicTester<ThreePointsCircl
   @Override
   public Object[] getParameters() {
     return new Object[] {
+      Graphic.DEFAULT_FILL_OPACITY,
       Graphic.DEFAULT_FILLED,
       Graphic.DEFAULT_LABEL_VISIBLE,
       Graphic.DEFAULT_LINE_THICKNESS,
-      Graphic.DEFAULT_INTERIOR_OPACITY,
       getGraphicUuid(),
       WProperties.color2Hexadecimal(Graphic.DEFAULT_COLOR, true)
     };

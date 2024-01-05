@@ -26,9 +26,9 @@ import java.awt.geom.Rectangle2D;
 import java.util.Objects;
 import java.util.Optional;
 import org.weasis.core.api.gui.util.GeomUtil;
-import org.weasis.core.api.util.FontItem;
 import org.weasis.core.api.util.FontTools;
 import org.weasis.core.ui.editor.image.ViewCanvas;
+import org.weasis.core.ui.editor.image.dockable.MeasureTool;
 import org.weasis.core.ui.model.utils.imp.DefaultGraphicLabel;
 import org.weasis.core.util.StringUtil;
 
@@ -158,11 +158,11 @@ public abstract class AbstractGraphicLabel implements GraphicLabel {
       reset();
     } else {
       this.labels = labels;
-      Font defaultFont = view2d == null ? FontItem.DEFAULT.getFont() : view2d.getFont();
+      Font font = MeasureTool.viewSetting.getFont();
       Graphics2D g2d = view2d == null ? null : (Graphics2D) view2d.getJComponent().getGraphics();
       FontRenderContext fontRenderContext =
           g2d == null ? new FontRenderContext(null, false, false) : g2d.getFontRenderContext();
-      updateBoundsSize(defaultFont, fontRenderContext);
+      updateBoundsSize(font, fontRenderContext);
 
       labelBounds = new Rectangle.Double(xPos, yPos, labelWidth, (labelHeight * labels.length));
       GeomUtil.growRectangle(labelBounds, GROWING_BOUND);
@@ -200,6 +200,9 @@ public abstract class AbstractGraphicLabel implements GraphicLabel {
     if (labels != null && labelBounds != null) {
 
       Paint oldPaint = g2d.getPaint();
+      Font oldFont = g2d.getFont();
+      Font font = MeasureTool.viewSetting.getFont();
+      g2d.setFont(font);
 
       Point2D pt = new Point2D.Double(labelBounds.getX() + offsetX, labelBounds.getY() + offsetY);
 
@@ -243,6 +246,7 @@ public abstract class AbstractGraphicLabel implements GraphicLabel {
       }
 
       g2d.setPaint(oldPaint);
+      g2d.setFont(oldFont);
     }
   }
 

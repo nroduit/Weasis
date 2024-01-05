@@ -21,7 +21,7 @@ public class PolygonGraphicTest extends GraphicTester<PolygonGraphic> {
   private static final String XML_1 = "/graphic/polygon/polygon.graphic.1.xml"; // NON-NLS
 
   public static final String BASIC_TPL =
-      "<polygon fill=\"%s\" showLabel=\"%s\" thickness=\"%s\" insideOpacity=\"%s\" uuid=\"%s\">" // NON-NLS
+      "<polygon fillOpacity=\"%s\" fill=\"%s\" showLabel=\"%s\" thickness=\"%s\" uuid=\"%s\">" // NON-NLS
           + "<paint rgb=\"%s\"/>" // NON-NLS
           + "<pts/>" // NON-NLS
           + "</polygon>"; // NON-NLS
@@ -52,10 +52,10 @@ public class PolygonGraphicTest extends GraphicTester<PolygonGraphic> {
   @Override
   public Object[] getParameters() {
     return new Object[] {
+      Graphic.DEFAULT_FILL_OPACITY,
       Graphic.DEFAULT_FILLED,
       Graphic.DEFAULT_LABEL_VISIBLE,
       Graphic.DEFAULT_LINE_THICKNESS,
-      Graphic.DEFAULT_INTERIOR_OPACITY,
       getGraphicUuid(),
       WProperties.color2Hexadecimal(Graphic.DEFAULT_COLOR, true)
     };

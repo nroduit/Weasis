@@ -81,10 +81,12 @@ public class PreferenceDialog extends AbstractWizardDialog {
     ArrayList<AbstractItemDialogPage> list = new ArrayList<>();
     GeneralSetting generalSetting = new GeneralSetting(this);
     list.add(generalSetting);
-    ViewerPrefView viewerSetting = new ViewerPrefView(this);
+    ViewerPrefView viewerSetting = new ViewerPrefView();
     list.add(viewerSetting);
     DicomPrefView dicomPrefView = new DicomPrefView(this);
     list.add(dicomPrefView);
+    DrawPrefView drawPrefView = new DrawPrefView(this);
+    list.add(drawPrefView);
 
     BundleContext context = FrameworkUtil.getBundle(this.getClass()).getBundleContext();
     try {
@@ -104,6 +106,8 @@ public class PreferenceDialog extends AbstractWizardDialog {
                   mainPage = viewerSetting;
                 } else if (position > 600 && position < 700) {
                   mainPage = dicomPrefView;
+                } else if (position > 700 && position < 800) {
+                  mainPage = drawPrefView;
                 } else {
                   mainPage = generalSetting;
                 }
