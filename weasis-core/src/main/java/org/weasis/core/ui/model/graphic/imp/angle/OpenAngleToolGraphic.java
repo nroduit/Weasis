@@ -264,41 +264,39 @@ public class OpenAngleToolGraphic extends AbstractDragGraphic {
         intersectABsegment = (r >= 0 && r <= 1); // means lineABP[1].equals(P)
         intersectCDsegment = (s >= 0 && s <= 1); // means lineCDP[1].equals(P)
 
-        lineABP[0] = r >= 0 ? ptA : ptB;
-        lineABP[1] = r < 0 ? ptA : r > 1 ? ptB : ptP;
-        lineABP[2] = r < 0 ? ptP : r > 1 ? ptP : ptB;
+        validateOrder(r, lineABP, ptA, ptB, intersectABsegment);
 
-        if (intersectABsegment) {
-          if (ptP.distance(lineABP[0]) < ptP.distance(lineABP[2])) {
-            Point2D switchPt = (Point2D) lineABP[2].clone();
-            lineABP[2] = (Point2D) lineABP[0].clone();
-            lineABP[0] = switchPt;
-          }
-        } else if (ptP.distance(lineABP[0]) < ptP.distance(lineABP[1])) {
-          Point2D switchPt = (Point2D) lineABP[1].clone();
-          lineABP[1] = (Point2D) lineABP[0].clone();
-          lineABP[0] = switchPt;
-        }
-
-        lineCDP[0] = s >= 0 ? ptC : ptD;
-        lineCDP[1] = s < 0 ? ptC : s > 1 ? ptD : ptP;
-        lineCDP[2] = s < 0 ? ptP : s > 1 ? ptP : ptD;
-
-        if (intersectCDsegment) {
-          if (ptP.distance(lineCDP[0]) < ptP.distance(lineCDP[2])) {
-            Point2D switchPt = (Point2D) lineCDP[2].clone();
-            lineCDP[2] = (Point2D) lineCDP[0].clone();
-            lineCDP[0] = switchPt;
-          }
-        } else if (ptP.distance(lineCDP[0]) < ptP.distance(lineCDP[1])) {
-          Point2D switchPt = (Point2D) lineCDP[1].clone();
-          lineCDP[1] = (Point2D) lineCDP[0].clone();
-          lineCDP[0] = switchPt;
-        }
+        validateOrder(s, lineCDP, ptC, ptD, intersectCDsegment);
 
         angleDeg =
             GeomUtil.getSmallestRotationAngleDeg(GeomUtil.getAngleDeg(lineABP[0], ptP, lineCDP[0]));
       }
+    }
+  }
+
+  private void validateOrder(
+      double s, Point2D[] lineCDP, Point2D ptC, Point2D ptD, boolean intersectCDsegment) {
+    addToLine(s, lineCDP, ptC, ptD, ptP);
+    validatePosition(intersectCDsegment, lineCDP);
+  }
+
+  static void addToLine(double s, Point2D[] lineCDP, Point2D ptC, Point2D ptD, Point2D ptP) {
+    lineCDP[0] = s >= 0 ? ptC : ptD;
+    lineCDP[1] = s < 0 ? ptC : s > 1 ? ptD : ptP;
+    lineCDP[2] = s < 0 ? ptP : s > 1 ? ptP : ptD;
+  }
+
+  private void validatePosition(boolean intersectABSegment, Point2D[] lineABP) {
+    if (intersectABSegment) {
+      if (ptP.distance(lineABP[0]) < ptP.distance(lineABP[2])) {
+        Point2D switchPt = (Point2D) lineABP[2].clone();
+        lineABP[2] = (Point2D) lineABP[0].clone();
+        lineABP[0] = switchPt;
+      }
+    } else if (ptP.distance(lineABP[0]) < ptP.distance(lineABP[1])) {
+      Point2D switchPt = (Point2D) lineABP[1].clone();
+      lineABP[1] = (Point2D) lineABP[0].clone();
+      lineABP[0] = switchPt;
     }
   }
 
