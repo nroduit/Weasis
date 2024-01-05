@@ -308,12 +308,15 @@ public class AbstractTabLicense extends JPanel implements Insertable {
   public void logProgress(String message) {
     currentTask++;
     progressBar.setValue(currentTask);
-    progressMessageLabel.setText(currentTask + " of " + totalTasks + ": " + message);
+    String finalMessage = currentTask + " of " + totalTasks + ": " + message;
+    LOGGER.debug(finalMessage);
+    progressMessageLabel.setText(finalMessage);
   }
 
   public void close() {
     // in case we just tested, we can close close stuff we opened when executing the 
     // plugin register process
+    LOGGER.trace("currentTask: ", currentTask);
     if (currentTask < TOTAL_LICENSE_REGISTER_TASKS) { 
       licenseController.close();
     }

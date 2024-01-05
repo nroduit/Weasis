@@ -306,6 +306,8 @@ public class LicenseDialogController implements LicenseController {
           }
         }
       }
+    } else {
+      taskMonitor.processItem("Reaching out boot bundle jar...");
     }
   }
 
