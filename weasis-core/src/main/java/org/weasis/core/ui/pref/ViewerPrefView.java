@@ -10,7 +10,6 @@
 package org.weasis.core.ui.pref;
 
 import java.awt.GridLayout;
-import java.util.List;
 import javax.swing.JPanel;
 import org.weasis.core.Messages;
 import org.weasis.core.api.gui.util.AbstractItemDialogPage;
@@ -21,7 +20,7 @@ public class ViewerPrefView extends AbstractItemDialogPage {
 
   private final JPanel menuPanel = new JPanel();
 
-  public ViewerPrefView(PreferenceDialog dialog) {
+  public ViewerPrefView() {
     super(Messages.getString("viewer"), 500);
 
     menuPanel.setLayout(new GridLayout(0, 2));
@@ -29,9 +28,6 @@ public class ViewerPrefView extends AbstractItemDialogPage {
     add(GuiUtils.boxVerticalStrut(BLOCK_SEPARATOR));
 
     add(GuiUtils.boxYLastElement(LAST_FILLER_HEIGHT));
-
-    List<AbstractItemDialogPage> childPages = List.of(new LabelsPrefView());
-    childPages.forEach(p -> addSubPage(p, a -> dialog.showPage(p.getTitle()), menuPanel));
   }
 
   @Override

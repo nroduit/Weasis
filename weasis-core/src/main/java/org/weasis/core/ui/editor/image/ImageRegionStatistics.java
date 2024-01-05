@@ -279,7 +279,7 @@ public class ImageRegionStatistics {
 
       Double suv = (Double) layer.getSourceTagValue(TagW.SuvFactor);
       if (channelIndex == null && Objects.nonNull(suv)) {
-        unit = "SUVbw";
+        unit = "SUVbw, g/ml"; // NON-NLS
         addMeasure(measList, IMAGE_MIN, null, min * suv, unit);
         addMeasure(measList, IMAGE_MAX, null, max * suv, unit);
         addMeasure(measList, IMAGE_MEAN, null, mean * suv, unit);

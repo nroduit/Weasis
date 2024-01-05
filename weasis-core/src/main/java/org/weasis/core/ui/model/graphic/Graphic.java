@@ -41,7 +41,7 @@ import org.weasis.core.ui.util.MouseEventDouble;
 public interface Graphic extends UUIDable, GUIEntry, KeyActionValue, Copyable<Graphic> {
   Color DEFAULT_COLOR = Color.YELLOW;
   Float DEFAULT_LINE_THICKNESS = 1f;
-  Float DEFAULT_INTERIOR_OPACITY = 1f;
+  Float DEFAULT_FILL_OPACITY = 1f;
   Boolean DEFAULT_LABEL_VISIBLE = Boolean.TRUE;
   Boolean DEFAULT_FILLED = Boolean.FALSE;
   Boolean DEFAULT_SELECTED = Boolean.FALSE;
@@ -97,7 +97,7 @@ public interface Graphic extends UUIDable, GUIEntry, KeyActionValue, Copyable<Gr
    *
    * @return The interior opacity value (between 0.0 and 1.0)
    */
-  Float getRelativeInteriorOpacity();
+  Float getFillOpacity();
 
   /**
    * Returns a build Stroke object regarding the line thickness value.
@@ -205,7 +205,7 @@ public interface Graphic extends UUIDable, GUIEntry, KeyActionValue, Copyable<Gr
 
   void setLineThickness(Float lineThickness);
 
-  void setRelativeInteriorOpacity(Float relativeInteriorOpacity);
+  void setFillOpacity(Float fillOpacity);
 
   void setPaint(Color newPaintColor);
 

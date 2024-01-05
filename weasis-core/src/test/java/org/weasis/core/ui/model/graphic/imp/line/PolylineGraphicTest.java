@@ -21,7 +21,7 @@ public class PolylineGraphicTest extends GraphicTester<PolylineGraphic> {
   private static final String XML_1 = "/graphic/polyline/polyline.graphic.1.xml"; // NON-NLS
 
   static final String BASIC_TPL =
-      "<polyline fill=\"%s\" showLabel=\"%s\" thickness=\"%s\" insideOpacity=\"%s\" uuid=\"%s\">" // NON-NLS
+      "<polyline fillOpacity=\"%s\" fill=\"%s\" showLabel=\"%s\" thickness=\"%s\" uuid=\"%s\">" // NON-NLS
           + "<paint rgb=\"%s\"/>" // NON-NLS
           + "<pts/>" // NON-NLS
           + "</polyline>"; // NON-NLS
@@ -57,10 +57,10 @@ public class PolylineGraphicTest extends GraphicTester<PolylineGraphic> {
   @Override
   public Object[] getParameters() {
     return new Object[] {
+      Graphic.DEFAULT_FILL_OPACITY,
       Graphic.DEFAULT_FILLED,
       Graphic.DEFAULT_LABEL_VISIBLE,
       Graphic.DEFAULT_LINE_THICKNESS,
-      Graphic.DEFAULT_INTERIOR_OPACITY,
       getGraphicUuid(),
       WProperties.color2Hexadecimal(Graphic.DEFAULT_COLOR, true)
     };

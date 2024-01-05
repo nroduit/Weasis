@@ -167,6 +167,8 @@ public class ViewerPrefView extends AbstractItemDialogPage {
 
     add(GuiUtils.boxYLastElement(LAST_FILLER_HEIGHT));
     getProperties().setProperty(PreferenceDialog.KEY_SHOW_RESTORE, Boolean.TRUE.toString());
+    getProperties()
+        .setProperty(PreferenceDialog.KEY_HELP, "dicom-2d-viewer/#preferences"); // NON-NLS
   }
 
   private Color getOverlayColor() {

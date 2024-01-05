@@ -10,22 +10,29 @@
 package org.weasis.core.ui.pref;
 
 import java.awt.GridLayout;
+import java.util.List;
 import javax.swing.JPanel;
 import org.weasis.core.api.gui.util.AbstractItemDialogPage;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.PageItem;
+import org.weasis.core.ui.editor.image.dockable.MeasureTool;
 
-public class DicomPrefView extends AbstractItemDialogPage {
+public class DrawPrefView extends AbstractItemDialogPage {
+
   private final JPanel menuPanel = new JPanel();
 
-  public DicomPrefView() {
-    super("DICOM", 600);
+  public DrawPrefView(PreferenceDialog dialog) {
+    super(MeasureTool.BUTTON_NAME, 700);
 
     menuPanel.setLayout(new GridLayout(0, 2));
     add(menuPanel);
     add(GuiUtils.boxVerticalStrut(BLOCK_SEPARATOR));
 
     add(GuiUtils.boxYLastElement(LAST_FILLER_HEIGHT));
+    getProperties().setProperty(PreferenceDialog.KEY_HELP, "draw-measure"); // NON-NLS
+
+    List<AbstractItemDialogPage> childPages = List.of(new GraphicPrefView(), new LabelsPrefView());
+    childPages.forEach(p -> addSubPage(p, _ -> dialog.showPage(p.getTitle()), menuPanel));
   }
 
   @Override
@@ -41,5 +48,7 @@ public class DicomPrefView extends AbstractItemDialogPage {
   }
 
   @Override
-  public void resetToDefaultValues() {}
+  public void resetToDefaultValues() {
+    // Do nothing
+  }
 }

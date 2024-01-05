@@ -867,7 +867,7 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
   public void addSeriesList(List<MediaSeries<E>> seriesList, boolean bestDefaultLayout) {
     if (seriesList != null && !seriesList.isEmpty()) {
       if (SynchData.Mode.TILE.equals(synchView.getSynchData().getMode())) {
-        addSeries(seriesList.get(0));
+        addSeries(seriesList.getFirst());
         return;
       }
       setSelectedAndGetFocus();
@@ -886,7 +886,7 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
           }
         }
         if (!view2ds.isEmpty()) {
-          setSelectedImagePane(view2ds.get(0));
+          setSelectedImagePane(view2ds.getFirst());
         }
         for (MediaSeries mediaSeries : seriesList) {
           addSeries(mediaSeries);

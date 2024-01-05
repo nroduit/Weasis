@@ -21,7 +21,7 @@ public class AngleToolGraphicTest extends GraphicTester<AngleToolGraphic> {
   private static final String XML_1 = "/graphic/angle/angle.graphic.1.xml"; // NON-NLS
 
   public static final String BASIC_TPL =
-      "<angle fill=\"%s\" showLabel=\"%s\" thickness=\"%s\" insideOpacity=\"%s\" uuid=\"%s\">" // NON-NLS
+      "<angle fillOpacity=\"%s\" fill=\"%s\" showLabel=\"%s\" thickness=\"%s\" uuid=\"%s\">" // NON-NLS
           + "<paint rgb=\"%s\"/>" // NON-NLS
           + "<pts/>" // NON-NLS
           + "</angle>"; // NON-NLS
@@ -47,10 +47,10 @@ public class AngleToolGraphicTest extends GraphicTester<AngleToolGraphic> {
   @Override
   public Object[] getParameters() {
     return new Object[] {
+      Graphic.DEFAULT_FILL_OPACITY,
       Graphic.DEFAULT_FILLED,
       Graphic.DEFAULT_LABEL_VISIBLE,
       Graphic.DEFAULT_LINE_THICKNESS,
-      Graphic.DEFAULT_INTERIOR_OPACITY,
       getGraphicUuid(),
       WProperties.color2Hexadecimal(Graphic.DEFAULT_COLOR, true)
     };
