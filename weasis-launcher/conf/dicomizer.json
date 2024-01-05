@@ -219,7 +219,7 @@
     {
       "code": "weasis-base-viewer2d.all.imagetool.enable",
       "value": "false",
-      "description": "Show the image tool with base 2D viewer",
+      "description": "Show the Image Tools with base 2D viewer",
       "type": "A",
       "javaType": "BOOLEAN",
       "category": "UI"

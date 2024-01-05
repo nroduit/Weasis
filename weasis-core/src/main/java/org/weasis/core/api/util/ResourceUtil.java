@@ -113,7 +113,7 @@ public class ResourceUtil {
     NONE("svg/action/none.svg"), // NON-NLS
     OPEN_EXTERNAL("svg/action/openExternal.svg"), // NON-NLS
     OPEN_NEW_TAB("svg/action/openNewTab.svg"), // NON-NLS
-    ORTHOGRAPHIC("svg/action/Orthographic.svg"), // NON-NLS
+    ORTHOGRAPHIC("svg/action/orthographic.svg"), // NON-NLS
     PAN("svg/action/pan.svg"), // NON-NLS
     PIPETTE("svg/action/pipette.svg"), // NON-NLS
     PLUS("svg/action/plus.svg"), // NON-NLS

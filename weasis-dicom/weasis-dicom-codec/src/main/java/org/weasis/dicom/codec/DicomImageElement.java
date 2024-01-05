@@ -178,8 +178,7 @@ public class DicomImageElement extends ImageElement implements DicomElement {
   private double[] getMagnifiedPixelSpacing(boolean useMagnificationFactor) {
     double[] val = TagD.getTagValue(mediaIO, Tag.ImagerPixelSpacing, double[].class);
     // Follows D. Clunie recommendations
-    pixelSizeCalibrationDescription =
-        val == null ? null : Messages.getString("DicomImageElement.detector");
+    pixelSizeCalibrationDescription = val == null ? null : "At Detector"; // NON-NLS
     if (useMagnificationFactor && val != null && val.length == 2 && val[0] > 0.0 && val[1] > 0.0) {
       Double estimatedFactor =
           TagD.getTagValue(mediaIO, Tag.EstimatedRadiographicMagnificationFactor, Double.class);
