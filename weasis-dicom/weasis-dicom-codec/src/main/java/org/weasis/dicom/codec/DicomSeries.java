@@ -25,6 +25,7 @@ import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.SeriesEvent;
 import org.weasis.core.api.media.data.TagView;
 import org.weasis.core.api.media.data.TagW;
+import org.weasis.core.ui.editor.image.DefaultView2d;
 import org.weasis.core.util.FileUtil;
 import org.weasis.core.util.MathUtil;
 import org.weasis.core.util.StringUtil;
@@ -337,9 +338,9 @@ public class DicomSeries extends Series<DicomImageElement> {
     SeriesInstanceList seriesInstanceList =
         (SeriesInstanceList) getTagValue(TagW.WadoInstanceReferenceList);
     if (seriesInstanceList != null) {
-      return seriesInstanceList.size() >= 5;
+      return seriesInstanceList.size() >= DefaultView2d.MINIMAL_IMAGES_FOR_3D;
     }
-    return size(null) >= 5;
+    return size(null) >= DefaultView2d.MINIMAL_IMAGES_FOR_3D;
   }
 
   public static synchronized void startPreloading(
