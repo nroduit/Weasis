@@ -60,19 +60,35 @@ public class Preset extends TextureData {
   private int id2;
 
   public Preset(VolumePreset v) {
-    super(256, PixelFormat.RGBA8);
-    this.name = Objects.requireNonNull(v).getName();
-    this.modality = Modality.getModality(v.getModality());
-    this.defaultElement = v.isDefaultElement();
-    this.shade = v.isShade();
-    this.specularPower = v.getSpecularPower();
+    this(
+        Objects.requireNonNull(v).getName(),
+        v.getModality(),
+        v.isDefaultElement(),
+        v.isShade(),
+        v.getSpecularPower(),
+        v.getGroups());
+  }
 
-    this.groups = v.getGroups();
+  public Preset(
+      String name,
+      String modality,
+      boolean defaultElement,
+      boolean shade,
+      float specularPower,
+      List<PresetGroup> groups) {
+    super(256, PixelFormat.RGBA8);
+    this.name = Objects.requireNonNull(name);
+    this.modality = Modality.getModality(modality);
+    this.defaultElement = defaultElement;
+    this.shade = shade;
+    this.specularPower = specularPower;
+
+    this.groups = groups;
     if (groups.isEmpty() || groups.stream().anyMatch(g -> g.getPoints().length == 0)) {
       throw new IllegalArgumentException("empty group or point");
     }
-    this.colorMin = groups.get(0).getPoints()[0].getIntensity();
-    PresetPoint[] pts = groups.get(groups.size() - 1).getPoints();
+    this.colorMin = groups.getFirst().getPoints()[0].getIntensity();
+    PresetPoint[] pts = groups.getLast().getPoints();
     this.colorMax = pts[pts.length - 1].getIntensity();
     this.width = colorMax - colorMin;
     this.colors = new byte[width * 4];

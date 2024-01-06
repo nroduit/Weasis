@@ -86,6 +86,7 @@ import org.weasis.dicom.codec.DicomSpecialElement;
 import org.weasis.dicom.codec.KOSpecialElement;
 import org.weasis.dicom.codec.PRSpecialElement;
 import org.weasis.dicom.codec.PresentationStateReader;
+import org.weasis.dicom.codec.SegSpecialElement;
 import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.TagD.Level;
 import org.weasis.dicom.explorer.DicomExplorer;
@@ -96,6 +97,7 @@ import org.weasis.dicom.explorer.ImportToolBar;
 import org.weasis.dicom.explorer.print.DicomPrintDialog;
 import org.weasis.dicom.viewer2d.dockable.DisplayTool;
 import org.weasis.dicom.viewer2d.dockable.ImageTool;
+import org.weasis.dicom.viewer2d.dockable.SegmentationTool;
 
 public class View2dContainer extends DicomViewerPlugin implements PropertyChangeListener {
   private static final Logger LOGGER = LoggerFactory.getLogger(View2dContainer.class);
@@ -355,6 +357,18 @@ public class View2dContainer extends DicomViewerPlugin implements PropertyChange
         TOOLS.add(tool);
       }
 
+      if (InsertableUtil.getBooleanProperty(
+          preferences,
+          bundleName,
+          componentName,
+          InsertableUtil.getCName(SegmentationTool.class),
+          key,
+          true)) {
+        tool = new SegmentationTool();
+        TOOLS.add(tool);
+        eventManager.addSeriesViewerListener((SeriesViewerListener) tool);
+      }
+
       InsertableUtil.sortInsertable(TOOLS);
 
       // Send event to synchronize the series selection.
@@ -610,6 +624,13 @@ public class View2dContainer extends DicomViewerPlugin implements PropertyChange
             if (view instanceof View2d view2d
                 && PresentationStateReader.isImageApplicable(prSpecialElement, view.getImage())) {
               view2d.updatePR();
+            }
+          }
+        } else if (specialElement instanceof SegSpecialElement segSpecialElement) {
+          for (ViewCanvas<DicomImageElement> view : view2ds) {
+            if (view instanceof View2d view2d
+                && segSpecialElement.containsSopInstanceUIDReference(view.getImage())) {
+              view2d.updateSegmentation();
             }
           }
         }

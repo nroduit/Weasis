@@ -65,7 +65,6 @@ import org.weasis.core.api.image.PseudoColorOp;
 import org.weasis.core.api.image.WindowOp;
 import org.weasis.core.api.image.ZoomOp.Interpolation;
 import org.weasis.core.api.image.cv.ImageCVIO;
-import org.weasis.core.api.image.op.ByteLutCollection;
 import org.weasis.core.api.image.util.KernelData;
 import org.weasis.core.api.image.util.MeasurableLayer;
 import org.weasis.core.api.image.util.Unit;
@@ -104,6 +103,7 @@ import org.weasis.core.ui.util.TitleMenuItem;
 import org.weasis.core.util.LangUtil;
 import org.weasis.core.util.MathUtil;
 import org.weasis.opencv.data.PlanarImage;
+import org.weasis.opencv.op.lut.ColorLut;
 
 /**
  * @author Nicolas Roduit
@@ -218,8 +218,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         Interpolation.getInterpolation(eventManager.getZoomSetting().getInterpolation()));
     disOp.setParamValue(AffineTransformOp.OP_NAME, AffineTransformOp.P_AFFINE_MATRIX, null);
     disOp.setParamValue(FilterOp.OP_NAME, FilterOp.P_KERNEL_DATA, KernelData.NONE);
-    disOp.setParamValue(
-        PseudoColorOp.OP_NAME, PseudoColorOp.P_LUT, ByteLutCollection.Lut.IMAGE.getByteLut());
+    disOp.setParamValue(PseudoColorOp.OP_NAME, PseudoColorOp.P_LUT, ColorLut.IMAGE.getByteLut());
     disOp.setParamValue(PseudoColorOp.OP_NAME, PseudoColorOp.P_LUT_INVERSE, false);
   }
 

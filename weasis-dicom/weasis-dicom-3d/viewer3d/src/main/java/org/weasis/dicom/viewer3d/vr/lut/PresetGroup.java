@@ -18,6 +18,15 @@ public class PresetGroup {
   @JsonProperty("point")
   PresetPoint[] points;
 
+  public PresetGroup() {
+    // Used by Jackson
+  }
+
+  public PresetGroup(String name, PresetPoint[] points) {
+    this.name = name;
+    this.points = points;
+  }
+
   public String getName() {
     return name;
   }

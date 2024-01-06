@@ -21,6 +21,7 @@ import java.awt.event.MouseEvent;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
@@ -89,9 +90,11 @@ import org.weasis.core.ui.util.TitleMenuItem;
 import org.weasis.core.util.LangUtil;
 import org.weasis.core.util.MathUtil;
 import org.weasis.dicom.codec.DicomImageElement;
+import org.weasis.dicom.codec.DicomSeries;
 import org.weasis.dicom.codec.KOSpecialElement;
 import org.weasis.dicom.codec.PRSpecialElement;
 import org.weasis.dicom.codec.PresentationStateReader;
+import org.weasis.dicom.codec.SegSpecialElement;
 import org.weasis.dicom.codec.SortSeriesStack;
 import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.display.OverlayOp;
@@ -104,6 +107,7 @@ import org.weasis.dicom.codec.geometry.IntersectSlice;
 import org.weasis.dicom.codec.geometry.IntersectVolume;
 import org.weasis.dicom.codec.geometry.LocalizerPoster;
 import org.weasis.dicom.codec.geometry.PatientOrientation.Biped;
+import org.weasis.dicom.codec.seg.EditableContour;
 import org.weasis.dicom.explorer.DicomModel;
 import org.weasis.dicom.explorer.DicomSeriesHandler;
 import org.weasis.dicom.explorer.pr.PrGraphicUtil;
@@ -623,6 +627,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
     super.setImage(img);
 
     if (newImg) {
+      updateSegmentation(img);
       updatePrButtonState(img);
       updateKOSelectedState(img);
     }
@@ -668,6 +673,38 @@ public class View2d extends DefaultView2d<DicomImageElement> {
     } else if (ActionState.NoneLabel.NONE.equals(oldPR)) {
       // No persistence for NONE
       actionsInView.put(ActionW.PR_STATE.cmd(), null);
+    }
+  }
+
+  public void updateSegmentation() {
+    updateSegmentation(imageLayer.getSourceImage());
+  }
+
+  private void updateSegmentation(DicomImageElement img) {
+    graphicManager.deleteByLayerType(LayerType.DICOM_SEG);
+    if (series != null && img != null) {
+      String patientPseudoUID = DicomModel.getPatientPseudoUID(series);
+      List<SegSpecialElement> segList =
+          DicomSeries.getHiddenElementsFromPatient(patientPseudoUID, SegSpecialElement.class);
+      if (!segList.isEmpty()) {
+        List<EditableContour> contours = new ArrayList<>();
+        for (SegSpecialElement seg : segList) {
+          if (seg.isVisible() && seg.containsSopInstanceUIDReference(img)) {
+            contours.addAll(seg.getContours(img));
+          }
+        }
+
+        for (EditableContour c : contours) {
+          // Structure graphics
+          Graphic graphic = c.getNonEditableGraphic();
+          if (graphic != null) {
+            for (PropertyChangeListener listener : graphicManager.getGraphicsListeners()) {
+              graphic.addPropertyChangeListener(listener);
+            }
+            graphicManager.addGraphic(graphic);
+          }
+        }
+      }
     }
   }
 

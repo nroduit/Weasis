@@ -13,32 +13,50 @@ import com.jogamp.opengl.GL2ES2;
 import com.jogamp.opengl.GL4;
 import com.jogamp.opengl.GLContext;
 import com.jogamp.opengl.util.GLPixelStorageModes;
+import java.awt.Color;
 import java.awt.Dimension;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Objects;
 import javax.swing.JProgressBar;
 import jogamp.opengl.glu.error.Error;
 import org.dcm4che3.data.Tag;
 import org.dcm4che3.img.DicomImageUtils;
+import org.dcm4che3.img.data.SegmentAttributes;
 import org.joml.Vector3d;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
+import org.opencv.core.MatOfPoint;
+import org.opencv.core.Scalar;
+import org.opencv.imgproc.Imgproc;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.weasis.core.api.gui.util.ComboItemListener;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.ui.editor.image.ViewCanvas;
+import org.weasis.core.ui.model.graphic.imp.NonEditableGraphic;
 import org.weasis.dicom.codec.DicomImageElement;
+import org.weasis.dicom.codec.DicomSeries;
+import org.weasis.dicom.codec.SegSpecialElement;
 import org.weasis.dicom.codec.TagD;
+import org.weasis.dicom.codec.seg.EditableContour;
+import org.weasis.dicom.explorer.DicomModel;
+import org.weasis.dicom.viewer3d.ActionVol;
 import org.weasis.dicom.viewer3d.EventManager;
 import org.weasis.dicom.viewer3d.geometry.GeometryUtils;
 import org.weasis.dicom.viewer3d.geometry.VolumeGeometry;
+import org.weasis.dicom.viewer3d.vr.lut.PresetGroup;
+import org.weasis.dicom.viewer3d.vr.lut.PresetPoint;
 import org.weasis.opencv.data.ImageCV;
 import org.weasis.opencv.data.PlanarImage;
+import org.weasis.opencv.op.ImageProcessor;
 
 public final class VolumeBuilder {
   private static final Logger LOGGER = LoggerFactory.getLogger(VolumeBuilder.class);
@@ -204,6 +222,10 @@ public final class VolumeBuilder {
       Instant timeStarted = Instant.now();
       double lastPos = 0;
 
+      String patientPseudoUID = DicomModel.getPatientPseudoUID(volTexture.getSeries());
+      List<SegSpecialElement> segList =
+          DicomSeries.getHiddenElementsFromPatient(patientPseudoUID, SegSpecialElement.class);
+
       List<DicomImageElement> list = volTexture.getVolumeImages();
       for (int i = 0; i < list.size(); i++) {
         if (isInterrupted()) {
@@ -272,6 +294,28 @@ public final class VolumeBuilder {
             i,
             Duration.between(start, Instant.now()).toMillis());
 
+        if (!segList.isEmpty()) {
+          Mat mask = Mat.zeros(imageMLUT.size(), imageMLUT.type());
+          for (SegSpecialElement seg : segList) {
+            if (seg.isVisible() && seg.containsSopInstanceUIDReference(imageElement)) {
+              Collection<EditableContour> contours = seg.getContours(imageElement);
+              if (!contours.isEmpty()) {
+                for (EditableContour c : contours) {
+                  NonEditableGraphic graphic = c.getNonEditableGraphic();
+                  if (graphic != null) {
+                    List<MatOfPoint> pts =
+                        ImageProcessor.transformShapeToContour(graphic.getShape(), false);
+                    // TODO check the limit value
+                    Imgproc.fillPoly(mask, pts, new Scalar(c.getCategory().getId()));
+                  }
+                }
+                // Core.bitwise_and(src, mask, src);
+              }
+            }
+          }
+          imageMLUT = ImageCV.toImageCV(mask);
+        }
+
         sumMemory += imageMLUT.physicalBytes();
         if (sumMemory > maxMemory) {
           start = Instant.now();
@@ -313,8 +357,60 @@ public final class VolumeBuilder {
 
       if (view instanceof View3d view3d) {
         view3d.setProgressBar(null);
+        buildSegmentationLut(segList);
+        volTexture.notifyFullyLoaded();
       }
-      volTexture.notifyFullyLoaded();
+    }
+
+    private void buildSegmentationLut(List<SegSpecialElement> segList) {
+      ComboItemListener<Preset> action =
+          EventManager.getInstance().getAction(ActionVol.VOL_PRESET).orElse(null);
+      if (action != null && !segList.isEmpty()) {
+        List<PresetGroup> groups = new ArrayList<>();
+        groups.add(
+            new PresetGroup(
+                "StartEmpty",
+                new PresetPoint[] {getTransparentPoint(-10), getTransparentPoint(0)}));
+
+        List<PresetPoint> presetPoints = new ArrayList<>();
+        int max = 1;
+
+        for (SegSpecialElement segElement : segList) {
+          Map<Integer, EditableContour> map = segElement.getSegAttributes();
+          if (map != null) {
+            for (Entry<Integer, EditableContour> entry : map.entrySet()) {
+              SegmentAttributes a = entry.getValue().getAttributes();
+              if (a.isVisible()) {
+                max = Math.max(max, entry.getKey());
+                Color c = a.getColor();
+                presetPoints.add(
+                    new PresetPoint(
+                        entry.getKey(),
+                        c.getAlpha() / 255f,
+                        c.getRed() / 255f,
+                        c.getGreen() / 255f,
+                        c.getBlue() / 255f,
+                        0.2f,
+                        0.1f,
+                        0.9f));
+              }
+            }
+          }
+        }
+        groups.add(new PresetGroup("segments", presetPoints.toArray(new PresetPoint[0])));
+        groups.add(
+            new PresetGroup(
+                "EndEmpty",
+                new PresetPoint[] {getTransparentPoint(max + 1), getTransparentPoint(max + 11)}));
+        Preset preset = new Preset("Segmentation", "SEG", false, true, 1.0f, groups);
+        if (action.getModel().getIndexOf(preset) < 0) {
+          action.getModel().addElement(preset);
+        }
+      }
+    }
+
+    private static PresetPoint getTransparentPoint(int intensity) {
+      return new PresetPoint(intensity, 0, 0f, 0f, 0f, 0.2f, 0.1f, 0.9f);
     }
   }
 }
