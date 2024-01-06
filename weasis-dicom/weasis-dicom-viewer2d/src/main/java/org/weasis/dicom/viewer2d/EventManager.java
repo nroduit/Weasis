@@ -66,7 +66,6 @@ import org.weasis.core.api.image.ImageOpNode;
 import org.weasis.core.api.image.OpManager;
 import org.weasis.core.api.image.PseudoColorOp;
 import org.weasis.core.api.image.WindowOp;
-import org.weasis.core.api.image.op.ByteLut;
 import org.weasis.core.api.image.op.ByteLutCollection;
 import org.weasis.core.api.image.util.KernelData;
 import org.weasis.core.api.image.util.Unit;
@@ -113,6 +112,8 @@ import org.weasis.dicom.viewer2d.mip.MipView;
 import org.weasis.dicom.viewer2d.mpr.MprContainer;
 import org.weasis.dicom.viewer2d.mpr.MprView;
 import org.weasis.opencv.op.ImageConversion;
+import org.weasis.opencv.op.lut.ByteLut;
+import org.weasis.opencv.op.lut.ColorLut;
 import org.weasis.opencv.op.lut.DefaultWlPresentation;
 import org.weasis.opencv.op.lut.LutShape;
 
@@ -738,11 +739,11 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
 
   private ComboItemListener<ByteLut> newLutAction() {
     List<ByteLut> luts = new ArrayList<>();
-    luts.add(ByteLutCollection.Lut.GRAY.getByteLut());
+    luts.add(ColorLut.GRAY.getByteLut());
     ByteLutCollection.readLutFilesFromResourcesDir(
         luts, ResourceUtil.getResource(DicomResource.LUTS));
     // Set default first as the list has been sorted
-    luts.add(0, ByteLutCollection.Lut.IMAGE.getByteLut());
+    luts.addFirst(ColorLut.IMAGE.getByteLut());
 
     return new ComboItemListener<>(ActionW.LUT, luts.toArray(new ByteLut[0])) {
 

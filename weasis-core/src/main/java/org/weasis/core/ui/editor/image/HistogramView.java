@@ -36,7 +36,6 @@ import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.image.OpManager;
 import org.weasis.core.api.image.PseudoColorOp;
 import org.weasis.core.api.image.WindowOp;
-import org.weasis.core.api.image.op.ByteLut;
 import org.weasis.core.api.image.util.MeasurableLayer;
 import org.weasis.core.api.image.util.WindLevelParameters;
 import org.weasis.core.ui.editor.SeriesViewer;
@@ -54,6 +53,7 @@ import org.weasis.core.ui.util.SimpleTableModel;
 import org.weasis.core.ui.util.TableNumberRenderer;
 import org.weasis.core.util.StringUtil;
 import org.weasis.opencv.data.PlanarImage;
+import org.weasis.opencv.op.lut.ByteLut;
 import org.weasis.opencv.op.lut.WlParams;
 
 public class HistogramView extends JComponent
@@ -265,7 +265,7 @@ public class HistogramView extends JComponent
         PseudoColorOp lutOp = (PseudoColorOp) dispOp.getNode(PseudoColorOp.OP_NAME);
         if (lutOp != null) {
           ByteLut lutTable = (ByteLut) lutOp.getParam(PseudoColorOp.P_LUT);
-          if (lutTable != null && lutTable.getLutTable() != null) {
+          if (lutTable != null && lutTable.lutTable() != null) {
             disLut = new DisplayByteLut(lutTable);
           }
         }
@@ -335,7 +335,7 @@ public class HistogramView extends JComponent
           DisplayByteLut[] displut = getLut(p, colorModel);
           for (int i = 0; i < lut.length; i++) {
             ChannelHistogramPanel chartPanel;
-            StringBuilder name = new StringBuilder(lut[i].getName());
+            StringBuilder name = new StringBuilder(lut[i].name());
             name.append(StringUtil.SPACE);
             name.append(Messages.getString("HistogramView.histo"));
             if (StringUtil.hasText(layer.getPixelValueUnit())) {

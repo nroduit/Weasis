@@ -11,11 +11,11 @@ package org.weasis.core.api.image;
 
 import org.weasis.core.Messages;
 import org.weasis.core.api.gui.util.ActionW;
-import org.weasis.core.api.image.op.ByteLut;
 import org.weasis.core.api.image.op.ByteLutCollection;
 import org.weasis.core.util.LangUtil;
 import org.weasis.opencv.data.PlanarImage;
 import org.weasis.opencv.op.ImageProcessor;
+import org.weasis.opencv.op.lut.ByteLut;
 
 public class PseudoColorOp extends AbstractOp {
 
@@ -56,7 +56,7 @@ public class PseudoColorOp extends AbstractOp {
 
     if (lutTable != null) {
       boolean invert = LangUtil.getNULLtoFalse((Boolean) params.get(P_LUT_INVERSE));
-      byte[][] lut = lutTable.getLutTable();
+      byte[][] lut = lutTable.lutTable();
       if (lut == null) {
         if (invert) {
           result = ImageProcessor.invertLUT(source.toImageCV());

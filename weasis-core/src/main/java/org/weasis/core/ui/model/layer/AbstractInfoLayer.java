@@ -27,8 +27,6 @@ import org.weasis.core.api.gui.util.DecFormatter;
 import org.weasis.core.api.image.OpManager;
 import org.weasis.core.api.image.PseudoColorOp;
 import org.weasis.core.api.image.WindowOp;
-import org.weasis.core.api.image.op.ByteLut;
-import org.weasis.core.api.image.op.ByteLutCollection;
 import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.service.BundlePreferences;
@@ -41,6 +39,8 @@ import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.model.utils.imp.DefaultUUID;
 import org.weasis.core.ui.pref.ViewSetting;
 import org.weasis.core.util.StringUtil;
+import org.weasis.opencv.op.lut.ByteLut;
+import org.weasis.opencv.op.lut.ColorLut;
 import org.weasis.opencv.op.lut.WlParams;
 
 public abstract class AbstractInfoLayer<E extends ImageElement> extends DefaultUUID
@@ -268,7 +268,7 @@ public abstract class AbstractInfoLayer<E extends ImageElement> extends DefaultU
     WlParams p = getWinLeveParameters();
     if (p != null && bound.height > 350) {
       DisplayByteLut lut = getLut(p);
-      byte[][] table = lut.getLutTable();
+      byte[][] table = lut.getByteLut().lutTable();
       float length = table[0].length;
 
       int width = 0;
@@ -355,13 +355,13 @@ public abstract class AbstractInfoLayer<E extends ImageElement> extends DefaultU
         PseudoColorOp lutOp = (PseudoColorOp) dispOp.getNode(PseudoColorOp.OP_NAME);
         if (lutOp != null) {
           ByteLut lutTable = (ByteLut) lutOp.getParam(PseudoColorOp.P_LUT);
-          if (lutTable != null && lutTable.getLutTable() != null) {
+          if (lutTable != null && lutTable.lutTable() != null) {
             disLut = new DisplayByteLut(lutTable);
           }
         }
 
         if (disLut == null) {
-          disLut = new DisplayByteLut(ByteLutCollection.Lut.GRAY.getByteLut());
+          disLut = new DisplayByteLut(ColorLut.GRAY.getByteLut());
         }
         disLut.setInvert(p.isInverseLut());
         lut = disLut;
@@ -369,7 +369,7 @@ public abstract class AbstractInfoLayer<E extends ImageElement> extends DefaultU
     }
 
     if (lut == null) {
-      lut = new DisplayByteLut(ByteLutCollection.Lut.GRAY.getByteLut());
+      lut = new DisplayByteLut(ColorLut.GRAY.getByteLut());
     }
     return lut;
   }

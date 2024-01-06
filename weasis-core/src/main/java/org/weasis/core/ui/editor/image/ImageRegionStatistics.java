@@ -30,7 +30,6 @@ import java.util.Objects;
 import org.opencv.core.Mat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.weasis.core.api.image.op.ByteLut;
 import org.weasis.core.api.image.util.MeasurableLayer;
 import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.api.media.data.TagW;
@@ -42,6 +41,7 @@ import org.weasis.core.util.MathUtil;
 import org.weasis.opencv.data.PlanarImage;
 import org.weasis.opencv.op.ImageConversion;
 import org.weasis.opencv.op.ImageProcessor;
+import org.weasis.opencv.op.lut.ByteLut;
 
 public class ImageRegionStatistics {
   private static final Logger LOGGER = LoggerFactory.getLogger(ImageRegionStatistics.class);
