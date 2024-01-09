@@ -435,7 +435,15 @@ public class GuiUtils {
   }
 
   public static void formatCheckAction(JSpinner spin) {
+    formatCheckAction(spin, null);
+  }
+
+  public static void formatCheckAction(
+      JSpinner spin, JFormattedTextField.AbstractFormatter defaultFormat) {
     final JFormattedTextField ftf = ((JSpinner.DefaultEditor) spin.getEditor()).getTextField();
+    if (defaultFormat != null) {
+      ftf.setFormatterFactory(new DefaultFormatterFactory(defaultFormat));
+    }
     addCheckActionToJFormattedTextField(ftf);
   }
 

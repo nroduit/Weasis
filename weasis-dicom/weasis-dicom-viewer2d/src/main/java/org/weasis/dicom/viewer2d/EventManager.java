@@ -24,7 +24,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.Optional;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import javax.swing.BoundedRangeModel;
 import javax.swing.ButtonGroup;
@@ -161,7 +160,8 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
     setAction(new BasicActionState(ActionW.MEASURE));
     setAction(new BasicActionState(ActionW.VOLUME));
 
-    setAction(getMoveTroughSliceAction(20, TIME.SECOND, 0.1));
+    setAction(getMoveTroughSliceAction(20.0, TIME.SECOND, 0.1));
+    setAction(newLoopSweepAction());
     setAction(newWindowAction());
     setAction(newLevelAction());
     setAction(newRotateAction());
@@ -245,10 +245,8 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
 
   @Override
   protected SliderCineListener getMoveTroughSliceAction(
-      int speed, TIME time, double mouseSensitivity) {
+      double speed, TIME time, double mouseSensitivity) {
     return new SliderCineListener(ActionW.SCROLL_SERIES, 1, 2, 1, speed, time, mouseSensitivity) {
-
-      private CineThread currentCine;
 
       @Override
       public void stateChanged(BoundedRangeModel model) {
@@ -280,6 +278,15 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
             // Ensure to load image before calling the default preset (requires pixel min and max)
             if (image != null && !image.isImageAvailable()) {
               image.getImage();
+            }
+          }
+        }
+        if (image != null) {
+          double[] frameTimes = (double[]) image.getTagValue(TagD.get(Tag.FrameTimeVector));
+          if (frameTimes != null && frameTimes.length > 1) {
+            Double cineRate = TagD.getTagValue(image, Tag.CineRate, Double.class);
+            if (cineRate != null) {
+              setSpeed(cineRate);
             }
           }
         }
@@ -427,96 +434,20 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
         updateKeyObjectComponentsListener(view2d);
       }
 
-      @Override
-      public void setSpeed(int speed) {
-        super.setSpeed(speed);
-        if (currentCine != null) {
-          currentCine.iniSpeed();
-        }
-      }
-
-      /** Create a thread to cine the images. */
-      class CineThread extends Thread {
-
-        private AtomicInteger iteration;
-        private volatile int waitTimeMillis;
-        private volatile int currentCineRate;
-        private volatile long start;
-        private volatile boolean cining = true;
-
-        @Override
-        public void run() {
-          iniSpeed();
-          while (cining) {
-            long startFrameTime = System.currentTimeMillis();
-            // Set the value to SliderCineListener, must be in EDT for refreshing UI correctly
-            GuiExecutor.invokeAndWait(
-                () -> {
-                  if (cining) {
-                    int frameIndex = getSliderValue() + 1;
-                    setSliderValue(frameIndex > getSliderMax() ? 0 : frameIndex);
-                  }
-                });
-            // Time to set the new frame index
-            long elapsedFrame = System.currentTimeMillis() - startFrameTime;
-            /*
-             * If this time is smaller than the time to wait according to the cine speed (fps), then wait
-             * the time left, otherwise continue (that means the cine speed cannot be reached)
-             */
-            if (elapsedFrame < waitTimeMillis) {
-              try {
-                Thread.sleep(waitTimeMillis - elapsedFrame);
-              } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-              }
-            }
-
-            // Check the speed every 3 images
-            if (iteration.incrementAndGet() > 2) {
-              // Get the speed rate (fps) on the last 3 images
-              currentCineRate =
-                  (int) (iteration.get() * 1000 / (System.currentTimeMillis() - start));
-              // reinitialize the parameters for computing speed next time
-              iteration.set(0);
-              waitTimeMillis = 1000 / getSpeed();
-              start = System.currentTimeMillis();
-            }
+      private double getImageCineRate(
+          ViewCanvas<DicomImageElement> view2d, Series<DicomImageElement> series, int index) {
+        DicomImageElement image =
+            series.getMedia(
+                index,
+                (Filter<DicomImageElement>) view2d.getActionValue(ActionW.FILTERED_SERIES.cmd()),
+                view2d.getCurrentSortComparator());
+        if (image != null) {
+          Double cineRate = TagD.getTagValue(image, Tag.CineRate, Double.class);
+          if (cineRate != null) {
+            return cineRate;
           }
         }
-
-        public void iniSpeed() {
-          iteration = new AtomicInteger(0);
-          currentCineRate = getSpeed();
-          waitTimeMillis = 1000 / currentCineRate;
-          start = System.currentTimeMillis();
-        }
-
-        public int getCurrentCineRate() {
-          return currentCineRate;
-        }
-      }
-
-      /** Start the cining. */
-      @Override
-      public synchronized void start() {
-        if (currentCine != null) {
-          stop();
-        }
-        if (getSliderMax() - getSliderMin() > 0) {
-          currentCine = new CineThread();
-          currentCine.start();
-        }
-      }
-
-      /** Stop the cining. */
-      @Override
-      public synchronized void stop() {
-        CineThread moribund = currentCine;
-        currentCine = null;
-        if (moribund != null) {
-          moribund.cining = false;
-          moribund.interrupt();
-        }
+        return 0.0;
       }
 
       @Override
@@ -524,19 +455,6 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
         if (isActionEnabled()) {
           setSliderValue(getSliderValue() + e.getWheelRotation());
         }
-      }
-
-      @Override
-      public int getCurrentCineRate() {
-        if (currentCine != null) {
-          return currentCine.getCurrentCineRate();
-        }
-        return 0;
-      }
-
-      @Override
-      public boolean isCining() {
-        return currentCine != null;
       }
     };
   }
@@ -907,7 +825,6 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
       ImageViewerPlugin<DicomImageElement> selectedView2dContainer) {
     if (this.selectedView2dContainer != null) {
       this.selectedView2dContainer.setMouseActions(null);
-      getAction(ActionW.SCROLL_SERIES).ifPresent(SliderCineListener::stop);
     }
 
     ImageViewerPlugin<DicomImageElement> oldContainer = this.selectedView2dContainer;
@@ -1083,14 +1000,13 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
                         view2d.getActionValue(ActionW.FILTERED_SERIES.cmd())),
                 view2d.getFrameIndex() + 1,
                 false));
-    Integer cineRate = TagD.getTagValue(series, Tag.CineRate, Integer.class);
-    final Integer speed =
-        cineRate == null
-            ? TagD.getTagValue(series, Tag.RecommendedDisplayFrameRate, Integer.class)
-            : cineRate;
-    if (speed != null) {
-      cineAction.ifPresent(a -> a.setSpeed(speed));
+
+    Double cineRate = TagD.getTagValue(view2d.getImage(), Tag.CineRate, Double.class);
+    if (cineRate != null) {
+      cineAction.ifPresent(a -> a.setSpeed(cineRate));
     }
+    int playbackSequencing = getPlaybackSequencing(view2d);
+    getAction(ActionW.CINE_SWEEP).ifPresent(a -> a.setSelected(playbackSequencing == 1));
 
     getAction(ActionW.SORT_STACK)
         .ifPresent(
@@ -1114,6 +1030,12 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
 
     view2d.updateGraphicSelectionListener(selectedView2dContainer);
     return true;
+  }
+
+  private static int getPlaybackSequencing(ViewCanvas<DicomImageElement> view2d) {
+    Integer playbackSequencing =
+        TagD.getTagValue(view2d.getImage(), Tag.PreferredPlaybackSequencing, Integer.class);
+    return playbackSequencing == null ? 0 : playbackSequencing;
   }
 
   public void updateKeyObjectComponentsListener(ViewCanvas<DicomImageElement> view2d) {
@@ -1654,6 +1576,49 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
             GuiUtils.applySelectedIconEffect(menuItem);
             menuItem.setAccelerator(
                 KeyStroke.getKeyStroke(KeyEvent.VK_F, InputEvent.ALT_DOWN_MASK));
+            menu.add(menuItem);
+          }
+        }
+      }
+    }
+    return menu;
+  }
+
+  public JMenu getCineMenu(String prop) {
+    JMenu menu = null;
+    if (GuiUtils.getUICore().getSystemPreferences().getBooleanProperty(prop, true)) {
+      Optional<SliderCineListener> scrollAction = getAction(ActionW.SCROLL_SERIES);
+      if (scrollAction.isPresent()) {
+        menu = new JMenu(Messages.getString("cine"));
+        GuiUtils.applySelectedIconEffect(menu);
+        menu.setEnabled(scrollAction.get().isActionEnabled());
+
+        if (scrollAction.get().isActionEnabled()) {
+          JMenuItem menuItem = new JMenuItem(ActionW.CINESTART.getTitle());
+          menuItem.setIcon(ResourceUtil.getIcon(ActionIcon.EXECUTE));
+          GuiUtils.applySelectedIconEffect(menuItem);
+          menuItem.setActionCommand(ActionW.CINESTART.cmd());
+          menuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_C, 0));
+          menuItem.addActionListener(EventManager.getInstance());
+          menu.add(menuItem);
+
+          menuItem = new JMenuItem(ActionW.CINESTOP.getTitle());
+          menuItem.setIcon(ResourceUtil.getIcon(ActionIcon.SUSPEND));
+          GuiUtils.applySelectedIconEffect(menuItem);
+          menuItem.setActionCommand(ActionW.CINESTOP.cmd());
+          menuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_C, 0));
+          menuItem.addActionListener(EventManager.getInstance());
+          menu.add(menuItem);
+
+          Optional<ToggleButtonListener> sweepAction = getAction(ActionW.CINE_SWEEP);
+          if (sweepAction.isPresent()) {
+            menu.add(new JSeparator());
+            menuItem =
+                sweepAction
+                    .get()
+                    .createUnregisteredJCCheckBoxMenuItem(
+                        ActionW.CINE_SWEEP.getTitle(), ResourceUtil.getIcon(ActionIcon.LOOP));
+            GuiUtils.applySelectedIconEffect(menuItem);
             menu.add(menuItem);
           }
         }

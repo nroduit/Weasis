@@ -146,8 +146,6 @@ public class DicomMediaIO implements DcmMediaReader {
     // Should be in image C.7.6.5 Cine Module
     // http://dicom.nema.org/medical/dicom/current/output/chtml/part03/sect_C.7.6.5.html
     tagManager.addTag(Tag.PreferredPlaybackSequencing, Level.SERIES);
-    tagManager.addTag(Tag.CineRate, Level.SERIES);
-    tagManager.addTag(Tag.RecommendedDisplayFrameRate, Level.SERIES);
     tagManager.addTag(Tag.KVP, Level.SERIES);
     tagManager.addTag(Tag.BodyPartExamined, Level.SERIES);
     tagManager.addTag(Tag.FrameOfReferenceUID, Level.SERIES);
@@ -563,6 +561,8 @@ public class DicomMediaIO implements DcmMediaReader {
 
       TagD.get(Tag.Units).readValue(header, this);
       TagD.get(Tag.NumberOfFrames).readValue(header, this);
+      setTagNoNull(TagD.get(Tag.FrameTimeVector), DicomMediaUtils.getFrameTime(header));
+      TagD.get(Tag.PreferredPlaybackSequencing).readValue(header, this);
 
       int samplesPerPixel = DicomUtils.getIntegerFromDicomElement(header, Tag.SamplesPerPixel, 1);
       setTag(TagD.get(Tag.SamplesPerPixel), samplesPerPixel);
@@ -739,35 +739,52 @@ public class DicomMediaIO implements DcmMediaReader {
       } else if (SERIES_ENCAP_DOC_MIMETYPE.equals(mimeType)) {
         image = new MediaElement[] {new DicomEncapDocElement(this, null)};
       } else {
-        DicomSpecialElementFactory factory = getDicomSpecialElementFactory();
-        if (numberOfFrame > 0) {
-          image = new MediaElement[factory == null ? numberOfFrame : numberOfFrame + 1];
-          for (int i = 0; i < image.length; i++) {
-            image[i] = new DicomImageElement(this, i);
-          }
-          if (numberOfFrame > 1) {
-            // IF enhanced DICOM, instance number can be overridden later
-            // IF simple multi-frame instance number is necessary
-            for (int i = 0; i < image.length; i++) {
-              Integer offset = (Integer) tags.get(TagD.get(Tag.ConcatenationFrameOffsetNumber));
-              int nb = offset == null ? i + 1 : offset + i + 1;
-              image[i].setTag(TagD.get(Tag.InstanceNumber), nb);
-            }
-          }
-          if (factory != null) {
-            image[numberOfFrame] = factory.buildDicomSpecialElement(this);
-          }
-        } else {
-          if (factory == null) {
-            // Corrupted image => should have one frame
-            image = new MediaElement[0];
-          } else {
-            image = new MediaElement[] {factory.buildDicomSpecialElement(this)};
-          }
-        }
+        buildImageElement();
       }
     }
     return image;
+  }
+
+  private void buildImageElement() {
+    DicomSpecialElementFactory factory = getDicomSpecialElementFactory();
+    if (numberOfFrame > 0) {
+      image = new MediaElement[factory == null ? numberOfFrame : numberOfFrame + 1];
+      for (int i = 0; i < image.length; i++) {
+        image[i] = new DicomImageElement(this, i);
+      }
+      if (numberOfFrame > 1) {
+        buildMultiframe();
+      }
+    } else {
+      if (factory == null) {
+        // Corrupted image => should have one frame
+        image = new MediaElement[0];
+      } else {
+        image = new MediaElement[] {factory.buildDicomSpecialElement(this)};
+      }
+    }
+  }
+
+  private void buildMultiframe() {
+    Integer offset = (Integer) tags.get(TagD.get(Tag.ConcatenationFrameOffsetNumber));
+    double[] frameTimes = (double[]) tags.get(TagD.get(Tag.FrameTimeVector));
+    // IF enhanced DICOM, instance number can be overridden later
+    // IF simple multi-frame instance number is necessary
+    for (int i = 0; i < image.length; i++) {
+      int nb = offset == null ? i + 1 : offset + i + 1;
+      image[i].setTag(TagD.get(Tag.InstanceNumber), nb);
+      if (frameTimes != null) {
+        double frameTime;
+        if (i < frameTimes.length) {
+          frameTime = frameTimes[i] / 1000;
+        } else {
+          frameTime = frameTimes[frameTimes.length - 1] / 1000;
+        }
+        if (frameTime > 0) {
+          image[i].setTag(TagD.get(Tag.CineRate), 1.0 / frameTime);
+        }
+      }
+    }
   }
 
   private DicomSpecialElementFactory getDicomSpecialElementFactory() {
