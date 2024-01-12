@@ -90,7 +90,7 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
     setAction(new BasicActionState(ActionW.DRAW));
     setAction(new BasicActionState(ActionW.MEASURE));
 
-    setAction(getMoveTroughSliceAction(10, TIME.MINUTE, 0.1));
+    setAction(getMoveTroughSliceAction(10.0, TIME.MINUTE, 0.1));
     setAction(newWindowAction());
     setAction(newLevelAction());
     setAction(newRotateAction());
@@ -450,7 +450,7 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
                     (Filter<ImageElement>) view2d.getActionValue(ActionW.FILTERED_SERIES.cmd())),
                 view2d.getFrameIndex() + 1,
                 false));
-    final Integer speed = (Integer) series.getTagValue(TagW.get("CineRate"));
+    Double speed = (Double) series.getTagValue(TagW.get("CineRate"));
     if (speed != null) {
       cineAction.ifPresent(a -> a.setSpeed(speed));
     }

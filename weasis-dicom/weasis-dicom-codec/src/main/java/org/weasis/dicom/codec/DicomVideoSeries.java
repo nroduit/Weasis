@@ -41,19 +41,17 @@ public class DicomVideoSeries extends DicomSeries implements FilesExtractor {
     StringBuilder toolTips = DicomSeries.getToolTips(this);
     toolTips.append(Messages.getString("DicomVideo.video_l"));
     toolTips.append(StringUtil.COLON_AND_SPACE);
-    Integer speed = TagD.getTagValue(this, Tag.CineRate, Integer.class);
-    if (speed == null) {
-      speed = TagD.getTagValue(this, Tag.RecommendedDisplayFrameRate, Integer.class);
-      if (speed == null) {
-        speed = 25;
-      }
-    }
     Integer frames = TagD.getTagValue(this, Tag.NumberOfFrames, Integer.class);
     if (frames != null) {
-      toolTips.append(convertSecondsInTime(frames / speed));
+      DicomImageElement video = getMedia(MEDIA_POSITION.FIRST, null, null);
+      if (video != null) {
+        Double frameTime = TagD.getTagValue(video, Tag.FrameTime, Double.class);
+        if (frameTime != null) {
+          toolTips.append(convertSecondsInTime((int) (frames * frameTime / 1000)));
+        }
+      }
     }
     toolTips.append(GuiUtils.HTML_BR);
-
     toolTips.append(GuiUtils.HTML_END);
     return toolTips.toString();
   }

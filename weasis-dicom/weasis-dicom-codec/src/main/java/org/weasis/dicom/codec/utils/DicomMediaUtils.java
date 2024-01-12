@@ -536,6 +536,45 @@ public class DicomMediaUtils {
     }
   }
 
+  public static double[] getFrameTime(Attributes attributes) {
+    double[] frameTimes = null;
+    String frameIncrementPointer = attributes.getString(Tag.FrameIncrementPointer, null);
+    if (StringUtil.hasText(frameIncrementPointer)) {
+      frameTimes =
+          DicomUtils.getDoubleArrayFromDicomElement(
+              attributes, TagUtils.intFromHexString(frameIncrementPointer), null);
+    }
+
+    if (frameTimes == null) {
+      Integer frameRate =
+          DicomUtils.getIntegerFromDicomElement(attributes, Tag.RecommendedDisplayFrameRate, null);
+      if (frameRate != null) {
+        frameTimes = new double[] {1000f / frameRate};
+      }
+    } else {
+      frameTimes = validateFrameTime(frameTimes);
+    }
+    return frameTimes;
+  }
+
+  private static double[] validateFrameTime(double[] frameTimes) {
+    if (frameTimes != null && frameTimes.length > 1) {
+      boolean same = true;
+      double first = frameTimes[0];
+      for (int i = 1; i < frameTimes.length; i++) {
+        if (Math.abs(first - frameTimes[i]) > MathUtil.DOUBLE_EPSILON
+            && MathUtil.isDifferentFromZero(frameTimes[i])) {
+          same = false;
+          break;
+        }
+      }
+      if (same) {
+        return new double[] {first};
+      }
+    }
+    return frameTimes;
+  }
+
   public static Attributes createDicomPR(
       Attributes dicomSourceAttribute, String seriesInstanceUID, String sopInstanceUID) {
 

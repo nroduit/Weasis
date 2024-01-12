@@ -501,6 +501,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     boolean updateGraphics = false;
     imageLayer.setEnableDispOperations(false);
     if (img == null) {
+      eventManager.getAction(ActionW.SCROLL_SERIES).ifPresent(SliderCineListener::stop);
       actionsInView.put(ActionW.SPATIAL_UNIT.cmd(), Unit.PIXEL);
       eventManager
           .getAction(ActionW.SPATIAL_UNIT)

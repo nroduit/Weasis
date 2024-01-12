@@ -1196,6 +1196,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
       GuiUtils.addItemToMenu(popupMenu, manager.getZoomMenu("weasis.contextmenu.zoom"));
       GuiUtils.addItemToMenu(
           popupMenu, manager.getOrientationMenu("weasis.contextmenu.orientation"));
+      GuiUtils.addItemToMenu(popupMenu, manager.getCineMenu("weasis.contextmenu.cine"));
       GuiUtils.addItemToMenu(popupMenu, manager.getSortStackMenu("weasis.contextmenu.sortstack"));
       addSeparatorToPopupMenu(popupMenu, count);
 

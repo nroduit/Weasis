@@ -447,6 +447,7 @@ public class View2dContainer extends DicomViewerPlugin implements PropertyChange
         menuRoot.add(new JSeparator());
         GuiUtils.addItemToMenu(menuRoot, manager.getZoomMenu(null));
         GuiUtils.addItemToMenu(menuRoot, manager.getOrientationMenu(null));
+        GuiUtils.addItemToMenu(menuRoot, manager.getCineMenu(null));
         GuiUtils.addItemToMenu(menuRoot, manager.getSortStackMenu(null));
         menuRoot.add(new JSeparator());
         menuRoot.add(manager.getResetMenu(null));

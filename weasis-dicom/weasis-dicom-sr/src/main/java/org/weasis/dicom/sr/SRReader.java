@@ -183,7 +183,7 @@ public class SRReader {
         html.append(continuous || noCodeName ? " " : " = ");
         Attributes val = c.getMeasuredValue();
         if (val != null) {
-          html.append(val.getFloat(Tag.NumericValue, 0.0f));
+          html.append(val.getDouble(Tag.NumericValue, 0.0));
           Attributes item = val.getNestedDataset(Tag.MeasurementUnitsCodeSequence);
           if (item != null) {
             Code unit = new Code(item);

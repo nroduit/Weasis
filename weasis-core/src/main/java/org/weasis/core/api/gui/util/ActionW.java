@@ -71,6 +71,8 @@ public class ActionW {
   public static final BasicActionStateValue CINESTOP =
       new BasicActionStateValue(
           Messages.getString("ActionW.stop"), "cinestop", 0, 0, null); // NON-NLS
+  public static final ToggleButtonListenerValue CINE_SWEEP =
+      new ToggleButtonListenerValue("Loop Sweep", "cinesweep", 0, 0, null); // NON-NLS
   public static final Feature<SliderChangeListener> WINDOW =
       new SliderChangeListenerValue(
           Messages.getString("ActionW.win"), "window", 0, 0, null); // NON-NLS
