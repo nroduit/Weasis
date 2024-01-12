@@ -11,6 +11,10 @@ package org.weasis.dicom.explorer;
 
 import java.util.Arrays;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicInteger;
+import javax.swing.JOptionPane;
+import javax.swing.JTextPane;
+import javax.swing.border.EmptyBorder;
 import org.dcm4che3.data.Tag;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.ObservableEvent;
@@ -33,6 +37,8 @@ import org.weasis.dicom.explorer.HangingProtocols.OpeningViewer;
 public abstract class LoadDicom extends ExplorerTask<Boolean, String> {
 
   private static final org.slf4j.Logger LOGGER = LoggerFactory.getLogger(LoadDicom.class);
+
+  protected final AtomicInteger errors = new AtomicInteger(0);
 
   protected final DicomModel dicomModel;
 
@@ -71,7 +77,37 @@ public abstract class LoadDicom extends ExplorerTask<Boolean, String> {
       dicomModel.firePropertyChange(
           new ObservableEvent(ObservableEvent.BasicAction.LOADING_STOP, dicomModel, null, this));
       LOGGER.info("End of loading DICOM locally");
+      int nbErrors = errors.get();
+      if (nbErrors > 0) {
+        JOptionPane.showMessageDialog(
+            GuiUtils.getUICore().getApplicationWindow(),
+            getErrorPanel(nbErrors),
+            Messages.getString("DicomImport.imp_dicom"),
+            JOptionPane.ERROR_MESSAGE);
+      }
     }
+  }
+
+  private JTextPane getErrorPanel(int nbErrors) {
+    String files = nbErrors > 1 ? "files" : "file";
+    String message = "%d DICOM %s cannot be read!".formatted(nbErrors, files);
+    String logOutput = "Check log output";
+    String html =
+        """
+      <P>
+      %s<br>
+      <a href="%s">%s</a>
+      </P>
+    """
+            .formatted(
+                message,
+                STR."\{GuiUtils.getUICore().getSystemPreferences()
+        .getProperty("weasis.help.online")}logging",
+                logOutput);
+
+    JTextPane jTextPane1 = GuiUtils.getPanelWithHyperlink(html);
+    jTextPane1.setBorder(new EmptyBorder(5, 5, 15, 5));
+    return jTextPane1;
   }
 
   protected SeriesThumbnail buildDicomStructure(DicomMediaIO dicomReader) {

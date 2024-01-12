@@ -91,6 +91,12 @@ public class DicomMediaIO implements DcmMediaReader {
   public static final String UNREADABLE = "unreadable/dicom"; // NON-NLS
   public static final String SERIES_XDSI = "xds-i/dicom"; // NON-NLS
 
+  public enum Reading {
+    ERROR,
+    EXCLUDED,
+    READABLE
+  }
+
   private static final AtomicInteger instanceID = new AtomicInteger(1);
   public static final TagManager tagManager = new TagManager();
 
@@ -355,62 +361,62 @@ public class DicomMediaIO implements DcmMediaReader {
   }
 
   public synchronized boolean isReadableDicom() {
+    return getReadingStatus() == Reading.READABLE;
+  }
+
+  public synchronized Reading getReadingStatus() {
     if (UNREADABLE.equals(mimeType)) {
-      // Return true only to display the error message in the view
-      return true;
+      return Reading.EXCLUDED;
     }
     if ("data".equals(uri.getScheme()) && dcmMetadata == null) { // NON-NLS
-      return false;
+      // Not readable, in memory DICOM object
+      return Reading.EXCLUDED;
     }
 
     if (tags.isEmpty()) {
-      try {
-        DicomMetaData md = readMetaData();
-        Attributes fmi = md.getFileMetaInformation();
-        Attributes header = md.getDicomObject();
-        // Exclude DICOMDIR
-        String mediaStorageSOPClassUID =
-            fmi == null ? null : fmi.getString(Tag.MediaStorageSOPClassUID);
-        if ("1.2.840.10008.1.3.10".equals(mediaStorageSOPClassUID)) {
+      return setMimeType();
+    }
+    return Reading.READABLE;
+  }
+
+  private Reading setMimeType() {
+    try {
+      DicomMetaData md = readMetaData();
+      Attributes header = md.getDicomObject();
+      // Exclude DICOMDIR
+      if (md.isMediaStorageDirectory()) {
+        mimeType = UNREADABLE;
+        close();
+        return Reading.EXCLUDED;
+      }
+      if (hasPixel) {
+        if (md.isVideoTransferSyntaxUID()) {
+          mimeType = SERIES_VIDEO_MIMETYPE;
+        } else {
+          if (md.isSegmentationStorage()) {
+            mimeType = SERIES_SEG_MIMETYPE; // Do not display SEG images
+          } else {
+            mimeType = IMAGE_MIMETYPE;
+          }
+        }
+      } else {
+        boolean special = setDicomSpecialType(header);
+        if (!special) {
+          // Not supported DICOM file
           mimeType = UNREADABLE;
           close();
-          return false;
+          return Reading.ERROR;
         }
-        if (hasPixel) {
-          String ts = fmi == null ? null : fmi.getString(Tag.TransferSyntaxUID);
-          if (ts != null && ts.startsWith("1.2.840.10008.1.2.4.10")) {
-            // MPEG2 MP@ML 1.2.840.10008.1.2.4.100
-            // MEPG2 MP@HL 1.2.840.10008.1.2.4.101
-            // MPEG4 AVC/H.264 1.2.840.10008.1.2.4.102
-            // MPEG4 AVC/H.264 BD 1.2.840.10008.1.2.4.103
-            mimeType = SERIES_VIDEO_MIMETYPE;
-          } else {
-            if ("1.2.840.10008.5.1.4.1.1.66.4".equals(mediaStorageSOPClassUID)) {
-              mimeType = SERIES_SEG_MIMETYPE; // Do not display SEG images
-            } else {
-              mimeType = IMAGE_MIMETYPE;
-            }
-          }
-        } else {
-          boolean special = setDicomSpecialType(header);
-          if (!special) {
-            // Not supported DICOM file
-            mimeType = UNREADABLE;
-            close();
-            return false;
-          }
-        }
-
-        writeInstanceTags(md);
-
-      } catch (Exception | OutOfMemoryError e) {
-        mimeType = UNREADABLE;
-        LOGGER.error("Cannot read DICOM:", e);
-        close();
-        return false;
       }
+
+      writeInstanceTags(md);
+      return Reading.READABLE;
+    } catch (Exception | OutOfMemoryError e) {
+      mimeType = UNREADABLE;
+      LOGGER.error("Cannot read DICOM:", e);
+      close();
+      return Reading.ERROR;
     }
-    return true;
   }
 
   private boolean setDicomSpecialType(Attributes header) {

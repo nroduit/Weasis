@@ -499,7 +499,7 @@ public class WeasisLauncher {
                   String.format(
                       "<a href=\"%s", // NON-NLS
                       releaseNotesUrl));
-              message.append("\" style=\"color:#FF9900\">"); // NON-NLS
+              message.append("\">"); // NON-NLS
               message.append(rn);
               message.append("</a>"); // NON-NLS
               message.append("</P>"); // NON-NLS

@@ -79,6 +79,7 @@ import org.weasis.core.util.FileUtil;
 import org.weasis.core.util.StreamIOException;
 import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.codec.DicomMediaIO;
+import org.weasis.dicom.codec.DicomMediaIO.Reading;
 import org.weasis.dicom.codec.HiddenSeriesManager;
 import org.weasis.dicom.codec.HiddenSpecialElement;
 import org.weasis.dicom.codec.TagD;
@@ -928,14 +929,19 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
       // Change status to complete if this point was reached because downloading has finished.
       if (status == Status.DOWNLOADING) {
         status = Status.COMPLETE;
-        if (tempFile != null && dicomSeries != null && dicomReader.isReadableDicom()) {
-          if (tempFile.getPath().startsWith(AppProperties.APP_TEMP_DIR.getPath())) {
-            dicomReader.getFileCache().setOriginalTempFile(tempFile);
+        if (tempFile != null && dicomSeries != null) {
+          Reading reading = dicomReader.getReadingStatus();
+          if (reading == Reading.READABLE) {
+            if (tempFile.getPath().startsWith(AppProperties.APP_TEMP_DIR.getPath())) {
+              dicomReader.getFileCache().setOriginalTempFile(tempFile);
+            }
+            final DicomMediaIO reader = dicomReader;
+            // Necessary to wait the runnable because the dicomSeries must be added to the
+            // dicomModel before reaching done() of SwingWorker
+            GuiExecutor.invokeAndWait(() -> updateUI(reader));
+          } else if (reading == Reading.ERROR) {
+            errors.incrementAndGet();
           }
-          final DicomMediaIO reader = dicomReader;
-          // Necessary to wait the runnable because the dicomSeries must be added to the dicomModel
-          // before reaching done() of SwingWorker
-          GuiExecutor.invokeAndWait(() -> updateUI(reader));
         }
       }
       // Increment progress bar in EDT and repaint when downloaded
