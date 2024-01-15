@@ -10,7 +10,6 @@
 package org.weasis.dicom.codec;
 
 import java.awt.Color;
-import java.awt.geom.Point2D;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -21,25 +20,27 @@ import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Sequence;
 import org.dcm4che3.data.Tag;
 import org.dcm4che3.img.data.CIELab;
-import org.dcm4che3.img.data.Segment;
-import org.dcm4che3.img.data.SegmentAttributes;
-import org.dcm4che3.img.data.SegmentCategory;
 import org.dcm4che3.img.util.DicomUtils;
-import org.opencv.core.Mat;
-import org.opencv.core.MatOfPoint;
-import org.opencv.core.Point;
-import org.opencv.imgproc.Imgproc;
+import org.opencv.core.Core;
+import org.weasis.core.api.media.data.MediaSeries.MEDIA_POSITION;
+import org.weasis.core.ui.model.graphic.imp.seg.SegContour;
+import org.weasis.core.ui.model.graphic.imp.seg.SegMeasurableLayer;
+import org.weasis.core.ui.model.graphic.imp.seg.SegRegion;
 import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.codec.macro.Code;
-import org.weasis.dicom.codec.seg.EditableContour;
+import org.weasis.dicom.codec.utils.DicomMediaUtils;
 import org.weasis.opencv.data.PlanarImage;
 import org.weasis.opencv.op.ImageConversion;
+import org.weasis.opencv.seg.Region;
+import org.weasis.opencv.seg.Segment;
+import org.weasis.opencv.seg.SegmentAttributes;
+import org.weasis.opencv.seg.SegmentCategory;
 
 public class SegSpecialElement extends HiddenSpecialElement {
 
-  private final Map<String, Map<String, List<EditableContour>>> refMap = new HashMap<>();
-  private final Map<Integer, List<EditableContour>> roiMap = new HashMap<>();
-  private final Map<Integer, EditableContour> segAttributes = new HashMap<>();
+  private final Map<String, Map<String, List<SegContour>>> refMap = new HashMap<>();
+  private final Map<Integer, List<SegContour>> roiMap = new HashMap<>();
+  private final Map<Integer, SegRegion> segAttributes = new HashMap<>();
 
   private volatile float opacity = 1.0f;
   private volatile boolean visible = true;
@@ -96,7 +97,7 @@ public class SegSpecialElement extends HiddenSpecialElement {
                     .reference2Series
                     .computeIfAbsent(seriesUID, _ -> new ArrayList<>());
             list.add(originSeriesUID);
-            Map<String, List<EditableContour>> map =
+            Map<String, List<SegContour>> map =
                 refMap.computeIfAbsent(seriesUID, _ -> new HashMap<>());
             Sequence instanceSeq = ref.getSequence(Tag.ReferencedInstanceSequence);
             if (instanceSeq != null) {
@@ -116,13 +117,14 @@ public class SegSpecialElement extends HiddenSpecialElement {
                 .reference2Series
                 .computeIfAbsent(seriesUID, _ -> new ArrayList<>());
         list.add(originSeriesUID);
-        Map<String, List<EditableContour>> map =
-            refMap.computeIfAbsent(seriesUID, _ -> new HashMap<>());
+        Map<String, List<SegContour>> map = refMap.computeIfAbsent(seriesUID, _ -> new HashMap<>());
 
         for (String sopUID : sourceSopUIDList) {
           map.computeIfAbsent(sopUID, _ -> new ArrayList<>());
         }
       }
+
+      SegMeasurableLayer<DicomImageElement> measurableLayer = getMeasurableLayer(series);
 
       for (Attributes seg : segSeq) {
         int nb = seg.getInt(Tag.SegmentNumber, -1);
@@ -161,9 +163,10 @@ public class SegSpecialElement extends HiddenSpecialElement {
         attributes.setInteriorOpacity(0.2f);
         SegmentCategory category =
             new SegmentCategory(nb, segmentLabel, null, segmentAlgorithmType);
-        EditableContour c = new EditableContour(String.valueOf(nb), null);
+        SegRegion c = new SegRegion(String.valueOf(nb));
         c.setCategory(category);
         c.setAttributes(attributes);
+        c.setMeasurableLayer(measurableLayer);
         segAttributes.put(nb, c);
       }
     }
@@ -206,25 +209,23 @@ public class SegSpecialElement extends HiddenSpecialElement {
             Integer nb =
                 DicomUtils.getIntegerFromDicomElement(refSeqNb, Tag.ReferencedSegmentNumber, null);
             if (nb != null) {
-              EditableContour c = segAttributes.get(nb);
+              SegRegion c = segAttributes.get(nb);
               if (c != null) {
-                SegmentAttributes attributes = c.getAttributes();
-                SegmentCategory category = c.getCategory();
-                buildGraphic(binaryMask, index, attributes, category);
+                buildGraphic(binaryMask, index, c);
               }
             }
           }
         }
 
-        List<EditableContour> contour = roiMap.get(index);
+        List<SegContour> contour = roiMap.get(index);
         if (contour != null && !contour.isEmpty()) {
           refMap.forEach(
               (key, _) -> {
-                Map<String, List<EditableContour>> map = refMap.get(key);
+                Map<String, List<SegContour>> map = refMap.get(key);
                 if (map != null) {
                   sopUIDList.forEach(
                       sopUID -> {
-                        List<EditableContour> list = map.get(sopUID);
+                        List<SegContour> list = map.get(sopUID);
                         if (list != null) {
                           list.addAll(contour);
                         }
@@ -236,6 +237,25 @@ public class SegSpecialElement extends HiddenSpecialElement {
     }
   }
 
+  private SegMeasurableLayer<DicomImageElement> getMeasurableLayer(DicomSeries series) {
+    if (series != null && series.size(null) > 0) {
+      DicomImageElement first = series.getMedia(MEDIA_POSITION.FIRST, null, null);
+      DicomImageElement last = series.getMedia(MEDIA_POSITION.LAST, null, null);
+      DicomImageElement img = series.getMedia(MEDIA_POSITION.MIDDLE, null, null);
+      if (img != null && first != null && last != null) {
+        int size = series.size(null);
+        double thickness = DicomMediaUtils.getThickness(first, last);
+        if (thickness <= 0.0) {
+          thickness = 1.0;
+        } else {
+          thickness /= size;
+        }
+        return new SegMeasurableLayer<>(img, thickness);
+      }
+    }
+    return null;
+  }
+
   private static void addSourceImage(Attributes derivation, List<String> sopUIDList) {
     Sequence srcSeq = derivation.getSequence(Tag.SourceImageSequence);
     if (srcSeq != null) {
@@ -245,46 +265,30 @@ public class SegSpecialElement extends HiddenSpecialElement {
     }
   }
 
-  private void buildGraphic(
-      DicomImageElement binaryMask,
-      int id,
-      SegmentAttributes attributes,
-      SegmentCategory category) {
-    List<MatOfPoint> contours = new ArrayList<>();
+  private void buildGraphic(DicomImageElement binaryMask, int id, SegRegion region) {
+    SegmentAttributes attributes = region.getAttributes();
+    SegmentCategory category = region.getCategory();
     PlanarImage binary = binaryMask.getImage();
-    Mat hierarchy = new Mat();
-    Imgproc.findContours(
-        binary.toMat(), contours, hierarchy, Imgproc.RETR_TREE, Imgproc.CHAIN_APPROX_SIMPLE);
+    List<Segment> segmentList = Region.buildSegmentList(binary);
+    int nbPixels = Core.countNonZero(binary.toMat());
     ImageConversion.releasePlanarImage(binary);
-    List<Segment> segmentList = new ArrayList<>();
-    for (MatOfPoint point : contours) {
-      Point[] pts = point.toArray();
-      if (pts.length == 0) {
-        continue;
-      }
-      Segment segment = new Segment();
-      for (Point p : pts) {
-        segment.add(new Point2D.Double(p.x, p.y));
-      }
-      segmentList.add(segment);
-    }
-
-    EditableContour contour = new EditableContour(String.valueOf(id), segmentList);
+    SegContour contour = new SegContour(String.valueOf(id), segmentList, nbPixels);
+    region.addPixels(contour);
     contour.setAttributes(attributes);
     contour.setCategory(category);
-    List<EditableContour> list = roiMap.computeIfAbsent(id, _ -> new ArrayList<>());
+    List<SegContour> list = roiMap.computeIfAbsent(id, _ -> new ArrayList<>());
     list.add(contour);
   }
 
-  public Map<Integer, List<EditableContour>> getRoiMap() {
+  public Map<Integer, List<SegContour>> getRoiMap() {
     return roiMap;
   }
 
-  public Map<String, Map<String, List<EditableContour>>> getRefMap() {
+  public Map<String, Map<String, List<SegContour>>> getRefMap() {
     return refMap;
   }
 
-  public Map<Integer, EditableContour> getSegAttributes() {
+  public Map<Integer, SegRegion> getSegAttributes() {
     return segAttributes;
   }
 
@@ -319,7 +323,7 @@ public class SegSpecialElement extends HiddenSpecialElement {
       String seriesUID = TagD.getTagValue(img, Tag.SeriesInstanceUID, String.class);
       if (seriesUID != null) {
         String sopInstanceUID = TagD.getTagValue(img, Tag.SOPInstanceUID, String.class);
-        Map<String, List<EditableContour>> map = refMap.get(seriesUID);
+        Map<String, List<SegContour>> map = refMap.get(seriesUID);
         if (map != null && sopInstanceUID != null) {
           return map.containsKey(sopInstanceUID);
         }
@@ -328,13 +332,13 @@ public class SegSpecialElement extends HiddenSpecialElement {
     return false;
   }
 
-  public Collection<EditableContour> getContours(DicomImageElement img) {
+  public Collection<SegContour> getContours(DicomImageElement img) {
     String seriesUID = TagD.getTagValue(img, Tag.SeriesInstanceUID, String.class);
     if (seriesUID != null) {
       String sopInstanceUID = TagD.getTagValue(img, Tag.SOPInstanceUID, String.class);
-      Map<String, List<EditableContour>> map = refMap.get(seriesUID);
+      Map<String, List<SegContour>> map = refMap.get(seriesUID);
       if (map != null && sopInstanceUID != null) {
-        List<EditableContour> list = map.get(sopInstanceUID);
+        List<SegContour> list = map.get(sopInstanceUID);
         if (list != null) {
           return list;
         }

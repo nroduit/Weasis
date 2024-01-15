@@ -27,7 +27,6 @@ import javax.swing.JProgressBar;
 import jogamp.opengl.glu.error.Error;
 import org.dcm4che3.data.Tag;
 import org.dcm4che3.img.DicomImageUtils;
-import org.dcm4che3.img.data.SegmentAttributes;
 import org.joml.Vector3d;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
@@ -41,12 +40,13 @@ import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.ui.editor.image.ViewCanvas;
-import org.weasis.core.ui.model.graphic.imp.NonEditableGraphic;
+import org.weasis.core.ui.model.graphic.imp.seg.SegContour;
+import org.weasis.core.ui.model.graphic.imp.seg.SegGraphic;
+import org.weasis.core.ui.model.graphic.imp.seg.SegRegion;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.DicomSeries;
 import org.weasis.dicom.codec.SegSpecialElement;
 import org.weasis.dicom.codec.TagD;
-import org.weasis.dicom.codec.seg.EditableContour;
 import org.weasis.dicom.explorer.DicomModel;
 import org.weasis.dicom.viewer3d.ActionVol;
 import org.weasis.dicom.viewer3d.EventManager;
@@ -57,6 +57,7 @@ import org.weasis.dicom.viewer3d.vr.lut.PresetPoint;
 import org.weasis.opencv.data.ImageCV;
 import org.weasis.opencv.data.PlanarImage;
 import org.weasis.opencv.op.ImageProcessor;
+import org.weasis.opencv.seg.SegmentAttributes;
 
 public final class VolumeBuilder {
   private static final Logger LOGGER = LoggerFactory.getLogger(VolumeBuilder.class);
@@ -298,10 +299,10 @@ public final class VolumeBuilder {
           Mat mask = Mat.zeros(imageMLUT.size(), imageMLUT.type());
           for (SegSpecialElement seg : segList) {
             if (seg.isVisible() && seg.containsSopInstanceUIDReference(imageElement)) {
-              Collection<EditableContour> contours = seg.getContours(imageElement);
+              Collection<SegContour> contours = seg.getContours(imageElement);
               if (!contours.isEmpty()) {
-                for (EditableContour c : contours) {
-                  NonEditableGraphic graphic = c.getNonEditableGraphic();
+                for (SegContour c : contours) {
+                  SegGraphic graphic = c.getSegGraphic();
                   if (graphic != null) {
                     List<MatOfPoint> pts =
                         ImageProcessor.transformShapeToContour(graphic.getShape(), false);
@@ -376,9 +377,9 @@ public final class VolumeBuilder {
         int max = 1;
 
         for (SegSpecialElement segElement : segList) {
-          Map<Integer, EditableContour> map = segElement.getSegAttributes();
+          Map<Integer, SegRegion> map = segElement.getSegAttributes();
           if (map != null) {
-            for (Entry<Integer, EditableContour> entry : map.entrySet()) {
+            for (Entry<Integer, SegRegion> entry : map.entrySet()) {
               SegmentAttributes a = entry.getValue().getAttributes();
               if (a.isVisible()) {
                 max = Math.max(max, entry.getKey());

@@ -78,6 +78,7 @@ import org.weasis.core.ui.model.graphic.imp.area.PolygonGraphic;
 import org.weasis.core.ui.model.graphic.imp.area.RectangleGraphic;
 import org.weasis.core.ui.model.graphic.imp.line.LineGraphic;
 import org.weasis.core.ui.model.graphic.imp.line.LineWithGapGraphic;
+import org.weasis.core.ui.model.graphic.imp.seg.SegContour;
 import org.weasis.core.ui.model.layer.GraphicLayer;
 import org.weasis.core.ui.model.layer.LayerType;
 import org.weasis.core.ui.model.utils.bean.PanPoint;
@@ -107,7 +108,6 @@ import org.weasis.dicom.codec.geometry.IntersectSlice;
 import org.weasis.dicom.codec.geometry.IntersectVolume;
 import org.weasis.dicom.codec.geometry.LocalizerPoster;
 import org.weasis.dicom.codec.geometry.PatientOrientation.Biped;
-import org.weasis.dicom.codec.seg.EditableContour;
 import org.weasis.dicom.explorer.DicomModel;
 import org.weasis.dicom.explorer.DicomSeriesHandler;
 import org.weasis.dicom.explorer.pr.PrGraphicUtil;
@@ -687,16 +687,16 @@ public class View2d extends DefaultView2d<DicomImageElement> {
       List<SegSpecialElement> segList =
           DicomSeries.getHiddenElementsFromPatient(patientPseudoUID, SegSpecialElement.class);
       if (!segList.isEmpty()) {
-        List<EditableContour> contours = new ArrayList<>();
+        List<SegContour> contours = new ArrayList<>();
         for (SegSpecialElement seg : segList) {
           if (seg.isVisible() && seg.containsSopInstanceUIDReference(img)) {
             contours.addAll(seg.getContours(img));
           }
         }
 
-        for (EditableContour c : contours) {
+        for (SegContour c : contours) {
           // Structure graphics
-          Graphic graphic = c.getNonEditableGraphic();
+          Graphic graphic = c.getSegGraphic();
           if (graphic != null) {
             for (PropertyChangeListener listener : graphicManager.getGraphicsListeners()) {
               graphic.addPropertyChangeListener(listener);

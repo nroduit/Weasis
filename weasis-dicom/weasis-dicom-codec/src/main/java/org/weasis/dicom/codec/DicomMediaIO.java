@@ -761,6 +761,9 @@ public class DicomMediaIO implements DcmMediaReader {
       if (numberOfFrame > 1) {
         buildMultiframe();
       }
+      if (factory != null) {
+        image[numberOfFrame] = factory.buildDicomSpecialElement(this);
+      }
     } else {
       if (factory == null) {
         // Corrupted image => should have one frame

@@ -22,6 +22,7 @@ import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Enumeration;
 import java.util.List;
@@ -30,9 +31,11 @@ import java.util.Objects;
 import javax.swing.BorderFactory;
 import javax.swing.JComboBox;
 import javax.swing.JMenuItem;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
+import javax.swing.JTable;
 import javax.swing.JTree;
 import javax.swing.SwingUtilities;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -41,8 +44,12 @@ import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import net.miginfocom.swing.MigLayout;
 import org.dcm4che3.data.Tag;
+import org.weasis.core.Messages;
+import org.weasis.core.api.gui.util.DecFormatter;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.JSliderW;
+import org.weasis.core.api.image.measure.MeasurementsAdapter;
+import org.weasis.core.api.image.util.MeasurableLayer;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.api.util.ResourceUtil.OtherIcon;
@@ -51,21 +58,27 @@ import org.weasis.core.ui.docking.PluginTool;
 import org.weasis.core.ui.editor.SeriesViewerEvent;
 import org.weasis.core.ui.editor.SeriesViewerEvent.EVENT;
 import org.weasis.core.ui.editor.SeriesViewerListener;
+import org.weasis.core.ui.editor.image.ImageRegionStatistics;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.editor.image.ViewCanvas;
+import org.weasis.core.ui.editor.image.dockable.MeasureTool;
+import org.weasis.core.ui.model.graphic.imp.seg.SegContour;
+import org.weasis.core.ui.model.graphic.imp.seg.SegMeasurableLayer;
+import org.weasis.core.ui.model.graphic.imp.seg.SegRegion;
+import org.weasis.core.ui.model.utils.bean.MeasureItem;
 import org.weasis.core.ui.util.CheckBoxTreeBuilder;
+import org.weasis.core.ui.util.SimpleTableModel;
+import org.weasis.core.ui.util.TableNumberRenderer;
 import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.DicomSeries;
 import org.weasis.dicom.codec.HiddenSeriesManager;
-import org.weasis.dicom.codec.HiddenSpecialElement;
 import org.weasis.dicom.codec.SegSpecialElement;
 import org.weasis.dicom.codec.TagD;
-import org.weasis.dicom.codec.seg.EditableContour;
 import org.weasis.dicom.viewer2d.EventManager;
 import org.weasis.dicom.viewer2d.View2d;
 import org.weasis.opencv.data.PlanarImage;
-import org.weasis.opencv.op.ImageProcessor;
+import org.weasis.opencv.seg.SegmentCategory;
 
 /**
  * @author Nicolas Roduit
@@ -134,14 +147,18 @@ public class SegmentationTool extends PluginTool implements SeriesViewerListener
             popupMenu.removeAll();
             if (SwingUtilities.isRightMouseButton(e)) {
               DefaultMutableTreeNode node = getTreeNode(e.getPoint());
-              boolean visible = node != null && !node.isLeaf();
-              if (visible) {
-                popupMenu.add(getCheckAllMenuItem(node, true));
-                popupMenu.add(getCheckAllMenuItem(node, false));
+              if (node != null) {
+                boolean leaf = node.isLeaf();
+                if (!leaf) {
+                  popupMenu.add(getCheckAllMenuItem(node, true));
+                  popupMenu.add(getCheckAllMenuItem(node, false));
+                }
+                popupMenu.add(getOpacityMenuItem(node, e.getPoint()));
+                if (leaf) {
+                  popupMenu.add(getStatisticMenuItem(node));
+                }
+                popupMenu.show(tree, e.getX(), e.getY());
               }
-              popupMenu.add(getOpacityMenuItem(node, e.getPoint()));
-              popupMenu.add(getStatisticMenuItem(node));
-              popupMenu.show(tree, e.getX(), e.getY());
             }
           }
         });
@@ -154,17 +171,36 @@ public class SegmentationTool extends PluginTool implements SeriesViewerListener
   }
 
   private void showSliderInPopup(DefaultMutableTreeNode node, Point pt) {
-    if (node != null && node.isLeaf() && node.getUserObject() instanceof EditableContour contour) {
+    if (node != null) {
+      List<SegContour> contours = new ArrayList<>();
+      if (node.isLeaf() && node.getUserObject() instanceof SegContour contour) {
+        contours.add(contour);
+      } else {
+        Enumeration<?> children = node.children();
+        while (children.hasMoreElements()) {
+          Object child = children.nextElement();
+          if (child instanceof DefaultMutableTreeNode dtm
+              && dtm.getUserObject() instanceof SegContour contour) {
+            contours.add(contour);
+          }
+        }
+      }
+
+      if (contours.isEmpty()) {
+        return;
+      }
       // Create a popup menu
       JPopupMenu menu = new JPopupMenu();
       JSliderW jSlider = PropertiesDialog.createOpacitySlider(PropertiesDialog.FILL_OPACITY);
       GuiUtils.setPreferredWidth(jSlider, 250);
-      jSlider.setValue((int) (contour.getAttributes().getInteriorOpacity() * 100f));
+      jSlider.setValue((int) (contours.getFirst().getAttributes().getInteriorOpacity() * 100f));
       PropertiesDialog.updateSlider(jSlider, PropertiesDialog.FILL_OPACITY);
       jSlider.addChangeListener(
           l -> {
             float value = PropertiesDialog.updateSlider(jSlider, PropertiesDialog.FILL_OPACITY);
-            contour.getAttributes().setInteriorOpacity(value);
+            for (SegContour c : contours) {
+              c.getAttributes().setInteriorOpacity(value);
+            }
             updateVisibleNode();
           });
       menu.add(jSlider);
@@ -173,46 +209,78 @@ public class SegmentationTool extends PluginTool implements SeriesViewerListener
   }
 
   private JMenuItem getStatisticMenuItem(DefaultMutableTreeNode node) {
-    JMenuItem selectAllMenuItem = new JMenuItem("Compute statistics");
+    JMenuItem selectAllMenuItem = new JMenuItem("Compute statistics from the selected view");
     selectAllMenuItem.addActionListener(
         e -> {
           if (node != null) {
-            if (node.isLeaf() && node.getUserObject() instanceof EditableContour contour) {
+            if (node.isLeaf() && node.getUserObject() instanceof SegContour contour) {
               ViewCanvas<DicomImageElement> view = EventManager.getInstance().getSelectedViewPane();
-              if (view != null && view.getImage() instanceof DicomImageElement imageElement) {
-                PlanarImage img = imageElement.getImage();
-                if (img != null) {
-                  String seriesUID =
-                      TagD.getTagValue(imageElement, Tag.SeriesInstanceUID, String.class);
-                  List<String> seriesList =
-                      HiddenSeriesManager.getInstance().reference2Series.get(seriesUID);
-                  for (String s : seriesList) {
-                    List<HiddenSpecialElement> els =
-                        HiddenSeriesManager.getInstance().series2Elements.get(s);
-                    for (HiddenSpecialElement el : els) {
-                      if (el instanceof SegSpecialElement seg) {
-                        Collection<EditableContour> segments = seg.getContours(imageElement);
-                        if (segments != null) {
-                          for (EditableContour c : segments) {
-                            if (c.getCategory().equals(contour.getCategory())) {
-                              double[][] result =
-                                  ImageProcessor.meanStdDev(
-                                      img.toMat(), c.getNonEditableGraphic().getShape());
-                              System.out.println(
-                                  "Mean: " + result[0][0] + " StdDev: " + result[1][0]);
-                              break;
-                            }
-                          }
-                        }
-                      }
-                    }
-                  }
+              DicomImageElement imageElement = getImageElement(view);
+              if (imageElement != null) {
+                SegContour c = getContour(imageElement, contour.getCategory());
+                if (c != null) {
+                  MeasurableLayer layer = view.getMeasurableLayer();
+                  showStatistics(c, layer);
                 }
               }
             }
           }
         });
     return selectAllMenuItem;
+  }
+
+  private DicomImageElement getImageElement(ViewCanvas<DicomImageElement> view) {
+    if (view != null && view.getImage() instanceof DicomImageElement imageElement) {
+      return imageElement;
+    }
+    return null;
+  }
+
+  private SegContour getContour(DicomImageElement imageElement, SegmentCategory category) {
+    PlanarImage img = imageElement.getImage();
+    if (img != null) {
+      if (comboSeg.getSelectedItem() instanceof SegSpecialElement seg) {
+        Collection<SegContour> segments = seg.getContours(imageElement);
+        if (segments != null) {
+          for (SegContour c : segments) {
+            if (c.getCategory().equals(category)) {
+              return c;
+            }
+          }
+        }
+      }
+    }
+    return null;
+  }
+
+  private void showStatistics(SegContour contour, MeasurableLayer layer) {
+    List<MeasureItem> measList =
+        ImageRegionStatistics.getImageStatistics(contour.getSegGraphic(), layer, true);
+
+    JPanel tableContainer = new JPanel();
+    tableContainer.setLayout(new BorderLayout());
+
+    JTable jtable =
+        MeasureTool.createMultipleRenderingTable(
+            new SimpleTableModel(new String[] {}, new Object[][] {}));
+    jtable.getTableHeader().setReorderingAllowed(false);
+
+    String[] headers = {
+      Messages.getString("MeasureTool.param"), Messages.getString("MeasureTool.val")
+    };
+    jtable.setModel(new SimpleTableModel(headers, MeasureTool.getLabels(measList)));
+    jtable.getColumnModel().getColumn(1).setCellRenderer(new TableNumberRenderer());
+    tableContainer.add(jtable.getTableHeader(), BorderLayout.PAGE_START);
+    tableContainer.add(jtable, BorderLayout.CENTER);
+    jtable.setShowVerticalLines(true);
+    jtable.getColumnModel().getColumn(0).setPreferredWidth(120);
+    jtable.getColumnModel().getColumn(1).setPreferredWidth(80);
+    JOptionPane.showMessageDialog(
+        this,
+        tableContainer,
+        Messages.getString("HistogramView.stats"),
+        JOptionPane.PLAIN_MESSAGE,
+        null);
   }
 
   private JMenuItem getCheckAllMenuItem(DefaultMutableTreeNode node, boolean selected) {
@@ -326,7 +394,7 @@ public class SegmentationTool extends PluginTool implements SeriesViewerListener
       if (dtm.isLeaf()) {
         TreePath tp = new TreePath(dtm.getPath());
         DefaultMutableTreeNode node = (DefaultMutableTreeNode) tp.getLastPathComponent();
-        if (node.getUserObject() instanceof EditableContour contour) {
+        if (node.getUserObject() instanceof SegContour contour) {
           contour.getAttributes().setVisible(tree.getCheckingModel().isPathChecked(tp));
         }
       } else {
@@ -404,9 +472,9 @@ public class SegmentationTool extends PluginTool implements SeriesViewerListener
 
       // Prepare parent node for structures
       nodeStructures.removeAllChildren();
-      Map<Integer, EditableContour> segments = specialElement.getSegAttributes();
+      Map<Integer, SegRegion> segments = specialElement.getSegAttributes();
       if (segments != null) {
-        for (EditableContour contour : segments.values()) {
+        for (SegRegion contour : segments.values()) {
           DefaultMutableTreeNode node = new StructToolTipTreeNode(contour, false);
           nodeStructures.add(node);
           initPathSelection(new TreePath(node.getPath()), contour.getAttributes().isVisible());
@@ -491,12 +559,12 @@ public class SegmentationTool extends PluginTool implements SeriesViewerListener
 
   static class StructToolTipTreeNode extends DefaultMutableTreeNode {
 
-    public StructToolTipTreeNode(EditableContour userObject, boolean allowsChildren) {
+    public StructToolTipTreeNode(SegRegion<?> userObject, boolean allowsChildren) {
       super(Objects.requireNonNull(userObject), allowsChildren);
     }
 
     public String getToolTipText() {
-      EditableContour seg = (EditableContour) getUserObject();
+      SegRegion<?> seg = (SegRegion) getUserObject();
       StringBuilder buf = new StringBuilder();
       buf.append(GuiUtils.HTML_START);
       buf.append("Label");
@@ -507,14 +575,27 @@ public class SegmentationTool extends PluginTool implements SeriesViewerListener
       buf.append(StringUtil.COLON_AND_SPACE);
       buf.append(seg.getCategory().type());
       buf.append(GuiUtils.HTML_BR);
+      buf.append("Voxel count");
+      buf.append(StringUtil.COLON_AND_SPACE);
+      buf.append(DecFormatter.allNumber(seg.getNumberOfPixels()));
+      buf.append(GuiUtils.HTML_BR);
+      SegMeasurableLayer<?> layer = seg.getMeasurableLayer();
+      MeasurementsAdapter adapter =
+          layer.getMeasurementAdapter(layer.getSourceImage().getPixelSpacingUnit());
+      buf.append("Volume (%s3)".formatted(adapter.getUnit()));
+      buf.append(StringUtil.COLON_AND_SPACE);
+      double ratio = adapter.getCalibRatio();
+      buf.append(
+          DecFormatter.twoDecimal(seg.getNumberOfPixels() * ratio * ratio * layer.getThickness()));
+      buf.append(GuiUtils.HTML_BR);
       buf.append(GuiUtils.HTML_END);
       return buf.toString();
     }
 
     @Override
     public String toString() {
-      EditableContour layer = (EditableContour) getUserObject();
-      return getColorBullet(layer.getAttributes().getColor(), layer.getCategory().label());
+      SegRegion<?> seg = (SegRegion) getUserObject();
+      return getColorBullet(seg.getAttributes().getColor(), seg.getCategory().label());
     }
   }
 }

@@ -7,23 +7,26 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
  */
-package org.weasis.dicom.codec.seg;
+package org.weasis.core.ui.model.graphic.imp.seg;
 
 import java.awt.geom.Path2D;
 import java.awt.geom.Point2D;
 import java.util.List;
-import org.dcm4che3.img.data.Region;
-import org.dcm4che3.img.data.Segment;
-import org.weasis.core.ui.model.graphic.imp.NonEditableGraphic;
 import org.weasis.core.ui.model.layer.LayerType;
+import org.weasis.opencv.seg.Region;
+import org.weasis.opencv.seg.Segment;
 
-public class EditableContour extends Region {
+public class SegContour extends Region {
 
-  public EditableContour(String id, List<Segment> segmentList) {
+  public SegContour(String id, List<Segment> segmentList) {
     super(id, segmentList);
   }
 
-  public NonEditableGraphic getNonEditableGraphic() {
+  public SegContour(String id, List<Segment> segmentList, int numberOfPixels) {
+    super(id, segmentList, numberOfPixels);
+  }
+
+  public SegGraphic getSegGraphic() {
     if (segmentList.isEmpty() || !attributes.isVisible()) {
       return null;
     }
@@ -37,7 +40,7 @@ public class EditableContour extends Region {
       return null;
     }
 
-    NonEditableGraphic graphic = new NonEditableGraphic(path);
+    SegGraphic graphic = new SegGraphic(path);
     graphic.setFilled(attributes.isFilled());
     graphic.setLineThickness(attributes.getLineThickness());
     graphic.setFillOpacity(attributes.getInteriorOpacity());
