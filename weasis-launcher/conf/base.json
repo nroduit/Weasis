@@ -304,7 +304,7 @@
     },
     {
       "code": "weasis.name",
-      "value": "Weasis",
+      "value": "Agile",
       "description": "Change the name of the application everywhere in UI",
       "type": "AP",
       "category": "LAUNCH"

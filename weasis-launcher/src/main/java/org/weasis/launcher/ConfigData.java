@@ -171,7 +171,7 @@ public class ConfigData {
     String profile = preferences.getProperty(P_WEASIS_PROFILE, "default");
     addProperty(P_WEASIS_PROFILE, profile);
 
-    String name = preferences.getProperty(P_WEASIS_NAME, "Weasis"); // NON-NLS
+    String name = preferences.getProperty(P_WEASIS_NAME, "Agile"); // NON-NLS
     addProperty(P_WEASIS_NAME, name);
 
     String version = preferences.getProperty(P_WEASIS_VERSION, "0.0.0");

@@ -28,6 +28,7 @@ public class ResourceUtil {
 
   public enum LogoIcon implements ResourceIconPath {
     LARGE("svg/logo/WeasisAbout.svg"), // NON-NLS
+
     SMALL("svg/logo/Weasis.svg"), // NON-NLS
     SMALL_DICOMIZER("svg/logo/Dicomizer.svg"); // NON-NLS
 

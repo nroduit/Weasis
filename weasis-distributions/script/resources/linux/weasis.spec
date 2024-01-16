@@ -88,7 +88,7 @@ fi
 mkdir -p /etc/opt/chrome/policies/managed/
     echo '{
     "URLAllowlist": ["weasis://*"]
-}' > /etc/opt/chrome/policies/managed/weasis.json 
+}' > /etc/opt/chrome/policies/managed/weasis.json
 mkdir -p /etc/chromium/policies/managed/
 cp /etc/opt/chrome/policies/managed/weasis.json /etc/chromium/policies/managed/weasis.json
 
@@ -99,7 +99,7 @@ LAUNCHER_AS_SERVICE_SCRIPTS
 DESKTOP_COMMANDS_UNINSTALL
 LAUNCHER_AS_SERVICE_COMMANDS_UNINSTALL
 
-rm -f /etc/opt/chrome/policies/managed/weasis.json 
+rm -f /etc/opt/chrome/policies/managed/weasis.json
 rm -f /etc/chromium/policies/managed/weasis.json
 
 %clean

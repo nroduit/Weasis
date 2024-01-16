@@ -27,7 +27,7 @@ LAUNCHER_AS_SERVICE_COMMANDS_INSTALL
 mkdir -p /etc/opt/chrome/policies/managed/
 echo '{
     "URLAllowlist": ["weasis://*"]
-}' > /etc/opt/chrome/policies/managed/weasis.json 
+}' > /etc/opt/chrome/policies/managed/weasis.json
 mkdir -p /etc/chromium/policies/managed/
 cp /etc/opt/chrome/policies/managed/weasis.json /etc/chromium/policies/managed/weasis.json
     ;;

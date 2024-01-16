@@ -171,7 +171,7 @@ jobs:
           RES: "native-dist/weasis-native/build/script/resources/${{ matrix.wsystem }}"
           FILE_ASSOC: "native-dist/weasis-native/build/script/file-associations.properties"
           VENDOR: "Weasis Team"
-          COPYRIGHT: "© 2009-2023 Weasis Team"
+          COPYRIGHT: "© 2023-2024 Agile Team"
         run: |
           mkdir -p final-dist
           machine=${{ matrix.wsystem }}

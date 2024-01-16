@@ -31,7 +31,7 @@ public class AppProperties {
       System.getProperty("weasis.version", "0.0.0"); // NON-NLS
 
   /** The name of the application (for display) */
-  public static final String WEASIS_NAME = System.getProperty("weasis.name", "Weasis"); // NON-NLS
+  public static final String WEASIS_NAME = System.getProperty("weasis.name", "Agile"); // NON-NLS
 
   /**
    * The current user of the application (defined either in the launch property "weasis.user" or by
