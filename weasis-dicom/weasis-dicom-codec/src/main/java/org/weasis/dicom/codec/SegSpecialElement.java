@@ -10,6 +10,7 @@
 package org.weasis.dicom.codec;
 
 import java.awt.Color;
+import java.awt.Point;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -22,7 +23,6 @@ import org.dcm4che3.data.Tag;
 import org.dcm4che3.img.data.CIELab;
 import org.dcm4che3.img.util.DicomUtils;
 import org.opencv.core.Core;
-import org.weasis.core.api.media.data.MediaSeries.MEDIA_POSITION;
 import org.weasis.core.ui.model.graphic.imp.seg.SegContour;
 import org.weasis.core.ui.model.graphic.imp.seg.SegMeasurableLayer;
 import org.weasis.core.ui.model.graphic.imp.seg.SegRegion;
@@ -40,7 +40,7 @@ public class SegSpecialElement extends HiddenSpecialElement {
 
   private final Map<String, Map<String, List<SegContour>>> refMap = new HashMap<>();
   private final Map<Integer, List<SegContour>> roiMap = new HashMap<>();
-  private final Map<Integer, SegRegion> segAttributes = new HashMap<>();
+  private final Map<Integer, SegRegion<DicomImageElement>> segAttributes = new HashMap<>();
 
   private volatile float opacity = 1.0f;
   private volatile boolean visible = true;
@@ -81,6 +81,7 @@ public class SegSpecialElement extends HiddenSpecialElement {
       // TODO: handle fractional segmentations
     }
 
+    Map<SegRegion<DicomImageElement>, Point> regionPosition = new HashMap<>();
     // Locate the name and number of each ROI
     Sequence segSeq = dicom.getSequence(Tag.SegmentSequence);
     List<String> sourceSopUIDList = new ArrayList<>();
@@ -124,8 +125,6 @@ public class SegSpecialElement extends HiddenSpecialElement {
         }
       }
 
-      SegMeasurableLayer<DicomImageElement> measurableLayer = getMeasurableLayer(series);
-
       for (Attributes seg : segSeq) {
         int nb = seg.getInt(Tag.SegmentNumber, -1);
         String segmentLabel = seg.getString(Tag.SegmentLabel);
@@ -163,11 +162,12 @@ public class SegSpecialElement extends HiddenSpecialElement {
         attributes.setInteriorOpacity(0.2f);
         SegmentCategory category =
             new SegmentCategory(nb, segmentLabel, null, segmentAlgorithmType);
-        SegRegion c = new SegRegion(String.valueOf(nb));
+        SegRegion<DicomImageElement> c = new SegRegion<>(String.valueOf(nb));
         c.setCategory(category);
         c.setAttributes(attributes);
-        c.setMeasurableLayer(measurableLayer);
+
         segAttributes.put(nb, c);
+        regionPosition.put(c, new Point(-1, -1));
       }
     }
 
@@ -209,9 +209,17 @@ public class SegSpecialElement extends HiddenSpecialElement {
             Integer nb =
                 DicomUtils.getIntegerFromDicomElement(refSeqNb, Tag.ReferencedSegmentNumber, null);
             if (nb != null) {
-              SegRegion c = segAttributes.get(nb);
+              SegRegion<?> c = segAttributes.get(nb);
               if (c != null) {
                 buildGraphic(binaryMask, index, c);
+                Point p = regionPosition.get(c);
+                if (p != null) {
+                  if (p.x == -1) {
+                    p.x = index - 1;
+                  } else {
+                    p.y = index - 1;
+                  }
+                }
               }
             }
           }
@@ -235,20 +243,26 @@ public class SegSpecialElement extends HiddenSpecialElement {
         }
       }
     }
+
+    regionPosition.forEach(
+        (region, p) -> {
+          SegMeasurableLayer<DicomImageElement> measurableLayer = getMeasurableLayer(series, p);
+          region.setMeasurableLayer(measurableLayer);
+        });
   }
 
-  private SegMeasurableLayer<DicomImageElement> getMeasurableLayer(DicomSeries series) {
-    if (series != null && series.size(null) > 0) {
-      DicomImageElement first = series.getMedia(MEDIA_POSITION.FIRST, null, null);
-      DicomImageElement last = series.getMedia(MEDIA_POSITION.LAST, null, null);
-      DicomImageElement img = series.getMedia(MEDIA_POSITION.MIDDLE, null, null);
+  private SegMeasurableLayer<DicomImageElement> getMeasurableLayer(DicomSeries series, Point p) {
+    if (series != null && series.size(null) > 0 && p != null && p.x >= 0 && p.y >= 0) {
+      DicomImageElement first = series.getMedia(p.x, null, null);
+      DicomImageElement last = series.getMedia(p.y, null, null);
+      DicomImageElement img = series.getMedia(p.y - (p.y - p.x) / 2, null, null);
       if (img != null && first != null && last != null) {
         int size = series.size(null);
         double thickness = DicomMediaUtils.getThickness(first, last);
         if (thickness <= 0.0) {
           thickness = 1.0;
         } else {
-          thickness /= size;
+          thickness /= (p.y - p.x) + 1;
         }
         return new SegMeasurableLayer<>(img, thickness);
       }
@@ -288,7 +302,7 @@ public class SegSpecialElement extends HiddenSpecialElement {
     return refMap;
   }
 
-  public Map<Integer, SegRegion> getSegAttributes() {
+  public Map<Integer, SegRegion<DicomImageElement>> getSegAttributes() {
     return segAttributes;
   }
 

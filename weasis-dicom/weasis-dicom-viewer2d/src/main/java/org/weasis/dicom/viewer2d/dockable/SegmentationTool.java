@@ -172,33 +172,33 @@ public class SegmentationTool extends PluginTool implements SeriesViewerListener
 
   private void showSliderInPopup(DefaultMutableTreeNode node, Point pt) {
     if (node != null) {
-      List<SegContour> contours = new ArrayList<>();
-      if (node.isLeaf() && node.getUserObject() instanceof SegContour contour) {
-        contours.add(contour);
+      List<SegRegion<?>> segRegions = new ArrayList<>();
+      if (node.isLeaf() && node.getUserObject() instanceof SegRegion<?> region) {
+        segRegions.add(region);
       } else {
         Enumeration<?> children = node.children();
         while (children.hasMoreElements()) {
           Object child = children.nextElement();
           if (child instanceof DefaultMutableTreeNode dtm
-              && dtm.getUserObject() instanceof SegContour contour) {
-            contours.add(contour);
+              && dtm.getUserObject() instanceof SegRegion<?> region) {
+            segRegions.add(region);
           }
         }
       }
 
-      if (contours.isEmpty()) {
+      if (segRegions.isEmpty()) {
         return;
       }
       // Create a popup menu
       JPopupMenu menu = new JPopupMenu();
       JSliderW jSlider = PropertiesDialog.createOpacitySlider(PropertiesDialog.FILL_OPACITY);
       GuiUtils.setPreferredWidth(jSlider, 250);
-      jSlider.setValue((int) (contours.getFirst().getAttributes().getInteriorOpacity() * 100f));
+      jSlider.setValue((int) (segRegions.getFirst().getAttributes().getInteriorOpacity() * 100f));
       PropertiesDialog.updateSlider(jSlider, PropertiesDialog.FILL_OPACITY);
       jSlider.addChangeListener(
           l -> {
             float value = PropertiesDialog.updateSlider(jSlider, PropertiesDialog.FILL_OPACITY);
-            for (SegContour c : contours) {
+            for (SegRegion<?> c : segRegions) {
               c.getAttributes().setInteriorOpacity(value);
             }
             updateVisibleNode();
@@ -209,15 +209,15 @@ public class SegmentationTool extends PluginTool implements SeriesViewerListener
   }
 
   private JMenuItem getStatisticMenuItem(DefaultMutableTreeNode node) {
-    JMenuItem selectAllMenuItem = new JMenuItem("Compute statistics from the selected view");
+    JMenuItem selectAllMenuItem = new JMenuItem("Pixel statistics from selected view");
     selectAllMenuItem.addActionListener(
         e -> {
           if (node != null) {
-            if (node.isLeaf() && node.getUserObject() instanceof SegContour contour) {
+            if (node.isLeaf() && node.getUserObject() instanceof SegRegion<?> region) {
               ViewCanvas<DicomImageElement> view = EventManager.getInstance().getSelectedViewPane();
               DicomImageElement imageElement = getImageElement(view);
               if (imageElement != null) {
-                SegContour c = getContour(imageElement, contour.getCategory());
+                SegContour c = getContour(imageElement, region.getCategory());
                 if (c != null) {
                   MeasurableLayer layer = view.getMeasurableLayer();
                   showStatistics(c, layer);
@@ -394,8 +394,8 @@ public class SegmentationTool extends PluginTool implements SeriesViewerListener
       if (dtm.isLeaf()) {
         TreePath tp = new TreePath(dtm.getPath());
         DefaultMutableTreeNode node = (DefaultMutableTreeNode) tp.getLastPathComponent();
-        if (node.getUserObject() instanceof SegContour contour) {
-          contour.getAttributes().setVisible(tree.getCheckingModel().isPathChecked(tp));
+        if (node.getUserObject() instanceof SegRegion<?> region) {
+          region.getAttributes().setVisible(tree.getCheckingModel().isPathChecked(tp));
         }
       } else {
         updateVisibleNode(dtm, all);
@@ -472,9 +472,9 @@ public class SegmentationTool extends PluginTool implements SeriesViewerListener
 
       // Prepare parent node for structures
       nodeStructures.removeAllChildren();
-      Map<Integer, SegRegion> segments = specialElement.getSegAttributes();
+      Map<Integer, SegRegion<DicomImageElement>> segments = specialElement.getSegAttributes();
       if (segments != null) {
-        for (SegRegion contour : segments.values()) {
+        for (SegRegion<DicomImageElement> contour : segments.values()) {
           DefaultMutableTreeNode node = new StructToolTipTreeNode(contour, false);
           nodeStructures.add(node);
           initPathSelection(new TreePath(node.getPath()), contour.getAttributes().isVisible());

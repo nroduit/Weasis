@@ -377,9 +377,9 @@ public final class VolumeBuilder {
         int max = 1;
 
         for (SegSpecialElement segElement : segList) {
-          Map<Integer, SegRegion> map = segElement.getSegAttributes();
+          Map<Integer, SegRegion<DicomImageElement>> map = segElement.getSegAttributes();
           if (map != null) {
-            for (Entry<Integer, SegRegion> entry : map.entrySet()) {
+            for (Entry<Integer, SegRegion<DicomImageElement>> entry : map.entrySet()) {
               SegmentAttributes a = entry.getValue().getAttributes();
               if (a.isVisible()) {
                 max = Math.max(max, entry.getKey());
