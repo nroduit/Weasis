@@ -59,6 +59,7 @@ import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.api.util.ResourceUtil.ActionIcon;
 import org.weasis.core.api.util.ResourceUtil.OtherIcon;
 import org.weasis.core.ui.docking.DockableTool;
+import org.weasis.core.ui.docking.ExtToolFactory;
 import org.weasis.core.ui.docking.PluginTool;
 import org.weasis.core.ui.editor.SeriesViewerFactory;
 import org.weasis.core.ui.editor.SeriesViewerListener;
@@ -97,7 +98,6 @@ import org.weasis.dicom.explorer.ImportToolBar;
 import org.weasis.dicom.explorer.print.DicomPrintDialog;
 import org.weasis.dicom.viewer2d.dockable.DisplayTool;
 import org.weasis.dicom.viewer2d.dockable.ImageTool;
-import org.weasis.dicom.viewer2d.dockable.SegmentationTool;
 
 public class View2dContainer extends DicomViewerPlugin implements PropertyChangeListener {
   private static final Logger LOGGER = LoggerFactory.getLogger(View2dContainer.class);
@@ -357,18 +357,6 @@ public class View2dContainer extends DicomViewerPlugin implements PropertyChange
         TOOLS.add(tool);
       }
 
-      if (InsertableUtil.getBooleanProperty(
-          preferences,
-          bundleName,
-          componentName,
-          InsertableUtil.getCName(SegmentationTool.class),
-          key,
-          true)) {
-        tool = new SegmentationTool();
-        TOOLS.add(tool);
-        eventManager.addSeriesViewerListener((SeriesViewerListener) tool);
-      }
-
       InsertableUtil.sortInsertable(TOOLS);
 
       // Send event to synchronize the series selection.
@@ -464,39 +452,24 @@ public class View2dContainer extends DicomViewerPlugin implements PropertyChange
     super.addSeries(sequence);
   }
 
-  protected MediaSeries<DicomImageElement> getFirstSeries() {
-    for (ViewCanvas<DicomImageElement> v : getImagePanels()) {
-      if (v.getSeries() != null) {
-        return v.getSeries();
-      }
-    }
-    return null;
-  }
-
   @Override
   public List<DockableTool> getToolPanel() {
-    if (TOOL_EXT.isEmpty()) {
-      return TOOLS;
-    }
+    return TOOLS;
+  }
 
-    List<DockableTool> list = new ArrayList<>();
+  static void updateAdditionalTools(MediaSeries<DicomImageElement> series) {
     Hashtable<String, Object> properties = new Hashtable<>();
-    MediaSeries<DicomImageElement> series = getFirstSeries();
     if (series != null) {
       properties.put(MediaSeries.class.getName(), series);
     }
     for (InsertableFactory factory : TOOL_EXT) {
       Insertable instance = factory.createInstance(properties);
       if (instance instanceof DockableTool dockableTool) {
-        list.add(dockableTool);
+        dockableTool.showDockable();
+      } else if (factory instanceof ExtToolFactory<?> extToolFactory) {
+        extToolFactory.hideTool();
       }
     }
-
-    if (list.isEmpty()) {
-      return TOOLS;
-    }
-    list.addAll(0, TOOLS);
-    return list;
   }
 
   @Override
@@ -628,19 +601,19 @@ public class View2dContainer extends DicomViewerPlugin implements PropertyChange
             }
           }
         } else if (specialElement instanceof SegSpecialElement segSpecialElement) {
+          ViewCanvas<DicomImageElement> pane = getSelectedImagePane();
           for (ViewCanvas<DicomImageElement> view : view2ds) {
             if (view instanceof View2d view2d
                 && segSpecialElement.containsSopInstanceUIDReference(view.getImage())) {
               view2d.updateSegmentation();
+              if (view2d == pane) {
+                updateAdditionalTools(view2d.getSeries());
+              }
             }
           }
-        }
-
-        /*
-         * Update if necessary all the views with the KOSpecialElement
-         */
-        else if (specialElement instanceof KOSpecialElement koSpecialElement) {
-          setKOSpecialElement(koSpecialElement, null, false, false);
+        } else if (specialElement instanceof KOSpecialElement koSpecialElement) {
+          // Update if necessary all the views with the KOSpecialElement
+          setKOSpecialElement(koSpecialElement, null, false, true);
         }
       } else if (ObservableEvent.BasicAction.SELECT.equals(action)
           && newVal instanceof KOSpecialElement koSpecialElement) {
