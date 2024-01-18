@@ -1149,8 +1149,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     imageLayer.removeLayerChangeListener(this);
     Optional.ofNullable(lens).ifPresent(l -> l.showLens(false));
     if (series != null) {
-      GuiUtils.getUICore().closeSeries(series);
-      series = null;
+      setSeries(null);
     }
     super.disposeView();
   }

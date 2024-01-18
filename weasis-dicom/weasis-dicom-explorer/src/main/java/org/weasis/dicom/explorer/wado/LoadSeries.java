@@ -35,6 +35,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -336,7 +337,7 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
       }
 
       if (DicomModel.isHiddenModality(dicomSeries)) {
-        List<HiddenSpecialElement> list =
+        Set<HiddenSpecialElement> list =
             HiddenSeriesManager.getInstance().series2Elements.get(seriesUID);
         if (list != null) {
           list.stream()

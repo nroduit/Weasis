@@ -934,12 +934,15 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
         // Let scrolling if only one image is corrupted in the series
         cineAction.ifPresent(a -> a.enableAction(true));
       }
+      View2dContainer.updateAdditionalTools(view2d.getSeries());
       return false;
     }
 
     if (!enabledAction) {
       enableActions(true);
     }
+
+    View2dContainer.updateAdditionalTools(view2d.getSeries());
 
     OpManager dispOp = view2d.getDisplayOpManager();
 

@@ -15,8 +15,11 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.function.Function;
 import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Sequence;
 import org.dcm4che3.data.Tag;
@@ -26,7 +29,6 @@ import org.opencv.core.Core;
 import org.weasis.core.ui.model.graphic.imp.seg.SegContour;
 import org.weasis.core.ui.model.graphic.imp.seg.SegMeasurableLayer;
 import org.weasis.core.ui.model.graphic.imp.seg.SegRegion;
-import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.codec.macro.Code;
 import org.weasis.dicom.codec.utils.DicomMediaUtils;
 import org.weasis.opencv.data.PlanarImage;
@@ -36,10 +38,11 @@ import org.weasis.opencv.seg.Segment;
 import org.weasis.opencv.seg.SegmentAttributes;
 import org.weasis.opencv.seg.SegmentCategory;
 
-public class SegSpecialElement extends HiddenSpecialElement {
+public class SegSpecialElement extends HiddenSpecialElement
+    implements SpecialElementReferences, SpecialElementRegion {
 
-  private final Map<String, Map<String, List<SegContour>>> refMap = new HashMap<>();
-  private final Map<Integer, List<SegContour>> roiMap = new HashMap<>();
+  private final Map<String, Map<String, Set<SegContour>>> refMap = new HashMap<>();
+  private final Map<Integer, Set<SegContour>> roiMap = new HashMap<>();
   private final Map<Integer, SegRegion<DicomImageElement>> segAttributes = new HashMap<>();
 
   private volatile float opacity = 1.0f;
@@ -71,9 +74,19 @@ public class SegSpecialElement extends HiddenSpecialElement {
     label = buf.toString();
   }
 
+  @Override
+  public void initReferences(String originSeriesUID) {
+    refMap.clear();
+    Attributes dicom = ((DicomMediaIO) mediaIO).getDicomObject();
+    if (dicom != null) {
+      Function<String, Map<String, Set<SegContour>>> addSeries =
+          seriesUID -> refMap.computeIfAbsent(seriesUID, _ -> new HashMap<>());
+      HiddenSeriesManager.getInstance().extractReferencedSeries(dicom, originSeriesUID, addSeries);
+    }
+  }
+
   public void initContours(DicomSeries series) {
     roiMap.clear();
-    refMap.clear();
 
     Attributes dicom = ((DicomMediaIO) mediaIO).getDicomObject();
     String segmentType = dicom.getString(Tag.SegmentationType);
@@ -87,44 +100,6 @@ public class SegSpecialElement extends HiddenSpecialElement {
     List<String> sourceSopUIDList = new ArrayList<>();
 
     if (segSeq != null && series != null) {
-      Sequence seriesRef = dicom.getSequence(Tag.ReferencedSeriesSequence);
-      if (seriesRef != null) {
-        for (Attributes ref : seriesRef) {
-          String seriesUID = ref.getString(Tag.SeriesInstanceUID);
-          if (StringUtil.hasText(seriesUID)) {
-            String originSeriesUID = TagD.getTagValue(series, Tag.SeriesInstanceUID, String.class);
-            List<String> list =
-                HiddenSeriesManager.getInstance()
-                    .reference2Series
-                    .computeIfAbsent(seriesUID, _ -> new ArrayList<>());
-            list.add(originSeriesUID);
-            Map<String, List<SegContour>> map =
-                refMap.computeIfAbsent(seriesUID, _ -> new HashMap<>());
-            Sequence instanceSeq = ref.getSequence(Tag.ReferencedInstanceSequence);
-            if (instanceSeq != null) {
-              for (Attributes instance : instanceSeq) {
-                String sopInstanceUID = instance.getString(Tag.ReferencedSOPInstanceUID);
-                map.computeIfAbsent(sopInstanceUID, _ -> new ArrayList<>());
-              }
-            }
-          }
-        }
-      } else {
-        addSourceImage(dicom, sourceSopUIDList);
-        String seriesUID = "1.3.6.1.4.1.14519.5.2.1.7695.1700.229054711046553504545787083659";
-        String originSeriesUID = TagD.getTagValue(series, Tag.SeriesInstanceUID, String.class);
-        List<String> list =
-            HiddenSeriesManager.getInstance()
-                .reference2Series
-                .computeIfAbsent(seriesUID, _ -> new ArrayList<>());
-        list.add(originSeriesUID);
-        Map<String, List<SegContour>> map = refMap.computeIfAbsent(seriesUID, _ -> new HashMap<>());
-
-        for (String sopUID : sourceSopUIDList) {
-          map.computeIfAbsent(sopUID, _ -> new ArrayList<>());
-        }
-      }
-
       for (Attributes seg : segSeq) {
         int nb = seg.getInt(Tag.SegmentNumber, -1);
         String segmentLabel = seg.getString(Tag.SegmentLabel);
@@ -161,7 +136,7 @@ public class SegSpecialElement extends HiddenSpecialElement {
         SegmentAttributes attributes = new SegmentAttributes(rgbColor, true, 1f);
         attributes.setInteriorOpacity(0.2f);
         SegmentCategory category =
-            new SegmentCategory(nb, segmentLabel, null, segmentAlgorithmType);
+            new SegmentCategory(nb, segmentLabel, segmentDescription, segmentAlgorithmType);
         SegRegion<DicomImageElement> c = new SegRegion<>(String.valueOf(nb));
         c.setCategory(category);
         c.setAttributes(attributes);
@@ -181,7 +156,7 @@ public class SegSpecialElement extends HiddenSpecialElement {
         Sequence derivationSeq = frame.getSequence(Tag.DerivationImageSequence);
         if (derivationSeq != null) {
           for (Attributes derivation : derivationSeq) {
-            addSourceImage(derivation, sopUIDList);
+            HiddenSeriesManager.addSourceImage(derivation, sopUIDList);
           }
         }
 
@@ -225,15 +200,15 @@ public class SegSpecialElement extends HiddenSpecialElement {
           }
         }
 
-        List<SegContour> contour = roiMap.get(index);
+        Set<SegContour> contour = roiMap.get(index);
         if (contour != null && !contour.isEmpty()) {
           refMap.forEach(
               (key, _) -> {
-                Map<String, List<SegContour>> map = refMap.get(key);
+                Map<String, Set<SegContour>> map = refMap.get(key);
                 if (map != null) {
                   sopUIDList.forEach(
                       sopUID -> {
-                        List<SegContour> list = map.get(sopUID);
+                        Set<SegContour> list = map.get(sopUID);
                         if (list != null) {
                           list.addAll(contour);
                         }
@@ -257,7 +232,6 @@ public class SegSpecialElement extends HiddenSpecialElement {
       DicomImageElement last = series.getMedia(p.y, null, null);
       DicomImageElement img = series.getMedia(p.y - (p.y - p.x) / 2, null, null);
       if (img != null && first != null && last != null) {
-        int size = series.size(null);
         double thickness = DicomMediaUtils.getThickness(first, last);
         if (thickness <= 0.0) {
           thickness = 1.0;
@@ -270,16 +244,7 @@ public class SegSpecialElement extends HiddenSpecialElement {
     return null;
   }
 
-  private static void addSourceImage(Attributes derivation, List<String> sopUIDList) {
-    Sequence srcSeq = derivation.getSequence(Tag.SourceImageSequence);
-    if (srcSeq != null) {
-      for (Attributes src : srcSeq) {
-        sopUIDList.add(src.getString(Tag.ReferencedSOPInstanceUID));
-      }
-    }
-  }
-
-  private void buildGraphic(DicomImageElement binaryMask, int id, SegRegion region) {
+  private void buildGraphic(DicomImageElement binaryMask, int id, SegRegion<?> region) {
     SegmentAttributes attributes = region.getAttributes();
     SegmentCategory category = region.getCategory();
     PlanarImage binary = binaryMask.getImage();
@@ -290,15 +255,14 @@ public class SegSpecialElement extends HiddenSpecialElement {
     region.addPixels(contour);
     contour.setAttributes(attributes);
     contour.setCategory(category);
-    List<SegContour> list = roiMap.computeIfAbsent(id, _ -> new ArrayList<>());
-    list.add(contour);
+    roiMap.computeIfAbsent(id, _ -> new LinkedHashSet<>()).add(contour);
   }
 
-  public Map<Integer, List<SegContour>> getRoiMap() {
+  public Map<Integer, Set<SegContour>> getRoiMap() {
     return roiMap;
   }
 
-  public Map<String, Map<String, List<SegContour>>> getRefMap() {
+  public Map<String, Map<String, Set<SegContour>>> getRefMap() {
     return refMap;
   }
 
@@ -306,21 +270,24 @@ public class SegSpecialElement extends HiddenSpecialElement {
     return segAttributes;
   }
 
+  @Override
   public boolean isVisible() {
     return visible;
   }
 
+  @Override
   public void setVisible(boolean visible) {
     this.visible = visible;
   }
 
+  @Override
   public float getOpacity() {
     return opacity;
   }
 
+  @Override
   public void setOpacity(float opacity) {
     this.opacity = Math.max(0.0f, Math.min(opacity, 1.0f));
-    ;
     int opacityValue = (int) (this.opacity * 255f);
     segAttributes
         .values()
@@ -332,12 +299,13 @@ public class SegSpecialElement extends HiddenSpecialElement {
             });
   }
 
+  @Override
   public boolean containsSopInstanceUIDReference(DicomImageElement img) {
     if (img != null) {
       String seriesUID = TagD.getTagValue(img, Tag.SeriesInstanceUID, String.class);
       if (seriesUID != null) {
         String sopInstanceUID = TagD.getTagValue(img, Tag.SOPInstanceUID, String.class);
-        Map<String, List<SegContour>> map = refMap.get(seriesUID);
+        Map<String, Set<SegContour>> map = refMap.get(seriesUID);
         if (map != null && sopInstanceUID != null) {
           return map.containsKey(sopInstanceUID);
         }
@@ -346,13 +314,14 @@ public class SegSpecialElement extends HiddenSpecialElement {
     return false;
   }
 
+  @Override
   public Collection<SegContour> getContours(DicomImageElement img) {
     String seriesUID = TagD.getTagValue(img, Tag.SeriesInstanceUID, String.class);
     if (seriesUID != null) {
       String sopInstanceUID = TagD.getTagValue(img, Tag.SOPInstanceUID, String.class);
-      Map<String, List<SegContour>> map = refMap.get(seriesUID);
+      Map<String, Set<SegContour>> map = refMap.get(seriesUID);
       if (map != null && sopInstanceUID != null) {
-        List<SegContour> list = map.get(sopInstanceUID);
+        Set<SegContour> list = map.get(sopInstanceUID);
         if (list != null) {
           return list;
         }

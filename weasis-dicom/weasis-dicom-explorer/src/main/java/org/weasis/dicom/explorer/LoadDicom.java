@@ -179,16 +179,7 @@ public abstract class LoadDicom extends ExplorerTask<Boolean, String> {
           }
         }
 
-        if (DicomModel.isHiddenModality(dicomSeries) && medias != null) {
-          Arrays.stream(medias)
-              .filter(HiddenSpecialElement.class::isInstance)
-              .map(HiddenSpecialElement.class::cast)
-              .forEach(
-                  d ->
-                      dicomModel.firePropertyChange(
-                          new ObservableEvent(
-                              ObservableEvent.BasicAction.UPDATE, dicomModel, null, d)));
-        } else {
+        if (!updateHiddenModality(dicomSeries, medias)) {
           dicomModel.firePropertyChange(
               new ObservableEvent(ObservableEvent.BasicAction.ADD, dicomModel, null, dicomSeries));
         }
@@ -227,16 +218,7 @@ public abstract class LoadDicom extends ExplorerTask<Boolean, String> {
             }
           }
 
-          if (DicomModel.isHiddenModality(dicomSeries)) {
-            Arrays.stream(medias)
-                .filter(HiddenSpecialElement.class::isInstance)
-                .map(HiddenSpecialElement.class::cast)
-                .forEach(
-                    d ->
-                        dicomModel.firePropertyChange(
-                            new ObservableEvent(
-                                ObservableEvent.BasicAction.UPDATE, dicomModel, null, d)));
-          }
+          updateHiddenModality(dicomSeries, medias);
 
           // If Split series or special DICOM element update the explorer view and View2DContainer
           Integer splitNb = (Integer) dicomSeries.getTagValue(TagW.SplitSeriesNumber);
@@ -252,6 +234,21 @@ public abstract class LoadDicom extends ExplorerTask<Boolean, String> {
       LOGGER.error("Build DICOM hierarchy", e);
     }
     return thumb;
+  }
+
+  private boolean updateHiddenModality(Series<?> dicomSeries, MediaElement[] medias) {
+    if (DicomModel.isHiddenModality(dicomSeries) && medias != null) {
+      Arrays.stream(medias)
+          .filter(HiddenSpecialElement.class::isInstance)
+          .map(HiddenSpecialElement.class::cast)
+          .forEach(
+              d ->
+                  dicomModel.firePropertyChange(
+                      new ObservableEvent(
+                          ObservableEvent.BasicAction.UPDATE, dicomModel, null, d)));
+      return true;
+    }
+    return false;
   }
 
   protected boolean isSOPInstanceUIDExist(

@@ -44,7 +44,7 @@ import org.weasis.core.ui.model.graphic.imp.seg.SegContour;
 import org.weasis.core.ui.model.graphic.imp.seg.SegGraphic;
 import org.weasis.core.ui.model.graphic.imp.seg.SegRegion;
 import org.weasis.dicom.codec.DicomImageElement;
-import org.weasis.dicom.codec.DicomSeries;
+import org.weasis.dicom.codec.HiddenSeriesManager;
 import org.weasis.dicom.codec.SegSpecialElement;
 import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.explorer.DicomModel;
@@ -225,7 +225,8 @@ public final class VolumeBuilder {
 
       String patientPseudoUID = DicomModel.getPatientPseudoUID(volTexture.getSeries());
       List<SegSpecialElement> segList =
-          DicomSeries.getHiddenElementsFromPatient(patientPseudoUID, SegSpecialElement.class);
+          HiddenSeriesManager.getHiddenElementsFromPatient(
+              SegSpecialElement.class, patientPseudoUID);
 
       List<DicomImageElement> list = volTexture.getVolumeImages();
       for (int i = 0; i < list.size(); i++) {

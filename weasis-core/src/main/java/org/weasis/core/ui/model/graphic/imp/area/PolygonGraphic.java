@@ -370,7 +370,7 @@ public class PolygonGraphic extends AbstractDragGraphicArea {
       Double curX = NaN;
       Double curY = NaN;
 
-      Set<Point2D> ptSet = new HashSet<>(lineSegmentList.size() * 2);
+      Set<Point2D> ptSet = HashSet.newHashSet(pts.size() * 2);
 
       while (!pathIt.isDone()) {
 

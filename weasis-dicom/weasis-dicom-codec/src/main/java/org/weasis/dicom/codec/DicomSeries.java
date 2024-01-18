@@ -13,6 +13,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Set;
 import org.dcm4che3.data.Tag;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -51,50 +52,6 @@ public class DicomSeries extends Series<DicomImageElement> {
         displayTag,
         c,
         SortSeriesStack.instanceNumber);
-  }
-
-  public static <E> List<E> getHiddenElementsFromSeries(Class<E> clazz, String... seriesUID) {
-    if (clazz != null && clazz.isAssignableFrom(clazz)) {
-      List<E> list = new ArrayList<>();
-      for (String uid : seriesUID) {
-        if (StringUtil.hasText(uid)) {
-          List<HiddenSpecialElement> hiddenElements =
-              HiddenSeriesManager.getInstance().series2Elements.get(uid);
-          if (hiddenElements != null) {
-            for (HiddenSpecialElement el : hiddenElements) {
-              if (clazz.isInstance(el)) {
-                list.add((E) el);
-              }
-            }
-          }
-        }
-      }
-      return list;
-    }
-    return Collections.emptyList();
-  }
-
-  public static <E> List<E> getHiddenElementsFromPatient(String patientPseudoUID, Class<E> clazz) {
-    if (StringUtil.hasText(patientPseudoUID) && clazz != null && clazz.isAssignableFrom(clazz)) {
-      List<String> patients =
-          HiddenSeriesManager.getInstance().patient2Series.get(patientPseudoUID);
-      if (patients != null) {
-        List<E> list = new ArrayList<>();
-        for (String seriesUID : patients) {
-          List<HiddenSpecialElement> hiddenElements =
-              HiddenSeriesManager.getInstance().series2Elements.get(seriesUID);
-          if (hiddenElements != null) {
-            for (HiddenSpecialElement el : hiddenElements) {
-              if (clazz.isInstance(el)) {
-                list.add((E) el);
-              }
-            }
-          }
-        }
-        return list;
-      }
-    }
-    return Collections.emptyList();
   }
 
   public boolean[] getImageInMemoryList() {
@@ -198,17 +155,17 @@ public class DicomSeries extends Series<DicomImageElement> {
     String seriesUID = (String) getTagValue(getTagID());
     String modality = TagD.getTagValue(this, Tag.Modality, String.class);
     if (DicomMediaIO.isHiddenModality(modality)) {
-      List<HiddenSpecialElement> removed =
-          HiddenSeriesManager.getInstance().series2Elements.remove(seriesUID);
+      HiddenSeriesManager manager = HiddenSeriesManager.getInstance();
+      Set<HiddenSpecialElement> removed = manager.series2Elements.remove(seriesUID);
       if (removed != null && !removed.isEmpty()) {
-        String patientPseudoUID = (String) removed.getFirst().getTagValue(TagW.PatientPseudoUID);
+        String patientPseudoUID =
+            (String) removed.iterator().next().getTagValue(TagW.PatientPseudoUID);
         if (patientPseudoUID != null) {
-          List<String> list =
-              HiddenSeriesManager.getInstance().patient2Series.get(patientPseudoUID);
+          Set<String> list = manager.patient2Series.get(patientPseudoUID);
           if (list != null) {
             list.remove(seriesUID);
             if (list.isEmpty()) {
-              HiddenSeriesManager.getInstance().patient2Series.remove(patientPseudoUID);
+              manager.patient2Series.remove(patientPseudoUID);
             }
           }
         }
@@ -315,7 +272,7 @@ public class DicomSeries extends Series<DicomImageElement> {
     }
 
     String seriesUID = (String) getTagValue(getTagID());
-    List<HiddenSpecialElement> list =
+    Set<HiddenSpecialElement> list =
         HiddenSeriesManager.getInstance().series2Elements.get(seriesUID);
     if (list != null && !list.isEmpty()) {
       return new ArrayList<>(list);

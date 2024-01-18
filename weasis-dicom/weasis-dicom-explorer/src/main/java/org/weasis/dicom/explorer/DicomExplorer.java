@@ -88,6 +88,7 @@ import org.weasis.core.ui.util.TitleMenuItem;
 import org.weasis.core.ui.util.WrapLayout;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.DicomSpecialElement;
+import org.weasis.dicom.codec.HiddenSeriesManager;
 import org.weasis.dicom.codec.KOSpecialElement;
 import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.TagD.Level;
@@ -871,7 +872,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
                 selectedPatient == null ? null : selectedPatient.patient;
             if (patient != null && e.getSource() instanceof JButton button) {
               List<KOSpecialElement> list =
-                  DicomModel.getHiddenSpecialElements(patient, KOSpecialElement.class);
+                  HiddenSeriesManager.getHiddenElementsFromPatient(KOSpecialElement.class, patient);
               if (!list.isEmpty()) {
                 if (list.size() == 1) {
                   model.openRelatedSeries(list.getFirst(), patient);
@@ -954,7 +955,8 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
       }
       studyCombobox.addItemListener(studyItemListener);
       selectStudy();
-      koOpen.setVisible(DicomModel.hasHiddenSpecialElements(patient, KOSpecialElement.class));
+      koOpen.setVisible(
+          HiddenSeriesManager.hasHiddenSpecialElements(KOSpecialElement.class, patient));
       // Send message for selecting related plug-ins window
       model.firePropertyChange(
           new ObservableEvent(ObservableEvent.BasicAction.SELECT, model, null, patient));
@@ -1234,7 +1236,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
             MediaSeriesGroupNode patient = getSelectedPatient();
             if (patient != null) {
               koOpen.setVisible(
-                  DicomModel.hasHiddenSpecialElements(patient, KOSpecialElement.class));
+                  HiddenSeriesManager.hasHiddenSpecialElements(KOSpecialElement.class, patient));
             }
           }
         } else if (ObservableEvent.BasicAction.LOADING_START.equals(action)) {
@@ -1248,7 +1250,8 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
           }
           MediaSeriesGroupNode patient = getSelectedPatient();
           if (patient != null) {
-            koOpen.setVisible(DicomModel.hasHiddenSpecialElements(patient, KOSpecialElement.class));
+            koOpen.setVisible(
+                HiddenSeriesManager.hasHiddenSpecialElements(KOSpecialElement.class, patient));
           }
         }
       } else if (evt.getSource() instanceof SeriesViewer

@@ -91,12 +91,12 @@ import org.weasis.core.ui.util.TitleMenuItem;
 import org.weasis.core.util.LangUtil;
 import org.weasis.core.util.MathUtil;
 import org.weasis.dicom.codec.DicomImageElement;
-import org.weasis.dicom.codec.DicomSeries;
+import org.weasis.dicom.codec.HiddenSeriesManager;
 import org.weasis.dicom.codec.KOSpecialElement;
 import org.weasis.dicom.codec.PRSpecialElement;
 import org.weasis.dicom.codec.PresentationStateReader;
-import org.weasis.dicom.codec.SegSpecialElement;
 import org.weasis.dicom.codec.SortSeriesStack;
+import org.weasis.dicom.codec.SpecialElementRegion;
 import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.display.OverlayOp;
 import org.weasis.dicom.codec.display.ShutterOp;
@@ -684,11 +684,12 @@ public class View2d extends DefaultView2d<DicomImageElement> {
     graphicManager.deleteByLayerType(LayerType.DICOM_SEG);
     if (series != null && img != null) {
       String patientPseudoUID = DicomModel.getPatientPseudoUID(series);
-      List<SegSpecialElement> segList =
-          DicomSeries.getHiddenElementsFromPatient(patientPseudoUID, SegSpecialElement.class);
+      List<SpecialElementRegion> segList =
+          HiddenSeriesManager.getHiddenElementsFromPatient(
+              SpecialElementRegion.class, patientPseudoUID);
       if (!segList.isEmpty()) {
         List<SegContour> contours = new ArrayList<>();
-        for (SegSpecialElement seg : segList) {
+        for (SpecialElementRegion seg : segList) {
           if (seg.isVisible() && seg.containsSopInstanceUIDReference(img)) {
             contours.addAll(seg.getContours(img));
           }

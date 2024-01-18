@@ -14,7 +14,6 @@ import it.cnr.imaa.essi.lablib.gui.checkboxtree.CheckboxTree;
 import it.cnr.imaa.essi.lablib.gui.checkboxtree.TreeCheckingEvent;
 import it.cnr.imaa.essi.lablib.gui.checkboxtree.TreeCheckingModel;
 import java.awt.BorderLayout;
-import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Point;
@@ -27,7 +26,7 @@ import java.util.Collection;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
+import java.util.Set;
 import javax.swing.BorderFactory;
 import javax.swing.JComboBox;
 import javax.swing.JMenuItem;
@@ -68,10 +67,10 @@ import org.weasis.core.ui.model.graphic.imp.seg.SegRegion;
 import org.weasis.core.ui.model.utils.bean.MeasureItem;
 import org.weasis.core.ui.util.CheckBoxTreeBuilder;
 import org.weasis.core.ui.util.SimpleTableModel;
+import org.weasis.core.ui.util.StructToolTipTreeNode;
 import org.weasis.core.ui.util.TableNumberRenderer;
 import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.codec.DicomImageElement;
-import org.weasis.dicom.codec.DicomSeries;
 import org.weasis.dicom.codec.HiddenSeriesManager;
 import org.weasis.dicom.codec.SegSpecialElement;
 import org.weasis.dicom.codec.TagD;
@@ -241,11 +240,9 @@ public class SegmentationTool extends PluginTool implements SeriesViewerListener
     if (img != null) {
       if (comboSeg.getSelectedItem() instanceof SegSpecialElement seg) {
         Collection<SegContour> segments = seg.getContours(imageElement);
-        if (segments != null) {
-          for (SegContour c : segments) {
-            if (c.getCategory().equals(category)) {
-              return c;
-            }
+        for (SegContour c : segments) {
+          if (c.getCategory().equals(category)) {
+            return c;
           }
         }
       }
@@ -475,7 +472,39 @@ public class SegmentationTool extends PluginTool implements SeriesViewerListener
       Map<Integer, SegRegion<DicomImageElement>> segments = specialElement.getSegAttributes();
       if (segments != null) {
         for (SegRegion<DicomImageElement> contour : segments.values()) {
-          DefaultMutableTreeNode node = new StructToolTipTreeNode(contour, false);
+          DefaultMutableTreeNode node =
+              new StructToolTipTreeNode(contour, false) {
+                @Override
+                public String getToolTipText() {
+                  SegRegion<?> seg = (SegRegion) getUserObject();
+                  StringBuilder buf = new StringBuilder();
+                  buf.append(GuiUtils.HTML_START);
+                  buf.append("Label");
+                  buf.append(StringUtil.COLON_AND_SPACE);
+                  buf.append(seg.getCategory().label());
+                  buf.append(GuiUtils.HTML_BR);
+                  buf.append("Algorithm type");
+                  buf.append(StringUtil.COLON_AND_SPACE);
+                  buf.append(seg.getCategory().type());
+                  buf.append(GuiUtils.HTML_BR);
+                  buf.append("Voxel count");
+                  buf.append(StringUtil.COLON_AND_SPACE);
+                  buf.append(DecFormatter.allNumber(seg.getNumberOfPixels()));
+                  buf.append(GuiUtils.HTML_BR);
+                  SegMeasurableLayer<?> layer = seg.getMeasurableLayer();
+                  MeasurementsAdapter adapter =
+                      layer.getMeasurementAdapter(layer.getSourceImage().getPixelSpacingUnit());
+                  buf.append("Volume (%s3)".formatted(adapter.getUnit()));
+                  buf.append(StringUtil.COLON_AND_SPACE);
+                  double ratio = adapter.getCalibRatio();
+                  buf.append(
+                      DecFormatter.twoDecimal(
+                          seg.getNumberOfPixels() * ratio * ratio * layer.getThickness()));
+                  buf.append(GuiUtils.HTML_BR);
+                  buf.append(GuiUtils.HTML_END);
+                  return buf.toString();
+                }
+              };
           nodeStructures.add(node);
           initPathSelection(new TreePath(node.getPath()), contour.getAttributes().isVisible());
         }
@@ -503,10 +532,10 @@ public class SegmentationTool extends PluginTool implements SeriesViewerListener
       MediaSeries<?> dcmSeries = viewCanvas.getSeries();
       String seriesUID = TagD.getTagValue(dcmSeries, Tag.SeriesInstanceUID, String.class);
       if (StringUtil.hasText(seriesUID)) {
-        List<String> list = HiddenSeriesManager.getInstance().reference2Series.get(seriesUID);
+        Set<String> list = HiddenSeriesManager.getInstance().reference2Series.get(seriesUID);
         if (list != null && !list.isEmpty()) {
           segList =
-              DicomSeries.getHiddenElementsFromSeries(
+              HiddenSeriesManager.getHiddenElementsFromSeries(
                   SegSpecialElement.class, list.toArray(new String[0]));
         }
       }
@@ -540,62 +569,6 @@ public class SegmentationTool extends PluginTool implements SeriesViewerListener
         tree.expandPath(tp);
         expandTree(tree, dtm);
       }
-    }
-  }
-
-  private static String getColorBullet(Color c, String label) {
-    StringBuilder buf = new StringBuilder("<html><font color='rgb("); // NON-NLS
-    buf.append(c.getRed());
-    buf.append(",");
-    buf.append(c.getGreen());
-    buf.append(",");
-    buf.append(c.getBlue());
-    // Other square: u2B1B (unicode)
-    buf.append(")'> █ </font>"); // NON-NLS
-    buf.append(label);
-    buf.append(GuiUtils.HTML_END);
-    return buf.toString();
-  }
-
-  static class StructToolTipTreeNode extends DefaultMutableTreeNode {
-
-    public StructToolTipTreeNode(SegRegion<?> userObject, boolean allowsChildren) {
-      super(Objects.requireNonNull(userObject), allowsChildren);
-    }
-
-    public String getToolTipText() {
-      SegRegion<?> seg = (SegRegion) getUserObject();
-      StringBuilder buf = new StringBuilder();
-      buf.append(GuiUtils.HTML_START);
-      buf.append("Label");
-      buf.append(StringUtil.COLON_AND_SPACE);
-      buf.append(seg.getCategory().label());
-      buf.append(GuiUtils.HTML_BR);
-      buf.append("Algorithm type");
-      buf.append(StringUtil.COLON_AND_SPACE);
-      buf.append(seg.getCategory().type());
-      buf.append(GuiUtils.HTML_BR);
-      buf.append("Voxel count");
-      buf.append(StringUtil.COLON_AND_SPACE);
-      buf.append(DecFormatter.allNumber(seg.getNumberOfPixels()));
-      buf.append(GuiUtils.HTML_BR);
-      SegMeasurableLayer<?> layer = seg.getMeasurableLayer();
-      MeasurementsAdapter adapter =
-          layer.getMeasurementAdapter(layer.getSourceImage().getPixelSpacingUnit());
-      buf.append("Volume (%s3)".formatted(adapter.getUnit()));
-      buf.append(StringUtil.COLON_AND_SPACE);
-      double ratio = adapter.getCalibRatio();
-      buf.append(
-          DecFormatter.twoDecimal(seg.getNumberOfPixels() * ratio * ratio * layer.getThickness()));
-      buf.append(GuiUtils.HTML_BR);
-      buf.append(GuiUtils.HTML_END);
-      return buf.toString();
-    }
-
-    @Override
-    public String toString() {
-      SegRegion<?> seg = (SegRegion) getUserObject();
-      return getColorBullet(seg.getAttributes().getColor(), seg.getCategory().label());
     }
   }
 }

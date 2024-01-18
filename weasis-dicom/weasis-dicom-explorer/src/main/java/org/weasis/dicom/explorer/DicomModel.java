@@ -30,6 +30,7 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.ExecutorService;
 import javax.swing.SwingUtilities;
 import org.apache.felix.service.command.CommandProcessor;
@@ -63,7 +64,6 @@ import org.weasis.core.api.util.ResourceUtil.OtherIcon;
 import org.weasis.core.api.util.ThreadUtil;
 import org.weasis.core.ui.editor.SeriesViewerFactory;
 import org.weasis.core.ui.editor.ViewerPluginBuilder;
-import org.weasis.core.util.LangUtil;
 import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.codec.AbstractKOSpecialElement;
 import org.weasis.dicom.codec.DicomEncapDocElement;
@@ -80,6 +80,7 @@ import org.weasis.dicom.codec.PRSpecialElement;
 import org.weasis.dicom.codec.RejectedKOSpecialElement;
 import org.weasis.dicom.codec.SegSpecialElement;
 import org.weasis.dicom.codec.SortSeriesStack;
+import org.weasis.dicom.codec.SpecialElementReferences;
 import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.TagD.Level;
 import org.weasis.dicom.codec.display.Modality;
@@ -428,14 +429,13 @@ public class DicomModel implements TreeModel, DataExplorerModel {
     }
 
     if (isHiddenModality(dicomSeries)) {
-      List<HiddenSpecialElement> specialElementList =
+      Set<HiddenSpecialElement> specialElementList =
           HiddenSeriesManager.getInstance().series2Elements.get(seriesUID);
       if (specialElementList == null) {
         return;
       }
 
       if (specialElementList.remove(element)) {
-        // TDOO update the hidden series
         firePropertyChange(
             new ObservableEvent(ObservableEvent.BasicAction.UPDATE, this, null, element));
         element.dispose();
@@ -530,7 +530,8 @@ public class DicomModel implements TreeModel, DataExplorerModel {
 
   public static Collection<KOSpecialElement> getEditableKoSpecialElements(
       MediaSeriesGroup patient) {
-    List<KOSpecialElement> list = getHiddenSpecialElements(patient, KOSpecialElement.class);
+    List<KOSpecialElement> list =
+        HiddenSeriesManager.getHiddenElementsFromPatient(KOSpecialElement.class, patient);
     if (!list.isEmpty()) {
       for (int i = list.size() - 1; i >= 0; i--) {
         KOSpecialElement koElement = list.get(i);
@@ -547,7 +548,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
       MediaSeries<DicomImageElement> dicomSeries) {
     String patientPseudoUID = getPatientPseudoUID(dicomSeries);
     List<KOSpecialElement> specialElementList =
-        DicomSeries.getHiddenElementsFromPatient(patientPseudoUID, KOSpecialElement.class);
+        HiddenSeriesManager.getHiddenElementsFromPatient(KOSpecialElement.class, patientPseudoUID);
 
     String referencedSeriesInstanceUID =
         TagD.getTagValue(dicomSeries, Tag.SeriesInstanceUID, String.class);
@@ -559,7 +560,8 @@ public class DicomModel implements TreeModel, DataExplorerModel {
       MediaSeries<DicomImageElement> dicomSeries) {
     String patientPseudoUID = getPatientPseudoUID(dicomSeries);
     List<RejectedKOSpecialElement> specialElementList =
-        DicomSeries.getHiddenElementsFromPatient(patientPseudoUID, RejectedKOSpecialElement.class);
+        HiddenSeriesManager.getHiddenElementsFromPatient(
+            RejectedKOSpecialElement.class, patientPseudoUID);
 
     String referencedSeriesInstanceUID =
         TagD.getTagValue(dicomSeries, Tag.SeriesInstanceUID, String.class);
@@ -582,7 +584,8 @@ public class DicomModel implements TreeModel, DataExplorerModel {
       MediaSeries<DicomImageElement> dicomSeries, String sopUID, Integer dicomFrameNumber) {
     String patientPseudoUID = getPatientPseudoUID(dicomSeries);
     List<RejectedKOSpecialElement> specialElementList =
-        DicomSeries.getHiddenElementsFromPatient(patientPseudoUID, RejectedKOSpecialElement.class);
+        HiddenSeriesManager.getHiddenElementsFromPatient(
+            RejectedKOSpecialElement.class, patientPseudoUID);
 
     String referencedSeriesInstanceUID =
         TagD.getTagValue(dicomSeries, Tag.SeriesInstanceUID, String.class);
@@ -594,61 +597,13 @@ public class DicomModel implements TreeModel, DataExplorerModel {
       MediaSeries<DicomImageElement> dicomSeries, DicomImageElement img) {
     String patientPseudoUID = getPatientPseudoUID(dicomSeries);
     List<PRSpecialElement> specialElementList =
-        DicomSeries.getHiddenElementsFromPatient(patientPseudoUID, PRSpecialElement.class);
+        HiddenSeriesManager.getHiddenElementsFromPatient(PRSpecialElement.class, patientPseudoUID);
     if (!specialElementList.isEmpty()) {
       String referencedSeriesInstanceUID =
           TagD.getTagValue(dicomSeries, Tag.SeriesInstanceUID, String.class);
       String seriesUID = TagD.getTagValue(img, Tag.SeriesInstanceUID, String.class);
       if (Objects.equals(seriesUID, referencedSeriesInstanceUID)) {
         return PRSpecialElement.getPRSpecialElements(specialElementList, img);
-      }
-    }
-    return Collections.emptyList();
-  }
-
-  public static <E> boolean hasHiddenSpecialElements(MediaSeriesGroup patient, Class<E> clazz) {
-    if (patient != null && clazz != null && clazz.isAssignableFrom(clazz)) {
-      String patientPseudoUID = (String) patient.getTagValue(TagW.PatientPseudoUID);
-      List<String> patients =
-          HiddenSeriesManager.getInstance().patient2Series.get(patientPseudoUID);
-      if (patients != null) {
-        for (String seriesUID : patients) {
-          List<HiddenSpecialElement> hiddenElements =
-              HiddenSeriesManager.getInstance().series2Elements.get(seriesUID);
-          if (hiddenElements != null) {
-            for (HiddenSpecialElement el : hiddenElements) {
-              if (clazz.isInstance(el)) {
-                return true;
-              }
-            }
-          }
-        }
-      }
-    }
-    return false;
-  }
-
-  public static <E> List<E> getHiddenSpecialElements(MediaSeriesGroup patient, Class<E> clazz) {
-    if (patient != null && clazz != null && clazz.isAssignableFrom(clazz)) {
-      String patientPseudoUID = (String) patient.getTagValue(TagW.PatientPseudoUID);
-      if (patientPseudoUID != null) {
-        List<String> patients =
-            HiddenSeriesManager.getInstance().patient2Series.get(patientPseudoUID);
-        if (patients != null) {
-          List<E> list = new ArrayList<>();
-          for (String seriesUID : patients) {
-            List<HiddenSpecialElement> hiddenElements =
-                HiddenSeriesManager.getInstance().series2Elements.get(seriesUID);
-            if (hiddenElements != null) {
-              for (HiddenSpecialElement el : hiddenElements) {
-                if (clazz.isInstance(el)) {
-                  list.add((E) el);
-                }
-              }
-            }
-          }
-          return list;
-        }
       }
     }
     return Collections.emptyList();
@@ -870,62 +825,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
           return true;
         }
         if (media instanceof DicomSpecialElement specialElement) {
-          if (specialElement instanceof HiddenSpecialElement hiddenSpecialElement) {
-            if (hiddenSpecialElement instanceof SegSpecialElement segSpecialElement) {
-              segSpecialElement.initContours(initialSeries);
-            }
-            synchronized (this) {
-              Map<String, List<HiddenSpecialElement>> mapSeries =
-                  HiddenSeriesManager.getInstance().series2Elements;
-              List<HiddenSpecialElement> hiddenElements =
-                  mapSeries.computeIfAbsent(seriesUID, _ -> new CopyOnWriteArrayList<>());
-              if (!hiddenElements.contains(hiddenSpecialElement)) {
-                hiddenElements.add(hiddenSpecialElement);
-              }
-
-              String patientPseudoUID =
-                  (String) hiddenSpecialElement.getTagValue(TagW.PatientPseudoUID);
-              if (patientPseudoUID != null) {
-                List<String> patients =
-                    HiddenSeriesManager.getInstance()
-                        .patient2Series
-                        .computeIfAbsent(patientPseudoUID, _ -> new CopyOnWriteArrayList<>());
-                if (!patients.contains(seriesUID)) {
-                  patients.add(seriesUID);
-                }
-              }
-            }
-          } else {
-            List<DicomSpecialElement> specialElementList =
-                (List<DicomSpecialElement>) initialSeries.getTagValue(TagW.DicomSpecialElementList);
-            String rMime = dicomReader.getMimeType();
-            if (specialElementList == null) {
-              specialElementList = new CopyOnWriteArrayList<>();
-              initialSeries.setTag(TagW.DicomSpecialElementList, specialElementList);
-              if ("rt/dicom".equals(rMime)) { // NON-NLS
-                MediaSeriesGroup st = getParent(initialSeries, DicomModel.study);
-                if (st != null
-                    && !LangUtil.getNULLtoFalse((Boolean) st.getTagValue(TagW.StudyDicomRT))) {
-                  st.setTag(TagW.StudyDicomRT, Boolean.TRUE);
-                  for (MediaSeriesGroup s : getChildren(st)) {
-                    String modality = TagD.getTagValue(s, Tag.Modality, String.class);
-                    if ("CT".equals(modality)) {
-                      // Force to update the Plugin Tools of the selected Viewer
-                      firePropertyChange(
-                          new ObservableEvent(BasicAction.UPDATE_TOOLS, this, null, this));
-                      break;
-                    }
-                  }
-                }
-              }
-            } else if ("sr/dicom".equals(rMime) || "wf/dicom".equals(rMime)) { // NON-NLS
-              // Split SR series to have only one object by series
-              Series<?> s = splitSeries(dicomReader, initialSeries);
-              specialElementList = new CopyOnWriteArrayList<>();
-              s.setTag(TagW.DicomSpecialElementList, specialElementList);
-            }
-            specialElementList.add((specialElement));
-          }
+          splitSpecialElement(specialElement, initialSeries, seriesUID, dicomReader);
           return false;
         }
 
@@ -973,6 +873,54 @@ public class DicomModel implements TreeModel, DataExplorerModel {
       }
     }
     return false;
+  }
+
+  private void splitSpecialElement(
+      DicomSpecialElement specialElement,
+      DicomSeries initialSeries,
+      String seriesUID,
+      DicomMediaIO dicomReader) {
+    String rMime = dicomReader.getMimeType();
+    if (specialElement instanceof HiddenSpecialElement hiddenSpecialElement) {
+      if (hiddenSpecialElement instanceof SpecialElementReferences references) {
+        String originSeriesUID =
+            TagD.getTagValue(initialSeries, Tag.SeriesInstanceUID, String.class);
+        references.initReferences(originSeriesUID);
+      }
+
+      if (hiddenSpecialElement instanceof SegSpecialElement segSpecialElement) {
+        segSpecialElement.initContours(initialSeries);
+      }
+      synchronized (this) {
+        Map<String, Set<HiddenSpecialElement>> mapSeries =
+            HiddenSeriesManager.getInstance().series2Elements;
+        mapSeries
+            .computeIfAbsent(seriesUID, _ -> new CopyOnWriteArraySet<>())
+            .add(hiddenSpecialElement);
+
+        String patientPseudoUID = (String) hiddenSpecialElement.getTagValue(TagW.PatientPseudoUID);
+        if (patientPseudoUID != null) {
+          Set<String> patients =
+              HiddenSeriesManager.getInstance()
+                  .patient2Series
+                  .computeIfAbsent(patientPseudoUID, _ -> new CopyOnWriteArraySet<>());
+          patients.add(seriesUID);
+        }
+      }
+    } else {
+      List<DicomSpecialElement> specialElementList =
+          (List<DicomSpecialElement>) initialSeries.getTagValue(TagW.DicomSpecialElementList);
+      if (specialElementList == null) {
+        specialElementList = new CopyOnWriteArrayList<>();
+        initialSeries.setTag(TagW.DicomSpecialElementList, specialElementList);
+      } else if ("sr/dicom".equals(rMime) || "wf/dicom".equals(rMime)) { // NON-NLS
+        // Split SR series to have only one object by series
+        Series<?> s = splitSeries(dicomReader, initialSeries);
+        specialElementList = new CopyOnWriteArrayList<>();
+        s.setTag(TagW.DicomSpecialElementList, specialElementList);
+      }
+      specialElementList.add((specialElement));
+    }
   }
 
   private boolean findMatchingSeriesOrSplit(Series original, MediaElement media) {
