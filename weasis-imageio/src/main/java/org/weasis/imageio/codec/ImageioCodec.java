@@ -17,10 +17,11 @@ import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Deactivate;
 import org.weasis.core.api.image.cv.ImageCVIO;
 import org.weasis.core.api.media.data.Codec;
+import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaReader;
 
 @org.osgi.service.component.annotations.Component(service = Codec.class)
-public class ImageioCodec implements Codec {
+public class ImageioCodec implements Codec<ImageElement> {
 
   public static final String NAME = "JDK ImageIO"; // NON-NLS
 
@@ -47,7 +48,8 @@ public class ImageioCodec implements Codec {
   }
 
   @Override
-  public MediaReader getMediaIO(URI media, String mimeType, Hashtable<String, Object> properties) {
+  public MediaReader<ImageElement> getMediaIO(
+      URI media, String mimeType, Hashtable<String, Object> properties) {
     if (isMimeTypeSupported(mimeType)) {
       return new ImageCVIO(media, mimeType, this);
     }

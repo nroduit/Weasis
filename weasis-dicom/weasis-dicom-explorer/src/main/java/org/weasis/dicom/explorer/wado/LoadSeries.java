@@ -39,6 +39,7 @@ import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import javax.swing.JProgressBar;
 import org.dcm4che3.data.Attributes;
@@ -56,7 +57,6 @@ import org.weasis.core.api.gui.task.SeriesProgressMonitor;
 import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.gui.util.GuiUtils;
-import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.Series;
@@ -79,8 +79,11 @@ import org.weasis.core.ui.model.ReferencedSeries;
 import org.weasis.core.util.FileUtil;
 import org.weasis.core.util.StreamIOException;
 import org.weasis.core.util.StringUtil;
+import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.DicomMediaIO;
 import org.weasis.dicom.codec.DicomMediaIO.Reading;
+import org.weasis.dicom.codec.DicomSpecialElement;
+import org.weasis.dicom.codec.DicomSpecialElementFactory;
 import org.weasis.dicom.codec.HiddenSeriesManager;
 import org.weasis.dicom.codec.HiddenSpecialElement;
 import org.weasis.dicom.codec.TagD;
@@ -1097,8 +1100,19 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
     }
 
     private void updateUI(final DicomMediaIO reader) {
-      boolean firstImageToDisplay = false;
-      MediaElement[] medias = reader.getMediaElement();
+      boolean firstImageToDisplay;
+      Predicate<Object> buildSpecialElement =
+          object -> {
+            if (object instanceof DicomSpecialElementFactory factory) {
+              DicomSpecialElement media = factory.buildDicomSpecialElement(reader);
+              if (media != null) {
+                dicomModel.applySplittingRules(dicomSeries, media);
+                return true;
+              }
+            }
+            return false;
+          };
+      DicomImageElement[] medias = reader.getMediaElement(buildSpecialElement);
       if (medias != null) {
         firstImageToDisplay = dicomSeries.size(null) == 0;
         if (firstImageToDisplay) {
@@ -1122,7 +1136,7 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
           }
         }
 
-        for (MediaElement media : medias) {
+        for (DicomImageElement media : medias) {
           applyPresentationModel(media);
           dicomModel.applySplittingRules(dicomSeries, media);
         }
@@ -1143,7 +1157,7 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
     }
   }
 
-  private void applyPresentationModel(MediaElement media) {
+  private void applyPresentationModel(DicomImageElement media) {
     String sopUID = TagD.getTagValue(media, Tag.SOPInstanceUID, String.class);
 
     SopInstance sop;
@@ -1157,7 +1171,7 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
 
     if (sop != null && sop.getGraphicModel() instanceof GraphicModel model) {
       int frames = media.getMediaReader().getMediaElementNumber();
-      if (frames > 1 && media.getKey() instanceof Integer) {
+      if (frames > 1 && media.getKey() instanceof Integer key) {
         String seriesUID = TagD.getTagValue(media, Tag.SeriesInstanceUID, String.class);
 
         for (ReferencedSeries s : model.getReferencedSeries()) {
@@ -1165,7 +1179,7 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
             for (ReferencedImage refImg : s.getImages()) {
               if (refImg.getUuid().equals(sopUID)) {
                 List<Integer> f = refImg.getFrames();
-                if (f == null || f.contains(media.getKey())) {
+                if (f == null || f.contains(key)) {
                   media.setTag(TagW.PresentationModel, model);
                 }
                 break;

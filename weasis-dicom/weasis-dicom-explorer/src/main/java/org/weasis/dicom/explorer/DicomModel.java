@@ -55,6 +55,7 @@ import org.weasis.core.api.media.data.MediaSeries.MEDIA_POSITION;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.MediaSeriesGroupNode;
 import org.weasis.core.api.media.data.Series;
+import org.weasis.core.api.media.data.SeriesThumbnail;
 import org.weasis.core.api.media.data.TagView;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.media.data.Thumbnail;
@@ -774,8 +775,12 @@ public class DicomModel implements TreeModel, DataExplorerModel {
     }
     dicomSeries.addMedia(media);
 
+    buildThumbnail(dicomSeries);
+  }
+
+  public SeriesThumbnail buildThumbnail(Series<?> dicomSeries) {
     // Load image and create thumbnail in this Thread
-    Thumbnail t = (Thumbnail) dicomSeries.getTagValue(TagW.Thumbnail);
+    SeriesThumbnail t = (SeriesThumbnail) dicomSeries.getTagValue(TagW.Thumbnail);
     if (t == null) {
       int thumbnailSize =
           GuiUtils.getUICore()
@@ -785,8 +790,8 @@ public class DicomModel implements TreeModel, DataExplorerModel {
       dicomSeries.setTag(TagW.Thumbnail, t);
       Optional.ofNullable(t).ifPresent(Thumbnail::repaint);
     }
-    firePropertyChange(
-        new ObservableEvent(ObservableEvent.BasicAction.ADD, this, null, dicomSeries));
+    firePropertyChange(new ObservableEvent(BasicAction.ADD, this, null, dicomSeries));
+    return t;
   }
 
   @Override

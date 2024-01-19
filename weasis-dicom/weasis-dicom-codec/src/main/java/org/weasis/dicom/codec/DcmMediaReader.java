@@ -17,7 +17,10 @@ import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.dicom.codec.utils.DicomMediaUtils;
 
-public interface DcmMediaReader extends MediaReader {
+public interface DcmMediaReader extends MediaReader<DicomImageElement> {
+
+  @Override
+  DicomSeries getMediaSeries();
 
   Attributes getDicomObject();
 

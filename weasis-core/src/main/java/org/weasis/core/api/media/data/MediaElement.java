@@ -25,19 +25,19 @@ public class MediaElement implements Taggable {
   // Metadata of the media
   protected final Map<TagW, Object> tags;
   // Reader of the media (local or remote)
-  protected final MediaReader mediaIO;
+  protected final MediaReader<? extends MediaElement> mediaIO;
   // Key to identify the media (the URI passed to the Reader can contain several media elements)
   protected final Object key;
 
   private volatile boolean loading = false;
 
-  public <E> MediaElement(MediaReader mediaIO, Object key) {
+  public <E extends MediaElement> MediaElement(MediaReader<E> mediaIO, Object key) {
     this.mediaIO = Objects.requireNonNull(mediaIO);
     this.key = key;
     this.tags = Optional.ofNullable(mediaIO.getMediaFragmentTags(key)).orElseGet(HashMap::new);
   }
 
-  public MediaReader getMediaReader() {
+  public MediaReader<? extends MediaElement> getMediaReader() {
     return mediaIO;
   }
 
@@ -118,7 +118,7 @@ public class MediaElement implements Taggable {
     return saveToFile(mediaIO, output);
   }
 
-  public static boolean saveToFile(MediaReader mediaIO, File output) {
+  public static boolean saveToFile(MediaReader<?> mediaIO, File output) {
     if (mediaIO.getFileCache().isElementInMemory()) {
       return mediaIO.buildFile(output);
     }

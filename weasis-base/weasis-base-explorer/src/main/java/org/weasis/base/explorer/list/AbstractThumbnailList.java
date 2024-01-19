@@ -403,7 +403,7 @@ public abstract class AbstractThumbnailList<E extends MediaElement> extends JLis
                   list.add(series);
                 }
               } else {
-                series = list.get(0);
+                series = list.getFirst();
                 if (series != null) {
                   MediaElement[] ms = mreader.getMediaElement();
                   if (ms != null) {

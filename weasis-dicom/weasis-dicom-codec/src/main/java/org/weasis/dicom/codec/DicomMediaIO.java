@@ -26,6 +26,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Predicate;
 import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.BulkData;
 import org.dcm4che3.data.Implementation;
@@ -51,8 +52,6 @@ import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.media.data.Codec;
 import org.weasis.core.api.media.data.FileCache;
 import org.weasis.core.api.media.data.MediaElement;
-import org.weasis.core.api.media.data.MediaSeries;
-import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.SimpleTaggable;
 import org.weasis.core.api.media.data.TagView;
 import org.weasis.core.api.media.data.TagW;
@@ -300,7 +299,7 @@ public class DicomMediaIO implements DcmMediaReader {
   private URI uri;
   private int numberOfFrame;
   private final Map<TagW, Object> tags;
-  private MediaElement[] image = null;
+  private DicomImageElement[] image = null;
   private String mimeType;
   private boolean hasPixel = false;
 
@@ -715,12 +714,12 @@ public class DicomMediaIO implements DcmMediaReader {
     return new Mat();
   }
 
-  private MediaElement getSingleImage() {
+  private DicomImageElement getSingleImage() {
     return getSingleImage(0);
   }
 
-  private MediaElement getSingleImage(int frame) {
-    MediaElement[] elements = getMediaElement();
+  private DicomImageElement getSingleImage(int frame) {
+    DicomImageElement[] elements = getMediaElement();
     if (elements != null && elements.length > frame) {
       return elements[frame];
     }
@@ -738,23 +737,27 @@ public class DicomMediaIO implements DcmMediaReader {
   }
 
   @Override
-  public synchronized MediaElement[] getMediaElement() {
+  public synchronized DicomImageElement[] getMediaElement() {
+    return getMediaElement(null);
+  }
+
+  public synchronized DicomImageElement[] getMediaElement(Predicate<Object> buildSpecialElement) {
     if (image == null && isReadableDicom()) {
       if (SERIES_VIDEO_MIMETYPE.equals(mimeType)) {
-        image = new MediaElement[] {new DicomVideoElement(this, null)};
+        image = new DicomImageElement[] {new DicomVideoElement(this, null)};
       } else if (SERIES_ENCAP_DOC_MIMETYPE.equals(mimeType)) {
-        image = new MediaElement[] {new DicomEncapDocElement(this, null)};
+        image = new DicomImageElement[] {new DicomEncapDocElement(this, null)};
       } else {
-        buildImageElement();
+        buildImageElement(buildSpecialElement);
       }
     }
     return image;
   }
 
-  private void buildImageElement() {
+  private void buildImageElement(Predicate<Object> buildSpecialElement) {
     DicomSpecialElementFactory factory = getDicomSpecialElementFactory();
     if (numberOfFrame > 0) {
-      image = new MediaElement[factory == null ? numberOfFrame : numberOfFrame + 1];
+      image = new DicomImageElement[numberOfFrame];
       for (int i = 0; i < image.length; i++) {
         image[i] = new DicomImageElement(this, i);
       }
@@ -762,14 +765,14 @@ public class DicomMediaIO implements DcmMediaReader {
         buildMultiframe();
       }
       if (factory != null) {
-        image[numberOfFrame] = factory.buildDicomSpecialElement(this);
+        buildSpecialElement.test(factory);
       }
     } else {
       if (factory == null) {
         // Corrupted image => should have one frame
-        image = new MediaElement[0];
+        image = new DicomImageElement[0];
       } else {
-        image = new MediaElement[] {factory.buildDicomSpecialElement(this)};
+        buildSpecialElement.test(factory);
       }
     }
   }
@@ -805,17 +808,16 @@ public class DicomMediaIO implements DcmMediaReader {
   }
 
   @Override
-  public MediaSeries<MediaElement> getMediaSeries() {
-    Series<MediaElement> series = null;
+  public DicomSeries getMediaSeries() {
+    DicomSeries series = null;
     if (isReadableDicom()) {
       String seriesUID = TagD.getTagValue(this, Tag.SeriesInstanceUID, String.class);
       series = buildSeries(seriesUID);
       writeMetaData(series);
-      // no need to apply splitting rules
-      // also no model
-      MediaElement[] elements = getMediaElement();
+      // No need to apply splitting rules. No model
+      DicomImageElement[] elements = getMediaElement();
       if (elements != null) {
-        for (MediaElement media : elements) {
+        for (DicomImageElement media : elements) {
           series.addMedia(media);
         }
       }
@@ -867,8 +869,8 @@ public class DicomMediaIO implements DcmMediaReader {
     };
   }
 
-  public Series<MediaElement> buildSeries(String seriesUID) {
-    Series<? extends MediaElement> series;
+  public DicomSeries buildSeries(String seriesUID) {
+    DicomSeries series;
     if (IMAGE_MIMETYPE.equals(mimeType)) {
       series = new DicomSeries(seriesUID);
     } else if (SERIES_VIDEO_MIMETYPE.equals(mimeType)) {
@@ -878,7 +880,7 @@ public class DicomMediaIO implements DcmMediaReader {
     } else {
       series = new DicomSeries(seriesUID);
     }
-    return (Series<MediaElement>) series;
+    return series;
   }
 
   @Override
