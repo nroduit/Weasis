@@ -14,13 +14,15 @@ import com.formdev.flatlaf.IntelliJTheme.ThemeLaf;
 import com.formdev.flatlaf.util.LoggingFacade;
 import java.io.IOException;
 
+
 public class FlatWeasisTheme extends ThemeLaf {
   public static boolean setup() {
     return setup(new FlatWeasisTheme());
   }
 
   public FlatWeasisTheme() {
-    super(loadTheme("Weasis.theme.json"));
+    //super(loadTheme("Weasis.theme.json"));
+    super(loadTheme("Cyan.theme.json"));
   }
 
   @Override

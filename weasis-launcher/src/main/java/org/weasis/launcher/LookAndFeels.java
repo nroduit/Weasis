@@ -91,6 +91,7 @@ public final class LookAndFeels {
   /** Changes the look and feel for the whole GUI */
   public String setLookAndFeel(ReadableLookAndFeelInfo look) {
     ReadableLookAndFeelInfo info = look == null ? defaultDarkTheme : look;
+    //ReadableLookAndFeelInfo info = defaultLightTheme;
     boolean dark = info.isDark();
     try {
       UIManager.setLookAndFeel(info.getClassName());
