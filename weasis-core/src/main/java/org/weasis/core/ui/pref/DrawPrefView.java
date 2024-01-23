@@ -32,7 +32,7 @@ public class DrawPrefView extends AbstractItemDialogPage {
     getProperties().setProperty(PreferenceDialog.KEY_HELP, "draw-measure"); // NON-NLS
 
     List<AbstractItemDialogPage> childPages = List.of(new GraphicPrefView(), new LabelsPrefView());
-    childPages.forEach(p -> addSubPage(p, _ -> dialog.showPage(p.getTitle()), menuPanel));
+    childPages.forEach(p -> addSubPage(p, a -> dialog.showPage(p.getTitle()), menuPanel));
   }
 
   @Override

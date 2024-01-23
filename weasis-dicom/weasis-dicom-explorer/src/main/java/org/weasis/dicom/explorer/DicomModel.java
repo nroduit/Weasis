@@ -878,7 +878,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
               Map<String, List<HiddenSpecialElement>> mapSeries =
                   HiddenSeriesManager.getInstance().series2Elements;
               List<HiddenSpecialElement> hiddenElements =
-                  mapSeries.computeIfAbsent(seriesUID, _ -> new CopyOnWriteArrayList<>());
+                  mapSeries.computeIfAbsent(seriesUID, a -> new CopyOnWriteArrayList<>());
               if (!hiddenElements.contains(hiddenSpecialElement)) {
                 hiddenElements.add(hiddenSpecialElement);
               }
@@ -889,7 +889,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
                 List<String> patients =
                     HiddenSeriesManager.getInstance()
                         .patient2Series
-                        .computeIfAbsent(patientPseudoUID, _ -> new CopyOnWriteArrayList<>());
+                        .computeIfAbsent(patientPseudoUID, a -> new CopyOnWriteArrayList<>());
                 if (!patients.contains(seriesUID)) {
                   patients.add(seriesUID);
                 }

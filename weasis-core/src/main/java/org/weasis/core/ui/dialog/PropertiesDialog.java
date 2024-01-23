@@ -81,7 +81,7 @@ public abstract class PropertiesDialog extends JDialog {
     jButtonColor.addActionListener(e -> openColorChooser((JButton) e.getSource()));
 
     jCheckBoxFilled.setText(Messages.getString("PropertiesDialog.fill_shape"));
-    slicerOpacity.addChangeListener(_ -> updateSlider(slicerOpacity, FILL_OPACITY));
+    slicerOpacity.addChangeListener(a -> updateSlider(slicerOpacity, FILL_OPACITY));
 
     getContentPane().add(panel1);
 

@@ -52,7 +52,7 @@ public class ViewSetting {
     this.basicStatistics = true;
     this.moreStatistics = true;
     spinnerModel.addChangeListener(
-        _ -> {
+        a -> {
           if (spinnerModel.getValue() instanceof Integer intVal) {
             setLineWidth(intVal);
             MeasureTool.updateMeasureProperties();
