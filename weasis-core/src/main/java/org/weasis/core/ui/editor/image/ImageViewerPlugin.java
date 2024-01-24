@@ -29,6 +29,7 @@ import java.awt.event.WindowEvent;
 import java.beans.PropertyChangeListener;
 import java.lang.reflect.Constructor;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -209,15 +210,14 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
   public void close() {
     super.close();
 
-    GuiExecutor.instance()
-        .execute(
-            () -> {
-              removeComponents();
-              for (ViewCanvas v : view2ds) {
-                resetMaximizedSelectedImagePane(v);
-                v.disposeView();
-              }
-            });
+    GuiExecutor.execute(
+        () -> {
+          removeComponents();
+          for (ViewCanvas v : view2ds) {
+            resetMaximizedSelectedImagePane(v);
+            v.disposeView();
+          }
+        });
   }
 
   /**
@@ -801,6 +801,67 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
     return getDefaultLayoutModel();
   }
 
+  protected static ArrayList<GridBagLayoutModel> getLayoutList(
+      ImageViewerPlugin<?> viewerPlugin, List<GridBagLayoutModel> bagLayoutModels) {
+    int rx = 1;
+    int ry = 1;
+    int width = viewerPlugin.getWidth();
+    int height = viewerPlugin.getHeight();
+    double ratio = width / (double) height;
+    if (ratio >= 1.0) {
+      rx = (int) Math.round(ratio * 1.5);
+    } else {
+      ry = (int) Math.round((1.0 / ratio) * 1.5);
+    }
+
+    ArrayList<GridBagLayoutModel> list = new ArrayList<>(bagLayoutModels);
+    int rxMin = rx;
+    int ryMin = ry;
+    for (GridBagLayoutModel model : bagLayoutModels) {
+      Dimension dim = model.getGridSize();
+      if (dim.width > rxMin) {
+        rxMin = dim.width;
+      }
+      if (dim.height > ryMin) {
+        ryMin = dim.height;
+      }
+    }
+
+    // Exclude 1x1
+    if (rx != ry && rx != 0 && ry != 0) {
+      int factorLimit = (int) (rx == 1 ? Math.round(width / 512.0) : Math.round(height / 512.0));
+      if (factorLimit < 1) {
+        factorLimit = 1;
+      }
+      if (rx > ry) {
+        int step = 1 + (rx / 20);
+        for (int i = rx / 2; i < rx; i = i + step) {
+          addLayout(list, factorLimit, i, ry, rxMin, ryMin);
+        }
+      } else {
+        int step = 1 + (ry / 20);
+        for (int i = ry / 2; i < ry; i = i + step) {
+          addLayout(list, factorLimit, rx, i, rxMin, ryMin);
+        }
+      }
+      addLayout(list, factorLimit, rx, ry, rxMin, ryMin);
+    }
+    list.sort(Comparator.comparingInt(o -> o.getConstraints().size()));
+    return list;
+  }
+
+  private static void addLayout(
+      List<GridBagLayoutModel> list, int factorLimit, int rx, int ry, int rxMin, int ryMin) {
+    for (int i = 1; i <= factorLimit; i++) {
+      if (i > 2 || i * ry > ryMin || i * rx > rxMin) {
+        if (i * ry < 50 && i * rx < 50) {
+          list.add(
+              ImageViewerPlugin.buildGridBagLayoutModel(i * ry, i * rx, view2dClass.getName()));
+        }
+      }
+    }
+  }
+
   public static GridBagLayoutModel getBestDefaultViewLayout(
       ActionState layout, int size, GridBagLayoutModel defaultModel) {
     if (size <= 1) {
@@ -868,7 +929,7 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
   public void addSeriesList(List<MediaSeries<E>> seriesList, boolean bestDefaultLayout) {
     if (seriesList != null && !seriesList.isEmpty()) {
       if (SynchData.Mode.TILE.equals(synchView.getSynchData().getMode())) {
-        addSeries(seriesList.get(0));
+        addSeries(seriesList.getFirst());
         return;
       }
       setSelectedAndGetFocus();
@@ -887,7 +948,7 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
           }
         }
         if (!view2ds.isEmpty()) {
-          setSelectedImagePane(view2ds.get(0));
+          setSelectedImagePane(view2ds.getFirst());
         }
         for (MediaSeries mediaSeries : seriesList) {
           addSeries(mediaSeries);

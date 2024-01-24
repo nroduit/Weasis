@@ -21,7 +21,7 @@ public class EllipseGraphicTest extends GraphicTester<EllipseGraphic> {
   private static final String XML_1 = "/graphic/ellipse/ellipse.graphic.1.xml"; // NON-NLS
 
   public static final String BASIC_TPL =
-      "<ellipse fill=\"%s\" showLabel=\"%s\" thickness=\"%s\" uuid=\"%s\">" // NON-NLS
+      "<ellipse fillOpacity=\"%s\" fill=\"%s\" showLabel=\"%s\" thickness=\"%s\" uuid=\"%s\">" // NON-NLS
           + "<paint rgb=\"%s\"/>" // NON-NLS
           + "<pts/>" // NON-NLS
           + "</ellipse>"; // NON-NLS
@@ -48,6 +48,7 @@ public class EllipseGraphicTest extends GraphicTester<EllipseGraphic> {
   @Override
   public Object[] getParameters() {
     return new Object[] {
+      Graphic.DEFAULT_FILL_OPACITY,
       Graphic.DEFAULT_FILLED,
       Graphic.DEFAULT_LABEL_VISIBLE,
       Graphic.DEFAULT_LINE_THICKNESS,

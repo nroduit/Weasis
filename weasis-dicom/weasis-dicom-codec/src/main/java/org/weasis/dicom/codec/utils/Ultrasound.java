@@ -16,6 +16,7 @@ import java.util.Objects;
 import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Sequence;
 import org.dcm4che3.data.Tag;
+import org.dcm4che3.img.util.DicomUtils;
 
 public class Ultrasound {
 
@@ -44,11 +45,11 @@ public class Ultrasound {
           spatialCalib = r;
         } else {
           Double calib1X =
-              DicomMediaUtils.getDoubleFromDicomElement(spatialCalib, Tag.PhysicalDeltaX, null);
+              DicomUtils.getDoubleFromDicomElement(spatialCalib, Tag.PhysicalDeltaX, null);
           Double calib1Y =
-              DicomMediaUtils.getDoubleFromDicomElement(spatialCalib, Tag.PhysicalDeltaY, null);
-          Double calib2X = DicomMediaUtils.getDoubleFromDicomElement(r, Tag.PhysicalDeltaX, null);
-          Double calib2Y = DicomMediaUtils.getDoubleFromDicomElement(r, Tag.PhysicalDeltaY, null);
+              DicomUtils.getDoubleFromDicomElement(spatialCalib, Tag.PhysicalDeltaY, null);
+          Double calib2X = DicomUtils.getDoubleFromDicomElement(r, Tag.PhysicalDeltaX, null);
+          Double calib2Y = DicomUtils.getDoubleFromDicomElement(r, Tag.PhysicalDeltaY, null);
           if (!Objects.equals(calib1X, calib2X) || !Objects.equals(calib1Y, calib2Y)) {
             return null; // currently, cannot handle multiple spatial calibration
           }
@@ -60,9 +61,9 @@ public class Ultrasound {
 
   public static Integer getUnitsForXY(Attributes region) {
     Integer unitX =
-        DicomMediaUtils.getIntegerFromDicomElement(region, Tag.PhysicalUnitsXDirection, null);
+        DicomUtils.getIntegerFromDicomElement(region, Tag.PhysicalUnitsXDirection, null);
     Integer unitY =
-        DicomMediaUtils.getIntegerFromDicomElement(region, Tag.PhysicalUnitsYDirection, null);
+        DicomUtils.getIntegerFromDicomElement(region, Tag.PhysicalUnitsYDirection, null);
     if (unitX != null && unitX.equals(unitY)) {
       return unitX;
     }

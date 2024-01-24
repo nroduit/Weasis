@@ -22,6 +22,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.weasis.core.util.StringUtil;
 import org.weasis.launcher.FileUtil;
 import org.weasis.launcher.Utils;
 
@@ -33,7 +34,7 @@ public class AppPreferences extends HashMap<String, Preference> {
   static final String VAL = "value"; // NON-NLS
   static final String DESC = "description"; // NON-NLS
   static final String TYPE = "type"; // NON-NLS
-  static final String JAVA_TYPE = "JavaType"; // NON-NLS
+  static final String JAVA_TYPE = "javaType"; // NON-NLS
   static final String DEFAULT = "defaultValue"; // NON-NLS
   static final String CATEGORY = "category"; // NON-NLS
 
@@ -97,6 +98,9 @@ public class AppPreferences extends HashMap<String, Preference> {
       cycleMap = new HashMap<>();
     }
     cycleMap.put(currentKey, currentKey);
+    if (val == null) {
+      return StringUtil.EMPTY_STRING;
+    }
 
     int stopDelim = -1;
     int startDelim = -1;

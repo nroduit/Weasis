@@ -16,7 +16,6 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.Hashtable;
 import java.util.List;
 import java.util.Optional;
@@ -277,7 +276,7 @@ public class View2dContainer extends DicomViewerPlugin implements PropertyChange
           InsertableUtil.getCName(Basic3DToolBar.class),
           key,
           true)) {
-        TOOLBARS.add(new Basic3DToolBar<DicomImageElement>(50));
+        TOOLBARS.add(new Basic3DToolBar(50));
       }
       if (InsertableUtil.getBooleanProperty(
           preferences,
@@ -434,12 +433,21 @@ public class View2dContainer extends DicomViewerPlugin implements PropertyChange
         menuRoot.add(new JSeparator());
         GuiUtils.addItemToMenu(menuRoot, manager.getZoomMenu(null));
         GuiUtils.addItemToMenu(menuRoot, manager.getOrientationMenu(null));
+        GuiUtils.addItemToMenu(menuRoot, manager.getCineMenu(null));
         GuiUtils.addItemToMenu(menuRoot, manager.getSortStackMenu(null));
         menuRoot.add(new JSeparator());
         menuRoot.add(manager.getResetMenu(null));
       }
     }
     return menuRoot;
+  }
+
+  @Override
+  public void addSeries(MediaSeries<DicomImageElement> sequence) {
+    if (DicomModel.isHiddenModality(sequence)) {
+      return;
+    }
+    super.addSeries(sequence);
   }
 
   protected MediaSeries<DicomImageElement> getFirstSeries() {
@@ -829,49 +837,6 @@ public class View2dContainer extends DicomViewerPlugin implements PropertyChange
 
   @Override
   public List<GridBagLayoutModel> getLayoutList() {
-    int rx = 1;
-    int ry = 1;
-    double ratio = getWidth() / (double) getHeight();
-    if (ratio >= 1.0) {
-      rx = (int) Math.round(ratio * 1.5);
-    } else {
-      ry = (int) Math.round((1.0 / ratio) * 1.5);
-    }
-
-    ArrayList<GridBagLayoutModel> list = new ArrayList<>(DEFAULT_LAYOUT_LIST);
-    // Exclude 1x1
-    if (rx != ry && rx != 0 && ry != 0) {
-      int factorLimit =
-          (int) (rx == 1 ? Math.round(getWidth() / 512.0) : Math.round(getHeight() / 512.0));
-      if (factorLimit < 1) {
-        factorLimit = 1;
-      }
-      if (rx > ry) {
-        int step = 1 + (rx / 20);
-        for (int i = rx / 2; i < rx; i = i + step) {
-          addLayout(list, factorLimit, i, ry);
-        }
-      } else {
-        int step = 1 + (ry / 20);
-        for (int i = ry / 2; i < ry; i = i + step) {
-          addLayout(list, factorLimit, rx, i);
-        }
-      }
-
-      addLayout(list, factorLimit, rx, ry);
-    }
-    list.sort(Comparator.comparingInt(o -> o.getConstraints().size()));
-    return list;
-  }
-
-  private void addLayout(List<GridBagLayoutModel> list, int factorLimit, int rx, int ry) {
-    for (int i = 1; i <= factorLimit; i++) {
-      if (i > 2 || i * ry > 2 || i * rx > 4) {
-        if (i * ry < 50 && i * rx < 50) {
-          list.add(
-              ImageViewerPlugin.buildGridBagLayoutModel(i * ry, i * rx, view2dClass.getName()));
-        }
-      }
-    }
+    return getLayoutList(this, DEFAULT_LAYOUT_LIST);
   }
 }

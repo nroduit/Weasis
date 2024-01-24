@@ -35,6 +35,7 @@ import javax.swing.JOptionPane;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.Messages;
+import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.image.LayoutConstraints;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.ui.editor.image.ExportImage;
@@ -69,8 +70,8 @@ public class ImagePrint implements Printable {
       case PageFormat.LANDSCAPE -> OrientationRequested.LANDSCAPE;
       case PageFormat.REVERSE_LANDSCAPE -> OrientationRequested.REVERSE_LANDSCAPE;
       case PageFormat.PORTRAIT -> OrientationRequested.PORTRAIT;
-      default -> throw new IllegalArgumentException(
-          "The given value is no valid PageFormat orientation.");
+      default ->
+          throw new IllegalArgumentException("The given value is no valid PageFormat orientation.");
     };
   }
 
@@ -110,7 +111,7 @@ public class ImagePrint implements Printable {
           // so they'll know there may be a problem.
           int response =
               JOptionPane.showConfirmDialog(
-                  null,
+                  GuiUtils.getUICore().getApplicationWindow(),
                   Messages.getString("ImagePrint.issue_desc"),
                   Messages.getString("ImagePrint.status"),
                   JOptionPane.YES_NO_OPTION,

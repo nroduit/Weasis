@@ -215,38 +215,35 @@ public class WeasisWinListener implements MainWindowListener {
     String className1 =
         GuiUtils.getUICore().getSystemPreferences().getProperty(factory.getClass().getName());
     if (!StringUtil.hasText(className1) || Boolean.parseBoolean(className1)) {
-      GuiExecutor.instance()
-          .execute(() -> registerDataExplorer(factory.createDataExplorerView(null)));
+      GuiExecutor.execute(() -> registerDataExplorer(factory.createDataExplorerView(null)));
     }
   }
 
   void removeDataExplorer(DataExplorerViewFactory factory) {
-    GuiExecutor.instance()
-        .execute(
-            () -> {
-              final DataExplorerView explorer = factory.createDataExplorerView(null);
-              List<DataExplorerView> explorerPlugins = GuiUtils.getUICore().getExplorerPlugins();
-              if (explorerPlugins.contains(explorer)) {
-                Optional.ofNullable(explorer.getDataExplorerModel())
-                    .ifPresent(e -> e.removePropertyChangeListener(this));
-                explorerPlugins.remove(explorer);
+    GuiExecutor.execute(
+        () -> {
+          final DataExplorerView explorer = factory.createDataExplorerView(null);
+          List<DataExplorerView> explorerPlugins = GuiUtils.getUICore().getExplorerPlugins();
+          if (explorerPlugins.contains(explorer)) {
+            Optional.ofNullable(explorer.getDataExplorerModel())
+                .ifPresent(e -> e.removePropertyChangeListener(this));
+            explorerPlugins.remove(explorer);
 
-                // Update toolbar
-                List<Toolbar> tb = mainWindow.getToolbarContainer().getRegisteredToolBars();
-                tb.removeIf(b -> b.getComponent().getAttachedInsertable() == explorer);
-                mainWindow.getToolbarContainer().registerToolBar(tb);
-                GuiUtils.getUICore()
-                    .getViewerPlugins()
-                    .forEach(
-                        v ->
-                            v.getToolBars()
-                                .removeIf(
-                                    b -> b.getComponent().getAttachedInsertable() == explorer));
+            // Update toolbar
+            List<Toolbar> tb = mainWindow.getToolbarContainer().getRegisteredToolBars();
+            tb.removeIf(b -> b.getComponent().getAttachedInsertable() == explorer);
+            mainWindow.getToolbarContainer().registerToolBar(tb);
+            GuiUtils.getUICore()
+                .getViewerPlugins()
+                .forEach(
+                    v ->
+                        v.getToolBars()
+                            .removeIf(b -> b.getComponent().getAttachedInsertable() == explorer));
 
-                explorer.dispose();
-                LOGGER.info("Unregister data explorer Plug-in: {}", explorer.getUIName());
-              }
-            });
+            explorer.dispose();
+            LOGGER.info("Unregister data explorer Plug-in: {}", explorer.getUIName());
+          }
+        });
   }
 
   void registerDataExplorer(DataExplorerView explorer) {

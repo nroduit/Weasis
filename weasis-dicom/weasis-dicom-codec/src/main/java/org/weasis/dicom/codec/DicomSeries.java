@@ -9,6 +9,7 @@
  */
 package org.weasis.dicom.codec;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -24,6 +25,7 @@ import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.SeriesEvent;
 import org.weasis.core.api.media.data.TagView;
 import org.weasis.core.api.media.data.TagW;
+import org.weasis.core.ui.editor.image.DefaultView2d;
 import org.weasis.core.util.FileUtil;
 import org.weasis.core.util.MathUtil;
 import org.weasis.core.util.StringUtil;
@@ -49,6 +51,50 @@ public class DicomSeries extends Series<DicomImageElement> {
         displayTag,
         c,
         SortSeriesStack.instanceNumber);
+  }
+
+  public static <E> List<E> getHiddenElementsFromSeries(Class<E> clazz, String... seriesUID) {
+    if (clazz != null && clazz.isAssignableFrom(clazz)) {
+      List<E> list = new ArrayList<>();
+      for (String uid : seriesUID) {
+        if (StringUtil.hasText(uid)) {
+          List<HiddenSpecialElement> hiddenElements =
+              HiddenSeriesManager.getInstance().series2Elements.get(uid);
+          if (hiddenElements != null) {
+            for (HiddenSpecialElement el : hiddenElements) {
+              if (clazz.isInstance(el)) {
+                list.add((E) el);
+              }
+            }
+          }
+        }
+      }
+      return list;
+    }
+    return Collections.emptyList();
+  }
+
+  public static <E> List<E> getHiddenElementsFromPatient(String patientPseudoUID, Class<E> clazz) {
+    if (StringUtil.hasText(patientPseudoUID) && clazz != null && clazz.isAssignableFrom(clazz)) {
+      List<String> patients =
+          HiddenSeriesManager.getInstance().patient2Series.get(patientPseudoUID);
+      if (patients != null) {
+        List<E> list = new ArrayList<>();
+        for (String seriesUID : patients) {
+          List<HiddenSpecialElement> hiddenElements =
+              HiddenSeriesManager.getInstance().series2Elements.get(seriesUID);
+          if (hiddenElements != null) {
+            for (HiddenSpecialElement el : hiddenElements) {
+              if (clazz.isInstance(el)) {
+                list.add((E) el);
+              }
+            }
+          }
+        }
+        return list;
+      }
+    }
+    return Collections.emptyList();
   }
 
   public boolean[] getImageInMemoryList() {
@@ -149,6 +195,25 @@ public class DicomSeries extends Series<DicomImageElement> {
   @Override
   public void dispose() {
     stopPreloading(this);
+    String seriesUID = (String) getTagValue(getTagID());
+    String modality = TagD.getTagValue(this, Tag.Modality, String.class);
+    if (DicomMediaIO.isHiddenModality(modality)) {
+      List<HiddenSpecialElement> removed =
+          HiddenSeriesManager.getInstance().series2Elements.remove(seriesUID);
+      if (removed != null && !removed.isEmpty()) {
+        String patientPseudoUID = (String) removed.getFirst().getTagValue(TagW.PatientPseudoUID);
+        if (patientPseudoUID != null) {
+          List<String> list =
+              HiddenSeriesManager.getInstance().patient2Series.get(patientPseudoUID);
+          if (list != null) {
+            list.remove(seriesUID);
+            if (list.isEmpty()) {
+              HiddenSeriesManager.getInstance().patient2Series.remove(patientPseudoUID);
+            }
+          }
+        }
+      }
+    }
     super.dispose();
   }
 
@@ -228,11 +293,10 @@ public class DicomSeries extends Series<DicomImageElement> {
         }
       }
       if (medias.isEmpty()) {
-        List<DicomSpecialElement> seriesSpecialElementList =
-            (List<DicomSpecialElement>) getTagValue(TagW.DicomSpecialElementList);
-        if (seriesSpecialElementList != null) {
-          for (DicomSpecialElement seriesSpecialElement : seriesSpecialElementList) {
-            Object val2 = seriesSpecialElement.getTagValue(tag);
+        List<? extends DicomSpecialElement> list = getAllDicomSpecialElement();
+        if (list != null) {
+          for (DicomSpecialElement specialElement : list) {
+            Object val2 = specialElement.getTagValue(tag);
             if (val.equals(val2)) {
               return true;
             }
@@ -243,12 +307,28 @@ public class DicomSeries extends Series<DicomImageElement> {
     return false;
   }
 
+  public List<DicomSpecialElement> getAllDicomSpecialElement() {
+    List<DicomSpecialElement> specialElements =
+        (List<DicomSpecialElement>) getTagValue(TagW.DicomSpecialElementList);
+    if (specialElements != null) {
+      return specialElements;
+    }
+
+    String seriesUID = (String) getTagValue(getTagID());
+    List<HiddenSpecialElement> list =
+        HiddenSeriesManager.getInstance().series2Elements.get(seriesUID);
+    if (list != null && !list.isEmpty()) {
+      return new ArrayList<>(list);
+    }
+    return Collections.emptyList();
+  }
+
   @Override
   public DicomSpecialElement getFirstSpecialElement() {
     List<DicomSpecialElement> specialElements =
         (List<DicomSpecialElement>) getTagValue(TagW.DicomSpecialElementList);
     if (specialElements != null && !specialElements.isEmpty()) {
-      return specialElements.get(0);
+      return specialElements.getFirst();
     }
     return null;
   }
@@ -258,9 +338,9 @@ public class DicomSeries extends Series<DicomImageElement> {
     SeriesInstanceList seriesInstanceList =
         (SeriesInstanceList) getTagValue(TagW.WadoInstanceReferenceList);
     if (seriesInstanceList != null) {
-      return seriesInstanceList.size() >= 5;
+      return seriesInstanceList.size() >= DefaultView2d.MINIMAL_IMAGES_FOR_3D;
     }
-    return size(null) >= 5;
+    return size(null) >= DefaultView2d.MINIMAL_IMAGES_FOR_3D;
   }
 
   public static synchronized void startPreloading(

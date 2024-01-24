@@ -12,10 +12,10 @@ package org.weasis.dicom.qr.manisfest;
 import java.util.List;
 import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Tag;
+import org.dcm4che3.img.util.DicomUtils;
 import org.dcm4che3.net.service.QueryRetrieveLevel;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.util.StringUtil;
-import org.weasis.dicom.codec.utils.DicomMediaUtils;
 import org.weasis.dicom.explorer.DicomModel;
 import org.weasis.dicom.explorer.mf.DicomModelQueryResult;
 import org.weasis.dicom.mf.AbstractQueryResult;
@@ -118,7 +118,7 @@ public class CFindQueryResult extends AbstractQueryResult {
 
         for (Attributes instanceDataSet : instances) {
           Integer frame =
-              DicomMediaUtils.getIntegerFromDicomElement(instanceDataSet, Tag.InstanceNumber, null);
+              DicomUtils.getIntegerFromDicomElement(instanceDataSet, Tag.InstanceNumber, null);
           String sopUID = instanceDataSet.getString(Tag.SOPInstanceUID);
           SopInstance sop = s.getSopInstance(sopUID, frame);
           if (sop == null) {

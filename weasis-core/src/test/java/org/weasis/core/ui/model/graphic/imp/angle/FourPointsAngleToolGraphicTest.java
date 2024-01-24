@@ -23,7 +23,7 @@ public class FourPointsAngleToolGraphicTest extends GraphicTester<FourPointsAngl
       "/graphic/fourPointsAngle/fourPointsAngle.graphic.1.xml"; // NON-NLS
 
   public static final String BASIC_TPL =
-      "<fourPointsAngle fill=\"%s\" showLabel=\"%s\" thickness=\"%s\" uuid=\"%s\">" // NON-NLS
+      "<fourPointsAngle fillOpacity=\"%s\" fill=\"%s\" showLabel=\"%s\" thickness=\"%s\" uuid=\"%s\">" // NON-NLS
           + "<paint rgb=\"%s\"/>" // NON-NLS
           + "<pts/>" // NON-NLS
           + "</fourPointsAngle>"; // NON-NLS
@@ -54,6 +54,7 @@ public class FourPointsAngleToolGraphicTest extends GraphicTester<FourPointsAngl
   @Override
   public Object[] getParameters() {
     return new Object[] {
+      Graphic.DEFAULT_FILL_OPACITY,
       Graphic.DEFAULT_FILLED,
       Graphic.DEFAULT_LABEL_VISIBLE,
       Graphic.DEFAULT_LINE_THICKNESS,

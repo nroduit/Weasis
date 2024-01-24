@@ -40,7 +40,7 @@ public class Preference {
   }
 
   public void setValue(String value) {
-    this.value = value;
+    this.value = "null".equals(value) ? null : value; // NON-NLS
   }
 
   public String getDefaultValue() {
@@ -48,7 +48,7 @@ public class Preference {
   }
 
   public void setDefaultValue(String defaultValue) {
-    this.defaultValue = defaultValue;
+    this.defaultValue = "null".equals(defaultValue) ? null : defaultValue; // NON-NLS
   }
 
   public String getDescription() {

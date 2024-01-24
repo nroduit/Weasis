@@ -79,7 +79,7 @@ public class RawImageIO implements DcmMediaReader {
   public File getDicomFile() {
     Attributes dcm = getDicomObject();
 
-    File file = imageCV.getFile();
+    File file = imageCV.file();
     BulkData bdl =
         new BulkData(
             file.toURI().toString(),
@@ -107,7 +107,7 @@ public class RawImageIO implements DcmMediaReader {
 
   @Override
   public URI getUri() {
-    return imageCV.getFile().toURI();
+    return imageCV.file().toURI();
   }
 
   @Override
@@ -239,7 +239,7 @@ public class RawImageIO implements DcmMediaReader {
     dcm.setSpecificCharacterSet(cs.toCodes());
     DicomMediaUtils.fillAttributes(tags, dcm);
     dcm.addAll(attributes);
-    File file = imageCV.getFile();
+    File file = imageCV.file();
     BulkData bdl =
         new BulkData(
             file.toURI().toString(),

@@ -116,7 +116,7 @@ public class ThemeSetting extends AbstractItemDialogPage {
                   LOGGER.error("Can't change look and feel", e1);
                 }
               };
-          GuiExecutor.instance().execute(runnable);
+          GuiExecutor.execute(runnable);
         });
 
     if (SystemInfo.isLinux) {
@@ -233,7 +233,7 @@ public class ThemeSetting extends AbstractItemDialogPage {
               LOGGER.error("Can't change look and feel", e);
             }
           };
-      GuiExecutor.instance().execute(runnable);
+      GuiExecutor.execute(runnable);
     }
 
     String scale = "-1";

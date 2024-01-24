@@ -151,14 +151,17 @@ public abstract class PannerListener extends MouseActionAdapter
 
   @Override
   public void keyPressed(KeyEvent e) {
-    if (e.getKeyCode() == KeyEvent.VK_LEFT) {
-      setPoint(new PanPoint(PanPoint.State.MOVE, 5, 0));
-    } else if (e.getKeyCode() == KeyEvent.VK_UP) {
-      setPoint(new PanPoint(PanPoint.State.MOVE, 0, 5));
-    } else if (e.getKeyCode() == KeyEvent.VK_RIGHT) {
-      setPoint(new PanPoint(PanPoint.State.MOVE, -5, 0));
-    } else if (e.getKeyCode() == KeyEvent.VK_DOWN) {
-      setPoint(new PanPoint(PanPoint.State.MOVE, 0, -5));
+    if (e.isAltDown()) {
+      int shift = e.isShiftDown() ? 10 : 5;
+      if (e.getKeyCode() == KeyEvent.VK_LEFT) {
+        setPoint(new PanPoint(PanPoint.State.MOVE, shift, 0));
+      } else if (e.getKeyCode() == KeyEvent.VK_UP) {
+        setPoint(new PanPoint(PanPoint.State.MOVE, 0, shift));
+      } else if (e.getKeyCode() == KeyEvent.VK_RIGHT) {
+        setPoint(new PanPoint(PanPoint.State.MOVE, -shift, 0));
+      } else if (e.getKeyCode() == KeyEvent.VK_DOWN) {
+        setPoint(new PanPoint(PanPoint.State.MOVE, 0, -shift));
+      }
     }
   }
 

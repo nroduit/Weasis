@@ -10,26 +10,19 @@
 package org.weasis.core.api.gui.util;
 
 import java.lang.reflect.InvocationTargetException;
-import java.util.List;
-import java.util.concurrent.AbstractExecutorService;
-import java.util.concurrent.TimeUnit;
 import javax.swing.SwingUtilities;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class GuiExecutor extends AbstractExecutorService {
+public class GuiExecutor {
   private static final Logger LOGGER = LoggerFactory.getLogger(GuiExecutor.class);
-
-  private static final GuiExecutor instance = new GuiExecutor();
 
   private GuiExecutor() {}
 
-  public static GuiExecutor instance() {
-    return instance;
-  }
-
-  @Override
-  public void execute(Runnable r) {
+  public static void execute(Runnable r) {
+    if (r == null) {
+      return;
+    }
     if (SwingUtilities.isEventDispatchThread()) {
       r.run();
     } else {
@@ -37,7 +30,10 @@ public class GuiExecutor extends AbstractExecutorService {
     }
   }
 
-  public void invokeAndWait(Runnable r) {
+  public static void invokeAndWait(Runnable r) {
+    if (r == null) {
+      return;
+    }
     if (SwingUtilities.isEventDispatchThread()) {
       r.run();
     } else {
@@ -50,30 +46,5 @@ public class GuiExecutor extends AbstractExecutorService {
         LOGGER.error("EDT invokeAndWait()", e);
       }
     }
-  }
-
-  @Override
-  public void shutdown() {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public List<Runnable> shutdownNow() {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public boolean awaitTermination(long timeout, TimeUnit unit) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public boolean isShutdown() {
-    return false;
-  }
-
-  @Override
-  public boolean isTerminated() {
-    return false;
   }
 }

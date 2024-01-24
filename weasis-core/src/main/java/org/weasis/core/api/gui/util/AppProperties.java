@@ -137,7 +137,7 @@ public class AppProperties {
   public static Version getVersion(String version) {
     String v = "";
     if (version != null) {
-      int start = version.startsWith("v") ? 1 : 0;
+      int start = version.startsWith("v") ? 1 : 0; // NON-NLS
       int end = version.indexOf('-');
       if (end < 0) {
         end = version.length();

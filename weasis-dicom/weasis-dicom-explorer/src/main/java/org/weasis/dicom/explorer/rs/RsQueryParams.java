@@ -240,11 +240,10 @@ public class RsQueryParams extends ExplorerTask<Boolean, String> {
   }
 
   private static void showErrorMessage(String title, String msg) {
-    GuiExecutor.instance()
-        .execute(
-            () ->
-                JOptionPane.showMessageDialog(
-                    GuiUtils.getUICore().getBaseArea(), msg, title, JOptionPane.ERROR_MESSAGE));
+    GuiExecutor.execute(
+        () ->
+            JOptionPane.showMessageDialog(
+                GuiUtils.getUICore().getBaseArea(), msg, title, JOptionPane.ERROR_MESSAGE));
   }
 
   private static String getFirstParam(List<String> list) {

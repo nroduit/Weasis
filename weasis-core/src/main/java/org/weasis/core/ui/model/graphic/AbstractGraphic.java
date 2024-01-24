@@ -74,6 +74,7 @@ public abstract class AbstractGraphic extends DefaultUUID implements Graphic {
   protected List<Point2D> pts;
   protected Paint colorPaint = DEFAULT_COLOR;
   protected Float lineThickness = DEFAULT_LINE_THICKNESS;
+  protected Float fillOpacity = DEFAULT_FILL_OPACITY;
   protected Boolean labelVisible = DEFAULT_LABEL_VISIBLE;
   protected Boolean filled = DEFAULT_FILLED;
   protected Integer classID;
@@ -98,6 +99,7 @@ public abstract class AbstractGraphic extends DefaultUUID implements Graphic {
     setPointNumber(graphic.pointNumber);
     setColorPaint(graphic.colorPaint);
     setLineThickness(graphic.lineThickness);
+    setFillOpacity(graphic.fillOpacity);
     setLabelVisible(graphic.labelVisible);
     setFilled(graphic.filled);
     setClassID(graphic.classID);
@@ -211,6 +213,20 @@ public abstract class AbstractGraphic extends DefaultUUID implements Graphic {
         advancedShape.getShapeList().stream()
             .forEachOrdered(bs -> bs.changeLineThickness(lineThickness));
       }
+      fireDrawingChanged();
+    }
+  }
+
+  @XmlAttribute(name = "fillOpacity")
+  @Override
+  public Float getFillOpacity() {
+    return fillOpacity;
+  }
+
+  @Override
+  public void setFillOpacity(Float fillOpacity) {
+    if (!Objects.equals(this.fillOpacity, fillOpacity)) {
+      this.fillOpacity = Optional.ofNullable(fillOpacity).orElse(DEFAULT_FILL_OPACITY);
       fireDrawingChanged();
     }
   }
@@ -421,6 +437,10 @@ public abstract class AbstractGraphic extends DefaultUUID implements Graphic {
       g2d.draw(drawingShape);
 
       if (getFilled()) {
+        if (fillOpacity < 1.0f && colorPaint instanceof Color color) {
+          int alpha = (int) (fillOpacity * color.getAlpha());
+          g2d.setPaint(new Color(color.getRed(), color.getGreen(), color.getBlue(), alpha));
+        }
         g2d.fill(drawingShape);
       }
     }

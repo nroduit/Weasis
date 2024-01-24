@@ -79,18 +79,17 @@ public class Activator implements BundleActivator, ServiceListener {
     MeasureTool.viewSetting.applyPreferences(prefs);
 
     // Must be instantiated in EDT
-    GuiExecutor.instance()
-        .execute(
-            () -> {
-              try {
-                for (ServiceReference<SeriesViewerFactory> service :
-                    bundleContext.getServiceReferences(SeriesViewerFactory.class, null)) {
-                  registerSeriesViewerFactory(bundleContext.getService(service));
-                }
-              } catch (InvalidSyntaxException e) {
-                LOGGER.error("", e);
-              }
-            });
+    GuiExecutor.execute(
+        () -> {
+          try {
+            for (ServiceReference<SeriesViewerFactory> service :
+                bundleContext.getServiceReferences(SeriesViewerFactory.class, null)) {
+              registerSeriesViewerFactory(bundleContext.getService(service));
+            }
+          } catch (InvalidSyntaxException e) {
+            LOGGER.error("", e);
+          }
+        });
 
     bundleContext.addServiceListener(
         this, BundleTools.createServiceFilter(Codec.class, SeriesViewerFactory.class));
@@ -144,22 +143,20 @@ public class Activator implements BundleActivator, ServiceListener {
       }
     } else if (service instanceof SeriesViewerFactory viewerFactory) {
       // Must be instantiated in EDT
-      GuiExecutor.instance()
-          .execute(
-              () -> {
-                if (event.getType() == ServiceEvent.REGISTERED) {
-                  registerSeriesViewerFactory(viewerFactory);
-                } else if (event.getType() == ServiceEvent.UNREGISTERING) {
-                  List<SeriesViewerFactory> viewerFactories =
-                      GuiUtils.getUICore().getSeriesViewerFactories();
-                  if (viewerFactories.contains(viewerFactory)) {
-                    LOGGER.info(
-                        "Unregister series viewer plug-in: {}", viewerFactory.getDescription());
-                    viewerFactories.remove(viewerFactory);
-                  }
-                  context.ungetService(sRef);
-                }
-              });
+      GuiExecutor.execute(
+          () -> {
+            if (event.getType() == ServiceEvent.REGISTERED) {
+              registerSeriesViewerFactory(viewerFactory);
+            } else if (event.getType() == ServiceEvent.UNREGISTERING) {
+              List<SeriesViewerFactory> viewerFactories =
+                  GuiUtils.getUICore().getSeriesViewerFactories();
+              if (viewerFactories.contains(viewerFactory)) {
+                LOGGER.info("Unregister series viewer plug-in: {}", viewerFactory.getDescription());
+                viewerFactories.remove(viewerFactory);
+              }
+              context.ungetService(sRef);
+            }
+          });
     }
   }
 

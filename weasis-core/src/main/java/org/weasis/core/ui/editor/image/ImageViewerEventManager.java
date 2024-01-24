@@ -10,6 +10,7 @@
 package org.weasis.core.ui.editor.image;
 
 import java.awt.event.InputEvent;
+import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.event.MouseWheelEvent;
 import java.awt.geom.Point2D;
@@ -20,18 +21,16 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.concurrent.atomic.AtomicInteger;
 import javax.swing.BoundedRangeModel;
+import javax.swing.SwingUtilities;
 import javax.swing.event.SwingPropertyChangeSupport;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.weasis.core.Messages;
 import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.ComboItemListener;
 import org.weasis.core.api.gui.util.DecFormatter;
 import org.weasis.core.api.gui.util.Feature;
 import org.weasis.core.api.gui.util.Filter;
-import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.gui.util.SliderChangeListener;
 import org.weasis.core.api.gui.util.SliderCineListener;
 import org.weasis.core.api.gui.util.SliderCineListener.TIME;
@@ -51,10 +50,10 @@ import org.weasis.core.ui.model.graphic.Graphic;
 import org.weasis.core.ui.model.utils.bean.PanPoint;
 import org.weasis.core.ui.model.utils.imp.DefaultViewModel;
 import org.weasis.core.ui.pref.ZoomSetting;
+import org.weasis.core.ui.util.ColorLayerUI;
+import org.weasis.core.ui.util.PrintDialog;
 
 public abstract class ImageViewerEventManager<E extends ImageElement> implements KeyListener {
-  private static final Logger LOGGER = LoggerFactory.getLogger(ImageViewerEventManager.class);
-
   public static final int WINDOW_SMALLEST = 0;
   public static final int WINDOW_LARGEST = 4096;
   public static final int WINDOW_DEFAULT = 700;
@@ -86,12 +85,8 @@ public abstract class ImageViewerEventManager<E extends ImageElement> implements
   }
 
   protected SliderCineListener getMoveTroughSliceAction(
-      int speed, final TIME time, double mouseSensitivity) {
+      double speed, final TIME time, double mouseSensitivity) {
     return new SliderCineListener(ActionW.SCROLL_SERIES, 1, 2, 1, speed, time, mouseSensitivity) {
-
-      private volatile boolean cining = true;
-
-      private CineThread currentCine;
 
       @Override
       public void stateChanged(BoundedRangeModel model) {
@@ -131,114 +126,18 @@ public abstract class ImageViewerEventManager<E extends ImageElement> implements
       }
 
       @Override
-      public void setSpeed(int speed) {
-        super.setSpeed(speed);
-        if (currentCine != null) {
-          currentCine.iniSpeed();
-        }
-      }
-
-      /** Create a thread to cine the images. */
-      class CineThread extends Thread {
-
-        private AtomicInteger iteration;
-        private AtomicInteger wait;
-        private volatile int currentCineRate;
-        private volatile long start;
-
-        @Override
-        public void run() {
-          iniSpeed();
-
-          while (cining) {
-            GuiExecutor.instance()
-                .execute(
-                    () -> {
-                      int frameIndex = getSliderValue() + 1;
-                      frameIndex = frameIndex > getSliderMax() ? 0 : frameIndex;
-                      setSliderValue(frameIndex);
-                    });
-            iteration.incrementAndGet();
-
-            // adjust the delay time based on the current performance
-            long elapsed = (System.currentTimeMillis() - start) / 1000;
-            if (elapsed > 0) {
-              currentCineRate = (int) (iteration.get() / elapsed);
-
-              if (currentCineRate < getSpeed()) {
-                if (wait.decrementAndGet() < 0) {
-                  wait.set(0);
-                }
-              } else {
-                wait.incrementAndGet();
-              }
-            }
-
-            // wait
-            if (wait.get() > 0) {
-              try {
-                Thread.sleep(wait.get());
-              } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-              }
-            }
-          }
-        }
-
-        public void iniSpeed() {
-          iteration = new AtomicInteger(0);
-          int timeDiv =
-              TIME.SECOND.equals(time) ? 1000 : TIME.MINUTE.equals(time) ? 60000 : 3600000;
-          wait = new AtomicInteger(timeDiv / getSpeed());
-          currentCineRate = getSpeed();
-          start = System.currentTimeMillis();
-        }
-
-        public int getCurrentCineRate() {
-          return currentCineRate;
-        }
-      }
-
-      /** Start the cining. */
-      @Override
-      public synchronized void start() {
-        if (currentCine != null) {
-          stop();
-        }
-        if (getSliderMax() - getSliderMin() > 0) {
-          cining = true;
-          currentCine = new CineThread();
-          currentCine.start();
-        }
-      }
-
-      /** Stop the cining. */
-      @Override
-      public synchronized void stop() {
-        CineThread moribund = currentCine;
-        currentCine = null;
-        if (moribund != null) {
-          cining = false;
-          moribund.interrupt();
-        }
-      }
-
-      @Override
-      public boolean isCining() {
-        return cining;
-      }
-
-      @Override
       public void mouseWheelMoved(MouseWheelEvent e) {
         setSliderValue(getSliderValue() + e.getWheelRotation());
       }
+    };
+  }
+
+  protected ToggleButtonListener newLoopSweepAction() {
+    return new ToggleButtonListener(ActionW.CINE_SWEEP, false) {
 
       @Override
-      public int getCurrentCineRate() {
-        if (currentCine != null) {
-          return currentCine.getCurrentCineRate();
-        }
-        return 0;
+      public void actionPerformed(boolean selected) {
+        getAction(ActionW.SCROLL_SERIES).ifPresent(a -> a.setSweeping(selected));
       }
     };
   }
@@ -787,6 +686,58 @@ public abstract class ImageViewerEventManager<E extends ImageElement> implements
         }
       }
     }
+  }
+
+  protected boolean commonDisplayShortcuts(KeyEvent e) {
+    int keyEvent = e.getKeyCode();
+    int modifiers = e.getModifiers();
+
+    if (keyEvent == KeyEvent.VK_ESCAPE) {
+      resetDisplay();
+    } else if (keyEvent == ActionW.CINESTART.getKeyCode()
+        && ActionW.CINESTART.getModifier() == modifiers) {
+      Optional<SliderCineListener> cineAction = getAction(ActionW.SCROLL_SERIES);
+      if (cineAction.isPresent() && cineAction.get().isActionEnabled()) {
+        if (cineAction.get().isCining()) {
+          cineAction.get().stop();
+        } else {
+          cineAction.get().start();
+        }
+      }
+    } else if (keyEvent == KeyEvent.VK_P && modifiers == 0) {
+      ImageViewerPlugin<? extends ImageElement> view = getSelectedView2dContainer();
+      if (view != null) {
+        ColorLayerUI layer = ColorLayerUI.createTransparentLayerUI(view);
+        PrintDialog<?> dialog =
+            new PrintDialog<>(
+                SwingUtilities.getWindowAncestor(view),
+                Messages.getString("ImageViewerPlugin.print_layout"),
+                this);
+        ColorLayerUI.showCenterScreen(dialog, layer);
+      }
+    } else if (keyEvent == KeyEvent.VK_UP && !e.isAltDown() && !e.isControlDown()) {
+      int shift = e.isShiftDown() ? 10 : 1;
+      getAction(ActionW.SCROLL_SERIES).ifPresent(a -> a.setSliderValue(a.getSliderValue() - shift));
+    } else if (keyEvent == KeyEvent.VK_DOWN && !e.isAltDown() && !e.isControlDown()) {
+      int shift = e.isShiftDown() ? 10 : 1;
+      getAction(ActionW.SCROLL_SERIES).ifPresent(a -> a.setSliderValue(a.getSliderValue() + shift));
+    } else if (keyEvent == KeyEvent.VK_HOME && !e.isControlDown()) {
+      getAction(ActionW.SCROLL_SERIES).ifPresent(a -> a.setSliderValue(a.getSliderMin()));
+    } else if (keyEvent == KeyEvent.VK_END && !e.isControlDown()) {
+      getAction(ActionW.SCROLL_SERIES).ifPresent(a -> a.setSliderValue(a.getSliderMax()));
+    } else if (keyEvent == KeyEvent.VK_SUBTRACT && e.isControlDown()) {
+      getAction(ActionW.ZOOM).ifPresent(a -> a.setSliderValue(a.getSliderValue() - 1));
+    } else if (keyEvent == KeyEvent.VK_ADD && e.isControlDown()) {
+      getAction(ActionW.ZOOM).ifPresent(a -> a.setSliderValue(a.getSliderValue() + 1));
+    } else if (keyEvent == KeyEvent.VK_ENTER && e.isControlDown()) {
+      firePropertyChange(
+          ActionW.SYNCH.cmd(),
+          null,
+          new SynchEvent(getSelectedViewPane(), ActionW.ZOOM.cmd(), -200.0));
+    } else {
+      return false;
+    }
+    return true;
   }
 
   protected void triggerDrawingToolKeyEvent(int keyEvent, int modifiers) {

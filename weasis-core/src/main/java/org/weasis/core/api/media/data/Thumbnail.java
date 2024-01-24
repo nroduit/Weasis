@@ -191,9 +191,11 @@ public class Thumbnail extends JLabel implements Thumbnailable {
               icon.paintIcon(c, g2d, x + (thumbnailSize - icon.getIconWidth()) / 2, fy);
 
               if (displayText) {
+                Object[] oldRenderingHints = GuiUtils.setRenderingHints(g2d, true, false, true);
                 int startX = x + (thumbnailSize - textLength) / 2;
                 int startY = fm.getAscent() - fm.getDescent() - fm.getLeading();
                 g2d.drawString(description, startX, fy + icon.getIconHeight() + startY + insetY);
+                GuiUtils.resetRenderingHints(g2d, oldRenderingHints);
               }
             } else {
               width = thumbnail.width();

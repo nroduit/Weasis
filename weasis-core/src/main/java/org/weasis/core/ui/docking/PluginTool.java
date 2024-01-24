@@ -130,7 +130,7 @@ public abstract class PluginTool extends JPanel implements DockableTool {
 
   @Override
   public void showDockable() {
-    GuiExecutor.instance().execute(this::updateVisibleState);
+    GuiExecutor.execute(this::updateVisibleState);
   }
 
   private void updateVisibleState() {
@@ -204,14 +204,13 @@ public abstract class PluginTool extends JPanel implements DockableTool {
   @Override
   public void closeDockable() {
     previousExtendedMode = dockable.getExtendedMode();
-    GuiExecutor.instance()
-        .execute(
-            () -> {
-              CControl control = GuiUtils.getUICore().getDockingControl();
-              CVetoFocusListener vetoFocus = GuiUtils.getUICore().getDockingVetoFocus();
-              control.addVetoFocusListener(vetoFocus);
-              control.removeDockable(dockable);
-              control.removeVetoFocusListener(vetoFocus);
-            });
+    GuiExecutor.execute(
+        () -> {
+          CControl control = GuiUtils.getUICore().getDockingControl();
+          CVetoFocusListener vetoFocus = GuiUtils.getUICore().getDockingVetoFocus();
+          control.addVetoFocusListener(vetoFocus);
+          control.removeDockable(dockable);
+          control.removeVetoFocusListener(vetoFocus);
+        });
   }
 }

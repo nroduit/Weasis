@@ -9,7 +9,6 @@
  */
 package org.weasis.dicom.viewer2d;
 
-import java.awt.Component;
 import java.awt.event.ActionEvent;
 import java.io.File;
 import java.util.ArrayList;
@@ -206,7 +205,7 @@ public class View2dFactory implements SeriesViewerFactory {
               list, ViewerPluginBuilder.DefaultDataModel, true, true);
         } else {
           JOptionPane.showMessageDialog(
-              e.getSource() instanceof Component c ? c : null,
+              GuiUtils.getUICore().getApplicationWindow(),
               Messages.getString("OpenDicomAction.open_err_msg"),
               Messages.getString("OpenDicomAction.desc"),
               JOptionPane.WARNING_MESSAGE);

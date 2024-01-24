@@ -9,6 +9,8 @@
  */
 package org.weasis.core.ui.editor.image;
 
+import bibliothek.gui.dock.control.focus.DefaultFocusRequest;
+import bibliothek.gui.dock.control.focus.FocusController;
 import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Component;
@@ -31,6 +33,8 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
+import java.util.Timer;
+import java.util.TimerTask;
 import javax.swing.Action;
 import javax.swing.BorderFactory;
 import javax.swing.ButtonGroup;
@@ -39,6 +43,7 @@ import javax.swing.JPopupMenu;
 import javax.swing.JRadioButtonMenuItem;
 import javax.swing.JSeparator;
 import javax.swing.KeyStroke;
+import javax.swing.SwingUtilities;
 import javax.swing.border.Border;
 import org.weasis.core.Messages;
 import org.weasis.core.api.gui.Image2DViewer;
@@ -54,6 +59,7 @@ import org.weasis.core.api.image.WindowOp;
 import org.weasis.core.api.image.ZoomOp.Interpolation;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaSeries;
+import org.weasis.core.api.service.UICore;
 import org.weasis.core.ui.editor.image.dockable.MeasureTool;
 import org.weasis.core.ui.model.graphic.Graphic;
 import org.weasis.core.ui.model.layer.LayerAnnotation;
@@ -61,6 +67,7 @@ import org.weasis.core.ui.model.utils.ImageLayerChangeListener;
 import org.weasis.core.ui.model.utils.bean.PanPoint;
 import org.weasis.core.ui.model.utils.bean.PanPoint.State;
 import org.weasis.core.ui.util.TitleMenuItem;
+import org.weasis.core.util.LangUtil;
 import org.weasis.core.util.StringUtil;
 
 public interface ViewCanvas<E extends ImageElement>
@@ -235,14 +242,36 @@ public interface ViewCanvas<E extends ImageElement>
   void setSeries(MediaSeries<E> newSeries, E selectedMedia);
 
   default void setFocused(Boolean focused) {
+    boolean isFocused = LangUtil.getNULLtoFalse(focused);
     MediaSeries<E> series = getSeries();
     if (series != null) {
-      series.setFocused(focused);
+      series.setFocused(isFocused);
     }
-    if (focused && getBorder() == viewBorder) {
+    if (isFocused && getBorder() == viewBorder) {
       setBorder(focusBorder);
-    } else if (!focused && getBorder() == focusBorder) {
+    } else if (!isFocused && getBorder() == focusBorder) {
       setBorder(viewBorder);
+    }
+
+    if (isFocused) {
+      if (WinUtil.getParentOfClass(getJComponent(), ViewerPlugin.class)
+          instanceof ViewerPlugin<?> viewerPlugin) {
+        FocusController focusController =
+            UICore.getInstance().getDockingControl().getController().getFocusController();
+        focusController.focus(
+            new DefaultFocusRequest(viewerPlugin.getDockable().intern(), getJComponent(), true));
+      } else {
+        // Delay the request focus
+        Timer timer = new Timer();
+        timer.schedule(
+            new TimerTask() {
+              @Override
+              public void run() {
+                SwingUtilities.invokeLater(() -> getJComponent().requestFocus());
+              }
+            },
+            500);
+      }
     }
   }
 

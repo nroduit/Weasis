@@ -18,7 +18,7 @@ import org.weasis.core.api.gui.util.PageItem;
 public class DicomPrefView extends AbstractItemDialogPage {
   private final JPanel menuPanel = new JPanel();
 
-  public DicomPrefView(PreferenceDialog dialog) {
+  public DicomPrefView() {
     super("DICOM", 600);
 
     menuPanel.setLayout(new GridLayout(0, 2));

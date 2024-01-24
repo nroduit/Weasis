@@ -22,6 +22,7 @@ import org.weasis.acquire.explorer.AcquireManager;
 import org.weasis.acquire.explorer.Messages;
 import org.weasis.acquire.explorer.core.bean.SeriesGroup;
 import org.weasis.acquire.explorer.gui.central.AcquireTabPanel;
+import org.weasis.core.api.gui.util.WinUtil;
 import org.weasis.core.api.media.data.ImageElement;
 
 public class AcquireNewSeriesDialog extends JDialog implements PropertyChangeListener {
@@ -72,7 +73,7 @@ public class AcquireNewSeriesDialog extends JDialog implements PropertyChangeLis
               new SeriesGroup(seriesName.getText()), AcquireManager.toAcquireImageInfo(medias));
         } else {
           JOptionPane.showMessageDialog(
-              this,
+              WinUtil.getValidComponent(this),
               Messages.getString("AcquireImportDialog.add_name_msg"),
               Messages.getString("AcquireImportDialog.add_name_title"),
               JOptionPane.ERROR_MESSAGE);

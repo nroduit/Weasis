@@ -14,6 +14,8 @@ import java.awt.Color;
 import java.awt.FlowLayout;
 import java.awt.Window;
 import java.awt.event.WindowEvent;
+import javax.swing.BorderFactory;
+import javax.swing.DefaultBoundedRangeModel;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JColorChooser;
@@ -21,14 +23,20 @@ import javax.swing.JDialog;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JSpinner;
+import javax.swing.border.TitledBorder;
 import org.weasis.core.Messages;
+import org.weasis.core.api.gui.util.DecFormatter;
 import org.weasis.core.api.gui.util.GuiUtils;
+import org.weasis.core.api.gui.util.JSliderW;
+import org.weasis.core.api.gui.util.SliderChangeListener;
+import org.weasis.core.api.util.FontItem;
 import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.api.util.ResourceUtil.ActionIcon;
 import org.weasis.core.util.StringUtil;
 
 public abstract class PropertiesDialog extends JDialog {
 
+  public static final String FILL_OPACITY = "Fill opacity";
   protected Color color;
 
   private final JPanel panel1 = new JPanel();
@@ -39,15 +47,18 @@ public abstract class PropertiesDialog extends JDialog {
   protected final JLabel jLabelLineColor = new JLabel();
   protected final JButton jButtonColor = new JButton(ResourceUtil.getIcon(ActionIcon.PIPETTE));
   protected final JCheckBox jCheckBoxFilled = new JCheckBox();
+  protected final JSliderW slicerOpacity = createOpacitySlider(FILL_OPACITY);
   protected final JButton overrideMultipleValues =
       new JButton(Messages.getString("PropertiesDialog.header_override"));
   protected final JCheckBox checkBoxColor = new JCheckBox();
+  protected final JCheckBox checkBoxFillOpacity = new JCheckBox();
   protected final JCheckBox checkBoxWidth = new JCheckBox();
   protected final JCheckBox checkBoxFill = new JCheckBox();
 
   protected final JPanel panelColor = GuiUtils.getFlowLayoutPanel(FlowLayout.TRAILING, 2, 5);
   protected final JPanel panelLine = GuiUtils.getFlowLayoutPanel(FlowLayout.TRAILING, 2, 5);
   protected final JPanel panelFilled = GuiUtils.getFlowLayoutPanel(FlowLayout.TRAILING, 2, 5);
+  protected final JPanel panelOpacity = GuiUtils.getFlowLayoutPanel(FlowLayout.TRAILING, 2, 5);
 
   protected PropertiesDialog(Window parent, String title) {
     super(parent, title, ModalityType.APPLICATION_MODAL);
@@ -70,6 +81,7 @@ public abstract class PropertiesDialog extends JDialog {
     jButtonColor.addActionListener(e -> openColorChooser((JButton) e.getSource()));
 
     jCheckBoxFilled.setText(Messages.getString("PropertiesDialog.fill_shape"));
+    slicerOpacity.addChangeListener(a -> updateSlider(slicerOpacity, FILL_OPACITY));
 
     getContentPane().add(panel1);
 
@@ -96,6 +108,11 @@ public abstract class PropertiesDialog extends JDialog {
           JCheckBox box = (JCheckBox) e.getSource();
           jCheckBoxFilled.setEnabled(box.isSelected());
         });
+    checkBoxFillOpacity.addActionListener(
+        e -> {
+          JCheckBox box = (JCheckBox) e.getSource();
+          slicerOpacity.setEnabled(box.isSelected());
+        });
 
     JPanel centerPanel = GuiUtils.getVerticalBoxLayoutPanel();
     centerPanel.add(GuiUtils.getFlowLayoutPanel(FlowLayout.TRAILING, 2, 5, overrideMultipleValues));
@@ -107,10 +124,12 @@ public abstract class PropertiesDialog extends JDialog {
     panelLine.add(spinnerLineWidth);
 
     panelFilled.add(jCheckBoxFilled);
+    panelOpacity.add(slicerOpacity);
 
     centerPanel.add(panelColor);
     centerPanel.add(panelLine);
     centerPanel.add(panelFilled);
+    centerPanel.add(panelOpacity);
     centerPanel.add(GuiUtils.boxVerticalStrut(10));
     panel1.add(centerPanel, BorderLayout.CENTER);
   }
@@ -122,6 +141,32 @@ public abstract class PropertiesDialog extends JDialog {
       quitWithoutSaving();
     }
     super.processWindowEvent(e);
+  }
+
+  public static float updateSlider(JSliderW slider, String titlePrefix) {
+    float value = slider.getValue() / 100f;
+    SliderChangeListener.updateSliderProperties(slider, getOpacityTitle(titlePrefix, value));
+    return value;
+  }
+
+  private static String getOpacityTitle(String titlePrefix, float value) {
+    return titlePrefix + StringUtil.COLON_AND_SPACE + DecFormatter.percentTwoDecimal(value);
+  }
+
+  public static JSliderW createOpacitySlider(String titlePrefix) {
+    DefaultBoundedRangeModel model = new DefaultBoundedRangeModel(100, 0, 0, 100);
+    TitledBorder titledBorder =
+        new TitledBorder(
+            BorderFactory.createEmptyBorder(),
+            getOpacityTitle(titlePrefix, model.getValue() / 100f),
+            TitledBorder.LEADING,
+            TitledBorder.DEFAULT_POSITION,
+            FontItem.MEDIUM.getFont(),
+            null);
+    JSliderW s = new JSliderW(model);
+    s.setDisplayValueInTitle(true);
+    s.setBorder(titledBorder);
+    return s;
   }
 
   protected abstract void okAction();

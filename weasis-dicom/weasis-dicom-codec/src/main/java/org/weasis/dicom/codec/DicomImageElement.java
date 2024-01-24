@@ -50,7 +50,6 @@ import org.weasis.dicom.codec.display.OverlayOp;
 import org.weasis.dicom.codec.display.ShutterOp;
 import org.weasis.dicom.codec.display.WindowAndPresetsOp;
 import org.weasis.dicom.codec.geometry.GeometryOfSlice;
-import org.weasis.dicom.codec.utils.DicomMediaUtils;
 import org.weasis.dicom.codec.utils.Ultrasound;
 import org.weasis.dicom.param.AttributeEditorContext;
 import org.weasis.opencv.data.ImageCV;
@@ -104,7 +103,7 @@ public class DicomImageElement extends ImageElement implements DicomElement {
     }
     if (val == null || val.length != 2) {
       val = TagD.getTagValue(mediaIO, Tag.NominalScannedPixelSpacing, double[].class);
-      pixelSizeCalibrationDescription = val == null ? null : "At scanner";
+      pixelSizeCalibrationDescription = val == null ? null : "At scanner"; // NON-NLS
     }
 
     if (val != null && val.length == 2 && val[0] > 0.0 && val[1] > 0.0) {
@@ -145,9 +144,9 @@ public class DicomImageElement extends ImageElement implements DicomElement {
           Ultrasound.getUniqueSpatialRegion(getMediaReader().getDicomObject());
       if (spatialCalibration != null) {
         Double calibX =
-            DicomMediaUtils.getDoubleFromDicomElement(spatialCalibration, Tag.PhysicalDeltaX, null);
+            DicomUtils.getDoubleFromDicomElement(spatialCalibration, Tag.PhysicalDeltaX, null);
         Double calibY =
-            DicomMediaUtils.getDoubleFromDicomElement(spatialCalibration, Tag.PhysicalDeltaY, null);
+            DicomUtils.getDoubleFromDicomElement(spatialCalibration, Tag.PhysicalDeltaY, null);
         if (calibX != null && calibY != null) {
           calibX = Math.abs(calibX);
           calibY = Math.abs(calibY);
@@ -179,8 +178,7 @@ public class DicomImageElement extends ImageElement implements DicomElement {
   private double[] getMagnifiedPixelSpacing(boolean useMagnificationFactor) {
     double[] val = TagD.getTagValue(mediaIO, Tag.ImagerPixelSpacing, double[].class);
     // Follows D. Clunie recommendations
-    pixelSizeCalibrationDescription =
-        val == null ? null : Messages.getString("DicomImageElement.detector");
+    pixelSizeCalibrationDescription = val == null ? null : "At Detector"; // NON-NLS
     if (useMagnificationFactor && val != null && val.length == 2 && val[0] > 0.0 && val[1] > 0.0) {
       Double estimatedFactor =
           TagD.getTagValue(mediaIO, Tag.EstimatedRadiographicMagnificationFactor, Double.class);
@@ -196,7 +194,7 @@ public class DicomImageElement extends ImageElement implements DicomElement {
       if (estimatedFactor != null && estimatedFactor > 0) {
         val[0] = val[0] / estimatedFactor;
         val[1] = val[1] / estimatedFactor;
-        pixelSizeCalibrationDescription = "Magnified";
+        pixelSizeCalibrationDescription = "Magnified"; // NON-NLS
       }
     }
     return val;

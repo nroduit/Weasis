@@ -9,29 +9,74 @@
  */
 package org.weasis.core.api.gui.util;
 
+import java.util.concurrent.atomic.AtomicInteger;
 import javax.swing.SpinnerNumberModel;
+import javax.swing.Timer;
 import javax.swing.UIManager;
 import javax.swing.border.TitledBorder;
 import org.weasis.core.Messages;
 import org.weasis.core.api.gui.util.GuiUtils.IconColor;
+import org.weasis.core.util.MathUtil;
 import org.weasis.core.util.StringUtil;
 
 public abstract class SliderCineListener extends SliderChangeListener {
+
   public enum TIME {
     SECOND,
     MINUTE,
     HOUR
   }
 
+  protected volatile boolean sweeping = false;
+  private volatile boolean backward = false;
+
+  private volatile long startTime;
+  private volatile long spentTime;
+
+  private final AtomicInteger iteration = new AtomicInteger(0);
+
   private final TIME time;
   private final SpinnerNumberModel speedModel;
+
+  private final Timer timer =
+      new Timer(
+          1000 / 20,
+          a -> {
+            int step = (int) (getSpeed() / 5);
+            if (step <= 0) {
+              step = 1;
+            }
+            if (iteration.getAndIncrement() % step == 0) {
+              long prevStartTime = startTime;
+              startTime = System.currentTimeMillis();
+              if (iteration.get() > step) {
+                spentTime = (System.currentTimeMillis() - prevStartTime) / 1000;
+              } else {
+                spentTime = 0;
+              }
+            }
+            int offset = backward ? -1 : 1;
+            int frameIndex = getSliderValue() + offset;
+            if (frameIndex > getSliderMax()) {
+              if (sweeping) {
+                backward = true;
+                frameIndex = frameIndex - 2;
+              } else {
+                frameIndex = getSliderMin();
+              }
+            } else if (frameIndex < getSliderMin()) {
+              backward = false;
+              frameIndex = getSliderMin();
+            }
+            setSliderValue(frameIndex);
+          });
 
   protected SliderCineListener(
       Feature<? extends ActionState> action,
       int min,
       int max,
       int value,
-      int speed,
+      double speed,
       TIME time,
       double mouseSensitivity) {
     this(action, min, max, value, speed, time);
@@ -39,35 +84,46 @@ public abstract class SliderCineListener extends SliderChangeListener {
   }
 
   protected SliderCineListener(
-      Feature<? extends ActionState> action, int min, int max, int value, int speed, TIME time) {
+      Feature<? extends ActionState> action, int min, int max, int value, double speed, TIME time) {
     super(action, min, max, value);
     this.time = time;
-    speedModel = new SpinnerNumberModel(speed, 1, 200, 1);
-    speedModel.addChangeListener(
-        e -> setSpeed((Integer) ((SpinnerNumberModel) e.getSource()).getValue()));
+    speedModel = new SpinnerNumberModel(speed, 0.01, 90.0, 1.0);
+    speedModel.addChangeListener(a -> updateSpeed());
   }
 
-  public abstract void start();
+  public void start() {
+    if (!timer.isRunning() && getSliderMax() - getSliderMin() > 0) {
+      timer.setDelay((int) (1000 / getSpeed()));
+      iteration.set(0);
+      timer.start();
+    }
+  }
 
-  public abstract void stop();
+  public void stop() {
+    if (timer.isRunning()) {
+      timer.stop();
+    }
+  }
 
-  public abstract boolean isCining();
+  public boolean isCining() {
+    return timer.isRunning();
+  }
 
-  public int getSpeed() {
-    return (Integer) speedModel.getValue();
+  public double getSpeed() {
+    return (Double) speedModel.getValue();
   }
 
   @Override
   public void updateSliderProperties(JSliderW slider) {
-    int rate = getCurrentCineRate();
+    double rate = getCurrentCineRate();
     StringBuilder buffer = new StringBuilder(Messages.getString("SliderCineListener.img"));
     buffer.append(StringUtil.COLON_AND_SPACE);
     buffer.append(getValueToDisplay());
 
     if (slider.isDisplayValueInTitle() && slider.getBorder() instanceof TitledBorder titledBorder) {
-      if (rate > 0) {
+      if (MathUtil.isDifferentFromZero(rate)) {
         buffer.append(" (");
-        buffer.append(rate);
+        buffer.append(DecFormatter.twoDecimal(rate));
         if (TIME.SECOND.equals(time)) {
           buffer.append(Messages.getString("SliderCineListener.fps"));
         } else if (TIME.MINUTE.equals(time)) {
@@ -78,7 +134,7 @@ public abstract class SliderCineListener extends SliderChangeListener {
         buffer.append(")");
       }
       titledBorder.setTitleColor(
-          rate > 0 && rate < (getSpeed() - 1)
+          rate > 0 && Math.abs(rate - getSpeed()) > getSpeed() / 20.0
               ? IconColor.ACTIONS_RED.getColor()
               : UIManager.getColor("TitledBorder.titleColor"));
       titledBorder.setTitle(buffer.toString());
@@ -88,15 +144,33 @@ public abstract class SliderCineListener extends SliderChangeListener {
     }
   }
 
-  public int getCurrentCineRate() {
-    return 0;
+  public double getCurrentCineRate() {
+    if (isCining()) {
+      double time = spentTime;
+      if (time == 0) {
+        return 1000.0 / timer.getDelay();
+      }
+      return spentTime;
+    }
+    return 0.0;
   }
 
-  public void setSpeed(int speed) {
+  public void setSpeed(double speed) {
     speedModel.setValue(speed);
+  }
+
+  protected void updateSpeed() {
+    if (timer.isRunning()) {
+      iteration.set(0);
+      timer.setDelay((int) (1000 / getSpeed()));
+    }
   }
 
   public SpinnerNumberModel getSpeedModel() {
     return speedModel;
+  }
+
+  public void setSweeping(boolean sweep) {
+    this.sweeping = sweep;
   }
 }

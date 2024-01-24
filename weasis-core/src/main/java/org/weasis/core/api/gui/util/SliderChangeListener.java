@@ -287,16 +287,15 @@ public abstract class SliderChangeListener extends MouseActionAdapter
     }
 
     final Hashtable<Integer, JLabel> table = new Hashtable<>();
-    GuiExecutor.instance()
-        .invokeAndWait(
-            () -> {
-              for (int i = 0; i < div; i++) {
-                int index = i * spacing + min;
-                table.put(
-                    index,
-                    new JLabel(getDisplayedModelValue(i * spacing + min, max, realMin, realMax)));
-              }
-            });
+    GuiExecutor.invokeAndWait(
+        () -> {
+          for (int i = 0; i < div; i++) {
+            int index = i * spacing + min;
+            table.put(
+                index,
+                new JLabel(getDisplayedModelValue(i * spacing + min, max, realMin, realMax)));
+          }
+        });
 
     slider.setLabelTable(table);
     SliderChangeListener.setFont(slider, FontItem.MINI.getFont());

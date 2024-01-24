@@ -41,9 +41,9 @@ public class RemotePrefService {
       String url, Map<String, String> serverProp, String user, String profile) {
     this.remotePrefURL = Objects.requireNonNull(url);
     this.user = Objects.requireNonNull(user);
-    this.localSessionUser = Utils.getEmptytoFalse(serverProp.get("weasis.pref.local.session"));
+    this.localSessionUser = Utils.getEmptyToFalse(serverProp.get("weasis.pref.local.session"));
     this.storeLocalSession =
-        Utils.getEmptytoFalse(serverProp.get("weasis.pref.store.local.session"));
+        Utils.getEmptyToFalse(serverProp.get("weasis.pref.store.local.session"));
     this.profile = Objects.requireNonNull(profile);
   }
 

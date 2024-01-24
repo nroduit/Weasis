@@ -17,11 +17,5 @@
         <include>**/*</include>
       </includes>
     </fileSet>
-    <fileSet filtered="true" encoding="UTF-8">
-      <directory>conf</directory>
-      <includes>
-        <include>**/*.properties</include>
-      </includes>
-    </fileSet>
   </fileSets>
 </archetype-descriptor>

@@ -25,7 +25,7 @@ public class AnnotationGraphicTest extends GraphicTester<AnnotationGraphic> {
   private static final String XML_1 = "/graphic/annotation/annotation.graphic.1.xml"; // NON-NLS
 
   static final String BASIC_TPL =
-      "<annotation fill=\"%s\" showLabel=\"%s\" thickness=\"%s\" uuid=\"%s\">" // NON-NLS
+      "<annotation fillOpacity=\"%s\" fill=\"%s\" showLabel=\"%s\" thickness=\"%s\" uuid=\"%s\">" // NON-NLS
           + "<paint rgb=\"%s\"/>" // NON-NLS
           + "<pts/>" // NON-NLS
           + "</annotation>"; // NON-NLS
@@ -55,6 +55,7 @@ public class AnnotationGraphicTest extends GraphicTester<AnnotationGraphic> {
   @Override
   public Object[] getParameters() {
     return new Object[] {
+      Graphic.DEFAULT_FILL_OPACITY,
       Graphic.DEFAULT_FILLED,
       Graphic.DEFAULT_LABEL_VISIBLE,
       Graphic.DEFAULT_LINE_THICKNESS,

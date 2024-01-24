@@ -13,7 +13,6 @@ import bibliothek.gui.dock.common.CLocation;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
-import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.GridLayout;
 import java.awt.Window;
@@ -44,6 +43,7 @@ import org.weasis.core.api.gui.util.Feature;
 import org.weasis.core.api.gui.util.Feature.ComboItemListenerValue;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.JToggleButtonGroup;
+import org.weasis.core.api.gui.util.WinUtil;
 import org.weasis.core.api.image.util.MeasurableLayer;
 import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.api.media.data.ImageElement;
@@ -113,32 +113,10 @@ public class MeasureTool extends PluginTool implements GraphicSelectionListener 
     transform.add(Box.createVerticalStrut(5));
 
     JLabel label = new JLabel(Messages.getString("MeasureToolBar.line") + StringUtil.COLON);
-    JButton button = new JButton(ResourceUtil.getIcon(ActionIcon.PIPETTE));
-    button.setToolTipText(Messages.getString("MeasureTool.pick"));
-    button.addActionListener(
-        e -> {
-          Color newColor =
-              JColorChooser.showDialog(
-                  SwingUtilities.getWindowAncestor(MeasureTool.this),
-                  Messages.getString("MeasureTool.pick_color"),
-                  viewSetting.getLineColor());
-          if (newColor != null) {
-            viewSetting.setLineColor(newColor);
-            updateMeasureProperties(viewSetting);
-          }
-        });
+    JButton button = buildLineColorButton(this);
 
     JSpinner spinner = new JSpinner();
-    GuiUtils.setNumberModel(spinner, viewSetting.getLineWidth(), 1, 8, 1);
-    spinner.addChangeListener(
-        e -> {
-          Object val = ((JSpinner) e.getSource()).getValue();
-
-          if (val instanceof Integer intVal) {
-            viewSetting.setLineWidth(intVal);
-            updateMeasureProperties(viewSetting);
-          }
-        });
+    viewSetting.initLineWidthSpinner(spinner);
     transform.add(GuiUtils.getFlowLayoutPanel(label, button, spinner));
 
     eventManager
@@ -195,20 +173,18 @@ public class MeasureTool extends PluginTool implements GraphicSelectionListener 
           Window win = SwingUtilities.getWindowAncestor(MeasureTool.this);
           ColorLayerUI layer = ColorLayerUI.createTransparentLayerUI(win.getParent());
           PreferenceDialog dialog = new PreferenceDialog(win);
-          dialog.showPage(LABEL_PREF_NAME);
+          dialog.showPage(BUTTON_NAME);
           ColorLayerUI.showCenterScreen(dialog, layer);
         });
     transform.add(GuiUtils.getFlowLayoutPanel(btnGeneralOptions));
     return transform;
   }
 
-  private static void updateMeasureProperties(final ViewSetting setting) {
-    if (setting != null) {
-      MeasureToolBar.getMeasureGraphicList()
-          .forEach(g -> MeasureToolBar.applyDefaultSetting(setting, g));
-      MeasureToolBar.getDrawGraphicList()
-          .forEach(g -> MeasureToolBar.applyDefaultSetting(setting, g));
-    }
+  public static void updateMeasureProperties() {
+    MeasureToolBar.getMeasureGraphicList()
+        .forEach(g -> MeasureToolBar.applyDefaultSetting(viewSetting, g));
+    MeasureToolBar.getDrawGraphicList()
+        .forEach(g -> MeasureToolBar.applyDefaultSetting(viewSetting, g));
   }
 
   public JPanel getSelectedMeasurePanel() {
@@ -242,6 +218,24 @@ public class MeasureTool extends PluginTool implements GraphicSelectionListener 
   @Override
   protected void changeToolWindowAnchor(CLocation clocation) {
     // Do nothing
+  }
+
+  public static JButton buildLineColorButton(Component c) {
+    JButton button = new JButton(ResourceUtil.getIcon(ActionIcon.PIPETTE));
+    button.setToolTipText(Messages.getString("MeasureTool.pick"));
+    button.addActionListener(
+        e -> {
+          Color newColor =
+              JColorChooser.showDialog(
+                  WinUtil.getValidComponent(c),
+                  Messages.getString("MeasureTool.pick_color"),
+                  viewSetting.getLineColor());
+          if (newColor != null) {
+            viewSetting.setLineColor(newColor);
+            updateMeasureProperties();
+          }
+        });
+    return button;
   }
 
   public static JTable createMultipleRenderingTable(TableModel model) {
@@ -278,15 +272,7 @@ public class MeasureTool extends PluginTool implements GraphicSelectionListener 
       };
       jtable.setModel(new SimpleTableModel(headers, getLabels(measList)));
       jtable.getColumnModel().getColumn(1).setCellRenderer(new TableNumberRenderer());
-      int height =
-          (jtable.getRowHeight() + jtable.getRowMargin()) * jtable.getRowCount()
-              + jtable.getTableHeader().getHeight()
-              + 5;
-      tableContainer.setPreferredSize(
-          new Dimension(jtable.getColumnModel().getTotalColumnWidth(), height));
-      tableContainer.add(jtable.getTableHeader(), BorderLayout.PAGE_START);
-      tableContainer.add(jtable, BorderLayout.CENTER);
-      TableColumnAdjuster.pack(jtable);
+      TableColumnAdjuster.adjustPreferredSizeForViewPort(jtable, tableContainer);
     } else {
       tableContainer.setPreferredSize(GuiUtils.getDimension(50, 50));
     }

@@ -332,7 +332,7 @@ public class DicomVolTexture extends VolumeTexture implements MediaSeriesGroup {
 
   protected void firePropertyChange(final Object source, final String name, final Object newValue) {
     PropertyChangeEvent event = new PropertyChangeEvent(source, name, null, newValue);
-    GuiExecutor.instance().execute(() -> changeSupport.firePropertyChange(event));
+    GuiExecutor.execute(() -> changeSupport.firePropertyChange(event));
   }
 
   public void setPixelSpacingUnit(Unit pixelSpacingUnit) {

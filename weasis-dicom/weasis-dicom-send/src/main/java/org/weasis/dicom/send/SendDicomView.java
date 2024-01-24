@@ -36,6 +36,7 @@ import org.weasis.core.api.gui.util.AbstractItemDialogPage;
 import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.gui.util.GuiUtils;
+import org.weasis.core.api.gui.util.WinUtil;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.Series;
@@ -189,15 +190,13 @@ public class SendDicomView extends AbstractItemDialogPage implements ExportDicom
       DicomProgress dicomProgress = new DicomProgress();
       dicomProgress.addProgressListener(
           p ->
-              GuiExecutor.instance()
-                  .execute(
-                      () -> {
-                        int c =
-                            p.getNumberOfCompletedSuboperations()
-                                + p.getNumberOfFailedSuboperations();
-                        int r = p.getNumberOfRemainingSuboperations();
-                        progressBar.setValue((c * 100) / (c + r));
-                      }));
+              GuiExecutor.execute(
+                  () -> {
+                    int c =
+                        p.getNumberOfCompletedSuboperations() + p.getNumberOfFailedSuboperations();
+                    int r = p.getNumberOfRemainingSuboperations();
+                    progressBar.setValue((c * 100) / (c + r));
+                  }));
       t.addCancelListener(dicomProgress);
 
       Object selectedItem = comboNode.getSelectedItem();
@@ -253,16 +252,15 @@ public class SendDicomView extends AbstractItemDialogPage implements ExportDicom
     if (e != null) {
       LOGGER.error(title, e.getMessage());
     }
-    GuiExecutor.instance()
-        .execute(
-            () ->
-                JOptionPane.showMessageDialog(
-                    exportTree,
-                    state == null
-                        ? Objects.requireNonNull(e).getMessage()
-                        : StringUtil.getTruncatedString(state.getMessage(), 150, Suffix.THREE_PTS),
-                    getTitle(),
-                    JOptionPane.ERROR_MESSAGE));
+    GuiExecutor.execute(
+        () ->
+            JOptionPane.showMessageDialog(
+                WinUtil.getValidComponent(exportTree),
+                state == null
+                    ? Objects.requireNonNull(e).getMessage()
+                    : StringUtil.getTruncatedString(state.getMessage(), 150, Suffix.THREE_PTS),
+                getTitle(),
+                JOptionPane.ERROR_MESSAGE));
   }
 
   private void writeDicom(ExplorerTask<Boolean, String> task, File writeDir, CheckTreeModel model)

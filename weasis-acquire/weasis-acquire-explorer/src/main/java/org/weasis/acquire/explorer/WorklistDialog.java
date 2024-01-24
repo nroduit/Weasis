@@ -31,6 +31,7 @@ import org.dcm4che3.net.Status;
 import org.weasis.acquire.explorer.core.bean.DefaultTaggable;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.gui.util.GuiUtils;
+import org.weasis.core.api.gui.util.WinUtil;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.util.FontItem;
 import org.weasis.core.ui.util.SimpleTableModel;
@@ -172,11 +173,13 @@ public class WorklistDialog extends JDialog {
       jtable.getSelectionModel().addListSelectionListener(selectionListener);
     } else {
       if (state.getStatus() != Status.Success) {
-        GuiExecutor.instance()
-            .execute(
-                () ->
-                    JOptionPane.showMessageDialog(
-                        this, state.getMessage(), null, JOptionPane.ERROR_MESSAGE));
+        GuiExecutor.execute(
+            () ->
+                JOptionPane.showMessageDialog(
+                    WinUtil.getValidComponent(this),
+                    state.getMessage(),
+                    null,
+                    JOptionPane.ERROR_MESSAGE));
         dispose();
         throw new IllegalStateException(state.getMessage());
       }

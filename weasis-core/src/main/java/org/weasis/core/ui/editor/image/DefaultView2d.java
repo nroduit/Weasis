@@ -121,6 +121,8 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     REAL
   }
 
+  public static final int MINIMAL_IMAGES_FOR_3D = 5;
+
   public static final GraphicClipboard GRAPHIC_CLIPBOARD = new GraphicClipboard();
 
   public static final Cursor EDIT_CURSOR =
@@ -402,6 +404,12 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     if (oldSequence != null
         && oldSequence.equals(newSeries)
         && imageLayer.getSourceImage() != null) {
+      if (eventManager.isActionRegistered(ActionW.VOLUME)
+          && !eventManager.isActionEnabled(ActionW.VOLUME)
+          && newSeries.size(null) >= MINIMAL_IMAGES_FOR_3D) {
+        // Force update to activate 3D buttons
+        eventManager.updateComponentsListener(this);
+      }
       return;
     }
 
@@ -494,6 +502,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     boolean updateGraphics = false;
     imageLayer.setEnableDispOperations(false);
     if (img == null) {
+      eventManager.getAction(ActionW.SCROLL_SERIES).ifPresent(SliderCineListener::stop);
       actionsInView.put(ActionW.SPATIAL_UNIT.cmd(), Unit.PIXEL);
       eventManager
           .getAction(ActionW.SPATIAL_UNIT)

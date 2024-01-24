@@ -9,6 +9,7 @@
  */
 package org.weasis.dicom.explorer.rs;
 
+import jakarta.json.Json;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URLEncoder;
@@ -19,9 +20,9 @@ import java.util.Date;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
-import javax.json.Json;
 import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Tag;
+import org.dcm4che3.img.util.DicomUtils;
 import org.dcm4che3.json.JSONReader;
 import org.dcm4che3.json.JSONReader.Callback;
 import org.slf4j.Logger;
@@ -40,7 +41,6 @@ import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.codec.DicomSeries;
 import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.TagD.Level;
-import org.weasis.dicom.codec.utils.DicomMediaUtils;
 import org.weasis.dicom.codec.utils.PatientComparator;
 import org.weasis.dicom.codec.utils.SeriesInstanceList;
 import org.weasis.dicom.explorer.DicomModel;
@@ -484,7 +484,7 @@ public class RsQueryResult extends AbstractQueryResult {
       Attributes instanceDataSet, SeriesInstanceList seriesInstanceList, String seriesRetrieveURL) {
     String sopUID = instanceDataSet.getString(Tag.SOPInstanceUID);
     Integer frame =
-        DicomMediaUtils.getIntegerFromDicomElement(instanceDataSet, Tag.InstanceNumber, null);
+        DicomUtils.getIntegerFromDicomElement(instanceDataSet, Tag.InstanceNumber, null);
 
     SopInstance sop = seriesInstanceList.getSopInstance(sopUID, frame);
     if (sop == null) {

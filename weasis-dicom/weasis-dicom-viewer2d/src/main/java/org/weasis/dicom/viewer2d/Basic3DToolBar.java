@@ -28,7 +28,7 @@ import org.weasis.dicom.viewer2d.mip.MipPopup.MipDialog;
 import org.weasis.dicom.viewer2d.mip.MipView;
 import org.weasis.dicom.viewer2d.mpr.MprFactory;
 
-public class Basic3DToolBar<DicomImageElement> extends WtoolBar {
+public class Basic3DToolBar extends WtoolBar {
 
   public Basic3DToolBar(int index) {
     super(Messages.getString("Basic3DToolBar.title"), index);

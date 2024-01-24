@@ -21,7 +21,7 @@ public class CobbAngleToolGraphicTest extends GraphicTester<CobbAngleToolGraphic
   private static final String XML_1 = "/graphic/cobbAngle/cobbAngle.graphic.1.xml"; // NON-NLS
 
   public static final String BASIC_TPL =
-      "<cobbAngle fill=\"%s\" showLabel=\"%s\" thickness=\"%s\" uuid=\"%s\">" // NON-NLS
+      "<cobbAngle fillOpacity=\"%s\" fill=\"%s\" showLabel=\"%s\" thickness=\"%s\" uuid=\"%s\">" // NON-NLS
           + "<paint rgb=\"%s\"/>" // NON-NLS
           + "<pts/>" // NON-NLS
           + "</cobbAngle>"; // NON-NLS
@@ -49,6 +49,7 @@ public class CobbAngleToolGraphicTest extends GraphicTester<CobbAngleToolGraphic
   @Override
   public Object[] getParameters() {
     return new Object[] {
+      Graphic.DEFAULT_FILL_OPACITY,
       Graphic.DEFAULT_FILLED,
       Graphic.DEFAULT_LABEL_VISIBLE,
       Graphic.DEFAULT_LINE_THICKNESS,

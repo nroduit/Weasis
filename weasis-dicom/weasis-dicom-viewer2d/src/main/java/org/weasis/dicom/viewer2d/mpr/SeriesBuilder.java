@@ -36,6 +36,7 @@ import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.gui.util.Filter;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.gui.util.GuiUtils;
+import org.weasis.core.api.gui.util.WinUtil;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.TagW;
@@ -234,19 +235,18 @@ public class SeriesBuilder {
                     needBuild[i] = group == null;
                     if (!needBuild[i]) {
                       final MprView mprView = recView[i];
-                      GuiExecutor.instance()
-                          .execute(
-                              () -> {
-                                mprView.setSeries((MediaSeries<DicomImageElement>) group);
-                                // Copy the synch values from the main view
-                                for (String action :
-                                    MprContainer.defaultMpr.getSynchData().getActions().keySet()) {
-                                  mprView.setActionsInView(action, view.getActionValue(action));
-                                }
-                                mprView.zoom(mainView.getViewModel().getViewScale());
-                                mprView.center();
-                                mprView.repaint();
-                              });
+                      GuiExecutor.execute(
+                          () -> {
+                            mprView.setSeries((MediaSeries<DicomImageElement>) group);
+                            // Copy the synch values from the main view
+                            for (String action :
+                                MprContainer.defaultMpr.getSynchData().getActions().keySet()) {
+                              mprView.setActionsInView(action, view.getActionValue(action));
+                            }
+                            mprView.zoom(mainView.getViewModel().getViewScale());
+                            mprView.center();
+                            mprView.repaint();
+                          });
                     }
                   }
                 }
@@ -254,25 +254,23 @@ public class SeriesBuilder {
 
               final int size = series.size(filter);
               final JProgressBar[] bar = new JProgressBar[2];
-              GuiExecutor.instance()
-                  .invokeAndWait(
-                      () -> {
-                        for (int i = 0; i < 2; i++) {
-                          if (needBuild[i]) {
-                            bar[i] = new JProgressBar(0, size);
-                            Dimension dim =
-                                new Dimension(
-                                    recView[i].getWidth() / 2, GuiUtils.getScaleLength(30));
-                            bar[i].setSize(dim);
-                            bar[i].setPreferredSize(dim);
-                            bar[i].setMaximumSize(dim);
-                            bar[i].setValue(0);
-                            bar[i].setStringPainted(true);
-                            recView[i].setProgressBar(bar[i]);
-                            recView[i].repaint();
-                          }
-                        }
-                      });
+              GuiExecutor.invokeAndWait(
+                  () -> {
+                    for (int i = 0; i < 2; i++) {
+                      if (needBuild[i]) {
+                        bar[i] = new JProgressBar(0, size);
+                        Dimension dim =
+                            new Dimension(recView[i].getWidth() / 2, GuiUtils.getScaleLength(30));
+                        bar[i].setSize(dim);
+                        bar[i].setPreferredSize(dim);
+                        bar[i].setMaximumSize(dim);
+                        bar[i].setValue(0);
+                        bar[i].setStringPainted(true);
+                        recView[i].setProgressBar(bar[i]);
+                        recView[i].repaint();
+                      }
+                    }
+                  });
 
               // Get the image in the middle of the series for having better default W/L values
               img =
@@ -332,20 +330,19 @@ public class SeriesBuilder {
                       }
                     }
 
-                    GuiExecutor.instance()
-                        .execute(
-                            () -> {
-                              mprView.setProgressBar(null);
-                              mprView.setSeries(dicomSeries);
-                              // Copy the synch values from the main view
-                              for (String action :
-                                  MprContainer.defaultMpr.getSynchData().getActions().keySet()) {
-                                mprView.setActionsInView(action, view.getActionValue(action));
-                              }
-                              mprView.zoom(mainView.getViewModel().getViewScale());
-                              mprView.center();
-                              mprView.repaint();
-                            });
+                    GuiExecutor.execute(
+                        () -> {
+                          mprView.setProgressBar(null);
+                          mprView.setSeries(dicomSeries);
+                          // Copy the synch values from the main view
+                          for (String action :
+                              MprContainer.defaultMpr.getSynchData().getActions().keySet()) {
+                            mprView.setActionsInView(action, view.getActionValue(action));
+                          }
+                          mprView.zoom(mainView.getViewModel().getViewScale());
+                          mprView.center();
+                          mprView.repaint();
+                        });
                   }
                 }
               }
@@ -376,15 +373,14 @@ public class SeriesBuilder {
 
     if (params.rotateOutputImg) {
       if (bar != null) {
-        GuiExecutor.instance()
-            .execute(
-                () -> {
-                  bar.setMaximum(newSeries.length);
-                  bar.setValue(0);
-                  // Force to reset the progress bar
-                  bar.updateUI();
-                  view.repaint();
-                });
+        GuiExecutor.execute(
+            () -> {
+              bar.setMaximum(newSeries.length);
+              bar.setValue(0);
+              // Force to reset the progress bar
+              bar.updateUI();
+              view.repaint();
+            });
       }
 
       pixSpacing = new double[] {origPixSize, sPixSize};
@@ -459,21 +455,20 @@ public class SeriesBuilder {
           newSeries[i].write(
               ImageProcessor.getRotatedImage(newSeries[i].read(), Core.ROTATE_90_CLOCKWISE));
         } catch (Exception e) {
-          FileUtil.delete(newSeries[i].getFile());
+          FileUtil.delete(newSeries[i].file());
           throw e;
         }
 
         if (bar != null) {
-          GuiExecutor.instance()
-              .execute(
-                  () -> {
-                    bar.setValue(bar.getValue() + 1);
-                    view.repaint();
-                  });
+          GuiExecutor.execute(
+              () -> {
+                bar.setValue(bar.getValue() + 1);
+                view.repaint();
+              });
         }
       }
       RawImageIO rawIO = new RawImageIO(newSeries[i], null);
-      rawIO.getFileCache().setOriginalTempFile(newSeries[i].getFile());
+      rawIO.getFileCache().setOriginalTempFile(newSeries[i].file());
       rawIO.setBaseAttributes(cpTags);
 
       // Tags with same values for all the Series
@@ -610,12 +605,11 @@ public class SeriesBuilder {
           lastPos = pos;
           index++;
           if (bar != null) {
-            GuiExecutor.instance()
-                .execute(
-                    () -> {
-                      bar.setValue(bar.getValue() + 1);
-                      view.repaint();
-                    });
+            GuiExecutor.execute(
+                () -> {
+                  bar.setValue(bar.getValue() + 1);
+                  view.repaint();
+                });
           }
         }
 
@@ -643,7 +637,7 @@ public class SeriesBuilder {
       for (int i = 0; i < newSeries.length; i++) {
         if (newSeries[i] != null) {
           if (abort[0]) {
-            FileUtil.delete(newSeries[i].getFile());
+            FileUtil.delete(newSeries[i].file());
           } else {
             newSeries[i].write(builImgs[i]);
           }
@@ -699,23 +693,22 @@ public class SeriesBuilder {
 
   public static void confirmMessage(
       final Component view, final String message, final boolean[] abort) {
-    GuiExecutor.instance()
-        .invokeAndWait(
-            () -> {
-              int usrChoice =
-                  JOptionPane.showConfirmDialog(
-                      view,
-                      message + Messages.getString("SeriesBuilder.add_warn"),
-                      MprFactory.NAME,
-                      JOptionPane.YES_NO_OPTION,
-                      JOptionPane.QUESTION_MESSAGE);
-              if (usrChoice == JOptionPane.NO_OPTION) {
-                abort[0] = true;
-              } else {
-                // bypass for other similar messages
-                abort[1] = true;
-              }
-            });
+    GuiExecutor.invokeAndWait(
+        () -> {
+          int usrChoice =
+              JOptionPane.showConfirmDialog(
+                  WinUtil.getValidComponent(view),
+                  message + Messages.getString("SeriesBuilder.add_warn"),
+                  MprFactory.NAME,
+                  JOptionPane.YES_NO_OPTION,
+                  JOptionPane.QUESTION_MESSAGE);
+          if (usrChoice == JOptionPane.NO_OPTION) {
+            abort[0] = true;
+          } else {
+            // bypass for other similar messages
+            abort[1] = true;
+          }
+        });
     if (abort[0]) {
       throw new IllegalStateException(message);
     }

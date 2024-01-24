@@ -23,6 +23,7 @@ import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Tag;
 import org.dcm4che3.img.data.CIELab;
 import org.dcm4che3.img.util.DicomObjectUtil;
+import org.dcm4che3.img.util.DicomUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.media.data.ImageElement;
@@ -38,7 +39,6 @@ import org.weasis.core.ui.model.utils.exceptions.InvalidShapeException;
 import org.weasis.core.ui.serialize.XmlSerializer;
 import org.weasis.core.util.MathUtil;
 import org.weasis.dicom.codec.PresentationStateReader;
-import org.weasis.dicom.codec.utils.DicomMediaUtils;
 
 public class PrGraphicUtil {
   private static final Logger LOGGER = LoggerFactory.getLogger(PrGraphicUtil.class);
@@ -79,10 +79,10 @@ public class PrGraphicUtil {
     boolean isDisp = !dcmSR && "DISPLAY".equalsIgnoreCase(go.getString(Tag.GraphicAnnotationUnits));
 
     String type = go.getString(Tag.GraphicType);
-    Integer groupID = DicomMediaUtils.getIntegerFromDicomElement(go, Tag.GraphicGroupID, null);
+    Integer groupID = DicomUtils.getIntegerFromDicomElement(go, Tag.GraphicGroupID, null);
     boolean filled = getBooleanValue(go, Tag.GraphicFilled);
     Attributes style = go.getNestedDataset(Tag.LineStyleSequence);
-    Float thickness = DicomMediaUtils.getFloatFromDicomElement(style, Tag.LineThickness, 1.0f);
+    Float thickness = DicomUtils.getFloatFromDicomElement(style, Tag.LineThickness, 1.0f);
     boolean dashed = isDashedLine(style);
     Color color = getPatternColor(style, defaultColor);
 
@@ -90,7 +90,7 @@ public class PrGraphicUtil {
     color = getFillPatternColor(fillStyle, color);
 
     Graphic shape = null;
-    float[] points = DicomMediaUtils.getFloatArrayFromDicomElement(go, Tag.GraphicData, null);
+    float[] points = DicomUtils.getFloatArrayFromDicomElement(go, Tag.GraphicData, null);
     if (isDisp && inverse != null) {
       float[] dstpoints = new float[points.length];
       inverse.transform(points, 0, dstpoints, 0, points.length / 2);
@@ -296,8 +296,7 @@ public class PrGraphicUtil {
     if (style != null) {
       int[] rgb = CIELab.dicomLab2rgb(style.getInts(Tag.PatternOnColorCIELabValue));
       color = DicomObjectUtil.getRGBColor(0xFFFF, rgb);
-      Float fillOpacity =
-          DicomMediaUtils.getFloatFromDicomElement(style, Tag.PatternOnOpacity, null);
+      Float fillOpacity = DicomUtils.getFloatFromDicomElement(style, Tag.PatternOnOpacity, null);
       if (fillOpacity != null && fillOpacity < 1.0F) {
         int opacity = (int) (fillOpacity * 255);
         color = new Color((opacity << 24) | (color.getRGB() & 0x00ffffff), true);
@@ -333,10 +332,10 @@ public class PrGraphicUtil {
 
     String type = go.getString(Tag.CompoundGraphicType);
     String id = go.getString(Tag.CompoundGraphicInstanceID);
-    Integer groupID = DicomMediaUtils.getIntegerFromDicomElement(go, Tag.GraphicGroupID, null);
+    Integer groupID = DicomUtils.getIntegerFromDicomElement(go, Tag.GraphicGroupID, null);
     boolean filled = getBooleanValue(go, Tag.GraphicFilled);
     Attributes style = go.getNestedDataset(Tag.LineStyleSequence);
-    Float thickness = DicomMediaUtils.getFloatFromDicomElement(style, Tag.LineThickness, 1.0f);
+    Float thickness = DicomUtils.getFloatFromDicomElement(style, Tag.LineThickness, 1.0f);
     boolean dashed = isDashedLine(style);
     Color color = getPatternColor(style, defaultColor);
 
@@ -344,7 +343,7 @@ public class PrGraphicUtil {
     color = getFillPatternColor(fillStyle, color);
 
     Graphic shape = null;
-    float[] points = DicomMediaUtils.getFloatArrayFromDicomElement(go, Tag.GraphicData, null);
+    float[] points = DicomUtils.getFloatArrayFromDicomElement(go, Tag.GraphicData, null);
     if (isDisp && inverse != null) {
       float[] dstpoints = new float[points.length];
       inverse.transform(points, 0, dstpoints, 0, points.length / 2);

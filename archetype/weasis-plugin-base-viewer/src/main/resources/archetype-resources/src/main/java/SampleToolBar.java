@@ -8,10 +8,9 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import javax.swing.JButton;
 import org.weasis.core.api.gui.util.GuiUtils;
-import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.ui.util.WtoolBar;
 
-public class SampleToolBar<E extends ImageElement> extends WtoolBar {
+public class SampleToolBar extends WtoolBar {
 
     protected SampleToolBar() {
         super("Sample Toolbar", 400);

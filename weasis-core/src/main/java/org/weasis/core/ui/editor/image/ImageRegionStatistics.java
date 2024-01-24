@@ -64,24 +64,7 @@ public class ImageRegionStatistics {
         return Collections.emptyList();
       }
 
-      Shape roi = null;
-      if (shape != null) {
-        AffineTransform transform = layer.getShapeTransform();
-        Point offset = layer.getOffset();
-        if (offset != null) {
-          if (transform == null) {
-            transform = AffineTransform.getTranslateInstance(-offset.getX(), -offset.getY());
-          } else {
-            transform.translate(-offset.getX(), -offset.getY());
-          }
-        }
-        if (transform != null) {
-          // Rescale ROI, if needed
-          roi = transform.createTransformedShape(shape);
-        } else {
-          roi = shape;
-        }
-      }
+      Shape roi = getShape(layer, shape);
 
       // Always apply pixel padding (deactivate in Display has no effect in statistics)
       Integer paddingValue = (Integer) layer.getSourceTagValue(TagW.get("PixelPaddingValue"));
@@ -91,6 +74,28 @@ public class ImageRegionStatistics {
     return Collections.emptyList();
   }
 
+  private static Shape getShape(MeasurableLayer layer, Shape shape) {
+    Shape roi = null;
+    if (shape != null) {
+      AffineTransform transform = layer.getShapeTransform();
+      Point offset = layer.getOffset();
+      if (offset != null) {
+        if (transform == null) {
+          transform = AffineTransform.getTranslateInstance(-offset.getX(), -offset.getY());
+        } else {
+          transform.translate(-offset.getX(), -offset.getY());
+        }
+      }
+      if (transform != null) {
+        // Rescale ROI, if needed
+        roi = transform.createTransformedShape(shape);
+      } else {
+        roi = shape;
+      }
+    }
+    return roi;
+  }
+
   public static List<MeasureItem> getImageStatistics(MeasurableLayer layer) {
     return getImageStatistics(null, layer, true);
   }
@@ -98,80 +103,81 @@ public class ImageRegionStatistics {
   public static List<HistogramData> getHistogram(
       AbstractDragGraphicArea graphic, MeasurableLayer layer) {
     List<Mat> imgPr = prepareInputImages(graphic, layer);
-    if (imgPr.size() > 1) {
-      Mat srcImg = imgPr.get(0);
-      Mat mask = imgPr.get(1);
+    if (layer != null && layer.hasContent() && imgPr != null && imgPr.size() == 2) {
+      return getHistogram(imgPr.get(0), imgPr.get(1), layer);
+    }
+    return Collections.emptyList();
+  }
 
-      double pixMin = layer.getPixelMin();
-      double pixMax = layer.getPixelMax();
-
-      int channels = srcImg.channels();
-      Model colorModel = channels > 1 ? Model.RGB : Model.GRAY;
-      int[] selChannels = new int[channels];
-      for (int i = 0; i < selChannels.length; i++) {
-        selChannels[i] = i;
-      }
-
-      List<HistogramData> data = new ArrayList<>();
-      int datatype = ImageConversion.convertToDataType(srcImg.type());
-      boolean intVal = datatype >= DataBuffer.TYPE_BYTE && datatype < DataBuffer.TYPE_INT;
-      try {
-        int nbins = intVal ? (int) pixMax - (int) pixMin + 1 : 1024;
-        List<Mat> listHisto =
-            HistogramData.computeHistogram(
-                srcImg, mask, nbins, selChannels, colorModel, pixMin, pixMax);
-
-        ByteLut[] lut = colorModel.getByteLut();
-        DisplayByteLut[] displut = new DisplayByteLut[lut.length];
-
-        for (int i = 0; i < lut.length; i++) {
-          displut[i] = new DisplayByteLut(lut[i]);
-          Mat h = listHisto.get(i);
-          float[] histValues = new float[h.rows()];
-          h.get(0, 0, histValues);
-          data.add(
-              new HistogramData(
-                  histValues, displut[i], i, colorModel, null, pixMin, pixMax, layer));
-        }
-      } catch (Exception e) {
-        LOGGER.error("Build histogram", e);
-      }
-      return data;
+  public static List<HistogramData> getHistogram(Mat srcImg, Mat mask, MeasurableLayer layer) {
+    if (srcImg == null || layer == null || !layer.hasContent()) {
+      return Collections.emptyList();
     }
 
-    return Collections.emptyList();
+    double pixMin = layer.getPixelMin();
+    double pixMax = layer.getPixelMax();
+
+    int channels = srcImg.channels();
+    Model colorModel = channels > 1 ? Model.RGB : Model.GRAY;
+    int[] selChannels = new int[channels];
+    for (int i = 0; i < selChannels.length; i++) {
+      selChannels[i] = i;
+    }
+
+    List<HistogramData> data = new ArrayList<>();
+    int datatype = ImageConversion.convertToDataType(srcImg.type());
+    boolean intVal = datatype >= DataBuffer.TYPE_BYTE && datatype < DataBuffer.TYPE_INT;
+    try {
+      int binCount = intVal ? (int) pixMax - (int) pixMin + 1 : 1024;
+      List<Mat> histograms =
+          HistogramData.computeHistogram(
+              srcImg, mask, binCount, selChannels, colorModel, pixMin, pixMax);
+
+      ByteLut[] lut = colorModel.getByteLut();
+      DisplayByteLut[] luts = new DisplayByteLut[lut.length];
+
+      for (int i = 0; i < lut.length; i++) {
+        luts[i] = new DisplayByteLut(lut[i]);
+        Mat h = histograms.get(i);
+        float[] histValues = new float[h.rows()];
+        h.get(0, 0, histValues);
+        data.add(
+            new HistogramData(histValues, luts[i], i, colorModel, null, pixMin, pixMax, layer));
+      }
+    } catch (Exception e) {
+      LOGGER.error("Build histogram", e);
+    }
+    return data;
   }
 
   public static List<MeasureItem> getImageStatistics(
       AbstractDragGraphicArea graphic, MeasurableLayer layer, boolean releaseEvent) {
     if (layer != null && layer.hasContent()) {
       List<MeasureItem> measVal = new ArrayList<>();
-      if (releaseEvent
-          && (IMAGE_PIXELS.getComputed()
-              || IMAGE_MIN.getComputed()
-              || IMAGE_MAX.getComputed()
-              || IMAGE_MEDIAN.getComputed()
-              || IMAGE_MEAN.getComputed()
-              || IMAGE_STD.getComputed()
-              || IMAGE_SKEW.getComputed()
-              || IMAGE_KURTOSIS.getComputed()
-              || IMAGE_ENTROPY.getComputed())) {
-
+      if (releaseEvent && isOneComputed()) {
         List<HistogramData> hists = getHistogram(graphic, layer);
         for (int i = 0; i < hists.size(); i++) {
           HistogramData data = hists.get(i);
-          List<MeasureItem> mItems =
-              getStatistics(data, hists.size() == 1 ? null : data.getBandIndex());
-          if (i > 0) {
-            mItems.remove(0);
-          }
-          measVal.addAll(mItems);
+          Integer bandIndex = hists.size() == 1 ? null : data.getBandIndex();
+          measVal.addAll(getStatistics(data, bandIndex, i == 0));
         }
       }
       return measVal;
     }
 
     return Collections.emptyList();
+  }
+
+  private static boolean isOneComputed() {
+    return IMAGE_PIXELS.getComputed()
+        || IMAGE_MIN.getComputed()
+        || IMAGE_MAX.getComputed()
+        || IMAGE_MEDIAN.getComputed()
+        || IMAGE_MEAN.getComputed()
+        || IMAGE_STD.getComputed()
+        || IMAGE_SKEW.getComputed()
+        || IMAGE_KURTOSIS.getComputed()
+        || IMAGE_ENTROPY.getComputed();
   }
 
   private static void addMeasure(
@@ -189,7 +195,8 @@ public class ImageRegionStatistics {
     }
   }
 
-  public static List<MeasureItem> getStatistics(HistogramData data, Integer channelIndex) {
+  public static List<MeasureItem> getStatistics(
+      HistogramData data, Integer channelIndex, boolean imagePixels) {
     MeasurableLayer layer = data.getLayer();
     if (layer != null && layer.hasContent()) {
       float[] bins = data.getHistValues();
@@ -253,7 +260,9 @@ public class ImageRegionStatistics {
         kurtosis = 0.0;
       }
       String unit = layer.getPixelValueUnit();
-      addMeasure(measList, IMAGE_PIXELS, channelIndex, sum, Unit.PIXEL.getAbbreviation());
+      if (imagePixels) {
+        addMeasure(measList, IMAGE_PIXELS, channelIndex, sum, Unit.PIXEL.getAbbreviation());
+      }
       addMeasure(measList, IMAGE_MIN, channelIndex, min, unit);
       addMeasure(measList, IMAGE_MAX, channelIndex, max, unit);
       addMeasure(
@@ -270,10 +279,10 @@ public class ImageRegionStatistics {
 
       Double suv = (Double) layer.getSourceTagValue(TagW.SuvFactor);
       if (channelIndex == null && Objects.nonNull(suv)) {
-        unit = "SUVbw";
-        addMeasure(measList, IMAGE_MIN, channelIndex, min * suv, unit);
-        addMeasure(measList, IMAGE_MAX, channelIndex, max * suv, unit);
-        addMeasure(measList, IMAGE_MEAN, channelIndex, mean * suv, unit);
+        unit = "SUVbw, g/ml"; // NON-NLS
+        addMeasure(measList, IMAGE_MIN, null, min * suv, unit);
+        addMeasure(measList, IMAGE_MAX, null, max * suv, unit);
+        addMeasure(measList, IMAGE_MEAN, null, mean * suv, unit);
       }
 
       return measList;

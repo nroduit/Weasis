@@ -184,14 +184,13 @@ public final class VolumeBuilder {
         bar.setPreferredSize(dim);
         bar.setMaximumSize(dim);
 
-        GuiExecutor.instance()
-            .invokeAndWait(
-                () -> {
-                  bar.setValue(0);
-                  bar.setStringPainted(true);
-                  view3d.setProgressBar(bar);
-                  view3d.repaint();
-                });
+        GuiExecutor.invokeAndWait(
+            () -> {
+              bar.setValue(0);
+              bar.setStringPainted(true);
+              view3d.setProgressBar(bar);
+              view3d.repaint();
+            });
       } else {
         bar = null;
       }
@@ -291,12 +290,11 @@ public final class VolumeBuilder {
         }
         slices.add(imageMLUT.toMat());
         if (bar != null) {
-          GuiExecutor.instance()
-              .execute(
-                  () -> {
-                    bar.setValue(bar.getValue() + 1);
-                    view.getJComponent().repaint();
-                  });
+          GuiExecutor.execute(
+              () -> {
+                bar.setValue(bar.getValue() + 1);
+                view.getJComponent().repaint();
+              });
         }
       }
 

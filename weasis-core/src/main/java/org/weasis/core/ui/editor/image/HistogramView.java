@@ -214,12 +214,8 @@ public class HistogramView extends JComponent
 
     List<MeasureItem> measList = new ArrayList<>();
     for (int i = 0; i < hist.length; i++) {
-      List<MeasureItem> list =
-          ImageRegionStatistics.getStatistics(hist[i].getData(), hist.length == 1 ? null : i);
-      if (i > 0) {
-        list.remove(0);
-      }
-      measList.addAll(list);
+      Integer channel = hist.length == 1 ? null : i;
+      measList.addAll(ImageRegionStatistics.getStatistics(hist[i].getData(), channel, i == 0));
     }
 
     JPanel tableContainer = new JPanel();

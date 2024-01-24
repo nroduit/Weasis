@@ -9,12 +9,16 @@
  */
 package org.weasis.dicom.codec;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Tag;
 import org.dcm4che3.img.data.PrDicomObject;
 import org.weasis.core.api.media.data.TagW;
 
-public class PRSpecialElement extends DicomSpecialElement {
+public class PRSpecialElement extends HiddenSpecialElement {
 
   public PRSpecialElement(DicomMediaIO mediaIO) {
     super(mediaIO);
@@ -46,5 +50,27 @@ public class PRSpecialElement extends DicomSpecialElement {
 
   public PrDicomObject getPrDicomObject() {
     return (PrDicomObject) getTagValue(TagW.PrDicomObject);
+  }
+
+  public static List<PRSpecialElement> getPRSpecialElements(
+      Collection<PRSpecialElement> specialElements, DicomImageElement img) {
+
+    if (specialElements == null) {
+      return Collections.emptyList();
+    }
+    List<PRSpecialElement> prList = null;
+
+    for (PRSpecialElement prElement : specialElements) {
+      if (PresentationStateReader.isImageApplicable(prElement, img)) {
+        if (prList == null) {
+          prList = new ArrayList<>();
+        }
+        prList.add(prElement);
+      }
+    }
+    if (prList != null) {
+      prList.sort(ORDER_BY_DATE);
+    }
+    return prList == null ? Collections.emptyList() : prList;
   }
 }

@@ -13,7 +13,6 @@ import bibliothek.gui.dock.common.CLocation;
 import bibliothek.gui.dock.common.mode.ExtendedMode;
 import java.awt.BorderLayout;
 import java.awt.Component;
-import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.util.ArrayList;
 import java.util.List;
@@ -30,6 +29,7 @@ import javax.swing.table.TableModel;
 import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Sequence;
 import org.dcm4che3.data.Tag;
+import org.dcm4che3.img.util.DicomUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.Insertable;
@@ -48,7 +48,6 @@ import org.weasis.core.ui.util.TableColumnAdjuster;
 import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.codec.DicomSpecialElement;
 import org.weasis.dicom.codec.TagD;
-import org.weasis.dicom.codec.utils.DicomMediaUtils;
 import org.weasis.dicom.explorer.DicomModel;
 import org.weasis.dicom.wave.Messages;
 
@@ -177,15 +176,7 @@ public class MeasureAnnotationTool extends PluginTool implements SeriesViewerLis
       };
       tableTag.setModel(new SimpleTableModel(headers, labels));
       tableTag.getColumnModel().getColumn(1).setCellRenderer(new TagRenderer());
-      int height =
-          (tableTag.getRowHeight() + tableTag.getRowMargin()) * tableTag.getRowCount()
-              + tableTag.getTableHeader().getHeight()
-              + 5;
-      tableTagContainer.setPreferredSize(
-          new Dimension(tableTag.getColumnModel().getTotalColumnWidth(), height));
-      tableTagContainer.add(tableTag.getTableHeader(), BorderLayout.PAGE_START);
-      tableTagContainer.add(tableTag, BorderLayout.CENTER);
-      TableColumnAdjuster.pack(tableTag);
+      TableColumnAdjuster.adjustPreferredSizeForViewPort(tableTag, tableTagContainer);
     } else {
       tableTagContainer.setPreferredSize(GuiUtils.getDimension(50, 50));
     }
@@ -208,15 +199,7 @@ public class MeasureAnnotationTool extends PluginTool implements SeriesViewerLis
       };
       tableMarker.setModel(new SimpleTableModel(headers, labels));
       tableMarker.getColumnModel().getColumn(1).setCellRenderer(new TagRenderer());
-      int height =
-          (tableMarker.getRowHeight() + tableMarker.getRowMargin()) * tableMarker.getRowCount()
-              + tableMarker.getTableHeader().getHeight()
-              + 5;
-      tableMarkerContainer.setPreferredSize(
-          new Dimension(tableMarker.getColumnModel().getTotalColumnWidth(), height));
-      tableMarkerContainer.add(tableMarker.getTableHeader(), BorderLayout.PAGE_START);
-      tableMarkerContainer.add(tableMarker, BorderLayout.CENTER);
-      TableColumnAdjuster.pack(tableMarker);
+      TableColumnAdjuster.adjustPreferredSizeForViewPort(tableMarker, tableMarkerContainer);
     } else {
       tableMarkerContainer.setPreferredSize(GuiUtils.getDimension(50, 50));
     }
@@ -276,20 +259,18 @@ public class MeasureAnnotationTool extends PluginTool implements SeriesViewerLis
 
     if (!chDefSeq.isEmpty()) {
       Attributes item = chDefSeq.get(0);
-      double filterLow =
-          DicomMediaUtils.getDoubleFromDicomElement(item, Tag.FilterLowFrequency, 0.0);
+      double filterLow = DicomUtils.getDoubleFromDicomElement(item, Tag.FilterLowFrequency, 0.0);
       addValueToModel(list, TagD.get(Tag.FilterLowFrequency), filterLow + " Hz"); // NON-NLS
-      double filterHigh =
-          DicomMediaUtils.getDoubleFromDicomElement(item, Tag.FilterHighFrequency, 0.0);
+      double filterHigh = DicomUtils.getDoubleFromDicomElement(item, Tag.FilterHighFrequency, 0.0);
       addValueToModel(list, TagD.get(Tag.FilterHighFrequency), filterHigh + " Hz"); // NON-NLS
       double notchFilter =
-          DicomMediaUtils.getDoubleFromDicomElement(item, Tag.NotchFilterFrequency, 0.0);
+          DicomUtils.getDoubleFromDicomElement(item, Tag.NotchFilterFrequency, 0.0);
       addValueToModel(list, TagD.get(Tag.NotchFilterFrequency), notchFilter + " Hz"); // NON-NLS
 
       for (int i = 1; i < chDefSeq.size(); i++) {
         item = chDefSeq.get(i);
         String title = item.getNestedDataset(Tag.ChannelSourceSequence).getString(Tag.CodeMeaning);
-        double low = DicomMediaUtils.getDoubleFromDicomElement(item, Tag.FilterLowFrequency, 0.0);
+        double low = DicomUtils.getDoubleFromDicomElement(item, Tag.FilterLowFrequency, 0.0);
         if (low != filterLow) {
           addValueToModel(
               list,
@@ -297,7 +278,7 @@ public class MeasureAnnotationTool extends PluginTool implements SeriesViewerLis
               low + " Hz"); // NON-NLS
         }
 
-        double high = DicomMediaUtils.getDoubleFromDicomElement(item, Tag.FilterHighFrequency, 0.0);
+        double high = DicomUtils.getDoubleFromDicomElement(item, Tag.FilterHighFrequency, 0.0);
         if (high != filterHigh) {
           addValueToModel(
               list,
@@ -305,8 +286,7 @@ public class MeasureAnnotationTool extends PluginTool implements SeriesViewerLis
               high + " Hz"); // NON-NLS
         }
 
-        double notch =
-            DicomMediaUtils.getDoubleFromDicomElement(item, Tag.NotchFilterFrequency, 0.0);
+        double notch = DicomUtils.getDoubleFromDicomElement(item, Tag.NotchFilterFrequency, 0.0);
         if (notch != notchFilter) {
           addValueToModel(
               list,

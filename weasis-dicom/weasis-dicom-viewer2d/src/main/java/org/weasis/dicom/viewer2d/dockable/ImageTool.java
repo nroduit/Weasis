@@ -12,6 +12,7 @@ package org.weasis.dicom.viewer2d.dockable;
 import bibliothek.gui.dock.common.CLocation;
 import com.formdev.flatlaf.extras.FlatSVGIcon;
 import java.awt.Component;
+import java.text.DecimalFormat;
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
@@ -23,6 +24,7 @@ import javax.swing.JSpinner;
 import javax.swing.JToggleButton;
 import javax.swing.JViewport;
 import javax.swing.border.Border;
+import javax.swing.text.NumberFormatter;
 import org.weasis.core.api.gui.Insertable;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.GuiUtils;
@@ -109,12 +111,16 @@ public class ImageTool extends PluginTool {
         .ifPresent(
             sliderItem -> {
               JSliderW frameSlider = sliderItem.createSlider(2, true);
+              framePanel.add(frameSlider);
 
               JLabel speedLabel = new JLabel();
               speedLabel.setText(Messages.getString("speed.fps") + StringUtil.COLON);
 
               JSpinner speedSpinner = new JSpinner(sliderItem.getSpeedModel());
-              GuiUtils.formatCheckAction(speedSpinner);
+              NumberFormatter formatter = new NumberFormatter(new DecimalFormat("##"));
+              formatter.setValueClass(Double.class);
+              GuiUtils.formatCheckAction(speedSpinner, formatter);
+              GuiUtils.setSpinnerWidth(speedSpinner, 2);
 
               JButton startButton = new JButton();
               startButton.setActionCommand(ActionW.CINESTART.cmd());
@@ -129,10 +135,22 @@ public class ImageTool extends PluginTool {
               stopButton.setIcon(ResourceUtil.getIcon(ActionIcon.SUSPEND));
               stopButton.addActionListener(EventManager.getInstance());
               sliderItem.registerActionState(stopButton);
-              framePanel.add(frameSlider);
-              framePanel.add(
+
+              JPanel cinePanel =
                   GuiUtils.getFlowLayoutPanel(
-                      3, 3, speedLabel, speedSpinner, startButton, stopButton));
+                      3, 3, speedLabel, speedSpinner, startButton, stopButton);
+              EventManager.getInstance()
+                  .getAction(ActionW.CINE_SWEEP)
+                  .ifPresent(
+                      toggleButton -> {
+                        FlatSVGIcon icon = ResourceUtil.getIcon(ActionIcon.LOOP);
+                        JToggleButton checkBox = toggleButton.createJToggleButton(icon);
+                        checkBox.setPreferredSize(GuiUtils.getBigIconButtonSize(checkBox));
+                        checkBox.setToolTipText(toggleButton.getActionW().getTitle());
+                        cinePanel.add(checkBox);
+                      });
+
+              framePanel.add(cinePanel);
             });
     return framePanel;
   }

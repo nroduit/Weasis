@@ -17,7 +17,6 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
@@ -426,8 +425,7 @@ public class View2dContainer extends ImageViewerPlugin<ImageElement>
                         series.getImageIndex(img, filter, view2DPane.getCurrentSortComparator());
                     if (imgIndex < 0) {
                       imgIndex = 0;
-                      // add again the series for registering listeners
-                      // (require at least one image)
+                      // Add again the series for registering listeners (require at least one image)
                       view2DPane.setSeries(series, null);
                     }
                     seqAction.get().setSliderMinMaxValue(1, series.size(filter), imgIndex + 1);
@@ -473,8 +471,7 @@ public class View2dContainer extends ImageViewerPlugin<ImageElement>
             MediaSeries<ImageElement> s = v.getSeries();
             if (series.equals(s)) {
               // Set to null to be sure that all parameters from the view are applied again to the
-              // Series
-              // (in case for instance it is the same series with more images)
+              // Series (in case for instance it is the same series with more images)
               v.setSeries(null);
               v.setSeries(series, null);
             }
@@ -570,49 +567,6 @@ public class View2dContainer extends ImageViewerPlugin<ImageElement>
 
   @Override
   public List<GridBagLayoutModel> getLayoutList() {
-    int rx = 1;
-    int ry = 1;
-    double ratio = getWidth() / (double) getHeight();
-    if (ratio >= 1.0) {
-      rx = (int) Math.round(ratio * 1.5);
-    } else {
-      ry = (int) Math.round((1.0 / ratio) * 1.5);
-    }
-
-    ArrayList<GridBagLayoutModel> list = new ArrayList<>(DEFAULT_LAYOUT_LIST);
-    // Exclude 1x1
-    if (rx != ry && rx != 0 && ry != 0) {
-      int factorLimit =
-          (int) (rx == 1 ? Math.round(getWidth() / 512.0) : Math.round(getHeight() / 512.0));
-      if (factorLimit < 1) {
-        factorLimit = 1;
-      }
-      if (rx > ry) {
-        int step = 1 + (rx / 20);
-        for (int i = rx / 2; i < rx; i = i + step) {
-          addLayout(list, factorLimit, i, ry);
-        }
-      } else {
-        int step = 1 + (ry / 20);
-        for (int i = ry / 2; i < ry; i = i + step) {
-          addLayout(list, factorLimit, rx, i);
-        }
-      }
-
-      addLayout(list, factorLimit, rx, ry);
-    }
-    list.sort(Comparator.comparingInt(o -> o.getConstraints().size()));
-    return list;
-  }
-
-  private void addLayout(List<GridBagLayoutModel> list, int factorLimit, int rx, int ry) {
-    for (int i = 1; i <= factorLimit; i++) {
-      if (i > 2 || i * ry > 2 || i * rx > 2) {
-        if (i * ry < 50 && i * rx < 50) {
-          list.add(
-              ImageViewerPlugin.buildGridBagLayoutModel(i * ry, i * rx, view2dClass.getName()));
-        }
-      }
-    }
+    return getLayoutList(this, DEFAULT_LAYOUT_LIST);
   }
 }

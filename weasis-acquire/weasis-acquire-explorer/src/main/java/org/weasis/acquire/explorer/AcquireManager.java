@@ -56,6 +56,7 @@ import org.weasis.core.api.command.Options;
 import org.weasis.core.api.explorer.ObservableEvent;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.gui.util.GuiUtils;
+import org.weasis.core.api.gui.util.WinUtil;
 import org.weasis.core.api.media.MimeInspector;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaElement;
@@ -480,7 +481,7 @@ public class AcquireManager {
       return;
     }
 
-    GuiExecutor.instance().execute(() -> patientCommand(opt, args.get(0)));
+    GuiExecutor.execute(() -> patientCommand(opt, args.get(0)));
   }
 
   private void patientCommand(Option opt, String arg) {
@@ -557,7 +558,7 @@ public class AcquireManager {
       } else {
         if (!isAcquireImagesAllPublished()
             && JOptionPane.showConfirmDialog(
-                    getExplorerViewComponent(),
+                    WinUtil.getValidComponent(getExplorerViewComponent()),
                     Messages.getString("AcquireManager.new_patient_load_warn"),
                     Messages.getString("AcquireManager.new_patient_load_title"),
                     JOptionPane.OK_CANCEL_OPTION,

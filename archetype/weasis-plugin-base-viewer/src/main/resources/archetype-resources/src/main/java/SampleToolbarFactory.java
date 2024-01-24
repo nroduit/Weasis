@@ -28,7 +28,7 @@ public class SampleToolbarFactory implements InsertableFactory {
 
     @Override
     public Insertable createInstance(Hashtable<String, Object> properties) {
-        return new SampleToolBar<>();
+        return new SampleToolBar();
     }
 
     @Override
@@ -50,7 +50,7 @@ public class SampleToolbarFactory implements InsertableFactory {
     // ================================================================================
 
     @Activate
-    protected void activate(ComponentContext context) throws Exception {
+    protected void activate(ComponentContext context) {
         LOGGER.info("Activate the Sample tool bar");
     }
 

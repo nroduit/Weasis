@@ -25,6 +25,7 @@ import javax.swing.WindowConstants;
 import net.miginfocom.swing.MigLayout;
 import org.weasis.core.api.auth.AuthMethod;
 import org.weasis.core.api.gui.util.GuiUtils;
+import org.weasis.core.api.gui.util.WinUtil;
 import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.explorer.Messages;
 import org.weasis.dicom.explorer.pref.node.AbstractDicomNode.UsageType;
@@ -128,7 +129,7 @@ public class DicomWebNodeDialog extends JDialog {
 
     if (!StringUtil.hasText(desc) || !StringUtil.hasText(url)) {
       JOptionPane.showMessageDialog(
-          this,
+          WinUtil.getValidComponent(this),
           Messages.getString("PrinterDialog.fill_message"),
           Messages.getString("PrinterDialog.error"),
           JOptionPane.ERROR_MESSAGE);
@@ -143,7 +144,7 @@ public class DicomWebNodeDialog extends JDialog {
       validUrl = new URL(url);
     } catch (MalformedURLException e) {
       JOptionPane.showMessageDialog(
-          this,
+          WinUtil.getValidComponent(this),
           Messages.getString("this.url.is.not.valid"),
           Messages.getString("PrinterDialog.error"),
           JOptionPane.ERROR_MESSAGE);

@@ -23,7 +23,6 @@ import javax.swing.JMenu;
 import javax.swing.JMenuItem;
 import javax.swing.JSeparator;
 import javax.swing.KeyStroke;
-import javax.swing.SwingUtilities;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.FrameworkUtil;
 import org.osgi.service.prefs.Preferences;
@@ -68,8 +67,6 @@ import org.weasis.core.ui.editor.image.SynchView;
 import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.editor.image.ZoomToolBar;
 import org.weasis.core.ui.model.graphic.Graphic;
-import org.weasis.core.ui.util.ColorLayerUI;
-import org.weasis.core.ui.util.PrintDialog;
 import org.weasis.core.util.LangUtil;
 import org.weasis.opencv.op.lut.DefaultWlPresentation;
 
@@ -92,7 +89,7 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
     setAction(new BasicActionState(ActionW.DRAW));
     setAction(new BasicActionState(ActionW.MEASURE));
 
-    setAction(getMoveTroughSliceAction(10, TIME.MINUTE, 0.1));
+    setAction(getMoveTroughSliceAction(10.0, TIME.MINUTE, 0.1));
     setAction(newWindowAction());
     setAction(newLevelAction());
     setAction(newRotateAction());
@@ -212,38 +209,9 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
 
   @Override
   public void keyPressed(KeyEvent e) {
-
-    int keyEvent = e.getKeyCode();
-    int modifiers = e.getModifiers();
-
-    if (keyEvent == KeyEvent.VK_ESCAPE) {
-      resetDisplay();
-    } else if (keyEvent == ActionW.CINESTART.getKeyCode()
-        && ActionW.CINESTART.getModifier() == modifiers) {
-      getAction(ActionW.SCROLL_SERIES)
-          .ifPresent(
-              s -> {
-                if (s.isActionEnabled()) {
-                  if (s.isCining()) {
-                    s.stop();
-                  } else {
-                    s.start();
-                  }
-                }
-              });
-
-    } else if (keyEvent == KeyEvent.VK_P && modifiers == 0) {
-      ImageViewerPlugin<ImageElement> view = getSelectedView2dContainer();
-      if (view != null) {
-        ColorLayerUI layer = ColorLayerUI.createTransparentLayerUI(view);
-        PrintDialog<?> dialog =
-            new PrintDialog<>(
-                SwingUtilities.getWindowAncestor(view),
-                Messages.getString("View2dContainer.print_layout"),
-                this);
-        ColorLayerUI.showCenterScreen(dialog, layer);
-      }
-    } else {
+    if (!commonDisplayShortcuts(e)) {
+      int keyEvent = e.getKeyCode();
+      int modifiers = e.getModifiers();
       triggerDrawingToolKeyEvent(keyEvent, modifiers);
     }
   }
@@ -329,8 +297,7 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
           new SynchEvent(getSelectedViewPane(), ActionW.RESET.cmd(), true));
     } else if (ResetTools.ZOOM.equals(action)) {
       // Pass the value 0.0 (convention: default value according the zoom type) directly to the
-      // property change,
-      // otherwise the value is adjusted by the BoundedRangeModel
+      // property change, otherwise the value is adjusted by the BoundedRangeModel
       firePropertyChange(
           ActionW.SYNCH.cmd(),
           null,
@@ -482,7 +449,7 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
                     (Filter<ImageElement>) view2d.getActionValue(ActionW.FILTERED_SERIES.cmd())),
                 view2d.getFrameIndex() + 1,
                 false));
-    final Integer speed = (Integer) series.getTagValue(TagW.get("CineRate"));
+    Double speed = (Double) series.getTagValue(TagW.get("CineRate"));
     if (speed != null) {
       cineAction.ifPresent(a -> a.setSpeed(speed));
     }

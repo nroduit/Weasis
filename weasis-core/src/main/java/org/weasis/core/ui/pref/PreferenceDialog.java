@@ -81,10 +81,12 @@ public class PreferenceDialog extends AbstractWizardDialog {
     ArrayList<AbstractItemDialogPage> list = new ArrayList<>();
     GeneralSetting generalSetting = new GeneralSetting(this);
     list.add(generalSetting);
-    ViewerPrefView viewerSetting = new ViewerPrefView(this);
+    ViewerPrefView viewerSetting = new ViewerPrefView();
     list.add(viewerSetting);
-    DicomPrefView dicomPrefView = new DicomPrefView(this);
+    DicomPrefView dicomPrefView = new DicomPrefView();
     list.add(dicomPrefView);
+    DrawPrefView drawPrefView = new DrawPrefView(this);
+    list.add(drawPrefView);
 
     BundleContext context = FrameworkUtil.getBundle(this.getClass()).getBundleContext();
     try {
@@ -92,26 +94,32 @@ public class PreferenceDialog extends AbstractWizardDialog {
           context.getServiceReferences(PreferencesPageFactory.class, null)) {
         PreferencesPageFactory factory = context.getService(service);
         if (factory != null) {
-          AbstractItemDialogPage page = factory.createInstance(properties);
-          if (page != null) {
-            int position = page.getComponentPosition();
-            if (position < 1000) {
-              AbstractItemDialogPage mainPage;
-              if (position > 500 && position < 600) {
-                mainPage = viewerSetting;
-              } else if (position > 600 && position < 700) {
-                mainPage = dicomPrefView;
+          String className =
+              GuiUtils.getUICore().getSystemPreferences().getProperty(factory.getClass().getName());
+          if (!StringUtil.hasText(className) || Boolean.parseBoolean(className)) {
+            AbstractItemDialogPage page = factory.createInstance(properties);
+            if (page != null) {
+              int position = page.getComponentPosition();
+              if (position < 1000) {
+                AbstractItemDialogPage mainPage;
+                if (position > 500 && position < 600) {
+                  mainPage = viewerSetting;
+                } else if (position > 600 && position < 700) {
+                  mainPage = dicomPrefView;
+                } else if (position > 700 && position < 800) {
+                  mainPage = drawPrefView;
+                } else {
+                  mainPage = generalSetting;
+                }
+                JComponent menuPanel = mainPage.getMenuPanel();
+                mainPage.addSubPage(page, a -> showPage(page.getTitle()), menuPanel);
+                if (menuPanel != null) {
+                  menuPanel.revalidate();
+                  menuPanel.repaint();
+                }
               } else {
-                mainPage = generalSetting;
+                list.add(page);
               }
-              JComponent menuPanel = mainPage.getMenuPanel();
-              mainPage.addSubPage(page, a -> showPage(page.getTitle()), menuPanel);
-              if (menuPanel != null) {
-                menuPanel.revalidate();
-                menuPanel.repaint();
-              }
-            } else {
-              list.add(page);
             }
           }
         }

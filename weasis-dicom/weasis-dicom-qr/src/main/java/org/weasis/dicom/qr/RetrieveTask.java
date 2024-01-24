@@ -33,6 +33,7 @@ import org.weasis.core.api.gui.task.CircularProgressBar;
 import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.gui.util.GuiUtils;
+import org.weasis.core.api.gui.util.WinUtil;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.MediaSeriesGroupNode;
 import org.weasis.core.api.media.data.Series;
@@ -104,18 +105,16 @@ public class RetrieveTask extends ExplorerTask<ExplorerTask<Boolean, String>, St
     DicomProgress progress = new DicomProgress();
     progress.addProgressListener(
         p ->
-            GuiExecutor.instance()
-                .execute(
-                    () -> {
-                      int c =
-                          p.getNumberOfCompletedSuboperations()
-                              + p.getNumberOfFailedSuboperations();
-                      int r = p.getNumberOfRemainingSuboperations();
-                      int t = c + r;
-                      if (t > 0) {
-                        progressBar.setValue((c * 100) / t);
-                      }
-                    }));
+            GuiExecutor.execute(
+                () -> {
+                  int c =
+                      p.getNumberOfCompletedSuboperations() + p.getNumberOfFailedSuboperations();
+                  int r = p.getNumberOfRemainingSuboperations();
+                  int t = c + r;
+                  if (t > 0) {
+                    progressBar.setValue((c * 100) / t);
+                  }
+                }));
 
     addCancelListener(progress);
 
@@ -285,11 +284,13 @@ public class RetrieveTask extends ExplorerTask<ExplorerTask<Boolean, String>, St
       final String errorTitle =
           StringUtil.getEmptyStringIfNull(
               dicomQrView.getComboDicomRetrieveType().getSelectedItem());
-      GuiExecutor.instance()
-          .execute(
-              () ->
-                  JOptionPane.showMessageDialog(
-                      dicomQrView, mes, errorTitle, JOptionPane.ERROR_MESSAGE));
+      GuiExecutor.execute(
+          () ->
+              JOptionPane.showMessageDialog(
+                  WinUtil.getValidComponent(dicomQrView),
+                  mes,
+                  errorTitle,
+                  JOptionPane.ERROR_MESSAGE));
     }
 
     return loadingTask;
@@ -329,32 +330,33 @@ public class RetrieveTask extends ExplorerTask<ExplorerTask<Boolean, String>, St
       }
     }
     if (wadoURLs.isEmpty()) {
-      GuiExecutor.instance()
-          .execute(
-              () ->
-                  JOptionPane.showMessageDialog(
-                      dicomQrView, message1, null, JOptionPane.ERROR_MESSAGE));
+      GuiExecutor.execute(
+          () ->
+              JOptionPane.showMessageDialog(
+                  WinUtil.getValidComponent(dicomQrView),
+                  message1,
+                  null,
+                  JOptionPane.ERROR_MESSAGE));
       return null;
     } else if (wadoURLs.size() > 1) {
-      GuiExecutor.instance()
-          .invokeAndWait(
-              () -> {
-                Object[] options = wadoURLs.toArray();
-                Object response =
-                    JOptionPane.showInputDialog(
-                        dicomQrView,
-                        Messages.getString("RetrieveTask.several_wado_urls"),
-                        wadoURLs.get(0).getWebType().toString(),
-                        JOptionPane.QUESTION_MESSAGE,
-                        null,
-                        options,
-                        options[0]);
+      GuiExecutor.invokeAndWait(
+          () -> {
+            Object[] options = wadoURLs.toArray();
+            Object response =
+                JOptionPane.showInputDialog(
+                    WinUtil.getValidComponent(dicomQrView),
+                    Messages.getString("RetrieveTask.several_wado_urls"),
+                    wadoURLs.getFirst().getWebType().toString(),
+                    JOptionPane.QUESTION_MESSAGE,
+                    null,
+                    options,
+                    options[0]);
 
-                if (response != null) {
-                  wadoURLs.clear();
-                  wadoURLs.add((DicomWebNode) response);
-                }
-              });
+            if (response != null) {
+              wadoURLs.clear();
+              wadoURLs.add((DicomWebNode) response);
+            }
+          });
     }
     return wadoURLs.get(0);
   }

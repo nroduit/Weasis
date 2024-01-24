@@ -28,6 +28,7 @@ import org.weasis.core.api.auth.AuthRegistration;
 import org.weasis.core.api.auth.DefaultAuthMethod;
 import org.weasis.core.api.auth.OAuth2ServiceFactory;
 import org.weasis.core.api.gui.util.GuiUtils;
+import org.weasis.core.api.gui.util.WinUtil;
 import org.weasis.core.api.util.NetworkUtil;
 import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.explorer.Messages;
@@ -117,7 +118,7 @@ public class AuthMethodDialog extends JDialog {
 
             int option =
                 JOptionPane.showConfirmDialog(
-                    this,
+                    WinUtil.getValidComponent(this),
                     inputFields,
                     Messages.getString("enter.keycloak.inf"),
                     JOptionPane.OK_CANCEL_OPTION,
@@ -202,7 +203,7 @@ public class AuthMethodDialog extends JDialog {
         || !StringUtil.hasText(tURI)
         || !NetworkUtil.urlValidator(tURI)) {
       JOptionPane.showMessageDialog(
-          this,
+          WinUtil.getValidComponent(this),
           Messages.getString("missing.fields"),
           Messages.getString("error"),
           JOptionPane.ERROR_MESSAGE);

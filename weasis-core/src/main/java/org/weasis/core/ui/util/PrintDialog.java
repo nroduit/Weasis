@@ -22,6 +22,7 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import org.weasis.core.Messages;
 import org.weasis.core.api.gui.util.GuiUtils;
+import org.weasis.core.api.gui.util.WinUtil;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.ui.editor.image.ImageViewerEventManager;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
@@ -108,7 +109,10 @@ public class PrintDialog<I extends ImageElement> extends javax.swing.JDialog {
     List<ViewCanvas<I>> views = container.getImagePanels();
     if (views.isEmpty()) {
       JOptionPane.showMessageDialog(
-          this, Messages.getString("PrintDialog.no_print"), null, JOptionPane.ERROR_MESSAGE);
+          WinUtil.getValidComponent(this),
+          Messages.getString("PrintDialog.no_print"),
+          null,
+          JOptionPane.ERROR_MESSAGE);
       dispose();
       return;
     }

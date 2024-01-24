@@ -512,14 +512,13 @@ public class View3DContainer extends DicomViewerPlugin implements PropertyChange
     View3DFactory.closeSeriesViewer(this);
     super.close();
 
-    GuiExecutor.instance()
-        .execute(
-            () -> {
-              for (ViewCanvas v : view2ds) {
-                resetMaximizedSelectedImagePane(v);
-                v.disposeView();
-              }
-            });
+    GuiExecutor.execute(
+        () -> {
+          for (ViewCanvas v : view2ds) {
+            resetMaximizedSelectedImagePane(v);
+            v.disposeView();
+          }
+        });
   }
 
   @Override

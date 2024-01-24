@@ -60,11 +60,15 @@ public enum FontItem {
   }
 
   public static FontItem getFontItem(String key) {
+    return getFontItem(key, FontItem.DEFAULT);
+  }
+
+  public static FontItem getFontItem(String key, FontItem defaultItem) {
     for (FontItem item : FontItem.values()) {
       if (item.key.equals(key)) {
         return item;
       }
     }
-    return DEFAULT;
+    return defaultItem;
   }
 }

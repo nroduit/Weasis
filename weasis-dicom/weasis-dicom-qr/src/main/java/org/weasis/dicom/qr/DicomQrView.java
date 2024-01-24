@@ -648,16 +648,34 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
     pageSpinner.addChangeListener(queryListener);
   }
 
+  private boolean isEmptyQuery(List<DicomParam> p) {
+    if (p == null || p.isEmpty()) {
+      return true;
+    }
+
+    for (DicomParam param : p) {
+      String[] values = param.getValues();
+      if (values != null) {
+        for (String value : values) {
+          if (StringUtil.hasText(value)) {
+            return false;
+          }
+        }
+      }
+    }
+    return true;
+  }
+
   private void dicomQuery() {
     stopCurrentProcess();
     SearchParameters searchParams = buildCurrentSearchParameters("custom"); // NON-NLS
     List<DicomParam> p = searchParams.getParameters();
 
-    if (p.isEmpty() && (Integer) limitSpinner.getValue() < 1) {
+    if ((Integer) limitSpinner.getValue() < 1 && isEmptyQuery(p)) {
       String message = Messages.getString("DicomQrView.msg_empty_query");
       int response =
           JOptionPane.showOptionDialog(
-              WinUtil.getParentDialog(this),
+              WinUtil.getValidComponent(WinUtil.getParentDialog(this)),
               message,
               getTitle(),
               JOptionPane.YES_NO_OPTION,
@@ -703,12 +721,11 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
 
       Runnable runnable =
           () -> {
-            GuiExecutor.instance()
-                .execute(
-                    () -> {
-                      progressBar.setEnabled(true);
-                      progressBar.setIndeterminate(true);
-                    });
+            GuiExecutor.execute(
+                () -> {
+                  progressBar.setEnabled(true);
+                  progressBar.setIndeterminate(true);
+                });
             final DicomState state =
                 CFind.process(
                     params,
@@ -719,23 +736,25 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
                     p.toArray(new DicomParam[0]));
 
             if (running.get()) {
-              GuiExecutor.instance()
-                  .execute(
-                      () -> {
-                        progressBar.setEnabled(false);
-                        progressBar.setIndeterminate(false);
-                        displayResult(state);
-                        if (state.getStatus() != Status.Success) {
-                          int limit = (Integer) limitSpinner.getValue();
-                          String message =
-                              state.getStatus() == Status.Cancel && limit > 0
-                                  ? Messages.getString("query.canceled.limit").formatted(limit)
-                                  : state.getMessage();
-                          LOGGER.error("Dicom C-FIND error: {}", message);
-                          JOptionPane.showMessageDialog(
-                              this, message, null, JOptionPane.ERROR_MESSAGE);
-                        }
-                      });
+              GuiExecutor.execute(
+                  () -> {
+                    progressBar.setEnabled(false);
+                    progressBar.setIndeterminate(false);
+                    displayResult(state);
+                    if (state.getStatus() != Status.Success) {
+                      int limit = (Integer) limitSpinner.getValue();
+                      String message =
+                          state.getStatus() == Status.Cancel && limit > 0
+                              ? Messages.getString("query.canceled.limit").formatted(limit)
+                              : state.getMessage();
+                      LOGGER.error("Dicom C-FIND error: {}", message);
+                      JOptionPane.showMessageDialog(
+                          WinUtil.getValidComponent(this),
+                          message,
+                          null,
+                          JOptionPane.ERROR_MESSAGE);
+                    }
+                  });
             }
           };
       process = new QueryProcess(runnable, "DICOM C-FIND", running); // $NON-NLS-1$
@@ -768,23 +787,21 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
       Runnable runnable =
           () -> {
             try {
-              GuiExecutor.instance()
-                  .execute(
-                      () -> {
-                        progressBar.setEnabled(true);
-                        progressBar.setIndeterminate(true);
-                      });
+              GuiExecutor.execute(
+                  () -> {
+                    progressBar.setEnabled(true);
+                    progressBar.setIndeterminate(true);
+                  });
               rsquery.call();
               if (running.get()) {
-                GuiExecutor.instance()
-                    .execute(
-                        () -> {
-                          progressBar.setEnabled(false);
-                          progressBar.setIndeterminate(false);
-                          tree.setRetrieveTreeModel(new RetrieveTreeModel(rsquery.getDicomModel()));
-                          tree.revalidate();
-                          tree.repaint();
-                        });
+                GuiExecutor.execute(
+                    () -> {
+                      progressBar.setEnabled(false);
+                      progressBar.setIndeterminate(false);
+                      tree.setRetrieveTreeModel(new RetrieveTreeModel(rsquery.getDicomModel()));
+                      tree.revalidate();
+                      tree.repaint();
+                    });
               }
             } catch (Exception e) {
               LOGGER.error("", e);
@@ -985,15 +1002,14 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
       t.running.set(false);
       t.interrupt();
     }
-    GuiExecutor.instance()
-        .execute(
-            () -> {
-              progressBar.setEnabled(false);
-              progressBar.setIndeterminate(false);
-              tree.setRetrieveTreeModel(new RetrieveTreeModel());
-              tree.revalidate();
-              tree.repaint();
-            });
+    GuiExecutor.execute(
+        () -> {
+          progressBar.setEnabled(false);
+          progressBar.setIndeterminate(false);
+          tree.setRetrieveTreeModel(new RetrieveTreeModel());
+          tree.revalidate();
+          tree.repaint();
+        });
   }
 
   @Override

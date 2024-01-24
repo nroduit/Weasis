@@ -251,13 +251,12 @@ public class WaveContainer extends DicomViewerPlugin implements PropertyChangeLi
     super.close();
     WaveFactory.closeSeriesViewer(this);
 
-    GuiExecutor.instance()
-        .execute(
-            () -> {
-              if (ecgView != null) {
-                ecgView.dispose();
-              }
-            });
+    GuiExecutor.execute(
+        () -> {
+          if (ecgView != null) {
+            ecgView.dispose();
+          }
+        });
   }
 
   @Override
@@ -448,7 +447,7 @@ public class WaveContainer extends DicomViewerPlugin implements PropertyChangeLi
             // so they'll know there may be a problem.
             int response =
                 JOptionPane.showConfirmDialog(
-                    null,
+                    GuiUtils.getUICore().getApplicationWindow(),
                     org.weasis.core.Messages.getString("ImagePrint.issue_desc"),
                     org.weasis.core.Messages.getString("ImagePrint.status"),
                     JOptionPane.YES_NO_OPTION,

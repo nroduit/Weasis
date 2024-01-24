@@ -21,7 +21,7 @@ public class RectangleGraphicTest extends GraphicTester<ObliqueRectangleGraphic>
   private static final String XML_1 = "/graphic/rectangle/rectangle.graphic.1.xml"; // NON-NLS
 
   public static final String BASIC_TPL =
-      "<rectangle fill=\"%s\" showLabel=\"%s\" thickness=\"%s\" uuid=\"%s\">" // NON-NLS
+      "<rectangle fillOpacity=\"%s\" fill=\"%s\" showLabel=\"%s\" thickness=\"%s\" uuid=\"%s\">" // NON-NLS
           + "<paint rgb=\"%s\"/>" // NON-NLS
           + "<pts/>" // NON-NLS
           + "</rectangle>"; // NON-NLS
@@ -49,6 +49,7 @@ public class RectangleGraphicTest extends GraphicTester<ObliqueRectangleGraphic>
   @Override
   public Object[] getParameters() {
     return new Object[] {
+      Graphic.DEFAULT_FILL_OPACITY,
       Graphic.DEFAULT_FILLED,
       Graphic.DEFAULT_LABEL_VISIBLE,
       Graphic.DEFAULT_LINE_THICKNESS,

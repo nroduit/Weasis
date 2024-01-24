@@ -58,6 +58,13 @@ public class WinUtil {
     return null;
   }
 
+  public static Component getValidComponent(Component c) {
+    if (c != null && c.isDisplayable()) {
+      return c;
+    }
+    return GuiUtils.getUICore().getApplicationWindow();
+  }
+
   public static RootPaneContainer getRootPaneContainer(Component c) {
     if (c instanceof RootPaneContainer container) {
       return container;

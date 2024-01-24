@@ -261,12 +261,6 @@
                   <outputDirectory>${tmp.bundle.dir}</outputDirectory>
                 </artifactItem>
                 <artifactItem>
-                  <groupId>org.glassfish</groupId>
-                  <artifactId>jakarta.json</artifactId>
-                  <version>${javax.json.version}</version>
-                  <outputDirectory>${tmp.bundle.dir}</outputDirectory>
-                </artifactItem>
-                <artifactItem>
                   <groupId>org.weasis.thirdparty</groupId>
                   <artifactId>jaxb-osgi</artifactId>
                   <version>${jaxb.osgi.version}</version>
@@ -361,6 +355,12 @@
                 </artifactItem>
                 <artifactItem>
                   <groupId>org.weasis.opencv</groupId>
+                  <artifactId>weasis-opencv-core-macosx-aarch64</artifactId>
+                  <version>${weasis.opencv.native.version}</version>
+                  <outputDirectory>${tmp.bundle.dir}</outputDirectory>
+                </artifactItem>
+                <artifactItem>
+                  <groupId>org.weasis.opencv</groupId>
                   <artifactId>weasis-opencv-core-macosx-x86-64</artifactId>
                   <version>${weasis.opencv.native.version}</version>
                   <outputDirectory>${tmp.bundle.dir}</outputDirectory>
@@ -414,6 +414,12 @@
                 <artifactItem>
                   <groupId>org.weasis.thirdparty.org.jogamp</groupId>
                   <artifactId>jogamp-linux-aarch64</artifactId>
+                  <version>${jogamp.version}</version>
+                  <outputDirectory>${tmp.bundle.dir}</outputDirectory>
+                </artifactItem>
+                <artifactItem>
+                  <groupId>org.weasis.thirdparty.org.jogamp</groupId>
+                  <artifactId>jogamp-macosx-aarch64</artifactId>
                   <version>${jogamp.version}</version>
                   <outputDirectory>${tmp.bundle.dir}</outputDirectory>
                 </artifactItem>

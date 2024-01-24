@@ -293,22 +293,15 @@ public class ScreenPrefView extends AbstractItemDialogPage {
         }
         cross.repaint();
         JOptionPane.showMessageDialog(
-            this,
+            WinUtil.getValidComponent(this),
             Messages.getString("ScreenPrefView.calib_desc"),
             Messages.getString("ScreenPrefView.sp_calib"),
             JOptionPane.WARNING_MESSAGE);
 
-        StringBuilder buf = new StringBuilder("screen."); // NON-NLS
-        buf.append(monitor.getMonitorID());
-        Rectangle b = monitor.getBounds();
-        buf.append(".");
-        buf.append(b.width);
-        buf.append("x"); // NON-NLS
-        buf.append(b.height);
-        buf.append(".pitch");
+        String screen = ViewSetting.buildScreenItem(monitor);
         GuiUtils.getUICore()
             .getLocalPersistence()
-            .putDoubleProperty(buf.toString(), monitor.getRealScaleFactor());
+            .putDoubleProperty(screen, monitor.getRealScaleFactor());
       }
     }
   }

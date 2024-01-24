@@ -31,6 +31,7 @@ import org.weasis.core.api.explorer.DataExplorerView;
 import org.weasis.core.api.explorer.ObservableEvent;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.gui.util.GuiUtils;
+import org.weasis.core.api.gui.util.WinUtil;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaSeries;
@@ -251,7 +252,7 @@ public class SRView extends JScrollPane implements SeriesViewerListener {
           } else {
             // TODO try to download if IHE IID has been configured
             JOptionPane.showMessageDialog(
-                this,
+                WinUtil.getValidComponent(this),
                 Messages.getString("SRView.msg"),
                 Messages.getString("SRView.open"),
                 JOptionPane.WARNING_MESSAGE);
@@ -361,7 +362,7 @@ public class SRView extends JScrollPane implements SeriesViewerListener {
 
         LoadDicomObjects loadDicomObjects =
             new LoadDicomObjects(model, OpeningViewer.NONE, attributes);
-        GuiExecutor.instance().invokeAndWait(loadDicomObjects);
+        GuiExecutor.invokeAndWait(loadDicomObjects);
 
         for (KOSpecialElement koElement : DicomModel.getKoSpecialElements(s)) {
           if (koElement.getMediaReader().getDicomObject().equals(attributes)) {

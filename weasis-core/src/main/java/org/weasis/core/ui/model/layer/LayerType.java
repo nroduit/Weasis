@@ -82,6 +82,8 @@ public enum LayerType {
       Boolean.TRUE,
       Boolean.TRUE),
 
+  DICOM_SEG(95, "DICOM SEG", Boolean.TRUE, Boolean.TRUE, Boolean.FALSE, Boolean.FALSE), // NON-NLS
+
   DICOM_SR(100, "DICOM SR", Boolean.TRUE, Boolean.TRUE, Boolean.FALSE, Boolean.TRUE), // NON-NLS
 
   DICOM_RT(110, "DICOM RT", Boolean.TRUE, Boolean.TRUE, Boolean.FALSE, Boolean.FALSE), // NON-NLS

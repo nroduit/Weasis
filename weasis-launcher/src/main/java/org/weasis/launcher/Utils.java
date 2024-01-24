@@ -34,14 +34,14 @@ public class Utils {
 
   private Utils() {}
 
-  public static boolean getEmptytoFalse(String val) {
+  public static boolean getEmptyToFalse(String val) {
     if (hasText(val)) {
       return getBoolean(val);
     }
     return false;
   }
 
-  public static boolean geEmptytoTrue(String val) {
+  public static boolean geEmptyToTrue(String val) {
     if (hasText(val)) {
       return getBoolean(val);
     }
@@ -53,7 +53,7 @@ public class Utils {
   }
 
   public static boolean hasLength(CharSequence str) {
-    return str != null && str.length() > 0;
+    return str != null && !str.isEmpty();
   }
 
   public static boolean hasLength(String str) {

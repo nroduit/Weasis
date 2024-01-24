@@ -15,5 +15,9 @@ public interface DicomSpecialElementFactory {
 
   String[] getModalities();
 
+  default boolean isHidden() {
+    return false;
+  }
+
   DicomSpecialElement buildDicomSpecialElement(DicomMediaIO mediaIO);
 }

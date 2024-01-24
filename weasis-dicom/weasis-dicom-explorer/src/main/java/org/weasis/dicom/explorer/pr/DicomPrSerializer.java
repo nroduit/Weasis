@@ -395,11 +395,11 @@ public class DicomPrSerializer {
           dcm = getBasicGraphic(graphic);
           points.add(new Point2D.Double(pts[0], pts[1]));
         }
-        case PathIterator.SEG_LINETO, PathIterator.SEG_CLOSE -> points.add(
-            new Point2D.Double(pts[0], pts[1]));
+        case PathIterator.SEG_LINETO, PathIterator.SEG_CLOSE ->
+            points.add(new Point2D.Double(pts[0], pts[1]));
         case PathIterator.SEG_CUBICTO, PathIterator.SEG_QUADTO ->
-        // should never append with FlatteningPathIterator
-        throw new IllegalStateException("cubic iterator is not supported");
+            // should never append with FlatteningPathIterator
+            throw new IllegalStateException("cubic iterator is not supported");
       }
       iterator.next();
     }

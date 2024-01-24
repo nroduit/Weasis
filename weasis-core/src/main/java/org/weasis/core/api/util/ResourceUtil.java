@@ -97,7 +97,8 @@ public class ResourceUtil {
     IMPORT_IMAGE("svg/action/importImage.svg"), // NON-NLS
     INVERSE_LUT("svg/action/inverseLut.svg"), // NON-NLS
     LAYOUT("svg/action/layout.svg"), // NON-NLS
-    LOAD_VOLUME("svg/action/loadVolume.svg"), // NON-NLS
+    LOAD_VOLUME("svg/action/loadVolume.svg"),
+    LOOP("svg/action/loop.svg"), // NON-NLS// NON-NLS
     LUT("svg/action/lut.svg"), // NON-NLS
     MEASURE("svg/action/measure.svg"), // NON-NLS
     MEASURE_TOP_LEFT("svg/action/measureTopLeft.svg"), // NON-NLS
@@ -113,7 +114,7 @@ public class ResourceUtil {
     NONE("svg/action/none.svg"), // NON-NLS
     OPEN_EXTERNAL("svg/action/openExternal.svg"), // NON-NLS
     OPEN_NEW_TAB("svg/action/openNewTab.svg"), // NON-NLS
-    ORTHOGRAPHIC("svg/action/Orthographic.svg"), // NON-NLS
+    ORTHOGRAPHIC("svg/action/orthographic.svg"), // NON-NLS
     PAN("svg/action/pan.svg"), // NON-NLS
     PIPETTE("svg/action/pipette.svg"), // NON-NLS
     PLUS("svg/action/plus.svg"), // NON-NLS

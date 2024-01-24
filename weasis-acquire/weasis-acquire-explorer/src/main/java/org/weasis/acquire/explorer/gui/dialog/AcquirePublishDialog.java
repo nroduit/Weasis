@@ -269,7 +269,7 @@ public class AcquirePublishDialog extends JDialog {
 
     if (toPublish.isEmpty()) {
       JOptionPane.showMessageDialog(
-          this,
+          WinUtil.getValidComponent(this),
           Messages.getString("AcquirePublishDialog.select_one_msg"),
           this.getTitle(),
           JOptionPane.ERROR_MESSAGE);
@@ -291,7 +291,7 @@ public class AcquirePublishDialog extends JDialog {
     }
     if (!publishable) {
       JOptionPane.showMessageDialog(
-          this,
+          WinUtil.getValidComponent(this),
           Messages.getString("AcquirePublishDialog.pub_warn_msg"),
           this.getTitle(),
           JOptionPane.ERROR_MESSAGE);
@@ -349,7 +349,7 @@ public class AcquirePublishDialog extends JDialog {
                   clearAndHide();
                 } else {
                   JOptionPane.showMessageDialog(
-                      this,
+                      WinUtil.getValidComponent(this),
                       Messages.getString("AcquirePublishDialog.dicomize_error_msg"),
                       Messages.getString("AcquirePublishDialog.dicomize_error_title"),
                       JOptionPane.ERROR_MESSAGE);

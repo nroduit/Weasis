@@ -20,6 +20,7 @@ import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Tag;
 import org.dcm4che3.img.data.OverlayData;
 import org.dcm4che3.img.data.PrDicomObject;
+import org.dcm4che3.img.util.DicomUtils;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.image.AbstractOp;
 import org.weasis.core.api.image.ImageOpEvent;
@@ -29,7 +30,6 @@ import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.util.LangUtil;
 import org.weasis.dicom.codec.PRSpecialElement;
 import org.weasis.dicom.codec.TagD;
-import org.weasis.dicom.codec.utils.DicomMediaUtils;
 import org.weasis.opencv.data.ImageCV;
 import org.weasis.opencv.data.PlanarImage;
 import org.weasis.opencv.op.ImageProcessor;
@@ -128,7 +128,7 @@ public class ShutterOp extends AbstractOp {
         if (height != null && width != null) {
           Attributes attributes = pr.getDicomObject();
           Integer shutterOverlayGroup =
-              DicomMediaUtils.getIntegerFromDicomElement(attributes, Tag.ShutterOverlayGroup, null);
+              DicomUtils.getIntegerFromDicomElement(attributes, Tag.ShutterOverlayGroup, null);
           if (shutterOverlayGroup != null) {
             PlanarImage overlayImg = OverlayData.getOverlayImage(result, overlays, frame);
             imgOverlay =

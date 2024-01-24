@@ -435,7 +435,15 @@ public class GuiUtils {
   }
 
   public static void formatCheckAction(JSpinner spin) {
+    formatCheckAction(spin, null);
+  }
+
+  public static void formatCheckAction(
+      JSpinner spin, JFormattedTextField.AbstractFormatter defaultFormat) {
     final JFormattedTextField ftf = ((JSpinner.DefaultEditor) spin.getEditor()).getTextField();
+    if (defaultFormat != null) {
+      ftf.setFormatterFactory(new DefaultFormatterFactory(defaultFormat));
+    }
     addCheckActionToJFormattedTextField(ftf);
   }
 
@@ -520,7 +528,7 @@ public class GuiUtils {
         }
       } else {
         JOptionPane.showMessageDialog(
-            parent,
+            WinUtil.getValidComponent(parent),
             Messages.getString("JMVUtils.browser") + StringUtil.COLON_AND_SPACE + url,
             Messages.getString("JMVUtils.error"),
             JOptionPane.ERROR_MESSAGE);
@@ -541,7 +549,7 @@ public class GuiUtils {
         openCommand("/usr/bin/open", file); // NON-NLS
       } else {
         JOptionPane.showMessageDialog(
-            parent,
+            WinUtil.getValidComponent(parent),
             Messages.getString("JMVUtils.browser") + StringUtil.COLON_AND_SPACE + file.getPath(),
             Messages.getString("JMVUtils.error"),
             JOptionPane.ERROR_MESSAGE);
@@ -618,5 +626,25 @@ public class GuiUtils {
       g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, oldRenderingHints[1]);
       g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, oldRenderingHints[2]);
     }
+  }
+
+  public static int insetWidth(JPanel panel) {
+    if (panel != null) {
+      Insets insets = panel.getInsets();
+      if (insets != null) {
+        return insets.left + insets.right;
+      }
+    }
+    return 0;
+  }
+
+  public static int insetHeight(JPanel panel) {
+    if (panel != null) {
+      Insets insets = panel.getInsets();
+      if (insets != null) {
+        return insets.top + insets.bottom;
+      }
+    }
+    return 0;
   }
 }

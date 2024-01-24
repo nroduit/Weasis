@@ -26,6 +26,7 @@ import net.miginfocom.swing.MigLayout;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.GuiUtils;
+import org.weasis.core.api.gui.util.WinUtil;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.ui.editor.image.ImageViewerEventManager;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
@@ -209,7 +210,10 @@ public class DicomPrintDialog<I extends ImageElement> extends JDialog {
     List<ViewCanvas<I>> views = container.getImagePanels();
     if (views.isEmpty()) {
       JOptionPane.showMessageDialog(
-          this, Messages.getString("DicomPrintDialog.no_print"), null, JOptionPane.ERROR_MESSAGE);
+          WinUtil.getValidComponent(this),
+          Messages.getString("DicomPrintDialog.no_print"),
+          null,
+          JOptionPane.ERROR_MESSAGE);
       doClose();
       return;
     }
@@ -228,7 +232,7 @@ public class DicomPrintDialog<I extends ImageElement> extends JDialog {
     } catch (Exception e) {
       LOGGER.error("DICOM Print Service", e);
       JOptionPane.showMessageDialog(
-          this,
+          WinUtil.getValidComponent(this),
           Messages.getString("DicomPrintDialog.error_print"),
           Messages.getString("DicomPrintDialog.error"),
           JOptionPane.ERROR_MESSAGE);

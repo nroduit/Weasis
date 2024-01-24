@@ -9,7 +9,9 @@
  */
 package org.weasis.launcher;
 
+import java.awt.Window;
 import javax.swing.RootPaneContainer;
+import javax.swing.SwingUtilities;
 
 public class WeasisMainFrame implements WeasisMainFrameMBean {
 
@@ -22,5 +24,17 @@ public class WeasisMainFrame implements WeasisMainFrameMBean {
   @Override
   public RootPaneContainer getRootPaneContainer() {
     return rootPaneContainer;
+  }
+
+  public Window getWindow() {
+    if (rootPaneContainer == null) {
+      return null;
+    }
+
+    Window window = SwingUtilities.getWindowAncestor(rootPaneContainer.getRootPane());
+    if (window != null && window.isDisplayable()) {
+      return window;
+    }
+    return null;
   }
 }

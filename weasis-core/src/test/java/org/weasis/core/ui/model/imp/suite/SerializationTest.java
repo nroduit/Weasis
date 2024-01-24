@@ -66,7 +66,7 @@ class SerializationTest extends ModelListHelper {
                 + "<layer level=\"40\" locked=\"false\" selectable=\"true\" type=\"DRAW\" visible=\"true\" uuid=\"%2$s\"/>" // NON-NLS
                 + "</layers>" // NON-NLS
                 + "<graphics>" // NON-NLS
-                + "<point pointSize=\"1\" fill=\"false\" showLabel=\"true\" thickness=\"3.0\" " // NON-NLS
+                + "<point pointSize=\"1\" fillOpacity=\"1.0\" fill=\"false\" showLabel=\"true\" thickness=\"3.0\" " // NON-NLS
                 + "uuid=\"%3$s\">" // NON-NLS
                 + "<paint rgb=\"ffff0000\"/>" // NON-NLS
                 + "<layer>%2$s</layer>" // NON-NLS

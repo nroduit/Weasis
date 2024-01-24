@@ -135,7 +135,6 @@ public class WeasisLauncher {
   public static final String P_WEASIS_CODEBASE_LOCAL = "weasis.codebase.local";
   public static final String P_WEASIS_SOURCE_ID = "weasis.source.id";
   public static final String P_WEASIS_CODEBASE_URL = "weasis.codebase.url";
-  public static final String P_WEASIS_CODEBASE_EXT_URL = "weasis.codebase.ext.url";
   public static final String P_WEASIS_CONFIG_HASH = "weasis.config.hash";
   public static final String P_WEASIS_PREFS_URL = "weasis.pref.url";
   public static final String P_WEASIS_CONFIG_URL = "weasis.config.url";
@@ -189,13 +188,11 @@ public class WeasisLauncher {
             String appName = System.getProperty(P_WEASIS_NAME);
             int response =
                 JOptionPane.showOptionDialog(
-                    mainFrame.getRootPaneContainer() == null
-                        ? null
-                        : mainFrame.getRootPaneContainer().getContentPane(),
+                    mainFrame.getWindow(),
                     String.format(
-                        Messages.getString("WeasisLauncher.update_min")
-                            + "\n\n"
-                            + Messages.getString("WeasisLauncher.continue_local"),
+                        STR."\{Messages.getString(
+                            "WeasisLauncher.update_min")}\n\n\{Messages.getString(
+                            "WeasisLauncher.continue_local")}",
                         appName,
                         minVersion),
                     null,
@@ -411,7 +408,7 @@ public class WeasisLauncher {
     if (versionOld == null) {
       String val = serverProp.get("prev." + P_WEASIS_SHOW_DISCLAIMER); // NON-NLS
       String accept = serverProp.get(P_WEASIS_ACCEPT_DISCLAIMER);
-      if (Utils.geEmptytoTrue(val) && !Utils.getEmptytoFalse(accept)) {
+      if (Utils.geEmptyToTrue(val) && !Utils.getEmptyToFalse(accept)) {
 
         EventQueue.invokeLater(
             () -> {
@@ -422,9 +419,7 @@ public class WeasisLauncher {
               String appName = System.getProperty(P_WEASIS_NAME);
               int response =
                   JOptionPane.showOptionDialog(
-                      mainFrame.getRootPaneContainer() == null
-                          ? null
-                          : mainFrame.getRootPaneContainer().getContentPane(),
+                      mainFrame.getWindow(),
                       String.format(Messages.getString("WeasisLauncher.msg"), appName),
                       String.format(Messages.getString("WeasisLauncher.first"), appName),
                       JOptionPane.YES_NO_OPTION,
@@ -452,7 +447,7 @@ public class WeasisLauncher {
       }
     } else if (versionNew != null && !versionNew.equals(versionOld)) {
       String val = serverProp.get("prev." + P_WEASIS_SHOW_RELEASE); // NON-NLS
-      if (Utils.geEmptytoTrue(val)) {
+      if (Utils.geEmptyToTrue(val)) {
         try {
           Version vOld = getVersion(versionOld);
           Version vNew = getVersion(versionNew);
@@ -510,9 +505,7 @@ public class WeasisLauncher {
               message.append("</P>"); // NON-NLS
               jTextPane1.setText(message.toString());
               JOptionPane.showMessageDialog(
-                  mainFrame.getRootPaneContainer() == null
-                      ? null
-                      : mainFrame.getRootPaneContainer().getContentPane(),
+                  mainFrame.getWindow(),
                   jTextPane1,
                   Messages.getString("WeasisLauncher.News"),
                   JOptionPane.INFORMATION_MESSAGE);
@@ -774,7 +767,7 @@ public class WeasisLauncher {
             currentProps,
             true,
             true);
-    if (Utils.getEmptytoFalse(logActivation)) {
+    if (Utils.getEmptyToFalse(logActivation)) {
       String logFile = dir + File.separator + "log" + File.separator + "default.log"; // NON-NLS
       serverProp.put("org.apache.sling.commons.log.file", logFile);
       currentProps.remove("org.apache.sling.commons.log.file");
@@ -847,7 +840,7 @@ public class WeasisLauncher {
               currentProps,
               true,
               true);
-      if (Utils.getEmptytoFalse(decoration)) {
+      if (Utils.getEmptyToFalse(decoration)) {
         // enable custom window decorations
         JFrame.setDefaultLookAndFeelDecorated(true);
         JDialog.setDefaultLookAndFeelDecorated(true);
