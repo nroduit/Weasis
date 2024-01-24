@@ -20,6 +20,7 @@ import org.weasis.dicom.codec.DicomImageElement;
  */
 public class Image {
 
+  private final DicomImageElement image;
   private String patientPosition;
   private int prone;
   private int feetFirst;
@@ -29,6 +30,7 @@ public class Image {
   AbstractMap.SimpleImmutableEntry<double[], double[]> imageLUT;
 
   public Image(DicomImageElement image) {
+    this.image = image;
     // Determine if the patient is prone or supine
     Attributes dcmItems = image.getMediaReader().getDicomObject();
     this.patientPosition = dcmItems.getString(Tag.PatientPosition).toLowerCase();
@@ -73,5 +75,9 @@ public class Image {
 
   public void setImageLUT(AbstractMap.SimpleImmutableEntry<double[], double[]> imageLUT) {
     this.imageLUT = imageLUT;
+  }
+
+  public DicomImageElement getImage() {
+    return this.image;
   }
 }

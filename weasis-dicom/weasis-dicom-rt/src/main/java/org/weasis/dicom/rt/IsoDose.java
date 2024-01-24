@@ -24,7 +24,7 @@ public class IsoDose {
   private double thickness;
 
   private Color color;
-  private Map<KeyDouble, List<Contour>> planes;
+  private Map<KeyDouble, List<StructContour>> planes;
 
   public IsoDose(int level, Color color, String name, double planDose) {
     this.level = level;
@@ -69,11 +69,11 @@ public class IsoDose {
     this.thickness = value;
   }
 
-  public Map<KeyDouble, List<Contour>> getPlanes() {
+  public Map<KeyDouble, List<StructContour>> getPlanes() {
     return this.planes;
   }
 
-  public void setPlanes(Map<KeyDouble, List<Contour>> contours) {
+  public void setPlanes(Map<KeyDouble, List<StructContour>> contours) {
     this.planes = contours;
   }
 

@@ -9,16 +9,21 @@
  */
 package org.weasis.dicom.rt;
 
+import java.awt.Color;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import org.weasis.core.util.StringUtil;
+import org.weasis.dicom.codec.DicomMediaIO;
 
 /**
  * @author Tomas Skripcak
  */
-public class Plan {
-
+public class Plan extends RtSpecialElement {
+  private volatile float opacity = 1.0f;
+  private volatile boolean visible = true;
   private String sopInstanceUid;
   private String label;
   private Date date;
@@ -27,6 +32,12 @@ public class Plan {
   private String geometry;
   private Double rxDose;
   private List<Dose> doses = new ArrayList<>();
+
+  private final Map<Integer, StructRegion> segAttributes = new HashMap<>();
+
+  public Plan(DicomMediaIO mediaIO) {
+    super(mediaIO);
+  }
 
   public String getSopInstanceUid() {
     return this.sopInstanceUid;
@@ -143,5 +154,30 @@ public class Plan {
     if (label == null) {
       return other.label == null;
     } else return label.equals(other.label);
+  }
+
+  public boolean isVisible() {
+    return visible;
+  }
+
+  public void setVisible(boolean visible) {
+    this.visible = visible;
+  }
+
+  public float getOpacity() {
+    return opacity;
+  }
+
+  public void setOpacity(float opacity) {
+    this.opacity = Math.max(0.0f, Math.min(opacity, 1.0f));
+    int opacityValue = (int) (this.opacity * 255f);
+    segAttributes
+        .values()
+        .forEach(
+            c -> {
+              Color color = c.getAttributes().getColor();
+              color = new Color(color.getRed(), color.getGreen(), color.getBlue(), opacityValue);
+              c.getAttributes().setColor(color);
+            });
   }
 }

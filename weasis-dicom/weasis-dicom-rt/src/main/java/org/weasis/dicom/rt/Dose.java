@@ -30,8 +30,14 @@ import org.opencv.core.Scalar;
 import org.opencv.imgproc.Imgproc;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaElement;
+import org.weasis.core.ui.model.graphic.imp.seg.SegContour;
 import org.weasis.dicom.codec.DicomImageElement;
+import org.weasis.dicom.codec.DicomSeries;
+import org.weasis.opencv.data.ImageCV;
 import org.weasis.opencv.op.ImageConversion;
+import org.weasis.opencv.seg.Segment;
+import org.weasis.opencv.seg.SegmentAttributes;
+import org.weasis.opencv.seg.SegmentCategory;
 
 /**
  * @author Tomas Skripcak
@@ -47,23 +53,22 @@ public class Dose extends HashMap<Integer, Dvh> {
   private String doseSummationType;
   private double[] gridFrameOffsetVector;
   private double doseGridScaling;
-  private double doseMax;
 
+  private final DicomSeries series;
   private double doseSlicePositionThreshold;
 
-  private List<MediaElement> images = new ArrayList<>();
-  private Map<Integer, IsoDoseLayer> isoDoseSet = new LinkedHashMap<>();
-  private Map<String, ArrayList<Contour>> isoContourMap = new HashMap<>();
+  private Map<Integer, IsoDoseRegion> isoDoseSet = new LinkedHashMap<>();
+  private Map<String, List<StructContour>> isoContourMap = new HashMap<>();
 
   // Dose LUTs
   private AbstractMap.SimpleImmutableEntry<double[], double[]> doseMmLUT;
   private AbstractMap.SimpleImmutableEntry<double[], double[]> dosePixLUT;
 
-  public Dose() {
+  public Dose( DicomSeries series) {
     // Default threshold in mm to determine the max difference from slicePosition to the closest
     // dose frame without interpolation
     this.doseSlicePositionThreshold = 0.5;
-    this.doseMax = 0.0;
+    this.series = series;
   }
 
   public String getSopInstanceUid() {
@@ -130,20 +135,6 @@ public class Dose extends HashMap<Integer, Dvh> {
     this.doseGridScaling = doseGridScaling;
   }
 
-  public double getDoseMax() {
-    // Initialise max dose once dose images are available
-    if (!this.images.isEmpty() && doseMax < 0.01) {
-      for (MediaElement me : this.images) {
-        Core.MinMaxLocResult minMaxLoc = minMaxLoc(((ImageElement) me).getImage().toMat());
-        if (doseMax < minMaxLoc.maxVal) {
-          doseMax = minMaxLoc.maxVal;
-        }
-      }
-    }
-
-    return doseMax;
-  }
-
   public double getDoseSlicePositionThreshold() {
     return this.doseSlicePositionThreshold;
   }
@@ -152,27 +143,19 @@ public class Dose extends HashMap<Integer, Dvh> {
     this.doseSlicePositionThreshold = doseSlicePositionThreshold;
   }
 
-  public List<MediaElement> getImages() {
-    return this.images;
-  }
-
-  public void setImages(List<MediaElement> images) {
-    this.images = images;
-  }
-
-  public Map<Integer, IsoDoseLayer> getIsoDoseSet() {
+  public Map<Integer, IsoDoseRegion> getIsoDoseSet() {
     return this.isoDoseSet;
   }
 
-  public void setIsoDoseSet(Map<Integer, IsoDoseLayer> isoDoseSet) {
+  public void setIsoDoseSet(Map<Integer, IsoDoseRegion> isoDoseSet) {
     this.isoDoseSet = isoDoseSet;
   }
 
-  public Map<String, ArrayList<Contour>> getIsoContourMap() {
+  public Map<String, List<StructContour>> getIsoContourMap() {
     return this.isoContourMap;
   }
 
-  public void setIsoContourMap(Map<String, ArrayList<Contour>> isoContourMap) {
+  public void setIsoContourMap(Map<String, List<StructContour>> isoContourMap) {
     this.isoContourMap = isoContourMap;
   }
 
@@ -228,7 +211,7 @@ public class Dose extends HashMap<Integer, Dvh> {
 
         // Dose slice position found return the plane
         if (doseSlicePosition != -1) {
-          dosePlane = this.images.get(doseSlicePosition);
+          dosePlane = series.getMedia(doseSlicePosition, null, null);
         }
         // There is no dose plane for such slice position, so interpolate between planes
         else {
@@ -330,6 +313,44 @@ public class Dose extends HashMap<Integer, Dvh> {
     return contours;
   }
 
+  public StructContour getIsoDoseContour(
+      KeyDouble slicePosition, double isoDoseThreshold, IsoDoseRegion region) {
+    SegmentAttributes attributes = region.getAttributes();
+    SegmentCategory category = region.getCategory();
+    if (region.getMeasurableLayer() == null) {
+    //  region.setMeasurableLayer(getMeasurableLayer(img, contour));
+    }
+    // Convert from threshold in cCy to raw pixel value threshold
+    double rawThreshold = (isoDoseThreshold / 100) / this.doseGridScaling;
+    DicomImageElement dosePlane =
+        (DicomImageElement) this.getDosePlaneBySlice(slicePosition.getValue());
+
+    int rows = dosePlane.getImage().toMat().rows();
+    int cols = dosePlane.getImage().toMat().cols();
+
+    Mat src = new Mat(rows, cols, CvType.CV_32FC1);
+    Mat thr = new Mat(rows, cols, CvType.CV_32FC1);
+
+    dosePlane.getImage().toMat().convertTo(src, CvType.CV_32FC1);
+
+    Imgproc.threshold(src, thr, rawThreshold, 255, Imgproc.THRESH_BINARY);
+    ImageConversion.releaseMat(src);
+    Mat thrSrc = new Mat(rows, cols, CvType.CV_8U);
+    thr.convertTo(thrSrc, CvType.CV_8U);
+    ImageConversion.releaseMat(thr);
+
+    List<Segment> segmentList = SegContour.buildSegmentList(ImageCV.toImageCV(thrSrc));
+    int nbPixels = Core.countNonZero(thrSrc);
+    ImageConversion.releaseMat(thrSrc);
+
+    StructContour segContour = new StructContour(String.valueOf(slicePosition.getKey()), segmentList, nbPixels);
+    segContour.setPositionZ(slicePosition.getValue());
+    region.addPixels(segContour);
+    segContour.setAttributes(attributes);
+    segContour.setCategory(category);
+    return segContour;
+  }
+
   public void initialiseDoseGridToImageGrid(Image patientImage) {
 
     // Transpose the dose grid LUT onto the image grid LUT
@@ -356,8 +377,8 @@ public class Dose extends HashMap<Integer, Dvh> {
       int upperBoundaryIndex, int lowerBoundaryIndex, double fractionalDistance) {
     MediaElement dosePlane = null;
 
-    DicomImageElement upperPlane = (DicomImageElement) this.images.get(upperBoundaryIndex);
-    DicomImageElement lowerPlane = (DicomImageElement) this.images.get(lowerBoundaryIndex);
+    DicomImageElement upperPlane = series.getMedia(upperBoundaryIndex,null, null);
+    DicomImageElement lowerPlane = series.getMedia(lowerBoundaryIndex,null, null);
 
     // A simple linear interpolation (lerp)
     Mat dosePlaneMat = new Mat();

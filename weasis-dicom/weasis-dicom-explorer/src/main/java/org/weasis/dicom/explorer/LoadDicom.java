@@ -236,15 +236,17 @@ public abstract class LoadDicom extends ExplorerTask<Boolean, String> {
   }
 
   private boolean updateHiddenModality(Series<?> dicomSeries, MediaElement[] medias) {
-    if (DicomModel.isHiddenModality(dicomSeries) && medias != null) {
-      Arrays.stream(medias)
-          .filter(HiddenSpecialElement.class::isInstance)
-          .map(HiddenSpecialElement.class::cast)
-          .forEach(
-              d ->
-                  dicomModel.firePropertyChange(
-                      new ObservableEvent(
-                          ObservableEvent.BasicAction.UPDATE, dicomModel, null, d)));
+    if (DicomModel.isHiddenModality(dicomSeries)) {
+      if (medias != null) {
+        Arrays.stream(medias)
+            .filter(HiddenSpecialElement.class::isInstance)
+            .map(HiddenSpecialElement.class::cast)
+            .forEach(
+                d ->
+                    dicomModel.firePropertyChange(
+                        new ObservableEvent(
+                            ObservableEvent.BasicAction.UPDATE, dicomModel, null, d)));
+      }
       return true;
     }
     return false;
