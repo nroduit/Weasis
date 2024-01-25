@@ -161,7 +161,7 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
     setPreferredSize(GuiUtils.getDimension(400, 300));
     setMinimumSize(GuiUtils.getDimension(150, 50));
 
-    this.addChangeListener(a -> changeDicomInfo(currentSeries, currentMedia));
+    this.addChangeListener(_ -> changeDicomInfo(currentSeries, currentMedia));
     this.addComponentListener(
         new java.awt.event.ComponentAdapter() {
           @Override
