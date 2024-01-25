@@ -889,7 +889,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
                 List<String> patients =
                     HiddenSeriesManager.getInstance()
                         .patient2Series
-                        .computeIfAbsent(patientPseudoUID, a -> new CopyOnWriteArrayList<>());
+                        .computeIfAbsent(patientPseudoUID, _ -> new CopyOnWriteArrayList<>());
                 if (!patients.contains(seriesUID)) {
                   patients.add(seriesUID);
                 }
