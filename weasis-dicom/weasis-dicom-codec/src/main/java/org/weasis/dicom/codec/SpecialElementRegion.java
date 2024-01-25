@@ -9,8 +9,14 @@
  */
 package org.weasis.dicom.codec;
 
+import java.awt.*;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Map;
+import java.util.Set;
+import org.dcm4che3.data.Tag;
 import org.weasis.core.ui.model.graphic.imp.seg.SegContour;
+import org.weasis.opencv.seg.Region;
 
 public interface SpecialElementRegion {
   boolean isVisible();
@@ -21,7 +27,48 @@ public interface SpecialElementRegion {
 
   void setOpacity(float opacity);
 
-  boolean containsSopInstanceUIDReference(DicomImageElement img);
+  Map<String, Map<String, Set<SegContour>>> getRefMap();
 
-  Collection<SegContour> getContours(DicomImageElement img);
+  Map<Integer, ? extends Region> getSegAttributes();
+
+  default boolean containsSopInstanceUIDReference(DicomImageElement img) {
+    if (img != null) {
+      String seriesUID = TagD.getTagValue(img, Tag.SeriesInstanceUID, String.class);
+      if (seriesUID != null) {
+        String sopInstanceUID = TagD.getTagValue(img, Tag.SOPInstanceUID, String.class);
+        Map<String, Set<SegContour>> map = getRefMap().get(seriesUID);
+        if (map != null && sopInstanceUID != null) {
+          return map.containsKey(sopInstanceUID);
+        }
+      }
+    }
+    return false;
+  }
+
+  default Collection<SegContour> getContours(DicomImageElement img) {
+    String seriesUID = TagD.getTagValue(img, Tag.SeriesInstanceUID, String.class);
+    if (seriesUID != null) {
+      String sopInstanceUID = TagD.getTagValue(img, Tag.SOPInstanceUID, String.class);
+      Map<String, Set<SegContour>> map = getRefMap().get(seriesUID);
+      if (map != null && sopInstanceUID != null) {
+        Set<SegContour> list = map.get(sopInstanceUID);
+        if (list != null) {
+          return list;
+        }
+      }
+    }
+    return Collections.emptyList();
+  }
+
+  default void updateOpacityInSegAttributes(float opacity) {
+    int opacityValue = (int) (opacity * 255f);
+    getSegAttributes()
+        .values()
+        .forEach(
+            c -> {
+              Color color = c.getAttributes().getColor();
+              color = new Color(color.getRed(), color.getGreen(), color.getBlue(), opacityValue);
+              c.getAttributes().setColor(color);
+            });
+  }
 }

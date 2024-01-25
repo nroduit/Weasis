@@ -13,13 +13,10 @@ import static org.opencv.core.Core.addWeighted;
 import static org.opencv.core.Core.minMaxLoc;
 import static org.opencv.core.Core.multiply;
 
-import java.util.AbstractMap;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
+import java.awt.*;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
+import org.dcm4che3.data.Tag;
 import org.opencv.core.Core;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
@@ -28,11 +25,13 @@ import org.opencv.core.MatOfInt;
 import org.opencv.core.MatOfPoint;
 import org.opencv.core.Scalar;
 import org.opencv.imgproc.Imgproc;
-import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.ui.model.graphic.imp.seg.SegContour;
+import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.DicomSeries;
+import org.weasis.dicom.codec.SpecialElementRegion;
+import org.weasis.dicom.codec.TagD;
 import org.weasis.opencv.data.ImageCV;
 import org.weasis.opencv.op.ImageConversion;
 import org.weasis.opencv.seg.Segment;
@@ -43,7 +42,11 @@ import org.weasis.opencv.seg.SegmentCategory;
  * @author Tomas Skripcak
  * @author Nicolas Roduit
  */
-public class Dose extends HashMap<Integer, Dvh> {
+public class Dose extends HashMap<Integer, Dvh> implements SpecialElementRegion {
+  private final Map<String, Map<String, Set<SegContour>>> refMap = new HashMap<>();
+
+  private volatile float opacity = 1.0f;
+  private volatile boolean visible = true;
 
   private String sopInstanceUid;
   private double[] imagePositionPatient;
@@ -53,6 +56,7 @@ public class Dose extends HashMap<Integer, Dvh> {
   private String doseSummationType;
   private double[] gridFrameOffsetVector;
   private double doseGridScaling;
+  private double doseMax;
 
   private final DicomSeries series;
   private double doseSlicePositionThreshold;
@@ -64,11 +68,48 @@ public class Dose extends HashMap<Integer, Dvh> {
   private AbstractMap.SimpleImmutableEntry<double[], double[]> doseMmLUT;
   private AbstractMap.SimpleImmutableEntry<double[], double[]> dosePixLUT;
 
-  public Dose( DicomSeries series) {
+  public Dose(DicomSeries series) {
     // Default threshold in mm to determine the max difference from slicePosition to the closest
     // dose frame without interpolation
     this.doseSlicePositionThreshold = 0.5;
     this.series = series;
+    this.doseMax = 0.0;
+  }
+
+  public Map<String, Map<String, Set<SegContour>>> getRefMap() {
+    return refMap;
+  }
+
+  public Map<Integer, IsoDoseRegion> getSegAttributes() {
+    return isoDoseSet;
+  }
+
+  public boolean isVisible() {
+    return visible;
+  }
+
+  public void setVisible(boolean visible) {
+    this.visible = visible;
+  }
+
+  public float getOpacity() {
+    return opacity;
+  }
+
+  public void setOpacity(float opacity) {
+    this.opacity = Math.max(0.0f, Math.min(opacity, 1.0f));
+    updateOpacityInSegAttributes(this.opacity);
+  }
+
+  /**
+   * Calculated relative dose with respect to absolute planned dose
+   *
+   * @param dose absolute simulated dose in cGy
+   * @param planDose absolute planned dose in cGy
+   * @return relative dose in %
+   */
+  public static double calculateRelativeDose(double dose, double planDose) {
+    return (100 / planDose) * dose;
   }
 
   public String getSopInstanceUid() {
@@ -135,6 +176,24 @@ public class Dose extends HashMap<Integer, Dvh> {
     this.doseGridScaling = doseGridScaling;
   }
 
+  public double getDoseMax() {
+    // Initialise max dose once dose images are available
+    if (this.series.size(null) > 1 && doseMax < 0.01) {
+      for (DicomImageElement img : series.getMedias(null, null)) {
+        try {
+          Core.MinMaxLocResult minMaxLoc = minMaxLoc(img.getImage().toMat());
+          if (doseMax < minMaxLoc.maxVal) {
+            doseMax = minMaxLoc.maxVal;
+          }
+        } catch (Exception e) {
+          System.out.println("Error: " + e.getMessage());
+        }
+      }
+    }
+
+    return doseMax;
+  }
+
   public double getDoseSlicePositionThreshold() {
     return this.doseSlicePositionThreshold;
   }
@@ -173,6 +232,84 @@ public class Dose extends HashMap<Integer, Dvh> {
 
   public void setDosePixLUT(AbstractMap.SimpleImmutableEntry<double[], double[]> lut) {
     this.dosePixLUT = lut;
+  }
+
+  public void initDoseSet(double rxDose, RtSet rtSet) {
+    int doseMaxLevel =
+        (int) Dose.calculateRelativeDose((getDoseMax() * getDoseGridScaling() * 100), rxDose);
+
+    // Max and standard levels 102, 100, 98, 95, 90, 80, 70, 50, 30
+    if (doseMaxLevel > 0) {
+      String seriesUID =
+          TagD.getTagValue(rtSet.getPatientImage().getImage(), Tag.SeriesInstanceUID, String.class);
+      isoDoseSet.put(
+          doseMaxLevel,
+          new IsoDoseRegion(
+              doseMaxLevel,
+              new Color(120 / 255f, 0, 0, opacity),
+              "Max", // NON-NLS
+              rxDose)); // NON-NLS
+      isoDoseSet.put(102, new IsoDoseRegion(102, new Color(170 / 255f, 0, 0, opacity), "", rxDose));
+      isoDoseSet.put(
+          100, new IsoDoseRegion(100, new Color(238 / 255f, 69 / 255f, 0, opacity), "", rxDose));
+      isoDoseSet.put(98, new IsoDoseRegion(98, new Color(1f, 165 / 255f, 0, opacity), "", rxDose));
+      isoDoseSet.put(95, new IsoDoseRegion(95, new Color(1f, 1f, 0, opacity), "", rxDose));
+      isoDoseSet.put(90, new IsoDoseRegion(90, new Color(0, 1f, 0, opacity), "", rxDose));
+      isoDoseSet.put(80, new IsoDoseRegion(80, new Color(0, 139 / 255f, 0, opacity), "", rxDose));
+      isoDoseSet.put(70, new IsoDoseRegion(70, new Color(0, 1f, 1f, opacity), "", rxDose));
+      isoDoseSet.put(50, new IsoDoseRegion(50, new Color(0, 0, 1f, opacity), "", rxDose));
+      isoDoseSet.put(30, new IsoDoseRegion(30, new Color(0, 0, 128 / 255f, opacity), "", rxDose));
+
+      // Commented level just for testing
+      //           isoDoseSet.put(2, new IsoDoseLayer(new IsoDose(2, new Color(0, 0,
+      // 111/255f,
+      //           opacity), "", rxDose)));
+
+      // Go through whole imaging grid (CT)
+      for (DicomImageElement image : this.series.getMedias(null, null)) {
+        // Image slice UID and position
+        String uidKey = TagD.getTagValue(image, Tag.SOPInstanceUID, String.class);
+        KeyDouble z = new KeyDouble(image.getSliceGeometry().getTLHC().z);
+
+        for (IsoDoseRegion isoDoseLayer : isoDoseSet.values()) {
+          double isoDoseThreshold = isoDoseLayer.getAbsoluteDose();
+
+          StructContour isoContour = getIsoDoseContour(z, isoDoseThreshold, isoDoseLayer);
+          if (isoContour == null) {
+            continue;
+          }
+
+          // Create empty hash map of planes for IsoDose layer if there is none
+          if (isoDoseLayer.getPlanes() == null) {
+            isoDoseLayer.setPlanes(new HashMap<>());
+          }
+
+          // Create a new IsoDose contour plane for Z or select existing one
+          // it will hold list of contours for that plane
+          isoDoseLayer.getPlanes().computeIfAbsent(z, _ -> new ArrayList<>()).add(isoContour);
+          // For lookup from GUI use specific image UID
+          if (StringUtil.hasText(uidKey)) {
+            List<StructContour> pls =
+                getIsoContourMap().computeIfAbsent(uidKey, _ -> new ArrayList<>());
+            pls.add(isoContour);
+          }
+
+          DicomImageElement zImage = rtSet.getSeries().getNearestImage(z.getKey(), 0, null, null);
+          if (zImage != null) {
+            String sopUID = TagD.getTagValue(zImage, Tag.SOPInstanceUID, String.class);
+            refMap
+                .get(seriesUID)
+                .computeIfAbsent(sopUID, _ -> new LinkedHashSet<>())
+                .add(isoContour);
+          }
+        }
+      }
+
+      // When finished creation of iso contours plane data calculate the plane thickness
+      for (IsoDoseRegion isoDoseLayer : isoDoseSet.values()) {
+        isoDoseLayer.setThickness(RtSet.calculatePlaneThickness(isoDoseLayer.getPlanes()));
+      }
+    }
   }
 
   public MediaElement getDosePlaneBySlice(double slicePosition) {
@@ -318,8 +455,9 @@ public class Dose extends HashMap<Integer, Dvh> {
     SegmentAttributes attributes = region.getAttributes();
     SegmentCategory category = region.getCategory();
     if (region.getMeasurableLayer() == null) {
-    //  region.setMeasurableLayer(getMeasurableLayer(img, contour));
+      //  region.setMeasurableLayer(getMeasurableLayer(img, contour));
     }
+
     // Convert from threshold in cCy to raw pixel value threshold
     double rawThreshold = (isoDoseThreshold / 100) / this.doseGridScaling;
     DicomImageElement dosePlane =
@@ -340,10 +478,16 @@ public class Dose extends HashMap<Integer, Dvh> {
     ImageConversion.releaseMat(thr);
 
     List<Segment> segmentList = SegContour.buildSegmentList(ImageCV.toImageCV(thrSrc));
+    if (segmentList.isEmpty()) {
+      ImageConversion.releaseMat(thrSrc);
+      return null;
+    }
+
     int nbPixels = Core.countNonZero(thrSrc);
     ImageConversion.releaseMat(thrSrc);
 
-    StructContour segContour = new StructContour(String.valueOf(slicePosition.getKey()), segmentList, nbPixels);
+    StructContour segContour =
+        new StructContour(String.valueOf(slicePosition.getKey()), segmentList, nbPixels);
     segContour.setPositionZ(slicePosition.getValue());
     region.addPixels(segContour);
     segContour.setAttributes(attributes);
@@ -377,8 +521,8 @@ public class Dose extends HashMap<Integer, Dvh> {
       int upperBoundaryIndex, int lowerBoundaryIndex, double fractionalDistance) {
     MediaElement dosePlane = null;
 
-    DicomImageElement upperPlane = series.getMedia(upperBoundaryIndex,null, null);
-    DicomImageElement lowerPlane = series.getMedia(lowerBoundaryIndex,null, null);
+    DicomImageElement upperPlane = series.getMedia(upperBoundaryIndex, null, null);
+    DicomImageElement lowerPlane = series.getMedia(lowerBoundaryIndex, null, null);
 
     // A simple linear interpolation (lerp)
     Mat dosePlaneMat = new Mat();

@@ -10,10 +10,8 @@
 package org.weasis.dicom.rt;
 
 import static org.opencv.core.Core.add;
-import static org.opencv.core.Core.minMaxLoc;
 import static org.opencv.core.Core.multiply;
 
-import java.awt.Color;
 import java.awt.geom.Point2D;
 import java.util.AbstractMap;
 import java.util.ArrayList;
@@ -34,19 +32,15 @@ import org.dcm4che3.data.Tag;
 import org.dcm4che3.data.UID;
 import org.dcm4che3.img.util.DicomUtils;
 import org.joml.Vector3d;
-import org.opencv.core.Core;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
-import org.opencv.core.MatOfPoint;
 import org.opencv.core.MatOfPoint2f;
 import org.opencv.core.Point;
 import org.opencv.core.Scalar;
 import org.opencv.imgproc.Imgproc;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaElement;
-import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeries.MEDIA_POSITION;
 import org.weasis.core.ui.model.graphic.imp.seg.SegContour;
 import org.weasis.core.util.MathUtil;
@@ -80,35 +74,15 @@ public class RtSet {
   private int structureFillTransparency = 115;
   private int isoFillTransparency = 70;
   boolean forceRecalculateDvh = false;
-  private double doseMax;
 
   public RtSet(DicomSeries series, List<RtSpecialElement> rtElements) {
     this.series = Objects.requireNonNull(series);
     this.rtElements.addAll(Objects.requireNonNull(rtElements));
     Object image = series.getMedia(MEDIA_POSITION.MIDDLE, null, null);
-    this.doseMax = 0.0;
     if (image instanceof DicomImageElement dicomImageElement) {
       this.patientImage = new Image(dicomImageElement);
       this.patientImage.setImageLUT(this.calculatePixelLookupTable(dicomImageElement));
     }
-  }
-
-  public double getDoseMax() {
-    // Initialise max dose once dose images are available
-    if (this.series.size(null) > 1 && doseMax < 0.01) {
-      for (DicomImageElement img : series.getMedias(null, null)) {
-        try {
-          Core.MinMaxLocResult minMaxLoc = minMaxLoc(img.getImage().toMat());
-          if (doseMax < minMaxLoc.maxVal) {
-            doseMax = minMaxLoc.maxVal;
-          }
-        } catch (Exception e) {
-          System.out.println("Error: " + e.getMessage());
-        }
-      }
-    }
-
-    return doseMax;
   }
 
   public DicomSeries getSeries() {
@@ -160,7 +134,7 @@ public class RtSet {
 
         // Re-init DVHs
         for (Dose dose : plan.getDoses()) {
-          if (getDoseMax() > 0) {
+          if (dose.getDoseMax() > 0) {
 
             // For all ROIs
             for (StructRegion region : getFirstStructure().getSegAttributes().values()) {
@@ -207,21 +181,21 @@ public class RtSet {
                         "Structure: %s, %s Min Dose: %.3f %%",
                         region.getCategory().getLabel(),
                         structureDvh.getDvhSource(),
-                        RtSet.calculateRelativeDose(
+                        Dose.calculateRelativeDose(
                             structureDvh.getDvhMinimumDoseCGy(), plan.getRxDose()));
                 String relativeMaxDose =
                     String.format(
                         "Structure: %s, %s Max Dose: %.3f %%",
                         region.getCategory().getLabel(),
                         structureDvh.getDvhSource(),
-                        RtSet.calculateRelativeDose(
+                        Dose.calculateRelativeDose(
                             structureDvh.getDvhMaximumDoseCGy(), plan.getRxDose()));
                 String relativeMeanDose =
                     String.format(
                         "Structure:  %s,  %s Mean Dose: %.3f %%",
                         region.getCategory().getLabel(),
                         structureDvh.getDvhSource(),
-                        RtSet.calculateRelativeDose(
+                        Dose.calculateRelativeDose(
                             structureDvh.getDvhMeanDoseCGy(), plan.getRxDose()));
                 LOGGER.debug(relativeMinDose);
                 LOGGER.debug(relativeMaxDose);
@@ -418,7 +392,7 @@ public class RtSet {
         }
         // Create a new dose object
         else {
-          rtDose = new Dose(series);
+          rtDose = new Dose(((DcmMediaReader) rtElement.getMediaReader()).getMediaSeries());
           plan.getDoses().add(rtDose);
 
           rtDose.setSopInstanceUid(sopInstanceUID);
@@ -559,110 +533,10 @@ public class RtSet {
   private void initIsoDoses(Plan plan) {
     // Init IsoDose levels for each dose
     for (Dose dose : plan.getDoses()) {
-
       // Plan has specified prescribed dose and IsoDoses have not been initialised for specific dose
       // yet
       if (plan.getRxDose() != null && dose.getIsoDoseSet().isEmpty()) {
-        int doseMaxLevel =
-            (int)
-                calculateRelativeDose(
-                    (getDoseMax() * dose.getDoseGridScaling() * 1000), plan.getRxDose());
-
-        // Max and standard levels 102, 100, 98, 95, 90, 80, 70, 50, 30
-        if (doseMaxLevel > 0) {
-          dose.getIsoDoseSet()
-              .put(
-                  doseMaxLevel,
-                  new IsoDoseRegion(
-                      doseMaxLevel,
-                      new Color(120, 0, 0, isoFillTransparency),
-                      "Max", // NON-NLS
-                      plan.getRxDose())); // NON-NLS
-          dose.getIsoDoseSet()
-              .put(
-                  102,
-                  new IsoDoseRegion(
-                      102, new Color(170, 0, 0, isoFillTransparency), "", plan.getRxDose()));
-          dose.getIsoDoseSet()
-              .put(
-                  100,
-                  new IsoDoseRegion(
-                      100, new Color(238, 69, 0, isoFillTransparency), "", plan.getRxDose()));
-          dose.getIsoDoseSet()
-              .put(
-                  98,
-                  new IsoDoseRegion(
-                      98, new Color(255, 165, 0, isoFillTransparency), "", plan.getRxDose()));
-          dose.getIsoDoseSet()
-              .put(
-                  95,
-                  new IsoDoseRegion(
-                      95, new Color(255, 255, 0, isoFillTransparency), "", plan.getRxDose()));
-          dose.getIsoDoseSet()
-              .put(
-                  90,
-                  new IsoDoseRegion(
-                      90, new Color(0, 255, 0, isoFillTransparency), "", plan.getRxDose()));
-          dose.getIsoDoseSet()
-              .put(
-                  80,
-                  new IsoDoseRegion(
-                      80, new Color(0, 139, 0, isoFillTransparency), "", plan.getRxDose()));
-          dose.getIsoDoseSet()
-              .put(
-                  70,
-                  new IsoDoseRegion(
-                      70, new Color(0, 255, 255, isoFillTransparency), "", plan.getRxDose()));
-          dose.getIsoDoseSet()
-              .put(
-                  50,
-                  new IsoDoseRegion(
-                      50, new Color(0, 0, 255, isoFillTransparency), "", plan.getRxDose()));
-          dose.getIsoDoseSet()
-              .put(
-                  30,
-                  new IsoDoseRegion(
-                      30, new Color(0, 0, 128, isoFillTransparency), "", plan.getRxDose()));
-
-          // Commented level just for testing
-          //           dose.getIsoDoseSet().put(2, new IsoDoseLayer(new IsoDose(2, new Color(0, 0,
-          // 111,
-          //           isoFillTransparency), "", plan.getRxDose())));
-
-          // Go through whole imaging grid (CT)
-          for (DicomImageElement image : this.series.getMedias(null, null)) {
-            // Image slice UID and position
-            String uidKey = TagD.getTagValue(image, Tag.SOPInstanceUID, String.class);
-            KeyDouble z = new KeyDouble(image.getSliceGeometry().getTLHC().z);
-
-            for (IsoDoseRegion isoDoseLayer : dose.getIsoDoseSet().values()) {
-              double isoDoseThreshold = isoDoseLayer.getAbsoluteDose();
-
-
-              StructContour isoContour = dose.getIsoDoseContour(z, isoDoseThreshold, isoDoseLayer);
-
-              // Create empty hash map of planes for IsoDose layer if there is none
-              if (isoDoseLayer.getPlanes() == null) {
-                isoDoseLayer.setPlanes(new HashMap<>());
-              }
-
-              // Create a new IsoDose contour plane for Z or select existing one
-              // it will hold list of contours for that plane
-              isoDoseLayer.getPlanes().computeIfAbsent(z, k -> new ArrayList<>()).add(isoContour);
-              // For lookup from GUI use specific image UID
-              if (StringUtil.hasText(uidKey)) {
-                List<StructContour> pls =
-                    dose.getIsoContourMap().computeIfAbsent(uidKey, l -> new ArrayList<>());
-                pls.add(isoContour);
-              }
-            }
-          }
-
-          // When finished creation of iso contours plane data calculate the plane thickness
-          for (IsoDoseRegion isoDoseLayer : dose.getIsoDoseSet().values()) {
-            isoDoseLayer.setThickness(calculatePlaneThickness(isoDoseLayer.getPlanes()));
-          }
-        }
+        dose.initDoseSet(plan.getRxDose(), this);
       }
     }
   }
@@ -768,17 +642,6 @@ public class RtSet {
     return new PolynomialSplineFunction(x, polynomials);
   }
 
-  /**
-   * Calculated relative dose with respect to absolute planned dose
-   *
-   * @param dose absolute simulated dose in cGy
-   * @param planDose absolute planned dose in cGy
-   * @return relative dose in %
-   */
-  public static double calculateRelativeDose(double dose, double planDose) {
-    return (100 / planDose) * dose;
-  }
-
   public Dvh initCalculatedDvh(StructRegion region, Dose dose) {
     Dvh dvh = new Dvh();
     dvh.setReferencedRoiNumber(region.getCategory().getId());
@@ -801,9 +664,9 @@ public class RtSet {
 
   private Mat calculateDifferentialDvh(StructRegion region, Dose dose) {
 
-    DicomImageElement doseImage = this.series.getMedia(MEDIA_POSITION.FIRST, null,null);
+    DicomImageElement doseImage = this.series.getMedia(MEDIA_POSITION.FIRST, null, null);
     Vector3d doseImageSpacing = doseImage.getSliceGeometry().getVoxelSpacing();
-    double maxDose = getDoseMax() * dose.getDoseGridScaling() * 100;
+    double maxDose = dose.getDoseMax() * dose.getDoseGridScaling() * 100;
 
     double volume = 0f;
 

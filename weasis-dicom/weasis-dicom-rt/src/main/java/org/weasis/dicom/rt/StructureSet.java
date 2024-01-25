@@ -12,8 +12,6 @@ package org.weasis.dicom.rt;
 import java.awt.Color;
 import java.awt.geom.Path2D;
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
@@ -62,6 +60,31 @@ public class StructureSet extends RtSpecialElement implements SpecialElementRegi
 
   public StructureSet(DicomMediaIO mediaIO) {
     super(mediaIO);
+  }
+
+  public Map<String, Map<String, Set<SegContour>>> getRefMap() {
+    return refMap;
+  }
+
+  public Map<Integer, StructRegion> getSegAttributes() {
+    return segAttributes;
+  }
+
+  public boolean isVisible() {
+    return visible;
+  }
+
+  public void setVisible(boolean visible) {
+    this.visible = visible;
+  }
+
+  public float getOpacity() {
+    return opacity;
+  }
+
+  public void setOpacity(float opacity) {
+    this.opacity = Math.max(0.0f, Math.min(opacity, 1.0f));
+    updateOpacityInSegAttributes(this.opacity);
   }
 
   @Override
@@ -314,69 +337,5 @@ public class StructureSet extends RtSpecialElement implements SpecialElementRegi
       return new SegMeasurableLayer<>(img, slabThickness);
     }
     return null;
-  }
-
-  public Map<String, Map<String, Set<SegContour>>> getRefMap() {
-    return refMap;
-  }
-
-  public Map<Integer, StructRegion> getSegAttributes() {
-    return segAttributes;
-  }
-
-  public boolean isVisible() {
-    return visible;
-  }
-
-  public void setVisible(boolean visible) {
-    this.visible = visible;
-  }
-
-  public float getOpacity() {
-    return opacity;
-  }
-
-  public void setOpacity(float opacity) {
-    this.opacity = Math.max(0.0f, Math.min(opacity, 1.0f));
-    int opacityValue = (int) (this.opacity * 255f);
-    segAttributes
-        .values()
-        .forEach(
-            c -> {
-              Color color = c.getAttributes().getColor();
-              color = new Color(color.getRed(), color.getGreen(), color.getBlue(), opacityValue);
-              c.getAttributes().setColor(color);
-            });
-  }
-
-  @Override
-  public boolean containsSopInstanceUIDReference(DicomImageElement img) {
-    if (img != null) {
-      String seriesUID = TagD.getTagValue(img, Tag.SeriesInstanceUID, String.class);
-      if (seriesUID != null) {
-        String sopInstanceUID = TagD.getTagValue(img, Tag.SOPInstanceUID, String.class);
-        Map<String, Set<SegContour>> map = refMap.get(seriesUID);
-        if (map != null && sopInstanceUID != null) {
-          return map.containsKey(sopInstanceUID);
-        }
-      }
-    }
-    return false;
-  }
-
-  @Override
-  public Collection<SegContour> getContours(DicomImageElement img) {
-    String seriesUID = TagD.getTagValue(img, Tag.SeriesInstanceUID, String.class);
-    if (seriesUID != null) {
-      String sopInstanceUID = TagD.getTagValue(img, Tag.SOPInstanceUID, String.class);
-      Map<String, Set<SegContour>> map = refMap.get(seriesUID);
-      if (map != null && sopInstanceUID != null) {
-        Set<SegContour> list = map.get(sopInstanceUID);
-        if (list != null) {
-          return list;
-        }
-      }
-    }
-    return Collections.emptyList();
   }
 }

@@ -31,9 +31,9 @@ public class IsoDoseRegion extends SegRegion<DicomImageElement> {
     setAttributes(new SegmentAttributes(color, true, 1.0f));
     this.absoluteDose = ((this.level) * planDose) / 100.0;
     String result =
-        this.level + " % / " + String.format("%.6g", this.absoluteDose) + " cGy"; // NON-NLS
+        STR."\{this.level} % / \{String.format("%.6g", this.absoluteDose)} cGy"; // NON-NLS
     if (StringUtil.hasText(name)) {
-      result += " [" + name + "]";
+      result += STR." [\{name}]";
     }
     setCategory(new SegmentCategory(level, result, null, null));
   }

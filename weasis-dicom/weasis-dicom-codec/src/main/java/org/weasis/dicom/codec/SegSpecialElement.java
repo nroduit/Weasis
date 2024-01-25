@@ -12,8 +12,6 @@ package org.weasis.dicom.codec;
 import java.awt.Color;
 import java.awt.Point;
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -72,6 +70,39 @@ public class SegSpecialElement extends HiddenSpecialElement
       buf.append(item);
     }
     label = buf.toString();
+  }
+
+  public Map<Integer, Set<SegContour>> getRoiMap() {
+    return roiMap;
+  }
+
+  public Map<String, Map<String, Set<SegContour>>> getRefMap() {
+    return refMap;
+  }
+
+  public Map<Integer, SegRegion<DicomImageElement>> getSegAttributes() {
+    return segAttributes;
+  }
+
+  @Override
+  public boolean isVisible() {
+    return visible;
+  }
+
+  @Override
+  public void setVisible(boolean visible) {
+    this.visible = visible;
+  }
+
+  @Override
+  public float getOpacity() {
+    return opacity;
+  }
+
+  @Override
+  public void setOpacity(float opacity) {
+    this.opacity = Math.max(0.0f, Math.min(opacity, 1.0f));
+    updateOpacityInSegAttributes(this.opacity);
   }
 
   @Override
@@ -256,77 +287,5 @@ public class SegSpecialElement extends HiddenSpecialElement
     contour.setAttributes(attributes);
     contour.setCategory(category);
     roiMap.computeIfAbsent(id, _ -> new LinkedHashSet<>()).add(contour);
-  }
-
-  public Map<Integer, Set<SegContour>> getRoiMap() {
-    return roiMap;
-  }
-
-  public Map<String, Map<String, Set<SegContour>>> getRefMap() {
-    return refMap;
-  }
-
-  public Map<Integer, SegRegion<DicomImageElement>> getSegAttributes() {
-    return segAttributes;
-  }
-
-  @Override
-  public boolean isVisible() {
-    return visible;
-  }
-
-  @Override
-  public void setVisible(boolean visible) {
-    this.visible = visible;
-  }
-
-  @Override
-  public float getOpacity() {
-    return opacity;
-  }
-
-  @Override
-  public void setOpacity(float opacity) {
-    this.opacity = Math.max(0.0f, Math.min(opacity, 1.0f));
-    int opacityValue = (int) (this.opacity * 255f);
-    segAttributes
-        .values()
-        .forEach(
-            c -> {
-              Color color = c.getAttributes().getColor();
-              color = new Color(color.getRed(), color.getGreen(), color.getBlue(), opacityValue);
-              c.getAttributes().setColor(color);
-            });
-  }
-
-  @Override
-  public boolean containsSopInstanceUIDReference(DicomImageElement img) {
-    if (img != null) {
-      String seriesUID = TagD.getTagValue(img, Tag.SeriesInstanceUID, String.class);
-      if (seriesUID != null) {
-        String sopInstanceUID = TagD.getTagValue(img, Tag.SOPInstanceUID, String.class);
-        Map<String, Set<SegContour>> map = refMap.get(seriesUID);
-        if (map != null && sopInstanceUID != null) {
-          return map.containsKey(sopInstanceUID);
-        }
-      }
-    }
-    return false;
-  }
-
-  @Override
-  public Collection<SegContour> getContours(DicomImageElement img) {
-    String seriesUID = TagD.getTagValue(img, Tag.SeriesInstanceUID, String.class);
-    if (seriesUID != null) {
-      String sopInstanceUID = TagD.getTagValue(img, Tag.SOPInstanceUID, String.class);
-      Map<String, Set<SegContour>> map = refMap.get(seriesUID);
-      if (map != null && sopInstanceUID != null) {
-        Set<SegContour> list = map.get(sopInstanceUID);
-        if (list != null) {
-          return list;
-        }
-      }
-    }
-    return Collections.emptyList();
   }
 }

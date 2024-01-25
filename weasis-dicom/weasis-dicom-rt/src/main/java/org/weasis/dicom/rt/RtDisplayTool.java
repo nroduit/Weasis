@@ -681,7 +681,7 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener {
                     buf.append(
                         String.format(
                             FORMAT,
-                            RtSet.calculateRelativeDose(
+                            Dose.calculateRelativeDose(
                                 structureDvh.getDvhMinimumDoseCGy(),
                                 structureDvh.getPlan().getRxDose())));
                     buf.append(GuiUtils.HTML_BR);
@@ -692,7 +692,7 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener {
                     buf.append(
                         String.format(
                             FORMAT,
-                            RtSet.calculateRelativeDose(
+                            Dose.calculateRelativeDose(
                                 structureDvh.getDvhMaximumDoseCGy(),
                                 structureDvh.getPlan().getRxDose())));
                     buf.append(GuiUtils.HTML_BR);
@@ -703,7 +703,7 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener {
                     buf.append(
                         String.format(
                             FORMAT,
-                            RtSet.calculateRelativeDose(
+                            Dose.calculateRelativeDose(
                                 structureDvh.getDvhMeanDoseCGy(),
                                 structureDvh.getPlan().getRxDose())));
                     buf.append(GuiUtils.HTML_BR);

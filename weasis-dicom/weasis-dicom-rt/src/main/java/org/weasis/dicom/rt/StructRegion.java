@@ -28,6 +28,7 @@ public class StructRegion extends SegRegion<DicomImageElement> {
 
   public StructRegion(String id) {
     super(id);
+    this.volume = -1.0;
   }
 
   public int getObservationNumber() {
