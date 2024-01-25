@@ -41,7 +41,7 @@ public abstract class SliderCineListener extends SliderChangeListener {
   private final Timer timer =
       new Timer(
           1000 / 20,
-          a -> {
+          _ -> {
             int step = (int) (getSpeed() / 5);
             if (step <= 0) {
               step = 1;
@@ -88,7 +88,7 @@ public abstract class SliderCineListener extends SliderChangeListener {
     super(action, min, max, value);
     this.time = time;
     speedModel = new SpinnerNumberModel(speed, 0.01, 90.0, 1.0);
-    speedModel.addChangeListener(a -> updateSpeed());
+    speedModel.addChangeListener(_ -> updateSpeed());
   }
 
   public void start() {

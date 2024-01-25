@@ -69,7 +69,7 @@ public class GraphicPrefView extends AbstractItemDialogPage {
     sliderOpacity.setValue((int) (MeasureTool.viewSetting.getFillOpacity() * 100));
     PropertiesDialog.updateSlider(sliderOpacity, PropertiesDialog.FILL_OPACITY);
     sliderOpacity.addChangeListener(
-        a -> PropertiesDialog.updateSlider(sliderOpacity, PropertiesDialog.FILL_OPACITY));
+        _ -> PropertiesDialog.updateSlider(sliderOpacity, PropertiesDialog.FILL_OPACITY));
 
     getProperties().setProperty(PreferenceDialog.KEY_SHOW_RESTORE, Boolean.TRUE.toString());
     getProperties().setProperty(PreferenceDialog.KEY_HELP, "draw-measure/#preferences"); // NON-NLS
