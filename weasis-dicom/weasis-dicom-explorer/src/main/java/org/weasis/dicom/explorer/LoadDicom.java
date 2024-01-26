@@ -9,7 +9,6 @@
  */
 package org.weasis.dicom.explorer;
 
-import java.util.Arrays;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
@@ -22,7 +21,6 @@ import org.weasis.core.api.explorer.ObservableEvent;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.gui.util.GuiUtils;
-import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.MediaSeriesGroupNode;
 import org.weasis.core.api.media.data.Series;
@@ -34,7 +32,6 @@ import org.weasis.dicom.codec.DicomMediaIO;
 import org.weasis.dicom.codec.DicomSeries;
 import org.weasis.dicom.codec.DicomSpecialElement;
 import org.weasis.dicom.codec.DicomSpecialElementFactory;
-import org.weasis.dicom.codec.HiddenSpecialElement;
 import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.TagD.Level;
 import org.weasis.dicom.explorer.HangingProtocols.OpeningViewer;
@@ -161,7 +158,7 @@ public abstract class LoadDicom extends ExplorerTask<Boolean, String> {
         dicomModel.addHierarchyNode(study, dicomSeries);
         DicomImageElement[] medias = getDicomImageElements(dicomReader, dicomSeries, editableDicom);
 
-        if (!updateHiddenModality(dicomSeries, medias)) {
+        if (!DicomModel.isHiddenModality(dicomSeries) && medias != null && medias.length > 0) {
           // After the thumbnail is sent to interface, it will be return to be rebuilt later
           thumb = dicomModel.buildThumbnail(dicomSeries);
         }
@@ -189,8 +186,6 @@ public abstract class LoadDicom extends ExplorerTask<Boolean, String> {
             GuiExecutor.execute(t::repaint);
           }
         }
-
-        updateHiddenModality(dicomSeries, medias);
 
         // If Split series or special DICOM element update the explorer view and View2DContainer
         Integer splitNb = (Integer) dicomSeries.getTagValue(TagW.SplitSeriesNumber);
@@ -230,25 +225,10 @@ public abstract class LoadDicom extends ExplorerTask<Boolean, String> {
       DicomSpecialElement media = result.getSpecialElement();
       dicomModel.applySplittingRules(series, media);
       series.setFileSize(series.getFileSize() + media.getLength());
+      dicomModel.firePropertyChange(
+          new ObservableEvent(ObservableEvent.BasicAction.UPDATE, dicomModel, null, media));
     }
     return medias;
-  }
-
-  private boolean updateHiddenModality(Series<?> dicomSeries, MediaElement[] medias) {
-    if (DicomModel.isHiddenModality(dicomSeries)) {
-      if (medias != null) {
-        Arrays.stream(medias)
-            .filter(HiddenSpecialElement.class::isInstance)
-            .map(HiddenSpecialElement.class::cast)
-            .forEach(
-                d ->
-                    dicomModel.firePropertyChange(
-                        new ObservableEvent(
-                            ObservableEvent.BasicAction.UPDATE, dicomModel, null, d)));
-      }
-      return true;
-    }
-    return false;
   }
 
   protected boolean isSOPInstanceUIDExist(
