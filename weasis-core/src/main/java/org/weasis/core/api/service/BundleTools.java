@@ -13,16 +13,17 @@ import java.util.List;
 import org.osgi.framework.Constants;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.media.data.Codec;
+import org.weasis.core.api.media.data.MediaElement;
 
 public class BundleTools {
 
   private BundleTools() {}
 
-  public static Codec getCodec(String mimeType, String preferredCodec) {
-    Codec codec = null;
-    List<Codec> codecs = GuiUtils.getUICore().getCodecPlugins();
+  public static Codec<MediaElement> getCodec(String mimeType, String preferredCodec) {
+    Codec<MediaElement> codec = null;
+    List<Codec<MediaElement>> codecs = GuiUtils.getUICore().getCodecPlugins();
     synchronized (codecs) {
-      for (Codec c : codecs) {
+      for (Codec<MediaElement> c : codecs) {
         if (c.isMimeTypeSupported(mimeType)) {
           if (c.getCodecName().equals(preferredCodec)) {
             codec = c;

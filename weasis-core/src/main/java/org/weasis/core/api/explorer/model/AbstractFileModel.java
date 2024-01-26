@@ -23,15 +23,9 @@ import org.weasis.core.api.command.Options;
 import org.weasis.core.api.explorer.ObservableEvent;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.gui.util.GuiUtils;
-import org.weasis.core.api.media.data.Codec;
-import org.weasis.core.api.media.data.MediaElement;
-import org.weasis.core.api.media.data.MediaSeriesGroup;
-import org.weasis.core.api.media.data.MediaSeriesGroupNode;
-import org.weasis.core.api.media.data.Series;
-import org.weasis.core.api.media.data.TagView;
-import org.weasis.core.api.media.data.TagW;
+import org.weasis.core.api.media.data.*;
 
-public abstract class AbstractFileModel implements TreeModel, DataExplorerModel {
+public abstract class AbstractFileModel implements TreeModel, DataExplorerModel<MediaElement> {
   private static final Logger LOGGER = LoggerFactory.getLogger(AbstractFileModel.class);
 
   public static final List<String> functions = List.of("get", "close"); // NON-NLS
@@ -53,7 +47,7 @@ public abstract class AbstractFileModel implements TreeModel, DataExplorerModel 
   }
 
   @Override
-  public List<Codec> getCodecPlugins() {
+  public List<Codec<MediaElement>> getCodecPlugins() {
     return GuiUtils.getUICore().getCodecPlugins();
   }
 
@@ -182,7 +176,8 @@ public abstract class AbstractFileModel implements TreeModel, DataExplorerModel 
   }
 
   @Override
-  public boolean applySplittingRules(Series original, MediaElement media) {
+  public <S extends Series<MediaElement>> boolean applySplittingRules(
+      S original, MediaElement media) {
     return false;
   }
 

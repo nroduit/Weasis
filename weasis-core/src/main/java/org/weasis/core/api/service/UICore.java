@@ -45,6 +45,7 @@ import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.gui.util.WinUtil;
 import org.weasis.core.api.media.data.Codec;
+import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.util.ClosableURLConnection;
 import org.weasis.core.api.util.LocalUtil;
@@ -77,7 +78,7 @@ public final class UICore {
   private final CContentArea baseArea;
   private final CWorkingArea mainArea;
 
-  private final List<Codec> codecPlugins;
+  private final List<Codec<MediaElement>> codecPlugins;
   private final WProperties systemPreferences;
   private final WProperties localPersistence;
   private final WProperties initialSystemPreferences;
@@ -339,7 +340,7 @@ public final class UICore {
     return dockingVetoFocus;
   }
 
-  public List<Codec> getCodecPlugins() {
+  public List<Codec<MediaElement>> getCodecPlugins() {
     return codecPlugins;
   }
 

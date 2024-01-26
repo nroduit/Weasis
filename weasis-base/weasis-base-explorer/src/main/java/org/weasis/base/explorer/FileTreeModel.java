@@ -23,7 +23,7 @@ import org.weasis.core.api.media.data.Codec;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.Series;
 
-public class FileTreeModel extends DefaultTreeModel implements DataExplorerModel {
+public class FileTreeModel extends DefaultTreeModel implements DataExplorerModel<MediaElement> {
 
   private final PropertyChangeSupport propertyChange;
 
@@ -59,7 +59,7 @@ public class FileTreeModel extends DefaultTreeModel implements DataExplorerModel
   }
 
   @Override
-  public List<Codec> getCodecPlugins() {
+  public List<Codec<MediaElement>> getCodecPlugins() {
     return GuiUtils.getUICore().getCodecPlugins();
   }
 
@@ -69,7 +69,8 @@ public class FileTreeModel extends DefaultTreeModel implements DataExplorerModel
   }
 
   @Override
-  public boolean applySplittingRules(Series original, MediaElement media) {
+  public <S extends Series<MediaElement>> boolean applySplittingRules(
+      S original, MediaElement media) {
     return false;
   }
 }

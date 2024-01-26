@@ -104,7 +104,7 @@ import org.weasis.dicom.explorer.wado.LoadSeries;
       CommandProcessor.COMMAND_FUNCTION + "=close"
     },
     service = DicomModel.class)
-public class DicomModel implements TreeModel, DataExplorerModel {
+public class DicomModel implements TreeModel, DataExplorerModel<DicomImageElement> {
   private static final Logger LOGGER = LoggerFactory.getLogger(DicomModel.class);
 
   public static final String NAME = "DICOM";
@@ -146,11 +146,11 @@ public class DicomModel implements TreeModel, DataExplorerModel {
   }
 
   @Override
-  public List<Codec> getCodecPlugins() {
-    ArrayList<Codec> codecPlugins = new ArrayList<>(1);
-    List<Codec> codecs = GuiUtils.getUICore().getCodecPlugins();
+  public List<Codec<MediaElement>> getCodecPlugins() {
+    ArrayList<Codec<MediaElement>> codecPlugins = new ArrayList<>(1);
+    List<Codec<MediaElement>> codecs = GuiUtils.getUICore().getCodecPlugins();
     synchronized (codecs) {
-      for (Codec codec : codecs) {
+      for (Codec<MediaElement> codec : codecs) {
         if (codec != null
             && !"JDK ImageIO".equals(codec.getCodecName()) // NON-NLS
             && codec.isMimeTypeSupported(DicomMediaIO.DICOM_MIMETYPE)
@@ -673,12 +673,13 @@ public class DicomModel implements TreeModel, DataExplorerModel {
     }
   }
 
-  private void splitSeries(DicomMediaIO dicomReader, Series original, MediaElement media) {
-    Series s = splitSeries(dicomReader, original);
+  private void splitSeries(
+      DicomMediaIO dicomReader, DicomSeries original, DicomImageElement media) {
+    DicomSeries s = splitSeries(dicomReader, original);
     s.addMedia(media);
   }
 
-  private Series splitSeries(DicomMediaIO dicomReader, Series original) {
+  private DicomSeries splitSeries(DicomMediaIO dicomReader, DicomSeries original) {
     MediaSeriesGroup st = getParent(original, DicomModel.study);
     String seriesUID = TagD.getTagValue(original, Tag.SeriesInstanceUID, String.class);
     int k = 1;
@@ -691,7 +692,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
       k++;
     }
     String uid = "#" + k + "." + seriesUID;
-    Series s = dicomReader.buildSeries(uid);
+    DicomSeries s = dicomReader.buildSeries(uid);
     dicomReader.writeMetaData(s);
     Object val = original.getTagValue(TagW.SplitSeriesNumber);
     if (val == null) {
@@ -705,7 +706,8 @@ public class DicomModel implements TreeModel, DataExplorerModel {
     return s;
   }
 
-  private void replaceSeries(DicomMediaIO dicomReader, Series original, MediaElement media) {
+  private void replaceSeries(
+      DicomMediaIO dicomReader, DicomSeries original, DicomImageElement media) {
     MediaSeriesGroup st = getParent(original, DicomModel.study);
     String seriesUID = TagD.getTagValue(original, Tag.SeriesInstanceUID, String.class);
 
@@ -719,7 +721,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
       k++;
     }
     String uid = "#" + k + "." + seriesUID;
-    Series s = dicomReader.buildSeries(uid);
+    DicomSeries s = dicomReader.buildSeries(uid);
     dicomReader.writeMetaData(s);
     Object val = original.getTagValue(TagW.SplitSeriesNumber);
     if (val == null) {
@@ -795,7 +797,8 @@ public class DicomModel implements TreeModel, DataExplorerModel {
   }
 
   @Override
-  public boolean applySplittingRules(Series original, MediaElement media) {
+  public <S extends Series<DicomImageElement>> boolean applySplittingRules(
+      S original, MediaElement media) {
     if (media != null && media.getMediaReader() instanceof DicomMediaIO dicomReader) {
       String seriesUID = TagD.getTagValue(original, Tag.SeriesInstanceUID, String.class);
       if (seriesUID == null) {
@@ -810,22 +813,22 @@ public class DicomModel implements TreeModel, DataExplorerModel {
         if (original.size(null) > 0) {
           // Always split when it is a video or an encapsulated document
           if (media instanceof DicomVideoElement || media instanceof DicomEncapDocElement) {
-            splitSeries(dicomReader, original, media);
+            splitSeries(dicomReader, (DicomSeries) original, (DicomImageElement) media);
             return true;
           } else {
-            findMatchingSeriesOrSplit(original, media);
+            findMatchingSeriesOrSplit((DicomSeries) original, (DicomImageElement) media);
           }
         } else {
-          original.addMedia(media);
+          original.addMedia((DicomImageElement) media);
         }
       } else if (original instanceof DicomSeries initialSeries) {
         // Handle cases when the Series is created before getting the image (downloading)
         if (media instanceof DicomVideoElement || media instanceof DicomEncapDocElement) {
-          if (original.size(null) > 0) {
+          if (initialSeries.size(null) > 0) {
             // When the series already contains elements (images), always split video and document
-            splitSeries(dicomReader, original, media);
+            splitSeries(dicomReader, initialSeries, (DicomImageElement) media);
           } else {
-            replaceSeries(dicomReader, original, media);
+            replaceSeries(dicomReader, initialSeries, (DicomImageElement) media);
           }
           return true;
         }
@@ -871,9 +874,11 @@ public class DicomModel implements TreeModel, DataExplorerModel {
             }
             k++;
           }
-          // no matching series exists, so split series
-          splitSeries(dicomReader, initialSeries, media);
-          return true;
+          if (media instanceof DicomImageElement dcm) {
+            // no matching series exists, so split series
+            splitSeries(dicomReader, initialSeries, dcm);
+            return true;
+          }
         }
       }
     }
@@ -928,7 +933,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
     }
   }
 
-  private boolean findMatchingSeriesOrSplit(Series original, MediaElement media) {
+  private boolean findMatchingSeriesOrSplit(DicomSeries original, DicomImageElement media) {
     DicomMediaIO dicomReader = (DicomMediaIO) media.getMediaReader();
     int frames = dicomReader.getMediaElementNumber();
     if (frames < 1) {
@@ -958,9 +963,9 @@ public class DicomModel implements TreeModel, DataExplorerModel {
       while (true) {
         String uid = "#" + k + "." + seriesUID;
         MediaSeriesGroup group = getHierarchyNode(studyGroup, uid);
-        if (group instanceof Series series) {
-          if (isSimilar(rules, series, media)) {
-            series.addMedia(media);
+        if (group instanceof DicomSeries s) {
+          if (isSimilar(rules, s, media)) {
+            s.addMedia(media);
             return false;
           }
         } else {
