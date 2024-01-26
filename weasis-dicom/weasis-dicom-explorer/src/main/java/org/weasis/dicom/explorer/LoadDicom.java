@@ -106,8 +106,10 @@ public abstract class LoadDicom extends ExplorerTask<Boolean, String> {
     """
             .formatted(
                 message,
-                STR."\{GuiUtils.getUICore().getSystemPreferences()
-        .getProperty("weasis.help.online")}logging",
+                STR."\{
+                    GuiUtils.getUICore()
+                        .getSystemPreferences()
+                        .getProperty("weasis.help.online")}logging",
                 logOutput);
 
     JTextPane jTextPane1 = GuiUtils.getPanelWithHyperlink(html);
