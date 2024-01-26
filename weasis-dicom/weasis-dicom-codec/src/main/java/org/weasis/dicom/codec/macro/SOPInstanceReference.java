@@ -43,7 +43,7 @@ public class SOPInstanceReference extends Module {
   }
 
   public int[] getReferencedFrameNumber() {
-    return DicomUtils.getIntAyrrayFromDicomElement(dcmItems, Tag.ReferencedFrameNumber, null);
+    return DicomUtils.getIntArrayFromDicomElement(dcmItems, Tag.ReferencedFrameNumber, null);
   }
 
   /**
