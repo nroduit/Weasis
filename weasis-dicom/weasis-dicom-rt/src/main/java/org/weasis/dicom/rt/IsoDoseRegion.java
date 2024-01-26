@@ -19,7 +19,7 @@ import org.weasis.opencv.seg.SegmentAttributes;
 import org.weasis.opencv.seg.SegmentCategory;
 
 public class IsoDoseRegion extends SegRegion<DicomImageElement> {
-  private int level;
+  private final int level;
   private final double absoluteDose;
   private double thickness;
 
@@ -29,6 +29,7 @@ public class IsoDoseRegion extends SegRegion<DicomImageElement> {
     super(String.valueOf(level));
     this.level = level;
     setAttributes(new SegmentAttributes(color, true, 1.0f));
+    getAttributes().setInteriorOpacity(0.2f);
     this.absoluteDose = ((this.level) * planDose) / 100.0;
     String result =
         STR."\{this.level} % / \{String.format("%.6g", this.absoluteDose)} cGy"; // NON-NLS
@@ -40,10 +41,6 @@ public class IsoDoseRegion extends SegRegion<DicomImageElement> {
 
   public int getLevel() {
     return level;
-  }
-
-  public void setLevel(int level) {
-    this.level = level;
   }
 
   public double getAbsoluteDose() {

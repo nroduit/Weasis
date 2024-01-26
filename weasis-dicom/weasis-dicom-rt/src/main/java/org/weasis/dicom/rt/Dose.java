@@ -16,22 +16,22 @@ import static org.opencv.core.Core.multiply;
 import java.awt.*;
 import java.util.*;
 import java.util.List;
+import java.util.stream.DoubleStream;
+import org.dcm4che3.data.Attributes;
+import org.dcm4che3.data.Sequence;
 import org.dcm4che3.data.Tag;
 import org.opencv.core.Core;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfFloat;
 import org.opencv.core.MatOfInt;
-import org.opencv.core.MatOfPoint;
 import org.opencv.core.Scalar;
 import org.opencv.imgproc.Imgproc;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.ui.model.graphic.imp.seg.SegContour;
-import org.weasis.core.util.StringUtil;
-import org.weasis.dicom.codec.DicomImageElement;
-import org.weasis.dicom.codec.DicomSeries;
-import org.weasis.dicom.codec.SpecialElementRegion;
-import org.weasis.dicom.codec.TagD;
+import org.weasis.dicom.codec.*;
 import org.weasis.opencv.data.ImageCV;
 import org.weasis.opencv.op.ImageConversion;
 import org.weasis.opencv.seg.Segment;
@@ -42,13 +42,13 @@ import org.weasis.opencv.seg.SegmentCategory;
  * @author Tomas Skripcak
  * @author Nicolas Roduit
  */
-public class Dose extends HashMap<Integer, Dvh> implements SpecialElementRegion {
+public class Dose extends RtSpecialElement implements SpecialElementRegion {
+  private static final Logger LOGGER = LoggerFactory.getLogger(Dose.class);
   private final Map<String, Map<String, Set<SegContour>>> refMap = new HashMap<>();
 
   private volatile float opacity = 1.0f;
-  private volatile boolean visible = true;
+  private volatile boolean visible = false;
 
-  private String sopInstanceUid;
   private double[] imagePositionPatient;
   private String comment;
   private String doseUnit;
@@ -61,19 +61,155 @@ public class Dose extends HashMap<Integer, Dvh> implements SpecialElementRegion 
   private final DicomSeries series;
   private double doseSlicePositionThreshold;
 
-  private Map<Integer, IsoDoseRegion> isoDoseSet = new LinkedHashMap<>();
-  private Map<String, List<StructContour>> isoContourMap = new HashMap<>();
+  private final Map<Integer, IsoDoseRegion> isoDoseSet = new LinkedHashMap<>();
+
+  private final Map<Integer, Dvh> dvhMap = new HashMap<>();
 
   // Dose LUTs
   private AbstractMap.SimpleImmutableEntry<double[], double[]> doseMmLUT;
   private AbstractMap.SimpleImmutableEntry<double[], double[]> dosePixLUT;
 
-  public Dose(DicomSeries series) {
+  public Dose(DicomMediaIO mediaIO) {
+    super(mediaIO);
     // Default threshold in mm to determine the max difference from slicePosition to the closest
     // dose frame without interpolation
     this.doseSlicePositionThreshold = 0.5;
-    this.series = series;
+    this.series = getMediaReader().getMediaSeries();
     this.doseMax = 0.0;
+
+    Attributes dcmItems = mediaIO.getDicomObject();
+    if (dcmItems != null) {
+      setImagePositionPatient(dcmItems.getDoubles(Tag.ImagePositionPatient));
+      setComment(dcmItems.getString(Tag.DoseComment));
+      setDoseUnit(dcmItems.getString(Tag.DoseUnits));
+      setDoseType(dcmItems.getString(Tag.DoseType));
+      setDoseSummationType(dcmItems.getString(Tag.DoseSummationType));
+      setGridFrameOffsetVector(dcmItems.getDoubles(Tag.GridFrameOffsetVector));
+      setDoseGridScaling(dcmItems.getDouble(Tag.DoseGridScaling, 0.0));
+      initDvh(dcmItems.getSequence(Tag.DVHSequence));
+    }
+  }
+
+  private void initDvh(Sequence dvhSeq) {
+    if (dvhSeq != null) {
+      for (Attributes dvhAttributes : dvhSeq) {
+
+        // Need to refer to delineated contour
+        Dvh rtDvh = null;
+        Sequence dvhRefRoiSeq = dvhAttributes.getSequence(Tag.DVHReferencedROISequence);
+        if (dvhRefRoiSeq == null) {
+          continue;
+        } else if (dvhRefRoiSeq.size() == 1) {
+          rtDvh = new Dvh();
+          Attributes dvhRefRoiAttributes = dvhRefRoiSeq.getFirst();
+          rtDvh.setReferencedRoiNumber(dvhRefRoiAttributes.getInt(Tag.ReferencedROINumber, -1));
+
+          LOGGER.debug("Found DVH for ROI: {}", rtDvh.getReferencedRoiNumber());
+        }
+
+        if (rtDvh != null) {
+          rtDvh.setDvhSource(DataSource.PROVIDED);
+          // Convert Differential DVH to Cumulative
+          if (dvhSeq.get(0).getString(Tag.DVHType).equals("DIFFERENTIAL")) {
+
+            LOGGER.info("Not supported: converting differential DVH to cumulative");
+
+            double[] data = dvhAttributes.getDoubles(Tag.DVHData);
+            if (data != null && data.length % 2 == 0) {
+
+              // X of histogram
+              double[] doseX = new double[data.length / 2];
+
+              // Y of histogram
+              double[] volume = new double[data.length / 2];
+
+              // Separate the dose and volume values into distinct arrays
+              for (int i = 0; i < data.length; i = i + 2) {
+                doseX[i] = data[i];
+                volume[i] = data[i + 1];
+              }
+
+              // Get the min and max dose in cGy
+              int minDose = (int) (doseX[0] * 100);
+              int maxDose = (int) DoubleStream.of(doseX).sum();
+
+              // Get volume values
+              double maxVolume = DoubleStream.of(volume).sum();
+
+              // Determine the dose values that are missing from the original data
+              double[] missingDose = new double[minDose];
+              for (int j = 0; j < minDose; j++) {
+                missingDose[j] = maxVolume;
+              }
+
+              // Cumulative dose - x of histogram
+              // Cumulative volume data - y of histogram
+              double[] cumVolume = new double[doseX.length];
+              double[] cumDose = new double[doseX.length];
+              for (int k = 0; k < doseX.length; k++) {
+                cumVolume[k] = DoubleStream.of(Arrays.copyOfRange(volume, k, doseX.length)).sum();
+                cumDose[k] = DoubleStream.of(Arrays.copyOfRange(doseX, 0, k)).sum() * 100;
+              }
+
+              // Interpolated dose data for 1 cGy bins (between min and max)
+              int[] interpDose = new int[maxDose + 1 - minDose];
+              int m = 0;
+              for (int l = minDose; l < maxDose + 1; l++) {
+                interpDose[m] = l;
+                m++;
+              }
+
+              // Interpolated volume data
+              double[] interpCumVolume = interpolate(interpDose, cumDose, cumVolume);
+
+              // Append the interpolated values to the missing dose values
+              double[] cumDvhData = new double[missingDose.length + interpCumVolume.length];
+              System.arraycopy(missingDose, 0, cumDvhData, 0, cumDvhData.length);
+              System.arraycopy(
+                  interpCumVolume, 0, cumDvhData, missingDose.length, interpCumVolume.length);
+
+              rtDvh.setDvhData(cumDvhData);
+              rtDvh.setDvhNumberOfBins(cumDvhData.length);
+            }
+          }
+          // Cumulative
+          else {
+            // "filler" values are included in DVH data array (every second is DVH value)
+            double[] data = dvhAttributes.getDoubles(Tag.DVHData);
+            if (data != null && data.length % 2 == 0) {
+              double[] newData = new double[data.length / 2];
+
+              int j = 0;
+              for (int i = 1; i < data.length; i = i + 2) {
+                newData[j] = data[i];
+                j++;
+              }
+
+              rtDvh.setDvhData(newData);
+            }
+
+            rtDvh.setDvhNumberOfBins(dvhAttributes.getInt(Tag.DVHNumberOfBins, -1));
+          }
+
+          // Always cumulative - differential was converted
+          rtDvh.setType("CUMULATIVE");
+          rtDvh.setDoseUnit(dvhAttributes.getString(Tag.DoseUnits));
+          rtDvh.setDoseType(dvhAttributes.getString(Tag.DoseType));
+          rtDvh.setDvhDoseScaling(dvhAttributes.getDouble(Tag.DVHDoseScaling, 1.0));
+          rtDvh.setDvhVolumeUnit(dvhAttributes.getString(Tag.DVHVolumeUnits));
+          // -1.0 means that it needs to be calculated later
+          rtDvh.setDvhMinimumDose(dvhAttributes.getDouble(Tag.DVHMinimumDose, -1.0));
+          rtDvh.setDvhMaximumDose(dvhAttributes.getDouble(Tag.DVHMaximumDose, -1.0));
+          rtDvh.setDvhMeanDose(dvhAttributes.getDouble(Tag.DVHMeanDose, -1.0));
+
+          dvhMap.put(rtDvh.getReferencedRoiNumber(), rtDvh);
+        }
+      }
+    }
+  }
+
+  public Map<Integer, Dvh> getDvhMap() {
+    return dvhMap;
   }
 
   public Map<String, Map<String, Set<SegContour>>> getRefMap() {
@@ -113,11 +249,7 @@ public class Dose extends HashMap<Integer, Dvh> implements SpecialElementRegion 
   }
 
   public String getSopInstanceUid() {
-    return sopInstanceUid;
-  }
-
-  public void setSopInstanceUid(String sopInstanceUid) {
-    this.sopInstanceUid = sopInstanceUid;
+    return TagD.getTagValue(this, Tag.SOPInstanceUID, String.class);
   }
 
   public double[] getImagePositionPatient() {
@@ -206,18 +338,6 @@ public class Dose extends HashMap<Integer, Dvh> implements SpecialElementRegion 
     return this.isoDoseSet;
   }
 
-  public void setIsoDoseSet(Map<Integer, IsoDoseRegion> isoDoseSet) {
-    this.isoDoseSet = isoDoseSet;
-  }
-
-  public Map<String, List<StructContour>> getIsoContourMap() {
-    return this.isoContourMap;
-  }
-
-  public void setIsoContourMap(Map<String, List<StructContour>> isoContourMap) {
-    this.isoContourMap = isoContourMap;
-  }
-
   public AbstractMap.SimpleImmutableEntry<double[], double[]> getDoseMmLUT() {
     return this.doseMmLUT;
   }
@@ -264,11 +384,12 @@ public class Dose extends HashMap<Integer, Dvh> implements SpecialElementRegion 
       //           isoDoseSet.put(2, new IsoDoseLayer(new IsoDose(2, new Color(0, 0,
       // 111/255f,
       //           opacity), "", rxDose)));
-
+      Map<String, Set<SegContour>> map = refMap.computeIfAbsent(seriesUID, _ -> new HashMap<>());
+      List<StructContour> contours = new ArrayList<>();
       // Go through whole imaging grid (CT)
-      for (DicomImageElement image : this.series.getMedias(null, null)) {
+      for (DicomImageElement image : rtSet.getSeries().getMedias(null, null)) {
         // Image slice UID and position
-        String uidKey = TagD.getTagValue(image, Tag.SOPInstanceUID, String.class);
+        String sopUID = TagD.getTagValue(image, Tag.SOPInstanceUID, String.class);
         KeyDouble z = new KeyDouble(image.getSliceGeometry().getTLHC().z);
 
         for (IsoDoseRegion isoDoseLayer : isoDoseSet.values()) {
@@ -288,20 +409,13 @@ public class Dose extends HashMap<Integer, Dvh> implements SpecialElementRegion 
           // it will hold list of contours for that plane
           isoDoseLayer.getPlanes().computeIfAbsent(z, _ -> new ArrayList<>()).add(isoContour);
           // For lookup from GUI use specific image UID
-          if (StringUtil.hasText(uidKey)) {
-            List<StructContour> pls =
-                getIsoContourMap().computeIfAbsent(uidKey, _ -> new ArrayList<>());
-            pls.add(isoContour);
-          }
 
-          DicomImageElement zImage = rtSet.getSeries().getNearestImage(z.getKey(), 0, null, null);
-          if (zImage != null) {
-            String sopUID = TagD.getTagValue(zImage, Tag.SOPInstanceUID, String.class);
-            refMap
-                .get(seriesUID)
-                .computeIfAbsent(sopUID, _ -> new LinkedHashSet<>())
-                .add(isoContour);
-          }
+          contours.add(isoContour);
+        }
+
+        if (!contours.isEmpty()) {
+          Collections.reverse(contours);
+          map.computeIfAbsent(sopUID, _ -> new LinkedHashSet<>()).addAll(contours);
         }
       }
 
@@ -310,6 +424,43 @@ public class Dose extends HashMap<Integer, Dvh> implements SpecialElementRegion 
         isoDoseLayer.setThickness(RtSet.calculatePlaneThickness(isoDoseLayer.getPlanes()));
       }
     }
+  }
+
+  Plan initPlan(RtSet rtSet) {
+    DicomMediaIO reader = getMediaReader();
+    Plan plan = null;
+    Attributes dcmItems = reader.getDicomObject();
+    if (dcmItems != null) {
+      // Dose is Referencing Plan
+      String referencedPlanUid = "";
+      Sequence refPlanSeq = dcmItems.getSequence(Tag.ReferencedRTPlanSequence);
+      if (refPlanSeq != null) {
+        for (Attributes refRtPlanSeq : refPlanSeq) {
+          referencedPlanUid = refRtPlanSeq.getString(Tag.ReferencedSOPInstanceUID);
+        }
+      }
+
+      Set<Plan> plans = rtSet.getPlans();
+      // Plan is already loaded
+      if (!plans.isEmpty()) {
+        String finalReferencedPlanUid = referencedPlanUid;
+        Optional<Plan> opPlan =
+            plans.stream()
+                .filter(p -> p.getSopInstanceUid().equals(finalReferencedPlanUid))
+                .findFirst();
+        if (opPlan.isPresent()) {
+          plan = opPlan.get();
+        }
+      }
+      // Dummy plan will be created
+      else {
+        plan = new Plan(reader);
+        plan.setSopInstanceUid(referencedPlanUid);
+        plans.add(plan);
+      }
+      plan.getDoses().add(this);
+    }
+    return plan;
   }
 
   public MediaElement getDosePlaneBySlice(double slicePosition) {
@@ -418,38 +569,6 @@ public class Dose extends HashMap<Integer, Dvh> implements SpecialElementRegion 
     return hist;
   }
 
-  public List<MatOfPoint> getIsoDoseContourPoints(
-      KeyDouble slicePosition, double isoDoseThreshold) {
-    List<MatOfPoint> contours = new ArrayList<>();
-
-    // Convert from threshold in cCy to raw pixel value threshold
-    double rawThreshold = (isoDoseThreshold / 100) / this.doseGridScaling;
-
-    DicomImageElement dosePlane =
-        (DicomImageElement) this.getDosePlaneBySlice(slicePosition.getValue());
-
-    int rows = dosePlane.getImage().toMat().rows();
-    int cols = dosePlane.getImage().toMat().cols();
-
-    Mat src = new Mat(rows, cols, CvType.CV_32FC1);
-    Mat thr = new Mat(rows, cols, CvType.CV_32FC1);
-
-    dosePlane.getImage().toMat().convertTo(src, CvType.CV_32FC1);
-
-    Mat hierarchy = new Mat();
-
-    Imgproc.threshold(src, thr, rawThreshold, 255, Imgproc.THRESH_BINARY);
-    ImageConversion.releaseMat(src);
-    Mat thrSrc = new Mat(rows, cols, CvType.CV_8U);
-    thr.convertTo(thrSrc, CvType.CV_8U);
-    ImageConversion.releaseMat(thr);
-
-    Imgproc.findContours(
-        thrSrc, contours, hierarchy, Imgproc.RETR_TREE, Imgproc.CHAIN_APPROX_SIMPLE);
-    ImageConversion.releaseMat(thrSrc);
-    return contours;
-  }
-
   public StructContour getIsoDoseContour(
       KeyDouble slicePosition, double isoDoseThreshold, IsoDoseRegion region) {
     SegmentAttributes attributes = region.getAttributes();
@@ -485,6 +604,14 @@ public class Dose extends HashMap<Integer, Dvh> implements SpecialElementRegion 
 
     int nbPixels = Core.countNonZero(thrSrc);
     ImageConversion.releaseMat(thrSrc);
+
+    //    for (Segment seg :segmentList){
+    //      for (Point2D pt : seg){
+    //        double x = doseMmLUT.getKey()[(int) pt.getX()];
+    //        double y = doseMmLUT.getValue()[(int) pt.getY()];
+    //        pt.setLocation(x, y);
+    //      }
+    //    }
 
     StructContour segContour =
         new StructContour(String.valueOf(slicePosition.getKey()), segmentList, nbPixels);
@@ -546,5 +673,43 @@ public class Dose extends HashMap<Integer, Dvh> implements SpecialElementRegion 
       }
     }
     return -1;
+  }
+
+  private static double[] interpolate(
+      int[] interpolatedX, double[] xCoordinates, double[] yCoordinates) {
+    double[] interpolatedY = new double[interpolatedX.length];
+
+    PolynomialSplineFunction psf = interpolate(xCoordinates, yCoordinates);
+
+    for (int i = 0; i <= interpolatedX.length; ++i) {
+      interpolatedY[0] = psf.value(interpolatedX[i]);
+    }
+
+    return interpolatedY;
+  }
+
+  public static PolynomialSplineFunction interpolate(double[] x, double[] y) {
+    if (x.length != y.length || x.length < 2) {
+      throw new IllegalStateException();
+    }
+
+    // Number of intervals
+    int length = x.length - 1;
+
+    // Slope of the lines between the data points
+    final double[] m = new double[length];
+    for (int i = 0; i < length; i++) {
+      m[i] = (y[i + 1] - y[i]) / (x[i + 1] - x[i]);
+    }
+
+    final PolynomialFunction[] polynomials = new PolynomialFunction[length];
+    final double[] coefficients = new double[2];
+    for (int i = 0; i < length; i++) {
+      coefficients[0] = y[i];
+      coefficients[1] = m[i];
+      polynomials[i] = new PolynomialFunction(coefficients);
+    }
+
+    return new PolynomialSplineFunction(x, polynomials);
   }
 }

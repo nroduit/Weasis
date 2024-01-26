@@ -45,7 +45,9 @@ public class RTElementFactory implements DicomSpecialElementFactory {
   public DicomSpecialElement buildDicomSpecialElement(DicomMediaIO mediaIO) {
     Attributes dicom = mediaIO.getDicomObject();
     String modality = dicom.getString(Tag.Modality);
-    if ("RTSTRUCT".equals(modality)) {
+    if ("RTDOSE".equals(modality)) {
+      return new Dose(mediaIO);
+    } else if ("RTSTRUCT".equals(modality)) {
       return new StructureSet(mediaIO);
     } else if ("RTPLAN".equals(modality)) {
       return new Plan(mediaIO);

@@ -15,7 +15,6 @@ import static org.opencv.core.Core.multiply;
 import java.awt.geom.Point2D;
 import java.util.AbstractMap;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
@@ -25,11 +24,9 @@ import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import java.util.stream.DoubleStream;
 import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Sequence;
 import org.dcm4che3.data.Tag;
-import org.dcm4che3.data.UID;
 import org.dcm4che3.img.util.DicomUtils;
 import org.joml.Vector3d;
 import org.opencv.core.CvType;
@@ -45,9 +42,7 @@ import org.weasis.core.api.media.data.MediaSeries.MEDIA_POSITION;
 import org.weasis.core.ui.model.graphic.imp.seg.SegContour;
 import org.weasis.core.util.MathUtil;
 import org.weasis.core.util.StringUtil;
-import org.weasis.dicom.codec.DcmMediaReader;
 import org.weasis.dicom.codec.DicomImageElement;
-import org.weasis.dicom.codec.DicomMediaIO;
 import org.weasis.dicom.codec.DicomSeries;
 import org.weasis.dicom.codec.TagD;
 import org.weasis.opencv.seg.Segment;
@@ -114,9 +109,8 @@ public class RtSet {
 
     // Then initialise all RTDOSE
     for (MediaElement rt : this.rtElements) {
-      String sopUID = TagD.getTagValue(rt, Tag.SOPClassUID, String.class);
-      if (UID.RTDoseStorage.equals(sopUID)) {
-        initDose(rt);
+      if (rt instanceof Dose dose) {
+        initDose(dose);
       }
     }
 
@@ -141,7 +135,7 @@ public class RtSet {
               SegmentCategory category = region.getCategory();
 
               // If DVH exists for the structure and setting always recalculate is false
-              Dvh structureDvh = dose.get(category.getId());
+              Dvh structureDvh = dose.getDvhMap().get(category.getId());
 
               // Re-calculate DVH if it does not exist or if it is provided and force recalculation
               // is set up
@@ -149,7 +143,7 @@ public class RtSet {
                   || (structureDvh.getDvhSource().equals(DataSource.PROVIDED)
                       && this.forceRecalculateDvh)) {
                 structureDvh = this.initCalculatedDvh(region, dose);
-                dose.put(category.getId(), structureDvh);
+                dose.getDvhMap().put(category.getId(), structureDvh);
               }
               // Otherwise, read provided DVH
               else {
@@ -339,191 +333,26 @@ public class RtSet {
   /**
    * Initialise RTDOSE objects
    *
-   * @param rtElement RTDOSE dicom object
+   * @param dose RTDOSE dicom object
    */
-  private void initDose(MediaElement rtElement) {
-    Attributes dcmItems = ((DcmMediaReader) rtElement.getMediaReader()).getDicomObject();
-    if (dcmItems != null) {
+  private void initDose(Dose dose) {
+    String sopInstanceUID = TagD.getTagValue(dose, Tag.SOPInstanceUID, String.class);
 
-      String sopInstanceUID = dcmItems.getString(Tag.SOPInstanceUID);
+    // Dose is Referencing Plan
+    Plan plan = dose.initPlan(this);
 
-      // Dose is Referencing Plan
-      Plan plan = null;
-      String referencedPlanUid = "";
-      Sequence refPlanSeq = dcmItems.getSequence(Tag.ReferencedRTPlanSequence);
-      if (refPlanSeq != null) {
-        for (Attributes refRtPlanSeq : refPlanSeq) {
-          referencedPlanUid = refRtPlanSeq.getString(Tag.ReferencedSOPInstanceUID);
-        }
-      }
+    // Dose for plan
+    if (plan != null) {
+      Dose rtDose = null;
 
-      // Plan is already loaded
-      if (!plans.isEmpty()) {
-        String finalReferencedPlanUid = referencedPlanUid;
-        Optional<Plan> opPlan =
-            getPlans().stream()
-                .filter(p -> p.getSopInstanceUid().equals(finalReferencedPlanUid))
+      // Dose object with such SOP already exists, use it
+      if (!plan.getDoses().isEmpty()) {
+        Optional<Dose> opPlan =
+            plan.getDoses().stream()
+                .filter(i -> i.getSopInstanceUid().equals(sopInstanceUID))
                 .findFirst();
         if (opPlan.isPresent()) {
-          plan = opPlan.get();
-        }
-      }
-      // Dummy plan will be created
-      else {
-        plan = new Plan((DicomMediaIO) rtElement.getMediaReader());
-        plan.setSopInstanceUid(referencedPlanUid);
-        plans.add(plan);
-      }
-
-      // Dose for plan
-      if (plan != null) {
-        Dose rtDose = null;
-
-        // Dose object with such SOP already exists, use it
-        if (!plan.getDoses().isEmpty()) {
-          Optional<Dose> opPlan =
-              plan.getDoses().stream()
-                  .filter(i -> i.getSopInstanceUid().equals(sopInstanceUID))
-                  .findFirst();
-          if (opPlan.isPresent()) {
-            rtDose = opPlan.get();
-          }
-
-        }
-        // Create a new dose object
-        else {
-          rtDose = new Dose(((DcmMediaReader) rtElement.getMediaReader()).getMediaSeries());
-          plan.getDoses().add(rtDose);
-
-          rtDose.setSopInstanceUid(sopInstanceUID);
-          rtDose.setImagePositionPatient(dcmItems.getDoubles(Tag.ImagePositionPatient));
-          rtDose.setComment(dcmItems.getString(Tag.DoseComment));
-          rtDose.setDoseUnit(dcmItems.getString(Tag.DoseUnits));
-          rtDose.setDoseType(dcmItems.getString(Tag.DoseType));
-          rtDose.setDoseSummationType(dcmItems.getString(Tag.DoseSummationType));
-          rtDose.setGridFrameOffsetVector(dcmItems.getDoubles(Tag.GridFrameOffsetVector));
-          rtDose.setDoseGridScaling(dcmItems.getDouble(Tag.DoseGridScaling, 0.0));
-
-          // Check whether DVH is included
-          Sequence dvhSeq = dcmItems.getSequence(Tag.DVHSequence);
-          if (dvhSeq != null) {
-
-            for (Attributes dvhAttributes : dvhSeq) {
-
-              // Need to refer to delineated contour
-              Dvh rtDvh = null;
-              Sequence dvhRefRoiSeq = dvhAttributes.getSequence(Tag.DVHReferencedROISequence);
-              if (dvhRefRoiSeq == null) {
-                continue;
-              } else if (dvhRefRoiSeq.size() == 1) {
-                rtDvh = new Dvh();
-                Attributes dvhRefRoiAttributes = dvhRefRoiSeq.getFirst();
-                rtDvh.setReferencedRoiNumber(
-                    dvhRefRoiAttributes.getInt(Tag.ReferencedROINumber, -1));
-
-                LOGGER.debug("Found DVH for ROI: {}", rtDvh.getReferencedRoiNumber());
-              }
-
-              if (rtDvh != null) {
-                rtDvh.setDvhSource(DataSource.PROVIDED);
-                // Convert Differential DVH to Cumulative
-                if (dvhSeq.get(0).getString(Tag.DVHType).equals("DIFFERENTIAL")) {
-
-                  LOGGER.info("Not supported: converting differential DVH to cumulative");
-
-                  double[] data = dvhAttributes.getDoubles(Tag.DVHData);
-                  if (data != null && data.length % 2 == 0) {
-
-                    // X of histogram
-                    double[] dose = new double[data.length / 2];
-
-                    // Y of histogram
-                    double[] volume = new double[data.length / 2];
-
-                    // Separate the dose and volume values into distinct arrays
-                    for (int i = 0; i < data.length; i = i + 2) {
-                      dose[i] = data[i];
-                      volume[i] = data[i + 1];
-                    }
-
-                    // Get the min and max dose in cGy
-                    int minDose = (int) (dose[0] * 100);
-                    int maxDose = (int) DoubleStream.of(dose).sum();
-
-                    // Get volume values
-                    double maxVolume = DoubleStream.of(volume).sum();
-
-                    // Determine the dose values that are missing from the original data
-                    double[] missingDose = new double[minDose];
-                    for (int j = 0; j < minDose; j++) {
-                      missingDose[j] = maxVolume;
-                    }
-
-                    // Cumulative dose - x of histogram
-                    // Cumulative volume data - y of histogram
-                    double[] cumVolume = new double[dose.length];
-                    double[] cumDose = new double[dose.length];
-                    for (int k = 0; k < dose.length; k++) {
-                      cumVolume[k] =
-                          DoubleStream.of(Arrays.copyOfRange(volume, k, dose.length)).sum();
-                      cumDose[k] = DoubleStream.of(Arrays.copyOfRange(dose, 0, k)).sum() * 100;
-                    }
-
-                    // Interpolated dose data for 1 cGy bins (between min and max)
-                    int[] interpDose = new int[maxDose + 1 - minDose];
-                    int m = 0;
-                    for (int l = minDose; l < maxDose + 1; l++) {
-                      interpDose[m] = l;
-                      m++;
-                    }
-
-                    // Interpolated volume data
-                    double[] interpCumVolume = interpolate(interpDose, cumDose, cumVolume);
-
-                    // Append the interpolated values to the missing dose values
-                    double[] cumDvhData = new double[missingDose.length + interpCumVolume.length];
-                    System.arraycopy(missingDose, 0, cumDvhData, 0, cumDvhData.length);
-                    System.arraycopy(
-                        interpCumVolume, 0, cumDvhData, missingDose.length, interpCumVolume.length);
-
-                    rtDvh.setDvhData(cumDvhData);
-                    rtDvh.setDvhNumberOfBins(cumDvhData.length);
-                  }
-                }
-                // Cumulative
-                else {
-                  // "filler" values are included in DVH data array (every second is DVH value)
-                  double[] data = dvhAttributes.getDoubles(Tag.DVHData);
-                  if (data != null && data.length % 2 == 0) {
-                    double[] newData = new double[data.length / 2];
-
-                    int j = 0;
-                    for (int i = 1; i < data.length; i = i + 2) {
-                      newData[j] = data[i];
-                      j++;
-                    }
-
-                    rtDvh.setDvhData(newData);
-                  }
-
-                  rtDvh.setDvhNumberOfBins(dvhAttributes.getInt(Tag.DVHNumberOfBins, -1));
-                }
-
-                // Always cumulative - differential was converted
-                rtDvh.setType("CUMULATIVE");
-                rtDvh.setDoseUnit(dvhAttributes.getString(Tag.DoseUnits));
-                rtDvh.setDoseType(dvhAttributes.getString(Tag.DoseType));
-                rtDvh.setDvhDoseScaling(dvhAttributes.getDouble(Tag.DVHDoseScaling, 1.0));
-                rtDvh.setDvhVolumeUnit(dvhAttributes.getString(Tag.DVHVolumeUnits));
-                // -1.0 means that it needs to be calculated later
-                rtDvh.setDvhMinimumDose(dvhAttributes.getDouble(Tag.DVHMinimumDose, -1.0));
-                rtDvh.setDvhMaximumDose(dvhAttributes.getDouble(Tag.DVHMaximumDose, -1.0));
-                rtDvh.setDvhMeanDose(dvhAttributes.getDouble(Tag.DVHMeanDose, -1.0));
-
-                rtDose.put(rtDvh.getReferencedRoiNumber(), rtDvh);
-              }
-            }
-          }
+          rtDose = opPlan.get();
         }
       }
     }
@@ -602,44 +431,6 @@ public class RtSet {
     }
 
     return thickness;
-  }
-
-  private static double[] interpolate(
-      int[] interpolatedX, double[] xCoordinates, double[] yCoordinates) {
-    double[] interpolatedY = new double[interpolatedX.length];
-
-    PolynomialSplineFunction psf = interpolate(xCoordinates, yCoordinates);
-
-    for (int i = 0; i <= interpolatedX.length; ++i) {
-      interpolatedY[0] = psf.value(interpolatedX[i]);
-    }
-
-    return interpolatedY;
-  }
-
-  public static PolynomialSplineFunction interpolate(double[] x, double[] y) {
-    if (x.length != y.length || x.length < 2) {
-      throw new IllegalStateException();
-    }
-
-    // Number of intervals
-    int length = x.length - 1;
-
-    // Slope of the lines between the data points
-    final double[] m = new double[length];
-    for (int i = 0; i < length; i++) {
-      m[i] = (y[i + 1] - y[i]) / (x[i + 1] - x[i]);
-    }
-
-    final PolynomialFunction[] polynomials = new PolynomialFunction[length];
-    final double[] coefficients = new double[2];
-    for (int i = 0; i < length; i++) {
-      coefficients[0] = y[i];
-      coefficients[1] = m[i];
-      polynomials[i] = new PolynomialFunction(coefficients);
-    }
-
-    return new PolynomialSplineFunction(x, polynomials);
   }
 
   public Dvh initCalculatedDvh(StructRegion region, Dose dose) {

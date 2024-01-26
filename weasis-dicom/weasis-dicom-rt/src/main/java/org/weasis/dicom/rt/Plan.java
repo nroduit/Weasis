@@ -9,7 +9,6 @@
  */
 package org.weasis.dicom.rt;
 
-import java.awt.Color;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -22,8 +21,6 @@ import org.weasis.dicom.codec.DicomMediaIO;
  * @author Tomas Skripcak
  */
 public class Plan extends RtSpecialElement {
-  private volatile float opacity = 1.0f;
-  private volatile boolean visible = true;
   private String sopInstanceUid;
   private String label;
   private Date date;
@@ -31,8 +28,7 @@ public class Plan extends RtSpecialElement {
   private String description;
   private String geometry;
   private Double rxDose;
-  private List<Dose> doses = new ArrayList<>();
-
+  private final List<Dose> doses = new ArrayList<>();
   private final Map<Integer, StructRegion> segAttributes = new HashMap<>();
 
   public Plan(DicomMediaIO mediaIO) {
@@ -99,17 +95,9 @@ public class Plan extends RtSpecialElement {
     return this.doses;
   }
 
-  public void setDoses(List<Dose> doses) {
-    this.doses = doses;
-  }
-
-  public boolean hasAssociatedDose() {
-    return !this.doses.isEmpty();
-  }
-
   public Dose getFirstDose() {
     if (!this.doses.isEmpty()) {
-      return this.doses.get(0);
+      return this.doses.getFirst();
     }
 
     return null;
@@ -117,9 +105,9 @@ public class Plan extends RtSpecialElement {
 
   public void appendName(String text) {
     if (StringUtil.hasText(this.name)) {
-      this.name += " (" + text + ")";
+      this.name += STR." (\{text})";
     } else if (StringUtil.hasText(this.label)) {
-      this.name = this.label + " (" + text + ")";
+      this.name = STR."\{this.label} (\{text})";
     }
   }
 
@@ -154,30 +142,5 @@ public class Plan extends RtSpecialElement {
     if (label == null) {
       return other.label == null;
     } else return label.equals(other.label);
-  }
-
-  public boolean isVisible() {
-    return visible;
-  }
-
-  public void setVisible(boolean visible) {
-    this.visible = visible;
-  }
-
-  public float getOpacity() {
-    return opacity;
-  }
-
-  public void setOpacity(float opacity) {
-    this.opacity = Math.max(0.0f, Math.min(opacity, 1.0f));
-    int opacityValue = (int) (this.opacity * 255f);
-    segAttributes
-        .values()
-        .forEach(
-            c -> {
-              Color color = c.getAttributes().getColor();
-              color = new Color(color.getRed(), color.getGreen(), color.getBlue(), opacityValue);
-              c.getAttributes().setColor(color);
-            });
   }
 }
