@@ -37,7 +37,6 @@ import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.MediaSeriesGroupNode;
-import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.media.data.Thumbnail;
 import org.weasis.core.ui.editor.image.ViewerPlugin;
@@ -168,7 +167,7 @@ public class DicomDirLoader {
     while (series != null) {
       if (RecordType.SERIES.name().equals(series.getString(Tag.DirectoryRecordType))) {
         String seriesUID = series.getString(Tag.SeriesInstanceUID, TagW.NO_VALUE);
-        Series dicomSeries = (Series) dicomModel.getHierarchyNode(study, seriesUID);
+        DicomSeries dicomSeries = (DicomSeries) dicomModel.getHierarchyNode(study, seriesUID);
         if (dicomSeries == null) {
           dicomSeries = new DicomSeries(seriesUID);
           dicomSeries.setTag(TagW.ExplorerModel, dicomModel);

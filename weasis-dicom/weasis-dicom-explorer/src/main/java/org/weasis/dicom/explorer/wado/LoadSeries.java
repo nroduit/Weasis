@@ -79,16 +79,9 @@ import org.weasis.core.ui.model.ReferencedSeries;
 import org.weasis.core.util.FileUtil;
 import org.weasis.core.util.StreamIOException;
 import org.weasis.core.util.StringUtil;
-import org.weasis.dicom.codec.DicomImageElement;
-import org.weasis.dicom.codec.DicomMediaIO;
+import org.weasis.dicom.codec.*;
 import org.weasis.dicom.codec.DicomMediaIO.Reading;
-import org.weasis.dicom.codec.DicomSpecialElement;
-import org.weasis.dicom.codec.DicomSpecialElementFactory;
-import org.weasis.dicom.codec.HiddenSeriesManager;
-import org.weasis.dicom.codec.HiddenSpecialElement;
-import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.TagD.Level;
-import org.weasis.dicom.codec.TransferSyntax;
 import org.weasis.dicom.codec.utils.DicomMediaUtils;
 import org.weasis.dicom.codec.utils.SeriesInstanceList;
 import org.weasis.dicom.explorer.DicomModel;
@@ -135,7 +128,7 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
 
   public final int concurrentDownloads;
   private final DicomModel dicomModel;
-  private final Series<?> dicomSeries;
+  private final DicomSeries dicomSeries;
   private final SeriesInstanceList seriesInstanceList;
   private final JProgressBar progressBar;
   private final URLParameters urlParams;
@@ -148,12 +141,15 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
   private volatile boolean hasError = false;
 
   public LoadSeries(
-      Series<?> dicomSeries, DicomModel dicomModel, int concurrentDownloads, boolean writeInCache) {
+      DicomSeries dicomSeries,
+      DicomModel dicomModel,
+      int concurrentDownloads,
+      boolean writeInCache) {
     this(dicomSeries, dicomModel, null, concurrentDownloads, writeInCache, true);
   }
 
   public LoadSeries(
-      Series<?> dicomSeries,
+      DicomSeries dicomSeries,
       DicomModel dicomModel,
       AuthMethod authMethod,
       int concurrentDownloads,
@@ -171,7 +167,7 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
   }
 
   public LoadSeries(
-      Series<?> dicomSeries,
+      DicomSeries dicomSeries,
       DicomModel dicomModel,
       AuthMethod authMethod,
       JProgressBar progressBar,
@@ -190,7 +186,7 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
   }
 
   public LoadSeries(
-      Series<?> dicomSeries,
+      DicomSeries dicomSeries,
       DicomModel dicomModel,
       AuthMethod authMethod,
       JProgressBar progressBar,
@@ -709,7 +705,7 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
     }
   }
 
-  public Series<?> getDicomSeries() {
+  public DicomSeries getDicomSeries() {
     return dicomSeries;
   }
 

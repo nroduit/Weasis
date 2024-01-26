@@ -19,7 +19,6 @@ import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.MediaSeriesGroupNode;
-import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.dicom.codec.DicomSeries;
 import org.weasis.dicom.codec.TagD;
@@ -89,7 +88,7 @@ public class LoadRemoteDicomURL extends ExplorerTask<Boolean, String> {
               TagD.getUID(Level.STUDY), UIDUtils.createUID(), DicomModel.study.tagView());
       dicomModel.addHierarchyNode(patient, study);
 
-      Series dicomSeries = new DicomSeries(seriesUID);
+      DicomSeries dicomSeries = new DicomSeries(seriesUID);
       dicomSeries.setTag(TagW.ExplorerModel, dicomModel);
       dicomSeries.setTag(TagD.get(Tag.SeriesInstanceUID), seriesUID);
       final WadoParameters wadoParameters = new WadoParameters("", false);
