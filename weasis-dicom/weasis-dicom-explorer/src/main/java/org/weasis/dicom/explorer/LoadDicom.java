@@ -12,7 +12,7 @@ package org.weasis.dicom.explorer;
 import java.util.Arrays;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.Predicate;
+import java.util.function.Function;
 import javax.swing.JOptionPane;
 import javax.swing.JTextPane;
 import javax.swing.border.EmptyBorder;
@@ -209,20 +209,11 @@ public abstract class LoadDicom extends ExplorerTask<Boolean, String> {
 
   private DicomImageElement[] getDicomImageElements(
       DicomMediaIO dicomReader, DicomSeries series, boolean editableDicom) {
-    Predicate<Object> buildSpecialElement =
-        object -> {
-          if (object instanceof DicomSpecialElementFactory factory) {
-            DicomSpecialElement media = factory.buildDicomSpecialElement(dicomReader);
-            if (media != null) {
-              dicomModel.applySplittingRules(series, media);
-              series.setFileSize(series.getFileSize() + media.getLength());
-              return true;
-            }
-          }
-          return false;
-        };
+    Function<DicomSpecialElementFactory, DicomSpecialElement> buildSpecialElement =
+        factory -> factory.buildDicomSpecialElement(dicomReader);
 
-    DicomImageElement[] medias = dicomReader.getMediaElement(buildSpecialElement);
+    DicomMediaIO.ResultContainer result = dicomReader.getMediaElement(buildSpecialElement);
+    DicomImageElement[] medias = result.getImage();
     if (medias != null) {
       for (DicomImageElement media : medias) {
         dicomModel.applySplittingRules(series, media);
@@ -231,8 +222,14 @@ public abstract class LoadDicom extends ExplorerTask<Boolean, String> {
         }
       }
       if (medias.length > 0) {
+        // Handle multi-frame DICOM
         series.setFileSize(series.getFileSize() + medias[0].getLength());
       }
+    }
+    if (result.getSpecialElement() != null) {
+      DicomSpecialElement media = result.getSpecialElement();
+      dicomModel.applySplittingRules(series, media);
+      series.setFileSize(series.getFileSize() + media.getLength());
     }
     return medias;
   }

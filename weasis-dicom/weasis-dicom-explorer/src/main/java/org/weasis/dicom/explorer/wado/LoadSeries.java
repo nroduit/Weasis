@@ -39,7 +39,7 @@ import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.Predicate;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import javax.swing.JProgressBar;
 import org.dcm4che3.data.Attributes;
@@ -1097,18 +1097,11 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
 
     private void updateUI(final DicomMediaIO reader) {
       boolean firstImageToDisplay;
-      Predicate<Object> buildSpecialElement =
-          object -> {
-            if (object instanceof DicomSpecialElementFactory factory) {
-              DicomSpecialElement media = factory.buildDicomSpecialElement(reader);
-              if (media != null) {
-                dicomModel.applySplittingRules(dicomSeries, media);
-                return true;
-              }
-            }
-            return false;
-          };
-      DicomImageElement[] medias = reader.getMediaElement(buildSpecialElement);
+      Function<DicomSpecialElementFactory, DicomSpecialElement> buildSpecialElement =
+          factory -> factory.buildDicomSpecialElement(reader);
+
+      DicomMediaIO.ResultContainer result = reader.getMediaElement(buildSpecialElement);
+      DicomImageElement[] medias = result.getImage();
       if (medias != null) {
         firstImageToDisplay = dicomSeries.size(null) == 0;
         if (firstImageToDisplay) {
@@ -1136,6 +1129,10 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
           applyPresentationModel(media);
           dicomModel.applySplittingRules(dicomSeries, media);
         }
+      }
+
+      if (result.getSpecialElement() != null) {
+        dicomModel.applySplittingRules(dicomSeries, result.getSpecialElement());
       }
 
       Thumbnail thumb = (Thumbnail) dicomSeries.getTagValue(TagW.Thumbnail);

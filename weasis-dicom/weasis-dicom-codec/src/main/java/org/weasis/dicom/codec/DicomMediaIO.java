@@ -26,7 +26,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.Predicate;
+import java.util.function.Function;
 import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.BulkData;
 import org.dcm4che3.data.Implementation;
@@ -738,23 +738,27 @@ public class DicomMediaIO implements DcmMediaReader {
 
   @Override
   public synchronized DicomImageElement[] getMediaElement() {
-    return getMediaElement(null);
+    ResultContainer result = getMediaElement(null);
+    return result.getImage();
   }
 
-  public synchronized DicomImageElement[] getMediaElement(Predicate<Object> buildSpecialElement) {
+  public synchronized ResultContainer getMediaElement(
+      Function<DicomSpecialElementFactory, DicomSpecialElement> buildSpecialElement) {
+    DicomSpecialElement specialElement = null;
     if (image == null && isReadableDicom()) {
       if (SERIES_VIDEO_MIMETYPE.equals(mimeType)) {
         image = new DicomImageElement[] {new DicomVideoElement(this, null)};
       } else if (SERIES_ENCAP_DOC_MIMETYPE.equals(mimeType)) {
         image = new DicomImageElement[] {new DicomEncapDocElement(this, null)};
       } else {
-        buildImageElement(buildSpecialElement);
+        specialElement = buildImageElement(buildSpecialElement);
       }
     }
-    return image;
+    return new ResultContainer(image, specialElement);
   }
 
-  private void buildImageElement(Predicate<Object> buildSpecialElement) {
+  private DicomSpecialElement buildImageElement(
+      Function<DicomSpecialElementFactory, DicomSpecialElement> buildSpecialElement) {
     DicomSpecialElementFactory factory = getDicomSpecialElementFactory();
     if (numberOfFrame > 0) {
       image = new DicomImageElement[numberOfFrame];
@@ -765,16 +769,17 @@ public class DicomMediaIO implements DcmMediaReader {
         buildMultiframe();
       }
       if (factory != null) {
-        buildSpecialElement.test(factory);
+        return buildSpecialElement.apply(factory);
       }
     } else {
       if (factory == null) {
         // Corrupted image => should have one frame
         image = new DicomImageElement[0];
       } else {
-        buildSpecialElement.test(factory);
+        return buildSpecialElement.apply(factory);
       }
     }
+    return null;
   }
 
   private void buildMultiframe() {
@@ -964,5 +969,24 @@ public class DicomMediaIO implements DcmMediaReader {
       }
     }
     return false;
+  }
+
+  public static class ResultContainer {
+
+    private final DicomImageElement[] image;
+    private final DicomSpecialElement specialElement;
+
+    public ResultContainer(DicomImageElement[] image, DicomSpecialElement specialElement) {
+      this.image = image;
+      this.specialElement = specialElement;
+    }
+
+    public DicomImageElement[] getImage() {
+      return image;
+    }
+
+    public DicomSpecialElement getSpecialElement() {
+      return specialElement;
+    }
   }
 }
