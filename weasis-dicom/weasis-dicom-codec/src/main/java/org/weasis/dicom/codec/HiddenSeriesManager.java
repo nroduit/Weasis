@@ -121,7 +121,7 @@ public class HiddenSeriesManager {
       Set<HiddenSpecialElement> hiddenElements = getInstance().series2Elements.get(seriesUID);
       if (hiddenElements != null) {
         for (HiddenSpecialElement media : hiddenElements) {
-          if (clazz.isInstance(media)) {
+          if (clazz.isInstance(media) && !list.contains(media)) {
             list.add((E) media);
             if (childRef) {
               String sopUID = TagD.getTagValue(media, Tag.SOPInstanceUID, String.class);
