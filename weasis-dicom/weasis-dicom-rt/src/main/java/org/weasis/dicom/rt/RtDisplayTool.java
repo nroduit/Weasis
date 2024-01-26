@@ -10,7 +10,6 @@
 package org.weasis.dicom.rt;
 
 import bibliothek.gui.dock.common.CLocation;
-import it.cnr.imaa.essi.lablib.gui.checkboxtree.CheckboxTree;
 import it.cnr.imaa.essi.lablib.gui.checkboxtree.TreeCheckingEvent;
 import it.cnr.imaa.essi.lablib.gui.checkboxtree.TreeCheckingModel;
 import java.awt.BorderLayout;
@@ -19,27 +18,8 @@ import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
-import java.awt.event.MouseEvent;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Enumeration;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import javax.swing.BorderFactory;
-import javax.swing.BoxLayout;
-import javax.swing.JButton;
-import javax.swing.JCheckBox;
-import javax.swing.JComboBox;
-import javax.swing.JDialog;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.JTabbedPane;
-import javax.swing.JTextField;
-import javax.swing.JTree;
-import javax.swing.JViewport;
-import javax.swing.SwingWorker;
+import java.util.*;
+import javax.swing.*;
 import javax.swing.SwingWorker.StateValue;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
@@ -56,6 +36,7 @@ import org.weasis.core.api.gui.task.CircularProgressBar;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.JSliderW;
 import org.weasis.core.api.gui.util.WinUtil;
+import org.weasis.core.api.image.util.MeasurableLayer;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
@@ -67,24 +48,26 @@ import org.weasis.core.ui.editor.SeriesViewerEvent;
 import org.weasis.core.ui.editor.SeriesViewerListener;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.editor.image.ViewCanvas;
+import org.weasis.core.ui.model.graphic.imp.seg.SegContour;
 import org.weasis.core.ui.model.graphic.imp.seg.SegRegion;
 import org.weasis.core.ui.util.CheckBoxTreeBuilder;
+import org.weasis.core.ui.util.SegRegionTool;
+import org.weasis.core.ui.util.SegRegionTree;
 import org.weasis.core.ui.util.StructToolTipTreeNode;
 import org.weasis.core.util.SoftHashMap;
 import org.weasis.core.util.StringUtil;
-import org.weasis.dicom.codec.DicomImageElement;
-import org.weasis.dicom.codec.DicomSeries;
-import org.weasis.dicom.codec.HiddenSeriesManager;
-import org.weasis.dicom.codec.TagD;
+import org.weasis.dicom.codec.*;
 import org.weasis.dicom.explorer.DicomModel;
 import org.weasis.dicom.viewer2d.EventManager;
 import org.weasis.dicom.viewer2d.View2d;
+import org.weasis.opencv.data.PlanarImage;
+import org.weasis.opencv.seg.SegmentCategory;
 
 /**
  * @author Tomas Skripcak
  * @author Nicolas Roduit
  */
-public class RtDisplayTool extends PluginTool implements SeriesViewerListener {
+public class RtDisplayTool extends PluginTool implements SeriesViewerListener, SegRegionTool {
 
   public static final String BUTTON_NAME = Messages.getString("rt.tool");
 
@@ -97,8 +80,8 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener {
   private final JButton btnLoad = new JButton(Messages.getString("load.rt"));
   private final JCheckBox cbDvhRecalculate = new JCheckBox(Messages.getString("dvh.recalculate"));
 
-  private final CheckboxTree treeStructures;
-  private final CheckboxTree treeIsodoses;
+  private final SegRegionTree treeStructures;
+  private final SegRegionTree treeIsodoses;
   private boolean initPathSelection;
   private final DefaultMutableTreeNode rootNodeStructures =
       new DefaultMutableTreeNode("rootNode", true); // NON-NLS
@@ -159,50 +142,24 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener {
           updateSlider();
         });
 
-    this.treeStructures =
-        new CheckboxTree() {
-
-          @Override
-          public String getToolTipText(MouseEvent evt) {
-            if (getRowForLocation(evt.getX(), evt.getY()) == -1) {
-              return null;
-            }
-            TreePath curPath = getPathForLocation(evt.getX(), evt.getY());
-            if (curPath != null) {
-              Object object = curPath.getLastPathComponent();
-              if (object instanceof StructToolTipTreeNode treeNode) {
-                return treeNode.getToolTipText();
-              }
-            }
-            return null;
-          }
-        };
+    this.treeStructures = new SegRegionTree(this);
     treeStructures.setToolTipText(StringUtil.EMPTY_STRING);
     treeStructures.setCellRenderer(CheckBoxTreeBuilder.buildNoIconCheckboxTreeCellRenderer());
 
-    this.treeIsodoses =
-        new CheckboxTree() {
-
-          @Override
-          public String getToolTipText(MouseEvent evt) {
-            if (getRowForLocation(evt.getX(), evt.getY()) == -1) {
-              return null;
-            }
-            TreePath curPath = getPathForLocation(evt.getX(), evt.getY());
-            if (curPath != null) {
-              Object object = curPath.getLastPathComponent();
-              if (object instanceof StructToolTipTreeNode treeNode) {
-                return treeNode.getToolTipText();
-              }
-            }
-            return null;
-          }
-        };
+    this.treeIsodoses = new SegRegionTree(this);
     treeIsodoses.setToolTipText(StringUtil.EMPTY_STRING);
     treeIsodoses.setCellRenderer(CheckBoxTreeBuilder.buildNoIconCheckboxTreeCellRenderer());
+
     this.nodeStructures = new DefaultMutableTreeNode(Messages.getString("structures"), true);
     this.nodeIsodoses = new DefaultMutableTreeNode(Messages.getString("isodoses"), true);
-    this.initData();
+
+    initData();
+    initListeners();
+  }
+
+  private void initListeners() {
+    treeStructures.initListeners();
+    treeIsodoses.initListeners();
   }
 
   private void loadData() {
@@ -271,6 +228,60 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener {
         });
 
     new Thread(loadTask).start();
+  }
+
+  private DicomImageElement getImageElement(ViewCanvas<DicomImageElement> view) {
+    if (view != null && view.getImage() instanceof DicomImageElement imageElement) {
+      return imageElement;
+    }
+    return null;
+  }
+
+  private SegContour getContour(DicomImageElement imageElement, SegmentCategory category) {
+    PlanarImage img = imageElement.getImage();
+    if (img != null) {
+      if (tabbedPane.getSelectedIndex() == 0) {
+        StructureSet structureSet = (StructureSet) comboRtStructureSet.getSelectedItem();
+        if (structureSet != null) {
+          Collection<SegContour> segments = structureSet.getContours(imageElement);
+          for (SegContour c : segments) {
+            if (c.getCategory().equals(category)) {
+              return c;
+            }
+          }
+        }
+      } else if (tabbedPane.getSelectedIndex() == 1) {
+        Plan plan = (Plan) comboRtPlan.getSelectedItem();
+        if (plan != null) {
+          Dose dose = plan.getFirstDose();
+          if (dose != null) {
+            Collection<SegContour> segments = dose.getContours(imageElement);
+            for (SegContour c : segments) {
+              if (c.getCategory().equals(category)) {
+                return c;
+              }
+            }
+          }
+        }
+      }
+    }
+    return null;
+  }
+
+  public void computeStatistics(SegRegion<?> region) {
+    ViewCanvas<DicomImageElement> view = EventManager.getInstance().getSelectedViewPane();
+    DicomImageElement imageElement = getImageElement(view);
+    if (imageElement != null) {
+      SegContour c = getContour(imageElement, region.getCategory());
+      if (c != null) {
+        MeasurableLayer layer = view.getMeasurableLayer();
+        if (region instanceof IsoDoseRegion) {
+          treeIsodoses.showStatistics(c, layer);
+        } else {
+          treeStructures.showStatistics(c, layer);
+        }
+      }
+    }
   }
 
   public void initData() {
@@ -389,7 +400,10 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener {
       } else if (tabbedPane.getSelectedIndex() == 1) {
         Plan plan = (Plan) comboRtPlan.getSelectedItem();
         if (plan != null) {
-          opacity = plan.getOpacity();
+          Dose dose = plan.getFirstDose();
+          if (dose != null) {
+            opacity = dose.getOpacity();
+          }
         }
       }
       slider.setValue((int) (opacity * 100));
@@ -455,7 +469,10 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener {
       } else if (tabbedPane.getSelectedIndex() == 1) {
         Plan plan = (Plan) comboRtPlan.getSelectedItem();
         if (plan != null) {
-          plan.setOpacity(value);
+          Dose dose = plan.getFirstDose();
+          if (dose != null) {
+            dose.setOpacity(value);
+          }
         }
       }
       updateVisibleNode();
@@ -515,7 +532,7 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener {
     }
   }
 
-  private void updateVisibleNode() {
+  public void updateVisibleNode() {
 
     if (tabbedPane.getSelectedIndex() == 0) {
       boolean all =
@@ -530,7 +547,10 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener {
           treeIsodoses.getCheckingModel().isPathChecked(new TreePath(nodeIsodoses.getPath()));
       Plan plan = (Plan) comboRtPlan.getSelectedItem();
       if (plan != null) {
-        plan.setVisible(all);
+        Dose dose = plan.getFirstDose();
+        if (dose != null) {
+          dose.setVisible(all);
+        }
       }
       updateVisibleNode(rootNodeIsodoses, all);
     }
@@ -655,13 +675,10 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener {
 
                   StringBuilder buf = new StringBuilder();
                   buf.append(GuiUtils.HTML_START);
-                  buf.append(Messages.getString("structure.information"));
-                  buf.append(StringUtil.COLON);
-                  buf.append(GuiUtils.HTML_BR);
                   if (StringUtil.hasText(layer.getRoiObservationLabel())) {
-                    buf.append(Messages.getString("observation.label"));
-                    buf.append(StringUtil.COLON_AND_SPACE);
+                    buf.append("<b>");
                     buf.append(layer.getRoiObservationLabel());
+                    buf.append("</b>");
                     buf.append(GuiUtils.HTML_BR);
                   }
                   buf.append(Messages.getString("thickness"));
@@ -752,10 +769,10 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener {
 
                       StringBuilder buf = new StringBuilder();
                       buf.append(GuiUtils.HTML_START);
-                      buf.append(Messages.getString("isodose.information"));
-                      buf.append(StringUtil.COLON);
+                      buf.append("<b>");
+                      buf.append(layer.getCategory().label());
+                      buf.append("</b>");
                       buf.append(GuiUtils.HTML_BR);
-
                       buf.append(Messages.getString("level"));
                       buf.append(StringUtil.COLON_AND_SPACE);
                       buf.append(String.format("%d %%", layer.getLevel())); // NON-NLS

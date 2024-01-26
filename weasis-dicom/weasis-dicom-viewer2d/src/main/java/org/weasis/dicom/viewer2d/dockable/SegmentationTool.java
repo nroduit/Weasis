@@ -10,18 +10,13 @@
 package org.weasis.dicom.viewer2d.dockable;
 
 import bibliothek.gui.dock.common.CLocation;
-import it.cnr.imaa.essi.lablib.gui.checkboxtree.CheckboxTree;
 import it.cnr.imaa.essi.lablib.gui.checkboxtree.TreeCheckingEvent;
 import it.cnr.imaa.essi.lablib.gui.checkboxtree.TreeCheckingModel;
 import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.Dimension;
-import java.awt.Point;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Enumeration;
 import java.util.List;
@@ -29,21 +24,14 @@ import java.util.Map;
 import java.util.Set;
 import javax.swing.BorderFactory;
 import javax.swing.JComboBox;
-import javax.swing.JMenuItem;
-import javax.swing.JOptionPane;
 import javax.swing.JPanel;
-import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
-import javax.swing.JTable;
 import javax.swing.JTree;
-import javax.swing.SwingUtilities;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
-import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import net.miginfocom.swing.MigLayout;
 import org.dcm4che3.data.Tag;
-import org.weasis.core.Messages;
 import org.weasis.core.api.gui.util.DecFormatter;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.JSliderW;
@@ -57,18 +45,12 @@ import org.weasis.core.ui.docking.PluginTool;
 import org.weasis.core.ui.editor.SeriesViewerEvent;
 import org.weasis.core.ui.editor.SeriesViewerEvent.EVENT;
 import org.weasis.core.ui.editor.SeriesViewerListener;
-import org.weasis.core.ui.editor.image.ImageRegionStatistics;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.editor.image.ViewCanvas;
-import org.weasis.core.ui.editor.image.dockable.MeasureTool;
 import org.weasis.core.ui.model.graphic.imp.seg.SegContour;
 import org.weasis.core.ui.model.graphic.imp.seg.SegMeasurableLayer;
 import org.weasis.core.ui.model.graphic.imp.seg.SegRegion;
-import org.weasis.core.ui.model.utils.bean.MeasureItem;
-import org.weasis.core.ui.util.CheckBoxTreeBuilder;
-import org.weasis.core.ui.util.SimpleTableModel;
-import org.weasis.core.ui.util.StructToolTipTreeNode;
-import org.weasis.core.ui.util.TableNumberRenderer;
+import org.weasis.core.ui.util.*;
 import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.HiddenSeriesManager;
@@ -82,14 +64,14 @@ import org.weasis.opencv.seg.SegmentCategory;
 /**
  * @author Nicolas Roduit
  */
-public class SegmentationTool extends PluginTool implements SeriesViewerListener {
+public class SegmentationTool extends PluginTool implements SeriesViewerListener, SegRegionTool {
 
   public static final String BUTTON_NAME = "Segmentation";
   private static final String GRAPHIC_OPACITY = "Graphic Opacity";
   ;
   private final JScrollPane rootPane;
 
-  private final CheckboxTree tree;
+  private final SegRegionTree tree;
   private boolean initPathSelection;
   private final DefaultMutableTreeNode rootNodeStructures =
       new DefaultMutableTreeNode("rootNode", true); // NON-NLS
@@ -103,7 +85,6 @@ public class SegmentationTool extends PluginTool implements SeriesViewerListener
         }
       };
   private final JSliderW slider;
-  private final JPopupMenu popupMenu = new JPopupMenu();
 
   public SegmentationTool() {
     super(BUTTON_NAME, Type.TOOL, 30);
@@ -119,15 +100,7 @@ public class SegmentationTool extends PluginTool implements SeriesViewerListener
         l -> {
           updateSlider();
         });
-    this.tree =
-        new CheckboxTree() {
-
-          @Override
-          public String getToolTipText(MouseEvent evt) {
-            TreePath curPath = getPathForLocation(evt.getX(), evt.getY());
-            return getSegItemToolTipText(curPath);
-          }
-        };
+    this.tree = new SegRegionTree(this);
     tree.setToolTipText(StringUtil.EMPTY_STRING);
     tree.setCellRenderer(CheckBoxTreeBuilder.buildNoIconCheckboxTreeCellRenderer());
 
@@ -139,93 +112,7 @@ public class SegmentationTool extends PluginTool implements SeriesViewerListener
 
   private void initListeners() {
     comboSeg.addItemListener(structureChangeListener);
-    tree.addMouseListener(
-        new MouseAdapter() {
-          @Override
-          public void mousePressed(MouseEvent e) {
-            popupMenu.removeAll();
-            if (SwingUtilities.isRightMouseButton(e)) {
-              DefaultMutableTreeNode node = getTreeNode(e.getPoint());
-              if (node != null) {
-                boolean leaf = node.isLeaf();
-                if (!leaf) {
-                  popupMenu.add(getCheckAllMenuItem(node, true));
-                  popupMenu.add(getCheckAllMenuItem(node, false));
-                }
-                popupMenu.add(getOpacityMenuItem(node, e.getPoint()));
-                if (leaf) {
-                  popupMenu.add(getStatisticMenuItem(node));
-                }
-                popupMenu.show(tree, e.getX(), e.getY());
-              }
-            }
-          }
-        });
-  }
-
-  private JMenuItem getOpacityMenuItem(DefaultMutableTreeNode node, Point pt) {
-    JMenuItem jMenuItem = new JMenuItem(PropertiesDialog.FILL_OPACITY);
-    jMenuItem.addActionListener(_ -> showSliderInPopup(node, pt));
-    return jMenuItem;
-  }
-
-  private void showSliderInPopup(DefaultMutableTreeNode node, Point pt) {
-    if (node != null) {
-      List<SegRegion<?>> segRegions = new ArrayList<>();
-      if (node.isLeaf() && node.getUserObject() instanceof SegRegion<?> region) {
-        segRegions.add(region);
-      } else {
-        Enumeration<?> children = node.children();
-        while (children.hasMoreElements()) {
-          Object child = children.nextElement();
-          if (child instanceof DefaultMutableTreeNode dtm
-              && dtm.getUserObject() instanceof SegRegion<?> region) {
-            segRegions.add(region);
-          }
-        }
-      }
-
-      if (segRegions.isEmpty()) {
-        return;
-      }
-      // Create a popup menu
-      JPopupMenu menu = new JPopupMenu();
-      JSliderW jSlider = PropertiesDialog.createOpacitySlider(PropertiesDialog.FILL_OPACITY);
-      GuiUtils.setPreferredWidth(jSlider, 250);
-      jSlider.setValue((int) (segRegions.getFirst().getAttributes().getInteriorOpacity() * 100f));
-      PropertiesDialog.updateSlider(jSlider, PropertiesDialog.FILL_OPACITY);
-      jSlider.addChangeListener(
-          l -> {
-            float value = PropertiesDialog.updateSlider(jSlider, PropertiesDialog.FILL_OPACITY);
-            for (SegRegion<?> c : segRegions) {
-              c.getAttributes().setInteriorOpacity(value);
-            }
-            updateVisibleNode();
-          });
-      menu.add(jSlider);
-      menu.show(tree, pt.x, pt.y);
-    }
-  }
-
-  private JMenuItem getStatisticMenuItem(DefaultMutableTreeNode node) {
-    JMenuItem selectAllMenuItem = new JMenuItem("Pixel statistics from selected view");
-    selectAllMenuItem.addActionListener(
-        e -> {
-          if (node != null) {
-            if (node.isLeaf() && node.getUserObject() instanceof SegRegion<?> region) {
-              ViewCanvas<DicomImageElement> view = EventManager.getInstance().getSelectedViewPane();
-              DicomImageElement imageElement = getImageElement(view);
-              if (imageElement != null) {
-                SegContour c = getContour(imageElement, region.getCategory());
-                if (c != null) {
-                  MeasurableLayer layer = view.getMeasurableLayer();
-                  showStatistics(c, layer);
-                }
-              }
-            }
-          }
-        });
-    return selectAllMenuItem;
+    tree.initListeners();
   }
 
   private DicomImageElement getImageElement(ViewCanvas<DicomImageElement> view) {
@@ -250,78 +137,16 @@ public class SegmentationTool extends PluginTool implements SeriesViewerListener
     return null;
   }
 
-  private void showStatistics(SegContour contour, MeasurableLayer layer) {
-    List<MeasureItem> measList =
-        ImageRegionStatistics.getImageStatistics(contour.getSegGraphic(), layer, true);
-
-    JPanel tableContainer = new JPanel();
-    tableContainer.setLayout(new BorderLayout());
-
-    JTable jtable =
-        MeasureTool.createMultipleRenderingTable(
-            new SimpleTableModel(new String[] {}, new Object[][] {}));
-    jtable.getTableHeader().setReorderingAllowed(false);
-
-    String[] headers = {
-      Messages.getString("MeasureTool.param"), Messages.getString("MeasureTool.val")
-    };
-    jtable.setModel(new SimpleTableModel(headers, MeasureTool.getLabels(measList)));
-    jtable.getColumnModel().getColumn(1).setCellRenderer(new TableNumberRenderer());
-    tableContainer.add(jtable.getTableHeader(), BorderLayout.PAGE_START);
-    tableContainer.add(jtable, BorderLayout.CENTER);
-    jtable.setShowVerticalLines(true);
-    jtable.getColumnModel().getColumn(0).setPreferredWidth(120);
-    jtable.getColumnModel().getColumn(1).setPreferredWidth(80);
-    JOptionPane.showMessageDialog(
-        this,
-        tableContainer,
-        Messages.getString("HistogramView.stats"),
-        JOptionPane.PLAIN_MESSAGE,
-        null);
-  }
-
-  private JMenuItem getCheckAllMenuItem(DefaultMutableTreeNode node, boolean selected) {
-    JMenuItem selectAllMenuItem =
-        new JMenuItem(selected ? "Select all the child nodes" : "Unselect all the child nodes");
-    selectAllMenuItem.addActionListener(
-        e -> {
-          if (node != null) {
-            Enumeration<?> children = node.children();
-            while (children.hasMoreElements()) {
-              Object child = children.nextElement();
-              if (child instanceof DefaultMutableTreeNode dtm) {
-                TreePath tp = new TreePath(dtm.getPath());
-                if (selected) {
-                  tree.getCheckingModel().addCheckingPath(tp);
-                } else {
-                  tree.getCheckingModel().removeCheckingPath(tp);
-                }
-              }
-            }
-          }
-        });
-    return selectAllMenuItem;
-  }
-
-  private DefaultMutableTreeNode getTreeNode(Point mousePosition) {
-    TreePath treePath = tree.getPathForLocation(mousePosition.x, mousePosition.y);
-    if (treePath != null) {
-      Object userObject = treePath.getLastPathComponent();
-      if (userObject instanceof DefaultMutableTreeNode) {
-        return (DefaultMutableTreeNode) userObject;
+  public void computeStatistics(SegRegion<?> region) {
+    ViewCanvas<DicomImageElement> view = EventManager.getInstance().getSelectedViewPane();
+    DicomImageElement imageElement = getImageElement(view);
+    if (imageElement != null) {
+      SegContour c = getContour(imageElement, region.getCategory());
+      if (c != null) {
+        MeasurableLayer layer = view.getMeasurableLayer();
+        tree.showStatistics(c, layer);
       }
     }
-    return null;
-  }
-
-  private String getSegItemToolTipText(TreePath curPath) {
-    if (curPath != null) {
-      Object object = curPath.getLastPathComponent();
-      if (object instanceof StructToolTipTreeNode treeNode) {
-        return treeNode.getToolTipText();
-      }
-    }
-    return null;
   }
 
   public void initData() {
@@ -385,28 +210,13 @@ public class SegmentationTool extends PluginTool implements SeriesViewerListener
     }
   }
 
-  private void updateVisibleNode(DefaultMutableTreeNode start, boolean all) {
-    for (Enumeration<TreeNode> children = start.children(); children.hasMoreElements(); ) {
-      DefaultMutableTreeNode dtm = (DefaultMutableTreeNode) children.nextElement();
-      if (dtm.isLeaf()) {
-        TreePath tp = new TreePath(dtm.getPath());
-        DefaultMutableTreeNode node = (DefaultMutableTreeNode) tp.getLastPathComponent();
-        if (node.getUserObject() instanceof SegRegion<?> region) {
-          region.getAttributes().setVisible(tree.getCheckingModel().isPathChecked(tp));
-        }
-      } else {
-        updateVisibleNode(dtm, all);
-      }
-    }
-  }
-
-  private void updateVisibleNode() {
+  public void updateVisibleNode() {
     boolean all = tree.getCheckingModel().isPathChecked(new TreePath(nodeStructures.getPath()));
     SegSpecialElement seg = (SegSpecialElement) comboSeg.getSelectedItem();
     if (seg != null) {
       seg.setVisible(all);
     }
-    updateVisibleNode(rootNodeStructures, all);
+    tree.updateVisibleNode(rootNodeStructures, all);
 
     ImageViewerPlugin<DicomImageElement> container =
         EventManager.getInstance().getSelectedView2dContainer();
@@ -479,9 +289,9 @@ public class SegmentationTool extends PluginTool implements SeriesViewerListener
                   SegRegion<?> seg = (SegRegion) getUserObject();
                   StringBuilder buf = new StringBuilder();
                   buf.append(GuiUtils.HTML_START);
-                  buf.append("Label");
-                  buf.append(StringUtil.COLON_AND_SPACE);
+                  buf.append("<b>");
                   buf.append(seg.getCategory().label());
+                  buf.append("</b>");
                   buf.append(GuiUtils.HTML_BR);
                   buf.append("Algorithm type");
                   buf.append(StringUtil.COLON_AND_SPACE);
@@ -492,15 +302,17 @@ public class SegmentationTool extends PluginTool implements SeriesViewerListener
                   buf.append(DecFormatter.allNumber(seg.getNumberOfPixels()));
                   buf.append(GuiUtils.HTML_BR);
                   SegMeasurableLayer<?> layer = seg.getMeasurableLayer();
-                  MeasurementsAdapter adapter =
-                      layer.getMeasurementAdapter(layer.getSourceImage().getPixelSpacingUnit());
-                  buf.append("Volume (%s3)".formatted(adapter.getUnit()));
-                  buf.append(StringUtil.COLON_AND_SPACE);
-                  double ratio = adapter.getCalibRatio();
-                  buf.append(
-                      DecFormatter.twoDecimal(
-                          seg.getNumberOfPixels() * ratio * ratio * layer.getThickness()));
-                  buf.append(GuiUtils.HTML_BR);
+                  if (layer != null) {
+                    MeasurementsAdapter adapter =
+                        layer.getMeasurementAdapter(layer.getSourceImage().getPixelSpacingUnit());
+                    buf.append("Volume (%s3)".formatted(adapter.getUnit()));
+                    buf.append(StringUtil.COLON_AND_SPACE);
+                    double ratio = adapter.getCalibRatio();
+                    buf.append(
+                        DecFormatter.twoDecimal(
+                            seg.getNumberOfPixels() * ratio * ratio * layer.getThickness()));
+                    buf.append(GuiUtils.HTML_BR);
+                  }
                   buf.append(GuiUtils.HTML_END);
                   return buf.toString();
                 }

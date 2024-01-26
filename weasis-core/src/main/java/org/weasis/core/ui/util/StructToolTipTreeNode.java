@@ -12,6 +12,7 @@ package org.weasis.core.ui.util;
 import java.awt.Color;
 import java.util.Objects;
 import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.TreePath;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.ui.model.graphic.imp.seg.SegRegion;
 import org.weasis.opencv.seg.Region;
@@ -42,5 +43,15 @@ public abstract class StructToolTipTreeNode extends DefaultMutableTreeNode {
     buf.append(label);
     buf.append(GuiUtils.HTML_END);
     return buf.toString();
+  }
+
+  public static String getSegItemToolTipText(TreePath curPath) {
+    if (curPath != null) {
+      Object object = curPath.getLastPathComponent();
+      if (object instanceof StructToolTipTreeNode treeNode) {
+        return treeNode.getToolTipText();
+      }
+    }
+    return null;
   }
 }
