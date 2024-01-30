@@ -230,6 +230,10 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener, S
     new Thread(loadTask).start();
   }
 
+  private boolean isDoseSelected() {
+    return tabbedPane.getSelectedIndex() == 1;
+  }
+
   private DicomImageElement getImageElement(ViewCanvas<DicomImageElement> view) {
     if (view != null && view.getImage() instanceof DicomImageElement imageElement) {
       return imageElement;
@@ -240,27 +244,12 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener, S
   private SegContour getContour(DicomImageElement imageElement, SegmentCategory category) {
     PlanarImage img = imageElement.getImage();
     if (img != null) {
-      if (tabbedPane.getSelectedIndex() == 0) {
-        StructureSet structureSet = (StructureSet) comboRtStructureSet.getSelectedItem();
-        if (structureSet != null) {
-          Collection<SegContour> segments = structureSet.getContours(imageElement);
-          for (SegContour c : segments) {
-            if (c.getCategory().equals(category)) {
-              return c;
-            }
-          }
-        }
-      } else if (tabbedPane.getSelectedIndex() == 1) {
-        Plan plan = (Plan) comboRtPlan.getSelectedItem();
-        if (plan != null) {
-          Dose dose = plan.getFirstDose();
-          if (dose != null) {
-            Collection<SegContour> segments = dose.getContours(imageElement);
-            for (SegContour c : segments) {
-              if (c.getCategory().equals(category)) {
-                return c;
-              }
-            }
+      SpecialElementRegion region = getSelectedRegion();
+      if (region != null) {
+        Collection<SegContour> segments = region.getContours(imageElement);
+        for (SegContour c : segments) {
+          if (c.getCategory().equals(category)) {
+            return c;
           }
         }
       }
@@ -391,24 +380,32 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener, S
     RtSet rt = rtSet;
     if (rt != null) {
       float opacity = 1.0f;
-
-      if (tabbedPane.getSelectedIndex() == 0) {
-        StructureSet structureSet = (StructureSet) comboRtStructureSet.getSelectedItem();
-        if (structureSet != null) {
-          opacity = structureSet.getOpacity();
-        }
-      } else if (tabbedPane.getSelectedIndex() == 1) {
-        Plan plan = (Plan) comboRtPlan.getSelectedItem();
-        if (plan != null) {
-          Dose dose = plan.getFirstDose();
-          if (dose != null) {
-            opacity = dose.getOpacity();
-          }
-        }
+      SpecialElementRegion region = getSelectedRegion();
+      if (region != null) {
+        opacity = region.getOpacity();
       }
       slider.setValue((int) (opacity * 100));
       PropertiesDialog.updateSlider(slider, GRAPHIC_OPACITY);
     }
+  }
+
+  private SpecialElementRegion getSelectedRegion() {
+    SpecialElementRegion region = null;
+    if (isDoseSelected()) {
+      Plan plan = (Plan) comboRtPlan.getSelectedItem();
+      if (plan != null) {
+        Dose dose = plan.getFirstDose();
+        if (dose != null) {
+          region = dose;
+        }
+      }
+    } else {
+      StructureSet structureSet = (StructureSet) comboRtStructureSet.getSelectedItem();
+      if (structureSet != null) {
+        region = structureSet;
+      }
+    }
+    return region;
   }
 
   public void initStructureTree() {
@@ -461,19 +458,9 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener, S
     float value = PropertiesDialog.updateSlider(slider, GRAPHIC_OPACITY);
     RtSet rt = rtSet;
     if (rt != null) {
-      if (tabbedPane.getSelectedIndex() == 0) {
-        StructureSet structureSet = (StructureSet) comboRtStructureSet.getSelectedItem();
-        if (structureSet != null) {
-          structureSet.setOpacity(value);
-        }
-      } else if (tabbedPane.getSelectedIndex() == 1) {
-        Plan plan = (Plan) comboRtPlan.getSelectedItem();
-        if (plan != null) {
-          Dose dose = plan.getFirstDose();
-          if (dose != null) {
-            dose.setOpacity(value);
-          }
-        }
+      SpecialElementRegion region = getSelectedRegion();
+      if (region != null) {
+        region.setOpacity(value);
       }
       updateVisibleNode();
     }
@@ -533,25 +520,16 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener, S
   }
 
   public void updateVisibleNode() {
-
-    if (tabbedPane.getSelectedIndex() == 0) {
+    SpecialElementRegion region = getSelectedRegion();
+    if (region instanceof StructureSet) {
       boolean all =
           treeStructures.getCheckingModel().isPathChecked(new TreePath(nodeStructures.getPath()));
-      StructureSet structureSet = (StructureSet) comboRtStructureSet.getSelectedItem();
-      if (structureSet != null) {
-        structureSet.setVisible(all);
-      }
+      region.setVisible(all);
       updateVisibleNode(rootNodeStructures, all);
-    } else if (tabbedPane.getSelectedIndex() == 1) {
+    } else if (region instanceof Dose) {
       boolean all =
           treeIsodoses.getCheckingModel().isPathChecked(new TreePath(nodeIsodoses.getPath()));
-      Plan plan = (Plan) comboRtPlan.getSelectedItem();
-      if (plan != null) {
-        Dose dose = plan.getFirstDose();
-        if (dose != null) {
-          dose.setVisible(all);
-        }
-      }
+      region.setVisible(all);
       updateVisibleNode(rootNodeIsodoses, all);
     }
 
@@ -589,7 +567,7 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener, S
     comboRtPlan.removeItemListener(planChangeListener);
 
     StructureSet oldStructure = (StructureSet) comboRtStructureSet.getSelectedItem();
-    RtSpecialElement oldPlan = (RtSpecialElement) comboRtPlan.getSelectedItem();
+    Plan oldPlan = (Plan) comboRtPlan.getSelectedItem();
 
     comboRtStructureSet.removeAllItems();
     comboRtPlan.removeAllItems();
