@@ -16,7 +16,6 @@ import java.awt.print.PrinterException;
 import java.awt.print.PrinterJob;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -43,7 +42,7 @@ import org.weasis.core.api.service.WProperties;
 import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.api.util.ResourceUtil.ActionIcon;
 import org.weasis.core.api.util.ResourceUtil.FileIcon;
-import org.weasis.core.ui.docking.DockableTool;
+import org.weasis.core.ui.editor.SeriesViewerUI;
 import org.weasis.core.ui.editor.image.ImageViewerEventManager;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.editor.image.SynchView;
@@ -76,16 +75,9 @@ public class SRContainer extends DicomViewerPlugin implements PropertyChangeList
 
   public static final List<SynchView> SYNCH_LIST = List.of(SynchView.NONE);
 
-  // Static tools shared by all the View2dContainer instances, tools are registered when a container
-  // is selected
-  // Do not initialize tools in a static block (order initialization issue with eventManager), use
-  // instead a lazy
-  // initialization with a method.
-  public static final List<Toolbar> TOOLBARS = Collections.synchronizedList(new ArrayList<>(1));
-  public static final List<DockableTool> TOOLS = Collections.synchronizedList(new ArrayList<>(1));
-  private static volatile boolean initComponents = false;
+  public static final SeriesViewerUI UI = new SeriesViewerUI(SRContainer.class);
   static final ImageViewerEventManager<DicomImageElement> SR_EVENT_MANAGER =
-      new ImageViewerEventManager<DicomImageElement>() {
+      new ImageViewerEventManager<>() {
 
         @Override
         public boolean updateComponentsListener(ViewCanvas<DicomImageElement> defaultView2d) {
@@ -135,8 +127,9 @@ public class SRContainer extends DicomViewerPlugin implements PropertyChangeList
         ResourceUtil.getIcon(FileIcon.TEXT),
         null);
     setSynchView(SynchView.NONE);
-    if (!initComponents) {
-      initComponents = true;
+
+    if (!UI.init.getAndSet(true)) {
+      List<Toolbar> toolBars = UI.toolBars;
       // Add standard toolbars
       final BundleContext context = FrameworkUtil.getBundle(this.getClass()).getBundleContext();
       String bundleName = context.getBundle().getSymbolicName();
@@ -155,7 +148,7 @@ public class SRContainer extends DicomViewerPlugin implements PropertyChangeList
             GuiUtils.getUICore().getExplorerPluginToolbars().stream()
                 .filter(t -> t instanceof ImportToolBar)
                 .findFirst();
-        b.ifPresent(TOOLBARS::add);
+        b.ifPresent(toolBars::add);
       }
       if (InsertableUtil.getBooleanProperty(
           preferences,
@@ -168,7 +161,7 @@ public class SRContainer extends DicomViewerPlugin implements PropertyChangeList
             GuiUtils.getUICore().getExplorerPluginToolbars().stream()
                 .filter(t -> t instanceof ExportToolBar)
                 .findFirst();
-        b.ifPresent(TOOLBARS::add);
+        b.ifPresent(toolBars::add);
       }
 
       if (InsertableUtil.getBooleanProperty(
@@ -178,7 +171,7 @@ public class SRContainer extends DicomViewerPlugin implements PropertyChangeList
           InsertableUtil.getCName(SrToolBar.class),
           key,
           true)) {
-        TOOLBARS.add(new SrToolBar(10));
+        toolBars.add(new SrToolBar(10));
       }
     }
   }
@@ -207,8 +200,8 @@ public class SRContainer extends DicomViewerPlugin implements PropertyChangeList
   }
 
   @Override
-  public List<DockableTool> getToolPanel() {
-    return TOOLS;
+  public SeriesViewerUI getSeriesViewerUI() {
+    return UI;
   }
 
   @Override
@@ -308,11 +301,6 @@ public class SRContainer extends DicomViewerPlugin implements PropertyChangeList
   @Override
   public GridBagLayoutModel getDefaultLayoutModel() {
     return VIEWS_SR;
-  }
-
-  @Override
-  public synchronized List<Toolbar> getToolBars() {
-    return TOOLBARS;
   }
 
   @Override

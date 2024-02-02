@@ -16,7 +16,7 @@ import org.weasis.core.api.media.data.Codec;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.Series;
 
-public interface DataExplorerModel<E extends MediaElement> {
+public interface DataExplorerModel {
 
   List<Codec<MediaElement>> getCodecPlugins();
 
@@ -28,5 +28,5 @@ public interface DataExplorerModel<E extends MediaElement> {
 
   TreeModelNode getTreeModelNodeForNewPlugin();
 
-  <S extends Series<E>> boolean applySplittingRules(S original, MediaElement media);
+  boolean applySplittingRules(Series<?> original, MediaElement media);
 }

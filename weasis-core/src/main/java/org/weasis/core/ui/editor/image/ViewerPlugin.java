@@ -43,6 +43,7 @@ import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.ui.docking.DockableTool;
 import org.weasis.core.ui.editor.SeriesViewer;
+import org.weasis.core.ui.editor.SeriesViewerUI;
 import org.weasis.core.ui.editor.ViewerPluginBuilder;
 import org.weasis.core.ui.util.Toolbar;
 
@@ -86,11 +87,9 @@ public abstract class ViewerPlugin<E extends MediaElement> extends JPanel
             super.close(dockable);
             control.removeVetoFocusListener(vetoFocus);
             if (dockable.getFocusComponent() instanceof SeriesViewer<?> seriesViewer) {
-              List<DockableTool> oldTool = seriesViewer.getToolPanel();
-              if (oldTool != null) {
-                for (DockableTool p : oldTool) {
-                  p.closeDockable();
-                }
+              List<DockableTool> oldTool = seriesViewer.getSeriesViewerUI().tools;
+              for (DockableTool p : oldTool) {
+                p.closeDockable();
               }
               seriesViewer.close();
             }
@@ -106,7 +105,7 @@ public abstract class ViewerPlugin<E extends MediaElement> extends JPanel
                   && defaultCommonDockable.getDockable()
                       instanceof AbstractCDockable abstractCDockable) {
                 if (abstractCDockable.getFocusComponent() instanceof SeriesViewer<?> plugin) {
-                  GuiUtils.getUICore().updateTools(null, plugin, true);
+                  SeriesViewerUI.updateTools(null, plugin, true);
                 }
                 abstractCDockable.toFront();
               }
@@ -170,7 +169,10 @@ public abstract class ViewerPlugin<E extends MediaElement> extends JPanel
     } else {
       ViewerPluginBuilder.DefaultDataModel.firePropertyChange(
           new ObservableEvent(
-              ObservableEvent.BasicAction.NULL_SELECTION, ViewerPlugin.this, null, null));
+              ObservableEvent.BasicAction.NULL_SELECTION,
+              ViewerPlugin.this.getSeriesViewerUI(),
+              null,
+              null));
     }
   }
 
@@ -216,13 +218,11 @@ public abstract class ViewerPlugin<E extends MediaElement> extends JPanel
   }
 
   public ViewerToolBar getViewerToolBar() {
-    List<Toolbar> bars = getToolBars();
-    if (bars != null) {
-      synchronized (bars) {
-        for (Toolbar t : bars) {
-          if (t instanceof ViewerToolBar viewerToolBar) {
-            return viewerToolBar;
-          }
+    List<Toolbar> bars = getSeriesViewerUI().toolBars;
+    synchronized (bars) {
+      for (Toolbar t : bars) {
+        if (t instanceof ViewerToolBar viewerToolBar) {
+          return viewerToolBar;
         }
       }
     }
@@ -250,7 +250,7 @@ public abstract class ViewerPlugin<E extends MediaElement> extends JPanel
     protected void action() {
       super.action();
       if (dockable.getFocusComponent() instanceof SeriesViewer<?> plugin) {
-        GuiUtils.getUICore().updateTools(plugin, closeAll ? null : plugin, true);
+        SeriesViewerUI.updateTools(plugin, closeAll ? null : plugin, true);
       }
       // We need to access the Core API to find out which other Dockables exist.
       DockStation parent = dockable.intern().getDockParent();

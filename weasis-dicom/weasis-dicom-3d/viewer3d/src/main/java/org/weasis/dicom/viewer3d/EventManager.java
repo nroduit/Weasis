@@ -665,12 +665,14 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> {
 
     if (!(view2d instanceof View3d canvas) || canvas.getVolTexture() == null) {
       enableActions(false);
+      View3DContainer.UI.updateDynamicTools(view2d.getSeries());
       return false;
     }
 
     if (!enabledAction) {
       enableActions(true);
     }
+    View3DContainer.UI.updateDynamicTools(view2d.getSeries());
 
     RenderingLayer rendering = canvas.getRenderingLayer();
     updateWindowLevelComponentsListener(canvas);

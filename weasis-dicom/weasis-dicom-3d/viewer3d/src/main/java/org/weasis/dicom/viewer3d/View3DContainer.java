@@ -15,7 +15,6 @@ import java.awt.GridBagConstraints;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -53,6 +52,7 @@ import org.weasis.core.api.util.ResourceUtil.ActionIcon;
 import org.weasis.core.ui.docking.DockableTool;
 import org.weasis.core.ui.docking.PluginTool;
 import org.weasis.core.ui.editor.SeriesViewerListener;
+import org.weasis.core.ui.editor.SeriesViewerUI;
 import org.weasis.core.ui.editor.image.RotationToolBar;
 import org.weasis.core.ui.editor.image.SynchData;
 import org.weasis.core.ui.editor.image.SynchView;
@@ -183,9 +183,7 @@ public class View3DContainer extends DicomViewerPlugin implements PropertyChange
   public static final List<GridBagLayoutModel> LAYOUT_LIST =
       Stream.of(VIEWS_vr, VIEWS_vr_1x2).toList();
 
-  public static final List<Toolbar> TOOLBARS = Collections.synchronizedList(new ArrayList<>());
-  public static final List<DockableTool> TOOLS = Collections.synchronizedList(new ArrayList<>());
-  private static volatile boolean initComponents = false;
+  public static final SeriesViewerUI UI = new SeriesViewerUI(View3DContainer.class);
 
   // protected ControlAxes controlAxes;
   protected final DicomVolTextureFactory factory;
@@ -221,19 +219,15 @@ public class View3DContainer extends DicomViewerPlugin implements PropertyChange
   }
 
   @Override
-  public List<Toolbar> getToolBars() {
-    return TOOLBARS;
-  }
-
-  @Override
-  public List<DockableTool> getToolPanel() {
-    return TOOLS;
+  public SeriesViewerUI getSeriesViewerUI() {
+    return UI;
   }
 
   private void initTools() {
     setSynchView(defaultMpr);
-    if (!initComponents) {
-      initComponents = true;
+
+    if (!UI.init.getAndSet(true)) {
+      List<Toolbar> toolBars = UI.toolBars;
 
       // Add standard toolbars
       final BundleContext context = FrameworkUtil.getBundle(this.getClass()).getBundleContext();
@@ -250,7 +244,7 @@ public class View3DContainer extends DicomViewerPlugin implements PropertyChange
           InsertableUtil.getCName(ViewerToolBar.class),
           key,
           true)) {
-        TOOLBARS.add(
+        toolBars.add(
             new ViewerToolBar<>(
                 eventManager, eventManager.getMouseActions().getActiveButtons(), preferences, 10));
       }
@@ -270,7 +264,7 @@ public class View3DContainer extends DicomViewerPlugin implements PropertyChange
           InsertableUtil.getCName(ZoomToolBar.class),
           key,
           true)) {
-        TOOLBARS.add(new ZoomToolBar(eventManager, 20, false));
+        toolBars.add(new ZoomToolBar(eventManager, 20, false));
       }
       if (InsertableUtil.getBooleanProperty(
           preferences,
@@ -279,7 +273,7 @@ public class View3DContainer extends DicomViewerPlugin implements PropertyChange
           InsertableUtil.getCName(RotationToolBar.class),
           key,
           true)) {
-        TOOLBARS.add(new RotationToolBar(eventManager, 30));
+        toolBars.add(new RotationToolBar(eventManager, 30));
       }
       if (InsertableUtil.getBooleanProperty(
           preferences,
@@ -288,7 +282,7 @@ public class View3DContainer extends DicomViewerPlugin implements PropertyChange
           InsertableUtil.getCName(LutToolBar.class),
           key,
           true)) {
-        TOOLBARS.add(new VolLutToolBar(eventManager, 40));
+        toolBars.add(new VolLutToolBar(eventManager, 40));
       }
       if (InsertableUtil.getBooleanProperty(
           preferences,
@@ -297,9 +291,10 @@ public class View3DContainer extends DicomViewerPlugin implements PropertyChange
           InsertableUtil.getCName(View3DToolbar.class),
           key,
           true)) {
-        TOOLBARS.add(new View3DToolbar(50));
+        toolBars.add(new View3DToolbar(50));
       }
 
+      List<DockableTool> tools = UI.tools;
       PluginTool tool;
 
       if (InsertableUtil.getBooleanProperty(
@@ -321,7 +316,7 @@ public class View3DContainer extends DicomViewerPlugin implements PropertyChange
                 return listeners.toArray(new SliderChangeListener[0]);
               }
             };
-        TOOLS.add(tool);
+        tools.add(tool);
       }
 
       if (InsertableUtil.getBooleanProperty(
@@ -331,7 +326,7 @@ public class View3DContainer extends DicomViewerPlugin implements PropertyChange
           InsertableUtil.getCName(VolumeTool.class),
           key,
           true)) {
-        TOOLS.add(new VolumeTool(VolumeTool.BUTTON_NAME));
+        tools.add(new VolumeTool(VolumeTool.BUTTON_NAME));
       }
 
       if (InsertableUtil.getBooleanProperty(
@@ -342,7 +337,7 @@ public class View3DContainer extends DicomViewerPlugin implements PropertyChange
           key,
           true)) {
         tool = new DisplayTool(DisplayTool.BUTTON_NAME);
-        TOOLS.add(tool);
+        tools.add(tool);
         eventManager.addSeriesViewerListener((SeriesViewerListener) tool);
       }
 
@@ -354,10 +349,10 @@ public class View3DContainer extends DicomViewerPlugin implements PropertyChange
           key,
           true)) {
         tool = new MeasureTool(eventManager);
-        TOOLS.add(tool);
+        tools.add(tool);
       }
 
-      InsertableUtil.sortInsertable(TOOLS);
+      InsertableUtil.sortInsertable(tools);
 
       // Send event to synchronize the series selection.
       DataExplorerView dicomView = GuiUtils.getUICore().getExplorerPlugin(DicomExplorer.NAME);
@@ -367,8 +362,8 @@ public class View3DContainer extends DicomViewerPlugin implements PropertyChange
 
       Preferences prefs = BundlePreferences.getDefaultPreferences(context);
       if (prefs != null) {
-        InsertableUtil.applyPreferences(TOOLBARS, prefs, bundleName, componentName, Type.TOOLBAR);
-        InsertableUtil.applyPreferences(TOOLS, prefs, bundleName, componentName, Type.TOOL);
+        InsertableUtil.applyPreferences(toolBars, prefs, bundleName, componentName, Type.TOOLBAR);
+        InsertableUtil.applyPreferences(tools, prefs, bundleName, componentName, Type.TOOL);
       }
     }
   }

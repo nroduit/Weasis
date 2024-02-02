@@ -589,7 +589,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
   @Override
   public void updateGraphicSelectionListener(ImageViewerPlugin<E> viewerPlugin) {
     if (viewerPlugin != null) {
-      List<DockableTool> tools = viewerPlugin.getToolPanel();
+      List<DockableTool> tools = viewerPlugin.getSeriesViewerUI().tools;
       synchronized (tools) {
         for (DockableTool p : tools) {
           if (p instanceof GraphicSelectionListener selectionListener) {

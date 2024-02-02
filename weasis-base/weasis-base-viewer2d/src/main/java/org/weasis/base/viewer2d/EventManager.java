@@ -479,9 +479,10 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
       setSliderPreference(prefNode, ActionW.ROTATION);
       setSliderPreference(prefNode, ActionW.ZOOM);
 
-      Preferences containerNode = prefs.node(View2dContainer.class.getSimpleName().toLowerCase());
-      InsertableUtil.savePreferences(View2dContainer.TOOLBARS, containerNode, Type.TOOLBAR);
-      InsertableUtil.savePreferences(View2dContainer.TOOLS, containerNode, Type.TOOL);
+      Preferences containerNode =
+          prefs.node(View2dContainer.UI.clazz.getSimpleName().toLowerCase());
+      InsertableUtil.savePreferences(View2dContainer.UI.toolBars, containerNode, Type.TOOLBAR);
+      InsertableUtil.savePreferences(View2dContainer.UI.tools, containerNode, Type.TOOL);
     }
   }
 

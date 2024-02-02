@@ -35,7 +35,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Locale.Category;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Properties;
 import org.osgi.framework.BundleContext;
 import org.slf4j.Logger;
@@ -52,7 +51,6 @@ import org.weasis.core.api.util.LocalUtil;
 import org.weasis.core.api.util.NetworkUtil;
 import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.api.util.URLParameters;
-import org.weasis.core.ui.docking.DockableTool;
 import org.weasis.core.ui.editor.SeriesViewer;
 import org.weasis.core.ui.editor.SeriesViewerFactory;
 import org.weasis.core.ui.editor.image.ViewerPlugin;
@@ -523,33 +521,6 @@ public final class UICore {
               viewerPlugin.handleFocusAfterClosing();
             }
           });
-    }
-  }
-
-  public void updateTools(SeriesViewer<?> oldPlugin, SeriesViewer<?> plugin, boolean force) {
-    List<DockableTool> oldTool = oldPlugin == null ? null : oldPlugin.getToolPanel();
-    List<DockableTool> tool = plugin == null ? null : plugin.getToolPanel();
-    if (force || !Objects.equals(tool, oldTool)) {
-      if (oldTool != null) {
-        for (DockableTool p : oldTool) {
-          p.closeDockable();
-        }
-      }
-      if (tool != null) {
-        for (DockableTool p : tool) {
-          if (p.isComponentEnabled()) {
-            p.showDockable();
-          }
-        }
-      }
-    }
-  }
-
-  public void updateToolbars(SeriesViewer<?> oldPlugin, SeriesViewer<?> plugin, boolean force) {
-    List<Toolbar> oldToolBars = oldPlugin == null ? null : oldPlugin.getToolBars();
-    List<Toolbar> toolBars = plugin == null ? null : plugin.getToolBars();
-    if (force || toolBars != oldToolBars) {
-      toolbarContainer.registerToolBar(toolBars);
     }
   }
 }

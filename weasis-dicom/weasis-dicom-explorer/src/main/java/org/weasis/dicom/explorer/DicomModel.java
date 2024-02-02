@@ -104,7 +104,7 @@ import org.weasis.dicom.explorer.wado.LoadSeries;
       CommandProcessor.COMMAND_FUNCTION + "=close"
     },
     service = DicomModel.class)
-public class DicomModel implements TreeModel, DataExplorerModel<DicomImageElement> {
+public class DicomModel implements TreeModel, DataExplorerModel {
   private static final Logger LOGGER = LoggerFactory.getLogger(DicomModel.class);
 
   public static final String NAME = "DICOM";
@@ -673,9 +673,8 @@ public class DicomModel implements TreeModel, DataExplorerModel<DicomImageElemen
     }
   }
 
-  private void splitSeries(
-      DicomMediaIO dicomReader, DicomSeries original, DicomImageElement media) {
-    DicomSeries s = splitSeries(dicomReader, original);
+  private void splitSeries(DicomMediaIO dicomReader, DicomSeries original, MediaElement media) {
+    Series s = splitSeries(dicomReader, original);
     s.addMedia(media);
   }
 
@@ -797,8 +796,7 @@ public class DicomModel implements TreeModel, DataExplorerModel<DicomImageElemen
   }
 
   @Override
-  public <S extends Series<DicomImageElement>> boolean applySplittingRules(
-      S original, MediaElement media) {
+  public boolean applySplittingRules(Series<?> original, MediaElement media) {
     if (media != null && media.getMediaReader() instanceof DicomMediaIO dicomReader) {
       String seriesUID = TagD.getTagValue(original, Tag.SeriesInstanceUID, String.class);
       if (seriesUID == null) {
@@ -809,24 +807,24 @@ public class DicomModel implements TreeModel, DataExplorerModel<DicomImageElemen
         return true;
       }
 
-      if (original instanceof FilesExtractor) {
+      if (original instanceof FilesExtractor && original instanceof DicomSeries dicomSeries) {
         if (original.size(null) > 0) {
           // Always split when it is a video or an encapsulated document
           if (media instanceof DicomVideoElement || media instanceof DicomEncapDocElement) {
-            splitSeries(dicomReader, (DicomSeries) original, (DicomImageElement) media);
+            splitSeries(dicomReader, dicomSeries, media);
             return true;
           } else {
-            findMatchingSeriesOrSplit((DicomSeries) original, (DicomImageElement) media);
+            findMatchingSeriesOrSplit(dicomSeries, (DicomImageElement) media);
           }
         } else {
-          original.addMedia((DicomImageElement) media);
+          dicomSeries.addMedia((DicomImageElement) media);
         }
       } else if (original instanceof DicomSeries initialSeries) {
         // Handle cases when the Series is created before getting the image (downloading)
         if (media instanceof DicomVideoElement || media instanceof DicomEncapDocElement) {
           if (initialSeries.size(null) > 0) {
             // When the series already contains elements (images), always split video and document
-            splitSeries(dicomReader, initialSeries, (DicomImageElement) media);
+            splitSeries(dicomReader, initialSeries, media);
           } else {
             replaceSeries(dicomReader, initialSeries, (DicomImageElement) media);
           }

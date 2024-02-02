@@ -25,7 +25,7 @@ import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.media.data.*;
 
-public abstract class AbstractFileModel implements TreeModel, DataExplorerModel<MediaElement> {
+public abstract class AbstractFileModel implements TreeModel, DataExplorerModel {
   private static final Logger LOGGER = LoggerFactory.getLogger(AbstractFileModel.class);
 
   public static final List<String> functions = List.of("get", "close"); // NON-NLS
@@ -176,8 +176,7 @@ public abstract class AbstractFileModel implements TreeModel, DataExplorerModel<
   }
 
   @Override
-  public <S extends Series<MediaElement>> boolean applySplittingRules(
-      S original, MediaElement media) {
+  public boolean applySplittingRules(Series<?> original, MediaElement media) {
     return false;
   }
 

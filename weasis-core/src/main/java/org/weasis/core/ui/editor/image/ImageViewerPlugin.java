@@ -206,6 +206,14 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
     return selectedImagePane;
   }
 
+  public List<ViewCanvas<E>> getView2ds() {
+    return view2ds;
+  }
+
+  public ImageViewerEventManager<E> getEventManager() {
+    return eventManager;
+  }
+
   @Override
   public void close() {
     super.close();

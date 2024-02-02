@@ -129,14 +129,6 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
       new ArrayListComboBoxModel<>(DicomSorter.STUDY_COMPARATOR);
   private final JComboBox<?> patientCombobox = new JComboBox<>(modelPatient);
   private final JComboBox<?> studyCombobox = new JComboBox<>(modelStudy);
-  private final transient ItemListener patientChangeListener =
-      e -> {
-        if (e.getStateChange() == ItemEvent.SELECTED) {
-          selectPatient(getSelectedPatient());
-          selectedPatient.revalidate();
-          selectedPatient.repaint();
-        }
-      };
   private final transient ItemListener studyItemListener =
       e -> {
         if (e.getStateChange() == ItemEvent.SELECTED) {
@@ -166,6 +158,14 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
     setDockableWidth(Math.max(thumbnailSize, Thumbnail.DEFAULT_SIZE) + 42);
 
     patientCombobox.setMaximumRowCount(15);
+    ItemListener patientChangeListener =
+        e -> {
+          if (e.getStateChange() == ItemEvent.SELECTED) {
+            selectPatient(getSelectedPatient());
+            selectedPatient.revalidate();
+            selectedPatient.repaint();
+          }
+        };
     patientCombobox.addItemListener(patientChangeListener);
     studyCombobox.setMaximumRowCount(15);
     // do not use addElement
@@ -413,7 +413,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
   private MediaSeriesGroup getFirstStudy(MediaSeriesGroup patientGroup) {
     List<StudyPane> studyList = getStudyList(patientGroup);
     if (studyList != null && !studyList.isEmpty()) {
-      return studyList.get(0).dicomStudy;
+      return studyList.getFirst().dicomStudy;
     }
     return null;
   }
@@ -531,7 +531,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
         for (StudyPane studyPane : studyList) {
           List<SeriesPane> seriesList = study2series.get(studyPane.dicomStudy);
           if (seriesList != null && !seriesList.isEmpty()) {
-            return seriesList.get(0).sequence;
+            return seriesList.getFirst().sequence;
           }
         }
       }

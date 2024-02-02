@@ -18,7 +18,6 @@ import java.awt.print.PrinterJob;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import javax.print.attribute.HashPrintRequestAttributeSet;
@@ -45,9 +44,9 @@ import org.weasis.core.api.service.WProperties;
 import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.api.util.ResourceUtil.ActionIcon;
 import org.weasis.core.api.util.ResourceUtil.FileIcon;
-import org.weasis.core.ui.docking.DockableTool;
 import org.weasis.core.ui.docking.PluginTool;
 import org.weasis.core.ui.editor.SeriesViewerListener;
+import org.weasis.core.ui.editor.SeriesViewerUI;
 import org.weasis.core.ui.editor.image.DefaultView2d;
 import org.weasis.core.ui.editor.image.ImageViewerEventManager;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
@@ -83,15 +82,7 @@ public class WaveContainer extends DicomViewerPlugin implements PropertyChangeLi
 
   public static final List<SynchView> SYNCH_LIST = List.of(SynchView.NONE);
 
-  // Static tools shared by all the View2dContainer instances, tools are registered when a container
-  // is selected
-  // Do not initialize tools in a static block (order initialization issue with eventManager), use
-  // instead a lazy
-  // initialization with a method.
-  protected static final List<Toolbar> TOOLBARS = Collections.synchronizedList(new ArrayList<>(1));
-  protected static final List<DockableTool> TOOLS =
-      Collections.synchronizedList(new ArrayList<>(1));
-  private static volatile boolean initComponents = false;
+  public static final SeriesViewerUI UI = new SeriesViewerUI(WaveContainer.class);
   static final ImageViewerEventManager<DicomImageElement> ECG_EVENT_MANAGER =
       new ImageViewerEventManager<>() {
 
@@ -142,8 +133,9 @@ public class WaveContainer extends DicomViewerPlugin implements PropertyChangeLi
         ResourceUtil.getIcon(FileIcon.ECG),
         null);
     setSynchView(SynchView.NONE);
-    if (!initComponents) {
-      initComponents = true;
+
+    if (!UI.init.getAndSet(true)) {
+      List<Toolbar> toolBars = UI.toolBars;
       // Add standard toolbars
       final BundleContext context = FrameworkUtil.getBundle(this.getClass()).getBundleContext();
       String bundleName = context.getBundle().getSymbolicName();
@@ -162,7 +154,7 @@ public class WaveContainer extends DicomViewerPlugin implements PropertyChangeLi
             GuiUtils.getUICore().getExplorerPluginToolbars().stream()
                 .filter(ImportToolBar.class::isInstance)
                 .findFirst();
-        b.ifPresent(TOOLBARS::add);
+        b.ifPresent(toolBars::add);
       }
       if (InsertableUtil.getBooleanProperty(
           preferences,
@@ -175,7 +167,7 @@ public class WaveContainer extends DicomViewerPlugin implements PropertyChangeLi
             GuiUtils.getUICore().getExplorerPluginToolbars().stream()
                 .filter(ExportToolBar.class::isInstance)
                 .findFirst();
-        b.ifPresent(TOOLBARS::add);
+        b.ifPresent(toolBars::add);
       }
 
       if (InsertableUtil.getBooleanProperty(
@@ -185,7 +177,7 @@ public class WaveContainer extends DicomViewerPlugin implements PropertyChangeLi
           InsertableUtil.getCName(WaveformToolBar.class),
           key,
           true)) {
-        TOOLBARS.add(new WaveformToolBar(20));
+        toolBars.add(new WaveformToolBar(20));
       }
 
       PluginTool tool;
@@ -198,7 +190,7 @@ public class WaveContainer extends DicomViewerPlugin implements PropertyChangeLi
           true)) {
         tool = new MeasureAnnotationTool();
         eventManager.addSeriesViewerListener((SeriesViewerListener) tool);
-        TOOLS.add(tool);
+        UI.tools.add(tool);
       }
     }
   }
@@ -228,8 +220,8 @@ public class WaveContainer extends DicomViewerPlugin implements PropertyChangeLi
   }
 
   @Override
-  public List<DockableTool> getToolPanel() {
-    return TOOLS;
+  public SeriesViewerUI getSeriesViewerUI() {
+    return UI;
   }
 
   @Override
@@ -237,8 +229,8 @@ public class WaveContainer extends DicomViewerPlugin implements PropertyChangeLi
     super.setSelected(true);
     if (selected) {
       if (ecgView != null
-          && !TOOLS.isEmpty()
-          && TOOLS.get(0) instanceof MeasureAnnotationTool tool) {
+          && !UI.tools.isEmpty()
+          && UI.tools.getFirst() instanceof MeasureAnnotationTool tool) {
         ecgView.setAnnotationTool(tool);
         tool.setSeries(ecgView.getSeries());
         ecgView.updateMarkersTable();
@@ -342,11 +334,6 @@ public class WaveContainer extends DicomViewerPlugin implements PropertyChangeLi
   @Override
   public GridBagLayoutModel getDefaultLayoutModel() {
     return DEFAULT_VIEW;
-  }
-
-  @Override
-  public synchronized List<Toolbar> getToolBars() {
-    return TOOLBARS;
   }
 
   @Override

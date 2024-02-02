@@ -934,7 +934,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
         // Let scrolling if only one image is corrupted in the series
         cineAction.ifPresent(a -> a.enableAction(true));
       }
-      View2dContainer.updateAdditionalTools(view2d.getSeries());
+      View2dContainer.UI.updateDynamicTools(view2d.getSeries());
       return false;
     }
 
@@ -942,7 +942,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
       enableActions(true);
     }
 
-    View2dContainer.updateAdditionalTools(view2d.getSeries());
+    View2dContainer.UI.updateDynamicTools(view2d.getSeries());
 
     OpManager dispOp = view2d.getDisplayOpManager();
 
@@ -1415,12 +1415,13 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
       BundlePreferences.putBooleanPreferences(
           prefNode, PRManager.PR_APPLY, options.getBooleanProperty(PRManager.PR_APPLY, false));
 
-      Preferences containerNode = prefs.node(View2dContainer.class.getSimpleName().toLowerCase());
-      InsertableUtil.savePreferences(View2dContainer.TOOLBARS, containerNode, Type.TOOLBAR);
-      InsertableUtil.savePreferences(View2dContainer.TOOLS, containerNode, Type.TOOL);
+      Preferences containerNode =
+          prefs.node(View2dContainer.UI.clazz.getSimpleName().toLowerCase());
+      InsertableUtil.savePreferences(View2dContainer.UI.toolBars, containerNode, Type.TOOLBAR);
+      InsertableUtil.savePreferences(View2dContainer.UI.tools, containerNode, Type.TOOL);
 
       InsertableUtil.savePreferences(
-          MprContainer.TOOLBARS,
+          MprContainer.UI.toolBars,
           prefs.node(MprContainer.class.getSimpleName().toLowerCase()),
           Type.TOOLBAR);
     }
