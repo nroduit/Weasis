@@ -24,10 +24,10 @@ public class Image {
   private final DicomImageElement image;
   private final int width;
   private final int height;
-  private String patientPosition;
-  private int prone;
-  private int feetFirst;
-  private Vector3d imageSpacing;
+  private final String patientPosition;
+  private final int prone;
+  private final int feetFirst;
+  private final Vector3d imageSpacing;
 
   // Image LUT
   AbstractMap.SimpleImmutableEntry<double[], double[]> imageLUT;
@@ -50,24 +50,12 @@ public class Image {
     return this.patientPosition;
   }
 
-  public void setPatientPosition(String value) {
-    this.patientPosition = value;
-  }
-
   public int getProne() {
     return this.prone;
   }
 
-  public void setProne(int prone) {
-    this.prone = prone;
-  }
-
   public int getFeetFirst() {
     return this.feetFirst;
-  }
-
-  public void setFeetFirst(int feetFirst) {
-    this.feetFirst = feetFirst;
   }
 
   public Vector3d getImageSpacing() {

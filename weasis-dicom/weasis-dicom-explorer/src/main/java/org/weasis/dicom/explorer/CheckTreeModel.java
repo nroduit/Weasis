@@ -9,8 +9,8 @@
  */
 package org.weasis.dicom.explorer;
 
-import it.cnr.imaa.essi.lablib.gui.checkboxtree.DefaultTreeCheckingModel;
-import it.cnr.imaa.essi.lablib.gui.checkboxtree.TreeCheckingModel;
+import eu.essilab.lablib.checkboxtree.DefaultTreeCheckingModel;
+import eu.essilab.lablib.checkboxtree.TreeCheckingModel;
 import java.io.File;
 import java.net.URL;
 import java.time.LocalDateTime;

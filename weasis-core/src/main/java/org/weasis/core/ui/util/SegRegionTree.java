@@ -9,7 +9,7 @@
  */
 package org.weasis.core.ui.util;
 
-import it.cnr.imaa.essi.lablib.gui.checkboxtree.CheckboxTree;
+import eu.essilab.lablib.checkboxtree.CheckboxTree;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;

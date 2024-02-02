@@ -9,8 +9,8 @@
  */
 package org.weasis.dicom.explorer;
 
-import it.cnr.imaa.essi.lablib.gui.checkboxtree.TreeCheckingModel;
-import it.cnr.imaa.essi.lablib.gui.checkboxtree.TreeCheckingModel.CheckingMode;
+import eu.essilab.lablib.checkboxtree.TreeCheckingModel;
+import eu.essilab.lablib.checkboxtree.TreeCheckingModel.CheckingMode;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Window;

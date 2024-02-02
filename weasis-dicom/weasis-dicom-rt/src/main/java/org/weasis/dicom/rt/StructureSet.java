@@ -242,7 +242,7 @@ public class StructureSet extends RtSpecialElement implements SpecialElementRegi
           }
 
           // Calculate the plane thickness for the current ROI
-          region.setThickness(RtSet.calculatePlaneThickness(planes));
+          region.setThickness(RtSet.calculatePlaneThickness(planes.keySet()));
 
           // Add the planes' dictionary to the current ROI
           region.setPlanes(planes);

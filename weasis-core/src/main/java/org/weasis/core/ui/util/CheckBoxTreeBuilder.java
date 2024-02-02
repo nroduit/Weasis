@@ -9,7 +9,7 @@
  */
 package org.weasis.core.ui.util;
 
-import it.cnr.imaa.essi.lablib.gui.checkboxtree.DefaultCheckboxTreeCellRenderer;
+import eu.essilab.lablib.checkboxtree.DefaultCheckboxTreeCellRenderer;
 import java.util.Enumeration;
 import javax.swing.JTree;
 import javax.swing.tree.DefaultMutableTreeNode;

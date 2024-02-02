@@ -17,9 +17,9 @@
 
   <properties>
     <jxlayer.version>3.0.4</jxlayer.version>
-    <xchart.version>3.8.3</xchart.version>
+    <xchart.version>3.8.7</xchart.version>
     <LGoodDatePicker.version>11.3.0-r1</LGoodDatePicker.version>
-    <lablib-checkboxtree.version>3.3</lablib-checkboxtree.version>
+    <lablib-checkboxtree.version>4.0</lablib-checkboxtree.version>
     <VectorGraphics2D.version>0.13</VectorGraphics2D.version>
   </properties>
 
@@ -45,13 +45,13 @@
         <artifactId>bnd-maven-plugin</artifactId>
         <configuration>
           <bnd>
-            -includeresource: @target/dependency/lablib-checkboxtree-${lablib-checkboxtree.version}.jar!/!(it/cnr/imaa/essi/lablib/gui/checkboxtree/examples/*)
+            -includeresource: @target/dependency/lablib-checkboxtree-${lablib-checkboxtree.version}.jar!/!(eu/essilab/lablib/checkboxtree/examples/*)
             -includeresource.all: lib/=target/dependency/;filter:=!lablib*.jar;lib:=true
             Import-Package: !org.apache.commons.codec.binary;resolution:=optional,com.madgag.gif.fmsware;resolution:=optional,de.rototor.pdfbox.graphics2d;\
             resolution:=optional,org.apache.pdfbox.pdmodel.*;resolution:=optional,\
             !sun.swing,*
             Export-Package: !org.weasis.core.internal,!org.weasis.core.util,org.weasis.core.*
-            -exportcontents: com.github.scribejava.*,it.cnr.imaa.*,org.jdesktop.jxlayer.*,com.github.lgooddatepicker.*,\
+            -exportcontents: com.github.scribejava.*,eu.essilab.lablib.checkboxtree.*,org.jdesktop.jxlayer.*,com.github.lgooddatepicker.*,\
             com.privatejgoodies.*,org.knowm.xchart.*,de.erichseifert.*
           </bnd>
         </configuration>
@@ -101,7 +101,7 @@
       <artifactId>docking-frames</artifactId>
     </dependency>
     <dependency>
-      <groupId>it.cnr.imaa.essi</groupId>
+      <groupId>eu.essilab</groupId>
       <artifactId>lablib-checkboxtree</artifactId>
       <version>${lablib-checkboxtree.version}</version>
     </dependency>

@@ -9,9 +9,9 @@
  */
 package org.weasis.acquire.explorer.gui.model.publish;
 
-import it.cnr.imaa.essi.lablib.gui.checkboxtree.CheckboxTree;
-import it.cnr.imaa.essi.lablib.gui.checkboxtree.TreeCheckingListener;
-import it.cnr.imaa.essi.lablib.gui.checkboxtree.TreeCheckingModel;
+import eu.essilab.lablib.checkboxtree.CheckboxTree;
+import eu.essilab.lablib.checkboxtree.TreeCheckingListener;
+import eu.essilab.lablib.checkboxtree.TreeCheckingModel;
 import javax.swing.JScrollPane;
 import org.weasis.core.ui.util.CheckBoxTreeBuilder;
 
