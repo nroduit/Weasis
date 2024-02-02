@@ -14,6 +14,7 @@ import static org.opencv.core.Core.minMaxLoc;
 import static org.opencv.core.Core.multiply;
 
 import java.awt.*;
+import java.awt.geom.Point2D;
 import java.util.*;
 import java.util.List;
 import java.util.stream.DoubleStream;
@@ -108,7 +109,7 @@ public class Dose extends RtSpecialElement implements SpecialElementRegion {
         if (rtDvh != null) {
           rtDvh.setDvhSource(DataSource.PROVIDED);
           // Convert Differential DVH to Cumulative
-          if (dvhSeq.get(0).getString(Tag.DVHType).equals("DIFFERENTIAL")) {
+          if (dvhSeq.getFirst().getString(Tag.DVHType).equals("DIFFERENTIAL")) {
 
             LOGGER.info("Not supported: converting differential DVH to cumulative");
 
@@ -136,9 +137,7 @@ public class Dose extends RtSpecialElement implements SpecialElementRegion {
 
               // Determine the dose values that are missing from the original data
               double[] missingDose = new double[minDose];
-              for (int j = 0; j < minDose; j++) {
-                missingDose[j] = maxVolume;
-              }
+              Arrays.fill(missingDose, maxVolume);
 
               // Cumulative dose - x of histogram
               // Cumulative volume data - y of histogram
@@ -390,22 +389,22 @@ public class Dose extends RtSpecialElement implements SpecialElementRegion {
         String sopUID = TagD.getTagValue(image, Tag.SOPInstanceUID, String.class);
         KeyDouble z = new KeyDouble(image.getSliceGeometry().getTLHC().z);
 
-        for (IsoDoseRegion isoDoseLayer : isoDoseSet.values()) {
-          double isoDoseThreshold = isoDoseLayer.getAbsoluteDose();
+        for (IsoDoseRegion doseRegion : isoDoseSet.values()) {
+          double isoDoseThreshold = doseRegion.getAbsoluteDose();
 
-          StructContour isoContour = getIsoDoseContour(z, isoDoseThreshold, isoDoseLayer);
+          StructContour isoContour = getIsoDoseContour(z, isoDoseThreshold, doseRegion, rtSet);
           if (isoContour == null) {
             continue;
           }
 
           // Create empty hash map of planes for IsoDose layer if there is none
-          if (isoDoseLayer.getPlanes() == null) {
-            isoDoseLayer.setPlanes(new HashMap<>());
+          if (doseRegion.getPlanes() == null) {
+            doseRegion.setPlanes(new HashMap<>());
           }
 
           // Create a new IsoDose contour plane for Z or select existing one
           // it will hold list of contours for that plane
-          isoDoseLayer.getPlanes().computeIfAbsent(z, _ -> new ArrayList<>()).add(isoContour);
+          doseRegion.getPlanes().computeIfAbsent(z, _ -> new ArrayList<>()).add(isoContour);
           // For lookup from GUI use specific image UID
 
           contours.add(isoContour);
@@ -424,7 +423,7 @@ public class Dose extends RtSpecialElement implements SpecialElementRegion {
     }
   }
 
-  Plan initPlan(RtSet rtSet) {
+  void initPlan(RtSet rtSet) {
     DicomMediaIO reader = getMediaReader();
     Plan plan = null;
     Attributes dcmItems = reader.getDicomObject();
@@ -458,7 +457,6 @@ public class Dose extends RtSpecialElement implements SpecialElementRegion {
       }
       plan.getDoses().add(this);
     }
-    return plan;
   }
 
   public MediaElement getDosePlaneBySlice(double slicePosition) {
@@ -568,7 +566,7 @@ public class Dose extends RtSpecialElement implements SpecialElementRegion {
   }
 
   public StructContour getIsoDoseContour(
-      KeyDouble slicePosition, double isoDoseThreshold, IsoDoseRegion region) {
+      KeyDouble slicePosition, double isoDoseThreshold, IsoDoseRegion region, RtSet rtSet) {
     if (region.getMeasurableLayer() == null) {
       //  region.setMeasurableLayer(getMeasurableLayer(img, contour));
     }
@@ -601,13 +599,20 @@ public class Dose extends RtSpecialElement implements SpecialElementRegion {
     int nbPixels = Core.countNonZero(thrSrc);
     ImageConversion.releaseMat(thrSrc);
 
-    //    for (Segment seg :segmentList){
-    //      for (Point2D pt : seg){
-    //        double x = doseMmLUT.getKey()[(int) pt.getX()];
-    //        double y = doseMmLUT.getValue()[(int) pt.getY()];
-    //        pt.setLocation(x, y);
-    //      }
-    //    }
+    Image refImage = rtSet.getPatientImage();
+    double shiftX = (double) refImage.getWidth() / cols;
+    double shiftY =  (double) refImage.getHeight() / rows;
+//    int nb = (int) dosePlane.getKey();
+//    double shiftX = Math.abs(doseMmLUT.getKey()[nb] / cols);
+//    double shiftY = Math.abs(doseMmLUT.getValue()[nb] / rows);
+
+    for (Segment seg : segmentList) {
+      for (Point2D pt : seg) {
+        double x = pt.getX() * shiftX;
+        double y = pt.getY() * shiftY;
+        pt.setLocation(x, y);
+      }
+    }
 
     StructContour segContour =
         new StructContour(String.valueOf(slicePosition.getKey()), segmentList, nbPixels);

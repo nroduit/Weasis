@@ -176,7 +176,7 @@ public class Dvh {
     this.plan = plan;
   }
 
-  public XYChart appendChart(Structure structure, XYChart dvhChart) {
+  public XYChart appendChart(StructRegion region, XYChart dvhChart) {
 
     // Each element represent 1cGY bin on x axes
     double[] x = new double[this.dvhData.length];
@@ -187,20 +187,17 @@ public class Dvh {
     // Convert structure DVH data in cm^3 to relative volume representation
     double[] y = new double[this.dvhData.length];
     for (int i = 0; i < y.length; i++) {
-      y[i] = (100 / structure.getVolume()) * this.dvhData[i];
+      y[i] = (100 / region.getVolume()) * this.dvhData[i];
     }
 
-    String sName = structure.getRoiName();
+    String sName = region.getLabel();
     int k = 2;
     while (dvhChart.getSeriesMap().get(sName) != null) {
-      sName = structure.getRoiName() + " " + k;
+      sName = STR."\{region.getLabel()} \{k}";
       k++;
     }
     // Create a line
-    dvhChart
-        .addSeries(sName, x, y)
-        .setMarker(SeriesMarkers.NONE)
-        .setLineColor(structure.getColor());
+    dvhChart.addSeries(sName, x, y).setMarker(SeriesMarkers.NONE).setLineColor(region.getColor());
 
     // axes.set_xlim(0, maxlen)
     // axes.set_ylim(0, 100)

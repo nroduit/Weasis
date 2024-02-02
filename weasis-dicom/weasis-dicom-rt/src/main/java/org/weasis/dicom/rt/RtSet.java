@@ -16,7 +16,6 @@ import java.awt.geom.Point2D;
 import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -44,7 +43,6 @@ import org.weasis.core.util.MathUtil;
 import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.DicomSeries;
-import org.weasis.dicom.codec.TagD;
 import org.weasis.opencv.seg.Segment;
 
 /**
@@ -61,12 +59,9 @@ public class RtSet {
   private final LinkedHashSet<StructureSet> structures = new LinkedHashSet<>();
   private final LinkedHashSet<Plan> plans = new LinkedHashSet<>();
   private final DicomSeries series;
-  private final Map<String, ArrayList<Contour>> contourMap = new HashMap<>();
 
   private Image patientImage;
 
-  private int structureFillTransparency = 115;
-  private int isoFillTransparency = 70;
   boolean forceRecalculateDvh = false;
 
   public RtSet(DicomSeries series, List<RtSpecialElement> rtElements) {
@@ -109,7 +104,7 @@ public class RtSet {
     // Then initialise all RTDOSE
     for (MediaElement rt : this.rtElements) {
       if (rt instanceof Dose dose) {
-        initDose(dose);
+        dose.initPlan(this);
       }
     }
 
@@ -328,34 +323,6 @@ public class RtSet {
     }
   }
 
-  /**
-   * Initialise RTDOSE objects
-   *
-   * @param dose RTDOSE dicom object
-   */
-  private void initDose(Dose dose) {
-    String sopInstanceUID = TagD.getTagValue(dose, Tag.SOPInstanceUID, String.class);
-
-    // Dose is Referencing Plan
-    Plan plan = dose.initPlan(this);
-
-    // Dose for plan
-    if (plan != null) {
-      Dose rtDose = null;
-
-      // Dose object with such SOP already exists, use it
-      if (!plan.getDoses().isEmpty()) {
-        Optional<Dose> opPlan =
-            plan.getDoses().stream()
-                .filter(i -> i.getSopInstanceUid().equals(sopInstanceUID))
-                .findFirst();
-        if (opPlan.isPresent()) {
-          rtDose = opPlan.get();
-        }
-      }
-    }
-  }
-
   /** Initialise ISO dose levels */
   private void initIsoDoses(Plan plan) {
     // Init IsoDose levels for each dose
@@ -379,10 +346,6 @@ public class RtSet {
     return structures.getFirst();
   }
 
-  public Map<String, ArrayList<Contour>> getContourMap() {
-    return contourMap;
-  }
-
   public Set<Plan> getPlans() {
     return plans;
   }
@@ -396,10 +359,6 @@ public class RtSet {
 
   public List<MediaElement> getRtElements() {
     return rtElements;
-  }
-
-  public void setStructureFillTransparency(int value) {
-    this.structureFillTransparency = value;
   }
 
   /**

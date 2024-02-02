@@ -11,9 +11,8 @@ package org.weasis.dicom.rt;
 
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
+import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.codec.DicomMediaIO;
 
@@ -29,7 +28,6 @@ public class Plan extends RtSpecialElement {
   private String geometry;
   private Double rxDose;
   private final List<Dose> doses = new ArrayList<>();
-  private final Map<Integer, StructRegion> segAttributes = new HashMap<>();
 
   public Plan(DicomMediaIO mediaIO) {
     super(mediaIO);
@@ -113,12 +111,12 @@ public class Plan extends RtSpecialElement {
 
   @Override
   public String toString() {
-    if (StringUtil.hasText(this.name)) {
-      return this.name;
-    } else if (StringUtil.hasText(this.label)) {
+    if (StringUtil.hasText(this.label)) {
       return this.label;
+    } else if (StringUtil.hasText(this.name)) {
+      return this.name;
     }
-    return StringUtil.EMPTY_STRING;
+    return TagW.NO_VALUE;
   }
 
   @Override

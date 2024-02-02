@@ -151,7 +151,7 @@ public class StructureSet extends RtSpecialElement implements SpecialElementRegi
 
           structRegion.setDescription(ssROIseq.getString(Tag.ROIDescription));
           structRegion.setType(ssROIseq.getString(Tag.ROIGenerationAlgorithm));
-          structRegion.setInteriorOpacity(0.5f);
+          structRegion.setInteriorOpacity(0.2f);
 
           segAttributes.put(nb, structRegion);
         }

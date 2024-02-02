@@ -350,7 +350,7 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener, S
   private void showDvhChart() {
     RtSet rt = rtSet;
     if (rt != null) {
-      List<StructureLayer> structs = getStructureSelection();
+      List<StructRegion> structs = getStructureSelection();
       if (!structs.isEmpty()) {
         XYChart dvhChart =
             new XYChartBuilder()
@@ -361,10 +361,9 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener, S
                 .yAxisTitle(Messages.getString("volume") + " (%)")
                 .build();
         dvhChart.getStyler().setDefaultSeriesRenderStyle(XYSeries.XYSeriesRenderStyle.Line);
-        for (StructureLayer structureLayer : structs) {
-          Structure structure = structureLayer.getStructure();
-          Dvh structureDvh = structure.getDvh();
-          structureDvh.appendChart(structure, dvhChart);
+        for (StructRegion region : structs) {
+          Dvh structureDvh = region.getDvh();
+          structureDvh.appendChart(region, dvhChart);
         }
 
         JDialog d = new JDialog(WinUtil.getParentWindow(this), Messages.getString("dvh.chart"));
@@ -472,28 +471,28 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener, S
     }
   }
 
-  private List<StructureLayer> getStructureSelection() {
-    ArrayList<StructureLayer> list = new ArrayList<>();
+  private List<StructRegion> getStructureSelection() {
+    ArrayList<StructRegion> list = new ArrayList<>();
     if (treeStructures.getCheckingModel().isPathChecked(new TreePath(nodeStructures.getPath()))) {
       TreePath[] paths = treeStructures.getCheckingModel().getCheckingPaths();
       for (TreePath treePath : paths) {
         DefaultMutableTreeNode node = (DefaultMutableTreeNode) treePath.getLastPathComponent();
-        if (node.getUserObject() instanceof StructureLayer layer) {
-          list.add(layer);
+        if (node.getUserObject() instanceof StructRegion region) {
+          list.add(region);
         }
       }
     }
     return list;
   }
 
-  private List<IsoDoseLayer> getIsoDoseSelection() {
-    ArrayList<IsoDoseLayer> list = new ArrayList<>();
+  private List<IsoDoseRegion> getIsoDoseSelection() {
+    ArrayList<IsoDoseRegion> list = new ArrayList<>();
     if (treeIsodoses.getCheckingModel().isPathChecked(new TreePath(nodeIsodoses.getPath()))) {
       TreePath[] paths = treeIsodoses.getCheckingModel().getCheckingPaths();
       for (TreePath treePath : paths) {
         DefaultMutableTreeNode node = (DefaultMutableTreeNode) treePath.getLastPathComponent();
-        if (node.getUserObject() instanceof IsoDoseLayer layer) {
-          list.add(layer);
+        if (node.getUserObject() instanceof IsoDoseRegion region) {
+          list.add(region);
         }
       }
     }
@@ -552,14 +551,16 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener, S
   public void updateCanvas(ViewCanvas<?> viewCanvas) {
     RtSet rt = rtSet;
     if (rt == null || rt.getStructures().isEmpty()) {
-      this.nodeStructures.removeAllChildren();
-      this.nodeIsodoses.removeAllChildren();
+      initPathSelection = true;
+      nodeStructures.removeAllChildren();
+      nodeIsodoses.removeAllChildren();
 
       treeStructures.setModel(new DefaultTreeModel(rootNodeStructures, false));
       treeIsodoses.setModel(new DefaultTreeModel(rootNodeIsodoses, false));
 
       comboRtStructureSet.removeAllItems();
       comboRtPlan.removeAllItems();
+      initPathSelection = false;
       return;
     }
 
@@ -622,16 +623,17 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener, S
   }
 
   public void updateTree(StructureSet selectedStructure, Plan selectedPlan) {
+    initPathSelection = true;
     // Empty tree when no RtSet
     if (rtSet == null) {
       nodeStructures.removeAllChildren();
       nodeIsodoses.removeAllChildren();
       treeStructures.setModel(new DefaultTreeModel(rootNodeStructures, false));
       treeIsodoses.setModel(new DefaultTreeModel(rootNodeIsodoses, false));
+      initPathSelection = false;
       return;
     }
 
-    initPathSelection = true;
     try {
       // Prepare root tree model
       treeStructures.setModel(new DefaultTreeModel(rootNodeStructures, false));

@@ -12,6 +12,7 @@ package org.weasis.dicom.rt;
 import java.awt.Color;
 import java.util.List;
 import java.util.Map;
+import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.ui.model.graphic.imp.seg.SegRegion;
 import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.codec.DicomImageElement;
@@ -24,7 +25,7 @@ public class IsoDoseRegion extends SegRegion<DicomImageElement> {
   private Map<KeyDouble, List<StructContour>> planes;
 
   public IsoDoseRegion(int level, Color color, String name, double planDose) {
-    super(level, name, color);
+    super(level, TagW.NO_VALUE, color);
     this.level = level;
     setInteriorOpacity(0.2f);
     this.absoluteDose = ((this.level) * planDose) / 100.0;

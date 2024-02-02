@@ -14,6 +14,7 @@ import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Tag;
 import org.joml.Vector3d;
 import org.weasis.dicom.codec.DicomImageElement;
+import org.weasis.dicom.codec.TagD;
 
 /**
  * @author Tomas Skripcak
@@ -21,6 +22,8 @@ import org.weasis.dicom.codec.DicomImageElement;
 public class Image {
 
   private final DicomImageElement image;
+  private final int width;
+  private final int height;
   private String patientPosition;
   private int prone;
   private int feetFirst;
@@ -39,6 +42,8 @@ public class Image {
 
     // Get the image pixel spacing
     this.imageSpacing = image.getSliceGeometry().getVoxelSpacing();
+    this.width = TagD.getTagValue(image, Tag.Columns, Integer.class);
+    this.height = TagD.getTagValue(image, Tag.Rows, Integer.class);
   }
 
   public String getPatientPosition() {
@@ -75,6 +80,14 @@ public class Image {
 
   public void setImageLUT(AbstractMap.SimpleImmutableEntry<double[], double[]> imageLUT) {
     this.imageLUT = imageLUT;
+  }
+
+  public int getWidth() {
+    return width;
+  }
+
+  public int getHeight() {
+    return height;
   }
 
   public DicomImageElement getImage() {
