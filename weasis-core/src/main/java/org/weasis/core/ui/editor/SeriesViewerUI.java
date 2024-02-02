@@ -88,7 +88,10 @@ public class SeriesViewerUI {
       SeriesViewer<?> oldPlugin, SeriesViewer<?> plugin, boolean force) {
     List<Toolbar> oldToolBars = oldPlugin == null ? null : oldPlugin.getSeriesViewerUI().toolBars;
     List<Toolbar> toolBars = plugin == null ? null : plugin.getSeriesViewerUI().toolBars;
-    if (force || toolBars != oldToolBars) {
+    if (force || !Objects.equals(toolBars, oldToolBars)) {
+      if (toolBars == null) {
+        toolBars = UICore.getInstance().getExplorerPluginToolbars();
+      }
       UICore.getInstance().getToolbarContainer().registerToolBar(toolBars);
     }
   }

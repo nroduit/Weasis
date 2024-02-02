@@ -156,9 +156,9 @@ public abstract class LoadDicom extends ExplorerTask<Boolean, String> {
         }
         dicomReader.writeMetaData(dicomSeries);
         dicomModel.addHierarchyNode(study, dicomSeries);
-        DicomImageElement[] medias = getDicomImageElements(dicomReader, dicomSeries, editableDicom);
+        getDicomImageElements(dicomReader, dicomSeries, editableDicom);
 
-        if (!DicomModel.isHiddenModality(dicomSeries) && medias != null && medias.length > 0) {
+        if (!DicomModel.isHiddenModality(dicomSeries)) {
           // After the thumbnail is sent to interface, it will be return to be rebuilt later
           thumb = dicomModel.buildThumbnail(dicomSeries);
         }
