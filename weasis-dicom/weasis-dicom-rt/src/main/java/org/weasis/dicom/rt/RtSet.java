@@ -46,7 +46,6 @@ import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.DicomSeries;
 import org.weasis.dicom.codec.TagD;
 import org.weasis.opencv.seg.Segment;
-import org.weasis.opencv.seg.SegmentCategory;
 
 /**
  * RtSet is a collection of linked DICOM-RT entities that form the whole treatment case (Plans,
@@ -132,10 +131,9 @@ public class RtSet {
 
             // For all ROIs
             for (StructRegion region : getFirstStructure().getSegAttributes().values()) {
-              SegmentCategory category = region.getCategory();
 
               // If DVH exists for the structure and setting always recalculate is false
-              Dvh structureDvh = dose.getDvhMap().get(category.getId());
+              Dvh structureDvh = dose.getDvhMap().get(region.getId());
 
               // Re-calculate DVH if it does not exist or if it is provided and force recalculation
               // is set up
@@ -143,7 +141,7 @@ public class RtSet {
                   || (structureDvh.getDvhSource().equals(DataSource.PROVIDED)
                       && this.forceRecalculateDvh)) {
                 structureDvh = this.initCalculatedDvh(region, dose);
-                dose.getDvhMap().put(category.getId(), structureDvh);
+                dose.getDvhMap().put(region.getId(), structureDvh);
               }
               // Otherwise, read provided DVH
               else {
@@ -165,7 +163,7 @@ public class RtSet {
               if (LOGGER.isDebugEnabled()) {
                 LOGGER.debug(
                     "Structure: {}, {} Volume: {} cm^3",
-                    region.getCategory().getLabel(),
+                    region.getLabel(),
                     source,
                     String.format("%.4f", volume));
 
@@ -173,21 +171,21 @@ public class RtSet {
                 String relativeMinDose =
                     String.format(
                         "Structure: %s, %s Min Dose: %.3f %%",
-                        region.getCategory().getLabel(),
+                        region.getLabel(),
                         structureDvh.getDvhSource(),
                         Dose.calculateRelativeDose(
                             structureDvh.getDvhMinimumDoseCGy(), plan.getRxDose()));
                 String relativeMaxDose =
                     String.format(
                         "Structure: %s, %s Max Dose: %.3f %%",
-                        region.getCategory().getLabel(),
+                        region.getLabel(),
                         structureDvh.getDvhSource(),
                         Dose.calculateRelativeDose(
                             structureDvh.getDvhMaximumDoseCGy(), plan.getRxDose()));
                 String relativeMeanDose =
                     String.format(
                         "Structure:  %s,  %s Mean Dose: %.3f %%",
-                        region.getCategory().getLabel(),
+                        region.getLabel(),
                         structureDvh.getDvhSource(),
                         Dose.calculateRelativeDose(
                             structureDvh.getDvhMeanDoseCGy(), plan.getRxDose()));
@@ -435,7 +433,7 @@ public class RtSet {
 
   public Dvh initCalculatedDvh(StructRegion region, Dose dose) {
     Dvh dvh = new Dvh();
-    dvh.setReferencedRoiNumber(region.getCategory().getId());
+    dvh.setReferencedRoiNumber(region.getId());
     dvh.setDvhSource(DataSource.CALCULATED);
     dvh.setType("CUMULATIVE");
     dvh.setDoseUnit("CGY");

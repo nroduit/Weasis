@@ -15,8 +15,6 @@ import java.util.Map;
 import org.weasis.core.ui.model.graphic.imp.seg.SegRegion;
 import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.codec.DicomImageElement;
-import org.weasis.opencv.seg.SegmentAttributes;
-import org.weasis.opencv.seg.SegmentCategory;
 
 public class IsoDoseRegion extends SegRegion<DicomImageElement> {
   private final int level;
@@ -26,17 +24,16 @@ public class IsoDoseRegion extends SegRegion<DicomImageElement> {
   private Map<KeyDouble, List<StructContour>> planes;
 
   public IsoDoseRegion(int level, Color color, String name, double planDose) {
-    super(String.valueOf(level));
+    super(level, name, color);
     this.level = level;
-    setAttributes(new SegmentAttributes(color, true, 1.0f));
-    getAttributes().setInteriorOpacity(0.2f);
+    setInteriorOpacity(0.2f);
     this.absoluteDose = ((this.level) * planDose) / 100.0;
     String result =
         STR."\{this.level} % / \{String.format("%.6g", this.absoluteDose)} cGy"; // NON-NLS
     if (StringUtil.hasText(name)) {
       result += STR." [\{name}]";
     }
-    setCategory(new SegmentCategory(level, result, null, null));
+    setLabel(result);
   }
 
   public int getLevel() {

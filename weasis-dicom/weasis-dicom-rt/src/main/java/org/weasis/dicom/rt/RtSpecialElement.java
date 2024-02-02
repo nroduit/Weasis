@@ -12,6 +12,8 @@ package org.weasis.dicom.rt;
 import java.util.concurrent.CopyOnWriteArraySet;
 import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Tag;
+import org.weasis.core.api.util.ResourceUtil.OtherIcon;
+import org.weasis.core.api.util.ResourceUtil.ResourceIconPath;
 import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.codec.DicomMediaIO;
 import org.weasis.dicom.codec.HiddenSeriesManager;
@@ -76,5 +78,10 @@ public class RtSpecialElement extends HiddenSpecialElement implements SpecialEle
 
   public boolean isRtPlan() {
     return "RTPLAN".equals(modality);
+  }
+
+  @Override
+  public ResourceIconPath getIconPath() {
+    return OtherIcon.RADIOACTIVE;
   }
 }

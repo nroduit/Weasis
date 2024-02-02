@@ -61,7 +61,7 @@ import org.weasis.dicom.explorer.DicomModel;
 import org.weasis.dicom.viewer2d.EventManager;
 import org.weasis.dicom.viewer2d.View2d;
 import org.weasis.opencv.data.PlanarImage;
-import org.weasis.opencv.seg.SegmentCategory;
+import org.weasis.opencv.seg.RegionAttributes;
 
 /**
  * @author Tomas Skripcak
@@ -241,14 +241,14 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener, S
     return null;
   }
 
-  private SegContour getContour(DicomImageElement imageElement, SegmentCategory category) {
+  private SegContour getContour(DicomImageElement imageElement, RegionAttributes attributes) {
     PlanarImage img = imageElement.getImage();
     if (img != null) {
       SpecialElementRegion region = getSelectedRegion();
       if (region != null) {
         Collection<SegContour> segments = region.getContours(imageElement);
         for (SegContour c : segments) {
-          if (c.getCategory().equals(category)) {
+          if (c.getAttributes().equals(attributes)) {
             return c;
           }
         }
@@ -261,7 +261,7 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener, S
     ViewCanvas<DicomImageElement> view = EventManager.getInstance().getSelectedViewPane();
     DicomImageElement imageElement = getImageElement(view);
     if (imageElement != null) {
-      SegContour c = getContour(imageElement, region.getCategory());
+      SegContour c = getContour(imageElement, region);
       if (c != null) {
         MeasurableLayer layer = view.getMeasurableLayer();
         if (region instanceof IsoDoseRegion) {
@@ -508,9 +508,9 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener, S
         DefaultMutableTreeNode node = (DefaultMutableTreeNode) tp.getLastPathComponent();
         if (node.getUserObject() instanceof SegRegion<?> region) {
           if (tabbedPane.getSelectedIndex() == 0) {
-            region.getAttributes().setVisible(treeStructures.getCheckingModel().isPathChecked(tp));
+            region.setVisible(treeStructures.getCheckingModel().isPathChecked(tp));
           } else if (tabbedPane.getSelectedIndex() == 1) {
-            region.getAttributes().setVisible(treeIsodoses.getCheckingModel().isPathChecked(tp));
+            region.setVisible(treeIsodoses.getCheckingModel().isPathChecked(tp));
           }
         }
       } else {
@@ -711,14 +711,14 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener, S
                 @Override
                 public String toString() {
                   StructRegion layer = (StructRegion) getUserObject();
-                  String resultLabel = layer.getCategory().label();
+                  String resultLabel = layer.getLabel();
 
                   String type = layer.getRtRoiInterpretedType();
                   if (StringUtil.hasText(type)) {
                     resultLabel += STR." [\{type}]";
                   }
 
-                  return getColorBullet(layer.getAttributes().getColor(), resultLabel);
+                  return getColorBullet(layer.getColor(), resultLabel);
                 }
               };
           nodeStructures.add(node);
@@ -748,7 +748,7 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener, S
                       StringBuilder buf = new StringBuilder();
                       buf.append(GuiUtils.HTML_START);
                       buf.append("<b>");
-                      buf.append(layer.getCategory().label());
+                      buf.append(layer.getLabel());
                       buf.append("</b>");
                       buf.append(GuiUtils.HTML_BR);
                       buf.append(Messages.getString("level"));

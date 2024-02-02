@@ -24,6 +24,8 @@ import org.dcm4che3.data.Tag;
 import org.dcm4che3.img.data.CIELab;
 import org.dcm4che3.img.util.DicomUtils;
 import org.opencv.core.Core;
+import org.weasis.core.api.util.ResourceUtil.OtherIcon;
+import org.weasis.core.api.util.ResourceUtil.ResourceIconPath;
 import org.weasis.core.ui.model.graphic.imp.seg.SegContour;
 import org.weasis.core.ui.model.graphic.imp.seg.SegMeasurableLayer;
 import org.weasis.core.ui.model.graphic.imp.seg.SegRegion;
@@ -32,9 +34,8 @@ import org.weasis.dicom.codec.utils.DicomMediaUtils;
 import org.weasis.opencv.data.PlanarImage;
 import org.weasis.opencv.op.ImageConversion;
 import org.weasis.opencv.seg.Region;
+import org.weasis.opencv.seg.RegionAttributes;
 import org.weasis.opencv.seg.Segment;
-import org.weasis.opencv.seg.SegmentAttributes;
-import org.weasis.opencv.seg.SegmentCategory;
 
 public class SegSpecialElement extends HiddenSpecialElement
     implements SpecialElementReferences, SpecialElementRegion {
@@ -116,6 +117,11 @@ public class SegSpecialElement extends HiddenSpecialElement
     }
   }
 
+  @Override
+  public ResourceIconPath getIconPath() {
+    return OtherIcon.SEGMENTATION;
+  }
+
   public void initContours(DicomSeries series) {
     roiMap.clear();
 
@@ -134,7 +140,6 @@ public class SegSpecialElement extends HiddenSpecialElement
       for (Attributes seg : segSeq) {
         int nb = seg.getInt(Tag.SegmentNumber, -1);
         String segmentLabel = seg.getString(Tag.SegmentLabel);
-        String segmentAlgorithmType = seg.getString(Tag.SegmentAlgorithmType);
 
         Sequence regionSeq = seg.getSequence(Tag.AnatomicRegionSequence);
         if (regionSeq != null) {
@@ -160,20 +165,16 @@ public class SegSpecialElement extends HiddenSpecialElement
             CIELab.dicomLab2rgb(
                 DicomUtils.getIntArrayFromDicomElement(
                     seg, Tag.RecommendedDisplayCIELabValue, null));
-        Color rgbColor = SegmentAttributes.getColor(colorRgb, nb, opacity);
+        Color rgbColor = RegionAttributes.getColor(colorRgb, nb, opacity);
         String segmentAlgorithmName = seg.getString(Tag.SegmentAlgorithmName);
-        String segmentDescription = seg.getString(Tag.SegmentDescription);
 
-        SegmentAttributes attributes = new SegmentAttributes(rgbColor, true, 1f);
+        SegRegion<DicomImageElement> attributes = new SegRegion<>(nb, segmentLabel, rgbColor);
         attributes.setInteriorOpacity(0.2f);
-        SegmentCategory category =
-            new SegmentCategory(nb, segmentLabel, segmentDescription, segmentAlgorithmType);
-        SegRegion<DicomImageElement> c = new SegRegion<>(String.valueOf(nb));
-        c.setCategory(category);
-        c.setAttributes(attributes);
+        attributes.setDescription(seg.getString(Tag.SegmentDescription));
+        attributes.setType(seg.getString(Tag.SegmentAlgorithmType));
 
-        segAttributes.put(nb, c);
-        regionPosition.put(c, new Point(-1, -1));
+        segAttributes.put(nb, attributes);
+        regionPosition.put(attributes, new Point(-1, -1));
       }
     }
 
@@ -276,16 +277,13 @@ public class SegSpecialElement extends HiddenSpecialElement
   }
 
   private void buildGraphic(DicomImageElement binaryMask, int id, SegRegion<?> region) {
-    SegmentAttributes attributes = region.getAttributes();
-    SegmentCategory category = region.getCategory();
     PlanarImage binary = binaryMask.getImage();
     List<Segment> segmentList = Region.buildSegmentList(binary);
     int nbPixels = Core.countNonZero(binary.toMat());
     ImageConversion.releasePlanarImage(binary);
     SegContour contour = new SegContour(String.valueOf(id), segmentList, nbPixels);
     region.addPixels(contour);
-    contour.setAttributes(attributes);
-    contour.setCategory(category);
+    contour.setAttributes(region);
     roiMap.computeIfAbsent(id, _ -> new LinkedHashSet<>()).add(contour);
   }
 }

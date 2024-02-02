@@ -9,6 +9,7 @@
  */
 package org.weasis.dicom.rt;
 
+import java.awt.Color;
 import java.util.AbstractMap;
 import java.util.List;
 import java.util.Map;
@@ -26,8 +27,8 @@ public class StructRegion extends SegRegion<DicomImageElement> {
   private Dvh dvh;
   private Map<KeyDouble, List<StructContour>> planes;
 
-  public StructRegion(String id) {
-    super(id);
+  public StructRegion(int id, String label, Color color) {
+    super(id, label, color);
     this.volume = -1.0;
   }
 
@@ -45,7 +46,7 @@ public class StructRegion extends SegRegion<DicomImageElement> {
 
   public void setRtRoiInterpretedType(String value) {
     this.rtRoiInterpretedType = value;
-    attributes.setFilled(!"EXTERNAL".equals(value));
+    setFilled(!"EXTERNAL".equals(value));
   }
 
   public String getRoiObservationLabel() {

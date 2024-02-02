@@ -9,15 +9,16 @@
  */
 package org.weasis.core.ui.model.graphic.imp.seg;
 
+import java.awt.Color;
 import org.weasis.core.api.media.data.ImageElement;
-import org.weasis.opencv.seg.Region;
+import org.weasis.opencv.seg.RegionAttributes;
 
-public class SegRegion<E extends ImageElement> extends Region {
+public class SegRegion<E extends ImageElement> extends RegionAttributes {
 
   private SegMeasurableLayer<E> measurableLayer;
 
-  public SegRegion(String id) {
-    super(id);
+  public SegRegion(int id, String label, Color color) {
+    super(id, label, color);
     restPixels();
   }
 

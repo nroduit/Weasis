@@ -43,9 +43,8 @@ import org.weasis.opencv.data.ImageCV;
 import org.weasis.opencv.op.ImageConversion;
 import org.weasis.opencv.op.ImageProcessor;
 import org.weasis.opencv.seg.Region;
+import org.weasis.opencv.seg.RegionAttributes;
 import org.weasis.opencv.seg.Segment;
-import org.weasis.opencv.seg.SegmentAttributes;
-import org.weasis.opencv.seg.SegmentCategory;
 
 /**
  * @author Tomas Skripcak
@@ -148,17 +147,11 @@ public class StructureSet extends RtSpecialElement implements SpecialElementRegi
             name = "ROI_" + nb;
           }
 
-          StructRegion structRegion = new StructRegion(String.valueOf(nb));
+          StructRegion structRegion = new StructRegion(nb, name, null);
 
-          String description = ssROIseq.getString(Tag.ROIDescription);
-          String segmentAlgorithmType = ssROIseq.getString(Tag.ROIGenerationAlgorithm);
-          SegmentCategory category =
-              new SegmentCategory(nb, name, description, segmentAlgorithmType);
-          structRegion.setCategory(category);
-
-          SegmentAttributes attributes = new SegmentAttributes(null, true, 1f);
-          attributes.setInteriorOpacity(0.5f);
-          structRegion.setAttributes(attributes);
+          structRegion.setDescription(ssROIseq.getString(Tag.ROIDescription));
+          structRegion.setType(ssROIseq.getString(Tag.ROIGenerationAlgorithm));
+          structRegion.setInteriorOpacity(0.5f);
 
           segAttributes.put(nb, structRegion);
         }
@@ -190,7 +183,7 @@ public class StructureSet extends RtSpecialElement implements SpecialElementRegi
             continue;
           }
 
-          if (region.getAttributes().getColor() == null) {
+          if (region.getColor() == null) {
             // Get the RGB color triplet for the current ROI if it exists
             String[] valColors = roiContourSeq.getStrings(Tag.ROIDisplayColor);
             int[] rgb;
@@ -205,8 +198,8 @@ public class StructureSet extends RtSpecialElement implements SpecialElementRegi
               rgb = null;
             }
 
-            Color rgbColor = SegmentAttributes.getColor(rgb, nb, opacity);
-            region.getAttributes().setColor(rgbColor);
+            Color rgbColor = RegionAttributes.getColor(rgb, nb, opacity);
+            region.setColor(rgbColor);
           }
 
           Map<KeyDouble, List<StructContour>> planes = new HashMap<>();
@@ -260,8 +253,6 @@ public class StructureSet extends RtSpecialElement implements SpecialElementRegi
 
   private static StructContour buildGraphic(
       DicomImageElement img, Attributes contour, int id, StructRegion region) {
-    SegmentAttributes attributes = region.getAttributes();
-    SegmentCategory category = region.getCategory();
     if (region.getMeasurableLayer() == null) {
       region.setMeasurableLayer(getMeasurableLayer(img, contour));
     }
@@ -320,9 +311,8 @@ public class StructureSet extends RtSpecialElement implements SpecialElementRegi
 
       StructContour segContour = new StructContour(String.valueOf(id), segmentList, nbPixels);
       segContour.setPositionZ(z);
+      segContour.setAttributes(region);
       region.addPixels(segContour);
-      segContour.setAttributes(attributes);
-      segContour.setCategory(category);
       return segContour;
     }
 

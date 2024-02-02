@@ -16,7 +16,7 @@ import java.util.Map;
 import java.util.Set;
 import org.dcm4che3.data.Tag;
 import org.weasis.core.ui.model.graphic.imp.seg.SegContour;
-import org.weasis.opencv.seg.Region;
+import org.weasis.opencv.seg.RegionAttributes;
 
 public interface SpecialElementRegion {
   boolean isVisible();
@@ -29,7 +29,7 @@ public interface SpecialElementRegion {
 
   Map<String, Map<String, Set<SegContour>>> getRefMap();
 
-  Map<Integer, ? extends Region> getSegAttributes();
+  Map<Integer, ? extends RegionAttributes> getSegAttributes();
 
   default boolean containsSopInstanceUIDReference(DicomImageElement img) {
     if (img != null) {
@@ -66,9 +66,9 @@ public interface SpecialElementRegion {
         .values()
         .forEach(
             c -> {
-              Color color = c.getAttributes().getColor();
+              Color color = c.getColor();
               color = new Color(color.getRed(), color.getGreen(), color.getBlue(), opacityValue);
-              c.getAttributes().setColor(color);
+              c.setColor(color);
             });
   }
 }

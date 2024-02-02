@@ -35,8 +35,6 @@ import org.weasis.dicom.codec.*;
 import org.weasis.opencv.data.ImageCV;
 import org.weasis.opencv.op.ImageConversion;
 import org.weasis.opencv.seg.Segment;
-import org.weasis.opencv.seg.SegmentAttributes;
-import org.weasis.opencv.seg.SegmentCategory;
 
 /**
  * @author Tomas Skripcak
@@ -571,8 +569,6 @@ public class Dose extends RtSpecialElement implements SpecialElementRegion {
 
   public StructContour getIsoDoseContour(
       KeyDouble slicePosition, double isoDoseThreshold, IsoDoseRegion region) {
-    SegmentAttributes attributes = region.getAttributes();
-    SegmentCategory category = region.getCategory();
     if (region.getMeasurableLayer() == null) {
       //  region.setMeasurableLayer(getMeasurableLayer(img, contour));
     }
@@ -617,8 +613,7 @@ public class Dose extends RtSpecialElement implements SpecialElementRegion {
         new StructContour(String.valueOf(slicePosition.getKey()), segmentList, nbPixels);
     segContour.setPositionZ(slicePosition.getValue());
     region.addPixels(segContour);
-    segContour.setAttributes(attributes);
-    segContour.setCategory(category);
+    segContour.setAttributes(region);
     return segContour;
   }
 

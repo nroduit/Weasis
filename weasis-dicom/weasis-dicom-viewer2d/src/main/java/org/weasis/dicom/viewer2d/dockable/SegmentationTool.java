@@ -59,7 +59,7 @@ import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.viewer2d.EventManager;
 import org.weasis.dicom.viewer2d.View2d;
 import org.weasis.opencv.data.PlanarImage;
-import org.weasis.opencv.seg.SegmentCategory;
+import org.weasis.opencv.seg.RegionAttributes;
 
 /**
  * @author Nicolas Roduit
@@ -90,7 +90,7 @@ public class SegmentationTool extends PluginTool implements SeriesViewerListener
     super(BUTTON_NAME, Type.TOOL, 30);
     this.setLayout(new BorderLayout(0, 0));
     this.rootPane = new JScrollPane();
-    this.dockable.setTitleIcon(ResourceUtil.getIcon(OtherIcon.IMAGE_PRESENTATION));
+    this.dockable.setTitleIcon(ResourceUtil.getIcon(OtherIcon.SEGMENTATION));
     this.setDockableWidth(350);
     rootPane.setBorder(BorderFactory.createEmptyBorder()); // remove default line
     this.slider = PropertiesDialog.createOpacitySlider(GRAPHIC_OPACITY);
@@ -122,13 +122,13 @@ public class SegmentationTool extends PluginTool implements SeriesViewerListener
     return null;
   }
 
-  private SegContour getContour(DicomImageElement imageElement, SegmentCategory category) {
+  private SegContour getContour(DicomImageElement imageElement, RegionAttributes attributes) {
     PlanarImage img = imageElement.getImage();
     if (img != null) {
       if (comboSeg.getSelectedItem() instanceof SegSpecialElement seg) {
         Collection<SegContour> segments = seg.getContours(imageElement);
         for (SegContour c : segments) {
-          if (c.getCategory().equals(category)) {
+          if (c.getAttributes().equals(attributes)) {
             return c;
           }
         }
@@ -141,7 +141,7 @@ public class SegmentationTool extends PluginTool implements SeriesViewerListener
     ViewCanvas<DicomImageElement> view = EventManager.getInstance().getSelectedViewPane();
     DicomImageElement imageElement = getImageElement(view);
     if (imageElement != null) {
-      SegContour c = getContour(imageElement, region.getCategory());
+      SegContour c = getContour(imageElement, region);
       if (c != null) {
         MeasurableLayer layer = view.getMeasurableLayer();
         tree.showStatistics(c, layer);
@@ -290,12 +290,12 @@ public class SegmentationTool extends PluginTool implements SeriesViewerListener
                   StringBuilder buf = new StringBuilder();
                   buf.append(GuiUtils.HTML_START);
                   buf.append("<b>");
-                  buf.append(seg.getCategory().label());
+                  buf.append(seg.getLabel());
                   buf.append("</b>");
                   buf.append(GuiUtils.HTML_BR);
                   buf.append("Algorithm type");
                   buf.append(StringUtil.COLON_AND_SPACE);
-                  buf.append(seg.getCategory().type());
+                  buf.append(seg.getType());
                   buf.append(GuiUtils.HTML_BR);
                   buf.append("Voxel count");
                   buf.append(StringUtil.COLON_AND_SPACE);
@@ -318,7 +318,7 @@ public class SegmentationTool extends PluginTool implements SeriesViewerListener
                 }
               };
           nodeStructures.add(node);
-          initPathSelection(new TreePath(node.getPath()), contour.getAttributes().isVisible());
+          initPathSelection(new TreePath(node.getPath()), contour.isVisible());
         }
       }
       initPathSelection(new TreePath(nodeStructures.getPath()), specialElement.isVisible());

@@ -15,7 +15,7 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.ui.model.graphic.imp.seg.SegRegion;
-import org.weasis.opencv.seg.Region;
+import org.weasis.opencv.seg.RegionAttributes;
 
 public abstract class StructToolTipTreeNode extends DefaultMutableTreeNode {
 
@@ -27,8 +27,8 @@ public abstract class StructToolTipTreeNode extends DefaultMutableTreeNode {
 
   @Override
   public String toString() {
-    Region seg = (Region) getUserObject();
-    return getColorBullet(seg.getAttributes().getColor(), seg.getCategory().label());
+    RegionAttributes seg = (RegionAttributes) getUserObject();
+    return getColorBullet(seg.getColor(), seg.getLabel());
   }
 
   protected static String getColorBullet(Color c, String label) {

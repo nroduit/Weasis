@@ -25,6 +25,8 @@ import java.util.stream.Collectors;
 import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Tag;
 import org.weasis.core.api.gui.util.Filter;
+import org.weasis.core.api.util.ResourceUtil.OtherIcon;
+import org.weasis.core.api.util.ResourceUtil.ResourceIconPath;
 import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.codec.macro.HierarchicalSOPInstanceReference;
 import org.weasis.dicom.codec.macro.KODocumentModule;
@@ -116,6 +118,11 @@ public class AbstractKOSpecialElement extends HiddenSpecialElement {
       buf.append(name);
     }
     label = buf.toString();
+  }
+
+  @Override
+  public ResourceIconPath getIconPath() {
+    return OtherIcon.KEY;
   }
 
   protected String getLabelWithoutPrefix() {

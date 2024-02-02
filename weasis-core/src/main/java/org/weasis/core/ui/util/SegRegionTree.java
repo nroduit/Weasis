@@ -135,13 +135,13 @@ public class SegRegionTree extends CheckboxTree {
       JPopupMenu menu = new JPopupMenu();
       JSliderW jSlider = PropertiesDialog.createOpacitySlider(PropertiesDialog.FILL_OPACITY);
       GuiUtils.setPreferredWidth(jSlider, 250);
-      jSlider.setValue((int) (segRegions.getFirst().getAttributes().getInteriorOpacity() * 100f));
+      jSlider.setValue((int) (segRegions.getFirst().getInteriorOpacity() * 100f));
       PropertiesDialog.updateSlider(jSlider, PropertiesDialog.FILL_OPACITY);
       jSlider.addChangeListener(
           l -> {
             float value = PropertiesDialog.updateSlider(jSlider, PropertiesDialog.FILL_OPACITY);
             for (SegRegion<?> c : segRegions) {
-              c.getAttributes().setInteriorOpacity(value);
+              c.setInteriorOpacity(value);
             }
             segRegionTool.updateVisibleNode();
           });
@@ -157,7 +157,7 @@ public class SegRegionTree extends CheckboxTree {
         TreePath tp = new TreePath(dtm.getPath());
         DefaultMutableTreeNode node = (DefaultMutableTreeNode) tp.getLastPathComponent();
         if (node.getUserObject() instanceof SegRegion<?> region) {
-          region.getAttributes().setVisible(getCheckingModel().isPathChecked(tp));
+          region.setVisible(getCheckingModel().isPathChecked(tp));
         }
       } else {
         updateVisibleNode(dtm, all);

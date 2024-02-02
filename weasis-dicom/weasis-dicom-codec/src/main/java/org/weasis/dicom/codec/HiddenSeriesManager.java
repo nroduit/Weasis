@@ -24,6 +24,7 @@ import org.dcm4che3.data.Sequence;
 import org.dcm4che3.data.Tag;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.TagW;
+import org.weasis.core.api.util.ResourceUtil.ResourceIconPath;
 import org.weasis.core.ui.model.graphic.imp.seg.SegContour;
 import org.weasis.core.util.StringUtil;
 
@@ -184,5 +185,27 @@ public class HiddenSeriesManager {
       }
     }
     return Collections.emptyList();
+  }
+
+  public static Set<ResourceIconPath> getRelatedIcons(String seriesUID) {
+    if (StringUtil.hasText(seriesUID)) {
+      Set<String> list = HiddenSeriesManager.getInstance().reference2Series.get(seriesUID);
+      if (list != null && !list.isEmpty()) {
+        Set<ResourceIconPath> icons = new LinkedHashSet<>();
+        for (String uid : list) {
+          Set<HiddenSpecialElement> hiddenElements = getInstance().series2Elements.get(uid);
+          if (hiddenElements != null) {
+            for (HiddenSpecialElement media : hiddenElements) {
+              ResourceIconPath path = media.getIconPath();
+              if (path != null) {
+                icons.add(path);
+              }
+            }
+          }
+        }
+        return icons;
+      }
+    }
+    return Collections.emptySet();
   }
 }
