@@ -36,6 +36,7 @@ import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.FutureTask;
+import java.util.function.Function;
 import javax.swing.Action;
 import javax.swing.BorderFactory;
 import javax.swing.ButtonGroup;
@@ -73,6 +74,7 @@ import org.weasis.core.api.media.data.Thumbnail;
 import org.weasis.core.api.util.FontItem;
 import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.api.util.ResourceUtil.OtherIcon;
+import org.weasis.core.api.util.ResourceUtil.ResourceIconPath;
 import org.weasis.core.ui.docking.PluginTool;
 import org.weasis.core.ui.editor.SeriesViewer;
 import org.weasis.core.ui.editor.SeriesViewerEvent;
@@ -1329,11 +1331,12 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
   }
 
   public static SeriesThumbnail createThumbnail(
-      final Series series, final DicomModel dicomModel, final int thumbnailSize) {
+      final Series<?> series, final DicomModel dicomModel, final int thumbnailSize) {
 
     Callable<SeriesThumbnail> callable =
         () -> {
-          final SeriesThumbnail thumb = new SeriesThumbnail(series, thumbnailSize);
+          Function<String, Set<ResourceIconPath>> drawIcons = HiddenSeriesManager::getRelatedIcons;
+          final SeriesThumbnail thumb = new SeriesThumbnail(series, thumbnailSize, drawIcons);
           if (series.getSeriesLoader() instanceof LoadSeries loader) {
             // In case series is downloaded or canceled
             thumb.setProgressBar(loader.isDone() ? null : loader.getProgressBar());

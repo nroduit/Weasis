@@ -71,6 +71,7 @@ import org.weasis.core.api.util.AuthResponse;
 import org.weasis.core.api.util.ClosableURLConnection;
 import org.weasis.core.api.util.HttpResponse;
 import org.weasis.core.api.util.NetworkUtil;
+import org.weasis.core.api.util.ResourceUtil.ResourceIconPath;
 import org.weasis.core.api.util.ThreadUtil;
 import org.weasis.core.api.util.URLParameters;
 import org.weasis.core.ui.model.GraphicModel;
@@ -578,7 +579,9 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
                   GuiUtils.getUICore()
                       .getSystemPreferences()
                       .getIntProperty(Thumbnail.KEY_SIZE, Thumbnail.DEFAULT_SIZE);
-              thumbnail = new SeriesThumbnail(dicomSeries, thumbnailSize);
+              Function<String, Set<ResourceIconPath>> drawIcons =
+                  HiddenSeriesManager::getRelatedIcons;
+              thumbnail = new SeriesThumbnail(dicomSeries, thumbnailSize, drawIcons);
             }
             // In case series is downloaded or canceled
             thumbnail.setProgressBar(LoadSeries.this.isDone() ? null : progressBar);
