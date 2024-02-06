@@ -521,6 +521,8 @@ public class View3d extends VolumeCanvas
     //    }
   }
 
+  public void updateSegmentation() {}
+
   public void setVolumePreset(Preset preset) {
     this.volumePreset = Objects.requireNonNull(preset);
     volumePreset.setRequiredBuilding(true);

@@ -35,6 +35,8 @@ import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.util.MathUtil;
 import org.weasis.dicom.codec.DicomImageElement;
+import org.weasis.dicom.codec.HiddenSeriesManager;
+import org.weasis.dicom.codec.SpecialElementRegion;
 import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.display.Modality;
 import org.weasis.dicom.codec.geometry.ImageOrientation;
@@ -347,5 +349,10 @@ public class DicomVolTexture extends VolumeTexture implements MediaSeriesGroup {
       return ImageOrientation.getPlan(vr, vc);
     }
     return null;
+  }
+
+  public List<SpecialElementRegion> getSegmentations() {
+    String seriesUID = TagD.getTagValue(series, Tag.SeriesInstanceUID, String.class);
+    return HiddenSeriesManager.getHiddenElementsFromSeries(SpecialElementRegion.class, seriesUID);
   }
 }

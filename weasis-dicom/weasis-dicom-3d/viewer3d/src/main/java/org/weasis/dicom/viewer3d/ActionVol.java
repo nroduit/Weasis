@@ -76,4 +76,7 @@ public class ActionVol {
   public static final BasicActionStateValue ORIENTATION_CUBE =
       new BasicActionStateValue(
           Messages.getString("orientation.cube"), "crosshair-cube", 0, 0, null); // NON-NLS
+
+  public static final ComboItemListenerValue<MipView.Type> SEG_TYPE =
+      new ComboItemListenerValue<>(Messages.getString("type"), "seg.type", 0, 0, null);
 }

@@ -70,6 +70,7 @@ import org.weasis.dicom.viewer2d.Messages;
 import org.weasis.dicom.viewer2d.ResetTools;
 import org.weasis.dicom.viewer2d.View2dContainer;
 import org.weasis.dicom.viewer2d.mip.MipView;
+import org.weasis.dicom.viewer3d.dockable.SegmentationTool;
 import org.weasis.dicom.viewer3d.geometry.ArcballMouseListener;
 import org.weasis.dicom.viewer3d.geometry.Axis;
 import org.weasis.dicom.viewer3d.geometry.Camera;
@@ -128,6 +129,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> {
     setAction(newLutShapeAction());
     setAction(newPreset3DAction());
     setAction(newInverseLutAction());
+    setAction(newSegmentationMode());
     setAction(newSortStackAction());
     setAction(newInverseStackAction());
     setAction(
@@ -420,6 +422,17 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> {
         if (view instanceof View3d view3d) {
           updateWindowLevelComponentsListener(view3d);
         }
+      }
+    };
+  }
+
+  private ComboItemListener<SegmentationTool.Type> newSegmentationMode() {
+    return new ComboItemListener<>(ActionVol.SEG_TYPE, SegmentationTool.Type.values()) {
+
+      @Override
+      public void itemStateChanged(Object object) {
+        ViewCanvas<DicomImageElement> view = getSelectedViewPane();
+        firePropertyChange(ActionW.SYNCH.cmd(), null, new SynchEvent(view, action.cmd(), object));
       }
     };
   }

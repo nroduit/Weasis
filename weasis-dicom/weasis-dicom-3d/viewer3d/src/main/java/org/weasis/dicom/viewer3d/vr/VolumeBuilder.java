@@ -28,10 +28,7 @@ import jogamp.opengl.glu.error.Error;
 import org.dcm4che3.data.Tag;
 import org.dcm4che3.img.DicomImageUtils;
 import org.joml.Vector3d;
-import org.opencv.core.CvType;
-import org.opencv.core.Mat;
-import org.opencv.core.MatOfPoint;
-import org.opencv.core.Scalar;
+import org.opencv.core.*;
 import org.opencv.imgproc.Imgproc;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -42,12 +39,7 @@ import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.model.graphic.imp.seg.SegContour;
 import org.weasis.core.ui.model.graphic.imp.seg.SegGraphic;
-import org.weasis.core.ui.model.graphic.imp.seg.SegRegion;
-import org.weasis.dicom.codec.DicomImageElement;
-import org.weasis.dicom.codec.HiddenSeriesManager;
-import org.weasis.dicom.codec.SegSpecialElement;
-import org.weasis.dicom.codec.TagD;
-import org.weasis.dicom.explorer.DicomModel;
+import org.weasis.dicom.codec.*;
 import org.weasis.dicom.viewer3d.ActionVol;
 import org.weasis.dicom.viewer3d.EventManager;
 import org.weasis.dicom.viewer3d.geometry.GeometryUtils;
@@ -57,7 +49,7 @@ import org.weasis.dicom.viewer3d.vr.lut.PresetPoint;
 import org.weasis.opencv.data.ImageCV;
 import org.weasis.opencv.data.PlanarImage;
 import org.weasis.opencv.op.ImageProcessor;
-import org.weasis.opencv.seg.SegmentAttributes;
+import org.weasis.opencv.seg.RegionAttributes;
 
 public final class VolumeBuilder {
   private static final Logger LOGGER = LoggerFactory.getLogger(VolumeBuilder.class);
@@ -223,11 +215,6 @@ public final class VolumeBuilder {
       Instant timeStarted = Instant.now();
       double lastPos = 0;
 
-      String patientPseudoUID = DicomModel.getPatientPseudoUID(volTexture.getSeries());
-      List<SegSpecialElement> segList =
-          HiddenSeriesManager.getHiddenElementsFromPatient(
-              SegSpecialElement.class, patientPseudoUID);
-
       List<DicomImageElement> list = volTexture.getVolumeImages();
       for (int i = 0; i < list.size(); i++) {
         if (isInterrupted()) {
@@ -296,9 +283,10 @@ public final class VolumeBuilder {
             i,
             Duration.between(start, Instant.now()).toMillis());
 
+        List<SpecialElementRegion> segList = volTexture.getSegmentations();
         if (!segList.isEmpty()) {
           Mat mask = Mat.zeros(imageMLUT.size(), imageMLUT.type());
-          for (SegSpecialElement seg : segList) {
+          for (SpecialElementRegion seg : segList) {
             if (seg.isVisible() && seg.containsSopInstanceUIDReference(imageElement)) {
               Collection<SegContour> contours = seg.getContours(imageElement);
               if (!contours.isEmpty()) {
@@ -308,13 +296,14 @@ public final class VolumeBuilder {
                     List<MatOfPoint> pts =
                         ImageProcessor.transformShapeToContour(graphic.getShape(), false);
                     // TODO check the limit value
-                    Imgproc.fillPoly(mask, pts, new Scalar(c.getCategory().getId()));
+                    Imgproc.fillPoly(mask, pts, new Scalar(c.getAttributes().getId()));
                   }
                 }
                 // Core.bitwise_and(src, mask, src);
               }
             }
           }
+          int nbPixels = Core.countNonZero(mask);
           imageMLUT = ImageCV.toImageCV(mask);
         }
 
@@ -359,12 +348,12 @@ public final class VolumeBuilder {
 
       if (view instanceof View3d view3d) {
         view3d.setProgressBar(null);
-        buildSegmentationLut(segList);
+        //  buildSegmentationLut(segList);
         volTexture.notifyFullyLoaded();
       }
     }
 
-    private void buildSegmentationLut(List<SegSpecialElement> segList) {
+    private void buildSegmentationLut(List<SpecialElementRegion> segList) {
       ComboItemListener<Preset> action =
           EventManager.getInstance().getAction(ActionVol.VOL_PRESET).orElse(null);
       if (action != null && !segList.isEmpty()) {
@@ -377,11 +366,11 @@ public final class VolumeBuilder {
         List<PresetPoint> presetPoints = new ArrayList<>();
         int max = 1;
 
-        for (SegSpecialElement segElement : segList) {
-          Map<Integer, SegRegion<DicomImageElement>> map = segElement.getSegAttributes();
+        for (SpecialElementRegion segElement : segList) {
+          Map<Integer, ? extends RegionAttributes> map = segElement.getSegAttributes();
           if (map != null) {
-            for (Entry<Integer, SegRegion<DicomImageElement>> entry : map.entrySet()) {
-              SegmentAttributes a = entry.getValue().getAttributes();
+            for (Entry<Integer, ? extends RegionAttributes> entry : map.entrySet()) {
+              RegionAttributes a = entry.getValue();
               if (a.isVisible()) {
                 max = Math.max(max, entry.getKey());
                 Color c = a.getColor();
