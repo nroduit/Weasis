@@ -155,9 +155,8 @@ public class StructRegion extends SegRegion<DicomImageElement> {
       // For first and last plane calculate with half of thickness
       if ((n == 0) || (n == this.planes.size() - 1)) {
         structureVolume += area * this.thickness * 0.5;
-      }
-      // For rest use the full slice thickness
-      else {
+      } else {
+        // For rest use the full slice thickness
         structureVolume += area * this.thickness;
       }
 

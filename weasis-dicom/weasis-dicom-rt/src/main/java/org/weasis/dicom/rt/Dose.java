@@ -21,6 +21,7 @@ import java.util.stream.DoubleStream;
 import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Sequence;
 import org.dcm4che3.data.Tag;
+import org.joml.Vector3d;
 import org.opencv.core.Core;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
@@ -33,6 +34,7 @@ import org.slf4j.LoggerFactory;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.ui.model.graphic.imp.seg.SegContour;
 import org.weasis.dicom.codec.*;
+import org.weasis.dicom.codec.geometry.GeometryOfSlice;
 import org.weasis.opencv.data.ImageCV;
 import org.weasis.opencv.op.ImageConversion;
 import org.weasis.opencv.seg.Segment;
@@ -48,13 +50,13 @@ public class Dose extends RtSpecialElement implements SpecialElementRegion {
   private volatile float opacity = 1.0f;
   private volatile boolean visible = false;
 
-  private double[] imagePositionPatient;
-  private String comment;
-  private String doseUnit;
-  private String doseType;
-  private String doseSummationType;
-  private double[] gridFrameOffsetVector;
-  private double doseGridScaling;
+  private final double[] imagePositionPatient;
+  private final String comment;
+  private final String doseUnit;
+  private final String doseType;
+  private final String doseSummationType;
+  private final double[] gridFrameOffsetVector;
+  private final double doseGridScaling;
   private double doseMax;
 
   private final DicomSeries series;
@@ -77,16 +79,14 @@ public class Dose extends RtSpecialElement implements SpecialElementRegion {
     this.doseMax = 0.0;
 
     Attributes dcmItems = mediaIO.getDicomObject();
-    if (dcmItems != null) {
-      setImagePositionPatient(dcmItems.getDoubles(Tag.ImagePositionPatient));
-      setComment(dcmItems.getString(Tag.DoseComment));
-      setDoseUnit(dcmItems.getString(Tag.DoseUnits));
-      setDoseType(dcmItems.getString(Tag.DoseType));
-      setDoseSummationType(dcmItems.getString(Tag.DoseSummationType));
-      setGridFrameOffsetVector(dcmItems.getDoubles(Tag.GridFrameOffsetVector));
-      setDoseGridScaling(dcmItems.getDouble(Tag.DoseGridScaling, 0.0));
-      initDvh(dcmItems.getSequence(Tag.DVHSequence));
-    }
+    this.imagePositionPatient = dcmItems.getDoubles(Tag.ImagePositionPatient);
+    this.comment = dcmItems.getString(Tag.DoseComment);
+    this.doseUnit = dcmItems.getString(Tag.DoseUnits);
+    this.doseType = dcmItems.getString(Tag.DoseType);
+    this.doseSummationType = dcmItems.getString(Tag.DoseSummationType);
+    this.gridFrameOffsetVector = dcmItems.getDoubles(Tag.GridFrameOffsetVector);
+    this.doseGridScaling = dcmItems.getDouble(Tag.DoseGridScaling, 0.0);
+    initDvh(dcmItems.getSequence(Tag.DVHSequence));
   }
 
   private void initDvh(Sequence dvhSeq) {
@@ -205,6 +205,10 @@ public class Dose extends RtSpecialElement implements SpecialElementRegion {
     }
   }
 
+  public DicomSeries getSeries() {
+    return series;
+  }
+
   public Map<Integer, Dvh> getDvhMap() {
     return dvhMap;
   }
@@ -253,56 +257,28 @@ public class Dose extends RtSpecialElement implements SpecialElementRegion {
     return imagePositionPatient;
   }
 
-  public void setImagePositionPatient(double[] imagePositionPatient) {
-    this.imagePositionPatient = imagePositionPatient;
-  }
-
   public String getComment() {
     return this.comment;
-  }
-
-  public void setComment(String comment) {
-    this.comment = comment;
   }
 
   public String getDoseUnit() {
     return this.doseUnit;
   }
 
-  public void setDoseUnit(String doseUnit) {
-    this.doseUnit = doseUnit;
-  }
-
   public String getDoseType() {
     return doseType;
-  }
-
-  public void setDoseType(String doseType) {
-    this.doseType = doseType;
   }
 
   public String getDoseSummationType() {
     return doseSummationType;
   }
 
-  public void setDoseSummationType(String doseSummationType) {
-    this.doseSummationType = doseSummationType;
-  }
-
   public double[] getGridFrameOffsetVector() {
     return this.gridFrameOffsetVector;
   }
 
-  public void setGridFrameOffsetVector(double[] gridFrameOffsetVector) {
-    this.gridFrameOffsetVector = gridFrameOffsetVector;
-  }
-
   public double getDoseGridScaling() {
     return doseGridScaling;
-  }
-
-  public void setDoseGridScaling(double doseGridScaling) {
-    this.doseGridScaling = doseGridScaling;
   }
 
   public double getDoseMax() {
@@ -382,43 +358,36 @@ public class Dose extends RtSpecialElement implements SpecialElementRegion {
       // 111/255f,
       //           opacity), "", rxDose)));
       Map<String, Set<SegContour>> map = refMap.computeIfAbsent(seriesUID, _ -> new HashMap<>());
-      List<StructContour> contours = new ArrayList<>();
+      Set<KeyDouble> zSet = new LinkedHashSet<>();
       // Go through whole imaging grid (CT)
       for (DicomImageElement image : rtSet.getSeries().getMedias(null, null)) {
+        Set<SegContour> contours = new LinkedHashSet<>();
         // Image slice UID and position
         String sopUID = TagD.getTagValue(image, Tag.SOPInstanceUID, String.class);
         KeyDouble z = new KeyDouble(image.getSliceGeometry().getTLHC().z);
 
-        for (IsoDoseRegion doseRegion : isoDoseSet.values()) {
+        List<IsoDoseRegion> reverseValues = new ArrayList<>(isoDoseSet.values());
+        Collections.reverse(reverseValues);
+        for (IsoDoseRegion doseRegion : reverseValues) {
+          zSet.add(z);
           double isoDoseThreshold = doseRegion.getAbsoluteDose();
 
           StructContour isoContour = getIsoDoseContour(z, isoDoseThreshold, doseRegion, rtSet);
           if (isoContour == null) {
             continue;
           }
-
-          // Create empty hash map of planes for IsoDose layer if there is none
-          if (doseRegion.getPlanes() == null) {
-            doseRegion.setPlanes(new HashMap<>());
-          }
-
-          // Create a new IsoDose contour plane for Z or select existing one
-          // it will hold list of contours for that plane
-          doseRegion.getPlanes().computeIfAbsent(z, _ -> new ArrayList<>()).add(isoContour);
-          // For lookup from GUI use specific image UID
-
           contours.add(isoContour);
         }
-
-        if (!contours.isEmpty()) {
-          Collections.reverse(contours);
-          map.computeIfAbsent(sopUID, _ -> new LinkedHashSet<>()).addAll(contours);
+        if (contours.isEmpty()) {
+          map.remove(sopUID);
+        } else {
+          map.put(sopUID, contours);
         }
       }
 
       // When finished creation of iso contours plane data calculate the plane thickness
       for (IsoDoseRegion isoDoseLayer : isoDoseSet.values()) {
-        isoDoseLayer.setThickness(RtSet.calculatePlaneThickness(isoDoseLayer.getPlanes()));
+        isoDoseLayer.setThickness(RtSet.calculatePlaneThickness(zSet));
       }
     }
   }
@@ -599,24 +568,32 @@ public class Dose extends RtSpecialElement implements SpecialElementRegion {
     int nbPixels = Core.countNonZero(thrSrc);
     ImageConversion.releaseMat(thrSrc);
 
-    Image refImage = rtSet.getPatientImage();
-    double shiftX = (double) refImage.getWidth() / cols;
-    double shiftY =  (double) refImage.getHeight() / rows;
-//    int nb = (int) dosePlane.getKey();
-//    double shiftX = Math.abs(doseMmLUT.getKey()[nb] / cols);
-//    double shiftY = Math.abs(doseMmLUT.getValue()[nb] / rows);
+    GeometryOfSlice geometry = rtSet.getPatientImage().getImage().getDispSliceGeometry();
+    Vector3d voxelSpacing = geometry.getVoxelSpacing();
+    if (voxelSpacing.x < 0.00001 || voxelSpacing.y < 0.00001) {
+      return null;
+    }
+    Vector3d tlhc = geometry.getTLHC();
+    Vector3d row = geometry.getRow();
+    Vector3d column = geometry.getColumn();
+    double z = slicePosition.getValue();
 
     for (Segment seg : segmentList) {
       for (Point2D pt : seg) {
-        double x = pt.getX() * shiftX;
-        double y = pt.getY() * shiftY;
+        double sx = doseMmLUT.getKey()[(int) pt.getX()];
+        double sy = doseMmLUT.getValue()[(int) pt.getY()];
+        double x =
+            ((sx - tlhc.x) * row.x + (sy - tlhc.y) * row.y + (z - tlhc.z) * row.z) / voxelSpacing.x;
+        double y =
+            ((sx - tlhc.x) * column.x + (sy - tlhc.y) * column.y + (z - tlhc.z) * column.z)
+                / voxelSpacing.y;
         pt.setLocation(x, y);
       }
     }
 
     StructContour segContour =
         new StructContour(String.valueOf(slicePosition.getKey()), segmentList, nbPixels);
-    segContour.setPositionZ(slicePosition.getValue());
+    segContour.setPositionZ(z);
     region.addPixels(segContour);
     segContour.setAttributes(region);
     return segContour;

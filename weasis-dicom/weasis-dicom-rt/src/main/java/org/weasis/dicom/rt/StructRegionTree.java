@@ -9,9 +9,6 @@
  */
 package org.weasis.dicom.rt;
 
-import java.awt.Toolkit;
-import java.awt.datatransfer.Clipboard;
-import java.awt.datatransfer.StringSelection;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.Enumeration;
@@ -19,6 +16,7 @@ import java.util.List;
 import javax.swing.JMenuItem;
 import javax.swing.SwingUtilities;
 import javax.swing.tree.DefaultMutableTreeNode;
+import org.weasis.core.ui.util.CsvExporter;
 import org.weasis.core.ui.util.SegRegionTool;
 import org.weasis.core.ui.util.SegRegionTree;
 import org.weasis.core.util.StringUtil;
@@ -72,56 +70,50 @@ public class StructRegionTree extends SegRegionTree {
       }
 
       if (!segRegions.isEmpty()) {
-        StringBuilder sb = new StringBuilder();
-        CsvExporter.addQuotedName(sb, "ROI Observation Label");
-        sb.append(CsvExporter.separator);
-        CsvExporter.addQuotedName(sb, Messages.getString("thickness"));
-        sb.append(CsvExporter.separator);
-        CsvExporter.addQuotedName(sb, Messages.getString("volume") + " [cm³]");
-        sb.append(CsvExporter.separator);
-        CsvExporter.addQuotedName(sb, Messages.getString("min.dose") + " [%]");
-        sb.append(CsvExporter.separator);
-        CsvExporter.addQuotedName(sb, Messages.getString("max.dose") + " [%]");
-        sb.append(CsvExporter.separator);
-        CsvExporter.addQuotedName(sb, Messages.getString("mean.dose") + " [%]");
-        sb.append(System.lineSeparator());
-
-        for (StructRegion region : segRegions) {
-          Dvh structureDvh = region.getDvh();
-
-          CsvExporter.addQuotedName(sb, region.getRoiObservationLabel());
-          sb.append(CsvExporter.separator);
-          sb.append(region.getThickness());
-          sb.append(CsvExporter.separator);
-          sb.append(region.getVolume());
-          sb.append(CsvExporter.separator);
-          sb.append(
-              structureDvh == null
-                  ? StringUtil.EMPTY_STRING
-                  : 100.0
-                      * Dose.calculateRelativeDose(
-                          structureDvh.getDvhMinimumDoseCGy(), structureDvh.getPlan().getRxDose()));
-          sb.append(CsvExporter.separator);
-          sb.append(
-              structureDvh == null
-                  ? StringUtil.EMPTY_STRING
-                  : 100.0
-                      * Dose.calculateRelativeDose(
-                          structureDvh.getDvhMaximumDoseCGy(), structureDvh.getPlan().getRxDose()));
-          sb.append(CsvExporter.separator);
-          sb.append(
-              structureDvh == null
-                  ? StringUtil.EMPTY_STRING
-                  : 100.0
-                      * Dose.calculateRelativeDose(
-                          structureDvh.getDvhMeanDoseCGy(), structureDvh.getPlan().getRxDose()));
-          sb.append(System.lineSeparator());
-        }
-
-        StringSelection stringSelection = new StringSelection(sb.toString());
-        Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
-        clipboard.setContents(stringSelection, null);
+        writeToCsv(segRegions);
       }
     }
+  }
+
+  private static void writeToCsv(List<StructRegion> segRegions) {
+    CsvExporter csv = new CsvExporter();
+    csv.addQuotedNameAndSeparator("ROI Observation Label");
+    csv.addQuotedNameAndSeparator(Messages.getString("thickness"));
+    csv.addQuotedNameAndSeparator(Messages.getString("volume") + " [cm³]");
+    csv.addQuotedNameAndSeparator(Messages.getString("min.dose") + " [%]");
+    csv.addQuotedNameAndSeparator(Messages.getString("max.dose") + " [%]");
+    csv.addQuotedName(Messages.getString("mean.dose") + " [%]");
+    csv.addEndOfLine();
+
+    StringBuilder sb = csv.getBuilder();
+    for (StructRegion region : segRegions) {
+      Dvh structureDvh = region.getDvh();
+      csv.addQuotedName(region.getRoiObservationLabel());
+      csv.addSeparator();
+      sb.append(region.getThickness());
+      csv.addSeparator();
+      sb.append(region.getVolume());
+      csv.addSeparator();
+      sb.append(
+          structureDvh == null
+              ? StringUtil.EMPTY_STRING
+              : Dose.calculateRelativeDose(
+                  structureDvh.getDvhMinimumDoseCGy(), structureDvh.getPlan().getRxDose()));
+      csv.addSeparator();
+      sb.append(
+          structureDvh == null
+              ? StringUtil.EMPTY_STRING
+              : Dose.calculateRelativeDose(
+                  structureDvh.getDvhMaximumDoseCGy(), structureDvh.getPlan().getRxDose()));
+      csv.addSeparator();
+      sb.append(
+          structureDvh == null
+              ? StringUtil.EMPTY_STRING
+              : Dose.calculateRelativeDose(
+                  structureDvh.getDvhMeanDoseCGy(), structureDvh.getPlan().getRxDose()));
+      csv.addEndOfLine();
+    }
+
+    csv.copyToClipboard();
   }
 }

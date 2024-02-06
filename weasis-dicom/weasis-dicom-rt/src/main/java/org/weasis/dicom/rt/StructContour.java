@@ -9,7 +9,6 @@
  */
 package org.weasis.dicom.rt;
 
-import java.awt.geom.Point2D;
 import java.util.List;
 import org.weasis.core.ui.model.graphic.imp.seg.SegContour;
 import org.weasis.opencv.seg.Segment;
@@ -21,10 +20,12 @@ public class StructContour extends SegContour {
 
   public StructContour(String id, List<Segment> segmentList) {
     super(id, segmentList);
+    this.area = -1.0;
   }
 
   public StructContour(String id, List<Segment> segmentList, int numberOfPixels) {
     super(id, segmentList, numberOfPixels);
+    this.area = -1.0;
   }
 
   public void setPositionZ(Double z) {
@@ -37,33 +38,8 @@ public class StructContour extends SegContour {
 
   public double getArea() {
     if (this.area < 0) {
-      for (Segment segment : this.getSegmentList()) {
-        this.area += polygonArea(segment);
-        if (!segment.getChildren().isEmpty()) {
-          for (Segment child : segment.getChildren()) {
-            this.area -= polygonArea(child);
-          }
-          // TODO recursive
-        }
-      }
+      this.area = super.getArea();
     }
-
     return area;
-  }
-
-  private double polygonArea(Segment segment) {
-    int n = segment.size();
-    double polygonArea = 0.0;
-
-    for (int i = 0; i < n; i++) {
-      int nextIndex = (i + 1) % n;
-      Point2D pt = segment.get(i);
-      Point2D ptNext = segment.get(nextIndex);
-      polygonArea += (pt.getX() * ptNext.getY()) - (ptNext.getX() * pt.getY());
-    }
-
-    polygonArea = Math.abs(polygonArea) / 2.0;
-
-    return polygonArea;
   }
 }

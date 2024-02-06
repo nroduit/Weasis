@@ -12,13 +12,11 @@ package org.weasis.dicom.rt;
 import static org.opencv.core.Core.add;
 import static org.opencv.core.Core.multiply;
 
-import java.awt.geom.Point2D;
 import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Optional;
@@ -43,7 +41,6 @@ import org.weasis.core.util.MathUtil;
 import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.DicomSeries;
-import org.weasis.opencv.seg.Segment;
 
 /**
  * RtSet is a collection of linked DICOM-RT entities that form the whole treatment case (Plans,
@@ -114,7 +111,10 @@ public class RtSet {
 
         // Init Dose LUTs
         for (Dose dose : plan.getDoses()) {
-          dose.setDoseMmLUT(patientImage.getImageLUT());
+          dose.setDoseMmLUT(
+              calculatePixelLookupTable(
+                  Objects.requireNonNull(
+                      dose.getSeries().getMedia(MEDIA_POSITION.FIRST, null, null))));
           dose.initialiseDoseGridToImageGrid(patientImage);
         }
 
@@ -157,7 +157,7 @@ public class RtSet {
               String source = region.getVolumeSource().toString();
               if (LOGGER.isDebugEnabled()) {
                 LOGGER.debug(
-                    "Structure: {}, {} Volume: {} cm^3",
+                    "Structure: {}, {} Volume: {} cm³",
                     region.getLabel(),
                     source,
                     String.format("%.4f", volume));
@@ -366,9 +366,9 @@ public class RtSet {
    *
    * @return structure plane thickness
    */
-  static double calculatePlaneThickness(Map<KeyDouble, List<StructContour>> planesMap) {
+  static double calculatePlaneThickness(Set<KeyDouble> planesSet) {
     // Sort the list of z coordinates
-    List<KeyDouble> planes = new ArrayList<>(planesMap.keySet());
+    List<KeyDouble> planes = new ArrayList<>(planesSet);
     Collections.sort(planes);
 
     // Set maximum thickness as initial value
@@ -412,7 +412,7 @@ public class RtSet {
 
   private Mat calculateDifferentialDvh(StructRegion region, Dose dose) {
 
-    DicomImageElement doseImage = this.series.getMedia(MEDIA_POSITION.FIRST, null, null);
+    DicomImageElement doseImage = dose.getSeries().getMedia(MEDIA_POSITION.FIRST, null, null);
     Vector3d doseImageSpacing = doseImage.getSliceGeometry().getVoxelSpacing();
     double maxDose = dose.getDoseMax() * dose.getDoseGridScaling() * 100;
 
@@ -591,21 +591,15 @@ public class RtSet {
     int rows = doseMmLUT.getValue().length;
 
     List<Point> list = new ArrayList<>();
-    MatOfPoint2f mop = new MatOfPoint2f();
-    for (Segment segment : contour.getSegmentList()) {
-      for (Point2D point : segment) {
-        list.add(new Point(point.getX(), point.getY()));
-      }
-      if (!segment.getChildren().isEmpty()) {
-        for (Segment child : segment.getChildren()) {
-          for (Point2D point : child) {
-            list.add(new Point(point.getX(), point.getY()));
-          }
+    if (contour instanceof StructContour structContour) {
+      double[] points = structContour.getPoints();
+      if (points != null && points.length % 3 == 0 && points.length > 1) {
+        for (int i = 0; i < points.length; i = i + 3) {
+          list.add(new Point(points[i], points[i + 1]));
         }
-        // TODO recursive
       }
     }
-
+    MatOfPoint2f mop = new MatOfPoint2f();
     mop.fromList(list);
 
     Mat binaryMask = new Mat(rows, cols, CvType.CV_32FC1);

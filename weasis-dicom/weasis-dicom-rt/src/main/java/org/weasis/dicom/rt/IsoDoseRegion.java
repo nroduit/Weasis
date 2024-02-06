@@ -10,8 +10,6 @@
 package org.weasis.dicom.rt;
 
 import java.awt.Color;
-import java.util.List;
-import java.util.Map;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.ui.model.graphic.imp.seg.SegRegion;
 import org.weasis.core.util.StringUtil;
@@ -21,8 +19,6 @@ public class IsoDoseRegion extends SegRegion<DicomImageElement> {
   private final int level;
   private final double absoluteDose;
   private double thickness;
-
-  private Map<KeyDouble, List<StructContour>> planes;
 
   public IsoDoseRegion(int level, Color color, String name, double planDose) {
     super(level, TagW.NO_VALUE, color);
@@ -51,13 +47,5 @@ public class IsoDoseRegion extends SegRegion<DicomImageElement> {
 
   public void setThickness(double thickness) {
     this.thickness = thickness;
-  }
-
-  public Map<KeyDouble, List<StructContour>> getPlanes() {
-    return planes;
-  }
-
-  public void setPlanes(Map<KeyDouble, List<StructContour>> planes) {
-    this.planes = planes;
   }
 }

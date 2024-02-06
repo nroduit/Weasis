@@ -221,6 +221,7 @@ public class StructureSet extends RtSpecialElement implements SpecialElementRegi
                 for (Attributes attributes : contImgSeq) {
                   String sopUID = attributes.getString(Tag.ReferencedSOPInstanceUID);
                   if (StringUtil.hasText(sopUID)) {
+                    plane.setPoints(contour.getDoubles(Tag.ContourData));
                     refMap
                         .get(seriesUID)
                         .computeIfAbsent(sopUID, _ -> new LinkedHashSet<>())

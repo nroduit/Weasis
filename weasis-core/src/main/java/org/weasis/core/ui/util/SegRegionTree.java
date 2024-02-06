@@ -33,12 +33,39 @@ import org.weasis.core.ui.model.utils.bean.MeasureItem;
 
 public class SegRegionTree extends CheckboxTree {
 
-  private final JPopupMenu popupMenu = new JPopupMenu();
+  protected final JPopupMenu popupMenu = new JPopupMenu();
 
-  private final SegRegionTool segRegionTool;
+  protected final SegRegionTool segRegionTool;
 
   public SegRegionTree(SegRegionTool segRegionTool) {
     this.segRegionTool = segRegionTool;
+  }
+
+  public JPopupMenu getPopupMenu() {
+    return popupMenu;
+  }
+
+  public SegRegionTool getSegRegionTool() {
+    return segRegionTool;
+  }
+
+  protected void mousePressed(MouseEvent e) {
+    popupMenu.removeAll();
+    if (SwingUtilities.isRightMouseButton(e)) {
+      DefaultMutableTreeNode node = getTreeNode(e.getPoint());
+      if (node != null) {
+        boolean leaf = node.isLeaf();
+        if (!leaf) {
+          popupMenu.add(getCheckAllMenuItem(node, true));
+          popupMenu.add(getCheckAllMenuItem(node, false));
+        }
+        popupMenu.add(getOpacityMenuItem(node, e.getPoint()));
+        if (leaf) {
+          popupMenu.add(getStatisticMenuItem(node));
+        }
+        popupMenu.show(SegRegionTree.this, e.getX(), e.getY());
+      }
+    }
   }
 
   public void initListeners() {
@@ -46,22 +73,7 @@ public class SegRegionTree extends CheckboxTree {
         new MouseAdapter() {
           @Override
           public void mousePressed(MouseEvent e) {
-            popupMenu.removeAll();
-            if (SwingUtilities.isRightMouseButton(e)) {
-              DefaultMutableTreeNode node = getTreeNode(e.getPoint());
-              if (node != null) {
-                boolean leaf = node.isLeaf();
-                if (!leaf) {
-                  popupMenu.add(getCheckAllMenuItem(node, true));
-                  popupMenu.add(getCheckAllMenuItem(node, false));
-                }
-                popupMenu.add(getOpacityMenuItem(node, e.getPoint()));
-                if (leaf) {
-                  popupMenu.add(getStatisticMenuItem(node));
-                }
-                popupMenu.show(SegRegionTree.this, e.getX(), e.getY());
-              }
-            }
+            SegRegionTree.this.mousePressed(e);
           }
         });
   }
@@ -106,7 +118,7 @@ public class SegRegionTree extends CheckboxTree {
     return selectAllMenuItem;
   }
 
-  private JMenuItem getOpacityMenuItem(DefaultMutableTreeNode node, Point pt) {
+  protected JMenuItem getOpacityMenuItem(DefaultMutableTreeNode node, Point pt) {
     JMenuItem jMenuItem = new JMenuItem(PropertiesDialog.FILL_OPACITY);
     jMenuItem.addActionListener(_ -> showSliderInPopup(node, pt));
     return jMenuItem;
@@ -165,7 +177,7 @@ public class SegRegionTree extends CheckboxTree {
     }
   }
 
-  private JMenuItem getStatisticMenuItem(DefaultMutableTreeNode node) {
+  protected JMenuItem getStatisticMenuItem(DefaultMutableTreeNode node) {
     JMenuItem selectAllMenuItem = new JMenuItem("Pixel statistics from selected view");
     selectAllMenuItem.addActionListener(
         _ -> {

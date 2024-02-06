@@ -17,6 +17,8 @@ import org.weasis.opencv.seg.Region;
 import org.weasis.opencv.seg.Segment;
 
 public class SegContour extends Region {
+  private double[] points;
+  ;
 
   public SegContour(String id, List<Segment> segmentList) {
     super(id, segmentList);
@@ -67,5 +69,13 @@ public class SegContour extends Region {
       path.lineTo(p.getX(), p.getY());
     }
     path.closePath(); // TODO check if it is necessary
+  }
+
+  public double[] getPoints() {
+    return points;
+  }
+
+  public void setPoints(double[] points) {
+    this.points = points;
   }
 }

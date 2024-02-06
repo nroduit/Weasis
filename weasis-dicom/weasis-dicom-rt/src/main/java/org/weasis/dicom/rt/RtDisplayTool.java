@@ -33,13 +33,12 @@ import org.knowm.xchart.XYChartBuilder;
 import org.knowm.xchart.XYSeries;
 import org.weasis.core.api.gui.Insertable;
 import org.weasis.core.api.gui.task.CircularProgressBar;
+import org.weasis.core.api.gui.util.DecFormatter;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.JSliderW;
 import org.weasis.core.api.gui.util.WinUtil;
 import org.weasis.core.api.image.util.MeasurableLayer;
-import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaSeries;
-import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.api.util.ResourceUtil.OtherIcon;
 import org.weasis.core.ui.dialog.PropertiesDialog;
@@ -57,7 +56,6 @@ import org.weasis.core.ui.util.StructToolTipTreeNode;
 import org.weasis.core.util.SoftHashMap;
 import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.codec.*;
-import org.weasis.dicom.explorer.DicomModel;
 import org.weasis.dicom.viewer2d.EventManager;
 import org.weasis.dicom.viewer2d.View2d;
 import org.weasis.opencv.data.PlanarImage;
@@ -80,7 +78,7 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener, S
   private final JButton btnLoad = new JButton(Messages.getString("load.rt"));
   private final JCheckBox cbDvhRecalculate = new JCheckBox(Messages.getString("dvh.recalculate"));
 
-  private final SegRegionTree treeStructures;
+  private final StructRegionTree treeStructures;
   private final SegRegionTree treeIsodoses;
   private boolean initPathSelection;
   private final DefaultMutableTreeNode rootNodeStructures =
@@ -142,7 +140,7 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener, S
           updateSlider();
         });
 
-    this.treeStructures = new SegRegionTree(this);
+    this.treeStructures = new StructRegionTree(this);
     treeStructures.setToolTipText(StringUtil.EMPTY_STRING);
     treeStructures.setCellRenderer(CheckBoxTreeBuilder.buildNoIconCheckboxTreeCellRenderer());
 
@@ -647,27 +645,26 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener, S
               new StructToolTipTreeNode(structureLayer, false) {
                 @Override
                 public String getToolTipText() {
-                  StructRegion layer = (StructRegion) getUserObject();
+                  StructRegion region = (StructRegion) getUserObject();
 
-                  double volume = layer.getVolume();
-                  // String source = layer.getStructure().getVolumeSource().toString();
-                  Dvh structureDvh = layer.getDvh();
+                  double volume = region.getVolume();
+                  Dvh structureDvh = region.getDvh();
 
                   StringBuilder buf = new StringBuilder();
                   buf.append(GuiUtils.HTML_START);
-                  if (StringUtil.hasText(layer.getRoiObservationLabel())) {
+                  if (StringUtil.hasText(region.getRoiObservationLabel())) {
                     buf.append("<b>");
-                    buf.append(layer.getRoiObservationLabel());
+                    buf.append(region.getRoiObservationLabel());
                     buf.append("</b>");
                     buf.append(GuiUtils.HTML_BR);
                   }
                   buf.append(Messages.getString("thickness"));
                   buf.append(StringUtil.COLON_AND_SPACE);
-                  buf.append(String.format("%.2f", layer.getThickness())); // NON-NLS
+                  buf.append(DecFormatter.twoDecimal(region.getThickness()));
                   buf.append(GuiUtils.HTML_BR);
                   buf.append(Messages.getString("volume"));
                   buf.append(StringUtil.COLON_AND_SPACE);
-                  buf.append(String.format("%.4f cm^3", volume)); // NON-NLS
+                  buf.append(String.format("%s cm³", DecFormatter.fourDecimal(volume))); // NON-NLS
                   buf.append(GuiUtils.HTML_BR);
 
                   if (structureDvh != null) {
@@ -676,33 +673,33 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener, S
                     buf.append(Messages.getString("min.dose"));
                     buf.append(StringUtil.COLON_AND_SPACE);
                     buf.append(
-                        String.format(
-                            FORMAT,
+                        DecFormatter.percentTwoDecimal(
                             Dose.calculateRelativeDose(
-                                structureDvh.getDvhMinimumDoseCGy(),
-                                structureDvh.getPlan().getRxDose())));
+                                    structureDvh.getDvhMinimumDoseCGy(),
+                                    structureDvh.getPlan().getRxDose())
+                                / 100.0));
                     buf.append(GuiUtils.HTML_BR);
                     buf.append(structureDvh.getDvhSource().toString());
                     buf.append(" ");
                     buf.append(Messages.getString("max.dose"));
                     buf.append(StringUtil.COLON_AND_SPACE);
                     buf.append(
-                        String.format(
-                            FORMAT,
+                        DecFormatter.percentTwoDecimal(
                             Dose.calculateRelativeDose(
-                                structureDvh.getDvhMaximumDoseCGy(),
-                                structureDvh.getPlan().getRxDose())));
+                                    structureDvh.getDvhMaximumDoseCGy(),
+                                    structureDvh.getPlan().getRxDose())
+                                / 100.0));
                     buf.append(GuiUtils.HTML_BR);
                     buf.append(structureDvh.getDvhSource().toString());
                     buf.append(" ");
                     buf.append(Messages.getString("mean.dose"));
                     buf.append(StringUtil.COLON_AND_SPACE);
                     buf.append(
-                        String.format(
-                            FORMAT,
+                        DecFormatter.percentTwoDecimal(
                             Dose.calculateRelativeDose(
-                                structureDvh.getDvhMeanDoseCGy(),
-                                structureDvh.getPlan().getRxDose())));
+                                    structureDvh.getDvhMeanDoseCGy(),
+                                    structureDvh.getPlan().getRxDose())
+                                / 100.0));
                     buf.append(GuiUtils.HTML_BR);
                   }
                   buf.append(GuiUtils.HTML_END);
@@ -755,11 +752,11 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener, S
                       buf.append(GuiUtils.HTML_BR);
                       buf.append(Messages.getString("level"));
                       buf.append(StringUtil.COLON_AND_SPACE);
-                      buf.append(String.format("%d %%", layer.getLevel())); // NON-NLS
+                      buf.append(String.format("%d%%", layer.getLevel())); // NON-NLS
                       buf.append(GuiUtils.HTML_BR);
                       buf.append(Messages.getString("thickness"));
                       buf.append(StringUtil.COLON_AND_SPACE);
-                      buf.append(String.format("%.2f", layer.getThickness())); // NON-NLS
+                      buf.append(DecFormatter.twoDecimal(layer.getThickness()));
                       buf.append(GuiUtils.HTML_BR);
 
                       buf.append(GuiUtils.HTML_END);
@@ -785,7 +782,7 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener, S
 
   public void initTreeValues(ViewCanvas<?> viewCanvas) {
 
-    List<RtSpecialElement> list = null;
+    List<RtSpecialElement> list;
     if (viewCanvas != null) {
       MediaSeries<?> dcmSeries = viewCanvas.getSeries();
       boolean compatible = RtDisplayTool.isCtLinkedRT(dcmSeries);
@@ -872,43 +869,5 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener, S
       }
     }
     return false;
-  }
-
-  private static List<MediaElement> getRelatedSpecialElements(
-      DicomModel model, MediaSeriesGroup patient, String frameOfReferenceUID) {
-    List<MediaElement> specialElementList = new ArrayList<>();
-    if (StringUtil.hasText(frameOfReferenceUID)) {
-      for (MediaSeriesGroup st : model.getChildren(patient)) {
-        for (MediaSeriesGroup s : model.getChildren(st)) {
-          String frameUID = TagD.getTagValue(s, Tag.FrameOfReferenceUID, String.class);
-          String modality = TagD.getTagValue(s, Tag.Modality, String.class);
-          if (frameOfReferenceUID.equals(frameUID) || "RTSTRUCT".equals(modality)) {
-            List<RtSpecialElement> list = DicomModel.getSpecialElements(s, RtSpecialElement.class);
-            if (!list.isEmpty()) {
-              specialElementList.addAll(list);
-            }
-            if ("RTDOSE".equals(modality) && s instanceof DicomSeries dicomSeries) {
-              synchronized (s) {
-                for (DicomImageElement media : dicomSeries.getMedias(null, null)) {
-                  if ("RTDOSE".equals(TagD.getTagValue(media, Tag.Modality))) {
-                    specialElementList.add(media);
-                  }
-                }
-              }
-            }
-            if ("CT".equals(modality) && s instanceof DicomSeries dicomSeries) {
-              synchronized (s) {
-                for (DicomImageElement media : dicomSeries.getMedias(null, null)) {
-                  if ("CT".equals(TagD.getTagValue(media, Tag.Modality))) {
-                    specialElementList.add(media);
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-    return specialElementList;
   }
 }
