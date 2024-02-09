@@ -19,8 +19,7 @@ import java.util.Objects;
 import java.util.Set;
 import javax.swing.JPanel;
 import javax.swing.tree.TreePath;
-import org.weasis.core.api.gui.util.AbstractWizardDialog;
-import org.weasis.core.ui.util.CheckBoxTreeBuilder;
+import org.weasis.core.ui.util.TreeBuilder;
 import org.weasis.dicom.explorer.CheckTreeModel.ToolTipTreeNode;
 
 public class ExportTree extends JPanel {
@@ -54,7 +53,7 @@ public class ExportTree extends JPanel {
           }
         };
 
-    checkboxTree.setCellRenderer(CheckBoxTreeBuilder.buildNoIconCheckboxTreeCellRenderer());
+    checkboxTree.setCellRenderer(TreeBuilder.buildNoIconCheckboxTreeCellRenderer());
     // Register tooltips
     checkboxTree.setToolTipText("");
 
@@ -92,7 +91,7 @@ public class ExportTree extends JPanel {
       }
     }
 
-    AbstractWizardDialog.expandTree(
+    TreeBuilder.expandTree(
         checkboxTree, checkTreeModel.getRootNode(), 2); // 2 stands for Study Level
     add(checkboxTree, BorderLayout.CENTER);
   }

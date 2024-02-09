@@ -53,6 +53,7 @@ import org.weasis.core.ui.util.CheckBoxTreeBuilder;
 import org.weasis.core.ui.util.SegRegionTool;
 import org.weasis.core.ui.util.SegRegionTree;
 import org.weasis.core.ui.util.StructToolTipTreeNode;
+import org.weasis.core.ui.util.TreeBuilder;
 import org.weasis.core.util.SoftHashMap;
 import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.codec.*;
@@ -142,11 +143,11 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener, S
 
     this.treeStructures = new StructRegionTree(this);
     treeStructures.setToolTipText(StringUtil.EMPTY_STRING);
-    treeStructures.setCellRenderer(CheckBoxTreeBuilder.buildNoIconCheckboxTreeCellRenderer());
+    treeStructures.setCellRenderer(TreeBuilder.buildNoIconCheckboxTreeCellRenderer());
 
     this.treeIsodoses = new SegRegionTree(this);
     treeIsodoses.setToolTipText(StringUtil.EMPTY_STRING);
-    treeIsodoses.setCellRenderer(CheckBoxTreeBuilder.buildNoIconCheckboxTreeCellRenderer());
+    treeIsodoses.setCellRenderer(TreeBuilder.buildNoIconCheckboxTreeCellRenderer());
 
     this.nodeStructures = new DefaultMutableTreeNode(Messages.getString("structures"), true);
     this.nodeIsodoses = new DefaultMutableTreeNode(Messages.getString("isodoses"), true);
@@ -417,10 +418,10 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener, S
     treeStructures.setShowsRootHandles(true);
     treeStructures.setRootVisible(false);
     treeStructures.setExpandsSelectedPaths(true);
-    treeStructures.setCellRenderer(CheckBoxTreeBuilder.buildNoIconCheckboxTreeCellRenderer());
+    treeStructures.setCellRenderer(TreeBuilder.buildNoIconCheckboxTreeCellRenderer());
     treeStructures.addTreeCheckingListener(this::treeValueChanged);
 
-    expandTree(treeStructures, rootNodeStructures);
+    TreeBuilder.expandTree(treeStructures, rootNodeStructures, 2);
     Dimension minimumSize = GuiUtils.getDimension(150, 150);
     JScrollPane scrollPane = new JScrollPane(treeStructures);
     scrollPane.setMinimumSize(minimumSize);
@@ -440,10 +441,10 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener, S
     treeIsodoses.setShowsRootHandles(true);
     treeIsodoses.setRootVisible(false);
     treeIsodoses.setExpandsSelectedPaths(true);
-    treeIsodoses.setCellRenderer(CheckBoxTreeBuilder.buildNoIconCheckboxTreeCellRenderer());
+    treeIsodoses.setCellRenderer(TreeBuilder.buildNoIconCheckboxTreeCellRenderer());
     treeIsodoses.addTreeCheckingListener(this::treeValueChanged);
 
-    expandTree(treeIsodoses, rootNodeIsodoses);
+    TreeBuilder.expandTree(treeIsodoses, rootNodeIsodoses, 2);
     Dimension minimumSize = GuiUtils.getDimension(150, 150);
     JScrollPane scrollPane = new JScrollPane(treeIsodoses);
     scrollPane.setMinimumSize(minimumSize);
@@ -640,12 +641,88 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener, S
       // Prepare parent node for structures
       if (selectedStructure != null) {
         nodeStructures.removeAllChildren();
-        for (StructRegion structureLayer : selectedStructure.getSegAttributes().values()) {
-          DefaultMutableTreeNode node =
-              new StructToolTipTreeNode(structureLayer, false) {
-                @Override
-                public String getToolTipText() {
-                  StructRegion region = (StructRegion) getUserObject();
+        Map<String, List<StructRegion>> map =
+            SegRegion.groupRegions(selectedStructure.getSegAttributes().values());
+        for (List<StructRegion> list : map.values()) {
+          if (list.size() == 1) {
+            StructRegion region = list.getFirst();
+            DefaultMutableTreeNode node = buildStructRegionNode(region);
+            nodeStructures.add(node);
+            treeStructures.setPathSelection(new TreePath(node.getPath()), region.isSelected());
+          } else {
+            GroupTreeNode node = new GroupTreeNode(list.getFirst().getPrefix(), true);
+            for (StructRegion structRegion : list) {
+              DefaultMutableTreeNode childNode = buildStructRegionNode(structRegion);
+              node.add(childNode);
+              treeStructures.setPathSelection(
+                  new TreePath(childNode.getPath()), structRegion.isSelected());
+            }
+            nodeStructures.add(node);
+            treeStructures.addCheckingPath(new TreePath(node.getPath()));
+          }
+        }
+        treeStructures.setPathSelection(new TreePath(nodeStructures.getPath()), true);
+      }
+
+      // Prepare parent node for isodoses
+      if (selectedPlan != null) {
+        nodeIsodoses.removeAllChildren();
+
+        lblRtPlanName.setText(selectedPlan.getName());
+        txtRtPlanDoseValue.setText(String.format("%.0f", selectedPlan.getRxDose())); // NON-NLS
+
+        Dose planDose = selectedPlan.getFirstDose();
+        if (planDose != null) {
+          Map<Integer, IsoDoseRegion> isodoses = planDose.getIsoDoseSet();
+          if (isodoses != null) {
+            for (IsoDoseRegion isoDoseLayer : isodoses.values()) {
+              DefaultMutableTreeNode node =
+                  new StructToolTipTreeNode(isoDoseLayer, false) {
+                    @Override
+                    public String getToolTipText() {
+                      IsoDoseRegion layer = (IsoDoseRegion) getUserObject();
+
+                      StringBuilder buf = new StringBuilder();
+                      buf.append(GuiUtils.HTML_START);
+                      buf.append("<b>");
+                      buf.append(layer.getLabel());
+                      buf.append("</b>");
+                      buf.append(GuiUtils.HTML_BR);
+                      buf.append(Messages.getString("level"));
+                      buf.append(StringUtil.COLON_AND_SPACE);
+                      buf.append(String.format("%d%%", layer.getLevel())); // NON-NLS
+                      buf.append(GuiUtils.HTML_BR);
+                      buf.append(Messages.getString("thickness"));
+                      buf.append(StringUtil.COLON_AND_SPACE);
+                      buf.append(DecFormatter.twoDecimal(layer.getThickness()));
+                      buf.append(GuiUtils.HTML_BR);
+
+                      buf.append(GuiUtils.HTML_END);
+
+                      return buf.toString();
+                    }
+                  };
+              this.nodeIsodoses.add(node);
+              treeIsodoses.addCheckingPath(new TreePath(node.getPath()));
+            }
+          }
+          treeIsodoses.removeCheckingPath(new TreePath(nodeIsodoses.getPath()));
+        }
+      }
+
+      // Expand
+      TreeBuilder.expandTree(treeStructures, rootNodeStructures, 2);
+      TreeBuilder.expandTree(treeIsodoses, rootNodeIsodoses, 2);
+    } finally {
+      initPathSelection = false;
+    }
+  }
+
+  private DefaultMutableTreeNode buildStructRegionNode(StructRegion structRegion) {
+    return new StructToolTipTreeNode(structRegion, false) {
+      @Override
+      public String getToolTipText() {
+        StructRegion region = (StructRegion) getUserObject();
 
                   double volume = region.getVolume();
                   Dvh structureDvh = region.getDvh();
@@ -704,80 +781,22 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener, S
                   }
                   buf.append(GuiUtils.HTML_END);
 
-                  return buf.toString();
-                }
-
-                @Override
-                public String toString() {
-                  StructRegion layer = (StructRegion) getUserObject();
-                  String resultLabel = layer.getLabel();
-
-                  String type = layer.getRtRoiInterpretedType();
-                  if (StringUtil.hasText(type)) {
-                    resultLabel += STR." [\{type}]";
-                  }
-
-                  return getColorBullet(layer.getColor(), resultLabel);
-                }
-              };
-          nodeStructures.add(node);
-          treeStructures.addCheckingPath(new TreePath(node.getPath()));
-        }
-        treeStructures.addCheckingPath(new TreePath(nodeStructures.getPath()));
+        return buf.toString();
       }
 
-      // Prepare parent node for isodoses
-      if (selectedPlan != null) {
-        nodeIsodoses.removeAllChildren();
+      @Override
+      public String toString() {
+        StructRegion layer = (StructRegion) getUserObject();
+        String resultLabel = layer.getLabel();
 
-        lblRtPlanName.setText(selectedPlan.getName());
-        txtRtPlanDoseValue.setText(String.format("%.0f", selectedPlan.getRxDose())); // NON-NLS
-
-        Dose planDose = selectedPlan.getFirstDose();
-        if (planDose != null) {
-          Map<Integer, IsoDoseRegion> isodoses = planDose.getIsoDoseSet();
-          if (isodoses != null) {
-            for (IsoDoseRegion isoDoseLayer : isodoses.values()) {
-              DefaultMutableTreeNode node =
-                  new StructToolTipTreeNode(isoDoseLayer, false) {
-                    @Override
-                    public String getToolTipText() {
-                      IsoDoseRegion layer = (IsoDoseRegion) getUserObject();
-
-                      StringBuilder buf = new StringBuilder();
-                      buf.append(GuiUtils.HTML_START);
-                      buf.append("<b>");
-                      buf.append(layer.getLabel());
-                      buf.append("</b>");
-                      buf.append(GuiUtils.HTML_BR);
-                      buf.append(Messages.getString("level"));
-                      buf.append(StringUtil.COLON_AND_SPACE);
-                      buf.append(String.format("%d%%", layer.getLevel())); // NON-NLS
-                      buf.append(GuiUtils.HTML_BR);
-                      buf.append(Messages.getString("thickness"));
-                      buf.append(StringUtil.COLON_AND_SPACE);
-                      buf.append(DecFormatter.twoDecimal(layer.getThickness()));
-                      buf.append(GuiUtils.HTML_BR);
-
-                      buf.append(GuiUtils.HTML_END);
-
-                      return buf.toString();
-                    }
-                  };
-              this.nodeIsodoses.add(node);
-              treeIsodoses.addCheckingPath(new TreePath(node.getPath()));
-            }
-          }
-          treeIsodoses.removeCheckingPath(new TreePath(nodeIsodoses.getPath()));
+        String type = layer.getRtRoiInterpretedType();
+        if (StringUtil.hasText(type)) {
+          resultLabel += STR." [\{type}]";
         }
-      }
 
-      // Expand
-      expandTree(treeStructures, rootNodeStructures);
-      expandTree(treeIsodoses, rootNodeIsodoses);
-    } finally {
-      initPathSelection = false;
-    }
+        return getColorBullet(layer.getColor(), resultLabel);
+      }
+    };
   }
 
   public void initTreeValues(ViewCanvas<?> viewCanvas) {
@@ -844,17 +863,6 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener, S
   @Override
   protected void changeToolWindowAnchor(CLocation clocation) {
     // TODO Auto-generated method stub
-  }
-
-  private static void expandTree(JTree tree, DefaultMutableTreeNode start) {
-    for (Enumeration children = start.children(); children.hasMoreElements(); ) {
-      DefaultMutableTreeNode dtm = (DefaultMutableTreeNode) children.nextElement();
-      if (!dtm.isLeaf()) {
-        TreePath tp = new TreePath(dtm.getPath());
-        tree.expandPath(tp);
-        expandTree(tree, dtm);
-      }
-    }
   }
 
   public static boolean isCtLinkedRT(MediaSeries<?> dcmSeries) {

@@ -18,7 +18,6 @@ import java.awt.Dimension;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.util.Collection;
-import java.util.Enumeration;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -26,7 +25,6 @@ import javax.swing.BorderFactory;
 import javax.swing.JComboBox;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
-import javax.swing.JTree;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
@@ -102,9 +100,9 @@ public class SegmentationTool extends PluginTool implements SeriesViewerListener
         });
     this.tree = new SegRegionTree(this);
     tree.setToolTipText(StringUtil.EMPTY_STRING);
-    tree.setCellRenderer(CheckBoxTreeBuilder.buildNoIconCheckboxTreeCellRenderer());
+    tree.setCellRenderer(TreeBuilder.buildNoIconCheckboxTreeCellRenderer());
 
-    this.nodeStructures = new DefaultMutableTreeNode("List of regions", true);
+    this.nodeStructures = new GroupTreeNode("List of regions", true);
     this.initData();
 
     initListeners();
@@ -189,10 +187,10 @@ public class SegmentationTool extends PluginTool implements SeriesViewerListener
     tree.setShowsRootHandles(true);
     tree.setRootVisible(false);
     tree.setExpandsSelectedPaths(true);
-    tree.setCellRenderer(CheckBoxTreeBuilder.buildNoIconCheckboxTreeCellRenderer());
+    tree.setCellRenderer(TreeBuilder.buildNoIconCheckboxTreeCellRenderer());
     tree.addTreeCheckingListener(this::treeValueChanged);
 
-    expandTree(tree, rootNodeStructures);
+    TreeBuilder.expandTree(tree, rootNodeStructures, 2);
   }
 
   private void updateSlider() {
@@ -279,63 +277,69 @@ public class SegmentationTool extends PluginTool implements SeriesViewerListener
 
       // Prepare parent node for structures
       nodeStructures.removeAllChildren();
-      Map<Integer, SegRegion<DicomImageElement>> segments = specialElement.getSegAttributes();
-      if (segments != null) {
-        for (SegRegion<DicomImageElement> contour : segments.values()) {
-          DefaultMutableTreeNode node =
-              new StructToolTipTreeNode(contour, false) {
-                @Override
-                public String getToolTipText() {
-                  SegRegion<?> seg = (SegRegion) getUserObject();
-                  StringBuilder buf = new StringBuilder();
-                  buf.append(GuiUtils.HTML_START);
-                  buf.append("<b>");
-                  buf.append(seg.getLabel());
-                  buf.append("</b>");
-                  buf.append(GuiUtils.HTML_BR);
-                  buf.append("Algorithm type");
-                  buf.append(StringUtil.COLON_AND_SPACE);
-                  buf.append(seg.getType());
-                  buf.append(GuiUtils.HTML_BR);
-                  buf.append("Voxel count");
-                  buf.append(StringUtil.COLON_AND_SPACE);
-                  buf.append(DecFormatter.allNumber(seg.getNumberOfPixels()));
-                  buf.append(GuiUtils.HTML_BR);
-                  SegMeasurableLayer<?> layer = seg.getMeasurableLayer();
-                  if (layer != null) {
-                    MeasurementsAdapter adapter =
-                        layer.getMeasurementAdapter(layer.getSourceImage().getPixelSpacingUnit());
-                    buf.append("Volume (%s3)".formatted(adapter.getUnit()));
-                    buf.append(StringUtil.COLON_AND_SPACE);
-                    double ratio = adapter.getCalibRatio();
-                    buf.append(
-                        DecFormatter.twoDecimal(
-                            seg.getNumberOfPixels() * ratio * ratio * layer.getThickness()));
-                    buf.append(GuiUtils.HTML_BR);
-                  }
-                  buf.append(GuiUtils.HTML_END);
-                  return buf.toString();
-                }
-              };
+      Map<String, List<SegRegion<DicomImageElement>>> map =
+          SegRegion.groupRegions(specialElement.getSegAttributes().values());
+      for (List<SegRegion<DicomImageElement>> list : map.values()) {
+        if (list.size() == 1) {
+          SegRegion<DicomImageElement> region = list.getFirst();
+          DefaultMutableTreeNode node = buildStructRegionNode(region);
           nodeStructures.add(node);
-          initPathSelection(new TreePath(node.getPath()), contour.isVisible());
+          tree.setPathSelection(new TreePath(node.getPath()), region.isSelected());
+        } else {
+          GroupTreeNode node = new GroupTreeNode(list.getFirst().getPrefix(), true);
+          for (SegRegion<DicomImageElement> structRegion : list) {
+            DefaultMutableTreeNode childNode = buildStructRegionNode(structRegion);
+            node.add(childNode);
+            tree.setPathSelection(new TreePath(childNode.getPath()), structRegion.isSelected());
+          }
+          nodeStructures.add(node);
+          tree.setPathSelection(new TreePath(node.getPath()), true);
         }
       }
-      initPathSelection(new TreePath(nodeStructures.getPath()), specialElement.isVisible());
+      tree.setPathSelection(new TreePath(nodeStructures.getPath()), specialElement.isVisible());
 
       // Expand
-      expandTree(tree, rootNodeStructures);
+      TreeBuilder.expandTree(tree, rootNodeStructures, 2);
     } finally {
       initPathSelection = false;
     }
   }
 
-  private void initPathSelection(TreePath path, boolean selected) {
-    if (selected) {
-      tree.addCheckingPath(path);
-    } else {
-      tree.removeCheckingPath(path);
-    }
+  private DefaultMutableTreeNode buildStructRegionNode(SegRegion<DicomImageElement> contour) {
+    return new StructToolTipTreeNode(contour, false) {
+      @Override
+      public String getToolTipText() {
+        SegRegion<?> seg = (SegRegion) getUserObject();
+        StringBuilder buf = new StringBuilder();
+        buf.append(GuiUtils.HTML_START);
+        buf.append("<b>");
+        buf.append(seg.getLabel());
+        buf.append("</b>");
+        buf.append(GuiUtils.HTML_BR);
+        buf.append("Algorithm type");
+        buf.append(StringUtil.COLON_AND_SPACE);
+        buf.append(seg.getType());
+        buf.append(GuiUtils.HTML_BR);
+        buf.append("Voxel count");
+        buf.append(StringUtil.COLON_AND_SPACE);
+        buf.append(DecFormatter.allNumber(seg.getNumberOfPixels()));
+        buf.append(GuiUtils.HTML_BR);
+        SegMeasurableLayer<?> layer = seg.getMeasurableLayer();
+        if (layer != null) {
+          MeasurementsAdapter adapter =
+              layer.getMeasurementAdapter(layer.getSourceImage().getPixelSpacingUnit());
+          buf.append("Volume (%s3)".formatted(adapter.getUnit()));
+          buf.append(StringUtil.COLON_AND_SPACE);
+          double ratio = adapter.getCalibRatio();
+          buf.append(
+              DecFormatter.twoDecimal(
+                  seg.getNumberOfPixels() * ratio * ratio * layer.getThickness()));
+          buf.append(GuiUtils.HTML_BR);
+        }
+        buf.append(GuiUtils.HTML_END);
+        return buf.toString();
+      }
+    };
   }
 
   public void initTreeValues(ViewCanvas<?> viewCanvas) {
@@ -371,16 +375,5 @@ public class SegmentationTool extends PluginTool implements SeriesViewerListener
   @Override
   protected void changeToolWindowAnchor(CLocation clocation) {
     // TODO Auto-generated method stub
-  }
-
-  private static void expandTree(JTree tree, DefaultMutableTreeNode start) {
-    for (Enumeration children = start.children(); children.hasMoreElements(); ) {
-      DefaultMutableTreeNode dtm = (DefaultMutableTreeNode) children.nextElement();
-      if (!dtm.isLeaf()) {
-        TreePath tp = new TreePath(dtm.getPath());
-        tree.expandPath(tp);
-        expandTree(tree, dtm);
-      }
-    }
   }
 }

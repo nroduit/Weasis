@@ -33,6 +33,7 @@ import javax.swing.tree.TreePath;
 import org.weasis.core.Messages;
 import org.weasis.core.api.gui.Insertable;
 import org.weasis.core.api.gui.InsertableUtil;
+import org.weasis.core.ui.util.TreeBuilder;
 
 public abstract class AbstractWizardDialog extends JDialog {
 
@@ -181,7 +182,7 @@ public abstract class AbstractWizardDialog extends JDialog {
             }
           }
         });
-    expandTree(tree, pagesRoot, 2);
+    TreeBuilder.expandTree(tree, pagesRoot, 2);
   }
 
   protected void iniSubpages(DefaultMutableTreeNode node) {
@@ -218,21 +219,6 @@ public abstract class AbstractWizardDialog extends JDialog {
       }
     }
     return null;
-  }
-
-  public static void expandTree(JTree tree, DefaultMutableTreeNode start, int maxDeep) {
-    if (maxDeep > 1) {
-      Enumeration<?> children = start.children();
-      while (children.hasMoreElements()) {
-        Object child = children.nextElement();
-        if (child instanceof DefaultMutableTreeNode dtm && !dtm.isLeaf()) {
-          TreePath tp = new TreePath(dtm.getPath());
-          tree.expandPath(tp);
-
-          expandTree(tree, dtm, maxDeep - 1);
-        }
-      }
-    }
   }
 
   public void closeAllPages() {

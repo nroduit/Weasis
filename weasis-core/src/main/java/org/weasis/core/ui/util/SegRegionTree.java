@@ -222,4 +222,8 @@ public class SegRegionTree extends CheckboxTree {
         JOptionPane.PLAIN_MESSAGE,
         null);
   }
+
+  public void setPathSelection(TreePath path, boolean selected) {
+    TreeBuilder.setPathSelection(this, path, selected);
+  }
 }

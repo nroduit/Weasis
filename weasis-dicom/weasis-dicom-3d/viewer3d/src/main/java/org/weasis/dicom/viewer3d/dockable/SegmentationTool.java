@@ -18,7 +18,6 @@ import java.awt.Dimension;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.util.Collection;
-import java.util.Enumeration;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -27,14 +26,12 @@ import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
-import javax.swing.JTree;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 import net.miginfocom.swing.MigLayout;
 import org.dcm4che3.data.Tag;
 import org.weasis.core.api.gui.Insertable;
-import org.weasis.core.api.gui.Insertable.Type;
 import org.weasis.core.api.gui.util.DecFormatter;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.JSliderW;
@@ -50,6 +47,7 @@ import org.weasis.core.ui.editor.SeriesViewerEvent.EVENT;
 import org.weasis.core.ui.editor.SeriesViewerListener;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.editor.image.ViewCanvas;
+import org.weasis.core.ui.model.graphic.imp.seg.GroupTreeNode;
 import org.weasis.core.ui.model.graphic.imp.seg.SegContour;
 import org.weasis.core.ui.model.graphic.imp.seg.SegMeasurableLayer;
 import org.weasis.core.ui.model.graphic.imp.seg.SegRegion;
@@ -123,7 +121,7 @@ public class SegmentationTool extends PluginTool implements SeriesViewerListener
         });
     this.tree = new SegRegionTree(this);
     tree.setToolTipText(StringUtil.EMPTY_STRING);
-    tree.setCellRenderer(CheckBoxTreeBuilder.buildNoIconCheckboxTreeCellRenderer());
+    tree.setCellRenderer(TreeBuilder.buildNoIconCheckboxTreeCellRenderer());
 
     this.nodeStructures = new DefaultMutableTreeNode("List of regions", true);
     this.initData();
@@ -221,10 +219,10 @@ public class SegmentationTool extends PluginTool implements SeriesViewerListener
     tree.setShowsRootHandles(true);
     tree.setRootVisible(false);
     tree.setExpandsSelectedPaths(true);
-    tree.setCellRenderer(CheckBoxTreeBuilder.buildNoIconCheckboxTreeCellRenderer());
+    tree.setCellRenderer(TreeBuilder.buildNoIconCheckboxTreeCellRenderer());
     tree.addTreeCheckingListener(this::treeValueChanged);
 
-    expandTree(tree, rootNodeStructures);
+    TreeBuilder.expandTree(tree, rootNodeStructures, 2);
   }
 
   private void updateSlider() {
@@ -350,23 +348,16 @@ public class SegmentationTool extends PluginTool implements SeriesViewerListener
                 }
               };
           nodeStructures.add(node);
-          initPathSelection(new TreePath(node.getPath()), contour.isVisible());
+          TreeBuilder.setPathSelection(tree, new TreePath(node.getPath()), contour.isVisible());
         }
       }
-      initPathSelection(new TreePath(nodeStructures.getPath()), specialElement.isVisible());
+      TreeBuilder.setPathSelection(
+          tree, new TreePath(nodeStructures.getPath()), specialElement.isVisible());
 
       // Expand
-      expandTree(tree, rootNodeStructures);
+      TreeBuilder.expandTree(tree, rootNodeStructures, 2);
     } finally {
       initPathSelection = false;
-    }
-  }
-
-  private void initPathSelection(TreePath path, boolean selected) {
-    if (selected) {
-      tree.addCheckingPath(path);
-    } else {
-      tree.removeCheckingPath(path);
     }
   }
 
@@ -403,16 +394,5 @@ public class SegmentationTool extends PluginTool implements SeriesViewerListener
   @Override
   protected void changeToolWindowAnchor(CLocation clocation) {
     // TODO Auto-generated method stub
-  }
-
-  private static void expandTree(JTree tree, DefaultMutableTreeNode start) {
-    for (Enumeration children = start.children(); children.hasMoreElements(); ) {
-      DefaultMutableTreeNode dtm = (DefaultMutableTreeNode) children.nextElement();
-      if (!dtm.isLeaf()) {
-        TreePath tp = new TreePath(dtm.getPath());
-        tree.expandPath(tp);
-        expandTree(tree, dtm);
-      }
-    }
   }
 }
