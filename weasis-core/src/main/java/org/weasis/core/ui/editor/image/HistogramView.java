@@ -218,6 +218,16 @@ public class HistogramView extends JComponent
       measList.addAll(ImageRegionStatistics.getStatistics(hist[i].getData(), channel, i == 0));
     }
 
+    JPanel tableContainer = buildStatisticsTable(measList);
+    JOptionPane.showMessageDialog(
+        spinnerBins,
+        tableContainer,
+        Messages.getString("HistogramView.stats"),
+        JOptionPane.PLAIN_MESSAGE,
+        null);
+  }
+
+  public static JPanel buildStatisticsTable(List<MeasureItem> measList) {
     JPanel tableContainer = new JPanel();
     tableContainer.setLayout(new BorderLayout());
 
@@ -236,12 +246,7 @@ public class HistogramView extends JComponent
     jtable.setShowVerticalLines(true);
     jtable.getColumnModel().getColumn(0).setPreferredWidth(120);
     jtable.getColumnModel().getColumn(1).setPreferredWidth(80);
-    JOptionPane.showMessageDialog(
-        spinnerBins,
-        tableContainer,
-        Messages.getString("HistogramView.stats"),
-        JOptionPane.PLAIN_MESSAGE,
-        null);
+    return tableContainer;
   }
 
   private WindLevelParameters getWinLeveParameters() {
@@ -260,16 +265,7 @@ public class HistogramView extends JComponent
     if (view2DPane != null) {
       int channels = view2DPane.getSourceImage().channels();
       if (channels == 1) {
-        DisplayByteLut disLut = null;
-        OpManager dispOp = view2DPane.getDisplayOpManager();
-        PseudoColorOp lutOp = (PseudoColorOp) dispOp.getNode(PseudoColorOp.OP_NAME);
-        if (lutOp != null) {
-          ByteLut lutTable = (ByteLut) lutOp.getParam(PseudoColorOp.P_LUT);
-          if (lutTable != null && lutTable.lutTable() != null) {
-            disLut = new DisplayByteLut(lutTable);
-          }
-        }
-
+        DisplayByteLut disLut = buildDisplayByteLut(view2DPane);
         if (disLut == null) {
           disLut = new DisplayByteLut(Model.GRAY.getByteLut()[0]);
         }
@@ -286,6 +282,19 @@ public class HistogramView extends JComponent
       }
     }
     return lut;
+  }
+
+  public static DisplayByteLut buildDisplayByteLut(ViewCanvas<?> view2DPane) {
+    DisplayByteLut disLut = null;
+    OpManager dispOp = view2DPane.getDisplayOpManager();
+    PseudoColorOp lutOp = (PseudoColorOp) dispOp.getNode(PseudoColorOp.OP_NAME);
+    if (lutOp != null) {
+      ByteLut lutTable = (ByteLut) lutOp.getParam(PseudoColorOp.P_LUT);
+      if (lutTable != null && lutTable.lutTable() != null) {
+        disLut = new DisplayByteLut(lutTable);
+      }
+    }
+    return disLut;
   }
 
   private Model getSelectedColorModel(int channels) {

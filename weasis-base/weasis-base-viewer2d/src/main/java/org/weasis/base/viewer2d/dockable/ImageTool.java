@@ -21,7 +21,6 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSpinner;
 import javax.swing.JToggleButton;
-import javax.swing.JViewport;
 import javax.swing.border.Border;
 import org.weasis.base.viewer2d.EventManager;
 import org.weasis.base.viewer2d.Messages;
@@ -62,15 +61,7 @@ public class ImageTool extends PluginTool {
 
   @Override
   public Component getToolComponent() {
-    JViewport viewPort = rootPane.getViewport();
-    if (viewPort == null) {
-      viewPort = new JViewport();
-      rootPane.setViewport(viewPort);
-    }
-    if (viewPort.getView() != this) {
-      viewPort.setView(this);
-    }
-    return rootPane;
+    return getToolComponentFromJScrollPane(rootPane);
   }
 
   public JPanel getResetPanel() {

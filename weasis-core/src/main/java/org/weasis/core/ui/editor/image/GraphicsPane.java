@@ -44,7 +44,7 @@ import org.weasis.core.util.LangUtil;
  *
  * @author Nicolas Roduit
  */
-public class GraphicsPane extends JComponent implements Canvas {
+public abstract class GraphicsPane extends JComponent implements Canvas {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(GraphicsPane.class);
 
@@ -81,15 +81,13 @@ public class GraphicsPane extends JComponent implements Canvas {
     Objects.requireNonNull(graphicManager);
     GraphicModel graphicManagerOld = this.graphicManager;
     if (!Objects.equals(graphicManager, graphicManagerOld)) {
-      graphicManagerOld.removeChangeListener(layerModelHandler);
-      graphicManagerOld.removeGraphicChangeHandler(graphicsChangeHandler);
-      graphicManagerOld.deleteNonSerializableGraphics();
+      removeGraphicManager(graphicManagerOld, layerModelHandler);
       this.graphicManager = graphicManager;
-      this.graphicManager.addGraphicChangeHandler(graphicsChangeHandler);
+      graphicManager.addGraphicChangeHandler(graphicsChangeHandler);
       if (this instanceof ViewCanvas<?> viewCanvas) {
-        this.graphicManager.updateLabels(Boolean.TRUE, viewCanvas);
+        graphicManager.updateLabels(Boolean.TRUE, viewCanvas);
       }
-      this.graphicManager.addChangeListener(layerModelHandler);
+      graphicManager.addChangeListener(layerModelHandler);
       firePropertyChange("graphicManager", graphicManagerOld, this.graphicManager);
     }
   }
@@ -123,8 +121,7 @@ public class GraphicsPane extends JComponent implements Canvas {
     Optional.ofNullable(viewModel)
         .ifPresent(model -> model.removeViewModelChangeListener(viewModelHandler));
     // Unregister listener
-    graphicManager.removeChangeListener(layerModelHandler);
-    graphicManager.removeGraphicChangeHandler(graphicsChangeHandler);
+    removeGraphicManager(graphicManager, layerModelHandler);
   }
 
   /**

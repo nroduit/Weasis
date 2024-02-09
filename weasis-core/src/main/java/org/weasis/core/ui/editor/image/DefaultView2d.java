@@ -49,12 +49,10 @@ import org.slf4j.LoggerFactory;
 import org.weasis.core.Messages;
 import org.weasis.core.api.gui.Image2DViewer;
 import org.weasis.core.api.gui.model.ViewModel;
-import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.Feature;
 import org.weasis.core.api.gui.util.Filter;
 import org.weasis.core.api.gui.util.GuiUtils;
-import org.weasis.core.api.gui.util.SliderChangeListener;
 import org.weasis.core.api.gui.util.SliderCineListener;
 import org.weasis.core.api.image.AffineTransformOp;
 import org.weasis.core.api.image.FilterOp;
@@ -78,8 +76,6 @@ import org.weasis.core.api.util.FontItem;
 import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.api.util.ResourceUtil.ActionIcon;
 import org.weasis.core.ui.docking.DockableTool;
-import org.weasis.core.ui.editor.SeriesViewerEvent;
-import org.weasis.core.ui.editor.SeriesViewerEvent.EVENT;
 import org.weasis.core.ui.editor.image.SynchData.Mode;
 import org.weasis.core.ui.editor.image.dockable.MeasureTool;
 import org.weasis.core.ui.model.AbstractGraphicModel;
@@ -629,26 +625,14 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     return viewScale;
   }
 
-  protected double adjustViewScale(double viewScale) {
+  public double adjustViewScale(double viewScale) {
     double ratio = viewScale;
     if (ratio < DefaultViewModel.SCALE_MIN) {
       ratio = DefaultViewModel.SCALE_MIN;
     } else if (ratio > DefaultViewModel.SCALE_MAX) {
       ratio = DefaultViewModel.SCALE_MAX;
     }
-    Optional<SliderChangeListener> zoom = eventManager.getAction(ActionW.ZOOM);
-    if (zoom.isPresent()) {
-      SliderChangeListener z = zoom.get();
-      // Adjust the best fit value according to the possible range of the model zoom action.
-      if (eventManager.getSelectedViewPane() == this) {
-        // Set back the value to UI components as this value cannot be computed early.
-        z.setRealValue(ratio, false);
-        ratio = z.getRealValue();
-      } else {
-        ratio = z.toModelValue(z.toSliderValue(ratio));
-      }
-    }
-    return ratio;
+    return adjustViewScale(eventManager, ratio);
   }
 
   @Override
@@ -824,7 +808,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     drawLayers(g2d, affineTransform, inverseTransform);
     g2d.translate(-p.getX(), -p.getY());
 
-    drawPointer(g2d);
+    drawPointer(g2d, pointerType);
     drawAffineInvariant(g2d);
     if (infoLayer != null) {
       g2d.setFont(getLayerFont());
@@ -862,24 +846,10 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
 
   @Override
   public void zoom(Double viewScale) {
-    boolean defSize = MathUtil.isEqualToZero(viewScale);
-    double ratio = viewScale;
-    if (defSize) {
-      ZoomType type = (ZoomType) actionsInView.get(ZOOM_TYPE_CMD);
-      if (ZoomType.BEST_FIT.equals(type)) {
-        ratio = -getBestFitViewScale();
-      } else if (ZoomType.REAL.equals(type)) {
-        ratio = -getRealWorldViewScale();
-      }
-
-      if (MathUtil.isEqualToZero(ratio)) {
-        ratio = -adjustViewScale(1.0);
-      }
-    }
-
+    double ratio = getZoomRatioFromType(viewScale);
     actionsInView.put(ActionW.ZOOM.cmd(), ratio);
     super.zoom(Math.abs(ratio));
-    if (defSize) {
+    if (MathUtil.isEqualToZero(viewScale)) {
       /*
        * If the view has not been repainted once (the width and the height of the view is 0), it will be done
        * later and the componentResized event will call again the zoom.
@@ -1180,54 +1150,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
 
   @Override
   public void keyPressed(KeyEvent e) {
-    if (e.isControlDown() && e.getKeyCode() == KeyEvent.VK_SPACE) {
-      eventManager.nextLeftMouseAction();
-    } else if (e.getModifiers() == 0
-        && (e.getKeyCode() == KeyEvent.VK_SPACE || e.getKeyCode() == KeyEvent.VK_I)) {
-      eventManager.fireSeriesViewerListeners(
-          new SeriesViewerEvent(
-              eventManager.getSelectedView2dContainer(), null, null, EVENT.TOGGLE_INFO));
-    } else if (e.isAltDown() && e.getKeyCode() == KeyEvent.VK_L) {
-      // Counterclockwise
-      eventManager
-          .getAction(ActionW.ROTATION)
-          .ifPresent(a -> a.setSliderValue((a.getSliderValue() + 270) % 360));
-    } else if (e.isAltDown() && e.getKeyCode() == KeyEvent.VK_R) {
-      // Clockwise
-      eventManager
-          .getAction(ActionW.ROTATION)
-          .ifPresent(a -> a.setSliderValue((a.getSliderValue() + 90) % 360));
-    } else if (e.isAltDown() && e.getKeyCode() == KeyEvent.VK_F) {
-      // Flip horizontal
-      eventManager.getAction(ActionW.FLIP).ifPresent(f -> f.setSelected(!f.isSelected()));
-    } else {
-      Optional<Feature<? extends ActionState>> feature =
-          eventManager.getLeftMouseActionFromKeyEvent(e.getKeyCode(), e.getModifiers());
-      if (feature.isPresent()) {
-        eventManager.changeLeftMouseAction(feature.get().cmd());
-      } else {
-        eventManager.keyPressed(e);
-      }
-    }
-  }
-
-  private void drawPointer(Graphics2D g) {
-    if (pointerType < 1) {
-      return;
-    }
-    if ((pointerType & CENTER_POINTER) == CENTER_POINTER) {
-      drawPointer(g, (getWidth() - 1) * 0.5, (getHeight() - 1) * 0.5, false);
-    }
-    if ((pointerType & HIGHLIGHTED_POINTER) == HIGHLIGHTED_POINTER
-        && highlightedPosition.isHighlightedPosition()) {
-      // Display the position in the center of the pixel (constant position even with a high zoom
-      // factor)
-      double offsetX =
-          modelToViewLength(highlightedPosition.getX() + 0.5 - viewModel.getModelOffsetX());
-      double offsetY =
-          modelToViewLength(highlightedPosition.getY() + 0.5 - viewModel.getModelOffsetY());
-      drawPointer(g, offsetX, offsetY, true);
-    }
+    defaultKeyPressed(eventManager, e);
   }
 
   @Override

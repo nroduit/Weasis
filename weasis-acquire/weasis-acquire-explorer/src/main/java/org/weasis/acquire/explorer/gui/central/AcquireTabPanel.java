@@ -76,17 +76,7 @@ public class AcquireTabPanel extends JPanel {
         setSelected(selected);
       }
     } else {
-      // Create series list
-      btnMap.put(seriesGroup, imageInfos);
-
-      SeriesButton btn = new SeriesButton(seriesGroup, this);
-      btnGrp.add(btn);
-      seriesList.addButton(btn);
-
-      if (selected == null) {
-        btnGrp.setSelected(btn.getModel(), true);
-        setSelected(btn);
-      }
+      createSeriesList(seriesGroup, imageInfos);
     }
   }
 
@@ -101,17 +91,20 @@ public class AcquireTabPanel extends JPanel {
         setSelected(selected);
       }
     } else {
-      // Create series list
-      btnMap.put(seriesGroup, imageInfos);
+      createSeriesList(seriesGroup, imageInfos);
+    }
+  }
 
-      SeriesButton btn = new SeriesButton(seriesGroup, this);
-      btnGrp.add(btn);
-      seriesList.addButton(btn);
+  private void createSeriesList(SeriesGroup seriesGroup, List<AcquireImageInfo> imageInfos) {
+    btnMap.put(seriesGroup, imageInfos);
 
-      if (selected == null) {
-        btnGrp.setSelected(btn.getModel(), true);
-        setSelected(btn);
-      }
+    SeriesButton btn = new SeriesButton(seriesGroup, this);
+    btnGrp.add(btn);
+    seriesList.addButton(btn);
+
+    if (selected == null) {
+      btnGrp.setSelected(btn.getModel(), true);
+      setSelected(btn);
     }
   }
 

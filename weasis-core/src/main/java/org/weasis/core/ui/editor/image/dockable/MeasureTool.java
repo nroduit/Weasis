@@ -32,7 +32,6 @@ import javax.swing.JScrollPane;
 import javax.swing.JSpinner;
 import javax.swing.JTable;
 import javax.swing.JToggleButton;
-import javax.swing.JViewport;
 import javax.swing.SwingUtilities;
 import javax.swing.table.TableModel;
 import org.weasis.core.Messages;
@@ -204,15 +203,7 @@ public class MeasureTool extends PluginTool implements GraphicSelectionListener 
 
   @Override
   public Component getToolComponent() {
-    JViewport viewPort = rootPane.getViewport();
-    if (viewPort == null) {
-      viewPort = new JViewport();
-      rootPane.setViewport(viewPort);
-    }
-    if (viewPort.getView() != this) {
-      viewPort.setView(this);
-    }
-    return rootPane;
+    return getToolComponentFromJScrollPane(rootPane);
   }
 
   @Override

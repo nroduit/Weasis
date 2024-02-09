@@ -9,15 +9,23 @@
  */
 package org.weasis.core.ui.editor.image;
 
+import static org.weasis.core.ui.editor.image.ViewCanvas.ZOOM_TYPE_CMD;
+
 import java.awt.Point;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.beans.PropertyChangeListener;
 import java.util.Map;
+import java.util.Optional;
 import javax.swing.JComponent;
 import org.weasis.core.api.gui.model.ViewModel;
+import org.weasis.core.api.gui.util.ActionW;
+import org.weasis.core.api.gui.util.SliderChangeListener;
+import org.weasis.core.ui.editor.image.DefaultView2d.ZoomType;
 import org.weasis.core.ui.model.GraphicModel;
+import org.weasis.core.ui.model.layer.GraphicModelChangeListener;
+import org.weasis.core.util.MathUtil;
 
 public interface Canvas {
 
@@ -54,6 +62,8 @@ public interface Canvas {
    */
   void zoom(Double viewScale);
 
+  double getRealWorldViewScale();
+
   /**
    * Get the image scale factor witch matches to the dimension of the view
    *
@@ -88,4 +98,50 @@ public interface Canvas {
   Rectangle2D getImageViewBounds(double viewportWidth, double viewportHeight);
 
   DrawingsKeyListeners getDrawingsKeyListeners();
+
+  double adjustViewScale(double viewScale);
+
+  default double adjustViewScale(ImageViewerEventManager<?> eventManager, double viewScale) {
+    double ratio = viewScale;
+    Optional<SliderChangeListener> zoom = eventManager.getAction(ActionW.ZOOM);
+    if (zoom.isPresent()) {
+      SliderChangeListener z = zoom.get();
+      // Adjust the best fit value according to the possible range of the model zoom action.
+      if (eventManager.getSelectedViewPane() == this) {
+        // Set back the value to UI components as this value cannot be computed early.
+        z.setRealValue(ratio, false);
+        ratio = z.getRealValue();
+      } else {
+        ratio = z.toModelValue(z.toSliderValue(ratio));
+      }
+    }
+    return ratio;
+  }
+
+  default void removeGraphicManager(
+      GraphicModel graphicManager, GraphicModelChangeListener layerModelHandler) {
+    if (graphicManager != null) {
+      graphicManager.removeChangeListener(layerModelHandler);
+      graphicManager.removeGraphicChangeHandler(getGraphicsChangeHandler());
+      graphicManager.deleteNonSerializableGraphics();
+    }
+  }
+
+  default double getZoomRatioFromType(Double viewScale) {
+    boolean defSize = MathUtil.isEqualToZero(viewScale);
+    double ratio = viewScale;
+    if (defSize) {
+      ZoomType type = (ZoomType) getActionsInView().get(ZOOM_TYPE_CMD);
+      if (ZoomType.BEST_FIT.equals(type)) {
+        ratio = -getBestFitViewScale();
+      } else if (ZoomType.REAL.equals(type)) {
+        ratio = -getRealWorldViewScale();
+      }
+
+      if (MathUtil.isEqualToZero(ratio)) {
+        ratio = -adjustViewScale(1.0);
+      }
+    }
+    return ratio;
+  }
 }

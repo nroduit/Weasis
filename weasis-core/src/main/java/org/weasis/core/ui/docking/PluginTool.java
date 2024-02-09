@@ -19,6 +19,8 @@ import bibliothek.gui.dock.common.mode.ExtendedMode;
 import java.awt.Component;
 import java.util.UUID;
 import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JViewport;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.gui.util.GuiUtils;
 
@@ -94,6 +96,18 @@ public abstract class PluginTool extends JPanel implements DockableTool {
   @Override
   public Component getToolComponent() {
     return this;
+  }
+
+  protected Component getToolComponentFromJScrollPane(JScrollPane rootPane) {
+    JViewport viewPort = rootPane.getViewport();
+    if (viewPort == null) {
+      viewPort = new JViewport();
+      rootPane.setViewport(viewPort);
+    }
+    if (viewPort.getView() != this) {
+      viewPort.setView(this);
+    }
+    return rootPane;
   }
 
   @Override

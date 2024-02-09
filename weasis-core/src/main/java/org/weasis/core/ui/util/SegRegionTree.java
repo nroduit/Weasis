@@ -25,8 +25,8 @@ import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.JSliderW;
 import org.weasis.core.api.image.util.MeasurableLayer;
 import org.weasis.core.ui.dialog.PropertiesDialog;
+import org.weasis.core.ui.editor.image.HistogramView;
 import org.weasis.core.ui.editor.image.ImageRegionStatistics;
-import org.weasis.core.ui.editor.image.dockable.MeasureTool;
 import org.weasis.core.ui.model.graphic.imp.seg.GroupTreeNode;
 import org.weasis.core.ui.model.graphic.imp.seg.SegContour;
 import org.weasis.core.ui.model.graphic.imp.seg.SegRegion;
@@ -217,24 +217,7 @@ public class SegRegionTree extends CheckboxTree {
     List<MeasureItem> measList =
         ImageRegionStatistics.getImageStatistics(contour.getSegGraphic(), layer, true);
 
-    JPanel tableContainer = new JPanel();
-    tableContainer.setLayout(new BorderLayout());
-
-    JTable jtable =
-        MeasureTool.createMultipleRenderingTable(
-            new SimpleTableModel(new String[] {}, new Object[][] {}));
-    jtable.getTableHeader().setReorderingAllowed(false);
-
-    String[] headers = {
-      Messages.getString("MeasureTool.param"), Messages.getString("MeasureTool.val")
-    };
-    jtable.setModel(new SimpleTableModel(headers, MeasureTool.getLabels(measList)));
-    jtable.getColumnModel().getColumn(1).setCellRenderer(new TableNumberRenderer());
-    tableContainer.add(jtable.getTableHeader(), BorderLayout.PAGE_START);
-    tableContainer.add(jtable, BorderLayout.CENTER);
-    jtable.setShowVerticalLines(true);
-    jtable.getColumnModel().getColumn(0).setPreferredWidth(120);
-    jtable.getColumnModel().getColumn(1).setPreferredWidth(80);
+    JPanel tableContainer = HistogramView.buildStatisticsTable(measList);
     JOptionPane.showMessageDialog(
         this.getParent(),
         tableContainer,

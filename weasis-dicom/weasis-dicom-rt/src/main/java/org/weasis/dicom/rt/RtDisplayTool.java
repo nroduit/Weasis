@@ -447,47 +447,35 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener, S
   public void initStructureTree() {
     this.treeStructures.getCheckingModel().setCheckingMode(TreeCheckingModel.CheckingMode.SIMPLE);
     this.treeStructures.setVisible(false);
-    DefaultTreeModel model = new DefaultTreeModel(rootNodeStructures, false);
-    treeStructures.setModel(model);
-
-    rootNodeStructures.add(nodeStructures);
-    TreePath rootPath = new TreePath(rootNodeStructures.getPath());
-    treeStructures.addCheckingPath(rootPath);
-    treeStructures.setShowsRootHandles(true);
-    treeStructures.setRootVisible(false);
-    treeStructures.setExpandsSelectedPaths(true);
-    treeStructures.setCellRenderer(TreeBuilder.buildNoIconCheckboxTreeCellRenderer());
-    treeStructures.addTreeCheckingListener(this::treeValueChanged);
-
-    TreeBuilder.expandTree(treeStructures, rootNodeStructures, 2);
-    Dimension minimumSize = GuiUtils.getDimension(150, 150);
-    JScrollPane scrollPane = new JScrollPane(treeStructures);
-    scrollPane.setMinimumSize(minimumSize);
-    scrollPane.setPreferredSize(minimumSize);
-    tabbedPane.add(scrollPane, nodeStructures.toString());
+    buildTreeModel(rootNodeStructures, treeStructures, nodeStructures);
   }
 
   public void initIsodosesTree() {
     this.treeIsodoses.getCheckingModel().setCheckingMode(TreeCheckingModel.CheckingMode.SIMPLE);
     this.treeIsodoses.setVisible(false);
-    DefaultTreeModel model = new DefaultTreeModel(rootNodeIsodoses, false);
-    treeIsodoses.setModel(model);
+    buildTreeModel(rootNodeIsodoses, treeIsodoses, nodeIsodoses);
+  }
 
-    rootNodeIsodoses.add(nodeIsodoses);
-    TreePath rootPath = new TreePath(rootNodeIsodoses.getPath());
-    treeIsodoses.addCheckingPath(rootPath);
-    treeIsodoses.setShowsRootHandles(true);
-    treeIsodoses.setRootVisible(false);
-    treeIsodoses.setExpandsSelectedPaths(true);
-    treeIsodoses.setCellRenderer(TreeBuilder.buildNoIconCheckboxTreeCellRenderer());
-    treeIsodoses.addTreeCheckingListener(this::treeValueChanged);
+  private void buildTreeModel(
+      DefaultMutableTreeNode rootNode, SegRegionTree tree, GroupTreeNode groupTreeNode) {
+    DefaultTreeModel model = new DefaultTreeModel(rootNode, false);
+    tree.setModel(model);
 
-    TreeBuilder.expandTree(treeIsodoses, rootNodeIsodoses, 2);
+    rootNode.add(groupTreeNode);
+    TreePath rootPath = new TreePath(rootNode.getPath());
+    tree.addCheckingPath(rootPath);
+    tree.setShowsRootHandles(true);
+    tree.setRootVisible(false);
+    tree.setExpandsSelectedPaths(true);
+    tree.setCellRenderer(TreeBuilder.buildNoIconCheckboxTreeCellRenderer());
+    tree.addTreeCheckingListener(this::treeValueChanged);
+
+    TreeBuilder.expandTree(tree, rootNode, 2);
     Dimension minimumSize = GuiUtils.getDimension(150, 150);
-    JScrollPane scrollPane = new JScrollPane(treeIsodoses);
+    JScrollPane scrollPane = new JScrollPane(tree);
     scrollPane.setMinimumSize(minimumSize);
     scrollPane.setPreferredSize(minimumSize);
-    tabbedPane.add(scrollPane, nodeIsodoses.toString());
+    tabbedPane.add(scrollPane, groupTreeNode.toString());
   }
 
   private void updateSlider() {
@@ -870,15 +858,7 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener, S
 
   @Override
   public Component getToolComponent() {
-    JViewport viewPort = rootPane.getViewport();
-    if (viewPort == null) {
-      viewPort = new JViewport();
-      rootPane.setViewport(viewPort);
-    }
-    if (viewPort.getView() != this) {
-      viewPort.setView(this);
-    }
-    return rootPane;
+    return getToolComponentFromJScrollPane(rootPane);
   }
 
   @Override

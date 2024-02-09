@@ -331,14 +331,8 @@ public abstract class AbstractThumbnailList<E extends MediaElement> extends JLis
         }
       }
       if (!list.isEmpty()) {
-        Map<String, Object> props = Collections.synchronizedMap(new HashMap<>());
-        props.put(ViewerPluginBuilder.CMP_ENTRY_BUILD_NEW_VIEWER, compareEntryToBuildNewViewer);
-        props.put(ViewerPluginBuilder.BEST_DEF_LAYOUT, bestDefaultLayout);
-        props.put(ViewerPluginBuilder.SCREEN_BOUND, null);
-        if (inSelView) {
-          props.put(ViewerPluginBuilder.ADD_IN_SELECTED_VIEW, true);
-        }
-
+        Map<String, Object> props =
+            buildPropertiesMap(compareEntryToBuildNewViewer, bestDefaultLayout, inSelView);
         ArrayList<String> mimes = new ArrayList<>();
         for (MediaSeries s : list) {
           String mime = s.getMimeType();
@@ -363,6 +357,18 @@ public abstract class AbstractThumbnailList<E extends MediaElement> extends JLis
         }
       }
     }
+  }
+
+  private Map<String, Object> buildPropertiesMap(
+      boolean compareEntryToBuildNewViewer, boolean bestDefaultLayout, boolean inSelView) {
+    Map<String, Object> props = Collections.synchronizedMap(new HashMap<>());
+    props.put(ViewerPluginBuilder.CMP_ENTRY_BUILD_NEW_VIEWER, compareEntryToBuildNewViewer);
+    props.put(ViewerPluginBuilder.BEST_DEF_LAYOUT, bestDefaultLayout);
+    props.put(ViewerPluginBuilder.SCREEN_BOUND, null);
+    if (inSelView) {
+      props.put(ViewerPluginBuilder.ADD_IN_SELECTED_VIEW, true);
+    }
+    return props;
   }
 
   public void openGroup(
@@ -424,13 +430,8 @@ public abstract class AbstractThumbnailList<E extends MediaElement> extends JLis
         }
       }
 
-      Map<String, Object> props = Collections.synchronizedMap(new HashMap<>());
-      props.put(ViewerPluginBuilder.CMP_ENTRY_BUILD_NEW_VIEWER, compareEntryToBuildNewViewer);
-      props.put(ViewerPluginBuilder.BEST_DEF_LAYOUT, bestDefaultLayout);
-      props.put(ViewerPluginBuilder.SCREEN_BOUND, null);
-      if (inSelView) {
-        props.put(ViewerPluginBuilder.ADD_IN_SELECTED_VIEW, true);
-      }
+      Map<String, Object> props =
+          buildPropertiesMap(compareEntryToBuildNewViewer, bestDefaultLayout, inSelView);
 
       for (Entry<SeriesViewerFactory, List<MediaSeries<MediaElement>>> item : plugins.entrySet()) {
         ViewerPluginBuilder builder =

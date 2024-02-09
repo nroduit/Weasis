@@ -839,17 +839,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
         if (frames < 1) {
           initialSeries.addMedia((DicomImageElement) media);
         } else {
-          Modality modality =
-              Modality.getModality(TagD.getTagValue(initialSeries, Tag.Modality, String.class));
-
-          SplittingModalityRules splitRules =
-              splittingRules.getSplittingModalityRules(modality, Modality.DEFAULT);
-          List<Rule> rules;
-          if (splitRules == null) {
-            rules = Collections.emptyList();
-          } else {
-            rules = frames > 1 ? splitRules.getMultiFrameRules() : splitRules.getSingleFrameRules();
-          }
+          List<Rule> rules = buildRules(initialSeries, frames);
           // If similar add to the original series
           if (isSimilar(rules, initialSeries, media)) {
             initialSeries.addMedia((DicomImageElement) media);
@@ -881,6 +871,21 @@ public class DicomModel implements TreeModel, DataExplorerModel {
       }
     }
     return false;
+  }
+
+  private List<Rule> buildRules(DicomSeries initialSeries, int frames) {
+    Modality modality =
+        Modality.getModality(TagD.getTagValue(initialSeries, Tag.Modality, String.class));
+
+    SplittingModalityRules splitRules =
+        splittingRules.getSplittingModalityRules(modality, Modality.DEFAULT);
+    List<Rule> rules;
+    if (splitRules == null) {
+      rules = Collections.emptyList();
+    } else {
+      rules = frames > 1 ? splitRules.getMultiFrameRules() : splitRules.getSingleFrameRules();
+    }
+    return rules;
   }
 
   private void splitSpecialElement(
@@ -939,16 +944,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
     } else {
       String seriesUID = TagD.getTagValue(original, Tag.SeriesInstanceUID, String.class);
 
-      Modality modality =
-          Modality.getModality(TagD.getTagValue(original, Tag.Modality, String.class));
-      SplittingModalityRules splitRules =
-          splittingRules.getSplittingModalityRules(modality, Modality.DEFAULT);
-      List<Rule> rules;
-      if (splitRules == null) {
-        rules = Collections.emptyList();
-      } else {
-        rules = frames > 1 ? splitRules.getMultiFrameRules() : splitRules.getSingleFrameRules();
-      }
+      List<Rule> rules = buildRules(original, frames);
       // If similar add to the original series
       if (isSimilar(rules, original, media)) {
         original.addMedia(media);

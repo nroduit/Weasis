@@ -25,7 +25,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import org.osgi.service.prefs.Preferences;
 import org.weasis.core.api.gui.util.DecFormatter;
 import org.weasis.core.api.image.OpManager;
-import org.weasis.core.api.image.PseudoColorOp;
 import org.weasis.core.api.image.WindowOp;
 import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.api.media.data.ImageElement;
@@ -33,13 +32,13 @@ import org.weasis.core.api.service.BundlePreferences;
 import org.weasis.core.api.util.FontTools;
 import org.weasis.core.ui.editor.image.DisplayByteLut;
 import org.weasis.core.ui.editor.image.HistogramData;
+import org.weasis.core.ui.editor.image.HistogramView;
 import org.weasis.core.ui.editor.image.PixelInfo;
 import org.weasis.core.ui.editor.image.ViewButton;
 import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.model.utils.imp.DefaultUUID;
 import org.weasis.core.ui.pref.ViewSetting;
 import org.weasis.core.util.StringUtil;
-import org.weasis.opencv.op.lut.ByteLut;
 import org.weasis.opencv.op.lut.ColorLut;
 import org.weasis.opencv.op.lut.WlParams;
 
@@ -350,16 +349,7 @@ public abstract class AbstractInfoLayer<E extends ImageElement> extends DefaultU
     if (view2DPane != null) {
       int channels = view2DPane.getSourceImage().channels();
       if (channels == 1) {
-        DisplayByteLut disLut = null;
-        OpManager dispOp = view2DPane.getDisplayOpManager();
-        PseudoColorOp lutOp = (PseudoColorOp) dispOp.getNode(PseudoColorOp.OP_NAME);
-        if (lutOp != null) {
-          ByteLut lutTable = (ByteLut) lutOp.getParam(PseudoColorOp.P_LUT);
-          if (lutTable != null && lutTable.lutTable() != null) {
-            disLut = new DisplayByteLut(lutTable);
-          }
-        }
-
+        DisplayByteLut disLut = HistogramView.buildDisplayByteLut(view2DPane);
         if (disLut == null) {
           disLut = new DisplayByteLut(ColorLut.GRAY.getByteLut());
         }
