@@ -45,6 +45,7 @@ import org.weasis.core.ui.editor.SeriesViewerEvent.EVENT;
 import org.weasis.core.ui.editor.SeriesViewerListener;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.editor.image.ViewCanvas;
+import org.weasis.core.ui.model.graphic.imp.seg.GroupTreeNode;
 import org.weasis.core.ui.model.graphic.imp.seg.SegContour;
 import org.weasis.core.ui.model.graphic.imp.seg.SegMeasurableLayer;
 import org.weasis.core.ui.model.graphic.imp.seg.SegRegion;
@@ -75,7 +76,7 @@ public class SegmentationTool extends PluginTool implements SeriesViewerListener
       new DefaultMutableTreeNode("rootNode", true); // NON-NLS
   private final JComboBox<SegSpecialElement> comboSeg = new JComboBox<>();
 
-  private final DefaultMutableTreeNode nodeStructures;
+  private final GroupTreeNode nodeStructures;
   private final transient ItemListener structureChangeListener =
       e -> {
         if (e.getStateChange() == ItemEvent.SELECTED) {
@@ -214,7 +215,9 @@ public class SegmentationTool extends PluginTool implements SeriesViewerListener
     if (seg != null) {
       seg.setVisible(all);
     }
-    tree.updateVisibleNode(rootNodeStructures, all);
+
+    nodeStructures.setSelected(all);
+    tree.updateVisibleNode(rootNodeStructures, nodeStructures);
 
     ImageViewerPlugin<DicomImageElement> container =
         EventManager.getInstance().getSelectedView2dContainer();

@@ -18,7 +18,6 @@ import org.weasis.opencv.seg.Segment;
 
 public class SegContour extends Region {
   private double[] points;
-  ;
 
   public SegContour(String id, List<Segment> segmentList) {
     super(id, segmentList);

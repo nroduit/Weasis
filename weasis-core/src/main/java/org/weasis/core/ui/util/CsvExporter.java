@@ -12,6 +12,7 @@ package org.weasis.core.ui.util;
 import java.awt.Toolkit;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.StringSelection;
+import org.weasis.core.util.StringUtil;
 
 public class CsvExporter {
   public static final char separator = ',';
@@ -28,13 +29,17 @@ public class CsvExporter {
   }
 
   public void addQuotedName(String name) {
-    sb.append(quote);
-    sb.append(name);
-    sb.append(quote);
+    if (StringUtil.hasText(name)) {
+      sb.append(quote);
+      sb.append(name);
+      sb.append(quote);
+    }
   }
 
   public void adName(String name) {
-    sb.append(name);
+    if (StringUtil.hasText(name)) {
+      sb.append(name);
+    }
   }
 
   public StringBuilder getBuilder() {

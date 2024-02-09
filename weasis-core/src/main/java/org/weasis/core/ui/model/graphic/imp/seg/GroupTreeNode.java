@@ -9,27 +9,19 @@
  */
 package org.weasis.core.ui.model.graphic.imp.seg;
 
-import java.awt.Color;
-import org.weasis.core.api.media.data.ImageElement;
-import org.weasis.opencv.seg.RegionAttributes;
+import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.TreeNode;
 
-public class SegRegion<E extends ImageElement> extends RegionAttributes {
-
-  private SegMeasurableLayer<E> measurableLayer;
+public class GroupTreeNode extends DefaultMutableTreeNode {
   private boolean selected;
 
-  public SegRegion(int id, String label, Color color) {
-    super(id, label, color);
+  public GroupTreeNode(Object userObject) {
+    this(userObject, true);
+  }
+
+  public GroupTreeNode(Object userObject, boolean allowsChildren) {
+    super(userObject, allowsChildren);
     this.selected = true;
-    resetPixelCount();
-  }
-
-  public SegMeasurableLayer<E> getMeasurableLayer() {
-    return measurableLayer;
-  }
-
-  public void setMeasurableLayer(SegMeasurableLayer<E> measurableLayer) {
-    this.measurableLayer = measurableLayer;
   }
 
   public boolean isSelected() {
@@ -38,5 +30,19 @@ public class SegRegion<E extends ImageElement> extends RegionAttributes {
 
   public void setSelected(boolean selected) {
     this.selected = selected;
+  }
+
+  public boolean isParentVisible() {
+    if (!selected) {
+      return false;
+    }
+    TreeNode node = getParent();
+    while (node instanceof GroupTreeNode group) {
+      if (!group.isSelected()) {
+        return false;
+      }
+      node = node.getParent();
+    }
+    return true;
   }
 }

@@ -47,9 +47,9 @@ import org.weasis.core.ui.editor.SeriesViewerEvent;
 import org.weasis.core.ui.editor.SeriesViewerListener;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.editor.image.ViewCanvas;
+import org.weasis.core.ui.model.graphic.imp.seg.GroupTreeNode;
 import org.weasis.core.ui.model.graphic.imp.seg.SegContour;
 import org.weasis.core.ui.model.graphic.imp.seg.SegRegion;
-import org.weasis.core.ui.util.CheckBoxTreeBuilder;
 import org.weasis.core.ui.util.SegRegionTool;
 import org.weasis.core.ui.util.SegRegionTree;
 import org.weasis.core.ui.util.StructToolTipTreeNode;
@@ -95,8 +95,8 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener, S
   private final JLabel lblRtPlanDose = new JLabel(Messages.getString("dose") + StringUtil.COLON);
   private final JTextField txtRtPlanDoseValue = new JTextField();
   private final JLabel lblRtPlanDoseUnit = new JLabel("cGy"); // NON-NLS
-  private final DefaultMutableTreeNode nodeStructures;
-  private final DefaultMutableTreeNode nodeIsodoses;
+  private final GroupTreeNode nodeStructures;
+  private final GroupTreeNode nodeIsodoses;
   private final CircularProgressBar progressBar = new CircularProgressBar();
   private RtSet rtSet;
   private final transient ItemListener structureChangeListener =
@@ -149,8 +149,8 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener, S
     treeIsodoses.setToolTipText(StringUtil.EMPTY_STRING);
     treeIsodoses.setCellRenderer(TreeBuilder.buildNoIconCheckboxTreeCellRenderer());
 
-    this.nodeStructures = new DefaultMutableTreeNode(Messages.getString("structures"), true);
-    this.nodeIsodoses = new DefaultMutableTreeNode(Messages.getString("isodoses"), true);
+    this.nodeStructures = new GroupTreeNode(Messages.getString("structures"), true);
+    this.nodeIsodoses = new GroupTreeNode(Messages.getString("isodoses"), true);
 
     initData();
     initListeners();
@@ -476,29 +476,16 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener, S
       TreePath[] paths = treeStructures.getCheckingModel().getCheckingPaths();
       for (TreePath treePath : paths) {
         DefaultMutableTreeNode node = (DefaultMutableTreeNode) treePath.getLastPathComponent();
-        if (node.getUserObject() instanceof StructRegion region) {
+        if (node.getUserObject() instanceof StructRegion region && region.getDvh() != null) {
           list.add(region);
         }
       }
+      return list;
     }
-    return list;
+    return Collections.emptyList();
   }
 
-  private List<IsoDoseRegion> getIsoDoseSelection() {
-    ArrayList<IsoDoseRegion> list = new ArrayList<>();
-    if (treeIsodoses.getCheckingModel().isPathChecked(new TreePath(nodeIsodoses.getPath()))) {
-      TreePath[] paths = treeIsodoses.getCheckingModel().getCheckingPaths();
-      for (TreePath treePath : paths) {
-        DefaultMutableTreeNode node = (DefaultMutableTreeNode) treePath.getLastPathComponent();
-        if (node.getUserObject() instanceof IsoDoseRegion region) {
-          list.add(region);
-        }
-      }
-    }
-    return list;
-  }
-
-  private void updateVisibleNode(DefaultMutableTreeNode start, boolean all) {
+  private void updateVisibleNode(DefaultMutableTreeNode start, GroupTreeNode parent) {
     for (Enumeration<TreeNode> children = start.children(); children.hasMoreElements(); ) {
       DefaultMutableTreeNode dtm = (DefaultMutableTreeNode) children.nextElement();
       if (dtm.isLeaf()) {
@@ -506,13 +493,20 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener, S
         DefaultMutableTreeNode node = (DefaultMutableTreeNode) tp.getLastPathComponent();
         if (node.getUserObject() instanceof SegRegion<?> region) {
           if (tabbedPane.getSelectedIndex() == 0) {
-            region.setVisible(treeStructures.getCheckingModel().isPathChecked(tp));
+            boolean selected = treeStructures.getCheckingModel().isPathChecked(tp);
+            region.setSelected(selected);
+            region.setVisible(selected && parent.isParentVisible());
           } else if (tabbedPane.getSelectedIndex() == 1) {
-            region.setVisible(treeIsodoses.getCheckingModel().isPathChecked(tp));
+            boolean selected = treeIsodoses.getCheckingModel().isPathChecked(tp);
+            region.setSelected(selected);
+            region.setVisible(selected && parent.isParentVisible());
           }
         }
-      } else {
-        updateVisibleNode(dtm, all);
+      } else if (dtm instanceof GroupTreeNode groupTreeNode) {
+        TreePath tp = new TreePath(dtm.getPath());
+        boolean selected = treeStructures.getCheckingModel().isPathChecked(tp);
+        groupTreeNode.setSelected(selected);
+        updateVisibleNode(dtm, groupTreeNode);
       }
     }
   }
@@ -520,15 +514,13 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener, S
   public void updateVisibleNode() {
     SpecialElementRegion region = getSelectedRegion();
     if (region instanceof StructureSet) {
-      boolean all =
-          treeStructures.getCheckingModel().isPathChecked(new TreePath(nodeStructures.getPath()));
-      region.setVisible(all);
-      updateVisibleNode(rootNodeStructures, all);
+      nodeStructures.setSelected(
+          treeStructures.getCheckingModel().isPathChecked(new TreePath(nodeStructures.getPath())));
+      updateVisibleNode(rootNodeStructures, nodeStructures);
     } else if (region instanceof Dose) {
-      boolean all =
-          treeIsodoses.getCheckingModel().isPathChecked(new TreePath(nodeIsodoses.getPath()));
-      region.setVisible(all);
-      updateVisibleNode(rootNodeIsodoses, all);
+      nodeIsodoses.setSelected(
+          treeIsodoses.getCheckingModel().isPathChecked(new TreePath(nodeIsodoses.getPath())));
+      updateVisibleNode(rootNodeIsodoses, nodeIsodoses);
     }
 
     ImageViewerPlugin<DicomImageElement> container =
@@ -724,62 +716,62 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener, S
       public String getToolTipText() {
         StructRegion region = (StructRegion) getUserObject();
 
-                  double volume = region.getVolume();
-                  Dvh structureDvh = region.getDvh();
+        double volume = region.getVolume();
+        Dvh structureDvh = region.getDvh();
 
-                  StringBuilder buf = new StringBuilder();
-                  buf.append(GuiUtils.HTML_START);
-                  if (StringUtil.hasText(region.getRoiObservationLabel())) {
-                    buf.append("<b>");
-                    buf.append(region.getRoiObservationLabel());
-                    buf.append("</b>");
-                    buf.append(GuiUtils.HTML_BR);
-                  }
-                  buf.append(Messages.getString("thickness"));
-                  buf.append(StringUtil.COLON_AND_SPACE);
-                  buf.append(DecFormatter.twoDecimal(region.getThickness()));
-                  buf.append(GuiUtils.HTML_BR);
-                  buf.append(Messages.getString("volume"));
-                  buf.append(StringUtil.COLON_AND_SPACE);
-                  buf.append(String.format("%s cm³", DecFormatter.fourDecimal(volume))); // NON-NLS
-                  buf.append(GuiUtils.HTML_BR);
+        StringBuilder buf = new StringBuilder();
+        buf.append(GuiUtils.HTML_START);
+        buf.append("<b>");
+        buf.append(region.getLabel());
+        buf.append("</b>");
+        buf.append(GuiUtils.HTML_BR);
+        if (StringUtil.hasText(region.getRoiObservationLabel())) {
+          buf.append(region.getRoiObservationLabel());
+          buf.append(GuiUtils.HTML_BR);
+        }
+        buf.append(Messages.getString("thickness"));
+        buf.append(StringUtil.COLON_AND_SPACE);
+        buf.append(
+            String.format("%s mm", DecFormatter.twoDecimal(region.getThickness()))); // NON-NLS
+        buf.append(GuiUtils.HTML_BR);
+        buf.append(Messages.getString("volume"));
+        buf.append(StringUtil.COLON_AND_SPACE);
+        buf.append(String.format("%s cm³", DecFormatter.fourDecimal(volume))); // NON-NLS
+        buf.append(GuiUtils.HTML_BR);
 
-                  if (structureDvh != null) {
-                    buf.append(structureDvh.getDvhSource().toString());
-                    buf.append(" ");
-                    buf.append(Messages.getString("min.dose"));
-                    buf.append(StringUtil.COLON_AND_SPACE);
-                    buf.append(
-                        DecFormatter.percentTwoDecimal(
-                            Dose.calculateRelativeDose(
-                                    structureDvh.getDvhMinimumDoseCGy(),
-                                    structureDvh.getPlan().getRxDose())
-                                / 100.0));
-                    buf.append(GuiUtils.HTML_BR);
-                    buf.append(structureDvh.getDvhSource().toString());
-                    buf.append(" ");
-                    buf.append(Messages.getString("max.dose"));
-                    buf.append(StringUtil.COLON_AND_SPACE);
-                    buf.append(
-                        DecFormatter.percentTwoDecimal(
-                            Dose.calculateRelativeDose(
-                                    structureDvh.getDvhMaximumDoseCGy(),
-                                    structureDvh.getPlan().getRxDose())
-                                / 100.0));
-                    buf.append(GuiUtils.HTML_BR);
-                    buf.append(structureDvh.getDvhSource().toString());
-                    buf.append(" ");
-                    buf.append(Messages.getString("mean.dose"));
-                    buf.append(StringUtil.COLON_AND_SPACE);
-                    buf.append(
-                        DecFormatter.percentTwoDecimal(
-                            Dose.calculateRelativeDose(
-                                    structureDvh.getDvhMeanDoseCGy(),
-                                    structureDvh.getPlan().getRxDose())
-                                / 100.0));
-                    buf.append(GuiUtils.HTML_BR);
-                  }
-                  buf.append(GuiUtils.HTML_END);
+        if (structureDvh != null) {
+          buf.append(structureDvh.getDvhSource().toString());
+          buf.append(" ");
+          buf.append(Messages.getString("min.dose"));
+          buf.append(StringUtil.COLON_AND_SPACE);
+          buf.append(
+              DecFormatter.percentTwoDecimal(
+                  Dose.calculateRelativeDose(
+                          structureDvh.getDvhMinimumDoseCGy(), structureDvh.getPlan().getRxDose())
+                      / 100.0));
+          buf.append(GuiUtils.HTML_BR);
+          buf.append(structureDvh.getDvhSource().toString());
+          buf.append(" ");
+          buf.append(Messages.getString("max.dose"));
+          buf.append(StringUtil.COLON_AND_SPACE);
+          buf.append(
+              DecFormatter.percentTwoDecimal(
+                  Dose.calculateRelativeDose(
+                          structureDvh.getDvhMaximumDoseCGy(), structureDvh.getPlan().getRxDose())
+                      / 100.0));
+          buf.append(GuiUtils.HTML_BR);
+          buf.append(structureDvh.getDvhSource().toString());
+          buf.append(" ");
+          buf.append(Messages.getString("mean.dose"));
+          buf.append(StringUtil.COLON_AND_SPACE);
+          buf.append(
+              DecFormatter.percentTwoDecimal(
+                  Dose.calculateRelativeDose(
+                          structureDvh.getDvhMeanDoseCGy(), structureDvh.getPlan().getRxDose())
+                      / 100.0));
+          buf.append(GuiUtils.HTML_BR);
+        }
+        buf.append(GuiUtils.HTML_END);
 
         return buf.toString();
       }

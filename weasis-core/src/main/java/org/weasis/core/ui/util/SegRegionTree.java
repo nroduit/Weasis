@@ -27,6 +27,7 @@ import org.weasis.core.api.image.util.MeasurableLayer;
 import org.weasis.core.ui.dialog.PropertiesDialog;
 import org.weasis.core.ui.editor.image.ImageRegionStatistics;
 import org.weasis.core.ui.editor.image.dockable.MeasureTool;
+import org.weasis.core.ui.model.graphic.imp.seg.GroupTreeNode;
 import org.weasis.core.ui.model.graphic.imp.seg.SegContour;
 import org.weasis.core.ui.model.graphic.imp.seg.SegRegion;
 import org.weasis.core.ui.model.utils.bean.MeasureItem;
@@ -162,17 +163,22 @@ public class SegRegionTree extends CheckboxTree {
     }
   }
 
-  public void updateVisibleNode(DefaultMutableTreeNode start, boolean all) {
+  public void updateVisibleNode(DefaultMutableTreeNode start, GroupTreeNode parent) {
     for (Enumeration<TreeNode> children = start.children(); children.hasMoreElements(); ) {
       DefaultMutableTreeNode dtm = (DefaultMutableTreeNode) children.nextElement();
       if (dtm.isLeaf()) {
         TreePath tp = new TreePath(dtm.getPath());
         DefaultMutableTreeNode node = (DefaultMutableTreeNode) tp.getLastPathComponent();
         if (node.getUserObject() instanceof SegRegion<?> region) {
-          region.setVisible(getCheckingModel().isPathChecked(tp));
+          boolean selected = getCheckingModel().isPathChecked(tp);
+          region.setSelected(selected);
+          region.setVisible(selected && parent.isParentVisible());
         }
-      } else {
-        updateVisibleNode(dtm, all);
+      } else if (dtm instanceof GroupTreeNode groupTreeNode) {
+        TreePath tp = new TreePath(dtm.getPath());
+        boolean selected = getCheckingModel().isPathChecked(tp);
+        groupTreeNode.setSelected(selected);
+        updateVisibleNode(dtm, groupTreeNode);
       }
     }
   }
@@ -216,7 +222,7 @@ public class SegRegionTree extends CheckboxTree {
     jtable.getColumnModel().getColumn(0).setPreferredWidth(120);
     jtable.getColumnModel().getColumn(1).setPreferredWidth(80);
     JOptionPane.showMessageDialog(
-        this,
+        this.getParent(),
         tableContainer,
         Messages.getString("HistogramView.stats"),
         JOptionPane.PLAIN_MESSAGE,

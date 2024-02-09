@@ -96,7 +96,7 @@ public class SegmentationTool extends PluginTool implements SeriesViewerListener
       new DefaultMutableTreeNode("rootNode", true); // NON-NLS
   private final JComboBox<SpecialElementRegion> comboSeg = new JComboBox<>();
 
-  private final DefaultMutableTreeNode nodeStructures;
+  private final GroupTreeNode nodeStructures;
   private final transient ItemListener structureChangeListener =
       e -> {
         if (e.getStateChange() == ItemEvent.SELECTED) {
@@ -123,7 +123,7 @@ public class SegmentationTool extends PluginTool implements SeriesViewerListener
     tree.setToolTipText(StringUtil.EMPTY_STRING);
     tree.setCellRenderer(TreeBuilder.buildNoIconCheckboxTreeCellRenderer());
 
-    this.nodeStructures = new DefaultMutableTreeNode("List of regions", true);
+    this.nodeStructures = new GroupTreeNode("List of regions", true);
     this.initData();
 
     initListeners();
@@ -246,7 +246,9 @@ public class SegmentationTool extends PluginTool implements SeriesViewerListener
     if (seg != null) {
       seg.setVisible(all);
     }
-    tree.updateVisibleNode(rootNodeStructures, all);
+
+    nodeStructures.setSelected(all);
+    tree.updateVisibleNode(rootNodeStructures, nodeStructures);
 
     ImageViewerPlugin<DicomImageElement> container =
         EventManager.getInstance().getSelectedView2dContainer();

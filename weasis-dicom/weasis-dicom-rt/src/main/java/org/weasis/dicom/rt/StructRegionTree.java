@@ -77,17 +77,21 @@ public class StructRegionTree extends SegRegionTree {
 
   private static void writeToCsv(List<StructRegion> segRegions) {
     CsvExporter csv = new CsvExporter();
+    csv.addQuotedNameAndSeparator("Label");
     csv.addQuotedNameAndSeparator("ROI Observation Label");
-    csv.addQuotedNameAndSeparator(Messages.getString("thickness"));
+    csv.addQuotedNameAndSeparator(Messages.getString("thickness [mm]"));
     csv.addQuotedNameAndSeparator(Messages.getString("volume") + " [cm³]");
-    csv.addQuotedNameAndSeparator(Messages.getString("min.dose") + " [%]");
-    csv.addQuotedNameAndSeparator(Messages.getString("max.dose") + " [%]");
-    csv.addQuotedName(Messages.getString("mean.dose") + " [%]");
+    if (hasDvh(segRegions)) {
+      csv.addQuotedNameAndSeparator(Messages.getString("min.dose") + " [%]");
+      csv.addQuotedNameAndSeparator(Messages.getString("max.dose") + " [%]");
+      csv.addQuotedName(Messages.getString("mean.dose") + " [%]");
+    }
     csv.addEndOfLine();
 
     StringBuilder sb = csv.getBuilder();
     for (StructRegion region : segRegions) {
       Dvh structureDvh = region.getDvh();
+      csv.addQuotedName(region.getLabel());
       csv.addQuotedName(region.getRoiObservationLabel());
       csv.addSeparator();
       sb.append(region.getThickness());
@@ -115,5 +119,14 @@ public class StructRegionTree extends SegRegionTree {
     }
 
     csv.copyToClipboard();
+  }
+
+  static boolean hasDvh(List<StructRegion> segRegions) {
+    for (StructRegion region : segRegions) {
+      if (region.getDvh() != null) {
+        return true;
+      }
+    }
+    return false;
   }
 }
