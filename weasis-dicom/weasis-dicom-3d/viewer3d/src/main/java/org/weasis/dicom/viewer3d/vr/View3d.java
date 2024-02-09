@@ -86,6 +86,7 @@ import org.weasis.dicom.viewer2d.mip.MipView;
 import org.weasis.dicom.viewer3d.ActionVol;
 import org.weasis.dicom.viewer3d.EventManager;
 import org.weasis.dicom.viewer3d.InfoLayer3d;
+import org.weasis.dicom.viewer3d.dockable.SegmentationTool.Type;
 import org.weasis.dicom.viewer3d.geometry.Axis;
 import org.weasis.dicom.viewer3d.geometry.Camera;
 import org.weasis.dicom.viewer3d.geometry.View;
@@ -1037,6 +1038,23 @@ public class View3d extends VolumeCanvas
         } else if (command.equals(ActionVol.VOL_PROJECTION.cmd())) {
           if (val instanceof Boolean projection) {
             camera.setOrthographicProjection(projection);
+          }
+        } else if (command.equals(ActionVol.SEG_TYPE.cmd())) {
+          if (val instanceof Type segType) {
+            Type oldType = renderingLayer.getSegmentationType();
+            if (oldType != segType) {
+              renderingLayer.setEnableRepaint(false);
+              renderingLayer.setSegmentationType(segType);
+              renderingLayer.setEnableRepaint(true);
+              if (segType == Type.SEG_ONLY) {
+                Preset p = Preset.getSegmentationLut(volTexture);
+                if (p != null) {
+                  setVolumePreset(p);
+                }
+              } else {
+                display();
+              }
+            }
           }
         }
       }

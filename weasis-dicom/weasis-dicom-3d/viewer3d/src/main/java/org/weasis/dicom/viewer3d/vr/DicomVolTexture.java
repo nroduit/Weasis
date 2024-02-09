@@ -20,6 +20,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import org.dcm4che3.data.Tag;
 import org.dcm4che3.img.lut.PresetWindowLevel;
 import org.joml.Vector3d;
@@ -353,6 +354,11 @@ public class DicomVolTexture extends VolumeTexture implements MediaSeriesGroup {
 
   public List<SpecialElementRegion> getSegmentations() {
     String seriesUID = TagD.getTagValue(series, Tag.SeriesInstanceUID, String.class);
-    return HiddenSeriesManager.getHiddenElementsFromSeries(SpecialElementRegion.class, seriesUID);
+    Set<String> list = HiddenSeriesManager.getInstance().reference2Series.get(seriesUID);
+    if (list != null && !list.isEmpty()) {
+      return HiddenSeriesManager.getHiddenElementsFromSeries(
+          SpecialElementRegion.class, list.toArray(new String[0]));
+    }
+    return Collections.emptyList();
   }
 }

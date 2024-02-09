@@ -13,15 +13,12 @@ import com.jogamp.opengl.GL2ES2;
 import com.jogamp.opengl.GL4;
 import com.jogamp.opengl.GLContext;
 import com.jogamp.opengl.util.GLPixelStorageModes;
-import java.awt.Color;
 import java.awt.Dimension;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Objects;
 import javax.swing.JProgressBar;
 import jogamp.opengl.glu.error.Error;
@@ -32,7 +29,6 @@ import org.opencv.core.*;
 import org.opencv.imgproc.Imgproc;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.weasis.core.api.gui.util.ComboItemListener;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.media.data.TagW;
@@ -40,16 +36,12 @@ import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.model.graphic.imp.seg.SegContour;
 import org.weasis.core.ui.model.graphic.imp.seg.SegGraphic;
 import org.weasis.dicom.codec.*;
-import org.weasis.dicom.viewer3d.ActionVol;
 import org.weasis.dicom.viewer3d.EventManager;
 import org.weasis.dicom.viewer3d.geometry.GeometryUtils;
 import org.weasis.dicom.viewer3d.geometry.VolumeGeometry;
-import org.weasis.dicom.viewer3d.vr.lut.PresetGroup;
-import org.weasis.dicom.viewer3d.vr.lut.PresetPoint;
 import org.weasis.opencv.data.ImageCV;
 import org.weasis.opencv.data.PlanarImage;
 import org.weasis.opencv.op.ImageProcessor;
-import org.weasis.opencv.seg.RegionAttributes;
 
 public final class VolumeBuilder {
   private static final Logger LOGGER = LoggerFactory.getLogger(VolumeBuilder.class);
@@ -185,10 +177,11 @@ public final class VolumeBuilder {
     public void run() {
       DicomVolTexture volTexture = volumeBuilder.volTexture;
       final int size = volTexture.getDepth();
-
+      List<SpecialElementRegion> segList = null;
       ViewCanvas<DicomImageElement> view = EventManager.getInstance().getSelectedViewPane();
       final JProgressBar bar;
       if (view instanceof View3d view3d) {
+        segList = volTexture.getSegmentations();
         bar = new JProgressBar(0, size);
         Dimension dim = new Dimension(view3d.getWidth() / 2, GuiUtils.getScaleLength(30));
         bar.setSize(dim);
@@ -283,8 +276,7 @@ public final class VolumeBuilder {
             i,
             Duration.between(start, Instant.now()).toMillis());
 
-        List<SpecialElementRegion> segList = volTexture.getSegmentations();
-        if (!segList.isEmpty()) {
+        if (segList != null && !segList.isEmpty()) {
           Mat mask = Mat.zeros(imageMLUT.size(), imageMLUT.type());
           for (SpecialElementRegion seg : segList) {
             if (seg.isVisible() && seg.containsSopInstanceUIDReference(imageElement)) {
@@ -348,60 +340,8 @@ public final class VolumeBuilder {
 
       if (view instanceof View3d view3d) {
         view3d.setProgressBar(null);
-        //  buildSegmentationLut(segList);
         volTexture.notifyFullyLoaded();
       }
-    }
-
-    private void buildSegmentationLut(List<SpecialElementRegion> segList) {
-      ComboItemListener<Preset> action =
-          EventManager.getInstance().getAction(ActionVol.VOL_PRESET).orElse(null);
-      if (action != null && !segList.isEmpty()) {
-        List<PresetGroup> groups = new ArrayList<>();
-        groups.add(
-            new PresetGroup(
-                "StartEmpty",
-                new PresetPoint[] {getTransparentPoint(-10), getTransparentPoint(0)}));
-
-        List<PresetPoint> presetPoints = new ArrayList<>();
-        int max = 1;
-
-        for (SpecialElementRegion segElement : segList) {
-          Map<Integer, ? extends RegionAttributes> map = segElement.getSegAttributes();
-          if (map != null) {
-            for (Entry<Integer, ? extends RegionAttributes> entry : map.entrySet()) {
-              RegionAttributes a = entry.getValue();
-              if (a.isVisible()) {
-                max = Math.max(max, entry.getKey());
-                Color c = a.getColor();
-                presetPoints.add(
-                    new PresetPoint(
-                        entry.getKey(),
-                        c.getAlpha() / 255f,
-                        c.getRed() / 255f,
-                        c.getGreen() / 255f,
-                        c.getBlue() / 255f,
-                        0.2f,
-                        0.1f,
-                        0.9f));
-              }
-            }
-          }
-        }
-        groups.add(new PresetGroup("segments", presetPoints.toArray(new PresetPoint[0])));
-        groups.add(
-            new PresetGroup(
-                "EndEmpty",
-                new PresetPoint[] {getTransparentPoint(max + 1), getTransparentPoint(max + 11)}));
-        Preset preset = new Preset("Segmentation", "SEG", false, true, 1.0f, groups);
-        if (action.getModel().getIndexOf(preset) < 0) {
-          action.getModel().addElement(preset);
-        }
-      }
-    }
-
-    private static PresetPoint getTransparentPoint(int intensity) {
-      return new PresetPoint(intensity, 0, 0f, 0f, 0f, 0.2f, 0.1f, 0.9f);
     }
   }
 }
