@@ -73,8 +73,7 @@ public class SegmentationTool extends PluginTool implements SeriesViewerListener
 
   public enum Type {
     NONE("None"),
-    SEG_ONLY("Segmentation only"),
-    SEG_AND_VOLUME("Segmentation and voluume rendering");
+    SEG_ONLY("Segmentation only");
 
     private final String title;
 
@@ -155,6 +154,8 @@ public class SegmentationTool extends PluginTool implements SeriesViewerListener
     }
     return null;
   }
+
+  public void show(SegRegion<?> region) {}
 
   public void computeStatistics(SegRegion<?> region) {
     ViewCanvas<DicomImageElement> view = EventManager.getInstance().getSelectedViewPane();
@@ -311,56 +312,70 @@ public class SegmentationTool extends PluginTool implements SeriesViewerListener
 
       // Prepare parent node for structures
       nodeStructures.removeAllChildren();
-      Map<Integer, ? extends RegionAttributes> segments = specialElement.getSegAttributes();
-      if (segments != null) {
-        for (RegionAttributes contour : segments.values()) {
-          DefaultMutableTreeNode node =
-              new StructToolTipTreeNode((SegRegion<?>) contour, false) {
-                @Override
-                public String getToolTipText() {
-                  SegRegion<?> seg = (SegRegion) getUserObject();
-                  StringBuilder buf = new StringBuilder();
-                  buf.append(GuiUtils.HTML_START);
-                  buf.append("<b>");
-                  buf.append(seg.getLabel());
-                  buf.append("</b>");
-                  buf.append(GuiUtils.HTML_BR);
-                  buf.append("Algorithm type");
-                  buf.append(StringUtil.COLON_AND_SPACE);
-                  buf.append(seg.getType());
-                  buf.append(GuiUtils.HTML_BR);
-                  buf.append("Voxel count");
-                  buf.append(StringUtil.COLON_AND_SPACE);
-                  buf.append(DecFormatter.allNumber(seg.getNumberOfPixels()));
-                  buf.append(GuiUtils.HTML_BR);
-                  SegMeasurableLayer<?> layer = seg.getMeasurableLayer();
-                  if (layer != null) {
-                    MeasurementsAdapter adapter =
-                        layer.getMeasurementAdapter(layer.getSourceImage().getPixelSpacingUnit());
-                    buf.append("Volume (%s3)".formatted(adapter.getUnit()));
-                    buf.append(StringUtil.COLON_AND_SPACE);
-                    double ratio = adapter.getCalibRatio();
-                    buf.append(
-                        DecFormatter.twoDecimal(
-                            seg.getNumberOfPixels() * ratio * ratio * layer.getThickness()));
-                    buf.append(GuiUtils.HTML_BR);
-                  }
-                  buf.append(GuiUtils.HTML_END);
-                  return buf.toString();
-                }
-              };
+      Map<String, List<SegRegion<?>>> map =
+          SegRegion.groupRegions(
+              (Collection<SegRegion<?>>) specialElement.getSegAttributes().values());
+      for (List<SegRegion<?>> list : map.values()) {
+        if (list.size() == 1) {
+          SegRegion<?> region = list.getFirst();
+          DefaultMutableTreeNode node = buildStructRegionNode(region);
           nodeStructures.add(node);
-          TreeBuilder.setPathSelection(tree, new TreePath(node.getPath()), contour.isVisible());
+          tree.setPathSelection(new TreePath(node.getPath()), region.isSelected());
+        } else {
+          GroupTreeNode node = new GroupTreeNode(list.getFirst().getPrefix(), true);
+          nodeStructures.add(node);
+          for (SegRegion<?> structRegion : list) {
+            DefaultMutableTreeNode childNode = buildStructRegionNode(structRegion);
+            node.add(childNode);
+            tree.setPathSelection(new TreePath(childNode.getPath()), structRegion.isSelected());
+          }
+          tree.setPathSelection(new TreePath(node.getPath()), true);
         }
       }
-      TreeBuilder.setPathSelection(
-          tree, new TreePath(nodeStructures.getPath()), specialElement.isVisible());
+      tree.setPathSelection(new TreePath(nodeStructures.getPath()), specialElement.isVisible());
 
       // Expand
       TreeBuilder.expandTree(tree, rootNodeStructures, 2);
     } finally {
       initPathSelection = false;
     }
+  }
+
+  private DefaultMutableTreeNode buildStructRegionNode(SegRegion<?> contour) {
+    return new StructToolTipTreeNode(contour, false) {
+      @Override
+      public String getToolTipText() {
+        SegRegion<?> seg = (SegRegion<?>) getUserObject();
+        StringBuilder buf = new StringBuilder();
+        buf.append(GuiUtils.HTML_START);
+        buf.append("<b>");
+        buf.append(seg.getLabel());
+        buf.append("</b>");
+        buf.append(GuiUtils.HTML_BR);
+        buf.append("Algorithm type");
+        buf.append(StringUtil.COLON_AND_SPACE);
+        buf.append(seg.getType());
+        buf.append(GuiUtils.HTML_BR);
+        buf.append("Voxel count");
+        buf.append(StringUtil.COLON_AND_SPACE);
+        buf.append(DecFormatter.allNumber(seg.getNumberOfPixels()));
+        buf.append(GuiUtils.HTML_BR);
+        SegMeasurableLayer<?> layer = seg.getMeasurableLayer();
+        if (layer != null) {
+          MeasurementsAdapter adapter =
+              layer.getMeasurementAdapter(layer.getSourceImage().getPixelSpacingUnit());
+          buf.append("Volume (%s3)".formatted(adapter.getUnit()));
+          buf.append(StringUtil.COLON_AND_SPACE);
+          double ratio = adapter.getCalibRatio();
+          buf.append(
+              DecFormatter.twoDecimal(
+                  seg.getNumberOfPixels() * ratio * ratio * layer.getThickness()));
+          buf.append(GuiUtils.HTML_BR);
+        }
+        buf.append(GuiUtils.HTML_END);
+        return buf.toString();
+      }
+    };
   }
 
   public void initTreeValues(ViewCanvas<?> viewCanvas) {

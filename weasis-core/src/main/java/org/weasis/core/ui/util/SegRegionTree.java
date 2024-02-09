@@ -62,6 +62,7 @@ public class SegRegionTree extends CheckboxTree {
         }
         popupMenu.add(getOpacityMenuItem(node, e.getPoint()));
         if (leaf) {
+          popupMenu.add(getSelectionMenuItem(node));
           popupMenu.add(getStatisticMenuItem(node));
         }
         popupMenu.show(SegRegionTree.this, e.getX(), e.getY());
@@ -181,6 +182,19 @@ public class SegRegionTree extends CheckboxTree {
         updateVisibleNode(dtm, groupTreeNode);
       }
     }
+  }
+
+  protected JMenuItem getSelectionMenuItem(DefaultMutableTreeNode node) {
+    JMenuItem selectAllMenuItem = new JMenuItem("Show in the image view");
+    selectAllMenuItem.addActionListener(
+        _ -> {
+          if (node != null
+              && node.isLeaf()
+              && node.getUserObject() instanceof SegRegion<?> region) {
+            segRegionTool.show(region);
+          }
+        });
+    return selectAllMenuItem;
   }
 
   protected JMenuItem getStatisticMenuItem(DefaultMutableTreeNode node) {

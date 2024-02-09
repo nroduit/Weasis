@@ -15,4 +15,6 @@ public interface SegRegionTool {
   void computeStatistics(SegRegion<?> region);
 
   void updateVisibleNode();
+
+  void show(SegRegion<?> region);
 }

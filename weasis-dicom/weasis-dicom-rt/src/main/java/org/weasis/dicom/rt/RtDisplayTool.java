@@ -33,9 +33,12 @@ import org.knowm.xchart.XYChartBuilder;
 import org.knowm.xchart.XYSeries;
 import org.weasis.core.api.gui.Insertable;
 import org.weasis.core.api.gui.task.CircularProgressBar;
+import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.DecFormatter;
+import org.weasis.core.api.gui.util.Filter;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.JSliderW;
+import org.weasis.core.api.gui.util.SliderCineListener;
 import org.weasis.core.api.gui.util.WinUtil;
 import org.weasis.core.api.image.util.MeasurableLayer;
 import org.weasis.core.api.media.data.MediaSeries;
@@ -240,6 +243,13 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener, S
     return null;
   }
 
+  private DicomSeries getSeries(ViewCanvas<DicomImageElement> view) {
+    if (view != null && view.getSeries() instanceof DicomSeries series) {
+      return series;
+    }
+    return null;
+  }
+
   private SegContour getContour(DicomImageElement imageElement, RegionAttributes attributes) {
     PlanarImage img = imageElement.getImage();
     if (img != null) {
@@ -254,6 +264,34 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener, S
       }
     }
     return null;
+  }
+
+  public void show(SegRegion<?> region) {
+    ViewCanvas<DicomImageElement> view = EventManager.getInstance().getSelectedViewPane();
+    DicomSeries series = (DicomSeries) view.getSeries();
+    if (series != null) {
+      long max = Long.MIN_VALUE;
+      DicomImageElement bestImage = null;
+      for (DicomImageElement dcm : series.getMedias(null, null)) {
+        SegContour c = getContour(dcm, region);
+        if (c != null) {
+          if (c.getNumberOfPixels() > max) {
+            max = c.getNumberOfPixels();
+            bestImage = dcm;
+          }
+        }
+      }
+      if (bestImage != null) {
+        Optional<SliderCineListener> action =
+            EventManager.getInstance().getAction(ActionW.SCROLL_SERIES);
+        if (action.isPresent()) {
+          Filter<DicomImageElement> filter =
+              (Filter<DicomImageElement>) view.getActionValue(ActionW.FILTERED_SERIES.cmd());
+          int imgIndex = series.getImageIndex(bestImage, filter, view.getCurrentSortComparator());
+          action.get().setSliderValue(imgIndex + 1);
+        }
+      }
+    }
   }
 
   public void computeStatistics(SegRegion<?> region) {
@@ -643,13 +681,13 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener, S
             treeStructures.setPathSelection(new TreePath(node.getPath()), region.isSelected());
           } else {
             GroupTreeNode node = new GroupTreeNode(list.getFirst().getPrefix(), true);
+            nodeStructures.add(node);
             for (StructRegion structRegion : list) {
               DefaultMutableTreeNode childNode = buildStructRegionNode(structRegion);
               node.add(childNode);
               treeStructures.setPathSelection(
                   new TreePath(childNode.getPath()), structRegion.isSelected());
             }
-            nodeStructures.add(node);
             treeStructures.addCheckingPath(new TreePath(node.getPath()));
           }
         }
