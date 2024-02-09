@@ -281,9 +281,11 @@ public class SegSpecialElement extends HiddenSpecialElement
     List<Segment> segmentList = Region.buildSegmentList(binary);
     int nbPixels = Core.countNonZero(binary.toMat());
     ImageConversion.releasePlanarImage(binary);
-    SegContour contour = new SegContour(String.valueOf(id), segmentList, nbPixels);
-    region.addPixels(contour);
-    contour.setAttributes(region);
-    roiMap.computeIfAbsent(id, _ -> new LinkedHashSet<>()).add(contour);
+    if (!segmentList.isEmpty()) {
+      SegContour contour = new SegContour(String.valueOf(id), segmentList, nbPixels);
+      region.addPixels(contour);
+      contour.setAttributes(region);
+      roiMap.computeIfAbsent(id, _ -> new LinkedHashSet<>()).add(contour);
+    }
   }
 }
