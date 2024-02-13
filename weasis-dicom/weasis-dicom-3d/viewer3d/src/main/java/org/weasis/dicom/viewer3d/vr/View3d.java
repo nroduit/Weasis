@@ -48,6 +48,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
+import org.weasis.core.api.gui.util.ComboItemListener;
 import org.weasis.core.api.gui.util.Feature;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.MouseActionAdapter;
@@ -84,10 +85,12 @@ import org.weasis.dicom.viewer2d.mip.MipView;
 import org.weasis.dicom.viewer3d.ActionVol;
 import org.weasis.dicom.viewer3d.EventManager;
 import org.weasis.dicom.viewer3d.InfoLayer3d;
+import org.weasis.dicom.viewer3d.dockable.SegmentationTool;
 import org.weasis.dicom.viewer3d.dockable.SegmentationTool.Type;
 import org.weasis.dicom.viewer3d.geometry.Axis;
 import org.weasis.dicom.viewer3d.geometry.Camera;
 import org.weasis.dicom.viewer3d.geometry.View;
+import org.weasis.dicom.viewer3d.vr.TextureData.PixelFormat;
 import org.weasis.opencv.data.PlanarImage;
 import org.weasis.opencv.op.lut.LutShape;
 
@@ -263,7 +266,12 @@ public class View3d extends VolumeCanvas
         eventManager
             .getAction(ActionVol.VOL_QUALITY)
             .ifPresent(a -> a.setSliderValue(quality, false));
-        preset = Preset.getDefaultPreset(volTexture.getModality());
+        ComboItemListener<Type> segType = eventManager.getAction(ActionVol.SEG_TYPE).orElse(null);
+        if (segType != null && segType.getSelectedItem() == SegmentationTool.Type.SEG_ONLY) {
+          preset = Preset.getSegmentationLut();
+        } else {
+          preset = Preset.getDefaultPreset(volTexture.getModality());
+        }
       } else {
         preset = Preset.getDefaultPreset(null);
       }
@@ -340,6 +348,7 @@ public class View3d extends VolumeCanvas
   }
 
   public void initShaders(GL4 gl4) {
+    boolean seg = volumePreset != null && "Segmentation".equals(volumePreset.getName());
     WProperties preferences = GuiUtils.getUICore().getSystemPreferences();
     Color lightColor = preferences.getColorProperty(RenderingLayer.P_LIGHT_COLOR, Color.WHITE);
     Vector3f lColor =
@@ -374,7 +383,9 @@ public class View3d extends VolumeCanvas
         "depthSampleNumber",
         (gl, loc) -> gl4.glUniform1i(loc, renderingLayer.getDepthSampleNumber()));
     program.allocateUniform(
-        gl4, "lutShape", (gl, loc) -> gl4.glUniform1ui(loc, renderingLayer.getLutShapeId()));
+        gl4,
+        "lutShape",
+        (gl, loc) -> gl4.glUniform1ui(loc, seg ? 0 : renderingLayer.getLutShapeId()));
 
     program.allocateUniform(
         gl4,
@@ -422,27 +433,30 @@ public class View3d extends VolumeCanvas
     program.allocateUniform(
         gl4,
         "textureDataType",
-        (gl, loc) -> gl.glUniform1ui(loc, TextureData.getDataType(volTexture.getPixelFormat())));
+        (gl, loc) -> gl.glUniform1ui(loc, TextureData.getDataType(getPixelFormat(seg))));
 
     program.allocateUniform(
         gl4,
         "opacityFactor",
         (gl, loc) -> gl.glUniform1f(loc, (float) renderingLayer.getOpacity()));
+
+    float levelMin = seg ? volumePreset.getColorMin() : volTexture.getLevelMin();
+    float levelMax = seg ? volumePreset.getColorMax() : volTexture.getLevelMax();
+    float outputLevelMin = volumePreset.getColorMin();
+    float outputLevelMax = volumePreset.getColorMax();
+    float windowWidth = seg ? levelMax - levelMin : renderingLayer.getWindowWidth();
+    float windowCenter = seg ? (levelMin + levelMax) / 2f : renderingLayer.getWindowCenter();
+
+    program.allocateUniform(gl4, "inputLevelMin", (gl, loc) -> gl.glUniform1f(loc, levelMin));
+    program.allocateUniform(gl4, "inputLevelMax", (gl, loc) -> gl.glUniform1f(loc, levelMax));
     program.allocateUniform(
-        gl4, "inputLevelMin", (gl, loc) -> gl.glUniform1f(loc, volTexture.getLevelMin()));
+        gl4, "outputLevelMin", (gl, loc) -> gl.glUniform1f(loc, outputLevelMin));
     program.allocateUniform(
-        gl4, "inputLevelMax", (gl, loc) -> gl.glUniform1f(loc, volTexture.getLevelMax()));
-    program.allocateUniform(
-        gl4, "outputLevelMin", (gl, loc) -> gl.glUniform1f(loc, volumePreset.getColorMin()));
-    program.allocateUniform(
-        gl4, "outputLevelMax", (gl, loc) -> gl.glUniform1f(loc, volumePreset.getColorMax()));
-    program.allocateUniform(
-        gl4, "windowWidth", (gl, loc) -> gl.glUniform1f(loc, renderingLayer.getWindowWidth()));
-    program.allocateUniform(
-        gl4, "windowCenter", (gl, loc) -> gl.glUniform1f(loc, renderingLayer.getWindowCenter()));
+        gl4, "outputLevelMax", (gl, loc) -> gl.glUniform1f(loc, outputLevelMax));
+    program.allocateUniform(gl4, "windowWidth", (gl, loc) -> gl.glUniform1f(loc, windowWidth));
+    program.allocateUniform(gl4, "windowCenter", (gl, loc) -> gl.glUniform1f(loc, windowCenter));
 
     final IntBuffer intBuffer = IntBuffer.allocate(1);
-
     texture.init(gl4);
     volTexture.init(gl4);
     if (volumePreset != null) {
@@ -458,6 +472,16 @@ public class View3d extends VolumeCanvas
         (long) vertexBufferData.length * Float.BYTES,
         Buffers.newDirectFloatBuffer(vertexBufferData),
         GL.GL_STATIC_DRAW);
+  }
+
+  private PixelFormat getPixelFormat(boolean segmentation) {
+    PixelFormat format = volTexture.getPixelFormat();
+    if (segmentation) {
+      if (format == PixelFormat.SIGNED_SHORT) {
+        return PixelFormat.UNSIGNED_SHORT;
+      }
+    }
+    return format;
   }
 
   public void display(GLAutoDrawable drawable) {
@@ -989,23 +1013,6 @@ public class View3d extends VolumeCanvas
         } else if (command.equals(ActionVol.VOL_PROJECTION.cmd())) {
           if (val instanceof Boolean projection) {
             camera.setOrthographicProjection(projection);
-          }
-        } else if (command.equals(ActionVol.SEG_TYPE.cmd())) {
-          if (val instanceof Type segType) {
-            Type oldType = renderingLayer.getSegmentationType();
-            if (oldType != segType) {
-              renderingLayer.setEnableRepaint(false);
-              renderingLayer.setSegmentationType(segType);
-              renderingLayer.setEnableRepaint(true);
-              if (segType == Type.SEG_ONLY) {
-                Preset p = Preset.getSegmentationLut(volTexture);
-                if (p != null) {
-                  setVolumePreset(p);
-                }
-              } else {
-                display();
-              }
-            }
           }
         }
       }

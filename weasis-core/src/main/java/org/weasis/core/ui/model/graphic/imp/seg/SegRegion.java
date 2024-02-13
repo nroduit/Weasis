@@ -11,9 +11,11 @@ package org.weasis.core.ui.model.graphic.imp.seg;
 
 import java.awt.Color;
 import org.weasis.core.api.media.data.ImageElement;
+import org.weasis.core.api.util.Copyable;
 import org.weasis.opencv.seg.RegionAttributes;
 
-public class SegRegion<E extends ImageElement> extends RegionAttributes {
+public class SegRegion<E extends ImageElement> extends RegionAttributes
+    implements Copyable<SegRegion<E>> {
 
   private SegMeasurableLayer<E> measurableLayer;
   private boolean selected;
@@ -22,6 +24,20 @@ public class SegRegion<E extends ImageElement> extends RegionAttributes {
     super(id, label, color);
     this.selected = true;
     resetPixelCount();
+  }
+
+  public SegRegion(SegRegion<E> region) {
+    super(region.getId(), region.getLabel(), new Color(region.getColor().getRGB()));
+    this.setDescription(region.getDescription());
+    this.setType(region.getType());
+    this.setFilled(region.isFilled());
+    this.setLineThickness(region.getLineThickness());
+    this.setVisible(region.isVisible());
+    this.setInteriorOpacity(region.getInteriorOpacity());
+    this.numberOfPixels = region.numberOfPixels;
+
+    this.selected = region.selected;
+    this.measurableLayer = region.measurableLayer;
   }
 
   public SegMeasurableLayer<E> getMeasurableLayer() {
@@ -38,5 +54,10 @@ public class SegRegion<E extends ImageElement> extends RegionAttributes {
 
   public void setSelected(boolean selected) {
     this.selected = selected;
+  }
+
+  @Override
+  public SegRegion<E> copy() {
+    return new SegRegion<>(this);
   }
 }

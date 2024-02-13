@@ -61,6 +61,7 @@ import org.weasis.core.ui.editor.image.ViewerToolBar;
 import org.weasis.core.ui.editor.image.ZoomToolBar;
 import org.weasis.core.ui.editor.image.dockable.MeasureTool;
 import org.weasis.core.ui.editor.image.dockable.MiniTool;
+import org.weasis.core.ui.model.graphic.imp.seg.SegRegion;
 import org.weasis.core.ui.util.Toolbar;
 import org.weasis.core.ui.util.WtoolBar;
 import org.weasis.dicom.codec.DicomImageElement;
@@ -71,6 +72,7 @@ import org.weasis.dicom.viewer2d.LutToolBar;
 import org.weasis.dicom.viewer2d.View2dContainer;
 import org.weasis.dicom.viewer2d.mpr.MprContainer;
 import org.weasis.dicom.viewer3d.dockable.DisplayTool;
+import org.weasis.dicom.viewer3d.dockable.SegmentationTool;
 import org.weasis.dicom.viewer3d.dockable.VolumeTool;
 import org.weasis.dicom.viewer3d.vr.DicomVolTexture;
 import org.weasis.dicom.viewer3d.vr.DicomVolTextureFactory;
@@ -188,6 +190,9 @@ public class View3DContainer extends DicomViewerPlugin implements PropertyChange
   // protected ControlAxes controlAxes;
   protected final DicomVolTextureFactory factory;
   protected VolumeBuilder volumeBuilder;
+  protected SegmentationTool.Type segType;
+
+  protected final Map<String, List<SegRegion<?>>> regionMap = new HashMap<>();
 
   public View3DContainer() {
     this(
@@ -203,6 +208,7 @@ public class View3DContainer extends DicomViewerPlugin implements PropertyChange
     super(EventManager.getInstance(), layoutModel, uid, pluginName, icon, tooltips);
     setSynchView(SynchView.NONE);
     this.factory = new DicomVolTextureFactory();
+    this.segType = SegmentationTool.Type.NONE;
     initTools();
 
     //    final ViewerToolBar toolBar = getViewerToolBar();
@@ -653,5 +659,17 @@ public class View3DContainer extends DicomViewerPlugin implements PropertyChange
   @Override
   public List<GridBagLayoutModel> getLayoutList() {
     return LAYOUT_LIST;
+  }
+
+  public void setSegmentationType(SegmentationTool.Type type) {
+    this.segType = type;
+  }
+
+  public SegmentationTool.Type getSegmentationType() {
+    return segType;
+  }
+
+  public Map<String, List<SegRegion<?>>> getRegionMap() {
+    return regionMap;
   }
 }

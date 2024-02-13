@@ -79,6 +79,9 @@ public class BundleTools {
     // The View2dContainer name should be referenced as a property in the provided service
     if (Boolean.parseBoolean((String) mref.getProperty(ui.clazz.getName()))) {
       final BundleContext context = FrameworkUtil.getBundle(ui.clazz).getBundleContext();
+      if (context == null) {
+        return;
+      }
       GuiExecutor.execute(
           () -> {
             Object service = context.getService(mref);

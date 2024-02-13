@@ -22,7 +22,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import javax.swing.BorderFactory;
 import javax.swing.JComboBox;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
@@ -72,8 +71,6 @@ public class SegmentationTool extends PluginTool implements SeriesViewerListener
 
   public static final String BUTTON_NAME = "Segmentation";
   private static final String GRAPHIC_OPACITY = "Graphic Opacity";
-  ;
-  private final JScrollPane rootPane;
 
   private final SegRegionTree tree;
   private boolean initPathSelection;
@@ -93,10 +90,8 @@ public class SegmentationTool extends PluginTool implements SeriesViewerListener
   public SegmentationTool() {
     super(BUTTON_NAME, Type.TOOL, 30);
     this.setLayout(new BorderLayout(0, 0));
-    this.rootPane = new JScrollPane();
     this.dockable.setTitleIcon(ResourceUtil.getIcon(OtherIcon.SEGMENTATION));
     this.setDockableWidth(350);
-    rootPane.setBorder(BorderFactory.createEmptyBorder()); // remove default line
     this.slider = PropertiesDialog.createOpacitySlider(GRAPHIC_OPACITY);
     slider.setValue(80);
     PropertiesDialog.updateSlider(slider, GRAPHIC_OPACITY);

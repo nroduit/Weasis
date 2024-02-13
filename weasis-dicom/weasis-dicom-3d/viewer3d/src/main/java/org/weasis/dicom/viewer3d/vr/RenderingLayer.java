@@ -13,8 +13,6 @@ import java.util.ArrayList;
 import java.util.List;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.dicom.viewer2d.mip.MipView;
-import org.weasis.dicom.viewer3d.dockable.SegmentationTool;
-import org.weasis.dicom.viewer3d.dockable.SegmentationTool.Type;
 import org.weasis.opencv.op.lut.LutShape;
 
 public class RenderingLayer<E extends ImageElement> {
@@ -40,8 +38,6 @@ public class RenderingLayer<E extends ImageElement> {
   private LutShape lutShape;
   private RenderingType renderingType;
   private MipView.Type mipType;
-
-  private SegmentationTool.Type segmentationType;
   private int mipThickness;
   private double opacity;
   private boolean enableRepaint;
@@ -57,7 +53,6 @@ public class RenderingLayer<E extends ImageElement> {
     this.quality = 1024;
     this.renderingType = RenderingType.COMPOSITE;
     this.mipType = MipView.Type.NONE;
-    this.segmentationType = SegmentationTool.Type.NONE;
     this.mipThickness = 1;
     this.enableRepaint = true;
     this.invertLut = false;
@@ -103,17 +98,6 @@ public class RenderingLayer<E extends ImageElement> {
   public void setMipType(MipView.Type mipType) {
     if (this.mipType != mipType) {
       this.mipType = mipType;
-      fireLayerChanged();
-    }
-  }
-
-  public Type getSegmentationType() {
-    return segmentationType;
-  }
-
-  public void setSegmentationType(Type segmentationType) {
-    if (this.segmentationType != segmentationType) {
-      this.segmentationType = segmentationType;
       fireLayerChanged();
     }
   }

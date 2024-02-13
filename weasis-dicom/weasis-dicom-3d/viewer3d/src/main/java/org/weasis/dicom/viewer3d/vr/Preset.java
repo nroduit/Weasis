@@ -33,9 +33,10 @@ import org.joml.Vector4f;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.ActionW;
-import org.weasis.dicom.codec.SpecialElementRegion;
+import org.weasis.core.ui.model.graphic.imp.seg.SegRegion;
 import org.weasis.dicom.codec.display.Modality;
 import org.weasis.dicom.viewer3d.EventManager;
+import org.weasis.dicom.viewer3d.View3DContainer;
 import org.weasis.dicom.viewer3d.vr.lut.PresetGroup;
 import org.weasis.dicom.viewer3d.vr.lut.PresetPoint;
 import org.weasis.dicom.viewer3d.vr.lut.VolumePreset;
@@ -535,44 +536,56 @@ public class Preset extends TextureData {
     return null;
   }
 
-  public static Preset getSegmentationLut(DicomVolTexture texture) {
-    List<SpecialElementRegion> segList = texture.getSegmentations();
-    if (!segList.isEmpty()) {
+  public static Map<String, List<SegRegion<?>>> getRegionMap() {
+    if (EventManager.getInstance().getSelectedView2dContainer()
+        instanceof View3DContainer container) {
+      return container.getRegionMap();
+    }
+    return null;
+  }
+
+  private static List<SegRegion<?>> getOrderRegionAttributes(Map<String, List<SegRegion<?>>> map) {
+    List<SegRegion<?>> list = new ArrayList<>();
+    for (Entry<String, List<SegRegion<?>>> entry : map.entrySet()) {
+      list.addAll(entry.getValue());
+    }
+    list.sort(Comparator.comparingInt(RegionAttributes::getId));
+    return list;
+  }
+
+  public static Preset getSegmentationLut() {
+    Map<String, List<SegRegion<?>>> map = getRegionMap();
+
+    if (map != null && !map.isEmpty()) {
       List<PresetGroup> groups = new ArrayList<>();
-      groups.add(
-          new PresetGroup(
-              "StartEmpty", new PresetPoint[] {getTransparentPoint(-10), getTransparentPoint(0)}));
+      groups.add(new PresetGroup("StartEmpty", new PresetPoint[] {getTransparentPoint(0)}));
 
       List<PresetPoint> presetPoints = new ArrayList<>();
       int max = 1;
 
-      for (SpecialElementRegion segElement : segList) {
-        Map<Integer, ? extends RegionAttributes> map = segElement.getSegAttributes();
-        if (map != null) {
-          for (Entry<Integer, ? extends RegionAttributes> entry : map.entrySet()) {
-            RegionAttributes a = entry.getValue();
-            if (a.isVisible()) {
-              max = Math.max(max, entry.getKey());
-              Color c = a.getColor();
-              presetPoints.add(
-                  new PresetPoint(
-                      entry.getKey(),
-                      1.0f,
-                      c.getRed() / 255f,
-                      c.getGreen() / 255f,
-                      c.getBlue() / 255f,
-                      0.2f,
-                      0.1f,
-                      0.9f));
-            }
-          }
+      for (RegionAttributes a : getOrderRegionAttributes(map)) {
+        float opacity = a.getInteriorOpacity();
+        int density = a.getId();
+        if (a.isVisible()) {
+          max = Math.max(max, density);
+          Color c = a.getColor();
+          presetPoints.add(
+              new PresetPoint(
+                  density,
+                  opacity,
+                  c.getRed() / 255.0f,
+                  c.getGreen() / 255.0f,
+                  c.getBlue() / 255.0f,
+                  1.0f,
+                  0.2f,
+                  1.0f));
+        } else {
+          presetPoints.add(getTransparentPoint(density));
         }
       }
+
       groups.add(new PresetGroup("segments", presetPoints.toArray(new PresetPoint[0])));
-      groups.add(
-          new PresetGroup(
-              "EndEmpty",
-              new PresetPoint[] {getTransparentPoint(max + 1), getTransparentPoint(max + 11)}));
+      groups.add(new PresetGroup("EndEmpty", new PresetPoint[] {getTransparentPoint(max + 1)}));
       return new Preset("Segmentation", "SEG", false, true, 1.0f, groups);
     }
     return null;

@@ -57,16 +57,22 @@ public class SegRegionTree extends CheckboxTree {
       if (node != null) {
         boolean leaf = node.isLeaf();
         if (!leaf) {
-          popupMenu.add(getCheckAllMenuItem(node, true));
-          popupMenu.add(getCheckAllMenuItem(node, false));
+          addPopupMenuItem(getCheckAllMenuItem(node, true));
+          addPopupMenuItem(getCheckAllMenuItem(node, false));
         }
-        popupMenu.add(getOpacityMenuItem(node, e.getPoint()));
+        addPopupMenuItem(getOpacityMenuItem(node, e.getPoint()));
         if (leaf) {
-          popupMenu.add(getSelectionMenuItem(node));
-          popupMenu.add(getStatisticMenuItem(node));
+          addPopupMenuItem(getSelectionMenuItem(node));
+          addPopupMenuItem(getStatisticMenuItem(node));
         }
         popupMenu.show(SegRegionTree.this, e.getX(), e.getY());
       }
+    }
+  }
+
+  protected void addPopupMenuItem(JMenuItem menuItem) {
+    if (menuItem != null) {
+      popupMenu.add(menuItem);
     }
   }
 
@@ -108,11 +114,7 @@ public class SegRegionTree extends CheckboxTree {
               Object child = children.nextElement();
               if (child instanceof DefaultMutableTreeNode dtm) {
                 TreePath tp = new TreePath(dtm.getPath());
-                if (selected) {
-                  getCheckingModel().addCheckingPath(tp);
-                } else {
-                  getCheckingModel().removeCheckingPath(tp);
-                }
+                TreeBuilder.setPathSelection(SegRegionTree.this, tp, selected);
               }
             }
           }

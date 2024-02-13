@@ -29,6 +29,7 @@ import org.opencv.core.*;
 import org.opencv.imgproc.Imgproc;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.weasis.core.api.gui.util.ComboItemListener;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.media.data.TagW;
@@ -36,7 +37,9 @@ import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.model.graphic.imp.seg.SegContour;
 import org.weasis.core.ui.model.graphic.imp.seg.SegGraphic;
 import org.weasis.dicom.codec.*;
+import org.weasis.dicom.viewer3d.ActionVol;
 import org.weasis.dicom.viewer3d.EventManager;
+import org.weasis.dicom.viewer3d.dockable.SegmentationTool.Type;
 import org.weasis.dicom.viewer3d.geometry.GeometryUtils;
 import org.weasis.dicom.viewer3d.geometry.VolumeGeometry;
 import org.weasis.opencv.data.ImageCV;
@@ -179,9 +182,14 @@ public final class VolumeBuilder {
       final int size = volTexture.getDepth();
       List<SpecialElementRegion> segList = null;
       ViewCanvas<DicomImageElement> view = EventManager.getInstance().getSelectedViewPane();
+      ComboItemListener<Type> segType =
+          EventManager.getInstance().getAction(ActionVol.SEG_TYPE).orElse(null);
+      if (segType != null && segType.getSelectedItem() == Type.SEG_ONLY) {
+        segList = volTexture.getSegmentations();
+      }
+
       final JProgressBar bar;
       if (view instanceof View3d view3d) {
-        segList = volTexture.getSegmentations();
         bar = new JProgressBar(0, size);
         Dimension dim = new Dimension(view3d.getWidth() / 2, GuiUtils.getScaleLength(30));
         bar.setSize(dim);
@@ -262,22 +270,10 @@ public final class VolumeBuilder {
         LOGGER.debug(
             "Time preparation of {}: {} ms", i, Duration.between(start, Instant.now()).toMillis());
 
-        start = Instant.now();
-        PlanarImage imageMLUT = volTexture.getModalityLutImage(imageElement);
-        LOGGER.debug(
-            "Time to get Modality LUT image  {}: {} ms",
-            i,
-            Duration.between(start, Instant.now()).toMillis());
-
-        start = Instant.now();
-        imageMLUT = getSuitableImage(imageMLUT);
-        LOGGER.debug(
-            "Time to get suitable image  {}: {} ms",
-            i,
-            Duration.between(start, Instant.now()).toMillis());
+        PlanarImage imageMLUT;
 
         if (segList != null && !segList.isEmpty()) {
-          Mat mask = Mat.zeros(imageMLUT.size(), imageMLUT.type());
+          Mat mask = volTexture.getEmptyImage();
           for (SpecialElementRegion seg : segList) {
             if (seg.isVisible() && seg.containsSopInstanceUIDReference(imageElement)) {
               Collection<SegContour> contours = seg.getContours(imageElement);
@@ -286,9 +282,10 @@ public final class VolumeBuilder {
                   SegGraphic graphic = c.getSegGraphic();
                   if (graphic != null) {
                     List<MatOfPoint> pts =
-                        ImageProcessor.transformShapeToContour(graphic.getShape(), false);
+                        ImageProcessor.transformShapeToContour(graphic.getShape(), true);
                     // TODO check the limit value
-                    Imgproc.fillPoly(mask, pts, new Scalar(c.getAttributes().getId()));
+                    int density = c.getAttributes().getId();
+                    Imgproc.fillPoly(mask, pts, new Scalar(density));
                   }
                 }
                 // Core.bitwise_and(src, mask, src);
@@ -297,7 +294,21 @@ public final class VolumeBuilder {
           }
           int nbPixels = Core.countNonZero(mask);
           imageMLUT = ImageCV.toImageCV(mask);
+        } else {
+          start = Instant.now();
+          imageMLUT = volTexture.getModalityLutImage(imageElement);
+          LOGGER.debug(
+              "Time to get Modality LUT image  {}: {} ms",
+              i,
+              Duration.between(start, Instant.now()).toMillis());
         }
+
+        start = Instant.now();
+        imageMLUT = getSuitableImage(imageMLUT);
+        LOGGER.debug(
+            "Time to get suitable image  {}: {} ms",
+            i,
+            Duration.between(start, Instant.now()).toMillis());
 
         sumMemory += imageMLUT.physicalBytes();
         if (sumMemory > maxMemory) {

@@ -24,7 +24,10 @@ import java.util.Set;
 import org.dcm4che3.data.Tag;
 import org.dcm4che3.img.lut.PresetWindowLevel;
 import org.joml.Vector3d;
+import org.opencv.core.CvType;
+import org.opencv.core.Mat;
 import org.opencv.core.Rect;
+import org.opencv.core.Size;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.image.SimpleOpManager;
 import org.weasis.core.api.image.ZoomOp;
@@ -360,5 +363,19 @@ public class DicomVolTexture extends VolumeTexture implements MediaSeriesGroup {
           SpecialElementRegion.class, list.toArray(new String[0]));
     }
     return Collections.emptyList();
+  }
+
+  public Mat getEmptyImage() {
+    int type;
+    if (pixelFormat == PixelFormat.RGB8) {
+      type = CvType.CV_8UC3;
+    } else if (pixelFormat == PixelFormat.RGBA8) {
+      type = CvType.CV_8UC4;
+    } else if (pixelFormat == PixelFormat.BYTE) {
+      type = CvType.CV_8UC1;
+    } else {
+      type = CvType.CV_16UC1;
+    }
+    return Mat.zeros(new Size(width, height), type);
   }
 }
