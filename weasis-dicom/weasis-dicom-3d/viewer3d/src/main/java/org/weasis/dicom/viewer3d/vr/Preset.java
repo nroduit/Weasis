@@ -566,8 +566,8 @@ public class Preset extends TextureData {
       for (RegionAttributes a : getOrderRegionAttributes(map)) {
         float opacity = a.getInteriorOpacity();
         int density = a.getId();
+        max = Math.max(max, density);
         if (a.isVisible()) {
-          max = Math.max(max, density);
           Color c = a.getColor();
           presetPoints.add(
               new PresetPoint(
@@ -583,9 +583,10 @@ public class Preset extends TextureData {
           presetPoints.add(getTransparentPoint(density));
         }
       }
+   //   presetPoints.add(presetPoints.getLast());
 
       groups.add(new PresetGroup("segments", presetPoints.toArray(new PresetPoint[0])));
-      groups.add(new PresetGroup("EndEmpty", new PresetPoint[] {getTransparentPoint(max + 1)}));
+     // groups.add(new PresetGroup("EndEmpty", new PresetPoint[] {getTransparentPoint(max + 1)}));
       return new Preset("Segmentation", "SEG", false, true, 1.0f, groups);
     }
     return null;

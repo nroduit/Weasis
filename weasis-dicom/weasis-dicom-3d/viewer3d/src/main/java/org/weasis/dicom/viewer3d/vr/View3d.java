@@ -348,7 +348,6 @@ public class View3d extends VolumeCanvas
   }
 
   public void initShaders(GL4 gl4) {
-    boolean seg = volumePreset != null && "Segmentation".equals(volumePreset.getName());
     WProperties preferences = GuiUtils.getUICore().getSystemPreferences();
     Color lightColor = preferences.getColorProperty(RenderingLayer.P_LIGHT_COLOR, Color.WHITE);
     Vector3f lColor =
@@ -385,7 +384,7 @@ public class View3d extends VolumeCanvas
     program.allocateUniform(
         gl4,
         "lutShape",
-        (gl, loc) -> gl4.glUniform1ui(loc, seg ? 0 : renderingLayer.getLutShapeId()));
+        (gl, loc) -> gl4.glUniform1ui(loc, isSegMode() ? 0 : renderingLayer.getLutShapeId()));
 
     program.allocateUniform(
         gl4,
@@ -433,28 +432,21 @@ public class View3d extends VolumeCanvas
     program.allocateUniform(
         gl4,
         "textureDataType",
-        (gl, loc) -> gl.glUniform1ui(loc, TextureData.getDataType(getPixelFormat(seg))));
+        (gl, loc) -> gl.glUniform1ui(loc, TextureData.getDataType(getPixelFormat())));
 
     program.allocateUniform(
         gl4,
         "opacityFactor",
         (gl, loc) -> gl.glUniform1f(loc, (float) renderingLayer.getOpacity()));
 
-    float levelMin = seg ? volumePreset.getColorMin() : volTexture.getLevelMin();
-    float levelMax = seg ? volumePreset.getColorMax() : volTexture.getLevelMax();
-    float outputLevelMin = volumePreset.getColorMin();
-    float outputLevelMax = volumePreset.getColorMax();
-    float windowWidth = seg ? levelMax - levelMin : renderingLayer.getWindowWidth();
-    float windowCenter = seg ? (levelMin + levelMax) / 2f : renderingLayer.getWindowCenter();
-
-    program.allocateUniform(gl4, "inputLevelMin", (gl, loc) -> gl.glUniform1f(loc, levelMin));
-    program.allocateUniform(gl4, "inputLevelMax", (gl, loc) -> gl.glUniform1f(loc, levelMax));
+    program.allocateUniform(gl4, "inputLevelMin", (gl, loc) -> gl.glUniform1f(loc, isSegMode()  ? 0 : volTexture.getLevelMin()));
+    program.allocateUniform(gl4, "inputLevelMax", (gl, loc) -> gl.glUniform1f(loc, isSegMode()  ? volumePreset.getWidth() : volTexture.getLevelMax()));
     program.allocateUniform(
-        gl4, "outputLevelMin", (gl, loc) -> gl.glUniform1f(loc, outputLevelMin));
+        gl4, "outputLevelMin", (gl, loc) -> gl.glUniform1f(loc, 0));
     program.allocateUniform(
-        gl4, "outputLevelMax", (gl, loc) -> gl.glUniform1f(loc, outputLevelMax));
-    program.allocateUniform(gl4, "windowWidth", (gl, loc) -> gl.glUniform1f(loc, windowWidth));
-    program.allocateUniform(gl4, "windowCenter", (gl, loc) -> gl.glUniform1f(loc, windowCenter));
+        gl4, "outputLevelMax", (gl, loc) -> gl.glUniform1f(loc, volumePreset.getWidth()));
+    program.allocateUniform(gl4, "windowWidth", (gl, loc) -> gl.glUniform1f(loc, isSegMode()  ? volumePreset.getColorMax() - volumePreset.getColorMin() : renderingLayer.getWindowWidth()));
+    program.allocateUniform(gl4, "windowCenter", (gl, loc) -> gl.glUniform1f(loc, isSegMode()  ? (volumePreset.getColorMin() + volumePreset.getColorMax()) / 2f : renderingLayer.getWindowCenter()));
 
     final IntBuffer intBuffer = IntBuffer.allocate(1);
     texture.init(gl4);
@@ -474,9 +466,13 @@ public class View3d extends VolumeCanvas
         GL.GL_STATIC_DRAW);
   }
 
-  private PixelFormat getPixelFormat(boolean segmentation) {
+  private boolean isSegMode() {
+    return volumePreset != null && "Segmentation".equals(volumePreset.getName());
+  }
+
+  private PixelFormat getPixelFormat() {
     PixelFormat format = volTexture.getPixelFormat();
-    if (segmentation) {
+    if (isSegMode()) {
       if (format == PixelFormat.SIGNED_SHORT) {
         return PixelFormat.UNSIGNED_SHORT;
       }
