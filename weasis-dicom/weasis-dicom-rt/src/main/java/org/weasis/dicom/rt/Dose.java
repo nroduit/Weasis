@@ -573,13 +573,26 @@ public class Dose extends RtSpecialElement implements SpecialElementRegion {
     if (voxelSpacing.x < 0.00001 || voxelSpacing.y < 0.00001) {
       return null;
     }
+
+    double z = slicePosition.getValue();
+    transformGeometry(geometry, z, segmentList);
+
+    StructContour segContour =
+        new StructContour(String.valueOf(slicePosition.getKey()), segmentList, nbPixels);
+    segContour.setPositionZ(z);
+    region.addPixels(segContour);
+    segContour.setAttributes(region);
+    return segContour;
+  }
+
+  private void transformGeometry(GeometryOfSlice geometry, double z, List<Segment> segmentList) {
     Vector3d tlhc = geometry.getTLHC();
     Vector3d row = geometry.getRow();
     Vector3d column = geometry.getColumn();
-    double z = slicePosition.getValue();
+    Vector3d voxelSpacing = geometry.getVoxelSpacing();
 
-    for (Segment seg : segmentList) {
-      for (Point2D pt : seg) {
+    for (Segment segment : segmentList) {
+      for (Point2D pt : segment) {
         double sx = doseMmLUT.getKey()[(int) pt.getX()];
         double sy = doseMmLUT.getValue()[(int) pt.getY()];
         double x =
@@ -589,14 +602,11 @@ public class Dose extends RtSpecialElement implements SpecialElementRegion {
                 / voxelSpacing.y;
         pt.setLocation(x, y);
       }
+      List<Segment> children = segment.getChildren();
+      if (!children.isEmpty()) {
+        transformGeometry(geometry, z, children);
+      }
     }
-
-    StructContour segContour =
-        new StructContour(String.valueOf(slicePosition.getKey()), segmentList, nbPixels);
-    segContour.setPositionZ(z);
-    region.addPixels(segContour);
-    segContour.setAttributes(region);
-    return segContour;
   }
 
   public void initialiseDoseGridToImageGrid(Image patientImage) {
