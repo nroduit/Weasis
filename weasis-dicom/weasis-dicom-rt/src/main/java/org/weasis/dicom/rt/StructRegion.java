@@ -11,10 +11,14 @@ package org.weasis.dicom.rt;
 
 import java.awt.Color;
 import java.util.AbstractMap;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import org.weasis.core.ui.model.graphic.imp.seg.SegRegion;
+import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.codec.DicomImageElement;
+import org.weasis.opencv.seg.RegionAttributes;
 
 public class StructRegion extends SegRegion<DicomImageElement> {
   private int observationNumber;
@@ -119,6 +123,31 @@ public class StructRegion extends SegRegion<DicomImageElement> {
     return new AbstractMap.SimpleImmutableEntry<>(maxContourIndex, maxContourArea);
   }
 
+  public String getSortLabel() {
+    if (StringUtil.hasText(rtRoiInterpretedType)) {
+      return rtRoiInterpretedType + getLabel();
+    }
+    return this.getLabel();
+  }
+
+  public static List<List<StructRegion>> sort(Collection<List<StructRegion>> regions) {
+    List<List<StructRegion>> sortedRegions = new ArrayList<>(regions);
+    sortedRegions.sort(
+        (List<StructRegion> a, List<StructRegion> b) -> {
+          if (a.isEmpty() && b.isEmpty()) {
+            return 0;
+          }
+          if (a.isEmpty()) {
+            return 1;
+          }
+          if (b.isEmpty()) {
+            return -1;
+          }
+          return a.getFirst().compareTo(b.getFirst());
+        });
+    return sortedRegions;
+  }
+
   private double calculateVolume() {
     double structureVolume = 0.0;
 
@@ -165,5 +194,13 @@ public class StructRegion extends SegRegion<DicomImageElement> {
 
     // DICOM uses millimeters -> convert from mm^3 to cm^3
     return structureVolume / 1000;
+  }
+
+  @Override
+  public int compareTo(RegionAttributes o) {
+    if (o instanceof StructRegion) {
+      return StringUtil.collator.compare(getSortLabel(), ((StructRegion) o).getSortLabel());
+    }
+    return super.compareTo(o);
   }
 }

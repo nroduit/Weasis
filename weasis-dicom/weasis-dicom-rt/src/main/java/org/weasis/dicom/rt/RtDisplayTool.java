@@ -23,7 +23,6 @@ import javax.swing.*;
 import javax.swing.SwingWorker.StateValue;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
-import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import net.miginfocom.swing.MigLayout;
 import org.dcm4che3.data.Tag;
@@ -511,42 +510,20 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener, S
     return Collections.emptyList();
   }
 
-  private void updateVisibleNode(DefaultMutableTreeNode start, GroupTreeNode parent) {
-    for (Enumeration<TreeNode> children = start.children(); children.hasMoreElements(); ) {
-      DefaultMutableTreeNode dtm = (DefaultMutableTreeNode) children.nextElement();
-      if (dtm.isLeaf()) {
-        TreePath tp = new TreePath(dtm.getPath());
-        DefaultMutableTreeNode node = (DefaultMutableTreeNode) tp.getLastPathComponent();
-        if (node.getUserObject() instanceof SegRegion<?> region) {
-          if (tabbedPane.getSelectedIndex() == 0) {
-            boolean selected = treeStructures.getCheckingModel().isPathChecked(tp);
-            region.setSelected(selected);
-            region.setVisible(selected && parent.isParentVisible());
-          } else if (tabbedPane.getSelectedIndex() == 1) {
-            boolean selected = treeIsodoses.getCheckingModel().isPathChecked(tp);
-            region.setSelected(selected);
-            region.setVisible(selected && parent.isParentVisible());
-          }
-        }
-      } else if (dtm instanceof GroupTreeNode groupTreeNode) {
-        TreePath tp = new TreePath(dtm.getPath());
-        boolean selected = treeStructures.getCheckingModel().isPathChecked(tp);
-        groupTreeNode.setSelected(selected);
-        updateVisibleNode(dtm, groupTreeNode);
-      }
-    }
-  }
-
   public void updateVisibleNode() {
     SpecialElementRegion region = getSelectedRegion();
     if (region instanceof StructureSet) {
-      nodeStructures.setSelected(
-          treeStructures.getCheckingModel().isPathChecked(new TreePath(nodeStructures.getPath())));
-      updateVisibleNode(rootNodeStructures, nodeStructures);
+      boolean all =
+          treeStructures.getCheckingModel().isPathChecked(new TreePath(nodeStructures.getPath()));
+      region.setVisible(all);
+      nodeStructures.setSelected(all);
+      treeStructures.updateVisibleNode(rootNodeStructures, nodeStructures);
     } else if (region instanceof Dose) {
-      nodeIsodoses.setSelected(
-          treeIsodoses.getCheckingModel().isPathChecked(new TreePath(nodeIsodoses.getPath())));
-      updateVisibleNode(rootNodeIsodoses, nodeIsodoses);
+      boolean all =
+          treeIsodoses.getCheckingModel().isPathChecked(new TreePath(nodeIsodoses.getPath()));
+      region.setVisible(all);
+      nodeIsodoses.setSelected(all);
+      treeIsodoses.updateVisibleNode(rootNodeIsodoses, nodeIsodoses);
     }
 
     ImageViewerPlugin<DicomImageElement> container =
@@ -661,7 +638,7 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener, S
         nodeStructures.removeAllChildren();
         Map<String, List<StructRegion>> map =
             SegRegion.groupRegions(selectedStructure.getSegAttributes().values());
-        for (List<StructRegion> list : map.values()) {
+        for (List<StructRegion> list : StructRegion.sort(map.values())) {
           if (list.size() == 1) {
             StructRegion region = list.getFirst();
             DefaultMutableTreeNode node = buildStructRegionNode(region);
