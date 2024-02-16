@@ -1006,9 +1006,10 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
                 false));
 
     Double cineRate = TagD.getTagValue(view2d.getImage(), Tag.CineRate, Double.class);
-    if (cineRate != null) {
-      cineAction.ifPresent(a -> a.setSpeed(cineRate));
-    }
+    cineAction.ifPresent(
+        a -> {
+          a.setSpeed(cineRate == null ? 20.0 : cineRate);
+        });
     int playbackSequencing = getPlaybackSequencing(view2d);
     getAction(ActionW.CINE_SWEEP).ifPresent(a -> a.setSelected(playbackSequencing == 1));
 
