@@ -190,9 +190,9 @@ public class WeasisLauncher {
                 JOptionPane.showOptionDialog(
                     mainFrame.getWindow(),
                     String.format(
-                        STR."\{Messages.getString(
-                            "WeasisLauncher.update_min")}\n\n\{Messages.getString(
-                            "WeasisLauncher.continue_local")}",
+                        Messages.getString(
+                            "WeasisLauncher.update_min") + "\n\n" + Messages.getString(
+                            "WeasisLauncher.continue_local"),
                         appName,
                         minVersion),
                     null,

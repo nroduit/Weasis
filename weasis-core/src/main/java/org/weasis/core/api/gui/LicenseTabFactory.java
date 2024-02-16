@@ -13,8 +13,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.util.Hashtable;
+import java.util.OptionalInt;
 import java.util.Properties;
 import java.util.Random;
+import java.util.stream.IntStream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -60,9 +62,16 @@ public interface LicenseTabFactory extends InsertableFactory {
 
   private String decode(String key, String value) {
     Random r = new Random(key.hashCode());
+    long salt = r.nextLong();
+    OptionalInt intSalt;
+    try (IntStream inStream = Long.valueOf(salt).toString().chars()) {
+      intSalt = inStream.reduce((left, right) -> {
+        return left + right;
+      });
+    }
     StringBuilder switchedString = new StringBuilder();
     for (int i = 0; i < value.length(); ++i)
-      switchedString.append((char) (value.charAt(i) + (-1) * ((i * r.nextLong() + r.nextLong()) % 8192)));
+      switchedString.append((char) (value.charAt(i) + (-1 * intSalt.getAsInt())));
     return switchedString.toString();
   }
 

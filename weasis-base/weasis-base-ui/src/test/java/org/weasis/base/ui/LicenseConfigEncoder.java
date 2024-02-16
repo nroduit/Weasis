@@ -6,9 +6,11 @@ import java.io.FileOutputStream;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.OptionalInt;
 import java.util.Properties;
 import java.util.Random;
 import java.util.Set;
+import java.util.stream.IntStream;
 
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Disabled;
@@ -57,7 +59,7 @@ class LicenseConfigEncoder {
   }
 
   @Test
-  void test() {
+  void testEncode() {
     // read the source
     Properties p = new Properties();
     try (FileInputStream fis = new FileInputStream(new File(sourceFile))) {
@@ -82,14 +84,24 @@ class LicenseConfigEncoder {
     } catch (Exception e) {
       e.printStackTrace();
     }
+
   }
 
   private String encode(String key, String value) {
     Random r = new Random(key.hashCode());
+    long salt = r.nextLong();
+    OptionalInt intSalt;
+    try (IntStream inStream = Long.valueOf(salt).toString().chars()) {
+      intSalt = inStream.reduce((left, right) -> {
+        return left + right;
+      });
+    }
     StringBuilder switchedString = new StringBuilder();
     for (int i = 0; i < value.length(); ++i)
-      switchedString.append((char) (value.charAt(i) + 1 * ((i * r.nextLong() + r.nextLong()) % 8192)));
+      switchedString.append((char) (value.charAt(i) + (1 * intSalt.getAsInt())));
     return switchedString.toString();
   }
+
+
 
 }
