@@ -39,14 +39,7 @@ public class XmlSerializer {
       try {
         JAXBContext jaxbContext = getJaxbContext(XmlGraphicModel.class);
         Unmarshaller jaxbUnmarshaller = jaxbContext.createUnmarshaller();
-        GraphicModel model = (GraphicModel) jaxbUnmarshaller.unmarshal(gpxFile);
-        int length = model.getModels().size();
-        model.getModels().removeIf(g -> g.getLayer() == null);
-        if (length > model.getModels().size()) {
-          LOGGER.error(
-              "Removing {} graphics without a attached layer", model.getModels().size() - length);
-        }
-        return model;
+        return getGraphicModel((GraphicModel) jaxbUnmarshaller.unmarshal(gpxFile));
       } catch (Exception e) {
         LOGGER.error("Cannot load xml: ", e);
       }
@@ -100,15 +93,7 @@ public class XmlSerializer {
       JAXBElement<XmlGraphicModel> unmarshalledObj =
           jaxbUnmarshaller.unmarshal(
               new NoNamespaceStreamReaderDelegate(xmler), XmlGraphicModel.class);
-      GraphicModel model = unmarshalledObj.getValue();
-
-      int length = model.getModels().size();
-      model.getModels().removeIf(g -> g.getLayer() == null);
-      if (length > model.getModels().size()) {
-        LOGGER.error(
-            "Removing {} graphics without a attached layer", model.getModels().size() - length);
-      }
-      return model;
+      return getGraphicModel(unmarshalledObj.getValue());
     } catch (Exception e) {
       LOGGER.error("Cannot write GraphicModel", e);
     }
@@ -129,18 +114,21 @@ public class XmlSerializer {
       Unmarshaller jaxbUnmarshaller = jaxbContext.createUnmarshaller();
       ByteArrayInputStream inputStream =
           new ByteArrayInputStream(GzipManager.gzipUncompressToByte(gzipData));
-      GraphicModel model = (GraphicModel) jaxbUnmarshaller.unmarshal(inputStream);
-      int length = model.getModels().size();
-      model.getModels().removeIf(g -> g.getLayer() == null);
-      if (length > model.getModels().size()) {
-        LOGGER.error(
-            "Removing {} graphics without a attached layer", model.getModels().size() - length);
-      }
-      return model;
+      return getGraphicModel((GraphicModel) jaxbUnmarshaller.unmarshal(inputStream));
     } catch (Exception e) {
       LOGGER.error("Cannot load xml graphic model: ", e);
     }
     return null;
+  }
+
+  private static GraphicModel getGraphicModel(GraphicModel model) {
+    int length = model.getModels().size();
+    model.getModels().removeIf(g -> g.getLayer() == null);
+    if (length > model.getModels().size()) {
+      LOGGER.error(
+          "Removing {} graphics without a attached layer", model.getModels().size() - length);
+    }
+    return model;
   }
 
   public static JAXBContext getJaxbContext(Class<?>... clazz) throws JAXBException {

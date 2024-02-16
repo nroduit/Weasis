@@ -30,15 +30,7 @@ public class SampleTool extends PluginTool {
 
     @Override
     public Component getToolComponent() {
-        JViewport viewPort = rootPane.getViewport();
-        if (viewPort == null) {
-            viewPort = new JViewport();
-            rootPane.setViewport(viewPort);
-        }
-        if (viewPort.getView() != this) {
-            viewPort.setView(this);
-        }
-        return rootPane;
+        return getToolComponentFromJScrollPane(rootPane);
     }
 
     @Override

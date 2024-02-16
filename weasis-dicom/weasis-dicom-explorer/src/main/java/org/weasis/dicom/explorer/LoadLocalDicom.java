@@ -28,6 +28,7 @@ import org.weasis.core.ui.serialize.XmlSerializer;
 import org.weasis.core.util.FileUtil;
 import org.weasis.dicom.codec.DicomCodec;
 import org.weasis.dicom.codec.DicomMediaIO;
+import org.weasis.dicom.codec.DicomMediaIO.Reading;
 import org.weasis.dicom.explorer.HangingProtocols.OpeningViewer;
 
 public class LoadLocalDicom extends LoadDicom {
@@ -83,7 +84,8 @@ public class LoadLocalDicom extends LoadDicom {
               && FileUtil.isFileExtensionMatching(value, DicomCodec.FILE_EXTENSIONS)
           || MimeInspector.isMatchingMimeTypeFromMagicNumber(value, DicomMediaIO.DICOM_MIMETYPE)) {
         DicomMediaIO loader = new DicomMediaIO(value);
-        if (loader.isReadableDicom()) {
+        Reading reading = loader.getReadingStatus();
+        if (reading == Reading.READABLE) {
           if (value.getPath().startsWith(AppProperties.APP_TEMP_DIR.getPath())) {
             loader.getFileCache().setOriginalTempFile(value);
           }
@@ -98,6 +100,8 @@ public class LoadLocalDicom extends LoadDicom {
           if (graphicModel != null) {
             loader.setTag(TagW.PresentationModel, graphicModel);
           }
+        } else if (reading == Reading.ERROR) {
+          errors.incrementAndGet();
         }
       }
     }

@@ -34,6 +34,7 @@ import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.media.data.Codec;
+import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.service.AuditLog;
 import org.weasis.core.api.service.BundlePreferences;
 import org.weasis.core.api.service.BundleTools;
@@ -128,12 +129,12 @@ public class Activator implements BundleActivator, ServiceListener {
       return;
     }
 
-    if (service instanceof Codec codec) {
+    if (service instanceof Codec<?> codec) {
       // TODO manage when several identical MimeType, register the default one
       if (event.getType() == ServiceEvent.REGISTERED) {
         registerCodecPlugins(codec);
       } else if (event.getType() == ServiceEvent.UNREGISTERING) {
-        List<Codec> codecs = GuiUtils.getUICore().getCodecPlugins();
+        List<Codec<MediaElement>> codecs = GuiUtils.getUICore().getCodecPlugins();
         if (codecs.contains(codec)) {
           LOGGER.info("Unregister Image Codec Plug-in: {}", codec.getCodecName());
           codecs.remove(codec);
@@ -160,10 +161,10 @@ public class Activator implements BundleActivator, ServiceListener {
     }
   }
 
-  private static void registerCodecPlugins(Codec codec) {
-    List<Codec> codecs = GuiUtils.getUICore().getCodecPlugins();
+  private static void registerCodecPlugins(Codec<?> codec) {
+    List<Codec<MediaElement>> codecs = GuiUtils.getUICore().getCodecPlugins();
     if (codec != null && !codecs.contains(codec)) {
-      codecs.add(codec);
+      codecs.add((Codec<MediaElement>) codec);
       LOGGER.info("Register Image Codec Plug-in: {}", codec.getCodecName());
     }
   }

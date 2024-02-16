@@ -36,6 +36,7 @@ import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.FutureTask;
+import java.util.function.Function;
 import javax.swing.Action;
 import javax.swing.BorderFactory;
 import javax.swing.ButtonGroup;
@@ -73,6 +74,7 @@ import org.weasis.core.api.media.data.Thumbnail;
 import org.weasis.core.api.util.FontItem;
 import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.api.util.ResourceUtil.OtherIcon;
+import org.weasis.core.api.util.ResourceUtil.ResourceIconPath;
 import org.weasis.core.ui.docking.PluginTool;
 import org.weasis.core.ui.editor.SeriesViewer;
 import org.weasis.core.ui.editor.SeriesViewerEvent;
@@ -88,6 +90,7 @@ import org.weasis.core.ui.util.TitleMenuItem;
 import org.weasis.core.ui.util.WrapLayout;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.DicomSpecialElement;
+import org.weasis.dicom.codec.HiddenSeriesManager;
 import org.weasis.dicom.codec.KOSpecialElement;
 import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.TagD.Level;
@@ -128,14 +131,6 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
       new ArrayListComboBoxModel<>(DicomSorter.STUDY_COMPARATOR);
   private final JComboBox<?> patientCombobox = new JComboBox<>(modelPatient);
   private final JComboBox<?> studyCombobox = new JComboBox<>(modelStudy);
-  private final transient ItemListener patientChangeListener =
-      e -> {
-        if (e.getStateChange() == ItemEvent.SELECTED) {
-          selectPatient(getSelectedPatient());
-          selectedPatient.revalidate();
-          selectedPatient.repaint();
-        }
-      };
   private final transient ItemListener studyItemListener =
       e -> {
         if (e.getStateChange() == ItemEvent.SELECTED) {
@@ -165,6 +160,14 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
     setDockableWidth(Math.max(thumbnailSize, Thumbnail.DEFAULT_SIZE) + 42);
 
     patientCombobox.setMaximumRowCount(15);
+    ItemListener patientChangeListener =
+        e -> {
+          if (e.getStateChange() == ItemEvent.SELECTED) {
+            selectPatient(getSelectedPatient());
+            selectedPatient.revalidate();
+            selectedPatient.repaint();
+          }
+        };
     patientCombobox.addItemListener(patientChangeListener);
     studyCombobox.setMaximumRowCount(15);
     // do not use addElement
@@ -412,7 +415,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
   private MediaSeriesGroup getFirstStudy(MediaSeriesGroup patientGroup) {
     List<StudyPane> studyList = getStudyList(patientGroup);
     if (studyList != null && !studyList.isEmpty()) {
-      return studyList.get(0).dicomStudy;
+      return studyList.getFirst().dicomStudy;
     }
     return null;
   }
@@ -530,7 +533,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
         for (StudyPane studyPane : studyList) {
           List<SeriesPane> seriesList = study2series.get(studyPane.dicomStudy);
           if (seriesList != null && !seriesList.isEmpty()) {
-            return seriesList.get(0).sequence;
+            return seriesList.getFirst().sequence;
           }
         }
       }
@@ -871,7 +874,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
                 selectedPatient == null ? null : selectedPatient.patient;
             if (patient != null && e.getSource() instanceof JButton button) {
               List<KOSpecialElement> list =
-                  DicomModel.getHiddenSpecialElements(patient, KOSpecialElement.class);
+                  HiddenSeriesManager.getHiddenElementsFromPatient(KOSpecialElement.class, patient);
               if (!list.isEmpty()) {
                 if (list.size() == 1) {
                   model.openRelatedSeries(list.getFirst(), patient);
@@ -954,7 +957,8 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
       }
       studyCombobox.addItemListener(studyItemListener);
       selectStudy();
-      koOpen.setVisible(DicomModel.hasHiddenSpecialElements(patient, KOSpecialElement.class));
+      koOpen.setVisible(
+          HiddenSeriesManager.hasHiddenSpecialElements(KOSpecialElement.class, patient));
       // Send message for selecting related plug-ins window
       model.firePropertyChange(
           new ObservableEvent(ObservableEvent.BasicAction.SELECT, model, null, patient));
@@ -1027,9 +1031,9 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
           k++;
         }
       }
-
       studyPane.revalidate();
       studyPane.repaint();
+      changeToolWindowAnchor(getDockable().getBaseLocation());
     } else {
       int k = 1;
       for (SeriesPane s : seriesList) {
@@ -1234,7 +1238,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
             MediaSeriesGroupNode patient = getSelectedPatient();
             if (patient != null) {
               koOpen.setVisible(
-                  DicomModel.hasHiddenSpecialElements(patient, KOSpecialElement.class));
+                  HiddenSeriesManager.hasHiddenSpecialElements(KOSpecialElement.class, patient));
             }
           }
         } else if (ObservableEvent.BasicAction.LOADING_START.equals(action)) {
@@ -1248,7 +1252,8 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
           }
           MediaSeriesGroupNode patient = getSelectedPatient();
           if (patient != null) {
-            koOpen.setVisible(DicomModel.hasHiddenSpecialElements(patient, KOSpecialElement.class));
+            koOpen.setVisible(
+                HiddenSeriesManager.hasHiddenSpecialElements(KOSpecialElement.class, patient));
           }
         }
       } else if (evt.getSource() instanceof SeriesViewer
@@ -1326,11 +1331,12 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
   }
 
   public static SeriesThumbnail createThumbnail(
-      final Series series, final DicomModel dicomModel, final int thumbnailSize) {
+      final Series<?> series, final DicomModel dicomModel, final int thumbnailSize) {
 
     Callable<SeriesThumbnail> callable =
         () -> {
-          final SeriesThumbnail thumb = new SeriesThumbnail(series, thumbnailSize);
+          Function<String, Set<ResourceIconPath>> drawIcons = HiddenSeriesManager::getRelatedIcons;
+          final SeriesThumbnail thumb = new SeriesThumbnail(series, thumbnailSize, drawIcons);
           if (series.getSeriesLoader() instanceof LoadSeries loader) {
             // In case series is downloaded or canceled
             thumb.setProgressBar(loader.isDone() ? null : loader.getProgressBar());

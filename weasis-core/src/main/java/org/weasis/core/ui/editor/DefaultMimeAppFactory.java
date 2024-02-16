@@ -53,6 +53,11 @@ public class DefaultMimeAppFactory implements SeriesViewerFactory {
         }
 
         @Override
+        public SeriesViewerUI getSeriesViewerUI() {
+          return null;
+        }
+
+        @Override
         public String getDockableUID() {
           return null;
         }

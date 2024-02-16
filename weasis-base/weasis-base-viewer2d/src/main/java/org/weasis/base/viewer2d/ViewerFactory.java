@@ -161,13 +161,13 @@ public class ViewerFactory implements SeriesViewerFactory {
         || (selectedFiles = fileChooser.getSelectedFiles()) == null) {
       return;
     } else {
-      MediaSeries<MediaElement> series = null;
+      MediaSeries series = null;
       for (File file : selectedFiles) {
         String mimeType = MimeInspector.getMimeType(file);
         if (mimeType != null && mimeType.startsWith("image")) {
-          Codec codec = BundleTools.getCodec(mimeType, null);
+          Codec<?> codec = BundleTools.getCodec(mimeType, null);
           if (codec != null) {
-            MediaReader reader = codec.getMediaIO(file.toURI(), mimeType, null);
+            MediaReader<?> reader = codec.getMediaIO(file.toURI(), mimeType, null);
             if (reader != null) {
               if (series == null) {
                 // TODO improve group model for image, uid for group ?

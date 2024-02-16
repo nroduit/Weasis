@@ -190,9 +190,9 @@ public class WeasisLauncher {
                 JOptionPane.showOptionDialog(
                     mainFrame.getWindow(),
                     String.format(
-                        STR."\{Messages.getString(
-                            "WeasisLauncher.update_min")}\n\n\{Messages.getString(
-                            "WeasisLauncher.continue_local")}",
+                        STR."\{
+                            Messages.getString("WeasisLauncher.update_min")}\n\n\{
+                            Messages.getString("WeasisLauncher.continue_local")}",
                         appName,
                         minVersion),
                     null,
@@ -499,7 +499,7 @@ public class WeasisLauncher {
                   String.format(
                       "<a href=\"%s", // NON-NLS
                       releaseNotesUrl));
-              message.append("\" style=\"color:#FF9900\">"); // NON-NLS
+              message.append("\">"); // NON-NLS
               message.append(rn);
               message.append("</a>"); // NON-NLS
               message.append("</P>"); // NON-NLS

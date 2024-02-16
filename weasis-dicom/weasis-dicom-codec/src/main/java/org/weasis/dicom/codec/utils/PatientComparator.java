@@ -92,12 +92,8 @@ public class PatientComparator {
        * Manager/Archive or by the Portable Media Creator).
        */
       // Build a global identifier for the patient.
-      StringBuilder buffer = new StringBuilder(patientId);
       // patientID + issuerOfPatientID => should be unique globally
-      buffer.append(issuerOfPatientID);
-      buffer.append(name);
-
-      return buffer.toString();
+      return patientId + issuerOfPatientID + name;
     }
   }
 

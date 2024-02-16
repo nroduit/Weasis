@@ -15,7 +15,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.ExecutorService;
-import javax.swing.ComboBoxModel;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
@@ -109,15 +108,7 @@ public class SendDicomView extends AbstractItemDialogPage implements ExportDicom
       AbstractDicomNode.loadDicomNodes(comboNode, AbstractDicomNode.Type.DICOM, UsageType.STORAGE);
       AbstractDicomNode.loadDicomNodes(comboNode, AbstractDicomNode.Type.WEB, UsageType.STORAGE);
       String desc = SendDicomFactory.EXPORT_PERSISTENCE.getProperty(LAST_SEL_NODE);
-      if (StringUtil.hasText(desc)) {
-        ComboBoxModel<AbstractDicomNode> model = comboNode.getModel();
-        for (int i = 0; i < model.getSize(); i++) {
-          if (desc.equals(model.getElementAt(i).getDescription())) {
-            model.setSelectedItem(model.getElementAt(i));
-            break;
-          }
-        }
-      }
+      AbstractDicomNode.selectDicomNode(comboNode, desc);
     }
   }
 

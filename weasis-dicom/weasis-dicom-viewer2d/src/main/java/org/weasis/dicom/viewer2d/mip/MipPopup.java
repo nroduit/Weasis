@@ -36,6 +36,7 @@ import org.weasis.core.api.media.data.SeriesComparator;
 import org.weasis.core.api.util.FontItem;
 import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.codec.DicomImageElement;
+import org.weasis.dicom.codec.utils.DicomMediaUtils;
 import org.weasis.dicom.viewer2d.Messages;
 
 public class MipPopup {
@@ -216,7 +217,11 @@ public class MipPopup {
 
         if (fimg != null && limg != null) {
           buf.append(" (");
-          buf.append(DecFormatter.allNumber(SeriesBuilder.getThickness(fimg, limg, max - min)));
+          double thickness = DicomMediaUtils.getThickness(fimg, limg);
+          if (thickness <= 0.0) {
+            thickness = max - min;
+          }
+          buf.append(DecFormatter.allNumber(thickness));
           buf.append(" ");
           buf.append(fimg.getPixelSpacingUnit().getAbbreviation());
           buf.append(")");

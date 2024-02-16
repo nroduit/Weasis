@@ -555,14 +555,14 @@ public class RsQueryResult extends AbstractQueryResult {
     return study;
   }
 
-  private Series getSeries(
+  private DicomSeries getSeries(
       MediaSeriesGroup study, final Attributes seriesDataset, boolean startDownloading) {
     if (seriesDataset == null) {
       throw new IllegalArgumentException("seriesDataset cannot be null");
     }
     String seriesUID = seriesDataset.getString(Tag.SeriesInstanceUID);
     DicomModel model = rsQueryParams.getDicomModel();
-    Series dicomSeries = (Series) model.getHierarchyNode(study, seriesUID);
+    DicomSeries dicomSeries = (DicomSeries) model.getHierarchyNode(study, seriesUID);
     if (dicomSeries == null) {
       dicomSeries = new DicomSeries(seriesUID);
       dicomSeries.setTag(TagD.get(Tag.SeriesInstanceUID), seriesUID);

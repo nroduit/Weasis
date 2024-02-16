@@ -11,7 +11,6 @@ package org.weasis.dicom.viewer3d.pref;
 
 import java.util.Hashtable;
 import org.weasis.core.api.gui.Insertable;
-import org.weasis.core.api.gui.Insertable.Type;
 import org.weasis.core.api.gui.PreferencesPageFactory;
 import org.weasis.core.api.gui.util.AbstractItemDialogPage;
 
@@ -24,15 +23,7 @@ public class Viewer3dPrefFactory implements PreferencesPageFactory {
   }
 
   @Override
-  public void dispose(Insertable component) {}
-
-  @Override
   public boolean isComponentCreatedByThisFactory(Insertable component) {
     return component instanceof Viewer3dPrefView;
-  }
-
-  @Override
-  public Type getType() {
-    return Type.PREFERENCES;
   }
 }

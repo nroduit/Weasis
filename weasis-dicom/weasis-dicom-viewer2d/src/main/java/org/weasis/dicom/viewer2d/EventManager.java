@@ -65,7 +65,6 @@ import org.weasis.core.api.image.ImageOpNode;
 import org.weasis.core.api.image.OpManager;
 import org.weasis.core.api.image.PseudoColorOp;
 import org.weasis.core.api.image.WindowOp;
-import org.weasis.core.api.image.op.ByteLut;
 import org.weasis.core.api.image.op.ByteLutCollection;
 import org.weasis.core.api.image.util.KernelData;
 import org.weasis.core.api.image.util.Unit;
@@ -112,6 +111,8 @@ import org.weasis.dicom.viewer2d.mip.MipView;
 import org.weasis.dicom.viewer2d.mpr.MprContainer;
 import org.weasis.dicom.viewer2d.mpr.MprView;
 import org.weasis.opencv.op.ImageConversion;
+import org.weasis.opencv.op.lut.ByteLut;
+import org.weasis.opencv.op.lut.ColorLut;
 import org.weasis.opencv.op.lut.DefaultWlPresentation;
 import org.weasis.opencv.op.lut.LutShape;
 
@@ -656,11 +657,11 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
 
   private ComboItemListener<ByteLut> newLutAction() {
     List<ByteLut> luts = new ArrayList<>();
-    luts.add(ByteLutCollection.Lut.GRAY.getByteLut());
+    luts.add(ColorLut.GRAY.getByteLut());
     ByteLutCollection.readLutFilesFromResourcesDir(
         luts, ResourceUtil.getResource(DicomResource.LUTS));
     // Set default first as the list has been sorted
-    luts.add(0, ByteLutCollection.Lut.IMAGE.getByteLut());
+    luts.addFirst(ColorLut.IMAGE.getByteLut());
 
     return new ComboItemListener<>(ActionW.LUT, luts.toArray(new ByteLut[0])) {
 
@@ -933,12 +934,15 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
         // Let scrolling if only one image is corrupted in the series
         cineAction.ifPresent(a -> a.enableAction(true));
       }
+      View2dContainer.UI.updateDynamicTools(view2d.getSeries());
       return false;
     }
 
     if (!enabledAction) {
       enableActions(true);
     }
+
+    View2dContainer.UI.updateDynamicTools(view2d.getSeries());
 
     OpManager dispOp = view2d.getDisplayOpManager();
 
@@ -1002,9 +1006,10 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
                 false));
 
     Double cineRate = TagD.getTagValue(view2d.getImage(), Tag.CineRate, Double.class);
-    if (cineRate != null) {
-      cineAction.ifPresent(a -> a.setSpeed(cineRate));
-    }
+    cineAction.ifPresent(
+        a -> {
+          a.setSpeed(cineRate == null ? 20.0 : cineRate);
+        });
     int playbackSequencing = getPlaybackSequencing(view2d);
     getAction(ActionW.CINE_SWEEP).ifPresent(a -> a.setSelected(playbackSequencing == 1));
 
@@ -1411,12 +1416,13 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
       BundlePreferences.putBooleanPreferences(
           prefNode, PRManager.PR_APPLY, options.getBooleanProperty(PRManager.PR_APPLY, false));
 
-      Preferences containerNode = prefs.node(View2dContainer.class.getSimpleName().toLowerCase());
-      InsertableUtil.savePreferences(View2dContainer.TOOLBARS, containerNode, Type.TOOLBAR);
-      InsertableUtil.savePreferences(View2dContainer.TOOLS, containerNode, Type.TOOL);
+      Preferences containerNode =
+          prefs.node(View2dContainer.UI.clazz.getSimpleName().toLowerCase());
+      InsertableUtil.savePreferences(View2dContainer.UI.toolBars, containerNode, Type.TOOLBAR);
+      InsertableUtil.savePreferences(View2dContainer.UI.tools, containerNode, Type.TOOL);
 
       InsertableUtil.savePreferences(
-          MprContainer.TOOLBARS,
+          MprContainer.UI.toolBars,
           prefs.node(MprContainer.class.getSimpleName().toLowerCase()),
           Type.TOOLBAR);
     }

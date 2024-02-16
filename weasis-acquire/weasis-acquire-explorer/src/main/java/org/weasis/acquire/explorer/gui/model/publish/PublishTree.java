@@ -9,11 +9,11 @@
  */
 package org.weasis.acquire.explorer.gui.model.publish;
 
-import it.cnr.imaa.essi.lablib.gui.checkboxtree.CheckboxTree;
-import it.cnr.imaa.essi.lablib.gui.checkboxtree.TreeCheckingListener;
-import it.cnr.imaa.essi.lablib.gui.checkboxtree.TreeCheckingModel;
+import eu.essilab.lablib.checkboxtree.CheckboxTree;
+import eu.essilab.lablib.checkboxtree.TreeCheckingListener;
+import eu.essilab.lablib.checkboxtree.TreeCheckingModel;
 import javax.swing.JScrollPane;
-import org.weasis.core.ui.util.CheckBoxTreeBuilder;
+import org.weasis.core.ui.util.TreeBuilder;
 
 public class PublishTree extends JScrollPane {
 
@@ -26,7 +26,7 @@ public class PublishTree extends JScrollPane {
     TreeCheckingModel checkingModel = publishTreeModel.getCheckingModel();
     checkboxTree.setCheckingModel(
         checkingModel); // be aware that checkingPaths is cleared at this point
-    checkboxTree.setCellRenderer(CheckBoxTreeBuilder.buildNoIconCheckboxTreeCellRenderer());
+    checkboxTree.setCellRenderer(TreeBuilder.buildNoIconCheckboxTreeCellRenderer());
     setViewportView(checkboxTree);
   }
 

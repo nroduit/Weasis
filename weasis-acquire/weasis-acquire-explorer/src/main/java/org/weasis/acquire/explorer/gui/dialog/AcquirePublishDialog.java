@@ -22,7 +22,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import javax.swing.BorderFactory;
-import javax.swing.ComboBoxModel;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JDialog;
@@ -222,15 +221,7 @@ public class AcquirePublishDialog extends JDialog {
       AbstractDicomNode.loadDicomNodes(comboNode, AbstractDicomNode.Type.DICOM, UsageType.STORAGE);
       AbstractDicomNode.loadDicomNodes(comboNode, AbstractDicomNode.Type.WEB, UsageType.STORAGE);
       String desc = MediaImporterFactory.EXPORT_PERSISTENCE.getProperty(LAST_SEL_NODE);
-      if (StringUtil.hasText(desc)) {
-        ComboBoxModel<AbstractDicomNode> model = comboNode.getModel();
-        for (int i = 0; i < model.getSize(); i++) {
-          if (desc.equals(model.getElementAt(i).getDescription())) {
-            model.setSelectedItem(model.getElementAt(i));
-            break;
-          }
-        }
-      }
+      AbstractDicomNode.selectDicomNode(comboNode, desc);
 
       if (comboNode.getItemCount() == 0) {
         comboNode.addItem(getDestinationConfiguration());
@@ -312,6 +303,14 @@ public class AcquirePublishDialog extends JDialog {
       }
     }
 
+    SwingWorker<File, AcquireImageInfo> dicomizeTask =
+        getFileAcquireImageInfoSwingWorker(toPublish);
+
+    ThreadUtil.buildNewSingleThreadExecutor("Dicomize").execute(dicomizeTask); // NON-NLS
+  }
+
+  private SwingWorker<File, AcquireImageInfo> getFileAcquireImageInfoSwingWorker(
+      List<AcquireImageInfo> toPublish) {
     SwingWorker<File, AcquireImageInfo> dicomizeTask = new DicomizeTask(toPublish);
     ActionListener taskCancelActionListener = e -> dicomizeTask.cancel(true);
 
@@ -367,8 +366,7 @@ public class AcquirePublishDialog extends JDialog {
             }
           }
         });
-
-    ThreadUtil.buildNewSingleThreadExecutor("Dicomize").execute(dicomizeTask); // NON-NLS
+    return dicomizeTask;
   }
 
   private static void setZoomRatio(AcquireImageInfo imgInfo, Double ratio) {

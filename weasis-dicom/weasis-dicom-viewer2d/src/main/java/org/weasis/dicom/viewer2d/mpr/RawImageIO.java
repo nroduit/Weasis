@@ -32,11 +32,12 @@ import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.core.api.media.data.Codec;
 import org.weasis.core.api.media.data.FileCache;
 import org.weasis.core.api.media.data.MediaElement;
-import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.util.SoftHashMap;
 import org.weasis.dicom.codec.DcmMediaReader;
+import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.DicomMediaIO;
+import org.weasis.dicom.codec.DicomSeries;
 import org.weasis.dicom.codec.utils.DicomMediaUtils;
 import org.weasis.opencv.data.FileRawImage;
 import org.weasis.opencv.data.PlanarImage;
@@ -121,12 +122,12 @@ public class RawImageIO implements DcmMediaReader {
   }
 
   @Override
-  public MediaElement[] getMediaElement() {
+  public DicomImageElement[] getMediaElement() {
     return null;
   }
 
   @Override
-  public MediaSeries<MediaElement> getMediaSeries() {
+  public DicomSeries getMediaSeries() {
     return null;
   }
 

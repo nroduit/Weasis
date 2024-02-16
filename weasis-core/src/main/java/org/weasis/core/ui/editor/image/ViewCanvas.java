@@ -20,6 +20,7 @@ import java.awt.Point;
 import java.awt.event.ActionListener;
 import java.awt.event.FocusListener;
 import java.awt.event.InputEvent;
+import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
@@ -60,6 +61,8 @@ import org.weasis.core.api.image.ZoomOp.Interpolation;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.service.UICore;
+import org.weasis.core.ui.editor.SeriesViewerEvent;
+import org.weasis.core.ui.editor.SeriesViewerEvent.EVENT;
 import org.weasis.core.ui.editor.image.dockable.MeasureTool;
 import org.weasis.core.ui.model.graphic.Graphic;
 import org.weasis.core.ui.model.layer.LayerAnnotation;
@@ -279,8 +282,6 @@ public interface ViewCanvas<E extends ImageElement>
 
   Border getBorder();
 
-  double getRealWorldViewScale();
-
   LayerAnnotation getInfoLayer();
 
   int getTileOffset();
@@ -446,4 +447,59 @@ public interface ViewCanvas<E extends ImageElement>
   }
 
   boolean hasValidContent();
+
+  default void drawPointer(Graphics2D g, int pointerType) {
+    if (pointerType < 1) {
+      return;
+    }
+    if ((pointerType & CENTER_POINTER) == CENTER_POINTER) {
+      drawPointer(
+          g,
+          (getJComponent().getWidth() - 1) * 0.5,
+          (getJComponent().getHeight() - 1) * 0.5,
+          false);
+    }
+    if ((pointerType & HIGHLIGHTED_POINTER) == HIGHLIGHTED_POINTER
+        && highlightedPosition.isHighlightedPosition()) {
+      // Display the position in the center of the pixel (constant position even with a high zoom
+      // factor)
+      double offsetX =
+          modelToViewLength(highlightedPosition.getX() + 0.5 - getViewModel().getModelOffsetX());
+      double offsetY =
+          modelToViewLength(highlightedPosition.getY() + 0.5 - getViewModel().getModelOffsetY());
+      drawPointer(g, offsetX, offsetY, true);
+    }
+  }
+
+  default void defaultKeyPressed(ImageViewerEventManager<?> eventManager, KeyEvent e) {
+    if (e.isControlDown() && e.getKeyCode() == KeyEvent.VK_SPACE) {
+      eventManager.nextLeftMouseAction();
+    } else if (e.getModifiers() == 0
+        && (e.getKeyCode() == KeyEvent.VK_SPACE || e.getKeyCode() == KeyEvent.VK_I)) {
+      eventManager.fireSeriesViewerListeners(
+          new SeriesViewerEvent(
+              eventManager.getSelectedView2dContainer(), null, null, EVENT.TOGGLE_INFO));
+    } else if (e.isAltDown() && e.getKeyCode() == KeyEvent.VK_L) {
+      // Counterclockwise
+      eventManager
+          .getAction(ActionW.ROTATION)
+          .ifPresent(a -> a.setSliderValue((a.getSliderValue() + 270) % 360));
+    } else if (e.isAltDown() && e.getKeyCode() == KeyEvent.VK_R) {
+      // Clockwise
+      eventManager
+          .getAction(ActionW.ROTATION)
+          .ifPresent(a -> a.setSliderValue((a.getSliderValue() + 90) % 360));
+    } else if (e.isAltDown() && e.getKeyCode() == KeyEvent.VK_F) {
+      // Flip horizontal
+      eventManager.getAction(ActionW.FLIP).ifPresent(f -> f.setSelected(!f.isSelected()));
+    } else {
+      Optional<Feature<? extends ActionState>> feature =
+          eventManager.getLeftMouseActionFromKeyEvent(e.getKeyCode(), e.getModifiers());
+      if (feature.isPresent()) {
+        eventManager.changeLeftMouseAction(feature.get().cmd());
+      } else {
+        eventManager.keyPressed(e);
+      }
+    }
+  }
 }

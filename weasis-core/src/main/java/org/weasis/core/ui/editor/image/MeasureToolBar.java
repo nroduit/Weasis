@@ -151,6 +151,9 @@ public class MeasureToolBar extends WtoolBar {
       graphic.setLayerType(LayerType.ANNOTATION);
       drawGraphicList.add(graphic);
     }
+
+    selectionGraphic.setFilled(false);
+    selectionGraphic.setLabelVisible(false);
     selectionGraphic.setLayerType(LayerType.TEMP_DRAW);
   }
 

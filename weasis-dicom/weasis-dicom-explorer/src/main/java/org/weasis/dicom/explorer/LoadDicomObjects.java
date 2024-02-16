@@ -17,6 +17,7 @@ import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.core.api.media.data.SeriesThumbnail;
 import org.weasis.dicom.codec.DicomMediaIO;
+import org.weasis.dicom.codec.DicomMediaIO.Reading;
 import org.weasis.dicom.explorer.HangingProtocols.OpeningViewer;
 
 /**
@@ -52,7 +53,7 @@ public class LoadDicomObjects extends LoadDicom {
 
         try {
           DicomMediaIO loader = new DicomMediaIO(dicom);
-          if (loader.isReadableDicom()) {
+          if (loader.getReadingStatus() == Reading.READABLE) {
             // Issue: must handle adding image to viewer and building thumbnail (middle image)
             SeriesThumbnail t = buildDicomStructure(loader);
             if (t != null) {

@@ -35,7 +35,7 @@ import org.weasis.core.api.service.BundlePreferences;
 import org.weasis.imageio.codec.ImageioUtil;
 
 @org.osgi.service.component.annotations.Component(service = Codec.class)
-public class DicomCodec implements Codec {
+public class DicomCodec implements Codec<DicomImageElement> {
   private static final Logger LOGGER = LoggerFactory.getLogger(DicomCodec.class);
 
   public static final String NAME = "dcm4che"; // NON-NLS
@@ -75,7 +75,8 @@ public class DicomCodec implements Codec {
   }
 
   @Override
-  public MediaReader getMediaIO(URI media, String mimeType, Hashtable<String, Object> properties) {
+  public MediaReader<DicomImageElement> getMediaIO(
+      URI media, String mimeType, Hashtable<String, Object> properties) {
     if (isMimeTypeSupported(mimeType)) {
       return new DicomMediaIO(media);
     }

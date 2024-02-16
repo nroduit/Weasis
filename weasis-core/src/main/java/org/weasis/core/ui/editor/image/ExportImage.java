@@ -90,8 +90,7 @@ public class ExportImage<E extends ImageElement> extends DefaultView2d<E> {
     ToolTipManager.sharedInstance().unregisterComponent(this);
     imageLayer.removeLayerChangeListener(this);
     // Unregister listener in GraphicsPane
-    graphicManager.removeChangeListener(layerModelHandler);
-    graphicManager.removeGraphicChangeHandler(graphicsChangeHandler);
+    removeGraphicManager(graphicManager, layerModelHandler);
     setViewModel(null);
   }
 

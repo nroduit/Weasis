@@ -91,11 +91,7 @@ void intersect(in Ray ray, out float tmin, out float tmax) {
 }
 
 vec4 applyTextureColor(float pix){
-    #if __VERSION__ > 130
     return texture(colorMap, vec2(pix, 0.0));
-    #else
-    return texture(colorMap, vec3(pix, 0.5, 0.5));
-    #endif
 }
 
 vec4 rayCastingMip(Ray ray, float tmin, float tmax, vec2 uv) {

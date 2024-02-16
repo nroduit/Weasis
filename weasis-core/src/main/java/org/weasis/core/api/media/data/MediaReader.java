@@ -15,15 +15,15 @@ import java.util.Map;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.opencv.data.PlanarImage;
 
-public interface MediaReader extends Taggable {
+public interface MediaReader<E extends MediaElement> extends Taggable {
 
   URI getUri();
 
   FileCache getFileCache();
 
-  MediaElement[] getMediaElement();
+  E[] getMediaElement();
 
-  MediaSeries<MediaElement> getMediaSeries();
+  MediaSeries<E> getMediaSeries();
 
   boolean delegate(DataExplorerModel explorerModel);
 

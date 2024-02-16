@@ -20,10 +20,14 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import org.dcm4che3.data.Tag;
 import org.dcm4che3.img.lut.PresetWindowLevel;
 import org.joml.Vector3d;
+import org.opencv.core.CvType;
+import org.opencv.core.Mat;
 import org.opencv.core.Rect;
+import org.opencv.core.Size;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.image.SimpleOpManager;
 import org.weasis.core.api.image.ZoomOp;
@@ -35,6 +39,8 @@ import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.util.MathUtil;
 import org.weasis.dicom.codec.DicomImageElement;
+import org.weasis.dicom.codec.HiddenSeriesManager;
+import org.weasis.dicom.codec.SpecialElementRegion;
 import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.display.Modality;
 import org.weasis.dicom.codec.geometry.ImageOrientation;
@@ -347,5 +353,29 @@ public class DicomVolTexture extends VolumeTexture implements MediaSeriesGroup {
       return ImageOrientation.getPlan(vr, vc);
     }
     return null;
+  }
+
+  public List<SpecialElementRegion> getSegmentations() {
+    String seriesUID = TagD.getTagValue(series, Tag.SeriesInstanceUID, String.class);
+    Set<String> list = HiddenSeriesManager.getInstance().reference2Series.get(seriesUID);
+    if (list != null && !list.isEmpty()) {
+      return HiddenSeriesManager.getHiddenElementsFromSeries(
+          SpecialElementRegion.class, list.toArray(new String[0]));
+    }
+    return Collections.emptyList();
+  }
+
+  public Mat getEmptyImage() {
+    int type;
+    if (pixelFormat == PixelFormat.RGB8) {
+      type = CvType.CV_8UC3;
+    } else if (pixelFormat == PixelFormat.RGBA8) {
+      type = CvType.CV_8UC4;
+    } else if (pixelFormat == PixelFormat.BYTE) {
+      type = CvType.CV_8UC1;
+    } else {
+      type = CvType.CV_16UC1;
+    }
+    return Mat.zeros(new Size(width, height), type);
   }
 }

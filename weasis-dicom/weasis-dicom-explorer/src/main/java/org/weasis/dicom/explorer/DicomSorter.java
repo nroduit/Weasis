@@ -9,10 +9,8 @@
  */
 package org.weasis.dicom.explorer;
 
-import java.text.Collator;
 import java.time.LocalDateTime;
 import java.util.Comparator;
-import java.util.Locale;
 import java.util.Objects;
 import javax.swing.tree.DefaultMutableTreeNode;
 import org.dcm4che3.data.Tag;
@@ -20,6 +18,7 @@ import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
+import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.explorer.DicomExplorer.SeriesPane;
 import org.weasis.dicom.explorer.DicomExplorer.StudyPane;
@@ -61,9 +60,8 @@ public class DicomSorter {
     }
   }
 
-  private static final Collator collator = Collator.getInstance(Locale.getDefault());
   public static final Comparator<Object> PATIENT_COMPARATOR =
-      (o1, o2) -> collator.compare(o1.toString(), o2.toString());
+      (o1, o2) -> StringUtil.collator.compare(o1.toString(), o2.toString());
 
   public static final Comparator<Object> STUDY_COMPARATOR =
       (o1, o2) -> {
@@ -95,7 +93,7 @@ public class DicomSorter {
             String d1 = TagD.getTagValue(st1, Tag.StudyDescription, String.class);
             String d2 = TagD.getTagValue(st2, Tag.StudyDescription, String.class);
             if (d1 != null && d2 != null) {
-              c = collator.compare(d1, d2);
+              c = StringUtil.collator.compare(d1, d2);
               if (c != 0) {
                 return c;
               }

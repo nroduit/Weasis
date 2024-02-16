@@ -10,8 +10,6 @@
 package org.weasis.acquire.explorer.gui.central;
 
 import java.awt.BorderLayout;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
@@ -21,24 +19,24 @@ import org.weasis.base.explorer.JIThumbnailCache;
 import org.weasis.base.viewer2d.EventManager;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaSeries;
-import org.weasis.core.ui.docking.DockableTool;
 import org.weasis.core.ui.editor.SeriesViewerEvent;
 import org.weasis.core.ui.editor.SeriesViewerEvent.EVENT;
+import org.weasis.core.ui.editor.SeriesViewerUI;
 import org.weasis.core.ui.editor.image.ViewerPlugin;
 import org.weasis.core.ui.util.ToolBarContainer;
-import org.weasis.core.ui.util.Toolbar;
-import org.weasis.core.ui.util.WtoolBar;
 
 public class ImageGroupPane extends ViewerPlugin<ImageElement> {
 
-  protected final List<Toolbar> toolBars = Collections.synchronizedList(new ArrayList<>());
+  public static final SeriesViewerUI UI = new SeriesViewerUI(ImageGroupPane.class);
 
   public final AcquireTabPanel tabbedPane;
 
   public ImageGroupPane(String pluginName, JIThumbnailCache thumbCache) {
     super(pluginName);
     this.tabbedPane = new AcquireTabPanel(thumbCache);
-    toolBars.add(ToolBarContainer.EMPTY);
+    if (!UI.init.getAndSet(true)) {
+      UI.toolBars.add(ToolBarContainer.EMPTY);
+    }
     init();
   }
 
@@ -78,18 +76,8 @@ public class ImageGroupPane extends ViewerPlugin<ImageElement> {
   }
 
   @Override
-  public synchronized List<Toolbar> getToolBars() {
-    return toolBars;
-  }
-
-  @Override
-  public WtoolBar getStatusBar() {
-    return null;
-  }
-
-  @Override
-  public List<DockableTool> getToolPanel() {
-    return null;
+  public SeriesViewerUI getSeriesViewerUI() {
+    return UI;
   }
 
   @Override

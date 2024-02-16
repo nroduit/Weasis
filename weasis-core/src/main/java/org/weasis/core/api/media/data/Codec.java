@@ -12,7 +12,7 @@ package org.weasis.core.api.media.data;
 import java.net.URI;
 import java.util.Hashtable;
 
-public interface Codec {
+public interface Codec<E extends MediaElement> {
 
   /**
    * @return the codec name (must be unique)
@@ -25,7 +25,7 @@ public interface Codec {
   String[] getReaderMIMETypes();
 
   /**
-   * @return the list of file extensions supported the reader
+   * @return the array of file extensions supported the reader
    */
   String[] getReaderExtensions();
 
@@ -35,11 +35,11 @@ public interface Codec {
   String[] getWriterMIMETypes();
 
   /**
-   * @return the list of file extensions supported the writer
+   * @return the array of file extensions supported the writer
    */
   String[] getWriterExtensions();
 
-  MediaReader getMediaIO(URI media, String mimeType, Hashtable<String, Object> properties);
+  MediaReader<E> getMediaIO(URI media, String mimeType, Hashtable<String, Object> properties);
 
   /**
    * @param mimeType the mime type value

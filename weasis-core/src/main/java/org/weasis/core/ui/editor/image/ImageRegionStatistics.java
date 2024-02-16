@@ -30,26 +30,25 @@ import java.util.Objects;
 import org.opencv.core.Mat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.weasis.core.api.image.op.ByteLut;
 import org.weasis.core.api.image.util.MeasurableLayer;
 import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.ui.editor.image.HistogramData.Model;
-import org.weasis.core.ui.model.graphic.AbstractDragGraphicArea;
+import org.weasis.core.ui.model.graphic.GraphicArea;
 import org.weasis.core.ui.model.utils.bean.MeasureItem;
 import org.weasis.core.ui.model.utils.bean.Measurement;
 import org.weasis.core.util.MathUtil;
 import org.weasis.opencv.data.PlanarImage;
 import org.weasis.opencv.op.ImageConversion;
 import org.weasis.opencv.op.ImageProcessor;
+import org.weasis.opencv.op.lut.ByteLut;
 
 public class ImageRegionStatistics {
   private static final Logger LOGGER = LoggerFactory.getLogger(ImageRegionStatistics.class);
 
   private ImageRegionStatistics() {}
 
-  public static List<Mat> prepareInputImages(
-      AbstractDragGraphicArea graphic, MeasurableLayer layer) {
+  public static List<Mat> prepareInputImages(GraphicArea graphic, MeasurableLayer layer) {
     if (layer != null && layer.hasContent()) {
       Shape shape = null;
       if (graphic != null) {
@@ -100,8 +99,7 @@ public class ImageRegionStatistics {
     return getImageStatistics(null, layer, true);
   }
 
-  public static List<HistogramData> getHistogram(
-      AbstractDragGraphicArea graphic, MeasurableLayer layer) {
+  public static List<HistogramData> getHistogram(GraphicArea graphic, MeasurableLayer layer) {
     List<Mat> imgPr = prepareInputImages(graphic, layer);
     if (layer != null && layer.hasContent() && imgPr != null && imgPr.size() == 2) {
       return getHistogram(imgPr.get(0), imgPr.get(1), layer);
@@ -151,7 +149,7 @@ public class ImageRegionStatistics {
   }
 
   public static List<MeasureItem> getImageStatistics(
-      AbstractDragGraphicArea graphic, MeasurableLayer layer, boolean releaseEvent) {
+      GraphicArea graphic, MeasurableLayer layer, boolean releaseEvent) {
     if (layer != null && layer.hasContent()) {
       List<MeasureItem> measVal = new ArrayList<>();
       if (releaseEvent && isOneComputed()) {

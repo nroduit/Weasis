@@ -23,12 +23,12 @@ import org.weasis.core.api.gui.util.DropDownButton;
 import org.weasis.core.api.gui.util.GroupPopup;
 import org.weasis.core.api.gui.util.GroupRadioMenu;
 import org.weasis.core.api.gui.util.RadioMenuItem;
-import org.weasis.core.api.image.op.ByteLut;
 import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.api.util.ResourceUtil.ActionIcon;
 import org.weasis.core.ui.editor.image.ImageViewerEventManager;
 import org.weasis.core.ui.util.WtoolBar;
 import org.weasis.dicom.codec.DicomImageElement;
+import org.weasis.opencv.op.lut.ByteLut;
 
 public class LutToolBar extends WtoolBar {
 

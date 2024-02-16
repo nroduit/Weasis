@@ -25,9 +25,6 @@ import org.opencv.core.MatOfFloat;
 import org.opencv.core.MatOfInt;
 import org.opencv.imgproc.Imgproc;
 import org.weasis.core.Messages;
-import org.weasis.core.api.image.op.ByteLut;
-import org.weasis.core.api.image.op.ByteLutCollection;
-import org.weasis.core.api.image.op.ByteLutCollection.Lut;
 import org.weasis.core.api.image.util.MeasurableLayer;
 import org.weasis.core.api.image.util.WindLevelParameters;
 import org.weasis.core.api.media.data.ImageElement;
@@ -35,6 +32,8 @@ import org.weasis.opencv.data.ImageCV;
 import org.weasis.opencv.data.LookupTableCV;
 import org.weasis.opencv.data.PlanarImage;
 import org.weasis.opencv.op.ImageConversion;
+import org.weasis.opencv.op.lut.ByteLut;
+import org.weasis.opencv.op.lut.ColorLut;
 import org.weasis.opencv.op.lut.PresentationStateLut;
 import org.weasis.opencv.op.lut.WlParams;
 
@@ -50,23 +49,23 @@ public class HistogramData {
   private LookupTableCV voiLut;
 
   public enum Model {
-    GRAY(Messages.getString("HistogramData.lum"), buildLut(ByteLutCollection.Lut.GRAY)),
+    GRAY(Messages.getString("HistogramData.lum"), buildLut(ColorLut.GRAY)),
 
     RGB(
         Messages.getString("HistogramData.rgb"),
-        buildLut(ByteLutCollection.Lut.RED),
-        buildLut(ByteLutCollection.Lut.GREEN),
-        buildLut(ByteLutCollection.Lut.BLUE)),
+        buildLut(ColorLut.RED),
+        buildLut(ColorLut.GREEN),
+        buildLut(ColorLut.BLUE)),
     HSV(
         Messages.getString("HistogramData.hsv"),
-        buildLut(ByteLutCollection.Lut.HUE),
-        buildLut(Messages.getString("HistogramData.saturation"), ByteLutCollection.Lut.GRAY),
-        buildLut(Messages.getString("HistogramData.val"), ByteLutCollection.Lut.GRAY)),
+        buildLut(ColorLut.HUE),
+        buildLut(Messages.getString("HistogramData.saturation"), ColorLut.GRAY),
+        buildLut(Messages.getString("HistogramData.val"), ColorLut.GRAY)),
     HLS(
         Messages.getString("HistogramData.hls"),
-        buildLut(ByteLutCollection.Lut.HUE),
-        buildLut(Messages.getString("HistogramData.lightness"), ByteLutCollection.Lut.GRAY),
-        buildLut(Messages.getString("HistogramData.saturation"), ByteLutCollection.Lut.GRAY));
+        buildLut(ColorLut.HUE),
+        buildLut(Messages.getString("HistogramData.lightness"), ColorLut.GRAY),
+        buildLut(Messages.getString("HistogramData.saturation"), ColorLut.GRAY));
 
     private final ByteLut[] byteLut;
     private final String title;
@@ -75,7 +74,7 @@ public class HistogramData {
       this.title =
           name
               + " ("
-              + Arrays.stream(luts).map(ByteLut::getName).collect(Collectors.joining(","))
+              + Arrays.stream(luts).map(ByteLut::name).collect(Collectors.joining(","))
               + ")";
       this.byteLut = luts;
     }
@@ -93,12 +92,12 @@ public class HistogramData {
       return title;
     }
 
-    private static ByteLut buildLut(Lut lut) {
+    private static ByteLut buildLut(ColorLut lut) {
       return buildLut(lut.getName(), lut);
     }
 
-    private static ByteLut buildLut(String name, Lut lut) {
-      return new ByteLut(name, lut.getByteLut().getLutTable());
+    private static ByteLut buildLut(String name, ColorLut lut) {
+      return new ByteLut(name, lut.getByteLut().lutTable());
     }
 
     private static ByteLut buildLut(String name, byte[][] slut) {
@@ -176,7 +175,7 @@ public class HistogramData {
   public int getFinalVoiLutIndex(Number level) {
     if (lut == null || windLevel == null) return 0;
     Integer index = null;
-    int dynamic = lut.getLutTable()[0].length - 1;
+    int dynamic = lut.getByteLut().lutTable()[0].length - 1;
 
     int datatype = ImageConversion.convertToDataType(layer.getSourceRenderedImage().type());
     if (datatype >= DataBuffer.TYPE_BYTE && datatype < DataBuffer.TYPE_INT) {
@@ -222,10 +221,8 @@ public class HistogramData {
   public Color getFinalVoiLutColor(Number level) {
     if (lut == null) return Color.BLACK;
     int index = getFinalVoiLutIndex(level);
-    return new Color(
-        (lut.getLutTable()[2][index] & 0xff),
-        (lut.getLutTable()[1][index] & 0xff),
-        (lut.getLutTable()[0][index] & 0xff));
+    byte[][] table = lut.getByteLut().lutTable();
+    return new Color((table[2][index] & 0xff), (table[1][index] & 0xff), (table[0][index] & 0xff));
   }
 
   public void updateVoiLut(ViewCanvas<? extends ImageElement> view2DPane) {

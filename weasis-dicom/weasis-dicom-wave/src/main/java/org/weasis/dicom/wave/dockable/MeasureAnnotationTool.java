@@ -23,7 +23,6 @@ import javax.swing.BoxLayout;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
-import javax.swing.JViewport;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableModel;
 import org.dcm4che3.data.Attributes;
@@ -131,15 +130,7 @@ public class MeasureAnnotationTool extends PluginTool implements SeriesViewerLis
 
   @Override
   public Component getToolComponent() {
-    JViewport viewPort = rootPane.getViewport();
-    if (viewPort == null) {
-      viewPort = new JViewport();
-      rootPane.setViewport(viewPort);
-    }
-    if (viewPort.getView() != this) {
-      viewPort.setView(this);
-    }
-    return rootPane;
+    return getToolComponentFromJScrollPane(rootPane);
   }
 
   @Override

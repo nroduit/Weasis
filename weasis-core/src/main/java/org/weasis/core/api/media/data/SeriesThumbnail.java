@@ -9,6 +9,7 @@
  */
 package org.weasis.core.api.media.data;
 
+import com.formdev.flatlaf.extras.FlatSVGIcon;
 import java.awt.AlphaComposite;
 import java.awt.Color;
 import java.awt.Component;
@@ -35,6 +36,8 @@ import java.awt.event.MouseListener;
 import java.io.File;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
+import java.util.function.Function;
 import javax.swing.JPanel;
 import javax.swing.JProgressBar;
 import javax.swing.JViewport;
@@ -52,6 +55,8 @@ import org.weasis.core.api.image.OpManager;
 import org.weasis.core.api.media.data.MediaSeries.MEDIA_POSITION;
 import org.weasis.core.api.util.FontItem;
 import org.weasis.core.api.util.FontTools;
+import org.weasis.core.api.util.ResourceUtil;
+import org.weasis.core.api.util.ResourceUtil.ResourceIconPath;
 import org.weasis.core.util.FileUtil;
 
 public class SeriesThumbnail extends Thumbnail
@@ -82,15 +87,20 @@ public class SeriesThumbnail extends Thumbnail
 
   private JProgressBar progressBar;
   private final MediaSeries<? extends MediaElement> series;
+  private final Function<String, Set<ResourceIconPath>> drawIcons;
   private Point dragPressed = null;
   private DragSource dragSource = null;
 
-  public SeriesThumbnail(final MediaSeries<? extends MediaElement> sequence, int thumbnailSize) {
+  public SeriesThumbnail(
+      final MediaSeries<? extends MediaElement> sequence,
+      int thumbnailSize,
+      Function<String, Set<ResourceIconPath>> drawIcons) {
     super(thumbnailSize);
     if (sequence == null) {
       throw new IllegalArgumentException("Sequence cannot be null");
     }
     this.series = sequence;
+    this.drawIcons = drawIcons;
 
     // media can be null for seriesThumbnail
     MediaElement media = sequence.getMedia(MEDIA_POSITION.MIDDLE, null, null);
@@ -99,7 +109,7 @@ public class SeriesThumbnail extends Thumbnail
       List<MediaElement> specialElements =
           (List<MediaElement>) series.getTagValue(TagW.DicomSpecialElementList);
       if (specialElements != null && !specialElements.isEmpty()) {
-        media = specialElements.get(0);
+        media = specialElements.getFirst();
       }
     }
     /*
@@ -358,42 +368,61 @@ public class SeriesThumbnail extends Thumbnail
       // To avoid concurrency issue
       final JProgressBar bar = progressBar;
       if (bar != null) {
-        if (series.getFileSize() > 0.0) {
-          g2d.drawString(
-              FileUtil.humanReadableByte(series.getFileSize(), false),
-              x + inset,
-              y + height - fontHeight - inset * 2);
-        }
-        if (bar.isVisible()) {
-          // Draw in the bottom right corner of thumbnail
-          double shiftX = (double) thumbnailSize - bar.getWidth();
-          double shiftY = (double) thumbnailSize - bar.getHeight();
-          g2d.translate(shiftX, shiftY);
-          bar.paint(g2d);
-          g2d.translate(-shiftX, -shiftY);
-
-          // Draw in the top right corner
-          SeriesImporter seriesLoader = series.getSeriesLoader();
-          if (seriesLoader != null) {
-            boolean stopped = seriesLoader.isStopped();
-            shiftX = (double) thumbnailSize - stopButton.width;
-            shiftY = thumbnailSize - bar.getHeight() - stopButton.height - inset * 3.0;
-            g2d.translate(shiftX, shiftY);
-            g2d.setColor(IconColor.ACTIONS_RED.color);
-            g2d.setComposite(stopped ? TRANSPARENT_COMPOSITE : SOLID_COMPOSITE);
-            g2d.fill(stopButton);
-            g2d.translate(-shiftX, -shiftY);
-
-            shiftX = shiftX - 3 * BUTTON_SIZE_HALF;
-            g2d.translate(shiftX, shiftY);
-            g2d.setColor(IconColor.ACTIONS_GREEN.color);
-            g2d.setComposite(stopped ? SOLID_COMPOSITE : TRANSPARENT_COMPOSITE);
-            g2d.fill(startButton);
-            g2d.translate(-shiftX, -shiftY);
+        drawProgression(g2d, x, y, height, bar, inset, fontHeight);
+      } else {
+        String seriesUID = (String) series.getTagValue(TagW.get("SeriesInstanceUID"));
+        Set<ResourceIconPath> paths = drawIcons.apply(seriesUID);
+        if (paths != null && !paths.isEmpty()) {
+          double yPos = thumbnailSize;
+          for (ResourceIconPath path : paths) {
+            FlatSVGIcon icon = ResourceUtil.getIcon(path);
+            yPos -= icon.getIconHeight() + inset;
+            double shiftX = (double) thumbnailSize - icon.getIconWidth();
+            g2d.translate(shiftX, yPos);
+            icon.paintIcon(this, g2d, x, y);
+            g2d.translate(-shiftX, -yPos);
           }
         }
       }
       GuiUtils.resetRenderingHints(g2d, oldRenderingHints);
+    }
+  }
+
+  private void drawProgression(
+      Graphics2D g2d, int x, int y, int height, JProgressBar bar, int inset, int fontHeight) {
+    if (series.getFileSize() > 0.0) {
+      g2d.drawString(
+          FileUtil.humanReadableByte(series.getFileSize(), false),
+          x + inset,
+          y + height - fontHeight - inset * 2);
+    }
+    if (bar.isVisible()) {
+      // Draw in the bottom right corner of thumbnail
+      double shiftX = (double) thumbnailSize - bar.getWidth();
+      double shiftY = (double) thumbnailSize - bar.getHeight();
+      g2d.translate(shiftX, shiftY);
+      bar.paint(g2d);
+      g2d.translate(-shiftX, -shiftY);
+
+      // Draw in the top right corner
+      SeriesImporter seriesLoader = series.getSeriesLoader();
+      if (seriesLoader != null) {
+        boolean stopped = seriesLoader.isStopped();
+        shiftX = (double) thumbnailSize - stopButton.width;
+        shiftY = thumbnailSize - bar.getHeight() - stopButton.height - inset * 3.0;
+        g2d.translate(shiftX, shiftY);
+        g2d.setColor(IconColor.ACTIONS_RED.color);
+        g2d.setComposite(stopped ? TRANSPARENT_COMPOSITE : SOLID_COMPOSITE);
+        g2d.fill(stopButton);
+        g2d.translate(-shiftX, -shiftY);
+
+        shiftX = shiftX - 3 * BUTTON_SIZE_HALF;
+        g2d.translate(shiftX, shiftY);
+        g2d.setColor(IconColor.ACTIONS_GREEN.color);
+        g2d.setComposite(stopped ? SOLID_COMPOSITE : TRANSPARENT_COMPOSITE);
+        g2d.fill(startButton);
+        g2d.translate(-shiftX, -shiftY);
+      }
     }
   }
 

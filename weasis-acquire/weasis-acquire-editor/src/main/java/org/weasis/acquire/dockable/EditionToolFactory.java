@@ -11,11 +11,6 @@ package org.weasis.acquire.dockable;
 
 import java.awt.event.KeyEvent;
 import java.util.Hashtable;
-import org.osgi.service.component.ComponentContext;
-import org.osgi.service.component.annotations.Activate;
-import org.osgi.service.component.annotations.Deactivate;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.weasis.acquire.Messages;
 import org.weasis.acquire.dockable.components.actions.calibrate.CalibrationPanel;
 import org.weasis.base.viewer2d.EventManager;
@@ -29,6 +24,9 @@ import org.weasis.core.api.gui.util.Feature;
 import org.weasis.core.api.gui.util.Feature.BasicActionStateValue;
 import org.weasis.core.api.gui.util.Feature.ComboItemListenerValue;
 import org.weasis.core.api.gui.util.GuiUtils;
+import org.weasis.core.api.media.data.ImageElement;
+import org.weasis.core.ui.docking.ExtToolFactory;
+import org.weasis.core.ui.editor.image.ImageViewerEventManager;
 import org.weasis.core.ui.editor.image.MeasureToolBar;
 import org.weasis.core.ui.model.graphic.Graphic;
 
@@ -40,9 +38,7 @@ import org.weasis.core.ui.model.graphic.Graphic;
 @org.osgi.service.component.annotations.Component(
     service = InsertableFactory.class,
     property = {"org.weasis.base.viewer2d.View2dContainer=true"})
-public class EditionToolFactory implements InsertableFactory {
-  private static final Logger LOGGER = LoggerFactory.getLogger(EditionToolFactory.class);
-
+public class EditionToolFactory extends ExtToolFactory<ImageElement> {
   public static final BasicActionStateValue EDITION =
       new BasicActionStateValue(
           Messages.getString("edit"), "draw.edition", KeyEvent.VK_G, 0, null) { // NON-NLS
@@ -55,7 +51,9 @@ public class EditionToolFactory implements InsertableFactory {
   public static final ComboItemListenerValue<Graphic> DRAW_EDITION =
       new ComboItemListenerValue<>("", Feature.DRAW_CMD_PREFIX + EDITION.cmd(), 0, 0, null);
 
-  private EditionTool toolPane = null;
+  public EditionToolFactory() {
+    super(EditionTool.BUTTON_NAME);
+  }
 
   @Override
   public Type getType() {
@@ -63,70 +61,54 @@ public class EditionToolFactory implements InsertableFactory {
   }
 
   @Override
-  public Insertable createInstance(Hashtable<String, Object> properties) {
-    if (toolPane == null) {
-      EventManager eventManager = EventManager.getInstance();
-
-      // Remove actions which are not useful
-      eventManager.removeAction(ActionW.SCROLL_SERIES);
-      eventManager.removeAction(ActionW.WINLEVEL);
-      eventManager.removeAction(ActionW.WINDOW);
-      eventManager.removeAction(ActionW.LEVEL);
-      eventManager.removeAction(ActionW.ROTATION);
-      eventManager.removeAction(ActionW.FLIP);
-      eventManager.removeAction(ActionW.FILTER);
-      eventManager.removeAction(ActionW.INVERSE_STACK);
-      eventManager.removeAction(ActionW.INVERT_LUT);
-      eventManager.removeAction(ActionW.LUT);
-      eventManager.removeAction(ActionW.LAYOUT);
-      eventManager.removeAction(ActionW.SYNCH);
-      GuiUtils.getUICore()
-          .getSystemPreferences()
-          .setProperty("weasis.contextmenu.close", Boolean.FALSE.toString());
-
-      eventManager.setAction(new BasicActionState(EDITION));
-      eventManager.setAction(
-          new ComboItemListener<>(
-              DRAW_EDITION,
-              new Graphic[] {
-                MeasureToolBar.selectionGraphic, CalibrationPanel.CALIBRATION_LINE_GRAPHIC
-              }) {
-
-            @Override
-            public void itemStateChanged(Object object) {
-              // Do nothing
-            }
-          });
-      toolPane = new EditionTool(getType());
-      EventManager.getInstance().addSeriesViewerListener(toolPane);
-    }
-    return toolPane;
-  }
-
-  @Override
-  public void dispose(Insertable tool) {
-    if (toolPane != null) {
-      EventManager.getInstance().removeSeriesViewerListener(toolPane);
-      toolPane = null;
-    }
-  }
-
-  @Override
   public boolean isComponentCreatedByThisFactory(Insertable tool) {
     return tool instanceof EditionTool;
   }
 
-  // ================================================================================
-  // OSGI service implementation
-  // ================================================================================
-
-  @Activate
-  protected void activate(ComponentContext context) {
-    LOGGER.info("Activate the TransformationTool panel");
+  @Override
+  protected ImageViewerEventManager<ImageElement> getImageViewerEventManager() {
+    return EventManager.getInstance();
   }
 
-  @Deactivate
-  protected void deactivate(ComponentContext context) {
-    LOGGER.info("Deactivate the TransformationTool panel");
+  @Override
+  protected boolean isCompatible(Hashtable<String, Object> properties) {
+    return true;
+  }
+
+  @Override
+  protected Insertable getInstance(Hashtable<String, Object> properties) {
+    EventManager eventManager = EventManager.getInstance();
+
+    // Remove actions which are not useful
+    eventManager.removeAction(ActionW.SCROLL_SERIES);
+    eventManager.removeAction(ActionW.WINLEVEL);
+    eventManager.removeAction(ActionW.WINDOW);
+    eventManager.removeAction(ActionW.LEVEL);
+    eventManager.removeAction(ActionW.ROTATION);
+    eventManager.removeAction(ActionW.FLIP);
+    eventManager.removeAction(ActionW.FILTER);
+    eventManager.removeAction(ActionW.INVERSE_STACK);
+    eventManager.removeAction(ActionW.INVERT_LUT);
+    eventManager.removeAction(ActionW.LUT);
+    eventManager.removeAction(ActionW.LAYOUT);
+    eventManager.removeAction(ActionW.SYNCH);
+    GuiUtils.getUICore()
+        .getSystemPreferences()
+        .setProperty("weasis.contextmenu.close", Boolean.FALSE.toString());
+
+    eventManager.setAction(new BasicActionState(EDITION));
+    eventManager.setAction(
+        new ComboItemListener<>(
+            DRAW_EDITION,
+            new Graphic[] {
+              MeasureToolBar.selectionGraphic, CalibrationPanel.CALIBRATION_LINE_GRAPHIC
+            }) {
+
+          @Override
+          public void itemStateChanged(Object object) {
+            // Do nothing
+          }
+        });
+    return new EditionTool(getType());
   }
 }

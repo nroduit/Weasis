@@ -122,15 +122,7 @@ public class PrGraphicUtil {
               setProperties(shape, thickness, color, labelVisible, Boolean.FALSE, groupID);
             }
           } else {
-            Path2D path = new Path2D.Double(Path2D.WIND_NON_ZERO, size);
-            double x = isDisp ? points[0] * width : points[0];
-            double y = isDisp ? points[1] * height : points[1];
-            path.moveTo(x, y);
-            for (int i = 1; i < size; i++) {
-              x = isDisp ? points[i * 2] * width : points[i * 2];
-              y = isDisp ? points[i * 2 + 1] * height : points[i * 2 + 1];
-              path.lineTo(x, y);
-            }
+            Path2D path = buildPath2D(width, height, isDisp, points, size);
             if (dcmSR) {
               // Always close polyline for DICOM SR
               path.closePath();
@@ -258,6 +250,20 @@ public class PrGraphicUtil {
     return shape;
   }
 
+  private static Path2D buildPath2D(
+      double width, double height, boolean isDisp, float[] points, int size) {
+    Path2D path = new Path2D.Double(Path2D.WIND_NON_ZERO, size);
+    double x = isDisp ? points[0] * width : points[0];
+    double y = isDisp ? points[1] * height : points[1];
+    path.moveTo(x, y);
+    for (int i = 1; i < size; i++) {
+      x = isDisp ? points[i * 2] * width : points[i * 2];
+      y = isDisp ? points[i * 2 + 1] * height : points[i * 2 + 1];
+      path.lineTo(x, y);
+    }
+    return path;
+  }
+
   public static boolean getBooleanValue(Attributes dcmobj, int tag) {
     return "Y".equalsIgnoreCase(dcmobj.getString(tag)); // NON-NLS
   }
@@ -353,15 +359,7 @@ public class PrGraphicUtil {
       if (points != null) {
         int size = points.length / 2;
         if (size >= 2) {
-          Path2D path = new Path2D.Double(Path2D.WIND_NON_ZERO, size);
-          double x = isDisp ? points[0] * width : points[0];
-          double y = isDisp ? points[1] * height : points[1];
-          path.moveTo(x, y);
-          for (int i = 1; i < size; i++) {
-            x = isDisp ? points[i * 2] * width : points[i * 2];
-            y = isDisp ? points[i * 2 + 1] * height : points[i * 2 + 1];
-            path.lineTo(x, y);
-          }
+          Path2D path = buildPath2D(width, height, isDisp, points, size);
           shape = new NonEditableGraphic(path);
           setProperties(shape, thickness, color, labelVisible, filled, groupID);
         }

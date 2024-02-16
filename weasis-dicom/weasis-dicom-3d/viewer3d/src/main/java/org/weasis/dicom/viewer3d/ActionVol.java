@@ -17,6 +17,7 @@ import org.weasis.core.api.gui.util.Feature.ComboItemListenerValue;
 import org.weasis.core.api.gui.util.Feature.SliderChangeListenerValue;
 import org.weasis.core.api.gui.util.Feature.ToggleButtonListenerValue;
 import org.weasis.dicom.viewer2d.mip.MipView;
+import org.weasis.dicom.viewer3d.dockable.SegmentationTool;
 import org.weasis.dicom.viewer3d.geometry.ArcballMouseListener;
 import org.weasis.dicom.viewer3d.geometry.Axis;
 import org.weasis.dicom.viewer3d.vr.Preset;
@@ -76,4 +77,7 @@ public class ActionVol {
   public static final BasicActionStateValue ORIENTATION_CUBE =
       new BasicActionStateValue(
           Messages.getString("orientation.cube"), "crosshair-cube", 0, 0, null); // NON-NLS
+
+  public static final ComboItemListenerValue<SegmentationTool.Type> SEG_TYPE =
+      new ComboItemListenerValue<>(Messages.getString("type"), "seg.type", 0, 0, null);
 }

@@ -9,6 +9,8 @@
  */
 package org.weasis.dicom.rt;
 
+import org.dcm4che3.data.Attributes;
+import org.dcm4che3.data.Tag;
 import org.weasis.dicom.codec.DicomMediaIO;
 import org.weasis.dicom.codec.DicomSpecialElement;
 import org.weasis.dicom.codec.DicomSpecialElementFactory;
@@ -35,7 +37,21 @@ public class RTElementFactory implements DicomSpecialElementFactory {
   }
 
   @Override
+  public boolean isHidden() {
+    return true;
+  }
+
+  @Override
   public DicomSpecialElement buildDicomSpecialElement(DicomMediaIO mediaIO) {
+    Attributes dicom = mediaIO.getDicomObject();
+    String modality = dicom.getString(Tag.Modality);
+    if ("RTDOSE".equals(modality)) {
+      return new Dose(mediaIO);
+    } else if ("RTSTRUCT".equals(modality)) {
+      return new StructureSet(mediaIO);
+    } else if ("RTPLAN".equals(modality)) {
+      return new Plan(mediaIO);
+    }
     return new RtSpecialElement(mediaIO);
   }
 }

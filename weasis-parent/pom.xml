@@ -30,7 +30,7 @@
     <weasis.releasenotes>https://github.com/nroduit/Weasis/blob/master/CHANGELOG.md#v421-2023-11-11</weasis.releasenotes>
 
     <felix.framework.version>7.0.5</felix.framework.version>
-    <flatlaf.version>3.2.5</flatlaf.version>
+    <flatlaf.version>3.3</flatlaf.version>
     <miglayout.version>11.0</miglayout.version>
     <xz.version>1.9</xz.version>
 
@@ -52,7 +52,7 @@
     <sling.commons.log.version>3.0.2-r5</sling.commons.log.version>
     <dockingframes.version>1.1.6</dockingframes.version>
     <weasis-dicom-tools.version>5.31.2</weasis-dicom-tools.version>
-    <weasis.core.img.version>4.8.1</weasis.core.img.version>
+    <weasis.core.img.version>4.8.1.1</weasis.core.img.version>
     <weasis.opencv.native.version>4.8.1-dcm</weasis.opencv.native.version>
     <osgi.resource.locator.version>2.5.0-b42</osgi.resource.locator.version>
     <jaxb.osgi.version>4.0.3</jaxb.osgi.version>
@@ -204,7 +204,7 @@
         <plugin>
           <groupId>com.diffplug.spotless</groupId>
           <artifactId>spotless-maven-plugin</artifactId>
-          <version>2.41.1</version>
+          <version>2.43.0</version>
         </plugin>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
@@ -302,9 +302,7 @@
         <artifactId>spotless-maven-plugin</artifactId>
         <configuration>
           <java>
-            <googleJavaFormat>
-              <version>1.19.1</version>
-            </googleJavaFormat>
+            <googleJavaFormat/>
             <toggleOffOn>
               <off>@formatter:off</off>
               <on>@formatter:on</on>

@@ -9,8 +9,8 @@
  */
 package org.weasis.dicom.qr;
 
-import it.cnr.imaa.essi.lablib.gui.checkboxtree.DefaultTreeCheckingModel;
-import it.cnr.imaa.essi.lablib.gui.checkboxtree.TreeCheckingModel;
+import eu.essilab.lablib.checkboxtree.DefaultTreeCheckingModel;
+import eu.essilab.lablib.checkboxtree.TreeCheckingModel;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;

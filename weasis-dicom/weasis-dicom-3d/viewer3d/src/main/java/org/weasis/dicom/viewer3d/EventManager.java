@@ -70,6 +70,8 @@ import org.weasis.dicom.viewer2d.Messages;
 import org.weasis.dicom.viewer2d.ResetTools;
 import org.weasis.dicom.viewer2d.View2dContainer;
 import org.weasis.dicom.viewer2d.mip.MipView;
+import org.weasis.dicom.viewer3d.dockable.SegmentationTool;
+import org.weasis.dicom.viewer3d.dockable.SegmentationTool.Type;
 import org.weasis.dicom.viewer3d.geometry.ArcballMouseListener;
 import org.weasis.dicom.viewer3d.geometry.Axis;
 import org.weasis.dicom.viewer3d.geometry.Camera;
@@ -128,6 +130,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> {
     setAction(newLutShapeAction());
     setAction(newPreset3DAction());
     setAction(newInverseLutAction());
+    setAction(newSegmentationMode());
     setAction(newSortStackAction());
     setAction(newInverseStackAction());
     setAction(
@@ -424,6 +427,20 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> {
     };
   }
 
+  private ComboItemListener<SegmentationTool.Type> newSegmentationMode() {
+    return new ComboItemListener<>(ActionVol.SEG_TYPE, SegmentationTool.Type.values()) {
+
+      @Override
+      public void itemStateChanged(Object object) {
+        ImageViewerPlugin<DicomImageElement> container = getSelectedView2dContainer();
+        if (container instanceof View3DContainer view3DContainer) {
+          view3DContainer.setSegmentationType((SegmentationTool.Type) object);
+          view3DContainer.reload();
+        }
+      }
+    };
+  }
+
   private ComboItemListener<SeriesComparator<DicomImageElement>> newSortStackAction() {
     return new ComboItemListener<>(ActionW.SORT_STACK, SortSeriesStack.getValues()) {
 
@@ -661,16 +678,17 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> {
     }
 
     clearAllPropertyChangeListeners();
-    Optional<SliderChangeListener> cineAction = getAction(ActionVol.SCROLLING);
 
     if (!(view2d instanceof View3d canvas) || canvas.getVolTexture() == null) {
       enableActions(false);
+      View3DContainer.UI.updateDynamicTools(view2d.getSeries());
       return false;
     }
 
     if (!enabledAction) {
       enableActions(true);
     }
+    View3DContainer.UI.updateDynamicTools(view2d.getSeries());
 
     RenderingLayer rendering = canvas.getRenderingLayer();
     updateWindowLevelComponentsListener(canvas);
@@ -699,6 +717,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> {
     Optional<ComboItemListener<MipView.Type>> mipType = getAction(ActionVol.MIP_TYPE);
     mipType.ifPresent(a -> a.setSelectedItemWithoutTriggerAction(rendering.getMipType()));
 
+    Optional<SliderChangeListener> cineAction = getAction(ActionVol.SCROLLING);
     cineAction.ifPresent(
         a ->
             a.setSliderMinMaxValue(
@@ -766,6 +785,23 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> {
             a ->
                 a.setSelectedWithoutTriggerAction(
                     (Boolean) canvas.getActionValue(ActionW.INVERSE_STACK.cmd())));
+
+    Optional<ComboItemListener<Type>> segType = getAction(ActionVol.SEG_TYPE);
+    Type segmenationType;
+    if (selectedView2dContainer instanceof View3DContainer view3DContainer) {
+      segmenationType = view3DContainer.getSegmentationType();
+      segType.ifPresent(a -> a.setSelectedItemWithoutTriggerAction(segmenationType));
+    } else {
+      segmenationType = Type.NONE;
+    }
+
+    boolean segDisable = segmenationType == Type.NONE;
+    // getAction(ActionVol.VOL_PRESET).ifPresent(a -> a.enableAction(segDisable));
+    //    getAction(ActionW.WINLEVEL).ifPresent(a -> a.enableAction(segDisable));
+    //    getAction(ActionW.WINDOW).ifPresent(a -> a.enableAction(segDisable));
+    //    getAction(ActionW.LEVEL).ifPresent(a -> a.enableAction(segDisable));
+    // getAction(ActionW.PRESET).ifPresent(a -> a.enableAction(segDisable));
+    // getAction(ActionW.LUT_SHAPE).ifPresent(a -> a.enableAction(segDisable));
 
     // register all actions for the selected view and for the other views register according to
     // synchview.

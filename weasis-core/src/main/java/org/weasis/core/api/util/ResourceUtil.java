@@ -170,6 +170,9 @@ public class ResourceUtil {
     KEY_IMAGE("svg/other/keyImage.svg"), // NON-NLS
 
     PATIENT("svg/other/patient.svg"), // NON-NLS
+    PRESENTATION("svg/other/presentation.svg"), // NON-NLS
+    KEY("svg/other/key.svg"), // NON-NLS
+    SEGMENTATION("svg/other/segmentation.svg"), // NON-NLS
     RADIOACTIVE("svg/other/radioactive.svg"), // NON-NLS
     RASTER_IMAGE("svg/other/rasterImage.svg"), // NON-NLS
     TICK_OFF("svg/other/tickOff.svg"), // NON-NLS

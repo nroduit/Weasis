@@ -285,6 +285,16 @@ public class ZoomWin<E extends ImageElement> extends GraphicsPane
     }
   }
 
+  @Override
+  public double getRealWorldViewScale() {
+    return view2d.getRealWorldViewScale();
+  }
+
+  @Override
+  public double adjustViewScale(double viewScale) {
+    return view2d.adjustViewScale(viewScale);
+  }
+
   public void updateZoom() {
     double zoomFactor =
         (Boolean) actionsInView.get(SYNCH_CMD)

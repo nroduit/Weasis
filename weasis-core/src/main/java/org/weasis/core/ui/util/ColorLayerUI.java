@@ -12,9 +12,7 @@ package org.weasis.core.ui.util;
 import java.awt.AlphaComposite;
 import java.awt.Component;
 import java.awt.Container;
-import java.awt.Dimension;
 import java.awt.Graphics2D;
-import java.awt.Point;
 import java.awt.Window;
 import javax.swing.JComponent;
 import javax.swing.RootPaneContainer;
@@ -61,16 +59,8 @@ public class ColorLayerUI extends AbstractLayerUI<JComponent> {
 
   public static void showCenterScreen(Window window, ColorLayerUI layer) {
     Container container = getContentPane(layer);
-    if (container == null) {
-      GuiUtils.showCenterScreen(window);
-    } else {
-      Dimension sSize = container.getSize();
-      Dimension wSize = window.getSize();
-      Point p = container.getLocationOnScreen();
-      window.setLocation(
-          p.x + ((sSize.width - wSize.width) / 2), p.y + ((sSize.height - wSize.height) / 2));
-      window.setVisible(true);
-
+    GuiUtils.showCenterScreen(window, container);
+    if (layer != null) {
       layer.hideUI();
     }
   }

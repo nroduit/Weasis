@@ -30,7 +30,7 @@ import org.weasis.core.api.media.data.TagView;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.opencv.data.PlanarImage;
 
-public class DefaultMimeIO implements MediaReader {
+public class DefaultMimeIO implements MediaReader<MediaElement> {
 
   private static final TagView defaultTagView = new TagView(TagW.FileName);
 
@@ -80,7 +80,7 @@ public class DefaultMimeIO implements MediaReader {
           public String getMimeType() {
             if (!medias.isEmpty()) {
               synchronized (this) {
-                MediaElement img = medias.get(0);
+                MediaElement img = medias.getFirst();
                 if (img != null) {
                   return img.getMimeType();
                 }

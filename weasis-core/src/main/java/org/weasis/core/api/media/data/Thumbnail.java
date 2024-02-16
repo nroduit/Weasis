@@ -293,7 +293,7 @@ public class Thumbnail extends JLabel implements Thumbnailable {
               }
             }
             try {
-              if (thumb != null && file != null) {
+              if (thumb != null && file != null && thumb.width() > 0) {
                 MatOfInt map = new MatOfInt(Imgcodecs.IMWRITE_JPEG_QUALITY, 80);
                 if (ImageProcessor.writeImage(thumb.toMat(), file, map)) {
                   /*
