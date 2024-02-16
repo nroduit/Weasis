@@ -27,6 +27,9 @@ public abstract class SliderCineListener extends SliderChangeListener {
     HOUR
   }
 
+  private static final double DEFAULT_MIN = 0.01;
+  private static final double DEFAULT_MAX = 90.0;
+
   protected volatile boolean sweeping = false;
   private volatile boolean backward = false;
 
@@ -87,7 +90,7 @@ public abstract class SliderCineListener extends SliderChangeListener {
       Feature<? extends ActionState> action, int min, int max, int value, double speed, TIME time) {
     super(action, min, max, value);
     this.time = time;
-    speedModel = new SpinnerNumberModel(speed, 0.01, 90.0, 1.0);
+    speedModel = new SpinnerNumberModel(speed, DEFAULT_MIN, DEFAULT_MAX, 1.0);
     speedModel.addChangeListener(_ -> updateSpeed());
   }
 
@@ -156,7 +159,7 @@ public abstract class SliderCineListener extends SliderChangeListener {
   }
 
   public void setSpeed(double speed) {
-    speedModel.setValue(speed);
+    speedModel.setValue(Math.max(DEFAULT_MIN, Math.min(speed, DEFAULT_MAX)));
   }
 
   protected void updateSpeed() {
