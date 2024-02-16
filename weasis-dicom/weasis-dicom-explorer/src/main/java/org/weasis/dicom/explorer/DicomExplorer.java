@@ -1031,9 +1031,9 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
           k++;
         }
       }
-
       studyPane.revalidate();
       studyPane.repaint();
+      changeToolWindowAnchor(getDockable().getBaseLocation());
     } else {
       int k = 1;
       for (SeriesPane s : seriesList) {
