@@ -91,6 +91,19 @@ public class HiddenSeriesManager {
     }
   }
 
+  public static void addReferencedSOPInstanceUID(Attributes seriesRef, String originSeriesUID) {
+    if (seriesRef == null || originSeriesUID == null) {
+      return;
+    }
+    String structUID = seriesRef.getString(Tag.ReferencedSOPInstanceUID);
+    if (StringUtil.hasText(structUID)) {
+      HiddenSeriesManager.getInstance()
+          .sopRef2Series
+          .computeIfAbsent(structUID, _ -> new CopyOnWriteArraySet<>())
+          .add(originSeriesUID);
+    }
+  }
+
   public static <E> boolean hasHiddenElementsFromSeries(Class<E> clazz, String... seriesUID) {
     if (clazz != null && clazz.isAssignableFrom(clazz)) {
       for (String uid : seriesUID) {
@@ -117,19 +130,19 @@ public class HiddenSeriesManager {
   }
 
   private static <E> void addHiddenElements(
-      List<E> list, Class<E> clazz, String seriesUID, boolean childRef) {
+      List<E> list, Class<E> clazz, String seriesUID, int childNumber) {
     if (StringUtil.hasText(seriesUID)) {
       Set<HiddenSpecialElement> hiddenElements = getInstance().series2Elements.get(seriesUID);
       if (hiddenElements != null) {
         for (HiddenSpecialElement media : hiddenElements) {
           if (clazz.isInstance(media) && !list.contains(media)) {
             list.add((E) media);
-            if (childRef) {
+            if (childNumber > 0) {
               String sopUID = TagD.getTagValue(media, Tag.SOPInstanceUID, String.class);
               Set<String> refs = getInstance().sopRef2Series.get(sopUID);
               if (refs != null) {
                 for (String ref : refs) {
-                  addHiddenElements(list, clazz, ref, false);
+                  addHiddenElements(list, clazz, ref, childNumber - 1);
                 }
               }
             }
@@ -143,7 +156,7 @@ public class HiddenSeriesManager {
     if (clazz != null && clazz.isAssignableFrom(clazz)) {
       List<E> list = new ArrayList<>();
       for (String uid : seriesUID) {
-        addHiddenElements(list, clazz, uid, true);
+        addHiddenElements(list, clazz, uid, 2);
       }
       return list;
     }
@@ -179,7 +192,7 @@ public class HiddenSeriesManager {
       if (patients != null) {
         List<E> list = new ArrayList<>();
         for (String seriesUID : patients) {
-          addHiddenElements(list, clazz, seriesUID, true);
+          addHiddenElements(list, clazz, seriesUID, 2);
         }
         return list;
       }

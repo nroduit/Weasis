@@ -14,7 +14,6 @@ import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Tag;
 import org.weasis.core.api.util.ResourceUtil.OtherIcon;
 import org.weasis.core.api.util.ResourceUtil.ResourceIconPath;
-import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.codec.DicomMediaIO;
 import org.weasis.dicom.codec.HiddenSeriesManager;
 import org.weasis.dicom.codec.HiddenSpecialElement;
@@ -40,15 +39,12 @@ public class RtSpecialElement extends HiddenSpecialElement implements SpecialEle
 
     Attributes dcmItems = getMediaReader().getDicomObject();
     if (dcmItems != null) {
-      Attributes seriesRef = dcmItems.getNestedDataset(Tag.ReferencedStructureSetSequence);
-      if (seriesRef != null) {
-        String structUID = seriesRef.getString(Tag.ReferencedSOPInstanceUID);
-        if (StringUtil.hasText(structUID)) {
-          HiddenSeriesManager.getInstance()
-              .sopRef2Series
-              .computeIfAbsent(structUID, _ -> new CopyOnWriteArraySet<>())
-              .add(originSeriesUID);
-        }
+      if (this instanceof Plan) {
+        Attributes seriesRef = dcmItems.getNestedDataset(Tag.ReferencedStructureSetSequence);
+        HiddenSeriesManager.addReferencedSOPInstanceUID(seriesRef, originSeriesUID);
+      } else if (this instanceof Dose) {
+        Attributes seriesRef = dcmItems.getNestedDataset(Tag.ReferencedRTPlanSequence);
+        HiddenSeriesManager.addReferencedSOPInstanceUID(seriesRef, originSeriesUID);
       }
     }
   }
