@@ -219,7 +219,7 @@ public class MipPopup {
           buf.append(" (");
           double thickness = DicomMediaUtils.getThickness(fimg, limg);
           if (thickness <= 0.0) {
-            thickness = max - min;
+            thickness = (double) max - min;
           }
           buf.append(DecFormatter.allNumber(thickness));
           buf.append(" ");
