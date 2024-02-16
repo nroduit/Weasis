@@ -796,12 +796,12 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> {
     }
 
     boolean segDisable = segmenationType == Type.NONE;
-    //getAction(ActionVol.VOL_PRESET).ifPresent(a -> a.enableAction(segDisable));
+    // getAction(ActionVol.VOL_PRESET).ifPresent(a -> a.enableAction(segDisable));
     //    getAction(ActionW.WINLEVEL).ifPresent(a -> a.enableAction(segDisable));
     //    getAction(ActionW.WINDOW).ifPresent(a -> a.enableAction(segDisable));
     //    getAction(ActionW.LEVEL).ifPresent(a -> a.enableAction(segDisable));
-    //getAction(ActionW.PRESET).ifPresent(a -> a.enableAction(segDisable));
-    //getAction(ActionW.LUT_SHAPE).ifPresent(a -> a.enableAction(segDisable));
+    // getAction(ActionW.PRESET).ifPresent(a -> a.enableAction(segDisable));
+    // getAction(ActionW.LUT_SHAPE).ifPresent(a -> a.enableAction(segDisable));
 
     // register all actions for the selected view and for the other views register according to
     // synchview.

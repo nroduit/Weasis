@@ -439,14 +439,36 @@ public class View3d extends VolumeCanvas
         "opacityFactor",
         (gl, loc) -> gl.glUniform1f(loc, (float) renderingLayer.getOpacity()));
 
-    program.allocateUniform(gl4, "inputLevelMin", (gl, loc) -> gl.glUniform1f(loc, isSegMode()  ? 0 : volTexture.getLevelMin()));
-    program.allocateUniform(gl4, "inputLevelMax", (gl, loc) -> gl.glUniform1f(loc, isSegMode()  ? volumePreset.getWidth() : volTexture.getLevelMax()));
     program.allocateUniform(
-        gl4, "outputLevelMin", (gl, loc) -> gl.glUniform1f(loc, 0));
+        gl4,
+        "inputLevelMin",
+        (gl, loc) -> gl.glUniform1f(loc, isSegMode() ? 0 : volTexture.getLevelMin()));
+    program.allocateUniform(
+        gl4,
+        "inputLevelMax",
+        (gl, loc) ->
+            gl.glUniform1f(loc, isSegMode() ? volumePreset.getWidth() : volTexture.getLevelMax()));
+    program.allocateUniform(gl4, "outputLevelMin", (gl, loc) -> gl.glUniform1f(loc, 0));
     program.allocateUniform(
         gl4, "outputLevelMax", (gl, loc) -> gl.glUniform1f(loc, volumePreset.getWidth()));
-    program.allocateUniform(gl4, "windowWidth", (gl, loc) -> gl.glUniform1f(loc, isSegMode()  ? volumePreset.getColorMax() - volumePreset.getColorMin() : renderingLayer.getWindowWidth()));
-    program.allocateUniform(gl4, "windowCenter", (gl, loc) -> gl.glUniform1f(loc, isSegMode()  ? (volumePreset.getColorMin() + volumePreset.getColorMax()) / 2f : renderingLayer.getWindowCenter()));
+    program.allocateUniform(
+        gl4,
+        "windowWidth",
+        (gl, loc) ->
+            gl.glUniform1f(
+                loc,
+                isSegMode()
+                    ? volumePreset.getColorMax() - volumePreset.getColorMin()
+                    : renderingLayer.getWindowWidth()));
+    program.allocateUniform(
+        gl4,
+        "windowCenter",
+        (gl, loc) ->
+            gl.glUniform1f(
+                loc,
+                isSegMode()
+                    ? (volumePreset.getColorMin() + volumePreset.getColorMax()) / 2f
+                    : renderingLayer.getWindowCenter()));
 
     final IntBuffer intBuffer = IntBuffer.allocate(1);
     texture.init(gl4);

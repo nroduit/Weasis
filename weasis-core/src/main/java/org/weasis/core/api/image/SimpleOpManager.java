@@ -165,9 +165,8 @@ public class SimpleOpManager implements OpManager {
 
   @Override
   public ImageOpNode getFirstNode() {
-    int size = operations.size();
-    if (size > 0) {
-      return operations.get(0);
+    if (!operations.isEmpty()) {
+      return operations.getFirst();
     }
     return null;
   }

@@ -293,9 +293,9 @@ public final class VolumeBuilder {
           }
           int nbPixels = Core.countNonZero(mask);
           imageMLUT = ImageCV.toImageCV(mask);
-//          PlanarImage src = volTexture.getModalityLutImage(imageElement);
-//          imageMLUT = new ImageCV();
-//          Core.bitwise_and(src.toImageCV(), mask, imageMLUT.toImageCV());
+          //          PlanarImage src = volTexture.getModalityLutImage(imageElement);
+          //          imageMLUT = new ImageCV();
+          //          Core.bitwise_and(src.toImageCV(), mask, imageMLUT.toImageCV());
         } else {
           start = Instant.now();
           imageMLUT = volTexture.getModalityLutImage(imageElement);
