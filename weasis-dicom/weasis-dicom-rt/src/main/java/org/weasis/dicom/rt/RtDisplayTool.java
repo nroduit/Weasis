@@ -72,7 +72,7 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener, S
 
   public static final String BUTTON_NAME = Messages.getString("rt.tool");
 
-  private static final String GRAPHIC_OPACITY = "Graphic Opacity";
+  private static final String GRAPHIC_OPACITY = Messages.getString("graphic.opacity");
   public static final String FORMAT = "%.3f %%"; // NON-NLS
   private static final SoftHashMap<String, RtSet> RtSet_Cache = new SoftHashMap<>();
 

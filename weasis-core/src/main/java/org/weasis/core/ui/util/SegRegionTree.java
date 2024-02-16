@@ -105,7 +105,10 @@ public class SegRegionTree extends CheckboxTree {
 
   protected JMenuItem getCheckAllMenuItem(DefaultMutableTreeNode node, boolean selected) {
     JMenuItem selectAllMenuItem =
-        new JMenuItem(selected ? "Select all the child nodes" : "Unselect all the child nodes");
+        new JMenuItem(
+            selected
+                ? Messages.getString("select.all.the.child.nodes")
+                : Messages.getString("unselect.all.the.child.nodes"));
     selectAllMenuItem.addActionListener(
         e -> {
           if (node != null) {
@@ -187,7 +190,7 @@ public class SegRegionTree extends CheckboxTree {
   }
 
   protected JMenuItem getSelectionMenuItem(DefaultMutableTreeNode node) {
-    JMenuItem selectAllMenuItem = new JMenuItem("Show in the image view");
+    JMenuItem selectAllMenuItem = new JMenuItem(Messages.getString("show.in.the.image.view"));
     selectAllMenuItem.addActionListener(
         _ -> {
           if (node != null
@@ -200,7 +203,7 @@ public class SegRegionTree extends CheckboxTree {
   }
 
   protected JMenuItem getStatisticMenuItem(DefaultMutableTreeNode node) {
-    JMenuItem selectAllMenuItem = new JMenuItem("Pixel statistics from selected view");
+    JMenuItem selectAllMenuItem = new JMenuItem(Messages.getString("pixel.statistics"));
     selectAllMenuItem.addActionListener(
         _ -> {
           if (node != null

@@ -97,8 +97,8 @@ public class ResourceUtil {
     IMPORT_IMAGE("svg/action/importImage.svg"), // NON-NLS
     INVERSE_LUT("svg/action/inverseLut.svg"), // NON-NLS
     LAYOUT("svg/action/layout.svg"), // NON-NLS
-    LOAD_VOLUME("svg/action/loadVolume.svg"),
-    LOOP("svg/action/loop.svg"), // NON-NLS// NON-NLS
+    LOAD_VOLUME("svg/action/loadVolume.svg"), // NON-NLS
+    LOOP("svg/action/loop.svg"), // NON-NLS
     LUT("svg/action/lut.svg"), // NON-NLS
     MEASURE("svg/action/measure.svg"), // NON-NLS
     MEASURE_TOP_LEFT("svg/action/measureTopLeft.svg"), // NON-NLS

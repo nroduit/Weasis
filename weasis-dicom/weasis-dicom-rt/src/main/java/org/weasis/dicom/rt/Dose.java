@@ -291,7 +291,7 @@ public class Dose extends RtSpecialElement implements SpecialElementRegion {
             doseMax = minMaxLoc.maxVal;
           }
         } catch (Exception e) {
-          System.out.println("Error: " + e.getMessage());
+          LOGGER.error("Get max dose", e);
         }
       }
     }

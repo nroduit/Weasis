@@ -2,6 +2,9 @@
   <item name='java.lang.Class java.io.InputStream getResourceAsStream(java.lang.String)'>
     <annotation name='org.jetbrains.annotations.NonNls'/>
   </item>
+  <item name='java.lang.String boolean contains(java.lang.CharSequence)'>
+    <annotation name='org.jetbrains.annotations.NonNls'/>
+  </item>
   <item name='java.lang.String boolean endsWith(java.lang.String)'>
     <annotation name='org.jetbrains.annotations.NonNls'/>
   </item>
@@ -9,6 +12,9 @@
     <annotation name='org.jetbrains.annotations.NonNls'/>
   </item>
   <item name='java.lang.String int indexOf(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.NonNls'/>
+  </item>
+  <item name='java.lang.StringBuilder java.lang.StringBuilder append(java.lang.String) 0'>
     <annotation name='org.jetbrains.annotations.NonNls'/>
   </item>
   <item name='java.lang.System.Logger void log(java.lang.System.Logger.Level, java.lang.String)'>

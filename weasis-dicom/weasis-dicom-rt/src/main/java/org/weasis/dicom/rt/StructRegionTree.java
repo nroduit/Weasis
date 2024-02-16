@@ -48,7 +48,7 @@ public class StructRegionTree extends SegRegionTree {
   }
 
   private JMenuItem getExportMenuItem(DefaultMutableTreeNode node) {
-    JMenuItem jMenuItem = new JMenuItem("Export to clipboard as CSV");
+    JMenuItem jMenuItem = new JMenuItem(Messages.getString("export.as.csv"));
     jMenuItem.addActionListener(_ -> exportToCSV(node));
     return jMenuItem;
   }
@@ -77,14 +77,14 @@ public class StructRegionTree extends SegRegionTree {
 
   private static void writeToCsv(List<StructRegion> segRegions) {
     CsvExporter csv = new CsvExporter();
-    csv.addQuotedNameAndSeparator("Label");
-    csv.addQuotedNameAndSeparator("ROI Observation Label");
-    csv.addQuotedNameAndSeparator(Messages.getString("thickness [mm]"));
-    csv.addQuotedNameAndSeparator(Messages.getString("volume") + " [cm³]");
+    csv.addQuotedNameAndSeparator("Label"); // NON-NLS
+    csv.addQuotedNameAndSeparator("ROI Observation Label"); // NON-NLS
+    csv.addQuotedNameAndSeparator(STR."\{Messages.getString("thickness")} [mm]");
+    csv.addQuotedNameAndSeparator(STR."\{Messages.getString("volume")} [cm³]");
     if (hasDvh(segRegions)) {
-      csv.addQuotedNameAndSeparator(Messages.getString("min.dose") + " [%]");
-      csv.addQuotedNameAndSeparator(Messages.getString("max.dose") + " [%]");
-      csv.addQuotedName(Messages.getString("mean.dose") + " [%]");
+      csv.addQuotedNameAndSeparator(STR."\{Messages.getString("min.dose")} [%]");
+      csv.addQuotedNameAndSeparator(STR."\{Messages.getString("max.dose")} [%]");
+      csv.addQuotedName(STR."\{Messages.getString("mean.dose")} [%]");
     }
     csv.addEndOfLine();
 

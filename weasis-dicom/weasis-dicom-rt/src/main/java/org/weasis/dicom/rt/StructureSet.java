@@ -144,7 +144,7 @@ public class StructureSet extends RtSpecialElement implements SpecialElementRegi
           int nb = ssROIseq.getInt(Tag.ROINumber, -1);
           String name = ssROIseq.getString(Tag.ROIName);
           if (!StringUtil.hasText(name)) {
-            name = "ROI_" + nb;
+            name = "ROI_" + nb; // NON-NLS
           }
 
           StructRegion structRegion = new StructRegion(nb, name, null);

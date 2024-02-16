@@ -91,9 +91,8 @@ public abstract class LoadDicom extends ExplorerTask<Boolean, String> {
   }
 
   private JTextPane getErrorPanel(int nbErrors) {
-    String files = nbErrors > 1 ? "files" : "file";
-    String message = "%d DICOM %s cannot be read!".formatted(nbErrors, files);
-    String logOutput = "Check log output";
+    String message = Messages.getString("dicom.file.cannot.be.read").formatted(nbErrors);
+    String logOutput = Messages.getString("check.log.output");
     String html =
         """
       <P>

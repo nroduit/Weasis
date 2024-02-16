@@ -489,7 +489,7 @@ public class View3d extends VolumeCanvas
   }
 
   private boolean isSegMode() {
-    return volumePreset != null && "Segmentation".equals(volumePreset.getName());
+    return volumePreset != null && "Segmentation".equals(volumePreset.getName()); // NON-NLS
   }
 
   private PixelFormat getPixelFormat() {

@@ -60,6 +60,7 @@ import org.weasis.dicom.codec.HiddenSeriesManager;
 import org.weasis.dicom.codec.SegSpecialElement;
 import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.viewer2d.EventManager;
+import org.weasis.dicom.viewer2d.Messages;
 import org.weasis.dicom.viewer2d.View2d;
 import org.weasis.opencv.data.PlanarImage;
 import org.weasis.opencv.seg.RegionAttributes;
@@ -69,8 +70,8 @@ import org.weasis.opencv.seg.RegionAttributes;
  */
 public class SegmentationTool extends PluginTool implements SeriesViewerListener, SegRegionTool {
 
-  public static final String BUTTON_NAME = "Segmentation";
-  private static final String GRAPHIC_OPACITY = "Graphic Opacity";
+  public static final String BUTTON_NAME = Messages.getString("segmentation");
+  private static final String GRAPHIC_OPACITY = Messages.getString("graphic.opacity");
 
   private final SegRegionTree tree;
   private boolean initPathSelection;
@@ -347,11 +348,11 @@ public class SegmentationTool extends PluginTool implements SeriesViewerListener
         buf.append(seg.getLabel());
         buf.append("</b>");
         buf.append(GuiUtils.HTML_BR);
-        buf.append("Algorithm type");
+        buf.append("Algorithm type"); // NON-NLS
         buf.append(StringUtil.COLON_AND_SPACE);
         buf.append(seg.getType());
         buf.append(GuiUtils.HTML_BR);
-        buf.append("Voxel count");
+        buf.append("Voxel count"); // NON-NLS
         buf.append(StringUtil.COLON_AND_SPACE);
         buf.append(DecFormatter.allNumber(seg.getNumberOfPixels()));
         buf.append(GuiUtils.HTML_BR);
@@ -359,7 +360,7 @@ public class SegmentationTool extends PluginTool implements SeriesViewerListener
         if (layer != null) {
           MeasurementsAdapter adapter =
               layer.getMeasurementAdapter(layer.getSourceImage().getPixelSpacingUnit());
-          buf.append("Volume (%s3)".formatted(adapter.getUnit()));
+          buf.append("Volume (%s3)".formatted(adapter.getUnit())); // NON-NLS
           buf.append(StringUtil.COLON_AND_SPACE);
           double ratio = adapter.getCalibRatio();
           buf.append(
