@@ -1228,6 +1228,10 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     imageLayer.fireOpEvent(
         new ImageOpEvent(ImageOpEvent.OpEvent.RESET_DISPLAY, series, getImage(), null));
     resetZoom();
+    // Synch to zoom action
+    if (ZoomType.CURRENT.equals(actionsInView.get(ZOOM_TYPE_CMD))) {
+      zoom(0.0);
+    }
     resetPan();
     imageLayer.setEnableDispOperations(true);
     eventManager.updateComponentsListener(this);
