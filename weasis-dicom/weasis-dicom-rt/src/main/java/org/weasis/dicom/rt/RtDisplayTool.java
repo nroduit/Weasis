@@ -526,6 +526,10 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener, S
       treeIsodoses.updateVisibleNode(rootNodeIsodoses, nodeIsodoses);
     }
 
+    updateCurrentContainer();
+  }
+
+  public void updateCurrentContainer() {
     ImageViewerPlugin<DicomImageElement> container =
         EventManager.getInstance().getSelectedView2dContainer();
     List<ViewCanvas<DicomImageElement>> views = null;
@@ -614,6 +618,8 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener, S
     // rt.getDoseValueForPixel(247, 263, geometry.getTLHC().getZ());
     // }
     // }
+
+    updateCurrentContainer();
   }
 
   public void updateTree(StructureSet selectedStructure, Plan selectedPlan) {
