@@ -10,7 +10,6 @@
 - Cine for multiframe: variable speed and sweeping [\#497](https://github.com/nroduit/Weasis/issues/497)
 - Improve tag viewer [\#494](https://github.com/nroduit/Weasis/issues/494)
 - Merging several multiframe files with an identical concatenation UID [\#493](https://github.com/nroduit/Weasis/issues/493)
-- About DCM parsing Chinese garbled characters [\#480](https://github.com/nroduit/Weasis/issues/480)
 - Display an error message when a file is identified as DICOM but cannot be read [\#479](https://github.com/nroduit/Weasis/issues/479)
 - Multiframe image fixed/varibale framerate \(Frame Time Vector support 0018,1065\) [\#424](https://github.com/nroduit/Weasis/issues/424)
 - Color and transparency display options for overlay data  [\#184](https://github.com/nroduit/Weasis/issues/184)
@@ -20,7 +19,6 @@
 - 3D Buttons are not active [\#504](https://github.com/nroduit/Weasis/issues/504)
 - The latest measurement values are not visible in the table [\#502](https://github.com/nroduit/Weasis/issues/502)
 - font size setting of Labels on image does not affect actually. [\#498](https://github.com/nroduit/Weasis/issues/498)
-- Not reading the CDROM/ DVD drive on Ubuntu [\#487](https://github.com/nroduit/Weasis/issues/487)
 
 **Closed issues:**
 
