@@ -1,5 +1,31 @@
 # Changelog
 
+## [v4.3.0](https://github.com/nroduit/Weasis/tree/v4.3.0) (2024-02-16)
+
+[Full Changelog](https://github.com/nroduit/Weasis/compare/v4.2.1...v4.3.0)
+
+**Implemented enhancements:**
+
+- Fill opacity as a graphic property [\#505](https://github.com/nroduit/Weasis/issues/505)
+- Cine for multiframe: variable speed and sweeping [\#497](https://github.com/nroduit/Weasis/issues/497)
+- Improve tag viewer [\#494](https://github.com/nroduit/Weasis/issues/494)
+- Merging several multiframe files with an identical concatenation UID [\#493](https://github.com/nroduit/Weasis/issues/493)
+- About DCM parsing Chinese garbled characters [\#480](https://github.com/nroduit/Weasis/issues/480)
+- Display an error message when a file is identified as DICOM but cannot be read [\#479](https://github.com/nroduit/Weasis/issues/479)
+- Multiframe image fixed/varibale framerate \(Frame Time Vector support 0018,1065\) [\#424](https://github.com/nroduit/Weasis/issues/424)
+- Color and transparency display options for overlay data  [\#184](https://github.com/nroduit/Weasis/issues/184)
+
+**Fixed bugs:**
+
+- 3D Buttons are not active [\#504](https://github.com/nroduit/Weasis/issues/504)
+- The latest measurement values are not visible in the table [\#502](https://github.com/nroduit/Weasis/issues/502)
+- font size setting of Labels on image does not affect actually. [\#498](https://github.com/nroduit/Weasis/issues/498)
+- Not reading the CDROM/ DVD drive on Ubuntu [\#487](https://github.com/nroduit/Weasis/issues/487)
+
+**Closed issues:**
+
+- Weasis does not even reach the splash screen - possible wayland and flatpak interaction?   [\#449](https://github.com/nroduit/Weasis/issues/449)
+
 ## [v4.2.1](https://github.com/nroduit/Weasis/tree/v4.2.1) (2023-11-11)
 
 [Full Changelog](https://github.com/nroduit/Weasis/compare/v4.2.0...v4.2.1)
