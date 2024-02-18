@@ -12,11 +12,12 @@
 ### sudo apt-get install qemu binfmt-support qemu-user-static
 ### docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
 # Install the required XFS packages:
-### sudo apt-get install xfsprogs
+### sudo apt-get install xfsprogs jfsutils
 
 ##### Update docker images
+# unzip weasis-native.zip
+# cd weasis-native/build/docker
 # docker image rm -f weasis/builder:latest
-# docker buildx build --platform linux/amd64,linux/arm64,linux/arm/v7 -t weasis/builder:latest .
 # docker buildx build --load --platform linux/amd64 -t weasis/builder:latest .
 # sudo ./build-linux-installers.sh -a linux/amd64
 # docker buildx build --load --platform linux/arm64 -t weasis/builder:latest .
