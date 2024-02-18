@@ -26,9 +26,7 @@ grade: stable
 confinement: strict
 architectures:
   - build-on: [amd64]
-    build-for: [amd64]
   - build-on: [arm64]
-    build-for: [arm64]
 
 plugs:
   desktop:
@@ -88,8 +86,10 @@ parts:
     source-type: local
     source-subdir: weasis-distributions
     override-build: |
-      cp -Rf /root/parts/remote-weasis-build/install/weasis-native ${SNAPCRAFT_PART_BUILD}/
-      weasis-native/build/script/package-weasis.sh --output ${SNAPCRAFT_PART_INSTALL} --no-installer --jdk /root/parts/remote-openjdk/install/java-runtime
+      WEASIS_REMOTE=$(echo ${SNAPCRAFT_PART_INSTALL} | sed 's|/weasis/|/remote-weasis-build/|g')
+      WEASIS_JDK=$(echo ${SNAPCRAFT_PART_INSTALL} | sed 's|/weasis/|/remote-openjdk/|g')
+      cp -Rf ${WEASIS_REMOTE}/weasis-native ${SNAPCRAFT_PART_BUILD}/
+      weasis-native/build/script/package-weasis.sh --output ${SNAPCRAFT_PART_INSTALL} --no-installer --jdk ${WEASIS_JDK}/java-runtime
       mv ${SNAPCRAFT_PART_INSTALL}/Weasis/* ${SNAPCRAFT_PART_INSTALL}/
       rm -rf ${SNAPCRAFT_PART_INSTALL}/Weasis
       snapcraftctl build
