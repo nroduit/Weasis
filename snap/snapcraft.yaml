@@ -86,8 +86,8 @@ parts:
     source-type: local
     source-subdir: weasis-distributions
     override-build: |
-      WEASIS_REMOTE=$(echo ${SNAPCRAFT_PART_INSTALL} | sed 's|/weasis/|/remote-weasis-build/|g')
-      WEASIS_JDK=$(echo ${SNAPCRAFT_PART_INSTALL} | sed 's|/weasis/|/remote-openjdk/|g')
+      WEASIS_REMOTE=$(echo ${SNAPCRAFT_PART_INSTALL} | sed 's|parts/weasis/|parts/remote-weasis-build/|g')
+      WEASIS_JDK=$(echo ${SNAPCRAFT_PART_INSTALL} | sed 's|parts/weasis/|parts/remote-openjdk/|g')
       cp -Rf ${WEASIS_REMOTE}/weasis-native ${SNAPCRAFT_PART_BUILD}/
       weasis-native/build/script/package-weasis.sh --output ${SNAPCRAFT_PART_INSTALL} --no-installer --jdk ${WEASIS_JDK}/java-runtime
       mv ${SNAPCRAFT_PART_INSTALL}/Weasis/* ${SNAPCRAFT_PART_INSTALL}/
