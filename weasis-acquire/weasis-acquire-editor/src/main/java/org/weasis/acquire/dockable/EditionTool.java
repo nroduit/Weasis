@@ -16,7 +16,6 @@ import java.awt.Component;
 import java.util.Optional;
 import javax.swing.BorderFactory;
 import javax.swing.JScrollPane;
-import javax.swing.JViewport;
 import org.weasis.acquire.Messages;
 import org.weasis.acquire.dockable.components.AcquireActionButton;
 import org.weasis.acquire.dockable.components.AcquireActionButtonsPanel;
@@ -64,13 +63,7 @@ public class EditionTool extends PluginTool implements SeriesViewerListener {
 
   @Override
   public Component getToolComponent() {
-    JViewport viewPort = rootPane.getViewport();
-    rootPane.setViewport(Optional.ofNullable(viewPort).orElseGet(JViewport::new));
-
-    if (viewPort != null && viewPort.getView() != this) {
-      viewPort.setView(this);
-    }
-    return rootPane;
+    return getToolComponentFromJScrollPane(rootPane);
   }
 
   @Override

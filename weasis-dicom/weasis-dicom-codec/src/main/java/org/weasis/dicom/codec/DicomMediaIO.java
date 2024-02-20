@@ -26,6 +26,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Function;
 import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.BulkData;
 import org.dcm4che3.data.Implementation;
@@ -51,8 +52,6 @@ import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.media.data.Codec;
 import org.weasis.core.api.media.data.FileCache;
 import org.weasis.core.api.media.data.MediaElement;
-import org.weasis.core.api.media.data.MediaSeries;
-import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.SimpleTaggable;
 import org.weasis.core.api.media.data.TagView;
 import org.weasis.core.api.media.data.TagW;
@@ -90,6 +89,12 @@ public class DicomMediaIO implements DcmMediaReader {
   public static final String SERIES_ENCAP_DOC_MIMETYPE = "encap/dicom"; // NON-NLS
   public static final String UNREADABLE = "unreadable/dicom"; // NON-NLS
   public static final String SERIES_XDSI = "xds-i/dicom"; // NON-NLS
+
+  public enum Reading {
+    ERROR,
+    EXCLUDED,
+    READABLE
+  }
 
   private static final AtomicInteger instanceID = new AtomicInteger(1);
   public static final TagManager tagManager = new TagManager();
@@ -294,7 +299,7 @@ public class DicomMediaIO implements DcmMediaReader {
   private URI uri;
   private int numberOfFrame;
   private final Map<TagW, Object> tags;
-  private MediaElement[] image = null;
+  private DicomImageElement[] image = null;
   private String mimeType;
   private boolean hasPixel = false;
 
@@ -353,62 +358,62 @@ public class DicomMediaIO implements DcmMediaReader {
   }
 
   public synchronized boolean isReadableDicom() {
+    return getReadingStatus() == Reading.READABLE;
+  }
+
+  public synchronized Reading getReadingStatus() {
     if (UNREADABLE.equals(mimeType)) {
-      // Return true only to display the error message in the view
-      return true;
+      return Reading.EXCLUDED;
     }
     if ("data".equals(uri.getScheme()) && dcmMetadata == null) { // NON-NLS
-      return false;
+      // Not readable, in memory DICOM object
+      return Reading.EXCLUDED;
     }
 
     if (tags.isEmpty()) {
-      try {
-        DicomMetaData md = readMetaData();
-        Attributes fmi = md.getFileMetaInformation();
-        Attributes header = md.getDicomObject();
-        // Exclude DICOMDIR
-        String mediaStorageSOPClassUID =
-            fmi == null ? null : fmi.getString(Tag.MediaStorageSOPClassUID);
-        if ("1.2.840.10008.1.3.10".equals(mediaStorageSOPClassUID)) {
+      return setMimeType();
+    }
+    return Reading.READABLE;
+  }
+
+  private Reading setMimeType() {
+    try {
+      DicomMetaData md = readMetaData();
+      Attributes header = md.getDicomObject();
+      // Exclude DICOMDIR
+      if (md.isMediaStorageDirectory()) {
+        mimeType = UNREADABLE;
+        close();
+        return Reading.EXCLUDED;
+      }
+      if (hasPixel) {
+        if (md.isVideoTransferSyntaxUID()) {
+          mimeType = SERIES_VIDEO_MIMETYPE;
+        } else {
+          if (md.isSegmentationStorage()) {
+            mimeType = SERIES_SEG_MIMETYPE; // Do not display SEG images
+          } else {
+            mimeType = IMAGE_MIMETYPE;
+          }
+        }
+      } else {
+        boolean special = setDicomSpecialType(header);
+        if (!special) {
+          // Not supported DICOM file
           mimeType = UNREADABLE;
           close();
-          return false;
+          return Reading.ERROR;
         }
-        if (hasPixel) {
-          String ts = fmi == null ? null : fmi.getString(Tag.TransferSyntaxUID);
-          if (ts != null && ts.startsWith("1.2.840.10008.1.2.4.10")) {
-            // MPEG2 MP@ML 1.2.840.10008.1.2.4.100
-            // MEPG2 MP@HL 1.2.840.10008.1.2.4.101
-            // MPEG4 AVC/H.264 1.2.840.10008.1.2.4.102
-            // MPEG4 AVC/H.264 BD 1.2.840.10008.1.2.4.103
-            mimeType = SERIES_VIDEO_MIMETYPE;
-          } else {
-            if ("1.2.840.10008.5.1.4.1.1.66.4".equals(mediaStorageSOPClassUID)) {
-              mimeType = SERIES_SEG_MIMETYPE; // Do not display SEG images
-            } else {
-              mimeType = IMAGE_MIMETYPE;
-            }
-          }
-        } else {
-          boolean special = setDicomSpecialType(header);
-          if (!special) {
-            // Not supported DICOM file
-            mimeType = UNREADABLE;
-            close();
-            return false;
-          }
-        }
-
-        writeInstanceTags(md);
-
-      } catch (Exception | OutOfMemoryError e) {
-        mimeType = UNREADABLE;
-        LOGGER.error("Cannot read DICOM:", e);
-        close();
-        return false;
       }
+
+      writeInstanceTags(md);
+      return Reading.READABLE;
+    } catch (Exception | OutOfMemoryError e) {
+      mimeType = UNREADABLE;
+      LOGGER.error("Cannot read DICOM:", e);
+      close();
+      return Reading.ERROR;
     }
-    return true;
   }
 
   private boolean setDicomSpecialType(Attributes header) {
@@ -709,12 +714,12 @@ public class DicomMediaIO implements DcmMediaReader {
     return new Mat();
   }
 
-  private MediaElement getSingleImage() {
+  private DicomImageElement getSingleImage() {
     return getSingleImage(0);
   }
 
-  private MediaElement getSingleImage(int frame) {
-    MediaElement[] elements = getMediaElement();
+  private DicomImageElement getSingleImage(int frame) {
+    DicomImageElement[] elements = getMediaElement();
     if (elements != null && elements.length > frame) {
       return elements[frame];
     }
@@ -732,37 +737,49 @@ public class DicomMediaIO implements DcmMediaReader {
   }
 
   @Override
-  public synchronized MediaElement[] getMediaElement() {
-    if (image == null && isReadableDicom()) {
-      if (SERIES_VIDEO_MIMETYPE.equals(mimeType)) {
-        image = new MediaElement[] {new DicomVideoElement(this, null)};
-      } else if (SERIES_ENCAP_DOC_MIMETYPE.equals(mimeType)) {
-        image = new MediaElement[] {new DicomEncapDocElement(this, null)};
-      } else {
-        buildImageElement();
-      }
-    }
-    return image;
+  public synchronized DicomImageElement[] getMediaElement() {
+    ResultContainer result = getMediaElement(null);
+    return result.getImage();
   }
 
-  private void buildImageElement() {
+  public synchronized ResultContainer getMediaElement(
+      Function<DicomSpecialElementFactory, DicomSpecialElement> buildSpecialElement) {
+    DicomSpecialElement specialElement = null;
+    if (image == null && isReadableDicom()) {
+      if (SERIES_VIDEO_MIMETYPE.equals(mimeType)) {
+        image = new DicomImageElement[] {new DicomVideoElement(this, null)};
+      } else if (SERIES_ENCAP_DOC_MIMETYPE.equals(mimeType)) {
+        image = new DicomImageElement[] {new DicomEncapDocElement(this, null)};
+      } else {
+        specialElement = buildImageElement(buildSpecialElement);
+      }
+    }
+    return new ResultContainer(image, specialElement);
+  }
+
+  private DicomSpecialElement buildImageElement(
+      Function<DicomSpecialElementFactory, DicomSpecialElement> buildSpecialElement) {
     DicomSpecialElementFactory factory = getDicomSpecialElementFactory();
     if (numberOfFrame > 0) {
-      image = new MediaElement[factory == null ? numberOfFrame : numberOfFrame + 1];
+      image = new DicomImageElement[numberOfFrame];
       for (int i = 0; i < image.length; i++) {
         image[i] = new DicomImageElement(this, i);
       }
       if (numberOfFrame > 1) {
         buildMultiframe();
       }
+      if (factory != null) {
+        return buildSpecialElement.apply(factory);
+      }
     } else {
       if (factory == null) {
         // Corrupted image => should have one frame
-        image = new MediaElement[0];
+        image = new DicomImageElement[0];
       } else {
-        image = new MediaElement[] {factory.buildDicomSpecialElement(this)};
+        return buildSpecialElement.apply(factory);
       }
     }
+    return null;
   }
 
   private void buildMultiframe() {
@@ -796,17 +813,16 @@ public class DicomMediaIO implements DcmMediaReader {
   }
 
   @Override
-  public MediaSeries<MediaElement> getMediaSeries() {
-    Series<MediaElement> series = null;
+  public DicomSeries getMediaSeries() {
+    DicomSeries series = null;
     if (isReadableDicom()) {
       String seriesUID = TagD.getTagValue(this, Tag.SeriesInstanceUID, String.class);
       series = buildSeries(seriesUID);
       writeMetaData(series);
-      // no need to apply splitting rules
-      // also no model
-      MediaElement[] elements = getMediaElement();
+      // No need to apply splitting rules. No model
+      DicomImageElement[] elements = getMediaElement();
       if (elements != null) {
-        for (MediaElement media : elements) {
+        for (DicomImageElement media : elements) {
           series.addMedia(media);
         }
       }
@@ -858,8 +874,8 @@ public class DicomMediaIO implements DcmMediaReader {
     };
   }
 
-  public Series<MediaElement> buildSeries(String seriesUID) {
-    Series<? extends MediaElement> series;
+  public DicomSeries buildSeries(String seriesUID) {
+    DicomSeries series;
     if (IMAGE_MIMETYPE.equals(mimeType)) {
       series = new DicomSeries(seriesUID);
     } else if (SERIES_VIDEO_MIMETYPE.equals(mimeType)) {
@@ -869,7 +885,7 @@ public class DicomMediaIO implements DcmMediaReader {
     } else {
       series = new DicomSeries(seriesUID);
     }
-    return (Series<MediaElement>) series;
+    return series;
   }
 
   @Override
@@ -953,5 +969,24 @@ public class DicomMediaIO implements DcmMediaReader {
       }
     }
     return false;
+  }
+
+  public static class ResultContainer {
+
+    private final DicomImageElement[] image;
+    private final DicomSpecialElement specialElement;
+
+    public ResultContainer(DicomImageElement[] image, DicomSpecialElement specialElement) {
+      this.image = image;
+      this.specialElement = specialElement;
+    }
+
+    public DicomImageElement[] getImage() {
+      return image;
+    }
+
+    public DicomSpecialElement getSpecialElement() {
+      return specialElement;
+    }
   }
 }

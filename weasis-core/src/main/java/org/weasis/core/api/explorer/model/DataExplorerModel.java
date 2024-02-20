@@ -18,7 +18,7 @@ import org.weasis.core.api.media.data.Series;
 
 public interface DataExplorerModel {
 
-  List<Codec> getCodecPlugins();
+  List<Codec<MediaElement>> getCodecPlugins();
 
   void addPropertyChangeListener(PropertyChangeListener propertychangelistener);
 

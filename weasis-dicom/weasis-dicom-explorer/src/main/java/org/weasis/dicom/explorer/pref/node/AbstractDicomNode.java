@@ -14,6 +14,7 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.util.ArrayList;
 import java.util.List;
+import javax.swing.ComboBoxModel;
 import javax.swing.JComboBox;
 import javax.swing.JComponent;
 import javax.swing.JDialog;
@@ -455,6 +456,18 @@ public abstract class AbstractDicomNode {
                   }
                 }
               });
+    }
+  }
+
+  public static void selectDicomNode(JComboBox<AbstractDicomNode> comboNode, String desc) {
+    if (comboNode != null && StringUtil.hasText(desc)) {
+      ComboBoxModel<AbstractDicomNode> model = comboNode.getModel();
+      for (int i = 0; i < model.getSize(); i++) {
+        if (desc.equals(model.getElementAt(i).getDescription())) {
+          model.setSelectedItem(model.getElementAt(i));
+          break;
+        }
+      }
     }
   }
 }

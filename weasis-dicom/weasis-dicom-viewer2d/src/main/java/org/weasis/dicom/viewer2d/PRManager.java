@@ -341,11 +341,11 @@ public class PRManager {
                   glm, Tag.GraphicLayerRecommendedDisplayGrayscaleValue, null);
           int[] colorRgb =
               CIELab.dicomLab2rgb(
-                  DicomUtils.getIntAyrrayFromDicomElement(
+                  DicomUtils.getIntArrayFromDicomElement(
                       glm, Tag.GraphicLayerRecommendedDisplayCIELabValue, null));
           if (colorRgb.length == 0) {
             colorRgb =
-                DicomUtils.getIntAyrrayFromDicomElement(
+                DicomUtils.getIntArrayFromDicomElement(
                     glm, Tag.GraphicLayerRecommendedDisplayRGBValue, null);
             if (colorRgb == null && grayVal == null) {
               Color c =

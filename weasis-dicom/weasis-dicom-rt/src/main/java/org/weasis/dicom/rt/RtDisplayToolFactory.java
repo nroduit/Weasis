@@ -10,16 +10,14 @@
 package org.weasis.dicom.rt;
 
 import java.util.Hashtable;
-import org.osgi.service.component.ComponentContext;
-import org.osgi.service.component.annotations.Activate;
-import org.osgi.service.component.annotations.Deactivate;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.Insertable;
-import org.weasis.core.api.gui.Insertable.Type;
 import org.weasis.core.api.gui.InsertableFactory;
 import org.weasis.core.api.media.data.MediaSeries;
+import org.weasis.core.ui.docking.ExtToolFactory;
+import org.weasis.core.ui.editor.image.ImageViewerEventManager;
+import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.viewer2d.EventManager;
+import org.weasis.dicom.viewer2d.dockable.DisplayTool;
 
 /**
  * @author Tomas Skripcak
@@ -28,57 +26,36 @@ import org.weasis.dicom.viewer2d.EventManager;
 @org.osgi.service.component.annotations.Component(
     service = InsertableFactory.class,
     property = {"org.weasis.dicom.viewer2d.View2dContainer=true"})
-public class RtDisplayToolFactory implements InsertableFactory {
-  private static final Logger LOGGER = LoggerFactory.getLogger(RtDisplayToolFactory.class);
+public class RtDisplayToolFactory extends ExtToolFactory<DicomImageElement> {
 
-  private RtDisplayTool toolPane = null;
-
-  @Override
-  public Insertable createInstance(Hashtable<String, Object> properties) {
-    Object val = properties.get(MediaSeries.class.getName());
-    boolean compatible = false;
-    if (val instanceof MediaSeries<?> mediaSeries) {
-      compatible = RtDisplayTool.isCtLinkedRT(mediaSeries);
-    }
-    if (!compatible) {
-      return null;
-    }
-    if (toolPane == null) {
-      toolPane = new RtDisplayTool();
-      EventManager.getInstance().addSeriesViewerListener(toolPane);
-    }
-    return toolPane;
+  public RtDisplayToolFactory() {
+    super(DisplayTool.BUTTON_NAME);
   }
 
   @Override
-  public void dispose(Insertable tool) {
-    if (toolPane != null) {
-      EventManager.getInstance().removeSeriesViewerListener(toolPane);
-      toolPane = null;
+  protected ImageViewerEventManager<DicomImageElement> getImageViewerEventManager() {
+    return EventManager.getInstance();
+  }
+
+  @Override
+  protected boolean isCompatible(Hashtable<String, Object> properties) {
+    Object val = null;
+    if (properties != null) {
+      val = properties.get(MediaSeries.class.getName());
     }
+    if (val instanceof MediaSeries<?> mediaSeries) {
+      return RtDisplayTool.isCtLinkedRT(mediaSeries);
+    }
+    return false;
+  }
+
+  @Override
+  protected Insertable getInstance(Hashtable<String, Object> properties) {
+    return new RtDisplayTool();
   }
 
   @Override
   public boolean isComponentCreatedByThisFactory(Insertable component) {
     return component instanceof RtDisplayTool;
-  }
-
-  @Override
-  public Type getType() {
-    return Type.TOOL_EXT;
-  }
-
-  // ================================================================================
-  // OSGI service implementation
-  // ================================================================================
-
-  @Activate
-  protected void activate(ComponentContext context) {
-    LOGGER.info("Activate the RT panel");
-  }
-
-  @Deactivate
-  protected void deactivate(ComponentContext context) {
-    LOGGER.info("Deactivate the RT panel");
   }
 }

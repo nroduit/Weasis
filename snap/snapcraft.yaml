@@ -1,7 +1,7 @@
 name: weasis
 title: Weasis
-base: core20
-version: '4.2.1'
+base: core22
+version: '4.3.0'
 summary: A free/libre/open medical DICOM viewer
 description: |
   Weasis is a multipurpose standalone and web-based DICOM viewer with 
@@ -26,28 +26,27 @@ grade: stable
 confinement: strict
 architectures:
   - build-on: [amd64]
-    run-on: [amd64]
-
-assumes:
-  - snapd2.43
+  - build-on: [arm64]
 
 plugs:
-  gnome-3-38-2004:
-    default-provider: gnome-3-38-2004
-    interface: content
-    target: $SNAP/gnome-platform
+  desktop:
+    mount-host-font-cache: false
   gtk-3-themes:
-    default-provider: gtk-common-themes
     interface: content
     target: $SNAP/data-dir/themes
-  icon-themes:
     default-provider: gtk-common-themes
+  icon-themes:
     interface: content
     target: $SNAP/data-dir/icons
-  sound-themes:
     default-provider: gtk-common-themes
+  sound-themes:
     interface: content
     target: $SNAP/data-dir/sounds
+    default-provider: gtk-common-themes
+  gnome-42-2204:
+    interface: content
+    target: $SNAP/gnome-platform
+    default-provider: gnome-42-2204
 
 layout:
   /usr/bin/lpr:
@@ -57,8 +56,8 @@ parts:
   remote-openjdk:
     plugin: dump
     source:
-      - on amd64: https://github.com/adoptium/temurin21-binaries/releases/download/jdk-21.0.1%2B12/OpenJDK21U-jdk_x64_linux_hotspot_21.0.1_12.tar.gz
-      - on arm64: https://github.com/adoptium/temurin21-binaries/releases/download/jdk-21.0.1%2B12/OpenJDK21U-jdk_aarch64_linux_hotspot_21.0.1_12.tar.gz
+      - on amd64: https://github.com/adoptium/temurin21-binaries/releases/download/jdk-21.0.2%2B13/OpenJDK21U-jdk_x64_linux_hotspot_21.0.2_13.tar.gz
+      - on arm64: https://github.com/adoptium/temurin21-binaries/releases/download/jdk-21.0.2%2B13/OpenJDK21U-jdk_aarch64_linux_hotspot_21.0.2_13.tar.gz
     organize:
       '*': java-runtime/
     override-stage: 'true'
@@ -74,7 +73,7 @@ parts:
       - libstdc++6
       - libgcc1
     #source: weasis-distributions/target/native-dist/weasis-native.zip
-    source: https://github.com/nroduit/Weasis/releases/download/v4.2.1/weasis-native.zip
+    source: https://github.com/nroduit/Weasis/releases/download/v4.3.0/weasis-native.zip
     organize:
       '*': weasis-native/
     override-stage: 'true'
@@ -87,16 +86,17 @@ parts:
     source-type: local
     source-subdir: weasis-distributions
     override-build: |
-      cp -Rf /root/parts/remote-weasis-build/install/weasis-native ${SNAPCRAFT_PART_BUILD}/
-      weasis-native/build/script/package-weasis.sh --output ${SNAPCRAFT_PART_INSTALL} --no-installer --jdk /root/parts/remote-openjdk/install/java-runtime
+      WEASIS_REMOTE=$(echo ${SNAPCRAFT_PART_INSTALL} | sed 's|parts/weasis/|parts/remote-weasis-build/|g')
+      WEASIS_JDK=$(echo ${SNAPCRAFT_PART_INSTALL} | sed 's|parts/weasis/|parts/remote-openjdk/|g')
+      cp -Rf ${WEASIS_REMOTE}/weasis-native ${SNAPCRAFT_PART_BUILD}/
+      weasis-native/build/script/package-weasis.sh --output ${SNAPCRAFT_PART_INSTALL} --no-installer --jdk ${WEASIS_JDK}/java-runtime
       mv ${SNAPCRAFT_PART_INSTALL}/Weasis/* ${SNAPCRAFT_PART_INSTALL}/
       rm -rf ${SNAPCRAFT_PART_INSTALL}/Weasis
       snapcraftctl build
 
 apps:
   weasis:
-    extensions:
-      - gnome-3-38
+    extensions: [gnome]
     command: bin/Weasis
     environment:
       _JAVA_OPTIONS: -Duser.home=$SNAP_USER_DATA
@@ -117,8 +117,7 @@ apps:
       - cups-control
   
   dicomizer:
-    extensions:
-      - gnome-3-38
+    extensions: [gnome]
     command: bin/Dicomizer
     environment:
       _JAVA_OPTIONS: -Duser.home=$SNAP_USER_DATA

@@ -201,7 +201,7 @@ public class SRReader {
         if (imgRef != null) {
           html.append("<a href=\"http://"); // NON-NLS
           html.append(level);
-          html.append("\" style=\"color:#FF9900\">"); // NON-NLS
+          html.append("\">");
           html.append(Messages.getString("SRReader.show_img")); // NON-NLS
           html.append("</a>"); // NON-NLS
         }
@@ -265,7 +265,7 @@ public class SRReader {
 
               html.append("<a href=\"http://"); // NON-NLS
               html.append(id);
-              html.append("\" style=\"color:#FF9900\">"); // NON-NLS
+              html.append("\">");
               html.append(graphicsItems.getString(Tag.GraphicType));
               html.append("</a>"); // NON-NLS
             }

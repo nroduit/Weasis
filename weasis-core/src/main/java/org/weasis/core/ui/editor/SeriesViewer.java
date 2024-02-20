@@ -16,8 +16,6 @@ import javax.swing.JMenu;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
-import org.weasis.core.ui.docking.DockableTool;
-import org.weasis.core.ui.util.Toolbar;
 import org.weasis.core.ui.util.WtoolBar;
 
 public interface SeriesViewer<E extends MediaElement> {
@@ -34,13 +32,11 @@ public interface SeriesViewer<E extends MediaElement> {
 
   JMenu fillSelectedPluginMenu(JMenu menuRoot);
 
-  List<Toolbar> getToolBars();
+  SeriesViewerUI getSeriesViewerUI();
 
   default WtoolBar getStatusBar() {
     return null;
   }
-
-  List<DockableTool> getToolPanel();
 
   void setSelected(boolean selected);
 

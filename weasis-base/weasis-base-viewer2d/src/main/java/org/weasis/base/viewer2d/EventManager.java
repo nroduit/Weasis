@@ -45,7 +45,6 @@ import org.weasis.core.api.image.ImageOpNode;
 import org.weasis.core.api.image.OpManager;
 import org.weasis.core.api.image.PseudoColorOp;
 import org.weasis.core.api.image.WindowOp;
-import org.weasis.core.api.image.op.ByteLut;
 import org.weasis.core.api.image.op.ByteLutCollection;
 import org.weasis.core.api.image.util.KernelData;
 import org.weasis.core.api.image.util.Unit;
@@ -68,6 +67,8 @@ import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.editor.image.ZoomToolBar;
 import org.weasis.core.ui.model.graphic.Graphic;
 import org.weasis.core.util.LangUtil;
+import org.weasis.opencv.op.lut.ByteLut;
+import org.weasis.opencv.op.lut.ColorLut;
 import org.weasis.opencv.op.lut.DefaultWlPresentation;
 
 /**
@@ -166,11 +167,11 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
 
   private ComboItemListener<ByteLut> newLutAction() {
     List<ByteLut> luts = new ArrayList<>();
-    luts.add(ByteLutCollection.Lut.GRAY.getByteLut());
+    luts.add(ColorLut.GRAY.getByteLut());
     ByteLutCollection.readLutFilesFromResourcesDir(
         luts, ResourceUtil.getResource("luts")); // NON-NLS
     // Set default first as the list has been sorted
-    luts.add(0, ByteLutCollection.Lut.IMAGE.getByteLut());
+    luts.add(0, ColorLut.IMAGE.getByteLut());
 
     return new ComboItemListener<>(ActionW.LUT, luts.toArray(new ByteLut[0])) {
       @Override
@@ -478,9 +479,10 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
       setSliderPreference(prefNode, ActionW.ROTATION);
       setSliderPreference(prefNode, ActionW.ZOOM);
 
-      Preferences containerNode = prefs.node(View2dContainer.class.getSimpleName().toLowerCase());
-      InsertableUtil.savePreferences(View2dContainer.TOOLBARS, containerNode, Type.TOOLBAR);
-      InsertableUtil.savePreferences(View2dContainer.TOOLS, containerNode, Type.TOOL);
+      Preferences containerNode =
+          prefs.node(View2dContainer.UI.clazz.getSimpleName().toLowerCase());
+      InsertableUtil.savePreferences(View2dContainer.UI.toolBars, containerNode, Type.TOOLBAR);
+      InsertableUtil.savePreferences(View2dContainer.UI.tools, containerNode, Type.TOOL);
     }
   }
 

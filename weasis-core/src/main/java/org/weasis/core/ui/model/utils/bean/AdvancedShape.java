@@ -10,6 +10,7 @@
 package org.weasis.core.ui.model.utils.bean;
 
 import java.awt.BasicStroke;
+import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.Paint;
 import java.awt.Rectangle;
@@ -139,6 +140,11 @@ public class AdvancedShape implements Shape {
 
           Boolean itemFilled = item.getFilled();
           if (itemFilled == null ? filled : itemFilled) {
+            float fillOpacity = graphic.getFillOpacity();
+            if (fillOpacity < 1.0f && g2d.getPaint() instanceof Color color) {
+              int alpha = (int) (fillOpacity * color.getAlpha());
+              g2d.setPaint(new Color(color.getRed(), color.getGreen(), color.getBlue(), alpha));
+            }
             g2d.fill(drawingShape);
           }
         }

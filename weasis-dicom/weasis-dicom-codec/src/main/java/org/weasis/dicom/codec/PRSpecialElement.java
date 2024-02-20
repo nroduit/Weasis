@@ -17,6 +17,8 @@ import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Tag;
 import org.dcm4che3.img.data.PrDicomObject;
 import org.weasis.core.api.media.data.TagW;
+import org.weasis.core.api.util.ResourceUtil.OtherIcon;
+import org.weasis.core.api.util.ResourceUtil.ResourceIconPath;
 
 public class PRSpecialElement extends HiddenSpecialElement {
 
@@ -72,5 +74,10 @@ public class PRSpecialElement extends HiddenSpecialElement {
       prList.sort(ORDER_BY_DATE);
     }
     return prList == null ? Collections.emptyList() : prList;
+  }
+
+  @Override
+  public ResourceIconPath getIconPath() {
+    return OtherIcon.PRESENTATION;
   }
 }

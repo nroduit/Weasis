@@ -55,7 +55,6 @@ import org.weasis.core.api.gui.util.WinUtil;
 import org.weasis.core.api.media.MimeInspector;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.MediaSeriesGroupNode;
-import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.TagUtil;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.media.data.Thumbnail;
@@ -606,7 +605,7 @@ public class DownloadManager {
     return study;
   }
 
-  private static Series readSeries(
+  private static DicomSeries readSeries(
       XMLStreamReader xmler,
       ReaderParams params,
       MediaSeriesGroup patient,
@@ -617,7 +616,7 @@ public class DownloadManager {
     DicomModel model = params.getModel();
     TagW seriesTag = TagD.get(Tag.SeriesInstanceUID);
     String seriesUID = (String) seriesTag.getValue(xmler);
-    Series dicomSeries = (Series) model.getHierarchyNode(study, seriesUID);
+    DicomSeries dicomSeries = (DicomSeries) model.getHierarchyNode(study, seriesUID);
 
     if (dicomSeries == null) {
       dicomSeries = new DicomSeries(seriesUID);

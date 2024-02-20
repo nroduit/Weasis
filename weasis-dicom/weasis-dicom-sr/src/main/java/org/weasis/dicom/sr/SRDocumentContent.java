@@ -24,7 +24,7 @@ public class SRDocumentContent extends SRDocumentContentModule {
   }
 
   public int[] getReferencedContentItemIdentifier() {
-    return DicomUtils.getIntAyrrayFromDicomElement(
+    return DicomUtils.getIntArrayFromDicomElement(
         dcmItems, Tag.ReferencedContentItemIdentifier, null);
   }
 }

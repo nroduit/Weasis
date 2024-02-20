@@ -97,8 +97,8 @@ public class ResourceUtil {
     IMPORT_IMAGE("svg/action/importImage.svg"), // NON-NLS
     INVERSE_LUT("svg/action/inverseLut.svg"), // NON-NLS
     LAYOUT("svg/action/layout.svg"), // NON-NLS
-    LOAD_VOLUME("svg/action/loadVolume.svg"),
-    LOOP("svg/action/loop.svg"), // NON-NLS// NON-NLS
+    LOAD_VOLUME("svg/action/loadVolume.svg"), // NON-NLS
+    LOOP("svg/action/loop.svg"), // NON-NLS
     LUT("svg/action/lut.svg"), // NON-NLS
     MEASURE("svg/action/measure.svg"), // NON-NLS
     MEASURE_TOP_LEFT("svg/action/measureTopLeft.svg"), // NON-NLS
@@ -170,6 +170,9 @@ public class ResourceUtil {
     KEY_IMAGE("svg/other/keyImage.svg"), // NON-NLS
 
     PATIENT("svg/other/patient.svg"), // NON-NLS
+    PRESENTATION("svg/other/presentation.svg"), // NON-NLS
+    KEY("svg/other/key.svg"), // NON-NLS
+    SEGMENTATION("svg/other/segmentation.svg"), // NON-NLS
     RADIOACTIVE("svg/other/radioactive.svg"), // NON-NLS
     RASTER_IMAGE("svg/other/rasterImage.svg"), // NON-NLS
     TICK_OFF("svg/other/tickOff.svg"), // NON-NLS

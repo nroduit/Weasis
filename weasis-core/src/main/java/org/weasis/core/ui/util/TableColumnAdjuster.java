@@ -44,15 +44,19 @@ public class TableColumnAdjuster {
       }
 
       for (int row = from; row < to; row++) {
-        int preferredWidth =
-            (int)
-                table
-                    .getCellRenderer(row, col)
-                    .getTableCellRendererComponent(
-                        table, table.getValueAt(row, col), false, false, row, col)
-                    .getPreferredSize()
-                    .getWidth();
-        width = Math.max(width, preferredWidth);
+        try {
+          int preferredWidth =
+              (int)
+                  table
+                      .getCellRenderer(row, col)
+                      .getTableCellRendererComponent(
+                          table, table.getValueAt(row, col), false, false, row, col)
+                      .getPreferredSize()
+                      .getWidth();
+          width = Math.max(width, preferredWidth);
+        } catch (Exception e) {
+          // Do noting
+        }
       }
     }
     return width + table.getIntercellSpacing().width + GuiUtils.getScaleLength(7);

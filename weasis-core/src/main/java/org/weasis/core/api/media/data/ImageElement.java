@@ -344,16 +344,18 @@ public class ImageElement extends MediaElement {
         manager.setParamValue(WindowOp.OP_NAME, WindowOp.P_IMAGE_ELEMENT, this);
         manager.setParamValue(WindowOp.OP_NAME, ActionW.IMAGE_PIX_PADDING.cmd(), padding);
       }
-
-      ZoomOp node = new ZoomOp();
-      node.setParam(ZoomOp.P_RATIO_X, getRescaleX() * ratio);
-      node.setParam(ZoomOp.P_RATIO_Y, getRescaleY() * ratio);
-      node.setParam(ZoomOp.P_INTERPOLATION, ZoomOp.Interpolation.BICUBIC);
-      manager.addImageOperationAction(node);
-
+      manager.addImageOperationAction(buildZoomOp(ratio));
       manager.setFirstNode(image);
     }
     return manager;
+  }
+
+  protected ZoomOp buildZoomOp(double ratio) {
+    ZoomOp node = new ZoomOp();
+    node.setParam(ZoomOp.P_RATIO_X, getRescaleX() * ratio);
+    node.setParam(ZoomOp.P_RATIO_Y, getRescaleY() * ratio);
+    node.setParam(ZoomOp.P_INTERPOLATION, ZoomOp.Interpolation.BICUBIC);
+    return node;
   }
 
   public static PlanarImage getDefaultRenderedImage(

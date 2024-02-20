@@ -64,7 +64,7 @@ import org.weasis.opencv.data.PlanarImage;
 import org.weasis.opencv.op.ImageConversion;
 import org.weasis.opencv.op.ImageProcessor;
 
-public class ImageCVIO implements MediaReader {
+public class ImageCVIO implements MediaReader<ImageElement> {
   private static final Logger LOGGER = LoggerFactory.getLogger(ImageCVIO.class);
 
   public static final int TILE_SIZE = 512;
@@ -209,19 +209,19 @@ public class ImageCVIO implements MediaReader {
   }
 
   @Override
-  public MediaElement[] getMediaElement() {
-    return new MediaElement[] {getSingleImage()};
+  public ImageElement[] getMediaElement() {
+    return new ImageElement[] {getSingleImage()};
   }
 
   @Override
-  public MediaSeries<MediaElement> getMediaSeries() {
+  public MediaSeries<ImageElement> getMediaSeries() {
     String sUID;
     MediaElement element = getSingleImage();
     sUID = (String) element.getTagValue(TagW.get("SeriesInstanceUID"));
     if (sUID == null) {
       sUID = uri.toString();
     }
-    MediaSeries<MediaElement> series =
+    MediaSeries<ImageElement> series =
         new Series<>(TagW.SubseriesInstanceUID, sUID, AbstractFileModel.series.tagView()) {
 
           @Override
@@ -238,8 +238,8 @@ public class ImageCVIO implements MediaReader {
           }
 
           @Override
-          public void addMedia(MediaElement media) {
-            if (media instanceof ImageElement) {
+          public void addMedia(ImageElement media) {
+            if (media != null) {
               this.add(media);
               DataExplorerModel model = (DataExplorerModel) getTagValue(TagW.ExplorerModel);
               if (model != null) {

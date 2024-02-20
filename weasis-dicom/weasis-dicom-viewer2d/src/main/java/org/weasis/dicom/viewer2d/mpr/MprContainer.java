@@ -16,7 +16,6 @@ import java.awt.geom.Point2D;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -49,7 +48,7 @@ import org.weasis.core.api.service.BundlePreferences;
 import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.api.util.ResourceUtil.ActionIcon;
 import org.weasis.core.api.util.ResourceUtil.OtherIcon;
-import org.weasis.core.ui.docking.DockableTool;
+import org.weasis.core.ui.editor.SeriesViewerUI;
 import org.weasis.core.ui.editor.image.DefaultView2d;
 import org.weasis.core.ui.editor.image.MeasureToolBar;
 import org.weasis.core.ui.editor.image.MouseActions;
@@ -213,13 +212,8 @@ public class MprContainer extends DicomViewerPlugin implements PropertyChangeLis
   public static final List<GridBagLayoutModel> LAYOUT_LIST =
       List.of(view1, view2, view3, view4, view5);
 
-  // Static tools shared by all the View2dContainer instances, tools are registered when a container
-  // is selected.
-  // Do not initialize tools in a static block (order initialization issue with eventManager), use
-  // instead a lazy initialization with a method.
-  public static final List<Toolbar> TOOLBARS = Collections.synchronizedList(new ArrayList<>());
-  protected static final List<DockableTool> TOOLS = View2dContainer.TOOLS;
-  private static volatile boolean initComponents = false;
+  public static final SeriesViewerUI UI =
+      new SeriesViewerUI(MprContainer.class, null, View2dContainer.UI.tools, null);
 
   private Thread process;
   private String lastCommand;
@@ -237,34 +231,35 @@ public class MprContainer extends DicomViewerPlugin implements PropertyChangeLis
         ResourceUtil.getIcon(OtherIcon.VIEW_3D),
         null);
     setSynchView(SynchView.NONE);
-    if (!initComponents) {
-      initComponents = true;
+    if (!UI.init.getAndSet(true)) {
+      List<Toolbar> toolBars = UI.toolBars;
+
       // Add standard toolbars
       // WProperties props = (WProperties) BundleTools.SYSTEM_PREFERENCES.clone();
       // props.putBooleanProperty("weasis.toolbar.synch.button", false);
 
       EventManager evtMg = EventManager.getInstance();
       Optional<Toolbar> importBar =
-          View2dContainer.TOOLBARS.stream().filter(ImportToolBar.class::isInstance).findFirst();
-      importBar.ifPresent(TOOLBARS::add);
+          View2dContainer.UI.toolBars.stream().filter(ImportToolBar.class::isInstance).findFirst();
+      importBar.ifPresent(toolBars::add);
       Optional<Toolbar> exportBar =
-          View2dContainer.TOOLBARS.stream().filter(ExportToolBar.class::isInstance).findFirst();
-      exportBar.ifPresent(TOOLBARS::add);
+          View2dContainer.UI.toolBars.stream().filter(ExportToolBar.class::isInstance).findFirst();
+      exportBar.ifPresent(toolBars::add);
       Optional<Toolbar> viewBar =
-          View2dContainer.TOOLBARS.stream().filter(ViewerToolBar.class::isInstance).findFirst();
-      viewBar.ifPresent(TOOLBARS::add);
-      TOOLBARS.add(new MeasureToolBar(evtMg, 11));
-      TOOLBARS.add(new ZoomToolBar(evtMg, 20, true));
-      TOOLBARS.add(new RotationToolBar(evtMg, 30));
-      TOOLBARS.add(new DcmHeaderToolBar(evtMg, 35));
-      TOOLBARS.add(new LutToolBar(evtMg, 40));
+          View2dContainer.UI.toolBars.stream().filter(ViewerToolBar.class::isInstance).findFirst();
+      viewBar.ifPresent(toolBars::add);
+      toolBars.add(new MeasureToolBar(evtMg, 11));
+      toolBars.add(new ZoomToolBar(evtMg, 20, true));
+      toolBars.add(new RotationToolBar(evtMg, 30));
+      toolBars.add(new DcmHeaderToolBar(evtMg, 35));
+      toolBars.add(new LutToolBar(evtMg, 40));
 
       final BundleContext context = FrameworkUtil.getBundle(this.getClass()).getBundleContext();
       Preferences prefs = BundlePreferences.getDefaultPreferences(context);
       if (prefs != null) {
         String className = this.getClass().getSimpleName().toLowerCase();
         InsertableUtil.applyPreferences(
-            TOOLBARS, prefs, context.getBundle().getSymbolicName(), className, Type.TOOLBAR);
+            toolBars, prefs, context.getBundle().getSymbolicName(), className, Type.TOOLBAR);
       }
     }
   }
@@ -310,8 +305,8 @@ public class MprContainer extends DicomViewerPlugin implements PropertyChangeLis
   }
 
   @Override
-  public List<DockableTool> getToolPanel() {
-    return TOOLS;
+  public SeriesViewerUI getSeriesViewerUI() {
+    return View2dContainer.UI;
   }
 
   @Override
@@ -468,11 +463,6 @@ public class MprContainer extends DicomViewerPlugin implements PropertyChangeLis
   @Override
   public GridBagLayoutModel getDefaultLayoutModel() {
     return view1;
-  }
-
-  @Override
-  public synchronized List<Toolbar> getToolBars() {
-    return TOOLBARS;
   }
 
   @Override

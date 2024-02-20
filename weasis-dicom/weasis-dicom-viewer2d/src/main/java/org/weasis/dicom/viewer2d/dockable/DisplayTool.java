@@ -10,10 +10,10 @@
 package org.weasis.dicom.viewer2d.dockable;
 
 import bibliothek.gui.dock.common.CLocation;
-import it.cnr.imaa.essi.lablib.gui.checkboxtree.CheckboxTree;
-import it.cnr.imaa.essi.lablib.gui.checkboxtree.TreeCheckingEvent;
-import it.cnr.imaa.essi.lablib.gui.checkboxtree.TreeCheckingModel;
-import it.cnr.imaa.essi.lablib.gui.checkboxtree.TreeCheckingModel.CheckingMode;
+import eu.essilab.lablib.checkboxtree.CheckboxTree;
+import eu.essilab.lablib.checkboxtree.TreeCheckingEvent;
+import eu.essilab.lablib.checkboxtree.TreeCheckingModel;
+import eu.essilab.lablib.checkboxtree.TreeCheckingModel.CheckingMode;
 import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.FlowLayout;
@@ -48,7 +48,7 @@ import org.weasis.core.ui.model.layer.AbstractInfoLayer;
 import org.weasis.core.ui.model.layer.LayerAnnotation;
 import org.weasis.core.ui.model.layer.LayerItem;
 import org.weasis.core.ui.model.layer.LayerType;
-import org.weasis.core.ui.util.CheckBoxTreeBuilder;
+import org.weasis.core.ui.util.TreeBuilder;
 import org.weasis.core.util.LangUtil;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.display.OverlayOp;
@@ -123,7 +123,7 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
     tree.setShowsRootHandles(true);
     tree.setRootVisible(false);
     tree.setExpandsSelectedPaths(true);
-    tree.setCellRenderer(CheckBoxTreeBuilder.buildNoIconCheckboxTreeCellRenderer());
+    tree.setCellRenderer(TreeBuilder.buildNoIconCheckboxTreeCellRenderer());
     tree.addTreeCheckingListener(this::treeValueChanged);
 
     JPanel panel = new JPanel();
@@ -150,7 +150,7 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
         });
     panel.add(applyAllViews);
 
-    CheckBoxTreeBuilder.expandTree(tree, rootNode);
+    TreeBuilder.expandTree(tree, rootNode);
     add(new JScrollPane(tree), BorderLayout.CENTER);
   }
 
@@ -261,15 +261,7 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
     TreeNode treeNode = imageNode.getChildAt(index);
     if (treeNode != null) {
       Boolean val = (Boolean) disOp.getParamValue(op, param);
-      initPathSelection(getTreePath(treeNode), val != null && val);
-    }
-  }
-
-  private void initPathSelection(TreePath path, boolean selected) {
-    if (selected) {
-      tree.addCheckingPath(path);
-    } else {
-      tree.removeCheckingPath(path);
+      TreeBuilder.setPathSelection(tree, getTreePath(treeNode), val != null && val);
     }
   }
 
@@ -278,7 +270,7 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
       initPathSelection = true;
       // Image node
       OpManager disOp = view.getDisplayOpManager();
-      initPathSelection(getTreePath(imageNode), view.getImageLayer().getVisible());
+      TreeBuilder.setPathSelection(tree, getTreePath(imageNode), view.getImageLayer().getVisible());
       iniDicomView(disOp, OverlayOp.OP_NAME, OverlayOp.P_SHOW, 0);
       iniDicomView(disOp, ShutterOp.OP_NAME, ShutterOp.P_SHOW, 1);
       iniDicomView(disOp, WindowOp.OP_NAME, ActionW.IMAGE_PIX_PADDING.cmd(), 2);
@@ -286,7 +278,7 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
       // Annotations node
       LayerAnnotation layer = view.getInfoLayer();
       if (layer != null) {
-        initPathSelection(getTreePath(dicomInfo), layer.getVisible());
+        TreeBuilder.setPathSelection(tree, getTreePath(dicomInfo), layer.getVisible());
 
         Enumeration<?> en = dicomInfo.children();
         while (en.hasMoreElements()) {
@@ -298,7 +290,7 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
                     ? AbstractInfoLayer.getDefaultDisplayPreferences()
                         .getOrDefault(item, Boolean.FALSE)
                     : layer.getDisplayPreferences(item);
-            initPathSelection(getTreePath(checkNode), sel);
+            TreeBuilder.setPathSelection(tree, getTreePath(checkNode), sel);
           }
         }
       }
@@ -309,10 +301,12 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
   }
 
   private void initLayers(ViewCanvas<?> view) {
-    initPathSelection(
+    TreeBuilder.setPathSelection(
+        tree,
         getTreePath(drawings),
         LangUtil.getNULLtoTrue((Boolean) view.getActionValue(ActionW.DRAWINGS.cmd())));
-    initPathSelection(
+    TreeBuilder.setPathSelection(
+        tree,
         getTreePath(crosslines),
         LangUtil.getNULLtoTrue((Boolean) view.getActionValue(LayerType.CROSSLINES.name())));
   }

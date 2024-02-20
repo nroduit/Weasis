@@ -16,7 +16,6 @@ import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
@@ -34,10 +33,7 @@ import org.slf4j.LoggerFactory;
 import org.weasis.base.viewer2d.dockable.DisplayTool;
 import org.weasis.base.viewer2d.dockable.ImageTool;
 import org.weasis.core.api.explorer.ObservableEvent;
-import org.weasis.core.api.explorer.ObservableEvent.BasicAction;
-import org.weasis.core.api.gui.Insertable;
 import org.weasis.core.api.gui.Insertable.Type;
-import org.weasis.core.api.gui.InsertableFactory;
 import org.weasis.core.api.gui.InsertableUtil;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.ComboItemListener;
@@ -60,7 +56,7 @@ import org.weasis.core.api.util.ResourceUtil.OtherIcon;
 import org.weasis.core.ui.docking.DockableTool;
 import org.weasis.core.ui.docking.PluginTool;
 import org.weasis.core.ui.editor.SeriesViewerListener;
-import org.weasis.core.ui.editor.ViewerPluginBuilder;
+import org.weasis.core.ui.editor.SeriesViewerUI;
 import org.weasis.core.ui.editor.image.DefaultView2d;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.editor.image.MeasureToolBar;
@@ -106,13 +102,7 @@ public class View2dContainer extends ImageViewerPlugin<ImageElement>
           VIEWS_2x3,
           VIEWS_2x4);
 
-  // Static tools shared by all the View2dContainer instances, tools are registered when a container
-  // is selected.
-  // Do not initialize tools in a static block (order initialization issue with eventManager), use
-  // instead a lazy initialization with a method.
-  protected static final List<Toolbar> TOOLBARS = Collections.synchronizedList(new ArrayList<>());
-  protected static final List<DockableTool> TOOLS = Collections.synchronizedList(new ArrayList<>());
-  private static volatile boolean initComponents = false;
+  public static final SeriesViewerUI UI = new SeriesViewerUI(View2dContainer.class);
 
   public View2dContainer() {
     this(VIEWS_1x1, null);
@@ -145,8 +135,8 @@ public class View2dContainer extends ImageViewerPlugin<ImageElement>
           }
         });
 
-    if (!initComponents) {
-      initComponents = true;
+    if (!UI.init.getAndSet(true)) {
+      List<Toolbar> toolBars = UI.toolBars;
 
       // Add standard toolbars
       final BundleContext context = FrameworkUtil.getBundle(this.getClass()).getBundleContext();
@@ -168,7 +158,7 @@ public class View2dContainer extends ImageViewerPlugin<ImageElement>
             GuiUtils.getUICore().getExplorerPluginToolbars().stream()
                 .filter(ImportToolBar.class::isInstance)
                 .findFirst();
-        b.ifPresent(TOOLBARS::add);
+        b.ifPresent(toolBars::add);
       }
       if (InsertableUtil.getBooleanProperty(
           preferences,
@@ -177,7 +167,7 @@ public class View2dContainer extends ImageViewerPlugin<ImageElement>
           InsertableUtil.getCName(ScreenshotToolBar.class),
           key,
           true)) {
-        TOOLBARS.add(new ScreenshotToolBar<>(evtMg, 9));
+        toolBars.add(new ScreenshotToolBar<>(evtMg, 9));
       }
       if (InsertableUtil.getBooleanProperty(
           preferences,
@@ -186,7 +176,7 @@ public class View2dContainer extends ImageViewerPlugin<ImageElement>
           InsertableUtil.getCName(ViewerToolBar.class),
           key,
           true)) {
-        TOOLBARS.add(
+        toolBars.add(
             new ViewerToolBar<>(
                 evtMg, evtMg.getMouseActions().getActiveButtons(), preferences, 10));
       }
@@ -197,7 +187,7 @@ public class View2dContainer extends ImageViewerPlugin<ImageElement>
           InsertableUtil.getCName(MeasureToolBar.class),
           key,
           true)) {
-        TOOLBARS.add(new MeasureToolBar(evtMg, 11));
+        toolBars.add(new MeasureToolBar(evtMg, 11));
       }
       if (InsertableUtil.getBooleanProperty(
           preferences,
@@ -206,7 +196,7 @@ public class View2dContainer extends ImageViewerPlugin<ImageElement>
           InsertableUtil.getCName(ZoomToolBar.class),
           key,
           true)) {
-        TOOLBARS.add(new ZoomToolBar(evtMg, 20, true));
+        toolBars.add(new ZoomToolBar(evtMg, 20, true));
       }
       if (InsertableUtil.getBooleanProperty(
           preferences,
@@ -215,10 +205,11 @@ public class View2dContainer extends ImageViewerPlugin<ImageElement>
           InsertableUtil.getCName(RotationToolBar.class),
           key,
           true)) {
-        TOOLBARS.add(new RotationToolBar(evtMg, 30));
+        toolBars.add(new RotationToolBar(evtMg, 30));
       }
 
-      PluginTool tool = null;
+      List<DockableTool> tools = UI.tools;
+      PluginTool tool;
 
       if (InsertableUtil.getBooleanProperty(
           preferences,
@@ -241,7 +232,7 @@ public class View2dContainer extends ImageViewerPlugin<ImageElement>
               }
             };
 
-        TOOLS.add(tool);
+        tools.add(tool);
       }
 
       if (InsertableUtil.getBooleanProperty(
@@ -252,7 +243,7 @@ public class View2dContainer extends ImageViewerPlugin<ImageElement>
           key,
           true)) {
         tool = new ImageTool(ImageTool.BUTTON_NAME);
-        TOOLS.add(tool);
+        tools.add(tool);
       }
 
       if (InsertableUtil.getBooleanProperty(
@@ -263,7 +254,7 @@ public class View2dContainer extends ImageViewerPlugin<ImageElement>
           key,
           true)) {
         tool = new DisplayTool(DisplayTool.BUTTON_NAME);
-        TOOLS.add(tool);
+        tools.add(tool);
         eventManager.addSeriesViewerListener((SeriesViewerListener) tool);
       }
 
@@ -275,89 +266,15 @@ public class View2dContainer extends ImageViewerPlugin<ImageElement>
           key,
           true)) {
         tool = new MeasureTool(eventManager);
-        TOOLS.add(tool);
+        tools.add(tool);
       }
 
-      InsertableUtil.sortInsertable(TOOLS);
+      InsertableUtil.sortInsertable(tools);
 
       Preferences prefs = BundlePreferences.getDefaultPreferences(context);
       if (prefs != null) {
-        InsertableUtil.applyPreferences(TOOLBARS, prefs, bundleName, componentName, Type.TOOLBAR);
-        InsertableUtil.applyPreferences(TOOLS, prefs, bundleName, componentName, Type.TOOL);
-      }
-    }
-  }
-
-  public static void registerToolBar(Insertable instance) {
-    if (instance instanceof Toolbar bar && !View2dContainer.TOOLBARS.contains(instance)) {
-      View2dContainer.TOOLBARS.add(bar);
-      updateViewerUI(ObservableEvent.BasicAction.UPDATE_TOOLBARS);
-      LOGGER.debug("Add Toolbar [{}] for {}", bar, View2dContainer.class.getName());
-    }
-  }
-
-  public static void registerTool(Insertable instance) {
-    if (instance instanceof DockableTool tool && !View2dContainer.TOOLS.contains(instance)) {
-      View2dContainer.TOOLS.add(tool);
-      ImageViewerPlugin<ImageElement> view =
-          EventManager.getInstance().getSelectedView2dContainer();
-      if (view instanceof View2dContainer) {
-        tool.showDockable();
-      }
-      LOGGER.debug("Add Tool [{}] for {}", tool, View2dContainer.class.getName());
-    }
-  }
-
-  public static void unregisterToolBar(InsertableFactory factory, final BundleContext context) {
-    boolean updateGUI = false;
-    synchronized (View2dContainer.TOOLBARS) {
-      for (int i = View2dContainer.TOOLBARS.size() - 1; i >= 0; i--) {
-        Insertable b = View2dContainer.TOOLBARS.get(i);
-        if (factory.isComponentCreatedByThisFactory(b)) {
-          Preferences prefs = BundlePreferences.getDefaultPreferences(context);
-          if (prefs != null) {
-            List<Insertable> list = Collections.singletonList(b);
-            InsertableUtil.savePreferences(
-                list,
-                prefs.node(View2dContainer.class.getSimpleName().toLowerCase()),
-                Type.TOOLBAR);
-          }
-
-          View2dContainer.TOOLBARS.remove(i);
-          factory.dispose(b);
-          updateGUI = true;
-        }
-      }
-    }
-    if (updateGUI) {
-      updateViewerUI(ObservableEvent.BasicAction.UPDATE_TOOLBARS);
-    }
-  }
-
-  protected static void updateViewerUI(BasicAction action) {
-    ImageViewerPlugin<ImageElement> view = EventManager.getInstance().getSelectedView2dContainer();
-    if (view instanceof View2dContainer) {
-      ViewerPluginBuilder.DefaultDataModel.firePropertyChange(
-          new ObservableEvent(action, view, null, view));
-    }
-  }
-
-  public static void unregisterTool(InsertableFactory factory, final BundleContext context) {
-    synchronized (View2dContainer.TOOLS) {
-      for (int i = View2dContainer.TOOLS.size() - 1; i >= 0; i--) {
-        DockableTool t = View2dContainer.TOOLS.get(i);
-        if (factory.isComponentCreatedByThisFactory(t)) {
-          Preferences prefs = BundlePreferences.getDefaultPreferences(context);
-          if (prefs != null) {
-            Preferences containerNode =
-                prefs.node(View2dContainer.class.getSimpleName().toLowerCase());
-            InsertableUtil.savePreferences(Collections.singletonList(t), containerNode, Type.TOOL);
-          }
-
-          View2dContainer.TOOLS.remove(i);
-          factory.dispose(t);
-          t.closeDockable();
-        }
+        InsertableUtil.applyPreferences(toolBars, prefs, bundleName, componentName, Type.TOOLBAR);
+        InsertableUtil.applyPreferences(tools, prefs, bundleName, componentName, Type.TOOL);
       }
     }
   }
@@ -380,11 +297,6 @@ public class View2dContainer extends ImageViewerPlugin<ImageElement>
       }
     }
     return menuRoot;
-  }
-
-  @Override
-  public List<DockableTool> getToolPanel() {
-    return TOOLS;
   }
 
   @Override
@@ -502,6 +414,11 @@ public class View2dContainer extends ImageViewerPlugin<ImageElement>
   }
 
   @Override
+  public SeriesViewerUI getSeriesViewerUI() {
+    return UI;
+  }
+
+  @Override
   public Class<?> getSeriesViewerClass() {
     return view2dClass;
   }
@@ -509,11 +426,6 @@ public class View2dContainer extends ImageViewerPlugin<ImageElement>
   @Override
   public GridBagLayoutModel getDefaultLayoutModel() {
     return VIEWS_1x1;
-  }
-
-  @Override
-  public synchronized List<Toolbar> getToolBars() {
-    return TOOLBARS;
   }
 
   @Override

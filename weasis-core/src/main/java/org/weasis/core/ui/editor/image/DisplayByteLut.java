@@ -9,17 +9,18 @@
  */
 package org.weasis.core.ui.editor.image;
 
-import org.weasis.core.api.image.op.ByteLut;
+import org.weasis.opencv.op.lut.ByteLut;
 
-public class DisplayByteLut extends ByteLut {
+public class DisplayByteLut {
   private boolean invert;
+  private final ByteLut byteLut;
 
   public DisplayByteLut(ByteLut lut) {
-    super(lut.getName(), lut.getLutTable());
+    this.byteLut = lut;
   }
 
-  public DisplayByteLut(String name, byte[][] lutTable) {
-    super(name, lutTable);
+  public ByteLut getByteLut() {
+    return byteLut;
   }
 
   public boolean isInvert() {

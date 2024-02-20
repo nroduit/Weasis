@@ -36,7 +36,7 @@ import org.weasis.core.util.StringUtil;
 
 public abstract class PropertiesDialog extends JDialog {
 
-  public static final String FILL_OPACITY = "Fill opacity";
+  public static final String FILL_OPACITY = Messages.getString("fill.opacity");
   protected Color color;
 
   private final JPanel panel1 = new JPanel();

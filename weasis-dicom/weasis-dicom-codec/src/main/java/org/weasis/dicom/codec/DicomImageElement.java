@@ -41,7 +41,6 @@ import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.image.OpManager;
 import org.weasis.core.api.image.SimpleOpManager;
 import org.weasis.core.api.image.WindowOp;
-import org.weasis.core.api.image.ZoomOp;
 import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.TagW;
@@ -584,13 +583,7 @@ public class DicomImageElement extends ImageElement implements DicomElement {
         manager.setParamValue(OverlayOp.OP_NAME, OverlayOp.P_IMAGE_ELEMENT, this);
         manager.setParamValue(OverlayOp.OP_NAME, OverlayOp.P_SHOW, true);
       }
-
-      ZoomOp node = new ZoomOp();
-      node.setParam(ZoomOp.P_RATIO_X, getRescaleX() * ratio);
-      node.setParam(ZoomOp.P_RATIO_Y, getRescaleY() * ratio);
-      node.setParam(ZoomOp.P_INTERPOLATION, ZoomOp.Interpolation.BICUBIC);
-      manager.addImageOperationAction(node);
-
+      manager.addImageOperationAction(buildZoomOp(ratio));
       manager.setFirstNode(image);
     }
     return manager;

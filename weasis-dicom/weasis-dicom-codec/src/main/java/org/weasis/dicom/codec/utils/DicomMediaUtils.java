@@ -45,6 +45,7 @@ import org.dcm4che3.util.UIDUtils;
 import org.joml.Vector3d;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.TagUtil;
 import org.weasis.core.api.media.data.TagW;
@@ -1078,5 +1079,26 @@ public class DicomMediaUtils {
         }
       }
     }
+  }
+
+  public static double getThickness(ImageElement firstDcm, ImageElement lastDcm) {
+    double[] p1 = (double[]) firstDcm.getTagValue(TagW.SlicePosition);
+    double[] p2 = (double[]) lastDcm.getTagValue(TagW.SlicePosition);
+    if (p1 != null && p2 != null) {
+      double diff = Math.abs((p2[0] + p2[1] + p2[2]) - (p1[0] + p1[1] + p1[2]));
+
+      Double t1 = TagD.getTagValue(firstDcm, Tag.SliceThickness, Double.class);
+      if (t1 != null) {
+        diff += t1 / 2;
+      }
+
+      t1 = TagD.getTagValue(lastDcm, Tag.SliceThickness, Double.class);
+      if (t1 != null) {
+        diff += t1 / 2;
+      }
+
+      return diff;
+    }
+    return 0.0;
   }
 }

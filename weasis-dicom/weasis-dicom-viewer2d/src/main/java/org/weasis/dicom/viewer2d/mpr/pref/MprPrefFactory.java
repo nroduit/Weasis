@@ -11,7 +11,6 @@ package org.weasis.dicom.viewer2d.mpr.pref;
 
 import java.util.Hashtable;
 import org.weasis.core.api.gui.Insertable;
-import org.weasis.core.api.gui.Insertable.Type;
 import org.weasis.core.api.gui.PreferencesPageFactory;
 import org.weasis.core.api.gui.util.AbstractItemDialogPage;
 
@@ -24,15 +23,7 @@ public class MprPrefFactory implements PreferencesPageFactory {
   }
 
   @Override
-  public void dispose(Insertable component) {}
-
-  @Override
   public boolean isComponentCreatedByThisFactory(Insertable component) {
     return component instanceof MprPrefView;
-  }
-
-  @Override
-  public Type getType() {
-    return Type.PREFERENCES;
   }
 }

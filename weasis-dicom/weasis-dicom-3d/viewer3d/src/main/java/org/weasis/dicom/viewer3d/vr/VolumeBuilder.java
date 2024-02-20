@@ -17,6 +17,7 @@ import java.awt.Dimension;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 import javax.swing.JProgressBar;
@@ -24,21 +25,26 @@ import jogamp.opengl.glu.error.Error;
 import org.dcm4che3.data.Tag;
 import org.dcm4che3.img.DicomImageUtils;
 import org.joml.Vector3d;
-import org.opencv.core.CvType;
-import org.opencv.core.Mat;
+import org.opencv.core.*;
+import org.opencv.imgproc.Imgproc;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.weasis.core.api.gui.util.ComboItemListener;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.ui.editor.image.ViewCanvas;
-import org.weasis.dicom.codec.DicomImageElement;
-import org.weasis.dicom.codec.TagD;
+import org.weasis.core.ui.model.graphic.imp.seg.SegContour;
+import org.weasis.core.ui.model.graphic.imp.seg.SegGraphic;
+import org.weasis.dicom.codec.*;
+import org.weasis.dicom.viewer3d.ActionVol;
 import org.weasis.dicom.viewer3d.EventManager;
+import org.weasis.dicom.viewer3d.dockable.SegmentationTool.Type;
 import org.weasis.dicom.viewer3d.geometry.GeometryUtils;
 import org.weasis.dicom.viewer3d.geometry.VolumeGeometry;
 import org.weasis.opencv.data.ImageCV;
 import org.weasis.opencv.data.PlanarImage;
+import org.weasis.opencv.op.ImageProcessor;
 
 public final class VolumeBuilder {
   private static final Logger LOGGER = LoggerFactory.getLogger(VolumeBuilder.class);
@@ -174,8 +180,14 @@ public final class VolumeBuilder {
     public void run() {
       DicomVolTexture volTexture = volumeBuilder.volTexture;
       final int size = volTexture.getDepth();
-
+      List<SpecialElementRegion> segList = null;
       ViewCanvas<DicomImageElement> view = EventManager.getInstance().getSelectedViewPane();
+      ComboItemListener<Type> segType =
+          EventManager.getInstance().getAction(ActionVol.SEG_TYPE).orElse(null);
+      if (segType != null && segType.getSelectedItem() == Type.SEG_ONLY) {
+        segList = volTexture.getSegmentations();
+      }
+
       final JProgressBar bar;
       if (view instanceof View3d view3d) {
         bar = new JProgressBar(0, size);
@@ -258,12 +270,40 @@ public final class VolumeBuilder {
         LOGGER.debug(
             "Time preparation of {}: {} ms", i, Duration.between(start, Instant.now()).toMillis());
 
-        start = Instant.now();
-        PlanarImage imageMLUT = volTexture.getModalityLutImage(imageElement);
-        LOGGER.debug(
-            "Time to get Modality LUT image  {}: {} ms",
-            i,
-            Duration.between(start, Instant.now()).toMillis());
+        PlanarImage imageMLUT;
+
+        if (segList != null && !segList.isEmpty()) {
+          Mat mask = volTexture.getEmptyImage();
+          for (SpecialElementRegion seg : segList) {
+            if (seg.isVisible() && seg.containsSopInstanceUIDReference(imageElement)) {
+              Collection<SegContour> contours = seg.getContours(imageElement);
+              if (!contours.isEmpty()) {
+                for (SegContour c : contours) {
+                  SegGraphic graphic = c.getSegGraphic();
+                  if (graphic != null) {
+                    List<MatOfPoint> pts =
+                        ImageProcessor.transformShapeToContour(graphic.getShape(), true);
+                    // TODO check the limit value
+                    int density = c.getAttributes().getId();
+                    Imgproc.fillPoly(mask, pts, new Scalar(density));
+                  }
+                }
+              }
+            }
+          }
+          int nbPixels = Core.countNonZero(mask);
+          imageMLUT = ImageCV.toImageCV(mask);
+          //          PlanarImage src = volTexture.getModalityLutImage(imageElement);
+          //          imageMLUT = new ImageCV();
+          //          Core.bitwise_and(src.toImageCV(), mask, imageMLUT.toImageCV());
+        } else {
+          start = Instant.now();
+          imageMLUT = volTexture.getModalityLutImage(imageElement);
+          LOGGER.debug(
+              "Time to get Modality LUT image  {}: {} ms",
+              i,
+              Duration.between(start, Instant.now()).toMillis());
+        }
 
         start = Instant.now();
         imageMLUT = getSuitableImage(imageMLUT);
@@ -313,8 +353,8 @@ public final class VolumeBuilder {
 
       if (view instanceof View3d view3d) {
         view3d.setProgressBar(null);
+        volTexture.notifyFullyLoaded();
       }
-      volTexture.notifyFullyLoaded();
     }
   }
 }

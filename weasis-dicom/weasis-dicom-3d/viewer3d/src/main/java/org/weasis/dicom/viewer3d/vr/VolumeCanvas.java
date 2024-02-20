@@ -9,8 +9,6 @@
  */
 package org.weasis.dicom.viewer3d.vr;
 
-import static org.weasis.core.ui.editor.image.ViewCanvas.ZOOM_TYPE_CMD;
-
 import com.jogamp.opengl.awt.GLJPanel;
 import java.awt.GraphicsConfiguration;
 import java.awt.Point;
@@ -30,11 +28,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.model.ViewModel;
 import org.weasis.core.api.gui.model.ViewModelChangeListener;
-import org.weasis.core.api.gui.util.ActionW;
-import org.weasis.core.api.gui.util.SliderChangeListener;
 import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.ui.editor.image.Canvas;
-import org.weasis.core.ui.editor.image.DefaultView2d.ZoomType;
 import org.weasis.core.ui.editor.image.DrawingsKeyListeners;
 import org.weasis.core.ui.editor.image.ImageViewerEventManager;
 import org.weasis.core.ui.editor.image.PropertyChangeHandler;
@@ -46,7 +41,6 @@ import org.weasis.core.ui.model.layer.GraphicModelChangeListener;
 import org.weasis.core.ui.model.utils.imp.DefaultViewModel;
 import org.weasis.core.ui.pref.Monitor;
 import org.weasis.core.util.LangUtil;
-import org.weasis.core.util.MathUtil;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.viewer3d.EventManager;
 import org.weasis.dicom.viewer3d.geometry.Camera;
@@ -95,15 +89,13 @@ public class VolumeCanvas extends GLJPanel implements Canvas {
     Objects.requireNonNull(graphicManager);
     GraphicModel graphicManagerOld = this.graphicManager;
     if (!Objects.equals(graphicManager, graphicManagerOld)) {
-      graphicManagerOld.removeChangeListener(layerModelHandler);
-      graphicManagerOld.removeGraphicChangeHandler(graphicsChangeHandler);
-      graphicManagerOld.deleteNonSerializableGraphics();
+      removeGraphicManager(graphicManagerOld, layerModelHandler);
       this.graphicManager = graphicManager;
-      this.graphicManager.addGraphicChangeHandler(graphicsChangeHandler);
+      graphicManager.addGraphicChangeHandler(graphicsChangeHandler);
       if (this instanceof ViewCanvas<?> viewCanvas) {
-        this.graphicManager.updateLabels(Boolean.TRUE, viewCanvas);
+        graphicManager.updateLabels(Boolean.TRUE, viewCanvas);
       }
-      this.graphicManager.addChangeListener(layerModelHandler);
+      graphicManager.addChangeListener(layerModelHandler);
       firePropertyChange("graphicManager", graphicManagerOld, this.graphicManager);
     }
   }
@@ -133,8 +125,7 @@ public class VolumeCanvas extends GLJPanel implements Canvas {
     Optional.ofNullable(viewModel)
         .ifPresent(model -> model.removeViewModelChangeListener(viewModelHandler));
     // Unregister listener
-    graphicManager.removeChangeListener(layerModelHandler);
-    graphicManager.removeGraphicChangeHandler(graphicsChangeHandler);
+    removeGraphicManager(graphicManager, layerModelHandler);
   }
 
   @Override
@@ -211,24 +202,11 @@ public class VolumeCanvas extends GLJPanel implements Canvas {
 
   @Override
   public void zoom(Double viewScale) {
-    boolean defSize = MathUtil.isEqualToZero(viewScale);
-    double ratio = viewScale;
-    if (defSize) {
-      ZoomType type = (ZoomType) actionsInView.get(ZOOM_TYPE_CMD);
-      if (ZoomType.BEST_FIT.equals(type)) {
-        ratio = -getBestFitViewScale();
-      } else if (ZoomType.REAL.equals(type)) {
-        ratio = -getRealWorldViewScale();
-      }
-
-      if (MathUtil.isEqualToZero(ratio)) {
-        ratio = -adjustViewScale(1.0);
-      }
-    }
-
+    double ratio = getZoomRatioFromType(viewScale);
     camera.setZoomFactor(ratio);
   }
 
+  @Override
   public double getRealWorldViewScale() {
     double viewScale = 0.0;
     DicomVolTexture vol = getVolTexture();
@@ -252,26 +230,14 @@ public class VolumeCanvas extends GLJPanel implements Canvas {
     return viewScale;
   }
 
-  protected double adjustViewScale(double viewScale) {
+  public double adjustViewScale(double viewScale) {
     double ratio = viewScale;
     if (ratio < Camera.SCALE_MIN) {
       ratio = Camera.SCALE_MIN;
     } else if (ratio > Camera.SCALE_MAX) {
       ratio = Camera.SCALE_MAX;
     }
-    Optional<SliderChangeListener> zoom = eventManager.getAction(ActionW.ZOOM);
-    if (zoom.isPresent()) {
-      SliderChangeListener z = zoom.get();
-      // Adjust the best fit value according to the possible range of the model zoom action.
-      if (eventManager.getSelectedViewPane() == this) {
-        // Set back the value to UI components as this value cannot be computed early.
-        z.setRealValue(ratio, false);
-        ratio = z.getRealValue();
-      } else {
-        ratio = z.toModelValue(z.toSliderValue(ratio));
-      }
-    }
-    return ratio;
+    return adjustViewScale(eventManager, ratio);
   }
 
   @Override

@@ -358,7 +358,7 @@ public class RetrieveTask extends ExplorerTask<ExplorerTask<Boolean, String>, St
             }
           });
     }
-    return wadoURLs.get(0);
+    return wadoURLs.getFirst();
   }
 
   static String getHostname(String host) {
@@ -481,7 +481,7 @@ public class RetrieveTask extends ExplorerTask<ExplorerTask<Boolean, String>, St
     return null;
   }
 
-  private Series getSeries(
+  private DicomSeries getSeries(
       MediaSeriesGroup study,
       final Attributes seriesDataset,
       Map<String, LoadSeries> loadMap,
@@ -492,7 +492,7 @@ public class RetrieveTask extends ExplorerTask<ExplorerTask<Boolean, String>, St
       throw new IllegalArgumentException("seriesDataset cannot be null");
     }
     String seriesUID = seriesDataset.getString(Tag.SeriesInstanceUID);
-    Series dicomSeries = (Series) explorerDcmModel.getHierarchyNode(study, seriesUID);
+    DicomSeries dicomSeries = (DicomSeries) explorerDcmModel.getHierarchyNode(study, seriesUID);
     if (dicomSeries == null) {
       dicomSeries = new DicomSeries(seriesUID);
       dicomSeries.setTag(TagD.get(Tag.SeriesInstanceUID), seriesUID);

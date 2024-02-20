@@ -22,7 +22,7 @@ import javax.swing.Icon;
 import javax.swing.JMenu;
 import javax.swing.JPopupMenu;
 import javax.swing.event.ListDataEvent;
-import org.weasis.core.api.image.op.ByteLut;
+import org.weasis.opencv.op.lut.ByteLut;
 
 public class GroupRadioMenu<T> implements ActionListener, ComboBoxModelAdapter<T>, GroupPopup {
 

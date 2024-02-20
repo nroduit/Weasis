@@ -59,7 +59,7 @@ public class FileTreeModel extends DefaultTreeModel implements DataExplorerModel
   }
 
   @Override
-  public List<Codec> getCodecPlugins() {
+  public List<Codec<MediaElement>> getCodecPlugins() {
     return GuiUtils.getUICore().getCodecPlugins();
   }
 
@@ -69,7 +69,7 @@ public class FileTreeModel extends DefaultTreeModel implements DataExplorerModel
   }
 
   @Override
-  public boolean applySplittingRules(Series original, MediaElement media) {
+  public boolean applySplittingRules(Series<?> original, MediaElement media) {
     return false;
   }
 }

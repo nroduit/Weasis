@@ -20,17 +20,4 @@
     <module>jogamp-native</module>
     <module>viewer3d</module>
   </modules>
-
-  <dependencies>
-    <dependency>
-      <groupId>org.weasis.core</groupId>
-      <artifactId>weasis-core</artifactId>
-      <version>${project.parent.version}</version>
-      <scope>provided</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.weasis.thirdparty</groupId>
-      <artifactId>docking-frames</artifactId>
-    </dependency>
-  </dependencies>
 </project>

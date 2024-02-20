@@ -575,9 +575,18 @@ public class GuiUtils {
         pane.setToolTipText(null);
       } else if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
         Component parent = e.getSource() instanceof Component c ? c : null;
-        openInDefaultBrowser(parent, e.getURL());
+        openInDefaultBrowser(WinUtil.getValidComponent(parent), e.getURL());
       }
     };
+  }
+
+  public static JTextPane getPanelWithHyperlink(String html) {
+    JTextPane jTextPane1 = new JTextPane();
+    jTextPane1.setContentType("text/html");
+    jTextPane1.setEditable(false);
+    jTextPane1.addHyperlinkListener(buildHyperlinkListener());
+    jTextPane1.setText(html);
+    return jTextPane1;
   }
 
   public static void addItemToMenu(JMenu menu, JMenuItem item) {

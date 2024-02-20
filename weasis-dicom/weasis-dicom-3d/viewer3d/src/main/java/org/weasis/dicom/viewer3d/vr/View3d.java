@@ -48,6 +48,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
+import org.weasis.core.api.gui.util.ComboItemListener;
 import org.weasis.core.api.gui.util.Feature;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.MouseActionAdapter;
@@ -60,8 +61,6 @@ import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.service.AuditLog;
 import org.weasis.core.api.service.WProperties;
 import org.weasis.core.api.util.FontItem;
-import org.weasis.core.ui.editor.SeriesViewerEvent;
-import org.weasis.core.ui.editor.SeriesViewerEvent.EVENT;
 import org.weasis.core.ui.editor.image.ContextMenuHandler;
 import org.weasis.core.ui.editor.image.DefaultView2d;
 import org.weasis.core.ui.editor.image.DefaultView2d.ZoomType;
@@ -86,9 +85,12 @@ import org.weasis.dicom.viewer2d.mip.MipView;
 import org.weasis.dicom.viewer3d.ActionVol;
 import org.weasis.dicom.viewer3d.EventManager;
 import org.weasis.dicom.viewer3d.InfoLayer3d;
+import org.weasis.dicom.viewer3d.dockable.SegmentationTool;
+import org.weasis.dicom.viewer3d.dockable.SegmentationTool.Type;
 import org.weasis.dicom.viewer3d.geometry.Axis;
 import org.weasis.dicom.viewer3d.geometry.Camera;
 import org.weasis.dicom.viewer3d.geometry.View;
+import org.weasis.dicom.viewer3d.vr.TextureData.PixelFormat;
 import org.weasis.opencv.data.PlanarImage;
 import org.weasis.opencv.op.lut.LutShape;
 
@@ -264,7 +266,12 @@ public class View3d extends VolumeCanvas
         eventManager
             .getAction(ActionVol.VOL_QUALITY)
             .ifPresent(a -> a.setSliderValue(quality, false));
-        preset = Preset.getDefaultPreset(volTexture.getModality());
+        ComboItemListener<Type> segType = eventManager.getAction(ActionVol.SEG_TYPE).orElse(null);
+        if (segType != null && segType.getSelectedItem() == SegmentationTool.Type.SEG_ONLY) {
+          preset = Preset.getSegmentationLut();
+        } else {
+          preset = Preset.getDefaultPreset(volTexture.getModality());
+        }
       } else {
         preset = Preset.getDefaultPreset(null);
       }
@@ -303,7 +310,7 @@ public class View3d extends VolumeCanvas
     drawLayers(g2d, affineTransform, inverseTransform);
     g2d.translate(-p.getX(), -p.getY());
 
-    drawPointer(g2d);
+    drawPointer(g2d, pointerType);
     //   drawAffineInvariant(g2d);
     if (infoLayer != null) {
       g2d.setFont(getLayerFont());
@@ -375,7 +382,9 @@ public class View3d extends VolumeCanvas
         "depthSampleNumber",
         (gl, loc) -> gl4.glUniform1i(loc, renderingLayer.getDepthSampleNumber()));
     program.allocateUniform(
-        gl4, "lutShape", (gl, loc) -> gl4.glUniform1ui(loc, renderingLayer.getLutShapeId()));
+        gl4,
+        "lutShape",
+        (gl, loc) -> gl4.glUniform1ui(loc, isSegMode() ? 0 : renderingLayer.getLutShapeId()));
 
     program.allocateUniform(
         gl4,
@@ -423,27 +432,45 @@ public class View3d extends VolumeCanvas
     program.allocateUniform(
         gl4,
         "textureDataType",
-        (gl, loc) -> gl.glUniform1ui(loc, TextureData.getDataType(volTexture.getPixelFormat())));
+        (gl, loc) -> gl.glUniform1ui(loc, TextureData.getDataType(getPixelFormat())));
 
     program.allocateUniform(
         gl4,
         "opacityFactor",
         (gl, loc) -> gl.glUniform1f(loc, (float) renderingLayer.getOpacity()));
+
     program.allocateUniform(
-        gl4, "inputLevelMin", (gl, loc) -> gl.glUniform1f(loc, volTexture.getLevelMin()));
+        gl4,
+        "inputLevelMin",
+        (gl, loc) -> gl.glUniform1f(loc, isSegMode() ? 0 : volTexture.getLevelMin()));
     program.allocateUniform(
-        gl4, "inputLevelMax", (gl, loc) -> gl.glUniform1f(loc, volTexture.getLevelMax()));
+        gl4,
+        "inputLevelMax",
+        (gl, loc) ->
+            gl.glUniform1f(loc, isSegMode() ? volumePreset.getWidth() : volTexture.getLevelMax()));
+    program.allocateUniform(gl4, "outputLevelMin", (gl, loc) -> gl.glUniform1f(loc, 0));
     program.allocateUniform(
-        gl4, "outputLevelMin", (gl, loc) -> gl.glUniform1f(loc, volumePreset.getColorMin()));
+        gl4, "outputLevelMax", (gl, loc) -> gl.glUniform1f(loc, volumePreset.getWidth()));
     program.allocateUniform(
-        gl4, "outputLevelMax", (gl, loc) -> gl.glUniform1f(loc, volumePreset.getColorMax()));
+        gl4,
+        "windowWidth",
+        (gl, loc) ->
+            gl.glUniform1f(
+                loc,
+                isSegMode()
+                    ? volumePreset.getColorMax() - volumePreset.getColorMin()
+                    : renderingLayer.getWindowWidth()));
     program.allocateUniform(
-        gl4, "windowWidth", (gl, loc) -> gl.glUniform1f(loc, renderingLayer.getWindowWidth()));
-    program.allocateUniform(
-        gl4, "windowCenter", (gl, loc) -> gl.glUniform1f(loc, renderingLayer.getWindowCenter()));
+        gl4,
+        "windowCenter",
+        (gl, loc) ->
+            gl.glUniform1f(
+                loc,
+                isSegMode()
+                    ? (volumePreset.getColorMin() + volumePreset.getColorMax()) / 2f
+                    : renderingLayer.getWindowCenter()));
 
     final IntBuffer intBuffer = IntBuffer.allocate(1);
-
     texture.init(gl4);
     volTexture.init(gl4);
     if (volumePreset != null) {
@@ -459,6 +486,20 @@ public class View3d extends VolumeCanvas
         (long) vertexBufferData.length * Float.BYTES,
         Buffers.newDirectFloatBuffer(vertexBufferData),
         GL.GL_STATIC_DRAW);
+  }
+
+  private boolean isSegMode() {
+    return volumePreset != null && "Segmentation".equals(volumePreset.getName()); // NON-NLS
+  }
+
+  private PixelFormat getPixelFormat() {
+    PixelFormat format = volTexture.getPixelFormat();
+    if (isSegMode()) {
+      if (format == PixelFormat.SIGNED_SHORT) {
+        return PixelFormat.UNSIGNED_SHORT;
+      }
+    }
+    return format;
   }
 
   public void display(GLAutoDrawable drawable) {
@@ -520,6 +561,8 @@ public class View3d extends VolumeCanvas
     //      volTexture.destroy(gl2);
     //    }
   }
+
+  public void updateSegmentation() {}
 
   public void setVolumePreset(Preset preset) {
     this.volumePreset = Objects.requireNonNull(preset);
@@ -712,25 +755,6 @@ public class View3d extends VolumeCanvas
     return highlightedPosition;
   }
 
-  private void drawPointer(Graphics2D g) {
-    if (pointerType < 1) {
-      return;
-    }
-    if ((pointerType & CENTER_POINTER) == CENTER_POINTER) {
-      drawPointer(g, (getWidth() - 1) * 0.5, (getHeight() - 1) * 0.5, false);
-    }
-    if ((pointerType & HIGHLIGHTED_POINTER) == HIGHLIGHTED_POINTER
-        && highlightedPosition.isHighlightedPosition()) {
-      // Display the position in the center of the pixel (constant position even with a high zoom
-      // factor)
-      double offsetX =
-          modelToViewLength(highlightedPosition.getX() + 0.5 - viewModel.getModelOffsetX());
-      double offsetY =
-          modelToViewLength(highlightedPosition.getY() + 0.5 - viewModel.getModelOffsetY());
-      drawPointer(g, offsetX, offsetY, true);
-    }
-  }
-
   @Override
   public List<Action> getExportActions() {
     return null;
@@ -869,35 +893,7 @@ public class View3d extends VolumeCanvas
 
   @Override
   public void keyPressed(KeyEvent e) {
-    if (e.isControlDown() && e.getKeyCode() == KeyEvent.VK_SPACE) {
-      eventManager.nextLeftMouseAction();
-    } else if (e.getModifiers() == 0
-        && (e.getKeyCode() == KeyEvent.VK_SPACE || e.getKeyCode() == KeyEvent.VK_I)) {
-      eventManager.fireSeriesViewerListeners(
-          new SeriesViewerEvent(
-              eventManager.getSelectedView2dContainer(), null, null, EVENT.TOGGLE_INFO));
-    } else if (e.isAltDown() && e.getKeyCode() == KeyEvent.VK_L) {
-      // Counterclockwise
-      eventManager
-          .getAction(ActionW.ROTATION)
-          .ifPresent(a -> a.setSliderValue((a.getSliderValue() + 270) % 360));
-    } else if (e.isAltDown() && e.getKeyCode() == KeyEvent.VK_R) {
-      // Clockwise
-      eventManager
-          .getAction(ActionW.ROTATION)
-          .ifPresent(a -> a.setSliderValue((a.getSliderValue() + 90) % 360));
-    } else if (e.isAltDown() && e.getKeyCode() == KeyEvent.VK_F) {
-      // Flip horizontal
-      eventManager.getAction(ActionW.FLIP).ifPresent(f -> f.setSelected(!f.isSelected()));
-    } else {
-      Optional<Feature<? extends ActionState>> feature =
-          eventManager.getLeftMouseActionFromKeyEvent(e.getKeyCode(), e.getModifiers());
-      if (feature.isPresent()) {
-        eventManager.changeLeftMouseAction(feature.get().cmd());
-      } else {
-        eventManager.keyPressed(e);
-      }
-    }
+    defaultKeyPressed(eventManager, e);
   }
 
   @Override

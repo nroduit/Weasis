@@ -10,9 +10,9 @@
 package org.weasis.base.viewer2d.dockable;
 
 import bibliothek.gui.dock.common.CLocation;
-import it.cnr.imaa.essi.lablib.gui.checkboxtree.CheckboxTree;
-import it.cnr.imaa.essi.lablib.gui.checkboxtree.TreeCheckingEvent;
-import it.cnr.imaa.essi.lablib.gui.checkboxtree.TreeCheckingModel.CheckingMode;
+import eu.essilab.lablib.checkboxtree.CheckboxTree;
+import eu.essilab.lablib.checkboxtree.TreeCheckingEvent;
+import eu.essilab.lablib.checkboxtree.TreeCheckingModel.CheckingMode;
 import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.FlowLayout;
@@ -47,7 +47,7 @@ import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.editor.image.ViewerPlugin;
 import org.weasis.core.ui.model.layer.LayerAnnotation;
 import org.weasis.core.ui.model.layer.LayerItem;
-import org.weasis.core.ui.util.CheckBoxTreeBuilder;
+import org.weasis.core.ui.util.TreeBuilder;
 
 public class DisplayTool extends PluginTool implements SeriesViewerListener {
 
@@ -102,7 +102,7 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
     tree.setShowsRootHandles(true);
     tree.setRootVisible(false);
     tree.setExpandsSelectedPaths(true);
-    tree.setCellRenderer(CheckBoxTreeBuilder.buildNoIconCheckboxTreeCellRenderer());
+    tree.setCellRenderer(TreeBuilder.buildNoIconCheckboxTreeCellRenderer());
     tree.addTreeCheckingListener(this::treeValueChanged);
 
     JPanel panel = new JPanel();
@@ -128,37 +128,30 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
         });
     panel.add(applyAllViews);
 
-    CheckBoxTreeBuilder.expandTree(tree, rootNode);
+    TreeBuilder.expandTree(tree, rootNode);
     add(new JScrollPane(tree), BorderLayout.CENTER);
 
     panelFoot = new JPanel();
     add(panelFoot, BorderLayout.SOUTH);
   }
 
-  private void initPathSelection(TreePath path, boolean selected) {
-    if (selected) {
-      tree.addCheckingPath(path);
-    } else {
-      tree.removeCheckingPath(path);
-    }
-  }
-
   public void iniTreeValues(ViewCanvas<?> view) {
     if (view != null) {
       initPathSelection = true;
       // Image node
-      initPathSelection(getTreePath(image), view.getImageLayer().getVisible());
+      TreeBuilder.setPathSelection(tree, getTreePath(image), view.getImageLayer().getVisible());
 
       // Annotations node
       LayerAnnotation layer = view.getInfoLayer();
       if (layer != null) {
-        initPathSelection(getTreePath(info), layer.getVisible());
+        TreeBuilder.setPathSelection(tree, getTreePath(info), layer.getVisible());
         Enumeration<?> en = info.children();
         while (en.hasMoreElements()) {
           Object node = en.nextElement();
           if (node instanceof DefaultMutableTreeNode checkNode
               && checkNode.getUserObject() instanceof LayerItem item) {
-            initPathSelection(getTreePath(checkNode), layer.getDisplayPreferences(item));
+            TreeBuilder.setPathSelection(
+                tree, getTreePath(checkNode), layer.getDisplayPreferences(item));
           }
         }
       }

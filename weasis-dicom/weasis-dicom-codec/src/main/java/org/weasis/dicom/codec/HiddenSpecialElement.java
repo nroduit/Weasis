@@ -9,9 +9,13 @@
  */
 package org.weasis.dicom.codec;
 
-public class HiddenSpecialElement extends DicomSpecialElement {
+import org.weasis.core.api.util.ResourceUtil.ResourceIconPath;
+
+public abstract class HiddenSpecialElement extends DicomSpecialElement {
 
   public HiddenSpecialElement(DicomMediaIO mediaIO) {
     super(mediaIO);
   }
+
+  public abstract ResourceIconPath getIconPath();
 }

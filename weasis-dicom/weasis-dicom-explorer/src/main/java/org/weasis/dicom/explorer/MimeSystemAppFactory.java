@@ -21,6 +21,7 @@ import org.weasis.core.api.util.ResourceUtil.ActionIcon;
 import org.weasis.core.ui.editor.MimeSystemAppViewer;
 import org.weasis.core.ui.editor.SeriesViewer;
 import org.weasis.core.ui.editor.SeriesViewerFactory;
+import org.weasis.core.ui.editor.SeriesViewerUI;
 import org.weasis.dicom.codec.DicomMediaIO;
 import org.weasis.dicom.codec.FilesExtractor;
 
@@ -53,6 +54,11 @@ public class MimeSystemAppFactory implements SeriesViewerFactory {
               }
             }
           }
+        }
+
+        @Override
+        public SeriesViewerUI getSeriesViewerUI() {
+          return null;
         }
 
         @Override

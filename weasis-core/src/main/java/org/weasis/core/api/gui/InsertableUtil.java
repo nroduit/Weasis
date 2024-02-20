@@ -117,14 +117,7 @@ public class InsertableUtil {
     if (props != null && bundleName != null && className != null && key != null) {
       for (String bundle : new String[] {bundleName, ALL_BUNDLE}) {
         for (String cl : new String[] {className, ALL}) {
-          StringBuilder buf = new StringBuilder(bundle);
-          buf.append('.');
-          buf.append(cl);
-          buf.append('.');
-          buf.append(componentName);
-          buf.append('.');
-          buf.append(key);
-          final String value = props.getProperty(buf.toString());
+          String value = buildPropertyName(props, componentName, key, bundle, cl);
           if (value != null) {
             if (Boolean.TRUE.toString().equalsIgnoreCase(value)) {
               return true;
@@ -138,6 +131,18 @@ public class InsertableUtil {
     return def;
   }
 
+  private static String buildPropertyName(
+      Properties props, String componentName, String key, String bundle, String cl) {
+    StringBuilder buf = new StringBuilder(bundle);
+    buf.append('.');
+    buf.append(cl);
+    buf.append('.');
+    buf.append(componentName);
+    buf.append('.');
+    buf.append(key);
+    return props.getProperty(buf.toString());
+  }
+
   private static int getIntProperty(
       Properties props,
       String bundleName,
@@ -148,14 +153,7 @@ public class InsertableUtil {
     if (props != null && bundleName != null && className != null && key != null) {
       for (String bundle : new String[] {bundleName, ALL_BUNDLE}) {
         for (String cl : new String[] {className, ALL}) {
-          StringBuilder buf = new StringBuilder(bundle);
-          buf.append('.');
-          buf.append(cl);
-          buf.append('.');
-          buf.append(componentName);
-          buf.append('.');
-          buf.append(key);
-          final String value = props.getProperty(buf.toString());
+          String value = buildPropertyName(props, componentName, key, bundle, cl);
           if (value != null) {
             try {
               return Integer.parseInt(value);

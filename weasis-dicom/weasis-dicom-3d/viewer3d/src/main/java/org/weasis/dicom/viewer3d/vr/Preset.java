@@ -25,17 +25,22 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Objects;
 import javax.swing.Icon;
 import org.joml.Vector4f;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.ActionW;
+import org.weasis.core.ui.model.graphic.imp.seg.SegRegion;
 import org.weasis.dicom.codec.display.Modality;
 import org.weasis.dicom.viewer3d.EventManager;
+import org.weasis.dicom.viewer3d.View3DContainer;
 import org.weasis.dicom.viewer3d.vr.lut.PresetGroup;
 import org.weasis.dicom.viewer3d.vr.lut.PresetPoint;
 import org.weasis.dicom.viewer3d.vr.lut.VolumePreset;
+import org.weasis.opencv.seg.RegionAttributes;
 
 public class Preset extends TextureData {
   private static final Logger LOGGER = LoggerFactory.getLogger(Preset.class);
@@ -60,19 +65,35 @@ public class Preset extends TextureData {
   private int id2;
 
   public Preset(VolumePreset v) {
-    super(256, PixelFormat.RGBA8);
-    this.name = Objects.requireNonNull(v).getName();
-    this.modality = Modality.getModality(v.getModality());
-    this.defaultElement = v.isDefaultElement();
-    this.shade = v.isShade();
-    this.specularPower = v.getSpecularPower();
+    this(
+        Objects.requireNonNull(v).getName(),
+        v.getModality(),
+        v.isDefaultElement(),
+        v.isShade(),
+        v.getSpecularPower(),
+        v.getGroups());
+  }
 
-    this.groups = v.getGroups();
+  public Preset(
+      String name,
+      String modality,
+      boolean defaultElement,
+      boolean shade,
+      float specularPower,
+      List<PresetGroup> groups) {
+    super(256, PixelFormat.RGBA8);
+    this.name = Objects.requireNonNull(name);
+    this.modality = Modality.getModality(modality);
+    this.defaultElement = defaultElement;
+    this.shade = shade;
+    this.specularPower = specularPower;
+
+    this.groups = groups;
     if (groups.isEmpty() || groups.stream().anyMatch(g -> g.getPoints().length == 0)) {
       throw new IllegalArgumentException("empty group or point");
     }
-    this.colorMin = groups.get(0).getPoints()[0].getIntensity();
-    PresetPoint[] pts = groups.get(groups.size() - 1).getPoints();
+    this.colorMin = groups.getFirst().getPoints()[0].getIntensity();
+    PresetPoint[] pts = groups.getLast().getPoints();
     this.colorMax = pts[pts.length - 1].getIntensity();
     this.width = colorMax - colorMin;
     this.colors = new byte[width * 4];
@@ -495,7 +516,7 @@ public class Preset extends TextureData {
   static Preset getOriginalPreset() {
     try {
       List<VolumePreset> original = loadFile("/originalLut.json"); // NON-NLS
-      return buildPreset(original.get(0));
+      return buildPreset(original.getFirst());
     } catch (IOException e) {
       throw new RuntimeException(e);
     }
@@ -513,5 +534,65 @@ public class Preset extends TextureData {
       LOGGER.error("Cannot read the preset {}", p.getName(), e);
     }
     return null;
+  }
+
+  public static Map<String, List<SegRegion<?>>> getRegionMap() {
+    if (EventManager.getInstance().getSelectedView2dContainer()
+        instanceof View3DContainer container) {
+      return container.getRegionMap();
+    }
+    return null;
+  }
+
+  private static List<SegRegion<?>> getOrderRegionAttributes(Map<String, List<SegRegion<?>>> map) {
+    List<SegRegion<?>> list = new ArrayList<>();
+    for (Entry<String, List<SegRegion<?>>> entry : map.entrySet()) {
+      list.addAll(entry.getValue());
+    }
+    list.sort(Comparator.comparingInt(RegionAttributes::getId));
+    return list;
+  }
+
+  public static Preset getSegmentationLut() {
+    Map<String, List<SegRegion<?>>> map = getRegionMap();
+
+    if (map != null && !map.isEmpty()) {
+      List<PresetGroup> groups = new ArrayList<>();
+      groups.add(new PresetGroup("StartEmpty", new PresetPoint[] {getTransparentPoint(0)}));
+
+      List<PresetPoint> presetPoints = new ArrayList<>();
+      int max = 1;
+
+      for (RegionAttributes a : getOrderRegionAttributes(map)) {
+        float opacity = a.getInteriorOpacity();
+        int density = a.getId();
+        max = Math.max(max, density);
+        if (a.isVisible()) {
+          Color c = a.getColor();
+          presetPoints.add(
+              new PresetPoint(
+                  density,
+                  opacity,
+                  c.getRed() / 255.0f,
+                  c.getGreen() / 255.0f,
+                  c.getBlue() / 255.0f,
+                  1.0f,
+                  0.2f,
+                  1.0f));
+        } else {
+          presetPoints.add(getTransparentPoint(density));
+        }
+      }
+      //   presetPoints.add(presetPoints.getLast());
+
+      groups.add(new PresetGroup("segments", presetPoints.toArray(new PresetPoint[0]))); // NON-NLS
+      // groups.add(new PresetGroup("EndEmpty", new PresetPoint[] {getTransparentPoint(max + 1)}));
+      return new Preset("Segmentation", "SEG", false, true, 1.0f, groups); // NON-NLS
+    }
+    return null;
+  }
+
+  private static PresetPoint getTransparentPoint(int intensity) {
+    return new PresetPoint(intensity, 0, 0f, 0f, 0f, 0.2f, 0.1f, 0.9f);
   }
 }

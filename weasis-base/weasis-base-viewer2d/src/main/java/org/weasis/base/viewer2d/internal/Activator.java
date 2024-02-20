@@ -13,20 +13,18 @@ import org.osgi.annotation.bundle.Header;
 import org.osgi.framework.BundleActivator;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.Constants;
-import org.osgi.framework.FrameworkUtil;
 import org.osgi.framework.InvalidSyntaxException;
 import org.osgi.framework.ServiceEvent;
 import org.osgi.framework.ServiceListener;
-import org.osgi.framework.ServiceReference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.base.viewer2d.EventManager;
 import org.weasis.base.viewer2d.ImportToolBar;
 import org.weasis.base.viewer2d.View2dContainer;
-import org.weasis.core.api.gui.Insertable.Type;
 import org.weasis.core.api.gui.InsertableFactory;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.gui.util.GuiUtils;
+import org.weasis.core.api.service.BundleTools;
 
 @Header(name = Constants.BUNDLE_ACTIVATOR, value = "${@class}") // NON-NLS
 public class Activator implements BundleActivator, ServiceListener {
@@ -35,7 +33,7 @@ public class Activator implements BundleActivator, ServiceListener {
 
   @Override
   public void start(final BundleContext bundleContext) {
-    registerExistingComponents(bundleContext);
+    BundleTools.registerExistingComponents(bundleContext, View2dContainer.UI);
 
     // Instantiate UI components in EDT
     GuiExecutor.execute(
@@ -43,7 +41,6 @@ public class Activator implements BundleActivator, ServiceListener {
 
     // Add listener for getting new service events
     try {
-
       bundleContext.addServiceListener(
           Activator.this,
           String.format(
@@ -66,56 +63,6 @@ public class Activator implements BundleActivator, ServiceListener {
   @Override
   public synchronized void serviceChanged(final ServiceEvent event) {
     // Tools and Toolbars (with non-immediate instance) must be instantiated in the EDT
-    GuiExecutor.execute(() -> dataExplorerChanged(event));
-  }
-
-  private void dataExplorerChanged(final ServiceEvent event) {
-
-    final ServiceReference<?> mref = event.getServiceReference();
-    // The View2dContainer name should be referenced as a property in the provided service
-    if (Boolean.parseBoolean((String) mref.getProperty(View2dContainer.class.getName()))) {
-      final BundleContext context =
-          FrameworkUtil.getBundle(Activator.this.getClass()).getBundleContext();
-      Object service = context.getService(mref);
-      if (service instanceof InsertableFactory factory) {
-        if (event.getType() == ServiceEvent.REGISTERED) {
-          registerComponent(factory);
-        } else if (event.getType() == ServiceEvent.UNREGISTERING) {
-          if (Type.TOOLBAR.equals(factory.getType())) {
-            View2dContainer.unregisterToolBar(factory, context);
-          } else if (Type.TOOL.equals(factory.getType())) {
-            View2dContainer.unregisterTool(factory, context);
-          }
-        }
-      }
-    }
-  }
-
-  private static void registerExistingComponents(BundleContext bundleContext) {
-    try {
-      for (ServiceReference<InsertableFactory> serviceReference :
-          bundleContext.getServiceReferences(InsertableFactory.class, null)) {
-        // The View2dContainer name should be referenced as a property in the provided service
-        if (Boolean.parseBoolean(
-            (String) serviceReference.getProperty(View2dContainer.class.getName()))) {
-          // Instantiate UI components in EDT
-          GuiExecutor.execute(() -> registerComponent(bundleContext.getService(serviceReference)));
-        }
-      }
-    } catch (InvalidSyntaxException e1) {
-      LOGGER.error("Register tool and toolbar", e1);
-    }
-  }
-
-  private static void registerComponent(final InsertableFactory factory) {
-    if (factory == null) {
-      return;
-    }
-
-    if (Type.TOOLBAR.equals(factory.getType())) {
-      View2dContainer.registerToolBar(factory.createInstance(null));
-    } else if (Type.TOOL.equals(factory.getType())) {
-      View2dContainer.registerTool(factory.createInstance(null));
-    }
+    GuiExecutor.execute(() -> BundleTools.dataExplorerChanged(event, View2dContainer.UI));
   }
 }

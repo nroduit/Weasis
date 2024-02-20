@@ -19,10 +19,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.image.cv.ImageCVIO;
 import org.weasis.core.api.media.data.Codec;
+import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaReader;
 
 @org.osgi.service.component.annotations.Component(service = Codec.class)
-public class NativeOpenCVCodec implements Codec {
+public class NativeOpenCVCodec implements Codec<ImageElement> {
   private static final Logger LOGGER = LoggerFactory.getLogger(NativeOpenCVCodec.class);
 
   private static final String[] readerMIMETypes = {
@@ -100,7 +101,8 @@ public class NativeOpenCVCodec implements Codec {
   }
 
   @Override
-  public MediaReader getMediaIO(URI media, String mimeType, Hashtable<String, Object> properties) {
+  public MediaReader<ImageElement> getMediaIO(
+      URI media, String mimeType, Hashtable<String, Object> properties) {
     if (isMimeTypeSupported(mimeType)) {
       return new ImageCVIO(media, mimeType, this);
     }

@@ -129,6 +129,7 @@ import org.weasis.core.ui.docking.DockableTool;
 import org.weasis.core.ui.editor.MimeSystemAppViewer;
 import org.weasis.core.ui.editor.SeriesViewer;
 import org.weasis.core.ui.editor.SeriesViewerFactory;
+import org.weasis.core.ui.editor.SeriesViewerUI;
 import org.weasis.core.ui.editor.ViewerPluginBuilder;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.editor.image.SequenceHandler;
@@ -564,7 +565,8 @@ public class WeasisWin {
       GuiUtils.getUICore()
           .getToolbarContainer()
           .registerToolBar(GuiUtils.getUICore().getExplorerPluginToolbars());
-      List<DockableTool> oldTool = selectedPlugin == null ? null : selectedPlugin.getToolPanel();
+      List<DockableTool> oldTool =
+          selectedPlugin == null ? null : selectedPlugin.getSeriesViewerUI().tools;
       if (oldTool != null) {
         for (DockableTool p : oldTool) {
           p.closeDockable();
@@ -585,8 +587,8 @@ public class WeasisWin {
     selectedPlugin = plugin;
     menuSelectedPlugin.setText(selectedPlugin.getName());
 
-    GuiUtils.getUICore().updateTools(oldPlugin, selectedPlugin, false);
-    GuiUtils.getUICore().updateToolbars(oldPlugin, selectedPlugin, false);
+    SeriesViewerUI.updateTools(oldPlugin, selectedPlugin, false);
+    SeriesViewerUI.updateToolbars(oldPlugin, selectedPlugin, false);
 
     selectedPlugin.setSelected(true);
   }
@@ -831,7 +833,8 @@ public class WeasisWin {
   }
 
   private void buildToolSubMenu(final JMenu toolMenu) {
-    List<DockableTool> tools = selectedPlugin == null ? null : selectedPlugin.getToolPanel();
+    List<DockableTool> tools =
+        selectedPlugin == null ? null : selectedPlugin.getSeriesViewerUI().tools;
     if (tools != null) {
       for (final DockableTool t : tools) {
         buildSubMenu(toolMenu, t);
@@ -1097,7 +1100,7 @@ public class WeasisWin {
           for (final DataExplorerView dataExplorerView : explorers) {
             DataExplorerModel model = dataExplorerView.getDataExplorerModel();
             if (model != null) {
-              List<Codec> cList = model.getCodecPlugins();
+              List<Codec<MediaElement>> cList = model.getCodecPlugins();
               if (cList != null && cList.contains(entry.getKey())) {
                 exps.add(dataExplorerView);
               }

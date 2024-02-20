@@ -23,6 +23,9 @@
     <sonar.projectKey>weasis</sonar.projectKey>
     <sonar.organization>nroduit-github</sonar.organization>
     <sonar.host.url>https://sonarcloud.io</sonar.host.url>
+    <sonar.language>java</sonar.language>
+    <sonar.java.source>${java-version}</sonar.java.source>
+    <sonar.test.exclusions>src/test/**/*</sonar.test.exclusions>
   </properties>
   <modules>
     <module>weasis-parent</module>

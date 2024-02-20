@@ -15,8 +15,6 @@ import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Hashtable;
 import java.util.List;
 import java.util.Optional;
 import javax.swing.Action;
@@ -36,9 +34,7 @@ import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.DataExplorerView;
 import org.weasis.core.api.explorer.ObservableEvent;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
-import org.weasis.core.api.gui.Insertable;
 import org.weasis.core.api.gui.Insertable.Type;
-import org.weasis.core.api.gui.InsertableFactory;
 import org.weasis.core.api.gui.InsertableUtil;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.BasicActionState;
@@ -62,6 +58,7 @@ import org.weasis.core.ui.docking.DockableTool;
 import org.weasis.core.ui.docking.PluginTool;
 import org.weasis.core.ui.editor.SeriesViewerFactory;
 import org.weasis.core.ui.editor.SeriesViewerListener;
+import org.weasis.core.ui.editor.SeriesViewerUI;
 import org.weasis.core.ui.editor.ViewerPluginBuilder;
 import org.weasis.core.ui.editor.image.DefaultView2d;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
@@ -86,6 +83,7 @@ import org.weasis.dicom.codec.DicomSpecialElement;
 import org.weasis.dicom.codec.KOSpecialElement;
 import org.weasis.dicom.codec.PRSpecialElement;
 import org.weasis.dicom.codec.PresentationStateReader;
+import org.weasis.dicom.codec.SegSpecialElement;
 import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.TagD.Level;
 import org.weasis.dicom.explorer.DicomExplorer;
@@ -130,15 +128,7 @@ public class View2dContainer extends DicomViewerPlugin implements PropertyChange
           VIEWS_2x3,
           VIEWS_2x4);
 
-  // Static tools shared by all the View2dContainer instances, tools are registered when a container
-  // is selected
-  // Do not initialize tools in a static block (order initialization issue with eventManager), use
-  // instead a lazy initialization with a method.
-  public static final List<Toolbar> TOOLBARS = Collections.synchronizedList(new ArrayList<>());
-  public static final List<DockableTool> TOOLS = Collections.synchronizedList(new ArrayList<>());
-  public static final List<InsertableFactory> TOOL_EXT =
-      Collections.synchronizedList(new ArrayList<>());
-  private static volatile boolean initComponents = false;
+  public static final SeriesViewerUI UI = new SeriesViewerUI(View2dContainer.class);
 
   public View2dContainer() {
     this(VIEWS_1x1, null, View2dFactory.NAME, ResourceUtil.getIcon(OtherIcon.XRAY), null);
@@ -166,8 +156,8 @@ public class View2dContainer extends DicomViewerPlugin implements PropertyChange
           }
         });
 
-    if (!initComponents) {
-      initComponents = true;
+    if (!UI.init.getAndSet(true)) {
+      List<Toolbar> toolBars = UI.toolBars;
 
       // Add standard toolbars
       final BundleContext context = FrameworkUtil.getBundle(this.getClass()).getBundleContext();
@@ -189,7 +179,7 @@ public class View2dContainer extends DicomViewerPlugin implements PropertyChange
             GuiUtils.getUICore().getExplorerPluginToolbars().stream()
                 .filter(ImportToolBar.class::isInstance)
                 .findFirst();
-        b.ifPresent(TOOLBARS::add);
+        b.ifPresent(toolBars::add);
       }
       if (InsertableUtil.getBooleanProperty(
           preferences,
@@ -202,7 +192,7 @@ public class View2dContainer extends DicomViewerPlugin implements PropertyChange
             GuiUtils.getUICore().getExplorerPluginToolbars().stream()
                 .filter(ExportToolBar.class::isInstance)
                 .findFirst();
-        b.ifPresent(TOOLBARS::add);
+        b.ifPresent(toolBars::add);
       }
       if (InsertableUtil.getBooleanProperty(
           preferences,
@@ -211,7 +201,7 @@ public class View2dContainer extends DicomViewerPlugin implements PropertyChange
           InsertableUtil.getCName(ScreenshotToolBar.class),
           key,
           true)) {
-        TOOLBARS.add(new ScreenshotToolBar<>(evtMg, 9));
+        toolBars.add(new ScreenshotToolBar<>(evtMg, 9));
       }
       if (InsertableUtil.getBooleanProperty(
           preferences,
@@ -220,7 +210,7 @@ public class View2dContainer extends DicomViewerPlugin implements PropertyChange
           InsertableUtil.getCName(ViewerToolBar.class),
           key,
           true)) {
-        TOOLBARS.add(
+        toolBars.add(
             new ViewerToolBar<>(
                 evtMg, evtMg.getMouseActions().getActiveButtons(), preferences, 10));
       }
@@ -231,7 +221,7 @@ public class View2dContainer extends DicomViewerPlugin implements PropertyChange
           InsertableUtil.getCName(MeasureToolBar.class),
           key,
           true)) {
-        TOOLBARS.add(new MeasureToolBar(evtMg, 11));
+        toolBars.add(new MeasureToolBar(evtMg, 11));
       }
       if (InsertableUtil.getBooleanProperty(
           preferences,
@@ -240,7 +230,7 @@ public class View2dContainer extends DicomViewerPlugin implements PropertyChange
           InsertableUtil.getCName(ZoomToolBar.class),
           key,
           true)) {
-        TOOLBARS.add(new ZoomToolBar(evtMg, 20, true));
+        toolBars.add(new ZoomToolBar(evtMg, 20, true));
       }
       if (InsertableUtil.getBooleanProperty(
           preferences,
@@ -249,7 +239,7 @@ public class View2dContainer extends DicomViewerPlugin implements PropertyChange
           InsertableUtil.getCName(RotationToolBar.class),
           key,
           true)) {
-        TOOLBARS.add(new RotationToolBar(evtMg, 30));
+        toolBars.add(new RotationToolBar(evtMg, 30));
       }
       if (InsertableUtil.getBooleanProperty(
           preferences,
@@ -258,7 +248,7 @@ public class View2dContainer extends DicomViewerPlugin implements PropertyChange
           InsertableUtil.getCName(DcmHeaderToolBar.class),
           key,
           true)) {
-        TOOLBARS.add(new DcmHeaderToolBar(evtMg, 35));
+        toolBars.add(new DcmHeaderToolBar(evtMg, 35));
       }
       if (InsertableUtil.getBooleanProperty(
           preferences,
@@ -267,7 +257,7 @@ public class View2dContainer extends DicomViewerPlugin implements PropertyChange
           InsertableUtil.getCName(LutToolBar.class),
           key,
           true)) {
-        TOOLBARS.add(new LutToolBar(evtMg, 40));
+        toolBars.add(new LutToolBar(evtMg, 40));
       }
       if (InsertableUtil.getBooleanProperty(
           preferences,
@@ -276,7 +266,7 @@ public class View2dContainer extends DicomViewerPlugin implements PropertyChange
           InsertableUtil.getCName(Basic3DToolBar.class),
           key,
           true)) {
-        TOOLBARS.add(new Basic3DToolBar(50));
+        toolBars.add(new Basic3DToolBar(50));
       }
       if (InsertableUtil.getBooleanProperty(
           preferences,
@@ -285,7 +275,7 @@ public class View2dContainer extends DicomViewerPlugin implements PropertyChange
           InsertableUtil.getCName(CineToolBar.class),
           key,
           true)) {
-        TOOLBARS.add(new CineToolBar(80));
+        toolBars.add(new CineToolBar(80));
       }
       if (InsertableUtil.getBooleanProperty(
           preferences,
@@ -294,9 +284,10 @@ public class View2dContainer extends DicomViewerPlugin implements PropertyChange
           InsertableUtil.getCName(KeyObjectToolBar.class),
           key,
           true)) {
-        TOOLBARS.add(new KeyObjectToolBar(90));
+        toolBars.add(new KeyObjectToolBar(90));
       }
 
+      List<DockableTool> tools = UI.tools;
       PluginTool tool;
 
       if (InsertableUtil.getBooleanProperty(
@@ -318,7 +309,7 @@ public class View2dContainer extends DicomViewerPlugin implements PropertyChange
                 return listeners.toArray(new SliderChangeListener[0]);
               }
             };
-        TOOLS.add(tool);
+        tools.add(tool);
       }
 
       if (InsertableUtil.getBooleanProperty(
@@ -329,7 +320,7 @@ public class View2dContainer extends DicomViewerPlugin implements PropertyChange
           key,
           true)) {
         tool = new ImageTool(ImageTool.BUTTON_NAME);
-        TOOLS.add(tool);
+        tools.add(tool);
       }
 
       if (InsertableUtil.getBooleanProperty(
@@ -340,7 +331,7 @@ public class View2dContainer extends DicomViewerPlugin implements PropertyChange
           key,
           true)) {
         tool = new DisplayTool(DisplayTool.BUTTON_NAME);
-        TOOLS.add(tool);
+        tools.add(tool);
         eventManager.addSeriesViewerListener((SeriesViewerListener) tool);
       }
 
@@ -352,10 +343,10 @@ public class View2dContainer extends DicomViewerPlugin implements PropertyChange
           key,
           true)) {
         tool = new MeasureTool(eventManager);
-        TOOLS.add(tool);
+        tools.add(tool);
       }
 
-      InsertableUtil.sortInsertable(TOOLS);
+      InsertableUtil.sortInsertable(tools);
 
       // Send event to synchronize the series selection.
       DataExplorerView dicomView = GuiUtils.getUICore().getExplorerPlugin(DicomExplorer.NAME);
@@ -365,8 +356,8 @@ public class View2dContainer extends DicomViewerPlugin implements PropertyChange
 
       Preferences prefs = BundlePreferences.getDefaultPreferences(context);
       if (prefs != null) {
-        InsertableUtil.applyPreferences(TOOLBARS, prefs, bundleName, componentName, Type.TOOLBAR);
-        InsertableUtil.applyPreferences(TOOLS, prefs, bundleName, componentName, Type.TOOL);
+        InsertableUtil.applyPreferences(toolBars, prefs, bundleName, componentName, Type.TOOLBAR);
+        InsertableUtil.applyPreferences(tools, prefs, bundleName, componentName, Type.TOOL);
       }
     }
   }
@@ -450,39 +441,8 @@ public class View2dContainer extends DicomViewerPlugin implements PropertyChange
     super.addSeries(sequence);
   }
 
-  protected MediaSeries<DicomImageElement> getFirstSeries() {
-    for (ViewCanvas<DicomImageElement> v : getImagePanels()) {
-      if (v.getSeries() != null) {
-        return v.getSeries();
-      }
-    }
-    return null;
-  }
-
-  @Override
-  public List<DockableTool> getToolPanel() {
-    if (TOOL_EXT.isEmpty()) {
-      return TOOLS;
-    }
-
-    List<DockableTool> list = new ArrayList<>();
-    Hashtable<String, Object> properties = new Hashtable<>();
-    MediaSeries<DicomImageElement> series = getFirstSeries();
-    if (series != null) {
-      properties.put(MediaSeries.class.getName(), series);
-    }
-    for (InsertableFactory factory : TOOL_EXT) {
-      Insertable instance = factory.createInstance(properties);
-      if (instance instanceof DockableTool dockableTool) {
-        list.add(dockableTool);
-      }
-    }
-
-    if (list.isEmpty()) {
-      return TOOLS;
-    }
-    list.addAll(0, TOOLS);
-    return list;
+  public SeriesViewerUI getSeriesViewer() {
+    return UI;
   }
 
   @Override
@@ -613,13 +573,20 @@ public class View2dContainer extends DicomViewerPlugin implements PropertyChange
               view2d.updatePR();
             }
           }
-        }
-
-        /*
-         * Update if necessary all the views with the KOSpecialElement
-         */
-        else if (specialElement instanceof KOSpecialElement koSpecialElement) {
-          setKOSpecialElement(koSpecialElement, null, false, false);
+        } else if (specialElement instanceof SegSpecialElement segSpecialElement) {
+          ViewCanvas<DicomImageElement> pane = getSelectedImagePane();
+          for (ViewCanvas<DicomImageElement> view : view2ds) {
+            if (view instanceof View2d view2d
+                && segSpecialElement.containsSopInstanceUIDReference(view.getImage())) {
+              view2d.updateSegmentation();
+              if (view2d == pane) {
+                UI.updateDynamicTools(view2d.getSeries());
+              }
+            }
+          }
+        } else if (specialElement instanceof KOSpecialElement koSpecialElement) {
+          // Update if necessary all the views with the KOSpecialElement
+          setKOSpecialElement(koSpecialElement, null, false, true);
         }
       } else if (ObservableEvent.BasicAction.SELECT.equals(action)
           && newVal instanceof KOSpecialElement koSpecialElement) {
@@ -777,6 +744,11 @@ public class View2dContainer extends DicomViewerPlugin implements PropertyChange
   }
 
   @Override
+  public SeriesViewerUI getSeriesViewerUI() {
+    return UI;
+  }
+
+  @Override
   public Class<?> getSeriesViewerClass() {
     return view2dClass;
   }
@@ -784,11 +756,6 @@ public class View2dContainer extends DicomViewerPlugin implements PropertyChange
   @Override
   public GridBagLayoutModel getDefaultLayoutModel() {
     return VIEWS_1x1;
-  }
-
-  @Override
-  public synchronized List<Toolbar> getToolBars() {
-    return TOOLBARS;
   }
 
   @Override
