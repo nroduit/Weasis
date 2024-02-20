@@ -65,6 +65,8 @@ public class View3DFactory implements SeriesViewerFactory {
   public static final String P_OPENGL_ENABLE = "opengl.enable";
   public static final String P_OPENGL_PREV_INIT = "opengl.prev.init";
 
+  private static final String JOGL_THREAD_CONFIG = "jogl.1thread";
+
   private static OpenGLInfo openGLInfo;
 
   @Override
@@ -284,7 +286,11 @@ public class View3DFactory implements SeriesViewerFactory {
   @Activate
   protected void activate(ComponentContext context) throws Exception {
     LOGGER.info("3D Viewer is activated");
-    System.setProperty("jogl.1thread", "worker"); // TODO set to auto
+    String joglThreadConfig = GuiUtils.getUICore().getSystemPreferences().getProperty(JOGL_THREAD_CONFIG);
+    LOGGER.debug("Custom {} value: {}", JOGL_THREAD_CONFIG, joglThreadConfig);
+    if (StringUtil.hasText(joglThreadConfig)) {
+      System.setProperty(JOGL_THREAD_CONFIG, joglThreadConfig);
+    }
 
     WProperties prefs = GuiUtils.getUICore().getLocalPersistence();
     if (GuiUtils.getUICore().getSystemPreferences().getBooleanProperty("weasis.force.3d", false)) {
