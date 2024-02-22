@@ -109,7 +109,9 @@
           <version>3.12.1</version>
           <configuration>
             <release>${java-version}</release>
-            <compilerArgs>--enable-preview</compilerArgs>
+            <compilerArgs>
+                <arg>--enable-preview</arg>
+            </compilerArgs>
           </configuration>
         </plugin>
         <plugin>
