@@ -12,7 +12,7 @@
   <modelVersion>4.0.0</modelVersion>
   <artifactId>weasis-framework</artifactId>
   <packaging>pom</packaging>
-  <name>Weasis framework ${project.artifactId}</name>
+  <name>Weasis framework</name>
   <scm>
     <connection>scm:git:git@github.com:nroduit/Weasis.git</connection>
     <developerConnection>scm:git:https://weasis.repositoryhosting.com/git/weasis/weasis-dev.git
