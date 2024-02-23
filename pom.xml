@@ -20,7 +20,7 @@
     <url>https://github.com/nroduit/Weasis</url>
   </scm>
   <properties>
-    <sonar.projectKey>weasis</sonar.projectKey>
+    <sonar.moduleKey>${project.artifactId}</sonar.moduleKey>
     <sonar.organization>nroduit-github</sonar.organization>
     <sonar.host.url>https://sonarcloud.io</sonar.host.url>
     <sonar.language>java</sonar.language>
