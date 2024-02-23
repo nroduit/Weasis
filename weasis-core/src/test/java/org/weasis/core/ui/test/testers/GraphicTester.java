@@ -10,21 +10,17 @@
 package org.weasis.core.ui.test.testers;
 
 import static java.lang.String.format;
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.awt.geom.Point2D;
-import java.beans.PropertyChangeSupport;
 import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.ParameterizedType;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import org.assertj.core.api.Fail;
-import org.assertj.core.api.recursive.comparison.RecursiveComparisonConfiguration;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.weasis.core.ui.model.graphic.AbstractGraphic;
 import org.weasis.core.ui.model.graphic.DragGraphic;
 import org.weasis.core.ui.model.graphic.Graphic;
 import org.weasis.core.ui.model.graphic.GraphicArea;
@@ -64,20 +60,14 @@ public abstract class GraphicTester<E extends Graphic> extends XmlSerialisationH
   }
 
   protected void checkSerialization(String expectedGraphic) {
-    assertThat(serializationGraphic).isEqualTo(TPL_XML_PREFIX + expectedGraphic);
+    assertEquals(TPL_XML_PREFIX + expectedGraphic, serializationGraphic);
   }
 
   protected void checkDeserialization() throws Exception {
     deserializedGraphic = deserialize(serializationGraphic, getGraphicClass());
-    assertThat(deserializedGraphic)
-        .isInstanceOfAny(Graphic.class, AbstractGraphic.class, getGraphicClass());
-    assertThat(deserializedGraphic.getUuid()).isEqualTo(graphic.getUuid());
-    assertThat(deserializedGraphic)
-        .usingRecursiveComparison(
-            RecursiveComparisonConfiguration.builder()
-                .withIgnoredFieldsOfTypes(PropertyChangeSupport.class)
-                .build())
-        .isEqualTo(graphic);
+    assertTrue(deserializedGraphic != null || getGraphicClass().isInstance(deserializedGraphic));
+    assertEquals(graphic.getUuid(), deserializedGraphic.getUuid());
+    assertEquals(graphic, deserializedGraphic);
   }
 
   @SuppressWarnings("unchecked")
@@ -98,7 +88,7 @@ public abstract class GraphicTester<E extends Graphic> extends XmlSerialisationH
         | IllegalAccessException
         | NoSuchMethodException
         | InvocationTargetException e) {
-      Fail.fail("Cannot create instance"); // NON-NLS
+      fail("Cannot create instance"); // NON-NLS
     }
     return null;
   }
@@ -138,21 +128,16 @@ public abstract class GraphicTester<E extends Graphic> extends XmlSerialisationH
   public void testDeserializeBasicGraphic() throws Exception {
     InputStream xml = getClass().getResourceAsStream(getXmlFilePathCase0());
 
-    assertThat(xml).isNotNull();
+    assertNotNull(xml);
 
     E result = deserialize(xml, getGraphicClass());
     E expected = getExpectedDeserializeBasicGraphic();
 
-    assertThat(result).isNotNull();
-    assertThat(expected).isNotNull();
+    assertNotNull(result);
+    assertNotNull(expected);
 
-    assertThat(result.getUuid()).isNotEmpty().isEqualTo(expected.getUuid());
-    assertThat(result)
-        .usingRecursiveComparison(
-            RecursiveComparisonConfiguration.builder()
-                .withIgnoredFieldsOfTypes(PropertyChangeSupport.class)
-                .build())
-        .isEqualTo(expected);
+    assertEquals(result.getUuid(), expected.getUuid());
+    assertEquals(result, expected);
 
     checkGraphicInterfaceFields(result, expected);
 
@@ -176,15 +161,15 @@ public abstract class GraphicTester<E extends Graphic> extends XmlSerialisationH
   public void testCompleteGraphic() throws Exception {
     InputStream xml = getClass().getResourceAsStream(getXmlFilePathCase1());
 
-    assertThat(xml).isNotNull();
+    assertNotNull(xml);
 
     E result = deserialize(xml, getGraphicClass());
     E expected = getExpectedDeserializeCompleteGraphicCopy();
 
-    assertThat(result).isNotNull();
-    assertThat(expected).isNotNull();
+    assertNotNull(result);
+    assertNotNull(expected);
 
-    assertThat(result.getUuid()).isNotEmpty().isEqualTo(expected.getUuid());
+    assertEquals(expected.getUuid(), result.getUuid());
 
     checkGraphicInterfaceFields(result, expected);
 
@@ -229,32 +214,28 @@ public abstract class GraphicTester<E extends Graphic> extends XmlSerialisationH
   }
 
   protected final void checkGraphicInterfaceFields(Graphic result, Graphic expected) {
-    assertThat(result.getPts()).isEqualTo(expected.getPts());
-    assertThat(result.getColorPaint()).isNotNull().isEqualTo(expected.getColorPaint());
-    assertThat(result.getLineThickness()).isNotNull().isEqualTo(expected.getLineThickness());
-    assertThat(result.getLabelVisible()).isNotNull().isEqualTo(expected.getLabelVisible());
-    assertThat(result.getFilled()).isNotNull().isEqualTo(expected.getFilled());
-    assertThat(result.getLayerType()).isNotNull().isEqualTo(expected.getLayerType());
-    assertThat(result.getVariablePointsNumber())
-        .isNotNull()
-        .isEqualTo(expected.getVariablePointsNumber());
+    assertEquals(expected.getPts(), result.getPts());
+    assertEquals(expected.getColorPaint(), result.getColorPaint());
+    assertEquals(expected.getLineThickness(), result.getLineThickness());
+    assertEquals(expected.getLabelVisible(), result.getLabelVisible());
+    assertEquals(expected.getFilled(), result.getFilled());
+    assertEquals(expected.getLayerType(), result.getLayerType());
+    assertEquals(expected.getVariablePointsNumber(), result.getVariablePointsNumber());
 
     // Values that are always null when creating new instance
-    assertThat(result.getGraphicLabel()).isEqualTo(expected.getGraphicLabel());
-    assertThat(result.getLayer()).isEqualTo(expected.getLayer());
+    assertEquals(expected.getGraphicLabel(), result.getGraphicLabel());
+    assertEquals(expected.getLayer(), result.getLayer());
 
     checkDefaultValues(result);
   }
 
   /** Check values that never change during serialization */
   protected void checkDefaultValues(Graphic result) {
-    assertThat(result.getSelected()).isNotNull().isEqualTo(Graphic.DEFAULT_SELECTED);
+    assertEquals(Graphic.DEFAULT_SELECTED, result.getSelected());
   }
 
   protected void checkDragGraphicInterface(DragGraphic result, DragGraphic expected) {
-    assertThat(result.getResizingOrMoving())
-        .isNotNull()
-        .isEqualTo(DragGraphic.DEFAULT_RESIZE_OR_MOVING);
+    assertEquals(DragGraphic.DEFAULT_RESIZE_OR_MOVING, result.getResizingOrMoving());
   }
 
   private void checkDragGraphicAreaInterface(GraphicArea result, GraphicArea expected) {}

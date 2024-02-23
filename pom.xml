@@ -26,6 +26,8 @@
     <sonar.language>java</sonar.language>
     <sonar.java.source>${java-version}</sonar.java.source>
     <sonar.test.exclusions>src/test/**/*</sonar.test.exclusions>
+    <!--suppress UnresolvedMavenProperty -->
+    <sonar.coverage.jacoco.xmlReportPaths>${maven.multiModuleProjectDirectory}/tests/target/site/jacoco-aggregate/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
   </properties>
   <modules>
     <module>weasis-parent</module>
@@ -36,5 +38,6 @@
     <module>weasis-dicom</module>
     <module>weasis-acquire</module>
     <module>weasis-launcher</module>
+    <module>tests</module>
   </modules>
 </project>

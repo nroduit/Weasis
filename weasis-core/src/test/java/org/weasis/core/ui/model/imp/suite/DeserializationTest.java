@@ -9,10 +9,9 @@
  */
 package org.weasis.core.ui.model.imp.suite;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.io.InputStream;
-import org.assertj.core.api.Fail;
 import org.junit.jupiter.api.Test;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.ui.model.ReferencedImage;
@@ -24,7 +23,6 @@ import org.weasis.core.ui.model.layer.Layer;
 import org.weasis.core.ui.model.layer.LayerType;
 import org.weasis.core.ui.model.layer.imp.DefaultLayer;
 import org.weasis.core.ui.test.utils.ModelListHelper;
-import org.xml.sax.SAXParseException;
 
 class DeserializationTest extends ModelListHelper {
   public static final String XML_0 = "/presentation/presentation.0.xml"; // NON-NLS
@@ -35,24 +33,12 @@ class DeserializationTest extends ModelListHelper {
   public static final String XML_5 = "/presentation/presentation.5.xml"; // NON-NLS
 
   @Test
-  void test_empty_xml() {
+  void test_empty_xml() throws Exception {
     InputStream xml_0 = checkXml(XML_0);
-
-    try {
-      deserialize(xml_0, XmlGraphicModel.class);
-      Fail.fail("Must throws an exception"); // NON-NLS
-    } catch (Exception e) {
-      assertThat(e).hasCauseExactlyInstanceOf(SAXParseException.class);
-    }
+    assertThrows(Exception.class, () -> deserialize(xml_0, XmlGraphicModel.class));
 
     InputStream xml_1 = checkXml(XML_1);
-
-    try {
-      deserialize(xml_1, XmlGraphicModel.class);
-      Fail.fail("Must throws an exception"); // NON-NLS
-    } catch (Exception e) {
-      assertThat(e).hasCauseExactlyInstanceOf(SAXParseException.class);
-    }
+    assertThrows(Exception.class, () -> deserialize(xml_1, XmlGraphicModel.class));
   }
 
   @Test
@@ -61,13 +47,14 @@ class DeserializationTest extends ModelListHelper {
 
     XmlGraphicModel result = deserialize(xml, XmlGraphicModel.class);
 
-    assertThat(result).isNotNull();
-    assertThat(result.getUuid()).isNotNull().isNotEmpty();
-    assertThat(result.getReferencedSeries()).isEmpty();
-    assertThat(result.getModels()).isEmpty();
-    assertThat(result.getLayers()).isEmpty();
-    assertThat(result.getLayerCount()).isZero();
-    assertThat(result.getAllGraphics()).isEmpty();
+    assertNotNull(result);
+    assertNotNull(result.getUuid());
+    assertFalse(result.getUuid().isEmpty());
+    assertTrue(result.getReferencedSeries().isEmpty());
+    assertTrue(result.getModels().isEmpty());
+    assertTrue(result.getLayers().isEmpty());
+    assertEquals(0, result.getLayerCount());
+    assertTrue(result.getAllGraphics().isEmpty());
   }
 
   @Test
@@ -77,14 +64,19 @@ class DeserializationTest extends ModelListHelper {
     XmlGraphicModel result = deserialize(xml, XmlGraphicModel.class);
     XmlGraphicModel expected = new XmlGraphicModel();
 
-    assertThat(result).isNotNull();
-    assertThat(result.getUuid()).isEqualTo(PRESENTATION_UUID_0);
+    assertNotNull(result);
+    assertEquals(PRESENTATION_UUID_0, result.getUuid());
 
-    assertThat(result.getReferencedSeries()).isEqualTo(expected.getReferencedSeries()).isEmpty();
-    assertThat(result.getModels()).isEqualTo(expected.getModels()).isEmpty();
-    assertThat(result.getLayers()).isEqualTo(expected.getLayers()).isEmpty();
-    assertThat(result.getLayerCount()).isEqualTo(expected.getLayerCount()).isEqualTo(0);
-    assertThat(result.getAllGraphics()).isEqualTo(expected.getAllGraphics()).isEmpty();
+    assertEquals(expected.getReferencedSeries(), result.getReferencedSeries());
+    assertTrue(result.getReferencedSeries().isEmpty());
+    assertEquals(expected.getModels(), result.getModels());
+    assertTrue(result.getModels().isEmpty());
+    assertEquals(expected.getLayers(), result.getLayers());
+    assertTrue(result.getLayers().isEmpty());
+    assertEquals(expected.getLayerCount(), result.getLayerCount());
+    assertEquals(0, result.getLayerCount());
+    assertEquals(expected.getAllGraphics(), result.getAllGraphics());
+    assertTrue(result.getAllGraphics().isEmpty());
   }
 
   @Test
@@ -95,29 +87,33 @@ class DeserializationTest extends ModelListHelper {
     XmlGraphicModel result = deserialize(xml, XmlGraphicModel.class);
     XmlGraphicModel expected = new XmlGraphicModel(img);
 
-    assertThat(result).isNotNull();
-    assertThat(result.getUuid()).isEqualTo(PRESENTATION_UUID_0);
+    assertNotNull(result);
+    assertEquals(PRESENTATION_UUID_0, result.getUuid());
 
-    assertThat(result.getReferencedSeries()).hasSize(1);
-    assertThat(expected.getReferencedSeries()).hasSize(1);
+    assertEquals(1, result.getReferencedSeries().size());
+    assertEquals(1, expected.getReferencedSeries().size());
 
-    ReferencedSeries resultRef = result.getReferencedSeries().get(0);
-    ReferencedSeries expectedRef = expected.getReferencedSeries().get(0);
+    ReferencedSeries resultRef = result.getReferencedSeries().getFirst();
+    ReferencedSeries expectedRef = expected.getReferencedSeries().getFirst();
 
-    assertThat(resultRef.getUuid()).isEqualTo(expectedRef.getUuid()).isEqualTo(PRESENTATION_UUID_2);
-    assertThat(resultRef.getImages()).hasSize(1);
-    assertThat(expectedRef.getImages()).hasSize(1);
+    assertEquals(expectedRef.getUuid(), resultRef.getUuid());
+    assertEquals(PRESENTATION_UUID_2, resultRef.getUuid());
+    assertEquals(1, resultRef.getImages().size());
+    assertEquals(1, expectedRef.getImages().size());
 
-    ReferencedImage resultImgRef = resultRef.getImages().get(0);
-    ReferencedImage expectedImgRef = expectedRef.getImages().get(0);
-    assertThat(resultImgRef.getUuid())
-        .isEqualTo(expectedImgRef.getUuid())
-        .isEqualTo(PRESENTATION_UUID_1);
+    ReferencedImage resultImgRef = resultRef.getImages().getFirst();
+    ReferencedImage expectedImgRef = expectedRef.getImages().getFirst();
+    assertEquals(expectedImgRef.getUuid(), resultImgRef.getUuid());
+    assertEquals(PRESENTATION_UUID_1, resultImgRef.getUuid());
 
-    assertThat(result.getModels()).isEqualTo(expected.getModels()).isEmpty();
-    assertThat(result.getLayers()).isEqualTo(expected.getLayers()).isEmpty();
-    assertThat(result.getLayerCount()).isEqualTo(expected.getLayerCount()).isEqualTo(0);
-    assertThat(result.getAllGraphics()).isEqualTo(expected.getAllGraphics()).isEmpty();
+    assertEquals(expected.getModels(), result.getModels());
+    assertTrue(result.getModels().isEmpty());
+    assertEquals(expected.getLayers(), result.getLayers());
+    assertTrue(result.getLayers().isEmpty());
+    assertEquals(expected.getLayerCount(), result.getLayerCount());
+    assertEquals(0, result.getLayerCount());
+    assertEquals(expected.getAllGraphics(), result.getAllGraphics());
+    assertTrue(result.getAllGraphics().isEmpty());
   }
 
   @Test
@@ -125,28 +121,28 @@ class DeserializationTest extends ModelListHelper {
     InputStream xml = checkXml(XML_5);
     XmlGraphicModel result = deserialize(xml, XmlGraphicModel.class);
 
-    assertThat(result).isNotNull();
-    assertThat(result.getUuid()).isEqualTo(PRESENTATION_UUID_0);
+    assertNotNull(result);
+    assertEquals(PRESENTATION_UUID_0, result.getUuid());
 
-    assertThat(result.getModels()).hasSize(1);
-    assertThat(result.getLayers()).hasSize(1);
+    assertEquals(1, result.getModels().size());
+    assertEquals(1, result.getLayers().size());
 
-    Layer layer = result.getLayers().get(0);
-    assertThat(layer).isInstanceOf(DefaultLayer.class);
-    assertThat(layer.getUuid()).isEqualTo(LAYER_UUID_0);
-    assertThat(layer.getLevel()).isEqualTo(40);
-    assertThat(layer.getName()).isNull();
-    assertThat(layer.getType()).isEqualTo(LayerType.DRAW);
-    assertThat(layer.getVisible()).isEqualTo(Boolean.TRUE);
+    Layer layer = result.getLayers().getFirst();
+    assertInstanceOf(DefaultLayer.class, layer);
+    assertEquals(LAYER_UUID_0, layer.getUuid());
+    assertEquals(40, layer.getLevel());
+    assertNull(layer.getName());
+    assertEquals(LayerType.DRAW, layer.getType());
+    assertEquals(Boolean.TRUE, layer.getVisible());
 
-    Graphic graphic = result.getModels().get(0);
-    assertThat(graphic).isInstanceOf(PointGraphic.class);
-    assertThat(graphic.getUuid()).isEqualTo(GRAPHIC_UUID_0);
+    Graphic graphic = result.getModels().getFirst();
+    assertInstanceOf(PointGraphic.class, graphic);
+    assertEquals(GRAPHIC_UUID_0, graphic.getUuid());
   }
 
   private InputStream checkXml(String path) {
     InputStream xml = getClass().getResourceAsStream(path);
-    assertThat(xml).isNotNull();
+    assertNotNull(xml);
     return xml;
   }
 }

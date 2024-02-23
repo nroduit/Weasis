@@ -9,11 +9,12 @@
  */
 package org.weasis.acquire.explorer.core.bean;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.*;
 
+import java.util.AbstractMap;
+import java.util.Arrays;
 import java.util.Collections;
-import org.assertj.core.api.Assertions;
-import org.assertj.core.data.MapEntry;
+import java.util.Map;
 import org.dcm4che3.data.Tag;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -25,15 +26,13 @@ class GlobalTest extends GlobalHelper {
   @Test
   void testInitWithEmptyTaggable() {
     Global global = new Global();
-
-    Mockito.when(taggable.getTagEntrySetIterator())
-        .thenReturn(Collections.EMPTY_MAP.entrySet().iterator());
+    Mockito.when(taggable.getTagEntrySetIterator()).thenReturn(Collections.emptyIterator());
     // Method to test
     global.init(taggable);
 
     // Tests
-    assertThat(global.containTagKey(TagD.get(Tag.StudyInstanceUID))).isTrue();
-    assertThat(global.getTagValue(TagD.get(Tag.StudyInstanceUID))).isNotNull();
+    assertTrue(global.containTagKey(TagD.get(Tag.StudyInstanceUID)));
+    assertNotNull(global.getTagValue(TagD.get(Tag.StudyInstanceUID)));
   }
 
   @Test
@@ -52,21 +51,28 @@ class GlobalTest extends GlobalHelper {
 
     // Tests
     TagW studyTag = TagD.get(Tag.StudyInstanceUID);
-    assertThat(global.containTagKey(studyTag)).isTrue();
+    assertTrue(global.containTagKey(studyTag));
     global.setTag(studyTag, studyInstanceUIDValue);
-    assertThat(global.getTagEntrySet())
-        .containsExactlyInAnyOrder(
-            Assertions.entry(studyTag, studyInstanceUIDValue),
-            entry(GlobalTag.patientId),
-            entry(GlobalTag.patientName),
-            entry(GlobalTag.issuerOfPatientId),
-            entry(GlobalTag.patientBirthDate),
-            entry(GlobalTag.patientSex),
-            entry(GlobalTag.studyDate),
-            entry(GlobalTag.modality));
+    assertTrue(
+        global
+            .getTagEntrySet()
+            .containsAll(
+                Arrays.asList(
+                    entry(studyTag, studyInstanceUIDValue),
+                    entry(GlobalTag.patientId),
+                    entry(GlobalTag.patientName),
+                    entry(GlobalTag.issuerOfPatientId),
+                    entry(GlobalTag.patientBirthDate),
+                    entry(GlobalTag.patientSex),
+                    entry(GlobalTag.studyDate),
+                    entry(GlobalTag.modality))));
   }
 
-  private static MapEntry<TagW, Object> entry(GlobalTag tag) {
-    return Assertions.entry(tag.tagW, tag.value);
+  private static Map.Entry<TagW, Object> entry(GlobalTag tag) {
+    return entry(tag.tagW, tag.value);
+  }
+
+  private static Map.Entry<TagW, Object> entry(TagW tag, Object value) {
+    return new AbstractMap.SimpleEntry<>(tag, value);
   }
 }

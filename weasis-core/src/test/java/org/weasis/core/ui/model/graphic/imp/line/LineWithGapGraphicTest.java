@@ -9,7 +9,7 @@
  */
 package org.weasis.core.ui.model.graphic.imp.line;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.awt.Color;
 import java.awt.geom.Point2D;
@@ -61,7 +61,7 @@ public class LineWithGapGraphicTest extends GraphicTester<LineWithGapGraphic> {
   @Override
   public void additionalTestsForDeserializeBasicGraphic(
       LineWithGapGraphic result, LineWithGapGraphic expected) {
-    assertThat(result.getGapSize()).isEqualTo(LineWithGapGraphic.DEFAULT_GAP_SIZE);
+    assertEquals(LineWithGapGraphic.DEFAULT_GAP_SIZE, result.getGapSize());
   }
 
   @Override

@@ -9,7 +9,7 @@
  */
 package org.weasis.core.ui.model.graphic.imp;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.awt.Color;
 import java.awt.geom.Point2D;
@@ -69,7 +69,7 @@ public class PixelInfoGraphicTest extends GraphicTester<PixelInfoGraphic> {
       PixelInfoGraphic result, PixelInfoGraphic expected) {
     AnnotationGraphicTest.checkForDeserializeBasicGraphic(result, expected);
 
-    assertThat(result.getPixelInfo()).isNull();
+    assertNull(result.getPixelInfo());
   }
 
   @Override

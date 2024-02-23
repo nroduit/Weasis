@@ -9,7 +9,7 @@
  */
 package org.weasis.core.ui.model.graphic.imp;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.awt.Color;
 import java.awt.geom.Point2D;
@@ -61,7 +61,7 @@ public class PointGraphicTest extends GraphicTester<PointGraphic> {
   @Override
   public void additionalTestsForDeserializeBasicGraphic(
       PointGraphic result, PointGraphic expected) {
-    assertThat(result.getPointSize()).isEqualTo(PointGraphic.DEFAULT_POINT_SIZE);
+    assertEquals(PointGraphic.DEFAULT_POINT_SIZE, result.getPointSize());
   }
 
   @Override
@@ -82,6 +82,6 @@ public class PointGraphicTest extends GraphicTester<PointGraphic> {
   @Override
   public void additionalTestsForDeserializeCompleteGraphic(
       PointGraphic result, PointGraphic expected) {
-    assertThat(result.getPointSize()).isEqualTo(expected.getPointSize());
+    assertEquals(expected.getPointSize(), result.getPointSize());
   }
 }

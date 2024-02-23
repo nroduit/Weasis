@@ -9,7 +9,7 @@
  */
 package org.weasis.acquire.explorer;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.*;
 
 import org.junit.jupiter.api.Test;
 import org.weasis.core.api.image.util.Unit;
@@ -20,16 +20,16 @@ class AcquireImageValuesTest {
   void testConstructor() {
     AcquireImageValues a1 = new AcquireImageValues();
 
-    assertThat(a1).isNotNull();
-    assertThat(a1.getBrightness()).isZero();
-    assertThat(a1.getCalibrationRatio()).isEqualTo(1.0);
-    assertThat(a1.getCalibrationUnit()).isEqualTo(Unit.PIXEL);
-    assertThat(a1.getContrast()).isEqualTo(100);
-    assertThat(a1.getCropZone()).isNull();
-    assertThat(a1.getFullRotation()).isZero();
-    assertThat(a1.getLayerOffset()).isNull();
-    assertThat(a1.getOrientation()).isZero();
-    assertThat(a1.getRotation()).isZero();
-    assertThat(a1.isAutoLevel()).isFalse();
+    assertNotNull(a1);
+    assertEquals(0, a1.getBrightness());
+    assertEquals(1.0, a1.getCalibrationRatio());
+    assertEquals(Unit.PIXEL, a1.getCalibrationUnit());
+    assertEquals(100, a1.getContrast());
+    assertNull(a1.getCropZone());
+    assertEquals(0, a1.getFullRotation());
+    assertNull(a1.getLayerOffset());
+    assertEquals(0, a1.getOrientation());
+    assertEquals(0, a1.getRotation());
+    assertFalse(a1.isAutoLevel());
   }
 }

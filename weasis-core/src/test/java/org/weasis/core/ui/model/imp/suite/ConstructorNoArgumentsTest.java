@@ -9,7 +9,7 @@
  */
 package org.weasis.core.ui.model.imp.suite;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.*;
 
 import org.junit.jupiter.api.Test;
 import org.weasis.core.ui.model.AbstractGraphicModel;
@@ -24,22 +24,20 @@ class ConstructorNoArgumentsTest extends ModelListHelper {
   void testXmlModelList() {
     GraphicModel actual = new XmlGraphicModel();
 
-    assertThat(actual)
-        .isInstanceOfAny(
-            DefaultUUID.class,
-            GraphicModel.class,
-            AbstractGraphicModel.class,
-            XmlGraphicModel.class);
+    assertInstanceOf(DefaultUUID.class, actual);
+    assertInstanceOf(GraphicModel.class, actual);
+    assertInstanceOf(AbstractGraphicModel.class, actual);
+    assertInstanceOf(XmlGraphicModel.class, actual);
 
-    assertThat(actual.getReferencedSeries()).isEmpty();
-    assertThat(actual.getLayers()).isEmpty();
-    assertThat(actual.getModels()).isEmpty();
-    assertThat(actual.getAllGraphics()).isEmpty();
-    assertThat(actual.groupLayerByType()).isEmpty();
-    assertThat(actual.getSelectedDraggableGraphics()).isEmpty();
-    assertThat(actual.getSelectedGraphics()).isEmpty();
-    assertThat(actual.getGraphicSelectionListeners()).isEmpty();
+    assertTrue(actual.getReferencedSeries().isEmpty());
+    assertTrue(actual.getLayers().isEmpty());
+    assertTrue(actual.getModels().isEmpty());
+    assertTrue(actual.getAllGraphics().isEmpty());
+    assertTrue(actual.groupLayerByType().isEmpty());
+    assertTrue(actual.getSelectedDraggableGraphics().isEmpty());
+    assertTrue(actual.getSelectedGraphics().isEmpty());
+    assertTrue(actual.getGraphicSelectionListeners().isEmpty());
 
-    assertThat(actual.getLayerCount()).isZero();
+    assertEquals(0, actual.getLayerCount());
   }
 }

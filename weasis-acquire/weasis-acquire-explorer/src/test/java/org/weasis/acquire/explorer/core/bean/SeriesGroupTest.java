@@ -9,7 +9,7 @@
  */
 package org.weasis.acquire.explorer.core.bean;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -34,17 +34,17 @@ class SeriesGroupTest {
 
   @Test
   void testToString() {
-    assertThat(s1.toString()).hasToString("Other"); // NON-NLS
-    assertThat(s2.toString())
-        .hasToString(DateTimeFormatter.ofLocalizedDateTime(FormatStyle.MEDIUM).format(today));
-    assertThat(s3.toString()).hasToString(TEST_SERIES);
+    assertEquals("Other", s1.toString());
+    assertEquals(
+        DateTimeFormatter.ofLocalizedDateTime(FormatStyle.MEDIUM).format(today), s2.toString());
+    assertEquals(TEST_SERIES, s3.toString());
   }
 
   @Test
   void testGetters() {
-    assertThat(s1.getType()).isEqualTo(SeriesGroup.Type.NONE);
-    assertThat(s2.getType()).isEqualTo(SeriesGroup.Type.DATE);
-    assertThat(s3.getType()).isEqualTo(SeriesGroup.Type.NAME);
+    assertEquals(SeriesGroup.Type.NONE, s1.getType());
+    assertEquals(SeriesGroup.Type.DATE, s2.getType());
+    assertEquals(SeriesGroup.Type.NAME, s3.getType());
   }
 
   @Test
@@ -67,6 +67,6 @@ class SeriesGroupTest {
   }
 
   private void assetSorted(SeriesGroup[] input, SeriesGroup[] expected) {
-    assertThat(Arrays.stream(input).sorted().toArray(SeriesGroup[]::new)).isEqualTo(expected);
+    assertArrayEquals(expected, Arrays.stream(input).sorted().toArray(SeriesGroup[]::new));
   }
 }

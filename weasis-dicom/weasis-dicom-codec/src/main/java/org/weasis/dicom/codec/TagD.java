@@ -761,16 +761,18 @@ public class TagD extends TagW {
   public static TagW getUID(Level level) {
     if (level != null) {
       switch (level) {
-        case PATIENT:
+        case PATIENT -> {
           return TagW.PatientPseudoUID;
-        case STUDY:
+        }
+        case STUDY -> {
           return TagD.get(Tag.StudyInstanceUID);
-        case SERIES:
+        }
+        case SERIES -> {
           return TagW.SubseriesInstanceUID;
-        case INSTANCE, FRAME:
+        }
+        case INSTANCE, FRAME -> {
           return TagD.get(Tag.SOPInstanceUID);
-        default:
-          break;
+        }
       }
     }
     return TagW.UnknownTag;
@@ -907,20 +909,17 @@ public class TagD extends TagW {
 
     String unit;
     switch (value.charAt(value.length() - 1)) {
-      case 'Y': // NON-NLS
-        unit = ChronoUnit.YEARS.toString();
-        break;
-      case 'M': // NON-NLS
-        unit = ChronoUnit.MONTHS.toString();
-        break;
-      case 'W': // NON-NLS
-        unit = ChronoUnit.WEEKS.toString();
-        break;
-      case 'D': // NON-NLS
-        unit = ChronoUnit.DAYS.toString();
-        break;
-      default:
+      case 'Y' -> // NON-NLS
+          unit = ChronoUnit.YEARS.toString();
+      case 'M' -> // NON-NLS
+          unit = ChronoUnit.MONTHS.toString();
+      case 'W' -> // NON-NLS
+          unit = ChronoUnit.WEEKS.toString();
+      case 'D' -> // NON-NLS
+          unit = ChronoUnit.DAYS.toString();
+      default -> {
         return StringUtil.EMPTY_STRING;
+      }
     }
 
     // Remove the last character and leading 0

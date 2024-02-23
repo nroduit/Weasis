@@ -9,7 +9,7 @@
  */
 package org.weasis.core.ui.model.imp.suite;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.*;
 
 import org.junit.jupiter.api.Test;
 import org.weasis.core.api.media.data.ImageElement;
@@ -42,7 +42,7 @@ class SerializationTest extends ModelListHelper {
             TPL_XML_PREFIX
                 + "<presentation uuid=\"%s\"><references/><layers/><graphics/></presentation>", // NON-NLS
             UUID_1);
-    assertThat(actual).isEqualTo(expected);
+    assertEquals(expected, actual);
   }
 
   @Test
@@ -53,8 +53,8 @@ class SerializationTest extends ModelListHelper {
     Graphic graphic = PointGraphicTest.COMPLETE_OBJECT;
     model.addGraphic(graphic);
 
-    assertThat(model.getLayers()).hasSize(1);
-    Layer layer = model.getLayers().get(0);
+    assertEquals(1, model.getLayers().size());
+    Layer layer = model.getLayers().getFirst();
 
     String actual = serialize(model);
     String expected =
@@ -80,7 +80,7 @@ class SerializationTest extends ModelListHelper {
             layer.getUuid(),
             graphic.getUuid());
 
-    assertThat(actual).isEqualTo(expected);
+    assertEquals(expected, actual);
   }
 
   @Test
@@ -106,7 +106,7 @@ class SerializationTest extends ModelListHelper {
             UUID_3,
             UUID_2);
 
-    assertThat(actual).isEqualTo(expected);
+    assertEquals(expected, actual);
   }
 
   @Test
@@ -137,18 +137,18 @@ class SerializationTest extends ModelListHelper {
     model.addGraphic(angleGraphic);
     model.addGraphic(cobbAngleGraphic);
 
-    assertThat(model.getLayers()).hasSize(1);
-    Layer layer = model.getLayers().get(0);
+    assertEquals(1, model.getLayers().size());
+    Layer layer = model.getLayers().getFirst();
 
-    assertThat(pointGraphic.getLayer()).isEqualTo(layer);
-    assertThat(pixelInfoGraphic.getLayer()).isEqualTo(layer);
-    assertThat(annotationGraphic.getLayer()).isEqualTo(layer);
-    assertThat(lineGraphic.getLayer()).isEqualTo(layer);
-    assertThat(polylineGraphic.getLayer()).isEqualTo(layer);
-    assertThat(polygonGraphic.getLayer()).isEqualTo(layer);
-    assertThat(rectangleGraphic.getLayer()).isEqualTo(layer);
-    assertThat(angleGraphic.getLayer()).isEqualTo(layer);
-    assertThat(cobbAngleGraphic.getLayer()).isEqualTo(layer);
+    assertEquals(layer, pointGraphic.getLayer());
+    assertEquals(layer, pixelInfoGraphic.getLayer());
+    assertEquals(layer, annotationGraphic.getLayer());
+    assertEquals(layer, lineGraphic.getLayer());
+    assertEquals(layer, polylineGraphic.getLayer());
+    assertEquals(layer, polygonGraphic.getLayer());
+    assertEquals(layer, rectangleGraphic.getLayer());
+    assertEquals(layer, angleGraphic.getLayer());
+    assertEquals(layer, cobbAngleGraphic.getLayer());
 
     String actual = serialize(model);
     String expected =
@@ -180,7 +180,7 @@ class SerializationTest extends ModelListHelper {
             UUID_3,
             UUID_2);
 
-    assertThat(actual).isEqualTo(expected);
+    assertEquals(expected, actual);
   }
 
   @Test
@@ -215,24 +215,24 @@ class SerializationTest extends ModelListHelper {
     model.addGraphic(angleGraphic);
     model.addGraphic(cobbAngleGraphic);
 
-    assertThat(model.getLayers()).hasSize(3);
+    assertEquals(3, model.getLayers().size());
     Layer layer1 = model.getLayers().get(0);
     Layer layer2 = model.getLayers().get(1);
     Layer layer3 = model.getLayers().get(2);
 
-    assertThat(layer1).isNotNull();
-    assertThat(layer2).isNotNull();
-    assertThat(layer3).isNotNull();
+    assertNotNull(layer1);
+    assertNotNull(layer2);
+    assertNotNull(layer3);
 
-    assertThat(pointGraphic.getLayer()).isEqualTo(layer1);
-    assertThat(pixelInfoGraphic.getLayer()).isEqualTo(layer2);
-    assertThat(annotationGraphic.getLayer()).isEqualTo(layer1);
-    assertThat(lineGraphic.getLayer()).isEqualTo(layer3);
-    assertThat(polylineGraphic.getLayer()).isEqualTo(layer1);
-    assertThat(polygonGraphic.getLayer()).isEqualTo(layer1);
-    assertThat(rectangleGraphic.getLayer()).isEqualTo(layer3);
-    assertThat(angleGraphic.getLayer()).isEqualTo(layer1);
-    assertThat(cobbAngleGraphic.getLayer()).isEqualTo(layer1);
+    assertEquals(layer1, pointGraphic.getLayer());
+    assertEquals(layer2, pixelInfoGraphic.getLayer());
+    assertEquals(layer1, annotationGraphic.getLayer());
+    assertEquals(layer3, lineGraphic.getLayer());
+    assertEquals(layer1, polylineGraphic.getLayer());
+    assertEquals(layer1, polygonGraphic.getLayer());
+    assertEquals(layer3, rectangleGraphic.getLayer());
+    assertEquals(layer1, angleGraphic.getLayer());
+    assertEquals(layer1, cobbAngleGraphic.getLayer());
 
     String actual = serialize(model);
     String expected =
@@ -266,7 +266,7 @@ class SerializationTest extends ModelListHelper {
             UUID_3,
             UUID_2);
 
-    assertThat(actual).isEqualTo(expected);
+    assertEquals(expected, actual);
     consoleDisplay(model);
   }
 }

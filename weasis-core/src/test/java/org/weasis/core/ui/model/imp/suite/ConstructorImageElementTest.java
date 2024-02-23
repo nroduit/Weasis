@@ -9,7 +9,7 @@
  */
 package org.weasis.core.ui.model.imp.suite;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.*;
 
 import org.junit.jupiter.api.Test;
 import org.weasis.core.api.media.data.ImageElement;
@@ -28,27 +28,25 @@ class ConstructorImageElementTest extends ModelListHelper {
     ImageElement img = mockImage(UUID_1, UUID_2);
     GraphicModel actual = new XmlGraphicModel(img);
 
-    assertThat(actual)
-        .isInstanceOfAny(
-            DefaultUUID.class,
-            GraphicModel.class,
-            AbstractGraphicModel.class,
-            XmlGraphicModel.class);
+    assertInstanceOf(DefaultUUID.class, actual);
+    assertInstanceOf(GraphicModel.class, actual);
+    assertInstanceOf(AbstractGraphicModel.class, actual);
+    assertInstanceOf(XmlGraphicModel.class, actual);
 
-    assertThat(actual.getReferencedSeries()).hasSize(1);
-    assertThat(actual.getReferencedSeries().get(0).getUuid()).isEqualTo(UUID_2);
-    assertThat(actual.getReferencedSeries().get(0).getImages()).hasSize(1);
-    assertThat(actual.getReferencedSeries().get(0).getImages().get(0).getUuid()).isEqualTo(UUID_1);
+    assertEquals(1, actual.getReferencedSeries().size());
+    assertEquals(UUID_2, actual.getReferencedSeries().getFirst().getUuid());
+    assertEquals(1, actual.getReferencedSeries().getFirst().getImages().size());
+    assertEquals(UUID_1, actual.getReferencedSeries().getFirst().getImages().getFirst().getUuid());
 
-    assertThat(actual.getLayers()).isEmpty();
-    assertThat(actual.getModels()).isEmpty();
-    assertThat(actual.getAllGraphics()).isEmpty();
-    assertThat(actual.groupLayerByType()).isEmpty();
-    assertThat(actual.getSelectedDraggableGraphics()).isEmpty();
-    assertThat(actual.getSelectedGraphics()).isEmpty();
-    assertThat(actual.getGraphicSelectionListeners()).isEmpty();
+    assertTrue(actual.getLayers().isEmpty());
+    assertTrue(actual.getModels().isEmpty());
+    assertTrue(actual.getAllGraphics().isEmpty());
+    assertTrue(actual.groupLayerByType().isEmpty());
+    assertTrue(actual.getSelectedDraggableGraphics().isEmpty());
+    assertTrue(actual.getSelectedGraphics().isEmpty());
+    assertTrue(actual.getGraphicSelectionListeners().isEmpty());
 
-    assertThat(actual.getLayerCount()).isZero();
+    assertEquals(0, actual.getLayerCount());
   }
 
   @Test
@@ -56,33 +54,32 @@ class ConstructorImageElementTest extends ModelListHelper {
     ImageElement img = mockImage(null, UUID_2);
     GraphicModel actual = new XmlGraphicModel(img);
 
-    assertThat(actual)
-        .isInstanceOfAny(
-            DefaultUUID.class,
-            GraphicModel.class,
-            AbstractGraphicModel.class,
-            XmlGraphicModel.class);
+    assertInstanceOf(DefaultUUID.class, actual);
+    assertInstanceOf(GraphicModel.class, actual);
+    assertInstanceOf(AbstractGraphicModel.class, actual);
+    assertInstanceOf(XmlGraphicModel.class, actual);
 
-    assertThat(actual.getReferencedSeries()).hasSize(1);
+    assertEquals(1, actual.getReferencedSeries().size());
 
-    ReferencedSeries referencedSeries = actual.getReferencedSeries().get(0);
-    assertThat(referencedSeries).isNotNull();
-    assertThat(referencedSeries.getUuid()).isEqualTo(UUID_2);
-    assertThat(referencedSeries.getImages()).hasSize(1);
+    ReferencedSeries referencedSeries = actual.getReferencedSeries().getFirst();
+    assertNotNull(referencedSeries);
+    assertEquals(UUID_2, referencedSeries.getUuid());
+    assertEquals(1, referencedSeries.getImages().size());
 
-    ReferencedImage referencedImage = referencedSeries.getImages().get(0);
-    assertThat(referencedImage).isNotNull();
-    assertThat(referencedImage.getUuid()).isNotNull().isNotEmpty();
+    ReferencedImage referencedImage = referencedSeries.getImages().getFirst();
+    assertNotNull(referencedImage);
+    assertNotNull(referencedImage.getUuid());
+    assertFalse(referencedImage.getUuid().isEmpty());
 
-    assertThat(actual.getLayers()).isEmpty();
-    assertThat(actual.getModels()).isEmpty();
-    assertThat(actual.getAllGraphics()).isEmpty();
-    assertThat(actual.groupLayerByType()).isEmpty();
-    assertThat(actual.getSelectedDraggableGraphics()).isEmpty();
-    assertThat(actual.getSelectedGraphics()).isEmpty();
-    assertThat(actual.getGraphicSelectionListeners()).isEmpty();
+    assertTrue(actual.getLayers().isEmpty());
+    assertTrue(actual.getModels().isEmpty());
+    assertTrue(actual.getAllGraphics().isEmpty());
+    assertTrue(actual.groupLayerByType().isEmpty());
+    assertTrue(actual.getSelectedDraggableGraphics().isEmpty());
+    assertTrue(actual.getSelectedGraphics().isEmpty());
+    assertTrue(actual.getGraphicSelectionListeners().isEmpty());
 
-    assertThat(actual.getLayerCount()).isZero();
+    assertEquals(0, actual.getLayerCount());
   }
 
   @Test
@@ -90,31 +87,30 @@ class ConstructorImageElementTest extends ModelListHelper {
     ImageElement img = mockImage(UUID_1, null);
     GraphicModel actual = new XmlGraphicModel(img);
 
-    assertThat(actual)
-        .isInstanceOfAny(
-            DefaultUUID.class,
-            GraphicModel.class,
-            AbstractGraphicModel.class,
-            XmlGraphicModel.class);
+    assertInstanceOf(DefaultUUID.class, actual);
+    assertInstanceOf(GraphicModel.class, actual);
+    assertInstanceOf(AbstractGraphicModel.class, actual);
+    assertInstanceOf(XmlGraphicModel.class, actual);
 
-    ReferencedSeries referencedSeries = actual.getReferencedSeries().get(0);
-    assertThat(referencedSeries).isNotNull();
-    assertThat(referencedSeries.getUuid()).isNotNull().isNotEmpty();
-    assertThat(referencedSeries.getImages()).hasSize(1);
+    ReferencedSeries referencedSeries = actual.getReferencedSeries().getFirst();
+    assertNotNull(referencedSeries);
+    assertNotNull(referencedSeries.getUuid());
+    assertFalse(referencedSeries.getUuid().isEmpty());
+    assertEquals(1, referencedSeries.getImages().size());
 
-    ReferencedImage referencedImage = referencedSeries.getImages().get(0);
-    assertThat(referencedImage).isNotNull();
-    assertThat(referencedImage.getUuid()).isEqualTo(UUID_1);
+    ReferencedImage referencedImage = referencedSeries.getImages().getFirst();
+    assertNotNull(referencedImage);
+    assertEquals(UUID_1, referencedImage.getUuid());
 
-    assertThat(actual.getLayers()).isEmpty();
-    assertThat(actual.getModels()).isEmpty();
-    assertThat(actual.getAllGraphics()).isEmpty();
-    assertThat(actual.groupLayerByType()).isEmpty();
-    assertThat(actual.getSelectedDraggableGraphics()).isEmpty();
-    assertThat(actual.getSelectedGraphics()).isEmpty();
-    assertThat(actual.getGraphicSelectionListeners()).isEmpty();
+    assertTrue(actual.getLayers().isEmpty());
+    assertTrue(actual.getModels().isEmpty());
+    assertTrue(actual.getAllGraphics().isEmpty());
+    assertTrue(actual.groupLayerByType().isEmpty());
+    assertTrue(actual.getSelectedDraggableGraphics().isEmpty());
+    assertTrue(actual.getSelectedGraphics().isEmpty());
+    assertTrue(actual.getGraphicSelectionListeners().isEmpty());
 
-    assertThat(actual.getLayerCount()).isZero();
+    assertEquals(0, actual.getLayerCount());
   }
 
   @Test
@@ -122,30 +118,30 @@ class ConstructorImageElementTest extends ModelListHelper {
     ImageElement img = mockImage(null, null);
     GraphicModel actual = new XmlGraphicModel(img);
 
-    assertThat(actual)
-        .isInstanceOfAny(
-            DefaultUUID.class,
-            GraphicModel.class,
-            AbstractGraphicModel.class,
-            XmlGraphicModel.class);
+    assertInstanceOf(DefaultUUID.class, actual);
+    assertInstanceOf(GraphicModel.class, actual);
+    assertInstanceOf(AbstractGraphicModel.class, actual);
+    assertInstanceOf(XmlGraphicModel.class, actual);
 
-    ReferencedSeries referencedSeries = actual.getReferencedSeries().get(0);
-    assertThat(referencedSeries).isNotNull();
-    assertThat(referencedSeries.getUuid()).isNotNull().isNotEmpty();
-    assertThat(referencedSeries.getImages()).hasSize(1);
+    ReferencedSeries referencedSeries = actual.getReferencedSeries().getFirst();
+    assertNotNull(referencedSeries);
+    assertNotNull(referencedSeries.getUuid());
+    assertFalse(referencedSeries.getUuid().isEmpty());
+    assertEquals(1, referencedSeries.getImages().size());
 
-    ReferencedImage referencedImage = referencedSeries.getImages().get(0);
-    assertThat(referencedImage).isNotNull();
-    assertThat(referencedImage.getUuid()).isNotNull().isNotEmpty();
+    ReferencedImage referencedImage = referencedSeries.getImages().getFirst();
+    assertNotNull(referencedImage);
+    assertNotNull(referencedImage.getUuid());
+    assertFalse(referencedImage.getUuid().isEmpty());
 
-    assertThat(actual.getLayers()).isEmpty();
-    assertThat(actual.getModels()).isEmpty();
-    assertThat(actual.getAllGraphics()).isEmpty();
-    assertThat(actual.groupLayerByType()).isEmpty();
-    assertThat(actual.getSelectedDraggableGraphics()).isEmpty();
-    assertThat(actual.getSelectedGraphics()).isEmpty();
-    assertThat(actual.getGraphicSelectionListeners()).isEmpty();
+    assertTrue(actual.getLayers().isEmpty());
+    assertTrue(actual.getModels().isEmpty());
+    assertTrue(actual.getAllGraphics().isEmpty());
+    assertTrue(actual.groupLayerByType().isEmpty());
+    assertTrue(actual.getSelectedDraggableGraphics().isEmpty());
+    assertTrue(actual.getSelectedGraphics().isEmpty());
+    assertTrue(actual.getGraphicSelectionListeners().isEmpty());
 
-    assertThat(actual.getLayerCount()).isZero();
+    assertEquals(0, actual.getLayerCount());
   }
 }

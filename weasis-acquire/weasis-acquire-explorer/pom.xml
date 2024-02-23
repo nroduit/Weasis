@@ -39,16 +39,8 @@
           <bnd>
             -includeresource.all: lib/=target/dependency/;lib:=true
             Export-Package: org.weasis.acquire.explorer.*
+            -exportcontents:net.samuelcampos.usbdrivedetector.*
           </bnd>
-        </configuration>
-      </plugin>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-surefire-plugin</artifactId>
-        <configuration>
-          <argLine>
-            -Xshare:off
-          </argLine>
         </configuration>
       </plugin>
     </plugins>

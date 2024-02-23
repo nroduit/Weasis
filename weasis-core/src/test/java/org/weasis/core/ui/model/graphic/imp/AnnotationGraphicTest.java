@@ -9,7 +9,7 @@
  */
 package org.weasis.core.ui.model.graphic.imp;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.awt.Color;
 import java.awt.geom.Point2D;
@@ -66,10 +66,10 @@ public class AnnotationGraphicTest extends GraphicTester<AnnotationGraphic> {
 
   public static void checkForDeserializeBasicGraphic(
       AnnotationGraphic result, AnnotationGraphic expected) {
-    assertThat(result.getLabels()).isNullOrEmpty();
-    assertThat(result.getLabelBounds()).isNull();
-    assertThat(result.getLabelWidth()).isNull();
-    assertThat(result.getLabelHeight()).isNull();
+    assertTrue(result.getLabels() == null || result.getLabels().length == 0);
+    assertNull(result.getLabelBounds());
+    assertNull(result.getLabelWidth());
+    assertNull(result.getLabelHeight());
   }
 
   @Override

@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <groupId>org.weasis</groupId>
+    <artifactId>weasis-framework</artifactId>
+    <!--suppress MavenPropertyInParent -->
+    <version>${revision}${changelist}</version>
+    <relativePath>../pom.xml</relativePath>
+  </parent>
+
+  <artifactId>tests</artifactId>
+  <name>Tests</name>
+  <packaging>pom</packaging>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.jacoco</groupId>
+        <artifactId>jacoco-maven-plugin</artifactId>
+        <configuration>
+          <includes>
+            <include>org/weasis/core/**/*.*</include>
+            <include>org/weasis/acquire/**/*.*</include>
+            <include>org/weasis/dicom/**/*.*</include>
+          </includes>
+          <excludes>
+            <exclude>**/package-info.java</exclude>
+            <!-- Exclude weasis-dicom-tools library-->
+            <exclude>org/weasis/dicom/mf/*.*</exclude>
+            <exclude>org/weasis/dicom/op/*.*</exclude>
+            <exclude>org/weasis/dicom/param/*.*</exclude>
+            <exclude>org/weasis/dicom/tool/*.*</exclude>
+            <exclude>org/weasis/dicom/util/*.*</exclude>
+            <exclude>org/weasis/dicom/web/*.*</exclude>
+            <!-- Exclude weasis-core-img library-->
+            <exclude>org/weasis/core/util/*.*</exclude>
+          </excludes>
+        </configuration>
+        <executions>
+          <execution>
+            <id>report</id>
+            <goals>
+              <goal>report-aggregate</goal>
+            </goals>
+            <phase>verify</phase>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
+
+  <dependencies>
+    <dependency>
+      <groupId>org.weasis.acquire</groupId>
+      <artifactId>weasis-acquire-explorer</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.weasis.dicom</groupId>
+      <artifactId>weasis-dicom-codec</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.weasis.core</groupId>
+      <artifactId>weasis-core</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+  </dependencies>
+</project>
