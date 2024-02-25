@@ -180,7 +180,7 @@
           <artifactId>maven-surefire-plugin</artifactId>
           <version>3.2.5</version>
           <configuration>
-            <argLine>@{argLine} -Xshare:off -javaagent:${net.bytebuddy:byte-buddy-agent:jar}</argLine>
+            <argLine>@{argLine} --enable-preview -Xshare:off -javaagent:${net.bytebuddy:byte-buddy-agent:jar}</argLine>
             <parallel>all</parallel>
           </configuration>
         </plugin>
