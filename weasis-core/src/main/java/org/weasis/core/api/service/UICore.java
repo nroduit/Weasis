@@ -136,11 +136,12 @@ public final class UICore {
     FileUtil.readProperties(new File(dataFolder, "persistence.properties"), localPersistence);
   }
 
+  private static class Holder {
+    private static final UICore INSTANCE = new UICore();
+  }
+
   public static UICore getInstance() {
-    if (INSTANCE == null) {
-      INSTANCE = new UICore();
-    }
-    return INSTANCE;
+    return Holder.INSTANCE;
   }
 
   private void readSystemPreferences(BundleContext context) {
