@@ -65,7 +65,7 @@ public final class UICore {
   public static final String CONFIRM_CLOSE = "weasis.confirm.closing";
   public static final String LINUX_WINDOWS_DECORATION = "weasis.linux.windows.decoration";
   private static final Logger LOGGER = LoggerFactory.getLogger(UICore.class);
-  private static final UICore INSTANCE = new UICore();
+  private static UICore INSTANCE;
   private final ToolBarContainer toolbarContainer;
   public final List<ViewerPlugin<?>> viewerPlugins;
   private final List<DataExplorerView> explorerPlugins;
@@ -137,6 +137,9 @@ public final class UICore {
   }
 
   public static UICore getInstance() {
+    if (INSTANCE == null) {
+      INSTANCE = new UICore();
+    }
     return INSTANCE;
   }
 
