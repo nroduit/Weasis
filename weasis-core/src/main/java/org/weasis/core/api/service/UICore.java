@@ -65,7 +65,6 @@ public final class UICore {
   public static final String CONFIRM_CLOSE = "weasis.confirm.closing";
   public static final String LINUX_WINDOWS_DECORATION = "weasis.linux.windows.decoration";
   private static final Logger LOGGER = LoggerFactory.getLogger(UICore.class);
-  private static UICore INSTANCE;
   private final ToolBarContainer toolbarContainer;
   public final List<ViewerPlugin<?>> viewerPlugins;
   private final List<DataExplorerView> explorerPlugins;
@@ -262,19 +261,19 @@ public final class UICore {
   }
 
   public String getConfigServiceUrl() {
-    return INSTANCE.getSystemPreferences().getProperty("weasis.config.url");
+    return Holder.INSTANCE.getSystemPreferences().getProperty("weasis.config.url");
   }
 
   public String getStatisticServiceUrl() {
-    return INSTANCE.getSystemPreferences().getProperty("weasis.stat.url");
+    return Holder.INSTANCE.getSystemPreferences().getProperty("weasis.stat.url");
   }
 
   public boolean isLocalSession() {
-    return INSTANCE.getSystemPreferences().getBooleanProperty("weasis.pref.local.session", false);
+    return Holder.INSTANCE.getSystemPreferences().getBooleanProperty("weasis.pref.local.session", false);
   }
 
   public boolean isStoreLocalSession() {
-    return INSTANCE
+    return Holder.INSTANCE
         .getSystemPreferences()
         .getBooleanProperty("weasis.pref.store.local.session", false);
   }
