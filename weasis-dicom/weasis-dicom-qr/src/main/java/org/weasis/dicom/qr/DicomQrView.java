@@ -234,7 +234,7 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
               Tag.AccessionNumber,
               Tag.StudyID,
               Tag.StudyDescription,
-              Tag.InstitutionName,
+              Tag.StudyInstanceUID,
               Tag.ReferringPhysicianName,
               Tag.PerformingPhysicianName,
               Tag.NameOfPhysiciansReadingStudy));
@@ -708,7 +708,6 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
       addReturnTags(p, CFind.AccessionNumber);
       addReturnTags(p, CFind.ReferringPhysicianName);
       addReturnTags(p, CFind.StudyID);
-      addReturnTags(p, new DicomParam(Tag.InstitutionName));
       addReturnTags(p, new DicomParam(Tag.ModalitiesInStudy));
       addReturnTags(p, new DicomParam(Tag.NumberOfStudyRelatedSeries));
       addReturnTags(p, new DicomParam(Tag.NumberOfStudyRelatedInstances));
