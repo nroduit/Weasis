@@ -30,8 +30,6 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.lang.System.Logger;
-import java.lang.System.Logger.Level;
 import java.net.Authenticator;
 import java.net.HttpURLConnection;
 import java.net.PasswordAuthentication;
@@ -56,12 +54,13 @@ import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
 import org.osgi.framework.Constants;
 import org.osgi.framework.Version;
+import org.slf4j.LoggerFactory;
 import org.weasis.launcher.WeasisLauncher.Type;
 import org.weasis.pref.AppPreferences;
 import org.weasis.pref.Preference;
 
 public class ConfigData {
-  private static final Logger LOGGER = System.getLogger(ConfigData.class.getName());
+  private static final org.slf4j.Logger LOGGER = LoggerFactory.getLogger(ConfigData.class);
 
   // Params, see
   // https://nroduit.github.io/en/getting-started/weasis-protocol/#modify-the-launch-parameters
@@ -84,12 +83,12 @@ public class ConfigData {
 
   public void init(String[] args) {
     this.clear();
-    LOGGER.log(Level.INFO, "Starting Weasis...");
-    LOGGER.log(Level.INFO, "Initialization of the launch configuration...");
+    LOGGER.info("Starting Weasis...");
+    LOGGER.info("Initialization of the launch configuration...");
 
     if (args != null) {
       for (int i = 0; i < args.length; i++) {
-        LOGGER.log(Level.INFO, "Main arg {0} = {1}", Integer.toString(i), args[i]);
+        LOGGER.info("Main arg {0} = {1}", Integer.toString(i), args[i]);
       }
 
       int index = Utils.getWeasisProtocolIndex(args);
@@ -192,7 +191,7 @@ public class ConfigData {
 
     String portable = properties.getProperty("weasis.portable.dir");
     if (portable != null) {
-      LOGGER.log(Level.INFO, "Set default relative folders");
+      LOGGER.info("Set default relative folders");
       String pkey = "weasis.portable.dicom.directory";
       addProperty(pkey, preferences.getProperty(pkey, "dicom,DICOM,IMAGES,images")); // NON-NLS
     }
@@ -201,18 +200,15 @@ public class ConfigData {
     applyConfigToSystemProperties();
 
     filterConfigProperties(preferences);
-    if (LOGGER.isLoggable(Level.TRACE)) {
-      felixProps.forEach(
-          (k, v) ->
-              LOGGER.log(
-                  Level.TRACE, () -> String.format("Felix config: %s = %s", k, v))); // NON-NLS
+    if (LOGGER.isTraceEnabled()) {
+      felixProps.forEach((k, v) -> LOGGER.trace("Felix config: {} = {}", k, v));
     }
 
     File appFolder = new File(felixProps.get(Constants.FRAMEWORK_STORAGE)).getParentFile();
     appFolder.mkdirs();
     addProperty(P_WEASIS_PATH, appFolder.getPath());
     System.setProperty(P_WEASIS_PATH, appFolder.getPath());
-    LOGGER.log(Level.INFO, "Properties: {0}", properties);
+    LOGGER.info("Properties: {}", properties);
   }
 
   private void filterConfigProperties(AppPreferences preferences) {
@@ -290,7 +286,7 @@ public class ConfigData {
       baseURI += "/" + CONFIG_DIRECTORY + "/";
       addProperty(CONFIG_PROPERTIES_PROP, baseURI + CONFIG_PROPERTIES_FILE_VALUE);
     } catch (Exception e) {
-      LOGGER.log(Level.ERROR, "Apply Codebase", e);
+      LOGGER.error("Apply Codebase", e);
     }
     return baseURI;
   }
@@ -348,7 +344,7 @@ public class ConfigData {
           if (result.length == 2) {
             addProperty(result[0], result[1]);
           } else {
-            LOGGER.log(Level.WARNING, "Cannot parse property: {0}", value);
+            LOGGER.warn("Cannot parse property: {}", value);
           }
         });
   }
@@ -436,7 +432,7 @@ public class ConfigData {
             }
           }
         } catch (Exception e) {
-          LOGGER.log(Level.ERROR, "Cannot store the proxy password", e);
+          LOGGER.error("Cannot store the proxy password", e);
         }
       }
     }
@@ -484,10 +480,10 @@ public class ConfigData {
           try {
             val = new File(new URI(arg)).getPath();
           } catch (URISyntaxException e) {
-            LOGGER.log(Level.ERROR, "Convert URI to file", e);
+            LOGGER.error("Convert URI to file", e);
           }
         }
-        arguments.add("dicom:get -l \"" + val + "\""); // NON-NLS
+        arguments.add(STR."dicom:get -l \"\{val}\""); // NON-NLS
       }
     }
   }
@@ -576,10 +572,7 @@ public class ConfigData {
       }
 
     } catch (Exception e) {
-      LOGGER.log(
-          Level.ERROR,
-          () -> String.format("Error Loading config service %s", configServicePath), // NON-NLS
-          e);
+      LOGGER.error("Error Loading config service {}", configServicePath, e);
     } finally {
       FileUtil.safeClose(stream);
     }
@@ -622,7 +615,7 @@ public class ConfigData {
       preferences.readJson(propURI);
 
     } else {
-      LOGGER.log(Level.ERROR, "No base.json path found, Weasis cannot start!");
+      LOGGER.error("No base.json path found, Weasis cannot start!");
     }
 
     propURI = getPropertiesURI(EXTENDED_PROPERTIES_PROP, null);
@@ -659,8 +652,7 @@ public class ConfigData {
                 localPrefs.getProperty(WeasisLauncher.P_WEASIS_VERSION).replaceFirst("-", "."));
         Version min = new Version(val.replaceFirst("-", "."));
         if (loc.compareTo(min) < 0) {
-          LOGGER.log(
-              Level.WARNING,
+          LOGGER.warn(
               "Start only with the native plug-ins because the version ({}) is lower the minimal version ({}) required remotely",
               loc,
               min);
@@ -669,7 +661,7 @@ public class ConfigData {
           System.setProperty(WeasisLauncher.P_WEASIS_MIN_NATIVE_VERSION, val);
         }
       } catch (Exception e) {
-        LOGGER.log(Level.ERROR, "Cannot check compatibility with remote package", e);
+        LOGGER.error("Cannot check compatibility with remote package", e);
       }
     }
   }
@@ -686,7 +678,7 @@ public class ConfigData {
           propURL = new URI(custom);
         }
       } catch (URISyntaxException e) {
-        LOGGER.log(Level.ERROR, configProp, e);
+        LOGGER.error(configProp, e);
         return null;
       }
     } else {
@@ -701,7 +693,7 @@ public class ConfigData {
       try {
         return new File(confDir, configFile).toURI();
       } catch (Exception ex) {
-        LOGGER.log(Level.ERROR, configFile, ex);
+        LOGGER.error(configFile, ex);
       }
     }
     return null;

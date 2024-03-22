@@ -9,16 +9,12 @@
  */
 package org.weasis.dicom.codec;
 
-import java.io.IOException;
 import java.net.URI;
-import java.util.Dictionary;
 import java.util.Hashtable;
 import javax.imageio.spi.IIOServiceProvider;
 import org.dcm4che3.data.SpecificCharacterSet;
 import org.dcm4che3.img.DicomImageReaderSpi;
 import org.dcm4che3.util.UIDUtils;
-import org.osgi.service.cm.Configuration;
-import org.osgi.service.cm.ConfigurationAdmin;
 import org.osgi.service.component.ComponentContext;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Deactivate;
@@ -30,8 +26,6 @@ import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.media.data.Codec;
 import org.weasis.core.api.media.data.MediaReader;
-import org.weasis.core.api.service.AuditLog;
-import org.weasis.core.api.service.BundlePreferences;
 import org.weasis.imageio.codec.ImageioUtil;
 
 @org.osgi.service.component.annotations.Component(service = Codec.class)
@@ -127,28 +121,6 @@ public class DicomCodec implements Codec<DicomImageElement> {
 
     for (IIOServiceProvider p : dcm4cheCodecs) {
       ImageioUtil.registerServiceProvider(p);
-    }
-
-    ConfigurationAdmin confAdmin =
-        BundlePreferences.getService(context.getBundleContext(), ConfigurationAdmin.class);
-    if (confAdmin != null) {
-      try {
-        Configuration logConfiguration =
-            AuditLog.getLogConfiguration(confAdmin, LOGGER_KEY, LOGGER_VAL);
-        if (logConfiguration == null) {
-          logConfiguration =
-              confAdmin.createFactoryConfiguration(
-                  "org.apache.sling.commons.log.LogManager.factory.config", null);
-          Dictionary<String, Object> loggingProperties = new Hashtable<>();
-          loggingProperties.put("org.apache.sling.commons.log.level", "INFO"); // NON-NLS
-          loggingProperties.put("org.apache.sling.commons.log.names", LOGGER_VAL);
-          // add this property to give us something unique to re-find this configuration
-          loggingProperties.put(LOGGER_KEY, LOGGER_VAL);
-          logConfiguration.update(loggingProperties);
-        }
-      } catch (IOException e) {
-        LOGGER.error("", e);
-      }
     }
   }
 

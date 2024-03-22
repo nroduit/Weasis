@@ -46,13 +46,12 @@
     <felix.configadmin.version>1.9.26</felix.configadmin.version>
     <felix.prefs.version>1.1.0</felix.prefs.version>
     <felix.scr.version>2.2.6</felix.scr.version>
-    <felix.metatype.version>1.2.4</felix.metatype.version>
 
-    <slf4j.version>1.7.36</slf4j.version>
-    <sling.commons.log.version>3.0.2-r5</sling.commons.log.version>
-    <dockingframes.version>1.1.6</dockingframes.version>
+    <slf4j.version>2.0.12</slf4j.version>
+    <logback.version>1.5.2</logback.version>
+    <dockingframes.version>1.1.7</dockingframes.version>
     <weasis-dicom-tools.version>5.31.2</weasis-dicom-tools.version>
-    <weasis.core.img.version>4.8.1.1</weasis.core.img.version>
+    <weasis.core.img.version>4.8.1.2</weasis.core.img.version>
     <weasis.opencv.native.version>4.8.1-dcm</weasis.opencv.native.version>
     <osgi.resource.locator.version>2.5.0-b42</osgi.resource.locator.version>
     <jaxb.osgi.version>4.0.3</jaxb.osgi.version>
@@ -133,6 +132,7 @@
               -noextraheaders: true
               -snapshot: SNAPSHOT
               -includeresource.all = -src/main/resources
+              Import-Package: org.slf4j;version=!,*
             </bnd>
           </configuration>
         </plugin>
@@ -213,7 +213,7 @@
           <artifactId>maven-site-plugin</artifactId>
           <version>4.0.0-M13</version>
         </plugin>
-         <plugin>
+        <plugin>
           <groupId>org.codehaus.mojo</groupId>
           <artifactId>build-helper-maven-plugin</artifactId>
           <version>3.5.0</version>
@@ -413,6 +413,14 @@
   <dependencyManagement>
     <dependencies>
       <dependency>
+        <groupId>org.slf4j</groupId>
+        <artifactId>slf4j-bom</artifactId>
+        <version>${slf4j.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+
+      <dependency>
         <groupId>org.apache.felix</groupId>
         <artifactId>org.apache.felix.gogo.command</artifactId>
         <version>${felix.gogo.command.version}</version>
@@ -459,18 +467,6 @@
 
       <!--The following dependencies are not required for compilation (required
         when loading the OSGI framework for debugging) -->
-      <dependency>
-        <groupId>org.apache.sling</groupId>
-        <artifactId>org.apache.sling.commons.log</artifactId>
-        <version>${sling.commons.log.version}</version>
-        <scope>provided</scope>
-      </dependency>
-      <dependency>
-        <groupId>org.apache.felix</groupId>
-        <artifactId>org.apache.felix.metatype</artifactId>
-        <version>${felix.metatype.version}</version>
-        <scope>provided</scope>
-      </dependency>
       <dependency>
         <groupId>org.apache.felix</groupId>
         <artifactId>org.apache.felix.scr</artifactId>
@@ -588,6 +584,19 @@
       <scope>provided</scope>
     </dependency>
     <dependency>
+      <groupId>ch.qos.logback</groupId>
+      <artifactId>logback-classic</artifactId>
+      <version>${logback.version}</version>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>ch.qos.logback</groupId>
+      <artifactId>logback-core</artifactId>
+      <version>${logback.version}</version>
+      <scope>provided</scope>
+    </dependency>
+
+    <dependency>
       <groupId>com.formdev</groupId>
       <artifactId>flatlaf</artifactId>
       <version>${flatlaf.version}</version>
@@ -691,7 +700,6 @@
     <dependency>
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-simple</artifactId>
-      <version>${slf4j.version}</version>
       <scope>test</scope>
     </dependency>
   </dependencies>

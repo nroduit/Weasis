@@ -9,23 +9,21 @@
  */
 package org.weasis.launcher;
 
-import java.io.IOException;
 import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
-import java.util.logging.LogManager;
 
 public class AppLauncher extends WeasisLauncher implements Singleton.SingletonApp {
 
   static {
-    // Configuration of java.util.logging.Logger
-    try {
-      LogManager.getLogManager()
-          .readConfiguration(
-              WeasisLauncher.class.getResourceAsStream("/logging.properties")); // NON-NLS
-    } catch (SecurityException | IOException e) {
-      e.printStackTrace(); // NOSONAR cannot initialize logger
-    }
+    //    // Configuration of java.util.logging.Logger
+    //    try {
+    //      LogManager.getLogManager()
+    //          .readConfiguration(
+    //              WeasisLauncher.class.getResourceAsStream("/logging.properties")); // NON-NLS
+    //    } catch (SecurityException | IOException e) {
+    //      e.printStackTrace(); // NOSONAR cannot initialize logger
+    //    }
   }
 
   public AppLauncher(ConfigData configData) {

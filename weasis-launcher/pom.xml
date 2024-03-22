@@ -103,6 +103,21 @@
                     <exclude>META-INF/MANIFEST.MF</exclude>
                   </excludes>
                 </filter>
+                <filter>
+                  <artifact>org.slf4j:*</artifact>
+                  <excludes>
+                    <exclude>**/module-info.class</exclude>
+                    <exclude>META-INF/LICENSE.txt</exclude>
+                    <exclude>META-INF/MANIFEST.MF</exclude>
+                  </excludes>
+                </filter>
+                <filter>
+                  <artifact>ch.qos.logback:*</artifact>
+                  <excludes>
+                    <exclude>**/module-info.class</exclude>
+                    <exclude>META-INF/MANIFEST.MF</exclude>
+                  </excludes>
+                </filter>
               </filters>
             </configuration>
           </execution>
@@ -149,17 +164,24 @@
       <artifactId>xz</artifactId>
       <version>${xz.version}</version>
     </dependency>
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-api</artifactId>
+      <version>${slf4j.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>ch.qos.logback</groupId>
+      <artifactId>logback-classic</artifactId>
+      <version>${logback.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>ch.qos.logback</groupId>
+      <artifactId>logback-core</artifactId>
+      <version>${logback.version}</version>
+    </dependency>
 
     <!-- Dependencies below are provided for debugging Weasis from IDE (by launching WeasisLauncher) -->
     <!-- No direct dependency should be made with weasis-launcher -->
-    <dependency>
-      <groupId>org.apache.sling</groupId>
-      <artifactId>org.apache.sling.commons.log</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.felix</groupId>
-      <artifactId>org.apache.felix.metatype</artifactId>
-    </dependency>
     <dependency>
       <groupId>org.apache.felix</groupId>
       <artifactId>org.apache.felix.scr</artifactId>

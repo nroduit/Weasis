@@ -9,8 +9,6 @@
  */
 package org.weasis.launcher;
 
-import java.lang.System.Logger;
-import java.lang.System.Logger.Level;
 import java.net.URI;
 import java.net.URL;
 import java.util.HashMap;
@@ -23,6 +21,8 @@ import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.Constants;
 import org.osgi.service.startlevel.StartLevel;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.tukaani.xz.XZInputStream;
 
 /**
@@ -30,8 +30,7 @@ import org.tukaani.xz.XZInputStream;
  * @author Nicolas Roduit
  */
 public class AutoProcessor {
-
-  private static final Logger LOGGER = System.getLogger(AutoProcessor.class.getName());
+  private static final Logger LOGGER = LoggerFactory.getLogger(AutoProcessor.class);
 
   /** The property name prefix for the launcher's auto-install property. */
   public static final String AUTO_INSTALL_PROP = "felix.auto.install";
@@ -103,7 +102,7 @@ public class AutoProcessor {
       try {
         startLevel = Integer.parseInt(key.substring(key.lastIndexOf('.') + 1));
       } catch (NumberFormatException ex) {
-        LOGGER.log(Level.ERROR, () -> String.format("Invalid start level %s", key), ex); // NON-NLS
+        LOGGER.error("Invalid start level {}", key, ex);
       }
       boolean canBeStarted = key.startsWith(AUTO_START_PROP);
       StringTokenizer st = new StringTokenizer(configMap.get(key), "\" ", true);
@@ -131,24 +130,20 @@ public class AutoProcessor {
         if (b == null) {
           if (!"System Bundle".equals(bundleName)) { // NON-NLS
             value.uninstall();
-            LOGGER.log(Level.INFO, "Uninstall unused bundle: {0}", bundleName);
+            LOGGER.info("Uninstall unused bundle: {}", bundleName);
           }
           continue;
         }
         // Remove snapshot version to install it every time
         if (value.getVersion().getQualifier().endsWith("SNAPSHOT")) {
           value.uninstall();
-          LOGGER.log(Level.INFO, "Uninstall SNAPSHOT bundle: {0}", bundleName);
+          LOGGER.info("Uninstall SNAPSHOT bundle: {}", bundleName);
           continue;
         }
         installedBundleMap.put(bundleName, value);
 
       } catch (Exception e) {
-        LOGGER.log(
-            Level.ERROR,
-            () ->
-                String.format("Cannot remove from OSGI cache the bundle %s", bundleName), // NON-NLS
-            e);
+        LOGGER.error("Cannot remove from OSGI cache the bundle {}", bundleName, e);
       }
     }
 
@@ -180,15 +175,9 @@ public class AutoProcessor {
         loadTranslationBundle(context, b, installedBundleMap, modulesi18n, cache);
       } catch (Exception ex) {
         if (bundleName.contains(System.getProperty("native.library.spec"))) {
-          LOGGER.log(
-              Level.ERROR,
-              () -> String.format("Cannot install a native bundle %s", bundleName), // NON-NLS
-              ex);
+          LOGGER.error("Cannot install a native bundle {}}", bundleName, ex);
         } else {
-          LOGGER.log(
-              Level.ERROR,
-              () -> String.format("Cannot install bundle %s", bundleName), // NON-NLS
-              ex);
+          LOGGER.error("Cannot install bundle {}}", bundleName, ex);
           if (!Constants.FRAMEWORK_STORAGE_CLEAN_ONFIRSTINIT.equals(
               configMap.get(Constants.FRAMEWORK_STORAGE_CLEAN))) {
             // Reset all the old cache
@@ -221,10 +210,7 @@ public class AutoProcessor {
             b.start();
           }
         } catch (Exception ex) {
-          LOGGER.log(
-              Level.ERROR,
-              () -> String.format("Cannot start bundle %s", bundleName), // NON-NLS
-              ex);
+          LOGGER.error("Cannot start bundle {}", bundleName, ex);
         }
       }
     }
@@ -276,19 +262,12 @@ public class AutoProcessor {
                             .getInputStream());
                     installedBundleMap.put(bundleName, b);
                   } catch (Exception exc) {
-                    LOGGER.log(
-                        Level.ERROR,
-                        () ->
-                            String.format("Cannot install a translation bundle %s", uri), // NON-NLS
-                        exc);
+                    LOGGER.error("Cannot install a translation bundle {}", uri, exc);
                   }
                 }
               }
             } catch (Exception e) {
-              LOGGER.log(
-                  Level.ERROR,
-                  () -> String.format("Cannot install a translation bundle %s", uri), // NON-NLS
-                  e);
+              LOGGER.error("Cannot install a translation bundle {}", uri, e);
             }
           }
         }
@@ -362,10 +341,7 @@ public class AutoProcessor {
           new XZInputStream(FileUtil.getAdaptedConnection(url, httpCache).getInputStream())) {
         return context.installBundle(location, xzStream);
       } catch (Exception e) {
-        LOGGER.log(
-            Level.ERROR,
-            () -> String.format("Cannot install xz compressed bundle %s", url), // NON-NLS
-            e);
+        LOGGER.error("Cannot install xz compressed bundle {}", url, e);
       }
     }
     return context.installBundle(
