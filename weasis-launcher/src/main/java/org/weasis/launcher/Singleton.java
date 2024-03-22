@@ -100,7 +100,7 @@ public class Singleton {
 
       try (Socket socket = new Socket(LOCALHOST, siServer.getPort());
           OutputStream os = socket.getOutputStream();
-          PrintStream out = new PrintStream(os, true, Charset.defaultCharset().name())) {
+          PrintStream out = new PrintStream(os, true, Charset.defaultCharset())) {
         byte[] encoding = new byte[1];
         encoding[0] = ENCODING_PLATFORM;
         os.write(encoding);

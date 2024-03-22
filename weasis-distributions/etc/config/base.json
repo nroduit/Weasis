@@ -444,7 +444,7 @@
       "value": "true",
       "description": "Start to download series immediately",
       "type": "F",
-      "JavaType": "BOOLEAN",
+      "javaType": "BOOLEAN",
       "category": "DICOM"
     },
     {
@@ -452,7 +452,7 @@
       "value": "3",
       "description": "The number of concurrently downloaded series",
       "type": "A",
-      "JavaType": "INT",
+      "javaType": "INT",
       "category": "DICOM"
     },
     {
@@ -460,7 +460,7 @@
       "value": "4",
       "description": "The number of concurrently downloaded images in a series",
       "type": "A",
-      "JavaType": "INT",
+      "javaType": "INT",
       "category": "DICOM"
     },
     {
@@ -468,7 +468,7 @@
       "value": "true",
       "description": "Allow applying Window/Level on color images",
       "type": "F",
-      "JavaType": "BOOLEAN",
+      "javaType": "BOOLEAN",
       "category": "VIEWER"
     },
     {
@@ -476,7 +476,7 @@
       "value": "true",
       "description": "Inverse level direction (moving the cursor down to increase brightness",
       "type": "F",
-      "JavaType": "BOOLEAN",
+      "javaType": "BOOLEAN",
       "category": "VIEWER"
     },
     {
@@ -484,7 +484,7 @@
       "value": "false",
       "description": "Apply by default the most recent Presentation State to the related image",
       "type": "F",
-      "JavaType": "BOOLEAN",
+      "javaType": "BOOLEAN",
       "category": "VIEWER"
     },
     {
@@ -492,7 +492,7 @@
       "value": "false",
       "description": "Force to detect a graphic card at every launch",
       "type": "A",
-      "JavaType": "BOOLEAN",
+      "javaType": "BOOLEAN",
       "category": "VIEWER"
     },
     {
@@ -528,7 +528,7 @@
       "value": "true",
       "description": "Show the import image toolbar and menu",
       "type": "A",
-      "JavaType": "BOOLEAN",
+      "javaType": "BOOLEAN",
       "category": "UI"
     },
     {
@@ -536,7 +536,7 @@
       "value": "true",
       "description": "Show the DICOM import menu and dialog",
       "type": "A",
-      "JavaType": "BOOLEAN",
+      "javaType": "BOOLEAN",
       "category": "UI"
     },
     {
@@ -544,7 +544,7 @@
       "value": "true",
       "description": "Show the DICOM Q/R page in the DICOM Export dialog",
       "type": "A",
-      "JavaType": "BOOLEAN",
+      "javaType": "BOOLEAN",
       "category": "UI"
     },
     {
@@ -552,7 +552,7 @@
       "value": "true",
       "description": "Show the DICOM export menu and dialog",
       "type": "A",
-      "JavaType": "BOOLEAN",
+      "javaType": "BOOLEAN",
       "category": "UI"
     },
     {
@@ -560,7 +560,7 @@
       "value": "true",
       "description": "Show the send page in the DICOM Export dialog",
       "type": "A",
-      "JavaType": "BOOLEAN",
+      "javaType": "BOOLEAN",
       "category": "UI"
     },
     {
@@ -568,7 +568,7 @@
       "value": "7170",
       "description": "Show all mouse buttons. Sum of LEFT=1024 + MIDDLE=2048 + RIGHT=4096 + SCROLL=2. Show all:7170 and show none:0.",
       "type": "A",
-      "JavaType": "INT",
+      "javaType": "INT",
       "category": "UI"
     },
     {
@@ -576,7 +576,7 @@
       "value": "false",
       "description": "Show all the cine toolbars",
       "type": "A",
-      "JavaType": "BOOLEAN",
+      "javaType": "BOOLEAN",
       "category": "UI"
     },
     {
@@ -584,7 +584,7 @@
       "value": "false",
       "description": "Show all the key object toolbars",
       "type": "A",
-      "JavaType": "BOOLEAN",
+      "javaType": "BOOLEAN",
       "category": "UI"
     },
     {
@@ -592,7 +592,7 @@
       "value": "false",
       "description": "Show the rotation toolbars in DICOM 2D viewer",
       "type": "A",
-      "JavaType": "BOOLEAN",
+      "javaType": "BOOLEAN",
       "category": "UI"
     },
     {
@@ -600,7 +600,7 @@
       "value": "false",
       "description": "Show LUT Shape in the contextual menu",
       "type": "A",
-      "JavaType": "BOOLEAN",
+      "javaType": "BOOLEAN",
       "category": "UI"
     },
     {
@@ -608,7 +608,7 @@
       "value": "false",
       "description": "Show LUT in the contextual menu",
       "type": "A",
-      "JavaType": "BOOLEAN",
+      "javaType": "BOOLEAN",
       "category": "UI"
     },
     {
@@ -616,7 +616,7 @@
       "value": "false",
       "description": "Show Filter in the contextual menu",
       "type": "A",
-      "JavaType": "BOOLEAN",
+      "javaType": "BOOLEAN",
       "category": "UI"
     }
   ]

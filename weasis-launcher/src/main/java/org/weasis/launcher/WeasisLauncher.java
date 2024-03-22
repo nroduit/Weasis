@@ -1183,7 +1183,7 @@ public class WeasisLauncher {
         mFelix.waitForStop(30_000);
       }
     } catch (Exception ex) {
-      System.err.println("Error stopping framework: " + ex); // NON-NLS
+      System.err.println(STR."Error stopping framework: \{ex}"); // NON-NLS
       if (ex instanceof InterruptedException) {
         Thread.currentThread().interrupt();
       }
