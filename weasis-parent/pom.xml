@@ -52,8 +52,8 @@
     <sling.commons.log.version>3.0.2-r5</sling.commons.log.version>
     <dockingframes.version>1.1.6</dockingframes.version>
     <weasis-dicom-tools.version>5.31.2</weasis-dicom-tools.version>
-    <weasis.core.img.version>4.8.1.1</weasis.core.img.version>
-    <weasis.opencv.native.version>4.8.1-dcm</weasis.opencv.native.version>
+    <weasis.core.img.version>4.9.0.1</weasis.core.img.version>
+    <weasis.opencv.native.version>4.9.0-dcm</weasis.opencv.native.version>
     <osgi.resource.locator.version>2.5.0-b42</osgi.resource.locator.version>
     <jaxb.osgi.version>4.0.3</jaxb.osgi.version>
     <xml.bind-api.version>4.0.0</xml.bind-api.version>
@@ -188,8 +188,7 @@
           <artifactId>maven-surefire-plugin</artifactId>
           <version>3.2.5</version>
           <configuration>
-            <!--suppress UnresolvedMavenProperty -->
-            <argLine>@{argLine} --enable-preview -Xshare:off -javaagent:${net.bytebuddy:byte-buddy-agent:jar}</argLine>
+            <argLine>@{argLine} --enable-preview -Xshare:off -XX:+EnableDynamicAgentLoading</argLine>
             <parallel>all</parallel>
           </configuration>
         </plugin>
