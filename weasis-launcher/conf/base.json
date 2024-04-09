@@ -2,7 +2,7 @@
   "weasisPreferences": [
     {
       "code": "framework.system.packages.extra.basic",
-      "value": "com.formdev.flatlaf, com.formdev.flatlaf.extras, com.formdev.flatlaf.extras.components, com.formdev.flatlaf.icons, com.formdev.flatlaf.ui, com.formdev.flatlaf.util, com.sun.awt, com.sun.image.codec.jpeg, com.sun.imageio.spi, javax.accessibility, javax.imageio, javax.imageio.event, javax.imageio.metadata, javax.imageio.plugins.jpeg, javax.imageio.spi, javax.imageio.stream, javax.media, javax.swing, javax.swing.border, javax.swing.event, javax.swing.filechooser, javax.swing.plaf, javax.swing.plaf.basic, javax.swing.plaf.metal, javax.swing.table, javax.swing.text, javax.swing.tree, javax.xml.bind, javax.xml.parsers, javax.xml.namespace, javax.xml.stream, javax.xml.transform, javax.xml.transform.stax, javax.xml.validation, net.miginfocom.layout, net.miginfocom.swing, org.w3c.dom, org.xml.sax, org.xml.sax.ext, org.xml.sax.helpers, sun.awt, sun.awt.geom, sun.awt.image, sun.awt.image.codec, sun.java2d.opengl, sun.security.action, sun.misc, sun.net.www.protocol.file, sun.reflect",
+      "value": "ch.qos.logback.classic,ch.qos.logback.classic.encoder,ch.qos.logback.classic.spi,ch.qos.logback.core,ch.qos.logback.core.encoder,ch.qos.logback.core.rolling,ch.qos.logback.core.util,com.formdev.flatlaf, com.formdev.flatlaf.extras, com.formdev.flatlaf.extras.components, com.formdev.flatlaf.icons, com.formdev.flatlaf.ui, com.formdev.flatlaf.util, com.sun.awt, com.sun.image.codec.jpeg, com.sun.imageio.spi, javax.accessibility, javax.imageio, javax.imageio.event, javax.imageio.metadata, javax.imageio.plugins.jpeg, javax.imageio.spi, javax.imageio.stream, javax.media, javax.swing, javax.swing.border, javax.swing.event, javax.swing.filechooser, javax.swing.plaf, javax.swing.plaf.basic, javax.swing.plaf.metal, javax.swing.table, javax.swing.text, javax.swing.tree, javax.xml.bind, javax.xml.parsers, javax.xml.namespace, javax.xml.stream, javax.xml.transform, javax.xml.transform.stax, javax.xml.validation, net.miginfocom.layout, net.miginfocom.swing, org.slf4j, org.w3c.dom, org.xml.sax, org.xml.sax.ext, org.xml.sax.helpers, sun.awt, sun.awt.geom, sun.awt.image, sun.awt.image.codec, sun.java2d.opengl, sun.security.action, sun.misc, sun.net.www.protocol.file, sun.reflect",
       "description": "List of additional packages for Felix (by default only java.* is visible in main class loader)",
       "type": "A",
       "category": "FELIX_CONFIG"
@@ -59,13 +59,6 @@
       "category": "FELIX_INSTALL"
     },
     {
-      "code": "felix.auto.start.2",
-      "value": "file:${maven.localRepository}/org/slf4j/slf4j-api/${slf4j.version}/slf4j-api-${slf4j.version}.jar file:${maven.localRepository}/org/apache/sling/org.apache.sling.commons.log/${sling.commons.log.version}/org.apache.sling.commons.log-${sling.commons.log.version}.jar",
-      "description": "OSGI logger",
-      "type": "A",
-      "category": "FELIX_INSTALL"
-    },
-    {
       "code": "felix.auto.start.3",
       "value": "file:${maven.localRepository}/org/apache/felix/org.apache.felix.gogo.command/${felix.gogo.command.version}/org.apache.felix.gogo.command-${felix.gogo.command.version}.jar file:${maven.localRepository}/org/apache/felix/org.apache.felix.gogo.shell/${felix.gogo.shell.version}/org.apache.felix.gogo.shell-${felix.gogo.shell.version}.jar",
       "description": "OSGI command and shell",
@@ -81,7 +74,7 @@
     },
     {
       "code": "felix.auto.start.5",
-      "value": "file:${maven.localRepository}/org/osgi/org.osgi.service.component/${osgi.component.version}/org.osgi.service.component-${osgi.component.version}.jar file:${maven.localRepository}/org/apache/felix/org.apache.felix.configadmin/${felix.configadmin.version}/org.apache.felix.configadmin-${felix.configadmin.version}.jar file:${maven.localRepository}/org/apache/felix/org.apache.felix.prefs/${felix.prefs.version}/org.apache.felix.prefs-${felix.prefs.version}.jar file:${maven.localRepository}/org/apache/felix/org.apache.felix.scr/${felix.scr.version}/org.apache.felix.scr-${felix.scr.version}.jar file:${maven.localRepository}/org/apache/felix/org.apache.felix.metatype/${felix.metatype.version}/org.apache.felix.metatype-${felix.metatype.version}.jar",
+      "value": "file:${maven.localRepository}/org/osgi/org.osgi.service.component/${osgi.component.version}/org.osgi.service.component-${osgi.component.version}.jar file:${maven.localRepository}/org/apache/felix/org.apache.felix.configadmin/${felix.configadmin.version}/org.apache.felix.configadmin-${felix.configadmin.version}.jar file:${maven.localRepository}/org/apache/felix/org.apache.felix.prefs/${felix.prefs.version}/org.apache.felix.prefs-${felix.prefs.version}.jar file:${maven.localRepository}/org/apache/felix/org.apache.felix.scr/${felix.scr.version}/org.apache.felix.scr-${felix.scr.version}.jar",
       "description": "OSGI configuration and preferences",
       "type": "A",
       "category": "FELIX_INSTALL"
@@ -223,7 +216,7 @@
     },
     {
       "code": "org.apache.sling.commons.log.file.number",
-      "value": "5",
+      "value": "20",
       "description": "The max number of rolling log files",
       "type": "F",
       "javaType": "INT",
@@ -238,7 +231,7 @@
     },
     {
       "code": "org.apache.sling.commons.log.pattern",
-      "value": "{0,date,dd.MM.yyyy HH:mm:ss.SSS} *{4}* [{2}] {3}: {5}",
+      "value": "%d{dd.MM.yyyy HH:mm:ss.SSS} *%-5level* [%thread] %logger{36}: %msg%ex{3}%n",
       "description": "Log pattern: {0} The timestamp of type java.util.Date, {1} the log marker, \n{2} the name of the current thread, {3} the name of the logger, {4} the debug level and {5} the actual debug message.",
       "type": "F",
       "category": "LOG"

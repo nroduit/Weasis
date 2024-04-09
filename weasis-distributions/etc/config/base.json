@@ -59,13 +59,6 @@
       "category": "FELIX_INSTALL"
     },
     {
-      "code": "felix.auto.start.2",
-      "value": "${dollar}{weasis.codebase.url}/bundle/slf4j-api-${slf4j.version}.jar${xz.ext} ${dollar}{weasis.codebase.url}/bundle/org.apache.sling.commons.log-${sling.commons.log.version}.jar${xz.ext}",
-      "description": "OSGI logger",
-      "type": "A",
-      "category": "FELIX_INSTALL"
-    },
-    {
       "code": "felix.auto.start.3",
       "value": "${dollar}{weasis.codebase.url}/bundle/org.apache.felix.gogo.command-${felix.gogo.command.version}.jar${xz.ext} ${dollar}{weasis.codebase.url}/bundle/org.apache.felix.gogo.shell-${felix.gogo.shell.version}.jar${xz.ext}",
       "description": "OSGI command and shell",
@@ -81,7 +74,7 @@
     },
     {
       "code": "felix.auto.start.5",
-      "value": "${dollar}{weasis.codebase.url}/bundle/org.osgi.service.component-${osgi.component.version}.jar${xz.ext} ${dollar}{weasis.codebase.url}/bundle/org.apache.felix.configadmin-${felix.configadmin.version}.jar${xz.ext} ${dollar}{weasis.codebase.url}/bundle/org.apache.felix.prefs-${felix.prefs.version}.jar${xz.ext} ${dollar}{weasis.codebase.url}/bundle/org.apache.felix.scr-${felix.scr.version}.jar${xz.ext} ${dollar}{weasis.codebase.url}/bundle/org.apache.felix.metatype-${felix.metatype.version}.jar${xz.ext}",
+      "value": "${dollar}{weasis.codebase.url}/bundle/org.osgi.service.component-${osgi.component.version}.jar${xz.ext} ${dollar}{weasis.codebase.url}/bundle/org.apache.felix.configadmin-${felix.configadmin.version}.jar${xz.ext} ${dollar}{weasis.codebase.url}/bundle/org.apache.felix.prefs-${felix.prefs.version}.jar${xz.ext} ${dollar}{weasis.codebase.url}/bundle/org.apache.felix.scr-${felix.scr.version}.jar${xz.ext}",
       "description": "OSGI configuration and preferences",
       "type": "A",
       "category": "FELIX_INSTALL"
@@ -223,7 +216,7 @@
     },
     {
       "code": "org.apache.sling.commons.log.file.number",
-      "value": "5",
+      "value": "20",
       "description": "The max number of rolling log files",
       "type": "F",
       "javaType": "INT",
@@ -238,14 +231,14 @@
     },
     {
       "code": "org.apache.sling.commons.log.pattern",
-      "value": "{0,date,dd.MM.yyyy HH:mm:ss.SSS} *{4}* [{2}] {3}: {5}",
+      "value": "%d{dd.MM.yyyy HH:mm:ss.SSS} *%-5level* [%thread] %logger{36}: %msg%ex{3}%n",
       "description": "Log pattern: {0} The timestamp of type java.util.Date, {1} the log marker, \n{2} the name of the current thread, {3} the name of the logger, {4} the debug level and {5} the actual debug message.",
       "type": "F",
       "category": "LOG"
     },
     {
       "code": "org.apache.sling.commons.log.stack.limit",
-      "value": "5",
+      "value": "3",
       "description": "Defines the maximum number of lines for stack trace (0 => NONE, -1 => ALL). Default value is 3",
       "type": "F",
       "javaType": "INT",

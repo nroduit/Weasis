@@ -12,8 +12,6 @@ package org.weasis.launcher;
 import com.formdev.flatlaf.util.SystemInfo;
 import java.awt.Desktop;
 import java.io.IOException;
-import java.lang.System.Logger;
-import java.lang.System.Logger.Level;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
@@ -28,9 +26,10 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import javax.crypto.Cipher;
 import javax.crypto.spec.SecretKeySpec;
+import org.slf4j.LoggerFactory;
 
 public class Utils {
-  private static final Logger LOGGER = System.getLogger(Utils.class.getName());
+  private static final org.slf4j.Logger LOGGER = LoggerFactory.getLogger(Utils.class);
 
   private Utils() {}
 
@@ -142,7 +141,7 @@ public class Utils {
               FileUtil.gzipUncompressToByte(
                   Base64.getDecoder().decode(value.getBytes(StandardCharsets.UTF_8)));
         } catch (IOException e) {
-          System.getLogger(Utils.class.getName()).log(Level.ERROR, "Get byte property", e);
+          LOGGER.error("Get byte property", e);
         }
       }
     }
@@ -165,7 +164,7 @@ public class Utils {
           String[] cmd = new String[] {"xdg-open", url.toString()}; // NON-NLS
           Runtime.getRuntime().exec(cmd);
         } catch (IOException e) {
-          LOGGER.log(Level.ERROR, "Cannot open URL to the system browser", e);
+          LOGGER.error("Cannot open URL to the system browser", e);
         }
       } else if (Desktop.isDesktopSupported()) {
         final Desktop desktop = Desktop.getDesktop();
@@ -173,11 +172,11 @@ public class Utils {
           try {
             desktop.browse(url.toURI());
           } catch (IOException | URISyntaxException e) {
-            LOGGER.log(Level.ERROR, "Cannot open URL to the desktop browser", e);
+            LOGGER.error("Cannot open URL to the desktop browser", e);
           }
         }
       } else {
-        LOGGER.log(Level.WARNING, "Cannot open URL to the system browser");
+        LOGGER.warn("Cannot open URL to the system browser");
       }
     }
   }

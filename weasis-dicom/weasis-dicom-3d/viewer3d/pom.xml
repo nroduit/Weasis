@@ -21,7 +21,7 @@
         <artifactId>bnd-maven-plugin</artifactId>
         <configuration>
           <bnd>
-            Import-Package: com.jogamp.opencl.llb.gl;resolution:=optional,*
+            Import-Package: org.slf4j;version=!,com.jogamp.opencl.llb.gl;resolution:=optional,*
             Export-Package: org.weasis.dicom.viewer3d.*
           </bnd>
         </configuration>

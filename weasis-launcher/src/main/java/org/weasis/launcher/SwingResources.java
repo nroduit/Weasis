@@ -11,15 +11,13 @@ package org.weasis.launcher;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.lang.System.Logger;
-import java.lang.System.Logger.Level;
 import java.util.Map.Entry;
 import java.util.Properties;
 import javax.swing.UIManager;
+import org.slf4j.LoggerFactory;
 
 public class SwingResources {
-
-  private static final Logger LOGGER = System.getLogger(SwingResources.class.getName());
+  private static final org.slf4j.Logger LOGGER = LoggerFactory.getLogger(SwingResources.class);
 
   static final String AND_MNEMONIC = "AndMnemonic";
   static final String TITLE_SUFFIX = ".titleAndMnemonic";
@@ -55,7 +53,7 @@ public class SwingResources {
       try {
         swingDialogs.load(inStream);
       } catch (IOException e) {
-        LOGGER.log(Level.ERROR, "Cannot read swing translations", e);
+        LOGGER.error("Cannot read swing translations", e);
       } finally {
         FileUtil.safeClose(inStream);
       }

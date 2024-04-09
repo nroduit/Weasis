@@ -28,6 +28,7 @@
         <configuration>
           <bnd>
             Bundle-NativeCode: ${native.configuration}
+            Import-Package:
             Fragment-Host: weasis-core-img;bundle-version="${weasis.core.img.version}"
           </bnd>
         </configuration>

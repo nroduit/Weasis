@@ -9,8 +9,12 @@
  */
 package org.weasis.core.internal;
 
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.LoggerContext;
+import ch.qos.logback.classic.encoder.PatternLayoutEncoder;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.rolling.RollingFileAppender;
 import java.io.File;
-import java.io.IOException;
 import java.util.Dictionary;
 import java.util.Hashtable;
 import java.util.List;
@@ -24,8 +28,6 @@ import org.osgi.framework.InvalidSyntaxException;
 import org.osgi.framework.ServiceEvent;
 import org.osgi.framework.ServiceListener;
 import org.osgi.framework.ServiceReference;
-import org.osgi.service.cm.Configuration;
-import org.osgi.service.cm.ConfigurationAdmin;
 import org.osgi.service.prefs.Preferences;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -65,7 +67,7 @@ public class Activator implements BundleActivator, ServiceListener {
 
     bundleContext.addServiceListener(this, BundleTools.createServiceFilter(Codec.class));
 
-    initLoggerAndAudit(bundleContext, properties);
+    initLoggerAndAudit(properties);
 
     // FIXME do not use system property
     File file = ResourceUtil.getResource("presets.xml");
@@ -184,54 +186,38 @@ public class Activator implements BundleActivator, ServiceListener {
     context.registerService(FileModel.class.getName(), ViewerPluginBuilder.DefaultDataModel, dict);
   }
 
-  private static void initLoggerAndAudit(BundleContext bundleContext, WProperties properties)
-      throws IOException {
+  private static void initLoggerAndAudit(WProperties properties) {
+    WProperties prefs = GuiUtils.getUICore().getSystemPreferences();
+
+    LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
+    loggerContext.reset();
+
+    AuditLog.applyConfig(prefs, loggerContext);
+
+    ch.qos.logback.classic.Logger logger =
+        (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME);
+
     // Audit log for giving statistics about usage of Weasis
     String loggerKey = "audit.log";
-    String[] loggerVal = new String[] {"org.weasis.core.api.service.AuditLog"};
-    // Activate audit log by adding an entry "audit.log=true" in Weasis.
     if (properties.getBooleanProperty(loggerKey, false)) {
-      AuditLog.createOrUpdateLogger(
-          bundleContext,
-          loggerKey,
-          loggerVal,
-          "DEBUG",
-          AppProperties.WEASIS_PATH
-              + File.separator
-              + "log"
-              + File.separator
-              + "audit-" // NON-NLS
-              + AppProperties.WEASIS_USER
-              + ".log",
-          "{0,date,dd.MM.yyyy HH:mm:ss.SSS} *{4}* {5}", // NON-NLS
-          null,
-          null,
-          "0");
+      String pattern =
+          prefs.getProperty(
+              AuditLog.LOG_PATTERN,
+              "%d{dd.MM.yyyy HH:mm:ss.SSS} *%-5level* %msg" + "%ex{0}%nopex%n");
+
+      PatternLayoutEncoder encoder = AuditLog.getPatternLayoutEncoder(loggerContext, pattern);
+
+      RollingFileAppender<ILoggingEvent> rollingFileAppender =
+          AuditLog.getRollingFilesAppender(logger, AuditLog.NAME_AUDIT);
+      WProperties p = AuditLog.getAuditProperties();
+
+      AuditLog.updateRollingFilesAppender(rollingFileAppender, loggerContext, p, encoder);
       AuditLog.LOGGER.info("Start audit log session");
     } else {
-      ServiceReference<ConfigurationAdmin> configurationAdminReference =
-          bundleContext.getServiceReference(ConfigurationAdmin.class);
-      if (configurationAdminReference != null) {
-        ConfigurationAdmin confAdmin = bundleContext.getService(configurationAdminReference);
-        if (confAdmin != null) {
-          Configuration logConfiguration =
-              AuditLog.getLogConfiguration(confAdmin, loggerKey, loggerVal[0]);
-          if (logConfiguration == null) {
-            logConfiguration =
-                confAdmin.createFactoryConfiguration(
-                    "org.apache.sling.commons.log.LogManager.factory.config", null);
-            Dictionary<String, Object> loggingProperties = new Hashtable<>();
-            loggingProperties.put("org.apache.sling.commons.log.level", "ERROR"); // NON-NLS
-            loggingProperties.put("org.apache.sling.commons.log.names", loggerVal);
-            // add this property to give us something unique to re-find this configuration
-            loggingProperties.put(loggerKey, loggerVal[0]);
-            logConfiguration.update(loggingProperties);
-          } else {
-            Dictionary loggingProperties = logConfiguration.getProperties();
-            loggingProperties.remove(AuditLog.LOG_FILE);
-            logConfiguration.update(loggingProperties);
-          }
-        }
+      logger.detachAppender(AuditLog.NAME_AUDIT);
+      if (AuditLog.LOGGER instanceof ch.qos.logback.classic.Logger auditLogger) {
+        auditLogger.detachAndStopAllAppenders();
+        auditLogger.setLevel(Level.OFF);
       }
     }
   }

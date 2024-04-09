@@ -23,8 +23,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.lang.System.Logger;
-import java.lang.System.Logger.Level;
 import java.lang.management.ManagementFactory;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
@@ -65,6 +63,8 @@ import org.osgi.framework.Bundle;
 import org.osgi.framework.Constants;
 import org.osgi.framework.Version;
 import org.osgi.util.tracker.ServiceTracker;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.weasis.launcher.LookAndFeels.ReadableLookAndFeelInfo;
 
 /**
@@ -73,7 +73,7 @@ import org.weasis.launcher.LookAndFeels.ReadableLookAndFeelInfo;
  */
 public class WeasisLauncher {
 
-  private static final Logger LOGGER = System.getLogger(WeasisLauncher.class.getName());
+  private static final Logger LOGGER = LoggerFactory.getLogger(WeasisLauncher.class);
 
   public enum Type {
     DEFAULT,
@@ -203,7 +203,7 @@ public class WeasisLauncher {
                     null);
 
             if (response != 0) {
-              LOGGER.log(Level.ERROR, "Do not continue the launch with the local version");
+              LOGGER.error("Do not continue the launch with the local version");
               System.exit(-1);
             }
           });
@@ -243,10 +243,8 @@ public class WeasisLauncher {
 
       String logActivation = serverProp.get("org.apache.sling.commons.log.file");
       if (Utils.hasText(logActivation)) {
-        LOGGER.log(
-            Level.INFO,
-            "Logs has been delegated to the OSGI service and can be read in {0}",
-            logActivation);
+        LOGGER.info(
+            "Logs has been delegated to the OSGI service and can be read in {}", logActivation);
       }
 
       // Init after default properties for UI
@@ -255,7 +253,7 @@ public class WeasisLauncher {
         app.setOpenURIHandler(
             e -> {
               String uri = "dicom:get -r \"" + e.getURI().toString() + "\""; // NON-NLS
-              LOGGER.log(Level.INFO, "Get URI event from OS. URI: {0}", uri);
+              LOGGER.info("Get URI event from OS. URI: {}", uri);
               executeCommands(List.of(uri), null);
             });
       }
@@ -267,7 +265,7 @@ public class WeasisLauncher {
                   e.getFiles().stream()
                       .map(f -> "dicom:get -l \"" + f.getPath() + "\"") // NON-NLS
                       .toList();
-              LOGGER.log(Level.INFO, "Get oOpen file event from OS. Files: {0}", files);
+              LOGGER.info("Get oOpen file event from OS. Files: {}", files);
               executeCommands(files, null);
             });
       }
@@ -287,18 +285,15 @@ public class WeasisLauncher {
         Thread.currentThread().interrupt();
       }
       exitStatus = -1;
-      LOGGER.log(Level.ERROR, "Cannot not start framework.", ex);
-      LOGGER.log(Level.ERROR, "Weasis cache will be cleaned at next launch.");
-      LOGGER.log(Level.ERROR, "State of the framework:");
+      LOGGER.error("Cannot not start framework.", ex);
+      LOGGER.error("Weasis cache will be cleaned at next launch.");
+      LOGGER.error("State of the framework:");
       for (Bundle b : mFelix.getBundleContext().getBundles()) {
-        LOGGER.log(
-            Level.ERROR,
-            " * "
-                + b.getSymbolicName()
-                + "-"
-                + b.getVersion().toString()
-                + " "
-                + State.valueOf(b.getState()));
+        LOGGER.error(
+            STR." * \{
+                b.getSymbolicName()}-\{
+                b.getVersion().toString()} \{
+                State.valueOf(b.getState())}");
       }
       resetBundleCache();
     } finally {
@@ -350,7 +345,7 @@ public class WeasisLauncher {
     buf.append(END_LINE);
     buf.append("         |__/|__/\\__/\\_,_/___/_/___/");
     buf.append(END_LINE);
-    LOGGER.log(Level.INFO, buf::toString);
+    LOGGER.info(buf.toString());
   }
 
   protected void executeCommands(List<String> commandList, String goshArgs) {
@@ -440,7 +435,7 @@ public class WeasisLauncher {
                         System.getProperty(P_WEASIS_SOURCE_ID) + ".properties");
                 // delete the properties file to ask again
                 FileUtil.delete(file);
-                LOGGER.log(Level.ERROR, "Refusing the disclaimer");
+                LOGGER.error("Refusing the disclaimer");
                 System.exit(-1);
               }
             });
@@ -463,7 +458,7 @@ public class WeasisLauncher {
             System.setProperty(P_WEASIS_VERSION_RELEASE, vNew.toString());
           }
         } catch (Exception e2) {
-          LOGGER.log(Level.ERROR, "Cannot read version", e2);
+          LOGGER.error("Cannot read version", e2);
           return;
         }
         final String releaseNotesUrl = serverProp.get("weasis.releasenotes"); // NON-NLS
@@ -538,7 +533,7 @@ public class WeasisLauncher {
       // Since the services returned by the tracker could become
       // invalid at any moment, we will catch all exceptions, log
       // a message, and then ignore faulty services.
-      LOGGER.log(Level.ERROR, "Create a command session", ex);
+      LOGGER.error("Create a command session", ex);
     }
 
     return null;
@@ -572,7 +567,7 @@ public class WeasisLauncher {
               });
       nameMethod.invoke(commandProcessor, listener);
     } catch (Exception e) {
-      LOGGER.log(Level.ERROR, "Add command session listener", e);
+      LOGGER.error("Add command session listener", e);
     }
   }
 
@@ -593,7 +588,7 @@ public class WeasisLauncher {
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
     } catch (Exception e) {
-      LOGGER.log(Level.ERROR, "Init command session", e);
+      LOGGER.error("Init command session", e);
     }
     return false;
   }
@@ -610,7 +605,7 @@ public class WeasisLauncher {
       Method nameMethod = commandSession.getClass().getMethod("get", parameterTypes);
       return nameMethod.invoke(commandSession, arguments);
     } catch (Exception ex) {
-      LOGGER.log(Level.ERROR, "Invoke a command", ex);
+      LOGGER.error("Invoke a command", ex);
     }
 
     return null;
@@ -625,7 +620,7 @@ public class WeasisLauncher {
       nameMethod.invoke(commandSession);
       return true;
     } catch (Exception ex) {
-      LOGGER.log(Level.ERROR, "Close command session", ex);
+      LOGGER.error("Close command session", ex);
     }
 
     return false;
@@ -643,7 +638,7 @@ public class WeasisLauncher {
       Method nameMethod = commandSession.getClass().getMethod("execute", parameterTypes);
       return nameMethod.invoke(commandSession, arguments);
     } catch (Exception ex) {
-      LOGGER.log(Level.ERROR, "Execute command", ex);
+      LOGGER.error("Execute command", ex);
     }
 
     return null;
@@ -654,10 +649,7 @@ public class WeasisLauncher {
     try (InputStream is = FileUtil.getAdaptedConnection(propURI.toURL(), false).getInputStream()) {
       props.load(is);
     } catch (Exception ex) {
-      LOGGER.log(
-          Level.ERROR,
-          () -> String.format("Cannot read properties file: %s", propURI), // NON-NLS
-          ex);
+      LOGGER.error("Cannot read properties file: {}", propURI, ex);
     }
   }
 
@@ -685,7 +677,7 @@ public class WeasisLauncher {
       serverProp.put(key, value);
       serverProp.put("def." + key, defaultVal); // NON-NLS
     }
-    LOGGER.log(Level.INFO, "Config of {0} = {1}", key, value);
+    LOGGER.info("Config of {} = {}", key, value);
     return value;
   }
 
@@ -710,7 +702,7 @@ public class WeasisLauncher {
       prefDir.mkdirs();
     } catch (Exception e) {
       prefDir = new File(dir);
-      LOGGER.log(Level.ERROR, "Cannot create preferences folders", e);
+      LOGGER.error("Cannot create preferences folders", e);
     }
     localPrefsDir = prefDir.getPath();
     serverProp.put("weasis.pref.dir", prefDir.getPath());
@@ -738,8 +730,7 @@ public class WeasisLauncher {
           serverProp.put("wp.init.diff.remote.pref", Boolean.TRUE.toString()); // NON-NLS
         }
       } catch (Exception e) {
-        String msg = String.format("Cannot read Launcher preference for user: %s", user); // NON-NLS
-        LOGGER.log(Level.ERROR, () -> msg, e);
+        LOGGER.error("Cannot read Launcher preference for user: {}", user, e);
       }
     }
 
@@ -774,7 +765,7 @@ public class WeasisLauncher {
     }
 
     getGeneralProperty(
-        "org.apache.sling.commons.log.file.number", "5", serverProp, currentProps, true, true);
+        "org.apache.sling.commons.log.file.number", "20", serverProp, currentProps, true, true);
     getGeneralProperty(
         "org.apache.sling.commons.log.file.size",
         "10MB", // NON-NLS
@@ -786,7 +777,7 @@ public class WeasisLauncher {
         "org.apache.sling.commons.log.stack.limit", "3", serverProp, currentProps, true, true);
     getGeneralProperty(
         "org.apache.sling.commons.log.pattern",
-        "{0,date,dd.MM.yyyy HH:mm:ss.SSS} *{4}* [{2}] {3}: {5}", // NON-NLS
+        "%d{dd.MM.yyyy HH:mm:ss.SSS} *%-5level* [%thread] %logger{36}: %msg%ex{3}%n", // NON-NLS
         serverProp,
         currentProps,
         false,
@@ -891,11 +882,11 @@ public class WeasisLauncher {
               mainFrame.setRootPaneContainer(new JFrame());
               ManagementFactory.getPlatformMBeanServer().registerMBean(mainFrame, objectName2);
             } catch (Exception e1) {
-              LOGGER.log(Level.ERROR, "Cannot register the main frame", e1);
+              LOGGER.error("Cannot register the main frame", e1);
             }
           });
     } catch (Exception e) {
-      LOGGER.log(Level.ERROR, "Unable to set the Look&Feel {0}", look);
+      LOGGER.error("Unable to set the Look&Feel {}", look);
       if (e instanceof InterruptedException) {
         Thread.currentThread().interrupt();
       }
@@ -950,7 +941,7 @@ public class WeasisLauncher {
       }
     } catch (Exception e) {
       cacheDir = null;
-      LOGGER.log(Level.ERROR, "Loads the resource folder", e);
+      LOGGER.error("Loads the resource folder", e);
     }
 
     if (cacheDir == null) {
@@ -1001,15 +992,14 @@ public class WeasisLauncher {
           Constants.FRAMEWORK_STORAGE_CLEAN, Constants.FRAMEWORK_STORAGE_CLEAN_ONFIRSTINIT);
       localSourceProp.remove(P_WEASIS_CLEAN_CACHE);
       update = true;
-      LOGGER.log(
-          Level.INFO, "Clean plug-in cache because Weasis has crashed during the previous launch");
+      LOGGER.info("Clean plug-in cache because Weasis has crashed during the previous launch");
     }
     // Clean cache when version has changed
     else if (cleanCache && versionNew != null && !versionNew.equals(versionOld)) {
-      LOGGER.log(Level.INFO, "Clean previous Weasis version: {0}", versionOld);
+      LOGGER.info("Clean previous Weasis version: {}", versionOld);
       serverProp.put(
           Constants.FRAMEWORK_STORAGE_CLEAN, Constants.FRAMEWORK_STORAGE_CLEAN_ONFIRSTINIT);
-      LOGGER.log(Level.INFO, "Clean plug-in cache because the version has changed");
+      LOGGER.info("Clean plug-in cache because the version has changed");
     }
 
     if (update) {
@@ -1074,7 +1064,7 @@ public class WeasisLauncher {
     conf.append(FileUtil.humanReadableByteCount(Runtime.getRuntime().maxMemory(), false));
 
     conf.append("\n***** End of Configuration *****"); // NON-NLS
-    LOGGER.log(Level.INFO, conf::toString);
+    LOGGER.info(conf.toString());
     return loader;
   }
 
@@ -1133,7 +1123,7 @@ public class WeasisLauncher {
         System.setProperty("weasis.languages", modulesi18n.getProperty("languages", "")); // NON-NLS
       }
     } catch (Exception e) {
-      LOGGER.log(Level.ERROR, "Cannot load translation modules", e);
+      LOGGER.error("Cannot load translation modules", e);
     }
   }
 
@@ -1167,11 +1157,11 @@ public class WeasisLauncher {
     try {
       Class.forName("sun.misc.Signal");
       Class.forName("sun.misc.SignalHandler");
-      sun.misc.Signal.handle(new sun.misc.Signal("TERM"), signal -> shutdownHook());
+      sun.misc.Signal.handle(new sun.misc.Signal("TERM"), _ -> shutdownHook());
     } catch (IllegalArgumentException e) {
-      LOGGER.log(Level.ERROR, "Register shutdownHook", e);
+      LOGGER.error("Register shutdownHook", e);
     } catch (ClassNotFoundException e) {
-      LOGGER.log(Level.ERROR, "Cannot find sun.misc.Signal for shutdown hook extension", e);
+      LOGGER.error("Cannot find sun.misc.Signal for shutdown hook extension", e);
     }
   }
 

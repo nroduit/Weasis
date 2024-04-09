@@ -11,8 +11,6 @@ package org.weasis.launcher;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.lang.System.Logger;
-import java.lang.System.Logger.Level;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLConnection;
@@ -21,15 +19,15 @@ import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Properties;
+import org.slf4j.LoggerFactory;
 
 public class RemotePrefService {
+  private static final org.slf4j.Logger LOGGER = LoggerFactory.getLogger(RemotePrefService.class);
 
   public static final String P_REMOTE_PREF_USER = "user"; // NON-NLS
   public static final String P_REMOTE_PREF_PROFILE = "profile"; // NON-NLS
 
   private static final String TEXT_X_JAVA_PROP = "text/x-java-properties"; // NON-NLS
-
-  private static final Logger LOGGER = System.getLogger(RemotePrefService.class.getName());
 
   private final String remotePrefURL;
   private final String user;
@@ -93,7 +91,7 @@ public class RemotePrefService {
       try (InputStream is = httpURLConnection.getInputStream()) {
         props.load(is);
       } catch (Exception e) {
-        LOGGER.log(Level.ERROR, () -> String.format("Loading %s", remoteURL), e); // NON-NLS
+        LOGGER.error("Loading {}", remoteURL, e);
       }
     }
   }

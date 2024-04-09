@@ -18,8 +18,6 @@ import java.awt.Frame;
 import java.awt.GraphicsEnvironment;
 import java.awt.Rectangle;
 import java.awt.Window;
-import java.lang.System.Logger;
-import java.lang.System.Logger.Level;
 import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Path;
 import java.util.Map;
@@ -34,10 +32,10 @@ import javax.swing.RootPaneContainer;
 import javax.swing.SwingConstants;
 import javax.swing.UIManager;
 import org.osgi.framework.BundleContext;
+import org.slf4j.LoggerFactory;
 
 public class WeasisLoader {
-
-  private static final Logger LOGGER = System.getLogger(WeasisLoader.class.getName());
+  private static final org.slf4j.Logger LOGGER = LoggerFactory.getLogger(WeasisLoader.class);
 
   public static final String LBL_LOADING = Messages.getString("WebStartLoader.load");
   public static final String LBL_DOWNLOADING = Messages.getString("WebStartLoader.download");
@@ -172,7 +170,7 @@ public class WeasisLoader {
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
     } catch (InvocationTargetException e) {
-      LOGGER.log(Level.ERROR, "Display splashscreen", e);
+      LOGGER.error("Display splashscreen", e);
     }
   }
 
@@ -209,7 +207,7 @@ public class WeasisLoader {
 
         container.setLocation(x, y);
       } catch (Exception e) {
-        LOGGER.log(Level.ERROR, "Set splashscreen location", e);
+        LOGGER.error("Set splashscreen location", e);
       }
       container.setVisible(true);
     }

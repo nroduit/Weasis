@@ -216,12 +216,6 @@
                 </artifactItem>
                 <artifactItem>
                   <groupId>org.apache.felix</groupId>
-                  <artifactId>org.apache.felix.metatype</artifactId>
-                  <version>${felix.metatype.version}</version>
-                  <outputDirectory>${tmp.bundle.dir}</outputDirectory>
-                </artifactItem>
-                <artifactItem>
-                  <groupId>org.apache.felix</groupId>
                   <artifactId>org.apache.felix.prefs</artifactId>
                   <version>${felix.prefs.version}</version>
                   <outputDirectory>${tmp.bundle.dir}</outputDirectory>
@@ -255,9 +249,15 @@
                   <outputDirectory>${tmp.bundle.dir}</outputDirectory>
                 </artifactItem>
                 <artifactItem>
-                  <groupId>org.apache.sling</groupId>
-                  <artifactId>org.apache.sling.commons.log</artifactId>
-                  <version>${sling.commons.log.version}</version>
+                  <groupId>ch.qos.logback</groupId>
+                  <artifactId>logback-classic</artifactId>
+                  <version>${logback.version}</version>
+                  <outputDirectory>${tmp.bundle.dir}</outputDirectory>
+                </artifactItem>
+                <artifactItem>
+                  <groupId>ch.qos.logback</groupId>
+                  <artifactId>logback-core</artifactId>
+                  <version>${logback.version}</version>
                   <outputDirectory>${tmp.bundle.dir}</outputDirectory>
                 </artifactItem>
                 <artifactItem>
