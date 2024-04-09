@@ -30,7 +30,7 @@
     <weasis.releasenotes>https://github.com/nroduit/Weasis/blob/master/CHANGELOG.md#v430-2024-02-16</weasis.releasenotes>
 
     <felix.framework.version>7.0.5</felix.framework.version>
-    <flatlaf.version>3.4</flatlaf.version>
+    <flatlaf.version>3.4.1</flatlaf.version>
     <miglayout.version>11.3</miglayout.version>
     <xz.version>1.9</xz.version>
 
@@ -55,7 +55,7 @@
     <weasis.opencv.native.version>4.8.1-dcm</weasis.opencv.native.version>
     <osgi.resource.locator.version>2.5.0-b42</osgi.resource.locator.version>
     <jaxb.osgi.version>4.0.3</jaxb.osgi.version>
-    <xml.bind-api.version>4.0.0</xml.bind-api.version>
+    <xml.bind-api.version>4.0.2</xml.bind-api.version>
     <joml.version>1.10.5</joml.version>
     <jogamp.version>2.5.0</jogamp.version>
     <jackson.version>2.15.1</jackson.version>

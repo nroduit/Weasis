@@ -216,7 +216,7 @@
     },
     {
       "code": "org.apache.sling.commons.log.file.number",
-      "value": "5",
+      "value": "20",
       "description": "The max number of rolling log files",
       "type": "F",
       "javaType": "INT",

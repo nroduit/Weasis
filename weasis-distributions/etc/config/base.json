@@ -216,7 +216,7 @@
     },
     {
       "code": "org.apache.sling.commons.log.file.number",
-      "value": "5",
+      "value": "20",
       "description": "The max number of rolling log files",
       "type": "F",
       "javaType": "INT",
@@ -238,7 +238,7 @@
     },
     {
       "code": "org.apache.sling.commons.log.stack.limit",
-      "value": "5",
+      "value": "3",
       "description": "Defines the maximum number of lines for stack trace (0 => NONE, -1 => ALL). Default value is 3",
       "type": "F",
       "javaType": "INT",

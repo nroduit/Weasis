@@ -50,7 +50,7 @@ public class LoggingPrefView extends AbstractItemDialogPage {
 
     try {
       GuiUtils.setNumberModel(
-          spinner, getIntPreferences(AuditLog.LOG_FILE_NUMBER, 10, null), 1, 99, 1);
+          spinner, getIntPreferences(AuditLog.LOG_FILE_NUMBER, 20, null), 1, 99, 1);
       GuiUtils.setNumberModel(
           spinner1, getIntPreferences(AuditLog.LOG_FILE_SIZE, 10, "MB"), 1, 99, 1);
 
@@ -134,7 +134,7 @@ public class LoggingPrefView extends AbstractItemDialogPage {
     comboBoxStackLimit.setSelectedItem(limit >= 0 ? Integer.toString(limit) : "");
 
     checkboxFileLog.setSelected(prefs.getBooleanProperty(AuditLog.LOG_FILE_ACTIVATION, false));
-    spinner.setValue(getIntPreferences(AuditLog.LOG_FILE_NUMBER, 5, null));
+    spinner.setValue(getIntPreferences(AuditLog.LOG_FILE_NUMBER, 20, null));
     spinner1.setValue(getIntPreferences(AuditLog.LOG_FILE_SIZE, 10, "MB"));
     checkRollingLog();
   }
@@ -175,7 +175,7 @@ public class LoggingPrefView extends AbstractItemDialogPage {
     preferences.resetServiceProperty(AuditLog.LOG_STACKTRACE_LIMIT, "3");
     preferences.resetServiceProperty(AuditLog.LOG_LEVEL, "INFO");
     preferences.resetServiceProperty(AuditLog.LOG_FILE, "");
-    preferences.resetServiceProperty(AuditLog.LOG_FILE_NUMBER, "10");
+    preferences.resetServiceProperty(AuditLog.LOG_FILE_NUMBER, "20");
     preferences.resetServiceProperty(AuditLog.LOG_FILE_SIZE, "10MB"); // NON-NLS
 
     initialize();
