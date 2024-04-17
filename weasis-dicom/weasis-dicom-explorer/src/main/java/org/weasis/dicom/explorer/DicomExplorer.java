@@ -213,7 +213,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
     MediaSeriesGroup patient = model.getParent(study, DicomModel.patient);
     List<StudyPane> studies = patient2study.get(patient);
     if (studies != null) {
-      for (int i = 0; i < studies.size(); i++) {
+      for (int i = studies.size() - 1; i >= 0; i--) {
         StudyPane st = studies.get(i);
         if (st.isStudy(study)) {
           studies.remove(i);
@@ -241,7 +241,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
     MediaSeriesGroup study = model.getParent(series, DicomModel.study);
     List<SeriesPane> seriesList = study2series.get(study);
     if (seriesList != null) {
-      for (int j = 0; j < seriesList.size(); j++) {
+      for (int j = seriesList.size() - 1; j >= 0; j--) {
         SeriesPane se = seriesList.get(j);
         if (se.isSeries(series)) {
           seriesList.remove(j);
@@ -719,12 +719,28 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
           new ComponentAdapter() {
             @Override
             public void componentResized(ComponentEvent e) {
-              WrapLayout wl = (WrapLayout) sub.getLayout();
-              sub.setPreferredSize(wl.preferredLayoutSize(sub));
+              refreshLayout();
               StudyPane.this.revalidate();
               StudyPane.this.getParent().repaint();
             }
           });
+    }
+
+    @Override
+    public void remove(int index) {
+      sub.remove(index);
+      refreshLayout();
+    }
+
+    @Override
+    public void remove(Component comp) {
+      sub.remove(comp);
+      refreshLayout();
+    }
+
+    public void refreshLayout() {
+      WrapLayout wl = (WrapLayout) sub.getLayout();
+      sub.setPreferredSize(wl.preferredLayoutSize(sub));
     }
 
     public boolean isSeriesVisible(MediaSeriesGroup series) {
