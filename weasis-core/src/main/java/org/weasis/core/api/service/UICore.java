@@ -269,7 +269,9 @@ public final class UICore {
   }
 
   public boolean isLocalSession() {
-    return Holder.INSTANCE.getSystemPreferences().getBooleanProperty("weasis.pref.local.session", false);
+    return Holder.INSTANCE
+        .getSystemPreferences()
+        .getBooleanProperty("weasis.pref.local.session", false);
   }
 
   public boolean isStoreLocalSession() {

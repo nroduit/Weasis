@@ -56,6 +56,8 @@ import org.weasis.core.api.util.ResourceUtil.ActionIcon;
 import org.weasis.core.api.util.ResourceUtil.OtherIcon;
 import org.weasis.core.ui.docking.DockableTool;
 import org.weasis.core.ui.docking.PluginTool;
+import org.weasis.core.ui.editor.SeriesViewerEvent;
+import org.weasis.core.ui.editor.SeriesViewerEvent.EVENT;
 import org.weasis.core.ui.editor.SeriesViewerFactory;
 import org.weasis.core.ui.editor.SeriesViewerListener;
 import org.weasis.core.ui.editor.SeriesViewerUI;
@@ -83,7 +85,7 @@ import org.weasis.dicom.codec.DicomSpecialElement;
 import org.weasis.dicom.codec.KOSpecialElement;
 import org.weasis.dicom.codec.PRSpecialElement;
 import org.weasis.dicom.codec.PresentationStateReader;
-import org.weasis.dicom.codec.SegSpecialElement;
+import org.weasis.dicom.codec.SpecialElementRegion;
 import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.TagD.Level;
 import org.weasis.dicom.explorer.DicomExplorer;
@@ -573,14 +575,19 @@ public class View2dContainer extends DicomViewerPlugin implements PropertyChange
               view2d.updatePR();
             }
           }
-        } else if (specialElement instanceof SegSpecialElement segSpecialElement) {
+        } else if (specialElement instanceof SpecialElementRegion region) {
           ViewCanvas<DicomImageElement> pane = getSelectedImagePane();
           for (ViewCanvas<DicomImageElement> view : view2ds) {
-            if (view instanceof View2d view2d
-                && segSpecialElement.containsSopInstanceUIDReference(view.getImage())) {
-              view2d.updateSegmentation();
+            if (view instanceof View2d view2d) {
+              if (region.containsSopInstanceUIDReference(view.getImage())) {
+                view2d.updateSegmentation();
+              }
               if (view2d == pane) {
                 UI.updateDynamicTools(view2d.getSeries());
+                if (!UI.dynamicTools.isEmpty()) {
+                  eventManager.fireSeriesViewerListeners(
+                      new SeriesViewerEvent(this, view2d.getSeries(), null, EVENT.SELECT_VIEW));
+                }
               }
             }
           }
