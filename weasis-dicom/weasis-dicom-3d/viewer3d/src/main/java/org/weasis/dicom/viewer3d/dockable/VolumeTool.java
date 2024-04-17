@@ -30,6 +30,7 @@ import org.weasis.core.api.util.ResourceUtil.ActionIcon;
 import org.weasis.core.api.util.ResourceUtil.OtherIcon;
 import org.weasis.core.ui.docking.PluginTool;
 import org.weasis.core.util.StringUtil;
+import org.weasis.dicom.viewer2d.dockable.ImageTool;
 import org.weasis.dicom.viewer3d.ActionVol;
 import org.weasis.dicom.viewer3d.EventManager;
 import org.weasis.dicom.viewer3d.Messages;
@@ -66,54 +67,7 @@ public class VolumeTool extends PluginTool {
 
   private JPanel getWindowLevelPanel() {
     int gabY = 7;
-    JPanel winLevelPanel = GuiUtils.getVerticalBoxLayoutPanel();
-    winLevelPanel.setBorder(
-        BorderFactory.createCompoundBorder(
-            spaceY,
-            GuiUtils.getTitledBorder(
-                org.weasis.dicom.viewer2d.Messages.getString("ImageTool.wl"))));
-    EventManager.getInstance()
-        .getAction(ActionW.WINDOW)
-        .ifPresent(
-            sliderItem -> {
-              JSliderW windowSlider = sliderItem.createSlider(0, true);
-              GuiUtils.setPreferredWidth(windowSlider, 100);
-              winLevelPanel.add(windowSlider);
-              winLevelPanel.add(GuiUtils.boxVerticalStrut(gabY));
-            });
-
-    EventManager.getInstance()
-        .getAction(ActionW.LEVEL)
-        .ifPresent(
-            sliderItem -> {
-              JSliderW levelSlider = sliderItem.createSlider(0, true);
-              GuiUtils.setPreferredWidth(levelSlider, 100);
-              winLevelPanel.add(levelSlider);
-              winLevelPanel.add(GuiUtils.boxVerticalStrut(gabY));
-            });
-
-    EventManager.getInstance()
-        .getAction(ActionW.PRESET)
-        .ifPresent(
-            comboItem -> {
-              JLabel presetsLabel = new JLabel(ActionW.PRESET.getTitle() + StringUtil.COLON);
-              JComboBox<?> presetComboBox = comboItem.createCombo(160);
-              presetComboBox.setMaximumRowCount(10);
-              winLevelPanel.add(
-                  GuiUtils.getHorizontalBoxLayoutPanel(5, presetsLabel, presetComboBox));
-              winLevelPanel.add(GuiUtils.boxVerticalStrut(gabY));
-            });
-
-    EventManager.getInstance()
-        .getAction(ActionW.LUT_SHAPE)
-        .ifPresent(
-            comboItem -> {
-              JLabel label = new JLabel(ActionW.LUT_SHAPE.getTitle() + StringUtil.COLON);
-              JComboBox<?> combo = comboItem.createCombo(140);
-              combo.setMaximumRowCount(10);
-              winLevelPanel.add(GuiUtils.getHorizontalBoxLayoutPanel(5, label, combo));
-              winLevelPanel.add(GuiUtils.boxVerticalStrut(gabY));
-            });
+    JPanel winLevelPanel = ImageTool.getWindowLevelPanel(EventManager.getInstance(), spaceY, false);
 
     EventManager.getInstance()
         .getAction(ActionVol.VOL_PRESET)
