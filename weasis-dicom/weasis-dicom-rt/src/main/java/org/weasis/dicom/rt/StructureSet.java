@@ -263,7 +263,7 @@ public class StructureSet extends RtSpecialElement implements SpecialElementRegi
 
     Double z = null;
     double[] points = contour.getDoubles(Tag.ContourData);
-    if (points != null && points.length % 3 == 0 && points.length > 1) {
+    if (img != null && points != null && points.length % 3 == 0 && points.length > 1) {
       GeometryOfSlice geometry = img.getDispSliceGeometry();
       Vector3d voxelSpacing = geometry.getVoxelSpacing();
       if (voxelSpacing.x < 0.00001 || voxelSpacing.y < 0.00001) {

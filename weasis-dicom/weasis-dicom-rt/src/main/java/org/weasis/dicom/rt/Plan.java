@@ -90,12 +90,12 @@ public class Plan extends RtSpecialElement {
   }
 
   public List<Dose> getDoses() {
-    return this.doses;
+    return doses;
   }
 
   public Dose getFirstDose() {
-    if (!this.doses.isEmpty()) {
-      return this.doses.getFirst();
+    if (!doses.isEmpty()) {
+      return doses.getFirst();
     }
 
     return null;

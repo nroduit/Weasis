@@ -424,7 +424,9 @@ public class Dose extends RtSpecialElement implements SpecialElementRegion {
         plan.setSopInstanceUid(referencedPlanUid);
         plans.add(plan);
       }
-      plan.getDoses().add(this);
+      if (plan != null) {
+        plan.getDoses().add(this);
+      }
     }
   }
 
