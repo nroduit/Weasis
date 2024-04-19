@@ -611,6 +611,14 @@
       "type": "A",
       "javaType": "BOOLEAN",
       "category": "UI"
+    },
+    {
+      "code": "weasis.plugins.license",
+      "value": "true",
+      "description": "Show license activation in Help menu",
+      "type": "A",
+      "javaType": "BOOLEAN",
+      "category": "UI"
     }
   ]
 }

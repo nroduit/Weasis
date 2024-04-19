@@ -288,9 +288,9 @@ public class View3DFactory implements SeriesViewerFactory {
     LOGGER.info("3D Viewer is activated");
     String joglThreadConfig =
         GuiUtils.getUICore().getSystemPreferences().getProperty(JOGL_THREAD_CONFIG);
-    LOGGER.debug("Custom {} value: {}", JOGL_THREAD_CONFIG, joglThreadConfig);
     if (StringUtil.hasText(joglThreadConfig)) {
       System.setProperty(JOGL_THREAD_CONFIG, joglThreadConfig);
+      LOGGER.debug("Custom " + JOGL_THREAD_CONFIG + " value: {}", joglThreadConfig);
     }
 
     WProperties prefs = GuiUtils.getUICore().getLocalPersistence();

@@ -82,6 +82,10 @@ public final class UICore {
   private final HashMap<String, WProperties> pluginPersistenceMap;
   private final File propsFile;
 
+  private static final class Holder {
+    private static final UICore INSTANCE = new UICore();
+  }
+
   /** Do not instantiate UICore, get OSGI singleton service from GuiUtils.getUICore() */
   private UICore() {
     this.dockingControl = new CControl();
@@ -135,10 +139,11 @@ public final class UICore {
     FileUtil.readProperties(new File(dataFolder, "persistence.properties"), localPersistence);
   }
 
-  private static class Holder {
-    private static final UICore INSTANCE = new UICore();
-  }
-
+  /**
+   * Thread safe singleton instance.
+   *
+   * @return a thread safe singleton instance with a lazy initialization.
+   */
   public static UICore getInstance() {
     return Holder.INSTANCE;
   }

@@ -292,17 +292,15 @@ public class StructureSet extends RtSpecialElement implements SpecialElementRegi
     return null;
   }
 
-  private static Path2D getPath2D(GeometryOfSlice geometry, double[] points,
-      Vector3d voxelSpacing) {
+  private static Path2D getPath2D(
+      GeometryOfSlice geometry, double[] points, Vector3d voxelSpacing) {
     Vector3d tlhc = geometry.getTLHC();
     Vector3d row = geometry.getRow();
     Vector3d column = geometry.getColumn();
 
     Path2D path = new Path2D.Double(Path2D.WIND_NON_ZERO);
     double x =
-        ((points[0] - tlhc.x) * row.x
-                + (points[1] - tlhc.y) * row.y
-                + (points[2] - tlhc.z) * row.z)
+        ((points[0] - tlhc.x) * row.x + (points[1] - tlhc.y) * row.y + (points[2] - tlhc.z) * row.z)
             / voxelSpacing.x;
     double y =
         ((points[0] - tlhc.x) * column.x
