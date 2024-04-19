@@ -269,35 +269,7 @@ public class StructureSet extends RtSpecialElement implements SpecialElementRegi
       if (voxelSpacing.x < 0.00001 || voxelSpacing.y < 0.00001) {
         return null;
       }
-      Vector3d tlhc = geometry.getTLHC();
-      Vector3d row = geometry.getRow();
-      Vector3d column = geometry.getColumn();
-
-      Path2D path = new Path2D.Double(Path2D.WIND_NON_ZERO);
-      double x =
-          ((points[0] - tlhc.x) * row.x
-                  + (points[1] - tlhc.y) * row.y
-                  + (points[2] - tlhc.z) * row.z)
-              / voxelSpacing.x;
-      double y =
-          ((points[0] - tlhc.x) * column.x
-                  + (points[1] - tlhc.y) * column.y
-                  + (points[2] - tlhc.z) * column.z)
-              / voxelSpacing.y;
-      path.moveTo(x, y);
-      for (int i = 3; i < points.length; i = i + 3) {
-        x =
-            ((points[i] - tlhc.x) * row.x
-                    + (points[i + 1] - tlhc.y) * row.y
-                    + (points[i + 2] - tlhc.z) * row.z)
-                / voxelSpacing.x;
-        y =
-            ((points[i] - tlhc.x) * column.x
-                    + (points[i + 1] - tlhc.y) * column.y
-                    + (points[i + 2] - tlhc.z) * column.z)
-                / voxelSpacing.y;
-        path.lineTo(x, y);
-      }
+      Path2D path = getPath2D(geometry, points, voxelSpacing);
       z = points[2];
       if ("CLOSED_PLANAR".equals(geometricType)) { // NON-NLS
         path.closePath();
@@ -318,6 +290,40 @@ public class StructureSet extends RtSpecialElement implements SpecialElementRegi
     }
 
     return null;
+  }
+
+  private static Path2D getPath2D(GeometryOfSlice geometry, double[] points,
+      Vector3d voxelSpacing) {
+    Vector3d tlhc = geometry.getTLHC();
+    Vector3d row = geometry.getRow();
+    Vector3d column = geometry.getColumn();
+
+    Path2D path = new Path2D.Double(Path2D.WIND_NON_ZERO);
+    double x =
+        ((points[0] - tlhc.x) * row.x
+                + (points[1] - tlhc.y) * row.y
+                + (points[2] - tlhc.z) * row.z)
+            / voxelSpacing.x;
+    double y =
+        ((points[0] - tlhc.x) * column.x
+                + (points[1] - tlhc.y) * column.y
+                + (points[2] - tlhc.z) * column.z)
+            / voxelSpacing.y;
+    path.moveTo(x, y);
+    for (int i = 3; i < points.length; i = i + 3) {
+      x =
+          ((points[i] - tlhc.x) * row.x
+                  + (points[i + 1] - tlhc.y) * row.y
+                  + (points[i + 2] - tlhc.z) * row.z)
+              / voxelSpacing.x;
+      y =
+          ((points[i] - tlhc.x) * column.x
+                  + (points[i + 1] - tlhc.y) * column.y
+                  + (points[i + 2] - tlhc.z) * column.z)
+              / voxelSpacing.y;
+      path.lineTo(x, y);
+    }
+    return path;
   }
 
   private static SegMeasurableLayer<DicomImageElement> getMeasurableLayer(
