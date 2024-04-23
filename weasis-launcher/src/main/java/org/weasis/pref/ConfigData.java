@@ -7,24 +7,7 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
  */
-package org.weasis.launcher;
-
-import static org.weasis.launcher.WeasisLauncher.CONFIG_DIRECTORY;
-import static org.weasis.launcher.WeasisLauncher.CONFIG_PROPERTIES_FILE_VALUE;
-import static org.weasis.launcher.WeasisLauncher.CONFIG_PROPERTIES_PROP;
-import static org.weasis.launcher.WeasisLauncher.EXTENDED_PROPERTIES_PROP;
-import static org.weasis.launcher.WeasisLauncher.P_HTTP_AUTHORIZATION;
-import static org.weasis.launcher.WeasisLauncher.P_OS_NAME;
-import static org.weasis.launcher.WeasisLauncher.P_WEASIS_CODEBASE_LOCAL;
-import static org.weasis.launcher.WeasisLauncher.P_WEASIS_CODEBASE_URL;
-import static org.weasis.launcher.WeasisLauncher.P_WEASIS_CONFIG_HASH;
-import static org.weasis.launcher.WeasisLauncher.P_WEASIS_CONFIG_URL;
-import static org.weasis.launcher.WeasisLauncher.P_WEASIS_NAME;
-import static org.weasis.launcher.WeasisLauncher.P_WEASIS_PATH;
-import static org.weasis.launcher.WeasisLauncher.P_WEASIS_PROFILE;
-import static org.weasis.launcher.WeasisLauncher.P_WEASIS_SOURCE_ID;
-import static org.weasis.launcher.WeasisLauncher.P_WEASIS_USER;
-import static org.weasis.launcher.WeasisLauncher.P_WEASIS_VERSION;
+package org.weasis.pref;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -55,12 +38,55 @@ import javax.xml.stream.XMLStreamReader;
 import org.osgi.framework.Constants;
 import org.osgi.framework.Version;
 import org.slf4j.LoggerFactory;
+import org.weasis.launcher.FileUtil;
+import org.weasis.launcher.Utils;
 import org.weasis.launcher.WeasisLauncher.Type;
-import org.weasis.pref.AppPreferences;
-import org.weasis.pref.Preference;
 
 public class ConfigData {
   private static final org.slf4j.Logger LOGGER = LoggerFactory.getLogger(ConfigData.class);
+
+  /** Name of the configuration directory. */
+  public static final String CONFIG_DIRECTORY = "conf";
+
+  public static final String APP_PROPERTY_FILE = "weasis.properties";
+  public static final String P_WEASIS_VERSION = "weasis.version";
+  public static final String P_WEASIS_PROFILE = "weasis.profile";
+  public static final String P_WEASIS_NAME = "weasis.name";
+  public static final String P_WEASIS_PATH = "weasis.path";
+  public static final String P_WEASIS_RES_DATE = "weasis.resources.date";
+  public static final String P_WEASIS_CODEBASE_LOCAL = "weasis.codebase.local";
+  public static final String P_WEASIS_SOURCE_ID = "weasis.source.id";
+  public static final String P_WEASIS_CODEBASE_URL = "weasis.codebase.url";
+  public static final String P_WEASIS_CONFIG_HASH = "weasis.config.hash";
+  public static final String P_WEASIS_PREFS_URL = "weasis.pref.url";
+  public static final String P_WEASIS_CONFIG_URL = "weasis.config.url";
+  public static final String P_WEASIS_USER = "weasis.user";
+  public static final String P_WEASIS_SHOW_DISCLAIMER = "weasis.show.disclaimer";
+  public static final String P_WEASIS_ACCEPT_DISCLAIMER = "weasis.accept.disclaimer";
+  public static final String P_WEASIS_SHOW_RELEASE = "weasis.show.release";
+  public static final String P_WEASIS_VERSION_RELEASE = "weasis.version.release";
+  public static final String P_WEASIS_I18N = "weasis.i18n";
+  public static final String P_OS_NAME = "os.name";
+  public static final String P_WEASIS_LOOK = "weasis.theme";
+  public static final String P_GOSH_ARGS = "gosh.args";
+  public static final String P_WEASIS_CLEAN_CACHE = "weasis.clean.cache";
+  public static final String P_HTTP_AUTHORIZATION = "http.authorization";
+  public static final String P_NATIVE_LIB_SPEC = "native.library.spec";
+  public static final String P_WEASIS_MIN_NATIVE_VERSION = "weasis.min.native.version";
+  public static final String P_WEASIS_RESOURCES_URL = "weasis.resources.url";
+  public static final String F_RESOURCES = "resources"; // NON-NLS
+
+  /**
+   * The property name used to specify a URL to the configuration property file to be used for the
+   * created the framework instance.
+   */
+  public static final String CONFIG_PROPERTIES_PROP = "felix.config.properties";
+
+  /** The default name used for the configuration file. */
+  public static final String CONFIG_PROPERTIES_FILE_VALUE = "base.json";
+
+  /** The property name used to specify a URL to the extended configuration file. */
+  public static final String EXTENDED_PROPERTIES_PROP = "felix.extended.config.properties";
 
   // Params, see
   // https://nroduit.github.io/en/getting-started/weasis-protocol/#modify-the-launch-parameters
@@ -76,6 +102,7 @@ public class ConfigData {
 
   private final StringBuilder configOutput = new StringBuilder();
   private final Map<String, String> felixProps = new HashMap<>();
+  private final AppPreferences preferences = new AppPreferences();
 
   public ConfigData(String[] args) {
     init(args);
@@ -88,7 +115,7 @@ public class ConfigData {
 
     if (args != null) {
       for (int i = 0; i < args.length; i++) {
-        LOGGER.info("Main arg {0} = {1}", Integer.toString(i), args[i]);
+        LOGGER.info("Main arg {} = {}", i, args[i]);
       }
 
       int index = Utils.getWeasisProtocolIndex(args);
@@ -120,7 +147,7 @@ public class ConfigData {
     applyConfigFromArguments();
 
     // Load all the felix properties
-    AppPreferences preferences = loadConfigProperties();
+    loadConfigProperties();
 
     // Set "application config" properties, but has no effect on those already set
     initWeasisProperties(preferences);
@@ -167,13 +194,13 @@ public class ConfigData {
     // current platform
     setOsgiNativeLibSpecification();
 
-    String profile = preferences.getProperty(P_WEASIS_PROFILE, "default");
+    String profile = preferences.getValue(P_WEASIS_PROFILE, "default");
     addProperty(P_WEASIS_PROFILE, profile);
 
-    String name = preferences.getProperty(P_WEASIS_NAME, "Weasis"); // NON-NLS
+    String name = preferences.getValue(P_WEASIS_NAME, "Weasis"); // NON-NLS
     addProperty(P_WEASIS_NAME, name);
 
-    String version = preferences.getProperty(P_WEASIS_VERSION, "0.0.0");
+    String version = preferences.getValue(P_WEASIS_VERSION, "0.0.0");
     addProperty(P_WEASIS_VERSION, version);
 
     String codebase = properties.getProperty(P_WEASIS_CODEBASE_URL);
@@ -193,7 +220,7 @@ public class ConfigData {
     if (portable != null) {
       LOGGER.info("Set default relative folders");
       String pkey = "weasis.portable.dicom.directory";
-      addProperty(pkey, preferences.getProperty(pkey, "dicom,DICOM,IMAGES,images")); // NON-NLS
+      addProperty(pkey, preferences.getValue(pkey, "dicom,DICOM,IMAGES,images")); // NON-NLS
     }
 
     // Set weasis properties to Java System Properties before variables substitution.
@@ -215,7 +242,7 @@ public class ConfigData {
     // Only required for dev purposes (running the app in IDE)
     String mvnRepo =
         System.getProperty(
-            "maven.localRepository", preferences.getProperty("maven.local.repo")); // NON-NLS
+            "maven.localRepository", preferences.getValue("maven.local.repo")); // NON-NLS
     if (mvnRepo != null) {
       System.setProperty("maven.localRepository", Utils.adaptPathToUri(mvnRepo));
     }
@@ -274,7 +301,7 @@ public class ConfigData {
     configOutput.append(properties.getProperty(P_WEASIS_CODEBASE_URL));
   }
 
-  private String applyLocalCodebase() {
+  private void applyLocalCodebase() {
     File localCodebase = findLocalCodebase();
     String baseURI = localCodebase.toURI().toString();
     if (baseURI.endsWith("/")) {
@@ -288,7 +315,6 @@ public class ConfigData {
     } catch (Exception e) {
       LOGGER.error("Apply Codebase", e);
     }
-    return baseURI;
   }
 
   private void applyConfigParams(Map<String, List<String>> configParams) {
@@ -299,14 +325,18 @@ public class ConfigData {
     configParams.forEach(
         (k, v) -> {
           switch (k) {
-            case PARAM_CONFIG_URL -> addProperty(P_WEASIS_CONFIG_URL, v.get(0));
-            case PARAM_CODEBASE -> addProperty(P_WEASIS_CODEBASE_URL, v.get(0));
-            case PARAM_AUTHORIZATION -> addProperty(P_HTTP_AUTHORIZATION, v.get(0));
+            case PARAM_CONFIG_URL -> addProperty(P_WEASIS_CONFIG_URL, v.getFirst());
+            case PARAM_CODEBASE -> addProperty(P_WEASIS_CODEBASE_URL, v.getFirst());
+            case PARAM_AUTHORIZATION -> addProperty(P_HTTP_AUTHORIZATION, v.getFirst());
             case PARAM_PROPERTY -> addProperties(v);
             case PARAM_ARGUMENT -> addArguments(v);
             default -> throw new IllegalStateException("Unexpected value: " + k);
           }
         });
+  }
+
+  public AppPreferences getPreferences() {
+    return preferences;
   }
 
   public List<String> getArguments() {
@@ -605,9 +635,9 @@ public class ConfigData {
    * Reads application config files and compute WEASIS_CONFIG_HASH to check if those had been
    * updated.
    */
-  public AppPreferences loadConfigProperties() {
+  public void loadConfigProperties() {
     URI propURI = getPropertiesURI(CONFIG_PROPERTIES_PROP, CONFIG_PROPERTIES_FILE_VALUE);
-    AppPreferences preferences = new AppPreferences();
+
     // Read the properties file
     if (propURI != null) {
       configOutput.append("\n  Application configuration file = "); // NON-NLS
@@ -636,20 +666,16 @@ public class ConfigData {
     // Build a hash the properties just after reading. It will allow comparing with a new app
     // instance.
     properties.put(P_WEASIS_CONFIG_HASH, String.valueOf(preferences.hashCode()));
-
-    return preferences;
   }
 
   private void checkMinimalVersion(AppPreferences preferences) {
-    String val = preferences.getProperty(WeasisLauncher.P_WEASIS_MIN_NATIVE_VERSION);
+    String val = preferences.getValue(P_WEASIS_MIN_NATIVE_VERSION);
     if (Utils.hasText(val) && getProperty(P_WEASIS_CODEBASE_LOCAL) == null) {
       try {
         URI propURI = getLocalPropertiesURI(CONFIG_PROPERTIES_FILE_VALUE);
         AppPreferences localPrefs = new AppPreferences();
         localPrefs.readJson(propURI);
-        Version loc =
-            new Version(
-                localPrefs.getProperty(WeasisLauncher.P_WEASIS_VERSION).replaceFirst("-", "."));
+        Version loc = new Version(localPrefs.getValue(P_WEASIS_VERSION).replaceFirst("-", "."));
         Version min = new Version(val.replaceFirst("-", "."));
         if (loc.compareTo(min) < 0) {
           LOGGER.warn(
@@ -658,7 +684,7 @@ public class ConfigData {
               min);
           preferences.clear();
           preferences.putAll(localPrefs);
-          System.setProperty(WeasisLauncher.P_WEASIS_MIN_NATIVE_VERSION, val);
+          System.setProperty(P_WEASIS_MIN_NATIVE_VERSION, val);
         }
       } catch (Exception e) {
         LOGGER.error("Cannot check compatibility with remote package", e);
@@ -710,7 +736,7 @@ public class ConfigData {
     return String.valueOf(ch8);
   }
 
-  static File findLocalCodebase() {
+  public static File findLocalCodebase() {
     // Determine where the configuration directory is by figuring
     // out where weasis-launcher.jar is located on the system class path.
     String jarLocation = null;
@@ -784,7 +810,7 @@ public class ConfigData {
       } else {
         osArch = osArch.toLowerCase();
       }
-      System.setProperty(WeasisLauncher.P_NATIVE_LIB_SPEC, osName + "-" + osArch);
+      System.setProperty(P_NATIVE_LIB_SPEC, osName + "-" + osArch);
     }
   }
 }

@@ -31,6 +31,7 @@ import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.weasis.pref.ConfigData;
 
 public class Singleton {
   private static final Logger LOGGER = LoggerFactory.getLogger(Singleton.class);
@@ -186,8 +187,8 @@ public class Singleton {
 
       out.println(SI_PROP);
       Properties p = configData.getProperties();
-      printProperty(out, WeasisLauncher.P_WEASIS_USER, p);
-      printProperty(out, WeasisLauncher.P_WEASIS_CONFIG_HASH, p);
+      printProperty(out, ConfigData.P_WEASIS_USER, p);
+      printProperty(out, ConfigData.P_WEASIS_CONFIG_HASH, p);
 
       // indicate end of file transmission
       out.println(SI_EOF);

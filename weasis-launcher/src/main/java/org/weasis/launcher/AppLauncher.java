@@ -12,6 +12,7 @@ package org.weasis.launcher;
 import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
+import org.weasis.pref.ConfigData;
 
 public class AppLauncher extends WeasisLauncher implements Singleton.SingletonApp {
 
@@ -72,10 +73,11 @@ public class AppLauncher extends WeasisLauncher implements Singleton.SingletonAp
   @Override
   public boolean canStartNewActivation(Properties prop) {
     boolean sameUser =
-        configData.isPropertyValueSimilar(P_WEASIS_USER, prop.getProperty(P_WEASIS_USER));
+        configData.isPropertyValueSimilar(
+            ConfigData.P_WEASIS_USER, prop.getProperty(ConfigData.P_WEASIS_USER));
     boolean sameConfig =
         configData.isPropertyValueSimilar(
-            P_WEASIS_CONFIG_HASH, prop.getProperty(P_WEASIS_CONFIG_HASH));
+            ConfigData.P_WEASIS_CONFIG_HASH, prop.getProperty(ConfigData.P_WEASIS_CONFIG_HASH));
     return sameUser && sameConfig;
   }
 

@@ -24,6 +24,7 @@ import java.io.DataOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.lang.management.ManagementFactory;
 import java.net.HttpURLConnection;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
@@ -36,6 +37,10 @@ import java.util.Locale;
 import java.util.Locale.Category;
 import java.util.Map;
 import java.util.Properties;
+import javax.management.InstanceNotFoundException;
+import javax.management.JMException;
+import javax.management.MBeanServer;
+import javax.management.ObjectName;
 import org.osgi.framework.BundleContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -58,6 +63,7 @@ import org.weasis.core.ui.util.ToolBarContainer;
 import org.weasis.core.ui.util.Toolbar;
 import org.weasis.core.util.FileUtil;
 import org.weasis.core.util.StringUtil;
+import org.weasis.pref.ConfigData;
 
 public final class UICore {
   public static final String P_FORMAT_CODE = "locale.format.code";
@@ -79,6 +85,7 @@ public final class UICore {
   private final WProperties systemPreferences;
   private final WProperties localPersistence;
   private final WProperties initialSystemPreferences;
+  private final ConfigData configData;
   private final HashMap<String, WProperties> pluginPersistenceMap;
   private final File propsFile;
 
@@ -92,6 +99,7 @@ public final class UICore {
     this.baseArea = dockingControl.getContentArea();
     this.mainArea = dockingControl.createWorkingArea("mainArea");
     this.toolbarContainer = new ToolBarContainer();
+    this.configData = retrieveconfigData();
     this.initialSystemPreferences = new WProperties();
     this.systemPreferences = new WProperties();
     this.pluginPersistenceMap = new HashMap<>();
@@ -137,6 +145,21 @@ public final class UICore {
 
     File dataFolder = AppProperties.getBundleDataFolder(context);
     FileUtil.readProperties(new File(dataFolder, "persistence.properties"), localPersistence);
+  }
+
+  private static ConfigData retrieveconfigData() {
+    MBeanServer server = ManagementFactory.getPlatformMBeanServer();
+    try {
+      ObjectName objectName = ObjectName.getInstance("weasis:name=MainWindow"); // NON-NLS
+      Object preferences = server.getAttribute(objectName, "ConfigData");
+      if (preferences instanceof ConfigData configData) {
+        return configData;
+      }
+    } catch (InstanceNotFoundException ignored) {
+    } catch (JMException e) {
+      LOGGER.debug("Error while receiving main window", e);
+    }
+    throw new IllegalStateException("Cannot retrieve ConfigData");
   }
 
   /**
@@ -350,6 +373,10 @@ public final class UICore {
 
   public List<Codec<MediaElement>> getCodecPlugins() {
     return codecPlugins;
+  }
+
+  public ConfigData getConfigData() {
+    return configData;
   }
 
   /**

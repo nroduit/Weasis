@@ -210,19 +210,24 @@ public class FileUtil {
     // Prevent caching of Java WebStart.
     connection.setUseCaches(useCaches);
     // Support for http proxy authentication.
-    String p = url.getProtocol();
+    String protocol = url.getProtocol();
     String pauth = System.getProperty("http.proxyAuth", null);
-    if (Utils.hasText(pauth) && ("http".equals(p) || "https".equals(p))) { // NON-NLS
+    if (hasProxyProperty(pauth, protocol)) {
       String base64 = Util.base64Encode(pauth);
       connection.setRequestProperty("Proxy-Authorization", "Basic " + base64); // NON-NLS
     }
 
     String auth = System.getProperty("http.authorization", null);
-    if (Utils.hasText(auth) && ("http".equals(p) || "https".equals(p))) { // NON-NLS
+    if (hasProxyProperty(auth, protocol)) {
       connection.setRequestProperty("Authorization", auth);
     }
 
     return connection;
+  }
+
+  private static boolean hasProxyProperty(String propertyValue, String protocol) {
+    return Utils.hasText(propertyValue)
+        && ("http".equals(protocol) || "https".equals(protocol)); // NON-NLS
   }
 
   private static void copyZip(InputStream in, File file) throws IOException {

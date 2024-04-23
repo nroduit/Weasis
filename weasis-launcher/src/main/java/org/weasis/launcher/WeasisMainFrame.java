@@ -12,10 +12,12 @@ package org.weasis.launcher;
 import java.awt.Window;
 import javax.swing.RootPaneContainer;
 import javax.swing.SwingUtilities;
+import org.weasis.pref.ConfigData;
 
 public class WeasisMainFrame implements WeasisMainFrameMBean {
 
   private RootPaneContainer rootPaneContainer;
+  private ConfigData configData;
 
   public void setRootPaneContainer(RootPaneContainer rootPaneContainer) {
     this.rootPaneContainer = rootPaneContainer;
@@ -24,6 +26,15 @@ public class WeasisMainFrame implements WeasisMainFrameMBean {
   @Override
   public RootPaneContainer getRootPaneContainer() {
     return rootPaneContainer;
+  }
+
+  @Override
+  public ConfigData getConfigData() {
+    return configData;
+  }
+
+  public void setConfigData(ConfigData configData) {
+    this.configData = configData;
   }
 
   public Window getWindow() {

@@ -62,6 +62,12 @@
 
   <dependencies>
     <dependency>
+      <groupId>org.weasis.launcher</groupId>
+      <artifactId>weasis-launcher</artifactId>
+      <version>${project.parent.version}</version>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
       <groupId>org.apache.felix</groupId>
       <artifactId>org.apache.felix.gogo.command</artifactId>
     </dependency>

@@ -55,10 +55,6 @@ public class Utils {
     return str != null && !str.isEmpty();
   }
 
-  public static boolean hasLength(String str) {
-    return hasLength((CharSequence) str);
-  }
-
   public static boolean hasText(CharSequence str) {
     if (!hasLength(str)) {
       return false;

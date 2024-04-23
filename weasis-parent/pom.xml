@@ -576,6 +576,7 @@
   </dependencyManagement>
 
   <dependencies>
+    <!-- The following dependencies are embedded in the launcher jar -->
     <dependency>
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-api</artifactId>
@@ -613,6 +614,8 @@
       <version>${flatlaf.version}</version>
       <scope>provided</scope>
     </dependency>
+
+    <!-- The following dependencies are provided as OSGI bundles for all the plugins -->
     <dependency>
       <groupId>com.miglayout</groupId>
       <artifactId>miglayout-swing</artifactId>
@@ -625,6 +628,7 @@
       <version>${miglayout.version}</version>
       <scope>provided</scope>
     </dependency>
+
     <dependency>
       <groupId>org.weasis.core</groupId>
       <artifactId>weasis-core-img</artifactId>

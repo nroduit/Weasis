@@ -24,6 +24,7 @@ import org.osgi.service.startlevel.StartLevel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tukaani.xz.XZInputStream;
+import org.weasis.pref.ConfigData;
 
 /**
  * @author Richard S. Hall
@@ -239,7 +240,7 @@ public class AutoProcessor {
         String filename = p.toString();
         String value = modulesi18n.getProperty(filename);
         if (value != null) {
-          String baseURL = System.getProperty(WeasisLauncher.P_WEASIS_I18N);
+          String baseURL = System.getProperty(ConfigData.P_WEASIS_I18N);
           if (baseURL != null) {
             String uri = baseURL + (baseURL.endsWith("/") ? filename : "/" + filename);
             String bundleName = getBundleNameFromLocation(filename);

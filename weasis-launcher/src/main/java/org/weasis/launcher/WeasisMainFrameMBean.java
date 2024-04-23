@@ -10,8 +10,11 @@
 package org.weasis.launcher;
 
 import javax.swing.RootPaneContainer;
+import org.weasis.pref.ConfigData;
 
 public interface WeasisMainFrameMBean {
 
   RootPaneContainer getRootPaneContainer();
+
+  ConfigData getConfigData();
 }
