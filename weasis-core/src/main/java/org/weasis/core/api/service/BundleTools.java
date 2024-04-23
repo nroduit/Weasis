@@ -147,7 +147,7 @@ public class BundleTools {
 
   private static void registerTool(Insertable instance, SeriesViewerUI ui) {
     List<DockableTool> tools = ui.getTools();
-    if (instance instanceof DockableTool tool && tools.contains(tool)) {
+    if (instance instanceof DockableTool tool && !tools.contains(tool)) {
       tools.add(tool);
       LOGGER.debug("Add Tool [{}] for {}", tool, ui.clazz.getName());
     }
