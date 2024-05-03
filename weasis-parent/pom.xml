@@ -14,7 +14,7 @@
   <properties>
     <!-- force command line arguments settings to set version -->
     <!-- $ mvn clean install -Drevision=4.2.2 -Dchangelist=-SNAPSHOT -->
-    <revision>4.3.1</revision>
+    <revision>4.4.0</revision>
     <changelist>-SNAPSHOT</changelist>  <!-- Remove "-SNAPSHOT" for release -->
 
     <java-version>21</java-version>
@@ -25,9 +25,9 @@
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 
     <app.version>${revision}${changelist}</app.version>
-    <base.minimal.version>4.2.0</base.minimal.version>
+    <base.minimal.version>4.4.0</base.minimal.version>
     <i18n.version>4.0.0-SNAPSHOT</i18n.version>
-    <weasis.releasenotes>https://github.com/nroduit/Weasis/blob/master/CHANGELOG.md#v430-2024-02-16</weasis.releasenotes>
+    <weasis.releasenotes>https://github.com/nroduit/Weasis/blob/master/CHANGELOG.md#v440-2024-05-04</weasis.releasenotes>
 
     <felix.framework.version>7.0.5</felix.framework.version>
     <flatlaf.version>3.4.1</flatlaf.version>
@@ -50,7 +50,7 @@
     <slf4j.version>2.0.12</slf4j.version>
     <logback.version>1.5.2</logback.version>
     <dockingframes.version>1.1.7</dockingframes.version>
-    <weasis-dicom-tools.version>5.31.2</weasis-dicom-tools.version>
+    <weasis-dicom-tools.version>5.32.0</weasis-dicom-tools.version>
     <weasis.core.img.version>4.9.0.1</weasis.core.img.version>
     <weasis.opencv.native.version>4.9.0-dcm</weasis.opencv.native.version>
     <osgi.resource.locator.version>2.5.0-b42</osgi.resource.locator.version>
