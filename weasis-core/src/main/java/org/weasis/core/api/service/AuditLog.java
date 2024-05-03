@@ -72,7 +72,7 @@ public class AuditLog {
     p.setProperty(
         AuditLog.LOG_FILE, STR."\{AuditLog.LOG_FOLDER_PATH}audit-\{AppProperties.WEASIS_USER}.log");
     p.setProperty(AuditLog.LOG_FILE_NUMBER, "10");
-    p.setProperty(AuditLog.LOG_FILE_SIZE, "20MB");
+    p.setProperty(AuditLog.LOG_FILE_SIZE, "20MB"); // NON-NLS
     p.setProperty(AuditLog.LOG_CLASSES, "org.weasis.core.api.service.AuditLog");
     p.setProperty(AuditLog.LOG_FILE_PATTERN, STR."audit-\{AppProperties.WEASIS_USER}.%i.log.zip");
     return p;
@@ -88,7 +88,7 @@ public class AuditLog {
     AuditLog.createOrUpdateConsoleAppender(loggerContext, logger, encoder);
 
     if (StringUtil.hasText(prefs.getProperty(AuditLog.LOG_FILE))) {
-      prefs.setProperty(AuditLog.LOG_FILE_PATTERN, "default.%i.log.zip");
+      prefs.setProperty(AuditLog.LOG_FILE_PATTERN, "default.%i.log.zip"); // NON-NLS
       RollingFileAppender<ILoggingEvent> rollingFileAppender =
           AuditLog.getRollingFilesAppender(logger, AuditLog.NAME_ROLLING_FILES);
       AuditLog.updateRollingFilesAppender(rollingFileAppender, loggerContext, prefs, encoder);
@@ -174,7 +174,7 @@ public class AuditLog {
     encoder.setContext(loggerContext);
 
     String limit = StringUtil.hasText(stackLimit) && !"-1".equals(stackLimit) ? stackLimit : "full";
-    String str = pattern.replaceAll("ex\\{\\d+}", STR."ex{\{limit}}");
+    String str = pattern.replaceAll("ex\\{\\d+}", STR."ex{\{limit}}"); // NON-NLS
     encoder.setPattern(str);
     encoder.start();
     return encoder;

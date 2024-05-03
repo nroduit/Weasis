@@ -104,7 +104,7 @@ public class SegmentationTool extends PluginTool implements SeriesViewerListener
     tree.setToolTipText(StringUtil.EMPTY_STRING);
     tree.setCellRenderer(TreeBuilder.buildNoIconCheckboxTreeCellRenderer());
 
-    this.nodeStructures = new GroupTreeNode("List of regions", true);
+    this.nodeStructures = new GroupTreeNode(Messages.getString("list.of.regions"), true);
     this.initData();
 
     initListeners();
