@@ -224,7 +224,7 @@ jobs:
 
 
           # submit app for notarization
-          if xcrun notarytool submit --keychain "$HOME/Library/Keychains/signing_temp.keychain-db" -u "${{ secrets.MACOS_NOTARIZATION_USER }}" -p "${{ secrets.MACOS_NOTARIZATION_PWD }}" -i "org.test.${{env.NAME}}" "$BUNDLE_PKG" > "$NOTARIZE_APP_LOG" 2>&1; then
+          if xcrun notarytool submit --keychain "$HOME/Library/Keychains/signing_temp.keychain-db" -u "${{ secrets.MACOS_NOTARIZATION_USER }}" -p "${{ secrets.MACOS_NOTARIZATION_PWD }}" "$BUNDLE_PKG" > "$NOTARIZE_APP_LOG" 2>&1; then
           cat "$NOTARIZE_APP_LOG"
           RequestUUID=$(awk -F ' = ' '/RequestUUID/ {print $2}' "$NOTARIZE_APP_LOG")
 
