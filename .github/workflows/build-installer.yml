@@ -224,15 +224,15 @@ jobs:
 
 
           # submit app for notarization
-          if xcrun altool --notarize-app --primary-bundle-id "org.test.${{ env.NAME }}" --username "${{ secrets.MACOS_NOTARIZATION_USER}}" --password "${{ secrets.MACOS_NOTARIZATION_PWD }}" -f "$BUNDLE_PKG" > "$NOTARIZE_APP_LOG" 2>&1; then
+          if xcrun notarytool submit --keychain "$HOME/Library/Keychains/signing_temp.keychain-db" -u "${{ secrets.MACOS_NOTARIZATION_USER }}" -p "${{ secrets.MACOS_NOTARIZATION_PWD }}" -i "org.test.${{env.NAME}}" "$BUNDLE_PKG" > "$NOTARIZE_APP_LOG" 2>&1; then
           cat "$NOTARIZE_APP_LOG"
           RequestUUID=$(awk -F ' = ' '/RequestUUID/ {print $2}' "$NOTARIZE_APP_LOG")
 
           # check status periodically
           while sleep 60 && date; do
-           # check notarization status
-           if xcrun altool --notarization-info "$RequestUUID" --username "${{ secrets.MACOS_NOTARIZATION_USER}}" --password "${{ secrets.MACOS_NOTARIZATION_PWD }}" > "$NOTARIZE_INFO_LOG" 2>&1; then
-             cat "$NOTARIZE_INFO_LOG"
+          # check notarization status
+          if xcrun notarytool info "${RequestUUID}" --keychain "$HOME/Library/Keychains/signing_temp.keychain-db" -u "${{secrets.MACOS_NOTARIZATION_USER}}" -p "${{secrets.MACOS_NOTARIZATION_PWD}}" > "$NOTARIZE_INFO_LOG" 2>&1; then
+          cat "$NOTARIZE_INFO_LOG"
 
              # once notarization is complete, run stapler and exit
              if ! grep -q "Status: in progress" "$NOTARIZE_INFO_LOG"; then
