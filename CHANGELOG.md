@@ -1,5 +1,28 @@
 # Changelog
 
+## [v4.4.0](https://github.com/nroduit/Weasis/tree/v4.4.0) (2024-05-06)
+
+[Full Changelog](https://github.com/nroduit/Weasis/compare/v4.3.0...v4.4.0)
+
+**Implemented enhancements:**
+
+- Update weasis-dicom-tools and dcm4che to 5.32.0 [\#547](https://github.com/nroduit/Weasis/issues/547)
+- Replace OSGI Sling logger by Logback 1.5.2 and update to slf4j 2.0.12 [\#540](https://github.com/nroduit/Weasis/issues/540)
+- Update to weasis-core-img 4.9.0.1 [\#539](https://github.com/nroduit/Weasis/issues/539)
+- Update to FlatLaf 3.4.1 [\#538](https://github.com/nroduit/Weasis/issues/538)
+
+**Fixed bugs:**
+
+-  Image editor tools are not visible with Dicomizer [\#546](https://github.com/nroduit/Weasis/issues/546)
+- Issue of removing series from the UI [\#544](https://github.com/nroduit/Weasis/issues/544)
+- Segmentation panel is sometimes not visible when loading DICOM SEG [\#541](https://github.com/nroduit/Weasis/issues/541)
+- MIP rebuild resets the image preset [\#528](https://github.com/nroduit/Weasis/issues/528)
+- Can't open DX studies [\#525](https://github.com/nroduit/Weasis/issues/525)
+
+**Merged pull requests:**
+
+- Changing maven compiler plugin config. Updating UICore singleton. [\#517](https://github.com/nroduit/Weasis/pull/517) ([mriss](https://github.com/mriss))
+
 ## [v4.3.0](https://github.com/nroduit/Weasis/tree/v4.3.0) (2024-02-16)
 
 [Full Changelog](https://github.com/nroduit/Weasis/compare/v4.2.1...v4.3.0)
