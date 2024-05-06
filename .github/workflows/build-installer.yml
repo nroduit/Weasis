@@ -207,47 +207,19 @@ jobs:
           fi
           echo "APP_ARTIFACT=weasis-${machine}-${ARC_NAME}-${{ env.WEASIS_CLEAN_VERSION }}" >> $GITHUB_ENV
 
-      - name: Notarize Build
-        shell: bash
-        if: matrix.wsystem == 'macosx'
+      - name: "Notarize Release Build"
         run: |
-          BUNDLE_PKG="final-dist/${{ env.NAME }}-${{ env.WEASIS_CLEAN_VERSION }}-${{ matrix.warc }}.pkg"
-          # create temporary files
-          NOTARIZE_APP_LOG=$(mktemp -t notarize-app)
-          NOTARIZE_INFO_LOG=$(mktemp -t notarize-info)
+          xcrun notarytool submit \
+            "final-dist/${{ env.NAME }}-${{ env.WEASIS_CLEAN_VERSION }}-${{ matrix.warc }}.pkg" \
+            --apple-id "${{ secrets.APPLE_DEVELOPER_AC_USERNAME }}" \
+            --team-id "${{ secrets.APPLE_TEAM_ID }}" \
+            --password "${{ secrets.WEASIS_PWD }}" \
+            --wait
 
-          # delete temporary files on exit
-          function finish {
-          rm "$NOTARIZE_APP_LOG" "$NOTARIZE_INFO_LOG"
-          }
-          trap finish EXIT
-
-
-          # submit app for notarization
-          if xcrun notarytool submit --keychain "$HOME/Library/Keychains/signing_temp.keychain-db" -u "${{ secrets.MACOS_NOTARIZATION_USER }}" -p "${{ secrets.MACOS_NOTARIZATION_PWD }}" "$BUNDLE_PKG" > "$NOTARIZE_APP_LOG" 2>&1; then
-          cat "$NOTARIZE_APP_LOG"
-          RequestUUID=$(awk -F ' = ' '/RequestUUID/ {print $2}' "$NOTARIZE_APP_LOG")
-
-          # check status periodically
-          while sleep 60 && date; do
-          # check notarization status
-          if xcrun notarytool info "${RequestUUID}" --keychain "$HOME/Library/Keychains/signing_temp.keychain-db" -u "${{secrets.MACOS_NOTARIZATION_USER}}" -p "${{secrets.MACOS_NOTARIZATION_PWD}}" > "$NOTARIZE_INFO_LOG" 2>&1; then
-          cat "$NOTARIZE_INFO_LOG"
-
-             # once notarization is complete, run stapler and exit
-             if ! grep -q "Status: in progress" "$NOTARIZE_INFO_LOG"; then
-               xcrun stapler staple "$BUNDLE_PKG"
-               exit $?
-             fi
-           else
-             cat "$NOTARIZE_INFO_LOG" 1>&2
-             exit 1
-           fi
-          done
-          else
-          cat "$NOTARIZE_APP_LOG" 1>&2
-          exit 1
-          fi
+      - name: "Staple Release Build"
+        run: |
+          xcrun stapler staple \
+            "final-dist/${{ env.NAME }}-${{ env.WEASIS_CLEAN_VERSION }}-${{ matrix.warc }}.pkg"
 
       - name: Upload the installer
         uses: actions/upload-artifact@v3
