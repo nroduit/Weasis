@@ -208,6 +208,7 @@ jobs:
           echo "APP_ARTIFACT=weasis-${machine}-${ARC_NAME}-${{ env.WEASIS_CLEAN_VERSION }}" >> $GITHUB_ENV
 
       - name: "Notarize Release Build"
+        if: matrix.wsystem == 'macosx'
         run: |
           xcrun notarytool submit \
             "final-dist/${{ env.NAME }}-${{ env.WEASIS_CLEAN_VERSION }}-${{ matrix.warc }}.pkg" \
@@ -217,6 +218,7 @@ jobs:
             --wait
 
       - name: "Staple Release Build"
+        if: matrix.wsystem == 'macosx'
         run: |
           xcrun stapler staple \
             "final-dist/${{ env.NAME }}-${{ env.WEASIS_CLEAN_VERSION }}-${{ matrix.warc }}.pkg"
