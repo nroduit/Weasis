@@ -223,6 +223,15 @@ jobs:
           xcrun stapler staple \
             "final-dist/${{ env.NAME }}-${{ env.WEASIS_CLEAN_VERSION }}-${{ matrix.warc }}.pkg"
 
+      - name: "Add checksum sha256 file"
+        shell: bash
+        run: |
+            for file in "final-dist/*"; do
+              if [[ -f "$file" ]]; then
+                sha256sum "$file" >> "$file.sha256"
+              fi
+            done
+
       - name: Upload the installer
         uses: actions/upload-artifact@v3
         with:
