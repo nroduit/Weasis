@@ -146,7 +146,7 @@ public class AcquireImageInfo {
   }
 
   public void reloadFinalProcessing(ViewCanvas<ImageElement> view) {
-    if(view == null || view.getSourceImage() == null) {
+    if (view == null || view.getSourceImage() == null) {
       return;
     }
     postProcessOpManager.setParamValue(CropOp.OP_NAME, CropOp.P_AREA, null);

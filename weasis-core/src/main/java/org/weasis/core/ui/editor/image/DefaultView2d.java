@@ -499,12 +499,15 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     if (img == null) {
       eventManager.getAction(ActionW.SCROLL_SERIES).ifPresent(SliderCineListener::stop);
       actionsInView.put(ActionW.SPATIAL_UNIT.cmd(), Unit.PIXEL);
-      eventManager
-          .getAction(ActionW.SPATIAL_UNIT)
-          .ifPresent(
-              c ->
-                  c.setSelectedItemWithoutTriggerAction(
-                      actionsInView.get(ActionW.SPATIAL_UNIT.cmd())));
+      if (eventManager.getSelectedViewPane() == this) {
+        eventManager
+            .getAction(ActionW.SPATIAL_UNIT)
+            .ifPresent(
+                c ->
+                    c.setSelectedItemWithoutTriggerAction(
+                        actionsInView.get(ActionW.SPATIAL_UNIT.cmd())));
+      }
+
       // Force the update for null image
       imageLayer.setEnableDispOperations(true);
       imageLayer.setImage(null, null);
@@ -516,7 +519,10 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
       E oldImage = imageLayer.getSourceImage();
       if (!img.equals(oldImage)) {
         updateGraphics = true;
-        actionsInView.put(ActionW.SPATIAL_UNIT.cmd(), img.getPixelSpacingUnit());
+        Object oldUnit = actionsInView.get(ActionW.SPATIAL_UNIT.cmd());
+        if (oldUnit == null || Unit.PIXEL.equals(oldUnit)) {
+          actionsInView.put(ActionW.SPATIAL_UNIT.cmd(), img.getPixelSpacingUnit());
+        }
         if (eventManager.getSelectedViewPane() == this) {
           eventManager
               .getAction(ActionW.SPATIAL_UNIT)
@@ -526,12 +532,6 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
                           actionsInView.get(ActionW.SPATIAL_UNIT.cmd())));
         }
         actionsInView.put(ActionW.PREPROCESSING.cmd(), null);
-        eventManager
-            .getAction(ActionW.SPATIAL_UNIT)
-            .ifPresent(
-                c ->
-                    c.setSelectedItemWithoutTriggerAction(
-                        actionsInView.get(ActionW.SPATIAL_UNIT.cmd())));
 
         updateCanvas(img, false);
 
