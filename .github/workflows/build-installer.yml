@@ -64,9 +64,8 @@ jobs:
       matrix:
         include:
           - { os: ubuntu-latest, platform: x64, wsystem: linux, warc: x86-64 }
-          - { os: macos-latest, platform: x64, wsystem: macosx, warc: x86-64 }
-          - { os: macos-latest-xlarge, platform: arm64, wsystem: macosx, warc: aarch64 }
-          #  - { os: windows-latest, platform: x86, wsystem: windows, warc: x86 }
+          - { os: macos-13, platform: x64, wsystem: macosx, warc: x86-64 }
+          - { os: macos-latest, platform: arm64, wsystem: macosx, warc: aarch64 }
           - { os: windows-latest, platform: x64, wsystem: windows, warc: x86-64 }
 
     steps:
