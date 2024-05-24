@@ -546,22 +546,6 @@
               <outputDirectory>${project.build.directory}</outputDirectory>
             </configuration>
           </execution>
-          <execution>
-            <id>web</id>
-            <phase>package</phase>
-            <goals>
-              <goal>single</goal>
-            </goals>
-            <configuration>
-              <attach>true</attach>
-              <finalName>weasis</finalName>
-              <appendAssemblyId>false</appendAssemblyId>
-              <outputDirectory>${project.build.directory}/web-dist</outputDirectory>
-              <descriptors>
-                <descriptor>src/assembly/web-dist.xml</descriptor>
-              </descriptors>
-            </configuration>
-          </execution>
         </executions>
       </plugin>
     </plugins>
