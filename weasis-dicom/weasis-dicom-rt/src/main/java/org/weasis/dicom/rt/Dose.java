@@ -217,6 +217,11 @@ public class Dose extends RtSpecialElement implements SpecialElementRegion {
     return refMap;
   }
 
+  @Override
+  public Map<String, Set<SegContour>> getPositionMap() {
+    return Map.of();
+  }
+
   public Map<Integer, IsoDoseRegion> getSegAttributes() {
     return isoDoseSet;
   }

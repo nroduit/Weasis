@@ -34,9 +34,7 @@ import net.miginfocom.swing.MigLayout;
 import org.dcm4che3.data.Tag;
 import org.weasis.core.api.gui.Insertable;
 import org.weasis.core.api.gui.util.ComboItemListener;
-import org.weasis.core.api.gui.util.DecFormatter;
 import org.weasis.core.api.gui.util.GuiUtils;
-import org.weasis.core.api.image.measure.MeasurementsAdapter;
 import org.weasis.core.api.image.util.MeasurableLayer;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.util.ResourceUtil;
@@ -49,12 +47,12 @@ import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.model.graphic.imp.seg.GroupTreeNode;
 import org.weasis.core.ui.model.graphic.imp.seg.SegContour;
-import org.weasis.core.ui.model.graphic.imp.seg.SegMeasurableLayer;
 import org.weasis.core.ui.model.graphic.imp.seg.SegRegion;
 import org.weasis.core.ui.util.*;
 import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.HiddenSeriesManager;
+import org.weasis.dicom.codec.SegSpecialElement;
 import org.weasis.dicom.codec.SpecialElementRegion;
 import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.viewer3d.ActionVol;
@@ -317,14 +315,14 @@ public class SegmentationTool extends PluginTool implements SeriesViewerListener
     for (List<SegRegion<?>> list : regionMap.values()) {
       if (list.size() == 1) {
         SegRegion<?> region = list.getFirst();
-        DefaultMutableTreeNode node = buildStructRegionNode(region);
+        DefaultMutableTreeNode node = SegSpecialElement.buildStructRegionNode(region);
         nodeStructures.add(node);
         tree.setPathSelection(new TreePath(node.getPath()), region.isSelected());
       } else {
         GroupTreeNode node = new GroupTreeNode(list.getFirst().getPrefix(), true);
         nodeStructures.add(node);
         for (SegRegion<?> structRegion : list) {
-          DefaultMutableTreeNode childNode = buildStructRegionNode(structRegion);
+          DefaultMutableTreeNode childNode = SegSpecialElement.buildStructRegionNode(structRegion);
           node.add(childNode);
           tree.setPathSelection(new TreePath(childNode.getPath()), structRegion.isSelected());
         }
@@ -335,43 +333,6 @@ public class SegmentationTool extends PluginTool implements SeriesViewerListener
 
     // Expand
     TreeBuilder.expandTree(tree, rootNodeStructures, 2);
-  }
-
-  private DefaultMutableTreeNode buildStructRegionNode(SegRegion<?> contour) {
-    return new StructToolTipTreeNode(contour, false) {
-      @Override
-      public String getToolTipText() {
-        SegRegion<?> seg = (SegRegion<?>) getUserObject();
-        StringBuilder buf = new StringBuilder();
-        buf.append(GuiUtils.HTML_START);
-        buf.append("<b>");
-        buf.append(seg.getLabel());
-        buf.append("</b>");
-        buf.append(GuiUtils.HTML_BR);
-        buf.append("Algorithm type");
-        buf.append(StringUtil.COLON_AND_SPACE);
-        buf.append(seg.getType());
-        buf.append(GuiUtils.HTML_BR);
-        buf.append("Voxel count");
-        buf.append(StringUtil.COLON_AND_SPACE);
-        buf.append(DecFormatter.allNumber(seg.getNumberOfPixels()));
-        buf.append(GuiUtils.HTML_BR);
-        SegMeasurableLayer<?> layer = seg.getMeasurableLayer();
-        if (layer != null) {
-          MeasurementsAdapter adapter =
-              layer.getMeasurementAdapter(layer.getSourceImage().getPixelSpacingUnit());
-          buf.append("Volume (%s3)".formatted(adapter.getUnit()));
-          buf.append(StringUtil.COLON_AND_SPACE);
-          double ratio = adapter.getCalibRatio();
-          buf.append(
-              DecFormatter.twoDecimal(
-                  seg.getNumberOfPixels() * ratio * ratio * layer.getThickness()));
-          buf.append(GuiUtils.HTML_BR);
-        }
-        buf.append(GuiUtils.HTML_END);
-        return buf.toString();
-      }
-    };
   }
 
   public void initTreeValues(ViewCanvas<?> viewCanvas) {

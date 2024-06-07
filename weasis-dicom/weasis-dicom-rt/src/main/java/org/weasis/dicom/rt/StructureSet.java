@@ -65,6 +65,11 @@ public class StructureSet extends RtSpecialElement implements SpecialElementRegi
     return refMap;
   }
 
+  @Override
+  public Map<String, Set<SegContour>> getPositionMap() {
+    return Map.of();
+  }
+
   public Map<Integer, StructRegion> getSegAttributes() {
     return segAttributes;
   }

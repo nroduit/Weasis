@@ -10,6 +10,7 @@
 package org.weasis.core.ui.model.graphic.imp.seg;
 
 import java.awt.Color;
+import java.util.List;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.util.Copyable;
 import org.weasis.opencv.seg.RegionAttributes;
@@ -19,6 +20,9 @@ public class SegRegion<E extends ImageElement> extends RegionAttributes
 
   private SegMeasurableLayer<E> measurableLayer;
   private boolean selected;
+  private String algorithmName;
+  private List<String> anatomicRegionCodes;
+  private List<String> categories;
 
   public SegRegion(int id, String label, Color color) {
     super(id, label, color);
@@ -34,8 +38,11 @@ public class SegRegion<E extends ImageElement> extends RegionAttributes
     this.setLineThickness(region.getLineThickness());
     this.setVisible(region.isVisible());
     this.setInteriorOpacity(region.getInteriorOpacity());
-    this.numberOfPixels = region.numberOfPixels;
+    this.algorithmName = region.algorithmName;
+    this.anatomicRegionCodes = region.anatomicRegionCodes;
+    this.categories = region.categories;
 
+    this.numberOfPixels = region.numberOfPixels;
     this.selected = region.selected;
     this.measurableLayer = region.measurableLayer;
   }
@@ -59,5 +66,29 @@ public class SegRegion<E extends ImageElement> extends RegionAttributes
   @Override
   public SegRegion<E> copy() {
     return new SegRegion<>(this);
+  }
+
+  public String getAlgorithmName() {
+    return algorithmName;
+  }
+
+  public void setAlgorithmName(String algorithmName) {
+    this.algorithmName = algorithmName;
+  }
+
+  public void setAnatomicRegionCodes(List<String> anatomicRegions) {
+    this.anatomicRegionCodes = anatomicRegions;
+  }
+
+  public List<String> getAnatomicRegionCodes() {
+    return anatomicRegionCodes;
+  }
+
+  public void setCategories(List<String> categories) {
+    this.categories = categories;
+  }
+
+  public List<String> getCategories() {
+    return categories;
   }
 }

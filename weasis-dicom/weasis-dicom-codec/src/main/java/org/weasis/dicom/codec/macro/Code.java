@@ -10,9 +10,9 @@
 package org.weasis.dicom.codec.macro;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
+import java.util.List;
 import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Sequence;
 import org.dcm4che3.data.Tag;
@@ -29,7 +29,7 @@ public class Code extends Module {
     this(new Attributes());
   }
 
-  public static Collection<Code> toCodeMacros(Sequence seq) {
+  public static List<Code> toCodeMacros(Sequence seq) {
     if (seq == null || seq.isEmpty()) {
       return Collections.emptyList();
     }

@@ -11,6 +11,8 @@ package org.weasis.dicom.codec;
 
 import java.awt.Color;
 import java.awt.Point;
+import java.math.RoundingMode;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
@@ -18,17 +20,25 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
+import javax.swing.tree.DefaultMutableTreeNode;
 import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Sequence;
 import org.dcm4che3.data.Tag;
 import org.dcm4che3.img.data.CIELab;
 import org.dcm4che3.img.util.DicomUtils;
+import org.joml.Vector3d;
 import org.opencv.core.Core;
+import org.weasis.core.api.gui.util.DecFormatter;
+import org.weasis.core.api.gui.util.GuiUtils;
+import org.weasis.core.api.image.measure.MeasurementsAdapter;
 import org.weasis.core.api.util.ResourceUtil.OtherIcon;
 import org.weasis.core.api.util.ResourceUtil.ResourceIconPath;
 import org.weasis.core.ui.model.graphic.imp.seg.SegContour;
 import org.weasis.core.ui.model.graphic.imp.seg.SegMeasurableLayer;
 import org.weasis.core.ui.model.graphic.imp.seg.SegRegion;
+import org.weasis.core.ui.util.StructToolTipTreeNode;
+import org.weasis.core.util.StringUtil;
+import org.weasis.dicom.codec.geometry.VectorUtils;
 import org.weasis.dicom.codec.macro.Code;
 import org.weasis.dicom.codec.utils.DicomMediaUtils;
 import org.weasis.opencv.data.PlanarImage;
@@ -40,8 +50,16 @@ import org.weasis.opencv.seg.Segment;
 public class SegSpecialElement extends HiddenSpecialElement
     implements SpecialElementReferences, SpecialElementRegion {
 
+  static final DecimalFormat roundDouble = new DecimalFormat("0.######");
+
+  static {
+    roundDouble.setRoundingMode(RoundingMode.HALF_UP);
+    roundDouble.setGroupingUsed(false);
+  }
+
   private final Map<String, Map<String, Set<SegContour>>> refMap = new HashMap<>();
   private final Map<Integer, Set<SegContour>> roiMap = new HashMap<>();
+  private final Map<String, Set<SegContour>> postitionMap = new HashMap<>();
   private final Map<Integer, SegRegion<DicomImageElement>> segAttributes = new HashMap<>();
 
   private volatile float opacity = 1.0f;
@@ -49,6 +67,64 @@ public class SegSpecialElement extends HiddenSpecialElement
 
   public SegSpecialElement(DicomMediaIO mediaIO) {
     super(mediaIO);
+  }
+
+  public static DefaultMutableTreeNode buildStructRegionNode(SegRegion<?> contour) {
+    return new StructToolTipTreeNode(contour, false) {
+      @Override
+      public String getToolTipText() {
+        SegRegion<?> seg = (SegRegion<?>) getUserObject();
+        StringBuilder buf = new StringBuilder();
+        buf.append(GuiUtils.HTML_START);
+        buf.append("<b>");
+        buf.append(seg.getLabel());
+        buf.append("</b>");
+        buf.append(GuiUtils.HTML_BR);
+        buf.append("Algorithm type");
+        buf.append(StringUtil.COLON_AND_SPACE);
+        buf.append(seg.getType());
+        buf.append(GuiUtils.HTML_BR);
+        String algoName = seg.getAlgorithmName();
+        if (StringUtil.hasText(algoName)) {
+          buf.append("Algorithm name");
+          buf.append(StringUtil.COLON_AND_SPACE);
+          buf.append(algoName);
+          buf.append(GuiUtils.HTML_BR);
+        }
+        List<String> categories = seg.getCategories();
+        if (categories != null && !categories.isEmpty()) {
+          buf.append("Categories");
+          buf.append(StringUtil.COLON_AND_SPACE);
+          buf.append(String.join(", ", categories));
+          buf.append(GuiUtils.HTML_BR);
+        }
+        List<String> anatomicRegionCodes = seg.getAnatomicRegionCodes();
+        if (anatomicRegionCodes != null && !anatomicRegionCodes.isEmpty()) {
+          buf.append("Anatomic regions");
+          buf.append(StringUtil.COLON_AND_SPACE);
+          buf.append(String.join(", ", anatomicRegionCodes));
+          buf.append(GuiUtils.HTML_BR);
+        }
+        buf.append("Voxel count");
+        buf.append(StringUtil.COLON_AND_SPACE);
+        buf.append(DecFormatter.allNumber(seg.getNumberOfPixels()));
+        buf.append(GuiUtils.HTML_BR);
+        SegMeasurableLayer<?> layer = seg.getMeasurableLayer();
+        if (layer != null) {
+          MeasurementsAdapter adapter =
+              layer.getMeasurementAdapter(layer.getSourceImage().getPixelSpacingUnit());
+          buf.append("Volume (%s3)".formatted(adapter.getUnit()));
+          buf.append(StringUtil.COLON_AND_SPACE);
+          double ratio = adapter.getCalibRatio();
+          buf.append(
+              DecFormatter.twoDecimal(
+                  seg.getNumberOfPixels() * ratio * ratio * layer.getThickness()));
+          buf.append(GuiUtils.HTML_BR);
+        }
+        buf.append(GuiUtils.HTML_END);
+        return buf.toString();
+      }
+    };
   }
 
   @Override
@@ -79,6 +155,11 @@ public class SegSpecialElement extends HiddenSpecialElement
 
   public Map<String, Map<String, Set<SegContour>>> getRefMap() {
     return refMap;
+  }
+
+  @Override
+  public Map<String, Set<SegContour>> getPositionMap() {
+    return postitionMap;
   }
 
   public Map<Integer, SegRegion<DicomImageElement>> getSegAttributes() {
@@ -131,47 +212,38 @@ public class SegSpecialElement extends HiddenSpecialElement
       // TODO: handle fractional segmentations
     }
 
-    Map<SegRegion<DicomImageElement>, Point> regionPosition = new HashMap<>();
     // Locate the name and number of each ROI
+    Map<SegRegion<DicomImageElement>, Point> regionPosition = new HashMap<>();
     Sequence segSeq = dicom.getSequence(Tag.SegmentSequence);
-    List<String> sourceSopUIDList = new ArrayList<>();
 
     if (segSeq != null && series != null) {
       for (Attributes seg : segSeq) {
         int nb = seg.getInt(Tag.SegmentNumber, -1);
         String segmentLabel = seg.getString(Tag.SegmentLabel);
 
-        Sequence regionSeq = seg.getSequence(Tag.AnatomicRegionSequence);
-        if (regionSeq != null) {
-          for (Attributes region : regionSeq) {
-            Code regionCode = new Code(region);
-            String regionCodeValue = regionCode.getCodeValue();
-            String regionCodingSchemeDesignator = regionCode.getCodingSchemeDesignator();
-            String regionCodeMeaning = regionCode.getCodeMeaning();
-          }
-        }
-
-        Sequence categorySeq = seg.getSequence(Tag.SegmentedPropertyCategoryCodeSequence);
-        if (categorySeq != null) {
-          for (Attributes category : categorySeq) {
-            Code categoryCode = new Code(category);
-            String categoryCodeCodeMeaning = categoryCode.getCodeMeaning();
-          }
-        }
-        String trackingUID = seg.getString(Tag.TrackingUID);
-        Integer grayVal =
-            DicomUtils.getIntegerFromDicomElement(seg, Tag.RecommendedDisplayGrayscaleValue, null);
         int[] colorRgb =
             CIELab.dicomLab2rgb(
                 DicomUtils.getIntArrayFromDicomElement(
                     seg, Tag.RecommendedDisplayCIELabValue, null));
         Color rgbColor = RegionAttributes.getColor(colorRgb, nb, opacity);
-        String segmentAlgorithmName = seg.getString(Tag.SegmentAlgorithmName);
 
         SegRegion<DicomImageElement> attributes = new SegRegion<>(nb, segmentLabel, rgbColor);
         attributes.setInteriorOpacity(0.2f);
         attributes.setDescription(seg.getString(Tag.SegmentDescription));
         attributes.setType(seg.getString(Tag.SegmentAlgorithmType));
+        attributes.setAlgorithmName(seg.getString(Tag.SegmentAlgorithmName));
+
+        Sequence regionSeq = seg.getSequence(Tag.AnatomicRegionSequence);
+        if (regionSeq != null) {
+          attributes.setAnatomicRegionCodes(
+              Code.toCodeMacros(regionSeq).stream().map(Code::getCodeMeaning).toList());
+        }
+
+        Sequence categorySeq = seg.getSequence(Tag.SegmentedPropertyCategoryCodeSequence);
+        if (categorySeq != null) {
+          attributes.setCategories(
+              Code.toCodeMacros(categorySeq).stream().map(Code::getCodeMeaning).toList());
+        }
 
         segAttributes.put(nb, attributes);
         regionPosition.put(attributes, new Point(-1, -1));
@@ -180,7 +252,6 @@ public class SegSpecialElement extends HiddenSpecialElement
 
     Sequence perFrameSeq = dicom.getSequence(Tag.PerFrameFunctionalGroupsSequence);
     if (perFrameSeq != null) {
-      int frameCount = perFrameSeq.size();
       int index = 0;
       for (Attributes frame : perFrameSeq) {
         index++;
@@ -189,23 +260,6 @@ public class SegSpecialElement extends HiddenSpecialElement
         if (derivationSeq != null) {
           for (Attributes derivation : derivationSeq) {
             HiddenSeriesManager.addSourceImage(derivation, sopUIDList);
-          }
-        }
-
-        if (sopUIDList.isEmpty() && sourceSopUIDList.size() >= index) {
-          for (int i = index - 1; i < sourceSopUIDList.size(); i = i + frameCount) {
-            sopUIDList.add(sourceSopUIDList.get(i));
-          }
-        }
-
-        Sequence refPos = frame.getSequence(Tag.PlanePositionSequence);
-        if (refPos != null) {
-          for (Attributes ref : refPos) {
-            //              double[] pos = TagD.getTagValue(ref, Tag.ImagePositionPatient,
-            // double[].class);
-            //              if (pos != null && pos.length == 3) {
-            //                series.getNearestImage(pos, null, null);
-            //              }
           }
         }
 
@@ -256,6 +310,35 @@ public class SegSpecialElement extends HiddenSpecialElement
           SegMeasurableLayer<DicomImageElement> measurableLayer = getMeasurableLayer(series, p);
           region.setMeasurableLayer(measurableLayer);
         });
+  }
+
+  private void addPositionMap(Attributes frame, Set<SegContour> contour) {
+    Attributes refPos = frame.getNestedDataset(Tag.PlanePositionSequence);
+    if (refPos != null) {
+      double[] pos =
+          DicomUtils.getDoubleArrayFromDicomElement(
+              refPos,
+              Tag.ImagePositionPatient,
+              TagD.getTagValue(mediaIO, Tag.ImagePositionPatient, double[].class));
+      if (pos != null && pos.length == 3) {
+        Vector3d pPos = new Vector3d(pos);
+        Attributes refImgPos = frame.getNestedDataset(Tag.PlaneOrientationSequence);
+        double[] imagePosition =
+            DicomUtils.getDoubleArrayFromDicomElement(
+                refImgPos,
+                Tag.ImageOrientationPatient,
+                TagD.getTagValue(mediaIO, Tag.ImageOrientationPatient, double[].class));
+        if (imagePosition != null && imagePosition.length == 6) {
+          Vector3d vr = new Vector3d(imagePosition);
+          Vector3d vc = new Vector3d(imagePosition[3], imagePosition[4], imagePosition[5]);
+          Vector3d normal = VectorUtils.computeNormalOfSurface(vr, vc);
+          normal.mul(pPos);
+          String position = normal.toString(roundDouble).replace("-0 ", "0 ");
+          Set<SegContour> set = postitionMap.computeIfAbsent(position, _ -> new LinkedHashSet<>());
+          set.addAll(contour);
+        }
+      }
+    }
   }
 
   private SegMeasurableLayer<DicomImageElement> getMeasurableLayer(DicomSeries series, Point p) {
