@@ -732,7 +732,7 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
                 + seriesUID
                 + "&objectUID="
                 + sopInstanceUID
-                + "&contentType=image/jpeg&imageQuality=70"
+                + "&contentType=image/jpeg&imageQuality=75"
                 + "&rows="
                 + Thumbnail.MAX_SIZE
                 + "&columns="

@@ -104,14 +104,14 @@ public class DicomSeries extends Series<DicomImageElement> {
       toolTips.append(Messages.getString("DicomSeries.size"));
       toolTips.append(StringUtil.COLON_AND_SPACE);
       toolTips.append(FileUtil.humanReadableByte(getFileSize(), false));
-      toolTips.append("<br>");
+      toolTips.append(GuiUtils.HTML_BR);
     }
     toolTips.append(GuiUtils.HTML_END);
     return toolTips.toString();
   }
 
   public static StringBuilder getToolTips(Series<?> series) {
-    StringBuilder toolTips = new StringBuilder("<html>");
+    StringBuilder toolTips = new StringBuilder(GuiUtils.HTML_START);
     series.addToolTipsElement(
         toolTips, Messages.getString("DicomSeries.pat"), TagD.get(Tag.PatientName));
     series.addToolTipsElement(

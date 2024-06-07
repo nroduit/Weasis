@@ -31,6 +31,7 @@ import org.slf4j.LoggerFactory;
 import org.weasis.core.Messages;
 import org.weasis.core.api.explorer.ObservableEvent;
 import org.weasis.core.api.gui.util.Filter;
+import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.util.LangUtil;
 import org.weasis.core.util.StringUtil;
 import org.weasis.opencv.data.PlanarImage;
@@ -351,7 +352,7 @@ public abstract class Series<E extends MediaElement> extends MediaSeriesGroupNod
     if (tag != null) {
       toolTips.append(tag.getFormattedTagValue(getTagValue(tag), null));
     }
-    toolTips.append("<br>");
+    toolTips.append(GuiUtils.HTML_BR);
   }
 
   public void addToolTipsElement(StringBuilder toolTips, String title, TagW tag1, TagW tag2) {
@@ -364,7 +365,7 @@ public abstract class Series<E extends MediaElement> extends MediaSeriesGroupNod
     if (tag2 != null) {
       toolTips.append(tag2.getFormattedTagValue(getTagValue(tag2), null));
     }
-    toolTips.append("<br>");
+    toolTips.append(GuiUtils.HTML_BR);
   }
 
   @Override

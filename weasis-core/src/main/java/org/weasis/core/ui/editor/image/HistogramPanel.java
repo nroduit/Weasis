@@ -392,7 +392,7 @@ public class HistogramPanel extends JPanel {
         int val2 = (int) Math.floor((i + 1) * (max - min) / histValues.length + min);
 
         StringBuilder buf = new StringBuilder();
-        buf.append("<html>");
+        buf.append(GuiUtils.HTML_START);
         buf.append(Messages.getString("HistogramPanel.intensity"));
         buf.append(StringUtil.COLON_AND_SPACE);
         buf.append(val);
@@ -400,7 +400,7 @@ public class HistogramPanel extends JPanel {
           buf.append("...");
           buf.append(val2);
         }
-        buf.append("<br>");
+        buf.append(GuiUtils.HTML_BR);
         buf.append(Messages.getString("HistogramPanel.pixels"));
         buf.append(StringUtil.COLON_AND_SPACE);
         buf.append((int) histValues[i]);
