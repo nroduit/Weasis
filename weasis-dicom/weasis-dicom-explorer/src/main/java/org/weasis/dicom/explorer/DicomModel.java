@@ -1237,15 +1237,21 @@ public class DicomModel implements TreeModel, DataExplorerModel {
       "Close DICOM files", // NON-NLS
       "Usage: dicom:close  (-a | ([-y UID]... [-s UID]...))", // NON-NLS
       "  -a --all           close all the patients", // NON-NLS
+      "  -p --patient=ID    close a patient from its patient ID", // NON-NLS
       "  -y --study=UID     close a study, UID is Study Instance UID", // NON-NLS
       "  -s --series=UID    close a series, UID is Series Instance UID", // NON-NLS
       "  -? --help          show help" // NON-NLS
     };
     final Option opt = Options.compile(usage).parse(argv);
+    final List<String> pargs = opt.getList("patient"); // NON-NLS
     final List<String> yargs = opt.getList("study"); // NON-NLS
     final List<String> sargs = opt.getList("series"); // NON-NLS
 
-    if (opt.isSet("help") || (yargs.isEmpty() && sargs.isEmpty() && !opt.isSet("all"))) { // NON-NLS
+    if (opt.isSet("help")
+        || (pargs.isEmpty()
+            && yargs.isEmpty()
+            && sargs.isEmpty()
+            && !opt.isSet("all"))) { // NON-NLS
       opt.usage();
       return;
     }
@@ -1255,16 +1261,25 @@ public class DicomModel implements TreeModel, DataExplorerModel {
           firePropertyChange(
               new ObservableEvent(
                   ObservableEvent.BasicAction.SELECT, DicomModel.this, null, DicomModel.this));
-          closeCommand(opt, yargs, sargs);
+          closeCommand(opt, pargs, yargs, sargs);
         });
   }
 
-  private void closeCommand(Option opt, List<String> yargs, List<String> sargs) {
+  private void closeCommand(
+      Option opt, List<String> pargs, List<String> yargs, List<String> sargs) {
     if (opt.isSet("all")) { // NON-NLS
       for (MediaSeriesGroup patientGroup : model.getSuccessors(MediaSeriesGroupNode.rootNode)) {
         removePatient(patientGroup);
       }
     } else {
+      if (opt.isSet("patient")) { // NON-NLS
+        for (MediaSeriesGroup patientGroup : model.getSuccessors(MediaSeriesGroupNode.rootNode)) {
+          String patientID = TagD.getTagValue(patientGroup, Tag.PatientID, String.class);
+          if (pargs.contains(patientID)) {
+            removePatient(patientGroup);
+          }
+        }
+      }
       if (opt.isSet("study")) { // NON-NLS
         for (String studyUID : yargs) {
           removeStudy(getStudyNode(studyUID));
