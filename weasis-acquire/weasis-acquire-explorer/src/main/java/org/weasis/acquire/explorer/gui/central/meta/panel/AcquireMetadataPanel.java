@@ -52,6 +52,7 @@ import org.weasis.core.api.media.data.TagW.TagType;
 import org.weasis.core.api.util.FontItem;
 import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.ui.util.CalendarUtil;
+import org.weasis.core.ui.util.LimitedTextField;
 import org.weasis.core.ui.util.TableColumnAdjuster;
 import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.codec.TagD;
@@ -213,11 +214,15 @@ public abstract class AcquireMetadataPanel extends JPanel implements TableModelL
       int tagID = 0;
       boolean date = false;
       boolean time = false;
+      int limitedChars = 64;
       if (tag instanceof TagW tagW) {
         tagID = tagW.getId();
         TagType type = tagW.getType();
         date = TagType.DICOM_DATE == type || TagType.DATE == type;
         time = TagType.DICOM_TIME == type || TagType.TIME == type;
+        if (tag instanceof TagD tagD) {
+          limitedChars = tagD.getMaximumChars();
+        }
       }
       if (tagID == Tag.BodyPartExamined) {
         cellEditor = new DefaultCellEditor(bodyPartsCombo);
@@ -226,9 +231,9 @@ public abstract class AcquireMetadataPanel extends JPanel implements TableModelL
       } else if (tagID == Tag.Modality) {
         cellEditor = new DefaultCellEditor(modalityCombo);
       } else if (tagID == Tag.StudyDescription) {
-        cellEditor = getCellEditor(studyDescCombo);
+        cellEditor = getCellEditor(studyDescCombo, limitedChars);
       } else if (tagID == Tag.SeriesDescription) {
-        cellEditor = getCellEditor(seriesDescCombo);
+        cellEditor = getCellEditor(seriesDescCombo, limitedChars);
       } else if (date) {
         DateTableEditor datePicker = buildDatePicker();
         JTextField picker = datePicker.getDatePicker().getComponentDateTextField();
@@ -252,7 +257,7 @@ public abstract class AcquireMetadataPanel extends JPanel implements TableModelL
             tableEditor.getTimePicker().getComponentTimeTextField(), height, height);
         cellEditor = tableEditor;
       } else {
-        cellEditor = new DefaultCellEditor(new JTextField());
+        cellEditor = new DefaultCellEditor(new LimitedTextField(limitedChars));
       }
       editor = Optional.of(cellEditor);
       Component c = cellEditor.getTableCellEditorComponent(table, value, isSelected, row, column);
@@ -260,9 +265,9 @@ public abstract class AcquireMetadataPanel extends JPanel implements TableModelL
       return c;
     }
 
-    private static DefaultCellEditor getCellEditor(JComboBox<?> combo) {
+    private static DefaultCellEditor getCellEditor(JComboBox<?> combo, int limitedChars) {
       if (combo.getItemCount() == 0) {
-        return new DefaultCellEditor(new JTextField());
+        return new DefaultCellEditor(new LimitedTextField(limitedChars));
       } else {
         return new DefaultCellEditor(combo);
       }

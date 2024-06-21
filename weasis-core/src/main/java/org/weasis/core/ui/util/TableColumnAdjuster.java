@@ -75,7 +75,7 @@ public class TableColumnAdjuster {
     }
 
     int extra = table.getVisibleRect().width - total;
-    if (extra > 0) {
+    if (extra > 0 && width.length > 0 && table.getColumnCount() > 0) {
       int bonus = extra / table.getColumnCount();
       for (int i = 0; i < width.length; i++) {
         width[i] += bonus;

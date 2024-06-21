@@ -60,6 +60,24 @@ public class TagD extends TagW {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(TagD.class);
 
+  private static final Map<VR, Integer> vrToMaxChars = new HashMap<>();
+
+  static {
+    vrToMaxChars.put(VR.AE, 16);
+    vrToMaxChars.put(VR.AS, 4);
+    vrToMaxChars.put(VR.CS, 16);
+    vrToMaxChars.put(VR.DA, 8);
+    vrToMaxChars.put(VR.DS, 16);
+    vrToMaxChars.put(VR.DT, 26);
+    vrToMaxChars.put(VR.IS, 12);
+    vrToMaxChars.put(VR.LO, 64);
+    vrToMaxChars.put(VR.LT, 10240);
+    vrToMaxChars.put(VR.PN, 129);
+    vrToMaxChars.put(VR.SH, 16);
+    vrToMaxChars.put(VR.ST, 1024);
+    vrToMaxChars.put(VR.UI, 64);
+  }
+
   static final DateTimeFormatter DICOM_DATE =
       new DateTimeFormatterBuilder()
           .appendValue(YEAR, 4)
@@ -241,6 +259,10 @@ public class TagD extends TagW {
       LOGGER.error("Cannot evaluate multiplicity from DICOM VR", e);
     }
     return getValueMultiplicity(value);
+  }
+
+  public int getMaximumChars() {
+    return vrToMaxChars.getOrDefault(vr, 64);
   }
 
   @Override

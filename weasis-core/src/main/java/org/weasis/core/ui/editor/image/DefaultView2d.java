@@ -1191,7 +1191,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         new DefaultAction(
             ActionW.EXPORT_VIEW.getTitle(),
             ActionW.EXPORT_VIEW.getIcon(),
-            event -> ScreenshotDialog.showDialog(this));
+            _ -> ScreenshotDialog.showDialog(this));
     list.add(exportAction);
     return list;
   }
