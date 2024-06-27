@@ -172,7 +172,6 @@ public class WeasisLauncher {
     }
 
     Runtime.getRuntime().addShutdownHook(new Thread(this::shutdownHook));
-    registerAdditionalShutdownHook();
 
     displayStartingAsciiIcon();
 
@@ -1101,7 +1100,7 @@ Starting OSGI Bundles...
   static class HaltTask extends TimerTask {
     @Override
     public void run() {
-      System.out.println("Force to close the application"); // NON-NLS
+      LOGGER.info("Force to close the application");
       Runtime.getRuntime().halt(1);
     }
   }
@@ -1124,27 +1123,17 @@ Starting OSGI Bundles...
     return Locale.getDefault();
   }
 
-  private void registerAdditionalShutdownHook() {
-    try {
-      Class.forName("sun.misc.Signal");
-      Class.forName("sun.misc.SignalHandler");
-      sun.misc.Signal.handle(new sun.misc.Signal("TERM"), _ -> shutdownHook());
-    } catch (IllegalArgumentException e) {
-      LOGGER.error("Register shutdownHook", e);
-    } catch (ClassNotFoundException e) {
-      LOGGER.error("Cannot find sun.misc.Signal for shutdown hook extension", e);
-    }
-  }
-
   private void shutdownHook() {
+    if (mFelix == null || (mFelix.getState() & 6) != 0) {
+      return;
+    }
+    LOGGER.info("Stop the OSGI framework and clean files before closing");
     try {
-      if (mFelix != null) {
-        mFelix.stop();
-        // wait asynchronous stop (max 30 seconds to stop all bundles)
-        mFelix.waitForStop(30_000);
-      }
+      mFelix.stop();
+      // wait asynchronous stop (max 30 seconds to stop all bundles)
+      mFelix.waitForStop(30_000);
     } catch (Exception ex) {
-      System.err.println(STR."Error stopping framework: \{ex}"); // NON-NLS
+      LOGGER.error("Error stopping framework", ex);
       if (ex instanceof InterruptedException) {
         Thread.currentThread().interrupt();
       }
@@ -1168,7 +1157,7 @@ Starting OSGI Bundles...
           List<Path> folders = listOldFolders(path);
           folders.forEach(
               p -> {
-                System.err.println("Delete old folder: " + p); // NON-NLS
+                LOGGER.error("Delete old folder: {}", p);
                 FileUtil.delete(p.toFile());
                 Optional<String> id = getID(p.getFileName().toString());
                 if (id.isPresent()) {
@@ -1183,7 +1172,7 @@ Starting OSGI Bundles...
                 }
               });
         } catch (IOException e) {
-          System.err.println("Cannot clean old folders - " + e); // NON-NLS
+          LOGGER.error("Cannot clean old folders", e);
         }
       }
     }
@@ -1212,7 +1201,7 @@ Starting OSGI Bundles...
       long daysBetween = DAYS.between(convertedFileTime, now);
       return daysBetween > days;
     } catch (Exception e) {
-      System.err.println("Cannot get the last modified time - " + e); // NON-NLS
+      LOGGER.error("Cannot get the last modified time", e);
     }
     return false;
   }
