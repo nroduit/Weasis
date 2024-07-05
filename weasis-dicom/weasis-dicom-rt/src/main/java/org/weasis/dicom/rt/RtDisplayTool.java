@@ -792,7 +792,7 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener, S
 
         String type = layer.getRtRoiInterpretedType();
         if (StringUtil.hasText(type)) {
-          resultLabel += STR." [\{type}]";
+          resultLabel += " [" + type + "]";
         }
 
         return getColorBullet(layer.getColor(), resultLabel);

@@ -193,7 +193,7 @@ public class Dvh {
     String sName = region.getLabel();
     int k = 2;
     while (dvhChart.getSeriesMap().get(sName) != null) {
-      sName = STR."\{region.getLabel()} \{k}";
+      sName = region.getLabel() + " " + k;
       k++;
     }
     // Create a line

@@ -152,9 +152,9 @@ public class WeasisLauncher {
                 JOptionPane.showOptionDialog(
                     mainFrame.getWindow(),
                     String.format(
-                        STR."\{
-                            Messages.getString("WeasisLauncher.update_min")}\n\n\{
-                            Messages.getString("WeasisLauncher.continue_local")}",
+                        "%s\n\n%s",
+                        Messages.getString("WeasisLauncher.update_min"),
+                        Messages.getString("WeasisLauncher.continue_local"),
                         appName,
                         minVersion),
                     null,
@@ -252,10 +252,10 @@ public class WeasisLauncher {
       LOGGER.error("State of the framework:");
       for (Bundle b : mFelix.getBundleContext().getBundles()) {
         LOGGER.error(
-            STR." * \{
-                b.getSymbolicName()}-\{
-                b.getVersion().toString()} \{
-                State.valueOf(b.getState())}");
+            " * {}-{} {}",
+            b.getSymbolicName(),
+            b.getVersion().toString(),
+            State.valueOf(b.getState()));
       }
       resetBundleCache();
     } finally {

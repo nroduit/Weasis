@@ -47,7 +47,7 @@ public class AuditLog {
   public static final String LOG_FILE_PATTERN = "org.apache.sling.commons.log.file.pattern";
 
   public static final String LOG_FOLDER_PATH =
-      STR."\{AppProperties.WEASIS_PATH}\{File.separator}log\{File.separator}";
+      AppProperties.WEASIS_PATH + File.separator + "log" + File.separator;
 
   public enum LEVEL {
     TRACE,
@@ -70,11 +70,14 @@ public class AuditLog {
     WProperties p = new WProperties();
     p.putBooleanProperty(AuditLog.LOG_FILE_ACTIVATION, true);
     p.setProperty(
-        AuditLog.LOG_FILE, STR."\{AuditLog.LOG_FOLDER_PATH}audit-\{AppProperties.WEASIS_USER}.log");
+        AuditLog.LOG_FILE,
+        AuditLog.LOG_FOLDER_PATH + "audit-" + AppProperties.WEASIS_USER + ".log"); // NON-NLS
     p.setProperty(AuditLog.LOG_FILE_NUMBER, "10");
     p.setProperty(AuditLog.LOG_FILE_SIZE, "20MB"); // NON-NLS
     p.setProperty(AuditLog.LOG_CLASSES, "org.weasis.core.api.service.AuditLog");
-    p.setProperty(AuditLog.LOG_FILE_PATTERN, STR."audit-\{AppProperties.WEASIS_USER}.%i.log.zip");
+    p.setProperty(
+        AuditLog.LOG_FILE_PATTERN,
+        AuditLog.LOG_FOLDER_PATH + "audit-" + AppProperties.WEASIS_USER + ".%i.log.zip"); // NON-NLS
     return p;
   }
 
@@ -174,7 +177,7 @@ public class AuditLog {
     encoder.setContext(loggerContext);
 
     String limit = StringUtil.hasText(stackLimit) && !"-1".equals(stackLimit) ? stackLimit : "full";
-    String str = pattern.replaceAll("ex\\{\\d+}", STR."ex{\{limit}}"); // NON-NLS
+    String str = pattern.replaceAll("ex\\{\\d+}", "ex{" + limit + "}"); // NON-NLS
     encoder.setPattern(str);
     encoder.start();
     return encoder;

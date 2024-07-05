@@ -152,13 +152,12 @@ public class LoggingPrefView extends AbstractItemDialogPage {
     }
     preferences.setProperty(AuditLog.LOG_LEVEL, level.toString());
     preferences.putBooleanProperty(AuditLog.LOG_FILE_ACTIVATION, checkboxFileLog.isSelected());
-    String logFile =
-        checkboxFileLog.isSelected() ? STR."\{AuditLog.LOG_FOLDER_PATH}default.log" : "";
+    String logFile = checkboxFileLog.isSelected() ? AuditLog.LOG_FOLDER_PATH + "default.log" : "";
     preferences.setProperty(AuditLog.LOG_FILE, logFile);
 
     if (checkboxFileLog.isSelected()) {
       String fileNb = spinner.getValue().toString();
-      String fileSize = STR."\{spinner1.getValue().toString()}MB";
+      String fileSize = spinner1.getValue().toString() + "MB";
       preferences.setProperty(AuditLog.LOG_FILE_NUMBER, fileNb);
       preferences.setProperty(AuditLog.LOG_FILE_SIZE, fileSize);
     }

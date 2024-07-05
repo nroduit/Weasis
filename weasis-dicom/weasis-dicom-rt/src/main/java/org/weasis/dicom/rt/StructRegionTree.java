@@ -79,12 +79,12 @@ public class StructRegionTree extends SegRegionTree {
     CsvExporter csv = new CsvExporter();
     csv.addQuotedNameAndSeparator("Label"); // NON-NLS
     csv.addQuotedNameAndSeparator("ROI Observation Label"); // NON-NLS
-    csv.addQuotedNameAndSeparator(STR."\{Messages.getString("thickness")} [mm]");
-    csv.addQuotedNameAndSeparator(STR."\{Messages.getString("volume")} [cm³]");
+    csv.addQuotedNameAndSeparator(Messages.getString("thickness") + " [mm]"); // NON-NLS
+    csv.addQuotedNameAndSeparator(Messages.getString("volume") + " [cm³]"); // NON-NLS
     if (hasDvh(segRegions)) {
-      csv.addQuotedNameAndSeparator(STR."\{Messages.getString("min.dose")} [%]");
-      csv.addQuotedNameAndSeparator(STR."\{Messages.getString("max.dose")} [%]");
-      csv.addQuotedName(STR."\{Messages.getString("mean.dose")} [%]");
+      csv.addQuotedNameAndSeparator(Messages.getString("min.dose") + " [%]");
+      csv.addQuotedNameAndSeparator(Messages.getString("max.dose") + " [%]");
+      csv.addQuotedName(Messages.getString("mean.dose") + " [%]");
     }
     csv.addEndOfLine();
 

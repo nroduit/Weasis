@@ -103,9 +103,9 @@ public class Plan extends RtSpecialElement {
 
   public void appendName(String text) {
     if (StringUtil.hasText(this.name)) {
-      this.name += STR." (\{text})";
+      this.name += " (" + text + ")";
     } else if (StringUtil.hasText(this.label)) {
-      this.name = STR."\{this.label} (\{text})";
+      this.name = this.label + " (" + text + ")";
     }
   }
 

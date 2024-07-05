@@ -26,9 +26,9 @@ public class IsoDoseRegion extends SegRegion<DicomImageElement> {
     setInteriorOpacity(0.2f);
     this.absoluteDose = ((this.level) * planDose) / 100.0;
     String result =
-        STR."\{this.level} % / \{String.format("%.6g", this.absoluteDose)} cGy"; // NON-NLS
+        this.level + " % / " + String.format("%.6g", this.absoluteDose) + " cGy"; // NON-NLS
     if (StringUtil.hasText(name)) {
-      result += STR." [\{name}]";
+      result += " [" + name + "]";
     }
     setLabel(result);
   }

@@ -513,7 +513,7 @@ public class ConfigData {
             LOGGER.error("Convert URI to file", e);
           }
         }
-        arguments.add(STR."dicom:get -l \"\{val}\""); // NON-NLS
+        arguments.add("dicom:get -l \"" + val + "\""); // NON-NLS
       }
     }
   }
