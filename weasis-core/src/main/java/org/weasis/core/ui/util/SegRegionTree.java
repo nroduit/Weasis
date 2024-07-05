@@ -234,4 +234,18 @@ public class SegRegionTree extends CheckboxTree {
   public void setPathSelection(TreePath path, boolean selected) {
     TreeBuilder.setPathSelection(this, path, selected);
   }
+
+  public boolean hasAllParentsChecked(TreePath path) {
+    boolean allParentsChecked = true;
+    Object[] pathArray = path.getPath();
+    // Start from 1 to skip the root node
+    for (int i = 1; i < pathArray.length; i++) {
+      TreePath parentPath = new TreePath(java.util.Arrays.copyOfRange(pathArray, 0, i + 1));
+      if (!getCheckingModel().isPathChecked(parentPath)) {
+        allParentsChecked = false;
+        break;
+      }
+    }
+    return allParentsChecked;
+  }
 }

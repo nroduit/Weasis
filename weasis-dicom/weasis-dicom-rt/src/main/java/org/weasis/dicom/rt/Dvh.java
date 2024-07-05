@@ -177,6 +177,9 @@ public class Dvh {
   }
 
   public XYChart appendChart(StructRegion region, XYChart dvhChart) {
+    if (dvhChart == null || dvhData.length == 0) {
+      return null;
+    }
 
     // Each element represent 1cGY bin on x axes
     double[] x = new double[this.dvhData.length];

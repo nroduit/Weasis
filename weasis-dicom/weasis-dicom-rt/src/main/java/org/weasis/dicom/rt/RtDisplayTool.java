@@ -386,7 +386,7 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener, S
   private void showDvhChart() {
     RtSet rt = rtSet;
     if (rt != null) {
-      List<StructRegion> structs = getStructureSelection();
+      List<StructRegion> structs = getCheckedPathsOnlyIfAllParentsChecked();
       if (!structs.isEmpty()) {
         XYChart dvhChart =
             new XYChartBuilder()
@@ -495,19 +495,17 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener, S
     }
   }
 
-  private List<StructRegion> getStructureSelection() {
+  public List<StructRegion> getCheckedPathsOnlyIfAllParentsChecked() {
     ArrayList<StructRegion> list = new ArrayList<>();
-    if (treeStructures.getCheckingModel().isPathChecked(new TreePath(nodeStructures.getPath()))) {
-      TreePath[] paths = treeStructures.getCheckingModel().getCheckingPaths();
-      for (TreePath treePath : paths) {
-        DefaultMutableTreeNode node = (DefaultMutableTreeNode) treePath.getLastPathComponent();
+    for (TreePath path : treeStructures.getCheckingModel().getCheckingPaths()) {
+      if (treeStructures.hasAllParentsChecked(path)) {
+        DefaultMutableTreeNode node = (DefaultMutableTreeNode) path.getLastPathComponent();
         if (node.getUserObject() instanceof StructRegion region && region.getDvh() != null) {
           list.add(region);
         }
       }
-      return list;
     }
-    return Collections.emptyList();
+    return list;
   }
 
   public void updateVisibleNode() {
