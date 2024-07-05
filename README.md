@@ -3,7 +3,7 @@
 
 ![Weasis](weasis-distributions/resources/svg/logo/WeasisAbout.svg)
 
-Weasis is a standalone and web-based software for visualizing images obtained from medical imaging devices. This free DICOM viewer is used in healthcare by hospitals, health networks, multicenter research trials, and patients.
+Agile is a standalone and web-based software for visualizing images obtained from medical imaging devices. This free DICOM viewer is used in healthcare by hospitals, health networks, multicenter research trials, and patients.
 
 * [General information](https://nroduit.github.io)
 * [Download binary releases](https://nroduit.github.io/en/getting-started/download-dicom-viewer)
