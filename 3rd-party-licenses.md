@@ -37,7 +37,7 @@ Licenses: Apache 2.0 license
 ### weasis-core-img
 This project [weasis-core-img](https://github.com/nroduit/weasis-core-img) is the Java wrapper of the native library.
 
-Licenses: Eclipse Public License 2. or Apache 2.0 license
+Licenses: Eclipse Public License 2.0 or Apache 2.0 license
 
 ### OpenCV
 

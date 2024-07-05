@@ -756,7 +756,7 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
                   });
             }
           };
-      process = new QueryProcess(runnable, "DICOM C-FIND", running); // $NON-NLS-1$
+      process = new QueryProcess(runnable, "DICOM C-FIND", running);
       process.start();
     } else if (selectedItem instanceof final DicomWebNode node) {
       AuthMethod auth = AuthenticationPersistence.getAuthMethod(node.getAuthMethodUid());
@@ -806,7 +806,7 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
               LOGGER.error("", e);
             }
           };
-      process = new QueryProcess(runnable, "QIDO-RS", running); // $NON-NLS-1$
+      process = new QueryProcess(runnable, "QIDO-RS", running);
       process.start();
     }
   }

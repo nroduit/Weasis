@@ -48,7 +48,7 @@ public class ExportIsoFactory implements DicomExportFactory {
     LOGGER.info("Export ISO image is activated");
     FileUtil.readProperties(
         new File(BundlePreferences.getDataFolder(context.getBundleContext()), "export.properties"),
-        EXPORT_PERSISTENCE); //$NON-NLS-1$
+        EXPORT_PERSISTENCE);
   }
 
   @Deactivate
@@ -57,6 +57,6 @@ public class ExportIsoFactory implements DicomExportFactory {
     FileUtil.storeProperties(
         new File(BundlePreferences.getDataFolder(context.getBundleContext()), "export.properties"),
         EXPORT_PERSISTENCE,
-        null); //$NON-NLS-1$
+        null);
   }
 }

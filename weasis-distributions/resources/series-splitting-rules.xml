@@ -14,7 +14,7 @@
     to split multiframe file into subseries when the frame values are different -->
 
   <!-- DICOM Attributes (see http://dicom.nema.org/medical/dicom/current/output/chtml/part06/chapter_6.html)
-    or available in the class TagW (see https://github.com/nroduit/Weasis/blob/master/weasis-core/weasis-core-api/src/main/java/org/weasis/core/api/media/data/TagW.java), -->
+    or available in the class TagW (see https://github.com/nroduit/Weasis/blob/master/weasis-core/src/main/java/org/weasis/core/api/media/data/TagW.java), -->
   <!-- When the value of an attribute is different, the new image goes into
     a new sub-series -->
   <!-- An attribute can have conditions when the values are different. -->
