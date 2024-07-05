@@ -373,11 +373,11 @@ public class SeriesThumbnail extends Thumbnail
         String seriesUID = (String) series.getTagValue(TagW.get("SeriesInstanceUID"));
         Set<ResourceIconPath> paths = drawIcons.apply(seriesUID);
         if (paths != null && !paths.isEmpty()) {
-          double yPos = thumbnailSize;
+          double yPos = height;
           for (ResourceIconPath path : paths) {
             FlatSVGIcon icon = ResourceUtil.getIcon(path);
             yPos -= icon.getIconHeight() + inset;
-            double shiftX = (double) thumbnailSize - icon.getIconWidth();
+            double shiftX = (double) width - icon.getIconWidth();
             g2d.translate(shiftX, yPos);
             icon.paintIcon(this, g2d, x, y);
             g2d.translate(-shiftX, -yPos);
