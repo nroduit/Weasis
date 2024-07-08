@@ -25,7 +25,6 @@
     <sonar.host.url>https://sonarcloud.io</sonar.host.url>
     <sonar.language>java</sonar.language>
     <sonar.java.source>${java-version}</sonar.java.source>
-    <sonar.java.enablePreview>true</sonar.java.enablePreview>
     <sonar.test.exclusions>src/test/**/*</sonar.test.exclusions>
     <!--suppress UnresolvedMavenProperty -->
     <sonar.coverage.jacoco.xmlReportPaths>${maven.multiModuleProjectDirectory}/tests/target/site/jacoco-aggregate/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>

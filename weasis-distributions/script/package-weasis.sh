@@ -232,7 +232,7 @@ else
 fi
 declare -a commonOptions=("--java-options" "-Dgosh.port=17179" \
 "--java-options" "-Djavax.accessibility.assistive_technologies=org.weasis.launcher.EmptyAccessibilityProvider" \
-"--java-options" "-Djavax.accessibility.screen_magnifier_present=false" "--java-options" "--enable-preview" \
+"--java-options" "-Djavax.accessibility.screen_magnifier_present=false" \
 "--java-options" "--add-exports=java.base/sun.net.www.protocol.http=ALL-UNNAMED" "--java-options" "--add-exports=java.base/sun.net.www.protocol.file=ALL-UNNAMED" \
 "--java-options" "--add-exports=java.base/sun.net.www.protocol.https=ALL-UNNAMED" "--java-options" "--add-exports=java.base/sun.net.www.protocol.ftp=ALL-UNNAMED" \
 "--java-options" "--add-exports=java.base/sun.net.www.protocol.jar=ALL-UNNAMED" "--java-options" "--add-exports=jdk.unsupported/sun.misc=ALL-UNNAMED" \
