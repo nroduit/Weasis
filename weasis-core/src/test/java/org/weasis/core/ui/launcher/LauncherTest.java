@@ -16,7 +16,6 @@ import java.awt.Component;
 import java.lang.management.ManagementFactory;
 import java.net.URI;
 import javax.management.ObjectName;
-import javax.swing.JFrame;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;

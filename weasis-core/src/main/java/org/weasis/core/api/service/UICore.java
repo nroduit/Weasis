@@ -18,6 +18,7 @@ import bibliothek.gui.dock.common.CWorkingArea;
 import bibliothek.gui.dock.common.event.CVetoFocusListener;
 import bibliothek.gui.dock.common.intern.CDockable;
 import bibliothek.gui.dock.event.KeyboardListener;
+import java.awt.GraphicsEnvironment;
 import java.awt.Window;
 import java.awt.event.KeyEvent;
 import java.io.DataOutputStream;
@@ -99,7 +100,11 @@ public final class UICore {
   /** Do not instantiate UICore, get OSGI singleton service from GuiUtils.getUICore() */
   private UICore() {
     this.dockingControl = new CControl();
-    this.baseArea = dockingControl.getContentArea();
+    if (GraphicsEnvironment.isHeadless()) {
+      this.baseArea = null; // For test where no GUI is available
+    } else {
+      this.baseArea = dockingControl.getContentArea();
+    }
     this.mainArea = dockingControl.createWorkingArea("mainArea");
     this.toolbarContainer = new ToolBarContainer();
     this.dicomLaunchers = Launcher.loadLaunchers(Launcher.Type.DICOM);
