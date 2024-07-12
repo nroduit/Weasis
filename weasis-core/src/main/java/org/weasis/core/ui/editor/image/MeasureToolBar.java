@@ -161,7 +161,7 @@ public class MeasureToolBar extends WtoolBar {
   protected final ImageViewerEventManager<?> eventManager;
 
   public MeasureToolBar(final ImageViewerEventManager<?> eventManager, int index) {
-    super(Messages.getString("MeasureToolBar.title"), index);
+    super(Messages.getString("MeasureToolBar.drawing_tools"), index);
     if (eventManager == null) {
       throw new IllegalArgumentException("EventManager cannot be null");
     }

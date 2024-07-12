@@ -95,6 +95,7 @@ public class ResourceUtil {
     IMPORT_CD("svg/action/importCd.svg"), // NON-NLS
     IMPORT_DICOM("svg/action/importDicom.svg"), // NON-NLS
     IMPORT_IMAGE("svg/action/importImage.svg"), // NON-NLS
+    LAUNCH("svg/action/launch.svg"), // NON-NLS
     INVERSE_LUT("svg/action/inverseLut.svg"), // NON-NLS
     LAYOUT("svg/action/layout.svg"), // NON-NLS
     LOAD_VOLUME("svg/action/loadVolume.svg"), // NON-NLS

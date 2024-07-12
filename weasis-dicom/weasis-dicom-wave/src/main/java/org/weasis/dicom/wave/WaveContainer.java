@@ -29,11 +29,11 @@ import javax.swing.JMenu;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import org.osgi.framework.BundleContext;
-import org.osgi.framework.FrameworkUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.ObservableEvent;
 import org.weasis.core.api.gui.InsertableUtil;
+import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.image.GridBagLayoutModel;
@@ -53,6 +53,7 @@ import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.editor.image.SynchView;
 import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.editor.image.dockable.MeasureTool;
+import org.weasis.core.ui.pref.LauncherToolBar;
 import org.weasis.core.ui.util.ForcedAcceptPrintService;
 import org.weasis.core.ui.util.Toolbar;
 import org.weasis.dicom.codec.DicomImageElement;
@@ -60,6 +61,7 @@ import org.weasis.dicom.codec.DicomSeries;
 import org.weasis.dicom.codec.DicomSpecialElement;
 import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.TagD.Level;
+import org.weasis.dicom.explorer.DicomExportAction;
 import org.weasis.dicom.explorer.DicomFieldsView;
 import org.weasis.dicom.explorer.DicomModel;
 import org.weasis.dicom.explorer.DicomViewerPlugin;
@@ -117,6 +119,11 @@ public class WaveContainer extends DicomViewerPlugin implements PropertyChangeLi
         public void keyReleased(KeyEvent e) {
           // Do nothing
         }
+
+        @Override
+        public String resolvePlaceholders(String template) {
+          return DicomExportAction.resolvePlaceholders(template, this);
+        }
       };
   protected WaveView ecgView;
 
@@ -137,7 +144,11 @@ public class WaveContainer extends DicomViewerPlugin implements PropertyChangeLi
     if (!UI.init.getAndSet(true)) {
       List<Toolbar> toolBars = UI.toolBars;
       // Add standard toolbars
-      final BundleContext context = FrameworkUtil.getBundle(this.getClass()).getBundleContext();
+      final BundleContext context = AppProperties.getBundleContext(this.getClass());
+      if (context == null) {
+        LOGGER.error("Cannot get BundleContext");
+        return;
+      }
       String bundleName = context.getBundle().getSymbolicName();
       String componentName = InsertableUtil.getCName(this.getClass());
       String key = "enable"; // NON-NLS
@@ -169,7 +180,6 @@ public class WaveContainer extends DicomViewerPlugin implements PropertyChangeLi
                 .findFirst();
         b.ifPresent(toolBars::add);
       }
-
       if (InsertableUtil.getBooleanProperty(
           preferences,
           bundleName,
@@ -178,6 +188,15 @@ public class WaveContainer extends DicomViewerPlugin implements PropertyChangeLi
           key,
           true)) {
         toolBars.add(new WaveformToolBar(20));
+      }
+      if (InsertableUtil.getBooleanProperty(
+          preferences,
+          bundleName,
+          componentName,
+          InsertableUtil.getCName(LauncherToolBar.class),
+          key,
+          true)) {
+        toolBars.add(new LauncherToolBar(getEventManager(), 130));
       }
 
       PluginTool tool;

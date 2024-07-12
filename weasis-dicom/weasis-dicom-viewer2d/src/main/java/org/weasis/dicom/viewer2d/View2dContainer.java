@@ -27,7 +27,6 @@ import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
 import org.dcm4che3.data.Tag;
 import org.osgi.framework.BundleContext;
-import org.osgi.framework.FrameworkUtil;
 import org.osgi.service.prefs.Preferences;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,6 +36,7 @@ import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.core.api.gui.Insertable.Type;
 import org.weasis.core.api.gui.InsertableUtil;
 import org.weasis.core.api.gui.util.ActionW;
+import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.gui.util.BasicActionState;
 import org.weasis.core.api.gui.util.ComboItemListener;
 import org.weasis.core.api.gui.util.Filter;
@@ -63,6 +63,7 @@ import org.weasis.core.ui.editor.SeriesViewerListener;
 import org.weasis.core.ui.editor.SeriesViewerUI;
 import org.weasis.core.ui.editor.ViewerPluginBuilder;
 import org.weasis.core.ui.editor.image.DefaultView2d;
+import org.weasis.core.ui.editor.image.ImageViewerEventManager;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.editor.image.MeasureToolBar;
 import org.weasis.core.ui.editor.image.RotationToolBar;
@@ -74,6 +75,7 @@ import org.weasis.core.ui.editor.image.ViewerToolBar;
 import org.weasis.core.ui.editor.image.ZoomToolBar;
 import org.weasis.core.ui.editor.image.dockable.MeasureTool;
 import org.weasis.core.ui.editor.image.dockable.MiniTool;
+import org.weasis.core.ui.pref.LauncherToolBar;
 import org.weasis.core.ui.util.ColorLayerUI;
 import org.weasis.core.ui.util.DefaultAction;
 import org.weasis.core.ui.util.PrintDialog;
@@ -162,8 +164,12 @@ public class View2dContainer extends DicomViewerPlugin implements PropertyChange
       List<Toolbar> toolBars = UI.toolBars;
 
       // Add standard toolbars
-      final BundleContext context = FrameworkUtil.getBundle(this.getClass()).getBundleContext();
-      EventManager evtMg = EventManager.getInstance();
+      final BundleContext context = AppProperties.getBundleContext(this.getClass());
+      if (context == null) {
+        LOGGER.error("Cannot get BundleContext");
+        return;
+      }
+      ImageViewerEventManager<DicomImageElement> evtMg = getEventManager();
 
       String bundleName = context.getBundle().getSymbolicName();
       String componentName = InsertableUtil.getCName(this.getClass());
@@ -287,6 +293,15 @@ public class View2dContainer extends DicomViewerPlugin implements PropertyChange
           key,
           true)) {
         toolBars.add(new KeyObjectToolBar(90));
+      }
+      if (InsertableUtil.getBooleanProperty(
+          preferences,
+          bundleName,
+          componentName,
+          InsertableUtil.getCName(LauncherToolBar.class),
+          key,
+          true)) {
+        toolBars.add(new LauncherToolBar(evtMg, 130));
       }
 
       List<DockableTool> tools = UI.tools;

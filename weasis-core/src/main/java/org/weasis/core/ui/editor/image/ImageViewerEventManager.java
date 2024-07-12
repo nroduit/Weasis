@@ -46,6 +46,7 @@ import org.weasis.core.ui.editor.SeriesViewerEvent.EVENT;
 import org.weasis.core.ui.editor.SeriesViewerListener;
 import org.weasis.core.ui.editor.image.SynchData.Mode;
 import org.weasis.core.ui.editor.image.dockable.MeasureTool;
+import org.weasis.core.ui.launcher.Launcher;
 import org.weasis.core.ui.model.graphic.Graphic;
 import org.weasis.core.ui.model.utils.bean.PanPoint;
 import org.weasis.core.ui.model.utils.imp.DefaultViewModel;
@@ -788,4 +789,12 @@ public abstract class ImageViewerEventManager<E extends ImageElement> implements
   }
 
   public abstract void resetDisplay();
+
+  public String resolvePlaceholders(String template) {
+    return template;
+  }
+
+  public void dicomExportAction(Launcher launcher) {
+    // Do nothing
+  }
 }

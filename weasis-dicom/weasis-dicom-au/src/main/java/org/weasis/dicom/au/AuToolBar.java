@@ -20,7 +20,7 @@ import org.weasis.dicom.explorer.DicomFieldsView;
 public class AuToolBar extends WtoolBar {
 
   public AuToolBar(int index) {
-    super("Main Bar", index); // NON-NLS
+    super(Messages.getString("main.bar"), index);
 
     final JButton metaButton = new JButton(ResourceUtil.getToolBarIcon(ActionIcon.METADATA));
     metaButton.setToolTipText(ActionW.SHOW_HEADER.getTitle());

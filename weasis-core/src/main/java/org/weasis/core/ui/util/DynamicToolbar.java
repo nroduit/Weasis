@@ -9,9 +9,7 @@
  */
 package org.weasis.core.ui.util;
 
-import org.weasis.core.api.gui.Insertable;
+public interface DynamicToolbar extends Toolbar {
 
-public interface Toolbar extends Insertable {
-
-  WtoolBar getComponent();
+  void updateToolbar();
 }

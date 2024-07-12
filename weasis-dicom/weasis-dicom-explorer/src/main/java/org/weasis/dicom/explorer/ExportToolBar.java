@@ -21,7 +21,7 @@ import org.weasis.core.ui.util.WtoolBar;
 public class ExportToolBar extends WtoolBar {
 
   public ExportToolBar(int index, DicomExplorer explorer) {
-    super(Messages.getString("ExportToolBar.dcm_export_bar"), index);
+    super(Messages.getString("ExportToolBar.export_dcm"), index);
     setAttachedInsertable(explorer);
 
     final DicomModel model = (DicomModel) explorer.getDataExplorerModel();

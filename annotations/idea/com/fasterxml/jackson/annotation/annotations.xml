@@ -5,4 +5,7 @@
   <item name='com.fasterxml.jackson.annotation.JsonProperty java.lang.String value()'>
     <annotation name='org.jetbrains.annotations.NonNls'/>
   </item>
+  <item name='com.fasterxml.jackson.annotation.JsonSubTypes.Type java.lang.Class&lt;?&gt; value()'>
+    <annotation name='org.jetbrains.annotations.NonNls'/>
+  </item>
 </root>

@@ -59,6 +59,7 @@ import org.weasis.core.api.util.URLParameters;
 import org.weasis.core.ui.editor.SeriesViewer;
 import org.weasis.core.ui.editor.SeriesViewerFactory;
 import org.weasis.core.ui.editor.image.ViewerPlugin;
+import org.weasis.core.ui.launcher.Launcher;
 import org.weasis.core.ui.util.ToolBarContainer;
 import org.weasis.core.ui.util.Toolbar;
 import org.weasis.core.util.FileUtil;
@@ -72,6 +73,8 @@ public final class UICore {
   public static final String LINUX_WINDOWS_DECORATION = "weasis.linux.windows.decoration";
   private static final Logger LOGGER = LoggerFactory.getLogger(UICore.class);
   private final ToolBarContainer toolbarContainer;
+  private final List<Launcher> dicomLaunchers;
+  private final List<Launcher> otherLaunchers;
   public final List<ViewerPlugin<?>> viewerPlugins;
   private final List<DataExplorerView> explorerPlugins;
   private final List<Toolbar> explorerPluginToolbars;
@@ -99,6 +102,8 @@ public final class UICore {
     this.baseArea = dockingControl.getContentArea();
     this.mainArea = dockingControl.createWorkingArea("mainArea");
     this.toolbarContainer = new ToolBarContainer();
+    this.dicomLaunchers = Launcher.loadLaunchers(Launcher.Type.DICOM);
+    this.otherLaunchers = Launcher.loadLaunchers(Launcher.Type.OTHER);
     this.configData = retrieveconfigData();
     this.initialSystemPreferences = new WProperties();
     this.systemPreferences = new WProperties();
@@ -333,6 +338,14 @@ public final class UICore {
 
   public CControl getDockingControl() {
     return dockingControl;
+  }
+
+  public List<Launcher> getDicomLaunchers() {
+    return dicomLaunchers;
+  }
+
+  public List<Launcher> getOtherLaunchers() {
+    return otherLaunchers;
   }
 
   public CWorkingArea getMainArea() {

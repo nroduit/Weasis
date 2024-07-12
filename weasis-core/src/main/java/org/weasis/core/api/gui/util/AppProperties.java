@@ -96,7 +96,11 @@ public class AppProperties {
   private AppProperties() {}
 
   public static BundleContext getBundleContext() {
-    Bundle bundle = FrameworkUtil.getBundle(AppProperties.class);
+    return getBundleContext(AppProperties.class);
+  }
+
+  public static BundleContext getBundleContext(Class<?> cl) {
+    Bundle bundle = FrameworkUtil.getBundle(cl);
     return bundle == null ? null : bundle.getBundleContext();
   }
 

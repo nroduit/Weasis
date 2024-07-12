@@ -37,7 +37,6 @@ import org.dcm4che3.data.Tag;
 import org.dcm4che3.img.data.PrDicomObject;
 import org.dcm4che3.img.lut.PresetWindowLevel;
 import org.osgi.framework.BundleContext;
-import org.osgi.framework.FrameworkUtil;
 import org.osgi.service.prefs.Preferences;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -48,6 +47,7 @@ import org.weasis.core.api.gui.Insertable.Type;
 import org.weasis.core.api.gui.InsertableUtil;
 import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
+import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.gui.util.BasicActionState;
 import org.weasis.core.api.gui.util.ComboItemListener;
 import org.weasis.core.api.gui.util.Feature;
@@ -94,6 +94,7 @@ import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.editor.image.ViewerPlugin;
 import org.weasis.core.ui.editor.image.ViewerToolBar;
 import org.weasis.core.ui.editor.image.ZoomToolBar;
+import org.weasis.core.ui.launcher.Launcher;
 import org.weasis.core.ui.model.graphic.Graphic;
 import org.weasis.core.ui.model.layer.LayerType;
 import org.weasis.core.ui.model.utils.bean.PanPoint;
@@ -107,6 +108,8 @@ import org.weasis.dicom.codec.geometry.ImageOrientation;
 import org.weasis.dicom.codec.utils.DicomResource;
 import org.weasis.dicom.explorer.DicomExplorer;
 import org.weasis.dicom.explorer.DicomExplorer.ListPosition;
+import org.weasis.dicom.explorer.DicomExportAction;
+import org.weasis.dicom.explorer.DicomModel;
 import org.weasis.dicom.viewer2d.mip.MipView;
 import org.weasis.dicom.viewer2d.mpr.MprContainer;
 import org.weasis.dicom.viewer2d.mpr.MprView;
@@ -198,7 +201,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
     setAction(newKOFilterAction());
     setAction(newKOSelectionAction());
 
-    final BundleContext context = FrameworkUtil.getBundle(this.getClass()).getBundleContext();
+    final BundleContext context = AppProperties.getBundleContext(this.getClass());
     Preferences prefs = BundlePreferences.getDefaultPreferences(context);
     zoomSetting.applyPreferences(prefs);
     mouseActions.applyPreferences(prefs);
@@ -878,6 +881,27 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
         getAction(ActionW.SCROLL_SERIES).ifPresent(SliderCineListener::start);
       } else if (command.equals(ActionW.CINESTOP.cmd())) {
         getAction(ActionW.SCROLL_SERIES).ifPresent(SliderCineListener::stop);
+      }
+    }
+  }
+
+  @Override
+  public String resolvePlaceholders(String template) {
+    return DicomExportAction.resolvePlaceholders(template, this);
+  }
+
+  @Override
+  public void dicomExportAction(Launcher launcher) {
+    if (launcher != null && launcher.getConfiguration().isDicomSelectionAction()) {
+      DicomExplorer dicom = getDicomExplorer();
+      if (dicom != null) {
+        DicomModel dicomModel = (DicomModel) dicom.getDataExplorerModel();
+        DicomExportAction action = new DicomExportAction(launcher, dicomModel);
+        try {
+          action.execute();
+        } catch (IOException e) {
+          LOGGER.error("Copy DICOM failed", e);
+        }
       }
     }
   }

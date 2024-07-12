@@ -16,6 +16,7 @@ import java.util.Arrays;
 import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.weasis.core.util.StringUtil;
 
 public class UriListFlavor {
   private static final Logger LOGGER = LoggerFactory.getLogger(UriListFlavor.class);
@@ -52,6 +53,18 @@ public class UriListFlavor {
       }
     }
     return list;
+  }
+
+  public static boolean isValidURI(String uriString) {
+    if (!StringUtil.hasText(uriString)) {
+      return false;
+    }
+    try {
+      new URI(uriString);
+      return true;
+    } catch (Exception e) {
+      return false;
+    }
   }
 
   public static DataFlavor[] getTransferDataFlavors() {

@@ -32,7 +32,7 @@ import org.weasis.core.ui.util.WtoolBar;
 public class ZoomToolBar extends WtoolBar {
 
   public ZoomToolBar(final ImageViewerEventManager<?> eventManager, int index, boolean showLens) {
-    super(Messages.getString("ZoomToolBar.zoomBar"), index);
+    super(Messages.getString("ResetTools.zoom"), index);
     if (eventManager == null) {
       throw new IllegalArgumentException("EventManager cannot be null");
     }

@@ -21,7 +21,7 @@ import org.weasis.core.ui.util.WtoolBar;
 public class CineToolBar extends WtoolBar {
 
   public CineToolBar(int index) {
-    super(Messages.getString("CineToolBar.name"), index);
+    super(Messages.getString("cine"), index);
 
     SliderCineListener sequence =
         EventManager.getInstance().getAction(ActionW.SCROLL_SERIES).orElse(null);

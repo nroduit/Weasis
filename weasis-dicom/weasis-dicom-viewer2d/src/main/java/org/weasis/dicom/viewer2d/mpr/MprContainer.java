@@ -29,7 +29,6 @@ import javax.swing.JSeparator;
 import javax.swing.SwingUtilities;
 import org.dcm4che3.data.Tag;
 import org.osgi.framework.BundleContext;
-import org.osgi.framework.FrameworkUtil;
 import org.osgi.service.prefs.Preferences;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,6 +36,7 @@ import org.weasis.core.api.explorer.ObservableEvent;
 import org.weasis.core.api.gui.Insertable.Type;
 import org.weasis.core.api.gui.InsertableUtil;
 import org.weasis.core.api.gui.util.ActionW;
+import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.image.GridBagLayoutModel;
@@ -254,7 +254,7 @@ public class MprContainer extends DicomViewerPlugin implements PropertyChangeLis
       toolBars.add(new DcmHeaderToolBar(evtMg, 35));
       toolBars.add(new LutToolBar(evtMg, 40));
 
-      final BundleContext context = FrameworkUtil.getBundle(this.getClass()).getBundleContext();
+      final BundleContext context = AppProperties.getBundleContext(this.getClass());
       Preferences prefs = BundlePreferences.getDefaultPreferences(context);
       if (prefs != null) {
         String className = this.getClass().getSimpleName().toLowerCase();

@@ -16,13 +16,13 @@ import java.util.ArrayList;
 import javax.swing.JButton;
 import javax.swing.tree.DefaultMutableTreeNode;
 import org.osgi.framework.BundleContext;
-import org.osgi.framework.FrameworkUtil;
 import org.osgi.framework.ServiceReference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.InsertableUtil;
 import org.weasis.core.api.gui.util.AbstractItemDialogPage;
 import org.weasis.core.api.gui.util.AbstractWizardDialog;
+import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.PageItem;
 
@@ -78,7 +78,7 @@ public class DicomImport extends AbstractWizardDialog {
     list.add(new DicomZipImport());
     list.add(new DicomDirImport());
 
-    BundleContext context = FrameworkUtil.getBundle(this.getClass()).getBundleContext();
+    BundleContext context = AppProperties.getBundleContext(this.getClass());
     try {
       for (ServiceReference<DicomImportFactory> service :
           context.getServiceReferences(DicomImportFactory.class, null)) {

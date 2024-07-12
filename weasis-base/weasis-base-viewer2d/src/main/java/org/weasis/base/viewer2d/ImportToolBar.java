@@ -21,7 +21,7 @@ import org.weasis.core.ui.util.WtoolBar;
 public class ImportToolBar extends WtoolBar {
 
   public ImportToolBar(int index) {
-    super(Messages.getString("ImportToolBar.import_img_bar"), index);
+    super(Messages.getString("image.import"), index);
 
     if (GuiUtils.getUICore()
         .getSystemPreferences()

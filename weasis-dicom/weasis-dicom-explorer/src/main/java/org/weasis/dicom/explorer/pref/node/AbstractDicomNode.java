@@ -29,9 +29,9 @@ import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
 import javax.xml.stream.XMLStreamWriter;
 import org.osgi.framework.BundleContext;
-import org.osgi.framework.FrameworkUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.service.BundlePreferences;
 import org.weasis.core.api.util.ResourceUtil;
@@ -215,8 +215,7 @@ public abstract class AbstractDicomNode {
     loadDicomNodes(list, ResourceUtil.getResource(type.getFilename()), type, false, usage, webType);
 
     // Load nodes from local data
-    final BundleContext context =
-        FrameworkUtil.getBundle(AbstractDicomNode.class).getBundleContext();
+    final BundleContext context = AppProperties.getBundleContext(AbstractDicomNode.class);
     loadDicomNodes(
         list,
         new File(BundlePreferences.getDataFolder(context), type.getFilename()),
@@ -231,8 +230,7 @@ public abstract class AbstractDicomNode {
   public static void saveDicomNodes(JComboBox<? extends AbstractDicomNode> comboBox, Type type) {
     XMLStreamWriter writer = null;
     XMLOutputFactory factory = XMLOutputFactory.newInstance();
-    final BundleContext context =
-        FrameworkUtil.getBundle(AbstractDicomNode.class).getBundleContext();
+    final BundleContext context = AppProperties.getBundleContext(AbstractDicomNode.class);
     try {
       writer =
           factory.createXMLStreamWriter(

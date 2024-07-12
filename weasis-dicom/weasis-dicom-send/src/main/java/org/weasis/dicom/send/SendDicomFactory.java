@@ -41,7 +41,7 @@ public class SendDicomFactory implements DicomExportFactory {
       DicomModel dicomModel = (DicomModel) properties.get(DicomModel.class.getName());
       CheckTreeModel treeModel = (CheckTreeModel) properties.get(CheckTreeModel.class.getName());
       if (dicomModel != null && treeModel != null) {
-        return new SendDicomView(dicomModel, treeModel);
+        return new SendDicomView(dicomModel, treeModel).initGUI();
       }
     }
     return null;

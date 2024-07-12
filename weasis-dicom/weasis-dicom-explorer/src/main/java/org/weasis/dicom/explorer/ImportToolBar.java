@@ -36,7 +36,7 @@ public class ImportToolBar extends WtoolBar {
   private static final Logger LOGGER = LoggerFactory.getLogger(ImportToolBar.class);
 
   public ImportToolBar(int index, DicomExplorer explorer) {
-    super(Messages.getString("ImportToolBar.dcm_import_bar"), index);
+    super(Messages.getString("ImportToolBar.import_dcm"), index);
     setAttachedInsertable(explorer);
 
     final DicomModel model = (DicomModel) explorer.getDataExplorerModel();

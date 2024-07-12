@@ -38,7 +38,7 @@ public class LocalImport extends AbstractItemDialogPage implements ImportDicom {
 
   public static final String LAST_OPEN_VIEWER_MODE = "last.open.viewer.mode";
   public static final String LAST_RECURSIVE_MODE = "last.recursive.mode";
-  private static final String LAST_OPEN_DIR = "lastOpenDir";
+  public static final String LAST_OPEN_DIR = "lastOpenDir";
 
   private final JComboBox<OpeningViewer> openingViewerJComboBox =
       new JComboBox<>(OpeningViewer.values());

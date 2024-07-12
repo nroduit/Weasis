@@ -25,7 +25,6 @@ import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
 import javax.xml.stream.XMLStreamWriter;
 import org.osgi.framework.BundleContext;
-import org.osgi.framework.FrameworkUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.auth.AuthMethod;
@@ -33,6 +32,7 @@ import org.weasis.core.api.auth.AuthProvider;
 import org.weasis.core.api.auth.AuthRegistration;
 import org.weasis.core.api.auth.DefaultAuthMethod;
 import org.weasis.core.api.auth.OAuth2ServiceFactory;
+import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.service.BundlePreferences;
 import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.util.FileUtil;
@@ -85,8 +85,7 @@ public class AuthenticationPersistence {
       loadMethods(list, ResourceUtil.getResource(FILENAME), false);
 
       // Load nodes from local data
-      final BundleContext context =
-          FrameworkUtil.getBundle(AbstractDicomNode.class).getBundleContext();
+      final BundleContext context = AppProperties.getBundleContext(AbstractDicomNode.class);
       loadMethods(list, new File(BundlePreferences.getDataFolder(context), FILENAME), true);
       for (AuthMethod m : list) {
         methods.put(m.getUid(), m);
@@ -107,8 +106,7 @@ public class AuthenticationPersistence {
   public static void saveMethod() {
     XMLStreamWriter writer = null;
     XMLOutputFactory factory = XMLOutputFactory.newInstance();
-    final BundleContext context =
-        FrameworkUtil.getBundle(AbstractDicomNode.class).getBundleContext();
+    final BundleContext context = AppProperties.getBundleContext(AbstractDicomNode.class);
     try {
       writer =
           factory.createXMLStreamWriter(

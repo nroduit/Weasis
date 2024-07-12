@@ -60,7 +60,7 @@ public class WtoolBar extends JToolBar implements Toolbar {
 
   @Override
   public String toString() {
-    return "WtoolBar " + getName(); // NON-NLS
+    return barName;
   }
 
   @Override

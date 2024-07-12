@@ -20,7 +20,7 @@ public class WaveformToolBar extends WtoolBar {
   protected final JButton jButtonDelete = new JButton();
 
   public WaveformToolBar(int index) {
-    super("Main Bar", index); // NON-NLS
+    super(Messages.getString("main.bar"), index);
 
     final JButton printButton = new JButton(ResourceUtil.getToolBarIcon(ActionIcon.PRINT));
     printButton.addActionListener(

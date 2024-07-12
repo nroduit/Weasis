@@ -31,10 +31,10 @@ import javax.swing.JSeparator;
 import javax.swing.KeyStroke;
 import org.dcm4che3.img.lut.PresetWindowLevel;
 import org.osgi.framework.BundleContext;
-import org.osgi.framework.FrameworkUtil;
 import org.osgi.service.prefs.Preferences;
 import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
+import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.gui.util.BasicActionState;
 import org.weasis.core.api.gui.util.ComboItemListener;
 import org.weasis.core.api.gui.util.DecFormatter;
@@ -66,6 +66,7 @@ import org.weasis.core.ui.model.utils.bean.PanPoint;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.SortSeriesStack;
 import org.weasis.dicom.codec.display.Modality;
+import org.weasis.dicom.explorer.DicomExportAction;
 import org.weasis.dicom.viewer2d.Messages;
 import org.weasis.dicom.viewer2d.ResetTools;
 import org.weasis.dicom.viewer2d.View2dContainer;
@@ -148,7 +149,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> {
     setAction(newCrosshairAction());
     setAction(new BasicActionState(ActionW.RESET));
 
-    final BundleContext context = FrameworkUtil.getBundle(this.getClass()).getBundleContext();
+    final BundleContext context = AppProperties.getBundleContext(this.getClass());
     Preferences prefs = BundlePreferences.getDefaultPreferences(context);
     zoomSetting.applyPreferences(prefs);
     // Default 3D mouse actions
@@ -868,6 +869,11 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> {
         }
       }
     }
+  }
+
+  @Override
+  public String resolvePlaceholders(String template) {
+    return DicomExportAction.resolvePlaceholders(template, this);
   }
 
   @Override

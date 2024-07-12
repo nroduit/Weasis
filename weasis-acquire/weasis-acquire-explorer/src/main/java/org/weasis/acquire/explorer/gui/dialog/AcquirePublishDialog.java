@@ -34,7 +34,6 @@ import javax.swing.SwingWorker.StateValue;
 import javax.swing.WindowConstants;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
-import org.osgi.framework.FrameworkUtil;
 import org.osgi.service.prefs.Preferences;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -49,6 +48,7 @@ import org.weasis.acquire.explorer.gui.central.meta.model.imp.AcquireImageMeta;
 import org.weasis.acquire.explorer.gui.central.meta.model.imp.AcquireSeriesMeta;
 import org.weasis.acquire.explorer.gui.control.AcquirePublishPanel;
 import org.weasis.acquire.explorer.gui.model.publish.PublishTree;
+import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.WinUtil;
 import org.weasis.core.api.image.ImageOpNode;
@@ -183,8 +183,7 @@ public class AcquirePublishDialog extends JDialog {
 
     resolutionCombo = new JComboBox<>(Resolution.values());
     Preferences prefs =
-        BundlePreferences.getDefaultPreferences(
-            FrameworkUtil.getBundle(this.getClass()).getBundleContext());
+        BundlePreferences.getDefaultPreferences(AppProperties.getBundleContext(this.getClass()));
     if (prefs != null) {
       Preferences p = prefs.node(PREFERENCE_NODE);
       resolutionCombo.setSelectedItem(
@@ -405,8 +404,7 @@ public class AcquirePublishDialog extends JDialog {
       MediaImporterFactory.EXPORT_PERSISTENCE.setProperty(LAST_SEL_NODE, node.getDescription());
     }
     Preferences prefs =
-        BundlePreferences.getDefaultPreferences(
-            FrameworkUtil.getBundle(this.getClass()).getBundleContext());
+        BundlePreferences.getDefaultPreferences(AppProperties.getBundleContext(this.getClass()));
     if (prefs != null) {
       Preferences p = prefs.node(PREFERENCE_NODE);
       Resolution resolution = (Resolution) resolutionCombo.getSelectedItem();

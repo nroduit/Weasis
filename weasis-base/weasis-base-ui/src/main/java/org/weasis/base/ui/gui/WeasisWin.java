@@ -99,8 +99,6 @@ import javax.swing.RootPaneContainer;
 import javax.swing.TransferHandler.DropLocation;
 import javax.swing.WindowConstants;
 import org.osgi.framework.BundleContext;
-import org.osgi.framework.FrameworkUtil;
-import org.osgi.framework.InvalidSyntaxException;
 import org.osgi.framework.ServiceReference;
 import org.osgi.framework.Version;
 import org.slf4j.Logger;
@@ -142,6 +140,8 @@ import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.editor.image.SequenceHandler;
 import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.editor.image.ViewerPlugin;
+import org.weasis.core.ui.launcher.Launcher;
+import org.weasis.core.ui.launcher.Launcher.Type;
 import org.weasis.core.ui.pref.Monitor;
 import org.weasis.core.ui.pref.PreferenceDialog;
 import org.weasis.core.ui.util.ColorLayerUI;
@@ -742,7 +742,7 @@ public class WeasisWin {
             ColorLayerUI layer = ColorLayerUI.createTransparentLayerUI(rootPaneContainer);
             final List<AbstractTabLicense> list = new ArrayList<>();
             try {
-              BundleContext context = FrameworkUtil.getBundle(this.getClass()).getBundleContext();
+              BundleContext context = AppProperties.getBundleContext(this.getClass());
               Hashtable<String, Object> properties = new Hashtable<>();
               for (ServiceReference<LicenseTabFactory> service :
                   context.getServiceReferences(LicenseTabFactory.class, null)) {
@@ -754,7 +754,7 @@ public class WeasisWin {
                   }
                 }
               }
-            } catch (InvalidSyntaxException ex) {
+            } catch (Exception ex) {
               LOGGER.error("Get License from OSGI service", ex);
             }
             if (list.isEmpty()) {
@@ -942,6 +942,14 @@ public class WeasisWin {
         .forEach(d -> fillMenu(exportMenu, d.getOpenExportDialogAction()));
   }
 
+  private void buildLauncherSubMenu(final JMenu exportMenu) {
+    if (selectedPlugin instanceof ImageViewerPlugin<?> viewerPlugin) {
+      fillMenu(exportMenu, Launcher.getLauncherActions(viewerPlugin.getEventManager(), null));
+    } else {
+      fillMenu(exportMenu, Launcher.getLauncherActions(null, Type.OTHER));
+    }
+  }
+
   private static void fillMenu(final JMenu menu, List<Action> actions) {
     Optional.ofNullable(actions)
         .ifPresent(
@@ -1031,6 +1039,19 @@ public class WeasisWin {
     exportMenu.addPopupMenuListener();
 
     menuFile.add(exportMenu);
+
+    DynamicMenu launcherMenu =
+        new DynamicMenu("Launcher") {
+
+          @Override
+          public void popupMenuWillBecomeVisible() {
+            buildLauncherSubMenu(this);
+          }
+        };
+    launcherMenu.addPopupMenuListener();
+
+    menuFile.add(launcherMenu);
+
     menuFile.add(new JSeparator());
     DynamicMenu printMenu =
         new DynamicMenu(Messages.getString("WeasisWin.print")) {

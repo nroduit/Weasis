@@ -38,6 +38,7 @@ import java.awt.event.KeyEvent;
 import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
+import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.text.ParseException;
@@ -510,9 +511,19 @@ public class GuiUtils {
 
   public static void openInDefaultBrowser(Component parent, URL url) {
     if (url != null) {
+      try {
+        openInDefaultBrowser(parent, url.toURI());
+      } catch (URISyntaxException e) {
+        throw new RuntimeException(e);
+      }
+    }
+  }
+
+  public static void openInDefaultBrowser(Component parent, URI uri) {
+    if (uri != null) {
       if (SystemInfo.isLinux) {
         try {
-          String[] cmd = new String[] {"xdg-open", url.toString()}; // NON-NLS
+          String[] cmd = new String[] {"xdg-open", uri.toString()}; // NON-NLS
           Runtime.getRuntime().exec(cmd);
         } catch (IOException e) {
           LOGGER.error("Cannot open URL to the system browser", e);
@@ -521,15 +532,15 @@ public class GuiUtils {
         final Desktop desktop = Desktop.getDesktop();
         if (desktop.isSupported(Desktop.Action.BROWSE)) {
           try {
-            desktop.browse(url.toURI());
-          } catch (IOException | URISyntaxException e) {
+            desktop.browse(uri);
+          } catch (IOException e) {
             LOGGER.error("Cannot open URL to the desktop browser", e);
           }
         }
       } else {
         JOptionPane.showMessageDialog(
             WinUtil.getValidComponent(parent),
-            Messages.getString("JMVUtils.browser") + StringUtil.COLON_AND_SPACE + url,
+            Messages.getString("JMVUtils.browser") + StringUtil.COLON_AND_SPACE + uri,
             Messages.getString("JMVUtils.error"),
             JOptionPane.ERROR_MESSAGE);
       }

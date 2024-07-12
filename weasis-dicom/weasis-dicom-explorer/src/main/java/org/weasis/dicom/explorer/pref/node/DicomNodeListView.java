@@ -11,9 +11,9 @@ package org.weasis.dicom.explorer.pref.node;
 
 import javax.swing.JButton;
 import javax.swing.JComboBox;
-import javax.swing.JPanel;
 import org.weasis.core.api.gui.util.AbstractItemDialogPage;
 import org.weasis.core.api.gui.util.GuiUtils;
+import org.weasis.core.ui.pref.LauncherPrefView;
 import org.weasis.dicom.explorer.Messages;
 
 public class DicomNodeListView extends AbstractItemDialogPage {
@@ -40,24 +40,14 @@ public class DicomNodeListView extends AbstractItemDialogPage {
     JButton editButton = new JButton(Messages.getString("DicomNodeListView.edit"));
     JButton deleteButton = new JButton(Messages.getString("DicomNodeListView.delete"));
     JButton addNodeButton = new JButton(Messages.getString("DicomNodeListView.add_new"));
-    deleteButton.addActionListener(e -> AbstractDicomNode.deleteNodeActionPerformed(nodeComboBox));
-    editButton.addActionListener(e -> AbstractDicomNode.editNodeActionPerformed(nodeComboBox));
+    deleteButton.addActionListener(_ -> AbstractDicomNode.deleteNodeActionPerformed(nodeComboBox));
+    editButton.addActionListener(_ -> AbstractDicomNode.editNodeActionPerformed(nodeComboBox));
     addNodeButton.addActionListener(
         e -> AbstractDicomNode.addNodeActionPerformed(nodeComboBox, nodeType));
 
-    JPanel panel = GuiUtils.getVerticalBoxLayoutPanel();
-    panel.setBorder(GuiUtils.getTitledBorder(nodeType.toString()));
-    panel.add(
-        GuiUtils.getFlowLayoutPanel(
-            ITEM_SEPARATOR,
-            ITEM_SEPARATOR,
-            nodeComboBox,
-            GuiUtils.boxHorizontalStrut(BLOCK_SEPARATOR),
-            editButton,
-            GuiUtils.boxHorizontalStrut(ITEM_SEPARATOR_LARGE),
-            deleteButton));
-    panel.add(GuiUtils.getFlowLayoutPanel(ITEM_SEPARATOR, ITEM_SEPARATOR, addNodeButton));
-    add(panel);
+    add(
+        LauncherPrefView.buildItem(
+            nodeType.toString(), nodeComboBox, editButton, deleteButton, addNodeButton));
 
     add(GuiUtils.boxVerticalStrut(BLOCK_SEPARATOR));
   }

@@ -13,7 +13,6 @@ import java.util.Collections;
 import java.util.List;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.Constants;
-import org.osgi.framework.FrameworkUtil;
 import org.osgi.framework.InvalidSyntaxException;
 import org.osgi.framework.ServiceEvent;
 import org.osgi.framework.ServiceReference;
@@ -27,6 +26,7 @@ import org.weasis.core.api.gui.Insertable;
 import org.weasis.core.api.gui.Insertable.Type;
 import org.weasis.core.api.gui.InsertableFactory;
 import org.weasis.core.api.gui.InsertableUtil;
+import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.media.data.Codec;
@@ -78,7 +78,7 @@ public class BundleTools {
     final ServiceReference<?> mref = event.getServiceReference();
     // The View2dContainer name should be referenced as a property in the provided service
     if (Boolean.parseBoolean((String) mref.getProperty(ui.clazz.getName()))) {
-      final BundleContext context = FrameworkUtil.getBundle(ui.clazz).getBundleContext();
+      final BundleContext context = AppProperties.getBundleContext(ui.clazz);
       if (context == null) {
         return;
       }
@@ -220,7 +220,7 @@ public class BundleTools {
     }
   }
 
-  private static void notifyDicomModel(BasicAction action, SeriesViewerUI ui) {
+  public static void notifyDicomModel(BasicAction action, SeriesViewerUI ui) {
     if (ui != null) {
       List<DataExplorerView> explorerPlugins = GuiUtils.getUICore().getExplorerPlugins();
       explorerPlugins.stream()
@@ -231,8 +231,10 @@ public class BundleTools {
     }
   }
 
-  private static void notifyDefaultDataModel(BasicAction action, SeriesViewerUI ui) {
-    ViewerPluginBuilder.DefaultDataModel.firePropertyChange(
-        new ObservableEvent(action, ui, null, ui));
+  public static void notifyDefaultDataModel(BasicAction action, SeriesViewerUI ui) {
+    if (ui != null) {
+      ViewerPluginBuilder.DefaultDataModel.firePropertyChange(
+          new ObservableEvent(action, ui, null, ui));
+    }
   }
 }

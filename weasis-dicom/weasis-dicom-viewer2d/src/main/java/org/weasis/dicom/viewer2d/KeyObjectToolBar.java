@@ -74,7 +74,7 @@ public class KeyObjectToolBar extends WtoolBar {
   }
 
   public KeyObjectToolBar(int index) {
-    super(Messages.getString("KeyObjectToolBar.title"), index);
+    super(Messages.getString("KOManager.ko_title"), index);
 
     final EventManager evtMgr = EventManager.getInstance();
     evtMgr
