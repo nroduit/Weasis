@@ -41,10 +41,10 @@ class LauncherTest {
   @BeforeAll
   static void setUpAll() throws Exception {
     System.setProperty("weasis.resources.path", "src/test/resources"); // NON-NLS
+    System.setProperty("weasis.pref.dir", "target/test-classes"); // NON-NLS
 
     mainFrame.setConfigData(new ConfigData(null));
     ObjectName objectName2 = new ObjectName("weasis:name=MainWindow"); // NON-NLS
-    mainFrame.setRootPaneContainer(new JFrame());
     ManagementFactory.getPlatformMBeanServer().registerMBean(mainFrame, objectName2);
   }
 
