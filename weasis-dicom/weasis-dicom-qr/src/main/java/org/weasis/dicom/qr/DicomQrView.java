@@ -391,7 +391,8 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
 
     final JButton btnGeneralOptions = new JButton(Messages.getString("DicomQrView.more_opt"));
     btnGeneralOptions.addActionListener(
-        e -> {
+        _ -> {
+          applyChange();
           PreferenceDialog dialog = new PreferenceDialog(SwingUtilities.getWindowAncestor(this));
           dialog.showPage(
               org.weasis.dicom.explorer.Messages.getString("DicomNodeListView.node_list"));
