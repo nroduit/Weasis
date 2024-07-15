@@ -179,6 +179,20 @@ public class DicomModel implements TreeModel, DataExplorerModel {
     return null;
   }
 
+  public List<MediaSeriesGroup> getAllSeriesNodes(MediaSeriesGroup parent, Object valueID) {
+    if (parent != null || valueID != null) {
+      List<MediaSeriesGroup> list = new ArrayList<>();
+      for (MediaSeriesGroup node : getChildren(parent)) {
+        String seriesInstanceUID = TagD.getTagValue(node, Tag.SeriesInstanceUID, String.class);
+        if (Objects.equals(seriesInstanceUID, valueID)) {
+          list.add(node);
+        }
+      }
+      return list;
+    }
+    return Collections.emptyList();
+  }
+
   public void mergePatientUID(String oldPatientUID, String newPatientUID) {
     MediaSeriesGroup pt = getHierarchyNode(MediaSeriesGroupNode.rootNode, oldPatientUID);
     MediaSeriesGroup pt2 = getHierarchyNode(MediaSeriesGroupNode.rootNode, newPatientUID);
