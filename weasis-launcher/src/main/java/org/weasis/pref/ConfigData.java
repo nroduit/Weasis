@@ -325,7 +325,7 @@ public class ConfigData {
     configParams.forEach(
         (k, v) -> {
           switch (k) {
-            case PARAM_CONFIG_URL -> addProperty(P_WEASIS_CONFIG_URL, v.getFirst());
+            case PARAM_CONFIG_URL -> addAndReplaceProperty(P_WEASIS_CONFIG_URL, v.getFirst());
             case PARAM_CODEBASE -> addProperty(P_WEASIS_CODEBASE_URL, v.getFirst());
             case PARAM_AUTHORIZATION -> addProperty(P_HTTP_AUTHORIZATION, v.getFirst());
             case PARAM_PROPERTY -> addProperties(v);
@@ -360,8 +360,17 @@ public class ConfigData {
   }
 
   private void addProperty(String key, String val) {
+    addProperty(key, val, false);
+  }
+
+  private void addAndReplaceProperty(String key, String val) {
+    addProperty(key, val, true);
+  }
+
+  private void addProperty(String key, String val, boolean forceIfPresent) {
     if (Utils.hasText(key) && Utils.hasText(val)) {
-      properties.putIfAbsent(key, val);
+      if (forceIfPresent) properties.put(key, val);
+      else properties.putIfAbsent(key, val);
     }
   }
 
