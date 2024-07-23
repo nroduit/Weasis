@@ -13,24 +13,13 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.Authenticator;
-import java.net.HttpURLConnection;
-import java.net.PasswordAuthentication;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.URLConnection;
-import java.net.URLDecoder;
+import java.net.*;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Properties;
+import java.util.*;
+import java.util.function.Predicate;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import javax.xml.stream.XMLInputFactory;
 import javax.xml.stream.XMLStreamConstants;
 import javax.xml.stream.XMLStreamException;
@@ -41,6 +30,8 @@ import org.slf4j.LoggerFactory;
 import org.weasis.launcher.FileUtil;
 import org.weasis.launcher.Utils;
 import org.weasis.launcher.WeasisLauncher.Type;
+
+import static java.util.stream.Collectors.*;
 
 public class ConfigData {
   private static final org.slf4j.Logger LOGGER = LoggerFactory.getLogger(ConfigData.class);
@@ -566,6 +557,68 @@ public class ConfigData {
     paramList.add(Utils.removeEnglobingQuotes(value));
   }
 
+  private URI adaptConfigServiceURI(URI configServiceUri)
+      throws URISyntaxException, MalformedURLException {
+
+    List<String> paramsToOverride = List.of("user", "host");
+
+    String configServiceQueryString = configServiceUri.getQuery();
+    Map<String, List<String>> queryParamsMap;
+
+    if (!Utils.hasText(configServiceQueryString)) {
+      queryParamsMap = new LinkedHashMap<>();
+    } else {
+      queryParamsMap =
+          Arrays.stream(configServiceQueryString.split("&"))
+              .filter(Objects::nonNull)
+              .filter(Predicate.not(String::isEmpty))
+              .map(s -> Arrays.copyOf(s.split("=", 2), 2))
+              .collect(
+                  groupingBy(
+                      s ->
+                          paramsToOverride.contains(s[0].toLowerCase()) ? s[0].toLowerCase() : s[0],
+                      mapping(s -> s[1], toList())));
+    }
+
+    // If 'weasis.user' prop is already defined, it replaces the config service query parameter
+    String user = properties.getProperty(P_WEASIS_USER);
+
+    if (Utils.hasText(user)) {
+      queryParamsMap.put("user", List.of(user));
+    } else if (!queryParamsMap.containsKey("user")) {
+      if ((user = System.getProperty("user.name")) != null)
+        queryParamsMap.putIfAbsent("user", List.of(user));
+      else LOGGER.error("Cannot get system user.name from Launcher");
+    }
+
+    // If 'host' is not defined in config service query parameter, then it should be.
+    if (!queryParamsMap.containsKey("host")) {
+      try {
+        String hostName = InetAddress.getLocalHost().getHostName();
+        // TODO check if hostName is not an IP
+        queryParamsMap.putIfAbsent("host", List.of(hostName));
+      } catch (Exception e) {
+        LOGGER.error("Cannot get local hostname from Launcher", e);
+      }
+    }
+
+    String queryParamString =
+        queryParamsMap.entrySet().stream()
+            .flatMap(
+                entry ->
+                    Stream.of(entry.getValue()).map(val -> entry.getKey() + "=" + val.getFirst()))
+            .collect(Collectors.joining("&"));
+
+    return new URI(
+        configServiceUri.getScheme(),
+        null,
+        configServiceUri.getHost(),
+        configServiceUri.getPort(),
+        configServiceUri.getPath(),
+        queryParamString,
+        null);
+  }
+
   private Map<String, List<String>> getConfigParamsFromServicePath() {
 
     String configServicePath = properties.getProperty(P_WEASIS_CONFIG_URL);
@@ -580,8 +633,9 @@ public class ConfigData {
       if (configServiceUri.getScheme().startsWith("file")) {
         stream = new FileInputStream(new File(configServiceUri));
       } else {
+        URI adaptedConfigServiceUri = adaptConfigServiceURI(configServiceUri);
         URLConnection urlConnection =
-            FileUtil.getAdaptedConnection(new URI(configServicePath).toURL(), false);
+            FileUtil.getAdaptedConnection(adaptedConfigServiceUri.toURL(), false);
 
         urlConnection.setRequestProperty("Accept", "application/xml"); // NON-NLS
         urlConnection.setConnectTimeout(
