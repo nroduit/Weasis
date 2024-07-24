@@ -225,6 +225,7 @@ public class SRView extends JScrollPane implements SeriesViewerListener {
                       TagD.getTagValue(s, Tag.SeriesInstanceUID, String.class),
                       ref.getReferencedSOPInstanceUID(),
                       ref.getReferencedSOPClassUID(),
+                      TagD.getTagValue(s, Tag.InstanceNumber, Integer.class),
                       ref.getReferencedFrameNumber());
               keyReferences.addKeyObject(koRef);
               SeriesViewerFactory plugin =
