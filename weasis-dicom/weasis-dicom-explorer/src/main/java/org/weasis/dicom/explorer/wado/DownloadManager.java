@@ -806,11 +806,15 @@ public class DownloadManager {
           String sopClassUID =
               TagUtil.getTagAttribute(
                   xmler, TagD.get(Tag.ReferencedSOPClassUID).getKeyword(), null);
+          Integer nb =
+              TagUtil.getIntegerTagAttribute(
+                  xmler, TagD.get(Tag.InstanceNumber).getKeyword(), null);
           int[] seqFrame = (int[]) TagD.get(Tag.ReferencedFrameNumber).getValue(xmler);
 
           SOPInstanceReferenceAndMAC referencedSOP = new SOPInstanceReferenceAndMAC();
           referencedSOP.setReferencedSOPInstanceUID(sopUID);
           referencedSOP.setReferencedSOPClassUID(sopClassUID);
+          referencedSOP.setInstanceNumber(nb);
           referencedSOP.setReferencedFrameNumber(seqFrame);
           instances.add(referencedSOP);
         };

@@ -70,4 +70,14 @@ public class SOPInstanceReference extends Module {
   public void setReferencedSOPClassUID(String uid) {
     dcmItems.setString(Tag.ReferencedSOPClassUID, VR.UI, uid);
   }
+
+  public void setInstanceNumber(Integer number) {
+    if (number != null) {
+      dcmItems.setInt(Tag.InstanceNumber, VR.IS, number);
+    }
+  }
+
+  public Integer getInstanceNumber() {
+    return DicomUtils.getIntegerFromDicomElement(dcmItems, Tag.InstanceNumber, null);
+  }
 }
