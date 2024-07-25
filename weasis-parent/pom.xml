@@ -30,7 +30,7 @@
     <weasis.releasenotes>https://github.com/nroduit/Weasis/blob/master/CHANGELOG.md#v440-2024-05-06</weasis.releasenotes>
 
     <felix.framework.version>7.0.5</felix.framework.version>
-    <flatlaf.version>3.4.1</flatlaf.version>
+    <flatlaf.version>3.5</flatlaf.version>
     <miglayout.version>11.3</miglayout.version>
     <xz.version>1.9</xz.version>
 
