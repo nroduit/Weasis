@@ -10,10 +10,10 @@ jobs:
       cleanversion: ${{ env.WEASIS_CLEAN_VERSION }}
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Set up JDK for compilation
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: '22'
@@ -38,13 +38,13 @@ jobs:
           echo "WEASIS_CLEAN_VERSION=${CVERSION}" >> $GITHUB_ENV
 
       - name: Upload the weasis package for building the native distribution
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: weasis-native-${{ env.WEASIS_VERSION }}
           path: weasis-distributions/target/native-dist/weasis-native.zip
 
       - name: Upload the weasis web distribution
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: weasis-web-${{ env.WEASIS_VERSION }}
           path: weasis-distributions/target/web-dist/weasis.war
@@ -78,13 +78,13 @@ jobs:
           echo "WEASIS_CLEAN_VERSION=${{needs.build.outputs.cleanversion}}" >> $GITHUB_ENV
 
       - name: Set up JDK
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: '22'
 
       - name: Download weasis-native
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: weasis-native-${{ env.WEASIS_VERSION }}
           path: native-dist
@@ -108,7 +108,7 @@ jobs:
           echo "$(ls ${{ env.WEASIS_INPUT_BIN }}/bundle/)"
 
       - name: Import Developer Certificate
-        uses: apple-actions/import-codesign-certs@v2
+        uses: apple-actions/import-codesign-certs@v3
         if: matrix.wsystem == 'macosx'
         id: cert
         with:
@@ -116,7 +116,7 @@ jobs:
           p12-password: ${{ secrets.MACOS_CERTIFICATE_PWD }}
 
       - name: Import Installer Certificate
-        uses: apple-actions/import-codesign-certs@v2
+        uses: apple-actions/import-codesign-certs@v3
         if: matrix.wsystem == 'macosx'
         with:
           create-keychain: "false"
@@ -170,7 +170,7 @@ jobs:
           RES: "native-dist/weasis-native/build/script/resources/${{ matrix.wsystem }}"
           FILE_ASSOC: "native-dist/weasis-native/build/script/file-associations.properties"
           VENDOR: "Weasis Team"
-          COPYRIGHT: "© 2009-2023 Weasis Team"
+          COPYRIGHT: "© 2009-2024 Weasis Team"
         run: |
           mkdir -p final-dist
           machine=${{ matrix.wsystem }}
@@ -232,7 +232,7 @@ jobs:
             done
 
       - name: Upload the installer
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: ${{ env.APP_ARTIFACT }}
           path: final-dist
