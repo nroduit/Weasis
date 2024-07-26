@@ -35,12 +35,12 @@ import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.DicomSeries;
 import org.weasis.dicom.codec.KOSpecialElement;
 import org.weasis.dicom.codec.TagD;
-import org.weasis.dicom.codec.macro.HierarchicalSOPInstanceReference;
-import org.weasis.dicom.codec.macro.KODocumentModule;
 import org.weasis.dicom.codec.utils.DicomMediaUtils;
 import org.weasis.dicom.explorer.DicomModel;
 import org.weasis.dicom.explorer.HangingProtocols.OpeningViewer;
 import org.weasis.dicom.explorer.LoadDicomObjects;
+import org.weasis.dicom.macro.HierarchicalSOPInstanceReference;
+import org.weasis.dicom.macro.KODocumentModule;
 
 public final class KOManager {
 

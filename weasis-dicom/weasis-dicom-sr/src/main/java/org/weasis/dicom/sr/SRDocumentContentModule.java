@@ -13,9 +13,9 @@ import java.util.Date;
 import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Sequence;
 import org.dcm4che3.data.Tag;
-import org.weasis.dicom.codec.macro.Code;
-import org.weasis.dicom.codec.macro.Module;
-import org.weasis.dicom.codec.macro.SOPInstanceReference;
+import org.weasis.dicom.macro.Code;
+import org.weasis.dicom.macro.Module;
+import org.weasis.dicom.macro.SOPInstanceReference;
 
 public class SRDocumentContentModule extends Module {
 

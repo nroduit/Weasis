@@ -24,7 +24,7 @@ import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.SeriesComparator;
 import org.weasis.core.util.StringUtil;
 import org.weasis.core.util.StringUtil.Suffix;
-import org.weasis.dicom.codec.macro.SOPInstanceReferenceAndMAC;
+import org.weasis.dicom.macro.SOPInstanceReferenceAndMAC;
 import org.weasis.dicom.param.AttributeEditor;
 
 public class DicomSpecialElement extends MediaElement implements DicomElement {
