@@ -43,12 +43,6 @@ jobs:
           name: weasis-native-${{ env.WEASIS_VERSION }}
           path: weasis-distributions/target/native-dist/weasis-native.zip
 
-      - name: Upload the weasis web distribution
-        uses: actions/upload-artifact@v4
-        with:
-          name: weasis-web-${{ env.WEASIS_VERSION }}
-          path: weasis-distributions/target/web-dist/weasis.war
-
   jpackage:
     env:
       JDK_MODULES: "java.base,java.compiler,java.datatransfer,java.net.http,java.desktop,java.logging,java.management,java.prefs,java.xml,jdk.localedata,jdk.charsets,jdk.crypto.ec,jdk.crypto.cryptoki,jdk.unsupported,jdk.jdwp.agent,java.sql"
