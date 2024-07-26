@@ -135,15 +135,15 @@ public class ModalityView {
     try {
       return Modality.valueOf(name);
     } catch (Exception e) {
-      if("DS".equals(name)) {
+      if ("DS".equals(name)) {
         return Modality.XA;
-      } else if("CF".equals(name) || "DF".equals(name) || "VF".equals(name)) {
+      } else if ("CF".equals(name) || "DF".equals(name) || "VF".equals(name)) {
         return Modality.RF;
-      } else if("MA".equals(name) || "MS".equals(name)) {
+      } else if ("MA".equals(name) || "MS".equals(name)) {
         return Modality.MR;
-      } else if("EC".equals(name) || "CD".equals(name) || "DD".equals(name)) {
+      } else if ("EC".equals(name) || "CD".equals(name) || "DD".equals(name)) {
         return Modality.US;
-      } else if("ST".equals(name)) {
+      } else if ("ST".equals(name)) {
         return Modality.NM;
       }
       LOGGER.error("Modality reference of {} is missing", name, e);

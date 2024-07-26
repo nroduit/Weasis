@@ -180,6 +180,7 @@ public class DicomMediaIO implements DcmMediaReader {
     tagManager.addTag(Tag.DiffusionBValue, Level.INSTANCE);
     tagManager.addTag(Tag.MIMETypeOfEncapsulatedDocument, Level.INSTANCE);
     tagManager.addTag(Tag.PixelDataProviderURL, Level.INSTANCE);
+    tagManager.addTag(Tag.AnatomicRegionSequence, Level.INSTANCE);
 
     for (Entry<Modality, ModalityInfoData> entry : ModalityView.getModalityViewEntries()) {
       readTagsInModalityView(entry.getValue().getCornerInfo(CornerDisplay.TOP_LEFT).getInfos());
@@ -559,8 +560,9 @@ public class DicomMediaIO implements DcmMediaReader {
       TagD.get(Tag.DistanceSourceToPatient).readValue(header, this);
       TagD.get(Tag.NominalScannedPixelSpacing).readValue(header, this);
 
-      setTag(TagW.ModalityLUTData, desc.getModalityLUT());
+      setTag(TagW.AnatomicRegion, desc.getAnatomicRegion());
 
+      setTag(TagW.ModalityLUTData, desc.getModalityLUT());
       TagD.get(Tag.PixelIntensityRelationship).readValue(header, this);
       setTag(TagW.VOILUTsData, desc.getVoiLUT());
 

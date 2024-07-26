@@ -226,6 +226,7 @@ public class SeriesBuilder {
       Tag.KVP,
       Tag.Laterality,
       Tag.BodyPartExamined,
+      Tag.AnatomicRegionSequence,
       Tag.FrameOfReferenceUID,
       Tag.RescaleSlope,
       Tag.RescaleIntercept,

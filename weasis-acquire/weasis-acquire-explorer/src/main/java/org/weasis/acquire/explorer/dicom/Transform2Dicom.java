@@ -40,6 +40,7 @@ import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.TagD.Level;
 import org.weasis.dicom.codec.utils.DicomMediaUtils;
 import org.weasis.dicom.explorer.pr.DicomPrSerializer;
+import org.weasis.dicom.ref.AnatomicRegion;
 import org.weasis.dicom.tool.Dicomizer;
 import org.weasis.opencv.data.PlanarImage;
 import org.weasis.opencv.op.ImageProcessor;
@@ -111,6 +112,8 @@ public final class Transform2Dicom {
                     imageElement.getPixelSpacingUnit().getConvFactor());
         attrs.setDouble(Tag.PixelSpacing, VR.DS, unitRatio, unitRatio);
       }
+
+      AnatomicRegion.write(attrs, (AnatomicRegion) imageElement.getTagValue(TagW.AnatomicRegion));
 
       try {
         Dicomizer.jpeg(attrs, imgFile, new File(exportDirDicom, sopInstanceUID), false);

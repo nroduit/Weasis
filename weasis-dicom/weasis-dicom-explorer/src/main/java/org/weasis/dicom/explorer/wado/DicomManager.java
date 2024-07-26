@@ -13,6 +13,7 @@ import java.util.ArrayList;
 import java.util.List;
 import org.dcm4che3.data.Tag;
 import org.weasis.core.api.media.data.TagView;
+import org.weasis.core.api.media.data.TagW;
 import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.explorer.DicomFieldsView.DicomData;
 import org.weasis.dicom.explorer.Messages;
@@ -88,6 +89,7 @@ public class DicomManager {
       new TagView(TagD.get(Tag.InstanceNumber)),
       new TagView(TagD.get(Tag.ImageComments)),
       new TagView(TagD.getTagFromIDs(Tag.FrameLaterality, Tag.ImageLaterality, Tag.Laterality)),
+      new TagView(TagW.AnatomicRegion),
       new TagView(TagD.get(Tag.PhotometricInterpretation)),
       new TagView(TagD.get(Tag.SamplesPerPixel)),
       new TagView(TagD.get(Tag.PixelRepresentation)),
