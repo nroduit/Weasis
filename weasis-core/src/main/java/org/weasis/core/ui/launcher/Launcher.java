@@ -25,7 +25,6 @@ import java.nio.file.Path;
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import javax.swing.Action;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
@@ -406,14 +405,10 @@ public class Launcher {
 
     public void launch(ImageViewerEventManager<?> eventManager) {
       try {
-
-        List<String> command = Optional.ofNullable(binaryPath)
-		        .map(String::trim) // Trim the input
-		        .filter(trimmed -> !trimmed.isEmpty())
-		        .map(trimmed -> trimmed.split("\\s+"))// Split by one or more spaces
-                .stream().flatMap(Arrays::stream)
-                .collect(Collectors.toCollection(ArrayList::new));
-
+        if (!StringUtil.hasText(binaryPath)) {
+          return;
+        }
+        List<String> command = new ArrayList<>(Arrays.asList(binaryPath.trim().split("\\s+")));
         if (parameters != null && !parameters.isEmpty()) {
           for (String param : parameters) {
             command.add(resolvePlaceholders(param, eventManager));
