@@ -9,6 +9,8 @@
  */
 package org.weasis.pref;
 
+import static java.util.stream.Collectors.*;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -16,10 +18,8 @@ import java.io.InputStream;
 import java.net.*;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
-import java.util.function.Predicate;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import javax.xml.stream.XMLInputFactory;
 import javax.xml.stream.XMLStreamConstants;
 import javax.xml.stream.XMLStreamException;
@@ -30,8 +30,6 @@ import org.slf4j.LoggerFactory;
 import org.weasis.launcher.FileUtil;
 import org.weasis.launcher.Utils;
 import org.weasis.launcher.WeasisLauncher.Type;
-
-import static java.util.stream.Collectors.*;
 
 public class ConfigData {
   private static final org.slf4j.Logger LOGGER = LoggerFactory.getLogger(ConfigData.class);
@@ -557,9 +555,7 @@ public class ConfigData {
     paramList.add(Utils.removeEnglobingQuotes(value));
   }
 
-  private URI adaptConfigServiceURI(URI configServiceUri)
-      throws URISyntaxException, MalformedURLException {
-
+  private URI adaptConfigServiceURI(URI configServiceUri) throws URISyntaxException {
     List<String> paramsToOverride = List.of("user", "host");
 
     String configServiceQueryString = configServiceUri.getQuery();
@@ -570,8 +566,7 @@ public class ConfigData {
     } else {
       queryParamsMap =
           Arrays.stream(configServiceQueryString.split("&"))
-              .filter(Objects::nonNull)
-              .filter(Predicate.not(String::isEmpty))
+              .filter(s -> s != null && !s.isEmpty())
               .map(s -> Arrays.copyOf(s.split("=", 2), 2))
               .collect(
                   groupingBy(
@@ -586,17 +581,18 @@ public class ConfigData {
     if (Utils.hasText(user)) {
       queryParamsMap.put("user", List.of(user));
     } else if (!queryParamsMap.containsKey("user")) {
-      if ((user = System.getProperty("user.name")) != null)
+      user = System.getProperty("user.name");
+      if (user != null) {
         queryParamsMap.putIfAbsent("user", List.of(user));
-      else LOGGER.error("Cannot get system user.name from Launcher");
+      } else {
+        LOGGER.error("Cannot get system user.name from Launcher");
+      }
     }
 
     // If 'host' is not defined in config service query parameter, then it should be.
     if (!queryParamsMap.containsKey("host")) {
       try {
-        String hostName = InetAddress.getLocalHost().getHostName();
-        // TODO check if hostName is not an IP
-        queryParamsMap.putIfAbsent("host", List.of(hostName));
+        queryParamsMap.putIfAbsent("host", List.of(getHostName()));
       } catch (Exception e) {
         LOGGER.error("Cannot get local hostname from Launcher", e);
       }
@@ -604,9 +600,7 @@ public class ConfigData {
 
     String queryParamString =
         queryParamsMap.entrySet().stream()
-            .flatMap(
-                entry ->
-                    Stream.of(entry.getValue()).map(val -> entry.getKey() + "=" + val.getFirst()))
+            .flatMap(entry -> entry.getValue().stream().map(val -> entry.getKey() + "=" + val))
             .collect(Collectors.joining("&"));
 
     return new URI(
@@ -617,6 +611,31 @@ public class ConfigData {
         configServiceUri.getPath(),
         queryParamString,
         null);
+  }
+
+  private static String getHostName() throws UnknownHostException, SocketException {
+    InetAddress localhost = InetAddress.getLocalHost();
+    String hostName = localhost.getHostName();
+
+    // Verify if the host name is an IP address
+    if (hostName.equals(localhost.getHostAddress())) {
+      Enumeration<NetworkInterface> networkInterfaces = NetworkInterface.getNetworkInterfaces();
+      while (networkInterfaces.hasMoreElements()) {
+        NetworkInterface networkInterface = networkInterfaces.nextElement();
+        Enumeration<InetAddress> inetAddresses = networkInterface.getInetAddresses();
+        while (inetAddresses.hasMoreElements()) {
+          InetAddress inetAddress = inetAddresses.nextElement();
+          if (!inetAddress.isLoopbackAddress() && inetAddress.isSiteLocalAddress()) {
+            hostName = inetAddress.getCanonicalHostName();
+            break;
+          }
+        }
+        if (!hostName.equals(localhost.getHostAddress())) {
+          break;
+        }
+      }
+    }
+    return hostName;
   }
 
   private Map<String, List<String>> getConfigParamsFromServicePath() {
