@@ -12,7 +12,7 @@ package org.weasis.dicom.sr;
 import java.util.ArrayList;
 import java.util.List;
 import org.weasis.core.ui.model.graphic.Graphic;
-import org.weasis.dicom.codec.macro.SOPInstanceReference;
+import org.weasis.dicom.macro.SOPInstanceReference;
 
 public class SRImageReference {
   private SOPInstanceReference sopInstanceReference;

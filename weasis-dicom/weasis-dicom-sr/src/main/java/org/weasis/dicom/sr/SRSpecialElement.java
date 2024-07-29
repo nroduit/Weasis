@@ -13,7 +13,7 @@ import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Tag;
 import org.weasis.dicom.codec.DicomMediaIO;
 import org.weasis.dicom.codec.DicomSpecialElement;
-import org.weasis.dicom.codec.macro.Code;
+import org.weasis.dicom.macro.Code;
 
 public class SRSpecialElement extends DicomSpecialElement {
 

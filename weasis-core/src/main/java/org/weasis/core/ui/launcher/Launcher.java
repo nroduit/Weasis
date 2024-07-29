@@ -22,12 +22,8 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URI;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Set;
 import java.util.stream.Collectors;
 import javax.swing.Action;
 import javax.swing.Icon;
@@ -409,8 +405,10 @@ public class Launcher {
 
     public void launch(ImageViewerEventManager<?> eventManager) {
       try {
-        List<String> command = new ArrayList<>();
-        command.add(binaryPath);
+        if (!StringUtil.hasText(binaryPath)) {
+          return;
+        }
+        List<String> command = new ArrayList<>(Arrays.asList(binaryPath.trim().split("\\s+")));
         if (parameters != null && !parameters.isEmpty()) {
           for (String param : parameters) {
             command.add(resolvePlaceholders(param, eventManager));

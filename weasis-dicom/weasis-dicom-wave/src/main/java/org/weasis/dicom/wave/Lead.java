@@ -11,7 +11,7 @@ package org.weasis.dicom.wave;
 
 import java.util.Objects;
 import org.weasis.core.util.StringUtil;
-import org.weasis.dicom.codec.macro.Code;
+import org.weasis.dicom.macro.Code;
 
 public class Lead {
 

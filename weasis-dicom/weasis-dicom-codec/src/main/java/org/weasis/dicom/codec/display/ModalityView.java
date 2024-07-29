@@ -131,10 +131,21 @@ public class ModalityView {
     return MODALITY_VIEW_MAP.entrySet();
   }
 
-  private static Modality getModdality(String name) {
+  private static Modality getModality(String name) {
     try {
       return Modality.valueOf(name);
     } catch (Exception e) {
+      if ("DS".equals(name)) {
+        return Modality.XA;
+      } else if ("CF".equals(name) || "DF".equals(name) || "VF".equals(name)) {
+        return Modality.RF;
+      } else if ("MA".equals(name) || "MS".equals(name)) {
+        return Modality.MR;
+      } else if ("EC".equals(name) || "CD".equals(name) || "DD".equals(name)) {
+        return Modality.US;
+      } else if ("ST".equals(name)) {
+        return Modality.NM;
+      }
       LOGGER.error("Modality reference of {} is missing", name, e);
     }
     return null;
@@ -202,11 +213,11 @@ public class ModalityView {
         String key = xmler.getName().getLocalPart();
         if ("modality".equals(key) && xmler.getAttributeCount() >= 1) { // NON-NLS
           String name = xmler.getAttributeValue(null, "name"); // NON-NLS
-          Modality m = getModdality(name);
+          Modality m = getModality(name);
           if (m != null) {
             try {
               String extend = xmler.getAttributeValue(null, "extend"); // NON-NLS
-              ModalityInfoData data = new ModalityInfoData(m, getModdality(extend));
+              ModalityInfoData data = new ModalityInfoData(m, getModality(extend));
               readModality(data, xmler);
               MODALITY_VIEW_MAP.put(m, data);
             } catch (Exception e) {

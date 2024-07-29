@@ -18,9 +18,12 @@ public class AcquireImageMeta extends AcquireMetadataTableModel {
 
   private static final TagW[] TAGS_TO_DISPLAY =
       getTags(
-          "weasis.acquire.meta.image.display", "ImageComments,ContentDate,ContentTime"); // NON-NLS
+          "weasis.acquire.meta.image.display",
+          "ImageComments,ContentDate,ContentTime,AnatomicRegion"); // NON-NLS
   private static final TagW[] TAGS_EDITABLE =
-      getTags("weasis.acquire.meta.image.edit", "ImageComments,ContentDate,ContentTime"); // NON-NLS
+      getTags(
+          "weasis.acquire.meta.image.edit",
+          "ImageComments,ContentDate,ContentTime,AnatomicRegion"); // NON-NLS
   private static final TagW[] TAGS_TO_PUBLISH =
       getTags("weasis.acquire.meta.image.required", "ContentDate"); // NON-NLS
 

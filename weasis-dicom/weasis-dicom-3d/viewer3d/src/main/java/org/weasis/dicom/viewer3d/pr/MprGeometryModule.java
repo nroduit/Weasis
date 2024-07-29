@@ -10,7 +10,7 @@
 package org.weasis.dicom.viewer3d.pr;
 
 import org.dcm4che3.data.Attributes;
-import org.weasis.dicom.codec.macro.Module;
+import org.weasis.dicom.macro.Module;
 
 /**
  * <a

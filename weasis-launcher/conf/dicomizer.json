@@ -103,14 +103,14 @@
     },
     {
       "code": "weasis.acquire.meta.series.display",
-      "value": "Modality,OperatorsName,ReferringPhysicianName,BodyPartExamined,SeriesDescription",
+      "value": "Modality,OperatorsName,ReferringPhysicianName,SeriesDescription",
       "description": "Comma-separated list of series tags which are displayed in UI. When a required tag has no value, it will be displayed.",
       "type": "A",
       "category": "METADATA"
     },
     {
       "code": "weasis.acquire.meta.series.edit",
-      "value": "ReferringPhysicianName,BodyPartExamined,SeriesDescription",
+      "value": "ReferringPhysicianName,SeriesDescription",
       "description": "Comma-separated list of series tags which are editable in UI. When a required tag has no value, it will be editable.",
       "type": "A",
       "category": "METADATA"
@@ -124,14 +124,14 @@
     },
     {
       "code": "weasis.acquire.meta.image.display",
-      "value": "ImageComments,ContentDate,ContentTime",
+      "value": "ImageComments,ContentDate,ContentTime,AnatomicRegion",
       "description": "Comma-separated list of image tags which are displayed in UI. When a required tag has no value, it will be displayed.",
       "type": "A",
       "category": "METADATA"
     },
     {
       "code": "weasis.acquire.meta.image.edit",
-      "value": "ImageComments,ContentDate,ContentTime",
+      "value": "ImageComments,ContentDate,ContentTime,AnatomicRegion",
       "description": "Comma-separated list of image tags which are editable in UI. When a required tag has no value, it will be editable.",
       "type": "A",
       "category": "METADATA"

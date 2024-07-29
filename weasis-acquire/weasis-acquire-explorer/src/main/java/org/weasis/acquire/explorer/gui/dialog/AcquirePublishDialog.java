@@ -9,9 +9,6 @@
  */
 package org.weasis.acquire.explorer.gui.dialog;
 
-import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.FlowLayout;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
@@ -21,7 +18,6 @@ import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
-import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JDialog;
@@ -34,6 +30,7 @@ import javax.swing.SwingWorker.StateValue;
 import javax.swing.WindowConstants;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
+import net.miginfocom.swing.MigLayout;
 import org.osgi.service.prefs.Preferences;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -111,7 +108,6 @@ public class AcquirePublishDialog extends JDialog {
   private final AcquirePublishPanel publishPanel;
 
   private PublishTree publishTree;
-  private JPanel resolutionPane;
   private JComboBox<Resolution> resolutionCombo;
   private JButton publishButton;
   private JButton cancelButton;
@@ -146,41 +142,23 @@ public class AcquirePublishDialog extends JDialog {
   }
 
   private JPanel initContent() {
-    JPanel contentPane = new JPanel();
-
-    contentPane.setBorder(GuiUtils.getEmptyBorder(10, 10, 10, 10));
-    contentPane.setLayout(new BorderLayout());
+    JPanel contentPane = new JPanel(new MigLayout("fill, insets 10", "[grow]", "[][][grow][]"));
 
     JLabel questionLabel = new JLabel(Messages.getString("AcquirePublishDialog.select_pub"));
     questionLabel.setFont(FontItem.DEFAULT_SEMIBOLD.getFont());
 
-    contentPane.add(questionLabel, BorderLayout.NORTH);
-
-    JPanel imageTreePane = new JPanel(new BorderLayout());
-    imageTreePane.setBorder(GuiUtils.getEmptyBorder(10, 10, 10, 10));
-
+    contentPane.add(questionLabel, "wrap");
     publishTree = new PublishTree();
     publishTree.addTreeCheckingListener(
         evt -> {
-          resolutionPane.setVisible(!getOversizedSelected(publishTree).isEmpty());
-          resolutionPane.repaint();
+          resolutionCombo.setEnabled(!getOversizedSelected(publishTree).isEmpty());
         });
-    publishTree.setMinimumSize(publishTree.getPreferredSize());
-    imageTreePane.add(publishTree);
+    contentPane.add(publishTree, "grow, wrap");
 
-    contentPane.add(imageTreePane, BorderLayout.CENTER);
-
-    JPanel actionPane = new JPanel(new BorderLayout());
-    actionPane.setBorder(GuiUtils.getEmptyBorder(10, 10, 10, 10));
-
-    resolutionPane = new JPanel();
-    resolutionPane.setBorder(BorderFactory.createLineBorder(Color.BLACK));
-
-    JLabel resolutionLabel =
+    contentPane.add(
         new JLabel(
-            Messages.getString("AcquirePublishDialog.resolution") + StringUtil.COLON_AND_SPACE);
-    resolutionPane.add(resolutionLabel);
-
+            Messages.getString("AcquirePublishDialog.resolution") + StringUtil.COLON_AND_SPACE),
+        "split 2, span");
     resolutionCombo = new JComboBox<>(Resolution.values());
     Preferences prefs =
         BundlePreferences.getDefaultPreferences(AppProperties.getBundleContext(this.getClass()));
@@ -189,19 +167,16 @@ public class AcquirePublishDialog extends JDialog {
       resolutionCombo.setSelectedItem(
           Resolution.getInstance(p.get(P_LAST_RESOLUTION, Resolution.ORIGINAL.name())));
     }
-    resolutionPane.add(resolutionCombo);
-    resolutionPane.setVisible(Boolean.FALSE);
+    resolutionCombo.setEnabled(false);
+    contentPane.add(resolutionCombo, "wrap");
 
-    actionPane.add(resolutionPane, BorderLayout.NORTH);
-
-    progressBar = new JProgressBar();
-    progressBar.setStringPainted(true);
-    progressBar.setVisible(false);
-
-    actionPane.add(progressBar, BorderLayout.CENTER);
-
-    JPanel bottomPane = new JPanel(new BorderLayout());
-    JPanel buttonPane = GuiUtils.getFlowLayoutPanel(FlowLayout.CENTER, 20, 10);
+    JLabel lblDestination =
+        new JLabel(
+            Messages.getString("AcquirePublishDialog.lblDestination.text") + StringUtil.COLON);
+    AbstractDicomNode.addTooltipToComboList(comboNode);
+    loadDicomNodes();
+    contentPane.add(lblDestination, "split 2, span");
+    contentPane.add(comboNode, " wrap");
 
     publishButton = new JButton(Messages.getString("AcquirePublishDialog.publish"));
     publishButton.addActionListener(e -> publishAction());
@@ -210,11 +185,16 @@ public class AcquirePublishDialog extends JDialog {
     clearAndHideActionListener = e -> clearAndHide();
     cancelButton.addActionListener(clearAndHideActionListener);
 
-    JLabel lblDestination =
-        new JLabel(
-            Messages.getString("AcquirePublishDialog.lblDestination.text") + StringUtil.COLON);
-    AbstractDicomNode.addTooltipToComboList(comboNode);
+    progressBar = new JProgressBar();
+    progressBar.setStringPainted(true);
+    progressBar.setVisible(false);
+    contentPane.add(progressBar, "split 3, span, growx, gaptop 20");
+    contentPane.add(publishButton);
+    contentPane.add(cancelButton, "wrap");
+    return contentPane;
+  }
 
+  private void loadDicomNodes() {
     if (!StringUtil.hasText(
         GuiUtils.getUICore().getSystemPreferences().getProperty("weasis.acquire.dest.host"))) {
       AbstractDicomNode.loadDicomNodes(comboNode, AbstractDicomNode.Type.DICOM, UsageType.STORAGE);
@@ -228,17 +208,6 @@ public class AcquirePublishDialog extends JDialog {
     } else {
       comboNode.addItem(getDestinationConfiguration());
     }
-
-    JPanel destPane = GuiUtils.getFlowLayoutPanel(2, 10, lblDestination, comboNode);
-    bottomPane.add(destPane, BorderLayout.WEST);
-
-    buttonPane.add(publishButton);
-    buttonPane.add(cancelButton);
-
-    bottomPane.add(buttonPane, BorderLayout.EAST);
-    actionPane.add(bottomPane, BorderLayout.SOUTH);
-    contentPane.add(actionPane, BorderLayout.SOUTH);
-    return contentPane;
   }
 
   private static AbstractDicomNode getDestinationConfiguration() {
@@ -322,7 +291,7 @@ public class AcquirePublishDialog extends JDialog {
           } else if ("state".equals(evt.getPropertyName())) {
 
             if (StateValue.STARTED == evt.getNewValue()) {
-              resolutionPane.setVisible(false);
+              resolutionCombo.setEnabled(false);
               progressBar.setVisible(true);
               publishButton.setEnabled(false);
               cancelButton.removeActionListener(clearAndHideActionListener);
@@ -355,7 +324,7 @@ public class AcquirePublishDialog extends JDialog {
               }
 
               if (exportDirDicom == null) {
-                resolutionPane.setVisible(!getOversizedSelected(publishTree).isEmpty());
+                resolutionCombo.setEnabled(!getOversizedSelected(publishTree).isEmpty());
                 progressBar.setValue(0);
                 progressBar.setVisible(false);
                 publishButton.setEnabled(true);

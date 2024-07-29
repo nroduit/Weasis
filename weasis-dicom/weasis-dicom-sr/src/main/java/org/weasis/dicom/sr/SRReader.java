@@ -28,10 +28,10 @@ import org.weasis.core.util.EscapeChars;
 import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.codec.DicomSpecialElement;
 import org.weasis.dicom.codec.TagD;
-import org.weasis.dicom.codec.macro.Code;
-import org.weasis.dicom.codec.macro.SOPInstanceReference;
-import org.weasis.dicom.codec.macro.SeriesAndInstanceReference;
 import org.weasis.dicom.explorer.pr.PrGraphicUtil;
+import org.weasis.dicom.macro.Code;
+import org.weasis.dicom.macro.SOPInstanceReference;
+import org.weasis.dicom.macro.SeriesAndInstanceReference;
 
 public class SRReader {
   private static final Logger LOGGER = LoggerFactory.getLogger(SRReader.class);

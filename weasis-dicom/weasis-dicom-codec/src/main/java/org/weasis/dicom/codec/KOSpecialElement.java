@@ -20,7 +20,7 @@ import org.dcm4che3.data.Tag;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.media.data.MediaSeries;
-import org.weasis.dicom.codec.macro.SOPInstanceReferenceAndMAC;
+import org.weasis.dicom.macro.SOPInstanceReferenceAndMAC;
 import org.weasis.dicom.mf.ArcParameters;
 import org.weasis.dicom.mf.Xml;
 

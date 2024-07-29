@@ -176,6 +176,8 @@ public class TagW {
 
   public static final TagW MonoChrome = new TagW("MonoChrome", TagType.BOOLEAN);
 
+  public static TagW AnatomicRegion = new TagW("AnatomicRegion", TagType.OBJECT);
+
   /** Basic EXIF tags: https://www.media.mit.edu/pia/Research/deepview/exif.html */
   public static final TagW ExifImageDescription = new TagW("ExifImageDescription", TagType.STRING);
 
@@ -219,6 +221,7 @@ public class TagW {
     addTag(PRLUTsExplanation);
     addTag(PrDicomObject);
     addTag(MonoChrome);
+    addTag(AnatomicRegion);
   }
 
   protected final int id;

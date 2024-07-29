@@ -16,10 +16,6 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.Font;
 import java.awt.Insets;
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.time.format.DateTimeFormatter;
 import java.time.format.FormatStyle;
 import java.util.ArrayList;
@@ -50,12 +46,12 @@ import org.weasis.core.api.gui.util.GuiUtils.IconColor;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.media.data.TagW.TagType;
 import org.weasis.core.api.util.FontItem;
-import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.ui.util.CalendarUtil;
 import org.weasis.core.ui.util.LimitedTextField;
 import org.weasis.core.ui.util.TableColumnAdjuster;
 import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.codec.TagD;
+import org.weasis.dicom.codec.TagD.Sex;
 import org.weasis.dicom.codec.display.Modality;
 
 public abstract class AcquireMetadataPanel extends JPanel implements TableModelListener {
@@ -126,7 +122,7 @@ public abstract class AcquireMetadataPanel extends JPanel implements TableModelL
     model.addTableModelListener(this);
     table.setModel(model);
     table.getColumnModel().getColumn(1).setCellRenderer(new TagRenderer());
-    table.getColumnModel().getColumn(1).setCellEditor(new AcquireImageCellEditor());
+    table.getColumnModel().getColumn(1).setCellEditor(new AcquireImageCellEditor(imageInfo));
     TableColumnAdjuster.pack(table);
     add(table.getTableHeader());
     add(table);
@@ -173,7 +169,6 @@ public abstract class AcquireMetadataPanel extends JPanel implements TableModelL
   }
 
   public static class AcquireImageCellEditor extends AbstractCellEditor implements TableCellEditor {
-    private static final JComboBox<String> bodyPartsCombo = new JComboBox<>(getBodyPartValues());
     private static final JComboBox<TagD.Sex> sexCombo = new JComboBox<>(TagD.Sex.values());
     private static final JComboBox<Modality> modalityCombo =
         new JComboBox<>(Modality.getAllModalitiesExceptDefault());
@@ -183,14 +178,18 @@ public abstract class AcquireMetadataPanel extends JPanel implements TableModelL
         new JComboBox<>(getValues("weasis.acquire.meta.series.description", null));
 
     static {
-      initCombo(bodyPartsCombo);
       initCombo(sexCombo);
       initCombo(modalityCombo);
       initCombo(studyDescCombo);
       initCombo(seriesDescCombo);
     }
 
+    private final AcquireImageInfo imageInfo;
     private Optional<TableCellEditor> editor;
+
+    public AcquireImageCellEditor(AcquireImageInfo imageInfo) {
+      this.imageInfo = imageInfo;
+    }
 
     @Override
     public Object getCellEditorValue() {
@@ -224,16 +223,17 @@ public abstract class AcquireMetadataPanel extends JPanel implements TableModelL
           limitedChars = tagD.getMaximumChars();
         }
       }
-      if (tagID == Tag.BodyPartExamined) {
-        cellEditor = new DefaultCellEditor(bodyPartsCombo);
+      if (tagID == TagW.AnatomicRegion.getId()) {
+        cellEditor = new AnatomicRegionCellEditor(imageInfo);
       } else if (tagID == Tag.PatientSex) {
-        cellEditor = new DefaultCellEditor(sexCombo);
+        cellEditor = getTableCellEditor(Sex.getSex((String) value), sexCombo, limitedChars);
       } else if (tagID == Tag.Modality) {
-        cellEditor = new DefaultCellEditor(modalityCombo);
+        cellEditor =
+            getTableCellEditor(Modality.getModality((String) value), modalityCombo, limitedChars);
       } else if (tagID == Tag.StudyDescription) {
-        cellEditor = getCellEditor(studyDescCombo, limitedChars);
+        cellEditor = getTableCellEditor(value, studyDescCombo, limitedChars);
       } else if (tagID == Tag.SeriesDescription) {
-        cellEditor = getCellEditor(seriesDescCombo, limitedChars);
+        cellEditor = getTableCellEditor(value, seriesDescCombo, limitedChars);
       } else if (date) {
         DateTableEditor datePicker = buildDatePicker();
         JTextField picker = datePicker.getDatePicker().getComponentDateTextField();
@@ -263,6 +263,14 @@ public abstract class AcquireMetadataPanel extends JPanel implements TableModelL
       Component c = cellEditor.getTableCellEditorComponent(table, value, isSelected, row, column);
       c.setFont(SMALL_FONT);
       return c;
+    }
+
+    private static TableCellEditor getTableCellEditor(
+        Object value, JComboBox<?> studyDescCombo, int limitedChars) {
+      if (value != null) {
+        studyDescCombo.setSelectedItem(value);
+      }
+      return getCellEditor(studyDescCombo, limitedChars);
     }
 
     private static DefaultCellEditor getCellEditor(JComboBox<?> combo, int limitedChars) {
@@ -296,24 +304,6 @@ public abstract class AcquireMetadataPanel extends JPanel implements TableModelL
       settings.setFormatForDatesBeforeCommonEra(
           DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM));
       return d;
-    }
-
-    public static String[] getBodyPartValues() {
-      // https://dicom.nema.org/medical/dicom/current/output/chtml/part16/chapter_L.html
-      List<String> list = new ArrayList<>();
-      try (BufferedReader br =
-          Files.newBufferedReader(ResourceUtil.getResource(Path.of("bodyPartExamined.csv")))) {
-        String line;
-        while ((line = br.readLine()) != null) {
-          String[] columns = line.split(",");
-          if (columns.length > 2 && StringUtil.hasText(columns[2]) && columns[2].length() <= 16) {
-            list.add(columns[2]);
-          }
-        }
-      } catch (IOException ex) {
-        LOGGER.error("Cannot read body part values", ex);
-      }
-      return list.toArray(new String[0]);
     }
 
     public static String[] getValues(String property, String defaultValues) {

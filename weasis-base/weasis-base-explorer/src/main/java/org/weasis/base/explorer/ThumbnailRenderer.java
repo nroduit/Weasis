@@ -82,7 +82,7 @@ public class ThumbnailRenderer<E extends MediaElement> extends JPanel
         icon = thumbnailList.getThumbCache().getThumbnailFor(imageElement, thumbnailList, index);
       }
       if (LangUtil.getNULLtoFalse((Boolean) value.getTagValue(TagW.Checked))) {
-        iconCheckedLabel.setIcon(ResourceUtil.getIcon(OtherIcon.TICK_ON));
+        iconCheckedLabel.setIcon(ResourceUtil.getToolBarIcon(OtherIcon.TICK_ON));
       } else {
         iconCheckedLabel.setIcon(null);
       }

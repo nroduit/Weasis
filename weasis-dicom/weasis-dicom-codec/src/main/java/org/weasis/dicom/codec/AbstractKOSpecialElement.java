@@ -28,10 +28,10 @@ import org.weasis.core.api.gui.util.Filter;
 import org.weasis.core.api.util.ResourceUtil.OtherIcon;
 import org.weasis.core.api.util.ResourceUtil.ResourceIconPath;
 import org.weasis.core.util.StringUtil;
-import org.weasis.dicom.codec.macro.HierarchicalSOPInstanceReference;
-import org.weasis.dicom.codec.macro.KODocumentModule;
-import org.weasis.dicom.codec.macro.SOPInstanceReferenceAndMAC;
-import org.weasis.dicom.codec.macro.SeriesAndInstanceReference;
+import org.weasis.dicom.macro.HierarchicalSOPInstanceReference;
+import org.weasis.dicom.macro.KODocumentModule;
+import org.weasis.dicom.macro.SOPInstanceReferenceAndMAC;
+import org.weasis.dicom.macro.SeriesAndInstanceReference;
 
 public class AbstractKOSpecialElement extends HiddenSpecialElement {
 

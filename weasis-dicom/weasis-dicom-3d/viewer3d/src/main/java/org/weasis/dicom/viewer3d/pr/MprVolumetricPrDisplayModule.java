@@ -10,7 +10,7 @@
 package org.weasis.dicom.viewer3d.pr;
 
 import org.dcm4che3.data.Attributes;
-import org.weasis.dicom.codec.macro.Module;
+import org.weasis.dicom.macro.Module;
 
 /**
  * <a href="https://dicom.nema.org/medical/dicom/current/output/chtml/part03/sect_C.11.27.html">MPR

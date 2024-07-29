@@ -20,6 +20,7 @@ import java.time.format.FormatStyle;
 import java.util.Locale;
 import java.util.ResourceBundle.Control;
 import org.junit.jupiter.api.Test;
+import org.junitpioneer.jupiter.DefaultLocale;
 
 class LocalUtilTest {
 
@@ -32,6 +33,7 @@ class LocalUtilTest {
    * </ul>
    */
   @Test
+  @DefaultLocale(language = "fr", country = "CH")
   void testTextToLocale() {
     Control control = Control.getControl(Control.FORMAT_PROPERTIES);
 

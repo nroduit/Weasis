@@ -426,6 +426,7 @@ public class SeriesBuilder {
       Tag.KVP,
       Tag.Laterality,
       Tag.BodyPartExamined,
+      Tag.AnatomicRegionSequence,
       Tag.RescaleSlope,
       Tag.RescaleIntercept,
       Tag.RescaleType,

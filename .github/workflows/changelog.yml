@@ -9,24 +9,24 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Changelog Generator from github issues
         id: generate_changelog_file
-        uses: heinrichreimer/github-changelog-generator-action@v2.3
+        uses: heinrichreimer/github-changelog-generator-action@v2.4
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           compareLink: true
           # Get config from .github_changelog_generator file
       - name: Git Auto Commit
         id: commit
-        uses: stefanzweifel/git-auto-commit-action@v4
+        uses: stefanzweifel/git-auto-commit-action@v5
         with:
           branch: master
           commit_message: "Automatic changelog update"
           file_pattern: "CHANGELOG.md"
       - name: Extract release notes
         id: extract-release-notes
-        uses: ffurrer2/extract-release-notes@v1
+        uses: ffurrer2/extract-release-notes@v2
         with:
           prerelease: true
       - name: Create release
