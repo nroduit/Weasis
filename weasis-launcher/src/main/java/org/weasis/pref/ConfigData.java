@@ -591,29 +591,27 @@ public class ConfigData {
 
     // Add or Force replace the 'host' parameter defined in config service query parameter.
     String hostFromLocal = null;
-    String queryParamHost = null;
 
     List<String> queryParamHosts = queryParamsMap.get("host");
-    if (queryParamHosts != null) {
-      queryParamHost = queryParamHosts.getFirst();
+    String queryParamHost = (queryParamHosts != null) ? queryParamHosts.getFirst() : null;
 
-      try {
-        hostFromLocal = getHostName();
-        queryParamsMap.put("host", List.of(hostFromLocal));
-      } catch (Exception e) {
-        String err = "Cannot get local hostname from Launcher";
-        if (Utils.hasText(queryParamHost))
-          err += ", the query param 'host' given is used instead : " + queryParamHost;
-        LOGGER.error(err, e);
-      }
+    try {
+      hostFromLocal = getHostName();
+      queryParamsMap.put("host", List.of(hostFromLocal));
+    } catch (Exception e) {
+      String err = "Cannot get local hostname from Launcher";
+      if (Utils.hasText(queryParamHost))
+        err += ", the query param 'host' given is used instead : " + queryParamHost;
+      LOGGER.error(err, e);
+    }
 
-      if (Utils.hasText(hostFromLocal)
-          && Utils.hasText(queryParamHost)
-          && !queryParamHost.equalsIgnoreCase(hostFromLocal)) {
-        LOGGER.info(
-            "LocalHost name found '{}' differs from the one given in LaunchConfigService URL parameter '{}'",
-            hostFromLocal, queryParamHost);
-      }
+    if (Utils.hasText(hostFromLocal)
+        && Utils.hasText(queryParamHost)
+        && !queryParamHost.equalsIgnoreCase(hostFromLocal)) {
+      LOGGER.info(
+          "LocalHost name found '{}' differs from the one given in LaunchConfigService URL parameter '{}'",
+          hostFromLocal,
+          queryParamHost);
     }
 
     String queryParamString =
@@ -634,7 +632,6 @@ public class ConfigData {
   private static String getHostName() throws UnknownHostException, SocketException {
     InetAddress localhost = InetAddress.getLocalHost();
     String hostName = localhost.getHostName();
-
 
     // Verify if the host name is an IP address
     if (hostName.equals(localhost.getHostAddress())) {
