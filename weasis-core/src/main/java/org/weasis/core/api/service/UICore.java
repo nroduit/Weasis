@@ -107,8 +107,7 @@ public final class UICore {
     }
     this.mainArea = dockingControl.createWorkingArea("mainArea");
     this.toolbarContainer = new ToolBarContainer();
-    this.dicomLaunchers = Launcher.loadLaunchers(Launcher.Type.DICOM);
-    this.otherLaunchers = Launcher.loadLaunchers(Launcher.Type.OTHER);
+
     this.configData = retrieveconfigData();
     this.initialSystemPreferences = new WProperties();
     this.systemPreferences = new WProperties();
@@ -155,6 +154,9 @@ public final class UICore {
 
     File dataFolder = AppProperties.getBundleDataFolder(context);
     FileUtil.readProperties(new File(dataFolder, "persistence.properties"), localPersistence);
+
+    this.dicomLaunchers = Launcher.loadLaunchers(Launcher.Type.DICOM);
+    this.otherLaunchers = Launcher.loadLaunchers(Launcher.Type.OTHER);
   }
 
   private static ConfigData retrieveconfigData() {
