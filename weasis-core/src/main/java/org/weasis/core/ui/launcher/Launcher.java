@@ -408,8 +408,9 @@ public class Launcher {
         if (!StringUtil.hasText(binaryPath)) {
           return;
         }
+        boolean isMac = compatibility == Compatibility.MAC;
         List<String> command = new ArrayList<>(Arrays.asList(binaryPath.trim().split("\\s+")));
-        if (parameters != null && !parameters.isEmpty()) {
+        if (!isMac && parameters != null && !parameters.isEmpty()) {
           for (String param : parameters) {
             command.add(resolvePlaceholders(param, eventManager));
           }
@@ -436,6 +437,18 @@ public class Launcher {
         if (p.waitFor() != 0) {
           val = p.exitValue();
         }
+
+        if (isMac && parameters != null && !parameters.isEmpty()) {
+          for (String param : parameters) {
+            command.add(resolvePlaceholders(param, eventManager));
+          }
+          Thread.sleep(1000);
+          p = processBuilder.start();
+          if (p.waitFor() != 0) {
+            val = p.exitValue();
+          }
+        }
+
         if (val != 0) {
           JOptionPane.showMessageDialog(
               GuiUtils.getUICore().getBaseArea(),
