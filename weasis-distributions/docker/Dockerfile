@@ -21,16 +21,16 @@ RUN set -eux; \
     ARCH="$(dpkg --print-architecture)"; \
     case "${ARCH}" in \
        amd64|i386:x86-64) \
-         ESUM='e59c6bf801cc023a1ea78eceb5e6756277f1564cd0a421ea984efe6cb96cfcf8'; \
-         BINARY_URL='https://github.com/adoptium/temurin22-binaries/releases/download/jdk-22.0.1%2B8/OpenJDK22U-jdk_x64_linux_hotspot_22.0.1_8.tar.gz'; \
+         ESUM='05cd9359dacb1a1730f7c54f57e0fed47942a5292eb56a3a0ee6b13b87457a43'; \
+         BINARY_URL='https://github.com/adoptium/temurin22-binaries/releases/download/jdk-22.0.2%2B9/OpenJDK22U-jdk_x64_linux_hotspot_22.0.2_9.tar.gz'; \
          ;; \
        aarch64|arm64) \
-         ESUM='d8488fa1e4e8c1e318cef4c0fc3842a7f15a4cf52b27054663bb94471f54b3fa'; \
-         BINARY_URL='https://github.com/adoptium/temurin22-binaries/releases/download/jdk-22.0.1%2B8/OpenJDK22U-jdk_aarch64_linux_hotspot_22.0.1_8.tar.gz'; \
+         ESUM='dac62747b5158c4bf4c4636432e3bdb9dea47f80f0c9d1d007f19bd5483b7d29'; \
+         BINARY_URL='https://github.com/adoptium/temurin22-binaries/releases/download/jdk-22.0.2%2B9/OpenJDK22U-jdk_aarch64_linux_hotspot_22.0.2_9.tar.gz'; \
          ;; \
        armhf|arm) \
-         ESUM='78f67326eea7131c99e5de514132bfae10aad0f571a35f85e719106a7c13397e'; \
-         BINARY_URL='https://download.bell-sw.com/java/22.0.1+12/bellsoft-jdk22.0.1+12-linux-arm32-vfp-hflt.tar.gz'; \
+         ESUM='f82f8dff34e169b1a6244dd75232e338955bd225551279ef0a88bb508ceec0d4'; \
+         BINARY_URL='https://download.bell-sw.com/java/22.0.2+11/bellsoft-jdk22.0.2+11-linux-arm32-vfp-hflt.tar.gz'; \
          ;; \
        *) \
          echo "Unsupported arch: ${ARCH}"; \
