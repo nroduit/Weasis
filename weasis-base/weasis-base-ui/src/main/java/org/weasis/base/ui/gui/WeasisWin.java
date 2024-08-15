@@ -1041,7 +1041,7 @@ public class WeasisWin {
     menuFile.add(exportMenu);
 
     DynamicMenu launcherMenu =
-        new DynamicMenu("Launcher") {
+        new DynamicMenu(Messages.getString("launcher")) {
 
           @Override
           public void popupMenuWillBecomeVisible() {

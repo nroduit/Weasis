@@ -45,7 +45,7 @@ public class ShaderManager {
 
   public static int readSource(String name, final StringBuilder result, int lineno)
       throws IOException {
-    InputStream stream = ShaderManager.class.getResourceAsStream("/shader/" + name);
+    InputStream stream = ShaderManager.class.getResourceAsStream("/shader/" + name); // NON-NLS
     if (stream == null) {
       throw new IllegalStateException("Cannot load " + name);
     }
@@ -54,7 +54,7 @@ public class ShaderManager {
       String line;
       while ((line = reader.readLine()) != null) {
         lineno++;
-        if (line.startsWith("#include ")) {
+        if (line.startsWith("#include ")) { // NON-NLS
           String file = line.substring(9).trim();
           if (file.startsWith("\"") && file.endsWith("\"")) {
             file = file.substring(1, file.length() - 1);

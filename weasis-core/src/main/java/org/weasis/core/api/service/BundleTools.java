@@ -136,7 +136,7 @@ public class BundleTools {
     List<Toolbar> toolBars = ui.getToolBars();
     if (instance instanceof Toolbar bar && !toolBars.contains(instance)) {
       toolBars.add(bar);
-      if (ui.clazz.getPackageName().contains("dicom")) {
+      if (ui.clazz.getPackageName().contains("dicom")) { // NON-NLS
         notifyDicomModel(ObservableEvent.BasicAction.UPDATE_TOOLBARS, ui);
       } else {
         notifyDefaultDataModel(ObservableEvent.BasicAction.UPDATE_TOOLBARS, ui);

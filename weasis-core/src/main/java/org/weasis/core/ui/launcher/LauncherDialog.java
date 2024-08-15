@@ -32,7 +32,8 @@ public class LauncherDialog extends JDialog {
   public LauncherDialog(
       Window parent, Launcher.Type type, Launcher launcher, JComboBox<Launcher> nodeComboBox) {
     super(parent, type.toString(), ModalityType.APPLICATION_MODAL);
-    setLayout(new MigLayout("insets 10lp 15lp 10lp 15lp, wrap 2", "[][grow]", "[][][][]"));
+    setLayout(
+        new MigLayout("insets 10lp 15lp 10lp 15lp, wrap 2", "[][grow]", "[][][][]")); // NON-NLS
     this.type = Objects.requireNonNull(type);
     this.nodesComboBox = nodeComboBox;
     if (launcher == null) {
@@ -46,23 +47,23 @@ public class LauncherDialog extends JDialog {
       buttonCheckBox.setSelected(launcher.isButton());
     }
 
-    add(new JLabel(Messages.getString("name") + StringUtil.COLON), "align right");
-    add(nameField, "growx");
+    add(new JLabel(Messages.getString("name") + StringUtil.COLON), "align right"); // NON-NLS
+    add(nameField, "growx"); // NON-NLS
 
-    add(new JLabel(Messages.getString("icon.path") + StringUtil.COLON), "align right");
-    add(iconNameField, "growx");
+    add(new JLabel(Messages.getString("icon.path") + StringUtil.COLON), "align right"); // NON-NLS
+    add(iconNameField, "growx"); // NON-NLS
 
-    add(enableCheckBox, "span, split 3");
-    add(buttonCheckBox, "growx");
+    add(enableCheckBox, "span, split 3"); // NON-NLS
+    add(buttonCheckBox, "growx"); // NON-NLS
 
     JButton configurationButton = new JButton(Messages.getString("configure"));
     configurationButton.addActionListener(
         _ -> new ConfigurationDialog(LauncherDialog.this, this.launcher, type).setVisible(true));
-    add(configurationButton, "align right");
+    add(configurationButton, "align right"); // NON-NLS
 
     JButton saveButton = new JButton(Messages.getString("save"));
     saveButton.addActionListener(_ -> saveLauncher());
-    add(saveButton, "cell 1 4, split 2, align right, gapright 15, gaptop 15");
+    add(saveButton, "cell 1 4, split 2, align right, gapright 15, gaptop 15"); // NON-NLS
     JButton cancelButton = new JButton(Messages.getString("cancel"));
     cancelButton.addActionListener(_ -> dispose());
     add(cancelButton);

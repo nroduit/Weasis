@@ -13,6 +13,7 @@ import com.formdev.flatlaf.IntelliJTheme;
 import com.formdev.flatlaf.IntelliJTheme.ThemeLaf;
 import com.formdev.flatlaf.util.LoggingFacade;
 import java.io.IOException;
+import java.util.Objects;
 
 public class FlatWeasisTheme extends ThemeLaf {
   public static boolean setup() {
@@ -31,7 +32,8 @@ public class FlatWeasisTheme extends ThemeLaf {
   static IntelliJTheme loadTheme(String name) {
     try {
       return new IntelliJTheme(
-          FlatWeasisTheme.class.getResourceAsStream("/org/weasis/theme/" + name));
+          Objects.requireNonNull(
+              FlatWeasisTheme.class.getResourceAsStream("/org/weasis/theme/" + name))); // NON-NLS
     } catch (IOException var3) {
       String msg = "FlatLaf: Failed to load Weasis theme"; // NON-NLS
       LoggingFacade.INSTANCE.logSevere(msg, var3);

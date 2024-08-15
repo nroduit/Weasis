@@ -31,7 +31,7 @@ public class FileCache {
   }
 
   public boolean isLocalFile() {
-    return reader.getUri().getScheme().startsWith("file");
+    return reader.getUri().getScheme().startsWith("file"); // NON-NLS
   }
 
   public boolean isElementInMemory() {

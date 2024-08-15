@@ -391,11 +391,12 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
             Object val = TagUtil.getTagValue(tag, group, currentMedia);
             if (val != null) {
               exist = true;
-              doc.insertString(doc.getLength(), tag.getDisplayedName(), doc.getStyle("normal"));
+              doc.insertString(
+                  doc.getLength(), tag.getDisplayedName(), doc.getStyle("normal")); // NON-NLS
               doc.insertString(
                   doc.getLength(),
                   StringUtil.COLON_AND_SPACE + tag.getFormattedTagValue(val, null) + "\n",
-                  doc.getStyle("bold"));
+                  doc.getStyle("bold")); // NON-NLS
               break;
             }
           } catch (BadLocationException e) {
@@ -408,7 +409,7 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
       try {
         String formatTitle =
             insertTitle < 3 ? dicomData.title + "\n" : "\n" + dicomData.title + "\n";
-        doc.insertString(insertTitle, formatTitle, doc.getStyle("h3"));
+        doc.insertString(insertTitle, formatTitle, doc.getStyle("h3")); // NON-NLS
       } catch (BadLocationException e) {
         LOGGER.error("Writing text issue", e);
       }

@@ -659,8 +659,8 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
     private void refreshLayout() {
       this.setLayout(
           verticalLayout
-              ? new MigLayout("fillx, flowy, insets 0", "[fill]")
-              : new MigLayout("fillx, flowx, insets 0", "[fill]"));
+              ? new MigLayout("fillx, flowy, insets 0", "[fill]") // NON-NLS
+              : new MigLayout("fillx, flowx, insets 0", "[fill]")); // NON-NLS
       List<StudyPane> studies = getStudyPaneList();
       super.removeAll();
       for (StudyPane studyPane : studies) {
@@ -714,7 +714,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
       this.setBorder(
           BorderFactory.createCompoundBorder(GuiUtils.getEmptyBorder(0, 3, 0, 3), title));
       this.setFocusable(false);
-      this.add(sub, "shrinky 100");
+      this.add(sub, "shrinky 100"); // NON-NLS
       this.addComponentListener(
           new ComponentAdapter() {
             @Override
@@ -805,7 +805,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
 
     public SeriesPane(MediaSeriesGroup sequence) {
       this.sequence = Objects.requireNonNull(sequence);
-      this.setLayout(new MigLayout("wrap 1", "[center]"));
+      this.setLayout(new MigLayout("wrap 1", "[center]")); // NON-NLS
       this.setBackground(FlatUIUtils.getUIColor(SeriesSelectionModel.BACKGROUND, Color.LIGHT_GRAY));
       int thumbnailSize =
           GuiUtils.getUICore()

@@ -85,7 +85,7 @@ public class AnatomicRegionView extends JPanel {
   }
 
   void jbInit() {
-    setLayout(new MigLayout("wrap 2", "[right][grow]", "[]10[]10[]20[]"));
+    setLayout(new MigLayout("wrap 2", "[right][grow]", "[]10[]10[]20[]")); // NON-NLS
 
     setBorder(GuiUtils.getEmptyBorder(10, 15, 10, 15));
 
@@ -122,18 +122,18 @@ public class AnatomicRegionView extends JPanel {
     ratioGroup.add(radioButtonSeries);
     ratioGroup.add(radioButtonImage);
 
-    add(new JLabel("Category" + StringUtil.COLON), "right");
-    add(comboBox1, "growx");
+    add(new JLabel("Category" + StringUtil.COLON), "right"); // NON-NLS
+    add(comboBox1, "growx"); // NON-NLS
 
-    add(new JLabel("Region" + StringUtil.COLON), "right");
-    add(comboBox2, "growx 500");
+    add(new JLabel("Region" + StringUtil.COLON), "right"); // NON-NLS
+    add(comboBox2, "growx 500"); // NON-NLS
 
     List<Object> list = Stream.of(AnatomicModifier.values()).collect(Collectors.toList());
     modifierGroup.setModel(list, false, false);
-    modifiersDropdown.setToolTipText("Select modifiers");
-    add(modifiersDropdown, "cell 1 2, span");
+    modifiersDropdown.setToolTipText("Select modifiers"); // NON-NLS
+    add(modifiersDropdown, "cell 1 2, span"); // NON-NLS
 
-    add(lblApplyTo, "span, split 3, right, gaptop 20");
+    add(lblApplyTo, "span, split 3, right, gaptop 20"); // NON-NLS
     add(radioButtonSeries);
     add(radioButtonImage);
   }

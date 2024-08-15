@@ -152,7 +152,7 @@ public class WeasisLauncher {
                 JOptionPane.showOptionDialog(
                     mainFrame.getWindow(),
                     String.format(
-                        "%s\n\n%s",
+                        "%s\n\n%s", // NON-NLS
                         Messages.getString("WeasisLauncher.update_min"),
                         Messages.getString("WeasisLauncher.continue_local"),
                         appName,
@@ -1186,7 +1186,7 @@ Starting OSGI Bundles...
           .filter(
               path ->
                   Files.isDirectory(path)
-                      && path.getFileName().toString().startsWith("cache-")
+                      && path.getFileName().toString().startsWith("cache-") // NON-NLS
                       && isOlderThan(path, days))
           .toList();
     }

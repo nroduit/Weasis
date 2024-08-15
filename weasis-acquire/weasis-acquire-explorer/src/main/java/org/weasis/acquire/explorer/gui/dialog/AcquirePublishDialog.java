@@ -142,23 +142,24 @@ public class AcquirePublishDialog extends JDialog {
   }
 
   private JPanel initContent() {
-    JPanel contentPane = new JPanel(new MigLayout("fill, insets 10", "[grow]", "[][][grow][]"));
+    JPanel contentPane =
+        new JPanel(new MigLayout("fill, insets 10", "[grow]", "[][][grow][]")); // NON-NLS
 
     JLabel questionLabel = new JLabel(Messages.getString("AcquirePublishDialog.select_pub"));
     questionLabel.setFont(FontItem.DEFAULT_SEMIBOLD.getFont());
 
-    contentPane.add(questionLabel, "wrap");
+    contentPane.add(questionLabel, "wrap"); // NON-NLS
     publishTree = new PublishTree();
     publishTree.addTreeCheckingListener(
         evt -> {
           resolutionCombo.setEnabled(!getOversizedSelected(publishTree).isEmpty());
         });
-    contentPane.add(publishTree, "grow, wrap");
+    contentPane.add(publishTree, "grow, wrap"); // NON-NLS
 
     contentPane.add(
         new JLabel(
             Messages.getString("AcquirePublishDialog.resolution") + StringUtil.COLON_AND_SPACE),
-        "split 2, span");
+        "split 2, span"); // NON-NLS
     resolutionCombo = new JComboBox<>(Resolution.values());
     Preferences prefs =
         BundlePreferences.getDefaultPreferences(AppProperties.getBundleContext(this.getClass()));
@@ -168,15 +169,15 @@ public class AcquirePublishDialog extends JDialog {
           Resolution.getInstance(p.get(P_LAST_RESOLUTION, Resolution.ORIGINAL.name())));
     }
     resolutionCombo.setEnabled(false);
-    contentPane.add(resolutionCombo, "wrap");
+    contentPane.add(resolutionCombo, "wrap"); // NON-NLS
 
     JLabel lblDestination =
         new JLabel(
             Messages.getString("AcquirePublishDialog.lblDestination.text") + StringUtil.COLON);
     AbstractDicomNode.addTooltipToComboList(comboNode);
     loadDicomNodes();
-    contentPane.add(lblDestination, "split 2, span");
-    contentPane.add(comboNode, " wrap");
+    contentPane.add(lblDestination, "split 2, span"); // NON-NLS
+    contentPane.add(comboNode, " wrap"); // NON-NLS
 
     publishButton = new JButton(Messages.getString("AcquirePublishDialog.publish"));
     publishButton.addActionListener(e -> publishAction());
@@ -188,9 +189,9 @@ public class AcquirePublishDialog extends JDialog {
     progressBar = new JProgressBar();
     progressBar.setStringPainted(true);
     progressBar.setVisible(false);
-    contentPane.add(progressBar, "split 3, span, growx, gaptop 20");
+    contentPane.add(progressBar, "split 3, span, growx, gaptop 20"); // NON-NLS
     contentPane.add(publishButton);
-    contentPane.add(cancelButton, "wrap");
+    contentPane.add(cancelButton, "wrap"); // NON-NLS
     return contentPane;
   }
 

@@ -556,7 +556,7 @@ public class ConfigData {
   }
 
   private URI adaptConfigServiceURI(URI configServiceUri) throws URISyntaxException {
-    List<String> paramsToOverride = List.of("user", "host");
+    List<String> paramsToOverride = List.of("user", "host"); // NON-NLS
 
     String configServiceQueryString = configServiceUri.getQuery();
     Map<String, List<String>> queryParamsMap;
@@ -579,11 +579,11 @@ public class ConfigData {
     String user = properties.getProperty(P_WEASIS_USER);
 
     if (Utils.hasText(user)) {
-      queryParamsMap.put("user", List.of(user));
-    } else if (!queryParamsMap.containsKey("user")) {
+      queryParamsMap.put("user", List.of(user)); // NON-NLS
+    } else if (!queryParamsMap.containsKey("user")) { // NON-NLS
       user = System.getProperty("user.name");
       if (user != null) {
-        queryParamsMap.putIfAbsent("user", List.of(user));
+        queryParamsMap.putIfAbsent("user", List.of(user)); // NON-NLS
       } else {
         LOGGER.error("Cannot get system user.name from Launcher");
       }
@@ -592,12 +592,12 @@ public class ConfigData {
     // Add or Force replace the 'host' parameter defined in config service query parameter.
     String hostFromLocal = null;
 
-    List<String> queryParamHosts = queryParamsMap.get("host");
+    List<String> queryParamHosts = queryParamsMap.get("host"); // NON-NLS
     String queryParamHost = (queryParamHosts != null) ? queryParamHosts.getFirst() : null;
 
     try {
       hostFromLocal = getHostName();
-      queryParamsMap.put("host", List.of(hostFromLocal));
+      queryParamsMap.put("host", List.of(hostFromLocal)); // NON-NLS
     } catch (Exception e) {
       String err = "Cannot get local hostname from Launcher";
       if (Utils.hasText(queryParamHost))
@@ -665,7 +665,7 @@ public class ConfigData {
     try {
       URI configServiceUri = new URI(configServicePath);
 
-      if (configServiceUri.getScheme().startsWith("file")) {
+      if (configServiceUri.getScheme().startsWith("file")) { // NON-NLS
         stream = new FileInputStream(new File(configServiceUri));
       } else {
         URI adaptedConfigServiceUri = adaptConfigServiceURI(configServiceUri);

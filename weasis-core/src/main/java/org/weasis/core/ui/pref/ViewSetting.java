@@ -171,7 +171,7 @@ public class ViewSetting {
     Rectangle b = monitor.getBounds();
     buf.append(".");
     buf.append(b.width);
-    buf.append("x");
+    buf.append("x"); // NON-NLS
     buf.append(b.height);
     buf.append(".pitch");
     return buf.toString();

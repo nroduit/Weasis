@@ -409,7 +409,8 @@ public class Launcher {
         return;
       }
       boolean isMac = compatibility == Compatibility.MAC;
-      List<String> command = new ArrayList<>(Arrays.asList(binaryPath.trim().split("\\s+")));
+      List<String> command =
+          new ArrayList<>(Arrays.asList(binaryPath.trim().split("\\s+"))); // NON-NLS
       if (!isMac && parameters != null && !parameters.isEmpty()) {
         for (String param : parameters) {
           command.add(resolvePlaceholders(param, eventManager));
@@ -584,7 +585,7 @@ public class Launcher {
       Set<SeriesViewerUI> uiSet =
           viewerPlugins.stream().map(ViewerPlugin::getSeriesViewerUI).collect(Collectors.toSet());
       for (SeriesViewerUI ui : uiSet) {
-        if (ui.clazz.getPackageName().contains("dicom")) {
+        if (ui.clazz.getPackageName().contains("dicom")) { // NON-NLS
           BundleTools.notifyDicomModel(ObservableEvent.BasicAction.UPDATE_TOOLBARS, ui);
         } else {
           BundleTools.notifyDefaultDataModel(ObservableEvent.BasicAction.UPDATE_TOOLBARS, ui);
