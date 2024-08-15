@@ -11,8 +11,8 @@ package org.weasis.core.ui.launcher;
 
 import java.awt.*;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import javax.swing.*;
 import net.miginfocom.swing.MigLayout;
@@ -150,7 +150,10 @@ public class ConfigurationDialog extends JDialog {
     appConfig.setBinaryPath(binaryPathField.getText());
     appConfig.setWorkingDirectory(workingDirectoryField.getText());
     appConfig.setParameters(
-        new ArrayList<>(List.of(parametersArea.getText().split("\\n")))); // NON-NLS
+        new ArrayList<>(
+            Arrays.stream(parametersArea.getText().split("\\n"))
+                .filter(StringUtil::hasText)
+                .toList()));
     appConfig.setEnvironmentVariables(
         parseEnvironmentVariables(environmentVariablesArea.getText()));
     appConfig.setCompatibility((Compatibility) compatibilityField.getSelectedItem());
