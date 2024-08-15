@@ -96,6 +96,7 @@ public class AbstractKOSpecialElement extends HiddenSpecialElement {
     public Integer getInstanceNumber() {
       return instanceNumber;
     }
+
     public List<Integer> getFrameList() {
       return frameList;
     }
@@ -239,6 +240,7 @@ public class AbstractKOSpecialElement extends HiddenSpecialElement {
                     .sum())
         .sum();
   }
+
   public boolean containsSopInstanceUIDReference(
       String seriesInstanceUID, String sopInstanceUIDReference, Integer frame) {
     return isSopuidInReferencedSeriesSequence(
