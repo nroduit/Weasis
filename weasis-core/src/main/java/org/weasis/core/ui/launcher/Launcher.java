@@ -24,6 +24,7 @@ import java.net.URI;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.Map.Entry;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import javax.swing.Action;
 import javax.swing.Icon;
@@ -404,63 +405,77 @@ public class Launcher {
     }
 
     public void launch(ImageViewerEventManager<?> eventManager) {
-      try {
-        if (!StringUtil.hasText(binaryPath)) {
-          return;
+      if (!StringUtil.hasText(binaryPath)) {
+        return;
+      }
+      boolean isMac = compatibility == Compatibility.MAC;
+      List<String> command = new ArrayList<>(Arrays.asList(binaryPath.trim().split("\\s+")));
+      if (!isMac && parameters != null && !parameters.isEmpty()) {
+        for (String param : parameters) {
+          command.add(resolvePlaceholders(param, eventManager));
         }
-        boolean isMac = compatibility == Compatibility.MAC;
-        List<String> command = new ArrayList<>(Arrays.asList(binaryPath.trim().split("\\s+")));
-        if (!isMac && parameters != null && !parameters.isEmpty()) {
-          for (String param : parameters) {
-            command.add(resolvePlaceholders(param, eventManager));
-          }
-        }
+      }
 
-        ProcessBuilder processBuilder = new ProcessBuilder(command);
-        if (StringUtil.hasText(workingDirectory)) {
-          processBuilder.directory(new File(workingDirectory));
+      ProcessBuilder processBuilder = new ProcessBuilder(command);
+      if (StringUtil.hasText(workingDirectory)) {
+        processBuilder.directory(new File(workingDirectory));
+      }
+      if (environmentVariables != null && !environmentVariables.isEmpty()) {
+        Map<String, String> environment = processBuilder.environment();
+        for (Entry<String, String> entry : environmentVariables.entrySet()) {
+          environment.put(entry.getKey(), resolvePlaceholders(entry.getValue(), eventManager));
         }
-        if (environmentVariables != null && !environmentVariables.isEmpty()) {
-          Map<String, String> environment = processBuilder.environment();
-          for (Entry<String, String> entry : environmentVariables.entrySet()) {
-            environment.put(entry.getKey(), resolvePlaceholders(entry.getValue(), eventManager));
-          }
-        }
-        Process p = processBuilder.start();
-        BufferedReader buffer = new BufferedReader(new InputStreamReader(p.getInputStream()));
+      }
 
-        String data;
-        while ((data = buffer.readLine()) != null) {
-          System.out.println(data);
-        }
-        int val = 0;
-        if (p.waitFor() != 0) {
-          val = p.exitValue();
-        }
+      Thread launcherThread =
+          new Thread(
+              () -> {
+                try {
+                  Process p = processBuilder.start();
+                  BufferedReader buffer =
+                      new BufferedReader(new InputStreamReader(p.getInputStream()));
 
-        if (isMac && parameters != null && !parameters.isEmpty()) {
-          for (String param : parameters) {
-            command.add(resolvePlaceholders(param, eventManager));
-          }
-          Thread.sleep(1000);
-          p = processBuilder.start();
-          if (p.waitFor() != 0) {
-            val = p.exitValue();
-          }
-        }
+                  String data;
+                  int lineCount = 0;
+                  while (lineCount < 5 && (data = buffer.readLine()) != null) {
+                    System.out.println(data);
+                    lineCount++;
+                  }
 
-        if (val != 0) {
-          JOptionPane.showMessageDialog(
-              GuiUtils.getUICore().getBaseArea(),
-              String.format(Messages.getString("error.launching.app"), binaryPath),
-              Messages.getString("launcher.error"),
-              JOptionPane.ERROR_MESSAGE);
-        }
-      } catch (IOException e1) {
-        LOGGER.error("Running cmd", e1);
-      } catch (InterruptedException e2) {
-        LOGGER.error("Cannot get the exit status of {}", binaryPath, e2);
-        Thread.currentThread().interrupt();
+                  int val = getExitValue(p);
+
+                  if (isMac && parameters != null && !parameters.isEmpty()) {
+                    for (String param : parameters) {
+                      command.add(resolvePlaceholders(param, eventManager));
+                    }
+                    Thread.sleep(500);
+                    p = processBuilder.start();
+                    val = getExitValue(p);
+                  }
+
+                  if (val != 0) {
+                    JOptionPane.showMessageDialog(
+                        GuiUtils.getUICore().getBaseArea(),
+                        String.format(Messages.getString("error.launching.app"), binaryPath),
+                        Messages.getString("launcher.error"),
+                        JOptionPane.ERROR_MESSAGE);
+                  }
+                } catch (IOException e1) {
+                  LOGGER.error("Running cmd", e1);
+                } catch (InterruptedException e2) {
+                  LOGGER.error("Cannot get the exit status of {}", binaryPath, e2);
+                  Thread.currentThread().interrupt();
+                }
+              });
+      launcherThread.start();
+    }
+
+    private int getExitValue(Process p) throws InterruptedException {
+      if (!p.waitFor(15, TimeUnit.SECONDS)) {
+        LOGGER.warn("Process did not exit within the timeout, detaching the process.");
+        return 0;
+      } else {
+        return p.exitValue();
       }
     }
 
