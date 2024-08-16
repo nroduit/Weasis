@@ -104,7 +104,6 @@ apps:
       - network
       - desktop
       - desktop-legacy
-      - wayland
       - x11
       - home
       - network-bind
@@ -125,7 +124,6 @@ apps:
       - network
       - desktop
       - desktop-legacy
-      - wayland
       - x11
       - home
       - network-bind
