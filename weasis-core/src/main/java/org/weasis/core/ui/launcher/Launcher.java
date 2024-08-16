@@ -429,45 +429,46 @@ public class Launcher {
       }
 
       Thread launcherThread =
-          new Thread(
-              () -> {
-                try {
-                  Process p = processBuilder.start();
-                  BufferedReader buffer =
-                      new BufferedReader(new InputStreamReader(p.getInputStream()));
+          Thread.ofVirtual()
+              .start(
+                  () -> {
+                    try {
+                      Process p = processBuilder.start();
+                      BufferedReader buffer =
+                          new BufferedReader(new InputStreamReader(p.getInputStream()));
 
-                  String data;
-                  int lineCount = 0;
-                  while (lineCount < 5 && (data = buffer.readLine()) != null) {
-                    System.out.println(data);
-                    lineCount++;
-                  }
+                      String data;
+                      int lineCount = 0;
+                      while (lineCount < 5 && (data = buffer.readLine()) != null) {
+                        System.out.println(data);
+                        lineCount++;
+                      }
 
-                  int val = getExitValue(p);
+                      int val = getExitValue(p);
 
-                  if (isMac && parameters != null && !parameters.isEmpty()) {
-                    for (String param : parameters) {
-                      command.add(resolvePlaceholders(param, eventManager));
+                      if (isMac && parameters != null && !parameters.isEmpty()) {
+                        for (String param : parameters) {
+                          command.add(resolvePlaceholders(param, eventManager));
+                        }
+                        Thread.sleep(500);
+                        p = processBuilder.start();
+                        val = getExitValue(p);
+                      }
+
+                      if (val != 0) {
+                        JOptionPane.showMessageDialog(
+                            GuiUtils.getUICore().getBaseArea(),
+                            String.format(Messages.getString("error.launching.app"), binaryPath),
+                            Messages.getString("launcher.error"),
+                            JOptionPane.ERROR_MESSAGE);
+                      }
+                    } catch (IOException e1) {
+                      LOGGER.error("Running cmd", e1);
+                    } catch (InterruptedException e2) {
+                      LOGGER.error("Cannot get the exit status of {}", binaryPath, e2);
+                      Thread.currentThread().interrupt();
                     }
-                    Thread.sleep(500);
-                    p = processBuilder.start();
-                    val = getExitValue(p);
-                  }
-
-                  if (val != 0) {
-                    JOptionPane.showMessageDialog(
-                        GuiUtils.getUICore().getBaseArea(),
-                        String.format(Messages.getString("error.launching.app"), binaryPath),
-                        Messages.getString("launcher.error"),
-                        JOptionPane.ERROR_MESSAGE);
-                  }
-                } catch (IOException e1) {
-                  LOGGER.error("Running cmd", e1);
-                } catch (InterruptedException e2) {
-                  LOGGER.error("Cannot get the exit status of {}", binaryPath, e2);
-                  Thread.currentThread().interrupt();
-                }
-              });
+                  });
       launcherThread.start();
     }
 
