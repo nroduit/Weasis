@@ -166,16 +166,12 @@ public class ExportDicomView extends AbstractItemDialogPage implements ExportDic
           }
 
           String path = LocalExport.buildPath(img, false, false, node, null);
-          if (saveFile(writeDir, img, iuid, path)) {
-            return;
-          }
+          saveFile(writeDir, img, iuid, path);
         } else if (node.getUserObject() instanceof DicomElement dcm) {
           String iuid = TagD.getTagValue((TagReadable) dcm, Tag.SOPInstanceUID, String.class);
 
           String path = LocalExport.buildPath((MediaElement) dcm, false, false, node, null);
-          if (saveFile(writeDir, dcm, iuid, path)) {
-            return;
-          }
+          saveFile(writeDir, dcm, iuid, path);
         } else if (node.getUserObject() instanceof MediaSeries<?> s)
           saveOtherMediaSeries(writeDir, s, node);
       }
@@ -200,15 +196,10 @@ public class ExportDicomView extends AbstractItemDialogPage implements ExportDic
     }
   }
 
-  private boolean saveFile(File writeDir, DicomElement dcm, String iuid, String path) {
+  private void saveFile(File writeDir, DicomElement dcm, String iuid, String path) {
     File destinationDir = new File(writeDir, path);
-    if (!destinationDir.mkdirs()) {
-      LOGGER.error("Cannot create directory: {}", destinationDir);
-      return true;
-    }
-
+    destinationDir.mkdirs();
     DicomExportParameters dicomExportParameters = new DicomExportParameters(null, true, null, 0, 0);
     dcm.saveToFile(new File(destinationDir, iuid), dicomExportParameters);
-    return false;
   }
 }
