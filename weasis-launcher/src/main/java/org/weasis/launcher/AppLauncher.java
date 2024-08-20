@@ -9,22 +9,70 @@
  */
 package org.weasis.launcher;
 
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.LoggerContext;
+import ch.qos.logback.classic.encoder.PatternLayoutEncoder;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.ConsoleAppender;
+import ch.qos.logback.core.rolling.FixedWindowRollingPolicy;
+import ch.qos.logback.core.rolling.RollingFileAppender;
+import ch.qos.logback.core.rolling.SizeBasedTriggeringPolicy;
+import ch.qos.logback.core.util.FileSize;
+import java.io.File;
 import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
+import org.slf4j.LoggerFactory;
 import org.weasis.pref.ConfigData;
 
 public class AppLauncher extends WeasisLauncher implements Singleton.SingletonApp {
 
   static {
-    //    // Configuration of java.util.logging.Logger
-    //    try {
-    //      LogManager.getLogManager()
-    //          .readConfiguration(
-    //              WeasisLauncher.class.getResourceAsStream("/logging.properties")); // NON-NLS
-    //    } catch (SecurityException | IOException e) {
-    //      e.printStackTrace(); // NOSONAR cannot initialize logger
-    //    }
+    String home = System.getProperty("user.home", "");
+    File bootLog = new File(home + File.separator + ".weasis" + File.separator + "log");
+    bootLog.mkdirs();
+
+    LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
+    loggerContext.reset();
+
+    PatternLayoutEncoder encoder = new PatternLayoutEncoder();
+    encoder.setContext(loggerContext);
+    encoder.setPattern("%d{dd.MM.yyyy HH:mm:ss.SSS} *%-5level* %msg%n");
+    encoder.start();
+
+    ConsoleAppender<ILoggingEvent> consoleAppender = new ConsoleAppender<>();
+    consoleAppender.setContext(loggerContext);
+    consoleAppender.setName("CONSOLE");
+    consoleAppender.setEncoder(encoder);
+    consoleAppender.start();
+
+    RollingFileAppender<ILoggingEvent> rollingFileAppender = new RollingFileAppender<>();
+    rollingFileAppender.setContext(loggerContext);
+    rollingFileAppender.setName("BOOT_ROLLING_FILE");
+    rollingFileAppender.setEncoder(encoder);
+    rollingFileAppender.setFile(bootLog.getPath() + "/boot.log");
+
+    FixedWindowRollingPolicy rollingPolicy = new FixedWindowRollingPolicy();
+    rollingPolicy.setContext(loggerContext);
+    rollingPolicy.setParent(rollingFileAppender);
+    rollingPolicy.setFileNamePattern(bootLog.getPath() + "/boot.%i.log.zip");
+    rollingPolicy.setMinIndex(1);
+    rollingPolicy.setMaxIndex(3);
+    rollingPolicy.start();
+
+    SizeBasedTriggeringPolicy<ILoggingEvent> triggeringPolicy = new SizeBasedTriggeringPolicy<>();
+    triggeringPolicy.setMaxFileSize(FileSize.valueOf("3MB"));
+    triggeringPolicy.start();
+
+    rollingFileAppender.setRollingPolicy(rollingPolicy);
+    rollingFileAppender.setTriggeringPolicy(triggeringPolicy);
+    rollingFileAppender.start();
+
+    ch.qos.logback.classic.Logger logger = loggerContext.getLogger("ROOT");
+    logger.setLevel(Level.DEBUG);
+    logger.setAdditive(false);
+    logger.addAppender(consoleAppender);
+    logger.addAppender(rollingFileAppender);
   }
 
   public AppLauncher(ConfigData configData) {
