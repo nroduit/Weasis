@@ -100,8 +100,12 @@ class LauncherTest {
 
   @Test
   void applicationLauncherWithCompatibleSystemShouldLaunch() {
+    Launcher.ApplicationConfiguration configurationMock =
+        mock(Launcher.ApplicationConfiguration.class);
+    when(configurationMock.isValid()).thenReturn(true);
+
     Launcher launcher = new Launcher();
-    launcher.setConfiguration(new Launcher.ApplicationConfiguration());
+    launcher.setConfiguration(configurationMock);
     ((Launcher.ApplicationConfiguration) launcher.getConfiguration())
         .setBinaryPath("/path/to/application"); // NON-NLS
     launcher.setName("Compatible Application Launcher"); // NON-NLS
@@ -109,6 +113,7 @@ class LauncherTest {
 
     launcher.execute(eventManagerMock);
     verify(eventManagerMock, atLeastOnce()).dicomExportAction(any(Launcher.class));
+    verify(configurationMock).launch(eventManagerMock);
   }
 
   @Test
