@@ -28,6 +28,7 @@ import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.WinUtil;
 import org.weasis.core.api.media.data.ImageElement;
+import org.weasis.core.api.service.WProperties;
 import org.weasis.core.ui.editor.image.ImageViewerEventManager;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.editor.image.ViewCanvas;
@@ -36,6 +37,9 @@ import org.weasis.core.ui.util.PrintOptions;
 import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.explorer.Messages;
 import org.weasis.dicom.explorer.pref.node.AbstractDicomNode;
+import org.weasis.dicom.explorer.pref.node.AbstractDicomNode.UsageType;
+import org.weasis.dicom.explorer.pref.node.DefaultDicomNode;
+import org.weasis.dicom.explorer.pref.node.DicomNodeDialog;
 import org.weasis.dicom.explorer.pref.node.DicomPrintNode;
 
 /**
@@ -44,6 +48,9 @@ import org.weasis.dicom.explorer.pref.node.DicomPrintNode;
  */
 public class DicomPrintDialog<I extends ImageElement> extends JDialog {
   private static final Logger LOGGER = LoggerFactory.getLogger(DicomPrintDialog.class);
+
+  private static final String LAST_SEL_NODE = "lastSelNode";
+  private static final String LAST_CALLING_NODE = "lastCallingNode";
 
   public enum FilmSize {
     IN8X10("8INX10IN", 8, 10), // NON-NLS
@@ -115,6 +122,7 @@ public class DicomPrintDialog<I extends ImageElement> extends JDialog {
 
   private DicomPrintOptionPane optionPane;
   private JComboBox<AbstractDicomNode> printersComboBox;
+  private final JComboBox<AbstractDicomNode> comboCallingNode = new JComboBox<>();
   private final ImageViewerEventManager<I> eventManager;
 
   /** Creates new form DicomPrintDialog */
@@ -148,6 +156,8 @@ public class DicomPrintDialog<I extends ImageElement> extends JDialog {
     AbstractDicomNode.loadDicomNodes(printersComboBox, AbstractDicomNode.Type.PRINTER);
     GuiUtils.setPreferredWidth(printersComboBox, 200, 185);
     AbstractDicomNode.addTooltipToComboList(printersComboBox);
+    AbstractDicomNode.restoreNodeSelection(
+        getPersistence(), printersComboBox.getModel(), LAST_SEL_NODE);
 
     Component horizontalStrut = Box.createHorizontalStrut(20);
     printersCfg.add(horizontalStrut);
@@ -183,13 +193,24 @@ public class DicomPrintDialog<I extends ImageElement> extends JDialog {
     optionPane = new DicomPrintOptionPane();
     panel.add(optionPane, "newline, gaptop 10, spanx"); // NON-NLS
 
+    JLabel lblCalling = new JLabel("Calling Node" + StringUtil.COLON);
+    AbstractDicomNode.loadDicomNodes(
+        comboCallingNode, AbstractDicomNode.Type.DICOM_CALLING, UsageType.STORAGE);
+    GuiUtils.setPreferredWidth(comboCallingNode, 185, 150);
+    AbstractDicomNode.addTooltipToComboList(comboCallingNode);
+    AbstractDicomNode.restoreNodeSelection(
+        getPersistence(), comboCallingNode.getModel(), LAST_CALLING_NODE);
+
+    panel.add(lblCalling, "newline, growx 0, alignx trailing"); // NON-NLS
+    panel.add(comboCallingNode, "growx, alignx trailing, gapright 25");
+
     JButton printButton = new JButton(Messages.getString("DicomPrintDialog.print"));
     printButton.addActionListener(this::printButtonActionPerformed);
     getRootPane().setDefaultButton(printButton);
     JButton cancelButton = new JButton(Messages.getString("DicomPrintDialog.cancel"));
     cancelButton.addActionListener(evt -> doClose());
 
-    panel.add(printButton, "newline, skip, growx 0, alignx trailing"); // NON-NLS
+    panel.add(printButton, "skip, growx 0, alignx trailing"); // NON-NLS
     panel.add(cancelButton, "gap 15lp 0lp 10lp 10lp"); // NON-NLS
     setContentPane(panel);
   }
@@ -228,7 +249,8 @@ public class DicomPrintDialog<I extends ImageElement> extends JDialog {
     }
 
     try {
-      dicomPrint.printImage(dicomPrint.printImage(layout));
+      dicomPrint.printImage(
+          dicomPrint.printImage(layout), (DefaultDicomNode) comboCallingNode.getSelectedItem());
     } catch (Exception e) {
       LOGGER.error("DICOM Print Service", e);
       JOptionPane.showMessageDialog(
@@ -242,6 +264,12 @@ public class DicomPrintDialog<I extends ImageElement> extends JDialog {
   }
 
   private void doClose() {
+    AbstractDicomNode.nodeSelectionPersistence(
+        getPersistence(), (AbstractDicomNode) printersComboBox.getSelectedItem(), LAST_SEL_NODE);
+    AbstractDicomNode.nodeSelectionPersistence(
+        getPersistence(),
+        (AbstractDicomNode) comboCallingNode.getSelectedItem(),
+        LAST_CALLING_NODE);
     dispose();
   }
 
@@ -250,5 +278,9 @@ public class DicomPrintDialog<I extends ImageElement> extends JDialog {
     if (selectedItem instanceof DicomPrintNode printNode) {
       optionPane.applyOptions(printNode.getPrintOptions());
     }
+  }
+
+  public static WProperties getPersistence() {
+    return GuiUtils.getUICore().getPluginPersistence(DicomNodeDialog.class.getPackageName());
   }
 }

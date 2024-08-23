@@ -80,10 +80,14 @@ public class AcquirePublishPanel extends JPanel {
   }
 
   public void publishDirDicom(
-      File exportDirDicom, AbstractDicomNode destinationNode, List<AcquireImageInfo> toPublish) {
+      File exportDirDicom,
+      AbstractDicomNode destinationNode,
+      String callingAet,
+      List<AcquireImageInfo> toPublish) {
     SwingWorker<DicomState, File> publishDicomTask = null;
     if (destinationNode instanceof DefaultDicomNode defaultDicomNode) {
-      publishDicomTask = publishDicomDimse(exportDirDicom, defaultDicomNode.getDicomNode());
+      publishDicomTask =
+          publishDicomDimse(exportDirDicom, defaultDicomNode.getDicomNode(), callingAet);
     } else if (destinationNode instanceof final DicomWebNode node) {
       publishDicomTask = publishStow(exportDirDicom, node, toPublish);
     }
@@ -94,7 +98,8 @@ public class AcquirePublishPanel extends JPanel {
     }
   }
 
-  public PublishDicomTask publishDicomDimse(File exportDirDicom, DicomNode destNdde) {
+  public PublishDicomTask publishDicomDimse(
+      File exportDirDicom, DicomNode destNode, String callingAet) {
     DicomProgress dicomProgress = new DicomProgress();
     Supplier<DicomState> publish =
         () -> {
@@ -105,14 +110,10 @@ public class AcquirePublishPanel extends JPanel {
           connectOptions.setConnectTimeout(3000);
           connectOptions.setAcceptTimeout(5000);
           params.setConnectOptions(connectOptions);
-          DicomNode callingNode =
-              new DicomNode(
-                  GuiUtils.getUICore()
-                      .getSystemPreferences()
-                      .getProperty("weasis.aet", "WEASIS_AE")); // NON-NLS
+          DicomNode callingNode = new DicomNode(callingAet); // NON-NLS
           try {
             return CStore.process(
-                params, callingNode, destNdde, exportFilesDicomPath, dicomProgress);
+                params, callingNode, destNode, exportFilesDicomPath, dicomProgress);
           } finally {
             FileUtil.recursiveDelete(exportDirDicom);
           }

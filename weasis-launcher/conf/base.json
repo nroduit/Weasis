@@ -427,8 +427,8 @@
     },
     {
       "code": "weasis.aet",
-      "value": "WEASIS_AE",
-      "description": "Calling AETitle for DICOM send and DICOM print",
+      "value": null,
+      "description": "Calling AETitle for DICOM send and Dicomizer publish. ? null means displaying the DICOM calling node combobox otherwise the combo is not displayed and the value is directly used",
       "type": "A",
       "category": "DICOM"
     },

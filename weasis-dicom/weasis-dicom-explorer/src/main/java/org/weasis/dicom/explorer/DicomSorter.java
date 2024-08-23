@@ -272,7 +272,9 @@ public class DicomSorter {
 
   private static boolean isEncapsulatedOrSR(MediaSeriesGroup series) {
     String s1 = TagD.getTagValue(series, Tag.SOPClassUID, String.class);
-    return s1 != null && (s1.startsWith("1.2.840.10008.5.1.4.1.1.88") || s1.startsWith("1.2.840.10008.5.1.4.1.1.104"));
+    return s1 != null
+        && (s1.startsWith("1.2.840.10008.5.1.4.1.1.88")
+            || s1.startsWith("1.2.840.10008.5.1.4.1.1.104"));
   }
 
   public static SortingTime getStudyDateSorting() {

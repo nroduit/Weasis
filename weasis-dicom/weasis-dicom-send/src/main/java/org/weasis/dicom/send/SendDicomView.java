@@ -14,6 +14,7 @@ import java.util.Objects;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
+import javax.swing.JPanel;
 import org.dcm4che3.net.Status;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -46,8 +47,10 @@ public class SendDicomView extends ExportDicomView {
   private static final Logger LOGGER = LoggerFactory.getLogger(SendDicomView.class);
 
   private static final String LAST_SEL_NODE = "lastSelNode";
+  private static final String LAST_CALLING_NODE = "lastCallingNode";
 
   private final JComboBox<AbstractDicomNode> comboNode = new JComboBox<>();
+  private final JComboBox<AbstractDicomNode> comboCallingNode = new JComboBox<>();
   private AuthMethod authMethod;
 
   public SendDicomView(DicomModel dicomModel, CheckTreeModel treeModel) {
@@ -59,9 +62,21 @@ public class SendDicomView extends ExportDicomView {
   public SendDicomView initGUI() {
     final JLabel lblDest =
         new JLabel(Messages.getString("SendDicomView.destination") + StringUtil.COLON);
+    GuiUtils.setPreferredWidth(comboNode, 210, 185);
     AbstractDicomNode.addTooltipToComboList(comboNode);
 
-    add(GuiUtils.getFlowLayoutPanel(ITEM_SEPARATOR_SMALL, 0, lblDest, comboNode));
+    JPanel panel = GuiUtils.getFlowLayoutPanel(ITEM_SEPARATOR_SMALL, 0, lblDest, comboNode);
+    if (comboCallingNode.getItemCount() > 0) {
+      AbstractDicomNode.addTooltipToComboList(comboCallingNode);
+      JLabel lblCalling = new JLabel("Calling Node" + StringUtil.COLON);
+      GuiUtils.setPreferredWidth(comboCallingNode, 160, 120);
+
+      panel.add(GuiUtils.boxHorizontalStrut(ITEM_SEPARATOR_LARGE));
+      panel.add(lblCalling);
+      panel.add(comboCallingNode);
+    }
+
+    add(panel);
     add(GuiUtils.boxVerticalStrut(ITEM_SEPARATOR));
 
     super.initGUI();
@@ -72,13 +87,27 @@ public class SendDicomView extends ExportDicomView {
     AbstractDicomNode.loadDicomNodes(comboNode, AbstractDicomNode.Type.DICOM, UsageType.STORAGE);
     AbstractDicomNode.loadDicomNodes(comboNode, AbstractDicomNode.Type.WEB, UsageType.STORAGE);
     String desc = SendDicomFactory.EXPORT_PERSISTENCE.getProperty(LAST_SEL_NODE);
-    AbstractDicomNode.selectDicomNode(comboNode, desc);
+    AbstractDicomNode.selectDicomNode(comboNode.getModel(), desc);
+
+    String weasisAet =
+        GuiUtils.getUICore().getSystemPreferences().getProperty("weasis.aet"); // NON-NLS
+    if (!StringUtil.hasText(weasisAet)) {
+      AbstractDicomNode.loadDicomNodes(
+          comboCallingNode, AbstractDicomNode.Type.DICOM_CALLING, UsageType.STORAGE);
+      String calling = SendDicomFactory.EXPORT_PERSISTENCE.getProperty(LAST_CALLING_NODE);
+      AbstractDicomNode.selectDicomNode(comboCallingNode.getModel(), calling);
+    }
   }
 
   public void applyChange() {
     final AbstractDicomNode node = (AbstractDicomNode) comboNode.getSelectedItem();
     if (node != null) {
       SendDicomFactory.EXPORT_PERSISTENCE.setProperty(LAST_SEL_NODE, node.getDescription());
+    }
+    final AbstractDicomNode callingNode = (AbstractDicomNode) comboCallingNode.getSelectedItem();
+    if (callingNode != null) {
+      SendDicomFactory.EXPORT_PERSISTENCE.setProperty(
+          LAST_CALLING_NODE, callingNode.getDescription());
     }
   }
 
@@ -92,9 +121,13 @@ public class SendDicomView extends ExportDicomView {
     Object selectedItem = comboNode.getSelectedItem();
     if (selectedItem instanceof final DefaultDicomNode node) {
       String weasisAet =
-          GuiUtils.getUICore()
-              .getSystemPreferences()
-              .getProperty("weasis.aet", "WEASIS_AE"); // NON-NLS
+          GuiUtils.getUICore().getSystemPreferences().getProperty("weasis.aet"); // NON-NLS
+      if (!StringUtil.hasText(weasisAet)) {
+        weasisAet =
+            comboCallingNode.getSelectedItem() == null
+                ? "WEASIS_AE"
+                : ((DefaultDicomNode) comboCallingNode.getSelectedItem()).getAeTitle();
+      }
       AdvancedParams params = new AdvancedParams();
       ConnectOptions connectOptions = new ConnectOptions();
       connectOptions.setConnectTimeout(3000);

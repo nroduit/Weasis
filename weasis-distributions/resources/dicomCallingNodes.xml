@@ -1,5 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!--  Port and hostname are not used for calling nodes-->
 <nodes>
-  <node description="Default" type="DICOM_CALLING" usageType="BOTH" tsuid="NONE" aeTitle="WEASIS_QR"
+  <node description="Default" type="DICOM_CALLING" usageType="BOTH" tsuid="NONE" aeTitle="WEASIS_AE"
+    hostname="localhost" port="11113"></node>
+  <node description="Default Query/Retrieve" type="DICOM_CALLING" usageType="RETRIEVE" tsuid="NONE" aeTitle="WEASIS_QR"
     hostname="localhost" port="11113"></node>
 </nodes>

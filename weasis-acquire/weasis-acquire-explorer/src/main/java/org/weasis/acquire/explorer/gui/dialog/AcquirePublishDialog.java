@@ -9,6 +9,9 @@
  */
 package org.weasis.acquire.explorer.gui.dialog;
 
+import static org.weasis.core.api.gui.Insertable.ITEM_SEPARATOR_LARGE;
+import static org.weasis.core.api.gui.Insertable.ITEM_SEPARATOR_SMALL;
+
 import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
@@ -65,6 +68,8 @@ public class AcquirePublishDialog extends JDialog {
   private static final String LAST_SEL_NODE = "lastSelectedNode";
   public static final String P_LAST_RESOLUTION = "last.resolution";
   public static final String PREFERENCE_NODE = "publish"; // NON-NLS
+  private static final String LAST_CALLING_NODE = "lastCallingNode";
+  private final JComboBox<AbstractDicomNode> comboCallingNode = new JComboBox<>();
 
   public enum Resolution {
     ORIGINAL(Messages.getString("AcquirePublishDialog.original"), Integer.MAX_VALUE),
@@ -174,10 +179,21 @@ public class AcquirePublishDialog extends JDialog {
     JLabel lblDestination =
         new JLabel(
             Messages.getString("AcquirePublishDialog.lblDestination.text") + StringUtil.COLON);
+    GuiUtils.setPreferredWidth(comboNode, 210, 185);
     AbstractDicomNode.addTooltipToComboList(comboNode);
     loadDicomNodes();
-    contentPane.add(lblDestination, "split 2, span"); // NON-NLS
-    contentPane.add(comboNode, " wrap"); // NON-NLS
+
+    JPanel panel = GuiUtils.getFlowLayoutPanel(ITEM_SEPARATOR_SMALL, 0, lblDestination, comboNode);
+    if (comboCallingNode.getItemCount() > 0) {
+      AbstractDicomNode.addTooltipToComboList(comboCallingNode);
+      JLabel lblCalling = new JLabel("Calling Node" + StringUtil.COLON);
+      GuiUtils.setPreferredWidth(comboCallingNode, 160, 120);
+
+      panel.add(GuiUtils.boxHorizontalStrut(ITEM_SEPARATOR_LARGE));
+      panel.add(lblCalling);
+      panel.add(comboCallingNode);
+    }
+    contentPane.add(panel, "split 5, span, wrap"); // NON-NLS
 
     publishButton = new JButton(Messages.getString("AcquirePublishDialog.publish"));
     publishButton.addActionListener(e -> publishAction());
@@ -201,13 +217,22 @@ public class AcquirePublishDialog extends JDialog {
       AbstractDicomNode.loadDicomNodes(comboNode, AbstractDicomNode.Type.DICOM, UsageType.STORAGE);
       AbstractDicomNode.loadDicomNodes(comboNode, AbstractDicomNode.Type.WEB, UsageType.STORAGE);
       String desc = MediaImporterFactory.EXPORT_PERSISTENCE.getProperty(LAST_SEL_NODE);
-      AbstractDicomNode.selectDicomNode(comboNode, desc);
+      AbstractDicomNode.selectDicomNode(comboNode.getModel(), desc);
 
       if (comboNode.getItemCount() == 0) {
         comboNode.addItem(getDestinationConfiguration());
       }
     } else {
       comboNode.addItem(getDestinationConfiguration());
+    }
+
+    String weasisAet =
+        GuiUtils.getUICore().getSystemPreferences().getProperty("weasis.aet"); // NON-NLS
+    if (!StringUtil.hasText(weasisAet)) {
+      AbstractDicomNode.loadDicomNodes(
+          comboCallingNode, AbstractDicomNode.Type.DICOM_CALLING, UsageType.STORAGE);
+      String calling = MediaImporterFactory.EXPORT_PERSISTENCE.getProperty(LAST_CALLING_NODE);
+      AbstractDicomNode.selectDicomNode(comboCallingNode.getModel(), calling);
     }
   }
 
@@ -313,7 +338,17 @@ public class AcquirePublishDialog extends JDialog {
 
                 if (exportDirDicom != null) {
                   AbstractDicomNode node = (AbstractDicomNode) comboNode.getSelectedItem();
-                  publishPanel.publishDirDicom(exportDirDicom, node, toPublish);
+                  String weasisAet =
+                      GuiUtils.getUICore()
+                          .getSystemPreferences()
+                          .getProperty("weasis.aet"); // NON-NLS
+                  if (!StringUtil.hasText(weasisAet)) {
+                    weasisAet =
+                        comboCallingNode.getSelectedItem() == null
+                            ? "WEASIS_AE"
+                            : ((DefaultDicomNode) comboCallingNode.getSelectedItem()).getAeTitle();
+                  }
+                  publishPanel.publishDirDicom(exportDirDicom, node, weasisAet, toPublish);
                   clearAndHide();
                 } else {
                   JOptionPane.showMessageDialog(
@@ -372,6 +407,11 @@ public class AcquirePublishDialog extends JDialog {
     final AbstractDicomNode node = (AbstractDicomNode) comboNode.getSelectedItem();
     if (node != null) {
       MediaImporterFactory.EXPORT_PERSISTENCE.setProperty(LAST_SEL_NODE, node.getDescription());
+    }
+    final AbstractDicomNode callingNode = (AbstractDicomNode) comboCallingNode.getSelectedItem();
+    if (callingNode != null) {
+      MediaImporterFactory.EXPORT_PERSISTENCE.setProperty(
+          LAST_CALLING_NODE, callingNode.getDescription());
     }
     Preferences prefs =
         BundlePreferences.getDefaultPreferences(AppProperties.getBundleContext(this.getClass()));

@@ -47,7 +47,6 @@ import org.dcm4che3.net.pdu.PresentationContext;
 import org.dcm4che3.util.UIDUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.image.AffineTransformOp;
 import org.weasis.core.api.image.LayoutConstraints;
 import org.weasis.core.api.image.ZoomOp.Interpolation;
@@ -57,6 +56,7 @@ import org.weasis.core.ui.util.ExportLayout;
 import org.weasis.core.ui.util.ImagePrint;
 import org.weasis.core.ui.util.PrintOptions;
 import org.weasis.core.util.MathUtil;
+import org.weasis.dicom.explorer.pref.node.DefaultDicomNode;
 import org.weasis.dicom.explorer.pref.node.DicomPrintNode;
 import org.weasis.dicom.explorer.print.DicomPrintDialog.FilmSize;
 import org.weasis.opencv.data.PlanarImage;
@@ -267,7 +267,7 @@ public class DicomPrint {
     return new BufferedImage(cm, r, false, null);
   }
 
-  public void printImage(BufferedImage image) throws Exception {
+  public void printImage(BufferedImage image, DefaultDicomNode selectedItem) throws Exception {
     Attributes filmSessionAttrs = new Attributes();
     Attributes filmBoxAttrs = new Attributes();
     Attributes imageBoxAttrs = new Attributes();
@@ -283,11 +283,7 @@ public class DicomPrint {
 
     // writeDICOM(new File("/tmp/print.dcm"), dicomImage);
 
-    String weasisAet =
-        GuiUtils.getUICore()
-            .getSystemPreferences()
-            .getProperty("weasis.aet", "WEASIS_AE"); // NON-NLS
-
+    String weasisAet = selectedItem == null ? "WEASIS_AE" : selectedItem.getAeTitle(); // NON-NLS
     Device device = new Device(weasisAet);
     ApplicationEntity ae = new ApplicationEntity(weasisAet);
     Connection conn = new Connection();

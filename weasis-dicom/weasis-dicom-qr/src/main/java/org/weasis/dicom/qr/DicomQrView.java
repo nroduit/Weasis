@@ -299,7 +299,7 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
   private QueryProcess process;
   private AuthMethod authMethod;
   private final CircularProgressBar progressBar = new CircularProgressBar();
-  final JLabel lblDest =
+  final JLabel lblCalling =
       new JLabel(Messages.getString("DicomQrView.calling_node") + StringUtil.COLON);
   private final JLabel lblRetrieve =
       new JLabel(Messages.getString("DicomQrView.retrieve") + StringUtil.COLON);
@@ -401,7 +401,7 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
     return GuiUtils.getFlowLayoutPanel(
         ITEM_SEPARATOR_SMALL,
         ITEM_SEPARATOR,
-        lblDest,
+        lblCalling,
         comboCallingNode,
         GuiUtils.boxHorizontalStrut(BLOCK_SEPARATOR),
         btnGeneralOptions);
@@ -855,7 +855,8 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
         comboCallingNode,
         AbstractDicomNode.Type.DICOM_CALLING,
         AbstractDicomNode.UsageType.RETRIEVE);
-    restoreNodeSelection(comboCallingNode.getModel(), LAST_CALLING_NODE);
+    AbstractDicomNode.restoreNodeSelection(
+        getPersistence(), comboCallingNode.getModel(), LAST_CALLING_NODE);
 
     comboDestinationNode.removeActionListener(destNodeListener);
     comboDestinationNode.removeAllItems();
@@ -863,7 +864,8 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
         comboDestinationNode, AbstractDicomNode.Type.DICOM, UsageType.RETRIEVE);
     AbstractDicomNode.loadDicomNodes(
         comboDestinationNode, AbstractDicomNode.Type.WEB, UsageType.RETRIEVE, WebType.QIDORS);
-    restoreNodeSelection(comboDestinationNode.getModel(), LAST_SEL_NODE);
+    AbstractDicomNode.restoreNodeSelection(
+        getPersistence(), comboDestinationNode.getModel(), LAST_SEL_NODE);
     String lastType = getPersistence().getProperty(LAST_RETRIEVE_TYPE);
     if (lastType != null) {
       try {
@@ -879,7 +881,7 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
   private void applySelectedArchive() {
     Object selectedItem = comboDestinationNode.getSelectedItem();
     boolean dcmOption = selectedItem instanceof DefaultDicomNode;
-    lblDest.setEnabled(dcmOption);
+    lblCalling.setEnabled(dcmOption);
     lblRetrieve.setEnabled(dcmOption);
     comboDicomRetrieveType.setEnabled(dcmOption);
     comboCallingNode.setEnabled(dcmOption);
@@ -926,10 +928,14 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
   }
 
   public void applyChange() {
-    nodeSelectionPersistence(
-        (AbstractDicomNode) comboDestinationNode.getSelectedItem(), LAST_SEL_NODE);
-    nodeSelectionPersistence(
-        (AbstractDicomNode) comboCallingNode.getSelectedItem(), LAST_CALLING_NODE);
+    AbstractDicomNode.nodeSelectionPersistence(
+        getPersistence(),
+        (AbstractDicomNode) comboDestinationNode.getSelectedItem(),
+        LAST_SEL_NODE);
+    AbstractDicomNode.nodeSelectionPersistence(
+        getPersistence(),
+        (AbstractDicomNode) comboCallingNode.getSelectedItem(),
+        LAST_CALLING_NODE);
     RetrieveType type = (RetrieveType) comboDicomRetrieveType.getSelectedItem();
     WProperties persistence = getPersistence();
     if (type != null) {
@@ -969,26 +975,6 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
       LOGGER.error("Error on writing DICOM node file", e);
     } finally {
       FileUtil.safeClose(writer);
-    }
-  }
-
-  private void nodeSelectionPersistence(AbstractDicomNode node, String key) {
-    if (node != null) {
-      getPersistence().setProperty(key, node.getDescription());
-    }
-  }
-
-  private void restoreNodeSelection(ComboBoxModel<AbstractDicomNode> model, String key) {
-    if (model != null) {
-      String desc = getPersistence().getProperty(key);
-      if (StringUtil.hasText(desc)) {
-        for (int i = 0; i < model.getSize(); i++) {
-          if (desc.equals(model.getElementAt(i).getDescription())) {
-            model.setSelectedItem(model.getElementAt(i));
-            break;
-          }
-        }
-      }
     }
   }
 
