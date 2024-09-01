@@ -3,13 +3,13 @@
 <plist version="1.0">
 	<dict>
 		<key>LSMinimumSystemVersion</key>
-  <string>10.11</string>
+    <string>10.13</string>
 		<key>CFBundleDevelopmentRegion</key>
 		<string>English</string>
 		<key>CFBundleAllowMixedLocalizations</key>
 		<true/>
 		<key>CFBundleExecutable</key>
-		<string>DEPLOY_LAUNCHER_NAME</string>
+		<string>run.sh</string>
 		<key>CFBundleIconFile</key>
 		<string>DEPLOY_ICON_FILE</string>
 		<key>CFBundleIdentifier</key>
@@ -38,6 +38,17 @@
 		<string>true</string>
 		<key>NSMicrophoneUsageDescription</key>
     <string>The application DEPLOY_LAUNCHER_NAME is requesting access to the microphone.</string>
+		<key>CFBundleURLTypes</key>
+    <array>
+      <dict>
+        <key>CFBundleURLName</key>
+        <string>org.weasis.url.handler</string>
+        <key>CFBundleURLSchemes</key>
+        <array>
+          <string>weasis</string>
+        </array>
+      </dict>
+    </array>
 		<key>UTImportedTypeDeclarations</key>
 		<array>
 			<dict>

@@ -151,8 +151,8 @@ jobs:
           "${signArgs[@]}" "${customOptions[@]}" "${commonOptions[@]}"
 
           if [ "$machine" = "macosx" ] ; then
-              codesign --timestamp --entitlements "${{ env.RES }}/uri-launcher.entitlements" --options runtime --force -vvv --keychain "$HOME/Library/Keychains/signing_temp.keychain-db" --sign "${{ secrets.MACOS__DEVELOPER_ID }}" "${{ env.RES }}/weasis-url-handler.app"
-              cp -Rf "${{ env.RES }}/weasis-url-handler.app" "${{ env.WEASIS_OUTPUT }}/${{ env.NAME }}.app/Contents/MacOS/"
+              cp -Rf "${{ env.RES }}/run.sh" "${{ env.WEASIS_OUTPUT }}/${{ env.NAME }}.app/Contents/MacOS/"
+              chmod 755 "${{ env.WEASIS_OUTPUT }}/${{ env.NAME }}.app/Contents/MacOS/run.sh"
               codesign --timestamp --entitlements "${{ env.RES }}/uri-launcher.entitlements" --options runtime --force -vvv --keychain "$HOME/Library/Keychains/signing_temp.keychain-db" --sign "${{ secrets.MACOS__DEVELOPER_ID }}" "${{ env.WEASIS_OUTPUT }}/${{ env.NAME }}.app"
           fi
 

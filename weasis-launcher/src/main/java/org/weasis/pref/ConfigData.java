@@ -243,7 +243,7 @@ public class ConfigData {
     }
   }
 
-  private void extractArgFromUri(String uri) {
+  public void extractArgFromUri(String uri) {
     String url = URLDecoder.decode(uri, StandardCharsets.UTF_8);
     String[] cmds = url.split("\\$");
     boolean windows = System.getProperty(P_OS_NAME, "").toLowerCase().startsWith("win"); // NON-NLS

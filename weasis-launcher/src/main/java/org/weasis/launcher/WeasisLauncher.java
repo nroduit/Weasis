@@ -214,9 +214,16 @@ public class WeasisLauncher {
       if (app.isSupported(Action.APP_OPEN_URI)) {
         app.setOpenURIHandler(
             e -> {
-              String uri = "dicom:get -r \"" + e.getURI().toString() + "\""; // NON-NLS
+              String uri = e.getURI().toString();
               LOGGER.info("Get URI event from OS. URI: {}", uri);
-              executeCommands(List.of(uri), null);
+              int index = Utils.getWeasisProtocolIndex(uri);
+              if (index < 0) {
+                uri = "dicom:get -r \"" + uri + "\""; // NON-NLS
+                executeCommands(List.of(uri), null);
+              } else {
+                configData.extractArgFromUri(uri);
+                executeCommands(configData.getArguments(), null);
+              }
             });
       }
       if (app.isSupported(Desktop.Action.APP_OPEN_FILE)) {

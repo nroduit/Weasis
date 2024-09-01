@@ -246,6 +246,12 @@ $JPKGCMD --type app-image --input "$INPUT_DIR" --dest "$OUTPUT_PATH" --name "$NA
 --add-launcher "${DICOMIZER_CONFIG}" --resource-dir "$RES"  --app-version "$WEASIS_CLEAN_VERSION" \
 "${tmpArgs[@]}" --verbose "${signArgs[@]}" "${customOptions[@]}" "${commonOptions[@]}"
 
+if [ "$machine" = "macosx" ] ; then
+    cp -Rf "$RES/run.sh" "$OUTPUT_PATH/$NAME.app/Contents/MacOS/"
+    chmod 755 "$OUTPUT_PATH/$NAME.app/Contents/MacOS/run.sh"
+    codesign --timestamp --entitlements "$RES/uri-launcher.entitlements" --options runtime --force -vvv --sign "$CERTIFICATE" "$RES/$NAME.app"
+fi
+
 if [ "$PACKAGE" = "YES" ] ; then
   VENDOR="Weasis Team"
   COPYRIGHT="© 2009-2024 Weasis Team"

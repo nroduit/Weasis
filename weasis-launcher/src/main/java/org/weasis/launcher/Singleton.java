@@ -28,6 +28,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Properties;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -251,12 +253,7 @@ public class Singleton {
     private final Thread thread;
 
     SingletonServer(SingletonServerRunnable runnable) throws Exception {
-      if ("1.8".equals(System.getProperty("java.specification.version"))) { // NON-NLS
-        thread = new Thread(null, runnable, "SIThread", 0);
-      } else {
-        thread = new Thread(null, runnable, "SIThread", 0, false);
-      }
-
+      thread = new Thread(null, runnable, "SIThread", 0, false);
       thread.setDaemon(true);
       this.runnable = runnable;
     }
@@ -348,83 +345,107 @@ public class Singleton {
     }
 
     private Void runSingletonServer() {
-      while (true) {
-        try (Socket s = ss.accept();
-            InputStream is = s.getInputStream();
-            InputStreamReader isr = new InputStreamReader(is, getStreamEncoding(is));
-            BufferedReader in = new BufferedReader(isr)) {
-          LOGGER.debug("Singleton server is waiting a connection");
+      ExecutorService executor = Executors.newFixedThreadPool(1);
 
-          // First read the random number
-          String line = in.readLine();
-          if (line.equals(String.valueOf(randomNumber))) {
-            line = in.readLine();
-
-            LOGGER.debug("Recieve message: {}", line);
-            if (SI_MAGICWORD.equals(line)) {
-              LOGGER.debug("Got Magic work");
-              List<String> recvArgs = new ArrayList<>();
-              Properties props = new Properties();
-              boolean arg = false;
-              while (true) {
-                try {
-                  line = in.readLine();
-                  if (SI_EOF.equals(line)) {
-                    break;
-                  } else if (SI_ARG.equals(line)) {
-                    arg = true;
-                  } else if (SI_PROP.equals(line)) {
-                    arg = false;
-                  } else if (Utils.hasText(line)) {
-                    if (arg) {
-                      recvArgs.add(line);
-                    } else {
-                      String[] vals = line.split("=", 2);
-                      if (vals.length == 2) {
-                        props.put(vals[0], vals[1]);
-                      }
-                    }
-                  }
-                } catch (IOException ioe1) {
-                  LOGGER.error("Reading singleton lock file", ioe1);
-                }
-              }
-              if (siApp.canStartNewActivation(props)) {
-                siApp.newActivation(recvArgs);
-                LOGGER.debug("Sending ACK");
-                try (OutputStream os = s.getOutputStream();
-                    PrintStream ps = new PrintStream(os, true, isr.getEncoding())) {
-                  ps.println(SI_ACK);
-                  ps.flush();
-                }
-              } else {
-                LOGGER.debug("Sending EXIT");
-                try (OutputStream os = s.getOutputStream();
-                    PrintStream ps = new PrintStream(os, true, isr.getEncoding())) {
-                  ps.println(SI_EXIT);
-                  ps.flush();
-                }
-                System.exit(0);
-              }
-            } else if (SI_STOP.equals(line)) {
-              removeSiFile();
+      try (ServerSocket serverSocket = ss) {
+        while (!Thread.currentThread().isInterrupted()) {
+          try {
+            Socket socket = serverSocket.accept();
+            executor.submit(() -> handleClient(socket));
+          } catch (IOException e) {
+            if (serverSocket.isClosed()) {
               break;
             }
-          } else {
-            // random number does not match
-            // should not happen
-            // shutdown server socket
-            removeSiFile();
-            ss.close();
-            serverStarted = false;
-            LOGGER.error("Unexpected error: Singleton {} disabled", stringId);
-            return null;
+            LOGGER.error("Error accepting connection", e);
           }
-        } catch (IOException ex) {
-          LOGGER.error("Starting Singleton server", ex);
         }
+      } catch (IOException e) {
+        LOGGER.error("Error starting Singleton server", e);
+      } finally {
+        executor.shutdown();
       }
       return null;
+    }
+
+    private void handleClient(Socket socket) {
+      try (InputStream is = socket.getInputStream();
+          InputStreamReader isr = new InputStreamReader(is, getStreamEncoding(is));
+          BufferedReader in = new BufferedReader(isr)) {
+
+        LOGGER.debug("Singleton server is waiting for a connection");
+
+        // First read the random number
+        String line = in.readLine();
+        if (line.equals(String.valueOf(randomNumber))) {
+          line = in.readLine();
+          LOGGER.debug("Receive message: {}", line);
+
+          if (SI_MAGICWORD.equals(line)) {
+            handleMagicWord(in, socket, isr);
+          } else if (SI_STOP.equals(line)) {
+            removeSiFile();
+            ss.close();
+          }
+        } else {
+          handleUnexpectedError();
+        }
+      } catch (IOException ex) {
+        LOGGER.error("Error handling client", ex);
+      }
+    }
+
+    private void handleMagicWord(BufferedReader in, Socket s, InputStreamReader isr)
+        throws IOException {
+      List<String> args = new ArrayList<>();
+      Properties props = new Properties();
+      boolean arg = false;
+
+      while (true) {
+        String line = in.readLine();
+        if (SI_EOF.equals(line)) {
+          break;
+        } else if (SI_ARG.equals(line)) {
+          arg = true;
+        } else if (SI_PROP.equals(line)) {
+          arg = false;
+        } else if (Utils.hasText(line)) {
+          if (arg) {
+            args.add(line);
+          } else {
+            String[] vals = line.split("=", 2);
+            if (vals.length == 2) {
+              props.put(vals[0], vals[1]);
+            }
+          }
+        }
+      }
+
+      if (siApp.canStartNewActivation(props)) {
+        siApp.newActivation(args);
+        LOGGER.debug("Sending ACK");
+        sendResponse(s, isr, SI_ACK);
+      } else {
+        LOGGER.debug("Sending EXIT");
+        sendResponse(s, isr, SI_EXIT);
+        System.exit(0);
+      }
+    }
+
+    private void sendResponse(Socket s, InputStreamReader isr, String response) throws IOException {
+      try (OutputStream os = s.getOutputStream();
+          PrintStream ps = new PrintStream(os, true, isr.getEncoding())) {
+        ps.println(response);
+        ps.flush();
+      }
+    }
+
+    private void handleUnexpectedError() throws IOException {
+      // random number does not match should not happen
+      // shutdown server socket
+      removeSiFile();
+      ss.close();
+      serverStarted = false;
+      LOGGER.error("Unexpected error: Singleton {} disabled", stringId);
     }
   }
 }
