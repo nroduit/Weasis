@@ -21,6 +21,8 @@ import ch.qos.logback.core.util.FileSize;
 import com.formdev.flatlaf.util.SystemInfo;
 import java.awt.Desktop;
 import java.awt.Desktop.Action;
+import java.awt.desktop.OpenFilesEvent;
+import java.awt.desktop.OpenURIEvent;
 import java.io.File;
 import java.util.List;
 import java.util.Properties;
@@ -96,59 +98,68 @@ public class AppLauncher extends WeasisLauncher implements Singleton.SingletonAp
       if (app.isSupported(Action.APP_OPEN_URI)) {
         long time = System.currentTimeMillis();
         boolean noArgs = argv.length == 0;
-        app.setOpenURIHandler(
-            e -> {
-              String uri = e.getURI().toString();
-              LOGGER.info("Get URI event from OS. URI: {}", uri);
-              int index = Utils.getWeasisProtocolIndex(uri);
-              if (index < 0) {
-                uri = "dicom:get -r \"" + uri + "\""; // NON-NLS
-                instance.executeCommands(List.of(uri), null);
-              } else {
-                boolean sameInstance = System.currentTimeMillis() - time < 3000;
-                String[] args;
-                if (SystemInfo.isMacOS) {
-                  args = new String[] {"open", "-n", "-b", "org.weasis.launcher", "--args", uri};
-                } else if (SystemInfo.isWindows) {
-                  args = new String[] {"cmd", "/c", "start", uri};
-                } else {
-                  args = new String[] {"xdg-open", uri};
-                }
-                Thread launcherThread =
-                    Thread.ofVirtual()
-                        .start(
-                            () -> {
-                              try {
-                                ProcessBuilder pb = new ProcessBuilder(args);
-                                pb.start().waitFor(15, TimeUnit.SECONDS);
-                                if (sameInstance && noArgs) {
-                                  LOGGER.info(
-                                      "Configuration with URI is different, restart Weasis with new configuration");
-                                  instance.shutdownHook();
-                                }
-                              } catch (Exception ex) {
-                                LOGGER.error("Cannot start Weasis from URI", ex);
-                              }
-                            });
-                launcherThread.start();
-              }
-            });
+        app.setOpenURIHandler(e -> handleOpenURI(e, time, noArgs, instance));
       }
       if (app.isSupported(Desktop.Action.APP_OPEN_FILE)) {
-        app.setOpenFileHandler(
-            e -> {
-              List<String> files =
-                  e.getFiles().stream()
-                      .map(f -> "dicom:get -l \"" + f.getPath() + "\"") // NON-NLS
-                      .toList();
-              LOGGER.info("Get oOpen file event from OS. Files: {}", files);
-              instance.executeCommands(files, null);
-            });
+        app.setOpenFileHandler(e -> handleOpenFile(e, instance));
       }
 
       Singleton.start(instance, configData.getSourceID());
       instance.launch(launchType);
     }
+  }
+
+  private static void handleOpenURI(
+      OpenURIEvent e, long time, boolean noArgs, AppLauncher instance) {
+    String uri = e.getURI().toString();
+    LOGGER.info("Get URI event from OS. URI: {}", uri);
+    int index = Utils.getWeasisProtocolIndex(uri);
+    if (index < 0) {
+      uri = "dicom:get -r \"" + uri + "\""; // NON-NLS
+      instance.executeCommands(List.of(uri), null);
+    } else {
+      boolean sameInstance = System.currentTimeMillis() - time < 3000;
+      String[] args = getArgsForURI(uri);
+      Thread launcherThread =
+          Thread.ofVirtual().start(() -> launchProcess(args, sameInstance, noArgs, instance));
+      launcherThread.start();
+    }
+  }
+
+  private static String[] getArgsForURI(String uri) {
+    if (SystemInfo.isMacOS) {
+      return new String[] {"open", "-n", "-b", "org.weasis.launcher", "--args", uri}; // NON-NLS
+    } else if (SystemInfo.isWindows) {
+      return new String[] {"cmd", "/c", "start", uri}; // NON-NLS
+    } else {
+      return new String[] {"xdg-open", uri}; // NON-NLS
+    }
+  }
+
+  private static void launchProcess(
+      String[] args, boolean sameInstance, boolean noArgs, AppLauncher instance) {
+    try {
+      ProcessBuilder pb = new ProcessBuilder(args);
+      pb.start().waitFor(15, TimeUnit.SECONDS);
+      if (sameInstance && noArgs) {
+        LOGGER.info("Configuration with URI is different, restart Weasis with new configuration");
+        instance.shutdownHook();
+      }
+    } catch (Exception ex) {
+      LOGGER.error("Cannot start Weasis from URI", ex);
+      if (ex instanceof InterruptedException) {
+        Thread.currentThread().interrupt();
+      }
+    }
+  }
+
+  private static void handleOpenFile(OpenFilesEvent e, AppLauncher instance) {
+    List<String> files =
+        e.getFiles().stream()
+            .map(f -> "dicom:get -l \"" + f.getPath() + "\"") // NON-NLS
+            .toList();
+    LOGGER.info("Get open file event from OS. Files: {}", files);
+    instance.executeCommands(files, null);
   }
 
   @Override

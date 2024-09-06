@@ -334,33 +334,35 @@ public class Singleton {
     private static String getStreamEncoding(InputStream is) throws IOException {
       // read first byte for encoding type
       int encoding = is.read();
-      if (encoding == ENCODING_PLATFORM) {
-        return Charset.defaultCharset().name();
-      } else if (encoding == ENCODING_UNICODE) {
-        return ENCODING_UNICODE_NAME;
-      } else {
-        LOGGER.error("Unknown encoding: {}", encoding);
-        return null;
+      switch (encoding) {
+        case ENCODING_PLATFORM -> {
+          return Charset.defaultCharset().name();
+        }
+        case ENCODING_UNICODE -> {
+          return ENCODING_UNICODE_NAME;
+        }
+        default -> {
+          LOGGER.error("Unknown encoding: {}", encoding);
+          return null;
+        }
       }
     }
 
     private Void runSingletonServer() {
       ExecutorService executor = Executors.newFixedThreadPool(1);
 
-      try (ServerSocket serverSocket = ss) {
+      try {
         while (!Thread.currentThread().isInterrupted()) {
           try {
-            Socket socket = serverSocket.accept();
+            Socket socket = ss.accept();
             executor.submit(() -> handleClient(socket));
           } catch (IOException e) {
-            if (serverSocket.isClosed()) {
+            if (ss.isClosed()) {
               break;
             }
             LOGGER.error("Error accepting connection", e);
           }
         }
-      } catch (IOException e) {
-        LOGGER.error("Error starting Singleton server", e);
       } finally {
         executor.shutdown();
       }
