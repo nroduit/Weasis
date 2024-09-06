@@ -696,6 +696,9 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
                     tsuid, onlyRaw, dicomEditors, jpegQuality, compressionRatio);
             Attributes attributes = img.saveToFile(destinationFile, dicomExportParameters);
             if (attributes != null) {
+              if (attributes.isEmpty()) {
+                attributes = img.getMediaReader().getDicomObject();
+              }
               writeInDicomDir(writer, attributes, node, iuid, destinationFile);
             }
           } else if (node.getUserObject() instanceof DicomElement dcm) {
@@ -715,6 +718,9 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
                     null, onlyRaw, getAttributeEditors(editor), jpegQuality, compressionRatio);
             Attributes attributes = dcm.saveToFile(destinationFile, dicomExportParameters);
             if (attributes != null) {
+              if (attributes.isEmpty()) {
+                attributes = dcm.getMediaReader().getDicomObject();
+              }
               writeInDicomDir(writer, attributes, node, iuid, destinationFile);
             }
           } else if (node.getUserObject() instanceof Series) {
