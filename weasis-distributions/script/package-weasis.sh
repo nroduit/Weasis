@@ -198,6 +198,16 @@ if [ "$arc" = "x86" ] ; then
   find "$INPUT_DIR"/bundle/*-x86* -type f -name "*-${machine}-x86-64-*"  -exec rm -f {} \;
 fi
 
+if [ "$machine" = "macosx" ] ; then
+    mkdir jar_contents
+    unzip "$INPUT_DIR"/weasis-launcher.jar -d jar_contents
+    codesign --force --deep --timestamp --sign "$CERTIFICATE" -vvv jar_contents/com/formdev/flatlaf/natives/libflatlaf-macos-arm64.dylib
+    codesign --force --deep --timestamp --sign "$CERTIFICATE" -vvv jar_contents/com/formdev/flatlaf/natives/libflatlaf-macos-x86_64.dylib
+    jar cfv weasis-launcher.jar -C jar_contents .
+    mv -f weasis-launcher.jar "$INPUT_DIR"/weasis-launcher.jar
+    rm -rf jar_contents
+fi
+
 # Remove previous package
 if [ -d "${OUTPUT_PATH}" ] ; then
   rm -rf "${OUTPUT_PATH}"

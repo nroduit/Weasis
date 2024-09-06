@@ -125,6 +125,13 @@ jobs:
         run: |
           machine=${{ matrix.wsystem }}
           if [ "$machine" = "macosx" ] ; then
+            mkdir jar_contents
+            unzip "${{ env.WEASIS_INPUT_BIN }}"/weasis-launcher.jar -d jar_contents
+            codesign --force --deep --timestamp --sign "${{ secrets.MACOS__DEVELOPER_ID }}" -vvv --keychain "$HOME/Library/Keychains/signing_temp.keychain-db" jar_contents/com/formdev/flatlaf/natives/libflatlaf-macos-arm64.dylib
+            codesign --force --deep --timestamp --sign "${{ secrets.MACOS__DEVELOPER_ID }}" -vvv --keychain "$HOME/Library/Keychains/signing_temp.keychain-db" jar_contents/com/formdev/flatlaf/natives/libflatlaf-macos-x86_64.dylib
+            jar cfv weasis-launcher.jar -C jar_contents .
+            mv -f weasis-launcher.jar "${{ env.WEASIS_INPUT_BIN }}/weasis-launcher.jar
+            rm -rf jar_contents
             declare -a customOptions=("--java-options" "-splash:\$APPDIR/resources/images/about-round.png" "--java-options" "-Dapple.laf.useScreenMenuBar=true" "--java-options" "-Dapple.awt.application.appearance=NSAppearanceNameDarkAqua")
             declare -a signArgs=("--mac-package-identifier" "${{ env.IDENTIFIER }}" "--mac-signing-keychain" "$HOME/Library/Keychains/signing_temp.keychain-db" "--mac-sign")
           elif [ "$machine" = "windows" ] ; then
