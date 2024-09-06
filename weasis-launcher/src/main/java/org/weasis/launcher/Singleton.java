@@ -422,7 +422,7 @@ public class Singleton {
 
       if (siApp.canStartNewActivation(props)) {
         siApp.newActivation(args);
-        LOGGER.debug("Sending ACK");
+        LOGGER.debug("Sending ACK for loading args");
         sendResponse(s, isr, SI_ACK);
       } else {
         LOGGER.debug("Sending EXIT");

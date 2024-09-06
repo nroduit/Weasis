@@ -18,6 +18,9 @@ import ch.qos.logback.core.rolling.FixedWindowRollingPolicy;
 import ch.qos.logback.core.rolling.RollingFileAppender;
 import ch.qos.logback.core.rolling.SizeBasedTriggeringPolicy;
 import ch.qos.logback.core.util.FileSize;
+import com.formdev.flatlaf.util.SystemInfo;
+import java.awt.Desktop;
+import java.awt.Desktop.Action;
 import java.io.File;
 import java.util.List;
 import java.util.Properties;
@@ -75,17 +78,74 @@ public class AppLauncher extends WeasisLauncher implements Singleton.SingletonAp
     logger.addAppender(rollingFileAppender);
   }
 
+  private static final org.slf4j.Logger LOGGER = LoggerFactory.getLogger(AppLauncher.class);
+
   public AppLauncher(ConfigData configData) {
     super(configData);
   }
 
   public static void main(String[] argv) throws Exception {
     final Type launchType = Type.NATIVE;
-    System.setProperty("weasis.launch.type", launchType.name());
 
     ConfigData configData = new ConfigData(argv);
     if (!Singleton.invoke(configData)) {
       AppLauncher instance = new AppLauncher(configData);
+
+      // Init handler for open URI and open file events
+      Desktop app = Desktop.getDesktop();
+      if (app.isSupported(Action.APP_OPEN_URI)) {
+        long time = System.currentTimeMillis();
+        boolean noArgs = argv.length == 0;
+        app.setOpenURIHandler(
+            e -> {
+              String uri = e.getURI().toString();
+              LOGGER.info("Get URI event from OS. URI: {}", uri);
+              int index = Utils.getWeasisProtocolIndex(uri);
+              if (index < 0) {
+                uri = "dicom:get -r \"" + uri + "\""; // NON-NLS
+                instance.executeCommands(List.of(uri), null);
+              } else {
+                boolean sameInstance = System.currentTimeMillis() - time < 3000;
+                String[] args;
+                if (SystemInfo.isMacOS) {
+                  args = new String[] {"open", "-n", "-b", "org.weasis.launcher", "--args", uri};
+                } else if (SystemInfo.isWindows) {
+                  args = new String[] {"cmd", "/c", "start", uri};
+                } else {
+                  args = new String[] {"xdg-open", uri};
+                }
+                Thread launcherThread =
+                    Thread.ofVirtual()
+                        .start(
+                            () -> {
+                              try {
+                                ProcessBuilder pb = new ProcessBuilder(args);
+                                pb.start().waitFor(15, TimeUnit.SECONDS);
+                                if (sameInstance && noArgs) {
+                                  LOGGER.info(
+                                      "Configuration with URI is different, restart Weasis with new configuration");
+                                  instance.shutdownHook();
+                                }
+                              } catch (Exception ex) {
+                                LOGGER.error("Cannot start Weasis from URI", ex);
+                              }
+                            });
+                launcherThread.start();
+              }
+            });
+      }
+      if (app.isSupported(Desktop.Action.APP_OPEN_FILE)) {
+        app.setOpenFileHandler(
+            e -> {
+              List<String> files =
+                  e.getFiles().stream()
+                      .map(f -> "dicom:get -l \"" + f.getPath() + "\"") // NON-NLS
+                      .toList();
+              LOGGER.info("Get oOpen file event from OS. Files: {}", files);
+              instance.executeCommands(files, null);
+            });
+      }
+
       Singleton.start(instance, configData.getSourceID());
       instance.launch(launchType);
     }

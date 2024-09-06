@@ -24,8 +24,6 @@ import static org.weasis.pref.ConfigData.P_WEASIS_VERSION;
 
 import com.formdev.flatlaf.FlatSystemProperties;
 import com.formdev.flatlaf.util.SystemInfo;
-import java.awt.Desktop;
-import java.awt.Desktop.Action;
 import java.awt.EventQueue;
 import java.io.File;
 import java.io.FileDescriptor;
@@ -123,6 +121,7 @@ public class WeasisLauncher {
   protected String look = null;
   protected RemotePrefService remotePrefs;
   protected String localPrefsDir;
+  protected volatile boolean closing = false;
 
   protected final Properties modulesi18n;
   protected final ConfigData configData;
@@ -179,6 +178,9 @@ public class WeasisLauncher {
     try {
 
       String goshArgs = getGoshArgs(serverProp);
+      if (closing) {
+        return;
+      }
       // Now create an instance of the framework with our configuration properties.
       mFelix = new Felix(serverProp);
       // Initialize the framework, but don't start it yet.
@@ -195,7 +197,9 @@ public class WeasisLauncher {
           new ServiceTracker(
               mFelix.getBundleContext(), "org.apache.felix.service.command.CommandProcessor", null);
       mTracker.open();
-
+      if (closing) {
+        return;
+      }
       // Start the framework.
       mFelix.start();
 
@@ -208,37 +212,6 @@ public class WeasisLauncher {
         LOGGER.info(
             "Logs has been delegated to the OSGI service and can be read in {}", logActivation);
       }
-
-      // Init after default properties for UI
-      Desktop app = Desktop.getDesktop();
-      if (app.isSupported(Action.APP_OPEN_URI)) {
-        app.setOpenURIHandler(
-            e -> {
-              String uri = e.getURI().toString();
-              LOGGER.info("Get URI event from OS. URI: {}", uri);
-              int index = Utils.getWeasisProtocolIndex(uri);
-              if (index < 0) {
-                uri = "dicom:get -r \"" + uri + "\""; // NON-NLS
-                executeCommands(List.of(uri), null);
-              } else {
-                configData.extractArgFromUri(uri);
-                executeCommands(configData.getArguments(), null);
-              }
-            });
-      }
-      if (app.isSupported(Desktop.Action.APP_OPEN_FILE)) {
-
-        app.setOpenFileHandler(
-            e -> {
-              List<String> files =
-                  e.getFiles().stream()
-                      .map(f -> "dicom:get -l \"" + f.getPath() + "\"") // NON-NLS
-                      .toList();
-              LOGGER.info("Get oOpen file event from OS. Files: {}", files);
-              executeCommands(files, null);
-            });
-      }
-
       executeCommands(configData.getArguments(), goshArgs);
 
       checkBundleUI(serverProp);
@@ -246,6 +219,9 @@ public class WeasisLauncher {
 
       showMessage(mainFrame, serverProp);
 
+      if (closing) {
+        return;
+      }
       // Wait for framework to stop to exit the VM.
       mFelix.waitForStop(0);
       System.exit(0);
@@ -1130,7 +1106,8 @@ Starting OSGI Bundles...
     return Locale.getDefault();
   }
 
-  private void shutdownHook() {
+  protected void shutdownHook() {
+    closing = true;
     if (mFelix == null || (mFelix.getState() & 6) != 0) {
       return;
     }
