@@ -63,6 +63,8 @@ public class LanguageSetting extends AbstractItemDialogPage {
   }
 
   private void jbInit() {
+    GuiUtils.setPreferredWidth(comboBoxLang, 300, 150);
+    GuiUtils.setPreferredWidth(comboBoxFormat, 300, 150);
     add(
         GuiUtils.getFlowLayoutPanel(
             FlowLayout.LEADING,
@@ -92,11 +94,13 @@ public class LanguageSetting extends AbstractItemDialogPage {
     return """
             <html>
               <h3>%s</h3>
+              <font size="-1">
               %s (%s): %s<BR>
               %2$s (%s): %s<BR>
               %2$s (%s): %s<BR>
               %2$s (%s): %s<BR>
               %s: %s
+              </font>
               <p><font color="%s">%s</font></p>
             </html>
             """
