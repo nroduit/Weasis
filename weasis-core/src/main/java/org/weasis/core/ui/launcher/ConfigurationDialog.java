@@ -17,6 +17,7 @@ import java.util.Map;
 import javax.swing.*;
 import net.miginfocom.swing.MigLayout;
 import org.weasis.core.Messages;
+import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.ui.launcher.Launcher.ApplicationConfiguration;
 import org.weasis.core.ui.launcher.Launcher.Compatibility;
 import org.weasis.core.ui.launcher.Launcher.Configuration;
@@ -90,7 +91,9 @@ public class ConfigurationDialog extends JDialog {
 
     JButton saveButton = new JButton(Messages.getString("save"));
     saveButton.addActionListener(_ -> saveConfiguration());
-    add(saveButton, "cell 1 3, split 2, align right, gapright 15, gaptop 15"); // NON-NLS
+    JButton jButtonHelp = GuiUtils.createHelpButton("launcher-external"); // NON-NLS
+    add(jButtonHelp, "cell 1 3, split 3, align right, gapright 15, gaptop 15"); // NON-NLS
+    add(saveButton, "align right, gaptop 15"); // NON-NLS
     JButton cancelButton = new JButton(Messages.getString("cancel"));
     cancelButton.addActionListener(_ -> dispose());
     add(cancelButton);

@@ -53,7 +53,6 @@ public class DicomImport extends AbstractWizardDialog {
     importButton.addActionListener(e -> importSelection());
 
     JButton jButtonHelp = GuiUtils.createHelpButton("dicom-import"); // NON-NLS
-    jButtonHelp.putClientProperty("JButton.buttonType", "help");
 
     jPanelBottom.removeAll();
     jPanelBottom.add(

@@ -487,6 +487,7 @@ public class GuiUtils {
   public static JButton createHelpButton(String topic) {
     JButton jButtonHelp = new JButton();
     jButtonHelp.putClientProperty("JButton.buttonType", "help");
+    jButtonHelp.setToolTipText(Messages.getString("online.documentation"));
     jButtonHelp.addActionListener(createHelpActionListener(jButtonHelp, topic));
     return jButtonHelp;
   }
