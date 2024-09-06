@@ -68,10 +68,6 @@ public class Utils {
     return false;
   }
 
-  public static boolean hasText(String str) {
-    return hasText((CharSequence) str);
-  }
-
   public static String getWeasisProtocol(String... params) {
     Pattern pattern = Pattern.compile("^weasis(-.*)?://.*?");
     for (String p : params) {

@@ -349,9 +349,7 @@ public class Singleton {
     }
 
     private Void runSingletonServer() {
-      ExecutorService executor = Executors.newFixedThreadPool(1);
-
-      try {
+      try (ExecutorService executor = Executors.newFixedThreadPool(1)) {
         while (!Thread.currentThread().isInterrupted()) {
           try {
             Socket socket = ss.accept();
@@ -363,8 +361,6 @@ public class Singleton {
             LOGGER.error("Error accepting connection", e);
           }
         }
-      } finally {
-        executor.shutdown();
       }
       return null;
     }
