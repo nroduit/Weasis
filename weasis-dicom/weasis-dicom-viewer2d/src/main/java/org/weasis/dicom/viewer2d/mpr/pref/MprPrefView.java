@@ -108,29 +108,30 @@ public class MprPrefView extends AbstractItemDialogPage {
 
   @Override
   public void closeAdditionalWindow() {
-    EventManager eventManager = EventManager.getInstance();
+    WProperties properties = EventManager.getInstance().getOptions();
 
     int mode = comboBox3DCursorMode.getSelectedIndex();
-    eventManager.getOptions().putIntProperty(View2d.P_CROSSHAIR_MODE, mode);
+    properties.putIntProperty(View2d.P_CROSSHAIR_MODE, mode);
     int gapSize = (int) spinnerCrossGapSize.getValue();
-    eventManager.getOptions().putIntProperty(View2d.P_CROSSHAIR_CENTER_GAP, gapSize);
-    GuiUtils.getUICore()
-        .getSystemPreferences()
-        .put(
-            MprFactory.P_DEFAULT_LAYOUT,
-            ((GridBagLayoutModel) comboBoxLayouts.getSelectedItem()).getId());
-
+    properties.putIntProperty(View2d.P_CROSSHAIR_CENTER_GAP, gapSize);
+    GridBagLayoutModel layout = (GridBagLayoutModel) comboBoxLayouts.getSelectedItem();
+    if (layout != null) {
+      GuiUtils.getUICore().getSystemPreferences().put(MprFactory.P_DEFAULT_LAYOUT, layout.getId());
+    }
     GuiUtils.getUICore().saveSystemPreferences();
   }
 
   @Override
   public void resetToDefaultValues() {
-
-    comboBox3DCursorMode.setSelectedIndex(1);
-
     // Get the default server configuration and if no value take the default value in parameter.
     WProperties properties = EventManager.getInstance().getOptions();
-    properties.resetProperty(View2d.P_CROSSHAIR_CENTER_GAP, null);
+    properties.resetProperty(View2d.P_CROSSHAIR_MODE, "1");
+    int mode = properties.getIntProperty(View2d.P_CROSSHAIR_MODE, 1);
+    comboBox3DCursorMode.setSelectedIndex(mode);
+    if (comboBox3DCursorMode.getSelectedIndex() < 0) {
+      comboBox3DCursorMode.setSelectedItem(1);
+    }
+    properties.resetProperty(View2d.P_CROSSHAIR_CENTER_GAP, "40");
     int gapSize = properties.getIntProperty(View2d.P_CROSSHAIR_CENTER_GAP, 40);
     spinnerCrossGapSize.setValue(gapSize);
     GuiUtils.getUICore()

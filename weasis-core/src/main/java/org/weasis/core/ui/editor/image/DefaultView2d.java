@@ -933,14 +933,6 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         }
       } else {
         double location = synch.getLocation().doubleValue();
-        // TODO add a way in GUI to resynchronize series. Offset should be in Series tag and
-        // related
-        // to
-        // a specific series
-        // Double offset = (Double) actionsInView.get(ActionW.STACK_OFFSET.cmd());
-        // if (offset != null) {
-        // location += offset;
-        // }
         imgElement =
             series.getNearestImage(
                 location,

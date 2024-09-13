@@ -223,6 +223,9 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
           options, WindowOp.P_APPLY_WL_COLOR, prefNode, Boolean.TRUE.toString());
       WProperties.setProperty(options, WindowOp.P_INVERSE_LEVEL, prefNode, Boolean.TRUE.toString());
       WProperties.setProperty(options, PRManager.PR_APPLY, prefNode, Boolean.FALSE.toString());
+
+      WProperties.setProperty(options, View2d.P_CROSSHAIR_MODE, prefNode, "1");
+      WProperties.setProperty(options, View2d.P_CROSSHAIR_CENTER_GAP, prefNode, "40");
     }
 
     initializeParameters();
@@ -1439,6 +1442,13 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
           options.getBooleanProperty(WindowOp.P_INVERSE_LEVEL, true));
       BundlePreferences.putBooleanPreferences(
           prefNode, PRManager.PR_APPLY, options.getBooleanProperty(PRManager.PR_APPLY, false));
+
+      BundlePreferences.putIntPreferences(
+          prefNode, View2d.P_CROSSHAIR_MODE, options.getIntProperty(View2d.P_CROSSHAIR_MODE, 1));
+      BundlePreferences.putIntPreferences(
+          prefNode,
+          View2d.P_CROSSHAIR_CENTER_GAP,
+          options.getIntProperty(View2d.P_CROSSHAIR_CENTER_GAP, 40));
 
       Preferences containerNode =
           prefs.node(View2dContainer.UI.clazz.getSimpleName().toLowerCase());
