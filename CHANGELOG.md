@@ -1,5 +1,23 @@
 # Changelog
 
+## [v4.5.1](https://github.com/nroduit/Weasis/tree/v4.5.1) (2024-09-18)
+
+[Full Changelog](https://github.com/nroduit/Weasis/compare/v4.5.0...v4.5.1)
+
+**Implemented enhancements:**
+
+- URl handler issue on Mac for all users [\#583](https://github.com/nroduit/Weasis/issues/583)
+- oblique MPR feature. [\#578](https://github.com/nroduit/Weasis/issues/578)
+- Add Dicom Calling Node to Dicom Export -\> Dicom Send. [\#575](https://github.com/nroduit/Weasis/issues/575)
+
+**Fixed bugs:**
+
+- MPR preferences are not persistent [\#589](https://github.com/nroduit/Weasis/issues/589)
+- Separate dock icon on Ubuntu [\#588](https://github.com/nroduit/Weasis/issues/588)
+- DICOMDIR cannot be written if it contains special DICOM elements [\#586](https://github.com/nroduit/Weasis/issues/586)
+- Missing the boot.log file [\#579](https://github.com/nroduit/Weasis/issues/579)
+- Failed to send to DICOM archive [\#577](https://github.com/nroduit/Weasis/issues/577)
+
 ## [v4.5.0](https://github.com/nroduit/Weasis/tree/v4.5.0) (2024-08-15)
 
 [Full Changelog](https://github.com/nroduit/Weasis/compare/v4.4.0...v4.5.0)
