@@ -142,7 +142,7 @@ public class AuthMethodDialog extends JDialog {
   }
 
   public JPanel getProvider() {
-    MigLayout layout = new MigLayout("fillx", "[right]rel[grow,fill]"); // NON-NLS
+    MigLayout layout = new MigLayout("fillx, insets 5lp", "[right]rel[grow,fill]"); // NON-NLS
     JPanel panel = new JPanel(layout);
     panel.setBorder(
         BorderFactory.createCompoundBorder(
@@ -160,7 +160,7 @@ public class AuthMethodDialog extends JDialog {
   }
 
   public JPanel getRegistration() {
-    MigLayout layout = new MigLayout("fillx", "[right]rel[grow,fill]"); // NON-NLS
+    MigLayout layout = new MigLayout("fillx, ins 5lp", "[right]rel[grow,fill]"); // NON-NLS
     JPanel panel = new JPanel(layout);
     panel.setBorder(
         BorderFactory.createCompoundBorder(

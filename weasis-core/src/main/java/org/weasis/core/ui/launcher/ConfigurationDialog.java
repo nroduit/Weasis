@@ -56,11 +56,11 @@ public class ConfigurationDialog extends JDialog {
     cardPanel = new JPanel(new CardLayout());
     cardPanel.setBorder(BorderFactory.createTitledBorder(Messages.getString("configuration")));
 
-    JPanel uriPanel = new JPanel(new MigLayout("", "[][grow]", "[]")); // NON-NLS
+    JPanel uriPanel = new JPanel(new MigLayout("insets 10", "[][grow]", "[]")); // NON-NLS
     uriPanel.add(new JLabel(Messages.getString("uri") + StringUtil.COLON), "cell 0 0"); // NON-NLS
     uriPanel.add(uriField, "cell 1 0, growx"); // NON-NLS
 
-    JPanel appPanel = new JPanel(new MigLayout("", "[][grow]", "[][][][][]")); // NON-NLS
+    JPanel appPanel = new JPanel(new MigLayout("insets 10", "[][grow]", "[][][][][]")); // NON-NLS
     appPanel.add(
         new JLabel(Messages.getString("binary.path") + StringUtil.COLON), "cell 0 0"); // NON-NLS
     appPanel.add(binaryPathField, "cell 1 0, growx"); // NON-NLS

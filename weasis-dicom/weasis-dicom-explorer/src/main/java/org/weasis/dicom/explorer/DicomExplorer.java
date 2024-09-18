@@ -805,7 +805,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
 
     public SeriesPane(MediaSeriesGroup sequence) {
       this.sequence = Objects.requireNonNull(sequence);
-      this.setLayout(new MigLayout("wrap 1", "[center]")); // NON-NLS
+      this.setLayout(new MigLayout("wrap 1, insets 0", "[center]")); // NON-NLS
       this.setBackground(FlatUIUtils.getUIColor(SeriesSelectionModel.BACKGROUND, Color.LIGHT_GRAY));
       int thumbnailSize =
           GuiUtils.getUICore()

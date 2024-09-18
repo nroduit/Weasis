@@ -85,7 +85,7 @@ public class AnatomicRegionView extends JPanel {
   }
 
   void jbInit() {
-    setLayout(new MigLayout("wrap 2", "[right][grow]", "[]10[]10[]20[]")); // NON-NLS
+    setLayout(new MigLayout("wrap 2, insets 5lp", "[right][grow]", "[]10[]10[]20[]")); // NON-NLS
 
     setBorder(GuiUtils.getEmptyBorder(10, 15, 10, 15));
 
