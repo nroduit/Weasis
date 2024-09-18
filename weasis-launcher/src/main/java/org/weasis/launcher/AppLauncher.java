@@ -42,7 +42,7 @@ public class AppLauncher extends WeasisLauncher implements Singleton.SingletonAp
 
     PatternLayoutEncoder encoder = new PatternLayoutEncoder();
     encoder.setContext(loggerContext);
-    encoder.setPattern("%d{dd.MM.yyyy HH:mm:ss.SSS} *%-5level* %msg%n");
+    encoder.setPattern("%d{dd.MM.yyyy HH:mm:ss.SSS} *%-5level* %msg%n"); // NON-NLS
     encoder.start();
 
     ConsoleAppender<ILoggingEvent> consoleAppender = new ConsoleAppender<>();
@@ -53,20 +53,20 @@ public class AppLauncher extends WeasisLauncher implements Singleton.SingletonAp
 
     RollingFileAppender<ILoggingEvent> rollingFileAppender = new RollingFileAppender<>();
     rollingFileAppender.setContext(loggerContext);
-    rollingFileAppender.setName("BOOT_ROLLING_FILE");
+    rollingFileAppender.setName("BOOT_ROLLING_FILE"); // NON-NLS
     rollingFileAppender.setEncoder(encoder);
-    rollingFileAppender.setFile(bootLog.getPath() + "/boot.log");
+    rollingFileAppender.setFile(bootLog.getPath() + "/boot.log"); // NON-NLS
 
     FixedWindowRollingPolicy rollingPolicy = new FixedWindowRollingPolicy();
     rollingPolicy.setContext(loggerContext);
     rollingPolicy.setParent(rollingFileAppender);
-    rollingPolicy.setFileNamePattern(bootLog.getPath() + "/boot.%i.log.zip");
+    rollingPolicy.setFileNamePattern(bootLog.getPath() + "/boot.%i.log.zip"); // NON-NLS
     rollingPolicy.setMinIndex(1);
     rollingPolicy.setMaxIndex(3);
     rollingPolicy.start();
 
     SizeBasedTriggeringPolicy<ILoggingEvent> triggeringPolicy = new SizeBasedTriggeringPolicy<>();
-    triggeringPolicy.setMaxFileSize(FileSize.valueOf("3MB"));
+    triggeringPolicy.setMaxFileSize(FileSize.valueOf("3MB")); // NON-NLS
     triggeringPolicy.start();
 
     rollingFileAppender.setRollingPolicy(rollingPolicy);

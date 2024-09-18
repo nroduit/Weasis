@@ -193,7 +193,7 @@ public class DicomPrintDialog<I extends ImageElement> extends JDialog {
     optionPane = new DicomPrintOptionPane();
     panel.add(optionPane, "newline, gaptop 10, spanx"); // NON-NLS
 
-    JLabel lblCalling = new JLabel("Calling Node" + StringUtil.COLON);
+    JLabel lblCalling = new JLabel(Messages.getString("calling.node") + StringUtil.COLON);
     AbstractDicomNode.loadDicomNodes(
         comboCallingNode, AbstractDicomNode.Type.DICOM_CALLING, UsageType.STORAGE);
     GuiUtils.setPreferredWidth(comboCallingNode, 185, 150);
@@ -202,7 +202,7 @@ public class DicomPrintDialog<I extends ImageElement> extends JDialog {
         getPersistence(), comboCallingNode.getModel(), LAST_CALLING_NODE);
 
     panel.add(lblCalling, "newline, growx 0, alignx trailing"); // NON-NLS
-    panel.add(comboCallingNode, "growx, alignx trailing, gapright 25");
+    panel.add(comboCallingNode, "growx, alignx trailing, gapright 25"); // NON-NLS
 
     JButton printButton = new JButton(Messages.getString("DicomPrintDialog.print"));
     printButton.addActionListener(this::printButtonActionPerformed);

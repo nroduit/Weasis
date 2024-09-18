@@ -59,7 +59,7 @@ public class AnatomicRegionView extends JPanel {
   private final DropDownButton modifiersDropdown =
       new DropDownButton(
           "search_mod", // NON-NLS
-          "Modifiers",
+          Messages.getString("modifiers"),
           GuiUtils.getDownArrowIcon(),
           modifierGroup) {
         @Override
@@ -85,10 +85,7 @@ public class AnatomicRegionView extends JPanel {
   }
 
   void jbInit() {
-    setLayout(new MigLayout("wrap 2, insets 5lp", "[right][grow]", "[]10[]10[]20[]")); // NON-NLS
-
-    setBorder(GuiUtils.getEmptyBorder(10, 15, 10, 15));
-
+    setLayout(new MigLayout("wrap 2, insets 0", "[right][grow]", "[]10[]10[]20[]")); // NON-NLS
     CategoryBuilder[] sortedCategories =
         AnatomicBuilder.categoryMap.keySet().stream()
             .sorted(Comparator.comparing(CategoryBuilder::toString))

@@ -186,7 +186,7 @@ public class AcquirePublishDialog extends JDialog {
     JPanel panel = GuiUtils.getFlowLayoutPanel(ITEM_SEPARATOR_SMALL, 0, lblDestination, comboNode);
     if (comboCallingNode.getItemCount() > 0) {
       AbstractDicomNode.addTooltipToComboList(comboCallingNode);
-      JLabel lblCalling = new JLabel("Calling Node" + StringUtil.COLON);
+      JLabel lblCalling = new JLabel(Messages.getString("calling.node") + StringUtil.COLON);
       GuiUtils.setPreferredWidth(comboCallingNode, 160, 120);
 
       panel.add(GuiUtils.boxHorizontalStrut(ITEM_SEPARATOR_LARGE));
@@ -345,7 +345,7 @@ public class AcquirePublishDialog extends JDialog {
                   if (!StringUtil.hasText(weasisAet)) {
                     weasisAet =
                         comboCallingNode.getSelectedItem() == null
-                            ? "WEASIS_AE"
+                            ? "WEASIS_AE" // NON-NLS
                             : ((DefaultDicomNode) comboCallingNode.getSelectedItem()).getAeTitle();
                   }
                   publishPanel.publishDirDicom(exportDirDicom, node, weasisAet, toPublish);

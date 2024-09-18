@@ -68,7 +68,7 @@ public class SendDicomView extends ExportDicomView {
     JPanel panel = GuiUtils.getFlowLayoutPanel(ITEM_SEPARATOR_SMALL, 0, lblDest, comboNode);
     if (comboCallingNode.getItemCount() > 0) {
       AbstractDicomNode.addTooltipToComboList(comboCallingNode);
-      JLabel lblCalling = new JLabel("Calling Node" + StringUtil.COLON);
+      JLabel lblCalling = new JLabel(Messages.getString("calling.node") + StringUtil.COLON);
       GuiUtils.setPreferredWidth(comboCallingNode, 160, 120);
 
       panel.add(GuiUtils.boxHorizontalStrut(ITEM_SEPARATOR_LARGE));
@@ -125,7 +125,7 @@ public class SendDicomView extends ExportDicomView {
       if (!StringUtil.hasText(weasisAet)) {
         weasisAet =
             comboCallingNode.getSelectedItem() == null
-                ? "WEASIS_AE"
+                ? "WEASIS_AE" // NON-NLS
                 : ((DefaultDicomNode) comboCallingNode.getSelectedItem()).getAeTitle();
       }
       AdvancedParams params = new AdvancedParams();

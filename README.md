@@ -18,7 +18,7 @@ See [How to build Weasis](https://nroduit.github.io/en/getting-started/building-
 
 # General Features
 * Open source DICOM viewer under EPL 2 or Apache 2 license
-* Flexible integration with PACS, VNA, RIS, HIS or PHR  (see [integration documentation](https://nroduit.github.io/en/basics/customize/integration/))
+* Flexible integration with PACS, VNA, RIS, HIS, or PHR  (see [integration documentation](https://nroduit.github.io/en/basics/customize/integration/))
 * [Desktop distributions](https://nroduit.github.io/en/getting-started/download-dicom-viewer/) (Windows, macOS, and Linux)
 * Web access through [weasis protocol](https://nroduit.github.io/en/getting-started/weasis-protocol)
 * [Responsive user interface](https://nroduit.github.io/en/tutorials/theme/index.html#how-to-scale-the-user-interface) working well on high DPI screens
@@ -33,9 +33,9 @@ See [How to build Weasis](https://nroduit.github.io/en/getting-started/building-
 # Viewer Features (see also [Tutorials](https://nroduit.github.io/en/tutorials/))
 
 * Data type support
-  * Display most of DICOM files including multi-frame, enhanced, MPEG-2, MPEG-4, MIME Encapsulation, DOC, SR, PR, KOS, SEG, AU, RT and ECG
+  * Display most DICOM files including multi-frame, enhanced, MPEG-2, MPEG-4, MIME Encapsulation, DOC, SR, PR, KOS, SEG, AU, RT, and ECG
   * Display DICOM image containing float or double data (Parametric Map)
-  * Import and export DICOM CD/DVD with DICOMDIR 
+  * Import and export DICOM CD/DVD with DICOMDIR
   * Import and export DICOM ZIP files
   * Viewer for common image formats (TIFF, BMP, GIF, JPEG, PNG, RAS, HDR, and PNM)
 
@@ -59,7 +59,7 @@ See [How to build Weasis](https://nroduit.github.io/en/getting-started/building-
   * Persistent magnifier glass
 
 * Measurement and annotation tools
-  * Length, area and angle measurement
+  * Length, area, and angle measurement
   * Region statistics of pixels (Min, Max, Mean, StDev, Skewness, Kurtosis, Entropy)
   * Histogram of modality values
   * SUV measurement
@@ -73,6 +73,6 @@ See [How to build Weasis](https://nroduit.github.io/en/getting-started/building-
   * Printing views to DICOM and system printers
   * Apply and Create DICOM Key Object Selection by selecting images with the star button
   * Display and search into all DICOM attributes
-  * DICOM RT tools for radiotherapy: display RT structure set, dose and DVH chart
+  * DICOM RT tools for radiotherapy: display RT structure set, dose, and DVH chart
 
 <img src='./weasis.jpg'>
