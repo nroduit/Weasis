@@ -7,7 +7,6 @@
 **Implemented enhancements:**
 
 - URl handler issue on Mac for all users [\#583](https://github.com/nroduit/Weasis/issues/583)
-- oblique MPR feature. [\#578](https://github.com/nroduit/Weasis/issues/578)
 - Add Dicom Calling Node to Dicom Export -\> Dicom Send. [\#575](https://github.com/nroduit/Weasis/issues/575)
 
 **Fixed bugs:**
