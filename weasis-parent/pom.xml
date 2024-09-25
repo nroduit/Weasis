@@ -17,8 +17,8 @@
     <revision>4.5.2</revision>
     <changelist>-SNAPSHOT</changelist>  <!-- Remove "-SNAPSHOT" for release -->
 
-    <java-version>22</java-version>
-    <jdk-version>22</jdk-version>
+    <java-version>23</java-version>
+    <jdk-version>23</jdk-version>
     <enforcer.jdk-version>[${jdk-version},)</enforcer.jdk-version>
     <enforcer.maven-version>[3.6.3,)</enforcer.maven-version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
