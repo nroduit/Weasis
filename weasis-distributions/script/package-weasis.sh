@@ -183,7 +183,7 @@ else
   INPUT_DIR="$INPUT_PATH_UNIX/weasis"
 fi
 
-WEASIS_CLEAN_VERSION=$(echo "$WEASIS_VERSION" | sed -e 's/"//g' -e 's/-.*//')
+WEASIS_CLEAN_VERSION=$(echo "$WEASIS_VERSION" sed -e 's/"//g' -e 's/-.*//' -e 's/\(\([0-9]\+\.\)\{2\}[0-9]\+\)\.[0-9]\+/\1/')
 
 
 # Remove pack jar for launcher
