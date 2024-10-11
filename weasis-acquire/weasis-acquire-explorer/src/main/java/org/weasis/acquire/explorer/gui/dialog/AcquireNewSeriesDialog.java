@@ -33,6 +33,7 @@ public class AcquireNewSeriesDialog extends JDialog implements PropertyChangeLis
   private final List<ImageElement> medias;
 
   public AcquireNewSeriesDialog(AcquireTabPanel acquireTabPanel, final List<ImageElement> medias) {
+    super(WinUtil.getParentFrame(acquireTabPanel), true);
     this.acquireTabPanel = acquireTabPanel;
     this.medias = medias;
     optionPane =
@@ -46,7 +47,6 @@ public class AcquireNewSeriesDialog extends JDialog implements PropertyChangeLis
     optionPane.addPropertyChangeListener(this);
 
     setContentPane(optionPane);
-    setModal(true);
     pack();
   }
 

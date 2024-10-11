@@ -9,7 +9,7 @@
  */
 package org.weasis.acquire.explorer.gui.dialog;
 
-import java.awt.Component;
+import java.awt.*;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.beans.PropertyChangeEvent;
@@ -65,7 +65,7 @@ public class AcquireImportDialog extends JDialog implements PropertyChangeListen
   private final List<ImageElement> mediaList;
 
   public AcquireImportDialog(ImportPanel importPanel, List<ImageElement> mediaList) {
-    super();
+    super(WinUtil.getParentFrame(importPanel), true);
     this.importPanel = importPanel;
     this.mediaList = mediaList;
 
@@ -88,8 +88,6 @@ public class AcquireImportDialog extends JDialog implements PropertyChangeListen
             OPTIONS[0]);
     optionPane.addPropertyChangeListener(this);
     setContentPane(optionPane);
-    setModal(true);
-    setLocationRelativeTo(null);
     pack();
   }
 
