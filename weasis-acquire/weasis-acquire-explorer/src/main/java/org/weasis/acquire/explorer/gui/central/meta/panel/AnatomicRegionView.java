@@ -28,7 +28,7 @@ import javax.swing.JRadioButton;
 import net.miginfocom.swing.MigLayout;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.weasis.core.Messages;
+import org.weasis.acquire.explorer.Messages;
 import org.weasis.core.api.gui.util.CheckBoxModel;
 import org.weasis.core.api.gui.util.DropDownButton;
 import org.weasis.core.api.gui.util.GroupCheckBoxMenu;
@@ -52,9 +52,9 @@ public class AnatomicRegionView extends JPanel {
 
   private final ButtonGroup ratioGroup = new ButtonGroup();
   private final JRadioButton radioButtonSeries =
-      new JRadioButton(Messages.getString("CalibrationView.series"));
+      new JRadioButton(org.weasis.core.Messages.getString("CalibrationView.series"));
   private final JRadioButton radioButtonImage =
-      new JRadioButton(Messages.getString("CalibrationView.current"));
+      new JRadioButton(org.weasis.core.Messages.getString("CalibrationView.current"));
   private final GroupCheckBoxMenu modifierGroup = new GroupCheckBoxMenu();
   private final DropDownButton modifiersDropdown =
       new DropDownButton(
@@ -127,7 +127,7 @@ public class AnatomicRegionView extends JPanel {
 
     List<Object> list = Stream.of(AnatomicModifier.values()).collect(Collectors.toList());
     modifierGroup.setModel(list, false, false);
-    modifiersDropdown.setToolTipText("Select modifiers"); // NON-NLS
+    modifiersDropdown.setToolTipText("Select modifiers");
     add(modifiersDropdown, "cell 1 2, span"); // NON-NLS
 
     add(lblApplyTo, "span, split 3, right, gaptop 20"); // NON-NLS
