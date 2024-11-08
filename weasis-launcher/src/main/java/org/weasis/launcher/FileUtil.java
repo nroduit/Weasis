@@ -9,6 +9,8 @@
  */
 package org.weasis.launcher;
 
+import static org.weasis.pref.ConfigData.P_HTTP_AUTHORIZATION;
+
 import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -207,9 +209,8 @@ public class FileUtil {
 
   public static URLConnection getAdaptedConnection(URL url, boolean useCaches) throws IOException {
     URLConnection connection = url.openConnection();
-    // Prevent caching of Java WebStart.
     connection.setUseCaches(useCaches);
-    // Support for http proxy authentication.
+    // Support for http proxy authentication. To remove in version 5
     String protocol = url.getProtocol();
     String pauth = System.getProperty("http.proxyAuth", null);
     if (hasProxyProperty(pauth, protocol)) {
@@ -217,7 +218,7 @@ public class FileUtil {
       connection.setRequestProperty("Proxy-Authorization", "Basic " + base64); // NON-NLS
     }
 
-    String auth = System.getProperty("http.authorization", null);
+    String auth = System.getProperty(P_HTTP_AUTHORIZATION, null);
     if (hasProxyProperty(auth, protocol)) {
       connection.setRequestProperty("Authorization", auth);
     }
