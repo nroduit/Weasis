@@ -30,9 +30,9 @@
     <weasis.releasenotes>https://github.com/nroduit/Weasis/blob/master/CHANGELOG.md#v451-2024-09-18</weasis.releasenotes>
 
     <felix.framework.version>7.0.5</felix.framework.version>
-    <flatlaf.version>3.5.1</flatlaf.version>
-    <miglayout.version>11.3</miglayout.version>
-    <xz.version>1.9</xz.version>
+    <flatlaf.version>3.5.2</flatlaf.version>
+    <miglayout.version>11.4.2</miglayout.version>
+    <xz.version>1.10</xz.version>
 
     <osgi.core.version>8.0.0</osgi.core.version>
     <osgi.promise.version>8.1.0</osgi.promise.version>
@@ -47,8 +47,8 @@
     <felix.prefs.version>1.1.0</felix.prefs.version>
     <felix.scr.version>2.2.6</felix.scr.version>
 
-    <slf4j.version>2.0.12</slf4j.version>
-    <logback.version>1.5.6</logback.version>
+    <slf4j.version>2.0.16</slf4j.version>
+    <logback.version>1.5.12</logback.version>
     <dockingframes.version>1.1.7</dockingframes.version>
     <weasis-dicom-tools.version>5.32.0.2</weasis-dicom-tools.version>
     <weasis.core.img.version>4.9.0.2</weasis.core.img.version>
@@ -56,16 +56,16 @@
     <osgi.resource.locator.version>2.5.0-b42</osgi.resource.locator.version>
     <jaxb.osgi.version>4.0.3</jaxb.osgi.version>
     <xml.bind-api.version>4.0.2</xml.bind-api.version>
-    <joml.version>1.10.5</joml.version>
+    <joml.version>1.10.8</joml.version>
     <jogamp.version>2.5.0</jogamp.version>
-    <jackson.version>2.15.1</jackson.version>
+    <jackson.version>2.18.1</jackson.version>
     <scribejava.version>8.3.3</scribejava.version>
     <zip4j.version>2.11.5</zip4j.version>
 
-    <junit-bom.version>5.10.2</junit-bom.version>
-    <mockito.version>5.11.0</mockito.version>
+    <junit-bom.version>5.11.3</junit-bom.version>
+    <mockito.version>5.14.2</mockito.version>
     <mockito-inline.version>5.2.0</mockito-inline.version>
-    <junit-pioneer.version>2.2.0</junit-pioneer.version>
+    <junit-pioneer.version>2.3.0</junit-pioneer.version>
 
     <!--suppress UnresolvedMavenProperty -->
     <argLine>-Djava.library.path=${project.build.directory}/lib/${os-name}-${cpu-name}</argLine>
