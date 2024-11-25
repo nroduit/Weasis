@@ -2,7 +2,12 @@
   "weasisPreferences": [
     {
       "code": "org.osgi.framework.startlevel.beginning",
-      "value": "110"
+      "value": "100"
+    },
+    {
+      "code": "felix.auto.start.30",
+      "value": "",
+      "description": "REMOVE - DICOM Codec"
     },
     {
       "code": "felix.auto.start.40",
@@ -10,24 +15,22 @@
       "description": "Replace DICOM explorer by a standard image explorer"
     },
     {
-      "code": "felix.auto.start.30",
-      "value": ""
-    },
-    {
       "code": "felix.auto.start.70",
-      "value": ""
+      "value": "",
+      "description": "REMOVE - DICOM Viewer 2D and SR viewer"
     },
     {
       "code": "felix.auto.start.75",
-      "value": ""
-    },
-    {
-      "code": "felix.auto.start.110",
-      "value": ""
+      "value": "",
+      "description": "REMOVE - DICOM AU and ECG"
     },
     {
       "code": "weasis.name",
       "value": "Weasis Image Explorer"
+    },
+    {
+      "code": "weasis.profile",
+      "value": "base-explorer"
     },
     {
       "code": "weasis.show.disclaimer",

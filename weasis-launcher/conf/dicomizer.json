@@ -7,17 +7,19 @@
     {
       "code": "felix.auto.start.45",
       "value": "file:${maven.localRepository}/org/weasis/base/weasis-base-explorer/${app.version}/weasis-base-explorer-${app.version}.jar file:${maven.localRepository}/org/weasis/acquire/weasis-acquire-explorer/${app.version}/weasis-acquire-explorer-${app.version}.jar",
-      "description": "Thumbnail explorer",
+      "description": "Base and Thumbnail explorer",
       "type": "A",
       "category": "FELIX_INSTALL"
     },
     {
       "code": "felix.auto.start.70",
-      "value": ""
+      "value": "",
+      "description": "REMOVE - DICOM Viewer 2D and SR viewer"
     },
     {
       "code": "felix.auto.start.75",
-      "value": ""
+      "value": "",
+      "description": "REMOVE - DICOM AU and ECG"
     },
     {
       "code": "felix.auto.start.85",
@@ -28,7 +30,8 @@
     },
     {
       "code": "felix.auto.start.110",
-      "value": "file:${maven.localRepository}/org/weasis/dicom/weasis-dicom-send/${app.version}/weasis-dicom-send-${app.version}.jar"
+      "value": "file:${maven.localRepository}/org/weasis/dicom/weasis-dicom-send/${app.version}/weasis-dicom-send-${app.version}.jar",
+      "description": "DICOM send only, REMOVE - Q/R and ISO writer"
     },
     {
       "code": "weasis.name",
@@ -37,6 +40,10 @@
     {
       "code": "weasis.profile",
       "value": "dicomizer"
+    },
+    {
+      "code": "weasis.show.disclaimer",
+      "value": "false"
     },
     {
       "code": "weasis.theme",
@@ -57,6 +64,10 @@
     {
       "code": "weasis.toolbar.mouse.wheel",
       "value": "zoom"
+    },
+    {
+      "code": "weasis.import.images",
+      "value": "false"
     },
     {
       "code": "weasis.acquire.dest.host",
@@ -190,10 +201,6 @@
       "category": "FACTORY"
     },
     {
-      "code": "weasis.import.images",
-      "value": "false"
-    },
-    {
       "code": "weasis-base-viewer2d.all.rotationtoolbar.enable",
       "value": "false",
       "description": "Show the rotation toolbar with base 2D viewer",
@@ -219,7 +226,7 @@
     {
       "code": "weasis-base-viewer2d.all.imagetool.enable",
       "value": "false",
-      "description": "Show the Image Tools with base 2D viewer",
+      "description": "Show Image Tools with base 2D viewer",
       "type": "A",
       "javaType": "BOOLEAN",
       "category": "UI"
