@@ -686,7 +686,12 @@ public class WeasisWin {
     WProperties preferences = GuiUtils.getUICore().getSystemPreferences();
 
     final JMenu helpMenuItem = new JMenu(Messages.getString("WeasisWin.help"));
-    final String helpURL = System.getProperty("weasis.help.url");
+    String helpPrefURL = preferences.getProperty("weasis.help.url");
+
+    // Exception in Priority order >> config property overrides Java System parameter
+    if (helpPrefURL == null) helpPrefURL = System.getProperty("weasis.help.url");
+    final String helpURL = helpPrefURL;
+
     if (helpURL != null) {
       final JMenuItem helpContentMenuItem = new JMenuItem(Messages.getString("WeasisWin.guide"));
       helpContentMenuItem.addActionListener(e -> openBrowser(helpContentMenuItem, helpURL));
