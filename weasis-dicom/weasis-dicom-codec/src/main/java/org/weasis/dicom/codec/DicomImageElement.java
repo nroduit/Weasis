@@ -451,37 +451,16 @@ public class DicomImageElement extends ImageElement implements DicomElement {
     return null;
   }
 
-  public GeometryOfSlice getDispSliceGeometry() {
-    // The geometry is adapted to get square pixel as all the images are displayed with square
-    // pixel.
-    double[] imgOr = TagD.getTagValue(this, Tag.ImageOrientationPatient, double[].class);
-    if (imgOr != null && imgOr.length == 6) {
-      double[] pos = TagD.getTagValue(this, Tag.ImagePositionPatient, double[].class);
-      if (pos != null && pos.length == 3) {
-        Double sliceTickness = TagD.getTagValue(this, Tag.SliceThickness, Double.class);
-        if (sliceTickness == null) {
-          sliceTickness = getPixelSize();
-        }
-        Vector3d spacing = new Vector3d(getPixelSize(), getPixelSize(), sliceTickness);
-        Integer rows = TagD.getTagValue(this, Tag.Rows, Integer.class);
-        Integer columns = TagD.getTagValue(this, Tag.Columns, Integer.class);
-        if (rows != null && columns != null && rows > 0 && columns > 0) {
-          // SliceTickness is only use in IntersectVolume
-          // Multiply rows and columns by getZoomScale() to have square pixel image size
-          return new GeometryOfSlice(
-              new Vector3d(imgOr[0], imgOr[1], imgOr[2]),
-              new Vector3d(imgOr[3], imgOr[4], imgOr[5]),
-              new Vector3d(pos),
-              spacing,
-              sliceTickness,
-              new Vector3d(rows * getRescaleY(), columns * getRescaleX(), 1));
-        }
-      }
-    }
-    return null;
+  public GeometryOfSlice getSliceGeometry() {
+    // This geometry is adapted to get square pixel  for display
+    return getGeometry(true);
   }
 
-  public GeometryOfSlice getSliceGeometry() {
+  public GeometryOfSlice getRawSliceGeometry() {
+    return getGeometry(false);
+  }
+
+  private GeometryOfSlice getGeometry(boolean isDisplay) {
     double[] imgOr = TagD.getTagValue(this, Tag.ImageOrientationPatient, double[].class);
     if (imgOr != null && imgOr.length == 6) {
       double[] pos = TagD.getTagValue(this, Tag.ImagePositionPatient, double[].class);
@@ -490,18 +469,25 @@ public class DicomImageElement extends ImageElement implements DicomElement {
         if (sliceTickness == null) {
           sliceTickness = getPixelSize();
         }
-        double[] pixSize = getDisplayPixelSize();
+        double[] pixSize =
+            isDisplay ? new double[] {getPixelSize(), getPixelSize()} : getDisplayPixelSize();
         Vector3d spacing = new Vector3d(pixSize[0], pixSize[1], sliceTickness);
         Integer rows = TagD.getTagValue(this, Tag.Rows, Integer.class);
         Integer columns = TagD.getTagValue(this, Tag.Columns, Integer.class);
         if (rows != null && columns != null && rows > 0 && columns > 0) {
+          // SliceThickness is only use in IntersectVolume
+          // With isDisplay, adapt rows and columns to have square pixel image size
+          Vector3d dimensions =
+              isDisplay
+                  ? new Vector3d(rows * getRescaleY(), columns * getRescaleX(), 1)
+                  : new Vector3d(rows, columns, 1);
           return new GeometryOfSlice(
               new Vector3d(imgOr[0], imgOr[1], imgOr[2]),
               new Vector3d(imgOr[3], imgOr[4], imgOr[5]),
               new Vector3d(pos),
               spacing,
               sliceTickness,
-              new Vector3d(rows, columns, 1));
+              dimensions);
         }
       }
     }

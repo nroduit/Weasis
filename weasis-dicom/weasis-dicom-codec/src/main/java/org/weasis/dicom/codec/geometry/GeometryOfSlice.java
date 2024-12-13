@@ -59,6 +59,15 @@ public class GeometryOfSlice {
     this.dimensions = dimensions;
   }
 
+  public GeometryOfSlice(GeometryOfSlice sliceGeometry) {
+    this.row = new Vector3d(sliceGeometry.row);
+    this.column = new Vector3d(sliceGeometry.column);
+    this.tlhc = new Vector3d(sliceGeometry.tlhc);
+    this.voxelSpacing = new Vector3d(sliceGeometry.voxelSpacing);
+    this.sliceThickness = sliceGeometry.sliceThickness;
+    this.dimensions = new Vector3d(sliceGeometry.dimensions);
+  }
+
   /**
    * Get the row direction.
    *
@@ -97,6 +106,15 @@ public class GeometryOfSlice {
     return tlhc;
   }
 
+  public boolean isRowColumnOrthogonal() {
+    return Math.abs(row.dot(column)) <= 0.005;
+  }
+
+  /**
+   * Get the 3D position of the image 2D point.
+   *
+   * @return the 3D position of the image 2D point
+   */
   public final Vector3d getPosition(Point2D p) {
     return new Vector3d(
         row.x * voxelSpacing.x * p.getX() + column.x * voxelSpacing.y * p.getY() + tlhc.x,
@@ -104,6 +122,11 @@ public class GeometryOfSlice {
         row.z * voxelSpacing.x * p.getX() + column.z * voxelSpacing.y * p.getY() + tlhc.z);
   }
 
+  /**
+   * Get the image 2D point of a 3D position.
+   *
+   * @return the image 2D point of a position
+   */
   public final Point2D getImagePosition(Vector3d p3) {
     if (voxelSpacing.x < 0.00001 || voxelSpacing.y < 0.00001) {
       return null;

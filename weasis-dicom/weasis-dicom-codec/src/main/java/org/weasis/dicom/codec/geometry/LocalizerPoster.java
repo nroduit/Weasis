@@ -117,21 +117,14 @@ public abstract class LocalizerPoster {
 
     validateDirectionCosines(row, column);
 
-    Vector3d distanceAlongRow = new Vector3d(row);
-    distanceAlongRow.mul((dimensions.y /* cols */) * voxelSpacing.y /* between cols */);
-    Vector3d distanceAlongColumn = new Vector3d(column);
-    distanceAlongColumn.mul((dimensions.x /* rows */) * voxelSpacing.x /* between rows */);
+    Vector3d distanceAlongRow = new Vector3d(row).mul(dimensions.y * voxelSpacing.y);
+    Vector3d distanceAlongColumn = new Vector3d(column).mul(dimensions.x * voxelSpacing.x);
 
     // Build a square to project with 4 corners TLHC, TRHC, BRHC, BLHC ...
-
-    Vector3d tlhc = new Vector3d(originalTLHC); // otherwise, original TLHC gets changed later on
-    Vector3d trhc = new Vector3d(tlhc);
-    trhc.add(distanceAlongRow);
-    Vector3d blhc = new Vector3d(tlhc);
-    blhc.add(distanceAlongColumn);
-    Vector3d brhc = new Vector3d(tlhc);
-    brhc.add(distanceAlongRow);
-    brhc.add(distanceAlongColumn);
+    Vector3d tlhc = new Vector3d(originalTLHC);
+    Vector3d trhc = new Vector3d(tlhc).add(distanceAlongRow);
+    Vector3d blhc = new Vector3d(tlhc).add(distanceAlongColumn);
+    Vector3d brhc = new Vector3d(tlhc).add(distanceAlongRow).add(distanceAlongColumn);
 
     return new Vector3d[] {tlhc, trhc, brhc, blhc};
   }
@@ -163,40 +156,24 @@ public abstract class LocalizerPoster {
     // the normal to the plane is the cross product of the row and column
     Vector3d normal = new Vector3d(row).cross(column);
 
-    Vector3d distanceAlongRow = new Vector3d(row);
-    distanceAlongRow.mul((dimensions.y /* cols */) * voxelSpacing.y /* between cols */);
-    Vector3d distanceAlongColumn = new Vector3d(column);
-    distanceAlongColumn.mul((dimensions.x /* rows */) * voxelSpacing.x /* between rows */);
-    Vector3d distanceAlongNormal = new Vector3d(normal);
-    distanceAlongNormal.mul(
-        (dimensions.z / 2) * sliceThickness); // divide by two ... half on either side
-    // of center
+    Vector3d distanceAlongRow = new Vector3d(row).mul(dimensions.y * voxelSpacing.y);
+    Vector3d distanceAlongColumn = new Vector3d(column).mul(dimensions.x * voxelSpacing.x);
+    // divide by two ... half on either side of center
+    Vector3d distanceAlongNormal = new Vector3d(normal).mul(dimensions.z / 2 * sliceThickness);
 
     // Build the "top" square to project with 4 corners TLHC, TRHC, BRHC, BLHC ...
 
-    Vector3d tlhcT = new Vector3d(originalTLHC); // otherwise, original TLHC gets changed later on
-    tlhcT.add(distanceAlongNormal);
-
-    Vector3d trhcT = new Vector3d(tlhcT);
-    trhcT.add(distanceAlongRow);
-    Vector3d blhcT = new Vector3d(tlhcT);
-    blhcT.add(distanceAlongColumn);
-    Vector3d brhcT = new Vector3d(tlhcT);
-    brhcT.add(distanceAlongRow);
-    brhcT.add(distanceAlongColumn);
+    Vector3d tlhcT = new Vector3d(originalTLHC).add(distanceAlongNormal);
+    Vector3d trhcT = new Vector3d(tlhcT).add(distanceAlongRow);
+    Vector3d blhcT = new Vector3d(tlhcT).add(distanceAlongColumn);
+    Vector3d brhcT = new Vector3d(tlhcT).add(distanceAlongRow).add(distanceAlongColumn);
 
     // Build the "bottom" square to project with 4 corners TLHC, TRHC, BRHC, BLHC ...
 
-    Vector3d tlhcB = new Vector3d(originalTLHC); // otherwise, original TLHC gets changed later on
-    tlhcB.sub(distanceAlongNormal);
-
-    Vector3d trhcB = new Vector3d(tlhcB);
-    trhcB.add(distanceAlongRow);
-    Vector3d blhcB = new Vector3d(tlhcB);
-    blhcB.add(distanceAlongColumn);
-    Vector3d brhcB = new Vector3d(tlhcB);
-    brhcB.add(distanceAlongRow);
-    brhcB.add(distanceAlongColumn);
+    Vector3d tlhcB = new Vector3d(originalTLHC).sub(distanceAlongNormal);
+    Vector3d trhcB = new Vector3d(tlhcB).add(distanceAlongRow);
+    Vector3d blhcB = new Vector3d(tlhcB).add(distanceAlongColumn);
+    Vector3d brhcB = new Vector3d(tlhcB).add(distanceAlongRow).add(distanceAlongColumn);
 
     return new Vector3d[] {tlhcT, trhcT, brhcT, blhcT, tlhcB, trhcB, brhcB, blhcB};
   }
@@ -307,36 +284,28 @@ public abstract class LocalizerPoster {
 
     // traverse each of the (three) possibilities for which opposite edges intersect the Z plane ...
 
-    // 0,1 2,3 4,5 6,7
-    // 0,3 1,2 4,7 5,6
-    // 0,4 1,5 2,6 3,7
+    int[][] edgePairs = {
+      {0, 1, 2, 3, 6, 7, 4, 5},
+      {0, 3, 1, 2, 5, 6, 4, 7},
+      {0, 4, 1, 5, 2, 6, 3, 7}
+    };
 
-    if (classifyCornersIntoEdgeCrossingZPlane(corners[0], corners[1])
-        && classifyCornersIntoEdgeCrossingZPlane(corners[2], corners[3])
-        && classifyCornersIntoEdgeCrossingZPlane(corners[4], corners[5])
-        && classifyCornersIntoEdgeCrossingZPlane(corners[6], corners[7])) {
-      intersections.add(intersectLineBetweenTwoPointsWithPlaneWhereZIsZero(corners[0], corners[1]));
-      intersections.add(intersectLineBetweenTwoPointsWithPlaneWhereZIsZero(corners[2], corners[3]));
-      intersections.add(intersectLineBetweenTwoPointsWithPlaneWhereZIsZero(corners[6], corners[7]));
-      intersections.add(intersectLineBetweenTwoPointsWithPlaneWhereZIsZero(corners[4], corners[5]));
-    } else if (classifyCornersIntoEdgeCrossingZPlane(corners[0], corners[3])
-        && classifyCornersIntoEdgeCrossingZPlane(corners[1], corners[2])
-        && classifyCornersIntoEdgeCrossingZPlane(corners[4], corners[7])
-        && classifyCornersIntoEdgeCrossingZPlane(corners[5], corners[6])) {
-      intersections.add(intersectLineBetweenTwoPointsWithPlaneWhereZIsZero(corners[0], corners[3]));
-      intersections.add(intersectLineBetweenTwoPointsWithPlaneWhereZIsZero(corners[1], corners[2]));
-      intersections.add(intersectLineBetweenTwoPointsWithPlaneWhereZIsZero(corners[5], corners[6]));
-      intersections.add(intersectLineBetweenTwoPointsWithPlaneWhereZIsZero(corners[4], corners[7]));
-    } else if (classifyCornersIntoEdgeCrossingZPlane(corners[0], corners[4])
-        && classifyCornersIntoEdgeCrossingZPlane(corners[1], corners[5])
-        && classifyCornersIntoEdgeCrossingZPlane(corners[2], corners[6])
-        && classifyCornersIntoEdgeCrossingZPlane(corners[3], corners[7])) {
-      intersections.add(intersectLineBetweenTwoPointsWithPlaneWhereZIsZero(corners[0], corners[4]));
-      intersections.add(intersectLineBetweenTwoPointsWithPlaneWhereZIsZero(corners[1], corners[5]));
-      intersections.add(intersectLineBetweenTwoPointsWithPlaneWhereZIsZero(corners[2], corners[6]));
-      intersections.add(intersectLineBetweenTwoPointsWithPlaneWhereZIsZero(corners[3], corners[7]));
+    for (int[] pair : edgePairs) {
+      if (classifyCornersIntoEdgeCrossingZPlane(corners[pair[0]], corners[pair[1]])
+          && classifyCornersIntoEdgeCrossingZPlane(corners[pair[2]], corners[pair[3]])
+          && classifyCornersIntoEdgeCrossingZPlane(corners[pair[4]], corners[pair[5]])
+          && classifyCornersIntoEdgeCrossingZPlane(corners[pair[6]], corners[pair[7]])) {
+        intersections.add(
+            intersectLineBetweenTwoPointsWithPlaneWhereZIsZero(corners[pair[0]], corners[pair[1]]));
+        intersections.add(
+            intersectLineBetweenTwoPointsWithPlaneWhereZIsZero(corners[pair[2]], corners[pair[3]]));
+        intersections.add(
+            intersectLineBetweenTwoPointsWithPlaneWhereZIsZero(corners[pair[4]], corners[pair[5]]));
+        intersections.add(
+            intersectLineBetweenTwoPointsWithPlaneWhereZIsZero(corners[pair[6]], corners[pair[7]]));
+        break;
+      }
     }
-
     return intersections;
   }
 

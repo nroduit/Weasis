@@ -411,7 +411,7 @@ public class RtSet {
       return null;
     }
     DicomImageElement doseImage = dose.getSeries().getMedia(MEDIA_POSITION.FIRST, null, null);
-    Vector3d doseImageSpacing = doseImage.getSliceGeometry().getVoxelSpacing();
+    Vector3d doseImageSpacing = doseImage.getRawSliceGeometry().getVoxelSpacing();
     double maxDose = dose.getDoseMax() * dose.getDoseGridScaling() * 100;
 
     double volume = 0.0;
@@ -496,13 +496,13 @@ public class RtSet {
   private AbstractMap.SimpleImmutableEntry<double[], double[]> calculatePixelLookupTable(
       DicomImageElement dicomImage) {
 
-    double deltaI = dicomImage.getSliceGeometry().getVoxelSpacing().x;
-    double deltaJ = dicomImage.getSliceGeometry().getVoxelSpacing().y;
+    double deltaI = dicomImage.getRawSliceGeometry().getVoxelSpacing().x;
+    double deltaJ = dicomImage.getRawSliceGeometry().getVoxelSpacing().y;
 
-    Vector3d rowDirection = dicomImage.getSliceGeometry().getRow();
-    Vector3d columnDirection = dicomImage.getSliceGeometry().getColumn();
+    Vector3d rowDirection = dicomImage.getRawSliceGeometry().getRow();
+    Vector3d columnDirection = dicomImage.getRawSliceGeometry().getColumn();
 
-    Vector3d position = dicomImage.getSliceGeometry().getTLHC();
+    Vector3d position = dicomImage.getRawSliceGeometry().getTLHC();
 
     // DICOM C.7.6.2.1 Equation C.7.6.2.1-1.
     double[][] m = {
