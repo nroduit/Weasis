@@ -15,6 +15,7 @@ import java.awt.geom.Line2D;
 import java.awt.geom.Path2D;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
+import java.util.Arrays;
 import java.util.List;
 import org.weasis.core.util.MathUtil;
 
@@ -27,7 +28,7 @@ public final class GeomUtil {
   }
 
   /**
-   * @return angle between BA & BC line segment in Degree <br>
+   * @return angle between BA & BC line segment in Radiant<br>
    *     0 is returned if any argument is invalid
    */
   public static double getAngleRad(Point2D ptA, Point2D ptB, Point2D ptC) {
@@ -38,7 +39,7 @@ public final class GeomUtil {
   }
 
   /**
-   * @return angle between BA & BC line segment in Radiant<br>
+   * @return angle between BA & BC line segment in Degree<br>
    *     0 is returned if any argument is invalid
    */
   public static double getAngleDeg(Point2D ptA, Point2D ptB, Point2D ptC) {
@@ -71,8 +72,25 @@ public final class GeomUtil {
   }
 
   /**
+   * Normalizes angle in the range of [-π, +π]
+   *
    * @param angle in Radiant
-   * @return angle in the range of [ -pi ; pi ]
+   * @return the normalized angle in radiant in the range of [-π, +π]
+   */
+  public static double normalizeAngle(double angle) {
+    angle = (angle + Math.PI) % (2 * Math.PI) - Math.PI;
+    // Normalize angle to [-π, +π]
+    if (angle > Math.PI) {
+      angle -= 2 * Math.PI;
+    } else if (angle < -Math.PI) {
+      angle += 2 * Math.PI;
+    }
+    return angle;
+  }
+
+  /**
+   * @param angle in Radiant
+   * @return angle in the range of [-π, +π]
    */
   public static double getSmallestRotationAngleRad(double angle) {
     double a = angle % (2 * Math.PI);
@@ -84,7 +102,7 @@ public final class GeomUtil {
 
   /**
    * @param angle in Degree
-   * @return angle in the range of [ -180 ; 180 ]
+   * @return angle in the range of [ -180, 180 ]
    */
   public static double getSmallestRotationAngleDeg(double angle) {
     double a = angle % 360.0;
@@ -96,7 +114,7 @@ public final class GeomUtil {
 
   /**
    * @param angle in Radiant
-   * @return angle in the range of [ -pi ; pi ]
+   * @return angle in the range of [-π, +π]
    */
   public static double getSmallestAngleRad(double angle) {
     double a = angle % Math.PI;
@@ -270,6 +288,52 @@ public final class GeomUtil {
       }
     }
     return p;
+  }
+
+  public static Line2D cropLine(Line2D line, Rectangle2D rect) {
+    if (line == null || rect == null || rect.isEmpty()) {
+      return line;
+    }
+
+    Point2D p1 =
+        lineIntersection(
+            line,
+            new Line2D.Double(rect.getMinX(), rect.getMinY(), rect.getMaxX(), rect.getMinY()));
+    Point2D p2 =
+        lineIntersection(
+            line,
+            new Line2D.Double(rect.getMinX(), rect.getMaxY(), rect.getMaxX(), rect.getMaxY()));
+    Point2D p3 =
+        lineIntersection(
+            line,
+            new Line2D.Double(rect.getMinX(), rect.getMinY(), rect.getMinX(), rect.getMaxY()));
+    Point2D p4 =
+        lineIntersection(
+            line,
+            new Line2D.Double(rect.getMaxX(), rect.getMinY(), rect.getMaxX(), rect.getMaxY()));
+
+    Point2D pl1 = null;
+    Point2D pl2 = null;
+
+    for (Point2D p : Arrays.asList(p1, p2, p3, p4)) {
+      if (p != null) {
+        if (pl1 == null) {
+          pl1 = p;
+        } else {
+          pl2 = p;
+          break;
+        }
+      }
+    }
+
+    if (pl1 != null && pl2 != null) {
+      if (line.getP1().distance(pl1) < line.getP1().distance(pl2)) {
+        return new Line2D.Double(pl1, pl2);
+      } else {
+        return new Line2D.Double(pl2, pl1);
+      }
+    }
+    return line;
   }
 
   private static Point2D lineIntersection(Line2D line1, Line2D line2) {
