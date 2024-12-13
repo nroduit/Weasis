@@ -11,10 +11,18 @@ package org.weasis.core.ui.model.layer;
 
 import java.awt.Graphics2D;
 import java.awt.Rectangle;
+import java.awt.geom.Point2D;
 import org.weasis.core.ui.editor.image.PixelInfo;
 import org.weasis.core.ui.editor.image.ViewCanvas;
 
 public interface LayerAnnotation extends Layer {
+  enum Position {
+    TopLeft,
+    TopRight,
+    BottomLeft,
+    BottomRight
+  }
+
   boolean getDisplayPreferences(LayerItem item);
 
   boolean setDisplayPreferencesValue(LayerItem displayItem, boolean selected);
@@ -40,4 +48,8 @@ public interface LayerAnnotation extends Layer {
   void setShowBottomScale(Boolean showBottomScale);
 
   void resetToDefault();
+
+  Point2D getPosition(Position position);
+
+  void setPosition(Position position, double x, double y);
 }

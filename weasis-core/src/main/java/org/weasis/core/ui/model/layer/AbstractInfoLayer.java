@@ -15,6 +15,7 @@ import java.awt.Graphics2D;
 import java.awt.GridBagConstraints;
 import java.awt.Rectangle;
 import java.awt.geom.Line2D;
+import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.util.EnumMap;
 import java.util.Map;
@@ -80,6 +81,8 @@ public abstract class AbstractInfoLayer<E extends ImageElement> extends DefaultU
   protected String name;
   protected boolean useGlobalPreferences;
 
+  private final Map<Position, Point2D> positions = new EnumMap<>(Position.class);
+
   protected AbstractInfoLayer(ViewCanvas<E> view2DPane) {
     this(view2DPane, true);
   }
@@ -89,6 +92,23 @@ public abstract class AbstractInfoLayer<E extends ImageElement> extends DefaultU
     this.pixelInfoBound = new Rectangle();
     this.preloadingProgressBound = new Rectangle();
     this.useGlobalPreferences = useGlobalPreferences;
+    positions.put(Position.TopLeft, new Point2D.Double(0, 0));
+    positions.put(Position.TopRight, new Point2D.Double(0, 0));
+    positions.put(Position.BottomLeft, new Point2D.Double(0, 0));
+    positions.put(Position.BottomRight, new Point2D.Double(0, 0));
+  }
+
+  @Override
+  public Point2D getPosition(Position position) {
+    return positions.get(position);
+  }
+
+  @Override
+  public void setPosition(Position position, double x, double y) {
+    Point2D p = positions.get(position);
+    if (p != null) {
+      p.setLocation(x, y);
+    }
   }
 
   public ViewCanvas<E> getView2DPane() {

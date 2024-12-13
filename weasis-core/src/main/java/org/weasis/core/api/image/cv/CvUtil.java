@@ -76,28 +76,17 @@ public class CvUtil {
 
   public static ImageCV meanStack(List<ImageElement> sources) {
     if (sources.size() > 1) {
-      ImageElement firstImg = sources.get(0);
+      ImageElement firstImg = sources.getFirst();
       PlanarImage img = firstImg.getImage(null, false);
 
-      Integer type = img.type();
-      ;
+      int type = img.type();
       Mat mean = new Mat(img.height(), img.width(), CvType.CV_32F);
       img.toMat().convertTo(mean, CvType.CV_32F);
       int numbSrc = sources.size();
       for (int i = 1; i < numbSrc; i++) {
         ImageElement imgElement = sources.get(i);
         PlanarImage image = imgElement.getImage(null, false);
-        if (image instanceof Mat mat && image.width() == img.width()) {
-          // Accumulate not supported 16-bit signed:
-          // https://docs.opencv.org/3.3.0/d7/df3/group__imgproc__motion.html#ga1a567a79901513811ff3b9976923b199
-          if (CvType.depth(image.type()) == CvType.CV_16S) {
-            Mat floatImage = new Mat(img.height(), img.width(), CvType.CV_32F);
-            image.toMat().convertTo(floatImage, CvType.CV_32F);
-            Imgproc.accumulate(floatImage, mean);
-          } else {
-            Imgproc.accumulate(mat, mean);
-          }
-        }
+        accumulateFloatStack(image, img, mean);
       }
       ImageCV dstImg = new ImageCV();
       Core.divide(mean, new Scalar(numbSrc), mean);
@@ -107,9 +96,23 @@ public class CvUtil {
     return null;
   }
 
+  public static void accumulateFloatStack(PlanarImage image, PlanarImage refImage, Mat floatStack) {
+    if (image instanceof Mat mat && image.width() == refImage.width()) {
+      // Accumulate not supported 16-bit signed:
+      // https://docs.opencv.org/3.3.0/d7/df3/group__imgproc__motion.html#ga1a567a79901513811ff3b9976923b199
+      if (CvType.depth(image.type()) == CvType.CV_16S) {
+        Mat floatImage = new Mat(refImage.height(), refImage.width(), CvType.CV_32F);
+        image.toMat().convertTo(floatImage, CvType.CV_32F);
+        Imgproc.accumulate(floatImage, floatStack);
+      } else {
+        Imgproc.accumulate(mat, floatStack);
+      }
+    }
+  }
+
   public static ImageCV minStack(List<ImageElement> sources) {
     if (sources.size() > 1) {
-      ImageElement firstImg = sources.get(0);
+      ImageElement firstImg = sources.getFirst();
       ImageCV dstImg = new ImageCV();
       PlanarImage img = firstImg.getImage(null, false);
       img.toMat().copyTo(dstImg);
@@ -129,7 +132,7 @@ public class CvUtil {
 
   public static ImageCV maxStack(List<ImageElement> sources) {
     if (sources.size() > 1) {
-      ImageElement firstImg = sources.get(0);
+      ImageElement firstImg = sources.getFirst();
       ImageCV dstImg = new ImageCV();
       PlanarImage img = firstImg.getImage(null, false);
       img.toMat().copyTo(dstImg);

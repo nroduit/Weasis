@@ -13,11 +13,14 @@ import java.awt.Point;
 import java.awt.image.DataBuffer;
 import java.awt.image.IndexColorModel;
 import java.awt.image.RenderedImage;
+import java.net.URI;
 import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import org.opencv.core.Core.MinMaxLocResult;
 import org.opencv.core.CvType;
 import org.slf4j.Logger;
@@ -371,19 +374,26 @@ public class ImageElement extends MediaElement {
 
   @Override
   public String toString() {
-    return getMediaURI().toString();
+    URI uri = getMediaURI();
+    if (uri == null) {
+      return "Memory image"; // NON-NLS
+    }
+    return uri.toString();
   }
 
   public synchronized PlanarImage getImage(OpManager manager, boolean findMinMax) {
     try {
       return getCacheImage(startImageLoading(), manager, findMinMax);
     } catch (OutOfMemoryError e1) {
-      LOGGER.warn("Out of MemoryError: {}", this, e1);
-
       mCache.expungeStaleEntries();
       CvUtil.runGarbageCollectorAndWait(100);
 
-      return getCacheImage(startImageLoading(), manager, findMinMax);
+      try {
+        return getCacheImage(startImageLoading(), manager, findMinMax);
+      } catch (OutOfMemoryError e) {
+        LOGGER.warn("Reading image data: {}", this, e1);
+      }
+      return null;
     }
   }
 
@@ -426,8 +436,8 @@ public class ImageElement extends MediaElement {
       Future<PlanarImage> future = IMAGE_LOADER.submit(ref);
       PlanarImage img = null;
       try {
-        img = future.get();
-      } catch (InterruptedException e) {
+        img = future.get(45, TimeUnit.SECONDS);
+      } catch (InterruptedException | TimeoutException e) {
         // Re-assert the thread's interrupted status
         Thread.currentThread().interrupt();
         // We don't need the result, so cancel the task too

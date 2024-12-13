@@ -14,4 +14,15 @@ public interface Taggable extends TagReadable {
   void setTag(TagW tag, Object value);
 
   void setTagNoNull(TagW tag, Object value);
+
+  default void copyTags(TagW[] tagList, MediaElement media, boolean allowNullValue) {
+    if (tagList != null && media != null) {
+      for (TagW tag : tagList) {
+        Object value = media.getTagValue(tag);
+        if (allowNullValue || value != null) {
+          setTag(tag, value);
+        }
+      }
+    }
+  }
 }
