@@ -43,6 +43,7 @@ import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.utils.DicomMediaUtils;
 import org.weasis.dicom.viewer2d.View2d;
 import org.weasis.dicom.viewer2d.mip.MipView.Type;
+import org.weasis.dicom.viewer2d.mpr.DerivedStack;
 import org.weasis.dicom.viewer2d.mpr.RawImageIO;
 import org.weasis.opencv.data.FileRawImage;
 import org.weasis.opencv.data.PlanarImage;
@@ -164,7 +165,7 @@ public class SeriesBuilder {
           rawIO.setTag(TagD.get(Tag.SeriesInstanceUID), seriesUID);
 
           // Mandatory tags
-          org.weasis.dicom.viewer2d.mpr.SeriesBuilder.copyMandatoryTags(img, rawIO);
+          DerivedStack.copyMandatoryTags(img, rawIO);
           TagW[] tagList2;
 
           tagList2 =
@@ -183,7 +184,7 @@ public class SeriesBuilder {
           // Image specific tags
           rawIO.setTag(TagD.get(Tag.SOPInstanceUID), UIDUtils.createUID());
           rawIO.setTag(TagD.get(Tag.InstanceNumber), index + 1);
-          dicoms.add(org.weasis.dicom.viewer2d.mpr.SeriesBuilder.buildDicomImageElement(rawIO));
+          dicoms.add(DerivedStack.buildDicomImageElement(rawIO));
         }
       }
     }

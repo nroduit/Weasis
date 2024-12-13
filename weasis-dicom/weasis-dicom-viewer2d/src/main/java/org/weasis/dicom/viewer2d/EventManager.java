@@ -111,8 +111,11 @@ import org.weasis.dicom.explorer.DicomExplorer.ListPosition;
 import org.weasis.dicom.explorer.DicomExportAction;
 import org.weasis.dicom.explorer.DicomModel;
 import org.weasis.dicom.viewer2d.mip.MipView;
+import org.weasis.dicom.viewer2d.mpr.MprAxis;
 import org.weasis.dicom.viewer2d.mpr.MprContainer;
+import org.weasis.dicom.viewer2d.mpr.MprController;
 import org.weasis.dicom.viewer2d.mpr.MprView;
+import org.weasis.dicom.viewer2d.mpr.Volume;
 import org.weasis.opencv.op.ImageConversion;
 import org.weasis.opencv.op.lut.ByteLut;
 import org.weasis.opencv.op.lut.ColorLut;
@@ -270,7 +273,16 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
           view2d = selectedView2dContainer.getSelectedImagePane();
         }
 
-        if (view2d != null && view2d.getSeries() instanceof Series) {
+        if (view2d instanceof MprView mprView) {
+          MprContainer mprContainer = (MprContainer) selectedView2dContainer;
+          MprController controller = mprContainer.getMprController();
+          MprAxis axis = controller.getMprAxis(mprView.getSliceOrientation());
+          int index = model.getValue() - 1;
+          axis.setSliceIndex(index);
+          axis.updateImage();
+          image = axis.getImageElement();
+          mediaEvent = new SynchCineEvent(view2d, image, index);
+        } else if (view2d != null && view2d.getSeries() instanceof Series) {
           series = (Series<DicomImageElement>) view2d.getSeries();
           if (series != null) {
             // Model contains display value, value-1 is the index value of a sequence
@@ -1021,16 +1033,26 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
       getAction(ActionW.LENS_ZOOM).ifPresent(a -> a.setRealValue(Math.abs(lensZoom), false));
     }
 
+    boolean isMprOrOblique =
+        selectedView2dContainer instanceof MprContainer c
+            && c.getMprController().getVolume() != null;
     MediaSeries<DicomImageElement> series = view2d.getSeries();
-    cineAction.ifPresent(
-        a ->
-            a.setSliderMinMaxValue(
-                1,
-                series.size(
-                    (Filter<DicomImageElement>)
-                        view2d.getActionValue(ActionW.FILTERED_SERIES.cmd())),
-                view2d.getFrameIndex() + 1,
-                false));
+    int maxSlice;
+    int currentSlice;
+    if (isMprOrOblique && view2d instanceof MprView mprView) {
+      MprContainer mprContainer = (MprContainer) selectedView2dContainer;
+      MprController controller = mprContainer.getMprController();
+      Volume<?> volume = controller.getVolume();
+      maxSlice = volume.getSliceSize();
+      MprAxis axis = controller.getMprAxis(mprView.getSliceOrientation());
+      currentSlice = axis.getSliceIndex();
+    } else {
+      maxSlice =
+          series.size(
+              (Filter<DicomImageElement>) view2d.getActionValue(ActionW.FILTERED_SERIES.cmd()));
+      currentSlice = view2d.getFrameIndex() + 1;
+    }
+    cineAction.ifPresent(a -> a.setSliderMinMaxValue(1, maxSlice, currentSlice, false));
 
     Double cineRate = TagD.getTagValue(view2d.getImage(), Tag.CineRate, Double.class);
     cineAction.ifPresent(
@@ -1051,6 +1073,8 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
                 a.setSelectedWithoutTriggerAction(
                     (Boolean) view2d.getActionValue(ActionW.INVERSE_STACK.cmd())));
     getAction(ActionW.VOLUME).ifPresent(a -> a.enableAction(series.isSuitableFor3d()));
+
+    getAction(ActionW.CROSSHAIR).ifPresent(a -> a.enableAction(!isMprOrOblique));
     updateKeyObjectComponentsListener(view2d);
 
     // register all actions for the selected view and for the other views register according to
@@ -1356,7 +1380,10 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
               }
             }
             // Force drawing crosslines without changing the slice position
-            cineAction.ifPresent(a -> a.stateChanged(a.getSliderModel()));
+            boolean isMprOrOblique = selectedView2dContainer instanceof MprContainer;
+            if (!isMprOrOblique) {
+              cineAction.ifPresent(a -> a.stateChanged(a.getSliderModel()));
+            }
 
           } else if (Mode.TILE.equals(synch.getMode())) {
             final List<ViewCanvas<DicomImageElement>> panes =

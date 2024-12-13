@@ -50,8 +50,8 @@
     <slf4j.version>2.0.16</slf4j.version>
     <logback.version>1.5.12</logback.version>
     <dockingframes.version>1.1.7</dockingframes.version>
-    <weasis-dicom-tools.version>5.32.0.2</weasis-dicom-tools.version>
-    <weasis.core.img.version>4.9.0.2</weasis.core.img.version>
+    <weasis-dicom-tools.version>5.32.0.3-SNAPSHOT</weasis-dicom-tools.version>
+    <weasis.core.img.version>4.9.0.3-SNAPSHOT</weasis.core.img.version>
     <weasis.opencv.native.version>4.9.0-dcm</weasis.opencv.native.version>
     <osgi.resource.locator.version>2.5.0-b42</osgi.resource.locator.version>
     <jaxb.osgi.version>4.0.3</jaxb.osgi.version>
