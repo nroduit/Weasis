@@ -687,6 +687,11 @@ public class View2dContainer extends DicomViewerPlugin implements PropertyChange
         if (updateAll) {
           List<ViewCanvas<DicomImageElement>> viewList = getImagePanels(true);
           for (ViewCanvas<DicomImageElement> view : viewList) {
+            if (forceUpdate
+                    || updatedKOSelection == view.getActionValue(ActionW.KO_SELECTION.cmd())) {
+              KOManager.updateKOFilter(
+                      view, forceUpdate ? updatedKOSelection : null, enableFilter, -1);
+            }
             ((View2d) view).updateKOButtonVisibleState();
           }
         } else {
