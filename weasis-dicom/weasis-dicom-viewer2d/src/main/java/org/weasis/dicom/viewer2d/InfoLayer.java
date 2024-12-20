@@ -347,7 +347,9 @@ public class InfoLayer extends AbstractInfoLayer<DicomImageElement> {
         }
       }
       setPosition(
-          Position.TopRight, bound.width - border, drawY - fontHeight + GuiUtils.getScaleLength(5));
+          Position.TopRight,
+          (double) bound.width - border,
+          drawY - fontHeight + GuiUtils.getScaleLength(5));
       drawY = bound.height - border - GuiUtils.getScaleLength(1.5f); // -1.5 for outline
       if (hideMin) {
         corner = modality.getCornerInfo(CornerDisplay.BOTTOM_RIGHT);
@@ -377,7 +379,8 @@ public class InfoLayer extends AbstractInfoLayer<DicomImageElement> {
         drawY -= 5;
         drawSeriesInMemoryState(g2, view2DPane.getSeries(), bound.width - border, (int) (drawY));
       }
-      setPosition(Position.BottomRight, bound.width - border, drawY - GuiUtils.getScaleLength(5));
+      setPosition(
+          Position.BottomRight, (double) bound.width - border, drawY - GuiUtils.getScaleLength(5));
 
       // Boolean synchLink = (Boolean) view2DPane.getActionValue(ActionW.SYNCH_LINK);
       // String str = synchLink != null && synchLink ? "linked" : "unlinked"; // NON-NLS
@@ -518,8 +521,9 @@ public class InfoLayer extends AbstractInfoLayer<DicomImageElement> {
       }
     } else {
       setPosition(Position.TopLeft, border, border);
-      setPosition(Position.TopRight, bound.width - border, border);
-      setPosition(Position.BottomRight, bound.width - border, bound.height - border);
+      setPosition(Position.TopRight, (double) bound.width - border, border);
+      setPosition(
+          Position.BottomRight, (double) bound.width - border, (double) bound.height - border);
     }
 
     drawExtendedActions(g2);

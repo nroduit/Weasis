@@ -24,8 +24,12 @@ import org.weasis.dicom.viewer2d.mpr.MprView.SliceOrientation;
 public class AxisDirection {
   private final Color color;
   private final String name;
-  private final Vector3d axisX, axisY, axisZ;
-  private final Color xColor, yColor, zColor;
+  private final Vector3d axisX;
+  private final Vector3d axisY;
+  private final Vector3d axisZ;
+  private final Color xColor;
+  private final Color yColor;
+  private final Color zColor;
   private final boolean invertedDirection;
 
   public AxisDirection(SliceOrientation viewOrientation) {
@@ -132,10 +136,10 @@ public class AxisDirection {
     Vector3d arrow3 = getArrowDirection(axis, dirZ, axisLength);
 
     Vector3d[] arrows = {arrow1, arrow2, arrow3};
-    double minX = Double.MAX_VALUE,
-        minY = Double.MAX_VALUE,
-        maxX = Double.MIN_VALUE,
-        maxY = Double.MIN_VALUE;
+    double minX = Double.MAX_VALUE;
+    double minY = Double.MAX_VALUE;
+    double maxX = Double.MIN_VALUE;
+    double maxY = Double.MIN_VALUE;
     for (Vector3d arrow : arrows) {
       if (arrow.x < minX) minX = arrow.x;
       if (arrow.y < minY) minY = arrow.y;
@@ -144,7 +148,7 @@ public class AxisDirection {
     }
 
     Point2D pt = mprView.getInfoLayer().getPosition(Position.TopLeft);
-    double dimX = Math.sqrt(axisLength * axisLength) * 2.0;
+    double dimX = Math.sqrt((double) axisLength * axisLength) * 2.0;
     double dimY = dimX;
 
     if (pt != null) {
@@ -180,7 +184,7 @@ public class AxisDirection {
 
   private void drawArrowHead(Graphics2D g2d, int xTip, int yTip, int xBase, int yBase) {
     final int arrowHeadSize = 10;
-    double angle = Math.atan2(yTip - yBase, xTip - xBase);
+    double angle = Math.atan2((double) yTip - yBase, (double) xTip - xBase);
 
     int x1 = xTip - (int) (arrowHeadSize * Math.cos(angle - Math.PI / 6));
     int y1 = yTip - (int) (arrowHeadSize * Math.sin(angle - Math.PI / 6));

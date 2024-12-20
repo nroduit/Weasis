@@ -27,7 +27,7 @@ public abstract class ArcBallController extends SliderChangeListener implements 
   private MouseActionAdapter window = null;
   private MouseActionAdapter level = null;
 
-  public ArcBallController(MprController controller) {
+  protected ArcBallController(MprController controller) {
     super(ActionW.ROTATION, 0, 360, 0, true, 0.25);
     this.controller = controller;
     this.lastMousePosition = new Vector2d();
@@ -125,18 +125,20 @@ public abstract class ArcBallController extends SliderChangeListener implements 
       //    if (view3d != null && !e.isConsumed() && (modifier & buttonMask) != 0) {
       int mask = InputEvent.CTRL_DOWN_MASK;
       if ((modifier & mask) == mask) {
-        view3d.setCursor(ActionW.WINLEVEL.getCursor());
-        window = view3d.getAction(ActionW.WINDOW);
-        if (window != null) {
-          window.setButtonMaskEx(window.getButtonMaskEx() | buttonMask);
-          window.setMoveOnX(true);
-          window.mousePressed(e);
-        }
-        level = view3d.getAction(ActionW.LEVEL);
-        if (level != null) {
-          level.setButtonMaskEx(level.getButtonMaskEx() | buttonMask);
-          level.setInverse(true);
-          level.mousePressed(e);
+        if (view3d != null) {
+          view3d.setCursor(ActionW.WINLEVEL.getCursor());
+          window = view3d.getAction(ActionW.WINDOW);
+          if (window != null) {
+            window.setButtonMaskEx(window.getButtonMaskEx() | buttonMask);
+            window.setMoveOnX(true);
+            window.mousePressed(e);
+          }
+          level = view3d.getAction(ActionW.LEVEL);
+          if (level != null) {
+            level.setButtonMaskEx(level.getButtonMaskEx() | buttonMask);
+            level.setInverse(true);
+            level.mousePressed(e);
+          }
         }
       } else {
         releaseWinLevelAdapter();

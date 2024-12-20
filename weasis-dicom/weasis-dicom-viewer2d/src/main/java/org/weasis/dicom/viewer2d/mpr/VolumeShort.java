@@ -25,10 +25,13 @@ import org.joml.Matrix4d;
 import org.joml.Quaterniond;
 import org.joml.Vector3d;
 import org.joml.Vector3i;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.weasis.opencv.data.ImageCV;
 import org.weasis.opencv.data.PlanarImage;
 
 public class VolumeShort extends Volume<Short> {
+  private static final Logger LOGGER = LoggerFactory.getLogger(VolumeShort.class);
 
   private short[][][] data;
 
@@ -189,7 +192,7 @@ public class VolumeShort extends Volume<Short> {
         }
       }
     } catch (IOException e) {
-      e.printStackTrace();
+      LOGGER.error("Cannot save volume in file", e);
     }
   }
 
@@ -215,7 +218,7 @@ public class VolumeShort extends Volume<Short> {
         }
       }
     } catch (IOException e) {
-      e.printStackTrace();
+      LOGGER.error("Cannot read volume from file", e);
     }
     return volume;
   }
