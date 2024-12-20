@@ -479,6 +479,11 @@ public interface ViewCanvas<E extends ImageElement>
       eventManager.fireSeriesViewerListeners(
           new SeriesViewerEvent(
               eventManager.getSelectedView2dContainer(), null, null, EVENT.TOGGLE_INFO));
+    } else if (e.getKeyCode() == KeyEvent.VK_F11) {
+      ImageViewerPlugin<E> c = (ImageViewerPlugin<E>) eventManager.getSelectedView2dContainer();
+      if (c != null) {
+        c.maximizedSelectedImagePane(c.getSelectedImagePane(), null);
+      }
     } else if (e.isAltDown() && e.getKeyCode() == KeyEvent.VK_L) {
       // Counterclockwise
       eventManager
