@@ -12,12 +12,14 @@ package org.weasis.dicom.viewer2d.mpr;
 import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.GridBagConstraints;
+import java.awt.event.InputEvent;
+import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.awt.geom.AffineTransform;
+import java.awt.geom.Line2D;
 import java.awt.geom.Point2D;
 import java.beans.PropertyChangeEvent;
 import java.io.File;
-import java.util.ArrayList;
 import java.util.List;
 import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JFileChooser;
@@ -27,6 +29,7 @@ import javax.swing.JOptionPane;
 import javax.swing.JPopupMenu;
 import javax.swing.JProgressBar;
 import javax.swing.JRadioButtonMenuItem;
+import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
 import org.dcm4che3.data.Tag;
@@ -53,14 +56,12 @@ import org.weasis.core.ui.editor.image.ViewButton;
 import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.model.AbstractGraphicModel;
 import org.weasis.core.ui.model.graphic.Graphic;
-import org.weasis.core.ui.model.graphic.imp.PointGraphic;
 import org.weasis.core.ui.model.layer.GraphicLayer;
 import org.weasis.core.ui.model.layer.LayerItem;
 import org.weasis.core.ui.model.layer.LayerType;
 import org.weasis.core.ui.model.utils.exceptions.InvalidShapeException;
 import org.weasis.core.ui.pref.PreferenceDialog;
 import org.weasis.core.util.LangUtil;
-import org.weasis.core.util.MathUtil;
 import org.weasis.core.util.Pair;
 import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.codec.DicomImageElement;
@@ -70,12 +71,13 @@ import org.weasis.dicom.codec.geometry.GeometryOfSlice;
 import org.weasis.dicom.codec.geometry.LocalizerPoster;
 import org.weasis.dicom.viewer2d.Messages;
 import org.weasis.dicom.viewer2d.View2d;
+import org.weasis.dicom.viewer2d.mpr.MprController.ControlPoints;
 
 public class MprView extends View2d {
   private static final Logger LOGGER = LoggerFactory.getLogger(MprView.class);
 
-  protected static final String SHOW_CROSS_CENTER = "show.cross.center";
-  protected static final String HIDE_CROSSLINES = "hide.crosslines";
+  public static final String SHOW_CROSS_CENTER = "show.cross.center";
+  public static final String HIDE_CROSSLINES = "hide.crosslines";
 
   public enum SliceOrientation {
     AXIAL,
@@ -236,6 +238,21 @@ public class MprView extends View2d {
     }
   }
 
+  public ControlPoints getControlPoints(Line2D line, Point2D center) {
+    line = GeomUtil.cropLine(line, getVisibleImageViewBounds());
+    ControlPoints c = new ControlPoints();
+    c.p1 = line.getP1();
+    c.p2 = line.getP2();
+    c.p1Rotate = GeomUtil.getColinearPointWithRatio(center, c.p1, 0.75);
+    c.p2Rotate = GeomUtil.getColinearPointWithRatio(center, c.p2, 0.75);
+    //    controlPoints.p1Extend  = GeomUtil.getColinearPointWithRatio(center, p1, 0.5);
+    //   controlPoints.p2Extend  = GeomUtil.getColinearPointWithRatio(center, p2, 0.5);
+    //    for (Point2D p : c.getPointList()) {
+    //      p.setLocation(modelToView(p.getX(), p.getY()));
+    //    }
+    return c;
+  }
+
   protected void addCrossline(MprAxis axis) {
     Pair<MprAxis, MprAxis> pair = mprController.getCrossAxis(axis);
     if (pair != null) {
@@ -271,23 +288,15 @@ public class MprView extends View2d {
     List<Point2D> pts = mprController.getLinePoints(axis, center, vertical);
     if (pts == null) return;
 
-    List<Point2D> controlPoints = null;
-    if (mprController.getCurrentAxis() == axis && currentAxis == mprController.getSelectedAxis()) {
-      controlPoints = new ArrayList<>();
-      for (Point2D pt : mprController.getControlPoints().getControlPoints()) {
-        Point2D point = new Point2D.Double(pt.getX(), pt.getY());
-        mprController.rectifyPosition(axis, point);
-        controlPoints.add(point);
-      }
-    }
-
     for (Point2D pt : pts) {
       mprController.rectifyPosition(axis, pt);
     }
 
     Color color = axis.getAxisDColor(vertical);
+    boolean selected =
+        mprController.getCurrentAxis() == axis && currentAxis == mprController.getSelectedAxis();
     addCrosshairLine(
-        layer, pts, color, centerPt, centerGap, currentAxis.getThicknessExtension(), controlPoints);
+        layer, pts, color, centerPt, centerGap, currentAxis.getThicknessExtension(), selected);
   }
 
   public boolean isVerticalLine(MprAxis axis) {
@@ -307,7 +316,7 @@ public class MprView extends View2d {
       Point2D center,
       int centerGap,
       int lineThickness,
-      List<Point2D> ctrlPts) {
+      boolean selected) {
     if (pts != null && pts.size() == 2) {
       try {
         Graphic graphic;
@@ -315,6 +324,8 @@ public class MprView extends View2d {
         line.setCenterGap(center);
         line.setGapSize(centerGap);
         line.setExtendLength(lineThickness);
+        line.setLineThickness(selected ? 3f : Graphic.DEFAULT_LINE_THICKNESS);
+        line.setMprView(this);
         graphic = line.buildGraphic(pts);
 
         graphic.setPaint(color);
@@ -322,21 +333,6 @@ public class MprView extends View2d {
         graphic.setLayer(layer);
 
         graphicManager.addGraphic(graphic);
-        if (ctrlPts != null) {
-          graphic.setLineThickness(3f);
-          double scalingFactor = GeomUtil.extractScalingFactor(getAffineTransform());
-          if (MathUtil.isEqualToZero(scalingFactor)) {
-            scalingFactor = 1;
-          }
-          for (Point2D pt : ctrlPts) {
-            PointGraphic point = new PointGraphic();
-            point.setPointSize((int) (15 / scalingFactor));
-            point.setLineThickness(3f);
-            point.setPaint(color);
-            point.setLayer(layer);
-            graphicManager.addGraphic(point.buildGraphic(List.of(pt)));
-          }
-        }
       } catch (InvalidShapeException e) {
         LOGGER.error("Add crosshair line", e);
       }
@@ -393,7 +389,7 @@ public class MprView extends View2d {
     return eventManager.getOptions().getIntProperty(View2d.P_CROSSHAIR_CENTER_GAP, 40);
   }
 
-  private void recenterAxis(boolean all) {
+  public void recenterAxis(boolean all) {
     MprAxis axis = getMprAxis();
     if (axis != null) {
       Vector3d current = mprController.getVolumeCrossHair(axis);
@@ -416,27 +412,34 @@ public class MprView extends View2d {
               if (getCenterMode() != 2) {
                 JMenuItem item = new JMenuItem("Center");
                 item.addActionListener(e -> recenterAxis(false));
+                item.setAccelerator(
+                    KeyStroke.getKeyStroke(KeyEvent.VK_A, InputEvent.ALT_DOWN_MASK));
                 popupMenu.add(item);
 
                 item = new JMenuItem("Center");
                 item.addActionListener(e -> recenterAxis(true));
+                item.setAccelerator(
+                    KeyStroke.getKeyStroke(KeyEvent.VK_C, InputEvent.ALT_DOWN_MASK));
                 menu.add(item);
               }
 
               int gap = getCenterGap();
               if (gap > 0) {
-                boolean showCenter =
-                    LangUtil.getNULLtoFalse((Boolean) actionsInView.get(SHOW_CROSS_CENTER));
+                boolean showCenter = getViewProperty(this, SHOW_CROSS_CENTER);
                 JCheckBoxMenuItem boxMenuItem =
                     new JCheckBoxMenuItem("Show center of crosshair", showCenter);
                 boxMenuItem.addActionListener(
                     e -> showCrossCenter((JCheckBoxMenuItem) e.getSource(), false));
+                boxMenuItem.setAccelerator(
+                    KeyStroke.getKeyStroke(KeyEvent.VK_S, InputEvent.ALT_DOWN_MASK));
                 popupMenu.add(boxMenuItem);
 
                 showCenter = getAllViewsProperty(SHOW_CROSS_CENTER);
                 boxMenuItem = new JCheckBoxMenuItem(boxMenuItem.getText(), showCenter);
                 boxMenuItem.addActionListener(
                     e -> showCrossCenter((JCheckBoxMenuItem) e.getSource(), true));
+                boxMenuItem.setAccelerator(
+                    KeyStroke.getKeyStroke(KeyEvent.VK_V, InputEvent.ALT_DOWN_MASK));
                 menu.add(boxMenuItem);
               }
 
@@ -445,12 +448,16 @@ public class MprView extends View2d {
                   new JCheckBoxMenuItem("Show crosshair lines", showCrossLines);
               boxMenuItem.addActionListener(
                   e -> showCrossLines((JCheckBoxMenuItem) e.getSource(), false));
+              boxMenuItem.setAccelerator(
+                  KeyStroke.getKeyStroke(KeyEvent.VK_D, InputEvent.ALT_DOWN_MASK));
               popupMenu.add(boxMenuItem);
 
               showCrossLines = !getAllViewsProperty(HIDE_CROSSLINES);
               boxMenuItem = new JCheckBoxMenuItem(boxMenuItem.getText(), showCrossLines);
               boxMenuItem.addActionListener(
                   e -> showCrossLines((JCheckBoxMenuItem) e.getSource(), true));
+              boxMenuItem.setAccelerator(
+                  KeyStroke.getKeyStroke(KeyEvent.VK_B, InputEvent.ALT_DOWN_MASK));
               menu.add(boxMenuItem);
 
               JMenu menuItem =
@@ -501,11 +508,9 @@ public class MprView extends View2d {
     String abbr = img.getPixelSpacingUnit().getAbbreviation();
     double minRatio = mprController.getVolume().getMinPixelRatio();
     int oldThickness = axis.getThicknessExtension();
-    List<MprAxis> mprAxisList =
-        all
-            ? List.of(
-                mprController.getAxial(), mprController.getCoronal(), mprController.getSagittal())
-            : List.of(axis);
+    List<MprAxis> allAxis =
+        List.of(mprController.getAxial(), mprController.getCoronal(), mprController.getSagittal());
+    List<MprAxis> mprAxisList = all ? allAxis : List.of(axis);
 
     List<Integer> extendsValues = List.of(1, 2, 3, 5, 7, 10, 15, 20);
     for (Integer i : extendsValues) {
@@ -521,6 +526,9 @@ public class MprView extends View2d {
                 mprAxis.setThicknessExtension(thicknessValue);
                 mprAxis.updateImage();
               }
+              if (mprAxisList != allAxis) {
+                allAxis.forEach(mprAxis -> mprAxis.getMprView().repaint());
+              }
             }
           });
       menu.add(item);
@@ -533,6 +541,9 @@ public class MprView extends View2d {
               for (MprAxis mprAxis : mprAxisList) {
                 mprAxis.setThicknessExtension(0);
                 mprAxis.updateImage();
+              }
+              if (mprAxisList != allAxis) {
+                allAxis.forEach(mprAxis -> mprAxis.getMprView().repaint());
               }
             });
 
@@ -553,6 +564,9 @@ public class MprView extends View2d {
                   mprAxis.setThicknessExtension(customThickness);
                   mprAxis.updateImage();
                 }
+                if (mprAxisList != allAxis) {
+                  allAxis.forEach(mprAxis -> mprAxis.getMprView().repaint());
+                }
               } catch (NumberFormatException ex) {
                 LOGGER.error("Invalid thickness value", ex);
               }
@@ -560,7 +574,7 @@ public class MprView extends View2d {
     return menu;
   }
 
-  private boolean getAllViewsProperty(String key) {
+  public boolean getAllViewsProperty(String key) {
     if (mprController != null) {
       return getViewProperty(mprController.getAxial().getMprView(), key)
           && getViewProperty(mprController.getCoronal().getMprView(), key)
@@ -569,7 +583,7 @@ public class MprView extends View2d {
     return false;
   }
 
-  private static boolean getViewProperty(MprView view, String key) {
+  public static boolean getViewProperty(MprView view, String key) {
     if (view != null) {
       return LangUtil.getNULLtoFalse((Boolean) view.actionsInView.get(key));
     }
@@ -577,7 +591,10 @@ public class MprView extends View2d {
   }
 
   private void showCrossLines(JCheckBoxMenuItem item, boolean all) {
-    boolean selected = item.isSelected();
+    showCrossLines(item.isSelected(), all);
+  }
+
+  public void showCrossLines(boolean selected, boolean all) {
     if (all) {
       showCrossLines(mprController.getAxial().getMprView(), selected);
       showCrossLines(mprController.getCoronal().getMprView(), selected);
@@ -595,12 +612,16 @@ public class MprView extends View2d {
   }
 
   private void showCrossCenter(JCheckBoxMenuItem item, boolean all) {
+    showCrossCenter(item.isSelected(), all);
+  }
+
+  public void showCrossCenter(boolean selected, boolean all) {
     if (all) {
-      showCrossCenter(mprController.getAxial().getMprView(), item.isSelected());
-      showCrossCenter(mprController.getCoronal().getMprView(), item.isSelected());
-      showCrossCenter(mprController.getSagittal().getMprView(), item.isSelected());
+      showCrossCenter(mprController.getAxial().getMprView(), selected);
+      showCrossCenter(mprController.getCoronal().getMprView(), selected);
+      showCrossCenter(mprController.getSagittal().getMprView(), selected);
     } else {
-      showCrossCenter(this, item.isSelected());
+      showCrossCenter(this, selected);
     }
   }
 

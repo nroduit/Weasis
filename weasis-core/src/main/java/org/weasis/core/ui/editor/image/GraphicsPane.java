@@ -229,6 +229,13 @@ public abstract class GraphicsPane extends JComponent implements Canvas {
     return new Point2D.Double(b.getX(), b.getY());
   }
 
+  public Rectangle2D getVisibleImageViewBounds() {
+    Point2D offset = getImageCoordinatesFromMouse(0, 0);
+    double width = viewToModelLength((double) getWidth());
+    double height = viewToModelLength((double) getHeight());
+    return new Rectangle2D.Double(offset.getX(), offset.getY(), width, height);
+  }
+
   @Override
   public Rectangle2D getImageViewBounds() {
     return getImageViewBounds(getWidth(), getHeight());

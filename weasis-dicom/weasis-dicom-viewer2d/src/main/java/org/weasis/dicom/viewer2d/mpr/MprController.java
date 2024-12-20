@@ -125,6 +125,10 @@ public class MprController implements MouseListener, MouseMotionListener {
     return adjusting;
   }
 
+  public void setAdjusting(boolean adjusting) {
+    this.adjusting = adjusting;
+  }
+
   public ComboItemListener<Type> getMipTypeOption() {
     return mipTypeOption;
   }
@@ -332,11 +336,9 @@ public class MprController implements MouseListener, MouseMotionListener {
     if (center == null) {
       return null;
     }
-    Quaterniond rotation = new Quaterniond();
-    Vector3d direction = getPlaneDirection(viewAxis, vertical);
-    Vector3d vStart = new Vector3d(center).add(direction.mul(volume.getSliceSize() / 2.0));
-    rotation.rotateZ(Math.PI).transform(direction);
-    Vector3d vEnd = new Vector3d(center).add(direction);
+    Vector3d direction = getPlaneDirection(viewAxis, vertical).mul(volume.getSliceSize() * 0.5);
+    Vector3d vStart = new Vector3d(center).add(direction);
+    Vector3d vEnd = new Vector3d(center).sub(direction);
 
     if (vertical && viewAxis.getViewOrientation() == SliceOrientation.CORONAL
         || !vertical && viewAxis.getViewOrientation() == SliceOrientation.SAGITTAL) {
@@ -395,18 +397,10 @@ public class MprController implements MouseListener, MouseMotionListener {
         selectedAxis = null;
         selectedCursor = null;
         Point2D pt = view.getImageCoordinatesFromMouse(e.getX(), e.getY());
-        Cursor cursor = DefaultView2d.DEFAULT_CURSOR;
+
         Vector3d position = getVolumePositionZ(axis, pt);
         Vector3d crossHair = getVolumeCrossHair(axis);
-        Pair<MprAxis, MprAxis> pair = getCrossAxis(axis);
-        if (pair != null) {
-          cursor =
-              processImageElement(
-                  view, position, crossHair, pair.first(), false, oldSelectedAxis, cursor);
-          cursor =
-              processImageElement(
-                  view, position, crossHair, pair.second(), true, oldSelectedAxis, cursor);
-        }
+        Cursor cursor = paintCrossline(view, axis, position, crossHair, oldSelectedAxis);
 
         if (crossHair != null && crossHair.distance(position) <= 20) {
           cursor = MOVE_CURSOR;
@@ -425,6 +419,21 @@ public class MprController implements MouseListener, MouseMotionListener {
         }
       }
     }
+  }
+
+  private Cursor paintCrossline(
+      MprView view, MprAxis axis, Vector3d position, Vector3d crossHair, MprAxis oldSelectedAxis) {
+    Cursor cursor = DefaultView2d.DEFAULT_CURSOR;
+    Pair<MprAxis, MprAxis> pair = getCrossAxis(axis);
+    if (pair != null) {
+      cursor =
+          processImageElement(
+              view, position, crossHair, pair.first(), false, oldSelectedAxis, cursor);
+      cursor =
+          processImageElement(
+              view, position, crossHair, pair.second(), true, oldSelectedAxis, cursor);
+    }
+    return cursor;
   }
 
   private Cursor processImageElement(
@@ -641,8 +650,10 @@ public class MprController implements MouseListener, MouseMotionListener {
     rectifyPosition(axis, pt);
 
     Rectangle2D dim = view.getViewModel().getModelArea();
-    if (mode == 2 || mode == 1 && view.isAutoCenter(pt, centerGap)) {
-      view.setCenter(pt.getX() - dim.getWidth() * 0.5, pt.getY() - dim.getHeight() * 0.5);
+    if (mode == 2 || mode == 1 && view.isAutoCenter(pt)) {
+      double mx = pt.getX() - dim.getWidth() * 0.5;
+      double my = pt.getY() - dim.getHeight() * 0.5;
+      view.setCenter(mx, my);
     } else {
       view.repaint();
     }
@@ -711,38 +722,26 @@ public class MprController implements MouseListener, MouseMotionListener {
   }
 
   public void addControlPoints(MprView view, Line2D line, Point2D center) {
-    Point2D offset = view.getImageCoordinatesFromMouse(0, 0);
-    double width = view.viewToModelLength((double) view.getWidth());
-    double height = view.viewToModelLength((double) view.getHeight());
-    Rectangle2D rectangle = new Rectangle2D.Double(offset.getX(), offset.getY(), width, height);
-
-    if (rectangle.intersectsLine(line)) {
-      line = GeomUtil.cropLine(line, rectangle);
-    }
-    Point2D p1 = line.getP1();
-    Point2D p2 = line.getP2();
-
-    Point2D p1R = GeomUtil.getColinearPointWithRatio(center, p1, 0.75);
-    Point2D p2R = GeomUtil.getColinearPointWithRatio(center, p2, 0.75);
-    //    Point2D p1E = GeomUtil.getColinearPointWithRatio(center, p1, 0.5);
-    //    Point2D p2E = GeomUtil.getColinearPointWithRatio(center, p2, 0.5);
+    ControlPoints ctrls = view.getControlPoints(line, center);
 
     if (selectedPoint != null) {
       if (selectedPoint == controlPoints.p1Rotate) {
-        this.selectedPoint = p1R;
+        this.selectedPoint = ctrls.p1Rotate;
       } else if (selectedPoint == controlPoints.p2Rotate) {
-        this.selectedPoint = p2R;
+        this.selectedPoint = ctrls.p2Rotate;
         //      } else if(selectedPoint == controlPoints.p1Extend) {
-        //        this.selectedPoint = p1E;
+        //        this.selectedPoint = ctrls.p1Extend;
         //      } else if(selectedPoint == controlPoints.p2Extend) {
-        //        this.selectedPoint = p2E;
+        //        this.selectedPoint = ctrls.p2Extend;;
       }
     }
 
-    controlPoints.p1Rotate = p1R;
-    controlPoints.p2Rotate = p2R;
-    //    controlPoints.p1Extend = p1E;
-    //    controlPoints.p2Extend = p2E;
+    controlPoints.p1 = ctrls.p1;
+    controlPoints.p2 = ctrls.p2;
+    controlPoints.p1Rotate = ctrls.p1Rotate;
+    controlPoints.p2Rotate = ctrls.p2Rotate;
+    //    controlPoints.p1Extend = ctrls.p1Extend;
+    //    controlPoints.p2Extend = ctrls.p2Extend;
   }
 
   public void centerAll(MprView view) {
@@ -760,27 +759,35 @@ public class MprController implements MouseListener, MouseMotionListener {
   }
 
   public static class ControlPoints {
+    Point2D p1;
+    Point2D p2;
     Point2D p1Rotate;
     Point2D p2Rotate;
     Point2D p1Extend;
     Point2D p2Extend;
 
     public void clear() {
+      p1 = null;
+      p2 = null;
       p1Rotate = null;
       p2Rotate = null;
       p1Extend = null;
       p2Extend = null;
     }
 
-    public List<Point2D> getControlPoints() {
+    public List<Point2D> getPointList() {
       return Stream.of(p1Rotate, p2Rotate, p1Extend, p2Extend).filter(Objects::nonNull).toList();
+    }
+
+    public Line2D getLine() {
+      return new Line2D.Double(p1, p2);
     }
 
     public Point2D getSelectedPoint(MprView view, Vector3d position) {
       Point2D current = new Point2D.Double(position.x, position.y);
       Point2D selectedPoint = null;
       double smallest = 15;
-      for (Point2D p : getControlPoints()) {
+      for (Point2D p : getPointList()) {
         double dist = view.modelToViewLength(current.distance(p));
         if (dist < smallest) {
           smallest = dist;

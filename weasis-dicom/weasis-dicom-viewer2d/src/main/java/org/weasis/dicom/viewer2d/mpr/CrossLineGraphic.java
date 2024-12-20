@@ -11,6 +11,7 @@ package org.weasis.dicom.viewer2d.mpr;
 
 import jakarta.xml.bind.annotation.XmlRootElement;
 import jakarta.xml.bind.annotation.XmlType;
+import java.awt.geom.Ellipse2D;
 import java.awt.geom.Line2D;
 import java.awt.geom.Path2D;
 import java.awt.geom.Point2D;
@@ -18,13 +19,16 @@ import org.weasis.core.api.gui.util.GeomUtil;
 import org.weasis.core.ui.model.graphic.Graphic;
 import org.weasis.core.ui.model.graphic.imp.line.LineWithGapGraphic;
 import org.weasis.core.ui.model.utils.bean.AdvancedShape;
+import org.weasis.core.ui.model.utils.bean.AdvancedShape.InvariantShape;
 import org.weasis.core.ui.util.MouseEventDouble;
+import org.weasis.dicom.viewer2d.mpr.MprController.ControlPoints;
 
 @XmlType(name = "CrossLine")
 @XmlRootElement(name = "CrossLine")
 public class CrossLineGraphic extends LineWithGapGraphic {
 
   private int extendLength = 0;
+  private MprView mprView;
 
   public CrossLineGraphic() {
     super();
@@ -81,32 +85,53 @@ public class CrossLineGraphic extends LineWithGapGraphic {
       }
       path.lineTo(ptB.getX(), ptB.getY());
 
-      newShape = new AdvancedShape(this, 2);
+      newShape = new AdvancedShape(this, 3);
       newShape.addShape(path);
 
-      Path2D arrow = new Path2D.Double();
-      double arrowLength = 15;
-      double angle = Math.atan2(ptA.getY() - ptB.getY(), ptA.getX() - ptB.getX());
-      arrow.moveTo(ptA.getX(), ptA.getY());
-      arrow.lineTo(
-          ptA.getX() - arrowLength * Math.cos(angle - Math.PI / 6),
-          ptA.getY() - arrowLength * Math.sin(angle - Math.PI / 6));
-      arrow.moveTo(ptA.getX(), ptA.getY());
-      arrow.lineTo(
-          ptA.getX() - arrowLength * Math.cos(angle + Math.PI / 6),
-          ptA.getY() - arrowLength * Math.sin(angle + Math.PI / 6));
-      newShape.addAllInvShape(arrow, ptA, getStroke(lineThickness), false);
+      if (mprView != null) {
+        Line2D line = new Line2D.Double(ptA, ptB);
+        ControlPoints ctrlPts = mprView.getControlPoints(line, centerGap);
+        double size = lineThickness == 3.f ? 15 : 9;
+        for (Point2D pt : ctrlPts.getPointList()) {
+          Ellipse2D ellipse =
+              new Ellipse2D.Double(pt.getX() - size / 2.0f, pt.getY() - size / 2.0f, size, size);
 
-      if (extendLength > 0) {
-        Line2D lineExt1 = GeomUtil.getParallelLine(ptA, ptB, extendLength);
-        Line2D lineExt2 = GeomUtil.getParallelLine(ptB, ptA, extendLength);
+          InvariantShape ctrlShape = newShape.addAllInvShape(ellipse, pt, getStroke(1.0f), true);
+          ctrlShape.setFilled(true);
+        }
 
-        newShape.addShape(lineExt1, getDashStroke(1.0f), true);
-        newShape.addShape(lineExt2, getDashStroke(1.0f), true);
+        Path2D arrow = new Path2D.Double();
+        double arrowLength = 20;
+        Line2D line1 = ctrlPts.getLine();
+        Point2D p1 = line1.getP1();
+        Point2D p2 = line1.getP2();
+        double angle = Math.atan2(p1.getY() - p2.getY(), p1.getX() - p2.getX());
+        arrow.moveTo(p1.getX(), p1.getY());
+        arrow.lineTo(
+            p1.getX() - arrowLength * Math.cos(angle - Math.PI / 6),
+            p1.getY() - arrowLength * Math.sin(angle - Math.PI / 6));
+        arrow.moveTo(p1.getX(), p1.getY());
+        arrow.lineTo(
+            p1.getX() - arrowLength * Math.cos(angle + Math.PI / 6),
+            p1.getY() - arrowLength * Math.sin(angle + Math.PI / 6));
+        newShape.addAllInvShape(arrow, p1, getStroke(lineThickness), false);
+
+        if (extendLength > 0) {
+          // Show the thickness of the slice
+          Line2D lineExt1 = GeomUtil.getParallelLine(p1, p2, extendLength);
+          Line2D lineExt2 = GeomUtil.getParallelLine(p2, p1, extendLength);
+
+          newShape.addShape(lineExt1, getDashStroke(1.0f), true);
+          newShape.addShape(lineExt2, getDashStroke(1.0f), true);
+        }
       }
     }
 
     setShape(newShape, mouseEvent);
     updateLabel(mouseEvent, getDefaultView2d(mouseEvent));
+  }
+
+  public void setMprView(MprView mprView) {
+    this.mprView = mprView;
   }
 }

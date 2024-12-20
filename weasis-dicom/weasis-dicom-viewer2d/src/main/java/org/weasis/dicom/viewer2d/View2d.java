@@ -44,6 +44,7 @@ import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.Feature;
 import org.weasis.core.api.gui.util.Filter;
+import org.weasis.core.api.gui.util.GeomUtil;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.MouseActionAdapter;
 import org.weasis.core.api.image.AffineTransformOp;
@@ -852,11 +853,10 @@ public class View2d extends DefaultView2d<DicomImageElement> {
     return null;
   }
 
-  public boolean isAutoCenter(Point2D p, int centerGap) {
-    return p.getX() < centerGap
-        || p.getY() < centerGap
-        || p.getX() > getWidth() - centerGap
-        || p.getY() > getHeight() - centerGap;
+  public boolean isAutoCenter(Point2D p) {
+    Rectangle2D rectangle = getVisibleImageViewBounds();
+    GeomUtil.growRectangle(rectangle, -10);
+    return !rectangle.contains(p);
   }
 
   public void computeCrosshair(Vector3d p3, PanPoint panPoint) {
@@ -881,9 +881,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
             if (released) {
               int mode = eventManager.getOptions().getIntProperty(View2d.P_CROSSHAIR_MODE, 1);
               if (mode == 2
-                  || mode == 1
-                      && isAutoCenter(
-                          getMouseCoordinatesFromImage(p.getX(), p.getY()), centerGap)) {
+                  || mode == 1 && isAutoCenter(getMouseCoordinatesFromImage(p.getX(), p.getY()))) {
                 setCenter(p.getX() - dim.y * 0.5, p.getY() - dim.x * 0.5);
               }
             } else {

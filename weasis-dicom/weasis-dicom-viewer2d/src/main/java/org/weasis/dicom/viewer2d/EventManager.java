@@ -279,8 +279,11 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
           MprAxis axis = controller.getMprAxis(mprView.getSliceOrientation());
           int index = model.getValue() - 1;
           axis.setSliceIndex(index);
+          boolean oldAdjusting = controller.isAdjusting();
+          controller.setAdjusting(model.getValueIsAdjusting());
           axis.updateImage();
           image = axis.getImageElement();
+          controller.setAdjusting(oldAdjusting);
           mediaEvent = new SynchCineEvent(view2d, image, index);
         } else if (view2d != null && view2d.getSeries() instanceof Series) {
           series = (Series<DicomImageElement>) view2d.getSeries();
@@ -734,6 +737,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
     if (!commonDisplayShortcuts(e)) {
       int keyEvent = e.getKeyCode();
       int modifiers = e.getModifiers();
+      boolean isMpr = selectedView2dContainer instanceof MprContainer;
 
       if (keyEvent == KeyEvent.VK_LEFT && !e.isAltDown()) {
         if (e.isControlDown()) {
@@ -767,6 +771,34 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
         movePatient(ListPosition.FIRST);
       } else if (keyEvent == KeyEvent.VK_END && e.isControlDown()) {
         movePatient(ListPosition.LAST);
+      } else if (isMpr && keyEvent == KeyEvent.VK_A && e.isAltDown()) {
+        if (selectedView2dContainer.getSelectedImagePane() instanceof MprView mprView) {
+          mprView.recenterAxis(false);
+        }
+      } else if (isMpr && keyEvent == KeyEvent.VK_S && e.isAltDown()) {
+        if (selectedView2dContainer.getSelectedImagePane() instanceof MprView mprView) {
+          boolean showCenter = MprView.getViewProperty(mprView, MprView.SHOW_CROSS_CENTER);
+          mprView.showCrossCenter(!showCenter, false);
+        }
+      } else if (isMpr && keyEvent == KeyEvent.VK_D && e.isAltDown()) {
+        if (selectedView2dContainer.getSelectedImagePane() instanceof MprView mprView) {
+          boolean showCrossLines = MprView.getViewProperty(mprView, MprView.HIDE_CROSSLINES);
+          mprView.showCrossLines(showCrossLines, false);
+        }
+      } else if (isMpr && keyEvent == KeyEvent.VK_C && e.isAltDown()) {
+        if (selectedView2dContainer.getSelectedImagePane() instanceof MprView mprView) {
+          mprView.recenterAxis(true);
+        }
+      } else if (isMpr && keyEvent == KeyEvent.VK_V && e.isAltDown()) {
+        if (selectedView2dContainer.getSelectedImagePane() instanceof MprView mprView) {
+          boolean showCenter = mprView.getAllViewsProperty(MprView.SHOW_CROSS_CENTER);
+          mprView.showCrossCenter(!showCenter, true);
+        }
+      } else if (isMpr && keyEvent == KeyEvent.VK_B && e.isAltDown()) {
+        if (selectedView2dContainer.getSelectedImagePane() instanceof MprView mprView) {
+          boolean showCrossLines = mprView.getAllViewsProperty(MprView.HIDE_CROSSLINES);
+          mprView.showCrossLines(showCrossLines, true);
+        }
       } else {
         keyPreset(keyEvent, modifiers);
         triggerDrawingToolKeyEvent(keyEvent, modifiers);
