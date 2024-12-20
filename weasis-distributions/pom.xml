@@ -652,7 +652,6 @@
           <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-jarsigner-plugin</artifactId>
-            <version>3.0.0</version>
             <!-- Uncomment and provide proxy server setting when it is necessary to reach time stamping server from corporate network -->
             <!--<configuration> -->
             <!--<arguments> -->

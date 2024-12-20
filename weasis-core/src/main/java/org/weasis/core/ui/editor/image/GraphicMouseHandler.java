@@ -343,15 +343,12 @@ public class GraphicMouseHandler<E extends ImageElement> extends MouseActionAdap
     mouseEvt.setImageCoordinates(vImg.getImageCoordinatesFromMouse(e.getX(), e.getY()));
 
     // Handle special case when drawing in mode [click > release > move/drag > release] instead of
-    // [click + drag >
-    // release]
+    // [click + drag > release]
     if (ds instanceof DefaultDragSequence) {
       ds.drag(mouseEvt);
     } else {
-
-      Cursor newCursor = cursorSet.getDrawingCursor();
+      Cursor newCursor = null;
       GraphicModel graphicList = vImg.getGraphicManager();
-
       if (!mouseEvt.isShiftDown()) {
         // Evaluates if mouse is on a dragging position, and changes cursor image consequently
         Optional<Graphic> firstGraphicIntersecting =
@@ -366,8 +363,9 @@ public class GraphicMouseHandler<E extends ImageElement> extends MouseActionAdap
           newCursor = getCursor(mouseEvt, selectedDragGraphList, dragGraph, cursorSet);
         }
       }
-      vImg.getJComponent()
-          .setCursor(Optional.ofNullable(newCursor).orElse(cursorSet.getDrawingCursor()));
+      if (newCursor != null) {
+        vImg.getJComponent().setCursor(newCursor);
+      }
     }
   }
 

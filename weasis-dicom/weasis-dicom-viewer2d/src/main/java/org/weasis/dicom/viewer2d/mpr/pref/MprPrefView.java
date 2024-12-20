@@ -35,7 +35,7 @@ public class MprPrefView extends AbstractItemDialogPage {
       new JComboBox<>(MprContainer.LAYOUT_LIST.toArray(new GridBagLayoutModel[0]));
 
   public MprPrefView() {
-    super(MprFactory.NAME, 507);
+    super(Messages.getString("MPRFactory.title"), 507);
     this.comboBox3DCursorMode = new JComboBox<>();
     this.spinnerCrossGapSize = new JSpinner(new SpinnerNumberModel(40, 0, 60, 1));
     GuiUtils.setSpinnerWidth(spinnerCrossGapSize, 3);

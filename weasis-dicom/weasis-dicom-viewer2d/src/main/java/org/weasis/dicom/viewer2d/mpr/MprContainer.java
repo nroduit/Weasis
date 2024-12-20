@@ -51,7 +51,6 @@ import org.weasis.core.api.util.ResourceUtil.OtherIcon;
 import org.weasis.core.ui.editor.SeriesViewerUI;
 import org.weasis.core.ui.editor.image.DefaultView2d;
 import org.weasis.core.ui.editor.image.MeasureToolBar;
-import org.weasis.core.ui.editor.image.MouseActions;
 import org.weasis.core.ui.editor.image.RotationToolBar;
 import org.weasis.core.ui.editor.image.SynchData;
 import org.weasis.core.ui.editor.image.SynchView;
@@ -214,9 +213,9 @@ public class MprContainer extends DicomViewerPlugin implements PropertyChangeLis
 
   public static final SeriesViewerUI UI =
       new SeriesViewerUI(MprContainer.class, null, View2dContainer.UI.tools, null);
+  private MprController mprController;
 
   private Thread process;
-  private String lastCommand;
 
   public MprContainer() {
     this(VIEWS_1x1, null);
@@ -310,35 +309,6 @@ public class MprContainer extends DicomViewerPlugin implements PropertyChangeLis
   }
 
   @Override
-  public void setSelected(boolean selected) {
-    final ViewerToolBar toolBar = getViewerToolBar();
-    if (selected) {
-      if (toolBar != null) {
-        String command = ActionW.CROSSHAIR.cmd();
-        MouseActions mouseActions = eventManager.getMouseActions();
-        String lastAction = mouseActions.getAction(MouseActions.T_LEFT);
-        if (!command.equals(lastAction)) {
-          lastCommand = lastAction;
-          mouseActions.setAction(MouseActions.T_LEFT, command);
-          setMouseActions(mouseActions);
-          toolBar.changeButtonState(MouseActions.T_LEFT, command);
-        }
-      }
-    } else {
-      if (lastCommand != null && toolBar != null) {
-        MouseActions mouseActions = eventManager.getMouseActions();
-        if (ActionW.CROSSHAIR.cmd().equals(mouseActions.getAction(MouseActions.T_LEFT))) {
-          mouseActions.setAction(MouseActions.T_LEFT, lastCommand);
-          setMouseActions(mouseActions);
-          toolBar.changeButtonState(MouseActions.T_LEFT, lastCommand);
-          lastCommand = null;
-        }
-      }
-    }
-    super.setSelected(true);
-  }
-
-  @Override
   protected synchronized void setLayoutModel(GridBagLayoutModel layoutModel) {
     super.setLayoutModel(layoutModel);
     if (eventManager instanceof EventManager manager) {
@@ -358,6 +328,9 @@ public class MprContainer extends DicomViewerPlugin implements PropertyChangeLis
   @Override
   public void close() {
     stopCurrentProcess();
+    if (mprController != null) {
+      mprController.dispose();
+    }
     MprFactory.closeSeriesViewer(this);
     super.close();
   }
@@ -434,9 +407,16 @@ public class MprContainer extends DicomViewerPlugin implements PropertyChangeLis
     return false;
   }
 
+  public MprController getMprController() {
+    if (mprController == null) {
+      mprController = new MprController();
+    }
+    return mprController;
+  }
+
   @Override
   public DefaultView2d<DicomImageElement> createDefaultView(String classType) {
-    return new MprView(eventManager);
+    return new MprView(eventManager, getMprController());
   }
 
   @Override
@@ -548,7 +528,7 @@ public class MprContainer extends DicomViewerPlugin implements PropertyChangeLis
             @Override
             public void run() {
               try {
-                SeriesBuilder.createMissingSeries(this, MprContainer.this, view);
+                MPRGenerator.createMissingSeries(this, MprContainer.this, view);
 
                 // Following actions need to be executed in EDT thread
                 GuiExecutor.execute(
@@ -557,23 +537,24 @@ public class MprContainer extends DicomViewerPlugin implements PropertyChangeLis
                           .getAction(ActionW.SYNCH)
                           .ifPresent(c -> c.setSelectedItem(MprContainer.defaultMpr));
 
-                      // Set the middle image ( the best choice to propagate the default preset
-                      // of non CT modalities)
-                      eventManager
-                          .getAction(ActionW.SCROLL_SERIES)
-                          .ifPresent(s -> s.setSliderValue(s.getSliderMax() / 2));
-
-                      eventManager
-                          .getAction(ActionW.CROSSHAIR)
-                          .ifPresent(
-                              i -> {
-                                Point2D pt =
-                                    view.getImageCoordinatesFromMouse(
-                                        view.getWidth() / 2, view.getHeight() / 2);
-                                PanPoint panPoint =
-                                    new PanPoint(PanPoint.State.CENTER, pt.getX(), pt.getY());
-                                i.setPoint(panPoint);
-                              });
+                      if (!mprController.isOblique()) {
+                        // Set the middle image ( the best choice to propagate the default preset
+                        // of non CT modalities)
+                        eventManager
+                            .getAction(ActionW.SCROLL_SERIES)
+                            .ifPresent(s -> s.setSliderValue(s.getSliderMax() / 2));
+                        eventManager
+                            .getAction(ActionW.CROSSHAIR)
+                            .ifPresent(
+                                i -> {
+                                  Point2D pt =
+                                      view.getImageCoordinatesFromMouse(
+                                          view.getWidth() / 2, view.getHeight() / 2);
+                                  PanPoint panPoint =
+                                      new PanPoint(PanPoint.State.CENTER, pt.getX(), pt.getY());
+                                  i.setPoint(panPoint);
+                                });
+                      }
 
                       // Force to propagate the default preset
                       eventManager

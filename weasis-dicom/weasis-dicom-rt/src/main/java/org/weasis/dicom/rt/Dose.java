@@ -369,7 +369,7 @@ public class Dose extends RtSpecialElement implements SpecialElementRegion {
         Set<SegContour> contours = new LinkedHashSet<>();
         // Image slice UID and position
         String sopUID = TagD.getTagValue(image, Tag.SOPInstanceUID, String.class);
-        KeyDouble z = new KeyDouble(image.getSliceGeometry().getTLHC().z);
+        KeyDouble z = new KeyDouble(image.getRawSliceGeometry().getTLHC().z);
 
         List<IsoDoseRegion> reverseValues = new ArrayList<>(isoDoseSet.values());
         Collections.reverse(reverseValues);
@@ -575,7 +575,7 @@ public class Dose extends RtSpecialElement implements SpecialElementRegion {
     int nbPixels = Core.countNonZero(thrSrc);
     ImageConversion.releaseMat(thrSrc);
 
-    GeometryOfSlice geometry = rtSet.getPatientImage().getImage().getDispSliceGeometry();
+    GeometryOfSlice geometry = rtSet.getPatientImage().getImage().getSliceGeometry();
     Vector3d voxelSpacing = geometry.getVoxelSpacing();
     if (voxelSpacing.x < 0.00001 || voxelSpacing.y < 0.00001) {
       return null;

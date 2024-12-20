@@ -7,17 +7,19 @@
     {
       "code": "felix.auto.start.45",
       "value": "${dollar}{weasis.codebase.url}/bundle/weasis-base-explorer-${app.version}.jar${xz.ext} ${dollar}{weasis.codebase.url}/bundle/weasis-acquire-explorer-${app.version}.jar${xz.ext}",
-      "description": "Thumbnail explorer",
+      "description": "Base and Thumbnail explorer",
       "type": "A",
       "category": "FELIX_INSTALL"
     },
     {
       "code": "felix.auto.start.70",
-      "value": ""
+      "value": "",
+      "description": "REMOVE - DICOM Viewer 2D and SR viewer"
     },
     {
       "code": "felix.auto.start.75",
-      "value": ""
+      "value": "",
+      "description": "REMOVE - DICOM AU and ECG"
     },
     {
       "code": "felix.auto.start.85",
@@ -28,7 +30,8 @@
     },
     {
       "code": "felix.auto.start.110",
-      "value": "${dollar}{weasis.codebase.url}/bundle/weasis-dicom-send-${app.version}.jar${xz.ext}"
+      "value": "${dollar}{weasis.codebase.url}/bundle/weasis-dicom-send-${app.version}.jar${xz.ext}",
+      "description": "DICOM send only, REMOVE - Q/R and ISO writer"
     },
     {
       "code": "weasis.name",
@@ -61,6 +64,10 @@
     {
       "code": "weasis.toolbar.mouse.wheel",
       "value": "zoom"
+    },
+    {
+      "code": "weasis.import.images",
+      "value": "false"
     },
     {
       "code": "weasis.acquire.dest.host",
@@ -149,7 +156,7 @@
     },
     {
       "code": "weasis.acquire.meta.study.description",
-      "value": "",
+      "value": "Pictures of follow-up,Pictures of observation,Pictures preoperative,Pictures intraoperative,Pictures postoperative",
       "description": "Comma-separated list of study description elements (to obtain a selection in a combo box). Empty value will be an editable text field",
       "type": "A",
       "category": "METADATA"
@@ -192,10 +199,6 @@
       "type": "A",
       "javaType": "BOOLEAN",
       "category": "FACTORY"
-    },
-    {
-      "code": "weasis.import.images",
-      "value": "false"
     },
     {
       "code": "weasis-base-viewer2d.all.rotationtoolbar.enable",

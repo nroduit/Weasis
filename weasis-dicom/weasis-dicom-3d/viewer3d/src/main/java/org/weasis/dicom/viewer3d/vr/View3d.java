@@ -572,7 +572,7 @@ public class View3d extends VolumeCanvas
     List<PresetWindowLevel> list = getVolTexture().getPresetList(true, volumePreset, originalLUT);
     if (originalLUT) {
       if (!list.isEmpty()) {
-        changePresetWindowLevel(list.get(0));
+        changePresetWindowLevel(list.getFirst());
       }
     } else {
       list.stream()

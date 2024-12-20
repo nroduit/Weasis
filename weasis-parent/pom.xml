@@ -30,7 +30,7 @@
     <weasis.releasenotes>https://github.com/nroduit/Weasis/blob/master/CHANGELOG.md#v451-2024-09-18</weasis.releasenotes>
 
     <felix.framework.version>7.0.5</felix.framework.version>
-    <flatlaf.version>3.5.2</flatlaf.version>
+    <flatlaf.version>3.5.4</flatlaf.version>
     <miglayout.version>11.4.2</miglayout.version>
     <xz.version>1.10</xz.version>
 
@@ -50,15 +50,15 @@
     <slf4j.version>2.0.16</slf4j.version>
     <logback.version>1.5.14</logback.version>
     <dockingframes.version>1.1.7</dockingframes.version>
-    <weasis-dicom-tools.version>5.32.0.2</weasis-dicom-tools.version>
-    <weasis.core.img.version>4.9.0.2</weasis.core.img.version>
+    <weasis-dicom-tools.version>5.33.0</weasis-dicom-tools.version>
+    <weasis.core.img.version>4.9.0.3</weasis.core.img.version>
     <weasis.opencv.native.version>4.9.0-dcm</weasis.opencv.native.version>
     <osgi.resource.locator.version>2.5.0-b42</osgi.resource.locator.version>
     <jaxb.osgi.version>4.0.3</jaxb.osgi.version>
     <xml.bind-api.version>4.0.2</xml.bind-api.version>
     <joml.version>1.10.8</joml.version>
     <jogamp.version>2.5.0</jogamp.version>
-    <jackson.version>2.18.1</jackson.version>
+    <jackson.version>2.18.2</jackson.version>
     <scribejava.version>8.3.3</scribejava.version>
     <zip4j.version>2.11.5</zip4j.version>
 
@@ -116,7 +116,7 @@
         <plugin>
           <groupId>biz.aQute.bnd</groupId>
           <artifactId>bnd-maven-plugin</artifactId>
-          <version>7.0.0</version>
+          <version>7.1.0</version>
           <executions>
             <execution>
               <goals>
@@ -238,31 +238,6 @@
           <groupId>org.jacoco</groupId>
           <artifactId>jacoco-maven-plugin</artifactId>
           <version>0.8.12</version>
-        </plugin>
-        <!--This plugin's configuration is used to store Eclipse m2e settings only. It has no influence on the Maven build itself. -->
-        <plugin>
-          <groupId>org.eclipse.m2e</groupId>
-          <artifactId>lifecycle-mapping</artifactId>
-          <version>1.0.0</version>
-          <configuration>
-            <lifecycleMappingMetadata>
-              <pluginExecutions>
-                <pluginExecution>
-                  <pluginExecutionFilter>
-                    <groupId>org.codehaus.mojo</groupId>
-                    <artifactId>flatten-maven-plugin</artifactId>
-                    <versionRange>[1.1.0,)</versionRange>
-                    <goals>
-                      <goal>flatten</goal>
-                    </goals>
-                  </pluginExecutionFilter>
-                  <action>
-                    <ignore/>
-                  </action>
-                </pluginExecution>
-              </pluginExecutions>
-            </lifecycleMappingMetadata>
-          </configuration>
         </plugin>
       </plugins>
     </pluginManagement>

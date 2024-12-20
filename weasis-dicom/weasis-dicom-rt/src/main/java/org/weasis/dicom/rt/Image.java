@@ -41,7 +41,7 @@ public class Image {
     this.feetFirst = patientPosition.contains("ff") ? -1 : 1; // NON-NLS
 
     // Get the image pixel spacing
-    this.imageSpacing = image.getSliceGeometry().getVoxelSpacing();
+    this.imageSpacing = image.getRawSliceGeometry().getVoxelSpacing();
     this.width = TagD.getTagValue(image, Tag.Columns, Integer.class);
     this.height = TagD.getTagValue(image, Tag.Rows, Integer.class);
   }

@@ -310,10 +310,13 @@ public class View2d extends DefaultView2d<DicomImageElement> {
         } else if (command.equals(ActionW.CROSSHAIR.cmd())
             && series != null
             && val instanceof PanPoint p) {
-          GeometryOfSlice sliceGeometry = this.getImage().getDispSliceGeometry();
+          GeometryOfSlice sliceGeometry = this.getImage().getSliceGeometry();
           String fruid = TagD.getTagValue(series, Tag.FrameOfReferenceUID, String.class);
-          crosshairAction(
-              sliceGeometry, eventManager.getSelectedView2dContainer(), actionsInView, fruid, p);
+          ImageViewerPlugin<DicomImageElement> container =
+              eventManager.getSelectedView2dContainer();
+          if (container != null) {
+            crosshairAction(sliceGeometry, container.getView2ds(), this, fruid, p);
+          }
         }
       }
     } else if (name.equals(ActionW.IMAGE_SHUTTER.cmd())) {
@@ -337,49 +340,47 @@ public class View2d extends DefaultView2d<DicomImageElement> {
 
   public static void crosshairAction(
       GeometryOfSlice sliceGeometry,
-      ImageViewerPlugin<DicomImageElement> container,
-      Map<String, Object> actionsInView,
+      List<ViewCanvas<DicomImageElement>> view2ds,
+      ViewCanvas<DicomImageElement> selectedView,
       String fruid,
       PanPoint p) {
     if (sliceGeometry != null && fruid != null) {
       Vector3d p3 = Double.isNaN(p.getX()) ? null : sliceGeometry.getPosition(p);
-      if (container != null) {
-        List<ViewCanvas<DicomImageElement>> viewPanels = container.getImagePanels();
-        if (p3 != null) {
-          for (ViewCanvas<DicomImageElement> v : viewPanels) {
-            MediaSeries<DicomImageElement> s = v.getSeries();
-            if (s == null) {
-              continue;
-            }
-            if (v instanceof View2d view2d
-                && fruid.equals(TagD.getTagValue(s, Tag.FrameOfReferenceUID))
-                && v != container.getSelectedImagePane()) {
-              DicomImageElement imgToUpdate = v.getImage();
-              if (imgToUpdate != null) {
-                GeometryOfSlice geometry = imgToUpdate.getDispSliceGeometry();
-                if (geometry != null) {
-                  Vector3d vn = geometry.getNormal();
-                  // vn.absolute();
-                  double location = p3.x * vn.x + p3.y * vn.y + p3.z * vn.z;
-                  DicomImageElement img =
-                      s.getNearestImage(
-                          location,
-                          0,
-                          (Filter<DicomImageElement>)
-                              actionsInView.get(ActionW.FILTERED_SERIES.cmd()),
-                          v.getCurrentSortComparator());
-                  if (img != null) {
-                    Object oldZoomType = actionsInView.get(ViewCanvas.ZOOM_TYPE_CMD);
-                    view2d.setActionsInView(ViewCanvas.ZOOM_TYPE_CMD, ZoomType.CURRENT);
-                    view2d.setImage(img);
-                    view2d.setActionsInView(ViewCanvas.ZOOM_TYPE_CMD, oldZoomType);
-                  }
+      if (view2ds != null && p3 != null) {
+        Map<String, Object> actionsInView = selectedView.getActionsInView();
+        for (ViewCanvas<DicomImageElement> v : view2ds) {
+          MediaSeries<DicomImageElement> s = v.getSeries();
+          if (s == null) {
+            continue;
+          }
+          if (v instanceof View2d view2d
+              && fruid.equals(TagD.getTagValue(s, Tag.FrameOfReferenceUID))
+              && v != selectedView) {
+            DicomImageElement imgToUpdate = v.getImage();
+            if (imgToUpdate != null) {
+              GeometryOfSlice geometry = imgToUpdate.getSliceGeometry();
+              if (geometry != null) {
+                Vector3d vn = geometry.getNormal();
+                // vn.absolute();
+                double location = p3.x * vn.x + p3.y * vn.y + p3.z * vn.z;
+                DicomImageElement img =
+                    s.getNearestImage(
+                        location,
+                        0,
+                        (Filter<DicomImageElement>)
+                            actionsInView.get(ActionW.FILTERED_SERIES.cmd()),
+                        v.getCurrentSortComparator());
+                if (img != null) {
+                  Object oldZoomType = actionsInView.get(ViewCanvas.ZOOM_TYPE_CMD);
+                  view2d.setActionsInView(ViewCanvas.ZOOM_TYPE_CMD, ZoomType.CURRENT);
+                  view2d.setImage(img);
+                  view2d.setActionsInView(ViewCanvas.ZOOM_TYPE_CMD, oldZoomType);
                 }
               }
             }
           }
         }
-        for (ViewCanvas<DicomImageElement> v : viewPanels) {
+        for (ViewCanvas<DicomImageElement> v : view2ds) {
           MediaSeries<DicomImageElement> s = v.getSeries();
           if (s == null) {
             continue;
@@ -720,8 +721,8 @@ public class View2d extends DefaultView2d<DicomImageElement> {
   protected void computeCrosslines(double location) {
     DicomImageElement image = this.getImage();
     if (image != null) {
-      GeometryOfSlice sliceGeometry = image.getDispSliceGeometry();
-      if (sliceGeometry != null) {
+      GeometryOfSlice sliceGeometry = image.getSliceGeometry();
+      if (sliceGeometry != null && sliceGeometry.isRowColumnOrthogonal()) {
         ViewCanvas<DicomImageElement> view2DPane = eventManager.getSelectedViewPane();
         MediaSeries<DicomImageElement> selSeries =
             view2DPane == null ? null : view2DPane.getSeries();
@@ -760,16 +761,16 @@ public class View2d extends DefaultView2d<DicomImageElement> {
           // IntersectSlice: display a line representing the center of the slice
           IntersectSlice slice = new IntersectSlice(sliceGeometry);
           if (firstImage != null && firstImage != lastImage) {
-            addCrossline(firstImage, layer, slice, false);
+            addCrossline(firstImage, layer, slice, Color.cyan);
           }
           if (lastImage != null && firstImage != lastImage) {
-            addCrossline(lastImage, layer, slice, false);
+            addCrossline(lastImage, layer, slice, Color.cyan);
           }
           if (selImage != null) {
             // IntersectVolume: display a rectangle to show the slice thickness
-            if (!addCrossline(selImage, layer, new IntersectVolume(sliceGeometry), true)) {
+            if (!addCrossline(selImage, layer, new IntersectVolume(sliceGeometry), Color.blue)) {
               // When the volume limits are outside the image, get only the intersection
-              addCrossline(selImage, layer, slice, true);
+              addCrossline(selImage, layer, slice, Color.blue);
             }
           }
           repaint();
@@ -778,10 +779,8 @@ public class View2d extends DefaultView2d<DicomImageElement> {
     }
   }
 
-  protected boolean addCrossline(
-      DicomImageElement selImage, GraphicLayer layer, LocalizerPoster localizer, boolean center) {
-    GeometryOfSlice sliceGeometry = selImage.getDispSliceGeometry();
-    if (sliceGeometry != null) {
+  public List<Point2D> getCrossLine(GeometryOfSlice sliceGeometry, LocalizerPoster localizer) {
+    if (sliceGeometry != null && localizer != null && sliceGeometry.isRowColumnOrthogonal()) {
       List<Point2D> pts = localizer.getOutlineOnLocalizerForThisGeometry(sliceGeometry);
       if (pts != null && !pts.isEmpty()) {
         int lastPointIndex = pts.size() - 1;
@@ -791,23 +790,32 @@ public class View2d extends DefaultView2d<DicomImageElement> {
             pts.remove(lastPointIndex);
           }
         }
-        Color color = center ? Color.blue : Color.cyan;
-        try {
-          Graphic graphic;
-          if (pts.size() == 2) {
-            graphic = new LineGraphic().buildGraphic(pts);
-          } else {
-            graphic = new PolygonGraphic().buildGraphic(pts);
-          }
-          graphic.setPaint(color);
-          graphic.setLabelVisible(Boolean.FALSE);
-          graphic.setLayer(layer);
+        return pts;
+      }
+    }
+    return null;
+  }
 
-          graphicManager.addGraphic(graphic);
-          return true;
-        } catch (InvalidShapeException e) {
-          LOGGER.error("Building crossline", e);
+  protected boolean addCrossline(
+      DicomImageElement selImage, GraphicLayer layer, LocalizerPoster localizer, Color color) {
+    GeometryOfSlice sliceGeometry = selImage.getSliceGeometry();
+    List<Point2D> pts = getCrossLine(sliceGeometry, localizer);
+    if (pts != null) {
+      try {
+        Graphic graphic;
+        if (pts.size() == 2) {
+          graphic = new LineGraphic().buildGraphic(pts);
+        } else {
+          graphic = new PolygonGraphic().buildGraphic(pts);
         }
+        graphic.setPaint(color);
+        graphic.setLabelVisible(Boolean.FALSE);
+        graphic.setLayer(layer);
+
+        graphicManager.addGraphic(graphic);
+        return true;
+      } catch (InvalidShapeException e) {
+        LOGGER.error("Building crossline", e);
       }
     }
     return false;
@@ -844,7 +852,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
     return null;
   }
 
-  protected boolean isAutoCenter(Point2D p, int centerGap) {
+  public boolean isAutoCenter(Point2D p, int centerGap) {
     return p.getX() < centerGap
         || p.getY() < centerGap
         || p.getX() > getWidth() - centerGap
@@ -858,7 +866,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
       if (!released) {
         graphicManager.deleteByLayerType(LayerType.CROSSLINES);
       }
-      GeometryOfSlice sliceGeometry = image.getDispSliceGeometry();
+      GeometryOfSlice sliceGeometry = image.getSliceGeometry();
       if (sliceGeometry != null) {
         SliceOrientation sliceOrientation = this.getSliceOrientation();
         if (sliceOrientation != null && p3 != null) {

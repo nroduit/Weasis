@@ -11,15 +11,11 @@ package org.weasis.dicom.viewer2d;
 
 import java.awt.event.ActionListener;
 import javax.swing.JButton;
-import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.media.data.MediaSeries;
-import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.api.util.ResourceUtil.OtherIcon;
-import org.weasis.core.ui.editor.SeriesViewerFactory;
-import org.weasis.core.ui.editor.ViewerPluginBuilder;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.util.WtoolBar;
@@ -34,8 +30,8 @@ public class Basic3DToolBar extends WtoolBar {
     super(Messages.getString("Basic3DToolBar.title"), index);
 
     final JButton mprButton = new JButton(ResourceUtil.getToolBarIcon(OtherIcon.VIEW_3D));
-    mprButton.setToolTipText(Messages.getString("Basic3DToolBar.mpr"));
-    mprButton.addActionListener(getMprAction());
+    mprButton.setToolTipText(Messages.getString("Basic3DToolBar.mpr.oblique"));
+    mprButton.addActionListener(MprFactory.getMprAction(null));
     add(mprButton);
 
     final JButton mipButton = new JButton(ResourceUtil.getToolBarIcon(OtherIcon.VIEW_MIP));
@@ -51,18 +47,6 @@ public class Basic3DToolBar extends WtoolBar {
               s.registerActionState(mprButton);
               s.registerActionState(mipButton);
             });
-  }
-
-  public static ActionListener getMprAction() {
-    return e -> {
-      MediaSeries<org.weasis.dicom.codec.DicomImageElement> s =
-          EventManager.getInstance().getSelectedSeries();
-      SeriesViewerFactory factory = GuiUtils.getUICore().getViewerFactory(MprFactory.class);
-      if (factory != null && factory.canReadSeries(s)) {
-        ViewerPluginBuilder.openSequenceInPlugin(
-            factory, s, (DataExplorerModel) s.getTagValue(TagW.ExplorerModel), false, false);
-      }
-    };
   }
 
   public static ActionListener getMipAction() {
