@@ -158,10 +158,10 @@ public class OpenAngleToolGraphic extends AbstractDragGraphic {
 
       // Let arcAngle be the partial section of the ellipse that represents the measured angle
       // Let Ix,Jx points of line segments AB & CD used to compute arcAngle radius
-      Point2D ptI1 = GeomUtil.getColinearPointWithRatio(lineABP[1], lineABP[0], 0.25);
-      Point2D ptJ1 = GeomUtil.getColinearPointWithRatio(lineCDP[1], lineCDP[0], 0.25);
-      Point2D ptI2 = GeomUtil.getColinearPointWithRatio(lineABP[0], lineABP[1], 0.25);
-      Point2D ptJ2 = GeomUtil.getColinearPointWithRatio(lineCDP[0], lineCDP[1], 0.25);
+      Point2D ptI1 = GeomUtil.getCollinearPointWithRatio(lineABP[1], lineABP[0], 0.25);
+      Point2D ptJ1 = GeomUtil.getCollinearPointWithRatio(lineCDP[1], lineCDP[0], 0.25);
+      Point2D ptI2 = GeomUtil.getCollinearPointWithRatio(lineABP[0], lineABP[1], 0.25);
+      Point2D ptJ2 = GeomUtil.getCollinearPointWithRatio(lineCDP[0], lineCDP[1], 0.25);
 
       double maxRadius = Math.min(ptP.distance(ptI2), ptP.distance(ptJ2));
       double radius = Math.min(maxRadius, (ptP.distance(ptI1) + ptP.distance(ptJ1)) / 2);

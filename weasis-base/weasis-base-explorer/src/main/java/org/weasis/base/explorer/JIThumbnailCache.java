@@ -155,7 +155,7 @@ public final class JIThumbnailCache {
     public void run() {
       PlanarImage img = null;
 
-      // Get the final that contain the thumbnail when the uncompress mode is activated
+      // Get the final that contain the thumbnail when the uncompressed mode is activated
       File file = diskObject.getFile();
       if (file != null && file.getName().endsWith(".wcv")) {
         File thumbFile = new File(ImageCVIO.changeExtension(file.getPath(), ".jpg"));

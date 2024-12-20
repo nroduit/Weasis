@@ -14,10 +14,12 @@ import java.awt.Dimension;
 import java.awt.GridBagConstraints;
 import java.awt.Point;
 import java.awt.Rectangle;
+import java.awt.Shape;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.awt.event.FocusEvent;
 import java.awt.event.MouseEvent;
+import java.awt.geom.Path2D;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.beans.PropertyChangeEvent;
@@ -854,9 +856,14 @@ public class View2d extends DefaultView2d<DicomImageElement> {
   }
 
   public boolean isAutoCenter(Point2D p) {
-    Rectangle2D rectangle = getVisibleImageViewBounds();
-    GeomUtil.growRectangle(rectangle, -10);
-    return !rectangle.contains(p);
+    Point2D pt = getClipViewCoordinatesOffset();
+    Rectangle2D bounds = new Rectangle2D.Double(-pt.getX(), -pt.getY(), getWidth(), getHeight());
+    GeomUtil.growRectangle(bounds, -10);
+    Shape path = inverseTransform.createTransformedShape(bounds);
+    if (path instanceof Path2D path2D) {
+      return !path2D.contains(p);
+    }
+    return !bounds.contains(p);
   }
 
   public void computeCrosshair(Vector3d p3, PanPoint panPoint) {
@@ -1210,9 +1217,9 @@ public class View2d extends DefaultView2d<DicomImageElement> {
       GuiUtils.addItemToMenu(popupMenu, manager.getResetMenu("weasis.contextmenu.reset"));
     }
 
-    if (GuiUtils.getUICore()
-        .getSystemPreferences()
-        .getBooleanProperty("weasis.contextmenu.close", true)) {
+    String pClose = "weasis.contextmenu.close";
+    if (LangUtil.getNULLtoTrue((Boolean) actionsInView.get(pClose))
+        && GuiUtils.getUICore().getSystemPreferences().getBooleanProperty(pClose, true)) {
       JMenuItem close = new JMenuItem(Messages.getString("View2d.close"));
       close.addActionListener(e -> View2d.this.setSeries(null, null));
       popupMenu.add(close);

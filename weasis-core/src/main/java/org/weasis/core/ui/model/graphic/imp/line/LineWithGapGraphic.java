@@ -118,7 +118,7 @@ public class LineWithGapGraphic extends AbstractDragGraphic {
 
     if (lineABvalid) {
       if (centerGap == null) {
-        centerGap = GeomUtil.getColinearPointWithRatio(ptA, ptB, 0.5);
+        centerGap = GeomUtil.getCollinearPointWithRatio(ptA, ptB, 0.5);
       }
       double dist = ptA.distance(ptB);
       double distCenterGap = ptA.distance(centerGap);
@@ -128,8 +128,8 @@ public class LineWithGapGraphic extends AbstractDragGraphic {
       Point2D ptbp = null;
       if (distCenterGap < dist && distCenterB < dist) {
         double distGap = 0.5 * gapSize / dist;
-        ptap = GeomUtil.getColinearPointWithRatio(ptA, ptB, distCenterGap / dist - distGap);
-        ptbp = GeomUtil.getColinearPointWithRatio(ptA, ptB, distCenterGap / dist + distGap);
+        ptap = GeomUtil.getCollinearPointWithRatio(ptA, ptB, distCenterGap / dist - distGap);
+        ptbp = GeomUtil.getCollinearPointWithRatio(ptA, ptB, distCenterGap / dist + distGap);
       }
 
       Path2D path = new Path2D.Double(Path2D.WIND_NON_ZERO, 4);

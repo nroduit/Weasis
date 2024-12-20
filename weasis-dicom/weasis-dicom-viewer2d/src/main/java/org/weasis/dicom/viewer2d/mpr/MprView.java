@@ -17,6 +17,7 @@ import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Line2D;
+import java.awt.geom.Path2D;
 import java.awt.geom.Point2D;
 import java.beans.PropertyChangeEvent;
 import java.io.File;
@@ -105,6 +106,7 @@ public class MprView extends View2d {
   @Override
   protected void initActionWState() {
     super.initActionWState();
+    actionsInView.put("weasis.contextmenu.close", false);
     actionsInView.put(ViewCanvas.ZOOM_TYPE_CMD, ZoomType.CURRENT);
     /*
      * Get the radiologist way to see stack (means in axial, the first image is from feet and last image is in the
@@ -223,7 +225,10 @@ public class MprView extends View2d {
   @Override
   protected void drawOnTop(Graphics2D g2d) {
     MprAxis axis = getMprAxis();
-    if (axis != null && isOblique()) {
+    if (axis != null
+        && isOblique()
+        && infoLayer != null
+        && LangUtil.getNULLtoFalse(infoLayer.getVisible())) {
       axis.getAxisDirection().drawAxes(g2d, this);
     }
 
@@ -239,17 +244,15 @@ public class MprView extends View2d {
   }
 
   public ControlPoints getControlPoints(Line2D line, Point2D center) {
-    line = GeomUtil.cropLine(line, getVisibleImageViewBounds());
+    Path2D path = getVisibleImageViewBounds();
+    line = GeomUtil.cropLine(line, path);
     ControlPoints c = new ControlPoints();
     c.p1 = line.getP1();
     c.p2 = line.getP2();
-    c.p1Rotate = GeomUtil.getColinearPointWithRatio(center, c.p1, 0.75);
-    c.p2Rotate = GeomUtil.getColinearPointWithRatio(center, c.p2, 0.75);
-    //    controlPoints.p1Extend  = GeomUtil.getColinearPointWithRatio(center, p1, 0.5);
-    //   controlPoints.p2Extend  = GeomUtil.getColinearPointWithRatio(center, p2, 0.5);
-    //    for (Point2D p : c.getPointList()) {
-    //      p.setLocation(modelToView(p.getX(), p.getY()));
-    //    }
+    c.p1Rotate = GeomUtil.getCollinearPointWithRatio(center, c.p1, 0.75);
+    c.p2Rotate = GeomUtil.getCollinearPointWithRatio(center, c.p2, 0.75);
+    //   c.p1Extend  = GeomUtil.getCollinearPointWithRatio(center, p1, 0.5);
+    //   c.p2Extend  = GeomUtil.getCollinearPointWithRatio(center, p2, 0.5);
     return c;
   }
 

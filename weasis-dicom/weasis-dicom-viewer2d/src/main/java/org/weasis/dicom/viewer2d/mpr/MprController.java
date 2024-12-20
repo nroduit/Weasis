@@ -722,26 +722,26 @@ public class MprController implements MouseListener, MouseMotionListener {
   }
 
   public void addControlPoints(MprView view, Line2D line, Point2D center) {
-    ControlPoints ctrls = view.getControlPoints(line, center);
+    ControlPoints c = view.getControlPoints(line, center);
 
     if (selectedPoint != null) {
       if (selectedPoint == controlPoints.p1Rotate) {
-        this.selectedPoint = ctrls.p1Rotate;
+        this.selectedPoint = c.p1Rotate;
       } else if (selectedPoint == controlPoints.p2Rotate) {
-        this.selectedPoint = ctrls.p2Rotate;
+        this.selectedPoint = c.p2Rotate;
         //      } else if(selectedPoint == controlPoints.p1Extend) {
-        //        this.selectedPoint = ctrls.p1Extend;
+        //        this.selectedPoint = c.p1Extend;
         //      } else if(selectedPoint == controlPoints.p2Extend) {
-        //        this.selectedPoint = ctrls.p2Extend;;
+        //        this.selectedPoint = c.p2Extend;;
       }
     }
 
-    controlPoints.p1 = ctrls.p1;
-    controlPoints.p2 = ctrls.p2;
-    controlPoints.p1Rotate = ctrls.p1Rotate;
-    controlPoints.p2Rotate = ctrls.p2Rotate;
-    //    controlPoints.p1Extend = ctrls.p1Extend;
-    //    controlPoints.p2Extend = ctrls.p2Extend;
+    controlPoints.p1 = c.p1;
+    controlPoints.p2 = c.p2;
+    controlPoints.p1Rotate = c.p1Rotate;
+    controlPoints.p2Rotate = c.p2Rotate;
+    //    controlPoints.p1Extend = c.p1Extend;
+    //    controlPoints.p2Extend = c.p2Extend;
   }
 
   public void centerAll(MprView view) {

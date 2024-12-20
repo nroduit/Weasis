@@ -11,8 +11,10 @@ package org.weasis.core.api.gui.util;
 
 import java.awt.Shape;
 import java.awt.geom.AffineTransform;
+import java.awt.geom.FlatteningPathIterator;
 import java.awt.geom.Line2D;
 import java.awt.geom.Path2D;
+import java.awt.geom.PathIterator;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.util.Arrays;
@@ -157,7 +159,7 @@ public final class GeomUtil {
    */
   public static Point2D getColinearPointWithLength(Point2D ptA, Point2D ptB, double newLength) {
     if (ptA != null && ptB != null) {
-      return getColinearPointWithRatio(ptA, ptB, newLength / ptA.distance(ptB));
+      return getCollinearPointWithRatio(ptA, ptB, newLength / ptA.distance(ptB));
     }
     return null;
   }
@@ -172,7 +174,7 @@ public final class GeomUtil {
    *     If >0 && <AB , ptC point will be interior of AB<br>
    * @return New point ptC coordinates or null if any argument is invalid
    */
-  public static Point2D.Double getColinearPointWithRatio(Point2D ptA, Point2D ptB, double k) {
+  public static Point2D.Double getCollinearPointWithRatio(Point2D ptA, Point2D ptB, double k) {
     if (ptA != null && ptB != null) {
       return new Point2D.Double(
           ptB.getX() * k + ptA.getX() * (1 - k), ptB.getY() * k + ptA.getY() * (1 - k));
@@ -326,16 +328,62 @@ public final class GeomUtil {
       }
     }
 
+    return getLine2D(line, pl1, pl2, rect);
+  }
+
+  /**
+   * Crops the given line (Line2D) to the boundaries of the provided Path2D.
+   *
+   * @param line The line to crop.
+   * @param path The boundary Path2D to which the line should be cropped.
+   * @return A new cropped Line2D, or the original line if no intersection occurs.
+   */
+  public static Line2D cropLine(Line2D line, Path2D path) {
+    if (line == null || path == null) {
+      return line;
+    }
+
+    Point2D pl1 = null;
+    Point2D pl2 = null;
+
+    PathIterator iterator = new FlatteningPathIterator(path.getPathIterator(null), 2);
+    double[] coords = new double[6];
+    Point2D.Double lastPoint = null;
+
+    while (!iterator.isDone()) {
+      int segmentType = iterator.currentSegment(coords);
+      if (segmentType == PathIterator.SEG_MOVETO) {
+        lastPoint = new Point2D.Double(coords[0], coords[1]);
+      } else if (segmentType == PathIterator.SEG_LINETO) {
+        Point2D.Double currentPoint = new Point2D.Double(coords[0], coords[1]);
+        Point2D intersection = lineIntersection(line, new Line2D.Double(lastPoint, currentPoint));
+        if (intersection != null) {
+          if (pl1 == null) {
+            pl1 = intersection;
+          } else {
+            pl2 = intersection;
+            break;
+          }
+        }
+        lastPoint = currentPoint;
+      }
+      iterator.next();
+    }
+
+    return getLine2D(line, pl1, pl2, path);
+  }
+
+  private static Line2D getLine2D(Line2D line, Point2D pl1, Point2D pl2, Shape path) {
     if (pl1 != null && pl2 != null) {
       return keepLineOrientation(line, pl1, pl2);
-
     } else if (pl1 != null) {
-      if (rect.contains(line.getP1())) {
+      if (path.contains(line.getP1())) {
         return keepLineOrientation(line, pl1, line.getP1());
-      } else if (rect.contains(line.getP2())) {
+      } else if (path.contains(line.getP2())) {
         return keepLineOrientation(line, pl1, line.getP2());
       }
     }
+
     return line;
   }
 

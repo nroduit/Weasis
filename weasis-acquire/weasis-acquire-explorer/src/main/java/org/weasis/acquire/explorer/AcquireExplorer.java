@@ -235,9 +235,10 @@ public class AcquireExplorer extends PluginTool implements DataExplorerView {
   public void applyNewPath(String newRootPath) {
     setSystemDrive(new FileSystemDrive(newRootPath));
 
-    browsePanel.getMediaSourceList().insertItem(0, systemDrive);
-    if (browsePanel.getMediaSourceList().getSize() >= MEDIA_SOURCE_LIST_MAX) {
-      browsePanel.getMediaSourceList().removeItem(MEDIA_SOURCE_LIST_MAX - 1);
+    var mediaSourceList = browsePanel.getMediaSourceList();
+    mediaSourceList.insertItem(0, systemDrive);
+    if (mediaSourceList.getSize() >= MEDIA_SOURCE_LIST_MAX) {
+      mediaSourceList.removeItem(MEDIA_SOURCE_LIST_MAX - 1);
     }
     browsePanel.getMediaSourceSelectionCombo().setSelectedItem(systemDrive);
     loadSystemDrive();

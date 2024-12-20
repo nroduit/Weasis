@@ -63,7 +63,7 @@ public class CrossLineGraphic extends LineWithGapGraphic {
 
     if (lineABvalid) {
       if (centerGap == null) {
-        centerGap = GeomUtil.getColinearPointWithRatio(ptA, ptB, 0.5);
+        centerGap = GeomUtil.getCollinearPointWithRatio(ptA, ptB, 0.5);
       }
       double dist = ptA.distance(ptB);
       double distCenterGap = ptA.distance(centerGap);
@@ -73,8 +73,8 @@ public class CrossLineGraphic extends LineWithGapGraphic {
       Point2D ptbp = null;
       if (distCenterGap < dist && distCenterB < dist) {
         double distGap = 0.5 * gapSize / dist;
-        ptap = GeomUtil.getColinearPointWithRatio(ptA, ptB, distCenterGap / dist - distGap);
-        ptbp = GeomUtil.getColinearPointWithRatio(ptA, ptB, distCenterGap / dist + distGap);
+        ptap = GeomUtil.getCollinearPointWithRatio(ptA, ptB, distCenterGap / dist - distGap);
+        ptbp = GeomUtil.getCollinearPointWithRatio(ptA, ptB, distCenterGap / dist + distGap);
       }
 
       Path2D path = new Path2D.Double(Path2D.WIND_NON_ZERO, 4);
@@ -114,7 +114,7 @@ public class CrossLineGraphic extends LineWithGapGraphic {
         arrow.lineTo(
             p1.getX() - arrowLength * Math.cos(angle + Math.PI / 6),
             p1.getY() - arrowLength * Math.sin(angle + Math.PI / 6));
-        newShape.addAllInvShape(arrow, p1, getStroke(lineThickness), false);
+        newShape.addScaleInvShape(arrow, p1, getStroke(lineThickness), false);
 
         if (extendLength > 0) {
           // Show the thickness of the slice
