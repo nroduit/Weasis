@@ -177,6 +177,8 @@ public class View2d extends DefaultView2d<DicomImageElement> {
      */
     if (currentZoom <= 0.0) {
       zoom(0.0);
+    } else {
+      zoom(currentZoom);
     }
     if (panner != null) {
       panner.updateImageSize();

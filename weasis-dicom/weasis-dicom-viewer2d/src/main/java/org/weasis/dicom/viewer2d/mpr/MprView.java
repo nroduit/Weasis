@@ -223,6 +223,12 @@ public class MprView extends View2d {
   }
 
   @Override
+  public void zoom(Double viewScale) {
+    super.zoom(viewScale);
+    computeCrosslines(0);
+  }
+
+  @Override
   protected void drawOnTop(Graphics2D g2d) {
     MprAxis axis = getMprAxis();
     if (axis != null

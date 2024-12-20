@@ -508,7 +508,7 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
 
       if (!view2ds.isEmpty()) {
         if (selectedImagePane == null) {
-          selectedImagePane = view2ds.get(0);
+          selectedImagePane = view2ds.getFirst();
         }
         MouseActions mouseActions = eventManager.getMouseActions();
         boolean tiledMode = SynchData.Mode.TILE.equals(synchView.getSynchData().getMode());
@@ -661,9 +661,9 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
       fullscreenDialog.removeAll();
       fullscreenDialog.dispose();
       add(grid, BorderLayout.CENTER);
-    }
 
-    defaultView2d.getJComponent().requestFocusInWindow();
+      defaultView2d.getJComponent().requestFocusInWindow();
+    }
   }
 
   /** Return the image in the image display panel. */
