@@ -327,13 +327,24 @@ public final class GeomUtil {
     }
 
     if (pl1 != null && pl2 != null) {
-      if (line.getP1().distance(pl1) < line.getP1().distance(pl2)) {
-        return new Line2D.Double(pl1, pl2);
-      } else {
-        return new Line2D.Double(pl2, pl1);
+      return keepLineOrientation(line, pl1, pl2);
+
+    } else if (pl1 != null) {
+      if (rect.contains(line.getP1())) {
+        return keepLineOrientation(line, pl1, line.getP1());
+      } else if (rect.contains(line.getP2())) {
+        return keepLineOrientation(line, pl1, line.getP2());
       }
     }
     return line;
+  }
+
+  private static Line2D keepLineOrientation(Line2D line, Point2D pl1, Point2D pl2) {
+    if (line.getP1().distance(pl1) < line.getP1().distance(pl2)) {
+      return new Line2D.Double(pl1, pl2);
+    } else {
+      return new Line2D.Double(pl2, pl1);
+    }
   }
 
   private static Point2D lineIntersection(Line2D line1, Line2D line2) {
