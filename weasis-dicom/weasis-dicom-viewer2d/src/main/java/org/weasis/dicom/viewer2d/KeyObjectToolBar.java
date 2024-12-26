@@ -232,11 +232,11 @@ public class KeyObjectToolBar extends WtoolBar {
           dicomModel.removeHiddenSpecialElement(list.getSelectedValue());
           for (ViewCanvas<DicomImageElement> canvas : selectedView2dContainer.getView2ds()) {
             if (canvas instanceof View2d view2d) {
-                boolean needToRepaint = view2d.updateKOSelectedState(view2d.getImage());
-                if (needToRepaint && view2d==selectedView2d) {
-                    evtMgr.updateKeyObjectComponentsListener(selectedView2d);
-                    repaint();
-                }
+              boolean needToRepaint = view2d.updateKOSelectedState(view2d.getImage());
+              if (needToRepaint && view2d == selectedView2d) {
+                evtMgr.updateKeyObjectComponentsListener(selectedView2d);
+                repaint();
+              }
             }
           }
         }

@@ -687,11 +687,7 @@ public class View2dContainer extends DicomViewerPlugin implements PropertyChange
         if (updateAll) {
           List<ViewCanvas<DicomImageElement>> viewList = getImagePanels(true);
           for (ViewCanvas<DicomImageElement> view : viewList) {
-            if (forceUpdate
-                    || updatedKOSelection == view.getActionValue(ActionW.KO_SELECTION.cmd())) {
-              KOManager.updateKOFilter(
-                      view, forceUpdate ? updatedKOSelection : null, enableFilter, -1);
-            }
+            updateKoView(updatedKOSelection, enableFilter, forceUpdate, view);
             ((View2d) view).updateKOButtonVisibleState();
           }
         } else {
@@ -710,12 +706,7 @@ public class View2dContainer extends DicomViewerPlugin implements PropertyChange
           if (!(view.getSeries() instanceof DicomSeries dicomSeries) || !(view instanceof View2d)) {
             continue;
           }
-
-          if (forceUpdate
-              || updatedKOSelection == view.getActionValue(ActionW.KO_SELECTION.cmd())) {
-            KOManager.updateKOFilter(
-                view, forceUpdate ? updatedKOSelection : null, enableFilter, -1);
-          }
+          updateKoView(updatedKOSelection, enableFilter, forceUpdate, view);
 
           String seriesInstanceUID =
               TagD.getTagValue(dicomSeries, Tag.SeriesInstanceUID, String.class);
@@ -729,6 +720,16 @@ public class View2dContainer extends DicomViewerPlugin implements PropertyChange
       }
 
       EventManager.getInstance().updateKeyObjectComponentsListener(selectedView);
+    }
+  }
+
+  private static void updateKoView(
+      KOSpecialElement updatedKOSelection,
+      Boolean enableFilter,
+      boolean forceUpdate,
+      ViewCanvas<DicomImageElement> view) {
+    if (forceUpdate || updatedKOSelection == view.getActionValue(ActionW.KO_SELECTION.cmd())) {
+      KOManager.updateKOFilter(view, forceUpdate ? updatedKOSelection : null, enableFilter, -1);
     }
   }
 
