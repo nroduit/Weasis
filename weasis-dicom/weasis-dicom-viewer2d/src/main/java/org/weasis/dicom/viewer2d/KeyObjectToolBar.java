@@ -230,11 +230,13 @@ public class KeyObjectToolBar extends WtoolBar {
         DicomModel dicomModel = (DicomModel) selectedDicomSeries.getTagValue(TagW.ExplorerModel);
         if (dicomModel != null) {
           dicomModel.removeHiddenSpecialElement(list.getSelectedValue());
-          if (selectedView2d instanceof View2d view2d) {
-            boolean needToRepaint = view2d.updateKOSelectedState(selectedView2d.getImage());
-            if (needToRepaint) {
-              evtMgr.updateKeyObjectComponentsListener(selectedView2d);
-              repaint();
+          for (ViewCanvas<DicomImageElement> canvas : selectedView2dContainer.getView2ds()) {
+            if (canvas instanceof View2d view2d) {
+                boolean needToRepaint = view2d.updateKOSelectedState(view2d.getImage());
+                if (needToRepaint && view2d==selectedView2d) {
+                    evtMgr.updateKeyObjectComponentsListener(selectedView2d);
+                    repaint();
+                }
             }
           }
         }
