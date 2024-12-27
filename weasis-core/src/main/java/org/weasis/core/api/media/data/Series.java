@@ -191,7 +191,7 @@ public abstract class Series<E extends MediaElement> extends MediaSeriesGroupNod
       return -1;
     }
     Iterable<E> list = getMedias(filter, sort);
-    synchronized (this) {
+    synchronized (medias) {
       int index = 0;
       for (E e : list) {
         if (e == source) {
@@ -242,8 +242,7 @@ public abstract class Series<E extends MediaElement> extends MediaSeriesGroupNod
   }
 
   @Override
-  public void dispose() {
-    // forEach implement synchronized
+  public synchronized void dispose() {
     medias.forEach(
         m -> {
           if (m instanceof ImageElement imageElement) {
@@ -319,10 +318,8 @@ public abstract class Series<E extends MediaElement> extends MediaSeriesGroupNod
   }
 
   @Override
-  public int size(Filter<E> filter) {
-    synchronized (this) {
-      return filter == null ? medias.size() : Filter.size(filter.filter(medias));
-    }
+  public synchronized int size(Filter<E> filter) {
+    return filter == null ? medias.size() : Filter.size(filter.filter(medias));
   }
 
   @Override
@@ -416,10 +413,9 @@ public abstract class Series<E extends MediaElement> extends MediaSeriesGroupNod
 
   public boolean hasMediaContains(TagW tag, Object val) {
     if (val != null) {
-      synchronized (this) {
+      synchronized (medias) {
         for (E media : medias) {
-          Object val2 = media.getTagValue(tag);
-          if (val.equals(val2)) {
+          if (val.equals(media.getTagValue(tag))) {
             return true;
           }
         }

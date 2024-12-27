@@ -38,6 +38,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -140,6 +141,7 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
 
   private final AtomicInteger errors;
   private volatile boolean hasError = false;
+  private final AtomicBoolean seriesInitialized = new AtomicBoolean(false);
 
   public LoadSeries(
       DicomSeries dicomSeries,
@@ -858,6 +860,10 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
 
     /** Download file. */
     private boolean process() throws IOException, URISyntaxException {
+      boolean firstImage =
+          dicomSeries != null
+              && dicomSeries.size(null) == 0
+              && seriesInitialized.compareAndSet(false, true);
       boolean cache = true;
       File tempFile = null;
       DicomMediaIO dicomReader = null;
@@ -904,7 +910,7 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
           FileUtil.safeClose(stream);
 
           dicomReader = new DicomMediaIO(tempFile);
-          if (dicomReader.isReadableDicom() && dicomSeries.size(null) == 0) {
+          if (dicomReader.isReadableDicom() && firstImage) {
             // Override the group (patient, study and series) by the dicom fields except the UID of
             // the group
             MediaSeriesGroup patient = dicomModel.getParent(dicomSeries, DicomModel.patient);
@@ -941,7 +947,7 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
             final DicomMediaIO reader = dicomReader;
             // Necessary to wait the runnable because the dicomSeries must be added to the
             // dicomModel before reaching done() of SwingWorker
-            GuiExecutor.invokeAndWait(() -> updateUI(reader));
+            GuiExecutor.invokeAndWait(() -> updateUI(reader, firstImage));
           } else if (reading == Reading.ERROR) {
             errors.incrementAndGet();
           }
@@ -1098,15 +1104,13 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
       }
     }
 
-    private void updateUI(final DicomMediaIO reader) {
-      boolean firstImageToDisplay;
+    private void updateUI(final DicomMediaIO reader, boolean firstImageToDisplay) {
       Function<DicomSpecialElementFactory, DicomSpecialElement> buildSpecialElement =
           factory -> factory.buildDicomSpecialElement(reader);
 
       DicomMediaIO.ResultContainer result = reader.getMediaElement(buildSpecialElement);
       DicomImageElement[] medias = result.getImage();
       if (medias != null) {
-        firstImageToDisplay = dicomSeries.size(null) == 0;
         if (firstImageToDisplay) {
           MediaSeriesGroup patient = dicomModel.getParent(dicomSeries, DicomModel.patient);
           if (patient != null) {
