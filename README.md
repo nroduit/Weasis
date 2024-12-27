@@ -2,21 +2,34 @@
 
 [![Sonar](https://sonarcloud.io/api/project_badges/measure?project=org.weasis%3Aweasis-framework&metric=ncloc)](https://sonarcloud.io/component_measures?id=org.weasis%3Aweasis-framework) [![Sonar](https://sonarcloud.io/api/project_badges/measure?project=org.weasis%3Aweasis-framework&metric=reliability_rating)](https://sonarcloud.io/component_measures?id=org.weasis%3Aweasis-framework) [![Sonar](https://sonarcloud.io/api/project_badges/measure?project=org.weasis%3Aweasis-framework&metric=sqale_rating)](https://sonarcloud.io/component_measures?id=org.weasis%3Aweasis-framework) [![Sonar](https://sonarcloud.io/api/project_badges/measure?project=org.weasis%3Aweasis-framework&metric=security_rating)](https://sonarcloud.io/component_measures?id=org.weasis%3Aweasis-framework) [![Sonar](https://sonarcloud.io/api/project_badges/measure?project=org.weasis%3Aweasis-framework&metric=alert_status)](https://sonarcloud.io/dashboard?id=org.weasis%3Aweasis-framework)
 
-Weasis is a standalone and web-based software for visualizing images obtained from medical imaging devices. This free DICOM viewer is used in healthcare by hospitals, health networks, multicenter research trials, and patients.
+## Table of Contents
+- [About Weasis](#about-weasis)
+- [Getting Started](#getting-started)
+- [Release History](#release-history)
+- [Build Weasis](#build-weasis)
+- [General Features](#general-features)
+- [Viewer Features](#viewer-features-see-also-tutorials)
+- [Community and Support](#community-and-support)
+- [License](#license)
+
+## About Weasis
+
+**Weasis** is a powerful, multifunctional, and open-source DICOM viewer designed for both standalone and web-based use. It excels in medical image visualization and is widely used by healthcare professionals and research institutions. Engineered for seamless integration with PACS and DICOM workflows, Weasis offers a reliable solution for modern medical imaging needs.
+
+## Getting Started
 
 * [General information](https://nroduit.github.io)
+* [Getting Started](https://nroduit.github.io/en/getting-started)
 * [Download binary releases](https://nroduit.github.io/en/getting-started/download-dicom-viewer)
 * [Live Demo with different datasets](https://nroduit.github.io/en/demo)
-* [Issues](https://github.com/nroduit/Weasis/issues) ([Old Issue Tracker](https://dcm4che.atlassian.net/projects/WEA))
-* Forum: [Google group](https://groups.google.com/forum/#!forum/dcm4che) or [GitHub Discussions](https://github.com/nroduit/Weasis/discussions)
 
-# Release History
+## Release History
 See [CHANGELOG](CHANGELOG.md)
 
-# Build Weasis
+## Build Weasis
 See [How to build Weasis](https://nroduit.github.io/en/getting-started/building-weasis)
 
-# General Features
+## General Features
 * Open source DICOM viewer under EPL 2 or Apache 2 license
 * Flexible integration with PACS, VNA, RIS, HIS, or PHR  (see [integration documentation](https://nroduit.github.io/en/basics/customize/integration/))
 * [Desktop distributions](https://nroduit.github.io/en/getting-started/download-dicom-viewer/) (Windows, macOS, and Linux)
@@ -30,7 +43,7 @@ See [How to build Weasis](https://nroduit.github.io/en/getting-started/building-
 * Dicomizer module to convert standard images into DICOM files
 * [Embedded DICOM viewer in CD/DVD](https://nroduit.github.io/en/tutorials/dicom-export/index.html#cddvd-image) or other portable media
 
-# Viewer Features (see also [Tutorials](https://nroduit.github.io/en/tutorials/))
+## Viewer Features (see also [Tutorials](https://nroduit.github.io/en/tutorials/))
 
 * Data type support
   * Display most DICOM files including multi-frame, enhanced, MPEG-2, MPEG-4, MIME Encapsulation, DOC, SR, PR, KOS, SEG, AU, RT, and ECG
@@ -54,7 +67,8 @@ See [How to build Weasis](https://nroduit.github.io/en/getting-started/building-
   * Layouts for comparing series or studies
   * Advanced series synchronization options
   * Display cross-lines
-  * Orthogonal Multi-planar Reconstruction (MPR) and 3D cursor
+  * 3D cursor
+  * Oblique Multi-planar Reconstruction (MPR)
   * Maximum Intensity Projection
   * Persistent magnifier glass
 
@@ -76,3 +90,12 @@ See [How to build Weasis](https://nroduit.github.io/en/getting-started/building-
   * DICOM RT tools for radiotherapy: display RT structure set, dose, and DVH chart
 
 <img src='./weasis.jpg'>
+
+## Community and Support
+Weasis encourages community participation. Whether you’re reporting bugs, suggesting features, or seeking help, you can connect with others here:
+* [GitHub Issues](https://github.com/nroduit/Weasis/issues)
+* Forum: [Google group](https://groups.google.com/forum/#!forum/dcm4che) or [GitHub Discussions](https://github.com/nroduit/Weasis/discussions)
+* [Frequently Asked Questions](https://nroduit.github.io/en/faq/)
+
+## License
+Weasis is dual-licensed under the [EPL 2.0](https://opensource.org/licenses/EPL-2.0) and [Apache 2.0](https://opensource.org/licenses/Apache-2.0).
