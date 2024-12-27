@@ -150,7 +150,7 @@ public class DicomSeries extends Series<DicomImageElement> {
   }
 
   @Override
-  public void dispose() {
+  public synchronized void dispose() {
     stopPreloading(this);
     String seriesUID = (String) getTagValue(getTagID());
     String modality = TagD.getTagValue(this, Tag.Modality, String.class);

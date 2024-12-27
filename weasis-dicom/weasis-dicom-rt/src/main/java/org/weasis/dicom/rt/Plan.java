@@ -21,7 +21,6 @@ import org.weasis.dicom.codec.DicomMediaIO;
  */
 public class Plan extends RtSpecialElement {
   private String sopInstanceUid;
-  private String label;
   private Date date;
   private String name;
   private String description;
@@ -39,10 +38,6 @@ public class Plan extends RtSpecialElement {
 
   public void setSopInstanceUid(String sopInstanceUid) {
     this.sopInstanceUid = sopInstanceUid;
-  }
-
-  public String getLabel() {
-    return this.label;
   }
 
   public void setLabel(String value) {

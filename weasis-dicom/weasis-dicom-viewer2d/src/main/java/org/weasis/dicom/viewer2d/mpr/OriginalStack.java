@@ -11,13 +11,11 @@ package org.weasis.dicom.viewer2d.mpr;
 
 import static org.weasis.dicom.viewer2d.mpr.MprView.SliceOrientation.AXIAL;
 
-import java.io.File;
 import java.util.Arrays;
 import java.util.List;
 import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Tag;
 import org.dcm4che3.data.VR;
-import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.gui.util.Filter;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.TagW;
@@ -29,9 +27,6 @@ import org.weasis.dicom.viewer2d.mpr.MprView.SliceOrientation;
 
 public abstract class OriginalStack extends AbstractStack {
   protected static final double EPSILON = 1e-3;
-  protected static final File MPR_CACHE_DIR =
-      AppProperties.buildAccessibleTempDirectory(
-          AppProperties.FILE_CACHE_DIR.getName(), "mpr"); // NON-NLS
   static TagW seriesReferences = new TagW("series.builder.refs", TagType.STRING, 2, 2);
   static final int[] COPIED_ATTRS = {
     Tag.SpecificCharacterSet,
