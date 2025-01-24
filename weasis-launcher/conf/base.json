@@ -247,7 +247,7 @@
     {
       "code": "audit.log",
       "value": "false",
-      "description": "Audit log for giving statistics about usage of Weasis",
+      "description": "Audit log for usage statistics in Weasis",
       "type": "A",
       "javaType": "BOOLEAN",
       "category": "LOG"
@@ -385,14 +385,14 @@
     {
       "code": "weasis.help.online",
       "value": "https://nroduit.github.io/en/tutorials/",
-      "description": "Online tutorial",
+      "description": "The online tutorial",
       "type": "A",
       "category": "DOC"
     },
     {
       "code": "weasis.help.shortcuts",
       "value": "https://nroduit.github.io/en/basics/shortcuts",
-      "description": "List of shortcuts",
+      "description": "Provides a list of available shortcuts.",
       "type": "A",
       "category": "DOC"
     },
@@ -414,14 +414,14 @@
     {
       "code": "locale.lang.code",
       "value": "en",
-      "description": "Language code (see Java Locale: https://www.oracle.com/java/technologies/javase/jdk20-suported-locales.html). Default value is \"en\".",
+      "description": "Specifies the language code (see Java Locale: https://www.oracle.com/java/technologies/javase/jdk20-suported-locales.html). Default value is \"en\".",
       "type": "F",
       "category": "GENERAL"
     },
     {
       "code": "locale.format.code",
       "value": "system",
-      "description": "If value is \"system\" then the locale of the operating system will be used (in client-side).\nSee Java Locale: https://www.oracle.com/java/technologies/javase/jdk20-suported-locales.html",
+      "description": "Uses the operating system's locale (on the client-side) with \"system\".\nFor other values refer to Java Locale: https://www.oracle.com/java/technologies/javase/jdk20-suported-locales.html",
       "type": "F",
       "category": "GENERAL"
     },
@@ -450,7 +450,7 @@
     {
       "code": "download.concurrent.series",
       "value": "3",
-      "description": "The number of concurrently downloaded series",
+      "description": "Controls the number of series downloaded simultaneously",
       "type": "A",
       "javaType": "INT",
       "category": "DICOM"
@@ -458,7 +458,7 @@
     {
       "code": "download.concurrent.series.images",
       "value": "4",
-      "description": "The number of concurrently downloaded images in a series",
+      "description": "The number of concurrently downloaded images within a series",
       "type": "A",
       "javaType": "INT",
       "category": "DICOM"
