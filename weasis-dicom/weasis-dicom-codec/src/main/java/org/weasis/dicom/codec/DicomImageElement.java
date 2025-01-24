@@ -45,6 +45,7 @@ import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.util.MathUtil;
+import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.codec.display.OverlayOp;
 import org.weasis.dicom.codec.display.ShutterOp;
 import org.weasis.dicom.codec.display.WindowAndPresetsOp;
@@ -137,7 +138,10 @@ public class DicomImageElement extends ImageElement implements DicomElement {
       pixelValueUnit = TagD.getTagValue(this, Tag.Units, String.class);
     }
     if (pixelValueUnit == null && "CT".equals(modality)) {
-      pixelValueUnit = "HU";
+      String sopClass = TagD.getTagValue(mediaIO, Tag.SOPClassUID, String.class);
+      if (StringUtil.hasText(sopClass) && !sopClass.startsWith(UID.SecondaryCaptureImageStorage)) {
+        pixelValueUnit = "HU";
+      }
     } else if (pixelSpacingUnit == Unit.PIXEL && "US".equals(modality)) {
       Attributes spatialCalibration =
           Ultrasound.getUniqueSpatialRegion(getMediaReader().getDicomObject());
