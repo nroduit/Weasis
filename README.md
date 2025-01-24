@@ -31,7 +31,7 @@ See [How to build Weasis](https://nroduit.github.io/en/getting-started/building-
 
 ## General Features
 * Open source DICOM viewer under EPL 2 or Apache 2 license
-* Flexible integration with PACS, VNA, RIS, HIS, or PHR  (see [integration documentation](https://nroduit.github.io/en/basics/customize/integration/))
+* Flexible integration with PACS, VNA, RIS, HIS, or EHR  (see [integration documentation](https://nroduit.github.io/en/basics/customize/integration/))
 * [Desktop distributions](https://nroduit.github.io/en/getting-started/download-dicom-viewer/) (Windows, macOS, and Linux)
 * Web access through [weasis protocol](https://nroduit.github.io/en/getting-started/weasis-protocol)
 * [Responsive user interface](https://nroduit.github.io/en/tutorials/theme/index.html#how-to-scale-the-user-interface) working well on high DPI screens
