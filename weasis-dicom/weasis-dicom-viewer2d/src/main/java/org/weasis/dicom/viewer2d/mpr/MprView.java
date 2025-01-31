@@ -107,7 +107,6 @@ public class MprView extends View2d {
   protected void initActionWState() {
     super.initActionWState();
     actionsInView.put("weasis.contextmenu.close", false);
-    actionsInView.put(ViewCanvas.ZOOM_TYPE_CMD, ZoomType.CURRENT);
     /*
      * Get the radiologist way to see stack (means in axial, the first image is from feet and last image is in the
      * head direction) This option may not be changed. Sorting stack must be disabled from menu in UI.
@@ -150,7 +149,10 @@ public class MprView extends View2d {
     if (img == null) {
       imageLayer.setImage(null, null);
     }
+    Object oldZoomType = actionsInView.get(ViewCanvas.ZOOM_TYPE_CMD);
+    setActionsInView(ViewCanvas.ZOOM_TYPE_CMD, ZoomType.CURRENT);
     super.setImage(img);
+    setActionsInView(ViewCanvas.ZOOM_TYPE_CMD, oldZoomType);
   }
 
   public void setType(SliceOrientation sliceOrientation) {
@@ -158,6 +160,14 @@ public class MprView extends View2d {
     if (isOblique()) {
       mprController.initListeners(this);
     }
+  }
+
+  @Override
+  public double getBestFitViewScale() {
+    if (mprController == null) {
+      return 1.0;
+    }
+    return mprController.getBestFitViewScale();
   }
 
   @Override
