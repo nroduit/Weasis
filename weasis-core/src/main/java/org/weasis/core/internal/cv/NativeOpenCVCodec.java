@@ -62,10 +62,10 @@ public class NativeOpenCVCodec implements Codec<ImageElement> {
     "pbm",
     "pgm",
     "ppm",
-    "pxm",
+    "pxm", // NON-NLS
     "pnm",
     "ras",
-    "rast",
+    "rast", // NON-NLS
     "tiff",
     "tif",
     "hdr",
