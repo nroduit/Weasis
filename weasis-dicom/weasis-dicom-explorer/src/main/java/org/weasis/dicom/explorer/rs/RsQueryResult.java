@@ -112,7 +112,7 @@ public class RsQueryResult extends AbstractQueryResult {
       buf.append("/studies?00100020="); // NON-NLS
       String patientVal = beginIndex <= 0 ? patientID : patientID.substring(0, beginIndex);
       try {
-        buf.append(URLEncoder.encode(patientVal, StandardCharsets.UTF_8.toString()));
+        buf.append(URLEncoder.encode(patientVal, StandardCharsets.UTF_8));
         if (beginIndex > 0) {
           buf.append("&00100021=");
           buf.append(patientID.substring(beginIndex + 3));

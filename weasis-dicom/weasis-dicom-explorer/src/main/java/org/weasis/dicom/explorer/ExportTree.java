@@ -20,7 +20,9 @@ import java.util.Set;
 import javax.swing.JPanel;
 import javax.swing.tree.TreePath;
 import org.weasis.core.ui.util.TreeBuilder;
-import org.weasis.dicom.explorer.CheckTreeModel.ToolTipTreeNode;
+import org.weasis.dicom.explorer.CheckTreeModel.ToolTipPatientNode;
+import org.weasis.dicom.explorer.CheckTreeModel.ToolTipSeriesNode;
+import org.weasis.dicom.explorer.CheckTreeModel.ToolTipStudyNode;
 
 public class ExportTree extends JPanel {
 
@@ -35,41 +37,49 @@ public class ExportTree extends JPanel {
 
   public void setCheckboxTreeModel(CheckTreeModel checkTreeModel) {
     Objects.requireNonNull(checkTreeModel);
-    CheckboxTree checkboxTree =
-        new CheckboxTree(checkTreeModel.getModel()) {
-          @Override
-          public String getToolTipText(MouseEvent evt) {
-            if (getRowForLocation(evt.getX(), evt.getY()) == -1) {
-              return null;
-            }
-            TreePath curPath = getPathForLocation(evt.getX(), evt.getY());
-            if (curPath != null) {
-              Object object = curPath.getLastPathComponent();
-              if (object instanceof ToolTipTreeNode treeNode) {
-                return treeNode.getToolTipText();
-              }
-            }
-            return null;
-          }
-        };
+    CheckboxTree checkboxTree = buildCheckboxTree(checkTreeModel);
+    initTree(checkTreeModel, checkboxTree);
+    add(checkboxTree, BorderLayout.CENTER);
+  }
 
+  public static CheckboxTree buildCheckboxTree(CheckTreeModel checkTreeModel) {
+    return new CheckboxTree(checkTreeModel.getModel()) {
+      @Override
+      public String getToolTipText(MouseEvent evt) {
+        if (getRowForLocation(evt.getX(), evt.getY()) == -1) {
+          return null;
+        }
+        TreePath curPath = getPathForLocation(evt.getX(), evt.getY());
+        if (curPath != null) {
+          Object object = curPath.getLastPathComponent();
+          if (object instanceof ToolTipPatientNode tipPatientNode) {
+            return tipPatientNode.getToolTipText();
+          } else if (object instanceof ToolTipStudyNode tipStudyNode) {
+            return tipStudyNode.getToolTipText();
+          } else if (object instanceof ToolTipSeriesNode tipSeriesNode) {
+            return tipSeriesNode.getToolTipText();
+          }
+        }
+        return null;
+      }
+    };
+  }
+
+  public static void initTree(CheckTreeModel checkTreeModel, CheckboxTree checkboxTree) {
     checkboxTree.setCellRenderer(TreeBuilder.buildNoIconCheckboxTreeCellRenderer());
     // Register tooltips
     checkboxTree.setToolTipText("");
 
-    /**
-     * At this point checking Paths are supposed to be binded at Series Level but depending on the
-     * CheckingMode it may also contain parents treeNode paths.<br>
-     * For medical use recommendation is to default select the whole series related to th studies to
-     * be analyzed
-     */
+    /*
+     At this point checking Paths are supposed to be bound at Series Level but depending on the
+     CheckingMode it may also contain parents treeNode paths.<br>
+     For medical use recommendation is to default select the whole series related to the studies
+     to be analyzed
+    */
     TreeCheckingModel checkingModel = checkTreeModel.getCheckingModel();
     TreePath[] checkingPaths = checkTreeModel.getCheckingPaths();
     checkboxTree.setCheckingModel(
         checkingModel); // be aware that checkingPaths is cleared at this point
-
-    // checkingModel.setCheckingMode(checkTreeModel.getCheckingModel().getCheckingMode());
-    // -- checkingMode is alreadySet inDicomExport
 
     if (checkingPaths != null && checkingPaths.length > 0) {
       Set<TreePath> studyPathsSet = new HashSet<>();
@@ -93,6 +103,5 @@ public class ExportTree extends JPanel {
 
     TreeBuilder.expandTree(
         checkboxTree, checkTreeModel.getRootNode(), 2); // 2 stands for Study Level
-    add(checkboxTree, BorderLayout.CENTER);
   }
 }
