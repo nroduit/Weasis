@@ -2,6 +2,9 @@
   <item name='java.net.InetAddress java.net.InetAddress getByName(java.lang.String)'>
     <annotation name='org.jetbrains.annotations.NonNls'/>
   </item>
+  <item name='java.net.URI URI(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.NonNls'/>
+  </item>
   <item name='java.net.URI java.lang.String getScheme()'>
     <annotation name='org.jetbrains.annotations.NonNls'/>
   </item>

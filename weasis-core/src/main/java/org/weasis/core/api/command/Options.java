@@ -93,7 +93,7 @@ public class Options implements Option {
 
     Option opt = Options.compile(usage).parse(args);
 
-    if (opt.isSet("help")) {
+    if (opt.isSet("help")) { // NON-NLS
       opt.usage(); // includes text before Usage:
       return;
     }

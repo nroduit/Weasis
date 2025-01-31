@@ -35,7 +35,7 @@ public class ConfigData {
   private static final org.slf4j.Logger LOGGER = LoggerFactory.getLogger(ConfigData.class);
 
   /** Name of the configuration directory. */
-  public static final String CONFIG_DIRECTORY = "conf";
+  public static final String CONFIG_DIRECTORY = "conf"; // NON-NLS
 
   public static final String APP_PROPERTY_FILE = "weasis.properties";
   public static final String P_WEASIS_VERSION = "weasis.version";

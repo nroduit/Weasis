@@ -1811,7 +1811,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
     final Option opt = Options.compile(usage).parse(argv);
     final List<String> args = opt.args();
 
-    if (opt.isSet("help")
+    if (opt.isSet("help") // NON-NLS
         || !opt.isOnlyOneOptionActivate("set", "increase", "decrease")) { // NON-NLS
       opt.usage();
       return;
@@ -1834,8 +1834,8 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
               .get()
               .setSliderValue(
                   zoomAction.get().getSliderValue() - opt.getNumber("decrease")); // NON-NLS
-        } else if (opt.isSet("set")) {
-          double val3 = Double.parseDouble(opt.get("set"));
+        } else if (opt.isSet("set")) { // NON-NLS
+          double val3 = Double.parseDouble(opt.get("set")); // NON-NLS
           if (val3 <= 0.0) {
             firePropertyChange(
                 ActionW.SYNCH.cmd(),
@@ -1861,7 +1861,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
     final Option opt = Options.compile(usage).parse(argv);
     final List<String> args = opt.args();
 
-    if (opt.isSet("help") || args.size() != 2) {
+    if (opt.isSet("help") || args.size() != 2) { // NON-NLS
       opt.usage();
       return;
     }
@@ -1893,7 +1893,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
     final Option opt = Options.compile(usage).parse(argv);
     final List<String> args = opt.args();
 
-    if (opt.isSet("help") || args.size() != 2) {
+    if (opt.isSet("help") || args.size() != 2) { // NON-NLS
       opt.usage();
       return;
     }
@@ -1923,7 +1923,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
     };
     final Option opt = Options.compile(usage).parse(argv);
 
-    if (opt.isSet("help")
+    if (opt.isSet("help") // NON-NLS
         || !opt.isOnlyOneOptionActivate("set", "increase", "decrease")) { // NON-NLS
       opt.usage();
       return;
@@ -1941,8 +1941,8 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
               } else if (opt.isSet("decrease")) { // NON-NLS
                 moveTroughSliceAction.setSliderValue(
                     moveTroughSliceAction.getSliderValue() - opt.getNumber("decrease")); // NON-NLS
-              } else if (opt.isSet("set")) {
-                moveTroughSliceAction.setSliderValue(opt.getNumber("set"));
+              } else if (opt.isSet("set")) { // NON-NLS
+                moveTroughSliceAction.setSliderValue(opt.getNumber("set")); // NON-NLS
               }
             }
           } catch (Exception e) {
@@ -1999,7 +1999,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
     final Option opt = Options.compile(usage).parse(argv);
     final List<String> args = opt.args();
 
-    if (opt.isSet("help") || args.size() != 1) {
+    if (opt.isSet("help") || args.size() != 1) { // NON-NLS
       opt.usage();
       return;
     }
@@ -2055,7 +2055,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
     final Option opt = Options.compile(usage).parse(argv);
     final List<String> args = opt.args();
 
-    if (opt.isSet("help") || args.size() != 1) {
+    if (opt.isSet("help") || args.size() != 1) { // NON-NLS
       opt.usage();
       return;
     }

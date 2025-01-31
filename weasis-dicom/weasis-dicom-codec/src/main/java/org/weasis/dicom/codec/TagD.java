@@ -594,7 +594,7 @@ public class TagD extends TagW {
               eventType = xmler.next();
               if (eventType == XMLStreamConstants.START_ELEMENT) {
                 key = xmler.getName().getLocalPart();
-                if ("el".equals(key)) {
+                if ("el".equals(key)) { // NON-NLS
                   readElement(xmler, map);
                 }
               }
@@ -697,7 +697,7 @@ public class TagD extends TagW {
 
           break;
         case XMLStreamConstants.END_ELEMENT:
-          if ("el".equals(xmler.getName().getLocalPart())) {
+          if ("el".equals(xmler.getName().getLocalPart())) { // NON-NLS
             state = false;
           }
           break;

@@ -410,16 +410,16 @@ public class MprView extends View2d {
         new ViewButton(
             (invoker, x, y) -> {
               JPopupMenu popupMenu = new JPopupMenu();
-              JMenu menu = new JMenu("All views");
+              JMenu menu = new JMenu(Messages.getString("all.views"));
 
               if (getCenterMode() != 2) {
-                JMenuItem item = new JMenuItem("Center");
+                JMenuItem item = new JMenuItem(Messages.getString("center"));
                 item.addActionListener(e -> recenterAxis(false));
                 item.setAccelerator(
                     KeyStroke.getKeyStroke(KeyEvent.VK_A, InputEvent.ALT_DOWN_MASK));
                 popupMenu.add(item);
 
-                item = new JMenuItem("Center");
+                item = new JMenuItem(Messages.getString("center"));
                 item.addActionListener(e -> recenterAxis(true));
                 item.setAccelerator(
                     KeyStroke.getKeyStroke(KeyEvent.VK_C, InputEvent.ALT_DOWN_MASK));
@@ -430,7 +430,7 @@ public class MprView extends View2d {
               if (gap > 0) {
                 boolean showCenter = getViewProperty(this, SHOW_CROSS_CENTER);
                 JCheckBoxMenuItem boxMenuItem =
-                    new JCheckBoxMenuItem("Show center of crosshair", showCenter);
+                    new JCheckBoxMenuItem(Messages.getString("show.center.crosshair"), showCenter);
                 boxMenuItem.addActionListener(
                     e -> showCrossCenter((JCheckBoxMenuItem) e.getSource(), false));
                 boxMenuItem.setAccelerator(
@@ -448,7 +448,7 @@ public class MprView extends View2d {
 
               boolean showCrossLines = !getViewProperty(this, HIDE_CROSSLINES);
               JCheckBoxMenuItem boxMenuItem =
-                  new JCheckBoxMenuItem("Show crosshair lines", showCrossLines);
+                  new JCheckBoxMenuItem(Messages.getString("show.crosshair"), showCrossLines);
               boxMenuItem.addActionListener(
                   e -> showCrossLines((JCheckBoxMenuItem) e.getSource(), false));
               boxMenuItem.setAccelerator(
@@ -464,7 +464,9 @@ public class MprView extends View2d {
               menu.add(boxMenuItem);
 
               JMenu menuItem =
-                  mprController.getMipTypeOption().createUnregisteredRadioMenu("MIP type");
+                  mprController
+                      .getMipTypeOption()
+                      .createUnregisteredRadioMenu(Messages.getString("mip.type"));
               menu.add(menuItem);
 
               menuItem = buildMipThicknessMenu(false);
@@ -503,7 +505,7 @@ public class MprView extends View2d {
 
   private JMenu buildMipThicknessMenu(boolean all) {
     MprAxis axis = getMprAxis();
-    JMenu menu = new JMenu("MIP thickness");
+    JMenu menu = new JMenu(Messages.getString("mip.thickness"));
     DicomImageElement img = axis.getImageElement();
     if (img == null) {
       return menu;
@@ -538,7 +540,7 @@ public class MprView extends View2d {
     }
     menu.add(new JPopupMenu.Separator());
 
-    menu.add(new JMenuItem("Reset thickness"))
+    menu.add(new JMenuItem(Messages.getString("reset.thickness")))
         .addActionListener(
             e -> {
               for (MprAxis mprAxis : mprAxisList) {
@@ -550,13 +552,15 @@ public class MprView extends View2d {
               }
             });
 
-    menu.add(new JMenuItem("Custom thickness"))
+    menu.add(new JMenuItem(Messages.getString("custom.thickness")))
         .addActionListener(
             e -> {
+              String message = Messages.getString("enter.thickness");
               String input =
                   JOptionPane.showInputDialog(
-                      "Enter a thickness value in pixels"
-                          + " (1 pix = %s %s)".formatted(DecFormatter.allNumber(minRatio), abbr)
+                      message
+                          + " (1 pix = %s %s)" // NON-NLS
+                              .formatted(DecFormatter.allNumber(minRatio), abbr)
                           + StringUtil.COLON);
               try {
                 int customThickness = Integer.parseInt(input);

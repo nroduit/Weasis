@@ -47,7 +47,7 @@ public class AuditLog {
   public static final String LOG_FILE_PATTERN = "org.apache.sling.commons.log.file.pattern";
 
   public static final String LOG_FOLDER_PATH =
-      AppProperties.WEASIS_PATH + File.separator + "log" + File.separator;
+      AppProperties.WEASIS_PATH + File.separator + "log" + File.separator; // NON-NLS
 
   public enum LEVEL {
     TRACE,

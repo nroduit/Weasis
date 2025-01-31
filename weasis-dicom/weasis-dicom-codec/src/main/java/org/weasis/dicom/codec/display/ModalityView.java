@@ -273,7 +273,8 @@ public class ModalityView {
           }
           break;
         case XMLStreamConstants.START_ELEMENT:
-          if ("p".equals(xmler.getName().getLocalPart()) && xmler.getAttributeCount() >= 1) {
+          if ("p".equals(xmler.getName().getLocalPart()) // NON-NLS
+              && xmler.getAttributeCount() >= 1) {
             index = TagUtil.getIntegerTagAttribute(xmler, "index", -1); // NON-NLS
             format = xmler.getAttributeValue(null, "format"); // NON-NLS
           }

@@ -476,19 +476,19 @@ public class AcquireManager {
     final Option opt = Options.compile(usage).parse(argv);
     final List<String> args = opt.args();
 
-    if (opt.isSet("help") || args.isEmpty()) {
+    if (opt.isSet("help") || args.isEmpty()) { // NON-NLS
       opt.usage();
       return;
     }
 
-    GuiExecutor.execute(() -> patientCommand(opt, args.get(0)));
+    GuiExecutor.execute(() -> patientCommand(opt, args.getFirst()));
   }
 
   private void patientCommand(Option opt, String arg) {
 
     final Document newPatientContext;
 
-    if (opt.isSet("xml")) {
+    if (opt.isSet("xml")) { // NON-NLS
       newPatientContext = getPatientContext(arg, OPT_NONE);
     } else if (opt.isSet("inbound")) { // NON-NLS
       newPatientContext = getPatientContext(arg, OPT_B64ZIP);

@@ -452,7 +452,7 @@ public class MagicMimeEntry {
           ret.append('\\');
         } else if (cn == ' ') {
           ret.append(' ');
-        } else if (cn == 't') {
+        } else if (cn == 't') { // NON-NLS
           ret.append('\t');
         } else if (cn == 'n') { // NON-NLS
           ret.append('\n');

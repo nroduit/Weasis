@@ -489,7 +489,7 @@ public class TagW {
       // If the value ($V) is followed by ':' that means a number formatter is used
       if (suffix && format.charAt(index + fmLength) == ':') {
         fmLength++;
-        if (format.charAt(index + fmLength) == 'f' && decimal) {
+        if (format.charAt(index + fmLength) == 'f' && decimal) { // NON-NLS
           fmLength++;
           String pattern = getPattern(index + fmLength, format);
           if (pattern != null) {

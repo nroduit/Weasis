@@ -19,6 +19,7 @@ import org.joml.Vector3d;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.ui.model.layer.LayerAnnotation.Position;
 import org.weasis.dicom.codec.geometry.PatientOrientation.Biped;
+import org.weasis.dicom.viewer2d.Messages;
 import org.weasis.dicom.viewer2d.mpr.MprView.SliceOrientation;
 
 public class AxisDirection {
@@ -41,9 +42,9 @@ public class AxisDirection {
         };
     this.name =
         switch (viewOrientation) {
-          case AXIAL -> "Axial";
-          case CORONAL -> "Coronal";
-          case SAGITTAL -> "Sagittal";
+          case AXIAL -> Messages.getString("axial");
+          case CORONAL -> Messages.getString("coronal");
+          case SAGITTAL -> Messages.getString("sagittal");
         };
 
     switch (viewOrientation) {

@@ -206,8 +206,8 @@ public class ObliqueMpr extends OriginalStack {
   private Attributes getCommonTags(OriginalStack stack, SliceOrientation orientation) {
     String frUID = setFrameOfReferenceUID(stack);
     String desc = TagD.getTagValue(stack.series, Tag.SeriesDescription, String.class);
-    String mprDesc = "MPR " + orientation;
-    desc = desc == null ? mprDesc : desc + " [%s]".formatted(mprDesc);
+    String mprDesc = "MPR " + orientation; // NON-NLS
+    desc = desc == null ? mprDesc : desc + " [%s]".formatted(mprDesc); // NON-NLS
     return stack.getCommonAttributes(frUID, desc, imageTypes);
   }
 }

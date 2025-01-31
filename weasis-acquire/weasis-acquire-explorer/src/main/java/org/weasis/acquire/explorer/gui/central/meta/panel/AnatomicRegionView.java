@@ -128,7 +128,7 @@ public class AnatomicRegionView extends JPanel {
 
     List<Object> list = Stream.of(AnatomicModifier.values()).collect(Collectors.toList());
     modifierGroup.setModel(list, false, false);
-    modifiersDropdown.setToolTipText("Select modifiers");
+    modifiersDropdown.setToolTipText(Messages.getString("select.modifiers"));
     add(modifiersDropdown, "cell 1 2, span"); // NON-NLS
 
     add(lblApplyTo, "span, split 3, right, gaptop 20"); // NON-NLS

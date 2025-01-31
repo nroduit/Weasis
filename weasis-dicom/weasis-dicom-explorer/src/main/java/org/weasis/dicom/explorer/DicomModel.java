@@ -1041,7 +1041,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
     final List<String> iargs = opt.getList("iwado"); // NON-NLS
     final List<String> wargs = opt.getList("wado"); // NON-NLS
 
-    if (opt.isSet("help")
+    if (opt.isSet("help") // NON-NLS
         || (largs.isEmpty()
             && rargs.isEmpty()
             && iargs.isEmpty()
@@ -1184,7 +1184,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
     final String rsUrl = opt.get("url"); // NON-NLS
     final List<String> pargs = opt.getList("request"); // NON-NLS
 
-    if (opt.isSet("help") || rsUrl.isEmpty() || (pargs.isEmpty())) {
+    if (opt.isSet("help") || rsUrl.isEmpty() || (pargs.isEmpty())) { // NON-NLS
       opt.usage();
       return;
     }
@@ -1261,7 +1261,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
     final List<String> yargs = opt.getList("study"); // NON-NLS
     final List<String> sargs = opt.getList("series"); // NON-NLS
 
-    if (opt.isSet("help")
+    if (opt.isSet("help") // NON-NLS
         || (pargs.isEmpty()
             && yargs.isEmpty()
             && sargs.isEmpty()

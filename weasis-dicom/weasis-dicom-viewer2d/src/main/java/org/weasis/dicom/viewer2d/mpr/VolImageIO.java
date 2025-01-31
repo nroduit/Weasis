@@ -65,7 +65,7 @@ import org.weasis.opencv.data.PlanarImage;
 public class VolImageIO implements DcmMediaReader {
   private static final Logger LOGGER = LoggerFactory.getLogger(VolImageIO.class);
 
-  private static final String MIME_TYPE = "image/vol";
+  private static final String MIME_TYPE = "image/vol"; // NON-NLS
   private static final SoftHashMap<VolImageIO, DicomMetaData> HEADER_CACHE =
       new SoftHashMap<>() {
 
