@@ -485,15 +485,15 @@ public class MprView extends View2d {
               menuItem = buildMipThicknessMenu(true);
               menu.add(menuItem);
 
-              JMenuItem item = new JMenuItem("Export this view in DICOM");
-              item.addActionListener(e -> rebuildView(false));
-              popupMenu.add(item);
+              //              JMenuItem item = new JMenuItem("Export this view in DICOM");
+              //              item.addActionListener(e -> rebuildView(false));
+              //              popupMenu.add(item);
+              //
+              //              item = new JMenuItem("Export in DICOM");
+              //              item.addActionListener(e -> rebuildView(true));
+              //              menu.add(item);
 
-              item = new JMenuItem("Export in DICOM");
-              item.addActionListener(e -> rebuildView(true));
-              menu.add(item);
-
-              item = new JMenuItem("Change MPR preferences");
+              JMenuItem item = new JMenuItem(Messages.getString("change.mpr.pref"));
               item.addActionListener(
                   _ -> {
                     PreferenceDialog dialog =
