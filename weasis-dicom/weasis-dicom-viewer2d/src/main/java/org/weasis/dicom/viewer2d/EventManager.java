@@ -24,6 +24,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.Optional;
+import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 import javax.swing.BoundedRangeModel;
 import javax.swing.ButtonGroup;
@@ -814,41 +815,36 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
     return null;
   }
 
-  private void movePatient(ListPosition position) {
+  private void moveEntity(
+      BiFunction<DicomExplorer, ViewCanvas<DicomImageElement>, MediaSeries<? extends MediaElement>>
+          moveFunction) {
+    ImageViewerPlugin<DicomImageElement> container = getSelectedView2dContainer();
+    if (container == null) {
+      return;
+    }
     ViewCanvas<DicomImageElement> view = getSelectedViewPane();
     if (view != null) {
       DicomExplorer dicom = getDicomExplorer();
       if (dicom != null) {
-        MediaSeries<? extends MediaElement> series = dicom.movePatient(view, position);
-        ImageViewerPlugin<DicomImageElement> container = getSelectedView2dContainer();
-        fireSeriesViewerListeners(
-            new SeriesViewerEvent(container, series, null, EVENT.SELECT_VIEW));
+        MediaSeries<? extends MediaElement> series = moveFunction.apply(dicom, view);
+        if (series != null) {
+          fireSeriesViewerListeners(
+              new SeriesViewerEvent(container, series, null, EVENT.SELECT_VIEW));
+        }
       }
     }
+  }
+
+  private void movePatient(ListPosition position) {
+    moveEntity((dicom, view) -> dicom.movePatient(view, position));
   }
 
   private void moveStudy(ListPosition position) {
-    ViewCanvas<DicomImageElement> view = getSelectedViewPane();
-    if (view != null) {
-      DicomExplorer dicom = getDicomExplorer();
-      if (dicom != null) {
-        MediaSeries<? extends MediaElement> series = dicom.moveStudy(view, position);
-        fireSeriesViewerListeners(
-            new SeriesViewerEvent(getSelectedView2dContainer(), series, null, EVENT.SELECT_VIEW));
-      }
-    }
+    moveEntity((dicom, view) -> dicom.moveStudy(view, position));
   }
 
   private void moveSeries(ListPosition position) {
-    ViewCanvas<DicomImageElement> view = getSelectedViewPane();
-    if (view != null) {
-      DicomExplorer dicom = getDicomExplorer();
-      if (dicom != null) {
-        MediaSeries<? extends MediaElement> series = dicom.moveSeries(view, position);
-        fireSeriesViewerListeners(
-            new SeriesViewerEvent(getSelectedView2dContainer(), series, null, EVENT.SELECT_VIEW));
-      }
-    }
+    moveEntity((dicom, view) -> dicom.moveSeries(view, position));
   }
 
   @Override

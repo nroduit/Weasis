@@ -101,7 +101,7 @@ public class PRManager {
     }
     DefaultWlPresentation wlp = new DefaultWlPresentation(reader.getPrDicomObject(), pixelPadding);
     List<PresetWindowLevel> presetList = img.getPresetList(wlp, true);
-    PresetWindowLevel p = presetList.get(0);
+    PresetWindowLevel p = presetList.getFirst();
     actionsInView.put(ActionW.WINDOW.cmd(), p.getWindow());
     actionsInView.put(ActionW.LEVEL.cmd(), p.getLevel());
     actionsInView.put(PRManager.PR_PRESETS, presetList);

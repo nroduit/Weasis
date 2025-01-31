@@ -341,8 +341,6 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
       MediaSeriesGroup series = view.getSeries();
       if (series == null) {
         seriesGroup = getSeries(null, null, ListPosition.FIRST);
-        MediaSeriesGroup studyGroup = model.getParent(seriesGroup, DicomModel.study);
-        patientGroup = model.getParent(studyGroup, DicomModel.patient);
       } else {
         MediaSeriesGroup studyGroup = model.getParent(series, DicomModel.study);
         patientGroup = model.getParent(studyGroup, DicomModel.patient);
@@ -350,13 +348,8 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
       }
 
       if (seriesGroup instanceof MediaSeries<?> dicomSeries) {
-        if (isPatientHasOpenSeries(patientGroup)) {
-          displaySeries(view, seriesGroup);
-        } else {
-          ThumbnailMouseAndKeyAdapter.openSeriesInDefaultPlugin(
-              model, (MediaSeries<? extends MediaElement>) dicomSeries);
-        }
-        return (MediaSeries<? extends MediaElement>) dicomSeries;
+        ThumbnailMouseAndKeyAdapter.openSeriesInDefaultPlugin(
+            model, (MediaSeries<? extends MediaElement>) dicomSeries);
       }
     }
     return null;
@@ -941,7 +934,6 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
   }
 
   public boolean isPatientHasOpenSeries(MediaSeriesGroup patient) {
-
     synchronized (model) {
       for (MediaSeriesGroup study : model.getChildren(patient)) {
         for (MediaSeriesGroup seq : model.getChildren(study)) {
