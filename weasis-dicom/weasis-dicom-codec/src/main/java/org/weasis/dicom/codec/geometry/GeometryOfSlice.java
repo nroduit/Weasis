@@ -10,6 +10,7 @@
 package org.weasis.dicom.codec.geometry;
 
 import java.awt.geom.Point2D;
+import java.util.Objects;
 import org.joml.Vector3d;
 
 /**
@@ -265,5 +266,24 @@ public class GeometryOfSlice {
    */
   public final String getColumnOrientation() {
     return getColumnOrientation(false);
+  }
+
+  @Override
+  public boolean equals(Object obj) {
+    if (obj instanceof GeometryOfSlice geom) {
+      return row.equals(geom.row)
+          && column.equals(geom.column)
+          && tlhc.equals(geom.tlhc)
+          && voxelSpacing.equals(geom.voxelSpacing)
+          && sliceThickness == geom.sliceThickness
+          && dimensions.equals(geom.dimensions);
+    }
+    return false;
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(
+        getRow(), getColumn(), tlhc, getVoxelSpacing(), getSliceThickness(), getDimensions());
   }
 }

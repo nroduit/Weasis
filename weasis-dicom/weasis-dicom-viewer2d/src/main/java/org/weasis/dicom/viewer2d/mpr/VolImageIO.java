@@ -49,6 +49,7 @@ import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.media.data.Taggable;
+import org.weasis.core.ui.model.GraphicModel;
 import org.weasis.core.util.SoftHashMap;
 import org.weasis.dicom.codec.DcmMediaReader;
 import org.weasis.dicom.codec.DicomImageElement;
@@ -83,6 +84,7 @@ public class VolImageIO implements DcmMediaReader {
   private final MprAxis mprAxis;
   private final Volume<?> volume;
   private Attributes attributes;
+  private Map<GeometryOfSlice, GraphicModel> graphicModelMap;
 
   public VolImageIO(MprAxis mprAxis, Volume<?> volume) {
     this.mprAxis = Objects.requireNonNull(mprAxis);
@@ -94,6 +96,17 @@ public class VolImageIO implements DcmMediaReader {
     } catch (URISyntaxException e) {
       throw new IllegalArgumentException(e);
     }
+    this.graphicModelMap = new HashMap<>();
+  }
+
+  public void setGraphicModel(GeometryOfSlice geometry, GraphicModel model) {
+    if (model != null) {
+      graphicModelMap.put(geometry, model);
+    }
+  }
+
+  public GraphicModel getGraphicModel(GeometryOfSlice geometry) {
+    return graphicModelMap.get(geometry);
   }
 
   public void setBaseAttributes(Attributes attributes) {

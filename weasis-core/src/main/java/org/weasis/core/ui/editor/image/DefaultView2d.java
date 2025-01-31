@@ -559,18 +559,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
       // Apply all image processing operation for visualization
       imageLayer.setEnableDispOperations(true);
 
-      if (updateGraphics) {
-        GraphicModel modelList = (GraphicModel) img.getTagValue(TagW.PresentationModel);
-        // After getting a new image iterator, update the measurements
-        if (modelList == null) {
-          modelList = new XmlGraphicModel(img);
-          img.setTag(TagW.PresentationModel, modelList);
-        }
-        List<GraphicSelectionListener> gListeners =
-            new ArrayList<>(graphicManager.getGraphicSelectionListeners());
-        setGraphicManager(modelList);
-        gListeners.forEach(l -> graphicManager.addGraphicSelectionListener(l));
-      }
+      updateGraphicManager(img, updateGraphics);
 
       if (panner != null) {
         panner.updateImage();
@@ -579,6 +568,21 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         lens.updateImage();
         lens.updateZoom();
       }
+    }
+  }
+
+  public void updateGraphicManager(E img, boolean updateGraphics) {
+    if (updateGraphics) {
+      GraphicModel modelList = (GraphicModel) img.getTagValue(TagW.PresentationModel);
+      // After getting a new image iterator, update the measurements
+      if (modelList == null) {
+        modelList = new XmlGraphicModel(img);
+        img.setTag(TagW.PresentationModel, modelList);
+      }
+      List<GraphicSelectionListener> gListeners =
+          new ArrayList<>(graphicManager.getGraphicSelectionListeners());
+      setGraphicManager(modelList);
+      gListeners.forEach(l -> graphicManager.addGraphicSelectionListener(l));
     }
   }
 

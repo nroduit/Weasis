@@ -11,10 +11,14 @@ package org.weasis.dicom.viewer2d.mpr;
 
 import java.awt.Color;
 import java.io.File;
+import java.util.Objects;
 import org.joml.Matrix4d;
 import org.joml.Quaterniond;
 import org.joml.Vector3d;
+import org.weasis.core.api.media.data.TagW;
+import org.weasis.core.ui.model.GraphicModel;
 import org.weasis.dicom.codec.DicomImageElement;
+import org.weasis.dicom.codec.geometry.GeometryOfSlice;
 import org.weasis.dicom.viewer2d.mip.MipView.Type;
 import org.weasis.dicom.viewer2d.mpr.MprView.SliceOrientation;
 
@@ -186,9 +190,23 @@ public class MprAxis {
 
   public void updateImage() {
     if (mprView != null) {
+      GeometryOfSlice oldGeometry = imageElement.getSliceGeometry();
+      GraphicModel oldModel = (GraphicModel) imageElement.getTagValue(TagW.PresentationModel);
+
       mprView.getImageLayer().setImage(null, null);
       imageElement.removeImageFromCache();
       mprView.setImage(imageElement);
+
+      GeometryOfSlice geometry = imageElement.getSliceGeometry();
+      if (!Objects.equals(oldGeometry, geometry)) {
+        GraphicModel model = rawIO.getGraphicModel(geometry);
+        imageElement.setTag(TagW.PresentationModel, model);
+        mprView.updateGraphicManager(imageElement, true);
+
+        if (oldModel != null && oldModel.hasSerializableGraphics()) {
+          rawIO.setGraphicModel(oldGeometry, oldModel);
+        }
+      }
       // mprView.center();
       mprView.repaint();
     }
