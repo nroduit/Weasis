@@ -103,6 +103,7 @@ import org.weasis.core.util.LangUtil;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.DicomSeries;
 import org.weasis.dicom.codec.PRSpecialElement;
+import org.weasis.dicom.codec.PresentationStateReader;
 import org.weasis.dicom.codec.SortSeriesStack;
 import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.geometry.ImageOrientation;
@@ -374,6 +375,10 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
                   .filter(PRSpecialElement.class::isInstance)
                   .map(PRSpecialElement.class::cast)
                   .orElse(null);
+          if (pr != null && !PresentationStateReader.isImageApplicable(pr, image)) {
+            view2d.setActionsInView(ActionW.PR_STATE.cmd(), null);
+            pr = null;
+          }
           DefaultWlPresentation wlp =
               new DefaultWlPresentation(pr == null ? null : pr.getPrDicomObject(), pixelPadding);
 
