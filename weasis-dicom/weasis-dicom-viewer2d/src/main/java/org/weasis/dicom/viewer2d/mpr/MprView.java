@@ -193,7 +193,7 @@ public class MprView extends View2d {
       SynchEvent synch = (SynchEvent) evt.getNewValue();
       if (synch.getView() == this && synch instanceof SynchCineEvent cineEvent) {
         if (LangUtil.getNULLtoTrue((Boolean) actionsInView.get(LayerType.CROSSLINES.name()))) {
-          // Compute cutlines from the location of selected image
+          // Compute crossline from the location of selected image
           Number location = cineEvent.getLocation();
           if (location != null) {
             computeCrosslines(location.doubleValue());
@@ -240,14 +240,7 @@ public class MprView extends View2d {
     }
 
     super.drawOnTop(g2d);
-    final JProgressBar bar = progressBar;
-    if (bar != null && bar.isVisible()) {
-      int shiftX = getWidth() / 2 - progressBar.getWidth() / 2;
-      int shiftY = getHeight() / 2 - progressBar.getHeight() / 2;
-      g2d.translate(shiftX, shiftY);
-      progressBar.paint(g2d);
-      g2d.translate(-shiftX, -shiftY);
-    }
+    drawProgressBar(g2d, progressBar);
   }
 
   public ControlPoints getControlPoints(Line2D line, Point2D center) {

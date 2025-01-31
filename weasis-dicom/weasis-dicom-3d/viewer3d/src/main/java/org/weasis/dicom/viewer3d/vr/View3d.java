@@ -324,14 +324,7 @@ public class View3d extends VolumeCanvas
   }
 
   protected void drawOnTop(Graphics2D g2d) {
-    final JProgressBar bar = progressBar;
-    if (bar != null && bar.isVisible()) {
-      int shiftX = getWidth() / 2 - progressBar.getWidth() / 2;
-      int shiftY = getHeight() / 2 - progressBar.getHeight() / 2;
-      g2d.translate(shiftX, shiftY);
-      progressBar.paint(g2d);
-      g2d.translate(-shiftX, -shiftY);
-    }
+    drawProgressBar(g2d, progressBar);
   }
 
   public void setProgressBar(JProgressBar bar) {

@@ -41,6 +41,7 @@ import javax.swing.BorderFactory;
 import javax.swing.ButtonGroup;
 import javax.swing.JComponent;
 import javax.swing.JPopupMenu;
+import javax.swing.JProgressBar;
 import javax.swing.JRadioButtonMenuItem;
 import javax.swing.JSeparator;
 import javax.swing.KeyStroke;
@@ -366,6 +367,18 @@ public interface ViewCanvas<E extends ImageElement>
     g.draw(pointerDown);
     g.translate(-x, -y);
     GuiUtils.resetRenderingHints(g, oldRenderingHints);
+  }
+
+  default void drawProgressBar(Graphics2D g2d, JProgressBar bar) {
+    if (bar != null && bar.isVisible()) {
+      int centerX = getJComponent().getWidth() / 2;
+      int centerY = getJComponent().getHeight() / 2;
+      int shiftX = centerX - bar.getWidth() / 2;
+      int shiftY = centerY - bar.getHeight() / 2;
+      g2d.translate(shiftX, shiftY);
+      bar.paint(g2d);
+      g2d.translate(-shiftX, -shiftY);
+    }
   }
 
   List<Action> getExportActions();
