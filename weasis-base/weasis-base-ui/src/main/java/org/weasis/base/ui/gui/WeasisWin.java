@@ -631,19 +631,27 @@ public class WeasisWin {
         int y = localPersistence.getIntProperty("last.window.y", 0);
         int w = localPersistence.getIntProperty("last.window.width", Integer.MAX_VALUE);
         int h = localPersistence.getIntProperty("last.window.height", Integer.MAX_VALUE);
-        if (x < b.x) {
-          x = b.x;
+        Rectangle lastWin = new Rectangle(x, y, w, h);
+        Rectangle intersection = lastWin.intersection(b);
+        int localArea = lastWin.width * lastWin.height;
+        int intersectionArea = intersection.width * intersection.height;
+
+        // Only If window is more than 25% within the screen
+        if (intersectionArea >= 0.25 * localArea) {
+          if (x < b.x) {
+            x = b.x;
+          }
+          if (y < b.y) {
+            y = b.y;
+          }
+          if (w > b.width) {
+            w = b.width;
+          }
+          if (h > b.height) {
+            h = b.height;
+          }
+          b = new Rectangle(x, y, w, h);
         }
-        if (y < b.y) {
-          y = b.y;
-        }
-        if (w > b.width) {
-          w = b.width;
-        }
-        if (h > b.height) {
-          h = b.height;
-        }
-        b = new Rectangle(x, y, w, h);
       }
     } else {
       b = new Rectangle(new Point(0, 0), kit.getScreenSize());
