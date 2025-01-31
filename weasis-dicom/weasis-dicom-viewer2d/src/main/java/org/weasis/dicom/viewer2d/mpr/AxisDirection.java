@@ -178,8 +178,15 @@ public class AxisDirection {
   }
 
   private void drawAxisLine(Graphics2D g2d, Vector3d arrow, Point offset) {
-    g2d.drawLine(offset.x, offset.y, offset.x + (int) arrow.x, offset.y + (int) arrow.y);
-    drawArrowHead(g2d, offset.x + (int) arrow.x, offset.y + (int) arrow.y, offset.x, offset.y);
+    int x1 = offset.x;
+    int y1 = offset.y;
+    int x2 = offset.x + (int) arrow.x;
+    int y2 = offset.y + (int) arrow.y;
+    double distance = Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
+    if (distance >= 10.0) {
+      g2d.drawLine(x1, y1, x2, y2);
+      drawArrowHead(g2d, x2, y2, x1, y1);
+    }
   }
 
   private void drawArrowHead(Graphics2D g2d, int xTip, int yTip, int xBase, int yBase) {
