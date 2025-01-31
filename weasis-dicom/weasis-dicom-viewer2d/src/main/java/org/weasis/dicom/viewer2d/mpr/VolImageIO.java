@@ -115,19 +115,7 @@ public class VolImageIO implements DcmMediaReader {
 
   @Override
   public void writeMetaData(MediaSeriesGroup group) {
-    if (group == null) {
-      return;
-    }
-    // Get the dicom header
-    Attributes header = getDicomObject();
-    DicomMediaUtils.writeMetaData(group, header);
-
-    // Series Group
-    if (TagW.SubseriesInstanceUID.equals(group.getTagID())) {
-      // Information for series ToolTips
-      group.setTagNoNull(TagD.get(Tag.PatientName), getTagValue(TagD.get(Tag.PatientName)));
-      group.setTagNoNull(TagD.get(Tag.StudyDescription), header.getString(Tag.StudyDescription));
-    }
+    DcmMediaReader.super.writeMetaData(group);
   }
 
   @Override
