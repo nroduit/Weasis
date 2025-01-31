@@ -165,6 +165,7 @@ public class MprView extends View2d {
     super.reset();
     if (mprController != null) {
       mprController.reset();
+      eventManager.updateComponentsListener(this);
     }
   }
 
