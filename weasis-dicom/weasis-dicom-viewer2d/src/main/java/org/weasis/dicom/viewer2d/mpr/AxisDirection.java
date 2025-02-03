@@ -93,9 +93,9 @@ public class AxisDirection {
     int g = (int) (weightX * x.getGreen() + weightY * y.getGreen() + weightZ * z.getGreen());
     int b = (int) (weightX * x.getBlue() + weightY * y.getBlue() + weightZ * z.getBlue());
 
-    r = Math.min(255, Math.max(0, r));
-    g = Math.min(255, Math.max(0, g));
-    b = Math.min(255, Math.max(0, b));
+    r = Math.clamp(r, 0, 255);
+    g = Math.clamp(g, 0, 255);
+    b = Math.clamp(b, 0, 255);
     return new Color(r, g, b);
   }
 
@@ -183,7 +183,7 @@ public class AxisDirection {
     int y1 = offset.y;
     int x2 = offset.x + (int) arrow.x;
     int y2 = offset.y + (int) arrow.y;
-    double distance = Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
+    double distance = Math.sqrt(Math.pow((double) x2 - x1, 2) + Math.pow((double) y2 - y1, 2));
     if (distance >= 10.0) {
       g2d.drawLine(x1, y1, x2, y2);
       drawArrowHead(g2d, x2, y2, x1, y1);
