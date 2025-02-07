@@ -889,8 +889,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
             GraphicLayer layer = AbstractGraphicModel.getOrBuildLayer(this, LayerType.CROSSLINES);
             if (released) {
               int mode = eventManager.getOptions().getIntProperty(View2d.P_CROSSHAIR_MODE, 1);
-              if (mode == 2
-                  || mode == 1 && isAutoCenter(getMouseCoordinatesFromImage(p.getX(), p.getY()))) {
+              if (mode == 2 || mode == 1 && isAutoCenter(p)) {
                 setCenter(p.getX() - dim.y * 0.5, p.getY() - dim.x * 0.5);
               }
             } else {
