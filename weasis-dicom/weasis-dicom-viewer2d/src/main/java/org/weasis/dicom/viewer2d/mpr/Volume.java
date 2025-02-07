@@ -27,17 +27,16 @@ import org.joml.Quaterniond;
 import org.joml.Vector3d;
 import org.joml.Vector3i;
 import org.opencv.core.CvType;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.AppProperties;
+import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.image.cv.CvUtil;
+import org.weasis.core.ui.editor.image.ViewerPlugin;
 import org.weasis.core.util.FileUtil;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.geometry.GeometryOfSlice;
 import org.weasis.opencv.data.PlanarImage;
 
 public abstract class Volume<T extends Number> {
-  private static final Logger LOGGER = LoggerFactory.getLogger(Volume.class);
 
   protected final Vector3d translation;
   protected final Quaterniond rotation;
@@ -420,25 +419,54 @@ public abstract class Volume<T extends Number> {
   }
 
   public static Volume<?> createVolume(OriginalStack stack, JProgressBar progressBar) {
-    // FIXME: cache volume if the stack is the same
     if (stack == null || stack.getSourceStack().isEmpty()) {
       return null;
     }
 
-    int type = CvType.depth(stack.getMiddleImage().getImage().type());
-    if (type <= CvType.CV_8S) {
-      return new VolumeByte(stack, progressBar);
-    } else if (type <= CvType.CV_16S) {
-      return new VolumeShort(stack, progressBar);
-    } else if (type == CvType.CV_32S) {
-      return new VolumeInt(stack, progressBar);
-    } else if (type == CvType.CV_32F) {
-      return new VolumeFloat(stack, progressBar);
-    } else if (type == CvType.CV_64F) {
-      return new VolumeDouble(stack, progressBar);
+    Volume<?> volume = getSharedVolume(stack);
+    if (volume == null) {
+      int type = CvType.depth(stack.getMiddleImage().getImage().type());
+      if (type <= CvType.CV_8S) {
+        volume = new VolumeByte(stack, progressBar);
+      } else if (type <= CvType.CV_16S) {
+        volume = new VolumeShort(stack, progressBar);
+      } else if (type == CvType.CV_32S) {
+        volume = new VolumeInt(stack, progressBar);
+      } else if (type == CvType.CV_32F) {
+        volume = new VolumeFloat(stack, progressBar);
+      } else if (type == CvType.CV_64F) {
+        volume = new VolumeDouble(stack, progressBar);
+      } else {
+        throw new IllegalArgumentException("Unsupported data type");
+      }
     } else {
-      throw new IllegalArgumentException("Unsupported data type");
+      progressBar.setValue(volume.size.z);
     }
+
+    return volume;
+  }
+
+  public boolean isSharedVolume() {
+    return getSharedVolume(stack) != null;
+  }
+
+  protected static Volume<?> getSharedVolume(OriginalStack currentStack) {
+    List<ViewerPlugin<?>> viewerPlugins = GuiUtils.getUICore().getViewerPlugins();
+    synchronized (viewerPlugins) {
+      for (int i = viewerPlugins.size() - 1; i >= 0; i--) {
+        ViewerPlugin<?> p = viewerPlugins.get(i);
+        if (p instanceof MprContainer mprContainer) {
+          MprController controller = mprContainer.getMprController();
+          if (controller != null) {
+            Volume<?> volume = controller.getVolume();
+            if (volume != null && volume.stack.equals(currentStack)) {
+              return volume;
+            }
+          }
+        }
+      }
+    }
+    return null;
   }
 
   protected Double interpolateVolume(Vector3d point, Vector3d voxelRatio) {

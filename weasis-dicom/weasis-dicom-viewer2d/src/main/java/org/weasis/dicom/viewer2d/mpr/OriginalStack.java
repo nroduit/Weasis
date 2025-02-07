@@ -13,6 +13,7 @@ import static org.weasis.dicom.viewer2d.mpr.MprView.SliceOrientation.AXIAL;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Tag;
 import org.dcm4che3.data.VR;
@@ -163,4 +164,22 @@ public abstract class OriginalStack extends AbstractStack {
   }
 
   public abstract void generate(BuildContext context);
+
+  @Override
+  public boolean equals(Object o) {
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    OriginalStack that = (OriginalStack) o;
+    return Double.compare(getSliceSpace(), that.getSliceSpace()) == 0
+        && isVariableSliceSpacing() == that.isVariableSliceSpacing()
+        && Objects.equals(getSourceStack(), that.getSourceStack())
+        && Objects.equals(getFistSliceGeometry(), that.getFistSliceGeometry());
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(
+        getSourceStack(), getFistSliceGeometry(), getSliceSpace(), isVariableSliceSpacing());
+  }
 }

@@ -694,7 +694,7 @@ public class MprController implements MouseListener, MouseMotionListener {
     axial.dispose();
     coronal.dispose();
     sagittal.dispose();
-    if (volume != null) {
+    if (volume != null && !volume.isSharedVolume()) {
       volume.removeData();
     }
   }
