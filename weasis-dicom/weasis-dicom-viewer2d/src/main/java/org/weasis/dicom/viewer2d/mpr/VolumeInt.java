@@ -9,6 +9,7 @@
  */
 package org.weasis.dicom.viewer2d.mpr;
 
+import java.util.Arrays;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.RecursiveAction;
 import javax.swing.JProgressBar;
@@ -17,6 +18,7 @@ import org.joml.Matrix4d;
 import org.joml.Quaterniond;
 import org.joml.Vector3d;
 import org.joml.Vector3i;
+import org.weasis.core.util.MathUtil;
 import org.weasis.opencv.data.ImageCV;
 import org.weasis.opencv.data.PlanarImage;
 
@@ -99,6 +101,10 @@ public class VolumeInt extends Volume<Integer> {
     mprAxis.getTransformation().set(combinedTransform);
 
     int[] raster = new int[sliceImageSize * sliceImageSize];
+    double value = getPhotometricMinValue();
+    if (MathUtil.isDifferentFromZero(value)) {
+      Arrays.fill(raster, (int) value);
+    }
 
     try (ForkJoinPool pool = new ForkJoinPool()) {
       pool.invoke(

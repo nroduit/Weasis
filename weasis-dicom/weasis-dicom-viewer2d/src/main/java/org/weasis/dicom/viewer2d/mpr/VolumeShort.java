@@ -17,6 +17,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.RecursiveAction;
 import javax.swing.JProgressBar;
@@ -27,6 +28,7 @@ import org.joml.Vector3d;
 import org.joml.Vector3i;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.weasis.core.util.MathUtil;
 import org.weasis.opencv.data.ImageCV;
 import org.weasis.opencv.data.PlanarImage;
 
@@ -111,6 +113,11 @@ public class VolumeShort extends Volume<Short> {
     mprAxis.getTransformation().set(combinedTransform);
 
     short[] raster = new short[sliceImageSize * sliceImageSize];
+
+    double value = getPhotometricMinValue();
+    if (MathUtil.isDifferentFromZero(value)) {
+      Arrays.fill(raster, (short) value);
+    }
 
     try (ForkJoinPool pool = new ForkJoinPool()) {
       pool.invoke(

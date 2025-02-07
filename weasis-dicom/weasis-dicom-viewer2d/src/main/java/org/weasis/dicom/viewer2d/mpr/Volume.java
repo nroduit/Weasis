@@ -283,6 +283,11 @@ public abstract class Volume<T extends Number> {
 
   public abstract PlanarImage getVolumeSlice(MprAxis mprAxis, Vector3d volumeCenter);
 
+  protected double getPhotometricMinValue() {
+    boolean isPhotometricInverse = stack.getMiddleImage().isPhotometricInterpretationInverse(null);
+    return isPhotometricInverse ? maxValue : minValue;
+  }
+
   public int getCVType() {
     return cvType;
   }
