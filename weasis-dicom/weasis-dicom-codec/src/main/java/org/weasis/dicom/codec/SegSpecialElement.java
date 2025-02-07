@@ -219,7 +219,7 @@ public class SegSpecialElement extends HiddenSpecialElement
     if (segSeq != null && series != null) {
       for (Attributes seg : segSeq) {
         int nb = seg.getInt(Tag.SegmentNumber, -1);
-        String segmentLabel = seg.getString(Tag.SegmentLabel);
+        String segmentLabel = seg.getString(Tag.SegmentLabel, "" + nb);
 
         int[] colorRgb =
             CIELab.dicomLab2rgb(
