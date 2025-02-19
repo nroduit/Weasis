@@ -83,8 +83,8 @@ public class ObliqueMpr extends OriginalStack {
             for (String action : MprContainer.defaultMpr.getSynchData().getActions().keySet()) {
               view.setActionsInView(action, mainView.getActionValue(action));
             }
-            view.zoom(mainView.getViewModel().getViewScale());
           }
+          view.zoom(mainView.mprController.getBestFitViewScale());
           view.center();
           view.repaint();
         });
