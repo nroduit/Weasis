@@ -10,7 +10,6 @@
 package org.weasis.dicom.viewer2d.mpr;
 
 import java.awt.Color;
-import java.io.File;
 import java.util.Objects;
 import org.joml.Matrix4d;
 import org.joml.Quaterniond;
@@ -226,13 +225,7 @@ public class MprAxis {
 
   public void setRawIO(VolImageIO rawIO) {
     this.rawIO = rawIO;
-    this.imageElement =
-        new DicomImageElement(rawIO, 0) {
-          @Override
-          public boolean saveToFile(File output) {
-            return saveToFile(mediaIO, output);
-          }
-        };
+    this.imageElement = new DicomImageElement(rawIO, 0);
   }
 
   public VolImageIO getRawIO() {

@@ -98,7 +98,6 @@ public class AxisDirection {
     b = Math.clamp(b, 0, 255);
     float[] hsb = Color.RGBtoHSB(r, g, b, null);
     return Color.getHSBColor(hsb[0], 1.0f, hsb[2]);
-
   }
 
   public Color getColor() {

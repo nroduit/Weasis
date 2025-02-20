@@ -168,36 +168,46 @@ public abstract class Volume<T extends Number> {
 
   protected void adaptPlaneOrientation() {
     Matrix3d m = getAffineTransform(stack.getFirstImage());
-    Vector3d row = stack.getFistSliceGeometry().getRow();
-    Vector3d col = stack.getFistSliceGeometry().getColumn();
+    Vector3d row = new Vector3d(stack.getFistSliceGeometry().getRow());
+    Vector3d col = new Vector3d(stack.getFistSliceGeometry().getColumn());
     if (adaptNegativeDirection(row, col)) {
       negativeDirection = true;
     }
     Vector3d oldRow = new Vector3d(row);
     Vector3d oldCol = new Vector3d(col);
-    m.transform(new Vector3d(m.m00, m.m10, m.m20), row);
-    m.transform(new Vector3d(m.m01, m.m11, m.m21), col);
-    oldRow.sub(row);
-    oldCol.sub(col);
+    oldRow.sub(m.transform(new Vector3d(m.m00, m.m10, m.m20)));
+    oldCol.sub(m.transform(new Vector3d(m.m01, m.m11, m.m21)));
 
     switch (stack.getStackOrientation()) {
       case AXIAL -> {
         double x = Math.max(Math.abs(oldRow.x), Math.abs(oldCol.x));
         double y = Math.max(Math.abs(oldRow.y), Math.abs(oldCol.y));
-        pixelRatio.x += pixelRatio.x * x;
-        pixelRatio.y += pixelRatio.y * y;
+        if (x < 0.5) {
+          pixelRatio.x += pixelRatio.x * x;
+        }
+        if (y < 0.5) {
+          pixelRatio.y += pixelRatio.y * y;
+        }
       }
       case CORONAL -> {
         double x = Math.max(Math.abs(oldRow.x), Math.abs(oldCol.x));
         double z = Math.max(Math.abs(oldRow.z), Math.abs(oldCol.z));
-        pixelRatio.x += pixelRatio.x * x;
-        pixelRatio.z += pixelRatio.z * z;
+        if (x < 0.5) {
+          pixelRatio.x += pixelRatio.x * x;
+        }
+        if (z < 0.5) {
+          pixelRatio.z += pixelRatio.z * z;
+        }
       }
       case SAGITTAL -> {
         double y = Math.max(Math.abs(oldRow.y), Math.abs(oldCol.y));
         double z = Math.max(Math.abs(oldRow.z), Math.abs(oldCol.z));
-        pixelRatio.y += pixelRatio.y * y;
-        pixelRatio.z += pixelRatio.z * z;
+        if (y < 0.5) {
+          pixelRatio.y += pixelRatio.y * y;
+        }
+        if (z < 0.5) {
+          pixelRatio.z += pixelRatio.z * z;
+        }
       }
     }
   }
@@ -213,8 +223,8 @@ public abstract class Volume<T extends Number> {
 
   private Matrix3d getAffineTransform(DicomImageElement dcm) {
     GeometryOfSlice geometry = dcm.getSliceGeometry();
-    Vector3d row = geometry.getRow();
-    Vector3d col = geometry.getColumn();
+    Vector3d row = new Vector3d(geometry.getRow());
+    Vector3d col = new Vector3d(geometry.getColumn());
     adaptNegativeDirection(row, col);
     Vector3d normal = geometry.getNormal();
 
