@@ -20,7 +20,6 @@ import java.time.format.DateTimeFormatter;
 import java.time.format.FormatStyle;
 import java.time.temporal.TemporalAccessor;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.Date;
 import java.util.regex.Pattern;
 import javax.xml.stream.XMLStreamReader;
@@ -96,26 +95,6 @@ public final class TagUtil {
       }
     }
     return null;
-  }
-
-  public static Date dateTime(Date date, Date time) {
-    if (time == null) {
-      return date;
-    } else if (date == null) {
-      return time;
-    }
-    Calendar calendarA = Calendar.getInstance();
-    calendarA.setTime(date);
-
-    Calendar calendarB = Calendar.getInstance();
-    calendarB.setTime(time);
-
-    calendarA.set(Calendar.HOUR_OF_DAY, calendarB.get(Calendar.HOUR_OF_DAY));
-    calendarA.set(Calendar.MINUTE, calendarB.get(Calendar.MINUTE));
-    calendarA.set(Calendar.SECOND, calendarB.get(Calendar.SECOND));
-    calendarA.set(Calendar.MILLISECOND, calendarB.get(Calendar.MILLISECOND));
-
-    return calendarA.getTime();
   }
 
   public static String formatDateTime(TemporalAccessor date) {

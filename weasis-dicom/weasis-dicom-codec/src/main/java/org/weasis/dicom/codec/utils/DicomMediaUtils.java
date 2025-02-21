@@ -16,6 +16,7 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.temporal.TemporalAccessor;
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -23,6 +24,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Set;
+import java.util.TimeZone;
 import java.util.TreeSet;
 import java.util.regex.Pattern;
 import javax.xml.stream.XMLInputFactory;
@@ -474,22 +476,15 @@ public class DicomMediaUtils {
               Date injectDateTime =
                   DicomUtils.getDateFromDicomElement(
                       dcm, Tag.RadiopharmaceuticalStartDateTime, null);
-              Date acquisitionDateTime =
-                  TagUtil.dateTime(
-                      DicomUtils.getDateFromDicomElement(dicomObject, Tag.AcquisitionDate, null),
-                      DicomUtils.getDateFromDicomElement(dicomObject, Tag.AcquisitionTime, null));
-              Date scanDate = DicomUtils.getDateFromDicomElement(dicomObject, Tag.SeriesDate, null);
+              Date acquisitionDateTime = dicomObject.getDate(Tag.AcquisitionDateAndTime);
+              Date scanDate = dicomObject.getDate(Tag.SeriesDateAndTime);
               if ("START".equals(dicomObject.getString(Tag.DecayCorrection))
                   && totalDose != null
                   && halfLife != null
                   && acquisitionDateTime != null
                   && (injectDateTime != null || (scanDate != null && injectTime != null))) {
                 double time = 0.0;
-                long scanDateTime =
-                    TagUtil.dateTime(
-                            scanDate,
-                            DicomUtils.getDateFromDicomElement(dicomObject, Tag.SeriesTime, null))
-                        .getTime();
+                long scanDateTime = scanDate.getTime();
                 if (injectDateTime == null) {
                   if (scanDateTime > acquisitionDateTime.getTime()) {
                     // per GE docs, may have been updated during post-processing into new series
@@ -504,7 +499,8 @@ public class DicomMediaUtils {
                     }
                   }
                   if (scanDate != null) {
-                    injectDateTime = TagUtil.dateTime(scanDate, injectTime);
+                    injectDateTime =
+                        dateTime(dicomObject.getTimeZone(), scanDate, injectTime, false);
                     time = (double) scanDateTime - injectDateTime.getTime();
                   }
 
@@ -535,6 +531,30 @@ public class DicomMediaUtils {
         }
       }
     }
+  }
+
+  // Remove this method and use DateTimeUtils
+  public static Date dateTime(TimeZone tz, Date date, Date time, boolean acceptNullDateOrTime) {
+    if (!acceptNullDateOrTime && (date == null || time == null)) {
+      return null;
+    }
+    Calendar calendar =
+        tz == null || date == null ? Calendar.getInstance() : Calendar.getInstance(tz);
+
+    Calendar datePart = Calendar.getInstance();
+    datePart.setTime(date == null ? new Date(0) : date);
+    calendar.set(Calendar.YEAR, datePart.get(Calendar.YEAR));
+    calendar.set(Calendar.MONTH, datePart.get(Calendar.MONTH));
+    calendar.set(Calendar.DAY_OF_MONTH, datePart.get(Calendar.DAY_OF_MONTH));
+
+    Calendar timePart = Calendar.getInstance();
+    timePart.setTime(time == null ? new Date(0) : time);
+    calendar.set(Calendar.HOUR_OF_DAY, timePart.get(Calendar.HOUR_OF_DAY));
+    calendar.set(Calendar.MINUTE, timePart.get(Calendar.MINUTE));
+    calendar.set(Calendar.SECOND, timePart.get(Calendar.SECOND));
+    calendar.set(Calendar.MILLISECOND, timePart.get(Calendar.MILLISECOND));
+
+    return calendar.getTime();
   }
 
   public static double[] getFrameTime(Attributes attributes) {
