@@ -83,6 +83,7 @@ public class DicomSpecialElement extends MediaElement implements DicomElement {
   public DicomSpecialElement(DicomMediaIO mediaIO) {
     super(mediaIO, null);
     initLabel();
+    DcmMediaReader.addTimeZone(this, mediaIO.getDicomObject());
   }
 
   protected String getLabelPrefix() {

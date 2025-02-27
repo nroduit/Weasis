@@ -13,7 +13,6 @@ import eu.essilab.lablib.checkboxtree.DefaultTreeCheckingModel;
 import eu.essilab.lablib.checkboxtree.TreeCheckingModel;
 import java.io.File;
 import java.net.URL;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -35,13 +34,13 @@ import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.MediaSeriesGroupNode;
 import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.TagReadable;
-import org.weasis.core.api.media.data.TagUtil;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.media.data.TagW.TagType;
 import org.weasis.core.api.media.data.Thumbnailable;
 import org.weasis.core.ui.model.GraphicModel;
 import org.weasis.core.util.LangUtil;
 import org.weasis.core.util.StringUtil;
+import org.weasis.dicom.codec.DcmMediaReader;
 import org.weasis.dicom.codec.DicomSeries;
 import org.weasis.dicom.codec.DicomSpecialElement;
 import org.weasis.dicom.codec.TagD;
@@ -226,11 +225,15 @@ public class CheckTreeModel {
         .forEachRemaining(
             i -> {
               TagW tag = i.getKey();
+              if (tag == null || tag == TagW.Timezone) {
+                return;
+              }
               toolTips.append("<b>");
               toolTips.append(tag.getDisplayedName());
               toolTips.append("</b>");
               toolTips.append(StringUtil.COLON_AND_SPACE);
-              toolTips.append(tag.getFormattedTagValue(i.getValue(), null));
+              String f = tag.addGMTOffset(null, tagReadable);
+              toolTips.append(tag.getFormattedTagValue(i.getValue(), f));
               toolTips.append(GuiUtils.HTML_BR);
             });
     toolTips.append(GuiUtils.HTML_END);
@@ -301,10 +304,7 @@ public class CheckTreeModel {
           buf.append("<img src=\""); // NON-NLS
           buf.append(url);
           buf.append("\"><br>"); // NON-NLS
-          LocalDateTime date = TagD.dateTime(Tag.SeriesDate, Tag.SeriesTime, s);
-          if (date != null) {
-            buf.append(TagUtil.formatDateTime(date));
-          }
+          buf.append(DcmMediaReader.buildDateTimeWithTimeZone(s, Tag.SeriesDate, Tag.SeriesTime));
           buf.append(GuiUtils.HTML_END);
           return buf.toString();
         }

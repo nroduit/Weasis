@@ -20,6 +20,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.TimeZone;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.DoubleStream;
@@ -177,6 +178,9 @@ public class TagW {
   public static final TagW MonoChrome = new TagW("MonoChrome", TagType.BOOLEAN);
 
   public static TagW AnatomicRegion = new TagW("AnatomicRegion", TagType.OBJECT);
+
+  // Date and Time
+  public static final TagW Timezone = new TagW("Timezone", TagType.OBJECT);
 
   /** Basic EXIF tags: https://www.media.mit.edu/pia/Research/deepview/exif.html */
   public static final TagW ExifImageDescription = new TagW("ExifImageDescription", TagType.STRING);
@@ -439,6 +443,21 @@ public class TagW {
 
   public synchronized void setAnonymizationType(int anonymizationType) {
     this.anonymizationType = anonymizationType;
+  }
+
+  public String addGMTOffset(String format, TagReadable readable) {
+    if (TagType.DICOM_TIME.equals(type)) {
+      TimeZone timeZone = TagW.getTagValue(readable, TagW.Timezone, TimeZone.class);
+      if (timeZone != null) {
+        String offset = timeZone.getDisplayName(true, TimeZone.SHORT);
+        if (StringUtil.hasText(format)) {
+          return format + " " + offset;
+        } else {
+          return "$V " + offset;
+        }
+      }
+    }
+    return format;
   }
 
   public String getFormattedTagValue(Object value, String format) {

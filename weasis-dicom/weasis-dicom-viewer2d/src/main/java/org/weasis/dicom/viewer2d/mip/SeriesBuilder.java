@@ -193,6 +193,7 @@ public class SeriesBuilder {
   private static Attributes getBaseAttributes(Attributes attributes) {
     final int[] COPIED_ATTRS = {
       Tag.SpecificCharacterSet,
+      Tag.TimezoneOffsetFromUTC,
       Tag.PatientID,
       Tag.PatientName,
       Tag.PatientBirthDate,

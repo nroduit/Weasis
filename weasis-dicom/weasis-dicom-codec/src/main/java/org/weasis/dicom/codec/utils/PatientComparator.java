@@ -20,7 +20,6 @@ import org.weasis.core.api.media.data.TagUtil;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.codec.TagD;
-import org.weasis.dicom.util.DateUtil;
 
 public class PatientComparator {
 
@@ -52,9 +51,8 @@ public class PatientComparator {
     setIssuerOfPatientID(TagD.getTagValue(taggable, Tag.IssuerOfPatientID, String.class));
     setName(TagD.getTagValue(taggable, Tag.PatientName, String.class));
     setSex(TagD.getTagValue(taggable, Tag.PatientSex, String.class));
-    setBirthdate(
-        DateUtil.formatDicomDate(
-            TagD.getTagValue(taggable, Tag.PatientBirthDate, LocalDate.class)));
+    LocalDate date = TagD.getTagValue(taggable, Tag.PatientBirthDate, LocalDate.class);
+    setBirthdate(TagD.formatDicomDate(date));
   }
 
   public String buildPatientPseudoUID() {

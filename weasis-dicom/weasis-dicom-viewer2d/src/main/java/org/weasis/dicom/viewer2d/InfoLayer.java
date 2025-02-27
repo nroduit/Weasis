@@ -307,7 +307,8 @@ public class InfoLayer extends AbstractInfoLayer<DicomImageElement> {
             if (!anonymize || tag.getAnonymizationType() != 1) {
               Object value = getTagValue(tag, patient, study, series, image);
               if (value != null) {
-                String str = tag.getFormattedTagValue(value, tagView.getFormat());
+                String format = tag.addGMTOffset(tagView.getFormat(), series);
+                String str = tag.getFormattedTagValue(value, format);
                 if (StringUtil.hasText(str)) {
                   FontTools.paintFontOutline(g2, str, border, drawY);
                   drawY += fontHeight;
@@ -330,7 +331,8 @@ public class InfoLayer extends AbstractInfoLayer<DicomImageElement> {
               if (!anonymize || tag.getAnonymizationType() != 1) {
                 value = getTagValue(tag, patient, study, series, image);
                 if (value != null) {
-                  String str = tag.getFormattedTagValue(value, info.getFormat());
+                  String format = tag.addGMTOffset(info.getFormat(), series);
+                  String str = tag.getFormattedTagValue(value, format);
                   if (StringUtil.hasText(str)) {
                     FontTools.paintFontOutline(
                         g2,
@@ -361,7 +363,8 @@ public class InfoLayer extends AbstractInfoLayer<DicomImageElement> {
               if (!anonymize || tag.getAnonymizationType() != 1) {
                 value = getTagValue(tag, patient, study, series, image);
                 if (value != null) {
-                  String str = tag.getFormattedTagValue(value, infos[j].getFormat());
+                  String format = tag.addGMTOffset(infos[j].getFormat(), series);
+                  String str = tag.getFormattedTagValue(value, format);
                   if (StringUtil.hasText(str)) {
                     FontTools.paintFontOutline(
                         g2,

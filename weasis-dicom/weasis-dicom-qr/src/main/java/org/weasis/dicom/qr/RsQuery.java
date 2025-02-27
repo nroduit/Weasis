@@ -213,7 +213,8 @@ public class RsQuery implements Callable<Boolean> {
     if (tag != null) {
       Object value = node.getTagValue(tag);
       if (value != null) {
-        return tag.getFormattedTagValue(value, null);
+        String format = tag.addGMTOffset(null, node);
+        return tag.getFormattedTagValue(value, format);
       }
     }
     return StringUtil.EMPTY_STRING;

@@ -57,6 +57,7 @@ import javax.xml.stream.XMLOutputFactory;
 import javax.xml.stream.XMLStreamWriter;
 import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Tag;
+import org.dcm4che3.img.util.DicomObjectUtil;
 import org.dcm4che3.net.Status;
 import org.dcm4che3.net.service.QueryRetrieveLevel;
 import org.osgi.framework.BundleContext;
@@ -109,7 +110,6 @@ import org.weasis.dicom.param.DicomParam;
 import org.weasis.dicom.param.DicomProgress;
 import org.weasis.dicom.param.DicomState;
 import org.weasis.dicom.tool.DicomListener;
-import org.weasis.dicom.util.DateUtil;
 
 public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
 
@@ -589,13 +589,13 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
           LocalDate end = null;
           if (range.length == 1) {
             if (dicomParam.getValues()[0].startsWith("-")) {
-              end = DateUtil.getDicomDate(range[0]);
+              end = DicomObjectUtil.getDicomDate(range[0]);
             } else {
-              start = DateUtil.getDicomDate(range[0]);
+              start = DicomObjectUtil.getDicomDate(range[0]);
             }
           } else if (range.length == 2) {
-            start = DateUtil.getDicomDate(range[0]);
-            end = DateUtil.getDicomDate(range[1]);
+            start = DicomObjectUtil.getDicomDate(range[0]);
+            end = DicomObjectUtil.getDicomDate(range[1]);
           }
 
           startDatePicker.setDate(start);

@@ -389,7 +389,8 @@ public class SRReader {
       html.append(tag.getDisplayedName());
       html.append("</B>");
       html.append(StringUtil.COLON_AND_SPACE);
-      html.append(tag.getFormattedTagValue(tag.getValue(dcmItems), null));
+      String format = tag.addGMTOffset(null, dicomSR);
+      html.append(tag.getFormattedTagValue(tag.getValue(dcmItems), format));
     }
   }
 

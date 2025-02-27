@@ -31,6 +31,7 @@ public abstract class OriginalStack extends AbstractStack {
   static TagW seriesReferences = new TagW("series.builder.refs", TagType.STRING, 2, 2);
   static final int[] COPIED_ATTRS = {
     Tag.SpecificCharacterSet,
+    Tag.TimezoneOffsetFromUTC,
     Tag.PatientID,
     Tag.PatientName,
     Tag.PatientBirthDate,

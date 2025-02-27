@@ -9,22 +9,12 @@
  */
 package org.weasis.dicom.codec;
 
-import static java.time.temporal.ChronoField.DAY_OF_MONTH;
-import static java.time.temporal.ChronoField.HOUR_OF_DAY;
-import static java.time.temporal.ChronoField.MINUTE_OF_HOUR;
-import static java.time.temporal.ChronoField.MONTH_OF_YEAR;
-import static java.time.temporal.ChronoField.SECOND_OF_MINUTE;
-import static java.time.temporal.ChronoField.YEAR;
-
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.ZoneId;
-import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeFormatterBuilder;
-import java.time.temporal.ChronoField;
 import java.time.temporal.ChronoUnit;
 import java.time.temporal.Temporal;
 import java.time.temporal.TemporalAccessor;
@@ -77,22 +67,6 @@ public class TagD extends TagW {
     vrToMaxChars.put(VR.ST, 1024);
     vrToMaxChars.put(VR.UI, 64);
   }
-
-  static final DateTimeFormatter DICOM_DATE =
-      new DateTimeFormatterBuilder()
-          .appendValue(YEAR, 4)
-          .appendValue(MONTH_OF_YEAR, 2)
-          .appendValue(DAY_OF_MONTH, 2)
-          .toFormatter();
-  static final DateTimeFormatter DICOM_TIME =
-      new DateTimeFormatterBuilder()
-          .appendValue(HOUR_OF_DAY, 2)
-          .optionalStart()
-          .appendValue(MINUTE_OF_HOUR, 2)
-          .optionalStart()
-          .appendValue(SECOND_OF_MINUTE, 2)
-          .appendFraction(ChronoField.MICRO_OF_SECOND, 0, 6, true)
-          .toFormatter();
 
   public enum Sex {
     SEX_MALE("M", org.weasis.core.Messages.getString("TagW.Male")), // NON-NLS
@@ -847,25 +821,27 @@ public class TagD extends TagW {
   public static LocalDateTime dateTime(int dateID, int timeID, TagReadable taggable) {
     LocalDate date = TagD.getTagValue(taggable, dateID, LocalDate.class);
     LocalTime time = TagD.getTagValue(taggable, timeID, LocalTime.class);
-    if (date == null) {
-      return null;
-    }
-    if (time == null) {
-      return date.atStartOfDay();
-    }
-    return LocalDateTime.of(date, time);
+    return DateTimeUtils.dateTime(date, time);
   }
 
   public static String formatDicomDate(LocalDate date) {
     if (date != null) {
-      return DICOM_DATE.format(date);
+      try {
+        return DateTimeUtils.formatDA(date);
+      } catch (Exception e) {
+        LOGGER.error("Format date", e);
+      }
     }
     return StringUtil.EMPTY_STRING;
   }
 
   public static String formatDicomTime(LocalTime time) {
     if (time != null) {
-      return DICOM_TIME.format(time);
+      try {
+        return DateTimeUtils.formatTM(time);
+      } catch (Exception e) {
+        LOGGER.error("Format time", e);
+      }
     }
     return StringUtil.EMPTY_STRING;
   }

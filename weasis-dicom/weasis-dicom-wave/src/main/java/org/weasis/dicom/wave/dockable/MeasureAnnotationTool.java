@@ -209,7 +209,6 @@ public class MeasureAnnotationTool extends PluginTool implements SeriesViewerLis
   }
 
   private void readAcquisitionContextSequence(Attributes attributes, List<Object[]> list) {
-
     Sequence ctxSeq = attributes.getSequence(Tag.AcquisitionContextSequence);
     if (ctxSeq != null) {
       for (Attributes item : ctxSeq) {

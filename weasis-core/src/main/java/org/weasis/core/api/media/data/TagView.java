@@ -9,6 +9,7 @@
  */
 package org.weasis.core.api.media.data;
 
+import java.util.stream.Stream;
 import org.weasis.core.util.StringUtil;
 
 public class TagView {
@@ -42,9 +43,12 @@ public class TagView {
   }
 
   public String getFormattedText(boolean anonymize, TagReadable... taggable) {
+    TagReadable readable =
+        Stream.of(taggable).filter(t -> t.containTagKey(TagW.Timezone)).findFirst().orElse(null);
     for (TagW t : this.tag) {
       if (!anonymize || t.getAnonymizationType() != 1) {
-        String str = t.getFormattedTagValue(TagUtil.getTagValue(t, taggable), format);
+        String f = t.addGMTOffset(format, readable);
+        String str = t.getFormattedTagValue(TagUtil.getTagValue(t, taggable), f);
         if (StringUtil.hasText(str)) {
           return str;
         }

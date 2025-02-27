@@ -21,6 +21,7 @@ import java.time.format.FormatStyle;
 import java.time.temporal.TemporalAccessor;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.TimeZone;
 import java.util.regex.Pattern;
 import javax.xml.stream.XMLStreamReader;
 import org.slf4j.Logger;
@@ -97,13 +98,24 @@ public final class TagUtil {
     return null;
   }
 
+  public static ZonedDateTime getZonedDateTime(LocalDateTime dateTime, TimeZone timeZone) {
+    if (dateTime != null) {
+      ZoneId zoneId = timeZone == null ? ZoneId.systemDefault() : timeZone.toZoneId();
+      return dateTime.atZone(zoneId);
+    }
+    return null;
+  }
+
   public static String formatDateTime(TemporalAccessor date) {
     if (date instanceof LocalDate) {
       return DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM).format(date);
     } else if (date instanceof LocalTime) {
       return DateTimeFormatter.ofLocalizedTime(FormatStyle.MEDIUM).format(date);
-    } else if (date instanceof LocalDateTime || date instanceof ZonedDateTime) {
+    } else if (date instanceof LocalDateTime) {
       return DateTimeFormatter.ofLocalizedDateTime(FormatStyle.MEDIUM).format(date);
+    } else if (date instanceof ZonedDateTime zonedDateTime) {
+      return DateTimeFormatter.ofLocalizedDateTime(FormatStyle.MEDIUM)
+          .format(zonedDateTime.withZoneSameInstant(ZoneId.systemDefault()));
     } else if (date instanceof Instant instant) {
       return DateTimeFormatter.ofLocalizedDateTime(FormatStyle.MEDIUM)
           .format(instant.atZone(ZoneId.systemDefault()));

@@ -122,12 +122,18 @@ public class DicomSeries extends Series<DicomImageElement> {
         toolTips, Messages.getString("DicomSeries.study"), TagD.get(Tag.StudyDescription));
     series.addToolTipsElement(
         toolTips, Messages.getString("DicomSeries.series"), TagD.get(Tag.SeriesDescription));
-    series.addToolTipsElement(
-        toolTips,
-        Messages.getString("DicomSeries.date"),
-        TagD.get(Tag.SeriesDate),
-        TagD.get(Tag.SeriesTime));
+
+    addToolTipsDateTime(
+        toolTips, Messages.getString("DicomSeries.date"), series, Tag.SeriesDate, Tag.SeriesTime);
     return toolTips;
+  }
+
+  public static void addToolTipsDateTime(
+      StringBuilder toolTips, String title, Series<?> series, int dateTag, int timeTag) {
+    toolTips.append(title);
+    toolTips.append(StringUtil.COLON_AND_SPACE);
+    toolTips.append(DcmMediaReader.buildDateTimeWithTimeZone(series, dateTag, timeTag));
+    toolTips.append(GuiUtils.HTML_BR);
   }
 
   @Override

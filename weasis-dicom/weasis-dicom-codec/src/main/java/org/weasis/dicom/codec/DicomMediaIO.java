@@ -144,10 +144,8 @@ public class DicomMediaIO implements DcmMediaReader {
     tagManager.addTag(Tag.NumberOfFrames, Level.SERIES);
     tagManager.addTag(Tag.SeriesDate, Level.SERIES);
     tagManager.addTag(Tag.SeriesTime, Level.SERIES);
-    tagManager.addTag(Tag.PerformedProcedureStepStartDate, Level.SERIES); // not
-    // required
-    tagManager.addTag(Tag.PerformedProcedureStepStartTime, Level.SERIES); // not
-    // required
+    tagManager.addTag(Tag.PerformedProcedureStepStartDate, Level.SERIES); // not required
+    tagManager.addTag(Tag.PerformedProcedureStepStartTime, Level.SERIES); // not required
     // Should be in image C.7.6.5 Cine Module
     // http://dicom.nema.org/medical/dicom/current/output/chtml/part03/sect_C.7.6.5.html
     tagManager.addTag(Tag.PreferredPlaybackSequencing, Level.SERIES);
