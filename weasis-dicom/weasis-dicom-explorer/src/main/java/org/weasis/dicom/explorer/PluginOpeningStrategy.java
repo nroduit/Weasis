@@ -85,7 +85,9 @@ public class PluginOpeningStrategy {
     boolean selectPatient = !isPatientOpen;
     if (!isPatientOpen && canAddNewPatient()) {
       SeriesViewerFactory plugin = GuiUtils.getUICore().getViewerFactory(dicomSeries.getMimeType());
-      if (plugin != null && !(plugin instanceof MimeSystemAppFactory)) {
+      if (plugin != null
+          && !("SRFactory".equals(plugin.getClass().getSimpleName()))
+          && !(plugin instanceof MimeSystemAppFactory)) {
         addPatient(patient);
         selectPatient = false;
         ViewerPluginBuilder.openSequenceInPlugin(plugin, dicomSeries, dicomModel, true, true);
