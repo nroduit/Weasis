@@ -1,3 +1,11 @@
+// *************************************************************************************************
+// My functions
+// *************************************************************************************************
+
+uniform bool sliceEnabled;
+uniform vec3 sliceNormal;  // Normal vector of the slicing plane
+uniform vec3 slicePoint;   // A point on the slicing plane
+
 // Texture data type
 uniform uint textureDataType;
 const uint dataTypeByte = 0x00000000u;
