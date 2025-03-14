@@ -613,7 +613,7 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
 
   // public JMenu getSortStackMenu(String prop) {
   // JMenu menu = null;
-  // if (BundleTools.SYSTEM_PREFERENCES.getBooleanProperty(prop, true)) {
+  // if (GuiUtils.getUICore().getSystemPreferences().getBooleanProperty(prop, true)) {
   // menu =
   // sortStackAction.createUnregisteredRadioMenu(Messages.getString("View2dContainer.sort_stack"));
   //

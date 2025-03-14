@@ -9,9 +9,9 @@
  */
 package org.weasis.dicom.viewer2d.mpr;
 
-import static org.weasis.dicom.viewer2d.mpr.MprView.SliceOrientation.AXIAL;
-import static org.weasis.dicom.viewer2d.mpr.MprView.SliceOrientation.CORONAL;
-import static org.weasis.dicom.viewer2d.mpr.MprView.SliceOrientation.SAGITTAL;
+import static org.weasis.dicom.viewer2d.mpr.MprView.Plane.AXIAL;
+import static org.weasis.dicom.viewer2d.mpr.MprView.Plane.CORONAL;
+import static org.weasis.dicom.viewer2d.mpr.MprView.Plane.SAGITTAL;
 
 import java.awt.Dimension;
 import java.util.concurrent.ForkJoinPool;
@@ -31,15 +31,14 @@ import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.DicomSeries;
 import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.explorer.DicomModel;
-import org.weasis.dicom.viewer2d.mpr.MprView.SliceOrientation;
+import org.weasis.dicom.viewer2d.mpr.MprView.Plane;
 
 public class ObliqueMpr extends OriginalStack {
   static final String[] imageTypes = {"DERIVED", "SECONDARY", "MPR"};
   private final Volume<?> volume;
 
-  public ObliqueMpr(
-      SliceOrientation sliceOrientation, MediaSeries<DicomImageElement> series, MprView view) {
-    super(sliceOrientation, series, (Filter) view.getActionValue(ActionW.FILTERED_SERIES.cmd()));
+  public ObliqueMpr(Plane plane, MediaSeries<DicomImageElement> series, MprView view) {
+    super(plane, series, (Filter) view.getActionValue(ActionW.FILTERED_SERIES.cmd()));
     JProgressBar bar = createProgressBar(view, getSourceStack().size());
     GuiExecutor.invokeAndWait(
         () -> {
@@ -123,23 +122,23 @@ public class ObliqueMpr extends OriginalStack {
   private class CreateSeriesTask extends RecursiveAction {
     private final BuildContext context;
     private final String[] uidsRef;
-    private final SliceOrientation[] orientations;
+    private final Plane[] planes;
 
-    CreateSeriesTask(BuildContext context, String[] uidsRef, SliceOrientation... orientations) {
+    CreateSeriesTask(BuildContext context, String[] uidsRef, Plane... planes) {
       this.context = context;
       this.uidsRef = uidsRef;
-      this.orientations = orientations;
+      this.planes = planes;
     }
 
     @Override
     protected void compute() {
-      for (SliceOrientation orientation : orientations) {
+      for (Plane orientation : planes) {
         createSeries(context, uidsRef[orientation.ordinal()], orientation);
       }
     }
   }
 
-  private void createSeries(BuildContext context, String uid, SliceOrientation orientation) {
+  private void createSeries(BuildContext context, String uid, Plane orientation) {
     DicomSeries series = new DicomSeries(uid, null, DicomModel.series.tagView());
     series.setTag(TagD.get(Tag.SeriesInstanceUID), uid);
     getMiddleImage().getMediaReader().writeMetaData(series);
@@ -172,7 +171,7 @@ public class ObliqueMpr extends OriginalStack {
     DicomImageElement img = volume.stack.getMiddleImage();
     VolImageIO rawIO = new VolImageIO(axis, volume);
 
-    final Attributes cpTags = getCommonTags(this, axis.getViewOrientation());
+    final Attributes cpTags = getCommonTags(this, axis.getPlane());
     rawIO.setBaseAttributes(cpTags);
 
     rawIO.setTag(
@@ -203,10 +202,10 @@ public class ObliqueMpr extends OriginalStack {
     return frUID;
   }
 
-  private Attributes getCommonTags(OriginalStack stack, SliceOrientation orientation) {
+  private Attributes getCommonTags(OriginalStack stack, Plane plane) {
     String frUID = setFrameOfReferenceUID(stack);
     String desc = TagD.getTagValue(stack.series, Tag.SeriesDescription, String.class);
-    String mprDesc = "MPR " + orientation; // NON-NLS
+    String mprDesc = "MPR " + plane; // NON-NLS
     desc = desc == null ? mprDesc : desc + " [%s]".formatted(mprDesc); // NON-NLS
     return stack.getCommonAttributes(frUID, desc, imageTypes);
   }

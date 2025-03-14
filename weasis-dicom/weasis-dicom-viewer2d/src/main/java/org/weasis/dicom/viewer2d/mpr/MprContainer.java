@@ -12,7 +12,6 @@ package org.weasis.dicom.viewer2d.mpr;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.GridBagConstraints;
-import java.awt.geom.Point2D;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
@@ -57,7 +56,6 @@ import org.weasis.core.ui.editor.image.SynchView;
 import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.editor.image.ViewerToolBar;
 import org.weasis.core.ui.editor.image.ZoomToolBar;
-import org.weasis.core.ui.model.utils.bean.PanPoint;
 import org.weasis.core.ui.util.ColorLayerUI;
 import org.weasis.core.ui.util.DefaultAction;
 import org.weasis.core.ui.util.PrintDialog;
@@ -81,7 +79,7 @@ import org.weasis.dicom.viewer2d.Messages;
 import org.weasis.dicom.viewer2d.ResetTools;
 import org.weasis.dicom.viewer2d.View2dContainer;
 import org.weasis.dicom.viewer2d.View2dFactory;
-import org.weasis.dicom.viewer2d.mpr.MprView.SliceOrientation;
+import org.weasis.dicom.viewer2d.mpr.MprView.Plane;
 
 public class MprContainer extends DicomViewerPlugin implements PropertyChangeListener {
   private static final Logger LOGGER = LoggerFactory.getLogger(MprContainer.class);
@@ -234,7 +232,7 @@ public class MprContainer extends DicomViewerPlugin implements PropertyChangeLis
       List<Toolbar> toolBars = UI.toolBars;
 
       // Add standard toolbars
-      // WProperties props = (WProperties) BundleTools.SYSTEM_PREFERENCES.clone();
+      // WProperties props = (WProperties) GuiUtils.getUICore().getSystemPreferences().clone();
       // props.putBooleanProperty("weasis.toolbar.synch.button", false);
 
       EventManager evtMg = EventManager.getInstance();
@@ -485,11 +483,9 @@ public class MprContainer extends DicomViewerPlugin implements PropertyChangeLis
     return actions;
   }
 
-  public MprView getMprView(SliceOrientation sliceOrientation) {
+  public MprView getMprView(Plane plane) {
     for (ViewCanvas<?> v : view2ds) {
-      if (v instanceof MprView mprView
-          && sliceOrientation != null
-          && sliceOrientation.equals(mprView.getSliceOrientation())) {
+      if (v instanceof MprView mprView && plane != null && plane.equals(mprView.getPlane())) {
         return mprView;
       }
     }
@@ -499,17 +495,22 @@ public class MprContainer extends DicomViewerPlugin implements PropertyChangeLis
   @Override
   public void addSeries(MediaSeries<DicomImageElement> sequence) {
     stopCurrentProcess();
+    AxesControl control = mprController.getAxesControl();
+    control.resetListeners();
+    control.reset();
+
     // TODO Should be init elsewhere
     for (int i = 0; i < view2ds.size(); i++) {
       ViewCanvas<DicomImageElement> val = view2ds.get(i);
       if (val instanceof MprView mprView) {
-        SliceOrientation sliceOrientation =
+        Plane plane =
             switch (i) {
-              case 1 -> SliceOrientation.CORONAL;
-              case 2 -> SliceOrientation.SAGITTAL;
-              default -> SliceOrientation.AXIAL;
+              case 1 -> Plane.CORONAL;
+              case 2 -> Plane.SAGITTAL;
+              default -> Plane.AXIAL;
             };
-        mprView.setType(sliceOrientation);
+        mprView.setType(plane);
+        control.addPropertyChangeListener(mprView);
       }
     }
 
@@ -536,25 +537,6 @@ public class MprContainer extends DicomViewerPlugin implements PropertyChangeLis
                       eventManager
                           .getAction(ActionW.SYNCH)
                           .ifPresent(c -> c.setSelectedItem(MprContainer.defaultMpr));
-
-                      if (!mprController.isOblique()) {
-                        // Set the middle image ( the best choice to propagate the default preset
-                        // of non CT modalities)
-                        eventManager
-                            .getAction(ActionW.SCROLL_SERIES)
-                            .ifPresent(s -> s.setSliderValue(s.getSliderMax() / 2));
-                        eventManager
-                            .getAction(ActionW.CROSSHAIR)
-                            .ifPresent(
-                                i -> {
-                                  Point2D pt =
-                                      view.getImageCoordinatesFromMouse(
-                                          view.getWidth() / 2, view.getHeight() / 2);
-                                  PanPoint panPoint =
-                                      new PanPoint(PanPoint.State.CENTER, pt.getX(), pt.getY());
-                                  i.setPoint(panPoint);
-                                });
-                      }
 
                       // Force to propagate the default preset
                       eventManager
@@ -622,13 +604,13 @@ public class MprContainer extends DicomViewerPlugin implements PropertyChangeLis
       if (img instanceof DicomImageElement imageElement) {
         Plan orientation = ImageOrientation.getPlan(imageElement);
         if (orientation != null) {
-          SliceOrientation sliceOrientation = SliceOrientation.AXIAL;
+          Plane plane = Plane.AXIAL;
           if (Plan.CORONAL.equals(orientation)) {
-            sliceOrientation = SliceOrientation.CORONAL;
+            plane = Plane.CORONAL;
           } else if (Plan.SAGITTAL.equals(orientation)) {
-            sliceOrientation = SliceOrientation.SAGITTAL;
+            plane = Plane.SAGITTAL;
           }
-          MprView view = getMprView(sliceOrientation);
+          MprView view = getMprView(plane);
           if (view != null) {
             setSelectedImagePane(view);
             return view;

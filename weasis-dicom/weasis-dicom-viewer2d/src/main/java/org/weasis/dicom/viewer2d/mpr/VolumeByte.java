@@ -96,7 +96,7 @@ public class VolumeByte extends Volume<Byte> {
     }
     int sliceImageSize = getSliceSize();
     Vector3d voxelRatio = getVoxelRatio();
-    Quaterniond mprRotation = mprAxis.getMprView().mprController.getRotation();
+    Quaterniond mprRotation = mprAxis.getMprView().mprController.getRotation(mprAxis.getPlane());
     Matrix4d combinedTransform = mprAxis.getCombinedTransformation(mprRotation, volumeCenter);
     mprAxis.getTransformation().set(combinedTransform);
 

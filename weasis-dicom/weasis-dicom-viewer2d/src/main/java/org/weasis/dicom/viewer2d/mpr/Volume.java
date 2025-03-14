@@ -82,7 +82,7 @@ public abstract class Volume<T extends Number> {
     this.cvType =
         initCVType(depth == CvType.CV_8S || depth == CvType.CV_16S || depth == CvType.CV_32S);
     this.byteDepth = CvType.ELEM_SIZE(cvType); // FIXME: color image
-    switch (stack.getStackOrientation()) {
+    switch (stack.getPlane()) {
       case AXIAL:
         copyFromAxial();
         break;
@@ -178,7 +178,7 @@ public abstract class Volume<T extends Number> {
     oldRow.sub(m.transform(new Vector3d(m.m00, m.m10, m.m20)));
     oldCol.sub(m.transform(new Vector3d(m.m01, m.m11, m.m21)));
 
-    switch (stack.getStackOrientation()) {
+    switch (stack.getPlane()) {
       case AXIAL -> {
         double x = Math.max(Math.abs(oldRow.x), Math.abs(oldCol.x));
         double y = Math.max(Math.abs(oldRow.y), Math.abs(oldCol.y));
@@ -228,7 +228,7 @@ public abstract class Volume<T extends Number> {
     adaptNegativeDirection(row, col);
     Vector3d normal = geometry.getNormal();
 
-    return switch (stack.getStackOrientation()) {
+    return switch (stack.getPlane()) {
       case AXIAL ->
           new Matrix3d(row.x, col.x, normal.x, row.y, col.y, normal.y, row.z, col.z, normal.z);
       case CORONAL ->
@@ -241,7 +241,7 @@ public abstract class Volume<T extends Number> {
   protected Vector3i transformPoint(int x, int y, int z, Matrix3d transform) {
     Vector3d p = new Vector3d(x, y, z);
     transform.transform(p);
-    switch (stack.getStackOrientation()) {
+    switch (stack.getPlane()) {
       case AXIAL -> {
         x = (int) Math.round(p.x);
         y = (int) Math.round(p.y);
@@ -400,6 +400,11 @@ public abstract class Volume<T extends Number> {
     voxelRatio.y /= minRatio;
     voxelRatio.z /= minRatio;
     return voxelRatio;
+  }
+
+  public Vector3d getSpatialMultiplier() {
+    double maxSize = Math.max(size.x, Math.max(size.y, size.z));
+    return getVoxelRatio().mul(size.x / maxSize, size.y / maxSize, size.z / maxSize);
   }
 
   protected boolean isOutside(int x, int y, int z) {

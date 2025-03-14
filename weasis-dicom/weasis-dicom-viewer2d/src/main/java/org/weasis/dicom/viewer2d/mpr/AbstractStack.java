@@ -14,16 +14,16 @@ import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeries.MEDIA_POSITION;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.TagD;
-import org.weasis.dicom.viewer2d.mpr.MprView.SliceOrientation;
+import org.weasis.dicom.viewer2d.mpr.MprView.Plane;
 
 public class AbstractStack {
   protected final int width;
   protected final int height;
-  protected final SliceOrientation stackOrientation;
+  protected final Plane plane;
   protected final MediaSeries<DicomImageElement> series;
 
-  public AbstractStack(SliceOrientation sliceOrientation, MediaSeries<DicomImageElement> series) {
-    this.stackOrientation = sliceOrientation;
+  public AbstractStack(Plane plane, MediaSeries<DicomImageElement> series) {
+    this.plane = plane;
     this.series = series;
 
     final DicomImageElement img = series.getMedia(MEDIA_POSITION.MIDDLE, null, null);
@@ -44,8 +44,8 @@ public class AbstractStack {
     return height;
   }
 
-  public SliceOrientation getStackOrientation() {
-    return stackOrientation;
+  public Plane getPlane() {
+    return plane;
   }
 
   public MediaSeries<DicomImageElement> getSeries() {

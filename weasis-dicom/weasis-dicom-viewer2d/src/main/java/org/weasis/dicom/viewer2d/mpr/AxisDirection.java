@@ -20,7 +20,7 @@ import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.ui.model.layer.LayerAnnotation.Position;
 import org.weasis.dicom.codec.geometry.PatientOrientation.Biped;
 import org.weasis.dicom.viewer2d.Messages;
-import org.weasis.dicom.viewer2d.mpr.MprView.SliceOrientation;
+import org.weasis.dicom.viewer2d.mpr.MprView.Plane;
 
 public class AxisDirection {
   private final Color color;
@@ -33,21 +33,21 @@ public class AxisDirection {
   private final Color zColor;
   private final boolean invertedDirection;
 
-  public AxisDirection(SliceOrientation viewOrientation) {
+  public AxisDirection(Plane plane) {
     this.color =
-        switch (viewOrientation) {
+        switch (plane) {
           case AXIAL -> Biped.H.getColor();
           case CORONAL -> Biped.A.getColor();
           case SAGITTAL -> Biped.R.getColor();
         };
     this.name =
-        switch (viewOrientation) {
+        switch (plane) {
           case AXIAL -> Messages.getString("axial");
           case CORONAL -> Messages.getString("coronal");
           case SAGITTAL -> Messages.getString("sagittal");
         };
 
-    switch (viewOrientation) {
+    switch (plane) {
       case AXIAL -> {
         this.invertedDirection = true;
         xColor = Biped.R.getColor();
@@ -58,7 +58,7 @@ public class AxisDirection {
         axisZ = new Vector3d(0, 0, -1);
       }
       case CORONAL -> {
-        this.invertedDirection = true;
+        this.invertedDirection = false;
         xColor = Biped.R.getColor();
         yColor = Biped.H.getColor();
         zColor = Biped.A.getColor();
@@ -75,7 +75,7 @@ public class AxisDirection {
         axisY = new Vector3d(0, 0, -1);
         axisZ = new Vector3d(1, 0, 0);
       }
-      default -> throw new IllegalStateException("Unexpected value: " + viewOrientation);
+      default -> throw new IllegalStateException("Unexpected value: " + plane);
     }
   }
 

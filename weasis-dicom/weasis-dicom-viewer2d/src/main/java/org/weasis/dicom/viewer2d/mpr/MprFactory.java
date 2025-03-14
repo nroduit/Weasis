@@ -40,7 +40,7 @@ import org.weasis.dicom.codec.DicomMediaIO;
 import org.weasis.dicom.explorer.DicomExplorer;
 import org.weasis.dicom.viewer2d.EventManager;
 import org.weasis.dicom.viewer2d.Messages;
-import org.weasis.dicom.viewer2d.mpr.MprView.SliceOrientation;
+import org.weasis.dicom.viewer2d.mpr.MprView.Plane;
 
 @org.osgi.service.component.annotations.Component(service = SeriesViewerFactory.class)
 public class MprFactory implements SeriesViewerFactory {
@@ -84,13 +84,13 @@ public class MprFactory implements SeriesViewerFactory {
     int index = 0;
     for (Component val : layout.model().getConstraints().values()) {
       if (val instanceof MprView mprView) {
-        SliceOrientation sliceOrientation =
+        Plane plane =
             switch (index) {
-              case 1 -> SliceOrientation.CORONAL;
-              case 2 -> SliceOrientation.SAGITTAL;
-              default -> SliceOrientation.AXIAL;
+              case 1 -> Plane.CORONAL;
+              case 2 -> Plane.SAGITTAL;
+              default -> Plane.AXIAL;
             };
-        mprView.setType(sliceOrientation);
+        mprView.setType(plane);
         index++;
       }
     }

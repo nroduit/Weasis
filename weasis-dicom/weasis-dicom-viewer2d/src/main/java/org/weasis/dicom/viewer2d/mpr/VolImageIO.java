@@ -58,7 +58,7 @@ import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.geometry.GeometryOfSlice;
 import org.weasis.dicom.codec.utils.DicomMediaUtils;
 import org.weasis.dicom.viewer2d.mip.MipView.Type;
-import org.weasis.dicom.viewer2d.mpr.MprView.SliceOrientation;
+import org.weasis.dicom.viewer2d.mpr.MprView.Plane;
 import org.weasis.opencv.data.ImageCV;
 import org.weasis.opencv.data.PlanarImage;
 
@@ -120,17 +120,18 @@ public class VolImageIO implements DcmMediaReader {
 
   @Override
   public PlanarImage getImageFragment(MediaElement media) throws Exception {
-    double position = mprAxis.getPositionAlongAxis();
-    Vector3d volumeCenter = mprAxis.getMprView().mprController.getVolumeCrossHair();
+    MprController controller = mprAxis.getMprView().mprController;
+    Vector3d volumeCenter = controller.getVolumeCrossHair();
     int extend = mprAxis.getThicknessExtension();
     if (extend > 0 && !mprAxis.isAdjusting()) {
+      double position = controller.getVolumeCrossHair(mprAxis).z;
       List<PlanarImage> sources = new ArrayList<>();
       for (int i = -extend; i <= extend; i++) {
         PlanarImage slice;
         if (i == 0) {
           slice = getSlice(volumeCenter);
         } else {
-          double positionIndex = position + i + volume.getSliceSize() / 2.0;
+          double positionIndex = position + i;
           Vector3d centerIndex = new Vector3d(volumeCenter);
           mprAxis.changePositionAlongAxis(centerIndex, positionIndex);
           slice = volume.getVolumeSlice(mprAxis, centerIndex);
@@ -226,10 +227,10 @@ public class VolImageIO implements DcmMediaReader {
     mprAxis.getTransformation().transformDirection(row);
     mprAxis.getTransformation().transformDirection(col);
     double[] orientation = new double[] {row.x, row.y, row.z, col.x, col.y, col.z};
-    if (mprAxis.getViewOrientation() == SliceOrientation.CORONAL) {
+    if (mprAxis.getPlane() == Plane.CORONAL) {
       orientation = new double[] {row.x, row.y, row.z, col.x, col.y, -col.z};
 
-    } else if (mprAxis.getViewOrientation() == SliceOrientation.SAGITTAL) {
+    } else if (mprAxis.getPlane() == Plane.SAGITTAL) {
       orientation = new double[] {row.x, row.y, row.z, col.x, -col.y, -col.z};
     }
 

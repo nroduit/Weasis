@@ -278,7 +278,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
         if (view2d instanceof MprView mprView) {
           MprContainer mprContainer = (MprContainer) selectedView2dContainer;
           MprController controller = mprContainer.getMprController();
-          MprAxis axis = controller.getMprAxis(mprView.getSliceOrientation());
+          MprAxis axis = controller.getMprAxis(mprView.getPlane());
           int index = model.getValue() - 1;
           axis.setSliceIndex(index);
           boolean oldAdjusting = controller.isAdjusting();
@@ -1077,7 +1077,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
       MprController controller = mprContainer.getMprController();
       Volume<?> volume = controller.getVolume();
       maxSlice = volume.getSliceSize();
-      MprAxis axis = controller.getMprAxis(mprView.getSliceOrientation());
+      MprAxis axis = controller.getMprAxis(mprView.getPlane());
       currentSlice = axis.getSliceIndex();
     } else {
       maxSlice =

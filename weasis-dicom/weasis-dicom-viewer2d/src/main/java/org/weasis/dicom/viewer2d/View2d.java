@@ -116,7 +116,7 @@ import org.weasis.dicom.explorer.DicomSeriesHandler;
 import org.weasis.dicom.explorer.pr.PrGraphicUtil;
 import org.weasis.dicom.viewer2d.KOComponentFactory.KOViewButton;
 import org.weasis.dicom.viewer2d.KOComponentFactory.KOViewButton.eState;
-import org.weasis.dicom.viewer2d.mpr.MprView.SliceOrientation;
+import org.weasis.dicom.viewer2d.mpr.MprView.Plane;
 import org.weasis.opencv.data.PlanarImage;
 import org.weasis.opencv.op.lut.WlPresentation;
 
@@ -877,12 +877,12 @@ public class View2d extends DefaultView2d<DicomImageElement> {
       }
       GeometryOfSlice sliceGeometry = image.getSliceGeometry();
       if (sliceGeometry != null) {
-        SliceOrientation sliceOrientation = this.getSliceOrientation();
-        if (sliceOrientation != null && p3 != null) {
+        Plane plane = this.getPlane();
+        if (plane != null && p3 != null) {
           Point2D p = sliceGeometry.getImagePosition(p3);
           if (p != null) {
             Vector3d dim = sliceGeometry.getDimensions();
-            boolean axial = SliceOrientation.AXIAL.equals(sliceOrientation);
+            boolean axial = Plane.AXIAL.equals(plane);
             Point2D centerPt = new Point2D.Double(p.getX(), p.getY());
             int centerGap =
                 eventManager.getOptions().getIntProperty(View2d.P_CROSSHAIR_CENTER_GAP, 40);
@@ -897,7 +897,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
               pts.add(new Point2D.Double(p.getX(), -50.0));
               pts.add(new Point2D.Double(p.getX(), dim.x + 50));
 
-              boolean sagittal = SliceOrientation.SAGITTAL.equals(sliceOrientation);
+              boolean sagittal = Plane.SAGITTAL.equals(plane);
               Color color1 = axial ? Biped.A.getColor() : Biped.F.getColor();
               addCrosshairLine(layer, pts, color1, centerPt, centerGap);
 
@@ -966,8 +966,8 @@ public class View2d extends DefaultView2d<DicomImageElement> {
     }
   }
 
-  public SliceOrientation getSliceOrientation() {
-    SliceOrientation sliceOrientation = null;
+  public Plane getPlane() {
+    Plane plane = null;
     MediaSeries<DicomImageElement> s = getSeries();
     if (s != null) {
       Object img = s.getMedia(MediaSeries.MEDIA_POSITION.MIDDLE, null, null);
@@ -975,16 +975,16 @@ public class View2d extends DefaultView2d<DicomImageElement> {
         Plan orientation = ImageOrientation.getPlan(imageElement);
         if (orientation != null) {
           if (Plan.AXIAL.equals(orientation)) {
-            sliceOrientation = SliceOrientation.AXIAL;
+            plane = Plane.AXIAL;
           } else if (Plan.CORONAL.equals(orientation)) {
-            sliceOrientation = SliceOrientation.CORONAL;
+            plane = Plane.CORONAL;
           } else if (Plan.SAGITTAL.equals(orientation)) {
-            sliceOrientation = SliceOrientation.SAGITTAL;
+            plane = Plane.SAGITTAL;
           }
         }
       }
     }
-    return sliceOrientation;
+    return plane;
   }
 
   @Override

@@ -22,6 +22,7 @@ import java.awt.geom.Point2D;
 import java.beans.PropertyChangeEvent;
 import java.io.File;
 import java.util.List;
+import java.util.Objects;
 import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JFileChooser;
 import javax.swing.JMenu;
@@ -74,28 +75,52 @@ import org.weasis.dicom.viewer2d.Messages;
 import org.weasis.dicom.viewer2d.View2d;
 import org.weasis.dicom.viewer2d.mpr.MprController.ControlPoints;
 
-public class MprView extends View2d {
+public class MprView extends View2d implements Canvas3D {
   private static final Logger LOGGER = LoggerFactory.getLogger(MprView.class);
 
   public static final String SHOW_CROSS_CENTER = "show.cross.center";
   public static final String HIDE_CROSSLINES = "hide.crosslines";
 
-  public enum SliceOrientation {
-    AXIAL,
-    CORONAL,
-    SAGITTAL
+  public enum Plane {
+    AXIAL(2), // Normal along Z axis
+    CORONAL(1), // Normal along Y axis
+    SAGITTAL(0); // Normal along X axis
+
+    private final int axisIndex;
+
+    Plane(int axisIndex) {
+      this.axisIndex = axisIndex;
+    }
+
+    public int axisIndex() {
+      return axisIndex;
+    }
+
+    public Vector3d getDirection() {
+      return new Vector3d().setComponent(axisIndex, 1);
+    }
+
+    public static Plane getPlane(int axisIndex) {
+      for (Plane plane : MprView.Plane.values()) {
+        if (plane.axisIndex == axisIndex) {
+          return plane;
+        }
+      }
+      return AXIAL;
+    }
   }
 
-  private SliceOrientation sliceOrientation;
   private JProgressBar progressBar;
+  private Plane plane;
+  private double rotationOffset;
 
-  protected MprController mprController;
+  protected final MprController mprController;
 
   public MprView(
       ImageViewerEventManager<DicomImageElement> eventManager, MprController controller) {
     super(eventManager);
-    this.mprController = controller;
-    this.sliceOrientation = SliceOrientation.AXIAL;
+    this.plane = Plane.AXIAL;
+    this.mprController = Objects.requireNonNull(controller);
     infoLayer.setDisplayPreferencesValue(LayerItem.PRELOADING_BAR, false);
 
     // Remove PR and KO buttons
@@ -129,15 +154,25 @@ public class MprView extends View2d {
   }
 
   @Override
-  public SliceOrientation getSliceOrientation() {
-    return sliceOrientation;
+  public Plane getPlane() {
+    return plane;
+  }
+
+  @Override
+  public double getRotationOffset() {
+    return rotationOffset;
+  }
+
+  @Override
+  public void setRotationOffset(double rotationOffset) {
+    this.rotationOffset = rotationOffset;
   }
 
   protected MprAxis getMprAxis() {
     if (mprController == null) {
       return null;
     }
-    return mprController.getMprAxis(sliceOrientation);
+    return mprController.getMprAxis(plane);
   }
 
   public boolean isOblique() {
@@ -155,8 +190,8 @@ public class MprView extends View2d {
     setActionsInView(ViewCanvas.ZOOM_TYPE_CMD, oldZoomType);
   }
 
-  public void setType(SliceOrientation sliceOrientation) {
-    this.sliceOrientation = sliceOrientation == null ? SliceOrientation.AXIAL : sliceOrientation;
+  public void setType(Plane plane) {
+    this.plane = plane == null ? Plane.AXIAL : plane;
     if (isOblique()) {
       mprController.initListeners(this);
     }
@@ -283,7 +318,6 @@ public class MprView extends View2d {
       }
       Vector3d center = mprController.getVolumeCrossHair(axis);
       Point2D centerPt = new Point2D.Double(center.x, center.y);
-      mprController.rectifyPosition(axis, centerPt);
       processImage(pair.first(), layer, axis, false, centerPt, centerGap);
       processImage(pair.second(), layer, axis, true, centerPt, centerGap);
     }
@@ -300,10 +334,6 @@ public class MprView extends View2d {
     Vector3d center = mprController.getVolumeCrossHair(axis);
     List<Point2D> pts = mprController.getLinePoints(axis, center, vertical);
     if (pts == null) return;
-
-    for (Point2D pt : pts) {
-      mprController.rectifyPosition(axis, pt);
-    }
 
     Color color = axis.getAxisDColor(vertical);
     boolean selected =
@@ -354,17 +384,7 @@ public class MprView extends View2d {
 
   @Override
   public List<Point2D> getCrossLine(GeometryOfSlice sliceGeometry, LocalizerPoster localizer) {
-    List<Point2D> pts = super.getCrossLine(sliceGeometry, localizer);
-    if (pts != null) {
-      MprAxis axis = getMprAxis();
-      if (axis != null) {
-        for (Point2D pt : pts) {
-          mprController.rectifyPosition(axis, pt);
-        }
-      }
-      return pts;
-    }
-    return null;
+    return super.getCrossLine(sliceGeometry, localizer);
   }
 
   @Override
@@ -678,10 +698,9 @@ public class MprView extends View2d {
   protected void rebuildView(MprAxis axis, File folder) {
     if (axis == null || folder == null || !folder.canWrite()) return;
 
-    double oldPosition = axis.getPositionAlongAxis();
+    Vector3d oldPosition = mprController.getVolumeCrossHair(axis);
     String uid = UIDUtils.createUID();
     int sliceImageSize = mprController.getVolume().getSliceSize();
-    double initialTranslation = -sliceImageSize / 2.0;
 
     File dir = new File(folder, uid);
     dir.mkdirs();
@@ -707,7 +726,7 @@ public class MprView extends View2d {
           @Override
           protected Void doInBackground() {
             for (int i = 0; i < sliceImageSize; i++) {
-              axis.setPositionAlongAxis(initialTranslation + i);
+              axis.setSliceIndex(i);
               DicomImageElement imageElement = axis.getImageElement();
               if (imageElement != null) {
                 imageElement.setTag(TagD.get(Tag.SeriesInstanceUID), uid);
@@ -732,8 +751,7 @@ public class MprView extends View2d {
           }
         };
     worker.execute();
-
-    axis.setPositionAlongAxis(oldPosition);
+    mprController.getAxesControl().setCenter(oldPosition);
   }
 
   protected void setRotation(double rotation) {
@@ -742,14 +760,14 @@ public class MprView extends View2d {
     if (pair != null) {
       Volume<?> volume = mprController.getVolume();
       Quaterniond r = new Quaterniond(volume.getRotation());
-      if (getSliceOrientation() == SliceOrientation.AXIAL) {
+      if (plane == Plane.AXIAL) {
         r.mul(new Quaterniond().rotateZ(rotation));
-      } else if (getSliceOrientation() == SliceOrientation.CORONAL) {
+      } else if (plane == Plane.CORONAL) {
         r.mul(new Quaterniond().rotateY(rotation));
-      } else if (getSliceOrientation() == SliceOrientation.SAGITTAL) {
+      } else if (plane == Plane.SAGITTAL) {
         r.mul(new Quaterniond().rotateX(rotation));
       }
-      mprController.getRotation().mul(r);
+      mprController.getRotation(plane).mul(r);
     }
     repaint();
   }

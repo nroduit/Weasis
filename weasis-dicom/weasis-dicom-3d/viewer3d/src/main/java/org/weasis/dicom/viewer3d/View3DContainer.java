@@ -259,7 +259,7 @@ public class View3DContainer extends DicomViewerPlugin implements PropertyChange
                 eventManager, eventManager.getMouseActions().getActiveButtons(), preferences, 10));
       }
       //      if (InsertableUtil.getBooleanProperty(
-      //          BundleTools.SYSTEM_PREFERENCES,
+      //          GuiUtils.getUICore().getSystemPreferences(),
       //          bundleName,
       //          componentName,
       //          InsertableUtil.getCName(MeasureToolBar.class),

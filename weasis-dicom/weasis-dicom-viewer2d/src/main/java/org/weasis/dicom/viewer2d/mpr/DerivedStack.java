@@ -19,7 +19,7 @@ import org.weasis.core.util.FileUtil;
 import org.weasis.dicom.codec.DcmMediaReader;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.TagD;
-import org.weasis.dicom.viewer2d.mpr.MprView.SliceOrientation;
+import org.weasis.dicom.viewer2d.mpr.MprView.Plane;
 
 public class DerivedStack extends AbstractStack {
 
@@ -40,8 +40,8 @@ public class DerivedStack extends AbstractStack {
           Tag.SamplesPerPixel,
           Tag.Modality);
 
-  public DerivedStack(SliceOrientation sliceOrientation, MediaSeries<DicomImageElement> series) {
-    super(sliceOrientation, series);
+  public DerivedStack(Plane plane, MediaSeries<DicomImageElement> series) {
+    super(plane, series);
   }
 
   public static DicomImageElement buildDicomImageElement(DcmMediaReader rawIO) {

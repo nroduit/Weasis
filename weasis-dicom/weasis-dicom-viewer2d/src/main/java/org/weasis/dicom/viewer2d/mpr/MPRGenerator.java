@@ -18,7 +18,7 @@ import org.weasis.core.util.MathUtil;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.viewer2d.Messages;
-import org.weasis.dicom.viewer2d.mpr.MprView.SliceOrientation;
+import org.weasis.dicom.viewer2d.mpr.MprView.Plane;
 
 public class MPRGenerator {
 
@@ -27,10 +27,10 @@ public class MPRGenerator {
     MediaSeries<DicomImageElement> series = view.getSeries();
     if (series == null) throw new IllegalStateException("No series");
 
-    SliceOrientation sliceOrientation = view.getSliceOrientation();
-    if (sliceOrientation == null) throw new IllegalStateException("No slice orientation");
+    Plane plane = view.getPlane();
+    if (plane == null) throw new IllegalStateException("No slice orientation");
 
-    OriginalStack stack = new ObliqueMpr(sliceOrientation, series, view);
+    OriginalStack stack = new ObliqueMpr(plane, series, view);
 
     if (stack.getWidth() == 0 || stack.getHeight() == 0)
       throw new IllegalStateException("No image");

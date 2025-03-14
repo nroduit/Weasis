@@ -19,53 +19,28 @@ import org.weasis.core.ui.model.GraphicModel;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.geometry.GeometryOfSlice;
 import org.weasis.dicom.viewer2d.mip.MipView.Type;
-import org.weasis.dicom.viewer2d.mpr.MprView.SliceOrientation;
+import org.weasis.dicom.viewer2d.mpr.MprView.Plane;
 
 public class MprAxis {
 
-  private final SliceOrientation viewOrientation;
+  private final Plane plane;
   private final AxisDirection axisDirection;
   private final Matrix4d transformation;
   private MprView mprView;
   private VolImageIO rawIO;
   private DicomImageElement imageElement;
-  private double positionAlongAxis;
   private int thicknessExtension;
-  private double axisAngle = 0.0;
 
-  public MprAxis(SliceOrientation sliceOrientation) {
-    this.viewOrientation = sliceOrientation;
+  public MprAxis(Plane plane) {
+    this.plane = plane;
     this.thicknessExtension = 0;
-    this.positionAlongAxis = 0; // From -sliceSize / 2.0 to sliceSize / 2.0, 0 is the center
     this.transformation = new Matrix4d();
-    this.axisDirection = new AxisDirection(sliceOrientation);
-  }
-
-  public void setPositionAlongAxis(double positionAlongAxis) {
-    this.positionAlongAxis = positionAlongAxis;
-  }
-
-  public double getPositionAlongAxis() {
-    return positionAlongAxis;
-  }
-
-  public void setAxisAngle(double axisAngle) {
-    this.axisAngle = axisAngle;
-  }
-
-  public double getAxisAngle() {
-    return axisAngle;
+    this.axisDirection = new AxisDirection(plane);
   }
 
   public void reset() {
-    axisAngle = 0.0;
-    resetPositionAlongAxis();
     setThicknessExtension(0);
     updateImage();
-  }
-
-  public void resetPositionAlongAxis() {
-    this.positionAlongAxis = 0;
   }
 
   public int getSliceIndex() {
@@ -73,7 +48,7 @@ public class MprAxis {
       return 0;
     }
     int sliceSize = rawIO.getVolume().getSliceSize();
-    int index = (int) (positionAlongAxis + sliceSize / 2.0);
+    int index = (int) (mprView.mprController.getAxesControl().getCenterAlongAxis(mprView));
     int sliceIndex;
     if (axisDirection.isInvertedDirection()) {
       sliceIndex = sliceSize - index;
@@ -94,7 +69,7 @@ public class MprAxis {
     } else {
       index = sliceIndex;
     }
-    this.positionAlongAxis = index - sliceSize / 2.0;
+    mprView.mprController.getAxesControl().setCenterAlongAxis(mprView, index);
   }
 
   public AxisDirection getAxisDirection() {
@@ -109,7 +84,7 @@ public class MprAxis {
   private void updateRotation() {
     if (mprView != null) {
       Vector3d crossHair = mprView.mprController.getVolumeCrossHair();
-      Quaterniond rotation = mprView.mprController.getRotation();
+      Quaterniond rotation = mprView.mprController.getRotation(plane);
       transformation.set(getCombinedTransformation(rotation, crossHair));
       updateImage();
     }
@@ -132,42 +107,32 @@ public class MprAxis {
     }
     Vector3d volCenter = new Vector3d(sliceImageSize / 2.0);
     Vector3d crossHairOffset = new Vector3d(crossHair).sub(volCenter);
-    Vector3d t1 =
-        new Vector3d(center)
-            .add(crossHairOffset.x, sliceImageSize - crossHair.y - volCenter.y, crossHairOffset.z);
+    Vector3d t1 = new Vector3d(center).add(crossHairOffset);
 
     Matrix4d matrix4d = new Matrix4d();
     Quaterniond r = new Quaterniond(rotation);
-    double axisAngle = getMprView().mprController.getMprAxis(viewOrientation).getAxisAngle();
+    matrix4d
+        .translate(t1)
+        .rotate(r)
+        .translate(t1.negate())
+        .translate(center)
+        .translate(volCenter.negate());
+    applyPlaneSpecificTransformations(matrix4d, plane, crossHair);
+    return matrix4d;
+  }
 
-    switch (viewOrientation) {
+  private void applyPlaneSpecificTransformations(Matrix4d matrix, Plane plane, Vector3d crossHair) {
+    switch (plane) {
       case AXIAL -> {
-        Vector3d t2 = new Vector3d(volCenter);
-        t2.x += crossHairOffset.x;
-        t2.y -= crossHairOffset.y;
-        t2.z = 0;
-
-        r.rotateZ(-axisAngle);
-        matrix4d.translate(t1).rotate(r).translate(t2.negate());
+        matrix.translate(0, 0, crossHair.z);
       }
       case CORONAL -> {
-        r.rotateY(-axisAngle);
-        matrix4d.translate(t1).rotate(r).translate(t1.negate());
-        matrix4d.translate(center).rotateX(Math.toRadians(90)).translate(volCenter.negate());
-        matrix4d.translate(0, 0, crossHair.y);
+        matrix.rotateX(-Math.toRadians(90)).scale(1.0, -1.0, 1.0).translate(0, 0, crossHair.y);
       }
       case SAGITTAL -> {
-        r.rotateX(-axisAngle);
-        matrix4d.translate(t1).rotate(r).translate(t1.negate());
-        matrix4d
-            .translate(center)
-            .rotateY(Math.toRadians(90))
-            .rotateZ(Math.toRadians(90))
-            .translate(volCenter.negate());
-        matrix4d.translate(0, 0, crossHair.x);
+        matrix.rotateY(Math.toRadians(90)).rotateZ(Math.toRadians(90)).translate(0, 0, crossHair.x);
       }
     }
-    return matrix4d;
   }
 
   public void setThicknessExtension(int extend) {
@@ -215,8 +180,8 @@ public class MprAxis {
     return imageElement;
   }
 
-  public SliceOrientation getViewOrientation() {
-    return viewOrientation;
+  public Plane getPlane() {
+    return plane;
   }
 
   public Matrix4d getTransformation() {
@@ -252,9 +217,9 @@ public class MprAxis {
   }
 
   public void changePositionAlongAxis(Vector3d position, double positionValue) {
-    if (viewOrientation == SliceOrientation.AXIAL) {
+    if (plane == Plane.AXIAL) {
       position.z = positionValue;
-    } else if (viewOrientation == SliceOrientation.CORONAL) {
+    } else if (plane == Plane.CORONAL) {
       position.y = positionValue;
     } else {
       position.x = positionValue;
@@ -264,7 +229,7 @@ public class MprAxis {
   public Vector3d getAxisDirection(boolean vertical) {
     Vector3d direction =
         new Vector3d(vertical ? axisDirection.getAxisY() : axisDirection.getAxisX());
-    mprView.mprController.getRotation().transform(direction);
+    mprView.mprController.getAxesControl().getGlobalRotation().transform(direction);
     return direction;
   }
 

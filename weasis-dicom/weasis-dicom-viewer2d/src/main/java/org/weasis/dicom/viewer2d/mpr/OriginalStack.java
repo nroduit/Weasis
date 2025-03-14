@@ -9,7 +9,7 @@
  */
 package org.weasis.dicom.viewer2d.mpr;
 
-import static org.weasis.dicom.viewer2d.mpr.MprView.SliceOrientation.AXIAL;
+import static org.weasis.dicom.viewer2d.mpr.MprView.Plane.AXIAL;
 
 import java.util.Arrays;
 import java.util.List;
@@ -24,7 +24,7 @@ import org.weasis.core.api.media.data.TagW.TagType;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.SortSeriesStack;
 import org.weasis.dicom.codec.geometry.GeometryOfSlice;
-import org.weasis.dicom.viewer2d.mpr.MprView.SliceOrientation;
+import org.weasis.dicom.viewer2d.mpr.MprView.Plane;
 
 public abstract class OriginalStack extends AbstractStack {
   protected static final double EPSILON = 1e-3;
@@ -88,10 +88,8 @@ public abstract class OriginalStack extends AbstractStack {
   protected boolean variableSliceSpacing;
 
   public OriginalStack(
-      SliceOrientation sliceOrientation,
-      MediaSeries<DicomImageElement> series,
-      Filter<DicomImageElement> filter) {
-    super(sliceOrientation, series);
+      Plane plane, MediaSeries<DicomImageElement> series, Filter<DicomImageElement> filter) {
+    super(plane, series);
     this.sourceStack = series.copyOfMedias(filter, SortSeriesStack.slicePosition);
     this.sliceSpace = initSliceSpace();
     this.fistSliceGeometry = new GeometryOfSlice(getStartingImage().getSliceGeometry());
@@ -114,7 +112,7 @@ public abstract class OriginalStack extends AbstractStack {
   }
 
   protected DicomImageElement getStartingImage() {
-    return stackOrientation == AXIAL ? getLastImage() : getFirstImage();
+    return plane == AXIAL ? getLastImage() : getFirstImage();
   }
 
   public GeometryOfSlice getFistSliceGeometry() {
