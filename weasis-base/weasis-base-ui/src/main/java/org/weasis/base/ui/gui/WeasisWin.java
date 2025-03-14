@@ -1282,12 +1282,15 @@ public class WeasisWin {
       "Usage: weasis:ui (-q | -v)", // NON-NLS
       "  -q --quit        shutdown Weasis", // NON-NLS
       "  -v --visible     set window on top", // NON-NLS
+      "  -m --minimized   minimize the window", // NON-NLS
       "  -? --help        show help" // NON-NLS
     };
 
     Option opt = Options.compile(usage).parse(argv);
     if (opt.isSet("quit")) { // NON-NLS
       System.exit(0);
+    } else if (opt.isSet("minimized")) { // NON-NLS
+      GuiExecutor.execute(() -> getFrame().setState(Frame.ICONIFIED));
     } else if (opt.isSet("visible")) { // NON-NLS
       GuiExecutor.execute(
           () -> {
