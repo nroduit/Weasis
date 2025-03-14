@@ -611,9 +611,9 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
         seriesUID = TagD.getTagValue(dicomSeries, Tag.SeriesInstanceUID, String.class);
       }
       try {
-        if(Objects.equals(dicomSeries.getMimeType(), DicomMediaIO.SERIES_MIMETYPE)) {
-          file = getJpegThumbnails(wadoParameters, studyUID, seriesUID,
-              instance.getSopInstanceUID());
+        if (Objects.equals(dicomSeries.getMimeType(), DicomMediaIO.SERIES_MIMETYPE)) {
+          file =
+              getJpegThumbnails(wadoParameters, studyUID, seriesUID, instance.getSopInstanceUID());
         }
       } catch (Exception e) {
         LOGGER.error("Downloading thumbnail", e);
