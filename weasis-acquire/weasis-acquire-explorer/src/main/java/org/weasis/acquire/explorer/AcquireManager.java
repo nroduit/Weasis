@@ -43,6 +43,7 @@ import javax.xml.parsers.ParserConfigurationException;
 import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.ElementDictionary;
 import org.dcm4che3.data.Tag;
+import org.dcm4che3.data.VR;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
@@ -529,6 +530,7 @@ public class AcquireManager {
     if (tag instanceof TagSeq && node.hasChildNodes()) {
       NodeList nodeList = node.getChildNodes();
       Attributes attributes = new Attributes();
+      attributes.setString(Tag.SpecificCharacterSet, VR.CS, "ISO_IR 192"); // NON-NLS
       // FIXME handle only one sequence element
       Attributes[] list = new Attributes[1];
       for (int i = 0; i < nodeList.getLength(); i++) {

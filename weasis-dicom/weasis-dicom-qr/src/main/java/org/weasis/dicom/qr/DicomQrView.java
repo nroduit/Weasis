@@ -88,6 +88,7 @@ import org.weasis.core.ui.util.CalendarUtil;
 import org.weasis.core.util.FileUtil;
 import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.codec.TagD;
+import org.weasis.dicom.codec.display.CharsetEncoding;
 import org.weasis.dicom.codec.display.Modality;
 import org.weasis.dicom.explorer.DicomExplorer;
 import org.weasis.dicom.explorer.DicomModel;
@@ -217,6 +218,7 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
 
   private static final String LAST_SEL_NODE = "lastSelNode";
   private static final String LAST_CALLING_NODE = "lastCallingNode";
+  private static final String LAST_DICOM_CHARSET = "lastRDicomCharset";
   private static final String LAST_RETRIEVE_TYPE = "lastRetrieveType";
   private static final String LAST_RETRIEVE_LIMIT = "lastRetrieveLimit";
   private static final String LAST_SEL_TEMPLATE = "lastSelTemplate";
@@ -291,6 +293,7 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
   private final JComboBox<RetrieveType> comboDicomRetrieveType =
       new JComboBox<>(RetrieveType.values());
   private final JComboBox<AbstractDicomNode> comboCallingNode = new JComboBox<>();
+  private final JComboBox<CharsetEncoding> comboCharset = new JComboBox<>(CharsetEncoding.values());
   private final DicomListener dicomListener;
   private final ExecutorService executor =
       ThreadUtil.buildNewFixedThreadExecutor(3, "Dicom Q/R task"); // NON-NLS
@@ -356,7 +359,10 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
     tabbedPane.putClientProperty(FlatClientProperties.TABBED_PANE_HAS_FULL_BORDER, true);
     JPanel sourcePanel =
         GuiUtils.getVerticalBoxLayoutPanel(
-            getArchivePanel(), getCallingNodePanel(), GuiUtils.boxXLastElement(2));
+            getArchivePanel(),
+            getCallingNodePanel(),
+            getCharsetPanel(),
+            GuiUtils.boxXLastElement(2));
     sourcePanel.setBorder(GuiUtils.getEmptyBorder(ITEM_SEPARATOR));
     tabbedPane.addTab(Messages.getString("dicom.source"), sourcePanel);
     tabbedPane.addTab(Messages.getString("search.criteria"), getSearchPanel());
@@ -405,6 +411,12 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
         comboCallingNode,
         GuiUtils.boxHorizontalStrut(BLOCK_SEPARATOR),
         btnGeneralOptions);
+  }
+
+  public JPanel getCharsetPanel() {
+    GuiUtils.setPreferredWidth(comboCharset, 350, 200);
+    return GuiUtils.getFlowLayoutPanel(
+        ITEM_SEPARATOR_SMALL, ITEM_SEPARATOR, lblCharset, comboCharset);
   }
 
   public JPanel getCtrlSearchPanel() {
@@ -692,6 +704,12 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
 
     AbstractDicomNode selectedItem = (AbstractDicomNode) comboDestinationNode.getSelectedItem();
     if (selectedItem instanceof final DefaultDicomNode node) {
+      CharsetEncoding encoding = (CharsetEncoding) comboCharset.getSelectedItem();
+      if (encoding == null) {
+        encoding = CharsetEncoding.ISO_IR_192;
+      }
+      p.add(new DicomParam(Tag.SpecificCharacterSet, encoding.getLabel()));
+
       DefaultDicomNode callingNode = (DefaultDicomNode) comboCallingNode.getSelectedItem();
 
       // see http://dicom.nema.org/medical/dicom/current/output/html/part04.html#sect_C.6
@@ -823,6 +841,9 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
     if (items != null) {
       for (int i = 0; i < items.size(); i++) {
         Attributes item = items.get(i);
+        if (item == null) {
+          continue;
+        }
         if (LOGGER.isTraceEnabled()) {
           LOGGER.trace("===========================================");
           LOGGER.trace("CFind Item {}", (i + 1));
@@ -874,6 +895,15 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
         // Do nothing
       }
     }
+    String lastCharset = getPersistence().getProperty(LAST_DICOM_CHARSET);
+    if (lastCharset != null) {
+      try {
+        comboCharset.setSelectedItem(CharsetEncoding.fromCode(lastCharset));
+      } catch (Exception e) {
+        // Do nothing
+      }
+    }
+
     applySelectedArchive();
     comboDestinationNode.addActionListener(destNodeListener);
   }
@@ -885,6 +915,8 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
     lblRetrieve.setEnabled(dcmOption);
     comboDicomRetrieveType.setEnabled(dcmOption);
     comboCallingNode.setEnabled(dcmOption);
+    lblCharset.setEnabled(dcmOption);
+    comboCharset.setEnabled(dcmOption);
     pageSpinner.setEnabled(!dcmOption);
     pageSpinner.removeChangeListener(queryListener);
     pageSpinner.setValue(1);
@@ -940,6 +972,10 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
     WProperties persistence = getPersistence();
     if (type != null) {
       persistence.setProperty(LAST_RETRIEVE_TYPE, type.name());
+    }
+    CharsetEncoding charset = (CharsetEncoding) comboCharset.getSelectedItem();
+    if (charset != null) {
+      persistence.setProperty(LAST_DICOM_CHARSET, charset.getCode());
     }
 
     persistence.setProperty(LAST_RETRIEVE_LIMIT, String.valueOf(limitSpinner.getValue()));

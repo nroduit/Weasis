@@ -448,11 +448,7 @@ public class VolImageIO implements DcmMediaReader {
     if (header != null) {
       return header;
     }
-    Attributes dcm = new Attributes(tags.size() + attributes.size());
-    SpecificCharacterSet cs = attributes.getSpecificCharacterSet();
-    dcm.setSpecificCharacterSet(cs.toCodes());
-    DicomMediaUtils.fillAttributes(tags, dcm);
-    dcm.addAll(attributes);
+    Attributes dcm = getDicomObject();
     header = new DicomMetaData(dcm, UID.ImplicitVRLittleEndian);
     HEADER_CACHE.put(this, header);
     return header;

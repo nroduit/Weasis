@@ -25,6 +25,7 @@ import java.util.Optional;
 import java.util.function.Consumer;
 import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Tag;
+import org.dcm4che3.data.VR;
 import org.dcm4che3.util.UIDUtils;
 import org.opencv.core.Mat;
 import org.opencv.core.Rect;
@@ -89,6 +90,7 @@ public class AcquireImageInfo {
 
     this.setStatus(AcquireImageStatus.TO_PUBLISH);
     this.attributes = new Attributes();
+    attributes.setString(Tag.SpecificCharacterSet, VR.CS, "ISO_IR 192"); // NON-NLS
 
     this.postProcessOpManager = new SimpleOpManager();
     this.postProcessOpManager.addImageOperationAction(new RotationOp());

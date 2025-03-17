@@ -117,7 +117,7 @@ public class DicomCodec implements Codec<DicomImageElement> {
     UIDUtils.setRoot(weasisRootUID);
 
     // Set the default encoding (must contain ASCII)
-    SpecificCharacterSet.setDefaultCharacterSet("ISO_IR 100"); // NON-NLS
+    SpecificCharacterSet.setDefaultCharacterSet("ISO_IR 192"); // NON-NLS
 
     for (IIOServiceProvider p : dcm4cheCodecs) {
       ImageioUtil.registerServiceProvider(p);

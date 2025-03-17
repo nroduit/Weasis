@@ -13,6 +13,7 @@ import java.util.List;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
+import javax.swing.JPanel;
 import javax.swing.JSpinner;
 import javax.swing.SpinnerListModel;
 import org.weasis.core.api.explorer.DataExplorerView;
@@ -45,6 +46,8 @@ public class DicomExplorerPrefView extends AbstractItemDialogPage {
   public DicomExplorerPrefView() {
     super(Messages.getString("DicomExplorer.title"), 607);
     WProperties preferences = GuiUtils.getUICore().getSystemPreferences();
+
+    JPanel panel = GuiUtils.getVerticalBoxLayoutPanel();
     int thumbnailSize = preferences.getIntProperty(Thumbnail.KEY_SIZE, Thumbnail.DEFAULT_SIZE);
     JLabel thumbSize = new JLabel(Messages.getString("DicomExplorer.thmb_size"));
     SpinnerListModel model =
@@ -61,26 +64,28 @@ public class DicomExplorerPrefView extends AbstractItemDialogPage {
                 Thumbnail.MAX_SIZE));
     spinner = new JSpinner(model);
     model.setValue(thumbnailSize);
-    add(GuiUtils.getFlowLayoutPanel(ITEM_SEPARATOR_SMALL, ITEM_SEPARATOR, thumbSize, spinner));
+    panel.add(GuiUtils.getFlowLayoutPanel(thumbSize, spinner));
 
     JLabel labelStudyDate = new JLabel(Messages.getString("study.date.sorting") + StringUtil.COLON);
     studyDateSortingComboBox.setSelectedItem(DicomSorter.getStudyDateSorting());
-    add(
+    panel.add(GuiUtils.getFlowLayoutPanel(labelStudyDate, studyDateSortingComboBox));
+    panel.setBorder(GuiUtils.getTitledBorder("Display"));
+    add(panel);
+    add(GuiUtils.boxVerticalStrut(BLOCK_SEPARATOR));
+
+    JPanel panel2 = GuiUtils.getVerticalBoxLayoutPanel();
+    downloadImmediatelyCheckbox.setSelected(
+        preferences.getBooleanProperty(DOWNLOAD_IMMEDIATELY, true));
+    panel2.add(
         GuiUtils.getFlowLayoutPanel(
-            ITEM_SEPARATOR_SMALL, ITEM_SEPARATOR, labelStudyDate, studyDateSortingComboBox));
+            ITEM_SEPARATOR_SMALL, ITEM_SEPARATOR, downloadImmediatelyCheckbox));
 
     JLabel labelOpenPatient =
         new JLabel(Messages.getString("DicomExplorer.open_win") + StringUtil.COLON);
     openingViewerJComboBox.setSelectedItem(getOpeningViewer());
-    add(
-        GuiUtils.getFlowLayoutPanel(
-            ITEM_SEPARATOR_SMALL, ITEM_SEPARATOR, labelOpenPatient, openingViewerJComboBox));
-
-    downloadImmediatelyCheckbox.setSelected(
-        preferences.getBooleanProperty(DOWNLOAD_IMMEDIATELY, true));
-    add(
-        GuiUtils.getFlowLayoutPanel(
-            ITEM_SEPARATOR_SMALL, ITEM_SEPARATOR, downloadImmediatelyCheckbox));
+    panel2.add(GuiUtils.getFlowLayoutPanel(labelOpenPatient, openingViewerJComboBox));
+    panel2.setBorder(GuiUtils.getTitledBorder("Actions"));
+    add(panel2);
 
     add(GuiUtils.boxYLastElement(LAST_FILLER_HEIGHT));
 
