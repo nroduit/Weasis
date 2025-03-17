@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.Set;
 import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Tag;
+import org.dcm4che3.img.util.DateTimeUtils;
 import org.dcm4che3.img.util.DicomUtils;
 import org.dcm4che3.json.JSONReader;
 import org.dcm4che3.json.JSONReader.Callback;
@@ -50,7 +51,6 @@ import org.weasis.dicom.explorer.wado.LoadSeries;
 import org.weasis.dicom.mf.AbstractQueryResult;
 import org.weasis.dicom.mf.SopInstance;
 import org.weasis.dicom.mf.WadoParameters;
-import org.weasis.dicom.util.DateUtil;
 import org.weasis.dicom.web.Multipart;
 
 public class RsQueryResult extends AbstractQueryResult {
@@ -161,7 +161,7 @@ public class RsQueryResult extends AbstractQueryResult {
     if (StringUtil.hasText(rsQueryParams.getLowerDateTime())) {
       Date lowerDateTime = null;
       try {
-        lowerDateTime = DateUtil.parseXmlDateTime(rsQueryParams.getLowerDateTime()).getTime();
+        lowerDateTime = DateTimeUtils.parseXmlDateTime(rsQueryParams.getLowerDateTime()).getTime();
       } catch (Exception e) {
         LOGGER.error("Cannot parse date: {}", rsQueryParams.getLowerDateTime(), e);
       }
@@ -182,7 +182,7 @@ public class RsQueryResult extends AbstractQueryResult {
     if (StringUtil.hasText(rsQueryParams.getUpperDateTime())) {
       Date upperDateTime = null;
       try {
-        upperDateTime = DateUtil.parseXmlDateTime(rsQueryParams.getUpperDateTime()).getTime();
+        upperDateTime = DateTimeUtils.parseXmlDateTime(rsQueryParams.getUpperDateTime()).getTime();
       } catch (Exception e) {
         LOGGER.error("Cannot parse date: {}", rsQueryParams.getUpperDateTime(), e);
       }
