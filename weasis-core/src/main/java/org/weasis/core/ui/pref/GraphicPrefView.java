@@ -11,7 +11,6 @@ package org.weasis.core.ui.pref;
 
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
-import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JSpinner;
 import net.miginfocom.swing.MigLayout;
@@ -25,7 +24,6 @@ import org.weasis.core.api.gui.util.JSliderW;
 import org.weasis.core.ui.dialog.PropertiesDialog;
 import org.weasis.core.ui.editor.image.dockable.MeasureTool;
 import org.weasis.core.ui.model.graphic.Graphic;
-import org.weasis.core.util.StringUtil;
 
 public class GraphicPrefView extends AbstractItemDialogPage {
   private static final Logger LOGGER = LoggerFactory.getLogger(GraphicPrefView.class);
@@ -53,16 +51,22 @@ public class GraphicPrefView extends AbstractItemDialogPage {
 
   private void jbInit() {
     add(GuiUtils.getFlowLayoutPanel(0, ITEM_SEPARATOR_LARGE, checkboxFilled));
-    JLabel label = new JLabel(Messages.getString("MeasureToolBar.line") + StringUtil.COLON);
     JButton button = MeasureTool.buildLineColorButton(this);
     MeasureTool.viewSetting.initLineWidthSpinner(spinner);
-    add(GuiUtils.getFlowLayoutPanel(label, button, spinner));
-    add(GuiUtils.getFlowLayoutPanel(checkboxFilled));
+    JPanel linePane = GuiUtils.getFlowLayoutPanel(button, spinner);
+    linePane.setBorder(GuiUtils.getTitledBorder(Messages.getString("MeasureToolBar.line")));
+    add(linePane);
+    add(GuiUtils.boxVerticalStrut(BLOCK_SEPARATOR));
 
-    MigLayout layout2 = new MigLayout("fillx, ins 5lp", "[fill]", "[]10lp[]"); // NON-NLS
-    JPanel panelBottom = new JPanel(layout2);
-    panelBottom.add(sliderOpacity);
-    add(GuiUtils.getHorizontalBoxLayoutPanel(panelBottom));
+    JPanel shapePane = GuiUtils.getVerticalBoxLayoutPanel();
+    shapePane.add(
+        GuiUtils.getFlowLayoutPanel(ITEM_SEPARATOR_SMALL, ITEM_SEPARATOR, checkboxFilled));
+
+    MigLayout layout2 = new MigLayout("fillx, ins 5lp", "[fill]", ""); // NON-NLS
+    new JPanel(layout2).add(sliderOpacity);
+    shapePane.add(GuiUtils.getHorizontalBoxLayoutPanel(ITEM_SEPARATOR_SMALL, sliderOpacity));
+    shapePane.setBorder(GuiUtils.getTitledBorder("Closed shape"));
+    add(shapePane);
 
     add(GuiUtils.boxYLastElement(5));
 

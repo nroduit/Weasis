@@ -64,7 +64,7 @@ public class Viewer3dPrefView extends AbstractItemDialogPage {
       list.add(val);
       val *= 2;
     }
-    if (list.get(list.size() - 1) != maxSize) {
+    if (list.getLast() != maxSize) {
       list.add(maxSize);
     }
     this.spinnerMaxXY = new JSpinner(new SpinnerListModel(list));
@@ -121,7 +121,8 @@ public class Viewer3dPrefView extends AbstractItemDialogPage {
     JPanel openglPanel = GuiUtils.getVerticalBoxLayoutPanel();
     openglPanel.setBorder(GuiUtils.getTitledBorder(Messages.getString("opengl.support")));
     enableOpenGL.setSelected(View3DFactory.isOpenglEnable());
-    openglPanel.add(GuiUtils.getFlowLayoutPanel(enableOpenGL));
+    openglPanel.add(
+        GuiUtils.getFlowLayoutPanel(ITEM_SEPARATOR_SMALL, ITEM_SEPARATOR, enableOpenGL));
 
     OpenGLInfo info = View3DFactory.getOpenGLInfo();
     if (info == null) {

@@ -304,6 +304,7 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
   private final CircularProgressBar progressBar = new CircularProgressBar();
   final JLabel lblCalling =
       new JLabel(Messages.getString("DicomQrView.calling_node") + StringUtil.COLON);
+  private final JLabel lblCharset = new JLabel("Charset" + StringUtil.COLON);
   private final JLabel lblRetrieve =
       new JLabel(Messages.getString("DicomQrView.retrieve") + StringUtil.COLON);
 

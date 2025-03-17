@@ -13,6 +13,7 @@ import ch.qos.logback.classic.LoggerContext;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
+import javax.swing.JPanel;
 import javax.swing.JSpinner;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -62,19 +63,20 @@ public class LoggingPrefView extends AbstractItemDialogPage {
   }
 
   private void jbInit() {
-    add(GuiUtils.getFlowLayoutPanel(0, ITEM_SEPARATOR_LARGE, checkboxFileLog));
-    add(
+    JPanel panel = GuiUtils.getVerticalBoxLayoutPanel();
+    panel.add(GuiUtils.getFlowLayoutPanel(ITEM_SEPARATOR_SMALL, ITEM_SEPARATOR, checkboxFileLog));
+    panel.add(
         GuiUtils.getFlowLayoutPanel(
-            ITEM_SEPARATOR_SMALL,
-            10,
             labelNumber,
             spinner,
             GuiUtils.boxHorizontalStrut(BLOCK_SEPARATOR),
             labelSize,
             spinner1));
+    panel.setBorder(GuiUtils.getTitledBorder("File"));
+    add(panel);
     add(
         GuiUtils.getFlowLayoutPanel(
-            0,
+            ITEM_SEPARATOR_SMALL,
             10,
             lblLogLevel,
             comboBoxLogLevel,
@@ -82,7 +84,7 @@ public class LoggingPrefView extends AbstractItemDialogPage {
             lblStacktraceLimit,
             comboBoxStackLimit));
 
-    add(GuiUtils.boxYLastElement(5));
+    add(GuiUtils.boxYLastElement(LAST_FILLER_HEIGHT));
 
     checkboxFileLog.addActionListener(e -> checkRollingLog());
 
