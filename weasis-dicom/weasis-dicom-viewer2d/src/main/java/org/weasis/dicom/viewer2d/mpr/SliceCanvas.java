@@ -12,7 +12,7 @@ package org.weasis.dicom.viewer2d.mpr;
 import org.weasis.core.ui.editor.image.Canvas;
 import org.weasis.dicom.viewer2d.mpr.MprView.Plane;
 
-public interface Canvas3D extends Canvas {
+public interface SliceCanvas extends Canvas {
 
   Plane getPlane();
 

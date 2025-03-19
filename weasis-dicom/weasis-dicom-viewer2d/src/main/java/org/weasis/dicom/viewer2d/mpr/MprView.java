@@ -75,7 +75,7 @@ import org.weasis.dicom.viewer2d.Messages;
 import org.weasis.dicom.viewer2d.View2d;
 import org.weasis.dicom.viewer2d.mpr.MprController.ControlPoints;
 
-public class MprView extends View2d implements Canvas3D {
+public class MprView extends View2d implements SliceCanvas {
   private static final Logger LOGGER = LoggerFactory.getLogger(MprView.class);
 
   public static final String SHOW_CROSS_CENTER = "show.cross.center";

@@ -31,7 +31,7 @@ public class AxesControl {
       new Vector3d(HALF_DIMENSION, HALF_DIMENSION, HALF_DIMENSION);
 
   private final PropertyChangeSupport changeSupport;
-  private final Set<Canvas3D> watchingCanvases;
+  private final Set<SliceCanvas> watchingCanvases;
   private final EnumMap<Plane, Double> canvasRotationOffset;
   private final MprController controller;
 
@@ -74,7 +74,7 @@ public class AxesControl {
     return volume == null ? 1 : volume.getSliceSize();
   }
 
-  public double getCenterAlongAxis(Canvas3D c) {
+  public double getCenterAlongAxis(SliceCanvas c) {
     return center.get(c.getPlane().axisIndex()) * getSliceSize();
   }
 
@@ -82,7 +82,7 @@ public class AxesControl {
     this.center = new Vector3d(center).div(getSliceSize());
   }
 
-  public void setCenterAlongAxis(Canvas3D c, double value) {
+  public void setCenterAlongAxis(SliceCanvas c, double value) {
     center.setComponent(c.getPlane().axisIndex(), value / getSliceSize());
   }
 
@@ -140,23 +140,23 @@ public class AxesControl {
     changeSupport.firePropertyChange("rotation", old, globalRotation);
   }
 
-  public void addWatchingCanvas(Canvas3D imageCanvas) {
+  public void addWatchingCanvas(SliceCanvas imageCanvas) {
     watchingCanvases.add(imageCanvas);
   }
 
   public void refreshAllCanvases() {
-    for (Canvas3D c : controller.getMprViews()) {
+    for (SliceCanvas c : controller.getMprViews()) {
       if (c != null) {
         c.getJComponent().repaint();
       }
     }
 
-    for (Canvas3D c : watchingCanvases) {
+    for (SliceCanvas c : watchingCanvases) {
       c.getJComponent().repaint();
     }
   }
 
-  public AxisAngle4d getAxisRotationForCanvas(Canvas3D imageCanvas) {
+  public AxisAngle4d getAxisRotationForCanvas(SliceCanvas imageCanvas) {
     Quaterniond var3 = getQuatRotationForCanvas(imageCanvas);
     return new AxisAngle4d(var3);
   }
@@ -175,7 +175,7 @@ public class AxesControl {
     };
   }
 
-  public Quaterniond getQuatRotationForCanvas(Canvas3D c) {
+  public Quaterniond getQuatRotationForCanvas(SliceCanvas c) {
     Quaterniond rotation = getRotationForSlice(c.getPlane());
     return rotation.invert();
   }
@@ -203,16 +203,16 @@ public class AxesControl {
     return axis;
   }
 
-  public Vector3d getCenterForCanvas(Canvas3D imageCanvas) {
+  public Vector3d getCenterForCanvas(SliceCanvas imageCanvas) {
     return getCenterForCanvas(imageCanvas, true);
   }
 
-  public Vector3d getCenterForCanvas(Canvas3D imageCanvas, boolean applySpatialMultiplier) {
+  public Vector3d getCenterForCanvas(SliceCanvas imageCanvas, boolean applySpatialMultiplier) {
     return getCenterForCanvas(imageCanvas, center, applySpatialMultiplier);
   }
 
   public Vector3d getCenterForCanvas(
-      Canvas3D imageCanvas, Vector3d pt, boolean applySpatialMultiplier) {
+      SliceCanvas imageCanvas, Vector3d pt, boolean applySpatialMultiplier) {
     if (imageCanvas == null) {
       return new Vector3d(pt);
     }
@@ -231,7 +231,7 @@ public class AxesControl {
     return adjustedCenter;
   }
 
-  private void applyRotationMatrix(Vector3d vector, Canvas3D canvas) {
+  private void applyRotationMatrix(Vector3d vector, SliceCanvas canvas) {
     Quaterniond rotation = getRotationForSlice(canvas.getPlane());
     Matrix3d rotationMatrix = new Matrix3d().set(rotation).invert();
     rotationMatrix.transform(vector);
@@ -255,7 +255,7 @@ public class AxesControl {
     return vCenter;
   }
 
-  public Vector3d getGlobalPositionForLocalPosition(Canvas3D canvas, Vector3d position) {
+  public Vector3d getGlobalPositionForLocalPosition(SliceCanvas canvas, Vector3d position) {
     Volume<?> v = controller.getVolume();
     if (v == null) {
       return position;
