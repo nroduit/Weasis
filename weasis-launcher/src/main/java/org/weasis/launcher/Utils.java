@@ -64,8 +64,12 @@ public class Utils {
     return false;
   }
 
+  public static Pattern getWeasisProtocolPattern() {
+    return Pattern.compile("^weasis(-.*)?://.*?");
+  }
+
   public static String getWeasisProtocol(String... params) {
-    Pattern pattern = Pattern.compile("^weasis(-.*)?://.*?");
+    Pattern pattern = getWeasisProtocolPattern();
     for (String p : params) {
       if (pattern.matcher(p).matches()) {
         return p;
@@ -75,7 +79,7 @@ public class Utils {
   }
 
   public static int getWeasisProtocolIndex(String... params) {
-    Pattern pattern = Pattern.compile("^weasis(-.*)?://.*?");
+    Pattern pattern = getWeasisProtocolPattern();
     for (int i = 0; i < params.length; i++) {
       if (pattern.matcher(params[i]).matches()) {
         return i;
