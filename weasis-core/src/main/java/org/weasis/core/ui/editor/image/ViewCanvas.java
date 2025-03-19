@@ -47,6 +47,7 @@ import javax.swing.JSeparator;
 import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
 import javax.swing.border.Border;
+import org.opencv.core.Point3;
 import org.weasis.core.Messages;
 import org.weasis.core.api.gui.Image2DViewer;
 import org.weasis.core.api.gui.util.ActionState;
@@ -277,6 +278,10 @@ public interface ViewCanvas<E extends ImageElement>
             500);
       }
     }
+  }
+
+  default Point3 getVolumeCoordinatesFromMouse(int x, int y) {
+    return null;
   }
 
   void setBorder(Border focusBorder);

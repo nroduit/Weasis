@@ -15,6 +15,7 @@ import java.awt.event.MouseEvent;
 import java.awt.geom.Point2D;
 import java.util.Objects;
 import java.util.Optional;
+import org.opencv.core.Point3;
 import org.weasis.core.Messages;
 import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.Feature;
@@ -108,10 +109,12 @@ public class FocusHandler<E extends ImageElement> extends MouseActionAdapter {
       Point2D pModel =
           viewCanvas.getImageCoordinatesFromMouse(mouseevent.getX(), mouseevent.getY());
       Rectangle oldBound = infoLayer.getPixelInfoBound();
-      // FIXME 3d position
       PixelInfo pixelInfo =
           viewCanvas.getPixelInfo(
               new Point((int) Math.floor(pModel.getX()), (int) Math.floor(pModel.getY())));
+      Point3 point3d =
+          viewCanvas.getVolumeCoordinatesFromMouse(mouseevent.getX(), mouseevent.getY());
+      pixelInfo.setPosition3d(point3d);
       oldBound.width =
           Math.max(
               oldBound.width,

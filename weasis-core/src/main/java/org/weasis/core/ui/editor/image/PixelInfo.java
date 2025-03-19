@@ -10,6 +10,7 @@
 package org.weasis.core.ui.editor.image;
 
 import java.awt.Point;
+import org.opencv.core.Point3;
 import org.weasis.core.Messages;
 import org.weasis.core.api.gui.util.DecFormatter;
 import org.weasis.core.api.image.util.Unit;
@@ -20,6 +21,7 @@ public class PixelInfo {
   private String[] channelNames;
   private String pixelValueUnit;
   private Point position;
+  private Point3 position3d;
   private Unit pixelSpacingUnit;
   // Only display square pixel, so one value is enough.
   private Double pixelSize;
@@ -59,17 +61,6 @@ public class PixelInfo {
         }
         return text.toString();
       } else if (values.length > 1) {
-        // TODO add preference for Pixel value type (RGB, IHS...) and pixel position (pix, real)
-        // float[] ihs = IHSColorSpace.getInstance().fromRGB(new float[]
-        // {
-        // c[0] / 255f, c[1] / 255f, c[2] / 255f
-        // });
-        // c[0] = (int) (ihs[0] * 255f);
-        // c[1] = (int) ((ihs[1] / (Math.PI * 2)) * 255f);
-        // c[2] = (int) (ihs[2] * 255f);
-        //
-        // message.append(" (I = " + c[0] + ", H = " + c[1] + ", S = " + c[2] + ")");
-
         StringBuilder text = new StringBuilder();
         for (int i = 0; i < values.length; i++) {
           text.append(" ");
@@ -110,11 +101,28 @@ public class PixelInfo {
     this.position = position;
   }
 
+  public Point3 getPosition3d() {
+    return position3d;
+  }
+
+  public void setPosition3d(Point3 position3d) {
+    this.position3d = position3d;
+  }
+
   public String getPixelPositionText() {
-    if (position == null) {
+    if (position == null && position3d == null) {
       return Messages.getString("DefaultView2d.out");
     }
-    return "(" + position.x + "," + position.y + ")";
+    if (position3d == null) {
+      return "(" + position.x + "," + position.y + ")";
+    }
+    return "("
+        + String.format("%.0f", position3d.x) // NON-NLS
+        + ","
+        + String.format("%.0f", position3d.y) // NON-NLS
+        + ","
+        + String.format("%.0f", position3d.z) // NON-NLS
+        + ")";
   }
 
   public String getRealPositionText() {
@@ -122,13 +130,12 @@ public class PixelInfo {
       return getPixelPositionText();
     }
 
-    StringBuilder text = new StringBuilder("(");
-    text.append(DecFormatter.twoDecimal(pixelSize * position.x));
-    text.append(pixelSpacingUnit.getAbbreviation());
-    text.append(",");
-    text.append(DecFormatter.twoDecimal(pixelSize * position.y));
-    text.append(pixelSpacingUnit.getAbbreviation());
-    text.append(")");
-    return text.toString();
+    return "("
+        + DecFormatter.twoDecimal(pixelSize * position.x)
+        + pixelSpacingUnit.getAbbreviation()
+        + ","
+        + DecFormatter.twoDecimal(pixelSize * position.y)
+        + pixelSpacingUnit.getAbbreviation()
+        + ")";
   }
 }
