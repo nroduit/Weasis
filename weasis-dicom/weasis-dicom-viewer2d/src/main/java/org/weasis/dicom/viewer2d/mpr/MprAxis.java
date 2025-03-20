@@ -44,7 +44,7 @@ public class MprAxis {
   }
 
   public int getSliceIndex() {
-    if (rawIO == null) {
+    if (rawIO == null || mprView == null) {
       return 0;
     }
     int sliceSize = rawIO.getVolume().getSliceSize();
@@ -59,7 +59,7 @@ public class MprAxis {
   }
 
   public void setSliceIndex(int sliceIndex) {
-    if (rawIO == null) {
+    if (rawIO == null || mprView == null) {
       return;
     }
     int sliceSize = rawIO.getVolume().getSliceSize();
@@ -83,7 +83,7 @@ public class MprAxis {
 
   private void updateRotation() {
     if (mprView != null) {
-      Vector3d crossHair = mprView.mprController.getVolumeCrossHair();
+      Vector3d crossHair = mprView.mprController.getCrossHairPosition();
       Quaterniond rotation = mprView.mprController.getRotation(plane);
       transformation.set(getRealVolumeTransformation(rotation, crossHair));
       updateImage();
@@ -101,7 +101,7 @@ public class MprAxis {
     Vector3d center = new Vector3d(volSize).mul(0.5);
     Vector3d crossHair;
     if (volumeCenter == null) {
-      crossHair = getMprView().mprController.getVolumeCrossHair();
+      crossHair = getMprView().mprController.getCrossHairPosition();
     } else {
       crossHair = new Vector3d(volumeCenter);
     }

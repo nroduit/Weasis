@@ -62,11 +62,11 @@ public class AxesControl {
   }
 
   public Vector3d getCenter() {
-    return new Vector3d(center).mul(getSliceSize());
+    return new Vector3d(center);
   }
 
-  public Vector3d getNormalizedCenter() {
-    return new Vector3d(center);
+  public Vector3d getUnnormalizedPosition(Vector3d p) {
+    return new Vector3d(p).mul(getSliceSize());
   }
 
   protected int getSliceSize() {
@@ -79,7 +79,7 @@ public class AxesControl {
   }
 
   public void setCenter(Vector3d center) {
-    this.center = new Vector3d(center).div(getSliceSize());
+    this.center = new Vector3d(center);
   }
 
   public void setCenterAlongAxis(SliceCanvas c, double value) {
@@ -156,6 +156,11 @@ public class AxesControl {
     }
   }
 
+  public AxisAngle4d getAxisRotationForPlane(SliceCanvas imageCanvas) {
+    Quaterniond rotation = getRotationForSlice(imageCanvas.getPlane());
+    return new AxisAngle4d(rotation.invert());
+  }
+
   public AxisAngle4d getAxisRotationForCanvas(SliceCanvas imageCanvas) {
     Quaterniond var3 = getQuatRotationForCanvas(imageCanvas);
     return new AxisAngle4d(var3);
@@ -177,7 +182,7 @@ public class AxesControl {
 
   public Quaterniond getQuatRotationForCanvas(SliceCanvas c) {
     Quaterniond rotation = getRotationForSlice(c.getPlane());
-    return rotation.invert();
+    return new Quaterniond(globalRotation).mul(rotation).invert();
   }
 
   public Vector3d getCanvasAxis(Plane type) {
@@ -204,7 +209,7 @@ public class AxesControl {
   }
 
   public Vector3d getCenterForCanvas(SliceCanvas imageCanvas) {
-    return getCenterForCanvas(imageCanvas, true);
+    return getCenterForCanvas(imageCanvas, false);
   }
 
   public Vector3d getCenterForCanvas(SliceCanvas imageCanvas, boolean applySpatialMultiplier) {
@@ -258,10 +263,10 @@ public class AxesControl {
   public Vector3d getGlobalPositionForLocalPosition(SliceCanvas canvas, Vector3d position) {
     Volume<?> v = controller.getVolume();
     if (v == null) {
-      return position;
+      return new Vector3d(position);
     }
     Vector3d p = new Vector3d(position).sub(CENTER_VECTOR);
-    Matrix3d var3 = new Matrix3d().set(getAxisRotationForCanvas(canvas));
+    Matrix3d var3 = new Matrix3d().set(getAxisRotationForPlane(canvas));
     var3.invert().transform(p);
     p.add(CENTER_VECTOR);
     return p;

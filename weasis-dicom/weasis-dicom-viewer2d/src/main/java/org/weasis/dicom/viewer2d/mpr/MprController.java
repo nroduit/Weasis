@@ -34,7 +34,6 @@ import org.weasis.core.ui.editor.image.ImageViewerEventManager;
 import org.weasis.core.ui.model.utils.imp.DefaultViewModel;
 import org.weasis.core.util.Pair;
 import org.weasis.dicom.codec.DicomImageElement;
-import org.weasis.dicom.codec.geometry.GeometryOfSlice;
 import org.weasis.dicom.viewer2d.View2d;
 import org.weasis.dicom.viewer2d.mip.MipView;
 import org.weasis.dicom.viewer2d.mip.MipView.Type;
@@ -158,16 +157,6 @@ public class MprController implements MouseListener, MouseMotionListener {
     };
   }
 
-  public GeometryOfSlice getGeometryOfSlice(MprView view) {
-    if (view != null) {
-      DicomImageElement image = view.getImage();
-      if (image != null) {
-        return image.getSliceGeometry();
-      }
-    }
-    return null;
-  }
-
   public MprAxis getMprAxis(Plane plane) {
     switch (plane) {
       case AXIAL -> {
@@ -192,22 +181,25 @@ public class MprController implements MouseListener, MouseMotionListener {
     axesControl.setGlobalRotation(r);
   }
 
-  public Vector3d getVolumeCrossHair() {
-    return getVolumeCrossHair(axial);
+  public Vector3d getCenterCoordinate() {
+    return getCenterCoordinate(axial);
   }
 
-  public Vector3d getVolumeCrossHair(MprAxis axis) {
+  public Vector3d getCenterCoordinate(MprAxis axis) {
     if (axis != null && volume != null) {
-      return axesControl.getCenterForCanvas(axis.getMprView(), false).mul(volume.getSliceSize());
+      return axesControl.getCenterForCanvas(axis.getMprView(), false);
     }
     return null;
   }
 
-  public Vector3d getDicomPositionCrossHair(MprAxis axis, GeometryOfSlice sliceGeometry) {
-    Vector3d center = getVolumeCrossHair(axis);
-    if (center != null) {
-      Point2D pt = new Point2D.Double(center.x, center.y);
-      return sliceGeometry.getPosition(pt);
+  public Vector3d getCrossHairPosition() {
+    return getCrossHairPosition(axial);
+  }
+
+  public Vector3d getCrossHairPosition(MprAxis axis) {
+    Vector3d v = getCenterCoordinate(axis);
+    if (v != null) {
+      return v.mul(volume.getSliceSize());
     }
     return null;
   }
@@ -223,11 +215,9 @@ public class MprController implements MouseListener, MouseMotionListener {
     return null;
   }
 
-  protected Vector3d getGlobalPosition(MprView canvas, Vector3d localPosition) {
-    int sliceSize = volume.getSliceSize();
-    return axesControl
-        .getGlobalPositionForLocalPosition(canvas, localPosition.div(sliceSize))
-        .mul(sliceSize);
+  public Vector3d get3DCoordinates(MouseEvent e, MprView view, Vector3d crossHair) {
+    Point2D pt = view.getImageCoordinatesFromMouse(e.getX(), e.getY());
+    return new Vector3d(pt.getX(), pt.getY(), crossHair.z);
   }
 
   @Override
@@ -239,15 +229,15 @@ public class MprController implements MouseListener, MouseMotionListener {
         view.setCursor(selectedCursor);
       } else {
         MprAxis axis = view.getMprAxis();
-        Vector3d crossHair = getVolumeCrossHair(axis);
-        if (crossHair == null) {
+        Vector3d center = getCenterCoordinate(axis);
+        if (center == null) {
           return;
         }
-        Point2D pt = view.getImageCoordinatesFromMouse(e.getX(), e.getY());
-        Vector3d current = new Vector3d(pt.getX(), pt.getY(), crossHair.z);
-        if (crossHair.distance(current) <= 20) {
+        Point2D pt = view.getPlaneCoordinatesFromMouse(e.getX(), e.getY());
+        int size = axesControl.getSliceSize();
+        if (center.distance(pt.getX(), pt.getY(), center.z) <= 20.0 / size) {
           e.consume();
-          updatePosition(view, current, crossHair);
+          updatePosition(view, pt, center);
           view.setCursor(MOVE_CURSOR);
           this.canMove = true;
         }
@@ -262,36 +252,34 @@ public class MprController implements MouseListener, MouseMotionListener {
         e.consume();
         adjusting = true;
         MprAxis axis = view.getMprAxis();
-        Point p = e.getPoint();
-        Point2D pt = view.getImageCoordinatesFromMouse(p.x, p.y);
-        Vector3d crossHair = getVolumeCrossHair(axis);
-        Vector3d current = new Vector3d(pt.getX(), pt.getY(), crossHair.z);
+        Vector3d center = getCenterCoordinate(axis);
+        Point2D pt = view.getPlaneCoordinatesFromMouse(e.getX(), e.getY());
         view.setCursor(NO_CURSOR);
-        updatePosition(view, current, crossHair);
+        updatePosition(view, pt, center);
       } else if (canMoveSelected) {
         e.consume();
         adjusting = true;
         MprAxis axis = view.getMprAxis();
         MprAxis selAxis = selectedAxis;
         if (selAxis != null) {
-          Point p = e.getPoint();
-          Point2D pt = view.getImageCoordinatesFromMouse(p.x, p.y);
-          Vector3d crossHair = getVolumeCrossHair(axis);
-          Vector3d current = new Vector3d(pt.getX(), pt.getY(), crossHair.z);
+          Vector3d center = getCenterCoordinate(axis);
           view.setCursor(selectedCursor);
           boolean vertical = view.isVerticalLine(selAxis);
+          Vector3d crossHair = new Vector3d(center).mul(axesControl.getSliceSize());
           List<Point2D> pts = getLinePoints(axis, crossHair, vertical);
           if (pts != null && pts.size() == 2) {
             Line2D line = new Line2D.Double(pts.get(0), pts.get(1));
             addControlPoints(view, line, new Point2D.Double(crossHair.x, crossHair.y));
           }
 
+          Point2D pt = view.getPlaneCoordinatesFromMouse(e.getX(), e.getY());
           if (selectedCursor == ROTATE_CURSOR) {
-            updateSelectedRotation(view, pt, crossHair);
+            Vector3d current = get3DCoordinates(e, view, crossHair);
+            updateSelectedRotation(view, current, center);
           } else if (selectedCursor == EXTEND_CURSOR) {
-            updateSelectedMIP(view, current, crossHair);
+            updateSelectedMIP(view, pt, center);
           } else {
-            updateSelectedPosition(view, current, crossHair);
+            updateSelectedPosition(view, pt, center);
           }
         }
       }
@@ -321,7 +309,7 @@ public class MprController implements MouseListener, MouseMotionListener {
   }
 
   protected List<Point2D> getLinePoints(MprAxis viewAxis, Vector3d center, boolean vertical) {
-    if (center == null) {
+    if (center == null || volume == null) {
       return null;
     }
     Vector3d direction = getPlaneDirection(viewAxis, vertical).mul(volume.getSliceSize() * 0.5);
@@ -384,14 +372,13 @@ public class MprController implements MouseListener, MouseMotionListener {
         MprAxis oldSelectedAxis = selectedAxis;
         selectedAxis = null;
         selectedCursor = null;
-        Point2D pt = view.getImageCoordinatesFromMouse(e.getX(), e.getY());
-        Vector3d crossHair = getVolumeCrossHair(axis);
-        if (crossHair == null) {
+        Vector3d center = getCrossHairPosition(axis);
+        if (center == null) {
           return;
         }
-        Vector3d position = new Vector3d(pt.getX(), pt.getY(), crossHair.z);
-        Cursor cursor = paintCrossline(view, axis, position, crossHair, oldSelectedAxis);
-        if (crossHair.distance(position) <= 20) {
+        Vector3d position = get3DCoordinates(e, view, center);
+        Cursor cursor = paintCrossline(view, axis, position, center, oldSelectedAxis);
+        if (center.distance(position) <= 20) {
           cursor = MOVE_CURSOR;
           selectedAxis = null;
           selectedCursor = null;
@@ -463,43 +450,45 @@ public class MprController implements MouseListener, MouseMotionListener {
     return intersects;
   }
 
-  public void updateSelectedMIP(MprView view, Vector3d current, Vector3d crossHair) {
-    if (view == null || current == null || crossHair == null) {
+  public void updateSelectedMIP(MprView view, Point2D pt, Vector3d center) {
+    if (view == null || pt == null || center == null) {
       return;
     }
     MprAxis axis = selectedAxis;
     Point2D pt1 = selectedPoint;
     if (axis != null && pt1 != null) {
-      Line2D line = new Line2D.Double(pt1, new Point2D.Double(crossHair.x, crossHair.y));
-      Point2D pt = new Point2D.Double(current.x, current.y);
-      Point2D extPoint = GeomUtil.getPerpendicularPointToLine(line, pt);
+      int size = axesControl.getSliceSize();
+      Line2D line = new Line2D.Double(pt1, new Point2D.Double(center.x * size, center.y * size));
+      Point2D point = new Point2D.Double(pt.getX() * size, pt.getY() * size);
+      Point2D extPoint = GeomUtil.getPerpendicularPointToLine(line, point);
       axis.setThicknessExtension((int) Math.round(pt.distance(extPoint)));
       axis.updateImage();
     }
   }
 
-  private double calculateRotationAngle(Point2D current, Point2D center) {
-    double deltaX = current.getX() - center.getX();
-    double deltaY = current.getY() - center.getY();
+  private double calculateRotationAngle(Vector3d current, Point2D center) {
+    double deltaX = current.x - center.getX();
+    double deltaY = current.y - center.getY();
     return Math.atan2(deltaY, deltaX);
   }
 
-  public void updateSelectedRotation(MprView view, Point2D originalPos, Vector3d crossHair) {
-    if (view == null || originalPos == null || crossHair == null) {
+  public void updateSelectedRotation(MprView view, Vector3d current, Vector3d center) {
+    if (view == null || current == null || center == null) {
       return;
     }
     MprAxis axis = view.getMprAxis();
     Pair<MprAxis, MprAxis> pair = getCrossAxis(axis);
     if (pair != null) {
       boolean vertical = selectedAxis == pair.second();
-      Point2D center = new Point2D.Double(crossHair.x, crossHair.y);
+      int size = axesControl.getSliceSize();
+      Point2D ptCenter = new Point2D.Double(center.x * size, center.y * size);
       Point2D selPt = selectedPoint;
       boolean firstPoint =
           selPt != null
               && (vertical
                   ? selPt.equals(controlPoints.p1Rotate)
                   : selPt.equals(controlPoints.p2Rotate));
-      double angle = calculateRotationAngle(originalPos, center);
+      double angle = calculateRotationAngle(current, ptCenter);
 
       if (vertical) {
         angle -= Math.PI / 2;
@@ -512,103 +501,83 @@ public class MprController implements MouseListener, MouseMotionListener {
       axesControl.rotateAroundAxis(axis.getPlane(), angle);
       pair.first().updateImage();
       pair.second().updateImage();
-      center(view, crossHair);
+      center(view, center);
     }
     view.repaint();
   }
 
-  public void updateSelectedPosition(MprView view, Vector3d current, Vector3d crossHair) {
-    if (view == null || current == null || crossHair == null) {
+  public void updateSelectedPosition(MprView view, Point2D pt, Vector3d crossHair) {
+    if (view == null || pt == null || crossHair == null) {
       return;
     }
 
     Pair<MprAxis, MprAxis> pair = getCrossAxis(view.getMprAxis());
     MprAxis axis = selectedAxis;
     if (axis != null && pair != null) {
+      int size = axesControl.getSliceSize();
       Point2D pta = controlPoints.p1Rotate;
+      pta = new Point2D.Double(pta.getX() / size, pta.getY() / size);
       Point2D ptb = controlPoints.p2Rotate;
-      Point2D ptc = new Point2D.Double(current.x, current.y);
-      Point2D extPoint = GeomUtil.getPerpendicularPointToLine(pta, ptb, ptc);
-      double distance = extPoint.distance(current.x, current.y);
+      ptb = new Point2D.Double(ptb.getX() / size, ptb.getY() / size);
+      Point2D extPoint = GeomUtil.getPerpendicularPointToLine(pta, ptb, pt);
+
+      Vector3d volExtPoint =
+          view.getVolumeCoordinatesFromMouse(extPoint.getX(), extPoint.getY(), crossHair);
+      Vector3d volPt = view.getVolumeCoordinatesFromMouse(pt.getX(), pt.getY(), crossHair);
+      double volumeDistance = volExtPoint.distance(volPt);
+
+      double distance = extPoint.distance(pt);
       double dotProduct =
-          (ptc.getX() - pta.getX()) * (ptb.getY() - pta.getY())
-              - (ptc.getY() - pta.getY()) * (ptb.getX() - pta.getX());
+          (pt.getX() - pta.getX()) * (ptb.getY() - pta.getY())
+              - (pt.getY() - pta.getY()) * (ptb.getX() - pta.getX());
 
       Point2D center = new Point2D.Double(crossHair.x, crossHair.y);
       if (dotProduct < 0) {
         distance = -distance;
       }
       Point2D newCenter = GeomUtil.getPerpendicularPointFromLine(center, pta, center, distance);
-      setNewCenter(view, new Vector3d(newCenter.getX(), newCenter.getY(), current.z), crossHair);
-      axis.updateImage();
-      center(view, getVolumeCrossHair(view.getMprAxis()));
+      setNewCenter(view, new Vector3d(newCenter.getX(), newCenter.getY(), crossHair.z));
+      pair.first().updateImage();
+      pair.second().updateImage();
+      center(view, getCenterCoordinate(view.getMprAxis()));
     }
     view.repaint();
   }
 
-  protected Vector3d transformCoordinates(Vector3d position, Vector3d crossHair) {
-    Quaterniond rotation = axesControl.getGlobalRotation();
-    Vector3d axialX = new Vector3d(1.0, 0, 0);
-    Vector3d axialY = new Vector3d(0, 1.0, 0);
-    axialX.rotate(rotation);
-    axialY.rotate(rotation);
-    Vector3d sCenter = new Vector3d(crossHair);
-    Vector3d diff = new Vector3d(new Vector3d(position)).sub(crossHair);
-    axialX.mul(diff.x);
-    axialY.mul(diff.y);
-    sCenter.add(axialX).add(axialY);
-    return sCenter;
-  }
-
-  protected void setNewCenter(MprView view, Vector3d newCenter, Vector3d crossHair) {
+  protected void setNewCenter(MprView view, Vector3d newCenter) {
     if (view == null || newCenter == null) {
       return;
     }
-    Vector3d sCenter = transformCoordinates(newCenter, crossHair);
-    Vector3d vCenter = getGlobalPosition(view, sCenter);
+    Vector3d vCenter = view.getVolumeCoordinates(newCenter);
     axesControl.setCenter(vCenter);
     view.getMprAxis().updateImage();
   }
 
-  public void updatePosition(MprView view, Vector3d current, Vector3d crossHair) {
-    if (view == null) {
+  public void updatePosition(MprView view, Point2D pt, Vector3d crossHair) {
+    if (view == null || pt == null || crossHair == null) {
       return;
     }
-
-    if (current == null) {
-      current = crossHair;
-    }
-    if (current == null) {
-      return;
-    }
-
-    int sliceSize = volume.getSliceSize();
     Pair<MprAxis, MprAxis> pair = getCrossAxis(view.getMprAxis());
     if (pair != null) {
-      if (view.getPlane() == Plane.CORONAL) {
-        current.y = sliceSize - current.y;
-      }
-
-      setNewCenter(view, current, crossHair);
+      setNewCenter(view, new Vector3d(pt.getX(), pt.getY(), crossHair.z));
       pair.first().updateImage();
       pair.second().updateImage();
-      center(view, getVolumeCrossHair(view.getMprAxis()));
+      center(view, getCenterCoordinate(view.getMprAxis()));
     }
     view.repaint();
   }
 
-  private void center(MprView view, Vector3d crossHair) {
+  private void center(MprView view, Vector3d center) {
     Pair<MprAxis, MprAxis> pair = getCrossAxis(view.getMprAxis());
     if (pair != null) {
       ImageViewerEventManager<DicomImageElement> eventManager = view.getEventManager();
-      int centerGap = eventManager.getOptions().getIntProperty(View2d.P_CROSSHAIR_CENTER_GAP, 40);
       int mode = eventManager.getOptions().getIntProperty(View2d.P_CROSSHAIR_MODE, 1);
-      recenter(pair.first(), crossHair, mode, centerGap);
-      recenter(pair.second(), crossHair, mode, centerGap);
+      recenter(pair.first(), center, mode);
+      recenter(pair.second(), center, mode);
     }
   }
 
-  protected void recenter(MprAxis axis, Vector3d current, int mode, int centerGap) {
+  protected void recenter(MprAxis axis, Vector3d current, int mode) {
     if (axis == null || current == null) {
       return;
     }
@@ -617,8 +586,8 @@ public class MprController implements MouseListener, MouseMotionListener {
       return;
     }
 
-    current = getVolumeCrossHair(axis);
-    Point2D pt = new Point2D.Double(current.x, current.y);
+    int size = axesControl.getSliceSize();
+    Point2D pt = new Point2D.Double(current.x * size, current.y * size);
     Rectangle2D dim = view.getViewModel().getModelArea();
     if (mode == 2 || mode == 1 && view.isAutoCenter(pt)) {
       double mx = pt.getX() - dim.getWidth() * 0.5;
@@ -648,10 +617,6 @@ public class MprController implements MouseListener, MouseMotionListener {
 
   public ControlPoints getControlPoints() {
     return controlPoints;
-  }
-
-  public boolean isOblique() {
-    return volume != null;
   }
 
   public void setArcBall(ArcBallController arcBall) {
@@ -751,17 +716,16 @@ public class MprController implements MouseListener, MouseMotionListener {
   }
 
   public void centerAll(MprView view) {
-    Vector3d current = getVolumeCrossHair(view.getMprAxis());
+    Vector3d current = getCenterCoordinate(view.getMprAxis());
     ImageViewerEventManager<DicomImageElement> eventManager = view.getEventManager();
-    int centerGap = eventManager.getOptions().getIntProperty(View2d.P_CROSSHAIR_CENTER_GAP, 40);
     int mode = eventManager.getOptions().getIntProperty(View2d.P_CROSSHAIR_MODE, 1);
-    centerAll(current, mode, centerGap);
+    centerAll(current, mode);
   }
 
-  public void centerAll(Vector3d current, int mode, int centerGap) {
-    recenter(axial, current, mode, centerGap);
-    recenter(coronal, current, mode, centerGap);
-    recenter(sagittal, current, mode, centerGap);
+  public void centerAll(Vector3d current, int mode) {
+    recenter(axial, current, mode);
+    recenter(coronal, current, mode);
+    recenter(sagittal, current, mode);
   }
 
   public static class ControlPoints {

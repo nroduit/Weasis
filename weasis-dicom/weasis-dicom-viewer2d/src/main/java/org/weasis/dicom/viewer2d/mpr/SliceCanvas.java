@@ -15,8 +15,4 @@ import org.weasis.dicom.viewer2d.mpr.MprView.Plane;
 public interface SliceCanvas extends Canvas {
 
   Plane getPlane();
-
-  double getRotationOffset();
-
-  void setRotationOffset(double rotationOffset);
 }

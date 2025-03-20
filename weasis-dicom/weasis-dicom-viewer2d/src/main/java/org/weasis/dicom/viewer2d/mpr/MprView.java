@@ -19,6 +19,7 @@ import java.awt.geom.AffineTransform;
 import java.awt.geom.Line2D;
 import java.awt.geom.Path2D;
 import java.awt.geom.Point2D;
+import java.awt.geom.Rectangle2D;
 import java.beans.PropertyChangeEvent;
 import java.io.File;
 import java.util.List;
@@ -36,8 +37,11 @@ import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
 import org.dcm4che3.data.Tag;
 import org.dcm4che3.util.UIDUtils;
+import org.joml.Matrix4d;
 import org.joml.Quaterniond;
 import org.joml.Vector3d;
+import org.joml.Vector4d;
+import org.opencv.core.Point3;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.ActionW;
@@ -112,7 +116,6 @@ public class MprView extends View2d implements SliceCanvas {
 
   private JProgressBar progressBar;
   private Plane plane;
-  private double rotationOffset;
 
   protected final MprController mprController;
 
@@ -158,14 +161,8 @@ public class MprView extends View2d implements SliceCanvas {
     return plane;
   }
 
-  @Override
-  public double getRotationOffset() {
-    return rotationOffset;
-  }
-
-  @Override
-  public void setRotationOffset(double rotationOffset) {
-    this.rotationOffset = rotationOffset;
+  public MprController getMprController() {
+    return mprController;
   }
 
   protected MprAxis getMprAxis() {
@@ -173,10 +170,6 @@ public class MprView extends View2d implements SliceCanvas {
       return null;
     }
     return mprController.getMprAxis(plane);
-  }
-
-  public boolean isOblique() {
-    return mprController != null && mprController.isOblique();
   }
 
   @Override
@@ -192,9 +185,68 @@ public class MprView extends View2d implements SliceCanvas {
 
   public void setType(Plane plane) {
     this.plane = plane == null ? Plane.AXIAL : plane;
-    if (isOblique()) {
+    if (mprController != null) {
       mprController.initListeners(this);
     }
+  }
+
+  public Point3 getVolumeCoordinatesFromMouse(int x, int y) {
+    if (mprController.getVolume() == null) {
+      return null;
+    }
+    Vector3d crossHair = mprController.getAxesControl().getCenterForCanvas(this);
+    Vector3d coordinates = getVolumeCoordinatesFromMouse(x, y, crossHair);
+    Vector3d volumeCoordinates = coordinates.mul(mprController.getVolume().getSliceSize());
+    return new Point3(volumeCoordinates.x, volumeCoordinates.y, volumeCoordinates.z);
+  }
+
+  public Point2D getPlaneCoordinatesFromMouse(double x, double y) {
+    Rectangle2D bounds = getImageViewBounds(getWidth(), getHeight());
+    double offsetX = (x - bounds.getX()) / bounds.getWidth();
+    double offsetY = (y - bounds.getY()) / bounds.getHeight();
+    return new Point2D.Double(offsetX, offsetY);
+  }
+
+  public Vector3d getVolumeCoordinatesFromMouse(double x, double y, Vector3d crossHair) {
+    Point2D pt = getPlaneCoordinatesFromMouse(x, y);
+    return getVolumeCoordinates(new Vector3d(pt.getX(), pt.getY(), crossHair.z));
+  }
+
+  public Vector3d getVolumeCoordinates(Vector3d planePosition) {
+    Vector3d p = new Vector3d(planePosition);
+    transform(getDisplayPointToTexturePointMatrix(), p);
+    return p;
+  }
+
+  protected Matrix4d getDisplayPointToTexturePointMatrix() {
+    AxesControl axes = mprController.getAxesControl();
+    Vector3d center = new Vector3d(0.5, 0.5, 0.5);
+
+    Matrix4d resultMatrix = new Matrix4d();
+    Quaterniond r = mprController.getRotation(plane);
+    Vector3d crossHairOffset = axes.getCenter().sub(center);
+    Vector3d t = new Vector3d(center).add(crossHairOffset);
+    resultMatrix.translate(t.x, t.y, t.z).rotate(r).translate(-t.x, -t.y, -t.z);
+
+    switch (plane) {
+      case CORONAL -> resultMatrix.rotateX(-Math.toRadians(90)).scale(1.0, -1.0, 1.0);
+      case SAGITTAL -> resultMatrix.rotateY(Math.toRadians(90)).rotateZ(Math.toRadians(90));
+    }
+    return resultMatrix;
+  }
+
+  public static Vector3d transform(Matrix4d m, Vector3d point) {
+    Vector4d dest = new Vector4d(point, 1);
+    m.transform(dest);
+    point.x = dest.x;
+    point.y = dest.y;
+    point.z = dest.z;
+    return point;
+  }
+
+  @Override
+  public Rectangle2D getImageViewBounds(double viewportWidth, double viewportHeight) {
+    return super.getImageViewBounds(viewportWidth, viewportHeight);
   }
 
   @Override
@@ -277,10 +329,7 @@ public class MprView extends View2d implements SliceCanvas {
   @Override
   protected void drawOnTop(Graphics2D g2d) {
     MprAxis axis = getMprAxis();
-    if (axis != null
-        && isOblique()
-        && infoLayer != null
-        && LangUtil.getNULLtoFalse(infoLayer.getVisible())) {
+    if (axis != null && infoLayer != null && LangUtil.getNULLtoFalse(infoLayer.getVisible())) {
       axis.getAxisDirection().drawAxes(g2d, this);
     }
 
@@ -316,7 +365,7 @@ public class MprView extends View2d implements SliceCanvas {
       if (LangUtil.getNULLtoFalse((Boolean) actionsInView.get(SHOW_CROSS_CENTER))) {
         centerGap = 0;
       }
-      Vector3d center = mprController.getVolumeCrossHair(axis);
+      Vector3d center = mprController.getCrossHairPosition(axis);
       Point2D centerPt = new Point2D.Double(center.x, center.y);
       processImage(pair.first(), layer, axis, false, centerPt, centerGap);
       processImage(pair.second(), layer, axis, true, centerPt, centerGap);
@@ -331,7 +380,7 @@ public class MprView extends View2d implements SliceCanvas {
       Point2D centerPt,
       int centerGap) {
 
-    Vector3d center = mprController.getVolumeCrossHair(axis);
+    Vector3d center = mprController.getCrossHairPosition(axis);
     List<Point2D> pts = mprController.getLinePoints(axis, center, vertical);
     if (pts == null) return;
 
@@ -409,8 +458,7 @@ public class MprView extends View2d implements SliceCanvas {
       if (axis == null) {
         return;
       }
-      Vector3d crossHair = mprController.getVolumeCrossHair(axis);
-      mprController.recenter(axis, crossHair, getCenterMode(), getCenterGap());
+      mprController.recenter(axis, getCenterMode());
     }
   }
 
@@ -425,12 +473,12 @@ public class MprView extends View2d implements SliceCanvas {
   public void recenterAxis(boolean all) {
     MprAxis axis = getMprAxis();
     if (axis != null) {
-      Vector3d current = mprController.getVolumeCrossHair(axis);
+      Vector3d current = mprController.getCenterCoordinate(axis);
       int centerGap = getCenterGap();
       if (all) {
-        mprController.centerAll(current, 2, centerGap);
+        mprController.centerAll(current, 2);
       } else {
-        mprController.recenter(axis, current, 2, centerGap);
+        mprController.recenter(axis, current, 2);
       }
     }
   }
@@ -698,7 +746,7 @@ public class MprView extends View2d implements SliceCanvas {
   protected void rebuildView(MprAxis axis, File folder) {
     if (axis == null || folder == null || !folder.canWrite()) return;
 
-    Vector3d oldPosition = mprController.getVolumeCrossHair(axis);
+    Vector3d oldPosition = mprController.getAxesControl().getCenter();
     String uid = UIDUtils.createUID();
     int sliceImageSize = mprController.getVolume().getSliceSize();
 

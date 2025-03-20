@@ -121,10 +121,10 @@ public class VolImageIO implements DcmMediaReader {
   @Override
   public PlanarImage getImageFragment(MediaElement media) throws Exception {
     MprController controller = mprAxis.getMprView().mprController;
-    Vector3d volumeCenter = controller.getVolumeCrossHair();
+    Vector3d volumeCenter = controller.getCrossHairPosition();
     int extend = mprAxis.getThicknessExtension();
     if (extend > 0 && !mprAxis.isAdjusting()) {
-      double position = controller.getVolumeCrossHair(mprAxis).z;
+      double position = controller.getCrossHairPosition(mprAxis).z;
       List<PlanarImage> sources = new ArrayList<>();
       for (int i = -extend; i <= extend; i++) {
         PlanarImage slice;
