@@ -85,12 +85,12 @@ public class MprAxis {
     if (mprView != null) {
       Vector3d crossHair = mprView.mprController.getVolumeCrossHair();
       Quaterniond rotation = mprView.mprController.getRotation(plane);
-      transformation.set(getCombinedTransformation(rotation, crossHair));
+      transformation.set(getRealVolumeTransformation(rotation, crossHair));
       updateImage();
     }
   }
 
-  public Matrix4d getCombinedTransformation(Quaterniond rotation, Vector3d volumeCenter) {
+  public Matrix4d getRealVolumeTransformation(Quaterniond rotation, Vector3d volumeCenter) {
     if (rawIO == null) {
       return new Matrix4d();
     }

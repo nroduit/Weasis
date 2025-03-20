@@ -97,7 +97,7 @@ public class VolumeFloat extends Volume<Float> {
     int sliceImageSize = getSliceSize();
     Vector3d voxelRatio = getVoxelRatio();
     Quaterniond mprRotation = mprAxis.getMprView().mprController.getRotation(mprAxis.getPlane());
-    Matrix4d combinedTransform = mprAxis.getCombinedTransformation(mprRotation, volumeCenter);
+    Matrix4d combinedTransform = mprAxis.getRealVolumeTransformation(mprRotation, volumeCenter);
     mprAxis.getTransformation().set(combinedTransform);
 
     double[] raster = new double[sliceImageSize * sliceImageSize];

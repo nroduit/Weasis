@@ -265,7 +265,7 @@ public class VolImageIO implements DcmMediaReader {
     // Calculate new Image Position (Patient)
     Vector3d topLeft = geometry.getTLHC();
 
-    Matrix4d transform = mprAxis.getCombinedTransformation(new Quaterniond(), volumeCenter);
+    Matrix4d transform = mprAxis.getRealVolumeTransformation(new Quaterniond(), volumeCenter);
     Vector3d origin = new Vector3d(0.5, 0.5, 0.5);
     Vector3d t1 = new Vector3d(); // Top left in the image space without rotation
     Vector3d t2 = new Vector3d(); // Top left in the image space
