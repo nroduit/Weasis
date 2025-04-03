@@ -65,7 +65,7 @@ public class GraphicPrefView extends AbstractItemDialogPage {
     MigLayout layout2 = new MigLayout("fillx, ins 5lp", "[fill]", ""); // NON-NLS
     new JPanel(layout2).add(sliderOpacity);
     shapePane.add(GuiUtils.getHorizontalBoxLayoutPanel(ITEM_SEPARATOR_SMALL, sliderOpacity));
-    shapePane.setBorder(GuiUtils.getTitledBorder("Closed shape"));
+    shapePane.setBorder(GuiUtils.getTitledBorder(Messages.getString("closed.shape")));
     add(shapePane);
 
     add(GuiUtils.boxYLastElement(5));

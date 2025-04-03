@@ -92,7 +92,7 @@ public class VolImageIO implements DcmMediaReader {
     this.fileCache = new FileCache(this);
     this.tags = new HashMap<>();
     try {
-      this.uri = new URI("data:" + MIME_TYPE);
+      this.uri = new URI("data:" + MIME_TYPE); // NON-NLS
     } catch (URISyntaxException e) {
       throw new IllegalArgumentException(e);
     }

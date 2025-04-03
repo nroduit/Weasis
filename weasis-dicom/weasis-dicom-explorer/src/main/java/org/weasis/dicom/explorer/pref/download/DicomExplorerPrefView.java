@@ -69,7 +69,7 @@ public class DicomExplorerPrefView extends AbstractItemDialogPage {
     JLabel labelStudyDate = new JLabel(Messages.getString("study.date.sorting") + StringUtil.COLON);
     studyDateSortingComboBox.setSelectedItem(DicomSorter.getStudyDateSorting());
     panel.add(GuiUtils.getFlowLayoutPanel(labelStudyDate, studyDateSortingComboBox));
-    panel.setBorder(GuiUtils.getTitledBorder("Display"));
+    panel.setBorder(GuiUtils.getTitledBorder(Messages.getString("display")));
     add(panel);
     add(GuiUtils.boxVerticalStrut(BLOCK_SEPARATOR));
 
@@ -84,7 +84,7 @@ public class DicomExplorerPrefView extends AbstractItemDialogPage {
         new JLabel(Messages.getString("DicomExplorer.open_win") + StringUtil.COLON);
     openingViewerJComboBox.setSelectedItem(getOpeningViewer());
     panel2.add(GuiUtils.getFlowLayoutPanel(labelOpenPatient, openingViewerJComboBox));
-    panel2.setBorder(GuiUtils.getTitledBorder("Actions"));
+    panel2.setBorder(GuiUtils.getTitledBorder(Messages.getString("actions")));
     add(panel2);
 
     add(GuiUtils.boxYLastElement(LAST_FILLER_HEIGHT));

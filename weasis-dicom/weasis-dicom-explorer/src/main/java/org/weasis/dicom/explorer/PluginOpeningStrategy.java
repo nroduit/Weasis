@@ -87,7 +87,7 @@ public class PluginOpeningStrategy {
       String mime = dicomSeries.getMimeType();
       SeriesViewerFactory plugin = GuiUtils.getUICore().getViewerFactory(mime);
       if (plugin != null
-          && !("sr/dicom".equals(mime))
+          && !("sr/dicom".equals(mime)) // NON-NLS
           && !(plugin instanceof MimeSystemAppFactory)) {
         addPatient(patient);
         selectPatient = false;

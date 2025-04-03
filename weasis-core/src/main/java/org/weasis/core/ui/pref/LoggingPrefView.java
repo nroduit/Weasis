@@ -72,7 +72,7 @@ public class LoggingPrefView extends AbstractItemDialogPage {
             GuiUtils.boxHorizontalStrut(BLOCK_SEPARATOR),
             labelSize,
             spinner1));
-    panel.setBorder(GuiUtils.getTitledBorder("File"));
+    panel.setBorder(GuiUtils.getTitledBorder(Messages.getString("file")));
     add(panel);
     add(
         GuiUtils.getFlowLayoutPanel(

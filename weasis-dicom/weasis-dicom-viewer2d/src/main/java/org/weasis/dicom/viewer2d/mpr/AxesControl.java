@@ -137,7 +137,7 @@ public class AxesControl {
       this.globalRotation = new Quaterniond(globalRotation);
     }
 
-    changeSupport.firePropertyChange("rotation", old, globalRotation);
+    changeSupport.firePropertyChange("rotation", old, globalRotation); // NON-NLS
   }
 
   public void addWatchingCanvas(SliceCanvas imageCanvas) {

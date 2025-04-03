@@ -180,7 +180,7 @@ public class TagW {
   public static TagW AnatomicRegion = new TagW("AnatomicRegion", TagType.OBJECT);
 
   // Date and Time
-  public static final TagW Timezone = new TagW("Timezone", TagType.OBJECT);
+  public static final TagW Timezone = new TagW("Timezone", TagType.OBJECT); // NON-NLS
 
   /** Basic EXIF tags: https://www.media.mit.edu/pia/Research/deepview/exif.html */
   public static final TagW ExifImageDescription = new TagW("ExifImageDescription", TagType.STRING);

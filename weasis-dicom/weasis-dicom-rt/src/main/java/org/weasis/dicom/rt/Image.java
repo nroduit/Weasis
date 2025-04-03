@@ -37,7 +37,7 @@ public class Image {
     // Determine if the patient is prone or supine
     Attributes dcmItems = image.getMediaReader().getDicomObject();
     this.patientPosition = dcmItems.getString(Tag.PatientPosition).toLowerCase();
-    this.prone = patientPosition.contains("p") ? -1 : 1;
+    this.prone = patientPosition.contains("p") ? -1 : 1; // NON-NLS
     this.feetFirst = patientPosition.contains("ff") ? -1 : 1; // NON-NLS
 
     // Get the image pixel spacing

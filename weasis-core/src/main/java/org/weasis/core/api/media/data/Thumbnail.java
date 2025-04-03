@@ -133,10 +133,10 @@ public class Thumbnail extends JLabel implements Thumbnailable {
         } else if (mime.equals("sr/dicom")) { // NON-NLS
           type = Messages.getString("Thumbnail.dicom_sr");
           fileIcon = FileIcon.TEXT;
-        } else if (mime.startsWith("txt")) {
+        } else if (mime.startsWith("txt")) { // NON-NLS
           type = Messages.getString("Thumbnail.text");
           fileIcon = FileIcon.TEXT;
-        } else if (mime.endsWith("html")) {
+        } else if (mime.endsWith("html")) { // NON-NLS
           type = Messages.getString("Thumbnail.html");
           fileIcon = FileIcon.XML;
         } else if (mime.equals("application/pdf")) {
