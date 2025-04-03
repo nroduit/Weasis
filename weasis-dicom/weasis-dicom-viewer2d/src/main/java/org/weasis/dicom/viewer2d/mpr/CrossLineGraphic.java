@@ -100,21 +100,22 @@ public class CrossLineGraphic extends LineWithGapGraphic {
           ctrlShape.setFilled(true);
         }
 
-        Path2D arrow = new Path2D.Double();
-        double arrowLength = 20;
         Line2D line1 = ctrlPts.getLine();
         Point2D p1 = line1.getP1();
         Point2D p2 = line1.getP2();
-        double angle = Math.atan2(p1.getY() - p2.getY(), p1.getX() - p2.getX());
-        arrow.moveTo(p1.getX(), p1.getY());
-        arrow.lineTo(
-            p1.getX() - arrowLength * Math.cos(angle - Math.PI / 6),
-            p1.getY() - arrowLength * Math.sin(angle - Math.PI / 6));
-        arrow.moveTo(p1.getX(), p1.getY());
-        arrow.lineTo(
-            p1.getX() - arrowLength * Math.cos(angle + Math.PI / 6),
-            p1.getY() - arrowLength * Math.sin(angle + Math.PI / 6));
-        newShape.addScaleInvShape(arrow, p1, getStroke(lineThickness), false);
+
+        //        Path2D arrow = new Path2D.Double();
+        //        double arrowLength = 20;
+        //        double angle = Math.atan2(p1.getY() - p2.getY(), p1.getX() - p2.getX());
+        //        arrow.moveTo(p1.getX(), p1.getY());
+        //        arrow.lineTo(
+        //            p1.getX() - arrowLength * Math.cos(angle - Math.PI / 6),
+        //            p1.getY() - arrowLength * Math.sin(angle - Math.PI / 6));
+        //        arrow.moveTo(p1.getX(), p1.getY());
+        //        arrow.lineTo(
+        //            p1.getX() - arrowLength * Math.cos(angle + Math.PI / 6),
+        //            p1.getY() - arrowLength * Math.sin(angle + Math.PI / 6));
+        //        newShape.addScaleInvShape(arrow, p1, getStroke(lineThickness), false);
 
         if (extendLength > 0) {
           // Show the thickness of the slice

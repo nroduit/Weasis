@@ -473,12 +473,10 @@ public class MprView extends View2d implements SliceCanvas {
   public void recenterAxis(boolean all) {
     MprAxis axis = getMprAxis();
     if (axis != null) {
-      Vector3d current = mprController.getCenterCoordinate(axis);
-      int centerGap = getCenterGap();
       if (all) {
-        mprController.centerAll(current, 2);
+        mprController.centerAll(2);
       } else {
-        mprController.recenter(axis, current, 2);
+        mprController.recenter(axis, 2);
       }
     }
   }
@@ -494,13 +492,14 @@ public class MprView extends View2d implements SliceCanvas {
                 JMenuItem item = new JMenuItem(Messages.getString("center"));
                 item.addActionListener(e -> recenterAxis(false));
                 item.setAccelerator(
-                    KeyStroke.getKeyStroke(KeyEvent.VK_A, InputEvent.ALT_DOWN_MASK));
+                    KeyStroke.getKeyStroke(KeyEvent.VK_X, InputEvent.ALT_DOWN_MASK));
                 popupMenu.add(item);
 
                 item = new JMenuItem(Messages.getString("center"));
                 item.addActionListener(e -> recenterAxis(true));
                 item.setAccelerator(
-                    KeyStroke.getKeyStroke(KeyEvent.VK_C, InputEvent.ALT_DOWN_MASK));
+                    KeyStroke.getKeyStroke(
+                        KeyEvent.VK_X, InputEvent.CTRL_DOWN_MASK | InputEvent.ALT_DOWN_MASK));
                 menu.add(item);
               }
 
@@ -512,7 +511,7 @@ public class MprView extends View2d implements SliceCanvas {
                 boxMenuItem.addActionListener(
                     e -> showCrossCenter((JCheckBoxMenuItem) e.getSource(), false));
                 boxMenuItem.setAccelerator(
-                    KeyStroke.getKeyStroke(KeyEvent.VK_S, InputEvent.ALT_DOWN_MASK));
+                    KeyStroke.getKeyStroke(KeyEvent.VK_C, InputEvent.ALT_DOWN_MASK));
                 popupMenu.add(boxMenuItem);
 
                 showCenter = getAllViewsProperty(SHOW_CROSS_CENTER);
@@ -520,7 +519,8 @@ public class MprView extends View2d implements SliceCanvas {
                 boxMenuItem.addActionListener(
                     e -> showCrossCenter((JCheckBoxMenuItem) e.getSource(), true));
                 boxMenuItem.setAccelerator(
-                    KeyStroke.getKeyStroke(KeyEvent.VK_V, InputEvent.ALT_DOWN_MASK));
+                    KeyStroke.getKeyStroke(
+                        KeyEvent.VK_C, InputEvent.CTRL_DOWN_MASK | InputEvent.ALT_DOWN_MASK));
                 menu.add(boxMenuItem);
               }
 
@@ -530,7 +530,7 @@ public class MprView extends View2d implements SliceCanvas {
               boxMenuItem.addActionListener(
                   e -> showCrossLines((JCheckBoxMenuItem) e.getSource(), false));
               boxMenuItem.setAccelerator(
-                  KeyStroke.getKeyStroke(KeyEvent.VK_D, InputEvent.ALT_DOWN_MASK));
+                  KeyStroke.getKeyStroke(KeyEvent.VK_V, InputEvent.ALT_DOWN_MASK));
               popupMenu.add(boxMenuItem);
 
               showCrossLines = !getAllViewsProperty(HIDE_CROSSLINES);
@@ -538,7 +538,8 @@ public class MprView extends View2d implements SliceCanvas {
               boxMenuItem.addActionListener(
                   e -> showCrossLines((JCheckBoxMenuItem) e.getSource(), true));
               boxMenuItem.setAccelerator(
-                  KeyStroke.getKeyStroke(KeyEvent.VK_B, InputEvent.ALT_DOWN_MASK));
+                  KeyStroke.getKeyStroke(
+                      KeyEvent.VK_V, InputEvent.CTRL_DOWN_MASK | InputEvent.ALT_DOWN_MASK));
               menu.add(boxMenuItem);
 
               JMenu menuItem =

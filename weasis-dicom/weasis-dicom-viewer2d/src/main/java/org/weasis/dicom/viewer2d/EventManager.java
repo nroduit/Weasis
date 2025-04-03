@@ -480,7 +480,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
 
       @Override
       public void mouseWheelMoved(MouseWheelEvent e) {
-        if (isActionEnabled()) {
+        if (isActionEnabled() && !e.isConsumed()) {
           setSliderValue(getSliderValue() + e.getWheelRotation());
         }
       }
@@ -777,33 +777,31 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
         movePatient(ListPosition.FIRST);
       } else if (keyEvent == KeyEvent.VK_END && e.isControlDown()) {
         movePatient(ListPosition.LAST);
-      } else if (isMpr && keyEvent == KeyEvent.VK_A && e.isAltDown()) {
+      } else if (isMpr && keyEvent == KeyEvent.VK_X && e.isAltDown()) {
         if (selectedView2dContainer.getSelectedImagePane() instanceof MprView mprView) {
-          mprView.recenterAxis(false);
-        }
-      } else if (isMpr && keyEvent == KeyEvent.VK_S && e.isAltDown()) {
-        if (selectedView2dContainer.getSelectedImagePane() instanceof MprView mprView) {
-          boolean showCenter = MprView.getViewProperty(mprView, MprView.SHOW_CROSS_CENTER);
-          mprView.showCrossCenter(!showCenter, false);
-        }
-      } else if (isMpr && keyEvent == KeyEvent.VK_D && e.isAltDown()) {
-        if (selectedView2dContainer.getSelectedImagePane() instanceof MprView mprView) {
-          boolean showCrossLines = MprView.getViewProperty(mprView, MprView.HIDE_CROSSLINES);
-          mprView.showCrossLines(showCrossLines, false);
+          mprView.recenterAxis(e.isControlDown());
         }
       } else if (isMpr && keyEvent == KeyEvent.VK_C && e.isAltDown()) {
         if (selectedView2dContainer.getSelectedImagePane() instanceof MprView mprView) {
-          mprView.recenterAxis(true);
+          boolean showCenter = MprView.getViewProperty(mprView, MprView.SHOW_CROSS_CENTER);
+          mprView.showCrossCenter(!showCenter, e.isControlDown());
         }
       } else if (isMpr && keyEvent == KeyEvent.VK_V && e.isAltDown()) {
         if (selectedView2dContainer.getSelectedImagePane() instanceof MprView mprView) {
-          boolean showCenter = mprView.getAllViewsProperty(MprView.SHOW_CROSS_CENTER);
-          mprView.showCrossCenter(!showCenter, true);
+          boolean showCrossLines = MprView.getViewProperty(mprView, MprView.HIDE_CROSSLINES);
+          mprView.showCrossLines(showCrossLines, e.isControlDown());
         }
-      } else if (isMpr && keyEvent == KeyEvent.VK_B && e.isAltDown()) {
+      } else if (isMpr && keyEvent == KeyEvent.VK_B && e.isAltDown() && e.isControlDown()) {
         if (selectedView2dContainer.getSelectedImagePane() instanceof MprView mprView) {
-          boolean showCrossLines = mprView.getAllViewsProperty(MprView.HIDE_CROSSLINES);
-          mprView.showCrossLines(showCrossLines, true);
+          MprController controller = mprView.getMprController();
+          if (controller != null) {
+            ComboItemListener<MipView.Type> mipCombo = controller.getMipTypeOption();
+            MipView.Type currentType = (MipView.Type) mipCombo.getSelectedItem();
+            MipView.Type[] types = MipView.Type.values();
+            int nextIndex = (currentType.ordinal() + 1) % types.length;
+            mipCombo.setSelectedItemWithoutTriggerAction(types[nextIndex]);
+            controller.updateAllViews();
+          }
         }
       } else {
         keyPreset(keyEvent, modifiers);
