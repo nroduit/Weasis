@@ -376,7 +376,6 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
                   .map(PRSpecialElement.class::cast)
                   .orElse(null);
           if (pr != null && !PresentationStateReader.isImageApplicable(pr, image)) {
-            view2d.setActionsInView(ActionW.PR_STATE.cmd(), null);
             pr = null;
           }
           DefaultWlPresentation wlp =
