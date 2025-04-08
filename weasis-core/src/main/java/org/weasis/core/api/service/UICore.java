@@ -301,23 +301,19 @@ public final class UICore {
   }
 
   public String getConfigServiceUrl() {
-    return Holder.INSTANCE.getSystemPreferences().getProperty("weasis.config.url");
+    return systemPreferences.getProperty("weasis.config.url");
   }
 
   public String getStatisticServiceUrl() {
-    return Holder.INSTANCE.getSystemPreferences().getProperty("weasis.stat.url");
+    return systemPreferences.getProperty("weasis.stat.url");
   }
 
   public boolean isLocalSession() {
-    return Holder.INSTANCE
-        .getSystemPreferences()
-        .getBooleanProperty("weasis.pref.local.session", false);
+    return systemPreferences.getBooleanProperty("weasis.pref.local.session", false);
   }
 
   public boolean isStoreLocalSession() {
-    return Holder.INSTANCE
-        .getSystemPreferences()
-        .getBooleanProperty("weasis.pref.store.local.session", false);
+    return systemPreferences.getBooleanProperty("weasis.pref.store.local.session", false);
   }
 
   public synchronized void saveSystemPreferences() {
