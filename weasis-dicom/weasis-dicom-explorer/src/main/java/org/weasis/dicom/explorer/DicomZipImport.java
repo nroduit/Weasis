@@ -9,6 +9,7 @@
  */
 package org.weasis.dicom.explorer;
 
+import java.awt.Component;
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
@@ -96,10 +97,11 @@ public class DicomZipImport extends AbstractItemDialogPage implements ImportDico
 
   @Override
   public void importDICOM(DicomModel dicomModel, JProgressBar info) {
-    loadDicomZip(selectedFile, dicomModel, getOpeningViewer());
+    loadDicomZip(selectedFile, dicomModel, getOpeningViewer(), this);
   }
 
-  public static void loadDicomZip(File file, DicomModel dicomModel, OpeningViewer openingViewer) {
+  public static void loadDicomZip(
+      File file, DicomModel dicomModel, OpeningViewer openingViewer, Component parent) {
     if (file != null && file.canRead()) {
       File dir =
           FileUtil.createTempDir(
@@ -112,7 +114,7 @@ public class DicomZipImport extends AbstractItemDialogPage implements ImportDico
           panel.add(pass);
           int response =
               JOptionPane.showOptionDialog(
-                  GuiUtils.getUICore().getApplicationWindow(),
+                  parent,
                   panel,
                   Messages.getString("DicomZipImport.title"),
                   JOptionPane.OK_CANCEL_OPTION,
@@ -148,23 +150,23 @@ public class DicomZipImport extends AbstractItemDialogPage implements ImportDico
 
   public static void loadDicomZip(String uri, DicomModel dicomModel) {
     if (StringUtil.hasText(uri)) {
-      File tempFile = null;
+      File zipFile = null;
       try {
         URI u = new URI(uri);
         if (u.toString().startsWith("file:")) { // NON-NLS
-          tempFile = new File(u.getPath());
+          zipFile = new File(u.getPath());
         } else {
-          tempFile = File.createTempFile("dicom_", ".zip", AppProperties.APP_TEMP_DIR); // NON-NLS
+          zipFile = File.createTempFile("dicom_", ".zip", AppProperties.APP_TEMP_DIR); // NON-NLS
           ClosableURLConnection urlConnection =
               NetworkUtil.getUrlConnection(u.toURL(), new URLParameters());
-          FileUtil.writeStreamWithIOException(urlConnection.getInputStream(), tempFile);
+          FileUtil.writeStreamWithIOException(urlConnection.getInputStream(), zipFile);
         }
       } catch (Exception e) {
         LOGGER.error("Loading DICOM Zip", e);
       }
       OpeningViewer openingViewer =
           OpeningViewer.getOpeningViewerByLocalKey(LAST_DICOM_ZIP_OPEN_MODE);
-      loadDicomZip(tempFile, dicomModel, openingViewer);
+      loadDicomZip(zipFile, dicomModel, openingViewer, GuiUtils.getUICore().getApplicationWindow());
     }
   }
 }
