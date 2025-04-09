@@ -247,10 +247,10 @@ public class MprController implements MouseListener, MouseMotionListener, MouseW
   @Override
   public void mouseWheelMoved(MouseWheelEvent e) {
     if ((e.getModifiersEx() & MouseWheelEvent.ALT_DOWN_MASK) != 0) {
-      adjusting = true;
       int rotation = e.getWheelRotation();
       MprAxis axis = selectedAxis;
       if (axis != null) {
+        adjusting = true;
         int oldThickness = axis.getThicknessExtension();
         axis.setThicknessExtension(oldThickness + rotation);
 
@@ -273,7 +273,8 @@ public class MprController implements MouseListener, MouseMotionListener, MouseW
 
   @Override
   public void mousePressed(MouseEvent e) {
-    if (e.getSource() instanceof MprView view) {
+    if (e.getSource() instanceof MprView view
+        && !MprView.getViewProperty(view, MprView.HIDE_CROSSLINES)) {
       if (selectedAxis != null) {
         e.consume();
         this.canMoveSelected = true;
@@ -299,7 +300,8 @@ public class MprController implements MouseListener, MouseMotionListener, MouseW
 
   @Override
   public void mouseDragged(MouseEvent e) {
-    if (e.getSource() instanceof MprView view) {
+    if (e.getSource() instanceof MprView view
+        && !MprView.getViewProperty(view, MprView.HIDE_CROSSLINES)) {
       if (canMove) {
         e.consume();
         adjusting = true;
@@ -394,7 +396,8 @@ public class MprController implements MouseListener, MouseMotionListener, MouseW
 
   @Override
   public void mouseReleased(MouseEvent e) {
-    if (e.getSource() instanceof MprView view) {
+    if (e.getSource() instanceof MprView view
+        && !MprView.getViewProperty(view, MprView.HIDE_CROSSLINES)) {
       if (canMove) {
         this.canMove = false;
         e.consume();
@@ -417,7 +420,8 @@ public class MprController implements MouseListener, MouseMotionListener, MouseW
 
   @Override
   public void mouseMoved(MouseEvent e) {
-    if (e.getSource() instanceof MprView view) {
+    if (e.getSource() instanceof MprView view
+        && !MprView.getViewProperty(view, MprView.HIDE_CROSSLINES)) {
       MprAxis axis = view.getMprAxis();
       currentAxis = axis;
       if (axis != null) {
