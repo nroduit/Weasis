@@ -108,10 +108,13 @@ public class FocusHandler<E extends ImageElement> extends MouseActionAdapter {
     if (infoLayer != null) {
       Point2D pModel =
           viewCanvas.getImageCoordinatesFromMouse(mouseevent.getX(), mouseevent.getY());
-      Rectangle oldBound = infoLayer.getPixelInfoBound();
       PixelInfo pixelInfo =
           viewCanvas.getPixelInfo(
               new Point((int) Math.floor(pModel.getX()), (int) Math.floor(pModel.getY())));
+      if (pixelInfo == null) {
+        return;
+      }
+      Rectangle oldBound = infoLayer.getPixelInfoBound();
       Point3 point3d =
           viewCanvas.getVolumeCoordinatesFromMouse(mouseevent.getX(), mouseevent.getY());
       pixelInfo.setPosition3d(point3d);
