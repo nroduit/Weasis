@@ -134,6 +134,9 @@ public class InfoLayer3d extends AbstractInfoLayer<DicomImageElement> {
       }
     }
 
+    Double tilt = imSeries.getOriginalGantryTilt();
+    drawY = InfoLayer.drawGantryTiltMessage(g2d, tilt, drawY, fontHeight, border);
+
     drawY -= fontHeight;
     if (imSeries.getVolumeGeometry().isVariablePixelSpacing()) {
       String message = Messages.getString("non.regular.volume.msg");

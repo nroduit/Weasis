@@ -163,6 +163,17 @@ public class DicomVolTexture extends VolumeTexture implements MediaSeriesGroup {
     return Modality.getModality(TagD.getTagValue(this, Tag.Modality, String.class));
   }
 
+  public Double getOriginalGantryTilt() {
+    DicomImageElement image = series.getMedia(MEDIA_POSITION.MIDDLE, null, seriesComparator);
+    if (image != null) {
+      Double tilt = TagD.getTagValue(image, Tag.GantryDetectorTilt, Double.class);
+      if (tilt != null && MathUtil.isDifferentFromZero(tilt)) {
+        return tilt;
+      }
+    }
+    return null;
+  }
+
   public MediaSeries<DicomImageElement> getSeries() {
     return series;
   }

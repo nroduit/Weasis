@@ -48,6 +48,7 @@ import org.weasis.core.ui.model.layer.AbstractInfoLayer;
 import org.weasis.core.ui.model.layer.LayerAnnotation;
 import org.weasis.core.ui.model.layer.LayerItem;
 import org.weasis.core.util.LangUtil;
+import org.weasis.core.util.MathUtil;
 import org.weasis.core.util.StringUtil;
 import org.weasis.core.util.StringUtil.Suffix;
 import org.weasis.dicom.codec.DicomImageElement;
@@ -64,6 +65,7 @@ import org.weasis.dicom.codec.geometry.ImageOrientation.Plan;
 import org.weasis.dicom.codec.geometry.PatientOrientation.Biped;
 import org.weasis.dicom.codec.geometry.VectorUtils;
 import org.weasis.dicom.explorer.DicomModel;
+import org.weasis.dicom.viewer2d.mpr.MprController;
 import org.weasis.dicom.viewer2d.mpr.MprView;
 import org.weasis.opencv.data.PlanarImage;
 import org.weasis.opencv.op.lut.DefaultWlPresentation;
@@ -170,6 +172,13 @@ public class InfoLayer extends AbstractInfoLayer<DicomImageElement> {
 
     drawY -= fontHeight;
     drawY = checkAndPaintLossyImage(g2, image, drawY, fontHeight, border);
+    if (view2DPane instanceof MprView mprView) {
+      MprController controller = mprView.getMprController();
+      if (controller != null && controller.getVolume() != null) {
+        Double tilt = controller.getVolume().getOriginalGantryTilt();
+        drawY = drawGantryTiltMessage(g2, tilt, drawY, fontHeight, border);
+      }
+    }
 
     Integer frame = TagD.getTagValue(image, Tag.InstanceNumber, Integer.class);
     RejectedKOSpecialElement koElement =
@@ -468,7 +477,7 @@ public class InfoLayer extends AbstractInfoLayer<DicomImageElement> {
         g2.setFont(bigFont);
         Map<TextAttribute, Object> map = new HashMap<>(1);
         map.put(TextAttribute.SUPERSCRIPT, TextAttribute.SUPERSCRIPT_SUB);
-        String bigLetter = top.length > 0 && top[0].length() > 0 ? top[0] : StringUtil.SPACE;
+        String bigLetter = top.length > 0 && !top[0].isEmpty() ? top[0] : StringUtil.SPACE;
         int shiftX = g2.getFontMetrics().stringWidth(bigLetter);
         int shiftY = fontHeight + GuiUtils.getScaleLength(5);
         FontTools.paintColorFontOutline(g2, bigLetter, midX - shiftX, shiftY, highlight);
@@ -484,7 +493,7 @@ public class InfoLayer extends AbstractInfoLayer<DicomImageElement> {
           g2.setFont(bigFont);
         }
 
-        bigLetter = left.length > 0 && left[0].length() > 0 ? left[0] : StringUtil.SPACE;
+        bigLetter = left.length > 0 && !left[0].isEmpty() ? left[0] : StringUtil.SPACE;
         FontTools.paintColorFontOutline(
             g2, bigLetter, (float) (border + thickLength), midY + fontHeight / 2.0f, highlight);
 
@@ -531,6 +540,18 @@ public class InfoLayer extends AbstractInfoLayer<DicomImageElement> {
 
     drawExtendedActions(g2);
     GuiUtils.resetRenderingHints(g2, oldRenderingHints);
+  }
+
+  public static float drawGantryTiltMessage(
+      Graphics2D g2d, Double tilt, float drawY, int fontHeight, int border) {
+    if (tilt != null && MathUtil.isDifferentFromZero(tilt)) {
+      String str = "(" + DecFormatter.oneDecimal(tilt) + "°)";
+      String message = Messages.getString("stretching.artifacts.msg");
+      FontTools.paintColorFontOutline(
+          g2d, message + StringUtil.SPACE + str, border, drawY, IconColor.ACTIONS_RED.getColor());
+      drawY -= fontHeight;
+    }
+    return drawY;
   }
 
   public static MediaSeriesGroup getParent(

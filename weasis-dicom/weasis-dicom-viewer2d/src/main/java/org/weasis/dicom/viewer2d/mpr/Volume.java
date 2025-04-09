@@ -22,6 +22,7 @@ import java.util.concurrent.RecursiveAction;
 import java.util.function.BiConsumer;
 import javax.swing.JProgressBar;
 import javax.swing.SwingUtilities;
+import org.dcm4che3.data.Tag;
 import org.joml.Matrix3d;
 import org.joml.Quaterniond;
 import org.joml.Vector3d;
@@ -32,7 +33,9 @@ import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.image.cv.CvUtil;
 import org.weasis.core.ui.editor.image.ViewerPlugin;
 import org.weasis.core.util.FileUtil;
+import org.weasis.core.util.MathUtil;
 import org.weasis.dicom.codec.DicomImageElement;
+import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.geometry.GeometryOfSlice;
 import org.weasis.opencv.data.PlanarImage;
 
@@ -485,6 +488,14 @@ public abstract class Volume<T extends Number> {
           }
         }
       }
+    }
+    return null;
+  }
+
+  public Double getOriginalGantryTilt() {
+    Double tilt = TagD.getTagValue(stack.getMiddleImage(), Tag.GantryDetectorTilt, Double.class);
+    if (tilt != null && MathUtil.isDifferentFromZero(tilt)) {
+      return tilt;
     }
     return null;
   }
