@@ -1186,7 +1186,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
         if (ObservableEvent.BasicAction.SELECT.equals(action)) {
           if (newVal instanceof Series dcm) {
             MediaSeriesGroup patient = model.getParent(dcm, DicomModel.patient);
-            if (!isSelectedPatient(patient)) {
+            if (!isSelectedPatient(patient) && modelPatient.getIndexOf(patient) >= 0) {
               modelPatient.setSelectedItem(patient);
               GuiUtils.getUICore()
                   .getDockingControl()
@@ -1267,7 +1267,8 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
       } else if (evt.getSource() instanceof SeriesViewer
           && ObservableEvent.BasicAction.SELECT.equals(action)
           && newVal instanceof MediaSeriesGroup patient
-          && !isSelectedPatient(patient)) {
+          && !isSelectedPatient(patient)
+          && modelPatient.getIndexOf(patient) >= 0) {
         modelPatient.setSelectedItem(patient);
         // focus get back to viewer
         if (evt.getSource() instanceof ViewerPlugin viewerPlugin) {
