@@ -558,10 +558,13 @@ public class View3DContainer extends DicomViewerPlugin implements PropertyChange
    *
    * <p>If that happens, all toolbars get visible and viewer not. Need a way out.
    *
-   * @param selected
+   * @param selected true if selected
    */
   @Override
   public void setSelected(boolean selected) {
+    if (!isShowing()) {
+      return;
+    }
     if (selected) {
       eventManager.setSelectedView2dContainer(this);
     }
@@ -572,7 +575,7 @@ public class View3DContainer extends DicomViewerPlugin implements PropertyChange
   public void addSeriesList(
       List<MediaSeries<DicomImageElement>> seriesList, boolean removeOldSeries) {
     if (seriesList != null && !seriesList.isEmpty()) {
-      addSeries(seriesList.get(0));
+      addSeries(seriesList.getFirst());
     }
   }
 
