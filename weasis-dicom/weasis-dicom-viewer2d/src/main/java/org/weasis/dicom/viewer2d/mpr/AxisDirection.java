@@ -15,9 +15,12 @@ import java.awt.Graphics2D;
 import java.awt.Point;
 import java.awt.geom.Point2D;
 import org.joml.Matrix4d;
+import org.joml.Quaterniond;
 import org.joml.Vector3d;
+import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.ui.model.layer.LayerAnnotation.Position;
+import org.weasis.core.util.LangUtil;
 import org.weasis.dicom.codec.geometry.PatientOrientation.Biped;
 import org.weasis.dicom.viewer2d.Messages;
 import org.weasis.dicom.viewer2d.mpr.MprView.Plane;
@@ -175,6 +178,18 @@ public class AxisDirection {
   private Vector3d getArrowDirection(MprAxis axis, Vector3d direction, int length) {
     Vector3d end = new Vector3d(direction);
     new Matrix4d(axis.getTransformation()).invert().transformDirection(end);
+    MprView view = axis.getMprView();
+    if (view != null) {
+      Integer r = (Integer) view.getActionValue(ActionW.ROTATION.cmd());
+      if (r != null && r != 0) {
+        Vector3d dir = Plane.AXIAL.getDirection();
+        Quaterniond q = new Quaterniond().fromAxisAngleRad(dir, Math.toRadians(r));
+        q.transform(end);
+      }
+      if (LangUtil.getNULLtoFalse((Boolean) view.getActionValue((ActionW.FLIP.cmd())))) {
+        end.x = -end.x;
+      }
+    }
     end.mul(length);
     return end;
   }
