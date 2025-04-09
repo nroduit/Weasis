@@ -238,7 +238,8 @@ public class VolImageIO implements DcmMediaReader {
     rawIO.setTag(TagD.get(Tag.Columns), curImage.width());
     rawIO.setTag(TagD.get(Tag.Rows), curImage.height());
     int extend = mprAxis.getThicknessExtension();
-    double thickness = extend > 0 && !mprAxis.isAdjusting() ? extend * minRatio : minRatio;
+    double thickness =
+        extend > 0 && !mprAxis.isAdjusting() ? (extend * 2 + 1) * minRatio : minRatio;
     rawIO.setTag(TagD.get(Tag.SliceThickness), thickness);
     rawIO.setTag(TagD.get(Tag.PixelSpacing), pixSpacing);
     rawIO.setTag(TagD.get(Tag.ImageOrientationPatient), orientation);

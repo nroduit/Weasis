@@ -10,6 +10,9 @@
 package org.weasis.dicom.viewer2d.mpr;
 
 import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.FlowLayout;
+import java.awt.FontMetrics;
 import java.awt.Graphics2D;
 import java.awt.GridBagConstraints;
 import java.awt.event.InputEvent;
@@ -26,13 +29,17 @@ import java.util.List;
 import java.util.Objects;
 import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JFileChooser;
+import javax.swing.JLabel;
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
+import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
 import javax.swing.JProgressBar;
 import javax.swing.JRadioButtonMenuItem;
+import javax.swing.JSpinner;
 import javax.swing.KeyStroke;
+import javax.swing.SpinnerNumberModel;
 import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
 import org.dcm4che3.data.Tag;
@@ -598,7 +605,7 @@ public class MprView extends View2d implements SliceCanvas {
 
     List<Integer> extendsValues = List.of(1, 2, 3, 5, 7, 10, 15, 20);
     for (Integer i : extendsValues) {
-      double thickness = i * minRatio;
+      double thickness = (i * 2 + 1) * minRatio;
       String title = i + " (" + DecFormatter.allNumber(thickness) + " " + abbr + ")";
       JRadioButtonMenuItem item = new JRadioButtonMenuItem(title, i == oldThickness);
       item.addActionListener(
@@ -634,27 +641,53 @@ public class MprView extends View2d implements SliceCanvas {
     menu.add(new JMenuItem(Messages.getString("custom.thickness")))
         .addActionListener(
             e -> {
-              String message = Messages.getString("enter.thickness");
-              String input =
-                  JOptionPane.showInputDialog(
-                      message
-                          + " (1 pix = %s %s)" // NON-NLS
-                              .formatted(DecFormatter.allNumber(minRatio), abbr)
-                          + StringUtil.COLON);
-              try {
-                int customThickness = Integer.parseInt(input);
-                if (customThickness < 0) {
-                  customThickness = 0;
-                }
+              int maxValue = mprController.getVolume().getSliceSize();
+              JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEADING));
+              SpinnerNumberModel spinnerModel = new SpinnerNumberModel(maxValue, 1, maxValue, 1);
+              JSpinner thicknessSpinner = new JSpinner(spinnerModel);
+              JLabel conversionLabel = new JLabel();
+              thicknessSpinner.addChangeListener(
+                  _ -> {
+                    int value = (Integer) thicknessSpinner.getValue();
+                    double mmValue = (value * 2 + 1) * minRatio;
+                    conversionLabel.setText(
+                        " %d pix = %s %s"
+                            .formatted(value, DecFormatter.allNumber(mmValue), abbr)); // NON-NLS
+                  });
+
+              // Adding components to the panel
+              panel.add(new JLabel(Messages.getString("MipView.img_extend") + StringUtil.COLON));
+              panel.add(thicknessSpinner);
+              panel.add(conversionLabel);
+              FontMetrics metrics = conversionLabel.getFontMetrics(conversionLabel.getFont());
+              String maxExpectedLabel =
+                  " %d pix = %s %s" // NON-NLS
+                      .formatted(
+                          maxValue, DecFormatter.allNumber((maxValue * 2 + 1) * minRatio), abbr);
+              conversionLabel.setPreferredSize(
+                  new Dimension(metrics.stringWidth(maxExpectedLabel), metrics.getHeight()));
+              int initialValue = Math.max(oldThickness, 1);
+              thicknessSpinner.setValue(initialValue);
+
+              int result =
+                  JOptionPane.showConfirmDialog(
+                      null,
+                      panel,
+                      Messages.getString("custom.thickness"),
+                      JOptionPane.OK_CANCEL_OPTION,
+                      JOptionPane.PLAIN_MESSAGE);
+
+              if (result == JOptionPane.OK_OPTION) {
+                int customThickness = (Integer) thicknessSpinner.getValue();
+
                 for (MprAxis mprAxis : mprAxisList) {
                   mprAxis.setThicknessExtension(customThickness);
                   mprAxis.updateImage();
                 }
+
                 if (mprAxisList != allAxis) {
                   allAxis.forEach(mprAxis -> mprAxis.getMprView().repaint());
                 }
-              } catch (NumberFormatException ex) {
-                LOGGER.error("Invalid thickness value", ex);
               }
             });
     return menu;
