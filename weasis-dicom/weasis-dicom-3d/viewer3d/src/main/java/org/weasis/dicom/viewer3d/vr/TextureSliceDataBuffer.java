@@ -14,6 +14,7 @@ import java.lang.foreign.MemorySegment;
 import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.nio.FloatBuffer;
 import java.nio.ShortBuffer;
 import java.util.List;
 import java.util.Objects;
@@ -59,6 +60,19 @@ public record TextureSliceDataBuffer(Buffer buffer, Arena scope) {
               .put(sSrcData)
               .rewind();
       return new TextureSliceDataBuffer(buffer, arena);
+    } else if (cvType == CvType.CV_32F) {
+      float[] fSrcData = new float[width * height * channels];
+      image.get(0, 0, fSrcData);
+      Arena arena = Arena.ofShared();
+      MemorySegment bufferSegment = arena.allocate(fSrcData.length * 4L);
+      FloatBuffer buffer =
+          bufferSegment
+              .asByteBuffer()
+              .order(ByteOrder.nativeOrder())
+              .asFloatBuffer()
+              .put(fSrcData)
+              .rewind();
+      return new TextureSliceDataBuffer(buffer, arena);
     } else {
       throw new IllegalArgumentException("Not supported dataType for LUT transformation:" + image);
     }
@@ -68,7 +82,7 @@ public record TextureSliceDataBuffer(Buffer buffer, Arena scope) {
     if (slices.isEmpty()) {
       throw new IllegalStateException("Cannot process when no slice!");
     }
-    Mat image = slices.get(0);
+    Mat image = slices.getFirst();
     int channels = CvType.channels(image.type());
     int cvType = CvType.depth(image.type());
     long depth = slices.size();
@@ -95,6 +109,18 @@ public record TextureSliceDataBuffer(Buffer buffer, Arena scope) {
       for (Mat slice : slices) {
         slice.get(0, 0, sSrcData);
         buf.put(sSrcData);
+      }
+      buf.rewind();
+
+      return new TextureSliceDataBuffer(buf, arena);
+    } else if (cvType == CvType.CV_32F) {
+      float[] fSrcData = new float[size * channels];
+      Arena arena = Arena.ofShared();
+      MemorySegment bufferSegment = arena.allocate(fSrcData.length * depth * 4L);
+      FloatBuffer buf = bufferSegment.asByteBuffer().order(ByteOrder.nativeOrder()).asFloatBuffer();
+      for (Mat slice : slices) {
+        slice.get(0, 0, fSrcData);
+        buf.put(fSrcData);
       }
       buf.rewind();
 

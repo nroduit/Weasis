@@ -6,6 +6,7 @@ const uint dataTypeUnsignedSort = 0x00000002u;
 const uint dataTypeRGB8 = 0x00000003u;
 const uint dataTypeRGBA8 = 0x00000004u;
 const uint dataTypeRGBA32F = 0x00000005u;
+const uint dataTypeFLOAT = 0x00000006u;
 
 // LUT shape type
 uniform uint lutShape;

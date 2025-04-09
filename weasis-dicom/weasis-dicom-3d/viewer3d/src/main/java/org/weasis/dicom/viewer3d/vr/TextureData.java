@@ -20,6 +20,7 @@ public abstract class TextureData {
     BYTE,
     UNSIGNED_SHORT,
     SIGNED_SHORT,
+    FLOAT,
     RGB8,
     RGBA32F,
     RGBA8;
@@ -56,6 +57,11 @@ public abstract class TextureData {
       case SIGNED_SHORT, UNSIGNED_SHORT -> {
         this.internalFormat = GL2GL3.GL_R16;
         this.type = GL.GL_UNSIGNED_SHORT;
+        this.format = GL2ES2.GL_RED;
+      }
+      case FLOAT -> {
+        this.internalFormat = GL2GL3.GL_R32F;
+        this.type = GL.GL_FLOAT;
         this.format = GL2ES2.GL_RED;
       }
       case RGB8 -> {
@@ -133,6 +139,7 @@ public abstract class TextureData {
       case RGB8 -> 3;
       case RGBA8 -> 4;
       case RGBA32F -> 5;
+      case FLOAT -> 6;
     };
   }
 }

@@ -115,6 +115,8 @@ public class DicomVolTextureFactory {
 
     if (bitsOutput > 8 && bitsOutput <= 16) {
       return isSigned ? PixelFormat.SIGNED_SHORT : PixelFormat.UNSIGNED_SHORT;
+    } else if (bitsOutput == 32) {
+      return PixelFormat.FLOAT;
     }
 
     if (bitsOutput <= 8) {

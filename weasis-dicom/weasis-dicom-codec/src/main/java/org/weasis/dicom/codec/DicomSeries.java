@@ -15,6 +15,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
 import org.dcm4che3.data.Tag;
+import org.dcm4che3.img.DicomImageReader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.ObservableEvent;
@@ -159,6 +160,7 @@ public class DicomSeries extends Series<DicomImageElement> {
   public synchronized void dispose() {
     stopPreloading(this);
     String seriesUID = (String) getTagValue(getTagID());
+    DicomImageReader.removeSeriesToFloatImages(seriesUID);
     String modality = TagD.getTagValue(this, Tag.Modality, String.class);
     if (DicomMediaIO.isHiddenModality(modality)) {
       HiddenSeriesManager manager = HiddenSeriesManager.getInstance();

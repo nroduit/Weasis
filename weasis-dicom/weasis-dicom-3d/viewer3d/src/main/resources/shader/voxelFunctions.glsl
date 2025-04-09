@@ -11,7 +11,9 @@ float getOriginalVoxelValue(float texValue) {
         return texValue * 255.0;
     } else if (textureDataType == dataTypeSignedSort) {
         return texValue * 65535.0 - 32768.0;
-    } else return texValue * 65535.0;
+    } else if (textureDataType == dataTypeUnsignedSort) {
+        return texValue * 65535.0;
+    } else return texValue;
 }
 
 float getOriginalVoxelNormalizedValue(vec3 texCoord) {
