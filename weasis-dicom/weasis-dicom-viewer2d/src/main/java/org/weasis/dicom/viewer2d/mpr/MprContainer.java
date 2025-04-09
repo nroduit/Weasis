@@ -547,7 +547,6 @@ public class MprContainer extends DicomViewerPlugin implements PropertyChangeLis
                                 c.setSelectedItem(c.getFirstItem());
                               });
                     });
-
               } catch (final Exception e) {
                 LOGGER.error("Build MPR", e);
                 // Following actions need to be executed in EDT thread

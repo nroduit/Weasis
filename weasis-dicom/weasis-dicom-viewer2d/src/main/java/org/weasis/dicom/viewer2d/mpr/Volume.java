@@ -38,6 +38,7 @@ import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.geometry.GeometryOfSlice;
 import org.weasis.opencv.data.PlanarImage;
+import org.weasis.opencv.op.ImageProcessor;
 
 public abstract class Volume<T extends Number> {
 
@@ -45,7 +46,8 @@ public abstract class Volume<T extends Number> {
   protected final Quaterniond rotation;
   protected final Vector3i size;
   protected final Vector3d pixelRatio;
-  protected boolean negativeDirection;
+  protected boolean negativeDirRow;
+  protected boolean negativeDirCol;
   protected double minValue;
   protected double maxValue;
   protected final OriginalStack stack;
@@ -66,7 +68,8 @@ public abstract class Volume<T extends Number> {
     this.size = new Vector3i(sizeX, sizeY, sizeZ);
     createData(size.x, size.y, size.z);
     this.pixelRatio = new Vector3d(1.0, 1.0, 1.0);
-    this.negativeDirection = false;
+    this.negativeDirRow = false;
+    this.negativeDirCol = false;
     this.minValue = -Double.MAX_VALUE;
     this.maxValue = Double.MAX_VALUE;
     this.stack = null;
@@ -79,7 +82,8 @@ public abstract class Volume<T extends Number> {
     this.rotation = new Quaterniond();
     this.size = new Vector3i(0, 0, 0);
     this.pixelRatio = new Vector3d(1.0, 1.0, 1.0);
-    this.negativeDirection = false;
+    this.negativeDirRow = false;
+    this.negativeDirCol = false;
     this.stack = stack;
     int depth = stack.getFirstImage().getImage().depth();
     this.cvType =
@@ -163,7 +167,12 @@ public abstract class Volume<T extends Number> {
       min = Math.min(dcm.getPixelMin(), min);
       max = Math.max(dcm.getPixelMax(), max);
       Matrix3d transform = getAffineTransform(dcm);
-      copyFrom(dcm.getImage(), z, transform);
+      PlanarImage srcImage = dcm.getImage();
+      if (negativeDirRow || negativeDirCol) {
+        int flipType = negativeDirRow && negativeDirCol ? -1 : negativeDirCol ? 0 : 1;
+        srcImage = ImageProcessor.flip(srcImage.toImageCV(), flipType);
+      }
+      copyFrom(srcImage, z, transform);
     }
     this.minValue = min;
     this.maxValue = max;
@@ -173,9 +182,8 @@ public abstract class Volume<T extends Number> {
     Matrix3d m = getAffineTransform(stack.getFirstImage());
     Vector3d row = new Vector3d(stack.getFistSliceGeometry().getRow());
     Vector3d col = new Vector3d(stack.getFistSliceGeometry().getColumn());
-    if (adaptNegativeDirection(row, col)) {
-      negativeDirection = true;
-    }
+    negativeDirRow = adaptNegativeVector(row);
+    negativeDirCol = adaptNegativeVector(col);
     Vector3d oldRow = new Vector3d(row);
     Vector3d oldCol = new Vector3d(col);
     oldRow.sub(m.transform(new Vector3d(m.m00, m.m10, m.m20)));
@@ -215,10 +223,9 @@ public abstract class Volume<T extends Number> {
     }
   }
 
-  private boolean adaptNegativeDirection(Vector3d row, Vector3d col) {
-    if (row.x < -0.5 && col.y < -0.5 || row.y < -0.5 && col.x < -0.5) {
-      row.negate();
-      col.negate();
+  private boolean adaptNegativeVector(Vector3d vector) {
+    if (vector.x < -0.5 || vector.y < -0.5) {
+      vector.negate();
       return true;
     }
     return false;
@@ -228,7 +235,8 @@ public abstract class Volume<T extends Number> {
     GeometryOfSlice geometry = dcm.getSliceGeometry();
     Vector3d row = new Vector3d(geometry.getRow());
     Vector3d col = new Vector3d(geometry.getColumn());
-    adaptNegativeDirection(row, col);
+    adaptNegativeVector(row);
+    adaptNegativeVector(col);
     Vector3d normal = geometry.getNormal();
 
     return switch (stack.getPlane()) {

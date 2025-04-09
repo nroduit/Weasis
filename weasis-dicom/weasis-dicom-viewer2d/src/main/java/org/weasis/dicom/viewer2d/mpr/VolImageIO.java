@@ -212,18 +212,12 @@ public class VolImageIO implements DcmMediaReader {
       return null;
     }
 
-    GeometryOfSlice geometry = volume.stack.getFistSliceGeometry();
     double minRatio = volume.getMinPixelRatio();
     double[] pixSpacing = new double[] {minRatio, minRatio};
 
-    Vector3d row = new Vector3d(geometry.getRow());
-    Vector3d col = new Vector3d(geometry.getColumn());
-    if (volume.negativeDirection) {
-      row.negate();
-      col.negate();
-    }
-
-    // Transform the original 3D position using the transformation matrix
+    // Transform volume direction to slice direction
+    Vector3d row = new Vector3d(1.0, 0, 0);
+    Vector3d col = new Vector3d(0, 1.0, 0);
     mprAxis.getTransformation().transformDirection(row);
     mprAxis.getTransformation().transformDirection(col);
     double[] orientation = new double[] {row.x, row.y, row.z, col.x, col.y, col.z};
@@ -249,6 +243,7 @@ public class VolImageIO implements DcmMediaReader {
     int instanceNumber = mprAxis.getSliceIndex();
     rawIO.setTag(TagD.get(Tag.InstanceNumber), instanceNumber + 1);
 
+    GeometryOfSlice geometry = volume.stack.getFistSliceGeometry();
     Vector3d thlc = transformPosition(geometry, volumeCenter);
     rawIO.setTag(TagD.get(Tag.ImagePositionPatient), new double[] {thlc.x, thlc.y, thlc.z});
 
