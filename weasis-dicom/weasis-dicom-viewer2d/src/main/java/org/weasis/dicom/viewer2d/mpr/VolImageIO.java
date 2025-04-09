@@ -36,6 +36,7 @@ import org.joml.Matrix4d;
 import org.joml.Quaterniond;
 import org.joml.Vector3d;
 import org.opencv.core.Core;
+import org.opencv.core.Core.MinMaxLocResult;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
 import org.opencv.core.Scalar;
@@ -446,6 +447,10 @@ public class VolImageIO implements DcmMediaReader {
     }
     Attributes dcm = getDicomObject();
     header = new DicomMetaData(dcm, UID.ImplicitVRLittleEndian);
+    MinMaxLocResult minMax = new MinMaxLocResult();
+    minMax.minVal = volume.getMinimum();
+    minMax.maxVal = volume.getMaximum();
+    header.getImageDescriptor().setMinMaxPixelValue(minMax);
     HEADER_CACHE.put(this, header);
     return header;
   }
