@@ -207,14 +207,17 @@ public class MprView extends View2d implements SliceCanvas {
     return new Point3(volumeCoordinates.x, volumeCoordinates.y, volumeCoordinates.z);
   }
 
-  public Point2D getPlaneCoordinatesFromMouse(double x, double y) {
-    Rectangle2D bounds = getImageViewBounds(getWidth(), getHeight());
-    double offsetX = (x - bounds.getX()) / bounds.getWidth();
-    double offsetY = (y - bounds.getY()) / bounds.getHeight();
-    return new Point2D.Double(offsetX, offsetY);
+  public Point2D getPlaneCoordinatesFromMouse(int x, int y) {
+    if (mprController.getVolume() == null) {
+      return null;
+    }
+    int size = mprController.getVolume().getSliceSize();
+    Point2D pt = super.getImageCoordinatesFromMouse(x, y);
+    pt.setLocation(pt.getX() / size, pt.getY() / size);
+    return pt;
   }
 
-  public Vector3d getVolumeCoordinatesFromMouse(double x, double y, Vector3d crossHair) {
+  public Vector3d getVolumeCoordinatesFromMouse(int x, int y, Vector3d crossHair) {
     Point2D pt = getPlaneCoordinatesFromMouse(x, y);
     return getVolumeCoordinates(new Vector3d(pt.getX(), pt.getY(), crossHair.z));
   }
