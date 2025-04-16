@@ -133,11 +133,10 @@ public class InfoLayer3d extends AbstractInfoLayer<DicomImageElement> {
         // drawLUT(g2, bound, fontHeight);
       }
     }
-
+    drawY -= fontHeight;
     Double tilt = imSeries.getOriginalGantryTilt();
     drawY = InfoLayer.drawGantryTiltMessage(g2d, tilt, drawY, fontHeight, border);
 
-    drawY -= fontHeight;
     if (imSeries.getVolumeGeometry().isVariablePixelSpacing()) {
       String message = Messages.getString("non.regular.volume.msg");
       FontTools.paintColorFontOutline(

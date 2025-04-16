@@ -833,10 +833,10 @@ public class MprView extends View2d implements SliceCanvas {
           @Override
           protected void done() {
             bar.setValue(bar.getMaximum());
+            mprController.getAxesControl().setCenter(oldPosition);
           }
         };
     worker.execute();
-    mprController.getAxesControl().setCenter(oldPosition);
   }
 
   protected void setRotation(double rotation) {
