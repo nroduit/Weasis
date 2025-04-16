@@ -11,7 +11,6 @@ package org.weasis.dicom.codec;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -63,17 +62,6 @@ public class HiddenSeriesManager {
               }
             }
           }
-        }
-      } else {
-        List<String> sourceSopUIDList = new ArrayList<>();
-        addSourceImage(dicom, sourceSopUIDList);
-        String seriesUID = "1.3.6.1.4.1.14519.5.2.1.7695.1700.229054711046553504545787083659";
-        reference2Series
-            .computeIfAbsent(seriesUID, _ -> new CopyOnWriteArraySet<>())
-            .add(originSeriesUID);
-        Map<String, Set<SegContour>> refMap = addSeries.apply(seriesUID);
-        for (String sopUID : sourceSopUIDList) {
-          refMap.computeIfAbsent(sopUID, _ -> new HashSet<>());
         }
       }
     }

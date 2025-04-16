@@ -916,7 +916,13 @@ public class DicomModel implements TreeModel, DataExplorerModel {
       }
 
       if (hiddenSpecialElement instanceof SegSpecialElement segSpecialElement) {
-        segSpecialElement.initContours(initialSeries);
+        List<DicomSeries> refSeriesList =
+            segSpecialElement.getRefMap().keySet().stream()
+                .map(this::getSeriesNode)
+                .filter(series -> series instanceof DicomSeries)
+                .map(series -> (DicomSeries) series)
+                .toList();
+        segSpecialElement.initContours(initialSeries, refSeriesList);
       }
       synchronized (this) {
         Map<String, Set<HiddenSpecialElement>> mapSeries =

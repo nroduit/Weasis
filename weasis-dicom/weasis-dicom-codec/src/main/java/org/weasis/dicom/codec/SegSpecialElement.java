@@ -28,6 +28,8 @@ import org.dcm4che3.img.data.CIELab;
 import org.dcm4che3.img.util.DicomUtils;
 import org.joml.Vector3d;
 import org.opencv.core.Core;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.DecFormatter;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.image.measure.MeasurementsAdapter;
@@ -49,7 +51,7 @@ import org.weasis.opencv.seg.Segment;
 
 public class SegSpecialElement extends HiddenSpecialElement
     implements SpecialElementReferences, SpecialElementRegion {
-
+  private static final Logger LOGGER = LoggerFactory.getLogger(SegSpecialElement.class);
   static final DecimalFormat roundDouble = new DecimalFormat("0.######");
 
   static {
@@ -203,7 +205,7 @@ public class SegSpecialElement extends HiddenSpecialElement
     return OtherIcon.SEGMENTATION;
   }
 
-  public void initContours(DicomSeries series) {
+  public void initContours(DicomSeries series, List<DicomSeries> refSeriesList) {
     roiMap.clear();
 
     Attributes dicom = ((DicomMediaIO) mediaIO).getDicomObject();
@@ -252,6 +254,13 @@ public class SegSpecialElement extends HiddenSpecialElement
 
     Sequence perFrameSeq = dicom.getSequence(Tag.PerFrameFunctionalGroupsSequence);
     if (perFrameSeq != null) {
+      if (perFrameSeq.size() > 400) {
+        // TODO reimplement in a more dynamic way instead of loading all contours in memory
+        LOGGER.warn(
+            "Segmentation contains more than 400 frames, skipping because of performance issues");
+        return;
+      }
+
       int index = 0;
       for (Attributes frame : perFrameSeq) {
         index++;
@@ -288,19 +297,41 @@ public class SegSpecialElement extends HiddenSpecialElement
 
         Set<SegContour> contour = roiMap.get(index);
         if (contour != null && !contour.isEmpty()) {
-          refMap.forEach(
-              (key, _) -> {
-                Map<String, Set<SegContour>> map = refMap.get(key);
-                if (map != null) {
-                  sopUIDList.forEach(
-                      sopUID -> {
-                        Set<SegContour> list = map.get(sopUID);
-                        if (list != null) {
-                          list.addAll(contour);
+          if (sopUIDList.isEmpty() && !refSeriesList.isEmpty()) {
+            Attributes planePosition = frame.getNestedDataset(Tag.PlanePositionSequence);
+            if (planePosition != null) {
+              double[] imagePositionPatient = planePosition.getDoubles(Tag.ImagePositionPatient);
+              if (imagePositionPatient != null) {
+                refSeriesList.forEach(
+                    refSeries -> {
+                      for (DicomImageElement dcm : refSeries.getMedias(null, null)) {
+                        double[] imagePosition =
+                            TagD.getTagValue(dcm, Tag.ImagePositionPatient, double[].class);
+                        if (isWithinTolerance(imagePosition, imagePositionPatient, 0.01)) {
+                          sopUIDList.add(TagD.getTagValue(dcm, Tag.SOPInstanceUID, String.class));
                         }
-                      });
-                }
-              });
+                      }
+                    });
+              }
+            }
+          }
+          if (sopUIDList.isEmpty()) {
+            roiMap.put(index, new LinkedHashSet<>());
+          } else {
+            refMap.forEach(
+                (key, _) -> {
+                  Map<String, Set<SegContour>> map = refMap.get(key);
+                  if (map != null) {
+                    sopUIDList.forEach(
+                        sopUID -> {
+                          Set<SegContour> list = map.get(sopUID);
+                          if (list != null) {
+                            list.addAll(contour);
+                          }
+                        });
+                  }
+                });
+          }
         }
       }
     }
@@ -310,6 +341,18 @@ public class SegSpecialElement extends HiddenSpecialElement
           SegMeasurableLayer<DicomImageElement> measurableLayer = getMeasurableLayer(series, p);
           region.setMeasurableLayer(measurableLayer);
         });
+  }
+
+  private static boolean isWithinTolerance(double[] array1, double[] array2, double tolerance) {
+    if (array1 == null || array2 == null || array1.length != array2.length) {
+      return false;
+    }
+    for (int i = 0; i < array1.length; i++) {
+      if (Math.abs(array1[i] - array2[i]) > tolerance) {
+        return false;
+      }
+    }
+    return true;
   }
 
   private void addPositionMap(Attributes frame, Set<SegContour> contour) {
