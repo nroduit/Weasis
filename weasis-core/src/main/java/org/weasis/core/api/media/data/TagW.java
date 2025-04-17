@@ -453,7 +453,7 @@ public class TagW {
         if (StringUtil.hasText(format)) {
           return format + " " + offset;
         } else {
-          return "$V " + offset;
+          return "$V " + offset; // NON-NLS
         }
       }
     }

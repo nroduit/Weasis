@@ -1,36 +1,35 @@
-# Based on image: https://github.com/adoptium/containers/blob/main/22/jdk/ubuntu/jammy/Dockerfile
-# Additional packages: https://github.com/adoptium/temurin22-binaries/releases/
+# Based on image: https://github.com/adoptium/containers/blob/main/24/jdk/ubuntu/noble/Dockerfile
+# Additional packages: https://github.com/adoptium/temurin24-binaries/releases/
 # Add libraries required by weasis build: bzip2 unzip xz-utils fakeroot rpm
-FROM ubuntu:22.04
 
-ENV JAVA_HOME /opt/java/openjdk
-ENV PATH $JAVA_HOME/bin:$PATH
+FROM ubuntu:24.04
+
+ENV JAVA_HOME=/opt/java/openjdk
+ENV PATH=$JAVA_HOME/bin:$PATH
 
 # Default to UTF-8 file.encoding
 ENV LANG='en_US.UTF-8' LANGUAGE='en_US:en' LC_ALL='en_US.UTF-8'
 
-RUN apt-get update \
-    && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends wget fontconfig ca-certificates p11-kit binutils tzdata locales curl bzip2 unzip xz-utils fakeroot rpm \
-    && echo "en_US.UTF-8 UTF-8" >> /etc/locale.gen \
-    && locale-gen en_US.UTF-8 \
-    && rm -rf /var/lib/apt/lists/*
+RUN set -eux; \
+    apt-get update; \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends wget fontconfig ca-certificates p11-kit binutils tzdata locales curl bzip2 unzip xz-utils fakeroot rpm \
+    ; \
+    echo "en_US.UTF-8 UTF-8" >> /etc/locale.gen; \
+    locale-gen en_US.UTF-8; \
+    rm -rf /var/lib/apt/lists/*
 
-ENV JAVA_VERSION jdk-22.0.1+8
+ENV JAVA_VERSION=jdk-24+36
 
 RUN set -eux; \
     ARCH="$(dpkg --print-architecture)"; \
     case "${ARCH}" in \
-       amd64|i386:x86-64) \
-         ESUM='05cd9359dacb1a1730f7c54f57e0fed47942a5292eb56a3a0ee6b13b87457a43'; \
-         BINARY_URL='https://github.com/adoptium/temurin22-binaries/releases/download/jdk-22.0.2%2B9/OpenJDK22U-jdk_x64_linux_hotspot_22.0.2_9.tar.gz'; \
+       amd64) \
+         ESUM='78832cb5ea4074f2215cde0d01d6192d09c87636fc24b36647aea61fb23b8272'; \
+         BINARY_URL='https://github.com/adoptium/temurin24-binaries/releases/download/jdk-24.0.1%2B9/OpenJDK24U-jdk_x64_linux_hotspot_24.0.1_9.tar.gz'; \
          ;; \
-       aarch64|arm64) \
-         ESUM='dac62747b5158c4bf4c4636432e3bdb9dea47f80f0c9d1d007f19bd5483b7d29'; \
-         BINARY_URL='https://github.com/adoptium/temurin22-binaries/releases/download/jdk-22.0.2%2B9/OpenJDK22U-jdk_aarch64_linux_hotspot_22.0.2_9.tar.gz'; \
-         ;; \
-       armhf|arm) \
-         ESUM='f82f8dff34e169b1a6244dd75232e338955bd225551279ef0a88bb508ceec0d4'; \
-         BINARY_URL='https://download.bell-sw.com/java/22.0.2+11/bellsoft-jdk22.0.2+11-linux-arm32-vfp-hflt.tar.gz'; \
+       arm64) \
+         ESUM='a598260e340028d9b2383c23df16aa286769a661bd3bf28a52e8c1a5774b1110'; \
+         BINARY_URL='https://github.com/adoptium/temurin24-binaries/releases/download/jdk-24.0.1%2B9/OpenJDK24U-jdk_aarch64_linux_hotspot_24.0.1_9.tar.gz'; \
          ;; \
        *) \
          echo "Unsupported arch: ${ARCH}"; \
@@ -38,6 +37,12 @@ RUN set -eux; \
          ;; \
     esac; \
     wget --progress=dot:giga -O /tmp/openjdk.tar.gz ${BINARY_URL}; \
+    wget --progress=dot:giga -O /tmp/openjdk.tar.gz.sig ${BINARY_URL}.sig; \
+    export GNUPGHOME="$(mktemp -d)"; \
+    # gpg: key 843C48A565F8F04B: "Adoptium GPG Key (DEB/RPM Signing Key) <temurin-dev@eclipse.org>" imported
+    gpg --batch --keyserver keyserver.ubuntu.com --recv-keys 3B04D753C9050D9A5D343F39843C48A565F8F04B; \
+    gpg --batch --verify /tmp/openjdk.tar.gz.sig /tmp/openjdk.tar.gz; \
+    rm -rf "${GNUPGHOME}" /tmp/openjdk.tar.gz.sig; \
     echo "${ESUM} */tmp/openjdk.tar.gz" | sha256sum -c -; \
     mkdir -p "$JAVA_HOME"; \
     tar --extract \
@@ -60,5 +65,7 @@ RUN set -eux; \
     echo "javac --version"; javac --version; \
     echo "java --version"; java --version; \
     echo "Complete."
+COPY --chmod=755 entrypoint.sh /__cacert_entrypoint.sh
+ENTRYPOINT ["/__cacert_entrypoint.sh"]
 
 CMD ["jshell"]

@@ -654,8 +654,8 @@ public class MprView extends View2d implements SliceCanvas {
                     int value = (Integer) thicknessSpinner.getValue();
                     double mmValue = (value * 2 + 1) * minRatio;
                     conversionLabel.setText(
-                        " %d pix = %s %s"
-                            .formatted(value, DecFormatter.allNumber(mmValue), abbr)); // NON-NLS
+                        " %d pix = %s %s" // NON-NLS
+                            .formatted(value, DecFormatter.allNumber(mmValue), abbr));
                   });
 
               // Adding components to the panel

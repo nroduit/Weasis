@@ -15,10 +15,10 @@
     <!-- force command line arguments settings to set version -->
     <!-- $ mvn clean install -Drevision=4.2.2 -Dchangelist=-SNAPSHOT -->
     <revision>4.6.0</revision>
-    <changelist>-SNAPSHOT</changelist>  <!-- Remove "-SNAPSHOT" for release -->
+    <changelist></changelist>  <!-- Remove "-SNAPSHOT" for release -->
 
-    <java-version>23</java-version>
-    <jdk-version>23</jdk-version>
+    <java-version>24</java-version>
+    <jdk-version>24</jdk-version>
     <enforcer.jdk-version>[${jdk-version},)</enforcer.jdk-version>
     <enforcer.maven-version>[3.6.3,)</enforcer.maven-version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -27,7 +27,7 @@
     <app.version>${revision}${changelist}</app.version>
     <base.minimal.version>4.6.0</base.minimal.version>
     <i18n.version>4.0.0-SNAPSHOT</i18n.version>
-    <weasis.releasenotes>https://github.com/nroduit/Weasis/blob/master/CHANGELOG.md#v451-2024-09-18</weasis.releasenotes>
+    <weasis.releasenotes>https://github.com/nroduit/Weasis/blob/master/CHANGELOG.md#v460-2025-04-17</weasis.releasenotes>
 
     <felix.framework.version>7.0.5</felix.framework.version>
     <flatlaf.version>3.5.4</flatlaf.version>
@@ -237,7 +237,7 @@
         <plugin>
           <groupId>org.jacoco</groupId>
           <artifactId>jacoco-maven-plugin</artifactId>
-          <version>0.8.12</version>
+          <version>0.8.13</version>
         </plugin>
       </plugins>
     </pluginManagement>
