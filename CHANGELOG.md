@@ -1,5 +1,54 @@
 # Changelog
 
+## [v4.6.0](https://github.com/nroduit/Weasis/tree/v4.6.0) (2025-04-17)
+
+[Full Changelog](https://github.com/nroduit/Weasis/compare/v4.5.1...v4.6.0)
+
+**Implemented enhancements:**
+
+- Add charset selection for C-FInd request [\#648](https://github.com/nroduit/Weasis/issues/648)
+- Add a Minimize Option to weasis:ui Command [\#644](https://github.com/nroduit/Weasis/issues/644)
+- Do open DICOM SR by default [\#638](https://github.com/nroduit/Weasis/issues/638)
+- Display time zone for Time attributes and adapt to local time for DateTime attributes [\#636](https://github.com/nroduit/Weasis/issues/636)
+- Update dcm4che to 5.33.1 [\#626](https://github.com/nroduit/Weasis/issues/626)
+- Update Flatlaf to 3.5.4 [\#625](https://github.com/nroduit/Weasis/issues/625)
+- Measurements in ADC series \(MRI\) [\#614](https://github.com/nroduit/Weasis/issues/614)
+- 3D View - Oblique MPR - Part 2 [\#390](https://github.com/nroduit/Weasis/issues/390)
+
+**Fixed bugs:**
+
+- Crash at startup with specific configuration of remote preferences [\#651](https://github.com/nroduit/Weasis/issues/651)
+- When importing DICOM Zip, the password window closes unexpectedly when clicking outside [\#650](https://github.com/nroduit/Weasis/issues/650)
+- SUV is not calculated when TimezoneOffsetFromUTC is negative [\#635](https://github.com/nroduit/Weasis/issues/635)
+- When a series is replaced in a view, the Presentation State applies even without a reference [\#631](https://github.com/nroduit/Weasis/issues/631)
+- Sometimes the download process remains even after cancellation [\#630](https://github.com/nroduit/Weasis/issues/630)
+- Patient navigation using shortcuts does not work correctly [\#629](https://github.com/nroduit/Weasis/issues/629)
+- The main window is not visible when a screen changes its origin \(x,y\) [\#628](https://github.com/nroduit/Weasis/issues/628)
+- Greek Characters not displayed properly [\#627](https://github.com/nroduit/Weasis/issues/627)
+- PT/CT fusion images display HU as the pixel unit [\#624](https://github.com/nroduit/Weasis/issues/624)
+- JPEG-LS: Samples per Pixel = 3 and interleave mode 'none' [\#623](https://github.com/nroduit/Weasis/issues/623)
+- GSPS with double inversions \(MONOCHROME1 & INVERSE\) gets inverted once [\#620](https://github.com/nroduit/Weasis/issues/620)
+- Potential Thread Synchronization Issue in LoadSeries.java [\#618](https://github.com/nroduit/Weasis/issues/618)
+- KO toggle button state runs incorrectly in tile mode [\#615](https://github.com/nroduit/Weasis/issues/615)
+- IVUS is not properly displayed [\#612](https://github.com/nroduit/Weasis/issues/612)
+- Empty modal window when importing or creating new series in Dicomizer [\#599](https://github.com/nroduit/Weasis/issues/599)
+- Not installing on MacOS [\#587](https://github.com/nroduit/Weasis/issues/587)
+- Cross position of MPR is not as expected when return from fullscreen. [\#572](https://github.com/nroduit/Weasis/issues/572)
+
+**Security fixes:**
+
+- Fixes CWE-522 [\#608](https://github.com/nroduit/Weasis/issues/608)
+- Weasis security issue [\#607](https://github.com/nroduit/Weasis/issues/607)
+
+**Closed issues:**
+
+- Hidden thumbnails of a study [\#584](https://github.com/nroduit/Weasis/issues/584)
+
+**Merged pull requests:**
+
+- Bump the maven group in /weasis-parent with 2 updates [\#619](https://github.com/nroduit/Weasis/pull/619) ([dependabot[bot]](https://github.com/apps/dependabot))
+- fixed \#615 KO toggle button state runs incorrectly in tile mode [\#617](https://github.com/nroduit/Weasis/pull/617) ([a347807131](https://github.com/a347807131))
+
 ## [v4.5.1](https://github.com/nroduit/Weasis/tree/v4.5.1) (2024-09-18)
 
 [Full Changelog](https://github.com/nroduit/Weasis/compare/v4.5.0...v4.5.1)
@@ -16,6 +65,10 @@
 - DICOMDIR cannot be written if it contains special DICOM elements [\#586](https://github.com/nroduit/Weasis/issues/586)
 - Missing the boot.log file [\#579](https://github.com/nroduit/Weasis/issues/579)
 - Failed to send to DICOM archive [\#577](https://github.com/nroduit/Weasis/issues/577)
+
+**Closed issues:**
+
+- oblique MPR feature. [\#578](https://github.com/nroduit/Weasis/issues/578)
 
 ## [v4.5.0](https://github.com/nroduit/Weasis/tree/v4.5.0) (2024-08-15)
 
