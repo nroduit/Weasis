@@ -1,7 +1,7 @@
 name: weasis
 title: Weasis
-base: core22
-version: '4.5.1'
+base: core24
+version: '4.6.0'
 summary: A free/libre/open medical DICOM viewer
 description: |
   Weasis is a multipurpose standalone and web-based DICOM viewer with 
@@ -24,9 +24,11 @@ description: |
 license: Apache-2.0
 grade: stable
 confinement: strict
-architectures:
-  - build-on: [amd64]
-  - build-on: [arm64]
+platforms:
+  amd64:
+    build-on: [amd64]
+  arm64:
+    build-on: [arm64]
 
 plugs:
   desktop:
@@ -43,10 +45,14 @@ plugs:
     interface: content
     target: $SNAP/data-dir/sounds
     default-provider: gtk-common-themes
-  gnome-42-2204:
+  gnome-46-2404:
     interface: content
     target: $SNAP/gnome-platform
-    default-provider: gnome-42-2204
+    default-provider: gnome-46-2404
+  gpu-2404:
+    interface: content
+    target: $SNAP/gpu-2404
+    default-provider: mesa-2404
 
 layout:
   /usr/bin/lpr:
@@ -56,8 +62,11 @@ parts:
   remote-openjdk:
     plugin: dump
     source:
-      - on amd64: https://github.com/adoptium/temurin22-binaries/releases/download/jdk-22.0.2%2B9/OpenJDK22U-jdk_x64_linux_hotspot_22.0.2_9.tar.gz
-      - on arm64: https://github.com/adoptium/temurin22-binaries/releases/download/jdk-22.0.2%2B9/OpenJDK22U-jdk_aarch64_linux_hotspot_22.0.2_9.tar.gz
+      - on amd64: https://github.com/adoptium/temurin24-binaries/releases/download/jdk-24.0.1%2B9/OpenJDK24U-jdk_x64_linux_hotspot_24.0.1_9.tar.gz
+      - on arm64: https://github.com/adoptium/temurin24-binaries/releases/download/jdk-24%2B36/OpenJDK24U-jdk_aarch64_linux_hotspot_24_36.tar.gz
+    source-checksum:
+      - on amd64: sha256/78832cb5ea4074f2215cde0d01d6192d09c87636fc24b36647aea61fb23b8272
+      - on arm64: sha256/a598260e340028d9b2383c23df16aa286769a661bd3bf28a52e8c1a5774b1110
     organize:
       '*': java-runtime/
     override-stage: 'true'
@@ -73,7 +82,8 @@ parts:
       - libstdc++6
       - libgcc1
     #source: weasis-distributions/target/native-dist/weasis-native.zip
-    source: https://github.com/nroduit/Weasis/releases/download/v4.5.1/weasis-native.zip
+    source: https://github.com/nroduit/Weasis/releases/download/v4.6.0/weasis-native.zip
+    source-checksum: sha256/a3a73591274fe9f86bb520064355541423fbc68ef7218f98aa8110cb3cf722eb
     organize:
       '*': weasis-native/
     override-stage: 'true'
@@ -86,6 +96,7 @@ parts:
     source-type: local
     source-subdir: weasis-distributions
     override-build: |
+      echo "Preparing Weasis build environment..."
       WEASIS_REMOTE=$(echo ${SNAPCRAFT_PART_INSTALL} | sed 's|parts/weasis/|parts/remote-weasis-build/|g')
       WEASIS_JDK=$(echo ${SNAPCRAFT_PART_INSTALL} | sed 's|parts/weasis/|parts/remote-openjdk/|g')
       cp -Rf ${WEASIS_REMOTE}/weasis-native ${SNAPCRAFT_PART_BUILD}/
@@ -103,11 +114,9 @@ apps:
     plugs:
       - network
       - desktop
-      - desktop-legacy
       - x11
       - home
       - network-bind
-      - unity7
       - gsettings
       - opengl
       - avahi-control
@@ -123,11 +132,9 @@ apps:
     plugs:
       - network
       - desktop
-      - desktop-legacy
       - x11
       - home
       - network-bind
-      - unity7
       - gsettings
       - opengl
       - avahi-control
