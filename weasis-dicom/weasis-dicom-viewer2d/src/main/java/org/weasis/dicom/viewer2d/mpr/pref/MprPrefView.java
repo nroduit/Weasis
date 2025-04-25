@@ -46,6 +46,7 @@ public class MprPrefView extends AbstractItemDialogPage {
     EventManager eventManager = EventManager.getInstance();
     JLabel lblMode = new JLabel(Messages.getString("auto.center") + StringUtil.COLON);
 
+    GuiUtils.setPreferredWidth(comboBox3DCursorMode, 270, 150);
     comboBox3DCursorMode.addItem(Messages.getString("never"));
     comboBox3DCursorMode.addItem(Messages.getString("only.center.hidden"));
     comboBox3DCursorMode.addItem(Messages.getString("always"));

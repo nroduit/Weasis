@@ -771,6 +771,7 @@ public class WeasisWin {
                   Messages.getString("LicencesDialog.no.licence"),
                   Messages.getString("LicencesDialog.title"),
                   JOptionPane.INFORMATION_MESSAGE);
+              layer.hideUI();
             } else {
               LicencesDialog dialog = new LicencesDialog(getFrame(), list);
               ColorLayerUI.showCenterScreen(dialog, layer);

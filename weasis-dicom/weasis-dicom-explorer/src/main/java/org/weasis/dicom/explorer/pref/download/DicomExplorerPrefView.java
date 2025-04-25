@@ -82,6 +82,7 @@ public class DicomExplorerPrefView extends AbstractItemDialogPage {
 
     JLabel labelOpenPatient =
         new JLabel(Messages.getString("DicomExplorer.open_win") + StringUtil.COLON);
+    GuiUtils.setPreferredWidth(openingViewerJComboBox, 270, 150);
     openingViewerJComboBox.setSelectedItem(getOpeningViewer());
     panel2.add(GuiUtils.getFlowLayoutPanel(labelOpenPatient, openingViewerJComboBox));
     panel2.setBorder(GuiUtils.getTitledBorder(Messages.getString("actions")));
