@@ -24,6 +24,7 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JRadioButton;
 import javax.swing.JSpinner;
+import javax.swing.JTextPane;
 import javax.swing.LookAndFeel;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
@@ -133,7 +134,12 @@ public class ThemeSetting extends AbstractItemDialogPage {
             .formatted(
                 IconColor.ACTIONS_RED.getHtmlCode(),
                 Messages.getString("GeneralSetting.alertNote"));
-    add(GuiUtils.getFlowLayoutPanel(new JLabel(alert)));
+    JTextPane textPane = new JTextPane();
+    textPane.setContentType("text/html");
+    textPane.setEditable(false);
+    textPane.setPreferredSize(GuiUtils.getDimension(300, 50));
+    textPane.setText(alert);
+    add(textPane);
     add(GuiUtils.boxYLastElement(LAST_FILLER_HEIGHT));
     getProperties().setProperty(PreferenceDialog.KEY_SHOW_RESTORE, Boolean.TRUE.toString());
     getProperties().setProperty(PreferenceDialog.KEY_HELP, "theme"); // NON-NLS

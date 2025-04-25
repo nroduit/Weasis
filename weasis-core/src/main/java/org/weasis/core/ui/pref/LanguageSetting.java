@@ -79,12 +79,12 @@ public class LanguageSetting extends AbstractItemDialogPage {
             ITEM_SEPARATOR,
             labelLocale2,
             comboBoxFormat));
+    textPane.setPreferredSize(GuiUtils.getDimension(300, 150));
     textPane.setContentType("text/html");
     textPane.setEditable(false);
     add(textPane);
 
-    add(GuiUtils.boxYLastElement(5));
-
+    // Do not add an element for margin, this lets the text pane grow
     getProperties().setProperty(PreferenceDialog.KEY_SHOW_RESTORE, Boolean.TRUE.toString());
     getProperties().setProperty(PreferenceDialog.KEY_HELP, "locale"); // NON-NLS
   }
