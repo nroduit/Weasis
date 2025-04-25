@@ -30,13 +30,19 @@ public final class LookAndFeels {
   private final ReadableLookAndFeelInfo defaultDarkTheme;
 
   private static final String[] FLAT_NAMES = {
-    "Core Dark - FlatDarcula", "Core Dark - FlatDark", "Core Light - FlatLight" // NON-NLS
+    "Core Dark - FlatDarcula", // NON-NLS
+    "Core Dark - FlatDark", // NON-NLS
+    "Core Light - FlatLight", // NON-NLS
+    "Core Dark - macOS", // NON-NLS
+    "Core Light - macOS" // NON-NLS
   };
 
   private static final String[] FLAT_CLASSES = {
     "com.formdev.flatlaf.FlatDarculaLaf",
     "com.formdev.flatlaf.FlatDarkLaf",
-    "com.formdev.flatlaf.FlatLightLaf"
+    "com.formdev.flatlaf.FlatLightLaf",
+    "com.formdev.flatlaf.themes.FlatMacDarkLaf",
+    "com.formdev.flatlaf.themes.FlatMacLightLaf"
   };
 
   LookAndFeels() {
