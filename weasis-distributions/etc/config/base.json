@@ -267,13 +267,6 @@
       "category": "LOCK"
     },
     {
-      "code": "felix.native.processor.alias.arm_le",
-      "value": "armv7a",
-      "description": "Processor alias for 32-bit arm native libraries",
-      "type": "A",
-      "category": "LAUNCH"
-    },
-    {
       "code": "weasis.clean.previous.version",
       "value": "false",
       "description": "If true, the bundle cache is cleared when the weasis version has changed from the previous launch",
