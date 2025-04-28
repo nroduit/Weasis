@@ -41,6 +41,7 @@ import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.text.NumberFormat;
 import java.text.ParseException;
 import javax.swing.AbstractAction;
 import javax.swing.AbstractButton;
@@ -71,6 +72,7 @@ import javax.swing.event.ChangeListener;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 import javax.swing.text.DefaultFormatterFactory;
+import javax.swing.text.NumberFormatter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.Messages;
@@ -467,6 +469,16 @@ public class GuiUtils {
       LOGGER.error("Cannot get number form textField", e);
     }
     return val;
+  }
+
+  public static void formatPortTextField(JFormattedTextField port) {
+    NumberFormat portFormat = NumberFormat.getNumberInstance();
+    portFormat.setMinimumIntegerDigits(0);
+    portFormat.setMaximumIntegerDigits(65535);
+    portFormat.setMaximumFractionDigits(0);
+    port.setFormatterFactory(new DefaultFormatterFactory(new NumberFormatter(portFormat)));
+    port.setColumns(5);
+    GuiUtils.addCheckAction(port);
   }
 
   // A convenience method for creating menu items

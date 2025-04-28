@@ -10,15 +10,12 @@
 package org.weasis.core.ui.pref;
 
 import java.awt.FlowLayout;
-import java.text.NumberFormat;
 import javax.swing.ButtonGroup;
 import javax.swing.JFormattedTextField;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JRadioButton;
 import javax.swing.JTextField;
-import javax.swing.text.DefaultFormatterFactory;
-import javax.swing.text.NumberFormatter;
 import net.miginfocom.swing.MigLayout;
 import org.weasis.core.Messages;
 import org.weasis.core.api.gui.util.AbstractItemDialogPage;
@@ -72,10 +69,10 @@ public class ProxyPrefView extends AbstractItemDialogPage {
   }
 
   private void initialize() {
-    formatPortTextField(proxyPortHttp);
-    formatPortTextField(proxyPortSecure);
-    formatPortTextField(proxyPortFtp);
-    formatPortTextField(proxyPortSocks);
+    GuiUtils.formatPortTextField(proxyPortHttp);
+    GuiUtils.formatPortTextField(proxyPortSecure);
+    GuiUtils.formatPortTextField(proxyPortFtp);
+    GuiUtils.formatPortTextField(proxyPortSocks);
 
     add(GuiUtils.getFlowLayoutPanel(FlowLayout.LEADING, 0, BLOCK_SEPARATOR, directConnectionRadio));
     add(
@@ -116,16 +113,6 @@ public class ProxyPrefView extends AbstractItemDialogPage {
 
     if (p.getBooleanProperty(PROXY_MANUAL, false)) proxyConnectionRadio.doClick();
     else directConnectionRadio.doClick();
-  }
-
-  private static void formatPortTextField(JFormattedTextField port) {
-    NumberFormat portFormat = NumberFormat.getNumberInstance();
-    portFormat.setMinimumIntegerDigits(0);
-    portFormat.setMaximumIntegerDigits(65535);
-    portFormat.setMaximumFractionDigits(0);
-    port.setFormatterFactory(new DefaultFormatterFactory(new NumberFormatter(portFormat)));
-    port.setColumns(5);
-    GuiUtils.addCheckAction(port);
   }
 
   private JPanel buildProxyPanel() {

@@ -11,7 +11,6 @@ package org.weasis.dicom.explorer.pref.node;
 
 import java.awt.FlowLayout;
 import java.awt.Window;
-import java.text.NumberFormat;
 import java.util.Optional;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JButton;
@@ -23,7 +22,6 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 import javax.swing.WindowConstants;
-import javax.swing.text.NumberFormatter;
 import net.miginfocom.swing.MigLayout;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.WinUtil;
@@ -56,6 +54,7 @@ public class DicomNodeDialog extends JDialog {
         dicomNode == null
             ? typeNode == null ? AbstractDicomNode.Type.DICOM : typeNode
             : dicomNode.getType();
+    this.portTf = new JFormattedTextField();
     initComponents();
     this.dicomNode = dicomNode;
     this.nodesComboBox = nodeComboBox;
@@ -100,14 +99,10 @@ public class DicomNodeDialog extends JDialog {
     panel.add(hostnameTf);
 
     JLabel portLabel = new JLabel(Messages.getString("PrinterDialog.port") + StringUtil.COLON);
-    NumberFormat myFormat = NumberFormat.getNumberInstance();
-    myFormat.setMinimumIntegerDigits(0);
-    myFormat.setMaximumIntegerDigits(65535);
-    myFormat.setMaximumFractionDigits(0);
-    portTf = new JFormattedTextField(new NumberFormatter(myFormat));
-    portTf.setColumns(5);
+    ;
+    GuiUtils.formatPortTextField(portTf);
     GuiUtils.setPreferredWidth(portTf, 60);
-    GuiUtils.addCheckAction(portTf);
+
     panel.add(portLabel, GuiUtils.NEWLINE);
     panel.add(portTf, "grow 0"); // NON-NLS
 
