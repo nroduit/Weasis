@@ -412,6 +412,14 @@
       "category": "GENERAL"
     },
     {
+      "code": "weasis.auth.back.port",
+      "value": "0",
+      "description": "Define the port for the authentication callback. 0 means random port",
+      "type": "A",
+      "javaType": "INT",
+      "category": "GENERAL"
+    },
+    {
       "code": "weasis.aet",
       "value": null,
       "description": "Calling AETitle for DICOM send and Dicomizer publish. ? null means displaying the DICOM calling node combobox otherwise the combo is not displayed and the value is directly used",

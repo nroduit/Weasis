@@ -18,6 +18,7 @@ import com.github.scribejava.core.oauth.OAuth20Service;
 import java.util.HashMap;
 import java.util.Map;
 import org.weasis.core.Messages;
+import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.util.SocketUtil;
 
 public class OAuth2ServiceFactory {
@@ -71,6 +72,12 @@ public class OAuth2ServiceFactory {
   }
 
   public static OAuth20Service getService(AuthMethod authMethod) {
+    int port =
+        GuiUtils.getUICore().getSystemPreferences().getIntProperty("weasis.auth.back.port", 0);
+    return getService(authMethod, port);
+  }
+
+  public static OAuth20Service getService(AuthMethod authMethod, int port) {
     if (services.containsKey(authMethod.getUid())) {
       return services.get(authMethod.getUid());
     }
@@ -80,7 +87,9 @@ public class OAuth2ServiceFactory {
     if (registration == null || provider == null) {
       return null;
     }
-    int port = SocketUtil.findAvailablePort();
+    if (port <= 0) {
+      port = SocketUtil.findAvailablePort();
+    }
     OAuth20Service oAuth20Service =
         new ServiceBuilder(registration.getClientId())
             .apiSecret(registration.getClientSecret())
