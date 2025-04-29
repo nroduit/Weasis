@@ -413,7 +413,7 @@
     },
     {
       "code": "weasis.auth.back.port",
-      "value": "1984",
+      "value": "0",
       "description": "Define the port for the authentication callback. 0 means random port",
       "type": "A",
       "javaType": "INT",
