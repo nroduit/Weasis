@@ -47,7 +47,8 @@ public class AuthMethodDialog extends JDialog {
   private final JTextField clientID = new JTextField(50);
   private final JTextField clientSecret = new JTextField(50);
   private final JTextField scope = new JTextField(50);
-
+  private final JTextField audience = new JTextField(50);
+  
   public AuthMethodDialog(
       Window parent, String title, AuthMethod authMethod, JComboBox<AuthMethod> parentCombobox) {
     super(parent, title, ModalityType.APPLICATION_MODAL);
@@ -172,6 +173,8 @@ public class AuthMethodDialog extends JDialog {
     panel.add(clientSecret, "");
     panel.add(new JLabel("Scope" + StringUtil.COLON), GuiUtils.NEWLINE); // NON-NLS
     panel.add(scope, "");
+    panel.add(new JLabel("Audience" + StringUtil.COLON), GuiUtils.NEWLINE); // NON-NLS
+    panel.add(audience, "");
     return panel;
   }
 
@@ -188,6 +191,7 @@ public class AuthMethodDialog extends JDialog {
       clientID.setText(reg.getClientId());
       clientSecret.setText(reg.getClientSecret());
       scope.setText(reg.getScope());
+      audience.setText(reg.getAudience());
     }
   }
 
@@ -224,6 +228,7 @@ public class AuthMethodDialog extends JDialog {
     reg.setClientId(clientID.getText());
     reg.setClientSecret(clientSecret.getText());
     reg.setScope(scope.getText());
+    reg.setAudience(audience.getText());
 
     if (addMethod) {
       parentCombobox.addItem(authMethod);

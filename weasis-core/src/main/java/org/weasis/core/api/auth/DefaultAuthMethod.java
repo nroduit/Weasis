@@ -102,6 +102,12 @@ public class DefaultAuthMethod implements AuthMethod {
       additionalParams.put("access_type", "offline"); // NON-NLS
       // force to reget refresh token (if user are asked not the first time)
       additionalParams.put("prompt", "consent"); // NON-NLS
+
+      // if audience was set in the registration, add it to the additional params
+      String audience = authRegistration.getAudience();
+      if (StringUtil.hasText(audience)) {
+        additionalParams.put("audience", audience); // NON-NLS
+      }
       OAuth20Service service = server.getResponseHandler().getService();
       final String authorizationUrl =
           service.createAuthorizationUrlBuilder().additionalParams(additionalParams).build();

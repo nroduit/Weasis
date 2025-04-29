@@ -51,6 +51,8 @@ echo " --no-installer
 Build only the native binaries not the final installer"
 echo " --mac-signing-key-user-name
 Key user name of the certificate to sign the bundle"
+echo " --insecure -k
+Build unsigned binary (skip code signing)"
 exit 0
 ;;
 -j|--jdk)
@@ -75,6 +77,10 @@ shift # past value
 ;;
 --no-installer)
 PACKAGE="NO"
+shift # past argument
+;;
+-k|--insecure)
+INSECURE="YES"
 shift # past argument
 ;;
 --mac-signing-key-user-name)
@@ -201,8 +207,10 @@ fi
 if [ "$machine" = "macosx" ] ; then
     mkdir jar_contents
     unzip "$INPUT_DIR"/weasis-launcher.jar -d jar_contents
-    codesign --force --deep --timestamp --sign "$CERTIFICATE" -vvv jar_contents/com/formdev/flatlaf/natives/libflatlaf-macos-arm64.dylib
-    codesign --force --deep --timestamp --sign "$CERTIFICATE" -vvv jar_contents/com/formdev/flatlaf/natives/libflatlaf-macos-x86_64.dylib
+    if [ "$INSECURE" != "YES" ] ; then
+        codesign --force --deep --timestamp --sign "$CERTIFICATE" -vvv jar_contents/com/formdev/flatlaf/natives/libflatlaf-macos-arm64.dylib
+        codesign --force --deep --timestamp --sign "$CERTIFICATE" -vvv jar_contents/com/formdev/flatlaf/natives/libflatlaf-macos-x86_64.dylib
+    fi
     jar cfv weasis-launcher.jar -C jar_contents .
     mv -f weasis-launcher.jar "$INPUT_DIR"/weasis-launcher.jar
     rm -rf jar_contents
@@ -226,7 +234,7 @@ fi
 if [ "$machine" = "macosx" ] ; then
   DICOMIZER_CONFIG="Dicomizer=$RES/dicomizer-launcher.properties"
   declare -a customOptions=("--java-options" "-splash:\$APPDIR/resources/images/about-round.png" "--java-options" "-Dapple.laf.useScreenMenuBar=true" "--java-options" "-Dapple.awt.application.appearance=NSAppearanceNameDarkAqua")
-  if [[ ! -x "$CERTIFICATE" ]] ; then
+  if [[ ! -x "$CERTIFICATE" ]] && [ "$INSECURE" != "YES" ] ; then
     declare -a signArgs=("--mac-package-identifier" "$IDENTIFIER" "--mac-signing-key-user-name" "$CERTIFICATE"  "--mac-sign")
   else
     declare -a signArgs=("--mac-package-identifier" "$IDENTIFIER")
@@ -256,7 +264,7 @@ $JPKGCMD --type app-image --input "$INPUT_DIR" --dest "$OUTPUT_PATH" --name "$NA
 --add-launcher "${DICOMIZER_CONFIG}" --resource-dir "$RES"  --app-version "$WEASIS_CLEAN_VERSION" \
 "${tmpArgs[@]}" --verbose "${signArgs[@]}" "${customOptions[@]}" "${commonOptions[@]}"
 
-if [ "$machine" = "macosx" ] ; then
+if [ "$machine" = "macosx" ] && [ "$INSECURE" != "YES" ] ; then
     codesign --timestamp --entitlements "$RES/uri-launcher.entitlements" --options runtime --force -vvv --sign "$CERTIFICATE" "$RES/$NAME.app"
 fi
 
