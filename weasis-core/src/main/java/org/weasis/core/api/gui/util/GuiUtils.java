@@ -43,6 +43,7 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.text.NumberFormat;
 import java.text.ParseException;
+import java.util.function.Predicate;
 import javax.swing.AbstractAction;
 import javax.swing.AbstractButton;
 import javax.swing.Box;
@@ -60,6 +61,7 @@ import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
 import javax.swing.JSlider;
 import javax.swing.JSpinner;
+import javax.swing.JTextField;
 import javax.swing.JTextPane;
 import javax.swing.KeyStroke;
 import javax.swing.SpinnerNumberModel;
@@ -69,6 +71,8 @@ import javax.swing.border.Border;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.TitledBorder;
 import javax.swing.event.ChangeListener;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 import javax.swing.text.DefaultFormatterFactory;
@@ -469,6 +473,46 @@ public class GuiUtils {
       LOGGER.error("Cannot get number form textField", e);
     }
     return val;
+  }
+
+  /**
+   * Adds a dynamic validation listener to the given JTextField.
+   *
+   * @param textField The JTextField to validate.
+   * @param validationLogic A lambda or Predicate to validate the field's content.
+   */
+  public static void addValidation(JTextField textField, Predicate<String> validationLogic) {
+    textField.putClientProperty("JComponent.outline", "error");
+    textField
+        .getDocument()
+        .addDocumentListener(
+            new DocumentListener() {
+              @Override
+              public void insertUpdate(DocumentEvent e) {
+                validate();
+              }
+
+              @Override
+              public void removeUpdate(DocumentEvent e) {
+                validate();
+              }
+
+              @Override
+              public void changedUpdate(DocumentEvent e) {
+                validate();
+              }
+
+              private void validate() {
+                String text = textField.getText().trim();
+                if (validationLogic.test(text)) {
+                  // Input is valid - no error
+                  textField.putClientProperty("JComponent.outline", null);
+                } else {
+                  // Input is invalid - show error outline
+                  textField.putClientProperty("JComponent.outline", "error");
+                }
+              }
+            });
   }
 
   public static void formatPortTextField(JFormattedTextField port) {

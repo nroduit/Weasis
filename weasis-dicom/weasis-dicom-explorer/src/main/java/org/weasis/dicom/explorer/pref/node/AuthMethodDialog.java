@@ -151,11 +151,15 @@ public class AuthMethodDialog extends JDialog {
 
     panel.add(new JLabel("Name" + StringUtil.COLON), GuiUtils.NEWLINE); // NON-NLS
     panel.add(name, "");
+    GuiUtils.addValidation(name, StringUtil::hasText);
     panel.add(new JLabel("Authorization URI" + StringUtil.COLON), GuiUtils.NEWLINE); // NON-NLS
     panel.add(authorizationURI, "");
+    GuiUtils.addValidation(authorizationURI, NetworkUtil::isValidUrlLikeUri);
     panel.add(new JLabel("Token URI" + StringUtil.COLON), GuiUtils.NEWLINE); // NON-NLS
+    GuiUtils.addValidation(tokenURI, NetworkUtil::isValidUrlLikeUri);
     panel.add(tokenURI, "");
     panel.add(new JLabel("Revoke URI" + StringUtil.COLON), GuiUtils.NEWLINE); // NON-NLS
+    GuiUtils.addValidation(revokeTokenURI, NetworkUtil::isValidUrlLikeUri);
     panel.add(revokeTokenURI, "");
     return panel;
   }
@@ -203,9 +207,9 @@ public class AuthMethodDialog extends JDialog {
 
     if (!StringUtil.hasText(n)
         || !StringUtil.hasText(authURI)
-        || !NetworkUtil.urlValidator(authURI)
-        || !StringUtil.hasText(tURI)
-        || !NetworkUtil.urlValidator(tURI)) {
+        || !NetworkUtil.isValidUrlLikeUri(authURI)
+        || !NetworkUtil.isValidUrlLikeUri(tURI)
+        || !NetworkUtil.isValidUrlLikeUri(tURI)) {
       JOptionPane.showMessageDialog(
           WinUtil.getValidComponent(this),
           Messages.getString("missing.fields"),

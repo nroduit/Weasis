@@ -225,11 +225,11 @@ public class NetworkUtil {
     return c;
   }
 
-  public static boolean urlValidator(String url) {
+  public static boolean isValidUrlLikeUri(String uri) {
     try {
-      new URL(url).toURI();
-      return true;
-    } catch (URISyntaxException | MalformedURLException exception) {
+      URI u = new URI(uri);
+      return u.getScheme() != null && u.getHost() != null;
+    } catch (URISyntaxException exception) {
       return false;
     }
   }
