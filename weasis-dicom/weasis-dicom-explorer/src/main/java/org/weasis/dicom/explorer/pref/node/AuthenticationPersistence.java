@@ -56,6 +56,7 @@ public class AuthenticationPersistence {
   private static final String T_TOKEN_URI = "token"; // NON-NLS
   private static final String T_REVOKE_URI = "revoke"; // NON-NLS
   private static final String T_OPENID = "openid"; // NON-NLS
+  private static final String T_AUDIENCE = "audience"; // NON-NLS
 
   private static final Map<String, AuthMethod> methods = new HashMap<>();
 
@@ -135,6 +136,7 @@ public class AuthenticationPersistence {
           writeNode(writer, T_CLIENT_ID, reg.getClientId());
           writeNode(writer, T_CLIENT_SECRET, reg.getClientSecret());
           writeNode(writer, T_SCOPE, reg.getScope());
+          writeNode(writer, T_AUDIENCE, reg.getAudience());
           writer.writeEndElement();
 
           writer.writeEndElement();
@@ -234,6 +236,7 @@ public class AuthenticationPersistence {
       reg.setClientId(xmler.getAttributeValue(null, T_CLIENT_ID));
       reg.setClientSecret(xmler.getAttributeValue(null, T_CLIENT_SECRET));
       reg.setScope(xmler.getAttributeValue(null, T_SCOPE));
+      reg.setAudience(xmler.getAttributeValue(null, T_AUDIENCE));
     }
   }
 }
