@@ -46,7 +46,6 @@
       </activation>
       <modules>
         <module>weasis-opencv-core-linux-aarch64</module>
-        <module>weasis-opencv-core-linux-armv7a</module>
         <module>weasis-opencv-core-linux-x86-64</module>
         <module>weasis-opencv-core-macosx-aarch64</module>
         <module>weasis-opencv-core-macosx-x86-64</module>

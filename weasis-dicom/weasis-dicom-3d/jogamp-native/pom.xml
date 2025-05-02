@@ -17,7 +17,6 @@
 
   <modules>
     <module>jogamp-linux-aarch64</module>
-    <module>jogamp-linux-armv7a</module>
     <module>jogamp-linux-x86-64</module>
     <module>jogamp-macosx-aarch64</module>
     <module>jogamp-macosx-x86-64</module>
