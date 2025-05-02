@@ -26,7 +26,13 @@ case "$1" in
     remove|upgrade|deconfigure)
 DESKTOP_COMMANDS_UNINSTALL
 LAUNCHER_AS_SERVICE_COMMANDS_UNINSTALL
-uninstall_default_mime_handler weasis-Weasis.desktop x-scheme-handler/weasis
+
+if command_exists desktop_uninstall_default_mime_handler; then
+    desktop_uninstall_default_mime_handler weasis-Weasis.desktop x-scheme-handler/weasis
+else
+    echo "Warning: 'desktop_uninstall_default_mime_handler' not found. Skipping MIME handler uninstallation." >&2
+fi
+
 rm -f /etc/opt/chrome/policies/managed/weasis.json
 rm -f /etc/chromium/policies/managed/weasis.json
     ;;
