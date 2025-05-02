@@ -49,18 +49,17 @@ public class OAuth2ServiceFactory {
               null,
               null,
               "https://www.googleapis.com/auth/cloud-healthcare https://www.googleapis.com/auth/cloudplatformprojects.readonly"));
-  public static final DefaultAuthMethod keycloackTemplate =
+  public static final DefaultAuthMethod keycloakTemplate =
       new DefaultAuthMethod(
           "68c845fc-93c5-11eb-b2f8-0f5db063091d", // NON-NLS
-          buildKeycloackProvider(
-              "Default Keycloack", "http://localhost:8080/", "master"), // NON-NLS
+          buildKeycloakProvider("Default Keycloak", "http://localhost:8080/", "master"), // NON-NLS
           new AuthRegistration(null, null, "openid")); // NON-NLS
 
   private static final Map<String, OAuth20Service> services = new HashMap<>();
 
   private OAuth2ServiceFactory() {}
 
-  public static AuthProvider buildKeycloackProvider(String name, String baseUrl, String realm) {
+  public static AuthProvider buildKeycloakProvider(String name, String baseUrl, String realm) {
     String baseUrlWithRealm =
         baseUrl + (baseUrl.endsWith("/") ? "" : "/") + "auth/realms/" + realm.trim(); // NON-NLS
     return new AuthProvider(

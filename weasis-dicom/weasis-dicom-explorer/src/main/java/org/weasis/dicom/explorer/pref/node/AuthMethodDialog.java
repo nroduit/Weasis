@@ -48,13 +48,13 @@ public class AuthMethodDialog extends JDialog {
   private final JTextField clientSecret = new JTextField(50);
   private final JTextField scope = new JTextField(50);
   private final JTextField audience = new JTextField(50);
-  
+
   public AuthMethodDialog(
       Window parent, String title, AuthMethod authMethod, JComboBox<AuthMethod> parentCombobox) {
     super(parent, title, ModalityType.APPLICATION_MODAL);
     this.parentCombobox = parentCombobox;
     comboBoxAuth.addItem(OAuth2ServiceFactory.googleAuthTemplate);
-    comboBoxAuth.addItem(OAuth2ServiceFactory.keycloackTemplate);
+    comboBoxAuth.addItem(OAuth2ServiceFactory.keycloakTemplate);
     boolean addAuth = false;
     if (authMethod == null) {
       addAuth = true;
@@ -103,7 +103,7 @@ public class AuthMethodDialog extends JDialog {
     buttonFill.addActionListener(
         e -> {
           AuthMethod m = (AuthMethod) comboBoxAuth.getSelectedItem();
-          if (OAuth2ServiceFactory.keycloackTemplate.equals(m)) {
+          if (OAuth2ServiceFactory.keycloakTemplate.equals(m)) {
             JTextField textFieldName = new JTextField();
             JTextField textFieldURL = new JTextField();
             JTextField textFieldRealm = new JTextField();
@@ -127,7 +127,7 @@ public class AuthMethodDialog extends JDialog {
 
             if (option == JOptionPane.OK_OPTION) {
               AuthProvider p =
-                  OAuth2ServiceFactory.buildKeycloackProvider(
+                  OAuth2ServiceFactory.buildKeycloakProvider(
                       textFieldName.getText(), textFieldURL.getText(), textFieldRealm.getText());
               m = new DefaultAuthMethod(UUID.randomUUID().toString(), p, m.getAuthRegistration());
               m.setLocal(true);
