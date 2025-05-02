@@ -18,7 +18,11 @@ public class AuthRegistration {
   private String audience;
   private String user;
 
-  public AuthRegistration(String clientId, String clientSecret, String scope) {
+  public AuthRegistration() {
+    this(null, null, null, null);
+  }
+
+  public AuthRegistration(String clientId, String clientSecret, String scope, String audience) {
     this.clientId = clientId;
     this.clientSecret = clientSecret;
     this.scope = scope;

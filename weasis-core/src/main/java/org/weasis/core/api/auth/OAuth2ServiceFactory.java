@@ -28,7 +28,7 @@ public class OAuth2ServiceFactory {
       new DefaultAuthMethod(
           NO,
           new AuthProvider(Messages.getString("no.authentication"), null, null, null, false),
-          new AuthRegistration(null, null, null)) {
+          new AuthRegistration()) {
         @Override
         public OAuth2AccessToken getToken() {
           return null;
@@ -48,12 +48,13 @@ public class OAuth2ServiceFactory {
           new AuthRegistration(
               null,
               null,
-              "https://www.googleapis.com/auth/cloud-healthcare https://www.googleapis.com/auth/cloudplatformprojects.readonly"));
+              "https://www.googleapis.com/auth/cloud-healthcare https://www.googleapis.com/auth/cloudplatformprojects.readonly",
+              null));
   public static final DefaultAuthMethod keycloakTemplate =
       new DefaultAuthMethod(
           "68c845fc-93c5-11eb-b2f8-0f5db063091d", // NON-NLS
           buildKeycloakProvider("Default Keycloak", "http://localhost:8080/", "master"), // NON-NLS
-          new AuthRegistration(null, null, "openid")); // NON-NLS
+          new AuthRegistration(null, null, "openid", null)); // NON-NLS
 
   private static final Map<String, OAuth20Service> services = new HashMap<>();
 

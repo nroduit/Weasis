@@ -62,7 +62,7 @@ public class AuthMethodDialog extends JDialog {
           new DefaultAuthMethod(
               UUID.randomUUID().toString(),
               new AuthProvider(null, null, null, null, false),
-              new AuthRegistration(null, null, null));
+              new AuthRegistration());
       this.authMethod.setLocal(true);
     } else {
       this.authMethod = authMethod;

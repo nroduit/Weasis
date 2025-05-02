@@ -202,7 +202,7 @@ public class AuthenticationPersistence {
         String code = xmler.getAttributeValue(null, T_CODE);
 
         AuthProvider p = new AuthProvider(null, null, null, null, false);
-        AuthRegistration reg = new AuthRegistration(null, null, null);
+        AuthRegistration reg = new AuthRegistration();
         DefaultAuthMethod node = new DefaultAuthMethod(uid, p, reg);
         while (xmler.hasNext()) {
           int eventType = xmler.next();
