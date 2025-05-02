@@ -37,7 +37,10 @@ public class Placeholder {
             }
             return val;
           });
-
+  public static final Placeholder DICOM_COPY_FOLDER_PLACEHOLDER =
+      new Placeholder(
+          "\\{dicom:" + DICOM_COPY_FOLDER + "}", // NON-NLS
+          (path, _) -> path);
   private final String patternString;
   private final BiFunction<String, ImageViewerEventManager<?>, String> biFunction;
 
@@ -58,6 +61,8 @@ public class Placeholder {
       if (replacement == null) {
         replacement = StringUtil.EMPTY_STRING;
         LOGGER.warn("Placeholder '{}' not found", placeholder);
+      } else {
+        replacement = Matcher.quoteReplacement(replacement);
       }
       matcher.appendReplacement(sb, replacement);
     }

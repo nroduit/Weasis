@@ -242,8 +242,10 @@ public class Launcher {
     @JsonIgnore
     protected String resolvePlaceholders(String text, ImageViewerEventManager<?> eventManager) {
       String val = Placeholder.PREFERENCES_PLACEHOLDER.resolvePlaceholders(text, eventManager);
-      if (source != null && val != null) {
-        val = val.replaceAll("\\" + DICOM_SEL, source.toAbsolutePath().toString());
+      if (source != null && StringUtil.hasText(val)) {
+        val =
+            Placeholder.DICOM_COPY_FOLDER_PLACEHOLDER.resolvePlaceholders(
+                source.toAbsolutePath().toString(), eventManager);
       }
       if (eventManager != null) {
         return eventManager.resolvePlaceholders(val);
