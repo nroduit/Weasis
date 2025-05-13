@@ -22,9 +22,8 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JToggleButton;
 import javax.swing.border.Border;
-import org.weasis.core.api.gui.util.ActionW;
-import org.weasis.core.api.gui.util.GuiUtils;
-import org.weasis.core.api.gui.util.JSliderW;
+
+import org.weasis.core.api.gui.util.*;
 import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.api.util.ResourceUtil.ActionIcon;
 import org.weasis.core.api.util.ResourceUtil.OtherIcon;
@@ -39,7 +38,9 @@ import org.weasis.dicom.viewer3d.vr.View3d;
 
 public class VolumeTool extends PluginTool {
 
-  public static final String BUTTON_NAME = Messages.getString("3d.tool");
+    private final Feature.SliderChangeListenerValue slider = new Feature.SliderChangeListenerValue("Slicing", "zoom", 90, 0, Feature.getSvgCursor("zoom.svg", "Slicing", 0.5F, 0.5F));
+
+    public static final String BUTTON_NAME = Messages.getString("3d.tool");
 
   private final JScrollPane rootPane = new JScrollPane();
   private final Border spaceY = GuiUtils.getEmptyBorder(15, 3, 0, 3);
@@ -54,6 +55,8 @@ public class VolumeTool extends PluginTool {
   private void init() {
     setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
     add(getWindowLevelPanel());
+    add(getSlicePanel());
+    add(getSliceNormPanel());
     add(getVolumetricPanel());
     add(getTransformPanel());
     add(GuiUtils.boxYLastElement(3));
@@ -222,7 +225,86 @@ public class VolumeTool extends PluginTool {
     return transform;
   }
 
-  @Override
+  private JPanel getSlicePanel() {
+    JPanel slice = GuiUtils.getVerticalBoxLayoutPanel();
+    slice.setBorder(
+            BorderFactory.createCompoundBorder(
+                    spaceY,
+                    GuiUtils.getTitledBorder("Slicing")));
+
+
+
+    EventManager.getInstance()
+            .getAction(ActionW.SLICE_X)
+            .ifPresent(
+                    sliderItem -> {
+                      JSliderW xSliceSlider = sliderItem.createSlider(0, true);
+                      GuiUtils.setPreferredWidth(xSliceSlider, 100);
+                      slice.add(xSliceSlider);
+
+                    });
+    EventManager.getInstance()
+            .getAction(ActionW.SLICE_Y)
+            .ifPresent(
+                    sliderItem -> {
+                      JSliderW sliceSlider = sliderItem.createSlider(0, true);
+                      GuiUtils.setPreferredWidth(sliceSlider, 100);
+                      slice.add(sliceSlider);
+
+                    });
+    EventManager.getInstance()
+            .getAction(ActionW.SLICE_Z)
+            .ifPresent(
+                    sliderItem -> {
+                      JSliderW sliceSlider = sliderItem.createSlider(0, true);
+                      GuiUtils.setPreferredWidth(sliceSlider, 100);
+                      slice.add(sliceSlider);
+
+                    });
+    EventManager.getInstance()
+            .getAction(ActionW.SLICE_ENABLE)
+            .ifPresent(
+                    toggleButton -> {
+                      JPanel pane = GuiUtils.getFlowLayoutPanel();
+                      pane.add(
+                              toggleButton.createCheckBox(
+                                      "Slicing Enabled"));
+                      slice.add(pane);
+                    });
+    return slice;
+  }
+    private JPanel getSliceNormPanel() {
+        JPanel slice = GuiUtils.getVerticalBoxLayoutPanel();
+        slice.setBorder(
+                BorderFactory.createCompoundBorder(
+                        spaceY,
+                        GuiUtils.getTitledBorder("Slicing Orientation")));
+
+
+
+        EventManager.getInstance()
+                .getAction(ActionW.SLICE_X_NORM)
+                .ifPresent(
+                        sliderItem -> {
+                            JSliderW sliceSlider = sliderItem.createSlider(0, true);
+                            GuiUtils.setPreferredWidth(sliceSlider, 100);
+                            slice.add(sliceSlider);
+
+                        });
+        EventManager.getInstance()
+                .getAction(ActionW.SLICE_Y_NORM)
+                .ifPresent(
+                        sliderItem -> {
+                            JSliderW sliceSlider = sliderItem.createSlider(0, true);
+                            GuiUtils.setPreferredWidth(sliceSlider, 100);
+                            slice.add(sliceSlider);
+
+                        });
+        return slice;
+    }
+
+
+    @Override
   protected void changeToolWindowAnchor(CLocation clocation) {
     // Do nothing
   }
