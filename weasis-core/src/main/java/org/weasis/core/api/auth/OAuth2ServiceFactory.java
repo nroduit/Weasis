@@ -53,7 +53,8 @@ public class OAuth2ServiceFactory {
   public static final DefaultAuthMethod keycloakTemplate =
       new DefaultAuthMethod(
           "68c845fc-93c5-11eb-b2f8-0f5db063091d", // NON-NLS
-          buildKeycloakProvider("Default Keycloak", "http://localhost:8080/", "master"), // NON-NLS
+          buildKeycloakProvider(
+              "Default Keycloak 18+", "http://localhost:8080/", "master"), // NON-NLS
           new AuthRegistration(null, null, "openid", null)); // NON-NLS
 
   private static final Map<String, OAuth20Service> services = new HashMap<>();
@@ -62,7 +63,7 @@ public class OAuth2ServiceFactory {
 
   public static AuthProvider buildKeycloakProvider(String name, String baseUrl, String realm) {
     String baseUrlWithRealm =
-        baseUrl + (baseUrl.endsWith("/") ? "" : "/") + "auth/realms/" + realm.trim(); // NON-NLS
+        baseUrl + (baseUrl.endsWith("/") ? "" : "/") + "realms/" + realm.trim(); // NON-NLS
     return new AuthProvider(
         name,
         baseUrlWithRealm + "/protocol/openid-connect/auth", // NON-NLS
