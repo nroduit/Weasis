@@ -23,14 +23,17 @@ import org.weasis.opencv.data.ImageCV;
 import org.weasis.opencv.data.PlanarImage;
 
 public class VolumeByte extends Volume<Byte> {
+  private final boolean signed;
   private byte[][][] data;
 
-  public VolumeByte(int sizeX, int sizeY, int sizeZ, JProgressBar progressBar) {
+  public VolumeByte(int sizeX, int sizeY, int sizeZ, boolean signed, JProgressBar progressBar) {
     super(sizeX, sizeY, sizeZ, progressBar);
+    this.signed = signed;
   }
 
-  public VolumeByte(OriginalStack stack, JProgressBar progressBar) {
+  public VolumeByte(OriginalStack stack, boolean signed, JProgressBar progressBar) {
     super(stack, progressBar);
+    this.signed = signed;
   }
 
   @Override
@@ -88,6 +91,15 @@ public class VolumeByte extends Volume<Byte> {
     } else {
       return data[x][y][z];
     }
+  }
+
+  @Override
+  protected double interpolate(Byte v0, Byte v1, double factor) {
+    if (signed) {
+      return super.interpolate(v0, v1, factor);
+    }
+    return (v0 == null ? 0 : Byte.toUnsignedInt(v0)) * (1 - factor)
+        + (v1 == null ? 0 : Byte.toUnsignedInt(v1)) * factor;
   }
 
   public PlanarImage getVolumeSlice(MprAxis mprAxis, Vector3d volumeCenter) {

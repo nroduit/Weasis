@@ -34,15 +34,18 @@ import org.weasis.opencv.data.PlanarImage;
 
 public class VolumeShort extends Volume<Short> {
   private static final Logger LOGGER = LoggerFactory.getLogger(VolumeShort.class);
+  private final boolean signed;
 
   private short[][][] data;
 
-  public VolumeShort(int sizeX, int sizeY, int sizeZ, JProgressBar progressBar) {
+  public VolumeShort(int sizeX, int sizeY, int sizeZ, boolean signed, JProgressBar progressBar) {
     super(sizeX, sizeY, sizeZ, progressBar);
+    this.signed = signed;
   }
 
-  public VolumeShort(OriginalStack stack, JProgressBar progressBar) {
+  public VolumeShort(OriginalStack stack, boolean signed, JProgressBar progressBar) {
     super(stack, progressBar);
+    this.signed = signed;
   }
 
   @Override
@@ -100,6 +103,15 @@ public class VolumeShort extends Volume<Short> {
     } else {
       return data[x][y][z];
     }
+  }
+
+  @Override
+  protected double interpolate(Short v0, Short v1, double factor) {
+    if (signed) {
+      return super.interpolate(v0, v1, factor);
+    }
+    return (v0 == null ? 0 : Short.toUnsignedInt(v0)) * (1 - factor)
+        + (v1 == null ? 0 : Short.toUnsignedInt(v1)) * factor;
   }
 
   public PlanarImage getVolumeSlice(MprAxis mprAxis, Vector3d volumeCenter) {
@@ -185,6 +197,7 @@ public class VolumeShort extends Volume<Short> {
       dos.writeInt(size.x);
       dos.writeInt(size.y);
       dos.writeInt(size.z);
+      dos.writeBoolean(signed);
       dos.writeDouble(pixelRatio.x);
       dos.writeDouble(pixelRatio.y);
       dos.writeDouble(pixelRatio.z);
@@ -210,7 +223,8 @@ public class VolumeShort extends Volume<Short> {
       int sizeX = dis.readInt();
       int sizeY = dis.readInt();
       int sizeZ = dis.readInt();
-      volume = new VolumeShort(sizeX, sizeY, sizeZ, null);
+      boolean signed = dis.readBoolean();
+      volume = new VolumeShort(sizeX, sizeY, sizeZ, signed, null);
       volume.pixelRatio.x = dis.readDouble();
       volume.pixelRatio.y = dis.readDouble();
       volume.pixelRatio.z = dis.readDouble();

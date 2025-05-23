@@ -457,10 +457,14 @@ public abstract class Volume<T extends Number> {
     Volume<?> volume = getSharedVolume(stack);
     if (volume == null) {
       int type = CvType.depth(stack.getMiddleImage().getImage().type());
-      if (type <= CvType.CV_8S) {
-        volume = new VolumeByte(stack, progressBar);
-      } else if (type <= CvType.CV_16S) {
-        volume = new VolumeShort(stack, progressBar);
+      if (type == CvType.CV_8U) {
+        volume = new VolumeByte(stack, false, progressBar);
+      } else if (type == CvType.CV_8S) {
+        volume = new VolumeByte(stack, true, progressBar);
+      } else if (type == CvType.CV_16U) {
+        volume = new VolumeShort(stack, false, progressBar);
+      } else if (type == CvType.CV_16S) {
+        volume = new VolumeShort(stack, true, progressBar);
       } else if (type == CvType.CV_32S) {
         volume = new VolumeInt(stack, progressBar);
       } else if (type == CvType.CV_32F) {
@@ -541,22 +545,19 @@ public abstract class Volume<T extends Number> {
     T v111 = getValue(x1, y1, z1);
 
     // Trilinear interpolation
-    double c00 =
-        (v000 != null ? v000.doubleValue() : 0) * (1 - xd)
-            + (v100 != null ? v100.doubleValue() : 0) * xd;
-    double c01 =
-        (v001 != null ? v001.doubleValue() : 0) * (1 - xd)
-            + (v101 != null ? v101.doubleValue() : 0) * xd;
-    double c10 =
-        (v010 != null ? v010.doubleValue() : 0) * (1 - xd)
-            + (v110 != null ? v110.doubleValue() : 0) * xd;
-    double c11 =
-        (v011 != null ? v011.doubleValue() : 0) * (1 - xd)
-            + (v111 != null ? v111.doubleValue() : 0) * xd;
+    double c00 = interpolate(v000, v100, xd);
+    double c01 = interpolate(v001, v101, xd);
+    double c10 = interpolate(v010, v110, xd);
+    double c11 = interpolate(v011, v111, xd);
 
     double c0 = c00 * (1 - yd) + c10 * yd;
     double c1 = c01 * (1 - yd) + c11 * yd;
 
     return (c0 * (1 - zd) + c1 * zd);
+  }
+
+  protected double interpolate(T v0, T v1, double factor) {
+    return (v0 == null ? 0 : v0.doubleValue()) * (1 - factor)
+        + (v1 == null ? 0 : v1.doubleValue()) * factor;
   }
 }
