@@ -110,7 +110,7 @@ public class StreamBackingStoreImpl implements BackingStore {
 
   @Override
   public void remove(Long bundleId) throws BackingStoreException {
-    // Do nothing, we don't want to delete the preferences file when a bundle is uninstalled
+    // Do nothing, we don't want to delete the preference file when a bundle is uninstalled
   }
 
   @Override
@@ -125,7 +125,7 @@ public class StreamBackingStoreImpl implements BackingStore {
   }
 
   /**
-   * Get the file for the preferences tree.
+   * Get the file for the preference tree.
    *
    * @param desc the PreferencesDescription value
    * @return the preference file
@@ -174,10 +174,10 @@ public class StreamBackingStoreImpl implements BackingStore {
     }
 
     if (remotePrefs != null) {
-      // if local don't exist create empty pref
+      // If local doesn't exist, create empty pref
       if (localPrefs == null) localPrefs = new PreferencesImpl(desc, manager);
 
-      // merge with saved version
+      // Merge with a saved version
       final PreferencesImpl updatePrefs = remotePrefs.getOrCreateNode(localPrefs.absolutePath());
       update(localPrefs, updatePrefs);
     }
@@ -291,7 +291,7 @@ public class StreamBackingStoreImpl implements BackingStore {
 
     try (InputStream fileReader = conn.getInputStream()) {
       XMLInputFactory factory = XMLInputFactory.newInstance();
-      // disable external entities for security
+      // Disable external entities for security
       factory.setProperty(XMLInputFactory.IS_SUPPORTING_EXTERNAL_ENTITIES, Boolean.FALSE);
       factory.setProperty(XMLInputFactory.SUPPORT_DTD, Boolean.FALSE);
       xmler = factory.createXMLStreamReader(fileReader);
@@ -324,7 +324,7 @@ public class StreamBackingStoreImpl implements BackingStore {
           while (xmler.hasNext()) {
             eventType = xmler.next();
             if (eventType == XMLStreamConstants.START_ELEMENT) {
-              // It is a child of the preferences node
+              // It is a child of the preference node
               this.read(root, xmler, xmler.getName().getLocalPart());
             }
           }
@@ -459,9 +459,9 @@ public class StreamBackingStoreImpl implements BackingStore {
     while (xmler.hasNext()) {
       eventType = xmler.next();
       switch (eventType) {
-          // It is a properties of the node
+        // It is a properties of the node
         case XMLStreamConstants.CHARACTERS -> prefs.getProperties().put(startKey, xmler.getText());
-          // It is a child of the node
+        // It is a child of the node
         case XMLStreamConstants.START_ELEMENT -> {
           PreferencesImpl impl = prefs.getOrCreateNode(startKey);
           this.read(impl, xmler, xmler.getName().getLocalPart());

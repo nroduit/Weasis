@@ -219,7 +219,7 @@ public class StructureSet extends RtSpecialElement implements SpecialElementRegi
                 continue;
               }
 
-              // Each plane which coincides with an image slice will have a unique ID
+              // Each plane that coincides with an image slice will have a unique ID
               // take the first one
               Sequence contImgSeq = contour.getSequence(Tag.ContourImageSequence);
               if (contImgSeq != null) {
@@ -238,7 +238,7 @@ public class StructureSet extends RtSpecialElement implements SpecialElementRegi
               // Add each plane to the planes' dictionary of the current ROI
               KeyDouble z = new KeyDouble(plane.getPositionZ());
 
-              // If there are no contour on specific z position
+              // If there is no contour on a specific z position
               if (!planes.containsKey(z)) {
                 List<StructContour> stack = new ArrayList<>();
                 stack.add(plane);
