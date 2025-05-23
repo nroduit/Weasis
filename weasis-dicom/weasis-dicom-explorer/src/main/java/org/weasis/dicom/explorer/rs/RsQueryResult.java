@@ -452,20 +452,31 @@ public class RsQueryResult extends AbstractQueryResult {
   }
 
   private void fillInstance(Attributes seriesDataset, Series<?> dicomSeries) {
-    String seriesInstanceUID = seriesDataset.getString(Tag.SeriesInstanceUID);
-    if (StringUtil.hasText(seriesInstanceUID)) {
+    String seriesUID = seriesDataset.getString(Tag.SeriesInstanceUID);
+    if (StringUtil.hasText(seriesUID)) {
       String seriesRetrieveURL = TagD.getTagValue(dicomSeries, Tag.RetrieveURL, String.class);
-      StringBuilder buf = new StringBuilder(seriesRetrieveURL);
-      buf.append("/instances?includefield="); // NON-NLS
-      buf.append(INSTANCE_QUERY);
-      buf.append(rsQueryParams.getProperties().getProperty(RsQueryParams.P_QUERY_EXT, ""));
+      StringBuilder baseQuery = new StringBuilder(seriesRetrieveURL);
+      baseQuery.append("/instances?includefield="); // NON-NLS
+      baseQuery.append(INSTANCE_QUERY);
+      baseQuery.append(rsQueryParams.getProperties().getProperty(RsQueryParams.P_QUERY_EXT, ""));
 
+      int offset = 0;
+      int limit = 1000; // Maximum number of instances to fetch per query
       try {
-        LOGGER.debug(QIDO_REQUEST, buf);
-        List<Attributes> instances =
-            parseJSON(
-                buf.toString(), authMethod, new URLParameters(rsQueryParams.getQueryHeaders()));
-        if (!instances.isEmpty()) {
+        while (true) {
+          StringBuilder paginatedQuery = new StringBuilder(baseQuery);
+          paginatedQuery.append("&offset=").append(offset); // NON-NLS
+          paginatedQuery.append("&limit=").append(limit); // NON-NLS
+          LOGGER.debug(QIDO_REQUEST, paginatedQuery);
+          List<Attributes> instances =
+              parseJSON(
+                  paginatedQuery.toString(),
+                  authMethod,
+                  new URLParameters(rsQueryParams.getQueryHeaders()));
+          if (instances.isEmpty()) {
+            break;
+          }
+
           SeriesInstanceList seriesInstanceList =
               (SeriesInstanceList) dicomSeries.getTagValue(TagW.WadoInstanceReferenceList);
           if (seriesInstanceList != null) {
@@ -473,9 +484,13 @@ public class RsQueryResult extends AbstractQueryResult {
               addSopInstance(instanceDataSet, seriesInstanceList, seriesRetrieveURL);
             }
           }
+          offset += instances.size();
+          if (instances.size() < limit) {
+            break;
+          }
         }
       } catch (Exception e) {
-        LOGGER.error("QIDO-RS all instances with seriesUID {}", seriesInstanceUID, e);
+        LOGGER.error("QIDO-RS all instances with seriesUID {}", seriesUID, e);
       }
     }
   }

@@ -137,25 +137,26 @@ public class RsQuery implements Callable<Boolean> {
   }
 
   private void fillSeries(Attributes studyDataSet) {
-    String studyInstanceUID = studyDataSet.getString(Tag.StudyInstanceUID);
-    if (StringUtil.hasText(studyInstanceUID)) {
-      StringBuilder buf = new StringBuilder(getBaseUrl());
-      buf.append("/studies/"); // NON-NLS
-      buf.append(studyInstanceUID);
-      buf.append("/series?includefield="); // NON-NLS
-      buf.append(RsQueryResult.SERIES_QUERY);
-      buf.append(properties.getProperty(RsQueryParams.P_QUERY_EXT, ""));
-
-      try {
-        LOGGER.debug(RsQueryResult.QIDO_REQUEST, buf);
-        List<Attributes> series =
-            RsQueryResult.parseJSON(buf.toString(), authMethod, new URLParameters(queryHeaders));
-        if (!series.isEmpty()) {
-          RsQuery.populateDicomModel(dicomModel, studyDataSet);
-        }
-      } catch (Exception e) {
-        LOGGER.error("QIDO-RS all series with studyUID {}", studyInstanceUID, e);
-      }
+    String studyUID = studyDataSet.getString(Tag.StudyInstanceUID);
+    if (StringUtil.hasText(studyUID)) {
+      //      StringBuilder buf = new StringBuilder(getBaseUrl());
+      //      buf.append("/studies/"); // NON-NLS
+      //      buf.append(studyInstanceUID);
+      //      buf.append("/series?includefield="); // NON-NLS
+      //      buf.append(RsQueryResult.SERIES_QUERY);
+      //      buf.append(properties.getProperty(RsQueryParams.P_QUERY_EXT, ""));
+      //
+      //      try {
+      //        LOGGER.debug(RsQueryResult.QIDO_REQUEST, buf);
+      //        List<Attributes> series =
+      //            RsQueryResult.parseJSON(buf.toString(), authMethod, new
+      // URLParameters(queryHeaders));
+      //        if (!series.isEmpty()) {
+      RsQuery.populateDicomModel(dicomModel, studyDataSet);
+      //        }
+      //      } catch (Exception e) {
+      //        LOGGER.error("QIDO-RS all series with studyInstanceUID {}", studyUID , e);
+      //      }
     }
   }
 
