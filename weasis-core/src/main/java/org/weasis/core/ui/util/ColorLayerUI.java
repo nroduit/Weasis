@@ -14,6 +14,7 @@ import java.awt.Component;
 import java.awt.Container;
 import java.awt.Graphics2D;
 import java.awt.Window;
+import java.util.concurrent.atomic.AtomicReference;
 import javax.swing.JComponent;
 import javax.swing.RootPaneContainer;
 import javax.swing.Timer;
@@ -28,7 +29,7 @@ public class ColorLayerUI extends AbstractLayerUI<JComponent> {
 
   private final RootPaneContainer parent;
   protected final JXLayer<JComponent> xlayer;
-  protected volatile float alpha;
+  private final AtomicReference<Float> alpha;
 
   public ColorLayerUI(final JXLayer<JComponent> comp, RootPaneContainer parent) {
     if (parent == null || comp == null) {
@@ -36,6 +37,7 @@ public class ColorLayerUI extends AbstractLayerUI<JComponent> {
     }
     this.parent = parent;
     this.xlayer = comp;
+    this.alpha = new AtomicReference<>(0.0f);
   }
 
   public static ColorLayerUI createTransparentLayerUI(RootPaneContainer parent) {
@@ -69,18 +71,19 @@ public class ColorLayerUI extends AbstractLayerUI<JComponent> {
   protected void paintLayer(final Graphics2D g, final JXLayer<? extends JComponent> comp) {
     super.paintLayer(g, this.xlayer);
     g.setColor(comp.getBackground());
-    g.setComposite(AlphaComposite.SrcOver.derive(alpha * MAX_ALPHA));
+    g.setComposite(AlphaComposite.SrcOver.derive(alpha.get() * MAX_ALPHA));
     g.fillRect(0, 0, comp.getWidth(), comp.getHeight());
   }
 
   public synchronized void showUI() {
-    this.alpha = 0.0f;
+    alpha.set(0.0f);
     final Timer timer = new Timer(3, null);
     timer.setRepeats(true);
     timer.addActionListener(
-        e -> {
-          alpha = Math.min(alpha + 0.1f, 1.0F);
-          if (alpha >= 1.0) {
+        _ -> {
+          float newAlpha = Math.min(alpha.get() + 0.1f, 1.0f);
+          alpha.set(newAlpha);
+          if (newAlpha >= 1.0f) {
             timer.stop();
           }
           xlayer.repaint();
@@ -90,13 +93,14 @@ public class ColorLayerUI extends AbstractLayerUI<JComponent> {
   }
 
   public synchronized void hideUI() {
-    this.alpha = 1.0f;
+    alpha.set(1.0f);
     final Timer timer = new Timer(3, null);
     timer.setRepeats(true);
     timer.addActionListener(
-        e -> {
-          alpha = Math.max(alpha - 0.1f, 0.0F);
-          if (alpha <= 0.0) {
+        _ -> {
+          float newAlpha = Math.max(alpha.get() - 0.1f, 0.0f);
+          alpha.set(newAlpha);
+          if (newAlpha <= 0.0f) {
             timer.stop();
             parent.setContentPane(xlayer.getView());
             return;
