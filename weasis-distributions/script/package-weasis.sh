@@ -193,11 +193,6 @@ rm -f "$INPUT_DIR"/*.jar.pack.gz
 find "$INPUT_DIR"/bundle/weasis-opencv-core-* -type f ! -name '*-'"${ARC_OS}"'-*'  -exec rm -f {} \;
 find "$INPUT_DIR"/bundle/jogamp-* -type f ! -name '*-'"${ARC_OS}"'-*' ! -name 'jogamp-[0-9]*' -exec rm -f {} \;
 
-# Special case with 32-bit x86 architecture, remove 64-bit lib
-if [ "$arc" = "x86" ] ; then
-  find "$INPUT_DIR"/bundle/*-x86* -type f -name "*-${machine}-x86-64-*"  -exec rm -f {} \;
-fi
-
 if [ "$machine" = "macosx" ] ; then
     mkdir jar_contents
     unzip "$INPUT_DIR"/weasis-launcher.jar -d jar_contents
@@ -241,6 +236,7 @@ else
   declare -a signArgs=()
 fi
 declare -a commonOptions=("--java-options" "-Dgosh.port=17179" \
+"--java-options" "--enable-native-access=ALL-UNNAMED" \
 "--java-options" "-Djavax.accessibility.assistive_technologies=org.weasis.launcher.EmptyAccessibilityProvider" \
 "--java-options" "-Djavax.accessibility.screen_magnifier_present=false" \
 "--java-options" "--add-exports=java.base/sun.net.www.protocol.http=ALL-UNNAMED" "--java-options" "--add-exports=java.base/sun.net.www.protocol.file=ALL-UNNAMED" \
@@ -264,7 +260,7 @@ if [ "$PACKAGE" = "YES" ] ; then
   VENDOR="Weasis Team"
   COPYRIGHT="© 2009-2024 Weasis Team"
   if [ "$machine" = "windows" ] ; then
-    [ "$arc" = "x86" ]  && UPGRADE_UID="3aedc24e-48a8-4623-ab39-0c3c01c7383b" || UPGRADE_UID="3aedc24e-48a8-4623-ab39-0c3c01c7383a"
+    [ "$arc" = "aarch64" ]  && UPGRADE_UID="3aedc24e-48a8-4623-ab39-0c3c01c7383c" || UPGRADE_UID="3aedc24e-48a8-4623-ab39-0c3c01c7383a"
     $JPKGCMD --type "msi" --app-image "$IMAGE_PATH" --dest "$OUTPUT_PATH" --name "$NAME" --resource-dir "$RES/msi/${arc}" \
     --license-file "$INPUT_PATH\Licence.txt" --description "Weasis DICOM viewer" --win-upgrade-uuid "$UPGRADE_UID"  \
     --win-menu --win-menu-group "$NAME" --copyright "$COPYRIGHT" --app-version "$WEASIS_CLEAN_VERSION" \

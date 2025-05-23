@@ -107,6 +107,7 @@
       <ComponentGroupRef Id="Shortcuts"/>
       <ComponentGroupRef Id="Files"/>
       <ComponentGroupRef Id="FileAssociations"/>
+      <ComponentGroupRef Id="FragmentOsCondition"/>
       <ComponentRef Id="URIHandlerRegistry" />
     </Feature>
 
@@ -155,6 +156,7 @@
       <?ifndef JpAllowDowngrades ?>
       <Custom Action="JpDisallowDowngrade" After="JpFindRelatedProducts">JP_DOWNGRADABLE_FOUND</Custom>
       <?endif?>
+      <LaunchConditions Before="AppSearch"/>
       <RemoveExistingProducts Before="CostInitialize"/>
       <Custom Action="JpFindRelatedProducts" After="FindRelatedProducts"/>
     </InstallExecuteSequence>
