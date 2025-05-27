@@ -13,7 +13,7 @@
   <packaging>jar</packaging>
   <artifactId>weasis-opencv-core-macosx-x86-64</artifactId>
   <name>OpenCV - Mac amd64 [${project.artifactId}]</name>
-  <version>${weasis.opencv.native.version}</version>
+  <version>${weasis.opencv.pkg.version}</version>
   <properties>
     <native.configuration>libopencv_java.dylib; processor=x86-64; osname=MacOSX
     </native.configuration>

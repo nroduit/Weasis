@@ -109,7 +109,7 @@
     },
     {
       "code": "felix.auto.install.23",
-      "value": "file:${maven.localRepository}/org/weasis/opencv/weasis-opencv-core-${native.library.spec}/${weasis.opencv.native.version}/weasis-opencv-core-${native.library.spec}-${weasis.opencv.native.version}.jar",
+      "value": "file:${maven.localRepository}/org/weasis/opencv/weasis-opencv-core-${native.library.spec}/${weasis.opencv.pkg.version}/weasis-opencv-core-${native.library.spec}-${weasis.opencv.pkg.version}.jar",
       "description": "OpenCV native package",
       "type": "A",
       "category": "FELIX_INSTALL"

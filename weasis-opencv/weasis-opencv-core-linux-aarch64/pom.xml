@@ -13,7 +13,7 @@
 	<packaging>jar</packaging>
 	<artifactId>weasis-opencv-core-linux-aarch64</artifactId>
 	<name>OpenCV - Linux aarch64 [${project.artifactId}]</name>
-	<version>${weasis.opencv.native.version}</version>
+	<version>${weasis.opencv.pkg.version}</version>
 	<properties>
 		<native.configuration>libopencv_java.so; processor=aarch64; osname=Linux</native.configuration>
 	</properties>

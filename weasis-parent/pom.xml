@@ -53,6 +53,7 @@
     <weasis-dicom-tools.version>5.33.1.1</weasis-dicom-tools.version>
     <weasis.core.img.version>4.11.0</weasis.core.img.version>
     <weasis.opencv.native.version>4.11.0-dcm</weasis.opencv.native.version>
+    <weasis.opencv.pkg.version>4.11.1-dcm</weasis.opencv.pkg.version>
     <osgi.resource.locator.version>3.0.0</osgi.resource.locator.version>
     <jaxb.osgi.version>4.0.3</jaxb.osgi.version>
     <xml.bind-api.version>4.0.2</xml.bind-api.version>

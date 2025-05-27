@@ -320,31 +320,31 @@
                 <artifactItem>
                   <groupId>org.weasis.opencv</groupId>
                   <artifactId>weasis-opencv-core-linux-x86-64</artifactId>
-                  <version>${weasis.opencv.native.version}</version>
+                  <version>${weasis.opencv.pkg.version}</version>
                   <outputDirectory>${tmp.bundle.dir}</outputDirectory>
                 </artifactItem>
                 <artifactItem>
                   <groupId>org.weasis.opencv</groupId>
                   <artifactId>weasis-opencv-core-linux-aarch64</artifactId>
-                  <version>${weasis.opencv.native.version}</version>
+                  <version>${weasis.opencv.pkg.version}</version>
                   <outputDirectory>${tmp.bundle.dir}</outputDirectory>
                 </artifactItem>
                 <artifactItem>
                   <groupId>org.weasis.opencv</groupId>
                   <artifactId>weasis-opencv-core-macosx-aarch64</artifactId>
-                  <version>${weasis.opencv.native.version}</version>
+                  <version>${weasis.opencv.pkg.version}</version>
                   <outputDirectory>${tmp.bundle.dir}</outputDirectory>
                 </artifactItem>
                 <artifactItem>
                   <groupId>org.weasis.opencv</groupId>
                   <artifactId>weasis-opencv-core-macosx-x86-64</artifactId>
-                  <version>${weasis.opencv.native.version}</version>
+                  <version>${weasis.opencv.pkg.version}</version>
                   <outputDirectory>${tmp.bundle.dir}</outputDirectory>
                 </artifactItem>
                 <artifactItem>
                   <groupId>org.weasis.opencv</groupId>
                   <artifactId>weasis-opencv-core-windows-x86-64</artifactId>
-                  <version>${weasis.opencv.native.version}</version>
+                  <version>${weasis.opencv.pkg.version}</version>
                   <outputDirectory>${tmp.bundle.dir}</outputDirectory>
                 </artifactItem>
 

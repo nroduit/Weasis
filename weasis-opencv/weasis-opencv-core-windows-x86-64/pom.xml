@@ -13,7 +13,7 @@
   <packaging>jar</packaging>
   <artifactId>weasis-opencv-core-windows-x86-64</artifactId>
   <name>OpenCV - Windows x86-64 [${project.artifactId}]</name>
-  <version>${weasis.opencv.native.version}</version>
+  <version>${weasis.opencv.pkg.version}</version>
   <properties>
     <native.configuration>opencv_java.dll; processor=x86-64; osname=win32</native.configuration>
   </properties>
