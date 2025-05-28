@@ -258,11 +258,30 @@ jobs:
 
       - name: Build multi-architecture packages for ${{ matrix.arch }}
         run: |
-          cd native-dist/weasis-native/build/docker
-          echo "Building Docker image for ${{ matrix.arch }}..."
-          docker buildx build --load --platform ${{ matrix.arch }} -t weasis/builder:latest .
-          sudo ./build-linux-installers.sh -a ${{ matrix.arch }}
-        timeout-minutes: 15
+          ARCH="${{ matrix.arch }}"
+          
+          # Prepare required directories
+          echo "Preparing bin-dist for ${ARCH}..."
+          rm -rf bin-dist
+          cp -r native-dist/weasis-native/bin-dist .
+
+          # Build Docker image for the current architecture
+          echo "Building Docker image for ${ARCH}..."
+          docker buildx build --load --platform "${ARCH}" -t weasis/builder:latest native-dist/weasis-native/build/docker
+
+          # Run Docker container to package weasis
+          echo "Running Docker container to package Weasis for ${ARCH}..."
+          docker run --platform "${ARCH}" -it --rm \
+            -v "$(pwd):/work" \
+            weasis/builder:latest \
+            bash -c "export JAVA_TOOL_OPTIONS=-Djdk.lang.Process.launchMechanism=vfork; \
+            cd /work/installer; /work/build/script/package-weasis.sh --jdk /opt/java/openjdk --temp /work/temp"
+
+          # Move output files to the appropriate directory
+          echo "Copying output files for ${ARCH}..."
+          mkdir -p native-dist/weasis-native/output-dist/${ARCH}
+          cp -r installer/* native-dist/weasis-native/output-dist/${ARCH}
+        timeout-minutes: 20
         continue-on-error: false
 
       #      - name: Upload .deb and .rpm to GitHub Release
@@ -278,6 +297,6 @@ jobs:
       - name: Upload Linux multi-arch installers
         uses: actions/upload-artifact@v4
         with:
-          name: linux-multiarch-installers
-          path: native-dist/weasis-native/output-dist
+          name: linux-multiarch-installers-${{ matrix.arch }}
+          path: native-dist/weasis-native/output-dist/${{ matrix.arch }}
 
