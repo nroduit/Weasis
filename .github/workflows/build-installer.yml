@@ -271,7 +271,7 @@ jobs:
 
           # Run Docker container to package weasis
           echo "Running Docker container to package Weasis for ${ARCH}..."
-          docker run --platform "${ARCH}" -it --rm \
+          docker run --platform "${ARCH}" --rm \
             -v "$(pwd):/work" \
             weasis/builder:latest \
             bash -c "export JAVA_TOOL_OPTIONS=-Djdk.lang.Process.launchMechanism=vfork; \
