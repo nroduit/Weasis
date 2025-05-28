@@ -245,6 +245,11 @@ jobs:
           name: weasis-native-${{ needs.build.outputs.version }}
           path: native-dist
 
+      - name: Unzip the native package version
+        shell: bash
+        run: |
+          unzip -o "native-dist/weasis-native.zip" -d "native-dist/weasis-native"
+
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
 
