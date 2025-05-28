@@ -256,7 +256,7 @@ jobs:
       - name: Set up Docker Buildx for multi-arch
         uses: docker/setup-buildx-action@v3
 
-      - name: Build multi-architecture packages for ${{ matrix.arch }}
+      - name: Run Docker container to package Weasis for ${{ matrix.arch }}
         run: |
           ARCH="${{ matrix.arch }}"
           
@@ -272,15 +272,15 @@ jobs:
           # Run Docker container to package weasis
           echo "Running Docker container to package Weasis for ${ARCH}..."
           docker run --platform "${ARCH}" --rm \
-            -v "$(pwd):/work" \
+            -v "$(pwd)/native-dist/weasis-native:/work" \
             weasis/builder:latest \
             bash -c "export JAVA_TOOL_OPTIONS=-Djdk.lang.Process.launchMechanism=vfork; \
             cd /work/installer; /work/build/script/package-weasis.sh --jdk /opt/java/openjdk --temp /work/temp"
 
-          # Move output files to the appropriate directory
-          echo "Copying output files for ${ARCH}..."
+          # Copy outputs to the architecture-specific folder
           mkdir -p native-dist/weasis-native/output-dist/${ARCH}
-          cp -r installer/* native-dist/weasis-native/output-dist/${ARCH}
+          cp -r native-dist/weasis-native/installer/* native-dist/weasis-native/output-dist/${ARCH}
+
         timeout-minutes: 20
         continue-on-error: false
 
