@@ -3,7 +3,6 @@
 ##### Prerequisites for building multi-architecture binaries #####
 # Required a linux system with amd64 architecture (examples based on Ubuntu)
 # Required Docker and qemu (see https://docs.docker.com/desktop/multi-arch/)
-# Required XFS driver for simulating 32-bit file system
 # The script must be executed after downloading or building weasis-native.zip
 
 ##### Install prerequisites #####
@@ -11,8 +10,6 @@
 # Install the required qemu packages: 
 ### sudo apt-get install qemu binfmt-support qemu-user-static
 ### docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
-# Install the required XFS packages:
-### sudo apt-get install xfsprogs jfsutils
 
 ##### Update docker images
 # unzip weasis-native.zip
@@ -22,8 +19,6 @@
 # sudo ./build-linux-installers.sh -a linux/amd64
 # docker buildx build --load --platform linux/arm64 -t weasis/builder:latest .
 # sudo ./build-linux-installers.sh -a linux/arm64
-# docker buildx build --load --platform linux/arm/v7 -t weasis/builder:latest .
-# sudo ./build-linux-installers.sh -a linux/arm/v7
 
 # Aux functions:
 die ( ) {
@@ -37,7 +32,7 @@ if ! [ "$(id -u)" = 0 ]; then
    exit 1
 fi
 
-declare -a supportedArc=("linux/amd64" "linux/arm64" "linux/arm/v7")
+declare -a supportedArc=("linux/amd64" "linux/arm64")
 
 if [ "$SUDO_USER" ]; then
     real_user=$SUDO_USER
@@ -55,7 +50,7 @@ do
 echo "Usage: build-all-linux.sh <options>"
 echo "Sample usages:"
 echo "    Build an installer for the arm platforms"
-echo "        $ sudo ./build-linux-installers.sh -a linux/arm/v7,linux/arm64"
+echo "        $ sudo ./build-linux-installers.sh -a linux/arm64"
 echo ""
 echo "Options:"
 echo " --help -h
@@ -88,27 +83,6 @@ fi
 #docker buildx build --platform "$ARC_LIST" -t weasis/builder:latest .
 
 PWD=$(pwd)
-DISK="disk-jfs.img"
-
-# Build a docker volume: file system for 32 and 64-bit:
-if [[ ! -f "$DISK" ]]; then
-  sudo -u "$real_user" fallocate -l 2G "$DISK"
-  sudo -u "$real_user" mkfs.jfs "$DISK" -q
-fi
-
-DISK_FOLDER="disk"
-# Build a docker volume: file system for 32 and 64-bit:
-if [[ ! -d "$DISK_FOLDER" ]]; then
-  sudo -u "$real_user" mkdir "$DISK_FOLDER"
-fi
-
-mount -o loop "$DISK" "$DISK_FOLDER"
-
-rm -Rf "$DISK_FOLDER/build/script"
-mkdir -p "$DISK_FOLDER/build"
-mkdir -p "$DISK_FOLDER/installer"
-cp -Rf ../script "$DISK_FOLDER"/build/
-
 
 IFS=',' read -ra ARCS <<< "$ARC_LIST"
 for arc in "${ARCS[@]}"; do
@@ -118,22 +92,13 @@ for arc in "${ARCS[@]}"; do
   fi
 
   # Must be copied for every build as some binaries are remove by script
-  rm -Rf "$DISK_FOLDER/bin-dist"
-  cp -Rf ../../bin-dist "$DISK_FOLDER"/
+  rm -Rf "bin-dist"
+  cp -Rf ../../bin-dist "bin-dist"
 
   # Load the local images
   # docker buildx build --load --platform "$arc" -t weasis/builder:latest .
-  if [[ "$arc" == *"64"* || "$arc" = "linux/s390x" ]]; then
-    docker run --platform "$arc" -it --rm -v "$PWD/$DISK_FOLDER":/work weasis/builder:latest bash -c "export JAVA_TOOL_OPTIONS=-Djdk.lang.Process.launchMechanism=vfork; cd /work/installer; /work/build/script/package-weasis.sh --jdk /opt/java/openjdk --temp /work/temp"
-  else
-    echo "32-bit needs to copy jdk on 32-bit file system"
-    docker run --platform "$arc" -it --rm -v "$PWD/$DISK_FOLDER":/work weasis/builder:latest bash -c "cp -r /opt/java/openjdk /work/; export JAVA_TOOL_OPTIONS=-Djdk.lang.Process.launchMechanism=vfork; cd /work/installer; /work/build/script/package-weasis.sh --jdk /work/openjdk --temp /work/temp"
-  fi
+  docker run --platform "$arc" -it --rm -v "$PWD":/work weasis/builder:latest bash -c "export JAVA_TOOL_OPTIONS=-Djdk.lang.Process.launchMechanism=vfork; cd /work/installer; /work/build/script/package-weasis.sh --jdk /opt/java/openjdk --temp /work/temp"
 done
 
 sudo -u "$real_user" mkdir -p "output-dist"
-sudo -u "$real_user" cp -Rf "$DISK_FOLDER/installer/"* "output-dist"
-
-umount "$DISK_FOLDER"
-rmdir "$DISK_FOLDER"
-rm -f "$DISK"
+sudo -u "$real_user" cp -Rf "installer/"* "output-dist"

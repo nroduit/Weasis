@@ -57,7 +57,7 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - { os: ubuntu-latest, platform: x64, wsystem: linux, warc: x86-64 }
+          #- { os: ubuntu-latest, platform: x64, wsystem: linux, warc: x86-64 }
           - { os: macos-13, platform: x64, wsystem: macosx, warc: x86-64 }
           - { os: macos-latest, platform: arm64, wsystem: macosx, warc: aarch64 }
           - { os: windows-latest, platform: x64, wsystem: windows, warc: x86-64 }
@@ -219,14 +219,60 @@ jobs:
       - name: "Add checksum sha256 file"
         shell: bash
         run: |
-            for file in "final-dist/*"; do
-              if [[ -f "$file" ]]; then
-                sha256sum "$file" >> "$file.sha256"
-              fi
-            done
+          for file in "final-dist/*"; do
+            if [[ -f "$file" ]]; then
+              sha256sum "$file" >> "$file.sha256"
+            fi
+          done
 
       - name: Upload the installer
         uses: actions/upload-artifact@v4
         with:
           name: ${{ env.APP_ARTIFACT }}
           path: final-dist
+
+  linux-multiarch:
+    needs: build
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        arch: ["linux/amd64", "linux/arm64"]
+
+    steps:
+      - name: Download weasis-native
+        uses: actions/download-artifact@v4
+        with:
+          name: weasis-native-${{ needs.build.outputs.version }}
+          path: native-dist
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx for multi-arch
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build multi-architecture packages for ${{ matrix.arch }}
+        run: |
+          cd native-dist/weasis-native/build/docker
+          echo "Building Docker image for ${{ matrix.arch }}..."
+          docker buildx build --load --platform ${{ matrix.arch }} -t weasis/builder:latest .
+          sudo ./build-linux-installers.sh -a ${{ matrix.arch }}
+        timeout-minutes: 15
+        continue-on-error: false
+
+      #      - name: Upload .deb and .rpm to GitHub Release
+      #        uses: softprops/action-gh-release@v2
+      #        with:
+      #          files: |
+      #            build-output/output/*.deb
+      #            build-output/output/*.rpm
+      #        env:
+      #          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+
+      - name: Upload Linux multi-arch installers
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-multiarch-installers
+          path: native-dist/weasis-native/output-dist
+
