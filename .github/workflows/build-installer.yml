@@ -283,22 +283,15 @@ jobs:
           mkdir -p native-dist/weasis-native/output-dist
           cp -r native-dist/weasis-native/installer/* native-dist/weasis-native/output-dist
 
+          PKG_ARTIFACT=$(ls -d native-dist/weasis-native/output-dist/*/ | head -n 1)
+          echo "PKG_ARTIFACT=${PKG_ARTIFACT}" >> $GITHUB_ENV
         timeout-minutes: 20
         continue-on-error: false
-
-      #      - name: Upload .deb and .rpm to GitHub Release
-      #        uses: softprops/action-gh-release@v2
-      #        with:
-      #          files: |
-      #            build-output/output/*.deb
-      #            build-output/output/*.rpm
-      #        env:
-      #          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
 
       - name: Upload Linux multi-arch installers
         uses: actions/upload-artifact@v4
         with:
-          name: linux-multiarch-installers
+          name: ${{ env.PKG_ARTIFACT }}
           path: native-dist/weasis-native/output-dist
 
