@@ -24,6 +24,8 @@ jobs:
         run: |
           mvn -B clean install
           mvn -B -P compressXZ -f weasis-distributions clean package
+          file="weasis-distributions/target/native-dist/weasis-native.zip"
+          sha256sum "$file" >> "$file.sha256"
 
       - name: Retrieve version
         shell: bash
@@ -41,7 +43,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: weasis-native-${{ env.WEASIS_VERSION }}
-          path: weasis-distributions/target/native-dist/weasis-native.zip
+          path: weasis-distributions/target/native-dist/weasis-native.*
 
   jpackage:
     env:
@@ -198,7 +200,7 @@ jobs:
             --mac-signing-keychain "$HOME/Library/Keychains/signing_temp.keychain-db" --mac-sign
             cp ${{ env.WEASIS_OUTPUT }}/*.pkg final-dist/${{ env.NAME }}-${{ env.WEASIS_CLEAN_VERSION }}-${ARC_NAME}.pkg
           fi
-          echo "APP_ARTIFACT=weasis-${machine}-${ARC_NAME}-${{ env.WEASIS_CLEAN_VERSION }}" >> $GITHUB_ENV
+          echo "APP_ARTIFACT=weasis-${machine}-${ARC_NAME}-${{ env.WEASIS_VERSION }}" >> $GITHUB_ENV
 
       - name: "Notarize Release Build"
         if: matrix.wsystem == 'macosx'
@@ -219,7 +221,7 @@ jobs:
       - name: "Add checksum sha256 file"
         shell: bash
         run: |
-          for file in "final-dist/*"; do
+          for file in final-dist/*; do
             if [[ -f "$file" ]]; then
               sha256sum "$file" >> "$file.sha256"
             fi
@@ -274,31 +276,27 @@ jobs:
           docker run --platform "${ARCH}" --rm \
             -v "$(pwd)/native-dist/weasis-native:/work" \
             weasis/builder:latest \
-            bash -c "export JAVA_TOOL_OPTIONS=-Djdk.lang.Process.launchMechanism=vfork; \
-            /work/build/script/package-weasis.sh --jdk /opt/java/openjdk --temp /work/temp; \
-            echo 'Docker /work directory contents:'; ls -la /work; ls -la /work/build/docker/output-dist"
+            bash -c "export JAVA_TOOL_OPTIONS=-Djdk.lang.Process.launchMechanism=vfork; mkdir -p /work/installer; \
+            cd /work/installer; /work/build/script/package-weasis.sh --jdk /opt/java/openjdk --temp /work/temp"
 
+          PKG_ARTIFACT=$(ls -d native-dist/weasis-native/installer/*/ | head -n 1 | xargs -n 1 basename)
+          echo "PKG_ARTIFACT=${PKG_ARTIFACT}" >> $GITHUB_ENV
+          
+          mkdir -p final-dist
+          # Copy .deb and .rpm files to the final-dist directory
+          cp native-dist/weasis-native/installer/${PKG_ARTIFACT}/*.deb final-dist 2>/dev/null || echo "[INFO] No .deb files found to copy."
+          cp native-dist/weasis-native/installer/${PKG_ARTIFACT}/*.rpm final-dist 2>/dev/null || echo "[INFO] No .rpm files found to copy."
 
-          # Copy outputs to the architecture-specific folder
-          mkdir -p native-dist/weasis-native/output-dist/${ARCH}
-          cp -r native-dist/weasis-native/build/docker/output-dist/* native-dist/weasis-native/output-dist/${ARCH}
-
-        timeout-minutes: 20
+          for file in final-dist/*; do
+            if [[ -f "$file" ]]; then
+              sha256sum "$file" >> "$file.sha256"
+            fi
+          done
+        timeout-minutes: 30
         continue-on-error: false
-
-      #      - name: Upload .deb and .rpm to GitHub Release
-      #        uses: softprops/action-gh-release@v2
-      #        with:
-      #          files: |
-      #            build-output/output/*.deb
-      #            build-output/output/*.rpm
-      #        env:
-      #          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
 
       - name: Upload Linux multi-arch installers
         uses: actions/upload-artifact@v4
         with:
-          name: linux-multiarch-installers-${{ matrix.arch }}
-          path: native-dist/weasis-native/output-dist/${{ matrix.arch }}
-
+          name: ${{ env.PKG_ARTIFACT }}
+          path: final-dist
