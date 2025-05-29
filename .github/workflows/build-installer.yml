@@ -283,15 +283,13 @@ jobs:
           mkdir -p native-dist/weasis-native/output-dist
           cp -r native-dist/weasis-native/installer/* native-dist/weasis-native/output-dist
 
-          PKG_ARTIFACT=$(ls -d native-dist/weasis-native/output-dist/*/ | head -n 1)
+          PKG_ARTIFACT=$(ls -d native-dist/weasis-native/output-dist/*/ | head -n 1 | xargs -n 1 basename)
           echo "PKG_ARTIFACT=${PKG_ARTIFACT}" >> $GITHUB_ENV
         timeout-minutes: 20
         continue-on-error: false
-
 
       - name: Upload Linux multi-arch installers
         uses: actions/upload-artifact@v4
         with:
           name: ${{ env.PKG_ARTIFACT }}
-          path: native-dist/weasis-native/output-dist
-
+          path: $(find native-dist/weasis-native/output-dist/${{ env.PKG_ARTIFACT }} -maxdepth 1 -type f)
