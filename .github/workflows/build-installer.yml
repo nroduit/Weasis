@@ -274,14 +274,14 @@ jobs:
           docker run --platform "${ARCH}" --rm \
             -v "$(pwd)/native-dist/weasis-native:/work" \
             weasis/builder:latest \
-            bash -c "export JAVA_TOOL_OPTIONS=-Djdk.lang.Process.launchMechanism=vfork; \
-            /work/build/script/package-weasis.sh --jdk /opt/java/openjdk --temp /work/temp; \
-            echo 'Docker /work directory contents:'; ls -la /work; ls -la /work/build/docker/output-dist"
+            bash -c "export JAVA_TOOL_OPTIONS=-Djdk.lang.Process.launchMechanism=vfork; mkdir -p /work/installer; \
+            cd /work/installer; /work/build/script/package-weasis.sh --jdk /opt/java/openjdk --temp /work/temp; \
+            echo 'Docker /work directory contents:'; ls -la /work/installer"
 
 
           # Copy outputs to the architecture-specific folder
           mkdir -p native-dist/weasis-native/output-dist/${ARCH}
-          cp -r native-dist/weasis-native/build/docker/output-dist/* native-dist/weasis-native/output-dist/${ARCH}
+          cp -r native-dist/weasis-native/installer/* native-dist/weasis-native/output-dist/${ARCH}
 
         timeout-minutes: 20
         continue-on-error: false
