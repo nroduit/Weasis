@@ -58,8 +58,8 @@ jobs:
       matrix:
         include:
           #- { os: ubuntu-latest, platform: x64, wsystem: linux, warc: x86-64 }
-          - { os: macos-13, platform: x64, wsystem: macosx, warc: x86-64 }
-          - { os: macos-latest, platform: arm64, wsystem: macosx, warc: aarch64 }
+          #- { os: macos-13, platform: x64, wsystem: macosx, warc: x86-64 }
+          #- { os: macos-latest, platform: arm64, wsystem: macosx, warc: aarch64 }
           - { os: windows-latest, platform: x64, wsystem: windows, warc: x86-64 }
 
     steps:
@@ -280,8 +280,8 @@ jobs:
 
 
           # Copy outputs to the architecture-specific folder
-          mkdir -p native-dist/weasis-native/output-dist/${ARCH}
-          cp -r native-dist/weasis-native/installer/* native-dist/weasis-native/output-dist/${ARCH}
+          mkdir -p native-dist/weasis-native/output-dist
+          cp -r native-dist/weasis-native/installer/* native-dist/weasis-native/output-dist
 
         timeout-minutes: 20
         continue-on-error: false
@@ -299,6 +299,6 @@ jobs:
       - name: Upload Linux multi-arch installers
         uses: actions/upload-artifact@v4
         with:
-          name: linux-multiarch-installers-${{ matrix.arch }}
-          path: native-dist/weasis-native/output-dist/${{ matrix.arch }}
+          name: linux-multiarch-installers
+          path: native-dist/weasis-native/output-dist
 
