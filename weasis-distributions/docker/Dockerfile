@@ -11,7 +11,7 @@ ENV PATH=$JAVA_HOME/bin:$PATH
 ENV LANG='en_US.UTF-8' LANGUAGE='en_US:en' LC_ALL='en_US.UTF-8'
 
 RUN set -eux; \
-    apt-get update; \
+    apt-get update || (sleep 10 && apt-get update); \
     DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends wget fontconfig ca-certificates p11-kit binutils tzdata locales curl bzip2 unzip xz-utils fakeroot rpm \
     ; \
     echo "en_US.UTF-8 UTF-8" >> /etc/locale.gen; \
