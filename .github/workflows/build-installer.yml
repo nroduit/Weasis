@@ -280,9 +280,12 @@ jobs:
           PKG_ARTIFACT=$(ls -d native-dist/weasis-native/installer/*/ | head -n 1 | xargs -n 1 basename)
           echo "PKG_ARTIFACT=${PKG_ARTIFACT}" >> $GITHUB_ENV
           
+          ls -la native-dist/weasis-native/installer/${PKG_ARTIFACT}
           mkdir -p final-dist
-          mv native-dist/weasis-native/installer/${PKG_ARTIFACT}/*.deb final-dist 2>/dev/null || true
-          mv native-dist/weasis-native/installer/${PKG_ARTIFACT}/*.rpm final-dist 2>/dev/null || true
+          # Copy .deb and .rpm files to the final-dist directory
+          cp native-dist/weasis-native/installer/${PKG_ARTIFACT}/*.deb final-dist 2>/dev/null || echo "[INFO] No .deb files found to copy."
+          cp native-dist/weasis-native/installer/${PKG_ARTIFACT}/*.rpm final-dist 2>/dev/null || echo "[INFO] No .rpm files found to copy."
+
           for file in "final-dist/*"; do
             echo "Adding checksum for $file"
             if [[ -f "$file" ]]; then
