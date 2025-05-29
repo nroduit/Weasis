@@ -274,17 +274,13 @@ jobs:
           docker run --platform "${ARCH}" --rm \
             -v "$(pwd)/native-dist/weasis-native:/work" \
             weasis/builder:latest \
-            bash -c "export JAVA_TOOL_OPTIONS=-Djdk.lang.Process.launchMechanism=vfork; mkdir -p /work/installer; \
-            cd /work/installer; /work/build/script/package-weasis.sh --jdk /opt/java/openjdk --temp /work/temp; \
-            echo 'Docker /work directory contents:'; ls -la /work/installer"
+            bash -c "export JAVA_TOOL_OPTIONS=-Djdk.lang.Process.launchMechanism=vfork; mkdir -p /work/installer/pkg; \
+            cd /work/installer; /work/build/script/package-weasis.sh --jdk /opt/java/openjdk --temp /work/temp"
 
-
-          # Copy outputs to the architecture-specific folder
-          mkdir -p native-dist/weasis-native/output-dist
-          cp -r native-dist/weasis-native/installer/* native-dist/weasis-native/output-dist
-
-          PKG_ARTIFACT=$(ls -d native-dist/weasis-native/output-dist/*/ | head -n 1 | xargs -n 1 basename)
+          PKG_ARTIFACT=$(ls -d native-dist/weasis-native/installer/*/ | head -n 1 | xargs -n 1 basename)
           echo "PKG_ARTIFACT=${PKG_ARTIFACT}" >> $GITHUB_ENV
+          mv native-dist/weasis-native/installer/${PKG_ARTIFACT}/*.deb native-dist/weasis-native/installer/pkg 2>/dev/null || true
+          mv native-dist/weasis-native/installer/${PKG_ARTIFACT}/*.rpm native-dist/weasis-native/installer/pkg 2>/dev/null || true
         timeout-minutes: 20
         continue-on-error: false
 
@@ -292,4 +288,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: ${{ env.PKG_ARTIFACT }}
-          path: $(find native-dist/weasis-native/output-dist/${{ env.PKG_ARTIFACT }} -maxdepth 1 -type f)
+          path: native-dist/weasis-native/installer/pkg
