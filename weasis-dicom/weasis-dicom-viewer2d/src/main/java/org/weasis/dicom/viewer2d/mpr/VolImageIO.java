@@ -450,7 +450,7 @@ public class VolImageIO implements DcmMediaReader {
     MinMaxLocResult minMax = new MinMaxLocResult();
     minMax.minVal = volume.getMinimum();
     minMax.maxVal = volume.getMaximum();
-    header.getImageDescriptor().setMinMaxPixelValue(minMax);
+    header.getImageDescriptor().setMinMaxPixelValue(0, minMax);
     HEADER_CACHE.put(this, header);
     return header;
   }

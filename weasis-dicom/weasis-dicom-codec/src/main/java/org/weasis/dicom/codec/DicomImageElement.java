@@ -393,7 +393,11 @@ public class DicomImageElement extends ImageElement implements DicomElement {
     if (img != null && !isImageAvailable()) {
       DicomMetaData meta = getMediaReader().getDicomMetaData();
       if (meta != null) {
-        adapter = new DicomImageAdapter(img, meta.getImageDescriptor());
+        int frameIndex = 0;
+        if (getKey() instanceof Integer intVal) {
+          frameIndex = intVal;
+        }
+        adapter = new DicomImageAdapter(img, meta.getImageDescriptor(), frameIndex);
         MinMaxLocResult val = adapter.getMinMax();
         if (val != null) {
           this.minPixelValue = val.minVal;
