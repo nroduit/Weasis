@@ -24,6 +24,8 @@ jobs:
         run: |
           mvn -B clean install
           mvn -B -P compressXZ -f weasis-distributions clean package
+          file="weasis-distributions/target/native-dist/weasis-native.zip"
+          sha256sum "$file" >> "$file.sha256"
 
       - name: Retrieve version
         shell: bash
@@ -41,7 +43,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: weasis-native-${{ env.WEASIS_VERSION }}
-          path: weasis-distributions/target/native-dist/weasis-native.zip
+          path: weasis-distributions/target/native-dist/weasis-native.*
 
   jpackage:
     env:
