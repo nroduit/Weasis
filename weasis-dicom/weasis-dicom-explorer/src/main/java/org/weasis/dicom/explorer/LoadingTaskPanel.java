@@ -12,9 +12,9 @@ package org.weasis.dicom.explorer;
 import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
-import org.weasis.core.api.gui.task.CircularProgressBar;
 import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.api.util.ResourceUtil.ActionIcon;
+import org.weasis.core.ui.tp.raven.spinner.SpinnerProgress;
 import org.weasis.dicom.explorer.wado.DownloadManager;
 
 public class LoadingTaskPanel extends JPanel {
@@ -58,7 +58,7 @@ public class LoadingTaskPanel extends JPanel {
           });
       this.add(cancelButton);
       if (task != null) {
-        CircularProgressBar globalProgress = task.getBar();
+        SpinnerProgress globalProgress = task.getBar();
         this.add(globalProgress);
         globalProgress.setIndeterminate(true);
       }

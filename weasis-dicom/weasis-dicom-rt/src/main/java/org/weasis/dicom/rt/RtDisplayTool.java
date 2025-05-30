@@ -31,7 +31,6 @@ import org.knowm.xchart.XYChart;
 import org.knowm.xchart.XYChartBuilder;
 import org.knowm.xchart.XYSeries;
 import org.weasis.core.api.gui.Insertable;
-import org.weasis.core.api.gui.task.CircularProgressBar;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.DecFormatter;
 import org.weasis.core.api.gui.util.Filter;
@@ -52,6 +51,7 @@ import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.model.graphic.imp.seg.GroupTreeNode;
 import org.weasis.core.ui.model.graphic.imp.seg.SegContour;
 import org.weasis.core.ui.model.graphic.imp.seg.SegRegion;
+import org.weasis.core.ui.tp.raven.spinner.SpinnerProgress;
 import org.weasis.core.ui.util.SegRegionTool;
 import org.weasis.core.ui.util.SegRegionTree;
 import org.weasis.core.ui.util.StructToolTipTreeNode;
@@ -99,7 +99,7 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener, S
   private final JLabel lblRtPlanDoseUnit = new JLabel("cGy"); // NON-NLS
   private final GroupTreeNode nodeStructures;
   private final GroupTreeNode nodeIsodoses;
-  private final CircularProgressBar progressBar = new CircularProgressBar();
+  private final SpinnerProgress progressBar = new SpinnerProgress();
   private RtSet rtSet;
   private final transient ItemListener structureChangeListener =
       e -> {
@@ -154,6 +154,7 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener, S
     this.nodeStructures = new GroupTreeNode(Messages.getString("structures"), true);
     this.nodeIsodoses = new GroupTreeNode(Messages.getString("isodoses"), true);
 
+    progressBar.setStringPainted(true);
     initData();
     initListeners();
   }

@@ -67,7 +67,6 @@ import org.slf4j.LoggerFactory;
 import org.weasis.core.api.auth.AuthMethod;
 import org.weasis.core.api.auth.OAuth2ServiceFactory;
 import org.weasis.core.api.explorer.DataExplorerView;
-import org.weasis.core.api.gui.task.CircularProgressBar;
 import org.weasis.core.api.gui.util.AbstractItemDialogPage;
 import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.gui.util.CheckBoxModel;
@@ -85,6 +84,7 @@ import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.api.util.ResourceUtil.OtherIcon;
 import org.weasis.core.api.util.ThreadUtil;
 import org.weasis.core.ui.pref.PreferenceDialog;
+import org.weasis.core.ui.tp.raven.spinner.SpinnerProgress;
 import org.weasis.core.ui.util.CalendarUtil;
 import org.weasis.core.util.FileUtil;
 import org.weasis.core.util.StringUtil;
@@ -315,7 +315,7 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
   private final JSpinner pageSpinner = new JSpinner();
   private QueryProcess process;
   private AuthMethod authMethod;
-  private final CircularProgressBar progressBar = new CircularProgressBar();
+  private final SpinnerProgress progressBar = new SpinnerProgress();
   final JLabel lblCalling =
       new JLabel(Messages.getString("DicomQrView.calling_node") + StringUtil.COLON);
   private final JLabel lblCharset = new JLabel(Messages.getString("charset") + StringUtil.COLON);

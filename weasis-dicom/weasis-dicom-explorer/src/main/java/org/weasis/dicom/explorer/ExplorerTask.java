@@ -9,16 +9,17 @@
  */
 package org.weasis.dicom.explorer;
 
+import java.awt.Dimension;
 import java.util.ArrayList;
 import java.util.List;
 import javax.swing.SwingWorker;
-import org.weasis.core.api.gui.task.CircularProgressBar;
+import org.weasis.core.ui.tp.raven.spinner.SpinnerProgress;
 import org.weasis.dicom.param.CancelListener;
 
 public abstract class ExplorerTask<T, V> extends SwingWorker<T, V> {
   private final String message;
   private final boolean globalLoadingManager;
-  private final CircularProgressBar bar;
+  private final SpinnerProgress bar;
   private final boolean subTask;
   private final List<CancelListener> cancelListeners;
 
@@ -29,7 +30,12 @@ public abstract class ExplorerTask<T, V> extends SwingWorker<T, V> {
   protected ExplorerTask(String message, boolean globalLoadingManager, boolean subTask) {
     this.message = message;
     this.globalLoadingManager = globalLoadingManager;
-    this.bar = new CircularProgressBar(0, 100);
+    this.bar = new SpinnerProgress();
+    bar.setStringPainted(true);
+    Dimension dim = bar.getUI().getPreferredSize(bar);
+    bar.setSize(dim.width, dim.height);
+    bar.setPreferredSize(dim);
+    bar.setMaximumSize(dim);
     this.subTask = subTask;
     this.cancelListeners = new ArrayList<>();
   }
@@ -52,7 +58,7 @@ public abstract class ExplorerTask<T, V> extends SwingWorker<T, V> {
     return message;
   }
 
-  public CircularProgressBar getBar() {
+  public SpinnerProgress getBar() {
     return bar;
   }
 

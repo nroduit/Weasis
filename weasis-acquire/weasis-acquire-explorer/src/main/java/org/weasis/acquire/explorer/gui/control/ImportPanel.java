@@ -22,12 +22,12 @@ import org.weasis.acquire.explorer.core.bean.SeriesGroup;
 import org.weasis.acquire.explorer.gui.central.ImageGroupPane;
 import org.weasis.acquire.explorer.gui.dialog.AcquireImportDialog;
 import org.weasis.acquire.explorer.gui.list.AcquireThumbnailListPane;
-import org.weasis.core.api.gui.task.CircularProgressBar;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.WinUtil;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.util.ThreadUtil;
+import org.weasis.core.ui.tp.raven.spinner.SpinnerProgress;
 
 public class ImportPanel extends JPanel {
 
@@ -35,7 +35,7 @@ public class ImportPanel extends JPanel {
       ThreadUtil.buildNewSingleThreadExecutor("ImportImage");
 
   private final JButton importBtn = new JButton(Messages.getString("ImportPanel.import"));
-  private final CircularProgressBar progressBar = new CircularProgressBar(0, 100);
+  private final SpinnerProgress progressBar = new SpinnerProgress();
 
   private final ImageGroupPane centralPane;
 
@@ -60,6 +60,7 @@ public class ImportPanel extends JPanel {
     add(progressBar);
 
     progressBar.setVisible(false);
+    progressBar.setStringPainted(true);
   }
 
   public ImageGroupPane getCentralPane() {

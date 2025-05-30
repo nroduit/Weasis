@@ -34,12 +34,12 @@ import org.weasis.acquire.explorer.PublishDicomTask;
 import org.weasis.acquire.explorer.gui.dialog.AcquirePublishDialog;
 import org.weasis.core.api.auth.AuthMethod;
 import org.weasis.core.api.auth.OAuth2ServiceFactory;
-import org.weasis.core.api.gui.task.CircularProgressBar;
 import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.WinUtil;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.util.ThreadUtil;
+import org.weasis.core.ui.tp.raven.spinner.SpinnerProgress;
 import org.weasis.core.util.FileUtil;
 import org.weasis.dicom.explorer.pref.node.AbstractDicomNode;
 import org.weasis.dicom.explorer.pref.node.AuthenticationPersistence;
@@ -58,7 +58,7 @@ public class AcquirePublishPanel extends JPanel {
   private static final Logger LOGGER = LoggerFactory.getLogger(AcquirePublishPanel.class);
 
   private final JButton publishBtn = new JButton(Messages.getString("AcquirePublishPanel.publish"));
-  private final CircularProgressBar progressBar = new CircularProgressBar(0, 100);
+  private final SpinnerProgress progressBar = new SpinnerProgress();
   private AuthMethod authMethod;
 
   public static final ExecutorService PUBLISH_DICOM =
@@ -77,6 +77,7 @@ public class AcquirePublishPanel extends JPanel {
     add(progressBar);
 
     progressBar.setVisible(false);
+    progressBar.setStringPainted(true);
   }
 
   public void publishDirDicom(
