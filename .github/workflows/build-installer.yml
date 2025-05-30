@@ -202,7 +202,7 @@ jobs:
           fi
           echo "APP_ARTIFACT=weasis-${machine}-${ARC_NAME}-${{ env.WEASIS_VERSION }}" >> $GITHUB_ENV
 
-      - name: "Notarize Release Build"
+      - name: Notarize Release Build
         if: matrix.wsystem == 'macosx'
         run: |
           xcrun notarytool submit \
@@ -212,18 +212,22 @@ jobs:
             --password "${{ secrets.WEASIS_PWD }}" \
             --wait
 
-      - name: "Staple Release Build"
+      - name: Staple Release Build
         if: matrix.wsystem == 'macosx'
         run: |
           xcrun stapler staple \
             "final-dist/${{ env.NAME }}-${{ env.WEASIS_CLEAN_VERSION }}-${{ matrix.warc }}.pkg"
 
-      - name: "Add checksum sha256 file"
+      - name: Add checksum sha256 file
         shell: bash
         run: |
           for file in final-dist/*; do
             if [[ -f "$file" ]]; then
-              sha256sum "$file" >> "$file.sha256"
+              if [[ "$(uname -s)" == "Darwin" ]]; then
+                shasum -a 256 "$file" >> "$file.sha256"
+              else
+                sha256sum "$file" >> "$file.sha256"
+              fi
             fi
           done
 
