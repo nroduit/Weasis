@@ -134,7 +134,7 @@ public class WeasisLauncher {
   public final void launch(Type type) throws Exception {
     Map<String, String> serverProp = configData.getFelixProps();
     String cacheDir = serverProp.get(Constants.FRAMEWORK_STORAGE) + "-" + configData.getSourceID();
-    // If there is a passed in bundle cache directory, then
+    // If there is a passed in the bundle cache directory, then
     // that overwrites anything in the config file.
     serverProp.put(Constants.FRAMEWORK_STORAGE, cacheDir);
 
@@ -183,7 +183,7 @@ public class WeasisLauncher {
       }
       // Now create an instance of the framework with our configuration properties.
       mFelix = new Felix(serverProp);
-      // Initialize the framework, but don't start it yet.
+      // Initialize the framework but don't start it yet.
       mFelix.init();
 
       // Use the system bundle context to process the auto-deploy
@@ -370,9 +370,8 @@ Starting OSGI Bundles...
                       null);
 
               if (response == 0) {
-                // Write "false" in weasis.properties. It can be useful when preferences are store
-                // remotely.
-                // The user will accept the disclaimer only once.
+                // Write "false" in weasis.properties. It can be useful when preferences are stored
+                // remotely. The user will accept the disclaimer only once.
                 System.setProperty(ConfigData.P_WEASIS_ACCEPT_DISCLAIMER, Boolean.TRUE.toString());
               } else {
                 File file =
@@ -636,14 +635,15 @@ Starting OSGI Bundles...
     configData.applyProxy(
         dir + File.separator + "data" + File.separator + "weasis-core"); // NON-NLS
 
-    StringBuilder bufDir = new StringBuilder(dir);
-    bufDir.append(File.separator);
-    bufDir.append("preferences"); // NON-NLS
-    bufDir.append(File.separator);
-    bufDir.append(user);
-    bufDir.append(File.separator);
-    bufDir.append(profileName);
-    File prefDir = new File(bufDir.toString());
+    String bufDir =
+        dir
+            + File.separator
+            + "preferences" // NON-NLS
+            + File.separator
+            + user
+            + File.separator
+            + profileName;
+    File prefDir = new File(bufDir);
     try {
       prefDir.mkdirs();
     } catch (Exception e) {
@@ -681,9 +681,9 @@ Starting OSGI Bundles...
     }
 
     // General Preferences priority order:
-    // 1) Last value (does not exist for first launch of Weasis in an operating system session).
+    // 1) Last value (does not exist for the first launch of Weasis in an operating system session).
     // 2) Java System property
-    // 3) Property defined in base.json or in other profile json files
+    // 3) Property defined in base.json or in other JSON files (profile)
     // 4) default value
     final String lang =
         getGeneralProperty(
@@ -1074,6 +1074,8 @@ Starting OSGI Bundles...
 
       if (!modulesi18n.isEmpty()) {
         System.setProperty("weasis.languages", modulesi18n.getProperty("languages", "")); // NON-NLS
+        System.setProperty(
+            "weasis.languages.percentage", modulesi18n.getProperty("percentages", "")); // NON-NLS
       }
     } catch (Exception e) {
       LOGGER.error("Cannot load translation modules", e);
@@ -1091,7 +1093,7 @@ Starting OSGI Bundles...
   /**
    * Returns the <code>Locale</code> value according the IETF BCP 47 language tag or the suffix of
    * the i18n jars. Null or empty string will return the ENGLISH <code>Locale</code>. The value
-   * "system " returns the system default <code>Locale</code>.
+   * "system" returns the system default <code>Locale</code>.
    *
    * @return the <code>Locale</code> value
    */

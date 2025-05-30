@@ -82,6 +82,7 @@ public class LanguageSetting extends AbstractItemDialogPage {
     textPane.setPreferredSize(GuiUtils.getDimension(300, 150));
     textPane.setContentType("text/html");
     textPane.setEditable(false);
+    textPane.addHyperlinkListener(GuiUtils.buildHyperlinkListener());
     add(textPane);
 
     // Do not add an element for margin, this lets the text pane grow
@@ -89,9 +90,17 @@ public class LanguageSetting extends AbstractItemDialogPage {
     getProperties().setProperty(PreferenceDialog.KEY_HELP, "locale"); // NON-NLS
   }
 
-  private static String getText() {
+  private String getText() {
     ZonedDateTime now = ZonedDateTime.now();
-    return """
+
+    int translationPercentage = 100;
+    if (comboBoxLang.getSelectedItem() instanceof JLocalePercentage jLocalePercentage) {
+      translationPercentage = jLocalePercentage.getPercentage();
+    }
+
+    // Base formatted HTML
+    String baseText =
+        """
             <html>
               <h3>%s</h3>
               <font size="-1">
@@ -104,21 +113,40 @@ public class LanguageSetting extends AbstractItemDialogPage {
               <p><font color="%s">%s</font></p>
             </html>
             """
-        .formatted(
-            Messages.getString("GeneralSetting.regionalTitle"),
-            Messages.getString("GeneralSetting.date"),
-            Messages.getString("GeneralSetting.short"),
-            DateTimeFormatter.ofLocalizedDateTime(FormatStyle.SHORT).format(now),
-            Messages.getString("GeneralSetting.medium"),
-            DateTimeFormatter.ofLocalizedDateTime(FormatStyle.MEDIUM).format(now),
-            Messages.getString("GeneralSetting.long"),
-            DateTimeFormatter.ofLocalizedDateTime(FormatStyle.LONG).format(now),
-            Messages.getString("GeneralSetting.full"),
-            DateTimeFormatter.ofLocalizedDateTime(FormatStyle.FULL).format(now),
-            Messages.getString("GeneralSetting.nb"),
-            NumberFormat.getNumberInstance().format(2543456.3465),
-            IconColor.ACTIONS_RED.getHtmlCode(),
-            Messages.getString("GeneralSetting.alertNote"));
+            .formatted(
+                Messages.getString("GeneralSetting.regionalTitle"),
+                Messages.getString("GeneralSetting.date"),
+                Messages.getString("GeneralSetting.short"),
+                DateTimeFormatter.ofLocalizedDateTime(FormatStyle.SHORT).format(now),
+                Messages.getString("GeneralSetting.medium"),
+                DateTimeFormatter.ofLocalizedDateTime(FormatStyle.MEDIUM).format(now),
+                Messages.getString("GeneralSetting.long"),
+                DateTimeFormatter.ofLocalizedDateTime(FormatStyle.LONG).format(now),
+                Messages.getString("GeneralSetting.full"),
+                DateTimeFormatter.ofLocalizedDateTime(FormatStyle.FULL).format(now),
+                Messages.getString("GeneralSetting.nb"),
+                NumberFormat.getNumberInstance().format(2543456.3465),
+                IconColor.ACTIONS_RED.getHtmlCode(),
+                Messages.getString("GeneralSetting.alertNote"));
+
+    // Append translation note if the translation percentage is less than 100%
+    if (translationPercentage < 100) {
+      String transifexUrl = "https://app.transifex.com/weasis/weasis/";
+      String translationNote =
+          """
+                <p><font color="%s">%s: <a href="%s">%s</a></font></p>
+                """
+              .formatted(
+                  IconColor.ACTIONS_BLUE.getHtmlCode(),
+                  Messages.getString("GeneralSetting.translation.msg")
+                      .formatted(translationPercentage),
+                  transifexUrl,
+                  transifexUrl);
+
+      baseText = baseText.replace("</html>", translationNote + "</html>");
+    }
+
+    return baseText;
   }
 
   protected void initialize() {

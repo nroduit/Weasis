@@ -13,87 +13,121 @@ import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.text.Collator;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Locale;
+import java.util.Map;
 import javax.swing.JComboBox;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.util.LocalUtil;
+import org.weasis.core.util.StringUtil;
 
 public class JLocaleLanguage extends JComboBox<JLocale> implements ItemListener, Refreshable {
 
-  private final ArrayList<Locale> languages = new ArrayList<>();
+  private final ArrayList<JLocalePercentage> languages = new ArrayList<>();
 
   public JLocaleLanguage() {
     super();
-    initLocales();
+    initLocalesWithPercentages();
     sortLocales();
     addItemListener(this);
   }
 
-  private void initLocales() {
-    String langs = System.getProperty("weasis.languages", null);
-    if (langs != null) {
-      String[] items = langs.split(",");
+  private void initLocalesWithPercentages() {
+    Map<String, Integer> percentages = new HashMap<>();
+    // Load percentages if available
+    String percentageData = System.getProperty("weasis.languages.percentage", null);
+    if (StringUtil.hasText(percentageData)) {
+      String[] items = percentageData.split(",");
+      for (String item : items) {
+        String entry = item.trim();
+        int index = entry.indexOf('.');
+        if (index > 0) {
+          String langCode = entry.substring(0, index);
+          try {
+            int percentage = Integer.parseInt(entry.substring(index + 1));
+            if (percentage > 30) { // Add only if percentage > 30
+              percentages.put(langCode, percentage);
+            }
+          } catch (NumberFormatException e) {
+            // Ignore invalid percentages
+          }
+        }
+      }
+    }
+
+    // Load locales
+    String languageList = System.getProperty("weasis.languages", null);
+    if (languageList != null) {
+      String[] items = languageList.split(",");
       for (String s : items) {
         String item = s.trim();
         int index = item.indexOf(' ');
-        Locale l = LocalUtil.textToLocale(index > 0 ? item.substring(0, index) : item);
-        if (l != null) {
-          languages.add(l);
+        String langCode = index > 0 ? item.substring(0, index) : item;
+        Locale locale = LocalUtil.textToLocale(langCode);
+        if (locale != null && percentages.getOrDefault(langCode, 0) > 30) {
+          languages.add(new JLocalePercentage(locale, percentages.get(langCode)));
         }
       }
     }
     if (languages.isEmpty()) {
-      languages.add(Locale.ENGLISH);
+      languages.add(new JLocalePercentage(Locale.ENGLISH, 100)); // Default to English
     }
   }
 
   private void sortLocales() {
     Locale defaultLocale = Locale.getDefault();
-    // Allow sorting correctly string in each language
+    // Allow sorting correctly for each language
     final Collator collator = Collator.getInstance(defaultLocale);
-    languages.sort((l1, l2) -> collator.compare(l1.getDisplayName(), l2.getDisplayName()));
+    languages.sort(
+        (l1, l2) ->
+            collator.compare(l1.getLocale().getDisplayName(), l2.getLocale().getDisplayName()));
 
-    JLocale dloc = null;
-    for (Locale locale : languages) {
-      JLocale val = new JLocale(locale);
-      if (locale.equals(defaultLocale)) {
-        dloc = val;
+    JLocalePercentage defaultLocaleEntry = null;
+    for (JLocalePercentage localePercentage : languages) {
+      if (localePercentage.getLocale().equals(defaultLocale)) {
+        defaultLocaleEntry = localePercentage;
       }
-      addItem(val);
+      addItem(localePercentage);
     }
-    if (dloc != null) {
-      this.setSelectedItem(dloc);
+    if (defaultLocaleEntry != null) {
+      this.setSelectedItem(defaultLocaleEntry);
     }
   }
 
-  public void selectLocale(String locale) {
-    Locale sLoc = LocalUtil.textToLocale(locale);
+  public void selectLocale(String localeCode) {
+    Locale selectedLocale = LocalUtil.textToLocale(localeCode);
     Object item = getSelectedItem();
-    if (item instanceof JLocale jLocale && sLoc != null && sLoc.equals(jLocale.getLocale())) {
+    if (item instanceof JLocalePercentage jLocalePercentage
+        && selectedLocale != null
+        && selectedLocale.equals(jLocalePercentage.getLocale())) {
+      valueHasChanged();
       return;
     }
 
     int defaultIndex = -1;
     for (int i = 0; i < getItemCount(); i++) {
-      Locale l = getItemAt(i).getLocale();
-      if (l.equals(sLoc)) {
+      JLocalePercentage localePercentage = (JLocalePercentage) getItemAt(i);
+      if (localePercentage.getLocale().equals(selectedLocale)) {
         defaultIndex = i;
         break;
       }
-      if (l.equals(Locale.ENGLISH)) {
+      if (localePercentage.getLocale().equals(Locale.ENGLISH)) {
         defaultIndex = i;
       }
     }
-    setSelectedIndex(defaultIndex);
+
+    if (defaultIndex >= 0) {
+      setSelectedIndex(defaultIndex);
+    }
   }
 
   @Override
   public void itemStateChanged(ItemEvent iEvt) {
     if (iEvt.getStateChange() == ItemEvent.SELECTED) {
       Object item = getSelectedItem();
-      if (item instanceof JLocale jLocale) {
+      if (item instanceof JLocalePercentage jLocalePercentage) {
         removeItemListener(this);
-        Locale locale = jLocale.getLocale();
+        Locale locale = jLocalePercentage.getLocale();
         Locale.setDefault(locale);
         GuiUtils.getUICore()
             .getSystemPreferences()
