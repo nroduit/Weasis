@@ -78,7 +78,13 @@ public interface SpecialElementRegion {
           }
         }
       } else if (map != null && sopInstanceUID != null) {
-        Set<SegContour> list = map.get(sopInstanceUID);
+        Set<SegContour> list;
+        int frames = img.getMediaReader().getMediaElementNumber();
+        if (frames > 1 && img.getKey() instanceof Integer intVal) {
+          list = map.get(sopInstanceUID + "_" + intVal);
+        } else {
+           list = map.get(sopInstanceUID);
+        }
         if (list != null) {
           return list;
         }

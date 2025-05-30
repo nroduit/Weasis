@@ -14,11 +14,13 @@ import java.awt.Point;
 import java.math.RoundingMode;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 import javax.swing.tree.DefaultMutableTreeNode;
 import org.dcm4che3.data.Attributes;
@@ -254,93 +256,137 @@ public class SegSpecialElement extends HiddenSpecialElement
 
     Sequence perFrameSeq = dicom.getSequence(Tag.PerFrameFunctionalGroupsSequence);
     if (perFrameSeq != null) {
-      if (perFrameSeq.size() > 400) {
+      if (perFrameSeq.size() > 1000) {
         // TODO reimplement in a more dynamic way instead of loading all contours in memory
         LOGGER.warn(
             "Segmentation contains more than 400 frames, skipping because of performance issues");
         return;
       }
 
-      int index = 0;
-      for (Attributes frame : perFrameSeq) {
-        index++;
-        List<String> sopUIDList = new ArrayList<>();
-        Sequence derivationSeq = frame.getSequence(Tag.DerivationImageSequence);
-        if (derivationSeq != null) {
-          for (Attributes derivation : derivationSeq) {
-            HiddenSeriesManager.addSourceImage(derivation, sopUIDList);
-          }
-        }
-
-        DicomImageElement binaryMask = series.getMedia(index - 1, null, null);
-        if (binaryMask != null) {
-          Attributes refSeqNb = frame.getNestedDataset(Tag.SegmentIdentificationSequence);
-          if (refSeqNb != null) {
-            Integer nb =
-                DicomUtils.getIntegerFromDicomElement(refSeqNb, Tag.ReferencedSegmentNumber, null);
-            if (nb != null) {
-              SegRegion<?> c = segAttributes.get(nb);
-              if (c != null) {
-                buildGraphic(binaryMask, index, c);
-                Point p = regionPosition.get(c);
-                if (p != null) {
-                  if (p.x == -1) {
-                    p.x = index - 1;
-                  } else {
-                    p.y = index - 1;
-                  }
-                }
-              }
-            }
-          }
-        }
-
-        Set<SegContour> contour = roiMap.get(index);
-        if (contour != null && !contour.isEmpty()) {
-          if (sopUIDList.isEmpty() && !refSeriesList.isEmpty()) {
-            Attributes planePosition = frame.getNestedDataset(Tag.PlanePositionSequence);
-            if (planePosition != null) {
-              double[] imagePositionPatient = planePosition.getDoubles(Tag.ImagePositionPatient);
-              if (imagePositionPatient != null) {
-                refSeriesList.forEach(
-                    refSeries -> {
-                      for (DicomImageElement dcm : refSeries.getMedias(null, null)) {
-                        double[] imagePosition =
-                            TagD.getTagValue(dcm, Tag.ImagePositionPatient, double[].class);
-                        if (isWithinTolerance(imagePosition, imagePositionPatient, 0.01)) {
-                          sopUIDList.add(TagD.getTagValue(dcm, Tag.SOPInstanceUID, String.class));
-                        }
-                      }
-                    });
-              }
-            }
-          }
-          if (sopUIDList.isEmpty()) {
-            roiMap.put(index, new LinkedHashSet<>());
-          } else {
-            refMap.forEach(
-                (key, _) -> {
-                  Map<String, Set<SegContour>> map = refMap.get(key);
-                  if (map != null) {
-                    sopUIDList.forEach(
-                        sopUID -> {
-                          Set<SegContour> list = map.get(sopUID);
-                          if (list != null) {
-                            list.addAll(contour);
-                          }
-                        });
-                  }
-                });
-          }
-        }
-      }
+      processPerFrameSequence(series, refSeriesList, regionPosition, perFrameSeq);
     }
 
+    // Calculate Measurable Layers for Regions
     regionPosition.forEach(
         (region, p) -> {
           SegMeasurableLayer<DicomImageElement> measurableLayer = getMeasurableLayer(series, p);
           region.setMeasurableLayer(measurableLayer);
         });
+  }
+
+  private void processPerFrameSequence(
+      DicomSeries series,
+      List<DicomSeries> refSeriesList,
+      Map<SegRegion<DicomImageElement>, Point> regionPosition,
+      Sequence perFrameSeq) {
+    int index = 0;
+    for (Attributes frame : perFrameSeq) {
+      index++;
+      // Map SOPInstanceUID to its associated frames (including ReferencedFrameNumber)
+      Map<String, List<Integer>> sopUIDToFramesMap = new ConcurrentHashMap<>();
+      Sequence derivationSeq = frame.getSequence(Tag.DerivationImageSequence);
+      if (derivationSeq != null) {
+        for (Attributes derivation : derivationSeq) {
+          HiddenSeriesManager.addSourceImage(derivation, sopUIDToFramesMap);
+        }
+      }
+
+      DicomImageElement binaryMask = series.getMedia(index - 1, null, null);
+      if (binaryMask != null) {
+        Attributes refSeqNb = frame.getNestedDataset(Tag.SegmentIdentificationSequence);
+        if (refSeqNb != null) {
+          Integer segmentNumber =
+              DicomUtils.getIntegerFromDicomElement(refSeqNb, Tag.ReferencedSegmentNumber, null);
+          if (segmentNumber != null) {
+            SegRegion<?> region = segAttributes.get(segmentNumber);
+            if (region != null) {
+              buildGraphic(binaryMask, index, region);
+              Point p = regionPosition.get(region);
+              if (p != null) {
+                if (p.x == -1) {
+                  p.x = index - 1;
+                } else {
+                  p.y = index - 1;
+                }
+              }
+            }
+          }
+        }
+      }
+
+      Set<SegContour> contour = roiMap.get(index);
+      if (contour != null && !contour.isEmpty()) {
+        associateContours(refSeriesList, sopUIDToFramesMap, frame, contour, index);
+      }
+    }
+  }
+
+  private void associateContours(
+      List<DicomSeries> refSeriesList,
+      Map<String, List<Integer>> sopUIDToFramesMap,
+      Attributes frame,
+      Set<SegContour> contours,
+      int index) {
+
+    // If the map is empty, attempt to populate `sopUIDToFramesMap` from the reference series list
+    if (sopUIDToFramesMap.isEmpty() && !refSeriesList.isEmpty()) {
+      Attributes planePosition = frame.getNestedDataset(Tag.PlanePositionSequence);
+      if (planePosition != null) {
+        double[] imagePositionPatient = planePosition.getDoubles(Tag.ImagePositionPatient);
+        if (imagePositionPatient != null) {
+          refSeriesList.forEach(
+              refSeries -> {
+                for (DicomImageElement dcm : refSeries.getMedias(null, null)) {
+                  double[] imagePosition =
+                      TagD.getTagValue(dcm, Tag.ImagePositionPatient, double[].class);
+                  if (isWithinTolerance(imagePosition, imagePositionPatient, 0.01)) {
+                    String sopUID = TagD.getTagValue(dcm, Tag.SOPInstanceUID, String.class);
+                    if (sopUID != null) {
+                      int frames = dcm.getMediaReader().getMediaElementNumber();
+                      if (frames > 1 && dcm.getKey() instanceof Integer intVal) {
+                        List<Integer> frameList = sopUIDToFramesMap.computeIfAbsent(sopUID, _ -> new ArrayList<>());
+                        if (!frameList.contains(intVal)) {
+                          frameList.add(intVal);
+                        }
+                      } else {
+                        sopUIDToFramesMap.putIfAbsent(sopUID, Collections.emptyList());
+                      }
+                    }
+                  }
+                }
+              });
+        }
+      }
+    }
+
+    if (sopUIDToFramesMap.isEmpty()) {
+      // If no SOPInstanceUIDs can be determined, map the index to an empty contour set
+      roiMap.put(index, new LinkedHashSet<>());
+    } else {
+      refMap.forEach(
+          (key, _) -> {
+            Map<String, Set<SegContour>> map = refMap.get(key);
+            if (map != null) {
+              sopUIDToFramesMap.forEach(
+                  (sopUID, frames) -> {
+                    Set<SegContour> list = map.get(sopUID);
+                    if (list != null) {
+                      if (frames.isEmpty()) {
+                        // If no frames are specified, add all contours
+                        list.addAll(contours);
+                      } else {
+                        frames.forEach(frameNumber -> {
+                          // Assuming frame-specific key mapping logic is required
+                          String frameSpecificKey = sopUID + "_" + frameNumber;
+                          map.computeIfAbsent(frameSpecificKey, _ -> new LinkedHashSet<>())
+                              .addAll(contours);
+                        });
+                      }
+                    }
+                  });
+            }
+          });
+    }
   }
 
   private static boolean isWithinTolerance(double[] array1, double[] array2, double tolerance) {

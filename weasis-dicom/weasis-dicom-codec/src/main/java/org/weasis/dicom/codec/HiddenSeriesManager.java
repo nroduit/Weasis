@@ -26,6 +26,7 @@ import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.util.ResourceUtil.ResourceIconPath;
 import org.weasis.core.ui.model.graphic.imp.seg.SegContour;
 import org.weasis.core.util.StringUtil;
+import org.weasis.dicom.macro.SOPInstanceReference;
 
 public class HiddenSeriesManager {
   private static final HiddenSeriesManager instance = new HiddenSeriesManager();
@@ -67,16 +68,36 @@ public class HiddenSeriesManager {
     }
   }
 
-  public static void addSourceImage(Attributes derivation, List<String> sopUIDList) {
-    if (derivation == null || sopUIDList == null) {
+  public static void addSourceImage(
+      Attributes derivation, Map<String, List<Integer>> sopUIDToFramesMap) {
+    if (derivation == null || sopUIDToFramesMap == null) {
       return;
     }
     Sequence srcSeq = derivation.getSequence(Tag.SourceImageSequence);
     if (srcSeq != null) {
       for (Attributes src : srcSeq) {
-        sopUIDList.add(src.getString(Tag.ReferencedSOPInstanceUID));
+        SOPInstanceReference sopRef = new SOPInstanceReference(src);
+        int[] frames = sopRef.getReferencedFrameNumber();
+        String sopInstanceUID = src.getString(Tag.ReferencedSOPInstanceUID);
+
+        if (sopInstanceUID != null) {
+          if (frames == null || frames.length == 0) {
+            // If no referenced frames are specified, assume all frames
+            sopUIDToFramesMap.put(sopInstanceUID, Collections.emptyList());
+          } else {
+            sopUIDToFramesMap.put(sopInstanceUID, toIntegerList(frames));
+          }
+        }
       }
     }
+  }
+
+  private static List<Integer> toIntegerList(int[] array) {
+    List<Integer> list = new ArrayList<>();
+    for (int value : array) {
+      list.add(value);
+    }
+    return list;
   }
 
   public static void addReferencedSOPInstanceUID(Attributes seriesRef, String originSeriesUID) {
