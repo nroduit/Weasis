@@ -10,8 +10,6 @@
 package org.weasis.dicom.codec;
 
 import java.awt.*;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -19,7 +17,6 @@ import org.dcm4che3.data.Tag;
 import org.joml.Vector3d;
 import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.TagW;
-import org.weasis.core.ui.model.graphic.imp.seg.SegContour;
 import org.weasis.opencv.seg.RegionAttributes;
 
 public interface SpecialElementRegion {
@@ -31,9 +28,9 @@ public interface SpecialElementRegion {
 
   void setOpacity(float opacity);
 
-  Map<String, Map<String, Set<SegContour>>> getRefMap();
+  Map<String, Map<String, Set<LazyContourLoader>>> getRefMap();
 
-  Map<String, Set<SegContour>> getPositionMap();
+  Map<String, Set<LazyContourLoader>> getPositionMap();
 
   Map<Integer, ? extends RegionAttributes> getSegAttributes();
 
@@ -42,8 +39,8 @@ public interface SpecialElementRegion {
       String seriesUID = TagD.getTagValue(img, Tag.SeriesInstanceUID, String.class);
       if (seriesUID != null) {
         String sopInstanceUID = TagD.getTagValue(img, Tag.SOPInstanceUID, String.class);
-        Map<String, Set<SegContour>> map = getRefMap().get(seriesUID);
-        Map<String, Set<SegContour>> positionMap = getPositionMap();
+        Map<String, Set<LazyContourLoader>> map = getRefMap().get(seriesUID);
+        Map<String, Set<LazyContourLoader>> positionMap = getPositionMap();
         if (!positionMap.isEmpty()) {
           Series<?> series = img.getMediaReader().getMediaSeries();
           String frameOfRef = TagD.getTagValue(series, Tag.FrameOfReferenceUID, String.class);
@@ -61,36 +58,31 @@ public interface SpecialElementRegion {
     return false;
   }
 
-  default Collection<SegContour> getContours(DicomImageElement img) {
+  default Set<LazyContourLoader> getContours(DicomImageElement img) {
     String seriesUID = TagD.getTagValue(img, Tag.SeriesInstanceUID, String.class);
     if (seriesUID != null) {
       String sopInstanceUID = TagD.getTagValue(img, Tag.SOPInstanceUID, String.class);
-      Map<String, Set<SegContour>> map = getRefMap().get(seriesUID);
-      Map<String, Set<SegContour>> positionMap = getPositionMap();
+      Map<String, Set<LazyContourLoader>> map = getRefMap().get(seriesUID);
+      Map<String, Set<LazyContourLoader>> positionMap = getPositionMap();
       if (!positionMap.isEmpty()) {
         double[] loc = (double[]) img.getTagValue(TagW.SlicePosition);
         if (loc != null) {
           String position =
               new Vector3d(loc).toString(SegSpecialElement.roundDouble).replace("-0 ", "0 ");
-          Set<SegContour> list = positionMap.get(position);
-          if (list != null) {
-            return list;
-          }
+          return positionMap.get(position);
         }
       } else if (map != null && sopInstanceUID != null) {
-        Set<SegContour> list;
+        Set<LazyContourLoader> loader;
         int frames = img.getMediaReader().getMediaElementNumber();
         if (frames > 1 && img.getKey() instanceof Integer intVal) {
-          list = map.get(sopInstanceUID + "_" + intVal);
+          loader = map.get(sopInstanceUID + "_" + intVal);
         } else {
-           list = map.get(sopInstanceUID);
+          loader = map.get(sopInstanceUID);
         }
-        if (list != null) {
-          return list;
-        }
+        return loader;
       }
     }
-    return Collections.emptyList();
+    return null;
   }
 
   default void updateOpacityInSegAttributes(float opacity) {

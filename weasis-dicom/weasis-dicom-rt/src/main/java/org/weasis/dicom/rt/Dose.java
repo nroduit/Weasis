@@ -45,7 +45,7 @@ import org.weasis.opencv.seg.Segment;
  */
 public class Dose extends RtSpecialElement implements SpecialElementRegion {
   private static final Logger LOGGER = LoggerFactory.getLogger(Dose.class);
-  private final Map<String, Map<String, Set<SegContour>>> refMap = new HashMap<>();
+  private final Map<String, Map<String, Set<LazyContourLoader>>> refMap = new HashMap<>();
 
   private volatile float opacity = 1.0f;
   private volatile boolean visible = false;
@@ -213,12 +213,12 @@ public class Dose extends RtSpecialElement implements SpecialElementRegion {
     return dvhMap;
   }
 
-  public Map<String, Map<String, Set<SegContour>>> getRefMap() {
+  public Map<String, Map<String, Set<LazyContourLoader>>> getRefMap() {
     return refMap;
   }
 
   @Override
-  public Map<String, Set<SegContour>> getPositionMap() {
+  public Map<String, Set<LazyContourLoader>> getPositionMap() {
     return Map.of();
   }
 
@@ -362,7 +362,8 @@ public class Dose extends RtSpecialElement implements SpecialElementRegion {
       //           isoDoseSet.put(2, new IsoDoseLayer(new IsoDose(2, new Color(0, 0,
       // 111/255f,
       //           opacity), "", rxDose)));
-      Map<String, Set<SegContour>> map = refMap.computeIfAbsent(seriesUID, _ -> new HashMap<>());
+      Map<String, Set<LazyContourLoader>> map =
+          refMap.computeIfAbsent(seriesUID, _ -> new HashMap<>());
       Set<KeyDouble> zSet = new LinkedHashSet<>();
       // Go through whole imaging grid (CT)
       for (DicomImageElement image : rtSet.getSeries().getMedias(null, null)) {
@@ -386,7 +387,10 @@ public class Dose extends RtSpecialElement implements SpecialElementRegion {
         if (contours.isEmpty()) {
           map.remove(sopUID);
         } else {
-          map.put(sopUID, contours);
+          Set<LazyContourLoader> set = map.computeIfAbsent(sopUID, _ -> new LinkedHashSet<>());
+          if (set.iterator().next() instanceof PlaneContourLoader planeLoader) {
+            planeLoader.addContours(contours);
+          }
         }
       }
 

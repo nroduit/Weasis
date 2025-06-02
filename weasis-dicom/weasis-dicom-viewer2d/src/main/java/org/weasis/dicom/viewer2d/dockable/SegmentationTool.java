@@ -54,6 +54,7 @@ import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.DicomSeries;
 import org.weasis.dicom.codec.HiddenSeriesManager;
+import org.weasis.dicom.codec.LazyContourLoader;
 import org.weasis.dicom.codec.SegSpecialElement;
 import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.viewer2d.EventManager;
@@ -123,10 +124,16 @@ public class SegmentationTool extends PluginTool implements SeriesViewerListener
     PlanarImage img = imageElement.getImage();
     if (img != null) {
       if (comboSeg.getSelectedItem() instanceof SegSpecialElement seg) {
-        Collection<SegContour> segments = seg.getContours(imageElement);
-        for (SegContour c : segments) {
-          if (c.getAttributes().equals(attributes)) {
-            return c;
+        Set<LazyContourLoader> loaders = seg.getContours(imageElement);
+        if (loaders == null || loaders.isEmpty()) {
+          return null;
+        }
+        for (LazyContourLoader loader : loaders) {
+          Collection<SegContour> segments = loader.getLazyContours();
+          for (SegContour c : segments) {
+            if (c.getAttributes().equals(attributes)) {
+              return c;
+            }
           }
         }
       }

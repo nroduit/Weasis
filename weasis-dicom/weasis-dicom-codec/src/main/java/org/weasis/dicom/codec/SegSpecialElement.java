@@ -29,7 +29,6 @@ import org.dcm4che3.data.Tag;
 import org.dcm4che3.img.data.CIELab;
 import org.dcm4che3.img.util.DicomUtils;
 import org.joml.Vector3d;
-import org.opencv.core.Core;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.DecFormatter;
@@ -37,7 +36,6 @@ import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.image.measure.MeasurementsAdapter;
 import org.weasis.core.api.util.ResourceUtil.OtherIcon;
 import org.weasis.core.api.util.ResourceUtil.ResourceIconPath;
-import org.weasis.core.ui.model.graphic.imp.seg.SegContour;
 import org.weasis.core.ui.model.graphic.imp.seg.SegMeasurableLayer;
 import org.weasis.core.ui.model.graphic.imp.seg.SegRegion;
 import org.weasis.core.ui.util.StructToolTipTreeNode;
@@ -45,11 +43,7 @@ import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.codec.geometry.VectorUtils;
 import org.weasis.dicom.codec.utils.DicomMediaUtils;
 import org.weasis.dicom.macro.Code;
-import org.weasis.opencv.data.PlanarImage;
-import org.weasis.opencv.op.ImageConversion;
-import org.weasis.opencv.seg.Region;
 import org.weasis.opencv.seg.RegionAttributes;
-import org.weasis.opencv.seg.Segment;
 
 public class SegSpecialElement extends HiddenSpecialElement
     implements SpecialElementReferences, SpecialElementRegion {
@@ -61,9 +55,9 @@ public class SegSpecialElement extends HiddenSpecialElement
     roundDouble.setGroupingUsed(false);
   }
 
-  private final Map<String, Map<String, Set<SegContour>>> refMap = new HashMap<>();
-  private final Map<Integer, Set<SegContour>> roiMap = new HashMap<>();
-  private final Map<String, Set<SegContour>> postitionMap = new HashMap<>();
+  private final Map<String, Map<String, Set<LazyContourLoader>>> refMap = new HashMap<>();
+  private final Map<Integer, LazyContourLoader> roiMap = new HashMap<>();
+  private final Map<String, Set<LazyContourLoader>> postitionMap = new HashMap<>();
   private final Map<Integer, SegRegion<DicomImageElement>> segAttributes = new HashMap<>();
 
   private volatile float opacity = 1.0f;
@@ -153,16 +147,12 @@ public class SegSpecialElement extends HiddenSpecialElement
     label = buf.toString();
   }
 
-  public Map<Integer, Set<SegContour>> getRoiMap() {
-    return roiMap;
-  }
-
-  public Map<String, Map<String, Set<SegContour>>> getRefMap() {
+  public Map<String, Map<String, Set<LazyContourLoader>>> getRefMap() {
     return refMap;
   }
 
   @Override
-  public Map<String, Set<SegContour>> getPositionMap() {
+  public Map<String, Set<LazyContourLoader>> getPositionMap() {
     return postitionMap;
   }
 
@@ -196,7 +186,7 @@ public class SegSpecialElement extends HiddenSpecialElement
     refMap.clear();
     Attributes dicom = ((DicomMediaIO) mediaIO).getDicomObject();
     if (dicom != null) {
-      Function<String, Map<String, Set<SegContour>>> addSeries =
+      Function<String, Map<String, Set<LazyContourLoader>>> addSeries =
           seriesUID -> refMap.computeIfAbsent(seriesUID, _ -> new HashMap<>());
       HiddenSeriesManager.getInstance().extractReferencedSeries(dicom, originSeriesUID, addSeries);
     }
@@ -256,13 +246,6 @@ public class SegSpecialElement extends HiddenSpecialElement
 
     Sequence perFrameSeq = dicom.getSequence(Tag.PerFrameFunctionalGroupsSequence);
     if (perFrameSeq != null) {
-      if (perFrameSeq.size() > 1000) {
-        // TODO reimplement in a more dynamic way instead of loading all contours in memory
-        LOGGER.warn(
-            "Segmentation contains more than 400 frames, skipping because of performance issues");
-        return;
-      }
-
       processPerFrameSequence(series, refSeriesList, regionPosition, perFrameSeq);
     }
 
@@ -300,7 +283,8 @@ public class SegSpecialElement extends HiddenSpecialElement
           if (segmentNumber != null) {
             SegRegion<?> region = segAttributes.get(segmentNumber);
             if (region != null) {
-              buildGraphic(binaryMask, index, region);
+              // Use lazy loading with caching
+              roiMap.put(index, new BasicContourLoader(binaryMask, index, region));
               Point p = regionPosition.get(region);
               if (p != null) {
                 if (p.x == -1) {
@@ -314,9 +298,9 @@ public class SegSpecialElement extends HiddenSpecialElement
         }
       }
 
-      Set<SegContour> contour = roiMap.get(index);
-      if (contour != null && !contour.isEmpty()) {
-        associateContours(refSeriesList, sopUIDToFramesMap, frame, contour, index);
+      LazyContourLoader loader = roiMap.get(index);
+      if (loader != null) {
+        associateContours(refSeriesList, sopUIDToFramesMap, frame, loader, index);
       }
     }
   }
@@ -325,7 +309,7 @@ public class SegSpecialElement extends HiddenSpecialElement
       List<DicomSeries> refSeriesList,
       Map<String, List<Integer>> sopUIDToFramesMap,
       Attributes frame,
-      Set<SegContour> contours,
+      LazyContourLoader loader,
       int index) {
 
     // If the map is empty, attempt to populate `sopUIDToFramesMap` from the reference series list
@@ -344,7 +328,8 @@ public class SegSpecialElement extends HiddenSpecialElement
                     if (sopUID != null) {
                       int frames = dcm.getMediaReader().getMediaElementNumber();
                       if (frames > 1 && dcm.getKey() instanceof Integer intVal) {
-                        List<Integer> frameList = sopUIDToFramesMap.computeIfAbsent(sopUID, _ -> new ArrayList<>());
+                        List<Integer> frameList =
+                            sopUIDToFramesMap.computeIfAbsent(sopUID, _ -> new ArrayList<>());
                         if (!frameList.contains(intVal)) {
                           frameList.add(intVal);
                         }
@@ -361,26 +346,27 @@ public class SegSpecialElement extends HiddenSpecialElement
 
     if (sopUIDToFramesMap.isEmpty()) {
       // If no SOPInstanceUIDs can be determined, map the index to an empty contour set
-      roiMap.put(index, new LinkedHashSet<>());
+      roiMap.put(index, loader);
     } else {
       refMap.forEach(
           (key, _) -> {
-            Map<String, Set<SegContour>> map = refMap.get(key);
+            Map<String, Set<LazyContourLoader>> map = refMap.get(key);
             if (map != null) {
               sopUIDToFramesMap.forEach(
                   (sopUID, frames) -> {
-                    Set<SegContour> list = map.get(sopUID);
+                    Set<LazyContourLoader> list = map.get(sopUID);
                     if (list != null) {
                       if (frames.isEmpty()) {
                         // If no frames are specified, add all contours
-                        list.addAll(contours);
+                        list.add(loader);
                       } else {
-                        frames.forEach(frameNumber -> {
-                          // Assuming frame-specific key mapping logic is required
-                          String frameSpecificKey = sopUID + "_" + frameNumber;
-                          map.computeIfAbsent(frameSpecificKey, _ -> new LinkedHashSet<>())
-                              .addAll(contours);
-                        });
+                        frames.forEach(
+                            frameNumber -> {
+                              // Assuming frame-specific key mapping logic is required
+                              String frameSpecificKey = sopUID + "_" + frameNumber;
+                              map.computeIfAbsent(frameSpecificKey, _ -> new LinkedHashSet<>())
+                                  .add(loader);
+                            });
                       }
                     }
                   });
@@ -401,7 +387,7 @@ public class SegSpecialElement extends HiddenSpecialElement
     return true;
   }
 
-  private void addPositionMap(Attributes frame, Set<SegContour> contour) {
+  private void addPositionMap(Attributes frame, LazyContourLoader loader) {
     Attributes refPos = frame.getNestedDataset(Tag.PlanePositionSequence);
     if (refPos != null) {
       double[] pos =
@@ -423,8 +409,9 @@ public class SegSpecialElement extends HiddenSpecialElement
           Vector3d normal = VectorUtils.computeNormalOfSurface(vr, vc);
           normal.mul(pPos);
           String position = normal.toString(roundDouble).replace("-0 ", "0 ");
-          Set<SegContour> set = postitionMap.computeIfAbsent(position, _ -> new LinkedHashSet<>());
-          set.addAll(contour);
+          Set<LazyContourLoader> set =
+              postitionMap.computeIfAbsent(position, _ -> new LinkedHashSet<>());
+          set.add(loader);
         }
       }
     }
@@ -446,18 +433,5 @@ public class SegSpecialElement extends HiddenSpecialElement
       }
     }
     return null;
-  }
-
-  private void buildGraphic(DicomImageElement binaryMask, int id, SegRegion<?> region) {
-    PlanarImage binary = binaryMask.getImage();
-    List<Segment> segmentList = Region.buildSegmentList(binary);
-    int nbPixels = Core.countNonZero(binary.toMat());
-    ImageConversion.releasePlanarImage(binary);
-    if (!segmentList.isEmpty()) {
-      SegContour contour = new SegContour(String.valueOf(id), segmentList, nbPixels);
-      region.addPixels(contour);
-      contour.setAttributes(region);
-      roiMap.computeIfAbsent(id, _ -> new LinkedHashSet<>()).add(contour);
-    }
   }
 }

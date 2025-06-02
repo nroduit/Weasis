@@ -30,12 +30,12 @@ import org.opencv.core.Mat;
 import org.opencv.core.MatOfPoint;
 import org.opencv.core.Scalar;
 import org.opencv.imgproc.Imgproc;
-import org.weasis.core.ui.model.graphic.imp.seg.SegContour;
 import org.weasis.core.ui.model.graphic.imp.seg.SegMeasurableLayer;
 import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.DicomMediaIO;
 import org.weasis.dicom.codec.HiddenSeriesManager;
+import org.weasis.dicom.codec.LazyContourLoader;
 import org.weasis.dicom.codec.SpecialElementRegion;
 import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.geometry.GeometryOfSlice;
@@ -51,7 +51,7 @@ import org.weasis.opencv.seg.Segment;
  * @author Nicolas Roduit
  */
 public class StructureSet extends RtSpecialElement implements SpecialElementRegion {
-  private final Map<String, Map<String, Set<SegContour>>> refMap = new HashMap<>();
+  private final Map<String, Map<String, Set<LazyContourLoader>>> refMap = new HashMap<>();
   private final Map<Integer, StructRegion> segAttributes = new HashMap<>();
 
   private volatile float opacity = 1.0f;
@@ -61,12 +61,12 @@ public class StructureSet extends RtSpecialElement implements SpecialElementRegi
     super(mediaIO);
   }
 
-  public Map<String, Map<String, Set<SegContour>>> getRefMap() {
+  public Map<String, Map<String, Set<LazyContourLoader>>> getRefMap() {
     return refMap;
   }
 
   @Override
-  public Map<String, Set<SegContour>> getPositionMap() {
+  public Map<String, Set<LazyContourLoader>> getPositionMap() {
     return Map.of();
   }
 
@@ -114,14 +114,14 @@ public class StructureSet extends RtSpecialElement implements SpecialElementRegi
                         .computeIfAbsent(seriesUID, _ -> new CopyOnWriteArraySet<>())
                         .add(originSeriesUID);
 
-                    Map<String, Set<SegContour>> map =
+                    Map<String, Set<LazyContourLoader>> map =
                         refMap.computeIfAbsent(seriesUID, _ -> new HashMap<>());
                     Sequence instanceSeq = refSeries.getSequence(Tag.ContourImageSequence);
                     if (instanceSeq != null) {
                       for (Attributes instance : instanceSeq) {
                         String sopInstanceUID = instance.getString(Tag.ReferencedSOPInstanceUID);
                         if (StringUtil.hasText(sopInstanceUID)) {
-                          map.computeIfAbsent(sopInstanceUID, _ -> new LinkedHashSet<>());
+                          map.put(sopInstanceUID, null);
                         }
                       }
                     }
@@ -227,10 +227,11 @@ public class StructureSet extends RtSpecialElement implements SpecialElementRegi
                   String sopUID = attributes.getString(Tag.ReferencedSOPInstanceUID);
                   if (StringUtil.hasText(sopUID)) {
                     plane.setPoints(contour.getDoubles(Tag.ContourData));
-                    refMap
-                        .get(seriesUID)
-                        .computeIfAbsent(sopUID, _ -> new LinkedHashSet<>())
-                        .add(plane);
+                    Set<LazyContourLoader> set =
+                        refMap.get(seriesUID).computeIfAbsent(sopUID, _ -> new LinkedHashSet<>());
+                    if (set.iterator().next() instanceof PlaneContourLoader planeLoader) {
+                      planeLoader.addContour(plane);
+                    }
                   }
                 }
               }

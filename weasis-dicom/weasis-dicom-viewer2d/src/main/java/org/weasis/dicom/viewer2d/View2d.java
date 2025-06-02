@@ -27,11 +27,13 @@ import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import javax.swing.JDialog;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
@@ -96,6 +98,7 @@ import org.weasis.core.util.MathUtil;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.HiddenSeriesManager;
 import org.weasis.dicom.codec.KOSpecialElement;
+import org.weasis.dicom.codec.LazyContourLoader;
 import org.weasis.dicom.codec.PRSpecialElement;
 import org.weasis.dicom.codec.PresentationStateReader;
 import org.weasis.dicom.codec.SortSeriesStack;
@@ -694,10 +697,22 @@ public class View2d extends DefaultView2d<DicomImageElement> {
           HiddenSeriesManager.getHiddenElementsFromPatient(
               SpecialElementRegion.class, patientPseudoUID);
       if (!segList.isEmpty()) {
-        List<SegContour> contours = new ArrayList<>();
+        Set<SegContour> contours = new LinkedHashSet<>();
         for (SpecialElementRegion seg : segList) {
           if (seg.isVisible() && seg.containsSopInstanceUIDReference(img)) {
-            contours.addAll(seg.getContours(img));
+            Set<LazyContourLoader> loaders = seg.getContours(img);
+            if (loaders != null && !loaders.isEmpty()) {
+              for (LazyContourLoader lazyLoader : loaders) {
+                try {
+                  Set<SegContour> c = lazyLoader.getLazyContours();
+                  if (c != null && !c.isEmpty()) {
+                    contours.addAll(c);
+                  }
+                } catch (Exception e) {
+                  LOGGER.error("Error loading contours", e);
+                }
+              }
+            }
           }
         }
 

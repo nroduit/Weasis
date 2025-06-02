@@ -24,7 +24,6 @@ import org.dcm4che3.data.Tag;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.util.ResourceUtil.ResourceIconPath;
-import org.weasis.core.ui.model.graphic.imp.seg.SegContour;
 import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.macro.SOPInstanceReference;
 
@@ -43,7 +42,7 @@ public class HiddenSeriesManager {
   public void extractReferencedSeries(
       Attributes dicom,
       String originSeriesUID,
-      Function<String, Map<String, Set<SegContour>>> addSeries) {
+      Function<String, Map<String, Set<LazyContourLoader>>> addSeries) {
     if (dicom != null && StringUtil.hasText(originSeriesUID) && addSeries != null) {
       Sequence seriesRef = dicom.getSequence(Tag.ReferencedSeriesSequence);
       if (seriesRef != null) {
@@ -54,12 +53,14 @@ public class HiddenSeriesManager {
                 .computeIfAbsent(seriesUID, _ -> new CopyOnWriteArraySet<>())
                 .add(originSeriesUID);
 
-            Map<String, Set<SegContour>> refMap = addSeries.apply(seriesUID);
+            Map<String, Set<LazyContourLoader>> refMap = addSeries.apply(seriesUID);
             Sequence instanceSeq = ref.getSequence(Tag.ReferencedInstanceSequence);
             if (instanceSeq != null) {
               for (Attributes instance : instanceSeq) {
                 String sopInstanceUID = instance.getString(Tag.ReferencedSOPInstanceUID);
-                refMap.computeIfAbsent(sopInstanceUID, _ -> new LinkedHashSet<>());
+                if (StringUtil.hasText(sopInstanceUID)) {
+                  refMap.computeIfAbsent(sopInstanceUID, _ -> new LinkedHashSet<>());
+                }
               }
             }
           }

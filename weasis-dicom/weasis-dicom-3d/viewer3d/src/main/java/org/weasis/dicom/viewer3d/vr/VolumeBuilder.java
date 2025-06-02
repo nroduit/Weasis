@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import javax.swing.JProgressBar;
 import jogamp.opengl.glu.error.Error;
 import org.dcm4che3.data.Tag;
@@ -276,16 +277,22 @@ public final class VolumeBuilder {
           Mat mask = volTexture.getEmptyImage();
           for (SpecialElementRegion seg : segList) {
             if (seg.isVisible() && seg.containsSopInstanceUIDReference(imageElement)) {
-              Collection<SegContour> contours = seg.getContours(imageElement);
-              if (!contours.isEmpty()) {
-                for (SegContour c : contours) {
-                  SegGraphic graphic = c.getSegGraphic();
-                  if (graphic != null) {
-                    List<MatOfPoint> pts =
-                        ImageProcessor.transformShapeToContour(graphic.getShape(), true);
-                    // TODO check the limit value
-                    int density = c.getAttributes().getId();
-                    Imgproc.fillPoly(mask, pts, new Scalar(density));
+              Set<LazyContourLoader> loaders = seg.getContours(imageElement);
+              if (loaders == null || loaders.isEmpty()) {
+                continue;
+              }
+              for (LazyContourLoader loader : loaders) {
+                Collection<SegContour> contours = loader.getLazyContours();
+                if (!contours.isEmpty()) {
+                  for (SegContour c : contours) {
+                    SegGraphic graphic = c.getSegGraphic();
+                    if (graphic != null) {
+                      List<MatOfPoint> pts =
+                          ImageProcessor.transformShapeToContour(graphic.getShape(), true);
+                      // TODO check the limit value
+                      int density = c.getAttributes().getId();
+                      Imgproc.fillPoly(mask, pts, new Scalar(density));
+                    }
                   }
                 }
               }

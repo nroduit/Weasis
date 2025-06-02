@@ -255,10 +255,16 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener, S
     if (img != null) {
       SpecialElementRegion region = getSelectedRegion();
       if (region != null) {
-        Collection<SegContour> segments = region.getContours(imageElement);
-        for (SegContour c : segments) {
-          if (c.getAttributes().equals(attributes)) {
-            return c;
+        Set<LazyContourLoader> loaders = region.getContours(imageElement);
+        if (loaders == null || loaders.isEmpty()) {
+          return null;
+        }
+        for (LazyContourLoader loader : loaders) {
+          Collection<SegContour> segments = loader.getLazyContours();
+          for (SegContour c : segments) {
+            if (c.getAttributes().equals(attributes)) {
+              return c;
+            }
           }
         }
       }
