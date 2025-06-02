@@ -87,6 +87,12 @@ public class AppLauncher extends WeasisLauncher implements Singleton.SingletonAp
   }
 
   public static void main(String[] argv) throws Exception {
+    try {
+      PlatformCertificateLoader.setupDefaultSSLContext();
+    } catch (Exception e) {
+      LOGGER.error("Cannot setup default SSL context by merging with system certificates", e);
+    }
+
     final Type launchType = Type.NATIVE;
 
     ConfigData configData = new ConfigData(argv);
