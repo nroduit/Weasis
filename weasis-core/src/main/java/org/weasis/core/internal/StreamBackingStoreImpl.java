@@ -252,7 +252,7 @@ public class StreamBackingStoreImpl implements BackingStore {
 
   private static URLParameters getURLParameters(boolean post) {
     Map<String, String> map = new HashMap<>();
-    map.put(post ? "Content-Type" : "Accept", "application/xml"); // NON-NLS
+    map.put(post ? "Content-Type" : "Accept", "text/plain"); // NON-NLS
     return new URLParameters(map, post);
   }
 
