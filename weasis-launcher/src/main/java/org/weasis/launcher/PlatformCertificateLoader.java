@@ -35,11 +35,7 @@ public class PlatformCertificateLoader {
   public static KeyStore setupDefaultSSLContext() throws Exception {
     // Load platform-specific trust store
     KeyStore platformTrustStore = loadPlatformTrustStore();
-
-    // Load Java default trust store
     KeyStore javaTrustStore = loadJavaDefaultTrustStore();
-
-    // Merge trust stores
     KeyStore mergedTrustStore = mergeTrustStores(platformTrustStore, javaTrustStore);
 
     // Create and set SSL context

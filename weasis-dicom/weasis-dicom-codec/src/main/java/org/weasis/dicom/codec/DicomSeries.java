@@ -301,12 +301,10 @@ public class DicomSeries extends Series<DicomImageElement> {
   @Override
   public boolean isSuitableFor3d() {
     int size = size(null);
-    if (size < 1) {
-      SeriesInstanceList seriesInstanceList =
-          (SeriesInstanceList) getTagValue(TagW.WadoInstanceReferenceList);
-      if (seriesInstanceList != null) {
-        size = seriesInstanceList.size();
-      }
+    SeriesInstanceList seriesInstanceList =
+        (SeriesInstanceList) getTagValue(TagW.WadoInstanceReferenceList);
+    if (seriesInstanceList != null) {
+      size = Math.max(size, seriesInstanceList.size());
     }
     return size >= DefaultView2d.MINIMAL_IMAGES_FOR_3D;
   }
