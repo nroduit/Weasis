@@ -110,7 +110,7 @@
     "i18n-version": "4.0.0-SNAPSHOT"
   },
   {
-    "release-version": "${app.version}",
+    "release-version": "${revision}",
     "minimal-version": "${base.minimal.version}",
     "i18n-version": "${i18n.version}"
   }
