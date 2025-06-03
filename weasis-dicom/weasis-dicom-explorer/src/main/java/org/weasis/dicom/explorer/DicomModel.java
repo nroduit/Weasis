@@ -854,8 +854,9 @@ public class DicomModel implements TreeModel, DataExplorerModel {
           initialSeries.addMedia((DicomImageElement) media);
         } else {
           List<Rule> rules = buildRules(initialSeries, frames);
-          // If similar add to the original series
-          if (isSimilar(rules, initialSeries, media)) {
+          // If similar, add to the original series
+          if (isSimilar(rules, initialSeries, media)
+              || "seg/dicom".equals(initialSeries.getMimeType())) {
             initialSeries.addMedia((DicomImageElement) media);
             return false;
           }
