@@ -55,9 +55,13 @@ public class BasicContourLoader implements LazyContourLoader {
 
   private SegContour buildContour() {
     PlanarImage binary = binaryMask.getImage();
+    if (binary == null || binary.width() <= 0) {
+      return null;
+    }
     List<Segment> segmentList = Region.buildSegmentList(binary);
     int pixelCount = Core.countNonZero(binary.toMat());
     ImageConversion.releasePlanarImage(binary);
+    binaryMask.removeImageFromCache();
 
     SegContour contour = new SegContour(String.valueOf(id), segmentList, pixelCount);
     region.addPixels(contour);
