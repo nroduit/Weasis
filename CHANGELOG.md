@@ -1,5 +1,42 @@
 # Changelog
 
+## [Unreleased](https://github.com/nroduit/Weasis/tree/HEAD)
+
+[Full Changelog](https://github.com/nroduit/Weasis/compare/v4.6.1...HEAD)
+
+**Merged pull requests:**
+
+- feat\(auth\): add audience option to auth registration [\#661](https://github.com/nroduit/Weasis/pull/661) ([chrisjhchung](https://github.com/chrisjhchung))
+
+## [v4.6.1](https://github.com/nroduit/Weasis/tree/v4.6.1) (2025-06-04)
+
+[Full Changelog](https://github.com/nroduit/Weasis/compare/v4.6.0...v4.6.1)
+
+**Implemented enhancements:**
+
+- Performance improvement of loading DICOM SEG [\#680](https://github.com/nroduit/Weasis/issues/680)
+- Add system certificates to default SSL context [\#679](https://github.com/nroduit/Weasis/issues/679)
+- Add translation note with percentage and transifex contribution link when not fully translated [\#678](https://github.com/nroduit/Weasis/issues/678)
+- Update weasis-dicom-tools 5.33.1.2 [\#677](https://github.com/nroduit/Weasis/issues/677)
+- Update to Flatlaf 3.6 [\#676](https://github.com/nroduit/Weasis/issues/676)
+- Auth0 Web Node Authentication Support [\#660](https://github.com/nroduit/Weasis/issues/660)
+
+**Fixed bugs:**
+
+- DICOMWeb template issue: base URL has changed from Keycloak 18 [\#675](https://github.com/nroduit/Weasis/issues/675)
+- Selection of plugin-licenses menu item dims view permanently [\#674](https://github.com/nroduit/Weasis/issues/674)
+- Artefacts in MPR visualization when using byte-Formatted pixel data [\#673](https://github.com/nroduit/Weasis/issues/673)
+- Weasis 4.6.0 cannot be installed on Debian 12 Bookworm [\#672](https://github.com/nroduit/Weasis/issues/672)
+- Window/Level issue with multiframe [\#667](https://github.com/nroduit/Weasis/issues/667)
+- Segmentation object not correctly displayed with Enhanced US Volume [\#666](https://github.com/nroduit/Weasis/issues/666)
+- System date issue: search cCriteria does not adjust over extended uptime [\#665](https://github.com/nroduit/Weasis/issues/665)
+- Cannot uninstall .deb package [\#664](https://github.com/nroduit/Weasis/issues/664)
+- Cannot open MPR when downloading multiframes [\#663](https://github.com/nroduit/Weasis/issues/663)
+- Native image library fails to load on certain macOS Intel systems [\#659](https://github.com/nroduit/Weasis/issues/659)
+- Regarding the mistakes in the Chinese translation [\#657](https://github.com/nroduit/Weasis/issues/657)
+- Third-party launcher is not working on Windows [\#656](https://github.com/nroduit/Weasis/issues/656)
+- Limit of 1000 images per series when downloading study from Google Healthcare API over DICOMWEB [\#653](https://github.com/nroduit/Weasis/issues/653)
+
 ## [v4.6.0](https://github.com/nroduit/Weasis/tree/v4.6.0) (2025-04-17)
 
 [Full Changelog](https://github.com/nroduit/Weasis/compare/v4.5.1...v4.6.0)
