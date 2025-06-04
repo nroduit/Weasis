@@ -1,13 +1,5 @@
 # Changelog
 
-## [Unreleased](https://github.com/nroduit/Weasis/tree/HEAD)
-
-[Full Changelog](https://github.com/nroduit/Weasis/compare/v4.6.1...HEAD)
-
-**Merged pull requests:**
-
-- feat\(auth\): add audience option to auth registration [\#661](https://github.com/nroduit/Weasis/pull/661) ([chrisjhchung](https://github.com/chrisjhchung))
-
 ## [v4.6.1](https://github.com/nroduit/Weasis/tree/v4.6.1) (2025-06-04)
 
 [Full Changelog](https://github.com/nroduit/Weasis/compare/v4.6.0...v4.6.1)
