@@ -17,7 +17,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -676,7 +675,6 @@ public class AcquireManager {
     }
 
     URI uri = null;
-
     if (!urlStr.startsWith("http")) { // NON-NLS
       try {
         File file = new File(urlStr);
@@ -690,8 +688,8 @@ public class AcquireManager {
     }
     if (uri == null) {
       try {
-        uri = new URL(urlStr).toURI();
-      } catch (MalformedURLException | URISyntaxException e) {
+        uri = new URI(urlStr);
+      } catch (URISyntaxException e) {
         LOGGER.error("getURIFromURL : {}", urlStr, e);
       }
     }
@@ -749,10 +747,10 @@ public class AcquireManager {
   /**
    * Get AcquireImageInfo from the data model and create lazily the JAI.PlanarImage if not yet
    * available<br>
-   * All the AcquireImageInfo value objects are unique according to the imageElement URI
+   * All the AcquireImageInfo value objects are unique, according to the imageElement URI
    *
    * @param media the ImageElement
-   * @return the AcquireImageInfo based on the image
+   * @return acquireImageInfo based on the image
    */
 
   // TODO be careful not to execute this method on the EDT

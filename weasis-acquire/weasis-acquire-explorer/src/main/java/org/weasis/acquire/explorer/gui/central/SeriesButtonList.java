@@ -20,18 +20,18 @@ import javax.swing.JScrollPane;
 import javax.swing.ScrollPaneConstants;
 import org.weasis.acquire.explorer.core.bean.SeriesGroup;
 
-public class SerieButtonList extends JScrollPane {
+public class SeriesButtonList extends JScrollPane {
 
-  private static final JPanel serieButtonPane = new JPanel();
+  private static final JPanel seriesButtonPane = new JPanel();
 
   private final SortedSet<SeriesButton> seriesButtonSet = new TreeSet<>();
 
-  public SerieButtonList() {
+  public SeriesButtonList() {
     super(
-        serieButtonPane,
+        seriesButtonPane,
         ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
         ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-    serieButtonPane.setLayout(new BoxLayout(serieButtonPane, BoxLayout.Y_AXIS));
+    seriesButtonPane.setLayout(new BoxLayout(seriesButtonPane, BoxLayout.Y_AXIS));
   }
 
   public void addButton(SeriesButton btn) {
@@ -43,7 +43,7 @@ public class SerieButtonList extends JScrollPane {
     btn.setMaximumSize(dim);
     seriesButtonSet.add(btn);
     int index = seriesButtonSet.headSet(btn).size();
-    serieButtonPane.add(btn, index);
+    seriesButtonPane.add(btn, index);
   }
 
   public Optional<SeriesButton> getButton(final SeriesGroup seriesGroup) {
@@ -56,7 +56,7 @@ public class SerieButtonList extends JScrollPane {
 
   private void remove(SeriesButton btn) {
     if (seriesButtonSet.remove(btn)) {
-      serieButtonPane.remove(btn);
+      seriesButtonPane.remove(btn);
     }
   }
 

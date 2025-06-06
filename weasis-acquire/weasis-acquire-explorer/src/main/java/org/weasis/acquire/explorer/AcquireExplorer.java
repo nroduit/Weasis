@@ -22,7 +22,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import javax.swing.Action;
-import javax.swing.Icon;
 import org.weasis.acquire.explorer.core.bean.SeriesGroup;
 import org.weasis.acquire.explorer.gui.central.ImageGroupPane;
 import org.weasis.acquire.explorer.gui.control.BrowsePanel;
@@ -76,7 +75,7 @@ public class AcquireExplorer extends PluginTool implements DataExplorerView {
     this.acquireThumbnailListPane.loadDirectory(Paths.get(systemDrive.getPath()));
 
     // Remove dropping capabilities in the central area (limit to import
-    // from browse panel)
+    // from a browse panel)
     GuiUtils.getUICore().getMainArea().getComponent().setTransferHandler(null);
   }
 
@@ -164,11 +163,6 @@ public class AcquireExplorer extends PluginTool implements DataExplorerView {
         }
       }
     }
-  }
-
-  @Override
-  public Icon getIcon() {
-    return null;
   }
 
   @Override
