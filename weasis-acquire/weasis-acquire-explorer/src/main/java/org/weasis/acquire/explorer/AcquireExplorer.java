@@ -32,6 +32,7 @@ import org.weasis.acquire.explorer.media.MediaSource;
 import org.weasis.base.explorer.JIThumbnailCache;
 import org.weasis.core.api.explorer.DataExplorerView;
 import org.weasis.core.api.explorer.ObservableEvent;
+import org.weasis.core.api.explorer.ObservableEvent.BasicAction;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.core.api.gui.Insertable;
 import org.weasis.core.api.gui.util.GuiUtils;
@@ -110,9 +111,9 @@ public class AcquireExplorer extends PluginTool implements DataExplorerView {
   @SuppressWarnings("unchecked")
   @Override
   public void propertyChange(PropertyChangeEvent evt) {
-    if (evt instanceof ObservableEvent observableEvent) {
+    if (evt instanceof ObservableEvent event) {
       if (evt.getSource() instanceof AcquireManager) {
-        if (ObservableEvent.BasicAction.REPLACE.equals(observableEvent.getActionCommand())) {
+        if (ObservableEvent.BasicAction.REPLACE.equals(event.getActionCommand())) {
 
           String newPatientName =
               Optional.ofNullable(evt.getNewValue())
@@ -128,7 +129,7 @@ public class AcquireExplorer extends PluginTool implements DataExplorerView {
           centralPane.tabbedPane.clearAll();
           centralPane.tabbedPane.repaint();
 
-        } else if (ObservableEvent.BasicAction.REMOVE.equals(observableEvent.getActionCommand())) {
+        } else if (ObservableEvent.BasicAction.REMOVE.equals(event.getActionCommand())) {
 
           if (evt.getNewValue() instanceof Collection<?>) {
             centralPane.tabbedPane.removeImages((Collection<AcquireMediaInfo>) evt.getNewValue());
@@ -139,11 +140,11 @@ public class AcquireExplorer extends PluginTool implements DataExplorerView {
             centralPane.tabbedPane.repaint();
           }
 
-        } else if (ObservableEvent.BasicAction.UPDATE.equals(observableEvent.getActionCommand())) {
+        } else if (ObservableEvent.BasicAction.UPDATE.equals(event.getActionCommand())) {
           centralPane.tabbedPane.refreshGUI();
           centralPane.tabbedPane.repaint();
 
-        } else if (ObservableEvent.BasicAction.ADD.equals(observableEvent.getActionCommand())) {
+        } else if (ObservableEvent.BasicAction.ADD.equals(event.getActionCommand())) {
 
           if (evt.getNewValue() instanceof Collection<?>) {
             ((Collection<AcquireMediaInfo>) evt.getNewValue())
@@ -160,6 +161,10 @@ public class AcquireExplorer extends PluginTool implements DataExplorerView {
 
           centralPane.tabbedPane.refreshGUI();
           centralPane.tabbedPane.repaint();
+        } else if (BasicAction.LOADING_STOP.equals(event.getActionCommand())) {
+          if (evt.getNewValue() instanceof SeriesGroup group) {
+            centralPane.tabbedPane.selectSeries(group);
+          }
         }
       }
     }

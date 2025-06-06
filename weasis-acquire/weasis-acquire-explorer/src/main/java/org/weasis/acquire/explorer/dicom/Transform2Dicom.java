@@ -26,11 +26,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.acquire.explorer.AcquireImageInfo;
 import org.weasis.acquire.explorer.AcquireManager;
+import org.weasis.acquire.explorer.AcquireMediaInfo;
+import org.weasis.acquire.explorer.core.bean.SeriesGroup.Type;
 import org.weasis.core.api.image.CropOp;
 import org.weasis.core.api.image.RotationOp;
 import org.weasis.core.api.image.SimpleOpManager;
 import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.api.media.data.ImageElement;
+import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.media.data.Taggable;
 import org.weasis.core.ui.model.GraphicModel;
@@ -59,13 +62,67 @@ public final class Transform2Dicom {
    * AcquireImageInfo. This Dicom is written in the exportDirDicom with its sopInstanceUID as
    * filename.
    *
-   * @param imageInfo the AcquireImageInfo value
+   * @param mediaInfo value
    * @param exportDirDicom the folder to save DICOM files
    * @param exportDirImage the folder to save image files
    * @param seriesInstanceUID Global series for all PR
    * @return true when the operation is successful
    */
   public static boolean dicomize(
+      AcquireMediaInfo mediaInfo,
+      File exportDirDicom,
+      File exportDirImage,
+      String seriesInstanceUID) {
+    if (mediaInfo instanceof AcquireImageInfo imageInfo) {
+      return processImageElement(imageInfo, exportDirDicom, exportDirImage, seriesInstanceUID);
+    } else {
+      return processOtherMediaElement(mediaInfo, exportDirDicom);
+    }
+  }
+
+  private static boolean processOtherMediaElement(AcquireMediaInfo mediaInfo, File exportDirDicom) {
+    Attributes attrs = populateDicomAttributes(mediaInfo);
+
+    MediaElement mediaElement = mediaInfo.getMedia();
+    File mediaFile = mediaElement.getFileCache().getOriginalFile().orElse(null);
+    if (mediaFile == null || !mediaFile.canRead()) {
+      LOGGER.error("Cannot read media file: {}", mediaElement.getName());
+      return false;
+    }
+
+    try {
+      String sopInstanceUID =
+          Objects.requireNonNull((String) mediaElement.getTagValue(TagD.getUID(Level.INSTANCE)));
+      var type = mediaInfo.getSeries().getType();
+      var file = new File(exportDirDicom, sopInstanceUID);
+      if (type == Type.PDF) {
+        Dicomizer.pdf(attrs, mediaFile, file);
+        //      } else if (type == Type.STL) {
+        //        Dicomizer.stl(attrs, mediaFile, file);
+        //      } else if (type == Type.AUDIO) {
+        //        Dicomizer.audio(attrs, mediaFile, file);
+      } else if (type == Type.VIDEO) {
+        Dicomizer.mpeg2(attrs, mediaFile, file);
+      }
+      return true;
+    } catch (Exception e) {
+      LOGGER.error("Cannot Dicomize media: {}", mediaElement.getName(), e);
+      return false;
+    }
+  }
+
+  private static Attributes populateDicomAttributes(AcquireMediaInfo mediaInfo) {
+    Attributes attrs = mediaInfo.getAttributes();
+    DicomMediaUtils.fillAttributes(AcquireManager.GLOBAL.getTagEntrySetIterator(), attrs);
+    DicomMediaUtils.fillAttributes(mediaInfo.getSeries().getTagEntrySetIterator(), attrs);
+    DicomMediaUtils.fillAttributes(mediaInfo.getMedia().getTagEntrySetIterator(), attrs);
+
+    AnatomicRegion.write(
+        attrs, (AnatomicRegion) mediaInfo.getMedia().getTagValue(TagW.AnatomicRegion));
+    return attrs;
+  }
+
+  public static boolean processImageElement(
       AcquireImageInfo imageInfo,
       File exportDirDicom,
       File exportDirImage,
@@ -75,10 +132,10 @@ public final class Transform2Dicom {
     String sopInstanceUID =
         Objects.requireNonNull((String) imageElement.getTagValue(TagD.getUID(Level.INSTANCE)));
 
-    // Transform to JPEG
+    // Transform the image if required
+    File imgFile = imageElement.getFileCache().getOriginalFile().orElse(null);
     Integer orientation =
         StringUtil.getInteger((String) imageElement.getTagValue(TagW.ExifOrientation));
-    File imgFile = imageElement.getFileCache().getOriginalFile().orElse(null);
     if (imgFile == null
         || !imageElement.getMimeType().contains("jpeg")
         || !imageInfo.getCurrentValues().equals(imageInfo.getDefaultValues())
@@ -90,19 +147,17 @@ public final class Transform2Dicom {
 
       MatOfInt map = new MatOfInt(Imgcodecs.IMWRITE_JPEG_QUALITY, 80);
       if (!ImageProcessor.writeImage(transformedImage.toImageCV(), imgFile, map)) {
-        // out of memory ??
+        // Out of memory or error
         FileUtil.delete(imgFile);
-        LOGGER.error("Cannot Transform to jpeg {}", imageElement.getName());
+        LOGGER.error("Cannot Transform to JPEG: {}", imageElement.getName());
         return false;
       }
     }
 
     // Dicomize
     if (imgFile.canRead()) {
-      Attributes attrs = imageInfo.getAttributes();
-      DicomMediaUtils.fillAttributes(AcquireManager.GLOBAL.getTagEntrySetIterator(), attrs);
-      DicomMediaUtils.fillAttributes(imageInfo.getSeries().getTagEntrySetIterator(), attrs);
-      DicomMediaUtils.fillAttributes(imageElement.getTagEntrySetIterator(), attrs);
+      Attributes attrs = populateDicomAttributes(imageInfo);
+
       // Spatial calibration
       if (Unit.PIXEL != imageElement.getPixelSpacingUnit()) {
         attrs.setString(Tag.PixelSpacingCalibrationDescription, VR.LO, "Used fiducial"); // NON-NLS
@@ -112,8 +167,6 @@ public final class Transform2Dicom {
                     imageElement.getPixelSpacingUnit().getConvFactor());
         attrs.setDouble(Tag.PixelSpacing, VR.DS, unitRatio, unitRatio);
       }
-
-      AnatomicRegion.write(attrs, (AnatomicRegion) imageElement.getTagValue(TagW.AnatomicRegion));
 
       try {
         Dicomizer.jpeg(attrs, imgFile, new File(exportDirDicom, sopInstanceUID), false);
@@ -125,30 +178,7 @@ public final class Transform2Dicom {
       // Presentation State
       GraphicModel grModel = (GraphicModel) imageElement.getTagValue(TagW.PresentationModel);
       if (grModel != null && grModel.hasSerializableGraphics()) {
-        Point2D offset = null;
-        Rectangle crop =
-            (Rectangle)
-                imageInfo.getPostProcessOpManager().getParamValue(CropOp.OP_NAME, CropOp.P_AREA);
-        if (crop != null) {
-          int rotationAngle =
-              Optional.ofNullable(
-                      (Integer)
-                          imageInfo
-                              .getPostProcessOpManager()
-                              .getParamValue(RotationOp.OP_NAME, RotationOp.P_ROTATE))
-                  .orElse(0);
-          rotationAngle = rotationAngle % 360;
-          if (rotationAngle == 0 || rotationAngle == 180) {
-            offset = new Point2D.Double(crop.getX(), crop.getY());
-          } else {
-            double factor = 2.0; // work only with 90 and 270 degrees
-            offset = new Point2D.Double(crop.getX() * factor, crop.getY() * factor);
-          }
-        }
-        String prUid = UIDUtils.createUID();
-        File outputFile = new File(exportDirDicom, prUid);
-        DicomPrSerializer.writePresentation(
-            grModel, attrs, outputFile, seriesInstanceUID, prUid, offset);
+        processDicomPR(imageInfo, exportDirDicom, seriesInstanceUID, grModel, attrs);
       }
     } else {
       LOGGER.error("Cannot read JPEG image {}", imageElement.getName());
@@ -156,6 +186,38 @@ public final class Transform2Dicom {
     }
 
     return true;
+  }
+
+  private static void processDicomPR(
+      AcquireImageInfo imageInfo,
+      File exportDirDicom,
+      String seriesInstanceUID,
+      GraphicModel grModel,
+      Attributes attrs) {
+    Point2D offset = null;
+    Rectangle crop =
+        (Rectangle)
+            imageInfo.getPostProcessOpManager().getParamValue(CropOp.OP_NAME, CropOp.P_AREA);
+    if (crop != null) {
+      int rotationAngle =
+          Optional.ofNullable(
+                  (Integer)
+                      imageInfo
+                          .getPostProcessOpManager()
+                          .getParamValue(RotationOp.OP_NAME, RotationOp.P_ROTATE))
+              .orElse(0);
+      rotationAngle = rotationAngle % 360;
+      if (rotationAngle == 0 || rotationAngle == 180) {
+        offset = new Point2D.Double(crop.getX(), crop.getY());
+      } else {
+        double factor = 2.0; // work only with 90 and 270 degrees
+        offset = new Point2D.Double(crop.getX() * factor, crop.getY() * factor);
+      }
+    }
+    String prUid = UIDUtils.createUID();
+    File outputFile = new File(exportDirDicom, prUid);
+    DicomPrSerializer.writePresentation(
+        grModel, attrs, outputFile, seriesInstanceUID, prUid, offset);
   }
 
   /**
@@ -167,7 +229,7 @@ public final class Transform2Dicom {
    * @param dicomTags the Taggable value
    */
   public static void buildStudySeriesDate(
-      Collection<AcquireImageInfo> collection, final Taggable dicomTags) {
+      Collection<AcquireMediaInfo> collection, final Taggable dicomTags) {
 
     TagW seriesDate = TagD.get(Tag.SeriesDate);
     TagW seriesTime = TagD.get(Tag.SeriesTime);
@@ -183,8 +245,8 @@ public final class Transform2Dicom {
           i.getSeries().setTag(seriesTime, null);
         });
 
-    for (AcquireImageInfo imageInfo : collection) {
-      ImageElement imageElement = imageInfo.getImage();
+    for (AcquireMediaInfo imageInfo : collection) {
+      MediaElement imageElement = imageInfo.getMedia();
       LocalDateTime date = TagD.dateTime(Tag.ContentDate, Tag.ContentTime, imageElement);
       if (date == null) {
         continue;

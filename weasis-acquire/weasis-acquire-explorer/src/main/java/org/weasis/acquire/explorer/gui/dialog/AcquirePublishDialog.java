@@ -24,6 +24,7 @@ import java.util.stream.Collectors;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JDialog;
+import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
@@ -39,6 +40,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.acquire.explorer.AcquireImageInfo;
 import org.weasis.acquire.explorer.AcquireManager;
+import org.weasis.acquire.explorer.AcquireMediaInfo;
 import org.weasis.acquire.explorer.DicomizeTask;
 import org.weasis.acquire.explorer.MediaImporterFactory;
 import org.weasis.acquire.explorer.Messages;
@@ -58,6 +60,7 @@ import org.weasis.core.api.service.WProperties;
 import org.weasis.core.api.util.FontItem;
 import org.weasis.core.api.util.ThreadUtil;
 import org.weasis.core.util.StringUtil;
+import org.weasis.dicom.explorer.LocalPersistence;
 import org.weasis.dicom.explorer.pref.node.AbstractDicomNode;
 import org.weasis.dicom.explorer.pref.node.AbstractDicomNode.UsageType;
 import org.weasis.dicom.explorer.pref.node.DefaultDicomNode;
@@ -195,20 +198,55 @@ public class AcquirePublishDialog extends JDialog {
     }
     contentPane.add(panel, "split 5, span, wrap"); // NON-NLS
 
+    JButton exportButton = createExportButton();
+    contentPane.add(exportButton);
+
     publishButton = new JButton(Messages.getString("AcquirePublishDialog.publish"));
-    publishButton.addActionListener(e -> publishAction());
+    publishButton.addActionListener(_ -> publishAction(null));
 
     cancelButton = new JButton(Messages.getString("AcquirePublishDialog.cancel"));
-    clearAndHideActionListener = e -> clearAndHide();
+    clearAndHideActionListener = _ -> clearAndHide();
     cancelButton.addActionListener(clearAndHideActionListener);
 
     progressBar = new JProgressBar();
     progressBar.setStringPainted(true);
     progressBar.setVisible(false);
-    contentPane.add(progressBar, "split 3, span, growx, gaptop 20"); // NON-NLS
+    contentPane.add(progressBar, "split 4, span, growx, gaptop 20"); // NON-NLS
+    contentPane.add(exportButton);
     contentPane.add(publishButton);
     contentPane.add(cancelButton, "wrap"); // NON-NLS
     return contentPane;
+  }
+
+  private JButton createExportButton() {
+    JButton exportButton = new JButton("Export");
+    exportButton.addActionListener(
+        _ -> {
+          var pref = LocalPersistence.getProperties();
+          String folderKey = "weasis.acquire.dicom.export.folder";
+          String targetDirectoryPath = pref.getProperty(folderKey, "");
+          JFileChooser fileChooser = new JFileChooser(targetDirectoryPath);
+          fileChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+          fileChooser.setMultiSelectionEnabled(false);
+          if (StringUtil.hasText(targetDirectoryPath)) {
+            File targetFile = new File(targetDirectoryPath);
+            if (targetFile.exists() && targetFile.isDirectory()) {
+              fileChooser.setSelectedFile(new File("new"));
+            }
+          }
+
+          if (fileChooser.showSaveDialog(WinUtil.getParentWindow(this))
+              == JFileChooser.APPROVE_OPTION) {
+            File selectedFile = fileChooser.getSelectedFile();
+            if (selectedFile != null) {
+              File outputFolder =
+                  selectedFile.isDirectory() ? selectedFile : selectedFile.getParentFile();
+              pref.setProperty(folderKey, outputFolder.getPath());
+              publishAction(outputFolder);
+            }
+          }
+        });
+    return exportButton;
   }
 
   private void loadDicomNodes() {
@@ -249,8 +287,8 @@ public class AcquirePublishDialog extends JDialog {
         UsageType.BOTH);
   }
 
-  private void publishAction() {
-    List<AcquireImageInfo> toPublish = getSelectedImages(publishTree);
+  private void publishAction(File exportDir) {
+    List<AcquireMediaInfo> toPublish = getSelectedImages(publishTree);
 
     if (toPublish.isEmpty()) {
       JOptionPane.showMessageDialog(
@@ -263,12 +301,12 @@ public class AcquirePublishDialog extends JDialog {
 
     boolean publishable = AcquireGlobalMeta.isPublishable(AcquireManager.GLOBAL);
     if (publishable) {
-      for (AcquireImageInfo info : toPublish) {
+      for (AcquireMediaInfo info : toPublish) {
         publishable = AcquireSeriesMeta.isPublishable(info.getSeries());
         if (!publishable) {
           break;
         }
-        publishable = AcquireImageMeta.isPublishable(info.getImage());
+        publishable = AcquireImageMeta.isPublishable(info.getMedia());
         if (!publishable) {
           break;
         }
@@ -283,8 +321,10 @@ public class AcquirePublishDialog extends JDialog {
       return;
     }
 
-    for (AcquireImageInfo imgInfo : toPublish) {
-      setZoomRatio(imgInfo, null);
+    for (AcquireMediaInfo info : toPublish) {
+      if (info instanceof AcquireImageInfo imgInfo) {
+        setZoomRatio(imgInfo, null);
+      }
     }
     Resolution resolution = (Resolution) resolutionCombo.getSelectedItem();
     if (resolution != Resolution.ORIGINAL) {
@@ -297,16 +337,14 @@ public class AcquirePublishDialog extends JDialog {
       }
     }
 
-    SwingWorker<File, AcquireImageInfo> dicomizeTask =
-        getFileAcquireImageInfoSwingWorker(toPublish);
-
+    SwingWorker<File, AcquireMediaInfo> dicomizeTask = setupPublishingTask(toPublish, exportDir);
     ThreadUtil.buildNewSingleThreadExecutor("Dicomize").execute(dicomizeTask); // NON-NLS
   }
 
-  private SwingWorker<File, AcquireImageInfo> getFileAcquireImageInfoSwingWorker(
-      List<AcquireImageInfo> toPublish) {
-    SwingWorker<File, AcquireImageInfo> dicomizeTask = new DicomizeTask(toPublish);
-    ActionListener taskCancelActionListener = e -> dicomizeTask.cancel(true);
+  private SwingWorker<File, AcquireMediaInfo> setupPublishingTask(
+      List<AcquireMediaInfo> toPublish, File exportDir) {
+    SwingWorker<File, AcquireMediaInfo> dicomizeTask = new DicomizeTask(toPublish);
+    ActionListener taskCancelActionListener = _ -> dicomizeTask.cancel(true);
 
     dicomizeTask.addPropertyChangeListener(
         evt -> {
@@ -324,11 +362,11 @@ public class AcquirePublishDialog extends JDialog {
               cancelButton.addActionListener(taskCancelActionListener);
 
             } else if (StateValue.DONE == evt.getNewValue()) {
-              File exportDirDicom = null;
+              File tempDirDicom = null;
 
               if (!dicomizeTask.isCancelled()) {
                 try {
-                  exportDirDicom = dicomizeTask.get();
+                  tempDirDicom = dicomizeTask.get();
                 } catch (InterruptedException doNothing) {
                   LOGGER.warn("Dicomizing task Interruption");
                   Thread.currentThread().interrupt();
@@ -336,20 +374,8 @@ public class AcquirePublishDialog extends JDialog {
                   LOGGER.error("Dicomizing task", e);
                 }
 
-                if (exportDirDicom != null) {
-                  AbstractDicomNode node = (AbstractDicomNode) comboNode.getSelectedItem();
-                  String weasisAet =
-                      GuiUtils.getUICore()
-                          .getSystemPreferences()
-                          .getProperty("weasis.aet"); // NON-NLS
-                  if (!StringUtil.hasText(weasisAet)) {
-                    weasisAet =
-                        comboCallingNode.getSelectedItem() == null
-                            ? "WEASIS_AE" // NON-NLS
-                            : ((DefaultDicomNode) comboCallingNode.getSelectedItem()).getAeTitle();
-                  }
-                  publishPanel.publishDirDicom(exportDirDicom, node, weasisAet, toPublish);
-                  clearAndHide();
+                if (tempDirDicom != null) {
+                  exportProcess(toPublish, exportDir, tempDirDicom);
                 } else {
                   JOptionPane.showMessageDialog(
                       WinUtil.getValidComponent(this),
@@ -359,7 +385,7 @@ public class AcquirePublishDialog extends JDialog {
                 }
               }
 
-              if (exportDirDicom == null) {
+              if (tempDirDicom == null) {
                 resolutionCombo.setEnabled(!getOversizedSelected(publishTree).isEmpty());
                 progressBar.setValue(0);
                 progressBar.setVisible(false);
@@ -373,6 +399,24 @@ public class AcquirePublishDialog extends JDialog {
     return dicomizeTask;
   }
 
+  private void exportProcess(List<AcquireMediaInfo> toPublish, File exportDir, File tempDirDicom) {
+    if (exportDir != null) {
+      publishPanel.exportDirDicom(exportDir, tempDirDicom, toPublish);
+    } else {
+      AbstractDicomNode node = (AbstractDicomNode) comboNode.getSelectedItem();
+      String weasisAet =
+          GuiUtils.getUICore().getSystemPreferences().getProperty("weasis.aet"); // NON-NLS
+      if (!StringUtil.hasText(weasisAet)) {
+        weasisAet =
+            comboCallingNode.getSelectedItem() == null
+                ? "WEASIS_AE" // NON-NLS
+                : ((DefaultDicomNode) comboCallingNode.getSelectedItem()).getAeTitle();
+      }
+      publishPanel.publishDirDicom(tempDirDicom, node, weasisAet, toPublish);
+    }
+    clearAndHide();
+  }
+
   private static void setZoomRatio(AcquireImageInfo imgInfo, Double ratio) {
     imgInfo.getCurrentValues().setRatio(ratio);
     ImageOpNode node = imgInfo.getPostProcessOpManager().getNode(ZoomOp.OP_NAME);
@@ -383,16 +427,20 @@ public class AcquirePublishDialog extends JDialog {
     }
   }
 
-  private List<AcquireImageInfo> getSelectedImages(PublishTree tree) {
+  private List<AcquireMediaInfo> getSelectedImages(PublishTree tree) {
     return Arrays.stream(tree.getModel().getCheckingPaths())
         .map(o1 -> (DefaultMutableTreeNode) o1.getLastPathComponent())
-        .filter(o2 -> o2.getUserObject() instanceof AcquireImageInfo)
-        .map(o3 -> (AcquireImageInfo) o3.getUserObject())
+        .filter(o2 -> o2.getUserObject() instanceof AcquireMediaInfo)
+        .map(o3 -> (AcquireMediaInfo) o3.getUserObject())
         .collect(Collectors.toList());
   }
 
   private List<AcquireImageInfo> getOversizedSelected(PublishTree tree) {
-    return getSelectedImages(tree).stream().filter(oversizedImages()).collect(Collectors.toList());
+    return getSelectedImages(tree).stream()
+        .filter(e -> e instanceof AcquireImageInfo)
+        .map(e -> (AcquireImageInfo) e)
+        .filter(oversizedImages())
+        .collect(Collectors.toList());
   }
 
   private Predicate<AcquireImageInfo> oversizedImages() {

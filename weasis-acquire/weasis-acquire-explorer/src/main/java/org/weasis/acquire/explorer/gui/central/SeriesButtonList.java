@@ -35,6 +35,7 @@ public class SeriesButtonList extends JScrollPane {
   }
 
   public void addButton(SeriesButton btn) {
+    btn.setFocusable(false);
     Dimension dim = btn.getPreferredSize();
     dim.width = 210;
     btn.setPreferredSize(dim);
@@ -46,7 +47,7 @@ public class SeriesButtonList extends JScrollPane {
     seriesButtonPane.add(btn, index);
   }
 
-  public Optional<SeriesButton> getButton(final SeriesGroup seriesGroup) {
+  public Optional<SeriesButton> getButton(SeriesGroup seriesGroup) {
     return seriesButtonSet.stream().filter(sb -> sb.getSeries().equals(seriesGroup)).findAny();
   }
 
@@ -64,7 +65,7 @@ public class SeriesButtonList extends JScrollPane {
     return seriesButtonSet.stream().sorted().findFirst();
   }
 
-  public void removeBySeries(final SeriesGroup seriesGroup) {
+  public void removeBySeries(SeriesGroup seriesGroup) {
     seriesButtonSet.stream()
         .filter(sb -> sb.getSeries().equals(seriesGroup))
         .findFirst()

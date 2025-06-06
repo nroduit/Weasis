@@ -42,9 +42,9 @@ class SeriesGroupTest {
 
   @Test
   void testGetters() {
-    assertEquals(SeriesGroup.Type.NONE, s1.getType());
-    assertEquals(SeriesGroup.Type.DATE, s2.getType());
-    assertEquals(SeriesGroup.Type.NAME, s3.getType());
+    assertEquals(SeriesGroup.Type.IMAGE, s1.getType());
+    assertEquals(SeriesGroup.Type.IMAGE_DATE, s2.getType());
+    assertEquals(SeriesGroup.Type.IMAGE_NAME, s3.getType());
   }
 
   @Test

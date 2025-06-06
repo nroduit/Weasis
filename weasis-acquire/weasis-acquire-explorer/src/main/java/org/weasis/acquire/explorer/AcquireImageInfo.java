@@ -20,7 +20,6 @@ import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.function.Consumer;
 import org.dcm4che3.data.Tag;
 import org.opencv.core.Mat;
 import org.opencv.core.Rect;
@@ -254,10 +253,6 @@ public class AcquireImageInfo extends AcquireMediaInfo {
   @Override
   public String toString() {
     return Optional.ofNullable(getImage()).map(ImageElement::getName).orElse("");
-  }
-
-  public static Consumer<AcquireImageInfo> changeStatus(AcquireImageStatus status) {
-    return imgInfo -> imgInfo.setStatus(status);
   }
 
   public AffineTransform getAffineTransform(int rotation, boolean inverse) {

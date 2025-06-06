@@ -14,12 +14,12 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.function.Consumer;
 import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Tag;
 import org.dcm4che3.data.VR;
 import org.dcm4che3.util.UIDUtils;
 import org.weasis.acquire.explorer.core.bean.SeriesGroup;
-import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.util.StringUtil;
@@ -74,7 +74,7 @@ public class AcquireMediaInfo {
 
       String seriesDescription = TagD.getTagValue(seriesGroup, Tag.SeriesDescription, String.class);
       if (!StringUtil.hasText(seriesDescription)
-          && seriesGroup.getType() != SeriesGroup.Type.NONE) {
+          && seriesGroup.getType() != SeriesGroup.Type.IMAGE) {
         seriesGroup.setTag(TagD.get(Tag.SeriesDescription), seriesGroup.getDisplayName());
       }
     }
@@ -93,37 +93,6 @@ public class AcquireMediaInfo {
     return Optional.ofNullable(seriesGroup).map(SeriesGroup::getUID).orElse("Unknown Media");
   }
 
-  public void setSpecificTags() {
-    if (media instanceof ImageElement || seriesGroup == null) {
-      return;
-    }
-
-    // Set specific tags for non-image media
-    String mime = media.getMimeType();
-    if (mime != null) {
-      String modality;
-      String title;
-      if ("application/pdf".equals(mime)) {
-        modality = "OT"; // NON-NLS
-        title = "Encapsulated PDF"; // NON-NLS
-      } else if (mime.startsWith("video/")) {
-        modality = "XC"; // NON-NLS
-        title = "Video"; // NON-NLS
-      } else if (mime.startsWith("audio/")) {
-        modality = "AU"; // NON-NLS
-        title = "Audio"; // NON-NLS
-      } else if ("application/SLA".equals(mime) || "model/stl".equals(mime)) {
-        modality = "M3D"; // NON-NLS
-        title = "STL 3D Model"; // NON-NLS
-      } else {
-        modality = "OT"; // NON-NLS
-        title = "Encapsulated Media";
-      }
-      seriesGroup.setTag(TagD.get(Tag.Modality), modality);
-      seriesGroup.setTag(TagD.get(Tag.SeriesDescription), title);
-    }
-  }
-
   protected static void setContentDateTime(MediaElement media, LocalDateTime dateTime) {
     if (dateTime == null) {
       dateTime =
@@ -132,5 +101,9 @@ public class AcquireMediaInfo {
     }
     media.setTagNoNull(TagD.get(Tag.ContentDate), dateTime.toLocalDate());
     media.setTagNoNull(TagD.get(Tag.ContentTime), dateTime.toLocalTime());
+  }
+
+  public static Consumer<AcquireMediaInfo> changeStatus(AcquireImageStatus status) {
+    return imgInfo -> imgInfo.setStatus(status);
   }
 }

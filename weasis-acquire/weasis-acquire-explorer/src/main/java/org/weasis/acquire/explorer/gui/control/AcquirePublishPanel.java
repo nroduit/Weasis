@@ -26,9 +26,9 @@ import javax.swing.SwingWorker.StateValue;
 import org.dcm4che3.net.Status;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.weasis.acquire.explorer.AcquireImageInfo;
 import org.weasis.acquire.explorer.AcquireImageStatus;
 import org.weasis.acquire.explorer.AcquireManager;
+import org.weasis.acquire.explorer.AcquireMediaInfo;
 import org.weasis.acquire.explorer.Messages;
 import org.weasis.acquire.explorer.PublishDicomTask;
 import org.weasis.acquire.explorer.gui.dialog.AcquirePublishDialog;
@@ -84,7 +84,7 @@ public class AcquirePublishPanel extends JPanel {
       File exportDirDicom,
       AbstractDicomNode destinationNode,
       String callingAet,
-      List<AcquireImageInfo> toPublish) {
+      List<AcquireMediaInfo> toPublish) {
     SwingWorker<DicomState, File> publishDicomTask = null;
     if (destinationNode instanceof DefaultDicomNode defaultDicomNode) {
       publishDicomTask =
@@ -123,7 +123,7 @@ public class AcquirePublishPanel extends JPanel {
   }
 
   public PublishDicomTask publishStow(
-      File exportDirDicom, DicomWebNode node, List<AcquireImageInfo> toPublish) {
+      File tempDirDicom, DicomWebNode node, List<AcquireMediaInfo> toPublish) {
     AuthMethod auth = AuthenticationPersistence.getAuthMethod(node.getAuthMethodUid());
     if (!OAuth2ServiceFactory.noAuth.equals(auth)) {
       String oldCode = auth.getCode();
@@ -147,12 +147,12 @@ public class AcquirePublishPanel extends JPanel {
 
             DicomState state =
                 stowRS.uploadDicom(
-                    Collections.singletonList(exportDirDicom.getAbsolutePath()), true, authMethod);
+                    Collections.singletonList(tempDirDicom.getAbsolutePath()), true, authMethod);
             if (state.getStatus() == Status.Success) {
               toPublish.forEach(
                   i -> {
                     i.setStatus(AcquireImageStatus.PUBLISHED);
-                    i.getImage().setTag(TagW.Checked, Boolean.TRUE);
+                    i.getMedia().setTag(TagW.Checked, Boolean.TRUE);
                     AcquireManager.getInstance().removeImage(i);
                   });
             }
@@ -161,7 +161,7 @@ public class AcquirePublishPanel extends JPanel {
             LOGGER.error("STOW-RS publish", e);
             return DicomState.buildMessage(null, e.getMessage(), null);
           } finally {
-            FileUtil.recursiveDelete(exportDirDicom);
+            FileUtil.recursiveDelete(tempDirDicom);
           }
         };
     return new PublishDicomTask(publish, new DicomProgress());
@@ -199,6 +199,22 @@ public class AcquirePublishPanel extends JPanel {
         publishBtn.setEnabled(true);
         progressBar.setVisible(false);
       }
+    }
+  }
+
+  public void exportDirDicom(File exportDir, File tempDirDicom, List<AcquireMediaInfo> toPublish) {
+    try {
+      FileUtil.copyFolder(tempDirDicom.toPath(), exportDir.toPath());
+      toPublish.forEach(
+          i -> {
+            i.setStatus(AcquireImageStatus.PUBLISHED);
+            i.getMedia().setTag(TagW.Checked, Boolean.TRUE);
+            AcquireManager.getInstance().removeImage(i);
+          });
+    } catch (Exception e) {
+      LOGGER.error("Export DICOM fils to local", e);
+    } finally {
+      FileUtil.recursiveDelete(tempDirDicom);
     }
   }
 }

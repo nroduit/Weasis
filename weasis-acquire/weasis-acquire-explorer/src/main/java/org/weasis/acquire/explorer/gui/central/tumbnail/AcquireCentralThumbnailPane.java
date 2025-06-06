@@ -14,20 +14,19 @@ import java.awt.datatransfer.UnsupportedFlavorException;
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
-import java.util.Optional;
 import javax.swing.JComponent;
 import javax.swing.event.ListSelectionListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.weasis.acquire.explorer.AcquireImageInfo;
+import org.weasis.acquire.explorer.AcquireImageStatus;
 import org.weasis.acquire.explorer.AcquireManager;
+import org.weasis.acquire.explorer.AcquireMediaInfo;
 import org.weasis.acquire.explorer.core.bean.SeriesGroup;
+import org.weasis.acquire.explorer.core.bean.SeriesGroup.Type;
 import org.weasis.acquire.explorer.gui.central.AcquireTabPanel;
-import org.weasis.acquire.explorer.gui.central.SeriesButton;
 import org.weasis.base.explorer.JIThumbnailCache;
 import org.weasis.base.explorer.list.AThumbnailListPane;
 import org.weasis.base.explorer.list.IThumbnailModel;
-import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaReader;
 import org.weasis.core.api.media.data.Series;
@@ -103,18 +102,26 @@ public class AcquireCentralThumbnailPane<E extends MediaElement> extends AThumbn
       return true;
     }
 
-    private void addToSeries(MediaElement media) {
-      if (media instanceof ImageElement imageElement) {
-        AcquireCentralThumbnailList<?> thumbnailList =
-            (AcquireCentralThumbnailList<?>) AcquireCentralThumbnailPane.this.thumbnailList;
-        AcquireImageInfo info = AcquireManager.findByImage(imageElement);
-        if (info != null) {
-          SeriesGroup seriesGroup =
-              Optional.ofNullable(thumbnailList.getSelectedSeries())
-                  .map(SeriesButton::getSeries)
-                  .orElse(null);
-          AcquireManager.importMedia(info, seriesGroup);
+    private void addToSeries(MediaElement... medias) {
+      SeriesGroup seriesGroup = null;
+      if (medias == null || medias.length == 0) {
+        return;
+      }
+      for (MediaElement media : medias) {
+        var type = Type.fromMimeType(media);
+        if (type != null) {
+          AcquireMediaInfo info = AcquireManager.findByMedia(media);
+          if (info != null) {
+            seriesGroup = new SeriesGroup(type);
+            AcquireManager.importMedia(info, seriesGroup);
+            info.setStatus(AcquireImageStatus.SUBMITTED);
+            AcquireManager.getInstance().notifySeriesSelection(seriesGroup);
+          }
         }
+      }
+
+      if (seriesGroup != null) {
+        AcquireManager.getInstance().notifySeriesSelection(seriesGroup);
       }
     }
 
@@ -124,7 +131,7 @@ public class AcquireCentralThumbnailPane<E extends MediaElement> extends AThumbn
         return false;
       }
       for (File file : files) {
-        MediaReader<?> reader = ViewerPluginBuilder.getMedia(file, false);
+        MediaReader<?> reader = ViewerPluginBuilder.getMedia(file, true);
         if (reader != null && !reader.getMediaFragmentMimeType().contains("dicom")) { // NON-NLS
           MediaElement[] medias = reader.getMediaElement();
           if (medias != null) {

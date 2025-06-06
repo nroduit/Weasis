@@ -23,16 +23,17 @@ import org.weasis.acquire.explorer.Messages;
 import org.weasis.acquire.explorer.core.bean.SeriesGroup;
 import org.weasis.acquire.explorer.gui.central.AcquireTabPanel;
 import org.weasis.core.api.gui.util.WinUtil;
-import org.weasis.core.api.media.data.ImageElement;
+import org.weasis.core.api.media.data.MediaElement;
+import org.weasis.core.util.StringUtil;
 
 public class AcquireNewSeriesDialog extends JDialog implements PropertyChangeListener {
   private final JTextField seriesName = new JTextField();
   private final JOptionPane optionPane;
 
   private final AcquireTabPanel acquireTabPanel;
-  private final List<ImageElement> medias;
+  private final List<MediaElement> medias;
 
-  public AcquireNewSeriesDialog(AcquireTabPanel acquireTabPanel, final List<ImageElement> medias) {
+  public AcquireNewSeriesDialog(AcquireTabPanel acquireTabPanel, final List<MediaElement> medias) {
     super(WinUtil.getParentFrame(acquireTabPanel), true);
     this.acquireTabPanel = acquireTabPanel;
     this.medias = medias;
@@ -68,9 +69,14 @@ public class AcquireNewSeriesDialog extends JDialog implements PropertyChangeLis
     boolean close = true;
     if (action != null) {
       if (AcquireImportDialog.OPTIONS[0].equals(action)) {
-        if (seriesName.getText() != null && !seriesName.getText().isEmpty()) {
-          acquireTabPanel.moveElements(
-              new SeriesGroup(seriesName.getText()), AcquireManager.toAcquireImageInfo(medias));
+        if (StringUtil.hasText(seriesName.getText())) {
+          var infos = AcquireManager.toAcquireMediaInfo(medias);
+          if (!infos.isEmpty()) {
+            var first = infos.getFirst();
+            var group = new SeriesGroup(first.getSeries().getType());
+            group.setSeriesDescription(seriesName.getText());
+            acquireTabPanel.moveElements(group, infos);
+          }
         } else {
           JOptionPane.showMessageDialog(
               WinUtil.getValidComponent(this),

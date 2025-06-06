@@ -54,6 +54,7 @@ import org.weasis.acquire.explorer.core.bean.SeriesGroup;
 import org.weasis.core.api.command.Option;
 import org.weasis.core.api.command.Options;
 import org.weasis.core.api.explorer.ObservableEvent;
+import org.weasis.core.api.explorer.ObservableEvent.BasicAction;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.WinUtil;
@@ -173,15 +174,22 @@ public class AcquireManager {
     return getBySeries().stream().filter(s -> s.equals(searched)).findFirst().orElse(searched);
   }
 
-  public static SeriesGroup getDefaultSeries() {
+  public static SeriesGroup getDefaultImageSeries() {
     return getBySeries().stream()
-        .filter(s -> SeriesGroup.Type.NONE.equals(s.getType()))
+        .filter(s -> SeriesGroup.Type.IMAGE.equals(s.getType()))
         .findFirst()
         .orElseGet(SeriesGroup::new);
   }
 
+  public static SeriesGroup getDefaultSeries(AcquireMediaInfo media) {
+    if (media == null || media instanceof AcquireImageInfo) {
+      return getDefaultImageSeries();
+    }
+    return null;
+  }
+
   public void removeMedias(List<? extends MediaElement> mediaList) {
-    removeImages(toAcquireImageInfo(mediaList));
+    removeImages(toAcquireMediaInfo(mediaList));
   }
 
   public void removeAllImages() {
@@ -219,14 +227,15 @@ public class AcquireManager {
     boolean isSearchSeriesByDate = false;
     SeriesGroup commonSeries = null;
     if (searchedSeries != null) {
-      isSearchSeriesByDate = SeriesGroup.Type.DATE.equals(searchedSeries.getType());
+      isSearchSeriesByDate = SeriesGroup.Type.IMAGE_DATE.equals(searchedSeries.getType());
       commonSeries = isSearchSeriesByDate ? null : getSeries(searchedSeries);
     }
 
     if (commonSeries == null) {
-      commonSeries = getDefaultSeries();
+      commonSeries = getDefaultImageSeries();
     }
 
+    SeriesGroup seriesGroup = null;
     List<AcquireImageInfo> imageImportedList = new ArrayList<>(toImport.size());
 
     for (AcquireImageInfo newImageInfo : toImport) {
@@ -236,15 +245,15 @@ public class AcquireManager {
         addImageToDataMapping(newImageInfo);
       }
 
-      SeriesGroup group =
+      seriesGroup =
           isSearchSeriesByDate
               ? findSeries(searchedSeries, newImageInfo, maxRangeInMinutes)
               : commonSeries;
-      if (group.isNeedUpdateFromGlobalTags()) {
-        group.setNeedUpdateFromGlobalTags(false);
-        group.updateDicomTags();
+      if (seriesGroup.isNeedUpdateFromGlobalTags()) {
+        seriesGroup.setNeedUpdateFromGlobalTags(false);
+        seriesGroup.updateDicomTags();
       }
-      newImageInfo.setSeries(group);
+      newImageInfo.setSeries(seriesGroup);
 
       if (isSearchSeriesByDate) {
         List<AcquireMediaInfo> imageInfoList =
@@ -257,10 +266,14 @@ public class AcquireManager {
     }
 
     getInstance().notifyImagesAdded(imageImportedList);
+    if (seriesGroup != null) {
+      getInstance().notifySeriesSelection(seriesGroup);
+    }
   }
 
-  public static void importMedia(AcquireMediaInfo mediaInfo, SeriesGroup searchedSeries) {
+  public static void importMedia(AcquireMediaInfo mediaInfo, SeriesGroup group) {
     Objects.requireNonNull(mediaInfo);
+    Objects.requireNonNull(group);
     if (uriToMediaInfoMap.isEmpty() || GLOBAL.isAllowFullEdition()) {
       AcquireManager.showWorklist();
     }
@@ -270,13 +283,12 @@ public class AcquireManager {
     } else {
       addImageToDataMapping(mediaInfo);
     }
-    SeriesGroup group = searchedSeries == null ? getDefaultSeries() : searchedSeries;
+
     if (group.isNeedUpdateFromGlobalTags()) {
       group.setNeedUpdateFromGlobalTags(false);
       group.updateDicomTags();
     }
     mediaInfo.setSeries(group);
-    mediaInfo.setSpecificTags();
 
     getInstance().notifyImageAdded(mediaInfo);
   }
@@ -286,13 +298,13 @@ public class AcquireManager {
 
     Objects.requireNonNull(imageInfo, "findSeries imageInfo should not be null");
 
-    if (SeriesGroup.Type.DATE.equals(searchedSeries.getType())) {
+    if (SeriesGroup.Type.IMAGE_DATE.equals(searchedSeries.getType())) {
       LocalDateTime imageDate =
           TagD.dateTime(Tag.ContentDate, Tag.ContentTime, imageInfo.getImage());
 
       Optional<SeriesGroup> series =
           getBySeries().stream()
-              .filter(s -> SeriesGroup.Type.DATE.equals(s.getType()))
+              .filter(s -> SeriesGroup.Type.IMAGE_DATE.equals(s.getType()))
               .filter(
                   s -> {
                     LocalDateTime start = s.getDate();
@@ -340,12 +352,12 @@ public class AcquireManager {
         .collect(Collectors.toList());
   }
 
-  public static List<AcquireMediaInfo> toAcquireImageInfo(List<? extends MediaElement> medias) {
-    return medias.stream()
-        .filter(ImageElement.class::isInstance)
-        .map(ImageElement.class::cast)
-        .map(AcquireManager::findByImage)
-        .collect(Collectors.toList());
+  public static List<MediaElement> toMediaElement(List<? extends MediaElement> medias) {
+    return medias.stream().filter(Objects::nonNull).collect(Collectors.toList());
+  }
+
+  public static List<AcquireMediaInfo> toAcquireMediaInfo(List<? extends MediaElement> medias) {
+    return medias.stream().map(AcquireManager::findByMedia).filter(Objects::nonNull).toList();
   }
 
   public static String getPatientContextName() {
@@ -409,6 +421,11 @@ public class AcquireManager {
     firePropertyChange(
         new ObservableEvent(
             ObservableEvent.BasicAction.REMOVE, AcquireManager.this, null, mediaInfos));
+  }
+
+  public void notifySeriesSelection(SeriesGroup group) {
+    firePropertyChange(
+        new ObservableEvent(BasicAction.LOADING_STOP, AcquireManager.this, null, group));
   }
 
   private void notifyImageAdded(AcquireMediaInfo mediaInfo) {
