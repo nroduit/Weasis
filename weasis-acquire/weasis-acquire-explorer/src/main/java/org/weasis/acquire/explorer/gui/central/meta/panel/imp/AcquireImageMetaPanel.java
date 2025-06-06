@@ -27,13 +27,13 @@ public class AcquireImageMetaPanel extends AcquireMetadataPanel {
 
   @Override
   public AcquireMetadataTableModel newTableModel() {
-    return new AcquireImageMeta(imageInfo);
+    return new AcquireImageMeta(mediaInfo);
   }
 
   @Override
   public String getDisplayText() {
-    if (imageInfo != null) {
-      return IMAGE_PREFIX + imageInfo.getImage().getName();
+    if (mediaInfo != null) {
+      return IMAGE_PREFIX + mediaInfo.getMedia().getName();
     } else {
       return NO_IMAGE;
     }

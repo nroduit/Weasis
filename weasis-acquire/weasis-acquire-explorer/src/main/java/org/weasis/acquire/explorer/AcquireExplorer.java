@@ -132,10 +132,10 @@ public class AcquireExplorer extends PluginTool implements DataExplorerView {
         } else if (ObservableEvent.BasicAction.REMOVE.equals(observableEvent.getActionCommand())) {
 
           if (evt.getNewValue() instanceof Collection<?>) {
-            centralPane.tabbedPane.removeImages((Collection<AcquireImageInfo>) evt.getNewValue());
+            centralPane.tabbedPane.removeImages((Collection<AcquireMediaInfo>) evt.getNewValue());
             centralPane.tabbedPane.repaint();
 
-          } else if (evt.getNewValue() instanceof AcquireImageInfo info) {
+          } else if (evt.getNewValue() instanceof AcquireMediaInfo info) {
             centralPane.tabbedPane.removeImage(info);
             centralPane.tabbedPane.repaint();
           }
@@ -147,14 +147,14 @@ public class AcquireExplorer extends PluginTool implements DataExplorerView {
         } else if (ObservableEvent.BasicAction.ADD.equals(observableEvent.getActionCommand())) {
 
           if (evt.getNewValue() instanceof Collection<?>) {
-            ((Collection<AcquireImageInfo>) evt.getNewValue())
+            ((Collection<AcquireMediaInfo>) evt.getNewValue())
                 .stream()
-                    .collect(Collectors.groupingBy(AcquireImageInfo::getSeries))
+                    .collect(Collectors.groupingBy(AcquireMediaInfo::getSeries))
                     .forEach(centralPane.tabbedPane::addSeriesElement);
 
-          } else if (evt.getNewValue() instanceof AcquireImageInfo info) {
+          } else if (evt.getNewValue() instanceof AcquireMediaInfo info) {
             SeriesGroup series = info.getSeries();
-            ArrayList<AcquireImageInfo> infos = new ArrayList<>();
+            ArrayList<AcquireMediaInfo> infos = new ArrayList<>();
             infos.add(info);
             centralPane.tabbedPane.addSeriesElement(series, infos);
           }

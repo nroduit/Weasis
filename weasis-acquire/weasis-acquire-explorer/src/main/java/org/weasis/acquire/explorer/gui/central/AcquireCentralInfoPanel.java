@@ -11,15 +11,15 @@ package org.weasis.acquire.explorer.gui.central;
 
 import java.awt.GridLayout;
 import javax.swing.JPanel;
-import org.weasis.acquire.explorer.AcquireImageInfo;
 import org.weasis.acquire.explorer.AcquireManager;
+import org.weasis.acquire.explorer.AcquireMediaInfo;
 import org.weasis.acquire.explorer.Messages;
 import org.weasis.acquire.explorer.core.bean.SeriesGroup;
 import org.weasis.acquire.explorer.gui.central.meta.panel.AcquireMetadataPanel;
 import org.weasis.acquire.explorer.gui.central.meta.panel.imp.AcquireGlobalMetaPanel;
 import org.weasis.acquire.explorer.gui.central.meta.panel.imp.AcquireImageMetaPanel;
 import org.weasis.acquire.explorer.gui.central.meta.panel.imp.AcquireSeriesMetaPanel;
-import org.weasis.core.api.media.data.ImageElement;
+import org.weasis.core.api.media.data.MediaElement;
 
 public class AcquireCentralInfoPanel extends JPanel {
 
@@ -42,12 +42,12 @@ public class AcquireCentralInfoPanel extends JPanel {
     seriesInfoPanel.setSeries(newSeries);
   }
 
-  public void setImage(ImageElement newImage) {
-    if (newImage != null) {
-      AcquireImageInfo imageInfo = AcquireManager.findByImage(newImage);
-      imageInfoPanel.setImageInfo(imageInfo);
+  public void setImage(MediaElement media) {
+    if (media != null) {
+      AcquireMediaInfo imageInfo = AcquireManager.findByMedia(media);
+      imageInfoPanel.setMediaInfo(imageInfo);
     } else {
-      imageInfoPanel.setImageInfo(null);
+      imageInfoPanel.setMediaInfo(null);
     }
 
     revalidate();

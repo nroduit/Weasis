@@ -19,8 +19,8 @@ import javax.swing.JButton;
 import javax.swing.JOptionPane;
 import javax.swing.JTable;
 import javax.swing.table.TableCellEditor;
-import org.weasis.acquire.explorer.AcquireImageInfo;
 import org.weasis.acquire.explorer.AcquireManager;
+import org.weasis.acquire.explorer.AcquireMediaInfo;
 import org.weasis.acquire.explorer.core.bean.SeriesGroup;
 import org.weasis.core.api.gui.util.WinUtil;
 import org.weasis.core.api.media.data.TagW;
@@ -30,12 +30,12 @@ import org.weasis.dicom.ref.AnatomicRegion;
 public class AnatomicRegionCellEditor extends AbstractCellEditor
     implements TableCellEditor, ActionListener {
   private final JButton buttonOpen;
-  private final AcquireImageInfo imageInfo;
+  private final AcquireMediaInfo mediaInfo;
   private AnatomicRegion currentValue;
 
-  public AnatomicRegionCellEditor(AcquireImageInfo imageInfo) {
-    this.imageInfo = Objects.requireNonNull(imageInfo);
-    this.currentValue = (AnatomicRegion) imageInfo.getImage().getTagValue(TagW.AnatomicRegion);
+  public AnatomicRegionCellEditor(AcquireMediaInfo mediaInfo) {
+    this.mediaInfo = Objects.requireNonNull(mediaInfo);
+    this.currentValue = (AnatomicRegion) mediaInfo.getMedia().getTagValue(TagW.AnatomicRegion);
     this.buttonOpen = new JButton();
     buttonOpen.setOpaque(true);
     buttonOpen.addActionListener(this);
@@ -62,7 +62,7 @@ public class AnatomicRegionCellEditor extends AbstractCellEditor
   public void actionPerformed(ActionEvent e) {
     AnatomicRegionView regionView =
         new AnatomicRegionView(
-            currentValue, imageInfo.getSeries().getTagValue(TagW.AnatomicRegion) != null);
+            currentValue, mediaInfo.getSeries().getTagValue(TagW.AnatomicRegion) != null);
     // ColorLayerUI layer = ColorLayerUI.createTransparentLayerUI(buttonOpen);
     int res =
         JOptionPane.showConfirmDialog(
@@ -78,14 +78,14 @@ public class AnatomicRegionCellEditor extends AbstractCellEditor
               : new AnatomicRegion(
                   regionView.getSelectedCategory(), item, regionView.getModifiers());
       if (regionView.isApplyingToSeries()) {
-        SeriesGroup seriesGroup = imageInfo.getSeries();
+        SeriesGroup seriesGroup = mediaInfo.getSeries();
         if (seriesGroup != null) {
-          for (AcquireImageInfo info : AcquireManager.findBySeries(seriesGroup)) {
-            info.getImage().setTag(TagW.AnatomicRegion, currentValue);
+          for (AcquireMediaInfo info : AcquireManager.findBySeries(seriesGroup)) {
+            info.getMedia().setTag(TagW.AnatomicRegion, currentValue);
           }
         }
       } else {
-        imageInfo.getImage().setTag(TagW.AnatomicRegion, currentValue);
+        mediaInfo.getMedia().setTag(TagW.AnatomicRegion, currentValue);
       }
     }
     if (stopCellEditing()) {

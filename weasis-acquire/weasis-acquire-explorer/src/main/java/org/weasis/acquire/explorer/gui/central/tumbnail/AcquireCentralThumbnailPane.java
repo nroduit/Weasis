@@ -113,7 +113,7 @@ public class AcquireCentralThumbnailPane<E extends MediaElement> extends AThumbn
               Optional.ofNullable(thumbnailList.getSelectedSeries())
                   .map(SeriesButton::getSeries)
                   .orElse(null);
-          AcquireManager.importImage(info, seriesGroup);
+          AcquireManager.importMedia(info, seriesGroup);
         }
       }
     }

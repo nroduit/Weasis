@@ -18,8 +18,8 @@ import java.util.Map;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
-import org.weasis.acquire.explorer.AcquireImageInfo;
 import org.weasis.acquire.explorer.AcquireManager;
+import org.weasis.acquire.explorer.AcquireMediaInfo;
 import org.weasis.acquire.explorer.core.bean.SeriesGroup;
 
 public class PublishTreeModel {
@@ -28,7 +28,7 @@ public class PublishTreeModel {
   private final List<TreePath> defaultSelectedPaths;
 
   private final List<SeriesGroup> seriesGroups;
-  private final Map<SeriesGroup, List<AcquireImageInfo>> dictionary;
+  private final Map<SeriesGroup, List<AcquireMediaInfo>> dictionary;
 
   DefaultMutableTreeNode rootNode;
   DefaultMutableTreeNode seriesNode;

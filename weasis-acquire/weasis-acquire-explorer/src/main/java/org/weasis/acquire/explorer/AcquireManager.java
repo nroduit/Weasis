@@ -98,8 +98,8 @@ public class AcquireManager {
   private static final int OPT_B64URL_SAFE_ZIP = 7;
 
   private static final AcquireManager instance = new AcquireManager();
-  private static final Map<String, AcquireImageInfo> imagesInfoByUID = new HashMap<>();
-  private static final Map<URI, AcquireImageInfo> imagesInfoByURI = new HashMap<>();
+  private static final Map<String, AcquireMediaInfo> uidToMediaInfoMap = new HashMap<>();
+  private static final Map<URI, AcquireMediaInfo> uriToMediaInfoMap = new HashMap<>();
 
   private AcquireImageInfo currentAcquireImageInfo = null;
   private ViewCanvas<ImageElement> currentView = null;
@@ -133,37 +133,41 @@ public class AcquireManager {
     }
   }
 
-  public static Collection<AcquireImageInfo> getAllAcquireImageInfo() {
-    return imagesInfoByURI.values();
+  public static Collection<AcquireMediaInfo> getAllAcquireImageInfo() {
+    return uriToMediaInfoMap.values();
   }
 
-  public static AcquireImageInfo findByUId(String uid) {
-    return imagesInfoByUID.get(uid);
+  public static AcquireMediaInfo findByUId(String uid) {
+    return uidToMediaInfoMap.get(uid);
   }
 
   public static AcquireImageInfo findByImage(ImageElement image) {
+    return (AcquireImageInfo) getAcquireImageInfo(image);
+  }
+
+  public static AcquireMediaInfo findByMedia(MediaElement image) {
     return getAcquireImageInfo(image);
   }
 
-  public static List<AcquireImageInfo> findBySeries(SeriesGroup seriesGroup) {
+  public static List<AcquireMediaInfo> findBySeries(SeriesGroup seriesGroup) {
     return getAcquireImageInfoList().stream()
         .filter(i -> i.getSeries() != null && i.getSeries().equals(seriesGroup))
         .collect(Collectors.toList());
   }
 
   public static List<SeriesGroup> getBySeries() {
-    return imagesInfoByURI.values().stream()
-        .map(AcquireImageInfo::getSeries)
+    return uriToMediaInfoMap.values().stream()
+        .map(AcquireMediaInfo::getSeries)
         .filter(Objects::nonNull)
         .distinct()
         .sorted()
         .collect(Collectors.toList());
   }
 
-  public static Map<SeriesGroup, List<AcquireImageInfo>> groupBySeries() {
+  public static Map<SeriesGroup, List<AcquireMediaInfo>> groupBySeries() {
     return getAcquireImageInfoList().stream()
         .filter(e -> e.getSeries() != null)
-        .collect(Collectors.groupingBy(AcquireImageInfo::getSeries));
+        .collect(Collectors.groupingBy(AcquireMediaInfo::getSeries));
   }
 
   public static SeriesGroup getSeries(SeriesGroup searched) {
@@ -182,34 +186,34 @@ public class AcquireManager {
   }
 
   public void removeAllImages() {
-    imagesInfoByURI.clear();
-    imagesInfoByUID.clear();
+    uriToMediaInfoMap.clear();
+    uidToMediaInfoMap.clear();
     notifyPatientContextChanged();
   }
 
-  public void removeImages(Collection<AcquireImageInfo> imageCollection) {
-    imageCollection.stream()
+  public void removeImages(Collection<AcquireMediaInfo> mediaInfos) {
+    mediaInfos.stream()
         .filter(Objects::nonNull)
         .forEach(AcquireManager::removeImageFromDataMapping);
-    notifyImagesRemoved(imageCollection);
+    notifyImagesRemoved(mediaInfos);
   }
 
-  public void removeImage(AcquireImageInfo imageElement) {
-    Optional.ofNullable(imageElement).ifPresent(AcquireManager::removeImageFromDataMapping);
-    notifyImageRemoved(imageElement);
+  public void removeImage(AcquireMediaInfo mediaInfo) {
+    Optional.ofNullable(mediaInfo).ifPresent(AcquireManager::removeImageFromDataMapping);
+    notifyMediaInfoRemoved(mediaInfo);
   }
 
-  private static boolean isImageInfoPresent(AcquireImageInfo imageInfo) {
-    return Optional.of(imageInfo)
-        .map(AcquireImageInfo::getImage)
-        .map(ImageElement::getMediaURI)
-        .map(imagesInfoByURI::get)
+  private static boolean isImageInfoPresent(AcquireMediaInfo mediaInfo) {
+    return Optional.of(mediaInfo)
+        .map(AcquireMediaInfo::getMedia)
+        .map(MediaElement::getMediaURI)
+        .map(uriToMediaInfoMap::get)
         .isPresent();
   }
 
   public static void importImages(
       Collection<AcquireImageInfo> toImport, SeriesGroup searchedSeries, int maxRangeInMinutes) {
-    if (imagesInfoByURI.isEmpty() || GLOBAL.isAllowFullEdition()) {
+    if (uriToMediaInfoMap.isEmpty() || GLOBAL.isAllowFullEdition()) {
       AcquireManager.showWorklist();
     }
 
@@ -244,7 +248,7 @@ public class AcquireManager {
       newImageInfo.setSeries(group);
 
       if (isSearchSeriesByDate) {
-        List<AcquireImageInfo> imageInfoList =
+        List<AcquireMediaInfo> imageInfoList =
             AcquireManager.findBySeries(newImageInfo.getSeries());
         if (imageInfoList.size() > 2) {
           recalculateCentralTime(imageInfoList);
@@ -256,25 +260,26 @@ public class AcquireManager {
     getInstance().notifyImagesAdded(imageImportedList);
   }
 
-  public static void importImage(AcquireImageInfo newImageInfo, SeriesGroup searchedSeries) {
-    Objects.requireNonNull(newImageInfo);
-    if (imagesInfoByURI.isEmpty() || GLOBAL.isAllowFullEdition()) {
+  public static void importMedia(AcquireMediaInfo mediaInfo, SeriesGroup searchedSeries) {
+    Objects.requireNonNull(mediaInfo);
+    if (uriToMediaInfoMap.isEmpty() || GLOBAL.isAllowFullEdition()) {
       AcquireManager.showWorklist();
     }
 
-    if (isImageInfoPresent(newImageInfo)) {
-      getInstance().getAcquireExplorer().getCentralPane().tabbedPane.removeImage(newImageInfo);
+    if (isImageInfoPresent(mediaInfo)) {
+      getInstance().getAcquireExplorer().getCentralPane().tabbedPane.removeImage(mediaInfo);
     } else {
-      addImageToDataMapping(newImageInfo);
+      addImageToDataMapping(mediaInfo);
     }
     SeriesGroup group = searchedSeries == null ? getDefaultSeries() : searchedSeries;
     if (group.isNeedUpdateFromGlobalTags()) {
       group.setNeedUpdateFromGlobalTags(false);
       group.updateDicomTags();
     }
-    newImageInfo.setSeries(group);
+    mediaInfo.setSeries(group);
+    mediaInfo.setSpecificTags();
 
-    getInstance().notifyImageAdded(newImageInfo);
+    getInstance().notifyImageAdded(mediaInfo);
   }
 
   private static SeriesGroup findSeries(
@@ -309,15 +314,15 @@ public class AcquireManager {
     }
   }
 
-  private static void recalculateCentralTime(List<AcquireImageInfo> imageInfoList) {
+  private static void recalculateCentralTime(List<AcquireMediaInfo> imageInfoList) {
     Objects.requireNonNull(imageInfoList);
-    List<AcquireImageInfo> sortedList =
+    List<AcquireMediaInfo> sortedList =
         imageInfoList.stream()
             .sorted(
                 Comparator.comparing(
                     i -> {
                       LocalDateTime val =
-                          TagD.dateTime(Tag.ContentDate, Tag.ContentTime, i.getImage());
+                          TagD.dateTime(Tag.ContentDate, Tag.ContentTime, i.getMedia());
                       if (val == null) {
                         val = LocalDateTime.now();
                       }
@@ -325,8 +330,8 @@ public class AcquireManager {
                     }))
             .toList();
 
-    AcquireImageInfo info = sortedList.get(sortedList.size() / 2);
-    info.getSeries().setDate(TagD.dateTime(Tag.ContentDate, Tag.ContentTime, info.getImage()));
+    AcquireMediaInfo info = sortedList.get(sortedList.size() / 2);
+    info.getSeries().setDate(TagD.dateTime(Tag.ContentDate, Tag.ContentTime, info.getMedia()));
   }
 
   public static List<ImageElement> toImageElement(List<? extends MediaElement> medias) {
@@ -336,7 +341,7 @@ public class AcquireManager {
         .collect(Collectors.toList());
   }
 
-  public static List<AcquireImageInfo> toAcquireImageInfo(List<? extends MediaElement> medias) {
+  public static List<AcquireMediaInfo> toAcquireImageInfo(List<? extends MediaElement> medias) {
     return medias.stream()
         .filter(ImageElement.class::isInstance)
         .map(ImageElement.class::cast)
@@ -395,21 +400,21 @@ public class AcquireManager {
     }
   }
 
-  private void notifyImageRemoved(AcquireImageInfo imageElement) {
+  private void notifyMediaInfoRemoved(AcquireMediaInfo mediaInfo) {
     firePropertyChange(
         new ObservableEvent(
-            ObservableEvent.BasicAction.REMOVE, AcquireManager.this, null, imageElement));
+            ObservableEvent.BasicAction.REMOVE, AcquireManager.this, null, mediaInfo));
   }
 
-  private void notifyImagesRemoved(Collection<AcquireImageInfo> imageCollection) {
+  private void notifyImagesRemoved(Collection<AcquireMediaInfo> mediaInfos) {
     firePropertyChange(
         new ObservableEvent(
-            ObservableEvent.BasicAction.REMOVE, AcquireManager.this, null, imageCollection));
+            ObservableEvent.BasicAction.REMOVE, AcquireManager.this, null, mediaInfos));
   }
 
-  private void notifyImageAdded(AcquireImageInfo imageInfo) {
+  private void notifyImageAdded(AcquireMediaInfo mediaInfo) {
     firePropertyChange(
-        new ObservableEvent(ObservableEvent.BasicAction.ADD, AcquireManager.this, null, imageInfo));
+        new ObservableEvent(ObservableEvent.BasicAction.ADD, AcquireManager.this, null, mediaInfo));
   }
 
   private void notifyImagesAdded(Collection<AcquireImageInfo> imageInfoCollection) {
@@ -569,8 +574,8 @@ public class AcquireManager {
           return;
         }
 
-        imagesInfoByURI.clear();
-        imagesInfoByUID.clear();
+        uriToMediaInfoMap.clear();
+        uidToMediaInfoMap.clear();
         GLOBAL.init(taggable);
         // Ensure to update all the existing SeriesGroup
         AcquireManager.getInstance()
@@ -717,18 +722,19 @@ public class AcquireManager {
     return null;
   }
 
-  private static void addImageToDataMapping(AcquireImageInfo imageInfo) {
-    Objects.requireNonNull(imageInfo);
-    imagesInfoByURI.put(imageInfo.getImage().getMediaURI(), imageInfo);
-    imagesInfoByUID.put(
-        (String) imageInfo.getImage().getTagValue(TagD.getUID(Level.INSTANCE)), imageInfo);
+  private static void addImageToDataMapping(AcquireMediaInfo mediaInfo) {
+    Objects.requireNonNull(mediaInfo);
+    uriToMediaInfoMap.put(mediaInfo.getMedia().getMediaURI(), mediaInfo);
+    uidToMediaInfoMap.put(
+        (String) mediaInfo.getMedia().getTagValue(TagD.getUID(Level.INSTANCE)), mediaInfo);
   }
 
-  private static void removeImageFromDataMapping(AcquireImageInfo imageInfo) {
-    imagesInfoByURI.remove(imageInfo.getImage().getMediaURI());
-    imagesInfoByUID.remove(imageInfo.getImage().getTagValue(TagD.getUID(Level.INSTANCE)));
+  private static void removeImageFromDataMapping(AcquireMediaInfo imageInfo) {
+    uriToMediaInfoMap.remove(imageInfo.getMedia().getMediaURI());
+    uidToMediaInfoMap.remove(
+        (String) imageInfo.getMedia().getTagValue(TagD.getUID(Level.INSTANCE)));
     GraphicModel modelList =
-        (GraphicModel) imageInfo.getImage().getTagValue(TagW.PresentationModel);
+        (GraphicModel) imageInfo.getMedia().getTagValue(TagW.PresentationModel);
     if (modelList != null) {
       for (GraphicLayer layer : new ArrayList<>(modelList.getLayers())) {
         modelList.deleteByLayer(layer);
@@ -736,8 +742,8 @@ public class AcquireManager {
     }
   }
 
-  private static List<AcquireImageInfo> getAcquireImageInfoList() {
-    return new ArrayList<>(imagesInfoByURI.values());
+  private static List<AcquireMediaInfo> getAcquireImageInfoList() {
+    return new ArrayList<>(uriToMediaInfoMap.values());
   }
 
   /**
@@ -745,19 +751,24 @@ public class AcquireManager {
    * available<br>
    * All the AcquireImageInfo value objects are unique according to the imageElement URI
    *
-   * @param image the ImageElement
+   * @param media the ImageElement
    * @return the AcquireImageInfo based on the image
    */
 
   // TODO be careful not to execute this method on the EDT
-  private static AcquireImageInfo getAcquireImageInfo(ImageElement image) {
-    if (image == null || image.getImage() == null) {
+  private static AcquireMediaInfo getAcquireImageInfo(MediaElement media) {
+    if (media == null
+        || (media instanceof ImageElement imageElement && imageElement.getImage() == null)) {
       return null;
     }
 
-    AcquireImageInfo imageInfo = imagesInfoByURI.get(image.getMediaURI());
+    AcquireMediaInfo imageInfo = uriToMediaInfoMap.get(media.getMediaURI());
     if (imageInfo == null) {
-      imageInfo = new AcquireImageInfo(image);
+      if (media instanceof ImageElement imageElement) {
+        imageInfo = new AcquireImageInfo(imageElement);
+      } else {
+        imageInfo = new AcquireMediaInfo(media);
+      }
     }
     return imageInfo;
   }

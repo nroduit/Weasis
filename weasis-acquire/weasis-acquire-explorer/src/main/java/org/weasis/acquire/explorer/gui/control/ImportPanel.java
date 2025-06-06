@@ -15,7 +15,9 @@ import java.util.concurrent.ExecutorService;
 import javax.swing.JButton;
 import javax.swing.JPanel;
 import javax.swing.SwingWorker.StateValue;
+import org.weasis.acquire.explorer.AcquireImageStatus;
 import org.weasis.acquire.explorer.AcquireManager;
+import org.weasis.acquire.explorer.AcquireMediaInfo;
 import org.weasis.acquire.explorer.ImportTask;
 import org.weasis.acquire.explorer.Messages;
 import org.weasis.acquire.explorer.core.bean.SeriesGroup;
@@ -49,10 +51,20 @@ public class ImportPanel extends JPanel {
     importBtn.setPreferredSize(GuiUtils.getDimension(150, 40));
     importBtn.addActionListener(
         e -> {
-          List<ImageElement> selected =
-              AcquireManager.toImageElement(mainPanel.getSelectedValuesList());
-          if (!selected.isEmpty()) {
-            AcquireImportDialog dialog = new AcquireImportDialog(this, selected);
+          List<MediaElement> selection = mainPanel.getSelectedValuesList();
+          List<MediaElement> nonImageElements =
+              selection.stream().filter(media -> !(media instanceof ImageElement)).toList();
+          if (!nonImageElements.isEmpty()) {
+            for (MediaElement mediaElement : nonImageElements) {
+              SeriesGroup seriesGroup = new SeriesGroup(mediaElement.getMimeType());
+              AcquireMediaInfo info = AcquireManager.findByMedia(mediaElement);
+              AcquireManager.importMedia(info, seriesGroup);
+              info.setStatus(AcquireImageStatus.SUBMITTED);
+            }
+          }
+          List<ImageElement> selectedImages = AcquireManager.toImageElement(selection);
+          if (!selectedImages.isEmpty()) {
+            AcquireImportDialog dialog = new AcquireImportDialog(this, selectedImages);
             GuiUtils.showCenterScreen(dialog, WinUtil.getParentWindow(mainPanel));
           }
         });

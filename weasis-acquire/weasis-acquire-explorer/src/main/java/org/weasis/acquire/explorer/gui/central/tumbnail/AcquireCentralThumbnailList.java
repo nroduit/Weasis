@@ -20,6 +20,7 @@ import javax.swing.JMenuItem;
 import javax.swing.JPopupMenu;
 import org.weasis.acquire.explorer.AcquireImageInfo;
 import org.weasis.acquire.explorer.AcquireManager;
+import org.weasis.acquire.explorer.AcquireMediaInfo;
 import org.weasis.acquire.explorer.Messages;
 import org.weasis.acquire.explorer.core.bean.SeriesGroup;
 import org.weasis.acquire.explorer.gui.central.AcquireTabPanel;
@@ -247,7 +248,7 @@ public class AcquireCentralThumbnailList<E extends MediaElement> extends Abstrac
       case KeyEvent.VK_DELETE -> {
         List<E> selected = getSelectedValuesList();
         if (!selected.isEmpty()) {
-          List<AcquireImageInfo> list = AcquireManager.toAcquireImageInfo(selected);
+          List<AcquireMediaInfo> list = AcquireManager.toAcquireImageInfo(selected);
           clearSelection();
           AcquireManager.getInstance().removeImages(list);
         }

@@ -75,7 +75,7 @@ public class PublishDicomTask extends SwingWorker<DicomState, File> {
           .forEach(
               imageInfo -> {
                 imageInfo.setStatus(AcquireImageStatus.PUBLISHED);
-                imageInfo.getImage().setTag(TagW.Checked, Boolean.TRUE);
+                imageInfo.getMedia().setTag(TagW.Checked, Boolean.TRUE);
                 AcquireManager.getInstance().removeImage(imageInfo);
               });
     }

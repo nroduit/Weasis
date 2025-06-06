@@ -60,11 +60,11 @@ public class SerieButtonList extends JScrollPane {
     }
   }
 
-  public Optional<SeriesButton> getFirstSerieButton() {
+  public Optional<SeriesButton> getFirstSeriesButton() {
     return seriesButtonSet.stream().sorted().findFirst();
   }
 
-  public void removeBySerie(final SeriesGroup seriesGroup) {
+  public void removeBySeries(final SeriesGroup seriesGroup) {
     seriesButtonSet.stream()
         .filter(sb -> sb.getSeries().equals(seriesGroup))
         .findFirst()
