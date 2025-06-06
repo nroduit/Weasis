@@ -9,6 +9,7 @@
  */
 package org.weasis.base.ui.internal;
 
+import java.lang.management.ManagementFactory;
 import java.util.Dictionary;
 import java.util.Hashtable;
 import org.apache.felix.service.command.CommandProcessor;
@@ -23,6 +24,7 @@ import org.slf4j.LoggerFactory;
 import org.weasis.base.ui.gui.MainWindowListener;
 import org.weasis.base.ui.gui.WeasisWin;
 import org.weasis.core.api.gui.util.GuiExecutor;
+import org.weasis.core.api.service.AuditLog;
 import org.weasis.core.api.service.BundlePreferences;
 import org.weasis.core.api.service.BundleTools;
 
@@ -50,6 +52,10 @@ public class Activator implements BundleActivator {
           try {
             mainWindow.createMainPanel();
             mainWindow.showWindow();
+            LOGGER.info(
+                "{} Global starting, type:INIT time:{}",
+                AuditLog.MARKER_PERF,
+                (System.currentTimeMillis() - ManagementFactory.getRuntimeMXBean().getStartTime()));
           } catch (Exception ex) {
             // It is better to exit than to let run a zombie process
             LOGGER.error("Cannot start GUI", ex);

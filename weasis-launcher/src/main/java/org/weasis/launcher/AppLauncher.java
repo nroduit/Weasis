@@ -24,6 +24,7 @@ import java.awt.Desktop.Action;
 import java.awt.desktop.OpenFilesEvent;
 import java.awt.desktop.OpenURIEvent;
 import java.io.File;
+import java.lang.management.ManagementFactory;
 import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
@@ -87,15 +88,26 @@ public class AppLauncher extends WeasisLauncher implements Singleton.SingletonAp
   }
 
   public static void main(String[] argv) throws Exception {
+    LOGGER.info(
+        "*PERF* JVM start, type:INIT time:{}",
+        (System.currentTimeMillis() - ManagementFactory.getRuntimeMXBean().getStartTime()));
+
+    long startTime = System.currentTimeMillis();
     try {
       PlatformCertificateLoader.setupDefaultSSLContext();
+      LOGGER.info(
+          "*PERF* Loading system trust store, type:INIT time:{}",
+          (System.currentTimeMillis() - startTime));
     } catch (Exception e) {
       LOGGER.error("Cannot setup default SSL context by merging with system certificates", e);
     }
 
     final Type launchType = Type.NATIVE;
 
+    startTime = System.currentTimeMillis();
     ConfigData configData = new ConfigData(argv);
+    LOGGER.info(
+        "*PERF* Loading config, type:INIT time:{}", (System.currentTimeMillis() - startTime));
     if (!Singleton.invoke(configData)) {
       AppLauncher instance = new AppLauncher(configData);
 

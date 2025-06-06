@@ -234,7 +234,7 @@ public class View3DFactory implements SeriesViewerFactory {
               textMax[0]);
       glContext.release();
       LOGGER.info(
-          "{} 3D initialization time: {} ms",
+          "{} 3D initialization, type:INIT time:{}",
           AuditLog.MARKER_PERF,
           (System.currentTimeMillis() - startTime));
       localPersistence.putBooleanProperty(P_OPENGL_PREV_INIT, true);
