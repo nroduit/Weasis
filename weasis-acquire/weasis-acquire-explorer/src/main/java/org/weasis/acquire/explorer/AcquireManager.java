@@ -787,4 +787,13 @@ public class AcquireManager {
     }
     return imageInfo;
   }
+
+  public static void updateFinalStatus(AcquireMediaInfo info) {
+    if (info == null || info.getStatus() == AcquireImageStatus.FAILED) {
+      return;
+    }
+    info.setStatus(AcquireImageStatus.PUBLISHED);
+    info.getMedia().setTag(TagW.Checked, Boolean.TRUE);
+    AcquireManager.getInstance().removeImage(info);
+  }
 }

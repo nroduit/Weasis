@@ -72,12 +72,7 @@ public class PublishDicomTask extends SwingWorker<DicomState, File> {
           .filter(Objects::nonNull)
           .map(imageFile -> AcquireManager.findByUId(imageFile.getName()))
           .filter(Objects::nonNull)
-          .forEach(
-              imageInfo -> {
-                imageInfo.setStatus(AcquireImageStatus.PUBLISHED);
-                imageInfo.getMedia().setTag(TagW.Checked, Boolean.TRUE);
-                AcquireManager.getInstance().removeImage(imageInfo);
-              });
+          .forEach(AcquireManager::updateFinalStatus);
     }
   }
 

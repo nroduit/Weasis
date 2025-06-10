@@ -11,6 +11,7 @@ package org.weasis.acquire.explorer.gui.control;
 
 import java.beans.PropertyChangeEvent;
 import java.io.File;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -26,7 +27,6 @@ import javax.swing.SwingWorker.StateValue;
 import org.dcm4che3.net.Status;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.weasis.acquire.explorer.AcquireImageStatus;
 import org.weasis.acquire.explorer.AcquireManager;
 import org.weasis.acquire.explorer.AcquireMediaInfo;
 import org.weasis.acquire.explorer.Messages;
@@ -37,7 +37,6 @@ import org.weasis.core.api.auth.OAuth2ServiceFactory;
 import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.WinUtil;
-import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.util.ThreadUtil;
 import org.weasis.core.ui.tp.raven.spinner.SpinnerProgress;
 import org.weasis.core.util.FileUtil;
@@ -149,12 +148,7 @@ public class AcquirePublishPanel extends JPanel {
                 stowRS.uploadDicom(
                     Collections.singletonList(tempDirDicom.getAbsolutePath()), true, authMethod);
             if (state.getStatus() == Status.Success) {
-              toPublish.forEach(
-                  i -> {
-                    i.setStatus(AcquireImageStatus.PUBLISHED);
-                    i.getMedia().setTag(TagW.Checked, Boolean.TRUE);
-                    AcquireManager.getInstance().removeImage(i);
-                  });
+              toPublish.forEach(AcquireManager::updateFinalStatus);
             }
             return state;
           } catch (Exception e) {
@@ -204,13 +198,9 @@ public class AcquirePublishPanel extends JPanel {
 
   public void exportDirDicom(File exportDir, File tempDirDicom, List<AcquireMediaInfo> toPublish) {
     try {
-      FileUtil.copyFolder(tempDirDicom.toPath(), exportDir.toPath());
-      toPublish.forEach(
-          i -> {
-            i.setStatus(AcquireImageStatus.PUBLISHED);
-            i.getMedia().setTag(TagW.Checked, Boolean.TRUE);
-            AcquireManager.getInstance().removeImage(i);
-          });
+      FileUtil.copyFolder(
+          tempDirDicom.toPath(), exportDir.toPath(), StandardCopyOption.REPLACE_EXISTING);
+      toPublish.forEach(AcquireManager::updateFinalStatus);
     } catch (Exception e) {
       LOGGER.error("Export DICOM fils to local", e);
     } finally {

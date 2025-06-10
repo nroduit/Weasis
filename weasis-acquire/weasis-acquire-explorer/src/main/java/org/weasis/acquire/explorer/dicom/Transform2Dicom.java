@@ -97,11 +97,11 @@ public final class Transform2Dicom {
       var file = new File(exportDirDicom, sopInstanceUID);
       if (type == Type.PDF) {
         Dicomizer.pdf(attrs, mediaFile, file);
-        //      } else if (type == Type.STL) {
-        //        Dicomizer.stl(attrs, mediaFile, file);
-        //      } else if (type == Type.AUDIO) {
-        //        Dicomizer.audio(attrs, mediaFile, file);
-      } else if (type == Type.VIDEO) {
+      } else if (type == Type.STL) {
+        Dicomizer.stl(attrs, mediaFile, file);
+      } else if (type == Type.VIDEO_MP4) {
+        Dicomizer.mpeg4(attrs, mediaFile, file);
+      } else if (type == Type.VIDEO_MP2) {
         Dicomizer.mpeg2(attrs, mediaFile, file);
       }
       return true;

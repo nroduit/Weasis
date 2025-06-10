@@ -9,12 +9,17 @@
  */
 package org.weasis.acquire.explorer.core.bean;
 
+import java.io.FileInputStream;
+import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import org.dcm4che3.data.Tag;
+import org.dcm4che3.imageio.codec.mpeg.MPEGHeader;
 import org.dcm4che3.util.UIDUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.weasis.acquire.explorer.AcquireManager;
 import org.weasis.acquire.explorer.Messages;
 import org.weasis.acquire.explorer.gui.central.SeriesDataListener;
@@ -26,13 +31,15 @@ import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.codec.TagD;
 
 public class SeriesGroup extends DefaultTaggable implements Comparable<SeriesGroup> {
+  private static final Logger LOGGER = LoggerFactory.getLogger(SeriesGroup.class);
 
   public enum Type {
     IMAGE(Messages.getString("Series.other"), "XC"),
     IMAGE_DATE("Date", "XC"), // NON-NLS
     IMAGE_NAME("Name", "XC"), // NON-NLS
-    AUDIO("Audio", "AU"),
-    VIDEO("Video", "XC"),
+    //    AUDIO("Audio", "AU"),
+    VIDEO_MP2("Video", "XC"),
+    VIDEO_MP4("Video", "XC"),
     PDF("PDF document", "DOC"),
     STL("STL 3D model", "M3D");
 
@@ -68,17 +75,55 @@ public class SeriesGroup extends DefaultTaggable implements Comparable<SeriesGro
       // Set specific tags for non-image media
       String mime = media.getMimeType();
       if (mime != null) {
-        if (mime.startsWith("audio/")) { // NON-NLS
-          return AUDIO;
-        } else if (mime.startsWith("video/")) { // NON-NLS
-          return VIDEO;
+        mime = mime.toLowerCase();
+        if (mime.startsWith("video/mp")) { // NON-NLS
+          return videaType(media, mime);
+          //        } else  if (mime.startsWith("audio/")) { // NON-NLS
+          //          return AUDIO;
         } else if (mime.equals("application/pdf")) { // NON-NLS
           return PDF;
-        } else if ("application/SLA".equals(mime) || "model/stl".equals(mime)) { // NON-NLS
+        } else if ("application/sla".equals(mime) // NON-NLS
+            || "model/stl".equals(mime) // NON-NLS
+            || "model/x.stl-binary".equals(mime)) { // NON-NLS
           return STL;
         }
       }
       return null;
+    }
+
+    private static Type videaType(MediaElement media, String mime) {
+      if ("video/mp4".equals(mime)) {
+        return VIDEO_MP4;
+      }
+      try (FileInputStream fis = new FileInputStream(media.getFile())) {
+        byte[] headerBytes = new byte[4096];
+        int bytesRead = fis.read(headerBytes);
+        if (bytesRead < 64) {
+          return null;
+        }
+        if (isMPEG4(headerBytes)) {
+          return VIDEO_MP4;
+        } else if (isMPEG2(headerBytes)) {
+          return VIDEO_MP2;
+        }
+      } catch (IOException e) {
+        LOGGER.error("Error reading video file header", e);
+      }
+      return null;
+    }
+
+    private static boolean isMPEG2(byte[] headerBytes) {
+      MPEGHeader mpegHeader = new MPEGHeader(headerBytes);
+      return mpegHeader.isValid();
+    }
+
+    private static boolean isMPEG4(byte[] headerBytes) {
+      String s = new String(headerBytes);
+      return s.contains("ftypisom")
+          || s.contains("ftypmp42")
+          || s.contains("ftypiso2")
+          || s.contains("ftypdash")
+          || s.contains("ftypqt");
     }
   }
 
