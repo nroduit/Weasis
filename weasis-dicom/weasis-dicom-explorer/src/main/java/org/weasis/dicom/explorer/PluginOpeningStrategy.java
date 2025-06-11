@@ -82,7 +82,6 @@ public class PluginOpeningStrategy {
     Objects.requireNonNull(dicomSeries);
 
     boolean isPatientOpen = containsPatient(patient);
-    boolean selectPatient = !isPatientOpen;
     if (!isPatientOpen && canAddNewPatient()) {
       String mime = dicomSeries.getMimeType();
       SeriesViewerFactory plugin = GuiUtils.getUICore().getViewerFactory(mime);
@@ -90,14 +89,8 @@ public class PluginOpeningStrategy {
           && !("sr/dicom".equals(mime)) // NON-NLS
           && !(plugin instanceof MimeSystemAppFactory)) {
         addPatient(patient);
-        selectPatient = false;
         ViewerPluginBuilder.openSequenceInPlugin(plugin, dicomSeries, dicomModel, true, true);
       }
-    }
-    if (selectPatient) {
-      // Send event to select the related patient in Dicom Explorer.
-      dicomModel.firePropertyChange(
-          new ObservableEvent(ObservableEvent.BasicAction.SELECT, dicomModel, null, dicomSeries));
     }
   }
 
