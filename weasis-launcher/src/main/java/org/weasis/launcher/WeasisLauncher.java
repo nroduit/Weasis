@@ -1206,7 +1206,10 @@ Starting OSGI Bundles...
     // Clean temp folder.
     String dir = System.getProperty("weasis.tmp.dir");
     if (Utils.hasText(dir)) {
+      long startTime = System.currentTimeMillis();
       FileUtil.deleteDirectoryContents(new File(dir), 3, 0);
+      LOGGER.info(
+          "*PERF* Clean temp folder, type:CLOSE time:{}", System.currentTimeMillis() - startTime);
     }
   }
 }

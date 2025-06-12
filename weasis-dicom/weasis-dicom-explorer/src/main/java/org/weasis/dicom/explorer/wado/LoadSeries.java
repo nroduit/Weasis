@@ -281,7 +281,7 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
       }
 
       LOGGER.info(
-          "{} type:{} seriesUID:{} modality:{} nbImages:{} size:{} time:{} rate:{} errors:{}",
+          "{} Downloading, type:{} seriesUID:{} modality:{} nbImages:{} size:{} time:{} rate:{} errors:{}",
           AuditLog.MARKER_PERF,
           loadType,
           seriesUID,
