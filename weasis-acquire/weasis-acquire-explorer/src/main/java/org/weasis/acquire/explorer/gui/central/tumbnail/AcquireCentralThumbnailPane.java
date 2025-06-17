@@ -24,6 +24,7 @@ import org.weasis.acquire.explorer.AcquireMediaInfo;
 import org.weasis.acquire.explorer.core.bean.SeriesGroup;
 import org.weasis.acquire.explorer.core.bean.SeriesGroup.Type;
 import org.weasis.acquire.explorer.gui.central.AcquireTabPanel;
+import org.weasis.acquire.explorer.gui.central.SeriesButton;
 import org.weasis.base.explorer.JIThumbnailCache;
 import org.weasis.base.explorer.list.AThumbnailListPane;
 import org.weasis.base.explorer.list.IThumbnailModel;
@@ -107,12 +108,25 @@ public class AcquireCentralThumbnailPane<E extends MediaElement> extends AThumbn
       if (medias == null || medias.length == 0) {
         return;
       }
+
+      SeriesGroup selectedGroup = null;
+      if (thumbnailList instanceof AcquireCentralThumbnailList<?> centralList) {
+        SeriesButton selected = centralList.getSelectedSeries();
+        if (selected != null) {
+          selectedGroup = selected.getSeries();
+        }
+      }
+
       for (MediaElement media : medias) {
         var type = Type.fromMimeType(media);
         if (type != null) {
           AcquireMediaInfo info = AcquireManager.findByMedia(media);
           if (info != null) {
-            seriesGroup = new SeriesGroup(type);
+            if (selectedGroup != null && type.equals(selectedGroup.getType())) {
+              seriesGroup = selectedGroup;
+            } else {
+              seriesGroup = new SeriesGroup(type);
+            }
             AcquireManager.importMedia(info, seriesGroup);
             info.setStatus(AcquireImageStatus.SUBMITTED);
             AcquireManager.getInstance().notifySeriesSelection(seriesGroup);
