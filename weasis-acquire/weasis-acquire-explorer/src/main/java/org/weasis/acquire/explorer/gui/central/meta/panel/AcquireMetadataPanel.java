@@ -27,7 +27,6 @@ import javax.swing.BoxLayout;
 import javax.swing.DefaultCellEditor;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
-import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTable;
 import javax.swing.JTextField;
@@ -39,7 +38,7 @@ import javax.swing.table.TableCellEditor;
 import org.dcm4che3.data.Tag;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.weasis.acquire.explorer.AcquireImageInfo;
+import org.weasis.acquire.explorer.AcquireMediaInfo;
 import org.weasis.acquire.explorer.gui.central.meta.model.AcquireMetadataTableModel;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.GuiUtils.IconColor;
@@ -58,9 +57,8 @@ public abstract class AcquireMetadataPanel extends JPanel implements TableModelL
   private static final Logger LOGGER = LoggerFactory.getLogger(AcquireMetadataPanel.class);
 
   protected final String title;
-  protected final JLabel label = new JLabel();
   protected final JTable table;
-  protected AcquireImageInfo imageInfo;
+  protected AcquireMediaInfo mediaInfo;
   protected TitledBorder titleBorder;
   protected static final Font SMALL_FONT = FontItem.SMALL.getFont();
 
@@ -95,10 +93,10 @@ public abstract class AcquireMetadataPanel extends JPanel implements TableModelL
     }
   }
 
-  public void setImageInfo(AcquireImageInfo imageInfo) {
-    this.imageInfo = imageInfo;
+  public void setMediaInfo(AcquireMediaInfo mediaInfo) {
+    this.mediaInfo = mediaInfo;
     this.titleBorder.setTitle(getDisplayText());
-    setMetaVisible(imageInfo != null);
+    setMetaVisible(mediaInfo != null);
     update();
   }
 
@@ -122,7 +120,7 @@ public abstract class AcquireMetadataPanel extends JPanel implements TableModelL
     model.addTableModelListener(this);
     table.setModel(model);
     table.getColumnModel().getColumn(1).setCellRenderer(new TagRenderer());
-    table.getColumnModel().getColumn(1).setCellEditor(new AcquireImageCellEditor(imageInfo));
+    table.getColumnModel().getColumn(1).setCellEditor(new AcquireImageCellEditor(mediaInfo));
     TableColumnAdjuster.pack(table);
     add(table.getTableHeader());
     add(table);
@@ -184,11 +182,11 @@ public abstract class AcquireMetadataPanel extends JPanel implements TableModelL
       initCombo(seriesDescCombo);
     }
 
-    private final AcquireImageInfo imageInfo;
+    private final AcquireMediaInfo mediaInfo;
     private Optional<TableCellEditor> editor;
 
-    public AcquireImageCellEditor(AcquireImageInfo imageInfo) {
-      this.imageInfo = imageInfo;
+    public AcquireImageCellEditor(AcquireMediaInfo mediaInfo) {
+      this.mediaInfo = mediaInfo;
     }
 
     @Override
@@ -224,7 +222,7 @@ public abstract class AcquireMetadataPanel extends JPanel implements TableModelL
         }
       }
       if (tagID == TagW.AnatomicRegion.getId()) {
-        cellEditor = new AnatomicRegionCellEditor(imageInfo);
+        cellEditor = new AnatomicRegionCellEditor(mediaInfo);
       } else if (tagID == Tag.PatientSex) {
         cellEditor = getTableCellEditor(Sex.getSex((String) value), sexCombo, limitedChars);
       } else if (tagID == Tag.Modality) {

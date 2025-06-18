@@ -9,7 +9,7 @@
  */
 package org.weasis.acquire.explorer.gui.central.meta.model.imp;
 
-import org.weasis.acquire.explorer.AcquireImageInfo;
+import org.weasis.acquire.explorer.AcquireMediaInfo;
 import org.weasis.acquire.explorer.gui.central.meta.model.AcquireMetadataTableModel;
 import org.weasis.core.api.media.data.TagReadable;
 import org.weasis.core.api.media.data.TagW;
@@ -27,9 +27,9 @@ public class AcquireImageMeta extends AcquireMetadataTableModel {
   private static final TagW[] TAGS_TO_PUBLISH =
       getTags("weasis.acquire.meta.image.required", "ContentDate"); // NON-NLS
 
-  public AcquireImageMeta(AcquireImageInfo imageInfo) {
+  public AcquireImageMeta(AcquireMediaInfo mediaInfo) {
     super(
-        (imageInfo == null) ? null : imageInfo.getImage(),
+        (mediaInfo == null) ? null : mediaInfo.getMedia(),
         TAGS_TO_DISPLAY,
         TAGS_EDITABLE,
         TAGS_TO_PUBLISH);

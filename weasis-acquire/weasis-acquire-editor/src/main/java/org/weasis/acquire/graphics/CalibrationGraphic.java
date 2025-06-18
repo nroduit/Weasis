@@ -20,6 +20,7 @@ import org.weasis.acquire.dockable.EditionToolFactory;
 import org.weasis.acquire.dockable.components.actions.calibrate.CalibrationPanel;
 import org.weasis.acquire.explorer.AcquireImageInfo;
 import org.weasis.acquire.explorer.AcquireManager;
+import org.weasis.acquire.explorer.AcquireMediaInfo;
 import org.weasis.core.api.image.util.MeasurableLayer;
 import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.api.media.data.ImageElement;
@@ -69,12 +70,14 @@ public class CalibrationGraphic extends LineGraphic {
           if (image != null) {
             AcquireImageInfo info = AcquireManager.findByImage(image);
             if (info != null) {
-              List<AcquireImageInfo> list = AcquireManager.findBySeries(info.getSeries());
-              for (AcquireImageInfo acquireImageInfo : list) {
-                ImageElement img = acquireImageInfo.getImage();
-                if (img != image) {
-                  img.setPixelSpacingUnit(image.getPixelSpacingUnit());
-                  img.setPixelSize(image.getPixelSize());
+              List<AcquireMediaInfo> list = AcquireManager.findBySeries(info.getSeries());
+              for (AcquireMediaInfo acquireImageInfo : list) {
+                if (acquireImageInfo instanceof AcquireImageInfo imageInfo) {
+                  ImageElement img = imageInfo.getImage();
+                  if (img != image) {
+                    img.setPixelSpacingUnit(image.getPixelSpacingUnit());
+                    img.setPixelSize(image.getPixelSize());
+                  }
                 }
               }
             }

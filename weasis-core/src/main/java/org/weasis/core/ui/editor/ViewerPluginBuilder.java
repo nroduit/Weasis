@@ -227,7 +227,7 @@ public class ViewerPluginBuilder {
         }
       }
       if (systemReader) {
-        MediaReader<MediaElement> mreader = new DefaultMimeIO(file.toURI(), null);
+        MediaReader<MediaElement> mreader = new DefaultMimeIO(file.toURI(), mimeType);
         if (cache) {
           mreader.getFileCache().setOriginalTempFile(file);
         }

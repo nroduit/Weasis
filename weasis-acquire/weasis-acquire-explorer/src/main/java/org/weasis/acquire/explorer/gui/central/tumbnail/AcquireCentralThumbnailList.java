@@ -20,6 +20,7 @@ import javax.swing.JMenuItem;
 import javax.swing.JPopupMenu;
 import org.weasis.acquire.explorer.AcquireImageInfo;
 import org.weasis.acquire.explorer.AcquireManager;
+import org.weasis.acquire.explorer.AcquireMediaInfo;
 import org.weasis.acquire.explorer.Messages;
 import org.weasis.acquire.explorer.core.bean.SeriesGroup;
 import org.weasis.acquire.explorer.gui.central.AcquireTabPanel;
@@ -78,19 +79,21 @@ public class AcquireCentralThumbnailList<E extends MediaElement> extends Abstrac
     final List<E> medias = getSelected(e);
 
     if (!medias.isEmpty()) {
+      E first = medias.getFirst();
       JPopupMenu popupMenu = new JPopupMenu();
 
-      popupMenu.add(
-          new JMenuItem(
-              new DefaultAction(
-                  Messages.getString("AcquireCentralThumnailList.edit"),
-                  event -> openSelection())));
+      if (first instanceof ImageElement) {
+        popupMenu.add(
+            new JMenuItem(
+                new DefaultAction(
+                    Messages.getString("AcquireCentralThumnailList.edit"), _ -> openSelection())));
+      }
 
       popupMenu.add(
           new JMenuItem(
               new DefaultAction(
                   Messages.getString("AcquireCentralThumnailList.remove"),
-                  event -> {
+                  _ -> {
                     clearSelection();
                     AcquireManager.getInstance().removeMedias(medias);
                     repaint();
@@ -99,31 +102,29 @@ public class AcquireCentralThumbnailList<E extends MediaElement> extends Abstrac
       JMenu moveToMenu = new JMenu(Messages.getString("AcquireCentralThumnailList.moveto"));
 
       moveToOther(moveToMenu, medias);
-      moveToMenu.addSeparator();
       moveToExisting(moveToMenu, medias);
-      if (moveToMenu.getItemCount() > 3) {
-        moveToMenu.addSeparator();
-      }
       moveToNewSeries(moveToMenu, medias);
-
-      JMenu operationsMenu = new JMenu(Messages.getString("AcquireCentralThumnailList.operations"));
-      operationRotate(
-          operationsMenu,
-          medias,
-          Messages.getString("AcquireCentralThumnailList.rotate")
-              + StringUtil.COLON_AND_SPACE
-              + Messages.getString("AcquireCentralThumnailList.plus90"),
-          90);
-      operationRotate(
-          operationsMenu,
-          medias,
-          Messages.getString("AcquireCentralThumnailList.rotate")
-              + StringUtil.COLON_AND_SPACE
-              + Messages.getString("AcquireCentralThumnailList.min90"),
-          270);
-
       popupMenu.add(moveToMenu);
-      popupMenu.add(operationsMenu);
+
+      if (first instanceof ImageElement) {
+        JMenu operationsMenu =
+            new JMenu(Messages.getString("AcquireCentralThumnailList.operations"));
+        operationRotate(
+            operationsMenu,
+            medias,
+            Messages.getString("AcquireCentralThumnailList.rotate")
+                + StringUtil.COLON_AND_SPACE
+                + Messages.getString("AcquireCentralThumnailList.plus90"),
+            90);
+        operationRotate(
+            operationsMenu,
+            medias,
+            Messages.getString("AcquireCentralThumnailList.rotate")
+                + StringUtil.COLON_AND_SPACE
+                + Messages.getString("AcquireCentralThumnailList.min90"),
+            270);
+        popupMenu.add(operationsMenu);
+      }
 
       return popupMenu;
     }
@@ -132,47 +133,68 @@ public class AcquireCentralThumbnailList<E extends MediaElement> extends Abstrac
   }
 
   private void moveToExisting(JMenu moveToMenu, final List<E> medias) {
+    if (medias == null || medias.isEmpty()) {
+      return;
+    }
+    int menuSize = moveToMenu.getMenuComponentCount();
+    var infos = AcquireManager.toAcquireMediaInfo(medias);
+    var first = infos.getFirst();
     AcquireCentralThumbnailList.this.acquireTabPanel.getSeries().stream()
         .forEach(
             s -> {
-              if (!s.equals(
-                      AcquireCentralThumbnailList.this.acquireTabPanel.getSelected().getSeries())
-                  && !SeriesGroup.Type.NONE.equals(s.getType())) {
+              if (!s.equals(first.getSeries())
+                  && !SeriesGroup.Type.IMAGE.equals(s.getType())
+                  && s.getType().equals(first.getSeries().getType())) {
                 moveToMenu.add(
                     new JMenuItem(
                         new DefaultAction(
                             s.getDisplayName(),
-                            event -> {
+                            _ -> {
                               AcquireCentralThumbnailList.this.acquireTabPanel.moveElements(
-                                  s, AcquireManager.toAcquireImageInfo(medias));
+                                  s, infos);
                               repaint();
                             })));
               }
             });
+    if (moveToMenu.getMenuComponentCount() > menuSize) {
+      moveToMenu.addSeparator();
+    }
   }
 
   private void moveToOther(JMenu moveToMenu, final List<E> medias) {
-    moveToMenu.add(
-        new JMenuItem(
-            new DefaultAction(
-                SeriesGroup.DEFAULT_SERIES_NAME,
-                event -> {
-                  AcquireCentralThumbnailList.this.acquireTabPanel.moveElements(
-                      AcquireManager.getDefaultSeries(), AcquireManager.toAcquireImageInfo(medias));
-                  repaint();
-                })));
+    if (medias == null || medias.isEmpty()) {
+      return;
+    }
+    var infos = AcquireManager.toAcquireMediaInfo(medias);
+    if (!infos.isEmpty()) {
+      var group = AcquireManager.getDefaultSeries(infos.getFirst());
+      if (group != null) {
+        moveToMenu.add(
+            new JMenuItem(
+                new DefaultAction(
+                    group.getDisplayName(),
+                    _ -> {
+                      AcquireCentralThumbnailList.this.acquireTabPanel.moveElements(group, infos);
+                      repaint();
+                    })));
+        moveToMenu.addSeparator();
+      }
+    }
   }
 
   private void moveToNewSeries(JMenu moveToMenu, final List<E> medias) {
+    if (medias == null || medias.isEmpty()) {
+      return;
+    }
     moveToMenu.add(
         new JMenuItem(
             new DefaultAction(
                 Messages.getString("AcquireCentralThumnailList.new_series"),
-                event -> {
+                _ -> {
                   JDialog dialog =
                       new AcquireNewSeriesDialog(
                           AcquireCentralThumbnailList.this.acquireTabPanel,
-                          AcquireManager.toImageElement(medias));
+                          AcquireManager.toMediaElement(medias));
                   GuiUtils.showCenterScreen(
                       dialog, AcquireCentralThumbnailList.this.acquireTabPanel);
                   repaint();
@@ -185,7 +207,7 @@ public class AcquireCentralThumbnailList<E extends MediaElement> extends Abstrac
         new JMenuItem(
             new DefaultAction(
                 label,
-                event ->
+                _ ->
                     medias.stream()
                         .filter(ImageElement.class::isInstance)
                         .map(ImageElement.class::cast)
@@ -247,7 +269,7 @@ public class AcquireCentralThumbnailList<E extends MediaElement> extends Abstrac
       case KeyEvent.VK_DELETE -> {
         List<E> selected = getSelectedValuesList();
         if (!selected.isEmpty()) {
-          List<AcquireImageInfo> list = AcquireManager.toAcquireImageInfo(selected);
+          List<AcquireMediaInfo> list = AcquireManager.toAcquireMediaInfo(selected);
           clearSelection();
           AcquireManager.getInstance().removeImages(list);
         }

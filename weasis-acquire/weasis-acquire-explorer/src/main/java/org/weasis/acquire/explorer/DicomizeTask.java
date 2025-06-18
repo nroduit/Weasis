@@ -28,13 +28,13 @@ import org.weasis.core.util.FileUtil;
  *
  * @version $Rev$ $Date$
  */
-public class DicomizeTask extends SwingWorker<File, AcquireImageInfo> {
+public class DicomizeTask extends SwingWorker<File, AcquireMediaInfo> {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(DicomizeTask.class);
 
-  private final Collection<AcquireImageInfo> toDicomize;
+  private final Collection<AcquireMediaInfo> toDicomize;
 
-  public DicomizeTask(Collection<AcquireImageInfo> toDicomize) {
+  public DicomizeTask(Collection<AcquireMediaInfo> toDicomize) {
     this.toDicomize = Objects.requireNonNull(toDicomize);
   }
 
@@ -56,13 +56,13 @@ public class DicomizeTask extends SwingWorker<File, AcquireImageInfo> {
 
       String seriesInstanceUID = UIDUtils.createUID(); // Global series for all PR
 
-      for (AcquireImageInfo imageInfo : toDicomize) {
+      for (AcquireMediaInfo imageInfo : toDicomize) {
+        setProgress(++nbImageProcessed * 100 / nbImageToProcess);
         if (!Transform2Dicom.dicomize(
             imageInfo, exportDirDicom, exportDirImage, seriesInstanceUID)) {
-          FileUtil.recursiveDelete(exportDirDicom);
-          return null;
+          imageInfo.setStatus(AcquireImageStatus.FAILED);
+          continue;
         }
-        setProgress(++nbImageProcessed * 100 / nbImageToProcess);
         publish(imageInfo);
       }
     } catch (Exception ex) {
@@ -77,7 +77,7 @@ public class DicomizeTask extends SwingWorker<File, AcquireImageInfo> {
   }
 
   @Override
-  protected void process(List<AcquireImageInfo> chunks) {
-    chunks.stream().forEach(AcquireImageInfo.changeStatus(AcquireImageStatus.SUBMITTED));
+  protected void process(List<AcquireMediaInfo> chunks) {
+    chunks.stream().forEach(AcquireMediaInfo.changeStatus(AcquireImageStatus.SUBMITTED));
   }
 }

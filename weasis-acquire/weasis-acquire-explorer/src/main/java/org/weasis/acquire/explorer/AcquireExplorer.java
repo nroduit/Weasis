@@ -22,7 +22,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import javax.swing.Action;
-import javax.swing.Icon;
 import org.weasis.acquire.explorer.core.bean.SeriesGroup;
 import org.weasis.acquire.explorer.gui.central.ImageGroupPane;
 import org.weasis.acquire.explorer.gui.control.BrowsePanel;
@@ -33,6 +32,7 @@ import org.weasis.acquire.explorer.media.MediaSource;
 import org.weasis.base.explorer.JIThumbnailCache;
 import org.weasis.core.api.explorer.DataExplorerView;
 import org.weasis.core.api.explorer.ObservableEvent;
+import org.weasis.core.api.explorer.ObservableEvent.BasicAction;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.core.api.gui.Insertable;
 import org.weasis.core.api.gui.util.GuiUtils;
@@ -76,7 +76,7 @@ public class AcquireExplorer extends PluginTool implements DataExplorerView {
     this.acquireThumbnailListPane.loadDirectory(Paths.get(systemDrive.getPath()));
 
     // Remove dropping capabilities in the central area (limit to import
-    // from browse panel)
+    // from a browse panel)
     GuiUtils.getUICore().getMainArea().getComponent().setTransferHandler(null);
   }
 
@@ -111,9 +111,9 @@ public class AcquireExplorer extends PluginTool implements DataExplorerView {
   @SuppressWarnings("unchecked")
   @Override
   public void propertyChange(PropertyChangeEvent evt) {
-    if (evt instanceof ObservableEvent observableEvent) {
+    if (evt instanceof ObservableEvent event) {
       if (evt.getSource() instanceof AcquireManager) {
-        if (ObservableEvent.BasicAction.REPLACE.equals(observableEvent.getActionCommand())) {
+        if (ObservableEvent.BasicAction.REPLACE.equals(event.getActionCommand())) {
 
           String newPatientName =
               Optional.ofNullable(evt.getNewValue())
@@ -129,46 +129,45 @@ public class AcquireExplorer extends PluginTool implements DataExplorerView {
           centralPane.tabbedPane.clearAll();
           centralPane.tabbedPane.repaint();
 
-        } else if (ObservableEvent.BasicAction.REMOVE.equals(observableEvent.getActionCommand())) {
+        } else if (ObservableEvent.BasicAction.REMOVE.equals(event.getActionCommand())) {
 
           if (evt.getNewValue() instanceof Collection<?>) {
-            centralPane.tabbedPane.removeImages((Collection<AcquireImageInfo>) evt.getNewValue());
+            centralPane.tabbedPane.removeImages((Collection<AcquireMediaInfo>) evt.getNewValue());
             centralPane.tabbedPane.repaint();
 
-          } else if (evt.getNewValue() instanceof AcquireImageInfo info) {
+          } else if (evt.getNewValue() instanceof AcquireMediaInfo info) {
             centralPane.tabbedPane.removeImage(info);
             centralPane.tabbedPane.repaint();
           }
 
-        } else if (ObservableEvent.BasicAction.UPDATE.equals(observableEvent.getActionCommand())) {
+        } else if (ObservableEvent.BasicAction.UPDATE.equals(event.getActionCommand())) {
           centralPane.tabbedPane.refreshGUI();
           centralPane.tabbedPane.repaint();
 
-        } else if (ObservableEvent.BasicAction.ADD.equals(observableEvent.getActionCommand())) {
+        } else if (ObservableEvent.BasicAction.ADD.equals(event.getActionCommand())) {
 
           if (evt.getNewValue() instanceof Collection<?>) {
-            ((Collection<AcquireImageInfo>) evt.getNewValue())
+            ((Collection<AcquireMediaInfo>) evt.getNewValue())
                 .stream()
-                    .collect(Collectors.groupingBy(AcquireImageInfo::getSeries))
+                    .collect(Collectors.groupingBy(AcquireMediaInfo::getSeries))
                     .forEach(centralPane.tabbedPane::addSeriesElement);
 
-          } else if (evt.getNewValue() instanceof AcquireImageInfo info) {
+          } else if (evt.getNewValue() instanceof AcquireMediaInfo info) {
             SeriesGroup series = info.getSeries();
-            ArrayList<AcquireImageInfo> infos = new ArrayList<>();
+            ArrayList<AcquireMediaInfo> infos = new ArrayList<>();
             infos.add(info);
             centralPane.tabbedPane.addSeriesElement(series, infos);
           }
 
           centralPane.tabbedPane.refreshGUI();
           centralPane.tabbedPane.repaint();
+        } else if (BasicAction.LOADING_STOP.equals(event.getActionCommand())) {
+          if (evt.getNewValue() instanceof SeriesGroup group) {
+            centralPane.tabbedPane.selectSeries(group);
+          }
         }
       }
     }
-  }
-
-  @Override
-  public Icon getIcon() {
-    return null;
   }
 
   @Override

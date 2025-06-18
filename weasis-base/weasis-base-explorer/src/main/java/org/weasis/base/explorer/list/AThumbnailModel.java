@@ -146,6 +146,16 @@ public abstract class AThumbnailModel<E extends MediaElement> extends AbstractLi
                   if (preview instanceof ImageElement) {
                     preview.getFileCache().setRequireTransformation(true);
                     addElement((E) preview);
+                  } else {
+                    String mime = media.getMediaFragmentMimeType();
+                    if (mime != null
+                        && ("application/pdf".equals(mime)
+                            || mime.startsWith("video") // NON-NLS
+                            || mime.startsWith("audio") // NON-NLS
+                            || "application/SLA".equals(mime) // NON-NLS
+                            || "model/stl".equals(mime))) { // NON-NLS
+                      addElement((E) preview);
+                    }
                   }
 
                   if (getSize() == 1) {

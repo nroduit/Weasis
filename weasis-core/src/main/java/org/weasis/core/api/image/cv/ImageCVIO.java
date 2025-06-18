@@ -228,7 +228,7 @@ public class ImageCVIO implements MediaReader<ImageElement> {
           public String getMimeType() {
             if (!medias.isEmpty()) {
               synchronized (this) {
-                MediaElement img = medias.get(0);
+                MediaElement img = medias.getFirst();
                 if (img != null) {
                   return img.getMimeType();
                 }

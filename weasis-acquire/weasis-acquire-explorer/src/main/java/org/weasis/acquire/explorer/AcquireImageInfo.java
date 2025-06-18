@@ -15,18 +15,12 @@ import java.awt.geom.AffineTransform;
 import java.awt.geom.NoninvertibleTransformException;
 import java.awt.geom.Rectangle2D;
 import java.io.File;
-import java.time.Instant;
 import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.function.Consumer;
-import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Tag;
-import org.dcm4che3.data.VR;
-import org.dcm4che3.util.UIDUtils;
 import org.opencv.core.Mat;
 import org.opencv.core.Rect;
 import org.opencv.core.RotatedRect;
@@ -34,7 +28,6 @@ import org.opencv.core.Size;
 import org.opencv.imgproc.Imgproc;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.weasis.acquire.explorer.core.bean.SeriesGroup;
 import org.weasis.core.api.image.AutoLevelsOp;
 import org.weasis.core.api.image.BrightnessOp;
 import org.weasis.core.api.image.CropOp;
@@ -55,7 +48,6 @@ import org.weasis.core.ui.model.layer.LayerType;
 import org.weasis.core.ui.model.utils.imp.DefaultViewModel;
 import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.codec.TagD;
-import org.weasis.dicom.codec.TagD.Level;
 import org.weasis.opencv.data.PlanarImage;
 import org.weasis.opencv.op.ImageConversion;
 
@@ -63,34 +55,18 @@ import org.weasis.opencv.op.ImageConversion;
  * @author Yannick LARVOR
  * @since 2.5.0
  */
-public class AcquireImageInfo {
+public class AcquireImageInfo extends AcquireMediaInfo {
   private static final Logger LOGGER = LoggerFactory.getLogger(AcquireImageInfo.class);
 
-  private final ImageElement image;
-  private SeriesGroup seriesGroup;
-  private final Attributes attributes;
-  private AcquireImageStatus status;
-
   private final SimpleOpManager postProcessOpManager;
-
   private final AcquireImageValues defaultValues;
+
   private AcquireImageValues currentValues;
   private AcquireImageValues nextValues;
 
   public AcquireImageInfo(ImageElement image) {
-    this.image = Objects.requireNonNull(image);
-    // Create a SOPInstanceUID if not present
-    TagW tagUid = TagD.getUID(Level.INSTANCE);
-    String uuid = (String) image.getTagValue(tagUid);
-    if (uuid == null) {
-      uuid = UIDUtils.createUID();
-      image.setTag(tagUid, uuid);
-    }
-    readTags(image);
-
-    this.setStatus(AcquireImageStatus.TO_PUBLISH);
-    this.attributes = new Attributes();
-    attributes.setString(Tag.SpecificCharacterSet, VR.CS, "ISO_IR 192"); // NON-NLS
+    super(image);
+    populateImageElementFromExif(image);
 
     this.postProcessOpManager = new SimpleOpManager();
     this.postProcessOpManager.addImageOperationAction(new RotationOp());
@@ -105,16 +81,8 @@ public class AcquireImageInfo {
     nextValues = defaultValues.copy();
   }
 
-  public String getUID() {
-    return TagD.getTagValue(image, Tag.SOPInstanceUID, String.class);
-  }
-
   public ImageElement getImage() {
-    return image;
-  }
-
-  public Attributes getAttributes() {
-    return attributes;
+    return (ImageElement) media;
   }
 
   public SimpleOpManager getPostProcessOpManager() {
@@ -192,7 +160,7 @@ public class AcquireImageInfo {
 
     // Reset preprocess cache
     postProcessOpManager.clearNodeIOCache();
-    view.getImageLayer().setImage(image, postProcessOpManager);
+    view.getImageLayer().setImage(getImage(), postProcessOpManager);
     updateTags(view.getImage());
     updateImageGeometry(view);
 
@@ -217,7 +185,7 @@ public class AcquireImageInfo {
       if (node != null) {
         node.setEnabled(false);
       }
-      imageLayer.setImage(image, postProcessOpManager);
+      imageLayer.setImage(getImage(), postProcessOpManager);
     }
   }
 
@@ -230,8 +198,8 @@ public class AcquireImageInfo {
   }
 
   private void updateTags(ImageElement image) {
-    this.image.setTag(TagW.ImageWidth, image.getTagValue(TagW.ImageWidth));
-    this.image.setTag(TagW.ImageHeight, image.getTagValue(TagW.ImageHeight));
+    media.setTag(TagW.ImageWidth, image.getTagValue(TagW.ImageWidth));
+    media.setTag(TagW.ImageHeight, image.getTagValue(TagW.ImageHeight));
   }
 
   public AcquireImageValues getNextValues() {
@@ -255,6 +223,7 @@ public class AcquireImageInfo {
   }
 
   public AcquireImageValues restore(ViewCanvas<ImageElement> view) {
+    ImageElement image = getImage();
     image.setPixelSpacingUnit(defaultValues.getCalibrationUnit());
     image.setPixelSize(defaultValues.getCalibrationRatio());
 
@@ -281,44 +250,15 @@ public class AcquireImageInfo {
     return defaultValues;
   }
 
-  public SeriesGroup getSeries() {
-    return seriesGroup;
-  }
-
-  public void setSeries(SeriesGroup seriesGroup) {
-    this.seriesGroup = seriesGroup;
-    if (seriesGroup != null) {
-      image.setTag(TagD.get(Tag.SeriesInstanceUID), seriesGroup.getUID());
-
-      String seriesDescription = TagD.getTagValue(seriesGroup, Tag.SeriesDescription, String.class);
-      if (!StringUtil.hasText(seriesDescription)
-          && seriesGroup.getType() != SeriesGroup.Type.NONE) {
-        seriesGroup.setTag(TagD.get(Tag.SeriesDescription), seriesGroup.getDisplayName());
-      }
-    }
-  }
-
   @Override
   public String toString() {
-    return Optional.ofNullable(image).map(ImageElement::getName).orElse("");
-  }
-
-  public AcquireImageStatus getStatus() {
-    return status;
-  }
-
-  public void setStatus(AcquireImageStatus status) {
-    this.status = Objects.requireNonNull(status);
-  }
-
-  public static Consumer<AcquireImageInfo> changeStatus(AcquireImageStatus status) {
-    return imgInfo -> imgInfo.setStatus(status);
+    return Optional.ofNullable(getImage()).map(ImageElement::getName).orElse("");
   }
 
   public AffineTransform getAffineTransform(int rotation, boolean inverse) {
     AffineTransform transform = new AffineTransform();
     if (rotation != 0) {
-      PlanarImage img = image.getImage();
+      PlanarImage img = getImage().getImage();
       Rectangle2D modelArea = new Rectangle2D.Double(0.0, 0.0, img.width(), img.height());
       double w = modelArea.getWidth();
       double h = modelArea.getHeight();
@@ -345,12 +285,12 @@ public class AcquireImageInfo {
   }
 
   /**
-   * Check if ImageElement has a SOPInstanceUID TAG value and if not create a new UUID. Read Exif
-   * metaData from original file and populate relevant ImageElement TAGS. <br>
+   * Check if ImageElement has a SOPInstanceUID TAG value and if not, create a new UUID. Read Exif
+   * metaData from the original file and populate relevant ImageElement TAGS. <br>
    *
    * @param imageElement the ImageElement value
    */
-  private static void readTags(ImageElement imageElement) {
+  private static void populateImageElementFromExif(ImageElement imageElement) {
     // Convert Exif TAG to DICOM attributes
     Optional<File> file = imageElement.getFileCache().getOriginalFile();
 
@@ -370,14 +310,7 @@ public class AcquireImageInfo {
           // Do nothing
         }
       }
-      if (dateTime == null) {
-        dateTime =
-            LocalDateTime.from(
-                Instant.ofEpochMilli(imageElement.getLastModified())
-                    .atZone(ZoneId.systemDefault()));
-      }
-      imageElement.setTagNoNull(TagD.get(Tag.ContentDate), dateTime.toLocalDate());
-      imageElement.setTagNoNull(TagD.get(Tag.ContentTime), dateTime.toLocalTime());
+      setContentDateTime(imageElement, dateTime);
 
       String imgDescription = (String) imageElement.getTagValue(TagW.ExifImageDescription);
       if (!StringUtil.hasText(imgDescription)) {

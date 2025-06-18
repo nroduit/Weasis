@@ -9,25 +9,122 @@
  */
 package org.weasis.acquire.explorer.core.bean;
 
+import java.io.FileInputStream;
+import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import org.dcm4che3.data.Tag;
+import org.dcm4che3.imageio.codec.mpeg.MPEGHeader;
 import org.dcm4che3.util.UIDUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.weasis.acquire.explorer.AcquireManager;
 import org.weasis.acquire.explorer.Messages;
 import org.weasis.acquire.explorer.gui.central.SeriesDataListener;
+import org.weasis.core.api.media.data.ImageElement;
+import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.TagUtil;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.codec.TagD;
 
 public class SeriesGroup extends DefaultTaggable implements Comparable<SeriesGroup> {
+  private static final Logger LOGGER = LoggerFactory.getLogger(SeriesGroup.class);
+
   public enum Type {
-    NONE,
-    DATE,
-    NAME
+    IMAGE(Messages.getString("Series.other"), "XC"),
+    IMAGE_DATE("Date", "XC"), // NON-NLS
+    IMAGE_NAME("Name", "XC"), // NON-NLS
+    //    AUDIO("Audio", "AU"),
+    VIDEO_MP2("Video", "XC"),
+    VIDEO_MP4("Video", "XC"),
+    PDF("PDF document", "DOC"),
+    STL("STL 3D model", "M3D");
+
+    private final String description;
+    private final String defaultModality;
+
+    Type(String description, String defaultModality) {
+      this.description = description;
+      this.defaultModality = defaultModality;
+    }
+
+    public String getDescription() {
+      return description;
+    }
+
+    public String getDefaultModality() {
+      return defaultModality;
+    }
+
+    @Override
+    public String toString() {
+      return description;
+    }
+
+    public static Type fromMimeType(MediaElement media) {
+      if (media == null) {
+        return null;
+      }
+      if (media instanceof ImageElement) {
+        return IMAGE;
+      }
+
+      // Set specific tags for non-image media
+      String mime = media.getMimeType();
+      if (mime != null) {
+        mime = mime.toLowerCase();
+        if (mime.startsWith("video/mp")) { // NON-NLS
+          return videaType(media, mime);
+          //        } else  if (mime.startsWith("audio/")) { // NON-NLS
+          //          return AUDIO;
+        } else if (mime.equals("application/pdf")) { // NON-NLS
+          return PDF;
+        } else if ("application/sla".equals(mime) // NON-NLS
+            || "model/stl".equals(mime) // NON-NLS
+            || "model/x.stl-binary".equals(mime)) { // NON-NLS
+          return STL;
+        }
+      }
+      return null;
+    }
+
+    private static Type videaType(MediaElement media, String mime) {
+      if ("video/mp4".equals(mime)) {
+        return VIDEO_MP4;
+      }
+      try (FileInputStream fis = new FileInputStream(media.getFile())) {
+        byte[] headerBytes = new byte[4096];
+        int bytesRead = fis.read(headerBytes);
+        if (bytesRead < 64) {
+          return null;
+        }
+        if (isMPEG4(headerBytes)) {
+          return VIDEO_MP4;
+        } else if (isMPEG2(headerBytes)) {
+          return VIDEO_MP2;
+        }
+      } catch (IOException e) {
+        LOGGER.error("Error reading video file header", e);
+      }
+      return null;
+    }
+
+    private static boolean isMPEG2(byte[] headerBytes) {
+      MPEGHeader mpegHeader = new MPEGHeader(headerBytes);
+      return mpegHeader.isValid();
+    }
+
+    private static boolean isMPEG4(byte[] headerBytes) {
+      String s = new String(headerBytes);
+      return s.contains("ftypisom")
+          || s.contains("ftypmp42")
+          || s.contains("ftypiso2")
+          || s.contains("ftypdash")
+          || s.contains("ftypqt");
+    }
   }
 
   private final Type type;
@@ -38,25 +135,23 @@ public class SeriesGroup extends DefaultTaggable implements Comparable<SeriesGro
 
   public static final SeriesGroup DATE_SERIES = new SeriesGroup(LocalDateTime.now());
 
-  public static final String DEFAULT_SERIES_NAME = Messages.getString("Series.other");
-
   public SeriesGroup() {
-    this(Type.NONE);
+    this(Type.IMAGE);
   }
 
-  private SeriesGroup(Type type) {
+  public SeriesGroup(SeriesGroup.Type type) {
     this.type = Objects.requireNonNull(type);
     init();
   }
 
   public SeriesGroup(String name) {
-    this.type = Type.NAME;
+    this.type = Type.IMAGE_NAME;
     this.name = name;
     init();
   }
 
   public SeriesGroup(LocalDateTime date) {
-    this.type = Type.DATE;
+    this.type = Type.IMAGE_DATE;
     this.date = Objects.requireNonNull(date);
     init();
   }
@@ -75,16 +170,16 @@ public class SeriesGroup extends DefaultTaggable implements Comparable<SeriesGro
     this.needUpdateFromGlobalTags = needUpdateFromGlobalTags;
   }
 
-  private void setIfnotInGlobal(TagW tag, Object value) {
+  private void setIfNotInGlobal(TagW tag, Object value) {
     Object globalValue = AcquireManager.GLOBAL.getTagValue(tag);
     tags.put(tag, globalValue == null ? value : globalValue);
   }
 
   public void updateDicomTags() {
-    // Modality from worklist otherwise XC
-    setIfnotInGlobal(TagD.get(Tag.Modality), "XC");
-    setIfnotInGlobal(TagD.get(Tag.OperatorsName), null);
-    setIfnotInGlobal(TagD.get(Tag.ReferringPhysicianName), null);
+    // Modality from worklist otherwise default value
+    setIfNotInGlobal(TagD.get(Tag.Modality), type.getDefaultModality());
+    setIfNotInGlobal(TagD.get(Tag.OperatorsName), null);
+    setIfNotInGlobal(TagD.get(Tag.ReferringPhysicianName), null);
   }
 
   public Type getType() {
@@ -103,15 +198,21 @@ public class SeriesGroup extends DefaultTaggable implements Comparable<SeriesGro
     this.date = Objects.requireNonNull(date);
   }
 
+  public void setSeriesDescription(String description) {
+    if (StringUtil.hasText(description)) {
+      tags.put(TagD.get(Tag.SeriesDescription), description);
+    }
+  }
+
   public String getDisplayName() {
     String desc = TagD.getTagValue(this, Tag.SeriesDescription, String.class);
     if (StringUtil.hasText(desc)) {
       return desc;
     }
     return switch (type) {
-      case NAME -> name;
-      case DATE -> TagUtil.formatDateTime(date);
-      case NONE -> DEFAULT_SERIES_NAME;
+      case IMAGE_NAME -> name;
+      case IMAGE_DATE -> TagUtil.formatDateTime(date);
+      default -> type.getDescription();
     };
   }
 
@@ -124,7 +225,7 @@ public class SeriesGroup extends DefaultTaggable implements Comparable<SeriesGro
       return false;
     }
     SeriesGroup that = (SeriesGroup) o;
-    return type == that.type && Objects.equals(name, that.name) && Objects.equals(date, that.date);
+    return type == that.type && Objects.equals(getDisplayName(), that.getDisplayName());
   }
 
   @Override
@@ -139,60 +240,12 @@ public class SeriesGroup extends DefaultTaggable implements Comparable<SeriesGro
 
   @Override
   public int compareTo(SeriesGroup that) {
-    final int BEFORE = -1;
-    final int EQUAL = 0;
-    final int AFTER = 1;
-
-    // this optimization is usually worthwhile, and can
-    // always be added
     if (this == that) {
-      return EQUAL;
+      return 0; // EQUAL
     }
-
-    // Check Type
-    if (this.type.equals(Type.NONE) && !that.type.equals(Type.NONE)) {
-      return BEFORE;
-    }
-    if (this.type.equals(Type.DATE) && that.type.equals(Type.NONE)) {
-      return AFTER;
-    }
-    if (this.type.equals(Type.DATE) && that.type.equals(Type.NAME)) {
-      return BEFORE;
-    }
-
-    // Check Dates
-    if (this.date != null && that.date == null) {
-      return BEFORE;
-    }
-    if (this.date == null && that.date != null) {
-      return AFTER;
-    }
-    if (this.date != null) {
-      int comp = this.date.compareTo(that.date);
-      if (comp != EQUAL) {
-        return comp;
-      }
-    }
-
-    // Check Names
-    if (this.name != null && that.name == null) {
-      return BEFORE;
-    }
-    if (this.name == null && that.name != null) {
-      return AFTER;
-    }
-    if (this.name != null) {
-      int comp = this.name.compareTo(that.name);
-      if (comp != EQUAL) {
-        return comp;
-      }
-    }
-
-    // Check equals
-    if (!this.equals(that)) {
-      throw new IllegalStateException("compareTo inconsistent with equals.");
-    }
-    return EQUAL;
+    // Compare Names
+    return Objects.compare(
+        this.getDisplayName(), that.getDisplayName(), String.CASE_INSENSITIVE_ORDER);
   }
 
   public void addLayerChangeListener(SeriesDataListener listener) {
