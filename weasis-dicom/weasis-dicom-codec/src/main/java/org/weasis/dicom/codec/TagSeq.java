@@ -36,20 +36,32 @@ public class TagSeq extends TagD {
     if (data instanceof MacroSeqData macro) {
       Object val = getValue(macro.getAttributes());
       if (val instanceof Sequence seq && !seq.isEmpty()) {
-        val = seq.getFirst();
-      }
-
-      if (val instanceof Attributes dataset) {
-        Predicate<? super Attributes> predicate = macro.getApplicable();
-        if (predicate == null || predicate.test(dataset)) {
-          for (TagW tag : macro.getTags()) {
-            if (tag != null) {
-              tag.readValue(dataset, taggable);
+        for (Object item : seq) {
+          if (item instanceof Attributes dataset) {
+            if (processAttributes(dataset, taggable, macro)) {
+              return;
             }
           }
         }
+      } else {
+        if (val instanceof Attributes dataset) {
+          processAttributes(dataset, taggable, macro);
+        }
       }
     }
+  }
+
+  private boolean processAttributes(Attributes dataset, Taggable taggable, MacroSeqData macro) {
+    Predicate<? super Attributes> predicate = macro.getApplicable();
+    if (predicate == null || predicate.test(dataset)) {
+      for (TagW tag : macro.getTags()) {
+        if (tag != null) {
+          tag.readValue(dataset, taggable);
+        }
+      }
+      return true;
+    }
+    return false;
   }
 
   public static class MacroSeqData {
