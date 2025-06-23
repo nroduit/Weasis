@@ -594,9 +594,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
             KOManager.setKeyObjectReference(newSelectedState, getSelectedViewPane());
 
         if (!hasKeyObjectReferenceChanged) {
-          // If KO Toogle State hasn't changed this action should be reset to its previous state,
-          // that is the
-          // current view's actionValue
+          // If KO Toggle State hasn't changed, this action should be reset to its previous state
           this.setSelectedWithoutTriggerAction(
               (Boolean) getSelectedViewPane().getActionValue(ActionW.KO_TOGGLE_STATE.cmd()));
         }
@@ -1448,10 +1446,6 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
               pane.setActionsInView(ActionW.SYNCH_CROSSLINE.cmd(), false);
               addPropertyChangeListener(ActionW.SYNCH.cmd(), pane);
               // pane.updateSynchState();
-            }
-
-            if (LangUtil.getNULLtoFalse(enableFilter)) {
-              KOManager.updateKOFilter(viewPane, selectedKO, enableFilter, frameIndex);
             }
           }
         }

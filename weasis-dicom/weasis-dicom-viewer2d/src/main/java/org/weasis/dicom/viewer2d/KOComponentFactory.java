@@ -34,7 +34,7 @@ public final class KOComponentFactory {
 
   private KOComponentFactory() {}
 
-  public static ViewButton buildKoSelectionButton(final View2d view2d) {
+  public static ViewButton buildKoSelectionButton() {
 
     return new ViewButton(
         (invoker, x, y) -> {
