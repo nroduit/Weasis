@@ -265,6 +265,10 @@ public class Dvh {
 
     double totalDose = 0.0;
 
+    if (dDvh.length == 0) {
+      return totalDose;
+    }
+
     // From left to right (each i - bin is 1 cGy)
     for (int i = 1; i < dDvh.length; i++) {
       totalDose += dDvh[i] * i;
@@ -283,6 +287,9 @@ public class Dvh {
 
     int size = this.dvhData.length;
     double[] dDvh = new double[size];
+    if (size == 0) {
+      return dDvh;
+    }
 
     for (int i = 0; i < size - 1; i++) {
       dDvh[i] = this.dvhData[i] - this.dvhData[i + 1];

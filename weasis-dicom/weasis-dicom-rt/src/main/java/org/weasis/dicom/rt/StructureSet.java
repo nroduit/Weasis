@@ -11,13 +11,7 @@ package org.weasis.dicom.rt;
 
 import java.awt.Color;
 import java.awt.geom.Path2D;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.CopyOnWriteArraySet;
 import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Sequence;
@@ -139,8 +133,9 @@ public class StructureSet extends RtSpecialElement implements SpecialElementRegi
     Attributes dcmItems = getMediaReader().getDicomObject();
     if (dcmItems != null) {
       String seriesUID = TagD.getTagValue(img, Tag.SeriesInstanceUID, String.class);
-      String label = dcmItems.getString(Tag.StructureSetLabel);
+      //      String label = dcmItems.getString(Tag.StructureSetLabel);
       Date datetime = dcmItems.getDate(Tag.StructureSetDateAndTime);
+      setTagNoNull(TagD.get(Tag.StructureSetDate), datetime);
 
       // Locate the name and number of each ROI
       Sequence structRoiSeq = dcmItems.getSequence(Tag.StructureSetROISequence);
@@ -213,25 +208,31 @@ public class StructureSet extends RtSpecialElement implements SpecialElementRegi
           if (contourSeq != null) {
             // Locate the contour sequence for each referenced ROI
             for (Attributes contour : contourSeq) {
+              PlaneContourLoader contours = new PlaneContourLoader();
               // For each plane, initialize a new plane dictionary
               StructContour plane = buildGraphic(img, contour, nb, region);
               if (plane == null) {
                 continue;
               }
+              contours.addContour(plane);
 
               // Each plane that coincides with an image slice will have a unique ID
               // take the first one
               Sequence contImgSeq = contour.getSequence(Tag.ContourImageSequence);
               if (contImgSeq != null) {
+                double[] pts = contour.getDoubles(Tag.ContourData);
+                if (pts != null && pts.length % 3 == 0 && pts.length > 1) {
+                  plane.setPoints(pts);
+                } else {
+                  continue;
+                }
                 for (Attributes attributes : contImgSeq) {
                   String sopUID = attributes.getString(Tag.ReferencedSOPInstanceUID);
                   if (StringUtil.hasText(sopUID)) {
-                    plane.setPoints(contour.getDoubles(Tag.ContourData));
-                    Set<LazyContourLoader> set =
-                        refMap.get(seriesUID).computeIfAbsent(sopUID, _ -> new LinkedHashSet<>());
-                    if (set.iterator().next() instanceof PlaneContourLoader planeLoader) {
-                      planeLoader.addContour(plane);
-                    }
+                    refMap
+                        .get(seriesUID)
+                        .computeIfAbsent(sopUID, _ -> new LinkedHashSet<>())
+                        .add(contours);
                   }
                 }
               }
