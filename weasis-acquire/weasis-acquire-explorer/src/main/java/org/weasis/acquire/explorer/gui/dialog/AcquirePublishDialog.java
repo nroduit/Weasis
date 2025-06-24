@@ -151,18 +151,19 @@ public class AcquirePublishDialog extends JDialog {
 
   private JPanel initContent() {
     JPanel contentPane =
-        new JPanel(new MigLayout("fill, insets 10", "[grow]", "[][][grow][]")); // NON-NLS
+        new JPanel(new MigLayout("fill, insets 10", "[grow][]", "[][][grow][]")); // NON-NLS
 
     JLabel questionLabel = new JLabel(Messages.getString("AcquirePublishDialog.select_pub"));
     questionLabel.setFont(FontItem.DEFAULT_SEMIBOLD.getFont());
-
-    contentPane.add(questionLabel, "wrap"); // NON-NLS
+    JButton exportButton = createExportButton();
+    contentPane.add(questionLabel, "");
+    contentPane.add(exportButton, "wrap"); // NON-NLS
     publishTree = new PublishTree();
     publishTree.addTreeCheckingListener(
         evt -> {
           resolutionCombo.setEnabled(!getOversizedSelected(publishTree).isEmpty());
         });
-    contentPane.add(publishTree, "grow, wrap"); // NON-NLS
+    contentPane.add(publishTree, "grow, span, wrap"); // NON-NLS
 
     contentPane.add(
         new JLabel(
@@ -198,9 +199,6 @@ public class AcquirePublishDialog extends JDialog {
     }
     contentPane.add(panel, "split 5, span, wrap"); // NON-NLS
 
-    JButton exportButton = createExportButton();
-    contentPane.add(exportButton);
-
     publishButton = new JButton(Messages.getString("AcquirePublishDialog.publish"));
     publishButton.addActionListener(_ -> publishAction(null));
 
@@ -211,15 +209,14 @@ public class AcquirePublishDialog extends JDialog {
     progressBar = new JProgressBar();
     progressBar.setStringPainted(true);
     progressBar.setVisible(false);
-    contentPane.add(progressBar, "split 4, span, growx, gaptop 20"); // NON-NLS
-    contentPane.add(exportButton);
+    contentPane.add(progressBar, "split 3, span, growx, gaptop 20"); // NON-NLS
     contentPane.add(publishButton);
     contentPane.add(cancelButton, "wrap"); // NON-NLS
     return contentPane;
   }
 
   private JButton createExportButton() {
-    JButton exportButton = new JButton("Export");
+    JButton exportButton = new JButton("Export locally");
     exportButton.addActionListener(
         _ -> {
           var pref = LocalPersistence.getProperties();

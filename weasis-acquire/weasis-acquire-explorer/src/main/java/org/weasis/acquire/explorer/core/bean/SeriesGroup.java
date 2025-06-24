@@ -9,14 +9,15 @@
  */
 package org.weasis.acquire.explorer.core.bean;
 
-import java.io.FileInputStream;
-import java.io.IOException;
+import java.nio.channels.FileChannel;
+import java.nio.channels.SeekableByteChannel;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import org.dcm4che3.data.Tag;
-import org.dcm4che3.imageio.codec.mpeg.MPEGHeader;
+import org.dcm4che3.imageio.codec.mp4.MP4Parser;
+import org.dcm4che3.imageio.codec.mpeg.MPEG2Parser;
 import org.dcm4che3.util.UIDUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -38,8 +39,8 @@ public class SeriesGroup extends DefaultTaggable implements Comparable<SeriesGro
     IMAGE_DATE("Date", "XC"), // NON-NLS
     IMAGE_NAME("Name", "XC"), // NON-NLS
     //    AUDIO("Audio", "AU"),
-    VIDEO_MP2("Video", "XC"),
-    VIDEO_MP4("Video", "XC"),
+    VIDEO_MP2("Video MPEG-4", "XC"),
+    VIDEO_MP4("Video MPEG-2", "XC"),
     PDF("PDF document", "DOC"),
     STL("STL 3D model", "M3D");
 
@@ -77,7 +78,7 @@ public class SeriesGroup extends DefaultTaggable implements Comparable<SeriesGro
       if (mime != null) {
         mime = mime.toLowerCase();
         if (mime.startsWith("video/mp")) { // NON-NLS
-          return videaType(media, mime);
+          return videoType(media);
           //        } else  if (mime.startsWith("audio/")) { // NON-NLS
           //          return AUDIO;
         } else if (mime.equals("application/pdf")) { // NON-NLS
@@ -91,39 +92,33 @@ public class SeriesGroup extends DefaultTaggable implements Comparable<SeriesGro
       return null;
     }
 
-    private static Type videaType(MediaElement media, String mime) {
-      if ("video/mp4".equals(mime)) {
+    private static Type videoType(MediaElement media) {
+      if (isMPEG4(media)) {
         return VIDEO_MP4;
-      }
-      try (FileInputStream fis = new FileInputStream(media.getFile())) {
-        byte[] headerBytes = new byte[4096];
-        int bytesRead = fis.read(headerBytes);
-        if (bytesRead < 64) {
-          return null;
-        }
-        if (isMPEG4(headerBytes)) {
-          return VIDEO_MP4;
-        } else if (isMPEG2(headerBytes)) {
-          return VIDEO_MP2;
-        }
-      } catch (IOException e) {
-        LOGGER.error("Error reading video file header", e);
+      } else if (isMPEG2(media)) {
+        return VIDEO_MP2;
       }
       return null;
     }
 
-    private static boolean isMPEG2(byte[] headerBytes) {
-      MPEGHeader mpegHeader = new MPEGHeader(headerBytes);
-      return mpegHeader.isValid();
+    private static boolean isMPEG4(MediaElement media) {
+      try (SeekableByteChannel channel = FileChannel.open(media.getFile().toPath())) {
+        MP4Parser parser = new MP4Parser(channel);
+        return parser.getTransferSyntaxUID() != null;
+      } catch (Exception e) {
+        LOGGER.debug("Try reading MP4 video file header:", e);
+        return false;
+      }
     }
 
-    private static boolean isMPEG4(byte[] headerBytes) {
-      String s = new String(headerBytes);
-      return s.contains("ftypisom")
-          || s.contains("ftypmp42")
-          || s.contains("ftypiso2")
-          || s.contains("ftypdash")
-          || s.contains("ftypqt");
+    private static boolean isMPEG2(MediaElement media) {
+      try (SeekableByteChannel channel = FileChannel.open(media.getFile().toPath())) {
+        MPEG2Parser parser = new MPEG2Parser(channel);
+        return parser.getTransferSyntaxUID() != null;
+      } catch (Exception e) {
+        LOGGER.debug("Try reading MPEG2 video file header for:", e);
+        return false;
+      }
     }
   }
 

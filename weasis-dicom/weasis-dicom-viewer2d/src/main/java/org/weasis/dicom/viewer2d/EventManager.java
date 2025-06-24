@@ -182,7 +182,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
     setAction(newLensAction());
     setAction(newLensZoomAction());
     setAction(newDrawOnlyOnceAction());
-    setAction(newDefaulPresetAction());
+    setAction(newDefaultPresetAction());
 
     setAction(newPresetAction());
     setAction(newLutShapeAction());
@@ -573,7 +573,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
     };
   }
 
-  private ToggleButtonListener newDefaulPresetAction() {
+  private ToggleButtonListener newDefaultPresetAction() {
     return new ToggleButtonListener(ActionW.DEFAULT_PRESET, true) {
       @Override
       public void actionPerformed(boolean selected) {
@@ -2052,7 +2052,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
     }
     GuiExecutor.execute(
         () -> {
-          String command = args.get(0);
+          String command = args.getFirst();
           if (command != null) {
             ImageViewerPlugin<DicomImageElement> view = getSelectedView2dContainer();
             if (view != null) {
