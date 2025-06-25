@@ -80,6 +80,10 @@ public class PluginOpeningStrategy {
     Objects.requireNonNull(dicomModel);
     Objects.requireNonNull(dicomSeries);
 
+    if (DicomModel.isHiddenModality(dicomSeries)) {
+      return;
+    }
+
     boolean isPatientOpen = containsPatient(patient);
     if (!isPatientOpen && canAddNewPatient()) {
       String mime = dicomSeries.getMimeType();
