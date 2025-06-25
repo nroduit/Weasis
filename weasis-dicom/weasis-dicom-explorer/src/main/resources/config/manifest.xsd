@@ -82,6 +82,16 @@
     </xsd:restriction>
   </xsd:simpleType>
 
+  <!-- Query Mode -->
+  <xsd:simpleType name="connectorType">
+    <xsd:restriction base="xsd:string">
+      <xsd:enumeration value="DB"/>
+      <xsd:enumeration value="DICOM"/>
+      <xsd:enumeration value="DICOM_WEB"/>
+    </xsd:restriction>
+  </xsd:simpleType>
+
+
   <!-- WEASIS SPECIFIC DATA ELEMENTS -->
 
   <xsd:simpleType name="dicomTagsList">
@@ -137,6 +147,7 @@
     <xsd:attribute name="requireOnlySOPInstanceUID" type="xsd:boolean"/>
     <xsd:attribute name="additionnalParameters" type="xsd:string"/>
     <xsd:attribute name="overrideDicomTagsList" type="dicomTagsList"/>
+    <xsd:attribute name="queryMode" type="connectorType"/>
   </xsd:complexType>
   <xsd:complexType name="Patient">
     <xsd:sequence>
