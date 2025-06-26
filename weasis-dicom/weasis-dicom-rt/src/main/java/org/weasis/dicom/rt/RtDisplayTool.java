@@ -73,437 +73,425 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener, S
   public static final String BUTTON_NAME = Messages.getString("rt.tool");
 
   private static final String GRAPHIC_OPACITY = Messages.getString("graphic.opacity");
-  public static final String FORMAT = "%.3f %%"; // NON-NLS
-  private static final SoftHashMap<String, RtSet> RtSet_Cache = new SoftHashMap<>();
+  private static final SoftHashMap<String, RtSet> RT_SET_CACHE = new SoftHashMap<>();
 
+  // UI Components
+  private final JScrollPane rootPane = new JScrollPane();
   private final JTabbedPane tabbedPane = new JTabbedPane();
-  private final JScrollPane rootPane;
   private final JButton btnLoad = new JButton(Messages.getString("load.rt"));
   private final JCheckBox cbDvhRecalculate = new JCheckBox(Messages.getString("dvh.recalculate"));
+  private final JComboBox<StructureSet> comboRtStructureSet = new JComboBox<>();
+  private final JComboBox<Plan> comboRtPlan = new JComboBox<>();
+  private final JSliderW slider;
+  private final SpinnerProgress progressBar = new SpinnerProgress();
 
+  // Tree components
   private final StructRegionTree treeStructures;
   private final SegRegionTree treeIsodoses;
-  private boolean initPathSelection;
   private final DefaultMutableTreeNode rootNodeStructures =
-      new DefaultMutableTreeNode("rootNode", true); // NON-NLS
+      new DefaultMutableTreeNode("rootNode", true);
   private final DefaultMutableTreeNode rootNodeIsodoses =
-      new DefaultMutableTreeNode("rootNode", true); // NON-NLS
-  private final JLabel lblRtStructureSet =
-      new JLabel(Messages.getString("structure.set") + StringUtil.COLON);
-  private final JComboBox<StructureSet> comboRtStructureSet = new JComboBox<>();
-  private final JLabel lblRtPlan = new JLabel(Messages.getString("plan") + StringUtil.COLON);
-  private final JComboBox<Plan> comboRtPlan = new JComboBox<>();
-  private final JLabel lblRtPlanName = new JLabel();
-  private final JLabel lblRtPlanDose = new JLabel(Messages.getString("dose") + StringUtil.COLON);
-  private final JTextField txtRtPlanDoseValue = new JTextField();
-  private final JLabel lblRtPlanDoseUnit = new JLabel("cGy"); // NON-NLS
+      new DefaultMutableTreeNode("rootNode", true);
   private final GroupTreeNode nodeStructures;
   private final GroupTreeNode nodeIsodoses;
-  private final SpinnerProgress progressBar = new SpinnerProgress();
+
+  // Labels
+  private final JLabel lblRtPlanName = new JLabel();
+  private final JTextField txtRtPlanDoseValue = new JTextField();
+
+  // State
   private RtSet rtSet;
-  private final transient ItemListener structureChangeListener =
-      e -> {
-        if (e.getStateChange() == ItemEvent.SELECTED) {
-          updateTree((StructureSet) e.getItem(), null);
-        }
-      };
-  private final transient ItemListener planChangeListener =
-      e -> {
-        if (e.getStateChange() == ItemEvent.SELECTED) {
-          updateTree(null, (Plan) e.getItem());
-        }
-      };
-  private final JSliderW slider;
+  private boolean initPathSelection;
+
+  // Store selection state for all GroupTreeNode items
+  private final Map<String, Map<String, Boolean>> structureSetSelections = new HashMap<>();
+  private final Map<String, Map<String, Boolean>> planSelections = new HashMap<>();
+
+  // Listeners
+  private final transient ItemListener structureChangeListener;
+  private final transient ItemListener planChangeListener;
 
   public RtDisplayTool() {
     super(BUTTON_NAME, Insertable.Type.TOOL, 30);
-    this.setLayout(new BorderLayout(0, 0));
-    this.rootPane = new JScrollPane();
     this.dockable.setTitleIcon(ResourceUtil.getIcon(OtherIcon.RADIOACTIVE));
     this.setDockableWidth(350);
     rootPane.setBorder(BorderFactory.createEmptyBorder()); // remove default line
-    this.btnLoad.setToolTipText(Messages.getString("populate.rt.objects"));
-    // By default, recalculate DVH only when it is missing for structure
-    this.cbDvhRecalculate.setSelected(false);
-    this.cbDvhRecalculate.setToolTipText(Messages.getString("when.enabled.recalculate"));
-    this.lblRtStructureSet.setVisible(false);
-    this.comboRtStructureSet.setVisible(false);
-    this.lblRtPlan.setVisible(false);
-    this.comboRtPlan.setVisible(false);
-    this.lblRtPlanName.setVisible(false);
-    this.lblRtPlanDose.setVisible(false);
-    this.txtRtPlanDoseValue.setVisible(false);
-    this.lblRtPlanDoseUnit.setVisible(false);
-    // this.btnShowDvh.setVisible(false);
-    this.slider = PropertiesDialog.createOpacitySlider(GRAPHIC_OPACITY);
-    slider.setValue(80);
-    PropertiesDialog.updateSlider(slider, GRAPHIC_OPACITY);
-    slider.addChangeListener(
-        l -> {
-          updateSlider();
-        });
 
+    // Initialize trees
     this.treeStructures = new StructRegionTree(this);
-    treeStructures.setToolTipText(StringUtil.EMPTY_STRING);
-    treeStructures.setCellRenderer(TreeBuilder.buildNoIconCheckboxTreeCellRenderer());
-
     this.treeIsodoses = new SegRegionTree(this);
-    treeIsodoses.setToolTipText(StringUtil.EMPTY_STRING);
-    treeIsodoses.setCellRenderer(TreeBuilder.buildNoIconCheckboxTreeCellRenderer());
-
     this.nodeStructures = new GroupTreeNode(Messages.getString("structures"), true);
     this.nodeIsodoses = new GroupTreeNode(Messages.getString("isodoses"), true);
 
-    progressBar.setStringPainted(true);
-    initData();
-    initListeners();
-  }
-
-  private void initListeners() {
-    treeStructures.initListeners();
-    treeIsodoses.initListeners();
-  }
-
-  private void loadData() {
-    final RtSet rt = this.rtSet;
-    if (rt.getPatientImage() == null) {
-      return;
-    }
-    SwingWorker<Boolean, Boolean> loadTask =
-        new SwingWorker<>() {
-
-          @Override
-          protected Boolean doInBackground() {
-            // Reload RT case data objects for GUI
-            rt.reloadRtCase(cbDvhRecalculate.isSelected());
-            return true;
+    // Initialize listeners after trees are created
+    this.structureChangeListener =
+        e -> {
+          if (e.getStateChange() == ItemEvent.DESELECTED
+              && e.getItem() instanceof StructureSet oldStructure) {
+            saveTreeSelection(
+                treeStructures, getSopInstanceUid(oldStructure), structureSetSelections);
+          } else if (e.getStateChange() == ItemEvent.SELECTED
+              && e.getItem() instanceof StructureSet newStructure) {
+            updateTree(newStructure, null);
+          }
+        };
+    this.planChangeListener =
+        e -> {
+          if (e.getStateChange() == ItemEvent.DESELECTED && e.getItem() instanceof Plan oldPlan) {
+            saveTreeSelection(treeIsodoses, getSopInstanceUid(oldPlan), planSelections);
+          } else if (e.getStateChange() == ItemEvent.SELECTED
+              && e.getItem() instanceof Plan newPlan) {
+            updateTree(null, newPlan);
           }
         };
 
-    loadTask.addPropertyChangeListener(
-        evt -> {
-          if ("progress".equals(evt.getPropertyName())) {
-            int progress = (Integer) evt.getNewValue();
-            progressBar.setValue(progress);
+    // Initialize slider
+    this.slider = PropertiesDialog.createOpacitySlider(GRAPHIC_OPACITY);
+    slider.setValue(80);
+    slider.addChangeListener(l -> updateSlider());
 
-          } else if ("state".equals(evt.getPropertyName())) {
-            if (StateValue.STARTED == evt.getNewValue()) {
-              btnLoad.setEnabled(false);
-              progressBar.setVisible(true);
-              progressBar.setIndeterminate(true);
-
-            } else if (StateValue.DONE == evt.getNewValue()) {
-              progressBar.setIndeterminate(false);
-              progressBar.setVisible(false);
-              btnLoad.setEnabled(false);
-              btnLoad.setToolTipText(Messages.getString("rt.objects.from.loaded"));
-              cbDvhRecalculate.setEnabled(false);
-              cbDvhRecalculate.setToolTipText(Messages.getString("dvh.calculation"));
-              lblRtStructureSet.setVisible(true);
-              comboRtStructureSet.setVisible(true);
-              lblRtPlan.setVisible(true);
-              comboRtPlan.setVisible(true);
-              lblRtPlanName.setVisible(true);
-              lblRtPlanDose.setVisible(true);
-              txtRtPlanDoseValue.setVisible(true);
-              lblRtPlanDoseUnit.setVisible(true);
-              treeStructures.setVisible(true);
-              treeIsodoses.setVisible(true);
-              // btnShowDvh.setVisible(true);
-
-              initSlider();
-
-              // Update GUI
-              ImageViewerPlugin<DicomImageElement> container =
-                  EventManager.getInstance().getSelectedView2dContainer();
-              List<ViewCanvas<DicomImageElement>> views = null;
-              if (container != null) {
-                views = container.getImagePanels();
-              }
-              if (views != null) {
-                for (ViewCanvas<DicomImageElement> v : views) {
-                  updateCanvas(v);
-                }
-              }
-            }
-          }
-        });
-
-    new Thread(loadTask).start();
+    initializeUI();
+    initializeListeners();
   }
 
-  private boolean isDoseSelected() {
-    return tabbedPane.getSelectedIndex() == 1;
-  }
+  private void initializeUI() {
+    setLayout(new BorderLayout());
 
-  private DicomImageElement getImageElement(ViewCanvas<DicomImageElement> view) {
-    if (view != null && view.getImage() instanceof DicomImageElement imageElement) {
-      return imageElement;
-    }
-    return null;
-  }
+    // Header panel
+    JPanel headerPanel = createHeaderPanel();
+    add(headerPanel, BorderLayout.NORTH);
 
-  private DicomSeries getSeries(ViewCanvas<DicomImageElement> view) {
-    if (view != null && view.getSeries() instanceof DicomSeries series) {
-      return series;
-    }
-    return null;
-  }
-
-  private SegContour getContour(DicomImageElement imageElement, RegionAttributes attributes) {
-    PlanarImage img = imageElement.getImage();
-    if (img != null) {
-      SpecialElementRegion region = getSelectedRegion();
-      if (region != null) {
-        Set<LazyContourLoader> loaders = region.getContours(imageElement);
-        if (loaders == null || loaders.isEmpty()) {
-          return null;
-        }
-        for (LazyContourLoader loader : loaders) {
-          Collection<SegContour> segments = loader.getLazyContours();
-          for (SegContour c : segments) {
-            if (c.getAttributes().equals(attributes)) {
-              return c;
-            }
-          }
-        }
-      }
-    }
-    return null;
-  }
-
-  public void show(SegRegion<?> region) {
-    ViewCanvas<DicomImageElement> view = EventManager.getInstance().getSelectedViewPane();
-    DicomSeries series = (DicomSeries) view.getSeries();
-    if (series != null) {
-      long max = Long.MIN_VALUE;
-      DicomImageElement bestImage = null;
-      for (DicomImageElement dcm : series.getMedias(null, null)) {
-        SegContour c = getContour(dcm, region);
-        if (c != null) {
-          if (c.getNumberOfPixels() > max) {
-            max = c.getNumberOfPixels();
-            bestImage = dcm;
-          }
-        }
-      }
-      if (bestImage != null) {
-        Optional<SliderCineListener> action =
-            EventManager.getInstance().getAction(ActionW.SCROLL_SERIES);
-        if (action.isPresent()) {
-          Filter<DicomImageElement> filter =
-              (Filter<DicomImageElement>) view.getActionValue(ActionW.FILTERED_SERIES.cmd());
-          int imgIndex = series.getImageIndex(bestImage, filter, view.getCurrentSortComparator());
-          action.get().setSliderValue(imgIndex + 1);
-        }
-      }
-    }
-  }
-
-  public void computeStatistics(SegRegion<?> region) {
-    ViewCanvas<DicomImageElement> view = EventManager.getInstance().getSelectedViewPane();
-    DicomImageElement imageElement = getImageElement(view);
-    if (imageElement != null) {
-      SegContour c = getContour(imageElement, region);
-      if (c != null) {
-        MeasurableLayer layer = view.getMeasurableLayer();
-        if (region instanceof IsoDoseRegion) {
-          treeIsodoses.showStatistics(c, layer);
-        } else {
-          treeStructures.showStatistics(c, layer);
-        }
-      }
-    }
-  }
-
-  public void initData() {
-    JPanel panelHead = new JPanel();
-    add(panelHead, BorderLayout.NORTH);
-    panelHead.setLayout(new BoxLayout(panelHead, BoxLayout.Y_AXIS));
-    this.btnLoad.setToolTipText(Messages.getString("populate.rt.objects"));
-    this.comboRtStructureSet.setVisible(false);
-    this.comboRtPlan.setVisible(false);
-
-    // RT data load panel
-    JPanel panelLoad = new JPanel();
-    panelHead.add(panelLoad);
-    FlowLayout flPanelLoad = (FlowLayout) panelLoad.getLayout();
-    flPanelLoad.setAlignment(FlowLayout.LEFT);
-    panelLoad.add(this.btnLoad);
-    panelLoad.add(progressBar);
-    progressBar.setVisible(false);
-
-    // RTStruct panel
-    JPanel panelStruct = new JPanel();
-    FlowLayout flStruct = (FlowLayout) panelStruct.getLayout();
-    flStruct.setAlignment(FlowLayout.LEFT);
-    panelHead.add(panelStruct);
-    panelStruct.add(this.lblRtStructureSet);
-    panelStruct.add(this.comboRtStructureSet);
-
-    // RTPlan panel
-    JPanel panelPlan = new JPanel();
-    FlowLayout flPlan = (FlowLayout) panelPlan.getLayout();
-    flPlan.setAlignment(FlowLayout.LEFT);
-    panelHead.add(panelPlan);
-    panelPlan.add(this.lblRtPlan);
-    // TODO: multi-select data table (with check box selection) -> with info about each plan dose
-    panelPlan.add(this.comboRtPlan);
-    panelPlan.add(this.lblRtPlanName);
-
-    // RTDose panel
-    JPanel panelDose = new JPanel();
-    FlowLayout flDose = (FlowLayout) panelDose.getLayout();
-    flDose.setAlignment(FlowLayout.LEFT);
-    panelHead.add(panelDose);
-    panelDose.add(this.lblRtPlanDose);
-    panelDose.add(this.txtRtPlanDoseValue);
-    panelDose.add(this.lblRtPlanDoseUnit);
-
-    // DVH panel
-    JPanel panelDvh = new JPanel();
-    FlowLayout flDvh = (FlowLayout) panelDvh.getLayout();
-    flDvh.setAlignment(FlowLayout.LEFT);
-    panelHead.add(panelDvh);
-    // By default, recalculate DVH only when it is missing for structure
-    panelDvh.add(cbDvhRecalculate);
-    this.cbDvhRecalculate.setSelected(false);
-    this.cbDvhRecalculate.setToolTipText(Messages.getString("when.enabled.recalculate"));
-
-    JButton btnShowDvh = new JButton(Messages.getString("display.dvh.chart"));
-    btnShowDvh.addActionListener(e -> showDvhChart());
-    panelDvh.add(btnShowDvh);
-
-    this.btnLoad.addActionListener(e -> loadData());
-
+    // Tabbed pane for trees
     add(tabbedPane, BorderLayout.CENTER);
 
-    MigLayout layout2 = new MigLayout("fillx, ins 5lp", "[fill]", "[]10lp[]"); // NON-NLS
-    JPanel panelBottom = new JPanel(layout2);
-    panelBottom.add(slider);
-    add(panelBottom, BorderLayout.SOUTH);
+    // Bottom panel with slider
+    JPanel bottomPanel = new JPanel(new MigLayout("fillx, ins 5lp", "[fill]", "[]10lp[]"));
+    bottomPanel.add(slider);
+    add(bottomPanel, BorderLayout.SOUTH);
 
-    initStructureTree();
-    initIsodosesTree();
-
-    initSlider();
-    tabbedPane.addChangeListener(e -> initSlider());
+    initializeTrees();
+    setInitialVisibility(false);
   }
 
-  private void showDvhChart() {
-    RtSet rt = rtSet;
-    if (rt != null) {
-      List<StructRegion> structs = getCheckedPathsOnlyIfAllParentsChecked();
-      if (!structs.isEmpty()) {
-        XYChart dvhChart =
-            new XYChartBuilder()
-                .width(800)
-                .height(500)
-                .title("DVH")
-                .xAxisTitle(Messages.getString("dose.cgy"))
-                .yAxisTitle(Messages.getString("volume") + " (%)")
-                .build();
-        dvhChart.getStyler().setDefaultSeriesRenderStyle(XYSeries.XYSeriesRenderStyle.Line);
-        for (StructRegion region : structs) {
-          Dvh structureDvh = region.getDvh();
-          structureDvh.appendChart(region, dvhChart);
-        }
+  private JPanel createHeaderPanel() {
+    JPanel headerPanel = new JPanel();
+    headerPanel.setLayout(new BoxLayout(headerPanel, BoxLayout.Y_AXIS));
 
-        JDialog d = new JDialog(WinUtil.getParentWindow(this), Messages.getString("dvh.chart"));
-        XChartPanel<XYChart> chartPanel = new XChartPanel<>(dvhChart);
-        d.getContentPane().add(chartPanel, BorderLayout.CENTER);
-        d.pack();
-        GuiUtils.showCenterScreen(d);
-      }
-    }
+    // Load panel
+    btnLoad.setToolTipText(Messages.getString("populate.rt.objects"));
+    JPanel loadPanel = createFlowPanel(FlowLayout.LEFT);
+    loadPanel.add(btnLoad);
+    loadPanel.add(progressBar);
+    progressBar.setVisible(false);
+    headerPanel.add(loadPanel);
+
+    // Structure set panel
+    JPanel structPanel = createFlowPanel(FlowLayout.LEFT);
+    structPanel.add(new JLabel(Messages.getString("structure.set") + StringUtil.COLON));
+    structPanel.add(comboRtStructureSet);
+    headerPanel.add(structPanel);
+
+    // Plan panel
+    JPanel planPanel = createFlowPanel(FlowLayout.LEFT);
+    planPanel.add(new JLabel(Messages.getString("plan") + StringUtil.COLON));
+    planPanel.add(comboRtPlan);
+    planPanel.add(lblRtPlanName);
+    headerPanel.add(planPanel);
+
+    // Dose panel
+    JPanel dosePanel = createFlowPanel(FlowLayout.LEFT);
+    dosePanel.add(new JLabel(Messages.getString("dose") + StringUtil.COLON));
+    dosePanel.add(txtRtPlanDoseValue);
+    dosePanel.add(new JLabel("cGy"));
+    headerPanel.add(dosePanel);
+
+    // DVH panel
+    JPanel dvhPanel = createFlowPanel(FlowLayout.LEFT);
+    cbDvhRecalculate.setToolTipText(Messages.getString("when.enabled.recalculate"));
+    dvhPanel.add(cbDvhRecalculate);
+    JButton btnShowDvh = new JButton(Messages.getString("display.dvh.chart"));
+    btnShowDvh.addActionListener(e -> showDvhChart());
+    dvhPanel.add(btnShowDvh);
+    headerPanel.add(dvhPanel);
+
+    return headerPanel;
   }
 
-  private void initSlider() {
-    RtSet rt = rtSet;
-    if (rt != null) {
-      float opacity = 1.0f;
-      SpecialElementRegion region = getSelectedRegion();
-      if (region != null) {
-        opacity = region.getOpacity();
-      }
-      slider.setValue((int) (opacity * 100));
-      PropertiesDialog.updateSlider(slider, GRAPHIC_OPACITY);
-    }
+  private JPanel createFlowPanel(int alignment) {
+    JPanel panel = new JPanel(new FlowLayout(alignment));
+    return panel;
   }
 
-  private SpecialElementRegion getSelectedRegion() {
-    SpecialElementRegion region = null;
-    if (isDoseSelected()) {
-      Plan plan = (Plan) comboRtPlan.getSelectedItem();
-      if (plan != null) {
-        Dose dose = plan.getFirstDose();
-        if (dose != null) {
-          region = dose;
-        }
-      }
-    } else {
-      StructureSet structureSet = (StructureSet) comboRtStructureSet.getSelectedItem();
-      if (structureSet != null) {
-        region = structureSet;
-      }
-    }
-    return region;
+  private void initializeListeners() {
+    btnLoad.addActionListener(e -> loadData());
+    treeStructures.initListeners();
+    treeIsodoses.initListeners();
+
+    comboRtStructureSet.addItemListener(structureChangeListener);
+    comboRtPlan.addItemListener(planChangeListener);
+    tabbedPane.addChangeListener(_ -> initSlider());
   }
 
-  public void initStructureTree() {
-    this.treeStructures.getCheckingModel().setCheckingMode(TreeCheckingModel.CheckingMode.SIMPLE);
-    this.treeStructures.setVisible(false);
-    buildTreeModel(rootNodeStructures, treeStructures, nodeStructures);
+  private void initializeTrees() {
+    setupTree(treeStructures, rootNodeStructures, nodeStructures);
+    setupTree(treeIsodoses, rootNodeIsodoses, nodeIsodoses);
   }
 
-  public void initIsodosesTree() {
-    this.treeIsodoses.getCheckingModel().setCheckingMode(TreeCheckingModel.CheckingMode.SIMPLE);
-    this.treeIsodoses.setVisible(false);
-    buildTreeModel(rootNodeIsodoses, treeIsodoses, nodeIsodoses);
-  }
+  private void setupTree(
+      SegRegionTree tree, DefaultMutableTreeNode rootNode, GroupTreeNode groupNode) {
+    tree.getCheckingModel().setCheckingMode(TreeCheckingModel.CheckingMode.SIMPLE);
+    tree.setVisible(false);
+    tree.setToolTipText(StringUtil.EMPTY_STRING);
+    tree.setCellRenderer(TreeBuilder.buildNoIconCheckboxTreeCellRenderer());
+    tree.addTreeCheckingListener(this::treeValueChanged);
 
-  private void buildTreeModel(
-      DefaultMutableTreeNode rootNode, SegRegionTree tree, GroupTreeNode groupTreeNode) {
     DefaultTreeModel model = new DefaultTreeModel(rootNode, false);
     tree.setModel(model);
+    rootNode.add(groupNode);
 
-    rootNode.add(groupTreeNode);
     TreePath rootPath = new TreePath(rootNode.getPath());
     tree.addCheckingPath(rootPath);
     tree.setShowsRootHandles(true);
     tree.setRootVisible(false);
     tree.setExpandsSelectedPaths(true);
-    tree.setCellRenderer(TreeBuilder.buildNoIconCheckboxTreeCellRenderer());
-    tree.addTreeCheckingListener(this::treeValueChanged);
+
+    if (tree == treeStructures) {
+      // Structures tree: default checked = true
+      tree.setPathSelection(new TreePath(groupNode.getPath()), true);
+    } else if (tree == treeIsodoses) {
+      // Isodoses tree: default checked = false
+      tree.setPathSelection(new TreePath(groupNode.getPath()), false);
+      tree.getCheckingModel().removeCheckingPath(new TreePath(groupNode.getPath()));
+    }
 
     TreeBuilder.expandTree(tree, rootNode, 2);
     Dimension minimumSize = GuiUtils.getDimension(150, 150);
     JScrollPane scrollPane = new JScrollPane(tree);
     scrollPane.setMinimumSize(minimumSize);
     scrollPane.setPreferredSize(minimumSize);
-    tabbedPane.add(scrollPane, groupTreeNode.toString());
+    tabbedPane.add(scrollPane, groupNode.toString());
   }
 
-  private void updateSlider() {
-    float value = PropertiesDialog.updateSlider(slider, GRAPHIC_OPACITY);
-    RtSet rt = rtSet;
-    if (rt != null) {
-      SpecialElementRegion region = getSelectedRegion();
-      if (region != null) {
-        region.setOpacity(value);
+  private void setInitialVisibility(boolean visible) {
+    comboRtStructureSet.setVisible(visible);
+    comboRtPlan.setVisible(visible);
+    lblRtPlanName.setVisible(visible);
+    txtRtPlanDoseValue.setVisible(visible);
+    treeStructures.setVisible(visible);
+    treeIsodoses.setVisible(visible);
+  }
+
+  private void saveTreeSelection(
+      SegRegionTree tree, String key, Map<String, Map<String, Boolean>> selectionMap) {
+    if (key == null || tree == null) return;
+
+    Map<String, Boolean> nodeSelections = new HashMap<>();
+
+    // Save root node selection
+    GroupTreeNode rootNode = (tree == treeStructures) ? nodeStructures : nodeIsodoses;
+    TreePath rootPath = new TreePath(rootNode.getPath());
+    boolean isRootChecked = tree.getCheckingModel().isPathChecked(rootPath);
+    nodeSelections.put("ROOT", isRootChecked);
+
+    // Save all GroupTreeNode selections
+    saveGroupNodeSelections(tree, rootNode, nodeSelections);
+
+    selectionMap.put(key, nodeSelections);
+  }
+
+  private void saveGroupNodeSelections(
+      SegRegionTree tree, DefaultMutableTreeNode parentNode, Map<String, Boolean> nodeSelections) {
+    for (int i = 0; i < parentNode.getChildCount(); i++) {
+      DefaultMutableTreeNode childNode = (DefaultMutableTreeNode) parentNode.getChildAt(i);
+
+      if (childNode instanceof GroupTreeNode groupNode) {
+        TreePath groupPath = new TreePath(groupNode.getPath());
+        boolean isGroupChecked = tree.getCheckingModel().isPathChecked(groupPath);
+
+        // Use group node's toString() as unique key
+        String groupKey = "GROUP_" + groupNode.toString();
+        nodeSelections.put(groupKey, isGroupChecked);
+
+        // Recursively save nested group nodes if any
+        saveGroupNodeSelections(tree, groupNode, nodeSelections);
       }
-      updateVisibleNode();
     }
   }
 
-  private void treeValueChanged(TreeCheckingEvent e) {
-    if (!initPathSelection) {
-      updateVisibleNode();
+  private String getSopInstanceUid(RtSpecialElement specialElement) {
+    if (specialElement == null) return null;
+    return TagD.getTagValue(specialElement, Tag.SOPInstanceUID, String.class);
+  }
+
+  private void restoreTreeSelection(
+      SegRegionTree tree, String key, Map<String, Map<String, Boolean>> selectionMap) {
+    if (key == null || tree == null) return;
+
+    Map<String, Boolean> savedSelections = selectionMap.get(key);
+    if (savedSelections != null && !savedSelections.isEmpty()) {
+      // Restore saved selections
+      restoreSavedSelections(tree, savedSelections);
+    } else {
+      // Apply default selection
+      applyDefaultTreeSelection(tree);
     }
   }
 
-  public List<StructRegion> getCheckedPathsOnlyIfAllParentsChecked() {
-    ArrayList<StructRegion> list = new ArrayList<>();
+  private void restoreSavedSelections(SegRegionTree tree, Map<String, Boolean> savedSelections) {
+    initPathSelection = true;
+    try {
+      // Restore root node selection
+      GroupTreeNode rootNode = (tree == treeStructures) ? nodeStructures : nodeIsodoses;
+      TreePath rootPath = new TreePath(rootNode.getPath());
+      Boolean rootSelection = savedSelections.get("ROOT");
+      if (rootSelection != null) {
+        tree.setPathSelection(rootPath, rootSelection);
+      }
+
+      // Restore GroupTreeNode selections
+      restoreGroupNodeSelections(tree, rootNode, savedSelections);
+
+    } finally {
+      initPathSelection = false;
+    }
+  }
+
+  private void restoreGroupNodeSelections(
+      SegRegionTree tree, DefaultMutableTreeNode parentNode, Map<String, Boolean> savedSelections) {
+    for (int i = 0; i < parentNode.getChildCount(); i++) {
+      DefaultMutableTreeNode childNode = (DefaultMutableTreeNode) parentNode.getChildAt(i);
+
+      if (childNode instanceof GroupTreeNode groupNode) {
+        String groupKey = "GROUP_" + groupNode.toString();
+        Boolean groupSelection = savedSelections.get(groupKey);
+
+        if (groupSelection != null) {
+          TreePath groupPath = new TreePath(groupNode.getPath());
+          tree.setPathSelection(groupPath, groupSelection);
+        }
+
+        // Recursively restore nested group nodes if any
+        restoreGroupNodeSelections(tree, groupNode, savedSelections);
+      }
+    }
+  }
+
+  private void applyDefaultTreeSelection(SegRegionTree tree) {
+    initPathSelection = true;
+    try {
+      GroupTreeNode rootNode = (tree == treeStructures) ? nodeStructures : nodeIsodoses;
+      TreePath rootPath = new TreePath(rootNode.getPath());
+
+      if (tree == treeStructures) {
+        // Default: structures tree root node checked (true)
+        tree.setPathSelection(rootPath, true);
+        setAllGroupNodesSelection(tree, rootNode, true);
+      } else if (tree == treeIsodoses) {
+        // Default: isodoses tree root node unchecked (false)
+        tree.setPathSelection(rootPath, false);
+        setAllGroupNodesSelection(tree, rootNode, true);
+      }
+    } finally {
+      initPathSelection = false;
+    }
+  }
+
+  private void setAllGroupNodesSelection(
+      SegRegionTree tree, DefaultMutableTreeNode parentNode, boolean selected) {
+    for (int i = 0; i < parentNode.getChildCount(); i++) {
+      DefaultMutableTreeNode childNode = (DefaultMutableTreeNode) parentNode.getChildAt(i);
+
+      if (childNode instanceof GroupTreeNode groupNode) {
+        TreePath groupPath = new TreePath(groupNode.getPath());
+        tree.setPathSelection(groupPath, selected);
+
+        // Recursively apply to nested group nodes
+        setAllGroupNodesSelection(tree, groupNode, selected);
+      }
+    }
+  }
+
+  private void loadData() {
+    if (rtSet == null || rtSet.getPatientImage() == null) return;
+
+    SwingWorker<Boolean, Void> loadTask =
+        new SwingWorker<>() {
+          @Override
+          protected Boolean doInBackground() throws Exception {
+            rtSet.reloadRtCase(cbDvhRecalculate.isSelected());
+            return true;
+          }
+        };
+
+    loadTask.addPropertyChangeListener(
+        evt -> {
+          String propertyName = evt.getPropertyName();
+          if ("state".equals(propertyName)) {
+            handleLoadTaskStateChange((StateValue) evt.getNewValue());
+          }
+        });
+
+    new Thread(loadTask).start();
+  }
+
+  private void handleLoadTaskStateChange(StateValue state) {
+    if (StateValue.STARTED == state) {
+      btnLoad.setEnabled(false);
+      progressBar.setVisible(true);
+      progressBar.setIndeterminate(true);
+
+    } else if (StateValue.DONE == state) {
+      progressBar.setVisible(false);
+      btnLoad.setEnabled(false);
+      btnLoad.setToolTipText(Messages.getString("rt.objects.from.loaded"));
+      cbDvhRecalculate.setEnabled(false);
+      cbDvhRecalculate.setToolTipText(Messages.getString("dvh.calculation"));
+      setInitialVisibility(true);
+      initSlider();
+
+      // Update GUI
+      updateCanvas(EventManager.getInstance().getSelectedViewPane());
+      updateCurrentContainer();
+    }
+  }
+
+  private void showDvhChart() {
+    if (rtSet == null) return;
+
+    List<StructRegion> structs = getCheckedStructRegions();
+    if (structs.isEmpty()) return;
+
+    XYChart chart =
+        new XYChartBuilder()
+            .width(800)
+            .height(500)
+            .title("DVH")
+            .xAxisTitle(Messages.getString("dose.cgy"))
+            .yAxisTitle(Messages.getString("volume") + " (%)")
+            .build();
+
+    chart.getStyler().setDefaultSeriesRenderStyle(XYSeries.XYSeriesRenderStyle.Line);
+
+    for (StructRegion region : structs) {
+      Dvh dvh = region.getDvh();
+      if (dvh != null) {
+        dvh.appendChart(region, chart);
+      }
+    }
+
+    showChartDialog(chart);
+  }
+
+  private void showChartDialog(XYChart chart) {
+    JDialog dialog = new JDialog(WinUtil.getParentWindow(this), Messages.getString("dvh.chart"));
+    XChartPanel<XYChart> chartPanel = new XChartPanel<>(chart);
+    dialog.getContentPane().add(chartPanel, BorderLayout.CENTER);
+    dialog.pack();
+    GuiUtils.showCenterScreen(dialog);
+  }
+
+  private List<StructRegion> getCheckedStructRegions() {
+    List<StructRegion> list = new ArrayList<>();
     for (TreePath path : treeStructures.getCheckingModel().getCheckingPaths()) {
       if (treeStructures.hasAllParentsChecked(path)) {
         DefaultMutableTreeNode node = (DefaultMutableTreeNode) path.getLastPathComponent();
@@ -515,94 +503,167 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener, S
     return list;
   }
 
+  private void initSlider() {
+    if (rtSet != null) {
+      SpecialElementRegion region = getSelectedRegion();
+      float opacity = region != null ? region.getOpacity() : 1.0f;
+      slider.setValue((int) (opacity * 100));
+      PropertiesDialog.updateSlider(slider, GRAPHIC_OPACITY);
+    }
+  }
+
+  private void updateSlider() {
+    float value = PropertiesDialog.updateSlider(slider, GRAPHIC_OPACITY);
+    if (rtSet != null) {
+      SpecialElementRegion region = getSelectedRegion();
+      if (region != null) {
+        region.setOpacity(value);
+        updateVisibleNode();
+      }
+    }
+  }
+
+  private SpecialElementRegion getSelectedRegion() {
+    boolean isDoseSelected = tabbedPane.getSelectedIndex() == 1;
+
+    if (isDoseSelected) {
+      Plan plan = (Plan) comboRtPlan.getSelectedItem();
+      return plan != null ? plan.getFirstDose() : null;
+    } else {
+      return (StructureSet) comboRtStructureSet.getSelectedItem();
+    }
+  }
+
+  private void treeValueChanged(TreeCheckingEvent e) {
+    if (!initPathSelection) {
+      updateVisibleNode();
+    }
+  }
+
   public void updateVisibleNode() {
     SpecialElementRegion region = getSelectedRegion();
     if (region instanceof StructureSet) {
-      boolean all =
-          treeStructures.getCheckingModel().isPathChecked(new TreePath(nodeStructures.getPath()));
-      region.setVisible(all);
-      nodeStructures.setSelected(all);
-      treeStructures.updateVisibleNode(rootNodeStructures, nodeStructures);
+      updateTreeVisibility(treeStructures, nodeStructures, region);
     } else if (region instanceof Dose) {
-      boolean all =
-          treeIsodoses.getCheckingModel().isPathChecked(new TreePath(nodeIsodoses.getPath()));
-      region.setVisible(all);
-      nodeIsodoses.setSelected(all);
-      treeIsodoses.updateVisibleNode(rootNodeIsodoses, nodeIsodoses);
+      updateTreeVisibility(treeIsodoses, nodeIsodoses, region);
     }
-
     updateCurrentContainer();
+  }
+
+  private void updateTreeVisibility(
+      SegRegionTree tree, GroupTreeNode node, SpecialElementRegion region) {
+    boolean isChecked = tree.getCheckingModel().isPathChecked(new TreePath(node.getPath()));
+    region.setVisible(isChecked);
+    node.setSelected(isChecked);
+    tree.updateVisibleNode(tree == treeStructures ? rootNodeStructures : rootNodeIsodoses, node);
   }
 
   public void updateCurrentContainer() {
     ImageViewerPlugin<DicomImageElement> container =
         EventManager.getInstance().getSelectedView2dContainer();
-    List<ViewCanvas<DicomImageElement>> views = null;
     if (container != null) {
-      views = container.getImagePanels();
-    }
-    if (views != null) {
-      for (ViewCanvas<DicomImageElement> v : views) {
-        if (v instanceof View2d view2d) {
-          view2d.updateSegmentation();
-          view2d.repaint();
-        }
+      List<ViewCanvas<DicomImageElement>> views = container.getImagePanels();
+      if (views != null) {
+        views.forEach(this::updateGraphics);
       }
     }
   }
 
+  private void updateGraphics(ViewCanvas<?> view) {
+    if (view instanceof View2d view2d) {
+      view2d.updateSegmentation();
+      view2d.repaint();
+    }
+  }
+
   public void updateCanvas(ViewCanvas<?> viewCanvas) {
-    RtSet rt = rtSet;
-    if (rt == null || rt.getStructures().isEmpty()) {
-      initPathSelection = true;
-      nodeStructures.removeAllChildren();
-      nodeIsodoses.removeAllChildren();
-
-      treeStructures.setModel(new DefaultTreeModel(rootNodeStructures, false));
-      treeIsodoses.setModel(new DefaultTreeModel(rootNodeIsodoses, false));
-
-      comboRtStructureSet.removeAllItems();
-      comboRtPlan.removeAllItems();
-      initPathSelection = false;
+    if (rtSet == null || rtSet.getStructures().isEmpty()) {
+      clearTrees();
       return;
     }
 
-    comboRtStructureSet.removeItemListener(structureChangeListener);
-    comboRtPlan.removeItemListener(planChangeListener);
+    updateComboBoxes();
+    updateGraphics(viewCanvas);
+  }
 
-    StructureSet oldStructure = (StructureSet) comboRtStructureSet.getSelectedItem();
-    Plan oldPlan = (Plan) comboRtPlan.getSelectedItem();
+  private void clearSelectionMemory() {
+    structureSetSelections.clear();
+    planSelections.clear();
+  }
+
+  private void clearTrees() {
+    // Save current selections before clearing
+    StructureSet currentStructure = (StructureSet) comboRtStructureSet.getSelectedItem();
+    Plan currentPlan = (Plan) comboRtPlan.getSelectedItem();
+
+    if (currentStructure != null) {
+      saveTreeSelection(
+          treeStructures, getSopInstanceUid(currentStructure), structureSetSelections);
+    }
+
+    if (currentPlan != null) {
+      saveTreeSelection(treeIsodoses, getSopInstanceUid(currentPlan), planSelections);
+    }
+
+    initPathSelection = true;
+    nodeStructures.removeAllChildren();
+    nodeIsodoses.removeAllChildren();
+
+    treeStructures.setModel(new DefaultTreeModel(rootNodeStructures, false));
+    treeIsodoses.setModel(new DefaultTreeModel(rootNodeIsodoses, false));
 
     comboRtStructureSet.removeAllItems();
     comboRtPlan.removeAllItems();
 
-    Set<StructureSet> rtStructElements = rt.getStructures();
-    Set<Plan> rtPlanElements = rt.getPlans();
+    // Apply default selections to empty trees
+    applyDefaultTreeSelection(treeStructures);
+    applyDefaultTreeSelection(treeIsodoses);
 
-    rtStructElements.forEach(comboRtStructureSet::addItem);
-    rtPlanElements.forEach(comboRtPlan::addItem);
+    initPathSelection = false;
+  }
 
-    boolean update = !rtStructElements.contains(oldStructure);
-    boolean update1 = !rtPlanElements.contains(oldPlan);
+  private void updateComboBoxes() {
+    // Save current selections
+    StructureSet oldStructure = (StructureSet) comboRtStructureSet.getSelectedItem();
+    Plan oldPlan = (Plan) comboRtPlan.getSelectedItem();
 
+    // Update combo boxes
+    comboRtStructureSet.removeItemListener(structureChangeListener);
+    comboRtPlan.removeItemListener(planChangeListener);
+    comboRtStructureSet.removeAllItems();
+    comboRtPlan.removeAllItems();
+
+    rtSet.getStructures().forEach(comboRtStructureSet::addItem);
+    rtSet.getPlans().forEach(comboRtPlan::addItem);
+
+    // Restore or set default selections
+    selectDefaultItems(oldStructure, oldPlan);
+
+    comboRtStructureSet.addItemListener(structureChangeListener);
+    comboRtPlan.addItemListener(planChangeListener);
+  }
+
+  private void selectDefaultItems(StructureSet oldStructure, Plan oldPlan) {
     boolean updateTree = false;
-    if (update) {
-      RtSpecialElement selectedStructure = rt.getFirstStructure();
-      if (selectedStructure != null) {
+
+    if (rtSet.getStructures().contains(oldStructure)) {
+      comboRtStructureSet.setSelectedItem(oldStructure);
+    } else {
+      RtSpecialElement firstStructure = rtSet.getFirstStructure();
+      if (firstStructure != null) {
+        comboRtStructureSet.setSelectedItem(firstStructure);
         updateTree = true;
       }
-    } else {
-      comboRtStructureSet.setSelectedItem(oldStructure);
     }
 
-    if (update1 || !nodeIsodoses.children().hasMoreElements()) {
-      RtSpecialElement selectedPlan = rt.getFirstPlan();
-      if (selectedPlan != null) {
-        comboRtPlan.setSelectedItem(selectedPlan);
+    if (rtSet.getPlans().contains(oldPlan)) {
+      comboRtPlan.setSelectedItem(oldPlan);
+    } else {
+      RtSpecialElement firstPlan = rtSet.getFirstPlan();
+      if (firstPlan != null) {
+        comboRtPlan.setSelectedItem(firstPlan);
         updateTree = true;
       }
-    } else {
-      comboRtPlan.setSelectedItem(oldPlan);
     }
 
     if (updateTree) {
@@ -610,240 +671,339 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener, S
           (StructureSet) comboRtStructureSet.getSelectedItem(),
           (Plan) comboRtPlan.getSelectedItem());
     }
-
-    comboRtStructureSet.addItemListener(structureChangeListener);
-    comboRtPlan.addItemListener(planChangeListener);
-
-    // Update selected dose plane
-    // ImageElement dicom = viewCanvas.getImage();
-    // if (dicom instanceof DicomImageElement) {
-    // GeometryOfSlice geometry = ((DicomImageElement) dicom).getDispSliceGeometry();
-    //
-    // if (rt.getFirstDose() != null) {
-    // rt.getDoseValueForPixel(247, 263, geometry.getTLHC().getZ());
-    // }
-    // }
-
-    updateCurrentContainer();
   }
 
   public void updateTree(StructureSet selectedStructure, Plan selectedPlan) {
     initPathSelection = true;
-    // Empty tree when no RtSet
-    if (rtSet == null) {
-      nodeStructures.removeAllChildren();
-      nodeIsodoses.removeAllChildren();
-      treeStructures.setModel(new DefaultTreeModel(rootNodeStructures, false));
-      treeIsodoses.setModel(new DefaultTreeModel(rootNodeIsodoses, false));
-      initPathSelection = false;
-      return;
-    }
-
     try {
-      // Prepare root tree model
-      treeStructures.setModel(new DefaultTreeModel(rootNodeStructures, false));
-      treeIsodoses.setModel(new DefaultTreeModel(rootNodeIsodoses, false));
-
-      // Prepare parent node for structures
-      if (selectedStructure != null) {
-        nodeStructures.removeAllChildren();
-        Map<String, List<StructRegion>> map =
-            SegRegion.groupRegions(selectedStructure.getSegAttributes().values());
-        for (List<StructRegion> list : StructRegion.sort(map.values())) {
-          if (list.size() == 1) {
-            StructRegion region = list.getFirst();
-            DefaultMutableTreeNode node = buildStructRegionNode(region);
-            nodeStructures.add(node);
-            treeStructures.setPathSelection(new TreePath(node.getPath()), region.isSelected());
-          } else {
-            GroupTreeNode node = new GroupTreeNode(list.getFirst().getPrefix(), true);
-            nodeStructures.add(node);
-            for (StructRegion structRegion : list) {
-              DefaultMutableTreeNode childNode = buildStructRegionNode(structRegion);
-              node.add(childNode);
-              treeStructures.setPathSelection(
-                  new TreePath(childNode.getPath()), structRegion.isSelected());
-            }
-            treeStructures.addCheckingPath(new TreePath(node.getPath()));
-          }
-        }
-        treeStructures.setPathSelection(new TreePath(nodeStructures.getPath()), true);
+      // Empty tree when no RtSet
+      if (rtSet == null) {
+        clearTrees();
+        return;
       }
 
-      // Prepare parent node for isodoses
-      if (selectedPlan != null) {
-        nodeIsodoses.removeAllChildren();
-
-        lblRtPlanName.setText(selectedPlan.getName());
-        txtRtPlanDoseValue.setText(String.format("%.0f", selectedPlan.getRxDose())); // NON-NLS
-
-        Dose planDose = selectedPlan.getFirstDose();
-        if (planDose != null) {
-          Map<Integer, IsoDoseRegion> isodoses = planDose.getIsoDoseSet();
-          if (isodoses != null) {
-            for (IsoDoseRegion isoDoseLayer : isodoses.values()) {
-              DefaultMutableTreeNode node =
-                  new StructToolTipTreeNode(isoDoseLayer, false) {
-                    @Override
-                    public String getToolTipText() {
-                      IsoDoseRegion layer = (IsoDoseRegion) getUserObject();
-
-                      StringBuilder buf = new StringBuilder();
-                      buf.append(GuiUtils.HTML_START);
-                      buf.append("<b>");
-                      buf.append(layer.getLabel());
-                      buf.append("</b>");
-                      buf.append(GuiUtils.HTML_BR);
-                      buf.append(Messages.getString("level"));
-                      buf.append(StringUtil.COLON_AND_SPACE);
-                      buf.append(String.format("%d%%", layer.getLevel())); // NON-NLS
-                      buf.append(GuiUtils.HTML_BR);
-                      buf.append(Messages.getString("thickness"));
-                      buf.append(StringUtil.COLON_AND_SPACE);
-                      buf.append(DecFormatter.twoDecimal(layer.getThickness()));
-                      buf.append(GuiUtils.HTML_BR);
-
-                      buf.append(GuiUtils.HTML_END);
-
-                      return buf.toString();
-                    }
-                  };
-              this.nodeIsodoses.add(node);
-              treeIsodoses.addCheckingPath(new TreePath(node.getPath()));
-            }
-          }
-          treeIsodoses.removeCheckingPath(new TreePath(nodeIsodoses.getPath()));
-        }
-      }
-
-      // Expand
-      TreeBuilder.expandTree(treeStructures, rootNodeStructures, 2);
-      TreeBuilder.expandTree(treeIsodoses, rootNodeIsodoses, 2);
+      updateStructuresTree(selectedStructure);
+      updateIsodosesTree(selectedPlan);
+      expandTrees();
     } finally {
       initPathSelection = false;
     }
+  }
+
+  private void updateStructuresTree(StructureSet selectedStructure) {
+    treeStructures.setModel(new DefaultTreeModel(rootNodeStructures, false));
+
+    if (selectedStructure != null) {
+      nodeStructures.removeAllChildren();
+      Map<String, List<StructRegion>> regionMap =
+          SegRegion.groupRegions(selectedStructure.getSegAttributes().values());
+
+      for (List<StructRegion> regionList : StructRegion.sort(regionMap.values())) {
+        addRegionsToTree(regionList);
+      }
+
+      // Restore saved selection or apply default (checked = true)
+      String key = getSopInstanceUid(selectedStructure);
+      restoreTreeSelection(treeStructures, key, structureSetSelections);
+    }
+  }
+
+  private void addRegionsToTree(List<StructRegion> regionList) {
+    if (regionList.size() == 1) {
+      StructRegion region = regionList.getFirst();
+      DefaultMutableTreeNode node = buildStructRegionNode(region);
+      nodeStructures.add(node);
+      treeStructures.setPathSelection(new TreePath(node.getPath()), region.isSelected());
+    } else {
+      GroupTreeNode groupNode = new GroupTreeNode(regionList.getFirst().getPrefix(), true);
+      nodeStructures.add(groupNode);
+
+      for (StructRegion region : regionList) {
+        DefaultMutableTreeNode childNode = buildStructRegionNode(region);
+        groupNode.add(childNode);
+        treeStructures.setPathSelection(new TreePath(childNode.getPath()), region.isSelected());
+      }
+
+      treeStructures.addCheckingPath(new TreePath(groupNode.getPath()));
+    }
+  }
+
+  private void updateIsodosesTree(Plan selectedPlan) {
+    treeIsodoses.setModel(new DefaultTreeModel(rootNodeIsodoses, false));
+
+    if (selectedPlan != null) {
+      nodeIsodoses.removeAllChildren();
+      updatePlanInfo(selectedPlan);
+
+      Dose planDose = selectedPlan.getFirstDose();
+      if (planDose != null) {
+        addIsodosesToTree(planDose);
+      }
+
+      // Restore saved selection or apply default (checked = false)
+      String key = getSopInstanceUid(selectedPlan);
+      restoreTreeSelection(treeIsodoses, key, planSelections);
+    }
+  }
+
+  private void updatePlanInfo(Plan selectedPlan) {
+    lblRtPlanName.setText(
+        StringUtil.getTruncatedString(selectedPlan.getName(), 25, StringUtil.Suffix.THREE_PTS));
+    txtRtPlanDoseValue.setText(String.format("%.0f", selectedPlan.getRxDose()));
+  }
+
+  private void addIsodosesToTree(Dose planDose) {
+    Map<Integer, IsoDoseRegion> isodoses = planDose.getIsoDoseSet();
+    if (isodoses != null) {
+      for (IsoDoseRegion isoDoseRegion : isodoses.values()) {
+        DefaultMutableTreeNode node = createIsodoseNode(isoDoseRegion);
+        nodeIsodoses.add(node);
+        treeIsodoses.addCheckingPath(new TreePath(node.getPath()));
+      }
+    }
+    treeIsodoses.removeCheckingPath(new TreePath(nodeIsodoses.getPath()));
+  }
+
+  private DefaultMutableTreeNode createIsodoseNode(IsoDoseRegion isoDoseRegion) {
+    return new StructToolTipTreeNode(isoDoseRegion, false) {
+      @Override
+      public String getToolTipText() {
+        IsoDoseRegion layer = (IsoDoseRegion) getUserObject();
+        return buildIsodoseTooltip(layer);
+      }
+    };
+  }
+
+  private String buildIsodoseTooltip(IsoDoseRegion layer) {
+    StringBuilder buf = new StringBuilder();
+    buf.append(GuiUtils.HTML_START);
+    buf.append("<b>").append(layer.getLabel()).append("</b>");
+    buf.append(GuiUtils.HTML_BR);
+    buf.append(Messages.getString("level")).append(StringUtil.COLON_AND_SPACE);
+    buf.append(String.format("%d%%", layer.getLevel()));
+    buf.append(GuiUtils.HTML_BR);
+    buf.append(Messages.getString("thickness")).append(StringUtil.COLON_AND_SPACE);
+    buf.append(DecFormatter.twoDecimal(layer.getThickness()));
+    buf.append(GuiUtils.HTML_BR);
+
+    buf.append(GuiUtils.HTML_END);
+
+    return buf.toString();
+  }
+
+  private void expandTrees() {
+    // Expand
+    TreeBuilder.expandTree(treeStructures, rootNodeStructures, 2);
+    TreeBuilder.expandTree(treeIsodoses, rootNodeIsodoses, 2);
   }
 
   private DefaultMutableTreeNode buildStructRegionNode(StructRegion structRegion) {
     return new StructToolTipTreeNode(structRegion, false) {
       @Override
       public String getToolTipText() {
-        StructRegion region = (StructRegion) getUserObject();
-
-        double volume = region.getVolume();
-        Dvh structureDvh = region.getDvh();
-
-        StringBuilder buf = new StringBuilder();
-        buf.append(GuiUtils.HTML_START);
-        buf.append("<b>");
-        buf.append(region.getLabel());
-        buf.append("</b>");
-        buf.append(GuiUtils.HTML_BR);
-        if (StringUtil.hasText(region.getRoiObservationLabel())) {
-          buf.append(region.getRoiObservationLabel());
-          buf.append(GuiUtils.HTML_BR);
-        }
-        buf.append(Messages.getString("thickness"));
-        buf.append(StringUtil.COLON_AND_SPACE);
-        buf.append(
-            String.format("%s mm", DecFormatter.twoDecimal(region.getThickness()))); // NON-NLS
-        buf.append(GuiUtils.HTML_BR);
-        buf.append(Messages.getString("volume"));
-        buf.append(StringUtil.COLON_AND_SPACE);
-        buf.append(String.format("%s cm³", DecFormatter.fourDecimal(volume))); // NON-NLS
-        buf.append(GuiUtils.HTML_BR);
-
-        if (structureDvh != null) {
-          buf.append(structureDvh.getDvhSource().toString());
-          buf.append(" ");
-          buf.append(Messages.getString("min.dose"));
-          buf.append(StringUtil.COLON_AND_SPACE);
-          buf.append(
-              DecFormatter.percentTwoDecimal(
-                  Dose.calculateRelativeDose(
-                          structureDvh.getDvhMinimumDoseCGy(), structureDvh.getPlan().getRxDose())
-                      / 100.0));
-          buf.append(GuiUtils.HTML_BR);
-          buf.append(structureDvh.getDvhSource().toString());
-          buf.append(" ");
-          buf.append(Messages.getString("max.dose"));
-          buf.append(StringUtil.COLON_AND_SPACE);
-          buf.append(
-              DecFormatter.percentTwoDecimal(
-                  Dose.calculateRelativeDose(
-                          structureDvh.getDvhMaximumDoseCGy(), structureDvh.getPlan().getRxDose())
-                      / 100.0));
-          buf.append(GuiUtils.HTML_BR);
-          buf.append(structureDvh.getDvhSource().toString());
-          buf.append(" ");
-          buf.append(Messages.getString("mean.dose"));
-          buf.append(StringUtil.COLON_AND_SPACE);
-          buf.append(
-              DecFormatter.percentTwoDecimal(
-                  Dose.calculateRelativeDose(
-                          structureDvh.getDvhMeanDoseCGy(), structureDvh.getPlan().getRxDose())
-                      / 100.0));
-          buf.append(GuiUtils.HTML_BR);
-        }
-        buf.append(GuiUtils.HTML_END);
-
-        return buf.toString();
+        return buildStructRegionTooltip((StructRegion) getUserObject());
       }
 
       @Override
       public String toString() {
         StructRegion layer = (StructRegion) getUserObject();
-        String resultLabel = layer.getLabel();
-
+        String label = layer.getLabel();
         String type = layer.getRtRoiInterpretedType();
         if (StringUtil.hasText(type)) {
-          resultLabel += " [" + type + "]";
+          label += " [" + type + "]";
         }
-
-        return getColorBullet(layer.getColor(), resultLabel);
+        return getColorBullet(layer.getColor(), label);
       }
     };
   }
 
-  public void initTreeValues(ViewCanvas<?> viewCanvas) {
+  private String buildStructRegionTooltip(StructRegion region) {
+    StringBuilder buf = new StringBuilder();
+    buf.append(GuiUtils.HTML_START);
+    buf.append("<b>").append(region.getLabel()).append("</b>");
+    buf.append(GuiUtils.HTML_BR);
 
-    List<RtSpecialElement> list;
-    if (viewCanvas != null) {
-      MediaSeries<?> dcmSeries = viewCanvas.getSeries();
-      boolean compatible = RtDisplayTool.isCtLinkedRT(dcmSeries);
-      if (compatible && dcmSeries instanceof DicomSeries series) {
-        String seriesUID = TagD.getTagValue(dcmSeries, Tag.SeriesInstanceUID, String.class);
-        if (StringUtil.hasText(seriesUID)) {
-          list = getRTSpecialElements(seriesUID);
-          RtSet set = RtSet_Cache.get(seriesUID);
-          boolean reload = set == null || (!list.isEmpty() && !set.getRtElements().equals(list));
-          if (reload) {
-            set = new RtSet(series, list);
-            RtSet_Cache.put(seriesUID, set);
-          }
-          boolean empty = set.getStructures().isEmpty();
-          btnLoad.setEnabled(empty || reload);
-          this.rtSet = set;
-          updateCanvas(viewCanvas);
-          return;
-        }
+    if (StringUtil.hasText(region.getRoiObservationLabel())) {
+      buf.append(region.getRoiObservationLabel()).append(GuiUtils.HTML_BR);
+    }
+
+    buf.append(Messages.getString("thickness")).append(StringUtil.COLON_AND_SPACE);
+    buf.append(String.format("%s mm", DecFormatter.twoDecimal(region.getThickness())));
+    buf.append(GuiUtils.HTML_BR);
+
+    buf.append(Messages.getString("volume")).append(StringUtil.COLON_AND_SPACE);
+    buf.append(String.format("%s cm³", DecFormatter.fourDecimal(region.getVolume())));
+    buf.append(GuiUtils.HTML_BR);
+
+    Dvh dvh = region.getDvh();
+    if (dvh != null) {
+      appendDvhInfo(buf, dvh);
+    }
+
+    buf.append(GuiUtils.HTML_END);
+    return buf.toString();
+  }
+
+  private void appendDvhInfo(StringBuilder buf, Dvh dvh) {
+    String source = dvh.getDvhSource().toString();
+    double rxDose = dvh.getPlan().getRxDose();
+
+    buf.append(source).append(" ").append(Messages.getString("min.dose"));
+    buf.append(StringUtil.COLON_AND_SPACE);
+    buf.append(
+        DecFormatter.percentTwoDecimal(
+            Dose.calculateRelativeDose(dvh.getDvhMinimumDoseCGy(), rxDose) / 100.0));
+    buf.append(GuiUtils.HTML_BR);
+
+    buf.append(source).append(" ").append(Messages.getString("max.dose"));
+    buf.append(StringUtil.COLON_AND_SPACE);
+    buf.append(
+        DecFormatter.percentTwoDecimal(
+            Dose.calculateRelativeDose(dvh.getDvhMaximumDoseCGy(), rxDose) / 100.0));
+    buf.append(GuiUtils.HTML_BR);
+
+    buf.append(source).append(" ").append(Messages.getString("mean.dose"));
+    buf.append(StringUtil.COLON_AND_SPACE);
+    buf.append(
+        DecFormatter.percentTwoDecimal(
+            Dose.calculateRelativeDose(dvh.getDvhMeanDoseCGy(), rxDose) / 100.0));
+    buf.append(GuiUtils.HTML_BR);
+  }
+
+  // Simplified utility methods for SegRegionTool interface
+  public void show(SegRegion<?> region) {
+    ViewCanvas<DicomImageElement> view = EventManager.getInstance().getSelectedViewPane();
+    if (view == null || !(view.getSeries() instanceof DicomSeries series)) return;
+
+    DicomImageElement bestImage = findBestImageForRegion(series, region);
+    if (bestImage != null) {
+      navigateToImage(view, series, bestImage);
+    }
+  }
+
+  private DicomImageElement findBestImageForRegion(DicomSeries series, SegRegion<?> region) {
+    long maxPixels = Long.MIN_VALUE;
+    DicomImageElement bestImage = null;
+
+    for (DicomImageElement dcm : series.getMedias(null, null)) {
+      SegContour contour = getContour(dcm, region);
+      if (contour != null && contour.getNumberOfPixels() > maxPixels) {
+        maxPixels = contour.getNumberOfPixels();
+        bestImage = dcm;
       }
     }
-    this.rtSet = null;
+    return bestImage;
+  }
+
+  private void navigateToImage(
+      ViewCanvas<DicomImageElement> view, DicomSeries series, DicomImageElement image) {
+    Optional<SliderCineListener> action =
+        EventManager.getInstance().getAction(ActionW.SCROLL_SERIES);
+    if (action.isPresent()) {
+      Filter<DicomImageElement> filter =
+          (Filter<DicomImageElement>) view.getActionValue(ActionW.FILTERED_SERIES.cmd());
+      int imgIndex = series.getImageIndex(image, filter, view.getCurrentSortComparator());
+      action.get().setSliderValue(imgIndex + 1);
+    }
+  }
+
+  private SegContour getContour(DicomImageElement imageElement, RegionAttributes attributes) {
+    PlanarImage img = imageElement.getImage();
+    if (img == null) return null;
+
+    SpecialElementRegion region = getSelectedRegion();
+    if (region == null) return null;
+
+    Set<LazyContourLoader> loaders = region.getContours(imageElement);
+    if (loaders == null || loaders.isEmpty()) return null;
+
+    return loaders.stream()
+        .flatMap(loader -> loader.getLazyContours().stream())
+        .filter(c -> c.getAttributes().equals(attributes))
+        .findFirst()
+        .orElse(null);
+  }
+
+  public void computeStatistics(SegRegion<?> region) {
+    ViewCanvas<DicomImageElement> view = EventManager.getInstance().getSelectedViewPane();
+    DicomImageElement imageElement = getImageElement(view);
+    if (imageElement == null) return;
+
+    SegContour contour = getContour(imageElement, region);
+    if (contour != null) {
+      MeasurableLayer layer = view.getMeasurableLayer();
+      if (region instanceof IsoDoseRegion) {
+        treeIsodoses.showStatistics(contour, layer);
+      } else {
+        treeStructures.showStatistics(contour, layer);
+      }
+    }
+  }
+
+  private DicomImageElement getImageElement(ViewCanvas<DicomImageElement> view) {
+    return (view != null && view.getImage() instanceof DicomImageElement element) ? element : null;
+  }
+
+  public void initTreeValues(ViewCanvas<?> viewCanvas) {
+    if (viewCanvas == null) {
+      this.rtSet = null;
+      updateCanvas(null);
+      return;
+    }
+
+    MediaSeries<?> series = viewCanvas.getSeries();
+    if (!isCtLinkedRT(series) || !(series instanceof DicomSeries dicomSeries)) {
+      this.rtSet = null;
+      updateCanvas(viewCanvas);
+      return;
+    }
+
+    String seriesUID = TagD.getTagValue(series, Tag.SeriesInstanceUID, String.class);
+    if (!StringUtil.hasText(seriesUID)) {
+      this.rtSet = null;
+      updateCanvas(viewCanvas);
+      return;
+    }
+
+    List<RtSpecialElement> rtElements = getRTSpecialElements(seriesUID);
+    RtSet set = RT_SET_CACHE.get(seriesUID);
+    boolean reload =
+        set == null || (!rtElements.isEmpty() && !set.getRtElements().equals(rtElements));
+
+    if (reload) {
+      set = new RtSet(dicomSeries, rtElements);
+      RT_SET_CACHE.put(seriesUID, set);
+    }
+
+    boolean empty = set.getStructures().isEmpty();
+    btnLoad.setEnabled(empty || reload);
+    this.rtSet = set;
     updateCanvas(viewCanvas);
   }
 
   private List<RtSpecialElement> getRTSpecialElements(String seriesUID) {
-    if (StringUtil.hasText(seriesUID)) {
-      Set<String> list = HiddenSeriesManager.getInstance().reference2Series.get(seriesUID);
-      if (list != null && !list.isEmpty()) {
-        return HiddenSeriesManager.getHiddenElementsFromSeries(
-            RtSpecialElement.class, list.toArray(new String[0]));
-      }
+    Set<String> hiddenSeries = HiddenSeriesManager.getInstance().reference2Series.get(seriesUID);
+    if (hiddenSeries != null && !hiddenSeries.isEmpty()) {
+      return HiddenSeriesManager.getHiddenElementsFromSeries(
+          RtSpecialElement.class, hiddenSeries.toArray(new String[0]));
     }
     return Collections.emptyList();
   }
 
+  public static boolean isCtLinkedRT(MediaSeries<?> dcmSeries) {
+    if (dcmSeries == null) return false;
+
+    String seriesUID = TagD.getTagValue(dcmSeries, Tag.SeriesInstanceUID, String.class);
+    if (!StringUtil.hasText(seriesUID)) return false;
+
+    Set<String> hiddenSeries = HiddenSeriesManager.getInstance().reference2Series.get(seriesUID);
+    return hiddenSeries != null
+        && !hiddenSeries.isEmpty()
+        && HiddenSeriesManager.hasHiddenElementsFromSeries(
+            RtSpecialElement.class, hiddenSeries.toArray(new String[0]));
+  }
+
+  // Required overrides
   @Override
   public Component getToolComponent() {
     return getToolComponentFromJScrollPane(rootPane);
@@ -851,29 +1011,14 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener, S
 
   @Override
   public void changingViewContentEvent(SeriesViewerEvent event) {
-    SeriesViewerEvent.EVENT e = event.getEventType();
-    if (SeriesViewerEvent.EVENT.SELECT.equals(e)
-        && event.getSeriesViewer() instanceof ImageViewerPlugin) {
-      initTreeValues(((ImageViewerPlugin<?>) event.getSeriesViewer()).getSelectedImagePane());
+    if (SeriesViewerEvent.EVENT.SELECT.equals(event.getEventType())
+        && event.getSeriesViewer() instanceof ImageViewerPlugin<?> plugin) {
+      initTreeValues(plugin.getSelectedImagePane());
     }
   }
 
   @Override
   protected void changeToolWindowAnchor(CLocation clocation) {
-    // TODO Auto-generated method stub
-  }
-
-  public static boolean isCtLinkedRT(MediaSeries<?> dcmSeries) {
-    if (dcmSeries != null) {
-      String seriesUID = TagD.getTagValue(dcmSeries, Tag.SeriesInstanceUID, String.class);
-      if (StringUtil.hasText(seriesUID)) {
-        Set<String> list = HiddenSeriesManager.getInstance().reference2Series.get(seriesUID);
-        if (list != null && !list.isEmpty()) {
-          return HiddenSeriesManager.hasHiddenElementsFromSeries(
-              RtSpecialElement.class, list.toArray(new String[0]));
-        }
-      }
-    }
-    return false;
+    // Implementation can be added if needed
   }
 }

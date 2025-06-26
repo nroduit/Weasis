@@ -150,7 +150,7 @@ public class MimeInspector {
     String line = br.readLine();
     while (line != null) {
       line = line.trim();
-      if (line.length() == 0 || line.charAt(0) == '#') {
+      if (line.isEmpty() || line.charAt(0) == '#') {
         line = br.readLine();
         continue;
       }
@@ -165,7 +165,7 @@ public class MimeInspector {
           break;
         }
         line = line.trim();
-        if (line.length() == 0 || line.charAt(0) == '#') {
+        if (line.isEmpty() || line.charAt(0) == '#') {
           continue;
         }
         if (line.charAt(0) != '>') {

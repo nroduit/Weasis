@@ -367,7 +367,7 @@ public class Dose extends RtSpecialElement implements SpecialElementRegion {
       Set<KeyDouble> zSet = new LinkedHashSet<>();
       // Go through whole imaging grid (CT)
       for (DicomImageElement image : rtSet.getSeries().getMedias(null, null)) {
-        Set<SegContour> contours = new LinkedHashSet<>();
+        PlaneContourLoader contours = new PlaneContourLoader();
         // Image slice UID and position
         String sopUID = TagD.getTagValue(image, Tag.SOPInstanceUID, String.class);
         KeyDouble z = new KeyDouble(image.getRawSliceGeometry().getTLHC().z);
@@ -382,15 +382,12 @@ public class Dose extends RtSpecialElement implements SpecialElementRegion {
           if (isoContour == null) {
             continue;
           }
-          contours.add(isoContour);
+          contours.addContour(isoContour);
         }
-        if (contours.isEmpty()) {
+        if (contours.getLazyContours().isEmpty()) {
           map.remove(sopUID);
         } else {
-          Set<LazyContourLoader> set = map.computeIfAbsent(sopUID, _ -> new LinkedHashSet<>());
-          if (set.iterator().next() instanceof PlaneContourLoader planeLoader) {
-            planeLoader.addContours(contours);
-          }
+          map.computeIfAbsent(sopUID, _ -> new LinkedHashSet<>()).add(contours);
         }
       }
 

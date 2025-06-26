@@ -19,17 +19,17 @@ import javax.swing.JPanel;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import org.dcm4che3.data.Tag;
-import org.weasis.acquire.explorer.AcquireImageInfo;
+import org.weasis.acquire.explorer.AcquireMediaInfo;
 import org.weasis.acquire.explorer.core.bean.SeriesGroup;
 import org.weasis.acquire.explorer.gui.central.tumbnail.AcquireCentralThumbnailPane;
 import org.weasis.base.explorer.JIThumbnailCache;
 import org.weasis.base.explorer.list.IThumbnailModel;
-import org.weasis.core.api.media.data.ImageElement;
+import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.dicom.codec.TagD;
 
 public class AcquireCentralImagePanel extends JPanel implements ListSelectionListener {
 
-  private final AcquireCentralThumbnailPane<ImageElement> imageListPane;
+  private final AcquireCentralThumbnailPane<MediaElement> imageListPane;
   private final AcquireCentralInfoPanel imageInfo;
 
   public AcquireCentralImagePanel(AcquireTabPanel acquireTabPanel, JIThumbnailCache thumbCache) {
@@ -48,15 +48,15 @@ public class AcquireCentralImagePanel extends JPanel implements ListSelectionLis
     imageInfo.setSeries(newSeries);
   }
 
-  public void setSeriesGroup(SeriesGroup seriesGroup, List<AcquireImageInfo> imageInfos) {
+  public void setSeriesGroup(SeriesGroup seriesGroup, List<AcquireMediaInfo> mediaInfos) {
     imageInfo.setSeries(seriesGroup);
-    List<ImageElement> list = imageInfos == null ? null : toImageElement(imageInfos);
+    List<MediaElement> list = mediaInfos == null ? null : toImageElement(mediaInfos);
     imageListPane.setList(list);
   }
 
-  private static List<ImageElement> toImageElement(List<AcquireImageInfo> list) {
+  private static List<MediaElement> toImageElement(List<AcquireMediaInfo> list) {
     return list.stream()
-        .map(AcquireImageInfo::getImage)
+        .map(AcquireMediaInfo::getMedia)
         .sorted(
             Comparator.comparing(
                 i -> TagD.dateTime(Tag.ContentDate, Tag.ContentTime, i),
@@ -64,13 +64,13 @@ public class AcquireCentralImagePanel extends JPanel implements ListSelectionLis
         .collect(Collectors.toList());
   }
 
-  public void addImagesInfo(List<AcquireImageInfo> imageInfos) {
-    List<ImageElement> list = imageInfos == null ? null : toImageElement(imageInfos);
+  public void addImagesInfo(List<AcquireMediaInfo> mediaInfos) {
+    List<MediaElement> list = mediaInfos == null ? null : toImageElement(mediaInfos);
     imageListPane.addElements(list);
   }
 
-  public void updateList(List<AcquireImageInfo> imageInfos) {
-    List<ImageElement> list = imageInfos == null ? null : toImageElement(imageInfos);
+  public void updateList(List<AcquireMediaInfo> mediaInfos) {
+    List<MediaElement> list = mediaInfos == null ? null : toImageElement(mediaInfos);
     imageListPane.setList(list);
   }
 
@@ -78,20 +78,20 @@ public class AcquireCentralImagePanel extends JPanel implements ListSelectionLis
     imageInfo.setSeries(newSeriesGroup);
   }
 
-  public IThumbnailModel<ImageElement> getFileListModel() {
+  public IThumbnailModel<MediaElement> getFileListModel() {
     return imageListPane.getFileListModel();
   }
 
-  public boolean containsImageElement(ImageElement image) {
+  public boolean containsImageElement(MediaElement image) {
     return getFileListModel().contains(image);
   }
 
-  public void removeElement(ImageElement image) {
+  public void removeElement(MediaElement image) {
     getFileListModel().removeElement(image);
   }
 
-  public void removeElements(List<ImageElement> medias) {
-    IThumbnailModel<ImageElement> model = getFileListModel();
+  public void removeElements(List<MediaElement> medias) {
+    IThumbnailModel<MediaElement> model = getFileListModel();
     medias.forEach(model::removeElement);
   }
 
@@ -117,9 +117,9 @@ public class AcquireCentralImagePanel extends JPanel implements ListSelectionLis
 
   @Override
   public void valueChanged(ListSelectionEvent e) {
-    List<ImageElement> images = imageListPane.getSelectedValuesList();
+    List<MediaElement> images = imageListPane.getSelectedValuesList();
     if (images.size() == 1) {
-      imageInfo.setImage(images.get(0));
+      imageInfo.setImage(images.getFirst());
     } else {
       imageInfo.setImage(null);
     }

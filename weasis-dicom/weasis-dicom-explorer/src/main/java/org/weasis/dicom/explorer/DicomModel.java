@@ -34,7 +34,9 @@ import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.ExecutorService;
 import javax.swing.SwingUtilities;
 import org.apache.felix.service.command.CommandProcessor;
+import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Tag;
+import org.dcm4che3.img.data.PrDicomObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.command.Option;
@@ -193,7 +195,8 @@ public class DicomModel implements TreeModel, DataExplorerModel {
     return Collections.emptyList();
   }
 
-  public void mergePatientUID(String oldPatientUID, String newPatientUID) {
+  public void mergePatientUID(
+      String oldPatientUID, String newPatientUID, PluginOpeningStrategy openingStrategy) {
     MediaSeriesGroup pt = getHierarchyNode(MediaSeriesGroupNode.rootNode, oldPatientUID);
     MediaSeriesGroup pt2 = getHierarchyNode(MediaSeriesGroupNode.rootNode, newPatientUID);
 
@@ -217,6 +220,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
       studyMap.put(st, getChildren(st));
     }
     firePropertyChange(new ObservableEvent(BasicAction.REMOVE, DicomModel.this, null, pt));
+    openingStrategy.removePatient(pt);
 
     for (Entry<MediaSeriesGroup, Collection<MediaSeriesGroup>> stEntry : studyMap.entrySet()) {
       MediaSeriesGroup st = stEntry.getKey();
@@ -225,6 +229,9 @@ public class DicomModel implements TreeModel, DataExplorerModel {
       for (MediaSeriesGroup s : stEntry.getValue()) {
         addHierarchyNode(st, s);
         firePropertyChange(new ObservableEvent(BasicAction.ADD, DicomModel.this, null, s));
+        if (s instanceof DicomSeries dicomSeries) {
+          openingStrategy.openViewerPlugin(pt2, DicomModel.this, dicomSeries);
+        }
       }
     }
     removeHierarchyNode(MediaSeriesGroupNode.rootNode, pt);
@@ -909,30 +916,48 @@ public class DicomModel implements TreeModel, DataExplorerModel {
       String seriesUID,
       DicomMediaIO dicomReader) {
     String rMime = dicomReader.getMimeType();
-    if (specialElement instanceof HiddenSpecialElement hiddenSpecialElement) {
-      if (hiddenSpecialElement instanceof SpecialElementReferences references) {
-        String originSeriesUID =
-            TagD.getTagValue(initialSeries, Tag.SeriesInstanceUID, String.class);
+    if (specialElement instanceof HiddenSpecialElement hiddenElement) {
+      String originSeriesUID = TagD.getTagValue(initialSeries, Tag.SeriesInstanceUID, String.class);
+      if (hiddenElement instanceof SpecialElementReferences references) {
         references.initReferences(originSeriesUID);
       }
 
-      if (hiddenSpecialElement instanceof SegSpecialElement segSpecialElement) {
+      if (hiddenElement instanceof SegSpecialElement seg) {
         List<DicomSeries> refSeriesList =
-            segSpecialElement.getRefMap().keySet().stream()
+            seg.getRefMap().keySet().stream()
                 .map(this::getSeriesNode)
                 .filter(series -> series instanceof DicomSeries)
                 .map(series -> (DicomSeries) series)
                 .toList();
-        segSpecialElement.initContours(initialSeries, refSeriesList);
+        seg.initContours(initialSeries, refSeriesList);
+      } else if (hiddenElement instanceof PRSpecialElement pr) {
+        PrDicomObject prDicomObject = pr.getPrDicomObject();
+        if (StringUtil.hasText(originSeriesUID) && prDicomObject != null) {
+          Attributes prAttributes = prDicomObject.getDicomObject();
+          HiddenSeriesManager.getInstance().extractReferencedSeries(prAttributes, originSeriesUID);
+        }
+      } else if (hiddenElement instanceof KOSpecialElement ko) {
+        if (StringUtil.hasText(originSeriesUID)) {
+          Set<String> referencedSeriesUIDs = ko.getReferencedSeriesInstanceUIDSet();
+          if (referencedSeriesUIDs != null) {
+            for (String referenceKey : referencedSeriesUIDs) {
+              if (StringUtil.hasText(referenceKey)) {
+                HiddenSeriesManager.getInstance()
+                    .reference2Series
+                    .computeIfAbsent(referenceKey, _ -> new CopyOnWriteArraySet<>())
+                    .add(originSeriesUID);
+              }
+            }
+          }
+        }
       }
+
       synchronized (this) {
         Map<String, Set<HiddenSpecialElement>> mapSeries =
             HiddenSeriesManager.getInstance().series2Elements;
-        mapSeries
-            .computeIfAbsent(seriesUID, _ -> new CopyOnWriteArraySet<>())
-            .add(hiddenSpecialElement);
+        mapSeries.computeIfAbsent(seriesUID, _ -> new CopyOnWriteArraySet<>()).add(hiddenElement);
 
-        String patientPseudoUID = (String) hiddenSpecialElement.getTagValue(TagW.PatientPseudoUID);
+        String patientPseudoUID = (String) hiddenElement.getTagValue(TagW.PatientPseudoUID);
         if (patientPseudoUID != null) {
           Set<String> patients =
               HiddenSeriesManager.getInstance()

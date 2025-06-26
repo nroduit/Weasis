@@ -21,10 +21,10 @@ import org.weasis.acquire.explorer.core.bean.SeriesGroup;
 import org.weasis.core.api.media.data.ImageElement;
 
 /**
- * Do the process of creating JAI.PlanarImage (ImageElement) and new AcquireImageInfo objects in a
+ * Do the process of creating PlanarImage (ImageElement) and new AcquireImageInfo objects in a
  * worker thread for the given image collection "toImport". Then, all the created AcquireImageInfo
  * objects are imported to the dataModel and associated to a valid SeriesGroup depending on the
- * searchedSeries type (NONE,DATE,NAME). This part is done within the EDT to avoid concurrences
+ * searchedSeries type (NONE, DATE, NAME). This part is done within the EDT to avoid concurrence
  * issues. Full process progression can still be listened with propertyChange notification of this
  * workerTask.
  *

@@ -177,6 +177,29 @@ public class DicomSeries extends Series<DicomImageElement> {
             }
           }
         }
+
+        manager
+            .reference2Series
+            .entrySet()
+            .removeIf(
+                entry -> {
+                  Set<String> referencingSeries = entry.getValue();
+                  referencingSeries.remove(seriesUID);
+                  return referencingSeries.isEmpty();
+                });
+
+        for (HiddenSpecialElement element : removed) {
+          String sopUID = TagD.getTagValue(element, Tag.SOPInstanceUID, String.class);
+          if (sopUID != null) {
+            Set<String> referencingSeries = manager.sopRef2Series.get(sopUID);
+            if (referencingSeries != null) {
+              referencingSeries.remove(seriesUID);
+              if (referencingSeries.isEmpty()) {
+                manager.sopRef2Series.remove(sopUID);
+              }
+            }
+          }
+        }
       }
     }
     super.dispose();

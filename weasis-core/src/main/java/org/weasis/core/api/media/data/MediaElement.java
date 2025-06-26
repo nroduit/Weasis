@@ -94,9 +94,9 @@ public class MediaElement implements Taggable {
   }
 
   /**
-   * This file can be the result of a processing like downloading, tiling or uncompressing.
+   * This file can be the result of processing like downloading, tiling or uncompressing.
    *
-   * @return the final file that has been load by the reader.
+   * @return the final file that has been loaded by the reader.
    */
   public File getFile() {
     return mediaIO.getFileCache().getFinalFile();

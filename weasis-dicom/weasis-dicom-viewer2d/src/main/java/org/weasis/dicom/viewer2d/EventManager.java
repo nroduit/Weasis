@@ -182,7 +182,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
     setAction(newLensAction());
     setAction(newLensZoomAction());
     setAction(newDrawOnlyOnceAction());
-    setAction(newDefaulPresetAction());
+    setAction(newDefaultPresetAction());
 
     setAction(newPresetAction());
     setAction(newLutShapeAction());
@@ -573,7 +573,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
     };
   }
 
-  private ToggleButtonListener newDefaulPresetAction() {
+  private ToggleButtonListener newDefaultPresetAction() {
     return new ToggleButtonListener(ActionW.DEFAULT_PRESET, true) {
       @Override
       public void actionPerformed(boolean selected) {
@@ -594,9 +594,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
             KOManager.setKeyObjectReference(newSelectedState, getSelectedViewPane());
 
         if (!hasKeyObjectReferenceChanged) {
-          // If KO Toogle State hasn't changed this action should be reset to its previous state,
-          // that is the
-          // current view's actionValue
+          // If KO Toggle State hasn't changed, this action should be reset to its previous state
           this.setSelectedWithoutTriggerAction(
               (Boolean) getSelectedViewPane().getActionValue(ActionW.KO_TOGGLE_STATE.cmd()));
         }
@@ -1449,10 +1447,6 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
               addPropertyChangeListener(ActionW.SYNCH.cmd(), pane);
               // pane.updateSynchState();
             }
-
-            if (LangUtil.getNULLtoFalse(enableFilter)) {
-              KOManager.updateKOFilter(viewPane, selectedKO, enableFilter, frameIndex);
-            }
           }
         }
       }
@@ -2058,7 +2052,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
     }
     GuiExecutor.execute(
         () -> {
-          String command = args.get(0);
+          String command = args.getFirst();
           if (command != null) {
             ImageViewerPlugin<DicomImageElement> view = getSelectedView2dContainer();
             if (view != null) {

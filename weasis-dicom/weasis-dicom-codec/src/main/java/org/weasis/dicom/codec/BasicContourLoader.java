@@ -47,6 +47,9 @@ public class BasicContourLoader implements LazyContourLoader {
       synchronized (contourCache) {
         contourCache.put(uid, newContour);
       }
+      if (newContour == null) {
+        return Set.of();
+      }
       return Set.of(newContour);
     }
 

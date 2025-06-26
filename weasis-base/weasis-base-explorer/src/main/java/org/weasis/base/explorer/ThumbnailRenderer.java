@@ -29,6 +29,7 @@ import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.util.FontItem;
 import org.weasis.core.api.util.ResourceUtil;
+import org.weasis.core.api.util.ResourceUtil.FileIcon;
 import org.weasis.core.api.util.ResourceUtil.OtherIcon;
 import org.weasis.core.util.LangUtil;
 
@@ -76,10 +77,28 @@ public class ThumbnailRenderer<E extends MediaElement> extends JPanel
   @Override
   public Component getListCellRendererComponent(
       JList<? extends E> list, E value, int index, boolean isSelected, boolean cellHasFocus) {
-    ThumbnailIcon icon = null;
-    if (value instanceof ImageElement imageElement) {
-      if (list instanceof AbstractThumbnailList<?> thumbnailList) {
+    Icon icon = null;
+    if (value instanceof MediaElement media) {
+      if (media instanceof ImageElement imageElement
+          && list instanceof AbstractThumbnailList<?> thumbnailList) {
         icon = thumbnailList.getThumbCache().getThumbnailFor(imageElement, thumbnailList, index);
+      } else {
+        FileIcon fileIcon = null;
+        String mime = media.getMimeType();
+        if ("application/pdf".equals(mime)) {
+          fileIcon = FileIcon.PDF;
+        } else if (mime.startsWith("video")) {
+          fileIcon = FileIcon.VIDEO;
+        } else if (mime.startsWith("audio")) {
+          fileIcon = FileIcon.AUDIO;
+        } else if (mime.equals("application/SLA") || mime.equals("model/stl")) {
+          fileIcon = FileIcon.XML;
+        }
+        if (fileIcon == null) {
+          fileIcon = FileIcon.UNKNOWN;
+        }
+        Dimension dim = GuiUtils.getDimension(ICON_DIM.width / 2, ICON_DIM.height / 2);
+        icon = ResourceUtil.getIcon(fileIcon, dim.width, dim.height);
       }
       if (LangUtil.getNULLtoFalse((Boolean) value.getTagValue(TagW.Checked))) {
         iconCheckedLabel.setIcon(ResourceUtil.getToolBarIcon(OtherIcon.TICK_ON));

@@ -39,20 +39,26 @@ public class HiddenSeriesManager {
     return instance;
   }
 
+  public void extractReferencedSeries(Attributes dicom, String originSeriesUID) {
+    extractReferencedSeries(dicom, originSeriesUID, null);
+  }
+
   public void extractReferencedSeries(
       Attributes dicom,
       String originSeriesUID,
       Function<String, Map<String, Set<LazyContourLoader>>> addSeries) {
-    if (dicom != null && StringUtil.hasText(originSeriesUID) && addSeries != null) {
-      Sequence seriesRef = dicom.getSequence(Tag.ReferencedSeriesSequence);
-      if (seriesRef != null) {
-        for (Attributes ref : seriesRef) {
-          String seriesUID = ref.getString(Tag.SeriesInstanceUID);
-          if (StringUtil.hasText(seriesUID)) {
-            reference2Series
-                .computeIfAbsent(seriesUID, _ -> new CopyOnWriteArraySet<>())
-                .add(originSeriesUID);
-
+    if (dicom == null || !StringUtil.hasText(originSeriesUID)) {
+      return;
+    }
+    Sequence seriesRef = dicom.getSequence(Tag.ReferencedSeriesSequence);
+    if (seriesRef != null) {
+      for (Attributes ref : seriesRef) {
+        String seriesUID = ref.getString(Tag.SeriesInstanceUID);
+        if (StringUtil.hasText(seriesUID)) {
+          reference2Series
+              .computeIfAbsent(seriesUID, _ -> new CopyOnWriteArraySet<>())
+              .add(originSeriesUID);
+          if (addSeries != null) {
             Map<String, Set<LazyContourLoader>> refMap = addSeries.apply(seriesUID);
             Sequence instanceSeq = ref.getSequence(Tag.ReferencedInstanceSequence);
             if (instanceSeq != null) {

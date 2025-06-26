@@ -82,7 +82,7 @@ public class RtSet {
   public void reloadRtCase(boolean forceRecalculateDvh) {
     this.forceRecalculateDvh = forceRecalculateDvh;
 
-    // First initialise all RTSTRUCT
+    // First initialize all RTSTRUCT
     for (MediaElement rt : this.rtElements) {
       if (rt instanceof StructureSet structureSet) {
         structureSet.initContours(patientImage.getImage());
@@ -90,7 +90,7 @@ public class RtSet {
       }
     }
 
-    // Then initialise all RTPLAN
+    // Then initialize all RTPLAN
     for (MediaElement rt : this.rtElements) {
       // Photon and Proton Plans
       if (rt instanceof Plan plan) {
@@ -98,7 +98,7 @@ public class RtSet {
       }
     }
 
-    // Then initialise all RTDOSE
+    // Then initialize all RTDOSE
     for (MediaElement rt : this.rtElements) {
       if (rt instanceof Dose dose) {
         dose.initPlan(this);

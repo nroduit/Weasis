@@ -44,7 +44,7 @@ public class MetadataPanel extends AbstractAcquireActionPanel {
   public void initValues(AcquireImageInfo info, AcquireImageValues values) {
     globalInfoPanel.update();
     seriesInfoPanel.setSeries(info.getSeries());
-    imageInfoPanel.setImageInfo(info);
+    imageInfoPanel.setMediaInfo(info);
     repaint();
   }
 

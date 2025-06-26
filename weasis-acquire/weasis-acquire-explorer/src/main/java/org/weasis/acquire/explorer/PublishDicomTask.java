@@ -28,10 +28,10 @@ import org.weasis.dicom.param.DicomProgress;
 import org.weasis.dicom.param.DicomState;
 
 /**
- * Do the process of publish DICOM files from the given temporary folder. Operation is a CSTORE to a
- * DICOM node destination. All the job is done outside the EDT instead of setting AcquireImageStatus
- * change and removing related Acquired Images from the dataModel. But, full process progression can
- * still be listened with propertyChange notification of this workerTask.
+ * Do the process of publish DICOM files from the given temporary folder. Operation is a C-STORE to
+ * a DICOM node destination. All the job is done outside the EDT instead of setting
+ * AcquireImageStatus change and removing related Acquired Images from the dataModel. But the full
+ * process progression can still be listened with propertyChange notification of this workerTask.
  *
  * @version $Rev$ $Date$
  */
@@ -72,12 +72,7 @@ public class PublishDicomTask extends SwingWorker<DicomState, File> {
           .filter(Objects::nonNull)
           .map(imageFile -> AcquireManager.findByUId(imageFile.getName()))
           .filter(Objects::nonNull)
-          .forEach(
-              imageInfo -> {
-                imageInfo.setStatus(AcquireImageStatus.PUBLISHED);
-                imageInfo.getImage().setTag(TagW.Checked, Boolean.TRUE);
-                AcquireManager.getInstance().removeImage(imageInfo);
-              });
+          .forEach(AcquireManager::updateFinalStatus);
     }
   }
 
@@ -91,7 +86,7 @@ public class PublishDicomTask extends SwingWorker<DicomState, File> {
   /**
    * Calculate the ratio between the image and the given resolution
    *
-   * @param imgInfo the AcquireImageInfo value
+   * @param imgInfo acquireImageInfo value
    * @param resolution the Resolution value
    * @return the ratio or null when cannot calculate it
    */
@@ -111,8 +106,7 @@ public class PublishDicomTask extends SwingWorker<DicomState, File> {
           .doubleValue();
     } catch (NullPointerException e) {
       LOGGER.warn(
-          "An error occurs when calculate ratio for : " + imgInfo + ", resolution=> " + resolution,
-          e);
+          "An error occurs when calculate ratio for : {}, resolution=> {}", imgInfo, resolution, e);
       return null;
     }
   }

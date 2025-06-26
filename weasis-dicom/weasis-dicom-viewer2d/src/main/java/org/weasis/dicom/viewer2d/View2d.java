@@ -151,7 +151,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
     this.oldSize = new Dimension(0, 0);
 
     // TODO should be a lazy instantiation
-    getViewButtons().add(KOComponentFactory.buildKoSelectionButton(this));
+    getViewButtons().add(KOComponentFactory.buildKoSelectionButton());
     this.koStarButton = KOComponentFactory.buildKoStarButton(this);
     koStarButton.setPosition(GridBagConstraints.NORTHEAST);
     getViewButtons().add(koStarButton);

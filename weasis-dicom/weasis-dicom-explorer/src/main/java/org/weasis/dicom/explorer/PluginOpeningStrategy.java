@@ -14,7 +14,6 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
-import org.weasis.core.api.explorer.ObservableEvent;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.Series;
@@ -64,6 +63,10 @@ public class PluginOpeningStrategy {
     openPatients.add(Objects.requireNonNull(patient));
   }
 
+  public void removePatient(MediaSeriesGroup patient) {
+    openPatients.remove(patient);
+  }
+
   public void prepareImport() {
     if (isRemovingPrevious() && (fullImportSession || openPatients.isEmpty())) {
       GuiUtils.getUICore()
@@ -80,6 +83,10 @@ public class PluginOpeningStrategy {
       MediaSeriesGroup patient, DicomModel dicomModel, Series<?> dicomSeries) {
     Objects.requireNonNull(dicomModel);
     Objects.requireNonNull(dicomSeries);
+
+    if (DicomModel.isHiddenModality(dicomSeries)) {
+      return;
+    }
 
     boolean isPatientOpen = containsPatient(patient);
     if (!isPatientOpen && canAddNewPatient()) {
