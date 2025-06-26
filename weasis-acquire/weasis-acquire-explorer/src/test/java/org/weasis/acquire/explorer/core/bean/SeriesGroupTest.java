@@ -17,6 +17,7 @@ import java.time.format.FormatStyle;
 import java.util.Arrays;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.junitpioneer.jupiter.DefaultLocale;
 
 class SeriesGroupTest {
 
@@ -48,6 +49,7 @@ class SeriesGroupTest {
   }
 
   @Test
+  @DefaultLocale(language = "fr", country = "CH")
   void testSort() {
     SeriesGroup s1 = new SeriesGroup(today);
     SeriesGroup s2 = new SeriesGroup();
