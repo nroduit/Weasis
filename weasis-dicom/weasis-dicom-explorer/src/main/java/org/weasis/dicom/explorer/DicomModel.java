@@ -195,7 +195,8 @@ public class DicomModel implements TreeModel, DataExplorerModel {
     return Collections.emptyList();
   }
 
-  public void mergePatientUID(String oldPatientUID, String newPatientUID) {
+  public void mergePatientUID(
+      String oldPatientUID, String newPatientUID, PluginOpeningStrategy openingStrategy) {
     MediaSeriesGroup pt = getHierarchyNode(MediaSeriesGroupNode.rootNode, oldPatientUID);
     MediaSeriesGroup pt2 = getHierarchyNode(MediaSeriesGroupNode.rootNode, newPatientUID);
 
@@ -219,6 +220,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
       studyMap.put(st, getChildren(st));
     }
     firePropertyChange(new ObservableEvent(BasicAction.REMOVE, DicomModel.this, null, pt));
+    openingStrategy.removePatient(pt);
 
     for (Entry<MediaSeriesGroup, Collection<MediaSeriesGroup>> stEntry : studyMap.entrySet()) {
       MediaSeriesGroup st = stEntry.getKey();
@@ -227,6 +229,9 @@ public class DicomModel implements TreeModel, DataExplorerModel {
       for (MediaSeriesGroup s : stEntry.getValue()) {
         addHierarchyNode(st, s);
         firePropertyChange(new ObservableEvent(BasicAction.ADD, DicomModel.this, null, s));
+        if (s instanceof DicomSeries dicomSeries) {
+          openingStrategy.openViewerPlugin(pt2, DicomModel.this, dicomSeries);
+        }
       }
     }
     removeHierarchyNode(MediaSeriesGroupNode.rootNode, pt);

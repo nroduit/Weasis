@@ -1120,8 +1120,8 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
             String oldDicomPtUID = (String) patient.getTagValue(TagW.PatientPseudoUID);
             String dicomPtUID = (String) reader.getTagValue(TagW.PatientPseudoUID);
             if (!Objects.equals(oldDicomPtUID, dicomPtUID)) {
-              // Fix when patientUID in xml have different patient name
-              dicomModel.mergePatientUID(oldDicomPtUID, dicomPtUID);
+              // Fix when patientUID in XML have different Patient Name or issuer of patientID
+              dicomModel.mergePatientUID(oldDicomPtUID, dicomPtUID, openingStrategy);
             }
           }
           MediaSeriesGroup study = dicomModel.getParent(dicomSeries, DicomModel.study);
@@ -1129,7 +1129,7 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
             String oldStudyUID = (String) study.getTagValue(TagD.get(Tag.StudyInstanceUID));
             String studyUID = TagD.getTagValue(reader, Tag.StudyInstanceUID, String.class);
             if (!Objects.equals(oldStudyUID, studyUID)) {
-              // Fix when StudyInstanceUID in xml have different study UID
+              // Fix when StudyInstanceUID in XML have different study UID
               dicomModel.mergeStudyUID(oldStudyUID, studyUID);
             }
           }

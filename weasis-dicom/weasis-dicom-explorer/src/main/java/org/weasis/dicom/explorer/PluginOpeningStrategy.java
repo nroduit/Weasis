@@ -63,6 +63,10 @@ public class PluginOpeningStrategy {
     openPatients.add(Objects.requireNonNull(patient));
   }
 
+  public void removePatient(MediaSeriesGroup patient) {
+    openPatients.remove(patient);
+  }
+
   public void prepareImport() {
     if (isRemovingPrevious() && (fullImportSession || openPatients.isEmpty())) {
       GuiUtils.getUICore()
