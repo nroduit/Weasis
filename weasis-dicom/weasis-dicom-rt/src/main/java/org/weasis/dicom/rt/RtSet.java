@@ -123,7 +123,8 @@ public class RtSet {
         // Re-init DVHs
         for (Dose dose : plan.getDoses()) {
           if (dose.getDoseMax() > 0) {
-            getFirstStructure().getSegAttributes().values().parallelStream()
+            getStructures().stream()
+                .flatMap(structure -> structure.getSegAttributes().values().stream())
                 .forEach(region -> computeDvh(plan, dose, region));
           }
         }
