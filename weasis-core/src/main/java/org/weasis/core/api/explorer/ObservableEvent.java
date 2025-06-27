@@ -27,7 +27,8 @@ public class ObservableEvent extends PropertyChangeEvent {
     REPLACE,
     LOADING_START,
     LOADING_CANCEL,
-    LOADING_STOP
+    LOADING_STOP,
+    LOADING_GLOBAL_MSG
   }
 
   private final BasicAction actionCommand;

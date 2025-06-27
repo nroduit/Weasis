@@ -1263,6 +1263,10 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
             koOpen.setVisible(
                 HiddenSeriesManager.hasHiddenSpecialElements(KOSpecialElement.class, patient));
           }
+        } else if (ObservableEvent.BasicAction.LOADING_GLOBAL_MSG.equals(action)) {
+          if (newVal instanceof String message) {
+            loadingPanel.setGlobalMessage(message);
+          }
         }
       } else if (evt.getSource() instanceof SeriesViewer
           && ObservableEvent.BasicAction.SELECT.equals(action)

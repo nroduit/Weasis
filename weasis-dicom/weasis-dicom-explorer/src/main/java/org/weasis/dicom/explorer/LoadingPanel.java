@@ -13,6 +13,7 @@ import java.awt.Component;
 import java.util.ArrayList;
 import javax.swing.BoxLayout;
 import javax.swing.JPanel;
+import org.weasis.core.api.gui.util.GuiExecutor;
 
 public class LoadingPanel extends JPanel {
 
@@ -25,6 +26,10 @@ public class LoadingPanel extends JPanel {
     this.setAlignmentY(TOP_ALIGNMENT);
   }
 
+  public void setGlobalMessage(String msg) {
+    GuiExecutor.execute(() -> globalDownloadTask.setMessage(msg));
+  }
+
   public boolean addTask(ExplorerTask<?, ?> task) {
     boolean update = false;
     if (task != null && !tasks.contains(task)) {
@@ -34,7 +39,7 @@ public class LoadingPanel extends JPanel {
           this.add(globalDownloadTask);
           update = true;
         }
-        globalDownloadTask.setMessage(task.getMessage());
+        setGlobalMessage(task.getMessage());
       } else {
         JPanel taskPanel = new LoadingTaskPanel(task);
         this.add(taskPanel);

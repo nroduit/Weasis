@@ -73,6 +73,7 @@ public class LoadRemoteDicomManifest extends ExplorerTask<Boolean, String> {
   private void checkDownloadIssues(LoadSeries loadSeries) {
     if (!loadSeries.hasDownloadFailed()) {
       loadSeriesList.remove(loadSeries);
+      return;
     }
 
     if (DownloadManager.getTasks().isEmpty()
@@ -83,7 +84,12 @@ public class LoadRemoteDicomManifest extends ExplorerTask<Boolean, String> {
         loadSeriesList.clear();
         dicomModel.removePropertyChangeListener(propertyChangeListener);
         for (LoadSeries s : oldList) {
-          LoadSeries task = s.cancelAndReplace(s);
+          LoadSeries task;
+          if (s.isStopped()) {
+            task = s;
+          } else {
+            task = s.cancelAndReplace(s, true);
+          }
           loadSeriesList.add(task);
         }
         startDownloadingSeries(loadSeriesList, true);
@@ -155,7 +161,7 @@ public class LoadRemoteDicomManifest extends ExplorerTask<Boolean, String> {
       }
     }
 
-    // Add listener to know when download of series ends
+    // Add a listener to know when download of series ends
     dicomModel.addPropertyChangeListener(propertyChangeListener);
 
     return true;
@@ -172,6 +178,11 @@ public class LoadRemoteDicomManifest extends ExplorerTask<Boolean, String> {
               .getSystemPreferences()
               .getBooleanProperty(DicomExplorerPrefView.DOWNLOAD_IMMEDIATELY, true);
       startDownloadingSeries(wadoTasks, downloadImmediately);
+      if (!downloadImmediately) {
+        dicomModel.firePropertyChange(
+            new ObservableEvent(
+                ObservableEvent.BasicAction.LOADING_GLOBAL_MSG, dicomModel, null, "Stopped"));
+      }
     } catch (URISyntaxException | MalformedURLException e) {
       LOGGER.error("Loading manifest", e);
     }
@@ -189,7 +200,7 @@ public class LoadRemoteDicomManifest extends ExplorerTask<Boolean, String> {
       }
 
       // Sort tasks from the download priority order (low number has a higher priority), TASKS
-      // is sorted from low to high priority.
+      // are sorted from low-to-high priority.
       DownloadManager.getTasks().sort(Collections.reverseOrder(new PriorityTaskComparator()));
     }
   }

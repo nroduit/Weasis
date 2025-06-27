@@ -256,7 +256,7 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
   public void resume() {
     if (isStopped()) {
       this.getPriority().setPriority(DownloadPriority.COUNTER.getAndDecrement());
-      cancelAndReplace(this);
+      cancelAndReplace(this, true);
     }
   }
 
@@ -1216,7 +1216,7 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
         synchronized (DownloadManager.getTasks()) {
           for (LoadSeries s : DownloadManager.getTasks()) {
             if (s != this && StateValue.STARTED.equals(s.getState())) {
-              cancelAndReplace(s);
+              cancelAndReplace(s, true);
               break;
             }
           }
@@ -1225,7 +1225,7 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
     }
   }
 
-  public LoadSeries cancelAndReplace(LoadSeries s) {
+  public LoadSeries cancelAndReplace(LoadSeries s, boolean restartAllDownload) {
     LoadSeries taskResume =
         new LoadSeries(
             s.getDicomSeries(),
@@ -1243,7 +1243,12 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
       LoadSeries.removeThumbnailMouseAndKeyAdapter(thumbnail);
       addListenerToThumbnail(thumbnail, taskResume, dicomModel);
     }
-    DownloadManager.addLoadSeries(taskResume, dicomModel, true);
+
+    if (restartAllDownload) {
+      DownloadManager.addLoadSeries(taskResume, dicomModel, true);
+    } else {
+      taskResume.execute();
+    }
     DownloadManager.removeLoadSeries(s, dicomModel);
 
     return taskResume;

@@ -44,7 +44,7 @@ public abstract class ExplorerTask<T, V> extends SwingWorker<T, V> {
     stopProgress();
     fireProgress();
     if (isDone()) {
-      // Execute again in case of error (e.g. OOM)
+      // Execute again in case of error (e.g., OOM)
       this.done();
     }
     return this.cancel(true);
