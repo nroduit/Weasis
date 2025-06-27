@@ -109,9 +109,7 @@ public class DicomDirLoader {
           });
     }
     for (LoadSeries loadSeries : seriesList) {
-      String modality = TagD.getTagValue(loadSeries.getDicomSeries(), Tag.Modality, String.class);
-      boolean ps = ("PR".equals(modality) || "KO".equals(modality)); // NON-NLS
-      if (!ps) {
+      if (!DicomModel.isHiddenModality(loadSeries.getDicomSeries())) {
         loadSeries.startDownloadImageReference(wadoParameters);
       }
     }

@@ -585,7 +585,7 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
                   HiddenSeriesManager::getRelatedIcons;
               thumbnail = new SeriesThumbnail(dicomSeries, thumbnailSize, drawIcons);
             }
-            // In case series is downloaded or canceled
+            // In case the series is downloaded or canceled
             thumbnail.setProgressBar(LoadSeries.this.isDone() ? null : progressBar);
             thumbnail.registerListeners();
             addListenerToThumbnail(thumbnail, LoadSeries.this, dicomModel);
