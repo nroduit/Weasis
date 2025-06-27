@@ -32,7 +32,7 @@ public class JLocaleFormat extends JComboBox<JLocale> implements ItemListener, R
     Locale[] locales = Locale.getAvailableLocales();
 
     Locale defaultLocale = Locale.getDefault();
-    // Allow sorting correctly string in each language
+    // Allow sorting string correctly in each language
     final Collator collator = Collator.getInstance(defaultLocale);
     Arrays.sort(locales, (l1, l2) -> collator.compare(l1.getDisplayName(), l2.getDisplayName()));
 
@@ -67,10 +67,14 @@ public class JLocaleFormat extends JComboBox<JLocale> implements ItemListener, R
   public void itemStateChanged(ItemEvent e) {
     if (e.getStateChange() == ItemEvent.SELECTED) {
       Object item = e.getItem();
-      if (item instanceof JLocale jLocale) {
-        storeLocale(jLocale.getLocale());
-        valueHasChanged();
-      }
+      handleLocaleChange(item);
+    }
+  }
+
+  private void handleLocaleChange(Object item) {
+    if (item instanceof JLocale jLocale) {
+      storeLocale(jLocale.getLocale());
+      valueHasChanged();
     }
   }
 
@@ -86,7 +90,7 @@ public class JLocaleFormat extends JComboBox<JLocale> implements ItemListener, R
     removeAllItems();
     sortLocales();
     selectLocale();
-    valueHasChanged();
+    handleLocaleChange(getSelectedItem());
     addItemListener(this);
   }
 }
