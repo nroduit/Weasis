@@ -108,16 +108,28 @@ public class ViewButton extends Rectangle2D.Double implements ShowPopup {
   }
 
   public static void drawButtonBackground(Graphics2D g2d, Component c, ViewButton b, Icon icon) {
+    int x = (int) b.x - 3;
+    int y = (int) b.y - 3;
+    int width = icon.getIconWidth() + 7;
+    int height = icon.getIconHeight() + 7;
+
     Color oldColor = g2d.getColor();
-    Color bck;
-    if (b.isHover()) {
-      bck = UIManager.getColor("Button.hoverBackground");
-    } else {
-      bck = UIManager.getColor("Button.background");
-    }
+    Color bck = UIManager.getColor("Button.background");
     g2d.setColor(bck);
-    g2d.fillRoundRect(
-        (int) b.x - 3, (int) b.y - 3, icon.getIconWidth() + 7, icon.getIconHeight() + 7, 7, 7);
+    g2d.fillRoundRect(x, y, width, height, 7, 7);
+
+    if (b.isHover()) {
+      Color borderColor = UIManager.getColor("Button.hoverBorderColor");
+      Color highlight = borderColor.brighter().brighter();
+      Color shadow = borderColor.darker().darker();
+
+      g2d.setStroke(new BasicStroke(2.0f));
+      g2d.setColor(highlight);
+      g2d.drawRoundRect(x, y, width, height, 7, 7);
+      g2d.setColor(shadow);
+      g2d.drawRoundRect(x, y, width, height, 7, 7);
+    }
+
     icon.paintIcon(c, g2d, (int) b.x, (int) b.y);
     g2d.setColor(oldColor);
   }
