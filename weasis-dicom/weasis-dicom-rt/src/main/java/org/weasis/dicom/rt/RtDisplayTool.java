@@ -104,7 +104,6 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener, S
 
   // Store selection state for all GroupTreeNode items
   private final Map<String, Map<String, Boolean>> structureSetSelections = new HashMap<>();
-  private final Map<String, Map<String, Boolean>> planSelections = new HashMap<>();
 
   // Listeners
   private final transient ItemListener structureChangeListener;
@@ -136,10 +135,7 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener, S
         };
     this.planChangeListener =
         e -> {
-          if (e.getStateChange() == ItemEvent.DESELECTED && e.getItem() instanceof Plan oldPlan) {
-            saveTreeSelection(treeIsodoses, getSopInstanceUid(oldPlan), planSelections);
-          } else if (e.getStateChange() == ItemEvent.SELECTED
-              && e.getItem() instanceof Plan newPlan) {
+          if (e.getStateChange() == ItemEvent.SELECTED && e.getItem() instanceof Plan newPlan) {
             updateTree(null, newPlan);
           }
         };
@@ -587,7 +583,6 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener, S
 
   private void clearSelectionMemory() {
     structureSetSelections.clear();
-    planSelections.clear();
   }
 
   private void clearTrees() {
@@ -598,10 +593,6 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener, S
     if (currentStructure != null) {
       saveTreeSelection(
           treeStructures, getSopInstanceUid(currentStructure), structureSetSelections);
-    }
-
-    if (currentPlan != null) {
-      saveTreeSelection(treeIsodoses, getSopInstanceUid(currentPlan), planSelections);
     }
 
     initPathSelection = true;

@@ -450,9 +450,12 @@ public class DownloadManager {
     String additionalParameters =
         TagUtil.getTagAttribute(xmler, ArcParameters.ADDITIONNAL_PARAMETERS, "");
     String overrideList = TagUtil.getTagAttribute(xmler, ArcParameters.OVERRIDE_TAGS, null);
+    String queryMode = TagUtil.getTagAttribute(xmler, "queryMode", null);
+    boolean wadoRs = "DICOM_WEB".equals(queryMode);
     String webLogin = TagUtil.getTagAttribute(xmler, ArcParameters.WEB_LOGIN, null);
     final WadoParameters wadoParameters =
-        new WadoParameters(wadoURL, onlySopUID, additionalParameters, overrideList, webLogin);
+        new WadoParameters(
+            "", wadoURL, onlySopUID, additionalParameters, overrideList, webLogin, wadoRs);
     params.wadoUri = getWadoUrl(wadoURL);
     readQuery(xmler, params, wadoParameters, WadoParameters.TAG_WADO_QUERY);
   }
@@ -521,9 +524,7 @@ public class DownloadManager {
           });
     }
     for (LoadSeries loadSeries : params.getSeriesMap().values()) {
-      String modality = TagD.getTagValue(loadSeries.getDicomSeries(), Tag.Modality, String.class);
-      boolean ps = "PR".equals(modality) || "KO".equals(modality); // NON-NLS
-      if (!ps) {
+      if (!DicomModel.isHiddenModality(loadSeries.getDicomSeries())) {
         loadSeries.startDownloadImageReference(wadoParameters);
       }
     }

@@ -153,7 +153,7 @@ public class DicomZipImport extends AbstractItemDialogPage implements ImportDico
       File zipFile = null;
       try {
         URI u = new URI(uri);
-        if (u.toString().startsWith("file:")) { // NON-NLS
+        if ("file".equals(u.getScheme())) { // NON-NLS
           zipFile = new File(u.getPath());
         } else {
           zipFile = File.createTempFile("dicom_", ".zip", AppProperties.APP_TEMP_DIR); // NON-NLS

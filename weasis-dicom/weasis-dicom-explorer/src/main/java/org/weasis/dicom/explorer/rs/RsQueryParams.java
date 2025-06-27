@@ -244,7 +244,7 @@ public class RsQueryParams extends ExplorerTask<Boolean, String> {
 
   private static String getFirstParam(List<String> list) {
     if (list != null && !list.isEmpty()) {
-      return list.get(0);
+      return list.getFirst();
     }
     return null;
   }
