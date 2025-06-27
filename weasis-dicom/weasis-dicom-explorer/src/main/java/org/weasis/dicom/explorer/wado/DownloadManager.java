@@ -189,7 +189,8 @@ public class DownloadManager {
   public static synchronized void addLoadSeries(
       final LoadSeries series, DicomModel dicomModel, boolean startLoading) {
     if (series != null) {
-      if (startLoading) {
+      boolean isHiddenSeries = DicomModel.isHiddenModality(series.getDicomSeries());
+      if (startLoading || isHiddenSeries) {
         offerSeriesInQueue(series);
       } else {
         GuiExecutor.execute(
@@ -203,7 +204,7 @@ public class DownloadManager {
             new ObservableEvent(
                 ObservableEvent.BasicAction.LOADING_START, dicomModel, null, series));
       }
-      if (!DownloadManager.TASKS.contains(series)) {
+      if (!isHiddenSeries && !DownloadManager.TASKS.contains(series)) {
         DownloadManager.TASKS.add(series);
       }
     }
