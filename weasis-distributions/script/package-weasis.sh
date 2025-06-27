@@ -220,7 +220,7 @@ fi
 if [ "$machine" = "macosx" ] ; then
   DICOMIZER_CONFIG="Dicomizer=$RES/dicomizer-launcher.properties"
   declare -a customOptions=("--java-options" "-splash:\$APPDIR/resources/images/about-round.png" "--java-options" "-Dapple.laf.useScreenMenuBar=true" "--java-options" "-Dapple.awt.application.appearance=NSAppearanceNameDarkAqua")
-  if [[ ! -x "$CERTIFICATE" ]] ; then
+  if [[ -n "$CERTIFICATE" ]] ; then
     declare -a signArgs=("--mac-package-identifier" "$IDENTIFIER" "--mac-signing-key-user-name" "$CERTIFICATE"  "--mac-sign")
   else
     declare -a signArgs=("--mac-package-identifier" "$IDENTIFIER")
@@ -244,7 +244,7 @@ $JPKGCMD --type app-image --input "$INPUT_DIR" --dest "$OUTPUT_PATH" --name "$NA
 --add-launcher "${DICOMIZER_CONFIG}" --resource-dir "$RES"  --app-version "$WEASIS_CLEAN_VERSION" \
 "${tmpArgs[@]}" --verbose "${signArgs[@]}" "${customOptions[@]}" "${commonOptions[@]}"
 
-if [ "$machine" = "macosx" ] ; then
+if [ "$machine" = "macosx" ] && [[ -n "$CERTIFICATE" ]] ; then
     codesign --timestamp --entitlements "$RES/uri-launcher.entitlements" --options runtime --force -vvv --sign "$CERTIFICATE" "$RES/$NAME.app"
 fi
 
