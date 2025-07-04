@@ -270,8 +270,7 @@ public class RetrieveTask extends ExplorerTask<ExplorerTask<Boolean, String>, St
         }
 
         if (tempFolder != null) {
-          loadingTask =
-              new LoadLocalDicom(new File[] {tempFolder}, false, explorerDcmModel, openingStrategy);
+          explorerDcmModel.allSeriesPostProcessing();
         }
       }
 

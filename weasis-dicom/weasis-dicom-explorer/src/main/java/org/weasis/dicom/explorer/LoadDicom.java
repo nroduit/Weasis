@@ -24,7 +24,6 @@ import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.MediaSeriesGroupNode;
 import org.weasis.core.api.media.data.Series;
-import org.weasis.core.api.media.data.SeriesThumbnail;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.media.data.Thumbnail;
 import org.weasis.dicom.codec.DicomImageElement;
@@ -110,8 +109,7 @@ public abstract class LoadDicom extends ExplorerTask<Boolean, String> {
     return jTextPane1;
   }
 
-  protected SeriesThumbnail buildDicomStructure(DicomMediaIO dicomReader) {
-    SeriesThumbnail thumb = null;
+  protected DicomSeries buildDicomStructure(DicomMediaIO dicomReader) {
     String studyUID = (String) dicomReader.getTagValue(TagD.getUID(Level.STUDY));
     String patientPseudoUID = (String) dicomReader.getTagValue(TagD.getUID(Level.PATIENT));
     MediaSeriesGroup patient =
@@ -147,17 +145,13 @@ public abstract class LoadDicom extends ExplorerTask<Boolean, String> {
       if (dicomSeries == null) {
         dicomSeries = dicomReader.buildSeries(seriesUID);
         dicomSeries.setTag(TagW.ExplorerModel, dicomModel);
+        dicomSeries.setTag(TagW.stepNDimensions, null);
         if (editableDicom) {
           dicomSeries.setTag(TagW.ObjectToSave, Boolean.TRUE);
         }
         dicomReader.writeMetaData(dicomSeries);
         dicomModel.addHierarchyNode(study, dicomSeries);
         getDicomImageElements(dicomReader, dicomSeries, editableDicom);
-
-        if (!DicomModel.isHiddenModality(dicomSeries)) {
-          // After the thumbnail is sent to interface, it will be return to be rebuilt later
-          thumb = dicomModel.buildThumbnail(dicomSeries);
-        }
 
         Integer splitNb = (Integer) dicomSeries.getTagValue(TagW.SplitSeriesNumber);
         if (splitNb != null) {
@@ -195,7 +189,7 @@ public abstract class LoadDicom extends ExplorerTask<Boolean, String> {
     } catch (Exception e) {
       LOGGER.error("Build DICOM hierarchy", e);
     }
-    return thumb;
+    return dicomSeries;
   }
 
   private DicomImageElement[] getDicomImageElements(

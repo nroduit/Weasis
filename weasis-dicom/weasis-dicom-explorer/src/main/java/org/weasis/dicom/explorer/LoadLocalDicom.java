@@ -10,24 +10,17 @@
 package org.weasis.dicom.explorer;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import org.weasis.core.api.explorer.ObservableEvent;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.core.api.gui.util.AppProperties;
-import org.weasis.core.api.gui.util.GuiExecutor;
+import org.weasis.core.api.gui.util.Filter;
 import org.weasis.core.api.media.MimeInspector;
-import org.weasis.core.api.media.data.MediaElement;
-import org.weasis.core.api.media.data.MediaSeries;
-import org.weasis.core.api.media.data.SeriesEvent;
-import org.weasis.core.api.media.data.SeriesThumbnail;
-import org.weasis.core.api.media.data.TagW;
+import org.weasis.core.api.media.data.*;
 import org.weasis.core.ui.model.GraphicModel;
 import org.weasis.core.ui.serialize.XmlSerializer;
 import org.weasis.core.util.FileUtil;
-import org.weasis.dicom.codec.DicomCodec;
-import org.weasis.dicom.codec.DicomMediaIO;
+import org.weasis.dicom.codec.*;
 import org.weasis.dicom.codec.DicomMediaIO.Reading;
 import org.weasis.dicom.explorer.HangingProtocols.OpeningViewer;
 
@@ -66,7 +59,7 @@ public class LoadLocalDicom extends LoadDicom {
       return;
     }
 
-    ArrayList<SeriesThumbnail> thumbs = new ArrayList<>();
+    Set<DicomSeries> uniqueSeriesSet = new LinkedHashSet<>();
     ArrayList<File> folders = new ArrayList<>();
     for (File value : file) {
       if (isCancelled()) {
@@ -89,11 +82,7 @@ public class LoadLocalDicom extends LoadDicom {
           if (value.getPath().startsWith(AppProperties.APP_TEMP_DIR.getPath())) {
             loader.getFileCache().setOriginalTempFile(value);
           }
-          // Issue: must handle adding image to viewer and building thumbnail (middle image)
-          SeriesThumbnail t = buildDicomStructure(loader);
-          if (t != null) {
-            thumbs.add(t);
-          }
+          uniqueSeriesSet.add(buildDicomStructure(loader));
 
           File gpxFile = new File(value.getPath() + ".xml");
           GraphicModel graphicModel = XmlSerializer.readPresentationModel(gpxFile);
@@ -105,33 +94,117 @@ public class LoadLocalDicom extends LoadDicom {
         }
       }
     }
-    updateSeriesThumbnail(thumbs, dicomModel);
+
+    if (openingStrategy.isFullImportSession()) {
+      updateSeriesThumbnail(uniqueSeriesSet, dicomModel);
+    } else {
+      for (DicomSeries series : uniqueSeriesSet) {
+        dicomModel.buildThumbnail(series);
+      }
+    }
 
     for (File folder : folders) {
       addSelectionAndNotify(folder.listFiles(), false);
     }
   }
 
-  public static void updateSeriesThumbnail(List<SeriesThumbnail> thumbs, DicomModel dicomModel) {
-    if (dicomModel == null || thumbs == null) {
+  public static void updateSeriesThumbnail(Set<DicomSeries> seriesList, DicomModel dicomModel) {
+    if (dicomModel == null || seriesList == null) {
       return;
     }
-    for (final SeriesThumbnail t : thumbs) {
-      MediaSeries<MediaElement> series = t.getSeries();
-      // Avoid rebuilding most of CR series thumbnail
+    for (DicomSeries series : seriesList) {
       if (series != null) {
-        if (series.size(null) > 2) {
-          GuiExecutor.execute(t::reBuildThumbnail);
-        }
-        if (series.isSuitableFor3d()) {
-          dicomModel.firePropertyChange(
-              new ObservableEvent(
-                  ObservableEvent.BasicAction.UPDATE,
-                  series,
-                  null,
-                  new SeriesEvent(SeriesEvent.Action.UPDATE, series, null)));
+        if (!DicomModel.isHiddenModality(series)) {
+          seriesPostProcessing(series, dicomModel);
+          dicomModel.buildThumbnail(series);
+
+          if (series.isSuitableFor3d()) {
+            dicomModel.firePropertyChange(
+                new ObservableEvent(
+                    ObservableEvent.BasicAction.UPDATE,
+                    series,
+                    null,
+                    new SeriesEvent(SeriesEvent.Action.UPDATE, series, null)));
+          }
         }
       }
     }
+  }
+
+  public static void seriesPostProcessing(DicomSeries dicomSeries, DicomModel dicomModel) {
+    Integer step = (Integer) dicomSeries.getTagValue(TagW.stepNDimensions);
+    if (step == null || step < 1) {
+      int imageCount = dicomSeries.size(null);
+      if (imageCount == 0) {
+        return;
+      }
+      List<DicomImageElement> imageList =
+          dicomSeries.copyOfMedias(null, SortSeriesStack.slicePosition);
+      int samplingRate = calculateSamplingRateFor4d(imageList);
+      dicomSeries.setTag(TagW.stepNDimensions, samplingRate);
+      if (samplingRate < 2) {
+        return;
+      }
+      for (int i = 0; i < samplingRate; i++) {
+        DicomImageElement image = imageList.get(i);
+        if (image.getMediaReader() instanceof DicomMediaIO dicomReader) {
+          MediaSeries<DicomImageElement> newSeries;
+          if (i == 0) {
+            dicomSeries.removeAllMedias();
+            newSeries = dicomSeries;
+          } else {
+            newSeries = dicomModel.splitSeries(dicomReader, dicomSeries);
+          }
+          newSeries.setTag(TagW.stepNDimensions, samplingRate);
+          Filter<DicomImageElement> samplingFilter = getDicomImageElementFilter(i, samplingRate);
+          newSeries.addAll(Filter.makeList(samplingFilter.filter(imageList)));
+          dicomModel.firePropertyChange(
+              new ObservableEvent(ObservableEvent.BasicAction.UPDATE, dicomModel, null, newSeries));
+        }
+      }
+    }
+  }
+
+  private static Filter<DicomImageElement> getDicomImageElementFilter(int index, int size) {
+    return new Filter<>() {
+      private final int samplingRate = size;
+      private int currentIndex = index;
+
+      @Override
+      public boolean passes(DicomImageElement item) {
+        boolean pass = (currentIndex % samplingRate) == 0;
+        currentIndex++;
+        return pass;
+      }
+    };
+  }
+
+  private static int calculateSamplingRateFor4d(List<DicomImageElement> imageList) {
+    try {
+      if (imageList.size() >= 2) {
+        double[] firstPos = (double[]) imageList.getFirst().getTagValue(TagW.SlicePosition);
+        double firstPosSum = firstPos[0] + firstPos[1] + firstPos[2];
+
+        int samePositionCount = 1;
+        for (int i = 1; i < imageList.size(); i++) {
+          double[] pos = (double[]) imageList.get(i).getTagValue(TagW.SlicePosition);
+          double posSum = pos[0] + pos[1] + pos[2];
+          if (Math.abs(posSum - firstPosSum) < 0.05) {
+            samePositionCount++;
+          } else {
+            break;
+          }
+        }
+
+        // If we found multiple images at the same position, that's likely our phase count
+        if (samePositionCount > 1 && samePositionCount < imageList.size() / 2) {
+          return samePositionCount;
+        }
+      }
+    } catch (Exception e) {
+      return 1;
+    }
+
+    return 1;
   }
 }

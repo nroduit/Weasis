@@ -42,7 +42,6 @@
       <ImageType />
       <SOPInstanceUID />
       <FrameType />
-      <FrameAcquisitionNumber />
       <StackID />
     </multiframeSplittingTags>
   </modality>

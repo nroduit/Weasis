@@ -30,7 +30,7 @@ public class MPRGenerator {
     Plane plane = view.getPlane();
     if (plane == null) throw new IllegalStateException("No slice orientation");
 
-    OriginalStack stack = new ObliqueMpr(plane, series, view);
+    OriginalStack stack = new ObliqueMpr(plane, series, view, null);
 
     if (stack.getWidth() == 0 || stack.getHeight() == 0)
       throw new IllegalStateException("No image");

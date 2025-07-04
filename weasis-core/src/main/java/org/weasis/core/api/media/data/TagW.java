@@ -133,6 +133,7 @@ public class TagW {
   public static final TagW ShutterPSValue = new TagW("ShutterPSValue", TagType.INTEGER);
   public static final TagW ImageDescriptor = new TagW("ImageDescriptor", TagType.OBJECT);
   public static final TagW ObjectToSave = new TagW("ObjectToSave", TagType.BOOLEAN);
+  public static final TagW stepNDimensions = new TagW("StepNDimension", TagType.INTEGER);
 
   public static final TagW WadoCompressionRate = new TagW("WadoCompressionRate", TagType.INTEGER);
   public static final TagW WadoTransferSyntaxUID =

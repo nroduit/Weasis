@@ -54,7 +54,6 @@ public class SplittingRules {
     defRules.addMultiFrameTags(Tag.ImageType, null);
     defRules.addMultiFrameTags(Tag.SOPInstanceUID, null);
     defRules.addMultiFrameTags(Tag.FrameType, null);
-    defRules.addMultiFrameTags(Tag.FrameAcquisitionNumber, null);
     defRules.addMultiFrameTags(Tag.StackID, null);
     rules.put(defRules.getModality(), defRules);
 

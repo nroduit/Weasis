@@ -175,11 +175,6 @@ public abstract class AbstractFileModel implements TreeModel, DataExplorerModel 
     }
   }
 
-  @Override
-  public boolean applySplittingRules(Series<?> original, MediaElement media) {
-    return false;
-  }
-
   public abstract void get(String[] argv) throws IOException;
 
   public void close(String[] argv) throws IOException {
