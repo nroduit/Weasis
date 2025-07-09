@@ -109,8 +109,6 @@ public class LoadRemoteDicomURL extends ExplorerTask<Boolean, String> {
       }
 
       if (!seriesInstanceList.isEmpty()) {
-        String modality = TagD.getTagValue(dicomSeries, Tag.Modality, String.class);
-        boolean ps = "PR".equals(modality) || "KO".equals(modality); // NON-NLS
         final LoadSeries loadSeries =
             new LoadSeries(
                 dicomSeries,
@@ -119,7 +117,7 @@ public class LoadRemoteDicomURL extends ExplorerTask<Boolean, String> {
                     .getSystemPreferences()
                     .getIntProperty(LoadSeries.CONCURRENT_DOWNLOADS_IN_SERIES, 4),
                 true);
-        if (!ps) {
+        if (!DicomModel.isHiddenModality(dicomSeries)) {
           loadSeries.startDownloadImageReference(wadoParameters);
         }
         PluginOpeningStrategy openingStrategy =

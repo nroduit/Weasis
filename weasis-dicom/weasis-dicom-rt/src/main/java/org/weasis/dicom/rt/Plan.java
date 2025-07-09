@@ -98,20 +98,21 @@ public class Plan extends RtSpecialElement {
 
   public void appendName(String text) {
     if (StringUtil.hasText(this.name)) {
-      this.name += " (" + text + ")";
-    } else if (StringUtil.hasText(this.label)) {
-      this.name = this.label + " (" + text + ")";
+      this.name += " - " + text;
+    } else {
+      this.name = text;
     }
   }
 
   @Override
   public String toString() {
-    if (StringUtil.hasText(this.label)) {
-      return this.label;
-    } else if (StringUtil.hasText(this.name)) {
-      return this.name;
+    if (!StringUtil.hasText(label)) {
+      return StringUtil.hasText(name) ? name : TagW.NO_VALUE;
+    } else if (StringUtil.hasText(name) && !name.equals(label)) {
+      return label + " (" + name + ")";
+    } else {
+      return label;
     }
-    return TagW.NO_VALUE;
   }
 
   @Override

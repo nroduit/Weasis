@@ -96,7 +96,6 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener, S
   private final GroupTreeNode nodeIsodoses;
 
   // Labels
-  private final JLabel lblRtPlanName = new JLabel();
   private final JTextField txtRtPlanDoseValue = new JTextField();
 
   // State
@@ -105,7 +104,6 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener, S
 
   // Store selection state for all GroupTreeNode items
   private final Map<String, Map<String, Boolean>> structureSetSelections = new HashMap<>();
-  private final Map<String, Map<String, Boolean>> planSelections = new HashMap<>();
 
   // Listeners
   private final transient ItemListener structureChangeListener;
@@ -137,10 +135,7 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener, S
         };
     this.planChangeListener =
         e -> {
-          if (e.getStateChange() == ItemEvent.DESELECTED && e.getItem() instanceof Plan oldPlan) {
-            saveTreeSelection(treeIsodoses, getSopInstanceUid(oldPlan), planSelections);
-          } else if (e.getStateChange() == ItemEvent.SELECTED
-              && e.getItem() instanceof Plan newPlan) {
+          if (e.getStateChange() == ItemEvent.SELECTED && e.getItem() instanceof Plan newPlan) {
             updateTree(null, newPlan);
           }
         };
@@ -187,15 +182,16 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener, S
 
     // Structure set panel
     JPanel structPanel = createFlowPanel(FlowLayout.LEFT);
-    structPanel.add(new JLabel(Messages.getString("structure.set") + StringUtil.COLON));
+    structPanel.add(new JLabel(Messages.getString("structures") + StringUtil.COLON));
+    GuiUtils.setPreferredWidth(comboRtStructureSet, 230, 150);
     structPanel.add(comboRtStructureSet);
     headerPanel.add(structPanel);
 
     // Plan panel
     JPanel planPanel = createFlowPanel(FlowLayout.LEFT);
     planPanel.add(new JLabel(Messages.getString("plan") + StringUtil.COLON));
+    GuiUtils.setPreferredWidth(comboRtPlan, 240, 150);
     planPanel.add(comboRtPlan);
-    planPanel.add(lblRtPlanName);
     headerPanel.add(planPanel);
 
     // Dose panel
@@ -275,7 +271,6 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener, S
   private void setInitialVisibility(boolean visible) {
     comboRtStructureSet.setVisible(visible);
     comboRtPlan.setVisible(visible);
-    lblRtPlanName.setVisible(visible);
     txtRtPlanDoseValue.setVisible(visible);
     treeStructures.setVisible(visible);
     treeIsodoses.setVisible(visible);
@@ -588,7 +583,6 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener, S
 
   private void clearSelectionMemory() {
     structureSetSelections.clear();
-    planSelections.clear();
   }
 
   private void clearTrees() {
@@ -599,10 +593,6 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener, S
     if (currentStructure != null) {
       saveTreeSelection(
           treeStructures, getSopInstanceUid(currentStructure), structureSetSelections);
-    }
-
-    if (currentPlan != null) {
-      saveTreeSelection(treeIsodoses, getSopInstanceUid(currentPlan), planSelections);
     }
 
     initPathSelection = true;
@@ -649,9 +639,17 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener, S
     if (rtSet.getStructures().contains(oldStructure)) {
       comboRtStructureSet.setSelectedItem(oldStructure);
     } else {
-      RtSpecialElement firstStructure = rtSet.getFirstStructure();
-      if (firstStructure != null) {
-        comboRtStructureSet.setSelectedItem(firstStructure);
+      Set<StructureSet> structures = rtSet.getStructures();
+      if (!structures.isEmpty()) {
+        StructureSet mostRecentStructure =
+            structures.stream()
+                .filter(structure -> structure.getTagValue(TagD.get(Tag.StructureSetDate)) != null)
+                .max(
+                    Comparator.comparing(
+                        structure -> (Date) structure.getTagValue(TagD.get(Tag.StructureSetDate))))
+                .orElse(structures.iterator().next());
+
+        comboRtStructureSet.setSelectedItem(mostRecentStructure);
         updateTree = true;
       }
     }
@@ -729,9 +727,8 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener, S
   }
 
   private void updateIsodosesTree(Plan selectedPlan) {
-    treeIsodoses.setModel(new DefaultTreeModel(rootNodeIsodoses, false));
-
     if (selectedPlan != null) {
+      treeIsodoses.setModel(new DefaultTreeModel(rootNodeIsodoses, false));
       nodeIsodoses.removeAllChildren();
       updatePlanInfo(selectedPlan);
 
@@ -739,16 +736,10 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener, S
       if (planDose != null) {
         addIsodosesToTree(planDose);
       }
-
-      // Restore saved selection or apply default (checked = false)
-      String key = getSopInstanceUid(selectedPlan);
-      restoreTreeSelection(treeIsodoses, key, planSelections);
     }
   }
 
   private void updatePlanInfo(Plan selectedPlan) {
-    lblRtPlanName.setText(
-        StringUtil.getTruncatedString(selectedPlan.getName(), 25, StringUtil.Suffix.THREE_PTS));
     txtRtPlanDoseValue.setText(String.format("%.0f", selectedPlan.getRxDose()));
   }
 

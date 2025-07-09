@@ -68,7 +68,7 @@ public interface SpecialElementRegion {
         double[] loc = (double[]) img.getTagValue(TagW.SlicePosition);
         if (loc != null) {
           String position =
-              new Vector3d(loc).toString(SegSpecialElement.roundDouble).replace("-0 ", "0 ");
+              new Vector3d(loc).toString(SegSpecialElement.roundFloat).replace("-0 ", "0 ");
           return positionMap.get(position);
         }
       } else if (map != null && sopInstanceUID != null) {

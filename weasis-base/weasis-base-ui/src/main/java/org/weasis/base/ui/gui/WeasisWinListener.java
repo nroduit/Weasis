@@ -87,7 +87,7 @@ public class WeasisWinListener implements MainWindowListener {
           }
           // Select a plugin from that as the same key as the MediaSeriesGroup
           else if (source instanceof MediaSeriesGroup group) {
-            // If already selected do not reselect or select a second window
+            // If already selected, do not reselect or select a second window
             if (selectedPlugin == null || !group.equals(selectedPlugin.getGroupID())) {
               List<ViewerPlugin<?>> viewerPlugins = GuiUtils.getUICore().getViewerPlugins();
               synchronized (viewerPlugins) {

@@ -431,9 +431,7 @@ public class RetrieveTask extends ExplorerTask<ExplorerTask<Boolean, String>, St
       wp.addHttpTag("Accept", "image/jpeg"); // NON-NLS
 
       for (final LoadSeries loadSeries : loadMap.values()) {
-        String modality = TagD.getTagValue(loadSeries.getDicomSeries(), Tag.Modality, String.class);
-        boolean ps = "PR".equals(modality) || "KO".equals(modality); // NON-NLS
-        if (!ps) {
+        if (!DicomModel.isHiddenModality(loadSeries.getDicomSeries())) {
           loadSeries.startDownloadImageReference(wp);
         }
         loadSeries.setPOpeningStrategy(openingStrategy);

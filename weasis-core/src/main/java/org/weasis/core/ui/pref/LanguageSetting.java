@@ -57,6 +57,7 @@ public class LanguageSetting extends AbstractItemDialogPage {
     try {
       jbInit();
       initialize();
+      comboBoxLang.addItemListener(comboBoxLang);
     } catch (Exception e) {
       LOGGER.error("Cannot initialize GeneralSetting", e);
     }

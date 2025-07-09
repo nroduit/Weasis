@@ -10,15 +10,12 @@
 package org.weasis.core.api.media.data;
 
 import com.formdev.flatlaf.extras.FlatSVGIcon;
-import java.awt.AlphaComposite;
 import java.awt.Color;
 import java.awt.Component;
-import java.awt.Composite;
 import java.awt.Container;
 import java.awt.FontMetrics;
 import java.awt.Graphics2D;
 import java.awt.Point;
-import java.awt.Polygon;
 import java.awt.Rectangle;
 import java.awt.dnd.DnDConstants;
 import java.awt.dnd.DragGestureEvent;
@@ -29,20 +26,13 @@ import java.awt.dnd.DragSourceDropEvent;
 import java.awt.dnd.DragSourceEvent;
 import java.awt.dnd.DragSourceListener;
 import java.awt.dnd.DragSourceMotionListener;
-import java.awt.event.FocusEvent;
-import java.awt.event.FocusListener;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
+import java.awt.event.*;
 import java.io.File;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Function;
-import javax.swing.JPanel;
-import javax.swing.JProgressBar;
-import javax.swing.JViewport;
-import javax.swing.SwingUtilities;
-import javax.swing.ToolTipManager;
+import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.border.EmptyBorder;
 import org.slf4j.Logger;
@@ -57,29 +47,19 @@ import org.weasis.core.api.util.FontItem;
 import org.weasis.core.api.util.FontTools;
 import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.api.util.ResourceUtil.ResourceIconPath;
+import org.weasis.core.ui.editor.image.PlayViewButton;
+import org.weasis.core.ui.editor.image.ViewButton;
 import org.weasis.core.util.FileUtil;
 
 public class SeriesThumbnail extends Thumbnail
     implements MouseListener,
+        MouseMotionListener,
         DragGestureListener,
         DragSourceListener,
         DragSourceMotionListener,
         FocusListener {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(SeriesThumbnail.class);
-
-  private static final int BUTTON_SIZE_HALF = GuiUtils.getScaleLength(7);
-  private static final Polygon startButton =
-      new Polygon(
-          new int[] {0, 2 * BUTTON_SIZE_HALF, 0},
-          new int[] {0, BUTTON_SIZE_HALF, 2 * BUTTON_SIZE_HALF},
-          3);
-  private static final Rectangle stopButton =
-      new Rectangle(0, 0, 2 * BUTTON_SIZE_HALF, 2 * BUTTON_SIZE_HALF);
-
-  private static final Composite SOLID_COMPOSITE = AlphaComposite.SrcOver;
-  private static final Composite TRANSPARENT_COMPOSITE =
-      AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.2f);
 
   private MediaSeries.MEDIA_POSITION mediaPosition = MediaSeries.MEDIA_POSITION.MIDDLE;
 
@@ -88,6 +68,7 @@ public class SeriesThumbnail extends Thumbnail
   private JProgressBar progressBar;
   private final MediaSeries<? extends MediaElement> series;
   private final Function<String, Set<ResourceIconPath>> drawIcons;
+  private final PlayViewButton playBtn;
   private Point dragPressed = null;
   private DragSource dragSource = null;
 
@@ -101,6 +82,24 @@ public class SeriesThumbnail extends Thumbnail
     }
     this.series = sequence;
     this.drawIcons = drawIcons;
+
+    this.playBtn =
+        new PlayViewButton(
+            (invoker, x, y) -> {
+              SeriesImporter loader = series.getSeriesLoader();
+              if (loader != null) {
+                PlayViewButton b = getPlayButton();
+                if (b != null) {
+                  if (b.getState() == PlayViewButton.eState.PAUSE) {
+                    b.setState(PlayViewButton.eState.PLAY);
+                    loader.stop();
+                  } else {
+                    b.setState(PlayViewButton.eState.PAUSE);
+                    loader.resume();
+                  }
+                }
+              }
+            });
 
     // media can be null for seriesThumbnail
     MediaElement media = sequence.getMedia(MEDIA_POSITION.MIDDLE, null, null);
@@ -141,6 +140,10 @@ public class SeriesThumbnail extends Thumbnail
     this.progressBar = progressBar;
   }
 
+  public PlayViewButton getPlayButton() {
+    return playBtn;
+  }
+
   @Override
   public void registerListeners() {
     super.registerListeners();
@@ -156,6 +159,7 @@ public class SeriesThumbnail extends Thumbnail
     addFocusListener(this);
     this.setFocusable(true);
     this.addMouseListener(this);
+    this.addMouseMotionListener(this);
     dragSource = new DragSource();
     dragSource.createDefaultDragGestureRecognizer(this, DnDConstants.ACTION_COPY, this);
     dragSource.addDragSourceMotionListener(this);
@@ -406,22 +410,17 @@ public class SeriesThumbnail extends Thumbnail
 
       // Draw in the top right corner
       SeriesImporter seriesLoader = series.getSeriesLoader();
+      playBtn.setVisible(seriesLoader != null);
       if (seriesLoader != null) {
-        boolean stopped = seriesLoader.isStopped();
-        shiftX = (double) thumbnailSize - stopButton.width;
-        shiftY = thumbnailSize - bar.getHeight() - stopButton.height - inset * 3.0;
-        g2d.translate(shiftX, shiftY);
-        g2d.setColor(IconColor.ACTIONS_RED.color);
-        g2d.setComposite(stopped ? TRANSPARENT_COMPOSITE : SOLID_COMPOSITE);
-        g2d.fill(stopButton);
-        g2d.translate(-shiftX, -shiftY);
-
-        shiftX = shiftX - 3 * BUTTON_SIZE_HALF;
-        g2d.translate(shiftX, shiftY);
-        g2d.setColor(IconColor.ACTIONS_GREEN.color);
-        g2d.setComposite(stopped ? SOLID_COMPOSITE : TRANSPARENT_COMPOSITE);
-        g2d.fill(startButton);
-        g2d.translate(-shiftX, -shiftY);
+        if (seriesLoader.isStopped()) {
+          playBtn.setState(PlayViewButton.eState.PLAY);
+        } else {
+          playBtn.setState(PlayViewButton.eState.PAUSE);
+        }
+        Icon icon = playBtn.getIcon();
+        playBtn.x = (double) thumbnailSize - icon.getIconWidth() - inset * 3.0;
+        playBtn.y = thumbnailSize - bar.getHeight() - icon.getIconHeight() - inset * 5.0;
+        ViewButton.drawButtonBackground(g2d, this, playBtn, icon);
       }
     }
   }
@@ -433,41 +432,15 @@ public class SeriesThumbnail extends Thumbnail
 
   @Override
   public void mousePressed(MouseEvent e) {
-    // Do nothing
+    if (playBtn.isVisible() && playBtn.contains(e.getPoint())) {
+      e.consume();
+      playBtn.showPopup(e.getComponent(), e.getX(), e.getY());
+    }
   }
 
   @Override
   public void mouseReleased(MouseEvent e) {
-    if (progressBar != null) {
-      // To avoid concurrency issue
-      JProgressBar bar = progressBar;
-      if (bar.isVisible()) {
-        Point p = e.getPoint();
-        int inset = GuiUtils.getScaleLength(2);
-        int shiftX = thumbnailSize - stopButton.width;
-        int shiftY = thumbnailSize - bar.getHeight() - stopButton.height - inset * 3;
-        p.translate(-shiftX, -shiftY);
-        Rectangle rect = stopButton.getBounds();
-        rect.grow(inset, inset);
-        if (rect.contains(p)) {
-          SeriesImporter loader = series.getSeriesLoader();
-          if (loader != null) {
-            loader.stop();
-          }
-          repaint();
-          return;
-        }
-
-        p.translate(3 * BUTTON_SIZE_HALF, 0);
-        if (rect.contains(p)) {
-          SeriesImporter loader = series.getSeriesLoader();
-          if (loader != null) {
-            loader.resume();
-          }
-          repaint();
-        }
-      }
-    }
+    // Do nothing
   }
 
   @Override
@@ -478,5 +451,21 @@ public class SeriesThumbnail extends Thumbnail
   @Override
   public void mouseExited(MouseEvent e) {
     // Do nothing
+  }
+
+  @Override
+  public void mouseDragged(MouseEvent e) {
+    // Do nothing
+  }
+
+  @Override
+  public void mouseMoved(MouseEvent e) {
+    if (playBtn.isVisible()) {
+      boolean hover = playBtn.contains(e.getPoint());
+      if (hover != playBtn.isHover()) {
+        playBtn.setHover(hover);
+        repaint();
+      }
+    }
   }
 }

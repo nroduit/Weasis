@@ -81,7 +81,7 @@ public class RsQueryResult extends AbstractQueryResult {
         "Accept", // NON-NLS
         Multipart.MULTIPART_RELATED
             + ";type=\"" // NON-NLS
-            + Multipart.ContentType.DICOM // NON-NLS
+            + Multipart.ContentType.DICOM
             + "\";"
             + rsQueryParams.getProperties().getProperty(RsQueryParams.P_ACCEPT_EXT));
     defaultStartDownloading =
@@ -363,7 +363,7 @@ public class RsQueryResult extends AbstractQueryResult {
             parseJSON(
                 buf.toString(), authMethod, new URLParameters(rsQueryParams.getQueryHeaders()));
         if (!series.isEmpty()) {
-          Attributes dataset = series.get(0);
+          Attributes dataset = series.getFirst();
           MediaSeriesGroup patient = getPatient(dataset, rsQueryParams.getDicomModel());
           MediaSeriesGroup study = getStudy(patient, dataset, rsQueryParams.getDicomModel());
           for (Attributes seriesDataset : series) {

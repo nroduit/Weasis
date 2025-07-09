@@ -39,12 +39,20 @@ public class LoadingTaskPanel extends JPanel {
     if (globalLoadingManager) {
       JButton globalResumeButton = new JButton(ResourceUtil.getIcon(ActionIcon.EXECUTE));
       globalResumeButton.setToolTipText(Messages.getString("DicomExplorer.resume_all"));
-      globalResumeButton.addActionListener(e -> DownloadManager.resume());
+      globalResumeButton.addActionListener(
+          _ -> {
+            DownloadManager.resume();
+            message.setText(Messages.getString("DicomExplorer.loading"));
+          });
       this.add(globalResumeButton);
 
       JButton globalStopButton = new JButton(ResourceUtil.getIcon(ActionIcon.SUSPEND));
       globalStopButton.setToolTipText(Messages.getString("DicomExplorer.stop_all"));
-      globalStopButton.addActionListener(e -> DownloadManager.stop());
+      globalStopButton.addActionListener(
+          _ -> {
+            DownloadManager.stop();
+            message.setText("Stopped");
+          });
       this.add(globalStopButton);
     } else {
       JButton cancelButton = new JButton(ResourceUtil.getIcon(ActionIcon.SUSPEND));

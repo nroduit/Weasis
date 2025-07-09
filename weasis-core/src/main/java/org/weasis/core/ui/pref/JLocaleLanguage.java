@@ -29,7 +29,6 @@ public class JLocaleLanguage extends JComboBox<JLocale> implements ItemListener,
     super();
     initLocalesWithPercentages();
     sortLocales();
-    addItemListener(this);
   }
 
   private void initLocalesWithPercentages() {

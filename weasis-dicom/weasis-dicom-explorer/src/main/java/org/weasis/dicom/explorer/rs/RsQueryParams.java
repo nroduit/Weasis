@@ -18,7 +18,6 @@ import java.util.Objects;
 import java.util.Properties;
 import java.util.UUID;
 import javax.swing.JOptionPane;
-import org.dcm4che3.data.Tag;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.auth.AuthMethod;
@@ -30,7 +29,6 @@ import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.util.LangUtil;
 import org.weasis.core.util.StringUtil;
 import org.weasis.core.util.StringUtil.Suffix;
-import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.explorer.DicomModel;
 import org.weasis.dicom.explorer.ExplorerTask;
 import org.weasis.dicom.explorer.Messages;
@@ -173,9 +171,7 @@ public class RsQueryParams extends ExplorerTask<Boolean, String> {
       wp.addHttpTag("Accept", "image/jpeg"); // NON-NLS
 
       for (final LoadSeries loadSeries : seriesMap.values()) {
-        String modality = TagD.getTagValue(loadSeries.getDicomSeries(), Tag.Modality, String.class);
-        boolean ps = ("PR".equals(modality) || "KO".equals(modality)); // NON-NLS
-        if (!ps) {
+        if (!DicomModel.isHiddenModality(loadSeries.getDicomSeries())) {
           loadSeries.startDownloadImageReference(wp);
         }
         loadSeries.setPOpeningStrategy(openingStrategy);
@@ -248,7 +244,7 @@ public class RsQueryParams extends ExplorerTask<Boolean, String> {
 
   private static String getFirstParam(List<String> list) {
     if (list != null && !list.isEmpty()) {
-      return list.get(0);
+      return list.getFirst();
     }
     return null;
   }

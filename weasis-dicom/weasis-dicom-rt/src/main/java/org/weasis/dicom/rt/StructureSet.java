@@ -24,6 +24,7 @@ import org.opencv.core.Mat;
 import org.opencv.core.MatOfPoint;
 import org.opencv.core.Scalar;
 import org.opencv.imgproc.Imgproc;
+import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.ui.model.graphic.imp.seg.SegMeasurableLayer;
 import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.codec.DicomImageElement;
@@ -86,6 +87,18 @@ public class StructureSet extends RtSpecialElement implements SpecialElementRegi
   }
 
   @Override
+  public String toString() {
+    String name = TagD.getTagValue(getMediaReader(), Tag.StructureSetName, String.class);
+    if (!StringUtil.hasText(label)) {
+      return StringUtil.hasText(name) ? name : TagW.NO_VALUE;
+    } else if (StringUtil.hasText(name) && !name.equals(label)) {
+      return label + " (" + name + ")";
+    } else {
+      return label;
+    }
+  }
+
+  @Override
   public void initReferences(String originSeriesUID) {
     refMap.clear();
     Attributes dcmItems = getMediaReader().getDicomObject();
@@ -133,7 +146,7 @@ public class StructureSet extends RtSpecialElement implements SpecialElementRegi
     Attributes dcmItems = getMediaReader().getDicomObject();
     if (dcmItems != null) {
       String seriesUID = TagD.getTagValue(img, Tag.SeriesInstanceUID, String.class);
-      //      String label = dcmItems.getString(Tag.StructureSetLabel);
+      setTagNoNull(TagD.get(Tag.StructureSetName), dcmItems.getString(Tag.StructureSetName));
       Date datetime = dcmItems.getDate(Tag.StructureSetDateAndTime);
       setTagNoNull(TagD.get(Tag.StructureSetDate), datetime);
 
