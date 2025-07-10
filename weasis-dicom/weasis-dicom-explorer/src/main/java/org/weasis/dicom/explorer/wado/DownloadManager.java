@@ -628,7 +628,12 @@ public class DownloadManager {
 
       TagW[] tags =
           TagD.getTagFromIDs(
-              Tag.Modality, Tag.SeriesNumber, Tag.SeriesDescription, Tag.ReferringPhysicianName);
+              Tag.Modality,
+              Tag.SeriesNumber,
+              Tag.SeriesDate,
+              Tag.SeriesTime,
+              Tag.SeriesDescription,
+              Tag.ReferringPhysicianName);
       for (TagW tag : tags) {
         tag.readValue(xmler, dicomSeries);
       }
