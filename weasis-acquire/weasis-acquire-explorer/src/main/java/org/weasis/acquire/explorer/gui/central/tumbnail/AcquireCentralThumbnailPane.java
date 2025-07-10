@@ -14,7 +14,7 @@ import java.awt.datatransfer.UnsupportedFlavorException;
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
-import javax.swing.JComponent;
+import javax.swing.JViewport;
 import javax.swing.event.ListSelectionListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -56,7 +56,6 @@ public class AcquireCentralThumbnailPane<E extends MediaElement> extends AThumbn
     if (elements != null) {
       IThumbnailModel<E> model = this.thumbnailList.getThumbnailListModel();
       elements.forEach(model::addElement);
-      repaintList();
     }
   }
 
@@ -65,14 +64,11 @@ public class AcquireCentralThumbnailPane<E extends MediaElement> extends AThumbn
     model.clear();
     if (elements != null) {
       elements.forEach(model::addElement);
-      repaintList();
     }
-  }
 
-  public void repaintList() {
-    // Repaint the scroll pane correctly (otherwise not all the elements of JList are repainted)
-    if (thumbnailList.asComponent() instanceof JComponent component) {
-      component.updateUI();
+    JViewport viewport = this.getViewport();
+    if (viewport != null) {
+      viewport.setView(thumbnailList.asComponent());
     }
   }
 

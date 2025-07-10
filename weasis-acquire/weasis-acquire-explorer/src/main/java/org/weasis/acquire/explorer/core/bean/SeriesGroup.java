@@ -106,7 +106,7 @@ public class SeriesGroup extends DefaultTaggable implements Comparable<SeriesGro
         MP4Parser parser = new MP4Parser(channel);
         return parser.getTransferSyntaxUID() != null;
       } catch (Exception e) {
-        LOGGER.debug("Try reading MP4 video file header:", e);
+        LOGGER.trace("Try reading MP4 video file header:", e);
         return false;
       }
     }
@@ -116,7 +116,7 @@ public class SeriesGroup extends DefaultTaggable implements Comparable<SeriesGro
         MPEG2Parser parser = new MPEG2Parser(channel);
         return parser.getTransferSyntaxUID() != null;
       } catch (Exception e) {
-        LOGGER.debug("Try reading MPEG2 video file header for:", e);
+        LOGGER.trace("Try reading MPEG2 video file header for:", e);
         return false;
       }
     }
