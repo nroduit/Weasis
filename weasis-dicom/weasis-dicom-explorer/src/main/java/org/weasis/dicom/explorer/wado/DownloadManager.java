@@ -235,6 +235,13 @@ public class DownloadManager {
     }
   }
 
+  public static boolean hasRunningTasks() {
+    synchronized (DownloadManager.getTasks()) {
+      return DownloadManager.getTasks().stream()
+          .anyMatch(loadSeries -> StateValue.STARTED.equals(loadSeries.getState()));
+    }
+  }
+
   public static void stopDownloading(DicomSeries series, DicomModel dicomModel) {
     if (series != null) {
       synchronized (DownloadManager.getTasks()) {

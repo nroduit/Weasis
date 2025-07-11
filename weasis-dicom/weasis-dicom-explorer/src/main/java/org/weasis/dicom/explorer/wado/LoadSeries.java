@@ -244,9 +244,18 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
       boolean val = cancel();
       dicomSeries.setSeriesLoader(this);
       dicomSeries.setTag(DOWNLOAD_TIME, getDownloadTime());
+      notifyDownloadCompletion(dicomModel);
       return val;
     }
     return true;
+  }
+
+  static void notifyDownloadCompletion(DicomModel model) {
+    if (!DownloadManager.hasRunningTasks()) {
+      model.firePropertyChange(
+          new ObservableEvent(
+              ObservableEvent.BasicAction.LOADING_GLOBAL_MSG, model, null, "Stopped"));
+    }
   }
 
   @Override
@@ -264,6 +273,7 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
       progressBar.setIndeterminate(false);
       this.dicomSeries.setSeriesLoader(null);
       DownloadManager.removeLoadSeries(this, dicomModel);
+      notifyDownloadCompletion(dicomModel);
 
       LoadLocalDicom.seriesPostProcessing(dicomSeries, dicomModel);
 

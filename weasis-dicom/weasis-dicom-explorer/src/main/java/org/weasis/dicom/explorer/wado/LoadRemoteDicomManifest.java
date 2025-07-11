@@ -179,9 +179,7 @@ public class LoadRemoteDicomManifest extends ExplorerTask<Boolean, String> {
               .getBooleanProperty(DicomExplorerPrefView.DOWNLOAD_IMMEDIATELY, true);
       startDownloadingSeries(wadoTasks, downloadImmediately);
       if (!downloadImmediately) {
-        dicomModel.firePropertyChange(
-            new ObservableEvent(
-                ObservableEvent.BasicAction.LOADING_GLOBAL_MSG, dicomModel, null, "Stopped"));
+        LoadSeries.notifyDownloadCompletion(dicomModel);
       }
     } catch (URISyntaxException | MalformedURLException e) {
       LOGGER.error("Loading manifest", e);
