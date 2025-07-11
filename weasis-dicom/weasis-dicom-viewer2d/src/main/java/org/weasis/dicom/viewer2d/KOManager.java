@@ -244,7 +244,7 @@ public final class KOManager {
   // /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
   /**
-   * Get an editable Dicom KeyObject Selection suitable to handle current Dicom Image. A valid
+   * Get an editable Dicom KeyObject Selection suitable to handle the current Dicom Image. A valid
    * object should either reference the studyInstanceUID of the current Dicom Image or simply be
    * empty ...
    */
@@ -255,24 +255,20 @@ public final class KOManager {
     if (currentImage != null && dicomSeries != null) {
       String currentStudyInstanceUID =
           TagD.getTagValue(currentImage, Tag.StudyInstanceUID, String.class);
-      Collection<KOSpecialElement> koElementsWithReferencedSeriesInstanceUID =
-          DicomModel.getKoSpecialElements(dicomSeries);
+      Collection<KOSpecialElement> validKOElements = DicomModel.getKoSpecialElements(dicomSeries);
 
-      if (koElementsWithReferencedSeriesInstanceUID != null) {
-
-        for (KOSpecialElement koElement : koElementsWithReferencedSeriesInstanceUID) {
-          if (koElement.getMediaReader().isEditableDicom()) {
-            if (koElement.containsStudyInstanceUIDReference(currentStudyInstanceUID)) {
-              return koElement;
-            }
+      for (KOSpecialElement koElement : validKOElements) {
+        if (koElement.getMediaReader().isEditableDicom()) {
+          if (koElement.containsStudyInstanceUIDReference(currentStudyInstanceUID)) {
+            return koElement;
           }
         }
+      }
 
-        for (KOSpecialElement koElement : koElementsWithReferencedSeriesInstanceUID) {
-          if (koElement.getMediaReader().isEditableDicom()) {
-            if (koElement.isEmpty()) {
-              return koElement;
-            }
+      for (KOSpecialElement koElement : validKOElements) {
+        if (koElement.getMediaReader().isEditableDicom()) {
+          if (koElement.isEmpty()) {
+            return koElement;
           }
         }
       }

@@ -389,7 +389,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
 
   public void mergeSeries(List<MediaSeries<? extends MediaElement>> seriesList) {
     if (seriesList != null && seriesList.size() > 1) {
-      String uid = TagD.getTagValue(seriesList.get(0), Tag.SeriesInstanceUID, String.class);
+      String uid = TagD.getTagValue(seriesList.getFirst(), Tag.SeriesInstanceUID, String.class);
       boolean sameOrigin = true;
       if (uid != null) {
         for (int i = 1; i < seriesList.size(); i++) {
@@ -401,7 +401,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
       }
       if (sameOrigin) {
         int min = Integer.MAX_VALUE;
-        MediaSeries<? extends MediaElement> base = seriesList.get(0);
+        MediaSeries<? extends MediaElement> base = seriesList.getFirst();
         for (MediaSeries<? extends MediaElement> s : seriesList) {
           Integer splitNb = (Integer) s.getTagValue(TagW.SplitSeriesNumber);
           if (splitNb != null && min > splitNb) {
