@@ -76,19 +76,18 @@ import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.api.util.ResourceUtil.OtherIcon;
 import org.weasis.core.api.util.ResourceUtil.ResourceIconPath;
 import org.weasis.core.ui.docking.PluginTool;
-import org.weasis.core.ui.editor.SeriesViewer;
 import org.weasis.core.ui.editor.SeriesViewerEvent;
 import org.weasis.core.ui.editor.SeriesViewerEvent.EVENT;
 import org.weasis.core.ui.editor.SeriesViewerListener;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.editor.image.SequenceHandler;
 import org.weasis.core.ui.editor.image.ViewCanvas;
-import org.weasis.core.ui.editor.image.ViewerPlugin;
 import org.weasis.core.ui.util.ArrayListComboBoxModel;
 import org.weasis.core.ui.util.DefaultAction;
 import org.weasis.core.ui.util.TitleMenuItem;
 import org.weasis.core.ui.util.WrapLayout;
 import org.weasis.dicom.codec.DicomImageElement;
+import org.weasis.dicom.codec.DicomSeries;
 import org.weasis.dicom.codec.DicomSpecialElement;
 import org.weasis.dicom.codec.HiddenSeriesManager;
 import org.weasis.dicom.codec.KOSpecialElement;
@@ -1182,20 +1181,11 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
     if (evt instanceof ObservableEvent event) {
       ObservableEvent.BasicAction action = event.getActionCommand();
       Object newVal = event.getNewValue();
-      if (model.equals(evt.getSource())) {
-        if (ObservableEvent.BasicAction.SELECT.equals(action)) {
-          if (newVal instanceof Series dcm) {
-            MediaSeriesGroup patient = model.getParent(dcm, DicomModel.patient);
-            if (!isSelectedPatient(patient) && modelPatient.getIndexOf(patient) >= 0) {
-              modelPatient.setSelectedItem(patient);
-              GuiUtils.getUICore()
-                  .getDockingControl()
-                  .getController()
-                  .setFocusedDockable(
-                      new DefaultFocusRequest(dockable.intern(), this, false, true, false));
-            }
-          }
-        } else if (ObservableEvent.BasicAction.ADD.equals(action)) {
+
+      if (ObservableEvent.BasicAction.SELECT.equals(action)) {
+        handleSelectEvent(newVal);
+      } else if (model.equals(evt.getSource())) {
+        if (ObservableEvent.BasicAction.ADD.equals(action)) {
           if (newVal instanceof Series series) {
             addDicomSeries(series);
           }
@@ -1268,17 +1258,30 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
             loadingPanel.setGlobalMessage(message);
           }
         }
-      } else if (evt.getSource() instanceof SeriesViewer
-          && ObservableEvent.BasicAction.SELECT.equals(action)
-          && newVal instanceof MediaSeriesGroup patient
-          && !isSelectedPatient(patient)
-          && modelPatient.getIndexOf(patient) >= 0) {
-        modelPatient.setSelectedItem(patient);
-        // focus get back to viewer
-        if (evt.getSource() instanceof ViewerPlugin viewerPlugin) {
-          viewerPlugin.requestFocusInWindow();
-        }
       }
+    }
+  }
+
+  private void handleSelectEvent(Object newVal) {
+    MediaSeriesGroup patient = null;
+    if (newVal instanceof DicomSeries dcm) {
+      patient = model.getParent(dcm, DicomModel.patient);
+    } else if (newVal instanceof MediaSeriesGroup group) {
+      TagW tagID = group.getTagID();
+      if (TagD.getUID(TagD.Level.PATIENT).equals(tagID)) {
+        patient = group;
+      }
+    }
+    if (patient != null && !isSelectedPatient(patient)) {
+      if (modelPatient.getIndexOf(patient) < 0) {
+        modelPatient.addElement(patient);
+      }
+
+      modelPatient.setSelectedItem(patient);
+      GuiUtils.getUICore()
+          .getDockingControl()
+          .getController()
+          .setFocusedDockable(new DefaultFocusRequest(dockable.intern(), this, false, true, false));
     }
   }
 
