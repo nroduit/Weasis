@@ -25,6 +25,7 @@ import javax.swing.AbstractCellEditor;
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
 import javax.swing.DefaultCellEditor;
+import javax.swing.DefaultComboBoxModel;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JPanel;
@@ -39,7 +40,10 @@ import org.dcm4che3.data.Tag;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.acquire.explorer.AcquireMediaInfo;
+import org.weasis.acquire.explorer.core.bean.SeriesGroup;
+import org.weasis.acquire.explorer.core.bean.SeriesGroup.Type;
 import org.weasis.acquire.explorer.gui.central.meta.model.AcquireMetadataTableModel;
+import org.weasis.acquire.explorer.gui.central.meta.panel.imp.AcquireSeriesMetaPanel;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.GuiUtils.IconColor;
 import org.weasis.core.api.media.data.TagW;
@@ -120,7 +124,11 @@ public abstract class AcquireMetadataPanel extends JPanel implements TableModelL
     model.addTableModelListener(this);
     table.setModel(model);
     table.getColumnModel().getColumn(1).setCellRenderer(new TagRenderer());
-    table.getColumnModel().getColumn(1).setCellEditor(new AcquireImageCellEditor(mediaInfo));
+    SeriesGroup group = null;
+    if (this instanceof AcquireSeriesMetaPanel panel) {
+      group = panel.getSeries();
+    }
+    table.getColumnModel().getColumn(1).setCellEditor(new AcquireImageCellEditor(group, mediaInfo));
     TableColumnAdjuster.pack(table);
     add(table.getTableHeader());
     add(table);
@@ -167,11 +175,12 @@ public abstract class AcquireMetadataPanel extends JPanel implements TableModelL
   }
 
   public static class AcquireImageCellEditor extends AbstractCellEditor implements TableCellEditor {
+    private static final String[] studyDescValues =
+        getValues("weasis.acquire.meta.study.description", null);
     private static final JComboBox<TagD.Sex> sexCombo = new JComboBox<>(TagD.Sex.values());
     private static final JComboBox<Modality> modalityCombo =
         new JComboBox<>(Modality.getAllModalitiesExceptDefault());
-    private static final JComboBox<String> studyDescCombo =
-        new JComboBox<>(getValues("weasis.acquire.meta.study.description", null));
+    private static final JComboBox<String> studyDescCombo = new JComboBox<>(studyDescValues);
     private static final JComboBox<String> seriesDescCombo =
         new JComboBox<>(getValues("weasis.acquire.meta.series.description", null));
 
@@ -185,8 +194,16 @@ public abstract class AcquireMetadataPanel extends JPanel implements TableModelL
     private final AcquireMediaInfo mediaInfo;
     private Optional<TableCellEditor> editor;
 
-    public AcquireImageCellEditor(AcquireMediaInfo mediaInfo) {
+    public AcquireImageCellEditor(SeriesGroup group, AcquireMediaInfo mediaInfo) {
       this.mediaInfo = mediaInfo;
+      if (group != null) {
+        Type type = group.getType();
+        if (type == Type.IMAGE || type == Type.IMAGE_NAME || type == Type.IMAGE_DATE) {
+          studyDescCombo.setModel(new DefaultComboBoxModel<>(studyDescValues));
+        } else {
+          studyDescCombo.removeAllItems();
+        }
+      }
     }
 
     @Override
@@ -226,8 +243,8 @@ public abstract class AcquireMetadataPanel extends JPanel implements TableModelL
       } else if (tagID == Tag.PatientSex) {
         cellEditor = getTableCellEditor(Sex.getSex((String) value), sexCombo, limitedChars);
       } else if (tagID == Tag.Modality) {
-        cellEditor =
-            getTableCellEditor(Modality.getModality((String) value), modalityCombo, limitedChars);
+        Modality modality = Modality.getModality((String) value);
+        cellEditor = getTableCellEditor(modality, modalityCombo, limitedChars);
       } else if (tagID == Tag.StudyDescription) {
         cellEditor = getTableCellEditor(value, studyDescCombo, limitedChars);
       } else if (tagID == Tag.SeriesDescription) {

@@ -97,7 +97,6 @@ public class AcquireCentralImagePanel extends JPanel implements ListSelectionLis
 
   public void clearAll() {
     getFileListModel().clear();
-    imageListPane.repaintList();
   }
 
   public boolean isEmpty() {
@@ -105,7 +104,6 @@ public class AcquireCentralImagePanel extends JPanel implements ListSelectionLis
   }
 
   protected void refreshGUI() {
-    imageListPane.repaintList();
     imageListPane.revalidate();
     imageListPane.repaint();
     refreshInfoGUI();

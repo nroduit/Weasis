@@ -96,6 +96,15 @@ public abstract class Series<E extends MediaElement> extends MediaSeriesGroupNod
     }
   }
 
+  /**
+   * Remove all medias from the series and reset the sorted medias map. Note: this method does not
+   * dispose the media elements and removes images from the cache.
+   */
+  public void removeAllMedias() {
+    medias.clear();
+    resetSortedMediasMap();
+  }
+
   @Override
   public List<E> getSortedMedias(Comparator<E> comparator) {
     // Do not sort when it is the default order.
@@ -252,8 +261,7 @@ public abstract class Series<E extends MediaElement> extends MediaSeriesGroupNod
           m.dispose();
         });
 
-    medias.clear();
-    resetSortedMediasMap();
+    removeAllMedias();
 
     Optional.ofNullable((Thumbnail) getTagValue(TagW.Thumbnail)).ifPresent(Thumbnail::dispose);
     if (propertyChange != null) {

@@ -88,9 +88,8 @@ public class PresentationStateReader implements Taggable {
     return tags.entrySet().iterator();
   }
 
-  private static Predicate<Attributes> isSequenceApplicable(
-      DicomImageElement img, boolean sequenceRequired) {
-    return attributes -> isModuleApplicable(attributes, img, sequenceRequired);
+  private static Predicate<Attributes> isSequenceApplicable(DicomImageElement img) {
+    return attributes -> isModuleApplicable(attributes, img, false);
   }
 
   public static boolean isImageApplicable(
@@ -128,13 +127,15 @@ public class PresentationStateReader implements Taggable {
         sequenceRequired);
   }
 
+  public static boolean getBooleanValue(Attributes attributes, int tag) {
+    return "Y".equalsIgnoreCase(attributes.getString(tag)); // NON-NLS
+  }
+
   public void applySpatialTransformationModule(Map<String, Object> actionsInView) {
     if (dicomObject != null) {
       // Rotation and then Flip
       actionsInView.put(TAG_PR_ROTATION, dicomObject.getInt(Tag.ImageRotation, 0));
-      actionsInView.put(
-          TAG_PR_FLIP,
-          "Y".equalsIgnoreCase(dicomObject.getString(Tag.ImageHorizontalFlip))); // NON-NLS
+      actionsInView.put(TAG_PR_FLIP, getBooleanValue(dicomObject, Tag.ImageHorizontalFlip));
     }
   }
 
@@ -150,7 +151,7 @@ public class PresentationStateReader implements Taggable {
               Tag.DisplayedAreaBottomRightHandCorner,
               Tag.PresentationPixelMagnificationRatio);
       TagSeq.MacroSeqData data =
-          new TagSeq.MacroSeqData(dicomObject, tagList, isSequenceApplicable(img, false));
+          new TagSeq.MacroSeqData(dicomObject, tagList, isSequenceApplicable(img));
       TagD.get(Tag.DisplayedAreaSelectionSequence).readValue(data, this);
     }
   }

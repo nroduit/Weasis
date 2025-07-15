@@ -175,6 +175,8 @@
     <xsd:attribute name="SeriesDescription" type="dicomVrLO"/>
     <xsd:attribute name="SeriesNumber" type="dicomVrIS"/>
     <xsd:attribute name="Modality" type="dicomVrCS"/>
+    <xsd:attribute name="SeriesDate" type="dicomVrDA"/>
+    <xsd:attribute name="SeriesTime" type="dicomVrTM"/>
     <xsd:attribute name="WadoTransferSyntaxUID" type="xsd:string"/>
     <xsd:attribute name="TransferSyntaxUID"
       type="dicomVrUI"/> <!-- Deprecated as Weasis check tsuid during download -->
@@ -183,6 +185,7 @@
   </xsd:complexType>
   <xsd:complexType name="Instance">
     <xsd:attribute name="SOPInstanceUID" type="dicomVrUI" use="required"/>
+    <xsd:attribute name="SOPClassUID" type="dicomVrUI"/>
     <xsd:attribute name="TransferSyntaxUID"
       type="dicomVrUI"/> <!-- Deprecated as Weasis check tsuid during download -->
     <xsd:attribute name="InstanceNumber" type="dicomVrIS"/>

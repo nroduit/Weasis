@@ -21,7 +21,6 @@ import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Tag;
 import org.dcm4che3.util.UIDUtils;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
-import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.Filter;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.gui.util.GuiUtils;
@@ -37,8 +36,12 @@ public class ObliqueMpr extends OriginalStack {
   static final String[] imageTypes = {"DERIVED", "SECONDARY", "MPR"};
   private final Volume<?> volume;
 
-  public ObliqueMpr(Plane plane, MediaSeries<DicomImageElement> series, MprView view) {
-    super(plane, series, (Filter) view.getActionValue(ActionW.FILTERED_SERIES.cmd()));
+  public ObliqueMpr(
+      Plane plane,
+      MediaSeries<DicomImageElement> series,
+      MprView view,
+      Filter<DicomImageElement> filter) {
+    super(plane, series, filter);
     JProgressBar bar = createProgressBar(view, getSourceStack().size());
     GuiExecutor.invokeAndWait(
         () -> {

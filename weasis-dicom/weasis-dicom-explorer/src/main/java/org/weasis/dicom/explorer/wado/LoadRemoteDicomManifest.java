@@ -92,7 +92,7 @@ public class LoadRemoteDicomManifest extends ExplorerTask<Boolean, String> {
           }
           loadSeriesList.add(task);
         }
-        startDownloadingSeries(loadSeriesList, true);
+        startDownloadingSeries(loadSeriesList, true, true);
 
         dicomModel.addPropertyChangeListener(propertyChangeListener);
       } else {
@@ -177,11 +177,9 @@ public class LoadRemoteDicomManifest extends ExplorerTask<Boolean, String> {
           GuiUtils.getUICore()
               .getSystemPreferences()
               .getBooleanProperty(DicomExplorerPrefView.DOWNLOAD_IMMEDIATELY, true);
-      startDownloadingSeries(wadoTasks, downloadImmediately);
+      startDownloadingSeries(wadoTasks, downloadImmediately, false);
       if (!downloadImmediately) {
-        dicomModel.firePropertyChange(
-            new ObservableEvent(
-                ObservableEvent.BasicAction.LOADING_GLOBAL_MSG, dicomModel, null, "Stopped"));
+        LoadSeries.notifyDownloadCompletion(dicomModel);
       }
     } catch (URISyntaxException | MalformedURLException e) {
       LOGGER.error("Loading manifest", e);
@@ -189,11 +187,13 @@ public class LoadRemoteDicomManifest extends ExplorerTask<Boolean, String> {
   }
 
   private void startDownloadingSeries(
-      Collection<LoadSeries> wadoTasks, boolean downloadImmediately) {
+      Collection<LoadSeries> wadoTasks, boolean downloadImmediately, boolean retry) {
     if (!wadoTasks.isEmpty()) {
       PluginOpeningStrategy openingStrategy =
           new PluginOpeningStrategy(DownloadManager.getOpeningViewer());
-      openingStrategy.prepareImport();
+      if (!retry) {
+        openingStrategy.prepareImport();
+      }
       for (final LoadSeries loadSeries : wadoTasks) {
         loadSeries.setPOpeningStrategy(openingStrategy);
         DownloadManager.addLoadSeries(loadSeries, dicomModel, downloadImmediately);

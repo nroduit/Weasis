@@ -14,11 +14,9 @@ import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 import javax.swing.BorderFactory;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
@@ -38,8 +36,6 @@ import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.TagW;
-import org.weasis.core.api.util.ResourceUtil;
-import org.weasis.core.api.util.ResourceUtil.OtherIcon;
 import org.weasis.core.ui.editor.SeriesViewerEvent;
 import org.weasis.core.ui.editor.SeriesViewerEvent.EVENT;
 import org.weasis.core.ui.editor.SeriesViewerFactory;
@@ -234,20 +230,20 @@ public class SRView extends JScrollPane implements SeriesViewerListener {
                 MediaElement mediaElement =
                     dicomSeries.getMedia(0, keyReferences.getSOPInstanceUIDFilter(), null);
                 addGraphicsToView(mediaElement, imgRef);
-                String uid = UUID.randomUUID().toString();
-                Map<String, Object> props = Collections.synchronizedMap(new HashMap<>());
-                props.put(ViewerPluginBuilder.CMP_ENTRY_BUILD_NEW_VIEWER, false);
-                props.put(ViewerPluginBuilder.BEST_DEF_LAYOUT, false);
-                props.put(ViewerPluginBuilder.ICON, ResourceUtil.getIcon(OtherIcon.KEY_IMAGE));
-                props.put(ViewerPluginBuilder.UID, uid);
+
                 List<DicomSeries> seriesList = new ArrayList<>();
                 seriesList.add((DicomSeries) s);
+
+                Map<String, Object> props = model.createViewerKeyImagePluginProperties();
                 ViewerPluginBuilder builder =
                     new ViewerPluginBuilder(plugin, seriesList, model, props);
                 ViewerPluginBuilder.openSequenceInPlugin(builder);
                 model.firePropertyChange(
                     new ObservableEvent(
-                        ObservableEvent.BasicAction.SELECT, uid, null, keyReferences));
+                        ObservableEvent.BasicAction.SELECT,
+                        props.get(ViewerPluginBuilder.UID),
+                        null,
+                        keyReferences));
               }
             }
           } else {

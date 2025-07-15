@@ -572,46 +572,6 @@ public class DicomMediaUtils {
     return frameTimes;
   }
 
-  public static Attributes createDicomPR(
-      Attributes dicomSourceAttribute, String seriesInstanceUID, String sopInstanceUID) {
-
-    final int[] patientStudyAttributes = {
-      Tag.SpecificCharacterSet,
-      Tag.StudyDate,
-      Tag.StudyTime,
-      Tag.StudyDescription,
-      Tag.AccessionNumber,
-      Tag.IssuerOfAccessionNumberSequence,
-      Tag.ReferringPhysicianName,
-      Tag.PatientName,
-      Tag.PatientID,
-      Tag.IssuerOfPatientID,
-      Tag.PatientBirthDate,
-      Tag.PatientSex,
-      Tag.AdditionalPatientHistory,
-      Tag.StudyInstanceUID,
-      Tag.StudyID
-    };
-    Arrays.sort(patientStudyAttributes);
-    Attributes pr = new Attributes(dicomSourceAttribute, patientStudyAttributes);
-
-    // TODO implement other ColorSoftcopyPresentationStateStorageSOPClass...
-    pr.setString(Tag.SOPClassUID, VR.UI, UID.GrayscaleSoftcopyPresentationStateStorage);
-    pr.setString(
-        Tag.SOPInstanceUID,
-        VR.UI,
-        StringUtil.hasText(sopInstanceUID) ? sopInstanceUID : UIDUtils.createUID());
-    Date now = new Date();
-    pr.setDate(Tag.PresentationCreationDateAndTime, now);
-    pr.setDate(Tag.ContentDateAndTime, now);
-    pr.setString(Tag.Modality, VR.CS, "PR");
-    pr.setString(
-        Tag.SeriesInstanceUID,
-        VR.UI,
-        StringUtil.hasText(seriesInstanceUID) ? seriesInstanceUID : UIDUtils.createUID());
-    return pr;
-  }
-
   // ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
   /**
