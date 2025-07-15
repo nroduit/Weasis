@@ -689,7 +689,7 @@ public class InfoLayer extends AbstractInfoLayer<DicomImageElement> {
 
   protected void drawExtendedActions(Graphics2D g2d) {
     if (!view2DPane.getViewButtons().isEmpty()) {
-      int space = GuiUtils.getScaleLength(5);
+      int space = GuiUtils.getScaleLength(10);
       int height = 0;
       for (ViewButton b : view2DPane.getViewButtons()) {
         if (b.isVisible() && b.getPosition() == GridBagConstraints.EAST) {

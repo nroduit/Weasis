@@ -10,16 +10,13 @@
 package org.weasis.dicom.viewer2d;
 
 import java.awt.Color;
+import java.awt.Component;
 import java.awt.Rectangle;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.text.DateFormat;
+import java.util.*;
 import javax.swing.ButtonGroup;
 import javax.swing.JPopupMenu;
 import org.dcm4che3.data.Attributes;
@@ -72,134 +69,813 @@ import org.weasis.opencv.data.PlanarImage;
 import org.weasis.opencv.op.ImageConversion;
 import org.weasis.opencv.op.lut.DefaultWlPresentation;
 
+/**
+ * Manager for DICOM Presentation State (PR) operations.
+ *
+ * <p>This class handles the application of DICOM Presentation States to image views, including
+ * spatial transformations, graphics overlay, and UI components.
+ */
 public class PRManager {
   private static final Logger LOGGER = LoggerFactory.getLogger(PRManager.class);
 
+  // Configuration constants
   public static final String PR_APPLY = "weasis.apply.latest.pr";
-
   public static final String PR_PRESETS = "pr.presets";
   public static final String TAG_CHANGE_PIX_CONFIG = "change.pixel";
   public static final String TAG_PR_ZOOM = "original.zoom";
   public static final String TAG_DICOM_LAYERS = "pr.layers";
 
+  // Internal constants
+  private static final String DISPLAY_MODE = "DISPLAY"; // NON-NLS
+  private static final String PIXEL_MODE = "PIXEL"; // NON-NLS
+  private static final String TRUE_SIZE_MODE = "TRUE SIZE"; // NON-NLS
+  private static final String SCALE_TO_FIT_MODE = "SCALE TO FIT"; // NON-NLS
+  private static final String MAGNIFY_MODE = "MAGNIFY"; // NON-NLS
+  private static final String DICOM_SUFFIX = " [DICOM]"; // NON-NLS
+  private static final int DEFAULT_DICOM_FRAME = 1;
+  private static final int XML_LAYER_BASE_LEVEL = 270;
+  private static final int GRAPHIC_LAYER_BASE_LEVEL = 310;
+
   private PRManager() {}
 
+  /**
+   * Applies a presentation state to the given view.
+   *
+   * @param view The view canvas to apply the presentation state to
+   * @param reader The presentation state reader
+   * @param img The DICOM image element
+   */
   public static void applyPresentationState(
       ViewCanvas<DicomImageElement> view, PresentationStateReader reader, DicomImageElement img) {
-    if (view == null || reader == null || img == null) {
+    if (!isValidInput(view, reader, img)) {
       return;
     }
 
-    // TODO should move to the model
-    Map<String, Object> actionsInView = view.getActionsInView();
-    reader.applySpatialTransformationModule(actionsInView);
-    ImageOpNode node = view.getDisplayOpManager().getNode(WindowOp.OP_NAME);
-    boolean pixelPadding = true;
-    if (node != null) {
-      pixelPadding =
-          LangUtil.getNULLtoTrue((Boolean) node.getParam(ActionW.IMAGE_PIX_PADDING.cmd()));
-    }
-    DefaultWlPresentation wlp = new DefaultWlPresentation(reader.getPrDicomObject(), pixelPadding);
-    List<PresetWindowLevel> presetList = img.getPresetList(wlp, true);
-    PresetWindowLevel p = presetList.getFirst();
-    actionsInView.put(ActionW.WINDOW.cmd(), p.getWindow());
-    actionsInView.put(ActionW.LEVEL.cmd(), p.getLevel());
-    actionsInView.put(PRManager.PR_PRESETS, presetList);
-    actionsInView.put(ActionW.PRESET.cmd(), p);
-    actionsInView.put(ActionW.LUT_SHAPE.cmd(), p.getLutShape());
-    actionsInView.put(ActionW.DEFAULT_PRESET.cmd(), true);
-
-    applyPixelSpacing(view, reader, img);
-
-    GraphicModel graphicModel = PrGraphicUtil.getPresentationModel(reader.getDicomObject());
-    // GraphicModel graphicModel = null;
-    List<GraphicLayer> layers =
-        graphicModel == null
-            ? readGraphicAnnotation(view, reader, img)
-            : readXmlModel(view, graphicModel);
-
-    if (layers != null) {
-      view.setActionsInView(PRManager.TAG_DICOM_LAYERS, layers);
+    try {
+      PresentationContext context = new PresentationContext(view, reader, img);
+      applyWindowLevelSettings(context);
+      applySpatialTransformations(context);
+      applyGraphics(context);
+    } catch (Exception e) {
+      LOGGER.error("Error applying presentation state: {}", e.getMessage(), e);
     }
   }
 
-  private static void applyPixelSpacing(
-      ViewCanvas<DicomImageElement> view, PresentationStateReader reader, DicomImageElement img) {
-    Map<String, Object> actionsInView = view.getActionsInView();
-    reader.readDisplayArea(img);
-
-    String presentationMode = TagD.getTagValue(reader, Tag.PresentationSizeMode, String.class);
-    boolean trueSize = "TRUE SIZE".equalsIgnoreCase(presentationMode); // NON-NLS
-
-    double[] prPixSize = TagD.getTagValue(reader, Tag.PresentationPixelSpacing, double[].class);
-    if (prPixSize != null && prPixSize.length == 2 && prPixSize[0] > 0.0 && prPixSize[1] > 0.0) {
-      if (trueSize) {
-        changePixelSize(img, actionsInView, prPixSize);
-        img.setPixelSpacingUnit(Unit.MILLIMETER);
-        EventManager.getInstance()
-            .getAction(ActionW.SPATIAL_UNIT)
-            .ifPresent(c -> c.setSelectedItem(Unit.MILLIMETER));
-      } else {
-        applyAspectRatio(img, actionsInView, prPixSize);
-      }
+  /**
+   * Deletes DICOM layers from the graphic manager.
+   *
+   * @param layers The layers to delete
+   * @param graphicManager The graphic manager
+   */
+  public static void deleteDicomLayers(List<GraphicLayer> layers, GraphicModel graphicManager) {
+    if (layers != null) {
+      layers.forEach(graphicManager::deleteByLayer);
     }
-    if (prPixSize == null) {
-      int[] aspects = TagD.getTagValue(reader, Tag.PresentationPixelAspectRatio, int[].class);
-      if (aspects != null && aspects.length == 2) {
-        applyAspectRatio(img, actionsInView, new double[] {aspects[0], aspects[1]});
-      }
+  }
+
+  /**
+   * Builds a presentation state selection button for the view.
+   *
+   * @param view The 2D view
+   * @param series The media series
+   * @param img The DICOM image element
+   * @return The view button or null if no PR elements available
+   */
+  public static ViewButton buildPrSelection(
+      final View2d view, MediaSeries<DicomImageElement> series, DicomImageElement img) {
+    if (!isValidInput(view, series, img)) {
+      return null;
     }
 
-    int[] tlhc = TagD.getTagValue(reader, Tag.DisplayedAreaTopLeftHandCorner, int[].class);
-    int[] brhc = TagD.getTagValue(reader, Tag.DisplayedAreaBottomRightHandCorner, int[].class);
-    // TODO http://dicom.nema.org/medical/dicom/current/output/chtml/part03/sect_C.10.4.html
-    // http://dicom.nema.org/medical/dicom/current/output/chtml/part03/sect_C.8.12.2.html
-    String pixelOriginInterpretation =
-        TagD.getTagValue(reader, Tag.PixelOriginInterpretation, String.class);
+    List<PRSpecialElement> prList = DicomModel.getPrSpecialElements(series, img);
+    if (prList.isEmpty()) {
+      return null;
+    }
 
-    if (tlhc != null && tlhc.length == 2 && brhc != null && brhc.length == 2) {
-      // Lots of systems encode topLeft as 1,1, even when they mean 0,0
-      if (tlhc[0] == 1) {
-        tlhc[0] = 0;
-      }
-      if (tlhc[1] == 1) {
-        tlhc[1] = 0;
-      }
-      Rectangle area = new Rectangle();
-      double ratiox = img.getRescaleX();
-      double ratioy = img.getRescaleY();
-      area.setFrameFromDiagonal(
-          getDisplayLength(tlhc[0], ratiox),
-          getDisplayLength(tlhc[1], ratioy),
-          getDisplayLength(brhc[0], ratiox),
-          getDisplayLength(brhc[1], ratioy));
+    PrSelectionHandler selectionHandler = new PrSelectionHandler(view, series, prList);
+    return selectionHandler.createButton();
+  }
 
-      PlanarImage source = view.getSourceImage();
-      if (source != null) {
-        Rectangle imgBounds = ImageConversion.getBounds(source);
-        area = area.intersection(imgBounds);
-        if (area.width > 1 && area.height > 1 && !area.equals(imgBounds)) {
-          SimpleOpManager opManager =
-              Optional.ofNullable((SimpleOpManager) actionsInView.get(ActionW.PREPROCESSING.cmd()))
-                  .orElseGet(SimpleOpManager::new);
-          CropOp crop = new CropOp();
-          crop.setParam(CropOp.P_AREA, area);
-          opManager.addImageOperationAction(crop);
-          actionsInView.put(ActionW.PREPROCESSING.cmd(), opManager);
+  /**
+   * Extracts PrDicomObject from a presentation state element.
+   *
+   * @param prElement The PR element
+   * @return The PrDicomObject or null
+   */
+  public static PrDicomObject getPrDicomObject(Object prElement) {
+    return prElement instanceof PRSpecialElement pr ? pr.getPrDicomObject() : null;
+  }
+
+  // ========== Private Helper Methods ==========
+
+  private static boolean isValidInput(Object... objects) {
+    return Arrays.stream(objects).allMatch(Objects::nonNull);
+  }
+
+  private static void applyWindowLevelSettings(PresentationContext context) {
+    Map<String, Object> actionsInView = context.view().getActionsInView();
+    context.reader().applySpatialTransformationModule(actionsInView);
+
+    boolean pixelPadding = getPixelPaddingValue(context.view());
+    DefaultWlPresentation wlp =
+        new DefaultWlPresentation(context.reader().getPrDicomObject(), pixelPadding);
+
+    List<PresetWindowLevel> presetList = context.img().getPresetList(wlp, true);
+    if (!presetList.isEmpty()) {
+      PresetWindowLevel preset = presetList.getFirst();
+
+      actionsInView.put(ActionW.WINDOW.cmd(), preset.getWindow());
+      actionsInView.put(ActionW.LEVEL.cmd(), preset.getLevel());
+      actionsInView.put(PR_PRESETS, presetList);
+      actionsInView.put(ActionW.PRESET.cmd(), preset);
+      actionsInView.put(ActionW.LUT_SHAPE.cmd(), preset.getLutShape());
+      actionsInView.put(ActionW.DEFAULT_PRESET.cmd(), true);
+    }
+  }
+
+  private static boolean getPixelPaddingValue(ViewCanvas<DicomImageElement> view) {
+    ImageOpNode node = view.getDisplayOpManager().getNode(WindowOp.OP_NAME);
+    if (node == null) {
+      return true;
+    }
+    return LangUtil.getNULLtoTrue((Boolean) node.getParam(ActionW.IMAGE_PIX_PADDING.cmd()));
+  }
+
+  private static void applySpatialTransformations(PresentationContext context) {
+    context.reader().readDisplayArea(context.img());
+
+    new PixelSpacingProcessor(context).process();
+    new DisplayAreaProcessor(context).process();
+    new ZoomProcessor(context).process();
+  }
+
+  private static void applyGraphics(PresentationContext context) {
+    GraphicModel graphicModel =
+        PrGraphicUtil.getPresentationModel(context.reader().getDicomObject());
+
+    List<GraphicLayer> layers =
+        (graphicModel != null)
+            ? readXmlModel(context.view(), graphicModel)
+            : readGraphicAnnotation(context);
+
+    if (layers != null) {
+      context.view().setActionsInView(TAG_DICOM_LAYERS, layers);
+    }
+  }
+
+  private static List<GraphicLayer> readXmlModel(
+      ViewCanvas<DicomImageElement> view, GraphicModel graphicModel) {
+    List<GraphicLayer> layers = new ArrayList<>();
+
+    int layerIndex = 0;
+    for (GraphicLayer layer : graphicModel.getLayers()) {
+      GraphicLayer processedLayer = processXmlLayer(layer, layerIndex++);
+      layers.add(processedLayer);
+    }
+    // Add graphics to the view
+    for (Graphic graphic : graphicModel.getModels()) {
+      AbstractGraphicModel.addGraphicToModel(view, graphic.getLayer(), graphic);
+    }
+
+    return layers;
+  }
+
+  private static GraphicLayer processXmlLayer(GraphicLayer layer, int index) {
+    String layerName =
+        Optional.ofNullable(layer.getName()).orElseGet(() -> layer.getType().getDefaultName());
+
+    layer.setName(layerName + DICOM_SUFFIX);
+    layer.setLocked(true);
+    layer.setSerializable(false);
+    layer.setLevel(XML_LAYER_BASE_LEVEL + index);
+
+    return layer;
+  }
+
+  private static List<GraphicLayer> readGraphicAnnotation(PresentationContext context) {
+    Attributes attributes = context.reader().getDicomObject();
+    if (attributes == null) {
+      return null;
+    }
+
+    GraphicAnnotationReader reader = new GraphicAnnotationReader(context, attributes);
+    return reader.readAnnotations();
+  }
+
+  // ========== Helper Classes ==========
+
+  /** Context object holding all necessary data for presentation state processing. */
+  private record PresentationContext(
+      ViewCanvas<DicomImageElement> view, PresentationStateReader reader, DicomImageElement img) {}
+
+  /** Processes pixel spacing settings from presentation state. */
+  private static class PixelSpacingProcessor {
+    private final PresentationContext context;
+    private final Map<String, Object> actionsInView;
+
+    public PixelSpacingProcessor(PresentationContext context) {
+      this.context = context;
+      this.actionsInView = context.view().getActionsInView();
+    }
+
+    public void process() {
+      String presentationMode =
+          TagD.getTagValue(context.reader(), Tag.PresentationSizeMode, String.class);
+      boolean trueSize = TRUE_SIZE_MODE.equalsIgnoreCase(presentationMode);
+
+      processPixelSpacing(trueSize);
+      processAspectRatio();
+    }
+
+    private void processPixelSpacing(boolean trueSize) {
+      double[] prPixSize =
+          TagD.getTagValue(context.reader(), Tag.PresentationPixelSpacing, double[].class);
+      if (prPixSize != null && prPixSize.length == 2 && prPixSize[0] > 0.0 && prPixSize[1] > 0.0) {
+        if (trueSize) {
+          changePixelSize(context.img(), actionsInView, prPixSize);
+          context.img().setPixelSpacingUnit(Unit.MILLIMETER);
+          EventManager.getInstance()
+              .getAction(ActionW.SPATIAL_UNIT)
+              .ifPresent(c -> c.setSelectedItem(Unit.MILLIMETER));
+        } else {
+          applyAspectRatio(context.img(), actionsInView, prPixSize);
         }
+      }
+    }
+
+    private void processAspectRatio() {
+      double[] prPixSize =
+          TagD.getTagValue(context.reader(), Tag.PresentationPixelSpacing, double[].class);
+      if (prPixSize == null) {
+        int[] aspects =
+            TagD.getTagValue(context.reader(), Tag.PresentationPixelAspectRatio, int[].class);
+        if (aspects != null && aspects.length == 2) {
+          applyAspectRatio(context.img(), actionsInView, new double[] {aspects[0], aspects[1]});
+        }
+      }
+    }
+  }
+
+  /** Processes display area settings from presentation state. */
+  private static class DisplayAreaProcessor {
+    private final PresentationContext context;
+    private final Map<String, Object> actionsInView;
+
+    public DisplayAreaProcessor(PresentationContext context) {
+      this.context = context;
+      this.actionsInView = context.view().getActionsInView();
+    }
+
+    public void process() {
+      int[] tlhc =
+          TagD.getTagValue(context.reader(), Tag.DisplayedAreaTopLeftHandCorner, int[].class);
+      int[] brhc =
+          TagD.getTagValue(context.reader(), Tag.DisplayedAreaBottomRightHandCorner, int[].class);
+
+      if (tlhc != null && tlhc.length == 2 && brhc != null && brhc.length == 2) {
+        Rectangle cropArea = calculateCropArea(tlhc, brhc);
+        applyCropArea(cropArea);
+      }
+    }
+
+    private Rectangle calculateCropArea(int[] tlhc, int[] brhc) {
+      // Adjust for systems that encode topLeft as 1,1 instead of 0,0
+      if (tlhc[0] == 1) tlhc[0] = 0;
+      if (tlhc[1] == 1) tlhc[1] = 0;
+      Rectangle area = new Rectangle();
+      double ratioX = context.img().getRescaleX();
+      double ratioY = context.img().getRescaleY();
+      area.setFrameFromDiagonal(
+          getDisplayLength(tlhc[0], ratioX),
+          getDisplayLength(tlhc[1], ratioY),
+          getDisplayLength(brhc[0], ratioX),
+          getDisplayLength(brhc[1], ratioY));
+
+      return area;
+    }
+
+    private void applyCropArea(Rectangle area) {
+      PlanarImage source = context.view().getSourceImage();
+      if (source == null) {
+        return;
+      }
+      Rectangle imgBounds = ImageConversion.getBounds(source);
+      area = area.intersection(imgBounds);
+      if (area.width > 1 && area.height > 1 && !area.equals(imgBounds)) {
+        SimpleOpManager opManager =
+            Optional.ofNullable((SimpleOpManager) actionsInView.get(ActionW.PREPROCESSING.cmd()))
+                .orElseGet(SimpleOpManager::new);
+        CropOp crop = new CropOp();
+        crop.setParam(CropOp.P_AREA, area);
+        opManager.addImageOperationAction(crop);
+        actionsInView.put(ActionW.PREPROCESSING.cmd(), opManager);
       }
       actionsInView.put(ActionW.CROP.cmd(), area);
     }
+  }
 
-    if ("SCALE TO FIT".equalsIgnoreCase(presentationMode)) { // NON-NLS
-      actionsInView.put(PRManager.TAG_PR_ZOOM, -200.0);
-    } else if ("MAGNIFY".equalsIgnoreCase(presentationMode)) {
-      Float val = TagD.getTagValue(reader, Tag.PresentationPixelMagnificationRatio, Float.class);
-      actionsInView.put(PRManager.TAG_PR_ZOOM, val == null ? 1.0 : val);
-    } else if (trueSize) {
-      // Required to calibrate the screen in preferences
-      actionsInView.put(PRManager.TAG_PR_ZOOM, -100.0);
+  /** Processes zoom settings from the Presentation State. */
+  private static class ZoomProcessor {
+    private final PresentationContext context;
+    private final Map<String, Object> actionsInView;
+
+    public ZoomProcessor(PresentationContext context) {
+      this.context = context;
+      this.actionsInView = context.view().getActionsInView();
     }
+
+    public void process() {
+      String presentationMode =
+          TagD.getTagValue(context.reader(), Tag.PresentationSizeMode, String.class);
+
+      switch (presentationMode != null ? presentationMode.toUpperCase() : "") {
+        case SCALE_TO_FIT_MODE -> actionsInView.put(TAG_PR_ZOOM, -200.0);
+        case MAGNIFY_MODE -> {
+          Float magnification =
+              TagD.getTagValue(
+                  context.reader(), Tag.PresentationPixelMagnificationRatio, Float.class);
+          actionsInView.put(TAG_PR_ZOOM, magnification != null ? magnification : 1.0);
+        }
+        // Required to calibrate the screen in Weasis preferences
+        case TRUE_SIZE_MODE -> actionsInView.put(TAG_PR_ZOOM, -100.0);
+      }
+    }
+  }
+
+  /** Reads graphic annotations from DICOM presentation state. */
+  private static class GraphicAnnotationReader {
+    private final PresentationContext context;
+    private final Attributes attributes;
+    private final Map<String, Object> actionsInView;
+    private final String imgSop;
+    private final int dicomFrame;
+
+    public GraphicAnnotationReader(PresentationContext context, Attributes attributes) {
+      this.context = context;
+      this.attributes = attributes;
+      this.actionsInView = context.view().getActionsInView();
+      this.imgSop = TagD.getTagValue(context.img(), Tag.SOPInstanceUID, String.class);
+      this.dicomFrame =
+          context.img().getKey() instanceof Integer intVal ? intVal + 1 : DEFAULT_DICOM_FRAME;
+    }
+
+    public List<GraphicLayer> readAnnotations() {
+      Sequence graphicSequence = attributes.getSequence(Tag.GraphicAnnotationSequence);
+      Sequence layerSequence = attributes.getSequence(Tag.GraphicLayerSequence);
+
+      if (graphicSequence == null || layerSequence == null) {
+        return null;
+      }
+
+      Map<String, Attributes> layerMap = createLayerMap(layerSequence);
+      TransformationContext transformContext = createTransformationContext();
+
+      List<GraphicLayer> layers = new ArrayList<>();
+
+      for (Attributes annotation : graphicSequence) {
+        processGraphicAnnotation(annotation, layerMap, transformContext, layers);
+      }
+      return layers;
+    }
+
+    private Map<String, Attributes> createLayerMap(Sequence layerSequence) {
+      Map<String, Attributes> layerMap = new HashMap<>(layerSequence.size());
+      for (Attributes layer : layerSequence) {
+        layerMap.put(layer.getString(Tag.GraphicLayer), layer);
+      }
+      return layerMap;
+    }
+
+    private TransformationContext createTransformationContext() {
+      int rotation =
+          (Integer) actionsInView.getOrDefault(PresentationStateReader.TAG_PR_ROTATION, 0);
+      boolean flip =
+          (Boolean) actionsInView.getOrDefault(PresentationStateReader.TAG_PR_FLIP, false);
+      Rectangle area = (Rectangle) actionsInView.get(ActionW.CROP.cmd());
+      Rectangle2D modelArea = context.view().getViewModel().getModelArea();
+
+      double width = area != null ? area.getWidth() : modelArea.getWidth();
+      double height = area != null ? area.getHeight() : modelArea.getHeight();
+
+      AffineTransform inverse = createInverseTransform(rotation, flip, area);
+
+      return new TransformationContext(width, height, inverse);
+    }
+
+    private AffineTransform createInverseTransform(int rotation, boolean flip, Rectangle area) {
+      if (rotation == 0 && !flip) {
+        return null;
+      }
+
+      double offsetX = area != null ? area.getX() / area.getWidth() : 0.0;
+      double offsetY = area != null ? area.getY() / area.getHeight() : 0.0;
+
+      AffineTransform inverse = AffineTransform.getTranslateInstance(offsetX, offsetY);
+      if (flip) {
+        inverse.scale(-1.0, 1.0);
+        inverse.translate(-1.0, 0.0);
+      }
+      if (rotation != 0) {
+        inverse.rotate(Math.toRadians(rotation), 0.5, 0.5);
+      }
+      return inverse;
+    }
+
+    private void processGraphicAnnotation(
+        Attributes annotation,
+        Map<String, Attributes> layerMap,
+        TransformationContext transformContext,
+        List<GraphicLayer> layers) {
+
+      String layerName = annotation.getString(Tag.GraphicLayer);
+      Attributes layerAttributes = layerMap.get(layerName);
+
+      if (!isAnnotationApplicable(annotation, layerAttributes)) {
+        return;
+      }
+
+      GraphicLayer layer = createGraphicLayer(layerName, layerAttributes);
+      layers.add(layer);
+
+      Color layerColor = extractLayerColor(layerAttributes);
+
+      processGraphicObjects(annotation, layer, layerColor, transformContext);
+      processTextObjects(annotation, layer, layerColor, transformContext);
+    }
+
+    private boolean isAnnotationApplicable(Attributes annotation, Attributes layerAttributes) {
+      return layerAttributes != null
+          && DicomObjectUtil.isImageFrameApplicableToReferencedImageSequence(
+              DicomObjectUtil.getSequence(annotation, Tag.ReferencedImageSequence),
+              Tag.ReferencedFrameNumber,
+              imgSop,
+              dicomFrame,
+              false);
+    }
+
+    private GraphicLayer createGraphicLayer(String layerName, Attributes layerAttributes) {
+      GraphicLayer layer = new DefaultLayer(LayerType.DICOM_PR);
+      layer.setName(layerName + DICOM_SUFFIX);
+      layer.setSerializable(false);
+      layer.setLocked(true);
+      layer.setSelectable(false);
+      layer.setLevel(GRAPHIC_LAYER_BASE_LEVEL + layerAttributes.getInt(Tag.GraphicLayerOrder, 0));
+      return layer;
+    }
+
+    private Color extractLayerColor(Attributes layerAttributes) {
+      Integer grayValue =
+          DicomUtils.getIntegerFromDicomElement(
+              layerAttributes, Tag.GraphicLayerRecommendedDisplayGrayscaleValue, null);
+
+      int[] colorRgb =
+          CIELab.dicomLab2rgb(
+              DicomUtils.getIntArrayFromDicomElement(
+                  layerAttributes, Tag.GraphicLayerRecommendedDisplayCIELabValue, null));
+      if (colorRgb.length == 0) {
+        colorRgb =
+            DicomUtils.getIntArrayFromDicomElement(
+                layerAttributes, Tag.GraphicLayerRecommendedDisplayRGBValue, null);
+
+        if (colorRgb == null && grayValue == null) {
+          Color defaultColor =
+              Optional.ofNullable(MeasureTool.viewSetting.getLineColor()).orElse(Color.YELLOW);
+          colorRgb =
+              new int[] {defaultColor.getRed(), defaultColor.getGreen(), defaultColor.getBlue()};
+        }
+      }
+      return DicomObjectUtil.getRGBColor(grayValue != null ? grayValue : 255, colorRgb);
+    }
+
+    private void processGraphicObjects(
+        Attributes annotation,
+        GraphicLayer layer,
+        Color layerColor,
+        TransformationContext transformContext) {
+
+      Sequence graphicSequence = annotation.getSequence(Tag.GraphicObjectSequence);
+      if (graphicSequence == null) {
+        return;
+      }
+
+      for (Attributes graphicObject : graphicSequence) {
+        try {
+          Graphic graphic =
+              PrGraphicUtil.buildGraphic(
+                  graphicObject,
+                  layerColor,
+                  false,
+                  transformContext.width(),
+                  transformContext.height(),
+                  true,
+                  transformContext.inverse(),
+                  false);
+          if (graphic != null) {
+            AbstractGraphicModel.addGraphicToModel(context.view(), layer, graphic);
+          }
+        } catch (InvalidShapeException e) {
+          LOGGER.error("Cannot create graphic: {}", e.getMessage(), e);
+        }
+      }
+    }
+
+    private void processTextObjects(
+        Attributes annotation,
+        GraphicLayer layer,
+        Color layerColor,
+        TransformationContext transformContext) {
+
+      Sequence textSequence = annotation.getSequence(Tag.TextObjectSequence);
+      if (textSequence == null) {
+        return;
+      }
+
+      for (Attributes textObject : textSequence) {
+        TextObjectProcessor processor =
+            new TextObjectProcessor(textObject, layer, layerColor, transformContext);
+        processor.process();
+      }
+    }
+
+    /** Processes individual text objects from presentation state. */
+    private class TextObjectProcessor {
+      private final Attributes textObject;
+      private final GraphicLayer layer;
+      private final Color layerColor;
+      private final TransformationContext context;
+
+      public TextObjectProcessor(
+          Attributes textObject,
+          GraphicLayer layer,
+          Color layerColor,
+          TransformationContext transformContext) {
+        this.textObject = textObject;
+        this.layer = layer;
+        this.layerColor = layerColor;
+        this.context = transformContext;
+      }
+
+      public void process() {
+        Color textColor = extractTextColor();
+        Float thickness = extractThickness();
+        String[] textLines = extractTextLines();
+
+        processAnchoredText(textColor, thickness, textLines);
+        processBoundedText(textColor, thickness, textLines);
+      }
+
+      private Color extractTextColor() {
+        Attributes style = textObject.getNestedDataset(Tag.LineStyleSequence);
+        if (style != null) {
+          int[] rgb = CIELab.dicomLab2rgb(style.getInts(Tag.PatternOnColorCIELabValue));
+          return DicomObjectUtil.getRGBColor(0xFFFF, rgb);
+        }
+        return layerColor;
+      }
+
+      private Float extractThickness() {
+        Attributes style = textObject.getNestedDataset(Tag.LineStyleSequence);
+        return DicomUtils.getFloatFromDicomElement(style, Tag.LineThickness, 1.0f);
+      }
+
+      private String[] extractTextLines() {
+        return EscapeChars.convertToLines(textObject.getString(Tag.UnformattedTextValue));
+      }
+
+      private void processAnchoredText(Color textColor, Float thickness, String[] textLines) {
+        float[] anchor = textObject.getFloats(Tag.AnchorPoint);
+        if (anchor == null || anchor.length != 2) {
+          return;
+        }
+
+        boolean isDisplay =
+            DISPLAY_MODE.equalsIgnoreCase(textObject.getString(Tag.AnchorPointAnnotationUnits));
+
+        double x = isDisplay ? anchor[0] * context.width() : anchor[0];
+        double y = isDisplay ? anchor[1] * context.height() : anchor[1];
+        Point2D.Double anchorPoint = new Point2D.Double(x, y);
+
+        Rectangle2D boundingBox = extractBoundingBox();
+        // Use the box center. This does not follow the DICOM standard.
+        Point2D.Double boxPoint =
+            boundingBox != null
+                ? new Point2D.Double(boundingBox.getCenterX(), boundingBox.getCenterY())
+                : anchorPoint;
+
+        if (!PresentationStateReader.getBooleanValue(textObject, Tag.AnchorPointVisibility)) {
+          anchorPoint = null;
+        }
+
+        if (anchorPoint != null && anchorPoint.equals(boxPoint)) {
+          boxPoint = new Point2D.Double(anchorPoint.getX() + 20, anchorPoint.getY() + 50);
+        }
+
+        createAnnotationGraphic(anchorPoint, boxPoint, textColor, thickness, textLines);
+      }
+
+      private void processBoundedText(Color textColor, Float thickness, String[] textLines) {
+        float[] anchor = textObject.getFloats(Tag.AnchorPoint);
+        if (anchor != null && anchor.length == 2) {
+          return; // Already processed as anchored text
+        }
+
+        Rectangle2D boundingBox = extractBoundingBox();
+        if (boundingBox != null) {
+          Point2D point = new Point2D.Double(boundingBox.getMinX(), boundingBox.getMinY());
+          createPointAnnotation(point, textColor, thickness, textLines);
+        }
+      }
+
+      private Rectangle2D extractBoundingBox() {
+        boolean isDisplay =
+            DISPLAY_MODE.equalsIgnoreCase(textObject.getString(Tag.BoundingBoxAnnotationUnits));
+
+        float[] topLeft = textObject.getFloats(Tag.BoundingBoxTopLeftHandCorner);
+        float[] bottomRight = textObject.getFloats(Tag.BoundingBoxBottomRightHandCorner);
+
+        if (topLeft == null || bottomRight == null) {
+          return null;
+        }
+
+        // Ensure correct coordinate order
+        if (topLeft[0] > bottomRight[0]) {
+          float temp = topLeft[0];
+          topLeft[0] = bottomRight[0];
+          bottomRight[0] = temp;
+        }
+        if (topLeft[1] > bottomRight[1]) {
+          float temp = topLeft[1];
+          topLeft[1] = bottomRight[1];
+          bottomRight[1] = temp;
+        }
+        Rectangle2D rect =
+            new Rectangle2D.Double(
+                topLeft[0], topLeft[1], bottomRight[0] - topLeft[0], bottomRight[1] - topLeft[1]);
+        if (isDisplay) {
+          rect.setRect(
+              rect.getX() * context.width(),
+              rect.getY() * context.height(),
+              rect.getWidth() * context.width(),
+              rect.getHeight() * context.height());
+
+          if (context.inverse() != null) {
+            float[] dstPt1 = new float[2];
+            float[] dstPt2 = new float[2];
+            context.inverse().transform(topLeft, 0, dstPt1, 0, 1);
+            context.inverse().transform(bottomRight, 0, dstPt2, 0, 1);
+            rect.setFrameFromDiagonal(
+                dstPt1[0] * context.width(),
+                dstPt1[1] * context.height(),
+                dstPt2[0] * context.width(),
+                dstPt2[1] * context.height());
+          }
+        }
+
+        return rect;
+      }
+
+      private void createAnnotationGraphic(
+          Point2D.Double anchorPoint,
+          Point2D.Double boxPoint,
+          Color textColor,
+          Float thickness,
+          String[] textLines) {
+        try {
+          List<Point2D> points = new ArrayList<>(2);
+          points.add(anchorPoint);
+          points.add(boxPoint);
+
+          Graphic graphic = new AnnotationGraphic().buildGraphic(points);
+          graphic.setPaint(textColor);
+          graphic.setLineThickness(thickness);
+          graphic.setLabelVisible(Boolean.TRUE);
+          graphic.setLabel(textLines, GraphicAnnotationReader.this.context.view());
+
+          AbstractGraphicModel.addGraphicToModel(
+              GraphicAnnotationReader.this.context.view(), layer, graphic);
+        } catch (InvalidShapeException e) {
+          LOGGER.error("Cannot create annotation: {}", e.getMessage(), e);
+        }
+      }
+
+      private void createPointAnnotation(
+          Point2D point, Color textColor, Float thickness, String[] textLines) {
+        try {
+          AbstractGraphic pointGraphic =
+              (AbstractGraphic) new PointGraphic().buildGraphic(Collections.singletonList(point));
+
+          pointGraphic.setLineThickness(thickness);
+          pointGraphic.setLabelVisible(Boolean.TRUE);
+
+          AbstractGraphicModel.addGraphicToModel(
+              GraphicAnnotationReader.this.context.view(), layer, pointGraphic);
+          pointGraphic.setShape(null, null);
+          pointGraphic.setLabel(textLines, GraphicAnnotationReader.this.context.view(), point);
+        } catch (InvalidShapeException e) {
+          LOGGER.error("Cannot create annotation: {}", e.getMessage(), e);
+        }
+      }
+    }
+  }
+
+  /** Handles presentation state selection UI operations. */
+  private record PrSelectionHandler(
+      View2d view, MediaSeries<DicomImageElement> series, List<PRSpecialElement> prList) {
+
+    public ViewButton createButton() {
+      setupInitialPrState();
+      return new ViewButton(
+          this::showPrSelectionMenu,
+          ResourceUtil.getIcon(OtherIcon.IMAGE_PRESENTATION).derive(24, 24),
+          ActionW.PR_STATE.getTitle());
+    }
+
+    private void setupInitialPrState() {
+      Object currentPr = view.getActionValue(ActionW.PR_STATE.cmd());
+
+      if (currentPr == null
+          && !view.getEventManager().getOptions().getBooleanProperty(PR_APPLY, false)) {
+        currentPr = ActionState.NoneLabel.NONE_SERIES;
+        view.setActionsInView(ActionW.PR_STATE.cmd(), currentPr);
+      }
+
+      if (currentPr == null || currentPr instanceof PRSpecialElement) {
+        // Set the previous selected value, otherwise set the more recent PR by default
+        var selectedPr = prList.contains(currentPr) ? currentPr : prList.getFirst();
+        view.setPresentationState(selectedPr, true);
+      }
+    }
+
+    private Object[] createMenuItems() {
+      int offset = series.size(null) > 1 ? 2 : 1;
+      Object[] items = new Object[prList.size() + offset];
+      items[0] = ActionState.NoneLabel.NONE;
+      if (offset == 2) {
+        items[1] = ActionState.NoneLabel.NONE_SERIES;
+      }
+      for (int i = 0; i < prList.size(); i++) {
+        items[i + offset] = prList.get(i);
+      }
+
+      return items;
+    }
+
+    private void showPrSelectionMenu(Component invoker, int x, int y) {
+      Object currentPr = view.getActionValue(ActionW.PR_STATE.cmd());
+      JPopupMenu popupMenu = createPopupMenu(currentPr);
+      popupMenu.show(invoker, x, y);
+    }
+
+    private JPopupMenu createPopupMenu(Object currentPr) {
+      JPopupMenu popupMenu = new JPopupMenu();
+      popupMenu.add(new TitleMenuItem(ActionW.PR_STATE.getTitle()));
+      popupMenu.addSeparator();
+      ButtonGroup buttonGroup = new ButtonGroup();
+      Object[] items = createMenuItems();
+
+      for (Object item : items) {
+        String title;
+        if (item instanceof PRSpecialElement pr) {
+          title = buildPrTitle(pr);
+        } else {
+          title = item.toString();
+        }
+        RadioMenuItem menuItem = new RadioMenuItem(title, null, item, item == currentPr);
+
+        menuItem.addActionListener(
+            e -> {
+              if (e.getSource() instanceof RadioMenuItem radioItem) {
+                view.setPresentationState(radioItem.getUserObject(), false);
+              }
+            });
+        buttonGroup.add(menuItem);
+        popupMenu.add(menuItem);
+      }
+
+      return popupMenu;
+    }
+  }
+
+  // ========== Utility Methods ==========
+
+  private static String buildPrTitle(PRSpecialElement pr) {
+    StringBuilder title = new StringBuilder(pr.toString());
+    PrDicomObject prDicomObject = pr.getPrDicomObject();
+    if (prDicomObject != null) {
+      Attributes dicomObject = prDicomObject.getDicomObject();
+      if (dicomObject != null) {
+        Date creationDate = dicomObject.getDate(Tag.PresentationCreationDateAndTime);
+        if (creationDate != null) {
+          title
+              .append(" (")
+              .append(
+                  DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT)
+                      .format(creationDate))
+              .append(')');
+        }
+      }
+    }
+    return title.toString();
   }
 
   private static int getDisplayLength(int length, double ratio) {
@@ -209,359 +885,38 @@ public class PRManager {
   private static void applyAspectRatio(
       DicomImageElement img, Map<String, Object> actionsInView, double[] aspects) {
     if (MathUtil.isDifferent(aspects[0], aspects[1])) {
-      // set the aspects to the pixel size of the image to stretch the image rendering (square
-      // pixel)
-      double[] pixelSize;
-      if (aspects[1] < aspects[0]) {
-        pixelSize = new double[] {aspects[0] / aspects[1], 1.0};
-      } else {
-        pixelSize = new double[] {1.0, aspects[1] / aspects[0]};
-      }
+      double[] pixelSize =
+          aspects[1] < aspects[0]
+              ? new double[] {aspects[0] / aspects[1], 1.0}
+              : new double[] {1.0, aspects[1] / aspects[0]};
+
       changePixelSize(img, actionsInView, pixelSize);
       img.setPixelSpacingUnit(Unit.PIXEL);
-      // TODO update graphics
     }
   }
 
   private static void changePixelSize(
       DicomImageElement img, Map<String, Object> actionsInView, double[] prPixSize) {
     img.setPixelSize(prPixSize[1], prPixSize[0]);
-    actionsInView.put(PRManager.TAG_CHANGE_PIX_CONFIG, true);
+    actionsInView.put(TAG_CHANGE_PIX_CONFIG, true);
 
-    ZoomOp node = img.getRectifyAspectRatioZoomOp();
-    if (node != null) {
+    ZoomOp zoomOp = img.getRectifyAspectRatioZoomOp();
+    if (zoomOp != null) {
       SimpleOpManager process = new SimpleOpManager();
-      process.addImageOperationAction(node);
+      process.addImageOperationAction(zoomOp);
+
       OpManager preprocessing = (OpManager) actionsInView.get(ActionW.PREPROCESSING.cmd());
       if (preprocessing != null) {
-        for (ImageOpNode op : preprocessing.getOperations()) {
-          if (!node.getName().equals(op.getName())) {
-            process.addImageOperationAction(op);
-          }
-        }
+        preprocessing.getOperations().stream()
+            .filter(op -> !zoomOp.getName().equals(op.getName()))
+            .forEach(process::addImageOperationAction);
       }
+
       actionsInView.put(ActionW.PREPROCESSING.cmd(), process);
     }
   }
 
-  private static ArrayList<GraphicLayer> readXmlModel(
-      ViewCanvas<DicomImageElement> view, GraphicModel graphicModel) {
-    ArrayList<GraphicLayer> layers = new ArrayList<>();
-    int k = 0;
-    for (GraphicLayer layer : graphicModel.getLayers()) {
-      layer.setName(
-          Optional.ofNullable(layer.getName()).orElseGet(layer.getType()::getDefaultName)
-              + " [DICOM]"); // NON-NLS
-      layer.setLocked(true);
-      layer.setSerializable(false);
-      layer.setLevel(270 + k++);
-      layers.add(layer);
-    }
+  // ========== Records ==========
 
-    for (Graphic g : graphicModel.getModels()) {
-      AbstractGraphicModel.addGraphicToModel(view, g.getLayer(), g);
-    }
-    return layers;
-  }
-
-  private static ArrayList<GraphicLayer> readGraphicAnnotation(
-      ViewCanvas<DicomImageElement> view, PresentationStateReader reader, DicomImageElement img) {
-    Map<String, Object> actionsInView = view.getActionsInView();
-
-    ArrayList<GraphicLayer> layers = null;
-    Attributes attributes = reader.getDicomObject();
-    if (attributes != null) {
-      String imgSop = TagD.getTagValue(img, Tag.SOPInstanceUID, String.class);
-      int dicomFrame = 1;
-      if (img.getKey() instanceof Integer intVal) {
-        dicomFrame = intVal + 1;
-      }
-
-      Sequence gams = attributes.getSequence(Tag.GraphicAnnotationSequence);
-      Sequence layerSeqs = attributes.getSequence(Tag.GraphicLayerSequence);
-
-      if (gams != null && layerSeqs != null) {
-        Map<String, Attributes> glms = new HashMap<>(layerSeqs.size());
-        for (Attributes a : layerSeqs) {
-          glms.put(a.getString(Tag.GraphicLayer), a);
-        }
-        /*
-         * Apply spatial transformations (rotation, flip) AFTER when graphics are in PIXEL mode and BEFORE when
-         * graphics are in DISPLAY mode.
-         */
-        int rotation =
-            (Integer) actionsInView.getOrDefault(PresentationStateReader.TAG_PR_ROTATION, 0);
-        boolean flip =
-            (Boolean) actionsInView.getOrDefault(PresentationStateReader.TAG_PR_FLIP, false);
-        Rectangle area = (Rectangle) actionsInView.get(ActionW.CROP.cmd());
-        Rectangle2D modelArea = view.getViewModel().getModelArea();
-        double width = area == null ? modelArea.getWidth() : area.getWidth();
-        double height = area == null ? modelArea.getHeight() : area.getHeight();
-        AffineTransform inverse = null;
-        if (rotation != 0 || flip) {
-          double offsetX = area == null ? 0.0 : area.getX() / area.getWidth();
-          double offsetY = area == null ? 0.0 : area.getY() / area.getHeight();
-          // Create inverse transformation for display coordinates (will convert in real
-          // coordinates)
-          inverse = AffineTransform.getTranslateInstance(offsetX, offsetY);
-          if (flip) {
-            inverse.scale(-1.0, 1.0);
-            inverse.translate(-1.0, 0.0);
-          }
-          if (rotation != 0) {
-            inverse.rotate(Math.toRadians(rotation), 0.5, 0.5);
-          }
-        }
-
-        layers = new ArrayList<>();
-
-        for (Attributes gram : gams) {
-          String graphicLayerName = gram.getString(Tag.GraphicLayer);
-          Attributes glm = glms.get(graphicLayerName);
-          if (glm == null
-              || !DicomObjectUtil.isImageFrameApplicableToReferencedImageSequence(
-                  DicomObjectUtil.getSequence(gram, Tag.ReferencedImageSequence),
-                  Tag.ReferencedFrameNumber,
-                  imgSop,
-                  dicomFrame,
-                  false)) {
-            continue;
-          }
-
-          GraphicLayer layer = new DefaultLayer(LayerType.DICOM_PR);
-          layer.setName(graphicLayerName + " [DICOM]"); // NON-NLS
-          layer.setSerializable(false);
-          layer.setLocked(true);
-          layer.setSelectable(false);
-          layer.setLevel(310 + glm.getInt(Tag.GraphicLayerOrder, 0));
-          layers.add(layer);
-
-          Integer grayVal =
-              DicomUtils.getIntegerFromDicomElement(
-                  glm, Tag.GraphicLayerRecommendedDisplayGrayscaleValue, null);
-          int[] colorRgb =
-              CIELab.dicomLab2rgb(
-                  DicomUtils.getIntArrayFromDicomElement(
-                      glm, Tag.GraphicLayerRecommendedDisplayCIELabValue, null));
-          if (colorRgb.length == 0) {
-            colorRgb =
-                DicomUtils.getIntArrayFromDicomElement(
-                    glm, Tag.GraphicLayerRecommendedDisplayRGBValue, null);
-            if (colorRgb == null && grayVal == null) {
-              Color c =
-                  Optional.ofNullable(MeasureTool.viewSetting.getLineColor()).orElse(Color.YELLOW);
-              colorRgb = new int[] {c.getRed(), c.getGreen(), c.getBlue()};
-            }
-          }
-
-          Color rgbColor = DicomObjectUtil.getRGBColor(grayVal == null ? 255 : grayVal, colorRgb);
-
-          Sequence gos = gram.getSequence(Tag.GraphicObjectSequence);
-
-          if (gos != null) {
-            for (Attributes go : gos) {
-              Graphic graphic;
-              try {
-                graphic =
-                    PrGraphicUtil.buildGraphic(
-                        go, rgbColor, false, width, height, true, inverse, false);
-                if (graphic != null) {
-                  AbstractGraphicModel.addGraphicToModel(view, layer, graphic);
-                }
-              } catch (InvalidShapeException e) {
-                LOGGER.error("Cannot create graphic: " + e.getMessage(), e);
-              }
-            }
-          }
-
-          Sequence txos = gram.getSequence(Tag.TextObjectSequence);
-          if (txos != null) {
-            for (Attributes txo : txos) {
-              Attributes style = txo.getNestedDataset(Tag.LineStyleSequence);
-              Float thickness = DicomUtils.getFloatFromDicomElement(style, Tag.LineThickness, 1.0f);
-              if (style != null) {
-                int[] rgb = CIELab.dicomLab2rgb(style.getInts(Tag.PatternOnColorCIELabValue));
-                rgbColor = DicomObjectUtil.getRGBColor(0xFFFF, rgb);
-              }
-
-              String[] textLines =
-                  EscapeChars.convertToLines(txo.getString(Tag.UnformattedTextValue));
-              // MATRIX not implemented
-              boolean isDisp =
-                  "DISPLAY".equalsIgnoreCase(txo.getString(Tag.BoundingBoxAnnotationUnits));
-              float[] topLeft = txo.getFloats(Tag.BoundingBoxTopLeftHandCorner);
-              float[] bottomRight = txo.getFloats(Tag.BoundingBoxBottomRightHandCorner);
-              Rectangle2D rect = null;
-              if (topLeft != null && bottomRight != null) {
-                if (topLeft[0] > bottomRight[0]) {
-                  float b = topLeft[0];
-                  topLeft[0] = bottomRight[0];
-                  bottomRight[0] = b;
-                }
-                if (topLeft[1] > bottomRight[1]) {
-                  float b = topLeft[1];
-                  topLeft[1] = bottomRight[1];
-                  bottomRight[1] = b;
-                }
-                rect =
-                    new Rectangle2D.Double(
-                        topLeft[0],
-                        topLeft[1],
-                        bottomRight[0] - topLeft[0],
-                        bottomRight[1] - topLeft[1]);
-                if (isDisp) {
-                  rect.setRect(
-                      rect.getX() * width,
-                      rect.getY() * height,
-                      rect.getWidth() * width,
-                      rect.getHeight() * height);
-                  if (inverse != null) {
-                    float[] dstPt1 = new float[2];
-                    float[] dstPt2 = new float[2];
-                    inverse.transform(topLeft, 0, dstPt1, 0, 1);
-                    inverse.transform(bottomRight, 0, dstPt2, 0, 1);
-                    rect.setFrameFromDiagonal(
-                        dstPt1[0] * width,
-                        dstPt1[1] * height,
-                        dstPt2[0] * width,
-                        dstPt2[1] * height);
-                  }
-                }
-              }
-
-              float[] anchor = txo.getFloats(Tag.AnchorPoint);
-              if (anchor != null && anchor.length == 2) {
-                // MATRIX not implemented
-                boolean disp =
-                    "DISPLAY".equalsIgnoreCase(txo.getString(Tag.AnchorPointAnnotationUnits));
-                double x = disp ? anchor[0] * width : anchor[0];
-                double y = disp ? anchor[1] * height : anchor[1];
-                Point2D.Double ptAnchor = new Point2D.Double(x, y);
-                /*
-                 * Use the center of the box. Do not follow DICOM specs: displaying the bounding box
-                 * even the text doesn't match. Does not make sense!
-                 */
-                Point2D.Double ptBox =
-                    rect == null
-                        ? ptAnchor
-                        : new Point2D.Double(rect.getCenterX(), rect.getCenterY());
-                if (!PrGraphicUtil.getBooleanValue(txo, Tag.AnchorPointVisibility)) {
-                  ptAnchor = null;
-                }
-                if (ptAnchor != null && ptAnchor.equals(ptBox)) {
-                  ptBox = new Point2D.Double(ptAnchor.getX() + 20, ptAnchor.getY() + 50);
-                }
-
-                try {
-                  List<Point2D> pts = new ArrayList<>(2);
-                  pts.add(ptAnchor);
-                  pts.add(ptBox);
-                  Graphic g = new AnnotationGraphic().buildGraphic(pts);
-                  g.setPaint(rgbColor);
-                  g.setLineThickness(thickness);
-                  g.setLabelVisible(Boolean.TRUE);
-                  g.setLabel(textLines, view);
-                  AbstractGraphicModel.addGraphicToModel(view, layer, g);
-                } catch (InvalidShapeException e) {
-                  LOGGER.error("Cannot create annotation: " + e.getMessage(), e);
-                }
-              } else if (rect != null) {
-                try {
-                  Point2D point = new Point2D.Double(rect.getMinX(), rect.getMinY());
-                  AbstractGraphic pt =
-                      (AbstractGraphic)
-                          new PointGraphic().buildGraphic(Collections.singletonList(point));
-                  pt.setLineThickness(thickness);
-                  pt.setLabelVisible(Boolean.TRUE);
-                  AbstractGraphicModel.addGraphicToModel(view, layer, pt);
-                  pt.setShape(null, null);
-                  pt.setLabel(textLines, view, point);
-                } catch (InvalidShapeException e) {
-                  LOGGER.error("Cannot create annotation: " + e.getMessage(), e);
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-    return layers;
-  }
-
-  /** Indicate if the graphic is to be filled in */
-  public static void deleteDicomLayers(List<GraphicLayer> layers, GraphicModel graphicManager) {
-    if (layers != null) {
-      for (GraphicLayer layer : layers) {
-        graphicManager.deleteByLayer(layer);
-      }
-    }
-  }
-
-  public static ViewButton buildPrSelection(
-      final View2d view, MediaSeries<DicomImageElement> series, DicomImageElement img) {
-    if (view != null && series != null && img != null) {
-      List<PRSpecialElement> prList = DicomModel.getPrSpecialElements(series, img);
-      if (!prList.isEmpty()) {
-        Object oldPR = view.getActionValue(ActionW.PR_STATE.cmd());
-        if (oldPR == null
-            && !view.getEventManager().getOptions().getBooleanProperty(PR_APPLY, false)) {
-          oldPR = ActionState.NoneLabel.NONE_SERIES;
-          view.setActionsInView(ActionW.PR_STATE.cmd(), oldPR);
-        }
-        if (!ActionState.NoneLabel.NONE_SERIES.equals(oldPR)) {
-          // Set the previous selected value, otherwise set the more recent PR by default
-          view.setPresentationState(!prList.contains(oldPR) ? prList.getFirst() : oldPR, true);
-        }
-
-        int offset = series.size(null) > 1 ? 2 : 1;
-        final Object[] items = new Object[prList.size() + offset];
-        items[0] = ActionState.NoneLabel.NONE;
-        if (offset == 2) {
-          items[1] = ActionState.NoneLabel.NONE_SERIES;
-        }
-        for (int i = offset; i < items.length; i++) {
-          items[i] = prList.get(i - offset);
-        }
-        ViewButton prButton =
-            new ViewButton(
-                (invoker, x, y) -> {
-                  Object pr = view.getActionValue(ActionW.PR_STATE.cmd());
-                  JPopupMenu popupMenu = new JPopupMenu();
-                  TitleMenuItem itemTitle = new TitleMenuItem(ActionW.PR_STATE.getTitle());
-                  popupMenu.add(itemTitle);
-                  popupMenu.addSeparator();
-                  ButtonGroup groupButtons = new ButtonGroup();
-
-                  for (Object dcm : items) {
-                    final RadioMenuItem menuItem =
-                        new RadioMenuItem(dcm.toString(), null, dcm, dcm == pr);
-                    menuItem.addActionListener(
-                        e -> {
-                          if (e.getSource() instanceof RadioMenuItem item) {
-                            Object val = item.getUserObject();
-                            view.setPresentationState(val, false);
-                          }
-                        });
-                    groupButtons.add(menuItem);
-                    popupMenu.add(menuItem);
-                  }
-                  popupMenu.show(invoker, x, y);
-                },
-                ResourceUtil.getIcon(OtherIcon.IMAGE_PRESENTATION).derive(24, 24),
-                ActionW.PR_STATE.getTitle());
-
-        prButton.setVisible(true);
-        return prButton;
-      }
-    }
-    return null;
-  }
-
-  public static PrDicomObject getPrDicomObject(Object prElement) {
-    PRSpecialElement pr = null;
-    if (prElement instanceof PRSpecialElement specialElement) {
-      pr = specialElement;
-    }
-    return pr == null ? null : pr.getPrDicomObject();
-  }
+  private record TransformationContext(double width, double height, AffineTransform inverse) {}
 }

@@ -151,14 +151,14 @@ public abstract class AbstractGraphic extends DefaultUUID implements Graphic {
 
   @Override
   public void setPts(List<Point2D> pts) {
-    this.pts =
-        Optional.ofNullable(pts)
-            .orElseGet(
-                () ->
-                    new ArrayList<>(
-                        Optional.ofNullable(getPtsNumber())
-                            .filter(v -> v >= 0)
-                            .orElse(DEFAULT_PTS_SIZE)));
+    if (pts == null) {
+      // Initialize with appropriate capacity based on expected points
+      int capacity =
+          Optional.ofNullable(getPtsNumber()).filter(n -> n > 0).orElse(DEFAULT_PTS_SIZE);
+      this.pts = new ArrayList<>(capacity);
+    } else {
+      this.pts = new ArrayList<>(pts);
+    }
   }
 
   @Override

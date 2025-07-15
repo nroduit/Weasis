@@ -675,6 +675,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
     ViewButton prButton = PRManager.buildPrSelection(this, series, img);
     getViewButtons().removeIf(b -> b == null || ActionW.PR_STATE.getTitle().equals(b.getName()));
     if (prButton != null) {
+      prButton.setVisible(true);
       getViewButtons().add(prButton);
     } else if (oldPR instanceof PRSpecialElement) {
       setPresentationState(null, true);

@@ -207,14 +207,22 @@ public final class Transform2Dicom {
                           .getParamValue(RotationOp.OP_NAME, RotationOp.P_ROTATE))
               .orElse(0);
       rotationAngle = rotationAngle % 360;
-      if (rotationAngle == 0 || rotationAngle == 180) {
-        offset = new Point2D.Double(crop.getX(), crop.getY());
-      } else {
+      if (rotationAngle == 90 || rotationAngle == 270) {
         double factor = 2.0; // work only with 90 and 270 degrees
         offset = new Point2D.Double(crop.getX() * factor, crop.getY() * factor);
+      } else {
+        offset = new Point2D.Double(crop.getX(), crop.getY());
       }
     }
     String prUid = UIDUtils.createUID();
+
+    // Set these attributes to determine the PR soapInstanceUID
+    String photometricInterpretation =
+        imageInfo.getAttributes().getString(Tag.PhotometricInterpretation, null);
+    attrs.setString(Tag.PhotometricInterpretation, VR.CS, photometricInterpretation);
+    int samplesPerPixel = imageInfo.getAttributes().getInt(Tag.SamplesPerPixel, 1);
+    attrs.setInt(Tag.SamplesPerPixel, VR.US, samplesPerPixel);
+
     File outputFile = new File(exportDirDicom, prUid);
     DicomPrSerializer.writePresentation(
         grModel, attrs, outputFile, seriesInstanceUID, prUid, offset);

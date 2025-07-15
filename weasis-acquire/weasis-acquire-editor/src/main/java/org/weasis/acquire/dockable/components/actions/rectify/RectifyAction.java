@@ -143,14 +143,14 @@ public class RectifyAction extends AbstractAcquireAction {
       view.getGraphicManager().deleteByLayerType(LayerType.DICOM_PR);
       applyGraphicsTransformation(view, null, getAffineTransform(imageInfo, false));
 
-      // Force dirty value, rotation is always apply in post process
+      // Force dirty value, rotation is always applied in post-process
       imageInfo.getCurrentValues().setCropZone(null);
       imageInfo.getNextValues().setCropZone(currentCropArea.getShape().getBounds());
       view.setActionsInView(ActionW.ROTATION.cmd(), 0);
       view.setActionsInView(ActionW.FLIP.cmd(), false);
       imageInfo.getPostProcessOpManager().setParamValue(MaskOp.OP_NAME, MaskOp.P_SHOW, false);
       imageInfo.applyFinalProcessing(view);
-      view.getImage().setTag(TagW.ThumbnailPath, null);
+      imageInfo.getImage().setTag(TagW.ThumbnailPath, null);
       Panner<?> panner = view.getPanner();
       if (panner != null) {
         panner.updateImage();
