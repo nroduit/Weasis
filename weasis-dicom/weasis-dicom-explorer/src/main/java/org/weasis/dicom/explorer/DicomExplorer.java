@@ -994,6 +994,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
 
   private void updateSplitSeries(Series<?> dcmSeries) {
     MediaSeriesGroup study = model.getParent(dcmSeries, DicomModel.study);
+    MediaSeriesGroup patient = model.getParent(dcmSeries, DicomModel.patient);
     // In case the Series has been replaced (split number = -1) and removed
     if (study == null) {
       return;
@@ -1002,6 +1003,15 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
     List<Series<?>> list = getSplitSeries(dcmSeries);
 
     List<SeriesPane> seriesList = study2series.computeIfAbsent(study, k -> new ArrayList<>());
+    if (isSelectedPatient(patient)) {
+      if (modelStudy.getIndexOf(study) < 0) {
+        modelStudy.addElement(study);
+      }
+      if (!selectedPatient.isStudyVisible(study)) {
+        selectedPatient.addPane(studyPane);
+        selectedPatient.revalidate();
+      }
+    }
     boolean addSeries = selectedPatient.isStudyVisible(study);
     boolean repaintStudy = false;
     for (Series<?> dicomSeries : list) {
