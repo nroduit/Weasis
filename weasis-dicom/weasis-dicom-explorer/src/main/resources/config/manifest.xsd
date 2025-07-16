@@ -185,6 +185,8 @@
     <xsd:attribute name="SeriesDescription" type="dicomVrLO"/>
     <xsd:attribute name="SeriesNumber" type="dicomVrIS"/>
     <xsd:attribute name="Modality" type="dicomVrCS"/>
+    <xsd:attribute name="SeriesDate" type="dicomVrDA"/>
+    <xsd:attribute name="SeriesTime" type="dicomVrTM"/>
     <xsd:attribute name="WadoTransferSyntaxUID" type="xsd:string"/>
     <xsd:attribute name="WadoCompressionRate" type="xsd:integer"/>
     <xsd:attribute name="DirectDownloadThumbnail" type="xsd:string"/>
@@ -192,6 +194,8 @@
   <xsd:complexType name="Instance">
     <xsd:attribute name="SOPInstanceUID" type="dicomVrUI"
       use="required"/>
+    <xsd:attribute name="SOPClassUID" type="dicomVrUI"
+                   use="required"/>
     <xsd:attribute name="InstanceNumber" type="dicomVrIS"/>
     <xsd:attribute name="DirectDownloadFile" type="xsd:string"/>
   </xsd:complexType>
