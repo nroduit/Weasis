@@ -38,7 +38,6 @@ import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
 import javax.xml.transform.Source;
 import javax.xml.transform.stax.StAXSource;
-import javax.xml.transform.stream.StreamSource;
 import javax.xml.validation.Schema;
 import javax.xml.validation.SchemaFactory;
 import javax.xml.validation.Validator;
@@ -337,20 +336,14 @@ public class DownloadManager {
       SchemaFactory schemaFactory = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
       try {
         Schema schema =
-            schemaFactory.newSchema(
-                new Source[] {
-                  new StreamSource(
-                      DownloadManager.class.getResource("/config/wado_query.xsd").toExternalForm()),
-                  new StreamSource(
-                      DownloadManager.class.getResource("/config/manifest.xsd").toExternalForm())
-                });
+            schemaFactory.newSchema(DownloadManager.class.getResource("/config/manifest.xsd"));
         Validator validator = schema.newValidator();
         validator.setProperty(XMLConstants.ACCESS_EXTERNAL_DTD, StringUtil.EMPTY_STRING);
         validator.setProperty(XMLConstants.ACCESS_EXTERNAL_SCHEMA, StringUtil.EMPTY_STRING);
         validator.validate(xmlFile);
-        LOGGER.info("[Validate with XSD schema] wado_query is valid");
+        LOGGER.info("[Validate with XSD schema] the manifest is valid");
       } catch (SAXException e) {
-        LOGGER.error("[Validate with XSD schema] wado_query is NOT valid", e);
+        LOGGER.error("[Validate with XSD schema] the manifest is NOT valid", e);
       } catch (Exception e) {
         LOGGER.error("Error when validate XSD schema.", e);
       }
