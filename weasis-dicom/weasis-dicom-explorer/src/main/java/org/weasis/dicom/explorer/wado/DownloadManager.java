@@ -451,7 +451,8 @@ public class DownloadManager {
         TagUtil.getTagAttribute(xmler, ArcParameters.ADDITIONNAL_PARAMETERS, "");
     String overrideList = TagUtil.getTagAttribute(xmler, ArcParameters.OVERRIDE_TAGS, null);
     String queryMode = TagUtil.getTagAttribute(xmler, "queryMode", null);
-    boolean wadoRs = "DICOM_WEB".equals(queryMode);
+    // TODO replace with enum in library
+    boolean wadoRs = "DICOM_WEB".equals(queryMode); // NON-NLS
     String webLogin = TagUtil.getTagAttribute(xmler, ArcParameters.WEB_LOGIN, null);
     final WadoParameters wadoParameters =
         new WadoParameters(

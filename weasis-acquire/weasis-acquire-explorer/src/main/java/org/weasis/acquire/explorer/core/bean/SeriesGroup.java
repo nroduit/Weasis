@@ -39,10 +39,10 @@ public class SeriesGroup extends DefaultTaggable implements Comparable<SeriesGro
     IMAGE_DATE("Date", "XC"), // NON-NLS
     IMAGE_NAME("Name", "XC"), // NON-NLS
     //    AUDIO("Audio", "AU"),
-    VIDEO_MP2("Video MPEG-4", "XC"),
-    VIDEO_MP4("Video MPEG-2", "XC"),
-    PDF("PDF document", "DOC"),
-    STL("STL 3D model", "M3D");
+    VIDEO_MP2(Messages.getString("video.mpeg4"), "XC"),
+    VIDEO_MP4(Messages.getString("video.mpeg2"), "XC"),
+    PDF(Messages.getString("pdf.document"), "DOC"),
+    STL(Messages.getString("stl.3d.model"), "M3D");
 
     private final String description;
     private final String defaultModality;

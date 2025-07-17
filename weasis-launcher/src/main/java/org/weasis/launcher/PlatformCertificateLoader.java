@@ -23,7 +23,8 @@ public class PlatformCertificateLoader {
   public static void main(String[] args) throws Exception {
     long startTime = System.nanoTime();
     KeyStore mergedTrustStore = setupDefaultSSLContext();
-    System.out.printf("Setup took: %.2f ms%n", (System.nanoTime() - startTime) / 1_000_000.0);
+    System.out.printf(
+        "Setup took: %.2f ms%n", (System.nanoTime() - startTime) / 1_000_000.0); // NON-NLS
 
     printTrustStoreAliases(mergedTrustStore);
   }
@@ -47,7 +48,7 @@ public class PlatformCertificateLoader {
 
   public static KeyStore loadPlatformTrustStore() throws Exception {
     if (SystemInfo.isWindows) {
-      return loadKeyStore("Windows-ROOT", null);
+      return loadKeyStore("Windows-ROOT", null); // NON-NLS
     } else if (SystemInfo.isMacOS) {
       return loadKeyStore("KeychainStore", null);
     } else {
@@ -56,7 +57,9 @@ public class PlatformCertificateLoader {
   }
 
   private static KeyStore loadLinuxTrustStore() throws Exception {
-    String[] TRUSTED_LINUX_PATHS = {"/etc/ssl/certs/java/cacerts", "/etc/pki/java/cacerts"};
+    String[] TRUSTED_LINUX_PATHS = {
+      "/etc/ssl/certs/java/cacerts", "/etc/pki/java/cacerts"
+    }; // NON-NLS
     for (String path : TRUSTED_LINUX_PATHS) {
       if (Files.isReadable(Paths.get(path))) {
         return loadKeyStore(KeyStore.getDefaultType(), path);
@@ -76,7 +79,8 @@ public class PlatformCertificateLoader {
     }
 
     // Load the default trust store
-    return loadKeyStore(KeyStore.getDefaultType(), trustStorePath, "changeit".toCharArray());
+    return loadKeyStore(
+        KeyStore.getDefaultType(), trustStorePath, "changeit".toCharArray()); // NON-NLS
   }
 
   private static KeyStore loadKeyStore(String type, String filePath) throws Exception {
@@ -102,7 +106,7 @@ public class PlatformCertificateLoader {
 
     // Copy all certificates from both input stores to the merged store
     copyCertificates(store1, mergedTrustStore, "");
-    copyCertificates(store2, mergedTrustStore, "java-");
+    copyCertificates(store2, mergedTrustStore, "java-"); // NON-NLS
 
     return mergedTrustStore;
   }
@@ -151,7 +155,7 @@ public class PlatformCertificateLoader {
   }
 
   private static void printTrustStoreAliases(KeyStore trustStore) throws Exception {
-    System.out.println("Merged Trust Store Aliases:");
+    System.out.println("Merged Trust Store Aliases:"); // NON-NLS
     Enumeration<String> aliases = trustStore.aliases();
     while (aliases.hasMoreElements()) {
       System.out.println(" - " + aliases.nextElement());

@@ -216,7 +216,7 @@ public class AcquirePublishDialog extends JDialog {
   }
 
   private JButton createExportButton() {
-    JButton exportButton = new JButton("Export locally");
+    JButton exportButton = new JButton(Messages.getString("export.locally"));
     exportButton.addActionListener(
         _ -> {
           var pref = LocalPersistence.getProperties();

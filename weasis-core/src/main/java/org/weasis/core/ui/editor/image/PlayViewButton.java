@@ -27,7 +27,7 @@ public class PlayViewButton extends ViewButton {
   }
 
   public PlayViewButton(int size, ShowPopup popup) {
-    super(popup, getResizedIcon(ResourceUtil.ActionIcon.EXECUTE, size), "play");
+    super(popup, getResizedIcon(ResourceUtil.ActionIcon.EXECUTE, size), "play"); // NON-NLS
     this.size = size;
   }
 

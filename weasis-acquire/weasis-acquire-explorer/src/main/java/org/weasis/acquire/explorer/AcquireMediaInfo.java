@@ -90,7 +90,9 @@ public class AcquireMediaInfo {
 
   @Override
   public String toString() {
-    return Optional.ofNullable(seriesGroup).map(SeriesGroup::getUID).orElse("Unknown Media");
+    return Optional.ofNullable(seriesGroup)
+        .map(SeriesGroup::getUID)
+        .orElse("Unknown Media"); // NON-NLS
   }
 
   protected static void setContentDateTime(MediaElement media, LocalDateTime dateTime) {

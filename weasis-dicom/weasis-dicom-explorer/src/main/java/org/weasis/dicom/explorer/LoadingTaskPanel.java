@@ -51,7 +51,7 @@ public class LoadingTaskPanel extends JPanel {
       globalStopButton.addActionListener(
           _ -> {
             DownloadManager.stop();
-            message.setText("Stopped");
+            message.setText(Messages.getString("stopped"));
           });
       this.add(globalStopButton);
     } else {

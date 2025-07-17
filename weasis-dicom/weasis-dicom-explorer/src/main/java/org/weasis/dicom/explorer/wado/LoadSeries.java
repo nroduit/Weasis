@@ -254,7 +254,10 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
     if (!DownloadManager.hasRunningTasks()) {
       model.firePropertyChange(
           new ObservableEvent(
-              ObservableEvent.BasicAction.LOADING_GLOBAL_MSG, model, null, "Stopped"));
+              ObservableEvent.BasicAction.LOADING_GLOBAL_MSG,
+              model,
+              null,
+              Messages.getString("stopped")));
     }
   }
 

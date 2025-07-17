@@ -160,7 +160,8 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener, S
     add(tabbedPane, BorderLayout.CENTER);
 
     // Bottom panel with slider
-    JPanel bottomPanel = new JPanel(new MigLayout("fillx, ins 5lp", "[fill]", "[]10lp[]"));
+    JPanel bottomPanel =
+        new JPanel(new MigLayout("fillx, ins 5lp", "[fill]", "[]10lp[]")); // NON-NLS
     bottomPanel.add(slider);
     add(bottomPanel, BorderLayout.SOUTH);
 
@@ -304,7 +305,7 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener, S
         boolean isGroupChecked = tree.getCheckingModel().isPathChecked(groupPath);
 
         // Use group node's toString() as unique key
-        String groupKey = "GROUP_" + groupNode.toString();
+        String groupKey = "GROUP_" + groupNode; // NON-NLS
         nodeSelections.put(groupKey, isGroupChecked);
 
         // Recursively save nested group nodes if any
@@ -357,7 +358,7 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener, S
       DefaultMutableTreeNode childNode = (DefaultMutableTreeNode) parentNode.getChildAt(i);
 
       if (childNode instanceof GroupTreeNode groupNode) {
-        String groupKey = "GROUP_" + groupNode.toString();
+        String groupKey = "GROUP_" + groupNode; // NON-NLS
         Boolean groupSelection = savedSelections.get(groupKey);
 
         if (groupSelection != null) {
@@ -740,7 +741,7 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener, S
   }
 
   private void updatePlanInfo(Plan selectedPlan) {
-    txtRtPlanDoseValue.setText(String.format("%.0f", selectedPlan.getRxDose()));
+    txtRtPlanDoseValue.setText(String.format("%.0f", selectedPlan.getRxDose())); // NON-NLS
   }
 
   private void addIsodosesToTree(Dose planDose) {
@@ -771,7 +772,7 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener, S
     buf.append("<b>").append(layer.getLabel()).append("</b>");
     buf.append(GuiUtils.HTML_BR);
     buf.append(Messages.getString("level")).append(StringUtil.COLON_AND_SPACE);
-    buf.append(String.format("%d%%", layer.getLevel()));
+    buf.append(String.format("%d%%", layer.getLevel())); // NON-NLS
     buf.append(GuiUtils.HTML_BR);
     buf.append(Messages.getString("thickness")).append(StringUtil.COLON_AND_SPACE);
     buf.append(DecFormatter.twoDecimal(layer.getThickness()));
@@ -819,11 +820,11 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener, S
     }
 
     buf.append(Messages.getString("thickness")).append(StringUtil.COLON_AND_SPACE);
-    buf.append(String.format("%s mm", DecFormatter.twoDecimal(region.getThickness())));
+    buf.append(String.format("%s mm", DecFormatter.twoDecimal(region.getThickness()))); // NON-NLS
     buf.append(GuiUtils.HTML_BR);
 
     buf.append(Messages.getString("volume")).append(StringUtil.COLON_AND_SPACE);
-    buf.append(String.format("%s cm³", DecFormatter.fourDecimal(region.getVolume())));
+    buf.append(String.format("%s cm³", DecFormatter.fourDecimal(region.getVolume()))); // NON-NLS
     buf.append(GuiUtils.HTML_BR);
 
     Dvh dvh = region.getDvh();

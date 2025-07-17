@@ -87,11 +87,11 @@ public class ThumbnailRenderer<E extends MediaElement> extends JPanel
         String mime = media.getMimeType();
         if ("application/pdf".equals(mime)) {
           fileIcon = FileIcon.PDF;
-        } else if (mime.startsWith("video")) {
+        } else if (mime.startsWith("video")) { // NON-NLS
           fileIcon = FileIcon.VIDEO;
-        } else if (mime.startsWith("audio")) {
+        } else if (mime.startsWith("audio")) { // NON-NLS
           fileIcon = FileIcon.AUDIO;
-        } else if (mime.equals("application/SLA") || mime.equals("model/stl")) {
+        } else if (mime.equals("application/SLA") || mime.equals("model/stl")) { // NON-NLS
           fileIcon = FileIcon.XML;
         }
         if (fileIcon == null) {
