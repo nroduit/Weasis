@@ -71,7 +71,20 @@ public class EditionTool extends PluginTool implements SeriesViewerListener {
     // Auto-generated method stub
   }
 
-  /** The manager initialize the Annotation panel with the given image data */
+  @Override
+  public void closeDockable() {
+    // Validate the current action because in changingViewContentEvent() the viewer is closed and
+    // has no source image. See #708.
+    AcquireImageInfo old = AcquireManager.getCurrentAcquireImageInfo();
+    ViewCanvas<ImageElement> oldView = AcquireManager.getCurrentView();
+    if (old != null && oldView != null) {
+      AcquireActionButton button = topPanel.getSelected();
+      button.getAcquireAction().validate(old, oldView);
+    }
+
+    super.closeDockable();
+  }
+
   @Override
   public void changingViewContentEvent(SeriesViewerEvent event) {
     EVENT type = event.getEventType();
