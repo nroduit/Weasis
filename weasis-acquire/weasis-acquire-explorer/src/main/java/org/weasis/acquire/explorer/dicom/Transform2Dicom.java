@@ -201,7 +201,7 @@ public final class Transform2Dicom {
     }
     String prUid = UIDUtils.createUID();
 
-    // Set these attributes to determine the PR soapInstanceUID
+    // Set these attributes to determine the PR sopInstanceUID
     String photometricInterpretation =
         imageInfo.getAttributes().getString(Tag.PhotometricInterpretation, null);
     attrs.setString(Tag.PhotometricInterpretation, VR.CS, photometricInterpretation);

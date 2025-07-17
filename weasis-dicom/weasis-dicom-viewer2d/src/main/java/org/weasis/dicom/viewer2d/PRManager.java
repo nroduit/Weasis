@@ -314,6 +314,19 @@ public class PRManager {
         }
       }
     }
+
+    private static void applyAspectRatio(
+        DicomImageElement img, Map<String, Object> actionsInView, double[] aspects) {
+      if (MathUtil.isDifferent(aspects[0], aspects[1])) {
+        double[] pixelSize =
+            aspects[1] < aspects[0]
+                ? new double[] {aspects[0] / aspects[1], 1.0}
+                : new double[] {1.0, aspects[1] / aspects[0]};
+
+        changePixelSize(img, actionsInView, pixelSize);
+        img.setPixelSpacingUnit(Unit.PIXEL);
+      }
+    }
   }
 
   /** Processes display area settings from presentation state. */
@@ -352,6 +365,10 @@ public class PRManager {
           getDisplayLength(brhc[1], ratioY));
 
       return area;
+    }
+
+    private static int getDisplayLength(int length, double ratio) {
+      return (int) Math.ceil(length * ratio - 0.5);
     }
 
     private void applyCropArea(Rectangle area) {
@@ -439,7 +456,7 @@ public class PRManager {
     }
 
     private Map<String, Attributes> createLayerMap(Sequence layerSequence) {
-      Map<String, Attributes> layerMap = new HashMap<>(layerSequence.size());
+      Map<String, Attributes> layerMap = HashMap.newHashMap(layerSequence.size());
       for (Attributes layer : layerSequence) {
         layerMap.put(layer.getString(Tag.GraphicLayer), layer);
       }
@@ -876,23 +893,6 @@ public class PRManager {
       }
     }
     return title.toString();
-  }
-
-  private static int getDisplayLength(int length, double ratio) {
-    return (int) Math.ceil(length * ratio - 0.5);
-  }
-
-  private static void applyAspectRatio(
-      DicomImageElement img, Map<String, Object> actionsInView, double[] aspects) {
-    if (MathUtil.isDifferent(aspects[0], aspects[1])) {
-      double[] pixelSize =
-          aspects[1] < aspects[0]
-              ? new double[] {aspects[0] / aspects[1], 1.0}
-              : new double[] {1.0, aspects[1] / aspects[0]};
-
-      changePixelSize(img, actionsInView, pixelSize);
-      img.setPixelSpacingUnit(Unit.PIXEL);
-    }
   }
 
   private static void changePixelSize(

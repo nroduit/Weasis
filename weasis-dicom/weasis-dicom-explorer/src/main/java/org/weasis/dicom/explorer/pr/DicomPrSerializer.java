@@ -181,7 +181,7 @@ public class DicomPrSerializer {
     writeCommonTags(attributes);
     writeReferences(attributes, serializedModel, parentAttributes.getString(Tag.SOPClassUID));
     writeGraphics(serializedModel, attributes);
-    // writePrivateTags(serializedModel, attributes);
+    writePrivateTags(serializedModel, attributes);
 
     if (saveToFile(outputFile, attributes)) {
       return attributes;
@@ -299,6 +299,11 @@ public class DicomPrSerializer {
     }
   }
 
+  /**
+   * Adds Displayed Area Selection Sequence to the DICOM attributes. See <a
+   * href="https://dicom.nema.org/medical/dicom/current/output/chtml/part03/sect_C.10.4.html#table_C.10-4">C.10-4.
+   * Displayed Area Module Attributes</a>
+   */
   private static void addDisplayedAreaSelectionSequence(
       Attributes attributes, Attributes sourceAttributes) {
     Sequence displayedAreaSeq = attributes.newSequence(Tag.DisplayedAreaSelectionSequence, 1);
