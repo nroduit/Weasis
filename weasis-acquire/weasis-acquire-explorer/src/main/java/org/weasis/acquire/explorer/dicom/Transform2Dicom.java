@@ -15,7 +15,6 @@ import java.io.File;
 import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.Objects;
-import java.util.Optional;
 import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Tag;
 import org.dcm4che3.data.VR;
@@ -29,7 +28,6 @@ import org.weasis.acquire.explorer.AcquireManager;
 import org.weasis.acquire.explorer.AcquireMediaInfo;
 import org.weasis.acquire.explorer.core.bean.SeriesGroup.Type;
 import org.weasis.core.api.image.CropOp;
-import org.weasis.core.api.image.RotationOp;
 import org.weasis.core.api.image.SimpleOpManager;
 import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.api.media.data.ImageElement;
@@ -199,20 +197,7 @@ public final class Transform2Dicom {
         (Rectangle)
             imageInfo.getPostProcessOpManager().getParamValue(CropOp.OP_NAME, CropOp.P_AREA);
     if (crop != null) {
-      int rotationAngle =
-          Optional.ofNullable(
-                  (Integer)
-                      imageInfo
-                          .getPostProcessOpManager()
-                          .getParamValue(RotationOp.OP_NAME, RotationOp.P_ROTATE))
-              .orElse(0);
-      rotationAngle = rotationAngle % 360;
-      if (rotationAngle == 90 || rotationAngle == 270) {
-        double factor = 2.0; // work only with 90 and 270 degrees
-        offset = new Point2D.Double(crop.getX() * factor, crop.getY() * factor);
-      } else {
-        offset = new Point2D.Double(crop.getX(), crop.getY());
-      }
+      offset = new Point2D.Double(crop.getX(), crop.getY());
     }
     String prUid = UIDUtils.createUID();
 
