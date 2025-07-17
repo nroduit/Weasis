@@ -30,7 +30,7 @@
     <weasis.releasenotes>https://github.com/nroduit/Weasis/blob/master/CHANGELOG.md#v461-2025-06-04</weasis.releasenotes>
 
     <felix.framework.version>7.0.5</felix.framework.version>
-    <flatlaf.version>3.6</flatlaf.version>
+    <flatlaf.version>3.6.1</flatlaf.version>
     <miglayout.version>11.4.2</miglayout.version>
     <xz.version>1.10</xz.version>
 
@@ -59,11 +59,11 @@
     <xml.bind-api.version>4.0.2</xml.bind-api.version>
     <joml.version>1.10.8</joml.version>
     <jogamp.version>2.5.0</jogamp.version>
-    <jackson.version>2.19.0</jackson.version>
+    <jackson.version>2.19.1</jackson.version>
     <scribejava.version>8.3.3</scribejava.version>
     <zip4j.version>2.11.5</zip4j.version>
 
-    <junit-bom.version>5.13.1</junit-bom.version>
+    <junit-bom.version>6.0.0-M1</junit-bom.version>
     <mockito.version>5.18.0</mockito.version>
     <junit-pioneer.version>2.3.0</junit-pioneer.version>
 
