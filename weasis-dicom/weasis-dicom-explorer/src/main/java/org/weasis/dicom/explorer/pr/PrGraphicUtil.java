@@ -17,8 +17,10 @@ import java.awt.geom.Path2D;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Tag;
 import org.dcm4che3.img.data.CIELab;
@@ -595,9 +597,64 @@ public class PrGraphicUtil {
 
   // ========== Data Records ==========
 
-  private record PointData(Point2D point, float[] rawPoints) {}
+  private record PointData(Point2D point, float[] rawPoints) {
 
-  private record LineData(Point2D start, Point2D end, float[] rawPoints) {}
+    @Override
+    public boolean equals(Object o) {
+      if (o == null || getClass() != o.getClass()) {
+        return false;
+      }
+      PointData pointData = (PointData) o;
+      return Objects.equals(point(), pointData.point())
+          && Objects.deepEquals(rawPoints(), pointData.rawPoints());
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(point(), Arrays.hashCode(rawPoints()));
+    }
+
+    @Override
+    public String toString() {
+      return "PointData{" // NON-NLS
+          + "point=" // NON-NLS
+          + point()
+          + ", rawPoints=" // NON-NLS
+          + Arrays.toString(rawPoints())
+          + '}';
+    }
+  }
+
+  private record LineData(Point2D start, Point2D end, float[] rawPoints) {
+
+    @Override
+    public boolean equals(Object o) {
+      if (o == null || getClass() != o.getClass()) {
+        return false;
+      }
+      LineData lineData = (LineData) o;
+      return Objects.equals(end(), lineData.end())
+          && Objects.equals(start(), lineData.start())
+          && Objects.deepEquals(rawPoints(), lineData.rawPoints());
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(start(), end(), Arrays.hashCode(rawPoints()));
+    }
+
+    @Override
+    public String toString() {
+      return "LineData{" // NON-NLS
+          + "start=" // NON-NLS
+          + start()
+          + ", end=" // NON-NLS
+          + end()
+          + ", rawPoints=" // NON-NLS
+          + Arrays.toString(rawPoints())
+          + '}';
+    }
+  }
 
   private record PolylineData(List<Point2D> points, float[] rawPoints) {
     public boolean isClosed(boolean isDcmSR) {
@@ -606,12 +663,101 @@ public class PrGraphicUtil {
       }
       return points.getFirst().equals(points.getLast());
     }
+
+    @Override
+    public boolean equals(Object o) {
+      if (o == null || getClass() != o.getClass()) {
+        return false;
+      }
+      PolylineData that = (PolylineData) o;
+      return Objects.deepEquals(rawPoints(), that.rawPoints())
+          && Objects.equals(points(), that.points());
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(points(), Arrays.hashCode(rawPoints()));
+    }
+
+    @Override
+    public String toString() {
+      return "PolylineData{" // NON-NLS
+          + "points=" // NON-NLS
+          + points()
+          + ", rawPoints=" // NON-NLS
+          + Arrays.toString(rawPoints())
+          + '}';
+    }
   }
 
-  private record RectangleData(Point2D topLeft, Point2D bottomRight, float[] rawPoints) {}
+  private record RectangleData(Point2D topLeft, Point2D bottomRight, float[] rawPoints) {
+
+    @Override
+    public boolean equals(Object o) {
+      if (o == null || getClass() != o.getClass()) {
+        return false;
+      }
+      RectangleData that = (RectangleData) o;
+      return Objects.equals(topLeft(), that.topLeft())
+          && Objects.deepEquals(rawPoints(), that.rawPoints())
+          && Objects.equals(bottomRight(), that.bottomRight());
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(topLeft(), bottomRight(), Arrays.hashCode(rawPoints()));
+    }
+
+    @Override
+    public String toString() {
+      return "RectangleData{" // NON-NLS
+          + "topLeft=" // NON-NLS
+          + topLeft()
+          + ", bottomRight=" // NON-NLS
+          + bottomRight()
+          + ", rawPoints=" // NON-NLS
+          + Arrays.toString(rawPoints())
+          + '}';
+    }
+  }
 
   private record EllipseData(
-      Point2D major1, Point2D major2, Point2D minor1, Point2D minor2, float[] rawPoints) {}
+      Point2D major1, Point2D major2, Point2D minor1, Point2D minor2, float[] rawPoints) {
+
+    @Override
+    public boolean equals(Object o) {
+      if (o == null || getClass() != o.getClass()) {
+        return false;
+      }
+      EllipseData that = (EllipseData) o;
+      return Objects.equals(major1(), that.major1())
+          && Objects.equals(major2(), that.major2())
+          && Objects.equals(minor1(), that.minor1())
+          && Objects.equals(minor2(), that.minor2())
+          && Objects.deepEquals(rawPoints(), that.rawPoints());
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(major1(), major2(), minor1(), minor2(), Arrays.hashCode(rawPoints()));
+    }
+
+    @Override
+    public String toString() {
+      return "EllipseData{" // NON-NLS
+          + "major1=" // NON-NLS
+          + major1()
+          + ", major2=" // NON-NLS
+          + major2()
+          + ", minor1=" // NON-NLS
+          + minor1()
+          + ", minor2=" // NON-NLS
+          + minor2()
+          + ", rawPoints=" // NON-NLS
+          + Arrays.toString(rawPoints())
+          + '}';
+    }
+  }
 
   private record EllipseGeometry(double cx, double cy, double rx, double ry, double rotation) {}
 
