@@ -1,5 +1,45 @@
 # Changelog
 
+## [v4.6.2](https://github.com/nroduit/Weasis/tree/v4.6.2) (2025-07-18)
+
+[Full Changelog](https://github.com/nroduit/Weasis/compare/v4.6.1...v4.6.2)
+
+**Implemented enhancements:**
+
+- Enhance DICOM Presentation State Management [\#707](https://github.com/nroduit/Weasis/issues/707)
+- Downloading with a manifest: allows sorting series by time with identical series numbers [\#703](https://github.com/nroduit/Weasis/issues/703)
+- Allow splitting multiphase 4D series into separate series for each phase [\#701](https://github.com/nroduit/Weasis/issues/701)
+- Update to weasis-dicom-tools and dcm4che 5.34.0 [\#698](https://github.com/nroduit/Weasis/issues/698)
+- Add icon to bottom right of series thumbnail for DICOM PR and KO objects [\#695](https://github.com/nroduit/Weasis/issues/695)
+- Add "Export locally" button to Dicomizer publish feature for DICOM files [\#690](https://github.com/nroduit/Weasis/issues/690)
+- Enhance series download management with WADO in Dicom Explorer [\#689](https://github.com/nroduit/Weasis/issues/689)
+- Preserve DICOM RT region selection when changing RT set or RT STRUCT in RT Tools [\#688](https://github.com/nroduit/Weasis/issues/688)
+- Sorting DICOM SR and PDF encapsulated at the end of the list in Dicom Explorer [\#685](https://github.com/nroduit/Weasis/issues/685)
+- Support for Additional Encapsulated File Types in DICOMizer \(PDF, STL, MPEG-2, MPEG-4\) [\#684](https://github.com/nroduit/Weasis/issues/684)
+- Support POLYGON type in DICOM GSPS objects [\#671](https://github.com/nroduit/Weasis/issues/671)
+- Coarse and fine control of window and level sliders using shift, control, or alt keys [\#634](https://github.com/nroduit/Weasis/issues/634)
+- Allow for minimum and maximum levels instead of level and window [\#632](https://github.com/nroduit/Weasis/issues/632)
+- Disable Check for Updates and Bug Report Menu [\#323](https://github.com/nroduit/Weasis/issues/323)
+
+**Fixed bugs:**
+
+- Dicomizer: image editing operations \(rotate/crop\) not always applied correctly [\#708](https://github.com/nroduit/Weasis/issues/708)
+- Dicomizer: vertical slider in main thumbnail list does not update after changing series [\#704](https://github.com/nroduit/Weasis/issues/704)
+- Regional format not persistent in language settings when switching languages [\#699](https://github.com/nroduit/Weasis/issues/699)
+- No image view opens when initially loading hidden series \(KO, PR, SEG, RT\) [\#697](https://github.com/nroduit/Weasis/issues/697)
+- View closes unexpectedly during patient reconciliation when elements differ between XML manifest and DICOM files [\#696](https://github.com/nroduit/Weasis/issues/696)
+- DICOM Presentation State graphics sometimes appear shifted [\#694](https://github.com/nroduit/Weasis/issues/694)
+- Unreported errors during DICOM publishing: images not sent but marked as successful in Dicomizer [\#692](https://github.com/nroduit/Weasis/issues/692)
+- Fix missing mandatory DICOM attribute in Dicomizer: "Image Type" tag not present in exported images [\#691](https://github.com/nroduit/Weasis/issues/691)
+- DICOM RT graphics are not displayed [\#687](https://github.com/nroduit/Weasis/issues/687)
+- Deselecting key image with filter enabled leads to mismatch when refreshing series in views [\#686](https://github.com/nroduit/Weasis/issues/686)
+- Dicom Explorer patient selection changes unexpectedly when loading large remote exams [\#683](https://github.com/nroduit/Weasis/issues/683)
+
+**Closed issues:**
+
+- Wont launch [\#649](https://github.com/nroduit/Weasis/issues/649)
+- Sort by anatomic location by default [\#601](https://github.com/nroduit/Weasis/issues/601)
+
 ## [v4.6.1](https://github.com/nroduit/Weasis/tree/v4.6.1) (2025-06-04)
 
 [Full Changelog](https://github.com/nroduit/Weasis/compare/v4.6.0...v4.6.1)
@@ -12,6 +52,7 @@
 - Update weasis-dicom-tools 5.33.1.2 [\#677](https://github.com/nroduit/Weasis/issues/677)
 - Update to Flatlaf 3.6 [\#676](https://github.com/nroduit/Weasis/issues/676)
 - Auth0 Web Node Authentication Support [\#660](https://github.com/nroduit/Weasis/issues/660)
+- feat\(auth\): add audience option to auth registration [\#661](https://github.com/nroduit/Weasis/pull/661) ([chrisjhchung](https://github.com/chrisjhchung))
 
 **Fixed bugs:**
 
