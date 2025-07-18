@@ -16,9 +16,6 @@
 - Preserve DICOM RT region selection when changing RT set or RT STRUCT in RT Tools [\#688](https://github.com/nroduit/Weasis/issues/688)
 - Sorting DICOM SR and PDF encapsulated at the end of the list in Dicom Explorer [\#685](https://github.com/nroduit/Weasis/issues/685)
 - Support for Additional Encapsulated File Types in DICOMizer \(PDF, STL, MPEG-2, MPEG-4\) [\#684](https://github.com/nroduit/Weasis/issues/684)
-- Support POLYGON type in DICOM GSPS objects [\#671](https://github.com/nroduit/Weasis/issues/671)
-- Coarse and fine control of window and level sliders using shift, control, or alt keys [\#634](https://github.com/nroduit/Weasis/issues/634)
-- Allow for minimum and maximum levels instead of level and window [\#632](https://github.com/nroduit/Weasis/issues/632)
 - Disable Check for Updates and Bug Report Menu [\#323](https://github.com/nroduit/Weasis/issues/323)
 
 **Fixed bugs:**
