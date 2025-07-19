@@ -116,6 +116,12 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> {
     setAction(newLevelAction());
     setAction(newRotateAction());
     setAction(newZoomAction());
+    setAction(newSliceEnableAction());
+    setAction(newSliceXAction());
+    setAction(newSliceYAction());
+    setAction(newSliceZAction());
+    setAction(newSliceXNormAction());
+    setAction(newSliceYNormAction());
     setAction(newMipTypeOption());
     setAction(newMipDepthAction());
     setAction(newOpacityAction());
@@ -290,6 +296,177 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> {
       }
     };
   }
+
+  private ToggleButtonListener newSliceEnableAction() {
+    return new ToggleButtonListener(ActionW.SLICE_ENABLE, false) {
+      @Override
+      public void actionPerformed(boolean selected) {
+        firePropertyChange(
+                ActionW.SYNCH.cmd(),
+                null,
+                new SynchEvent(
+                        getSelectedViewPane(),
+                        getActionW().cmd(),
+                        selected));
+      }
+    };
+  }
+
+  protected SliderChangeListener newSliceXAction() {
+
+    return new SliderChangeListener(
+            ActionW.SLICE_X,
+            0.0,
+            3.0,
+            0.5,
+            true,
+            0.3,
+            300) {
+
+      @Override
+      public void stateChanged(BoundedRangeModel model) {
+        firePropertyChange(
+                ActionW.SYNCH.cmd(),
+                null,
+                new SynchEvent(
+                        getSelectedViewPane(),
+                        getActionW().cmd(),
+                        toModelValue(model.getValue()),
+                        model.getValueIsAdjusting()));
+      }
+
+      @Override
+      public String getValueToDisplay() {
+        return DecFormatter.twoDecimal(getRealValue());
+      }
+
+    };
+  }
+
+  protected SliderChangeListener newSliceYAction() {
+
+    return new SliderChangeListener(
+            ActionW.SLICE_Y,
+            0.0,
+            3.0,
+            0.5,
+            true,
+            0.3,
+            300) {
+
+      @Override
+      public void stateChanged(BoundedRangeModel model) {
+        firePropertyChange(
+                ActionW.SYNCH.cmd(),
+                null,
+                new SynchEvent(
+                        getSelectedViewPane(),
+                        getActionW().cmd(),
+                        toModelValue(model.getValue()),
+                        model.getValueIsAdjusting()));
+      }
+
+      @Override
+      public String getValueToDisplay() {
+        return DecFormatter.twoDecimal(getRealValue());
+      }
+
+    };
+  }
+
+  protected SliderChangeListener newSliceZAction() {
+
+    return new SliderChangeListener(
+            ActionW.SLICE_Z,
+            0.0,
+            3.0,
+            0.5,
+            true,
+            0.3,
+            300) {
+
+      @Override
+      public void stateChanged(BoundedRangeModel model) {
+        firePropertyChange(
+                ActionW.SYNCH.cmd(),
+                null,
+                new SynchEvent(
+                        getSelectedViewPane(),
+                        getActionW().cmd(),
+                        toModelValue(model.getValue()),
+                        model.getValueIsAdjusting()));
+      }
+
+      @Override
+      public String getValueToDisplay() {
+        return DecFormatter.twoDecimal(getRealValue());
+      }
+
+    };
+  }
+
+  protected SliderChangeListener newSliceXNormAction() {
+
+    return new SliderChangeListener(
+            ActionW.SLICE_X_NORM,
+            0.0,
+            360.0,
+            0.0,
+            true,
+            0.3,
+            360) {
+
+      @Override
+      public void stateChanged(BoundedRangeModel model) {
+        firePropertyChange(
+                ActionW.SYNCH.cmd(),
+                null,
+                new SynchEvent(
+                        getSelectedViewPane(),
+                        getActionW().cmd(),
+                        toModelValue(model.getValue()),
+                        model.getValueIsAdjusting()));
+      }
+
+      @Override
+      public String getValueToDisplay() {
+        return DecFormatter.twoDecimal(getRealValue());
+      }
+
+    };
+  }
+
+  protected SliderChangeListener newSliceYNormAction() {
+
+    return new SliderChangeListener(
+            ActionW.SLICE_Y_NORM,
+            0.0,
+            360.0,
+            0.0,
+            true,
+            0.3,
+            360) {
+
+      @Override
+      public void stateChanged(BoundedRangeModel model) {
+        firePropertyChange(
+                ActionW.SYNCH.cmd(),
+                null,
+                new SynchEvent(
+                        getSelectedViewPane(),
+                        getActionW().cmd(),
+                        toModelValue(model.getValue()),
+                        model.getValueIsAdjusting()));
+      }
+
+      @Override
+      public String getValueToDisplay() {
+        return DecFormatter.twoDecimal(getRealValue());
+      }
+
+    };
+  }
+
 
   @Override
   protected SliderChangeListener newRotateAction() {
