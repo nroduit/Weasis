@@ -810,13 +810,12 @@ public class PRManager {
     private void setupInitialPrState() {
       Object currentPr = view.getActionValue(ActionW.PR_STATE.cmd());
 
-      if (currentPr == null
-          && !view.getEventManager().getOptions().getBooleanProperty(PR_APPLY, false)) {
+      if (!view.getEventManager().getOptions().getBooleanProperty(PR_APPLY, false)) {
         currentPr = ActionState.NoneLabel.NONE_SERIES;
         view.setActionsInView(ActionW.PR_STATE.cmd(), currentPr);
       }
 
-      if (currentPr == null || currentPr instanceof PRSpecialElement) {
+      if (currentPr == null || currentPr.equals(ActionState.NoneLabel.NONE) || currentPr instanceof PRSpecialElement) {
         // Set the previous selected value, otherwise set the more recent PR by default
         var selectedPr = prList.contains(currentPr) ? currentPr : prList.getFirst();
         view.setPresentationState(selectedPr, true);
