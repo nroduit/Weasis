@@ -194,8 +194,7 @@
   <xsd:complexType name="Instance">
     <xsd:attribute name="SOPInstanceUID" type="dicomVrUI"
       use="required"/>
-    <xsd:attribute name="SOPClassUID" type="dicomVrUI"
-                   use="required"/>
+    <xsd:attribute name="SOPClassUID" type="dicomVrUI"/>
     <xsd:attribute name="InstanceNumber" type="dicomVrIS"/>
     <xsd:attribute name="DirectDownloadFile" type="xsd:string"/>
   </xsd:complexType>
