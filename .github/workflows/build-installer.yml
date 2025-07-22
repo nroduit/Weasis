@@ -47,7 +47,6 @@ jobs:
 
   jpackage:
     env:
-      JDK_MODULES: "java.base,java.compiler,java.datatransfer,java.net.http,java.desktop,java.logging,java.management,java.prefs,java.xml,jdk.localedata,jdk.charsets,jdk.crypto.ec,jdk.crypto.cryptoki,jdk.jdwp.agent,java.sql"
       NAME: "Weasis"
       IDENTIFIER: "org.weasis.launcher"
       WEASIS_INPUT: "native-dist/weasis-native/bin-dist"
@@ -65,6 +64,14 @@ jobs:
           - { os: windows-latest, platform: x64, wsystem: windows, warc: x86-64 }
 
     steps:
+      - name: Set JDK modules based on OS
+        shell: bash
+        run: |
+          if [ "${{ matrix.wsystem }}" = "windows" ]; then
+            echo "JDK_MODULES=java.base,java.compiler,java.datatransfer,java.net.http,java.desktop,java.logging,java.management,java.prefs,java.xml,jdk.localedata,jdk.charsets,jdk.crypto.ec,jdk.crypto.cryptoki,jdk.crypto.mscapi,jdk.jdwp.agent,java.sql" >> $GITHUB_ENV
+          else
+            echo "JDK_MODULES=java.base,java.compiler,java.datatransfer,java.net.http,java.desktop,java.logging,java.management,java.prefs,java.xml,jdk.localedata,jdk.charsets,jdk.crypto.ec,jdk.crypto.cryptoki,jdk.jdwp.agent,java.sql" >> $GITHUB_ENV
+          fi
       - name: Set output version from build
         shell: bash
         run: |

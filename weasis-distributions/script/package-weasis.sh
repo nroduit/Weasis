@@ -10,7 +10,8 @@ PACKAGE=YES
 # Options
 # jdk.localedata => other locale (en_us) data are included in the jdk.localedata
 # jdk.jdwp.agent => package for debugging agent
-JDK_MODULES="java.base,java.compiler,java.datatransfer,java.net.http,java.desktop,java.logging,java.management,java.prefs,java.xml,jdk.localedata,jdk.charsets,jdk.crypto.ec,jdk.crypto.cryptoki,jdk.jdwp.agent,java.sql"
+# Base modules for all platforms
+JDK_MODULES_BASE="java.base,java.compiler,java.datatransfer,java.net.http,java.desktop,java.logging,java.management,java.prefs,java.xml,jdk.localedata,jdk.charsets,jdk.crypto.ec,jdk.crypto.cryptoki,jdk.jdwp.agent,java.sql"
 NAME="Weasis"
 IDENTIFIER="org.weasis.launcher"
 
@@ -116,6 +117,16 @@ if [ -z "$ARC_OS" ] ; then
 fi
 machine=$(echo "${ARC_OS}" | cut -d'-' -f1)
 arc=$(echo "${ARC_OS}" | cut -d'-' -f2-3)
+
+# Set JDK modules based on the platform
+if [ "$machine" = "windows" ] ; then
+  JDK_MODULES="${JDK_MODULES_BASE},jdk.crypto.mscapi"
+else
+  JDK_MODULES="${JDK_MODULES_BASE}"
+fi
+
+echo "Platform: $machine"
+echo "JDK Modules: $JDK_MODULES"
 
 if [ "$machine" = "windows" ] ; then
   INPUT_PATH_UNIX=$(cygpath -u "$INPUT_PATH")
