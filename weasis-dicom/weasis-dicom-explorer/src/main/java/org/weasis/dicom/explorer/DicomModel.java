@@ -811,7 +811,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
                 if (t == null) {
                   buildThumbnail(dicomSeries);
                 } else {
-                  t.reBuildThumbnail(MEDIA_POSITION.MIDDLE);
+                  GuiExecutor.execute(() -> t.reBuildThumbnail(MEDIA_POSITION.MIDDLE));
                 }
               }
             }
