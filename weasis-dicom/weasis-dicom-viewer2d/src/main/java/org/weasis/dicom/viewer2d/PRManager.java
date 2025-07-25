@@ -815,7 +815,9 @@ public class PRManager {
         view.setActionsInView(ActionW.PR_STATE.cmd(), currentPr);
       }
 
-      if (currentPr == null || currentPr.equals(ActionState.NoneLabel.NONE) || currentPr instanceof PRSpecialElement) {
+      if (currentPr == null
+          || currentPr.equals(ActionState.NoneLabel.NONE)
+          || currentPr instanceof PRSpecialElement) {
         // Set the previous selected value, otherwise set the more recent PR by default
         var selectedPr = prList.contains(currentPr) ? currentPr : prList.getFirst();
         view.setPresentationState(selectedPr, true);

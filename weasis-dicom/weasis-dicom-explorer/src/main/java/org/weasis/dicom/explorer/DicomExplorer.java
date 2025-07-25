@@ -280,17 +280,17 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
     StudyPane studyPane = getStudyPane(study);
     if (studyPane == null) {
       studyPane = new StudyPane(study);
-      List<StudyPane> studies = patient2study.get(model.getParent(study, DicomModel.patient));
-      if (studies != null) {
-        int index = Collections.binarySearch(studies, studyPane, DicomSorter.STUDY_COMPARATOR);
-        if (index < 0) {
-          index = -(index + 1);
-        }
-        if (position != null) {
-          position[0] = index;
-        }
-        studies.add(index, studyPane);
+      List<StudyPane> studies =
+          patient2study.computeIfAbsent(
+              model.getParent(study, DicomModel.patient), _ -> new ArrayList<>());
+      int index = Collections.binarySearch(studies, studyPane, DicomSorter.STUDY_COMPARATOR);
+      if (index < 0) {
+        index = -(index + 1);
       }
+      if (position != null) {
+        position[0] = index;
+      }
+      studies.add(index, studyPane);
     } else if (position != null) {
       position[0] = -1;
     }
@@ -571,17 +571,17 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
     SeriesPane seriesPane = getSeriesPane(series);
     if (seriesPane == null) {
       seriesPane = new SeriesPane(series);
-      List<SeriesPane> seriesList = study2series.get(model.getParent(series, DicomModel.study));
-      if (seriesList != null) {
-        int index = Collections.binarySearch(seriesList, seriesPane, DicomSorter.SERIES_COMPARATOR);
-        if (index < 0) {
-          index = -(index + 1);
-        }
-        if (position != null) {
-          position[0] = index;
-        }
-        seriesList.add(index, seriesPane);
+      List<SeriesPane> seriesList =
+          study2series.computeIfAbsent(
+              model.getParent(series, DicomModel.study), _ -> new ArrayList<>());
+      int index = Collections.binarySearch(seriesList, seriesPane, DicomSorter.SERIES_COMPARATOR);
+      if (index < 0) {
+        index = -(index + 1);
       }
+      if (position != null) {
+        position[0] = index;
+      }
+      seriesList.add(index, seriesPane);
     } else if (position != null) {
       position[0] = -1;
     }
@@ -1110,12 +1110,10 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
       }
     }
 
-    List<StudyPane> studies = patient2study.computeIfAbsent(patient, k -> new ArrayList<>());
     Object selectedStudy = modelStudy.getSelectedItem();
     int[] positionStudy = new int[1];
     StudyPane studyPane = createStudyPaneInstance(study, positionStudy);
 
-    List<SeriesPane> seriesList = study2series.computeIfAbsent(study, k -> new ArrayList<>());
     int[] positionSeries = new int[1];
     createSeriesPaneInstance(series, positionSeries);
     if (isSelectedPatient(patient) && positionSeries[0] != -1) {
@@ -1127,7 +1125,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
         // if modelStudy has the value "All studies"
         if (ALL_STUDIES.equals(selectedStudy)) {
           selectedPatient.removeAll();
-          for (StudyPane s : studies) {
+          for (StudyPane s : patient2study.getOrDefault(patient, List.of())) {
             selectedPatient.addPane(s);
           }
           selectedPatient.revalidate();
@@ -1139,6 +1137,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
                 .getSystemPreferences()
                 .getIntProperty(Thumbnail.KEY_SIZE, Thumbnail.DEFAULT_SIZE);
         studyPane.clearAllSeries();
+        List<SeriesPane> seriesList = study2series.getOrDefault(study, List.of());
         for (int i = 0; i < seriesList.size(); i++) {
           studyPane.addPane(seriesList.get(i), i, thumbnailSize);
         }
