@@ -57,6 +57,7 @@ import org.weasis.core.api.media.data.MediaSeries.MEDIA_POSITION;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.MediaSeriesGroupNode;
 import org.weasis.core.api.media.data.Series;
+import org.weasis.core.api.media.data.SeriesEvent;
 import org.weasis.core.api.media.data.SeriesThumbnail;
 import org.weasis.core.api.media.data.TagView;
 import org.weasis.core.api.media.data.TagW;
@@ -812,6 +813,15 @@ public class DicomModel implements TreeModel, DataExplorerModel {
                   buildThumbnail(dicomSeries);
                 } else {
                   GuiExecutor.execute(() -> t.reBuildThumbnail(MEDIA_POSITION.MIDDLE));
+                }
+
+                if (dicomSeries.isSuitableFor3d()) {
+                  firePropertyChange(
+                      new ObservableEvent(
+                          ObservableEvent.BasicAction.UPDATE,
+                          dicomSeries,
+                          null,
+                          new SeriesEvent(SeriesEvent.Action.UPDATE, dicomSeries, null)));
                 }
               }
             }
