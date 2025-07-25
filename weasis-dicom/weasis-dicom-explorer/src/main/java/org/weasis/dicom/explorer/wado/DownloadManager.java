@@ -677,7 +677,10 @@ public class DownloadManager {
                     xmler, TagD.getKeywordFromTag(Tag.InstanceNumber, null), null);
             SopInstance sop = seriesInstanceList.getSopInstance(sopInstanceUID, frame);
             if (sop == null) {
-              sop = new SopInstance(sopInstanceUID, frame);
+              String sopClassUID =
+                  TagUtil.getTagAttribute(
+                      xmler, TagD.getKeywordFromTag(Tag.SOPClassUID, null), null);
+              sop = new SopInstance(sopInstanceUID, sopClassUID, frame);
               sop.setDirectDownloadFile(
                   TagUtil.getTagAttribute(xmler, TagW.DirectDownloadFile.getKeyword(), null));
               seriesInstanceList.addSopInstance(sop);
