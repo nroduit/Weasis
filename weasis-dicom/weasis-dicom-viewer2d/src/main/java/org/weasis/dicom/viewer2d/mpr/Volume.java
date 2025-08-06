@@ -24,9 +24,11 @@ import javax.swing.JProgressBar;
 import javax.swing.SwingUtilities;
 import org.dcm4che3.data.Tag;
 import org.joml.Matrix3d;
+import org.joml.Matrix4d;
 import org.joml.Quaterniond;
 import org.joml.Vector3d;
 import org.joml.Vector3i;
+import org.joml.Vector4d;
 import org.opencv.core.CvType;
 import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.gui.util.GuiUtils;
@@ -45,17 +47,18 @@ public abstract class Volume<T extends Number> {
   protected final Vector3d translation;
   protected final Quaterniond rotation;
   protected final Vector3i size;
-  protected final Vector3d pixelRatio;
+  protected Vector3d pixelRatio;
   protected boolean negativeDirRow;
   protected boolean negativeDirCol;
   protected double minValue;
   protected double maxValue;
-  protected final OriginalStack stack;
-  protected final int cvType;
+  protected OriginalStack stack;
+  protected int cvType;
   protected int byteDepth = 1;
   protected MappedByteBuffer mappedBuffer;
   protected File dataFile;
   protected final JProgressBar progressBar;
+  protected final boolean isSigned;
 
   Volume(int sizeX, int sizeY, int sizeZ, JProgressBar progressBar) {
     this(sizeX, sizeY, sizeZ, true, progressBar);
@@ -74,6 +77,7 @@ public abstract class Volume<T extends Number> {
     this.maxValue = Double.MAX_VALUE;
     this.stack = null;
     this.cvType = initCVType(isSigned);
+    this.isSigned = isSigned;
   }
 
   Volume(OriginalStack stack, JProgressBar progressBar) {
@@ -86,8 +90,9 @@ public abstract class Volume<T extends Number> {
     this.negativeDirCol = false;
     this.stack = stack;
     int depth = stack.getFirstImage().getImage().depth();
+    this.isSigned = depth == CvType.CV_8S || depth == CvType.CV_16S || depth == CvType.CV_32S;
     this.cvType =
-        initCVType(depth == CvType.CV_8S || depth == CvType.CV_16S || depth == CvType.CV_32S);
+        initCVType(isSigned);
     this.byteDepth = CvType.ELEM_SIZE(cvType); // FIXME: color image
     switch (stack.getPlane()) {
       case AXIAL:
@@ -559,5 +564,124 @@ public abstract class Volume<T extends Number> {
   protected double interpolate(T v0, T v1, double factor) {
     return (v0 == null ? 0 : v0.doubleValue()) * (1 - factor)
         + (v1 == null ? 0 : v1.doubleValue()) * factor;
+  }
+
+  public Volume<Short> transformVolume() {
+    // Works if stack is axial ?
+
+    Matrix3d m = getAffineTransform(stack.getFirstImage());
+    Vector3d row = new Vector3d(stack.getFistSliceGeometry().getRow());
+    Vector3d col = new Vector3d(stack.getFistSliceGeometry().getColumn());
+
+    Matrix4d shear = new Matrix4d(1.0, 0.0, 0.0, 0.0,
+            0.0, 1.0, -Math.tan(Math.PI/2.0 - Math.acos(col.z()))/5.0, 0.0,
+            0.0, 0.0, 1.0, 0.0,
+            0.0, 0.0, 0.0, 1.0);
+
+    //shear.rotate
+
+    // Compute new volume size with transformation
+    // (0;0;0) (xmax;0;0) (xmax;0;zmax) (0;0;zmax) (xmax;ymax;0) (xmax;ymax;zmax) (0;ymax;zmax) (0;ymax;0)
+
+    Vector4d p1 = new Vector4d(0.0, 0.0, 0.0, 1.0);
+    Vector4d p2 = new Vector4d(size.x, 0.0, 0.0, 1.0);
+    Vector4d p3 = new Vector4d(size.x, 0.0, size.z, 1.0);
+    Vector4d p4 = new Vector4d(0.0, 0.0, size.z, 1.0);
+    Vector4d p5 = new Vector4d(size.x, size.y, 0.0, 1.0);
+    Vector4d p6 = new Vector4d(size.x, size.y, size.z, 1.0);
+    Vector4d p7 = new Vector4d(0.0, size.y, size.z, 1.0);
+    Vector4d p8 = new Vector4d(0.0, size.y, 0.0, 1.0);
+
+
+    List<Vector4d> angles = new ArrayList();
+    angles.add(p1);
+    angles.add(p2);
+    angles.add(p3);
+    angles.add(p4);
+    angles.add(p5);
+    angles.add(p6);
+    angles.add(p7);
+    angles.add(p8);
+
+    shear.transform(p1);
+    shear.transform(p2);
+    shear.transform(p3);
+    shear.transform(p4);
+    shear.transform(p5);
+    shear.transform(p6);
+    shear.transform(p7);
+    shear.transform(p8);
+
+    Vector3i min = new Vector3i(10000);
+    Vector3i max = new Vector3i(0);
+    for (Vector4d v : angles) {
+      if (v.x < min.x) {
+        min.x = (int) Math.round(v.x);
+      }
+      if (v.x > max.x) {
+        max.x = (int) Math.round(v.x);
+      }
+      if (v.y < min.y) {
+        min.y = (int) Math.round(v.y);
+      }
+      if (v.y > max.y) {
+        max.y = (int) Math.round(v.y);
+      }
+      if (v.z < min.z) {
+        min.z = (int) Math.round(v.z);
+      }
+      if (v.z > max.z) {
+        max.z = (int) Math.round(v.z);
+      }
+    }
+
+    int translateZ = 0;
+    int translateY = 0;
+
+    // Ramener à 0 si min > 0
+    if (min.x < 0) {
+      max.x += -min.x;
+      min.x = 0;
+    }
+    if (min.y < 0) {
+      translateY = -min.y;
+      max.y += -min.y;
+      min.y = 0;
+    }
+    if (min.z < 0) {
+      translateZ = -min.z;
+      max.z += -min.z;
+      min.z = 0;
+    }
+
+    //shear.set(3, 2, max.z);
+
+    Volume<Short> vs = new VolumeShort(max.x, max.y, max.z, isSigned, progressBar);
+    vs.stack = this.stack;
+    vs.pixelRatio = this.pixelRatio;
+    vs.negativeDirCol = this.negativeDirCol;
+    vs.negativeDirRow = this.negativeDirRow;
+    vs.minValue = this.minValue;
+    vs.maxValue = this.maxValue;
+    vs.cvType = this.cvType;
+    vs.byteDepth = this.byteDepth;
+
+    shear.translate(new Vector3d(0, translateY, translateZ));
+
+    // Loop over each voxel, transform coordinates, copy value
+    for (int i = 0 ; i < size.x ; i++) {
+      for (int j = 0 ; j < size.y ; j++) {
+        for (int k = 0 ; k < size.z ; k++) {
+          Vector4d v = new Vector4d(i, j, k, 1.0);
+          T value = this.getValue(i, j, k);
+          //System.out.println("OLD : (" + v.x + ", " + v.y + ", " + v.z + ") : " + value);
+          shear.transform(v);
+          vs.setValue((int) Math.round(v.x), (int) Math.round(v.y), (int) Math.round(v.z), (Short) value, null);
+          //System.out.println("NEW : (" + (int) Math.round(v.x) + ", " + (int) Math.round(v.y) + ", " + (int) Math.round(v.z) + ") : " + value);
+        }
+      }
+    }
+
+    return vs;
   }
 }
