@@ -91,8 +91,7 @@ public abstract class Volume<T extends Number> {
     this.stack = stack;
     int depth = stack.getFirstImage().getImage().depth();
     this.isSigned = depth == CvType.CV_8S || depth == CvType.CV_16S || depth == CvType.CV_32S;
-    this.cvType =
-        initCVType(isSigned);
+    this.cvType = initCVType(isSigned);
     this.byteDepth = CvType.ELEM_SIZE(cvType); // FIXME: color image
     switch (stack.getPlane()) {
       case AXIAL:
@@ -566,122 +565,225 @@ public abstract class Volume<T extends Number> {
         + (v1 == null ? 0 : v1.doubleValue()) * factor;
   }
 
-  public Volume<Short> transformVolume() {
-    // Works if stack is axial ?
+  public double calculateCorrectShearFactor() {
+    // Get actual gantry tilt from DICOM if available
+    Double dicomTilt = getOriginalGantryTilt();
+    double shearFactor = 0.0;
 
-    Matrix3d m = getAffineTransform(stack.getFirstImage());
-    Vector3d row = new Vector3d(stack.getFistSliceGeometry().getRow());
-    Vector3d col = new Vector3d(stack.getFistSliceGeometry().getColumn());
+    if (dicomTilt != null && MathUtil.isDifferentFromZero(dicomTilt)) {
+      // Use actual DICOM gantry tilt (already in degrees)
+      // Convert to radians and take tangent
+      shearFactor = Math.tan(Math.toRadians(dicomTilt));
+    } else {
+      // Calculate from geometry vectors
+      Vector3d col = new Vector3d(stack.getFistSliceGeometry().getColumn());
 
-    Matrix4d shear = new Matrix4d(1.0, 0.0, 0.0, 0.0,
-            0.0, 1.0, -Math.tan(Math.PI/2.0 - Math.acos(col.z()))/5.0, 0.0,
-            0.0, 0.0, 1.0, 0.0,
-            0.0, 0.0, 0.0, 1.0);
+      // The tilt angle is the deviation from vertical (90 degrees)
+      double colZ = Math.max(-1.0, Math.min(1.0, col.z()));
+      double tiltAngleRad = Math.acos(Math.abs(colZ)); // Angle from Z-axis
 
-    //shear.rotate
-
-    // Compute new volume size with transformation
-    // (0;0;0) (xmax;0;0) (xmax;0;zmax) (0;0;zmax) (xmax;ymax;0) (xmax;ymax;zmax) (0;ymax;zmax) (0;ymax;0)
-
-    Vector4d p1 = new Vector4d(0.0, 0.0, 0.0, 1.0);
-    Vector4d p2 = new Vector4d(size.x, 0.0, 0.0, 1.0);
-    Vector4d p3 = new Vector4d(size.x, 0.0, size.z, 1.0);
-    Vector4d p4 = new Vector4d(0.0, 0.0, size.z, 1.0);
-    Vector4d p5 = new Vector4d(size.x, size.y, 0.0, 1.0);
-    Vector4d p6 = new Vector4d(size.x, size.y, size.z, 1.0);
-    Vector4d p7 = new Vector4d(0.0, size.y, size.z, 1.0);
-    Vector4d p8 = new Vector4d(0.0, size.y, 0.0, 1.0);
-
-
-    List<Vector4d> angles = new ArrayList();
-    angles.add(p1);
-    angles.add(p2);
-    angles.add(p3);
-    angles.add(p4);
-    angles.add(p5);
-    angles.add(p6);
-    angles.add(p7);
-    angles.add(p8);
-
-    shear.transform(p1);
-    shear.transform(p2);
-    shear.transform(p3);
-    shear.transform(p4);
-    shear.transform(p5);
-    shear.transform(p6);
-    shear.transform(p7);
-    shear.transform(p8);
-
-    Vector3i min = new Vector3i(10000);
-    Vector3i max = new Vector3i(0);
-    for (Vector4d v : angles) {
-      if (v.x < min.x) {
-        min.x = (int) Math.round(v.x);
+      // For gantry tilt, we want the complement angle (deviation from vertical)
+      if (tiltAngleRad > Math.PI / 2) {
+        tiltAngleRad = Math.PI - tiltAngleRad;
       }
-      if (v.x > max.x) {
-        max.x = (int) Math.round(v.x);
-      }
-      if (v.y < min.y) {
-        min.y = (int) Math.round(v.y);
-      }
-      if (v.y > max.y) {
-        max.y = (int) Math.round(v.y);
-      }
-      if (v.z < min.z) {
-        min.z = (int) Math.round(v.z);
-      }
-      if (v.z > max.z) {
-        max.z = (int) Math.round(v.z);
+
+      shearFactor = Math.tan(tiltAngleRad);
+
+      // Apply sign based on the direction of tilt
+      if (col.z() < 0) {
+        shearFactor = -shearFactor;
       }
     }
 
-    int translateZ = 0;
+    // Scale by pixel spacing ratio to account for anisotropic voxels
+    double pixelSpacingRatio = pixelRatio.y / pixelRatio.z;
+    shearFactor *= pixelSpacingRatio;
+
+    return shearFactor;
+  }
+
+  private Vector3i[] calculateTransformedBounds(Matrix4d transform) {
+    // Transform all 8 corners of the original volume
+    Vector4d[] corners = {
+      new Vector4d(0.0, 0.0, 0.0, 1.0),
+      new Vector4d(size.x, 0.0, 0.0, 1.0),
+      new Vector4d(size.x, 0.0, size.z, 1.0),
+      new Vector4d(0.0, 0.0, size.z, 1.0),
+      new Vector4d(size.x, size.y, 0.0, 1.0),
+      new Vector4d(size.x, size.y, size.z, 1.0),
+      new Vector4d(0.0, size.y, size.z, 1.0),
+      new Vector4d(0.0, size.y, 0.0, 1.0)
+    };
+
+    for (Vector4d corner : corners) {
+      transform.transform(corner);
+    }
+
+    Vector3i min = new Vector3i(Integer.MAX_VALUE);
+    Vector3i max = new Vector3i(Integer.MIN_VALUE);
+
+    for (Vector4d corner : corners) {
+      int x = (int) Math.round(corner.x);
+      int y = (int) Math.round(corner.y);
+      int z = (int) Math.round(corner.z);
+
+      min.x = Math.min(min.x, x);
+      min.y = Math.min(min.y, y);
+      min.z = Math.min(min.z, z);
+
+      max.x = Math.max(max.x, x);
+      max.y = Math.max(max.y, y);
+      max.z = Math.max(max.z, z);
+    }
+
+    return new Vector3i[] {min, max};
+  }
+
+  private void copyVolumeProperties(Volume<Short> target) {
+    target.stack = this.stack;
+    target.pixelRatio = this.pixelRatio;
+    target.negativeDirCol = this.negativeDirCol;
+    target.negativeDirRow = this.negativeDirRow;
+    target.minValue = this.minValue;
+    target.maxValue = this.maxValue;
+    target.cvType = this.cvType;
+    target.byteDepth = this.byteDepth;
+  }
+
+  protected T getInterpolatedValueFromSource(double x, double y, double z) {
+    // Check bounds in the ORIGINAL volume (this)
+    if (x < 0
+        || x >= this.size.x - 1
+        || y < 0
+        || y >= this.size.y - 1
+        || z < 0
+        || z >= this.size.z - 1) {
+      return null;
+    }
+
+    // Get integer coordinates (floor)
+    int x0 = (int) Math.floor(x);
+    int y0 = (int) Math.floor(y);
+    int z0 = (int) Math.floor(z);
+
+    // Get upper bounds
+    int x1 = Math.min(x0 + 1, this.size.x - 1);
+    int y1 = Math.min(y0 + 1, this.size.y - 1);
+    int z1 = Math.min(z0 + 1, this.size.z - 1);
+
+    // Get fractional parts
+    double fx = x - x0;
+    double fy = y - y0;
+    double fz = z - z0;
+
+    // Get values from ORIGINAL volume (this)
+    T v000 = this.getValue(x0, y0, z0);
+    T v001 = this.getValue(x0, y0, z1);
+    T v010 = this.getValue(x0, y1, z0);
+    T v011 = this.getValue(x0, y1, z1);
+    T v100 = this.getValue(x1, y0, z0);
+    T v101 = this.getValue(x1, y0, z1);
+    T v110 = this.getValue(x1, y1, z0);
+    T v111 = this.getValue(x1, y1, z1);
+
+    // Trilinear interpolation
+    double v00 = interpolate(v000, v100, fx);
+    double v01 = interpolate(v001, v101, fx);
+    double v10 = interpolate(v010, v110, fx);
+    double v11 = interpolate(v011, v111, fx);
+
+    double v0 = v00 * (1 - fy) + v10 * fy;
+    double v1 = v01 * (1 - fy) + v11 * fy;
+
+    double result = v0 * (1 - fz) + v1 * fz;
+
+    return (T) Short.valueOf((short) Math.round(result));
+  }
+
+  public Volume<Short> transformVolume() {
+    // Calculate shear transformation
+
+    double shearFactor = calculateCorrectShearFactor();
+
+    Matrix4d shear =
+        new Matrix4d(
+            1.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1.0,
+            -shearFactor,
+            0.0,
+            0.0,
+            0.0,
+            1.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1.0);
+
+    // Calculate transformed volume bounds
+    Vector3i[] bounds = calculateTransformedBounds(shear);
+    Vector3i min = bounds[0];
+    Vector3i max = bounds[1];
+
+    // Adjust for negative bounds
+    int translateX = 0;
     int translateY = 0;
 
-    // Ramener à 0 si min > 0
+    int translateZ = 0;
+
     if (min.x < 0) {
-      max.x += -min.x;
-      min.x = 0;
+      translateX = -min.x;
+      max.x += translateX;
     }
     if (min.y < 0) {
       translateY = -min.y;
-      max.y += -min.y;
-      min.y = 0;
+      max.y += translateY;
     }
     if (min.z < 0) {
       translateZ = -min.z;
-      max.z += -min.z;
-      min.z = 0;
+      max.z += translateZ;
     }
 
-    //shear.set(3, 2, max.z);
+    // Create transformed volume
+    Volume<Short> transformedVolume = new VolumeShort(max.x, max.y, max.z, isSigned, progressBar);
+    copyVolumeProperties(transformedVolume);
 
-    Volume<Short> vs = new VolumeShort(max.x, max.y, max.z, isSigned, progressBar);
-    vs.stack = this.stack;
-    vs.pixelRatio = this.pixelRatio;
-    vs.negativeDirCol = this.negativeDirCol;
-    vs.negativeDirRow = this.negativeDirRow;
-    vs.minValue = this.minValue;
-    vs.maxValue = this.maxValue;
-    vs.cvType = this.cvType;
-    vs.byteDepth = this.byteDepth;
+    // Create inverse transformation for backward mapping
+    Matrix4d inverseShear = new Matrix4d(shear);
+    inverseShear.invert();
 
-    shear.translate(new Vector3d(0, translateY, translateZ));
+    // Apply translation to inverse matrix
+    Matrix4d translation = new Matrix4d();
+    translation.identity();
+    translation.setTranslation(-translateX, -translateY, -translateZ);
+    inverseShear.mul(translation);
 
-    // Loop over each voxel, transform coordinates, copy value
-    for (int i = 0 ; i < size.x ; i++) {
-      for (int j = 0 ; j < size.y ; j++) {
-        for (int k = 0 ; k < size.z ; k++) {
-          Vector4d v = new Vector4d(i, j, k, 1.0);
-          T value = this.getValue(i, j, k);
-          //System.out.println("OLD : (" + v.x + ", " + v.y + ", " + v.z + ") : " + value);
-          shear.transform(v);
-          vs.setValue((int) Math.round(v.x), (int) Math.round(v.y), (int) Math.round(v.z), (Short) value, null);
-          //System.out.println("NEW : (" + (int) Math.round(v.x) + ", " + (int) Math.round(v.y) + ", " + (int) Math.round(v.z) + ") : " + value);
+    // Fill transformed volume using backward mapping
+    for (int targetX = 0; targetX < transformedVolume.getSizeX(); targetX++) {
+      for (int targetY = 0; targetY < transformedVolume.getSizeY(); targetY++) {
+        for (int targetZ = 0; targetZ < transformedVolume.getSizeZ(); targetZ++) {
+
+          // Transform target coordinates back to source coordinates
+          Vector4d sourceCoord = new Vector4d(targetX, targetY, targetZ, 1.0);
+          inverseShear.transform(sourceCoord);
+
+          // Interpolate from the ORIGINAL volume at these fractional coordinates
+          T interpolatedValue =
+              getInterpolatedValueFromSource(sourceCoord.x, sourceCoord.y, sourceCoord.z);
+
+          if (interpolatedValue != null) {
+            transformedVolume.setValue(targetX, targetY, targetZ, (Short) interpolatedValue, null);
+          }
         }
       }
+
+      updateProgressBar(targetX);
     }
 
-    return vs;
+    return transformedVolume;
   }
 }
