@@ -335,7 +335,9 @@ public class AcquirePublishDialog extends JDialog {
     }
 
     SwingWorker<File, AcquireMediaInfo> dicomizeTask = setupPublishingTask(toPublish, exportDir);
-    ThreadUtil.buildNewSingleThreadExecutor("Dicomize").execute(dicomizeTask); // NON-NLS
+    try (var executor = ThreadUtil.newSingleThreadExecutor("AcquireDicomize")) {
+      executor.execute(dicomizeTask);
+    }
   }
 
   private SwingWorker<File, AcquireMediaInfo> setupPublishingTask(

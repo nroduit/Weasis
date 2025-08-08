@@ -35,7 +35,7 @@ import org.weasis.core.ui.tp.raven.spinner.SpinnerProgress;
 public class ImportPanel extends JPanel {
 
   public static final ExecutorService IMPORT_IMAGES =
-      ThreadUtil.buildNewSingleThreadExecutor("ImportImage");
+      ThreadUtil.newSingleThreadExecutor("ImportImage");
 
   private final JButton importBtn = new JButton(Messages.getString("ImportPanel.import"));
   private final SpinnerProgress progressBar = new SpinnerProgress();

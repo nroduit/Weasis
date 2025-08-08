@@ -61,7 +61,7 @@ public class AcquirePublishPanel extends JPanel {
   private AuthMethod authMethod;
 
   public static final ExecutorService PUBLISH_DICOM =
-      ThreadUtil.buildNewSingleThreadExecutor("Publish Dicom"); // NON-NLS
+      ThreadUtil.newSingleThreadExecutor("AcquirePublishDicom");
 
   public AcquirePublishPanel() {
     publishBtn.addActionListener(

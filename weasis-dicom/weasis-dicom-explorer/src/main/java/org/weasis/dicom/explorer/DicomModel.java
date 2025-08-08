@@ -133,7 +133,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
           TagW.SubseriesInstanceUID,
           new TagView(TagD.getTagFromIDs(Tag.SeriesDescription, Tag.SeriesNumber, Tag.SeriesTime)));
   public static final ExecutorService LOADING_EXECUTOR =
-      ThreadUtil.buildNewSingleThreadExecutor("Dicom Model"); // NON-NLS
+      ThreadUtil.newSingleThreadExecutor("DicomModelLoader");
 
   private static final List<TreeModelNode> modelStructure =
       Arrays.asList(TreeModelNode.ROOT, patient, study, series);

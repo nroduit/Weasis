@@ -309,8 +309,7 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
   private final JComboBox<AbstractDicomNode> comboCallingNode = new JComboBox<>();
   private final JComboBox<CharsetEncoding> comboCharset = new JComboBox<>(CharsetEncoding.values());
   private final DicomListener dicomListener;
-  private final ExecutorService executor =
-      ThreadUtil.buildNewFixedThreadExecutor(3, "Dicom Q/R task"); // NON-NLS
+  private final ExecutorService executor = ThreadUtil.newFixedThreadPool(3, "DicomQueryRetrieve");
   private final JSpinner limitSpinner = new JSpinner();
   private final JSpinner pageSpinner = new JSpinner();
   private QueryProcess process;
