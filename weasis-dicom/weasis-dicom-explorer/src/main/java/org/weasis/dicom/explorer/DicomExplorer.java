@@ -809,7 +809,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
           thumb = createThumbnail(series, model, thumbnailSize);
           series.setTag(TagW.Thumbnail, thumb);
         }
-        Optional.ofNullable(thumb).ifPresent(this::add);
+        Optional.ofNullable(thumb).ifPresent(SeriesPane.this::add);
       }
       String desc = TagD.getTagValue(sequence, Tag.SeriesDescription, String.class);
       label = new JLabel(desc == null ? "" : desc, SwingConstants.CENTER);

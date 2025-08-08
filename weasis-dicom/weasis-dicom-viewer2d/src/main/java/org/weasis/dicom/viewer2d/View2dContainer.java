@@ -505,7 +505,10 @@ public class View2dContainer extends DicomViewerPlugin implements PropertyChange
                               // (require at least one image)
                               view2DPane.setSeries(series, null);
                             }
-                            s.setSliderMinMaxValue(1, series.size(filter), imgIndex + 1);
+                            int max = series.size(filter);
+                            if (max > 0) {
+                              s.setSliderMinMaxValue(1, max, imgIndex + 1);
+                            }
                           });
                 }
               }
