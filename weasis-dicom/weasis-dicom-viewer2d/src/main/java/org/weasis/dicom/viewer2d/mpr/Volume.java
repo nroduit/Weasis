@@ -91,7 +91,8 @@ public abstract class Volume<T extends Number> {
     this.stack = stack;
     int depth = stack.getFirstImage().getImage().depth();
     this.isSigned = depth == CvType.CV_8S || depth == CvType.CV_16S || depth == CvType.CV_32S;
-    this.cvType = initCVType(isSigned);
+    this.cvType =
+        initCVType(isSigned);
     this.byteDepth = CvType.ELEM_SIZE(cvType); // FIXME: color image
     switch (stack.getPlane()) {
       case AXIAL:
@@ -566,34 +567,16 @@ public abstract class Volume<T extends Number> {
   }
 
   public double calculateCorrectShearFactor() {
-    // Get actual gantry tilt from DICOM if available
-    Double dicomTilt = getOriginalGantryTilt();
     double shearFactor = 0.0;
 
-    if (dicomTilt != null && MathUtil.isDifferentFromZero(dicomTilt)) {
-      // Use actual DICOM gantry tilt (already in degrees)
-      // Convert to radians and take tangent
-      shearFactor = Math.tan(Math.toRadians(dicomTilt));
-    } else {
-      // Calculate from geometry vectors
-      Vector3d col = new Vector3d(stack.getFistSliceGeometry().getColumn());
+    // Calculate from geometry vectors
+    Vector3d col = new Vector3d(stack.getFistSliceGeometry().getColumn());
 
-      // The tilt angle is the deviation from vertical (90 degrees)
-      double colZ = Math.max(-1.0, Math.min(1.0, col.z()));
-      double tiltAngleRad = Math.acos(Math.abs(colZ)); // Angle from Z-axis
-
-      // For gantry tilt, we want the complement angle (deviation from vertical)
-      if (tiltAngleRad > Math.PI / 2) {
-        tiltAngleRad = Math.PI - tiltAngleRad;
-      }
-
-      shearFactor = Math.tan(tiltAngleRad);
-
-      // Apply sign based on the direction of tilt
-      if (col.z() < 0) {
-        shearFactor = -shearFactor;
-      }
-    }
+    // The tilt angle is the deviation from vertical
+    // col Z is the cosinus of the angle between the tilt vector and the z axis
+    double colZ = col.z();
+    // Substract the angle from pi/2 to get the angle with the vertical axis
+    shearFactor = Math.tan(Math.PI/2.0 - Math.acos(colZ));
 
     // Scale by pixel spacing ratio to account for anisotropic voxels
     double pixelSpacingRatio = pixelRatio.y / pixelRatio.z;
@@ -605,14 +588,14 @@ public abstract class Volume<T extends Number> {
   private Vector3i[] calculateTransformedBounds(Matrix4d transform) {
     // Transform all 8 corners of the original volume
     Vector4d[] corners = {
-      new Vector4d(0.0, 0.0, 0.0, 1.0),
-      new Vector4d(size.x, 0.0, 0.0, 1.0),
-      new Vector4d(size.x, 0.0, size.z, 1.0),
-      new Vector4d(0.0, 0.0, size.z, 1.0),
-      new Vector4d(size.x, size.y, 0.0, 1.0),
-      new Vector4d(size.x, size.y, size.z, 1.0),
-      new Vector4d(0.0, size.y, size.z, 1.0),
-      new Vector4d(0.0, size.y, 0.0, 1.0)
+            new Vector4d(0.0, 0.0, 0.0, 1.0),
+            new Vector4d(size.x, 0.0, 0.0, 1.0),
+            new Vector4d(size.x, 0.0, size.z, 1.0),
+            new Vector4d(0.0, 0.0, size.z, 1.0),
+            new Vector4d(size.x, size.y, 0.0, 1.0),
+            new Vector4d(size.x, size.y, size.z, 1.0),
+            new Vector4d(0.0, size.y, size.z, 1.0),
+            new Vector4d(0.0, size.y, 0.0, 1.0)
     };
 
     for (Vector4d corner : corners) {
@@ -653,11 +636,11 @@ public abstract class Volume<T extends Number> {
   protected T getInterpolatedValueFromSource(double x, double y, double z) {
     // Check bounds in the ORIGINAL volume (this)
     if (x < 0
-        || x >= this.size.x - 1
-        || y < 0
-        || y >= this.size.y - 1
-        || z < 0
-        || z >= this.size.z - 1) {
+            || x >= this.size.x - 1
+            || y < 0
+            || y >= this.size.y - 1
+            || z < 0
+            || z >= this.size.z - 1) {
       return null;
     }
 
@@ -706,23 +689,10 @@ public abstract class Volume<T extends Number> {
     double shearFactor = calculateCorrectShearFactor();
 
     Matrix4d shear =
-        new Matrix4d(
-            1.0,
-            0.0,
-            0.0,
-            0.0,
-            0.0,
-            1.0,
-            -shearFactor,
-            0.0,
-            0.0,
-            0.0,
-            1.0,
-            0.0,
-            0.0,
-            0.0,
-            0.0,
-            1.0);
+            new Matrix4d(1.0, 0.0, 0.0, 0.0,
+                    0.0, 1.0, -shearFactor, 0.0,
+                    0.0, 0.0, 1.0, 0.0,
+                    0.0, 0.0, 0.0, 1.0);
 
     // Calculate transformed volume bounds
     Vector3i[] bounds = calculateTransformedBounds(shear);
@@ -732,7 +702,6 @@ public abstract class Volume<T extends Number> {
     // Adjust for negative bounds
     int translateX = 0;
     int translateY = 0;
-
     int translateZ = 0;
 
     if (min.x < 0) {
@@ -752,36 +721,28 @@ public abstract class Volume<T extends Number> {
     Volume<Short> transformedVolume = new VolumeShort(max.x, max.y, max.z, isSigned, progressBar);
     copyVolumeProperties(transformedVolume);
 
-    // Create inverse transformation for backward mapping
-    Matrix4d inverseShear = new Matrix4d(shear);
-    inverseShear.invert();
+    shear.translate(translateX, translateY, translateZ);
 
-    // Apply translation to inverse matrix
-    Matrix4d translation = new Matrix4d();
-    translation.identity();
-    translation.setTranslation(-translateX, -translateY, -translateZ);
-    inverseShear.mul(translation);
-
-    // Fill transformed volume using backward mapping
-    for (int targetX = 0; targetX < transformedVolume.getSizeX(); targetX++) {
-      for (int targetY = 0; targetY < transformedVolume.getSizeY(); targetY++) {
-        for (int targetZ = 0; targetZ < transformedVolume.getSizeZ(); targetZ++) {
-
-          // Transform target coordinates back to source coordinates
-          Vector4d sourceCoord = new Vector4d(targetX, targetY, targetZ, 1.0);
-          inverseShear.transform(sourceCoord);
+    // Fill transformed volume from the initial one, transform coordinates and interpolate value
+    for (int i = 0 ; i < size.x ; i++) {
+      for (int j = 0 ; j < size.y ; j++) {
+        for (int k = 0 ; k < size.z ; k++) {
+          // Transform initial coordinates
+          Vector4d coord = new Vector4d(i, j, k, 1.0);
+          shear.transform(coord);
 
           // Interpolate from the ORIGINAL volume at these fractional coordinates
           T interpolatedValue =
-              getInterpolatedValueFromSource(sourceCoord.x, sourceCoord.y, sourceCoord.z);
+                  getInterpolatedValueFromSource(i, j, k);
 
           if (interpolatedValue != null) {
-            transformedVolume.setValue(targetX, targetY, targetZ, (Short) interpolatedValue, null);
+            transformedVolume.setValue((int) Math.round(coord.x), (int) Math.round(coord.y), (int) Math.round(coord.z),
+                    (Short) interpolatedValue, null);
           }
         }
       }
 
-      updateProgressBar(targetX);
+      updateProgressBar(i);
     }
 
     return transformedVolume;
