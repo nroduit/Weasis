@@ -808,13 +808,6 @@ public class DicomModel implements TreeModel, DataExplorerModel {
               }
               if (!DicomModel.isHiddenModality(dicomSeries)) {
                 LoadLocalDicom.seriesPostProcessing(dicomSeries, this);
-                SeriesThumbnail t = (SeriesThumbnail) dicomSeries.getTagValue(TagW.Thumbnail);
-                if (t == null) {
-                  buildThumbnail(dicomSeries);
-                } else {
-                  GuiExecutor.execute(() -> t.reBuildThumbnail(MEDIA_POSITION.MIDDLE));
-                }
-
                 if (dicomSeries.isSuitableFor3d()) {
                   firePropertyChange(
                       new ObservableEvent(

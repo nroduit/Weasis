@@ -116,8 +116,6 @@ public class LoadLocalDicom extends LoadDicom {
       if (series != null) {
         if (!DicomModel.isHiddenModality(series)) {
           seriesPostProcessing(series, dicomModel);
-          dicomModel.buildThumbnail(series);
-
           if (series.isSuitableFor3d()) {
             dicomModel.firePropertyChange(
                 new ObservableEvent(
@@ -158,6 +156,12 @@ public class LoadLocalDicom extends LoadDicom {
           newSeries.setTag(TagW.stepNDimensions, samplingRate);
           Filter<DicomImageElement> samplingFilter = getDicomImageElementFilter(i, samplingRate);
           newSeries.addAll(Filter.makeList(samplingFilter.filter(imageList)));
+          if (i == 0) {
+            SeriesThumbnail thumbnail = (SeriesThumbnail) dicomSeries.getTagValue(TagW.Thumbnail);
+            if (thumbnail != null) {
+              thumbnail.reBuildThumbnail(null, MediaSeries.MEDIA_POSITION.MIDDLE);
+            }
+          }
           dicomModel.firePropertyChange(
               new ObservableEvent(ObservableEvent.BasicAction.UPDATE, dicomModel, null, newSeries));
         }
