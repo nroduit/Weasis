@@ -115,7 +115,11 @@ public class LoadLocalDicom extends LoadDicom {
     for (DicomSeries series : seriesList) {
       if (series != null) {
         if (!DicomModel.isHiddenModality(series)) {
-          seriesPostProcessing(series, dicomModel);
+          boolean split = seriesPostProcessing(series, dicomModel);
+          if (!split) {
+            dicomModel.buildThumbnail(series);
+          }
+
           if (series.isSuitableFor3d()) {
             dicomModel.firePropertyChange(
                 new ObservableEvent(
@@ -129,19 +133,19 @@ public class LoadLocalDicom extends LoadDicom {
     }
   }
 
-  public static void seriesPostProcessing(DicomSeries dicomSeries, DicomModel dicomModel) {
+  public static boolean seriesPostProcessing(DicomSeries dicomSeries, DicomModel dicomModel) {
     Integer step = (Integer) dicomSeries.getTagValue(TagW.stepNDimensions);
     if (step == null || step < 1) {
       int imageCount = dicomSeries.size(null);
       if (imageCount == 0) {
-        return;
+        return false;
       }
       List<DicomImageElement> imageList =
           dicomSeries.copyOfMedias(null, SortSeriesStack.slicePosition);
       int samplingRate = calculateSamplingRateFor4d(imageList);
       dicomSeries.setTag(TagW.stepNDimensions, samplingRate);
       if (samplingRate < 2) {
-        return;
+        return false;
       }
       for (int i = 0; i < samplingRate; i++) {
         DicomImageElement image = imageList.get(i);
@@ -166,7 +170,9 @@ public class LoadLocalDicom extends LoadDicom {
               new ObservableEvent(ObservableEvent.BasicAction.UPDATE, dicomModel, null, newSeries));
         }
       }
+      return true;
     }
+    return false;
   }
 
   private static Filter<DicomImageElement> getDicomImageElementFilter(int index, int size) {

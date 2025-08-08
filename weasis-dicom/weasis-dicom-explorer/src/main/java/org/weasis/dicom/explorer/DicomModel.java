@@ -25,7 +25,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.Properties;
 import java.util.Set;
 import java.util.UUID;
@@ -807,7 +806,11 @@ public class DicomModel implements TreeModel, DataExplorerModel {
                 continue;
               }
               if (!DicomModel.isHiddenModality(dicomSeries)) {
-                LoadLocalDicom.seriesPostProcessing(dicomSeries, this);
+                boolean split = LoadLocalDicom.seriesPostProcessing(dicomSeries, this);
+                if (!split) {
+                  buildThumbnail(dicomSeries);
+                }
+
                 if (dicomSeries.isSuitableFor3d()) {
                   firePropertyChange(
                       new ObservableEvent(
@@ -834,7 +837,6 @@ public class DicomModel implements TreeModel, DataExplorerModel {
               .getIntProperty(Thumbnail.KEY_SIZE, Thumbnail.DEFAULT_SIZE);
       t = DicomExplorer.createThumbnail(dicomSeries, this, thumbnailSize);
       dicomSeries.setTag(TagW.Thumbnail, t);
-      Optional.ofNullable(t).ifPresent(Thumbnail::repaint);
       firePropertyChange(new ObservableEvent(BasicAction.ADD, this, null, dicomSeries));
     }
   }
