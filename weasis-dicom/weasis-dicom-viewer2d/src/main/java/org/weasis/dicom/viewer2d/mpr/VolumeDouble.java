@@ -54,7 +54,6 @@ public class VolumeDouble extends Volume<Double> {
 
     copyPixels(
         width, height, (x, y) -> setValue(x, y, sliceIndex, pixelData[y * width + x], transform));
-    updateProgressBar(sliceIndex);
   }
 
   @Override

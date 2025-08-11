@@ -69,7 +69,6 @@ public class VolumeShort extends Volume<Short> {
 
     copyPixels(
         width, height, (x, y) -> setValue(x, y, sliceIndex, pixelData[y * width + x], transform));
-    updateProgressBar(sliceIndex);
   }
 
   @Override

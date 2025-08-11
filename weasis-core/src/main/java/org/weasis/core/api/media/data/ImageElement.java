@@ -49,7 +49,7 @@ public class ImageElement extends MediaElement {
   private static final Logger LOGGER = LoggerFactory.getLogger(ImageElement.class);
 
   public static final ExecutorService IMAGE_LOADER =
-      ThreadUtil.newSingleThreadExecutor("ImageLoader");
+      ThreadUtil.newManagedImageIOThreadPool("ImageLoader");
 
   private static final NativeCache<ImageElement, PlanarImage> mCache =
       new NativeCache<>(Runtime.getRuntime().maxMemory() / 2) {
