@@ -958,10 +958,7 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
             if (tempFile.getPath().startsWith(AppProperties.APP_TEMP_DIR.getPath())) {
               dicomReader.getFileCache().setOriginalTempFile(tempFile);
             }
-            final DicomMediaIO reader = dicomReader;
-            // Necessary to wait the runnable because the dicomSeries must be added to the
-            // dicomModel before reaching done() of SwingWorker
-            GuiExecutor.invokeAndWait(() -> updateUI(reader, firstImage));
+            updateUI(dicomReader, firstImage);
           } else if (reading == Reading.ERROR) {
             errors.incrementAndGet();
           }
@@ -1156,11 +1153,6 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
         dicomModel.applySplittingRules(dicomSeries, result.getSpecialElement());
       }
 
-      Thumbnail thumb = (Thumbnail) dicomSeries.getTagValue(TagW.Thumbnail);
-      if (thumb != null) {
-        thumb.repaint();
-      }
-
       MediaSeriesGroup patient = dicomModel.getParent(dicomSeries, DicomModel.patient);
       if (patient != null) {
         PluginOpeningStrategy open = openingStrategy;
@@ -1168,6 +1160,14 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
           open.openViewerPlugin(patient, dicomModel, dicomSeries);
         }
       }
+
+      GuiExecutor.execute(
+          () -> {
+            Thumbnail thumb = (Thumbnail) dicomSeries.getTagValue(TagW.Thumbnail);
+            if (thumb != null) {
+              thumb.repaint();
+            }
+          });
     }
   }
 
