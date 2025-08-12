@@ -25,7 +25,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.Properties;
 import java.util.Set;
 import java.util.UUID;
@@ -134,7 +133,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
           TagW.SubseriesInstanceUID,
           new TagView(TagD.getTagFromIDs(Tag.SeriesDescription, Tag.SeriesNumber, Tag.SeriesTime)));
   public static final ExecutorService LOADING_EXECUTOR =
-      ThreadUtil.buildNewSingleThreadExecutor("Dicom Model"); // NON-NLS
+      ThreadUtil.newSingleThreadExecutor("DicomModelLoader");
 
   private static final List<TreeModelNode> modelStructure =
       Arrays.asList(TreeModelNode.ROOT, patient, study, series);
@@ -807,12 +806,9 @@ public class DicomModel implements TreeModel, DataExplorerModel {
                 continue;
               }
               if (!DicomModel.isHiddenModality(dicomSeries)) {
-                LoadLocalDicom.seriesPostProcessing(dicomSeries, this);
-                SeriesThumbnail t = (SeriesThumbnail) dicomSeries.getTagValue(TagW.Thumbnail);
-                if (t == null) {
+                boolean split = LoadLocalDicom.seriesPostProcessing(dicomSeries, this);
+                if (!split) {
                   buildThumbnail(dicomSeries);
-                } else {
-                  GuiExecutor.execute(() -> t.reBuildThumbnail(MEDIA_POSITION.MIDDLE));
                 }
 
                 if (dicomSeries.isSuitableFor3d()) {
@@ -841,7 +837,6 @@ public class DicomModel implements TreeModel, DataExplorerModel {
               .getIntProperty(Thumbnail.KEY_SIZE, Thumbnail.DEFAULT_SIZE);
       t = DicomExplorer.createThumbnail(dicomSeries, this, thumbnailSize);
       dicomSeries.setTag(TagW.Thumbnail, t);
-      Optional.ofNullable(t).ifPresent(Thumbnail::repaint);
       firePropertyChange(new ObservableEvent(BasicAction.ADD, this, null, dicomSeries));
     }
   }

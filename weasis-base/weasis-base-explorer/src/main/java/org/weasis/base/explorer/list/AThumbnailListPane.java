@@ -35,7 +35,7 @@ public abstract class AThumbnailListPane<E extends MediaElement> extends JScroll
         thumbList.asComponent(),
         ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
         ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-    this.pool = ThreadUtil.buildNewSingleThreadExecutor("Thumbnail List"); // NON-NLS
+    this.pool = ThreadUtil.newSingleThreadExecutor("AcquireThumbnailList");
 
     this.thumbnailList = thumbList;
     this.thumbnailList.addListSelectionListener(new JIListSelectionAdapter());

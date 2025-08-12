@@ -47,8 +47,7 @@ public class ExportDicomView extends AbstractItemDialogPage implements ExportDic
   protected final File exportDir;
   protected final DicomModel dicomModel;
   protected final ExportTree exportTree;
-  protected final ExecutorService executor =
-      ThreadUtil.buildNewFixedThreadExecutor(3, "Dicom Send task"); // NON-NLS
+  protected final ExecutorService executor = ThreadUtil.newFixedThreadPool(3, "DicomSend");
 
   public ExportDicomView(
       String title, int position, DicomModel dicomModel, CheckTreeModel treeModel) {

@@ -482,80 +482,79 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
 
     List<SopInstance> sopList = seriesInstanceList.getSortedList();
 
-    ExecutorService imageDownloader =
-        ThreadUtil.buildNewFixedThreadExecutor(concurrentDownloads, "Image Downloader"); // NON-NLS
-    ArrayList<Callable<Boolean>> tasks = new ArrayList<>(sopList.size());
-    int[] dindex = generateDownloadOrder(sopList.size());
-    GuiExecutor.execute(
-        () -> {
-          progressBar.setMaximum(sopList.size());
-          progressBar.setValue(0);
-        });
-    for (int k = 0; k < sopList.size(); k++) {
-      SopInstance instance = sopList.get(dindex[k]);
-      if (isCancelled()) {
-        return true;
-      }
-
-      if (seriesInstanceList.isContainsMultiframes()
-          && seriesInstanceList.getSopInstance(instance.getSopInstanceUID()) != instance) {
-        // Do not handle wado query for multi-frames
-        continue;
-      }
-
-      // Test if SOPInstanceUID already exists
-      if (isSOPInstanceUIDExist(study, dicomSeries, instance.getSopInstanceUID())) {
-        incrementProgressBarValue();
-        LOGGER.debug("DICOM instance {} already exists, skip.", instance.getSopInstanceUID());
-        continue;
-      }
-
-      String studyUID = "";
-      String seriesUID = "";
-      if (!wado.isRequireOnlySOPInstanceUID()) {
-        studyUID = TagD.getTagValue(study, Tag.StudyInstanceUID, String.class);
-        seriesUID = TagD.getTagValue(dicomSeries, Tag.SeriesInstanceUID, String.class);
-      }
-      StringBuilder request = new StringBuilder(wado.getBaseURL());
-      if (instance.getDirectDownloadFile() == null) {
-        request.append("?requestType=WADO&studyUID="); // NON-NLS
-        request.append(studyUID);
-        request.append("&seriesUID="); // NON-NLS
-        request.append(seriesUID);
-        request.append("&objectUID="); // NON-NLS
-        request.append(instance.getSopInstanceUID());
-        request.append("&contentType=application%2Fdicom"); // NON-NLS
-
-        // for dcm4chee: it gets original DICOM files when no TransferSyntax is specified
-        String wadoTsuid = (String) dicomSeries.getTagValue(TagW.WadoTransferSyntaxUID);
-        if (StringUtil.hasText(wadoTsuid)) {
-          request.append("&transferSyntax="); // NON-NLS
-          request.append(wadoTsuid);
-          Integer rate = (Integer) dicomSeries.getTagValue(TagW.WadoCompressionRate);
-          if (rate != null && rate > 0) {
-            request.append("&imageQuality="); // NON-NLS
-            request.append(rate);
-          }
+    try (ExecutorService imageDownloader =
+        ThreadUtil.newFixedThreadPool(concurrentDownloads, "Image Downloader")) {
+      ArrayList<Callable<Boolean>> tasks = new ArrayList<>(sopList.size());
+      int[] dindex = generateDownloadOrder(sopList.size());
+      GuiExecutor.execute(
+          () -> {
+            progressBar.setMaximum(sopList.size());
+            progressBar.setValue(0);
+          });
+      for (int k = 0; k < sopList.size(); k++) {
+        SopInstance instance = sopList.get(dindex[k]);
+        if (isCancelled()) {
+          return true;
         }
-      } else {
-        request.append(instance.getDirectDownloadFile());
+
+        if (seriesInstanceList.isContainsMultiframes()
+            && seriesInstanceList.getSopInstance(instance.getSopInstanceUID()) != instance) {
+          // Do not handle wado query for multi-frames
+          continue;
+        }
+
+        // Test if SOPInstanceUID already exists
+        if (isSOPInstanceUIDExist(study, dicomSeries, instance.getSopInstanceUID())) {
+          incrementProgressBarValue();
+          LOGGER.debug("DICOM instance {} already exists, skip.", instance.getSopInstanceUID());
+          continue;
+        }
+
+        String studyUID = "";
+        String seriesUID = "";
+        if (!wado.isRequireOnlySOPInstanceUID()) {
+          studyUID = TagD.getTagValue(study, Tag.StudyInstanceUID, String.class);
+          seriesUID = TagD.getTagValue(dicomSeries, Tag.SeriesInstanceUID, String.class);
+        }
+        StringBuilder request = new StringBuilder(wado.getBaseURL());
+        if (instance.getDirectDownloadFile() == null) {
+          request.append("?requestType=WADO&studyUID="); // NON-NLS
+          request.append(studyUID);
+          request.append("&seriesUID="); // NON-NLS
+          request.append(seriesUID);
+          request.append("&objectUID="); // NON-NLS
+          request.append(instance.getSopInstanceUID());
+          request.append("&contentType=application%2Fdicom"); // NON-NLS
+
+          // for dcm4chee: it gets original DICOM files when no TransferSyntax is specified
+          String wadoTsuid = (String) dicomSeries.getTagValue(TagW.WadoTransferSyntaxUID);
+          if (StringUtil.hasText(wadoTsuid)) {
+            request.append("&transferSyntax="); // NON-NLS
+            request.append(wadoTsuid);
+            Integer rate = (Integer) dicomSeries.getTagValue(TagW.WadoCompressionRate);
+            if (rate != null && rate > 0) {
+              request.append("&imageQuality="); // NON-NLS
+              request.append(rate);
+            }
+          }
+        } else {
+          request.append(instance.getDirectDownloadFile());
+        }
+        request.append(wado.getAdditionnalParameters());
+        String url = request.toString();
+
+        LOGGER.debug("Download DICOM instance {} index {}.", url, k);
+        Download ref = new Download(url);
+        tasks.add(ref);
       }
-      request.append(wado.getAdditionnalParameters());
-      String url = request.toString();
 
-      LOGGER.debug("Download DICOM instance {} index {}.", url, k);
-      Download ref = new Download(url);
-      tasks.add(ref);
+      try {
+        dicomSeries.setTag(DOWNLOAD_START_TIME, System.currentTimeMillis());
+        imageDownloader.invokeAll(tasks);
+      } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
+      }
     }
-
-    try {
-      dicomSeries.setTag(DOWNLOAD_START_TIME, System.currentTimeMillis());
-      imageDownloader.invokeAll(tasks);
-    } catch (InterruptedException e) {
-      Thread.currentThread().interrupt();
-    }
-
-    imageDownloader.shutdown();
     return true;
   }
 
@@ -959,10 +958,7 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
             if (tempFile.getPath().startsWith(AppProperties.APP_TEMP_DIR.getPath())) {
               dicomReader.getFileCache().setOriginalTempFile(tempFile);
             }
-            final DicomMediaIO reader = dicomReader;
-            // Necessary to wait the runnable because the dicomSeries must be added to the
-            // dicomModel before reaching done() of SwingWorker
-            GuiExecutor.invokeAndWait(() -> updateUI(reader, firstImage));
+            updateUI(dicomReader, firstImage);
           } else if (reading == Reading.ERROR) {
             errors.incrementAndGet();
           }
@@ -1157,11 +1153,6 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
         dicomModel.applySplittingRules(dicomSeries, result.getSpecialElement());
       }
 
-      Thumbnail thumb = (Thumbnail) dicomSeries.getTagValue(TagW.Thumbnail);
-      if (thumb != null) {
-        thumb.repaint();
-      }
-
       MediaSeriesGroup patient = dicomModel.getParent(dicomSeries, DicomModel.patient);
       if (patient != null) {
         PluginOpeningStrategy open = openingStrategy;
@@ -1169,6 +1160,14 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
           open.openViewerPlugin(patient, dicomModel, dicomSeries);
         }
       }
+
+      GuiExecutor.execute(
+          () -> {
+            Thumbnail thumb = (Thumbnail) dicomSeries.getTagValue(TagW.Thumbnail);
+            if (thumb != null) {
+              thumb.repaint();
+            }
+          });
     }
   }
 

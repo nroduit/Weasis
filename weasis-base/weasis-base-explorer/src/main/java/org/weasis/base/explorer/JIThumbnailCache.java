@@ -40,12 +40,7 @@ public final class JIThumbnailCache {
   // ImageElement)
   private final ExecutorService qExecutor =
       new ThreadPoolExecutor(
-          1,
-          1,
-          0L,
-          TimeUnit.MILLISECONDS,
-          queue,
-          ThreadUtil.getThreadFactory("Thumbnail Cache")); // NON-NLS
+          1, 1, 0L, TimeUnit.MILLISECONDS, queue, ThreadUtil.namedThreadFactory("ThumbnailCache"));
 
   private final Map<URI, ThumbnailIcon> cachedThumbnails =
       Collections.synchronizedMap(

@@ -9,43 +9,41 @@
  */
 package org.weasis.core.ui.util;
 
-import java.awt.AlphaComposite;
-import java.awt.Component;
-import java.awt.Container;
-import java.awt.Graphics2D;
-import java.awt.Window;
+import java.awt.*;
+import java.awt.event.*;
 import java.util.concurrent.atomic.AtomicReference;
 import javax.swing.JComponent;
+import javax.swing.JRootPane;
 import javax.swing.RootPaneContainer;
 import javax.swing.Timer;
-import org.jdesktop.jxlayer.JXLayer;
-import org.jdesktop.jxlayer.plaf.AbstractLayerUI;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.WinUtil;
 
-public class ColorLayerUI extends AbstractLayerUI<JComponent> {
+public class ColorLayerUI {
 
   protected static final float MAX_ALPHA = 0.75f;
+  private static final int ANIMATION_DURATION = 300; // in ms
+  private static final int FRAME_RATE = 60; // fps
+  private static final int FRAME_DELAY = 1000 / FRAME_RATE; // ~16ms for 60fps
 
   private final RootPaneContainer parent;
-  protected final JXLayer<JComponent> xlayer;
   private final AtomicReference<Float> alpha;
+  private TransparentGlassPane glassPane;
+  private Component originalGlassPane;
+  private Timer animationTimer;
 
-  public ColorLayerUI(final JXLayer<JComponent> comp, RootPaneContainer parent) {
-    if (parent == null || comp == null) {
+  public ColorLayerUI(RootPaneContainer parent) {
+    if (parent == null) {
       throw new IllegalArgumentException();
     }
     this.parent = parent;
-    this.xlayer = comp;
     this.alpha = new AtomicReference<>(0.0f);
   }
 
   public static ColorLayerUI createTransparentLayerUI(RootPaneContainer parent) {
-    if (parent != null && parent.getContentPane() instanceof JComponent jComponent) {
-      JXLayer<JComponent> layer = new JXLayer<>(jComponent);
-      final ColorLayerUI ui = new ColorLayerUI(layer, parent);
-      layer.setUI(ui);
-      parent.setContentPane(layer);
+    if (parent != null && parent.getRootPane() != null) {
+      final ColorLayerUI ui = new ColorLayerUI(parent);
+      ui.installGlassPane();
       ui.showUI();
       return ui;
     }
@@ -67,48 +65,91 @@ public class ColorLayerUI extends AbstractLayerUI<JComponent> {
     }
   }
 
-  @Override
-  protected void paintLayer(final Graphics2D g, final JXLayer<? extends JComponent> comp) {
-    super.paintLayer(g, this.xlayer);
-    g.setColor(comp.getBackground());
-    g.setComposite(AlphaComposite.SrcOver.derive(alpha.get() * MAX_ALPHA));
-    g.fillRect(0, 0, comp.getWidth(), comp.getHeight());
+  private void installGlassPane() {
+    JRootPane rootPane = parent.getRootPane();
+    if (rootPane != null) {
+      originalGlassPane = rootPane.getGlassPane();
+      glassPane = new TransparentGlassPane();
+      rootPane.setGlassPane(glassPane);
+    }
+  }
+
+  private void uninstallGlassPane() {
+    JRootPane rootPane = parent.getRootPane();
+    if (rootPane != null && originalGlassPane != null) {
+      rootPane.setGlassPane(originalGlassPane);
+      glassPane = null;
+      originalGlassPane = null;
+    }
+  }
+
+  /** Easing function for smooth fade in/out Uses ease-out cubic for natural looking animation */
+  private float easeOutCubic(float t) {
+    return 1 - (float) Math.pow(1 - t, 3);
   }
 
   public synchronized void showUI() {
-    alpha.set(0.0f);
-    final Timer timer = new Timer(3, null);
-    timer.setRepeats(true);
-    timer.addActionListener(
-        _ -> {
-          float newAlpha = Math.min(alpha.get() + 0.1f, 1.0f);
-          alpha.set(newAlpha);
-          if (newAlpha >= 1.0f) {
-            timer.stop();
-          }
-          xlayer.repaint();
-        });
-    this.xlayer.repaint();
-    timer.start();
+    if (glassPane == null) return;
+
+    if (animationTimer != null && animationTimer.isRunning()) {
+      animationTimer.stop();
+    }
+    glassPane.setVisible(true);
+    final long startTime = System.currentTimeMillis();
+
+    animationTimer =
+        new Timer(
+            FRAME_DELAY,
+                e -> {
+                  long elapsed = System.currentTimeMillis() - startTime;
+                  float progress = Math.min(1.0f, (float) elapsed / ANIMATION_DURATION);
+
+                    float newAlpha = easeOutCubic(progress);
+                  alpha.set(newAlpha);
+                  if (glassPane != null) {
+                    glassPane.setAlpha(newAlpha);
+                  }
+                  if (progress >= 1.0f) {
+                    animationTimer.stop();
+                    animationTimer = null;
+                  }
+                });
+    animationTimer.setRepeats(true);
+    animationTimer.start();
   }
 
   public synchronized void hideUI() {
-    alpha.set(1.0f);
-    final Timer timer = new Timer(3, null);
-    timer.setRepeats(true);
-    timer.addActionListener(
-        _ -> {
-          float newAlpha = Math.max(alpha.get() - 0.1f, 0.0f);
-          alpha.set(newAlpha);
-          if (newAlpha <= 0.0f) {
-            timer.stop();
-            parent.setContentPane(xlayer.getView());
-            return;
-          }
-          xlayer.repaint();
-        });
-    this.xlayer.repaint();
-    timer.start();
+    if (glassPane == null) return;
+
+    if (animationTimer != null && animationTimer.isRunning()) {
+      animationTimer.stop();
+    }
+
+    final float startAlpha = alpha.get();
+    final long startTime = System.currentTimeMillis();
+
+    animationTimer =
+        new Timer(
+            FRAME_DELAY,
+                e -> {
+                  long elapsed = System.currentTimeMillis() - startTime;
+                  float progress = Math.min(1.0f, (float) elapsed / ANIMATION_DURATION);
+
+                  // Apply easing function for smooth animation
+                  float easedProgress = easeOutCubic(progress);
+                  float newAlpha = startAlpha * (1.0f - easedProgress);
+                  alpha.set(newAlpha);
+                  if (glassPane != null) {
+                    glassPane.setAlpha(newAlpha);
+                  }
+                  if (progress >= 1.0f) {
+                    animationTimer.stop();
+                    animationTimer = null;
+                    uninstallGlassPane();
+                  }
+                });
+    animationTimer.setRepeats(true);
+    animationTimer.start();
   }
 
   public static Container getContentPane(ColorLayerUI layer) {
@@ -116,5 +157,75 @@ public class ColorLayerUI extends AbstractLayerUI<JComponent> {
       return layer.parent.getRootPane();
     }
     return null;
+  }
+
+  private static class TransparentGlassPane extends JComponent
+      implements MouseListener, MouseMotionListener {
+    private float currentAlpha = 0.0f;
+
+    public TransparentGlassPane() {
+      setOpaque(false);
+      addMouseListener(this);
+      addMouseMotionListener(this);
+    }
+
+    public void setAlpha(float alpha) {
+      if (Math.abs(this.currentAlpha - alpha) > 0.001f) {
+        this.currentAlpha = alpha;
+        repaint();
+      }
+    }
+
+    @Override
+    protected void paintComponent(Graphics g) {
+      if (currentAlpha > 0.0f) {
+        Graphics2D g2d = (Graphics2D) g.create();
+        try {
+          // Enable anti-aliasing for smoother rendering
+          g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+          g2d.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+          g2d.setComposite(AlphaComposite.SrcOver.derive(currentAlpha * MAX_ALPHA));
+          g2d.setColor(getBackground());
+          g2d.fillRect(0, 0, getWidth(), getHeight());
+        } finally {
+          g2d.dispose();
+        }
+      }
+    }
+
+    @Override
+    public void mouseClicked(MouseEvent e) {
+      // Don't consume - let it pass through for dialogs
+    }
+
+    @Override
+    public void mousePressed(MouseEvent e) {
+      // Don't consume - let it pass through for dialogs
+    }
+
+    @Override
+    public void mouseReleased(MouseEvent e) {
+      // Don't consume - let it pass through for dialogs
+    }
+
+    @Override
+    public void mouseEntered(MouseEvent e) {
+      // Don't consume
+    }
+
+    @Override
+    public void mouseExited(MouseEvent e) {
+      // Don't consume
+    }
+
+    @Override
+    public void mouseDragged(MouseEvent e) {
+      // Don't consume
+    }
+
+    @Override
+    public void mouseMoved(MouseEvent e) {
+      // Don't consume
+    }
   }
 }

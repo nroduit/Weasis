@@ -121,7 +121,7 @@ public class DownloadManager {
           0L,
           TimeUnit.MILLISECONDS,
           PRIORITY_QUEUE,
-          ThreadUtil.getThreadFactory("Series Downloader")); // NON-NLS
+          ThreadUtil.namedThreadFactory("SeriesDownloader"));
 
   public static class PriorityTaskComparator implements Comparator<Runnable> {
 
