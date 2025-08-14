@@ -21,7 +21,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Properties;
-import java.util.concurrent.ExecutionException;
 import javax.swing.JOptionPane;
 import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Tag;
@@ -292,7 +291,7 @@ public class RetrieveTask extends ExplorerTask<ExplorerTask<Boolean, String>, St
                   JOptionPane.ERROR_MESSAGE));
     }
 
-    return loadingTask;
+    return null;
   }
 
   @Override
@@ -308,10 +307,9 @@ public class RetrieveTask extends ExplorerTask<ExplorerTask<Boolean, String>, St
         DicomModel.LOADING_EXECUTOR.execute(task);
       }
     } catch (InterruptedException e) {
-      LOGGER.warn("Retrieving task Interruption");
       Thread.currentThread().interrupt();
-    } catch (ExecutionException e) {
-      LOGGER.error("Retrieving task", e);
+    } catch (Exception e) {
+      LOGGER.error("Retrieving DICOM data:", e);
     }
   }
 

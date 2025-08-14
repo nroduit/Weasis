@@ -100,20 +100,20 @@ public class ColorLayerUI {
     animationTimer =
         new Timer(
             FRAME_DELAY,
-                e -> {
-                  long elapsed = System.currentTimeMillis() - startTime;
-                  float progress = Math.min(1.0f, (float) elapsed / ANIMATION_DURATION);
+            e -> {
+              long elapsed = System.currentTimeMillis() - startTime;
+              float progress = Math.min(1.0f, (float) elapsed / ANIMATION_DURATION);
 
-                    float newAlpha = easeOutCubic(progress);
-                  alpha.set(newAlpha);
-                  if (glassPane != null) {
-                    glassPane.setAlpha(newAlpha);
-                  }
-                  if (progress >= 1.0f) {
-                    animationTimer.stop();
-                    animationTimer = null;
-                  }
-                });
+              float newAlpha = easeOutCubic(progress);
+              alpha.set(newAlpha);
+              if (glassPane != null) {
+                glassPane.setAlpha(newAlpha);
+              }
+              if (progress >= 1.0f) {
+                animationTimer.stop();
+                animationTimer = null;
+              }
+            });
     animationTimer.setRepeats(true);
     animationTimer.start();
   }
@@ -131,23 +131,23 @@ public class ColorLayerUI {
     animationTimer =
         new Timer(
             FRAME_DELAY,
-                e -> {
-                  long elapsed = System.currentTimeMillis() - startTime;
-                  float progress = Math.min(1.0f, (float) elapsed / ANIMATION_DURATION);
+            e -> {
+              long elapsed = System.currentTimeMillis() - startTime;
+              float progress = Math.min(1.0f, (float) elapsed / ANIMATION_DURATION);
 
-                  // Apply easing function for smooth animation
-                  float easedProgress = easeOutCubic(progress);
-                  float newAlpha = startAlpha * (1.0f - easedProgress);
-                  alpha.set(newAlpha);
-                  if (glassPane != null) {
-                    glassPane.setAlpha(newAlpha);
-                  }
-                  if (progress >= 1.0f) {
-                    animationTimer.stop();
-                    animationTimer = null;
-                    uninstallGlassPane();
-                  }
-                });
+              // Apply easing function for smooth animation
+              float easedProgress = easeOutCubic(progress);
+              float newAlpha = startAlpha * (1.0f - easedProgress);
+              alpha.set(newAlpha);
+              if (glassPane != null) {
+                glassPane.setAlpha(newAlpha);
+              }
+              if (progress >= 1.0f) {
+                animationTimer.stop();
+                animationTimer = null;
+                uninstallGlassPane();
+              }
+            });
     animationTimer.setRepeats(true);
     animationTimer.start();
   }
