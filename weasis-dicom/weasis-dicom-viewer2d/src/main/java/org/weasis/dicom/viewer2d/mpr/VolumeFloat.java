@@ -13,7 +13,6 @@ import java.util.Arrays;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.RecursiveAction;
 import javax.swing.JProgressBar;
-import org.joml.Matrix3d;
 import org.joml.Matrix4d;
 import org.joml.Quaterniond;
 import org.joml.Vector3d;
@@ -27,6 +26,10 @@ public class VolumeFloat extends Volume<Float> {
 
   public VolumeFloat(int sizeX, int sizeY, int sizeZ, JProgressBar progressBar) {
     super(sizeX, sizeY, sizeZ, progressBar);
+  }
+
+  public VolumeFloat(Volume<? extends Number> volume, int sizeX, int sizeY, int sizeZ) {
+    super(volume, sizeX, sizeY, sizeZ);
   }
 
   public VolumeFloat(OriginalStack stack, JProgressBar progressBar) {
@@ -45,7 +48,7 @@ public class VolumeFloat extends Volume<Float> {
   }
 
   @Override
-  protected void copyFrom(PlanarImage image, int sliceIndex, Matrix3d transform) {
+  protected void copyFrom(PlanarImage image, int sliceIndex, Matrix4d transform) {
     int width = image.width();
     int height = image.height();
 
@@ -57,7 +60,7 @@ public class VolumeFloat extends Volume<Float> {
   }
 
   @Override
-  protected void setValue(int x, int y, int z, Float value, Matrix3d transform) {
+  protected void setValue(int x, int y, int z, Float value, Matrix4d transform) {
     if (transform != null) {
       Vector3i sliceCoord = transformPoint(x, y, z, transform);
       x = sliceCoord.x;

@@ -22,7 +22,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiConsumer;
 import javax.swing.JProgressBar;
 import org.dcm4che3.data.Tag;
-import org.joml.Matrix3d;
 import org.joml.Matrix4d;
 import org.joml.Quaterniond;
 import org.joml.Vector3d;
@@ -67,6 +66,23 @@ public abstract class Volume<T extends Number> {
   protected File dataFile;
   protected final JProgressBar progressBar;
   protected final boolean isSigned;
+
+  Volume(Volume<?> volume, int sizeX, int sizeY, int sizeZ) {
+    this.progressBar = volume.progressBar;
+    this.translation = new Vector3d(0, 0, 0);
+    this.rotation = new Quaterniond();
+    this.size = new Vector3i(sizeX, sizeY, sizeZ);
+    this.pixelRatio = volume.pixelRatio;
+    this.negativeDirRow = volume.negativeDirRow;
+    this.negativeDirCol = volume.negativeDirCol;
+    this.minValue = volume.minValue;
+    this.maxValue = volume.maxValue;
+    this.stack = volume.stack;
+    this.cvType = volume.cvType;
+    this.byteDepth = volume.byteDepth;
+    this.isSigned = volume.isSigned;
+    createData(size.x, size.y, size.z);
+  }
 
   Volume(int sizeX, int sizeY, int sizeZ, JProgressBar progressBar) {
     this(sizeX, sizeY, sizeZ, true, progressBar);
@@ -189,7 +205,7 @@ public abstract class Volume<T extends Number> {
       ecs.submit(
           () -> {
             DicomImageElement dcm = dicomImages.get(zi);
-            Matrix3d transform = getAffineTransform(dcm);
+            Matrix4d transform = getAffineTransform(dcm);
             // Load source image (IO and decode may run concurrently with other slices)
             PlanarImage src = dcm.getImage();
             // Get min max after loading the image
@@ -227,15 +243,15 @@ public abstract class Volume<T extends Number> {
   }
 
   protected void adaptPlaneOrientation() {
-    Matrix3d m = getAffineTransform(stack.getFirstImage());
+    Matrix4d m = getAffineTransform(stack.getFirstImage());
     Vector3d row = new Vector3d(stack.getFistSliceGeometry().getRow());
     Vector3d col = new Vector3d(stack.getFistSliceGeometry().getColumn());
     negativeDirRow = adaptNegativeVector(row);
     negativeDirCol = adaptNegativeVector(col);
-    Vector3d oldRow = new Vector3d(row);
-    Vector3d oldCol = new Vector3d(col);
-    oldRow.sub(m.transform(new Vector3d(m.m00, m.m10, m.m20)));
-    oldCol.sub(m.transform(new Vector3d(m.m01, m.m11, m.m21)));
+    Vector4d oldRow = new Vector4d(row, 0.0);
+    Vector4d oldCol = new Vector4d(col, 0.0);
+    oldRow.sub(m.transform(new Vector4d(m.m00(), m.m10(), m.m20(), 0.0)));
+    oldCol.sub(m.transform(new Vector4d(m.m01(), m.m11(), m.m21(), 0.0)));
 
     switch (stack.getPlane()) {
       case AXIAL -> {
@@ -279,7 +295,7 @@ public abstract class Volume<T extends Number> {
     return false;
   }
 
-  private Matrix3d getAffineTransform(DicomImageElement dcm) {
+  private Matrix4d getAffineTransform(DicomImageElement dcm) {
     GeometryOfSlice geometry = dcm.getSliceGeometry();
     Vector3d row = new Vector3d(geometry.getRow());
     Vector3d col = new Vector3d(geometry.getColumn());
@@ -287,18 +303,43 @@ public abstract class Volume<T extends Number> {
     adaptNegativeVector(col);
     Vector3d normal = geometry.getNormal();
 
+    Vector3d volSize = new Vector3d(this.getSize());
+    Vector3d center = new Vector3d(0, 0, volSize.z).mul(0.5);
+    Vector3d centerNegate = new Vector3d();
+    center.negate(centerNegate);
+
+    // cos of the angle between the patient orientation and the vertical
+    double colX = col.x();
+    double colY = col.y();
+    double colZ = col.z();
+
+    Matrix4d identity = new Matrix4d();
+    identity.translate(centerNegate)
+            .rotateZ(-(Math.PI/2.0 - Math.acos(colX)))
+            //.rotateZ((Math.PI/2.0 - Math.acos(row.y())));
+            .translate(center);
+
     return switch (stack.getPlane()) {
       case AXIAL ->
-          new Matrix3d(row.x, col.x, normal.x, row.y, col.y, normal.y, row.z, col.z, normal.z);
+          new Matrix4d(row.x, col.x, normal.x, 0.0,
+                  row.y, col.y, normal.y, 0.0,
+                  row.z, col.z, normal.z, 0.0,
+                  0.0, 0.0, 0.0, 1.0).mul(identity);
       case CORONAL ->
-          new Matrix3d(row.x, col.x, normal.x, row.z, col.z, normal.z, row.y, col.y, normal.y);
+          new Matrix4d(row.x, col.x, normal.x, 0.0,
+                  row.z, col.z, normal.z, 0.0,
+                  row.y, col.y, normal.y, 0.0,
+                  0.0, 0.0, 0.0, 1.0);
       case SAGITTAL ->
-          new Matrix3d(row.z, col.z, normal.z, row.x, col.x, normal.x, row.y, col.y, normal.y);
+              new Matrix4d(row.z, col.z, normal.z, 0.0,
+                      row.x, col.x, normal.x, 0.0,
+                      row.y, col.y, normal.y, 0.0,
+                      0.0, 0.0, 0.0, 1.0);
     };
   }
 
-  protected Vector3i transformPoint(int x, int y, int z, Matrix3d transform) {
-    Vector3d p = new Vector3d(x, y, z);
+  protected Vector3i transformPoint(int x, int y, int z, Matrix4d transform) {
+    Vector4d p = new Vector4d(x, y, z, 1.0);
     transform.transform(p);
     switch (stack.getPlane()) {
       case AXIAL -> {
@@ -348,7 +389,7 @@ public abstract class Volume<T extends Number> {
     coyImageToVolume(sagittalStack);
   }
 
-  protected abstract void copyFrom(PlanarImage image, int z, Matrix3d transform);
+  protected abstract void copyFrom(PlanarImage image, int z, Matrix4d transform);
 
   public abstract PlanarImage getVolumeSlice(MprAxis mprAxis, Vector3d volumeCenter);
 
@@ -389,7 +430,7 @@ public abstract class Volume<T extends Number> {
 
   protected abstract void createDataArray(int sizeX, int sizeY, int sizeZ);
 
-  protected abstract void setValue(int x, int y, int z, T value, Matrix3d transform);
+  protected abstract void setValue(int x, int y, int z, T value, Matrix4d transform);
 
   protected void copyPixels(int width, int height, BiConsumer<Integer, Integer> setPixel) {
     try (ForkJoinPool pool = new ForkJoinPool()) {
@@ -496,6 +537,18 @@ public abstract class Volume<T extends Number> {
 
     final int target = sliceIndex + 1;
     GuiExecutor.execute(() -> pb.setValue(target));
+  }
+
+  public Volume cloneVolume(int sizeX, int sizeY, int sizeZ) {
+
+    return switch (this.getCVType()) {
+        case CvType.CV_8U, CvType.CV_8S -> new VolumeByte(this, sizeX, sizeY, sizeZ);
+        case CvType.CV_16U, CvType.CV_16S -> new VolumeShort(this, sizeX, sizeY, sizeZ);
+        case CvType.CV_32S -> new VolumeInt(this, sizeX, sizeY, sizeZ);
+        case CvType.CV_32F -> new VolumeFloat(this, sizeX, sizeY, sizeZ);
+        case CvType.CV_64F -> new VolumeDouble(this, sizeX, sizeY, sizeZ);
+        default -> null;
+    };
   }
 
   public static Volume<?> createVolume(OriginalStack stack, JProgressBar progressBar) {
@@ -610,6 +663,41 @@ public abstract class Volume<T extends Number> {
         + (v1 == null ? 0 : v1.doubleValue()) * factor;
   }
 
+  public Matrix4d calculateRotation() {
+    Quaterniond rotation = new Quaterniond();
+
+    // Calculate from geometry vectors
+    Vector3d col = new Vector3d(stack.getFistSliceGeometry().getColumn());
+    Vector3d row =  new Vector3d(stack.getFistSliceGeometry().getRow());
+    Vector3d volSize = new Vector3d(this.getSize());
+    Vector3d center = new Vector3d(0, 0, volSize.z).mul(0.5);
+    Vector3d centerNegate = new Vector3d();
+    center.negate(centerNegate);
+
+    // cos of the angle between the patient orientation and the vertical
+    double colX = col.x();
+    double colY = col.y();
+    double colZ = col.z();
+
+    //-(Math.PI/2.0 - Math.acos(colX))
+
+    Matrix4d identity = new Matrix4d();
+    //identity//.translate(centerNegate)
+            //.rotateZ(-(Math.PI/2.0 - Math.acos(colX)));
+            //.rotateZ((Math.PI/2.0 - Math.acos(row.y())));
+    //.translate(center);
+
+    //Matrix4d identity = new Matrix4d();
+    identity.rotateZ((Math.PI/2.0 - Math.acos(row.y())));;
+
+    /*if (colX != 0) {
+      // Rotate - angle of each axis
+      rotation.rotateZ(-(Math.PI/2.0 - Math.acos(colX)));
+    }*/
+
+    return identity;
+  }
+
   public double calculateCorrectShearFactor() {
     double shearFactor = 0.0;
 
@@ -626,6 +714,26 @@ public abstract class Volume<T extends Number> {
     double pixelSpacingRatio = pixelRatio.y / pixelRatio.z;
     shearFactor *= pixelSpacingRatio;
 
+    return shearFactor;
+  }
+
+  public double calculateCorrectShearFactorX() {
+    double shearFactor = 0.0;
+
+    // Calculate from geometry vectors
+    Vector3d row = new Vector3d(stack.getFistSliceGeometry().getRow());
+
+    // The tilt angle is the deviation from vertical
+    // col Z is the cosinus of the angle between the tilt vector and the z axis
+    double rowZ = row.z();
+    // Substract the angle from pi/2 to get the angle with the vertical axis
+    shearFactor = Math.tan(Math.PI/2.0 - Math.acos(rowZ));
+
+    // Scale by pixel spacing ratio to account for anisotropic voxels
+    double pixelSpacingRatio = pixelRatio.x / pixelRatio.z;
+    shearFactor *= pixelSpacingRatio;
+    //shearFactor *= 10;
+    //System.out.println(shearFactor);
     return shearFactor;
   }
 
@@ -650,9 +758,9 @@ public abstract class Volume<T extends Number> {
     Vector3i max = new Vector3i(Integer.MIN_VALUE);
 
     for (Vector4d corner : corners) {
-      int x = (int) Math.round(corner.x);
-      int y = (int) Math.round(corner.y);
-      int z = (int) Math.round(corner.z);
+      int x = (int) Math.ceil(corner.x);
+      int y = (int) Math.ceil(corner.y);
+      int z = (int) Math.ceil(corner.z);
 
       min.x = Math.min(min.x, x);
       min.y = Math.min(min.y, y);
@@ -727,19 +835,36 @@ public abstract class Volume<T extends Number> {
     return (T) Short.valueOf((short) Math.round(result));
   }
 
-  public Volume<Short> transformVolume() {
+  public Volume<?> transformVolume() {
     // Calculate shear transformation
 
     double shearFactor = calculateCorrectShearFactor();
+    double shearFactorX = calculateCorrectShearFactorX();
+
+    Vector3d volSize = new Vector3d(this.getSize());
+    Vector3d center = new Vector3d(0, 0, volSize.z).mul(0.5);
+    Vector3d centerNegate = new Vector3d();
+    center.negate(centerNegate);
+
+
+    Matrix4d identity = new Matrix4d();
+    Matrix4d rotation = calculateRotation();
 
     Matrix4d shear =
             new Matrix4d(1.0, 0.0, 0.0, 0.0,
                     0.0, 1.0, -shearFactor, 0.0,
                     0.0, 0.0, 1.0, 0.0,
                     0.0, 0.0, 0.0, 1.0);
+    Matrix4d shear2 =
+            new Matrix4d(1.0, 0.0, -shearFactorX, 0.0,
+                    0.0, 1.0, 0.0, 0.0,
+                    0.0, 0.0, 1.0, 0.0,
+                    0.0, 0.0, 0.0, 1.0);
+
+    identity.mul(shear).mul(shear2).mul(rotation);
 
     // Calculate transformed volume bounds
-    Vector3i[] bounds = calculateTransformedBounds(shear);
+    Vector3i[] bounds = calculateTransformedBounds(identity);
     Vector3i min = bounds[0];
     Vector3i max = bounds[1];
 
@@ -762,31 +887,39 @@ public abstract class Volume<T extends Number> {
     }
 
     // Create transformed volume
-    Volume<Short> transformedVolume = new VolumeShort(max.x, max.y, max.z, isSigned, progressBar);
-    copyVolumeProperties(transformedVolume);
+    Volume transformedVolume = this.cloneVolume(max.x, max.y, max.z);
 
-    shear.translate(translateX, translateY, translateZ);
+    identity.translate(translateX, translateY, translateZ);
 
-    // Fill transformed volume from the initial one, transform coordinates and interpolate value
-    for (int i = 0 ; i < size.x ; i++) {
-      for (int j = 0 ; j < size.y ; j++) {
-        for (int k = 0 ; k < size.z ; k++) {
-          // Transform initial coordinates
-          Vector4d coord = new Vector4d(i, j, k, 1.0);
-          shear.transform(coord);
+    System.out.println("Old size : " + size.x + " - " + size.y + " - " + size.z);
+    System.out.println("New size : " + max.x + " - " + max.y + " - " + max.z);
+    System.out.println("Translation : " + translateX + " - " + translateY + " - " + translateZ);
+
+    Matrix4d inv = identity.invert();
+
+    // Fill transformed volume using backward mapping
+    for (int targetX = 0; targetX < transformedVolume.getSizeX(); targetX++) {
+      for (int targetY = 0; targetY < transformedVolume.getSizeY(); targetY++) {
+        for (int targetZ = 0; targetZ < transformedVolume.getSizeZ(); targetZ++) {
+
+          // Transform target coordinates back to source coordinates
+          Vector4d sourceCoord = new Vector4d(targetX, targetY, targetZ, 1.0);
+          inv.transform(sourceCoord);
 
           // Interpolate from the ORIGINAL volume at these fractional coordinates
           T interpolatedValue =
-                  getInterpolatedValueFromSource(i, j, k);
+                  getInterpolatedValueFromSource(sourceCoord.x, sourceCoord.y, sourceCoord.z);
+
+          //System.out.println("OLD : (" + (int) Math.floor(sourceCoord.x) + ", " + (int) Math.floor(sourceCoord.y) + ", " + (int) Math.floor(sourceCoord.z) + ")");
+          //System.out.println("NEW : (" + targetX+ ", " + targetY + ", " + targetZ + ")");
 
           if (interpolatedValue != null) {
-            transformedVolume.setValue((int) Math.round(coord.x), (int) Math.round(coord.y), (int) Math.round(coord.z),
-                    (Short) interpolatedValue, null);
+            transformedVolume.setValue(targetX, targetY, targetZ, interpolatedValue, null);
           }
         }
       }
 
-      updateProgressBar(i);
+      updateProgressBar(targetX);
     }
 
     return transformedVolume;

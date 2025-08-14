@@ -13,7 +13,6 @@ import java.util.Arrays;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.RecursiveAction;
 import javax.swing.JProgressBar;
-import org.joml.Matrix3d;
 import org.joml.Matrix4d;
 import org.joml.Quaterniond;
 import org.joml.Vector3d;
@@ -36,6 +35,11 @@ public class VolumeByte extends Volume<Byte> {
     this.signed = signed;
   }
 
+  public VolumeByte(Volume<? extends Number> volume, int sizeX, int sizeY, int sizeZ) {
+    super(volume, sizeX, sizeY, sizeZ);
+    this.signed = isSigned;
+  }
+
   @Override
   protected void createDataArray(int sizeX, int sizeY, int sizeZ) {
     this.data = new byte[sizeX][sizeY][sizeZ];
@@ -48,7 +52,7 @@ public class VolumeByte extends Volume<Byte> {
   }
 
   @Override
-  protected void copyFrom(PlanarImage image, int sliceIndex, Matrix3d transform) {
+  protected void copyFrom(PlanarImage image, int sliceIndex, Matrix4d transform) {
     int width = image.width();
     int height = image.height();
 
@@ -60,7 +64,7 @@ public class VolumeByte extends Volume<Byte> {
   }
 
   @Override
-  protected void setValue(int x, int y, int z, Byte value, Matrix3d transform) {
+  protected void setValue(int x, int y, int z, Byte value, Matrix4d transform) {
     if (transform != null) {
       Vector3i sliceCoord = transformPoint(x, y, z, transform);
       x = sliceCoord.x;
