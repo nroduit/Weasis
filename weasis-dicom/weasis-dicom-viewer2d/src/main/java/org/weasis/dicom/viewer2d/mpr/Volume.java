@@ -304,7 +304,7 @@ public abstract class Volume<T extends Number> {
     Vector3d normal = geometry.getNormal();
 
     Vector3d volSize = new Vector3d(this.getSize());
-    Vector3d center = new Vector3d(0, 0, volSize.z).mul(0.5);
+    Vector3d center = new Vector3d(size.x, size.y, size.z);
     Vector3d centerNegate = new Vector3d();
     center.negate(centerNegate);
 
@@ -314,14 +314,13 @@ public abstract class Volume<T extends Number> {
     double colZ = col.z();
 
     Matrix4d identity = new Matrix4d();
-    identity.translate(centerNegate)
-            .rotateZ(-(Math.PI/2.0 - Math.acos(colX)))
+    identity//.translate(centerNegate)
+            .rotateZ(-(Math.PI/2.0 - Math.acos(colX)));
             //.rotateZ((Math.PI/2.0 - Math.acos(row.y())));
-            .translate(center);
+            //.translate(center);
 
     return switch (stack.getPlane()) {
-      case AXIAL ->
-          new Matrix4d(row.x, col.x, normal.x, 0.0,
+      case AXIAL -> new Matrix4d(row.x, col.x, normal.x, 0.0,
                   row.y, col.y, normal.y, 0.0,
                   row.z, col.z, normal.z, 0.0,
                   0.0, 0.0, 0.0, 1.0).mul(identity);
@@ -698,7 +697,7 @@ public abstract class Volume<T extends Number> {
     return identity;
   }
 
-  public double calculateCorrectShearFactor() {
+  public double calculateCorrectShearFactorZ() {
     double shearFactor = 0.0;
 
     // Calculate from geometry vectors
@@ -732,8 +731,6 @@ public abstract class Volume<T extends Number> {
     // Scale by pixel spacing ratio to account for anisotropic voxels
     double pixelSpacingRatio = pixelRatio.x / pixelRatio.z;
     shearFactor *= pixelSpacingRatio;
-    //shearFactor *= 10;
-    //System.out.println(shearFactor);
     return shearFactor;
   }
 
@@ -838,8 +835,11 @@ public abstract class Volume<T extends Number> {
   public Volume<?> transformVolume() {
     // Calculate shear transformation
 
-    double shearFactor = calculateCorrectShearFactor();
+    this.pixelRatio.z *= 1.1; // Mystery coefficient
+
+    double shearFactor = calculateCorrectShearFactorZ();
     double shearFactorX = calculateCorrectShearFactorX();
+    System.out.println("Shear factors: " + shearFactorX + " " + shearFactor);
 
     Vector3d volSize = new Vector3d(this.getSize());
     Vector3d center = new Vector3d(0, 0, volSize.z).mul(0.5);
@@ -861,7 +861,7 @@ public abstract class Volume<T extends Number> {
                     0.0, 0.0, 1.0, 0.0,
                     0.0, 0.0, 0.0, 1.0);
 
-    identity.mul(shear).mul(shear2).mul(rotation);
+    identity.mul(rotation).mul(shear).mul(shear2);
 
     // Calculate transformed volume bounds
     Vector3i[] bounds = calculateTransformedBounds(identity);
@@ -896,6 +896,8 @@ public abstract class Volume<T extends Number> {
     System.out.println("Translation : " + translateX + " - " + translateY + " - " + translateZ);
 
     Matrix4d inv = identity.invert();
+    System.out.println("Inv : ");
+    System.out.println(inv);
 
     // Fill transformed volume using backward mapping
     for (int targetX = 0; targetX < transformedVolume.getSizeX(); targetX++) {
@@ -907,7 +909,7 @@ public abstract class Volume<T extends Number> {
           inv.transform(sourceCoord);
 
           // Interpolate from the ORIGINAL volume at these fractional coordinates
-          T interpolatedValue =
+          T interpolatedValue = //this.getValue((int) Math.floor(sourceCoord.x), (int) Math.floor(sourceCoord.y), (int) Math.floor(sourceCoord.z));
                   getInterpolatedValueFromSource(sourceCoord.x, sourceCoord.y, sourceCoord.z);
 
           //System.out.println("OLD : (" + (int) Math.floor(sourceCoord.x) + ", " + (int) Math.floor(sourceCoord.y) + ", " + (int) Math.floor(sourceCoord.z) + ")");

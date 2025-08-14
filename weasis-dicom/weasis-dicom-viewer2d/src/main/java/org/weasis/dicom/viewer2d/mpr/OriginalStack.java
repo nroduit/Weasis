@@ -9,14 +9,13 @@
  */
 package org.weasis.dicom.viewer2d.mpr;
 
-import static org.weasis.dicom.viewer2d.mpr.MprView.Plane.AXIAL;
-
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Tag;
 import org.dcm4che3.data.VR;
+import org.joml.Vector3d;
 import org.weasis.core.api.gui.util.Filter;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.TagW;
@@ -25,6 +24,7 @@ import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.SortSeriesStack;
 import org.weasis.dicom.codec.geometry.GeometryOfSlice;
 import org.weasis.dicom.viewer2d.mpr.MprView.Plane;
+import static org.weasis.dicom.viewer2d.mpr.MprView.Plane.AXIAL;
 
 public abstract class OriginalStack extends AbstractStack {
   protected static final double EPSILON = 1e-3;
@@ -137,18 +137,25 @@ public abstract class OriginalStack extends AbstractStack {
     double totalSpace = 0.0;
     double lastSpace = 0.0;
     double[] firstPos = (double[]) sourceStack.getFirst().getTagValue(TagW.SlicePosition);
-    double lastPos = firstPos[0] + firstPos[1] + firstPos[2];
+    if (firstPos == null || firstPos.length != 3) {
+      return 0.0;
+    }
 
+    Vector3d lastPosVector = new Vector3d(firstPos[0], firstPos[1], firstPos[2]);
     for (int i = 1; i < sourceStack.size(); i++) {
       double[] sp = (double[]) sourceStack.get(i).getTagValue(TagW.SlicePosition);
-      double pos = sp[0] + sp[1] + sp[2];
-      double space = Math.abs(pos - lastPos);
+      if (sp == null || sp.length != 3) {
+        continue;
+      }
+
+      Vector3d currentPosVector = new Vector3d(sp[0], sp[1], sp[2]);
+      double space = lastPosVector.distance(currentPosVector);
       if (i > 1 && Math.abs(lastSpace - space) > EPSILON) {
         this.variableSliceSpacing = true;
       }
       totalSpace += space;
       lastSpace = space;
-      lastPos = pos;
+      lastPosVector.set(currentPosVector);
     }
 
     return totalSpace / (sourceStack.size() - 1);
