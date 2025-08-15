@@ -833,9 +833,12 @@ public abstract class Volume<T extends Number> {
   }
 
   public Volume<?> transformVolume() {
-    // Calculate shear transformation
+    // Force pixelRatio to not be modified by adaptPlaneOrientation method
+    List<DicomImageElement> medias = new ArrayList<>(stack.getSourceStack());
+    Collections.reverse(medias);
+    DicomImageElement img = medias.getFirst();
 
-    this.pixelRatio.z *= 1.1; // Mystery coefficient
+    pixelRatio.set(img.getPixelSize(), img.getPixelSize(), stack.getSliceSpace());
 
     double shearFactor = calculateCorrectShearFactorZ();
     double shearFactorX = calculateCorrectShearFactorX();

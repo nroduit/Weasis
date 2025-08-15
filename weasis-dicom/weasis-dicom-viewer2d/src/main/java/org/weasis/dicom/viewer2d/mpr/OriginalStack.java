@@ -141,6 +141,7 @@ public abstract class OriginalStack extends AbstractStack {
       return 0.0;
     }
 
+    double gantryTilt = getGantryTilt();
     Vector3d lastPosVector = new Vector3d(firstPos[0], firstPos[1], firstPos[2]);
     for (int i = 1; i < sourceStack.size(); i++) {
       double[] sp = (double[]) sourceStack.get(i).getTagValue(TagW.SlicePosition);
@@ -150,6 +151,9 @@ public abstract class OriginalStack extends AbstractStack {
 
       Vector3d currentPosVector = new Vector3d(sp[0], sp[1], sp[2]);
       double space = lastPosVector.distance(currentPosVector);
+      if (gantryTilt != 0) {
+        space = correctSpaceForGantryTilt(space, gantryTilt);
+      }
       if (i > 1 && Math.abs(lastSpace - space) > EPSILON) {
         this.variableSliceSpacing = true;
       }
@@ -159,6 +163,27 @@ public abstract class OriginalStack extends AbstractStack {
     }
 
     return totalSpace / (sourceStack.size() - 1);
+  }
+
+  private double correctSpaceForGantryTilt(double measuredSpace, double gantryTiltDegrees) {
+    double gantryTiltRadians = Math.toRadians(gantryTiltDegrees);
+
+    // The corrected spacing is the measured spacing divided by the cosine of the tilt angle
+    // This accounts for the fact that the actual slice thickness is larger when tilted
+    return measuredSpace / Math.cos(gantryTiltRadians);
+  }
+
+  private double getGantryTilt() {
+    Vector3d col = new Vector3d(getStartingImage().getSliceGeometry().getColumn());
+
+    // The tilt angle is the deviation from vertical
+    // col Z is the cosinus of the angle between the tilt vector and the z axis
+    double colZ = col.z();
+    if (colZ <= EPSILON) {
+      return 0.0;
+    }
+    // Substract the angle from pi/2 to get the angle with the vertical axis
+    return Math.toDegrees(Math.PI/2.0 - Math.acos(colZ));
   }
 
   public double getSliceSpace() {
