@@ -120,6 +120,11 @@
     "i18n-version": "4.0.0-SNAPSHOT"
   },
   {
+    "release-version": "4.6.3",
+    "minimal-version": "4.6.0",
+    "i18n-version": "4.0.0-SNAPSHOT"
+  },
+  {
     "release-version": "${revision}",
     "minimal-version": "${base.minimal.version}",
     "i18n-version": "${i18n.version}"
