@@ -662,6 +662,15 @@ public abstract class Volume<T extends Number> {
         + (v1 == null ? 0 : v1.doubleValue()) * factor;
   }
 
+  public boolean needsTransformation(double value) {
+    double EPSILON = 1e-2; // Tolerance value
+    if (value > 0.5) {
+      return (1 - value) > EPSILON;
+    } else {
+      return value > EPSILON;
+    }
+  }
+
   public Matrix4d calculateRotation() {
     Quaterniond rotation = new Quaterniond();
 
@@ -833,38 +842,62 @@ public abstract class Volume<T extends Number> {
   }
 
   public Volume<?> transformVolume() {
-    // Force pixelRatio to not be modified by adaptPlaneOrientation method
-    List<DicomImageElement> medias = new ArrayList<>(stack.getSourceStack());
-    Collections.reverse(medias);
-    DicomImageElement img = medias.getFirst();
 
-    pixelRatio.set(img.getPixelSize(), img.getPixelSize(), stack.getSliceSpace());
+    boolean isModified = false;
 
-    double shearFactor = calculateCorrectShearFactorZ();
-    double shearFactorX = calculateCorrectShearFactorX();
-    System.out.println("Shear factors: " + shearFactorX + " " + shearFactor);
-
-    Vector3d volSize = new Vector3d(this.getSize());
-    Vector3d center = new Vector3d(0, 0, volSize.z).mul(0.5);
-    Vector3d centerNegate = new Vector3d();
-    center.negate(centerNegate);
-
+    Vector3d col = new Vector3d(stack.getFistSliceGeometry().getColumn());
+    Vector3d row = new Vector3d(stack.getFistSliceGeometry().getRow());
 
     Matrix4d identity = new Matrix4d();
-    Matrix4d rotation = calculateRotation();
 
-    Matrix4d shear =
-            new Matrix4d(1.0, 0.0, 0.0, 0.0,
-                    0.0, 1.0, -shearFactor, 0.0,
-                    0.0, 0.0, 1.0, 0.0,
-                    0.0, 0.0, 0.0, 1.0);
-    Matrix4d shear2 =
-            new Matrix4d(1.0, 0.0, -shearFactorX, 0.0,
-                    0.0, 1.0, 0.0, 0.0,
-                    0.0, 0.0, 1.0, 0.0,
-                    0.0, 0.0, 0.0, 1.0);
+    // Rotate image
+    if (needsTransformation(row.y())) {
+      Matrix4d rotation = calculateRotation();
+      identity.mul(rotation);
+      isModified = true;
+    }
 
-    identity.mul(rotation).mul(shear).mul(shear2);
+    // Gantry tilt
+    if (needsTransformation(col.z())) {
+      // Force pixelRatio to not be modified by adaptPlaneOrientation method
+      List<DicomImageElement> medias = new ArrayList<>(stack.getSourceStack());
+      Collections.reverse(medias);
+      DicomImageElement img = medias.getFirst();
+
+      pixelRatio.set(img.getPixelSize(), img.getPixelSize(), stack.getSliceSpace());
+
+      double shearFactor = calculateCorrectShearFactorZ();
+      Matrix4d shear =
+              new Matrix4d(1.0, 0.0, 0.0, 0.0,
+                      0.0, 1.0, -shearFactor, 0.0,
+                      0.0, 0.0, 1.0, 0.0,
+                      0.0, 0.0, 0.0, 1.0);
+
+      identity.mul(shear);
+      isModified = true;
+    }
+
+    if (needsTransformation(row.z())) {
+      // Force pixelRatio to not be modified by adaptPlaneOrientation method
+      List<DicomImageElement> medias = new ArrayList<>(stack.getSourceStack());
+      Collections.reverse(medias);
+      DicomImageElement img = medias.getFirst();
+
+      pixelRatio.set(img.getPixelSize(), img.getPixelSize(), stack.getSliceSpace());
+
+      double shearFactor = calculateCorrectShearFactorX();
+      Matrix4d shear =
+              new Matrix4d(1.0, 0.0, -shearFactor, 0.0,
+                      0.0, 1.0, 0.0, 0.0,
+                      0.0, 0.0, 1.0, 0.0,
+                      0.0, 0.0, 0.0, 1.0);
+
+      identity.mul(shear);
+      isModified = true;
+    }
+
+    if (!isModified) return this;
+
 
     // Calculate transformed volume bounds
     Vector3i[] bounds = calculateTransformedBounds(identity);
