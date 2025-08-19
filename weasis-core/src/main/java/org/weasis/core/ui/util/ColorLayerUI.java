@@ -75,6 +75,9 @@ public class ColorLayerUI {
   }
 
   private void uninstallGlassPane() {
+    if (glassPane != null) {
+      glassPane.setVisible(false);
+    }
     JRootPane rootPane = parent.getRootPane();
     if (rootPane != null && originalGlassPane != null) {
       rootPane.setGlassPane(originalGlassPane);
@@ -131,7 +134,7 @@ public class ColorLayerUI {
     animationTimer =
         new Timer(
             FRAME_DELAY,
-            e -> {
+            _ -> {
               long elapsed = System.currentTimeMillis() - startTime;
               float progress = Math.min(1.0f, (float) elapsed / ANIMATION_DURATION);
 
@@ -159,14 +162,11 @@ public class ColorLayerUI {
     return null;
   }
 
-  private static class TransparentGlassPane extends JComponent
-      implements MouseListener, MouseMotionListener {
+  private static class TransparentGlassPane extends JComponent {
     private float currentAlpha = 0.0f;
 
     public TransparentGlassPane() {
       setOpaque(false);
-      addMouseListener(this);
-      addMouseMotionListener(this);
     }
 
     public void setAlpha(float alpha) {
@@ -191,41 +191,6 @@ public class ColorLayerUI {
           g2d.dispose();
         }
       }
-    }
-
-    @Override
-    public void mouseClicked(MouseEvent e) {
-      // Don't consume - let it pass through for dialogs
-    }
-
-    @Override
-    public void mousePressed(MouseEvent e) {
-      // Don't consume - let it pass through for dialogs
-    }
-
-    @Override
-    public void mouseReleased(MouseEvent e) {
-      // Don't consume - let it pass through for dialogs
-    }
-
-    @Override
-    public void mouseEntered(MouseEvent e) {
-      // Don't consume
-    }
-
-    @Override
-    public void mouseExited(MouseEvent e) {
-      // Don't consume
-    }
-
-    @Override
-    public void mouseDragged(MouseEvent e) {
-      // Don't consume
-    }
-
-    @Override
-    public void mouseMoved(MouseEvent e) {
-      // Don't consume
     }
   }
 }
