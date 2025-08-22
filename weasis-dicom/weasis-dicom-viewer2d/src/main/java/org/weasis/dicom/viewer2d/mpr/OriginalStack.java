@@ -165,12 +165,10 @@ public abstract class OriginalStack extends AbstractStack {
     return totalSpace / (sourceStack.size() - 1);
   }
 
-  private double correctSpaceForGantryTilt(double measuredSpace, double gantryTiltDegrees) {
-    double gantryTiltRadians = Math.toRadians(gantryTiltDegrees);
-
+  private double correctSpaceForGantryTilt(double measuredSpace, double gantryTilt) {
     // The corrected spacing is the measured spacing divided by the cosine of the tilt angle
     // This accounts for the fact that the actual slice thickness is larger when tilted
-    return measuredSpace / Math.cos(gantryTiltRadians);
+    return measuredSpace / Math.cos(gantryTilt);
   }
 
   private double getGantryTilt() {
@@ -179,11 +177,11 @@ public abstract class OriginalStack extends AbstractStack {
     // The tilt angle is the deviation from vertical
     // col Z is the cosinus of the angle between the tilt vector and the z axis
     double colZ = col.z();
-    if (colZ <= EPSILON) {
+    if (Math.abs(colZ) <= EPSILON) {
       return 0.0;
     }
     // Substract the angle from pi/2 to get the angle with the vertical axis
-    return Math.toDegrees(Math.PI/2.0 - Math.acos(colZ));
+    return Math.PI/2.0 - Math.acos(colZ);
   }
 
   public double getSliceSpace() {

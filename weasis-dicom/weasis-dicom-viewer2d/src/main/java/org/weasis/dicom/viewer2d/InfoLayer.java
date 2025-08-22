@@ -47,7 +47,6 @@ import org.weasis.core.ui.model.layer.AbstractInfoLayer;
 import org.weasis.core.ui.model.layer.LayerAnnotation;
 import org.weasis.core.ui.model.layer.LayerItem;
 import org.weasis.core.util.LangUtil;
-import org.weasis.core.util.MathUtil;
 import org.weasis.core.util.StringUtil;
 import org.weasis.core.util.StringUtil.Suffix;
 import org.weasis.dicom.codec.DicomImageElement;
@@ -174,8 +173,9 @@ public class InfoLayer extends AbstractInfoLayer<DicomImageElement> {
     if (view2DPane instanceof MprView mprView) {
       MprController controller = mprView.getMprController();
       if (controller != null && controller.getVolume() != null) {
-        Double tilt = controller.getVolume().getOriginalGantryTilt();
-        drawY = drawGantryTiltMessage(g2, tilt, drawY, fontHeight, border);
+        if (controller.getVolume().isTransformed()) {
+          drawY = drawGeometricTransformationMessage(g2, drawY, fontHeight, border);
+        }
       }
     }
 
@@ -541,15 +541,12 @@ public class InfoLayer extends AbstractInfoLayer<DicomImageElement> {
     GuiUtils.resetRenderingHints(g2, oldRenderingHints);
   }
 
-  public static float drawGantryTiltMessage(
-      Graphics2D g2d, Double tilt, float drawY, int fontHeight, int border) {
-    if (tilt != null && MathUtil.isDifferentFromZero(tilt)) {
-      String str = "(" + DecFormatter.oneDecimal(tilt) + "°)";
-      String message = Messages.getString("stretching.artifacts.msg");
-      FontTools.paintColorFontOutline(
-          g2d, message + StringUtil.SPACE + str, border, drawY, IconColor.ACTIONS_RED.getColor());
-      drawY -= fontHeight;
-    }
+  public static float drawGeometricTransformationMessage(
+    Graphics2D g2d, float drawY, int fontHeight, int border) {
+    String message = Messages.getString("geometric.transformation.msg");
+    FontTools.paintColorFontOutline(
+        g2d, message, border, drawY, IconColor.ACTIONS_RED.getColor());
+    drawY -= fontHeight;
     return drawY;
   }
 

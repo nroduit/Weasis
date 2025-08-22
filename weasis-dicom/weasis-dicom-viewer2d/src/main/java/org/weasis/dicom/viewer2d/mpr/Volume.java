@@ -66,6 +66,7 @@ public abstract class Volume<T extends Number> {
   protected File dataFile;
   protected final JProgressBar progressBar;
   protected final boolean isSigned;
+  protected boolean isTransformed = false;
 
   Volume(Volume<?> volume, int sizeX, int sizeY, int sizeZ) {
     this.progressBar = volume.progressBar;
@@ -303,27 +304,19 @@ public abstract class Volume<T extends Number> {
     adaptNegativeVector(col);
     Vector3d normal = geometry.getNormal();
 
-    Vector3d volSize = new Vector3d(this.getSize());
-    Vector3d center = new Vector3d(size.x, size.y, size.z);
-    Vector3d centerNegate = new Vector3d();
-    center.negate(centerNegate);
-
     // cos of the angle between the patient orientation and the vertical
     double colX = col.x();
-    double colY = col.y();
-    double colZ = col.z();
+    Matrix4d matrix = new Matrix4d();
 
-    Matrix4d identity = new Matrix4d();
-    identity//.translate(centerNegate)
-            .rotateZ(-(Math.PI/2.0 - Math.acos(colX)));
-            //.rotateZ((Math.PI/2.0 - Math.acos(row.y())));
-            //.translate(center);
+    if (needsTransformation(colX)) {
+      matrix.rotateZ(-(Math.PI/2.0 - Math.acos(colX)));
+    }
 
     return switch (stack.getPlane()) {
       case AXIAL -> new Matrix4d(row.x, col.x, normal.x, 0.0,
                   row.y, col.y, normal.y, 0.0,
                   row.z, col.z, normal.z, 0.0,
-                  0.0, 0.0, 0.0, 1.0).mul(identity);
+                  0.0, 0.0, 0.0, 1.0).mul(matrix);
       case CORONAL ->
           new Matrix4d(row.x, col.x, normal.x, 0.0,
                   row.z, col.z, normal.z, 0.0,
@@ -576,7 +569,7 @@ public abstract class Volume<T extends Number> {
         throw new IllegalArgumentException("Unsupported data type");
       }
     } else {
-      progressBar.setValue(volume.size.z);
+      progressBar.setValue((int) Math.round(volume.size.z * 1.2));
     }
 
     return volume;
@@ -662,48 +655,30 @@ public abstract class Volume<T extends Number> {
         + (v1 == null ? 0 : v1.doubleValue()) * factor;
   }
 
+  // value is supposed to be a cosine value, if the difference is greater than 10e-2 from 1 or 0, transformation is needed
   public boolean needsTransformation(double value) {
     double EPSILON = 1e-2; // Tolerance value
-    if (value > 0.5) {
-      return (1 - value) > EPSILON;
+    if (Math.abs(value) > 0.5) {
+      return (1 - Math.abs(value)) > EPSILON;
     } else {
-      return value > EPSILON;
+      return Math.abs(value) > EPSILON;
     }
   }
 
+  public void setTransformed(boolean transformed) {
+    this.isTransformed = transformed;
+  }
+
+  public boolean isTransformed() {
+    return this.isTransformed;
+  }
+
   public Matrix4d calculateRotation() {
-    Quaterniond rotation = new Quaterniond();
-
     // Calculate from geometry vectors
-    Vector3d col = new Vector3d(stack.getFistSliceGeometry().getColumn());
     Vector3d row =  new Vector3d(stack.getFistSliceGeometry().getRow());
-    Vector3d volSize = new Vector3d(this.getSize());
-    Vector3d center = new Vector3d(0, 0, volSize.z).mul(0.5);
-    Vector3d centerNegate = new Vector3d();
-    center.negate(centerNegate);
-
-    // cos of the angle between the patient orientation and the vertical
-    double colX = col.x();
-    double colY = col.y();
-    double colZ = col.z();
-
-    //-(Math.PI/2.0 - Math.acos(colX))
-
-    Matrix4d identity = new Matrix4d();
-    //identity//.translate(centerNegate)
-            //.rotateZ(-(Math.PI/2.0 - Math.acos(colX)));
-            //.rotateZ((Math.PI/2.0 - Math.acos(row.y())));
-    //.translate(center);
-
-    //Matrix4d identity = new Matrix4d();
-    identity.rotateZ((Math.PI/2.0 - Math.acos(row.y())));;
-
-    /*if (colX != 0) {
-      // Rotate - angle of each axis
-      rotation.rotateZ(-(Math.PI/2.0 - Math.acos(colX)));
-    }*/
-
-    return identity;
+    Matrix4d matrix = new Matrix4d();
+    matrix.rotateZ((Math.PI/2.0 - Math.acos(row.y())));
+    return matrix;
   }
 
   public double calculateCorrectShearFactorZ() {
@@ -896,8 +871,10 @@ public abstract class Volume<T extends Number> {
       isModified = true;
     }
 
-    if (!isModified) return this;
-
+    if (!isModified) {
+      updateProgressBar(this.progressBar.getMaximum());
+      return this;
+    }
 
     // Calculate transformed volume bounds
     Vector3i[] bounds = calculateTransformedBounds(identity);
@@ -924,6 +901,7 @@ public abstract class Volume<T extends Number> {
 
     // Create transformed volume
     Volume transformedVolume = this.cloneVolume(max.x, max.y, max.z);
+    transformedVolume.setTransformed(true);
 
     identity.translate(translateX, translateY, translateZ);
 
@@ -934,6 +912,9 @@ public abstract class Volume<T extends Number> {
     Matrix4d inv = identity.invert();
     System.out.println("Inv : ");
     System.out.println(inv);
+
+    double progressBarStep = (this.stack.getSourceStack().size() * 0.2) / transformedVolume.getSizeX();
+    int stackSize = stack.getSourceStack().size();
 
     // Fill transformed volume using backward mapping
     for (int targetX = 0; targetX < transformedVolume.getSizeX(); targetX++) {
@@ -957,7 +938,7 @@ public abstract class Volume<T extends Number> {
         }
       }
 
-      updateProgressBar(targetX);
+      updateProgressBar((int) Math.ceil(stackSize + (targetX * progressBarStep)));
     }
 
     return transformedVolume;

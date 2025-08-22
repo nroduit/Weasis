@@ -10,13 +10,10 @@
 package org.weasis.dicom.viewer2d.mpr;
 
 import javax.swing.JOptionPane;
-import org.dcm4che3.data.Tag;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.gui.util.WinUtil;
 import org.weasis.core.api.media.data.MediaSeries;
-import org.weasis.core.util.MathUtil;
 import org.weasis.dicom.codec.DicomImageElement;
-import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.viewer2d.Messages;
 import org.weasis.dicom.viewer2d.mpr.MprView.Plane;
 
@@ -36,10 +33,6 @@ public class MPRGenerator {
       throw new IllegalStateException("No image");
 
     BuildContext context = new BuildContext(thread, mprContainer, view);
-    Double tilt = TagD.getTagValue(stack.getMiddleImage(), Tag.GantryDetectorTilt, Double.class);
-    if (tilt != null && MathUtil.isDifferentFromZero(tilt)) {
-      confirmMessage(context, Messages.getString("SeriesBuilder.gantry"));
-    }
     stack.generate(context);
   }
 

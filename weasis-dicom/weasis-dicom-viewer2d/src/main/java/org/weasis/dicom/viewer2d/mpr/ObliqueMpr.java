@@ -42,7 +42,7 @@ public class ObliqueMpr extends OriginalStack {
       MprView view,
       Filter<DicomImageElement> filter) {
     super(plane, series, filter);
-    JProgressBar bar = createProgressBar(view, getSourceStack().size());
+    JProgressBar bar = createProgressBar(view, (int) Math.ceil(getSourceStack().size() * 1.2));
     GuiExecutor.invokeAndWait(
         () -> {
           bar.setValue(0);
