@@ -68,12 +68,12 @@ public abstract class Volume<T extends Number> {
   protected final boolean isSigned;
   protected boolean isTransformed = false;
 
-  Volume(Volume<?> volume, int sizeX, int sizeY, int sizeZ) {
+  Volume(Volume<?> volume, int sizeX, int sizeY, int sizeZ, Vector3d originalPixelRatio) {
     this.progressBar = volume.progressBar;
     this.translation = new Vector3d(0, 0, 0);
     this.rotation = new Quaterniond();
     this.size = new Vector3i(sizeX, sizeY, sizeZ);
-    this.pixelRatio = volume.pixelRatio;
+    this.pixelRatio = originalPixelRatio;
     this.negativeDirRow = volume.negativeDirRow;
     this.negativeDirCol = volume.negativeDirCol;
     this.minValue = volume.minValue;
@@ -531,14 +531,14 @@ public abstract class Volume<T extends Number> {
     GuiExecutor.execute(() -> pb.setValue(target));
   }
 
-  public Volume cloneVolume(int sizeX, int sizeY, int sizeZ) {
+  public Volume cloneVolume(int sizeX, int sizeY, int sizeZ, Vector3d originalPixelRatio) {
 
     return switch (this.getCVType()) {
-        case CvType.CV_8U, CvType.CV_8S -> new VolumeByte(this, sizeX, sizeY, sizeZ);
-        case CvType.CV_16U, CvType.CV_16S -> new VolumeShort(this, sizeX, sizeY, sizeZ);
-        case CvType.CV_32S -> new VolumeInt(this, sizeX, sizeY, sizeZ);
-        case CvType.CV_32F -> new VolumeFloat(this, sizeX, sizeY, sizeZ);
-        case CvType.CV_64F -> new VolumeDouble(this, sizeX, sizeY, sizeZ);
+        case CvType.CV_8U, CvType.CV_8S -> new VolumeByte(this, sizeX, sizeY, sizeZ, originalPixelRatio);
+        case CvType.CV_16U, CvType.CV_16S -> new VolumeShort(this, sizeX, sizeY, sizeZ, originalPixelRatio);
+        case CvType.CV_32S -> new VolumeInt(this, sizeX, sizeY, sizeZ, originalPixelRatio);
+        case CvType.CV_32F -> new VolumeFloat(this, sizeX, sizeY, sizeZ, originalPixelRatio);
+        case CvType.CV_64F -> new VolumeDouble(this, sizeX, sizeY, sizeZ, originalPixelRatio);
         default -> null;
     };
   }
@@ -837,9 +837,6 @@ public abstract class Volume<T extends Number> {
       // Force pixelRatio to not be modified by adaptPlaneOrientation method
       List<DicomImageElement> medias = new ArrayList<>(stack.getSourceStack());
       Collections.reverse(medias);
-      DicomImageElement img = medias.getFirst();
-
-      pixelRatio.set(img.getPixelSize(), img.getPixelSize(), stack.getSliceSpace());
 
       double shearFactor = calculateCorrectShearFactorZ();
       Matrix4d shear =
@@ -856,9 +853,6 @@ public abstract class Volume<T extends Number> {
       // Force pixelRatio to not be modified by adaptPlaneOrientation method
       List<DicomImageElement> medias = new ArrayList<>(stack.getSourceStack());
       Collections.reverse(medias);
-      DicomImageElement img = medias.getFirst();
-
-      pixelRatio.set(img.getPixelSize(), img.getPixelSize(), stack.getSliceSpace());
 
       double shearFactor = calculateCorrectShearFactorX();
       Matrix4d shear =
@@ -900,7 +894,10 @@ public abstract class Volume<T extends Number> {
     }
 
     // Create transformed volume
-    Volume transformedVolume = this.cloneVolume(max.x, max.y, max.z);
+
+    DicomImageElement img = stack.getFirstImage();
+    Vector3d originalPixelRatio = new Vector3d(img.getPixelSize(), img.getPixelSize(), stack.getSliceSpace());
+    Volume transformedVolume = this.cloneVolume(max.x, max.y, max.z, originalPixelRatio);
     transformedVolume.setTransformed(true);
 
     identity.translate(translateX, translateY, translateZ);

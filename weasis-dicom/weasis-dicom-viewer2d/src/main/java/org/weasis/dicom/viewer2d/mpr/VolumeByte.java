@@ -35,8 +35,8 @@ public class VolumeByte extends Volume<Byte> {
     this.signed = signed;
   }
 
-  public VolumeByte(Volume<? extends Number> volume, int sizeX, int sizeY, int sizeZ) {
-    super(volume, sizeX, sizeY, sizeZ);
+  public VolumeByte(Volume<? extends Number> volume, int sizeX, int sizeY, int sizeZ, Vector3d originalPixelRatio) {
+    super(volume, sizeX, sizeY, sizeZ, originalPixelRatio);
     this.signed = isSigned;
   }
 

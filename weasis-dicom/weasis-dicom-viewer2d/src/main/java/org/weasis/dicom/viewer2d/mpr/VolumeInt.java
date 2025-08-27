@@ -28,8 +28,8 @@ public class VolumeInt extends Volume<Integer> {
     super(sizeX, sizeY, sizeZ, progressBar);
   }
 
-  public VolumeInt(Volume<? extends Number> volume, int sizeX, int sizeY, int sizeZ) {
-    super(volume, sizeX, sizeY, sizeZ);
+  public VolumeInt(Volume<? extends Number> volume, int sizeX, int sizeY, int sizeZ, Vector3d originalPixelRatio) {
+    super(volume, sizeX, sizeY, sizeZ, originalPixelRatio);
   }
 
   public VolumeInt(OriginalStack stack, JProgressBar progressBar) {

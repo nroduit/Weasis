@@ -42,8 +42,8 @@ public class VolumeShort extends Volume<Short> {
     this.signed = signed;
   }
 
-  public VolumeShort(Volume<? extends Number> volume, int sizeX, int sizeY, int sizeZ) {
-    super(volume, sizeX, sizeY, sizeZ);
+  public VolumeShort(Volume<? extends Number> volume, int sizeX, int sizeY, int sizeZ, Vector3d originalPixelRatio) {
+    super(volume, sizeX, sizeY, sizeZ, originalPixelRatio);
     this.signed = isSigned;
   }
 

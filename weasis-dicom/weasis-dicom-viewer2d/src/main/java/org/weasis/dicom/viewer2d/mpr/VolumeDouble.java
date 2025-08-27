@@ -28,8 +28,8 @@ public class VolumeDouble extends Volume<Double> {
     super(sizeX, sizeY, sizeZ, progressBar);
   }
 
-  public VolumeDouble(Volume<? extends Number> volume, int sizeX, int sizeY, int sizeZ) {
-    super(volume, sizeX, sizeY, sizeZ);
+  public VolumeDouble(Volume<? extends Number> volume, int sizeX, int sizeY, int sizeZ, Vector3d originalPixelRatio) {
+    super(volume, sizeX, sizeY, sizeZ, originalPixelRatio);
   }
 
   public VolumeDouble(OriginalStack stack, JProgressBar progressBar) {
