@@ -502,8 +502,8 @@ public class DicomMediaIO implements DcmMediaReader {
     // -------- End of Mandatory Tags --------
 
     writeImageValues(md);
-    writeSharedFunctionalGroupsSequence(header);
-    DicomMediaUtils.writePerFrameFunctionalGroupsSequence(this, header, 0);
+    writeSharedFunctionalGroupsSequence(header, md);
+    DicomMediaUtils.writePerFrameFunctionalGroupsSequence(this, md, 0);
 
     boolean pr = SERIES_PR_MIMETYPE.equals(mimeType);
     boolean ko = SERIES_KO_MIMETYPE.equals(mimeType);
@@ -526,10 +526,10 @@ public class DicomMediaIO implements DcmMediaReader {
     DicomMediaUtils.computeSUVFactor(header, this, 0);
   }
 
-  private void writeSharedFunctionalGroupsSequence(Attributes header) {
+  private void writeSharedFunctionalGroupsSequence(Attributes header, DicomMetaData md) {
     if (header != null) {
       DicomMediaUtils.writeFunctionalGroupsSequence(
-          this, header.getNestedDataset(Tag.SharedFunctionalGroupsSequence));
+          this, md, header.getNestedDataset(Tag.SharedFunctionalGroupsSequence), -1);
     }
   }
 
@@ -673,7 +673,9 @@ public class DicomMediaIO implements DcmMediaReader {
                 desc.getColumns(),
                 desc.getRows());
           }
-          return noEmbeddedOverlay ? ImageRendering.getImageWithoutEmbeddedOverlay(img, desc) : img;
+          return noEmbeddedOverlay
+              ? ImageRendering.getImageWithoutEmbeddedOverlay(img, desc, frame)
+              : img;
         } finally {
           reader.dispose();
         }
@@ -846,7 +848,8 @@ public class DicomMediaIO implements DcmMediaReader {
       // Clone the shared tag
       Map<TagW, Object> tagList = new HashMap<>(tags);
       SimpleTaggable taggable = new SimpleTaggable(tagList);
-      if (DicomMediaUtils.writePerFrameFunctionalGroupsSequence(taggable, getDicomObject(), val)) {
+      if (DicomMediaUtils.writePerFrameFunctionalGroupsSequence(
+          taggable, getDicomMetaData(), val)) {
         DicomMediaUtils.computeSlicePositionVector(taggable);
       }
       return tagList;

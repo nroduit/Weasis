@@ -1,7 +1,7 @@
 name: weasis
 title: Weasis
 base: core24
-version: '4.6.2'
+version: '4.6.3'
 summary: A free/libre/open medical DICOM viewer
 description: |
   Weasis is a multipurpose standalone and web-based DICOM viewer with 
@@ -63,10 +63,10 @@ parts:
     plugin: dump
     source:
       - on amd64: https://github.com/adoptium/temurin24-binaries/releases/download/jdk-24.0.2%2B12/OpenJDK24U-jdk_x64_linux_hotspot_24.0.2_12.tar.gz
-      - on arm64: https://github.com/adoptium/temurin24-binaries/releases/download/jdk-24.0.1%2B9/OpenJDK24U-jdk_aarch64_linux_hotspot_24.0.1_9.tar.gz
+      - on arm64: https://github.com/adoptium/temurin24-binaries/releases/download/jdk-24.0.2%2B12/OpenJDK24U-jdk_aarch64_linux_hotspot_24.0.2_12.tar.gz
     source-checksum:
       - on amd64: sha256/aea1cc55e51cf651c85f2f00ad021603fe269c4bb6493fa97a321ad770c9b096
-      - on arm64: sha256/a598260e340028d9b2383c23df16aa286769a661bd3bf28a52e8c1a5774b1110
+      - on arm64: sha256/6f8725d186d05c627176db9c46c732a6ef3ba41d9e9b3775c4727fc8ac642bb2
     organize:
       '*': java-runtime/
     override-stage: 'true'
@@ -82,8 +82,8 @@ parts:
       - libstdc++6
       - libgcc1
     #source: weasis-distributions/target/native-dist/weasis-native.zip
-    source: https://github.com/nroduit/Weasis/releases/download/v4.6.2/weasis-native.zip
-    source-checksum: sha256/cb1cd74f8e0892f32d5931fca0750aefdaa76dd38ed32e62ac9b542bdfbe1510
+    source: https://github.com/nroduit/Weasis/releases/download/v4.6.3/weasis-native.zip
+    source-checksum: sha256/01568d7a4075458d132991db6416601748d2ee1bc6d9983368919674fc9746dc
     organize:
       '*': weasis-native/
     override-stage: 'true'

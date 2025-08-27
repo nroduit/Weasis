@@ -1,5 +1,24 @@
 # Changelog
 
+## [v4.6.3](https://github.com/nroduit/Weasis/tree/v4.6.3) (2025-08-15)
+
+[Full Changelog](https://github.com/nroduit/Weasis/compare/v4.6.2...v4.6.3)
+
+**Implemented enhancements:**
+
+- Improve performance for building MPR views [\#721](https://github.com/nroduit/Weasis/issues/721)
+- Improve thumbnail generation speed using a thread pool [\#720](https://github.com/nroduit/Weasis/issues/720)
+- Improve loading speed of images with WADO and CD/DVD [\#719](https://github.com/nroduit/Weasis/issues/719)
+
+**Fixed bugs:**
+
+- Cannot enter value in JTextField with modal windows on macOS [\#718](https://github.com/nroduit/Weasis/issues/718)
+- DICOM Explorer: cannot select the last thumbnails [\#714](https://github.com/nroduit/Weasis/issues/714)
+- DICOM Explorer does not display series when all are split into multiple series [\#712](https://github.com/nroduit/Weasis/issues/712)
+- 3D buttons in toolbar disabled after DICOM Q/R retrieval for eligible series [\#711](https://github.com/nroduit/Weasis/issues/711)
+- Weasis hangs after retrieving study to 100% [\#710](https://github.com/nroduit/Weasis/issues/710)
+- DICOM presets for Breast Tomosynthesis not loaded [\#709](https://github.com/nroduit/Weasis/issues/709)
+
 ## [v4.6.2](https://github.com/nroduit/Weasis/tree/v4.6.2) (2025-07-18)
 
 [Full Changelog](https://github.com/nroduit/Weasis/compare/v4.6.1...v4.6.2)
@@ -35,6 +54,7 @@
 **Closed issues:**
 
 - Wont launch [\#649](https://github.com/nroduit/Weasis/issues/649)
+- Coarse and fine control of window and level sliders using shift, control, or alt keys [\#634](https://github.com/nroduit/Weasis/issues/634)
 - Sort by anatomic location by default [\#601](https://github.com/nroduit/Weasis/issues/601)
 
 ## [v4.6.1](https://github.com/nroduit/Weasis/tree/v4.6.1) (2025-06-04)
@@ -63,7 +83,6 @@
 - Cannot uninstall .deb package [\#664](https://github.com/nroduit/Weasis/issues/664)
 - Cannot open MPR when downloading multiframes [\#663](https://github.com/nroduit/Weasis/issues/663)
 - Native image library fails to load on certain macOS Intel systems [\#659](https://github.com/nroduit/Weasis/issues/659)
-- Regarding the mistakes in the Chinese translation [\#657](https://github.com/nroduit/Weasis/issues/657)
 - Third-party launcher is not working on Windows [\#656](https://github.com/nroduit/Weasis/issues/656)
 - Limit of 1000 images per series when downloading study from Google Healthcare API over DICOMWEB [\#653](https://github.com/nroduit/Weasis/issues/653)
 

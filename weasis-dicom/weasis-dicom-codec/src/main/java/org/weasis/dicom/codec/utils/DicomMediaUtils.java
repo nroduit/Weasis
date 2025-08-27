@@ -36,6 +36,7 @@ import org.dcm4che3.data.Sequence;
 import org.dcm4che3.data.Tag;
 import org.dcm4che3.data.UID;
 import org.dcm4che3.data.VR;
+import org.dcm4che3.img.DicomMetaData;
 import org.dcm4che3.img.lut.ModalityLutModule;
 import org.dcm4che3.img.lut.VoiLutModule;
 import org.dcm4che3.img.util.DateTimeUtils;
@@ -327,7 +328,8 @@ public class DicomMediaUtils {
     taggable.setTagNoNull(TagW.ShutterRGBColor, DicomObjectUtil.getShutterColor(dcmObject));
   }
 
-  public static void writeFunctionalGroupsSequence(Taggable taggable, Attributes dcm) {
+  public static void writeFunctionalGroupsSequence(
+      Taggable taggable, DicomMetaData md, Attributes dcm, int frameIndex) {
     if (dcm != null && taggable != null) {
       // C.7.6.16.2.1 Pixel Measures Macro:
       // https://dicom.nema.org/medical/dicom/2020b/output/chtml/part03/sect_C.7.6.16.2.html#table_C.7.6.16-2
@@ -377,6 +379,13 @@ public class DicomMediaUtils {
       Attributes mLutItems = dcm.getNestedDataset(Tag.PixelValueTransformationSequence);
       if (mLutItems != null) {
         ModalityLutModule mlut = new ModalityLutModule(mLutItems);
+        if (frameIndex < 0) {
+          // If the frame index is not defined, we set the modality LUT for all frames
+          taggable.setTag(TagW.ModalityLUTData, mlut);
+        } else {
+          // Otherwise, we set the modality LUT for the specific frame
+          md.getImageDescriptor().setModalityLutForFrame(frameIndex, mlut);
+        }
         taggable.setTag(TagW.ModalityLUTData, mlut);
       }
 
@@ -385,7 +394,13 @@ public class DicomMediaUtils {
       Attributes vLutItems = dcm.getNestedDataset(Tag.FrameVOILUTSequence);
       if (vLutItems != null) {
         VoiLutModule vlut = new VoiLutModule(vLutItems);
-        taggable.setTag(TagW.VOILUTsData, vlut);
+        if (frameIndex < 0) {
+          // If the frame index is not defined, we set the VOI LUT for all frames
+          taggable.setTag(TagW.VOILUTsData, vlut);
+        } else {
+          // Otherwise, we set the VOI LUT for the specific frame
+          md.getImageDescriptor().setVoiLutForFrame(frameIndex, vlut);
+        }
       }
 
       // C.7.6.16.2.15 Patient Orientation in Frame Macro:
@@ -413,14 +428,15 @@ public class DicomMediaUtils {
   }
 
   public static boolean writePerFrameFunctionalGroupsSequence(
-      Taggable taggable, Attributes header, int index) {
+      Taggable taggable, DicomMetaData md, int index) {
+    Attributes header = md.getDicomObject();
     if (header != null && taggable != null) {
       /*
        * C.7.6.16 The number of Items shall be the same as the number of frames in the Multi-frame image.
        */
       Attributes a = header.getNestedDataset(Tag.PerFrameFunctionalGroupsSequence, index);
       if (a != null) {
-        DicomMediaUtils.writeFunctionalGroupsSequence(taggable, a);
+        DicomMediaUtils.writeFunctionalGroupsSequence(taggable, md, a, index);
         return true;
       }
     }

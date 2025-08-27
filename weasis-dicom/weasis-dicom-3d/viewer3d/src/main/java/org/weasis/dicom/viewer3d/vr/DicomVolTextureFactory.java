@@ -105,7 +105,11 @@ public class DicomVolTextureFactory {
 
   private static PixelFormat getImageDataFormat(DicomImageElement media) {
     ImageDescriptor desc = media.getMediaReader().getDicomMetaData().getImageDescriptor();
-    final LookupTableCV mLUTSeq = desc.getModalityLUT().getLut().orElse(null);
+    int key = 0;
+    if (media.getKey() instanceof Integer val) {
+      key = val;
+    }
+    final LookupTableCV mLUTSeq = desc.getModalityLutForFrame(key).getLut().orElse(null);
     LutParameters params =
         media.getModalityLutParameters(
             true, mLUTSeq, media.isPhotometricInterpretationInverse(null), null);
