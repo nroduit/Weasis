@@ -42,7 +42,12 @@ public class VolumeShort extends Volume<Short> {
     this.signed = signed;
   }
 
-  public VolumeShort(Volume<? extends Number> volume, int sizeX, int sizeY, int sizeZ, Vector3d originalPixelRatio) {
+  public VolumeShort(
+      Volume<? extends Number> volume,
+      int sizeX,
+      int sizeY,
+      int sizeZ,
+      Vector3d originalPixelRatio) {
     super(volume, sizeX, sizeY, sizeZ, originalPixelRatio);
     this.signed = isSigned;
   }
@@ -79,15 +84,12 @@ public class VolumeShort extends Volume<Short> {
   protected void setValue(int x, int y, int z, Short value, Matrix4d transform) {
     Short v = value;
     if (transform != null) {
-      //v = getInterpolatedValueFromSource(x, y, z);
+      // v = getInterpolatedValueFromSource(x, y, z);
 
       Vector3i sliceCoord = transformPoint(x, y, z, transform);
       x = sliceCoord.x;
       y = sliceCoord.y;
       z = sliceCoord.z;
-
-
-
     }
     if (isOutside(x, y, z)) {
       return;
@@ -95,7 +97,7 @@ public class VolumeShort extends Volume<Short> {
     if (v != null) {
       if (data == null) {
         int index = (x * size.y * size.z + y * size.z + z) * byteDepth;
-        //System.out.println(index + " " + x + " " + y + " " + z + " " + byteDepth);
+        // System.out.println(index + " " + x + " " + y + " " + z + " " + byteDepth);
         mappedBuffer.putShort(index, v);
       } else {
         data[x][y][z] = v;

@@ -116,8 +116,7 @@ public abstract class Volume<T extends Number> {
     this.stack = stack;
     int depth = stack.getFirstImage().getImage().depth();
     this.isSigned = depth == CvType.CV_8S || depth == CvType.CV_16S || depth == CvType.CV_32S;
-    this.cvType =
-        initCVType(isSigned);
+    this.cvType = initCVType(isSigned);
     this.byteDepth = CvType.ELEM_SIZE(cvType); // FIXME: color image
     switch (stack.getPlane()) {
       case AXIAL:
@@ -309,24 +308,23 @@ public abstract class Volume<T extends Number> {
     Matrix4d matrix = new Matrix4d();
 
     if (needsTransformation(colX)) {
-      matrix.rotateZ(-(Math.PI/2.0 - Math.acos(colX)));
+      matrix.rotateZ(-(Math.PI / 2.0 - Math.acos(colX)));
     }
 
     return switch (stack.getPlane()) {
-      case AXIAL -> new Matrix4d(row.x, col.x, normal.x, 0.0,
-                  row.y, col.y, normal.y, 0.0,
-                  row.z, col.z, normal.z, 0.0,
-                  0.0, 0.0, 0.0, 1.0).mul(matrix);
+      case AXIAL ->
+          new Matrix4d(
+                  row.x, col.x, normal.x, 0.0, row.y, col.y, normal.y, 0.0, row.z, col.z, normal.z,
+                  0.0, 0.0, 0.0, 0.0, 1.0)
+              .mul(matrix);
       case CORONAL ->
-          new Matrix4d(row.x, col.x, normal.x, 0.0,
-                  row.z, col.z, normal.z, 0.0,
-                  row.y, col.y, normal.y, 0.0,
-                  0.0, 0.0, 0.0, 1.0);
+          new Matrix4d(
+              row.x, col.x, normal.x, 0.0, row.z, col.z, normal.z, 0.0, row.y, col.y, normal.y, 0.0,
+              0.0, 0.0, 0.0, 1.0);
       case SAGITTAL ->
-              new Matrix4d(row.z, col.z, normal.z, 0.0,
-                      row.x, col.x, normal.x, 0.0,
-                      row.y, col.y, normal.y, 0.0,
-                      0.0, 0.0, 0.0, 1.0);
+          new Matrix4d(
+              row.z, col.z, normal.z, 0.0, row.x, col.x, normal.x, 0.0, row.y, col.y, normal.y, 0.0,
+              0.0, 0.0, 0.0, 1.0);
     };
   }
 
@@ -534,12 +532,14 @@ public abstract class Volume<T extends Number> {
   public Volume cloneVolume(int sizeX, int sizeY, int sizeZ, Vector3d originalPixelRatio) {
 
     return switch (this.getCVType()) {
-        case CvType.CV_8U, CvType.CV_8S -> new VolumeByte(this, sizeX, sizeY, sizeZ, originalPixelRatio);
-        case CvType.CV_16U, CvType.CV_16S -> new VolumeShort(this, sizeX, sizeY, sizeZ, originalPixelRatio);
-        case CvType.CV_32S -> new VolumeInt(this, sizeX, sizeY, sizeZ, originalPixelRatio);
-        case CvType.CV_32F -> new VolumeFloat(this, sizeX, sizeY, sizeZ, originalPixelRatio);
-        case CvType.CV_64F -> new VolumeDouble(this, sizeX, sizeY, sizeZ, originalPixelRatio);
-        default -> null;
+      case CvType.CV_8U, CvType.CV_8S ->
+          new VolumeByte(this, sizeX, sizeY, sizeZ, originalPixelRatio);
+      case CvType.CV_16U, CvType.CV_16S ->
+          new VolumeShort(this, sizeX, sizeY, sizeZ, originalPixelRatio);
+      case CvType.CV_32S -> new VolumeInt(this, sizeX, sizeY, sizeZ, originalPixelRatio);
+      case CvType.CV_32F -> new VolumeFloat(this, sizeX, sizeY, sizeZ, originalPixelRatio);
+      case CvType.CV_64F -> new VolumeDouble(this, sizeX, sizeY, sizeZ, originalPixelRatio);
+      default -> null;
     };
   }
 
@@ -655,7 +655,8 @@ public abstract class Volume<T extends Number> {
         + (v1 == null ? 0 : v1.doubleValue()) * factor;
   }
 
-  // value is supposed to be a cosine value, if the difference is greater than 10e-2 from 1 or 0, transformation is needed
+  // value is supposed to be a cosine value, if the difference is greater than 10e-2 from 1 or 0,
+  // transformation is needed
   public boolean needsTransformation(double value) {
     double EPSILON = 1e-2; // Tolerance value
     if (Math.abs(value) > 0.5) {
@@ -675,9 +676,9 @@ public abstract class Volume<T extends Number> {
 
   public Matrix4d calculateRotation() {
     // Calculate from geometry vectors
-    Vector3d row =  new Vector3d(stack.getFistSliceGeometry().getRow());
+    Vector3d row = new Vector3d(stack.getFistSliceGeometry().getRow());
     Matrix4d matrix = new Matrix4d();
-    matrix.rotateZ((Math.PI/2.0 - Math.acos(row.y())));
+    matrix.rotateZ((Math.PI / 2.0 - Math.acos(row.y())));
     return matrix;
   }
 
@@ -691,7 +692,7 @@ public abstract class Volume<T extends Number> {
     // col Z is the cosinus of the angle between the tilt vector and the z axis
     double colZ = col.z();
     // Substract the angle from pi/2 to get the angle with the vertical axis
-    shearFactor = Math.tan(Math.PI/2.0 - Math.acos(colZ));
+    shearFactor = Math.tan(Math.PI / 2.0 - Math.acos(colZ));
 
     // Scale by pixel spacing ratio to account for anisotropic voxels
     double pixelSpacingRatio = pixelRatio.y / pixelRatio.z;
@@ -710,7 +711,7 @@ public abstract class Volume<T extends Number> {
     // col Z is the cosinus of the angle between the tilt vector and the z axis
     double rowZ = row.z();
     // Substract the angle from pi/2 to get the angle with the vertical axis
-    shearFactor = Math.tan(Math.PI/2.0 - Math.acos(rowZ));
+    shearFactor = Math.tan(Math.PI / 2.0 - Math.acos(rowZ));
 
     // Scale by pixel spacing ratio to account for anisotropic voxels
     double pixelSpacingRatio = pixelRatio.x / pixelRatio.z;
@@ -721,14 +722,14 @@ public abstract class Volume<T extends Number> {
   private Vector3i[] calculateTransformedBounds(Matrix4d transform) {
     // Transform all 8 corners of the original volume
     Vector4d[] corners = {
-            new Vector4d(0.0, 0.0, 0.0, 1.0),
-            new Vector4d(size.x, 0.0, 0.0, 1.0),
-            new Vector4d(size.x, 0.0, size.z, 1.0),
-            new Vector4d(0.0, 0.0, size.z, 1.0),
-            new Vector4d(size.x, size.y, 0.0, 1.0),
-            new Vector4d(size.x, size.y, size.z, 1.0),
-            new Vector4d(0.0, size.y, size.z, 1.0),
-            new Vector4d(0.0, size.y, 0.0, 1.0)
+      new Vector4d(0.0, 0.0, 0.0, 1.0),
+      new Vector4d(size.x, 0.0, 0.0, 1.0),
+      new Vector4d(size.x, 0.0, size.z, 1.0),
+      new Vector4d(0.0, 0.0, size.z, 1.0),
+      new Vector4d(size.x, size.y, 0.0, 1.0),
+      new Vector4d(size.x, size.y, size.z, 1.0),
+      new Vector4d(0.0, size.y, size.z, 1.0),
+      new Vector4d(0.0, size.y, 0.0, 1.0)
     };
 
     for (Vector4d corner : corners) {
@@ -769,11 +770,11 @@ public abstract class Volume<T extends Number> {
   protected T getInterpolatedValueFromSource(double x, double y, double z) {
     // Check bounds in the ORIGINAL volume (this)
     if (x < 0
-            || x >= this.size.x - 1
-            || y < 0
-            || y >= this.size.y - 1
-            || z < 0
-            || z >= this.size.z - 1) {
+        || x >= this.size.x - 1
+        || y < 0
+        || y >= this.size.y - 1
+        || z < 0
+        || z >= this.size.z - 1) {
       return null;
     }
 
@@ -840,10 +841,23 @@ public abstract class Volume<T extends Number> {
 
       double shearFactor = calculateCorrectShearFactorZ();
       Matrix4d shear =
-              new Matrix4d(1.0, 0.0, 0.0, 0.0,
-                      0.0, 1.0, -shearFactor, 0.0,
-                      0.0, 0.0, 1.0, 0.0,
-                      0.0, 0.0, 0.0, 1.0);
+          new Matrix4d(
+              1.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              1.0,
+              -shearFactor,
+              0.0,
+              0.0,
+              0.0,
+              1.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              1.0);
 
       identity.mul(shear);
       isModified = true;
@@ -856,10 +870,23 @@ public abstract class Volume<T extends Number> {
 
       double shearFactor = calculateCorrectShearFactorX();
       Matrix4d shear =
-              new Matrix4d(1.0, 0.0, -shearFactor, 0.0,
-                      0.0, 1.0, 0.0, 0.0,
-                      0.0, 0.0, 1.0, 0.0,
-                      0.0, 0.0, 0.0, 1.0);
+          new Matrix4d(
+              1.0,
+              0.0,
+              -shearFactor,
+              0.0,
+              0.0,
+              1.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              1.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              1.0);
 
       identity.mul(shear);
       isModified = true;
@@ -896,7 +923,8 @@ public abstract class Volume<T extends Number> {
     // Create transformed volume
 
     DicomImageElement img = stack.getFirstImage();
-    Vector3d originalPixelRatio = new Vector3d(img.getPixelSize(), img.getPixelSize(), stack.getSliceSpace());
+    Vector3d originalPixelRatio =
+        new Vector3d(img.getPixelSize(), img.getPixelSize(), stack.getSliceSpace());
     Volume transformedVolume = this.cloneVolume(max.x, max.y, max.z, originalPixelRatio);
     transformedVolume.setTransformed(true);
 
@@ -910,7 +938,8 @@ public abstract class Volume<T extends Number> {
     System.out.println("Inv : ");
     System.out.println(inv);
 
-    double progressBarStep = (this.stack.getSourceStack().size() * 0.2) / transformedVolume.getSizeX();
+    double progressBarStep =
+        (this.stack.getSourceStack().size() * 0.2) / transformedVolume.getSizeX();
     int stackSize = stack.getSourceStack().size();
 
     // Fill transformed volume using backward mapping
@@ -923,11 +952,13 @@ public abstract class Volume<T extends Number> {
           inv.transform(sourceCoord);
 
           // Interpolate from the ORIGINAL volume at these fractional coordinates
-          T interpolatedValue = //this.getValue((int) Math.floor(sourceCoord.x), (int) Math.floor(sourceCoord.y), (int) Math.floor(sourceCoord.z));
-                  getInterpolatedValueFromSource(sourceCoord.x, sourceCoord.y, sourceCoord.z);
+          T interpolatedValue = // this.getValue((int) Math.floor(sourceCoord.x), (int)
+              // Math.floor(sourceCoord.y), (int) Math.floor(sourceCoord.z));
+              getInterpolatedValueFromSource(sourceCoord.x, sourceCoord.y, sourceCoord.z);
 
-          //System.out.println("OLD : (" + (int) Math.floor(sourceCoord.x) + ", " + (int) Math.floor(sourceCoord.y) + ", " + (int) Math.floor(sourceCoord.z) + ")");
-          //System.out.println("NEW : (" + targetX+ ", " + targetY + ", " + targetZ + ")");
+          // System.out.println("OLD : (" + (int) Math.floor(sourceCoord.x) + ", " + (int)
+          // Math.floor(sourceCoord.y) + ", " + (int) Math.floor(sourceCoord.z) + ")");
+          // System.out.println("NEW : (" + targetX+ ", " + targetY + ", " + targetZ + ")");
 
           if (interpolatedValue != null) {
             transformedVolume.setValue(targetX, targetY, targetZ, interpolatedValue, null);

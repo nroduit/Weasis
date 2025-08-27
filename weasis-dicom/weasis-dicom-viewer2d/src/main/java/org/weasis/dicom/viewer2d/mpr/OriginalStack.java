@@ -9,6 +9,8 @@
  */
 package org.weasis.dicom.viewer2d.mpr;
 
+import static org.weasis.dicom.viewer2d.mpr.MprView.Plane.AXIAL;
+
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
@@ -24,7 +26,6 @@ import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.SortSeriesStack;
 import org.weasis.dicom.codec.geometry.GeometryOfSlice;
 import org.weasis.dicom.viewer2d.mpr.MprView.Plane;
-import static org.weasis.dicom.viewer2d.mpr.MprView.Plane.AXIAL;
 
 public abstract class OriginalStack extends AbstractStack {
   protected static final double EPSILON = 1e-3;
@@ -181,7 +182,7 @@ public abstract class OriginalStack extends AbstractStack {
       return 0.0;
     }
     // Substract the angle from pi/2 to get the angle with the vertical axis
-    return Math.PI/2.0 - Math.acos(colZ);
+    return Math.PI / 2.0 - Math.acos(colZ);
   }
 
   public double getSliceSpace() {

@@ -542,10 +542,9 @@ public class InfoLayer extends AbstractInfoLayer<DicomImageElement> {
   }
 
   public static float drawGeometricTransformationMessage(
-    Graphics2D g2d, float drawY, int fontHeight, int border) {
+      Graphics2D g2d, float drawY, int fontHeight, int border) {
     String message = Messages.getString("geometric.transformation.msg");
-    FontTools.paintColorFontOutline(
-        g2d, message, border, drawY, IconColor.ACTIONS_RED.getColor());
+    FontTools.paintColorFontOutline(g2d, message, border, drawY, IconColor.ACTIONS_RED.getColor());
     drawY -= fontHeight;
     return drawY;
   }

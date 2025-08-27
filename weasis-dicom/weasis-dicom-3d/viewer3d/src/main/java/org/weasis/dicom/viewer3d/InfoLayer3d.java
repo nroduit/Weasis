@@ -134,7 +134,7 @@ public class InfoLayer3d extends AbstractInfoLayer<DicomImageElement> {
       }
     }
     drawY -= fontHeight;
-    //TODO checkif transformed to display message
+    // TODO checkif transformed to display message
     drawY = InfoLayer.drawGeometricTransformationMessage(g2d, drawY, fontHeight, border);
 
     if (imSeries.getVolumeGeometry().isVariablePixelSpacing()) {
