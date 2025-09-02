@@ -31,4 +31,12 @@ public record OpenGLInfo(
     Version minimalVersion = new Version(4, 3, 0);
     return getVersion().compareTo(minimalVersion) >= 0;
   }
+
+  /** Check if the renderer is a software renderer without real GPU. */
+  public boolean looksSoftware() {
+    return renderer.contains("llvmpipe")
+        || renderer.contains("softpipe")
+        || renderer.contains("swiftshader")
+        || (renderer.contains("angle") && renderer.contains("warp"));
+  }
 }
