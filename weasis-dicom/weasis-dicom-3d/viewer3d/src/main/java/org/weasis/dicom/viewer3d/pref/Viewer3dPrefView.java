@@ -156,7 +156,8 @@ public class Viewer3dPrefView extends AbstractItemDialogPage {
       // This minimal version must match with the shader version
       Version minimalVersion = new Version(4, 3, 0);
       boolean versionIssue = !info.isVersionCompliant();
-      if (versionIssue || info.max3dTextureSize() < RenderingLayer.MAX_QUALITY) {
+      boolean software = info.looksSoftware();
+      if (versionIssue || software || info.max3dTextureSize() < RenderingLayer.MAX_QUALITY) {
         String alert =
             GuiUtils.HTML_COLOR_PATTERN.formatted(
                 IconColor.ACTIONS_RED.getHtmlCode(),
@@ -168,6 +169,16 @@ public class Viewer3dPrefView extends AbstractItemDialogPage {
                   .formatted(
                       IconColor.ACTIONS_RED.getHtmlCode(), Messages.getString("version.should.be"))
                   .formatted(minimalVersion);
+          openglPanel.add(GuiUtils.getFlowLayoutPanel(new JLabel(alert)));
+        }
+
+        if (software) {
+          alert =
+              GuiUtils.HTML_COLOR_PATTERN
+                  .formatted(
+                      IconColor.ACTIONS_RED.getHtmlCode(),
+                      Messages.getString("hardware.acceleration"))
+                  .formatted(info.renderer());
           openglPanel.add(GuiUtils.getFlowLayoutPanel(new JLabel(alert)));
         }
 
