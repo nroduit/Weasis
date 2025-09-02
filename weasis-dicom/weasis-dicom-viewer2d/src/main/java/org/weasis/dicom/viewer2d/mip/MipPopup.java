@@ -9,6 +9,8 @@
  */
 package org.weasis.dicom.viewer2d.mip;
 
+import static org.weasis.dicom.explorer.DicomModel.LOADING_EXECUTOR;
+
 import java.awt.FlowLayout;
 import java.awt.event.ActionListener;
 import java.util.Comparator;
@@ -24,6 +26,8 @@ import javax.swing.WindowConstants;
 import javax.swing.border.Border;
 import javax.swing.border.TitledBorder;
 import javax.swing.event.ChangeListener;
+import org.weasis.core.api.explorer.ObservableEvent;
+import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.core.api.gui.Insertable;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.DecFormatter;
@@ -38,6 +42,8 @@ import org.weasis.core.api.util.FontItem;
 import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.utils.DicomMediaUtils;
+import org.weasis.dicom.explorer.DicomExplorer;
+import org.weasis.dicom.explorer.ExplorerTask;
 import org.weasis.dicom.viewer2d.EventManager;
 import org.weasis.dicom.viewer2d.Messages;
 import org.weasis.dicom.viewer2d.dockable.ImageTool;
@@ -121,21 +127,21 @@ public class MipPopup {
           e -> {
             if (e.getSource() instanceof JRadioButton btn && btn.isSelected()) {
               view.setActionsInView(MipView.MIP.cmd(), MipView.Type.MIN);
-              MipView.buildMip(view, false);
+              MipView.buildMip(view);
             }
           });
       rdbtnMeanProjection.addActionListener(
           e -> {
             if (e.getSource() instanceof JRadioButton btn && btn.isSelected()) {
               view.setActionsInView(MipView.MIP.cmd(), MipView.Type.MEAN);
-              MipView.buildMip(view, false);
+              MipView.buildMip(view);
             }
           });
       rdbtnMaxProjection.addActionListener(
           e -> {
             if (e.getSource() instanceof JRadioButton btn && btn.isSelected()) {
               view.setActionsInView(MipView.MIP.cmd(), MipView.Type.MAX);
-              MipView.buildMip(view, false);
+              MipView.buildMip(view);
             }
           });
 
@@ -171,7 +177,7 @@ public class MipPopup {
               JSliderW slider = (JSliderW) e.getSource();
               getThickness(sliderThickness);
               view.setActionsInView(ActionW.SCROLL_SERIES.cmd(), slider.getValue());
-              MipView.buildMip(view, false);
+              MipView.buildMip(view);
             };
         frameSlider.addChangeListener(changeListener);
         sliderThickness.addChangeListener(
@@ -179,15 +185,45 @@ public class MipPopup {
               JSliderW slider = (JSliderW) e.getSource();
               getThickness(slider);
               view.setActionsInView(MipView.MIP_THICKNESS.cmd(), slider.getValue());
-              MipView.buildMip(view, false);
+              MipView.buildMip(view);
             });
       }
 
       JButton btnExitMipMode = new JButton(Messages.getString("MipPopup.rebuild_series"));
       btnExitMipMode.addActionListener(
           _ -> {
-            MipView.buildMip(view, true);
-            dispose();
+            if (GuiUtils.getUICore().getExplorerPlugin(DicomExplorer.NAME)
+                instanceof DicomExplorer explorer) {
+              DataExplorerModel dicomModel = explorer.getDataExplorerModel();
+              Runnable runnable = MipView.buildMipRunnable(view, true);
+              if (runnable == null) {
+                return;
+              }
+
+              setVisible(false);
+
+              ExplorerTask<Boolean, String> task =
+                  new ExplorerTask<>(btnExitMipMode.getText(), false) {
+
+                    @Override
+                    protected Boolean doInBackground() throws Exception {
+                      dicomModel.firePropertyChange(
+                          new ObservableEvent(
+                              ObservableEvent.BasicAction.LOADING_START, dicomModel, null, this));
+                      runnable.run();
+                      return true;
+                    }
+
+                    @Override
+                    protected void done() {
+                      dispose();
+                      dicomModel.firePropertyChange(
+                          new ObservableEvent(
+                              ObservableEvent.BasicAction.LOADING_STOP, dicomModel, null, this));
+                    }
+                  };
+              LOADING_EXECUTOR.execute(task);
+            }
           });
 
       JButton btnClose = new JButton(Messages.getString("MipPopup.close"));

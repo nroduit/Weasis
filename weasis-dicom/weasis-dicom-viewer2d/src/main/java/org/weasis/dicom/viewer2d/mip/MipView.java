@@ -165,9 +165,17 @@ public class MipView extends View2d {
     container.replaceView(this, newView2d);
   }
 
-  public static void buildMip(final MipView view, final boolean fullSeries) {
+  public static void buildMip(final MipView view) {
+    Runnable runnable = buildMipRunnable(view, false);
+    if (runnable != null) {
+      view.process = new Thread(runnable, Messages.getString("MipView.build"));
+      view.process.start();
+    }
+  }
+
+  public static Runnable buildMipRunnable(final MipView view, final boolean fullSeries) {
     if (view == null) {
-      return;
+      return null;
     }
     view.stopCurrentProcess();
 
@@ -175,7 +183,7 @@ public class MipView extends View2d {
     final Integer extend = (Integer) view.getActionValue(MIP_THICKNESS.cmd());
     final MediaSeries<DicomImageElement> ser = view.series;
     if (ser == null || extend == null || mipType == null) {
-      return;
+      return null;
     }
 
     Runnable runnable =
@@ -221,8 +229,7 @@ public class MipView extends View2d {
           }
         };
 
-    view.process = new Thread(runnable, Messages.getString("MipView.build"));
-    view.process.start();
+    return runnable;
   }
 
   protected void setMip(DicomImageElement dicom) {
