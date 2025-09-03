@@ -682,7 +682,7 @@ public abstract class Volume<T extends Number> {
     return matrix;
   }
 
-  public double calculateCorrectShearFactorZ() {
+  public double calculateCorrectShearFactorZ(Vector3d originalPixelRatio) {
     double shearFactor = 0.0;
 
     // Calculate from geometry vectors
@@ -695,13 +695,13 @@ public abstract class Volume<T extends Number> {
     shearFactor = Math.tan(Math.PI / 2.0 - Math.acos(colZ));
 
     // Scale by pixel spacing ratio to account for anisotropic voxels
-    double pixelSpacingRatio = pixelRatio.y / pixelRatio.z;
+    double pixelSpacingRatio = originalPixelRatio.y / originalPixelRatio.z;
     shearFactor *= pixelSpacingRatio;
 
     return shearFactor;
   }
 
-  public double calculateCorrectShearFactorX() {
+  public double calculateCorrectShearFactorX(Vector3d originalPixelRatio) {
     double shearFactor = 0.0;
 
     // Calculate from geometry vectors
@@ -714,7 +714,7 @@ public abstract class Volume<T extends Number> {
     shearFactor = Math.tan(Math.PI / 2.0 - Math.acos(rowZ));
 
     // Scale by pixel spacing ratio to account for anisotropic voxels
-    double pixelSpacingRatio = pixelRatio.x / pixelRatio.z;
+    double pixelSpacingRatio = originalPixelRatio.x / originalPixelRatio.z;
     shearFactor *= pixelSpacingRatio;
     return shearFactor;
   }
@@ -740,17 +740,13 @@ public abstract class Volume<T extends Number> {
     Vector3i max = new Vector3i(Integer.MIN_VALUE);
 
     for (Vector4d corner : corners) {
-      int x = (int) Math.ceil(corner.x);
-      int y = (int) Math.ceil(corner.y);
-      int z = (int) Math.ceil(corner.z);
+      min.x = Math.min(min.x, (int) Math.floor(corner.x));
+      min.y = Math.min(min.y, (int) Math.floor(corner.y));
+      min.z = Math.min(min.z, (int) Math.floor(corner.z));
 
-      min.x = Math.min(min.x, x);
-      min.y = Math.min(min.y, y);
-      min.z = Math.min(min.z, z);
-
-      max.x = Math.max(max.x, x);
-      max.y = Math.max(max.y, y);
-      max.z = Math.max(max.z, z);
+      max.x = Math.max(max.x, (int) Math.ceil(corner.x));
+      max.y = Math.max(max.y, (int) Math.ceil(corner.y));
+      max.z = Math.max(max.z, (int) Math.ceil(corner.z));
     }
 
     return new Vector3i[] {min, max};
@@ -819,12 +815,21 @@ public abstract class Volume<T extends Number> {
 
   public Volume<?> transformVolume() {
 
+    if (this.isTransformed()) {
+      // Volume already transformed, return itself
+      return this;
+    }
+
     boolean isModified = false;
 
     Vector3d col = new Vector3d(stack.getFistSliceGeometry().getColumn());
     Vector3d row = new Vector3d(stack.getFistSliceGeometry().getRow());
 
     Matrix4d identity = new Matrix4d();
+
+    DicomImageElement img = stack.getFirstImage();
+    Vector3d originalPixelRatio =
+        new Vector3d(img.getPixelSize(), img.getPixelSize(), stack.getSliceSpace());
 
     // Rotate image
     if (needsTransformation(row.y())) {
@@ -839,7 +844,7 @@ public abstract class Volume<T extends Number> {
       List<DicomImageElement> medias = new ArrayList<>(stack.getSourceStack());
       Collections.reverse(medias);
 
-      double shearFactor = calculateCorrectShearFactorZ();
+      double shearFactor = calculateCorrectShearFactorZ(originalPixelRatio);
       Matrix4d shear =
           new Matrix4d(
               1.0,
@@ -868,7 +873,7 @@ public abstract class Volume<T extends Number> {
       List<DicomImageElement> medias = new ArrayList<>(stack.getSourceStack());
       Collections.reverse(medias);
 
-      double shearFactor = calculateCorrectShearFactorX();
+      double shearFactor = calculateCorrectShearFactorX(originalPixelRatio);
       Matrix4d shear =
           new Matrix4d(
               1.0,
@@ -921,22 +926,11 @@ public abstract class Volume<T extends Number> {
     }
 
     // Create transformed volume
-
-    DicomImageElement img = stack.getFirstImage();
-    Vector3d originalPixelRatio =
-        new Vector3d(img.getPixelSize(), img.getPixelSize(), stack.getSliceSpace());
     Volume transformedVolume = this.cloneVolume(max.x, max.y, max.z, originalPixelRatio);
     transformedVolume.setTransformed(true);
 
     identity.translate(translateX, translateY, translateZ);
-
-    System.out.println("Old size : " + size.x + " - " + size.y + " - " + size.z);
-    System.out.println("New size : " + max.x + " - " + max.y + " - " + max.z);
-    System.out.println("Translation : " + translateX + " - " + translateY + " - " + translateZ);
-
     Matrix4d inv = identity.invert();
-    System.out.println("Inv : ");
-    System.out.println(inv);
 
     double progressBarStep =
         (this.stack.getSourceStack().size() * 0.2) / transformedVolume.getSizeX();
@@ -952,14 +946,8 @@ public abstract class Volume<T extends Number> {
           inv.transform(sourceCoord);
 
           // Interpolate from the ORIGINAL volume at these fractional coordinates
-          T interpolatedValue = // this.getValue((int) Math.floor(sourceCoord.x), (int)
-              // Math.floor(sourceCoord.y), (int) Math.floor(sourceCoord.z));
+          T interpolatedValue =
               getInterpolatedValueFromSource(sourceCoord.x, sourceCoord.y, sourceCoord.z);
-
-          // System.out.println("OLD : (" + (int) Math.floor(sourceCoord.x) + ", " + (int)
-          // Math.floor(sourceCoord.y) + ", " + (int) Math.floor(sourceCoord.z) + ")");
-          // System.out.println("NEW : (" + targetX+ ", " + targetY + ", " + targetZ + ")");
-
           if (interpolatedValue != null) {
             transformedVolume.setValue(targetX, targetY, targetZ, interpolatedValue, null);
           }

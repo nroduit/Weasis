@@ -56,7 +56,11 @@ public class ObliqueMpr extends OriginalStack {
           view.repaint();
         });
     Volume v = Volume.createVolume(this, bar);
-    volume = v.transformVolume();
+    if (v.isTransformed()) {
+      volume = v;
+    } else {
+      volume = v.transformVolume();
+    }
   }
 
   public static JProgressBar createProgressBar(MprView view, int maxSize) {

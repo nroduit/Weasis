@@ -84,7 +84,6 @@ public class VolumeShort extends Volume<Short> {
   protected void setValue(int x, int y, int z, Short value, Matrix4d transform) {
     Short v = value;
     if (transform != null) {
-      // v = getInterpolatedValueFromSource(x, y, z);
 
       Vector3i sliceCoord = transformPoint(x, y, z, transform);
       x = sliceCoord.x;
@@ -97,7 +96,6 @@ public class VolumeShort extends Volume<Short> {
     if (v != null) {
       if (data == null) {
         int index = (x * size.y * size.z + y * size.z + z) * byteDepth;
-        // System.out.println(index + " " + x + " " + y + " " + z + " " + byteDepth);
         mappedBuffer.putShort(index, v);
       } else {
         data[x][y][z] = v;
