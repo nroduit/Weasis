@@ -308,7 +308,7 @@ public abstract class Volume<T extends Number> {
     double colX = col.x();
     Matrix4d matrix = new Matrix4d();
 
-    if (needsTransformation(colX)) {
+    if (needsTransformation(colX) && stack.plane.equals(MprView.Plane.AXIAL)) {
       matrix.rotateZ(-(Math.PI / 2.0 - Math.acos(colX)));
     }
 
