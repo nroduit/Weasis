@@ -63,8 +63,8 @@
     <scribejava.version>8.3.3</scribejava.version>
     <zip4j.version>2.11.5</zip4j.version>
 
-    <junit-bom.version>6.0.0-M1</junit-bom.version>
-    <mockito.version>5.18.0</mockito.version>
+    <junit-bom.version>6.0.0-RC2</junit-bom.version>
+    <mockito.version>5.19.0</mockito.version>
     <junit-pioneer.version>2.3.0</junit-pioneer.version>
 
     <!--suppress UnresolvedMavenProperty -->
