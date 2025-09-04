@@ -17,11 +17,14 @@ import java.nio.channels.FileChannel;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.*;
+import java.util.concurrent.CompletionService;
+import java.util.concurrent.ExecutorCompletionService;
+import java.util.concurrent.ForkJoinPool;
+import java.util.concurrent.Future;
+import java.util.concurrent.RecursiveAction;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiConsumer;
 import javax.swing.JProgressBar;
-import org.dcm4che3.data.Tag;
 import org.joml.Matrix4d;
 import org.joml.Quaterniond;
 import org.joml.Vector3d;
@@ -37,10 +40,8 @@ import org.weasis.core.api.image.cv.CvUtil;
 import org.weasis.core.api.util.ThreadUtil;
 import org.weasis.core.ui.editor.image.ViewerPlugin;
 import org.weasis.core.util.FileUtil;
-import org.weasis.core.util.MathUtil;
 import org.weasis.core.util.Pair;
 import org.weasis.dicom.codec.DicomImageElement;
-import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.geometry.GeometryOfSlice;
 import org.weasis.opencv.data.PlanarImage;
 import org.weasis.opencv.op.ImageProcessor;
@@ -598,14 +599,6 @@ public abstract class Volume<T extends Number> {
     return null;
   }
 
-  public Double getOriginalGantryTilt() {
-    Double tilt = TagD.getTagValue(stack.getMiddleImage(), Tag.GantryDetectorTilt, Double.class);
-    if (tilt != null && MathUtil.isDifferentFromZero(tilt)) {
-      return tilt;
-    }
-    return null;
-  }
-
   protected Double interpolateVolume(Vector3d point, Vector3d voxelRatio) {
     // Convert from world coordinates to voxel indices
     double xIndex = point.x / voxelRatio.x;
@@ -752,17 +745,6 @@ public abstract class Volume<T extends Number> {
     return new Vector3i[] {min, max};
   }
 
-  private void copyVolumeProperties(Volume<Short> target) {
-    target.stack = this.stack;
-    target.pixelRatio = this.pixelRatio;
-    target.negativeDirCol = this.negativeDirCol;
-    target.negativeDirRow = this.negativeDirRow;
-    target.minValue = this.minValue;
-    target.maxValue = this.maxValue;
-    target.cvType = this.cvType;
-    target.byteDepth = this.byteDepth;
-  }
-
   protected T getInterpolatedValueFromSource(double x, double y, double z) {
     // Check bounds in the ORIGINAL volume (this)
     if (x < 0
@@ -815,8 +797,10 @@ public abstract class Volume<T extends Number> {
 
   public Volume<?> transformVolume() {
 
-    if (this.isTransformed()) {
+    if (this.isTransformed() || !this.stack.plane.equals(MprView.Plane.AXIAL)) {
       // Volume already transformed, return itself
+      // The geometric rectification is applied only if the images are in the axial orientation
+      updateProgressBar(this.progressBar.getMaximum());
       return this;
     }
 

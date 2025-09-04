@@ -174,15 +174,25 @@ public abstract class OriginalStack extends AbstractStack {
 
   private double getGantryTilt() {
     Vector3d col = new Vector3d(getStartingImage().getSliceGeometry().getColumn());
+    Vector3d row = new Vector3d(getStartingImage().getSliceGeometry().getRow());
 
-    // The tilt angle is the deviation from vertical
-    // col Z is the cosinus of the angle between the tilt vector and the z axis
-    double colZ = col.z();
-    if (Math.abs(colZ) <= EPSILON) {
+    // The tilt angle is the deviation from vertical in patient's Z axis
+    double tilt = 0.0;
+    switch (plane) {
+      case AXIAL:
+        tilt = col.z();
+        break;
+      case CORONAL:
+        tilt = col.y();
+        break;
+      case SAGITTAL:
+        tilt = row.z();
+    }
+    if (Math.abs(tilt) <= EPSILON) {
       return 0.0;
     }
     // Substract the angle from pi/2 to get the angle with the vertical axis
-    return Math.PI / 2.0 - Math.acos(colZ);
+    return Math.PI / 2.0 - Math.acos(tilt);
   }
 
   public double getSliceSpace() {
