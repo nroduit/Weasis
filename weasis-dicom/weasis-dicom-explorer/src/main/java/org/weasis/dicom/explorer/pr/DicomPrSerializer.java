@@ -67,6 +67,7 @@ import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.codec.DcmMediaReader;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.PresentationStateReader;
+import org.weasis.dicom.codec.display.CharsetEncoding;
 
 /**
  * DICOM Presentation State serializer for converting GraphicModel to DICOM PR objects.
@@ -240,6 +241,8 @@ public class DicomPrSerializer {
 
     String sopClassUID = determinePresentationStateSopClass(dicomSourceAttribute);
     pr.setString(Tag.SOPClassUID, VR.UI, sopClassUID);
+    // Force UTF-8 character set for adding text in any language
+    pr.setString(Tag.SpecificCharacterSet, VR.CS, CharsetEncoding.ISO_IR_192.getLabel());
 
     // Add mandatory ICC Profile for Color and Pseudo-Color Softcopy Presentation State
     if (!UID.GrayscaleSoftcopyPresentationStateStorage.equals(sopClassUID)) {
