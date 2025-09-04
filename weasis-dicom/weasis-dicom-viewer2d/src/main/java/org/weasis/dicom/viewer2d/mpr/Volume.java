@@ -18,10 +18,14 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CompletionService;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorCompletionService;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.Future;
 import java.util.concurrent.RecursiveAction;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiConsumer;
 import javax.swing.JProgressBar;
@@ -530,18 +534,19 @@ public abstract class Volume<T extends Number> {
     GuiExecutor.execute(() -> pb.setValue(target));
   }
 
-  public Volume cloneVolume(int sizeX, int sizeY, int sizeZ, Vector3d originalPixelRatio) {
-
-    return switch (this.getCVType()) {
-      case CvType.CV_8U, CvType.CV_8S ->
-          new VolumeByte(this, sizeX, sizeY, sizeZ, originalPixelRatio);
-      case CvType.CV_16U, CvType.CV_16S ->
-          new VolumeShort(this, sizeX, sizeY, sizeZ, originalPixelRatio);
-      case CvType.CV_32S -> new VolumeInt(this, sizeX, sizeY, sizeZ, originalPixelRatio);
-      case CvType.CV_32F -> new VolumeFloat(this, sizeX, sizeY, sizeZ, originalPixelRatio);
-      case CvType.CV_64F -> new VolumeDouble(this, sizeX, sizeY, sizeZ, originalPixelRatio);
-      default -> null;
-    };
+  @SuppressWarnings("unchecked")
+  public Volume<T> cloneVolume(int sizeX, int sizeY, int sizeZ, Vector3d originalPixelRatio) {
+    return (Volume<T>)
+        switch (this.getCVType()) {
+          case CvType.CV_8U, CvType.CV_8S ->
+              new VolumeByte(this, sizeX, sizeY, sizeZ, originalPixelRatio);
+          case CvType.CV_16U, CvType.CV_16S ->
+              new VolumeShort(this, sizeX, sizeY, sizeZ, originalPixelRatio);
+          case CvType.CV_32S -> new VolumeInt(this, sizeX, sizeY, sizeZ, originalPixelRatio);
+          case CvType.CV_32F -> new VolumeFloat(this, sizeX, sizeY, sizeZ, originalPixelRatio);
+          case CvType.CV_64F -> new VolumeDouble(this, sizeX, sizeY, sizeZ, originalPixelRatio);
+          default -> null;
+        };
   }
 
   public static Volume<?> createVolume(OriginalStack stack, JProgressBar progressBar) {
@@ -910,7 +915,7 @@ public abstract class Volume<T extends Number> {
     }
 
     // Create transformed volume
-    Volume transformedVolume = this.cloneVolume(max.x, max.y, max.z, originalPixelRatio);
+    Volume<T> transformedVolume = this.cloneVolume(max.x, max.y, max.z, originalPixelRatio);
     transformedVolume.setTransformed(true);
 
     identity.translate(translateX, translateY, translateZ);
@@ -920,11 +925,85 @@ public abstract class Volume<T extends Number> {
         (this.stack.getSourceStack().size() * 0.2) / transformedVolume.getSizeX();
     int stackSize = stack.getSourceStack().size();
 
-    // Fill transformed volume using backward mapping
-    for (int targetX = 0; targetX < transformedVolume.getSizeX(); targetX++) {
-      for (int targetY = 0; targetY < transformedVolume.getSizeY(); targetY++) {
-        for (int targetZ = 0; targetZ < transformedVolume.getSizeZ(); targetZ++) {
+    // Multi-threaded volume transformation
+    ExecutorService executor = ThreadUtil.newImageProcessingThreadPool("VolumeTransform");
+    try {
+      transformVolumeParallel(transformedVolume, inv, executor, stackSize, progressBarStep);
+    } finally {
+      executor.shutdown();
+      try {
+        if (!executor.awaitTermination(30, TimeUnit.SECONDS)) {
+          executor.shutdownNow();
+        }
+      } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
+        executor.shutdownNow();
+      }
+    }
 
+    return transformedVolume;
+  }
+
+  private void transformVolumeParallel(
+      Volume<T> transformedVolume,
+      Matrix4d inv,
+      ExecutorService executor,
+      int stackSize,
+      double progressBarStep) {
+    int sizeX = transformedVolume.getSizeX();
+    int sizeY = transformedVolume.getSizeY();
+    int sizeZ = transformedVolume.getSizeZ();
+
+    // Determine optimal chunk size for X dimension
+    int availableThreads = ((ThreadPoolExecutor) executor).getCorePoolSize();
+    int chunkSize =
+        Math.max(
+            1,
+            sizeX
+                / (availableThreads
+                    * 2)); // Create more chunks than threads for better load balancing
+
+    List<Future<?>> futures = new ArrayList<>();
+    AtomicInteger processedChunks = new AtomicInteger(0);
+    int totalChunks = (int) Math.ceil((double) sizeX / chunkSize);
+
+    // Submit tasks for X-dimension chunks
+    for (int startX = 0; startX < sizeX; startX += chunkSize) {
+      final int fromX = startX;
+      final int toX = Math.min(startX + chunkSize, sizeX);
+
+      Future<?> future =
+          executor.submit(
+              () -> {
+                processVolumeChunk(transformedVolume, inv, fromX, toX, sizeY, sizeZ);
+
+                // Update progress bar thread-safely
+                int completed = processedChunks.incrementAndGet();
+                double progress = stackSize + (completed * chunkSize * progressBarStep);
+                updateProgressBar((int) Math.ceil(progress));
+              });
+
+      futures.add(future);
+    }
+
+    // Wait for all tasks to complete
+    for (Future<?> future : futures) {
+      try {
+        future.get();
+      } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
+        throw new RuntimeException("Volume transformation was interrupted", e);
+      } catch (ExecutionException e) {
+        throw new RuntimeException("Error during volume transformation", e.getCause());
+      }
+    }
+  }
+
+  private void processVolumeChunk(
+      Volume<T> transformedVolume, Matrix4d inv, int fromX, int toX, int sizeY, int sizeZ) {
+    for (int targetX = fromX; targetX < toX; targetX++) {
+      for (int targetY = 0; targetY < sizeY; targetY++) {
+        for (int targetZ = 0; targetZ < sizeZ; targetZ++) {
           // Transform target coordinates back to source coordinates
           Vector4d sourceCoord = new Vector4d(targetX, targetY, targetZ, 1.0);
           inv.transform(sourceCoord);
@@ -937,10 +1016,6 @@ public abstract class Volume<T extends Number> {
           }
         }
       }
-
-      updateProgressBar((int) Math.ceil(stackSize + (targetX * progressBarStep)));
     }
-
-    return transformedVolume;
   }
 }
