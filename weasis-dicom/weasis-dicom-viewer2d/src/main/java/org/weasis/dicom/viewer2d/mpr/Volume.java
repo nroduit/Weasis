@@ -513,7 +513,7 @@ public abstract class Volume<T extends Number> {
   }
 
   public int getSliceSize() {
-    return (int) Math.ceil(size.length());
+    return (int) Math.ceil(getVoxelRatio().mul(new Vector3d(size)).length());
   }
 
   public double getMinimum() {
