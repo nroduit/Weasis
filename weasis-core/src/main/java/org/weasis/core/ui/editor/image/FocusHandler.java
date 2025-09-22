@@ -12,6 +12,7 @@ package org.weasis.core.ui.editor.image;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.event.MouseEvent;
+import java.awt.event.MouseWheelEvent;
 import java.awt.geom.Point2D;
 import java.util.Objects;
 import java.util.Optional;
@@ -20,6 +21,7 @@ import org.weasis.core.Messages;
 import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.Feature;
 import org.weasis.core.api.gui.util.MouseActionAdapter;
+import org.weasis.core.api.gui.util.WinUtil;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.ui.model.layer.LayerAnnotation;
 import org.weasis.core.util.StringUtil;
@@ -76,6 +78,23 @@ public class FocusHandler<E extends ImageElement> extends MouseActionAdapter {
     viewCanvas
         .getJComponent()
         .setCursor(action.isPresent() ? action.get().getCursor() : DefaultView2d.DEFAULT_CURSOR);
+  }
+
+  @Override
+  public void mouseWheelMoved(MouseWheelEvent e) {
+    ImageViewerEventManager<E> eventManager = viewCanvas.getEventManager();
+    if (eventManager != null) {
+      ImageViewerPlugin<E> container =
+          WinUtil.getParentOfClass(viewCanvas.getJComponent(), ImageViewerPlugin.class);
+      if (container != null) {
+        if (!container.equals(eventManager.getSelectedView2dContainer())) {
+          eventManager.setSelectedView2dContainer(container);
+        }
+        if (!container.getSelectedImagePane().equals(viewCanvas)) {
+          container.setSelectedImagePane(viewCanvas);
+        }
+      }
+    }
   }
 
   @Override

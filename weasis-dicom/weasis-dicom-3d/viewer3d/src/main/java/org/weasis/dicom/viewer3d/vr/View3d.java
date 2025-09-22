@@ -716,6 +716,7 @@ public class View3d extends VolumeCanvas
     // focus listener is always on
     this.addMouseListener(focusHandler);
     this.addMouseMotionListener(focusHandler);
+    this.addMouseWheelListener(focusHandler);
   }
 
   @Override
