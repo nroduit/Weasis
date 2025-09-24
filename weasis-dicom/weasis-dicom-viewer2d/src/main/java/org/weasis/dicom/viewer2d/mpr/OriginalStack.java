@@ -120,12 +120,11 @@ public abstract class OriginalStack extends AbstractStack {
     return fistSliceGeometry;
   }
 
-  protected Attributes getCommonAttributes(
-      String frameOfReferenceUID, String seriesDescription, String[] imageType) {
+  protected Attributes getCommonAttributes(String frameOfReferenceUID, String seriesDescription) {
     final Attributes attributes = getMiddleImage().getMediaReader().getDicomObject();
     final Attributes cpTags = new Attributes(attributes, COPIED_ATTRS);
     cpTags.setString(Tag.SeriesDescription, VR.LO, seriesDescription);
-    cpTags.setString(Tag.ImageType, VR.CS, imageType);
+    cpTags.setString(Tag.ImageType, VR.CS, ObliqueMpr.imageTypes);
     cpTags.setString(Tag.FrameOfReferenceUID, VR.UI, frameOfReferenceUID);
     return cpTags;
   }
@@ -177,21 +176,16 @@ public abstract class OriginalStack extends AbstractStack {
     Vector3d row = new Vector3d(getStartingImage().getSliceGeometry().getRow());
 
     // The tilt angle is the deviation from vertical in patient's Z axis
-    double tilt = 0.0;
-    switch (plane) {
-      case AXIAL:
-        tilt = col.z();
-        break;
-      case CORONAL:
-        tilt = col.y();
-        break;
-      case SAGITTAL:
-        tilt = row.z();
-    }
+    double tilt =
+        switch (plane) {
+          case AXIAL -> col.z();
+          case CORONAL -> col.y();
+          case SAGITTAL -> row.z();
+        };
     if (Math.abs(tilt) <= EPSILON) {
       return 0.0;
     }
-    // Substract the angle from pi/2 to get the angle with the vertical axis
+    // Subtract the angle from pi/2 to get the angle with the vertical axis
     return Math.PI / 2.0 - Math.acos(tilt);
   }
 

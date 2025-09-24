@@ -82,9 +82,7 @@ public class VolumeShort extends Volume<Short> {
 
   @Override
   protected void setValue(int x, int y, int z, Short value, Matrix4d transform) {
-    Short v = value;
     if (transform != null) {
-
       Vector3i sliceCoord = transformPoint(x, y, z, transform);
       x = sliceCoord.x;
       y = sliceCoord.y;
@@ -93,13 +91,11 @@ public class VolumeShort extends Volume<Short> {
     if (isOutside(x, y, z)) {
       return;
     }
-    if (v != null) {
-      if (data == null) {
-        int index = (x * size.y * size.z + y * size.z + z) * byteDepth;
-        mappedBuffer.putShort(index, v);
-      } else {
-        data[x][y][z] = v;
-      }
+    if (data == null) {
+      int index = (x * size.y * size.z + y * size.z + z) * byteDepth;
+      mappedBuffer.putShort(index, value);
+    } else {
+      data[x][y][z] = value;
     }
   }
 

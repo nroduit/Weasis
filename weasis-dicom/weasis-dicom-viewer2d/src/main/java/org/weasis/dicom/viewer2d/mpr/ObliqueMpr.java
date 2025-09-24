@@ -55,11 +55,12 @@ public class ObliqueMpr extends OriginalStack {
           }
           view.repaint();
         });
-    Volume v = Volume.createVolume(this, bar);
+    Volume<?> v = Volume.createVolume(this, bar);
     if (v.isTransformed()) {
       volume = v;
     } else {
       volume = v.transformVolume();
+      v.removeData();
     }
   }
 
@@ -215,6 +216,6 @@ public class ObliqueMpr extends OriginalStack {
     String desc = TagD.getTagValue(stack.series, Tag.SeriesDescription, String.class);
     String mprDesc = "MPR " + plane; // NON-NLS
     desc = desc == null ? mprDesc : desc + " [%s]".formatted(mprDesc); // NON-NLS
-    return stack.getCommonAttributes(frUID, desc, imageTypes);
+    return stack.getCommonAttributes(frUID, desc);
   }
 }

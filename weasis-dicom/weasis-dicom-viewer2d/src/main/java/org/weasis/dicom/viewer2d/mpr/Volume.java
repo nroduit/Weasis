@@ -99,7 +99,6 @@ public abstract class Volume<T extends Number> {
     this.translation = new Vector3d(0, 0, 0);
     this.rotation = new Quaterniond();
     this.size = new Vector3i(sizeX, sizeY, sizeZ);
-    createData(size.x, size.y, size.z);
     this.pixelRatio = new Vector3d(1.0, 1.0, 1.0);
     this.negativeDirRow = false;
     this.negativeDirCol = false;
@@ -108,6 +107,7 @@ public abstract class Volume<T extends Number> {
     this.stack = null;
     this.cvType = initCVType(isSigned);
     this.isSigned = isSigned;
+    createData(size.x, size.y, size.z);
   }
 
   Volume(OriginalStack stack, JProgressBar progressBar) {
@@ -681,7 +681,7 @@ public abstract class Volume<T extends Number> {
   }
 
   public double calculateCorrectShearFactorZ(Vector3d originalPixelRatio) {
-    double shearFactor = 0.0;
+    double shearFactor;
 
     // Calculate from geometry vectors
     Vector3d col = new Vector3d(stack.getFistSliceGeometry().getColumn());
@@ -689,7 +689,7 @@ public abstract class Volume<T extends Number> {
     // The tilt angle is the deviation from vertical
     // col Z is the cosinus of the angle between the tilt vector and the z axis
     double colZ = col.z();
-    // Substract the angle from pi/2 to get the angle with the vertical axis
+    // Subtract the angle from pi/2 to get the angle with the vertical axis
     shearFactor = Math.tan(Math.PI / 2.0 - Math.acos(colZ));
 
     // Scale by pixel spacing ratio to account for anisotropic voxels
@@ -700,7 +700,7 @@ public abstract class Volume<T extends Number> {
   }
 
   public double calculateCorrectShearFactorX(Vector3d originalPixelRatio) {
-    double shearFactor = 0.0;
+    double shearFactor;
 
     // Calculate from geometry vectors
     Vector3d row = new Vector3d(stack.getFistSliceGeometry().getRow());
@@ -708,7 +708,7 @@ public abstract class Volume<T extends Number> {
     // The tilt angle is the deviation from vertical
     // col Z is the cosinus of the angle between the tilt vector and the z axis
     double rowZ = row.z();
-    // Substract the angle from pi/2 to get the angle with the vertical axis
+    // Subtract the angle from pi/2 to get the angle with the vertical axis
     shearFactor = Math.tan(Math.PI / 2.0 - Math.acos(rowZ));
 
     // Scale by pixel spacing ratio to account for anisotropic voxels
@@ -797,7 +797,13 @@ public abstract class Volume<T extends Number> {
 
     double result = v0 * (1 - fz) + v1 * fz;
 
-    return (T) Short.valueOf((short) Math.round(result));
+    return switch (this) {
+      case VolumeByte _ -> (T) Byte.valueOf((byte) Math.round(result));
+      case VolumeShort _ -> (T) Short.valueOf((short) Math.round(result));
+      case VolumeInt _ -> (T) Integer.valueOf((int) Math.round(result));
+      case VolumeFloat _ -> (T) Float.valueOf((float) result);
+      default -> (T) Double.valueOf(result);
+    };
   }
 
   public Volume<?> transformVolume() {
@@ -925,7 +931,7 @@ public abstract class Volume<T extends Number> {
         (this.stack.getSourceStack().size() * 0.2) / transformedVolume.getSizeX();
     int stackSize = stack.getSourceStack().size();
 
-    // Multi-threaded volume transformation
+    // Multithreaded volume transformation
     ExecutorService executor = ThreadUtil.newImageProcessingThreadPool("VolumeTransform");
     try {
       transformVolumeParallel(transformedVolume, inv, executor, stackSize, progressBarStep);
@@ -965,7 +971,6 @@ public abstract class Volume<T extends Number> {
 
     List<Future<?>> futures = new ArrayList<>();
     AtomicInteger processedChunks = new AtomicInteger(0);
-    int totalChunks = (int) Math.ceil((double) sizeX / chunkSize);
 
     // Submit tasks for X-dimension chunks
     for (int startX = 0; startX < sizeX; startX += chunkSize) {

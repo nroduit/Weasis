@@ -9,12 +9,8 @@
  */
 package org.weasis.dicom.viewer2d.mpr;
 
-import javax.swing.JOptionPane;
-import org.weasis.core.api.gui.util.GuiExecutor;
-import org.weasis.core.api.gui.util.WinUtil;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.dicom.codec.DicomImageElement;
-import org.weasis.dicom.viewer2d.Messages;
 import org.weasis.dicom.viewer2d.mpr.MprView.Plane;
 
 public class MPRGenerator {
@@ -34,28 +30,5 @@ public class MPRGenerator {
 
     BuildContext context = new BuildContext(thread, mprContainer, view);
     stack.generate(context);
-  }
-
-  public static void confirmMessage(BuildContext context, final String message) {
-    boolean[] abort = context.getAbort();
-    GuiExecutor.invokeAndWait(
-        () -> {
-          int usrChoice =
-              JOptionPane.showConfirmDialog(
-                  WinUtil.getValidComponent(context.getMainView()),
-                  message + Messages.getString("SeriesBuilder.add_warn"),
-                  MprFactory.NAME,
-                  JOptionPane.YES_NO_OPTION,
-                  JOptionPane.QUESTION_MESSAGE);
-          if (usrChoice == JOptionPane.NO_OPTION) {
-            abort[0] = true;
-          } else {
-            // bypass for other similar messages
-            abort[1] = true;
-          }
-        });
-    if (abort[0]) {
-      throw new IllegalStateException(message);
-    }
   }
 }
