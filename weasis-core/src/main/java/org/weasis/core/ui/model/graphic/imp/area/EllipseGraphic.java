@@ -218,10 +218,13 @@ public class EllipseGraphic extends ObliqueRectangleGraphic {
     updateTool();
     List<Point2D> pts = new ArrayList<>();
     if (lineABvalid && lineCDvalid) {
+      double abDistance = ptA.distance(ptB);
+      double cdDistance = ptC.distance(ptD);
       Point2D n = new Point2D.Double(ptC.getX(), ptC.getY());
       Point2D s = new Point2D.Double(ptD.getX(), ptD.getY());
-      Line2D we = GeomUtil.getParallelLine(ptA, ptB, ptC.distance(ptD) / 2.0);
-      if (ptA.getX() > ptB.getX()) {
+      Line2D we = GeomUtil.getParallelLine(ptA, ptB, cdDistance / 2.0);
+      // Write the major axis first to match with DICOM PR
+      if (abDistance < cdDistance) {
         pts.add(n);
         pts.add(s);
         pts.add(we.getP1());

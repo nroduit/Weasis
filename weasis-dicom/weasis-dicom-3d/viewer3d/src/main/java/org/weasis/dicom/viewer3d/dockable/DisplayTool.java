@@ -173,8 +173,7 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
               && node.getUserObject() instanceof LayerItem item) {
             for (ViewCanvas<?> v : views) {
               LayerAnnotation layer = v.getInfoLayer();
-              if (layer != null
-                  && Boolean.TRUE.equals(layer.setDisplayPreferencesValue(item, selected))) {
+              if (layer != null && layer.setDisplayPreferencesValue(item, selected)) {
                 v.getJComponent().repaint();
               }
             }
@@ -215,6 +214,8 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
             TreeBuilder.setPathSelection(tree, getTreePath(checkNode), sel);
           }
         }
+        // Minimal annotation is the default mode
+        TreeBuilder.setPathSelection(tree, getTreePath(minAnnotations), true);
       }
 
       initLayers(view);
@@ -280,8 +281,7 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
           LayerAnnotation layer = v.getInfoLayer();
           if (layer != null) {
             layer.setVisible(true);
-            if (Boolean.TRUE.equals(
-                layer.setDisplayPreferencesValue(LayerItem.MIN_ANNOTATIONS, true))) {
+            if (layer.setDisplayPreferencesValue(LayerItem.MIN_ANNOTATIONS, true)) {
               v.getJComponent().repaint();
             }
           }

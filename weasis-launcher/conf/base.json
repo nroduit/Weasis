@@ -60,7 +60,7 @@
     },
     {
       "code": "felix.auto.start.3",
-      "value": "file:${maven.localRepository}/org/apache/felix/org.apache.felix.gogo.command/${felix.gogo.command.version}/org.apache.felix.gogo.command-${felix.gogo.command.version}.jar file:${maven.localRepository}/org/apache/felix/org.apache.felix.gogo.shell/${felix.gogo.shell.version}/org.apache.felix.gogo.shell-${felix.gogo.shell.version}.jar",
+      "value": "file:${maven.localRepository}/org/apache/felix/org.apache.felix.gogo.command/${felix.gogo.command.version}/org.apache.felix.gogo.command-${felix.gogo.command.version}.jar",
       "description": "OSGI command and shell",
       "type": "A",
       "category": "FELIX_INSTALL"

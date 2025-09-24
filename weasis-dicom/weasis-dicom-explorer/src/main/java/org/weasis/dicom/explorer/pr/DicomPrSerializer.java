@@ -39,6 +39,7 @@ import org.dcm4che3.data.UID;
 import org.dcm4che3.data.VR;
 import org.dcm4che3.image.ICCProfile;
 import org.dcm4che3.img.data.CIELab;
+import org.dcm4che3.img.util.DicomUtils;
 import org.dcm4che3.io.DicomOutputStream;
 import org.dcm4che3.util.UIDUtils;
 import org.slf4j.Logger;
@@ -66,6 +67,7 @@ import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.codec.DcmMediaReader;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.PresentationStateReader;
+import org.weasis.dicom.codec.display.CharsetEncoding;
 
 /**
  * DICOM Presentation State serializer for converting GraphicModel to DICOM PR objects.
@@ -84,7 +86,7 @@ public class DicomPrSerializer {
   private static final String CARRIAGE_RETURN_LINE_FEED = "\r\n";
   private static final int DEFAULT_SERIES_NUMBER = 999;
   private static final Color DEFAULT_LINE_COLOR = Color.YELLOW;
-  private static final double FLATTENING_TOLERANCE = 2.0;
+  private static final double FLATTENING_TOLERANCE = 1.0;
 
   private DicomPrSerializer() {}
 
@@ -239,6 +241,8 @@ public class DicomPrSerializer {
 
     String sopClassUID = determinePresentationStateSopClass(dicomSourceAttribute);
     pr.setString(Tag.SOPClassUID, VR.UI, sopClassUID);
+    // Force UTF-8 character set for adding text in any language
+    pr.setString(Tag.SpecificCharacterSet, VR.CS, CharsetEncoding.ISO_IR_192.getLabel());
 
     // Add mandatory ICC Profile for Color and Pseudo-Color Softcopy Presentation State
     if (!UID.GrayscaleSoftcopyPresentationStateStorage.equals(sopClassUID)) {
@@ -315,7 +319,10 @@ public class DicomPrSerializer {
         Tag.DisplayedAreaBottomRightHandCorner, VR.SL, imageWidth, imageHeight);
     displayedAreaItem.setInt(Tag.DisplayedAreaTopLeftHandCorner, VR.SL, 1, 1);
     displayedAreaItem.setString(Tag.PresentationSizeMode, VR.CS, "SCALE TO FIT"); // NON-NLS
-
+    double[] pixelSpacing =
+        DicomUtils.getDoubleArrayFromDicomElement(
+            sourceAttributes, Tag.PixelSpacing, new double[] {1.0, 1.0});
+    displayedAreaItem.setDouble(Tag.PresentationPixelSpacing, VR.DS, pixelSpacing);
     displayedAreaSeq.add(displayedAreaItem);
   }
 
@@ -399,6 +406,7 @@ public class DicomPrSerializer {
     attributes.setString(Tag.SoftwareVersions, VR.LO, AppProperties.WEASIS_VERSION);
     attributes.setString(
         Tag.SeriesDescription, VR.LO, String.join(" ", AppProperties.WEASIS_NAME, GSPS));
+    attributes.setString(Tag.PresentationLUTShape, VR.CS, "IDENTITY"); // NON-NLS
 
     setStationName(attributes);
   }
@@ -406,7 +414,9 @@ public class DicomPrSerializer {
   private static void setStationName(Attributes attributes) {
     try {
       String hostName = InetAddress.getLocalHost().getHostName();
-      attributes.setString(Tag.StationName, VR.SH, hostName);
+      // Limit station name to 16 characters as per DICOM VR.SH specification
+      String stationName = hostName.length() > 16 ? hostName.substring(0, 16) : hostName;
+      attributes.setString(Tag.StationName, VR.SH, stationName);
     } catch (UnknownHostException e) {
       LOGGER.warn("Cannot get host name for station name", e);
     }
@@ -557,12 +567,13 @@ public class DicomPrSerializer {
     switch (graphic) {
       case ObliqueRectangleGraphic rectangleShape -> {
         boolean isEllipse = graphic instanceof EllipseGraphic;
-        String graphicType = isEllipse ? PrGraphicUtil.ELLIPSE : PrGraphicUtil.POLYLINE;
-        List<Point2D> points = rectangleShape.getRectanglePointList();
-        if (!isEllipse) {
-          points.add(points.getFirst()); // Close the rectangle
+        if (isEllipse) {
+          return new GraphicTypeInfo(null, null, true);
         }
-        return new GraphicTypeInfo(graphicType, points, false);
+
+        List<Point2D> points = rectangleShape.getRectanglePointList();
+        points.add(points.getFirst()); // Close the rectangle
+        return new GraphicTypeInfo(PrGraphicUtil.POLYLINE, points, false);
       }
       case ThreePointsCircleGraphic _ -> {
         Point2D centerPt = GeomUtil.getCircleCenter(graphic.getPts());
@@ -683,11 +694,13 @@ public class DicomPrSerializer {
     attributes.setString(Tag.BoundingBoxAnnotationUnits, VR.CS, PIXEL);
     attributes.setFloat(Tag.AnchorPoint, VR.FL, (float) anchor.getX(), (float) anchor.getY());
     attributes.setString(Tag.AnchorPointVisibility, VR.CS, YES);
+    attributes.setString(Tag.AnchorPointAnnotationUnits, VR.CS, PIXEL);
     attributes.setDouble(
         Tag.BoundingBoxTopLeftHandCorner, VR.FL, bounds.getMinX(), bounds.getMinY());
     attributes.setDouble(
         Tag.BoundingBoxBottomRightHandCorner, VR.FL, bounds.getMaxX(), bounds.getMaxY());
     attributes.setString(Tag.UnformattedTextValue, VR.ST, text);
+    attributes.setString(Tag.BoundingBoxTextHorizontalJustification, VR.CS, "LEFT");
 
     int[] labColor = getLabColor(graphic);
     addLineStyleSequence(attributes, graphic, labColor);
@@ -705,6 +718,7 @@ public class DicomPrSerializer {
         Tag.BoundingBoxTopLeftHandCorner, VR.FL, bounds.getMinX(), bounds.getMinY());
     attributes.setDouble(
         Tag.BoundingBoxBottomRightHandCorner, VR.FL, bounds.getMaxX(), bounds.getMaxY());
+    attributes.setString(Tag.BoundingBoxTextHorizontalJustification, VR.CS, "LEFT");
     attributes.setString(Tag.UnformattedTextValue, VR.ST, text);
     return attributes;
   }

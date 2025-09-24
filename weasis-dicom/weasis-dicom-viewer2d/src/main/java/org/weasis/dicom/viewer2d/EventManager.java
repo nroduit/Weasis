@@ -18,7 +18,6 @@ import java.awt.event.MouseWheelEvent;
 import java.awt.image.DataBuffer;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -134,16 +133,15 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
   private static final Logger LOGGER = LoggerFactory.getLogger(EventManager.class);
 
   public static final List<String> functions =
-      Collections.unmodifiableList(
-          Arrays.asList(
-              "zoom", // NON-NLS
-              "wl", // NON-NLS
-              "move", // NON-NLS
-              "scroll", // NON-NLS
-              "layout", // NON-NLS
-              "mouseLeftAction", // NON-NLS
-              "synch", // NON-NLS
-              "reset")); // NON-NLS
+      List.of(
+          "zoom", // NON-NLS
+          "wl", // NON-NLS
+          "move", // NON-NLS
+          "scroll", // NON-NLS
+          "layout", // NON-NLS
+          "mouseLeftAction", // NON-NLS
+          "synch", // NON-NLS
+          "reset"); // NON-NLS
 
   /** The single instance of this singleton class. */
   private static EventManager instance;

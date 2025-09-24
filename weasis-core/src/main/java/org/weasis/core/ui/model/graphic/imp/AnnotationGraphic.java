@@ -40,6 +40,7 @@ import org.weasis.core.api.util.FontTools;
 import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.api.util.ResourceUtil.ActionIcon;
 import org.weasis.core.ui.editor.image.ViewCanvas;
+import org.weasis.core.ui.editor.image.dockable.MeasureTool;
 import org.weasis.core.ui.model.graphic.AbstractDragGraphic;
 import org.weasis.core.ui.model.graphic.Graphic;
 import org.weasis.core.ui.model.graphic.GraphicLabel;
@@ -256,6 +257,8 @@ public class AnnotationGraphic extends AbstractDragGraphic {
       float py = (float) (pt.getY() - rect.getHeight() / 2 + GraphicLabel.GROWING_BOUND);
       float height = labelHeight.floatValue();
 
+      g2d.setFont(MeasureTool.viewSetting.getFont());
+
       for (String label : labels) {
         if (StringUtil.hasText(label)) {
           py += height;
@@ -319,7 +322,7 @@ public class AnnotationGraphic extends AbstractDragGraphic {
       reset();
     } else {
       this.labels = labels;
-      Font defaultFont = view2d.getFont();
+      Font defaultFont = MeasureTool.viewSetting.getFont();
       Graphics2D g2d = (Graphics2D) view2d.getJComponent().getGraphics();
       FontRenderContext fontRenderContext =
           g2d == null ? new FontRenderContext(null, false, false) : g2d.getFontRenderContext();

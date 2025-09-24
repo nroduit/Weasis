@@ -280,7 +280,7 @@ public class WeasisLauncher {
 
   private static void displayStartingAsciiIcon() {
     String asciiArt =
-        """
+"""
 
 Starting OSGI Bundles...
 
@@ -313,10 +313,15 @@ Starting OSGI Bundles...
               // Set the main window visible and to the front
               commandSessionExecute(commandSession, "weasis:ui -v"); // NON-NLS
             } else {
-              // Start telnet after all other bundles. This will ensure that all the plugins
-              // commands are
-              // activated once telnet is available
-              initCommandSession(commandSession, goshArgs);
+              for (Bundle b : mFelix.getBundleContext().getBundles()) {
+                if (b.getSymbolicName().equals("org.apache.felix.gogo.shell")
+                    && b.getState() == Bundle.ACTIVE) {
+                  // If Gogo Shell is running, Start telnet after all other bundles. This will
+                  // ensure that all the plugins commands are activated once telnet is available
+                  initCommandSession(commandSession, goshArgs);
+                  break;
+                }
+              }
             }
 
             // execute the commands from main argv

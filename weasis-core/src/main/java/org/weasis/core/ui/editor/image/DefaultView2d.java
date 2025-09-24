@@ -1131,6 +1131,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     // focus listener is always on
     this.addMouseListener(focusHandler);
     this.addMouseMotionListener(focusHandler);
+    this.addMouseWheelListener(focusHandler);
   }
 
   @Override

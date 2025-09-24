@@ -247,6 +247,11 @@ public class View3DFactory implements SeriesViewerFactory {
         throw new IllegalStateException(
             "OpenGL %s is not compliant with compute shader".formatted(openGLInfo.shortVersion()));
       }
+      if (openGLInfo.looksSoftware()) {
+        throw new IllegalStateException(
+            "The OpenGL renderer seems to be a software renderer without real GPU: "
+                + openGLInfo.renderer());
+      }
     } catch (Exception e) {
       localPersistence.putBooleanProperty(P_OPENGL_ENABLE, false);
       localPersistence.putBooleanProperty(P_OPENGL_PREV_INIT, false);
