@@ -59,8 +59,11 @@ public class ObliqueMpr extends OriginalStack {
     if (v.isTransformed()) {
       volume = v;
     } else {
-      volume = v.transformVolume();
-      v.removeData();
+      Volume<?> transformVolume = v.transformVolume();
+      if (transformVolume != v) {
+        v.removeData();
+      }
+      volume = transformVolume;
     }
   }
 
