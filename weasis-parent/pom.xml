@@ -45,7 +45,7 @@
     <felix.bundlerepository.version>2.0.10</felix.bundlerepository.version>
     <felix.configadmin.version>1.9.26</felix.configadmin.version>
     <felix.prefs.version>1.1.0</felix.prefs.version>
-    <felix.scr.version>2.2.12</felix.scr.version>
+    <felix.scr.version>2.2.14</felix.scr.version>
 
     <slf4j.version>2.0.17</slf4j.version>
     <logback.version>1.5.18</logback.version>
@@ -56,15 +56,15 @@
     <weasis.opencv.pkg.version>4.11.1-dcm</weasis.opencv.pkg.version>
     <osgi.resource.locator.version>3.0.0</osgi.resource.locator.version>
     <jaxb.osgi.version>4.0.3</jaxb.osgi.version>
-    <xml.bind-api.version>4.0.2</xml.bind-api.version>
+    <xml.bind-api.version>4.0.4</xml.bind-api.version>
     <joml.version>1.10.8</joml.version>
     <jogamp.version>2.5.0</jogamp.version>
-    <jackson.version>2.19.1</jackson.version>
+    <jackson.version>2.19.2</jackson.version>
     <scribejava.version>8.3.3</scribejava.version>
     <zip4j.version>2.11.5</zip4j.version>
 
-    <junit-bom.version>6.0.0-RC2</junit-bom.version>
-    <mockito.version>5.19.0</mockito.version>
+    <junit-bom.version>6.0.0-RC3</junit-bom.version>
+    <mockito.version>5.20.0</mockito.version>
     <junit-pioneer.version>2.3.0</junit-pioneer.version>
 
     <!--suppress UnresolvedMavenProperty -->
@@ -108,7 +108,7 @@
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-compiler-plugin</artifactId>
-          <version>3.14.0</version>
+          <version>3.14.1</version>
           <configuration>
             <release>${java-version}</release>
           </configuration>
@@ -141,7 +141,7 @@
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-clean-plugin</artifactId>
-          <version>3.4.1</version>
+          <version>3.5.0</version>
         </plugin>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
@@ -166,7 +166,7 @@
         <plugin>
           <groupId>org.codehaus.mojo</groupId>
           <artifactId>flatten-maven-plugin</artifactId>
-          <version>1.7.0</version>
+          <version>1.7.3</version>
         </plugin>
          <plugin>
           <groupId>org.apache.maven.plugins</groupId>
@@ -183,7 +183,7 @@
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-surefire-plugin</artifactId>
-          <version>3.5.3</version>
+          <version>3.5.4</version>
           <configuration>
             <argLine>@{argLine} -Xshare:off -XX:+EnableDynamicAgentLoading</argLine>
             <parallel>all</parallel>
@@ -197,7 +197,7 @@
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-enforcer-plugin</artifactId>
-          <version>3.5.0</version>
+          <version>3.6.1</version>
         </plugin>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
@@ -212,12 +212,12 @@
         <plugin>
           <groupId>org.codehaus.mojo</groupId>
           <artifactId>build-helper-maven-plugin</artifactId>
-          <version>3.6.0</version>
+          <version>3.6.1</version>
         </plugin>
         <plugin>
           <groupId>com.diffplug.spotless</groupId>
           <artifactId>spotless-maven-plugin</artifactId>
-          <version>2.44.5</version>
+          <version>3.0.0</version>
         </plugin>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
@@ -227,12 +227,12 @@
         <plugin>
           <groupId>org.codehaus.mojo</groupId>
           <artifactId>exec-maven-plugin</artifactId>
-          <version>3.5.0</version>
+          <version>3.5.1</version>
         </plugin>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-shade-plugin</artifactId>
-          <version>3.6.0</version>
+          <version>3.6.1</version>
         </plugin>
         <plugin>
           <groupId>org.jacoco</groupId>
