@@ -58,7 +58,7 @@
     <jaxb.osgi.version>4.0.3</jaxb.osgi.version>
     <xml.bind-api.version>4.0.4</xml.bind-api.version>
     <joml.version>1.10.8</joml.version>
-    <jogamp.version>2.5.0</jogamp.version>
+    <jogamp.version>2.6.0</jogamp.version>
     <jackson.version>2.19.2</jackson.version>
     <scribejava.version>8.3.3</scribejava.version>
     <zip4j.version>2.11.5</zip4j.version>
