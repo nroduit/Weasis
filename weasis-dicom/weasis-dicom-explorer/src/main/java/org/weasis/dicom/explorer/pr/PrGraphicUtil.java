@@ -450,31 +450,9 @@ public class PrGraphicUtil {
   }
 
   private static Path2D createInterpolatedPath(BaseGraphicContext context, float[] points) {
-
-    int size = points.length / 2;
-    Path2D path = new Path2D.Double(Path2D.WIND_NON_ZERO, size);
-
-    Point2D firstPoint = context.transformPoint(points[0], points[1]);
-    path.moveTo(firstPoint.getX(), firstPoint.getY());
-
-    Point2D lastPoint = firstPoint;
-    for (int i = 1; i < size; i++) {
-      Point2D currentPoint = context.transformPoint(points[i * 2], points[i * 2 + 1]);
-
-      // Create a smooth curve using quadratic bezier
-      double distance = lastPoint.distance(currentPoint);
-      double ux = -(lastPoint.getY() - currentPoint.getY()) / distance;
-      double uy = (lastPoint.getX() - currentPoint.getX()) / distance;
-
-      double cx =
-          (lastPoint.getX() + currentPoint.getX()) * 0.5 + distance * SPLINE_CONTROL_FACTOR * ux;
-      double cy =
-          (lastPoint.getY() + currentPoint.getY()) * 0.5 + distance * SPLINE_CONTROL_FACTOR * uy;
-
-      path.quadTo(cx, cy, currentPoint.getX(), currentPoint.getY());
-      lastPoint = currentPoint;
-    }
-    return path;
+    List<Point2D> pointList = transformPoints(context, points);
+    boolean closed = pointList.getFirst().equals(pointList.getLast());
+    return InterpolatedPath2D.buildCentripetal(pointList, closed, 1.0);
   }
 
   private static Path2D createMultiPointPath(BaseGraphicContext context, float[] points) {
