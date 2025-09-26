@@ -61,7 +61,7 @@
     {
       "code": "felix.auto.start.3",
       "value": "${dollar}{weasis.codebase.url}/bundle/org.apache.felix.gogo.command-${felix.gogo.command.version}.jar${xz.ext}",
-      "description": "OSGI command and shell",
+      "description": "OSGI command",
       "type": "A",
       "category": "FELIX_INSTALL"
     },
