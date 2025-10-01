@@ -186,7 +186,7 @@ public abstract class OriginalStack extends AbstractStack {
       return 0.0;
     }
     // Subtract the angle from pi/2 to get the angle with the vertical axis
-    return Math.PI / 2.0 - Math.acos(tilt);
+    return (Math.PI / 2.0) - Math.acos(tilt);
   }
 
   public double getSliceSpace() {

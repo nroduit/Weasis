@@ -308,20 +308,9 @@ public abstract class Volume<T extends Number> {
     adaptNegativeVector(col);
     Vector3d normal = geometry.getNormal();
 
-    // cos of the angle between the patient orientation and the vertical
-    double colX = col.x();
-    Matrix4d matrix = new Matrix4d();
-
-    if (needsTransformation(colX) && stack.plane.equals(MprView.Plane.AXIAL)) {
-      matrix.rotateZ(-(Math.PI / 2.0 - Math.acos(colX)));
-    }
-
     return switch (stack.getPlane()) {
-      case AXIAL ->
-          new Matrix4d(
-                  row.x, col.x, normal.x, 0.0, row.y, col.y, normal.y, 0.0, row.z, col.z, normal.z,
-                  0.0, 0.0, 0.0, 0.0, 1.0)
-              .mul(matrix);
+      case AXIAL -> new Matrix4d();
+      // Return identity matrix because transformation matrix will be computed if needed later to rectify patient position
       case CORONAL ->
           new Matrix4d(
               row.x, col.x, normal.x, 0.0, row.z, col.z, normal.z, 0.0, row.y, col.y, normal.y, 0.0,
@@ -681,40 +670,13 @@ public abstract class Volume<T extends Number> {
   }
 
   public double calculateCorrectShearFactorZ(Vector3d originalPixelRatio) {
-    double shearFactor;
-
-    // Calculate from geometry vectors
-    Vector3d col = new Vector3d(stack.getFistSliceGeometry().getColumn());
-
-    // The tilt angle is the deviation from vertical
-    // col Z is the cosinus of the angle between the tilt vector and the z axis
-    double colZ = col.z();
-    // Subtract the angle from pi/2 to get the angle with the vertical axis
-    shearFactor = Math.tan(Math.PI / 2.0 - Math.acos(colZ));
-
-    // Scale by pixel spacing ratio to account for anisotropic voxels
-    double pixelSpacingRatio = originalPixelRatio.y / originalPixelRatio.z;
-    shearFactor *= pixelSpacingRatio;
-
-    return shearFactor;
+    Vector3d normal = stack.getFistSliceGeometry().getNormal();
+    return normal.y / normal.z;
   }
 
   public double calculateCorrectShearFactorX(Vector3d originalPixelRatio) {
-    double shearFactor;
-
-    // Calculate from geometry vectors
-    Vector3d row = new Vector3d(stack.getFistSliceGeometry().getRow());
-
-    // The tilt angle is the deviation from vertical
-    // col Z is the cosinus of the angle between the tilt vector and the z axis
-    double rowZ = row.z();
-    // Subtract the angle from pi/2 to get the angle with the vertical axis
-    shearFactor = Math.tan(Math.PI / 2.0 - Math.acos(rowZ));
-
-    // Scale by pixel spacing ratio to account for anisotropic voxels
-    double pixelSpacingRatio = originalPixelRatio.x / originalPixelRatio.z;
-    shearFactor *= pixelSpacingRatio;
-    return shearFactor;
+    Vector3d normal = stack.getFistSliceGeometry().getNormal();
+    return normal.x / normal.z;
   }
 
   private Vector3i[] calculateTransformedBounds(Matrix4d transform) {
@@ -839,7 +801,10 @@ public abstract class Volume<T extends Number> {
       List<DicomImageElement> medias = new ArrayList<>(stack.getSourceStack());
       Collections.reverse(medias);
 
-      double shearFactor = calculateCorrectShearFactorZ(originalPixelRatio);
+      double shearFactorZ = calculateCorrectShearFactorZ(originalPixelRatio);
+      // Scale by pixel spacing ratio to account for anisotropic voxels
+      double pixelSpacingRatioZ = originalPixelRatio.y / originalPixelRatio.z;
+      double pixelSpacingRatioY = originalPixelRatio.z / originalPixelRatio.y;
       Matrix4d shear =
           new Matrix4d(
               1.0,
@@ -848,10 +813,10 @@ public abstract class Volume<T extends Number> {
               0.0,
               0.0,
               1.0,
-              -shearFactor,
+              shearFactorZ*pixelSpacingRatioZ,
               0.0,
               0.0,
-              0.0,
+              -shearFactorZ*pixelSpacingRatioY,
               1.0,
               0.0,
               0.0,
@@ -868,18 +833,21 @@ public abstract class Volume<T extends Number> {
       List<DicomImageElement> medias = new ArrayList<>(stack.getSourceStack());
       Collections.reverse(medias);
 
-      double shearFactor = calculateCorrectShearFactorX(originalPixelRatio);
+      double shearFactorX = calculateCorrectShearFactorX(originalPixelRatio);
+      // Scale by pixel spacing ratio to account for anisotropic voxels
+      double pixelSpacingRatioX = originalPixelRatio.x / originalPixelRatio.z;
+      double pixelSpacingRatioZ = originalPixelRatio.z / originalPixelRatio.x;
       Matrix4d shear =
           new Matrix4d(
               1.0,
               0.0,
-              -shearFactor,
+              shearFactorX*pixelSpacingRatioX,
               0.0,
               0.0,
               1.0,
               0.0,
               0.0,
-              0.0,
+              -shearFactorX*pixelSpacingRatioZ,
               0.0,
               1.0,
               0.0,
