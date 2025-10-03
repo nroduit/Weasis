@@ -418,6 +418,12 @@ public class DicomModel implements TreeModel, DataExplorerModel {
         // Force to sort the new merged media list
         List sortedMedias = base.getSortedMedias(null);
         sortedMedias.sort(SortSeriesStack.instanceNumber);
+        if (base instanceof DicomSeries dicomSeries) {
+          List<DicomImageElement> imageList =
+              dicomSeries.copyOfMedias(null, SortSeriesStack.slicePosition);
+          int samplingRate = LoadLocalDicom.calculateSamplingRateFor4d(imageList);
+          base.setTag(TagW.stepNDimensions, samplingRate); // update stepNDimensions tag
+        }
         // filter observer
         this.firePropertyChange(
             new ObservableEvent(ObservableEvent.BasicAction.REPLACE, DicomModel.this, base, base));

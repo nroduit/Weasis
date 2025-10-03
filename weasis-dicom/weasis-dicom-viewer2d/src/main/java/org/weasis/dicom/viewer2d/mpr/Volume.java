@@ -310,7 +310,8 @@ public abstract class Volume<T extends Number> {
 
     return switch (stack.getPlane()) {
       case AXIAL -> new Matrix4d();
-      // Return identity matrix because transformation matrix will be computed if needed later to rectify patient position
+      // Return identity matrix because transformation matrix will be computed if needed later to
+      // rectify patient position
       case CORONAL ->
           new Matrix4d(
               row.x, col.x, normal.x, 0.0, row.z, col.z, normal.z, 0.0, row.y, col.y, normal.y, 0.0,
@@ -813,10 +814,10 @@ public abstract class Volume<T extends Number> {
               0.0,
               0.0,
               1.0,
-              shearFactorZ*pixelSpacingRatioZ,
+              shearFactorZ * pixelSpacingRatioZ,
               0.0,
               0.0,
-              -shearFactorZ*pixelSpacingRatioY,
+              -shearFactorZ * pixelSpacingRatioY,
               1.0,
               0.0,
               0.0,
@@ -841,13 +842,13 @@ public abstract class Volume<T extends Number> {
           new Matrix4d(
               1.0,
               0.0,
-              shearFactorX*pixelSpacingRatioX,
+              shearFactorX * pixelSpacingRatioX,
               0.0,
               0.0,
               1.0,
               0.0,
               0.0,
-              -shearFactorX*pixelSpacingRatioZ,
+              -shearFactorX * pixelSpacingRatioZ,
               0.0,
               1.0,
               0.0,

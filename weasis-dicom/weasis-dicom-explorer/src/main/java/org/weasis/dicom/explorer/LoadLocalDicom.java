@@ -134,8 +134,13 @@ public class LoadLocalDicom extends LoadDicom {
   }
 
   public static boolean seriesPostProcessing(DicomSeries dicomSeries, DicomModel dicomModel) {
+    return seriesPostProcessing(dicomSeries, dicomModel, false);
+  }
+
+  public static boolean seriesPostProcessing(
+      DicomSeries dicomSeries, DicomModel dicomModel, boolean force) {
     Integer step = (Integer) dicomSeries.getTagValue(TagW.stepNDimensions);
-    if (step == null || step < 1) {
+    if (step == null || step < 1 || force) {
       int imageCount = dicomSeries.size(null);
       if (imageCount == 0) {
         return false;
@@ -144,7 +149,7 @@ public class LoadLocalDicom extends LoadDicom {
           dicomSeries.copyOfMedias(null, SortSeriesStack.slicePosition);
       int samplingRate = calculateSamplingRateFor4d(imageList);
       dicomSeries.setTag(TagW.stepNDimensions, samplingRate);
-      if (samplingRate < 2) {
+      if (samplingRate < 2 || (samplingRate > 7 && !force)) {
         return false;
       }
       for (int i = 0; i < samplingRate; i++) {
@@ -157,7 +162,7 @@ public class LoadLocalDicom extends LoadDicom {
           } else {
             newSeries = dicomModel.splitSeries(dicomReader, dicomSeries);
           }
-          newSeries.setTag(TagW.stepNDimensions, samplingRate);
+          newSeries.setTag(TagW.stepNDimensions, 1);
           Filter<DicomImageElement> samplingFilter = getDicomImageElementFilter(i, samplingRate);
           newSeries.addAll(Filter.makeList(samplingFilter.filter(imageList)));
           if (i == 0) {
@@ -189,7 +194,7 @@ public class LoadLocalDicom extends LoadDicom {
     };
   }
 
-  private static int calculateSamplingRateFor4d(List<DicomImageElement> imageList) {
+  static int calculateSamplingRateFor4d(List<DicomImageElement> imageList) {
     try {
       if (imageList.size() >= 2) {
         double[] firstPos = (double[]) imageList.getFirst().getTagValue(TagW.SlicePosition);

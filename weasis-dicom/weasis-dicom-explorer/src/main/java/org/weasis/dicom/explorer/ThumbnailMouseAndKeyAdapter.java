@@ -307,6 +307,15 @@ public class ThumbnailMouseAndKeyAdapter extends MouseAdapter implements KeyList
             });
         popupMenu.add(item2);
         if (series.size(null) > 1) {
+          if (series.getTagValue(TagW.stepNDimensions) instanceof Integer step
+              && step > 1
+              && series instanceof DicomSeries dicomSeries) {
+            popupMenu.add(new JSeparator());
+            item2 = new JMenuItem("Separate phases into sub-series");
+            item2.addActionListener(
+                _ -> LoadLocalDicom.seriesPostProcessing(dicomSeries, dicomModel, true));
+            popupMenu.add(item2);
+          }
           if (series.getMedia(0, null, null) instanceof ImageElement) {
             popupMenu.add(new JSeparator());
             JMenu menu = new JMenu(Messages.getString("DicomExplorer.build_thumb"));

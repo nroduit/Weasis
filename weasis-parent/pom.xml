@@ -48,7 +48,7 @@
     <felix.scr.version>2.2.14</felix.scr.version>
 
     <slf4j.version>2.0.17</slf4j.version>
-    <logback.version>1.5.18</logback.version>
+    <logback.version>1.5.19</logback.version>
     <dockingframes.version>1.1.7</dockingframes.version>
     <weasis-dicom-tools.version>5.34.1</weasis-dicom-tools.version>
     <weasis.core.img.version>4.12.1</weasis.core.img.version>
