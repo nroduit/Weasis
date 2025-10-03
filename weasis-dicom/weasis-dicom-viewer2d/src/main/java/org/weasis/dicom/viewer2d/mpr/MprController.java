@@ -37,6 +37,7 @@ import org.weasis.core.ui.editor.image.ImageViewerEventManager;
 import org.weasis.core.ui.model.utils.imp.DefaultViewModel;
 import org.weasis.core.util.Pair;
 import org.weasis.dicom.codec.DicomImageElement;
+import org.weasis.dicom.viewer2d.EventManager;
 import org.weasis.dicom.viewer2d.View2d;
 import org.weasis.dicom.viewer2d.mip.MipView;
 import org.weasis.dicom.viewer2d.mip.MipView.Type;
@@ -707,18 +708,7 @@ public class MprController implements MouseListener, MouseMotionListener, MouseW
     double sagittalScale = calculateViewScale(volSize.y, volSize.z, sagittal);
 
     double viewScale = Math.min(axialScale, Math.min(coronalScale, sagittalScale));
-    MprView view;
-    if (viewScale == axialScale) {
-      view = axial.getMprView();
-    } else if (viewScale == coronalScale) {
-      view = coronal.getMprView();
-    } else {
-      view = sagittal.getMprView();
-    }
-    if (view == null) {
-      return 0.0;
-    }
-    return view.adjustViewScale(viewScale);
+    return EventManager.getInstance().getSelectedViewPane().adjustViewScale(viewScale);
   }
 
   private double calculateViewScale(double width, double height, MprAxis axis) {
