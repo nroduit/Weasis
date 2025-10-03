@@ -1,5 +1,43 @@
 # Changelog
 
+## [Unreleased](https://github.com/nroduit/Weasis/tree/HEAD)
+
+[Full Changelog](https://github.com/nroduit/Weasis/compare/v4.6.4...HEAD)
+
+**Implemented enhancements:**
+
+- New behavior of 4D DICOM series splitting [\#739](https://github.com/nroduit/Weasis/issues/739)
+
+## [v4.6.4](https://github.com/nroduit/Weasis/tree/v4.6.4) (2025-10-03)
+
+[Full Changelog](https://github.com/nroduit/Weasis/compare/v4.6.3...v4.6.4)
+
+**Implemented enhancements:**
+
+- Update to dcm4che 5.34.1 [\#738](https://github.com/nroduit/Weasis/issues/738)
+- Update to OpenCV 4.12.1 [\#737](https://github.com/nroduit/Weasis/issues/737)
+- Improve the display of interpolated curves in DICOM presentation states [\#734](https://github.com/nroduit/Weasis/issues/734)
+- Enable direct series scrolling in multi-view configuration without selection [\#729](https://github.com/nroduit/Weasis/issues/729)
+- Application freezes when using volume rendering on certain GPU configurations [\#723](https://github.com/nroduit/Weasis/issues/723)
+- MPR: Image orientation correction for non-standard patient positioning using 3D matrix transformations [\#716](https://github.com/nroduit/Weasis/issues/716)
+- Gantry tilt correction using backward mapping and trilinear interpolation [\#715](https://github.com/nroduit/Weasis/issues/715)
+- JPEG-XL Support [\#658](https://github.com/nroduit/Weasis/issues/658)
+
+**Fixed bugs:**
+
+- Dotted artifacts in MPR rendering [\#731](https://github.com/nroduit/Weasis/issues/731)
+- Images was cut in MPR view in v4.6 comparing to v4.5 [\#730](https://github.com/nroduit/Weasis/issues/730)
+- Image info on 3D viewer. [\#728](https://github.com/nroduit/Weasis/issues/728)
+- Text annotation encoding issue when saving annotations in DICOM Presentation State [\#725](https://github.com/nroduit/Weasis/issues/725)
+- Font size of pixel graphic tool and text annotation does not follow preference settings [\#724](https://github.com/nroduit/Weasis/issues/724)
+- Cursor icon not displaying correctly for current action and drawing [\#722](https://github.com/nroduit/Weasis/issues/722)
+- Actual pixel size tools fail to work in MPR mode [\#717](https://github.com/nroduit/Weasis/issues/717)
+
+**Security fixes:**
+
+- Fix CVE-2025-53644 in OpenCV \(jpeg2000 decoder\) [\#736](https://github.com/nroduit/Weasis/issues/736)
+- Code Injection via Apache felix plugin - CVE-2025-61585 [\#735](https://github.com/nroduit/Weasis/issues/735)
+
 ## [v4.6.3](https://github.com/nroduit/Weasis/tree/v4.6.3) (2025-08-15)
 
 [Full Changelog](https://github.com/nroduit/Weasis/compare/v4.6.2...v4.6.3)
