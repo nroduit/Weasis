@@ -72,7 +72,6 @@ public class PrGraphicUtil {
   // Default values
   private static final int DEFAULT_POINT_SIZE = 3;
   private static final float DEFAULT_LINE_THICKNESS = 1.0f;
-  private static final double SPLINE_CONTROL_FACTOR = 0.25;
 
   private PrGraphicUtil() {}
 

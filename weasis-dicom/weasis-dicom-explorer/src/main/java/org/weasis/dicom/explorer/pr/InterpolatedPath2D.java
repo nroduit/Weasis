@@ -29,7 +29,6 @@ public final class InterpolatedPath2D {
     Path2D.Double path = new Path2D.Double();
     if (points == null || points.isEmpty()) return path;
 
-
     List<Point2D> pts = new ArrayList<>(points);
 
     // Remove duplicate last point for closed curves
