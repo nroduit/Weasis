@@ -1,101 +1,619 @@
 # Changelog
 
-## [v4.6.4](https://github.com/nroduit/weasis-dev/tree/v4.6.4) (2025-10-03)
+## [v4.6.3](https://github.com/nroduit/Weasis/tree/v4.6.3) (2025-08-15)
 
-[Full Changelog](https://github.com/nroduit/weasis-dev/compare/v4.1.2...v4.6.4)
+[Full Changelog](https://github.com/nroduit/Weasis/compare/v4.6.2...v4.6.3)
+
+**Implemented enhancements:**
+
+- Improve performance for building MPR views [\#721](https://github.com/nroduit/Weasis/issues/721)
+- Improve thumbnail generation speed using a thread pool [\#720](https://github.com/nroduit/Weasis/issues/720)
+- Improve loading speed of images with WADO and CD/DVD [\#719](https://github.com/nroduit/Weasis/issues/719)
+
+**Fixed bugs:**
+
+- Cannot enter value in JTextField with modal windows on macOS [\#718](https://github.com/nroduit/Weasis/issues/718)
+- DICOM Explorer: cannot select the last thumbnails [\#714](https://github.com/nroduit/Weasis/issues/714)
+- DICOM Explorer does not display series when all are split into multiple series [\#712](https://github.com/nroduit/Weasis/issues/712)
+- 3D buttons in toolbar disabled after DICOM Q/R retrieval for eligible series [\#711](https://github.com/nroduit/Weasis/issues/711)
+- Weasis hangs after retrieving study to 100% [\#710](https://github.com/nroduit/Weasis/issues/710)
+- DICOM presets for Breast Tomosynthesis not loaded [\#709](https://github.com/nroduit/Weasis/issues/709)
+
+## [v4.6.2](https://github.com/nroduit/Weasis/tree/v4.6.2) (2025-07-18)
+
+[Full Changelog](https://github.com/nroduit/Weasis/compare/v4.6.1...v4.6.2)
+
+**Implemented enhancements:**
+
+- Enhance DICOM Presentation State Management [\#707](https://github.com/nroduit/Weasis/issues/707)
+- Downloading with a manifest: allows sorting series by time with identical series numbers [\#703](https://github.com/nroduit/Weasis/issues/703)
+- Allow splitting multiphase 4D series into separate series for each phase [\#701](https://github.com/nroduit/Weasis/issues/701)
+- Update to weasis-dicom-tools and dcm4che 5.34.0 [\#698](https://github.com/nroduit/Weasis/issues/698)
+- Add icon to bottom right of series thumbnail for DICOM PR and KO objects [\#695](https://github.com/nroduit/Weasis/issues/695)
+- Add "Export locally" button to Dicomizer publish feature for DICOM files [\#690](https://github.com/nroduit/Weasis/issues/690)
+- Enhance series download management with WADO in Dicom Explorer [\#689](https://github.com/nroduit/Weasis/issues/689)
+- Preserve DICOM RT region selection when changing RT set or RT STRUCT in RT Tools [\#688](https://github.com/nroduit/Weasis/issues/688)
+- Sorting DICOM SR and PDF encapsulated at the end of the list in Dicom Explorer [\#685](https://github.com/nroduit/Weasis/issues/685)
+- Support for Additional Encapsulated File Types in DICOMizer \(PDF, STL, MPEG-2, MPEG-4\) [\#684](https://github.com/nroduit/Weasis/issues/684)
+- Disable Check for Updates and Bug Report Menu [\#323](https://github.com/nroduit/Weasis/issues/323)
+
+**Fixed bugs:**
+
+- Dicomizer: image editing operations \(rotate/crop\) not always applied correctly [\#708](https://github.com/nroduit/Weasis/issues/708)
+- Dicomizer: vertical slider in main thumbnail list does not update after changing series [\#704](https://github.com/nroduit/Weasis/issues/704)
+- Regional format not persistent in language settings when switching languages [\#699](https://github.com/nroduit/Weasis/issues/699)
+- No image view opens when initially loading hidden series \(KO, PR, SEG, RT\) [\#697](https://github.com/nroduit/Weasis/issues/697)
+- View closes unexpectedly during patient reconciliation when elements differ between XML manifest and DICOM files [\#696](https://github.com/nroduit/Weasis/issues/696)
+- DICOM Presentation State graphics sometimes appear shifted [\#694](https://github.com/nroduit/Weasis/issues/694)
+- Unreported errors during DICOM publishing: images not sent but marked as successful in Dicomizer [\#692](https://github.com/nroduit/Weasis/issues/692)
+- Fix missing mandatory DICOM attribute in Dicomizer: "Image Type" tag not present in exported images [\#691](https://github.com/nroduit/Weasis/issues/691)
+- DICOM RT graphics are not displayed [\#687](https://github.com/nroduit/Weasis/issues/687)
+- Deselecting key image with filter enabled leads to mismatch when refreshing series in views [\#686](https://github.com/nroduit/Weasis/issues/686)
+- Dicom Explorer patient selection changes unexpectedly when loading large remote exams [\#683](https://github.com/nroduit/Weasis/issues/683)
+
+**Closed issues:**
+
+- Wont launch [\#649](https://github.com/nroduit/Weasis/issues/649)
+- Coarse and fine control of window and level sliders using shift, control, or alt keys [\#634](https://github.com/nroduit/Weasis/issues/634)
+- Sort by anatomic location by default [\#601](https://github.com/nroduit/Weasis/issues/601)
+
+## [v4.6.1](https://github.com/nroduit/Weasis/tree/v4.6.1) (2025-06-04)
+
+[Full Changelog](https://github.com/nroduit/Weasis/compare/v4.6.0...v4.6.1)
+
+**Implemented enhancements:**
+
+- Performance improvement of loading DICOM SEG [\#680](https://github.com/nroduit/Weasis/issues/680)
+- Add system certificates to default SSL context [\#679](https://github.com/nroduit/Weasis/issues/679)
+- Add translation note with percentage and transifex contribution link when not fully translated [\#678](https://github.com/nroduit/Weasis/issues/678)
+- Update weasis-dicom-tools 5.33.1.2 [\#677](https://github.com/nroduit/Weasis/issues/677)
+- Update to Flatlaf 3.6 [\#676](https://github.com/nroduit/Weasis/issues/676)
+- Auth0 Web Node Authentication Support [\#660](https://github.com/nroduit/Weasis/issues/660)
+- feat\(auth\): add audience option to auth registration [\#661](https://github.com/nroduit/Weasis/pull/661) ([chrisjhchung](https://github.com/chrisjhchung))
+
+**Fixed bugs:**
+
+- DICOMWeb template issue: base URL has changed from Keycloak 18 [\#675](https://github.com/nroduit/Weasis/issues/675)
+- Selection of plugin-licenses menu item dims view permanently [\#674](https://github.com/nroduit/Weasis/issues/674)
+- Artefacts in MPR visualization when using byte-Formatted pixel data [\#673](https://github.com/nroduit/Weasis/issues/673)
+- Weasis 4.6.0 cannot be installed on Debian 12 Bookworm [\#672](https://github.com/nroduit/Weasis/issues/672)
+- Window/Level issue with multiframe [\#667](https://github.com/nroduit/Weasis/issues/667)
+- Segmentation object not correctly displayed with Enhanced US Volume [\#666](https://github.com/nroduit/Weasis/issues/666)
+- System date issue: search cCriteria does not adjust over extended uptime [\#665](https://github.com/nroduit/Weasis/issues/665)
+- Cannot uninstall .deb package [\#664](https://github.com/nroduit/Weasis/issues/664)
+- Cannot open MPR when downloading multiframes [\#663](https://github.com/nroduit/Weasis/issues/663)
+- Native image library fails to load on certain macOS Intel systems [\#659](https://github.com/nroduit/Weasis/issues/659)
+- Third-party launcher is not working on Windows [\#656](https://github.com/nroduit/Weasis/issues/656)
+- Limit of 1000 images per series when downloading study from Google Healthcare API over DICOMWEB [\#653](https://github.com/nroduit/Weasis/issues/653)
+
+## [v4.6.0](https://github.com/nroduit/Weasis/tree/v4.6.0) (2025-04-17)
+
+[Full Changelog](https://github.com/nroduit/Weasis/compare/v4.5.1...v4.6.0)
+
+**Implemented enhancements:**
+
+- Add charset selection for C-FInd request [\#648](https://github.com/nroduit/Weasis/issues/648)
+- Add a Minimize Option to weasis:ui Command [\#644](https://github.com/nroduit/Weasis/issues/644)
+- Do open DICOM SR by default [\#638](https://github.com/nroduit/Weasis/issues/638)
+- Display time zone for Time attributes and adapt to local time for DateTime attributes [\#636](https://github.com/nroduit/Weasis/issues/636)
+- Update dcm4che to 5.33.1 [\#626](https://github.com/nroduit/Weasis/issues/626)
+- Update Flatlaf to 3.5.4 [\#625](https://github.com/nroduit/Weasis/issues/625)
+- Measurements in ADC series \(MRI\) [\#614](https://github.com/nroduit/Weasis/issues/614)
+- 3D View - Oblique MPR - Part 2 [\#390](https://github.com/nroduit/Weasis/issues/390)
+
+**Fixed bugs:**
+
+- Crash at startup with specific configuration of remote preferences [\#651](https://github.com/nroduit/Weasis/issues/651)
+- When importing DICOM Zip, the password window closes unexpectedly when clicking outside [\#650](https://github.com/nroduit/Weasis/issues/650)
+- SUV is not calculated when TimezoneOffsetFromUTC is negative [\#635](https://github.com/nroduit/Weasis/issues/635)
+- When a series is replaced in a view, the Presentation State applies even without a reference [\#631](https://github.com/nroduit/Weasis/issues/631)
+- Sometimes the download process remains even after cancellation [\#630](https://github.com/nroduit/Weasis/issues/630)
+- Patient navigation using shortcuts does not work correctly [\#629](https://github.com/nroduit/Weasis/issues/629)
+- The main window is not visible when a screen changes its origin \(x,y\) [\#628](https://github.com/nroduit/Weasis/issues/628)
+- Greek Characters not displayed properly [\#627](https://github.com/nroduit/Weasis/issues/627)
+- PT/CT fusion images display HU as the pixel unit [\#624](https://github.com/nroduit/Weasis/issues/624)
+- JPEG-LS: Samples per Pixel = 3 and interleave mode 'none' [\#623](https://github.com/nroduit/Weasis/issues/623)
+- GSPS with double inversions \(MONOCHROME1 & INVERSE\) gets inverted once [\#620](https://github.com/nroduit/Weasis/issues/620)
+- Potential Thread Synchronization Issue in LoadSeries.java [\#618](https://github.com/nroduit/Weasis/issues/618)
+- KO toggle button state runs incorrectly in tile mode [\#615](https://github.com/nroduit/Weasis/issues/615)
+- IVUS is not properly displayed [\#612](https://github.com/nroduit/Weasis/issues/612)
+- Empty modal window when importing or creating new series in Dicomizer [\#599](https://github.com/nroduit/Weasis/issues/599)
+- Not installing on MacOS [\#587](https://github.com/nroduit/Weasis/issues/587)
+- Cross position of MPR is not as expected when return from fullscreen. [\#572](https://github.com/nroduit/Weasis/issues/572)
+
+**Security fixes:**
+
+- Fixes CWE-522 [\#608](https://github.com/nroduit/Weasis/issues/608)
+- Weasis security issue [\#607](https://github.com/nroduit/Weasis/issues/607)
+
+**Closed issues:**
+
+- Hidden thumbnails of a study [\#584](https://github.com/nroduit/Weasis/issues/584)
 
 **Merged pull requests:**
 
-- feat: update manifest xsd [\#3](https://github.com/nroduit/weasis-dev/pull/3) ([jdcshug](https://github.com/jdcshug))
-- minor change from hug  [\#2](https://github.com/nroduit/weasis-dev/pull/2) ([bjacquemoud](https://github.com/bjacquemoud))
+- Bump the maven group in /weasis-parent with 2 updates [\#619](https://github.com/nroduit/Weasis/pull/619) ([dependabot[bot]](https://github.com/apps/dependabot))
+- fixed \#615 KO toggle button state runs incorrectly in tile mode [\#617](https://github.com/nroduit/Weasis/pull/617) ([a347807131](https://github.com/a347807131))
 
-## [v4.1.2](https://github.com/nroduit/weasis-dev/tree/v4.1.2) (2023-06-16)
+## [v4.5.1](https://github.com/nroduit/Weasis/tree/v4.5.1) (2024-09-18)
 
-[Full Changelog](https://github.com/nroduit/weasis-dev/compare/v4.1.1...v4.1.2)
+[Full Changelog](https://github.com/nroduit/Weasis/compare/v4.5.0...v4.5.1)
 
-## [v4.1.1](https://github.com/nroduit/weasis-dev/tree/v4.1.1) (2023-05-22)
+**Implemented enhancements:**
 
-[Full Changelog](https://github.com/nroduit/weasis-dev/compare/v4.1.0...v4.1.1)
+- URl handler issue on Mac for all users [\#583](https://github.com/nroduit/Weasis/issues/583)
+- Add Dicom Calling Node to Dicom Export -\> Dicom Send. [\#575](https://github.com/nroduit/Weasis/issues/575)
 
-## [v4.1.0](https://github.com/nroduit/weasis-dev/tree/v4.1.0) (2023-05-08)
+**Fixed bugs:**
 
-[Full Changelog](https://github.com/nroduit/weasis-dev/compare/v4.0.3...v4.1.0)
+- MPR preferences are not persistent [\#589](https://github.com/nroduit/Weasis/issues/589)
+- Separate dock icon on Ubuntu [\#588](https://github.com/nroduit/Weasis/issues/588)
+- DICOMDIR cannot be written if it contains special DICOM elements [\#586](https://github.com/nroduit/Weasis/issues/586)
+- Missing the boot.log file [\#579](https://github.com/nroduit/Weasis/issues/579)
+- Failed to send to DICOM archive [\#577](https://github.com/nroduit/Weasis/issues/577)
 
-## [v4.0.3](https://github.com/nroduit/weasis-dev/tree/v4.0.3) (2022-11-13)
+**Closed issues:**
 
-[Full Changelog](https://github.com/nroduit/weasis-dev/compare/v4.0.2...v4.0.3)
+- oblique MPR feature. [\#578](https://github.com/nroduit/Weasis/issues/578)
 
-## [v4.0.2](https://github.com/nroduit/weasis-dev/tree/v4.0.2) (2022-08-01)
+## [v4.5.0](https://github.com/nroduit/Weasis/tree/v4.5.0) (2024-08-15)
 
-[Full Changelog](https://github.com/nroduit/weasis-dev/compare/v4.0.1...v4.0.2)
+[Full Changelog](https://github.com/nroduit/Weasis/compare/v4.4.0...v4.5.0)
 
-## [v4.0.1](https://github.com/nroduit/weasis-dev/tree/v4.0.1) (2022-06-17)
+**Implemented enhancements:**
 
-[Full Changelog](https://github.com/nroduit/weasis-dev/compare/v4.0.0-rc...v4.0.1)
+- Launch third party applications in Weasis UI [\#570](https://github.com/nroduit/Weasis/issues/570)
+- Command: add close a specific patient from its patient ID [\#562](https://github.com/nroduit/Weasis/issues/562)
+- Improve reading DICOM SEG [\#560](https://github.com/nroduit/Weasis/issues/560)
+- Measurements for US studies [\#32](https://github.com/nroduit/Weasis/issues/32)
 
-## [v4.0.0-rc](https://github.com/nroduit/weasis-dev/tree/v4.0.0-rc) (2022-04-24)
+**Fixed bugs:**
 
-[Full Changelog](https://github.com/nroduit/weasis-dev/compare/v3.8.1...v4.0.0-rc)
+- In Query/Retrieve view, the selected DICOM node is not preserved when using More Options [\#571](https://github.com/nroduit/Weasis/issues/571)
+- Dicomizer: Limit the number of characters in metadata table according to the DICOM attributes [\#564](https://github.com/nroduit/Weasis/issues/564)
+- Preserve measurement tool unit selection within a series [\#551](https://github.com/nroduit/Weasis/issues/551)
 
-## [v3.8.1](https://github.com/nroduit/weasis-dev/tree/v3.8.1) (2022-02-03)
+## [v4.4.0](https://github.com/nroduit/Weasis/tree/v4.4.0) (2024-05-06)
 
-[Full Changelog](https://github.com/nroduit/weasis-dev/compare/v3.8.0...v3.8.1)
+[Full Changelog](https://github.com/nroduit/Weasis/compare/v4.3.0...v4.4.0)
 
-## [v3.8.0](https://github.com/nroduit/weasis-dev/tree/v3.8.0) (2021-12-11)
+**Implemented enhancements:**
 
-[Full Changelog](https://github.com/nroduit/weasis-dev/compare/v3.7.1...v3.8.0)
+- Update weasis-dicom-tools and dcm4che to 5.32.0 [\#547](https://github.com/nroduit/Weasis/issues/547)
+- Replace OSGI Sling logger by Logback 1.5.2 and update to slf4j 2.0.12 [\#540](https://github.com/nroduit/Weasis/issues/540)
+- Update to weasis-core-img 4.9.0.1 [\#539](https://github.com/nroduit/Weasis/issues/539)
+- Update to FlatLaf 3.4.1 [\#538](https://github.com/nroduit/Weasis/issues/538)
 
-## [v3.7.1](https://github.com/nroduit/weasis-dev/tree/v3.7.1) (2021-06-06)
+**Fixed bugs:**
 
-[Full Changelog](https://github.com/nroduit/weasis-dev/compare/v3.7.0...v3.7.1)
+-  Image editor tools are not visible with Dicomizer [\#546](https://github.com/nroduit/Weasis/issues/546)
+- Issue of removing series from the UI [\#544](https://github.com/nroduit/Weasis/issues/544)
+- Segmentation panel is sometimes not visible when loading DICOM SEG [\#541](https://github.com/nroduit/Weasis/issues/541)
+- MIP rebuild resets the image preset [\#528](https://github.com/nroduit/Weasis/issues/528)
+- Can't open DX studies [\#525](https://github.com/nroduit/Weasis/issues/525)
 
-## [v3.7.0](https://github.com/nroduit/weasis-dev/tree/v3.7.0) (2021-02-02)
+**Merged pull requests:**
 
-[Full Changelog](https://github.com/nroduit/weasis-dev/compare/v3.6.3-RC3...v3.7.0)
+- Changing maven compiler plugin config. Updating UICore singleton. [\#517](https://github.com/nroduit/Weasis/pull/517) ([mriss](https://github.com/mriss))
 
-## [v3.6.3-RC3](https://github.com/nroduit/weasis-dev/tree/v3.6.3-RC3) (2020-12-15)
+## [v4.3.0](https://github.com/nroduit/Weasis/tree/v4.3.0) (2024-02-16)
 
-[Full Changelog](https://github.com/nroduit/weasis-dev/compare/v3.6.3-RC2...v3.6.3-RC3)
+[Full Changelog](https://github.com/nroduit/Weasis/compare/v4.2.1...v4.3.0)
 
-## [v3.6.3-RC2](https://github.com/nroduit/weasis-dev/tree/v3.6.3-RC2) (2020-11-24)
+**Implemented enhancements:**
 
-[Full Changelog](https://github.com/nroduit/weasis-dev/compare/v3.6.3-RC1...v3.6.3-RC2)
+- Fill opacity as a graphic property [\#505](https://github.com/nroduit/Weasis/issues/505)
+- Cine for multiframe: variable speed and sweeping [\#497](https://github.com/nroduit/Weasis/issues/497)
+- Improve tag viewer [\#494](https://github.com/nroduit/Weasis/issues/494)
+- Merging several multiframe files with an identical concatenation UID [\#493](https://github.com/nroduit/Weasis/issues/493)
+- Display an error message when a file is identified as DICOM but cannot be read [\#479](https://github.com/nroduit/Weasis/issues/479)
+- Multiframe image fixed/varibale framerate \(Frame Time Vector support 0018,1065\) [\#424](https://github.com/nroduit/Weasis/issues/424)
+- Color and transparency display options for overlay data  [\#184](https://github.com/nroduit/Weasis/issues/184)
 
-## [v3.6.3-RC1](https://github.com/nroduit/weasis-dev/tree/v3.6.3-RC1) (2020-11-24)
+**Fixed bugs:**
 
-[Full Changelog](https://github.com/nroduit/weasis-dev/compare/v3.6.2...v3.6.3-RC1)
+- 3D Buttons are not active [\#504](https://github.com/nroduit/Weasis/issues/504)
+- The latest measurement values are not visible in the table [\#502](https://github.com/nroduit/Weasis/issues/502)
+- font size setting of Labels on image does not affect actually. [\#498](https://github.com/nroduit/Weasis/issues/498)
 
-## [v3.6.2](https://github.com/nroduit/weasis-dev/tree/v3.6.2) (2020-08-26)
+**Closed issues:**
 
-[Full Changelog](https://github.com/nroduit/weasis-dev/compare/v3.6.1-3D...v3.6.2)
+- Weasis does not even reach the splash screen - possible wayland and flatpak interaction?   [\#449](https://github.com/nroduit/Weasis/issues/449)
 
-## [v3.6.1-3D](https://github.com/nroduit/weasis-dev/tree/v3.6.1-3D) (2020-07-14)
+## [v4.2.1](https://github.com/nroduit/Weasis/tree/v4.2.1) (2023-11-11)
 
-[Full Changelog](https://github.com/nroduit/weasis-dev/compare/v3.6.0-3D...v3.6.1-3D)
+[Full Changelog](https://github.com/nroduit/Weasis/compare/v4.2.0...v4.2.1)
 
-## [v3.6.0-3D](https://github.com/nroduit/weasis-dev/tree/v3.6.0-3D) (2020-07-14)
+**Implemented enhancements:**
 
-[Full Changelog](https://github.com/nroduit/weasis-dev/compare/v3.6.1...v3.6.0-3D)
+- Update to Flatlaf 3.2.5 [\#490](https://github.com/nroduit/Weasis/issues/490)
+- Update weasis-dicom-tools and dcm4chee to 5.31.1 [\#489](https://github.com/nroduit/Weasis/issues/489)
+- Patient/Study/Series/Image navigation via keyboard shortcuts [\#483](https://github.com/nroduit/Weasis/issues/483)
+- \(0018,1114\) EstimatedRadiographicMagnificationFactor is not used when performing measurements [\#465](https://github.com/nroduit/Weasis/issues/465)
+- Use arrow keys to scroll inside stack and change series [\#235](https://github.com/nroduit/Weasis/issues/235)
 
-## [v3.6.1](https://github.com/nroduit/weasis-dev/tree/v3.6.1) (2020-07-03)
+**Fixed bugs:**
 
-[Full Changelog](https://github.com/nroduit/weasis-dev/compare/v3.6.0...v3.6.1)
+- Wrong color rendering of jpeg2000 with YBR\_FULL  [\#491](https://github.com/nroduit/Weasis/issues/491)
+- Wrong color rendering of  jpeg2000 with YBR\_FULL color model [\#488](https://github.com/nroduit/Weasis/issues/488)
+- Issue of parsing some properties in JSON files  [\#481](https://github.com/nroduit/Weasis/issues/481)
+- 4.2.0 .rpm does not install on Fedora 38, looking for already installed dependencies  [\#467](https://github.com/nroduit/Weasis/issues/467)
+- NULL UICore Instance access problem at UICore Constructor [\#466](https://github.com/nroduit/Weasis/issues/466)
+- Cannot open any images with wayland [\#462](https://github.com/nroduit/Weasis/issues/462)
 
-## [v3.6.0](https://github.com/nroduit/weasis-dev/tree/v3.6.0) (2020-02-21)
+## [v4.2.0](https://github.com/nroduit/Weasis/tree/v4.2.0) (2023-08-18)
 
-[Full Changelog](https://github.com/nroduit/weasis-dev/compare/v3.6.0-rc1...v3.6.0)
+[Full Changelog](https://github.com/nroduit/Weasis/compare/v4.1.2...v4.2.0)
 
-## [v3.6.0-rc1](https://github.com/nroduit/weasis-dev/tree/v3.6.0-rc1) (2020-02-03)
+**Implemented enhancements:**
 
-[Full Changelog](https://github.com/nroduit/weasis-dev/compare/v3.5.4...v3.6.0-rc1)
+- Use JSON file instead of properties for weasis configuration \(Part 1\) [\#454](https://github.com/nroduit/Weasis/issues/454)
+- Synchronize views from different tabs [\#433](https://github.com/nroduit/Weasis/issues/433)
+- Add shortcut to close current patient/image with "Ctrl+W"  [\#429](https://github.com/nroduit/Weasis/issues/429)
 
-## [v3.5.4](https://github.com/nroduit/weasis-dev/tree/v3.5.4) (2019-11-01)
+**Fixed bugs:**
 
-[Full Changelog](https://github.com/nroduit/weasis-dev/compare/3.5.4-rc...v3.5.4)
+- The clickable area of the key images does not match with the button size [\#458](https://github.com/nroduit/Weasis/issues/458)
+- Error in docking framework when opening or closing a tab [\#452](https://github.com/nroduit/Weasis/issues/452)
+- Cannot read RT ion plan and display Isodoses [\#446](https://github.com/nroduit/Weasis/issues/446)
+- DICOM explorer does not show all the series when large number of series are loaded [\#443](https://github.com/nroduit/Weasis/issues/443)
+- RT tool is not closed when closing the view tab [\#440](https://github.com/nroduit/Weasis/issues/440)
+- Clicking on RT Dose open images in new Weasis instance [\#439](https://github.com/nroduit/Weasis/issues/439)
+- Cannot enable again OpenGL in Preferences [\#438](https://github.com/nroduit/Weasis/issues/438)
+- Persistence of drawing tools and overlays doesn't work [\#435](https://github.com/nroduit/Weasis/issues/435)
+- Unable to load OpenCV native library on Windows [\#431](https://github.com/nroduit/Weasis/issues/431)
 
-## [3.5.4-rc](https://github.com/nroduit/weasis-dev/tree/3.5.4-rc) (2019-09-27)
+## [v4.1.2](https://github.com/nroduit/Weasis/tree/v4.1.2) (2023-06-16)
 
-[Full Changelog](https://github.com/nroduit/weasis-dev/compare/v3.5.3...3.5.4-rc)
+[Full Changelog](https://github.com/nroduit/Weasis/compare/v4.1.1...v4.1.2)
+
+**Fixed bugs:**
+
+- Languages can no longer be changed from the UI [\#426](https://github.com/nroduit/Weasis/issues/426)
+- Application freezes when 3D view is closed [\#425](https://github.com/nroduit/Weasis/issues/425)
+- Value of shininess is out of range [\#423](https://github.com/nroduit/Weasis/issues/423)
+- Cannot activate or deactivate OpenGL from Preferences  [\#421](https://github.com/nroduit/Weasis/issues/421)
+- Can't uninstall package weasis\_4.0.3-1\_amd64 [\#419](https://github.com/nroduit/Weasis/issues/419)
+- The tools associated with a viewer are not updated when closing a tab [\#417](https://github.com/nroduit/Weasis/issues/417)
+- MPR and 3D buttons are sometimes disabled after loading images [\#416](https://github.com/nroduit/Weasis/issues/416)
+- Can't load 3D CT scan with odd size [\#414](https://github.com/nroduit/Weasis/issues/414)
+- The program closes with an error when opening any file [\#410](https://github.com/nroduit/Weasis/issues/410)
+
+**Closed issues:**
+
+- PROBLEM: Weasis can't find my graphic card [\#420](https://github.com/nroduit/Weasis/issues/420)
+- crashing in archlinux when import DICOM [\#411](https://github.com/nroduit/Weasis/issues/411)
+- mv: cannot stat 'build-installer/Weasis-4.0.2.msi': No such file or directory [\#352](https://github.com/nroduit/Weasis/issues/352)
+- Annotations/labels font size [\#246](https://github.com/nroduit/Weasis/issues/246)
+- Print Dialog not come upfront when apply for print. [\#222](https://github.com/nroduit/Weasis/issues/222)
+- Weasis - Sante DICOM Viewer Pro batch studies retrieve iisue [\#188](https://github.com/nroduit/Weasis/issues/188)
+- Error building on FreeBSD [\#175](https://github.com/nroduit/Weasis/issues/175)
+- Query/Retrieve accessible as tool on main window with adjustable presets [\#92](https://github.com/nroduit/Weasis/issues/92)
+- Weasis Viewer does not open new Study Tab if a study was already loaded in Dicom Explorer [\#89](https://github.com/nroduit/Weasis/issues/89)
+
+## [v4.1.1](https://github.com/nroduit/Weasis/tree/v4.1.1) (2023-05-22)
+
+[Full Changelog](https://github.com/nroduit/Weasis/compare/v4.1.0...v4.1.1)
+
+**Fixed bugs:**
+
+- SUVbw value are different for DRO Washington Image than required per QIBA profile [\#399](https://github.com/nroduit/Weasis/issues/399)
+
+## [v4.1.0](https://github.com/nroduit/Weasis/tree/v4.1.0) (2023-05-08)
+
+[Full Changelog](https://github.com/nroduit/Weasis/compare/v4.0.3...v4.1.0)
+
+**Implemented enhancements:**
+
+- Preference for opening the MPR in a certain layout [\#406](https://github.com/nroduit/Weasis/issues/406)
+- Some viewers do not support the drag and drop of a series [\#405](https://github.com/nroduit/Weasis/issues/405)
+- DICOM ECG measurement [\#403](https://github.com/nroduit/Weasis/issues/403)
+- Persistence of search criteria in the Q/R [\#400](https://github.com/nroduit/Weasis/issues/400)
+- Open log folder from the Help menu [\#398](https://github.com/nroduit/Weasis/issues/398)
+- MPR auto-center options [\#397](https://github.com/nroduit/Weasis/issues/397)
+- Remove popup confirmation for some browsers [\#396](https://github.com/nroduit/Weasis/issues/396)
+- Activate DICOM RT tool panel when loading DICOM RT files [\#395](https://github.com/nroduit/Weasis/issues/395)
+- Add specific message when DICOM Q/R exceeds the limit of the results [\#392](https://github.com/nroduit/Weasis/issues/392)
+- 3D View - Volume Rendering - Part 1 [\#389](https://github.com/nroduit/Weasis/issues/389)
+- Keep the state of the docking panel when switching to a different viewer [\#381](https://github.com/nroduit/Weasis/issues/381)
+- LUT in Enhanced CT is not applied [\#375](https://github.com/nroduit/Weasis/issues/375)
+- Radiograph images suddenly become very bright after slightly lower the window level in Weasis [\#373](https://github.com/nroduit/Weasis/issues/373)
+- Using crosshair resets zoom on images [\#371](https://github.com/nroduit/Weasis/issues/371)
+- Option for sorting studies [\#369](https://github.com/nroduit/Weasis/issues/369)
+
+**Fixed bugs:**
+
+- The control points of the ellipse are not always displayed [\#404](https://github.com/nroduit/Weasis/issues/404)
+- Thumbnails in DICOM Explorer are not aligned correctly  [\#391](https://github.com/nroduit/Weasis/issues/391)
+- Localization does not work for weasis-core-api and weasis-core-ui in Weasis-snapshot after version 4.0.3. [\#386](https://github.com/nroduit/Weasis/issues/386)
+- Weasis and Dicomizer don't start maximized within Compiz \(in MX-Linux\) [\#383](https://github.com/nroduit/Weasis/issues/383)
+- Cannot load DICOM DX with invalid patient orientation [\#376](https://github.com/nroduit/Weasis/issues/376)
+- LUT \(black/white colour scales\) of some plain radiographs becomes inverted after upgrading to Weasis 4.0.3 [\#372](https://github.com/nroduit/Weasis/issues/372)
+- Viewer tabs behavior when opening studies via DICOM get [\#357](https://github.com/nroduit/Weasis/issues/357)
+- A corrupted DICOM file crashes Weasis [\#350](https://github.com/nroduit/Weasis/issues/350)
+
+**Closed issues:**
+
+- Could not find artifact org.weasis.core:weasis-core-img:pom:4.6.0-jdk11 [\#358](https://github.com/nroduit/Weasis/issues/358)
+
+**Merged pull requests:**
+
+- \[Snyk\] Security upgrade ubuntu from 20.04 to rolling [\#384](https://github.com/nroduit/Weasis/pull/384) ([snyk-bot](https://github.com/snyk-bot))
+
+## [v4.0.3](https://github.com/nroduit/Weasis/tree/v4.0.3) (2022-11-13)
+
+[Full Changelog](https://github.com/nroduit/Weasis/compare/v4.0.2...v4.0.3)
+
+**Fixed bugs:**
+
+- The opening tab strategy does not work when opening series that already exist [\#347](https://github.com/nroduit/Weasis/issues/347)
+- JPEG Baseline with RGB model is not displayed correctly [\#340](https://github.com/nroduit/Weasis/issues/340)
+- Do not export all the images of a series in non-dicom files [\#327](https://github.com/nroduit/Weasis/issues/327)
+
+**Closed issues:**
+
+- VIEWER INTERNAL CONTROLS NOT SHOWING. [\#332](https://github.com/nroduit/Weasis/issues/332)
+
+**Merged pull requests:**
+
+- Bump jackson-databind from 2.13.3 to 2.13.4.1 in /weasis-parent [\#345](https://github.com/nroduit/Weasis/pull/345) ([dependabot[bot]](https://github.com/apps/dependabot))
+
+## [v4.0.2](https://github.com/nroduit/Weasis/tree/v4.0.2) (2022-08-01)
+
+[Full Changelog](https://github.com/nroduit/Weasis/compare/v4.0.1...v4.0.2)
+
+**Implemented enhancements:**
+
+- Update to dcm4che 5.27.0 [\#320](https://github.com/nroduit/Weasis/issues/320)
+- The DICOM SR view always opens at the end of the page [\#313](https://github.com/nroduit/Weasis/issues/313)
+
+**Fixed bugs:**
+
+- The series deleted in the explorer reappear after a new Q/R [\#319](https://github.com/nroduit/Weasis/issues/319)
+- Cannot read the image when VOI LUT is corrupted [\#318](https://github.com/nroduit/Weasis/issues/318)
+- Cannot display ECG 2.5x4 in continuous time [\#315](https://github.com/nroduit/Weasis/issues/315)
+- Sometimes the Key Object Selection view is not open [\#312](https://github.com/nroduit/Weasis/issues/312)
+- Display of graphic information from a DICOM Comprehensive SR with a multiframe series [\#309](https://github.com/nroduit/Weasis/issues/309)
+- The search button in the DICOM Q/R is not visible [\#307](https://github.com/nroduit/Weasis/issues/307)
+- Cannot rebuild series with MIP sometimes [\#306](https://github.com/nroduit/Weasis/issues/306)
+- Histogram issue when all values are outside  the W/L [\#305](https://github.com/nroduit/Weasis/issues/305)
+- Opening strategy is not working as expected for local device import. [\#302](https://github.com/nroduit/Weasis/issues/302)
+- Check for updates doesn't work [\#301](https://github.com/nroduit/Weasis/issues/301)
+- Cannot start Weasis on Windows - Failed to Launch JVM [\#297](https://github.com/nroduit/Weasis/issues/297)
+- Issue of building the native installer on Windows [\#296](https://github.com/nroduit/Weasis/issues/296)
+
+**Closed issues:**
+
+- Not all series \(images\) are displayed [\#310](https://github.com/nroduit/Weasis/issues/310)
+
+**Merged pull requests:**
+
+- fix window create msi  bug [\#299](https://github.com/nroduit/Weasis/pull/299) ([runqinshiye](https://github.com/runqinshiye))
+
+## [v4.0.1](https://github.com/nroduit/Weasis/tree/v4.0.1) (2022-06-17)
+
+[Full Changelog](https://github.com/nroduit/Weasis/compare/v4.0.0-rc...v4.0.1)
+
+**Implemented enhancements:**
+
+- Include the weasis-isowriter plug-in [\#289](https://github.com/nroduit/Weasis/issues/289)
+- Add options in DICOM ZIP Export [\#288](https://github.com/nroduit/Weasis/issues/288)
+- Choose a strategy for opening a new tab [\#285](https://github.com/nroduit/Weasis/issues/285)
+- Real-time import into DICOM Explorer with DICOM C-GET and C-MOVE [\#284](https://github.com/nroduit/Weasis/issues/284)
+- Clean old folders in \<home.user\>/.weasis [\#283](https://github.com/nroduit/Weasis/issues/283)
+- Support of Pseudocolor Softcopy Presentation Stage Storage SOP Class [\#280](https://github.com/nroduit/Weasis/issues/280)
+- Show message when a new release is available [\#278](https://github.com/nroduit/Weasis/issues/278)
+- Allow import of password protected zip dicom file  [\#273](https://github.com/nroduit/Weasis/issues/273)
+- DICOM files in DICOMDIR file-set may have a filename extension. [\#272](https://github.com/nroduit/Weasis/issues/272)
+- Additional CD-ROM mount point for Linux. [\#271](https://github.com/nroduit/Weasis/issues/271)
+
+**Fixed bugs:**
+
+- Mac OS X - Weasis freezes when started by double clicking on a DICOM file [\#290](https://github.com/nroduit/Weasis/issues/290)
+- Transcoding issue in DICOM Export: Cannot uncompress or re-compress [\#287](https://github.com/nroduit/Weasis/issues/287)
+- Pixel Info graphic is not updated in the table when drawing [\#282](https://github.com/nroduit/Weasis/issues/282)
+- Reset action do not render correctly the view with Presentation State [\#281](https://github.com/nroduit/Weasis/issues/281)
+- Patient and study duplication at DICOMDIR import. [\#276](https://github.com/nroduit/Weasis/issues/276)
+- Sometimes the layout of thumbnails is not working [\#274](https://github.com/nroduit/Weasis/issues/274)
+- Patient name is not selected after study reload. [\#270](https://github.com/nroduit/Weasis/issues/270)
+- Cannot disable dicom export & dicom send in Weasis with properties [\#269](https://github.com/nroduit/Weasis/issues/269)
+- Saved 'Rolling log' property is not restored correctly. [\#267](https://github.com/nroduit/Weasis/issues/267)
+- Exporting an empty view freezes the application [\#265](https://github.com/nroduit/Weasis/issues/265)
+- Some views of the MPR are shifted when changing the layout [\#262](https://github.com/nroduit/Weasis/issues/262)
+- Importing an annotations xml file doesn't work [\#258](https://github.com/nroduit/Weasis/issues/258)
+
+**Closed issues:**
+
+- Deploy Weasis into Snapcraft [\#292](https://github.com/nroduit/Weasis/issues/292)
+- Use the API v3 for Transifex \(v2 is outdated\) [\#291](https://github.com/nroduit/Weasis/issues/291)
+- \[Packaging\] Make this program available as flatpak in FlatHub [\#130](https://github.com/nroduit/Weasis/issues/130)
+
+## [v4.0.0-rc](https://github.com/nroduit/Weasis/tree/v4.0.0-rc) (2022-04-29)
+
+[Full Changelog](https://github.com/nroduit/Weasis/compare/v3.8.1...v4.0.0-rc)
+
+**Implemented enhancements:**
+
+- Settings for opening new tab when importing images from local devices [\#259](https://github.com/nroduit/Weasis/issues/259)
+- Exporting data: Improve exporting image rendering  [\#255](https://github.com/nroduit/Weasis/issues/255)
+- Exporting data: Improve DICOM export \(generate new UIDs, transcoding\) [\#254](https://github.com/nroduit/Weasis/issues/254)
+- Replace Substance Look and Feel by FlatLaf [\#253](https://github.com/nroduit/Weasis/issues/253)
+- Move to Java 17 \(runtime and language specifications\) [\#252](https://github.com/nroduit/Weasis/issues/252)
+- New API for image rendering directly based on OpenCV  [\#250](https://github.com/nroduit/Weasis/issues/250)
+- Save the search criteria in DICOM Q/R [\#237](https://github.com/nroduit/Weasis/issues/237)
+- Bad render of specific instances with encapsulated transfer syntax [\#226](https://github.com/nroduit/Weasis/issues/226)
+- Apple silicon support - M1 \(arm\) processor for weasis-opencv on macOS [\#212](https://github.com/nroduit/Weasis/issues/212)
+
+**Closed issues:**
+
+- Removal of Java WebStart  [\#251](https://github.com/nroduit/Weasis/issues/251)
+
+## [v3.8.1](https://github.com/nroduit/Weasis/tree/v3.8.1) (2022-02-03)
+
+[Full Changelog](https://github.com/nroduit/Weasis/compare/v3.8.0...v3.8.1)
+
+**Implemented enhancements:**
+
+- Improve the automatic layout choice when opening several series [\#242](https://github.com/nroduit/Weasis/issues/242)
+- Update to dcm4che 5.25.1 [\#241](https://github.com/nroduit/Weasis/issues/241)
+- Add new default layouts for panoramic screens and MPR [\#229](https://github.com/nroduit/Weasis/issues/229)
+
+**Fixed bugs:**
+
+- Dicomizer: picker date do not commit the value when the focus is lost [\#240](https://github.com/nroduit/Weasis/issues/240)
+- Cannot display image with invalid shutter [\#236](https://github.com/nroduit/Weasis/issues/236)
+- Support measurement computations across Ultrasound regions with different scale factors [\#227](https://github.com/nroduit/Weasis/issues/227)
+
+**Closed issues:**
+
+- Building on aarch64: is it supposed to work? [\#234](https://github.com/nroduit/Weasis/issues/234)
+- Weasis icon at higher resolutions [\#233](https://github.com/nroduit/Weasis/issues/233)
+
+## [v3.8.0](https://github.com/nroduit/Weasis/tree/v3.8.0) (2021-12-11)
+
+[Full Changelog](https://github.com/nroduit/Weasis/compare/v3.7.1...v3.8.0)
+
+**Implemented enhancements:**
+
+- Improve photo editor in Dicomizer [\#210](https://github.com/nroduit/Weasis/issues/210)
+- Allow DICOMWeb OAuth2 authentication with STOW-RS [\#209](https://github.com/nroduit/Weasis/issues/209)
+- Separate "drawing tools" and "measurement tools" \(chnage drawing icon\) [\#206](https://github.com/nroduit/Weasis/issues/206)
+- Display order of "split series" [\#205](https://github.com/nroduit/Weasis/issues/205)
+- Display View Position for mammogram [\#203](https://github.com/nroduit/Weasis/issues/203)
+- Rotating ellipse feature [\#194](https://github.com/nroduit/Weasis/issues/194)
+
+**Fixed bugs:**
+
+- US images are stretched [\#217](https://github.com/nroduit/Weasis/issues/217)
+- WADO retrieve without authentication combined with C-FIND does not work \(regression\) [\#200](https://github.com/nroduit/Weasis/issues/200)
+- Deflate syntax is not supported for raw image and encapsulated document [\#197](https://github.com/nroduit/Weasis/issues/197)
+- JPEG-LS with YBR\_FULL color model is not supported [\#196](https://github.com/nroduit/Weasis/issues/196)
+
+## [v3.7.1](https://github.com/nroduit/Weasis/tree/v3.7.1) (2021-06-06)
+
+[Full Changelog](https://github.com/nroduit/Weasis/compare/v3.7.0...v3.7.1)
+
+**Implemented enhancements:**
+
+- Better management of inconsistent UIDs between the manifest and the file [\#186](https://github.com/nroduit/Weasis/issues/186)
+- Support service account auth for Cloud Healthcare API integration [\#125](https://github.com/nroduit/Weasis/issues/125)
+
+**Fixed bugs:**
+
+- Trailing whitespace in AE title of DICOM node [\#192](https://github.com/nroduit/Weasis/issues/192)
+- Uppercase DCM Files cannot be imported [\#190](https://github.com/nroduit/Weasis/issues/190)
+- GSPS object is not rendered properly [\#181](https://github.com/nroduit/Weasis/issues/181)
+- Weasis 3.7 fails to register the weasis:// protocol on macOS [\#180](https://github.com/nroduit/Weasis/issues/180)
+- Sorting channel issue in ECG [\#178](https://github.com/nroduit/Weasis/issues/178)
+- On Windows the Dicomizer exe launches the viewer  [\#176](https://github.com/nroduit/Weasis/issues/176)
+- Rebuilding thumbnail doesn't work [\#174](https://github.com/nroduit/Weasis/issues/174)
+
+## [v3.7.0](https://github.com/nroduit/Weasis/tree/v3.7.0) (2021-02-02)
+
+[Full Changelog](https://github.com/nroduit/Weasis/compare/v3.6.2...v3.7.0)
+
+**Implemented enhancements:**
+
+- Handle spatial calibration of US with multiple regions \(only when a single region in cm is present\) [\#169](https://github.com/nroduit/Weasis/issues/169)
+- Update to weasis-dicom-tools 5.23.0.1 [\#167](https://github.com/nroduit/Weasis/issues/167)
+- Update to OpenCV 4.5.0 [\#166](https://github.com/nroduit/Weasis/issues/166)
+- Make the STOW-RS URL compatible with the DICOMWeb API [\#164](https://github.com/nroduit/Weasis/issues/164)
+- Add DICOMWeb support in DICOM Query/Retrieve dialog [\#161](https://github.com/nroduit/Weasis/issues/161)
+- Add graphic object opacity of DICOM Presentation State [\#153](https://github.com/nroduit/Weasis/issues/153)
+
+**Fixed bugs:**
+
+- Fix overriding weasis.resources.url in VM option or in command $weasis:config [\#165](https://github.com/nroduit/Weasis/issues/165)
+- Raw RGB images encoded in bigendian are not rendered correctly [\#154](https://github.com/nroduit/Weasis/issues/154)
+
+**Merged pull requests:**
+
+- loadRemotePref [\#171](https://github.com/nroduit/Weasis/pull/171) ([bjacquemoud](https://github.com/bjacquemoud))
+
+## [v3.6.2](https://github.com/nroduit/Weasis/tree/v3.6.2) (2020-08-26)
+
+[Full Changelog](https://github.com/nroduit/Weasis/compare/v3.6.1...v3.6.2)
+
+**Implemented enhancements:**
+
+- Weasis shows green hues instead of black in JPEG-compressed Ultrasound images [\#140](https://github.com/nroduit/Weasis/issues/140)
+
+**Fixed bugs:**
+
+- Cannot read signed data with PaletteColor [\#148](https://github.com/nroduit/Weasis/issues/148)
+- DICOM Print: warning DICOM status is treated as an error [\#147](https://github.com/nroduit/Weasis/issues/147)
+- Cannot start MPR for series containing  ISO 2022 IR 149 charset [\#144](https://github.com/nroduit/Weasis/issues/144)
+- Not all colors are displayed correctly in DICOM PR graphics [\#143](https://github.com/nroduit/Weasis/issues/143)
+- Cannot add http headers when creating a new WEB Node [\#142](https://github.com/nroduit/Weasis/issues/142)
+- Poor image display with a more than 100% factor in the Window 10 display settings. [\#141](https://github.com/nroduit/Weasis/issues/141)
+- Cannot retrieve thumbnail with WADO-URI request [\#139](https://github.com/nroduit/Weasis/issues/139)
+
+## [v3.6.1](https://github.com/nroduit/Weasis/tree/v3.6.1) (2020-07-03)
+
+[Full Changelog](https://github.com/nroduit/Weasis/compare/v3.6.0...v3.6.1)
+
+**Implemented enhancements:**
+
+- Use weasis-core-img 4.3.0 and remove jai\_imageio dependency [\#135](https://github.com/nroduit/Weasis/issues/135)
+- Update radiance to 3.0.0 for the native distribution [\#134](https://github.com/nroduit/Weasis/issues/134)
+- Remembering Window position and size [\#123](https://github.com/nroduit/Weasis/issues/123)
+
+**Fixed bugs:**
+
+- Fix applying VOI Lut with a Presentation LUT and when there is no lookup table [\#133](https://github.com/nroduit/Weasis/issues/133)
+- Fix patientid containing special characters in dicomweb command [\#132](https://github.com/nroduit/Weasis/issues/132)
+- Command for loading DICOM locally doesn't work on Windows [\#128](https://github.com/nroduit/Weasis/issues/128)
+- Opening files with Polish diacritic signs doesn't work on Windows [\#126](https://github.com/nroduit/Weasis/issues/126)
+- Chinese charset exception when reading dataset [\#119](https://github.com/nroduit/Weasis/issues/119)
+- Weasis 3.5.4 crashes on OS X 10.15.2 [\#116](https://github.com/nroduit/Weasis/issues/116)
+
+## [v3.6.0](https://github.com/nroduit/Weasis/tree/v3.6.0) (2020-02-21)
+
+[Full Changelog](https://github.com/nroduit/Weasis/compare/v3.6.0-rc1...v3.6.0)
+
+**Implemented enhancements:**
+
+- Define a minimal local version for loading the remote plug-ins [\#113](https://github.com/nroduit/Weasis/issues/113)
+
+**Fixed bugs:**
+
+- Remove pack200 compression in Java 14 \(replace by xz for plug-in files\) [\#117](https://github.com/nroduit/Weasis/issues/117)
+
+## [v3.6.0-rc1](https://github.com/nroduit/Weasis/tree/v3.6.0-rc1) (2020-02-03)
+
+[Full Changelog](https://github.com/nroduit/Weasis/compare/v3.5.4...v3.6.0-rc1)
+
+**Implemented enhancements:**
+
+- Always set the Dose Report series at the end when sorting series [\#110](https://github.com/nroduit/Weasis/issues/110)
+
+**Fixed bugs:**
+
+- Cannot display 16-bit image with DICOM PALETTE\_COLOR [\#112](https://github.com/nroduit/Weasis/issues/112)
+- Mouse cursor is moving on the Weasis window \(when already open\) [\#108](https://github.com/nroduit/Weasis/issues/108)
+- NPE when loading a manifest [\#107](https://github.com/nroduit/Weasis/issues/107)
+- Issue of sorting series order [\#105](https://github.com/nroduit/Weasis/issues/105)
+
+## [v3.5.4](https://github.com/nroduit/Weasis/tree/v3.5.4) (2019-11-01)
+
+[Full Changelog](https://github.com/nroduit/Weasis/compare/3.5.4-rc...v3.5.4)
+
+**Implemented enhancements:**
+
+- DICOMWeb query/retrieve with a new command "dicom:rs" [\#102](https://github.com/nroduit/Weasis/issues/102)
+
+**Fixed bugs:**
+
+- Some menus are freezing [\#104](https://github.com/nroduit/Weasis/issues/104)
+- The language modules are not load from the server side [\#101](https://github.com/nroduit/Weasis/issues/101)
+- Http redirection not working when downloading \(regression\) [\#100](https://github.com/nroduit/Weasis/issues/100)
+- Fix covariant return types in ByteBuffer introduced in Java 9 [\#99](https://github.com/nroduit/Weasis/issues/99)
+- HTTPS download error: handshake\_failure  [\#98](https://github.com/nroduit/Weasis/issues/98)
+- Images blanking out randomly [\#43](https://github.com/nroduit/Weasis/issues/43)
+
+## [3.5.4-rc](https://github.com/nroduit/Weasis/tree/3.5.4-rc) (2019-09-27)
+
+[Full Changelog](https://github.com/nroduit/Weasis/compare/v3.5.3...3.5.4-rc)
 
 ## [v3.5.3](https://github.com/nroduit/weasis/tree/v3.5.3) (2019-08-09)
 
