@@ -33,6 +33,7 @@ import org.dcm4che3.data.Implementation;
 import org.dcm4che3.data.Tag;
 import org.dcm4che3.data.UID;
 import org.dcm4che3.data.VR;
+import org.dcm4che3.img.DicomImageReadParam;
 import org.dcm4che3.img.DicomImageReader;
 import org.dcm4che3.img.DicomMetaData;
 import org.dcm4che3.img.ImageRendering;
@@ -664,7 +665,9 @@ public class DicomMediaIO implements DcmMediaReader {
         try (DicomFileInputStream inputStream = new DicomFileInputStream(original.get().toPath())) {
           reader.setInput(inputStream);
           ImageDescriptor desc = reader.getImageDescriptor();
-          PlanarImage img = reader.getPlanarImage(frame, null);
+          DicomImageReadParam param = new DicomImageReadParam();
+          param.setAllowFloatImageConversion(true);
+          PlanarImage img = reader.getPlanarImage(frame, param);
           if (img.width() != desc.getColumns() || img.height() != desc.getRows()) {
             LOGGER.error(
                 "The native image size ({}x{}) does not match with the DICOM attributes({}x{})",

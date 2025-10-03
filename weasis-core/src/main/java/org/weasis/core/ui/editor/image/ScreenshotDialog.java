@@ -55,6 +55,7 @@ public class ScreenshotDialog<I extends ImageElement> extends JDialog {
 
   public enum Format {
     JPEG("JPEG Lossy", "jpg"), // NON-NLS
+    JPEG_XL("JPEG XL", "jxl"), // NON-NLS
     PNG("PNG", "png"),
     TIFF("TIFF", "tif"),
     JP2("JPEG 2000", "jp2"); // NON-NLS
@@ -236,6 +237,8 @@ public class ScreenshotDialog<I extends ImageElement> extends JDialog {
           new FileFormatFilter(Format.JP2.extension, Format.JP2.title));
       fileChooser.addChoosableFileFilter(
           new FileFormatFilter(Format.JPEG.extension, Format.JPEG.title));
+      fileChooser.addChoosableFileFilter(
+          new FileFormatFilter(Format.JPEG_XL.extension, Format.JPEG_XL.title));
       fileChooser.addChoosableFileFilter(filter);
       fileChooser.addChoosableFileFilter(
           new FileFormatFilter(Format.TIFF.extension, Format.TIFF.title));
@@ -257,6 +260,9 @@ public class ScreenshotDialog<I extends ImageElement> extends JDialog {
           MatOfInt map = new MatOfInt();
           if (Format.JPEG.extension.equals(extension)) {
             map.fromArray(Imgcodecs.IMWRITE_JPEG_QUALITY, 90);
+          } else if (Format.JPEG_XL.extension.equals(extension)) {
+            int quality = preservePixelCheckBox.isSelected() ? 100 : 90;
+            map.fromArray(Imgcodecs.IMWRITE_JPEGXL_QUALITY, quality);
           }
           ImageProcessor.writeImage(image.toMat(), destinationFile, map);
         }

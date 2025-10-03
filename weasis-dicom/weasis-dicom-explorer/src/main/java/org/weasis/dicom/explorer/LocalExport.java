@@ -99,6 +99,7 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
   public static final String INC_DICOMDIR = "exp.include.dicomdir";
   public static final String KEEP_INFO_DIR = "exp.keep.dir.name";
   public static final String IMG_QUALITY = "exp.img.quality";
+  public static final String IMG_JXL_QUALITY = "exp.img.jxl.quality";
   public static final String IMG_16_BIT = "exp.16-bit"; // NON-NLS
   public static final String IMG_PIXEL_PADDING = "exp.padding"; // NON-NLS
   public static final String IMG_SHUTTER = "exp.shutter"; // NON-NLS
@@ -112,6 +113,7 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
     DICOM("DICOM", "dcm"),
     DICOM_ZIP("DICOM ZIP", "zip"), // NON-NLS
     JPEG("JPEG Lossy", "jpg"), // NON-NLS
+    JPEG_XL("JPEG XL", "jxl"), // NON-NLS
     PNG("PNG", "png"),
     TIFF("TIFF", "tif"),
     JP2("JPEG 2000", "jp2"); // NON-NLS
@@ -151,7 +153,10 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
           TransferSyntax.JPEGLS_LOSSLESS,
           TransferSyntax.JPEGLS_NEAR_LOSSLESS,
           TransferSyntax.JPEG2000_LOSSLESS,
-          TransferSyntax.JPEG2000);
+          TransferSyntax.JPEG2000,
+          TransferSyntax.JPEGXL_LOSSLESS,
+          TransferSyntax.JPEGXL_RECOMPRESSION,
+          TransferSyntax.JPEGXL);
   protected final JComboBox<Format> comboBoxImgFormat;
 
   public LocalExport(DicomModel dicomModel, CheckTreeModel treeModel) {
@@ -208,8 +213,17 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
       if (dicomZip) {
         forceDICOMDIR = true;
       }
+
+      TransferSyntax tsuid =
+          TransferSyntax.getTransferSyntax(
+              pref.getProperty(DICOM_TSUID, TransferSyntax.NONE.name()));
+      boolean jxl =
+          tsuid == TransferSyntax.JPEGXL_LOSSLESS
+              || tsuid == TransferSyntax.JPEGXL_RECOMPRESSION
+              || tsuid == TransferSyntax.JPEGXL;
+      String qualityKey = jxl ? IMG_JXL_QUALITY : IMG_QUALITY;
       List<Component> options = new ArrayList<>();
-      JSlider slider = buildQualitySlider(pref);
+      JSlider slider = buildQualitySlider(pref, qualityKey);
       JCheckBox onlyUncompressed =
           new JCheckBox(
               Messages.getString("transcode.only.uncompressed"),
@@ -222,15 +236,15 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
               TransferSyntax t = (TransferSyntax) e.getItem();
               boolean realTsuid = t != null && t != TransferSyntax.NONE;
               slider.setEnabled(
-                  realTsuid && TransferSyntaxType.isLossyCompression(t.getTransferSyntaxUID()));
+                  realTsuid
+                      && TransferSyntaxType.isLossyCompression(t.getTransferSyntaxUID())
+                      && t != TransferSyntax.JPEGXL_RECOMPRESSION);
               onlyUncompressed.setEnabled(
                   realTsuid && !DicomUtils.isNative(t.getTransferSyntaxUID()));
             }
           });
 
-      syntaxComboBox.setSelectedItem(
-          TransferSyntax.getTransferSyntax(
-              pref.getProperty(DICOM_TSUID, TransferSyntax.NONE.name())));
+      syntaxComboBox.setSelectedItem(tsuid);
       JPanel transcodingPanel =
           GuiUtils.getVerticalBoxLayoutPanel(
               GuiUtils.getFlowLayoutPanel(syntaxComboBox),
@@ -281,7 +295,7 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
               null,
               null);
       if (response == JOptionPane.OK_OPTION) {
-        pref.setProperty(IMG_QUALITY, String.valueOf(slider.getValue()));
+        pref.setProperty(qualityKey, String.valueOf(slider.getValue()));
         pref.setProperty(
             DICOM_TSUID,
             StringUtil.getEmptyStringIfNullEnum((TransferSyntax) syntaxComboBox.getSelectedItem()));
@@ -296,8 +310,11 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
     } else if (Format.JPEG == selected
         || Format.PNG == selected
         || Format.TIFF == selected
-        || Format.JP2 == selected) {
-      boolean lossy = Format.JPEG == selected;
+        || Format.JP2 == selected
+        || Format.JPEG_XL == selected) {
+      boolean jxl = Format.JPEG_XL == selected;
+      boolean lossy = Format.JPEG == selected || jxl;
+      String qualityKey = jxl ? IMG_JXL_QUALITY : IMG_QUALITY;
       JSlider slider = null;
       JCheckBox preservePixelCheckBox;
       String dicom = "DICOM "; // NON-NLS
@@ -316,7 +333,7 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
       List<Component> options = new ArrayList<>();
 
       if (lossy) {
-        slider = buildQualitySlider(pref);
+        slider = buildQualitySlider(pref, qualityKey);
         options.add(slider);
       }
 
@@ -344,7 +361,7 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
               null);
       if (response == JOptionPane.OK_OPTION) {
         if (slider != null) {
-          pref.setProperty(IMG_QUALITY, String.valueOf(slider.getValue()));
+          pref.setProperty(qualityKey, String.valueOf(slider.getValue()));
         }
         pref.setProperty(IMG_16_BIT, String.valueOf(preservePixelCheckBox.isSelected()));
         pref.setProperty(IMG_PIXEL_PADDING, String.valueOf(paddingCheckBox.isSelected()));
@@ -355,9 +372,9 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
     }
   }
 
-  private static JSlider buildQualitySlider(Properties pref) {
-    JSlider slider =
-        new JSlider(1, 100, StringUtil.getInt(pref.getProperty(IMG_QUALITY, null), 85));
+  private static JSlider buildQualitySlider(Properties pref, String qualityKey) {
+    int defaultQuality = StringUtil.getInt(pref.getProperty(qualityKey, null), 85);
+    JSlider slider = new JSlider(1, 100, defaultQuality);
     TitledBorder titledBorder =
         new TitledBorder(
             BorderFactory.createEmptyBorder(),
@@ -517,9 +534,11 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
 
   protected void writeOther(
       ExplorerTask task, File exportDir, CheckTreeModel model, Format format, Properties pref) {
+    boolean jxl = Format.JPEG_XL == format;
+    String qualityKey = jxl ? IMG_JXL_QUALITY : IMG_QUALITY;
     boolean keepNames =
         Boolean.parseBoolean(pref.getProperty(KEEP_INFO_DIR, Boolean.TRUE.toString()));
-    int jpegQuality = StringUtil.getInt(pref.getProperty(IMG_QUALITY), 80);
+    int jpegQuality = StringUtil.getInt(pref.getProperty(qualityKey), 85);
     boolean padding =
         Boolean.parseBoolean(pref.getProperty(IMG_PIXEL_PADDING, Boolean.TRUE.toString()));
     boolean overlay = Boolean.parseBoolean(pref.getProperty(IMG_OVERLAY, Boolean.TRUE.toString()));
@@ -592,6 +611,8 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
                 MatOfInt map = new MatOfInt();
                 if (format == Format.JPEG) {
                   map.fromArray(Imgcodecs.IMWRITE_JPEG_QUALITY, jpegQuality);
+                } else if (format == Format.JPEG_XL) {
+                  map.fromArray(Imgcodecs.IMWRITE_JPEGXL_QUALITY, jpegQuality);
                 }
                 ImageProcessor.writeImage(image.toMat(), destinationFile, map);
               }
@@ -634,14 +655,19 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
     boolean writeDicomdir;
     boolean cdCompatible;
 
-    int jpegQuality = StringUtil.getInt(pref.getProperty(IMG_QUALITY), 80);
+    TransferSyntax tsuid =
+        TransferSyntax.getTransferSyntax(pref.getProperty(DICOM_TSUID, TransferSyntax.NONE.name()));
+    boolean jxl =
+        tsuid == TransferSyntax.JPEGXL_LOSSLESS
+            || tsuid == TransferSyntax.JPEGXL_RECOMPRESSION
+            || tsuid == TransferSyntax.JPEGXL;
+    String qualityKey = jxl ? IMG_JXL_QUALITY : IMG_QUALITY;
+    int jpegQuality = StringUtil.getInt(pref.getProperty(qualityKey), 85);
     int compressionRatio = 100 - jpegQuality; // Ratio from 0 to 99
     boolean newUID =
         Boolean.parseBoolean(pref.getProperty(DICOM_NEW_UID, Boolean.FALSE.toString()));
     boolean onlyRaw =
         Boolean.parseBoolean(pref.getProperty(DICOM_ONLY_RAW, Boolean.TRUE.toString()));
-    TransferSyntax tsuid =
-        TransferSyntax.getTransferSyntax(pref.getProperty(DICOM_TSUID, TransferSyntax.NONE.name()));
     boolean realTsuid = tsuid != TransferSyntax.NONE;
     if (realTsuid && DicomUtils.isNative(tsuid.getTransferSyntaxUID())) {
       onlyRaw = false;

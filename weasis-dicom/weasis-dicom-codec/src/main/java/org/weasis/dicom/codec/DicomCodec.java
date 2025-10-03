@@ -13,7 +13,6 @@ import java.net.URI;
 import java.util.Hashtable;
 import javax.imageio.spi.IIOServiceProvider;
 import org.dcm4che3.data.SpecificCharacterSet;
-import org.dcm4che3.img.DicomImageReader;
 import org.dcm4che3.img.DicomImageReaderSpi;
 import org.dcm4che3.util.UIDUtils;
 import org.osgi.service.component.ComponentContext;
@@ -119,10 +118,6 @@ public class DicomCodec implements Codec<DicomImageElement> {
 
     // Set the default encoding (must contain ASCII)
     SpecificCharacterSet.setDefaultCharacterSet("ISO_IR 192"); // NON-NLS
-
-    // Allow conversion to float images when the result of the Modality LUT is not compatible with
-    // the range of original image type
-    DicomImageReader.setAllowFloatImageConversion(true);
 
     for (IIOServiceProvider p : dcm4cheCodecs) {
       ImageioUtil.registerServiceProvider(p);

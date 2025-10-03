@@ -48,31 +48,15 @@ public class NativeOpenCVCodec implements Codec<ImageElement> {
     "image/jp2", // NON-NLS
     "image/jp2k", // NON-NLS
     "image/j2k", // NON-NLS
-    "image/j2c" // NON-NLS
+    "image/j2c", // NON-NLS
+    "image/jxl" // NON-NLS
   };
   private static final String[] readerFileSuffixes = {
-    "bm",
-    "bmp",
-    "dib",
-    "jpeg",
-    "jpg",
-    "jpe",
-    "png",
-    "x-png",
-    "pbm",
-    "pgm",
-    "ppm",
-    "pxm", // NON-NLS
-    "pnm",
-    "ras",
-    "rast", // NON-NLS
-    "tiff",
-    "tif",
-    "hdr",
-    "jp2",
-    "jp2k", // NON-NLS
-    "j2k",
-    "j2c" // NON-NLS
+    "bm", "bmp", "dib", "jpeg", "jpg", "jpe", "png", "x-png", "pbm", "pgm", "ppm", "pxm", // NON-NLS
+    "pnm", "ras", "rast", // NON-NLS
+    "tiff", "tif", "hdr", "jp2", "jp2k", // NON-NLS
+    "j2k", "j2c", // NON-NLS
+    "jxl"
   };
 
   private static final String[] writerMIMETypes = {};
