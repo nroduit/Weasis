@@ -311,7 +311,7 @@ public class ThumbnailMouseAndKeyAdapter extends MouseAdapter implements KeyList
               && step > 1
               && series instanceof DicomSeries dicomSeries) {
             popupMenu.add(new JSeparator());
-            item2 = new JMenuItem("Separate phases into sub-series");
+            item2 = new JMenuItem(Messages.getString("separate.phases"));
             item2.addActionListener(
                 _ -> LoadLocalDicom.seriesPostProcessing(dicomSeries, dicomModel, true));
             popupMenu.add(item2);
