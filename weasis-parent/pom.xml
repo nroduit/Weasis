@@ -27,7 +27,7 @@
     <app.version>${revision}${changelist}</app.version>
     <base.minimal.version>4.6.0</base.minimal.version>
     <i18n.version>4.0.0-SNAPSHOT</i18n.version>
-    <weasis.releasenotes>https://github.com/nroduit/Weasis/blob/master/CHANGELOG.md#v464-2025-10-03</weasis.releasenotes>
+    <weasis.releasenotes>https://github.com/nroduit/Weasis/blob/master/CHANGELOG.md#v465-2025-10-05</weasis.releasenotes>
 
     <felix.framework.version>7.0.5</felix.framework.version>
     <flatlaf.version>3.6.1</flatlaf.version>
