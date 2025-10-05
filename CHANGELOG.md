@@ -1,5 +1,17 @@
 # Changelog
 
+## [v4.6.5](https://github.com/nroduit/Weasis/tree/v4.6.5) (2025-10-05)
+
+[Full Changelog](https://github.com/nroduit/Weasis/compare/v4.6.4...v4.6.5)
+
+**Implemented enhancements:**
+
+- New behavior of 4D DICOM series splitting [\#739](https://github.com/nroduit/Weasis/issues/739)
+
+**Fixed bugs:**
+
+- Weasis 4.6.3 vs. 4.6.4 - Update = Cannot read this media! [\#740](https://github.com/nroduit/Weasis/issues/740)
+
 ## [v4.6.4](https://github.com/nroduit/Weasis/tree/v4.6.4) (2025-10-03)
 
 [Full Changelog](https://github.com/nroduit/Weasis/compare/v4.6.3...v4.6.4)
@@ -14,7 +26,6 @@
 - MPR: Image orientation correction for non-standard patient positioning using 3D matrix transformations [\#716](https://github.com/nroduit/Weasis/issues/716)
 - Gantry tilt correction using backward mapping and trilinear interpolation [\#715](https://github.com/nroduit/Weasis/issues/715)
 - JPEG-XL Support [\#658](https://github.com/nroduit/Weasis/issues/658)
-- New behavior of 4D DICOM series splitting [\#739](https://github.com/nroduit/Weasis/issues/739)
 
 **Fixed bugs:**
 
