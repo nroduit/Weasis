@@ -124,9 +124,14 @@ public class InfoLayer extends AbstractInfoLayer<DicomImageElement> {
   public void paint(Graphics2D g2) {
     DicomImageElement image = view2DPane.getImage();
     FontMetrics fontMetrics = g2.getFontMetrics();
-    final Rectangle bound = view2DPane.getJComponent().getBounds();
-    int minSize = fontMetrics.stringWidth(Messages.getString("InfoLayer.msg_outside_levels")) * 2;
-    if (!visible || image == null || minSize > bound.width || minSize > bound.height) {
+    Rectangle bound = view2DPane.getJComponent().getBounds();
+
+    if (!shouldPaint(image, fontMetrics, bound)) {
+      if (visible && image != null) {
+        setPosition(Position.BottomLeft, border, (double) bound.height - border);
+        setDefaultCornerPositions(bound);
+        drawExtendedActions(g2);
+      }
       return;
     }
 
