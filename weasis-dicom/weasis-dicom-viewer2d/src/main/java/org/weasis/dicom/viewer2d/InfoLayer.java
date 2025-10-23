@@ -646,7 +646,7 @@ public class InfoLayer extends AbstractInfoLayer<DicomImageElement> {
     Integer rotationAngle = (Integer) view2DPane.getActionValue(ActionW.ROTATION.cmd());
 
     if (rotationAngle != null && rotationAngle != 0) {
-      applyRotation(vr, vc, -rotationAngle);
+      applyRotation(vr, vc, rotationAngle);
     } else {
       vr.negate();
       vc.negate();
