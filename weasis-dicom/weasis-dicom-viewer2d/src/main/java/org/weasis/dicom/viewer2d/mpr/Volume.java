@@ -645,13 +645,22 @@ public abstract class Volume<T extends Number> {
 
   // value is supposed to be a cosine value, if the difference is greater than 10e-2 from 1 or 0,
   // transformation is needed
-  public boolean needsTransformation(double value) {
+  private boolean needsTransformation(double value) {
     double EPSILON = 1e-2; // Tolerance value
     if (Math.abs(value) > 0.5) {
       return (1 - Math.abs(value)) > EPSILON;
     } else {
       return Math.abs(value) > EPSILON;
     }
+  }
+
+  public boolean needsTransformation() {
+    Vector3d col = new Vector3d(stack.getFistSliceGeometry().getColumn());
+    Vector3d row = new Vector3d(stack.getFistSliceGeometry().getRow());
+
+    return needsTransformation(row.y())
+        || needsTransformation(col.z())
+        || needsTransformation(row.z());
   }
 
   public void setTransformed(boolean transformed) {

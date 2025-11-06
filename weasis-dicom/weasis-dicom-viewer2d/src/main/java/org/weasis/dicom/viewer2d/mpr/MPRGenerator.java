@@ -9,8 +9,12 @@
  */
 package org.weasis.dicom.viewer2d.mpr;
 
+import javax.swing.JOptionPane;
+import org.weasis.core.api.gui.util.GuiExecutor;
+import org.weasis.core.api.gui.util.WinUtil;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.dicom.codec.DicomImageElement;
+import org.weasis.dicom.viewer2d.Messages;
 import org.weasis.dicom.viewer2d.mpr.MprView.Plane;
 
 public class MPRGenerator {
@@ -23,12 +27,38 @@ public class MPRGenerator {
     Plane plane = view.getPlane();
     if (plane == null) throw new IllegalStateException("No slice orientation");
 
-    OriginalStack stack = new ObliqueMpr(plane, series, view, null);
+    ObliqueMpr stack = new ObliqueMpr(plane, series, view, null);
 
     if (stack.getWidth() == 0 || stack.getHeight() == 0)
       throw new IllegalStateException("No image");
 
     BuildContext context = new BuildContext(thread, mprContainer, view);
+    if (!plane.equals(Plane.AXIAL) && stack.getVolume().needsTransformation()) {
+      confirmMessage(context, Messages.getString("SeriesBuilder.patient_not_aligned"));
+    }
     stack.generate(context);
+  }
+
+  public static void confirmMessage(BuildContext context, final String message) {
+    boolean[] abort = context.getAbort();
+    GuiExecutor.invokeAndWait(
+        () -> {
+          int usrChoice =
+              JOptionPane.showConfirmDialog(
+                  WinUtil.getValidComponent(context.getMainView()),
+                  message + Messages.getString("SeriesBuilder.add_warn"),
+                  MprFactory.NAME,
+                  JOptionPane.YES_NO_OPTION,
+                  JOptionPane.QUESTION_MESSAGE);
+          if (usrChoice == JOptionPane.NO_OPTION) {
+            abort[0] = true;
+          } else {
+            // bypass for other similar messages
+            abort[1] = true;
+          }
+        });
+    if (abort[0]) {
+      throw new IllegalStateException(message);
+    }
   }
 }
