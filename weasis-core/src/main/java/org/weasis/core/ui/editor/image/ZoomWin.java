@@ -43,7 +43,6 @@ import org.weasis.core.api.image.SimpleOpManager;
 import org.weasis.core.api.image.ZoomOp.Interpolation;
 import org.weasis.core.api.image.util.ImageLayer;
 import org.weasis.core.api.media.data.ImageElement;
-import org.weasis.core.ui.editor.image.SynchData.Mode;
 import org.weasis.core.ui.editor.image.dockable.MeasureTool;
 import org.weasis.core.ui.model.layer.imp.RenderedImageLayer;
 import org.weasis.core.ui.model.utils.ImageLayerChangeListener;
@@ -464,7 +463,7 @@ public class ZoomWin<E extends ImageElement> extends GraphicsPane
     if (ActionW.SYNCH.cmd().equals(command) && value instanceof SynchEvent synchEvent) {
       if (!(value instanceof SynchCineEvent)) {
         SynchData synchData = (SynchData) view2d.getActionValue(ActionW.SYNCH_LINK.cmd());
-        if (synchData != null && Mode.NONE.equals(synchData.getMode())) {
+        if (synchData != null && !synchData.isSynch()) {
           return;
         }
 

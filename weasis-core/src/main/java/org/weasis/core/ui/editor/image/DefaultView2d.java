@@ -38,9 +38,7 @@ import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Optional;
 import javax.swing.Action;
-import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JOptionPane;
-import javax.swing.JPopupMenu;
 import javax.swing.SwingUtilities;
 import javax.swing.ToolTipManager;
 import org.opencv.core.CvType;
@@ -54,6 +52,7 @@ import org.weasis.core.api.gui.util.Feature;
 import org.weasis.core.api.gui.util.Filter;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.SliderCineListener;
+import org.weasis.core.api.gui.util.ToggleButtonListener;
 import org.weasis.core.api.image.AffineTransformOp;
 import org.weasis.core.api.image.FilterOp;
 import org.weasis.core.api.image.ImageOpEvent;
@@ -73,10 +72,7 @@ import org.weasis.core.api.media.data.SeriesComparator;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.service.AuditLog;
 import org.weasis.core.api.util.FontItem;
-import org.weasis.core.api.util.ResourceUtil;
-import org.weasis.core.api.util.ResourceUtil.ActionIcon;
 import org.weasis.core.ui.docking.DockableTool;
-import org.weasis.core.ui.editor.image.SynchData.Mode;
 import org.weasis.core.ui.editor.image.dockable.MeasureTool;
 import org.weasis.core.ui.model.AbstractGraphicModel;
 import org.weasis.core.ui.model.GraphicModel;
@@ -95,7 +91,6 @@ import org.weasis.core.ui.model.utils.imp.DefaultViewModel;
 import org.weasis.core.ui.pref.Monitor;
 import org.weasis.core.ui.util.DefaultAction;
 import org.weasis.core.ui.util.MouseEventDouble;
-import org.weasis.core.ui.util.TitleMenuItem;
 import org.weasis.core.util.LangUtil;
 import org.weasis.core.util.MathUtil;
 import org.weasis.opencv.data.PlanarImage;
@@ -141,7 +136,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
   protected Panner<E> panner;
   protected ZoomWin<E> lens;
   private final List<ViewButton> viewButtons;
-  protected ViewButton synchButton;
+  protected SynchViewButton synchButton;
 
   protected MediaSeries<E> series = null;
   protected LayerAnnotation infoLayer;
@@ -225,45 +220,42 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
 
   @Override
   public void updateSynchState() {
-    if (getActionValue(ActionW.SYNCH_LINK.cmd()) != null) {
+    ToggleButtonListener synch = eventManager.getAction(ActionW.SYNCH_MODE).orElse(null);
+    if (synch != null && synch.isActionEnabled()) {
       if (synchButton == null) {
         synchButton =
-            new ViewButton(
-                (invoker, x, y) -> {
-                  final SynchData synch = (SynchData) getActionValue(ActionW.SYNCH_LINK.cmd());
-                  if (synch == null) {
-                    return;
-                  }
+            new SynchViewButton((invoker, x, y) -> {
+              SynchData synchData = (SynchData) getActionValue(ActionW.SYNCH_LINK.cmd());
+              if (synchButton.getState() == SynchViewButton.eState.ON) {
+                synchButton.setState(SynchViewButton.eState.OFF);
+                synchData.setSynch(false);
+                synchData.setOriginal(false);
+              } else {
+                synchButton.setState(SynchViewButton.eState.ON);
+                synchData.setSynch(true);
+                synchData.setOriginal(false);
+              }
+            });
 
-                  JPopupMenu popupMenu = new JPopupMenu();
-                  TitleMenuItem itemTitle = new TitleMenuItem(ActionW.SYNCH.getTitle());
-                  popupMenu.add(itemTitle);
-                  popupMenu.addSeparator();
-
-                  for (Entry<String, Boolean> a : synch.getActions().entrySet()) {
-                    JCheckBoxMenuItem menuItem = new JCheckBoxMenuItem(a.getKey(), a.getValue());
-                    menuItem.addActionListener(
-                        e -> {
-                          if (e.getSource() instanceof JCheckBoxMenuItem item) {
-                            synch.getActions().put(item.getText(), item.isSelected());
-                          }
-                        });
-                    popupMenu.add(menuItem);
-                  }
-                  popupMenu.show(invoker, x, y);
-                },
-                ResourceUtil.getIcon(ActionIcon.SYNCH).derive(24, 24),
-                ActionW.SYNCH.getTitle());
         synchButton.setVisible(true);
         synchButton.setPosition(GridBagConstraints.SOUTHEAST);
       }
+
+      SynchData synchData = (SynchData) getActionValue(ActionW.SYNCH_LINK.cmd());
+      if (synchData != null) {
+        synchButton.setState(synchData.isSynch() ? SynchViewButton.eState.ON : SynchViewButton.eState.OFF);
+      }
+
       if (!getViewButtons().contains(synchButton)) {
         getViewButtons().add(synchButton);
       }
-      SynchData synch = (SynchData) getActionValue(ActionW.SYNCH_LINK.cmd());
-      synchButton.setVisible(!SynchData.Mode.NONE.equals(synch.getMode()));
+      //SynchData synch = (SynchData) getActionValue(ActionW.SYNCH_LINK.cmd());
+      synchButton.setVisible(true);
     } else {
-      getViewButtons().remove(synchButton);
+      if (synchButton != null) {
+        synchButton.setVisible(false);
+      }
+      //getViewButtons().remove(synchButton);
     }
   }
 
@@ -1005,7 +997,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
 
   private void propertyChange(final SynchEvent synch) {
     SynchData synchData = (SynchData) actionsInView.get(ActionW.SYNCH_LINK.cmd());
-    if (synchData != null && Mode.NONE.equals(synchData.getMode())) {
+    if (synchData != null && !synchData.isSynch()) {
       return;
     }
 

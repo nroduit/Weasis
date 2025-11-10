@@ -809,7 +809,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> {
     ComboItemListener<SynchView> synchAction = getAction(ActionW.SYNCH).orElse(null);
     updateAllListeners(
         selectedView2dContainer,
-        synchAction == null ? SynchView.NONE : (SynchView) synchAction.getSelectedItem());
+        synchAction == null ? SynchView.DEFAULT_STACK : (SynchView) synchAction.getSelectedItem());
 
     view2d.updateGraphicSelectionListener(selectedView2dContainer);
     return true;
@@ -933,7 +933,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> {
         panes.remove(viewPane);
         viewPane.setActionsInView(ActionW.SYNCH_CROSSLINE.cmd(), false);
 
-        if (SynchView.NONE.equals(synchView) || canvas.getViewType() == ViewType.VOLUME3D) {
+        if (!synchView.isSynch() || canvas.getViewType() == ViewType.VOLUME3D) {
           for (int i = 0; i < panes.size(); i++) {
             ViewCanvas<DicomImageElement> pane = panes.get(i);
             pane.getGraphicManager().deleteByLayerType(LayerType.CROSSLINES);

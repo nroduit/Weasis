@@ -148,7 +148,7 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
 
   protected final ArrayList<Component> components;
 
-  protected SynchView synchView = SynchView.NONE;
+  protected SynchView synchView = SynchView.DEFAULT_STACK;
 
   protected final ImageViewerEventManager<E> eventManager;
   protected final JPanel grid;

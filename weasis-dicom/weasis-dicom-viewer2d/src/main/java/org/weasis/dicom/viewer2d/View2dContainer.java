@@ -104,7 +104,7 @@ public class View2dContainer extends DicomViewerPlugin implements PropertyChange
 
   // Unmodifiable list of the default synchronization elements
   public static final List<SynchView> DEFAULT_SYNCH_LIST =
-      List.of(SynchView.NONE, SynchView.DEFAULT_STACK, SynchView.DEFAULT_TILE);
+      List.of(SynchView.DEFAULT_STACK, SynchView.DEFAULT_TILE);
 
   public static final GridBagLayoutModel VIEWS_2x1_r1xc2_dump =
       new GridBagLayoutModel(
@@ -141,7 +141,10 @@ public class View2dContainer extends DicomViewerPlugin implements PropertyChange
   public View2dContainer(
       GridBagLayoutModel layoutModel, String uid, String pluginName, Icon icon, String tooltips) {
     super(EventManager.getInstance(), layoutModel, uid, pluginName, icon, tooltips);
-    setSynchView(SynchView.DEFAULT_STACK);
+
+    SynchView syncView = SynchView.DEFAULT_STACK;
+    synchView.resetSynchData();
+    setSynchView(syncView);
     addComponentListener(
         new ComponentAdapter() {
 
@@ -378,6 +381,29 @@ public class View2dContainer extends DicomViewerPlugin implements PropertyChange
       }
     }
   }
+
+  /*private boolean activateSync() {
+    String fruid = null;
+
+    for (ViewCanvas<DicomImageElement> pane : getView2ds()) {
+      MediaSeries<DicomImageElement> s = pane.getSeries();
+      boolean specialView = pane instanceof MipView;
+      if (s != null && !specialView) {
+        Object paneFruid = TagD.getTagValue(s, Tag.FrameOfReferenceUID);
+        if (fruid == null && paneFruid != null) {
+          // First view of the container instantiate the value for the comparison
+          // TODO Should be compared against a list ? What if first element not linked but the others are ?
+          fruid = paneFruid.toString();
+          continue;
+        }
+        if (fruid.equals(TagD.getTagValue(s, Tag.FrameOfReferenceUID))) {
+          return true;
+          // At least 2 views have the same Frame of Reference UID and synchronization should be activated
+        }
+      }
+    }
+    return false;
+  }*/
 
   @Override
   public void setSelectedImagePaneFromFocus(ViewCanvas<DicomImageElement> viewCanvas) {

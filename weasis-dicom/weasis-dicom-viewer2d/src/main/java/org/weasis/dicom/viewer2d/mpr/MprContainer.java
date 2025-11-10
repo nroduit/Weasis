@@ -103,11 +103,12 @@ public class MprContainer extends DicomViewerPlugin implements PropertyChangeLis
             Messages.getString("mpr.synchronisation"),
             "mpr", // NON-NLS
             SynchData.Mode.STACK,
+            true,
             ActionIcon.TILE,
             actions);
   }
 
-  public static final List<SynchView> SYNCH_LIST = List.of(SynchView.NONE, defaultMpr);
+  public static final List<SynchView> SYNCH_LIST = List.of(defaultMpr);
 
   public static final GridBagLayoutModel view1 =
       new GridBagLayoutModel(LinkedHashMap.newLinkedHashMap(3), "mpr", "MPR (col 1,2)"); // NON-NLS
@@ -227,7 +228,6 @@ public class MprContainer extends DicomViewerPlugin implements PropertyChangeLis
         MprFactory.NAME,
         ResourceUtil.getIcon(OtherIcon.VIEW_3D),
         null);
-    setSynchView(SynchView.NONE);
     if (!UI.init.getAndSet(true)) {
       List<Toolbar> toolBars = UI.toolBars;
 

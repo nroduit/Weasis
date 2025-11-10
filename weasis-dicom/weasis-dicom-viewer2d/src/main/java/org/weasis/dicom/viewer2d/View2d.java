@@ -72,7 +72,6 @@ import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.editor.image.MouseActions;
 import org.weasis.core.ui.editor.image.PixelInfo;
 import org.weasis.core.ui.editor.image.SynchData;
-import org.weasis.core.ui.editor.image.SynchData.Mode;
 import org.weasis.core.ui.editor.image.SynchEvent;
 import org.weasis.core.ui.editor.image.ViewButton;
 import org.weasis.core.ui.editor.image.ViewCanvas;
@@ -243,7 +242,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
       SynchEvent synch = (SynchEvent) evt.getNewValue();
       SynchData synchData = (SynchData) actionsInView.get(ActionW.SYNCH_LINK.cmd());
       boolean tile = synchData != null && SynchData.Mode.TILE.equals(synchData.getMode());
-      if (synchData != null && Mode.NONE.equals(synchData.getMode())) {
+      if (synchData != null && !synchData.isSynch()) {
         return;
       }
       for (Entry<String, Object> entry : synch.getEvents().entrySet()) {

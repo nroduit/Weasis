@@ -18,6 +18,7 @@ import java.awt.print.PrinterJob;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import javax.print.attribute.HashPrintRequestAttributeSet;
@@ -82,7 +83,7 @@ public class WaveContainer extends DicomViewerPlugin implements PropertyChangeLi
 
   public static final List<GridBagLayoutModel> LAYOUT_LIST = List.of(DEFAULT_VIEW);
 
-  public static final List<SynchView> SYNCH_LIST = List.of(SynchView.NONE);
+  public static final List<SynchView> SYNCH_LIST = Collections.emptyList();
 
   public static final SeriesViewerUI UI = new SeriesViewerUI(WaveContainer.class);
   static final ImageViewerEventManager<DicomImageElement> ECG_EVENT_MANAGER =
@@ -139,7 +140,6 @@ public class WaveContainer extends DicomViewerPlugin implements PropertyChangeLi
         WaveFactory.NAME,
         ResourceUtil.getIcon(FileIcon.ECG),
         null);
-    setSynchView(SynchView.NONE);
 
     if (!UI.init.getAndSet(true)) {
       List<Toolbar> toolBars = UI.toolBars;

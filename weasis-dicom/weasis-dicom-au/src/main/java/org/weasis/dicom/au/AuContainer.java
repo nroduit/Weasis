@@ -12,6 +12,7 @@ package org.weasis.dicom.au;
 import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import javax.swing.JComponent;
@@ -59,7 +60,7 @@ public class AuContainer extends DicomViewerPlugin implements PropertyChangeList
           AuView.class.getName());
   private static final List<GridBagLayoutModel> LAYOUT_LIST = List.of(DEFAULT_VIEW);
 
-  private static final List<SynchView> SYNCH_LIST = List.of(SynchView.NONE);
+  private static final List<SynchView> SYNCH_LIST = Collections.emptyList();
 
   public static final SeriesViewerUI UI = new SeriesViewerUI(AuContainer.class);
 
@@ -117,7 +118,6 @@ public class AuContainer extends DicomViewerPlugin implements PropertyChangeList
         AuFactory.NAME,
         ResourceUtil.getIcon(OtherIcon.AUDIO),
         null);
-    setSynchView(SynchView.NONE);
 
     if (!UI.init.getAndSet(true)) {
       List<Toolbar> toolBars = UI.toolBars;

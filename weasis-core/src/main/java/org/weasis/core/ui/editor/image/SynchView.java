@@ -20,13 +20,6 @@ import org.weasis.core.api.util.ResourceUtil.ActionIcon;
 import org.weasis.core.ui.editor.image.SynchData.Mode;
 
 public class SynchView implements GUIEntry {
-  public static final SynchView NONE =
-      new SynchView(
-          Messages.getString("SynchView.none"),
-          "None", // NON-NLS
-          Mode.NONE,
-          ActionIcon.NONE,
-          new HashMap<>());
   public static final SynchView DEFAULT_TILE;
   public static final SynchView DEFAULT_STACK;
 
@@ -52,6 +45,7 @@ public class SynchView implements GUIEntry {
             Messages.getString("SynchView.def_t"),
             "Tile", // NON-NLS
             Mode.TILE,
+            true,
             ActionIcon.TILE,
             actions);
 
@@ -67,6 +61,7 @@ public class SynchView implements GUIEntry {
             Messages.getString("SynchView.def_s"),
             "Stack", // NON-NLS
             Mode.STACK,
+            false,
             ActionIcon.SEQUENCE,
             actions);
   }
@@ -74,14 +69,16 @@ public class SynchView implements GUIEntry {
   private final String name;
   private final String command;
   private final FlatSVGIcon svgIcon;
-  private final SynchData synchData;
+  private SynchData synchData;
+  private SynchData originalSynchData;
 
   public SynchView(
-      String name, String command, Mode mode, ActionIcon icon, Map<String, Boolean> actions) {
+      String name, String command, Mode mode, boolean synch, ActionIcon icon, Map<String, Boolean> actions) {
     if (name == null) {
       throw new IllegalArgumentException("A parameter is null!");
     }
-    this.synchData = new SynchData(mode, actions);
+    this.synchData = new SynchData(mode, actions, synch);
+    this.originalSynchData = new SynchData(mode, actions, synch);
     this.name = name;
     this.command = command;
     this.svgIcon = ResourceUtil.getIcon(icon);
@@ -93,6 +90,14 @@ public class SynchView implements GUIEntry {
 
   public SynchData getSynchData() {
     return synchData;
+  }
+
+  public void resetSynchData() {
+    this.synchData = originalSynchData.copy();
+  }
+
+  public boolean isSynch() {
+    return synchData != null && synchData.isSynch();
   }
 
   @Override

@@ -82,7 +82,7 @@ public class View2dContainer extends ImageViewerPlugin<ImageElement>
 
   // Unmodifiable list of the default synchronization elements
   public static final List<SynchView> DEFAULT_SYNCH_LIST =
-      List.of(SynchView.NONE, SynchView.DEFAULT_STACK, SynchView.DEFAULT_TILE);
+      List.of(SynchView.DEFAULT_STACK, SynchView.DEFAULT_TILE);
 
   public static final GridBagLayoutModel VIEWS_2x1_r1xc2_histo =
       new GridBagLayoutModel(

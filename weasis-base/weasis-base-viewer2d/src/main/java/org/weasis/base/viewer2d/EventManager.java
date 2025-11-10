@@ -461,7 +461,7 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
     ComboItemListener<SynchView> synchAction = getAction(ActionW.SYNCH).orElse(null);
     updateAllListeners(
         selectedView2dContainer,
-        synchAction == null ? SynchView.NONE : (SynchView) synchAction.getSelectedItem());
+        synchAction == null ? SynchView.DEFAULT_STACK : (SynchView) synchAction.getSelectedItem());
 
     view2d.updateGraphicSelectionListener(selectedView2dContainer);
 

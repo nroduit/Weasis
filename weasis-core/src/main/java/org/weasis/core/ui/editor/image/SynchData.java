@@ -18,23 +18,24 @@ import org.weasis.core.util.LangUtil;
 public class SynchData implements Copyable<SynchData> {
 
   public enum Mode {
-    NONE,
     STACK,
     TILE
   }
 
   protected final Map<String, Boolean> actions;
   protected final Mode mode;
+  protected boolean synch;
 
   private boolean original;
 
-  public SynchData(Mode mode, Map<String, Boolean> actions) {
+  public SynchData(Mode mode, Map<String, Boolean> actions, boolean synch) {
     if (actions == null) {
       throw new IllegalArgumentException("A parameter is null!");
     }
     this.actions = actions;
     this.mode = mode;
     this.original = true;
+    this.synch = synch;
   }
 
   public SynchData(SynchData synchData) {
@@ -42,6 +43,7 @@ public class SynchData implements Copyable<SynchData> {
     this.actions = new HashMap<>(synchData.actions);
     this.mode = synchData.mode;
     this.original = synchData.original;
+    this.synch = synchData.synch;
   }
 
   public Map<String, Boolean> getActions() {
@@ -54,6 +56,14 @@ public class SynchData implements Copyable<SynchData> {
 
   public Mode getMode() {
     return mode;
+  }
+
+  public boolean isSynch() {
+    return synch;
+  }
+
+  public void setSynch(boolean synch) {
+    this.synch = synch;
   }
 
   @Override

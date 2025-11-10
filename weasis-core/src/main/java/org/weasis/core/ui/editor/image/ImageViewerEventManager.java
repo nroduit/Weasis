@@ -119,7 +119,10 @@ public abstract class ImageViewerEventManager<E extends ImageElement> implements
           }
         }
 
-        firePropertyChange(ActionW.SYNCH.cmd(), null, mediaEvent);
+        SynchData synchData = (SynchData) getSelectedViewPane().getActionsInView().get(ActionW.SYNCH_LINK.cmd());
+        if (synchData != null && synchData.isSynch()) {
+          firePropertyChange(ActionW.SYNCH.cmd(), null, mediaEvent);
+        }
         if (image != null) {
           fireSeriesViewerListeners(
               new SeriesViewerEvent(selectedView2dContainer, series, image, EVENT.SELECT));
@@ -240,10 +243,13 @@ public abstract class ImageViewerEventManager<E extends ImageElement> implements
 
       @Override
       public void pointChanged(Point2D point) {
-        firePropertyChange(
-            ActionW.SYNCH.cmd(),
-            null,
-            new SynchEvent(getSelectedViewPane(), getActionW().cmd(), point));
+        SynchData synchData = (SynchData) getSelectedViewPane().getActionsInView().get(ActionW.SYNCH_LINK.cmd());
+        if (synchData != null && synchData.isSynch()) {
+          firePropertyChange(
+                  ActionW.SYNCH.cmd(),
+                  null,
+                  new SynchEvent(getSelectedViewPane(), getActionW().cmd(), point));
+        }
       }
     };
   }
@@ -377,6 +383,21 @@ public abstract class ImageViewerEventManager<E extends ImageElement> implements
         if (object instanceof SynchView synchView && selectedView2dContainer != null) {
           selectedView2dContainer.setSynchView(synchView);
         }
+      }
+    };
+  }
+
+  protected ToggleButtonListener newSynchModeAction() {
+    return new ToggleButtonListener(ActionW.SYNCH_MODE, false) {
+      @Override
+      public void actionPerformed(boolean selected) {
+        getAction(ActionW.SYNCH).ifPresent(a -> {
+          if (a.getSelectedItem() instanceof SynchView sel) {
+            sel.getSynchData().synch = selected;
+            sel.getSynchData().setOriginal(false);
+            updateAllListeners(getSelectedView2dContainer(), sel);
+          }
+        });
       }
     };
   }
@@ -664,11 +685,12 @@ public abstract class ImageViewerEventManager<E extends ImageElement> implements
 
         final List<ViewCanvas<E>> panes = viewerPlugin.getImagePanels();
         panes.remove(viewPane);
-        if (SynchView.NONE.equals(synchView)) {
+        if (synchView.isSynch()) {
           for (ViewCanvas<E> pane : panes) {
             pane.setActionsInView(ActionW.SYNCH_LINK.cmd(), synch);
           }
-        } else if (Mode.STACK.equals(synch.getMode())) {
+        }
+        if (Mode.STACK.equals(synch.getMode())) {
           // TODO if Pan is activated than rotation is required
           boolean hasLink = false;
           for (ViewCanvas<E> pane : panes) {

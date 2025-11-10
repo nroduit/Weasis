@@ -71,7 +71,6 @@ import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.editor.image.Panner;
 import org.weasis.core.ui.editor.image.PixelInfo;
 import org.weasis.core.ui.editor.image.SynchData;
-import org.weasis.core.ui.editor.image.SynchData.Mode;
 import org.weasis.core.ui.editor.image.SynchEvent;
 import org.weasis.core.ui.editor.image.ViewButton;
 import org.weasis.core.ui.editor.image.ViewCanvas;
@@ -906,7 +905,7 @@ public class View3d extends VolumeCanvas
   private void propertyChange(final SynchEvent synch) {
     {
       SynchData synchData = (SynchData) actionsInView.get(ActionW.SYNCH_LINK.cmd());
-      if (synchData != null && Mode.NONE.equals(synchData.getMode())) {
+      if (synchData != null && !synchData.isSynch()) {
         return;
       }
       // Progressive mode for VR
