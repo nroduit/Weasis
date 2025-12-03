@@ -1469,7 +1469,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
                                     boolean synchByDefault = frUidsMap.get(f) != null && frUidsMap.get(f) > 1L;
                                     oldSynch = (SynchData) pane.getActionValue(ActionW.SYNCH_LINK.cmd());
                                     if (synchByDefault) {
-                                        if (ImageOrientation.hasSameOrientation(series, s) && fruid.equals(TagD.getTagValue(series, Tag.FrameOfReferenceUID, String.class))) {
+                                        if (ImageOrientation.hasSameOrientation(series, s) && f.equals(TagD.getTagValue(series, Tag.FrameOfReferenceUID, String.class))) {
                                             pane.setActionsInView(ActionW.SYNCH_CROSSLINE.cmd(), false);
                                             // Only fully synch if no PR is applied (because can change pixel size)
                                             if (pane.getActionValue(ActionW.PR_STATE.cmd()) == null
