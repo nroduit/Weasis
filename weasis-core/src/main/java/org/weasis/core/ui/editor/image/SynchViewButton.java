@@ -21,7 +21,8 @@ public class SynchViewButton extends ViewButton {
 
   public enum eState {
     OFF,
-    ON
+    ON,
+    MANUAL
   }
 
   public SynchViewButton(ShowPopup popup) {
@@ -46,6 +47,7 @@ public class SynchViewButton extends ViewButton {
     return switch (state) {
       case ON -> ResourceUtil.getIcon(ResourceUtil.ActionIcon.SYNCH).derive(size, size);
       case OFF -> ResourceUtil.getIcon(ResourceUtil.ActionIcon.SYNCH).derive(size, size).setColorFilter(new FlatSVGIcon.ColorFilter().add(new Color(0x6E6E6E), new Color(0xFF0000)));
+      case MANUAL -> ResourceUtil.getIcon(ResourceUtil.ActionIcon.SYNCH).derive(size, size).setColorFilter(new FlatSVGIcon.ColorFilter().add(new Color(0x6E6E6E), new Color(0x0000FF)));
     };
   }
 }

@@ -25,6 +25,9 @@ public class SynchData implements Copyable<SynchData> {
   protected final Map<String, Boolean> actions;
   protected final Mode mode;
   protected boolean synch;
+  protected boolean manual;
+  protected double sourceLocation;
+  protected double targetLocation;
 
   private boolean original;
 
@@ -39,11 +42,15 @@ public class SynchData implements Copyable<SynchData> {
   }
 
   public SynchData(SynchData synchData) {
+    // Deep copy ?
     Objects.requireNonNull(synchData);
     this.actions = new HashMap<>(synchData.actions);
     this.mode = synchData.mode;
     this.original = synchData.original;
     this.synch = synchData.synch;
+    this.manual = synchData.manual;
+    this.sourceLocation = synchData.sourceLocation;
+    this.targetLocation = synchData.targetLocation;
   }
 
   public Map<String, Boolean> getActions() {
@@ -77,5 +84,28 @@ public class SynchData implements Copyable<SynchData> {
 
   public void setOriginal(boolean original) {
     this.original = original;
+  }
+
+  public boolean isManual() {
+    return manual;
+  }
+  public void setManual(boolean manual) {
+    this.manual = manual;
+  }
+
+  public double getSourceLocation() {
+    return sourceLocation;
+  }
+
+  public void setSourceLocation(double sourceLocation) {
+    this.sourceLocation = sourceLocation;
+  }
+
+  public double getTargetLocation() {
+    return targetLocation;
+  }
+
+  public void setTargetLocation(double targetLocation) {
+    this.targetLocation = targetLocation;
   }
 }
