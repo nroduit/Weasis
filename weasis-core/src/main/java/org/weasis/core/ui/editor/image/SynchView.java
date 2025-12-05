@@ -73,7 +73,12 @@ public class SynchView implements GUIEntry {
   private SynchData originalSynchData;
 
   public SynchView(
-      String name, String command, Mode mode, boolean synch, ActionIcon icon, Map<String, Boolean> actions) {
+      String name,
+      String command,
+      Mode mode,
+      boolean synch,
+      ActionIcon icon,
+      Map<String, Boolean> actions) {
     if (name == null) {
       throw new IllegalArgumentException("A parameter is null!");
     }

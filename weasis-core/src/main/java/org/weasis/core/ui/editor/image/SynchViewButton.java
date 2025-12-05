@@ -30,7 +30,10 @@ public class SynchViewButton extends ViewButton {
   }
 
   public SynchViewButton(ShowPopup popup, int size) {
-    super(popup, ResourceUtil.getIcon(ResourceUtil.ActionIcon.SYNCH).derive(size, size), "sync"); // NON-NLS
+    super(
+        popup,
+        ResourceUtil.getIcon(ResourceUtil.ActionIcon.SYNCH).derive(size, size),
+        "sync"); // NON-NLS
     this.size = size;
   }
 
@@ -46,8 +49,16 @@ public class SynchViewButton extends ViewButton {
   public Icon getIcon() {
     return switch (state) {
       case ON -> ResourceUtil.getIcon(ResourceUtil.ActionIcon.SYNCH).derive(size, size);
-      case OFF -> ResourceUtil.getIcon(ResourceUtil.ActionIcon.SYNCH).derive(size, size).setColorFilter(new FlatSVGIcon.ColorFilter().add(new Color(0x6E6E6E), new Color(0xFF0000)));
-      case MANUAL -> ResourceUtil.getIcon(ResourceUtil.ActionIcon.SYNCH).derive(size, size).setColorFilter(new FlatSVGIcon.ColorFilter().add(new Color(0x6E6E6E), new Color(0x0000FF)));
+      case OFF ->
+          ResourceUtil.getIcon(ResourceUtil.ActionIcon.SYNCH)
+              .derive(size, size)
+              .setColorFilter(
+                  new FlatSVGIcon.ColorFilter().add(new Color(0x6E6E6E), new Color(0xFF0000)));
+      case MANUAL ->
+          ResourceUtil.getIcon(ResourceUtil.ActionIcon.SYNCH)
+              .derive(size, size)
+              .setColorFilter(
+                  new FlatSVGIcon.ColorFilter().add(new Color(0x6E6E6E), new Color(0x0000FF)));
     };
   }
 }

@@ -52,31 +52,31 @@ import org.weasis.core.ui.util.WtoolBar;
 public class ViewerToolBar<E extends ImageElement> extends WtoolBar implements ActionListener {
 
   protected static final List<Feature<?>> actionsButtons =
-          Collections.synchronizedList(
-                  new ArrayList<>(
-                          Arrays.asList(
-                                  ActionW.PAN,
-                                  ActionW.WINLEVEL,
-                                  ActionW.SCROLL_SERIES,
-                                  ActionW.ZOOM,
-                                  ActionW.ROTATION,
-                                  ActionW.MEASURE,
-                                  ActionW.DRAW,
-                                  ActionW.CONTEXTMENU,
-                                  ActionW.CROSSHAIR,
-                                  ActionW.NO_ACTION)));
+      Collections.synchronizedList(
+          new ArrayList<>(
+              Arrays.asList(
+                  ActionW.PAN,
+                  ActionW.WINLEVEL,
+                  ActionW.SCROLL_SERIES,
+                  ActionW.ZOOM,
+                  ActionW.ROTATION,
+                  ActionW.MEASURE,
+                  ActionW.DRAW,
+                  ActionW.CONTEXTMENU,
+                  ActionW.CROSSHAIR,
+                  ActionW.NO_ACTION)));
 
   protected static final Feature<?>[] actionsScroll = {
-          ActionW.SCROLL_SERIES, ActionW.ZOOM, ActionW.ROTATION, ActionW.NO_ACTION
+    ActionW.SCROLL_SERIES, ActionW.ZOOM, ActionW.ROTATION, ActionW.NO_ACTION
   };
   public static final FlatSVGIcon MouseLeftIcon =
-          ResourceUtil.getToolBarIcon(ActionIcon.MOUSE_LEFT);
+      ResourceUtil.getToolBarIcon(ActionIcon.MOUSE_LEFT);
   public static final FlatSVGIcon MouseRightIcon =
-          ResourceUtil.getToolBarIcon(ActionIcon.MOUSE_RIGHT);
+      ResourceUtil.getToolBarIcon(ActionIcon.MOUSE_RIGHT);
   public static final FlatSVGIcon MouseMiddleIcon =
-          ResourceUtil.getToolBarIcon(ActionIcon.MOUSE_MIDDLE);
+      ResourceUtil.getToolBarIcon(ActionIcon.MOUSE_MIDDLE);
   public static final FlatSVGIcon MouseWheelIcon =
-          ResourceUtil.getToolBarIcon(ActionIcon.MOUSE_WHEEL);
+      ResourceUtil.getToolBarIcon(ActionIcon.MOUSE_WHEEL);
 
   protected final ImageViewerEventManager<E> eventManager;
   private final DropDownButton mouseLeft;
@@ -86,10 +86,10 @@ public class ViewerToolBar<E extends ImageElement> extends WtoolBar implements A
   private final DropDownButton synchButton;
 
   public ViewerToolBar(
-          final ImageViewerEventManager<E> eventManager,
-          int activeMouse,
-          WProperties props,
-          int index) {
+      final ImageViewerEventManager<E> eventManager,
+      int activeMouse,
+      WProperties props,
+      int index) {
     super(Messages.getString("ViewerToolBar.title"), index);
     if (eventManager == null) {
       throw new IllegalArgumentException("EventManager cannot be null");
@@ -101,9 +101,9 @@ public class ViewerToolBar<E extends ImageElement> extends WtoolBar implements A
     if ((activeMouse & InputEvent.BUTTON1_DOWN_MASK) == InputEvent.BUTTON1_DOWN_MASK) {
       mouseLeft = buildMouseButton(actions, MouseActions.T_LEFT);
       mouseLeft.setToolTipText(
-              Messages.getString("ViewerToolBar.change")
-                      + " "
-                      + Messages.getString("ViewerToolBar.m_action"));
+          Messages.getString("ViewerToolBar.change")
+              + " "
+              + Messages.getString("ViewerToolBar.m_action"));
       add(mouseLeft);
     } else {
       mouseLeft = null;
@@ -118,15 +118,15 @@ public class ViewerToolBar<E extends ImageElement> extends WtoolBar implements A
 
     if ((activeMouse & MouseActions.SCROLL_MASK) == MouseActions.SCROLL_MASK) {
       mouseWheel =
-              new DropDownButton(
-                      MouseActions.T_WHEEL,
-                      buildMouseIcon(MouseActions.T_WHEEL, actions.getAction(MouseActions.T_WHEEL))) {
+          new DropDownButton(
+              MouseActions.T_WHEEL,
+              buildMouseIcon(MouseActions.T_WHEEL, actions.getAction(MouseActions.T_WHEEL))) {
 
-                @Override
-                protected JPopupMenu getPopupMenu() {
-                  return getPopupMenuScroll(this);
-                }
-              };
+            @Override
+            protected JPopupMenu getPopupMenu() {
+              return getPopupMenuScroll(this);
+            }
+          };
       mouseWheel.setToolTipText(Messages.getString("ViewerToolBar.change"));
       add(mouseWheel);
     } else {
@@ -146,15 +146,15 @@ public class ViewerToolBar<E extends ImageElement> extends WtoolBar implements A
 
     if (props.getBooleanProperty("weasis.toolbar.layout.button", true)) {
       final DropDownButton layout =
-              new DropDownButton(
-                      "layout", // NON-NLS
-                      new DropButtonIcon(ResourceUtil.getToolBarIcon(ActionIcon.LAYOUT))) {
+          new DropDownButton(
+              "layout", // NON-NLS
+              new DropButtonIcon(ResourceUtil.getToolBarIcon(ActionIcon.LAYOUT))) {
 
-                @Override
-                protected JPopupMenu getPopupMenu() {
-                  return getLayoutPopupMenuButton(this);
-                }
-              };
+            @Override
+            protected JPopupMenu getPopupMenu() {
+              return getLayoutPopupMenuButton(this);
+            }
+          };
       layout.setToolTipText(Messages.getString("ViewerToolBar.layout"));
       add(layout);
     }
@@ -179,13 +179,13 @@ public class ViewerToolBar<E extends ImageElement> extends WtoolBar implements A
   private DropDownButton buildMouseButton(MouseActions actions, String actionLabel) {
     String action = actions.getAction(actionLabel);
     final DropDownButton button =
-            new DropDownButton(actionLabel, buildMouseIcon(actionLabel, action)) {
+        new DropDownButton(actionLabel, buildMouseIcon(actionLabel, action)) {
 
-              @Override
-              protected JPopupMenu getPopupMenu() {
-                return getPopupMenuButton(this);
-              }
-            };
+          @Override
+          protected JPopupMenu getPopupMenu() {
+            return getPopupMenuButton(this);
+          }
+        };
     button.setActionCommand(action);
     button.setToolTipText(Messages.getString("ViewerToolBar.change"));
     return button;
@@ -232,7 +232,7 @@ public class ViewerToolBar<E extends ImageElement> extends WtoolBar implements A
       for (Feature<?> b : actionsButtons) {
         if (eventManager.isActionEnabled(b)) {
           JRadioButtonMenuItem radio =
-                  new JRadioButtonMenuItem(b.getTitle(), b.getIcon(), b.cmd().equals(action));
+              new JRadioButtonMenuItem(b.getTitle(), b.getIcon(), b.cmd().equals(action));
           GuiUtils.applySelectedIconEffect(radio);
           radio.setActionCommand(b.cmd());
           radio.addActionListener(this);
@@ -256,8 +256,8 @@ public class ViewerToolBar<E extends ImageElement> extends WtoolBar implements A
     for (Feature<?> actionW : actionsScroll) {
       if (eventManager.isActionEnabled(actionW)) {
         JRadioButtonMenuItem radio =
-                new JRadioButtonMenuItem(
-                        actionW.getTitle(), actionW.getIcon(), actionW.cmd().equals(action));
+            new JRadioButtonMenuItem(
+                actionW.getTitle(), actionW.getIcon(), actionW.cmd().equals(action));
         GuiUtils.applySelectedIconEffect(radio);
         radio.setActionCommand(actionW.cmd());
         radio.addActionListener(this);
@@ -272,7 +272,7 @@ public class ViewerToolBar<E extends ImageElement> extends WtoolBar implements A
   @Override
   public void actionPerformed(ActionEvent e) {
     if (e.getSource() instanceof JRadioButtonMenuItem item
-            && item.getParent() instanceof JPopupMenu popupMenu) {
+        && item.getParent() instanceof JPopupMenu popupMenu) {
       MouseActions mouseActions = eventManager.getMouseActions();
       mouseActions.setAction(popupMenu.getLabel(), item.getActionCommand());
       ImageViewerPlugin<E> view = eventManager.getSelectedView2dContainer();
@@ -288,9 +288,9 @@ public class ViewerToolBar<E extends ImageElement> extends WtoolBar implements A
   public boolean isCommandActive(String cmd) {
     int active = eventManager.getMouseActions().getActiveButtons();
     return cmd != null && checkButtonCommand(cmd, mouseLeft)
-            || (((active & InputEvent.BUTTON2_DOWN_MASK) == InputEvent.BUTTON2_DOWN_MASK)
+        || (((active & InputEvent.BUTTON2_DOWN_MASK) == InputEvent.BUTTON2_DOWN_MASK)
             && checkButtonCommand(cmd, mouseMiddle))
-            || (((active & InputEvent.BUTTON3_DOWN_MASK) == InputEvent.BUTTON3_DOWN_MASK)
+        || (((active & InputEvent.BUTTON3_DOWN_MASK) == InputEvent.BUTTON3_DOWN_MASK)
             && checkButtonCommand(cmd, mouseRight));
   }
 
@@ -317,44 +317,44 @@ public class ViewerToolBar<E extends ImageElement> extends WtoolBar implements A
 
   static Icon getDopButtonIcon(Icon bckIcon, Icon smallIcon) {
     return new DropButtonIcon(
-            new Icon() {
+        new Icon() {
 
-              @Override
-              public void paintIcon(Component c, Graphics g, int x, int y) {
-                if (c instanceof AbstractButton model) {
-                  Icon icon = null;
-                  if (!model.isEnabled()) {
-                    icon = UIManager.getLookAndFeel().getDisabledIcon(model, bckIcon);
-                  }
-                  if (icon == null) {
-                    icon = bckIcon;
-                  }
-                  icon.paintIcon(c, g, x, y);
-                  if (smallIcon != null) {
-                    Icon sIcon = null;
-                    if (!model.isEnabled()) {
-                      sIcon = UIManager.getLookAndFeel().getDisabledIcon(model, smallIcon);
-                    }
-                    if (sIcon == null) {
-                      sIcon = smallIcon;
-                    }
-                    int sx = x + bckIcon.getIconWidth() - sIcon.getIconWidth();
-                    int sy = y + bckIcon.getIconHeight() - sIcon.getIconHeight();
-                    sIcon.paintIcon(c, g, sx, sy);
-                  }
+          @Override
+          public void paintIcon(Component c, Graphics g, int x, int y) {
+            if (c instanceof AbstractButton model) {
+              Icon icon = null;
+              if (!model.isEnabled()) {
+                icon = UIManager.getLookAndFeel().getDisabledIcon(model, bckIcon);
+              }
+              if (icon == null) {
+                icon = bckIcon;
+              }
+              icon.paintIcon(c, g, x, y);
+              if (smallIcon != null) {
+                Icon sIcon = null;
+                if (!model.isEnabled()) {
+                  sIcon = UIManager.getLookAndFeel().getDisabledIcon(model, smallIcon);
                 }
+                if (sIcon == null) {
+                  sIcon = smallIcon;
+                }
+                int sx = x + bckIcon.getIconWidth() - sIcon.getIconWidth();
+                int sy = y + bckIcon.getIconHeight() - sIcon.getIconHeight();
+                sIcon.paintIcon(c, g, sx, sy);
               }
+            }
+          }
 
-              @Override
-              public int getIconWidth() {
-                return bckIcon.getIconWidth();
-              }
+          @Override
+          public int getIconWidth() {
+            return bckIcon.getIconWidth();
+          }
 
-              @Override
-              public int getIconHeight() {
-                return bckIcon.getIconHeight();
-              }
-            });
+          @Override
+          public int getIconHeight() {
+            return bckIcon.getIconHeight();
+          }
+        });
   }
 
   private DropDownButton buildSynchButton() {
@@ -369,31 +369,31 @@ public class ViewerToolBar<E extends ImageElement> extends WtoolBar implements A
       }
       menuLut = new ViewGroupMenu();
 
-
       synch.registerActionState(menuLut);
     }
 
     final JCheckBoxMenuItem jButtonSynch =
-            new JCheckBoxMenuItem("Synchronize", ResourceUtil.getToolBarIcon(ActionIcon.SYNCH).derive(20, 20), false);
-    //jButtonSynch.setToolTipText("Synchronize"); // TODO MESSAGE
+        new JCheckBoxMenuItem(
+            "Synchronize", ResourceUtil.getToolBarIcon(ActionIcon.SYNCH).derive(20, 20), false);
+    // jButtonSynch.setToolTipText("Synchronize"); // TODO MESSAGE
     eventManager.getAction(ActionW.SYNCH_MODE).ifPresent(b -> b.registerActionState(jButtonSynch));
 
     final DropDownButton button =
-            new DropDownButton(ActionW.SYNCH.cmd(), buildSynchIcon(synchView), menuLut) {
-              @Override
-              protected JPopupMenu getPopupMenu() {
-                JPopupMenu menu =
-                        (getMenuModel() == null) ? new JPopupMenu() : getMenuModel().createJPopupMenu();
-                menu.addSeparator();
-                menu.add(jButtonSynch);
-                /*menu.add(synchMenu.syncButton);
-                menu.add(synchMenu.scrollButton);
-                menu.add(synchMenu.rotateButton);
-                menu.add(synchMenu.zoomButton);*/
-                menu.setInvoker(this);
-                return menu;
-              }
-            };
+        new DropDownButton(ActionW.SYNCH.cmd(), buildSynchIcon(synchView), menuLut) {
+          @Override
+          protected JPopupMenu getPopupMenu() {
+            JPopupMenu menu =
+                (getMenuModel() == null) ? new JPopupMenu() : getMenuModel().createJPopupMenu();
+            menu.addSeparator();
+            menu.add(jButtonSynch);
+            /*menu.add(synchMenu.syncButton);
+            menu.add(synchMenu.scrollButton);
+            menu.add(synchMenu.rotateButton);
+            menu.add(synchMenu.zoomButton);*/
+            menu.setInvoker(this);
+            return menu;
+          }
+        };
     button.setToolTipText(Messages.getString("ViewerToolBar.synch"));
     if (synch != null) {
       synch.registerActionState(button);
@@ -404,45 +404,45 @@ public class ViewerToolBar<E extends ImageElement> extends WtoolBar implements A
   private static Icon buildSynchIcon(SynchView synch) {
     final Icon mouseIcon = ResourceUtil.getToolBarIcon(ActionIcon.SYNCH_LARGE);
     final FlatSVGIcon smallIcon =
-            GuiUtils.getDerivedIcon(
-                    synch.getIcon(), new ColorFilter().add(new Color(0x6E6E6E), new Color(0x389FD6)));
+        GuiUtils.getDerivedIcon(
+            synch.getIcon(), new ColorFilter().add(new Color(0x6E6E6E), new Color(0x389FD6)));
     return new DropButtonIcon(
-            new Icon() {
+        new Icon() {
 
-              @Override
-              public void paintIcon(Component c, Graphics g, int x, int y) {
-                if (c instanceof AbstractButton model) {
-                  Icon icon = null;
-                  if (!model.isEnabled()) {
-                    icon = UIManager.getLookAndFeel().getDisabledIcon(model, mouseIcon);
-                  }
-                  if (icon == null) {
-                    icon = mouseIcon;
-                  }
-                  Icon sIcon = null;
-                  if (!model.isEnabled()) {
-                    sIcon = UIManager.getLookAndFeel().getDisabledIcon(model, smallIcon);
-                  }
-                  if (sIcon == null) {
-                    sIcon = smallIcon;
-                  }
-                  int x2 = x + mouseIcon.getIconWidth() / 2 - sIcon.getIconWidth() / 2;
-                  int y2 = y + mouseIcon.getIconHeight() / 2 - sIcon.getIconHeight() / 2;
-                  sIcon.paintIcon(c, g, x2, y2);
-                  icon.paintIcon(c, g, x, y);
-                }
+          @Override
+          public void paintIcon(Component c, Graphics g, int x, int y) {
+            if (c instanceof AbstractButton model) {
+              Icon icon = null;
+              if (!model.isEnabled()) {
+                icon = UIManager.getLookAndFeel().getDisabledIcon(model, mouseIcon);
               }
+              if (icon == null) {
+                icon = mouseIcon;
+              }
+              Icon sIcon = null;
+              if (!model.isEnabled()) {
+                sIcon = UIManager.getLookAndFeel().getDisabledIcon(model, smallIcon);
+              }
+              if (sIcon == null) {
+                sIcon = smallIcon;
+              }
+              int x2 = x + mouseIcon.getIconWidth() / 2 - sIcon.getIconWidth() / 2;
+              int y2 = y + mouseIcon.getIconHeight() / 2 - sIcon.getIconHeight() / 2;
+              sIcon.paintIcon(c, g, x2, y2);
+              icon.paintIcon(c, g, x, y);
+            }
+          }
 
-              @Override
-              public int getIconWidth() {
-                return mouseIcon.getIconWidth();
-              }
+          @Override
+          public int getIconWidth() {
+            return mouseIcon.getIconWidth();
+          }
 
-              @Override
-              public int getIconHeight() {
-                return mouseIcon.getIconHeight();
-              }
-            });
+          @Override
+          public int getIconHeight() {
+            return mouseIcon.getIconHeight();
+          }
+        });
   }
 
   public DropDownButton getDropDownButton(String type) {

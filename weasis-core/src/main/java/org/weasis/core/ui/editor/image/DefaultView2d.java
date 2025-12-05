@@ -224,25 +224,30 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     if (synch != null && synch.isSelected()) {
       if (synchButton == null) {
         synchButton =
-            new SynchViewButton((invoker, x, y) -> {
-              SynchData synchData = (SynchData) getActionValue(ActionW.SYNCH_LINK.cmd());
-              if (synchButton.getState() == SynchViewButton.eState.OFF) {
-                synchButton.setState(synchData.isManual() ? SynchViewButton.eState.MANUAL : SynchViewButton.eState.ON);
-                synchData.setSynch(true);
-                synchData.setOriginal(false);
-                // Check if manual synchro possible : another series with same orientation and different frame of reference uid
-                if (synchData.isManual()) {
-                  double[] val = (double[]) this.getImage().getTagValue(TagW.SlicePosition);
-                  if (val != null) {
-                    synchData.setTargetLocation(val[0] + val[1] + val[2]);
+            new SynchViewButton(
+                (invoker, x, y) -> {
+                  SynchData synchData = (SynchData) getActionValue(ActionW.SYNCH_LINK.cmd());
+                  if (synchButton.getState() == SynchViewButton.eState.OFF) {
+                    synchButton.setState(
+                        synchData.isManual()
+                            ? SynchViewButton.eState.MANUAL
+                            : SynchViewButton.eState.ON);
+                    synchData.setSynch(true);
+                    synchData.setOriginal(false);
+                    // Check if manual synchro possible : another series with same orientation and
+                    // different frame of reference uid
+                    if (synchData.isManual()) {
+                      double[] val = (double[]) this.getImage().getTagValue(TagW.SlicePosition);
+                      if (val != null) {
+                        synchData.setTargetLocation(val[0] + val[1] + val[2]);
+                      }
+                    }
+                  } else {
+                    synchButton.setState(SynchViewButton.eState.OFF);
+                    synchData.setSynch(false);
+                    synchData.setOriginal(false);
                   }
-                }
-              } else {
-                synchButton.setState(SynchViewButton.eState.OFF);
-                synchData.setSynch(false);
-                synchData.setOriginal(false);
-              }
-            });
+                });
 
         synchButton.setVisible(true);
         synchButton.setEnable(true);
@@ -252,24 +257,25 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
       SynchData synchData = (SynchData) getActionValue(ActionW.SYNCH_LINK.cmd());
       if (synchData != null) {
         if (synchData.isManual()) {
-          synchButton.setState(synchData.isSynch() ? SynchViewButton.eState.MANUAL : SynchViewButton.eState.OFF);
+          synchButton.setState(
+              synchData.isSynch() ? SynchViewButton.eState.MANUAL : SynchViewButton.eState.OFF);
         } else {
-          synchButton.setState(synchData.isSynch() ? SynchViewButton.eState.ON : SynchViewButton.eState.OFF);
+          synchButton.setState(
+              synchData.isSynch() ? SynchViewButton.eState.ON : SynchViewButton.eState.OFF);
         }
-
       }
 
       if (!getViewButtons().contains(synchButton)) {
         getViewButtons().add(synchButton);
       }
-      //SynchData synch = (SynchData) getActionValue(ActionW.SYNCH_LINK.cmd());
+      // SynchData synch = (SynchData) getActionValue(ActionW.SYNCH_LINK.cmd());
       synchButton.setVisible(true);
     } else {
       if (synchButton != null) {
         synchButton.setVisible(false);
         this.repaint();
       }
-      //getViewButtons().remove(synchButton);
+      // getViewButtons().remove(synchButton);
     }
   }
 
@@ -928,14 +934,17 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     // syncData.isSynch() : button in current view ON, synch enabled
     // !syncData.isSynch() : button OFF, apply only same view actions, do not sync
 
-    SynchData originalSyncData = (SynchData) synch.getView().getActionsInView().get(ActionW.SYNCH_LINK.cmd());
+    SynchData originalSyncData =
+        (SynchData) synch.getView().getActionsInView().get(ActionW.SYNCH_LINK.cmd());
     SynchData synchData = (SynchData) this.getActionsInView().get(ActionW.SYNCH_LINK.cmd());
 
     if (synch.getView() != this) { // action not launched by this view, propagating changes
       if (synchData != null && !synchData.isSynch()) { // if current view unsync then do not apply
         return;
       }
-      if (originalSyncData != null && !originalSyncData.isSynch()) { // view that originated the event is unsync, do not propagate
+      if (originalSyncData != null
+          && !originalSyncData
+              .isSynch()) { // view that originated the event is unsync, do not propagate
         return;
       }
     }
@@ -1028,14 +1037,17 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
   }
 
   private void propertyChange(final SynchEvent synch) {
-    SynchData originalSyncData = (SynchData) synch.getView().getActionsInView().get(ActionW.SYNCH_LINK.cmd());
+    SynchData originalSyncData =
+        (SynchData) synch.getView().getActionsInView().get(ActionW.SYNCH_LINK.cmd());
     SynchData synchData = (SynchData) this.getActionsInView().get(ActionW.SYNCH_LINK.cmd());
 
     if (synch.getView() != this) { // action not launched by this view, propagating changes
       if (synchData != null && !synchData.isSynch()) { // if current view unsync then do not apply
         return;
       }
-      if (originalSyncData != null && !originalSyncData.isSynch()) { // view that originated the event is unsync, do not propagate
+      if (originalSyncData != null
+          && !originalSyncData
+              .isSynch()) { // view that originated the event is unsync, do not propagate
         return;
       }
     }

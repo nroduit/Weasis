@@ -89,6 +89,7 @@ public class SynchData implements Copyable<SynchData> {
   public boolean isManual() {
     return manual;
   }
+
   public void setManual(boolean manual) {
     this.manual = manual;
   }

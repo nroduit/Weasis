@@ -119,7 +119,8 @@ public abstract class ImageViewerEventManager<E extends ImageElement> implements
           }
         }
 
-        SynchData synchData = (SynchData) getSelectedViewPane().getActionsInView().get(ActionW.SYNCH_LINK.cmd());
+        SynchData synchData =
+            (SynchData) getSelectedViewPane().getActionsInView().get(ActionW.SYNCH_LINK.cmd());
         if (synchData != null && synchData.isSynch()) {
           firePropertyChange(ActionW.SYNCH.cmd(), null, mediaEvent);
         }
@@ -243,12 +244,13 @@ public abstract class ImageViewerEventManager<E extends ImageElement> implements
 
       @Override
       public void pointChanged(Point2D point) {
-        SynchData synchData = (SynchData) getSelectedViewPane().getActionsInView().get(ActionW.SYNCH_LINK.cmd());
+        SynchData synchData =
+            (SynchData) getSelectedViewPane().getActionsInView().get(ActionW.SYNCH_LINK.cmd());
         if (synchData != null && synchData.isSynch()) {
           firePropertyChange(
-                  ActionW.SYNCH.cmd(),
-                  null,
-                  new SynchEvent(getSelectedViewPane(), getActionW().cmd(), point));
+              ActionW.SYNCH.cmd(),
+              null,
+              new SynchEvent(getSelectedViewPane(), getActionW().cmd(), point));
         }
       }
     };
@@ -391,13 +393,15 @@ public abstract class ImageViewerEventManager<E extends ImageElement> implements
     return new ToggleButtonListener(ActionW.SYNCH_MODE, false) {
       @Override
       public void actionPerformed(boolean selected) {
-        getAction(ActionW.SYNCH).ifPresent(a -> {
-          if (a.getSelectedItem() instanceof SynchView sel) {
-            sel.getSynchData().synch = selected;
-            sel.getSynchData().setOriginal(false);
-            updateAllListeners(getSelectedView2dContainer(), sel);
-          }
-        });
+        getAction(ActionW.SYNCH)
+            .ifPresent(
+                a -> {
+                  if (a.getSelectedItem() instanceof SynchView sel) {
+                    sel.getSynchData().synch = selected;
+                    sel.getSynchData().setOriginal(false);
+                    updateAllListeners(getSelectedView2dContainer(), sel);
+                  }
+                });
       }
     };
   }

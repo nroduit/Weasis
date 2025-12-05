@@ -39,8 +39,8 @@ public class ActionW {
       new ComboItemListenerValue<>(
           Messages.getString("ActionW.synch"), "synch", 0, 0, null); // NON-NLS
   public static final ToggleButtonListenerValue SYNCH_MODE =
-          new ToggleButtonListenerValue(
-                  Messages.getString("ActionW.synch_mode"), "synch_mode", 0, 0, null); // NON-NLS
+      new ToggleButtonListenerValue(
+          Messages.getString("ActionW.synch_mode"), "synch_mode", 0, 0, null); // NON-NLS
   public static final BasicActionStateValue VIEW_MODE =
       new BasicActionStateValue(Messages.getString("ActionW.view_mode"), "viewMode", 0, 0, null);
   public static final SliderChangeListenerValue ZOOM =
