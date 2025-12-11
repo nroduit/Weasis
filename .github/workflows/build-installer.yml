@@ -295,7 +295,7 @@ jobs:
               sha256sum "$file" >> "$file.sha256"
             fi
           done
-        timeout-minutes: 30
+        timeout-minutes: 45
         continue-on-error: false
 
       - name: Upload Linux multi-arch installers
