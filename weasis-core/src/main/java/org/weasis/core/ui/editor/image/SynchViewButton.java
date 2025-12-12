@@ -10,55 +10,65 @@
 package org.weasis.core.ui.editor.image;
 
 import com.formdev.flatlaf.extras.FlatSVGIcon;
-import java.awt.Color;
+import com.formdev.flatlaf.extras.FlatSVGIcon.ColorFilter;
+import java.awt.*;
 import javax.swing.Icon;
+import org.weasis.core.api.gui.util.GuiUtils;
+import org.weasis.core.api.gui.util.GuiUtils.IconColor;
 import org.weasis.core.api.util.ResourceUtil;
 
 public class SynchViewButton extends ViewButton {
+  private static final FlatSVGIcon ICON =
+      ResourceUtil.getIcon(ResourceUtil.ActionIcon.SYNCH, 20, 20);
 
-  protected eState state = eState.OFF;
-  protected int size;
+  protected State state = State.OFF;
 
-  public enum eState {
-    OFF,
-    ON,
-    MANUAL
+  public enum State {
+    OFF("Off", IconColor.ACTIONS_RED.getColor()),
+    ON("On", GuiUtils.IconColor.ACTIONS_GREEN.getColor()),
+    MANUAL("Manual", IconColor.ACTIONS_BLUE.getColor());
+
+    private final String name;
+    private final FlatSVGIcon icon;
+    private final Color color;
+
+    State(String name, Color color) {
+      this.name = name;
+      this.color = color;
+      this.icon = GuiUtils.getDerivedIcon(ICON, new ColorFilter().add(new Color(0x6E6E6E), color));
+    }
+
+    public String getName() {
+      return name;
+    }
+
+    public String toString() {
+      return name;
+    }
+
+    public FlatSVGIcon getIcon() {
+      return icon;
+    }
+
+    public Color getColor() {
+      return color;
+    }
   }
 
   public SynchViewButton(ShowPopup popup) {
-    this(popup, 20);
+    super(popup, State.OFF.getIcon(), "sync"); // NON-NLS
   }
 
-  public SynchViewButton(ShowPopup popup, int size) {
-    super(
-        popup,
-        ResourceUtil.getIcon(ResourceUtil.ActionIcon.SYNCH).derive(size, size),
-        "sync"); // NON-NLS
-    this.size = size;
-  }
-
-  public eState getState() {
+  public State getState() {
     return state;
   }
 
-  public void setState(eState state) {
+  public void setState(State state) {
     this.state = state;
   }
 
   @Override
   public Icon getIcon() {
-    return switch (state) {
-      case ON -> ResourceUtil.getIcon(ResourceUtil.ActionIcon.SYNCH).derive(size, size);
-      case OFF ->
-          ResourceUtil.getIcon(ResourceUtil.ActionIcon.SYNCH)
-              .derive(size, size)
-              .setColorFilter(
-                  new FlatSVGIcon.ColorFilter().add(new Color(0x6E6E6E), new Color(0xFF0000)));
-      case MANUAL ->
-          ResourceUtil.getIcon(ResourceUtil.ActionIcon.SYNCH)
-              .derive(size, size)
-              .setColorFilter(
-                  new FlatSVGIcon.ColorFilter().add(new Color(0x6E6E6E), new Color(0x0000FF)));
-    };
+    return state.getIcon();
   }
 }

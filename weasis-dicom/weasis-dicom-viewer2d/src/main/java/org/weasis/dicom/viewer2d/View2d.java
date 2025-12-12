@@ -73,6 +73,7 @@ import org.weasis.core.ui.editor.image.MouseActions;
 import org.weasis.core.ui.editor.image.PixelInfo;
 import org.weasis.core.ui.editor.image.SynchData;
 import org.weasis.core.ui.editor.image.SynchEvent;
+import org.weasis.core.ui.editor.image.SynchViewButton;
 import org.weasis.core.ui.editor.image.ViewButton;
 import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.model.AbstractGraphicModel;
@@ -242,13 +243,19 @@ public class View2d extends DefaultView2d<DicomImageElement> {
       SynchEvent synch = (SynchEvent) evt.getNewValue();
       SynchData synchData = (SynchData) actionsInView.get(ActionW.SYNCH_LINK.cmd());
       boolean tile = synchData != null && SynchData.Mode.TILE.equals(synchData.getMode());
-      if (synchData != null && !synchData.isSynch()) {
+      if (synchData != null && synchData.getState() == SynchViewButton.State.OFF) {
         return;
       }
       for (Entry<String, Object> entry : synch.getEvents().entrySet()) {
         final String command = entry.getKey();
         final Object val = entry.getValue();
         if (synchData != null && !synchData.isActionEnable(command)) {
+          continue;
+        }
+        // In MANUAL mode, only allow SCROLL_SERIES action
+        if (synchData != null
+            && synchData.getState() == SynchViewButton.State.MANUAL
+            && !ActionW.SCROLL_SERIES.cmd().equals(command)) {
           continue;
         }
 

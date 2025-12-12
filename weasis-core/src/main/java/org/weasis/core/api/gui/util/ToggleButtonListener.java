@@ -33,8 +33,8 @@ public abstract class ToggleButtonListener extends BasicActionState implements A
 
   @Override
   public void enableAction(boolean enabled) {
+    super.enableAction(enabled);
     model.setEnabled(enabled);
-    this.enabled = enabled;
   }
 
   @Override

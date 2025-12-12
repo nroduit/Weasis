@@ -13,6 +13,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import org.weasis.core.api.util.Copyable;
+import org.weasis.core.ui.editor.image.SynchViewButton.State;
 import org.weasis.core.util.LangUtil;
 
 public class SynchData implements Copyable<SynchData> {
@@ -24,12 +25,13 @@ public class SynchData implements Copyable<SynchData> {
 
   protected final Map<String, Boolean> actions;
   protected final Mode mode;
-  protected boolean synch;
-  protected boolean manual;
+  protected State state;
   protected double sourceLocation;
   protected double targetLocation;
+  protected String targetFrameOfReferenceUID;
 
   private boolean original;
+  private boolean orphan;
 
   public SynchData(Mode mode, Map<String, Boolean> actions, boolean synch) {
     if (actions == null) {
@@ -38,7 +40,8 @@ public class SynchData implements Copyable<SynchData> {
     this.actions = actions;
     this.mode = mode;
     this.original = true;
-    this.synch = synch;
+    this.state = synch ? State.ON : State.OFF;
+    this.orphan = false;
   }
 
   public SynchData(SynchData synchData) {
@@ -47,10 +50,11 @@ public class SynchData implements Copyable<SynchData> {
     this.actions = new HashMap<>(synchData.actions);
     this.mode = synchData.mode;
     this.original = synchData.original;
-    this.synch = synchData.synch;
-    this.manual = synchData.manual;
+    this.state = synchData.state;
     this.sourceLocation = synchData.sourceLocation;
     this.targetLocation = synchData.targetLocation;
+    this.targetFrameOfReferenceUID = synchData.targetFrameOfReferenceUID;
+    this.orphan = synchData.orphan;
   }
 
   public Map<String, Boolean> getActions() {
@@ -65,24 +69,50 @@ public class SynchData implements Copyable<SynchData> {
     return mode;
   }
 
-  public boolean isSynch() {
-    return synch;
+  public State getState() {
+    return state;
   }
 
-  public void setSynch(boolean synch) {
-    this.synch = synch;
+  public void setState(State state) {
+    this.state = state;
+  }
+
+  public boolean isOrphan() {
+    return orphan;
+  }
+
+  public void setOrphan(boolean orphan) {
+    this.orphan = orphan;
+  }
+
+  public String getTargetFrameOfReferenceUID() {
+    return targetFrameOfReferenceUID;
+  }
+
+  public void setTargetFrameOfReferenceUID(String targetFrameOfReferenceUID) {
+    this.targetFrameOfReferenceUID = targetFrameOfReferenceUID;
+  }
+
+  /**
+   * @deprecated Use {@link #getState()} instead
+   */
+  @Deprecated
+  public boolean isSynch() {
+    return state == State.ON;
   }
 
   @Override
   public SynchData copy() {
-    return new SynchData(this);
+    SynchData synchData = new SynchData(this);
+    // synchData.original = false;
+    return synchData;
   }
 
   public boolean isOriginal() {
     return original;
   }
 
-  public void setOriginal(boolean original) {
+  /*public void setOriginal(boolean original) {
     this.original = original;
   }
 
@@ -96,7 +126,7 @@ public class SynchData implements Copyable<SynchData> {
 
   public double getSourceLocation() {
     return sourceLocation;
-  }
+  }*/
 
   public void setSourceLocation(double sourceLocation) {
     this.sourceLocation = sourceLocation;

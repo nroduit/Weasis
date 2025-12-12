@@ -377,6 +377,7 @@ public class ViewerToolBar<E extends ImageElement> extends WtoolBar implements A
             "Synchronize", ResourceUtil.getToolBarIcon(ActionIcon.SYNCH).derive(20, 20), false);
     // jButtonSynch.setToolTipText("Synchronize"); // TODO MESSAGE
     eventManager.getAction(ActionW.SYNCH_MODE).ifPresent(b -> b.registerActionState(jButtonSynch));
+    SynchOptionsCheckBoxGroup synchOptions = new SynchOptionsCheckBoxGroup();
 
     final DropDownButton button =
         new DropDownButton(ActionW.SYNCH.cmd(), buildSynchIcon(synchView), menuLut) {
@@ -386,10 +387,25 @@ public class ViewerToolBar<E extends ImageElement> extends WtoolBar implements A
                 (getMenuModel() == null) ? new JPopupMenu() : getMenuModel().createJPopupMenu();
             menu.addSeparator();
             menu.add(jButtonSynch);
-            /*menu.add(synchMenu.syncButton);
-            menu.add(synchMenu.scrollButton);
-            menu.add(synchMenu.rotateButton);
-            menu.add(synchMenu.zoomButton);*/
+            JMenu synchOptionsMenu = synchOptions.createMenu("options");
+            for (Component item : synchOptionsMenu.getMenuComponents()) {
+              if (item instanceof JCheckBoxMenuItem checkBoxMenuItem) {
+                menu.add(checkBoxMenuItem);
+                checkBoxMenuItem.addActionListener(
+                    e -> {
+                      if (e.getSource() instanceof JCheckBoxMenuItem btn) {
+                        ComboItemListener<SynchView> synchAction =
+                            eventManager.getAction(ActionW.SYNCH).orElse(null);
+                        if (synchAction != null) {
+                          SynchView sv = (SynchView) synchAction.getSelectedItem();
+                          sv.getSynchData()
+                              .getActions()
+                              .put(btn.getActionCommand(), btn.isSelected());
+                        }
+                      }
+                    });
+              }
+            }
             menu.setInvoker(this);
             return menu;
           }

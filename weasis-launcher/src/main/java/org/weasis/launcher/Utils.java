@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.slf4j.LoggerFactory;
+import org.weasis.core.util.StringUtil;
 
 public class Utils {
   private static final org.slf4j.Logger LOGGER = LoggerFactory.getLogger(Utils.class);
@@ -33,7 +34,7 @@ public class Utils {
    * @return true if the string equals "true" (case-insensitive), false otherwise
    */
   public static boolean emptyToFalse(String value) {
-    return hasText(value) && Boolean.parseBoolean(value);
+    return StringUtil.hasText(value) && Boolean.parseBoolean(value);
   }
 
   /**
@@ -43,7 +44,7 @@ public class Utils {
    * @return false if the string equals "false" (case-insensitive), true otherwise
    */
   public static boolean emptyToTrue(String value) {
-    return !hasText(value) || Boolean.parseBoolean(value);
+    return !StringUtil.hasText(value) || Boolean.parseBoolean(value);
   }
 
   public static boolean hasLength(CharSequence str) {

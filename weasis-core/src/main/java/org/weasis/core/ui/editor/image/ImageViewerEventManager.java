@@ -18,7 +18,6 @@ import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import javax.swing.BoundedRangeModel;
@@ -44,7 +43,7 @@ import org.weasis.core.api.service.WProperties;
 import org.weasis.core.ui.editor.SeriesViewerEvent;
 import org.weasis.core.ui.editor.SeriesViewerEvent.EVENT;
 import org.weasis.core.ui.editor.SeriesViewerListener;
-import org.weasis.core.ui.editor.image.SynchData.Mode;
+import org.weasis.core.ui.editor.image.SynchViewButton.State;
 import org.weasis.core.ui.editor.image.dockable.MeasureTool;
 import org.weasis.core.ui.launcher.Launcher;
 import org.weasis.core.ui.model.graphic.Graphic;
@@ -69,12 +68,14 @@ public abstract class ImageViewerEventManager<E extends ImageElement> implements
   // Manages all PropertyChangeListeners in EDT
   protected final SwingPropertyChangeSupport propertySupport = new SwingPropertyChangeSupport(this);
   protected final HashMap<Feature<? extends ActionState>, ActionState> actions = new HashMap<>();
+  protected final SynchManager<E> synchManager;
 
   protected volatile boolean enabledAction = true;
   protected ImageViewerPlugin<E> selectedView2dContainer;
 
   protected ImageViewerEventManager() {
     super();
+    this.synchManager = createSynchManager();
   }
 
   public void setAction(ActionState action) {
@@ -83,6 +84,14 @@ public abstract class ImageViewerEventManager<E extends ImageElement> implements
 
   public void removeAction(Feature<?> action) {
     actions.remove(action);
+  }
+
+  /**
+   * Factory method to create the appropriate SynchManager for this event manager. Subclasses can
+   * override this to provide specialized synchronization behavior.
+   */
+  protected SynchManager<E> createSynchManager() {
+    return new SynchManager<>(this);
   }
 
   protected SliderCineListener getMoveTroughSliceAction(
@@ -397,8 +406,7 @@ public abstract class ImageViewerEventManager<E extends ImageElement> implements
             .ifPresent(
                 a -> {
                   if (a.getSelectedItem() instanceof SynchView sel) {
-                    sel.getSynchData().synch = selected;
-                    sel.getSynchData().setOriginal(false);
+                    sel.getSynchData().setState(selected ? State.ON : State.OFF);
                     updateAllListeners(getSelectedView2dContainer(), sel);
                   }
                 });
@@ -677,42 +685,7 @@ public abstract class ImageViewerEventManager<E extends ImageElement> implements
 
   public void updateAllListeners(ImageViewerPlugin<E> viewerPlugin, SynchView synchView) {
     clearAllPropertyChangeListeners();
-    if (viewerPlugin != null) {
-      ViewCanvas<E> viewPane = viewerPlugin.getSelectedImagePane();
-      if (viewPane == null) {
-        return;
-      }
-      if (viewPane.getSeries() != null) {
-        SynchData synch = synchView.getSynchData();
-        viewPane.setActionsInView(ActionW.SYNCH_LINK.cmd(), null);
-        addPropertyChangeListener(ActionW.SYNCH.cmd(), viewPane);
-
-        final List<ViewCanvas<E>> panes = viewerPlugin.getImagePanels();
-        panes.remove(viewPane);
-        if (synchView.isSynch()) {
-          for (ViewCanvas<E> pane : panes) {
-            pane.setActionsInView(ActionW.SYNCH_LINK.cmd(), synch);
-          }
-        }
-        if (Mode.STACK.equals(synch.getMode())) {
-          // TODO if Pan is activated than rotation is required
-          boolean hasLink = false;
-          for (ViewCanvas<E> pane : panes) {
-            boolean synchByDefault = isCompatible(viewPane.getSeries(), pane.getSeries());
-            pane.setActionsInView(ActionW.SYNCH_LINK.cmd(), synchByDefault ? synch.copy() : null);
-            if (synchByDefault) {
-              hasLink = true;
-              addPropertyChangeListener(ActionW.SYNCH.cmd(), pane);
-            }
-          }
-        } else if (Mode.TILE.equals(synch.getMode())) {
-          for (ViewCanvas<E> pane : panes) {
-            pane.setActionsInView(ActionW.SYNCH_LINK.cmd(), synch.copy());
-            addPropertyChangeListener(ActionW.SYNCH.cmd(), pane);
-          }
-        }
-      }
-    }
+    synchManager.updateAllListeners(viewerPlugin, synchView);
   }
 
   protected boolean commonDisplayShortcuts(KeyEvent e) {
