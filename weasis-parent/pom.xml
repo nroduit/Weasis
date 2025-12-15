@@ -30,7 +30,7 @@
     <weasis.releasenotes>https://github.com/nroduit/Weasis/blob/master/CHANGELOG.md#v465-2025-10-05</weasis.releasenotes>
 
     <felix.framework.version>7.0.5</felix.framework.version>
-    <flatlaf.version>3.6.1</flatlaf.version>
+    <flatlaf.version>3.7</flatlaf.version>
     <miglayout.version>11.4.2</miglayout.version>
     <xz.version>1.10</xz.version>
 
@@ -48,7 +48,7 @@
     <felix.scr.version>2.2.14</felix.scr.version>
 
     <slf4j.version>2.0.17</slf4j.version>
-    <logback.version>1.5.19</logback.version>
+    <logback.version>1.5.22</logback.version>
     <dockingframes.version>1.1.7</dockingframes.version>
     <weasis-dicom-tools.version>5.34.1.1</weasis-dicom-tools.version>
     <weasis.core.img.version>4.12.2</weasis.core.img.version>
@@ -59,12 +59,13 @@
     <xml.bind-api.version>4.0.4</xml.bind-api.version>
     <joml.version>1.10.8</joml.version>
     <jogamp.version>2.6.0</jogamp.version>
-    <jackson.version>2.19.2</jackson.version>
+    <jackson.version>2.20.1</jackson.version>
+    <jackson.an.version>2.20</jackson.an.version>
     <scribejava.version>8.3.3</scribejava.version>
     <zip4j.version>2.11.5</zip4j.version>
 
-    <junit-bom.version>6.0.0-RC3</junit-bom.version>
-    <mockito.version>5.20.0</mockito.version>
+    <junit-bom.version>6.1.0-M1</junit-bom.version>
+    <mockito.version>5.21.0</mockito.version>
     <junit-pioneer.version>2.3.0</junit-pioneer.version>
 
     <!--suppress UnresolvedMavenProperty -->
@@ -151,7 +152,7 @@
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-jar-plugin</artifactId>
-          <version>3.4.2</version>
+          <version>3.5.0</version>
           <configuration>
             <archive>
               <manifestFile>${project.build.outputDirectory}/META-INF/MANIFEST.MF</manifestFile>
@@ -171,7 +172,7 @@
          <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-dependency-plugin</artifactId>
-          <version>3.8.1</version>
+          <version>3.9.0</version>
            <executions>
              <execution>
                <goals>
@@ -192,17 +193,17 @@
          <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-source-plugin</artifactId>
-          <version>3.3.1</version>
+          <version>3.4.0</version>
         </plugin>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-enforcer-plugin</artifactId>
-          <version>3.6.1</version>
+          <version>3.6.2</version>
         </plugin>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-resources-plugin</artifactId>
-          <version>3.3.1</version>
+          <version>3.4.0</version>
         </plugin>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
@@ -217,17 +218,17 @@
         <plugin>
           <groupId>com.diffplug.spotless</groupId>
           <artifactId>spotless-maven-plugin</artifactId>
-          <version>3.0.0</version>
+          <version>3.1.0</version>
         </plugin>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-assembly-plugin</artifactId>
-          <version>3.7.1</version>
+          <version>3.8.0</version>
         </plugin>
         <plugin>
           <groupId>org.codehaus.mojo</groupId>
           <artifactId>exec-maven-plugin</artifactId>
-          <version>3.5.1</version>
+          <version>3.6.2</version>
         </plugin>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
@@ -237,7 +238,7 @@
         <plugin>
           <groupId>org.jacoco</groupId>
           <artifactId>jacoco-maven-plugin</artifactId>
-          <version>0.8.13</version>
+          <version>0.8.14</version>
         </plugin>
       </plugins>
     </pluginManagement>
@@ -650,7 +651,7 @@
     <dependency>
       <groupId>org.jetbrains</groupId>
       <artifactId>annotations</artifactId>
-      <version>26.0.2</version>
+      <version>26.0.2-1</version>
       <scope>provided</scope>
     </dependency>
 
