@@ -567,13 +567,12 @@ public class DicomPrSerializer {
     switch (graphic) {
       case ObliqueRectangleGraphic rectangleShape -> {
         boolean isEllipse = graphic instanceof EllipseGraphic;
-        if (isEllipse) {
-          return new GraphicTypeInfo(null, null, true);
-        }
-
+        String graphicType = isEllipse ? PrGraphicUtil.ELLIPSE : PrGraphicUtil.POLYLINE;
         List<Point2D> points = rectangleShape.getRectanglePointList();
-        points.add(points.getFirst()); // Close the rectangle
-        return new GraphicTypeInfo(PrGraphicUtil.POLYLINE, points, false);
+        if (!isEllipse) {
+          points.add(points.getFirst()); // Close the rectangle
+        }
+        return new GraphicTypeInfo(graphicType, points, false);
       }
       case ThreePointsCircleGraphic _ -> {
         Point2D centerPt = GeomUtil.getCircleCenter(graphic.getPts());
