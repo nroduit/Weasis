@@ -307,8 +307,7 @@ public class ThumbnailMouseAndKeyAdapter extends MouseAdapter implements KeyList
             });
         popupMenu.add(item2);
         if (series.size(null) > 1) {
-          if (series.getTagValue(TagW.stepNDimensions) instanceof Integer step
-              && step > 1
+          if (LoadLocalDicom.isMultiPhaseSeries(series)
               && series instanceof DicomSeries dicomSeries) {
             popupMenu.add(new JSeparator());
             item2 = new JMenuItem(Messages.getString("separate.phases"));

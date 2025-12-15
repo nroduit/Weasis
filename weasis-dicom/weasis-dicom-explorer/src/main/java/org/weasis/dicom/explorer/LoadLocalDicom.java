@@ -11,10 +11,12 @@ package org.weasis.dicom.explorer;
 
 import java.io.File;
 import java.util.*;
+import javax.swing.JOptionPane;
 import org.weasis.core.api.explorer.ObservableEvent;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.gui.util.Filter;
+import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.media.MimeInspector;
 import org.weasis.core.api.media.data.*;
 import org.weasis.core.ui.model.GraphicModel;
@@ -178,6 +180,40 @@ public class LoadLocalDicom extends LoadDicom {
       return true;
     }
     return false;
+  }
+
+  /**
+   * Checks if a series is a multi-phase series that can be separated.
+   *
+   * @param series the series to check
+   * @return true if the series has multiple phases (step > 1) and is a DicomSeries
+   */
+  public static boolean isMultiPhaseSeries(MediaSeries<?> series) {
+    return series.getTagValue(TagW.stepNDimensions) instanceof Integer step && step > 1;
+  }
+
+  public static MediaSeries<DicomImageElement> confirmSplittingMultiPhaseSeries(
+      MediaSeries<DicomImageElement> series) {
+    if (isMultiPhaseSeries(series) && series instanceof DicomSeries dicomSeries) {
+      int result =
+          JOptionPane.showConfirmDialog(
+              GuiUtils.getUICore().getApplicationWindow(),
+              Messages.getString("msg.multi.phase"),
+              Messages.getString("multi.phase.title"),
+              JOptionPane.OK_CANCEL_OPTION,
+              JOptionPane.QUESTION_MESSAGE);
+
+      if (result == JOptionPane.OK_OPTION) {
+        DicomModel dicomModel =
+            (DicomModel) dicomSeries.getTagValue(org.weasis.core.api.media.data.TagW.ExplorerModel);
+        if (dicomModel != null) {
+          LoadLocalDicom.seriesPostProcessing(dicomSeries, dicomModel, true);
+          return dicomSeries;
+        }
+      }
+      return null;
+    }
+    return series;
   }
 
   private static Filter<DicomImageElement> getDicomImageElementFilter(int index, int size) {

@@ -19,6 +19,7 @@ import org.weasis.core.api.util.ResourceUtil.OtherIcon;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.util.WtoolBar;
+import org.weasis.dicom.explorer.LoadLocalDicom;
 import org.weasis.dicom.viewer2d.mip.MipPopup;
 import org.weasis.dicom.viewer2d.mip.MipPopup.MipDialog;
 import org.weasis.dicom.viewer2d.mip.MipView;
@@ -60,6 +61,10 @@ public class Basic3DToolBar extends WtoolBar {
         if (selView != null) {
           MediaSeries<org.weasis.dicom.codec.DicomImageElement> s = selView.getSeries();
           if (s != null && s.size(null) > 2) {
+            s = LoadLocalDicom.confirmSplittingMultiPhaseSeries(s);
+            if (s == null) {
+              return;
+            }
             container.setSelectedAndGetFocus();
             MipView newView2d = new MipView(eventManager);
             newView2d.registerDefaultListeners();

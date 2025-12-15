@@ -38,6 +38,7 @@ import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.DicomMediaIO;
 import org.weasis.dicom.explorer.DicomExplorer;
+import org.weasis.dicom.explorer.LoadLocalDicom;
 import org.weasis.dicom.viewer2d.EventManager;
 import org.weasis.dicom.viewer2d.Messages;
 import org.weasis.dicom.viewer2d.mpr.MprView.Plane;
@@ -143,6 +144,11 @@ public class MprFactory implements SeriesViewerFactory {
         s = EventManager.getInstance().getSelectedSeries();
       }
       if (factory != null && factory.canReadSeries(s)) {
+        s = LoadLocalDicom.confirmSplittingMultiPhaseSeries(s);
+        if (s == null) {
+          return;
+        }
+
         Map<String, Object> props = Collections.synchronizedMap(new HashMap<>());
         props.put(CMP_ENTRY_BUILD_NEW_VIEWER, false);
         props.put(BEST_DEF_LAYOUT, false);

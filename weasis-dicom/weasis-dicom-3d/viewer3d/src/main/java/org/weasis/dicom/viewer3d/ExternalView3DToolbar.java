@@ -21,6 +21,7 @@ import org.weasis.core.ui.editor.SeriesViewerFactory;
 import org.weasis.core.ui.editor.ViewerPluginBuilder;
 import org.weasis.core.ui.util.WtoolBar;
 import org.weasis.dicom.codec.DicomImageElement;
+import org.weasis.dicom.explorer.LoadLocalDicom;
 import org.weasis.dicom.viewer2d.EventManager;
 
 public class ExternalView3DToolbar extends WtoolBar {
@@ -35,6 +36,10 @@ public class ExternalView3DToolbar extends WtoolBar {
           MediaSeries<DicomImageElement> s = EventManager.getInstance().getSelectedSeries();
           SeriesViewerFactory factory = GuiUtils.getUICore().getViewerFactory(View3DFactory.class);
           if (factory != null && factory.canReadSeries(s)) {
+            s = LoadLocalDicom.confirmSplittingMultiPhaseSeries(s);
+            if (s == null) {
+              return;
+            }
             ViewerPluginBuilder.openSequenceInPlugin(
                 factory, s, (DataExplorerModel) s.getTagValue(TagW.ExplorerModel), false, false);
           }
