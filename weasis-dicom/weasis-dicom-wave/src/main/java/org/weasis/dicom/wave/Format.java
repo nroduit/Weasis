@@ -9,6 +9,8 @@
  */
 package org.weasis.dicom.wave;
 
+import org.weasis.core.util.StringUtil;
+
 public enum Format {
   DEFAULT(Messages.getString("Format.1_10_sec"), 1, 0, Lead.DEFAULT_12LEAD),
 
@@ -81,5 +83,16 @@ public enum Format {
   @Override
   public String toString() {
     return value;
+  }
+
+  public static Format getValue(String value) {
+    if (StringUtil.hasText(value)) {
+      try {
+        return Format.valueOf(value);
+      } catch (Exception e) {
+        // Ignore
+      }
+    }
+    return DEFAULT;
   }
 }
