@@ -10,9 +10,12 @@
 package org.weasis.dicom.viewer2d.mip;
 
 import java.awt.Cursor;
-import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import javax.swing.ImageIcon;
 import org.dcm4che3.data.Tag;
 import org.slf4j.Logger;
@@ -24,20 +27,20 @@ import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.Feature;
 import org.weasis.core.api.gui.util.Feature.SliderChangeListenerValue;
 import org.weasis.core.api.gui.util.GuiExecutor;
+import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.image.OpManager;
 import org.weasis.core.api.image.WindowOp;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
-import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.service.AuditLog;
 import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.api.util.ResourceUtil.OtherIcon;
+import org.weasis.core.ui.editor.SeriesViewerFactory;
 import org.weasis.core.ui.editor.ViewerPluginBuilder;
 import org.weasis.core.ui.editor.image.ImageViewerEventManager;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.editor.image.ViewCanvas;
-import org.weasis.core.util.FileUtil;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.DicomSeries;
 import org.weasis.dicom.codec.TagD;
@@ -46,6 +49,10 @@ import org.weasis.dicom.viewer2d.Messages;
 import org.weasis.dicom.viewer2d.View2d;
 import org.weasis.dicom.viewer2d.View2dFactory;
 
+/**
+ * MIP (Maximum/Mean/Minimum Intensity Projection) view with responsive UI. Heavy work runs in
+ * background threads; EDT is used only for UI updates.
+ */
 public class MipView extends View2d {
   private static final Logger LOGGER = LoggerFactory.getLogger(MipView.class);
 
@@ -91,7 +98,7 @@ public class MipView extends View2d {
     }
   }
 
-  private Thread process;
+  private volatile Thread process;
 
   public MipView(ImageViewerEventManager<DicomImageElement> eventManager) {
     super(eventManager);
@@ -110,15 +117,14 @@ public class MipView extends View2d {
     disOp.setParamValue(WindowOp.OP_NAME, ActionW.DEFAULT_PRESET.cmd(), false);
   }
 
-  public void initMIPSeries(ViewCanvas<?> selView) {
+  public void initMIPSeries(ViewCanvas<DicomImageElement> selView) {
     if (selView != null) {
       actionsInView.put(ActionW.SORT_STACK.cmd(), selView.getActionValue(ActionW.SORT_STACK.cmd()));
       actionsInView.put(
           ActionW.INVERSE_STACK.cmd(), selView.getActionValue(ActionW.INVERSE_STACK.cmd()));
       actionsInView.put(
           ActionW.FILTERED_SERIES.cmd(), selView.getActionValue(ActionW.FILTERED_SERIES.cmd()));
-      MediaSeries s = selView.getSeries();
-      setSeries(s, null);
+      setSeries(selView.getSeries(), null);
     }
   }
 
@@ -132,7 +138,7 @@ public class MipView extends View2d {
   }
 
   protected synchronized void stopCurrentProcess() {
-    final Thread t = process;
+    Thread t = process;
     if (t != null) {
       process = null;
       t.interrupt();
@@ -140,26 +146,16 @@ public class MipView extends View2d {
   }
 
   public void exitMipMode(MediaSeries<DicomImageElement> series, DicomImageElement selectedDicom) {
-    // reset current process
-    this.setActionsInView(MipView.MIP.cmd(), null);
-    this.setActionsInView(MipView.MIP_THICKNESS.cmd(), null);
+    // Reset current process
+    setActionsInView(MipView.MIP.cmd(), null);
+    setActionsInView(MipView.MIP_THICKNESS.cmd(), null);
 
     setMip(null);
+    clearMipCache();
 
-    // Remove all files except the build series
-    File[] files = SeriesBuilder.MIP_CACHE_DIR.listFiles();
-    if (files != null) {
-      for (final File f : files) {
-        if (!f.isDirectory()) {
-          FileUtil.delete(f);
-        }
-      }
-    }
-
-    ImageViewerPlugin<DicomImageElement> container =
-        this.getEventManager().getSelectedView2dContainer();
+    ImageViewerPlugin<DicomImageElement> container = getEventManager().getSelectedView2dContainer();
     container.setSelectedAndGetFocus();
-    View2d newView2d = new View2d(this.getEventManager());
+    View2d newView2d = new View2d(getEventManager());
     newView2d.registerDefaultListeners();
     newView2d.setSeries(series, selectedDicom);
     container.replaceView(this, newView2d);
@@ -168,8 +164,7 @@ public class MipView extends View2d {
   public static void buildMip(final MipView view) {
     Runnable runnable = buildMipRunnable(view, false);
     if (runnable != null) {
-      view.process = new Thread(runnable, Messages.getString("MipView.build"));
-      view.process.start();
+      view.process = Thread.ofVirtual().name(Messages.getString("MipView.build")).start(runnable);
     }
   }
 
@@ -179,81 +174,111 @@ public class MipView extends View2d {
     }
     view.stopCurrentProcess();
 
-    final Type mipType = (Type) view.getActionValue(MipView.MIP.cmd());
-    final Integer extend = (Integer) view.getActionValue(MIP_THICKNESS.cmd());
-    final MediaSeries<DicomImageElement> ser = view.series;
+    Type mipType = (Type) view.getActionValue(MipView.MIP.cmd());
+    Integer extend = (Integer) view.getActionValue(MIP_THICKNESS.cmd());
+    MediaSeries<DicomImageElement> ser = view.series;
     if (ser == null || extend == null || mipType == null) {
       return null;
     }
 
-    Runnable runnable =
-        () -> {
-          final List<DicomImageElement> dicoms = new ArrayList<>();
-          try {
-            SeriesBuilder.applyMipParameters(view, ser, dicoms, mipType, extend, fullSeries);
-          } catch (TaskInterruptionException e) {
-            dicoms.clear();
-            LOGGER.info(e.getMessage());
-          } catch (Throwable t) {
-            dicoms.clear();
-            AuditLog.logError(LOGGER, t, "Mip rendering error"); // NON-NLS
-          } finally {
-            // Following actions need to be executed in EDT thread
-            GuiExecutor.execute(
-                () -> {
-                  if (dicoms.size() == 1) {
-                    view.setMip(dicoms.get(0));
-                  } else if (dicoms.size() > 1) {
-                    DicomImageElement dcm = dicoms.get(0);
-                    Series s =
-                        new DicomSeries(TagD.getTagValue(dcm, Tag.SeriesInstanceUID, String.class));
-                    s.addAll(dicoms);
-                    dcm.getMediaReader().writeMetaData(s);
-                    DataExplorerModel model =
-                        (DataExplorerModel) ser.getTagValue(TagW.ExplorerModel);
-                    if (model instanceof DicomModel dicomModel) {
-                      MediaSeriesGroup study = dicomModel.getParent(ser, DicomModel.study);
-                      if (study != null) {
-                        s.setTag(TagW.ExplorerModel, dicomModel);
-                        dicomModel.addHierarchyNode(study, s);
-                        dicomModel.firePropertyChange(
-                            new ObservableEvent(
-                                ObservableEvent.BasicAction.ADD, dicomModel, null, s));
-                      }
+    return () -> {
+      final List<DicomImageElement> dicoms = new ArrayList<>();
+      try {
+        SeriesBuilder.applyMipParameters(view, ser, dicoms, mipType, extend, fullSeries);
+      } catch (TaskInterruptionException e) {
+        dicoms.clear();
+        LOGGER.info(e.getMessage());
+      } catch (Throwable t) {
+        dicoms.clear();
+        AuditLog.logError(LOGGER, t, "Mip rendering error"); // NON-NLS
+      } finally {
+        GuiExecutor.execute(() -> view.handleMipResult(dicoms, ser));
+      }
+    };
+  }
 
-                      View2dFactory factory = new View2dFactory();
-                      ViewerPluginBuilder.openSequenceInPlugin(factory, s, model, false, false);
-                    }
-                  }
-                });
-          }
-        };
+  private void handleMipResult(
+      List<DicomImageElement> dicomImages, MediaSeries<DicomImageElement> ser) {
+    if (dicomImages.isEmpty()) {
+      return;
+    }
+    if (dicomImages.size() == 1) {
+      setMip(dicomImages.getFirst());
+      return;
+    }
 
-    return runnable;
+    DicomImageElement first = dicomImages.getFirst();
+    DicomSeries s = new DicomSeries(TagD.getTagValue(first, Tag.SeriesInstanceUID, String.class));
+    s.addAll(dicomImages);
+    first.getMediaReader().writeMetaData(s);
+
+    DataExplorerModel model = (DataExplorerModel) ser.getTagValue(TagW.ExplorerModel);
+    if (model instanceof DicomModel dicomModel) {
+      MediaSeriesGroup study = dicomModel.getParent(ser, DicomModel.study);
+      if (study != null) {
+        s.setTag(TagW.ExplorerModel, dicomModel);
+        dicomModel.addHierarchyNode(study, s);
+        dicomModel.firePropertyChange(
+            new ObservableEvent(ObservableEvent.BasicAction.ADD, dicomModel, null, s));
+      }
+
+      SeriesViewerFactory factory = GuiUtils.getUICore().getViewerFactory(View2dFactory.NAME);
+      ViewerPluginBuilder.openSequenceInPlugin(factory, s, model, false, false);
+    }
   }
 
   protected void setMip(DicomImageElement dicom) {
     DicomImageElement oldImage = getImage();
     if (dicom != null) {
-      // Trick: call super to change the image as "this" method is empty
       super.setImage(dicom);
     }
 
     if (oldImage == null) {
       eventManager.updateComponentsListener(MipView.this);
-    } else {
-      // Force drawing crosslines without changing the slice position
-      eventManager
-          .getAction(ActionW.SCROLL_SERIES)
-          .ifPresent(s -> s.stateChanged(s.getSliderModel()));
-      // Close stream
-      oldImage.dispose();
-      oldImage.removeImageFromCache();
-      // Delete file in cache
-      File file = oldImage.getFile();
-      if (file != null) {
-        FileUtil.delete(file);
-      }
+      return;
+    }
+
+    notifyCrossLines();
+    cleanupOldImageAsync(oldImage);
+  }
+
+  private void notifyCrossLines() {
+    eventManager
+        .getAction(ActionW.SCROLL_SERIES)
+        .ifPresent(action -> action.stateChanged(action.getSliderModel()));
+  }
+
+  private void cleanupOldImageAsync(DicomImageElement oldImage) {
+    Thread.ofVirtual()
+        .name("MIP-Cleanup")
+        .start(
+            () -> {
+              try {
+                oldImage.dispose();
+                oldImage.removeImageFromCache();
+                Optional.ofNullable(oldImage.getFile())
+                    .map(java.io.File::toPath)
+                    .ifPresent(this::deleteQuietly);
+              } catch (Throwable t) {
+                LOGGER.warn("Error during MIP cleanup", t);
+              }
+            });
+  }
+
+  private void clearMipCache() {
+    Path cacheDir = SeriesBuilder.MIP_CACHE_DIR.toPath();
+    try (var paths = Files.list(cacheDir)) {
+      paths.filter(Files::isRegularFile).forEach(this::deleteQuietly);
+    } catch (IOException e) {
+      LOGGER.warn("Cannot list MIP cache directory {}", cacheDir, e);
+    }
+  }
+
+  private void deleteQuietly(Path path) {
+    try {
+      Files.deleteIfExists(path);
+    } catch (IOException e) {
+      LOGGER.warn("Cannot delete {}", path, e);
     }
   }
 }

@@ -1055,7 +1055,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
       popupMenu.addSeparator();
       boolean graphicComplete = true;
       if (selected.size() == 1) {
-        final Graphic graph = selected.get(0);
+        final Graphic graph = selected.getFirst();
         if (graph instanceof final DragGraphic dragGraphic) {
           if (!dragGraphic.isGraphicComplete()) {
             graphicComplete = false;
