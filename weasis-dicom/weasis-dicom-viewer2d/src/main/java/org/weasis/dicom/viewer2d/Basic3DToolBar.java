@@ -80,7 +80,7 @@ public class Basic3DToolBar extends WtoolBar {
             timer.setRepeats(false);
             timer.start();
 
-            GuiUtils.showCenterScreen(dialog, container);
+            GuiUtils.showCenterScreen(dialog, container, GuiUtils.WindowPosition.E);
           }
         }
       }

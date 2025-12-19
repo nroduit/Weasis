@@ -100,6 +100,19 @@ public class GuiUtils {
 
   public static final String NEWLINE = "newline"; // NON-NLS
 
+  /** Enum representing the 9 possible window positions on the screen. */
+  public enum WindowPosition {
+    CENTER, // Center of the screen
+    NW, // Northwest (top-left)
+    N, // North (top-center)
+    NE, // Northeast (top-right)
+    W, // West (middle-left)
+    E, // East (middle-right)
+    SW, // Southwest (bottom-left)
+    S, // South (bottom-center)
+    SE // Southeast (bottom-right)
+  }
+
   public enum IconColor {
     // see https://jetbrains.design/intellij/principles/icons/#action-icons
     ACTIONS_RED(UIManager.getColor(FlatIconColors.ACTIONS_RED.key)),
@@ -364,32 +377,83 @@ public class GuiUtils {
   }
 
   public static void showCenterScreen(Window window) {
-    try {
-      Rectangle bound =
-          GraphicsEnvironment.getLocalGraphicsEnvironment()
-              .getDefaultScreenDevice()
-              .getDefaultConfiguration()
-              .getBounds();
-      window.setLocation(
-          bound.x + (bound.width - window.getWidth()) / 2,
-          bound.y + (bound.height - window.getHeight()) / 2);
-    } catch (Exception e) {
-      LOGGER.error("Cannot center the window to the screen", e);
-    }
-    window.setVisible(true);
+    showCenterScreen(window, null, WindowPosition.CENTER);
   }
 
   public static void showCenterScreen(Window window, Component parent) {
-    if (parent == null) {
-      showCenterScreen(window);
-    } else {
-      Dimension sSize = parent.getSize();
-      Dimension wSize = window.getSize();
-      Point p = parent.getLocationOnScreen();
-      window.setLocation(
-          p.x + ((sSize.width - wSize.width) / 2), p.y + ((sSize.height - wSize.height) / 2));
-      window.setVisible(true);
+    showCenterScreen(window, parent, WindowPosition.CENTER);
+  }
+
+  /**
+   * Positions a window on the screen according to the specified direction.
+   *
+   * @param window The window to position
+   * @param parent The parent component to position relative to, or null for screen positioning
+   * @param direction The position direction: CENTER, NW, N, NE, W, E, SW, S, SE
+   */
+  public static void showCenterScreen(Window window, Component parent, WindowPosition direction) {
+    try {
+      Rectangle bound;
+      if (parent == null) {
+        bound =
+            GraphicsEnvironment.getLocalGraphicsEnvironment()
+                .getDefaultScreenDevice()
+                .getDefaultConfiguration()
+                .getBounds();
+      } else {
+        Dimension sSize = parent.getSize();
+        Point p = parent.getLocationOnScreen();
+        bound = new Rectangle(p.x, p.y, sSize.width, sSize.height);
+      }
+
+      int x, y;
+      int windowWidth = window.getWidth();
+      int windowHeight = window.getHeight();
+
+      switch (direction) {
+        case NW -> {
+          x = bound.x;
+          y = bound.y;
+        }
+        case N -> {
+          x = bound.x + (bound.width - windowWidth) / 2;
+          y = bound.y;
+        }
+        case NE -> {
+          x = bound.x + bound.width - windowWidth;
+          y = bound.y;
+        }
+        case W -> {
+          x = bound.x;
+          y = bound.y + (bound.height - windowHeight) / 2;
+        }
+        case E -> {
+          x = bound.x + bound.width - windowWidth;
+          y = bound.y + (bound.height - windowHeight) / 2;
+        }
+        case SW -> {
+          x = bound.x;
+          y = bound.y + bound.height - windowHeight;
+        }
+        case S -> {
+          x = bound.x + (bound.width - windowWidth) / 2;
+          y = bound.y + bound.height - windowHeight;
+        }
+        case SE -> {
+          x = bound.x + bound.width - windowWidth;
+          y = bound.y + bound.height - windowHeight;
+        }
+        default -> { // CENTER
+          x = bound.x + (bound.width - windowWidth) / 2;
+          y = bound.y + (bound.height - windowHeight) / 2;
+        }
+      }
+
+      window.setLocation(x, y);
+    } catch (Exception e) {
+      LOGGER.error("Cannot position the window", e);
     }
+    window.setVisible(true);
   }
 
   public static void addChangeListener(JSlider slider, ChangeListener listener) {
