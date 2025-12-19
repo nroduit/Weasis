@@ -38,6 +38,7 @@ import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.TagReadable;
 import org.weasis.core.api.media.data.TagView;
 import org.weasis.core.api.media.data.TagW;
+import org.weasis.core.api.util.FontItem;
 import org.weasis.core.api.util.FontTools;
 import org.weasis.core.ui.editor.image.SynchData;
 import org.weasis.core.ui.editor.image.ViewButton;
@@ -123,7 +124,9 @@ public class InfoLayer extends AbstractInfoLayer<DicomImageElement> {
   @Override
   public void paint(Graphics2D g2) {
     DicomImageElement image = view2DPane.getImage();
-    FontMetrics fontMetrics = g2.getFontMetrics();
+    // Get the smallest font for better size calculations
+    FontMetrics fontMetrics =
+        view2DPane.getJComponent().getFontMetrics(FontItem.MICRO_SEMIBOLD.getFont());
     Rectangle bound = view2DPane.getJComponent().getBounds();
 
     if (!shouldPaint(image, fontMetrics, bound)) {
@@ -147,7 +150,7 @@ public class InfoLayer extends AbstractInfoLayer<DicomImageElement> {
 
   private boolean shouldPaint(DicomImageElement image, FontMetrics fontMetrics, Rectangle bound) {
     int minSize = fontMetrics.stringWidth(Messages.getString("InfoLayer.msg_outside_levels")) * 2;
-    return visible && image != null && minSize <= bound.width && minSize <= bound.height;
+    return visible && image != null && minSize <= bound.width && minSize / 2 <= bound.height;
   }
 
   private void paintContent(
