@@ -98,7 +98,7 @@ public class MipView extends View2d {
     }
   }
 
-  private volatile Thread process;
+  private Thread process;
 
   public MipView(ImageViewerEventManager<DicomImageElement> eventManager) {
     super(eventManager);
