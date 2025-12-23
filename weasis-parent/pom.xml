@@ -32,7 +32,7 @@
     <felix.framework.version>7.0.5</felix.framework.version>
     <flatlaf.version>3.7</flatlaf.version>
     <miglayout.version>11.4.2</miglayout.version>
-    <xz.version>1.10</xz.version>
+    <xz.version>1.11</xz.version>
 
     <osgi.core.version>8.0.0</osgi.core.version>
     <osgi.promise.version>8.1.0</osgi.promise.version>
@@ -48,7 +48,7 @@
     <felix.scr.version>2.2.14</felix.scr.version>
 
     <slf4j.version>2.0.17</slf4j.version>
-    <logback.version>1.5.22</logback.version>
+    <logback.version>1.5.23</logback.version>
     <dockingframes.version>1.1.7</dockingframes.version>
     <weasis-dicom-tools.version>5.34.1.2</weasis-dicom-tools.version>
     <weasis.core.img.version>4.12.2</weasis.core.img.version>
