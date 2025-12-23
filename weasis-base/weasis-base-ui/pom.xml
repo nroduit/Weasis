@@ -2,7 +2,6 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0"
   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
-  <modelVersion>4.0.0</modelVersion>
   <parent>
     <artifactId>weasis-base-parent</artifactId>
     <groupId>org.weasis.base</groupId>
@@ -10,6 +9,8 @@
     <version>${revision}${changelist}</version>
     <relativePath>../weasis-base-parent/pom.xml</relativePath>
   </parent>
+
+  <modelVersion>4.0.0</modelVersion>
   <artifactId>weasis-base-ui</artifactId>
   <packaging>jar</packaging>
   <name>Base UI [${project.artifactId}]</name>
@@ -17,13 +18,14 @@
   <build>
     <plugins>
       <plugin>
-        <groupId>biz.aQute.bnd</groupId>
-        <artifactId>bnd-maven-plugin</artifactId>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-jar-plugin</artifactId>
         <configuration>
-          <bnd>
-            Bundle-SymbolicName: weasis-base-ui
-            Export-Package:!org.weasis.base.ui.internal,org.weasis.base.ui.*
-          </bnd>
+          <archive>
+            <manifestEntries>
+              <Plugin-Class>org.weasis.base.ui.internal.Activator</Plugin-Class>
+            </manifestEntries>
+          </archive>
         </configuration>
       </plugin>
     </plugins>
@@ -33,14 +35,6 @@
     <dependency>
       <groupId>com.fasterxml.jackson.core</groupId>
       <artifactId>jackson-databind</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.felix</groupId>
-      <artifactId>org.apache.felix.gogo.command</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.felix</groupId>
-      <artifactId>org.apache.felix.gogo.runtime</artifactId>
     </dependency>
   </dependencies>
 </project>

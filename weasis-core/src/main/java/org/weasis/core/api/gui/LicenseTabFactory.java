@@ -9,11 +9,11 @@
  */
 package org.weasis.core.api.gui;
 
-import java.util.Hashtable;
+import java.util.Map;
 import org.weasis.core.api.gui.util.AbstractTabLicense;
 
 public interface LicenseTabFactory extends InsertableFactory {
 
   @Override
-  AbstractTabLicense createInstance(Hashtable<String, Object> properties);
+  AbstractTabLicense createInstance(Map<String, Object> properties);
 }

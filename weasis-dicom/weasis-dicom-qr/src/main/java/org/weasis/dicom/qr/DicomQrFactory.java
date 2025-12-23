@@ -9,51 +9,24 @@
  */
 package org.weasis.dicom.qr;
 
-import java.util.Hashtable;
-import org.osgi.service.component.ComponentContext;
-import org.osgi.service.component.annotations.Activate;
-import org.osgi.service.component.annotations.Deactivate;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import java.util.Map;
+import org.pf4j.Extension;
 import org.weasis.core.api.gui.util.GuiUtils;
-import org.weasis.core.api.service.BundlePreferences;
-import org.weasis.core.util.PropertiesUtil;
 import org.weasis.dicom.explorer.imp.DicomImportFactory;
 import org.weasis.dicom.explorer.imp.ImportDicom;
+import org.weasis.plugin.SingletonExtension;
 
-@org.osgi.service.component.annotations.Component(service = DicomImportFactory.class)
+@Extension
+@SingletonExtension
 public class DicomQrFactory implements DicomImportFactory {
 
-  private static final Logger LOGGER = LoggerFactory.getLogger(DicomQrFactory.class);
-
   @Override
-  public ImportDicom createDicomImportPage(Hashtable<String, Object> properties) {
+  public ImportDicom createDicomImportPage(Map<String, Object> properties) {
     if (GuiUtils.getUICore()
         .getSystemPreferences()
         .getBooleanProperty("weasis.import.dicom.qr", true)) {
       return new DicomQrView();
     }
     return null;
-  }
-
-  // ================================================================================
-  // OSGI service implementation
-  // ================================================================================
-
-  @Activate
-  protected void activate(ComponentContext context) {
-    LOGGER.info("DICOM Q/R is activated");
-    PropertiesUtil.loadProperties(
-        BundlePreferences.getFileInDataFolder(context.getBundleContext(), "import.properties"),
-        DicomQrView.getPersistence());
-  }
-
-  @Deactivate
-  protected void deactivate(ComponentContext context) {
-    LOGGER.info("DICOM Q/R is deactivated");
-    PropertiesUtil.storeProperties(
-        BundlePreferences.getFileInDataFolder(context.getBundleContext(), "import.properties"),
-        DicomQrView.getPersistence(),
-        null);
   }
 }

@@ -33,6 +33,7 @@ import bibliothek.gui.dock.util.DirectWindowProvider;
 import bibliothek.gui.dock.util.DockUtilities;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.formdev.flatlaf.extras.FlatSVGIcon;
+import com.github.zafarkhaja.semver.Version;
 import java.awt.AWTException;
 import java.awt.BorderLayout;
 import java.awt.Component;
@@ -70,7 +71,6 @@ import java.net.http.HttpResponse.BodyHandlers;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Hashtable;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -98,9 +98,6 @@ import javax.swing.KeyStroke;
 import javax.swing.RootPaneContainer;
 import javax.swing.TransferHandler.DropLocation;
 import javax.swing.WindowConstants;
-import org.osgi.framework.BundleContext;
-import org.osgi.framework.ServiceReference;
-import org.osgi.framework.Version;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.base.ui.Messages;
@@ -294,6 +291,9 @@ public class WeasisWin {
     localPersistence.putIntProperty("last.window.y", rect.y);
     localPersistence.putIntProperty("last.window.width", rect.width);
     localPersistence.putIntProperty("last.window.height", rect.height);
+
+    GuiUtils.getUICore().savePreferences();
+
     for (Runnable onClose : runOnClose) {
       onClose.run();
     }
@@ -755,11 +755,11 @@ public class WeasisWin {
             ColorLayerUI layer = ColorLayerUI.createTransparentLayerUI(rootPaneContainer);
             final List<AbstractTabLicense> list = new ArrayList<>();
             try {
-              BundleContext context = AppProperties.getBundleContext(this.getClass());
-              Hashtable<String, Object> properties = new Hashtable<>();
-              for (ServiceReference<LicenseTabFactory> service :
-                  context.getServiceReferences(LicenseTabFactory.class, null)) {
-                LicenseTabFactory factory = context.getService(service);
+              // Get all LicenseTabFactory extensions from PF4J plugin manager
+              List<LicenseTabFactory> factories =
+                  GuiUtils.getUICore().getPluginManager().getExtensions(LicenseTabFactory.class);
+              Map<String, Object> properties = new HashMap<>();
+              for (LicenseTabFactory factory : factories) {
                 if (factory != null) {
                   AbstractTabLicense page = factory.createInstance(properties);
                   if (page != null) {
@@ -768,7 +768,7 @@ public class WeasisWin {
                 }
               }
             } catch (Exception ex) {
-              LOGGER.error("Get License from OSGI service", ex);
+              LOGGER.error("Get License from plugin manager", ex);
             }
             if (list.isEmpty()) {
               JOptionPane.showMessageDialog(
@@ -1160,7 +1160,7 @@ public class WeasisWin {
           }
           MediaReader reader = ViewerPluginBuilder.getMedia(file, false);
           if (reader != null) {
-            Codec c = reader.getCodec();
+            Codec<?> c = reader.getCodec();
             if (c != null) {
               List<File> cFiles = codecs.computeIfAbsent(c, k -> new ArrayList<>());
               cFiles.add(file);
@@ -1179,7 +1179,7 @@ public class WeasisWin {
           for (final DataExplorerView dataExplorerView : explorers) {
             DataExplorerModel model = dataExplorerView.getDataExplorerModel();
             if (model != null) {
-              List<Codec<MediaElement>> cList = model.getCodecPlugins();
+              List<? extends Codec<? extends MediaElement>> cList = model.getCodecPlugins();
               if (cList != null && cList.contains(entry.getKey())) {
                 exps.add(dataExplorerView);
               }

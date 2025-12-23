@@ -9,11 +9,14 @@
  */
 package org.weasis.dicom.sr;
 
+import org.pf4j.Extension;
 import org.weasis.dicom.codec.DicomMediaIO;
 import org.weasis.dicom.codec.DicomSpecialElement;
 import org.weasis.dicom.codec.DicomSpecialElementFactory;
+import org.weasis.plugin.SingletonExtension;
 
-@org.osgi.service.component.annotations.Component(service = DicomSpecialElementFactory.class)
+@Extension
+@SingletonExtension
 public class SRElementFactory implements DicomSpecialElementFactory {
 
   public static final String SERIES_SR_MIMETYPE = "sr/dicom"; // NON-NLS

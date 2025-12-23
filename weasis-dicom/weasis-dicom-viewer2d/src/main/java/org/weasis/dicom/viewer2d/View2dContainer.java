@@ -17,6 +17,7 @@ import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.prefs.Preferences;
 import javax.swing.Action;
 import javax.swing.Icon;
 import javax.swing.JComponent;
@@ -26,8 +27,6 @@ import javax.swing.JSeparator;
 import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
 import org.dcm4che3.data.Tag;
-import org.osgi.framework.BundleContext;
-import org.osgi.service.prefs.Preferences;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.DataExplorerView;
@@ -36,7 +35,6 @@ import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.core.api.gui.Insertable.Type;
 import org.weasis.core.api.gui.InsertableUtil;
 import org.weasis.core.api.gui.util.ActionW;
-import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.gui.util.BasicActionState;
 import org.weasis.core.api.gui.util.ComboItemListener;
 import org.weasis.core.api.gui.util.Filter;
@@ -164,21 +162,20 @@ public class View2dContainer extends DicomViewerPlugin implements PropertyChange
       List<Toolbar> toolBars = UI.toolBars;
 
       // Add standard toolbars
-      final BundleContext context = AppProperties.getBundleContext(this.getClass());
-      if (context == null) {
+      String plugInId = GuiUtils.getUICore().getPluginManager().getPluginId(this.getClass());
+      if (plugInId == null) {
         LOGGER.error("Cannot get BundleContext");
         return;
       }
       ImageViewerEventManager<DicomImageElement> evtMg = getEventManager();
 
-      String bundleName = context.getBundle().getSymbolicName();
       String componentName = InsertableUtil.getCName(this.getClass());
       String key = "enable"; // NON-NLS
       WProperties preferences = GuiUtils.getUICore().getSystemPreferences();
 
       if (InsertableUtil.getBooleanProperty(
           preferences,
-          bundleName,
+          plugInId,
           componentName,
           InsertableUtil.getCName(ImportToolBar.class),
           key,
@@ -191,7 +188,7 @@ public class View2dContainer extends DicomViewerPlugin implements PropertyChange
       }
       if (InsertableUtil.getBooleanProperty(
           preferences,
-          bundleName,
+          plugInId,
           componentName,
           InsertableUtil.getCName(ExportToolBar.class),
           key,
@@ -204,7 +201,7 @@ public class View2dContainer extends DicomViewerPlugin implements PropertyChange
       }
       if (InsertableUtil.getBooleanProperty(
           preferences,
-          bundleName,
+          plugInId,
           componentName,
           InsertableUtil.getCName(ScreenshotToolBar.class),
           key,
@@ -213,7 +210,7 @@ public class View2dContainer extends DicomViewerPlugin implements PropertyChange
       }
       if (InsertableUtil.getBooleanProperty(
           preferences,
-          bundleName,
+          plugInId,
           componentName,
           InsertableUtil.getCName(ViewerToolBar.class),
           key,
@@ -224,7 +221,7 @@ public class View2dContainer extends DicomViewerPlugin implements PropertyChange
       }
       if (InsertableUtil.getBooleanProperty(
           preferences,
-          bundleName,
+          plugInId,
           componentName,
           InsertableUtil.getCName(MeasureToolBar.class),
           key,
@@ -233,7 +230,7 @@ public class View2dContainer extends DicomViewerPlugin implements PropertyChange
       }
       if (InsertableUtil.getBooleanProperty(
           preferences,
-          bundleName,
+          plugInId,
           componentName,
           InsertableUtil.getCName(ZoomToolBar.class),
           key,
@@ -242,7 +239,7 @@ public class View2dContainer extends DicomViewerPlugin implements PropertyChange
       }
       if (InsertableUtil.getBooleanProperty(
           preferences,
-          bundleName,
+          plugInId,
           componentName,
           InsertableUtil.getCName(RotationToolBar.class),
           key,
@@ -251,7 +248,7 @@ public class View2dContainer extends DicomViewerPlugin implements PropertyChange
       }
       if (InsertableUtil.getBooleanProperty(
           preferences,
-          bundleName,
+          plugInId,
           componentName,
           InsertableUtil.getCName(DcmHeaderToolBar.class),
           key,
@@ -260,7 +257,7 @@ public class View2dContainer extends DicomViewerPlugin implements PropertyChange
       }
       if (InsertableUtil.getBooleanProperty(
           preferences,
-          bundleName,
+          plugInId,
           componentName,
           InsertableUtil.getCName(LutToolBar.class),
           key,
@@ -269,7 +266,7 @@ public class View2dContainer extends DicomViewerPlugin implements PropertyChange
       }
       if (InsertableUtil.getBooleanProperty(
           preferences,
-          bundleName,
+          plugInId,
           componentName,
           InsertableUtil.getCName(Basic3DToolBar.class),
           key,
@@ -278,7 +275,7 @@ public class View2dContainer extends DicomViewerPlugin implements PropertyChange
       }
       if (InsertableUtil.getBooleanProperty(
           preferences,
-          bundleName,
+          plugInId,
           componentName,
           InsertableUtil.getCName(CineToolBar.class),
           key,
@@ -287,7 +284,7 @@ public class View2dContainer extends DicomViewerPlugin implements PropertyChange
       }
       if (InsertableUtil.getBooleanProperty(
           preferences,
-          bundleName,
+          plugInId,
           componentName,
           InsertableUtil.getCName(KeyObjectToolBar.class),
           key,
@@ -296,7 +293,7 @@ public class View2dContainer extends DicomViewerPlugin implements PropertyChange
       }
       if (InsertableUtil.getBooleanProperty(
           preferences,
-          bundleName,
+          plugInId,
           componentName,
           InsertableUtil.getCName(LauncherToolBar.class),
           key,
@@ -309,7 +306,7 @@ public class View2dContainer extends DicomViewerPlugin implements PropertyChange
 
       if (InsertableUtil.getBooleanProperty(
           preferences,
-          bundleName,
+          plugInId,
           componentName,
           InsertableUtil.getCName(MiniTool.class),
           key,
@@ -331,7 +328,7 @@ public class View2dContainer extends DicomViewerPlugin implements PropertyChange
 
       if (InsertableUtil.getBooleanProperty(
           preferences,
-          bundleName,
+          plugInId,
           componentName,
           InsertableUtil.getCName(ImageTool.class),
           key,
@@ -342,7 +339,7 @@ public class View2dContainer extends DicomViewerPlugin implements PropertyChange
 
       if (InsertableUtil.getBooleanProperty(
           preferences,
-          bundleName,
+          plugInId,
           componentName,
           InsertableUtil.getCName(DisplayTool.class),
           key,
@@ -354,7 +351,7 @@ public class View2dContainer extends DicomViewerPlugin implements PropertyChange
 
       if (InsertableUtil.getBooleanProperty(
           preferences,
-          bundleName,
+          plugInId,
           componentName,
           InsertableUtil.getCName(MeasureTool.class),
           key,
@@ -371,10 +368,10 @@ public class View2dContainer extends DicomViewerPlugin implements PropertyChange
         eventManager.addSeriesViewerListener((SeriesViewerListener) dicomView);
       }
 
-      Preferences prefs = BundlePreferences.getDefaultPreferences(context);
+      Preferences prefs = BundlePreferences.getDefaultPreferences(plugInId);
       if (prefs != null) {
-        InsertableUtil.applyPreferences(toolBars, prefs, bundleName, componentName, Type.TOOLBAR);
-        InsertableUtil.applyPreferences(tools, prefs, bundleName, componentName, Type.TOOL);
+        InsertableUtil.applyPreferences(toolBars, prefs, plugInId, componentName, Type.TOOLBAR);
+        InsertableUtil.applyPreferences(tools, prefs, plugInId, componentName, Type.TOOL);
       }
     }
   }

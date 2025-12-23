@@ -9,6 +9,7 @@
     <version>${revision}${changelist}</version>
     <relativePath>../weasis-dicom-parent/pom.xml</relativePath>
   </parent>
+
   <modelVersion>4.0.0</modelVersion>
   <artifactId>weasis-dicom-codec</artifactId>
   <name>DICOM - Codecs and parsers for DICOM [${project.artifactId}]</name>
@@ -29,43 +30,53 @@
     <plugins>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-dependency-plugin</artifactId>
+        <artifactId>maven-shade-plugin</artifactId>
         <executions>
           <execution>
-            <id>unpack-dependencies</id>
-            <phase>generate-resources</phase>
+            <phase>package</phase>
             <goals>
-              <goal>unpack-dependencies</goal>
+              <goal>shade</goal>
             </goals>
             <configuration>
-              <includeArtifactIds>dcm4che-dict</includeArtifactIds>
-              <includes>uids.xml,dataelements.xml</includes>
-              <outputDirectory>${project.build.directory}/classes</outputDirectory>
-            </configuration>
-          </execution>
-          <execution>
-            <id>copy-dependency</id>
-            <goals>
-              <goal>copy-dependencies</goal>
-            </goals>
-            <configuration>
-              <includeArtifactIds>jakarta.json-api,parsson,osgi-resource-locator</includeArtifactIds>
+              <createDependencyReducedPom>true</createDependencyReducedPom>
+              <filters>
+                <!-- Include only the two xml files from the dcm4che-dict artifact -->
+                <filter>
+                  <artifact>org.dcm4che:dcm4che-dict</artifact>
+                  <includes>
+                    <include>uids.xml</include>
+                    <include>dataelements.xml</include>
+                  </includes>
+                </filter>
+                <!-- Keep previous global filter for signatures -->
+                <filter>
+                  <artifact>*:*</artifact>
+                  <excludes>
+                    <exclude>META-INF/*.SF</exclude>
+                    <exclude>META-INF/*.DSA</exclude>
+                    <exclude>META-INF/*.RSA</exclude>
+                  </excludes>
+                </filter>
+              </filters>
+              <transformers>
+                <!-- preserve SPI/service files so PF4J plugin discovery works -->
+                <transformer
+                  implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
+              </transformers>
             </configuration>
           </execution>
         </executions>
       </plugin>
       <plugin>
-        <groupId>biz.aQute.bnd</groupId>
-        <artifactId>bnd-maven-plugin</artifactId>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-jar-plugin</artifactId>
         <configuration>
-          <bnd>
-            -includeresource.all: lib/=target/dependency/;lib:=true
-            Implementation-Version: ${weasis-dicom-tools.version}
-            Export-Package: !org.weasis.dicom.codec.internal,org.weasis.dicom.codec.*,\
-            org.weasis.dicom.*,org.dcm4che3.*
-
-            -exportcontents: jakarta.json.*
-          </bnd>
+          <archive>
+            <manifestEntries>
+              <Plugin-Class>org.weasis.dicom.codec.internal.Activator</Plugin-Class>
+              <Plugin-Dependencies>weasis-imageio-codec</Plugin-Dependencies>
+            </manifestEntries>
+          </archive>
         </configuration>
       </plugin>
     </plugins>

@@ -12,6 +12,7 @@ package org.weasis.dicom.au;
 import java.awt.BorderLayout;
 import java.io.File;
 import java.io.IOException;
+import java.util.Hashtable;
 import java.util.List;
 import javax.sound.sampled.AudioFileFormat;
 import javax.sound.sampled.AudioFormat;
@@ -355,7 +356,7 @@ public class AuView extends JPanel implements SeriesViewerListener {
     float fval = c.getValue();
     s.setValue((int) ((fval - min) / width * 1000));
 
-    java.util.Hashtable<Integer, JLabel> labels = new java.util.Hashtable<>(3);
+    Hashtable<Integer, JLabel> labels = new Hashtable<>(3);
     labels.put(0, new JLabel(c.getMinLabel()));
     labels.put(500, new JLabel(c.getMidLabel()));
     labels.put(1000, new JLabel(c.getMaxLabel()));

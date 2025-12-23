@@ -10,9 +10,10 @@
 package org.weasis.core.api.media.data;
 
 import java.net.URI;
-import java.util.Hashtable;
+import java.util.Map;
+import org.pf4j.ExtensionPoint;
 
-public interface Codec<E extends MediaElement> {
+public interface Codec<E extends MediaElement> extends ExtensionPoint {
 
   /**
    * @return the codec name (must be unique)
@@ -39,7 +40,7 @@ public interface Codec<E extends MediaElement> {
    */
   String[] getWriterExtensions();
 
-  MediaReader<E> getMediaIO(URI media, String mimeType, Hashtable<String, Object> properties);
+  MediaReader<E> getMediaIO(URI media, String mimeType, Map<String, Object> properties);
 
   /**
    * @param mimeType the mime type value

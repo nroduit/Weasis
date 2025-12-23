@@ -9,25 +9,28 @@
     <version>${revision}${changelist}</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
+
   <modelVersion>4.0.0</modelVersion>
   <packaging>jar</packaging>
   <artifactId>jogamp-linux-x86-64</artifactId>
   <name>JOGL - Linux x86-64 [${project.artifactId}]</name>
   <version>${jogamp.version}</version>
+
   <properties>
-    <native.configuration>
-      natives/linux-amd64/libgluegen_rt.so; \
-      natives/linux-amd64/libjocl.so; \
-      natives/linux-amd64/libnativewindow_awt.so; \
-      natives/linux-amd64/libnewt_drm.so; \
-      natives/linux-amd64/libnativewindow_x11.so; \
-      natives/linux-amd64/libnativewindow_drm.so; \
-      natives/linux-amd64/libnewt_head.so; \
-      natives/linux-amd64/libjogl_mobile.so; \
-      natives/linux-amd64/libjogl_desktop.so; \
-      processor=x86-64; osname=Linux
-    </native.configuration>
+    <native.folder>natives/linux-amd64</native.folder>
+    <native.files>
+      libgluegen_rt.so,
+      libjocl.so,
+      libnativewindow_awt.so,
+      libnewt_drm.so,
+      libnativewindow_x11.so,
+      libnativewindow_drm.so,
+      libnewt_head.so,
+      libjogl_mobile.so,
+      libjogl_desktop.so
+    </native.files>
   </properties>
+
   <build>
     <plugins>
       <plugin>
@@ -40,7 +43,6 @@
             <goals>
               <goal>unpack</goal>
             </goals>
-
             <configuration>
               <artifactItems>
                 <artifactItem>
@@ -50,7 +52,6 @@
                   <classifier>natives-linux-amd64</classifier>
                   <outputDirectory>target/classes</outputDirectory>
                 </artifactItem>
-
                 <artifactItem>
                   <groupId>org.jogamp.jogl</groupId>
                   <artifactId>jogl-all</artifactId>
@@ -58,7 +59,6 @@
                   <classifier>natives-linux-amd64</classifier>
                   <outputDirectory>target/classes</outputDirectory>
                 </artifactItem>
-
                 <artifactItem>
                   <groupId>org.jogamp.jocl</groupId>
                   <artifactId>jocl</artifactId>

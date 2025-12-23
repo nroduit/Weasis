@@ -40,6 +40,7 @@ import org.weasis.dicom.param.ConnectOptions;
 import org.weasis.dicom.param.DicomNode;
 import org.weasis.dicom.param.DicomProgress;
 import org.weasis.dicom.param.DicomState;
+import org.weasis.dicom.send.internal.Activator;
 import org.weasis.dicom.web.ContentType;
 
 public class SendDicomView extends ExportDicomView {
@@ -86,7 +87,7 @@ public class SendDicomView extends ExportDicomView {
   protected void initialize() {
     AbstractDicomNode.loadDicomNodes(comboNode, AbstractDicomNode.Type.DICOM, UsageType.STORAGE);
     AbstractDicomNode.loadDicomNodes(comboNode, AbstractDicomNode.Type.WEB, UsageType.STORAGE);
-    String desc = SendDicomFactory.EXPORT_PERSISTENCE.getProperty(LAST_SEL_NODE);
+    String desc = Activator.EXPORT_PERSISTENCE.getProperty(LAST_SEL_NODE);
     AbstractDicomNode.selectDicomNode(comboNode.getModel(), desc);
 
     String weasisAet =
@@ -94,7 +95,7 @@ public class SendDicomView extends ExportDicomView {
     if (!StringUtil.hasText(weasisAet)) {
       AbstractDicomNode.loadDicomNodes(
           comboCallingNode, AbstractDicomNode.Type.DICOM_CALLING, UsageType.STORAGE);
-      String calling = SendDicomFactory.EXPORT_PERSISTENCE.getProperty(LAST_CALLING_NODE);
+      String calling = Activator.EXPORT_PERSISTENCE.getProperty(LAST_CALLING_NODE);
       AbstractDicomNode.selectDicomNode(comboCallingNode.getModel(), calling);
     }
   }
@@ -102,12 +103,11 @@ public class SendDicomView extends ExportDicomView {
   public void applyChange() {
     final AbstractDicomNode node = (AbstractDicomNode) comboNode.getSelectedItem();
     if (node != null) {
-      SendDicomFactory.EXPORT_PERSISTENCE.setProperty(LAST_SEL_NODE, node.getDescription());
+      Activator.EXPORT_PERSISTENCE.setProperty(LAST_SEL_NODE, node.getDescription());
     }
     final AbstractDicomNode callingNode = (AbstractDicomNode) comboCallingNode.getSelectedItem();
     if (callingNode != null) {
-      SendDicomFactory.EXPORT_PERSISTENCE.setProperty(
-          LAST_CALLING_NODE, callingNode.getDescription());
+      Activator.EXPORT_PERSISTENCE.setProperty(LAST_CALLING_NODE, callingNode.getDescription());
     }
   }
 

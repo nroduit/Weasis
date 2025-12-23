@@ -9,29 +9,20 @@
  */
 package org.weasis.dicom.isowriter;
 
-import java.util.Hashtable;
-import java.util.Properties;
-import org.osgi.service.component.ComponentContext;
-import org.osgi.service.component.annotations.Activate;
-import org.osgi.service.component.annotations.Deactivate;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.weasis.core.api.service.BundlePreferences;
-import org.weasis.core.util.PropertiesUtil;
+import java.util.Map;
+import org.pf4j.Extension;
 import org.weasis.dicom.explorer.DicomModel;
 import org.weasis.dicom.explorer.exp.CheckTreeModel;
 import org.weasis.dicom.explorer.exp.DicomExportFactory;
 import org.weasis.dicom.explorer.exp.ExportDicom;
+import org.weasis.plugin.SingletonExtension;
 
-@org.osgi.service.component.annotations.Component(service = DicomExportFactory.class)
+@Extension
+@SingletonExtension
 public class ExportIsoFactory implements DicomExportFactory {
 
-  private static final Logger LOGGER = LoggerFactory.getLogger(ExportIsoFactory.class);
-
-  public static final Properties EXPORT_PERSISTENCE = new Properties();
-
   @Override
-  public ExportDicom createDicomExportPage(Hashtable<String, Object> properties) {
+  public ExportDicom createDicomExportPage(Map<String, Object> properties) {
     if (properties != null) {
       DicomModel dicomModel = (DicomModel) properties.get(DicomModel.class.getName());
       CheckTreeModel treeModel = (CheckTreeModel) properties.get(CheckTreeModel.class.getName());
@@ -40,22 +31,5 @@ public class ExportIsoFactory implements DicomExportFactory {
       }
     }
     return null;
-  }
-
-  @Activate
-  protected void activate(ComponentContext context) {
-    LOGGER.info("Export ISO image is activated");
-    PropertiesUtil.loadProperties(
-        BundlePreferences.getFileInDataFolder(context.getBundleContext(), "export.properties"),
-        EXPORT_PERSISTENCE);
-  }
-
-  @Deactivate
-  protected void deactivate(ComponentContext context) {
-    LOGGER.info("Export ISO image is deactivated");
-    PropertiesUtil.storeProperties(
-        BundlePreferences.getFileInDataFolder(context.getBundleContext(), "export.properties"),
-        EXPORT_PERSISTENCE,
-        null);
   }
 }

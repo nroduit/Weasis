@@ -14,6 +14,7 @@ import java.awt.Desktop;
 import java.io.File;
 import java.util.Map;
 import javax.swing.Icon;
+import org.pf4j.Extension;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.util.ResourceUtil;
@@ -24,8 +25,10 @@ import org.weasis.core.ui.editor.SeriesViewerFactory;
 import org.weasis.core.ui.editor.SeriesViewerUI;
 import org.weasis.dicom.codec.DicomMediaIO;
 import org.weasis.dicom.codec.FilesExtractor;
+import org.weasis.plugin.SingletonExtension;
 
-@org.osgi.service.component.annotations.Component(service = SeriesViewerFactory.class)
+@Extension
+@SingletonExtension
 public class MimeSystemAppFactory implements SeriesViewerFactory {
 
   public static final String NAME = Messages.getString("MimeSystemAppViewer.app");

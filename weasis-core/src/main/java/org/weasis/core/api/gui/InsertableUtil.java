@@ -11,7 +11,7 @@ package org.weasis.core.api.gui;
 
 import java.util.List;
 import java.util.Properties;
-import org.osgi.service.prefs.Preferences;
+import java.util.prefs.Preferences;
 import org.weasis.core.api.gui.Insertable.Type;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.service.BundlePreferences;

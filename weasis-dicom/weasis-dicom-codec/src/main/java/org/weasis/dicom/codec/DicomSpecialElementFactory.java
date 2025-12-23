@@ -9,7 +9,9 @@
  */
 package org.weasis.dicom.codec;
 
-public interface DicomSpecialElementFactory {
+import org.pf4j.ExtensionPoint;
+
+public interface DicomSpecialElementFactory extends ExtensionPoint {
 
   String getSeriesMimeType();
 

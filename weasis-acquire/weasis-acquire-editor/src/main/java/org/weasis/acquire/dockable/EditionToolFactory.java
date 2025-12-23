@@ -10,13 +10,13 @@
 package org.weasis.acquire.dockable;
 
 import java.awt.event.KeyEvent;
-import java.util.Hashtable;
+import java.util.Map;
+import org.pf4j.Extension;
 import org.weasis.acquire.Messages;
 import org.weasis.acquire.dockable.components.actions.calibrate.CalibrationPanel;
 import org.weasis.base.viewer2d.EventManager;
 import org.weasis.core.api.gui.Insertable;
 import org.weasis.core.api.gui.Insertable.Type;
-import org.weasis.core.api.gui.InsertableFactory;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.BasicActionState;
 import org.weasis.core.api.gui.util.ComboItemListener;
@@ -29,15 +29,15 @@ import org.weasis.core.ui.docking.ExtToolFactory;
 import org.weasis.core.ui.editor.image.ImageViewerEventManager;
 import org.weasis.core.ui.editor.image.MeasureToolBar;
 import org.weasis.core.ui.model.graphic.Graphic;
+import org.weasis.plugin.SingletonExtension;
 
 /**
  * @author Yannick LARVOR
  * @author Nicolas Roduit
  * @since v2.5.0
  */
-@org.osgi.service.component.annotations.Component(
-    service = InsertableFactory.class,
-    property = {"org.weasis.base.viewer2d.View2dContainer=true"})
+@Extension
+@SingletonExtension
 public class EditionToolFactory extends ExtToolFactory<ImageElement> {
   public static final BasicActionStateValue EDITION =
       new BasicActionStateValue(
@@ -71,12 +71,12 @@ public class EditionToolFactory extends ExtToolFactory<ImageElement> {
   }
 
   @Override
-  protected boolean isCompatible(Hashtable<String, Object> properties) {
+  protected boolean isCompatible(Map<String, Object> properties) {
     return true;
   }
 
   @Override
-  protected Insertable getInstance(Hashtable<String, Object> properties) {
+  protected Insertable getInstance(Map<String, Object> properties) {
     EventManager eventManager = EventManager.getInstance();
 
     // Remove actions which are not useful

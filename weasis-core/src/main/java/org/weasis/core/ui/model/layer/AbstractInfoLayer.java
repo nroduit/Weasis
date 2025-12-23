@@ -23,7 +23,7 @@ import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
-import org.osgi.service.prefs.Preferences;
+import java.util.prefs.Preferences;
 import org.weasis.core.api.gui.util.DecFormatter;
 import org.weasis.core.api.image.ImageOpNode;
 import org.weasis.core.api.image.OpManager;

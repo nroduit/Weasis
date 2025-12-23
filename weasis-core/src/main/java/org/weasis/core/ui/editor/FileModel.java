@@ -15,8 +15,10 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import org.pf4j.Extension;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.weasis.core.api.command.CommandExtension;
 import org.weasis.core.api.command.Option;
 import org.weasis.core.api.command.Options;
 import org.weasis.core.api.explorer.ObservableEvent;
@@ -28,15 +30,47 @@ import org.weasis.core.api.net.NetworkUtil;
 import org.weasis.core.api.net.URLParameters;
 import org.weasis.core.util.FileUtil;
 
-// TODO required to change the static ref
-// @org.osgi.service.component.annotations.Component(immediate = false, property = {
-//    CommandProcessor.COMMAND_SCOPE + "=image", CommandProcessor.COMMAND_FUNCTION + "=get",
-//    CommandProcessor.COMMAND_FUNCTION + "=close" }, service = FileModel.class)
-public class FileModel extends AbstractFileModel {
+@Extension
+public class FileModel extends AbstractFileModel implements CommandExtension {
   private static final Logger LOGGER = LoggerFactory.getLogger(FileModel.class);
 
   public static final Path IMAGE_CACHE_DIR =
       AppProperties.buildAccessibleTempDirectory(AppProperties.CACHE_NAME, "image");
+
+  private static final String GET_USAGE =
+      """
+      Load images remotely or locally
+      Usage: image:get ([-f file]... [-u url]...)
+        -f --file=FILE     open an image from a file
+        -u --url=URL       open an image from an URL
+        -? --help          show help
+      """;
+
+  @Override
+  public String getNamespace() {
+    return "image";
+  }
+
+  @Override
+  public void execute(String commandName, String[] args) throws Exception {
+    switch (commandName) {
+      case "get":
+        get(args);
+        break;
+      case "close":
+        close(args, commandName);
+        break;
+      default:
+        throw new IllegalArgumentException("Unknown command: " + commandName);
+    }
+  }
+
+  @Override
+  public String getHelp() {
+    return String.join("\n", GET_USAGE)
+        + "\n\n"
+        + String.join("\n", CLOSE_USAGE.formatted(getNamespace(), getNamespace()));
+  }
 
   private File getFile(String url) {
     Path outFile;
@@ -54,15 +88,7 @@ public class FileModel extends AbstractFileModel {
 
   @Override
   public void get(String[] argv) throws IOException {
-    final String[] usage = {
-      "Load images remotely or locally", // NON-NLS
-      "Usage: image:get ([-f file]... [-u url]...)", // NON-NLS
-      "  -f --file=FILE     open an image from a file", // NON-NLS
-      "  -u --url=URL       open an image from an URL", // NON-NLS
-      "  -? --help          show help" // NON-NLS
-    };
-
-    final Option opt = Options.compile(usage).parse(argv);
+    final Option opt = Options.compile(GET_USAGE).parse(argv);
     final List<String> fargs = opt.getList("file"); // NON-NLS
     final List<String> uargs = opt.getList("url"); // NON-NLS
 

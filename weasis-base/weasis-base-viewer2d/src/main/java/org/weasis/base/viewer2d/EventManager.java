@@ -17,19 +17,17 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.prefs.Preferences;
 import javax.swing.ButtonGroup;
 import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
 import javax.swing.JSeparator;
 import javax.swing.KeyStroke;
-import org.osgi.framework.BundleContext;
-import org.osgi.service.prefs.Preferences;
 import org.weasis.core.api.gui.Insertable.Type;
 import org.weasis.core.api.gui.InsertableUtil;
 import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
-import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.gui.util.BasicActionState;
 import org.weasis.core.api.gui.util.ComboItemListener;
 import org.weasis.core.api.gui.util.Feature;
@@ -116,7 +114,7 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
     setAction(newPanAction());
     setAction(new BasicActionState(ActionW.RESET));
 
-    final BundleContext context = AppProperties.getBundleContext(this.getClass());
+    String context = GuiUtils.getUICore().getPluginManager().getPluginId(this.getClass());
     Preferences prefs = BundlePreferences.getDefaultPreferences(context);
     zoomSetting.applyPreferences(prefs);
     mouseActions.applyPreferences(prefs);
@@ -468,8 +466,9 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
     return true;
   }
 
-  public void savePreferences(BundleContext bundleContext) {
-    Preferences prefs = BundlePreferences.getDefaultPreferences(bundleContext);
+  public void savePreferences() {
+    String context = GuiUtils.getUICore().getPluginManager().getPluginId(this.getClass());
+    Preferences prefs = BundlePreferences.getDefaultPreferences(context);
     zoomSetting.savePreferences(prefs);
     // Mouse buttons preferences
     mouseActions.savePreferences(prefs);

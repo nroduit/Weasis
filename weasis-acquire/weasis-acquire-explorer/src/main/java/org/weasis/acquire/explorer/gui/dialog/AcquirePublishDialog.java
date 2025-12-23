@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Predicate;
+import java.util.prefs.Preferences;
 import java.util.stream.Collectors;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
@@ -37,14 +38,12 @@ import javax.swing.WindowConstants;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
 import net.miginfocom.swing.MigLayout;
-import org.osgi.service.prefs.Preferences;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.acquire.explorer.AcquireImageInfo;
 import org.weasis.acquire.explorer.AcquireManager;
 import org.weasis.acquire.explorer.AcquireMediaInfo;
 import org.weasis.acquire.explorer.DicomizeTask;
-import org.weasis.acquire.explorer.MediaImporterFactory;
 import org.weasis.acquire.explorer.Messages;
 import org.weasis.acquire.explorer.PublishDicomTask;
 import org.weasis.acquire.explorer.gui.central.meta.model.imp.AcquireGlobalMeta;
@@ -52,7 +51,7 @@ import org.weasis.acquire.explorer.gui.central.meta.model.imp.AcquireImageMeta;
 import org.weasis.acquire.explorer.gui.central.meta.model.imp.AcquireSeriesMeta;
 import org.weasis.acquire.explorer.gui.control.AcquirePublishPanel;
 import org.weasis.acquire.explorer.gui.model.publish.PublishTree;
-import org.weasis.core.api.gui.util.AppProperties;
+import org.weasis.acquire.explorer.internal.Activator;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.WinUtil;
 import org.weasis.core.api.image.ImageOpNode;
@@ -172,8 +171,8 @@ public class AcquirePublishDialog extends JDialog {
             Messages.getString("AcquirePublishDialog.resolution") + StringUtil.COLON_AND_SPACE),
         "split 2, span"); // NON-NLS
     resolutionCombo = new JComboBox<>(Resolution.values());
-    Preferences prefs =
-        BundlePreferences.getDefaultPreferences(AppProperties.getBundleContext(this.getClass()));
+    String plugInId = GuiUtils.getUICore().getPluginManager().getPluginId(this.getClass());
+    Preferences prefs = BundlePreferences.getDefaultPreferences(plugInId);
     if (prefs != null) {
       Preferences p = prefs.node(PREFERENCE_NODE);
       resolutionCombo.setSelectedItem(
@@ -253,7 +252,7 @@ public class AcquirePublishDialog extends JDialog {
         GuiUtils.getUICore().getSystemPreferences().getProperty("weasis.acquire.dest.host"))) {
       AbstractDicomNode.loadDicomNodes(comboNode, AbstractDicomNode.Type.DICOM, UsageType.STORAGE);
       AbstractDicomNode.loadDicomNodes(comboNode, AbstractDicomNode.Type.WEB, UsageType.STORAGE);
-      String desc = MediaImporterFactory.EXPORT_PERSISTENCE.getProperty(LAST_SEL_NODE);
+      String desc = Activator.EXPORT_PERSISTENCE.getProperty(LAST_SEL_NODE);
       AbstractDicomNode.selectDicomNode(comboNode.getModel(), desc);
 
       if (comboNode.getItemCount() == 0) {
@@ -268,7 +267,7 @@ public class AcquirePublishDialog extends JDialog {
     if (!StringUtil.hasText(weasisAet)) {
       AbstractDicomNode.loadDicomNodes(
           comboCallingNode, AbstractDicomNode.Type.DICOM_CALLING, UsageType.STORAGE);
-      String calling = MediaImporterFactory.EXPORT_PERSISTENCE.getProperty(LAST_CALLING_NODE);
+      String calling = Activator.EXPORT_PERSISTENCE.getProperty(LAST_CALLING_NODE);
       AbstractDicomNode.selectDicomNode(comboCallingNode.getModel(), calling);
     }
   }
@@ -456,15 +455,14 @@ public class AcquirePublishDialog extends JDialog {
   public void clearAndHide() {
     final AbstractDicomNode node = (AbstractDicomNode) comboNode.getSelectedItem();
     if (node != null) {
-      MediaImporterFactory.EXPORT_PERSISTENCE.setProperty(LAST_SEL_NODE, node.getDescription());
+      Activator.EXPORT_PERSISTENCE.setProperty(LAST_SEL_NODE, node.getDescription());
     }
     final AbstractDicomNode callingNode = (AbstractDicomNode) comboCallingNode.getSelectedItem();
     if (callingNode != null) {
-      MediaImporterFactory.EXPORT_PERSISTENCE.setProperty(
-          LAST_CALLING_NODE, callingNode.getDescription());
+      Activator.EXPORT_PERSISTENCE.setProperty(LAST_CALLING_NODE, callingNode.getDescription());
     }
-    Preferences prefs =
-        BundlePreferences.getDefaultPreferences(AppProperties.getBundleContext(this.getClass()));
+    String plugInId = GuiUtils.getUICore().getPluginManager().getPluginId(this.getClass());
+    Preferences prefs = BundlePreferences.getDefaultPreferences(plugInId);
     if (prefs != null) {
       Preferences p = prefs.node(PREFERENCE_NODE);
       Resolution resolution = (Resolution) resolutionCombo.getSelectedItem();

@@ -9,30 +9,27 @@
  */
 package org.weasis.dicom.send;
 
-import java.util.Hashtable;
-import java.util.Properties;
-import org.osgi.service.component.ComponentContext;
-import org.osgi.service.component.annotations.Activate;
-import org.osgi.service.component.annotations.Deactivate;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import java.util.Map;
+import org.pf4j.Extension;
 import org.weasis.core.api.gui.util.GuiUtils;
-import org.weasis.core.api.service.BundlePreferences;
-import org.weasis.core.util.PropertiesUtil;
 import org.weasis.dicom.explorer.DicomModel;
 import org.weasis.dicom.explorer.exp.CheckTreeModel;
 import org.weasis.dicom.explorer.exp.DicomExportFactory;
 import org.weasis.dicom.explorer.exp.ExportDicom;
+import org.weasis.plugin.PluginContext;
+import org.weasis.plugin.SingletonExtension;
+import org.weasis.plugin.WeasisPlugin;
 
-@org.osgi.service.component.annotations.Component(service = DicomExportFactory.class)
-public class SendDicomFactory implements DicomExportFactory {
+@Extension
+@SingletonExtension
+public class SendDicomFactory extends WeasisPlugin implements DicomExportFactory {
 
-  private static final Logger LOGGER = LoggerFactory.getLogger(SendDicomFactory.class);
-
-  static final Properties EXPORT_PERSISTENCE = new Properties();
+  public SendDicomFactory(PluginContext context) {
+    super(context);
+  }
 
   @Override
-  public ExportDicom createDicomExportPage(Hashtable<String, Object> properties) {
+  public ExportDicom createDicomExportPage(Map<String, Object> properties) {
     if (properties != null
         && GuiUtils.getUICore()
             .getSystemPreferences()
@@ -44,26 +41,5 @@ public class SendDicomFactory implements DicomExportFactory {
       }
     }
     return null;
-  }
-
-  // ================================================================================
-  // OSGI service implementation
-  // ================================================================================
-
-  @Activate
-  protected void activate(ComponentContext context) {
-    LOGGER.info("DICOM Send is activated");
-    PropertiesUtil.loadProperties(
-        BundlePreferences.getFileInDataFolder(context.getBundleContext(), "export.properties"),
-        EXPORT_PERSISTENCE);
-  }
-
-  @Deactivate
-  protected void deactivate(ComponentContext context) {
-    LOGGER.info("DICOM Send is deactivated");
-    PropertiesUtil.storeProperties(
-        BundlePreferences.getFileInDataFolder(context.getBundleContext(), "export.properties"),
-        EXPORT_PERSISTENCE,
-        null);
   }
 }

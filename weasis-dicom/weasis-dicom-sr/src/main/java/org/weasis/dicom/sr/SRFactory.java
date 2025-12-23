@@ -11,8 +11,7 @@ package org.weasis.dicom.sr;
 
 import java.util.Map;
 import javax.swing.Icon;
-import org.osgi.service.component.ComponentContext;
-import org.osgi.service.component.annotations.Deactivate;
+import org.pf4j.Extension;
 import org.weasis.core.api.explorer.DataExplorerView;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.media.data.MediaElement;
@@ -25,14 +24,10 @@ import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin.LayoutModel;
 import org.weasis.dicom.explorer.main.DicomExplorer;
 
-@org.osgi.service.component.annotations.Component(service = SeriesViewerFactory.class)
+@Extension
 public class SRFactory implements SeriesViewerFactory {
 
   public static final String NAME = Messages.getString("SRFactory.viewer");
-
-  public SRFactory() {
-    super();
-  }
 
   @Override
   public Icon getIcon() {
@@ -93,14 +88,5 @@ public class SRFactory implements SeriesViewerFactory {
   @Override
   public boolean canReadSeries(MediaSeries<?> series) {
     return series != null;
-  }
-
-  // ================================================================================
-  // OSGI service implementation
-  // ================================================================================
-
-  @Deactivate
-  protected void deactivate(ComponentContext context) {
-    GuiUtils.getUICore().closeSeriesViewerType(SRContainer.class);
   }
 }

@@ -51,6 +51,7 @@ import org.weasis.dicom.explorer.DicomModel;
 import org.weasis.dicom.explorer.exp.CheckTreeModel;
 import org.weasis.dicom.explorer.exp.ExplorerTask;
 import org.weasis.dicom.explorer.exp.LocalExport;
+import org.weasis.dicom.isowriter.internal.Activator;
 
 public class IsoImageExport extends LocalExport {
 
@@ -97,7 +98,7 @@ public class IsoImageExport extends LocalExport {
   }
 
   protected Properties getPreferences() {
-    return ExportIsoFactory.EXPORT_PERSISTENCE;
+    return Activator.EXPORT_PERSISTENCE;
   }
 
   public void resetSettingsToDefault() {

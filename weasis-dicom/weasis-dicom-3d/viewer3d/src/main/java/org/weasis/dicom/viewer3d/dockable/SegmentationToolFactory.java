@@ -9,7 +9,7 @@
  */
 package org.weasis.dicom.viewer3d.dockable;
 
-import java.util.Hashtable;
+import java.util.Map;
 import java.util.Set;
 import org.dcm4che3.data.Tag;
 import org.weasis.core.api.gui.Insertable;
@@ -43,7 +43,7 @@ public class SegmentationToolFactory extends ExtToolFactory<DicomImageElement> {
   }
 
   @Override
-  protected boolean isCompatible(Hashtable<String, Object> properties) {
+  protected boolean isCompatible(Map<String, Object> properties) {
     Object val = null;
     if (properties != null) {
       val = properties.get(MediaSeries.class.getName());
@@ -62,7 +62,7 @@ public class SegmentationToolFactory extends ExtToolFactory<DicomImageElement> {
   }
 
   @Override
-  protected Insertable getInstance(Hashtable<String, Object> properties) {
+  protected Insertable getInstance(Map<String, Object> properties) {
     return new SegmentationTool();
   }
 }

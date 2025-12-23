@@ -36,7 +36,6 @@ import javax.swing.JOptionPane;
 import javax.swing.ListSelectionModel;
 import javax.swing.SwingUtilities;
 import javax.swing.plaf.basic.BasicComboPopup;
-import org.osgi.framework.BundleContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.Messages;
@@ -574,9 +573,10 @@ public class Launcher {
 
   static void saveLaunchers(Type type) {
     List<Launcher> list = getLaunchers(type);
-    final BundleContext context = AppProperties.getBundleContext(Launcher.class);
     try {
-      File file = BundlePreferences.getFileInDataFolder(context, type.getFilename()).toFile();
+      File file =
+          BundlePreferences.getFileInDataFolder(AppProperties.CORE_PLUGIN_ID, type.getFilename())
+              .toFile();
       ObjectMapper mapper = new ObjectMapper();
       mapper.writeValue(file, list);
     } catch (IOException e) {
@@ -669,10 +669,11 @@ public class Launcher {
   public static List<Launcher> loadLaunchers(Type type) {
     List<Launcher> list = new ArrayList<>();
     loadLaunchers(list, ResourceUtil.getResource(type.getFilename()), false);
-    AppProperties.getBundleContext(Launcher.class);
-    final BundleContext context = AppProperties.getBundleContext(Launcher.class);
     loadLaunchers(
-        list, BundlePreferences.getFileInDataFolder(context, type.getFilename()).toFile(), true);
+        list,
+        BundlePreferences.getFileInDataFolder(AppProperties.CORE_PLUGIN_ID, type.getFilename())
+            .toFile(),
+        true);
     return list;
   }
 

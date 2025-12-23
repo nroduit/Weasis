@@ -9,7 +9,6 @@ import java.awt.Component;
 import java.util.Objects;
 import javax.swing.BorderFactory;
 import javax.swing.JScrollPane;
-import javax.swing.JViewport;
 import org.weasis.core.ui.docking.PluginTool;
 
 public class SampleTool extends PluginTool {

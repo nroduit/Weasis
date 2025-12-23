@@ -20,10 +20,9 @@ import javax.xml.stream.XMLStreamConstants;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
 import javax.xml.stream.XMLStreamWriter;
-import org.osgi.framework.BundleContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.weasis.core.api.gui.util.AppProperties;
+import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.service.BundlePreferences;
 import org.weasis.core.util.StreamUtil;
 import org.weasis.core.util.StringUtil;
@@ -132,8 +131,8 @@ public class SearchParameters {
   public static List<SearchParameters> loadSearchParameters() {
     List<SearchParameters> list = new ArrayList<>();
 
-    final BundleContext context = AppProperties.getBundleContext(DicomQrView.class);
-    File file = BundlePreferences.getFileInDataFolder(context, FILENAME).toFile();
+    String plugInId = GuiUtils.getUICore().getPluginManager().getPluginId(DicomQrView.class);
+    File file = BundlePreferences.getFileInDataFolder(plugInId, FILENAME).toFile();
     if (file.canRead()) {
       XMLStreamReader xmler = null;
       try {

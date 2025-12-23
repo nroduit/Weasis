@@ -13,16 +13,14 @@ import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Window;
 import java.util.ArrayList;
+import java.util.List;
 import javax.swing.JButton;
 import javax.swing.tree.DefaultMutableTreeNode;
-import org.osgi.framework.BundleContext;
-import org.osgi.framework.ServiceReference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.InsertableUtil;
 import org.weasis.core.api.gui.util.AbstractItemDialogPage;
 import org.weasis.core.api.gui.util.AbstractWizardDialog;
-import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.PageItem;
 import org.weasis.dicom.explorer.*;
@@ -78,11 +76,10 @@ public class DicomImport extends AbstractWizardDialog {
     list.add(new DicomZipImport());
     list.add(new DicomDirImport());
 
-    BundleContext context = AppProperties.getBundleContext(this.getClass());
     try {
-      for (ServiceReference<DicomImportFactory> service :
-          context.getServiceReferences(DicomImportFactory.class, null)) {
-        DicomImportFactory factory = context.getService(service);
+      List<DicomImportFactory> factories =
+          GuiUtils.getUICore().getPluginManager().getExtensions(DicomImportFactory.class);
+      for (DicomImportFactory factory : factories) {
         if (factory != null) {
           ImportDicom page = factory.createDicomImportPage(null);
           if (page instanceof AbstractItemDialogPage dialogPage) {

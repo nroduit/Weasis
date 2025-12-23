@@ -10,17 +10,12 @@
 package org.weasis.core.api.gui.util;
 
 import com.formdev.flatlaf.util.SystemInfo;
+import com.github.zafarkhaja.semver.Version;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Optional;
-import org.osgi.framework.Bundle;
-import org.osgi.framework.BundleContext;
-import org.osgi.framework.FrameworkUtil;
-import org.osgi.framework.ServiceReference;
-import org.osgi.framework.Version;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.util.FileUtil;
@@ -31,6 +26,8 @@ public final class AppProperties {
   private static final Logger LOGGER = LoggerFactory.getLogger(AppProperties.class);
 
   private static final String UNKNOWN = "unknown"; // NON-NLS
+
+  public static final String CORE_PLUGIN_ID = "weasis-core"; // NON-NLS
 
   /** The version of the application (for display) */
   public static final String WEASIS_VERSION =
@@ -117,36 +114,6 @@ public final class AppProperties {
     return Paths.get(weasisPath);
   }
 
-  /** Gets the bundle context for the AppProperties class. */
-  public static BundleContext getBundleContext() {
-    return getBundleContext(AppProperties.class);
-  }
-
-  /** Gets the bundle context for the specified class. */
-  public static BundleContext getBundleContext(Class<?> cl) {
-    return Optional.ofNullable(FrameworkUtil.getBundle(cl))
-        .map(Bundle::getBundleContext)
-        .orElse(null);
-  }
-
-  /** Gets the bundle context from a service reference. */
-  public static BundleContext getBundleContext(ServiceReference<?> sRef) {
-    if (sRef == null) {
-      return null;
-    }
-
-    Bundle bundle = sRef.getBundle();
-    return bundle != null ? bundle.getBundleContext() : getBundleContext();
-  }
-
-  /** Gets the bundle data folder path for the given bundle context. */
-  public static Path getBundleDataFolder(BundleContext context) {
-    if (context == null) {
-      return null;
-    }
-    return WEASIS_PATH.resolve("data").resolve(context.getBundle().getSymbolicName());
-  }
-
   /**
    * Builds a directory path within the application's temporary directory, creating it if it does
    * not exist. If no subfolder names are provided, returns the main temporary directory.
@@ -193,19 +160,8 @@ public final class AppProperties {
    */
   public static Version getVersion(String version) {
     if (!StringUtil.hasText(version)) {
-      return new Version("0.0.0");
+      return Version.of(0);
     }
-
-    String cleanVersion = extractVersionNumber(version);
-    return new Version(cleanVersion);
-  }
-
-  private static String extractVersionNumber(String version) {
-    int start = version.startsWith("v") ? 1 : 0; // NON-NLS
-    int end = version.indexOf('-');
-    if (end < 0) {
-      end = version.length();
-    }
-    return end > start ? version.substring(start, end) : "0.0.0";
+    return Version.parse(version);
   }
 }

@@ -2,7 +2,6 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0"
   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
-  <modelVersion>4.0.0</modelVersion>
   <parent>
     <artifactId>weasis-dicom-parent</artifactId>
     <groupId>org.weasis.dicom</groupId>
@@ -10,35 +9,29 @@
     <version>${revision}${changelist}</version>
     <relativePath>../weasis-dicom-parent/pom.xml</relativePath>
   </parent>
+
+  <modelVersion>4.0.0</modelVersion>
   <artifactId>weasis-dicom-rt</artifactId>
   <packaging>jar</packaging>
   <name>DICOM - Viewer for RTs (radiotherapy) [${project.artifactId}]</name>
-  <properties>
-    <math3.version>3.6.1</math3.version>
-  </properties>
+
   <build>
     <plugins>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-dependency-plugin</artifactId>
-        <executions>
-          <execution>
-            <id>copy-dependency</id>
-            <goals>
-              <goal>copy-dependencies</goal>
-            </goals>
-            <configuration>
-              <includeArtifactIds>commons-math3</includeArtifactIds>
-            </configuration>
-          </execution>
-        </executions>
-      </plugin>
-      <plugin>
-        <groupId>biz.aQute.bnd</groupId>
-        <artifactId>bnd-maven-plugin</artifactId>
+        <artifactId>maven-jar-plugin</artifactId>
+        <configuration>
+          <archive>
+            <manifestEntries>
+              <Plugin-Class>org.weasis.dicom.rt.internal.Activator</Plugin-Class>
+              <Plugin-Dependencies>weasis-dicom-viewer2d</Plugin-Dependencies>
+            </manifestEntries>
+          </archive>
+        </configuration>
       </plugin>
     </plugins>
   </build>
+
   <dependencies>
     <dependency>
       <groupId>org.weasis.dicom</groupId>

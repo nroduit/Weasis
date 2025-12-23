@@ -9,6 +9,7 @@
     <version>${revision}${changelist}</version>
     <relativePath>../weasis-base-parent/pom.xml</relativePath>
   </parent>
+
   <modelVersion>4.0.0</modelVersion>
   <artifactId>weasis-base-explorer</artifactId>
   <packaging>jar</packaging>
@@ -17,12 +18,14 @@
   <build>
     <plugins>
       <plugin>
-        <groupId>biz.aQute.bnd</groupId>
-        <artifactId>bnd-maven-plugin</artifactId>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-jar-plugin</artifactId>
         <configuration>
-          <bnd>
-            Export-Package: org.weasis.base.explorer.*
-          </bnd>
+          <archive>
+            <manifestEntries>
+              <Plugin-Class>org.weasis.base.explorer.internal.Activator</Plugin-Class>
+            </manifestEntries>
+          </archive>
         </configuration>
       </plugin>
     </plugins>

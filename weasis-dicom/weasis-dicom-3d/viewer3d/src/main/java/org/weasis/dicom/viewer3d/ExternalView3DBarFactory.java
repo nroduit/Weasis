@@ -9,17 +9,18 @@
  */
 package org.weasis.dicom.viewer3d;
 
-import java.util.Hashtable;
+import java.util.Map;
+import org.pf4j.Extension;
 import org.weasis.core.api.gui.Insertable;
 import org.weasis.core.api.gui.InsertableFactory;
+import org.weasis.plugin.SingletonExtension;
 
-@org.osgi.service.component.annotations.Component(
-    service = InsertableFactory.class,
-    property = {"org.weasis.dicom.viewer2d.View2dContainer=true"})
+@Extension
+@SingletonExtension
 public class ExternalView3DBarFactory implements InsertableFactory {
 
   @Override
-  public Insertable createInstance(Hashtable<String, Object> properties) {
+  public Insertable createInstance(Map<String, Object> properties) {
     return new ExternalView3DToolbar(60);
   }
 

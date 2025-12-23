@@ -19,6 +19,7 @@ import javax.swing.Action;
 import javax.swing.Icon;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
+import org.pf4j.Extension;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.ActionW;
@@ -43,8 +44,10 @@ import org.weasis.core.ui.editor.ViewerPluginBuilder;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin.LayoutModel;
 import org.weasis.core.ui.util.DefaultAction;
+import org.weasis.plugin.SingletonExtension;
 
-@org.osgi.service.component.annotations.Component(service = SeriesViewerFactory.class)
+@Extension
+@SingletonExtension
 public class ViewerFactory implements SeriesViewerFactory {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(ViewerFactory.class);
@@ -165,9 +168,10 @@ public class ViewerFactory implements SeriesViewerFactory {
       for (File file : selectedFiles) {
         String mimeType = MimeInspector.getMimeType(file);
         if (mimeType != null && mimeType.startsWith("image")) {
-          Codec<?> codec = BundleTools.getCodec(mimeType, null);
+          Codec<? extends MediaElement> codec = BundleTools.getCodec(mimeType, null);
           if (codec != null) {
-            MediaReader<?> reader = codec.getMediaIO(file.toURI(), mimeType, null);
+            MediaReader<? extends MediaElement> reader =
+                codec.getMediaIO(file.toURI(), mimeType, null);
             if (reader != null) {
               if (series == null) {
                 // TODO improve group model for image, uid for group ?
@@ -179,7 +183,7 @@ public class ViewerFactory implements SeriesViewerFactory {
                   }
                 }
               } else {
-                MediaElement[] elements = reader.getMediaElement();
+                var elements = reader.getMediaElement();
                 if (elements != null) {
                   for (MediaElement media : elements) {
                     series.addMedia(media);

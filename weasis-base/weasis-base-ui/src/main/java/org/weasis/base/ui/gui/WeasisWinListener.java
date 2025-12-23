@@ -10,17 +10,16 @@
 package org.weasis.base.ui.gui;
 
 import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import org.osgi.service.component.ComponentContext;
-import org.osgi.service.component.annotations.Activate;
-import org.osgi.service.component.annotations.Deactivate;
-import org.osgi.service.component.annotations.Reference;
-import org.osgi.service.component.annotations.ReferenceCardinality;
-import org.osgi.service.component.annotations.ReferencePolicy;
+import org.pf4j.PluginManager;
+import org.pf4j.PluginState;
+import org.pf4j.PluginStateEvent;
+import org.pf4j.PluginStateListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.DataExplorerView;
@@ -34,7 +33,6 @@ import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
-import org.weasis.core.api.service.BundlePreferences;
 import org.weasis.core.ui.docking.DockableTool;
 import org.weasis.core.ui.docking.PluginTool;
 import org.weasis.core.ui.editor.SeriesViewerFactory;
@@ -45,16 +43,13 @@ import org.weasis.core.ui.util.Toolbar;
 import org.weasis.core.util.LangUtil;
 import org.weasis.core.util.StringUtil;
 
-@org.osgi.service.component.annotations.Component(
-    service = MainWindowListener.class,
-    immediate = true)
-public class WeasisWinListener implements MainWindowListener {
+public class WeasisWinListener implements PropertyChangeListener, PluginStateListener {
   private static final Logger LOGGER = LoggerFactory.getLogger(WeasisWinListener.class);
-  private WeasisWin mainWindow;
+  private final WeasisWin mainWindow;
 
-  @Override
-  public void setMainWindow(WeasisWin mainWindow) {
+  public WeasisWinListener(WeasisWin mainWindow) {
     this.mainWindow = mainWindow;
+    activate();
   }
 
   @Override
@@ -119,7 +114,7 @@ public class WeasisWinListener implements MainWindowListener {
                       && builder.getFactory().isViewerCreatedByThisFactory(selectedPlugin);
 
               if (series.size() == 1) {
-                MediaSeries<MediaElement> s = series.get(0);
+                MediaSeries<MediaElement> s = series.getFirst();
                 MediaSeriesGroup group =
                     treeModel.getParent(s, model.getTreeModelNodeForNewPlugin());
                 if (inSelView && !s.getMimeType().contains("dicom")) { // NON-NLS
@@ -138,7 +133,7 @@ public class WeasisWinListener implements MainWindowListener {
                     List<MediaSeries<?>> seriesList = entry.getValue();
                     if (!seriesList.isEmpty()) {
                       // Change the group attribution. DO NOT use it with DICOM.
-                      if (!seriesList.get(0).getMimeType().contains("dicom")) { // NON-NLS
+                      if (!seriesList.getFirst().getMimeType().contains("dicom")) { // NON-NLS
                         group = selectedPlugin.getGroupID();
                       }
                     }
@@ -188,31 +183,55 @@ public class WeasisWinListener implements MainWindowListener {
   }
 
   // ================================================================================
-  // OSGI service implementation
+  // Lifecycle methods
   // ================================================================================
 
-  @Activate
-  protected void activate(ComponentContext context) {
+  public void activate() {
     LOGGER.info("Activate the main window PropertyChangeListener");
     // Register default model
     ViewerPluginBuilder.DefaultDataModel.addPropertyChangeListener(this);
-    mainWindow = BundlePreferences.getService(context.getBundleContext(), WeasisWin.class);
+    monitorDataExplorerFactories();
   }
 
-  @Deactivate
-  protected void deactivate(ComponentContext context) {
+  public void deactivate() {
     // UnRegister default model
     ViewerPluginBuilder.DefaultDataModel.removePropertyChangeListener(this);
+    GuiUtils.getUICore().getPluginManager().removePluginStateListener(this);
     LOGGER.info("Deactivate the main window PropertyChangeListener");
   }
 
-  @Reference(
-      service = DataExplorerViewFactory.class,
-      cardinality = ReferenceCardinality.MULTIPLE,
-      policy = ReferencePolicy.DYNAMIC,
-      unbind = "removeDataExplorer")
-  void addDataExplorer(DataExplorerViewFactory factory) {
+  public void monitorDataExplorerFactories() {
+    PluginManager pluginManager = GuiUtils.getUICore().getPluginManager();
 
+    // Get all DataExplorerViewFactory extensions
+    List<DataExplorerViewFactory> factories =
+        pluginManager.getExtensions(DataExplorerViewFactory.class);
+
+    pluginManager.addPluginStateListener(this);
+
+    for (DataExplorerViewFactory factory : factories) {
+      addDataExplorer(factory);
+    }
+  }
+
+  @Override
+  public void pluginStateChanged(PluginStateEvent event) {
+    if (event.getPluginState() == PluginState.STARTED) {
+      List<DataExplorerViewFactory> newFactories =
+          GuiUtils.getUICore()
+              .getPluginManager()
+              .getExtensions(DataExplorerViewFactory.class, event.getPlugin().getPluginId());
+      newFactories.forEach(this::addDataExplorer);
+    } else if (event.getPluginState() == PluginState.STOPPED) {
+      List<DataExplorerViewFactory> removedFactories =
+          GuiUtils.getUICore()
+              .getPluginManager()
+              .getExtensions(DataExplorerViewFactory.class, event.getPlugin().getPluginId());
+      removedFactories.forEach(this::removeDataExplorer);
+    }
+  }
+
+  public void addDataExplorer(DataExplorerViewFactory factory) {
     String className1 =
         GuiUtils.getUICore().getSystemPreferences().getProperty(factory.getClass().getName());
     if (!StringUtil.hasText(className1) || Boolean.parseBoolean(className1)) {
@@ -220,7 +239,7 @@ public class WeasisWinListener implements MainWindowListener {
     }
   }
 
-  void removeDataExplorer(DataExplorerViewFactory factory) {
+  public void removeDataExplorer(DataExplorerViewFactory factory) {
     GuiExecutor.execute(
         () -> {
           final DataExplorerView explorer = factory.createDataExplorerView(null);

@@ -28,12 +28,10 @@ import javax.swing.JComponent;
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
-import org.osgi.framework.BundleContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.ObservableEvent;
 import org.weasis.core.api.gui.InsertableUtil;
-import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.image.GridBagLayoutModel;
@@ -144,19 +142,18 @@ public class WaveContainer extends DicomViewerPlugin implements PropertyChangeLi
     if (!UI.init.getAndSet(true)) {
       List<Toolbar> toolBars = UI.toolBars;
       // Add standard toolbars
-      final BundleContext context = AppProperties.getBundleContext(this.getClass());
-      if (context == null) {
+      String plugInId = GuiUtils.getUICore().getPluginManager().getPluginId(this.getClass());
+      if (plugInId == null) {
         LOGGER.error("Cannot get BundleContext");
         return;
       }
-      String bundleName = context.getBundle().getSymbolicName();
       String componentName = InsertableUtil.getCName(this.getClass());
       String key = "enable"; // NON-NLS
       WProperties preferences = GuiUtils.getUICore().getSystemPreferences();
 
       if (InsertableUtil.getBooleanProperty(
           preferences,
-          bundleName,
+          plugInId,
           componentName,
           InsertableUtil.getCName(ImportToolBar.class),
           key,
@@ -169,7 +166,7 @@ public class WaveContainer extends DicomViewerPlugin implements PropertyChangeLi
       }
       if (InsertableUtil.getBooleanProperty(
           preferences,
-          bundleName,
+          plugInId,
           componentName,
           InsertableUtil.getCName(ExportToolBar.class),
           key,
@@ -182,7 +179,7 @@ public class WaveContainer extends DicomViewerPlugin implements PropertyChangeLi
       }
       if (InsertableUtil.getBooleanProperty(
           preferences,
-          bundleName,
+          plugInId,
           componentName,
           InsertableUtil.getCName(WaveformToolBar.class),
           key,
@@ -191,7 +188,7 @@ public class WaveContainer extends DicomViewerPlugin implements PropertyChangeLi
       }
       if (InsertableUtil.getBooleanProperty(
           preferences,
-          bundleName,
+          plugInId,
           componentName,
           InsertableUtil.getCName(LauncherToolBar.class),
           key,
@@ -202,7 +199,7 @@ public class WaveContainer extends DicomViewerPlugin implements PropertyChangeLi
       PluginTool tool;
       if (InsertableUtil.getBooleanProperty(
           preferences,
-          bundleName,
+          plugInId,
           componentName,
           InsertableUtil.getCName(MeasureTool.class),
           key,

@@ -26,7 +26,6 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
@@ -43,6 +42,7 @@ import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.ElementDictionary;
 import org.dcm4che3.data.Tag;
 import org.dcm4che3.data.VR;
+import org.pf4j.Extension;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
@@ -51,6 +51,7 @@ import org.w3c.dom.NodeList;
 import org.weasis.acquire.explorer.core.bean.DefaultTaggable;
 import org.weasis.acquire.explorer.core.bean.Global;
 import org.weasis.acquire.explorer.core.bean.SeriesGroup;
+import org.weasis.core.api.command.CommandExtension;
 import org.weasis.core.api.command.Option;
 import org.weasis.core.api.command.Options;
 import org.weasis.core.api.explorer.ObservableEvent;
@@ -78,14 +79,10 @@ import org.weasis.dicom.codec.TagSeq;
 import org.weasis.dicom.param.DicomNode;
 import org.xml.sax.SAXException;
 
-/**
- * @author Yannick LARVOR
- * @since 2.5.0
- */
-public class AcquireManager {
+@Extension
+public class AcquireManager implements CommandExtension {
   private static final Logger LOGGER = LoggerFactory.getLogger(AcquireManager.class);
 
-  public static final List<String> functions = Collections.singletonList("patient"); // NON-NLS
   public static final Global GLOBAL = new Global();
 
   private static final int OPT_NONE = 0;
@@ -101,16 +98,47 @@ public class AcquireManager {
   private static final Map<String, AcquireMediaInfo> uidToMediaInfoMap = new HashMap<>();
   private static final Map<URI, AcquireMediaInfo> uriToMediaInfoMap = new HashMap<>();
 
+  private static final String GET_USAGE =
+      """
+          Load Patient Context from the first argument
+          Usage: acquire:patient (-x | -i | -s | -u) arg
+          arg is an XML text in UTF8 or an url with the option '--url'
+            -x --xml         Open Patient Context from an XML data containing all DICOM Tags
+            -i --inbound     Open Patient Context from an XML data containing all DICOM Tags, decoding syntax is [Base64/GZip]
+            -s --iurlsafe    Open Patient Context from an XML data containing all DICOM Tags, decoding syntax is [Base64_URL_SAFE/GZip]
+            -u --url         Open Patient Context from an URL (XML file containing all DICOM TAGs)
+            -? --help        show help
+          """;
+
   private AcquireImageInfo currentAcquireImageInfo = null;
   private ViewCanvas<ImageElement> currentView = null;
 
   private PropertyChangeSupport propertyChange = null;
   private AcquireExplorer acquireExplorer = null;
 
-  private AcquireManager() {}
+  public AcquireManager() {}
 
   public static AcquireManager getInstance() {
     return instance;
+  }
+
+  @Override
+  public String getNamespace() {
+    return "acquire";
+  }
+
+  @Override
+  public void execute(String commandName, String[] args) throws Exception {
+    if (commandName.equals("patient")) {
+      patient(args);
+    } else {
+      throw new IllegalArgumentException("Unknown command: " + commandName);
+    }
+  }
+
+  @Override
+  public String getHelp() {
+    return String.join("\n", GET_USAGE) + "\n";
   }
 
   public static AcquireImageInfo getCurrentAcquireImageInfo() {

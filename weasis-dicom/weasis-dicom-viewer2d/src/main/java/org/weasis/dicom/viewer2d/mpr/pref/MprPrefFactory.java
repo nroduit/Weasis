@@ -9,16 +9,19 @@
  */
 package org.weasis.dicom.viewer2d.mpr.pref;
 
-import java.util.Hashtable;
+import java.util.Map;
+import org.pf4j.Extension;
 import org.weasis.core.api.gui.Insertable;
 import org.weasis.core.api.gui.PreferencesPageFactory;
 import org.weasis.core.api.gui.util.AbstractItemDialogPage;
+import org.weasis.plugin.SingletonExtension;
 
-@org.osgi.service.component.annotations.Component(service = PreferencesPageFactory.class)
+@Extension
+@SingletonExtension
 public class MprPrefFactory implements PreferencesPageFactory {
 
   @Override
-  public AbstractItemDialogPage createInstance(Hashtable<String, Object> properties) {
+  public AbstractItemDialogPage createInstance(Map<String, Object> properties) {
     return new MprPrefView();
   }
 

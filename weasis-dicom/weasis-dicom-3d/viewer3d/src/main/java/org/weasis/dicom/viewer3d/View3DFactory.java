@@ -26,9 +26,7 @@ import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
-import org.osgi.service.component.ComponentContext;
-import org.osgi.service.component.annotations.Activate;
-import org.osgi.service.component.annotations.Deactivate;
+import org.pf4j.Extension;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.DataExplorerView;
@@ -54,8 +52,10 @@ import org.weasis.dicom.codec.DicomMediaIO;
 import org.weasis.dicom.explorer.main.DicomExplorer;
 import org.weasis.dicom.viewer2d.EventManager;
 import org.weasis.dicom.viewer3d.vr.OpenglUtils;
+import org.weasis.plugin.SingletonExtension;
 
-@org.osgi.service.component.annotations.Component(service = SeriesViewerFactory.class)
+@Extension
+@SingletonExtension
 public class View3DFactory implements SeriesViewerFactory {
   private static final Logger LOGGER = LoggerFactory.getLogger(View3DFactory.class);
 
@@ -68,6 +68,32 @@ public class View3DFactory implements SeriesViewerFactory {
   private static final String JOGL_THREAD_CONFIG = "jogl.1thread";
 
   private static OpenGLInfo openGLInfo;
+
+  public View3DFactory() {
+    LOGGER.info("3D Viewer is activated");
+    String joglThreadConfig =
+        GuiUtils.getUICore().getSystemPreferences().getProperty(JOGL_THREAD_CONFIG);
+    if (StringUtil.hasText(joglThreadConfig)) {
+      System.setProperty(JOGL_THREAD_CONFIG, joglThreadConfig);
+      LOGGER.debug("Custom " + JOGL_THREAD_CONFIG + " value: {}", joglThreadConfig);
+    }
+
+    WProperties prefs = GuiUtils.getUICore().getLocalPersistence();
+    if (GuiUtils.getUICore().getSystemPreferences().getBooleanProperty("weasis.force.3d", false)) {
+      prefs.putBooleanProperty(P_OPENGL_PREV_INIT, true);
+      prefs.putBooleanProperty(P_OPENGL_ENABLE, true);
+    }
+
+    boolean openglPrevInit = prefs.getBooleanProperty(P_OPENGL_PREV_INIT, true);
+    if (!openglPrevInit && isOpenglEnable()) {
+      LOGGER.info("Do not enable OpenGL because of the last initialization has failed.");
+      prefs.putBooleanProperty(P_OPENGL_ENABLE, false);
+    }
+
+    if (isOpenglEnable()) {
+      getOpenGLInfo();
+    }
+  }
 
   @Override
   public Icon getIcon() {
@@ -282,41 +308,5 @@ public class View3DFactory implements SeriesViewerFactory {
         panel,
         Messages.getString("opengl.error"),
         JOptionPane.ERROR_MESSAGE);
-  }
-
-  // ================================================================================
-  // OSGI service implementation
-  // ================================================================================
-
-  @Activate
-  protected void activate(ComponentContext context) throws Exception {
-    LOGGER.info("3D Viewer is activated");
-    String joglThreadConfig =
-        GuiUtils.getUICore().getSystemPreferences().getProperty(JOGL_THREAD_CONFIG);
-    if (StringUtil.hasText(joglThreadConfig)) {
-      System.setProperty(JOGL_THREAD_CONFIG, joglThreadConfig);
-      LOGGER.debug("Custom " + JOGL_THREAD_CONFIG + " value: {}", joglThreadConfig);
-    }
-
-    WProperties prefs = GuiUtils.getUICore().getLocalPersistence();
-    if (GuiUtils.getUICore().getSystemPreferences().getBooleanProperty("weasis.force.3d", false)) {
-      prefs.putBooleanProperty(P_OPENGL_PREV_INIT, true);
-      prefs.putBooleanProperty(P_OPENGL_ENABLE, true);
-    }
-
-    boolean openglPrevInit = prefs.getBooleanProperty(P_OPENGL_PREV_INIT, true);
-    if (!openglPrevInit && isOpenglEnable()) {
-      LOGGER.info("Do not enable OpenGL because of the last initialization has failed.");
-      prefs.putBooleanProperty(P_OPENGL_ENABLE, false);
-    }
-
-    if (isOpenglEnable()) {
-      getOpenGLInfo();
-    }
-  }
-
-  @Deactivate
-  protected void deactivate(ComponentContext context) {
-    LOGGER.info("3D Viewer is deactivated");
   }
 }

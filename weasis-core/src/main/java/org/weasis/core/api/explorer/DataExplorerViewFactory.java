@@ -9,10 +9,11 @@
  */
 package org.weasis.core.api.explorer;
 
-import java.util.Hashtable;
+import java.util.Map;
+import org.pf4j.ExtensionPoint;
 
 @FunctionalInterface
-public interface DataExplorerViewFactory {
+public interface DataExplorerViewFactory extends ExtensionPoint {
 
   /**
    * Creates a new DataExplorerView object. It should be a unique instance.
@@ -20,5 +21,5 @@ public interface DataExplorerViewFactory {
    * @param properties the properties. Can be null.
    * @return the explorer view
    */
-  DataExplorerView createDataExplorerView(Hashtable<String, Object> properties);
+  DataExplorerView createDataExplorerView(Map<String, Object> properties);
 }

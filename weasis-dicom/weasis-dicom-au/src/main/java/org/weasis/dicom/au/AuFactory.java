@@ -11,8 +11,7 @@ package org.weasis.dicom.au;
 
 import java.util.Map;
 import javax.swing.Icon;
-import org.osgi.service.component.ComponentContext;
-import org.osgi.service.component.annotations.Deactivate;
+import org.pf4j.Extension;
 import org.weasis.core.api.explorer.DataExplorerView;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.media.data.MediaSeries;
@@ -23,8 +22,10 @@ import org.weasis.core.ui.editor.SeriesViewerFactory;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin.LayoutModel;
 import org.weasis.dicom.explorer.main.DicomExplorer;
+import org.weasis.plugin.SingletonExtension;
 
-@org.osgi.service.component.annotations.Component(service = SeriesViewerFactory.class)
+@Extension
+@SingletonExtension
 public class AuFactory implements SeriesViewerFactory {
 
   public static final String NAME = "DICOM AU"; // NON-NLS
@@ -93,14 +94,5 @@ public class AuFactory implements SeriesViewerFactory {
   @Override
   public boolean canReadSeries(MediaSeries<?> series) {
     return series != null;
-  }
-
-  // ================================================================================
-  // OSGI service implementation
-  // ================================================================================
-
-  @Deactivate
-  protected void deactivate(ComponentContext context) {
-    GuiUtils.getUICore().closeSeriesViewerType(AuContainer.class);
   }
 }

@@ -9,21 +9,21 @@
  */
 package org.weasis.base.explorer;
 
-import java.util.Hashtable;
-import org.osgi.service.component.ComponentContext;
-import org.osgi.service.component.annotations.Activate;
-import org.osgi.service.component.annotations.Deactivate;
+import java.util.Map;
+import org.pf4j.Extension;
 import org.weasis.core.api.explorer.DataExplorerView;
 import org.weasis.core.api.explorer.DataExplorerViewFactory;
+import org.weasis.plugin.SingletonExtension;
 
-@org.osgi.service.component.annotations.Component(service = DataExplorerViewFactory.class)
+@Extension
+@SingletonExtension
 public class DefaultExplorerFactory implements DataExplorerViewFactory {
 
   private DefaultExplorer explorer = null;
   private FileTreeModel model = null;
 
   @Override
-  public DataExplorerView createDataExplorerView(Hashtable<String, Object> properties) {
+  public DataExplorerView createDataExplorerView(Map<String, Object> properties) {
     if (model == null) {
       model = JIUtility.createTreeModel();
     }
@@ -35,19 +35,7 @@ public class DefaultExplorerFactory implements DataExplorerViewFactory {
     return explorer;
   }
 
-  // ================================================================================
-  // OSGI service implementation
-  // ================================================================================
-
-  @Activate
-  protected void activate(ComponentContext context) {
-    if (model == null) {
-      model = JIUtility.createTreeModel();
-    }
-  }
-
-  @Deactivate
-  protected void deactivate(ComponentContext context) {
+  public void stop() {
     if (explorer != null) {
       explorer.saveLastPath();
     }

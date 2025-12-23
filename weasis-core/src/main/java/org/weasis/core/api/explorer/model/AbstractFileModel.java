@@ -28,13 +28,21 @@ import org.weasis.core.api.media.data.*;
 public abstract class AbstractFileModel implements TreeModel, DataExplorerModel {
   private static final Logger LOGGER = LoggerFactory.getLogger(AbstractFileModel.class);
 
-  public static final List<String> functions = List.of("get", "close"); // NON-NLS
-
   public static final String NAME = "All Files"; // NON-NLS
   public static final TreeModelNode group =
       new TreeModelNode(1, 0, TagW.Group, new TagView(TagW.Group, TagW.FileName));
   public static final TreeModelNode series =
       new TreeModelNode(2, 0, TagW.SubseriesInstanceUID, new TagView(TagW.FileName));
+
+  public static final String CLOSE_USAGE =
+      """
+    Close %s
+    Usage: %s:close (-a | ([-g UID]... [-s UID]...))
+      -a --all         close all series
+      -g --group=UID   close a group from its UID
+      -s --series=UID   close an series/image from its UID
+      -? --help        show help
+    """;
 
   private static final List<TreeModelNode> modelStructure =
       Arrays.asList(TreeModelNode.ROOT, group, series);
@@ -47,7 +55,7 @@ public abstract class AbstractFileModel implements TreeModel, DataExplorerModel 
   }
 
   @Override
-  public List<Codec<MediaElement>> getCodecPlugins() {
+  public List<? extends Codec<? extends MediaElement>> getCodecPlugins() {
     return GuiUtils.getUICore().getCodecPlugins();
   }
 
@@ -177,16 +185,8 @@ public abstract class AbstractFileModel implements TreeModel, DataExplorerModel 
 
   public abstract void get(String[] argv) throws IOException;
 
-  public void close(String[] argv) throws IOException {
-    final String[] usage = {
-      "Close images", // NON-NLS
-      "Usage: dicom:close (-a | ([-g UID]... [-s UID]...)) ", // NON-NLS
-      "  -a --all         close all series", // NON-NLS
-      "  -g --group=UID   close a group from its UID", // NON-NLS
-      "  -s --series=UID   close an series/image from its UID", // NON-NLS
-      "  -? --help        show help" // NON-NLS
-    };
-    final Option opt = Options.compile(usage).parse(argv);
+  public void close(String[] argv, String commandName) throws IOException {
+    final Option opt = Options.compile(CLOSE_USAGE.formatted(commandName, commandName)).parse(argv);
     final List<String> gargs = opt.getList("group"); // NON-NLS
     final List<String> iargs = opt.getList("series"); // NON-NLS
 

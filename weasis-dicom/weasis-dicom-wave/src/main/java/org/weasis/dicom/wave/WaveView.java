@@ -31,6 +31,7 @@ import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.prefs.Preferences;
 import javax.swing.BorderFactory;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
@@ -41,11 +42,9 @@ import org.dcm4che3.data.Sequence;
 import org.dcm4che3.data.Tag;
 import org.dcm4che3.img.util.DicomUtils;
 import org.dcm4che3.util.StreamUtils;
-import org.osgi.service.prefs.Preferences;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.DataExplorerView;
-import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
@@ -100,9 +99,9 @@ public class WaveView extends JPanel implements SeriesViewerListener {
 
     this.channels = new ArrayList<>();
 
+    String plugInId = GuiUtils.getUICore().getPluginManager().getPluginId(this.getClass());
     String formatName = null;
-    Preferences prefs =
-        BundlePreferences.getDefaultPreferences(AppProperties.getBundleContext(this.getClass()));
+    Preferences prefs = BundlePreferences.getDefaultPreferences(plugInId);
     if (prefs != null) {
       Preferences p = prefs.node(PREFERENCE_NODE);
       formatName = p.get(P_LAST_FORMAT, null);
@@ -250,8 +249,8 @@ public class WaveView extends JPanel implements SeriesViewerListener {
   }
 
   public void dispose() {
-    Preferences prefs =
-        BundlePreferences.getDefaultPreferences(AppProperties.getBundleContext(this.getClass()));
+    String plugInId = GuiUtils.getUICore().getPluginManager().getPluginId(this.getClass());
+    Preferences prefs = BundlePreferences.getDefaultPreferences(plugInId);
     if (prefs != null && currentFormat != null) {
       Preferences p = prefs.node(PREFERENCE_NODE);
       p.put(P_LAST_FORMAT, currentFormat.name());

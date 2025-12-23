@@ -10,7 +10,7 @@
 package org.weasis.core.ui.editor.image;
 
 import java.awt.event.InputEvent;
-import org.osgi.service.prefs.Preferences;
+import java.util.prefs.Preferences;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.service.AuditLog;

@@ -463,7 +463,7 @@ public abstract class ImageViewerEventManager<E extends ImageElement> implements
   }
 
   /** Fire property change event. */
-  protected void firePropertyChange(String propertyName, Object oldValue, Object newValue) {
+  public void firePropertyChange(String propertyName, Object oldValue, Object newValue) {
     propertySupport.firePropertyChange(propertyName, oldValue, newValue);
   }
 

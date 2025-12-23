@@ -13,12 +13,11 @@ import java.awt.Color;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
+import java.util.Map;
 import java.util.Properties;
-import org.osgi.framework.BundleContext;
-import org.osgi.service.prefs.Preferences;
+import java.util.prefs.Preferences;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.util.GzipManager;
 import org.weasis.core.util.StringUtil;
 
@@ -26,10 +25,14 @@ public class WProperties extends Properties {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(WProperties.class);
 
-  private final transient BundleContext context;
+  private final Map<String, String> appProps;
 
   public WProperties() {
-    context = AppProperties.getBundleContext();
+    this(null);
+  }
+
+  public WProperties(Map<String, String> appProps) {
+    this.appProps = appProps;
   }
 
   @Override
@@ -47,17 +50,21 @@ public class WProperties extends Properties {
     if (value == null) {
       value = System.getProperty(key, null);
       if (value == null) {
-        value = context == null ? null : context.getProperty(key);
+        value = getAppString(key);
       }
     }
     return value;
+  }
+
+  private String getAppString(String key) {
+    return appProps == null ? null : appProps.get(key);
   }
 
   public void resetProperty(String key, String defaultValue) {
     if (isKeyValid(key)) {
       String value = System.getProperty(key, null);
       if (value == null) {
-        value = context == null ? null : context.getProperty(key);
+        value = getAppString(key);
         if (value == null) {
           value = defaultValue;
         }
@@ -73,7 +80,7 @@ public class WProperties extends Properties {
     if (isKeyValid(key)) {
       String value = System.getProperty(key, null);
       if (value == null) {
-        value = context == null ? null : context.getProperty("def." + key); // NON-NLS
+        value = getAppString("def." + key);
         if (value == null) {
           value = defaultValue;
         }

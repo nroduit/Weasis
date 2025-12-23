@@ -10,17 +10,17 @@
 package org.weasis.imageio.codec;
 
 import java.net.URI;
-import java.util.Hashtable;
+import java.util.Map;
 import javax.imageio.ImageIO;
-import org.osgi.service.component.ComponentContext;
-import org.osgi.service.component.annotations.Activate;
-import org.osgi.service.component.annotations.Deactivate;
+import org.pf4j.Extension;
 import org.weasis.core.api.image.cv.ImageCVIO;
 import org.weasis.core.api.media.data.Codec;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaReader;
+import org.weasis.plugin.SingletonExtension;
 
-@org.osgi.service.component.annotations.Component(service = Codec.class)
+@Extension
+@SingletonExtension
 public class ImageioCodec implements Codec<ImageElement> {
 
   public static final String NAME = "JDK ImageIO"; // NON-NLS
@@ -49,7 +49,7 @@ public class ImageioCodec implements Codec<ImageElement> {
 
   @Override
   public MediaReader<ImageElement> getMediaIO(
-      URI media, String mimeType, Hashtable<String, Object> properties) {
+      URI media, String mimeType, Map<String, Object> properties) {
     if (isMimeTypeSupported(mimeType)) {
       return new ImageCVIO(media, mimeType, this);
     }
@@ -70,17 +70,4 @@ public class ImageioCodec implements Codec<ImageElement> {
   public String[] getWriterMIMETypes() {
     return ImageIO.getWriterMIMETypes();
   }
-
-  // ================================================================================
-  // OSGI service implementation
-  // ================================================================================
-
-  @Activate
-  protected void activate(ComponentContext context) {
-    // Do not use cache. Images must be downloaded locally before reading them.
-    ImageIO.setUseCache(false);
-  }
-
-  @Deactivate
-  protected void deactivate(ComponentContext context) {}
 }

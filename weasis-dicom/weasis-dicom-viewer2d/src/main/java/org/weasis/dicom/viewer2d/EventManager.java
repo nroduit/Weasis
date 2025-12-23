@@ -24,7 +24,7 @@ import java.util.List;
 import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.function.BiFunction;
-import java.util.stream.Collectors;
+import java.util.prefs.Preferences;
 import javax.swing.BoundedRangeModel;
 import javax.swing.ButtonGroup;
 import javax.swing.DefaultComboBoxModel;
@@ -36,23 +36,17 @@ import javax.swing.KeyStroke;
 import org.dcm4che3.data.Tag;
 import org.dcm4che3.img.data.PrDicomObject;
 import org.dcm4che3.img.lut.PresetWindowLevel;
-import org.osgi.framework.BundleContext;
-import org.osgi.service.prefs.Preferences;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.weasis.core.api.command.Option;
-import org.weasis.core.api.command.Options;
 import org.weasis.core.api.explorer.DataExplorerView;
 import org.weasis.core.api.gui.Insertable.Type;
 import org.weasis.core.api.gui.InsertableUtil;
 import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
-import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.gui.util.BasicActionState;
 import org.weasis.core.api.gui.util.ComboItemListener;
 import org.weasis.core.api.gui.util.Feature;
 import org.weasis.core.api.gui.util.Filter;
-import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.RadioMenuItem;
 import org.weasis.core.api.gui.util.SliderChangeListener;
@@ -84,7 +78,6 @@ import org.weasis.core.ui.editor.SeriesViewerEvent.EVENT;
 import org.weasis.core.ui.editor.image.ImageViewerEventManager;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.editor.image.MeasureToolBar;
-import org.weasis.core.ui.editor.image.MouseActions;
 import org.weasis.core.ui.editor.image.SynchCineEvent;
 import org.weasis.core.ui.editor.image.SynchData;
 import org.weasis.core.ui.editor.image.SynchData.Mode;
@@ -92,12 +85,10 @@ import org.weasis.core.ui.editor.image.SynchEvent;
 import org.weasis.core.ui.editor.image.SynchView;
 import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.editor.image.ViewerPlugin;
-import org.weasis.core.ui.editor.image.ViewerToolBar;
 import org.weasis.core.ui.editor.image.ZoomToolBar;
 import org.weasis.core.ui.launcher.Launcher;
 import org.weasis.core.ui.model.graphic.Graphic;
 import org.weasis.core.ui.model.layer.LayerType;
-import org.weasis.core.ui.model.utils.bean.PanPoint;
 import org.weasis.core.util.LangUtil;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.DicomSeries;
@@ -131,17 +122,6 @@ import org.weasis.opencv.op.lut.LutShape;
 public class EventManager extends ImageViewerEventManager<DicomImageElement>
     implements ActionListener {
   private static final Logger LOGGER = LoggerFactory.getLogger(EventManager.class);
-
-  public static final List<String> functions =
-      List.of(
-          "zoom", // NON-NLS
-          "wl", // NON-NLS
-          "move", // NON-NLS
-          "scroll", // NON-NLS
-          "layout", // NON-NLS
-          "mouseLeftAction", // NON-NLS
-          "synch", // NON-NLS
-          "reset"); // NON-NLS
 
   /** The single instance of this singleton class. */
   private static EventManager instance;
@@ -204,8 +184,8 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
     setAction(newKOFilterAction());
     setAction(newKOSelectionAction());
 
-    final BundleContext context = AppProperties.getBundleContext(this.getClass());
-    Preferences prefs = BundlePreferences.getDefaultPreferences(context);
+    String plugInId = GuiUtils.getUICore().getPluginManager().getPluginId(this.getClass());
+    Preferences prefs = BundlePreferences.getDefaultPreferences(plugInId);
     zoomSetting.applyPreferences(prefs);
     mouseActions.applyPreferences(prefs);
 
@@ -1470,8 +1450,9 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
     return false;
   }
 
-  public void savePreferences(BundleContext bundleContext) {
-    Preferences prefs = BundlePreferences.getDefaultPreferences(bundleContext);
+  public void savePreferences() {
+    String plugInId = GuiUtils.getUICore().getPluginManager().getPluginId(this.getClass());
+    Preferences prefs = BundlePreferences.getDefaultPreferences(plugInId);
     zoomSetting.savePreferences(prefs);
     // Mouse buttons preferences
     mouseActions.savePreferences(prefs);
@@ -1788,332 +1769,5 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
       }
     }
     return menu;
-  }
-
-  // ***** OSGI commands: dcmview2d:cmd ***** //
-
-  public void zoom(String[] argv) throws IOException {
-    final String[] usage = {
-      "Change the zoom value of the selected image", // NON-NLS
-      "Usage: dcmview2d:zoom (set VALUE | increase NUMBER | decrease NUMBER)", // NON-NLS
-      "  -s --set=VALUE        [decimal value]  set a new value from 0.0 to 12.0 (zoom magnitude, 0.0 => default, -200.0 => best fit, -100.0 => real size)", // NON-NLS
-      "  -i --increase=NUMBER  increase of some amount", // NON-NLS
-      "  -d --decrease=NUMBER  decrease of some amount", // NON-NLS
-      "  -? --help             show help" // NON-NLS
-    };
-    final Option opt = Options.compile(usage).parse(argv);
-    final List<String> args = opt.args();
-
-    if (opt.isSet("help") // NON-NLS
-        || !opt.isOnlyOneOptionActivate("set", "increase", "decrease")) { // NON-NLS
-      opt.usage();
-      return;
-    }
-
-    GuiExecutor.execute(() -> zoomCommand(opt, args));
-  }
-
-  private void zoomCommand(Option opt, List<String> args) {
-    try {
-      Optional<SliderChangeListener> zoomAction = getAction(ActionW.ZOOM);
-      if (zoomAction.isPresent()) {
-        if (opt.isSet("increase")) { // NON-NLS
-          zoomAction
-              .get()
-              .setSliderValue(
-                  zoomAction.get().getSliderValue() + opt.getNumber("increase")); // NON-NLS
-        } else if (opt.isSet("decrease")) { // NON-NLS
-          zoomAction
-              .get()
-              .setSliderValue(
-                  zoomAction.get().getSliderValue() - opt.getNumber("decrease")); // NON-NLS
-        } else if (opt.isSet("set")) { // NON-NLS
-          double val3 = Double.parseDouble(opt.get("set")); // NON-NLS
-          if (val3 <= 0.0) {
-            firePropertyChange(
-                ActionW.SYNCH.cmd(),
-                null,
-                new SynchEvent(getSelectedViewPane(), ActionW.ZOOM.cmd(), val3));
-          } else {
-            zoomAction.get().setRealValue(val3);
-          }
-        }
-      }
-    } catch (Exception e) {
-      LOGGER.error("Zoom command: {}", args.get(0), e);
-    }
-  }
-
-  public void wl(String[] argv) throws IOException {
-    final String[] usage = {
-      "Change the window/level values of the selected image (increase or decrease into a normalized range of 4096)", // NON-NLS
-      "Usage: dcmview2d:wl -- WIN LEVEL", // NON-NLS
-      "WIN and LEVEL are Integer. It is mandatory to have '--' (end of options) for negative values", // NON-NLS
-      "  -? --help       show help" // NON-NLS
-    };
-    final Option opt = Options.compile(usage).parse(argv);
-    final List<String> args = opt.args();
-
-    if (opt.isSet("help") || args.size() != 2) { // NON-NLS
-      opt.usage();
-      return;
-    }
-
-    GuiExecutor.execute(
-        () -> {
-          try {
-            Optional<SliderChangeListener> windowAction = getAction(ActionW.WINDOW);
-            Optional<SliderChangeListener> levelAction = getAction(ActionW.LEVEL);
-            if (windowAction.isPresent() && levelAction.isPresent()) {
-              int win = windowAction.get().getSliderValue() + Integer.parseInt(args.get(0));
-              int level = levelAction.get().getSliderValue() + Integer.parseInt(args.get(1));
-              windowAction.get().setSliderValue(win);
-              levelAction.get().setSliderValue(level);
-            }
-          } catch (Exception e) {
-            LOGGER.error("Window/level command: {} {}", args.get(0), args.get(1), e);
-          }
-        });
-  }
-
-  public void move(String[] argv) throws IOException {
-    final String[] usage = {
-      "Pan the selected image", // NON-NLS
-      "Usage: dcmview2d:move -- X Y", // NON-NLS
-      "X and Y are Integer. It is mandatory to have '--' (end of options) for negative values", // NON-NLS
-      "  -? --help       show help" // NON-NLS
-    };
-    final Option opt = Options.compile(usage).parse(argv);
-    final List<String> args = opt.args();
-
-    if (opt.isSet("help") || args.size() != 2) { // NON-NLS
-      opt.usage();
-      return;
-    }
-
-    GuiExecutor.execute(
-        () -> {
-          try {
-            int valx = Integer.parseInt(args.get(0));
-            int valy = Integer.parseInt(args.get(1));
-            getAction(ActionW.PAN)
-                .ifPresent(a -> a.setPoint(new PanPoint(PanPoint.State.MOVE, valx, valy)));
-
-          } catch (Exception e) {
-            LOGGER.error("Move (x,y) command: {} {}", args.get(0), args.get(1), e);
-          }
-        });
-  }
-
-  public void scroll(String[] argv) throws IOException {
-    final String[] usage = {
-      "Scroll into the images of the selected series", // NON-NLS
-      "Usage: dcmview2d:scroll ( -s NUMBER | -i NUMBER | -d NUMBER)", // NON-NLS
-      "  -s --set=NUMBER       set a new value from 1 to series size", // NON-NLS
-      "  -i --increase=NUMBER  increase of some amount", // NON-NLS
-      "  -d --decrease=NUMBER  decrease of some amount", // NON-NLS
-      "  -? --help             show help" // NON-NLS
-    };
-    final Option opt = Options.compile(usage).parse(argv);
-
-    if (opt.isSet("help") // NON-NLS
-        || !opt.isOnlyOneOptionActivate("set", "increase", "decrease")) { // NON-NLS
-      opt.usage();
-      return;
-    }
-
-    GuiExecutor.execute(
-        () -> {
-          try {
-            Optional<SliderCineListener> cineAction = getAction(ActionW.SCROLL_SERIES);
-            if (cineAction.isPresent() && cineAction.get().isActionEnabled()) {
-              SliderCineListener moveTroughSliceAction = cineAction.get();
-              if (opt.isSet("increase")) { // NON-NLS
-                moveTroughSliceAction.setSliderValue(
-                    moveTroughSliceAction.getSliderValue() + opt.getNumber("increase")); // NON-NLS
-              } else if (opt.isSet("decrease")) { // NON-NLS
-                moveTroughSliceAction.setSliderValue(
-                    moveTroughSliceAction.getSliderValue() - opt.getNumber("decrease")); // NON-NLS
-              } else if (opt.isSet("set")) { // NON-NLS
-                moveTroughSliceAction.setSliderValue(opt.getNumber("set")); // NON-NLS
-              }
-            }
-          } catch (Exception e) {
-            LOGGER.error("Scroll command error:", e);
-          }
-        });
-  }
-
-  public void layout(String[] argv) throws IOException {
-    final String[] usage = {
-      "Select a split-screen layout", // NON-NLS
-      "Usage: dcmview2d:layout ( -n NUMBER | -i ID )", // NON-NLS
-      "  -n --number=NUMBER  select the best matching number of views", // NON-NLS
-      "  -i --id=ID          select the layout from its identifier", // NON-NLS
-      "  -? --help           show help" // NON-NLS
-    };
-    final Option opt = Options.compile(usage).parse(argv);
-
-    if (opt.isSet("help") || !opt.isOnlyOneOptionActivate("number", "id")) { // NON-NLS
-      opt.usage();
-      return;
-    }
-    GuiExecutor.execute(
-        () -> {
-          try {
-            if (opt.isSet("number")) { // NON-NLS
-              if (selectedView2dContainer != null) {
-                GridBagLayoutModel val1 =
-                    selectedView2dContainer.getBestDefaultViewLayout(
-                        opt.getNumber("number")); // NON-NLS
-                getAction(ActionW.LAYOUT).ifPresent(a -> a.setSelectedItem(val1));
-              }
-            } else if (opt.isSet("id")) {
-              if (selectedView2dContainer != null) {
-                GridBagLayoutModel val2 = selectedView2dContainer.getViewLayout(opt.get("id"));
-                if (val2 != null) {
-                  getAction(ActionW.LAYOUT).ifPresent(a -> a.setSelectedItem(val2));
-                }
-              }
-            }
-          } catch (Exception e) {
-            LOGGER.error("Layout command error", e);
-          }
-        });
-  }
-
-  public void mouseLeftAction(String[] argv) throws IOException {
-    final String[] usage = {
-      "Change the mouse left action", // NON-NLS
-      "Usage: dcmview2d:mouseLeftAction COMMAND", // NON-NLS
-      "COMMAND is (sequence|winLevel|zoom|pan|rotation|crosshair|measure|draw|contextMenu|none)", // NON-NLS
-      "  -? --help       show help" // NON-NLS
-    };
-    final Option opt = Options.compile(usage).parse(argv);
-    final List<String> args = opt.args();
-
-    if (opt.isSet("help") || args.size() != 1) { // NON-NLS
-      opt.usage();
-      return;
-    }
-
-    GuiExecutor.execute(
-        () -> {
-          String command = args.get(0);
-          if (command != null) {
-            try {
-              if (command.startsWith("session")) { // NON-NLS
-                AuditLog.LOGGER.info("source:telnet {}", command);
-              } else {
-                AuditLog.LOGGER.info(
-                    "source:telnet mouse:{} action:{}", MouseActions.T_LEFT, command);
-                excecuteMouseAction(command);
-              }
-            } catch (Exception e) {
-              LOGGER.error("Mouse command: {}", command, e);
-            }
-          }
-        });
-  }
-
-  private void excecuteMouseAction(String command) {
-    if (!command.equals(mouseActions.getAction(MouseActions.T_LEFT))) {
-      mouseActions.setAction(MouseActions.T_LEFT, command);
-      ImageViewerPlugin<DicomImageElement> view = getSelectedView2dContainer();
-      if (view != null) {
-        view.setMouseActions(mouseActions);
-        final ViewerToolBar toolBar = view.getViewerToolBar();
-        if (toolBar != null) {
-          // Test if mouse action exist and if not NO_ACTION is set
-          Feature<?> action = toolBar.getToolBarAction(command);
-          if (action == null) {
-            command = ActionW.NO_ACTION.cmd();
-          }
-          toolBar.changeButtonState(MouseActions.T_LEFT, command);
-        }
-      }
-    }
-  }
-
-  public void synch(String[] argv) throws IOException {
-    final String[] usage = {
-      "Set a synchronization mode", // NON-NLS
-      "Usage: dcmview2d:synch VALUE", // NON-NLS
-      "VALUE is " // NON-NLS
-          + View2dContainer.DEFAULT_SYNCH_LIST.stream()
-              .map(SynchView::getCommand) // NON-NLS
-              .collect(Collectors.joining("|", "(", ")")),
-      "  -? --help       show help" // NON-NLS
-    };
-    final Option opt = Options.compile(usage).parse(argv);
-    final List<String> args = opt.args();
-
-    if (opt.isSet("help") || args.size() != 1) { // NON-NLS
-      opt.usage();
-      return;
-    }
-    GuiExecutor.execute(
-        () -> {
-          String command = args.getFirst();
-          if (command != null) {
-            ImageViewerPlugin<DicomImageElement> view = getSelectedView2dContainer();
-            if (view != null) {
-              try {
-                Optional<ComboItemListener<SynchView>> synchAction = getAction(ActionW.SYNCH);
-                if (synchAction.isPresent()) {
-                  for (SynchView synch : view.getSynchList()) {
-                    if (synch.getCommand().equals(command)) {
-                      synchAction.get().setSelectedItem(synch);
-                      return;
-                    }
-                  }
-                  throw new IllegalArgumentException(command + " not found!");
-                }
-              } catch (Exception e) {
-                LOGGER.error("Synch command: {}", command, e);
-              }
-            }
-          }
-        });
-  }
-
-  public void reset(String[] argv) throws IOException {
-    final String[] usage = {
-      "Reset image display", // NON-NLS
-      "Usage: dcmview2d:reset (-a | COMMAND...)", // NON-NLS
-      "COMMAND is (winLevel|zoom|pan|rotation)", // NON-NLS
-      "  -a --all        reset to original display", // NON-NLS
-      "  -? --help       show help" // NON-NLS
-    };
-    final Option opt = Options.compile(usage).parse(argv);
-    final List<String> args = opt.args();
-
-    if (opt.isSet("help") || args.isEmpty() && !opt.isSet("all")) { // NON-NLS
-      opt.usage();
-      return;
-    }
-
-    GuiExecutor.execute(
-        () -> {
-          if (opt.isSet("all")) { // NON-NLS
-            reset(ResetTools.ALL);
-          } else {
-            for (String command : args) {
-              try {
-                if (ActionW.WINLEVEL.cmd().equals(command)) {
-                  reset(ResetTools.WL);
-                } else if (ActionW.ZOOM.cmd().equals(command)) {
-                  reset(ResetTools.ZOOM);
-                } else if (ActionW.PAN.cmd().equals(command)) {
-                  reset(ResetTools.PAN);
-                } else {
-                  LOGGER.warn("Reset command not found: {}", command);
-                }
-              } catch (Exception e) {
-                LOGGER.error("Reset command: {}", command, e);
-              }
-            }
-          }
-        });
   }
 }

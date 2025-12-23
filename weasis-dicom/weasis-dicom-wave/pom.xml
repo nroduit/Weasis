@@ -9,6 +9,7 @@
     <version>${revision}${changelist}</version>
     <relativePath>../weasis-dicom-parent/pom.xml</relativePath>
   </parent>
+
   <modelVersion>4.0.0</modelVersion>
   <artifactId>weasis-dicom-wave</artifactId>
   <packaging>jar</packaging>
@@ -17,11 +18,20 @@
   <build>
     <plugins>
       <plugin>
-        <groupId>biz.aQute.bnd</groupId>
-        <artifactId>bnd-maven-plugin</artifactId>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-jar-plugin</artifactId>
+        <configuration>
+          <archive>
+            <manifestEntries>
+              <Plugin-Class>org.weasis.dicom.wave.internal.Activator</Plugin-Class>
+              <Plugin-Dependencies>weasis-dicom-explorer</Plugin-Dependencies>
+            </manifestEntries>
+          </archive>
+        </configuration>
       </plugin>
     </plugins>
   </build>
+
   <dependencies>
     <dependency>
       <groupId>org.weasis.dicom</groupId>

@@ -29,6 +29,7 @@ import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 import org.slf4j.LoggerFactory;
+import org.weasis.core.api.command.CommandManager;
 import org.weasis.pref.ConfigData;
 
 public class AppLauncher extends WeasisLauncher implements Singleton.SingletonApp {
@@ -87,7 +88,7 @@ public class AppLauncher extends WeasisLauncher implements Singleton.SingletonAp
     super(configData);
   }
 
-  public static void main(String[] argv) throws Exception {
+  static void main(String[] argv) throws Exception {
     LOGGER.info(
         "*PERF* JVM start, type:INIT time:{}",
         (System.currentTimeMillis() - ManagementFactory.getRuntimeMXBean().getStartTime()));
@@ -134,7 +135,8 @@ public class AppLauncher extends WeasisLauncher implements Singleton.SingletonAp
     int index = Utils.getWeasisProtocolIndex(uri);
     if (index < 0) {
       uri = "dicom:get -r \"" + uri + "\""; // NON-NLS
-      instance.executeCommands(List.of(uri), null);
+      CommandManager commandManager = new CommandManager(instance.configData.getPluginManager());
+      instance.executeCommands(commandManager, List.of(uri));
     } else {
       boolean sameInstance = System.currentTimeMillis() - time < 3000;
       String[] args = getArgsForURI(uri);
@@ -177,14 +179,16 @@ public class AppLauncher extends WeasisLauncher implements Singleton.SingletonAp
             .map(f -> "dicom:get -l \"" + f.getPath() + "\"") // NON-NLS
             .toList();
     LOGGER.info("Get open file event from OS. Files: {}", files);
-    instance.executeCommands(files, null);
+    CommandManager commandManager = new CommandManager(instance.configData.getPluginManager());
+    instance.executeCommands(commandManager, files);
   }
 
   @Override
   public void newActivation(List<String> arguments) {
     waitWhenStarted();
-    if (mTracker != null) {
-      executeCommands(arguments, null);
+    if (frameworkLoaded) {
+      CommandManager commandManager = new CommandManager(configData.getPluginManager());
+      executeCommands(commandManager, arguments);
     }
   }
 
@@ -196,7 +200,7 @@ public class AppLauncher extends WeasisLauncher implements Singleton.SingletonAp
         try {
           TimeUnit.MILLISECONDS.sleep(100);
           loop++;
-          if (loop > 300) { // Let 30s max to set up Felix framework
+          if (loop > 300) { // Let 30s max to set up the plugin framework
             runLoop = false;
           }
         } catch (InterruptedException e) {

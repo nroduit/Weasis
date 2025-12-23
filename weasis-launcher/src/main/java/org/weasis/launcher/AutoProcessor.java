@@ -9,25 +9,31 @@
  */
 package org.weasis.launcher;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.net.URI;
 import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.Set;
 import java.util.StringTokenizer;
-import org.osgi.framework.Bundle;
-import org.osgi.framework.BundleContext;
-import org.osgi.framework.Constants;
-import org.osgi.service.startlevel.StartLevel;
+import java.util.jar.JarFile;
+import java.util.jar.Manifest;
+import org.pf4j.PluginWrapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tukaani.xz.XZInputStream;
+import org.weasis.plugin.WeasisPluginManager;
 import org.weasis.pref.ConfigData;
 
 /**
- * @author Richard S. Hall
+ * AutoProcessor for PF4J plugin management
+ *
  * @author Nicolas Roduit
  */
 public class AutoProcessor {
@@ -40,262 +46,389 @@ public class AutoProcessor {
   public static final String AUTO_START_PROP = "felix.auto.start";
 
   public static final String XZ_COMPRESSION = ".xz";
+  public static final String JAR_EXTENSION = ".jar";
+
+  public static final String PLUGIN_STORAGE_CLEAN = "weasis.plugin.cache.clean";
+  public static final String PLUGIN_STORAGE_CLEAN_ONFIRSTINIT = "onFirstInit";
 
   private AutoProcessor() {}
 
   /**
-   * Used to instigate auto-deploy directory process and auto-install/auto-start configuration
-   * property processing during.
+   * Downloads and prepares plugins for PF4J from configuration properties.
    *
    * @param configMap Map of configuration properties.
-   * @param context The system bundle context.
+   * @param modulesI18n Internationalization modules
+   * @param pluginManager The PF4J plugin manager.
    * @param weasisLoader the WeasisLoader value
    */
   public static void process(
       Map<String, String> configMap,
       Properties modulesI18n,
-      BundleContext context,
+      WeasisPluginManager pluginManager,
       WeasisLoader weasisLoader) {
     Map<String, String> map = (configMap == null) ? new HashMap<>() : configMap;
-    processAutoProperties(map, modulesI18n, context, weasisLoader);
+    processAutoProperties(map, modulesI18n, pluginManager, weasisLoader);
   }
 
   /**
-   * Processes the auto-installation and auto-start properties from the specified configuration
-   * properties.
+   * Processes the auto-installation and auto-start properties and downloads plugins to the plugin
+   * directory.
    */
   private static void processAutoProperties(
       Map<String, String> configMap,
       Properties modulesi18n,
-      BundleContext context,
+      WeasisPluginManager pluginManager,
       WeasisLoader weasisLoader) {
-    // Retrieve the Start Level service, since it will be needed
-    // to set the start level of the installed bundles.
-    StartLevel sl =
-        (StartLevel)
-            context.getService(
-                context.getServiceReference(
-                    org.osgi.service.startlevel.StartLevel.class.getName()));
 
-    // Retrieve all auto-install and auto-start properties and install
-    // their associated bundles. The auto-installation property specifies a
-    // space-delimited list of bundle URLs to be automatically installed
-    // into each new profile, while the auto-start property specifies
-    // bundles to be installed and started. The start level to which the
-    // bundles are assigned is specified by appending a ".n" to the
-    // property name, where "n" is the desired start level for the list
-    // of bundles. If no start level is specified, the default start
-    // level is assumed.
-    Map<String, BundleElement> bundleList = new HashMap<>();
+    LOGGER.info("Processing plugin configuration for PF4J");
 
-    Set<String> set = configMap.keySet();
-    for (String o : set) {
-      String key = o.toLowerCase();
+    Path pluginsDir = pluginManager.getPluginCachePath();
+    Path cacheDir = pluginsDir.getParent();
 
-      // Ignore all keys that are not an auto property.
-      if (!key.startsWith(AUTO_INSTALL_PROP) && !key.startsWith(AUTO_START_PROP)) {
+    // Check if we need to clean cache
+    boolean cleanCache =
+        PLUGIN_STORAGE_CLEAN_ONFIRSTINIT.equals(configMap.get(PLUGIN_STORAGE_CLEAN));
+
+    if (cleanCache) {
+      LOGGER.info("Cleaning plugin cache");
+      FileUtil.delete(cacheDir);
+    }
+
+    int maxStartLevel = Integer.parseInt(configMap.getOrDefault("org.osgi.framework.startlevel.beginning", "300"));
+
+
+
+    // Collect all plugin locations from configuration
+    Map<String, PluginElement> pluginList = new HashMap<>();
+    Set<String> configKeys = configMap.keySet();
+
+    for (String key : configKeys) {
+      String lowerKey = key.toLowerCase();
+
+      // Process auto-install and auto-start properties
+      if (!lowerKey.startsWith(AUTO_INSTALL_PROP) && !lowerKey.startsWith(AUTO_START_PROP)) {
         continue;
       }
-      // If the auto property does not have a start level,
-      // then assume it is the default bundle start level, otherwise
-      // parse the specified start level.
-      int startLevel = sl.getInitialBundleStartLevel();
+
+      // Parse priority level (if specified)
+      int priority = 0;
       try {
-        startLevel = Integer.parseInt(key.substring(key.lastIndexOf('.') + 1));
+        priority = Integer.parseInt(lowerKey.substring(lowerKey.lastIndexOf('.') + 1));
       } catch (NumberFormatException ex) {
-        LOGGER.error("Invalid start level {}", key, ex);
+        LOGGER.debug("No priority level specified for {}", key);
       }
-      boolean canBeStarted = key.startsWith(AUTO_START_PROP);
-      StringTokenizer st = new StringTokenizer(configMap.get(key), "\" ", true);
-      for (String location = nextLocation(st); location != null; location = nextLocation(st)) {
-        String bundleName = getBundleNameFromLocation(location);
-        if (!"System Bundle".equals(bundleName)) { // NON-NLS
-          BundleElement b = new BundleElement(startLevel, location, canBeStarted);
-          bundleList.put(bundleName, b);
-        }
-      }
-    }
-    weasisLoader.setMax(bundleList.size());
 
-    final Map<String, Bundle> installedBundleMap = new HashMap<>();
-    Bundle[] bundles = context.getBundles();
-    for (Bundle value : bundles) {
-      String bundleName = getBundleNameFromLocation(value.getLocation());
-      if (bundleName == null) {
-        // Should never happen
+      if (priority < 0 || priority > maxStartLevel) {
         continue;
       }
-      try {
-        BundleElement b = bundleList.get(bundleName);
-        // Remove the bundles in cache when they are not in the base.json list
-        if (b == null) {
-          if (!"System Bundle".equals(bundleName)) { // NON-NLS
-            value.uninstall();
-            LOGGER.info("Uninstall unused bundle: {}", bundleName);
-          }
-          continue;
-        }
-        // Remove snapshot version to install it every time
-        if (value.getVersion().getQualifier().endsWith("SNAPSHOT")) {
-          value.uninstall();
-          LOGGER.info("Uninstall SNAPSHOT bundle: {}", bundleName);
-          continue;
-        }
-        installedBundleMap.put(bundleName, value);
 
-      } catch (Exception e) {
-        LOGGER.error("Cannot remove from OSGI cache the bundle {}", bundleName, e);
+      boolean autoStart = lowerKey.startsWith(AUTO_START_PROP);
+      String value = configMap.get(key);
+
+      StringTokenizer st = new StringTokenizer(value, "\" ", true);
+      for (String location = nextLocation(st); location != null; location = nextLocation(st)) {
+        String pluginName = getPluginNameFromLocation(location);
+        if (!"System Bundle".equals(pluginName)) { // NON-NLS
+          PluginElement element = new PluginElement(priority, location, autoStart);
+          pluginList.put(pluginName, element);
+        }
       }
     }
 
-    boolean cache =
+    weasisLoader.setMax(pluginList.size());
+
+    // Get currently loaded plugins
+    Map<String, PluginWrapper> loadedPlugins = new HashMap<>();
+    for (PluginWrapper plugin : pluginManager.getPlugins()) {
+      loadedPlugins.put(plugin.getPluginId(), plugin);
+    }
+
+    boolean httpCache =
         Boolean.TRUE
             .toString()
             .equals(System.getProperty("http.bundle.cache", Boolean.TRUE.toString()));
-    int bundleIter = 0;
 
-    // Parse and install the bundles associated with the key.
-    for (Entry<String, BundleElement> element : bundleList.entrySet()) {
-      String bundleName = element.getKey();
-      BundleElement bundle = element.getValue();
-      if (bundle == null) {
-        // Should never happen
-        continue;
-      }
+    int pluginIter = 0;
+
+    // Download and prepare plugins
+    for (Entry<String, PluginElement> entry : pluginList.entrySet()) {
+      String pluginName = entry.getKey();
+      PluginElement plugin = entry.getValue();
+
       try {
-        weasisLoader.writeLabel(WeasisLoader.LBL_DOWNLOADING + " " + bundleName);
-        // Do not download again the same bundle version but with different location or already in
-        // installed
-        // in cache from a previous version of Weasis
-        Bundle b = installedBundleMap.get(bundleName);
-        if (b == null) {
-          b = installBundle(context, bundle.getLocation(), cache);
-          installedBundleMap.put(bundleName, b);
+        weasisLoader.writeLabel(WeasisLoader.LBL_DOWNLOADING + " " + pluginName);
+
+        // Download plugin to plugins directory
+        Path pluginPath = downloadPlugin(cacheDir, plugin.getLocation(), pluginName, httpCache);
+
+        if (pluginPath != null) {
+          LOGGER.info("Downloaded plugin: {} to {}", pluginName, pluginPath);
+
+          // Download translation bundles if available
+          downloadTranslationPlugin(cacheDir, pluginName, modulesi18n, httpCache, loadedPlugins);
         }
-        sl.setBundleStartLevel(b, bundle.getStartLevel());
-        loadTranslationBundle(context, b, installedBundleMap, modulesi18n, cache);
+
       } catch (Exception ex) {
-        if (bundleName.contains(System.getProperty("native.library.spec"))) {
-          LOGGER.error("Cannot install a native bundle {}}", bundleName, ex);
+        if (pluginName.contains(System.getProperty("native.library.spec"))) {
+          LOGGER.error("Cannot download native plugin: {}", pluginName, ex);
         } else {
-          LOGGER.error("Cannot install bundle {}}", bundleName, ex);
-          if (!Constants.FRAMEWORK_STORAGE_CLEAN_ONFIRSTINIT.equals(
-              configMap.get(Constants.FRAMEWORK_STORAGE_CLEAN))) {
-            // Reset all the old cache
-            throw new IllegalStateException("A bundle cannot be started");
+          LOGGER.error("Cannot download plugin: {}", pluginName, ex);
+          if (cleanCache) {
+            throw new IllegalStateException("A plugin cannot be downloaded", ex);
           }
         }
       } finally {
-        bundleIter++;
-        weasisLoader.setValue(bundleIter);
+        pluginIter++;
+        weasisLoader.setValue(pluginIter);
       }
     }
 
     weasisLoader.writeLabel(Messages.getString("AutoProcessor.start"));
-    // Now loop through the auto-start bundles and start them.
-    for (Entry<String, BundleElement> element : bundleList.entrySet()) {
-      String bundleName = element.getKey();
-      BundleElement bundle = element.getValue();
-      if (bundle == null) {
-        // Should never happen
-        continue;
+  }
+
+  /**
+   * Validates if a JAR file is a valid PF4J plugin by checking for plugin descriptor.
+   *
+   * @param pluginPath Path to the plugin JAR file
+   * @return true if valid PF4J plugin, false otherwise
+   */
+  private static boolean isValidPF4JPlugin(Path pluginPath) {
+    try (JarFile jarFile = new JarFile(pluginPath.toFile())) {
+      // Check for plugin.properties in META-INF
+      var entry = jarFile.getEntry("META-INF/plugin.properties");
+      if (entry != null) {
+        try (InputStream is = jarFile.getInputStream(entry)) {
+          Properties props = new Properties();
+          props.load(is);
+          String pluginId = props.getProperty("plugin.id");
+          if (pluginId != null && !pluginId.trim().isEmpty()) {
+            LOGGER.debug("Valid PF4J plugin found with ID: {}", pluginId);
+            return true;
+          }
+        }
       }
-      if (bundle.isCanBeStarted()) {
+
+      // Check for @Extension annotations in manifest
+      Manifest manifest = jarFile.getManifest();
+      if (manifest != null) {
+        String pluginId = manifest.getMainAttributes().getValue("Plugin-ID");
+        if (pluginId != null && !pluginId.trim().isEmpty()) {
+          LOGGER.debug("Valid PF4J plugin found with Plugin-ID: {}", pluginId);
+          return true;
+        }
+      }
+
+      LOGGER.warn("No valid PF4J plugin descriptor found in: {}", pluginPath);
+      return false;
+    } catch (Exception e) {
+      LOGGER.error("Error validating plugin: {}", pluginPath, e);
+      return false;
+    }
+  }
+
+  /**
+   * Downloads a plugin from the given location to the plugins directory.
+   *
+   * @param pluginsDir The plugins directory
+   * @param location The URL/URI location of the plugin
+   * @param pluginName The name of the plugin
+   * @param httpCache Whether to use HTTP cache
+   * @return The path to the downloaded plugin, or null if failed
+   */
+  private static Path downloadPlugin(
+      Path pluginsDir, String location, String pluginName, boolean httpCache) throws IOException {
+
+    // Check if it's a compressed plugin
+    boolean isCompressed = location.endsWith(XZ_COMPRESSION);
+    String actualLocation = isCompressed ? location.substring(0, location.length() - 3) : location;
+
+    // Check if this is a translation file
+    boolean isTranslation = pluginName.contains("-i18n");
+
+    // Create target path
+    String fileName = pluginName + JAR_EXTENSION;
+    Path targetPath = pluginsDir.resolve(ConfigData.F_PLUGIN_FOLDER).resolve(fileName);
+
+    if (!pluginName.endsWith("-SNAPSHOT")) {
+      if (Files.exists(targetPath)) {
+        LOGGER.debug("Plugin already exists in cache: {}", targetPath);
+        return targetPath;
+      } else {
+        Path otherPath =
+            pluginsDir
+                .resolve(isTranslation ? ConfigData.F_TRANSLATION_FOLDER : ConfigData.F_LIB_FOLDER)
+                .resolve(fileName);
+        if (Files.exists(otherPath)) {
+          targetPath = otherPath;
+          LOGGER.debug("File already exists in cache: {}", targetPath);
+          return targetPath;
+        }
+      }
+    }
+
+    // Create tmp directory for downloading
+    Path tmpDir = pluginsDir.resolve("tmp");
+    Files.createDirectories(tmpDir);
+    Path tmpPath = tmpDir.resolve(fileName);
+
+    // Download the plugin
+    try {
+      if (isCompressed) {
+        // Download compressed version
+        URL url = new URL(location);
+        try (InputStream input =
+            new XZInputStream(FileUtil.getAdaptedConnection(url, httpCache).getInputStream()); ) {
+          Files.copy(input, tmpPath, StandardCopyOption.REPLACE_EXISTING);
+          LOGGER.info("Downloaded compressed plugin to tmp: {}", fileName);
+        }
+      } else {
+        // Download regular JAR
+        URL url = new URI(actualLocation).toURL();
+        try (InputStream input = FileUtil.getAdaptedConnection(url, httpCache).getInputStream()) {
+          Files.copy(input, tmpPath, StandardCopyOption.REPLACE_EXISTING);
+          LOGGER.info("Downloaded plugin to tmp: {}", fileName);
+        }
+      }
+
+      // Validate the downloaded plugin
+      if (!isValidPF4JPlugin(tmpPath)) {
+        // Determine target directory based on file type
+        Path targetDir =
+            pluginsDir.resolve(
+                isTranslation ? ConfigData.F_TRANSLATION_FOLDER : ConfigData.F_LIB_FOLDER);
         try {
-          Bundle b = installedBundleMap.get(bundleName);
-          if (b == null) {
-            // Try to reinstall
-            b = installBundle(context, bundle.getLocation(), cache);
+          Files.createDirectories(targetDir);
+          Path finalPath = targetDir.resolve(fileName);
+          Files.move(tmpPath, finalPath, StandardCopyOption.REPLACE_EXISTING);
+          LOGGER.info(
+              "Stored non-plugin to {} directory: {}",
+              isTranslation ? "translation" : "lib",
+              finalPath);
+          return finalPath;
+        } catch (IOException e) {
+          LOGGER.error(
+              "Failed to move file from tmp to {} directory: {}",
+              isTranslation ? "translation" : "lib",
+              tmpPath,
+              e);
+          FileUtil.delete(tmpPath);
+        }
+        return null;
+      }
+
+      // Move from tmp to final destination
+      Files.createDirectories(targetPath.getParent());
+      Files.move(tmpPath, targetPath, StandardCopyOption.REPLACE_EXISTING);
+      LOGGER.info("Stored plugin to: {}", targetPath);
+
+      return targetPath;
+    } catch (Exception e) {
+      LOGGER.error("Failed to download plugin from: {}", location, e);
+      FileUtil.delete(tmpPath);
+      return null;
+    }
+  }
+
+  /**
+   * Downloads translation plugin if available.
+   *
+   * @param pluginsDir The plugins directory
+   * @param pluginName The base plugin name
+   * @param modulesi18n Translation modules properties
+   * @param httpCache Whether to use HTTP cache
+   * @param loadedPlugins Currently loaded plugins
+   */
+  private static void downloadTranslationPlugin(
+      Path pluginsDir,
+      String pluginName,
+      Properties modulesi18n,
+      boolean httpCache,
+      Map<String, PluginWrapper> loadedPlugins) {
+
+    if (modulesi18n.isEmpty()) {
+      return;
+    }
+
+    String i18nFileName = pluginName + "-i18n.jar.xz"; // NON-NLS
+    String versionQualifier = modulesi18n.getProperty(i18nFileName);
+
+    if (versionQualifier != null) {
+      String baseURL = System.getProperty(ConfigData.P_WEASIS_I18N);
+      if (baseURL != null) {
+        String uri = baseURL + (baseURL.endsWith("/") ? i18nFileName : "/" + i18nFileName);
+        String i18nPluginName = pluginName + "-i18n";
+
+        try {
+          // Check if translation plugin needs update
+          PluginWrapper existingPlugin = loadedPlugins.get(i18nPluginName);
+          boolean needsDownload = true;
+
+          if (existingPlugin != null) {
+            String existingVersion = existingPlugin.getDescriptor().getVersion();
+            needsDownload = !versionQualifier.equals(existingVersion);
           }
-          if (b != null) {
-            b.start();
+
+          if (needsDownload) {
+            downloadPlugin(pluginsDir, uri, i18nPluginName, httpCache);
+            LOGGER.info("Downloaded translation plugin: {}", i18nPluginName);
           }
-        } catch (Exception ex) {
-          LOGGER.error("Cannot start bundle {}", bundleName, ex);
+
+        } catch (Exception e) {
+          LOGGER.error("Cannot download translation plugin: {}", uri, e);
         }
       }
     }
   }
 
-  static String getBundleNameFromLocation(String location) {
+  /**
+   * Extracts plugin name from location URL/path.
+   *
+   * @param location The plugin location
+   * @return The plugin name without extension
+   */
+  static String getPluginNameFromLocation(String location) {
     if (location != null) {
       int index = location.lastIndexOf('/');
       String name = index >= 0 ? location.substring(index + 1) : location;
-      index = name.lastIndexOf(".jar");
-      return index >= 0 ? name.substring(0, index) : name;
+
+      // Remove .jar extension
+      index = name.lastIndexOf(JAR_EXTENSION);
+      if (index >= 0) {
+        name = name.substring(0, index);
+      }
+
+      // Remove .xz extension if present
+      index = name.lastIndexOf(XZ_COMPRESSION);
+      if (index >= 0) {
+        name = name.substring(0, index);
+      }
+
+      return name;
     }
     return null;
   }
 
-  private static void loadTranslationBundle(
-      BundleContext context,
-      Bundle b,
-      final Map<String, Bundle> installedBundleMap,
-      Properties modulesi18n,
-      boolean cache) {
-    if (!modulesi18n.isEmpty()) {
-      if (b != null) {
-        StringBuilder p = new StringBuilder(b.getSymbolicName());
-        p.append("-i18n.jar.xz"); // NON-NLS
-        String filename = p.toString();
-        String value = modulesi18n.getProperty(filename);
-        if (value != null) {
-          String baseURL = System.getProperty(ConfigData.P_WEASIS_I18N);
-          if (baseURL != null) {
-            String uri = baseURL + (baseURL.endsWith("/") ? filename : "/" + filename);
-            String bundleName = getBundleNameFromLocation(filename);
-            try {
-              Bundle b2 = installedBundleMap.get(bundleName);
-              if (b2 == null) {
-                b2 = installBundle(context, uri, cache);
-                installedBundleMap.put(bundleName, b);
-              }
-              if (b2 != null && !value.equals(b2.getVersion().getQualifier())) {
-                if (b2.getLocation().startsWith(baseURL)) {
-                  b2.update();
-                } else {
-                  // Handle same bundle version with different location
-                  try {
-                    b2.uninstall();
-                    context.installBundle(
-                        uri,
-                        FileUtil.getAdaptedConnection(new URI(uri).toURL(), false)
-                            .getInputStream());
-                    installedBundleMap.put(bundleName, b);
-                  } catch (Exception exc) {
-                    LOGGER.error("Cannot install a translation bundle {}", uri, exc);
-                  }
-                }
-              }
-            } catch (Exception e) {
-              LOGGER.error("Cannot install a translation bundle {}", uri, e);
-            }
-          }
-        }
-      }
-    }
-  }
-
+  /**
+   * Parses the next location from a string tokenizer.
+   *
+   * @param st The string tokenizer
+   * @return The next location string, or null if none
+   */
   private static String nextLocation(StringTokenizer st) {
     String retVal = null;
 
     if (st.countTokens() > 0) {
       String tokenList = "\" ";
       StringBuilder tokBuf = new StringBuilder(10);
-      String tok = null;
       boolean inQuote = false;
       boolean tokStarted = false;
       boolean exit = false;
-      while ((st.hasMoreTokens()) && (!exit)) {
-        tok = st.nextToken(tokenList);
+
+      while (st.hasMoreTokens() && !exit) {
+        String tok = st.nextToken(tokenList);
         if (tok.equals("\"")) {
           inQuote = !inQuote;
-          if (inQuote) {
-            tokenList = "\"";
-          } else {
-            tokenList = "\" ";
-          }
-
+          tokenList = inQuote ? "\"" : "\" ";
         } else if (tok.equals(" ")) {
           if (tokStarted) {
             retVal = tokBuf.toString();
@@ -309,9 +442,8 @@ public class AutoProcessor {
         }
       }
 
-      // Handle case where end of token stream and
-      // still got data
-      if ((!exit) && (tokStarted)) {
+      // Handle case where end of token stream and still got data
+      if (!exit && tokStarted) {
         retVal = tokBuf.toString();
       }
 
@@ -323,55 +455,28 @@ public class AutoProcessor {
     return retVal;
   }
 
-  private static boolean isFragment(Bundle bundle) {
-    return bundle.getHeaders().get(Constants.FRAGMENT_HOST) != null;
-  }
-
-  private static Bundle installBundle(BundleContext context, String location, boolean httpCache)
-      throws Exception {
-    boolean pack = location.endsWith(XZ_COMPRESSION);
-    if (pack) {
-      // Remove the pack classifier from the location path
-      location = location.substring(0, location.length() - 3);
-      pack = context.getBundle(location) == null;
-    }
-
-    if (pack) {
-      final URL url = new URL(location + XZ_COMPRESSION);
-      try (XZInputStream xzStream =
-          new XZInputStream(FileUtil.getAdaptedConnection(url, httpCache).getInputStream())) {
-        return context.installBundle(location, xzStream);
-      } catch (Exception e) {
-        LOGGER.error("Cannot install xz compressed bundle {}", url, e);
-      }
-    }
-    return context.installBundle(
-        location,
-        FileUtil.getAdaptedConnection(new URI(location).toURL(), httpCache).getInputStream());
-  }
-
-  static class BundleElement {
-    private final int startLevel;
+  /** Represents a plugin element with its configuration. */
+  static class PluginElement {
+    private final int priority;
     private final String location;
-    private final boolean canBeStarted;
+    private final boolean autoStart;
 
-    public BundleElement(int startLevel, String location, boolean canBeStarted) {
-
-      this.startLevel = startLevel;
+    public PluginElement(int priority, String location, boolean autoStart) {
+      this.priority = priority;
       this.location = location;
-      this.canBeStarted = canBeStarted;
+      this.autoStart = autoStart;
     }
 
-    public int getStartLevel() {
-      return startLevel;
+    public int getPriority() {
+      return priority;
     }
 
     public String getLocation() {
       return location;
     }
 
-    public boolean isCanBeStarted() {
-      return canBeStarted;
+    public boolean isAutoStart() {
+      return autoStart;
     }
   }
 }

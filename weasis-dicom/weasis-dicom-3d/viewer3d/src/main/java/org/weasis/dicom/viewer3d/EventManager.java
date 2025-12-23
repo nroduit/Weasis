@@ -20,6 +20,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
+import java.util.prefs.Preferences;
 import javax.swing.BoundedRangeModel;
 import javax.swing.ButtonGroup;
 import javax.swing.DefaultComboBoxModel;
@@ -30,11 +31,8 @@ import javax.swing.JRadioButtonMenuItem;
 import javax.swing.JSeparator;
 import javax.swing.KeyStroke;
 import org.dcm4che3.img.lut.PresetWindowLevel;
-import org.osgi.framework.BundleContext;
-import org.osgi.service.prefs.Preferences;
 import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
-import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.gui.util.BasicActionState;
 import org.weasis.core.api.gui.util.ComboItemListener;
 import org.weasis.core.api.gui.util.DecFormatter;
@@ -149,8 +147,8 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> {
     setAction(newCrosshairAction());
     setAction(new BasicActionState(ActionW.RESET));
 
-    final BundleContext context = AppProperties.getBundleContext(this.getClass());
-    Preferences prefs = BundlePreferences.getDefaultPreferences(context);
+    String plugInId = GuiUtils.getUICore().getPluginManager().getPluginId(this.getClass());
+    Preferences prefs = BundlePreferences.getDefaultPreferences(plugInId);
     zoomSetting.applyPreferences(prefs);
     // Default 3D mouse actions
     mouseActions.setLeft(ActionW.ROTATION.cmd());

@@ -18,8 +18,16 @@
   <build>
     <plugins>
       <plugin>
-        <groupId>biz.aQute.bnd</groupId>
-        <artifactId>bnd-maven-plugin</artifactId>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-jar-plugin</artifactId>
+        <configuration>
+          <archive>
+            <manifestEntries>
+              <Plugin-Class>org.weasis.acquire.internal.Activator</Plugin-Class>
+              <Plugin-Dependencies>weasis-acquire-explorer</Plugin-Dependencies>
+            </manifestEntries>
+          </archive>
+        </configuration>
       </plugin>
     </plugins>
   </build>
@@ -28,6 +36,12 @@
     <dependency>
       <groupId>org.weasis.thirdparty</groupId>
       <artifactId>docking-frames</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.weasis.launcher</groupId>
+      <artifactId>weasis-launcher</artifactId>
+      <version>${project.parent.version}</version>
+      <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>org.weasis.core</groupId>

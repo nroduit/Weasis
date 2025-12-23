@@ -24,10 +24,9 @@ import javax.xml.stream.XMLStreamConstants;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
 import javax.xml.stream.XMLStreamWriter;
-import org.osgi.framework.BundleContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.weasis.core.api.gui.util.AppProperties;
+import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.net.auth.AuthMethod;
 import org.weasis.core.api.net.auth.AuthProvider;
 import org.weasis.core.api.net.auth.AuthRegistration;
@@ -86,8 +85,9 @@ public class AuthenticationPersistence {
       loadMethods(list, ResourceUtil.getResource(FILENAME), false);
 
       // Load nodes from local data
-      final BundleContext context = AppProperties.getBundleContext(AbstractDicomNode.class);
-      loadMethods(list, BundlePreferences.getFileInDataFolder(context, FILENAME).toFile(), true);
+      String plugInId =
+          GuiUtils.getUICore().getPluginManager().getPluginId(AbstractDicomNode.class);
+      loadMethods(list, BundlePreferences.getFileInDataFolder(plugInId, FILENAME).toFile(), true);
       for (AuthMethod m : list) {
         methods.put(m.getUid(), m);
       }
@@ -107,12 +107,12 @@ public class AuthenticationPersistence {
   public static void saveMethod() {
     XMLStreamWriter writer = null;
     XMLOutputFactory factory = XMLOutputFactory.newInstance();
-    final BundleContext context = AppProperties.getBundleContext(AbstractDicomNode.class);
+    String plugInId = GuiUtils.getUICore().getPluginManager().getPluginId(AbstractDicomNode.class);
     try {
       writer =
           factory.createXMLStreamWriter(
               new FileOutputStream(
-                  BundlePreferences.getFileInDataFolder(context, FILENAME).toFile()),
+                  BundlePreferences.getFileInDataFolder(plugInId, FILENAME).toFile()),
               "UTF-8"); // NON-NLS
 
       writer.writeStartDocument("UTF-8", "1.0"); // NON-NLS

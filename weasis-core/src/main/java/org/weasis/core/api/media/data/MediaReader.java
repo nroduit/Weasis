@@ -39,7 +39,7 @@ public interface MediaReader<E extends MediaElement> extends Taggable {
 
   void close();
 
-  Codec getCodec();
+  Codec<? extends MediaElement> getCodec();
 
   String[] getReaderDescription();
 

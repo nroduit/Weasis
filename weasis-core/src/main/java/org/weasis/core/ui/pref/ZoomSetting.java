@@ -10,7 +10,7 @@
 package org.weasis.core.ui.pref;
 
 import java.awt.Color;
-import org.osgi.service.prefs.Preferences;
+import java.util.prefs.Preferences;
 import org.weasis.core.api.image.ZoomOp.Interpolation;
 import org.weasis.core.api.service.BundlePreferences;
 

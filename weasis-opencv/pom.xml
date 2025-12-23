@@ -9,59 +9,54 @@
     <version>${revision}${changelist}</version>
     <relativePath>../weasis-parent/pom.xml</relativePath>
   </parent>
+
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.weasis.opencv</groupId>
   <artifactId>weasis-opencv</artifactId>
   <name>OpenCV plugins [${project.artifactId}]</name>
   <packaging>pom</packaging>
 
+  <modules>
+    <module>weasis-opencv-core-linux-aarch64</module>
+    <module>weasis-opencv-core-linux-x86-64</module>
+    <module>weasis-opencv-core-macosx-aarch64</module>
+    <module>weasis-opencv-core-macosx-x86-64</module>
+    <module>weasis-opencv-core-windows-x86-64</module>
+  </modules>
 
   <properties>
-    <native.configuration>changeMeInChildModule</native.configuration>
+    <native.folder>natives</native.folder>
+    <native.files>changeMeInChildModule</native.files>
   </properties>
 
   <build>
     <plugins>
       <plugin>
-        <groupId>biz.aQute.bnd</groupId>
-        <artifactId>bnd-maven-plugin</artifactId>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-jar-plugin</artifactId>
         <configuration>
-          <bnd>
-            Bundle-NativeCode: ${native.configuration}
-            Import-Package:
-            Fragment-Host: weasis-core-img;bundle-version="${weasis.core.img.version}"
-          </bnd>
+          <archive>
+            <manifestEntries>
+              <Plugin-Class>org.weasis.opencv.NativeLoaderPlugin</Plugin-Class>
+              <Plugin-Native-Folder>${native.folder}</Plugin-Native-Folder>
+              <Plugin-Native-Files>${native.files}</Plugin-Native-Files>
+              <Plugin-Id>${project.artifactId}</Plugin-Id>
+              <Plugin-Version>${weasis.opencv.native.version}</Plugin-Version>
+              <Plugin-Provider>OpenCV Community</Plugin-Provider>
+              <Plugin-Description>${project.name}</Plugin-Description>
+            </manifestEntries>
+          </archive>
         </configuration>
       </plugin>
     </plugins>
   </build>
 
-  <profiles>
-    <profile>
-      <id>default</id>
-      <activation>
-        <property>
-          <name>!weasis.arch</name>
-        </property>
-      </activation>
-      <modules>
-        <module>weasis-opencv-core-linux-aarch64</module>
-        <module>weasis-opencv-core-linux-x86-64</module>
-        <module>weasis-opencv-core-macosx-aarch64</module>
-        <module>weasis-opencv-core-macosx-x86-64</module>
-        <module>weasis-opencv-core-windows-x86-64</module>
-      </modules>
-    </profile>
-  <profile>
-    <id>weasis-arch</id>
-    <activation>
-      <property>
-        <name>weasis.arch</name>
-      </property>
-    </activation>
-    <modules>
-      <module>weasis-opencv-core-${weasis.arch}</module>
-    </modules>
-  </profile>
-</profiles>
+  <dependencies>
+    <dependency>
+      <groupId>org.weasis.launcher</groupId>
+      <artifactId>weasis-launcher</artifactId>
+      <version>${project.parent.version}</version>
+      <scope>provided</scope>
+    </dependency>
+  </dependencies>
 </project>

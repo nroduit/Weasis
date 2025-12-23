@@ -11,6 +11,7 @@ package org.weasis.pref;
 
 import static java.util.stream.Collectors.*;
 
+import com.github.zafarkhaja.semver.Version;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -24,12 +25,11 @@ import javax.xml.stream.XMLInputFactory;
 import javax.xml.stream.XMLStreamConstants;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
-import org.osgi.framework.Constants;
-import org.osgi.framework.Version;
 import org.slf4j.LoggerFactory;
 import org.weasis.launcher.FileUtil;
 import org.weasis.launcher.Utils;
 import org.weasis.launcher.WeasisLauncher.Type;
+import org.weasis.plugin.WeasisPluginManager;
 
 public class ConfigData {
   private static final org.slf4j.Logger LOGGER = LoggerFactory.getLogger(ConfigData.class);
@@ -41,6 +41,7 @@ public class ConfigData {
   public static final String P_WEASIS_VERSION = "weasis.version";
   public static final String P_WEASIS_PROFILE = "weasis.profile";
   public static final String P_WEASIS_NAME = "weasis.name";
+  public static final String P_PLUGIN_DIR_PROP = "org.osgi.framework.storage";
   public static final String P_WEASIS_PATH = "weasis.path";
   public static final String P_WEASIS_RES_DATE = "weasis.resources.date";
   public static final String P_WEASIS_CODEBASE_LOCAL = "weasis.codebase.local";
@@ -57,13 +58,16 @@ public class ConfigData {
   public static final String P_WEASIS_I18N = "weasis.i18n";
   public static final String P_OS_NAME = "os.name";
   public static final String P_WEASIS_LOOK = "weasis.theme";
-  public static final String P_GOSH_ARGS = "gosh.args";
   public static final String P_WEASIS_CLEAN_CACHE = "weasis.clean.cache";
   public static final String P_HTTP_AUTHORIZATION = "http.authorization";
   public static final String P_NATIVE_LIB_SPEC = "native.library.spec";
   public static final String P_WEASIS_MIN_NATIVE_VERSION = "weasis.min.native.version";
   public static final String P_WEASIS_RESOURCES_URL = "weasis.resources.url";
   public static final String F_RESOURCES = "resources"; // NON-NLS
+  public static final String F_ROOT_PLUGIN_FOLDER = "cache-plugins";
+  public static final String F_PLUGIN_FOLDER = "plugins";
+  public static final String F_LIB_FOLDER = "common-lib";
+  public static final String F_TRANSLATION_FOLDER = "i18n";
 
   /**
    * The property name used to specify a URL to the configuration property file to be used for the
@@ -91,6 +95,7 @@ public class ConfigData {
   private final StringBuilder configOutput = new StringBuilder();
   private final Map<String, String> felixProps = new HashMap<>();
   private final AppPreferences preferences = new AppPreferences();
+  private final WeasisPluginManager pluginManager = new WeasisPluginManager();
 
   public ConfigData(String[] args) {
     init(args);
@@ -219,7 +224,9 @@ public class ConfigData {
       felixProps.forEach((k, v) -> LOGGER.trace("Felix config: {} = {}", k, v));
     }
 
-    File appFolder = new File(felixProps.get(Constants.FRAMEWORK_STORAGE)).getParentFile();
+    // Set plugin directory for PF4J
+    String pluginDir = felixProps.getOrDefault(P_PLUGIN_DIR_PROP, F_ROOT_PLUGIN_FOLDER);
+    File appFolder = new File(pluginDir).getParentFile();
     appFolder.mkdirs();
     addProperty(P_WEASIS_PATH, appFolder.getPath());
     System.setProperty(P_WEASIS_PATH, appFolder.getPath());
@@ -321,6 +328,10 @@ public class ConfigData {
             default -> throw new IllegalStateException("Unexpected value: " + k);
           }
         });
+  }
+
+  public WeasisPluginManager getPluginManager() {
+    return pluginManager;
   }
 
   public AppPreferences getPreferences() {
@@ -741,8 +752,8 @@ public class ConfigData {
         URI propURI = getLocalPropertiesURI(CONFIG_PROPERTIES_FILE_VALUE);
         AppPreferences localPrefs = new AppPreferences();
         localPrefs.readJson(propURI);
-        Version loc = new Version(localPrefs.getValue(P_WEASIS_VERSION).replaceFirst("-", "."));
-        Version min = new Version(val.replaceFirst("-", "."));
+        Version loc = Version.parse(localPrefs.getValue(P_WEASIS_VERSION));
+        Version min = Version.parse(val);
         if (loc.compareTo(min) < 0) {
           LOGGER.warn(
               "Start only with the native plug-ins because the version ({}) is lower the minimal version ({}) required remotely",

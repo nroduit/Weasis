@@ -11,15 +11,18 @@ package org.weasis.dicom.rt;
 
 import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Tag;
+import org.pf4j.Extension;
 import org.weasis.dicom.codec.DicomMediaIO;
 import org.weasis.dicom.codec.DicomSpecialElement;
 import org.weasis.dicom.codec.DicomSpecialElementFactory;
+import org.weasis.plugin.SingletonExtension;
 
 /**
  * @author Tomas Skripcak
  * @author Nicolas Roduit
  */
-@org.osgi.service.component.annotations.Component(service = DicomSpecialElementFactory.class)
+@Extension
+@SingletonExtension
 public class RTElementFactory implements DicomSpecialElementFactory {
 
   public static final String SERIES_RT_MIMETYPE = "rt/dicom"; // NON-NLS

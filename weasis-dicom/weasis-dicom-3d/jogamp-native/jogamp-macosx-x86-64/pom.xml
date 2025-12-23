@@ -15,16 +15,16 @@
   <name>JOGL - MacOSX x86-64 [${project.artifactId}]</name>
   <version>${jogamp.version}</version>
   <properties>
-    <native.configuration>
-      natives/macosx-universal/libgluegen_rt.dylib; \
-      natives/macosx-universal/libjocl.dylib; \
-      natives/macosx-universal/libnativewindow_awt.dylib; \
-      natives/macosx-universal/libnativewindow_macosx.dylib; \
-      natives/macosx-universal/libnewt_head.dylib; \
-      natives/macosx-universal/libjogl_mobile.dylib; \
-      natives/macosx-universal/libjogl_desktop.dylib; \
-      processor=x86-64; osname=MacOSX
-    </native.configuration>
+    <native.folder>natives/macosx-universal</native.folder>
+    <native.files>
+      libgluegen_rt.dylib,
+      libjocl.dylib,
+      libnativewindow_awt.dylib,
+      libnativewindow_macosx.dylib,
+      libnewt_head.dylib,
+      libjogl_mobile.dylib,
+      libjogl_desktop.dylib
+    </native.files>
   </properties>
   <build>
     <plugins>
@@ -48,7 +48,6 @@
                   <classifier>natives-macosx-universal</classifier>
                   <outputDirectory>target/classes</outputDirectory>
                 </artifactItem>
-
                 <artifactItem>
                   <groupId>org.jogamp.jogl</groupId>
                   <artifactId>jogl-all</artifactId>
@@ -56,7 +55,6 @@
                   <classifier>natives-macosx-universal</classifier>
                   <outputDirectory>target/classes</outputDirectory>
                 </artifactItem>
-
                 <artifactItem>
                   <groupId>org.jogamp.jocl</groupId>
                   <artifactId>jocl</artifactId>

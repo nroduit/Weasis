@@ -9,8 +9,9 @@
  */
 package org.weasis.core.ui.editor;
 
-import java.util.Hashtable;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -101,7 +102,7 @@ public class SeriesViewerUI {
       return;
     }
 
-    Hashtable<String, Object> properties = new Hashtable<>();
+    Map<String, Object> properties = new HashMap<>();
     if (series != null) {
       properties.put(MediaSeries.class.getName(), series);
       properties.put("class.container", clazz.getName());

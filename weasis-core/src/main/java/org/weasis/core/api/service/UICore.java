@@ -18,6 +18,11 @@ import bibliothek.gui.dock.common.CWorkingArea;
 import bibliothek.gui.dock.common.event.CVetoFocusListener;
 import bibliothek.gui.dock.common.intern.CDockable;
 import bibliothek.gui.dock.event.KeyboardListener;
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.LoggerContext;
+import ch.qos.logback.classic.encoder.PatternLayoutEncoder;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.rolling.RollingFileAppender;
 import java.awt.GraphicsEnvironment;
 import java.awt.Window;
 import java.awt.event.KeyEvent;
@@ -39,11 +44,11 @@ import java.util.Locale;
 import java.util.Locale.Category;
 import java.util.Map;
 import java.util.Properties;
+import java.util.prefs.Preferences;
 import javax.management.InstanceNotFoundException;
 import javax.management.JMException;
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
-import org.osgi.framework.BundleContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.DataExplorerView;
@@ -61,11 +66,15 @@ import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.ui.editor.SeriesViewer;
 import org.weasis.core.ui.editor.SeriesViewerFactory;
 import org.weasis.core.ui.editor.image.ViewerPlugin;
+import org.weasis.core.ui.editor.image.dockable.MeasureTool;
 import org.weasis.core.ui.launcher.Launcher;
+import org.weasis.core.ui.model.layer.AbstractInfoLayer;
 import org.weasis.core.ui.util.ToolBarContainer;
 import org.weasis.core.ui.util.Toolbar;
+import org.weasis.core.util.FileUtil;
 import org.weasis.core.util.PropertiesUtil;
 import org.weasis.core.util.StringUtil;
+import org.weasis.plugin.WeasisPluginManager;
 import org.weasis.pref.ConfigData;
 
 public final class UICore {
@@ -80,13 +89,11 @@ public final class UICore {
   public final List<ViewerPlugin<?>> viewerPlugins;
   private final List<DataExplorerView> explorerPlugins;
   private final List<Toolbar> explorerPluginToolbars;
-  private final List<SeriesViewerFactory> seriesViewerFactories;
   private final CVetoFocusListener dockingVetoFocus;
   private final CControl dockingControl;
   private final CContentArea baseArea;
   private final CWorkingArea mainArea;
 
-  private final List<Codec<MediaElement>> codecPlugins;
   private final WProperties systemPreferences;
   private final WProperties localPersistence;
   private final WProperties initialSystemPreferences;
@@ -110,15 +117,13 @@ public final class UICore {
     this.toolbarContainer = new ToolBarContainer();
 
     this.configData = retrieveconfigData();
-    this.initialSystemPreferences = new WProperties();
-    this.systemPreferences = new WProperties();
+    this.initialSystemPreferences = new WProperties(configData.getFelixProps());
+    this.systemPreferences = new WProperties(configData.getFelixProps());
     this.pluginPersistenceMap = new HashMap<>();
-    this.codecPlugins = Collections.synchronizedList(new ArrayList<>());
     this.localPersistence = new WProperties();
     this.viewerPlugins = Collections.synchronizedList(new ArrayList<>());
     this.explorerPlugins = Collections.synchronizedList(new ArrayList<>());
     this.explorerPluginToolbars = Collections.synchronizedList(new ArrayList<>());
-    this.seriesViewerFactories = Collections.synchronizedList(new ArrayList<>());
     this.dockingVetoFocus =
         new CVetoFocusListener() {
 
@@ -134,8 +139,7 @@ public final class UICore {
         };
     dockingControl.getController().getKeyboardController().addListener(new StackTabSwitcher());
 
-    BundleContext context = AppProperties.getBundleContext();
-    readSystemPreferences(context);
+    readSystemPreferences();
     this.propsFile =
         new File(systemPreferences.getProperty("weasis.pref.dir"), "weasis.properties");
     if (!propsFile.canRead()) {
@@ -153,11 +157,13 @@ public final class UICore {
     String path = systemPreferences.getProperty("weasis.resources.path");
     ResourceUtil.setResourcePath(path);
 
-    Path dataFolder = AppProperties.getBundleDataFolder(context);
+    Path dataFolder = BundlePreferences.getDataFolder(AppProperties.CORE_PLUGIN_ID);
     PropertiesUtil.loadProperties(dataFolder.resolve("persistence.properties"), localPersistence);
 
     this.dicomLaunchers = Launcher.loadLaunchers(Launcher.Type.DICOM);
     this.otherLaunchers = Launcher.loadLaunchers(Launcher.Type.OTHER);
+
+    loadPreferences();
   }
 
   private static ConfigData retrieveconfigData() {
@@ -175,6 +181,74 @@ public final class UICore {
     throw new IllegalStateException("Cannot retrieve ConfigData");
   }
 
+  private void loadPreferences() {
+    try {
+
+      initLoggerAndAudit(systemPreferences);
+
+      Preferences prefs = BundlePreferences.getDefaultPreferences(AppProperties.CORE_PLUGIN_ID);
+      AbstractInfoLayer.applyPreferences(prefs);
+      MeasureTool.viewSetting.initMonitors(localPersistence);
+      MeasureTool.viewSetting.applyPreferences(prefs);
+    } catch (Exception e) {
+      LOGGER.error("Error starting Weasis core plugin", e);
+    }
+  }
+
+  public void savePreferences() {
+    try {
+      saveSystemPreferences();
+
+      // Save preferences
+      Preferences prefs = BundlePreferences.getDefaultPreferences(AppProperties.CORE_PLUGIN_ID);
+      AbstractInfoLayer.savePreferences(prefs);
+      MeasureTool.viewSetting.savePreferences(prefs);
+      prefs.sync();
+
+      Path dataFolder = BundlePreferences.getDataFolder(AppProperties.CORE_PLUGIN_ID);
+      Path filePath = dataFolder.resolve("persistence.properties");
+      FileUtil.prepareToWriteFile(filePath);
+      PropertiesUtil.storeProperties(filePath, getLocalPersistence(), null);
+    } catch (Exception e) {
+      LOGGER.error("Error stopping Weasis core plugin", e);
+    }
+  }
+
+  private void initLoggerAndAudit(WProperties properties) {
+
+    LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
+    loggerContext.reset();
+
+    AuditLog.applyConfig(systemPreferences, loggerContext);
+
+    ch.qos.logback.classic.Logger logger =
+        (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME);
+
+    // Audit log for giving statistics about usage of Weasis
+    String loggerKey = "audit.log";
+    if (properties.getBooleanProperty(loggerKey, false)) {
+      String pattern =
+          systemPreferences.getProperty(
+              AuditLog.LOG_PATTERN,
+              "%d{dd.MM.yyyy HH:mm:ss.SSS} *%-5level* %msg" + "%ex{0}%nopex%n");
+
+      PatternLayoutEncoder encoder = AuditLog.getPatternLayoutEncoder(loggerContext, pattern);
+
+      RollingFileAppender<ILoggingEvent> rollingFileAppender =
+          AuditLog.getRollingFilesAppender(logger, AuditLog.NAME_AUDIT);
+      WProperties p = AuditLog.getAuditProperties();
+
+      AuditLog.updateRollingFilesAppender(rollingFileAppender, loggerContext, p, encoder);
+      AuditLog.LOGGER.info("Start audit log session");
+    } else {
+      logger.detachAppender(AuditLog.NAME_AUDIT);
+      if (AuditLog.LOGGER instanceof ch.qos.logback.classic.Logger auditLogger) {
+        auditLogger.detachAndStopAllAppenders();
+        auditLogger.setLevel(Level.OFF);
+      }
+    }
+  }
+
   /**
    * Thread safe singleton instance.
    *
@@ -184,21 +258,25 @@ public final class UICore {
     return Holder.INSTANCE;
   }
 
-  private void readSystemPreferences(BundleContext context) {
+  public WeasisPluginManager getPluginManager() {
+    return configData.getPluginManager();
+  }
+
+  private void readSystemPreferences() {
     systemPreferences.clear();
-    if (context != null) {
-      String pkeys = context.getProperty("wp.list");
+    if (configData != null) {
+      Map<String, String> props = configData.getFelixProps();
+      String pkeys = props.get("wp.list");
       if (StringUtil.hasText(pkeys)) {
         for (String key : pkeys.split(",")) {
-          systemPreferences.setProperty(key, context.getProperty(key));
-          initialSystemPreferences.setProperty(
-              key, context.getProperty("wp.init." + key)); // NON-NLS
+          systemPreferences.setProperty(key, props.get(key));
+          initialSystemPreferences.setProperty(key, props.get("wp.init." + key)); // NON-NLS
         }
         // In case the remote file is empty or has fewer properties than the local file, set a pref
         // to force
         // rewriting both files
         String diffRemote = "wp.init.diff.remote.pref";
-        initialSystemPreferences.setProperty(diffRemote, context.getProperty(diffRemote));
+        initialSystemPreferences.setProperty(diffRemote, props.get(diffRemote));
         saveSystemPreferences();
       }
     }
@@ -381,15 +459,17 @@ public final class UICore {
   }
 
   public List<SeriesViewerFactory> getSeriesViewerFactories() {
-    return seriesViewerFactories;
+    return getPluginManager().getExtensions(SeriesViewerFactory.class);
   }
 
   public CVetoFocusListener getDockingVetoFocus() {
     return dockingVetoFocus;
   }
 
-  public List<Codec<MediaElement>> getCodecPlugins() {
-    return codecPlugins;
+  public List<? extends Codec<? extends MediaElement>> getCodecPlugins() {
+    return getPluginManager().getExtensions(Codec.class).stream()
+        .map(codec -> (Codec<? extends MediaElement>) codec)
+        .toList();
   }
 
   public ConfigData getConfigData() {
@@ -439,11 +519,9 @@ public final class UICore {
 
   public SeriesViewerFactory getViewerFactory(Class<? extends SeriesViewerFactory> clazz) {
     if (clazz != null) {
-      synchronized (seriesViewerFactories) {
-        for (final SeriesViewerFactory factory : seriesViewerFactories) {
-          if (clazz.isInstance(factory)) {
-            return factory;
-          }
+      for (final SeriesViewerFactory factory : getSeriesViewerFactories()) {
+        if (clazz.isInstance(factory)) {
+          return factory;
         }
       }
     }
@@ -452,11 +530,9 @@ public final class UICore {
 
   public SeriesViewerFactory getViewerFactory(SeriesViewer seriesViewer) {
     if (seriesViewer != null) {
-      synchronized (seriesViewerFactories) {
-        for (final SeriesViewerFactory factory : seriesViewerFactories) {
-          if (factory != null && factory.isViewerCreatedByThisFactory(seriesViewer)) {
-            return factory;
-          }
+      for (final SeriesViewerFactory factory : getSeriesViewerFactories()) {
+        if (factory != null && factory.isViewerCreatedByThisFactory(seriesViewer)) {
+          return factory;
         }
       }
     }
@@ -465,39 +541,35 @@ public final class UICore {
 
   public SeriesViewerFactory getViewerFactory(String mimeType) {
     if (mimeType != null) {
-      synchronized (seriesViewerFactories) {
-        int level = Integer.MAX_VALUE;
-        SeriesViewerFactory best = null;
-        for (final SeriesViewerFactory f : seriesViewerFactories) {
-          if (f != null && f.canReadMimeType(mimeType)) {
-            if (f.getLevel() < level) {
-              level = f.getLevel();
-              best = f;
-            }
+      int level = Integer.MAX_VALUE;
+      SeriesViewerFactory best = null;
+      for (final SeriesViewerFactory f : getSeriesViewerFactories()) {
+        if (f != null && f.canReadMimeType(mimeType)) {
+          if (f.getLevel() < level) {
+            level = f.getLevel();
+            best = f;
           }
         }
-        return best;
       }
+      return best;
     }
     return null;
   }
 
   public SeriesViewerFactory getViewerFactory(String[] mimeTypeList) {
     if (mimeTypeList != null && mimeTypeList.length > 0) {
-      synchronized (seriesViewerFactories) {
-        int level = Integer.MAX_VALUE;
-        SeriesViewerFactory best = null;
-        for (final SeriesViewerFactory f : seriesViewerFactories) {
-          if (f != null) {
-            for (String mime : mimeTypeList) {
-              if (f.canReadMimeType(mime) && f.getLevel() < level) {
-                best = f;
-              }
+      int level = Integer.MAX_VALUE;
+      SeriesViewerFactory best = null;
+      for (final SeriesViewerFactory f : getSeriesViewerFactories()) {
+        if (f != null) {
+          for (String mime : mimeTypeList) {
+            if (f.canReadMimeType(mime) && f.getLevel() < level) {
+              best = f;
             }
           }
         }
-        return best;
       }
+      return best;
     }
     return null;
   }
@@ -505,13 +577,11 @@ public final class UICore {
   public List<SeriesViewerFactory> getViewerFactoryList(String[] mimeTypeList) {
     if (mimeTypeList != null && mimeTypeList.length > 0) {
       List<SeriesViewerFactory> plugins = new ArrayList<>();
-      synchronized (seriesViewerFactories) {
-        for (final SeriesViewerFactory viewerFactory : seriesViewerFactories) {
-          if (viewerFactory != null) {
-            for (String mime : mimeTypeList) {
-              if (viewerFactory.canReadMimeType(mime)) {
-                plugins.add(viewerFactory);
-              }
+      for (final SeriesViewerFactory viewerFactory : getSeriesViewerFactories()) {
+        if (viewerFactory != null) {
+          for (String mime : mimeTypeList) {
+            if (viewerFactory.canReadMimeType(mime)) {
+              plugins.add(viewerFactory);
             }
           }
         }

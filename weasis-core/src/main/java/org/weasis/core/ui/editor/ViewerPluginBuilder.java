@@ -218,7 +218,7 @@ public class ViewerPluginBuilder {
       boolean cache = file.getPath().startsWith(AppProperties.FILE_CACHE_DIR.toString());
       String mimeType = MimeInspector.getMimeType(file);
       if (mimeType != null) {
-        Codec<?> codec = BundleTools.getCodec(mimeType, "dcm4che"); // NON-NLS
+        Codec<? extends MediaElement> codec = BundleTools.getCodec(mimeType, "dcm4che"); // NON-NLS
         if (codec != null) {
           MediaReader mreader = codec.getMediaIO(file.toURI(), mimeType, null);
           if (cache) {

@@ -9,6 +9,7 @@
     <version>${revision}${changelist}</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
+
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.weasis.thirdparty.org.jogamp</groupId>
   <artifactId>jogamp-native</artifactId>
@@ -24,25 +25,28 @@
   </modules>
 
   <properties>
-    <native.configuration>changeMeInChildModule</native.configuration>
+    <native.folder>changeMeInChildModule</native.folder>
+    <native.files>changeMeInChildModule</native.files>
   </properties>
+
   <build>
     <plugins>
       <plugin>
-        <groupId>biz.aQute.bnd</groupId>
-        <artifactId>bnd-maven-plugin</artifactId>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-jar-plugin</artifactId>
         <configuration>
-          <bnd>
-            Bundle-NativeCode: ${native.configuration}
-            Import-Package:
-            Fragment-Host: jogamp;bundle-version="${jogamp.version}"
-
-            Implementation-Title: Java Bindings for OpenGL Runtime Environment
-            Implementation-Version: ${jogamp.version}
-            Specification-Title: Java Bindings for OpenGL API Specification
-            Specification-Version: ${jogamp.version}
-            Specification-Vendor: JogAmp Community
-          </bnd>
+          <archive>
+            <manifestEntries>
+              <Plugin-Class>org.weasis.jogamp.NativeLoaderPlugin</Plugin-Class>
+              <Plugin-Native-Folder>${native.folder}</Plugin-Native-Folder>
+              <Plugin-Native-Files>${native.files}</Plugin-Native-Files>
+              <Plugin-Id>${project.artifactId}</Plugin-Id>
+              <Plugin-Version>${jogamp.version}</Plugin-Version>
+              <Plugin-Provider>JogAmp Community</Plugin-Provider>
+              <Plugin-Description>${project.name}</Plugin-Description>
+              <Plugin-Dependencies>jogamp</Plugin-Dependencies>
+            </manifestEntries>
+          </archive>
         </configuration>
       </plugin>
     </plugins>

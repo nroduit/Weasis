@@ -20,6 +20,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.prefs.Preferences;
 import javax.swing.Action;
 import javax.swing.JComponent;
 import javax.swing.JMenu;
@@ -27,15 +28,12 @@ import javax.swing.JProgressBar;
 import javax.swing.JSeparator;
 import javax.swing.SwingUtilities;
 import org.dcm4che3.data.Tag;
-import org.osgi.framework.BundleContext;
-import org.osgi.service.prefs.Preferences;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.ObservableEvent;
 import org.weasis.core.api.gui.Insertable.Type;
 import org.weasis.core.api.gui.InsertableUtil;
 import org.weasis.core.api.gui.util.ActionW;
-import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.image.GridBagLayoutModel;
@@ -251,12 +249,11 @@ public class MprContainer extends DicomViewerPlugin implements PropertyChangeLis
       toolBars.add(new DcmHeaderToolBar(evtMg, 35));
       toolBars.add(new LutToolBar(evtMg, 40));
 
-      final BundleContext context = AppProperties.getBundleContext(this.getClass());
-      Preferences prefs = BundlePreferences.getDefaultPreferences(context);
+      String plugInId = GuiUtils.getUICore().getPluginManager().getPluginId(this.getClass());
+      Preferences prefs = BundlePreferences.getDefaultPreferences(plugInId);
       if (prefs != null) {
         String className = this.getClass().getSimpleName().toLowerCase();
-        InsertableUtil.applyPreferences(
-            toolBars, prefs, context.getBundle().getSymbolicName(), className, Type.TOOLBAR);
+        InsertableUtil.applyPreferences(toolBars, prefs, plugInId, className, Type.TOOLBAR);
       }
     }
   }

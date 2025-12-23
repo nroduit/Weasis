@@ -252,7 +252,7 @@ public abstract class AbstractThumbnailList<E extends MediaElement> extends JLis
       TagW tname;
       String tvalue;
 
-      Codec codec = reader.getCodec();
+      Codec<?> codec = reader.getCodec();
       String sUID;
       String gUID;
       if (isDicomMedia(mediaElement)
@@ -301,7 +301,7 @@ public abstract class AbstractThumbnailList<E extends MediaElement> extends JLis
         TagW tname;
         String tvalue;
 
-        Codec codec = reader.getCodec();
+        Codec<?> codec = reader.getCodec();
         if (isDicomMedia(mediaElement)
             && codec != null
             && codec.isMimeTypeSupported("application/dicom")) { // NON-NLS

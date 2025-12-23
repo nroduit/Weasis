@@ -28,10 +28,8 @@ import javax.xml.stream.XMLStreamConstants;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
 import javax.xml.stream.XMLStreamWriter;
-import org.osgi.framework.BundleContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.service.BundlePreferences;
 import org.weasis.core.api.service.WProperties;
@@ -216,10 +214,10 @@ public abstract class AbstractDicomNode {
     loadDicomNodes(list, ResourceUtil.getResource(type.getFilename()), type, false, usage, webType);
 
     // Load nodes from local data
-    final BundleContext context = AppProperties.getBundleContext(AbstractDicomNode.class);
+    String plugInId = GuiUtils.getUICore().getPluginManager().getPluginId(AbstractDicomNode.class);
     loadDicomNodes(
         list,
-        BundlePreferences.getFileInDataFolder(context, type.getFilename()).toFile(),
+        BundlePreferences.getFileInDataFolder(plugInId, type.getFilename()).toFile(),
         type,
         true,
         usage,
@@ -231,12 +229,12 @@ public abstract class AbstractDicomNode {
   public static void saveDicomNodes(JComboBox<? extends AbstractDicomNode> comboBox, Type type) {
     XMLStreamWriter writer = null;
     XMLOutputFactory factory = XMLOutputFactory.newInstance();
-    final BundleContext context = AppProperties.getBundleContext(AbstractDicomNode.class);
+    String plugInId = GuiUtils.getUICore().getPluginManager().getPluginId(AbstractDicomNode.class);
     try {
       writer =
           factory.createXMLStreamWriter(
               new FileOutputStream(
-                  BundlePreferences.getFileInDataFolder(context, type.getFilename()).toString()),
+                  BundlePreferences.getFileInDataFolder(plugInId, type.getFilename()).toString()),
               "UTF-8"); // NON-NLS
 
       writer.writeStartDocument("UTF-8", "1.0"); // NON-NLS

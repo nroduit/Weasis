@@ -9,13 +9,7 @@
  */
 package org.weasis.base.viewer2d.internal;
 
-import org.osgi.annotation.bundle.Header;
-import org.osgi.framework.BundleActivator;
-import org.osgi.framework.BundleContext;
-import org.osgi.framework.Constants;
-import org.osgi.framework.InvalidSyntaxException;
-import org.osgi.framework.ServiceEvent;
-import org.osgi.framework.ServiceListener;
+import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.base.viewer2d.EventManager;
@@ -25,44 +19,61 @@ import org.weasis.core.api.gui.InsertableFactory;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.service.BundleTools;
+import org.weasis.plugin.PluginContext;
+import org.weasis.plugin.WeasisPlugin;
 
-@Header(name = Constants.BUNDLE_ACTIVATOR, value = "${@class}") // NON-NLS
-public class Activator implements BundleActivator, ServiceListener {
-
+public class Activator extends WeasisPlugin {
   private static final Logger LOGGER = LoggerFactory.getLogger(Activator.class);
 
+  public Activator(PluginContext context) {
+    super(context);
+  }
+
   @Override
-  public void start(final BundleContext bundleContext) {
-    BundleTools.registerExistingComponents(bundleContext, View2dContainer.UI);
-
-    // Instantiate UI components in EDT
-    GuiExecutor.execute(
-        () -> GuiUtils.getUICore().getExplorerPluginToolbars().add(new ImportToolBar(3)));
-
-    // Add listener for getting new service events
+  public void start() {
     try {
-      bundleContext.addServiceListener(
-          Activator.this,
-          String.format(
-              "(%s=%s)", Constants.OBJECTCLASS, InsertableFactory.class.getName())); // NON-NLS
-    } catch (InvalidSyntaxException e) {
-      LOGGER.error("Add service listener", e);
+      // Register InsertableFactory extensions from this plugin
+      List<InsertableFactory> insertableFactories =
+          getPluginWrapper()
+              .getPluginManager()
+              .getExtensions(InsertableFactory.class, getPluginId());
+      for (InsertableFactory factory : insertableFactories) {
+        BundleTools.registerInsertableFactory(factory, View2dContainer.UI);
+      }
+
+      // Instantiate UI components in EDT
+      GuiExecutor.execute(
+          () -> GuiUtils.getUICore().getExplorerPluginToolbars().add(new ImportToolBar(3)));
+
+      LOGGER.info("Weasis base-viewer2d plugin started");
+    } catch (Exception e) {
+      LOGGER.error("Error starting Weasis base-viewer2d plugin", e);
     }
   }
 
   @Override
-  public void stop(BundleContext bundleContext) {
-    // Save preferences only if EventManager has been initialized
-    if (EventManager.hasBeenInitialized()) {
-      EventManager.getInstance().savePreferences(bundleContext);
-    }
-    GuiUtils.getUICore().getExplorerPluginToolbars().removeIf(ImportToolBar.class::isInstance);
-    GuiUtils.getUICore().closeSeriesViewerType(View2dContainer.class);
-  }
+  public void stop() {
+    try {
+      // Save preferences only if EventManager has been initialized
+      if (EventManager.hasBeenInitialized()) {
+        EventManager.getInstance().savePreferences();
+      }
 
-  @Override
-  public synchronized void serviceChanged(final ServiceEvent event) {
-    // Tools and Toolbars (with non-immediate instance) must be instantiated in the EDT
-    GuiExecutor.execute(() -> BundleTools.dataExplorerChanged(event, View2dContainer.UI));
+      // Unregister InsertableFactory extensions from this plugin
+      List<InsertableFactory> insertableFactories =
+          getPluginWrapper()
+              .getPluginManager()
+              .getExtensions(InsertableFactory.class, getPluginId());
+      for (InsertableFactory factory : insertableFactories) {
+        BundleTools.unregisterInsertableFactory(factory, View2dContainer.UI);
+      }
+
+      GuiUtils.getUICore().getExplorerPluginToolbars().removeIf(ImportToolBar.class::isInstance);
+      GuiUtils.getUICore().closeSeriesViewerType(View2dContainer.class);
+
+      LOGGER.info("Weasis base-viewer2d plugin stopped");
+    } catch (Exception e) {
+      LOGGER.error("Error stopping Weasis base-viewer2d plugin", e);
+    }
   }
 }

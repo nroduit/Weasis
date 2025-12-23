@@ -9,7 +9,7 @@
  */
 package org.weasis.dicom.viewer3d;
 
-import org.osgi.framework.Version;
+import com.github.zafarkhaja.semver.Version;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.util.StringUtil;
 
@@ -18,17 +18,17 @@ public record OpenGLInfo(
 
   public Version getVersion() {
     try {
-      return new Version(shortVersion().split(StringUtil.SPACE)[0]);
+      return Version.parse(shortVersion().split(StringUtil.SPACE)[0]);
     } catch (Exception e) {
       LoggerFactory.getLogger(OpenGLInfo.class)
           .error("Cannot read opengl version {}", shortVersion().split(StringUtil.SPACE)[0]);
-      return new Version(0, 0, 0);
+      return Version.of(0);
     }
   }
 
   public boolean isVersionCompliant() {
     // Compliant with Compute Shaders
-    Version minimalVersion = new Version(4, 3, 0);
+    Version minimalVersion = Version.of(4, 3, 0);
     return getVersion().compareTo(minimalVersion) >= 0;
   }
 

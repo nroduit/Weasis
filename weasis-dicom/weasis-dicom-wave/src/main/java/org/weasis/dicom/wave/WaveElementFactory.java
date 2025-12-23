@@ -9,11 +9,14 @@
  */
 package org.weasis.dicom.wave;
 
+import org.pf4j.Extension;
 import org.weasis.dicom.codec.DicomMediaIO;
 import org.weasis.dicom.codec.DicomSpecialElement;
 import org.weasis.dicom.codec.DicomSpecialElementFactory;
+import org.weasis.plugin.SingletonExtension;
 
-@org.osgi.service.component.annotations.Component(service = DicomSpecialElementFactory.class)
+@Extension
+@SingletonExtension
 public class WaveElementFactory implements DicomSpecialElementFactory {
 
   public static final String SERIES_WAVEFORM_MIMETYPE = "wf/dicom"; // NON-NLS

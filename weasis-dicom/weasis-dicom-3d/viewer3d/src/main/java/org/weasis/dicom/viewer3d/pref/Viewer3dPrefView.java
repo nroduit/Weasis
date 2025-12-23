@@ -9,6 +9,7 @@
  */
 package org.weasis.dicom.viewer3d.pref;
 
+import com.github.zafarkhaja.semver.Version;
 import java.awt.Color;
 import java.awt.FlowLayout;
 import java.util.ArrayList;
@@ -23,7 +24,6 @@ import javax.swing.JSlider;
 import javax.swing.JSpinner;
 import javax.swing.SpinnerListModel;
 import javax.swing.SwingUtilities;
-import org.osgi.framework.Version;
 import org.weasis.core.api.gui.util.AbstractItemDialogPage;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.GuiUtils.IconColor;
@@ -154,7 +154,7 @@ public class Viewer3dPrefView extends AbstractItemDialogPage {
       openglPanel.add(GuiUtils.getFlowLayoutPanel(texture));
 
       // This minimal version must match with the shader version
-      Version minimalVersion = new Version(4, 3, 0);
+      Version minimalVersion = Version.of(4, 3, 0);
       boolean versionIssue = !info.isVersionCompliant();
       boolean software = info.looksSoftware();
       if (versionIssue || software || info.max3dTextureSize() < RenderingLayer.MAX_QUALITY) {

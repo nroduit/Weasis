@@ -9,11 +9,14 @@
  */
 package org.weasis.dicom.au;
 
+import org.pf4j.Extension;
 import org.weasis.dicom.codec.DicomMediaIO;
 import org.weasis.dicom.codec.DicomSpecialElement;
 import org.weasis.dicom.codec.DicomSpecialElementFactory;
+import org.weasis.plugin.SingletonExtension;
 
-@org.osgi.service.component.annotations.Component(service = DicomSpecialElementFactory.class)
+@Extension
+@SingletonExtension
 public class AuElementFactory implements DicomSpecialElementFactory {
   private static final String[] modalities = {"AU"};
 

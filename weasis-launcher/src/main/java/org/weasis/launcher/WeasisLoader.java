@@ -31,8 +31,8 @@ import javax.swing.JProgressBar;
 import javax.swing.RootPaneContainer;
 import javax.swing.SwingConstants;
 import javax.swing.UIManager;
-import org.osgi.framework.BundleContext;
 import org.slf4j.LoggerFactory;
+import org.weasis.plugin.WeasisPluginManager;
 
 public class WeasisLoader {
   private static final org.slf4j.Logger LOGGER = LoggerFactory.getLogger(WeasisLoader.class);
@@ -213,8 +213,9 @@ public class WeasisLoader {
     }
   }
 
-  public void setFelix(
-      Map<String, String> serverProp, BundleContext bundleContext, Properties modulesI18n) {
-    AutoProcessor.process(serverProp, modulesI18n, bundleContext, this);
+  public void setPluginManager(
+      Map<String, String> serverProp, WeasisPluginManager pluginManager, Properties modulesI18n) {
+    LOGGER.info("Plugin manager initialized with {} plugins", pluginManager.getPlugins().size());
+    AutoProcessor.process(serverProp, modulesI18n, pluginManager, this);
   }
 }

@@ -9,6 +9,7 @@
     <version>${revision}${changelist}</version>
     <relativePath>../../weasis-parent/pom.xml</relativePath>
   </parent>
+
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.weasis.base</groupId>
   <artifactId>weasis-base-parent</artifactId>
@@ -16,6 +17,12 @@
   <name>Base parent [${project.artifactId}]</name>
 
   <dependencies>
+    <dependency>
+      <groupId>org.weasis.launcher</groupId>
+      <artifactId>weasis-launcher</artifactId>
+      <version>${project.parent.version}</version>
+      <scope>provided</scope>
+    </dependency>
     <dependency>
       <groupId>org.weasis.core</groupId>
       <artifactId>weasis-core</artifactId>

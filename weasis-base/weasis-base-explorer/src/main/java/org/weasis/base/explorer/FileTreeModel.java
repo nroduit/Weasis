@@ -58,7 +58,7 @@ public class FileTreeModel extends DefaultTreeModel implements DataExplorerModel
   }
 
   @Override
-  public List<Codec<MediaElement>> getCodecPlugins() {
+  public List<? extends Codec<? extends MediaElement>> getCodecPlugins() {
     return GuiUtils.getUICore().getCodecPlugins();
   }
 

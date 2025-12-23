@@ -27,17 +27,14 @@
     <app.version>${revision}${changelist}</app.version>
     <base.minimal.version>4.6.0</base.minimal.version>
     <i18n.version>4.0.0-SNAPSHOT</i18n.version>
-    <weasis.releasenotes>https://github.com/nroduit/Weasis/blob/master/CHANGELOG.md#v465-2025-10-05</weasis.releasenotes>
+    <weasis.releasenotes>
+      https://github.com/nroduit/Weasis/blob/master/CHANGELOG.md#v465-2025-10-05
+    </weasis.releasenotes>
 
     <felix.framework.version>7.0.5</felix.framework.version>
     <flatlaf.version>3.7</flatlaf.version>
     <miglayout.version>11.4.2</miglayout.version>
     <xz.version>1.11</xz.version>
-
-    <osgi.core.version>8.0.0</osgi.core.version>
-    <osgi.promise.version>8.1.0</osgi.promise.version>
-    <osgi.annotation.version>8.1.0</osgi.annotation.version>
-    <osgi.component.version>1.5.1</osgi.component.version>
 
     <felix.gogo.version>1.1.6</felix.gogo.version>
     <felix.gogo.shell.version>1.1.4</felix.gogo.shell.version>
@@ -47,9 +44,10 @@
     <felix.prefs.version>1.1.0</felix.prefs.version>
     <felix.scr.version>2.2.14</felix.scr.version>
 
+    <pf4j.version>3.14.0</pf4j.version>
     <slf4j.version>2.0.17</slf4j.version>
     <logback.version>1.5.23</logback.version>
-    <dockingframes.version>1.1.7</dockingframes.version>
+    <dockingframes.version>1.1.8</dockingframes.version>
     <weasis-dicom-tools.version>5.34.1.7-SNAPSHOT</weasis-dicom-tools.version>
     <weasis.core.img.version>4.12.2.7</weasis.core.img.version>
     <weasis.opencv.native.version>4.12.2-dcm</weasis.opencv.native.version>
@@ -103,51 +101,23 @@
     </repository>
   </repositories>
 
-  <!-- Temporal repository to get the latest bnd-maven-plugin -->
- <pluginRepositories>
-   <pluginRepository>
-     <id>bndtools-snapshots</id>
-     <name>BND Tools Snapshots</name>
-     <url>https://bndtools.jfrog.io/bndtools/update-rc</url>
-     <snapshots>
-       <enabled>true</enabled>
-     </snapshots>
-     <releases>
-       <enabled>false</enabled>
-     </releases>
-   </pluginRepository>
- </pluginRepositories>
-
- <build>
-   <pluginManagement>
-     <plugins>
-       <plugin>
-         <groupId>org.apache.maven.plugins</groupId>
-         <artifactId>maven-compiler-plugin</artifactId>
-         <version>3.14.1</version>
-         <configuration>
-           <release>${java-version}</release>
-         </configuration>
-       </plugin>
-       <plugin>
-         <groupId>biz.aQute.bnd</groupId>
-         <artifactId>bnd-maven-plugin</artifactId>
-         <!-- Use the latest snapshot version for Java 25 compatibility, waiting for the next release -->
-          <version>7.2.0-SNAPSHOT</version>
-          <executions>
-            <execution>
-              <goals>
-                <goal>bnd-process</goal>
-              </goals>
-            </execution>
-          </executions>
+  <build>
+    <pluginManagement>
+      <plugins>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-compiler-plugin</artifactId>
+          <version>3.14.1</version>
           <configuration>
-            <bnd>
-              -noextraheaders: true
-              -snapshot: SNAPSHOT
-              -includeresource.all = -src/main/resources
-              Import-Package: org.slf4j;version=!,*
-            </bnd>
+            <release>${java-version}</release>
+            <!-- Enable annotation processing for PF4J -->
+            <annotationProcessorPaths>
+              <path>
+                <groupId>org.pf4j</groupId>
+                <artifactId>pf4j</artifactId>
+                <version>${pf4j.version}</version>
+              </path>
+            </annotationProcessorPaths>
           </configuration>
         </plugin>
         <plugin>
@@ -171,7 +141,14 @@
           <version>3.5.0</version>
           <configuration>
             <archive>
-              <manifestFile>${project.build.outputDirectory}/META-INF/MANIFEST.MF</manifestFile>
+              <manifestEntries>
+                <Plugin-Id>${project.artifactId}</Plugin-Id>
+                <Plugin-Version>${project.version}</Plugin-Version>
+                <Plugin-Requires>${base.minimal.version}</Plugin-Requires>
+                <Plugin-Description>${project.name}</Plugin-Description>
+                <Plugin-Provider>Weasis Team</Plugin-Provider>
+                <Plugin-License>EPL-2.0 OR Apache-2.0</Plugin-License>
+              </manifestEntries>
             </archive>
           </configuration>
         </plugin>
@@ -185,17 +162,17 @@
           <artifactId>flatten-maven-plugin</artifactId>
           <version>1.7.3</version>
         </plugin>
-         <plugin>
+        <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-dependency-plugin</artifactId>
           <version>3.9.0</version>
-           <executions>
-             <execution>
-               <goals>
-                 <goal>properties</goal>
-               </goals>
-             </execution>
-           </executions>
+          <executions>
+            <execution>
+              <goals>
+                <goal>properties</goal>
+              </goals>
+            </execution>
+          </executions>
         </plugin>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
@@ -206,7 +183,7 @@
             <parallel>all</parallel>
           </configuration>
         </plugin>
-         <plugin>
+        <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-source-plugin</artifactId>
           <version>3.4.0</version>
@@ -411,44 +388,6 @@
       </dependency>
 
       <dependency>
-        <groupId>org.apache.felix</groupId>
-        <artifactId>org.apache.felix.gogo.command</artifactId>
-        <version>${felix.gogo.command.version}</version>
-        <scope>provided</scope>
-        <exclusions>
-          <exclusion>
-            <groupId>org.osgi</groupId>
-            <artifactId>org.osgi.compendium</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>org.apache.felix</groupId>
-            <artifactId>org.apache.felix.gogo.runtime</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>org.osgi</groupId>
-            <artifactId>org.osgi.core</artifactId>
-          </exclusion>
-        </exclusions>
-      </dependency>
-      <dependency>
-        <groupId>org.apache.felix</groupId>
-        <artifactId>org.apache.felix.gogo.shell</artifactId>
-        <version>${felix.gogo.shell.version}</version>
-        <scope>provided</scope>
-        <exclusions>
-          <exclusion>
-            <groupId>org.apache.felix</groupId>
-            <artifactId>org.apache.felix.gogo.runtime</artifactId>
-          </exclusion>
-        </exclusions>
-      </dependency>
-      <dependency>
-        <groupId>org.apache.felix</groupId>
-        <artifactId>org.apache.felix.gogo.runtime</artifactId>
-        <version>${felix.gogo.version}</version>
-        <scope>provided</scope>
-      </dependency>
-      <dependency>
         <groupId>org.weasis.thirdparty</groupId>
         <artifactId>docking-frames</artifactId>
         <version>${dockingframes.version}</version>
@@ -457,65 +396,6 @@
 
       <!--The following dependencies are not required for compilation (required
         when loading the OSGI framework for debugging) -->
-      <dependency>
-        <groupId>org.apache.felix</groupId>
-        <artifactId>org.apache.felix.scr</artifactId>
-        <version>${felix.scr.version}</version>
-        <scope>provided</scope>
-      </dependency>
-      <dependency>
-        <groupId>org.osgi</groupId>
-        <artifactId>osgi.promise</artifactId>
-        <version>${osgi.promise.version}</version>
-        <scope>provided</scope>
-      </dependency>
-      <dependency>
-        <groupId>org.apache.felix</groupId>
-        <artifactId>org.apache.felix.prefs</artifactId>
-        <version>${felix.prefs.version}</version>
-        <scope>provided</scope>
-        <exclusions>
-          <!-- exclude these dependencies to avoid a mix with recent versions -->
-          <exclusion>
-            <groupId>org.apache.felix</groupId>
-            <artifactId>org.osgi.core</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>org.apache.felix</groupId>
-            <artifactId>org.osgi.compendium</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>commons-codec</groupId>
-            <artifactId>commons-codec</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>org.mockito</groupId>
-            <artifactId>mockito-all</artifactId>
-          </exclusion>
-        </exclusions>
-      </dependency>
-      <dependency>
-        <groupId>org.apache.felix</groupId>
-        <artifactId>org.apache.felix.bundlerepository</artifactId>
-        <version>${felix.bundlerepository.version}</version>
-        <scope>provided</scope>
-        <exclusions>
-          <exclusion>
-            <groupId>org.osgi</groupId>
-            <artifactId>org.osgi.core</artifactId>
-          </exclusion>
-        </exclusions>
-      </dependency>
-      <dependency>
-        <groupId>org.apache.felix</groupId>
-        <artifactId>org.apache.felix.configadmin</artifactId>
-        <version>${felix.configadmin.version}</version>
-        <scope>provided</scope>
-      </dependency>
       <dependency>
         <groupId>org.weasis.thirdparty</groupId>
         <artifactId>jaxb-osgi</artifactId>
@@ -568,6 +448,12 @@
 
   <dependencies>
     <!-- The following dependencies are embedded in the launcher jar -->
+    <dependency>
+      <groupId>org.pf4j</groupId>
+      <artifactId>pf4j</artifactId>
+      <version>${pf4j.version}</version>
+      <scope>provided</scope>
+    </dependency>
     <dependency>
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-api</artifactId>
@@ -629,42 +515,10 @@
 
     <!-- The following dependencies are only required for compilation -->
     <dependency>
-      <groupId>org.osgi</groupId>
-      <artifactId>osgi.core</artifactId>
-      <version>${osgi.core.version}</version>
-      <scope>provided</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.felix</groupId>
-      <artifactId>org.apache.felix.configadmin</artifactId>
-    </dependency>
-    <dependency>
       <groupId>jakarta.xml.bind</groupId>
       <artifactId>jakarta.xml.bind-api</artifactId>
       <version>${xml.bind-api.version}</version>
       <scope>provided</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.osgi</groupId>
-      <artifactId>org.osgi.service.component</artifactId>
-      <version>${osgi.component.version}</version>
-      <scope>provided</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.osgi</groupId>
-      <artifactId>org.osgi.service.component.annotations</artifactId>
-      <version>${osgi.component.version}</version>
-      <scope>provided</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.osgi</groupId>
-      <artifactId>osgi.annotation</artifactId>
-      <version>${osgi.annotation.version}</version>
-      <scope>provided</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.felix</groupId>
-      <artifactId>org.apache.felix.prefs</artifactId>
     </dependency>
     <dependency>
       <groupId>org.jetbrains</groupId>

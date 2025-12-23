@@ -9,12 +9,13 @@
  */
 package org.weasis.core.api.gui;
 
-import java.util.Hashtable;
+import java.util.Map;
+import org.pf4j.ExtensionPoint;
 import org.weasis.core.api.gui.Insertable.Type;
 
-public interface InsertableFactory {
+public interface InsertableFactory extends ExtensionPoint {
 
-  Insertable createInstance(Hashtable<String, Object> properties);
+  Insertable createInstance(Map<String, Object> properties);
 
   void dispose(Insertable component);
 

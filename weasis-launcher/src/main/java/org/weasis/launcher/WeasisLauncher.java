@@ -11,7 +11,7 @@ package org.weasis.launcher;
 
 import static java.time.temporal.ChronoUnit.DAYS;
 import static org.weasis.pref.ConfigData.F_RESOURCES;
-import static org.weasis.pref.ConfigData.P_GOSH_ARGS;
+import static org.weasis.pref.ConfigData.P_PLUGIN_DIR_PROP;
 import static org.weasis.pref.ConfigData.P_WEASIS_CODEBASE_LOCAL;
 import static org.weasis.pref.ConfigData.P_WEASIS_CODEBASE_URL;
 import static org.weasis.pref.ConfigData.P_WEASIS_I18N;
@@ -24,17 +24,12 @@ import static org.weasis.pref.ConfigData.P_WEASIS_VERSION;
 
 import com.formdev.flatlaf.FlatSystemProperties;
 import com.formdev.flatlaf.util.SystemInfo;
+import com.github.zafarkhaja.semver.Version;
 import java.awt.EventQueue;
 import java.io.File;
-import java.io.FileDescriptor;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.lang.management.ManagementFactory;
-import java.lang.reflect.Method;
-import java.lang.reflect.Proxy;
 import java.net.URI;
 import java.net.URL;
 import java.net.URLConnection;
@@ -54,7 +49,6 @@ import java.util.ResourceBundle.Control;
 import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 import javax.management.ObjectName;
 import javax.swing.JComponent;
@@ -67,14 +61,14 @@ import javax.swing.UIManager;
 import javax.swing.UIManager.LookAndFeelInfo;
 import javax.swing.border.EmptyBorder;
 import javax.swing.event.HyperlinkEvent;
-import org.apache.felix.framework.Felix;
-import org.osgi.framework.Bundle;
-import org.osgi.framework.Constants;
-import org.osgi.framework.Version;
-import org.osgi.util.tracker.ServiceTracker;
+import org.pf4j.PluginManager;
+import org.pf4j.PluginState;
+import org.pf4j.PluginWrapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.weasis.core.api.command.CommandManager;
 import org.weasis.launcher.LookAndFeels.ReadableLookAndFeelInfo;
+import org.weasis.plugin.WeasisPluginManager;
 import org.weasis.pref.ConfigData;
 
 /**
@@ -90,32 +84,6 @@ public class WeasisLauncher {
     NATIVE
   }
 
-  public enum State {
-    UNINSTALLED(0x00000001),
-    INSTALLED(0x00000002),
-    RESOLVED(0x00000004),
-    STARTING(0x00000008),
-    STOPPING(0x00000010),
-    ACTIVE(0x00000020);
-
-    private final int index;
-
-    State(int state) {
-      this.index = state;
-    }
-
-    public static String valueOf(int state) {
-      for (State s : State.values()) {
-        if (s.index == state) {
-          return s.name();
-        }
-      }
-      return "UNKNOWN";
-    }
-  }
-
-  protected Felix mFelix = null;
-  protected ServiceTracker mTracker = null;
   protected volatile boolean frameworkLoaded = false;
 
   protected String look = null;
@@ -133,10 +101,10 @@ public class WeasisLauncher {
 
   public final void launch(Type type) throws Exception {
     Map<String, String> serverProp = configData.getFelixProps();
-    String cacheDir = serverProp.get(Constants.FRAMEWORK_STORAGE) + "-" + configData.getSourceID();
-    // If there is a passed in the bundle cache directory, then
+    String cacheDir = serverProp.get(P_PLUGIN_DIR_PROP) + "-" + configData.getSourceID();
+    // If there is a passed in the plugin cache directory, then
     // that overwrites anything in the config file.
-    serverProp.put(Constants.FRAMEWORK_STORAGE, cacheDir);
+    serverProp.put(P_PLUGIN_DIR_PROP, cacheDir);
 
     // Load local properties and clean if necessary the previous version
     WeasisLoader loader = loadProperties(serverProp, configData.getConfigOutput());
@@ -176,32 +144,40 @@ public class WeasisLauncher {
 
     int exitStatus = 0;
     try {
-
-      String goshArgs = getGoshArgs(serverProp);
       if (closing) {
         return;
       }
-      // Now create an instance of the framework with our configuration properties.
-      mFelix = new Felix(serverProp);
-      // Initialize the framework but don't start it yet.
-      mFelix.init();
 
-      // Use the system bundle context to process the auto-deploy
-      // and auto-install/auto-start properties.
-      loader.setFelix(serverProp, mFelix.getBundleContext(), modulesi18n);
+      // Create PF4J Plugin Manager with the plugins directory path
+      Path pluginsDir = Paths.get(cacheDir, ConfigData.F_PLUGIN_FOLDER);
+      WeasisPluginManager pluginManager = configData.getPluginManager();
+      pluginManager.addPluginCachePath(pluginsDir);
+
+      loader.setPluginManager(serverProp, pluginManager, modulesi18n);
       loader.writeLabel(
           String.format(
               Messages.getString("WeasisLauncher.starting"),
               System.getProperty(ConfigData.P_WEASIS_NAME)));
-      mTracker =
-          new ServiceTracker(
-              mFelix.getBundleContext(), "org.apache.felix.service.command.CommandProcessor", null);
-      mTracker.open();
+
       if (closing) {
         return;
       }
-      // Start the framework.
-      mFelix.start();
+
+      // Load and start plugins
+      pluginManager.loadPlugins();
+      LOGGER.info("Loaded {} plugins", pluginManager.getPlugins().size());
+
+      // Start plugins
+      pluginManager.startPlugins();
+
+      // Log plugin states
+      for (PluginWrapper plugin : pluginManager.getPlugins()) {
+        LOGGER.debug(
+            "Plugin: {} - {} - State: {}",
+            plugin.getPluginId(),
+            plugin.getDescriptor().getVersion(),
+            plugin.getPluginState());
+      }
 
       // End of splash screen
       loader.close();
@@ -209,12 +185,13 @@ public class WeasisLauncher {
 
       String logActivation = serverProp.get("org.apache.sling.commons.log.file");
       if (Utils.hasText(logActivation)) {
-        LOGGER.info(
-            "Logs has been delegated to the OSGI service and can be read in {}", logActivation);
+        LOGGER.info("Logs can be read in {}", logActivation);
       }
-      executeCommands(configData.getArguments(), goshArgs);
 
-      checkBundleUI(serverProp);
+      CommandManager commandManager = new CommandManager(configData.getPluginManager());
+      executeCommands(commandManager, configData.getArguments());
+
+      checkPluginUI(serverProp);
       frameworkLoaded = true;
 
       showMessage(mainFrame, serverProp);
@@ -222,67 +199,56 @@ public class WeasisLauncher {
       if (closing) {
         return;
       }
-      // Wait for framework to stop to exit the VM.
-      mFelix.waitForStop(0);
+
+      // Keep application running
+      synchronized (this) {
+        while (!closing) {
+          wait();
+        }
+      }
       System.exit(0);
     } catch (Throwable ex) {
       if (ex instanceof InterruptedException) {
         Thread.currentThread().interrupt();
       }
       exitStatus = -1;
-      LOGGER.error("Cannot not start framework.", ex);
+      LOGGER.error("Cannot start plugin framework.", ex);
       LOGGER.error("Weasis cache will be cleaned at next launch.");
-      LOGGER.error("State of the framework:");
-      for (Bundle b : mFelix.getBundleContext().getBundles()) {
-        LOGGER.error(
-            " * {}-{} {}",
-            b.getSymbolicName(),
-            b.getVersion().toString(),
-            State.valueOf(b.getState()));
-      }
-      resetBundleCache();
+      LOGGER.error("State of the plugins:");
+      configData
+          .getPluginManager()
+          .getPlugins()
+          .forEach(
+              p ->
+                  LOGGER.error(
+                      " * {}-{} {}",
+                      p.getPluginId(),
+                      p.getDescriptor().getVersion(),
+                      p.getPluginState()));
+      resetPluginCache();
     } finally {
       Runtime.getRuntime().halt(exitStatus);
     }
   }
 
-  private void checkBundleUI(Map<String, String> serverProp) {
+  private void checkPluginUI(Map<String, String> serverProp) {
     String mainUI = serverProp.getOrDefault("weasis.main.ui", "").trim(); // NON-NLS
     if (Utils.hasText(mainUI)) {
-      boolean uiStarted = false;
-      for (Bundle b : mFelix.getBundleContext().getBundles()) {
-        if (b.getSymbolicName().equals(mainUI) && b.getState() == Bundle.ACTIVE) {
-          uiStarted = true;
-          break;
-        }
-      }
+      boolean uiStarted =
+          configData.getPluginManager().getPlugins().stream()
+              .anyMatch(
+                  p -> p.getPluginId().equals(mainUI) && p.getPluginState() == PluginState.STARTED);
       if (!uiStarted) {
-        throw new IllegalStateException("Main User Interface bundle cannot be started");
+        throw new IllegalStateException("Main User Interface plugin cannot be started");
       }
     }
-  }
-
-  private static String getGoshArgs(Map<String, String> serverProp) {
-    String goshArgs = System.getProperty(P_GOSH_ARGS, serverProp.getOrDefault(P_GOSH_ARGS, ""));
-    if (goshArgs.isEmpty()) {
-      String val = System.getProperty("gosh.port", ""); // NON-NLS
-      if (!val.isEmpty()) {
-        try {
-          goshArgs = String.format("-sc telnetd -p %d start", Integer.parseInt(val)); // NON-NLS
-        } catch (NumberFormatException e) {
-          // Do nothing
-        }
-      }
-    }
-    serverProp.put(P_GOSH_ARGS, "--nointeractive --noshutdown"); // NON-NLS
-    return goshArgs;
   }
 
   private static void displayStartingAsciiIcon() {
     String asciiArt =
 """
 
-Starting OSGI Bundles...
+Starting PF4J Plugins...
 
         __        __             _    \s
         \\ \\      / /__  __ _ ___(_)___\s
@@ -294,48 +260,24 @@ Starting OSGI Bundles...
     LOGGER.info("\u001B[32m{}\u001B[0m", asciiArt);
   }
 
-  protected void executeCommands(List<String> commandList, String goshArgs) {
-    SwingUtilities.invokeLater(
-        () -> {
-          mTracker.open();
+  /**
+   * Execute commands through the command manager
+   *
+   * @param commands list of command strings
+   */
+  public void executeCommands(CommandManager commandManager, List<String> commands) {
+    if (commandManager == null || commands == null || commands.isEmpty()) {
+      return;
+    }
 
-          // Do not close streams. Workaround for stackoverflow issue when using System.in
-          Object commandSession =
-              getCommandSession(
-                  mTracker.getService(),
-                  new Object[] {
-                    new FileInputStream(FileDescriptor.in),
-                    new FileOutputStream(FileDescriptor.out),
-                    new FileOutputStream(FileDescriptor.err)
-                  });
-          if (commandSession != null) {
-            if (goshArgs == null) {
-              // Set the main window visible and to the front
-              commandSessionExecute(commandSession, "weasis:ui -v"); // NON-NLS
-            } else {
-              for (Bundle b : mFelix.getBundleContext().getBundles()) {
-                if (b.getSymbolicName().equals("org.apache.felix.gogo.shell")
-                    && b.getState() == Bundle.ACTIVE) {
-                  // If Gogo Shell is running, Start telnet after all other bundles. This will
-                  // ensure that all the plugins commands are activated once telnet is available
-                  initCommandSession(commandSession, goshArgs);
-                  break;
-                }
-              }
-            }
-
-            // execute the commands from main argv
-            for (String command : commandList) {
-              commandSessionExecute(commandSession, command);
-            }
-            commandSessionClose(commandSession);
-          }
-
-          mTracker.close();
-        });
+    try {
+      commandManager.executeCommands(commands);
+    } catch (Exception e) {
+      LOGGER.error("Error executing commands", e);
+    }
   }
 
-  private static void resetBundleCache() {
+  private static void resetPluginCache() {
     // Set flag to clean cache at next launch
     Path sourceIdProps =
         Path.of(
@@ -394,13 +336,13 @@ Starting OSGI Bundles...
       String val = serverProp.get("prev." + ConfigData.P_WEASIS_SHOW_RELEASE); // NON-NLS
       if (Utils.emptyToTrue(val)) {
         try {
-          Version vOld = getVersion(versionOld);
-          Version vNew = getVersion(versionNew);
-          if (vNew.compareTo(vOld) > 0) {
+          Version vOld = Version.parse(versionOld);
+          Version vNew = Version.parse(versionNew);
+          if (vNew.isHigherThan(vOld)) {
             String lastTag = serverProp.get(ConfigData.P_WEASIS_VERSION_RELEASE);
             if (lastTag != null) {
-              vOld = getVersion(lastTag);
-              if (vNew.compareTo(vOld) <= 0) {
+              vOld = Version.parse(lastTag);
+              if (vNew.isLowerThanOrEquivalentTo(vOld)) {
                 // Message has been already displayed once.
                 return;
               }
@@ -457,141 +399,6 @@ Starting OSGI Bundles...
             });
       }
     }
-  }
-
-  private static Version getVersion(String version) {
-    String v = "";
-    if (version != null) {
-      int index = version.indexOf('-');
-      v = index > 0 ? version.substring(0, index) : version;
-    }
-    return new Version(v);
-  }
-
-  public static Object getCommandSession(Object commandProcessor, Object[] arguments) {
-    if (commandProcessor == null) {
-      return null;
-    }
-    Class<?>[] parameterTypes =
-        new Class[] {InputStream.class, OutputStream.class, OutputStream.class};
-    try {
-      Method nameMethod = commandProcessor.getClass().getMethod("createSession", parameterTypes);
-      Object commandSession = nameMethod.invoke(commandProcessor, arguments);
-      addCommandSessionListener(commandProcessor);
-      return commandSession;
-    } catch (Exception ex) {
-      // Since the services returned by the tracker could become
-      // invalid at any moment, we will catch all exceptions, log
-      // a message, and then ignore faulty services.
-      LOGGER.error("Create a command session", ex);
-    }
-
-    return null;
-  }
-
-  private static void addCommandSessionListener(Object commandProcessor) {
-    try {
-      ClassLoader loader = commandProcessor.getClass().getClassLoader();
-      Class<?> c = loader.loadClass("org.apache.felix.service.command.CommandSessionListener");
-      Method nameMethod = commandProcessor.getClass().getMethod("addListener", c);
-
-      Object listener =
-          Proxy.newProxyInstance(
-              loader,
-              new Class[] {c},
-              (proxy, method, args) -> {
-                String listenerMethod = method.getName();
-
-                if (listenerMethod.equals("beforeExecute")) {
-                  String arg = args[1].toString();
-                  if (arg.startsWith("gosh") || arg.startsWith("gogo:gosh")) { // NON-NLS
-                    // Force gogo to not use Expander to concatenate parameter with the current
-                    // directory (Otherwise "*(|<[?" are interpreted, issue with URI parameters)
-                    commandSessionExecute(args[0], "gogo.option.noglob=on"); // NON-NLS
-                  }
-                } else if (listenerMethod.equals("equals")) { // NON-NLS
-                  // Only add once in the set of listeners
-                  return proxy.getClass().isAssignableFrom((args[0].getClass()));
-                }
-                return null;
-              });
-      nameMethod.invoke(commandProcessor, listener);
-    } catch (Exception e) {
-      LOGGER.error("Add command session listener", e);
-    }
-  }
-
-  public static boolean initCommandSession(Object commandSession, String args) {
-    try {
-      // wait for gosh command to be registered
-      for (int i = 0;
-          (i < 100) && commandSessionGet(commandSession, "gogo:gosh") == null; // NON-NLS
-          ++i) {
-        TimeUnit.MILLISECONDS.sleep(10);
-      }
-
-      Class<?>[] parameterTypes = new Class[] {CharSequence.class};
-      Object[] arguments =
-          new Object[] {"gogo:gosh --login " + (args == null ? "" : args)}; // NON-NLS
-      Method nameMethod = commandSession.getClass().getMethod("execute", parameterTypes);
-      nameMethod.invoke(commandSession, arguments);
-    } catch (InterruptedException e) {
-      Thread.currentThread().interrupt();
-    } catch (Exception e) {
-      LOGGER.error("Init command session", e);
-    }
-    return false;
-  }
-
-  public static Object commandSessionGet(Object commandSession, String key) {
-    if (commandSession == null || key == null) {
-      return null;
-    }
-
-    Class<?>[] parameterTypes = new Class[] {String.class};
-    Object[] arguments = new Object[] {key};
-
-    try {
-      Method nameMethod = commandSession.getClass().getMethod("get", parameterTypes);
-      return nameMethod.invoke(commandSession, arguments);
-    } catch (Exception ex) {
-      LOGGER.error("Invoke a command", ex);
-    }
-
-    return null;
-  }
-
-  public static boolean commandSessionClose(Object commandSession) {
-    if (commandSession == null) {
-      return false;
-    }
-    try {
-      Method nameMethod = commandSession.getClass().getMethod("close");
-      nameMethod.invoke(commandSession);
-      return true;
-    } catch (Exception ex) {
-      LOGGER.error("Close command session", ex);
-    }
-
-    return false;
-  }
-
-  public static Object commandSessionExecute(Object commandSession, CharSequence charSequence) {
-    if (commandSession == null) {
-      return false;
-    }
-    Class<?>[] parameterTypes = new Class[] {CharSequence.class};
-
-    Object[] arguments = new Object[] {charSequence};
-
-    try {
-      Method nameMethod = commandSession.getClass().getMethod("execute", parameterTypes);
-      return nameMethod.invoke(commandSession, arguments);
-    } catch (Exception ex) {
-      LOGGER.error("Execute command", ex);
-    }
-
-    return null;
   }
 
   /** This following part has been copied from the Main class of the Felix project */
@@ -909,7 +716,7 @@ Starting OSGI Bundles...
     }
     serverProp.put("weasis.resources.path", cacheDir.toString());
 
-    // Splash screen that shows bundles loading
+    // Splash screen that shows plugins loading
     final WeasisLoader loader = new WeasisLoader(cacheDir, mainFrame);
     // Display splash screen
     loader.open();
@@ -946,18 +753,16 @@ Starting OSGI Bundles...
     // Clean cache if Weasis has crashed during the previous launch
     boolean cleanCache = Boolean.parseBoolean(serverProp.get("weasis.clean.previous.version"));
     if (Boolean.TRUE.toString().equals(cleanCacheAfterCrash)) {
-      serverProp.put(
-          Constants.FRAMEWORK_STORAGE_CLEAN, Constants.FRAMEWORK_STORAGE_CLEAN_ONFIRSTINIT);
+      serverProp.put("weasis.clean.plugin.cache", Boolean.TRUE.toString());
       localSourceProp.remove(ConfigData.P_WEASIS_CLEAN_CACHE);
       update = true;
-      LOGGER.info("Clean plug-in cache because Weasis has crashed during the previous launch");
+      LOGGER.info("Clean plugin cache because Weasis has crashed during the previous launch");
     }
     // Clean cache when version has changed
     else if (cleanCache && versionNew != null && !versionNew.equals(versionOld)) {
       LOGGER.info("Clean previous Weasis version: {}", versionOld);
-      serverProp.put(
-          Constants.FRAMEWORK_STORAGE_CLEAN, Constants.FRAMEWORK_STORAGE_CLEAN_ONFIRSTINIT);
-      LOGGER.info("Clean plug-in cache because the version has changed");
+      serverProp.put("weasis.clean.plugin.cache", Boolean.TRUE.toString());
+      LOGGER.info("Clean plugin cache because the version has changed");
     }
 
     if (update) {
@@ -1002,7 +807,7 @@ Starting OSGI Bundles...
     }
     conf.append("\n  Languages available = "); // NON-NLS
     conf.append(System.getProperty("weasis.languages", "en")); // NON-NLS
-    conf.append("\n  OSGI native specs = "); // NON-NLS
+    conf.append("\n  Native specs = "); // NON-NLS
     conf.append(System.getProperty(ConfigData.P_NATIVE_LIB_SPEC));
     conf.append("\n  HTTP user agent = "); // NON-NLS
     conf.append(System.getProperty("http.agent")); // NON-NLS
@@ -1115,19 +920,18 @@ Starting OSGI Bundles...
 
   protected void shutdownHook() {
     closing = true;
-    if (mFelix == null || (mFelix.getState() & 6) != 0) {
-      return;
-    }
-    LOGGER.info("Stop the OSGI framework and clean files before closing");
+    LOGGER.info("Stop the plugin framework and clean files before closing");
     try {
-      mFelix.stop();
-      // wait asynchronous stop (max 30 seconds to stop all bundles)
-      mFelix.waitForStop(30_000);
+      PluginManager pluginManager = configData.getPluginManager();
+      pluginManager.stopPlugins();
+      pluginManager.unloadPlugins();
+
+      // Wake up main thread
+      synchronized (this) {
+        notifyAll();
+      }
     } catch (Exception ex) {
       LOGGER.error("Error stopping framework", ex);
-      if (ex instanceof InterruptedException) {
-        Thread.currentThread().interrupt();
-      }
     } finally {
       cleanImageCache();
       stopSingletonServer();

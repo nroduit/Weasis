@@ -9,11 +9,9 @@
  */
 package org.weasis.dicom.explorer;
 
-import java.util.Hashtable;
 import java.util.List;
-import org.osgi.service.component.ComponentContext;
-import org.osgi.service.component.annotations.Activate;
-import org.osgi.service.component.annotations.Deactivate;
+import java.util.Map;
+import org.pf4j.Extension;
 import org.weasis.core.api.explorer.DataExplorerView;
 import org.weasis.core.api.explorer.DataExplorerViewFactory;
 import org.weasis.core.api.explorer.ObservableEvent;
@@ -24,17 +22,23 @@ import org.weasis.core.ui.util.Toolbar;
 import org.weasis.dicom.explorer.exp.ExportToolBar;
 import org.weasis.dicom.explorer.imp.ImportToolBar;
 import org.weasis.dicom.explorer.main.DicomExplorer;
+import org.weasis.plugin.SingletonExtension;
 
-@org.osgi.service.component.annotations.Component(service = DataExplorerViewFactory.class)
+@Extension
+@SingletonExtension
 public class DicomExplorerFactory implements DataExplorerViewFactory {
 
   private DicomExplorer explorer = null;
-
-  @org.osgi.service.component.annotations.Reference private DicomModel model;
+  private DicomModel model;
 
   @Override
-  public DataExplorerView createDataExplorerView(Hashtable<String, Object> properties) {
+  public DataExplorerView createDataExplorerView(Map<String, Object> properties) {
     if (explorer == null) {
+      // Get DicomModel instance - implementation depends on how DicomModel is registered
+      if (model == null) {
+        model = getDicomModel();
+      }
+
       explorer = new DicomExplorer(model);
       model.addPropertyChangeListener(explorer);
       List<Toolbar> toolbar = GuiUtils.getUICore().getExplorerPluginToolbars();
@@ -46,17 +50,15 @@ public class DicomExplorerFactory implements DataExplorerViewFactory {
     return explorer;
   }
 
-  // ================================================================================
-  // OSGI service implementation
-  // ================================================================================
-
-  @Activate
-  protected void activate(ComponentContext context) {
-    // Do nothing
+  private DicomModel getDicomModel() {
+    List<?> extensions = GuiUtils.getUICore().getPluginManager().getExtensions(DicomModel.class);
+    if (!extensions.isEmpty()) {
+      return (DicomModel) extensions.getFirst();
+    }
+    return new DicomModel();
   }
 
-  @Deactivate
-  protected void deactivate(ComponentContext context) {
+  public void stop() {
     if (explorer != null) {
       DataExplorerModel dataModel = explorer.getDataExplorerModel();
       dataModel.removePropertyChangeListener(explorer);

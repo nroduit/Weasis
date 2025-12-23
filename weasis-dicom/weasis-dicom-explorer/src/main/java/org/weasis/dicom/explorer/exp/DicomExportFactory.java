@@ -9,9 +9,10 @@
  */
 package org.weasis.dicom.explorer.exp;
 
-import java.util.Hashtable;
+import java.util.Map;
+import org.pf4j.ExtensionPoint;
 
-public interface DicomExportFactory {
+public interface DicomExportFactory extends ExtensionPoint {
 
-  ExportDicom createDicomExportPage(Hashtable<String, Object> properties);
+  ExportDicom createDicomExportPage(Map<String, Object> properties);
 }

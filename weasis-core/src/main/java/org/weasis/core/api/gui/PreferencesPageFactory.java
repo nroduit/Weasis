@@ -9,14 +9,14 @@
  */
 package org.weasis.core.api.gui;
 
-import java.util.Hashtable;
+import java.util.Map;
 import org.weasis.core.api.gui.Insertable.Type;
 import org.weasis.core.api.gui.util.AbstractItemDialogPage;
 
 public interface PreferencesPageFactory extends InsertableFactory {
 
   @Override
-  AbstractItemDialogPage createInstance(Hashtable<String, Object> properties);
+  AbstractItemDialogPage createInstance(Map<String, Object> properties);
 
   @Override
   default void dispose(Insertable component) {}

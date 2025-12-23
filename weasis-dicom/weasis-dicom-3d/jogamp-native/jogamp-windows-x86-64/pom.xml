@@ -15,16 +15,16 @@
   <name>JOGL - Windows x86-64 [${project.artifactId}]</name>
   <version>${jogamp.version}</version>
   <properties>
-    <native.configuration>
-      natives/windows-amd64/gluegen_rt.dll; \
-      natives/windows-amd64/jogl_desktop.dll; \
-      natives/windows-amd64/jogl_mobile.dll; \
-      natives/windows-amd64/nativewindow_awt.dll; \
-      natives/windows-amd64/nativewindow_win32.dll; \
-      natives/windows-amd64/newt_head.dll; \
-      natives/windows-amd64/jocl.dll;\
-      processor=x86-64;osname=win32
-    </native.configuration>
+    <native.folder>natives/windows-amd64</native.folder>
+    <native.files>
+      gluegen_rt.dll,
+      jogl_desktop.dll,
+      jogl_mobile.dll,
+      nativewindow_awt.dll,
+      nativewindow_win32.dll,
+      newt_head.dll,
+      jocl.dll
+    </native.files>
   </properties>
   <build>
     <plugins>
@@ -48,7 +48,6 @@
                   <classifier>natives-windows-amd64</classifier>
                   <outputDirectory>target/classes</outputDirectory>
                 </artifactItem>
-
                 <artifactItem>
                   <groupId>org.jogamp.jogl</groupId>
                   <artifactId>jogl-all</artifactId>
@@ -56,7 +55,6 @@
                   <classifier>natives-windows-amd64</classifier>
                   <outputDirectory>target/classes</outputDirectory>
                 </artifactItem>
-
                 <artifactItem>
                   <groupId>org.jogamp.jocl</groupId>
                   <artifactId>jocl</artifactId>

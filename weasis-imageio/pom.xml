@@ -9,6 +9,7 @@
     <version>${revision}${changelist}</version>
     <relativePath>../weasis-parent/pom.xml</relativePath>
   </parent>
+
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.weasis.imageio</groupId>
   <artifactId>weasis-imageio-codec</artifactId>
@@ -18,18 +19,26 @@
   <build>
     <plugins>
       <plugin>
-        <groupId>biz.aQute.bnd</groupId>
-        <artifactId>bnd-maven-plugin</artifactId>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-jar-plugin</artifactId>
         <configuration>
-          <bnd>
-            Export-Package: org.weasis.imageio.codec.*
-          </bnd>
+          <archive>
+            <manifestEntries>
+              <Plugin-Class>org.weasis.imageio.codec.internal.Activator</Plugin-Class>
+            </manifestEntries>
+          </archive>
         </configuration>
       </plugin>
     </plugins>
   </build>
 
   <dependencies>
+    <dependency>
+      <groupId>org.weasis.launcher</groupId>
+      <artifactId>weasis-launcher</artifactId>
+      <version>${project.parent.version}</version>
+      <scope>provided</scope>
+    </dependency>
     <dependency>
       <groupId>org.weasis.core</groupId>
       <artifactId>weasis-core</artifactId>

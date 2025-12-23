@@ -17,20 +17,18 @@ import java.awt.Window;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Enumeration;
-import java.util.Hashtable;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import javax.swing.JButton;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
-import org.osgi.framework.BundleContext;
-import org.osgi.framework.ServiceReference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.InsertableUtil;
 import org.weasis.core.api.gui.util.AbstractItemDialogPage;
 import org.weasis.core.api.gui.util.AbstractWizardDialog;
-import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.PageItem;
 import org.weasis.dicom.codec.DicomSeries;
@@ -86,7 +84,7 @@ public class DicomExport extends AbstractWizardDialog {
 
   @Override
   protected void initializePages() {
-    Hashtable<String, Object> properties = new Hashtable<>();
+    Map<String, Object> properties = new HashMap<>();
     properties.put(dicomModel.getClass().getName(), dicomModel);
     properties.put(treeModel.getClass().getName(), treeModel);
 
@@ -95,15 +93,15 @@ public class DicomExport extends AbstractWizardDialog {
     ArrayList<AbstractItemDialogPage> list = new ArrayList<>();
     list.add(new LocalExport(dicomModel, treeModel));
 
-    BundleContext context = AppProperties.getBundleContext(this.getClass());
-    if (context == null) {
-      LOGGER.error("Bundle context is null, cannot load DICOM export plugins");
+    String plugInId = GuiUtils.getUICore().getPluginManager().getPluginId(this.getClass());
+    if (plugInId == null) {
+      LOGGER.error("PplugInId is null, cannot load DICOM export plugins");
       return;
     }
     try {
-      for (ServiceReference<DicomExportFactory> service :
-          context.getServiceReferences(DicomExportFactory.class, null)) {
-        DicomExportFactory factory = context.getService(service);
+      List<DicomExportFactory> factories =
+          GuiUtils.getUICore().getPluginManager().getExtensions(DicomExportFactory.class);
+      for (DicomExportFactory factory : factories) {
         if (factory != null) {
           ExportDicom page = factory.createDicomExportPage(properties);
           if (page instanceof AbstractItemDialogPage dialogPage) {

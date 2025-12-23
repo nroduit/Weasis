@@ -23,6 +23,8 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
+import java.util.Arrays;
+import java.util.Base64;
 import java.util.Comparator;
 import java.util.Objects;
 import java.util.Properties;
@@ -31,7 +33,6 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
-import org.apache.felix.framework.util.Util;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.util.StreamUtil;
@@ -248,7 +249,8 @@ public class FileUtil {
     String protocol = url.getProtocol();
     String pauth = System.getProperty("http.proxyAuth", null);
     if (hasProxyProperty(pauth, protocol)) {
-      String base64 = Util.base64Encode(pauth);
+      String base64 =
+          Arrays.toString(Base64.getEncoder().encode(pauth.getBytes(StandardCharsets.UTF_8)));
       connection.setRequestProperty("Proxy-Authorization", "Basic " + base64); // NON-NLS
     }
 

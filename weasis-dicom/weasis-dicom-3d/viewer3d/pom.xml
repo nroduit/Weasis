@@ -9,6 +9,7 @@
     <version>${revision}${changelist}</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
+
   <modelVersion>4.0.0</modelVersion>
   <artifactId>weasis-dicom-viewer3d</artifactId>
   <packaging>jar</packaging>
@@ -17,17 +18,20 @@
   <build>
     <plugins>
       <plugin>
-        <groupId>biz.aQute.bnd</groupId>
-        <artifactId>bnd-maven-plugin</artifactId>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-jar-plugin</artifactId>
         <configuration>
-          <bnd>
-            Import-Package: org.slf4j;version=!,com.jogamp.opencl.llb.gl;resolution:=optional,*
-            Export-Package: org.weasis.dicom.viewer3d.*
-          </bnd>
+          <archive>
+            <manifestEntries>
+              <Plugin-Class>org.weasis.dicom.viewer3d.internal.Activator</Plugin-Class>
+              <Plugin-Dependencies>weasis-dicom-viewer2d,jogamp</Plugin-Dependencies>
+            </manifestEntries>
+          </archive>
         </configuration>
       </plugin>
     </plugins>
   </build>
+
   <dependencies>
     <dependency>
       <groupId>org.weasis.dicom</groupId>

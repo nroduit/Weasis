@@ -9,18 +9,15 @@
  */
 package org.weasis.dicom.viewer2d.internal;
 
-import java.util.Dictionary;
-import java.util.Hashtable;
-import org.apache.felix.service.command.CommandProcessor;
-import org.osgi.annotation.bundle.Header;
-import org.osgi.framework.BundleActivator;
-import org.osgi.framework.BundleContext;
-import org.osgi.framework.Constants;
-import org.osgi.framework.InvalidSyntaxException;
-import org.osgi.framework.ServiceEvent;
-import org.osgi.framework.ServiceListener;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import org.pf4j.PluginState;
+import org.pf4j.PluginWrapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.weasis.core.api.gui.Insertable;
+import org.weasis.core.api.gui.Insertable.Type;
 import org.weasis.core.api.gui.InsertableFactory;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.gui.util.GuiUtils;
@@ -30,35 +27,71 @@ import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.viewer2d.EventManager;
 import org.weasis.dicom.viewer2d.View2dContainer;
 import org.weasis.dicom.viewer2d.mpr.MprContainer;
+import org.weasis.plugin.PluginContext;
+import org.weasis.plugin.WeasisPlugin;
 
-@Header(name = Constants.BUNDLE_ACTIVATOR, value = "${@class}") // NON-NLS
-public class Activator implements BundleActivator, ServiceListener {
+public class Activator extends WeasisPlugin {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(Activator.class);
 
+  private final Map<String, List<InsertableFactory>> extensionCache = new HashMap<>();
+
+  public Activator(PluginContext context) {
+    super(context);
+  }
+
   @Override
-  public void start(final BundleContext bundleContext) {
+  public void start() {
 
-    Dictionary<String, Object> dict = new Hashtable<>();
-    dict.put(CommandProcessor.COMMAND_SCOPE, "dcmview2d"); // NON-NLS
-    dict.put(CommandProcessor.COMMAND_FUNCTION, EventManager.functions.toArray(new String[0]));
-    bundleContext.registerService(EventManager.class.getName(), EventManager.getInstance(), dict);
+    // Register tools and toolbars
+    BundleTools.registerExistingComponents(View2dContainer.UI);
 
-    BundleTools.registerExistingComponents(bundleContext, View2dContainer.UI);
+    // Start listening for InsertableFactory extensions from other plugins
+    GuiUtils.getUICore()
+        .getPluginManager()
+        .addPluginStateListener(
+            event -> {
+              if (event.getPluginState() == PluginState.STARTED) {
+                onExtensionsAdded(event.getPlugin());
+              } else if (event.getPluginState() == PluginState.STOPPED) {
+                onExtensionsRemoved(event.getPlugin());
+              }
+            });
+  }
 
-    // Add listener for getting new service events
-    try {
-      bundleContext.addServiceListener(
-          Activator.this,
-          String.format(
-              "(%s=%s)", Constants.OBJECTCLASS, InsertableFactory.class.getName())); // NON-NLS
-    } catch (InvalidSyntaxException e) {
-      LOGGER.error("Add service listener", e);
+  private void onExtensionsAdded(PluginWrapper plugin) {
+    List<InsertableFactory> extensions =
+        plugin.getPluginManager().getExtensions(InsertableFactory.class, plugin.getPluginId());
+
+    List<InsertableFactory> filteredExtensions =
+        extensions.stream()
+            .filter(
+                f ->
+                    Insertable.Type.TOOLBAR.equals(f.getType())
+                        || Insertable.Type.TOOL.equals(f.getType())
+                        || Type.TOOL_EXT.equals(f.getType()))
+            .toList();
+
+    extensionCache.put(plugin.getPluginId(), filteredExtensions);
+    for (InsertableFactory factory : filteredExtensions) {
+      GuiExecutor.execute(() -> BundleTools.registerInsertableFactory(factory, View2dContainer.UI));
+    }
+  }
+
+  private void onExtensionsRemoved(PluginWrapper plugin) {
+    List<InsertableFactory> removed = extensionCache.remove(plugin.getPluginId());
+    if (removed != null) {
+      for (InsertableFactory factory : removed) {
+        GuiExecutor.execute(
+            () -> BundleTools.unregisterInsertableFactory(factory, View2dContainer.UI));
+      }
     }
   }
 
   @Override
-  public void stop(BundleContext bundleContext) {
+  public void stop() {
+    extensionCache.clear();
+
     // Save preferences
     ImageViewerPlugin<DicomImageElement> container =
         EventManager.getInstance().getSelectedView2dContainer();
@@ -66,15 +99,9 @@ public class Activator implements BundleActivator, ServiceListener {
       // Remove crosshair tool
       container.setSelected(false);
     }
-    EventManager.getInstance().savePreferences(bundleContext);
+    EventManager.getInstance().savePreferences();
 
     GuiUtils.getUICore().closeSeriesViewerType(MprContainer.class);
     GuiUtils.getUICore().closeSeriesViewerType(View2dContainer.class);
-  }
-
-  @Override
-  public synchronized void serviceChanged(final ServiceEvent event) {
-    // Tools and Toolbars (with non-immediate instance) must be instantiated in the EDT
-    GuiExecutor.execute(() -> BundleTools.dataExplorerChanged(event, View2dContainer.UI));
   }
 }

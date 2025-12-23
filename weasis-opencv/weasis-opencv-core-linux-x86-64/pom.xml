@@ -9,13 +9,15 @@
     <version>${revision}${changelist}</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
+
   <modelVersion>4.0.0</modelVersion>
   <packaging>jar</packaging>
   <artifactId>weasis-opencv-core-linux-x86-64</artifactId>
   <name>OpenCV - Linux amd64 [${project.artifactId}]</name>
   <version>${weasis.opencv.pkg.version}</version>
+
   <properties>
-    <native.configuration>libopencv_java.so; processor=x86-64; osname=Linux</native.configuration>
+    <native.files>libopencv_java.so</native.files>
   </properties>
 
   <build>
@@ -38,7 +40,7 @@
                   <type>so</type>
                   <classifier>linux-x86-64-dyn</classifier>
                   <overWrite>true</overWrite>
-                  <outputDirectory>target/classes</outputDirectory>
+                  <outputDirectory>target/classes/${native.folder}</outputDirectory>
                   <destFileName>libopencv_java.so</destFileName>
                 </artifactItem>
               </artifactItems>

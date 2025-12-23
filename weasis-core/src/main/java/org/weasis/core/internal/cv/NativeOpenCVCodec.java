@@ -10,21 +10,17 @@
 package org.weasis.core.internal.cv;
 
 import java.net.URI;
-import java.util.Hashtable;
-import org.opencv.osgi.OpenCVNativeLoader;
-import org.osgi.service.component.ComponentContext;
-import org.osgi.service.component.annotations.Activate;
-import org.osgi.service.component.annotations.Deactivate;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import java.util.Map;
+import org.pf4j.Extension;
 import org.weasis.core.api.image.cv.ImageCVIO;
 import org.weasis.core.api.media.data.Codec;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaReader;
+import org.weasis.plugin.SingletonExtension;
 
-@org.osgi.service.component.annotations.Component(service = Codec.class)
+@Extension
+@SingletonExtension
 public class NativeOpenCVCodec implements Codec<ImageElement> {
-  private static final Logger LOGGER = LoggerFactory.getLogger(NativeOpenCVCodec.class);
 
   private static final String[] readerMIMETypes = {
     "image/bmp",
@@ -86,7 +82,7 @@ public class NativeOpenCVCodec implements Codec<ImageElement> {
 
   @Override
   public MediaReader<ImageElement> getMediaIO(
-      URI media, String mimeType, Hashtable<String, Object> properties) {
+      URI media, String mimeType, Map<String, Object> properties) {
     if (isMimeTypeSupported(mimeType)) {
       return new ImageCVIO(media, mimeType, this);
     }
@@ -107,19 +103,4 @@ public class NativeOpenCVCodec implements Codec<ImageElement> {
   public String[] getWriterMIMETypes() {
     return writerMIMETypes;
   }
-
-  // ================================================================================
-  // OSGI service implementation
-  // ================================================================================
-
-  @Activate
-  protected void activate(ComponentContext context) {
-    // Load the native OpenCV library
-    OpenCVNativeLoader loader = new OpenCVNativeLoader();
-    loader.init();
-    LOGGER.info("Native OpenCV is activated");
-  }
-
-  @Deactivate
-  protected void deactivate(ComponentContext context) {}
 }

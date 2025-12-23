@@ -9,11 +9,13 @@
     <version>${revision}${changelist}</version>
     <relativePath>../weasis-parent/pom.xml</relativePath>
   </parent>
+
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.weasis.dicom</groupId>
   <artifactId>weasis-dicom</artifactId>
   <packaging>pom</packaging>
   <name>DICOM plugins [${project.artifactId}]</name>
+
   <modules>
     <module>weasis-dicom-parent</module>
     <module>weasis-dicom-codec</module>

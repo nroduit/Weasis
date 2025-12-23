@@ -21,6 +21,7 @@ import javax.swing.Icon;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import org.dcm4che3.data.Tag;
+import org.pf4j.Extension;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.DataExplorerView;
@@ -50,8 +51,10 @@ import org.weasis.dicom.codec.DicomCodec;
 import org.weasis.dicom.codec.DicomMediaIO;
 import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.explorer.main.DicomExplorer;
+import org.weasis.plugin.SingletonExtension;
 
-@org.osgi.service.component.annotations.Component(service = SeriesViewerFactory.class)
+@Extension
+@SingletonExtension
 public class View2dFactory implements SeriesViewerFactory {
   private static final Logger LOGGER = LoggerFactory.getLogger(View2dFactory.class);
 

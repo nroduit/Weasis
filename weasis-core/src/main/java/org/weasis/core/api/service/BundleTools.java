@@ -11,12 +11,8 @@ package org.weasis.core.api.service;
 
 import java.util.Collections;
 import java.util.List;
-import org.osgi.framework.BundleContext;
-import org.osgi.framework.Constants;
-import org.osgi.framework.InvalidSyntaxException;
-import org.osgi.framework.ServiceEvent;
-import org.osgi.framework.ServiceReference;
-import org.osgi.service.prefs.Preferences;
+import java.util.prefs.Preferences;
+import org.pf4j.PluginManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.DataExplorerView;
@@ -41,11 +37,11 @@ public class BundleTools {
 
   private BundleTools() {}
 
-  public static Codec<MediaElement> getCodec(String mimeType, String preferredCodec) {
-    Codec<MediaElement> codec = null;
-    List<Codec<MediaElement>> codecs = GuiUtils.getUICore().getCodecPlugins();
+  public static Codec<? extends MediaElement> getCodec(String mimeType, String preferredCodec) {
+    Codec<? extends MediaElement> codec = null;
+    List<? extends Codec<? extends MediaElement>> codecs = GuiUtils.getUICore().getCodecPlugins();
     synchronized (codecs) {
-      for (Codec<MediaElement> c : codecs) {
+      for (Codec<? extends MediaElement> c : codecs) {
         if (c.isMimeTypeSupported(mimeType)) {
           if (c.getCodecName().equals(preferredCodec)) {
             codec = c;
@@ -61,64 +57,38 @@ public class BundleTools {
     }
   }
 
-  public static String createServiceFilter(Class<?>... interfaces) {
-    StringBuilder builder = new StringBuilder();
-
-    builder.append("( |");
-    for (Class<?> clazz : interfaces) {
-      builder.append(String.format("(%s=%s) ", Constants.OBJECTCLASS, clazz.getName())); // NON-NLS
+  public static void unregisterInsertableFactory(InsertableFactory factory, SeriesViewerUI ui) {
+    if (factory == null || ui == null) {
+      return;
     }
-
-    builder.append(" ) ");
-    return builder.toString();
+    GuiExecutor.execute(
+        () -> {
+          if (Type.TOOLBAR.equals(factory.getType())) {
+            unregisterToolBar(factory, ui);
+          } else if (Type.TOOL.equals(factory.getType())) {
+            unregisterTool(factory, ui);
+          } else if (Type.TOOL_EXT.equals(factory.getType())) {
+            unregisterDynamicTool(factory, ui);
+          }
+        });
   }
 
-  public static void dataExplorerChanged(final ServiceEvent event, SeriesViewerUI ui) {
+  public static void registerExistingComponents(SeriesViewerUI ui) {
+    if (ui == null) {
+      return;
+    }
 
-    final ServiceReference<?> mref = event.getServiceReference();
-    // The View2dContainer name should be referenced as a property in the provided service
-    if (Boolean.parseBoolean((String) mref.getProperty(ui.clazz.getName()))) {
-      final BundleContext context = AppProperties.getBundleContext(ui.clazz);
-      if (context == null) {
-        return;
-      }
-      GuiExecutor.execute(
-          () -> {
-            Object service = context.getService(mref);
-            if (service instanceof InsertableFactory factory) {
-              if (event.getType() == ServiceEvent.REGISTERED) {
-                registerComponent(factory, ui);
-              } else if (event.getType() == ServiceEvent.UNREGISTERING) {
-                if (Type.TOOLBAR.equals(factory.getType())) {
-                  unregisterToolBar(factory, context, ui);
-                } else if (Type.TOOL.equals(factory.getType())) {
-                  unregisterTool(factory, context, ui);
-                } else if (Type.TOOL_EXT.equals(factory.getType())) {
-                  unregisterDynamicTool(factory, ui);
-                }
-              }
-            }
-          });
+    PluginManager pluginManager = GuiUtils.getUICore().getPluginManager();
+    // Get all InsertableFactory extensions from loaded plugins
+    List<InsertableFactory> factories = pluginManager.getExtensions(InsertableFactory.class);
+
+    for (InsertableFactory factory : factories) {
+      // Instantiate UI components in EDT
+      GuiExecutor.execute(() -> registerInsertableFactory(factory, ui));
     }
   }
 
-  public static void registerExistingComponents(BundleContext bundleContext, SeriesViewerUI ui) {
-    try {
-      for (ServiceReference<InsertableFactory> serviceReference :
-          bundleContext.getServiceReferences(InsertableFactory.class, null)) {
-        // The View2dContainer name should be referenced as a property in the provided service
-        if (Boolean.parseBoolean((String) serviceReference.getProperty(ui.clazz.getName()))) {
-          // Instantiate UI components in EDT
-          GuiExecutor.execute(
-              () -> registerComponent(bundleContext.getService(serviceReference), ui));
-        }
-      }
-    } catch (InvalidSyntaxException e1) {
-      LOGGER.error("Register tool and toolbar", e1);
-    }
-  }
-
-  private static void registerComponent(InsertableFactory factory, SeriesViewerUI ui) {
+  public static void registerInsertableFactory(InsertableFactory factory, SeriesViewerUI ui) {
     if (factory == null) {
       return;
     }
@@ -161,15 +131,14 @@ public class BundleTools {
     }
   }
 
-  private static void unregisterToolBar(
-      InsertableFactory factory, final BundleContext context, SeriesViewerUI ui) {
+  private static void unregisterToolBar(InsertableFactory factory, SeriesViewerUI ui) {
     boolean updateGUI = false;
     List<Toolbar> toolBars = ui.getToolBars();
     synchronized (toolBars) {
       for (int i = toolBars.size() - 1; i >= 0; i--) {
         Insertable b = toolBars.get(i);
         if (factory.isComponentCreatedByThisFactory(b)) {
-          Preferences prefs = BundlePreferences.getDefaultPreferences(context);
+          Preferences prefs = BundlePreferences.getDefaultPreferences(AppProperties.CORE_PLUGIN_ID);
           if (prefs != null) {
             List<Insertable> list = Collections.singletonList(b);
             InsertableUtil.savePreferences(
@@ -187,14 +156,13 @@ public class BundleTools {
     }
   }
 
-  private static void unregisterTool(
-      InsertableFactory factory, final BundleContext context, SeriesViewerUI ui) {
+  private static void unregisterTool(InsertableFactory factory, SeriesViewerUI ui) {
     List<DockableTool> tools = ui.getTools();
     synchronized (tools) {
       for (int i = tools.size() - 1; i >= 0; i--) {
         DockableTool t = tools.get(i);
         if (factory.isComponentCreatedByThisFactory(t)) {
-          Preferences prefs = BundlePreferences.getDefaultPreferences(context);
+          Preferences prefs = BundlePreferences.getDefaultPreferences(AppProperties.CORE_PLUGIN_ID);
           if (prefs != null) {
             Preferences containerNode = prefs.node(ui.clazz.getSimpleName().toLowerCase());
             InsertableUtil.savePreferences(Collections.singletonList(t), containerNode, Type.TOOL);

@@ -9,12 +9,11 @@
     <version>${revision}${changelist}</version>
     <relativePath>../weasis-parent/pom.xml</relativePath>
   </parent>
+
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.weasis.launcher</groupId>
   <artifactId>weasis-launcher</artifactId>
-  <!-- The weasis launcher is not OSGI bundle, it is a simple jar -->
-  <packaging>jar</packaging>
-  <name>Weasis Launcher (Felix) [${project.artifactId}]</name>
+  <name>Weasis Launcher [${project.artifactId}]</name>
 
   <licenses>
     <license>
@@ -130,6 +129,7 @@
           <archive>
             <manifestEntries>
               <Multi-Release>true</Multi-Release>
+              <Premain-Class>org.weasis.plugin.WeasisPluginManager</Premain-Class>
             </manifestEntries>
           </archive>
         </configuration>
@@ -139,10 +139,9 @@
 
   <dependencies>
     <dependency>
-      <groupId>org.apache.felix</groupId>
-      <artifactId>org.apache.felix.framework</artifactId>
-      <version>${felix.framework.version}</version>
-			<scope>provided</scope>
+      <groupId>org.pf4j</groupId>
+      <artifactId>pf4j</artifactId>
+      <version>${pf4j.version}</version>
     </dependency>
     <dependency>
       <groupId>com.formdev</groupId>
@@ -182,18 +181,6 @@
 
     <!-- Dependencies below are provided for debugging Weasis from IDE (by launching WeasisLauncher) -->
     <!-- No direct dependency should be made with weasis-launcher -->
-    <dependency>
-      <groupId>org.apache.felix</groupId>
-      <artifactId>org.apache.felix.scr</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.osgi</groupId>
-      <artifactId>osgi.promise</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.felix</groupId>
-      <artifactId>org.apache.felix.bundlerepository</artifactId>
-    </dependency>
     <dependency>
       <groupId>org.joml</groupId>
       <artifactId>joml</artifactId>

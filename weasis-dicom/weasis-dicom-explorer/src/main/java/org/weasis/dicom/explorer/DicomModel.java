@@ -34,12 +34,13 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.ExecutorService;
 import javax.swing.SwingUtilities;
-import org.apache.felix.service.command.CommandProcessor;
 import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Tag;
 import org.dcm4che3.img.data.PrDicomObject;
+import org.pf4j.Extension;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.weasis.core.api.command.CommandExtension;
 import org.weasis.core.api.command.Option;
 import org.weasis.core.api.command.Options;
 import org.weasis.core.api.explorer.ObservableEvent;
@@ -104,19 +105,52 @@ import org.weasis.dicom.explorer.wado.LoadRemoteDicomManifest;
 import org.weasis.dicom.explorer.wado.LoadRemoteDicomURL;
 import org.weasis.dicom.explorer.wado.LoadSeries;
 
-@org.osgi.service.component.annotations.Component(
-    property = {
-      CommandProcessor.COMMAND_SCOPE + "=dicom",
-      CommandProcessor.COMMAND_FUNCTION + "=get",
-      CommandProcessor.COMMAND_FUNCTION + "=rs",
-      CommandProcessor.COMMAND_FUNCTION + "=close"
-    },
-    service = DicomModel.class)
-public class DicomModel implements TreeModel, DataExplorerModel {
+@Extension
+public class DicomModel implements TreeModel, DataExplorerModel, CommandExtension {
   private static final Logger LOGGER = LoggerFactory.getLogger(DicomModel.class);
 
   public static final String NAME = "DICOM";
   public static final String PREFERENCE_NODE = "dicom.model";
+  private static final String GET_USAGE =
+      """
+        Load DICOM files remotely or locally
+        Usage: dicom:get ([-l PATH]... [-w URI]... [-r URI]... [-p] [-i DATA]... [-z URI]...)
+        PATH is either a directory(recursive) or a file
+          -l --local=PATH   open DICOMs from local disk
+          -r --remote=URI   open DICOMs from an URI
+          -w --wado=URI     open DICOMs from an XML manifest
+          -z --zip=URI      open DICOM ZIP from an URI
+          -p --portable     open DICOMs from configured directories at the same level of the executable
+          -i --iwado=DATA   open DICOMs from an XML manifest (GZIP-Base64)
+          -? --help         show help""";
+
+  private static final String RS_USAGE =
+      """
+        Load DICOM files from DICOMWeb API (QIDO/WADO-RS)
+        Usage: dicom:rs -u URL -r QUERYPARAMS... [-H HEADER]... [--query-header HEADER]... [--retrieve-header HEADER]... [--query-ext EXT] [--retrieve-ext EXT] [--accept-ext EXT]
+          -u --url=URL               URL of the DICOMWeb service
+          -r --request=QUERYPARAMS   Query params of the URL, see weasis-pacs-connector
+          -H --header=HEADER         Pass custom header(s) to all the requests
+          --query-header=HEADER      Pass custom header(s) to the query requests (QIDO)
+          --retrieve-header=HEADER   Pass custom header(s) to the retrieve requests (WADO)
+          --query-ext=EXT            Additional parameters for Query URL (QIDO)
+          --retrieve-ext=EXT         Additional parameters for Retrieve URL (WADO)
+          --accept-ext=EXT           Additional parameters for DICOM multipart/related Accept header of the retrieve URL (WADO). Default value is: transfer-syntax=*
+          --auth-uid=UID             UID of the Weasis authentication method
+          --oidc-iss=UID             Issuer Identifier for OpenID Connect Authentication Request
+          --oidc-login=UID           Identifier the End-User might use to log in (OpenID Connect)
+          --show-whole-study         when downloading a series, show all the other series (ready for download) from the same study
+          -? --help                  show help""";
+
+  private static final String CLOSE_USAGE =
+      """
+        Close DICOM files
+        Usage: dicom:close  (-a | ([-y UID]... [-s UID]...))
+          -a --all           close all the patients
+          -p --patient=ID    close a patient from its patient ID
+          -y --study=UID     close a study, UID is Study Instance UID
+          -s --series=UID    close a series, UID is Series Instance UID
+          -? --help          show help""";
 
   public static final TreeModelNode patient =
       new TreeModelNode(
@@ -154,20 +188,48 @@ public class DicomModel implements TreeModel, DataExplorerModel {
   }
 
   @Override
-  public List<Codec<MediaElement>> getCodecPlugins() {
-    ArrayList<Codec<MediaElement>> codecPlugins = new ArrayList<>(1);
-    List<Codec<MediaElement>> codecs = GuiUtils.getUICore().getCodecPlugins();
-    synchronized (codecs) {
-      for (Codec<MediaElement> codec : codecs) {
-        if (codec != null
-            && !"JDK ImageIO".equals(codec.getCodecName()) // NON-NLS
-            && codec.isMimeTypeSupported(DicomMediaIO.DICOM_MIMETYPE)
-            && !codecPlugins.contains(codec)) {
-          codecPlugins.add(codec);
-        }
-      }
+  public String getNamespace() {
+    return "dicom";
+  }
+
+  @Override
+  public void execute(String commandName, String[] args) throws Exception {
+    switch (commandName) {
+      case "get":
+        get(args);
+        break;
+      case "rs":
+        rs(args);
+        break;
+      case "close":
+        close(args);
+        break;
+      default:
+        throw new IllegalArgumentException("Unknown command: " + commandName);
     }
-    return codecPlugins;
+  }
+
+  @Override
+  public String getHelp() {
+    return String.join("\n", GET_USAGE)
+        + "\n\n"
+        + String.join("\n", RS_USAGE)
+        + "\n\n"
+        + String.join("\n", CLOSE_USAGE);
+  }
+
+  @Override
+  public List<Codec<MediaElement>> getCodecPlugins() {
+    Codec<?> dicom =
+        GuiUtils.getUICore().getCodecPlugins().stream()
+            .filter(
+                codec ->
+                    codec != null
+                        && !"JDK ImageIO".equals(codec.getCodecName()) // NON-NLS
+                        && codec.isMimeTypeSupported(DicomMediaIO.DICOM_MIMETYPE))
+            .findFirst()
+            .orElse(null);
+    return dicom != null ? List.of((Codec<MediaElement>) dicom) : Collections.emptyList();
   }
 
   @Override
@@ -1102,20 +1164,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
   }
 
   public void get(String[] argv) throws IOException {
-    final String[] usage = {
-      "Load DICOM files remotely or locally", // NON-NLS
-      "Usage: dicom:get ([-l PATH]... [-w URI]... [-r URI]... [-p] [-i DATA]... [-z URI]...)", // NON-NLS
-      "PATH is either a directory(recursive) or a file", // NON-NLS
-      "  -l --local=PATH   open DICOMs from local disk", // NON-NLS
-      "  -r --remote=URI   open DICOMs from an URI", // NON-NLS
-      "  -w --wado=URI     open DICOMs from an XML manifest", // NON-NLS
-      "  -z --zip=URI      open DICOM ZIP from an URI", // NON-NLS
-      "  -p --portable     open DICOMs from configured directories at the same level of the executable", // NON-NLS
-      "  -i --iwado=DATA   open DICOMs from an XML manifest (GZIP-Base64)", // NON-NLS
-      "  -? --help         show help" // NON-NLS
-    };
-
-    final Option opt = Options.compile(usage).parse(argv);
+    final Option opt = Options.compile(GET_USAGE).parse(argv);
     final List<String> largs = opt.getList("local"); // NON-NLS
     final List<String> rargs = opt.getList("remote"); // NON-NLS
     final List<String> zargs = opt.getList("zip");
@@ -1244,25 +1293,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
   }
 
   public void rs(String[] argv) throws IOException {
-    final String[] usage = {
-      "Load DICOM files from DICOMWeb API (QIDO/WADO-RS)", // NON-NLS
-      "Usage: dicom:rs -u URL -r QUERYPARAMS... [-H HEADER]... [--query-header HEADER]... [--retrieve-header HEADER]... [--query-ext EXT] [--retrieve-ext EXT] [--accept-ext EXT]", // NON-NLS
-      "  -u --url=URL               URL of the DICOMWeb service", // NON-NLS
-      "  -r --request=QUERYPARAMS   Query params of the URL, see weasis-pacs-connector", // NON-NLS
-      "  -H --header=HEADER         Pass custom header(s) to all the requests", // NON-NLS
-      "  --query-header=HEADER      Pass custom header(s) to the query requests (QIDO)", // NON-NLS
-      "  --retrieve-header=HEADER   Pass custom header(s) to the retrieve requests (WADO)", // NON-NLS
-      "  --query-ext=EXT            Additional parameters for Query URL (QIDO)", // NON-NLS
-      "  --retrieve-ext=EXT         Additional parameters for Retrieve URL (WADO)", // NON-NLS
-      "  --accept-ext=EXT           Additional parameters for DICOM multipart/related Accept header of the retrieve URL (WADO). Default value is: transfer-syntax=*", // NON-NLS
-      "  --auth-uid=UID             UID of the Weasis authentication method", // NON-NLS
-      "  --oidc-iss=UID             Issuer Identifier for OpenID Connect Authentication Request", // NON-NLS
-      "  --oidc-login=UID           Identifier the End-User might use to log in (OpenID Connect)", // NON-NLS
-      "  --show-whole-study         when downloading a series, show all the other series (ready for download) from the same study", // NON-NLS
-      "  -? --help                  show help" // NON-NLS
-    };
-
-    final Option opt = Options.compile(usage).parse(argv);
+    final Option opt = Options.compile(RS_USAGE).parse(argv);
     final String rsUrl = opt.get("url"); // NON-NLS
     final List<String> pargs = opt.getList("request"); // NON-NLS
 
@@ -1329,16 +1360,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
   }
 
   public void close(String[] argv) throws IOException {
-    final String[] usage = {
-      "Close DICOM files", // NON-NLS
-      "Usage: dicom:close  (-a | ([-y UID]... [-s UID]...))", // NON-NLS
-      "  -a --all           close all the patients", // NON-NLS
-      "  -p --patient=ID    close a patient from its patient ID", // NON-NLS
-      "  -y --study=UID     close a study, UID is Study Instance UID", // NON-NLS
-      "  -s --series=UID    close a series, UID is Series Instance UID", // NON-NLS
-      "  -? --help          show help" // NON-NLS
-    };
-    final Option opt = Options.compile(usage).parse(argv);
+    final Option opt = Options.compile(CLOSE_USAGE).parse(argv);
     final List<String> pargs = opt.getList("patient"); // NON-NLS
     final List<String> yargs = opt.getList("study"); // NON-NLS
     final List<String> sargs = opt.getList("series"); // NON-NLS

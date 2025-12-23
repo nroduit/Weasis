@@ -57,7 +57,6 @@ import org.dcm4che3.data.Tag;
 import org.dcm4che3.img.util.DicomObjectUtil;
 import org.dcm4che3.net.Status;
 import org.dcm4che3.net.service.QueryRetrieveLevel;
-import org.osgi.framework.BundleContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.DataExplorerView;
@@ -987,12 +986,12 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
   public void saveTemplates(JComboBox<? extends SearchParameters> comboBox) {
     XMLStreamWriter writer = null;
     XMLOutputFactory factory = XMLOutputFactory.newInstance();
-    final BundleContext context = AppProperties.getBundleContext(this.getClass());
+    String plugInId = GuiUtils.getUICore().getPluginManager().getPluginId(this.getClass());
     try {
       writer =
           factory.createXMLStreamWriter(
               new FileOutputStream(
-                  BundlePreferences.getFileInDataFolder(context, SearchParameters.FILENAME)
+                  BundlePreferences.getFileInDataFolder(plugInId, SearchParameters.FILENAME)
                       .toFile()),
               "UTF-8"); // NON-NLS
 
