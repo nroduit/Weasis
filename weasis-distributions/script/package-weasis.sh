@@ -261,7 +261,7 @@ fi
 
 if [ "$PACKAGE" = "YES" ] ; then
   VENDOR="Weasis Team"
-  COPYRIGHT="© 2009-2024 Weasis Team"
+  COPYRIGHT="© 2009-2026 Weasis Team"
   if [ "$machine" = "windows" ] ; then
     [ "$arc" = "aarch64" ]  && UPGRADE_UID="3aedc24e-48a8-4623-ab39-0c3c01c7383c" || UPGRADE_UID="3aedc24e-48a8-4623-ab39-0c3c01c7383a"
     $JPKGCMD --type "msi" --app-image "$IMAGE_PATH" --dest "$OUTPUT_PATH" --name "$NAME" --resource-dir "$RES/msi/${arc}" \
