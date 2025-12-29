@@ -10,10 +10,10 @@ jobs:
       cleanversion: ${{ env.WEASIS_CLEAN_VERSION }}
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Set up JDK for compilation
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           distribution: 'temurin'
           java-version: '24'
@@ -40,7 +40,7 @@ jobs:
           echo "WEASIS_CLEAN_VERSION=${CVERSION}" >> $GITHUB_ENV
 
       - name: Upload the weasis package for building the native distribution
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: weasis-native-${{ env.WEASIS_VERSION }}
           path: weasis-distributions/target/native-dist/weasis-native.*
@@ -59,7 +59,7 @@ jobs:
       matrix:
         include:
           #- { os: ubuntu-latest, platform: x64, wsystem: linux, warc: x86-64 }
-          - { os: macos-13, platform: x64, wsystem: macosx, warc: x86-64 }
+          - { os: macos-15-intel, platform: x64, wsystem: macosx, warc: x86-64 }
           - { os: macos-latest, platform: arm64, wsystem: macosx, warc: aarch64 }
           - { os: windows-latest, platform: x64, wsystem: windows, warc: x86-64 }
 
@@ -81,13 +81,13 @@ jobs:
           echo "WEASIS_CLEAN_VERSION=${{needs.build.outputs.cleanversion}}" >> $GITHUB_ENV
 
       - name: Set up JDK
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           distribution: 'temurin'
           java-version: '24'
 
       - name: Download weasis-native
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v7
         with:
           name: weasis-native-${{ env.WEASIS_VERSION }}
           path: native-dist
@@ -232,7 +232,7 @@ jobs:
           done
 
       - name: Upload the installer
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: ${{ env.APP_ARTIFACT }}
           path: final-dist
@@ -246,7 +246,7 @@ jobs:
 
     steps:
       - name: Download weasis-native
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v7
         with:
           name: weasis-native-${{ needs.build.outputs.version }}
           path: native-dist
@@ -300,7 +300,7 @@ jobs:
         continue-on-error: false
 
       - name: Upload Linux multi-arch installers
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: ${{ env.PKG_ARTIFACT }}
           path: final-dist
