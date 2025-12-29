@@ -15,7 +15,7 @@
     <!-- force command line arguments settings to set version -->
     <!-- $ mvn clean install -Drevision=4.2.2 -Dchangelist=-SNAPSHOT -->
     <revision>4.6.6</revision>
-    <changelist>-SNAPSHOT</changelist>  <!-- Remove "-SNAPSHOT" for release -->
+    <changelist></changelist>  <!-- Remove "-SNAPSHOT" for release -->
 
     <java-version>24</java-version>
     <jdk-version>24</jdk-version>
@@ -27,7 +27,7 @@
     <app.version>${revision}${changelist}</app.version>
     <base.minimal.version>4.6.0</base.minimal.version>
     <i18n.version>4.0.0-SNAPSHOT</i18n.version>
-    <weasis.releasenotes>https://github.com/nroduit/Weasis/blob/master/CHANGELOG.md#v465-2025-10-05</weasis.releasenotes>
+    <weasis.releasenotes>https://github.com/nroduit/Weasis/blob/master/CHANGELOG.md#v466-2025-12-29</weasis.releasenotes>
 
     <felix.framework.version>7.0.5</felix.framework.version>
     <flatlaf.version>3.7</flatlaf.version>
