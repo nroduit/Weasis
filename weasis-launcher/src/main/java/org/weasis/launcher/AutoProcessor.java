@@ -94,9 +94,8 @@ public class AutoProcessor {
       FileUtil.delete(cacheDir);
     }
 
-    int maxStartLevel = Integer.parseInt(configMap.getOrDefault("org.osgi.framework.startlevel.beginning", "300"));
-
-
+    int maxStartLevel =
+        Integer.parseInt(configMap.getOrDefault("org.osgi.framework.startlevel.beginning", "300"));
 
     // Collect all plugin locations from configuration
     Map<String, PluginElement> pluginList = new HashMap<>();

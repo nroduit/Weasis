@@ -1218,7 +1218,7 @@ public class WeasisWin {
       if (model == null) {
         return false;
       }
-      List<Codec<MediaElement>> codecs = model.getCodecPlugins();
+      var codecs = model.getCodecPlugins();
       return codecs != null && codecs.contains(codec);
     }
   }

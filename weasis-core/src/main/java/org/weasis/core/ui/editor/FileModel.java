@@ -70,6 +70,7 @@ public class FileModel extends AbstractFileModel implements CommandExtension {
         + "\n\n"
         + String.join("\n", CLOSE_USAGE.formatted(getNamespace(), getNamespace()));
   }
+
   private Path getFile(String url) {
     Path outFile;
     try (ClosableURLConnection http = NetworkUtil.getUrlConnection(url, URLParameters.DEFAULT);
