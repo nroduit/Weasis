@@ -18,6 +18,7 @@ import java.awt.event.ItemListener;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.File;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.List;
 import javax.swing.*;
@@ -300,8 +301,7 @@ public class DicomExplorer extends PluginTool
       super(false, true);
     }
 
-    @Override
-    protected boolean dropFiles(List<File> files, TransferSupport support) {
+    protected boolean dropFiles(List<Path> files) {
       return DicomSeriesHandler.dropDicomFiles(files);
     }
   }
@@ -619,7 +619,7 @@ public class DicomExplorer extends PluginTool
     }
 
     if (seriesGroup instanceof DicomSeries dicomSeries) {
-      ThumbnailMouseAndKeyAdapter.openSeriesInDefaultPlugin(model, dicomSeries);
+      ThumbnailMouseAndKeyAdapter.openSeriesInDefaultPlugin(dicomSeries, model);
     }
 
     return null;

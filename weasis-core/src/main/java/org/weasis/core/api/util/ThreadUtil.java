@@ -54,6 +54,17 @@ public final class ThreadUtil {
   }
 
   /**
+   * Creates a virtual thread per task executor with named threads.
+   *
+   * @param threadName the name prefix for virtual threads
+   * @return a new virtual thread per task executor
+   * @throws NullPointerException if threadName is null
+   */
+  public static ExecutorService newVirtualThreadPerTaskExecutor(String threadName) {
+    return Executors.newThreadPerTaskExecutor(Thread.ofVirtual().name(threadName, 0).factory());
+  }
+
+  /**
    * Creates an IO-optimized bounded thread pool for image loading operations. Pool size and queue
    * capacity are calculated based on system resources.
    *

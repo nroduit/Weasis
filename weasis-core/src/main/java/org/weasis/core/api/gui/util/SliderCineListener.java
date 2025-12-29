@@ -43,7 +43,7 @@ public abstract class SliderCineListener extends SliderChangeListener {
 
   private final Timer timer =
       new Timer(
-          1000 / 20,
+          50,
           _ -> {
             int step = (int) (getSpeed() / 5);
             if (step <= 0) {

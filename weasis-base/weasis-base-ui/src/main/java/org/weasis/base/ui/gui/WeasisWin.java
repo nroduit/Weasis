@@ -68,6 +68,8 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.net.http.HttpResponse.BodyHandlers;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -1108,122 +1110,151 @@ public class WeasisWin {
 
     @Override
     protected boolean importDataExt(TransferSupport support) {
-      Transferable transferable = support.getTransferable();
-      Series seq;
       try {
-        seq = (Series) transferable.getTransferData(Series.sequenceDataFlavor);
-        List<SeriesViewerFactory> viewerFactories = GuiUtils.getUICore().getSeriesViewerFactories();
-        synchronized (viewerFactories) {
-          for (final SeriesViewerFactory factory : viewerFactories) {
-            if (factory.canReadMimeType(seq.getMimeType())) {
-              DataExplorerModel model = (DataExplorerModel) seq.getTagValue(TagW.ExplorerModel);
-              if (model instanceof TreeModel treeModel) {
-                ArrayList<MediaSeries<MediaElement>> list = new ArrayList<>(1);
-                list.add(seq);
-                ViewerPluginBuilder builder = new ViewerPluginBuilder(factory, list, model, null);
-                openSeriesInViewerPlugin(
-                    builder, treeModel.getParent(seq, model.getTreeModelNodeForNewPlugin()));
-              } else {
-                ViewerPluginBuilder.openSequenceInDefaultPlugin(
-                    seq, model == null ? ViewerPluginBuilder.DefaultDataModel : model, true, true);
-              }
-              break;
-            }
-          }
-        }
-
+        Transferable transferable = support.getTransferable();
+        Series<?> seq = (Series<?>) transferable.getTransferData(Series.sequenceDataFlavor);
+        openSeriesInViewer(seq);
+        return true;
       } catch (Exception e) {
-        LOGGER.error("Open series", e);
+        LOGGER.error("Failed to open series", e);
         return false;
       }
-      return true;
+    }
+
+    private void openSeriesInViewer(Series<?> seq) {
+      List<SeriesViewerFactory> viewerFactories = GuiUtils.getUICore().getSeriesViewerFactories();
+      synchronized (viewerFactories) {
+        for (SeriesViewerFactory factory : viewerFactories) {
+          if (factory.canReadMimeType(seq.getMimeType())) {
+            openWithFactory(seq, factory);
+            break;
+          }
+        }
+      }
+    }
+
+    private void openWithFactory(Series<?> seq, SeriesViewerFactory factory) {
+      DataExplorerModel model = (DataExplorerModel) seq.getTagValue(TagW.ExplorerModel);
+      if (model instanceof TreeModel treeModel) {
+        ViewerPluginBuilder builder = new ViewerPluginBuilder(factory, List.of(seq), model, null);
+        openSeriesInViewerPlugin(
+            builder, treeModel.getParent(seq, model.getTreeModelNodeForNewPlugin()));
+      } else {
+        ViewerPluginBuilder.openSequenceInDefaultPlugin(
+            seq, model == null ? ViewerPluginBuilder.DefaultDataModel : model, true, true);
+      }
     }
 
     @Override
-    protected boolean dropFiles(List<File> files, TransferSupport support) {
-      if (files != null) {
-        DropLocation dropLocation = support.getDropLocation();
-        List<DataExplorerView> explorers =
-            new ArrayList<>(GuiUtils.getUICore().getExplorerPlugins());
-        for (int i = explorers.size() - 1; i >= 0; i--) {
-          if (!explorers.get(i).canImportFiles()) {
-            explorers.remove(i);
-          }
-        }
-
-        final List<File> dirs = new ArrayList<>();
-        Map<Codec, List<File>> codecs = new HashMap<>();
-        for (File file : files) {
-          if (file.isDirectory()) {
-            dirs.add(file);
-            continue;
-          }
-          MediaReader reader = ViewerPluginBuilder.getMedia(file, false);
-          if (reader != null) {
-            Codec<?> c = reader.getCodec();
-            if (c != null) {
-              List<File> cFiles = codecs.computeIfAbsent(c, k -> new ArrayList<>());
-              cFiles.add(file);
-            }
-          }
-        }
-
-        if (!dirs.isEmpty() && !explorers.isEmpty()) {
-          importInExplorer(explorers, dirs, dropLocation);
-        }
-
-        for (Entry<Codec, List<File>> entry : codecs.entrySet()) {
-          final List<File> vals = entry.getValue();
-
-          List<DataExplorerView> exps = new ArrayList<>();
-          for (final DataExplorerView dataExplorerView : explorers) {
-            DataExplorerModel model = dataExplorerView.getDataExplorerModel();
-            if (model != null) {
-              List<? extends Codec<? extends MediaElement>> cList = model.getCodecPlugins();
-              if (cList != null && cList.contains(entry.getKey())) {
-                exps.add(dataExplorerView);
-              }
-            }
-          }
-
-          if (exps.isEmpty()) {
-            for (File file : vals) {
-              ViewerPluginBuilder.openSequenceInDefaultPlugin(file, true, true);
-            }
-          } else {
-            importInExplorer(exps, vals, dropLocation);
-          }
-        }
-        return true;
+    protected boolean dropFiles(List<Path> files) {
+      if (files == null || files.isEmpty()) {
+        return false;
       }
-      return false;
+      List<DataExplorerView> explorers = getImportableExplorers();
+      List<Path> dirs = new ArrayList<>();
+      Map<Codec, List<Path>> codecFiles = new HashMap<>();
+
+      categorizeFiles(files, dirs, codecFiles);
+      processDirectories(explorers, dirs);
+      processCodecFiles(explorers, codecFiles);
+      return true;
+    }
+
+    private List<DataExplorerView> getImportableExplorers() {
+      return GuiUtils.getUICore().getExplorerPlugins().stream()
+          .filter(DataExplorerView::canImportFiles)
+          .toList();
+    }
+
+    private void categorizeFiles(
+        List<Path> files, List<Path> dirs, Map<Codec, List<Path>> codecFiles) {
+      for (Path file : files) {
+        if (Files.isDirectory(file)) {
+          dirs.add(file);
+        } else {
+          categorizeMediaFile(file, codecFiles);
+        }
+      }
+    }
+
+    private void categorizeMediaFile(Path file, Map<Codec, List<Path>> codecFiles) {
+      MediaReader reader = ViewerPluginBuilder.getMedia(file, false);
+      if (reader != null) {
+        Codec codec = reader.getCodec();
+        if (codec != null) {
+          codecFiles.computeIfAbsent(codec, _ -> new ArrayList<>()).add(file);
+        }
+      }
+    }
+
+    private void processDirectories(List<DataExplorerView> explorers, List<Path> dirs) {
+      if (!dirs.isEmpty() && !explorers.isEmpty()) {
+        importInExplorer(explorers, dirs, null);
+      }
+    }
+
+    private void processCodecFiles(
+        List<DataExplorerView> explorers, Map<Codec, List<Path>> codecFiles) {
+      for (Entry<Codec, List<Path>> entry : codecFiles.entrySet()) {
+        List<Path> files = entry.getValue();
+        List<DataExplorerView> compatibleExplorers =
+            findCompatibleExplorers(explorers, entry.getKey());
+
+        if (compatibleExplorers.isEmpty()) {
+          files.forEach(file -> ViewerPluginBuilder.openSequenceInDefaultPlugin(file, true, true));
+        } else {
+          importInExplorer(compatibleExplorers, files, null);
+        }
+      }
+    }
+
+    private List<DataExplorerView> findCompatibleExplorers(
+        List<DataExplorerView> explorers, Codec codec) {
+      return explorers.stream().filter(explorer -> isCodecSupported(explorer, codec)).toList();
+    }
+
+    private boolean isCodecSupported(DataExplorerView explorer, Codec codec) {
+      DataExplorerModel model = explorer.getDataExplorerModel();
+      if (model == null) {
+        return false;
+      }
+      List<Codec<MediaElement>> codecs = model.getCodecPlugins();
+      return codecs != null && codecs.contains(codec);
     }
   }
 
   private void importInExplorer(
-      List<DataExplorerView> exps, final List<File> vals, DropLocation dropLocation) {
-    if (exps.size() == 1) {
-      exps.getFirst().importFiles(vals.toArray(new File[0]), true);
+      List<DataExplorerView> explorers, List<Path> paths, DropLocation dropLocation) {
+    File[] files = paths.stream().map(Path::toFile).toArray(File[]::new);
+
+    if (explorers.size() == 1) {
+      explorers.getFirst().importFiles(files, true);
     } else {
-      Point p;
-      if (dropLocation == null) {
-        Rectangle b = WeasisWin.this.getFrame().getBounds();
-        p = new Point((int) b.getCenterX(), (int) b.getCenterY());
-      } else {
-        p = dropLocation.getDropPoint();
-      }
-
-      JPopupMenu popup = new JPopupMenu();
-
-      for (final DataExplorerView dataExplorerView : exps) {
-        JMenuItem item = new JMenuItem(dataExplorerView.getUIName(), dataExplorerView.getIcon());
-        GuiUtils.applySelectedIconEffect(item);
-        item.addActionListener(e -> dataExplorerView.importFiles(vals.toArray(new File[0]), true));
-        popup.add(item);
-      }
-
-      popup.show(WeasisWin.this.getFrame(), p.x, p.y);
+      showExplorerSelectionMenu(explorers, files, dropLocation);
     }
+  }
+
+  private void showExplorerSelectionMenu(
+      List<DataExplorerView> explorers, File[] files, DropLocation dropLocation) {
+    Point location = determineMenuLocation(dropLocation);
+    JPopupMenu popup = new JPopupMenu();
+
+    for (DataExplorerView explorer : explorers) {
+      JMenuItem item = new JMenuItem(explorer.getUIName(), explorer.getIcon());
+      GuiUtils.applySelectedIconEffect(item);
+      item.addActionListener(e -> explorer.importFiles(files, true));
+      popup.add(item);
+    }
+
+    popup.show(getFrame(), location.x, location.y);
+  }
+
+  private Point determineMenuLocation(DropLocation dropLocation) {
+    if (dropLocation != null) {
+      return dropLocation.getDropPoint();
+    }
+    Rectangle bounds = getFrame().getBounds();
+    return new Point((int) bounds.getCenterX(), (int) bounds.getCenterY());
   }
 
   public static class HidingEclipseThemeConnector extends CommonEclipseThemeConnector {

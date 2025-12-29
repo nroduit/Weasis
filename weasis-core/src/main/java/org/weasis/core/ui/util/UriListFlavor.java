@@ -10,20 +10,26 @@
 package org.weasis.core.ui.util;
 
 import java.awt.datatransfer.DataFlavor;
-import java.io.File;
 import java.net.URI;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.util.StringUtil;
 
-public class UriListFlavor {
+/**
+ * Provides DataFlavor support for URI list drag-and-drop operations. Supports both file list and
+ * text/uri-list MIME types.
+ */
+public final class UriListFlavor {
   private static final Logger LOGGER = LoggerFactory.getLogger(UriListFlavor.class);
 
   public static final DataFlavor flavor = createDataFlavor();
 
-  private static final DataFlavor[] flavors =
+  private static final DataFlavor[] FLAVORS =
       new DataFlavor[] {DataFlavor.javaFileListFlavor, flavor};
 
   private UriListFlavor() {}
@@ -33,28 +39,43 @@ public class UriListFlavor {
       return new DataFlavor(
           "text/uri-list;class=java.lang.String", null, UriListFlavor.class.getClassLoader());
     } catch (Exception e) {
-      LOGGER.error("Build uri flavor", e);
+      LOGGER.error("Failed to create URI data flavor", e);
       return null;
     }
   }
 
-  public static List<File> textURIListToFileList(String uriList) {
-    List<File> list = new java.util.ArrayList<>();
-    for (java.util.StringTokenizer st = new java.util.StringTokenizer(uriList, "\r\n");
-        st.hasMoreTokens(); ) {
-      String s = st.nextToken();
-      // Check if the line is a comment (as per the RFC 2483)
-      if (!s.startsWith("#")) {
-        try {
-          list.add(new File(new URI(s)));
-        } catch (Exception e) {
-          LOGGER.error("Build file from URI", e);
-        }
-      }
-    }
-    return list;
+  /**
+   * Converts a text/uri-list string to a list of paths. Supports RFC 2483 format with comment lines
+   * starting with '#'.
+   *
+   * @param uriList the URI list string
+   * @return list of paths extracted from the URI list
+   */
+  public static List<Path> textURIListToPathList(String uriList) {
+    return uriList
+        .lines()
+        .map(String::trim)
+        .filter(line -> !line.isEmpty() && !line.startsWith("#"))
+        .map(UriListFlavor::uriToPath)
+        .flatMap(Optional::stream)
+        .toList();
   }
 
+  private static Optional<Path> uriToPath(String uriString) {
+    try {
+      return Optional.of(Paths.get(new URI(uriString)));
+    } catch (Exception e) {
+      LOGGER.error("Failed to convert URI to Path: {}", uriString, e);
+      return Optional.empty();
+    }
+  }
+
+  /**
+   * Validates if a string is a valid URI.
+   *
+   * @param uriString the URI string to validate
+   * @return true if the string is a valid URI
+   */
   public static boolean isValidURI(String uriString) {
     if (!StringUtil.hasText(uriString)) {
       return false;
@@ -67,11 +88,22 @@ public class UriListFlavor {
     }
   }
 
+  /**
+   * Returns a copy of supported data flavors.
+   *
+   * @return array of supported data flavors
+   */
   public static DataFlavor[] getTransferDataFlavors() {
-    return Arrays.copyOf(flavors, flavors.length);
+    return Arrays.copyOf(FLAVORS, FLAVORS.length);
   }
 
+  /**
+   * Checks if a data flavor is supported.
+   *
+   * @param flavor the data flavor to check
+   * @return true if the flavor is supported
+   */
   public static boolean isDataFlavorSupported(DataFlavor flavor) {
-    return Arrays.stream(flavors).anyMatch(flavor::equals);
+    return Arrays.stream(FLAVORS).anyMatch(flavor::equals);
   }
 }

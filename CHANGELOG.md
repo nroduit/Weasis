@@ -1,5 +1,32 @@
 # Changelog
 
+## [v4.6.6](https://github.com/nroduit/Weasis/tree/v4.6.6) (2025-12-29)
+
+[Full Changelog](https://github.com/nroduit/Weasis/compare/v4.6.5...v4.6.6)
+
+**Implemented enhancements:**
+
+- Improve logic for hiding corner annotations according to view size [\#766](https://github.com/nroduit/Weasis/issues/766)
+- Display warning on MPR on non-axial series requiring geometric transformations [\#765](https://github.com/nroduit/Weasis/issues/765)
+- 4D Series: Dialog to automatically divide a multi-phase series into individual phase sub-series \(MPR, MIP and VR\) [\#763](https://github.com/nroduit/Weasis/issues/763)
+- Dicomizer: Use the file’s last modified date instead of the invalid date from the acquisition device [\#762](https://github.com/nroduit/Weasis/issues/762)
+- Update to Flatlaf 3.7 [\#760](https://github.com/nroduit/Weasis/issues/760)
+- Preserve the last-used format as the default setting for the ECG viewer [\#754](https://github.com/nroduit/Weasis/issues/754)
+
+**Fixed bugs:**
+
+- View selection incorrectly resets to first position after MIP view replacement [\#764](https://github.com/nroduit/Weasis/issues/764)
+- Images with Deflated Explicit VR Little Endian not shown correctly [\#755](https://github.com/nroduit/Weasis/issues/755)
+- Overlay buttons on view canvas should always be visible [\#744](https://github.com/nroduit/Weasis/issues/744)
+- Orientation in Display do not work for some modalities [\#743](https://github.com/nroduit/Weasis/issues/743)
+- Strange behavior of the selected view while building MIP. [\#741](https://github.com/nroduit/Weasis/issues/741)
+- Pan with Orthographic Projection Mode in 3D Viewer [\#732](https://github.com/nroduit/Weasis/issues/732)
+- PNG codec error and image zooming/moving trouble [\#553](https://github.com/nroduit/Weasis/issues/553)
+
+**Security fixes:**
+
+- Weasis installer disables browser URL security popups via managed policies [\#753](https://github.com/nroduit/Weasis/issues/753)
+
 ## [v4.6.5](https://github.com/nroduit/Weasis/tree/v4.6.5) (2025-10-05)
 
 [Full Changelog](https://github.com/nroduit/Weasis/compare/v4.6.4...v4.6.5)

@@ -11,9 +11,11 @@ package org.weasis.acquire.explorer.gui.central.tumbnail;
 
 import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.UnsupportedFlavorException;
-import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 import javax.swing.JViewport;
 import javax.swing.event.ListSelectionListener;
 import org.slf4j.Logger;
@@ -34,6 +36,12 @@ import org.weasis.core.api.media.data.Series;
 import org.weasis.core.ui.editor.ViewerPluginBuilder;
 import org.weasis.core.ui.editor.image.SequenceHandler;
 
+/**
+ * Central thumbnail pane for acquired media elements. Handles drag-and-drop operations for series
+ * and files.
+ *
+ * @param <E> the media element type
+ */
 public class AcquireCentralThumbnailPane<E extends MediaElement> extends AThumbnailListPane<E> {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(AcquireCentralThumbnailPane.class);
@@ -45,28 +53,30 @@ public class AcquireCentralThumbnailPane<E extends MediaElement> extends AThumbn
   }
 
   public void setAcquireTabPanel(AcquireTabPanel acquireTabPanel) {
-    ((AcquireCentralThumbnailList<?>) this.thumbnailList).setAcquireTabPanel(acquireTabPanel);
+    if (thumbnailList instanceof AcquireCentralThumbnailList<?> centralList) {
+      centralList.setAcquireTabPanel(acquireTabPanel);
+    }
   }
 
   public void addListSelectionListener(ListSelectionListener listener) {
-    this.thumbnailList.addListSelectionListener(listener);
+    thumbnailList.addListSelectionListener(listener);
   }
 
   public void addElements(List<E> elements) {
     if (elements != null) {
-      IThumbnailModel<E> model = this.thumbnailList.getThumbnailListModel();
+      IThumbnailModel<E> model = thumbnailList.getThumbnailListModel();
       elements.forEach(model::addElement);
     }
   }
 
   public void setList(List<E> elements) {
-    IThumbnailModel<E> model = this.thumbnailList.getThumbnailListModel();
+    IThumbnailModel<E> model = thumbnailList.getThumbnailListModel();
     model.clear();
     if (elements != null) {
       elements.forEach(model::addElement);
     }
 
-    JViewport viewport = this.getViewport();
+    JViewport viewport = getViewport();
     if (viewport != null) {
       viewport.setView(thumbnailList.asComponent());
     }
@@ -76,82 +86,90 @@ public class AcquireCentralThumbnailPane<E extends MediaElement> extends AThumbn
 
     @Override
     public boolean canImport(TransferSupport support) {
-      boolean result = super.canImport(support);
-      if (result
-          && AcquireManager.getInstance().getAcquireExplorer().getImportPanel().isLoading()) {
-        result = false;
+      if (!super.canImport(support)) {
+        return false;
       }
-      return result;
+      return !AcquireManager.getInstance().getAcquireExplorer().getImportPanel().isLoading();
     }
 
+    @Override
     protected boolean importDataExt(TransferSupport support) {
       Transferable transferable = support.getTransferable();
       try {
-        Object object = transferable.getTransferData(Series.sequenceDataFlavor);
-        if (object instanceof Series<?> series) {
+        Object data = transferable.getTransferData(Series.sequenceDataFlavor);
+        if (data instanceof Series<?> series) {
           MediaElement media = series.getMedia(0, null, null);
-          addToSeries(media);
-        }
-      } catch (UnsupportedFlavorException | IOException e) {
-        LOGGER.error("Drop thumbnail", e);
-      }
-
-      return true;
-    }
-
-    private void addToSeries(MediaElement... medias) {
-      SeriesGroup seriesGroup = null;
-      if (medias == null || medias.length == 0) {
-        return;
-      }
-
-      SeriesGroup selectedGroup = null;
-      if (thumbnailList instanceof AcquireCentralThumbnailList<?> centralList) {
-        SeriesButton selected = centralList.getSelectedSeries();
-        if (selected != null) {
-          selectedGroup = selected.getSeries();
-        }
-      }
-
-      for (MediaElement media : medias) {
-        var type = Type.fromMimeType(media);
-        if (type != null) {
-          AcquireMediaInfo info = AcquireManager.findByMedia(media);
-          if (info != null) {
-            if (selectedGroup != null && type.equals(selectedGroup.getType())) {
-              seriesGroup = selectedGroup;
-            } else {
-              seriesGroup = new SeriesGroup(type);
-            }
-            AcquireManager.importMedia(info, seriesGroup);
-            info.setStatus(AcquireImageStatus.SUBMITTED);
-            AcquireManager.getInstance().notifySeriesSelection(seriesGroup);
+          if (media != null) {
+            addMediaToSeries(media);
           }
         }
-      }
-
-      if (seriesGroup != null) {
-        AcquireManager.getInstance().notifySeriesSelection(seriesGroup);
+        return true;
+      } catch (UnsupportedFlavorException | IOException e) {
+        LOGGER.error("Failed to drop thumbnail", e);
+        return false;
       }
     }
 
     @Override
-    protected boolean dropFiles(List<File> files, TransferSupport support) {
-      if (files == null) {
+    protected boolean dropFiles(List<Path> files) {
+      if (files == null || files.isEmpty()) {
         return false;
       }
-      for (File file : files) {
-        MediaReader<?> reader = ViewerPluginBuilder.getMedia(file, true);
-        if (reader != null && !reader.getMediaFragmentMimeType().contains("dicom")) { // NON-NLS
-          MediaElement[] medias = reader.getMediaElement();
-          if (medias != null) {
-            for (MediaElement mediaElement : medias) {
-              addToSeries(mediaElement);
-            }
-          }
+
+      files.stream()
+          .map(path -> ViewerPluginBuilder.getMedia(path, true))
+          .filter(reader -> reader != null && !reader.getMediaFragmentMimeType().contains("dicom"))
+          .map(MediaReader::getMediaElement)
+          .filter(Objects::nonNull)
+          .flatMap(Arrays::stream)
+          .forEach(this::addMediaToSeries);
+      return true;
+    }
+
+    private void addMediaToSeries(MediaElement... medias) {
+      if (medias == null || medias.length == 0) {
+        return;
+      }
+
+      SeriesGroup selectedGroup = getSelectedSeriesGroup();
+      SeriesGroup targetGroup = null;
+
+      for (MediaElement media : medias) {
+        Type type = Type.fromMimeType(media);
+        if (type == null) {
+          continue;
+        }
+        AcquireMediaInfo info = AcquireManager.findByMedia(media);
+        if (info != null) {
+          targetGroup = determineTargetGroup(selectedGroup, type);
+          importAndNotify(info, targetGroup);
         }
       }
-      return true;
+
+      if (targetGroup != null) {
+        AcquireManager.getInstance().notifySeriesSelection(targetGroup);
+      }
+    }
+
+    private SeriesGroup getSelectedSeriesGroup() {
+      if (thumbnailList instanceof AcquireCentralThumbnailList<?> centralList) {
+        SeriesButton selected = centralList.getSelectedSeries();
+        return selected != null ? selected.getSeries() : null;
+      }
+      return null;
+    }
+
+    private SeriesGroup determineTargetGroup(SeriesGroup selectedGroup, Type mediaType) {
+      if (selectedGroup != null && mediaType.equals(selectedGroup.getType())) {
+        return selectedGroup;
+      }
+      return new SeriesGroup(mediaType);
+    }
+
+    private void importAndNotify(AcquireMediaInfo info, SeriesGroup group) {
+      AcquireManager.importMedia(info, group);
+      info.setStatus(AcquireImageStatus.SUBMITTED);
+      AcquireManager.getInstance().notifySeriesSelection(group);
     }
   }
 }

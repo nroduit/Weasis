@@ -14,6 +14,7 @@ import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Objects;
+import org.weasis.core.util.StringUtil;
 
 /** URI operations utility for conversions, protocol checks, and path extraction. */
 public final class URIUtils {
@@ -40,22 +41,21 @@ public final class URIUtils {
   }
 
   public static boolean isHttpURI(URI uri) {
-    Objects.requireNonNull(uri, "URI cannot be null");
     return isProtocol(uri, "http") || isProtocol(uri, "https");
   }
 
   public static boolean isFileURI(URI uri) {
-    Objects.requireNonNull(uri, "URI cannot be null");
-    return isProtocol(uri, "file") || isSchemelesPath(uri);
+    return isProtocol(uri, "file") || isSchemelessPath(uri);
   }
 
-  private static boolean isSchemelesPath(URI uri) {
+  private static boolean isSchemelessPath(URI uri) {
     return uri.getScheme() == null && uri.getPath() != null;
   }
 
   public static boolean isProtocol(URI uri, String protocol) {
-    Objects.requireNonNull(uri, "URI cannot be null");
-    Objects.requireNonNull(protocol, "Protocol cannot be null");
+    if (uri == null || !StringUtil.hasText(protocol)) {
+      throw new IllegalArgumentException("URI and protocol cannot be null");
+    }
     return protocol.equalsIgnoreCase(uri.getScheme());
   }
 

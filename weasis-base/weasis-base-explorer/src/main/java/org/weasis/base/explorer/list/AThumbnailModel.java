@@ -140,7 +140,7 @@ public abstract class AThumbnailModel<E extends MediaElement> extends AbstractLi
           .sorted(Comparator.comparing(Path::getFileName))
           .forEachOrdered(
               p -> {
-                MediaReader media = ViewerPluginBuilder.getMedia(p.toFile());
+                MediaReader media = ViewerPluginBuilder.getMedia(p);
                 if (media != null) {
                   MediaElement preview = media.getPreview();
                   if (preview instanceof ImageElement) {
