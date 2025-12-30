@@ -41,12 +41,54 @@ public class ActionW {
   public static final BasicActionStateValue VIEW_MODE =
       new BasicActionStateValue(Messages.getString("ActionW.view_mode"), "viewMode", 0, 0, null);
   public static final SliderChangeListenerValue ZOOM =
-      new SliderChangeListenerValue(
-          Messages.getString("ActionW.zoom"),
-          "zoom", // NON-NLS
-          KeyEvent.VK_Z,
-          0,
-          Feature.getSvgCursor("zoom.svg", Messages.getString("ActionW.zoom"), 0.5f, 0.5f));
+          new SliderChangeListenerValue(
+                  Messages.getString("ActionW.zoom"),
+                  "zoom", // NON-NLS
+                  KeyEvent.VK_Z,
+                  0,
+                  Feature.getSvgCursor("zoom.svg", Messages.getString("ActionW.zoom"), 0.5f, 0.5f));
+  public static final ToggleButtonListenerValue SLICE_ENABLE =
+          new ToggleButtonListenerValue(
+                  "Slicing Enabled",
+                  "flip",
+                  0,
+                  0,
+                  null); // NON-NLS
+  public static final SliderChangeListenerValue SLICE_X =
+          new SliderChangeListenerValue(
+                  "Slice X",
+                  "slice_x", // NON-NLS
+                  0,
+                  0,
+                  Feature.getSvgCursor("zoom.svg", "Slice", 0.5f, 0.5f));
+  public static final SliderChangeListenerValue SLICE_Y =
+          new SliderChangeListenerValue(
+                  "Slice Y",
+                  "slice_y", // NON-NLS
+                  0,
+                  0,
+                  Feature.getSvgCursor("zoom.svg", "Slice", 0.5f, 0.5f));
+  public static final SliderChangeListenerValue SLICE_Z =
+          new SliderChangeListenerValue(
+                  "Slice Z",
+                  "slice_z", // NON-NLS
+                  0,
+                  0,
+                  Feature.getSvgCursor("zoom.svg", "Slice", 0.5f, 0.5f));
+  public static final SliderChangeListenerValue SLICE_X_NORM =
+          new SliderChangeListenerValue(
+                  "Slice Yaw",
+                  "slice_x_norm", // NON-NLS
+                  0,
+                  0,
+                  Feature.getSvgCursor("zoom.svg", "Slice", 0.5f, 0.5f));
+  public static final SliderChangeListenerValue SLICE_Y_NORM =
+          new SliderChangeListenerValue(
+                  "Slice Pitch",
+                  "slice_y_norm", // NON-NLS
+                  0,
+                  0,
+                  Feature.getSvgCursor("zoom.svg", "Slice", 0.5f, 0.5f));
   public static final SliderCineListenerValue SCROLL_SERIES =
       new SliderCineListenerValue(
           Messages.getString("ActionW.scroll"),

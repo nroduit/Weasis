@@ -1,9 +1,38 @@
 // *************************************************************************************************
+// My functions
+// *************************************************************************************************
+
+// *************************************************************************************************
+// Slicing logic
+// *************************************************************************************************
+
+// Function to calculate signed distance from a point to the slicing plane
+float getDistanceToPlane(vec3 point, vec3 planePoint, vec3 planeNormal) {
+    return dot(point - planePoint, planeNormal);
+}
+
+// Function to check if a voxel is inside the slice based on distance to the plane
+bool isVoxelNearSlice(vec3 voxelCoord, vec3 planePoint, vec3 planeNormal) {
+    float dist = getDistanceToPlane(voxelCoord, planePoint, planeNormal);
+    return dist >= 0;
+}
+
+
+
+
+
+// *************************************************************************************************
 // Get voxel value from 3D texture
 // *************************************************************************************************
 
 float getVoxelValue(vec3 coordinates) {
-    return texture(volTexture, coordinates).r;
+    // Check if the slicing is disabled or voxel is inside the slice
+    if (!sliceEnabled || isVoxelNearSlice(coordinates, slicePoint, sliceNormal)) {
+        return texture(volTexture, coordinates).r;
+    } else {
+        // Outside slice, discard fragment
+        return 0;
+    }
 }
 
 float getOriginalVoxelValue(float texValue) {
