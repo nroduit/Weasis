@@ -76,6 +76,8 @@ public class PreferenceDialog extends AbstractWizardDialog {
   protected void initializePages() {
     Hashtable<String, Object> properties = new Hashtable<>();
     properties.put("weasis.user.prefs", System.getProperty("weasis.user.prefs", "user")); // NON-NLS
+    properties.put("weasis.preferences.dialog", this); // pass this object as a property avoiding the need of changing
+                                                       // createInstance signature.
 
     ArrayList<AbstractItemDialogPage> list = new ArrayList<>();
     GeneralSetting generalSetting = new GeneralSetting(this);
