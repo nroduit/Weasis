@@ -1164,6 +1164,7 @@ public class WeasisWin {
 
         // Process zip files using DicomSeriesHandler if available
         if (!zipFiles.isEmpty()) {
+          
           try {
             Class<?> dicomSeriesHandlerClass = Class.forName("org.weasis.dicom.explorer.DicomSeriesHandler"); // NON-NLS
             java.lang.reflect.Method dropDicomFilesMethod = dicomSeriesHandlerClass.getMethod("dropDicomFiles", List.class);
