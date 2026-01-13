@@ -1151,9 +1151,35 @@ public class WeasisWin {
           }
         }
 
+        // Separate zip files from regular files
+        List<File> zipFiles = new ArrayList<>();
+        List<File> regularFiles = new ArrayList<>();
+        for (File file : files) {
+          if (!file.isDirectory() && file.getName().toLowerCase().endsWith(".zip")) { // NON-NLS
+            zipFiles.add(file);
+          } else {
+            regularFiles.add(file);
+          }
+        }
+
+        // Process zip files using DicomSeriesHandler if available
+        if (!zipFiles.isEmpty()) {
+          
+          try {
+            Class<?> dicomSeriesHandlerClass = Class.forName("org.weasis.dicom.explorer.DicomSeriesHandler"); // NON-NLS
+            java.lang.reflect.Method dropDicomFilesMethod = dicomSeriesHandlerClass.getMethod("dropDicomFiles", List.class);
+            Boolean result = (Boolean) dropDicomFilesMethod.invoke(null, zipFiles);
+            if (Boolean.TRUE.equals(result)) {
+              // Zip files processed successfully
+            }
+          } catch (Exception e) {
+            LOGGER.warn("Cannot process DICOM zip files via DicomSeriesHandler", e);
+          }
+        }
+
         final List<File> dirs = new ArrayList<>();
         Map<Codec, List<File>> codecs = new HashMap<>();
-        for (File file : files) {
+        for (File file : regularFiles) {
           if (file.isDirectory()) {
             dirs.add(file);
             continue;

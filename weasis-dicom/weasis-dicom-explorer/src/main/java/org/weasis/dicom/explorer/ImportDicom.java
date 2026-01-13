@@ -14,5 +14,6 @@ import org.weasis.core.api.gui.util.PageItem;
 
 public interface ImportDicom extends PageItem {
 
+
   void importDICOM(DicomModel dicomModel, JProgressBar info);
 }
