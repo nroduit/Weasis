@@ -11,20 +11,17 @@ package org.weasis.dicom.explorer;
 
 import java.awt.datatransfer.Transferable;
 import java.io.File;
-import java.util.ArrayList;
+import java.nio.file.Path;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.weasis.core.api.explorer.DataExplorerView;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.core.api.explorer.model.TreeModel;
 import org.weasis.core.api.gui.util.GuiUtils;
-import org.weasis.core.api.media.data.MediaElement;
-import org.weasis.core.api.media.data.MediaSeries;
-import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.ui.editor.SeriesViewerFactory;
@@ -32,7 +29,6 @@ import org.weasis.core.ui.editor.ViewerPluginBuilder;
 import org.weasis.core.ui.editor.image.SequenceHandler;
 import org.weasis.core.ui.editor.image.SynchData;
 import org.weasis.core.ui.editor.image.ViewCanvas;
-import org.weasis.core.ui.editor.image.ViewerPlugin;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.DicomSeries;
 import org.weasis.dicom.explorer.HangingProtocols.OpeningViewer;
@@ -40,9 +36,14 @@ import org.weasis.dicom.explorer.imp.LocalImport;
 import org.weasis.dicom.explorer.main.DicomExplorer;
 import org.weasis.dicom.explorer.main.SeriesSelectionModel;
 
+/**
+ * Handles DICOM series drag-and-drop operations and file imports for a specific view canvas.
+ * Manages series transfer between viewers and coordinates series opening in appropriate plugins.
+ */
 public class DicomSeriesHandler extends SequenceHandler {
   private static final Logger LOGGER = LoggerFactory.getLogger(DicomSeriesHandler.class);
-  protected final ViewCanvas<DicomImageElement> viewCanvas;
+
+  private final ViewCanvas<DicomImageElement> viewCanvas;
 
   public DicomSeriesHandler(ViewCanvas<DicomImageElement> viewCanvas) {
     super(true, true);
@@ -51,126 +52,195 @@ public class DicomSeriesHandler extends SequenceHandler {
 
   @Override
   protected boolean importDataExt(TransferSupport support) {
-    Transferable transferable = support.getTransferable();
-    DataExplorerView dicomView = GuiUtils.getUICore().getExplorerPlugin(DicomExplorer.NAME);
-    DataExplorerModel model;
-    SeriesSelectionModel selList = null;
-    if (dicomView != null) {
-      selList = ((DicomExplorer) dicomView).getSelectionList();
-    }
-    DicomViewerPlugin selPlugin = null;
-    for (ViewerPlugin<?> p : GuiUtils.getUICore().getViewerPlugins()) {
-      if (p instanceof DicomViewerPlugin v && v.isContainingView(viewCanvas)) {
-        selPlugin = v;
-      }
-    }
-    if (selPlugin == null) {
-      return false;
-    }
-
-    Series seq;
     try {
-      seq = (Series) transferable.getTransferData(Series.sequenceDataFlavor);
-      model = (DataExplorerModel) seq.getTagValue(TagW.ExplorerModel);
-      SeriesViewerFactory plugin = GuiUtils.getUICore().getViewerFactory(selPlugin);
+      var series = extractSeries(support.getTransferable());
+      if (series == null) {
+        return false;
+      }
+
+      var selectedPlugin = findSelectedPlugin();
+      if (selectedPlugin == null) {
+        return false;
+      }
+
+      var plugin = GuiUtils.getUICore().getViewerFactory(selectedPlugin);
       if (plugin == null) {
         return false;
       }
-      boolean buildNewPlugin =
-          plugin instanceof MimeSystemAppFactory || !plugin.canReadMimeType(seq.getMimeType());
 
-      if (buildNewPlugin) {
-        ViewerPluginBuilder.openSequenceInDefaultPlugin(seq, model, true, true);
+      var model = (DataExplorerModel) series.getTagValue(TagW.ExplorerModel);
+      if (shouldBuildNewPlugin(plugin, series)) {
+        ViewerPluginBuilder.openSequenceInDefaultPlugin(series, model, true, true);
         return true;
-      } else if (seq instanceof DicomSeries && model instanceof TreeModel treeModel) {
-        if (selList != null) {
-          selList.setOpeningSeries(true);
-        }
-
-        MediaSeriesGroup p1 = treeModel.getParent(seq, model.getTreeModelNodeForNewPlugin());
-        MediaSeriesGroup p2 = null;
-        if (p1 == null) {
-          return false;
-        }
-        if (p1.equals(selPlugin.getGroupID())) {
-          p2 = p1;
-        }
-
-        boolean readable = plugin.canReadSeries(seq);
-        boolean addSeries = plugin.canAddSeries();
-        if (!p1.equals(p2) || !readable || !addSeries) {
-          if (readable || addSeries) {
-            ViewerPluginBuilder.openSequenceInPlugin(plugin, seq, model, true, true);
-          } else {
-            Map<String, Object> props = Collections.synchronizedMap(new HashMap<>());
-            props.put(ViewerPluginBuilder.CMP_ENTRY_BUILD_NEW_VIEWER, true);
-            props.put(ViewerPluginBuilder.BEST_DEF_LAYOUT, false);
-            props.put(ViewerPluginBuilder.OPEN_IN_SELECTION, true);
-
-            String mime = seq.getMimeType();
-            plugin = GuiUtils.getUICore().getViewerFactory(mime);
-            if (plugin != null) {
-              ArrayList<MediaSeries<MediaElement>> list = new ArrayList<>(1);
-              list.add(seq);
-              ViewerPluginBuilder builder = new ViewerPluginBuilder(plugin, list, model, props);
-              ViewerPluginBuilder.openSequenceInPlugin(builder);
-            }
-          }
-          return false;
-        }
-      } else {
-        // Not a DICOM Series
-        return false;
       }
+
+      return handleDicomSeries(series, model, plugin, selectedPlugin);
+
     } catch (Exception e) {
-      LOGGER.error("Get draggable series", e);
+      LOGGER.error("Error importing draggable series", e);
       return false;
-    } finally {
-      if (selList != null) {
-        selList.setOpeningSeries(false);
-      }
     }
-    if (selList != null) {
-      selList.setOpeningSeries(true);
-    }
-
-    if (SynchData.Mode.TILE.equals(selPlugin.getSynchView().getSynchData().getMode())) {
-      selPlugin.addSeries(seq);
-      if (selList != null) {
-        selList.setOpeningSeries(false);
-      }
-      return true;
-    }
-
-    viewCanvas.setSeries(seq);
-    // Getting the focus has a delay and so it will trigger the view selection later
-    if (Boolean.TRUE.equals(selPlugin.isContainingView(viewCanvas))) {
-      selPlugin.setSelectedImagePaneFromFocus(viewCanvas);
-    }
-    if (selList != null) {
-      selList.setOpeningSeries(false);
-    }
-    return true;
   }
 
   @Override
-  protected boolean dropFiles(List<File> files, TransferSupport support) {
+  protected boolean dropFiles(List<Path> files) {
     return dropDicomFiles(files);
   }
 
-  public static boolean dropDicomFiles(List<File> files) {
-    if (files != null) {
-      DataExplorerView dicomView = GuiUtils.getUICore().getExplorerPlugin(DicomExplorer.NAME);
-      if (dicomView == null) {
-        return false;
-      }
-      DicomModel model = (DicomModel) dicomView.getDataExplorerModel();
-      OpeningViewer openingViewer =
-          OpeningViewer.getOpeningViewerByLocalKey(LocalImport.LAST_OPEN_VIEWER_MODE);
-      DicomModel.LOADING_EXECUTOR.execute(
-          new LoadLocalDicom(files.toArray(File[]::new), true, model, openingViewer));
-      return true;
+  /**
+   * Handles dropping DICOM files for import.
+   *
+   * @param paths the list of file paths to import
+   * @return true if import was initiated successfully
+   */
+  public static boolean dropDicomFiles(List<Path> paths) {
+    if (paths == null || paths.isEmpty()) {
+      return false;
     }
-    return false;
+    return getDicomExplorer()
+        .map(
+            explorer -> {
+              var model = explorer.getDataExplorerModel();
+              var openingViewer =
+                  OpeningViewer.getOpeningViewerByLocalKey(LocalImport.LAST_OPEN_VIEWER_MODE);
+              var files = paths.stream().map(Path::toFile).toArray(File[]::new);
+              DicomModel.LOADING_EXECUTOR.execute(
+                  new LoadLocalDicom(files, true, model, openingViewer));
+              return true;
+            })
+        .orElse(false);
+  }
+
+  private DicomSeries extractSeries(Transferable transferable) {
+    try {
+      if (transferable != null
+          && transferable.getTransferData(Series.sequenceDataFlavor)
+              instanceof DicomSeries series) {
+        return series;
+      }
+    } catch (Exception e) {
+      LOGGER.error("Failed to extract series from transferable", e);
+    }
+    return null;
+  }
+
+  private DicomViewerPlugin findSelectedPlugin() {
+    return GuiUtils.getUICore().getViewerPlugins().stream()
+        .filter(DicomViewerPlugin.class::isInstance)
+        .map(DicomViewerPlugin.class::cast)
+        .filter(plugin -> plugin.isContainingView(viewCanvas))
+        .findFirst()
+        .orElse(null);
+  }
+
+  private boolean shouldBuildNewPlugin(SeriesViewerFactory plugin, DicomSeries series) {
+    return plugin instanceof MimeSystemAppFactory || !plugin.canReadMimeType(series.getMimeType());
+  }
+
+  private boolean handleDicomSeries(
+      DicomSeries series,
+      DataExplorerModel model,
+      SeriesViewerFactory plugin,
+      DicomViewerPlugin selectedPlugin) {
+    if (series == null || !(model instanceof TreeModel treeModel)) {
+      return false;
+    }
+
+    try {
+      executeWithOpeningSeries(
+          getSelectionModel(),
+          () -> {
+            if (canAddToCurrentPlugin(series, model, plugin, selectedPlugin, treeModel)) {
+              addSeriesToPlugin(series, selectedPlugin);
+            } else {
+              openInAppropriatePlugin(series, model, plugin);
+            }
+          });
+      return true;
+    } catch (Exception e) {
+      LOGGER.error("Error handling DICOM series", e);
+      return false;
+    }
+  }
+
+  private boolean canAddToCurrentPlugin(
+      DicomSeries series,
+      DataExplorerModel model,
+      SeriesViewerFactory plugin,
+      DicomViewerPlugin selectedPlugin,
+      TreeModel treeModel) {
+    var parentGroup = treeModel.getParent(series, model.getTreeModelNodeForNewPlugin());
+    if (parentGroup == null) {
+      return false;
+    }
+
+    return parentGroup.equals(selectedPlugin.getGroupID())
+        && plugin.canReadSeries(series)
+        && plugin.canAddSeries();
+  }
+
+  private void addSeriesToPlugin(DicomSeries series, DicomViewerPlugin selectedPlugin) {
+    if (isTileMode(selectedPlugin)) {
+      selectedPlugin.addSeries(series);
+    } else {
+      viewCanvas.setSeries(series);
+      // Getting the focus has a delay, and so it will trigger the view selection later
+      if (Boolean.TRUE.equals(selectedPlugin.isContainingView(viewCanvas))) {
+        selectedPlugin.setSelectedImagePaneFromFocus(viewCanvas);
+      }
+    }
+  }
+
+  private boolean isTileMode(DicomViewerPlugin selectedPlugin) {
+    return SynchData.Mode.TILE.equals(selectedPlugin.getSynchView().getSynchData().getMode());
+  }
+
+  private void openInAppropriatePlugin(
+      DicomSeries series, DataExplorerModel model, SeriesViewerFactory plugin) {
+    if (plugin.canReadSeries(series) || plugin.canAddSeries()) {
+      ViewerPluginBuilder.openSequenceInPlugin(plugin, series, model, true, true);
+    } else {
+      openDicomSeriesInViewer(series, model);
+    }
+  }
+
+  /**
+   * Opens a DICOM series in the appropriate viewer plugin.
+   *
+   * @param series the DICOM series to open
+   * @param model the data explorer model
+   */
+  public static void openDicomSeriesInViewer(DicomSeries series, DataExplorerModel model) {
+    var plugin = GuiUtils.getUICore().getViewerFactory(series.getMimeType());
+    if (plugin != null) {
+      Map<String, Object> props = Collections.synchronizedMap(new HashMap<>());
+      props.put(ViewerPluginBuilder.CMP_ENTRY_BUILD_NEW_VIEWER, true);
+      props.put(ViewerPluginBuilder.BEST_DEF_LAYOUT, false);
+      props.put(ViewerPluginBuilder.OPEN_IN_SELECTION, true);
+      var builder = new ViewerPluginBuilder(plugin, List.of(series), model, props);
+      ViewerPluginBuilder.openSequenceInPlugin(builder);
+    }
+  }
+
+  private SeriesSelectionModel getSelectionModel() {
+    return getDicomExplorer().map(DicomExplorer::getSelectionList).orElse(null);
+  }
+
+  private static Optional<DicomExplorer> getDicomExplorer() {
+    var dicomView = GuiUtils.getUICore().getExplorerPlugin(DicomExplorer.NAME);
+    return dicomView instanceof DicomExplorer explorer ? Optional.of(explorer) : Optional.empty();
+  }
+
+  private void executeWithOpeningSeries(SeriesSelectionModel selectionModel, Runnable action) {
+    if (selectionModel != null) {
+      selectionModel.setOpeningSeries(true);
+      try {
+        action.run();
+      } finally {
+        selectionModel.setOpeningSeries(false);
+      }
+    } else {
+      action.run();
+    }
   }
 }

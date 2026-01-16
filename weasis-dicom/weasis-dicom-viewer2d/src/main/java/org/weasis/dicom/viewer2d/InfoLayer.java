@@ -38,6 +38,7 @@ import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.TagReadable;
 import org.weasis.core.api.media.data.TagView;
 import org.weasis.core.api.media.data.TagW;
+import org.weasis.core.api.util.FontItem;
 import org.weasis.core.api.util.FontTools;
 import org.weasis.core.ui.editor.image.SynchData;
 import org.weasis.core.ui.editor.image.ViewButton;
@@ -123,7 +124,9 @@ public class InfoLayer extends AbstractInfoLayer<DicomImageElement> {
   @Override
   public void paint(Graphics2D g2) {
     DicomImageElement image = view2DPane.getImage();
-    FontMetrics fontMetrics = g2.getFontMetrics();
+    // Get the smallest font for better size calculations
+    FontMetrics fontMetrics =
+        view2DPane.getJComponent().getFontMetrics(FontItem.MICRO_SEMIBOLD.getFont());
     Rectangle bound = view2DPane.getJComponent().getBounds();
 
     if (!shouldPaint(image, fontMetrics, bound)) {
@@ -147,7 +150,7 @@ public class InfoLayer extends AbstractInfoLayer<DicomImageElement> {
 
   private boolean shouldPaint(DicomImageElement image, FontMetrics fontMetrics, Rectangle bound) {
     int minSize = fontMetrics.stringWidth(Messages.getString("InfoLayer.msg_outside_levels")) * 2;
-    return visible && image != null && minSize <= bound.width && minSize <= bound.height;
+    return visible && image != null && minSize <= bound.width && minSize / 2 <= bound.height;
   }
 
   private void paintContent(
@@ -277,10 +280,12 @@ public class InfoLayer extends AbstractInfoLayer<DicomImageElement> {
   private float paintMprTransformationMessage(
       Graphics2D g2, MprView mprView, float drawY, int fontHeight) {
     MprController controller = mprView.getMprController();
-    if (controller != null
-        && controller.getVolume() != null
-        && controller.getVolume().isTransformed()) {
-      drawY = drawGeometricTransformationMessage(g2, drawY, fontHeight, border);
+    if (controller != null && controller.getVolume() != null) {
+      if (controller.getVolume().isTransformed()) {
+        drawY = drawGeometricTransformationMessage(g2, drawY, fontHeight, border);
+      } else if (controller.getVolume().needsTransformation()) {
+        drawY = drawStretchingMessage(g2, drawY, fontHeight, border);
+      }
     }
     return drawY;
   }
@@ -808,6 +813,14 @@ public class InfoLayer extends AbstractInfoLayer<DicomImageElement> {
     String message = Messages.getString("geometric.transformation.msg");
     FontTools.paintColorFontOutline(g2d, message, border, drawY, IconColor.ACTIONS_RED.getColor());
     return drawY - fontHeight;
+  }
+
+  public static float drawStretchingMessage(
+      Graphics2D g2d, float drawY, int fontHeight, int border) {
+    String message = Messages.getString("stretching.artifacts.msg");
+    FontTools.paintColorFontOutline(g2d, message, border, drawY, IconColor.ACTIONS_RED.getColor());
+    drawY -= fontHeight;
+    return drawY;
   }
 
   public static MediaSeriesGroup getParent(

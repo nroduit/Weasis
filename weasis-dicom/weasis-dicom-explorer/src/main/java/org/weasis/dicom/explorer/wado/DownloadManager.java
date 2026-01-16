@@ -104,6 +104,12 @@ public class DownloadManager {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(DownloadManager.class);
 
+  public enum Status {
+    DOWNLOADING,
+    COMPLETE,
+    ERROR
+  }
+
   public static final String CONCURRENT_SERIES = "download.concurrent.series";
   private static final List<LoadSeries> TASKS = new ArrayList<>();
 
@@ -380,7 +386,7 @@ public class DownloadManager {
             } else {
               // Read old manifest: xmlns="http://www.weasis.org/xsd"
               if (WadoParameters.TAG_WADO_QUERY.equals(key)) {
-                readWadoQuery(x, r);
+                readLegacyWadoQuery(x, r);
               }
             }
           };
@@ -418,10 +424,9 @@ public class DownloadManager {
   }
 
   private static String getErrorMessage(URI uri) {
-    StringBuilder buf = new StringBuilder(Messages.getString("DownloadManager.error_load_xml"));
-    buf.append(StringUtil.COLON_AND_SPACE);
-    buf.append(uri.toString());
-    return buf.toString();
+    return Messages.getString("DownloadManager.error_load_xml")
+        + StringUtil.COLON_AND_SPACE
+        + uri.toString();
   }
 
   private static void readArcQuery(XMLStreamReader xmler, ReaderParams params)
@@ -436,14 +441,16 @@ public class DownloadManager {
         TagUtil.getTagAttribute(xmler, ArcParameters.ADDITIONAL_PARAMETERS, "");
     String overrideList = TagUtil.getTagAttribute(xmler, ArcParameters.OVERRIDE_TAGS, null);
     String webLogin = TagUtil.getTagAttribute(xmler, ArcParameters.WEB_LOGIN, null);
+    String queryMode = TagUtil.getTagAttribute(xmler, ArcParameters.QUERY_MODE, null);
+    boolean wadoRs = "DICOM_WEB".equals(queryMode); // NON-NLS
     final WadoParameters wadoParameters =
         new WadoParameters(
-            arcID, wadoURL, onlySopUID, additionalParameters, overrideList, webLogin);
+            arcID, wadoURL, onlySopUID, additionalParameters, overrideList, webLogin, wadoRs);
     params.wadoUri = getWadoUrl(wadoURL);
     readQuery(xmler, params, wadoParameters, ArcParameters.TAG_ARC_QUERY);
   }
 
-  private static void readWadoQuery(XMLStreamReader xmler, ReaderParams params)
+  private static void readLegacyWadoQuery(XMLStreamReader xmler, ReaderParams params)
       throws XMLStreamException {
     String wadoURL = TagUtil.getTagAttribute(xmler, WadoParameters.WADO_URL, null);
     boolean onlySopUID =
@@ -453,13 +460,9 @@ public class DownloadManager {
     String additionalParameters =
         TagUtil.getTagAttribute(xmler, ArcParameters.ADDITIONAL_PARAMETERS, "");
     String overrideList = TagUtil.getTagAttribute(xmler, ArcParameters.OVERRIDE_TAGS, null);
-    String queryMode = TagUtil.getTagAttribute(xmler, "queryMode", null);
-    // TODO replace with enum in library
-    boolean wadoRs = "DICOM_WEB".equals(queryMode); // NON-NLS
     String webLogin = TagUtil.getTagAttribute(xmler, ArcParameters.WEB_LOGIN, null);
     final WadoParameters wadoParameters =
-        new WadoParameters(
-            "", wadoURL, onlySopUID, additionalParameters, overrideList, webLogin, wadoRs);
+        new WadoParameters("", wadoURL, onlySopUID, additionalParameters, overrideList, webLogin);
     params.wadoUri = getWadoUrl(wadoURL);
     readQuery(xmler, params, wadoParameters, WadoParameters.TAG_WADO_QUERY);
   }

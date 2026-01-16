@@ -163,7 +163,7 @@ public class ViewerFactory implements SeriesViewerFactory {
     } else {
       MediaSeries series = null;
       for (File file : selectedFiles) {
-        String mimeType = MimeInspector.getMimeType(file);
+        String mimeType = MimeInspector.getMimeType(file.toPath());
         if (mimeType != null && mimeType.startsWith("image")) {
           Codec<?> codec = BundleTools.getCodec(mimeType, null);
           if (codec != null) {

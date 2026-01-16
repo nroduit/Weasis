@@ -9,7 +9,6 @@
  */
 package org.weasis.core.ui.editor;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
@@ -38,7 +37,7 @@ public class FileModel extends AbstractFileModel {
   public static final Path IMAGE_CACHE_DIR =
       AppProperties.buildAccessibleTempDirectory(AppProperties.CACHE_NAME, "image");
 
-  private File getFile(String url) {
+  private Path getFile(String url) {
     Path outFile;
     try (ClosableURLConnection http = NetworkUtil.getUrlConnection(url, URLParameters.DEFAULT);
         InputStream in = http.getInputStream()) {
@@ -49,7 +48,7 @@ public class FileModel extends AbstractFileModel {
       LOGGER.error("Dowloading image", e);
       return null;
     }
-    return outFile.toFile();
+    return outFile;
   }
 
   @Override
@@ -77,8 +76,8 @@ public class FileModel extends AbstractFileModel {
               new ObservableEvent(ObservableEvent.BasicAction.SELECT, dataModel, null, dataModel));
           if (opt.isSet("file")) { // NON-NLS
             fargs.stream()
-                .map(File::new)
-                .filter(File::isFile)
+                .map(Path::of)
+                .filter(Files::isRegularFile)
                 .forEach(f -> ViewerPluginBuilder.openSequenceInDefaultPlugin(f, true, true));
           }
           if (opt.isSet("url")) { // NON-NLS

@@ -12,6 +12,7 @@ package org.weasis.dicom.au;
 import java.awt.BorderLayout;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.List;
 import javax.sound.sampled.AudioFileFormat;
 import javax.sound.sampled.AudioFormat;
@@ -469,13 +470,13 @@ public class AuView extends JPanel implements SeriesViewerListener {
     }
   }
 
-  private class SeriesHandler extends SequenceHandler {
+  private static class SeriesHandler extends SequenceHandler {
     public SeriesHandler() {
       super(false, true);
     }
 
     @Override
-    protected boolean dropFiles(List<File> files, TransferSupport support) {
+    protected boolean dropFiles(List<Path> files) {
       return DicomSeriesHandler.dropDicomFiles(files);
     }
   }

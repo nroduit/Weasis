@@ -335,7 +335,12 @@ public class Camera {
         new Vector2d(screenCoordToNDC(p)).sub(screenCoordToNDC(prevMousePos));
     prevMousePos.x = p.getX();
     prevMousePos.y = p.getY();
-    double hh = abs(internalZoomFactor) * tan(getFieldOfView() * 0.5);
+    double hh;
+    if (orthographicProjection) {
+      hh = 2.0 / zoomFactor;
+    } else {
+      hh = abs(internalZoomFactor) * tan(getFieldOfView() * 0.5);
+    }
     double hw = hh * renderer.getAspectRatio();
 
     Vector4d invTransform =

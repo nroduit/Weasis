@@ -33,17 +33,15 @@ public class WaveLayoutManager implements LayoutManager {
   private final WaveLayout layout;
   private final Map<Lead, LeadPanel> components;
 
-  private Format format;
   private double speed;
   private int amplitude;
 
-  public WaveLayoutManager(WaveView view, Format format, double speed, int amplitude) {
+  public WaveLayoutManager(WaveView view, double speed, int amplitude) {
     this.view = view;
     this.components = new LinkedHashMap<>();
     this.speed = speed;
     this.amplitude = amplitude;
     this.layout = new StandardWaveLayout();
-    setWaveFormat(format);
   }
 
   public void setSpeed(double mmPerS) {
@@ -54,12 +52,8 @@ public class WaveLayoutManager implements LayoutManager {
     this.amplitude = mmPerMV;
   }
 
-  public void setWaveFormat(Format format) {
-    this.format = format;
-  }
-
   public List<LeadPanel> getSortedComponents() {
-    return layout.getSortedComponents(format, components);
+    return layout.getSortedComponents(view.getCurrentFormat(), components);
   }
 
   public double getSpeed() {
@@ -92,6 +86,7 @@ public class WaveLayoutManager implements LayoutManager {
     double ratio = Toolkit.getDefaultToolkit().getScreenResolution() / 25.4 * view.getZoomRatio();
     int width = (int) (speed * ratio);
     int height = (int) (amplitude * ratio);
+    Format format = view.getCurrentFormat();
     double sec = (format == Format.DEFAULT) ? view.getSeconds() : 10;
 
     int layoutHeight =
@@ -125,6 +120,7 @@ public class WaveLayoutManager implements LayoutManager {
       c.setVisible(ordered.contains(c));
     }
 
+    Format format = view.getCurrentFormat();
     int xLayoutSize = format.getXlayoutSize() <= 0 ? 1 : format.getXlayoutSize();
     int yLayoutSize = format.getYlayoutSize() <= 0 ? ordered.size() : format.getYlayoutSize();
     int w = maxWidth / xLayoutSize;

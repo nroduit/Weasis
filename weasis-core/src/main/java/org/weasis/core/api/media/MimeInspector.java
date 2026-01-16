@@ -17,6 +17,8 @@ import java.io.InputStreamReader;
 import java.io.RandomAccessFile;
 import java.io.Reader;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Map.Entry;
 import java.util.Optional;
@@ -101,16 +103,16 @@ public class MimeInspector {
     return false;
   }
 
-  public static String getMimeTypeFromMagicNumber(final File file) {
-    if (file == null || !file.canRead()) {
+  public static String getMimeTypeFromMagicNumber(final Path file) {
+    if (file == null || !Files.isReadable(file)) {
       return null;
-    } else if (file.isDirectory()) {
+    } else if (Files.isDirectory(file)) {
       return "application/directory"; // NON-NLS
     }
     String mimeType = null;
 
     // Otherwise, find Mime Type from the magic number in file
-    try (RandomAccessFile raf = new RandomAccessFile(file, "r")) {
+    try (RandomAccessFile raf = new RandomAccessFile(file.toFile(), "r")) {
       mimeType = MimeInspector.getMagicMimeType(raf);
     } catch (IOException e) {
       LOGGER.error("Error when getting mime-type", e);
@@ -118,13 +120,13 @@ public class MimeInspector {
     return mimeType;
   }
 
-  public static String getMimeType(final File file) {
-    if (file == null || !file.canRead()) {
+  public static String getMimeType(final Path file) {
+    if (file == null || !Files.isReadable(file)) {
       return null;
     }
 
     // Get the file extension
-    String fileName = file.getName();
+    String fileName = file.getFileName().toString();
     int lastPos = fileName.lastIndexOf('.');
     String extension = lastPos > 0 ? fileName.substring(lastPos + 1).trim() : null;
 

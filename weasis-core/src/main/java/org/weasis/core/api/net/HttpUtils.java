@@ -22,8 +22,6 @@ import java.net.http.HttpResponse;
 import java.time.Duration;
 import java.util.Map;
 import java.util.Objects;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.net.auth.AuthMethod;
 import org.weasis.core.api.net.auth.OAuth2ServiceFactory;
@@ -32,44 +30,74 @@ import org.weasis.core.util.StreamIOException;
 /** HTTP operations utility with OAuth2 authentication support. */
 public final class HttpUtils {
 
-  private static final Logger LOGGER = LoggerFactory.getLogger(HttpUtils.class);
   private static final int HTTP_OK = 200;
+  // Use a shared client to enable connection pooling (Keep-Alive) and avoid handshake overhead
+  private static final HttpClient SHARED_CLIENT = buildHttpClient();
 
   private HttpUtils() {}
 
   public static <S> HttpResponse<S> getHttpConnection(
       URL url, URLParameters urlParameters, HttpResponse.BodyHandler<S> bodyHandler)
-      throws IOException, InterruptedException {
-    return createHttpRequest(url.toString(), urlParameters, bodyHandler);
+      throws IOException {
+    return createHttpRequest(SHARED_CLIENT, url.toString(), urlParameters, bodyHandler);
   }
 
-  public static HttpClient getHttpClient() {
+  public static <S> HttpResponse<S> getHttpConnection(
+      HttpClient client,
+      URL url,
+      URLParameters urlParameters,
+      HttpResponse.BodyHandler<S> bodyHandler)
+      throws IOException {
+    return createHttpRequest(client, url.toString(), urlParameters, bodyHandler);
+  }
+
+  public static HttpClient getDefaulttHttpClient() {
+    return SHARED_CLIENT;
+  }
+
+  public static HttpClient buildHttpClient() {
     return createHttpClient(
         Duration.ofMillis(NetworkUtil.getUrlConnectionTimeout()),
         HttpClient.Redirect.NORMAL,
         ProxySelector.getDefault());
   }
 
-  public static HttpClient getHttpClient(Duration timeout) {
+  public static HttpClient buildHttpClient(Duration timeout) {
     return createHttpClient(timeout, HttpClient.Redirect.NORMAL, ProxySelector.getDefault());
   }
 
-  public static HttpClient getHttpClient(
+  public static HttpClient buildHttpClient(
       Duration timeout, HttpClient.Redirect redirect, ProxySelector proxySelector) {
     return createHttpClient(timeout, redirect, proxySelector);
   }
 
   public static HttpStream getHttpResponse(
       String url, URLParameters urlParameters, AuthMethod authMethod) throws IOException {
-    return getHttpResponse(url, urlParameters, authMethod, null);
+    return getHttpResponse(SHARED_CLIENT, url, urlParameters, authMethod, null);
+  }
+
+  public static HttpStream getHttpResponse(
+      HttpClient client, String url, URLParameters urlParameters, AuthMethod authMethod)
+      throws IOException {
+    return getHttpResponse(client, url, urlParameters, authMethod, null);
   }
 
   public static HttpStream getHttpResponse(
       String url, URLParameters urlParameters, AuthMethod authMethod, OAuthRequest authRequest)
       throws IOException {
+    return getHttpResponse(SHARED_CLIENT, url, urlParameters, authMethod, authRequest);
+  }
+
+  public static HttpStream getHttpResponse(
+      HttpClient client,
+      String url,
+      URLParameters urlParameters,
+      AuthMethod authMethod,
+      OAuthRequest authRequest)
+      throws IOException {
     if (isNoAuthRequired(authMethod)) {
       var response =
-          createHttpRequest(url, urlParameters, HttpResponse.BodyHandlers.ofInputStream());
+          createHttpRequest(client, url, urlParameters, HttpResponse.BodyHandlers.ofInputStream());
       return new HttpResponseStream(response);
     }
     var request =
@@ -95,7 +123,15 @@ public final class HttpUtils {
   private static <S> HttpResponse<S> createHttpRequest(
       String url, URLParameters urlParameters, HttpResponse.BodyHandler<S> bodyHandler)
       throws IOException {
-    var client = getHttpClient(Duration.ofMillis(urlParameters.connectTimeout()));
+    return createHttpRequest(SHARED_CLIENT, url, urlParameters, bodyHandler);
+  }
+
+  private static <S> HttpResponse<S> createHttpRequest(
+      HttpClient client,
+      String url,
+      URLParameters urlParameters,
+      HttpResponse.BodyHandler<S> bodyHandler)
+      throws IOException {
     var requestBuilder =
         HttpRequest.newBuilder()
             .uri(URI.create(url))

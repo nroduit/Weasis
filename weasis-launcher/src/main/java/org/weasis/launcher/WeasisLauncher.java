@@ -152,10 +152,9 @@ public class WeasisLauncher {
                     mainFrame.getWindow(),
                     String.format(
                         "%s\n\n%s", // NON-NLS
-                        Messages.getString("WeasisLauncher.update_min"),
-                        Messages.getString("WeasisLauncher.continue_local"),
-                        appName,
-                        minVersion),
+                        String.format(
+                            Messages.getString("WeasisLauncher.update_min"), appName, minVersion),
+                        Messages.getString("WeasisLauncher.continue_local")),
                     null,
                     JOptionPane.YES_NO_OPTION,
                     JOptionPane.ERROR_MESSAGE,

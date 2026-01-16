@@ -31,6 +31,8 @@
       <plugin>
         <groupId>biz.aQute.bnd</groupId>
         <artifactId>bnd-maven-plugin</artifactId>
+        <!-- wait for a fix: https://github.com/bndtools/bnd/issues/7028 -->
+        <version>7.1.0</version>
         <configuration>
           <bnd>
             Bundle-NativeCode: ${native.configuration}

@@ -32,9 +32,6 @@ if command_exists desktop_uninstall_default_mime_handler; then
 else
     echo "Warning: 'desktop_uninstall_default_mime_handler' not found. Skipping MIME handler uninstallation." >&2
 fi
-
-rm -f /etc/opt/chrome/policies/managed/weasis.json
-rm -f /etc/chromium/policies/managed/weasis.json
     ;;
 
     failed-upgrade)

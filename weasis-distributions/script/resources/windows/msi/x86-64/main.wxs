@@ -83,23 +83,6 @@
 		            <RegistryValue Type="string" Value="&quot;[INSTALLDIR]Weasis.exe&quot; &quot;%1&quot;"/>
 		          </RegistryKey>
 		        </RegistryKey>
-            <!-- Remove popup on Edge and IE for weasis protocol -->
-            <RegistryKey Root="HKLM" Key="SOFTWARE\Microsoft\Internet Explorer\ProtocolExecute\weasis">
-              <RegistryValue Type="integer" Name="WarnOnOpen" Value="0" />
-            </RegistryKey>
-            <RegistryKey Root="HKLM" Key="SOFTWARE\Policies\Microsoft\Edge\URLAllowlist">
-               <RegistryValue Name="787" Type="string" Value="weasis://*"/>
-            </RegistryKey>
-            <!-- Remove popup on Chrome for weasis protocol -->
-            <RegistryKey Root="HKLM" Key="SOFTWARE\Policies\Google\Chrome\URLAllowlist">
-               <RegistryValue Name="787" Type="string" Value="weasis://*"/>
-            </RegistryKey>
-            <RegistryKey Root="HKLM" Key="SOFTWARE\Policies\Chromium\URLAllowlist">
-               <RegistryValue Name="787" Type="string" Value="weasis://*"/>
-            </RegistryKey>
-            <RegistryKey Root="HKLM" Key="SOFTWARE\Policies\Mozilla\Firefox\WebsiteFilter\Exceptions">
-               <RegistryValue Name="787" Type="string" Value="weasis://*"/>
-            </RegistryKey>
        </Component>
   </DirectoryRef>
 

@@ -33,15 +33,12 @@ import org.dcm4che3.io.SAXReader;
 import org.dcm4che3.net.Status;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.weasis.core.api.net.ClosableURLConnection;
 import org.weasis.core.api.net.HttpStream;
-import org.weasis.core.api.net.NetworkUtil;
+import org.weasis.core.api.net.HttpUtils;
 import org.weasis.core.api.net.URLParameters;
 import org.weasis.core.api.net.auth.AuthMethod;
-import org.weasis.core.api.net.auth.BasicHttpClient;
 import org.weasis.core.api.net.auth.BodySupplier;
 import org.weasis.core.api.net.auth.FileBodyPartPayload;
-import org.weasis.core.api.net.auth.OAuth2ServiceFactory;
 import org.weasis.core.util.FileUtil;
 import org.weasis.dicom.param.DicomProgress;
 import org.weasis.dicom.param.DicomState;
@@ -121,37 +118,20 @@ public class StowRS extends DicomStowRS {
     DicomState state = new DicomState(new DicomProgress());
     Attributes error = null;
     int nbFile = 0;
-    boolean auth = authMethod != null && !OAuth2ServiceFactory.NO_AUTH.equals(authMethod);
 
     String url = getRequestURL();
-    OAuthRequest authRequest = null;
-    if (auth) {
-      authRequest = prepareAuthConnection(filesOrFolders, recursive);
-      nbFile = authRequest.getMultipartPayload().getBodyParts().size();
-    }
+    OAuthRequest authRequest = prepareAuthConnection(filesOrFolders, recursive);
+    nbFile = authRequest.getMultipartPayload().getBodyParts().size();
 
     try (HttpStream httpCon =
-        NetworkUtil.getHttpResponse(
+        HttpUtils.getHttpResponse(
             url, new URLParameters(getHeaders(), true), authMethod, authRequest)) {
-      if (auth) {
-        int code = httpCon.getResponseCode();
-        if (code >= HttpURLConnection.HTTP_OK && code < HttpURLConnection.HTTP_BAD_REQUEST) {
-          error = getResponseOutput(httpCon);
-        } else if (code == HttpURLConnection.HTTP_UNAUTHORIZED) {
-          authMethod.resetToken();
-          authMethod.getToken();
-        }
-      } else if (httpCon instanceof ClosableURLConnection urlConnection
-          && urlConnection.urlConnection() instanceof HttpURLConnection http) {
-        MultipartPayload multipartPayload = getMultipartPayload(filesOrFolders, recursive);
-        nbFile = multipartPayload.getBodyParts().size();
-        BasicHttpClient.addBody(http, multipartPayload, true);
-        int code = httpCon.getResponseCode();
-        if (code >= HttpURLConnection.HTTP_OK && code < HttpURLConnection.HTTP_BAD_REQUEST) {
-          error = getResponseOutput(httpCon);
-        }
-      } else {
-        throw new IllegalStateException("HttpResponse type: not implemented");
+      int code = httpCon.getResponseCode();
+      if (code >= HttpURLConnection.HTTP_OK && code < HttpURLConnection.HTTP_BAD_REQUEST) {
+        error = getResponseOutput(httpCon);
+      } else if (code == HttpURLConnection.HTTP_UNAUTHORIZED && authMethod != null) {
+        authMethod.resetToken();
+        authMethod.getToken();
       }
       return buildErrorMessage(error, state, nbFile);
     } catch (Exception e) {

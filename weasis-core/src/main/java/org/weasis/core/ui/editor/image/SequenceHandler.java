@@ -12,6 +12,7 @@ package org.weasis.core.ui.editor.image;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
 import java.io.File;
+import java.nio.file.Path;
 import java.util.List;
 import javax.swing.JComponent;
 import javax.swing.TransferHandler;
@@ -23,15 +24,26 @@ import org.weasis.core.api.media.data.SeriesThumbnail;
 import org.weasis.core.ui.editor.ViewerPluginBuilder;
 import org.weasis.core.ui.util.UriListFlavor;
 
+/**
+ * Handles drag-and-drop operations for media sequences and files. Supports transferring series
+ * between components and importing files from external sources.
+ */
 public class SequenceHandler extends TransferHandler {
   private static final Logger LOGGER = LoggerFactory.getLogger(SequenceHandler.class);
-  protected final boolean sequenceFlavor;
-  protected final boolean fileFlavor;
+
+  private final boolean sequenceFlavor;
+  private final boolean fileFlavor;
 
   public SequenceHandler() {
     this(true, true);
   }
 
+  /**
+   * Creates a handler with configurable sequence and file support.
+   *
+   * @param sequence whether to support series drag-and-drop
+   * @param files whether to support file drag-and-drop
+   */
   public SequenceHandler(boolean sequence, boolean files) {
     super("series"); // NON-NLS
     this.sequenceFlavor = sequence;
@@ -40,13 +52,12 @@ public class SequenceHandler extends TransferHandler {
 
   @Override
   public Transferable createTransferable(JComponent comp) {
-    if (comp instanceof SeriesThumbnail thumbnail) {
-      MediaSeries<?> t = thumbnail.getSeries();
-      if (t instanceof Series) {
-        return t;
-      }
-    }
-    return null;
+    return comp instanceof SeriesThumbnail thumbnail ? getSeriesFromThumbnail(thumbnail) : null;
+  }
+
+  private Transferable getSeriesFromThumbnail(SeriesThumbnail thumbnail) {
+    MediaSeries<?> series = thumbnail.getSeries();
+    return series instanceof Series ? series : null;
   }
 
   @Override
@@ -54,12 +65,13 @@ public class SequenceHandler extends TransferHandler {
     if (!support.isDrop()) {
       return false;
     }
-    if (sequenceFlavor && support.isDataFlavorSupported(Series.sequenceDataFlavor)) {
-      return true;
-    }
-    return fileFlavor
-        && (support.isDataFlavorSupported(DataFlavor.javaFileListFlavor)
-            || support.isDataFlavorSupported(UriListFlavor.flavor));
+    return (sequenceFlavor && support.isDataFlavorSupported(Series.sequenceDataFlavor))
+        || (fileFlavor && isFileFlavorSupported(support));
+  }
+
+  private boolean isFileFlavorSupported(TransferSupport support) {
+    return support.isDataFlavorSupported(DataFlavor.javaFileListFlavor)
+        || support.isDataFlavorSupported(UriListFlavor.flavor);
   }
 
   @Override
@@ -68,45 +80,63 @@ public class SequenceHandler extends TransferHandler {
       return false;
     }
 
-    Transferable transferable = support.getTransferable();
+    if (fileFlavor) {
+      List<Path> files = extractFiles(support);
+      if (files != null) {
+        return dropFiles(files);
+      }
+    }
 
-    List<File> files = null;
-    // Not supported by some OS
-    if (fileFlavor && support.isDataFlavorSupported(DataFlavor.javaFileListFlavor)) {
-      try {
-        files = (List<File>) transferable.getTransferData(DataFlavor.javaFileListFlavor);
-      } catch (Exception e) {
-        LOGGER.error("Get draggable files", e);
-      }
-      return dropFiles(files, support);
-    }
-    // When dragging a file or group of files
-    // http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=4899516
-    else if (fileFlavor && support.isDataFlavorSupported(UriListFlavor.flavor)) {
-      try {
-        // Files with spaces in the filename trigger an error
-        // http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6936006
-        String val = (String) transferable.getTransferData(UriListFlavor.flavor);
-        files = UriListFlavor.textURIListToFileList(val);
-      } catch (Exception e) {
-        LOGGER.error("Get draggable URIs", e);
-      }
-      return dropFiles(files, support);
-    }
     return sequenceFlavor && importDataExt(support);
   }
 
+  private List<Path> extractFiles(TransferSupport support) {
+    Transferable transferable = support.getTransferable();
+
+    if (support.isDataFlavorSupported(DataFlavor.javaFileListFlavor)) {
+      return extractJavaFileList(transferable);
+    }
+
+    if (support.isDataFlavorSupported(UriListFlavor.flavor)) {
+      return extractUriList(transferable);
+    }
+
+    return null;
+  }
+
+  private List<Path> extractJavaFileList(Transferable transferable) {
+    try {
+      @SuppressWarnings("unchecked")
+      List<File> files = (List<File>) transferable.getTransferData(DataFlavor.javaFileListFlavor);
+      return files.stream().map(File::toPath).toList();
+    } catch (Exception e) {
+      LOGGER.error("Failed to extract draggable files", e);
+      return null;
+    }
+  }
+
+  private List<Path> extractUriList(Transferable transferable) {
+    try {
+      String uriList = (String) transferable.getTransferData(UriListFlavor.flavor);
+      return UriListFlavor.textURIListToPathList(uriList).stream().toList();
+    } catch (Exception e) {
+      LOGGER.error("Failed to extract draggable URIs", e);
+      return null;
+    }
+  }
+
+  /**
+   * Extension point for subclasses to handle additional data flavors.
+   *
+   * @param support the transfer support
+   * @return true if data was successfully imported
+   */
   protected boolean importDataExt(TransferSupport support) {
     return false;
   }
 
-  protected boolean dropFiles(List<File> files, TransferSupport support) {
-    if (files != null) {
-      for (File file : files) {
-        ViewerPluginBuilder.openSequenceInDefaultPlugin(file, true, true);
-      }
-      return true;
-    }
-    return false;
+  protected boolean dropFiles(List<Path> files) {
+    files.forEach(file -> ViewerPluginBuilder.openSequenceInDefaultPlugin(file, true, true));
+    return true;
   }
 }

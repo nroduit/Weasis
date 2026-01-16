@@ -31,7 +31,7 @@ public class ToolBarContainer extends JPanel {
   private final List<Toolbar> bars = new ArrayList<>();
 
   public ToolBarContainer() {
-    setLayout(new WrapLayout(FlowLayout.LEADING, 0, 0));
+    setLayout(new FlowLayout(FlowLayout.LEADING, 0, 0));
     addMouseListener(new PopClickListener());
   }
 
@@ -40,23 +40,21 @@ public class ToolBarContainer extends JPanel {
     unregisterAll();
 
     if (toolBars == null || toolBars.isEmpty()) {
-      add(ToolBarContainer.EMPTY.getComponent());
-      bars.add(ToolBarContainer.EMPTY);
+      add(EMPTY.getComponent());
+      bars.add(EMPTY);
     } else {
-      // Sort toolbars according the position
-      InsertableUtil.sortInsertable(toolBars);
+      List<Toolbar> sortedBars = new ArrayList<>(toolBars);
+      InsertableUtil.sortInsertable(sortedBars);
 
-      synchronized (toolBars) { // NOSONAR lock object is the list for iterating its elements safely
-        for (Toolbar b : toolBars) {
-          WtoolBar bar = b.getComponent();
-          if (bar instanceof DynamicToolbar dyn) {
-            dyn.updateToolbar();
-          }
-          if (bar.isComponentEnabled()) {
-            add(bar);
-          }
-          bars.add(b);
+      for (var toolbar : sortedBars) {
+        WtoolBar component = toolbar.getComponent();
+        if (component instanceof DynamicToolbar dyn) {
+          dyn.updateToolbar();
         }
+        if (toolbar.isComponentEnabled()) {
+          add(component);
+        }
+        bars.add(toolbar);
       }
     }
 
@@ -64,28 +62,28 @@ public class ToolBarContainer extends JPanel {
     repaint();
   }
 
-  public void displayToolbar(WtoolBar bar, boolean show) {
-    if (show != bar.isComponentEnabled()) {
-      if (show) {
-        int barIndex = bar.getComponentPosition();
-        int insert = 0;
-        for (Insertable b : bars) {
-          if (b.isComponentEnabled() && b.getComponentPosition() < barIndex) {
-            insert++;
-          }
-        }
-        if (insert >= getComponentCount()) {
-          // -1 => inserting after the last component
-          insert = -1;
-        }
-        add(bar, insert);
-      } else {
-        super.remove(bar);
-      }
-      bar.setComponentEnabled(show);
-      revalidate();
-      repaint();
+  public void displayToolbar(WtoolBar barComponent, boolean show) {
+    if (show == barComponent.isComponentEnabled()) {
+      return;
     }
+
+    if (show) {
+      // Calculate insertion index based on currently enabled bars preceding this one
+      int index =
+          (int)
+              bars.stream()
+                  .takeWhile(b -> b.getComponent() != barComponent)
+                  .filter(Toolbar::isComponentEnabled)
+                  .count();
+
+      add(barComponent, index);
+    } else {
+      remove(barComponent);
+    }
+
+    barComponent.setComponentEnabled(show);
+    revalidate();
+    repaint();
   }
 
   private void unregisterAll() {
@@ -102,7 +100,7 @@ public class ToolBarContainer extends JPanel {
     return new ArrayList<>(bars);
   }
 
-  class PopClickListener extends MouseAdapter {
+  private class PopClickListener extends MouseAdapter {
     @Override
     public void mousePressed(MouseEvent e) {
       if (e.isPopupTrigger()) doPop(e);
@@ -114,17 +112,16 @@ public class ToolBarContainer extends JPanel {
     }
 
     private void doPop(MouseEvent e) {
-      PopUpToolbars menu = new PopUpToolbars();
+      var menu = new PopUpToolbars();
       menu.show(e.getComponent(), e.getX(), e.getY());
     }
   }
 
-  class PopUpToolbars extends JPopupMenu {
+  private class PopUpToolbars extends JPopupMenu {
     public PopUpToolbars() {
-      for (final Toolbar bar : getRegisteredToolBars()) {
+      for (final Toolbar bar : bars) {
         if (!Insertable.Type.EMPTY.equals(bar.getType())) {
-          JCheckBoxMenuItem item =
-              new JCheckBoxMenuItem(bar.getComponentName(), bar.isComponentEnabled());
+          var item = new JCheckBoxMenuItem(bar.getComponentName(), bar.isComponentEnabled());
           item.addActionListener(
               e -> {
                 if (e.getSource() instanceof JCheckBoxMenuItem menuItem) {
@@ -138,7 +135,7 @@ public class ToolBarContainer extends JPanel {
   }
 
   public static WtoolBar buildEmptyToolBar(String name) {
-    WtoolBar toolBar =
+    var toolBar =
         new WtoolBar(name, 0) {
           @Override
           public Type getType() {
@@ -155,7 +152,7 @@ public class ToolBarContainer extends JPanel {
 
           @Override
           public void paintIcon(Component c, Graphics g, int x, int y) {
-            // Do noting
+            // Do nothing, purely structural
           }
 
           @Override

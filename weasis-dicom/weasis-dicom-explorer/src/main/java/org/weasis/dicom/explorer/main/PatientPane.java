@@ -166,6 +166,7 @@ public class PatientPane extends JPanel
   public void addPane(StudyPane studyPane) {
     if (studyPane != null) {
       add(studyPane);
+      studyPane.refreshLayout();
     }
   }
 

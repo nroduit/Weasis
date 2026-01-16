@@ -11,8 +11,8 @@ package org.weasis.dicom.sr;
 
 import java.awt.BorderLayout;
 import java.beans.PropertyChangeListener;
-import java.io.File;
 import java.net.URL;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -388,13 +388,13 @@ public class SRView extends JScrollPane implements SeriesViewerListener {
     return null;
   }
 
-  private class SeriesHandler extends SequenceHandler {
+  private static class SeriesHandler extends SequenceHandler {
     public SeriesHandler() {
       super(false, true);
     }
 
     @Override
-    protected boolean dropFiles(List<File> files, TransferSupport support) {
+    protected boolean dropFiles(List<Path> files) {
       return DicomSeriesHandler.dropDicomFiles(files);
     }
   }

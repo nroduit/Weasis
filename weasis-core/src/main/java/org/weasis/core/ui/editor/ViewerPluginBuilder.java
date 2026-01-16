@@ -10,7 +10,7 @@
 package org.weasis.core.ui.editor;
 
 import java.awt.Rectangle;
-import java.io.File;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -97,9 +97,8 @@ public class ViewerPluginBuilder {
     if (factory == null || series == null || model == null) {
       return;
     }
-    ArrayList<MediaSeries<? extends MediaElement>> list = new ArrayList<>(1);
-    list.add(series);
-    openSequenceInPlugin(factory, list, model, compareEntryToBuildNewViewer, removeOldSeries);
+    openSequenceInPlugin(
+        factory, List.of(series), model, compareEntryToBuildNewViewer, removeOldSeries);
   }
 
   public static void openSequenceInPlugin(
@@ -199,7 +198,7 @@ public class ViewerPluginBuilder {
   }
 
   public static void openSequenceInDefaultPlugin(
-      File file, boolean compareEntryToBuildNewViewer, boolean bestDefaultLayout) {
+      Path file, boolean compareEntryToBuildNewViewer, boolean bestDefaultLayout) {
     MediaReader<MediaElement> reader = getMedia(file);
     if (reader != null) {
       MediaSeries<MediaElement> s = buildMediaSeriesWithDefaultModel(reader);
@@ -208,29 +207,29 @@ public class ViewerPluginBuilder {
     }
   }
 
-  public static MediaReader<MediaElement> getMedia(File file) {
+  public static MediaReader<MediaElement> getMedia(Path file) {
     return getMedia(file, true);
   }
 
-  public static MediaReader<MediaElement> getMedia(File file, boolean systemReader) {
-    if (file != null && file.canRead()) {
+  public static MediaReader<MediaElement> getMedia(Path file, boolean systemReader) {
+    if (file != null && Files.isReadable(file)) {
       // If file has been downloaded or copied
-      boolean cache = file.getPath().startsWith(AppProperties.FILE_CACHE_DIR.toString());
+      boolean cache = file.startsWith(AppProperties.FILE_CACHE_DIR.toString());
       String mimeType = MimeInspector.getMimeType(file);
       if (mimeType != null) {
         Codec<?> codec = BundleTools.getCodec(mimeType, "dcm4che"); // NON-NLS
         if (codec != null) {
-          MediaReader mreader = codec.getMediaIO(file.toURI(), mimeType, null);
+          MediaReader mreader = codec.getMediaIO(file.toUri(), mimeType, null);
           if (cache) {
-            mreader.getFileCache().setOriginalTempFile(file.toPath());
+            mreader.getFileCache().setOriginalTempFile(file);
           }
           return mreader;
         }
       }
       if (systemReader) {
-        MediaReader<MediaElement> mreader = new DefaultMimeIO(file.toURI(), mimeType);
+        MediaReader<MediaElement> mreader = new DefaultMimeIO(file.toUri(), mimeType);
         if (cache) {
-          mreader.getFileCache().setOriginalTempFile(file.toPath());
+          mreader.getFileCache().setOriginalTempFile(file);
         }
         return mreader;
       }

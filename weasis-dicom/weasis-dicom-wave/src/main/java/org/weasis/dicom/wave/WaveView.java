@@ -41,15 +41,18 @@ import org.dcm4che3.data.Sequence;
 import org.dcm4che3.data.Tag;
 import org.dcm4che3.img.util.DicomUtils;
 import org.dcm4che3.util.StreamUtils;
+import org.osgi.service.prefs.Preferences;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.DataExplorerView;
+import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.TagView;
 import org.weasis.core.api.media.data.TagW;
+import org.weasis.core.api.service.BundlePreferences;
 import org.weasis.core.ui.editor.SeriesViewerEvent;
 import org.weasis.core.ui.editor.SeriesViewerEvent.EVENT;
 import org.weasis.core.ui.editor.SeriesViewerListener;
@@ -64,6 +67,8 @@ import org.weasis.dicom.wave.dockable.MeasureAnnotationTool;
 
 public class WaveView extends JPanel implements SeriesViewerListener {
   private static final Logger LOGGER = LoggerFactory.getLogger(WaveView.class);
+  private static final String PREFERENCE_NODE = "weasis.dicom.wave"; // NON-NLS
+  private static final String P_LAST_FORMAT = "last.format"; // NON-NLS
 
   private Series<?> series;
 
@@ -94,7 +99,15 @@ public class WaveView extends JPanel implements SeriesViewerListener {
     setPreferredSize(GuiUtils.getDimension(1024, 1024));
 
     this.channels = new ArrayList<>();
-    this.currentFormat = Format.DEFAULT;
+
+    String formatName = null;
+    Preferences prefs =
+        BundlePreferences.getDefaultPreferences(AppProperties.getBundleContext(this.getClass()));
+    if (prefs != null) {
+      Preferences p = prefs.node(PREFERENCE_NODE);
+      formatName = p.get(P_LAST_FORMAT, null);
+    }
+    this.currentFormat = Format.getValue(formatName);
     setSeries(series);
   }
 
@@ -237,6 +250,12 @@ public class WaveView extends JPanel implements SeriesViewerListener {
   }
 
   public void dispose() {
+    Preferences prefs =
+        BundlePreferences.getDefaultPreferences(AppProperties.getBundleContext(this.getClass()));
+    if (prefs != null && currentFormat != null) {
+      Preferences p = prefs.node(PREFERENCE_NODE);
+      p.put(P_LAST_FORMAT, currentFormat.name());
+    }
     if (series != null) {
       closingSeries(series);
       series = null;
@@ -295,7 +314,7 @@ public class WaveView extends JPanel implements SeriesViewerListener {
               ? WaveLayoutManager.AUTO_AMPLITUDE
               : waveLayoutManager.getAmplitude();
 
-      this.waveLayoutManager = new WaveLayoutManager(this, currentFormat, speed, amplitude);
+      this.waveLayoutManager = new WaveLayoutManager(this, speed, amplitude);
       this.pane = new JPanel(waveLayoutManager);
       JPanel channelWrap = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
       channelWrap.add(pane);
@@ -429,8 +448,7 @@ public class WaveView extends JPanel implements SeriesViewerListener {
   }
 
   public void setFormat(Format format) {
-    currentFormat = format;
-    this.waveLayoutManager.setWaveFormat(currentFormat);
+    currentFormat = format == null ? Format.DEFAULT : format;
     if (currentFormat == Format.TWO) {
       List<LeadPanel> ordered = waveLayoutManager.getSortedComponents();
       for (int i = 0; i < channelNumber; i++) {

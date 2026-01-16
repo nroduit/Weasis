@@ -11,8 +11,10 @@ package org.weasis.dicom.explorer.main;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -156,14 +158,26 @@ public class SplitSeriesManager {
 
   /** Refreshes the UI for all study panes that contain the split series. */
   private void refreshAffectedStudyPanes(List<DicomSeries> splitSeries) {
+    Set<StudyPane> studyPanes = new HashSet<>();
+    DicomPaneManager paneManager = explorer.getPaneManager();
+
     for (DicomSeries series : splitSeries) {
+      SeriesPane seriesPane = paneManager.getSeriesPane(series);
+      if (seriesPane != null) {
+        seriesPane.updateThumbnail();
+      }
+
       MediaSeriesGroup study = model.getParent(series, DicomModel.study);
       if (study != null) {
-        StudyPane studyPane = explorer.getPaneManager().getStudyPane(study);
+        StudyPane studyPane = paneManager.getStudyPane(study);
         if (studyPane != null) {
-          studyPane.refreshLayoutAsync();
+          studyPanes.add(studyPane);
         }
       }
+    }
+
+    for (StudyPane studyPane : studyPanes) {
+      studyPane.refreshLayoutAsync();
     }
   }
 

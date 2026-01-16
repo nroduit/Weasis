@@ -24,6 +24,7 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.net.http.HttpTimeoutException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.time.Duration;
@@ -39,14 +40,21 @@ import org.weasis.core.util.StringUtil;
 /** HTTP client implementation using Java's {@link HttpClient} for ScribeJava OAuth integration. */
 public class JavaNetHttpClient implements com.github.scribejava.core.httpclient.HttpClient {
 
-  private final JavaNetHttpClientConfig config;
+  // Hold a reference to the shared client to avoid recreation
+  private final HttpClient sharedClient;
+  private final Duration readTimeout;
 
   public JavaNetHttpClient() {
     this(new JavaNetHttpClientConfig());
   }
 
   public JavaNetHttpClient(JavaNetHttpClientConfig config) {
-    this.config = config;
+    this.sharedClient =
+        HttpUtils.buildHttpClient(
+            Duration.ofMillis(config.getConnectTimeout()),
+            HttpClient.Redirect.NORMAL,
+            config.getProxy());
+    this.readTimeout = Duration.ofMillis(config.getReadTimeout());
   }
 
   @Override
@@ -163,13 +171,18 @@ public class JavaNetHttpClient implements com.github.scribejava.core.httpclient.
       OAuthRequest.ResponseConverter<T> converter) {
 
     var requestBuilder =
-        createRequestBuilder(userAgent, headers, httpVerb, completeUrl, bodyContents);
+        createRequestBuilder(userAgent, headers, httpVerb, completeUrl, bodyContents, readTimeout);
 
-    try (var client = createHttpClient()) {
-      return client
-          .sendAsync(requestBuilder.build(), HttpResponse.BodyHandlers.ofInputStream())
-          .thenApply(httpResponse -> processAsyncResponse(httpResponse, callback, converter));
-    }
+    return sharedClient
+        .sendAsync(requestBuilder.build(), HttpResponse.BodyHandlers.ofInputStream())
+        .thenApply(httpResponse -> processAsyncResponse(httpResponse, callback, converter))
+        .exceptionally(
+            throwable -> {
+              if (callback != null) {
+                callback.onThrowable(throwable);
+              }
+              return null;
+            });
   }
 
   private Response doExecute(
@@ -181,11 +194,11 @@ public class JavaNetHttpClient implements com.github.scribejava.core.httpclient.
       throws IOException {
 
     var requestBuilder =
-        createRequestBuilder(userAgent, headers, httpVerb, completeUrl, bodyContents);
+        createRequestBuilder(userAgent, headers, httpVerb, completeUrl, bodyContents, readTimeout);
 
-    try (var client = createHttpClient()) {
+    try {
       var httpResponse =
-          client.send(requestBuilder.build(), HttpResponse.BodyHandlers.ofInputStream());
+          sharedClient.send(requestBuilder.build(), HttpResponse.BodyHandlers.ofInputStream());
       return new Response(
           httpResponse.statusCode(),
           httpResponse.version().toString(),
@@ -194,14 +207,9 @@ public class JavaNetHttpClient implements com.github.scribejava.core.httpclient.
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
       throw new IOException("Request interrupted", e);
+    } catch (HttpTimeoutException e) {
+      throw new IOException("Request timed out after " + readTimeout.toMillis() + "ms", e);
     }
-  }
-
-  private HttpClient createHttpClient() {
-    return HttpUtils.getHttpClient(
-        Duration.ofMillis(config.getConnectTimeout()),
-        HttpClient.Redirect.NORMAL,
-        config.getProxy());
   }
 
   private <T> T processAsyncResponse(
@@ -236,8 +244,9 @@ public class JavaNetHttpClient implements com.github.scribejava.core.httpclient.
       Map<String, String> headers,
       Verb httpVerb,
       String completeUrl,
-      Object bodyContents) {
-    var requestBuilder = HttpRequest.newBuilder(URI.create(completeUrl));
+      Object bodyContents,
+      Duration readTimeout) {
+    var requestBuilder = HttpRequest.newBuilder(URI.create(completeUrl)).timeout(readTimeout);
 
     if (StringUtil.hasText(userAgent)) {
       requestBuilder.setHeader("User-Agent", userAgent);

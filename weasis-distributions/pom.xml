@@ -288,7 +288,7 @@
                 <artifactItem>
                   <groupId>com.fasterxml.jackson.core</groupId>
                   <artifactId>jackson-annotations</artifactId>
-                  <version>${jackson.version}</version>
+                  <version>${jackson.an.version}</version>
                   <outputDirectory>${tmp.bundle.dir}</outputDirectory>
                 </artifactItem>
                 <artifactItem>
