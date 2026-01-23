@@ -44,6 +44,7 @@ import javax.swing.JProgressBar;
 import javax.swing.ToolTipManager;
 import org.dcm4che3.img.lut.PresetWindowLevel;
 import org.joml.Vector3f;
+import org.joml.Quaternionf;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.ActionState;
@@ -134,6 +135,11 @@ public class View3d extends VolumeCanvas
   protected Preset volumePreset;
   private ViewType viewType;
   private JProgressBar progressBar;
+
+  private boolean slicingEnabled = false;
+  private Vector3f slicingNormal = new Vector3f(1.0f, 0.0f, 0.0f);;
+  private Vector3f slicingPoint =  new Vector3f(0.5f, 0.5f, 0.5f);
+  private Vector3f slicingEulerAngles =  new Vector3f(0.0f, 0.0f, 0.0f);
 
   public View3d(
       ImageViewerEventManager<DicomImageElement> eventManager, DicomVolTexture volTexture) {
@@ -361,6 +367,27 @@ public class View3d extends VolumeCanvas
                 1,
                 false,
                 camera.getViewMatrix().invert().get(Buffers.newDirectFloatBuffer(16))));
+
+    //----------------------------------------
+
+    program.allocateUniform(
+            gl4, "sliceEnabled", (gl, loc) -> gl.glUniform1i(loc, slicingEnabled ? 1 : 0));
+
+
+    program.allocateUniform(
+            gl4,
+            "sliceNormal",
+            (gl, loc) -> gl.glUniform3fv(loc, 1, slicingNormal.get(Buffers.newDirectFloatBuffer(3)))
+    );
+
+    program.allocateUniform(
+            gl4,
+            "slicePoint",
+            (gl, loc) -> gl.glUniform3fv(loc, 1, slicingPoint.get(Buffers.newDirectFloatBuffer(3)))
+    );
+
+
+    //----------------------------------------
     program.allocateUniform(
         gl4,
         "projectionMatrix",
@@ -480,6 +507,49 @@ public class View3d extends VolumeCanvas
         Buffers.newDirectFloatBuffer(vertexBufferData),
         GL.GL_STATIC_DRAW);
   }
+  public void setSlicePlane(double y) {
+    setSlicePlane(this.slicingNormal, new Vector3f(0, (float) y, 0));
+  }
+
+  public void setSlicePlane(Vector3f normal, Vector3f point) {
+    // Update the slicing plane parameters
+    this.slicingNormal = normal;
+    this.slicingPoint = point;
+    updateSlicePlane();
+  }
+
+  public void updateSlicePlane() {
+    Vector3f normalVector = new Vector3f(1, 0, 0);
+
+    // Convert degrees to radians for rotation
+    float yaw = (float) Math.toRadians(this.slicingEulerAngles.x);   // Yaw (rotation around Z-axis)
+    float pitch = (float) Math.toRadians(this.slicingEulerAngles.y); // Pitch (rotation around Y-axis)
+
+    this.slicingNormal = rotateVector(normalVector, yaw, pitch);
+
+    // Make sure to update the shader with the new slicing parameters
+    GL4 gl4 = OpenglUtils.getGL4();
+    program.use(gl4);
+    program.setUniforms(gl4);
+
+    renderingLayer.fireLayerChanged();
+  }
+
+  // Method to rotate a Vector3f using yaw and pitch
+  private Vector3f rotateVector(Vector3f vector, float yaw, float pitch) {
+    // Create a quaternion for yaw (rotation around Z-axis)
+    Quaternionf yawRotation = new Quaternionf().fromAxisAngleRad(0, 0, 1, yaw);
+
+    // Create a quaternion for pitch (rotation around Y-axis)
+    Quaternionf pitchRotation = new Quaternionf().fromAxisAngleRad(0, 1, 0, pitch);
+
+    // Combine the yaw and pitch rotations (yaw then pitch)
+    yawRotation.mul(pitchRotation);
+
+    // Rotate the vector by applying the combined quaternion rotation
+    return yawRotation.transform(vector);
+  }
+
 
   private boolean isSegMode() {
     return volumePreset != null && "Segmentation".equals(volumePreset.getName()); // NON-NLS
@@ -949,7 +1019,7 @@ public class View3d extends VolumeCanvas
           } else {
             Object zoomType = actionsInView.get(ViewCanvas.ZOOM_TYPE_CMD);
             actionsInView.put(
-                ViewCanvas.ZOOM_TYPE_CMD, value == -100.0 ? ZoomType.REAL : ZoomType.BEST_FIT);
+                    ViewCanvas.ZOOM_TYPE_CMD, value == -100.0 ? ZoomType.REAL : ZoomType.BEST_FIT);
             zoom(0.0);
             actionsInView.put(ViewCanvas.ZOOM_TYPE_CMD, zoomType);
           }
@@ -957,6 +1027,29 @@ public class View3d extends VolumeCanvas
           if (val instanceof PanPoint panPoint) {
             moveOrigin(panPoint);
           }
+        } else if (command.equals(ActionW.SLICE_ENABLE.cmd())) {
+          this.slicingEnabled = (boolean) (Boolean) val;
+          updateSlicePlane();
+        } else if (command.equals(ActionW.SLICE_X.cmd())) {
+          double value = (Double) val;
+          this.slicingPoint.x = (float) value;
+          updateSlicePlane();
+        } else if (command.equals(ActionW.SLICE_Y.cmd())) {
+          double value = (Double) val;
+          this.slicingPoint.y = (float) value;
+          updateSlicePlane();
+        } else if (command.equals(ActionW.SLICE_Z.cmd())) {
+          double value = (Double) val;
+          this.slicingPoint.z = (float) value;
+          updateSlicePlane();
+        } else if (command.equals(ActionW.SLICE_X_NORM.cmd())) {
+          double value = (Double) val;
+          this.slicingEulerAngles.x = (float) value;
+          updateSlicePlane();
+        } else if (command.equals(ActionW.SLICE_Y_NORM.cmd())) {
+          double value = (Double) val;
+          this.slicingEulerAngles.y = (float) value;
+          updateSlicePlane();
         } else if (command.equals(ActionW.FLIP.cmd())) {
           actionsInView.put(ActionW.FLIP.cmd(), val);
           // LangUtil.getNULLtoFalse((Boolean) val);
