@@ -37,6 +37,7 @@ import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.DicomSeries;
 import org.weasis.dicom.explorer.HangingProtocols.OpeningViewer;
 
+
 public class DicomSeriesHandler extends SequenceHandler {
   private static final Logger LOGGER = LoggerFactory.getLogger(DicomSeriesHandler.class);
   protected final ViewCanvas<DicomImageElement> viewCanvas;
@@ -164,8 +165,28 @@ public class DicomSeriesHandler extends SequenceHandler {
       DicomModel model = (DicomModel) dicomView.getDataExplorerModel();
       OpeningViewer openingViewer =
           OpeningViewer.getOpeningViewerByLocalKey(LocalImport.LAST_OPEN_VIEWER_MODE);
-      DicomModel.LOADING_EXECUTOR.execute(
-          new LoadLocalDicom(files.toArray(File[]::new), true, model, openingViewer));
+
+      // Drag and Drop to open zip files
+      List<File> zipFiles = new ArrayList<>();
+      List<File> regularFiles = new ArrayList<>();
+
+      for (File file : files) {
+        if (file.getName().toLowerCase().endsWith(".zip")) { // NON-NLS
+          zipFiles.add(file);
+        } else {
+          regularFiles.add(file);
+        }
+      }
+
+      for (File zipFile : zipFiles) {
+        DicomZipImport.loadDicomZip(
+            zipFile, model, openingViewer, GuiUtils.getUICore().getApplicationWindow());
+      }
+
+      if (!regularFiles.isEmpty()) {
+        DicomModel.LOADING_EXECUTOR.execute(
+            new LoadLocalDicom(regularFiles.toArray(File[]::new), true, model, openingViewer));
+      }
       return true;
     }
     return false;
