@@ -722,7 +722,7 @@ public abstract class Volume<T extends Number> {
     return new Vector3i[] {min, max};
   }
 
-  protected T getInterpolatedValueFromSource(double x, double y, double z) {
+  public T getInterpolatedValueFromSource(double x, double y, double z) {
     // Check bounds in the ORIGINAL volume (this)
     if (x < 0
         || x >= this.size.x - 1
