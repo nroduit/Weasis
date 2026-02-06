@@ -47,6 +47,7 @@ public class SeriesPane extends JPanel {
   private final DicomSeries dicomSeries;
   private final JLabel label;
   private final DicomModel model;
+  private SeriesThumbnail thumbnail;
   private int currentThumbnailSize;
 
   public SeriesPane(DicomSeries dicomSeries, DicomModel model) {
@@ -67,12 +68,27 @@ public class SeriesPane extends JPanel {
   private void initializeComponents() {
     currentThumbnailSize = SeriesThumbnail.getThumbnailSizeFromPreferences();
 
-    SeriesThumbnail thumbnail = getOrCreateThumbnail();
+    thumbnail = getOrCreateThumbnail();
     if (thumbnail != null) {
       add(thumbnail);
     }
     updateSize(currentThumbnailSize);
     add(label);
+  }
+
+  public void updateThumbnail() {
+    SeriesThumbnail newThumb = (SeriesThumbnail) dicomSeries.getTagValue(TagW.Thumbnail);
+    if (newThumb != this.thumbnail) {
+      this.thumbnail = newThumb;
+      removeAll();
+      if (this.thumbnail != null) {
+        add(this.thumbnail);
+      }
+      add(label);
+      updateSize(currentThumbnailSize);
+      revalidate();
+      repaint();
+    }
   }
 
   private SeriesThumbnail getOrCreateThumbnail() {

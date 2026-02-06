@@ -22,7 +22,9 @@ import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Tag;
 import org.dcm4che3.data.VR;
 import org.dcm4che3.img.lut.PresetWindowLevel;
+import org.dcm4che3.img.util.PixelDataUtils;
 import org.dcm4che3.util.UIDUtils;
+import org.opencv.core.CvType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.ActionW;
@@ -32,12 +34,13 @@ import org.weasis.core.api.gui.util.Filter;
 import org.weasis.core.api.gui.util.SliderChangeListener;
 import org.weasis.core.api.gui.util.SliderCineListener;
 import org.weasis.core.api.image.op.ImageStackOperations;
-import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.SeriesComparator;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.ui.editor.image.ImageViewerEventManager;
 import org.weasis.core.util.FileUtil;
+import org.weasis.core.util.Pair;
+import org.weasis.dicom.codec.DcmMediaReader;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.utils.DicomMediaUtils;
@@ -52,6 +55,56 @@ public class SeriesBuilder {
   private static final Logger LOGGER = LoggerFactory.getLogger(SeriesBuilder.class);
   public static final Path MIP_CACHE_DIR =
       AppProperties.buildAccessibleTempDirectory(AppProperties.CACHE_NAME, "mip"); // NON-NLS
+
+  private static final int[] COPIED_ATTRS = {
+    Tag.SpecificCharacterSet,
+    Tag.TimezoneOffsetFromUTC,
+    Tag.PatientID,
+    Tag.PatientName,
+    Tag.PatientBirthDate,
+    Tag.PatientBirthTime,
+    Tag.PatientSex,
+    Tag.IssuerOfPatientID,
+    Tag.IssuerOfAccessionNumberSequence,
+    Tag.PatientWeight,
+    Tag.PatientAge,
+    Tag.PatientSize,
+    Tag.PatientState,
+    Tag.PatientComments,
+    Tag.StudyID,
+    Tag.StudyDate,
+    Tag.StudyTime,
+    Tag.StudyDescription,
+    Tag.StudyComments,
+    Tag.AccessionNumber,
+    Tag.ModalitiesInStudy,
+    Tag.Modality,
+    Tag.SeriesDate,
+    Tag.SeriesTime,
+    Tag.RetrieveAETitle,
+    Tag.ReferringPhysicianName,
+    Tag.InstitutionName,
+    Tag.InstitutionalDepartmentName,
+    Tag.StationName,
+    Tag.Manufacturer,
+    Tag.ManufacturerModelName,
+    Tag.AnatomicalOrientationType,
+    Tag.SeriesNumber,
+    Tag.KVP,
+    Tag.Laterality,
+    Tag.BodyPartExamined,
+    Tag.AnatomicRegionSequence,
+    Tag.FrameOfReferenceUID,
+    Tag.WindowCenter,
+    Tag.WindowWidth,
+    Tag.VOILUTFunction,
+    Tag.WindowCenterWidthExplanation,
+    Tag.VOILUTSequence
+  };
+
+  static {
+    Arrays.sort(COPIED_ATTRS);
+  }
 
   private SeriesBuilder() {}
 
@@ -84,13 +137,13 @@ public class SeriesBuilder {
       DicomImageElement img =
           series.getMedia(MediaSeries.MEDIA_POSITION.MIDDLE, filter, sortFilter);
       final Attributes attributes = img.getMediaReader().getDicomObject();
-      final Attributes cpTags = getBaseAttributes(attributes);
+      final Attributes cpTags = getMipBaseAttributes(attributes);
       adaptWindowLevel(view, cpTags);
       String seriesUID = UIDUtils.createUID();
 
       for (int index = minImg; index <= maxImg; index++) {
         Iterator<DicomImageElement> iter = medias.iterator();
-        final List<ImageElement> sources = new ArrayList<>();
+        final List<Pair<DicomImageElement, PlanarImage>> sources = new ArrayList<>();
         int startIndex = index - extend;
         if (startIndex < 0) {
           startIndex = 0;
@@ -100,7 +153,7 @@ public class SeriesBuilder {
         while (iter.hasNext()) {
           DicomImageElement dcm = iter.next();
           if (k >= startIndex) {
-            sources.add(dcm);
+            sources.add(new Pair<>(dcm, dcm.getModalityLutImage(null, null)));
           }
 
           if (k >= stopIndex) {
@@ -110,13 +163,13 @@ public class SeriesBuilder {
         }
 
         if (sources.size() > 1) {
-          curImage = addCollectionOperation(mipType, sources);
+          curImage = addCollectionOperation(mipType, sources.stream().map(Pair::second).toList());
         } else {
           curImage = null;
         }
 
         if (curImage != null) {
-          DicomImageElement imgRef = (DicomImageElement) sources.get(sources.size() / 2);
+          DicomImageElement imgRef = sources.get(sources.size() / 2).first();
           FileRawImage raw = null;
           try {
             File dir = MIP_CACHE_DIR.toFile();
@@ -145,12 +198,12 @@ public class SeriesBuilder {
           // Tags with same values for all the Series
           rawIO.setTag(TagD.get(Tag.Columns), curImage.width());
           rawIO.setTag(TagD.get(Tag.Rows), curImage.height());
-          rawIO.setTag(TagD.get(Tag.BitsAllocated), imgRef.getBitsAllocated());
-          rawIO.setTag(TagD.get(Tag.BitsStored), imgRef.getBitsStored());
 
-          int lastIndex = sources.size() - 1;
+          int channels = CvType.channels(curImage.type());
+          writePixelDataAttributes(channels, curImage.type(), rawIO);
+
           double thickness =
-              DicomMediaUtils.getThickness(sources.getFirst(), sources.get(lastIndex));
+              DicomMediaUtils.getThickness(sources.getFirst().first(), sources.getLast().first());
           if (thickness <= 0.0) {
             thickness = sources.size();
           }
@@ -171,8 +224,6 @@ public class SeriesBuilder {
               TagD.getTagFromIDs(
                   Tag.ImageOrientationPatient,
                   Tag.ImagePositionPatient,
-                  Tag.PixelPaddingValue,
-                  Tag.PixelPaddingRangeLimit,
                   Tag.PixelSpacing,
                   Tag.ImagerPixelSpacing,
                   Tag.NominalScannedPixelSpacing,
@@ -189,59 +240,24 @@ public class SeriesBuilder {
     }
   }
 
-  private static Attributes getBaseAttributes(Attributes attributes) {
-    final int[] COPIED_ATTRS = {
-      Tag.SpecificCharacterSet,
-      Tag.TimezoneOffsetFromUTC,
-      Tag.PatientID,
-      Tag.PatientName,
-      Tag.PatientBirthDate,
-      Tag.PatientBirthTime,
-      Tag.PatientSex,
-      Tag.IssuerOfPatientID,
-      Tag.IssuerOfAccessionNumberSequence,
-      Tag.PatientWeight,
-      Tag.PatientAge,
-      Tag.PatientSize,
-      Tag.PatientState,
-      Tag.PatientComments,
-      Tag.StudyID,
-      Tag.StudyDate,
-      Tag.StudyTime,
-      Tag.StudyDescription,
-      Tag.StudyComments,
-      Tag.AccessionNumber,
-      Tag.ModalitiesInStudy,
-      Tag.Modality,
-      Tag.SeriesDate,
-      Tag.SeriesTime,
-      Tag.RetrieveAETitle,
-      Tag.ReferringPhysicianName,
-      Tag.InstitutionName,
-      Tag.InstitutionalDepartmentName,
-      Tag.StationName,
-      Tag.Manufacturer,
-      Tag.ManufacturerModelName,
-      Tag.AnatomicalOrientationType,
-      Tag.SeriesNumber,
-      Tag.KVP,
-      Tag.Laterality,
-      Tag.BodyPartExamined,
-      Tag.AnatomicRegionSequence,
-      Tag.FrameOfReferenceUID,
-      Tag.RescaleSlope,
-      Tag.RescaleIntercept,
-      Tag.RescaleType,
-      Tag.ModalityLUTSequence,
-      Tag.WindowCenter,
-      Tag.WindowWidth,
-      Tag.VOILUTFunction,
-      Tag.WindowCenterWidthExplanation,
-      Tag.VOILUTSequence
-    };
+  public static void writePixelDataAttributes(int channels, int cvType, DcmMediaReader rawIO) {
+    int bpc = PixelDataUtils.getBitsAllocatedFromCvType(cvType);
+    rawIO.setTag(TagD.get(Tag.SamplesPerPixel), channels);
+    rawIO.setTag(TagD.get(Tag.BitsAllocated), bpc);
+    if (CvType.isInteger(cvType)) {
+      rawIO.setTag(TagD.get(Tag.BitsStored), bpc);
+      rawIO.setTag(TagD.get(Tag.HighBit), bpc - 1);
+      boolean isSigned = PixelDataUtils.isSignedCvType(cvType);
+      rawIO.setTag(TagD.get(Tag.PixelRepresentation), isSigned ? 1 : 0);
+    }
+  }
 
-    Arrays.sort(COPIED_ATTRS);
-    final Attributes cpTags = new Attributes(attributes, COPIED_ATTRS);
+  public static Attributes getBaseAttributes(Attributes attributes) {
+    return new Attributes(attributes, COPIED_ATTRS);
+  }
+
+  public static Attributes getMipBaseAttributes(Attributes attributes) {
+    final Attributes cpTags = getBaseAttributes(attributes);
     cpTags.setString(
         Tag.SeriesDescription,
         VR.LO,
@@ -285,7 +301,7 @@ public class SeriesBuilder {
     return newArray;
   }
 
-  public static PlanarImage addCollectionOperation(Type mipType, List<ImageElement> sources) {
+  public static PlanarImage addCollectionOperation(Type mipType, List<PlanarImage> sources) {
     if (Type.MIN.equals(mipType)) {
       return ImageStackOperations.min(sources);
     }

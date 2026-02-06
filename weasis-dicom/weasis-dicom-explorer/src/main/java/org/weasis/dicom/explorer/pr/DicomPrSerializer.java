@@ -46,6 +46,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.gui.util.GeomUtil;
+import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.api.util.GzipManager;
 import org.weasis.core.ui.editor.image.dockable.MeasureTool;
 import org.weasis.core.ui.model.GraphicModel;
@@ -145,6 +146,28 @@ public class DicomPrSerializer {
   }
 
   /**
+   * Set Presentation Spacial Calibration related attribute, according to <a
+   * href="https://dicom.nema.org/medical/dicom/current/output/chtml/part03/sect_C.10.4.html#table_C.10-4">DICOM
+   * standard</a>
+   *
+   * @param img DICOM image element containing pixel spacing information
+   * @param attributes DICOM attributes to modify
+   */
+  private static void writeCalibration(DicomImageElement img, Attributes attributes) {
+    if (img != null
+        && Unit.PIXEL != img.getPixelSpacingUnit()
+        && attributes != null
+        && img.isPixelSizeModifiedByUser()) {
+      double unitRatio =
+          img.getPixelSize()
+              * Unit.MILLIMETER.getConversionRatio(img.getPixelSpacingUnit().getFactorToMeters());
+      attributes.setDouble(Tag.PresentationPixelSpacing, VR.DS, unitRatio, unitRatio);
+    } else if (attributes != null && attributes.containsValue(Tag.PresentationPixelSpacing)) {
+      attributes.remove(Tag.PresentationPixelSpacing);
+    }
+  }
+
+  /**
    * Writes a GraphicModel to a DICOM Presentation State file using image element.
    *
    * @param model The GraphicModel to serialize
@@ -161,6 +184,7 @@ public class DicomPrSerializer {
       String seriesInstanceUID,
       String sopInstanceUID) {
     Attributes imgAttributes = extractImageAttributes(img);
+    writeCalibration(img, imgAttributes);
     return writePresentation(
         model, imgAttributes, outputFile, seriesInstanceUID, sopInstanceUID, null);
   }
@@ -310,6 +334,7 @@ public class DicomPrSerializer {
    */
   private static void addDisplayedAreaSelectionSequence(
       Attributes attributes, Attributes sourceAttributes) {
+
     Sequence displayedAreaSeq = attributes.newSequence(Tag.DisplayedAreaSelectionSequence, 1);
     Attributes displayedAreaItem = new Attributes();
 
@@ -319,10 +344,16 @@ public class DicomPrSerializer {
         Tag.DisplayedAreaBottomRightHandCorner, VR.SL, imageWidth, imageHeight);
     displayedAreaItem.setInt(Tag.DisplayedAreaTopLeftHandCorner, VR.SL, 1, 1);
     displayedAreaItem.setString(Tag.PresentationSizeMode, VR.CS, "SCALE TO FIT"); // NON-NLS
+
     double[] pixelSpacing =
         DicomUtils.getDoubleArrayFromDicomElement(
-            sourceAttributes, Tag.PixelSpacing, new double[] {1.0, 1.0});
-    displayedAreaItem.setDouble(Tag.PresentationPixelSpacing, VR.DS, pixelSpacing);
+            sourceAttributes, Tag.PresentationPixelSpacing, null);
+    if (pixelSpacing == null) {
+      displayedAreaItem.setInt(Tag.PresentationPixelAspectRatio, VR.IS, new int[] {1, 1});
+    } else {
+      displayedAreaItem.setDouble(Tag.PresentationPixelSpacing, VR.DS, pixelSpacing);
+    }
+
     displayedAreaSeq.add(displayedAreaItem);
   }
 

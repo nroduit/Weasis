@@ -379,14 +379,7 @@ public class DicomMediaUtils {
       Attributes mLutItems = dcm.getNestedDataset(Tag.PixelValueTransformationSequence);
       if (mLutItems != null) {
         ModalityLutModule mlut = new ModalityLutModule(mLutItems);
-        if (frameIndex < 0) {
-          // If the frame index is not defined, we set the modality LUT for all frames
-          taggable.setTag(TagW.ModalityLUTData, mlut);
-        } else {
-          // Otherwise, we set the modality LUT for the specific frame
-          md.getImageDescriptor().setModalityLutForFrame(frameIndex, mlut);
-        }
-        taggable.setTag(TagW.ModalityLUTData, mlut);
+        md.getImageDescriptor().setModalityLutForFrame(Math.max(frameIndex, 0), mlut);
       }
 
       // C.7.6.16.2.10 Frame VOI LUT Macro:
@@ -394,13 +387,7 @@ public class DicomMediaUtils {
       Attributes vLutItems = dcm.getNestedDataset(Tag.FrameVOILUTSequence);
       if (vLutItems != null) {
         VoiLutModule vlut = new VoiLutModule(vLutItems);
-        if (frameIndex < 0) {
-          // If the frame index is not defined, we set the VOI LUT for all frames
-          taggable.setTag(TagW.VOILUTsData, vlut);
-        } else {
-          // Otherwise, we set the VOI LUT for the specific frame
-          md.getImageDescriptor().setVoiLutForFrame(frameIndex, vlut);
-        }
+        md.getImageDescriptor().setVoiLutForFrame(Math.max(frameIndex, 0), vlut);
       }
 
       // C.7.6.16.2.15 Patient Orientation in Frame Macro:

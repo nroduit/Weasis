@@ -10,6 +10,8 @@
 package org.weasis.dicom.explorer.main;
 
 import java.awt.Component;
+import java.awt.Container;
+import java.awt.Insets;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.util.List;
@@ -22,7 +24,6 @@ import net.miginfocom.swing.MigLayout;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.SeriesThumbnail;
-import org.weasis.core.ui.util.WrapLayout;
 
 /**
  * A panel component that displays a DICOM study and manages its associated series panes. This
@@ -33,6 +34,7 @@ public class StudyPane extends JPanel {
   private static final String LAYOUT_CONSTRAINTS = "fillx, flowy, insets 0";
   private static final String COLUMN_CONSTRAINTS = "[fill]";
   private static final String SUB_PANEL_CONSTRAINTS = "shrinky 100";
+  private static final int GAP = 5;
 
   private final JPanel subPanel;
   private final MediaSeriesGroup dicomStudy;
@@ -49,7 +51,7 @@ public class StudyPane extends JPanel {
     super(new MigLayout(LAYOUT_CONSTRAINTS, COLUMN_CONSTRAINTS));
 
     this.dicomStudy = Objects.requireNonNull(dicomStudy);
-    this.subPanel = new JPanel(new WrapLayout());
+    this.subPanel = new JPanel(new MigLayout("insets 3lp, gap " + GAP + " " + GAP + ", flowx"));
     this.titleBorder = GuiUtils.getTitledBorder(dicomStudy.toString());
     this.resizeHandler = new ComponentResizeHandler();
 
@@ -86,8 +88,21 @@ public class StudyPane extends JPanel {
 
   /** Refreshes the layout of the sub-panel to accommodate component changes. */
   public void refreshLayout() {
-    if (subPanel.getLayout() instanceof WrapLayout wrapLayout) {
-      subPanel.setPreferredSize(wrapLayout.preferredLayoutSize(subPanel));
+    if (subPanel.getLayout() instanceof MigLayout migLayout) {
+      int width = subPanel.getWidth();
+      Container parent = SwingUtilities.getAncestorOfClass(JScrollPane.class, this);
+      if (parent instanceof JScrollPane scrollPane) {
+        width = scrollPane.getViewport().getWidth();
+        Insets insets = getInsets();
+        width -= (insets.left + insets.right);
+      }
+
+      if (width > 0 && subPanel.getComponentCount() > 0) {
+        int itemWidth = subPanel.getComponent(0).getPreferredSize().width;
+        int count = (width + GAP) / (itemWidth + GAP);
+        migLayout.setLayoutConstraints(
+            "insets 3lp, gap " + GAP + " " + GAP + ", flowx, wrap " + Math.max(1, count));
+      }
     }
   }
 

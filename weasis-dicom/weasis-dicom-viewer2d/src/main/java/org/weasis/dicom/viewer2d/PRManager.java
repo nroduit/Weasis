@@ -221,6 +221,7 @@ public class PRManager {
 
     if (layers != null) {
       context.view().setActionsInView(TAG_DICOM_LAYERS, layers);
+      context.view().getGraphicManager().updateLabels(Boolean.TRUE, context.view());
     }
   }
 
@@ -280,30 +281,43 @@ public class PRManager {
     }
 
     public void process() {
-      String presentationMode =
-          TagD.getTagValue(context.reader(), Tag.PresentationSizeMode, String.class);
-      boolean trueSize = TRUE_SIZE_MODE.equalsIgnoreCase(presentationMode);
-
-      processPixelSpacing(trueSize);
+      // Presentation Pixel Spacing is applied independently of the Presentation Size Mode.
+      // If the pixels are not squared, their aspect is only normalized, but the spatial unit
+      // remains in pixels.
+      // In case the aspect ratio is only defined, the pixel size is normalized as well.
+      processPixelSpacing();
       processAspectRatio();
     }
 
-    private void processPixelSpacing(boolean trueSize) {
+    /**
+     * Applies the Presentation Pixel Spacing. See <a
+     * href="https://dicom.nema.org/medical/dicom/current/output/html/part03.html#sect_10.7.1.3">10.7.1.3
+     * Pixel Spacing Value Order and Valid Values</a>
+     */
+    private void processPixelSpacing() {
       double[] prPixSize =
           TagD.getTagValue(context.reader(), Tag.PresentationPixelSpacing, double[].class);
       if (prPixSize != null && prPixSize.length == 2 && prPixSize[0] > 0.0 && prPixSize[1] > 0.0) {
-        if (trueSize) {
+        // If pixels are squared, apply pixel size and set the unit as millimeters
+        if (MathUtil.isEqual(prPixSize[0], prPixSize[1])) {
           changePixelSize(context.img(), actionsInView, prPixSize);
           context.img().setPixelSpacingUnit(Unit.MILLIMETER);
           EventManager.getInstance()
               .getAction(ActionW.SPATIAL_UNIT)
               .ifPresent(c -> c.setSelectedItem(Unit.MILLIMETER));
         } else {
+          // If pixels are not squared, the ratio is handled below
           applyAspectRatio(context.img(), actionsInView, prPixSize);
         }
+        context.img().setPixelSizeCalibrationDescription("From DICOM PR");
       }
     }
 
+    /**
+     * Applies the Presentation Pixel Aspect Ratio. See <a
+     * href="https://dicom.nema.org/medical/dicom/current/output/html/part03.html#sect_C.7.6.3.1.7">C.7.6.3.1.7
+     * Pixel Aspect Ratio</a>
+     */
     private void processAspectRatio() {
       double[] prPixSize =
           TagD.getTagValue(context.reader(), Tag.PresentationPixelSpacing, double[].class);
@@ -312,6 +326,7 @@ public class PRManager {
             TagD.getTagValue(context.reader(), Tag.PresentationPixelAspectRatio, int[].class);
         if (aspects != null && aspects.length == 2) {
           applyAspectRatio(context.img(), actionsInView, new double[] {aspects[0], aspects[1]});
+          context.img().setPixelSizeCalibrationDescription("From DICOM PR");
         }
       }
     }

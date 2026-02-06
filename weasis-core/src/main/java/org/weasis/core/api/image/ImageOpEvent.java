@@ -9,6 +9,7 @@
  */
 package org.weasis.core.api.image;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import org.weasis.core.api.media.data.ImageElement;
@@ -42,7 +43,7 @@ public record ImageOpEvent(
 
   public ImageOpEvent {
     Objects.requireNonNull(eventType, "Event type cannot be null");
-    params = params == null ? Map.of() : Map.copyOf(params);
+    params = params == null ? Map.of() : new HashMap<>(params);
   }
 
   /** Creates an event with only the event type. */

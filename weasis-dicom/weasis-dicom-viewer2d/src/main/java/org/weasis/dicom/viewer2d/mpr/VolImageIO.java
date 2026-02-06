@@ -9,10 +9,17 @@
  */
 package org.weasis.dicom.viewer2d.mpr;
 
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -20,6 +27,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
+import javax.swing.JProgressBar;
 import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.SpecificCharacterSet;
 import org.dcm4che3.data.Tag;
@@ -34,6 +42,7 @@ import org.dcm4che3.util.UIDUtils;
 import org.joml.Matrix4d;
 import org.joml.Quaterniond;
 import org.joml.Vector3d;
+import org.joml.Vector3i;
 import org.opencv.core.Core;
 import org.opencv.core.Core.MinMaxLocResult;
 import org.opencv.core.CvType;
@@ -437,10 +446,125 @@ public class VolImageIO implements DcmMediaReader {
     Attributes dcm = getDicomObject();
     header = new DicomMetaData(dcm, UID.ImplicitVRLittleEndian);
     MinMaxLocResult minMax = new MinMaxLocResult();
-    minMax.minVal = volume.getMinimum();
-    minMax.maxVal = volume.getMaximum();
+    minMax.minVal = volume.getMinimum().doubleValue();
+    minMax.maxVal = volume.getMaximum().doubleValue();
     header.getImageDescriptor().setMinMaxPixelValue(0, minMax);
     HEADER_CACHE.put(this, header);
     return header;
+  }
+
+  public static void saveVolumeInFile(Volume<?> volume, Path file) {
+    try (DataOutputStream dos =
+        new DataOutputStream(new BufferedOutputStream(Files.newOutputStream(file)))) {
+
+      Vector3i size = volume.getSize();
+      int cvType = volume.getCvType();
+      Vector3d pixelRatio = volume.getPixelRatio();
+
+      dos.writeInt(size.x);
+      dos.writeInt(size.y);
+      dos.writeInt(size.z);
+      dos.writeInt(cvType);
+      switch (CvType.depth(cvType)) {
+        case CvType.CV_8S, CvType.CV_8U -> {
+          dos.writeByte(volume.minValue.byteValue());
+          dos.writeByte(volume.maxValue.byteValue());
+        }
+        case CvType.CV_16S, CvType.CV_16U -> {
+          dos.writeShort(volume.minValue.shortValue());
+          dos.writeShort(volume.maxValue.shortValue());
+        }
+        case CvType.CV_32S -> {
+          dos.writeInt(volume.minValue.intValue());
+          dos.writeInt(volume.maxValue.intValue());
+        }
+        case CvType.CV_32F -> {
+          dos.writeFloat(volume.minValue.floatValue());
+          dos.writeFloat(volume.maxValue.floatValue());
+        }
+        case CvType.CV_64F -> {
+          dos.writeDouble(volume.minValue.doubleValue());
+          dos.writeDouble(volume.maxValue.doubleValue());
+        }
+        default -> throw new IOException("Unsupported volume data type: " + CvType.depth(cvType));
+      }
+      dos.writeDouble(pixelRatio.x);
+      dos.writeDouble(pixelRatio.y);
+      dos.writeDouble(pixelRatio.z);
+
+      for (int x = 0; x < size.x; x++) {
+        for (int y = 0; y < size.y; y++) {
+          for (int z = 0; z < size.z; z++) {
+            volume.writeVolume(dos, x, y, z);
+          }
+        }
+      }
+    } catch (IOException e) {
+      LOGGER.error("Cannot save volume in file", e);
+    }
+  }
+
+  public static Volume<?> readVolumeFromFile(Path file, JProgressBar progressBar) {
+    try (DataInputStream dis =
+        new DataInputStream(new BufferedInputStream(Files.newInputStream(file)))) {
+      int sizeX = dis.readInt();
+      int sizeY = dis.readInt();
+      int sizeZ = dis.readInt();
+      int cvType = dis.readInt();
+      int depth = CvType.depth(cvType);
+      int channels = CvType.channels(cvType);
+      boolean signed = depth == CvType.CV_16S || depth == CvType.CV_8S;
+
+      Volume<?> volume =
+          switch (depth) {
+            case CvType.CV_8S, CvType.CV_8U -> {
+              VolumeByte v = new VolumeByte(sizeX, sizeY, sizeZ, signed, channels, progressBar);
+              v.minValue = dis.readByte();
+              v.maxValue = dis.readByte();
+              yield v;
+            }
+            case CvType.CV_16S, CvType.CV_16U -> {
+              VolumeShort v = new VolumeShort(sizeX, sizeY, sizeZ, signed, channels, progressBar);
+              v.minValue = dis.readShort();
+              v.maxValue = dis.readShort();
+              yield v;
+            }
+            case CvType.CV_32S -> {
+              VolumeInt v = new VolumeInt(sizeX, sizeY, sizeZ, channels, progressBar);
+              v.minValue = dis.readInt();
+              v.maxValue = dis.readInt();
+              yield v;
+            }
+            case CvType.CV_32F -> {
+              VolumeFloat v = new VolumeFloat(sizeX, sizeY, sizeZ, channels, progressBar);
+              v.minValue = dis.readFloat();
+              v.maxValue = dis.readFloat();
+              yield v;
+            }
+            case CvType.CV_64F -> {
+              VolumeDouble v = new VolumeDouble(sizeX, sizeY, sizeZ, channels, progressBar);
+              v.minValue = dis.readDouble();
+              v.maxValue = dis.readDouble();
+              yield v;
+            }
+            default -> throw new IOException("Unsupported volume data type: " + depth);
+          };
+
+      volume.pixelRatio.x = dis.readDouble();
+      volume.pixelRatio.y = dis.readDouble();
+      volume.pixelRatio.z = dis.readDouble();
+
+      for (int x = 0; x < sizeX; x++) {
+        for (int y = 0; y < sizeY; y++) {
+          for (int z = 0; z < sizeZ; z++) {
+            volume.readVolume(dis, x, y, z);
+          }
+        }
+      }
+      return volume;
+    } catch (IOException e) {
+      LOGGER.error("Cannot read volume from file", e);
+    }
+    return null;
   }
 }

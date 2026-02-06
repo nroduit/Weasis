@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Weasis Team and other contributors.
+ * Copyright (c) 2026 Weasis Team and other contributors.
  *
  * This program and the accompanying materials are made available under the terms of the Eclipse
  * Public License 2.0 which is available at https://www.eclipse.org/legal/epl-2.0, or the Apache
@@ -9,179 +9,83 @@
  */
 package org.weasis.dicom.viewer2d.mpr;
 
-import java.util.Arrays;
-import java.util.concurrent.ForkJoinPool;
-import java.util.concurrent.RecursiveAction;
+import java.awt.Dimension;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
 import javax.swing.JProgressBar;
 import org.joml.Matrix4d;
-import org.joml.Quaterniond;
 import org.joml.Vector3d;
-import org.joml.Vector3i;
-import org.weasis.core.util.MathUtil;
-import org.weasis.opencv.data.ImageCV;
+import org.opencv.core.CvType;
 import org.weasis.opencv.data.PlanarImage;
 
-public class VolumeByte extends Volume<Byte> {
-  private final boolean signed;
-  private byte[][][] data;
+public final class VolumeByte extends Volume<Byte> {
 
-  public VolumeByte(int sizeX, int sizeY, int sizeZ, boolean signed, JProgressBar progressBar) {
-    super(sizeX, sizeY, sizeZ, progressBar);
-    this.signed = signed;
+  public VolumeByte(
+      int sizeX, int sizeY, int sizeZ, boolean signed, int channels, JProgressBar progressBar) {
+    super(
+        sizeX,
+        sizeY,
+        sizeZ,
+        signed ? CvType.CV_8SC(channels) : CvType.CV_8UC(channels),
+        progressBar);
   }
 
-  public VolumeByte(OriginalStack stack, boolean signed, JProgressBar progressBar) {
+  public VolumeByte(OriginalStack stack, JProgressBar progressBar) {
     super(stack, progressBar);
-    this.signed = signed;
   }
 
   public VolumeByte(
-      Volume<? extends Number> volume,
-      int sizeX,
-      int sizeY,
-      int sizeZ,
-      Vector3d originalPixelRatio) {
-    super(volume, sizeX, sizeY, sizeZ, originalPixelRatio);
-    this.signed = isSigned;
+      Volume<? extends Number> volume, int sizeX, int sizeY, int sizeZ, Vector3d voxelRatio) {
+    super(volume, sizeX, sizeY, sizeZ, voxelRatio);
   }
 
   @Override
-  protected void createDataArray(int sizeX, int sizeY, int sizeZ) {
-    this.data = new byte[sizeX][sizeY][sizeZ];
+  protected Byte initMinValue() {
+    return Byte.MIN_VALUE;
   }
 
   @Override
-  public void removeData() {
-    this.data = null;
-    super.removeData();
+  protected Byte initMaxValue() {
+    return Byte.MAX_VALUE;
   }
 
   @Override
-  protected void copyFrom(PlanarImage image, int sliceIndex, Matrix4d transform) {
-    int width = image.width();
-    int height = image.height();
+  protected int initCVType(boolean isSigned, int channels) {
+    checkSingleChannel(channels);
+    return isSigned ? CvType.CV_8S : CvType.CV_8U;
+  }
 
-    byte[] pixelData = new byte[width * height];
+  @Override
+  protected byte[][][] createDataArray(int sizeX, int sizeY, int sizeZ, int channels) {
+    checkSingleChannel(channels);
+    return new byte[sizeX][sizeY][sizeZ];
+  }
+
+  @Override
+  protected byte[] createRasterArray(int totalPixels, int channels) {
+    checkSingleChannel(channels);
+    return new byte[totalPixels];
+  }
+
+  @Override
+  protected void copyFrom(PlanarImage image, int sliceIndex, Matrix4d transform, Dimension dim) {
+    byte[] pixelData = new byte[dim.width * dim.height];
     image.get(0, 0, pixelData);
 
-    copyPixels(
-        width, height, (x, y) -> setValue(x, y, sliceIndex, pixelData[y * width + x], transform));
+    copyPixels(dim, (x, y) -> setValue(x, y, sliceIndex, pixelData[y * dim.width + x], transform));
   }
 
-  @Override
-  protected void setValue(int x, int y, int z, Byte value, Matrix4d transform) {
-    if (transform != null) {
-      Vector3i sliceCoord = transformPoint(x, y, z, transform);
-      x = sliceCoord.x;
-      y = sliceCoord.y;
-      z = sliceCoord.z;
-    }
-    if (isOutside(x, y, z)) {
-      return;
-    }
-    if (data == null) {
-      int index = x * size.y * size.z + y * size.z + z;
-      mappedBuffer.put(index, value);
-    } else {
-      data[x][y][z] = value;
-    }
+  public void readVolume(DataInputStream stream, int x, int y, int z) throws IOException {
+    Byte val = stream.readByte();
+    setValue(x, y, z, val, null);
   }
 
-  @Override
-  public Byte getValue(int x, int y, int z) {
-    if (isOutside(x, y, z)) {
-      return null;
+  public void writeVolume(DataOutputStream stream, int x, int y, int z) throws IOException {
+    Byte val = getValue(x, y, z, 0);
+    if (val == null) {
+      throw new IOException("Null voxel value at (" + x + "," + y + "," + z + ")");
     }
-
-    if (data == null) {
-      int index = x * size.y * size.z + y * size.z + z;
-      return mappedBuffer.get(index);
-    } else {
-      return data[x][y][z];
-    }
-  }
-
-  @Override
-  protected double interpolate(Byte v0, Byte v1, double factor) {
-    if (signed) {
-      return super.interpolate(v0, v1, factor);
-    }
-    return (v0 == null ? 0 : Byte.toUnsignedInt(v0)) * (1 - factor)
-        + (v1 == null ? 0 : Byte.toUnsignedInt(v1)) * factor;
-  }
-
-  public PlanarImage getVolumeSlice(MprAxis mprAxis, Vector3d volumeCenter) {
-    if (mprAxis == null) {
-      return null;
-    }
-    int sliceImageSize = getSliceSize();
-    Vector3d voxelRatio = getVoxelRatio();
-    Quaterniond mprRotation = mprAxis.getMprView().mprController.getRotation(mprAxis.getPlane());
-    Matrix4d combinedTransform = mprAxis.getRealVolumeTransformation(mprRotation, volumeCenter);
-    mprAxis.getTransformation().set(combinedTransform);
-
-    byte[] raster = new byte[sliceImageSize * sliceImageSize];
-    double value = getPhotometricMinValue();
-    if (MathUtil.isDifferentFromZero(value)) {
-      Arrays.fill(raster, (byte) value);
-    }
-
-    try (ForkJoinPool pool = new ForkJoinPool()) {
-      pool.invoke(
-          new VolumeSliceTask(
-              0, raster.length, sliceImageSize, combinedTransform, voxelRatio, raster));
-    }
-
-    ImageCV imageCV = new ImageCV(sliceImageSize, sliceImageSize, getCVType());
-    imageCV.put(0, 0, raster);
-    return imageCV;
-  }
-
-  private class VolumeSliceTask extends RecursiveAction {
-    private final int start;
-    private final int end;
-    private final int width;
-    private final Matrix4d combinedTransform;
-    private final Vector3d voxelRatio;
-    private final byte[] raster;
-
-    VolumeSliceTask(
-        int start,
-        int end,
-        int width,
-        Matrix4d combinedTransform,
-        Vector3d voxelRatio,
-        byte[] raster) {
-      this.start = start;
-      this.end = end;
-      this.width = width;
-      this.combinedTransform = combinedTransform;
-      this.voxelRatio = voxelRatio;
-      this.raster = raster;
-    }
-
-    @Override
-    protected void compute() {
-      if (end - start <= width) {
-        for (int i = start; i < end; i++) {
-          int x = i % width;
-          int y = i / width;
-          Vector3d sliceCoord = new Vector3d(x, y, 0);
-          combinedTransform.transformPosition(sliceCoord);
-
-          Double val = interpolateVolume(sliceCoord, voxelRatio);
-          if (val != null) {
-            raster[y * width + x] = val.byteValue();
-          }
-        }
-      } else {
-        int mid = (start + end) / 2;
-        VolumeSliceTask leftTask =
-            new VolumeSliceTask(start, mid, width, combinedTransform, voxelRatio, raster);
-        VolumeSliceTask rightTask =
-            new VolumeSliceTask(mid, end, width, combinedTransform, voxelRatio, raster);
-        invokeAll(leftTask, rightTask);
-      }
-    }
+    stream.writeByte(val);
   }
 }

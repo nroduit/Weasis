@@ -37,7 +37,8 @@ public class WProperties extends Properties {
 
   @Override
   public synchronized Object setProperty(String key, String value) {
-    if (isValid(key, value)) {
+    // Limit value size to 64KB, issue with cyclic paths
+    if (isValid(key, value) && value.length() < 65536) {
       return super.setProperty(key, value);
     }
     return null;
@@ -69,7 +70,7 @@ public class WProperties extends Properties {
           value = defaultValue;
         }
       }
-      if (isValid(key, value)) {
+      if (isValid(key, value) && value.length() < 65536) {
         this.put(key, value);
       }
     }
@@ -85,7 +86,7 @@ public class WProperties extends Properties {
           value = defaultValue;
         }
       }
-      if (isValid(key, value)) {
+      if (isValid(key, value) && value.length() < 65536) {
         this.put(key, value);
       }
     }
@@ -276,7 +277,7 @@ public class WProperties extends Properties {
     try {
       if (hexColor != null && hexColor.length() > 6) {
         intValue = (int) (Long.parseLong(hexColor, 16));
-      } else {
+      } else if (hexColor != null) {
         intValue |= Integer.parseInt(hexColor, 16);
       }
     } catch (NumberFormatException e) {

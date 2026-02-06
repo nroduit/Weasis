@@ -283,8 +283,6 @@ public class InfoLayer extends AbstractInfoLayer<DicomImageElement> {
     if (controller != null && controller.getVolume() != null) {
       if (controller.getVolume().isTransformed()) {
         drawY = drawGeometricTransformationMessage(g2, drawY, fontHeight, border);
-      } else if (controller.getVolume().needsTransformation()) {
-        drawY = drawStretchingMessage(g2, drawY, fontHeight, border);
       }
     }
     return drawY;
@@ -813,14 +811,6 @@ public class InfoLayer extends AbstractInfoLayer<DicomImageElement> {
     String message = Messages.getString("geometric.transformation.msg");
     FontTools.paintColorFontOutline(g2d, message, border, drawY, IconColor.ACTIONS_RED.getColor());
     return drawY - fontHeight;
-  }
-
-  public static float drawStretchingMessage(
-      Graphics2D g2d, float drawY, int fontHeight, int border) {
-    String message = Messages.getString("stretching.artifacts.msg");
-    FontTools.paintColorFontOutline(g2d, message, border, drawY, IconColor.ACTIONS_RED.getColor());
-    drawY -= fontHeight;
-    return drawY;
   }
 
   public static MediaSeriesGroup getParent(

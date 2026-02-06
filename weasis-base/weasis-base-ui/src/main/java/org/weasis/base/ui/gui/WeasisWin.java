@@ -38,6 +38,7 @@ import java.awt.AWTException;
 import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.Dialog;
+import java.awt.Dimension;
 import java.awt.Frame;
 import java.awt.GraphicsConfiguration;
 import java.awt.GraphicsDevice;
@@ -95,6 +96,8 @@ import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
+import javax.swing.JScrollBar;
+import javax.swing.JScrollPane;
 import javax.swing.JSeparator;
 import javax.swing.KeyStroke;
 import javax.swing.RootPaneContainer;
@@ -230,9 +233,53 @@ public class WeasisWin {
       rootPaneContainer.getRootPane().setJMenuBar(createMenuBar());
     }
     setSelectedPlugin(null);
-    rootPaneContainer
-        .getContentPane()
-        .add(GuiUtils.getUICore().getToolbarContainer(), BorderLayout.NORTH);
+
+    var toolbarContainer = GuiUtils.getUICore().getToolbarContainer();
+    var scrollPane =
+        new JScrollPane(toolbarContainer) {
+          @Override
+          public Dimension getPreferredSize() {
+            Dimension containerPreferredSize = toolbarContainer.getPreferredSize();
+            int scrollBarHeight = getScrollBarHeight(containerPreferredSize);
+            return new Dimension(
+                super.getPreferredSize().width, containerPreferredSize.height + scrollBarHeight);
+          }
+
+          private int getScrollBarHeight(Dimension containerPreferredSize) {
+            JScrollBar hScrollBar = getHorizontalScrollBar();
+            int scrollBarHeight = 0;
+
+            if (hScrollBar != null) {
+              int availableWidth = getViewport().getWidth();
+              int contentWidth = containerPreferredSize.width;
+
+              if (availableWidth > 0 && contentWidth > availableWidth) {
+                scrollBarHeight = hScrollBar.getPreferredSize().height;
+              } else if (hScrollBar.isVisible()) {
+                scrollBarHeight = hScrollBar.getPreferredSize().height;
+              }
+            }
+            return scrollBarHeight;
+          }
+
+          @Override
+          public Dimension getMinimumSize() {
+            Dimension containerMinSize = toolbarContainer.getMinimumSize();
+            JScrollBar hScrollBar = getHorizontalScrollBar();
+            int scrollBarHeight = 0;
+            if (hScrollBar != null && hScrollBar.isVisible()) {
+              scrollBarHeight = hScrollBar.getPreferredSize().height;
+            }
+            return new Dimension(
+                super.getMinimumSize().width, containerMinSize.height + scrollBarHeight);
+          }
+        };
+
+    scrollPane.setHorizontalScrollBarPolicy(
+        javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+    scrollPane.setVerticalScrollBarPolicy(javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
+    scrollPane.setBorder(null);
+    rootPaneContainer.getContentPane().add(scrollPane, BorderLayout.NORTH);
 
     rootPaneContainer.setGlassPane(AppProperties.glassPane);
 

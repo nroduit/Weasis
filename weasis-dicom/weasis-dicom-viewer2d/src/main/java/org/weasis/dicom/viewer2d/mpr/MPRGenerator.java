@@ -33,8 +33,10 @@ public class MPRGenerator {
       throw new IllegalStateException("No image");
 
     BuildContext context = new BuildContext(thread, mprContainer, view);
-    if (!plane.equals(Plane.AXIAL) && stack.getVolume().needsTransformation()) {
-      confirmMessage(context, Messages.getString("SeriesBuilder.patient_not_aligned"));
+    if (stack.isNonParallelSlices()) {
+      confirmMessage(context, Messages.getString("SeriesBuilder.orientation_varying"));
+    } else if (stack.isVariableSliceSpacing()) {
+      confirmMessage(context, Messages.getString("SeriesBuilder.space"));
     }
     stack.generate(context);
   }

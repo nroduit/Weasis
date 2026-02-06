@@ -32,6 +32,7 @@ import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.media.data.*;
+import org.weasis.core.api.util.FontItem;
 import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.ui.docking.PluginTool;
 import org.weasis.core.ui.editor.SeriesViewerEvent;
@@ -270,16 +271,18 @@ public class DicomExplorer extends PluginTool
 
   private void setupInitialSize() {
     int thumbnailSize = SeriesThumbnail.getThumbnailSizeFromPreferences();
-    setDockableWidth(Math.max(thumbnailSize, Thumbnail.DEFAULT_SIZE) + 42);
+    setDockableWidth(Math.max(thumbnailSize, Thumbnail.DEFAULT_SIZE) + 35);
   }
 
   private void setupComboBoxes() {
     // Patient combo box
     patientCombobox.setMaximumRowCount(15);
+    patientCombobox.setFont(FontItem.SMALL_SEMIBOLD.getFont());
     patientCombobox.addItemListener(patientItemListener);
 
     // Study combo box
     studyCombobox.setMaximumRowCount(15);
+    studyCombobox.setFont(FontItem.SMALL_SEMIBOLD.getFont());
     modelStudy.insertElementAt(ALL_STUDIES, 0);
     modelStudy.setSelectedItem(ALL_STUDIES);
     studyCombobox.addItemListener(studyItemListener);
@@ -501,8 +504,11 @@ public class DicomExplorer extends PluginTool
         studyPane.removeAll();
         List<SeriesPane> seriesList = paneManager.getSeriesList(study);
         for (int i = 0; i < seriesList.size(); i++) {
-          studyPane.addPane(seriesList.get(i), i, thumbnailSize);
+          SeriesPane pane = seriesList.get(i);
+          pane.updateThumbnail();
+          studyPane.addPane(pane, i, thumbnailSize);
         }
+        studyPane.refreshLayout();
         studyPane.revalidate();
         studyPane.repaint();
       }
@@ -588,7 +594,7 @@ public class DicomExplorer extends PluginTool
   // ========== Thumbnail Size Management ==========
 
   public void updateThumbnailSize(int thumbnailSize) {
-    updateDockableWidth(Math.max(thumbnailSize, Thumbnail.DEFAULT_SIZE) + 42);
+    updateDockableWidth(Math.max(thumbnailSize, Thumbnail.DEFAULT_SIZE) + 35);
     MediaSeriesGroup patient = getSelectedPatient();
     for (StudyPane studyPane : paneManager.getStudyList(patient)) {
       studyPane.updateThumbnailSize(thumbnailSize);

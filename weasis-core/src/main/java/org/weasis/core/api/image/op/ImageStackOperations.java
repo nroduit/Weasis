@@ -13,7 +13,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.function.Function;
 import org.weasis.core.api.image.cv.CvUtil;
-import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.opencv.data.PlanarImage;
 
 /**
@@ -34,7 +33,7 @@ public final class ImageStackOperations {
    * @throws NullPointerException if sources is null
    * @throws IllegalArgumentException if sources is empty
    */
-  public static PlanarImage max(List<ImageElement> sources) {
+  public static PlanarImage max(List<PlanarImage> sources) {
     return applyStackOperation(sources, CvUtil::maxStack);
   }
 
@@ -46,7 +45,7 @@ public final class ImageStackOperations {
    * @throws NullPointerException if sources is null
    * @throws IllegalArgumentException if sources is empty
    */
-  public static PlanarImage min(List<ImageElement> sources) {
+  public static PlanarImage min(List<PlanarImage> sources) {
     return applyStackOperation(sources, CvUtil::minStack);
   }
 
@@ -58,7 +57,7 @@ public final class ImageStackOperations {
    * @throws NullPointerException if sources is null
    * @throws IllegalArgumentException if sources is empty
    */
-  public static PlanarImage mean(List<ImageElement> sources) {
+  public static PlanarImage mean(List<PlanarImage> sources) {
     return applyStackOperation(sources, CvUtil::meanStack);
   }
 
@@ -72,18 +71,18 @@ public final class ImageStackOperations {
    * @throws IllegalArgumentException if sources is empty
    */
   public static PlanarImage apply(
-      List<ImageElement> sources, Function<List<ImageElement>, PlanarImage> operation) {
+      List<PlanarImage> sources, Function<List<PlanarImage>, PlanarImage> operation) {
     Objects.requireNonNull(operation, "Operation cannot be null");
     return applyStackOperation(sources, operation);
   }
 
   private static PlanarImage applyStackOperation(
-      List<ImageElement> sources, Function<List<ImageElement>, PlanarImage> operation) {
+      List<PlanarImage> sources, Function<List<PlanarImage>, PlanarImage> operation) {
     validateSources(sources);
     return operation.apply(sources);
   }
 
-  private static void validateSources(List<ImageElement> sources) {
+  private static void validateSources(List<PlanarImage> sources) {
     if (Objects.requireNonNull(sources, "Sources cannot be null").isEmpty()) {
       throw new IllegalArgumentException("Sources cannot be empty");
     }

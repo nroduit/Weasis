@@ -20,6 +20,7 @@ import javax.swing.JProgressBar;
 import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Tag;
 import org.dcm4che3.util.UIDUtils;
+import org.opencv.core.CvType;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.core.api.gui.util.Filter;
 import org.weasis.core.api.gui.util.GuiExecutor;
@@ -30,6 +31,7 @@ import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.DicomSeries;
 import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.explorer.DicomModel;
+import org.weasis.dicom.viewer2d.mip.SeriesBuilder;
 import org.weasis.dicom.viewer2d.mpr.MprView.Plane;
 
 public class ObliqueMpr extends OriginalStack {
@@ -189,8 +191,8 @@ public class ObliqueMpr extends OriginalStack {
     rawIO.setTag(
         TagD.get(Tag.SeriesInstanceUID), series.getTagValue(TagD.get(Tag.SeriesInstanceUID)));
 
-    rawIO.setTag(TagD.get(Tag.BitsAllocated), img.getBitsAllocated());
-    rawIO.setTag(TagD.get(Tag.BitsStored), img.getBitsStored());
+    int channels = CvType.channels(volume.cvType);
+    SeriesBuilder.writePixelDataAttributes(channels, volume.cvType, rawIO);
 
     // Mandatory tags
     DerivedStack.copyMandatoryTags(img, rawIO);

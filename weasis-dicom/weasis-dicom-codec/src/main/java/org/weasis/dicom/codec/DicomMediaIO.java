@@ -290,6 +290,7 @@ public class DicomMediaIO implements DcmMediaReader {
   private DicomImageElement[] image = null;
   private String mimeType;
   private boolean hasPixel = false;
+  private VR pixelDataVR = null;
 
   private final FileCache fileCache;
 
@@ -535,8 +536,11 @@ public class DicomMediaIO implements DcmMediaReader {
 
       int pixelRepresentation = desc.getPixelRepresentation();
       setTagNoNull(TagD.get(Tag.BitsAllocated), bitsAllocated);
-      setTagNoNull(TagD.get(Tag.BitsStored), bitsStored);
-      setTagNoNull(TagD.get(Tag.PixelRepresentation), pixelRepresentation);
+      // Write BitsStored and PixelRepresentation only for integer pixel data
+      if (pixelDataVR == VR.OB || pixelDataVR == VR.OW) {
+        setTagNoNull(TagD.get(Tag.BitsStored), bitsStored);
+        setTagNoNull(TagD.get(Tag.PixelRepresentation), pixelRepresentation);
+      }
 
       TagD.get(Tag.PixelSpacing).readValue(header, this);
       TagD.get(Tag.PixelAspectRatio).readValue(header, this);
@@ -549,9 +553,7 @@ public class DicomMediaIO implements DcmMediaReader {
 
       setTag(TagW.AnatomicRegion, desc.getAnatomicRegion());
 
-      setTag(TagW.ModalityLUTData, desc.getModalityLUT());
       TagD.get(Tag.PixelIntensityRelationship).readValue(header, this);
-      setTag(TagW.VOILUTsData, desc.getVoiLUT());
 
       TagD.get(Tag.Units).readValue(header, this);
       TagD.get(Tag.NumberOfFrames).readValue(header, this);
@@ -650,9 +652,14 @@ public class DicomMediaIO implements DcmMediaReader {
             frame,
             TagD.getTagValue(this, Tag.SOPInstanceUID));
         DicomImageReader reader = new DicomImageReader(Transcoder.dicomImageReaderSpi);
-        try (DicomFileInputStream inputStream = new DicomFileInputStream(original.get())) {
+        DicomMetaData metaData = HEADER_CACHE.get(this);
+        try (var inputStream = new DicomFileInputStream(original.get(), metaData)) {
           reader.setInput(inputStream);
-          ImageDescriptor desc = reader.getImageDescriptor();
+          if (metaData == null) {
+            metaData = reader.getStreamMetadata();
+            HEADER_CACHE.put(this, metaData);
+          }
+          ImageDescriptor desc = metaData.getImageDescriptor();
           DicomImageReadParam param = new DicomImageReadParam();
           param.setAllowFloatImageConversion(true);
           PlanarImage img = reader.getPlanarImage(frame, param);
@@ -942,6 +949,7 @@ public class DicomMediaIO implements DcmMediaReader {
       }
 
       if (pixelData != null) {
+        pixelDataVR = pixelatedVR.vr;
         hasPixel = true;
       }
 

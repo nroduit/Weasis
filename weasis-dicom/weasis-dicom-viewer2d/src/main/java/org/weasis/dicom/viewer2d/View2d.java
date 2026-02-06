@@ -60,6 +60,7 @@ import org.weasis.core.api.image.PseudoColorOp;
 import org.weasis.core.api.image.SimpleOpManager;
 import org.weasis.core.api.image.WindowOp;
 import org.weasis.core.api.image.util.ImageLayer;
+import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.service.AuditLog;
@@ -429,10 +430,23 @@ public class View2d extends DefaultView2d<DicomImageElement> {
     if (m != null) {
       // Restore the original image pixel size
       if (changePixConfig) {
+        Unit oldUnit = m.getPixelSpacingUnit();
         m.initPixelConfiguration();
-        eventManager
-            .getAction(ActionW.SPATIAL_UNIT)
-            .ifPresent(s -> s.setSelectedItem(m.getPixelSpacingUnit()));
+        Unit newUnit = m.getPixelSpacingUnit();
+        if (oldUnit != null && newUnit != null) {
+          if (oldUnit.equals(newUnit)) {
+            // When calibration changes but the unit remains the same, the labels and measures are
+            // not updated
+            // We set the unit to null so that the refresh is done automatically and a change is
+            // detected
+            eventManager
+                .getAction(ActionW.SPATIAL_UNIT)
+                .ifPresent(s -> s.setSelectedItemWithoutTriggerAction(null));
+          }
+          eventManager
+              .getAction(ActionW.SPATIAL_UNIT)
+              .ifPresent(s -> s.setSelectedItem(m.getPixelSpacingUnit()));
+        }
       }
       deletePrLayers();
 
