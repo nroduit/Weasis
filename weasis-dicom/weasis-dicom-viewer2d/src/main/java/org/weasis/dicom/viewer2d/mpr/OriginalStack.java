@@ -13,7 +13,6 @@ import static org.weasis.dicom.viewer2d.mpr.MprView.Plane.AXIAL;
 import static org.weasis.dicom.viewer2d.mpr.VolumeBounds.EPSILON;
 import static org.weasis.dicom.viewer2d.mpr.VolumeBounds.needsRectification;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import org.dcm4che3.data.Attributes;
@@ -28,62 +27,11 @@ import org.weasis.core.api.media.data.TagW.TagType;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.SortSeriesStack;
 import org.weasis.dicom.codec.geometry.GeometryOfSlice;
+import org.weasis.dicom.viewer2d.mip.SeriesBuilder;
 import org.weasis.dicom.viewer2d.mpr.MprView.Plane;
 
 public abstract class OriginalStack extends AbstractStack {
   static TagW seriesReferences = new TagW("series.builder.refs", TagType.STRING, 2, 2);
-  static final int[] COPIED_ATTRS = {
-    Tag.SpecificCharacterSet,
-    Tag.TimezoneOffsetFromUTC,
-    Tag.PatientID,
-    Tag.PatientName,
-    Tag.PatientBirthDate,
-    Tag.PatientBirthTime,
-    Tag.PatientSex,
-    Tag.IssuerOfPatientID,
-    Tag.IssuerOfAccessionNumberSequence,
-    Tag.PatientWeight,
-    Tag.PatientAge,
-    Tag.PatientSize,
-    Tag.PatientState,
-    Tag.PatientComments,
-    Tag.StudyID,
-    Tag.StudyDate,
-    Tag.StudyTime,
-    Tag.StudyDescription,
-    Tag.StudyComments,
-    Tag.AccessionNumber,
-    Tag.ModalitiesInStudy,
-    Tag.Modality,
-    Tag.SeriesDate,
-    Tag.SeriesTime,
-    Tag.RetrieveAETitle,
-    Tag.ReferringPhysicianName,
-    Tag.InstitutionName,
-    Tag.InstitutionalDepartmentName,
-    Tag.StationName,
-    Tag.Manufacturer,
-    Tag.ManufacturerModelName,
-    Tag.AnatomicalOrientationType,
-    Tag.SeriesNumber,
-    Tag.KVP,
-    Tag.Laterality,
-    Tag.BodyPartExamined,
-    Tag.AnatomicRegionSequence,
-    Tag.RescaleSlope,
-    Tag.RescaleIntercept,
-    Tag.RescaleType,
-    Tag.ModalityLUTSequence,
-    Tag.WindowCenter,
-    Tag.WindowWidth,
-    Tag.VOILUTFunction,
-    Tag.WindowCenterWidthExplanation,
-    Tag.VOILUTSequence
-  };
-
-  static {
-    Arrays.sort(COPIED_ATTRS);
-  }
 
   protected final List<DicomImageElement> sourceStack;
   private final GeometryOfSlice fistSliceGeometry;
@@ -124,8 +72,8 @@ public abstract class OriginalStack extends AbstractStack {
   }
 
   protected Attributes getCommonAttributes(String frameOfReferenceUID, String seriesDescription) {
-    final Attributes attributes = getMiddleImage().getMediaReader().getDicomObject();
-    final Attributes cpTags = new Attributes(attributes, COPIED_ATTRS);
+    Attributes attributes = getMiddleImage().getMediaReader().getDicomObject();
+    Attributes cpTags = SeriesBuilder.getBaseAttributes(attributes);
     cpTags.setString(Tag.SeriesDescription, VR.LO, seriesDescription);
     cpTags.setString(Tag.ImageType, VR.CS, ObliqueMpr.imageTypes);
     cpTags.setString(Tag.FrameOfReferenceUID, VR.UI, frameOfReferenceUID);

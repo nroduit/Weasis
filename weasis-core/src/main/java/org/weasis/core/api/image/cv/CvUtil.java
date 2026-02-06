@@ -18,10 +18,7 @@ import org.opencv.core.CvType;
 import org.opencv.core.Mat;
 import org.opencv.core.Scalar;
 import org.opencv.imgproc.Imgproc;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.weasis.core.api.image.util.KernelData;
-import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.opencv.data.ImageCV;
 import org.weasis.opencv.data.PlanarImage;
 
@@ -32,7 +29,6 @@ import org.weasis.opencv.data.PlanarImage;
  * support for various OpenCV matrix types.
  */
 public final class CvUtil {
-  private static final Logger LOGGER = LoggerFactory.getLogger(CvUtil.class);
 
   private static final int MIN_STACK_SIZE = 2;
   private static final int DEFAULT_DEPTH = -1;
@@ -77,7 +73,7 @@ public final class CvUtil {
    * @param sources list of image elements to average
    * @return mean image, or null if sources is invalid
    */
-  public static ImageCV meanStack(List<ImageElement> sources) {
+  public static ImageCV meanStack(List<PlanarImage> sources) {
     if (isInvalidStackSize(sources)) {
       return null;
     }
@@ -85,7 +81,7 @@ public final class CvUtil {
     Mat accumulator = initializeAccumulator(context);
 
     for (int i = 1; i < context.sourceCount(); i++) {
-      PlanarImage image = sources.get(i).getImage(null, false);
+      PlanarImage image = sources.get(i);
       accumulateFloatStack(image, context.referenceImage(), accumulator);
     }
 
@@ -98,7 +94,7 @@ public final class CvUtil {
    * @param sources list of image elements
    * @return image with minimum values, or null if sources is invalid
    */
-  public static ImageCV minStack(List<ImageElement> sources) {
+  public static ImageCV minStack(List<PlanarImage> sources) {
     return processStackOperation(
         sources,
         (result, img) -> {
@@ -113,7 +109,7 @@ public final class CvUtil {
    * @param sources list of image elements
    * @return image with maximum values, or null if sources is invalid
    */
-  public static ImageCV maxStack(List<ImageElement> sources) {
+  public static ImageCV maxStack(List<PlanarImage> sources) {
     return processStackOperation(
         sources,
         (result, img) -> {
@@ -151,12 +147,12 @@ public final class CvUtil {
     return matrix;
   }
 
-  private static boolean isInvalidStackSize(List<ImageElement> sources) {
+  private static boolean isInvalidStackSize(List<PlanarImage> sources) {
     return sources == null || sources.size() < MIN_STACK_SIZE;
   }
 
-  private static StackContext createStackContext(List<ImageElement> sources) {
-    PlanarImage firstImage = sources.getFirst().getImage(null, false);
+  private static StackContext createStackContext(List<PlanarImage> sources) {
+    PlanarImage firstImage = sources.getFirst();
     return new StackContext(firstImage, sources.size());
   }
 
@@ -175,7 +171,7 @@ public final class CvUtil {
   }
 
   private static ImageCV processStackOperation(
-      List<ImageElement> sources, BinaryOperator<Mat> operation) {
+      List<PlanarImage> sources, BinaryOperator<Mat> operation) {
     if (isInvalidStackSize(sources)) {
       return null;
     }
@@ -185,7 +181,7 @@ public final class CvUtil {
     context.referenceImage.toMat().copyTo(result);
 
     for (int i = 1; i < context.sourceCount(); i++) {
-      PlanarImage image = sources.get(i).getImage(null, false);
+      PlanarImage image = sources.get(i);
       if (hasSameDimensions(image, result)) {
         operation.apply(result, image.toImageCV());
       }

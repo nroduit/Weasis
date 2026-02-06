@@ -38,6 +38,7 @@ import org.joml.Quaterniond;
 import org.joml.Vector3d;
 import org.joml.Vector3i;
 import org.joml.Vector4d;
+import org.opencv.core.Core.MinMaxLocResult;
 import org.opencv.core.CvType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -49,10 +50,10 @@ import org.weasis.core.api.util.ThreadUtil;
 import org.weasis.core.ui.editor.image.ViewerPlugin;
 import org.weasis.core.util.FileUtil;
 import org.weasis.core.util.MathUtil;
-import org.weasis.core.util.Pair;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.opencv.data.ImageCV;
 import org.weasis.opencv.data.PlanarImage;
+import org.weasis.opencv.op.ImageAnalyzer;
 import org.weasis.opencv.op.ImageTransformer;
 
 public abstract sealed class Volume<T extends Number>
@@ -129,17 +130,15 @@ public abstract sealed class Volume<T extends Number>
     this.pixelRatio = new Vector3d(1.0, 1.0, 1.0);
     this.needsRowFlip = false;
     this.needsColFlip = false;
-    // Invert for initialization
-    this.minValue = initMaxValue();
-    this.maxValue = initMinValue();
+    this.minValue = initMinValue();
+    this.maxValue = initMaxValue();
     this.stack = stack;
-    int type = stack.getMiddleImage().getImage().type();
+    int type = stack.getMiddleImage().getModalityLutImage(null, null).type();
     int depth = CvType.depth(type);
     this.isSigned = isSigned(depth);
     this.channels = CvType.channels(type);
     this.cvType = initCVType(isSigned, channels);
     this.byteDepth = CvType.ELEM_SIZE(cvType) / channels;
-    ;
     copyFromAnyOrientation();
   }
 
@@ -167,6 +166,12 @@ public abstract sealed class Volume<T extends Number>
       } catch (OutOfMemoryError ex) {
         createDataFile(sizeX, sizeY, sizeZ);
       }
+    }
+
+    if (data == null) {
+      initValueMappedBuffer(minValue);
+    } else {
+      initValue(minValue);
     }
   }
 
@@ -217,7 +222,7 @@ public abstract sealed class Volume<T extends Number>
     Matrix4d sliceToVolumeTransform = computeSliceToVolumeTransform();
 
     // Submit per-slice tasks with bounded concurrency
-    CompletionService<Pair<T, T>> ecs = new ExecutorCompletionService<>(VOLUME_BUILD_POOL);
+    CompletionService<MinMaxLocResult> ecs = new ExecutorCompletionService<>(VOLUME_BUILD_POOL);
 
     final AtomicInteger submitted = new AtomicInteger(0);
     final AtomicInteger completed = new AtomicInteger(0);
@@ -229,40 +234,127 @@ public abstract sealed class Volume<T extends Number>
             DicomImageElement dcm = dicomImages.get(zi);
 
             // Load source image (IO and decode may run concurrently with other slices)
-            PlanarImage src = dcm.getImage();
+            PlanarImage src = dcm.getModalityLutImage(null, null);
             // Get min max after loading the image
-            Pair<T, T> minMax =
-                new Pair<>(
-                    convertToGeneric(dcm.getPixelMin()), convertToGeneric(dcm.getPixelMax()));
+            MinMaxLocResult minMaxLoc = ImageAnalyzer.findRawMinMaxValues(src, true);
+            if (minMaxLoc.minVal < 0) {
+              System.out.println("Negative min value detected: " + minMaxLoc.minVal);
+            }
 
             // Flip only if needed
-            if (src != null && (flipRow || flipCol)) {
+            if (flipRow || flipCol) {
               int flipType = (flipRow && flipCol) ? -1 : (flipCol ? 0 : 1);
               src = ImageTransformer.flip(src.toImageCV(), flipType);
             }
 
-            if (src != null) {
-              Dimension dim = new Dimension(src.width(), src.height());
-              copyFrom(src, zi, sliceToVolumeTransform, dim);
-            }
+            Dimension dim = new Dimension(src.width(), src.height());
+            copyFrom(src, zi, sliceToVolumeTransform, dim);
             int done = completed.incrementAndGet();
             updateProgressBar(done - 1);
-            return minMax;
+            return minMaxLoc;
           });
       submitted.incrementAndGet();
     }
 
-    // Wait for processing all slices
+    // Initialize min/max with inverted values
+    this.minValue = initMaxValue();
+    this.maxValue = initMinValue();
     try {
       for (int i = 0; i < submitted.get(); i++) {
-        Pair<T, T> minMax = ecs.take().get(); // propagate exceptions if any
-        this.minValue = compareMin(minMax.first(), minValue);
-        this.maxValue = compareMax(minMax.second(), maxValue);
+        Future<MinMaxLocResult> f = ecs.take();
+        var minMax = f.get(); // propagate exceptions if any
+        this.minValue = compareMin(convertToGeneric(minMax.minVal), minValue);
+        this.maxValue = compareMax(convertToGeneric(minMax.maxVal), maxValue);
       }
     } catch (InterruptedException ie) {
       Thread.currentThread().interrupt();
     } catch (Exception e) {
       LOGGER.error("Error while building volume", e);
+    }
+  }
+
+  protected void initValue(T value) {
+    if (MathUtil.isDifferentFromZero(value.doubleValue())) {
+      switch (data) {
+        case byte[][][] arr -> fill3DArray(arr, value.byteValue());
+        case short[][][] arr -> fill3DArray(arr, value.shortValue());
+        case int[][][] arr -> fill3DArray(arr, value.intValue());
+        case float[][][] arr -> fill3DArray(arr, value.floatValue());
+        case double[][][] arr -> fill3DArray(arr, value.doubleValue());
+        case byte[][][][] arr -> fill4DArray(arr, value.byteValue());
+        case short[][][][] arr -> fill4DArray(arr, value.shortValue());
+        default -> throw new IllegalStateException("Type mismatch");
+      }
+    }
+  }
+
+  private void fill3DArray(byte[][][] array, byte value) {
+    for (byte[][] row : array) {
+      for (byte[] slice : row) {
+        Arrays.fill(slice, value);
+      }
+    }
+  }
+
+  private void fill3DArray(short[][][] array, short value) {
+    for (short[][] row : array) {
+      for (short[] slice : row) {
+        Arrays.fill(slice, value);
+      }
+    }
+  }
+
+  private void fill3DArray(int[][][] array, int value) {
+    for (int[][] row : array) {
+      for (int[] slice : row) {
+        Arrays.fill(slice, value);
+      }
+    }
+  }
+
+  private void fill3DArray(float[][][] array, float value) {
+    for (float[][] row : array) {
+      for (float[] slice : row) {
+        Arrays.fill(slice, value);
+      }
+    }
+  }
+
+  private void fill3DArray(double[][][] array, double value) {
+    for (double[][] row : array) {
+      for (double[] slice : row) {
+        Arrays.fill(slice, value);
+      }
+    }
+  }
+
+  private void fill4DArray(byte[][][][] array, byte value) {
+    for (byte[][][] row : array) {
+      for (byte[][] slice : row) {
+        for (byte[] channel : slice) {
+          Arrays.fill(channel, value);
+        }
+      }
+    }
+  }
+
+  private void fill4DArray(short[][][][] array, short value) {
+    for (short[][][] row : array) {
+      for (short[][] slice : row) {
+        for (short[] channel : slice) {
+          Arrays.fill(channel, value);
+        }
+      }
+    }
+  }
+
+  private void initValueMappedBuffer(T minValue) {
+    if (MathUtil.isDifferentFromZero(minValue.doubleValue())) {
+      long totalElements = (long) size.x * size.y * size.z * channels;
+      for (long i = 0; i < totalElements; i++) {
+        int index = (int) (i * byteDepth);
+        setInMappedBuffer(index, minValue);
+      }
     }
   }
 
@@ -479,11 +571,11 @@ public abstract sealed class Volume<T extends Number>
     }
 
     switch (raster) {
-      case byte[] arr -> Arrays.fill(arr, (Byte) value);
-      case short[] arr -> Arrays.fill(arr, (Short) value);
-      case int[] arr -> Arrays.fill(arr, (Integer) value);
-      case float[] arr -> Arrays.fill(arr, (Float) value);
-      case double[] arr -> Arrays.fill(arr, (Double) value);
+      case byte[] arr -> Arrays.fill(arr, value.byteValue());
+      case short[] arr -> Arrays.fill(arr, value.shortValue());
+      case int[] arr -> Arrays.fill(arr, value.intValue());
+      case float[] arr -> Arrays.fill(arr, value.floatValue());
+      case double[] arr -> Arrays.fill(arr, value.doubleValue());
       default -> throw new IllegalStateException("Unsupported raster type");
     }
   }
@@ -638,8 +730,9 @@ public abstract sealed class Volume<T extends Number>
 
     Volume<?> volume = getSharedVolume(stack);
     if (volume == null) {
-      int depth = stack.getMiddleImage().getImage().depth();
-      int channels = stack.getMiddleImage().getImage().channels();
+      int type = getCvType(stack);
+      int depth = CvType.depth(type);
+      int channels = CvType.channels(type);
       if (depth == CvType.CV_8U || depth == CvType.CV_8S) {
         if (channels > 1) {
           volume = new VolumeByteMulti(stack, progressBar);
@@ -666,6 +759,11 @@ public abstract sealed class Volume<T extends Number>
     }
 
     return volume;
+  }
+
+  public static int getCvType(OriginalStack stack) {
+    PlanarImage middleImage = stack.getMiddleImage().getModalityLutImage(null, null);
+    return middleImage.type();
   }
 
   public boolean isSharedVolume() {
@@ -918,8 +1016,8 @@ public abstract sealed class Volume<T extends Number>
   @SuppressWarnings("unchecked")
   private T convertToGeneric(double value) {
     return switch (this) {
-      case VolumeByte _ -> (T) Byte.valueOf((byte) Math.round(value));
-      case VolumeShort _ -> (T) Short.valueOf((short) Math.round(value));
+      case VolumeByte _, VolumeByteMulti _ -> (T) Byte.valueOf((byte) Math.round(value));
+      case VolumeShort _, VolumeShortMulti _ -> (T) Short.valueOf((short) Math.round(value));
       case VolumeInt _ -> (T) Integer.valueOf((int) Math.round(value));
       case VolumeFloat _ -> (T) Float.valueOf((float) value);
       default -> (T) Double.valueOf(value);

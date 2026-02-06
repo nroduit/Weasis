@@ -161,17 +161,6 @@ public class TagW {
   /** DICOM common tags */
   public static final TagW SubseriesInstanceUID = new TagW("SubseriesInstanceUID", TagType.STRING);
 
-  // One or more Items shall be included in this sequence
-  public static final TagW VOILUTsExplanation =
-      new TagW("VOILUTsExplanation", TagType.STRING, 1, Integer.MAX_VALUE);
-  public static final TagW VOILUTsData = new TagW("VOILUTsData", TagType.OBJECT);
-
-  // Only a single Item shall be included in this sequence
-  public static final TagW ModalityLUTExplanation =
-      new TagW("ModalityLUTExplanation", TagType.STRING);
-  public static final TagW ModalityLUTType = new TagW("ModalityLUTType", TagType.STRING);
-  public static final TagW ModalityLUTData = new TagW("ModalityLUTData", TagType.OBJECT);
-
   // Only a single Item shall be included in this sequence
   public static final TagW PRLUTsExplanation = new TagW("PRLUTsExplanation", TagType.STRING);
   public static final TagW PrDicomObject = new TagW("PrDicomObject", TagType.OBJECT);
@@ -218,11 +207,6 @@ public class TagW {
 
     // DICOM
     addTag(SubseriesInstanceUID);
-    addTag(VOILUTsExplanation);
-    addTag(VOILUTsData);
-    addTag(ModalityLUTExplanation);
-    addTag(ModalityLUTType);
-    addTag(ModalityLUTData);
     addTag(PRLUTsExplanation);
     addTag(PrDicomObject);
     addTag(MonoChrome);

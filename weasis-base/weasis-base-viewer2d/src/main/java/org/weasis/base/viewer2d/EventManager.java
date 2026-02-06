@@ -398,7 +398,9 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
         .ifPresent(
             a ->
                 a.setSelectedItemWithoutTriggerAction(
-                    dispOp.getParamValue(PseudoColorOp.OP_NAME, PseudoColorOp.P_LUT)));
+                    dispOp
+                        .getParamValue(PseudoColorOp.OP_NAME, PseudoColorOp.P_LUT)
+                        .orElse(ColorLut.IMAGE.getByteLut())));
     getAction(ActionW.INVERT_LUT)
         .ifPresent(
             a ->
@@ -411,7 +413,9 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
         .ifPresent(
             a ->
                 a.setSelectedItemWithoutTriggerAction(
-                    dispOp.getParamValue(FilterOp.OP_NAME, FilterOp.P_KERNEL_DATA)));
+                    dispOp
+                        .getParamValue(FilterOp.OP_NAME, FilterOp.P_KERNEL_DATA)
+                        .orElse(KernelData.NONE)));
     getAction(ActionW.ROTATION)
         .ifPresent(
             a -> a.setSliderValue((Integer) view2d.getActionValue(ActionW.ROTATION.cmd()), false));
