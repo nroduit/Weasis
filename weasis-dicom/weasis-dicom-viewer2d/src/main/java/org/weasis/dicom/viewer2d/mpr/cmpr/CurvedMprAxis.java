@@ -19,9 +19,9 @@ import org.weasis.dicom.viewer2d.mpr.Volume;
 
 /**
  * Holds curve state and parameters for panoramic (curved MPR) generation.
- * 
- * <p>This class stores the 3D curve points defined by the user, the source plane normal,
- * and parameters controlling the panoramic image generation (width, sampling step).
+ *
+ * <p>This class stores the 3D curve points defined by the user, the source plane normal, and
+ * parameters controlling the panoramic image generation (width, sampling step).
  */
 public class CurvedMprAxis {
 
@@ -107,9 +107,7 @@ public class CurvedMprAxis {
     this.view = view;
   }
 
-  /**
-   * Update the panoramic image in the associated view.
-   */
+  /** Update the panoramic image in the associated view. */
   public void updateImage() {
     if (view != null && imageElement != null) {
       view.getImageLayer().setImage(null, null);
@@ -133,9 +131,7 @@ public class CurvedMprAxis {
     return totalLength;
   }
 
-  /**
-   * Dispose resources associated with this axis.
-   */
+  /** Dispose resources associated with this axis. */
   public void dispose() {
     if (imageElement != null) {
       imageElement.removeImageFromCache();

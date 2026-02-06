@@ -23,20 +23,18 @@ import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.DataExplorerView;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.gui.util.GuiUtils;
-import org.weasis.core.api.image.GridBagLayoutModel;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.api.util.ResourceUtil.OtherIcon;
 import org.weasis.core.ui.editor.SeriesViewer;
 import org.weasis.core.ui.editor.SeriesViewerFactory;
-import org.weasis.core.ui.editor.ViewerPluginBuilder;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin.LayoutModel;
 import org.weasis.core.ui.editor.image.ViewerPlugin;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.TagD;
-import org.weasis.dicom.explorer.DicomExplorer;
+import org.weasis.dicom.explorer.main.DicomExplorer;
 import org.weasis.dicom.viewer2d.mpr.MprController;
 import org.weasis.dicom.viewer2d.mpr.MprView;
 import org.weasis.dicom.viewer2d.mpr.MprView.Plane;
@@ -44,7 +42,7 @@ import org.weasis.dicom.viewer2d.mpr.Volume;
 
 /**
  * Factory for creating Curved MPR viewer containers.
- * 
+ *
  * <p>This factory is registered as an OSGi component and provides the ability to create
  * CurvedMprContainer instances programmatically from an MprView.
  */
@@ -77,17 +75,19 @@ public class CurvedMprFactory implements SeriesViewerFactory {
         ImageViewerPlugin.getLayoutModel(properties, ImageViewerPlugin.VIEWS_1x1, null);
     CurvedMprContainer instance = new CurvedMprContainer(layout.model(), layout.uid());
     LOGGER.info("Created CurvedMprContainer instance");
-    
+
     // Retrieve the axis from properties if available
     if (properties != null) {
       Object axisObj = properties.get("curvedMprAxis");
-      LOGGER.info("curvedMprAxis in properties: {}", axisObj != null ? axisObj.getClass().getName() : "null");
+      LOGGER.info(
+          "curvedMprAxis in properties: {}",
+          axisObj != null ? axisObj.getClass().getName() : "null");
       if (axisObj instanceof CurvedMprAxis axis) {
         LOGGER.info("Setting CurvedMprAxis on container");
         instance.setCurvedMprAxis(axis);
       }
     }
-    
+
     ImageViewerPlugin.registerInDataExplorerModel(properties, instance);
     LOGGER.info("Registered container, returning instance");
     return instance;
@@ -137,8 +137,9 @@ public class CurvedMprFactory implements SeriesViewerFactory {
    * @param curvePoints3D the 3D curve points in voxel coordinates
    */
   public static void openCurvedMpr(MprView sourceView, List<Vector3d> curvePoints3D) {
-    LOGGER.info("openCurvedMpr called with {} points", curvePoints3D != null ? curvePoints3D.size() : 0);
-    
+    LOGGER.info(
+        "openCurvedMpr called with {} points", curvePoints3D != null ? curvePoints3D.size() : 0);
+
     if (sourceView == null || curvePoints3D == null || curvePoints3D.size() < 2) {
       LOGGER.warn("Cannot open curved MPR: invalid source view or curve points");
       return;
@@ -191,33 +192,35 @@ public class CurvedMprFactory implements SeriesViewerFactory {
   }
 
   private static void copyBaseTags(CurvedMprImageIO io, DicomImageElement refImg) {
-    io.copyTags(TagD.getTagFromIDs(
-        Tag.PatientID,
-        Tag.PatientName,
-        Tag.PatientBirthDate,
-        Tag.PatientSex,
-        Tag.StudyInstanceUID,
-        Tag.StudyID,
-        Tag.StudyDate,
-        Tag.StudyTime,
-        Tag.AccessionNumber,
-        Tag.ReferringPhysicianName,
-        Tag.Modality,
-        Tag.BodyPartExamined,
-        Tag.PhotometricInterpretation,
-        Tag.SamplesPerPixel,
-        Tag.BitsAllocated,
-        Tag.BitsStored,
-        Tag.HighBit,
-        Tag.PixelRepresentation,
-        Tag.RescaleSlope,
-        Tag.RescaleIntercept,
-        Tag.RescaleType,
-        Tag.WindowCenter,
-        Tag.WindowWidth,
-        Tag.WindowCenterWidthExplanation,
-        Tag.VOILUTFunction
-    ), refImg, false);
+    io.copyTags(
+        TagD.getTagFromIDs(
+            Tag.PatientID,
+            Tag.PatientName,
+            Tag.PatientBirthDate,
+            Tag.PatientSex,
+            Tag.StudyInstanceUID,
+            Tag.StudyID,
+            Tag.StudyDate,
+            Tag.StudyTime,
+            Tag.AccessionNumber,
+            Tag.ReferringPhysicianName,
+            Tag.Modality,
+            Tag.BodyPartExamined,
+            Tag.PhotometricInterpretation,
+            Tag.SamplesPerPixel,
+            Tag.BitsAllocated,
+            Tag.BitsStored,
+            Tag.HighBit,
+            Tag.PixelRepresentation,
+            Tag.RescaleSlope,
+            Tag.RescaleIntercept,
+            Tag.RescaleType,
+            Tag.WindowCenter,
+            Tag.WindowWidth,
+            Tag.WindowCenterWidthExplanation,
+            Tag.VOILUTFunction),
+        refImg,
+        false);
   }
 
   private static Attributes getBaseAttributes(DicomImageElement refImg) {
@@ -235,7 +238,7 @@ public class CurvedMprFactory implements SeriesViewerFactory {
 
   private static void openCurvedMprViewer(CurvedMprAxis axis) {
     LOGGER.info("openCurvedMprViewer called");
-    
+
     SeriesViewerFactory factory = GuiUtils.getUICore().getViewerFactory(CurvedMprFactory.class);
     if (factory == null) {
       LOGGER.error("CurvedMprFactory not found in registered factories!");
@@ -250,7 +253,7 @@ public class CurvedMprFactory implements SeriesViewerFactory {
     // since we don't have a traditional series
     Map<String, Object> props = Collections.synchronizedMap(new HashMap<>());
     props.put("curvedMprAxis", axis);
-    
+
     SeriesViewer<?> viewer = factory.createSeriesViewer(props);
     if (viewer instanceof ViewerPlugin<?> plugin) {
       LOGGER.info("Created viewer plugin, registering...");
@@ -259,7 +262,8 @@ public class CurvedMprFactory implements SeriesViewerFactory {
       plugin.setSelectedAndGetFocus();
       LOGGER.info("Viewer registered and shown");
     } else {
-      LOGGER.error("Created viewer is not a ViewerPlugin: {}", 
+      LOGGER.error(
+          "Created viewer is not a ViewerPlugin: {}",
           viewer != null ? viewer.getClass().getName() : "null");
     }
   }

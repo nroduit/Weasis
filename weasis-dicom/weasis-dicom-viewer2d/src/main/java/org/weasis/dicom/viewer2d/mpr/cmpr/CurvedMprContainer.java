@@ -44,17 +44,15 @@ import org.weasis.core.ui.util.Toolbar;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.DicomSeries;
 import org.weasis.dicom.explorer.DicomViewerPlugin;
-import org.weasis.dicom.explorer.ExportToolBar;
-import org.weasis.dicom.explorer.ImportToolBar;
+import org.weasis.dicom.explorer.exp.ExportToolBar;
+import org.weasis.dicom.explorer.imp.ImportToolBar;
 import org.weasis.dicom.viewer2d.DcmHeaderToolBar;
 import org.weasis.dicom.viewer2d.EventManager;
 import org.weasis.dicom.viewer2d.LutToolBar;
 import org.weasis.dicom.viewer2d.Messages;
 import org.weasis.dicom.viewer2d.View2dContainer;
 
-/**
- * Viewer plugin container for curved MPR panoramic views.
- */
+/** Viewer plugin container for curved MPR panoramic views. */
 public class CurvedMprContainer extends DicomViewerPlugin implements PropertyChangeListener {
   private static final Logger LOGGER = LoggerFactory.getLogger(CurvedMprContainer.class);
 
@@ -195,7 +193,9 @@ public class CurvedMprContainer extends DicomViewerPlugin implements PropertyCha
               ColorLayerUI layer = ColorLayerUI.createTransparentLayerUI(CurvedMprContainer.this);
               PrintDialog<DicomImageElement> dialog =
                   new PrintDialog<>(
-                      SwingUtilities.getWindowAncestor(CurvedMprContainer.this), title, eventManager);
+                      SwingUtilities.getWindowAncestor(CurvedMprContainer.this),
+                      title,
+                      eventManager);
               ColorLayerUI.showCenterScreen(dialog, layer);
             });
     actions.add(printStd);
@@ -220,7 +220,8 @@ public class CurvedMprContainer extends DicomViewerPlugin implements PropertyCha
     LOGGER.info("setCurvedMprAxis called, axis={}", axis != null ? "not null" : "null");
     this.curvedMprAxis = axis;
     CurvedMprView view = getSelectedCurvedMprView();
-    LOGGER.info("getSelectedCurvedMprView returned: {}", view != null ? view.getClass().getName() : "null");
+    LOGGER.info(
+        "getSelectedCurvedMprView returned: {}", view != null ? view.getClass().getName() : "null");
     if (view != null && axis != null) {
       view.setCurvedMprAxis(axis);
       DicomImageElement img = axis.getImageElement();
@@ -231,7 +232,7 @@ public class CurvedMprContainer extends DicomViewerPlugin implements PropertyCha
         DicomSeries series = new DicomSeries(uid);
         series.addMedia(img);
         LOGGER.info("Created DicomSeries with uid: {}", uid);
-        
+
         // Set the series first, then the image
         view.setSeries(series, img);
         LOGGER.info("Called view.setSeries()");
@@ -272,25 +273,27 @@ public class CurvedMprContainer extends DicomViewerPlugin implements PropertyCha
 
   public JMenu createCurvedMprMenu() {
     JMenu menu = new JMenu("Curved MPR");
-    
+
     JMenuItem widthItem = new JMenuItem("Adjust Width...");
-    widthItem.addActionListener(e -> {
-      CurvedMprView view = getSelectedCurvedMprView();
-      if (view != null) {
-        view.showWidthDialog();
-      }
-    });
+    widthItem.addActionListener(
+        e -> {
+          CurvedMprView view = getSelectedCurvedMprView();
+          if (view != null) {
+            view.showWidthDialog();
+          }
+        });
     menu.add(widthItem);
-    
+
     JMenuItem stepItem = new JMenuItem("Adjust Sampling Step...");
-    stepItem.addActionListener(e -> {
-      CurvedMprView view = getSelectedCurvedMprView();
-      if (view != null) {
-        view.showStepDialog();
-      }
-    });
+    stepItem.addActionListener(
+        e -> {
+          CurvedMprView view = getSelectedCurvedMprView();
+          if (view != null) {
+            view.showStepDialog();
+          }
+        });
     menu.add(stepItem);
-    
+
     return menu;
   }
 

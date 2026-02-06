@@ -64,7 +64,6 @@ import org.weasis.core.api.media.data.SeriesComparator;
 import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.api.util.ResourceUtil.OtherIcon;
 import org.weasis.core.ui.editor.image.ImageViewerEventManager;
-import org.weasis.core.ui.util.MouseEventDouble;
 import org.weasis.core.ui.editor.image.SynchCineEvent;
 import org.weasis.core.ui.editor.image.SynchEvent;
 import org.weasis.core.ui.editor.image.ViewButton;
@@ -77,6 +76,7 @@ import org.weasis.core.ui.model.layer.LayerItem;
 import org.weasis.core.ui.model.layer.LayerType;
 import org.weasis.core.ui.model.utils.exceptions.InvalidShapeException;
 import org.weasis.core.ui.pref.PreferenceDialog;
+import org.weasis.core.ui.util.MouseEventDouble;
 import org.weasis.core.util.LangUtil;
 import org.weasis.core.util.Pair;
 import org.weasis.core.util.StringUtil;
@@ -228,13 +228,11 @@ public class MprView extends View2d implements SliceCanvas {
   }
 
   /**
-   * Convert image coordinates to volume coordinates.
-   * Use this when you have coordinates from a graphic (which are in image space),
-   * not mouse/screen coordinates.
-   * 
-   * Note: The MPR uses a cubic texture (sliceSize³) for rendering, but the actual
-   * volume may be non-cubic (e.g., 640x640x218). This method returns coordinates
-   * in actual voxel space.
+   * Convert image coordinates to volume coordinates. Use this when you have coordinates from a
+   * graphic (which are in image space), not mouse/screen coordinates.
+   *
+   * <p>Note: The MPR uses a cubic texture (sliceSize³) for rendering, but the actual volume may be
+   * non-cubic (e.g., 640x640x218). This method returns coordinates in actual voxel space.
    */
   public Point3 getVolumeCoordinatesFromImage(double imgX, double imgY) {
     if (mprController.getVolume() == null) {
@@ -244,17 +242,17 @@ public class MprView extends View2d implements SliceCanvas {
     int sliceSize = volume.getSliceSize();
     Vector3i volSize = volume.getSize();
     Vector3d voxelRatio = volume.getVoxelRatio();
-    
+
     // The volume is centered in the sliceSize×sliceSize image.
     // The rendered extent along each axis is volSize * voxelRatio.
     // The centering offset is (sliceSize - volSize*voxelRatio) / 2.
     double offsetX = (sliceSize - volSize.x * voxelRatio.x) / 2.0;
     double offsetY = (sliceSize - volSize.y * voxelRatio.y) / 2.0;
     double offsetZ = (sliceSize - volSize.z * voxelRatio.z) / 2.0;
-    
+
     // Get the raw center position (not canvas-transformed) for the depth axis
     Vector3d rawCenter = mprController.getAxesControl().getCenter();
-    
+
     // Convert image pixel coordinate to raw voxel index:
     // voxelIndex = (imgCoord - offset) / voxelRatio
     double voxelX, voxelY, voxelZ;
@@ -283,7 +281,7 @@ public class MprView extends View2d implements SliceCanvas {
         voxelZ = rawCenter.z * volSize.z;
       }
     }
-    
+
     return new Point3(voxelX, voxelY, voxelZ);
   }
 
@@ -380,28 +378,34 @@ public class MprView extends View2d implements SliceCanvas {
     List<Graphic> allGraphics = getGraphicManager().getAllGraphics();
     LOGGER.info("Total graphics in manager: {}", allGraphics.size());
     for (Graphic g : allGraphics) {
-      LOGGER.info("  Graphic: {} complete={} class={}", g, g.isGraphicComplete(), g.getClass().getSimpleName());
+      LOGGER.info(
+          "  Graphic: {} complete={} class={}",
+          g,
+          g.isGraphicComplete(),
+          g.getClass().getSimpleName());
     }
 
     // Try to find graphic under the cursor (like "Remove this point" does)
     PolylineGraphic polyline = null;
     Point2D imageCoords = getImageCoordinatesFromMouse(evt.getX(), evt.getY());
     LOGGER.info("Mouse at screen ({}, {}), image coords: {}", evt.getX(), evt.getY(), imageCoords);
-    
-    MouseEventDouble mouseEvt = new MouseEventDouble(
-        this, MouseEvent.MOUSE_RELEASED, evt.getWhen(), 16, 0, 0, 0, 0, 1, true, 1);
+
+    MouseEventDouble mouseEvt =
+        new MouseEventDouble(
+            this, MouseEvent.MOUSE_RELEASED, evt.getWhen(), 16, 0, 0, 0, 0, 1, true, 1);
     mouseEvt.setSource(this);
     mouseEvt.setImageCoordinates(imageCoords);
-    
-    java.util.Optional<Graphic> graphicUnderCursor = 
+
+    java.util.Optional<Graphic> graphicUnderCursor =
         getGraphicManager().getFirstGraphicIntersecting(mouseEvt);
     LOGGER.info("Graphic under cursor: {}", graphicUnderCursor.orElse(null));
-    
+
     if (graphicUnderCursor.isPresent()) {
       Graphic g = graphicUnderCursor.get();
-      LOGGER.info("Found graphic: {} isPolyline={} isComplete={}", 
-          g.getClass().getSimpleName(), 
-          g instanceof PolylineGraphic, 
+      LOGGER.info(
+          "Found graphic: {} isPolyline={} isComplete={}",
+          g.getClass().getSimpleName(),
+          g instanceof PolylineGraphic,
           g.isGraphicComplete());
       if (g instanceof PolylineGraphic pl && pl.isGraphicComplete()) {
         polyline = pl;
@@ -409,28 +413,31 @@ public class MprView extends View2d implements SliceCanvas {
     }
 
     if (polyline != null) {
-      LOGGER.info("Adding Curved MPR menu item for polyline with {} points", polyline.getHandlePointList().size());
+      LOGGER.info(
+          "Adding Curved MPR menu item for polyline with {} points",
+          polyline.getHandlePointList().size());
       final PolylineGraphic finalPolyline = polyline;
       popupMenu.addSeparator();
       JMenuItem curvedMprItem = new JMenuItem("Generate Curved MPR");
-      curvedMprItem.addActionListener(e -> {
-        List<Point2D> pts = finalPolyline.getHandlePointList();
-        if (pts.size() >= 2) {
-          java.util.List<org.joml.Vector3d> points3D = new java.util.ArrayList<>();
-          for (Point2D pt : pts) {
-            if (pt != null) {
-              // Use getVolumeCoordinatesFromImage since polyline points are in image coords
-              Point3 volCoord = getVolumeCoordinatesFromImage(pt.getX(), pt.getY());
-              if (volCoord != null) {
-                points3D.add(new org.joml.Vector3d(volCoord.x, volCoord.y, volCoord.z));
+      curvedMprItem.addActionListener(
+          e -> {
+            List<Point2D> pts = finalPolyline.getHandlePointList();
+            if (pts.size() >= 2) {
+              java.util.List<org.joml.Vector3d> points3D = new java.util.ArrayList<>();
+              for (Point2D pt : pts) {
+                if (pt != null) {
+                  // Use getVolumeCoordinatesFromImage since polyline points are in image coords
+                  Point3 volCoord = getVolumeCoordinatesFromImage(pt.getX(), pt.getY());
+                  if (volCoord != null) {
+                    points3D.add(new org.joml.Vector3d(volCoord.x, volCoord.y, volCoord.z));
+                  }
+                }
+              }
+              if (points3D.size() >= 2) {
+                CurvedMprFactory.openCurvedMpr(this, points3D);
               }
             }
-          }
-          if (points3D.size() >= 2) {
-            CurvedMprFactory.openCurvedMpr(this, points3D);
-          }
-        }
-      });
+          });
       popupMenu.add(curvedMprItem);
     }
   }
@@ -489,35 +496,35 @@ public class MprView extends View2d implements SliceCanvas {
 
     super.drawOnTop(g2d);
     drawProgressBar(g2d, progressBar);
-    
+
     // Draw debug visualization for curved MPR
     drawCurvedMprDebug(g2d);
   }
-  
+
   /**
-   * Draw debug visualization for the curved MPR curve and sampling directions.
-   * Shows: original points (red), smoothed curve (green), perpendicular directions (cyan).
+   * Draw debug visualization for the curved MPR curve and sampling directions. Shows: original
+   * points (red), smoothed curve (green), perpendicular directions (cyan).
    */
   private void drawCurvedMprDebug(Graphics2D g2d) {
     CurvedMprImageIO.DebugCurveData debug = CurvedMprImageIO.getLastDebugData();
     if (debug == null || plane != Plane.AXIAL) {
       return; // Only draw on axial view where the curve was drawn
     }
-    
+
     Volume<?> vol = mprController.getVolume();
     if (vol == null) return;
-    
+
     int sliceSize = vol.getSliceSize();
     Vector3i volSize = vol.getSize();
     Vector3d voxelRatio = vol.getVoxelRatio();
-    
+
     // Centering offsets: the volume is centered in the sliceSize×sliceSize image
     double offsetX = (sliceSize - volSize.x * voxelRatio.x) / 2.0;
     double offsetY = (sliceSize - volSize.y * voxelRatio.y) / 2.0;
-    
+
     java.awt.Stroke oldStroke = g2d.getStroke();
     java.awt.Color oldColor = g2d.getColor();
-    
+
     // Draw original user points (large red circles)
     g2d.setColor(Color.RED);
     g2d.setStroke(new java.awt.BasicStroke(2f));
@@ -526,9 +533,9 @@ public class MprView extends View2d implements SliceCanvas {
       double imgY = pt.y * voxelRatio.y + offsetY;
       Point2D screenPt = getImageCoordinatesToScreen(imgX, imgY);
       int r = 6;
-      g2d.drawOval((int)screenPt.getX() - r, (int)screenPt.getY() - r, r*2, r*2);
+      g2d.drawOval((int) screenPt.getX() - r, (int) screenPt.getY() - r, r * 2, r * 2);
     }
-    
+
     // Draw smoothed curve (green line)
     g2d.setColor(Color.GREEN);
     g2d.setStroke(new java.awt.BasicStroke(1.5f));
@@ -538,53 +545,63 @@ public class MprView extends View2d implements SliceCanvas {
       double imgY = pt.y * voxelRatio.y + offsetY;
       Point2D screenPt = getImageCoordinatesToScreen(imgX, imgY);
       if (prevPt != null) {
-        g2d.drawLine((int)prevPt.getX(), (int)prevPt.getY(), 
-                     (int)screenPt.getX(), (int)screenPt.getY());
+        g2d.drawLine(
+            (int) prevPt.getX(), (int) prevPt.getY(),
+            (int) screenPt.getX(), (int) screenPt.getY());
       }
       prevPt = screenPt;
     }
-    
+
     // Draw perpendicular directions at sampled points (cyan lines showing slab extent)
     g2d.setColor(Color.CYAN);
     g2d.setStroke(new java.awt.BasicStroke(1f));
     // Convert slab thickness from mm to voxels for correct visualization
     double pixelMm = vol.getMinPixelRatio();
     double halfSlabVoxels = (debug.slabThicknessMm / 2.0) / pixelMm;
-    
+
     // Sample every Nth point to avoid clutter
     int step = Math.max(1, debug.sampledPoints.size() / 30);
     for (int i = 0; i < debug.sampledPoints.size(); i += step) {
       Vector3d pt = debug.sampledPoints.get(i);
       Vector3d dir = debug.perpDirections.get(i);
-      
+
       // Compute endpoints of perpendicular line (in voxel coords)
       Vector3d p1 = new Vector3d(pt).add(new Vector3d(dir).mul(halfSlabVoxels));
       Vector3d p2 = new Vector3d(pt).sub(new Vector3d(dir).mul(halfSlabVoxels));
-      
+
       // Convert to image coordinates
       double img1X = p1.x * voxelRatio.x + offsetX;
       double img1Y = p1.y * voxelRatio.y + offsetY;
       double img2X = p2.x * voxelRatio.x + offsetX;
       double img2Y = p2.y * voxelRatio.y + offsetY;
-      
+
       Point2D screen1 = getImageCoordinatesToScreen(img1X, img1Y);
       Point2D screen2 = getImageCoordinatesToScreen(img2X, img2Y);
-      
-      g2d.drawLine((int)screen1.getX(), (int)screen1.getY(),
-                   (int)screen2.getX(), (int)screen2.getY());
+
+      g2d.drawLine(
+          (int) screen1.getX(), (int) screen1.getY(),
+          (int) screen2.getX(), (int) screen2.getY());
     }
-    
+
     // Draw info text
     g2d.setColor(Color.YELLOW);
-    g2d.drawString("Debug: orig=" + debug.originalPoints.size() + 
-                   " smooth=" + debug.smoothedPoints.size() +
-                   " sampled=" + debug.sampledPoints.size() +
-                   " slab=" + debug.slabThicknessMm + "mm", 10, 50);
-    
+    g2d.drawString(
+        "Debug: orig="
+            + debug.originalPoints.size()
+            + " smooth="
+            + debug.smoothedPoints.size()
+            + " sampled="
+            + debug.sampledPoints.size()
+            + " slab="
+            + debug.slabThicknessMm
+            + "mm",
+        10,
+        50);
+
     g2d.setStroke(oldStroke);
     g2d.setColor(oldColor);
   }
-  
+
   private Point2D getImageCoordinatesToScreen(double imgX, double imgY) {
     java.awt.geom.AffineTransform transform = getAffineTransform();
     if (transform == null) {
@@ -1108,11 +1125,14 @@ public class MprView extends View2d implements SliceCanvas {
 
   @Override
   public JPopupMenu buildGraphicContextMenu(final MouseEvent evt, final List<Graphic> selected) {
-    LOGGER.info("MprView.buildGraphicContextMenu called, selected={}", selected != null ? selected.size() : 0);
+    LOGGER.info(
+        "MprView.buildGraphicContextMenu called, selected={}",
+        selected != null ? selected.size() : 0);
     JPopupMenu popupMenu = super.buildGraphicContextMenu(evt, selected);
     if (popupMenu != null && selected != null && selected.size() == 1) {
       Graphic graphic = selected.getFirst();
-      LOGGER.info("Selected graphic: {} isPolyline={} isComplete={}", 
+      LOGGER.info(
+          "Selected graphic: {} isPolyline={} isComplete={}",
           graphic.getClass().getSimpleName(),
           graphic instanceof PolylineGraphic,
           graphic.isGraphicComplete());
@@ -1120,24 +1140,25 @@ public class MprView extends View2d implements SliceCanvas {
         LOGGER.info("Adding Curved MPR menu item in buildGraphicContextMenu");
         popupMenu.addSeparator();
         JMenuItem curvedMprItem = new JMenuItem("Generate Curved MPR");
-        curvedMprItem.addActionListener(e -> {
-          List<Point2D> pts = polyline.getHandlePointList();
-          if (pts.size() >= 2) {
-            java.util.List<org.joml.Vector3d> points3D = new java.util.ArrayList<>();
-            for (Point2D pt : pts) {
-              if (pt != null) {
-                // Use getVolumeCoordinatesFromImage since polyline points are in image coords
-                Point3 volCoord = getVolumeCoordinatesFromImage(pt.getX(), pt.getY());
-                if (volCoord != null) {
-                  points3D.add(new org.joml.Vector3d(volCoord.x, volCoord.y, volCoord.z));
+        curvedMprItem.addActionListener(
+            e -> {
+              List<Point2D> pts = polyline.getHandlePointList();
+              if (pts.size() >= 2) {
+                java.util.List<org.joml.Vector3d> points3D = new java.util.ArrayList<>();
+                for (Point2D pt : pts) {
+                  if (pt != null) {
+                    // Use getVolumeCoordinatesFromImage since polyline points are in image coords
+                    Point3 volCoord = getVolumeCoordinatesFromImage(pt.getX(), pt.getY());
+                    if (volCoord != null) {
+                      points3D.add(new org.joml.Vector3d(volCoord.x, volCoord.y, volCoord.z));
+                    }
+                  }
+                }
+                if (points3D.size() >= 2) {
+                  CurvedMprFactory.openCurvedMpr(this, points3D);
                 }
               }
-            }
-            if (points3D.size() >= 2) {
-              CurvedMprFactory.openCurvedMpr(this, points3D);
-            }
-          }
-        });
+            });
         popupMenu.add(curvedMprItem);
       }
     }

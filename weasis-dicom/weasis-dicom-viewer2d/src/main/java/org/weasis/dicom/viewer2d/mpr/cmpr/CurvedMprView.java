@@ -28,9 +28,9 @@ import org.weasis.dicom.viewer2d.View2d;
 
 /**
  * 2D view for displaying curved MPR panoramic images.
- * 
- * <p>This view extends View2d and provides the standard WL/LUT/zoom/pan controls
- * for the panoramic image generated from a curved MPR path.
+ *
+ * <p>This view extends View2d and provides the standard WL/LUT/zoom/pan controls for the panoramic
+ * image generated from a curved MPR path.
  */
 public class CurvedMprView extends View2d {
   private static final Logger LOGGER = LoggerFactory.getLogger(CurvedMprView.class);
@@ -66,9 +66,7 @@ public class CurvedMprView extends View2d {
     LOGGER.info("super.setImage completed");
   }
 
-  /**
-   * Show a dialog to adjust the panoramic width parameter.
-   */
+  /** Show a dialog to adjust the panoramic width parameter. */
   public void showWidthDialog() {
     if (curvedMprAxis == null) return;
 
@@ -86,8 +84,7 @@ public class CurvedMprView extends View2d {
         e -> {
           double value = (Double) widthSpinner.getValue();
           int pixels = (int) Math.round(value / minPixelRatio);
-          conversionLabel.setText(
-              " %.1f mm = %d pixels".formatted(value, pixels));
+          conversionLabel.setText(" %.1f mm = %d pixels".formatted(value, pixels));
         });
 
     panel.add(new JLabel("Width (mm)" + StringUtil.COLON));
@@ -95,7 +92,8 @@ public class CurvedMprView extends View2d {
     panel.add(conversionLabel);
 
     FontMetrics metrics = conversionLabel.getFontMetrics(conversionLabel.getFont());
-    String maxExpectedLabel = " %.1f mm = %d pixels".formatted(maxWidth, (int) (maxWidth / minPixelRatio));
+    String maxExpectedLabel =
+        " %.1f mm = %d pixels".formatted(maxWidth, (int) (maxWidth / minPixelRatio));
     conversionLabel.setPreferredSize(
         new Dimension(metrics.stringWidth(maxExpectedLabel), metrics.getHeight()));
 
@@ -115,9 +113,7 @@ public class CurvedMprView extends View2d {
     }
   }
 
-  /**
-   * Show a dialog to adjust the sampling step parameter.
-   */
+  /** Show a dialog to adjust the sampling step parameter. */
   public void showStepDialog() {
     if (curvedMprAxis == null) return;
 
@@ -136,8 +132,8 @@ public class CurvedMprView extends View2d {
           double value = (Double) stepSpinner.getValue();
           double totalArcLength = curvedMprAxis.getTotalArcLengthMm();
           int samples = (int) Math.ceil(totalArcLength / value);
-          infoLabel.setText(" Step: %s mm (%d samples)"
-              .formatted(DecFormatter.allNumber(value), samples));
+          infoLabel.setText(
+              " Step: %s mm (%d samples)".formatted(DecFormatter.allNumber(value), samples));
         });
 
     panel.add(new JLabel("Step (mm)" + StringUtil.COLON));
@@ -145,8 +141,8 @@ public class CurvedMprView extends View2d {
     panel.add(infoLabel);
 
     FontMetrics metrics = infoLabel.getFontMetrics(infoLabel.getFont());
-    String maxExpectedLabel = " Step: %s mm (%d samples)"
-        .formatted(DecFormatter.allNumber(maxStep), 9999);
+    String maxExpectedLabel =
+        " Step: %s mm (%d samples)".formatted(DecFormatter.allNumber(maxStep), 9999);
     infoLabel.setPreferredSize(
         new Dimension(metrics.stringWidth(maxExpectedLabel), metrics.getHeight()));
 
@@ -165,5 +161,4 @@ public class CurvedMprView extends View2d {
       curvedMprAxis.setStepMm(newStep);
     }
   }
-
 }

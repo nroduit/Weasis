@@ -24,9 +24,9 @@ import org.weasis.dicom.viewer2d.mpr.MprView;
 
 /**
  * Specialized polyline graphic for drawing curved MPR paths.
- * 
- * <p>This graphic extends PolylineGraphic to allow users to draw a curve in an MPR plane.
- * The 2D points are converted to 3D volume coordinates for panoramic image generation.
+ *
+ * <p>This graphic extends PolylineGraphic to allow users to draw a curve in an MPR plane. The 2D
+ * points are converted to 3D volume coordinates for panoramic image generation.
  */
 @XmlType(name = "curvedMpr")
 @XmlRootElement(name = "curvedMpr")
