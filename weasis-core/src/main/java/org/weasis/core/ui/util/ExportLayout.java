@@ -9,34 +9,107 @@
  */
 package org.weasis.core.ui.util;
 
+import static org.weasis.core.ui.editor.image.ImageViewerPlugin.VIEWS_1x1;
+
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
-import java.awt.GridBagConstraints;
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.Map.Entry;
+import java.util.List;
+import java.util.Optional;
 import javax.swing.JPanel;
 import javax.swing.plaf.PanelUI;
-import org.weasis.core.api.image.GridBagLayoutModel;
-import org.weasis.core.api.image.LayoutConstraints;
+import net.miginfocom.swing.MigLayout;
+import org.weasis.core.api.gui.layout.LayoutCellManager;
+import org.weasis.core.api.gui.layout.MigCell;
+import org.weasis.core.api.gui.layout.MigLayoutModel;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.ui.editor.image.ExportImage;
+import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.editor.image.ViewCanvas;
 
+/**
+ * Provides a printable/exportable representation of a {@link MigLayoutModel} with its content.
+ *
+ * <p>Use {@link #ExportLayout(ImageViewerPlugin)} to export all views in the current layout, or
+ * {@link #ExportLayout(ViewCanvas)} to export a single view.
+ *
+ * @param <E> the type of ImageElement
+ */
 public class ExportLayout<E extends ImageElement> extends JPanel {
 
   protected final JPanel grid = new JPanel();
-  protected GridBagLayoutModel layoutModel;
+  protected final LayoutCellManager<E> cellManager;
 
-  public ExportLayout(GridBagLayoutModel layoutModel) {
+  /**
+   * Creates an export layout from a full viewer container. All {@link ViewCanvas} instances in the
+   * container are wrapped in {@link ExportImage} components and placed into a copy of the
+   * container's current layout.
+   *
+   * @param container the source viewer plugin
+   */
+  public ExportLayout(ImageViewerPlugin<E> container) {
+    super(new BorderLayout());
+    MigLayoutModel layoutModel = container.getLayoutModel().copy();
+    this.cellManager = new LayoutCellManager<>(layoutModel);
     initGrid();
-    adaptLayoutModel(layoutModel);
+
+    grid.setLayout(
+        new MigLayout(
+            layoutModel.getLayoutConstraints(),
+            layoutModel.getColumnConstraints(),
+            layoutModel.getRowConstraints()));
+
+    List<LayoutCellManager.CellEntry<E>> entries = container.getCellManager().getAllEntries();
+
+    for (LayoutCellManager.CellEntry<E> sourceEntry : entries) {
+      MigCell cell = sourceEntry.getCell();
+      Optional<MigCell> modelCell = findCellInModel(layoutModel, cell.position());
+      if (modelCell.isEmpty()) {
+        continue;
+      }
+      String constraints = modelCell.get().getFullConstraints();
+      if (sourceEntry.isViewCanvas()) {
+        ViewCanvas<E> viewCanvas = sourceEntry.getViewCanvas().orElse(null);
+        if (viewCanvas != null) {
+          ExportImage<E> export = new ExportImage<>(viewCanvas);
+          export.getInfoLayer().setBorder(3);
+          cellManager.addComponent(cell.position(), export);
+          grid.add(export, constraints);
+        }
+      } else {
+        Component comp = sourceEntry.getComponent();
+        cellManager.addComponent(cell.position(), comp);
+        grid.add(comp, constraints);
+      }
+    }
+
+    layoutModel.applyConstraintsToLayout(grid);
+    grid.revalidate();
   }
 
+  /**
+   * Creates a 1×1 export layout for a single view canvas.
+   *
+   * @param viewCanvas the canvas to export
+   */
   public ExportLayout(ViewCanvas<E> viewCanvas) {
+    super(new BorderLayout());
+    MigLayoutModel layoutModel = VIEWS_1x1.copy();
+    this.cellManager = new LayoutCellManager<>(layoutModel);
     initGrid();
-    adaptLayoutModel(viewCanvas);
+
+    grid.setLayout(
+        new MigLayout(
+            layoutModel.getLayoutConstraints(),
+            layoutModel.getColumnConstraints(),
+            layoutModel.getRowConstraints()));
+
+    MigCell cell = layoutModel.getCells().getFirst();
+    ExportImage<E> export = new ExportImage<>(viewCanvas);
+    export.getInfoLayer().setBorder(3);
+    cellManager.addComponent(cell.position(), export);
+    grid.add(export, cell.getFullConstraints());
+    grid.revalidate();
   }
 
   private void initGrid() {
@@ -50,65 +123,39 @@ public class ExportLayout<E extends ImageElement> extends JPanel {
     grid.setBackground(bg);
   }
 
-  /** Get the layout of this view panel. */
-  public GridBagLayoutModel getLayoutModel() {
-    return layoutModel;
+  /** Get the layout model of this export panel. */
+  public MigLayoutModel getLayoutModel() {
+    return cellManager.getLayoutModel();
   }
 
-  private void adaptLayoutModel(ViewCanvas<E> viewCanvas) {
-    final Map<LayoutConstraints, Component> map = LinkedHashMap.newLinkedHashMap(1);
-    this.layoutModel = new GridBagLayoutModel(map, "exp_tmp", ""); // NON-NLS
-
-    ExportImage<E> export = new ExportImage<>(viewCanvas);
-    export.getInfoLayer().setBorder(3);
-    LayoutConstraints e =
-        new LayoutConstraints(
-            viewCanvas.getClass().getName(),
-            0,
-            0,
-            0,
-            1,
-            1,
-            1.0,
-            1.0,
-            GridBagConstraints.CENTER,
-            GridBagConstraints.BOTH);
-    map.put(e, export);
-    grid.add(export, e);
-    grid.revalidate();
+  /**
+   * Finds the {@link MigCell} matching a given position in the layout model.
+   *
+   * @param layoutModel the layout model to search
+   * @param position the cell position
+   * @return an Optional containing the matching cell, or empty if not found
+   */
+  private Optional<MigCell> findCellInModel(MigLayoutModel layoutModel, int position) {
+    return layoutModel.getCells().stream().filter(c -> c.position() == position).findFirst();
   }
 
-  private void adaptLayoutModel(GridBagLayoutModel layoutModel) {
-    final Map<LayoutConstraints, Component> oldMap = layoutModel.getConstraints();
-    final Map<LayoutConstraints, Component> map = LinkedHashMap.newLinkedHashMap(oldMap.size());
-    this.layoutModel = new GridBagLayoutModel(map, "exp_tmp", ""); // NON-NLS
-
-    for (Entry<LayoutConstraints, Component> e : oldMap.entrySet()) {
-      Component v = e.getValue();
-      LayoutConstraints constraint = e.getKey().copy();
-
-      if (v instanceof ViewCanvas<?> viewCanvas) {
-        ExportImage<?> export = new ExportImage<>(viewCanvas);
-        export.getInfoLayer().setBorder(3);
-        map.put(constraint, export);
-        v = export;
-      } else {
-        // Non-printable component. Create a new empty panel to not steel the component from the
-        // original UI
-        v = new JPanel();
-        map.put(constraint, v);
-      }
-
-      grid.add(v, e);
-    }
-    grid.revalidate();
+  /**
+   * Returns the component registered at the given cell position, or null if none.
+   *
+   * @param cell the MigCell whose position is used
+   * @return the component, or null
+   */
+  public Component findComponentForCell(MigCell cell) {
+    return cellManager.getComponent(cell.position());
   }
 
+  /** Disposes all ExportImage views and clears the cell manager. */
   public void dispose() {
-    for (Component c : layoutModel.getConstraints().values()) {
+    for (var c : cellManager.getAllComponents()) {
       if (c instanceof ExportImage<?> exportImage) {
         exportImage.disposeView();
       }
     }
+    cellManager.clear();
   }
 }

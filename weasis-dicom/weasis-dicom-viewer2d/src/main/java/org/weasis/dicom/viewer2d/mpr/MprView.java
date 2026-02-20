@@ -67,6 +67,7 @@ import org.weasis.core.ui.editor.image.SynchCineEvent;
 import org.weasis.core.ui.editor.image.SynchEvent;
 import org.weasis.core.ui.editor.image.ViewButton;
 import org.weasis.core.ui.editor.image.ViewCanvas;
+import org.weasis.core.ui.editor.image.ViewProgress;
 import org.weasis.core.ui.model.AbstractGraphicModel;
 import org.weasis.core.ui.model.graphic.Graphic;
 import org.weasis.core.ui.model.layer.GraphicLayer;
@@ -86,7 +87,7 @@ import org.weasis.dicom.viewer2d.Messages;
 import org.weasis.dicom.viewer2d.View2d;
 import org.weasis.dicom.viewer2d.mpr.MprController.ControlPoints;
 
-public class MprView extends View2d implements SliceCanvas {
+public class MprView extends View2d implements SliceCanvas, ViewProgress {
   private static final Logger LOGGER = LoggerFactory.getLogger(MprView.class);
 
   public static final String SHOW_CROSS_CENTER = "show.cross.center";
@@ -843,7 +844,7 @@ public class MprView extends View2d implements SliceCanvas {
     MprAxis axis = getMprAxis();
     Pair<MprAxis, MprAxis> pair = mprController.getCrossAxis(axis);
     if (pair != null) {
-      Volume<?> volume = mprController.getVolume();
+      Volume<?, ?> volume = mprController.getVolume();
       Quaterniond r = new Quaterniond(volume.getRotation());
       if (plane == Plane.AXIAL) {
         r.mul(new Quaterniond().rotateZ(rotation));

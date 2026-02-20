@@ -61,7 +61,7 @@ public class MprController implements MouseListener, MouseMotionListener, MouseW
       Toolkit.getDefaultToolkit().createCustomCursor(cursorImg, new Point(0, 0), "invisibleCursor");
 
   private static final int PIX_TOLERANCE = 7;
-  private Volume<?> volume;
+  private Volume<?, ?> volume;
   private final MprAxis axial;
   private final MprAxis coronal;
   private final MprAxis sagittal;
@@ -139,11 +139,11 @@ public class MprController implements MouseListener, MouseMotionListener, MouseW
     return List.of(axial.getMprView(), coronal.getMprView(), sagittal.getMprView());
   }
 
-  public Volume<?> getVolume() {
+  public Volume<?, ?> getVolume() {
     return volume;
   }
 
-  public void setVolume(Volume<?> volume) {
+  public void setVolume(Volume<?, ?> volume) {
     this.volume = volume;
   }
 

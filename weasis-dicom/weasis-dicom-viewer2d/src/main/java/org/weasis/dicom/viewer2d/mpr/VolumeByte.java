@@ -9,17 +9,15 @@
  */
 package org.weasis.dicom.viewer2d.mpr;
 
-import java.awt.Dimension;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import javax.swing.JProgressBar;
-import org.joml.Matrix4d;
 import org.joml.Vector3d;
 import org.opencv.core.CvType;
 import org.weasis.opencv.data.PlanarImage;
 
-public final class VolumeByte extends Volume<Byte> {
+public final class VolumeByte extends Volume<Byte, byte[]> {
 
   public VolumeByte(
       int sizeX, int sizeY, int sizeZ, boolean signed, int channels, JProgressBar progressBar) {
@@ -36,56 +34,74 @@ public final class VolumeByte extends Volume<Byte> {
   }
 
   public VolumeByte(
-      Volume<? extends Number> volume, int sizeX, int sizeY, int sizeZ, Vector3d voxelRatio) {
+      Volume<Byte, byte[]> volume, int sizeX, int sizeY, int sizeZ, Vector3d voxelRatio) {
     super(volume, sizeX, sizeY, sizeZ, voxelRatio);
   }
 
   @Override
   protected Byte initMinValue() {
-    return Byte.MIN_VALUE;
+    return isSigned ? Byte.MIN_VALUE : 0;
   }
 
   @Override
   protected Byte initMaxValue() {
-    return Byte.MAX_VALUE;
+    return isSigned ? Byte.MAX_VALUE : (byte) 0xFF;
   }
 
   @Override
   protected int initCVType(boolean isSigned, int channels) {
-    checkSingleChannel(channels);
-    return isSigned ? CvType.CV_8S : CvType.CV_8U;
+    return isSigned ? CvType.CV_8SC(channels) : CvType.CV_8UC(channels);
   }
 
   @Override
-  protected byte[][][] createDataArray(int sizeX, int sizeY, int sizeZ, int channels) {
-    checkSingleChannel(channels);
-    return new byte[sizeX][sizeY][sizeZ];
+  protected ChunkedArray<byte[]> createChunkedArray(long totalElements) {
+    return ChunkedArray.ofByte(totalElements);
   }
 
   @Override
-  protected byte[] createRasterArray(int totalPixels, int channels) {
-    checkSingleChannel(channels);
-    return new byte[totalPixels];
+  protected void setElementInData(long index, Byte value) {
+    data.getChunk(data.chunkIndex(index))[data.chunkOffset(index)] = value;
   }
 
   @Override
-  protected void copyFrom(PlanarImage image, int sliceIndex, Matrix4d transform, Dimension dim) {
-    byte[] pixelData = new byte[dim.width * dim.height];
+  protected Byte getElementFromData(long index) {
+    return data.getChunk(data.chunkIndex(index))[data.chunkOffset(index)];
+  }
+
+  @Override
+  protected byte[] allocatePixelArray(int pixelCount) {
+    return new byte[pixelCount * channels];
+  }
+
+  @Override
+  protected void readImagePixels(PlanarImage image, byte[] pixelData) {
     image.get(0, 0, pixelData);
-
-    copyPixels(dim, (x, y) -> setValue(x, y, sliceIndex, pixelData[y * dim.width + x], transform));
   }
 
-  public void readVolume(DataInputStream stream, int x, int y, int z) throws IOException {
-    Byte val = stream.readByte();
-    setValue(x, y, z, val, null);
-  }
-
-  public void writeVolume(DataOutputStream stream, int x, int y, int z) throws IOException {
-    Byte val = getValue(x, y, z, 0);
-    if (val == null) {
-      throw new IOException("Null voxel value at (" + x + "," + y + "," + z + ")");
+  @Override
+  protected void writeToMappedBuffer(long byteOffset, byte[] pixelData, int length) {
+    for (int i = 0; i < length; i++) {
+      mappedBuffer.put(byteOffset + (long) i * byteDepth, pixelData[i]);
     }
-    stream.writeByte(val);
+  }
+
+  @Override
+  protected Byte getFromPixelArray(byte[] pixelData, int index) {
+    return pixelData[index];
+  }
+
+  @Override
+  protected int pixelArrayLength(byte[] pixelData) {
+    return pixelData.length;
+  }
+
+  @Override
+  protected Byte readPrimitive(DataInputStream dis) throws IOException {
+    return dis.readByte();
+  }
+
+  @Override
+  protected void writePrimitive(DataOutputStream dos, Byte value) throws IOException {
+    dos.writeByte(value);
   }
 }

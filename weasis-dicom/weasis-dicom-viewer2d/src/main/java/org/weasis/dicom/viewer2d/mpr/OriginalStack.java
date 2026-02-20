@@ -13,6 +13,7 @@ import static org.weasis.dicom.viewer2d.mpr.MprView.Plane.AXIAL;
 import static org.weasis.dicom.viewer2d.mpr.VolumeBounds.EPSILON;
 import static org.weasis.dicom.viewer2d.mpr.VolumeBounds.needsRectification;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import org.dcm4che3.data.Attributes;
@@ -94,14 +95,11 @@ public abstract class OriginalStack extends AbstractStack {
       return 0.0;
     }
 
-    // Compute shear factors from geometry for spacing correction
-    double spacingCorrection = computeSpacingCorrectionFromGeometry();
-
     // Check for slice parallelism
     checkSliceParallelism();
 
-    double totalSpace = 0.0;
-    double lastSpace = 0.0;
+    // Collect all spacing measurements
+    List<Double> spacings = new ArrayList<>(sourceStack.size() - 1);
     Vector3d lastPosVector = new Vector3d(firstPos[0], firstPos[1], firstPos[2]);
     for (int i = 1; i < sourceStack.size(); i++) {
       double[] sp = (double[]) sourceStack.get(i).getTagValue(TagW.SlicePosition);
@@ -111,18 +109,22 @@ public abstract class OriginalStack extends AbstractStack {
 
       Vector3d currentPosVector = new Vector3d(sp[0], sp[1], sp[2]);
       double space = lastPosVector.distance(currentPosVector);
-      if (spacingCorrection != 1.0) {
-        space *= spacingCorrection;
-      }
-      if (i > 1 && Math.abs(lastSpace - space) > EPSILON) {
-        this.variableSliceSpacing = true;
-      }
-      totalSpace += space;
-      lastSpace = space;
+      spacings.add(space);
       lastPosVector.set(currentPosVector);
     }
 
-    return totalSpace / (sourceStack.size() - 1);
+    // Check for variable spacing (using median as reference)
+    spacings.sort(Double::compareTo);
+    double medianSpace = spacings.get(spacings.size() / 2);
+
+    for (double space : spacings) {
+      if (Math.abs(space - medianSpace) > EPSILON) {
+        this.variableSliceSpacing = true;
+        break;
+      }
+    }
+
+    return medianSpace;
   }
 
   /**
@@ -167,7 +169,7 @@ public abstract class OriginalStack extends AbstractStack {
    *
    * @return correction factor to apply to measured slice spacing
    */
-  private double computeSpacingCorrectionFromGeometry() {
+  double computeSpacingCorrectionFromGeometry() {
     GeometryOfSlice geometry = fistSliceGeometry;
     if (geometry == null) {
       return 1.0;
@@ -239,10 +241,9 @@ public abstract class OriginalStack extends AbstractStack {
 
   @Override
   public boolean equals(Object o) {
-    if (o == null || getClass() != o.getClass()) {
+    if (!(o instanceof OriginalStack that)) {
       return false;
     }
-    OriginalStack that = (OriginalStack) o;
     return Double.compare(getSliceSpace(), that.getSliceSpace()) == 0
         && isVariableSliceSpacing() == that.isVariableSliceSpacing()
         && Objects.equals(getSourceStack(), that.getSourceStack())

@@ -15,9 +15,9 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JSpinner;
 import javax.swing.SpinnerNumberModel;
+import org.weasis.core.api.gui.layout.MigLayoutModel;
 import org.weasis.core.api.gui.util.AbstractItemDialogPage;
 import org.weasis.core.api.gui.util.GuiUtils;
-import org.weasis.core.api.image.GridBagLayoutModel;
 import org.weasis.core.api.service.WProperties;
 import org.weasis.core.ui.pref.PreferenceDialog;
 import org.weasis.core.util.StringUtil;
@@ -31,8 +31,8 @@ public class MprPrefView extends AbstractItemDialogPage {
 
   private final JComboBox<String> comboBox3DCursorMode;
   private final JSpinner spinnerCrossGapSize;
-  private final JComboBox<GridBagLayoutModel> comboBoxLayouts =
-      new JComboBox<>(MprContainer.LAYOUT_LIST.toArray(new GridBagLayoutModel[0]));
+  private final JComboBox<MigLayoutModel> comboBoxLayouts =
+      new JComboBox<>(MprContainer.LAYOUT_LIST.toArray(new MigLayoutModel[0]));
 
   public MprPrefView() {
     super(Messages.getString("MPRFactory.title"), 507);
@@ -101,7 +101,7 @@ public class MprPrefView extends AbstractItemDialogPage {
   }
 
   private void setDefaultLayout() {
-    comboBoxLayouts.setSelectedItem(MprFactory.getDefaultGridBagLayoutModel());
+    comboBoxLayouts.setSelectedItem(MprFactory.getDefaultMigLayoutModel());
     if (comboBoxLayouts.getSelectedIndex() < 0) {
       comboBoxLayouts.setSelectedItem(0);
     }
@@ -115,7 +115,7 @@ public class MprPrefView extends AbstractItemDialogPage {
     properties.putIntProperty(View2d.P_CROSSHAIR_MODE, mode);
     int gapSize = (int) spinnerCrossGapSize.getValue();
     properties.putIntProperty(View2d.P_CROSSHAIR_CENTER_GAP, gapSize);
-    GridBagLayoutModel layout = (GridBagLayoutModel) comboBoxLayouts.getSelectedItem();
+    MigLayoutModel layout = (MigLayoutModel) comboBoxLayouts.getSelectedItem();
     if (layout != null) {
       GuiUtils.getUICore().getSystemPreferences().put(MprFactory.P_DEFAULT_LAYOUT, layout.getId());
     }

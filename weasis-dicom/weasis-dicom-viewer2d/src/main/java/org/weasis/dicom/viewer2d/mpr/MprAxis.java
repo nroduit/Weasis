@@ -94,7 +94,7 @@ public class MprAxis {
     if (rawIO == null) {
       return new Matrix4d();
     }
-    Volume<?> volume = rawIO.getVolume();
+    Volume<?, ?> volume = rawIO.getVolume();
     int sliceImageSize = volume.getSliceSize();
     Vector3d voxelRatio = volume.getVoxelRatio();
     Vector3d volSize = new Vector3d(volume.getSize()).mul(voxelRatio);

@@ -10,16 +10,16 @@
 package org.weasis.dicom.viewer2d.mpr;
 
 import java.util.concurrent.RecursiveAction;
-import java.util.function.BiConsumer;
+import java.util.function.IntBinaryOperator;
 
 public class CopyPixelsTask extends RecursiveAction {
-  private static final int THRESHOLD = 1000;
+  private static final int THRESHOLD = 4096;
   private final int start;
   private final int end;
   private final int width;
-  private final BiConsumer<Integer, Integer> setPixel;
+  private final IntBinaryOperator setPixel;
 
-  CopyPixelsTask(int start, int end, int width, BiConsumer<Integer, Integer> setPixel) {
+  CopyPixelsTask(int start, int end, int width, IntBinaryOperator setPixel) {
     this.start = start;
     this.end = end;
     this.width = width;
@@ -29,16 +29,20 @@ public class CopyPixelsTask extends RecursiveAction {
   @Override
   protected void compute() {
     if (end - start <= THRESHOLD) {
+      int x = start % width;
+      int y = start / width;
       for (int i = start; i < end; i++) {
-        int x = i % width;
-        int y = i / width;
-        setPixel.accept(x, y);
+        setPixel.applyAsInt(x, y);
+        if (++x >= width) {
+          x = 0;
+          y++;
+        }
       }
     } else {
       int mid = (start + end) / 2;
-      CopyPixelsTask leftTask = new CopyPixelsTask(start, mid, width, setPixel);
-      CopyPixelsTask rightTask = new CopyPixelsTask(mid, end, width, setPixel);
-      invokeAll(leftTask, rightTask);
+      invokeAll(
+          new CopyPixelsTask(start, mid, width, setPixel),
+          new CopyPixelsTask(mid, end, width, setPixel));
     }
   }
 }
