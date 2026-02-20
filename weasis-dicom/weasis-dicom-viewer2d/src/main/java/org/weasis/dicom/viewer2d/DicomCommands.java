@@ -18,13 +18,13 @@ import org.slf4j.LoggerFactory;
 import org.weasis.core.api.command.CommandExtension;
 import org.weasis.core.api.command.Option;
 import org.weasis.core.api.command.Options;
+import org.weasis.core.api.gui.layout.MigLayoutModel;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.ComboItemListener;
 import org.weasis.core.api.gui.util.Feature;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.gui.util.SliderChangeListener;
 import org.weasis.core.api.gui.util.SliderCineListener;
-import org.weasis.core.api.image.GridBagLayoutModel;
 import org.weasis.core.api.service.AuditLog;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.editor.image.MouseActions;
@@ -309,14 +309,14 @@ public class DicomCommands implements CommandExtension {
                 e.getSelectedView2dContainer();
             if (opt.isSet("number")) { // NON-NLS
               if (selectedView2dContainer != null) {
-                GridBagLayoutModel val1 =
+                MigLayoutModel val1 =
                     selectedView2dContainer.getBestDefaultViewLayout(
                         opt.getNumber("number")); // NON-NLS
                 e.getAction(ActionW.LAYOUT).ifPresent(a -> a.setSelectedItem(val1));
               }
             } else if (opt.isSet("id")) {
               if (selectedView2dContainer != null) {
-                GridBagLayoutModel val2 = selectedView2dContainer.getViewLayout(opt.get("id"));
+                MigLayoutModel val2 = selectedView2dContainer.getViewLayout(opt.get("id"));
                 if (val2 != null) {
                   e.getAction(ActionW.LAYOUT).ifPresent(a -> a.setSelectedItem(val2));
                 }

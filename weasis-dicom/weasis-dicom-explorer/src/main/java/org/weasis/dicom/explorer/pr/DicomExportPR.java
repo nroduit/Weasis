@@ -13,20 +13,18 @@ import eu.essilab.lablib.checkboxtree.TreeCheckingModel;
 import java.awt.Window;
 import java.util.ArrayList;
 import java.util.Enumeration;
-import java.util.Hashtable;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import org.dcm4che3.data.Tag;
-import org.osgi.framework.BundleContext;
-import org.osgi.framework.ServiceReference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.InsertableUtil;
 import org.weasis.core.api.gui.util.AbstractItemDialogPage;
-import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.dicom.codec.DicomSeries;
@@ -51,21 +49,25 @@ public class DicomExportPR extends DicomExport {
 
   @Override
   protected void initializePages() {
-    Hashtable<String, Object> properties = new Hashtable<>();
+    Map<String, Object> properties = new HashMap<>();
     properties.put(getDicomModel().getClass().getName(), getDicomModel());
     properties.put(getTreeModel().getClass().getName(), getTreeModel());
 
     initTreeCheckingModel();
 
     ArrayList<AbstractItemDialogPage> list = new ArrayList<>();
-    BundleContext context = AppProperties.getBundleContext(this.getClass());
+    String plugInId = GuiUtils.getUICore().getPluginManager().getPluginId(this.getClass());
+    if (plugInId == null) {
+      LOGGER.error("PplugInId is null, cannot load DICOM export plugins");
+      return;
+    }
     try {
-      for (ServiceReference<DicomExportFactory> service :
-          context.getServiceReferences(
-              DicomExportFactory.class,
-              "(component.name=org.weasis.dicom.send.SendDicomFactory)")) {
-        DicomExportFactory factory = context.getService(service);
-        if (factory != null) {
+      List<DicomExportFactory> factories =
+          GuiUtils.getUICore().getPluginManager().getExtensions(DicomExportFactory.class);
+      for (DicomExportFactory factory : factories) {
+        // Filter to only include SendDicomFactory (by class name to avoid direct dependency)
+        if (factory != null
+            && "org.weasis.dicom.send.SendDicomFactory".equals(factory.getClass().getName())) {
           ExportDicom page = factory.createDicomExportPage(properties);
           if (page instanceof AbstractItemDialogPage dialogPage) {
             list.add(dialogPage);

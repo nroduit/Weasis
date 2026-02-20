@@ -12,7 +12,7 @@ package org.weasis.opencv;
 import java.nio.file.Path;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.weasis.core.util.NativeLibrary;
+import org.weasis.opencv.natives.NativeLibrary;
 import org.weasis.plugin.PluginContext;
 import org.weasis.plugin.WeasisPlugin;
 
@@ -34,6 +34,6 @@ public class NativeLoaderPlugin extends WeasisPlugin {
   }
 
   private void loadingNativeLibrary(Path targetPath) {
-    NativeLibrary.loadLibraryFromAbsolutePath(targetPath.toAbsolutePath().toString());
+    NativeLibrary.loadLibraryFromAbsolutePath(targetPath.toAbsolutePath());
   }
 }
