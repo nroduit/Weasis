@@ -81,11 +81,11 @@ public class VolImageIO implements DcmMediaReader {
   private final HashMap<TagW, Object> tags;
   private final URI uri;
   private final MprAxis mprAxis;
-  private final Volume<?> volume;
+  private final Volume<?, ?> volume;
   private Attributes attributes;
   private Map<GeometryOfSlice, GraphicModel> graphicModelMap;
 
-  public VolImageIO(MprAxis mprAxis, Volume<?> volume) {
+  public VolImageIO(MprAxis mprAxis, Volume<?, ?> volume) {
     this.mprAxis = Objects.requireNonNull(mprAxis);
     this.volume = Objects.requireNonNull(volume);
     this.fileCache = new FileCache(this);
@@ -195,7 +195,7 @@ public class VolImageIO implements DcmMediaReader {
     return dstImg;
   }
 
-  public Volume<?> getVolume() {
+  public Volume<?, ?> getVolume() {
     return volume;
   }
 
@@ -242,7 +242,7 @@ public class VolImageIO implements DcmMediaReader {
     int instanceNumber = mprAxis.getSliceIndex();
     rawIO.setTag(TagD.get(Tag.InstanceNumber), instanceNumber + 1);
 
-    GeometryOfSlice geometry = volume.stack.getFistSliceGeometry();
+    GeometryOfSlice geometry = volume.stack.getFirstSliceGeometry();
     Vector3d thlc = transformPosition(geometry, volumeCenter);
     rawIO.setTag(TagD.get(Tag.ImagePositionPatient), new double[] {thlc.x, thlc.y, thlc.z});
 
@@ -446,14 +446,14 @@ public class VolImageIO implements DcmMediaReader {
     Attributes dcm = getDicomObject();
     header = new DicomMetaData(dcm, UID.ImplicitVRLittleEndian);
     MinMaxLocResult minMax = new MinMaxLocResult();
-    minMax.minVal = volume.getMinimum().doubleValue();
-    minMax.maxVal = volume.getMaximum().doubleValue();
+    minMax.minVal = volume.getMinimumAsDouble();
+    minMax.maxVal = volume.getMaximumAsDouble();
     header.getImageDescriptor().setMinMaxPixelValue(0, minMax);
     HEADER_CACHE.put(this, header);
     return header;
   }
 
-  public static void saveVolumeInFile(Volume<?> volume, Path file) {
+  public static void saveVolumeInFile(Volume<?, ?> volume, Path file) {
     try (DataOutputStream dos =
         new DataOutputStream(new BufferedOutputStream(Files.newOutputStream(file)))) {
 
@@ -504,7 +504,7 @@ public class VolImageIO implements DcmMediaReader {
     }
   }
 
-  public static Volume<?> readVolumeFromFile(Path file, JProgressBar progressBar) {
+  public static Volume<?, ?> readVolumeFromFile(Path file, JProgressBar progressBar) {
     try (DataInputStream dis =
         new DataInputStream(new BufferedInputStream(Files.newInputStream(file)))) {
       int sizeX = dis.readInt();
@@ -515,7 +515,7 @@ public class VolImageIO implements DcmMediaReader {
       int channels = CvType.channels(cvType);
       boolean signed = depth == CvType.CV_16S || depth == CvType.CV_8S;
 
-      Volume<?> volume =
+      Volume<?, ?> volume =
           switch (depth) {
             case CvType.CV_8S, CvType.CV_8U -> {
               VolumeByte v = new VolumeByte(sizeX, sizeY, sizeZ, signed, channels, progressBar);

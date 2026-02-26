@@ -35,6 +35,7 @@ import org.weasis.core.api.explorer.ObservableEvent;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.core.api.gui.Insertable.Type;
 import org.weasis.core.api.gui.InsertableUtil;
+import org.weasis.core.api.gui.layout.MigLayoutModel;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.gui.util.BasicActionState;
@@ -43,7 +44,6 @@ import org.weasis.core.api.gui.util.Filter;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.SliderChangeListener;
 import org.weasis.core.api.gui.util.ToggleButtonListener;
-import org.weasis.core.api.image.GridBagLayoutModel;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.Series;
@@ -106,18 +106,19 @@ public class View2dContainer extends DicomViewerPlugin implements PropertyChange
   public static final List<SynchView> DEFAULT_SYNCH_LIST =
       List.of(SynchView.NONE, SynchView.DEFAULT_STACK, SynchView.DEFAULT_TILE);
 
-  public static final GridBagLayoutModel VIEWS_2x1_r1xc2_dump =
-      new GridBagLayoutModel(
-          View2dContainer.class.getResourceAsStream("/config/layoutModel.xml"), // NON-NLS
+  public static final MigLayoutModel VIEWS_2x1_r1xc2_dump =
+      new MigLayoutModel(
+          View2dContainer.class.getResourceAsStream("/config/layoutModel.properties"), // NON-NLS
           "layout_dump", // NON-NLS
           Messages.getString("View2dContainer.layout_dump"));
-  public static final GridBagLayoutModel VIEWS_2x1_r1xc2_histo =
-      new GridBagLayoutModel(
-          View2dContainer.class.getResourceAsStream("/config/layoutModelHisto.xml"), // NON-NLS
+  public static final MigLayoutModel VIEWS_2x1_r1xc2_histo =
+      new MigLayoutModel(
+          View2dContainer.class.getResourceAsStream(
+              "/config/layoutModelHisto.properties"), // NON-NLS
           "layout_histo", // NON-NLS
           Messages.getString("View2dContainer.histogram"));
   // Unmodifiable list of the default layout elements
-  public static final List<GridBagLayoutModel> DEFAULT_LAYOUT_LIST =
+  public static final List<MigLayoutModel> DEFAULT_LAYOUT_LIST =
       List.of(
           VIEWS_1x1,
           VIEWS_1x2,
@@ -139,7 +140,7 @@ public class View2dContainer extends DicomViewerPlugin implements PropertyChange
   }
 
   public View2dContainer(
-      GridBagLayoutModel layoutModel, String uid, String pluginName, Icon icon, String tooltips) {
+      MigLayoutModel layoutModel, String uid, String pluginName, Icon icon, String tooltips) {
     super(EventManager.getInstance(), layoutModel, uid, pluginName, icon, tooltips);
     setSynchView(SynchView.DEFAULT_STACK);
     addComponentListener(
@@ -150,12 +151,12 @@ public class View2dContainer extends DicomViewerPlugin implements PropertyChange
             ImageViewerPlugin<DicomImageElement> container =
                 EventManager.getInstance().getSelectedView2dContainer();
             if (container == View2dContainer.this) {
-              Optional<ComboItemListener<GridBagLayoutModel>> layoutAction =
+              Optional<ComboItemListener<MigLayoutModel>> layoutAction =
                   EventManager.getInstance().getAction(ActionW.LAYOUT);
               layoutAction.ifPresent(
                   a ->
                       a.setDataListWithoutTriggerAction(
-                          getLayoutList().toArray(new GridBagLayoutModel[0])));
+                          getLayoutList().toArray(new MigLayoutModel[0])));
             }
           }
         });
@@ -515,7 +516,7 @@ public class View2dContainer extends DicomViewerPlugin implements PropertyChange
             }
           } else if (SeriesEvent.Action.UPDATE_IMAGE.equals(action2)) {
             if (source instanceof DicomImageElement dcm) {
-              for (ViewCanvas<DicomImageElement> v : view2ds) {
+              for (ViewCanvas<DicomImageElement> v : cellManager) {
                 if (dcm == v.getImage()) {
                   // Force to repaint the same image
                   if (v.getImageLayer().getDisplayImage() == null) {
@@ -532,7 +533,7 @@ public class View2dContainer extends DicomViewerPlugin implements PropertyChange
             }
           } else if (SeriesEvent.Action.PRELOADING.equals(action2)
               && source instanceof DicomSeries dcm) {
-            for (ViewCanvas<DicomImageElement> v : view2ds) {
+            for (ViewCanvas<DicomImageElement> v : cellManager) {
               if (dcm == v.getSeries()) {
                 v.getJComponent().repaint(v.getInfoLayer().getPreloadingProgressBound());
               }
@@ -555,7 +556,7 @@ public class View2dContainer extends DicomViewerPlugin implements PropertyChange
         }
       } else if (ObservableEvent.BasicAction.REPLACE.equals(action)) {
         if (newVal instanceof Series series) {
-          for (ViewCanvas<DicomImageElement> v : view2ds) {
+          for (ViewCanvas<DicomImageElement> v : cellManager) {
             MediaSeries<DicomImageElement> s = v.getSeries();
             if (series.equals(s)) {
               /*
@@ -587,7 +588,7 @@ public class View2dContainer extends DicomViewerPlugin implements PropertyChange
         }
 
         if (specialElement instanceof PRSpecialElement prSpecialElement) {
-          for (ViewCanvas<DicomImageElement> view : view2ds) {
+          for (ViewCanvas<DicomImageElement> view : cellManager) {
             if (view instanceof View2d view2d
                 && PresentationStateReader.isImageApplicable(prSpecialElement, view.getImage())) {
               view2d.updatePR();
@@ -595,7 +596,7 @@ public class View2dContainer extends DicomViewerPlugin implements PropertyChange
           }
         } else if (specialElement instanceof SpecialElementRegion region) {
           ViewCanvas<DicomImageElement> pane = getSelectedImagePane();
-          for (ViewCanvas<DicomImageElement> view : view2ds) {
+          for (ViewCanvas<DicomImageElement> view : cellManager) {
             if (view instanceof View2d view2d) {
               if (region.containsSopInstanceUIDReference(view.getImage())) {
                 view2d.updateSegmentation();
@@ -739,7 +740,7 @@ public class View2dContainer extends DicomViewerPlugin implements PropertyChange
   }
 
   @Override
-  public int getViewTypeNumber(GridBagLayoutModel layout, Class<?> defaultClass) {
+  public int getViewTypeNumber(MigLayoutModel layout, Class<?> defaultClass) {
     return View2dFactory.getViewTypeNumber(layout, defaultClass);
   }
 
@@ -787,7 +788,7 @@ public class View2dContainer extends DicomViewerPlugin implements PropertyChange
   }
 
   @Override
-  public GridBagLayoutModel getDefaultLayoutModel() {
+  public MigLayoutModel getDefaultLayoutModel() {
     return VIEWS_1x1;
   }
 
@@ -836,7 +837,7 @@ public class View2dContainer extends DicomViewerPlugin implements PropertyChange
   }
 
   @Override
-  public List<GridBagLayoutModel> getLayoutList() {
+  public List<MigLayoutModel> getLayoutList() {
     return getLayoutList(this, DEFAULT_LAYOUT_LIST);
   }
 }

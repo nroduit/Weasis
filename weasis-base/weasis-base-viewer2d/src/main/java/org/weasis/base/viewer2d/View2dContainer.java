@@ -34,6 +34,7 @@ import org.weasis.base.viewer2d.dockable.ImageTool;
 import org.weasis.core.api.explorer.ObservableEvent;
 import org.weasis.core.api.gui.Insertable.Type;
 import org.weasis.core.api.gui.InsertableUtil;
+import org.weasis.core.api.gui.layout.MigLayoutModel;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.gui.util.ComboItemListener;
@@ -41,7 +42,6 @@ import org.weasis.core.api.gui.util.Filter;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.SliderChangeListener;
 import org.weasis.core.api.gui.util.SliderCineListener;
-import org.weasis.core.api.image.GridBagLayoutModel;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
@@ -84,13 +84,13 @@ public class View2dContainer extends ImageViewerPlugin<ImageElement>
   public static final List<SynchView> DEFAULT_SYNCH_LIST =
       List.of(SynchView.NONE, SynchView.DEFAULT_STACK, SynchView.DEFAULT_TILE);
 
-  public static final GridBagLayoutModel VIEWS_2x1_r1xc2_histo =
-      new GridBagLayoutModel(
-          View2dContainer.class.getResourceAsStream("/config/layoutModelHisto.xml"), // NON-NLS
+  public static final MigLayoutModel VIEWS_2x1_r1xc2_histo =
+      new MigLayoutModel(
+          View2dContainer.class.getResourceAsStream("/config/layoutModelHisto.properties"),
           "layout_histo", // NON-NLS
           Messages.getString("View2dContainer.histogram"));
   // Unmodifiable list of the default layout elements
-  public static final List<GridBagLayoutModel> DEFAULT_LAYOUT_LIST =
+  public static final List<MigLayoutModel> DEFAULT_LAYOUT_LIST =
       List.of(
           VIEWS_1x1,
           VIEWS_1x2,
@@ -110,7 +110,7 @@ public class View2dContainer extends ImageViewerPlugin<ImageElement>
     this(VIEWS_1x1, null);
   }
 
-  public View2dContainer(GridBagLayoutModel layoutModel, String uid) {
+  public View2dContainer(MigLayoutModel layoutModel, String uid) {
     super(
         EventManager.getInstance(),
         layoutModel,
@@ -127,12 +127,12 @@ public class View2dContainer extends ImageViewerPlugin<ImageElement>
             ImageViewerPlugin<ImageElement> container =
                 EventManager.getInstance().getSelectedView2dContainer();
             if (container == View2dContainer.this) {
-              Optional<ComboItemListener<GridBagLayoutModel>> layoutAction =
+              Optional<ComboItemListener<MigLayoutModel>> layoutAction =
                   EventManager.getInstance().getAction(ActionW.LAYOUT);
               layoutAction.ifPresent(
                   a ->
                       a.setDataListWithoutTriggerAction(
-                          getLayoutList().toArray(new GridBagLayoutModel[0])));
+                          getLayoutList().toArray(new MigLayoutModel[0])));
             }
           }
         });
@@ -362,7 +362,7 @@ public class View2dContainer extends ImageViewerPlugin<ImageElement>
             }
           } else if (SeriesEvent.Action.PRELOADING.equals(action2)) {
             if (source instanceof Series s) {
-              for (ViewCanvas<ImageElement> v : view2ds) {
+              for (ViewCanvas<ImageElement> v : cellManager) {
                 if (s == v.getSeries()) {
                   v.getJComponent().repaint(v.getInfoLayer().getPreloadingProgressBound());
                 }
@@ -382,7 +382,7 @@ public class View2dContainer extends ImageViewerPlugin<ImageElement>
           }
           // Series Group
           else if (TagW.SubseriesInstanceUID.equals(group.getTagID())) {
-            for (ViewCanvas<ImageElement> v : view2ds) {
+            for (ViewCanvas<ImageElement> v : cellManager) {
               if (newVal.equals(v.getSeries())) {
                 v.setSeries(null);
                 if (closeIfNoContent()) {
@@ -394,7 +394,7 @@ public class View2dContainer extends ImageViewerPlugin<ImageElement>
         }
       } else if (ObservableEvent.BasicAction.REPLACE.equals(action)) {
         if (newVal instanceof Series series) {
-          for (ViewCanvas<ImageElement> v : view2ds) {
+          for (ViewCanvas<ImageElement> v : cellManager) {
             MediaSeries<ImageElement> s = v.getSeries();
             if (series.equals(s)) {
               // Set to null to be sure that all parameters from the view are applied again to the
@@ -439,7 +439,7 @@ public class View2dContainer extends ImageViewerPlugin<ImageElement>
   }
 
   @Override
-  public GridBagLayoutModel getDefaultLayoutModel() {
+  public MigLayoutModel getDefaultLayoutModel() {
     return VIEWS_1x1;
   }
 
@@ -451,7 +451,7 @@ public class View2dContainer extends ImageViewerPlugin<ImageElement>
   }
 
   @Override
-  public int getViewTypeNumber(GridBagLayoutModel layout, Class<?> defaultClass) {
+  public int getViewTypeNumber(MigLayoutModel layout, Class<?> defaultClass) {
     return ViewerFactory.getViewTypeNumber(layout, defaultClass);
   }
 
@@ -493,7 +493,7 @@ public class View2dContainer extends ImageViewerPlugin<ImageElement>
   }
 
   @Override
-  public List<GridBagLayoutModel> getLayoutList() {
+  public List<MigLayoutModel> getLayoutList() {
     return getLayoutList(this, DEFAULT_LAYOUT_LIST);
   }
 }

@@ -25,6 +25,7 @@ import javax.swing.BoundedRangeModel;
 import javax.swing.SwingUtilities;
 import javax.swing.event.SwingPropertyChangeSupport;
 import org.weasis.core.Messages;
+import org.weasis.core.api.gui.layout.MigLayoutModel;
 import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.ComboItemListener;
@@ -35,7 +36,6 @@ import org.weasis.core.api.gui.util.SliderChangeListener;
 import org.weasis.core.api.gui.util.SliderCineListener;
 import org.weasis.core.api.gui.util.SliderCineListener.TIME;
 import org.weasis.core.api.gui.util.ToggleButtonListener;
-import org.weasis.core.api.image.GridBagLayoutModel;
 import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaSeries;
@@ -344,18 +344,17 @@ public abstract class ImageViewerEventManager<E extends ImageElement> implements
     };
   }
 
-  protected ComboItemListener<GridBagLayoutModel> newLayoutAction(GridBagLayoutModel[] layouts) {
+  protected ComboItemListener<MigLayoutModel> newLayoutAction(MigLayoutModel[] layouts) {
     return new ComboItemListener<>(
-        ActionW.LAYOUT, Optional.ofNullable(layouts).orElseGet(() -> new GridBagLayoutModel[0])) {
+        ActionW.LAYOUT, Optional.ofNullable(layouts).orElseGet(() -> new MigLayoutModel[0])) {
 
       @Override
       public void itemStateChanged(Object object) {
-        if (selectedView2dContainer != null
-            && object instanceof GridBagLayoutModel gridBagLayoutModel) {
+        if (selectedView2dContainer != null && object instanceof MigLayoutModel layoutModel) {
           // change layout
           clearAllPropertyChangeListeners();
           ViewCanvas<E> view = selectedView2dContainer.getSelectedImagePane();
-          selectedView2dContainer.setLayoutModel(gridBagLayoutModel);
+          selectedView2dContainer.setLayoutModel(layoutModel);
           if (!selectedView2dContainer.isContainingView(view)) {
             view = selectedView2dContainer.getSelectedImagePane();
           }

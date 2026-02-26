@@ -32,47 +32,75 @@ import org.weasis.core.api.util.FontItem;
 import org.weasis.core.ui.model.graphic.Graphic;
 import org.weasis.core.ui.model.layer.LayerItem;
 
+/**
+ * A non-interactive view used for printing and exporting images.
+ *
+ * <p>Captures the full visual state of a source {@link ViewCanvas} (image operations, zoom, center,
+ * rotation, annotations) and renders it off-screen for printing or image export.
+ *
+ * <p>When rendering to a printer context, the image pipeline automatically uses the printer's
+ * native device scale to produce the sharpest possible output.
+ *
+ * @param <E> the type of ImageElement
+ */
 public class ExportImage<E extends ImageElement> extends DefaultView2d<E> {
 
-  private final ViewCanvas<E> view2d;
+  /** The source view whose state is captured for export. */
+  private final ViewCanvas<E> sourceView;
+
+  /**
+   * Holds the current {@link Graphics2D} context during {@link #draw(Graphics2D)} so that {@link
+   * #getGraphics()} returns it correctly for sub-components.
+   */
   private Graphics2D currentG2d;
+
   private double imagePrintingResolution = 1.0;
 
-  public ExportImage(ViewCanvas<E> view2d) {
-    super(view2d.getEventManager(), null);
-    this.view2d = view2d;
-    // Remove OpEventListener to avoid reseting some parameters when setting the series
-    this.imageLayer.removeEventListener(imageLayer.getDisplayOpManager());
+  /**
+   * Creates an export view that captures the visual state of the given {@code sourceView}.
+   *
+   * @param sourceView the canvas whose image, operations, zoom, and annotations are copied
+   */
+  public ExportImage(ViewCanvas<E> sourceView) {
+    super(sourceView.getEventManager(), null);
+    this.sourceView = sourceView;
+
+    // Remove the OpEventListener so that resizing/repaints do not reset operation parameters
+    imageLayer.removeEventListener(imageLayer.getDisplayOpManager());
+
     setFont(FontItem.MINI.getFont());
-    this.infoLayer = view2d.getInfoLayer().getLayerCopy(this, false);
-    infoLayer.setVisible(view2d.getInfoLayer().getVisible());
+
+    // Copy info layer settings (without global preferences so export is independent)
+    this.infoLayer = sourceView.getInfoLayer().getLayerCopy(this, false);
+    infoLayer.setVisible(sourceView.getInfoLayer().getVisible());
     infoLayer.setShowBottomScale(false);
-    // For exporting view, remove Pixel value, Preloading bar, Key Object
+    // Suppress interactive-only items in the export overlay
     infoLayer.setDisplayPreferencesValue(LayerItem.PIXEL, false);
     infoLayer.setDisplayPreferencesValue(LayerItem.PRELOADING_BAR, false);
 
-    // Copy image operations from view2d
+    // Copy image pipeline operations from the source view
     SimpleOpManager operations = imageLayer.getDisplayOpManager();
-    for (ImageOpNode op : view2d.getImageLayer().getDisplayOpManager().getOperations()) {
+    for (ImageOpNode op : sourceView.getImageLayer().getDisplayOpManager().getOperations()) {
       operations.addImageOperationAction(op.copy());
     }
-    // Copy the current values of image operations
-    view2d.copyActionWState(actionsInView);
+
+    // Copy all action states (zoom, window/level, rotation, …)
+    sourceView.copyActionWState(actionsInView);
 
     setPreferredSize(new Dimension(1024, 1024));
-    ViewModel model = view2d.getViewModel();
-
+    ViewModel model = sourceView.getViewModel();
     Rectangle2D canvas =
         new Rectangle2D.Double(
-            0, 0, view2d.getJComponent().getWidth(), view2d.getJComponent().getHeight());
+            0, 0, sourceView.getJComponent().getWidth(), sourceView.getJComponent().getHeight());
     actionsInView.put("origin.image.bound", canvas);
-    actionsInView.put("origin.zoom", view2d.getActionValue(ActionW.ZOOM.cmd()));
+    actionsInView.put("origin.zoom", sourceView.getActionValue(ActionW.ZOOM.cmd()));
     actionsInView.put(
         "origin.center.offset",
         new Point2D.Double(model.getModelOffsetX(), model.getModelOffsetY()));
+
     // Do not use setSeries() because the view will be reset
-    this.series = view2d.getSeries();
-    setImage(view2d.getImage());
+    this.series = sourceView.getSeries();
+    setImage(sourceView.getImage());
   }
 
   public double getImagePrintingResolution() {
@@ -104,8 +132,8 @@ public class ExportImage<E extends ImageElement> extends DefaultView2d<E> {
 
   @Override
   public void paintComponent(Graphics g) {
-    if (g instanceof Graphics2D graphics2D) {
-      draw(graphics2D);
+    if (g instanceof Graphics2D g2d) {
+      draw(g2d);
     }
   }
 
@@ -118,11 +146,12 @@ public class ExportImage<E extends ImageElement> extends DefaultView2d<E> {
     // Set font size according to the view size
     g2d.setFont(getLayerFont());
     Object[] oldRenderingHints = GuiUtils.setRenderingHints(g2d, true, true, true);
-    // Set label box size and spaces between items
+
+    // Update graphic label positions to match this view's bounds
     graphicManager.updateLabels(Boolean.TRUE, this);
 
-    Point2D p = getClipViewCoordinatesOffset();
-    g2d.translate(p.getX(), p.getY());
+    Point2D offset = getClipViewCoordinatesOffset();
+    g2d.translate(offset.getX(), offset.getY());
 
     // TODO fix rotation issue
     Integer rotationAngle = (Integer) actionsInView.get(ActionW.ROTATION.cmd());
@@ -134,7 +163,7 @@ public class ExportImage<E extends ImageElement> extends DefaultView2d<E> {
     }
 
     drawLayers(g2d, affineTransform, inverseTransform);
-    g2d.translate(-p.getX(), -p.getY());
+    g2d.translate(-offset.getX(), -offset.getY());
 
     if (infoLayer != null) {
       infoLayer.paint(g2d);
@@ -143,20 +172,20 @@ public class ExportImage<E extends ImageElement> extends DefaultView2d<E> {
     g2d.setPaint(oldColor);
     g2d.setStroke(oldStroke);
 
-    // Reset label box size and spaces between items
-    graphicManager.updateLabels(Boolean.TRUE, view2d);
+    // Restore graphic label positions relative to the original source view
+    graphicManager.updateLabels(Boolean.TRUE, sourceView);
 
     currentG2d = null;
   }
 
   @Override
   public void handleLayerChanged(ImageLayer<E> layer) {
-    // Do nothing
+    // No-op: export views do not react to live layer changes
   }
 
   @Override
   public void enableMouseAndKeyListener(MouseActions mouseActions) {
-    // Do nothing
+    // No-op: export views are not interactive
   }
 
   @Override

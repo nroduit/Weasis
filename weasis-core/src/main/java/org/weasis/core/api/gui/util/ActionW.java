@@ -12,6 +12,7 @@ package org.weasis.core.api.gui.util;
 import java.awt.Cursor;
 import java.awt.event.KeyEvent;
 import org.weasis.core.Messages;
+import org.weasis.core.api.gui.layout.MigLayoutModel;
 import org.weasis.core.api.gui.util.Feature.BasicActionStateValue;
 import org.weasis.core.api.gui.util.Feature.BooleanValue;
 import org.weasis.core.api.gui.util.Feature.ComboItemListenerValue;
@@ -21,7 +22,6 @@ import org.weasis.core.api.gui.util.Feature.PannerListenerValue;
 import org.weasis.core.api.gui.util.Feature.SliderChangeListenerValue;
 import org.weasis.core.api.gui.util.Feature.SliderCineListenerValue;
 import org.weasis.core.api.gui.util.Feature.ToggleButtonListenerValue;
-import org.weasis.core.api.image.GridBagLayoutModel;
 import org.weasis.core.api.image.util.KernelData;
 import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.api.media.data.SeriesComparator;
@@ -157,7 +157,7 @@ public class ActionW {
           Messages.getString("ActionW.context_menu"), "contextMenu", KeyEvent.VK_Q, 0, null);
   public static final Feature VIEWING_PROTOCOL =
       new BooleanValue("", "viewingProtocol", 0, 0, null); // NON-NLS
-  public static final ComboItemListenerValue<GridBagLayoutModel> LAYOUT =
+  public static final ComboItemListenerValue<MigLayoutModel> LAYOUT =
       new ComboItemListenerValue<>(
           Messages.getString("ActionW.layout"), "layout", 0, 0, null); // NON-NLS
   public static final Feature MODE =

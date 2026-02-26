@@ -32,6 +32,7 @@ import javax.swing.KeyStroke;
 import org.dcm4che3.img.lut.PresetWindowLevel;
 import org.osgi.framework.BundleContext;
 import org.osgi.service.prefs.Preferences;
+import org.weasis.core.api.gui.layout.MigLayoutModel;
 import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.AppProperties;
@@ -42,7 +43,6 @@ import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.RadioMenuItem;
 import org.weasis.core.api.gui.util.SliderChangeListener;
 import org.weasis.core.api.gui.util.ToggleButtonListener;
-import org.weasis.core.api.image.GridBagLayoutModel;
 import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.SeriesComparator;
@@ -134,8 +134,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> {
     setAction(newSegmentationMode());
     setAction(newSortStackAction());
     setAction(newInverseStackAction());
-    setAction(
-        newLayoutAction(View2dContainer.DEFAULT_LAYOUT_LIST.toArray(new GridBagLayoutModel[0])));
+    setAction(newLayoutAction(View2dContainer.DEFAULT_LAYOUT_LIST.toArray(new MigLayoutModel[0])));
     setAction(newSynchAction(View2dContainer.DEFAULT_SYNCH_LIST.toArray(new SynchView[0])));
     getAction(ActionW.SYNCH)
         .ifPresent(a -> a.setSelectedItemWithoutTriggerAction(SynchView.DEFAULT_STACK));
@@ -631,7 +630,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> {
 
     if (selectedView2dContainer != null) {
       Optional<ComboItemListener<SynchView>> synchAction = getAction(ActionW.SYNCH);
-      Optional<ComboItemListener<GridBagLayoutModel>> layoutAction = getAction(ActionW.LAYOUT);
+      Optional<ComboItemListener<MigLayoutModel>> layoutAction = getAction(ActionW.LAYOUT);
       if (oldContainer == null
           || !oldContainer.getClass().equals(selectedView2dContainer.getClass())) {
         synchAction.ifPresent(
@@ -641,7 +640,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> {
         layoutAction.ifPresent(
             a ->
                 a.setDataListWithoutTriggerAction(
-                    selectedView2dContainer.getLayoutList().toArray(new GridBagLayoutModel[0])));
+                    selectedView2dContainer.getLayoutList().toArray(new MigLayoutModel[0])));
       }
       if (oldContainer != null) {
         ViewCanvas<DicomImageElement> pane = oldContainer.getSelectedImagePane();

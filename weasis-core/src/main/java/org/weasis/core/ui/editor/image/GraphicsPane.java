@@ -63,7 +63,7 @@ public abstract class GraphicsPane extends JComponent implements Canvas {
   protected final PropertyChangeListener graphicsChangeHandler;
 
   public GraphicsPane(ViewModel viewModel) {
-    setOpaque(false);
+    setOpaque(true);
 
     this.layerModelHandler = new LayerModelHandler();
 

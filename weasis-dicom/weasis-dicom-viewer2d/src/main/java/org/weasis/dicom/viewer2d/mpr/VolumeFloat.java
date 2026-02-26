@@ -9,17 +9,15 @@
  */
 package org.weasis.dicom.viewer2d.mpr;
 
-import java.awt.Dimension;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import javax.swing.JProgressBar;
-import org.joml.Matrix4d;
 import org.joml.Vector3d;
 import org.opencv.core.CvType;
 import org.weasis.opencv.data.PlanarImage;
 
-public final class VolumeFloat extends Volume<Float> {
+public final class VolumeFloat extends Volume<Float, float[]> {
 
   public VolumeFloat(int sizeX, int sizeY, int sizeZ, int channels, JProgressBar progressBar) {
     super(sizeX, sizeY, sizeZ, CvType.CV_32FC(channels), progressBar);
@@ -40,45 +38,66 @@ public final class VolumeFloat extends Volume<Float> {
   }
 
   public VolumeFloat(
-      Volume<? extends Number> volume, int sizeX, int sizeY, int sizeZ, Vector3d voxelRatio) {
+      Volume<Float, float[]> volume, int sizeX, int sizeY, int sizeZ, Vector3d voxelRatio) {
     super(volume, sizeX, sizeY, sizeZ, voxelRatio);
   }
 
+  @Override
   protected int initCVType(boolean isSigned, int channels) {
     checkSingleChannel(channels);
     return CvType.CV_32F;
   }
 
   @Override
-  protected float[][][] createDataArray(int sizeX, int sizeY, int sizeZ, int channels) {
+  protected ChunkedArray<float[]> createChunkedArray(long totalElements) {
     checkSingleChannel(channels);
-    return new float[sizeX][sizeY][sizeZ];
+    return ChunkedArray.ofFloat(totalElements);
   }
 
   @Override
-  protected float[] createRasterArray(int totalPixels, int channels) {
-    checkSingleChannel(channels);
-    return new float[totalPixels];
+  protected void setElementInData(long index, Float value) {
+    data.getChunk(data.chunkIndex(index))[data.chunkOffset(index)] = value;
   }
 
   @Override
-  protected void copyFrom(PlanarImage image, int sliceIndex, Matrix4d transform, Dimension dim) {
-    float[] pixelData = new float[dim.width * dim.height];
+  protected Float getElementFromData(long index) {
+    return data.getChunk(data.chunkIndex(index))[data.chunkOffset(index)];
+  }
+
+  @Override
+  protected float[] allocatePixelArray(int pixelCount) {
+    return new float[pixelCount * channels];
+  }
+
+  @Override
+  protected void readImagePixels(PlanarImage image, float[] pixelData) {
     image.get(0, 0, pixelData);
-
-    copyPixels(dim, (x, y) -> setValue(x, y, sliceIndex, pixelData[y * dim.width + x], transform));
   }
 
-  public void readVolume(DataInputStream stream, int x, int y, int z) throws IOException {
-    Float val = stream.readFloat();
-    setValue(x, y, z, val, null);
-  }
-
-  public void writeVolume(DataOutputStream stream, int x, int y, int z) throws IOException {
-    Float val = getValue(x, y, z, 0);
-    if (val == null) {
-      throw new IOException("Null voxel value at (" + x + "," + y + "," + z + ")");
+  @Override
+  protected void writeToMappedBuffer(long byteOffset, float[] pixelData, int length) {
+    for (int i = 0; i < length; i++) {
+      mappedBuffer.putFloat(byteOffset + (long) i * byteDepth, pixelData[i]);
     }
-    stream.writeFloat(val);
+  }
+
+  @Override
+  protected Float getFromPixelArray(float[] pixelData, int index) {
+    return pixelData[index];
+  }
+
+  @Override
+  protected int pixelArrayLength(float[] pixelData) {
+    return pixelData.length;
+  }
+
+  @Override
+  protected Float readPrimitive(DataInputStream dis) throws IOException {
+    return dis.readFloat();
+  }
+
+  @Override
+  protected void writePrimitive(DataOutputStream dos, Float value) throws IOException {
+    dos.writeFloat(value);
   }
 }

@@ -31,10 +31,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.ObservableEvent;
 import org.weasis.core.api.gui.InsertableUtil;
+import org.weasis.core.api.gui.layout.MigLayoutModel;
 import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.gui.util.GuiUtils;
-import org.weasis.core.api.image.GridBagLayoutModel;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.Series;
@@ -65,15 +65,15 @@ import org.weasis.dicom.explorer.tag.DicomFieldsView;
 public class SRContainer extends DicomViewerPlugin implements PropertyChangeListener {
   private static final Logger LOGGER = LoggerFactory.getLogger(SRContainer.class);
 
-  public static final GridBagLayoutModel VIEWS_SR =
-      new GridBagLayoutModel(
+  public static final MigLayoutModel VIEWS_SR =
+      new MigLayoutModel(
           "1x1", // NON-NLS
           "1x1", // NON-NLS
           1,
           1,
           SRView.class.getName());
 
-  public static final List<GridBagLayoutModel> LAYOUT_LIST = List.of(VIEWS_SR);
+  public static final List<MigLayoutModel> LAYOUT_LIST = List.of(VIEWS_SR);
 
   public static final List<SynchView> SYNCH_LIST = List.of(SynchView.NONE);
 
@@ -125,7 +125,7 @@ public class SRContainer extends DicomViewerPlugin implements PropertyChangeList
     this(VIEWS_SR, null);
   }
 
-  public SRContainer(GridBagLayoutModel layoutModel, String uid) {
+  public SRContainer(MigLayoutModel layoutModel, String uid) {
     super(
         SR_EVENT_MANAGER,
         layoutModel,
@@ -276,7 +276,7 @@ public class SRContainer extends DicomViewerPlugin implements PropertyChangeList
   }
 
   @Override
-  public int getViewTypeNumber(GridBagLayoutModel layout, Class<?> defaultClass) {
+  public int getViewTypeNumber(MigLayoutModel layout, Class<?> defaultClass) {
     return 0;
   }
 
@@ -319,7 +319,7 @@ public class SRContainer extends DicomViewerPlugin implements PropertyChangeList
   }
 
   @Override
-  public GridBagLayoutModel getDefaultLayoutModel() {
+  public MigLayoutModel getDefaultLayoutModel() {
     return VIEWS_SR;
   }
 
@@ -417,7 +417,7 @@ public class SRContainer extends DicomViewerPlugin implements PropertyChangeList
   }
 
   @Override
-  public List<GridBagLayoutModel> getLayoutList() {
+  public List<MigLayoutModel> getLayoutList() {
     return LAYOUT_LIST;
   }
 }

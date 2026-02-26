@@ -27,6 +27,7 @@ import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.TagW;
+import org.weasis.core.ui.editor.image.ViewProgress;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.DicomSeries;
 import org.weasis.dicom.codec.TagD;
@@ -36,15 +37,15 @@ import org.weasis.dicom.viewer2d.mpr.MprView.Plane;
 
 public class ObliqueMpr extends OriginalStack {
   static final String[] imageTypes = {"DERIVED", "SECONDARY", "MPR"};
-  private final Volume<?> volume;
+  private final Volume<?, ?> volume;
 
   public ObliqueMpr(
       Plane plane,
       MediaSeries<DicomImageElement> series,
-      MprView view,
+      ViewProgress view,
       Filter<DicomImageElement> filter) {
     super(plane, series, filter);
-    JProgressBar bar = createProgressBar(view, (int) Math.ceil(getSourceStack().size() * 1.2));
+    JProgressBar bar = createProgressBar(view, getSourceStack().size());
     GuiExecutor.invokeAndWait(
         () -> {
           bar.setValue(0);
@@ -57,31 +58,22 @@ public class ObliqueMpr extends OriginalStack {
           }
           view.repaint();
         });
-    Volume<?> v = Volume.createVolume(this, bar);
-    if (v.isTransformed()) {
-      volume = v;
-    } else {
-      Volume<?> transformVolume = v.transformVolume();
-      if (transformVolume != v) {
-        v.removeData();
-      }
-      volume = transformVolume;
-    }
+    this.volume = Volume.createVolume(this, bar);
   }
 
-  public static JProgressBar createProgressBar(MprView view, int maxSize) {
+  public static JProgressBar createProgressBar(ViewProgress progress, int maxSize) {
     JProgressBar bar = new JProgressBar(0, maxSize);
-    Dimension dim = new Dimension(view.getWidth() / 2, GuiUtils.getScaleLength(30));
+    Dimension dim = new Dimension(progress.getWidth() / 2, GuiUtils.getScaleLength(30));
     bar.setSize(dim);
     bar.setPreferredSize(dim);
     bar.setMaximumSize(dim);
     bar.setValue(0);
     bar.setStringPainted(true);
-    view.setProgressBar(bar);
+    progress.setProgressBar(bar);
     return bar;
   }
 
-  public Volume<?> getVolume() {
+  public Volume<?, ?> getVolume() {
     return volume;
   }
 

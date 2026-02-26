@@ -22,38 +22,7 @@ public record VolumeBounds(
     Vector3d origin,
     Vector3d rowDir,
     Vector3d colDir,
-    Vector3d normalDir,
-    double columnShear,
-    double rowShear,
-    double planRotation) {
+    Vector3d normalDir) {
 
   public static final double EPSILON = 1e-2;
-
-  /**
-   * @return true if the volume needs rectification due to non-orthogonal orientation
-   */
-  public boolean needsRectification() {
-    return planNeedsRectification() || columnNeedsRectification() || rowNeedsRectification();
-  }
-
-  public boolean planNeedsRectification() {
-    return needsRectification(planRotation);
-  }
-
-  public boolean columnNeedsRectification() {
-    return needsRectification(columnShear);
-  }
-
-  public boolean rowNeedsRectification() {
-    return needsRectification(rowShear);
-  }
-
-  static boolean needsRectification(double shearValue) {
-    double absVal = Math.abs(shearValue);
-    // Check if deviation from 0 or 1 is significant
-    if (absVal > 0.5) {
-      return (1.0 - absVal) > EPSILON;
-    }
-    return absVal > EPSILON;
-  }
 }

@@ -11,8 +11,8 @@ package org.weasis.dicom.viewer2d.mpr;
 
 import static org.weasis.dicom.viewer2d.mpr.MprView.Plane.AXIAL;
 import static org.weasis.dicom.viewer2d.mpr.VolumeBounds.EPSILON;
-import static org.weasis.dicom.viewer2d.mpr.VolumeBounds.needsRectification;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import org.dcm4che3.data.Attributes;
@@ -67,7 +67,11 @@ public abstract class OriginalStack extends AbstractStack {
     return plane == AXIAL ? getLastImage() : getFirstImage();
   }
 
-  public GeometryOfSlice getFistSliceGeometry() {
+  protected DicomImageElement getEndingImage() {
+    return plane == AXIAL ? getFirstImage() : getLastImage();
+  }
+
+  public GeometryOfSlice getFirstSliceGeometry() {
     return fistSliceGeometry;
   }
 
@@ -94,14 +98,11 @@ public abstract class OriginalStack extends AbstractStack {
       return 0.0;
     }
 
-    // Compute shear factors from geometry for spacing correction
-    double spacingCorrection = computeSpacingCorrectionFromGeometry();
-
     // Check for slice parallelism
     checkSliceParallelism();
 
-    double totalSpace = 0.0;
-    double lastSpace = 0.0;
+    // Collect all spacing measurements
+    List<Double> spacings = new ArrayList<>(sourceStack.size() - 1);
     Vector3d lastPosVector = new Vector3d(firstPos[0], firstPos[1], firstPos[2]);
     for (int i = 1; i < sourceStack.size(); i++) {
       double[] sp = (double[]) sourceStack.get(i).getTagValue(TagW.SlicePosition);
@@ -111,18 +112,22 @@ public abstract class OriginalStack extends AbstractStack {
 
       Vector3d currentPosVector = new Vector3d(sp[0], sp[1], sp[2]);
       double space = lastPosVector.distance(currentPosVector);
-      if (spacingCorrection != 1.0) {
-        space *= spacingCorrection;
-      }
-      if (i > 1 && Math.abs(lastSpace - space) > EPSILON) {
-        this.variableSliceSpacing = true;
-      }
-      totalSpace += space;
-      lastSpace = space;
+      spacings.add(space);
       lastPosVector.set(currentPosVector);
     }
 
-    return totalSpace / (sourceStack.size() - 1);
+    // Check for variable spacing (using median as reference)
+    spacings.sort(Double::compareTo);
+    double medianSpace = spacings.get(spacings.size() / 2);
+
+    for (double space : spacings) {
+      if (Math.abs(space - medianSpace) > EPSILON) {
+        this.variableSliceSpacing = true;
+        break;
+      }
+    }
+
+    return medianSpace;
   }
 
   /**
@@ -161,68 +166,6 @@ public abstract class OriginalStack extends AbstractStack {
     }
   }
 
-  /**
-   * Computes the spacing correction factor from the image orientation geometry. This generalizes
-   * the gantry tilt correction to handle both column and row shear.
-   *
-   * @return correction factor to apply to measured slice spacing
-   */
-  private double computeSpacingCorrectionFromGeometry() {
-    GeometryOfSlice geometry = fistSliceGeometry;
-    if (geometry == null) {
-      return 1.0;
-    }
-
-    // Get shear components based on plane orientation
-    double colShear = getColumnShearComponent(geometry.getColumn());
-    double rowShear = getRowShearComponent(geometry.getRow());
-
-    // If no significant shear, no correction needed
-    if (!needsRectification(colShear) && !needsRectification(rowShear)) {
-      return 1.0;
-    }
-
-    // Combined shear magnitude
-    double combinedShear = Math.sqrt(colShear * colShear + rowShear * rowShear);
-
-    // The correction factor compensates for the apparent shortening of spacing
-    // when slices are acquired at an angle
-    double shearAngle = Math.atan(combinedShear);
-    return 1.0 / Math.cos(shearAngle);
-  }
-
-  /**
-   * Gets the column shear component based on the acquisition plane. Column shear represents
-   * deviation in the slice normal direction.
-   */
-  private double getColumnShearComponent(Vector3d col) {
-    return switch (plane) {
-      case AXIAL -> col.z;
-      case CORONAL -> col.y;
-      case SAGITTAL -> col.x;
-    };
-  }
-
-  /**
-   * Gets the row shear component based on the acquisition plane. Row shear represents deviation
-   * perpendicular to column shear.
-   */
-  private double getRowShearComponent(Vector3d row) {
-    return switch (plane) {
-      case AXIAL -> row.z;
-      case CORONAL -> row.y;
-      case SAGITTAL -> row.x;
-    };
-  }
-
-  private double getPlanRotationComponent(Vector3d row) {
-    return switch (plane) {
-      case AXIAL -> row.y();
-      case CORONAL -> row.z();
-      case SAGITTAL -> -row.z();
-    };
-  }
-
   public double getSliceSpace() {
     return sliceSpace;
   }
@@ -239,20 +182,19 @@ public abstract class OriginalStack extends AbstractStack {
 
   @Override
   public boolean equals(Object o) {
-    if (o == null || getClass() != o.getClass()) {
+    if (!(o instanceof OriginalStack that)) {
       return false;
     }
-    OriginalStack that = (OriginalStack) o;
     return Double.compare(getSliceSpace(), that.getSliceSpace()) == 0
         && isVariableSliceSpacing() == that.isVariableSliceSpacing()
         && Objects.equals(getSourceStack(), that.getSourceStack())
-        && Objects.equals(getFistSliceGeometry(), that.getFistSliceGeometry());
+        && Objects.equals(getFirstSliceGeometry(), that.getFirstSliceGeometry());
   }
 
   @Override
   public int hashCode() {
     return Objects.hash(
-        getSourceStack(), getFistSliceGeometry(), getSliceSpace(), isVariableSliceSpacing());
+        getSourceStack(), getFirstSliceGeometry(), getSliceSpace(), isVariableSliceSpacing());
   }
 
   /**
@@ -278,11 +220,6 @@ public abstract class OriginalStack extends AbstractStack {
     normalizeToPositiveDirection(row);
     normalizeToPositiveDirection(col);
 
-    // Compute shear factors for potential rectification
-    double columnShear = getColumnShearComponent(firstGeom.getColumn());
-    double rowShear = getRowShearComponent(firstGeom.getRow());
-    double planRotation = getPlanRotationComponent(firstGeom.getRow());
-
     // Get pixel spacing from first image
     double pixelSpacing = firstImg.getPixelSize();
     double sliceSpacing = getSliceSpace();
@@ -299,10 +236,7 @@ public abstract class OriginalStack extends AbstractStack {
               origin,
               row,
               col,
-              normal,
-              columnShear,
-              rowShear,
-              planRotation);
+              normal);
       case CORONAL ->
           new VolumeBounds(
               new Vector3i(getWidth(), numSlices, getHeight()),
@@ -310,10 +244,7 @@ public abstract class OriginalStack extends AbstractStack {
               origin,
               row,
               col,
-              normal,
-              columnShear,
-              rowShear,
-              planRotation);
+              normal);
       case SAGITTAL ->
           new VolumeBounds(
               new Vector3i(numSlices, getWidth(), getHeight()),
@@ -321,10 +252,7 @@ public abstract class OriginalStack extends AbstractStack {
               origin,
               row,
               col,
-              normal,
-              columnShear,
-              rowShear,
-              planRotation);
+              normal);
     };
   }
 

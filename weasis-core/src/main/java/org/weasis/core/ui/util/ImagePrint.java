@@ -21,8 +21,7 @@ import java.awt.print.Paper;
 import java.awt.print.Printable;
 import java.awt.print.PrinterException;
 import java.awt.print.PrinterJob;
-import java.util.Map;
-import java.util.Map.Entry;
+import java.util.List;
 import javax.print.attribute.HashPrintRequestAttributeSet;
 import javax.print.attribute.PrintRequestAttributeSet;
 import javax.print.attribute.Size2DSyntax;
@@ -35,8 +34,8 @@ import javax.swing.JOptionPane;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.Messages;
+import org.weasis.core.api.gui.layout.MigCell;
 import org.weasis.core.api.gui.util.GuiUtils;
-import org.weasis.core.api.image.LayoutConstraints;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.ui.editor.image.ExportImage;
 import org.weasis.core.util.MathUtil;
@@ -161,52 +160,58 @@ public class ImagePrint implements Printable {
     if ((layout == null) || (g2d == null)) {
       return;
     }
-    Dimension dimGrid = layout.layoutModel.getGridSize();
+    Dimension dimGrid = layout.getLayoutModel().getGridSize();
     Point2D.Double placeholder =
         new Point2D.Double(
             f.getImageableWidth() - (dimGrid.width - 1) * 5,
             f.getImageableHeight() - (dimGrid.height - 1) * 5);
+
+    // Calculate column and row weights from cells
+    double[] columnWeights = calculateColumnWeights(dimGrid);
+    double[] rowWeights = calculateRowWeights(dimGrid);
 
     int lastx = 0;
     double lastwx = 0.0;
     double[] lastwy = new double[dimGrid.width];
     double wx = 0.0;
 
-    final Map<LayoutConstraints, Component> elements = layout.layoutModel.getConstraints();
-    for (Entry<LayoutConstraints, Component> e : elements.entrySet()) {
-      LayoutConstraints key = e.getKey();
-      Component value = e.getValue();
+    final List<MigCell> cells = layout.getLayoutModel().getCells();
+    for (MigCell cell : cells) {
+      Component component = layout.findComponentForCell(cell);
 
       ExportImage<? extends ImageElement> image = null;
       Point2D.Double pad = new Point2D.Double(0.0, 0.0);
 
-      if (value instanceof ExportImage<? extends ImageElement> exportImage) {
+      if (component instanceof ExportImage<? extends ImageElement> exportImage) {
         image = exportImage;
-        formatImage(image, key, placeholder, pad);
+        // Calculate effective weights for this cell
+        double weightx = calculateCellWeightX(cell, columnWeights);
+        double weighty = calculateCellWeightY(cell, rowWeights);
+        formatImage(image, placeholder, pad, weightx, weighty);
       }
 
-      if (key.gridx == 0) {
+      if (cell.x() == 0) {
         wx = 0.0;
-      } else if (lastx < key.gridx) {
+      } else if (lastx < cell.x()) {
         wx += lastwx;
       }
-      double wy = lastwy[key.gridx];
+      double wy = lastwy[cell.x()];
       double x =
           printLoc.x
               + f.getImageableX()
               + (placeholder.x * wx)
-              + (MathUtil.isEqualToZero(wx) ? 0 : key.gridx * 5)
+              + (MathUtil.isEqualToZero(wx) ? 0 : cell.x() * 5)
               + pad.x;
       double y =
           printLoc.y
               + f.getImageableY()
               + (placeholder.y * wy)
-              + (MathUtil.isEqualToZero(wy) ? 0 : key.gridy * 5)
+              + (MathUtil.isEqualToZero(wy) ? 0 : cell.y() * 5)
               + pad.y;
-      lastx = key.gridx;
-      lastwx = key.weightx;
-      for (int i = key.gridx; i < key.gridx + key.gridwidth; i++) {
-        lastwy[i] += key.weighty;
+      lastx = cell.x();
+      lastwx = columnWeights[cell.x()];
+      for (int i = cell.x(); i < cell.x() + cell.spanX(); i++) {
+        lastwy[i] += rowWeights[cell.y()];
       }
 
       if (image != null) {
@@ -221,11 +226,46 @@ public class ImagePrint implements Printable {
     }
   }
 
+  private double[] calculateColumnWeights(Dimension dimGrid) {
+    double[] weights = new double[dimGrid.width];
+    double uniformWeight = 1.0 / dimGrid.width;
+    for (int i = 0; i < dimGrid.width; i++) {
+      weights[i] = uniformWeight;
+    }
+    return weights;
+  }
+
+  private double[] calculateRowWeights(Dimension dimGrid) {
+    double[] weights = new double[dimGrid.height];
+    double uniformWeight = 1.0 / dimGrid.height;
+    for (int i = 0; i < dimGrid.height; i++) {
+      weights[i] = uniformWeight;
+    }
+    return weights;
+  }
+
+  private double calculateCellWeightX(MigCell cell, double[] columnWeights) {
+    double totalWeight = 0.0;
+    for (int i = cell.x(); i < cell.x() + cell.spanX() && i < columnWeights.length; i++) {
+      totalWeight += columnWeights[i];
+    }
+    return totalWeight;
+  }
+
+  private double calculateCellWeightY(MigCell cell, double[] rowWeights) {
+    double totalWeight = 0.0;
+    for (int i = cell.y(); i < cell.y() + cell.spanY() && i < rowWeights.length; i++) {
+      totalWeight += rowWeights[i];
+    }
+    return totalWeight;
+  }
+
   private void formatImage(
       ExportImage<? extends ImageElement> image,
-      LayoutConstraints key,
       Point2D.Double placeholder,
-      Point2D.Double pad) {
+      Point2D.Double pad,
+      double weightx,
+      double weighty) {
     if (!printOptions.isShowingAnnotations() && image.getInfoLayer().getVisible()) {
       image.getInfoLayer().setVisible(false);
     }
@@ -246,9 +286,7 @@ public class ImagePrint implements Printable {
         canvasHeight = originSize.getHeight() / originZoom;
       }
       double scaleCanvas =
-          Math.min(
-              placeholder.x * key.weightx / canvasWidth,
-              placeholder.y * key.weighty / canvasHeight);
+          Math.min(placeholder.x * weightx / canvasWidth, placeholder.y * weighty / canvasHeight);
 
       // Set the print area in pixel
       double cw = canvasWidth * scaleCanvas;
@@ -256,8 +294,8 @@ public class ImagePrint implements Printable {
       image.setSize((int) (cw + 0.5), (int) (ch + 0.5));
 
       if (printOptions.isCenter()) {
-        pad.x = (placeholder.x * key.weightx - cw) * 0.5;
-        pad.y = (placeholder.y * key.weighty - ch) * 0.5;
+        pad.x = (placeholder.x * weightx - cw) * 0.5;
+        pad.y = (placeholder.y * weighty - ch) * 0.5;
       } else {
         pad.x = 0.0;
         pad.y = 0.0;

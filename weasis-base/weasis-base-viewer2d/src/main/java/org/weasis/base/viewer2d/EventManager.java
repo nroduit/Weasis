@@ -27,6 +27,7 @@ import org.osgi.framework.BundleContext;
 import org.osgi.service.prefs.Preferences;
 import org.weasis.core.api.gui.Insertable.Type;
 import org.weasis.core.api.gui.InsertableUtil;
+import org.weasis.core.api.gui.layout.MigLayoutModel;
 import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.AppProperties;
@@ -40,7 +41,6 @@ import org.weasis.core.api.gui.util.SliderCineListener;
 import org.weasis.core.api.gui.util.SliderCineListener.TIME;
 import org.weasis.core.api.gui.util.ToggleButtonListener;
 import org.weasis.core.api.image.FilterOp;
-import org.weasis.core.api.image.GridBagLayoutModel;
 import org.weasis.core.api.image.ImageOpNode;
 import org.weasis.core.api.image.OpManager;
 import org.weasis.core.api.image.PseudoColorOp;
@@ -105,8 +105,7 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
 
     setAction(newLutAction());
     setAction(newFilterAction());
-    setAction(
-        newLayoutAction(View2dContainer.DEFAULT_LAYOUT_LIST.toArray(new GridBagLayoutModel[0])));
+    setAction(newLayoutAction(View2dContainer.DEFAULT_LAYOUT_LIST.toArray(new MigLayoutModel[0])));
     setAction(newSynchAction(View2dContainer.DEFAULT_SYNCH_LIST.toArray(new SynchView[0])));
     getAction(ActionW.SYNCH)
         .ifPresent(a -> a.setSelectedItemWithoutTriggerAction(SynchView.DEFAULT_STACK));
@@ -234,7 +233,7 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
     this.selectedView2dContainer = selectedView2dContainer;
     if (selectedView2dContainer != null) {
       Optional<ComboItemListener<SynchView>> synchAction = getAction(ActionW.SYNCH);
-      Optional<ComboItemListener<GridBagLayoutModel>> layoutAction = getAction(ActionW.LAYOUT);
+      Optional<ComboItemListener<MigLayoutModel>> layoutAction = getAction(ActionW.LAYOUT);
       if (oldContainer == null
           || !oldContainer.getClass().equals(selectedView2dContainer.getClass())) {
         synchAction.ifPresent(
@@ -244,7 +243,7 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
         layoutAction.ifPresent(
             a ->
                 a.setDataListWithoutTriggerAction(
-                    selectedView2dContainer.getLayoutList().toArray(new GridBagLayoutModel[0])));
+                    selectedView2dContainer.getLayoutList().toArray(new MigLayoutModel[0])));
       }
       if (oldContainer != null) {
         ViewCanvas<ImageElement> pane = oldContainer.getSelectedImagePane();

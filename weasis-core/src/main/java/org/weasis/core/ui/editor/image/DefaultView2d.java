@@ -9,6 +9,7 @@
  */
 package org.weasis.core.ui.editor.image;
 
+import java.awt.Color;
 import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.Font;
@@ -799,6 +800,9 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
   protected void draw(Graphics2D g2d) {
     Stroke oldStroke = g2d.getStroke();
     Paint oldColor = g2d.getPaint();
+
+    g2d.setColor(Color.BLACK);
+    g2d.fillRect(0, 0, getWidth(), getHeight());
 
     // Paint the visible area
     // Set font size for computing shared text areas that need to be repainted in different zoom

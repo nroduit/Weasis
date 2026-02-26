@@ -23,8 +23,11 @@ import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
+import javax.swing.Icon;
 import org.osgi.service.prefs.Preferences;
+import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.DecFormatter;
+import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.image.ImageOpNode;
 import org.weasis.core.api.image.OpManager;
 import org.weasis.core.api.image.WindowOp;
@@ -36,6 +39,7 @@ import org.weasis.core.ui.editor.image.DisplayByteLut;
 import org.weasis.core.ui.editor.image.HistogramData;
 import org.weasis.core.ui.editor.image.HistogramView;
 import org.weasis.core.ui.editor.image.PixelInfo;
+import org.weasis.core.ui.editor.image.SynchData;
 import org.weasis.core.ui.editor.image.ViewButton;
 import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.model.utils.imp.DefaultUUID;
@@ -110,6 +114,86 @@ public abstract class AbstractInfoLayer<E extends ImageElement> extends DefaultU
     if (p != null) {
       p.setLocation(x, y);
     }
+  }
+
+  protected void setDefaultCornerPositions(Rectangle bound) {
+    setPosition(Position.TopLeft, border, border);
+    setPosition(Position.TopRight, (double) bound.width - border, border);
+    setPosition(
+        Position.BottomRight, (double) bound.width - border, (double) bound.height - border);
+  }
+
+  protected void drawExtendedActions(Graphics2D g2d) {
+    if (view2DPane.getViewButtons().isEmpty()) {
+      return;
+    }
+
+    int space = GuiUtils.getScaleLength(10);
+    Point2D topRight = getPosition(Position.TopRight);
+    Point2D.Double midy = calculateMiddleYPosition(space, topRight);
+
+    SynchData synchData = (SynchData) view2DPane.getActionValue(ActionW.SYNCH_LINK.cmd());
+    boolean tile = synchData != null && SynchData.Mode.TILE.equals(synchData.getMode());
+
+    for (ViewButton b : view2DPane.getViewButtons()) {
+      if (shouldDrawButton(b, tile)) {
+        positionAndDrawButton(g2d, b, space, topRight, midy);
+      }
+    }
+  }
+
+  private Point2D.Double calculateMiddleYPosition(int space, Point2D topRight) {
+    int height = 0;
+    for (ViewButton b : view2DPane.getViewButtons()) {
+      if (b.isVisible() && b.getPosition() == GridBagConstraints.EAST) {
+        height += b.getIcon().getIconHeight() + space;
+      }
+    }
+    return new Point2D.Double(
+        topRight.getX(), view2DPane.getJComponent().getHeight() * 0.5 - (height - space) * 0.5);
+  }
+
+  protected boolean shouldDrawButton(ViewButton b, boolean tile) {
+    return b.isVisible() && !(tile && ActionW.KO_SELECTION.getTitle().equals(b.getName()));
+  }
+
+  protected void positionAndDrawButton(
+      Graphics2D g2d, ViewButton b, int space, Point2D topRight, Point2D.Double midy) {
+    Icon icon = b.getIcon();
+    int position = b.getPosition();
+
+    switch (position) {
+      case GridBagConstraints.EAST -> {
+        b.x = midy.x - icon.getIconWidth();
+        b.y = midy.y;
+        midy.y += icon.getIconHeight() + space;
+      }
+      case GridBagConstraints.NORTHEAST -> {
+        b.x = topRight.getX() - icon.getIconWidth();
+        b.y = topRight.getY();
+        topRight.setLocation(topRight.getX() - icon.getIconWidth() + space, topRight.getY());
+      }
+      case GridBagConstraints.SOUTHEAST -> {
+        Point2D bottomRight = getPosition(Position.BottomRight);
+        b.x = bottomRight.getX() - icon.getIconWidth();
+        b.y = bottomRight.getY() - icon.getIconHeight();
+        bottomRight.setLocation(
+            bottomRight.getX() - icon.getIconWidth() + space, bottomRight.getY());
+      }
+      case GridBagConstraints.NORTHWEST -> {
+        Point2D topLeft = getPosition(Position.TopLeft);
+        b.x = topLeft.getX();
+        b.y = topLeft.getY();
+        topLeft.setLocation(topLeft.getX() + icon.getIconWidth() + space, topLeft.getY());
+      }
+      case GridBagConstraints.SOUTHWEST -> {
+        Point2D bottomLeft = getPosition(Position.BottomLeft);
+        b.x = bottomLeft.getX();
+        b.y = bottomLeft.getY() - icon.getIconHeight();
+        bottomLeft.setLocation(bottomLeft.getX() + icon.getIconWidth() + space, bottomLeft.getY());
+      }
+    }
+    ViewButton.drawButtonBackground(g2d, view2DPane.getJComponent(), b, icon);
   }
 
   public ViewCanvas<E> getView2DPane() {

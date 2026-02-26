@@ -44,8 +44,6 @@ import javax.swing.JProgressBar;
 import javax.swing.ToolTipManager;
 import org.dcm4che3.img.lut.PresetWindowLevel;
 import org.joml.Vector3f;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.ComboItemListener;
@@ -75,6 +73,7 @@ import org.weasis.core.ui.editor.image.SynchData.Mode;
 import org.weasis.core.ui.editor.image.SynchEvent;
 import org.weasis.core.ui.editor.image.ViewButton;
 import org.weasis.core.ui.editor.image.ViewCanvas;
+import org.weasis.core.ui.editor.image.ViewProgress;
 import org.weasis.core.ui.model.graphic.Graphic;
 import org.weasis.core.ui.model.layer.LayerAnnotation;
 import org.weasis.core.ui.model.layer.LayerType;
@@ -97,8 +96,8 @@ import org.weasis.opencv.op.lut.LutShape;
 public class View3d extends VolumeCanvas
     implements ViewCanvas<DicomImageElement>,
         RenderingLayerChangeListener<DicomImageElement>,
-        GLEventListener {
-  private static final Logger LOGGER = LoggerFactory.getLogger(View3d.class);
+        GLEventListener,
+        ViewProgress {
 
   public enum ViewType {
     AXIAL,
@@ -327,10 +326,12 @@ public class View3d extends VolumeCanvas
     drawProgressBar(g2d, progressBar);
   }
 
+  @Override
   public void setProgressBar(JProgressBar bar) {
     this.progressBar = bar;
   }
 
+  @Override
   public JProgressBar getProgressBar() {
     return progressBar;
   }
@@ -435,12 +436,13 @@ public class View3d extends VolumeCanvas
     program.allocateUniform(
         gl4,
         "inputLevelMin",
-        (gl, loc) -> gl.glUniform1f(loc, isSegMode() ? 0 : volTexture.getLevelMin()));
+        (gl, loc) -> gl.glUniform1f(loc, isSegMode() ? 0 : (float) volTexture.getLevelMin()));
     program.allocateUniform(
         gl4,
         "inputLevelMax",
         (gl, loc) ->
-            gl.glUniform1f(loc, isSegMode() ? volumePreset.getWidth() : volTexture.getLevelMax()));
+            gl.glUniform1f(
+                loc, isSegMode() ? volumePreset.getWidth() : (float) volTexture.getLevelMax()));
     program.allocateUniform(gl4, "outputLevelMin", (gl, loc) -> gl.glUniform1f(loc, 0));
     program.allocateUniform(
         gl4, "outputLevelMax", (gl, loc) -> gl.glUniform1f(loc, volumePreset.getWidth()));

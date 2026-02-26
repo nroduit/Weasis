@@ -33,6 +33,7 @@ import javax.swing.KeyStroke;
 import javax.swing.UIManager;
 import javax.swing.event.ListDataEvent;
 import org.weasis.core.Messages;
+import org.weasis.core.api.gui.layout.MigLayoutModel;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.ComboItemListener;
 import org.weasis.core.api.gui.util.DropButtonIcon;
@@ -41,7 +42,6 @@ import org.weasis.core.api.gui.util.Feature;
 import org.weasis.core.api.gui.util.GroupPopup;
 import org.weasis.core.api.gui.util.GroupRadioMenu;
 import org.weasis.core.api.gui.util.GuiUtils;
-import org.weasis.core.api.image.GridBagLayoutModel;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.service.WProperties;
 import org.weasis.core.api.util.ResourceUtil;
@@ -195,7 +195,7 @@ public class ViewerToolBar<E extends ImageElement> extends WtoolBar implements A
   }
 
   private JPopupMenu getLayoutPopupMenuButton(DropDownButton dropDownButton) {
-    Optional<ComboItemListener<GridBagLayoutModel>> layout = eventManager.getAction(ActionW.LAYOUT);
+    Optional<ComboItemListener<MigLayoutModel>> layout = eventManager.getAction(ActionW.LAYOUT);
     JPopupMenu popupMouseButtons = new JPopupMenu();
     if (layout.isPresent()) {
       JMenu menu = layout.get().createUnregisteredRadioMenu("layout"); // NON-NLS

@@ -9,16 +9,12 @@
  */
 package org.weasis.dicom.viewer2d.mpr;
 
-import java.awt.Component;
 import java.awt.Dimension;
-import java.awt.GridBagConstraints;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import javax.swing.Action;
 import javax.swing.JComponent;
@@ -34,12 +30,12 @@ import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.ObservableEvent;
 import org.weasis.core.api.gui.Insertable.Type;
 import org.weasis.core.api.gui.InsertableUtil;
+import org.weasis.core.api.gui.layout.MergedCellsBuilder;
+import org.weasis.core.api.gui.layout.MigLayoutModel;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.gui.util.GuiUtils;
-import org.weasis.core.api.image.GridBagLayoutModel;
-import org.weasis.core.api.image.LayoutConstraints;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.Series;
@@ -109,105 +105,41 @@ public class MprContainer extends DicomViewerPlugin implements PropertyChangeLis
 
   public static final List<SynchView> SYNCH_LIST = List.of(SynchView.NONE, defaultMpr);
 
-  public static final GridBagLayoutModel view1 =
-      new GridBagLayoutModel(LinkedHashMap.newLinkedHashMap(3), "mpr", "MPR (col 1,2)"); // NON-NLS
-  protected static final GridBagLayoutModel view2 = VIEWS_2x2_f2.copy();
-  protected static final GridBagLayoutModel view3 = VIEWS_2_f1x2.copy();
-  public static final GridBagLayoutModel view4 =
-      new GridBagLayoutModel(
-          LinkedHashMap.newLinkedHashMap(3), "layout_r2x1", "MPR (row 2,1)"); // NON-NLS
-  protected static final GridBagLayoutModel view5 = VIEWS_1x3.copy();
+  public static final MigLayoutModel view1 =
+      new MergedCellsBuilder(2, 2, "mpr1", "3 views (left merged)", MprView.class.getName())
+          .addMergedCell(0, 0, 1, 2)
+          .addCell(0, 1)
+          .addCell(1, 1)
+          .build();
+  protected static final MigLayoutModel view2 =
+      new MergedCellsBuilder(2, 2, "mpr2", "3 views (right merged)", MprView.class.getName())
+          .addCell(0, 0)
+          .addMergedCell(0, 1, 1, 2)
+          .addCell(1, 0)
+          .build();
+  protected static final MigLayoutModel view3 =
+      new MergedCellsBuilder(2, 2, "mpr3", "3 views (top merged)", MprView.class.getName())
+          .addMergedCell(0, 0, 2, 1)
+          .addCell(1, 0)
+          .addCell(1, 1)
+          .build();
+  public static final MigLayoutModel view4 =
+      new MergedCellsBuilder(2, 2, "mpr4", "3 views (bottom merged)", MprView.class.getName())
+          .addCell(0, 0)
+          .addCell(0, 1)
+          .addMergedCell(1, 0, 2, 1)
+          .build();
+  protected static final MigLayoutModel view5 =
+      new MigLayoutModel("mpr5", "3 horizontal views", 1, 3, MprView.class.getName());
+  public static final MigLayoutModel VIEWS_2x2_mpr =
+      new MigLayoutModel(
+          "mpr2x2_vr", // NON-NLS
+          String.format(F_VIEWS, "2x2"), // NON-NLS
+          2,
+          2,
+          MprView.class.getName());
 
-  static {
-    view2.setTitle("MPR (col 2,1)"); // NON-NLS
-    view3.setTitle("MPR (row 1,2)"); // NON-NLS
-    view5.setTitle("MPR (col 1,1,1)"); // NON-NLS
-
-    Map<LayoutConstraints, Component> constraints = view1.getConstraints();
-    constraints.put(
-        new LayoutConstraints(
-            MprView.class.getName(),
-            0,
-            0,
-            0,
-            1,
-            2,
-            0.5,
-            1.0,
-            GridBagConstraints.CENTER,
-            GridBagConstraints.BOTH),
-        null);
-    constraints.put(
-        new LayoutConstraints(
-            MprView.class.getName(),
-            1,
-            1,
-            0,
-            1,
-            1,
-            0.5,
-            0.5,
-            GridBagConstraints.CENTER,
-            GridBagConstraints.BOTH),
-        null);
-    constraints.put(
-        new LayoutConstraints(
-            MprView.class.getName(),
-            2,
-            1,
-            1,
-            1,
-            1,
-            0.5,
-            0.5,
-            GridBagConstraints.CENTER,
-            GridBagConstraints.BOTH),
-        null);
-
-    Map<LayoutConstraints, Component> view4Constraints = view4.getConstraints();
-    view4Constraints.put(
-        new LayoutConstraints(
-            MprView.class.getName(),
-            0,
-            0,
-            0,
-            1,
-            1,
-            0.5,
-            0.5,
-            GridBagConstraints.CENTER,
-            GridBagConstraints.BOTH),
-        null);
-    view4Constraints.put(
-        new LayoutConstraints(
-            MprView.class.getName(),
-            1,
-            1,
-            0,
-            1,
-            1,
-            0.5,
-            0.5,
-            GridBagConstraints.CENTER,
-            GridBagConstraints.BOTH),
-        null);
-    view4Constraints.put(
-        new LayoutConstraints(
-            MprView.class.getName(),
-            2,
-            0,
-            1,
-            2,
-            1,
-            1.0,
-            0.5,
-            GridBagConstraints.CENTER,
-            GridBagConstraints.BOTH),
-        null);
-  }
-
-  public static final List<GridBagLayoutModel> LAYOUT_LIST =
-      List.of(view1, view2, view3, view4, view5);
+  public static final List<MigLayoutModel> LAYOUT_LIST = List.of(view1, view2, view3, view4, view5);
 
   public static final SeriesViewerUI UI =
       new SeriesViewerUI(MprContainer.class, null, View2dContainer.UI.tools, null);
@@ -219,7 +151,7 @@ public class MprContainer extends DicomViewerPlugin implements PropertyChangeLis
     this(VIEWS_1x1, null);
   }
 
-  public MprContainer(GridBagLayoutModel layoutModel, String uid) {
+  public MprContainer(MigLayoutModel layoutModel, String uid) {
     super(
         EventManager.getInstance(),
         layoutModel,
@@ -307,7 +239,7 @@ public class MprContainer extends DicomViewerPlugin implements PropertyChangeLis
   }
 
   @Override
-  protected synchronized void setLayoutModel(GridBagLayoutModel layoutModel) {
+  protected synchronized void setLayoutModel(MigLayoutModel layoutModel) {
     super.setLayoutModel(layoutModel);
     if (eventManager instanceof EventManager manager) {
       // Force to refresh view with ZoomType.CURRENT
@@ -351,7 +283,7 @@ public class MprContainer extends DicomViewerPlugin implements PropertyChangeLis
           // Study Group
           else if (TagD.getUID(Level.STUDY).equals(group.getTagID())) {
             if (event.getSource() instanceof DicomModel model) {
-              for (ViewCanvas<DicomImageElement> v : view2ds) {
+              for (ViewCanvas<DicomImageElement> v : cellManager) {
                 if (group.equals(model.getParent(v.getSeries(), DicomModel.study))) {
                   v.setSeries(null);
                   if (closeIfNoContent()) {
@@ -363,7 +295,7 @@ public class MprContainer extends DicomViewerPlugin implements PropertyChangeLis
           }
           // Series Group
           else if (TagD.getUID(Level.SERIES).equals(group.getTagID())) {
-            for (ViewCanvas<DicomImageElement> v : view2ds) {
+            for (ViewCanvas<DicomImageElement> v : cellManager) {
               if (newVal.equals(v.getSeries())) {
                 v.setSeries(null);
                 if (closeIfNoContent()) {
@@ -375,7 +307,7 @@ public class MprContainer extends DicomViewerPlugin implements PropertyChangeLis
         }
       } else if (ObservableEvent.BasicAction.REPLACE.equals(action)) {
         if (newVal instanceof Series series) {
-          for (ViewCanvas<DicomImageElement> v : view2ds) {
+          for (ViewCanvas<DicomImageElement> v : cellManager) {
             MediaSeries<DicomImageElement> s = v.getSeries();
             if (series.equals(s)) {
               // It will reset MIP view
@@ -388,7 +320,7 @@ public class MprContainer extends DicomViewerPlugin implements PropertyChangeLis
   }
 
   @Override
-  public int getViewTypeNumber(GridBagLayoutModel layout, Class<?> defaultClass) {
+  public int getViewTypeNumber(MigLayoutModel layout, Class<?> defaultClass) {
     return View2dFactory.getViewTypeNumber(layout, defaultClass);
   }
 
@@ -439,7 +371,7 @@ public class MprContainer extends DicomViewerPlugin implements PropertyChangeLis
   }
 
   @Override
-  public GridBagLayoutModel getDefaultLayoutModel() {
+  public MigLayoutModel getDefaultLayoutModel() {
     return view1;
   }
 
@@ -484,7 +416,7 @@ public class MprContainer extends DicomViewerPlugin implements PropertyChangeLis
   }
 
   public MprView getMprView(Plane plane) {
-    for (ViewCanvas<?> v : view2ds) {
+    for (ViewCanvas<?> v : cellManager) {
       if (v instanceof MprView mprView && plane != null && plane.equals(mprView.getPlane())) {
         return mprView;
       }
@@ -500,11 +432,10 @@ public class MprContainer extends DicomViewerPlugin implements PropertyChangeLis
     control.reset();
 
     // TODO Should be init elsewhere
-    for (int i = 0; i < view2ds.size(); i++) {
-      ViewCanvas<DicomImageElement> val = view2ds.get(i);
-      if (val instanceof MprView mprView) {
+    for (var cell : cellManager.getAllEntries()) {
+      if (cell.getViewCanvas().orElse(null) instanceof MprView mprView) {
         Plane plane =
-            switch (i) {
+            switch (cell.getPosition()) {
               case 1 -> Plane.CORONAL;
               case 2 -> Plane.SAGITTAL;
               default -> Plane.AXIAL;
@@ -550,13 +481,17 @@ public class MprContainer extends DicomViewerPlugin implements PropertyChangeLis
               } catch (final Exception e) {
                 LOGGER.error("Build MPR", e);
                 // Following actions need to be executed in EDT thread
-                GuiExecutor.execute(() -> showErrorMessage(view2ds, view, e.getMessage()));
+                GuiExecutor.execute(
+                    () -> showErrorMessage(cellManager.getAllViewCanvases(), view, e.getMessage()));
               }
             }
           };
       process.start();
     } else {
-      showErrorMessage(view2ds, null, Messages.getString("MPRContainer.mesg_missing_3d"));
+      showErrorMessage(
+          cellManager.getAllViewCanvases(),
+          null,
+          Messages.getString("MPRContainer.mesg_missing_3d"));
     }
   }
 
@@ -626,7 +561,7 @@ public class MprContainer extends DicomViewerPlugin implements PropertyChangeLis
   }
 
   @Override
-  public List<GridBagLayoutModel> getLayoutList() {
+  public List<MigLayoutModel> getLayoutList() {
     return LAYOUT_LIST;
   }
 }

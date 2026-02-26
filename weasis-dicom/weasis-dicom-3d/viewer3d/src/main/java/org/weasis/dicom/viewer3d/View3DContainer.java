@@ -11,13 +11,10 @@ package org.weasis.dicom.viewer3d;
 
 import com.jogamp.opengl.GL4;
 import java.awt.Component;
-import java.awt.GridBagConstraints;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
@@ -36,13 +33,13 @@ import org.weasis.core.api.explorer.DataExplorerView;
 import org.weasis.core.api.explorer.ObservableEvent;
 import org.weasis.core.api.gui.Insertable.Type;
 import org.weasis.core.api.gui.InsertableUtil;
+import org.weasis.core.api.gui.layout.MigCell;
+import org.weasis.core.api.gui.layout.MigLayoutModel;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.SliderChangeListener;
-import org.weasis.core.api.image.GridBagLayoutModel;
-import org.weasis.core.api.image.LayoutConstraints;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.service.BundlePreferences;
@@ -71,6 +68,8 @@ import org.weasis.dicom.explorer.main.DicomExplorer;
 import org.weasis.dicom.viewer2d.LutToolBar;
 import org.weasis.dicom.viewer2d.View2dContainer;
 import org.weasis.dicom.viewer2d.mpr.MprContainer;
+import org.weasis.dicom.viewer2d.mpr.MprView;
+import org.weasis.dicom.viewer2d.mpr.MprView.Plane;
 import org.weasis.dicom.viewer3d.dockable.DisplayTool;
 import org.weasis.dicom.viewer3d.dockable.SegmentationTool;
 import org.weasis.dicom.viewer3d.dockable.VolumeTool;
@@ -110,80 +109,40 @@ public class View3DContainer extends DicomViewerPlugin implements PropertyChange
 
   public static final List<SynchView> SYNCH_LIST = List.of(SynchView.NONE, defaultMpr);
 
-  public static final GridBagLayoutModel VIEWS_vr =
-      new GridBagLayoutModel(
+  public static final MigLayoutModel VIEWS_vr =
+      new MigLayoutModel(
           "vr", Messages.getString("volume.rendering"), 1, 1, View3d.class.getName()); // NON-NLS
 
-  public static final GridBagLayoutModel VIEWS_vr_1x2 =
-      new GridBagLayoutModel(
+  public static final MigLayoutModel VIEWS_vr_1x2 =
+      new MigLayoutModel(
           "vr_1x2", VIEWS_vr.getUIName() + " (1x2)", 1, 2, View3d.class.getName()); // NON-NLS
-  public static final GridBagLayoutModel VIEWS_2x2_mpr =
-      new GridBagLayoutModel(
-          new LinkedHashMap<>(4),
-          "mpr4", // NON-NLS
-          Messages.getString("mpr.volume.rendering"));
+  private static final List<MigCell> cells = new ArrayList<>(MprContainer.VIEWS_2x2_mpr.getCells());
 
   static {
-    Map<LayoutConstraints, Component> constraints = VIEWS_2x2_mpr.getConstraints();
-    constraints.put(
-        new LayoutConstraints(
+    MigCell lastCell = cells.get(3);
+    cells.set(
+        3,
+        new MigCell(
+            lastCell.position(),
             View3d.class.getName(),
-            0,
-            0,
-            0,
-            1,
-            1,
-            0.5,
-            0.5,
-            GridBagConstraints.CENTER,
-            GridBagConstraints.BOTH),
-        null);
-    constraints.put(
-        new LayoutConstraints(
-            View3d.class.getName(),
-            1,
-            1,
-            0,
-            1,
-            1,
-            0.5,
-            0.5,
-            GridBagConstraints.CENTER,
-            GridBagConstraints.BOTH),
-        null);
-    constraints.put(
-        new LayoutConstraints(
-            View3d.class.getName(),
-            2,
-            0,
-            1,
-            1,
-            1,
-            0.5,
-            0.5,
-            GridBagConstraints.CENTER,
-            GridBagConstraints.BOTH),
-        null);
-    constraints.put(
-        new LayoutConstraints(
-            View3d.class.getName(),
-            3,
-            1,
-            1,
-            1,
-            1,
-            0.5,
-            0.5,
-            GridBagConstraints.CENTER,
-            GridBagConstraints.BOTH),
-        null);
+            lastCell.constraints(),
+            lastCell.x(),
+            lastCell.y(),
+            lastCell.spanX(),
+            lastCell.spanY()));
   }
 
-  //  public static final List<GridBagLayoutModel> LAYOUT_LIST =
-  //      Stream.concat(MprContainer.LAYOUT_LIST.stream(), Stream.of(VIEWS_2x2_mpr,
-  // VIEWS_vr)).toList();
-  public static final List<GridBagLayoutModel> LAYOUT_LIST =
-      Stream.of(VIEWS_vr, VIEWS_vr_1x2).toList();
+  public static final MigLayoutModel VIEWS_2x2_mpr =
+      new MigLayoutModel(
+          "mpr2x2_vr", // NON-NLS
+          Messages.getString("mpr.volume.rendering"), // NON-NLS
+          MprContainer.VIEWS_2x2_mpr.getLayoutConstraints(),
+          MprContainer.VIEWS_2x2_mpr.getColumnConstraints(),
+          MprContainer.VIEWS_2x2_mpr.getRowConstraints(),
+          cells);
+
+  public static final List<MigLayoutModel> LAYOUT_LIST =
+      Stream.of(VIEWS_vr, VIEWS_vr_1x2, VIEWS_2x2_mpr).toList();
 
   public static final SeriesViewerUI UI = new SeriesViewerUI(View3DContainer.class);
 
@@ -192,19 +151,16 @@ public class View3DContainer extends DicomViewerPlugin implements PropertyChange
   protected VolumeBuilder volumeBuilder;
   protected SegmentationTool.Type segType;
 
+  private final Object volumeBuilderLock = new Object();
+
   protected final Map<String, List<SegRegion<?>>> regionMap = new HashMap<>();
 
   public View3DContainer() {
-    this(
-        MprContainer.view1,
-        null,
-        View3DFactory.NAME,
-        ResourceUtil.getIcon(ActionIcon.VOLUME),
-        null);
+    this(VIEWS_vr, null, View3DFactory.NAME, ResourceUtil.getIcon(ActionIcon.VOLUME), null);
   }
 
   public View3DContainer(
-      GridBagLayoutModel layoutModel, String uid, String pluginName, Icon icon, String tooltips) {
+      MigLayoutModel layoutModel, String uid, String pluginName, Icon icon, String tooltips) {
     super(EventManager.getInstance(), layoutModel, uid, pluginName, icon, tooltips);
     setSynchView(SynchView.NONE);
     this.factory = new DicomVolTextureFactory();
@@ -393,12 +349,15 @@ public class View3DContainer extends DicomViewerPlugin implements PropertyChange
             volumeBuilder.getVolTexture().destroy(gl4);
           }
         }
+
         if (!series.equals(oldSequence)) {
           GuiUtils.getUICore().closeSeries(oldSequence);
-          synchronized (this) {
-            this.volumeBuilder = new VolumeBuilder(factory.createImageSeries(series));
-            for (ViewCanvas<DicomImageElement> view : view2ds) {
+          synchronized (volumeBuilderLock) {
+            for (ViewCanvas<DicomImageElement> view : cellManager) {
               if (view instanceof View3d v) {
+                if (volumeBuilder == null) {
+                  this.volumeBuilder = new VolumeBuilder(factory.createImageSeries(series, v));
+                }
                 v.setVolTexture(volumeBuilder.getVolTexture());
               }
             }
@@ -450,18 +409,19 @@ public class View3DContainer extends DicomViewerPlugin implements PropertyChange
   }
 
   @Override
-  protected synchronized void setLayoutModel(GridBagLayoutModel layoutModel) {
+  protected synchronized void setLayoutModel(MigLayoutModel layoutModel) {
     super.setLayoutModel(layoutModel);
 
     DicomVolTexture curVolTexture = getVolTexture();
-    final Map<LayoutConstraints, Component> elements = getLayoutModel().getConstraints();
-    Iterator<Component> enumVal = elements.values().iterator();
+    final List<MigCell> cells = getLayoutModel().getCells();
     int position = 0;
-    while (enumVal.hasNext()) {
-      Component next = enumVal.next();
-      if (next instanceof View3d vt) {
+    for (MigCell cell : cells) {
+      // Get the component directly from cellManager using the cell's position
+      Component component = cellManager.getComponent(cell.position());
+
+      if (component instanceof View3d vt) {
         ViewType viewType;
-        if (layoutModel.getConstraints().size() < 3) {
+        if (layoutModel.getCellCount() < 3) {
           viewType = ViewType.VOLUME3D;
         } else {
           viewType =
@@ -475,10 +435,17 @@ public class View3DContainer extends DicomViewerPlugin implements PropertyChange
         vt.setViewType(viewType);
         position++;
         vt.setVolTexture(curVolTexture);
+      } else if (component instanceof MprView mpr) {
+        Plane plane =
+            switch (position) {
+              case 1 -> Plane.CORONAL;
+              case 2 -> Plane.SAGITTAL;
+              default -> Plane.AXIAL;
+            };
+        mpr.setType(plane);
+        position++;
       }
     }
-    eventManager.updateComponentsListener(selectedImagePane);
-    repaint();
   }
 
   protected void removeContent(final ObservableEvent event) {
@@ -519,7 +486,7 @@ public class View3DContainer extends DicomViewerPlugin implements PropertyChange
 
     GuiExecutor.execute(
         () -> {
-          for (ViewCanvas v : view2ds) {
+          for (var v : cellManager) {
             resetMaximizedSelectedImagePane(v);
             v.disposeView();
           }
@@ -532,7 +499,7 @@ public class View3DContainer extends DicomViewerPlugin implements PropertyChange
     boolean fullyLoaded = DicomVolTextureFactory.FULLY_LOADED.equals(command);
     if (fullyLoaded || DicomVolTextureFactory.PARTIALLY_LOADED.equals(command)) {
       if (event.getNewValue() instanceof DicomVolTexture texture) {
-        for (ViewCanvas<DicomImageElement> view : view2ds) {
+        for (var view : cellManager) {
           if (view instanceof View3d v) {
             if (fullyLoaded) {
               v.getCamera().resetAll();
@@ -598,7 +565,7 @@ public class View3DContainer extends DicomViewerPlugin implements PropertyChange
   }
 
   @Override
-  public int getViewTypeNumber(GridBagLayoutModel layout, Class defaultClass) {
+  public int getViewTypeNumber(MigLayoutModel layout, Class defaultClass) {
     return View3DFactory.getViewTypeNumber(layout, defaultClass);
   }
 
@@ -614,7 +581,7 @@ public class View3DContainer extends DicomViewerPlugin implements PropertyChange
 
   @Override
   public Component createComponent(String clazz) {
-    if (isViewType(View3d.class, clazz)) {
+    if (isViewType(View3d.class, clazz) || isViewType(MprView.class, clazz)) {
       return createDefaultView(clazz).getJComponent();
     }
 
@@ -639,7 +606,7 @@ public class View3DContainer extends DicomViewerPlugin implements PropertyChange
   }
 
   @Override
-  public GridBagLayoutModel getDefaultLayoutModel() {
+  public MigLayoutModel getDefaultLayoutModel() {
     return VIEWS_vr;
   }
 
@@ -664,7 +631,7 @@ public class View3DContainer extends DicomViewerPlugin implements PropertyChange
   }
 
   @Override
-  public List<GridBagLayoutModel> getLayoutList() {
+  public List<MigLayoutModel> getLayoutList() {
     return LAYOUT_LIST;
   }
 

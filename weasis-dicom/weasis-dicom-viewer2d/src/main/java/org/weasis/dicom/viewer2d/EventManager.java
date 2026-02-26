@@ -45,6 +45,7 @@ import org.weasis.core.api.command.Options;
 import org.weasis.core.api.explorer.DataExplorerView;
 import org.weasis.core.api.gui.Insertable.Type;
 import org.weasis.core.api.gui.InsertableUtil;
+import org.weasis.core.api.gui.layout.MigLayoutModel;
 import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.AppProperties;
@@ -60,7 +61,6 @@ import org.weasis.core.api.gui.util.SliderCineListener;
 import org.weasis.core.api.gui.util.SliderCineListener.TIME;
 import org.weasis.core.api.gui.util.ToggleButtonListener;
 import org.weasis.core.api.image.FilterOp;
-import org.weasis.core.api.image.GridBagLayoutModel;
 import org.weasis.core.api.image.ImageOpNode;
 import org.weasis.core.api.image.OpManager;
 import org.weasis.core.api.image.PseudoColorOp;
@@ -187,8 +187,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
     setAction(newLutAction());
     setAction(newFilterAction());
     setAction(newSortStackAction());
-    setAction(
-        newLayoutAction(View2dContainer.DEFAULT_LAYOUT_LIST.toArray(new GridBagLayoutModel[0])));
+    setAction(newLayoutAction(View2dContainer.DEFAULT_LAYOUT_LIST.toArray(new MigLayoutModel[0])));
     setAction(newSynchAction(View2dContainer.DEFAULT_SYNCH_LIST.toArray(new SynchView[0])));
     getAction(ActionW.SYNCH)
         .ifPresent(a -> a.setSelectedItemWithoutTriggerAction(SynchView.DEFAULT_STACK));
@@ -314,13 +313,13 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
           }
         }
 
-        Optional<ComboItemListener<GridBagLayoutModel>> layoutAction = getAction(ActionW.LAYOUT);
+        Optional<ComboItemListener<MigLayoutModel>> layoutAction = getAction(ActionW.LAYOUT);
         Optional<ComboItemListener<SynchView>> synchAction = getAction(ActionW.SYNCH);
 
         if (image != null
             && layoutAction.isPresent()
             && View2dFactory.getViewTypeNumber(
-                    (GridBagLayoutModel) layoutAction.get().getSelectedItem(), ViewCanvas.class)
+                    (MigLayoutModel) layoutAction.get().getSelectedItem(), ViewCanvas.class)
                 > 1
             && synchAction.isPresent()) {
 
@@ -359,9 +358,9 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
             && levelAction.isPresent()) {
           Optional<? extends ComboItemListener<?>> presetAction = getAction(ActionW.PRESET);
           PresetWindowLevel oldPreset =
-              presetAction.isPresent()
-                  ? (PresetWindowLevel) presetAction.get().getSelectedItem()
-                  : null;
+              presetAction
+                  .map(comboItemListener -> (PresetWindowLevel) comboItemListener.getSelectedItem())
+                  .orElse(null);
           PresetWindowLevel newPreset = null;
           boolean pixelPadding =
               view2d
@@ -880,7 +879,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
 
     if (selectedView2dContainer != null) {
       Optional<ComboItemListener<SynchView>> synchAction = getAction(ActionW.SYNCH);
-      Optional<ComboItemListener<GridBagLayoutModel>> layoutAction = getAction(ActionW.LAYOUT);
+      Optional<ComboItemListener<MigLayoutModel>> layoutAction = getAction(ActionW.LAYOUT);
       if (oldContainer == null
           || !oldContainer.getClass().equals(selectedView2dContainer.getClass())) {
         synchAction.ifPresent(
@@ -890,7 +889,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
         layoutAction.ifPresent(
             a ->
                 a.setDataListWithoutTriggerAction(
-                    selectedView2dContainer.getLayoutList().toArray(new GridBagLayoutModel[0])));
+                    selectedView2dContainer.getLayoutList().toArray(new MigLayoutModel[0])));
       }
       if (oldContainer != null) {
         ViewCanvas<DicomImageElement> pane = oldContainer.getSelectedImagePane();
@@ -1077,7 +1076,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
     if (isMprOrOblique && view2d instanceof MprView mprView) {
       MprContainer mprContainer = (MprContainer) selectedView2dContainer;
       MprController controller = mprContainer.getMprController();
-      Volume<?> volume = controller.getVolume();
+      Volume<?, ?> volume = controller.getVolume();
       maxSlice = volume.getSliceSize();
       MprAxis axis = controller.getMprAxis(mprView.getPlane());
       currentSlice = axis.getSliceIndex();
@@ -1969,14 +1968,14 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
           try {
             if (opt.isSet("number")) { // NON-NLS
               if (selectedView2dContainer != null) {
-                GridBagLayoutModel val1 =
+                MigLayoutModel val1 =
                     selectedView2dContainer.getBestDefaultViewLayout(
                         opt.getNumber("number")); // NON-NLS
                 getAction(ActionW.LAYOUT).ifPresent(a -> a.setSelectedItem(val1));
               }
             } else if (opt.isSet("id")) {
               if (selectedView2dContainer != null) {
-                GridBagLayoutModel val2 = selectedView2dContainer.getViewLayout(opt.get("id"));
+                MigLayoutModel val2 = selectedView2dContainer.getViewLayout(opt.get("id"));
                 if (val2 != null) {
                   getAction(ActionW.LAYOUT).ifPresent(a -> a.setSelectedItem(val2));
                 }

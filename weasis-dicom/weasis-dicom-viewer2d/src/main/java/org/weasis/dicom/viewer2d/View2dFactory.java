@@ -13,7 +13,6 @@ import java.awt.event.ActionEvent;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import javax.swing.Action;
@@ -24,12 +23,12 @@ import org.dcm4che3.data.Tag;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.DataExplorerView;
+import org.weasis.core.api.gui.layout.MigCell;
+import org.weasis.core.api.gui.layout.MigLayoutModel;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.ComboItemListener;
 import org.weasis.core.api.gui.util.FileFormatFilter;
 import org.weasis.core.api.gui.util.GuiUtils;
-import org.weasis.core.api.image.GridBagLayoutModel;
-import org.weasis.core.api.image.LayoutConstraints;
 import org.weasis.core.api.media.MimeInspector;
 import org.weasis.core.api.media.data.Codec;
 import org.weasis.core.api.media.data.MediaElement;
@@ -82,7 +81,7 @@ public class View2dFactory implements SeriesViewerFactory {
 
   @Override
   public SeriesViewer<?> createSeriesViewer(Map<String, Object> properties) {
-    ComboItemListener<GridBagLayoutModel> layoutAction =
+    ComboItemListener<MigLayoutModel> layoutAction =
         EventManager.getInstance().getAction(ActionW.LAYOUT).orElse(null);
     LayoutModel layout =
         ImageViewerPlugin.getLayoutModel(properties, ImageViewerPlugin.VIEWS_1x1, layoutAction);
@@ -94,13 +93,12 @@ public class View2dFactory implements SeriesViewerFactory {
     return instance;
   }
 
-  public static int getViewTypeNumber(GridBagLayoutModel layout, Class<?> defaultClass) {
+  public static int getViewTypeNumber(MigLayoutModel layout, Class<?> defaultClass) {
     int val = 0;
     if (layout != null && defaultClass != null) {
-      Iterator<LayoutConstraints> enumVal = layout.getConstraints().keySet().iterator();
-      while (enumVal.hasNext()) {
+      for (MigCell cell : layout.getCells()) {
         try {
-          Class<?> clazz = Class.forName(enumVal.next().type());
+          Class<?> clazz = Class.forName(cell.type());
           if (defaultClass.isAssignableFrom(clazz)) {
             val++;
           }
