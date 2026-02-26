@@ -95,7 +95,7 @@ public class CurvedMprImageIO implements DcmMediaReader {
   private final HashMap<TagW, Object> tags;
   private final URI uri;
   private final CurvedMprAxis axis;
-  private final Volume<?> volume;
+  private final Volume<?, ?> volume;
   private Attributes attributes;
 
   public CurvedMprImageIO(CurvedMprAxis axis) {

@@ -23,8 +23,8 @@ import javax.swing.SwingUtilities;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.ObservableEvent;
+import org.weasis.core.api.gui.layout.MigLayoutModel;
 import org.weasis.core.api.gui.util.GuiUtils;
-import org.weasis.core.api.image.GridBagLayoutModel;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.api.util.ResourceUtil.ActionIcon;
@@ -67,7 +67,7 @@ public class CurvedMprContainer extends DicomViewerPlugin implements PropertyCha
     this(VIEWS_1x1, null);
   }
 
-  public CurvedMprContainer(GridBagLayoutModel layoutModel, String uid) {
+  public CurvedMprContainer(MigLayoutModel layoutModel, String uid) {
     super(
         EventManager.getInstance(),
         layoutModel,
@@ -129,7 +129,7 @@ public class CurvedMprContainer extends DicomViewerPlugin implements PropertyCha
   }
 
   @Override
-  public int getViewTypeNumber(GridBagLayoutModel layout, Class<?> defaultClass) {
+  public int getViewTypeNumber(MigLayoutModel layout, Class<?> defaultClass) {
     return 1;
   }
 
@@ -170,7 +170,7 @@ public class CurvedMprContainer extends DicomViewerPlugin implements PropertyCha
   }
 
   @Override
-  public GridBagLayoutModel getDefaultLayoutModel() {
+  public MigLayoutModel getDefaultLayoutModel() {
     return VIEWS_1x1;
   }
 
@@ -208,7 +208,7 @@ public class CurvedMprContainer extends DicomViewerPlugin implements PropertyCha
   }
 
   @Override
-  public List<GridBagLayoutModel> getLayoutList() {
+  public List<MigLayoutModel> getLayoutList() {
     return List.of(VIEWS_1x1);
   }
 
@@ -247,7 +247,7 @@ public class CurvedMprContainer extends DicomViewerPlugin implements PropertyCha
     if (selected instanceof CurvedMprView curvedMprView) {
       return curvedMprView;
     }
-    for (ViewCanvas<?> v : view2ds) {
+    for (ViewCanvas<?> v : cellManager) {
       if (v instanceof CurvedMprView curvedMprView) {
         return curvedMprView;
       }

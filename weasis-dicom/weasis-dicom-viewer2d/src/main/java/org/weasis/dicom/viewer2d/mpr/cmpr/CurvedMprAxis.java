@@ -25,7 +25,7 @@ import org.weasis.dicom.viewer2d.mpr.Volume;
  */
 public class CurvedMprAxis {
 
-  private final Volume<?> volume;
+  private final Volume<?, ?> volume;
   private final List<Vector3d> curvePoints3D;
   private final Vector3d planeNormal;
   private double widthMm;
@@ -41,7 +41,7 @@ public class CurvedMprAxis {
    * @param curvePoints3D the polyline control points in voxel coordinates
    * @param planeNormal the source plane normal (effective after rotation)
    */
-  public CurvedMprAxis(Volume<?> volume, List<Vector3d> curvePoints3D, Vector3d planeNormal) {
+  public CurvedMprAxis(Volume<?, ?> volume, List<Vector3d> curvePoints3D, Vector3d planeNormal) {
     this.volume = Objects.requireNonNull(volume);
     this.curvePoints3D = new ArrayList<>(curvePoints3D);
     this.planeNormal = new Vector3d(planeNormal).normalize();
@@ -49,7 +49,7 @@ public class CurvedMprAxis {
     this.stepMm = volume.getMinPixelRatio();
   }
 
-  public Volume<?> getVolume() {
+  public Volume<?, ?> getVolume() {
     return volume;
   }
 

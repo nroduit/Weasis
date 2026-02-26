@@ -239,7 +239,7 @@ public class MprView extends View2d implements SliceCanvas, ViewProgress {
     if (mprController.getVolume() == null) {
       return null;
     }
-    Volume<?> volume = mprController.getVolume();
+    var volume = mprController.getVolume();
     int sliceSize = volume.getSliceSize();
     Vector3i volSize = volume.getSize();
     Vector3d voxelRatio = volume.getVoxelRatio();
@@ -512,7 +512,7 @@ public class MprView extends View2d implements SliceCanvas, ViewProgress {
       return; // Only draw on axial view where the curve was drawn
     }
 
-    Volume<?> vol = mprController.getVolume();
+    var vol = mprController.getVolume();
     if (vol == null) return;
 
     int sliceSize = vol.getSliceSize();

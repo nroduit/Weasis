@@ -30,7 +30,6 @@ import org.joml.Quaterniond;
 import org.joml.Vector3d;
 import org.joml.Vector3i;
 import org.joml.Vector4d;
-import org.opencv.core.Core;
 import org.opencv.core.Core.MinMaxLocResult;
 import org.opencv.core.CvType;
 import org.slf4j.Logger;
@@ -44,7 +43,6 @@ import org.weasis.core.ui.editor.image.ViewerPlugin;
 import org.weasis.core.util.MathUtil;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.geometry.GeometryOfSlice;
-import org.weasis.dicom.viewer2d.mpr.MprView.Plane;
 import org.weasis.opencv.data.ImageCV;
 import org.weasis.opencv.data.PlanarImage;
 import org.weasis.opencv.op.ImageAnalyzer;
@@ -247,8 +245,9 @@ public abstract sealed class Volume<T extends Number, A>
   }
 
   /**
-   * Computes the basis matrix using the actual in-plane pixel spacings from the slice geometry.
-   * <a href="https://dicom.nema.org/medical/dicom/current/output/chtml/part03/sect_C.7.6.2.html#sect_C.7.6.2.1.1">DICOM slice geometry</a>
+   * Computes the basis matrix using the actual in-plane pixel spacings from the slice geometry. <a
+   * href="https://dicom.nema.org/medical/dicom/current/output/chtml/part03/sect_C.7.6.2.html#sect_C.7.6.2.1.1">DICOM
+   * slice geometry</a>
    *
    * @return the matrix corresponding to the row and column vectors
    */
@@ -364,8 +363,7 @@ public abstract sealed class Volume<T extends Number, A>
     final boolean flipCol = needsColFlip;
 
     // Submit per-slice tasks with bounded concurrency
-    CompletionService<MinMaxLocResult> ecs =
-        new ExecutorCompletionService<>(VOLUME_BUILD_POOL);
+    CompletionService<MinMaxLocResult> ecs = new ExecutorCompletionService<>(VOLUME_BUILD_POOL);
 
     final AtomicInteger submitted = new AtomicInteger(0);
     final AtomicInteger completed = new AtomicInteger(0);
@@ -1010,7 +1008,7 @@ public abstract sealed class Volume<T extends Number, A>
     return this.isTransformed;
   }
 
-  protected T getInterpolatedValueFromSource(double x, double y, double z, int channel) {
+  public T getInterpolatedValueFromSource(double x, double y, double z, int channel) {
     // Check bounds in the ORIGINAL volume (this)
     if (x < 0
         || x >= this.size.x - 1

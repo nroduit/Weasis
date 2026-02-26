@@ -38,7 +38,6 @@ import org.weasis.dicom.explorer.main.DicomExplorer;
 import org.weasis.dicom.viewer2d.mpr.MprController;
 import org.weasis.dicom.viewer2d.mpr.MprView;
 import org.weasis.dicom.viewer2d.mpr.MprView.Plane;
-import org.weasis.dicom.viewer2d.mpr.Volume;
 
 /**
  * Factory for creating Curved MPR viewer containers.
@@ -151,7 +150,7 @@ public class CurvedMprFactory implements SeriesViewerFactory {
       return;
     }
 
-    Volume<?> volume = controller.getVolume();
+    var volume = controller.getVolume();
     if (volume == null) {
       LOGGER.warn("Cannot open curved MPR: no volume available");
       return;
