@@ -30,6 +30,7 @@ import org.joml.Quaterniond;
 import org.joml.Vector3d;
 import org.joml.Vector3i;
 import org.joml.Vector4d;
+import org.opencv.core.Core;
 import org.opencv.core.Core.MinMaxLocResult;
 import org.opencv.core.CvType;
 import org.slf4j.Logger;
@@ -42,6 +43,7 @@ import org.weasis.core.api.util.ThreadUtil;
 import org.weasis.core.ui.editor.image.ViewerPlugin;
 import org.weasis.core.util.MathUtil;
 import org.weasis.dicom.codec.DicomImageElement;
+import org.weasis.dicom.codec.geometry.GeometryOfSlice;
 import org.weasis.dicom.viewer2d.mpr.MprView.Plane;
 import org.weasis.opencv.data.ImageCV;
 import org.weasis.opencv.data.PlanarImage;
@@ -88,13 +90,13 @@ public abstract sealed class Volume<T extends Number, A>
     this.pixelRatio = new Vector3d(originalPixelRatio);
     this.needsRowFlip = volume.needsRowFlip;
     this.needsColFlip = volume.needsColFlip;
-    this.minValue = (T) volume.minValue;
-    this.maxValue = (T) volume.maxValue;
     this.stack = volume.stack;
-    this.isSigned = volume.isSigned;
-    this.channels = volume.channels;
     this.cvType = volume.cvType;
     this.byteDepth = volume.byteDepth;
+    this.isSigned = volume.isSigned;
+    this.channels = volume.channels;
+    this.minValue = (T) volume.minValue;
+    this.maxValue = (T) volume.maxValue;
     createData(size.x, size.y, size.z);
   }
 
@@ -107,14 +109,14 @@ public abstract sealed class Volume<T extends Number, A>
     this.pixelRatio = new Vector3d(1.0, 1.0, 1.0);
     this.needsRowFlip = false;
     this.needsColFlip = false;
-    this.minValue = initMinValue();
-    this.maxValue = initMaxValue();
     this.stack = null;
     int depth = CvType.depth(cvType);
     this.isSigned = isSigned(depth);
     this.channels = CvType.channels(cvType);
     this.cvType = cvType;
     this.byteDepth = CvType.ELEM_SIZE(cvType) / channels;
+    this.minValue = initMinValue();
+    this.maxValue = initMaxValue();
     createData(size.x, size.y, size.z);
   }
 
@@ -126,8 +128,6 @@ public abstract sealed class Volume<T extends Number, A>
     this.pixelRatio = new Vector3d(1.0, 1.0, 1.0);
     this.needsRowFlip = false;
     this.needsColFlip = false;
-    this.minValue = initMinValue();
-    this.maxValue = initMaxValue();
     this.stack = stack;
     int type = stack.getMiddleImage().getModalityLutImage(null, null).type();
     int depth = CvType.depth(type);
@@ -135,6 +135,8 @@ public abstract sealed class Volume<T extends Number, A>
     this.channels = CvType.channels(type);
     this.cvType = initCVType(isSigned, channels);
     this.byteDepth = CvType.ELEM_SIZE(cvType) / channels;
+    this.minValue = initMinValue();
+    this.maxValue = initMaxValue();
     copyFromAnyOrientation();
   }
 
@@ -195,126 +197,91 @@ public abstract sealed class Volume<T extends Number, A>
       return;
     }
 
-    // Compute the rectification transform (shear, rotation) if needed
-    Matrix4d rectification = computeRectificationTransform(bounds);
-    Vector3i volumeSize;
-    Vector3d volumeSpacing;
+    Vector3d firstTlhc = stack.getStartingImage().getSliceGeometry().getTLHC();
+    Vector3d lastTlhc = stack.getEndingImage().getSliceGeometry().getTLHC();
 
-    if (rectification != null) {
-      DicomImageElement firstImg = stack.getFirstImage();
-      DicomImageElement lastImg = stack.getLastImage();
-      if (stack.getPlane() == Plane.AXIAL) {
-        DicomImageElement temp = firstImg;
-        firstImg = lastImg;
-        lastImg = temp;
-      }
-      Vector3d initPosition = firstImg.getSliceGeometry().getTLHC();
-      Vector3d diff = new Vector3d();
-      Vector3d position = lastImg.getSliceGeometry().getTLHC();
-      position.sub(initPosition, diff);
+    // Calculate the new bounds after rectification
+    Vector3d[] transformedBounds = calculateBoundsForSize(firstTlhc, lastTlhc);
+    Vector3d min = transformedBounds[0];
+    Vector3d max = transformedBounds[1];
+    // Store the translation needed during transformation because of negative coordinates
+    Vector3d translation = new Vector3d();
 
-      Vector3d diff2 = new Vector3d(diff);
-      switch (stack.getPlane()) {
-        case AXIAL:
-          diff2.x /= pixelRatio.x;
-          diff2.y /= pixelRatio.y;
-          diff2.z /= -pixelRatio.z;
-          break;
-        case CORONAL:
-          diff2.x /= pixelRatio.x;
-          diff2.y = diff.z / pixelRatio.z;
-          diff2.z = diff.y / pixelRatio.y;
-          break;
-        case SAGITTAL:
-          diff2.x = diff.y / pixelRatio.y;
-          diff2.y = diff.z / pixelRatio.z;
-          diff2.z = diff.x / pixelRatio.x;
-          break;
-      }
-
-      // Calculate the new bounds after rectification
-      Vector3i originalSize = new Vector3i(bounds.size());
-
-      Vector3i[] transformedBounds = calculateBoundsForSize(rectification, originalSize);
-      Vector3i min = transformedBounds[0];
-      Vector3i max = transformedBounds[1];
-      int translateX = min.x < 0 ? -min.x : 0;
-      int translateY = min.y < 0 ? -min.y : 0;
-      int translateZ = min.z < 0 ? -min.z : 0;
-
-      rectification.translate(translateX, translateY, translateZ);
-
-      // Adjust for negative bounds by adding translation
-      if (min.x < 0) {
-        max.x -= min.x;
-      }
-      if (min.y < 0) {
-        max.y -= min.y;
-      }
-      if (min.z < 0) {
-        max.z -= min.z;
-      }
-
-      volumeSize = new Vector3i(max.x, max.y, max.z);
-      volumeSpacing = new Vector3d(bounds.spacing());
-      this.isTransformed = true;
+    if (stack.getPlane().equals(MprView.Plane.AXIAL)) {
+      // When the plane is Axial, the stack is reversed
+      translation.z = -(max.z() - firstTlhc.z());
     } else {
-      volumeSize = bounds.size();
-      volumeSpacing = bounds.spacing();
+      translation.z = -(min.z() - firstTlhc.z());
     }
+    translation.y = -(min.y() - firstTlhc.y());
+    translation.x = -(min.x() - firstTlhc.x());
 
+    // Get the origin position in millimeters (first pixel of the volume)
+    Vector3d origin = new Vector3d(firstTlhc);
+    // Adapt the origin according to the modifications applied on the volume (geometric
+    // rectification)
+    origin.sub(translation);
+
+    // Compare the new size needed with the actual size of the images without transformation
+    // and set the volume size accordingly
+    Vector3d size = new Vector3d();
+    max.sub(min, size);
+    size.div(bounds.spacing());
+    Vector3i volumeSize =
+        new Vector3i(
+            (int) Math.ceil(size.x()), (int) Math.ceil(size.y()), (int) Math.ceil(size.z()));
     this.size.set(volumeSize);
-    this.sliceStride = (long) size.x * size.y;
-    this.pixelRatio.set(volumeSpacing);
+    this.sliceStride = (long) volumeSize.x * volumeSize.y;
+    this.pixelRatio.set(bounds.spacing());
+
+    // Compute the distance in pixels between the size of the images' stack and the transformed size
+    this.isTransformed = volumeSize.distance(bounds.size()) > 2.0;
 
     List<DicomImageElement> medias = new ArrayList<>(stack.getSourceStack());
     // For axial, we need to reverse to go from inferior to superior
-    if (stack.getPlane() == Plane.AXIAL) {
+    if (stack.getPlane() == MprView.Plane.AXIAL) {
       Collections.reverse(medias);
     }
 
-    copyImageToVolume(medias, bounds, rectification);
+    copyImageToVolume(medias, bounds, origin);
   }
 
   /**
-   * Computes the combined rectification matrix (rotation + shear) if the volume needs it.
+   * Computes the basis matrix using the actual in-plane pixel spacings from the slice geometry.
+   * <a href="https://dicom.nema.org/medical/dicom/current/output/chtml/part03/sect_C.7.6.2.html#sect_C.7.6.2.1.1">DICOM slice geometry</a>
    *
-   * @return the rectification matrix, or null if no rectification is needed
+   * @return the matrix corresponding to the row and column vectors
    */
-  private Matrix4d computeRectificationTransform(VolumeBounds bounds) {
-    if (!bounds.needsRectification()) {
-      return null;
-    }
-
-    boolean isModified = false;
-    Vector3d originalPixelRatio = bounds.spacing();
+  private Matrix4d getBasisMatrix() {
+    GeometryOfSlice geom = stack.getFirstSliceGeometry();
+    Vector3d col = geom.getColumn();
+    Vector3d row = geom.getRow();
+    double rowSpacing = geom.getVoxelSpacing().x();
+    double colSpacing = geom.getVoxelSpacing().y();
     Matrix4d transformMatrix = new Matrix4d();
+    transformMatrix.set(0, 0, row.x() * rowSpacing);
+    transformMatrix.set(0, 1, row.y() * rowSpacing);
+    transformMatrix.set(0, 2, row.z() * rowSpacing);
 
-    if (bounds.planNeedsRectification()) {
-      Matrix4d rotation = calculateRotation(bounds.planRotation());
-      transformMatrix.mul(rotation);
-      isModified = true;
-    }
+    transformMatrix.set(1, 0, col.x() * colSpacing);
+    transformMatrix.set(1, 1, col.y() * colSpacing);
+    transformMatrix.set(1, 2, col.z() * colSpacing);
 
-    if (bounds.columnNeedsRectification()) {
-      double shearFactorZ = calculateCorrectShearFactorZ();
-      if (shearFactorZ != 0.0) {
-        Matrix4d shear = createColumnShearMatrix(shearFactorZ, originalPixelRatio);
-        transformMatrix.mul(shear);
-        isModified = true;
-      }
-    }
+    return transformMatrix;
+  }
 
-    if (bounds.rowNeedsRectification()) {
-      double shearFactorX = calculateCorrectShearFactorX();
-      if (shearFactorX != 0.0) {
-        Matrix4d shear = createRowShearMatrix(shearFactorX, originalPixelRatio);
-        transformMatrix.mul(shear);
-        isModified = true;
-      }
-    }
-
-    return isModified ? new Matrix4d() : null;
+  /**
+   * Computes the matrix including the position column based on the position vector given as an
+   * argument.
+   *
+   * @return the matrix corresponding to the row and column vectors with the position column
+   */
+  private Matrix4d getTransformMatrix(Vector3d position) {
+    Matrix4d matrix = getBasisMatrix();
+    matrix.set(3, 0, position.x());
+    matrix.set(3, 1, position.y());
+    matrix.set(3, 2, position.z());
+    return matrix;
   }
 
   /**
@@ -342,63 +309,66 @@ public abstract sealed class Volume<T extends Number, A>
   }
 
   /** Calculates transformed bounds for a given size and transform matrix. */
-  private Vector3i[] calculateBoundsForSize(Matrix4d transform, Vector3i sz) {
-    Vector4d[] corners = {
+  private Vector3d[] calculateBoundsForSize(Vector3d firstImgTlhc, Vector3d lastImgTlhc) {
+    Vector4d[] cornersFirstImg = {
       new Vector4d(0.0, 0.0, 0.0, 1.0),
-      new Vector4d(sz.x, 0.0, 0.0, 1.0),
-      new Vector4d(sz.x, 0.0, sz.z, 1.0),
-      new Vector4d(0.0, 0.0, sz.z, 1.0),
-      new Vector4d(sz.x, sz.y, 0.0, 1.0),
-      new Vector4d(sz.x, sz.y, sz.z, 1.0),
-      new Vector4d(0.0, sz.y, sz.z, 1.0),
-      new Vector4d(0.0, sz.y, 0.0, 1.0)
+      new Vector4d(stack.getWidth(), 0.0, 0.0, 1.0),
+      new Vector4d(stack.getWidth(), stack.getHeight(), 0.0, 1.0),
+      new Vector4d(0.0, stack.getHeight(), 0.0, 1.0)
     };
 
-    for (Vector4d corner : corners) {
-      transform.transform(corner);
+    Vector4d[] cornersLastImg = {
+      new Vector4d(0.0, 0.0, 0.0, 1.0),
+      new Vector4d(stack.getWidth(), 0.0, 0.0, 1.0),
+      new Vector4d(stack.getWidth(), stack.getHeight(), 0.0, 1.0),
+      new Vector4d(0.0, stack.getHeight(), 0.0, 1.0)
+    };
+
+    Matrix4d firstImgTransform = getTransformMatrix(firstImgTlhc);
+    Matrix4d lastImgTransform = getTransformMatrix(lastImgTlhc);
+
+    for (Vector4d corner : cornersLastImg) {
+      lastImgTransform.transform(corner);
+    }
+    for (Vector4d corner : cornersFirstImg) {
+      firstImgTransform.transform(corner);
     }
 
-    Vector3i min = new Vector3i(Integer.MAX_VALUE);
-    Vector3i max = new Vector3i(Integer.MIN_VALUE);
+    Vector3d min = new Vector3d(Integer.MAX_VALUE);
+    Vector3d max = new Vector3d(Integer.MIN_VALUE);
 
+    minMaxCorner(cornersFirstImg, min, max);
+    minMaxCorner(cornersLastImg, min, max);
+
+    return new Vector3d[] {min, max};
+  }
+
+  private void minMaxCorner(Vector4d[] corners, Vector3d min, Vector3d max) {
     for (Vector4d corner : corners) {
-      min.x = Math.min(min.x, (int) Math.floor(corner.x));
-      min.y = Math.min(min.y, (int) Math.floor(corner.y));
-      min.z = Math.min(min.z, (int) Math.floor(corner.z));
-      max.x = Math.max(max.x, (int) Math.ceil(corner.x));
-      max.y = Math.max(max.y, (int) Math.ceil(corner.y));
-      max.z = Math.max(max.z, (int) Math.ceil(corner.z));
+      min.x = Math.min(min.x, corner.x);
+      min.y = Math.min(min.y, corner.y);
+      min.z = Math.min(min.z, corner.z);
+      max.x = Math.max(max.x, corner.x);
+      max.y = Math.max(max.y, corner.y);
+      max.z = Math.max(max.z, corner.z);
     }
-
-    return new Vector3i[] {min, max};
   }
 
   private void copyImageToVolume(
-      List<DicomImageElement> dicomImages, VolumeBounds bounds, Matrix4d rectification) {
+      List<DicomImageElement> dicomImages, VolumeBounds bounds, Vector3d translation) {
     createData(size.x, size.y, size.z);
     computeFlipRequirements(bounds);
 
     final int n = dicomImages.size();
     final boolean flipRow = needsRowFlip;
     final boolean flipCol = needsColFlip;
-    Matrix4d sliceToVolumeTransform = computeSliceToVolumeTransform();
-
-    // If we have a rectification, compose it with the slice-to-volume transform
-    final Matrix4d combinedTransform;
-    if (rectification != null) {
-      combinedTransform = new Matrix4d(rectification).mul(sliceToVolumeTransform);
-    } else {
-      combinedTransform = sliceToVolumeTransform;
-    }
 
     // Submit per-slice tasks with bounded concurrency
-    CompletionService<MinMaxLocResult> ecs = new ExecutorCompletionService<>(VOLUME_BUILD_POOL);
+    CompletionService<MinMaxLocResult> ecs =
+        new ExecutorCompletionService<>(VOLUME_BUILD_POOL);
 
     final AtomicInteger submitted = new AtomicInteger(0);
     final AtomicInteger completed = new AtomicInteger(0);
-
-    Vector3d initPosition = new Vector3d(dicomImages.getFirst().getSliceGeometry().getTLHC());
-    double spacingCorrection = stack.computeSpacingCorrectionFromGeometry();
 
     for (int z = 0; z < n; z++) {
       final int zi = z;
@@ -406,7 +376,7 @@ public abstract sealed class Volume<T extends Number, A>
           () -> {
             DicomImageElement dcm = dicomImages.get(zi);
 
-            // Load source image (IO and decode may run concurrently with other slices)
+            // Load source image (IO and decode may run concurrently with other slices
             PlanarImage src = dcm.getModalityLutImage(null, null);
             // Get min max after loading the image
             MinMaxLocResult minMaxLoc = ImageAnalyzer.findRawMinMaxValues(src, true);
@@ -417,40 +387,15 @@ public abstract sealed class Volume<T extends Number, A>
               src = ImageTransformer.flip(src.toImageCV(), flipType);
             }
 
-            Vector3d diff = new Vector3d();
             Vector3d position = dcm.getSliceGeometry().getTLHC();
-            position.sub(initPosition, diff);
-            Vector3d diff2 = new Vector3d(diff);
-            //            if (diff2.x < 0 ){
-            //              diff2.x = -diff2.x;
-            //            }
-            //            if (diff2.y < 0 ){
-            //              diff2.y = -diff2.y;
-            //            }
-            // Convert diff from physical (mm) to voxel/pixel units
-            switch (stack.getPlane()) {
-              case AXIAL:
-                diff2.x /= pixelRatio.x;
-                diff2.y /= pixelRatio.y;
-                diff2.z /= -pixelRatio.z;
-                diff2.z *= spacingCorrection;
-                break;
-              case CORONAL:
-                diff2.x /= pixelRatio.x;
-                diff2.y = diff.z / pixelRatio.z;
-                diff2.y *= spacingCorrection;
-                diff2.z = diff.y / pixelRatio.y;
-                break;
-              case SAGITTAL:
-                diff2.x = diff.y / pixelRatio.y;
-                diff2.x *= spacingCorrection;
-                diff2.y = diff.z / pixelRatio.z;
-                diff2.z = diff.x / pixelRatio.x;
-                break;
-            }
+            Matrix4d transform = getBasisMatrix();
+            position.sub(translation);
+            transform.set(3, 0, position.x());
+            transform.set(3, 1, position.y());
+            transform.set(3, 2, position.z());
 
             Dimension dim = new Dimension(src.width(), src.height());
-            copyFrom(src, zi, combinedTransform, dim, diff2);
+            copyFrom(src, zi, transform, dim);
             int done = completed.incrementAndGet();
             updateProgressBar(done - 1);
             return minMaxLoc;
@@ -497,22 +442,6 @@ public abstract sealed class Volume<T extends Number, A>
 
   private T compareMax(T a, T b) {
     return convertToUnsigned(a) > convertToUnsigned(b) ? a : b;
-  }
-
-  private Matrix4d computeSliceToVolumeTransform() {
-    Matrix4d matrix4d = new Matrix4d();
-    switch (stack.getPlane()) {
-      case AXIAL -> {
-        // No additional transform needed for axial, as it's the default orientation
-      }
-      case CORONAL -> {
-        matrix4d.rotateX(-Math.toRadians(90)).scale(1.0, -1.0, 1.0);
-      }
-      case SAGITTAL -> {
-        matrix4d.rotateY(Math.toRadians(90)).rotateZ(Math.toRadians(90));
-      }
-    }
-    return matrix4d;
   }
 
   /** Determines if row/column flipping is needed based on the volume bounds orientation. */
@@ -681,8 +610,7 @@ public abstract sealed class Volume<T extends Number, A>
   /** Returns the number of elements in the pixel array. */
   protected abstract int pixelArrayLength(A pixelData);
 
-  protected void copyFrom(
-      PlanarImage image, int sliceIndex, Matrix4d transform, Dimension dim, Vector3d diff) {
+  protected void copyFrom(PlanarImage image, int sliceIndex, Matrix4d transform, Dimension dim) {
     int pixelCount = dim.width * dim.height;
     A pixelData = allocatePixelArray(pixelCount);
     readImagePixels(image, pixelData);
@@ -700,7 +628,7 @@ public abstract sealed class Volume<T extends Number, A>
       copyPixels(
           dim,
           (x, y) -> {
-            setValue(x, y, sliceIndex, width, pixelData, transform, diff);
+            setValue(x, y, sliceIndex, width, pixelData, transform);
             return 0;
           });
     }
@@ -738,12 +666,26 @@ public abstract sealed class Volume<T extends Number, A>
     }
   }
 
-  protected void setValue(
-      int x, int y, int z, int width, A pixelData, Matrix4d transform, Vector3d diff) {
-    // Assuming channel 0 for simplicity
+  /**
+   * Sets the voxel value at the specified 3D coordinates, applying an optional transformation. This
+   * method supports only single-channel volumes. When a non-identity transform is used
+   * (rectification), uses splatting to avoid gaps.
+   */
+  protected void setValue(int x, int y, int z, int width, A pixelData, Matrix4d transform) {
     if (transform != null) {
-      Vector4d p = new Vector4d(x - diff.x, y - diff.y, diff.z, 1.0);
+      Vector4d p = new Vector4d(x, y, 0.0, 1.0);
+      // The coordinates of the voxel (i,j) in the frame's image plane in units of mm.
       transform.transform(p);
+
+      // Convert to pixel unit
+      p.div(new Vector4d(pixelRatio.x(), pixelRatio.y(), pixelRatio.z(), 1.0));
+
+      if (stack.getPlane().equals(MprView.Plane.AXIAL)) {
+        // Axial is reversed in Z compared to patient coordinates, so we need to flip the Z axis
+        p.z = -p.z;
+      } else {
+        p.z = size.z - p.z;
+      }
 
       int x0 = (int) Math.floor(p.x);
       int y0 = (int) Math.floor(p.y);
@@ -1068,114 +1010,6 @@ public abstract sealed class Volume<T extends Number, A>
     return this.isTransformed;
   }
 
-  public Matrix4d calculateRotation(double planRotation) {
-    double angle = Math.PI / 2.0 - Math.acos(planRotation);
-    Matrix4d matrix = new Matrix4d();
-    return switch (stack.getPlane()) {
-      case AXIAL -> {
-        matrix.rotateZ(angle);
-        yield matrix;
-      }
-      case CORONAL -> {
-        matrix.rotateY(angle);
-        yield matrix;
-      }
-      case SAGITTAL -> {
-        matrix.rotateX(angle);
-        yield matrix;
-      }
-    };
-  }
-
-  /**
-   * Safely calculates a shear factor with edge case handling.
-   *
-   * @param numerator the deviation component
-   * @param denominator the primary axis component
-   * @return bounded shear factor, or 0.0 if invalid
-   */
-  private double calculateSafeShearFactor(double numerator, double denominator) {
-    // Threshold below which denominator is considered degenerate (nearly 90° tilt)
-    final double MIN_DENOMINATOR = 1e-6;
-    // Maximum reasonable shear factor (~80° tilt = tan(80°) ≈ 5.67)
-    final double MAX_SHEAR = 5.0;
-    // Minimum shear worth applying (avoid unnecessary transformation)
-    final double MIN_SHEAR = 1e-4;
-
-    if (Math.abs(denominator) < MIN_DENOMINATOR) {
-      LOGGER.warn("Degenerate geometry: normal primary component near zero");
-      return 0.0;
-    }
-
-    double shear = numerator / denominator;
-
-    if (!Double.isFinite(shear)) {
-      LOGGER.warn("Invalid shear factor computed: {}", shear);
-      return 0.0;
-    }
-
-    // Clamp to reasonable range
-    if (Math.abs(shear) > MAX_SHEAR) {
-      LOGGER.warn(
-          "Shear factor {} exceeds maximum, clamping to {}", shear, Math.signum(shear) * MAX_SHEAR);
-      return Math.signum(shear) * MAX_SHEAR;
-    }
-
-    // Skip negligible shear
-    if (Math.abs(shear) < MIN_SHEAR) {
-      return 0.0;
-    }
-
-    return shear;
-  }
-
-  /**
-   * Calculates the column shear factor (gantry tilt correction). Uses the column direction vector's
-   * deviation from the ideal orientation.
-   *
-   * <p>For gantry tilt, the column vector deviates from being perpendicular to the slice plane. The
-   * shear factor is the tangent of the tilt angle, computed from the column vector components.
-   *
-   * @return the shear factor for column correction
-   */
-  public double calculateCorrectShearFactorZ() {
-    Vector3d col = stack.getFistSliceGeometry().getColumn();
-    return switch (stack.getPlane()) {
-      // For AXIAL: ideal column is (0,1,0), deviation is in Z
-      // shear = col.z / col.y (how much Z per unit Y)
-      case AXIAL -> calculateSafeShearFactor(col.z, col.y);
-      // For CORONAL: ideal column is (0,0,-1), deviation is in Y
-      // shear = col.y / col.z (how much Y per unit Z)
-      case CORONAL -> calculateSafeShearFactor(col.y, col.z);
-      // For SAGITTAL: ideal column is (0,0,-1), deviation is in X
-      // shear = col.x / col.z (how much X per unit Z)
-      case SAGITTAL -> calculateSafeShearFactor(col.x, col.z);
-    };
-  }
-
-  /**
-   * Calculates the row shear factor (in-plane rotation correction). Uses the row direction vector's
-   * deviation from the ideal orientation.
-   *
-   * <p>Row shear corrects for deviation perpendicular to the column shear direction.
-   *
-   * @return the shear factor for row correction
-   */
-  public double calculateCorrectShearFactorX() {
-    Vector3d row = stack.getFistSliceGeometry().getRow();
-    return switch (stack.getPlane()) {
-      // For AXIAL: ideal row is (1,0,0), deviation is in Z
-      // shear = row.z / row.x (how much Z per unit X)
-      case AXIAL -> calculateSafeShearFactor(row.z, row.x);
-      // For CORONAL: ideal row is (1,0,0), deviation is in Y
-      // shear = row.y / row.x (how much Y per unit X)
-      case CORONAL -> calculateSafeShearFactor(row.y, row.x);
-      // For SAGITTAL: ideal row is (0,1,0), deviation is in X
-      // shear = row.x / row.y (how much X per unit Y)
-      case SAGITTAL -> calculateSafeShearFactor(row.x, row.y);
-    };
-  }
-
   protected T getInterpolatedValueFromSource(double x, double y, double z, int channel) {
     // Check bounds in the ORIGINAL volume (this)
     if (x < 0
@@ -1233,158 +1067,6 @@ public abstract sealed class Volume<T extends Number, A>
       case VolumeInt _ -> (T) Integer.valueOf((int) Math.round(value));
       case VolumeFloat _ -> (T) Float.valueOf((float) value);
       default -> (T) Double.valueOf(value);
-    };
-  }
-
-  /**
-   * Creates a column shear matrix with correct ratio compensation for anisotropic voxels. Column
-   * shear corrects for gantry tilt (deviation in the slice stacking direction).
-   *
-   * <p>The ratio correction formula is: source_axis_spacing / affected_axis_spacing This ensures
-   * the shear operates correctly in voxel space while preserving physical angles.
-   *
-   * @param shearFactor the raw shear factor (tangent of tilt angle)
-   * @param originRatio the pixel spacing vector (x, y, z spacings)
-   * @return the shear transformation matrix
-   */
-  private Matrix4d createColumnShearMatrix(double shearFactor, Vector3d originRatio) {
-    return switch (stack.getPlane()) {
-      case AXIAL -> {
-        double ratioZ = originRatio.y / originRatio.z;
-        yield new Matrix4d(
-            1.0,
-            0.0,
-            0.0,
-            0.0,
-            0.0,
-            1.0,
-            -shearFactor * ratioZ,
-            0.0,
-            0.0,
-            0.0,
-            1.0,
-            0.0,
-            0.0,
-            0.0,
-            0.0,
-            1.0);
-      }
-      case CORONAL -> {
-        double ratioY = originRatio.z / originRatio.y;
-        yield new Matrix4d(
-            1.0,
-            0.0,
-            0.0,
-            0.0,
-            0.0,
-            1.0,
-            0.0,
-            0.0,
-            0.0,
-            shearFactor * ratioY,
-            1.0,
-            0.0,
-            0.0,
-            0.0,
-            0.0,
-            1.0);
-      }
-      case SAGITTAL -> {
-        double ratioX = originRatio.z / originRatio.x;
-        yield new Matrix4d(
-            1.0,
-            0.0,
-            0.0,
-            0.0,
-            0.0,
-            1.0,
-            0.0,
-            0.0,
-            shearFactor * ratioX,
-            0.0,
-            1.0,
-            0.0,
-            0.0,
-            0.0,
-            0.0,
-            1.0);
-      }
-    };
-  }
-
-  /**
-   * Creates a row shear matrix with correct ratio compensation for anisotropic voxels. Row shear
-   * corrects for in-plane rotation deviation perpendicular to column shear.
-   *
-   * <p>The ratio correction formula is: source_axis_spacing / affected_axis_spacing This ensures
-   * the shear operates correctly in voxel space while preserving physical angles.
-   *
-   * @param shearFactor the raw shear factor (tangent of tilt angle)
-   * @param originRatio the pixel spacing vector (x, y, z spacings)
-   * @return the shear transformation matrix
-   */
-  private Matrix4d createRowShearMatrix(double shearFactor, Vector3d originRatio) {
-    return switch (stack.getPlane()) {
-      case AXIAL -> {
-        double ratioX = originRatio.x / originRatio.z;
-        yield new Matrix4d(
-            1.0,
-            0.0,
-            -shearFactor * ratioX,
-            0.0,
-            0.0,
-            1.0,
-            0.0,
-            0.0,
-            0.0,
-            0.0,
-            1.0,
-            0.0,
-            0.0,
-            0.0,
-            0.0,
-            1.0);
-      }
-      case CORONAL -> {
-        double ratioY = originRatio.x / originRatio.y;
-        yield new Matrix4d(
-            1.0,
-            shearFactor * ratioY,
-            0.0,
-            0.0,
-            0.0,
-            1.0,
-            0.0,
-            0.0,
-            0.0,
-            0.0,
-            1.0,
-            0.0,
-            0.0,
-            0.0,
-            0.0,
-            1.0);
-      }
-      case SAGITTAL -> {
-        double ratioX = originRatio.y / originRatio.x;
-        yield new Matrix4d(
-            1.0,
-            0.0,
-            0.0,
-            0.0,
-            shearFactor * ratioX,
-            1.0,
-            0.0,
-            0.0,
-            0.0,
-            0.0,
-            1.0,
-            0.0,
-            0.0,
-            0.0,
-            0.0,
-            1.0);
-      }
     };
   }
 

@@ -242,7 +242,7 @@ public class VolImageIO implements DcmMediaReader {
     int instanceNumber = mprAxis.getSliceIndex();
     rawIO.setTag(TagD.get(Tag.InstanceNumber), instanceNumber + 1);
 
-    GeometryOfSlice geometry = volume.stack.getFistSliceGeometry();
+    GeometryOfSlice geometry = volume.stack.getFirstSliceGeometry();
     Vector3d thlc = transformPosition(geometry, volumeCenter);
     rawIO.setTag(TagD.get(Tag.ImagePositionPatient), new double[] {thlc.x, thlc.y, thlc.z});
 
