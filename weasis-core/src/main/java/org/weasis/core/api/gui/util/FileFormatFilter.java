@@ -10,7 +10,9 @@
 package org.weasis.core.api.gui.util;
 
 import java.io.File;
+import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Locale;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
@@ -92,6 +94,35 @@ public class FileFormatFilter extends FileFilter {
       }
     }
     return null;
+  }
+
+  /**
+   * Returns whether the path refers to a ZIP archive (by file extension).
+   *
+   * @param path the path to check (file or path)
+   * @return true if the path has a ".zip" extension (case-insensitive)
+   */
+  public static boolean isZipFile(Path path) {
+    if (path == null) {
+      return false;
+    }
+    Path name = path.getFileName();
+    return name != null
+        && name.toString().toLowerCase(Locale.ROOT).endsWith(".zip"); // NON-NLS
+  }
+
+  /**
+   * Returns whether the file refers to a ZIP archive (by file extension).
+   *
+   * @param file the file to check
+   * @return true if the file has a ".zip" extension (case-insensitive)
+   */
+  public static boolean isZipFile(File file) {
+    if (file == null || !file.isFile()) {
+      return false;
+    }
+    String name = file.getName();
+    return name != null && name.toLowerCase(Locale.ROOT).endsWith(".zip"); // NON-NLS
   }
 
   public void addExtension(String extension) {

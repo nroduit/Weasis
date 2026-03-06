@@ -121,6 +121,7 @@ import org.weasis.core.api.gui.util.AbstractTabLicense;
 import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.gui.util.DynamicMenu;
 import org.weasis.core.api.gui.util.GuiExecutor;
+import org.weasis.core.api.gui.util.FileFormatFilter;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.WinUtil;
 import org.weasis.core.api.media.data.Codec;
@@ -1199,10 +1200,12 @@ public class WeasisWin {
       }
       List<DataExplorerView> explorers = getImportableExplorers();
       List<Path> dirs = new ArrayList<>();
+      List<Path> zips = new ArrayList<>();
       Map<Codec, List<Path>> codecFiles = new HashMap<>();
 
-      categorizeFiles(files, dirs, codecFiles);
+      categorizeFiles(files, dirs, zips, codecFiles);
       processDirectories(explorers, dirs);
+      processZipFiles(explorers, zips);
       processCodecFiles(explorers, codecFiles);
       return true;
     }
@@ -1214,10 +1217,15 @@ public class WeasisWin {
     }
 
     private void categorizeFiles(
-        List<Path> files, List<Path> dirs, Map<Codec, List<Path>> codecFiles) {
+        List<Path> files,
+        List<Path> dirs,
+        List<Path> zips,
+        Map<Codec, List<Path>> codecFiles) {
       for (Path file : files) {
         if (Files.isDirectory(file)) {
           dirs.add(file);
+        } else if (FileFormatFilter.isZipFile(file)) {
+          zips.add(file);
         } else {
           categorizeMediaFile(file, codecFiles);
         }
@@ -1237,6 +1245,12 @@ public class WeasisWin {
     private void processDirectories(List<DataExplorerView> explorers, List<Path> dirs) {
       if (!dirs.isEmpty() && !explorers.isEmpty()) {
         importInExplorer(explorers, dirs, null);
+      }
+    }
+
+    private void processZipFiles(List<DataExplorerView> explorers, List<Path> zips) {
+      if (!zips.isEmpty() && !explorers.isEmpty()) {
+        importInExplorer(explorers, zips, null);
       }
     }
 

@@ -12,6 +12,7 @@ package org.weasis.dicom.explorer;
 import java.awt.datatransfer.Transferable;
 import java.io.File;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -21,6 +22,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.core.api.explorer.model.TreeModel;
+import org.weasis.core.api.gui.util.FileFormatFilter;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.TagW;
@@ -32,6 +34,7 @@ import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.DicomSeries;
 import org.weasis.dicom.explorer.HangingProtocols.OpeningViewer;
+import org.weasis.dicom.explorer.imp.DicomZipImport;
 import org.weasis.dicom.explorer.imp.LocalImport;
 import org.weasis.dicom.explorer.main.DicomExplorer;
 import org.weasis.dicom.explorer.main.SeriesSelectionModel;
@@ -88,9 +91,10 @@ public class DicomSeriesHandler extends SequenceHandler {
   }
 
   /**
-   * Handles dropping DICOM files for import.
+   * Handles dropping DICOM files and ZIP archives for import. ZIP files are processed the same way
+   * as when using the Import dialog (extracted then loaded like a folder).
    *
-   * @param paths the list of file paths to import
+   * @param paths the list of file paths to import (files, directories, or .zip archives)
    * @return true if import was initiated successfully
    */
   public static boolean dropDicomFiles(List<Path> paths) {
@@ -103,9 +107,25 @@ public class DicomSeriesHandler extends SequenceHandler {
               var model = explorer.getDataExplorerModel();
               var openingViewer =
                   OpeningViewer.getOpeningViewerByLocalKey(LocalImport.LAST_OPEN_VIEWER_MODE);
-              var files = paths.stream().map(Path::toFile).toArray(File[]::new);
-              DicomModel.LOADING_EXECUTOR.execute(
-                  new LoadLocalDicom(files, true, model, openingViewer));
+              var parent = GuiUtils.getUICore().getApplicationWindow();
+
+              List<Path> nonZipPaths = new ArrayList<>();
+              for (Path p : paths) {
+                if (FileFormatFilter.isZipFile(p)) {
+                  File zipFile = p.toFile();
+                  if (zipFile.canRead()) {
+                    DicomZipImport.loadDicomZip(zipFile, model, openingViewer, parent);
+                  }
+                } else {
+                  nonZipPaths.add(p);
+                }
+              }
+              if (!nonZipPaths.isEmpty()) {
+                var files = nonZipPaths.stream().map(Path::toFile).toArray(File[]::new);
+                DicomModel.LOADING_EXECUTOR.execute(
+                    new LoadLocalDicom(files, true, model, openingViewer));
+              }
+
               return true;
             })
         .orElse(false);
