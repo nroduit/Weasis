@@ -29,6 +29,7 @@ import org.weasis.core.api.explorer.DataExplorerView;
 import org.weasis.core.api.explorer.ObservableEvent;
 import org.weasis.core.api.gui.Insertable;
 import org.weasis.core.api.gui.util.ActionW;
+import org.weasis.core.api.gui.util.FileFormatFilter;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.media.data.*;
@@ -48,6 +49,7 @@ import org.weasis.dicom.explorer.*;
 import org.weasis.dicom.explorer.Messages;
 import org.weasis.dicom.explorer.exp.ExplorerTask;
 import org.weasis.dicom.explorer.exp.ExportToolBar;
+import org.weasis.dicom.explorer.imp.DicomZipImport;
 import org.weasis.dicom.explorer.imp.ImportToolBar;
 import org.weasis.dicom.explorer.imp.LocalImport;
 
@@ -943,12 +945,27 @@ public class DicomExplorer extends PluginTool
 
   @Override
   public void importFiles(File[] files, boolean recursive) {
-    if (files != null) {
-      HangingProtocols.OpeningViewer openingViewer =
-          HangingProtocols.OpeningViewer.getOpeningViewerByLocalKey(
-              LocalImport.LAST_OPEN_VIEWER_MODE);
+    if (files == null || files.length == 0) {
+      return;
+    }
+    HangingProtocols.OpeningViewer openingViewer =
+        HangingProtocols.OpeningViewer.getOpeningViewerByLocalKey(
+            LocalImport.LAST_OPEN_VIEWER_MODE);
+    Component parent = GuiUtils.getUICore().getApplicationWindow();
+    List<File> nonZipFiles = new ArrayList<>();
+    for (File f : files) {
+      if (FileFormatFilter.isZipFile(f)) {
+        if (f.canRead()) {
+          DicomZipImport.loadDicomZip(f, model, openingViewer, parent);
+        }
+      } else {
+        nonZipFiles.add(f);
+      }
+    }
+    if (!nonZipFiles.isEmpty()) {
+      File[] rest = nonZipFiles.toArray(new File[0]);
       DicomModel.LOADING_EXECUTOR.execute(
-          new LoadLocalDicom(files, recursive, model, openingViewer));
+          new LoadLocalDicom(rest, recursive, model, openingViewer));
     }
   }
 
