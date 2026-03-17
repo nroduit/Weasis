@@ -9,18 +9,19 @@
  */
 package org.weasis.dicom.explorer.exp;
 
-import java.awt.Component;
-import javax.swing.JButton;
-import javax.swing.JOptionPane;
+import java.awt.*;
+import javax.swing.*;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.api.util.ResourceUtil.ActionIcon;
+import org.weasis.core.ui.util.ColorLayerUI;
 import org.weasis.core.ui.util.DefaultAction;
 import org.weasis.core.ui.util.WtoolBar;
 import org.weasis.dicom.explorer.DicomModel;
 import org.weasis.dicom.explorer.Messages;
 import org.weasis.dicom.explorer.imp.ImportToolBar;
 import org.weasis.dicom.explorer.main.DicomExplorer;
+import org.weasis.dicom.explorer.pr.DicomExportPR;
 
 public class ExportToolBar extends WtoolBar {
 
@@ -38,6 +39,33 @@ public class ExportToolBar extends WtoolBar {
       btnExport.addActionListener(
           e -> ImportToolBar.showAction(ExportToolBar.this, model, null, true));
       add(btnExport);
+    }
+
+    if (GuiUtils.getUICore()
+        .getSystemPreferences()
+        .getBooleanProperty("weasis.export.dicom", true)) {
+      final JButton sendButton = new JButton();
+
+      sendButton.setToolTipText(Messages.getString("AnnotationsToolBar.export_pr"));
+      sendButton.setIcon(ResourceUtil.getToolBarIcon(ResourceUtil.ActionIcon.EXPORT_ANNOTATIONS));
+      sendButton.addActionListener(
+          e -> {
+            Window win = SwingUtilities.getWindowAncestor(this);
+            DicomExportPR dialog = new DicomExportPR(win, model);
+
+            if (dialog.isContainsPR()) {
+
+              dialog.showFirstPage();
+              dialog.setAlwaysOnTop(true);
+              ColorLayerUI layer = ColorLayerUI.createTransparentLayerUI(this);
+              ColorLayerUI.showCenterScreen(dialog, layer);
+            } else {
+              JOptionPane.showMessageDialog(
+                  win, Messages.getString("AnnotationsToolBar.error_no_pr"));
+            }
+          });
+
+      add(sendButton);
     }
   }
 

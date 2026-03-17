@@ -796,7 +796,7 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
     return Collections.emptyList();
   }
 
-  public static Attributes buildAndWritePR(
+  public static void buildAndWritePR(
       MediaElement img,
       boolean keepNames,
       File destinationDir,
@@ -813,7 +813,11 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
         destinationDir.mkdirs();
         Attributes prAttributes =
             DicomPrSerializer.writePresentation(
-                grModel, imgAttributes, outputFile, seriesInstanceUID, prUid);
+                grModel,
+                (img instanceof DicomImageElement ? (DicomImageElement) img : null),
+                outputFile,
+                seriesInstanceUID,
+                prUid);
         if (prAttributes != null) {
           try {
             writeInDicomDir(writer, prAttributes, node, outputFile.getName(), outputFile);
@@ -823,7 +827,6 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
         }
       }
     }
-    return imgAttributes;
   }
 
   public static String buildPath(

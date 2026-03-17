@@ -194,4 +194,12 @@ public class DicomExport extends AbstractWizardDialog {
     closeAllPages();
     super.dispose();
   }
+
+  public DicomModel getDicomModel() {
+    return dicomModel;
+  }
+
+  public CheckTreeModel getTreeModel() {
+    return treeModel;
+  }
 }

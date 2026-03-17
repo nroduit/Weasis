@@ -70,7 +70,7 @@ public class AxesControl {
   }
 
   protected int getSliceSize() {
-    Volume<?> volume = controller.getVolume();
+    Volume<?, ?> volume = controller.getVolume();
     return volume == null ? 1 : volume.getSliceSize();
   }
 
@@ -223,7 +223,7 @@ public class AxesControl {
     }
     Vector3d adjustedCenter = new Vector3d(pt).sub(CENTER_VECTOR);
     if (applySpatialMultiplier) {
-      Volume<?> volume = controller.getVolume();
+      Volume<?, ?> volume = controller.getVolume();
       if (volume != null) {
         Vector3d multiplier = volume.getSpatialMultiplier();
         adjustedCenter.x *= multiplier.x;
@@ -247,7 +247,7 @@ public class AxesControl {
 
   public Vector3d getCenterForCustomRotation(Quaterniond rotation) {
     Vector3d vCenter = new Vector3d(this.center).sub(CENTER_VECTOR);
-    Volume<?> v = controller.getVolume();
+    Volume<?, ?> v = controller.getVolume();
     if (v != null) {
       //      Vector3d dimensionMultiplier = v.getSpatialMultiplier();
       //      vCenter.x *= dimensionMultiplier.x;
@@ -261,7 +261,7 @@ public class AxesControl {
   }
 
   public Vector3d getGlobalPositionForLocalPosition(SliceCanvas canvas, Vector3d position) {
-    Volume<?> v = controller.getVolume();
+    Volume<?, ?> v = controller.getVolume();
     if (v == null) {
       return new Vector3d(position);
     }

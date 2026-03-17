@@ -95,7 +95,7 @@ public class GeometryOfSlice {
    *     (direction cosines, unit vector) LPH+
    */
   public final Vector3d getNormal() {
-    return new Vector3d(row).cross(column).normalize();
+    return VectorUtils.computeNormalOfSurface(row, column);
   }
 
   /**

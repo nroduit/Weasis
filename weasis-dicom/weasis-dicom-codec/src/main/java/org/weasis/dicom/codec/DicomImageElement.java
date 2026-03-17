@@ -114,6 +114,7 @@ public class DicomImageElement extends ImageElement implements DicomElement {
        */
       setPixelSize(val[1], val[0]);
       pixelSpacingUnit = Unit.MILLIMETER;
+      pixelSizeModifiedByUser = false;
     }
 
     initPixelValueUnit(modality);

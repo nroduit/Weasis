@@ -77,6 +77,7 @@ public class ImageElement extends MediaElement {
   protected double pixelSizeY = 1.0;
   protected Unit pixelSpacingUnit = Unit.PIXEL;
   protected String pixelSizeCalibrationDescription = null;
+  protected boolean pixelSizeModifiedByUser = false;
   protected String pixelValueUnit = null;
 
   protected Double minPixelValue;
@@ -219,6 +220,18 @@ public class ImageElement extends MediaElement {
 
   public String getPixelSizeCalibrationDescription() {
     return pixelSizeCalibrationDescription;
+  }
+
+  public void setPixelSizeCalibrationDescription(String pixelSizeCalibrationDescription) {
+    this.pixelSizeCalibrationDescription = pixelSizeCalibrationDescription;
+  }
+
+  public boolean isPixelSizeModifiedByUser() {
+    return pixelSizeModifiedByUser;
+  }
+
+  public void setPixelSizeModifiedByUser(boolean pixelSizeModifiedByUser) {
+    this.pixelSizeModifiedByUser = pixelSizeModifiedByUser;
   }
 
   public Number pixelToRealValue(Number pixelValue, WlPresentation wlp) {

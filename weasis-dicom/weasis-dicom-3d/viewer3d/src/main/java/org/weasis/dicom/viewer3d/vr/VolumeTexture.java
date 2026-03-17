@@ -14,14 +14,15 @@ import com.jogamp.opengl.GL2ES2;
 import com.jogamp.opengl.GL2ES3;
 import com.jogamp.opengl.GL4;
 import org.joml.Vector3d;
+import org.joml.Vector3i;
 
 public class VolumeTexture extends TextureData {
 
   private boolean requiredBuilding;
   private Vector3d texelSize;
 
-  public VolumeTexture(int width, int height, int depth, PixelFormat pixelFormat) {
-    super(width, height, depth, pixelFormat);
+  public VolumeTexture(Vector3i size, PixelFormat pixelFormat) {
+    super(size.x, size.y, size.z, pixelFormat);
     this.requiredBuilding = true;
     this.texelSize = new Vector3d(1.0, 1.0, 1.0);
   }

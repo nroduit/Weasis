@@ -10,14 +10,16 @@
 package org.weasis.dicom.viewer2d.mpr;
 
 import static org.weasis.dicom.viewer2d.mpr.MprView.Plane.AXIAL;
+import static org.weasis.dicom.viewer2d.mpr.VolumeBounds.EPSILON;
 
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Tag;
 import org.dcm4che3.data.VR;
 import org.joml.Vector3d;
+import org.joml.Vector3i;
 import org.weasis.core.api.gui.util.Filter;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.TagW;
@@ -25,75 +27,24 @@ import org.weasis.core.api.media.data.TagW.TagType;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.SortSeriesStack;
 import org.weasis.dicom.codec.geometry.GeometryOfSlice;
+import org.weasis.dicom.viewer2d.mip.SeriesBuilder;
 import org.weasis.dicom.viewer2d.mpr.MprView.Plane;
 
 public abstract class OriginalStack extends AbstractStack {
-  protected static final double EPSILON = 1e-3;
   static TagW seriesReferences = new TagW("series.builder.refs", TagType.STRING, 2, 2);
-  static final int[] COPIED_ATTRS = {
-    Tag.SpecificCharacterSet,
-    Tag.TimezoneOffsetFromUTC,
-    Tag.PatientID,
-    Tag.PatientName,
-    Tag.PatientBirthDate,
-    Tag.PatientBirthTime,
-    Tag.PatientSex,
-    Tag.IssuerOfPatientID,
-    Tag.IssuerOfAccessionNumberSequence,
-    Tag.PatientWeight,
-    Tag.PatientAge,
-    Tag.PatientSize,
-    Tag.PatientState,
-    Tag.PatientComments,
-    Tag.StudyID,
-    Tag.StudyDate,
-    Tag.StudyTime,
-    Tag.StudyDescription,
-    Tag.StudyComments,
-    Tag.AccessionNumber,
-    Tag.ModalitiesInStudy,
-    Tag.Modality,
-    Tag.SeriesDate,
-    Tag.SeriesTime,
-    Tag.RetrieveAETitle,
-    Tag.ReferringPhysicianName,
-    Tag.InstitutionName,
-    Tag.InstitutionalDepartmentName,
-    Tag.StationName,
-    Tag.Manufacturer,
-    Tag.ManufacturerModelName,
-    Tag.AnatomicalOrientationType,
-    Tag.SeriesNumber,
-    Tag.KVP,
-    Tag.Laterality,
-    Tag.BodyPartExamined,
-    Tag.AnatomicRegionSequence,
-    Tag.RescaleSlope,
-    Tag.RescaleIntercept,
-    Tag.RescaleType,
-    Tag.ModalityLUTSequence,
-    Tag.WindowCenter,
-    Tag.WindowWidth,
-    Tag.VOILUTFunction,
-    Tag.WindowCenterWidthExplanation,
-    Tag.VOILUTSequence
-  };
-
-  static {
-    Arrays.sort(COPIED_ATTRS);
-  }
 
   protected final List<DicomImageElement> sourceStack;
   private final GeometryOfSlice fistSliceGeometry;
   protected double sliceSpace;
   protected boolean variableSliceSpacing;
+  protected boolean nonParallelSlices;
 
   public OriginalStack(
       Plane plane, MediaSeries<DicomImageElement> series, Filter<DicomImageElement> filter) {
     super(plane, series);
     this.sourceStack = series.copyOfMedias(filter, SortSeriesStack.slicePosition);
-    this.sliceSpace = initSliceSpace();
     this.fistSliceGeometry = new GeometryOfSlice(getStartingImage().getSliceGeometry());
+    this.sliceSpace = initSliceSpace();
   }
 
   public DicomImageElement getMiddleImage() {
@@ -116,32 +67,42 @@ public abstract class OriginalStack extends AbstractStack {
     return plane == AXIAL ? getLastImage() : getFirstImage();
   }
 
-  public GeometryOfSlice getFistSliceGeometry() {
+  protected DicomImageElement getEndingImage() {
+    return plane == AXIAL ? getFirstImage() : getLastImage();
+  }
+
+  public GeometryOfSlice getFirstSliceGeometry() {
     return fistSliceGeometry;
   }
 
   protected Attributes getCommonAttributes(String frameOfReferenceUID, String seriesDescription) {
-    final Attributes attributes = getMiddleImage().getMediaReader().getDicomObject();
-    final Attributes cpTags = new Attributes(attributes, COPIED_ATTRS);
+    Attributes attributes = getMiddleImage().getMediaReader().getDicomObject();
+    Attributes cpTags = SeriesBuilder.getBaseAttributes(attributes);
     cpTags.setString(Tag.SeriesDescription, VR.LO, seriesDescription);
     cpTags.setString(Tag.ImageType, VR.CS, ObliqueMpr.imageTypes);
     cpTags.setString(Tag.FrameOfReferenceUID, VR.UI, frameOfReferenceUID);
     return cpTags;
   }
 
+  /**
+   * Initializes the slice spacing by measuring distances between consecutive slices. Applies
+   * correction for non-orthogonal orientations (column/row shear).
+   */
   protected double initSliceSpace() {
-    if (sourceStack == null || sourceStack.isEmpty()) {
+    if (sourceStack == null || sourceStack.size() < 2) {
       return 0.0;
     }
 
-    double totalSpace = 0.0;
-    double lastSpace = 0.0;
     double[] firstPos = (double[]) sourceStack.getFirst().getTagValue(TagW.SlicePosition);
     if (firstPos == null || firstPos.length != 3) {
       return 0.0;
     }
 
-    double gantryTilt = getGantryTilt();
+    // Check for slice parallelism
+    checkSliceParallelism();
+
+    // Collect all spacing measurements
+    List<Double> spacings = new ArrayList<>(sourceStack.size() - 1);
     Vector3d lastPosVector = new Vector3d(firstPos[0], firstPos[1], firstPos[2]);
     for (int i = 1; i < sourceStack.size(); i++) {
       double[] sp = (double[]) sourceStack.get(i).getTagValue(TagW.SlicePosition);
@@ -151,42 +112,58 @@ public abstract class OriginalStack extends AbstractStack {
 
       Vector3d currentPosVector = new Vector3d(sp[0], sp[1], sp[2]);
       double space = lastPosVector.distance(currentPosVector);
-      if (gantryTilt != 0) {
-        space = correctSpaceForGantryTilt(space, gantryTilt);
-      }
-      if (i > 1 && Math.abs(lastSpace - space) > EPSILON) {
-        this.variableSliceSpacing = true;
-      }
-      totalSpace += space;
-      lastSpace = space;
+      spacings.add(space);
       lastPosVector.set(currentPosVector);
     }
 
-    return totalSpace / (sourceStack.size() - 1);
-  }
+    // Check for variable spacing (using median as reference)
+    spacings.sort(Double::compareTo);
+    double medianSpace = spacings.get(spacings.size() / 2);
 
-  private double correctSpaceForGantryTilt(double measuredSpace, double gantryTilt) {
-    // The corrected spacing is the measured spacing divided by the cosine of the tilt angle
-    // This accounts for the fact that the actual slice thickness is larger when tilted
-    return measuredSpace / Math.cos(gantryTilt);
-  }
-
-  private double getGantryTilt() {
-    Vector3d col = new Vector3d(getStartingImage().getSliceGeometry().getColumn());
-    Vector3d row = new Vector3d(getStartingImage().getSliceGeometry().getRow());
-
-    // The tilt angle is the deviation from vertical in patient's Z axis
-    double tilt =
-        switch (plane) {
-          case AXIAL -> col.z();
-          case CORONAL -> col.y();
-          case SAGITTAL -> row.z();
-        };
-    if (Math.abs(tilt) <= EPSILON) {
-      return 0.0;
+    for (double space : spacings) {
+      if (Math.abs(space - medianSpace) > EPSILON) {
+        this.variableSliceSpacing = true;
+        break;
+      }
     }
-    // Subtract the angle from pi/2 to get the angle with the vertical axis
-    return (Math.PI / 2.0) - Math.acos(tilt);
+
+    return medianSpace;
+  }
+
+  /**
+   * Checks if slices are parallel within tolerance. Compares normal vectors of consecutive slices.
+   */
+  private void checkSliceParallelism() {
+    if (sourceStack.size() < 2) {
+      return;
+    }
+
+    Vector3d firstNormal = sourceStack.getFirst().getSliceGeometry().getNormal();
+    if (firstNormal == null) {
+      return;
+    }
+
+    for (int i = 1; i < sourceStack.size(); i++) {
+      GeometryOfSlice geom = sourceStack.get(i).getSliceGeometry();
+      if (geom == null) {
+        continue;
+      }
+
+      Vector3d currentNormal = geom.getNormal();
+      if (currentNormal == null) {
+        continue;
+      }
+
+      // Calculate the angle between normals using dot product
+      // For parallel slices, |dot product| should be very close to 1
+      double dotProduct = firstNormal.dot(currentNormal);
+
+      // Allow small deviation from perfect parallelism (EPSILON tolerance)
+      if (Math.abs(Math.abs(dotProduct) - 1.0) > EPSILON) {
+        this.nonParallelSlices = true;
+        break;
+      }
+    }
   }
 
   public double getSliceSpace() {
@@ -197,23 +174,101 @@ public abstract class OriginalStack extends AbstractStack {
     return variableSliceSpacing;
   }
 
+  public boolean isNonParallelSlices() {
+    return nonParallelSlices;
+  }
+
   public abstract void generate(BuildContext context);
 
   @Override
   public boolean equals(Object o) {
-    if (o == null || getClass() != o.getClass()) {
+    if (!(o instanceof OriginalStack that)) {
       return false;
     }
-    OriginalStack that = (OriginalStack) o;
     return Double.compare(getSliceSpace(), that.getSliceSpace()) == 0
         && isVariableSliceSpacing() == that.isVariableSliceSpacing()
         && Objects.equals(getSourceStack(), that.getSourceStack())
-        && Objects.equals(getFistSliceGeometry(), that.getFistSliceGeometry());
+        && Objects.equals(getFirstSliceGeometry(), that.getFirstSliceGeometry());
   }
 
   @Override
   public int hashCode() {
     return Objects.hash(
-        getSourceStack(), getFistSliceGeometry(), getSliceSpace(), isVariableSliceSpacing());
+        getSourceStack(), getFirstSliceGeometry(), getSliceSpace(), isVariableSliceSpacing());
+  }
+
+  /**
+   * Computes the volume bounds from all slice geometries. This method calculates the bounding box
+   * in patient coordinate space and determines the optimal voxel spacing, including shear factors
+   * for rectification.
+   *
+   * @return VolumeBounds containing size, spacing, orientation, and shear information
+   */
+  public VolumeBounds computeVolumeBounds() {
+    if (sourceStack == null || sourceStack.isEmpty()) {
+      return null;
+    }
+
+    DicomImageElement firstImg = getStartingImage();
+    GeometryOfSlice firstGeom = firstImg.getSliceGeometry();
+
+    Vector3d row = new Vector3d(firstGeom.getRow());
+    Vector3d col = new Vector3d(firstGeom.getColumn());
+    Vector3d normal = firstGeom.getNormal();
+
+    // Normalize directions to ensure consistent orientation
+    normalizeToPositiveDirection(row);
+    normalizeToPositiveDirection(col);
+
+    // Get pixel spacing from first image
+    double pixelSpacing = firstImg.getPixelSize();
+    double sliceSpacing = getSliceSpace();
+
+    // Get the origin (TLHC of first slice)
+    Vector3d origin = new Vector3d(firstGeom.getTLHC());
+    int numSlices = sourceStack.size();
+
+    return switch (plane) {
+      case AXIAL ->
+          new VolumeBounds(
+              new Vector3i(getWidth(), getHeight(), numSlices),
+              new Vector3d(pixelSpacing, pixelSpacing, sliceSpacing),
+              origin,
+              row,
+              col,
+              normal);
+      case CORONAL ->
+          new VolumeBounds(
+              new Vector3i(getWidth(), numSlices, getHeight()),
+              new Vector3d(pixelSpacing, sliceSpacing, pixelSpacing),
+              origin,
+              row,
+              col,
+              normal);
+      case SAGITTAL ->
+          new VolumeBounds(
+              new Vector3i(numSlices, getWidth(), getHeight()),
+              new Vector3d(sliceSpacing, pixelSpacing, pixelSpacing),
+              origin,
+              row,
+              col,
+              normal);
+    };
+  }
+
+  /** Normalizes a direction vector to point in the positive direction for the dominant axis. */
+  private void normalizeToPositiveDirection(Vector3d v) {
+    // Find dominant axis and ensure it's positive
+    double absX = Math.abs(v.x);
+    double absY = Math.abs(v.y);
+    double absZ = Math.abs(v.z);
+
+    if (absX >= absY && absX >= absZ) {
+      if (v.x < 0) v.negate();
+    } else if (absY >= absX && absY >= absZ) {
+      if (v.y < 0) v.negate();
+    } else {
+      if (v.z < 0) v.negate();
+    }
   }
 }

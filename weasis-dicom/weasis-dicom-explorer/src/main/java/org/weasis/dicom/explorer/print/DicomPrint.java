@@ -28,8 +28,7 @@ import java.awt.image.DataBufferShort;
 import java.awt.image.DataBufferUShort;
 import java.awt.image.WritableRaster;
 import java.io.IOException;
-import java.util.Map;
-import java.util.Map.Entry;
+import java.util.List;
 import java.util.concurrent.Executors;
 import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Sequence;
@@ -47,8 +46,8 @@ import org.dcm4che3.net.pdu.PresentationContext;
 import org.dcm4che3.util.UIDUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.weasis.core.api.gui.layout.MigCell;
 import org.weasis.core.api.image.AffineTransformOp;
-import org.weasis.core.api.image.LayoutConstraints;
 import org.weasis.core.api.image.ZoomOp.Interpolation;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.ui.editor.image.ExportImage;
@@ -100,34 +99,42 @@ public class DicomPrint {
         // Change background color
         g2d.clearRect(0, 0, bufferedImage.getWidth(), bufferedImage.getHeight());
       }
-      final Map<LayoutConstraints, Component> elements = layout.getLayoutModel().getConstraints();
-      for (Entry<LayoutConstraints, Component> e : elements.entrySet()) {
-        LayoutConstraints key = e.getKey();
-        Component value = e.getValue();
+
+      // Calculate column and row weights from cells
+      Dimension dimGrid = layout.getLayoutModel().getGridSize();
+      double[] columnWeights = calculateColumnWeights(dimGrid);
+      double[] rowWeights = calculateRowWeights(dimGrid);
+
+      final List<MigCell> cells = layout.getLayoutModel().getCells();
+      for (MigCell cell : cells) {
+        Component component = layout.findComponentForCell(cell);
 
         ExportImage<? extends ImageElement> image = null;
         Point2D.Double pad = new Point2D.Double(0.0, 0.0);
 
-        if (value instanceof ExportImage<?> exportImage) {
+        if (component instanceof ExportImage<?> exportImage) {
           image = exportImage;
-          formatImage(image, key, pad);
+          // Calculate effective weights for this cell
+          double weightx = calculateCellWeightX(cell, columnWeights);
+          double weighty = calculateCellWeightY(cell, rowWeights);
+          formatImage(image, pad, weightx, weighty);
         }
 
-        if (key.gridx == 0) {
+        if (cell.x() == 0) {
           wx = 0.0;
-        } else if (lastx < key.gridx) {
+        } else if (lastx < cell.x()) {
           wx += lastwx;
         }
-        double wy = lastwy[key.gridx];
+        double wy = lastwy[cell.x()];
 
         double x =
-            5 + (placeholderX * wx) + (MathUtil.isEqualToZero(wx) ? 0 : key.gridx * 5) + pad.x;
+            5 + (placeholderX * wx) + (MathUtil.isEqualToZero(wx) ? 0 : cell.x() * 5) + pad.x;
         double y =
-            5 + (placeholderY * wy) + (MathUtil.isEqualToZero(wy) ? 0 : key.gridy * 5) + pad.y;
-        lastx = key.gridx;
-        lastwx = key.weightx;
-        for (int i = key.gridx; i < key.gridx + key.gridwidth; i++) {
-          lastwy[i] += key.weighty;
+            5 + (placeholderY * wy) + (MathUtil.isEqualToZero(wy) ? 0 : cell.y() * 5) + pad.y;
+        lastx = cell.x();
+        lastwx = columnWeights[cell.x()];
+        for (int i = cell.x(); i < cell.x() + cell.spanX(); i++) {
+          lastwy[i] += rowWeights[cell.y()];
         }
 
         if (image != null) {
@@ -155,6 +162,7 @@ public class DicomPrint {
     return bufferedImage;
   }
 
+  @SuppressWarnings("SuspiciousNameCombination")
   private BufferedImage initialize(ExportLayout<? extends ImageElement> layout) {
     Dimension dimGrid = layout.getLayoutModel().getGridSize();
     FilmSize filmSize = printOptions.getFilmSizeId();
@@ -194,8 +202,45 @@ public class DicomPrint {
     }
   }
 
+  private double[] calculateColumnWeights(Dimension dimGrid) {
+    double[] weights = new double[dimGrid.width];
+    double uniformWeight = 1.0 / dimGrid.width;
+    for (int i = 0; i < dimGrid.width; i++) {
+      weights[i] = uniformWeight;
+    }
+    return weights;
+  }
+
+  private double[] calculateRowWeights(Dimension dimGrid) {
+    double[] weights = new double[dimGrid.height];
+    double uniformWeight = 1.0 / dimGrid.height;
+    for (int i = 0; i < dimGrid.height; i++) {
+      weights[i] = uniformWeight;
+    }
+    return weights;
+  }
+
+  private double calculateCellWeightX(MigCell cell, double[] columnWeights) {
+    double totalWeight = 0.0;
+    for (int i = cell.x(); i < cell.x() + cell.spanX() && i < columnWeights.length; i++) {
+      totalWeight += columnWeights[i];
+    }
+    return totalWeight;
+  }
+
+  private double calculateCellWeightY(MigCell cell, double[] rowWeights) {
+    double totalWeight = 0.0;
+    for (int i = cell.y(); i < cell.y() + cell.spanY() && i < rowWeights.length; i++) {
+      totalWeight += rowWeights[i];
+    }
+    return totalWeight;
+  }
+
   private void formatImage(
-      ExportImage<? extends ImageElement> image, LayoutConstraints key, Point2D.Double pad) {
+      ExportImage<? extends ImageElement> image,
+      Point2D.Double pad,
+      double weightx,
+      double weighty) {
     if (!printOptions.isShowingAnnotations() && image.getInfoLayer().getVisible()) {
       image.getInfoLayer().setVisible(false);
     }
@@ -216,8 +261,7 @@ public class DicomPrint {
         canvasHeight = originSize.getHeight() / originZoom;
       }
       double scaleCanvas =
-          Math.min(
-              placeholderX * key.weightx / canvasWidth, placeholderY * key.weighty / canvasHeight);
+          Math.min(placeholderX * weightx / canvasWidth, placeholderY * weighty / canvasHeight);
 
       // Set the print area in pixel
       double cw = canvasWidth * scaleCanvas;
@@ -225,8 +269,8 @@ public class DicomPrint {
       image.setSize((int) (cw + 0.5), (int) (ch + 0.5));
 
       if (printOptions.isCenter()) {
-        pad.x = (placeholderX * key.weightx - cw) * 0.5;
-        pad.y = (placeholderY * key.weighty - ch) * 0.5;
+        pad.x = (placeholderX * weightx - cw) * 0.5;
+        pad.y = (placeholderY * weighty - ch) * 0.5;
       } else {
         pad.x = 0.0;
         pad.y = 0.0;

@@ -17,35 +17,26 @@ import java.awt.Dimension;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
-import java.util.Set;
 import javax.swing.JProgressBar;
 import jogamp.opengl.glu.error.Error;
-import org.dcm4che3.data.Tag;
 import org.dcm4che3.img.util.PixelDataUtils;
-import org.joml.Vector3d;
+import org.joml.Vector3i;
 import org.opencv.core.*;
-import org.opencv.imgproc.Imgproc;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.ComboItemListener;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.gui.util.GuiUtils;
-import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.ui.editor.image.ViewCanvas;
-import org.weasis.core.ui.model.graphic.imp.seg.SegContour;
-import org.weasis.core.ui.model.graphic.imp.seg.SegGraphic;
 import org.weasis.dicom.codec.*;
+import org.weasis.dicom.viewer2d.mpr.Volume;
 import org.weasis.dicom.viewer3d.ActionVol;
 import org.weasis.dicom.viewer3d.EventManager;
 import org.weasis.dicom.viewer3d.dockable.SegmentationTool.Type;
-import org.weasis.dicom.viewer3d.geometry.GeometryUtils;
-import org.weasis.dicom.viewer3d.geometry.VolumeGeometry;
 import org.weasis.opencv.data.ImageCV;
 import org.weasis.opencv.data.PlanarImage;
-import org.weasis.opencv.op.ImageAnalyzer;
 
 public final class VolumeBuilder {
   private static final Logger LOGGER = LoggerFactory.getLogger(VolumeBuilder.class);
@@ -213,104 +204,20 @@ public final class VolumeBuilder {
       long sumMemory = 0L;
 
       ArrayList<Mat> slices = new ArrayList<>(size);
-
       Instant timeStarted = Instant.now();
-      double lastPos = 0;
 
-      List<DicomImageElement> list = volTexture.getVolumeImages();
-      for (int i = 0; i < list.size(); i++) {
+      Volume<?, ?> v = volTexture.getVolume();
+      Vector3i vSize = v.getSize();
+      double step = (double) vSize.z / volTexture.depth;
+      for (int i = volTexture.depth - 1; i >= 0; i--) {
         if (isInterrupted()) {
           return;
         }
-        DicomImageElement imageElement = list.get(i);
         Instant start = Instant.now();
-
-        // Force to get min/max values.
-        if (!imageElement.isImageAvailable()) {
-          imageElement.getImage();
-        }
-
-        int minValue = (int) imageElement.getMinValue(null);
-        int maxValue = (int) imageElement.getMaxValue(null);
-
-        int minInValue = Math.min(maxValue, minValue);
-        int maxInValue = Math.max(maxValue, minValue);
-        if (minInValue < volTexture.getLevelMin()) {
-          volTexture.setLevelMin(minInValue);
-        }
-        if (maxInValue > volTexture.getLevelMax()) {
-          volTexture.setLevelMax(maxInValue);
-        }
-
-        double[] sp = (double[]) imageElement.getTagValue(TagW.SlicePosition);
-        if (sp != null) {
-          Vector3d scale = volTexture.getScale();
-          double pos = sp[0] * scale.x + sp[1] * scale.y + sp[2] * scale.z;
-          if (i > 0) {
-            double space = pos - lastPos;
-            VolumeGeometry geometry = volTexture.getVolumeGeometry();
-            geometry.setLastDepthSpacing(space);
-            double[] pixelSpacing = GeometryUtils.getPixelSpacing(imageElement);
-            if (pixelSpacing != null && pixelSpacing.length > 1) {
-              double[] spacing = new double[2];
-              spacing[0] = pixelSpacing[0] / scale.x;
-              spacing[1] = pixelSpacing[1] / scale.y;
-              geometry.setLastPixelSpacing(spacing);
-            }
-            volTexture.setTexelSize(geometry.getDimensionMFactor());
-          }
-          lastPos = pos;
-        }
-
-        double[] or = TagD.getTagValue(imageElement, Tag.ImageOrientationPatient, double[].class);
-        if (i == 0 && or != null && or.length == 6) {
-          volTexture.setPixelSpacingUnit(imageElement.getPixelSpacingUnit());
-          volTexture.getVolumeGeometry().setOrientationPatient(or);
-        }
-
+        int index = (int) Math.floor(i * step);
+        PlanarImage imageMLUT = volTexture.getScaledImage(v.getAxialSlice(index));
         LOGGER.debug(
             "Time preparation of {}: {} ms", i, Duration.between(start, Instant.now()).toMillis());
-
-        PlanarImage imageMLUT;
-
-        if (segList != null && !segList.isEmpty()) {
-          Mat mask = volTexture.getEmptyImage();
-          for (SpecialElementRegion seg : segList) {
-            if (seg.isVisible() && seg.containsSopInstanceUIDReference(imageElement)) {
-              Set<LazyContourLoader> loaders = seg.getContours(imageElement);
-              if (loaders == null || loaders.isEmpty()) {
-                continue;
-              }
-              for (LazyContourLoader loader : loaders) {
-                Collection<SegContour> contours = loader.getLazyContours();
-                if (!contours.isEmpty()) {
-                  for (SegContour c : contours) {
-                    SegGraphic graphic = c.getSegGraphic();
-                    if (graphic != null) {
-                      List<MatOfPoint> pts =
-                          ImageAnalyzer.transformShapeToContour(graphic.getShape(), true);
-                      // TODO check the limit value
-                      int density = c.getAttributes().getId();
-                      Imgproc.fillPoly(mask, pts, new Scalar(density));
-                    }
-                  }
-                }
-              }
-            }
-          }
-          int nbPixels = Core.countNonZero(mask);
-          imageMLUT = ImageCV.fromMat(mask);
-          //          PlanarImage src = volTexture.getModalityLutImage(imageElement);
-          //          imageMLUT = new ImageCV();
-          //          Core.bitwise_and(src.toImageCV(), mask, imageMLUT.toImageCV());
-        } else {
-          start = Instant.now();
-          imageMLUT = volTexture.getModalityLutImage(imageElement);
-          LOGGER.debug(
-              "Time to get Modality LUT image  {}: {} ms",
-              i,
-              Duration.between(start, Instant.now()).toMillis());
-        }
 
         start = Instant.now();
         imageMLUT = getSuitableImage(imageMLUT);

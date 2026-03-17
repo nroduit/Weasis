@@ -13,7 +13,6 @@ import static org.weasis.core.ui.editor.ViewerPluginBuilder.BEST_DEF_LAYOUT;
 import static org.weasis.core.ui.editor.ViewerPluginBuilder.CMP_ENTRY_BUILD_NEW_VIEWER;
 import static org.weasis.core.ui.editor.ViewerPluginBuilder.SCREEN_BOUND;
 
-import java.awt.Component;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -22,8 +21,9 @@ import java.util.Map;
 import javax.swing.Icon;
 import org.weasis.core.api.explorer.DataExplorerView;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
+import org.weasis.core.api.gui.layout.MigCell;
+import org.weasis.core.api.gui.layout.MigLayoutModel;
 import org.weasis.core.api.gui.util.GuiUtils;
-import org.weasis.core.api.image.GridBagLayoutModel;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.TagW;
@@ -64,7 +64,7 @@ public class MprFactory implements SeriesViewerFactory {
     return NAME;
   }
 
-  public static GridBagLayoutModel getDefaultGridBagLayoutModel() {
+  public static MigLayoutModel getDefaultMigLayoutModel() {
     String defLayout =
         GuiUtils.getUICore().getSystemPreferences().getProperty(MprFactory.P_DEFAULT_LAYOUT);
     if (StringUtil.hasText(defLayout)) {
@@ -79,12 +79,12 @@ public class MprFactory implements SeriesViewerFactory {
   @Override
   public SeriesViewer<?> createSeriesViewer(Map<String, Object> properties) {
     LayoutModel layout =
-        ImageViewerPlugin.getLayoutModel(properties, getDefaultGridBagLayoutModel(), null);
+        ImageViewerPlugin.getLayoutModel(properties, getDefaultMigLayoutModel(), null);
     MprContainer instance = new MprContainer(layout.model(), layout.uid());
     ImageViewerPlugin.registerInDataExplorerModel(properties, instance);
     int index = 0;
-    for (Component val : layout.model().getConstraints().values()) {
-      if (val instanceof MprView mprView) {
+    for (MigCell cell : layout.model().getCells()) {
+      if (instance.getView2ds().get(cell.position()) instanceof MprView mprView) {
         Plane plane =
             switch (index) {
               case 1 -> Plane.CORONAL;

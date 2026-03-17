@@ -13,12 +13,7 @@ import eu.essilab.lablib.checkboxtree.DefaultTreeCheckingModel;
 import eu.essilab.lablib.checkboxtree.TreeCheckingModel;
 import java.io.File;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
@@ -28,15 +23,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.GuiUtils.IconColor;
-import org.weasis.core.api.media.data.MediaElement;
-import org.weasis.core.api.media.data.MediaSeries;
-import org.weasis.core.api.media.data.MediaSeriesGroup;
-import org.weasis.core.api.media.data.MediaSeriesGroupNode;
-import org.weasis.core.api.media.data.Series;
-import org.weasis.core.api.media.data.TagReadable;
-import org.weasis.core.api.media.data.TagW;
+import org.weasis.core.api.media.data.*;
 import org.weasis.core.api.media.data.TagW.TagType;
-import org.weasis.core.api.media.data.Thumbnailable;
 import org.weasis.core.ui.model.GraphicModel;
 import org.weasis.core.util.LangUtil;
 import org.weasis.core.util.StringUtil;
@@ -121,7 +109,12 @@ public class CheckTreeModel {
       }
     }
 
-    boolean hasGraphics = false;
+    List<?> children = Collections.list(studyNode.children());
+    int index = Collections.binarySearch(children, seriesNode, DicomSorter.SERIES_COMPARATOR);
+    index = index < 0 ? -(index + 1) : index;
+    studyNode.insert(seriesNode, index);
+
+    DefaultMutableTreeNode prVirtualNode = null;
     synchronized (series) { // NOSONAR lock object is the list for iterating its elements safely
       for (MediaElement dicom : series.getMedias(null, null)) {
         seriesNode.add(
@@ -144,34 +137,46 @@ public class CheckTreeModel {
               }
             });
 
-        if (!hasGraphics) {
-          GraphicModel grModel = (GraphicModel) dicom.getTagValue(TagW.PresentationModel);
-          hasGraphics = grModel != null && grModel.hasSerializableGraphics();
+        GraphicModel grModel = (GraphicModel) dicom.getTagValue(TagW.PresentationModel);
+        if (grModel != null && grModel.hasSerializableGraphics()) {
+          if (prVirtualNode == null) {
+            String seriesInstanceUID = UIDUtils.createUID();
+            Series<?> prSeries = new DicomSeries(seriesInstanceUID);
+            prSeries.setTag(
+                TagD.get(Tag.SeriesNumber),
+                TagD.getTagValue(series, Tag.SeriesNumber, Integer.class));
+            prSeries.setTag(TagD.get(Tag.Modality), "PR");
+            prSeries.setTag(TagD.get(Tag.SeriesInstanceUID), seriesInstanceUID);
+            prSeries.setTag(TagW.ObjectToSave, Boolean.TRUE);
+            prSeries.setTag(SourceSeriesForPR, series);
+            prSeries.setTag(
+                TagD.get(Tag.SeriesDescription),
+                Optional.ofNullable(TagD.getTagValue(series, Tag.SeriesDescription, String.class))
+                        .orElse("")
+                    + " [GRAPHICS]"); // NON-NLS
+            prVirtualNode = new ToolTipSeriesNode(prSeries, true);
+            studyNode.insert(prVirtualNode, index + 1);
+          }
+          prVirtualNode.add(
+              new DefaultMutableTreeNode(grModel, false) {
+                @Override
+                public String toString() {
+                  String sopUid = TagD.getTagValue(dicom, Tag.SOPInstanceUID, String.class);
+                  Integer instance = TagD.getTagValue(dicom, Tag.InstanceNumber, Integer.class);
+                  StringBuilder buf = new StringBuilder();
+                  if (instance != null) {
+                    buf.append("PR [");
+                    buf.append(instance);
+                    buf.append("] ");
+                  }
+                  if (sopUid != null) {
+                    buf.append(sopUid);
+                  }
+                  return buf.toString();
+                }
+              });
         }
       }
-    }
-
-    List<?> children = Collections.list(studyNode.children());
-    int index = Collections.binarySearch(children, seriesNode, DicomSorter.SERIES_COMPARATOR);
-    index = index < 0 ? -(index + 1) : index;
-    studyNode.insert(seriesNode, index);
-
-    if (hasGraphics) {
-      String seriesInstanceUID = UIDUtils.createUID();
-      Series<?> prSeries = new DicomSeries(seriesInstanceUID);
-      prSeries.setTag(
-          TagD.get(Tag.SeriesNumber), TagD.getTagValue(series, Tag.SeriesNumber, Integer.class));
-      prSeries.setTag(TagD.get(Tag.Modality), "PR");
-      prSeries.setTag(TagD.get(Tag.SeriesInstanceUID), seriesInstanceUID);
-      prSeries.setTag(TagW.ObjectToSave, Boolean.TRUE);
-      prSeries.setTag(SourceSeriesForPR, series);
-      prSeries.setTag(
-          TagD.get(Tag.SeriesDescription),
-          Optional.ofNullable(TagD.getTagValue(series, Tag.SeriesDescription, String.class))
-                  .orElse("")
-              + " [GRAPHICS]"); // NON-NLS
-      DefaultMutableTreeNode prVirtualNode = new ToolTipSeriesNode(prSeries, false);
-      studyNode.insert(prVirtualNode, index + 1);
     }
   }
 

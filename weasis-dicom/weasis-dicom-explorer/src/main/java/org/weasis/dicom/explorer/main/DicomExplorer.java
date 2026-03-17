@@ -349,7 +349,7 @@ public class DicomExplorer extends PluginTool
       case LOADING_START -> showLoadingPanel(event);
       case LOADING_STOP, LOADING_CANCEL -> hideLoadingPanel(event);
       case LOADING_GLOBAL_MSG -> loadingPanelMessage(event);
-      default -> LOGGER.debug("Unhandled observable event: {}", action);
+      default -> LOGGER.trace("Unhandled observable event: {}", action);
     }
   }
 

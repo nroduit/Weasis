@@ -16,7 +16,6 @@ import com.jogamp.opengl.GLContext;
 import com.jogamp.opengl.Threading;
 import java.awt.Component;
 import java.awt.Window;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import javax.swing.Action;
@@ -32,12 +31,12 @@ import org.osgi.service.component.annotations.Deactivate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.DataExplorerView;
+import org.weasis.core.api.gui.layout.MigCell;
+import org.weasis.core.api.gui.layout.MigLayoutModel;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.ComboItemListener;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.WinUtil;
-import org.weasis.core.api.image.GridBagLayoutModel;
-import org.weasis.core.api.image.LayoutConstraints;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.service.AuditLog;
 import org.weasis.core.api.service.WProperties;
@@ -84,7 +83,7 @@ public class View3DFactory implements SeriesViewerFactory {
     return NAME;
   }
 
-  public static GridBagLayoutModel getDefaultGridBagLayoutModel() {
+  public static MigLayoutModel getDefaultMigLayoutModel() {
     String defLayout =
         GuiUtils.getUICore().getSystemPreferences().getProperty(View3DFactory.P_DEFAULT_LAYOUT);
     if (StringUtil.hasText(defLayout)) {
@@ -99,11 +98,10 @@ public class View3DFactory implements SeriesViewerFactory {
   @Override
   public SeriesViewer createSeriesViewer(Map<String, Object> properties) {
     if (isOpenglEnable()) {
-      ComboItemListener<GridBagLayoutModel> layoutAction =
+      ComboItemListener<MigLayoutModel> layoutAction =
           EventManager.getInstance().getAction(ActionW.LAYOUT).orElse(null);
       LayoutModel layout =
-          ImageViewerPlugin.getLayoutModel(
-              properties, getDefaultGridBagLayoutModel(), layoutAction);
+          ImageViewerPlugin.getLayoutModel(properties, getDefaultMigLayoutModel(), layoutAction);
       View3DContainer instance =
           new View3DContainer(layout.model(), layout.uid(), getUIName(), getIcon(), null);
       ImageViewerPlugin.registerInDataExplorerModel(properties, instance);
@@ -114,13 +112,12 @@ public class View3DFactory implements SeriesViewerFactory {
     return null;
   }
 
-  public static int getViewTypeNumber(GridBagLayoutModel layout, Class<?> defaultClass) {
+  public static int getViewTypeNumber(MigLayoutModel layout, Class<?> defaultClass) {
     int val = 0;
     if (layout != null && defaultClass != null) {
-      Iterator<LayoutConstraints> enumVal = layout.getConstraints().keySet().iterator();
-      while (enumVal.hasNext()) {
+      for (MigCell cell : layout.getCells()) {
         try {
-          Class<?> clazz = Class.forName(enumVal.next().type());
+          Class<?> clazz = Class.forName(cell.type());
           if (defaultClass.isAssignableFrom(clazz)) {
             val++;
           }
