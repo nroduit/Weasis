@@ -10,12 +10,13 @@
 package org.weasis.dicom.viewer2d.mip;
 
 import java.awt.Cursor;
+import java.awt.GridBagConstraints;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
+import java.util.Objects;
 import javax.swing.ImageIcon;
 import org.dcm4che3.data.Tag;
 import org.slf4j.Logger;
@@ -26,6 +27,7 @@ import org.weasis.core.api.gui.task.TaskInterruptionException;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.Feature;
 import org.weasis.core.api.gui.util.Feature.SliderChangeListenerValue;
+import org.weasis.core.api.gui.util.Filter;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.image.OpManager;
@@ -40,7 +42,9 @@ import org.weasis.core.ui.editor.SeriesViewerFactory;
 import org.weasis.core.ui.editor.ViewerPluginBuilder;
 import org.weasis.core.ui.editor.image.ImageViewerEventManager;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
+import org.weasis.core.ui.editor.image.ViewButton;
 import org.weasis.core.ui.editor.image.ViewCanvas;
+import org.weasis.core.util.FileUtil;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.DicomSeries;
 import org.weasis.dicom.codec.TagD;
@@ -98,20 +102,40 @@ public class MipView extends View2d {
     }
   }
 
+  private final Path viewCacheDir = createViewCacheDir();
+
   private Thread process;
+
+  private volatile DicomImageElement centerImage;
+  private volatile int currentIndex = 0;
+  private volatile Type lastBuiltType;
+  private volatile Integer lastBuiltExtend;
+  private volatile boolean pendingCrosslineUpdate = false;
 
   public MipView(ImageViewerEventManager<DicomImageElement> eventManager) {
     super(eventManager);
+    // Remove PR and KO buttons
+    getViewButtons().clear();
+    getViewButtons().add(buildMipButton());
+  }
+
+  public ViewButton buildMipButton() {
+    ViewButton button =
+        new ViewButton(
+            (invoker, x, y) -> {
+              javax.swing.JPopupMenu popup = MipMenu.buildViewButtonPopup(this);
+              popup.show(invoker, x, y);
+            },
+            ResourceUtil.getIcon(OtherIcon.VIEW_MIP, 24, 24),
+            Messages.getString("MipPopup.title"));
+    button.setVisible(true);
+    button.setPosition(GridBagConstraints.NORTHEAST);
+    return button;
   }
 
   @Override
   protected void initActionWState() {
     super.initActionWState();
-    actionsInView.put(ViewCanvas.ZOOM_TYPE_CMD, ZoomType.BEST_FIT);
-    actionsInView.put(MIP_THICKNESS.cmd(), 2);
-    actionsInView.put(MipView.MIP.cmd(), MipView.Type.MAX);
-    actionsInView.put("no.ko", true);
-
     // Propagate the preset
     OpManager disOp = getDisplayOpManager();
     disOp.setParamValue(WindowOp.OP_NAME, ActionW.DEFAULT_PRESET.cmd(), false);
@@ -119,18 +143,75 @@ public class MipView extends View2d {
 
   public void initMIPSeries(ViewCanvas<DicomImageElement> selView) {
     if (selView != null) {
+      setSeries(selView.getSeries(), selView.getImage());
+
+      actionsInView.put(MIP_THICKNESS.cmd(), 2);
+      actionsInView.put(MipView.MIP.cmd(), MipView.Type.MAX);
+      actionsInView.put("no.ko", true);
       actionsInView.put(ActionW.SORT_STACK.cmd(), selView.getActionValue(ActionW.SORT_STACK.cmd()));
       actionsInView.put(
           ActionW.INVERSE_STACK.cmd(), selView.getActionValue(ActionW.INVERSE_STACK.cmd()));
       actionsInView.put(
           ActionW.FILTERED_SERIES.cmd(), selView.getActionValue(ActionW.FILTERED_SERIES.cmd()));
-      setSeries(selView.getSeries(), null);
     }
   }
 
   @Override
   protected void setImage(DicomImageElement img) {
-    // Avoid listening synch events
+    if (img == getImage()) {
+      return; // No change, skip everything
+    }
+    // Resolve and cache the index of the incoming image inside the filtered/sorted original series
+    // so that SeriesBuilder uses the exact same position as the center of the slab, independently
+    // of when the scroll-slider EDT update arrives.
+    if (series instanceof DicomSeries s) {
+      @SuppressWarnings("unchecked")
+      int idx =
+          s.getImageIndex(
+              img,
+              (Filter<DicomImageElement>) actionsInView.get(ActionW.FILTERED_SERIES.cmd()),
+              getCurrentSortComparator());
+      if (idx >= 0) {
+        currentIndex = idx;
+      }
+    }
+
+    Type mipType = (Type) getActionValue(MipView.MIP.cmd());
+    if (mipType == null || mipType == Type.NONE || series == null || img == null) {
+      setMip(img);
+      return;
+    }
+
+    Integer extend = (Integer) getActionValue(MIP_THICKNESS.cmd());
+    if (img == centerImage && mipType == lastBuiltType && Objects.equals(extend, lastBuiltExtend)) {
+      return;
+    }
+    pendingCrosslineUpdate = !Objects.equals(extend, lastBuiltExtend);
+    buildMip(this);
+  }
+
+  /**
+   * Records the original-series image at the center of the MIP slab together with the parameters
+   * used to produce it. Called from the background build thread. The three values are read together
+   * by {@link #setImage} to detect a no-op rebuild.
+   */
+  public void setCenterImage(DicomImageElement img, Type mipType, Integer extend) {
+    centerImage = img;
+    lastBuiltType = mipType;
+    lastBuiltExtend = extend;
+  }
+
+  /**
+   * Returns the 0-based index of the <em>centre image</em> of the current MIP slab inside the
+   * original series.
+   *
+   * <p>{@link #currentIndex} is updated every time {@link #setImage(DicomImageElement)} resolves
+   * the received image's position in the filtered/sorted series, so it always reflects the correct
+   * slab-centre position without requiring another series lookup here.
+   */
+  @Override
+  public int getFrameIndex() {
+    return currentIndex;
   }
 
   public boolean isProcessRunning() {
@@ -151,14 +232,21 @@ public class MipView extends View2d {
     setActionsInView(MipView.MIP_THICKNESS.cmd(), null);
 
     setMip(null);
-    clearMipCache();
+    FileUtil.delete(viewCacheDir);
+
+    // When no explicit target image is given, restore the slab-centre position so the replacement
+    // view opens at the same frame the user was looking at rather than jumping to the first image.
+    DicomImageElement targetImage = selectedDicom != null ? selectedDicom : centerImage;
 
     ImageViewerPlugin<DicomImageElement> container = getEventManager().getSelectedView2dContainer();
     container.setSelectedAndGetFocus();
     View2d newView2d = new View2d(getEventManager());
     newView2d.registerDefaultListeners();
-    newView2d.setSeries(series, selectedDicom);
+    newView2d.setSeries(series, targetImage);
     container.replaceView(this, newView2d);
+
+    pendingCrosslineUpdate = true;
+    updateCrosslines();
   }
 
   public static void buildMip(final MipView view) {
@@ -177,8 +265,8 @@ public class MipView extends View2d {
     Type mipType = (Type) view.getActionValue(MipView.MIP.cmd());
     Integer extend = (Integer) view.getActionValue(MIP_THICKNESS.cmd());
     MediaSeries<DicomImageElement> ser = view.series;
-    if (ser == null || extend == null || mipType == null) {
-      return null;
+    if (ser == null || extend == null || extend <= 0 || mipType == null || mipType == Type.NONE) {
+      return null; // Nothing to compute for NONE mode or missing data
     }
 
     return () -> {
@@ -230,25 +318,46 @@ public class MipView extends View2d {
   protected void setMip(DicomImageElement dicom) {
     DicomImageElement oldImage = getImage();
     if (dicom != null) {
-      super.setImage(dicom);
+      if (oldImage != null) {
+        // Preserve the current zoom level when updating the MIP slab (e.g. while scrolling).
+        // Without this guard, DefaultView2d.resetZoom() would reset to BEST_FIT on every update
+        // because the scroll handler restores ZOOM_TYPE_CMD before the async build finishes.
+        Object oldZoomType = actionsInView.get(ViewCanvas.ZOOM_TYPE_CMD);
+        actionsInView.put(ViewCanvas.ZOOM_TYPE_CMD, ZoomType.CURRENT);
+        super.setImage(dicom);
+        actionsInView.put(ViewCanvas.ZOOM_TYPE_CMD, oldZoomType);
+      } else {
+        super.setImage(dicom);
+      }
     }
 
     if (oldImage == null) {
-      eventManager.updateComponentsListener(MipView.this);
-      return;
+      eventManager.updateComponentsListener(this);
+    } else {
+      cleanupOldImageAsync(oldImage);
     }
-
-    notifyCrossLines();
-    cleanupOldImageAsync(oldImage);
+    updateCrosslines();
   }
 
-  private void notifyCrossLines() {
-    eventManager
-        .getAction(ActionW.SCROLL_SERIES)
-        .ifPresent(action -> action.stateChanged(action.getSliderModel()));
+  void activateCrosslinesUpdate() {
+    pendingCrosslineUpdate = true;
+  }
+
+  void updateCrosslines() {
+    // Force drawing crosslines only when the MIP thickness changed
+    if (pendingCrosslineUpdate) {
+      pendingCrosslineUpdate = false;
+      eventManager
+          .getAction(ActionW.SCROLL_SERIES)
+          .ifPresent(a -> a.stateChanged(a.getSliderModel()));
+    }
   }
 
   private void cleanupOldImageAsync(DicomImageElement oldImage) {
+    Path filePath = oldImage.getFilePath();
+    if (filePath == null || !filePath.startsWith(viewCacheDir)) {
+      return;
+    }
     Thread.ofVirtual()
         .name("MIP-Cleanup")
         .start(
@@ -256,27 +365,28 @@ public class MipView extends View2d {
               try {
                 oldImage.dispose();
                 oldImage.removeImageFromCache();
-                Optional.ofNullable(oldImage.getFilePath()).ifPresent(this::deleteQuietly);
               } catch (Throwable t) {
                 LOGGER.warn("Error during MIP cleanup", t);
               }
             });
   }
 
-  private void clearMipCache() {
-    Path cacheDir = SeriesBuilder.MIP_CACHE_DIR;
-    try (var paths = Files.list(SeriesBuilder.MIP_CACHE_DIR)) {
-      paths.filter(Files::isRegularFile).forEach(this::deleteQuietly);
-    } catch (IOException e) {
-      LOGGER.warn("Cannot list MIP cache directory {}", cacheDir, e);
-    }
+  /** Returns the per-view cache directory where this view writes its MIP temp files. */
+  public Path getCacheDir() {
+    return viewCacheDir;
   }
 
-  private void deleteQuietly(Path path) {
+  /**
+   * Creates a unique subdirectory under {@link SeriesBuilder#MIP_CACHE_DIR} for this view instance.
+   * Falls back to the shared root directory if creation fails (safe: the old shared-directory
+   * behavior is preserved in that unlikely case).
+   */
+  private static Path createViewCacheDir() {
     try {
-      Files.deleteIfExists(path);
+      return Files.createTempDirectory(SeriesBuilder.MIP_CACHE_DIR, "view_"); // NON-NLS
     } catch (IOException e) {
-      LOGGER.warn("Cannot delete {}", path, e);
+      LOGGER.warn("Cannot create per-view MIP cache directory, falling back to shared dir", e);
+      return SeriesBuilder.MIP_CACHE_DIR;
     }
   }
 }

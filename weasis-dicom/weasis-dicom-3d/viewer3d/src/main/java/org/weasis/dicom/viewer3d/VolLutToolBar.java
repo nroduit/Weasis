@@ -44,27 +44,7 @@ public class VolLutToolBar extends WtoolBar {
       menuPreset = presetAction.get().createGroupRadioMenu();
     }
 
-    final DropDownButton presetButton =
-        new DropDownButton(ActionW.WINLEVEL.cmd(), buildWLIcon(), menuPreset) {
-          @Override
-          protected JPopupMenu getPopupMenu() {
-            JPopupMenu menu =
-                (getMenuModel() == null) ? new JPopupMenu() : getMenuModel().createJPopupMenu();
-            menu.setInvoker(this);
-            if (getMenuModel() instanceof GroupRadioMenu) {
-              for (RadioMenuItem item :
-                  ((GroupRadioMenu<?>) getMenuModel()).getRadioMenuItemListCopy()) {
-                PresetWindowLevel preset = (PresetWindowLevel) item.getUserObject();
-                if (preset.getKeyCode() > 0) {
-                  item.setAccelerator(KeyStroke.getKeyStroke(preset.getKeyCode(), 0));
-                }
-              }
-            }
-            return menu;
-          }
-        };
-
-    presetButton.setToolTipText(ActionW.PRESET.getTitle());
+    final DropDownButton presetButton = getDropDownButton(menuPreset);
     add(presetButton);
     presetAction.ifPresent(
         objectComboItemListener -> objectComboItemListener.registerActionState(presetButton));
@@ -108,6 +88,31 @@ public class VolLutToolBar extends WtoolBar {
     invertButton.setIcon(ResourceUtil.getToolBarIcon(ActionIcon.INVERSE_LUT));
     eventManager.getAction(ActionW.INVERT_LUT).ifPresent(c -> c.registerActionState(invertButton));
     add(invertButton);
+  }
+
+  private DropDownButton getDropDownButton(GroupPopup menuPreset) {
+    final DropDownButton presetButton =
+        new DropDownButton(ActionW.WINLEVEL.cmd(), buildWLIcon(), menuPreset) {
+          @Override
+          protected JPopupMenu getPopupMenu() {
+            JPopupMenu menu =
+                (getMenuModel() == null) ? new JPopupMenu() : getMenuModel().createJPopupMenu();
+            menu.setInvoker(this);
+            if (getMenuModel() instanceof GroupRadioMenu) {
+              for (RadioMenuItem item :
+                  ((GroupRadioMenu<?>) getMenuModel()).getRadioMenuItemListCopy()) {
+                PresetWindowLevel preset = (PresetWindowLevel) item.getUserObject();
+                if (preset.getKeyCode() > 0) {
+                  item.setAccelerator(KeyStroke.getKeyStroke(preset.getKeyCode(), 0));
+                }
+              }
+            }
+            return menu;
+          }
+        };
+
+    presetButton.setToolTipText(ActionW.PRESET.getTitle());
+    return presetButton;
   }
 
   private Icon buildLutIcon() {

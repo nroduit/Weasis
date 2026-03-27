@@ -33,7 +33,7 @@ public class ExternalView3DToolbar extends WtoolBar {
     open.setToolTipText(Messages.getString("open.3d.viewer"));
     open.addActionListener(
         e -> {
-          MediaSeries<DicomImageElement> s = EventManager.getInstance().getSelectedSeries();
+          MediaSeries<DicomImageElement> s = EventManager.getInstance().getSelectedOriginalSeries();
           SeriesViewerFactory factory = GuiUtils.getUICore().getViewerFactory(View3DFactory.class);
           if (factory != null && factory.canReadSeries(s)) {
             s = LoadLocalDicom.confirmSplittingMultiPhaseSeries(s);

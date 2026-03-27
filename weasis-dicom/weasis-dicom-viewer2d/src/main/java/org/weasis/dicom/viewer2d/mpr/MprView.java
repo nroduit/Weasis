@@ -10,6 +10,7 @@
 package org.weasis.dicom.viewer2d.mpr;
 
 import java.awt.Color;
+import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.FontMetrics;
@@ -198,50 +199,83 @@ public class MprView extends View2d implements SliceCanvas, ViewProgress {
     }
   }
 
-  public Point3 getVolumeCoordinatesFromMouse(int x, int y) {
+  public Point3 getVolumePoint3FromMouse(int x, int y) {
     if (mprController.getVolume() == null) {
       return null;
     }
-    Vector3d crossHair = mprController.getAxesControl().getCenterForCanvas(this);
-    Vector3d coordinates = getVolumeCoordinatesFromMouse(x, y, crossHair);
-    Vector3d volumeCoordinates = coordinates.mul(mprController.getVolume().getSliceSize());
-    return new Point3(volumeCoordinates.x, volumeCoordinates.y, volumeCoordinates.z);
+    Vector3d coordinates = getVolumeCoordinatesFromMouse(x, y);
+    return new Point3(coordinates.x, coordinates.y, coordinates.z);
   }
 
   public Point2D getPlaneCoordinatesFromMouse(int x, int y) {
     if (mprController.getVolume() == null) {
       return null;
     }
-    int size = mprController.getVolume().getSliceSize();
-    Point2D pt = super.getImageCoordinatesFromMouse(x, y);
-    pt.setLocation(pt.getX() / size, pt.getY() / size);
-    return pt;
+    return super.getImageCoordinatesFromMouse(x, y);
   }
 
-  public Vector3d getVolumeCoordinatesFromMouse(int x, int y, Vector3d crossHair) {
+  public Vector3d getVolumeCoordinatesFromMouse(int x, int y) {
     Point2D pt = getPlaneCoordinatesFromMouse(x, y);
-    return getVolumeCoordinates(new Vector3d(pt.getX(), pt.getY(), crossHair.z));
+    if (pt == null) {
+      return null;
+    }
+    Vector3d planePos = new Vector3d(pt.getX(), pt.getY(), 0);
+    return getVolumeCoordinates(planePos);
   }
 
   public Vector3d getVolumeCoordinates(Vector3d planePosition) {
     Vector3d p = new Vector3d(planePosition);
-    transform(getDisplayPointToTexturePointMatrix(), p);
+    Matrix4d matrix = getDisplayPointToTexturePointMatrix();
+    transform(matrix, p);
     return p;
   }
 
   protected Matrix4d getDisplayPointToTexturePointMatrix() {
     AxesControl axes = mprController.getAxesControl();
-    Vector3d center = new Vector3d(0.5, 0.5, 0.5);
-
     Matrix4d resultMatrix = new Matrix4d();
     Quaterniond r = mprController.getRotation(plane);
-    Vector3d crossHairOffset = axes.getCenter().sub(center);
-    Vector3d t = new Vector3d(center).add(crossHairOffset);
-    resultMatrix.translate(t.x, t.y, t.z).rotate(r).translate(-t.x, -t.y, -t.z);
+    Vector3d center = axes.getCenter(); // crosshair position in slice-space
+    int sliceSize = mprController.getVolume().getSliceSize();
+    double halfSlice = sliceSize / 2.0;
 
+    // Compute the crosshair offset from volume center (mirrors MprAxis.getRealVolumeTransformation)
+    Vector3d crossHairOffset = new Vector3d(center).sub(halfSlice, halfSlice, halfSlice);
+
+    // Build the matrix matching getRealVolumeTransformation:
+    // The rotation always uses the fixed volume center as pivot.
+    // The perpendicular offset encodes the slice depth from volume center.
     switch (plane) {
-      case CORONAL -> resultMatrix.rotateX(-Math.toRadians(90)).scale(1.0, -1.0, 1.0);
-      case SAGITTAL -> resultMatrix.rotateY(Math.toRadians(90)).rotateZ(Math.toRadians(90));
+      case AXIAL -> {
+        Vector3d sliceNormal = new Vector3d(0, 0, 1);
+        r.transform(sliceNormal);
+        double perpendicularOffset = crossHairOffset.dot(sliceNormal);
+        resultMatrix
+            .translate(halfSlice, halfSlice, halfSlice)
+            .rotate(r)
+            .translate(-halfSlice, -halfSlice, perpendicularOffset);
+      }
+      case CORONAL -> {
+        Vector3d sliceNormal = new Vector3d(0, 1, 0);
+        r.transform(sliceNormal);
+        double perpendicularOffset = crossHairOffset.dot(sliceNormal);
+        resultMatrix
+            .translate(halfSlice, halfSlice, halfSlice)
+            .rotate(r)
+            .rotateX(-Math.toRadians(90))
+            .scale(1.0, -1.0, 1.0)
+            .translate(-halfSlice, -halfSlice, perpendicularOffset);
+      }
+      case SAGITTAL -> {
+        Vector3d sliceNormal = new Vector3d(1, 0, 0);
+        r.transform(sliceNormal);
+        double perpendicularOffset = crossHairOffset.dot(sliceNormal);
+        resultMatrix
+            .translate(halfSlice, halfSlice, halfSlice)
+            .rotate(r)
+            .rotateY(Math.toRadians(90))
+            .rotateZ(Math.toRadians(90))
+            .translate(-halfSlice, -halfSlice, perpendicularOffset);
+      }
     }
     return resultMatrix;
   }
@@ -492,100 +526,103 @@ public class MprView extends View2d implements SliceCanvas, ViewProgress {
     }
   }
 
+  /**
+   * Shows the MPR settings popup anchored at ({@code x}, {@code y}) relative to {@code invoker}.
+   */
+  public void showMprPopup(Component invoker, int x, int y) {
+    JPopupMenu popupMenu = new JPopupMenu();
+    JMenu menu = new JMenu(Messages.getString("all.views"));
+
+    if (getCenterMode() != 2) {
+      JMenuItem item = new JMenuItem(Messages.getString("center"));
+      item.addActionListener(e -> recenterAxis(false));
+      item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_X, InputEvent.ALT_DOWN_MASK));
+      popupMenu.add(item);
+
+      item = new JMenuItem(Messages.getString("center"));
+      item.addActionListener(e -> recenterAxis(true));
+      item.setAccelerator(
+          KeyStroke.getKeyStroke(
+              KeyEvent.VK_X, InputEvent.CTRL_DOWN_MASK | InputEvent.ALT_DOWN_MASK));
+      menu.add(item);
+    }
+
+    int gap = getCenterGap();
+    if (gap > 0) {
+      boolean showCenter = getViewProperty(this, SHOW_CROSS_CENTER);
+      JCheckBoxMenuItem boxMenuItem =
+          new JCheckBoxMenuItem(Messages.getString("show.center.crosshair"), showCenter);
+      boxMenuItem.addActionListener(e -> showCrossCenter((JCheckBoxMenuItem) e.getSource(), false));
+      boxMenuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_C, InputEvent.ALT_DOWN_MASK));
+      popupMenu.add(boxMenuItem);
+
+      showCenter = getAllViewsProperty(SHOW_CROSS_CENTER);
+      boxMenuItem = new JCheckBoxMenuItem(boxMenuItem.getText(), showCenter);
+      boxMenuItem.addActionListener(e -> showCrossCenter((JCheckBoxMenuItem) e.getSource(), true));
+      boxMenuItem.setAccelerator(
+          KeyStroke.getKeyStroke(
+              KeyEvent.VK_C, InputEvent.CTRL_DOWN_MASK | InputEvent.ALT_DOWN_MASK));
+      menu.add(boxMenuItem);
+    }
+
+    boolean showCrossLines = !getViewProperty(this, HIDE_CROSSLINES);
+    JCheckBoxMenuItem boxMenuItem =
+        new JCheckBoxMenuItem(Messages.getString("show.crosshair"), showCrossLines);
+    boxMenuItem.addActionListener(e -> showCrossLines((JCheckBoxMenuItem) e.getSource(), false));
+    boxMenuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_V, InputEvent.ALT_DOWN_MASK));
+    popupMenu.add(boxMenuItem);
+
+    showCrossLines = !getAllViewsProperty(HIDE_CROSSLINES);
+    boxMenuItem = new JCheckBoxMenuItem(boxMenuItem.getText(), showCrossLines);
+    boxMenuItem.addActionListener(e -> showCrossLines((JCheckBoxMenuItem) e.getSource(), true));
+    boxMenuItem.setAccelerator(
+        KeyStroke.getKeyStroke(
+            KeyEvent.VK_V, InputEvent.CTRL_DOWN_MASK | InputEvent.ALT_DOWN_MASK));
+    menu.add(boxMenuItem);
+
+    menu.addSeparator();
+    JMenu menuItem =
+        mprController
+            .getMipTypeOption()
+            .createUnregisteredRadioMenu(Messages.getString("mip.type"));
+    menu.add(menuItem);
+
+    popupMenu.addSeparator();
+    menuItem = buildMipThicknessMenu(false);
+    popupMenu.add(menuItem);
+
+    menuItem = buildMipThicknessMenu(true);
+    menu.add(menuItem);
+
+    popupMenu.addSeparator();
+    JMenuItem item = new JMenuItem("Export this view in DICOM");
+    item.addActionListener(_ -> rebuildView(false));
+    popupMenu.add(item);
+
+    menu.addSeparator();
+    item = new JMenuItem("Export in DICOM");
+    item.addActionListener(_ -> rebuildView(true));
+    menu.add(item);
+
+    menu.addSeparator();
+    item = new JMenuItem(Messages.getString("change.mpr.pref"));
+    item.addActionListener(
+        _ -> {
+          PreferenceDialog dialog = new PreferenceDialog(SwingUtilities.getWindowAncestor(this));
+          dialog.showPage(Messages.getString("MPRFactory.title"));
+          GuiUtils.showCenterScreen(dialog);
+        });
+    menu.add(item);
+
+    popupMenu.addSeparator();
+    popupMenu.add(menu);
+    popupMenu.show(invoker, x, y);
+  }
+
   public ViewButton buildMprButton() {
     ViewButton button =
         new ViewButton(
-            (invoker, x, y) -> {
-              JPopupMenu popupMenu = new JPopupMenu();
-              JMenu menu = new JMenu(Messages.getString("all.views"));
-
-              if (getCenterMode() != 2) {
-                JMenuItem item = new JMenuItem(Messages.getString("center"));
-                item.addActionListener(e -> recenterAxis(false));
-                item.setAccelerator(
-                    KeyStroke.getKeyStroke(KeyEvent.VK_X, InputEvent.ALT_DOWN_MASK));
-                popupMenu.add(item);
-
-                item = new JMenuItem(Messages.getString("center"));
-                item.addActionListener(e -> recenterAxis(true));
-                item.setAccelerator(
-                    KeyStroke.getKeyStroke(
-                        KeyEvent.VK_X, InputEvent.CTRL_DOWN_MASK | InputEvent.ALT_DOWN_MASK));
-                menu.add(item);
-              }
-
-              int gap = getCenterGap();
-              if (gap > 0) {
-                boolean showCenter = getViewProperty(this, SHOW_CROSS_CENTER);
-                JCheckBoxMenuItem boxMenuItem =
-                    new JCheckBoxMenuItem(Messages.getString("show.center.crosshair"), showCenter);
-                boxMenuItem.addActionListener(
-                    e -> showCrossCenter((JCheckBoxMenuItem) e.getSource(), false));
-                boxMenuItem.setAccelerator(
-                    KeyStroke.getKeyStroke(KeyEvent.VK_C, InputEvent.ALT_DOWN_MASK));
-                popupMenu.add(boxMenuItem);
-
-                showCenter = getAllViewsProperty(SHOW_CROSS_CENTER);
-                boxMenuItem = new JCheckBoxMenuItem(boxMenuItem.getText(), showCenter);
-                boxMenuItem.addActionListener(
-                    e -> showCrossCenter((JCheckBoxMenuItem) e.getSource(), true));
-                boxMenuItem.setAccelerator(
-                    KeyStroke.getKeyStroke(
-                        KeyEvent.VK_C, InputEvent.CTRL_DOWN_MASK | InputEvent.ALT_DOWN_MASK));
-                menu.add(boxMenuItem);
-              }
-
-              boolean showCrossLines = !getViewProperty(this, HIDE_CROSSLINES);
-              JCheckBoxMenuItem boxMenuItem =
-                  new JCheckBoxMenuItem(Messages.getString("show.crosshair"), showCrossLines);
-              boxMenuItem.addActionListener(
-                  e -> showCrossLines((JCheckBoxMenuItem) e.getSource(), false));
-              boxMenuItem.setAccelerator(
-                  KeyStroke.getKeyStroke(KeyEvent.VK_V, InputEvent.ALT_DOWN_MASK));
-              popupMenu.add(boxMenuItem);
-
-              showCrossLines = !getAllViewsProperty(HIDE_CROSSLINES);
-              boxMenuItem = new JCheckBoxMenuItem(boxMenuItem.getText(), showCrossLines);
-              boxMenuItem.addActionListener(
-                  e -> showCrossLines((JCheckBoxMenuItem) e.getSource(), true));
-              boxMenuItem.setAccelerator(
-                  KeyStroke.getKeyStroke(
-                      KeyEvent.VK_V, InputEvent.CTRL_DOWN_MASK | InputEvent.ALT_DOWN_MASK));
-              menu.add(boxMenuItem);
-
-              JMenu menuItem =
-                  mprController
-                      .getMipTypeOption()
-                      .createUnregisteredRadioMenu(Messages.getString("mip.type"));
-              menu.add(menuItem);
-
-              menuItem = buildMipThicknessMenu(false);
-              popupMenu.add(menuItem);
-
-              menuItem = buildMipThicknessMenu(true);
-              menu.add(menuItem);
-
-              //              JMenuItem item = new JMenuItem("Export this view in DICOM");
-              //              item.addActionListener(e -> rebuildView(false));
-              //              popupMenu.add(item);
-              //
-              //              item = new JMenuItem("Export in DICOM");
-              //              item.addActionListener(e -> rebuildView(true));
-              //              menu.add(item);
-
-              JMenuItem item = new JMenuItem(Messages.getString("change.mpr.pref"));
-              item.addActionListener(
-                  _ -> {
-                    PreferenceDialog dialog =
-                        new PreferenceDialog(SwingUtilities.getWindowAncestor(this));
-                    dialog.showPage(Messages.getString("MPRFactory.title"));
-                    GuiUtils.showCenterScreen(dialog);
-                  });
-              menu.add(item);
-
-              popupMenu.add(menu);
-              popupMenu.show(invoker, x, y);
-            },
+            this::showMprPopup,
             ResourceUtil.getIcon(OtherIcon.VIEW_SETTING).derive(24, 24),
             Messages.getString("MPRFactory.title"));
     button.setVisible(true);
@@ -792,7 +829,8 @@ public class MprView extends View2d implements SliceCanvas, ViewProgress {
     dir.mkdirs();
 
     MprView view = axis.getMprView();
-    JProgressBar bar = ObliqueMpr.createProgressBar(axis.getMprView(), sliceImageSize);
+    // Two passes (analysis + export) → double the progress bar range
+    JProgressBar bar = ObliqueMpr.createProgressBar(axis.getMprView(), 2 * sliceImageSize);
     bar.setVisible(true);
     GuiExecutor.invokeAndWait(
         () -> {
@@ -811,15 +849,58 @@ public class MprView extends View2d implements SliceCanvas, ViewProgress {
         new SwingWorker<>() {
           @Override
           protected Void doInBackground() {
+            VolImageIO rawIO = axis.getRawIO();
+            DicomImageElement imageElement = axis.getImageElement();
+
+            // ── Pass 1: analysis ─────────────────────────────────────────────
+            // Render every slice to build the union of all non-background
+            int globalMinX = sliceImageSize;
+            int globalMinY = sliceImageSize;
+            int globalMaxX = -1;
+            int globalMaxY = -1;
+            int firstValid = -1;
+            int lastValid = -1;
+
             for (int i = 0; i < sliceImageSize; i++) {
               axis.setSliceIndex(i);
-              DicomImageElement imageElement = axis.getImageElement();
-              if (imageElement != null) {
-                imageElement.setTag(TagD.get(Tag.SeriesInstanceUID), uid);
-                String iuid = TagD.getTagValue(imageElement, Tag.SOPInstanceUID, String.class);
-                imageElement.saveToFile(new File(dir, iuid));
+              int[] bbox = rawIO.computeCurrentSliceBoundingBox();
+              if (bbox != null) {
+                if (firstValid < 0) firstValid = i;
+                lastValid = i;
+                globalMinX = Math.min(globalMinX, bbox[0]);
+                globalMinY = Math.min(globalMinY, bbox[1]);
+                globalMaxX = Math.max(globalMaxX, bbox[0] + bbox[2] - 1);
+                globalMaxY = Math.max(globalMaxY, bbox[1] + bbox[3] - 1);
               }
               publish(i + 1);
+            }
+
+            if (firstValid < 0) return null; // all slices background – nothing to export
+
+            // Derive the uniform crop region from the union bounding box.
+            int[] uniformCrop = null;
+            if (globalMaxX >= 0) {
+              int cropW = globalMaxX - globalMinX + 1;
+              int cropH = globalMaxY - globalMinY + 1;
+              if (globalMinX > 0
+                  || globalMinY > 0
+                  || cropW < sliceImageSize
+                  || cropH < sliceImageSize) {
+                uniformCrop = new int[] {globalMinX, globalMinY, cropW, cropH};
+              }
+            }
+
+            // ── Pass 2: export ────────────────────────────────────────────────
+            // Write only the valid slice range, applying the same crop to every
+            // slice so all images in the series share identical dimensions.
+            int exportIndex = 0;
+            for (int i = firstValid; i <= lastValid; i++) {
+              axis.setSliceIndex(i);
+              if (imageElement != null) {
+                imageElement.setTag(TagD.get(Tag.SeriesInstanceUID), uid);
+                rawIO.buildCroppedFile(dir, uniformCrop);
+              }
+              publish(sliceImageSize + (++exportIndex));
             }
             return null;
           }
@@ -834,27 +915,10 @@ public class MprView extends View2d implements SliceCanvas, ViewProgress {
           @Override
           protected void done() {
             bar.setValue(bar.getMaximum());
+            mprController.getAxesControl().reset();
             mprController.getAxesControl().setCenter(oldPosition);
           }
         };
     worker.execute();
-  }
-
-  protected void setRotation(double rotation) {
-    MprAxis axis = getMprAxis();
-    Pair<MprAxis, MprAxis> pair = mprController.getCrossAxis(axis);
-    if (pair != null) {
-      Volume<?, ?> volume = mprController.getVolume();
-      Quaterniond r = new Quaterniond(volume.getRotation());
-      if (plane == Plane.AXIAL) {
-        r.mul(new Quaterniond().rotateZ(rotation));
-      } else if (plane == Plane.CORONAL) {
-        r.mul(new Quaterniond().rotateY(rotation));
-      } else if (plane == Plane.SAGITTAL) {
-        r.mul(new Quaterniond().rotateX(rotation));
-      }
-      mprController.getRotation(plane).mul(r);
-    }
-    repaint();
   }
 }

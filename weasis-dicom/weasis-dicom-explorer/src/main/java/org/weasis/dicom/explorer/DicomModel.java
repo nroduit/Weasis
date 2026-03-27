@@ -94,7 +94,7 @@ import org.weasis.dicom.codec.utils.SplittingRules;
 import org.weasis.dicom.explorer.HangingProtocols.OpeningViewer;
 import org.weasis.dicom.explorer.imp.DicomDirImport;
 import org.weasis.dicom.explorer.imp.DicomDirLoader;
-import org.weasis.dicom.explorer.imp.DicomZipImport;
+import org.weasis.dicom.explorer.imp.DicomZipMediaIO;
 import org.weasis.dicom.explorer.imp.LocalImport;
 import org.weasis.dicom.explorer.main.SeriesPane;
 import org.weasis.dicom.explorer.rs.RsQueryParams;
@@ -161,7 +161,8 @@ public class DicomModel implements TreeModel, DataExplorerModel {
       for (Codec<MediaElement> codec : codecs) {
         if (codec != null
             && !"JDK ImageIO".equals(codec.getCodecName()) // NON-NLS
-            && codec.isMimeTypeSupported(DicomMediaIO.DICOM_MIMETYPE)
+            && (codec.isMimeTypeSupported(DicomMediaIO.DICOM_MIMETYPE)
+                || codec.isMimeTypeSupported(DicomZipMediaIO.MIME_TYPE))
             && !codecPlugins.contains(codec)) {
           codecPlugins.add(codec);
         }
@@ -1172,7 +1173,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
 
     if (opt.isSet("zip")) {
       for (String zip : zargs) {
-        DicomZipImport.loadDicomZip(zip, DicomModel.this);
+        DicomZipMediaIO.loadDicomZip(zip, DicomModel.this);
       }
     }
 

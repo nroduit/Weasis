@@ -23,8 +23,8 @@ public final class VolumeDouble extends Volume<Double, double[]> {
     super(sizeX, sizeY, sizeZ, CvType.CV_64FC(channels), progressBar);
   }
 
-  public VolumeDouble(OriginalStack stack, JProgressBar progressBar) {
-    super(stack, progressBar);
+  public VolumeDouble(OriginalStack stack, JProgressBar progressBar, boolean isBasic) {
+    super(stack, progressBar, isBasic);
   }
 
   @Override

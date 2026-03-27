@@ -460,7 +460,7 @@ public class MprContainer extends DicomViewerPlugin implements PropertyChangeLis
             @Override
             public void run() {
               try {
-                MPRGenerator.createMissingSeries(this, MprContainer.this, view);
+                MPRGenerator.createMissingSeries(MprContainer.this, view);
 
                 // Following actions need to be executed in EDT thread
                 GuiExecutor.execute(

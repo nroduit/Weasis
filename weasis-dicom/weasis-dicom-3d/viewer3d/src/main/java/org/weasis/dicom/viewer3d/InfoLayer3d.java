@@ -146,7 +146,15 @@ public class InfoLayer3d extends AbstractInfoLayer<DicomImageElement> {
     }
     drawY -= fontHeight;
     if (imSeries.getVolume().isTransformed()) {
-      drawY = InfoLayer.drawGeometricTransformationMessage(g2d, drawY, fontHeight, border);
+      String message = org.weasis.dicom.viewer2d.Messages.getString("geometric.transformation.msg");
+      FontTools.paintColorFontOutline(
+          g2d, message, border, drawY, IconColor.ACTIONS_RED.getColor());
+      drawY -= fontHeight;
+    } else if (imSeries.getVolume().isSkipRectification()) {
+      String message = org.weasis.dicom.viewer2d.Messages.getString("skip.rectification.msg");
+      FontTools.paintColorFontOutline(
+          g2d, message, border, drawY, IconColor.ACTIONS_RED.getColor());
+      drawY -= fontHeight;
     }
 
     if (imSeries.getVolume().isVariableSliceSpacing()) {

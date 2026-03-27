@@ -280,7 +280,7 @@ public interface ViewCanvas<E extends ImageElement>
     }
   }
 
-  default Point3 getVolumeCoordinatesFromMouse(int x, int y) {
+  default Point3 getVolumePoint3FromMouse(int x, int y) {
     return null;
   }
 

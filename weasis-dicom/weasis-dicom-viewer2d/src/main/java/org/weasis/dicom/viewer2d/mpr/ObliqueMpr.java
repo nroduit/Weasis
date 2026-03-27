@@ -37,7 +37,8 @@ import org.weasis.dicom.viewer2d.mpr.MprView.Plane;
 
 public class ObliqueMpr extends OriginalStack {
   static final String[] imageTypes = {"DERIVED", "SECONDARY", "MPR"};
-  private final Volume<?, ?> volume;
+  private Volume<?, ?> volume;
+  private final JProgressBar bar;
 
   public ObliqueMpr(
       Plane plane,
@@ -45,7 +46,7 @@ public class ObliqueMpr extends OriginalStack {
       ViewProgress view,
       Filter<DicomImageElement> filter) {
     super(plane, series, filter);
-    JProgressBar bar = createProgressBar(view, getSourceStack().size());
+    this.bar = createProgressBar(view, getSourceStack().size());
     GuiExecutor.invokeAndWait(
         () -> {
           bar.setValue(0);
@@ -58,7 +59,14 @@ public class ObliqueMpr extends OriginalStack {
           }
           view.repaint();
         });
-    this.volume = Volume.createVolume(this, bar);
+  }
+
+  public void createTransformedVolume() {
+    this.volume = Volume.createVolume(this, bar, false);
+  }
+
+  public void createBasicVolume() {
+    this.volume = Volume.createVolume(this, bar, true);
   }
 
   public static JProgressBar createProgressBar(ViewProgress progress, int maxSize) {
@@ -97,6 +105,7 @@ public class ObliqueMpr extends OriginalStack {
 
   public void generate(BuildContext context) {
     MprController controller = context.getMprContainer().getMprController();
+    volume.setSkipRectification(context.isSkipRectification());
     controller.setVolume(volume);
 
     String[] uidsRef = setUIDsRef();

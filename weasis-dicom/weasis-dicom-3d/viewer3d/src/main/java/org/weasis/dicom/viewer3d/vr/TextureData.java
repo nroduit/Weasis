@@ -12,7 +12,6 @@ package org.weasis.dicom.viewer3d.vr;
 import com.jogamp.opengl.GL;
 import com.jogamp.opengl.GL2ES2;
 import com.jogamp.opengl.GL2GL3;
-import com.jogamp.opengl.GL4;
 import java.nio.IntBuffer;
 
 public abstract class TextureData {
@@ -23,6 +22,7 @@ public abstract class TextureData {
     FLOAT,
     RGB8,
     RGBA32F,
+    RGBA16F,
     RGBA8;
   }
 
@@ -74,6 +74,12 @@ public abstract class TextureData {
         this.type = GL.GL_UNSIGNED_BYTE;
         this.format = GL.GL_RGBA;
       }
+      case RGBA16F -> {
+        // Half-float: 8 bytes/pixel vs 16 for RGBA32F — halves GPU memory bandwidth on Retina.
+        this.internalFormat = GL2GL3.GL_RGBA16F;
+        this.type = GL.GL_FLOAT;
+        this.format = GL.GL_RGBA;
+      }
       default -> {
         this.internalFormat = GL.GL_RGBA32F;
         this.type = GL.GL_FLOAT;
@@ -82,19 +88,19 @@ public abstract class TextureData {
     }
   }
 
-  public void init(GL4 gl4) {
+  public void init(GL2ES2 gl) {
     if (id <= 0) {
       IntBuffer intBuffer = IntBuffer.allocate(1);
-      gl4.glGenTextures(1, intBuffer);
+      gl.glGenTextures(1, intBuffer);
       id = intBuffer.get(0);
     }
   }
 
-  public abstract void render(GL4 gl4);
+  public abstract void render(GL2ES2 gl);
 
-  public void destroy(GL4 gl4) {
+  public void destroy(GL2ES2 gl) {
     if (id != 0) {
-      gl4.glDeleteTextures(1, new int[] {id}, 0);
+      gl.glDeleteTextures(1, new int[] {id}, 0);
       id = 0;
     }
   }
@@ -138,7 +144,7 @@ public abstract class TextureData {
       case UNSIGNED_SHORT -> 2;
       case RGB8 -> 3;
       case RGBA8 -> 4;
-      case RGBA32F -> 5;
+      case RGBA32F, RGBA16F -> 5;
       case FLOAT -> 6;
     };
   }

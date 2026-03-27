@@ -482,9 +482,8 @@ public final class KOManager {
         if (koFilter && newImageIndex < 0) {
           if (dicomSeries.size(sopInstanceUIDFilter) > 0 && view2D.getImage() != null) {
 
-            double[] val = (double[]) view2D.getImage().getTagValue(TagW.SlicePosition);
-            if (val != null) {
-              double location = val[0] + val[1] + val[2];
+            Double location = (Double) view2D.getImage().getTagValue(TagW.SlicePosition);
+            if (location != null) {
               // Double offset = (Double) view2D.getActionValue(ActionW.STACK_OFFSET.cmd());
               // if (offset != null) {
               // location += offset;

@@ -10,97 +10,177 @@
 package org.weasis.dicom.explorer.imp;
 
 import java.awt.Component;
+import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Objects;
-import javax.swing.JButton;
-import javax.swing.JComboBox;
-import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JPasswordField;
-import javax.swing.JProgressBar;
+import javax.swing.Timer;
 import net.lingala.zip4j.ZipFile;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.weasis.core.api.gui.util.AbstractItemDialogPage;
+import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.core.api.gui.util.AppProperties;
-import org.weasis.core.api.gui.util.FileFormatFilter;
 import org.weasis.core.api.gui.util.GuiUtils;
+import org.weasis.core.api.media.data.Codec;
+import org.weasis.core.api.media.data.FileCache;
+import org.weasis.core.api.media.data.MediaElement;
+import org.weasis.core.api.media.data.MediaReader;
+import org.weasis.core.api.media.data.MediaSeries;
+import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.net.ClosableURLConnection;
 import org.weasis.core.api.net.NetworkUtil;
 import org.weasis.core.api.net.URLParameters;
 import org.weasis.core.util.FileUtil;
 import org.weasis.core.util.StringUtil;
-import org.weasis.dicom.explorer.*;
+import org.weasis.dicom.explorer.DicomModel;
 import org.weasis.dicom.explorer.HangingProtocols.OpeningViewer;
+import org.weasis.dicom.explorer.LoadDicomDir;
+import org.weasis.dicom.explorer.LoadLocalDicom;
+import org.weasis.dicom.explorer.Messages;
 import org.weasis.dicom.explorer.wado.LoadSeries;
+import org.weasis.opencv.data.PlanarImage;
 
-public class DicomZipImport extends AbstractItemDialogPage implements ImportDicom {
-  private static final Logger LOGGER = LoggerFactory.getLogger(DicomZipImport.class);
+/**
+ * A {@link MediaReader} that delegates loading of a DICOM ZIP archive. This allows drag-and-drop of
+ * {@code .zip} files containing DICOM data to be recognized and imported automatically through the
+ * codec infrastructure.
+ */
+public class DicomZipMediaIO implements MediaReader<MediaElement> {
+  private static final Logger LOGGER = LoggerFactory.getLogger(DicomZipMediaIO.class);
 
-  private static final String LAST_DICOM_ZIP = "lastDicomZip";
-  private static final String LAST_DICOM_ZIP_OPEN_MODE = "last.dicom.zip.open.mode";
+  public static final String MIME_TYPE = "application/x-zip"; // NON-NLS
+  private final URI uri;
+  private final FileCache fileCache;
+  private final DicomZipCodec codec;
 
-  private final JComboBox<OpeningViewer> openingViewerJComboBox =
-      new JComboBox<>(OpeningViewer.values());
-  private File selectedFile;
-  private final JLabel fileLabel = new JLabel();
-
-  public DicomZipImport() {
-    super(Messages.getString("DicomZipImport.title"), 3);
-    initGUI();
+  public DicomZipMediaIO(URI uri, DicomZipCodec codec) {
+    this.uri = Objects.requireNonNull(uri);
+    this.fileCache = new FileCache(this);
+    this.codec = codec;
   }
 
-  public void initGUI() {
-    JButton btnOpen = new JButton(Messages.getString("DicomZipImport.select_file"));
-    btnOpen.addActionListener(e -> browseImgFile());
-    add(GuiUtils.getFlowLayoutPanel(ITEM_SEPARATOR_SMALL, ITEM_SEPARATOR, btnOpen, fileLabel));
-
-    add(LocalImport.buildOpenViewerPanel(openingViewerJComboBox, LAST_DICOM_ZIP_OPEN_MODE));
-    add(GuiUtils.boxYLastElement(LAST_FILLER_HEIGHT));
+  @Override
+  public URI getUri() {
+    return uri;
   }
 
-  public void browseImgFile() {
-    String directory = LocalPersistence.getProperties().getProperty(LAST_DICOM_ZIP, "");
+  @Override
+  public FileCache getFileCache() {
+    return fileCache;
+  }
 
-    JFileChooser fileChooser = new JFileChooser(directory);
-    fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
-    fileChooser.setMultiSelectionEnabled(false);
-    fileChooser.setFileFilter(new FileFormatFilter("zip", "ZIP")); // NON-NLS
-    if (fileChooser.showOpenDialog(this) != JFileChooser.APPROVE_OPTION
-        || (selectedFile = fileChooser.getSelectedFile()) == null) {
-      fileLabel.setText("");
-    } else {
-      LocalPersistence.getProperties().setProperty(LAST_DICOM_ZIP, selectedFile.getParent());
-      fileLabel.setText(selectedFile.getPath());
+  @Override
+  public boolean isOnlyDelegate() {
+    return true;
+  }
+
+  @Override
+  public boolean delegate(DataExplorerModel explorerModel) {
+    File zipFile = new File(uri);
+    if (zipFile.canRead() && explorerModel instanceof DicomModel dicomModel) {
+      OpeningViewer openingViewer =
+          OpeningViewer.getOpeningViewerByLocalKey(LocalImport.LAST_OPEN_VIEWER_MODE);
+      loadDicomZip(zipFile, dicomModel, openingViewer, GuiUtils.getUICore().getApplicationWindow());
+      return true;
     }
+    return false;
   }
 
   @Override
-  public void closeAdditionalWindow() {
-    LocalPersistence.getProperties()
-        .setProperty(LAST_DICOM_ZIP_OPEN_MODE, getOpeningViewer().name());
-  }
-
-  private OpeningViewer getOpeningViewer() {
-    return Objects.requireNonNullElse(
-        (OpeningViewer) openingViewerJComboBox.getSelectedItem(), OpeningViewer.ONE_PATIENT);
+  public MediaElement getPreview() {
+    return null;
   }
 
   @Override
-  public void resetToDefaultValues() {
-    // Do nothing
+  public PlanarImage getImageFragment(MediaElement media) throws Exception {
+    return null;
   }
 
   @Override
-  public void importDICOM(DicomModel dicomModel, JProgressBar info) {
-    loadDicomZip(selectedFile, dicomModel, getOpeningViewer(), this);
+  public MediaElement[] getMediaElement() {
+    return new MediaElement[0];
+  }
+
+  @Override
+  public MediaSeries<MediaElement> getMediaSeries() {
+    return null;
+  }
+
+  @Override
+  public int getMediaElementNumber() {
+    return 0;
+  }
+
+  @Override
+  public String getMediaFragmentMimeType() {
+    return MIME_TYPE;
+  }
+
+  @Override
+  public Map<TagW, Object> getMediaFragmentTags(Object key) {
+    return Collections.emptyMap();
+  }
+
+  @Override
+  public void close() {
+    // Nothing to close
+  }
+
+  @Override
+  public Codec<MediaElement> getCodec() {
+    return codec;
+  }
+
+  @Override
+  public String[] getReaderDescription() {
+    return new String[] {"DICOM ZIP reader"}; // NON-NLS
+  }
+
+  @Override
+  public Object getTagValue(TagW tag) {
+    return null;
+  }
+
+  @Override
+  public void setTag(TagW tag, Object value) {
+    // Not supported
+  }
+
+  @Override
+  public boolean containTagKey(TagW tag) {
+    return false;
+  }
+
+  @Override
+  public void setTagNoNull(TagW tag, Object value) {
+    // Not supported
+  }
+
+  @Override
+  public Iterator<Entry<TagW, Object>> getTagEntrySetIterator() {
+    return Collections.emptyIterator();
+  }
+
+  @Override
+  public void replaceURI(URI uri) {
+    // Not supported
+  }
+
+  @Override
+  public boolean buildFile(File output) {
+    return false;
   }
 
   public static void loadDicomZip(
@@ -115,6 +195,10 @@ public class DicomZipImport extends AbstractItemDialogPage implements ImportDico
           JPasswordField pass = new JPasswordField(16);
           panel.add(new JLabel(Messages.getString("enter.password")));
           panel.add(pass);
+          ActionListener al = ae -> pass.requestFocusInWindow();
+          Timer timer = new Timer(150, al);
+          timer.setRepeats(false);
+          timer.start();
           int response =
               JOptionPane.showOptionDialog(
                   parent,
@@ -124,7 +208,7 @@ public class DicomZipImport extends AbstractItemDialogPage implements ImportDico
                   JOptionPane.PLAIN_MESSAGE,
                   null,
                   null,
-                  null);
+                  pass);
           if (response == JOptionPane.OK_OPTION) {
             zipFile.setPassword(pass.getPassword());
           }
@@ -171,7 +255,7 @@ public class DicomZipImport extends AbstractItemDialogPage implements ImportDico
         LOGGER.error("Loading DICOM Zip", e);
       }
       OpeningViewer openingViewer =
-          OpeningViewer.getOpeningViewerByLocalKey(LAST_DICOM_ZIP_OPEN_MODE);
+          OpeningViewer.getOpeningViewerByLocalKey(LocalImport.LAST_OPEN_VIEWER_MODE);
       loadDicomZip(zipFile, dicomModel, openingViewer, GuiUtils.getUICore().getApplicationWindow());
     }
   }

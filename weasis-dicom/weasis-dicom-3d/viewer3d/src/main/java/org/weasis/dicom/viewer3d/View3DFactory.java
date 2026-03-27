@@ -64,6 +64,15 @@ public class View3DFactory implements SeriesViewerFactory {
   public static final String P_OPENGL_ENABLE = "opengl.enable";
   public static final String P_OPENGL_PREV_INIT = "opengl.prev.init";
 
+  /**
+   * System property / preference key that forces the FBO-based fragment-shader path even when
+   * compute shaders are available (OpenGL >= 4.3). Useful for testing the OpenGL 3.3 fallback on
+   * any platform.
+   *
+   * <p>Set via JVM argument: {@code -Dweasis.3d.force.fbo=true}
+   */
+  public static final String P_FORCE_FBO = "weasis.3d.force.fbo"; // NON-NLS
+
   private static final String JOGL_THREAD_CONFIG = "jogl.1thread";
 
   private static OpenGLInfo openGLInfo;
@@ -154,10 +163,7 @@ public class View3DFactory implements SeriesViewerFactory {
 
   @Override
   public boolean isViewerCreatedByThisFactory(SeriesViewer viewer) {
-    if (viewer instanceof View3DContainer) {
-      return true;
-    }
-    return false;
+    return viewer instanceof View3DContainer;
   }
 
   @Override
@@ -242,7 +248,13 @@ public class View3DFactory implements SeriesViewerFactory {
           openGLInfo.version());
       if (!openGLInfo.isVersionCompliant()) {
         throw new IllegalStateException(
-            "OpenGL %s is not compliant with compute shader".formatted(openGLInfo.shortVersion()));
+            "OpenGL %s is below the minimum required version 3.3"
+                .formatted(openGLInfo.shortVersion()));
+      }
+      if (!openGLInfo.isComputeShaderCapable()) {
+        LOGGER.info(
+            "OpenGL {} does not support compute shaders (requires 4.3). Using FBO-based fragment shader fallback.",
+            openGLInfo.shortVersion());
       }
       if (openGLInfo.looksSoftware()) {
         throw new IllegalStateException(
@@ -258,6 +270,24 @@ public class View3DFactory implements SeriesViewerFactory {
 
   public static boolean isOpenglEnable() {
     return GuiUtils.getUICore().getLocalPersistence().getBooleanProperty(P_OPENGL_ENABLE, true);
+  }
+
+  /**
+   * Returns {@code true} when the FBO-based fragment-shader fallback should be used regardless of
+   * the actual OpenGL version. This is controlled by:
+   *
+   * <ul>
+   *   <li>The JVM system property {@code -Dweasis.3d.force.fbo=true}, or
+   *   <li>The local persistence preference {@value P_FORCE_FBO}.
+   * </ul>
+   *
+   * Use this to test the macOS fallback path on a machine that has OpenGL 4.3+.
+   */
+  public static boolean isFboForced() {
+    if (Boolean.getBoolean(P_FORCE_FBO)) {
+      return true;
+    }
+    return GuiUtils.getUICore().getLocalPersistence().getBooleanProperty(P_FORCE_FBO, false);
   }
 
   public static void showOpenglErrorMessage(Component parent) {

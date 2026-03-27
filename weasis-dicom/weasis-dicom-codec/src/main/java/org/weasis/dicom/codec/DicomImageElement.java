@@ -297,9 +297,9 @@ public class DicomImageElement extends ImageElement implements DicomElement {
 
   protected boolean isImageInitialized() {
     if (adapter == null) {
-      return getImage(null, true) != null;
+      getImage(null, true);
     }
-    return true;
+    return adapter != null;
   }
 
   public PlanarImage getModalityLutImage(OpManager manager, DicomImageReadParam params) {

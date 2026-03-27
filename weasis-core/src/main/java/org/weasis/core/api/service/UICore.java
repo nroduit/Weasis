@@ -325,14 +325,16 @@ public final class UICore {
     systemPreferences.setProperty(key, System.getProperty(key));
 
     if (!systemPreferences.equals(initialSystemPreferences)) {
-      PropertiesUtil.storeProperties(propsFile.toPath(), systemPreferences, null);
-      String remotePrefURL = getPrefServiceUrl();
-      if (remotePrefURL != null) {
-        try {
-          storeLauncherPref(systemPreferences, remotePrefURL);
-        } catch (Exception e) {
-          LOGGER.error(
-              "Cannot store Launcher preference for user: {}", AppProperties.WEASIS_USER, e);
+      if (propsFile != null) {
+        PropertiesUtil.storeProperties(propsFile.toPath(), systemPreferences, null);
+        String remotePrefURL = getPrefServiceUrl();
+        if (remotePrefURL != null) {
+          try {
+            storeLauncherPref(systemPreferences, remotePrefURL);
+          } catch (Exception e) {
+            LOGGER.error(
+                "Cannot store Launcher preference for user: {}", AppProperties.WEASIS_USER, e);
+          }
         }
       }
       initialSystemPreferences.clear();

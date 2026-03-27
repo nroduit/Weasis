@@ -649,7 +649,7 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
     grid.removeAll();
 
     MigLayoutModel currentLayout = cellManager.getLayoutModel();
-    updateMigLayoutContraints(currentLayout);
+    migLayout.setLayoutConstraints(currentLayout.getLayoutConstraints());
 
     // Iterate through cells and add components from cellManager
     for (MigCell cell : currentLayout.getCells()) {
@@ -659,7 +659,7 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
       }
     }
 
-    grid.revalidate();
+    currentLayout.applyConstraintsToLayout(grid);
   }
 
   public void resetMaximizedSelectedImagePane(ViewCanvas<E> viewCanvas) {

@@ -22,13 +22,10 @@ import org.joml.Vector3d;
 import org.weasis.dicom.viewer2d.mpr.MprView.Plane;
 
 public class AxesControl {
-  private static final double HALF_DIMENSION = 0.5;
   public static final double RAD90D = Math.toRadians(90);
   private static final Quaterniond CORONAL_ROTATION = new Quaterniond().rotateX(-RAD90D);
   private static final Quaterniond SAGITTAL_ROTATION =
       new Quaterniond().rotateY(RAD90D).rotateZ(RAD90D);
-  private static final Vector3d CENTER_VECTOR =
-      new Vector3d(HALF_DIMENSION, HALF_DIMENSION, HALF_DIMENSION);
 
   private final PropertyChangeSupport changeSupport;
   private final Set<SliceCanvas> watchingCanvases;
@@ -65,17 +62,15 @@ public class AxesControl {
     return new Vector3d(center);
   }
 
-  public Vector3d getUnnormalizedPosition(Vector3d p) {
-    return new Vector3d(p).mul(getSliceSize());
-  }
-
   protected int getSliceSize() {
-    Volume<?, ?> volume = controller.getVolume();
+    var volume = controller.getVolume();
     return volume == null ? 1 : volume.getSliceSize();
   }
 
   public double getCenterAlongAxis(SliceCanvas c) {
-    return center.get(c.getPlane().axisIndex()) * getSliceSize();
+    double halfSlice = getSliceSize() / 2.0;
+    Vector3d axis = getRotatedCanvasAxis(c.getPlane());
+    return new Vector3d(center).sub(halfSlice, halfSlice, halfSlice).dot(axis) + halfSlice;
   }
 
   public void setCenter(Vector3d center) {
@@ -83,7 +78,12 @@ public class AxesControl {
   }
 
   public void setCenterAlongAxis(SliceCanvas c, double value) {
-    center.setComponent(c.getPlane().axisIndex(), value / getSliceSize());
+    double halfSlice = getSliceSize() / 2.0;
+    Vector3d axis = getRotatedCanvasAxis(c.getPlane());
+    double currentDepth = new Vector3d(center).sub(halfSlice, halfSlice, halfSlice).dot(axis);
+    double targetDepth = value - halfSlice;
+    double delta = targetDepth - currentDepth;
+    center.add(new Vector3d(axis).mul(delta));
   }
 
   public boolean isHidden() {
@@ -98,7 +98,8 @@ public class AxesControl {
   }
 
   public void reset() {
-    this.center = new Vector3d(HALF_DIMENSION, HALF_DIMENSION, HALF_DIMENSION);
+    double halfSlice = getSliceSize() / 2.0;
+    this.center = new Vector3d(halfSlice, halfSlice, halfSlice);
     setGlobalRotation(new Quaterniond());
     canvasRotationOffset.put(Plane.AXIAL, 0.0);
     canvasRotationOffset.put(Plane.CORONAL, 0.0);
@@ -192,11 +193,7 @@ public class AxesControl {
     } else if (type == Plane.CORONAL) {
       p = new Vector3d(0.0, 1.0, 0.0);
     } else {
-      if (type == Plane.SAGITTAL) {
-        throw new IllegalArgumentException("Canvas3D type not supported");
-      }
-
-      p = new Vector3d(-1.0, 0.0, 0.0);
+      p = new Vector3d(1.0, 0.0, 0.0);
     }
 
     return p;
@@ -209,67 +206,44 @@ public class AxesControl {
   }
 
   public Vector3d getCenterForCanvas(SliceCanvas imageCanvas) {
-    return getCenterForCanvas(imageCanvas, false);
+    return getCenterForCanvas(imageCanvas, center);
   }
 
-  public Vector3d getCenterForCanvas(SliceCanvas imageCanvas, boolean applySpatialMultiplier) {
-    return getCenterForCanvas(imageCanvas, center, applySpatialMultiplier);
-  }
-
-  public Vector3d getCenterForCanvas(
-      SliceCanvas imageCanvas, Vector3d pt, boolean applySpatialMultiplier) {
+  public Vector3d getCenterForCanvas(SliceCanvas imageCanvas, Vector3d pt) {
     if (imageCanvas == null) {
       return new Vector3d(pt);
     }
-    Vector3d adjustedCenter = new Vector3d(pt).sub(CENTER_VECTOR);
-    if (applySpatialMultiplier) {
-      Volume<?, ?> volume = controller.getVolume();
-      if (volume != null) {
-        Vector3d multiplier = volume.getSpatialMultiplier();
-        adjustedCenter.x *= multiplier.x;
-        adjustedCenter.y *= multiplier.y;
-        adjustedCenter.z *= multiplier.z;
-      }
-    }
+    double halfSlice = getSliceSize() / 2.0;
+    Vector3d adjustedCenter = new Vector3d(pt).sub(halfSlice, halfSlice, halfSlice);
     applyRotationMatrix(adjustedCenter, imageCanvas);
-    adjustedCenter.add(CENTER_VECTOR);
+    adjustedCenter.add(new Vector3d(halfSlice, halfSlice, halfSlice));
     return adjustedCenter;
   }
 
   private void applyRotationMatrix(Vector3d vector, SliceCanvas canvas) {
-    Quaterniond rotation = getRotationForSlice(canvas.getPlane());
-    Matrix3d rotationMatrix = new Matrix3d().set(rotation).invert();
-    rotationMatrix.transform(vector);
-    if (canvas.getPlane() == Plane.CORONAL) {
+    Plane plane = canvas.getPlane();
+
+    // The forward transform (display→texture) applies rotations in this order:
+    //   AXIAL:    R(viewRot)
+    //   CORONAL:  R(viewRot) · Rx(-90°) · S(1,-1,1)
+    //   SAGITTAL: R(viewRot) · Ry(90°) · Rz(90°)
+    // The inverse (texture→display) is therefore:
+    //   AXIAL:    R(viewRot)⁻¹
+    //   CORONAL:  S(1,-1,1) · Rx(90°) · R(viewRot)⁻¹
+    //   SAGITTAL: Rz(-90°) · Ry(-90°) · R(viewRot)⁻¹
+
+    // Step 1: apply inverse of the full view rotation (global rotation + per-plane offset)
+    Quaterniond viewRotation = getViewRotation(plane);
+    new Matrix3d().set(viewRotation).invert().transform(vector);
+
+    // Step 2: apply inverse of the plane-specific base rotation
+    Quaterniond planeRotation = getRotationForSlice(plane);
+    new Matrix3d().set(planeRotation).invert().transform(vector);
+
+    // Step 3: apply the coronal Y-flip (S(1,-1,1) is its own inverse)
+    if (plane == Plane.CORONAL) {
       vector.y = -vector.y;
     }
-  }
-
-  public Vector3d getCenterForCustomRotation(Quaterniond rotation) {
-    Vector3d vCenter = new Vector3d(this.center).sub(CENTER_VECTOR);
-    Volume<?, ?> v = controller.getVolume();
-    if (v != null) {
-      //      Vector3d dimensionMultiplier = v.getSpatialMultiplier();
-      //      vCenter.x *= dimensionMultiplier.x;
-      //      vCenter.y *= dimensionMultiplier.y;
-      //      vCenter.z *= dimensionMultiplier.z;
-      Matrix3d var4 = new Matrix3d().set(new Quaterniond(rotation).invert());
-      var4.transform(vCenter);
-    }
-    vCenter.add(CENTER_VECTOR);
-    return vCenter;
-  }
-
-  public Vector3d getGlobalPositionForLocalPosition(SliceCanvas canvas, Vector3d position) {
-    Volume<?, ?> v = controller.getVolume();
-    if (v == null) {
-      return new Vector3d(position);
-    }
-    Vector3d p = new Vector3d(position).sub(CENTER_VECTOR);
-    Matrix3d var3 = new Matrix3d().set(getAxisRotationForPlane(canvas));
-    var3.invert().transform(p);
-    p.add(CENTER_VECTOR);
-    return p;
   }
 
   public void rotate(Quaterniond rotation, Plane type, double offset) {

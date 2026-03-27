@@ -141,7 +141,7 @@ public class MprFactory implements SeriesViewerFactory {
       SeriesViewerFactory factory = GuiUtils.getUICore().getViewerFactory(MprFactory.class);
       MediaSeries<DicomImageElement> s = series;
       if (s == null) {
-        s = EventManager.getInstance().getSelectedSeries();
+        s = EventManager.getInstance().getSelectedOriginalSeries();
       }
       if (factory != null && factory.canReadSeries(s)) {
         s = LoadLocalDicom.confirmSplittingMultiPhaseSeries(s);

@@ -9,7 +9,7 @@
  */
 package org.weasis.dicom.viewer3d;
 
-import com.jogamp.opengl.GL4;
+import com.jogamp.opengl.GL2ES2;
 import java.awt.Component;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
@@ -344,7 +344,7 @@ public class View3DContainer extends DicomViewerPlugin implements PropertyChange
         MediaSeries<DicomImageElement> oldSequence = null;
         if (volumeBuilder != null) {
           oldSequence = volumeBuilder.getVolTexture().getSeries();
-          GL4 gl4 = OpenglUtils.getGL4();
+          GL2ES2 gl4 = OpenglUtils.getGL();
           if (gl4 != null && !series.equals(oldSequence)) {
             volumeBuilder.getVolTexture().destroy(gl4);
           }
@@ -386,7 +386,10 @@ public class View3DContainer extends DicomViewerPlugin implements PropertyChange
   public void reload() {
     if (volumeBuilder != null) {
       MediaSeries<DicomImageElement> oldSequence = volumeBuilder.getVolTexture().getSeries();
-      volumeBuilder.getVolTexture().destroy(OpenglUtils.getGL4());
+      GL2ES2 gl = OpenglUtils.getGL();
+      if (gl != null) {
+        volumeBuilder.getVolTexture().destroy(gl);
+      }
       // Force to rebuild
       this.volumeBuilder = null;
       addSeries(oldSequence);

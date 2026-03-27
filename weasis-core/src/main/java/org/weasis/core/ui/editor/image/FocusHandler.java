@@ -178,8 +178,7 @@ public final class FocusHandler<E extends ImageElement> extends MouseActionAdapt
         viewCanvas.getPixelInfo(
             new Point((int) Math.floor(pModel.getX()), (int) Math.floor(pModel.getY())));
     if (pixelInfo != null) {
-      Point3 point3d =
-          viewCanvas.getVolumeCoordinatesFromMouse(mouseevent.getX(), mouseevent.getY());
+      Point3 point3d = viewCanvas.getVolumePoint3FromMouse(mouseevent.getX(), mouseevent.getY());
       pixelInfo.setPosition3d(point3d);
     }
 

@@ -27,6 +27,10 @@ public interface MediaReader<E extends MediaElement> extends Taggable {
 
   boolean delegate(DataExplorerModel explorerModel);
 
+  default boolean isOnlyDelegate() {
+    return false;
+  }
+
   MediaElement getPreview();
 
   PlanarImage getImageFragment(MediaElement media) throws Exception;

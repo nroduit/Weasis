@@ -11,6 +11,7 @@ package org.weasis.dicom.explorer.imp;
 
 import com.formdev.flatlaf.FlatClientProperties;
 import java.awt.Dimension;
+import java.awt.event.ItemEvent;
 import java.io.File;
 import java.net.URI;
 import java.util.Objects;
@@ -70,6 +71,13 @@ public class LocalImport extends AbstractItemDialogPage implements ImportDicom {
     add(GuiUtils.getFlowLayoutPanel(ITEM_SEPARATOR_SMALL, ITEM_SEPARATOR, checkboxSearch));
 
     add(buildOpenViewerPanel(openingViewerJComboBox, LAST_OPEN_VIEWER_MODE));
+    openingViewerJComboBox.addItemListener(
+        e -> {
+          if (e.getStateChange() == ItemEvent.SELECTED) {
+            LocalPersistence.getProperties()
+                .setProperty(LAST_OPEN_VIEWER_MODE, getOpeningViewer().name());
+          }
+        });
     add(GuiUtils.boxYLastElement(LAST_FILLER_HEIGHT));
   }
 

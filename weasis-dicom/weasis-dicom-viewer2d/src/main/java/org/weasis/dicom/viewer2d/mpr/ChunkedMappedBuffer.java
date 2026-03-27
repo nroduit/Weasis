@@ -157,33 +157,6 @@ public final class ChunkedMappedBuffer {
     chunks[chunkIndex(byteOffset)].putDouble(chunkOffset(byteOffset), value);
   }
 
-  /**
-   * Reads a contiguous range of bytes into the destination array.
-   *
-   * @param byteOffset starting byte offset in the mapped file
-   * @param dest destination byte array
-   * @param destPos starting index in dest
-   * @param length number of bytes to read
-   */
-  public void getBytes(long byteOffset, byte[] dest, int destPos, int length) {
-    int remaining = length;
-    long pos = byteOffset;
-    int dIdx = destPos;
-    while (remaining > 0) {
-      int ci = chunkIndex(pos);
-      int co = chunkOffset(pos);
-      int toCopy = (int) Math.min(remaining, CHUNK_BYTE_SIZE - co);
-      MappedByteBuffer chunk = chunks[ci];
-      // Use absolute bulk get via slice to avoid affecting buffer position
-      for (int i = 0; i < toCopy; i++) {
-        dest[dIdx + i] = chunk.get(co + i);
-      }
-      remaining -= toCopy;
-      pos += toCopy;
-      dIdx += toCopy;
-    }
-  }
-
   /** Releases all mapped buffers and deletes the backing file. */
   public void close() {
     for (int i = 0; i < chunks.length; i++) {

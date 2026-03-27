@@ -145,6 +145,7 @@ public class MprController implements MouseListener, MouseMotionListener, MouseW
 
   public void setVolume(Volume<?, ?> volume) {
     this.volume = volume;
+    axesControl.reset();
   }
 
   public Quaterniond getRotation(Plane plane) {
@@ -183,18 +184,11 @@ public class MprController implements MouseListener, MouseMotionListener, MouseW
   }
 
   public MprAxis getMprAxis(Plane plane) {
-    switch (plane) {
-      case AXIAL -> {
-        return axial;
-      }
-      case CORONAL -> {
-        return coronal;
-      }
-      case SAGITTAL -> {
-        return sagittal;
-      }
-    }
-    return null;
+    return switch (plane) {
+      case AXIAL -> axial;
+      case CORONAL -> coronal;
+      case SAGITTAL -> sagittal;
+    };
   }
 
   public void initRotation(Quaterniond rotation) {
@@ -206,27 +200,22 @@ public class MprController implements MouseListener, MouseMotionListener, MouseW
     axesControl.setGlobalRotation(r);
   }
 
-  public Vector3d getCenterCoordinate() {
-    return getCenterCoordinate(axial);
-  }
-
   public Vector3d getCenterCoordinate(MprAxis axis) {
     if (axis != null && volume != null) {
-      return axesControl.getCenterForCanvas(axis.getMprView(), false);
+      return axesControl.getCenterForCanvas(axis.getMprView());
     }
     return null;
   }
 
   public Vector3d getCrossHairPosition() {
-    return getCrossHairPosition(axial);
+    if (volume != null) {
+      return axesControl.getCenter();
+    }
+    return null;
   }
 
   public Vector3d getCrossHairPosition(MprAxis axis) {
-    Vector3d v = getCenterCoordinate(axis);
-    if (v != null) {
-      return v.mul(volume.getSliceSize());
-    }
-    return null;
+    return getCenterCoordinate(axis);
   }
 
   protected Pair<MprAxis, MprAxis> getCrossAxis(MprAxis axis) {
@@ -287,8 +276,7 @@ public class MprController implements MouseListener, MouseMotionListener, MouseW
           return;
         }
         Point2D pt = view.getPlaneCoordinatesFromMouse(e.getX(), e.getY());
-        int size = axesControl.getSliceSize();
-        if (center.distance(pt.getX(), pt.getY(), center.z) <= 20.0 / size) {
+        if (center.distance(pt.getX(), pt.getY(), center.z) <= 20.0) {
           e.consume();
           adjusting = true;
           updatePosition(view, pt, center);
@@ -320,7 +308,7 @@ public class MprController implements MouseListener, MouseMotionListener, MouseW
           Vector3d center = getCenterCoordinate(axis);
           view.setCursor(selectedCursor);
           boolean vertical = view.isVerticalLine(selAxis);
-          Vector3d crossHair = new Vector3d(center).mul(axesControl.getSliceSize());
+          Vector3d crossHair = new Vector3d(center);
           List<Point2D> pts = getLinePoints(axis, crossHair, vertical);
           if (pts != null && pts.size() == 2) {
             Line2D line = new Line2D.Double(pts.get(0), pts.get(1));
@@ -514,9 +502,8 @@ public class MprController implements MouseListener, MouseMotionListener, MouseW
     MprAxis axis = selectedAxis;
     Point2D pt1 = selectedPoint;
     if (axis != null && pt1 != null) {
-      int size = axesControl.getSliceSize();
-      Line2D line = new Line2D.Double(pt1, new Point2D.Double(center.x * size, center.y * size));
-      Point2D point = new Point2D.Double(pt.getX() * size, pt.getY() * size);
+      Line2D line = new Line2D.Double(pt1, new Point2D.Double(center.x, center.y));
+      Point2D point = new Point2D.Double(pt.getX(), pt.getY());
       Point2D extPoint = GeomUtil.getPerpendicularPointToLine(line, point);
       axis.setThicknessExtension((int) Math.round(pt.distance(extPoint)));
       axis.updateImage();
@@ -537,8 +524,7 @@ public class MprController implements MouseListener, MouseMotionListener, MouseW
     Pair<MprAxis, MprAxis> pair = getCrossAxis(axis);
     if (pair != null) {
       boolean vertical = selectedAxis == pair.second();
-      int size = axesControl.getSliceSize();
-      Point2D ptCenter = new Point2D.Double(center.x * size, center.y * size);
+      Point2D ptCenter = new Point2D.Double(center.x, center.y);
       Point2D selPt = selectedPoint;
       boolean firstPoint =
           selPt != null
@@ -571,11 +557,8 @@ public class MprController implements MouseListener, MouseMotionListener, MouseW
     Pair<MprAxis, MprAxis> pair = getCrossAxis(view.getMprAxis());
     MprAxis axis = selectedAxis;
     if (axis != null && pair != null) {
-      int size = axesControl.getSliceSize();
       Point2D pta = controlPoints.p1Rotate;
-      pta = new Point2D.Double(pta.getX() / size, pta.getY() / size);
       Point2D ptb = controlPoints.p2Rotate;
-      ptb = new Point2D.Double(ptb.getX() / size, ptb.getY() / size);
       Point2D extPoint = GeomUtil.getPerpendicularPointToLine(pta, ptb, pt);
       double distance = extPoint.distance(pt);
       double dotProduct =
@@ -606,12 +589,11 @@ public class MprController implements MouseListener, MouseMotionListener, MouseW
     }
     Pair<MprAxis, MprAxis> pair = getCrossAxis(view.getMprAxis());
     if (pair != null) {
-      setNewCenter(view, new Vector3d(pt.getX(), pt.getY(), crossHair.z));
+      setNewCenter(view, new Vector3d(pt.getX(), pt.getY(), 0));
       pair.first().updateImage();
       pair.second().updateImage();
       center(view);
     }
-    view.getMprAxis().updateImage();
     view.repaint();
   }
 
@@ -634,9 +616,8 @@ public class MprController implements MouseListener, MouseMotionListener, MouseW
       return;
     }
 
-    int size = axesControl.getSliceSize();
     Vector3d p = axesControl.getCenterForCanvas(view);
-    Point2D pt = new Point2D.Double(p.x * size, p.y * size);
+    Point2D pt = new Point2D.Double(p.x, p.y);
     if (mode == 2 || mode == 1 && view.isAutoCenter(pt)) {
       Rectangle2D dim = view.getViewModel().getModelArea();
       double mx = pt.getX() - dim.getWidth() * 0.5;
@@ -698,7 +679,8 @@ public class MprController implements MouseListener, MouseMotionListener, MouseW
   }
 
   public double getBestFitViewScale() {
-    if (volume == null) {
+    var pane = EventManager.getInstance().getSelectedViewPane();
+    if (volume == null || pane == null) {
       return 0.0;
     }
 
@@ -708,7 +690,7 @@ public class MprController implements MouseListener, MouseMotionListener, MouseW
     double sagittalScale = calculateViewScale(volSize.y, volSize.z, sagittal);
 
     double viewScale = Math.min(axialScale, Math.min(coronalScale, sagittalScale));
-    return EventManager.getInstance().getSelectedViewPane().adjustViewScale(viewScale);
+    return pane.adjustViewScale(viewScale);
   }
 
   private double calculateViewScale(double width, double height, MprAxis axis) {
