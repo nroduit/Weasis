@@ -102,7 +102,7 @@ public class SynchView implements GUIEntry {
   }
 
   public boolean isSynch() {
-    return synchData != null && synchData.isSynch();
+    return synchData != null && synchData.isSynchActivated();
   }
 
   @Override

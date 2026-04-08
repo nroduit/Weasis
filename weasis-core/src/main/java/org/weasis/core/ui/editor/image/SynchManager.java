@@ -12,14 +12,17 @@ package org.weasis.core.ui.editor.image;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import org.weasis.core.api.gui.util.ActionW;
+import org.weasis.core.api.gui.util.ComboItemListener;
+import org.weasis.core.api.gui.util.ToggleButtonListener;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.ui.editor.image.SynchData.Mode;
 import org.weasis.core.ui.editor.image.SynchViewButton.State;
 
-public class SynchManager<E extends ImageElement> {
+public abstract class SynchManager<E extends ImageElement> {
 
   protected final ImageViewerEventManager<E> eventManager;
 
@@ -79,14 +82,14 @@ public class SynchManager<E extends ImageElement> {
     }
 
     // Mark orphans
-    SynchData mainSynch = (SynchData) viewPane.getActionsInView().get(ActionW.SYNCH_LINK.cmd());
+    ViewSynchData mainSynch = (ViewSynchData) viewPane.getActionsInView().get(ActionW.SYNCH_LINK.cmd());
     if (mainSynch != null) {
       boolean isOrphan = mainFruid == null || frameOfReferenceCount.getOrDefault(mainFruid, 0) <= 1;
       mainSynch.setOrphan(isOrphan);
     }
 
     for (ViewCanvas<E> pane : panes) {
-      SynchData synch = (SynchData) pane.getActionsInView().get(ActionW.SYNCH_LINK.cmd());
+      ViewSynchData synch = (ViewSynchData) pane.getActionsInView().get(ActionW.SYNCH_LINK.cmd());
       String fruid = getFrameOfReferenceUID(pane.getSeries());
       boolean isOrphan = fruid == null || frameOfReferenceCount.getOrDefault(fruid, 0) <= 1;
 
@@ -110,6 +113,14 @@ public class SynchManager<E extends ImageElement> {
     return null;
   }
 
+  protected boolean hasSameFrUid(
+          MediaSeries<E> series1, MediaSeries<E> series2) {
+    if (series1 == null || series2 == null) {
+      return false;
+    }
+    return getFrameOfReferenceUID(series1).equals(getFrameOfReferenceUID(series2));
+  }
+
   protected void applySynchToAllPanes(List<ViewCanvas<E>> panes, SynchData synch) {
     for (ViewCanvas<E> pane : panes) {
       pane.setActionsInView(ActionW.SYNCH_LINK.cmd(), synch);
@@ -121,7 +132,7 @@ public class SynchManager<E extends ImageElement> {
     Boolean forceSyncOrphans = (Boolean) eventManager.getOptions().get("force.sync.orphans");
 
     for (ViewCanvas<E> pane : panes) {
-      SynchData paneSynch = (SynchData) pane.getActionsInView().get(ActionW.SYNCH_LINK.cmd());
+      ViewSynchData paneSynch = (ViewSynchData) pane.getActionsInView().get(ActionW.SYNCH_LINK.cmd());
 
       // Skip orphan views unless force sync is enabled
       if (paneSynch != null && paneSynch.isOrphan() && !Boolean.TRUE.equals(forceSyncOrphans)) {
@@ -133,7 +144,7 @@ public class SynchManager<E extends ImageElement> {
       if (synchByDefault) {
         // Views with same FrameOfReferenceUID default to ON
         SynchData copy = synch.copy();
-        copy.setState(State.ON);
+        copy.setAutoSyncState(State.ON);
         pane.setActionsInView(ActionW.SYNCH_LINK.cmd(), copy);
         eventManager.addPropertyChangeListener(ActionW.SYNCH.cmd(), pane);
       } else {
@@ -149,7 +160,39 @@ public class SynchManager<E extends ImageElement> {
     }
   }
 
+  protected void applyManualSync(ViewCanvas<E> viewPane, ViewSynchData synchData) {
+    final List<ViewCanvas<E>> panes = eventManager.getSelectedView2dContainer().getView2ds();
+    // UnsupportedOperationException !!
+    //panes.remove(viewPane);
+    //panes.remove(synchData.getManualSyncData().getTargetPane());
+
+    // recompute "canBeManuallySynced", update buttons on views
+    // Activate synchronize menu
+    ComboItemListener<SynchView> synchAction = eventManager.getAction(ActionW.SYNCH).orElse(null);
+    if (synchAction != null && synchAction.getSelectedItem() instanceof SynchView sel) {
+      //sel.getSynchData().setAutoSyncState(State.OFF);
+      sel.getSynchData().setManualSyncState(State.ON);
+      Optional<ToggleButtonListener> synchMode = eventManager.getAction(ActionW.SYNCH_MODE);
+      synchMode.ifPresent(
+              e -> {
+                e.setSelectedWithoutTriggerAction(true);
+                e.enableAction(true);
+              });
+    }
+  }
+
+  public void disableManualSync(ViewCanvas<E> viewPane, ViewSynchData synchData) {
+    // Deactivate synchronize menu if no more manual sync possible
+    ComboItemListener<SynchView> synchAction = eventManager.getAction(ActionW.SYNCH).orElse(null);
+    if (synchAction != null && synchAction.getSelectedItem() instanceof SynchView sel) {
+      sel.getSynchData().setManualSyncState(State.OFF);
+      // Disable global sync if no auto sync in current container -> call update all listeners ??
+    }
+  }
+
   protected boolean checkCompatibility(MediaSeries<E> series1, MediaSeries<E> series2) {
     return eventManager.isCompatible(series1, series2);
   }
+
+  public abstract boolean hasSameOrientation(MediaSeries<E> series1, MediaSeries<E> series2);
 }

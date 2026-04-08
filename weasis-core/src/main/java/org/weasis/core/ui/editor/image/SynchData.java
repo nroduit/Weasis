@@ -22,16 +22,12 @@ public class SynchData implements Copyable<SynchData> {
     STACK,
     TILE
   }
-
   protected final Map<String, Boolean> actions;
   protected final Mode mode;
-  protected State state;
-  protected double sourceLocation;
-  protected double targetLocation;
-  protected String targetFrameOfReferenceUID;
+  protected State autoSyncState;
 
-  private boolean original;
-  private boolean orphan;
+  private boolean original;// view that does not share frUID, not synced automatically
+  protected State manualSyncState;
 
   public SynchData(Mode mode, Map<String, Boolean> actions, boolean synch) {
     if (actions == null) {
@@ -40,8 +36,8 @@ public class SynchData implements Copyable<SynchData> {
     this.actions = actions;
     this.mode = mode;
     this.original = true;
-    this.state = synch ? State.ON : State.OFF;
-    this.orphan = false;
+    this.autoSyncState = synch ? State.ON : State.OFF;
+    this.manualSyncState = State.OFF;
   }
 
   public SynchData(SynchData synchData) {
@@ -50,11 +46,8 @@ public class SynchData implements Copyable<SynchData> {
     this.actions = new HashMap<>(synchData.actions);
     this.mode = synchData.mode;
     this.original = synchData.original;
-    this.state = synchData.state;
-    this.sourceLocation = synchData.sourceLocation;
-    this.targetLocation = synchData.targetLocation;
-    this.targetFrameOfReferenceUID = synchData.targetFrameOfReferenceUID;
-    this.orphan = synchData.orphan;
+    this.autoSyncState = synchData.autoSyncState;
+    this.manualSyncState = synchData.manualSyncState;
   }
 
   public Map<String, Boolean> getActions() {
@@ -69,36 +62,24 @@ public class SynchData implements Copyable<SynchData> {
     return mode;
   }
 
-  public State getState() {
-    return state;
+  public State getAutoSyncState() {
+    return autoSyncState;
   }
 
-  public void setState(State state) {
-    this.state = state;
+  public void setAutoSyncState(State state) {
+    this.autoSyncState = state;
   }
 
-  public boolean isOrphan() {
-    return orphan;
+  public State getManualSyncState() {
+    return manualSyncState;
   }
 
-  public void setOrphan(boolean orphan) {
-    this.orphan = orphan;
+  public void setManualSyncState(State state) {
+    this.manualSyncState = state;
   }
 
-  public String getTargetFrameOfReferenceUID() {
-    return targetFrameOfReferenceUID;
-  }
-
-  public void setTargetFrameOfReferenceUID(String targetFrameOfReferenceUID) {
-    this.targetFrameOfReferenceUID = targetFrameOfReferenceUID;
-  }
-
-  /**
-   * @deprecated Use {@link #getState()} instead
-   */
-  @Deprecated
-  public boolean isSynch() {
-    return state == State.ON;
+  public boolean isSynchActivated() {
+    return autoSyncState == State.ON || manualSyncState == State.ON;
   }
 
   @Override
@@ -112,31 +93,7 @@ public class SynchData implements Copyable<SynchData> {
     return original;
   }
 
-  /*public void setOriginal(boolean original) {
+  public void setOriginal(boolean original) {
     this.original = original;
-  }
-
-  public boolean isManual() {
-    return manual;
-  }
-
-  public void setManual(boolean manual) {
-    this.manual = manual;
-  }
-
-  public double getSourceLocation() {
-    return sourceLocation;
-  }*/
-
-  public void setSourceLocation(double sourceLocation) {
-    this.sourceLocation = sourceLocation;
-  }
-
-  public double getTargetLocation() {
-    return targetLocation;
-  }
-
-  public void setTargetLocation(double targetLocation) {
-    this.targetLocation = targetLocation;
   }
 }

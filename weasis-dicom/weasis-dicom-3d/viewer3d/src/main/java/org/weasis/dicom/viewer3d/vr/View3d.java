@@ -1011,7 +1011,7 @@ public class View3d extends VolumeCanvas
   private void propertyChange(final SynchEvent synch) {
     {
       SynchData synchData = (SynchData) actionsInView.get(ActionW.SYNCH_LINK.cmd());
-      if (synchData != null && !synchData.isSynch()) {
+      if (synchData != null && !synchData.isSynchActivated()) {
         return;
       }
       // Progressive mode for VR

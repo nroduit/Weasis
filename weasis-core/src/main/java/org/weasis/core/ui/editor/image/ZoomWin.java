@@ -463,7 +463,7 @@ public class ZoomWin<E extends ImageElement> extends GraphicsPane
     if (ActionW.SYNCH.cmd().equals(command) && value instanceof SynchEvent synchEvent) {
       if (!(value instanceof SynchCineEvent)) {
         SynchData synchData = (SynchData) view2d.getActionValue(ActionW.SYNCH_LINK.cmd());
-        if (synchData != null && !synchData.isSynch()) {
+        if (synchData != null && !synchData.isSynchActivated()) {
           return;
         }
 

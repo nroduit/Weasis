@@ -244,7 +244,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
       SynchEvent synch = (SynchEvent) evt.getNewValue();
       SynchData synchData = (SynchData) actionsInView.get(ActionW.SYNCH_LINK.cmd());
       boolean tile = synchData != null && SynchData.Mode.TILE.equals(synchData.getMode());
-      if (synchData != null && synchData.getState() == SynchViewButton.State.OFF) {
+      if (synchData != null && !synchData.isSynchActivated()) {
         return;
       }
       for (Entry<String, Object> entry : synch.getEvents().entrySet()) {
@@ -255,7 +255,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
         }
         // In MANUAL mode, only allow SCROLL_SERIES action
         if (synchData != null
-            && synchData.getState() == SynchViewButton.State.MANUAL
+            && synchData.getManualSyncState() == SynchViewButton.State.ON
             && !ActionW.SCROLL_SERIES.cmd().equals(command)) {
           continue;
         }

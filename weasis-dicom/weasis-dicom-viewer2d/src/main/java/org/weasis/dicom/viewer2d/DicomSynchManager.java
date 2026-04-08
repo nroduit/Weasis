@@ -32,6 +32,7 @@ import org.weasis.core.ui.editor.image.SynchManager;
 import org.weasis.core.ui.editor.image.SynchView;
 import org.weasis.core.ui.editor.image.SynchViewButton.State;
 import org.weasis.core.ui.editor.image.ViewCanvas;
+import org.weasis.core.ui.editor.image.ViewSynchData;
 import org.weasis.core.ui.editor.image.ViewerPlugin;
 import org.weasis.core.ui.model.layer.LayerType;
 import org.weasis.core.util.LangUtil;
@@ -68,6 +69,7 @@ public class DicomSynchManager extends SynchManager<DicomImageElement> {
 
     boolean needsRepaint = false;
 
+    // TODO problem with deactivated sync and original syncdata
     if (!synchView.isSynch() && !synch.isOriginal()) {
       handleManuallyDisabledSync(viewerPlugin, viewPane, series, synch);
     } else {
@@ -114,10 +116,12 @@ public class DicomSynchManager extends SynchManager<DicomImageElement> {
         // Force drawing crosslines without changing the slice position
         cineAction.ifPresent(a -> a.stateChanged(a.getSliderModel()));
       }
-      updatePaneSynchData(pane, synch);
+      pane.setActionsInView(ActionW.SYNCH_LINK.cmd(), null);
+      //updatePaneSynchData(pane, synch);
       System.out.println("Update " + pane.hashCode());
       pane.updateSynchState();
     }
+    viewPane.setActionsInView(ActionW.SYNCH_LINK.cmd(), null);
   }
 
   private boolean shouldEnableCrosslines(
@@ -142,7 +146,7 @@ public class DicomSynchManager extends SynchManager<DicomImageElement> {
       // pane.setActionsInView(ActionW.SYNCH_LINK.cmd(), synch);
       oldSynch = synch;
     }
-    // pane.setActionsInView(ActionW.SYNCH_LINK.cmd(), oldSynch);
+    //pane.setActionsInView(ActionW.SYNCH_LINK.cmd(), oldSynch);
   }
 
   private boolean handleActiveSync(
@@ -218,7 +222,7 @@ public class DicomSynchManager extends SynchManager<DicomImageElement> {
             ? 0
             : viewPane.getFrameIndex() - viewPane.getTileOffset();
     for (ViewCanvas<DicomImageElement> pane : panes) {
-      SynchData oldSynch = getOrCreateSynchData(pane, synch);
+      ViewSynchData oldSynch = getOrCreateSynchData(pane, synch);
       oldSynch.getActions().put(ActionW.KO_SELECTION.cmd(), true);
       oldSynch.getActions().put(ActionW.KO_FILTER.cmd(), true);
       KOManager.updateKOFilter(pane, selectedKO, enableFilter, frameIndex);
@@ -245,7 +249,7 @@ public class DicomSynchManager extends SynchManager<DicomImageElement> {
       SynchData synch) {
 
     DicomImageElement img = series.getMedia(MEDIA_POSITION.MIDDLE, null, null);
-    double[] val = img == null ? null : (double[]) img.getTagValue(TagW.SlicePosition);
+    Double val = img == null ? null : (Double) img.getTagValue(TagW.SlicePosition);
     List<ViewCanvas<DicomImageElement>> views = getViews(viewerPlugin, viewPane, true);
     views.add(viewPane);
     if (views.size() > 1) {
@@ -268,19 +272,30 @@ public class DicomSynchManager extends SynchManager<DicomImageElement> {
       List<ViewCanvas<DicomImageElement>> views,
       MediaSeries<DicomImageElement> series,
       SynchData synch,
-      double[] slicePosition) {
+      Double slicePosition) {
 
     Map<String, List<ViewCanvas<DicomImageElement>>> frUidsMap = collectFrameOfReferenceUIDs(views);
-    boolean synchActivated = isSynchActivated(frUidsMap);
+    boolean synchActivated = isAutoSynchActivated(frUidsMap);
+
+    // Set Sync button enabled since we have multiple views ?
+    Optional<ToggleButtonListener> synchMode = eventManager.getAction(ActionW.SYNCH_MODE);
+    synchMode.ifPresent(
+    e -> {
+      e.enableAction(true);
+    });
 
     System.out.println(frUidsMap);
-
-    if (synchActivated) {
-      activateAutoSync();
-    }
+// TODO Distinction if original or not ?
+    /*if (synchActivated) {
+      activateSync();
+    } else {
+      //deactivateAutoSync();
+    }*/
 
     for (ViewCanvas<DicomImageElement> pane : views) {
-      configurePaneForStack(pane, series, synch, synchActivated, slicePosition, frUidsMap);
+      // TODO Adapt list of manually syncable views if the synchronization is already on or not
+        List<ViewCanvas<DicomImageElement>> manuallySyncableViews = collectManuallySyncableViews(pane, views);
+      configurePaneForStack(pane, series, synch, synchActivated, slicePosition, frUidsMap, manuallySyncableViews);
     }
   }
 
@@ -301,20 +316,18 @@ public class DicomSynchManager extends SynchManager<DicomImageElement> {
         .collect(Collectors.toMap(Entry::getKey, Entry::getValue));
   }
 
-  private boolean isSynchActivated(
+    private List<ViewCanvas<DicomImageElement>> collectManuallySyncableViews(ViewCanvas<DicomImageElement> pane,
+            List<ViewCanvas<DicomImageElement>> views) {
+        return views.stream()
+                .filter(view -> view != null && view.getSeries() != null
+                        && ImageOrientation.hasSameOrientation(view.getSeries(), pane.getSeries()) && !hasSameFrUid(pane.getSeries(), view.getSeries()))
+                .toList();
+    }
+
+  private boolean isAutoSynchActivated(
       Map<String, List<ViewCanvas<DicomImageElement>>> frameOfReferenceGroups) {
     return frameOfReferenceGroups.entrySet().stream()
         .anyMatch(entry -> entry.getValue().size() > 1);
-  }
-
-  private void activateAutoSync() {
-    ComboItemListener<SynchView> synchAction = eventManager.getAction(ActionW.SYNCH).orElse(null);
-    if (synchAction != null && synchAction.getSelectedItem() instanceof SynchView sel) {
-      sel.getSynchData().setState(State.ON);
-      eventManager
-          .getAction(ActionW.SYNCH_MODE)
-          .ifPresent(e -> e.setSelectedWithoutTriggerAction(true));
-    }
   }
 
   private void configurePaneForStack(
@@ -322,11 +335,10 @@ public class DicomSynchManager extends SynchManager<DicomImageElement> {
       MediaSeries<DicomImageElement> series,
       SynchData synch,
       boolean synchActivated,
-      double[] slicePosition,
-      Map<String, List<ViewCanvas<DicomImageElement>>> frUidsMap) {
+      Double slicePosition,
+      Map<String, List<ViewCanvas<DicomImageElement>>> frUidsMap,
+      List<ViewCanvas<DicomImageElement>> manuallySyncableViews) {
     pane.getGraphicManager().deleteByLayerType(LayerType.CROSSLINES);
-
-    eventManager.getAction(ActionW.SYNCH_MODE).ifPresent(e -> e.enableAction(true));
 
     MediaSeries<DicomImageElement> paneSeries = pane.getSeries();
     String paneFrameUID = TagD.getTagValue(paneSeries, Tag.FrameOfReferenceUID, String.class);
@@ -335,13 +347,38 @@ public class DicomSynchManager extends SynchManager<DicomImageElement> {
         paneSeries, pane, synchActivated, slicePosition, paneFrameUID, frUidsMap)) {
       configurePaneSynchData(pane, series, paneSeries, synch, paneFrameUID);
     }
+
+    // If manual sync already activated, add listener to panes synced
+    ViewSynchData sd = (ViewSynchData) pane.getActionValue(ActionW.SYNCH_LINK.cmd());
+    if (synch.getManualSyncState() == State.ON && sd != null && sd.getManualSyncData() != null) {
+      eventManager.addPropertyChangeListener(ActionW.SYNCH.cmd(), pane);
+    }
+    if (!manuallySyncableViews.isEmpty()) {
+        // Configure for manual synchronization
+        // Add manual sync button + the list of manually syncable views to choose
+        ViewSynchData oldSynch = getOrCreateSynchData(pane, synch);
+        oldSynch.setCanBeManuallySynced(true);
+        // Scroll-only synchronization
+        configureScrollOnlyActions(oldSynch);
+        // TODO probably tries to sync but sync may not be active
+        //eventManager.addPropertyChangeListener(ActionW.SYNCH.cmd(), pane);
+        eventManager.getAction(ActionW.SYNCH_MODE).ifPresent(e -> {
+          e.setSelectedWithoutTriggerAction(true);
+          e.enableAction(true);
+        });
+        pane.setActionsInView(ActionW.SYNCH_LINK.cmd(), oldSynch);
+        pane.updateSynchState();
+    } else {
+      ViewSynchData oldSynch = getOrCreateSynchData(pane, synch);
+      oldSynch.setCanBeManuallySynced(false);
+    }
   }
 
   private boolean shouldConfigurePaneSync(
       MediaSeries<DicomImageElement> paneSeries,
       ViewCanvas<DicomImageElement> pane,
       boolean synchActivated,
-      double[] slicePosition,
+      Double slicePosition,
       String paneFrameUID,
       Map<String, List<ViewCanvas<DicomImageElement>>> frUidsMap) {
     if (paneSeries == null || pane instanceof MipView) {
@@ -365,21 +402,27 @@ public class DicomSynchManager extends SynchManager<DicomImageElement> {
     boolean sameFrameRef =
         paneFrameUID.equals(TagD.getTagValue(series, Tag.FrameOfReferenceUID, String.class));
 
-    SynchData paneSynch;
+    ViewSynchData paneSynch;
 
     if (sameOrientation && sameFrameRef) {
       paneSynch = configureSameOrientationSync(pane, series, paneSeries, synch);
     } else if (sameFrameRef) {
       paneSynch = configureDifferentOrientationSync(pane, synch);
     } else {
-      paneSynch = configureNoFrameRefSync(pane, synch);
+      paneSynch = getOrCreateSynchData(pane, synch);
     }
+    paneSynch.setAutoSyncState(State.ON);
+
+    eventManager.getAction(ActionW.SYNCH_MODE).ifPresent(e -> {
+      e.setSelectedWithoutTriggerAction(true);
+      e.enableAction(true);
+    });
 
     pane.setActionsInView(ActionW.SYNCH_LINK.cmd(), paneSynch);
     pane.updateSynchState();
   }
 
-  private SynchData configureSameOrientationSync(
+  private ViewSynchData configureSameOrientationSync(
       ViewCanvas<DicomImageElement> pane,
       MediaSeries<DicomImageElement> series,
       MediaSeries<DicomImageElement> paneSeries,
@@ -390,7 +433,7 @@ public class DicomSynchManager extends SynchManager<DicomImageElement> {
     boolean hasNoPRState = pane.getActionValue(ActionW.PR_STATE.cmd()) == null;
     boolean hasSameSize = hasSameSize(series, paneSeries);
 
-    SynchData oldSynch = getOrCreateSynchData(pane, synch);
+    ViewSynchData oldSynch = getOrCreateSynchData(pane, synch);
     if (hasNoPRState && hasSameSize) {
       // Full synchronization
       eventManager.addPropertyChangeListener(ActionW.SYNCH.cmd(), pane);
@@ -402,12 +445,12 @@ public class DicomSynchManager extends SynchManager<DicomImageElement> {
     return oldSynch;
   }
 
-  private SynchData configureDifferentOrientationSync(
+  private ViewSynchData configureDifferentOrientationSync(
       ViewCanvas<DicomImageElement> pane, SynchData synch) {
 
     pane.setActionsInView(ActionW.SYNCH_CROSSLINE.cmd(), true);
 
-    SynchData oldSynch = getOrCreateSynchData(pane, synch);
+    ViewSynchData oldSynch = getOrCreateSynchData(pane, synch);
     if (pane instanceof MprView) {
       // MPR views support full synchronization
       eventManager.addPropertyChangeListener(ActionW.SYNCH.cmd(), pane);
@@ -416,17 +459,6 @@ public class DicomSynchManager extends SynchManager<DicomImageElement> {
       configureScrollOnlyActions(oldSynch);
       eventManager.addPropertyChangeListener(ActionW.SYNCH.cmd(), pane);
     }
-    return oldSynch;
-  }
-
-  private SynchData configureNoFrameRefSync(ViewCanvas<DicomImageElement> pane, SynchData synch) {
-
-    SynchData oldSynch = getOrCreateSynchData(pane, synch);
-
-    if (oldSynch.isOriginal()) {
-      oldSynch.setState(State.MANUAL);
-    }
-
     return oldSynch;
   }
 
@@ -440,7 +472,8 @@ public class DicomSynchManager extends SynchManager<DicomImageElement> {
   private void handleSingleViewInStack() {
     ComboItemListener<SynchView> synchAction = eventManager.getAction(ActionW.SYNCH).orElse(null);
     if (synchAction != null && synchAction.getSelectedItem() instanceof SynchView sel) {
-      sel.getSynchData().setState(State.OFF);
+      sel.getSynchData().setAutoSyncState(State.OFF);
+      sel.getSynchData().setManualSyncState(State.OFF);
       Optional<ToggleButtonListener> synchMode = eventManager.getAction(ActionW.SYNCH_MODE);
       synchMode.ifPresent(
           e -> {
@@ -450,10 +483,10 @@ public class DicomSynchManager extends SynchManager<DicomImageElement> {
     }
   }
 
-  private SynchData getOrCreateSynchData(ViewCanvas<DicomImageElement> pane, SynchData synch) {
-    SynchData oldSynch = (SynchData) pane.getActionValue(ActionW.SYNCH_LINK.cmd());
+  private ViewSynchData getOrCreateSynchData(ViewCanvas<DicomImageElement> pane, SynchData synch) {
+    ViewSynchData oldSynch = (ViewSynchData) pane.getActionValue(ActionW.SYNCH_LINK.cmd());
     if (oldSynch == null || oldSynch.isOriginal() || !oldSynch.getMode().equals(synch.getMode())) {
-      return synch.copy();
+      return new ViewSynchData(synch.getMode(), synch.getActions(), synch.isSynchActivated());
     }
     return oldSynch;
   }
@@ -509,5 +542,16 @@ public class DicomSynchManager extends SynchManager<DicomImageElement> {
     DicomImageElement image2 = series2.getMedia(MEDIA_POSITION.MIDDLE, null, null);
 
     return image1 != null && image2 != null && image1.hasSameSize(image2);
+  }
+
+  @Override
+  public boolean hasSameOrientation(MediaSeries<DicomImageElement> series1, MediaSeries<DicomImageElement> series2) {
+    if (series1 == null || series2 == null) {
+      return false;
+    }
+    DicomImageElement image1 = series1.getMedia(MEDIA_POSITION.MIDDLE, null, null);
+    DicomImageElement image2 = series2.getMedia(MEDIA_POSITION.MIDDLE, null, null);
+
+    return image1 != null && image2 != null && ImageOrientation.hasSameOrientation(image1, image2);
   }
 }

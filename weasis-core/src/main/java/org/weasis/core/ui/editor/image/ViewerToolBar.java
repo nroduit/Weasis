@@ -387,7 +387,7 @@ public class ViewerToolBar<E extends ImageElement> extends WtoolBar implements A
                 (getMenuModel() == null) ? new JPopupMenu() : getMenuModel().createJPopupMenu();
             menu.addSeparator();
             menu.add(jButtonSynch);
-            JMenu synchOptionsMenu = synchOptions.createMenu("options");
+            /*JMenu synchOptionsMenu = synchOptions.createMenu("options");
             for (Component item : synchOptionsMenu.getMenuComponents()) {
               if (item instanceof JCheckBoxMenuItem checkBoxMenuItem) {
                 menu.add(checkBoxMenuItem);
@@ -405,7 +405,7 @@ public class ViewerToolBar<E extends ImageElement> extends WtoolBar implements A
                       }
                     });
               }
-            }
+            }*/
             menu.setInvoker(this);
             return menu;
           }

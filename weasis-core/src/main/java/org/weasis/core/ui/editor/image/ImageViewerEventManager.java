@@ -91,7 +91,7 @@ public abstract class ImageViewerEventManager<E extends ImageElement> implements
    * override this to provide specialized synchronization behavior.
    */
   protected SynchManager<E> createSynchManager() {
-    return new SynchManager<>(this);
+    return new DefaultSynchManager<>(this);
   }
 
   protected SliderCineListener getMoveTroughSliceAction(
@@ -130,7 +130,7 @@ public abstract class ImageViewerEventManager<E extends ImageElement> implements
 
         SynchData synchData =
             (SynchData) getSelectedViewPane().getActionsInView().get(ActionW.SYNCH_LINK.cmd());
-        if (synchData != null && synchData.isSynch()) {
+        if (synchData != null && synchData.isSynchActivated()) {
           firePropertyChange(ActionW.SYNCH.cmd(), null, mediaEvent);
         }
         if (image != null) {
@@ -255,7 +255,7 @@ public abstract class ImageViewerEventManager<E extends ImageElement> implements
       public void pointChanged(Point2D point) {
         SynchData synchData =
             (SynchData) getSelectedViewPane().getActionsInView().get(ActionW.SYNCH_LINK.cmd());
-        if (synchData != null && synchData.isSynch()) {
+        if (synchData != null && synchData.isSynchActivated()) {
           firePropertyChange(
               ActionW.SYNCH.cmd(),
               null,
@@ -405,8 +405,13 @@ public abstract class ImageViewerEventManager<E extends ImageElement> implements
             .ifPresent(
                 a -> {
                   if (a.getSelectedItem() instanceof SynchView sel) {
-                    sel.getSynchData().setState(selected ? State.ON : State.OFF);
+                    // If selected is false, deactivate manual sync, if selected is true, manual sync is deactivated as well since it must be set from the view
+                    sel.getSynchData().setManualSyncState(State.OFF);
+                    sel.getSynchData().setAutoSyncState(State.OFF);
+                    sel.getSynchData().setOriginal(selected);
                     updateAllListeners(getSelectedView2dContainer(), sel);
+                    // TODO block sync activation if nothing can be synches together ??
+                    // global can manually be synched + global can be auto sync
                   }
                 });
       }
