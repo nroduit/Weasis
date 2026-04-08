@@ -117,8 +117,6 @@ public class DicomSynchManager extends SynchManager<DicomImageElement> {
         cineAction.ifPresent(a -> a.stateChanged(a.getSliderModel()));
       }
       pane.setActionsInView(ActionW.SYNCH_LINK.cmd(), null);
-      //updatePaneSynchData(pane, synch);
-      System.out.println("Update " + pane.hashCode());
       pane.updateSynchState();
     }
     viewPane.setActionsInView(ActionW.SYNCH_LINK.cmd(), null);
@@ -236,7 +234,7 @@ public class DicomSynchManager extends SynchManager<DicomImageElement> {
 
   private boolean ensureViewPaneSynchLink(ViewCanvas<DicomImageElement> viewPane, SynchData synch) {
     if (viewPane.getAction(ActionW.SYNCH_LINK) == null) {
-      viewPane.setActionsInView(ActionW.SYNCH_LINK.cmd(), synch.copy());
+      viewPane.setActionsInView(ActionW.SYNCH_LINK.cmd(), new ViewSynchData(synch.getMode(), synch.getActions(), synch.isSynchActivated()));
       return true;
     }
     return false;
