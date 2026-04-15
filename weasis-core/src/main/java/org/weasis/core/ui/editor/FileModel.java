@@ -78,12 +78,14 @@ public class FileModel extends AbstractFileModel {
             fargs.stream()
                 .map(Path::of)
                 .filter(Files::isRegularFile)
-                .forEach(f -> ViewerPluginBuilder.openSequenceInDefaultPlugin(f, true, true));
+                .forEach(
+                    f -> ViewerPluginBuilder.openInDefaultViewer(f, ViewerOpenOptions.defaults()));
           }
           if (opt.isSet("url")) { // NON-NLS
             uargs.stream()
                 .map(this::getFile)
-                .forEach(f -> ViewerPluginBuilder.openSequenceInDefaultPlugin(f, true, true));
+                .forEach(
+                    f -> ViewerPluginBuilder.openInDefaultViewer(f, ViewerOpenOptions.defaults()));
           }
         });
   }

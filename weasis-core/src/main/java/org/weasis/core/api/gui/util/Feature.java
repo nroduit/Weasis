@@ -95,8 +95,8 @@ public abstract class Feature<T> implements KeyActionValue {
   private final String title;
   private final String command;
   private final FlatSVGIcon icon;
-  private final int keyCode;
-  private final int modifier;
+  private int keyCode;
+  private int modifier;
   private final Cursor cursor;
 
   protected Feature(String title, String command, int keyEvent, int modifier, Cursor cursor) {
@@ -149,6 +149,26 @@ public abstract class Feature<T> implements KeyActionValue {
   @Override
   public int getModifier() {
     return modifier;
+  }
+
+  /**
+   * Sets the key code for this feature's shortcut. Used by {@link ShortcutManager} to apply user
+   * customizations.
+   *
+   * @param keyCode the new key code (from {@link java.awt.event.KeyEvent})
+   */
+  public void setKeyCode(int keyCode) {
+    this.keyCode = keyCode;
+  }
+
+  /**
+   * Sets the modifier mask for this feature's shortcut. Used by {@link ShortcutManager} to apply
+   * user customizations.
+   *
+   * @param modifier the new modifier mask
+   */
+  public void setModifier(int modifier) {
+    this.modifier = modifier;
   }
 
   public boolean isDrawingAction() {

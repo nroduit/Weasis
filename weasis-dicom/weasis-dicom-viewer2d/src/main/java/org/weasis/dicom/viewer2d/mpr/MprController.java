@@ -27,6 +27,7 @@ import java.util.stream.Stream;
 import javax.swing.Timer;
 import org.joml.Quaterniond;
 import org.joml.Vector3d;
+import org.joml.Vector3i;
 import org.weasis.core.api.gui.model.ViewModel;
 import org.weasis.core.api.gui.util.ComboItemListener;
 import org.weasis.core.api.gui.util.Feature;
@@ -43,7 +44,8 @@ import org.weasis.dicom.viewer2d.mip.MipView;
 import org.weasis.dicom.viewer2d.mip.MipView.Type;
 import org.weasis.dicom.viewer2d.mpr.MprView.Plane;
 
-public class MprController implements MouseListener, MouseMotionListener, MouseWheelListener {
+public class MprController
+    implements MouseListener, MouseMotionListener, MouseWheelListener, VolumeProvider {
   public static final Cursor HAND_CURSOR =
       Feature.getSvgCursor("mpr-hand.svg", "mpr-hand", 0.5f, 0.5f); // NON-NLS
   public static final Cursor EXTEND_CURSOR =
@@ -146,6 +148,14 @@ public class MprController implements MouseListener, MouseMotionListener, MouseW
   public void setVolume(Volume<?, ?> volume) {
     this.volume = volume;
     axesControl.reset();
+  }
+
+  @Override
+  public Volume<?, ?> getVolumeForStack(OriginalStack originalStack) {
+    if (volume != null && volume.getStack().equals(originalStack)) {
+      return volume;
+    }
+    return null;
   }
 
   public Quaterniond getRotation(Plane plane) {
@@ -547,6 +557,8 @@ public class MprController implements MouseListener, MouseMotionListener, MouseW
       center(view);
     }
     view.repaint();
+
+    fireCrossHairChanged();
   }
 
   public void updateSelectedPosition(MprView view, Point2D pt, Vector3d crossHair) {
@@ -595,6 +607,7 @@ public class MprController implements MouseListener, MouseMotionListener, MouseW
       center(view);
     }
     view.repaint();
+    fireCrossHairChanged();
   }
 
   private void center(MprView view) {
@@ -653,6 +666,28 @@ public class MprController implements MouseListener, MouseMotionListener, MouseW
     this.arcBall = arcBall;
   }
 
+  public void fireCrossHairChanged() {
+    if (volume == null) {
+      return;
+    }
+    Vector3d center = axesControl.getCenter();
+    double sliceSize = volume.getSliceSize();
+    Vector3i volSize = volume.getSize();
+    Vector3d voxelRatio = volume.getVoxelRatio();
+    center.div(sliceSize);
+    center.sub(0.5, 0.5, 0.5);
+    center.div(voxelRatio);
+    Vector3d pos =
+        new Vector3d(
+            center.x * sliceSize / volSize.x,
+            center.y * sliceSize / volSize.y,
+            -center.z * sliceSize / volSize.z);
+    pos.add(0.5, 0.5, 0.5);
+    Quaterniond globalRot = axesControl.getGlobalRotation();
+    Quaterniond rot = new Quaterniond(-globalRot.x, -globalRot.y, globalRot.z, globalRot.w);
+    volume.fireCrossHairChanged(pos, rot);
+  }
+
   public void dispose() {
     axial.dispose();
     coronal.dispose();
@@ -676,6 +711,7 @@ public class MprController implements MouseListener, MouseMotionListener, MouseW
     axial.reset();
     coronal.reset();
     sagittal.reset();
+    fireCrossHairChanged();
   }
 
   public double getBestFitViewScale() {

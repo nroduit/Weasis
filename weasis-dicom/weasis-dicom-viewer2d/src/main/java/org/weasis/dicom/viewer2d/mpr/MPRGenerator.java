@@ -57,7 +57,7 @@ public class MPRGenerator {
           int usrChoice =
               JOptionPane.showConfirmDialog(
                   WinUtil.getValidComponent(context.getMainView()),
-                  message + Messages.getString("SeriesBuilder.add_warn"),
+                  message + Messages.getString("warn.rectify.limitation"),
                   MprFactory.NAME,
                   JOptionPane.YES_NO_OPTION,
                   JOptionPane.QUESTION_MESSAGE);
@@ -75,7 +75,7 @@ public class MPRGenerator {
           int usrChoice =
               JOptionPane.showConfirmDialog(
                   WinUtil.getValidComponent(parent),
-                  message + Messages.getString("SeriesBuilder.add_warn"),
+                  message + Messages.getString("warn.rectify.limitation"),
                   MprFactory.NAME,
                   JOptionPane.YES_NO_OPTION,
                   JOptionPane.QUESTION_MESSAGE);

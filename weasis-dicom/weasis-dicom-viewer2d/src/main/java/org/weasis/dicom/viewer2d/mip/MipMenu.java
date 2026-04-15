@@ -66,7 +66,7 @@ public final class MipMenu {
     if (!(container instanceof View2dContainer)) {
       return;
     }
-    ViewCanvas<DicomImageElement> selView = container.getSelectedImagePane();
+    ViewCanvas<DicomImageElement> selView = container.getSelectedViewCanvas();
     if (selView == null) {
       return;
     }
@@ -99,7 +99,7 @@ public final class MipMenu {
     MipView.Type currentType = getCurrentType(mipRef.get());
     boolean isActive = currentType != MipView.Type.NONE;
 
-    JMenu thicknessMenu = buildThicknessMenu(mipRef, isActive);
+    JMenu thicknessMenu = buildThicknessMenu(mipRef, isActive, selView);
 
     JMenuItem rebuildItem = new JMenuItem(Messages.getString("build.series"));
     rebuildItem.setEnabled(isActive);
@@ -177,7 +177,8 @@ public final class MipMenu {
     }
   }
 
-  private static JMenu buildThicknessMenu(AtomicReference<MipView> mipRef, boolean enabled) {
+  private static JMenu buildThicknessMenu(
+      AtomicReference<MipView> mipRef, boolean enabled, ViewCanvas<DicomImageElement> selView) {
     JMenu menu = new JMenu(Messages.getString("mip.thickness"));
     menu.setEnabled(enabled);
 
@@ -186,7 +187,7 @@ public final class MipMenu {
         view == null ? null : (Integer) view.getActionValue(MipView.MIP_THICKNESS.cmd());
     int currentThickness = thickness == null ? 2 : thickness;
 
-    MediaSeries<DicomImageElement> series = view != null ? view.getSeries() : null;
+    MediaSeries<DicomImageElement> series = view != null ? view.getSeries() : selView.getSeries();
     String unit = getUnitAbbreviation(series);
 
     ButtonGroup group = new ButtonGroup();

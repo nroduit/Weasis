@@ -353,12 +353,12 @@ public class Preset extends TextureData {
 
   @Override
   public void render(GL2ES2 gl) {
-    render(gl, false, false);
+    render(gl, false);
   }
 
-  void render(GL2ES2 gl, boolean inverse, boolean originalLut) {
+  void render(GL2ES2 gl, boolean inverse) {
     if (gl != null) {
-      Preset p = originalLut ? originalPreset : this;
+      Preset p = this;
       if (requiredBuilding) {
         this.requiredBuilding = false;
         if (p.getId() <= 0 || (inverse && (p.invertColors == null || p.id2 <= 0))) {

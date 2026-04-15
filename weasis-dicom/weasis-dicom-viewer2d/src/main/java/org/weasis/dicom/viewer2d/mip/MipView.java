@@ -39,6 +39,8 @@ import org.weasis.core.api.service.AuditLog;
 import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.api.util.ResourceUtil.OtherIcon;
 import org.weasis.core.ui.editor.SeriesViewerFactory;
+import org.weasis.core.ui.editor.ViewerOpenOptions;
+import org.weasis.core.ui.editor.ViewerPlacement;
 import org.weasis.core.ui.editor.ViewerPluginBuilder;
 import org.weasis.core.ui.editor.image.ImageViewerEventManager;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
@@ -106,7 +108,7 @@ public class MipView extends View2d {
 
   private Thread process;
 
-  private volatile DicomImageElement centerImage;
+  private volatile DicomImageElement centerImage; // NOSONAR volatile only guarantees visibility
   private volatile int currentIndex = 0;
   private volatile Type lastBuiltType;
   private volatile Integer lastBuiltExtend;
@@ -311,7 +313,12 @@ public class MipView extends View2d {
       }
 
       SeriesViewerFactory factory = GuiUtils.getUICore().getViewerFactory(View2dFactory.NAME);
-      ViewerPluginBuilder.openSequenceInPlugin(factory, s, model, false, false);
+      new ViewerPluginBuilder(
+              factory,
+              List.of(s),
+              model,
+              ViewerOpenOptions.builder().placement(ViewerPlacement.newTab()).build())
+          .open();
     }
   }
 

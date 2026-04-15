@@ -82,9 +82,8 @@ public class ImportToolBar extends WtoolBar {
     } else {
       List<LoadSeries> loadSeries = DicomDirImport.loadDicomDir(file, model, true);
       if (loadSeries != null && !loadSeries.isEmpty()) {
-        OpeningViewer openingViewer =
-            OpeningViewer.getOpeningViewerByLocalKey(DicomDirImport.LAST_DICOMDIR_OPEN_MODE);
-        DicomModel.LOADING_EXECUTOR.execute(new LoadDicomDir(loadSeries, model, openingViewer));
+        DicomModel.LOADING_EXECUTOR.execute(
+            new LoadDicomDir(loadSeries, model, OpeningViewer.ALL_PATIENTS));
       } else {
         LOGGER.error("Cannot import DICOM from {}", file);
 

@@ -9,6 +9,7 @@
  */
 package org.weasis.dicom.viewer2d.mpr;
 
+import com.formdev.flatlaf.util.SystemFileChooser;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
@@ -29,7 +30,6 @@ import java.io.File;
 import java.util.List;
 import java.util.Objects;
 import javax.swing.JCheckBoxMenuItem;
-import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
@@ -793,15 +793,15 @@ public class MprView extends View2d implements SliceCanvas, ViewProgress {
   }
 
   private void rebuildView(boolean all) {
-    JFileChooser fc = new JFileChooser();
-    fc.setDialogType(JFileChooser.OPEN_DIALOG);
-    fc.setControlButtonsAreShown(true);
-    fc.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+    SystemFileChooser fc = new SystemFileChooser();
+    fc.setDialogType(SystemFileChooser.OPEN_DIALOG);
+    fc.setMultiSelectionEnabled(false);
+    fc.setFileSelectionMode(SystemFileChooser.DIRECTORIES_ONLY);
 
     int returnVal = fc.showOpenDialog(this);
     File folder = null;
 
-    if (returnVal == JFileChooser.APPROVE_OPTION) {
+    if (returnVal == SystemFileChooser.APPROVE_OPTION) {
       try {
         folder = fc.getSelectedFile();
       } catch (SecurityException e) {

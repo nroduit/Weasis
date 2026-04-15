@@ -9,11 +9,11 @@
  */
 package org.weasis.acquire.explorer.gui.model.actions;
 
+import com.formdev.flatlaf.util.SystemFileChooser;
 import java.awt.Component;
 import java.awt.event.ActionEvent;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
-import javax.swing.JFileChooser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.acquire.explorer.AcquireExplorer;
@@ -54,15 +54,15 @@ public class ChangePathSelectionAction extends AbstractAction {
 
   public static String openDirectoryChooser(String path, Component parent) {
 
-    JFileChooser fc = new JFileChooser(path);
-    fc.setDialogType(JFileChooser.OPEN_DIALOG);
-    fc.setControlButtonsAreShown(true);
-    fc.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+    SystemFileChooser fc = new SystemFileChooser(path);
+    fc.setDialogType(SystemFileChooser.OPEN_DIALOG);
+    fc.setFileSelectionMode(SystemFileChooser.DIRECTORIES_ONLY);
+    fc.setMultiSelectionEnabled(false);
 
     int returnVal = fc.showOpenDialog(parent);
     String returnStr = null;
 
-    if (returnVal == JFileChooser.APPROVE_OPTION) {
+    if (returnVal == SystemFileChooser.APPROVE_OPTION) {
       try {
         returnStr = fc.getSelectedFile().toString();
       } catch (SecurityException e) {

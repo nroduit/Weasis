@@ -61,6 +61,8 @@ import org.weasis.core.ui.editor.SeriesViewerEvent.EVENT;
 import org.weasis.core.ui.editor.SeriesViewerFactory;
 import org.weasis.core.ui.editor.SeriesViewerListener;
 import org.weasis.core.ui.editor.SeriesViewerUI;
+import org.weasis.core.ui.editor.ViewerOpenOptions;
+import org.weasis.core.ui.editor.ViewerPlacement;
 import org.weasis.core.ui.editor.ViewerPluginBuilder;
 import org.weasis.core.ui.editor.image.DefaultView2d;
 import org.weasis.core.ui.editor.image.ImageViewerEventManager;
@@ -436,12 +438,14 @@ public class View2dContainer extends DicomViewerPlugin implements PropertyChange
               GuiUtils.applySelectedIconEffect(menuFactory);
               menuFactory.addActionListener(
                   e ->
-                      ViewerPluginBuilder.openSequenceInPlugin(
-                          viewerFactory,
-                          series,
-                          (DataExplorerModel) series.getTagValue(TagW.ExplorerModel),
-                          false,
-                          false));
+                      new ViewerPluginBuilder(
+                              viewerFactory,
+                              List.of(series),
+                              (DataExplorerModel) series.getTagValue(TagW.ExplorerModel),
+                              ViewerOpenOptions.builder()
+                                  .placement(ViewerPlacement.newTab())
+                                  .build())
+                          .open());
               menu.add(menuFactory);
             }
           }
@@ -570,7 +574,7 @@ public class View2dContainer extends DicomViewerPlugin implements PropertyChange
           if (source instanceof KOSpecialElement) {
             setKOSpecialElement((KOSpecialElement) source, null, false, param.equals("updateAll"));
           } else if (source instanceof DicomSeries dcm) {
-            ViewCanvas<DicomImageElement> view = getSelectedImagePane();
+            ViewCanvas<DicomImageElement> view = getSelectedViewCanvas();
             if (view != null && view.getSeries() == dcm) {
               eventManager.updateComponentsListener(view);
             }
@@ -621,7 +625,7 @@ public class View2dContainer extends DicomViewerPlugin implements PropertyChange
             }
           }
         } else if (specialElement instanceof SpecialElementRegion region) {
-          ViewCanvas<DicomImageElement> pane = getSelectedImagePane();
+          ViewCanvas<DicomImageElement> pane = getSelectedViewCanvas();
           for (ViewCanvas<DicomImageElement> view : cellManager) {
             if (view instanceof View2d view2d) {
               if (region.containsSopInstanceUIDReference(view.getImage())) {
@@ -691,7 +695,7 @@ public class View2dContainer extends DicomViewerPlugin implements PropertyChange
       Boolean enableFilter,
       boolean forceUpdate,
       boolean updateAll) {
-    ViewCanvas<DicomImageElement> selectedView = getSelectedImagePane();
+    ViewCanvas<DicomImageElement> selectedView = getSelectedViewCanvas();
 
     if (updatedKOSelection != null && selectedView instanceof View2d view2d) {
       if (SynchData.Mode.TILE.equals(this.getSynchView().getSynchData().getMode())) {

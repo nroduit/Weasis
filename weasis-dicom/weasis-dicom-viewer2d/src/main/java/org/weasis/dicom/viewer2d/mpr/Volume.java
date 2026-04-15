@@ -163,6 +163,15 @@ public abstract sealed class Volume<T extends Number, A>
   }
 
   public void addCrossHairChangeListener(PropertyChangeListener listener) {
+    if (listener == null) {
+      return;
+    }
+
+    for (PropertyChangeListener l : crossHairChangeSupport.getPropertyChangeListeners()) {
+      if (l == listener) {
+        return;
+      }
+    }
     crossHairChangeSupport.addPropertyChangeListener(listener);
   }
 
@@ -1037,7 +1046,7 @@ public abstract sealed class Volume<T extends Number, A>
     Volume<?, ?> volume = getSharedVolume(stack);
     if (volume != null && volume.isBasic == isBasic) {
       if (progressBar != null) {
-        progressBar.setValue(volume.size.z);
+        progressBar.setValue(volume.size.z + 1);
       }
 
       return volume;
@@ -1069,13 +1078,10 @@ public abstract sealed class Volume<T extends Number, A>
     synchronized (viewerPlugins) {
       for (int i = viewerPlugins.size() - 1; i >= 0; i--) {
         ViewerPlugin<?> p = viewerPlugins.get(i);
-        if (p instanceof MprContainer mprContainer) {
-          MprController controller = mprContainer.getMprController();
-          if (controller != null) {
-            Volume<?, ?> volume = controller.getVolume();
-            if (volume != null && volume.stack.equals(currentStack)) {
-              return volume;
-            }
+        if (p instanceof VolumeProvider provider) {
+          Volume<?, ?> volume = provider.getVolumeForStack(currentStack);
+          if (volume != null) {
+            return volume;
           }
         }
       }

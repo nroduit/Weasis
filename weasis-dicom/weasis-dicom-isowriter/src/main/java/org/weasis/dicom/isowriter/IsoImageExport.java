@@ -9,6 +9,8 @@
  */
 package org.weasis.dicom.isowriter;
 
+import com.formdev.flatlaf.util.SystemFileChooser;
+import com.formdev.flatlaf.util.SystemFileChooser.FileNameExtensionFilter;
 import com.formdev.flatlaf.util.SystemInfo;
 import com.github.stephenc.javaisotools.iso9660.ConfigException;
 import com.github.stephenc.javaisotools.iso9660.ISO9660RootDirectory;
@@ -35,13 +37,11 @@ import java.util.Properties;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JCheckBox;
 import javax.swing.JComponent;
-import javax.swing.JFileChooser;
 import javax.swing.JProgressBar;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.ObservableEvent;
 import org.weasis.core.api.gui.util.AppProperties;
-import org.weasis.core.api.gui.util.FileFormatFilter;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.util.FileUtil;
@@ -213,10 +213,10 @@ public class IsoImageExport extends LocalExport {
     }
     outputFile = new File(lastFolder, "cdrom-DICOM.iso");
 
-    JFileChooser fileChooser = new JFileChooser(outputFile);
-    fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+    SystemFileChooser fileChooser = new SystemFileChooser(outputFile);
+    fileChooser.setFileSelectionMode(SystemFileChooser.FILES_ONLY);
     fileChooser.setMultiSelectionEnabled(false);
-    FileFormatFilter filter = new FileFormatFilter("iso", "ISO"); // NON-NLS
+    FileNameExtensionFilter filter = new FileNameExtensionFilter("ISO image", "iso"); // NON-NLS
     fileChooser.addChoosableFileFilter(filter);
     fileChooser.setFileFilter(filter);
 

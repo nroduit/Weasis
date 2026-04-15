@@ -78,6 +78,48 @@ float getAabb(float val, int dir) {
     return dir == 0 ? -val : val;
 }
 
+// *************************************************************************************************
+// Crosshair cut — mirrors the legacy volumetricCenterSlicing logic.
+//
+// The cut plane(s) pass through crosshairPos (normalised [0,1]³ texture space) and are oriented by
+// crosshairRot (MPR global rotation matrix, volume space → volume space).
+//
+//   localVec = crosshairRot * (texCoord - crosshairPos)
+//   Axes: X = Left/Right,  Y = Up/Down,  Z = Front/Back (view depth)
+// *************************************************************************************************
+bool isCrosshairCut(vec3 texCoord) {
+    if (crosshairCutMode == 0 || !crosshairVisible) return false;
+
+    // Vector from the cut centre to the current sample in the crosshair local frame.
+    vec3 v = crosshairRot * (texCoord - crosshairPos);
+
+    // Half-space modes
+    if      (crosshairCutMode == 1) return v.x < 0.0;               // RIGHT
+    else if (crosshairCutMode == 2) return v.x > 0.0;               // LEFT
+    else if (crosshairCutMode == 3) return v.y < 0.0;               // FRONT
+    else if (crosshairCutMode == 4) return v.y > 0.0;               // BACK
+    else if (crosshairCutMode == 5) return v.z > 0.0;               // UP
+    else if (crosshairCutMode == 6) return v.z < 0.0;               // DOWN
+
+    // Quadrant modes — two simultaneous 1/4-space tests along X and Z
+    else if (crosshairCutMode == 7) return v.x < 0.0 && v.z > 0.0; // RIGHT_UP
+    else if (crosshairCutMode == 8)  return v.x > 0.0 && v.z > 0.0; // LEFT_UP
+    else if (crosshairCutMode == 9)  return v.x < 0.0 && v.z < 0.0; // RIGHT_DOWN
+    else if (crosshairCutMode == 10)  return v.x > 0.0 && v.z < 0.0; // LEFT_DOWN
+
+    // Octant modes — three simultaneous 1/8-space tests along X, Y, and Z
+    else if (crosshairCutMode == 11) return v.x < 0.0 && v.z > 0.0 && v.y < 0.0; // UP_RIGHT_FRONT
+    else if (crosshairCutMode == 12) return v.x > 0.0 && v.z > 0.0 && v.y < 0.0; // UP_LEFT_FRONT
+    else if (crosshairCutMode == 13) return v.x < 0.0 && v.z < 0.0 && v.y < 0.0; // DOWN_RIGHT_FRONT
+    else if (crosshairCutMode == 14) return v.x > 0.0 && v.z < 0.0 && v.y < 0.0; // DOWN_LEFT_FRONT
+    else if (crosshairCutMode == 15) return v.x < 0.0 && v.z > 0.0 && v.y > 0.0; // UP_RIGHT_BACK
+    else if (crosshairCutMode == 16) return v.x > 0.0 && v.z > 0.0 && v.y > 0.0; // UP_LEFT_BACK
+    else if (crosshairCutMode == 17) return v.x < 0.0 && v.z < 0.0 && v.y > 0.0; // DOWN_RIGHT_BACK
+    else if (crosshairCutMode == 18) return v.x > 0.0 && v.z < 0.0 && v.y > 0.0; // DOWN_LEFT_BACK
+
+    return false;
+}
+
 void intersect(in Ray ray, out float tmin, out float tmax) {
     float tymin, tymax, tzmin, tzmax;
     tmin = (getAabb(texelSize.x, ray.sign[0]) - ray.origin.x) * ray.invDirection.x;
@@ -114,6 +156,7 @@ vec4 rayCastingMip(Ray ray, float tmin, float tmax, vec2 uv) {
     for (int count = 0; count < sampleCount; count++) {
         rayPos += stepPos;
         texCoord = rayPos + ditheredRayStep;
+        if (isCrosshairCut(texCoord)) continue;
         pix = getNormalizedWindowLevel(texCoord);
 
         if (mipType == mipTypeMin) {
@@ -165,6 +208,7 @@ vec4 rayCastingComposite(Ray ray, float tmin, float tmax, vec2 uv) {
     for (int count = 0; count < sampleCount; count++) {
         rayPos += stepPos;
         texCoord = rayPos + ditheredRayStep;
+        if (isCrosshairCut(texCoord)) continue;
         pix = getNormalizedWindowLevel(texCoord);
         //pix = guassianFilter(texCoord, stepSize);
         vec4 pixel = applyTextureColor(pix);
@@ -223,6 +267,7 @@ vec4 rayCastingIsoSurface(Ray ray, float tmin, float tmax, vec2 uv) {
     for (int count = 0; count < sampleCount; count++) {
         rayPos += stepPos;
         texCoord = rayPos + ditheredRayStep;
+        if (isCrosshairCut(texCoord)) continue;
         pix = getNormalizedWindowLevel(texCoord);
         vec4 pixel = applyTextureColor(pix);
         bool sign_cur = pix > center;

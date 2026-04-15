@@ -31,6 +31,7 @@ import org.weasis.core.api.gui.util.ComboItemListener;
 import org.weasis.core.api.gui.util.DecFormatter;
 import org.weasis.core.api.gui.util.Feature;
 import org.weasis.core.api.gui.util.Filter;
+import org.weasis.core.api.gui.util.ShortcutManager;
 import org.weasis.core.api.gui.util.SliderChangeListener;
 import org.weasis.core.api.gui.util.SliderCineListener;
 import org.weasis.core.api.gui.util.SliderCineListener.TIME;
@@ -107,7 +108,7 @@ public abstract class ImageViewerEventManager<E extends ImageElement> implements
         ImageElement image = null;
 
         if (selectedView2dContainer != null) {
-          view2d = (ViewCanvas<ImageElement>) selectedView2dContainer.getSelectedImagePane();
+          view2d = (ViewCanvas<ImageElement>) selectedView2dContainer.getSelectedViewCanvas();
         }
 
         if (view2d != null && view2d.getSeries() instanceof Series) {
@@ -370,10 +371,10 @@ public abstract class ImageViewerEventManager<E extends ImageElement> implements
         if (selectedView2dContainer != null && object instanceof MigLayoutModel layoutModel) {
           // change layout
           clearAllPropertyChangeListeners();
-          ViewCanvas<E> view = selectedView2dContainer.getSelectedImagePane();
+          ViewCanvas<E> view = selectedView2dContainer.getSelectedViewCanvas();
           selectedView2dContainer.setLayoutModel(layoutModel);
           if (!selectedView2dContainer.isContainingView(view)) {
-            view = selectedView2dContainer.getSelectedImagePane();
+            view = selectedView2dContainer.getSelectedViewCanvas();
           }
           selectedView2dContainer.setSelectedImagePane(view);
           getAction(ActionW.SYNCH)
@@ -670,7 +671,7 @@ public abstract class ImageViewerEventManager<E extends ImageElement> implements
   public ViewCanvas<E> getSelectedViewPane() {
     ImageViewerPlugin<E> container = selectedView2dContainer;
     if (container != null) {
-      return container.getSelectedImagePane();
+      return container.getSelectedViewCanvas();
     }
     return null;
   }
@@ -695,8 +696,9 @@ public abstract class ImageViewerEventManager<E extends ImageElement> implements
   protected boolean commonDisplayShortcuts(KeyEvent e) {
     int keyEvent = e.getKeyCode();
     int modifiers = e.getModifiers();
+    ShortcutManager sm = ShortcutManager.getInstance();
 
-    if (keyEvent == KeyEvent.VK_ESCAPE) {
+    if (sm.matches(ShortcutManager.ID_VIEWER_ESCAPE, keyEvent, modifiers)) {
       resetDisplay();
     } else if (keyEvent == ActionW.CINESTART.getKeyCode()
         && ActionW.CINESTART.getModifier() == modifiers) {
@@ -708,7 +710,7 @@ public abstract class ImageViewerEventManager<E extends ImageElement> implements
           cineAction.get().start();
         }
       }
-    } else if (keyEvent == KeyEvent.VK_P && modifiers == 0) {
+    } else if (sm.matches(ShortcutManager.ID_VIEWER_PRINT, keyEvent, modifiers)) {
       ImageViewerPlugin<? extends ImageElement> view = getSelectedView2dContainer();
       if (view != null) {
         ColorLayerUI layer = ColorLayerUI.createTransparentLayerUI(view);
@@ -719,21 +721,23 @@ public abstract class ImageViewerEventManager<E extends ImageElement> implements
                 this);
         ColorLayerUI.showCenterScreen(dialog, layer);
       }
-    } else if (keyEvent == KeyEvent.VK_UP && !e.isAltDown() && !e.isControlDown()) {
-      int shift = e.isShiftDown() ? 10 : 1;
-      getAction(ActionW.SCROLL_SERIES).ifPresent(a -> a.setSliderValue(a.getSliderValue() - shift));
-    } else if (keyEvent == KeyEvent.VK_DOWN && !e.isAltDown() && !e.isControlDown()) {
-      int shift = e.isShiftDown() ? 10 : 1;
-      getAction(ActionW.SCROLL_SERIES).ifPresent(a -> a.setSliderValue(a.getSliderValue() + shift));
-    } else if (keyEvent == KeyEvent.VK_HOME && !e.isControlDown()) {
+    } else if (sm.matches(ShortcutManager.ID_VIEWER_SCROLL_UP, keyEvent, modifiers)) {
+      getAction(ActionW.SCROLL_SERIES).ifPresent(a -> a.setSliderValue(a.getSliderValue() - 1));
+    } else if (sm.matches(ShortcutManager.ID_VIEWER_SCROLL_UP_FAST, keyEvent, modifiers)) {
+      getAction(ActionW.SCROLL_SERIES).ifPresent(a -> a.setSliderValue(a.getSliderValue() - 10));
+    } else if (sm.matches(ShortcutManager.ID_VIEWER_SCROLL_DOWN, keyEvent, modifiers)) {
+      getAction(ActionW.SCROLL_SERIES).ifPresent(a -> a.setSliderValue(a.getSliderValue() + 1));
+    } else if (sm.matches(ShortcutManager.ID_VIEWER_SCROLL_DOWN_FAST, keyEvent, modifiers)) {
+      getAction(ActionW.SCROLL_SERIES).ifPresent(a -> a.setSliderValue(a.getSliderValue() + 10));
+    } else if (sm.matches(ShortcutManager.ID_VIEWER_SCROLL_FIRST, keyEvent, modifiers)) {
       getAction(ActionW.SCROLL_SERIES).ifPresent(a -> a.setSliderValue(a.getSliderMin()));
-    } else if (keyEvent == KeyEvent.VK_END && !e.isControlDown()) {
+    } else if (sm.matches(ShortcutManager.ID_VIEWER_SCROLL_LAST, keyEvent, modifiers)) {
       getAction(ActionW.SCROLL_SERIES).ifPresent(a -> a.setSliderValue(a.getSliderMax()));
-    } else if (keyEvent == KeyEvent.VK_SUBTRACT && e.isControlDown()) {
+    } else if (sm.matches(ShortcutManager.ID_VIEWER_ZOOM_OUT, keyEvent, modifiers)) {
       getAction(ActionW.ZOOM).ifPresent(a -> a.setSliderValue(a.getSliderValue() - 1));
-    } else if (keyEvent == KeyEvent.VK_ADD && e.isControlDown()) {
+    } else if (sm.matches(ShortcutManager.ID_VIEWER_ZOOM_IN, keyEvent, modifiers)) {
       getAction(ActionW.ZOOM).ifPresent(a -> a.setSliderValue(a.getSliderValue() + 1));
-    } else if (keyEvent == KeyEvent.VK_ENTER && e.isControlDown()) {
+    } else if (sm.matches(ShortcutManager.ID_VIEWER_BEST_FIT, keyEvent, modifiers)) {
       firePropertyChange(
           ActionW.SYNCH.cmd(),
           null,

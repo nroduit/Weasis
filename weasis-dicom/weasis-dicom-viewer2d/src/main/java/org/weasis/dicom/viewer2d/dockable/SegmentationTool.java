@@ -368,7 +368,7 @@ public class SegmentationTool extends PluginTool implements SeriesViewerListener
   public void changingViewContentEvent(SeriesViewerEvent event) {
     SeriesViewerEvent.EVENT e = event.getEventType();
     if (EVENT.SELECT_VIEW.equals(e) && event.getSeriesViewer() instanceof ImageViewerPlugin) {
-      initTreeValues(((ImageViewerPlugin<?>) event.getSeriesViewer()).getSelectedImagePane());
+      initTreeValues(((ImageViewerPlugin<?>) event.getSeriesViewer()).getSelectedViewCanvas());
     }
   }
 

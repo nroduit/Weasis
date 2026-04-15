@@ -16,10 +16,10 @@ import org.weasis.core.api.gui.util.Feature.BasicActionStateValue;
 import org.weasis.core.api.gui.util.Feature.ComboItemListenerValue;
 import org.weasis.core.api.gui.util.Feature.SliderChangeListenerValue;
 import org.weasis.core.api.gui.util.Feature.ToggleButtonListenerValue;
-import org.weasis.dicom.viewer2d.mip.MipView;
 import org.weasis.dicom.viewer3d.dockable.SegmentationTool;
 import org.weasis.dicom.viewer3d.geometry.ArcballMouseListener;
 import org.weasis.dicom.viewer3d.geometry.Axis;
+import org.weasis.dicom.viewer3d.vr.CrosshairCutMode;
 import org.weasis.dicom.viewer3d.vr.Preset;
 import org.weasis.dicom.viewer3d.vr.RenderingType;
 
@@ -52,9 +52,6 @@ public class ActionVol {
       new SliderChangeListenerValue(
           Messages.getString("z.axis.sampling"), "vol.quality", 0, 0, null);
 
-  public static final ToggleButtonListenerValue VOL_SLICING =
-      new ToggleButtonListenerValue(Messages.getString("slicing"), "vol.slicing", 0, 0, null);
-
   public static final ToggleButtonListenerValue VOL_SHADING =
       new ToggleButtonListenerValue(Messages.getString("shading"), "vol.shading", 0, 0, null);
 
@@ -65,12 +62,6 @@ public class ActionVol {
   public static final ComboItemListenerValue<RenderingType> RENDERING_TYPE =
       new ComboItemListenerValue<>(Messages.getString("type"), "rendering.type", 0, 0, null);
 
-  public static final ComboItemListenerValue<MipView.Type> MIP_TYPE =
-      new ComboItemListenerValue<>("MIP", "mip.type", 0, 0, null);
-
-  public static final SliderChangeListenerValue MIP_DEPTH =
-      new SliderChangeListenerValue(Messages.getString("mip.depth"), "mip.depth", 0, 0, null);
-
   public static final SliderChangeListenerValue VOL_OPACITY =
       new SliderChangeListenerValue(Messages.getString("opacity"), "vol.opacity", 0, 0, null);
 
@@ -80,4 +71,11 @@ public class ActionVol {
 
   public static final ComboItemListenerValue<SegmentationTool.Type> SEG_TYPE =
       new ComboItemListenerValue<>(Messages.getString("type"), "seg.type", 0, 0, null);
+
+  public static final BasicActionStateValue MPR_CROSSHAIR =
+      new BasicActionStateValue("MPR Crosshair", "mpr.crosshair", 0, 0, null); // NON-NLS
+
+  public static final ComboItemListenerValue<CrosshairCutMode> CROSSHAIR_CUT_MODE =
+      new ComboItemListenerValue<>(
+          Messages.getString("crosshair.cut.label"), "crosshair.cut.mode", 0, 0, null); // NON-NLS
 }

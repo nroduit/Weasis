@@ -35,7 +35,7 @@ public class DefaultAuthMethod implements AuthMethod {
   private final String uid;
   private final AuthProvider authProvider;
   private final AuthRegistration authRegistration;
-  private volatile OAuth2AccessToken token;
+  private volatile OAuth2AccessToken token; // NOSONAR guarantees visibility of the reference
   private volatile String code;
   private boolean local;
 
@@ -230,6 +230,9 @@ public class DefaultAuthMethod implements AuthMethod {
               try {
                 return service.getAccessTokenAsync(authCode).get();
               } catch (Exception e) {
+                if (e instanceof InterruptedException) {
+                  Thread.currentThread().interrupt();
+                }
                 throw new RuntimeException("Failed to get access token", e);
               }
             });

@@ -555,24 +555,27 @@ public final class KernelData {
 
   private static float[] computeGaussian(int width, int height, float sigX, float sigY) {
     float[] kernel = new float[width * height];
-    float sum = 0.0f;
+    double sum = 0.0;
     int centerX = (width - 1) / 2;
     int centerY = (height - 1) / 2;
+    double sigXSq = (double) sigX * sigX;
+    double sigYSq = (double) sigY * sigY;
 
     for (int y = 0; y < height; y++) {
-      float dy = y - centerY;
+      double dy = (double) y - centerY;
+      double dy2OverSigYSq = (dy * dy) / sigYSq;
       for (int x = 0; x < width; x++) {
-        float dx = x - centerX;
-        float value =
-            (float) Math.exp(-0.5 * ((dx * dx) / (sigX * sigX) + (dy * dy) / (sigY * sigY)));
-        kernel[y * width + x] = value;
+        double dx = (double) x - centerX;
+        // Use full double precision throughout; Math.exp already returns double
+        double value = Math.exp(-0.5 * ((dx * dx) / sigXSq + dy2OverSigYSq));
+        kernel[y * width + x] = (float) value;
         sum += value;
       }
     }
 
-    if (sum > 0) {
+    if (sum > EPSILON) {
       for (int i = 0; i < kernel.length; i++) {
-        kernel[i] /= sum;
+        kernel[i] = (float) (kernel[i] / sum);
       }
     }
     return kernel;
@@ -580,24 +583,28 @@ public final class KernelData {
 
   private static float[] computeLoG(int size, float sigma) {
     float[] kernel = new float[size * size];
-    float sum = 0.0f;
+    double sum = 0.0;
     int center = (size - 1) / 2;
+    double sigmaSq = (double) sigma * sigma;
+    double twoSigmaSq = 2.0 * sigmaSq;
+    double sigmaSqSq = sigmaSq * sigmaSq;
 
     for (int y = 0; y < size; y++) {
-      float dy = y - center;
+      double dy = (double) y - center;
       for (int x = 0; x < size; x++) {
-        float dx = x - center;
-        float dist = (float) Math.sqrt(dx * dx + dy * dy);
-        float value =
-            (-dist / (sigma * sigma)) * (float) Math.exp((-dist * dist) / (2.0f * sigma * sigma));
-        kernel[y * size + x] = value;
+        double dx = (double) x - center;
+        // Use distSq directly to avoid an unnecessary sqrt; correct LoG formula:
+        // LoG(r) = (r² − 2σ²) / σ⁴ · exp(−r² / 2σ²)
+        double distSq = dx * dx + dy * dy;
+        double value = ((distSq - twoSigmaSq) / sigmaSqSq) * Math.exp(-distSq / twoSigmaSq);
+        kernel[y * size + x] = (float) value;
         sum += value;
       }
     }
 
     if (Math.abs(sum) > EPSILON) {
       for (int i = 0; i < kernel.length; i++) {
-        kernel[i] /= sum;
+        kernel[i] = (float) (kernel[i] / sum);
       }
     }
     return kernel;

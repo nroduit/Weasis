@@ -33,7 +33,7 @@ import org.weasis.base.explorer.list.IThumbnailModel;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaReader;
 import org.weasis.core.api.media.data.Series;
-import org.weasis.core.ui.editor.ViewerPluginBuilder;
+import org.weasis.core.ui.editor.MediaFactory;
 import org.weasis.core.ui.editor.image.SequenceHandler;
 
 /**
@@ -117,7 +117,7 @@ public class AcquireCentralThumbnailPane<E extends MediaElement> extends AThumbn
       }
 
       files.stream()
-          .map(path -> ViewerPluginBuilder.getMedia(path, true))
+          .map(path -> MediaFactory.getMedia(path, true))
           .filter(reader -> reader != null && !reader.getMediaFragmentMimeType().contains("dicom"))
           .map(MediaReader::getMediaElement)
           .filter(Objects::nonNull)

@@ -12,6 +12,7 @@ package org.weasis.acquire.explorer.gui.dialog;
 import static org.weasis.core.api.gui.Insertable.ITEM_SEPARATOR_LARGE;
 import static org.weasis.core.api.gui.Insertable.ITEM_SEPARATOR_SMALL;
 
+import com.formdev.flatlaf.util.SystemFileChooser;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
@@ -26,7 +27,6 @@ import java.util.stream.Collectors;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JDialog;
-import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
@@ -224,18 +224,12 @@ public class AcquirePublishDialog extends JDialog {
           var pref = LocalPersistence.getProperties();
           String folderKey = "weasis.acquire.dicom.export.folder";
           String targetDirectoryPath = pref.getProperty(folderKey, "");
-          JFileChooser fileChooser = new JFileChooser(targetDirectoryPath);
-          fileChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+          SystemFileChooser fileChooser = new SystemFileChooser(targetDirectoryPath);
+          fileChooser.setFileSelectionMode(SystemFileChooser.DIRECTORIES_ONLY);
           fileChooser.setMultiSelectionEnabled(false);
-          if (StringUtil.hasText(targetDirectoryPath)) {
-            File targetFile = new File(targetDirectoryPath);
-            if (targetFile.exists() && targetFile.isDirectory()) {
-              fileChooser.setSelectedFile(new File("new"));
-            }
-          }
 
           if (fileChooser.showSaveDialog(WinUtil.getParentWindow(this))
-              == JFileChooser.APPROVE_OPTION) {
+              == SystemFileChooser.APPROVE_OPTION) {
             File selectedFile = fileChooser.getSelectedFile();
             if (selectedFile != null) {
               File outputFolder =

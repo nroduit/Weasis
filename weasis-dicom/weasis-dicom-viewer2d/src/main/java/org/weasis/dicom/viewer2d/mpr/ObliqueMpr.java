@@ -53,7 +53,7 @@ public class ObliqueMpr extends OriginalStack {
           view.repaint();
         });
     bar.addChangeListener(
-        e -> {
+        _ -> {
           if (bar.getValue() == bar.getMaximum()) {
             view.setProgressBar(null);
           }

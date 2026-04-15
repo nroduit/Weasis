@@ -181,7 +181,7 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
               // Send message to listeners, only selected view
               ImageViewerPlugin<DicomImageElement> container =
                   EventManager.getInstance().getSelectedView2dContainer();
-              ViewCanvas<DicomImageElement> v = container.getSelectedImagePane();
+              ViewCanvas<DicomImageElement> v = container.getSelectedViewCanvas();
               Series<?> series = (Series<?>) v.getSeries();
               EventManager.getInstance()
                   .fireSeriesViewerListeners(
@@ -263,7 +263,7 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
     // TODO should recieved layer changes
     EVENT e = event.getEventType();
     if (EVENT.SELECT_VIEW.equals(e) && event.getSeriesViewer() instanceof ImageViewerPlugin) {
-      iniTreeValues(((ImageViewerPlugin<?>) event.getSeriesViewer()).getSelectedImagePane());
+      iniTreeValues(((ImageViewerPlugin<?>) event.getSeriesViewer()).getSelectedViewCanvas());
     } else if (EVENT.TOGGLE_INFO.equals(e)) {
       TreeCheckingModel model = tree.getCheckingModel();
       TreePath path = new TreePath(dicomInfo.getPath());

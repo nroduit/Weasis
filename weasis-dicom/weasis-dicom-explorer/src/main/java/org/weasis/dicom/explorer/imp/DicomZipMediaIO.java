@@ -90,9 +90,11 @@ public class DicomZipMediaIO implements MediaReader<MediaElement> {
   public boolean delegate(DataExplorerModel explorerModel) {
     File zipFile = new File(uri);
     if (zipFile.canRead() && explorerModel instanceof DicomModel dicomModel) {
-      OpeningViewer openingViewer =
-          OpeningViewer.getOpeningViewerByLocalKey(LocalImport.LAST_OPEN_VIEWER_MODE);
-      loadDicomZip(zipFile, dicomModel, openingViewer, GuiUtils.getUICore().getApplicationWindow());
+      loadDicomZip(
+          zipFile,
+          dicomModel,
+          OpeningViewer.ALL_PATIENTS,
+          GuiUtils.getUICore().getApplicationWindow());
       return true;
     }
     return false;
@@ -196,7 +198,7 @@ public class DicomZipMediaIO implements MediaReader<MediaElement> {
           panel.add(new JLabel(Messages.getString("enter.password")));
           panel.add(pass);
           ActionListener al = ae -> pass.requestFocusInWindow();
-          Timer timer = new Timer(150, al);
+          Timer timer = new Timer(250, al);
           timer.setRepeats(false);
           timer.start();
           int response =
@@ -254,8 +256,7 @@ public class DicomZipMediaIO implements MediaReader<MediaElement> {
       } catch (Exception e) {
         LOGGER.error("Loading DICOM Zip", e);
       }
-      OpeningViewer openingViewer =
-          OpeningViewer.getOpeningViewerByLocalKey(LocalImport.LAST_OPEN_VIEWER_MODE);
+      OpeningViewer openingViewer = OpeningViewer.ALL_PATIENTS;
       loadDicomZip(zipFile, dicomModel, openingViewer, GuiUtils.getUICore().getApplicationWindow());
     }
   }

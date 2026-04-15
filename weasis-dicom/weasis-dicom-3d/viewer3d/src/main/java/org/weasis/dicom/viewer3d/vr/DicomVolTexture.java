@@ -10,8 +10,8 @@
 package org.weasis.dicom.viewer3d.vr;
 
 import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -44,6 +44,7 @@ import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.display.Modality;
 import org.weasis.dicom.codec.geometry.ImageOrientation.Plan;
 import org.weasis.dicom.viewer2d.mpr.Volume;
+import org.weasis.dicom.viewer3d.ActionVol;
 import org.weasis.opencv.data.ImageCV;
 import org.weasis.opencv.data.PlanarImage;
 import org.weasis.opencv.op.lut.DefaultWlPresentation;
@@ -57,6 +58,7 @@ public class DicomVolTexture extends VolumeTexture implements MediaSeriesGroup {
   private final SimpleOpManager manager;
   private final Vector3d scale;
   private final Volume<?, ?> volume;
+  private final PropertyChangeListener crossHairRelay;
 
   private String pixelValueUnit;
 
@@ -99,6 +101,25 @@ public class DicomVolTexture extends VolumeTexture implements MediaSeriesGroup {
     } else {
       this.manager = null;
     }
+    this.crossHairRelay =
+        evt -> firePropertyChange(this, ActionVol.MPR_CROSSHAIR.cmd(), evt.getNewValue());
+  }
+
+  /**
+   * Registers the MPR crosshair relay on the underlying {@link Volume} so that crosshair events
+   * fired by the MPR controller are forwarded to listeners of this texture. Duplicate registrations
+   * are silently ignored by {@link Volume#addCrossHairChangeListener}.
+   */
+  public void registerCrossHairRelay() {
+    volume.addCrossHairChangeListener(crossHairRelay);
+  }
+
+  /**
+   * Unregisters the MPR crosshair relay from the underlying {@link Volume}. Safe to call even when
+   * not currently registered.
+   */
+  public void unregisterCrossHairRelay() {
+    volume.removeCrossHairChangeListener(crossHairRelay);
   }
 
   public PlanarImage getScaledImage(PlanarImage image) {
@@ -183,7 +204,7 @@ public class DicomVolTexture extends VolumeTexture implements MediaSeriesGroup {
 
   @Override
   public void dispose() {
-    // Do nothing
+    unregisterCrossHairRelay();
   }
 
   @Override
@@ -214,31 +235,17 @@ public class DicomVolTexture extends VolumeTexture implements MediaSeriesGroup {
     }
   }
 
-  public List<PresetWindowLevel> getPresetList(
-      boolean pixelPadding, Preset volumePreset, boolean originalLut) {
-    DicomImageElement media = volume.getStack().getMiddleImage();
+  public PresetWindowLevel getDefaultPreset(Preset volumePreset) {
 
-    DefaultWlPresentation wlp = new DefaultWlPresentation(null, pixelPadding);
-    List<PresetWindowLevel> presets = new ArrayList<>(media.getPresetList(wlp));
-    if (!originalLut) {
-      // Modify auto level according to the volume LUT
-      for (int i = 0; i < presets.size(); i++) {
-        PresetWindowLevel p = presets.get(i);
-        if (p.getKeyCode() == 0x30) {
-          double ww = (double) volumePreset.getColorMax() - volumePreset.getColorMin();
-          PresetWindowLevel autoLevel =
-              new PresetWindowLevel(
-                  "Auto Level [Image]", // NON-NLS
-                  ww,
-                  volumePreset.getColorMin() + ww / 2,
-                  LutShape.LINEAR);
-          autoLevel.setKeyCode(0x30);
-          presets.set(i, autoLevel);
-          break;
-        }
-      }
-    }
-    return presets;
+    double ww = (double) volumePreset.getColorMax() - volumePreset.getColorMin();
+    PresetWindowLevel autoLevel =
+        new PresetWindowLevel(
+            "Auto Level", // NON-NLS
+            ww,
+            volumePreset.getColorMin() + ww / 2,
+            LutShape.LINEAR);
+    autoLevel.setKeyCode(0x30);
+    return autoLevel;
   }
 
   public Collection<LutShape> getLutShapeCollection(boolean pixelPadding) {
@@ -268,6 +275,20 @@ public class DicomVolTexture extends VolumeTexture implements MediaSeriesGroup {
   protected void firePropertyChange(final Object source, final String name, final Object newValue) {
     PropertyChangeEvent event = new PropertyChangeEvent(source, name, null, newValue);
     GuiExecutor.execute(() -> changeSupport.firePropertyChange(event));
+  }
+
+  /**
+   * Subscribes a listener to property-change events fired on this volume texture. This includes
+   * load notifications ({@code FULLY_LOADED}, {@code PARTIALLY_LOADED}) and MPR crosshair events
+   * ({@code "mpr.crosshair"}).
+   */
+  public void addPropertyChangeListener(PropertyChangeListener listener) {
+    changeSupport.addPropertyChangeListener(listener);
+  }
+
+  /** Removes a previously registered property-change listener. */
+  public void removePropertyChangeListener(PropertyChangeListener listener) {
+    changeSupport.removePropertyChangeListener(listener);
   }
 
   public Plan getSlicePlan() {

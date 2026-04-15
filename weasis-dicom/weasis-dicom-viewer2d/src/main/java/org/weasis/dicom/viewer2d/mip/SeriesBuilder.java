@@ -214,10 +214,10 @@ public class SeriesBuilder {
         DicomMediaUtils.getThickness(sources.getFirst().first(), sources.getLast().first());
     rawIO.setTag(TagD.get(Tag.SliceThickness), thickness > 0.0 ? thickness : sources.size());
 
-    double[] loc = (double[]) imgRef.getTagValue(TagW.SlicePosition);
+    Double loc = (Double) imgRef.getTagValue(TagW.SlicePosition);
     if (loc != null) {
       rawIO.setTag(TagW.SlicePosition, loc);
-      rawIO.setTag(TagD.get(Tag.SliceLocation), DicomMediaUtils.getSlicePositionValue(imgRef));
+      rawIO.setTag(TagD.get(Tag.SliceLocation), loc);
     }
 
     rawIO.setTag(TagD.get(Tag.SeriesInstanceUID), seriesUID);

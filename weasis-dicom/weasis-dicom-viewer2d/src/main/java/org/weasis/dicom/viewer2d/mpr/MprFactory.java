@@ -9,15 +9,8 @@
  */
 package org.weasis.dicom.viewer2d.mpr;
 
-import static org.weasis.core.ui.editor.ViewerPluginBuilder.BEST_DEF_LAYOUT;
-import static org.weasis.core.ui.editor.ViewerPluginBuilder.CMP_ENTRY_BUILD_NEW_VIEWER;
-import static org.weasis.core.ui.editor.ViewerPluginBuilder.SCREEN_BOUND;
-
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
 import javax.swing.Icon;
 import org.weasis.core.api.explorer.DataExplorerView;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
@@ -31,6 +24,8 @@ import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.api.util.ResourceUtil.OtherIcon;
 import org.weasis.core.ui.editor.SeriesViewer;
 import org.weasis.core.ui.editor.SeriesViewerFactory;
+import org.weasis.core.ui.editor.ViewerOpenOptions;
+import org.weasis.core.ui.editor.ViewerPlacement;
 import org.weasis.core.ui.editor.ViewerPluginBuilder;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin.LayoutModel;
@@ -77,11 +72,11 @@ public class MprFactory implements SeriesViewerFactory {
   }
 
   @Override
-  public SeriesViewer<?> createSeriesViewer(Map<String, Object> properties) {
+  public SeriesViewer<?> createSeriesViewer(ViewerOpenOptions options, DataExplorerModel model) {
     LayoutModel layout =
-        ImageViewerPlugin.getLayoutModel(properties, getDefaultMigLayoutModel(), null);
+        ImageViewerPlugin.getLayoutModel(options, getDefaultMigLayoutModel(), null);
     MprContainer instance = new MprContainer(layout.model(), layout.uid());
-    ImageViewerPlugin.registerInDataExplorerModel(properties, instance);
+    ImageViewerPlugin.registerInDataExplorerModel(model, instance);
     int index = 0;
     for (MigCell cell : layout.model().getCells()) {
       if (instance.getView2ds().get(cell.position()) instanceof MprView mprView) {
@@ -149,16 +144,13 @@ public class MprFactory implements SeriesViewerFactory {
           return;
         }
 
-        Map<String, Object> props = Collections.synchronizedMap(new HashMap<>());
-        props.put(CMP_ENTRY_BUILD_NEW_VIEWER, false);
-        props.put(BEST_DEF_LAYOUT, false);
-        props.put(SCREEN_BOUND, null);
+        ViewerOpenOptions opts =
+            ViewerOpenOptions.builder().placement(ViewerPlacement.newTab()).build();
         ArrayList<MediaSeries<? extends MediaElement>> list = new ArrayList<>(1);
         list.add(s);
-        ViewerPluginBuilder builder =
-            new ViewerPluginBuilder(
-                factory, list, (DataExplorerModel) s.getTagValue(TagW.ExplorerModel), props);
-        ViewerPluginBuilder.openSequenceInPlugin(builder);
+        new ViewerPluginBuilder(
+                factory, list, (DataExplorerModel) s.getTagValue(TagW.ExplorerModel), opts)
+            .open();
       }
     };
   }

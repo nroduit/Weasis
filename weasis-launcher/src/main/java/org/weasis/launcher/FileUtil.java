@@ -291,14 +291,34 @@ public class FileUtil {
 
   /* ======= ZIP and GZIP utilities ======= */
 
+  /** Maximum number of entries allowed in a ZIP archive (protection against zip bombs). */
+  private static final int ZIP_MAX_ENTRIES = 100_000;
+
+  /** Maximum total uncompressed size allowed when extracting a ZIP archive (1 GB). */
+  private static final long ZIP_MAX_TOTAL_SIZE = 1_073_741_824L;
+
+  /** Maximum allowed compression ratio (uncompressed / compressed). */
+  private static final double ZIP_MAX_COMPRESSION_RATIO = 100.0;
+
   /**
    * Unzip a zip input stream into a directory.
    *
+   * <p>Resource-consumption limits are enforced to prevent zip-bomb attacks:
+   *
+   * <ul>
+   *   <li>Maximum number of entries: {@value #ZIP_MAX_ENTRIES}
+   *   <li>Maximum total uncompressed size: {@value #ZIP_MAX_TOTAL_SIZE} bytes
+   *   <li>Maximum compression ratio: {@value #ZIP_MAX_COMPRESSION_RATIO}
+   * </ul>
+   *
    * @param inputStream the zip input stream
    * @param targetDir the directory to unzip all files
-   * @throws IOException if an I/O error occurs
+   * @throws IOException if an I/O error occurs or a resource limit is exceeded
    * @throws IllegalArgumentException if inputStream or targetDir is null
    */
+  @SuppressWarnings(
+      "java:S5042") // Zip-bomb protections are enforced: entry count, total size, and compression
+  // ratio
   public static void unzip(InputStream inputStream, Path targetDir) throws IOException {
     if (inputStream == null) {
       throw new IllegalArgumentException("Input stream cannot be null");
@@ -319,14 +339,41 @@ public class FileUtil {
 
   private static void extractZipEntries(ZipInputStream zis, Path targetPath) throws IOException {
     ZipEntry entry;
+    int entryCount = 0;
+    long remainingBudget = ZIP_MAX_TOTAL_SIZE;
+
     while ((entry = zis.getNextEntry()) != null) {
-      extractEntry(zis, entry, targetPath);
+      entryCount++;
+      if (entryCount > ZIP_MAX_ENTRIES) {
+        throw new IOException(
+            "ZIP archive contains too many entries (max allowed: " + ZIP_MAX_ENTRIES + ")");
+      }
+
+      // Check compression ratio using the declared compressed size when available
+      long compressedSize = entry.getCompressedSize();
+      long uncompressedSize = entry.getSize();
+      if (compressedSize > 0 && uncompressedSize > 0) {
+        double ratio = (double) uncompressedSize / compressedSize;
+        if (ratio > ZIP_MAX_COMPRESSION_RATIO) {
+          throw new IOException(
+              "ZIP entry \"" + entry.getName() + "\" has a suspicious compression ratio: " + ratio);
+        }
+      }
+
+      // Pass the remaining budget so the limit is enforced during streaming
+      long bytesWritten = extractEntry(zis, entry, targetPath, remainingBudget);
+      remainingBudget -= bytesWritten;
     }
   }
 
-  /** Extract a single zip entry to the target directory with security checks. */
-  private static void extractEntry(InputStream inputStream, ZipEntry entry, Path targetPath)
-      throws IOException {
+  /**
+   * Extract a single zip entry to the target directory with security checks.
+   *
+   * @param maxBytes maximum number of bytes that may be written for this entry
+   * @return the number of bytes written for this entry
+   */
+  private static long extractEntry(
+      InputStream inputStream, ZipEntry entry, Path targetPath, long maxBytes) throws IOException {
     Path entryPath = targetPath.resolve(entry.getName()).normalize();
 
     // Security check: prevent zip slip attacks
@@ -335,6 +382,7 @@ public class FileUtil {
     }
     if (entry.isDirectory()) {
       Files.createDirectories(entryPath);
+      return 0L;
     } else {
       // Ensure parent directory exists
       Path parent = entryPath.getParent();
@@ -342,21 +390,36 @@ public class FileUtil {
         Files.createDirectories(parent);
       }
 
-      // Copy file content
+      // Copy file content while enforcing the budget in real-time
       try (OutputStream out =
           Files.newOutputStream(
               entryPath, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING)) {
-        copyStream(inputStream, out);
+        return copyStream(inputStream, out, maxBytes);
       }
     }
   }
 
-  /** Copy data from input stream to output stream efficiently. */
-  private static void copyStream(InputStream in, OutputStream out) throws IOException {
+  /**
+   * Copy data from input stream to output stream efficiently, enforcing a byte limit.
+   *
+   * @param maxBytes maximum number of bytes allowed; an {@link IOException} is thrown if exceeded
+   * @return total number of bytes copied
+   */
+  private static long copyStream(InputStream in, OutputStream out, long maxBytes)
+      throws IOException {
     byte[] buffer = new byte[8192];
+    long total = 0;
     int bytesRead;
     while ((bytesRead = in.read(buffer)) != -1) {
+      total += bytesRead;
+      if (total > maxBytes) {
+        throw new IOException(
+            "ZIP archive exceeds maximum allowed uncompressed size ("
+                + humanReadableByte(ZIP_MAX_TOTAL_SIZE, true)
+                + ")");
+      }
       out.write(buffer, 0, bytesRead);
     }
+    return total;
   }
 }

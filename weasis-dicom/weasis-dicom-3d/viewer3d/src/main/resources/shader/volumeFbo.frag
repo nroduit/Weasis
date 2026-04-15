@@ -18,11 +18,17 @@ uniform sampler3D volTexture;   // unit 0 — set from Java
 uniform sampler2D colorMap;     // unit 1 — set from Java
 uniform sampler2D lightingMap;  // unit 2 — set from Java
 
-#include "voxelUniforms410.glsl"
+#include "voxelUniforms330.glsl"
+
+// Framebuffer dimensions (logical pixels) — set from Java each frame.
+// Needed by computeCrosshairColor() since imageSize() is not available in fragment shaders.
+uniform ivec2 viewportSize;
 
 #include "voxelFunctions.glsl"
 
 #include "vrFunctions.glsl"
+
+#include "crosshairOverlay.glsl"
 
 void main() {
     // quadCoordinates is in [-1, 1] — same NDC convention as the compute shader's uv.
@@ -47,5 +53,12 @@ void main() {
         }
     }
     fragColor = pixelVal;
+
+    // ---- MPR crosshair overlay ----
+    ivec2 pixelCoords = ivec2(gl_FragCoord.xy);
+    vec4 crosshairColor = computeCrosshairColor(pixelCoords, viewportSize);
+    if (crosshairColor.a >= 0.0) {
+        fragColor = crosshairColor;
+    }
 }
 

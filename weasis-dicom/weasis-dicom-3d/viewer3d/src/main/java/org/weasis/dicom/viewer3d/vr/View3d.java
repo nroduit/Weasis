@@ -16,6 +16,7 @@ import com.jogamp.opengl.GL2ES3;
 import com.jogamp.opengl.GL4;
 import com.jogamp.opengl.GLAutoDrawable;
 import com.jogamp.opengl.GLEventListener;
+import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;
@@ -32,6 +33,7 @@ import java.awt.event.MouseEvent;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
 import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.nio.IntBuffer;
 import java.util.Collections;
 import java.util.Comparator;
@@ -45,6 +47,10 @@ import javax.swing.JPopupMenu;
 import javax.swing.JProgressBar;
 import javax.swing.ToolTipManager;
 import org.dcm4che3.img.lut.PresetWindowLevel;
+import org.joml.Matrix3d;
+import org.joml.Matrix4d;
+import org.joml.Quaterniond;
+import org.joml.Vector3d;
 import org.joml.Vector3f;
 import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
@@ -77,11 +83,18 @@ import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.editor.image.ViewProgress;
 import org.weasis.core.ui.model.graphic.Graphic;
 import org.weasis.core.ui.model.layer.LayerAnnotation;
+import org.weasis.core.ui.model.layer.LayerItem;
 import org.weasis.core.ui.model.layer.LayerType;
 import org.weasis.core.ui.model.utils.bean.PanPoint;
+import org.weasis.core.util.LangUtil;
 import org.weasis.dicom.codec.DicomImageElement;
+import org.weasis.dicom.codec.geometry.PatientOrientation;
 import org.weasis.dicom.explorer.DicomSeriesHandler;
-import org.weasis.dicom.viewer2d.mip.MipView;
+import org.weasis.dicom.viewer2d.mpr.AxisDirection;
+import org.weasis.dicom.viewer2d.mpr.MprContainer;
+import org.weasis.dicom.viewer2d.mpr.MprFactory;
+import org.weasis.dicom.viewer2d.mpr.OriginalStack;
+import org.weasis.dicom.viewer2d.mpr.Volume;
 import org.weasis.dicom.viewer3d.ActionVol;
 import org.weasis.dicom.viewer3d.EventManager;
 import org.weasis.dicom.viewer3d.InfoLayer3d;
@@ -103,14 +116,6 @@ public class View3d extends VolumeCanvas
         ViewProgress {
 
   private static final org.slf4j.Logger LOGGER = org.slf4j.LoggerFactory.getLogger(View3d.class);
-
-  public enum ViewType {
-    AXIAL,
-    CORONAL,
-    SAGITTAL,
-    SLICE,
-    VOLUME3D
-  }
 
   static final float[] vertexBufferData =
       new float[] {
@@ -137,8 +142,14 @@ public class View3d extends VolumeCanvas
 
   private int vertexBuffer;
   protected Preset volumePreset;
-  private ViewType viewType;
   private JProgressBar progressBar;
+
+  private volatile Vector3d mprCrossHairPosition; // NOSONAR visibility reference
+  private volatile Quaterniond mprCrossHairRotation; // NOSONAR visibility reference
+  private volatile CrosshairCutMode mprCrossHairCutMode = CrosshairCutMode.NONE;
+
+  private PropertyChangeListener mprCrossHairListener;
+  private DicomVolTexture mprCrossHairListenerSource;
 
   public View3d(
       ImageViewerEventManager<DicomImageElement> eventManager, DicomVolTexture volTexture) {
@@ -165,8 +176,6 @@ public class View3d extends VolumeCanvas
     }
     this.quadProgram =
         new Program("basic", ShaderManager.VERTEX_SHADER, ShaderManager.FRAGMENT_SHADER); // NON-NLS
-    // this.program =new Program("basic", ShaderManager.OLD_VERTEX_SHADER,
-    // ShaderManager.OLD_FRAGMENT_SHADER);
     try {
       setSharedContext(OpenglUtils.getDefaultGlContext());
     } catch (Exception e) {
@@ -235,9 +244,41 @@ public class View3d extends VolumeCanvas
         });
   }
 
+  /**
+   * Subscribes to {@code "mpr.crosshair"} events on the given texture and unsubscribes from the
+   * previous one. Pass {@code null} to only unsubscribe.
+   */
+  private void subscribeToCrossHairEvents(DicomVolTexture newTexture) {
+    if (mprCrossHairListener != null && mprCrossHairListenerSource != null) {
+      mprCrossHairListenerSource.removePropertyChangeListener(mprCrossHairListener);
+      mprCrossHairListenerSource = null;
+    }
+    if (newTexture == null) {
+      mprCrossHairPosition = null;
+      mprCrossHairRotation = null;
+      mprCrossHairListener = null;
+      return;
+    }
+    mprCrossHairListener =
+        evt -> {
+          if (ActionVol.MPR_CROSSHAIR.cmd().equals(evt.getPropertyName())
+              && evt.getNewValue() instanceof Object[] arr
+              && arr.length >= 2
+              && arr[0] instanceof Vector3d pos
+              && arr[1] instanceof Quaterniond rot) {
+            mprCrossHairPosition = new Vector3d(pos);
+            mprCrossHairRotation = new Quaterniond(rot);
+            repaint();
+          }
+        };
+    mprCrossHairListenerSource = newTexture;
+    newTexture.addPropertyChangeListener(mprCrossHairListener);
+  }
+
   @Override
   public void disposeView() {
     disableMouseAndKeyListener();
+    subscribeToCrossHairEvents(null);
     removeFocusListener(this);
     ToolTipManager.sharedInstance().unregisterComponent(this);
     renderingLayer.removeLayerChangeListener(this);
@@ -262,17 +303,13 @@ public class View3d extends VolumeCanvas
     return renderingLayer;
   }
 
+  public CrosshairCutMode getCrossHairCutMode() {
+    CrosshairCutMode mode = mprCrossHairCutMode;
+    return mode != null ? mode : CrosshairCutMode.NONE;
+  }
+
   public Camera getCamera() {
     return camera;
-  }
-
-  public ViewType getViewType() {
-    return viewType;
-  }
-
-  public void setViewType(ViewType viewType) {
-    this.viewType = viewType;
-    camera.setSliceMode(viewType != ViewType.VOLUME3D);
   }
 
   public double getZoom() {
@@ -280,26 +317,32 @@ public class View3d extends VolumeCanvas
   }
 
   public void setVolTexture(DicomVolTexture volTexture) {
+    if (this.volTexture != null) {
+      this.volTexture.unregisterCrossHairRelay();
+    }
     this.volTexture = volTexture;
+    subscribeToCrossHairEvents(volTexture);
+    if (volTexture != null && mprCrossHairCutMode != CrosshairCutMode.NONE) {
+      volTexture.registerCrossHairRelay();
+      syncMprPosition();
+    }
     if (volTexture != null) {
       camera.setZoomFactor(-getBestFitViewScale());
       renderingLayer.setEnableRepaint(false);
+
+      int quality = getDefaultQuality();
+      renderingLayer.setQuality(quality);
+      eventManager
+          .getAction(ActionVol.VOL_QUALITY)
+          .ifPresent(a -> a.setSliderValue(quality, false));
+      ComboItemListener<Type> segType = eventManager.getAction(ActionVol.SEG_TYPE).orElse(null);
       Preset preset;
-      if (viewType == ViewType.VOLUME3D) {
-        int quality = getDefaultQuality();
-        renderingLayer.setQuality(quality);
-        eventManager
-            .getAction(ActionVol.VOL_QUALITY)
-            .ifPresent(a -> a.setSliderValue(quality, false));
-        ComboItemListener<Type> segType = eventManager.getAction(ActionVol.SEG_TYPE).orElse(null);
-        if (segType != null && segType.getSelectedItem() == SegmentationTool.Type.SEG_ONLY) {
-          preset = Preset.getSegmentationLut();
-        } else {
-          preset = Preset.getDefaultPreset(volTexture.getModality());
-        }
+      if (segType != null && segType.getSelectedItem() == SegmentationTool.Type.SEG_ONLY) {
+        preset = Preset.getSegmentationLut();
       } else {
-        preset = Preset.getDefaultPreset(null);
+        preset = Preset.getDefaultPreset(volTexture.getModality());
       }
+
       renderingLayer.setEnableRepaint(true);
       setVolumePreset(preset);
     } else {
@@ -336,7 +379,6 @@ public class View3d extends VolumeCanvas
     g2d.translate(-p.getX(), -p.getY());
 
     drawPointer(g2d, pointerType);
-    //   drawAffineInvariant(g2d);
     if (infoLayer != null && volTexture != null) {
       g2d.setFont(getLayerFont());
       infoLayer.paint(g2d);
@@ -349,7 +391,58 @@ public class View3d extends VolumeCanvas
   }
 
   protected void drawOnTop(Graphics2D g2d) {
+    if (infoLayer != null
+        && volTexture != null
+        && LangUtil.nullToFalse(infoLayer.getVisible())
+        && infoLayer.getDisplayPreferences(LayerItem.IMAGE_ORIENTATION)) {
+      drawLpsOrientation(g2d);
+    }
     drawProgressBar(g2d, progressBar);
+  }
+
+  private void drawLpsOrientation(Graphics2D g2d) {
+    int axisLength = GuiUtils.getScaleLength(30);
+
+    // LPS unit directions in volume-texture space:
+    //   X+ = Left  (R/L, blue),  Y+ = Superior (S/I, green),  -Z = Posterior (A/P, red)
+    Vector3d lrDir = new Vector3d(1, 0, 0);
+    Vector3d apDir = new Vector3d(0, 0, -1);
+    Vector3d siDir = new Vector3d(0, 1, 0);
+
+    // Build the combined model × view matrix (direction-only — translation is irrelevant).
+    // Camera.currentModelMatrix = rotateX(90°) × translate(-0.5,-0.5,-0.5)
+    Matrix4d mv = camera.getViewMatrix().mul(Camera.currentModelMatrix, new Matrix4d());
+    mv.transformDirection(lrDir);
+    mv.transformDirection(apDir);
+    mv.transformDirection(siDir);
+
+    // Camera space uses y-up; screen uses y-down — flip y.
+    lrDir.y = -lrDir.y;
+    apDir.y = -apDir.y;
+    siDir.y = -siDir.y;
+
+    // Scale to the desired pixel length.
+    lrDir.mul(axisLength);
+    apDir.mul(axisLength);
+    siDir.mul(axisLength);
+
+    Point2D topLeft = infoLayer.getPosition(LayerAnnotation.Position.TopLeft);
+    Point origin =
+        AxisDirection.computeOrigin(axisLength, new Vector3d[] {lrDir, apDir, siDir}, topLeft);
+
+    Stroke savedStroke = g2d.getStroke();
+    g2d.setStroke(new BasicStroke(2));
+
+    g2d.setColor(PatientOrientation.blue); // R/L
+    AxisDirection.drawAxisLine(g2d, lrDir, origin);
+
+    g2d.setColor(PatientOrientation.red); // A/P
+    AxisDirection.drawAxisLine(g2d, apDir, origin);
+
+    g2d.setColor(PatientOrientation.green); // S/I
+    AxisDirection.drawAxisLine(g2d, siDir, origin);
+
+    g2d.setStroke(savedStroke);
   }
 
   @Override
@@ -454,7 +547,8 @@ public class View3d extends VolumeCanvas
     program.allocateUniform(
         gl,
         "mipType",
-        (g, loc) -> ((GL2ES3) g).glUniform1ui(loc, renderingLayer.getMipType().getId()));
+        (g, loc) ->
+            ((GL2ES3) g).glUniform1ui(loc, renderingLayer.getRenderingType().getMipTypeId()));
     program.allocateUniform(gl, "volTexture", (g, loc) -> g.glUniform1i(loc, 0));
     program.allocateUniform(gl, "colorMap", (g, loc) -> g.glUniform1i(loc, 1));
     program.allocateUniform(
@@ -515,6 +609,12 @@ public class View3d extends VolumeCanvas
       program.allocateUniform(gl, "volTexture", (g, loc) -> g.glUniform1i(loc, 0));
       program.allocateUniform(gl, "colorMap", (g, loc) -> g.glUniform1i(loc, 1));
       program.allocateUniform(gl, "lightingMap", (g, loc) -> g.glUniform1i(loc, 2));
+      // FBO framebuffer dimensions for the crosshair overlay (imageSize() is unavailable in
+      // fragment shaders; we pass the logical FBO size instead).
+      program.allocateUniform(
+          gl,
+          "viewportSize", // NON-NLS
+          (g, loc) -> g.glUniform2i(loc, texture.getWidth(), texture.getHeight()));
     }
 
     final IntBuffer intBuffer = IntBuffer.allocate(1);
@@ -525,6 +625,43 @@ public class View3d extends VolumeCanvas
     if (volumePreset != null) {
       volumePreset.init(gl, renderingLayer.isInvertLut());
     }
+
+    // MPR crosshair uniforms — position in normalized [0,1]³ volume-texture space
+    program.allocateUniform(
+        gl,
+        "crosshairPos", // NON-NLS
+        (g, loc) -> {
+          Vector3d pos = mprCrossHairPosition;
+          if (pos != null) {
+            g.glUniform3f(loc, (float) pos.x, (float) pos.y, (float) pos.z);
+          } else {
+            g.glUniform3f(loc, 0.5f, 0.5f, 0.5f);
+          }
+        });
+    program.allocateUniform(
+        gl,
+        "crosshairRot", // NON-NLS
+        (g, loc) -> {
+          Quaterniond rot = mprCrossHairRotation;
+          Matrix3d m = (rot != null) ? new Matrix3d().set(rot) : new Matrix3d().identity();
+          float[] f = {
+            (float) m.m00, (float) m.m10, (float) m.m20,
+            (float) m.m01, (float) m.m11, (float) m.m21,
+            (float) m.m02, (float) m.m12, (float) m.m22
+          };
+          g.glUniformMatrix3fv(loc, 1, false, f, 0);
+        });
+    program.allocateUniform(
+        gl,
+        "crosshairVisible", // NON-NLS
+        (g, loc) -> g.glUniform1i(loc, mprCrossHairPosition != null ? 1 : 0));
+    program.allocateUniform(
+        gl,
+        "crosshairCutMode", // NON-NLS
+        (g, loc) -> {
+          CrosshairCutMode mode = mprCrossHairCutMode;
+          g.glUniform1i(loc, mode != null ? mode.getId() : 0);
+        });
 
     quadProgram.init(gl);
     gl.glGenBuffers(1, intBuffer);
@@ -583,7 +720,7 @@ public class View3d extends VolumeCanvas
         program.setUniforms(gl4);
         volTexture.render(gl4);
         if (volumePreset != null) {
-          volumePreset.render(gl4, renderingLayer.isInvertLut(), isOriginalLUT());
+          volumePreset.render(gl4, renderingLayer.isInvertLut());
         }
         texture.render(gl4);
         quadProgram.use(gl4);
@@ -607,7 +744,7 @@ public class View3d extends VolumeCanvas
         // Bind volume and LUT textures on their expected texture units
         volTexture.render(gl2);
         if (volumePreset != null) {
-          volumePreset.render(gl2, renderingLayer.isInvertLut(), isOriginalLUT());
+          volumePreset.render(gl2, renderingLayer.isInvertLut());
         }
 
         // Set up the vertex array so FboRenderTexture.render() can call glDrawArrays
@@ -642,10 +779,6 @@ public class View3d extends VolumeCanvas
     }
   }
 
-  public boolean isOriginalLUT() {
-    return viewType != ViewType.VOLUME3D && volumePreset != null && volumePreset.isDefaultForAll();
-  }
-
   public void reshape(GLAutoDrawable drawable, int x, int y, int width, int height) {
     GL2ES2 gl2 = drawable.getGL().getGL2ES2();
     gl2.glViewport(0, 0, width, height);
@@ -666,18 +799,9 @@ public class View3d extends VolumeCanvas
     this.volumePreset = Objects.requireNonNull(preset);
     volumePreset.setRequiredBuilding(true);
 
-    boolean originalLUT = isOriginalLUT();
-    List<PresetWindowLevel> list = getVolTexture().getPresetList(true, volumePreset, originalLUT);
-    if (originalLUT) {
-      if (!list.isEmpty()) {
-        changePresetWindowLevel(list.getFirst());
-      }
-    } else {
-      list.stream()
-          .filter(p -> p.getKeyCode() == 0x30)
-          .findFirst()
-          .ifPresent(this::changePresetWindowLevel);
-    }
+    PresetWindowLevel defaultPreset = getVolTexture().getDefaultPreset(volumePreset);
+    changePresetWindowLevel(defaultPreset);
+
     renderingLayer.applyVolumePreset(volumePreset, false);
     eventManager
         .getAction(ActionVol.VOL_SHADING)
@@ -784,8 +908,7 @@ public class View3d extends VolumeCanvas
     graphicManager.fireGraphicsSelectionChanged(getImageLayer());
 
     if (selected && getSeries() != null) {
-      AuditLog.LOGGER.info(
-          "select:series nb:{} viewType:{}", getSeries().getSeriesNumber(), viewType);
+      AuditLog.LOGGER.info("select:series nb:{}", getSeries().getSeriesNumber());
     }
   }
 
@@ -864,8 +987,6 @@ public class View3d extends VolumeCanvas
       return contextMenuHandler;
     } else if (command.equals(ActionW.WINLEVEL.cmd())) {
       return getAction(ActionW.LEVEL);
-      //    } else if (command.equals(ActionW.CROSSHAIR.cmd())) {
-      //      return controls;
     }
 
     Optional<Feature<? extends ActionState>> actionKey = eventManager.getActionKey(command);
@@ -911,8 +1032,7 @@ public class View3d extends VolumeCanvas
 
     initActionWState();
 
-    View c =
-        viewType == ViewType.VOLUME3D ? Camera.getDefaultOrientation() : Camera.DEFAULT_SLICE_VIEW;
+    View c = Camera.getDefaultOrientation();
     camera.set(c.position(), c.rotation(), -getBestFitViewScale(), false);
     renderingLayer.setEnableRepaint(false);
     renderingLayer.setQuality(getDefaultQuality());
@@ -955,16 +1075,16 @@ public class View3d extends VolumeCanvas
     int count = popupMenu.getComponentCount();
 
     if (eventManager instanceof EventManager manager) {
-      GuiUtils.addItemToMenu(popupMenu, manager.getPresetMenu(null));
-      GuiUtils.addItemToMenu(popupMenu, manager.getLutShapeMenu(null));
       GuiUtils.addItemToMenu(popupMenu, manager.getLutMenu(null));
+      GuiUtils.addItemToMenu(popupMenu, manager.getLutShapeMenu(null));
       count = addSeparatorToPopupMenu(popupMenu, count);
 
       GuiUtils.addItemToMenu(popupMenu, manager.getViewTypeMenu(null));
-      GuiUtils.addItemToMenu(popupMenu, manager.getMipTypeMenu(null));
       GuiUtils.addItemToMenu(popupMenu, manager.getShadingMenu(null));
       GuiUtils.addItemToMenu(popupMenu, manager.getSProjectionMenu(null));
-      GuiUtils.addItemToMenu(popupMenu, manager.getSlicingMenu(null));
+      count = addSeparatorToPopupMenu(popupMenu, count);
+
+      GuiUtils.addItemToMenu(popupMenu, manager.getMprCutMenu(null));
       count = addSeparatorToPopupMenu(popupMenu, count);
 
       GuiUtils.addItemToMenu(popupMenu, manager.getZoomMenu(null));
@@ -1023,11 +1143,6 @@ public class View3d extends VolumeCanvas
         final Object val = entry.getValue();
         if (synchData != null && !synchData.isActionEnable(command)) {
           continue;
-        }
-        if (command.equals(ActionVol.SCROLLING.cmd())) {
-          if (getViewType() != ViewType.VOLUME3D) { // If its not a volumetric view
-            //  setSlice((Integer) val);
-          }
         } else if (command.equals(ActionW.WINDOW.cmd())) {
           renderingLayer.setWindowWidth(((Double) val).intValue(), forceRepaint);
         } else if (command.equals(ActionW.LEVEL.cmd())) {
@@ -1090,24 +1205,9 @@ public class View3d extends VolumeCanvas
             if (type != oldType) {
               renderingLayer.setEnableRepaint(false);
               renderingLayer.setRenderingType(type);
-              setViewType(type.getViewType());
               renderingLayer.setEnableRepaint(true);
-              if (type == RenderingType.SLICE) {
-                setVolumePreset(Preset.getDefaultPreset(null));
-              } else if (oldType == RenderingType.SLICE) {
-                setVolumePreset(Preset.getDefaultPreset(volTexture.getModality()));
-              } else {
-                display();
-              }
+              display();
             }
-          }
-        } else if (command.equals(ActionVol.MIP_DEPTH.cmd())) {
-          if (val instanceof Integer thickness) {
-            renderingLayer.setMipThickness(thickness);
-          }
-        } else if (command.equals(ActionVol.MIP_TYPE.cmd())) {
-          if (val instanceof MipView.Type mipType) {
-            renderingLayer.setMipType(mipType);
           }
         } else if (command.equals(ActionVol.VOL_AXIS.cmd())) {
           if (val instanceof Axis axis) {
@@ -1121,11 +1221,26 @@ public class View3d extends VolumeCanvas
           if (val instanceof Double opacity) {
             renderingLayer.setOpacity(opacity, forceRepaint);
           }
-        } else if (command.equals(ActionVol.VOL_SLICING.cmd())) {
-          setActionsInView(ActionVol.VOL_SLICING.cmd(), val, true);
         } else if (command.equals(ActionVol.VOL_SHADING.cmd())) {
           if (val instanceof Boolean shading) {
             renderingLayer.setShading(shading);
+          }
+        } else if (command.equals(ActionVol.CROSSHAIR_CUT_MODE.cmd())) {
+          if (val instanceof CrosshairCutMode cutMode) {
+            mprCrossHairCutMode = cutMode;
+            if (cutMode == CrosshairCutMode.NONE) {
+              if (volTexture != null) {
+                volTexture.unregisterCrossHairRelay();
+              }
+              mprCrossHairPosition = null;
+              mprCrossHairRotation = null;
+            } else {
+              if (volTexture != null) {
+                volTexture.registerCrossHairRelay();
+              }
+              ensureMprIsOpen();
+            }
+            display();
           }
         } else if (command.equals(ActionVol.VOL_PROJECTION.cmd())) {
           if (val instanceof Boolean projection) {
@@ -1134,6 +1249,53 @@ public class View3d extends VolumeCanvas
         }
       }
     }
+  }
+
+  private void ensureMprIsOpen() {
+    DicomVolTexture tex = volTexture;
+    if (tex == null) {
+      return;
+    }
+    MediaSeries<DicomImageElement> series = tex.getSeries();
+    if (series == null) {
+      return;
+    }
+    if (!fireCrossHairIfMprOpen(tex)) {
+      // No MPR viewer found – open one.
+      MprFactory.getMprAction(series).actionPerformed(null);
+    }
+  }
+
+  private void syncMprPosition() {
+    DicomVolTexture tex = volTexture;
+    if (tex == null) {
+      return;
+    }
+    fireCrossHairIfMprOpen(tex);
+  }
+
+  private boolean fireCrossHairIfMprOpen(DicomVolTexture tex) {
+    Volume<?, ?> texVolume = tex.getVolume();
+    if (texVolume == null || texVolume.getStack() == null) {
+      return false;
+    }
+    OriginalStack texStack = texVolume.getStack();
+    boolean texIsBasic = texVolume.isBasic();
+    List<?> plugins = GuiUtils.getUICore().getViewerPlugins();
+    synchronized (plugins) {
+      for (Object plugin : plugins) {
+        if (plugin instanceof MprContainer mpr) {
+          Volume<?, ?> mprVolume = mpr.getMprController().getVolume();
+          if (mprVolume != null
+              && texStack.equals(mprVolume.getStack())
+              && texIsBasic == mprVolume.isBasic()) {
+            mpr.getMprController().fireCrossHairChanged();
+            return true;
+          }
+        }
+      }
+    }
+    return false;
   }
 
   private void setPresetWindowLevel(PresetWindowLevel preset, boolean repaint) {

@@ -246,7 +246,7 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
                     selectedView2dContainer.getLayoutList().toArray(new MigLayoutModel[0])));
       }
       if (oldContainer != null) {
-        ViewCanvas<ImageElement> pane = oldContainer.getSelectedImagePane();
+        ViewCanvas<ImageElement> pane = oldContainer.getSelectedViewCanvas();
         if (pane != null) {
           pane.setFocused(false);
         }
@@ -257,9 +257,9 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
           a ->
               a.setSelectedItemWithoutTriggerAction(
                   selectedView2dContainer.getOriginalLayoutModel()));
-      updateComponentsListener(selectedView2dContainer.getSelectedImagePane());
+      updateComponentsListener(selectedView2dContainer.getSelectedViewCanvas());
       selectedView2dContainer.setMouseActions(mouseActions);
-      ViewCanvas<ImageElement> pane = selectedView2dContainer.getSelectedImagePane();
+      ViewCanvas<ImageElement> pane = selectedView2dContainer.getSelectedViewCanvas();
       if (pane != null) {
         fireSeriesViewerListeners(
             new SeriesViewerEvent(
@@ -307,7 +307,7 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
       getAction(ActionW.ROTATION).ifPresent(a -> a.setSliderValue(0));
     } else if (ResetTools.WL.equals(action)) {
       if (selectedView2dContainer != null) {
-        ViewCanvas<ImageElement> defaultView2d = selectedView2dContainer.getSelectedImagePane();
+        ViewCanvas<ImageElement> defaultView2d = selectedView2dContainer.getSelectedViewCanvas();
         if (defaultView2d != null) {
           ImageElement img = defaultView2d.getImage();
           if (img != null) {
@@ -324,7 +324,7 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
       }
     } else if (ResetTools.PAN.equals(action)) {
       if (selectedView2dContainer != null) {
-        ViewCanvas viewPane = selectedView2dContainer.getSelectedImagePane();
+        ViewCanvas viewPane = selectedView2dContainer.getSelectedViewCanvas();
         if (viewPane != null) {
           viewPane.resetPan();
         }
@@ -339,7 +339,7 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
     }
 
     if (selectedView2dContainer == null
-        || view2d != selectedView2dContainer.getSelectedImagePane()) {
+        || view2d != selectedView2dContainer.getSelectedViewCanvas()) {
       return false;
     }
 

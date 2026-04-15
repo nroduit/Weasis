@@ -56,6 +56,7 @@ import org.weasis.core.api.gui.util.Feature;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.GuiUtils.IconColor;
 import org.weasis.core.api.gui.util.MouseActionAdapter;
+import org.weasis.core.api.gui.util.ShortcutManager;
 import org.weasis.core.api.gui.util.WinUtil;
 import org.weasis.core.api.image.OpManager;
 import org.weasis.core.api.image.WindowOp;
@@ -490,29 +491,33 @@ public interface ViewCanvas<E extends ImageElement>
   }
 
   default void defaultKeyPressed(ImageViewerEventManager<?> eventManager, KeyEvent e) {
-    if (e.isControlDown() && e.getKeyCode() == KeyEvent.VK_SPACE) {
+    ShortcutManager sm = ShortcutManager.getInstance();
+    int keyCode = e.getKeyCode();
+    int modifiers = e.getModifiers();
+
+    if (sm.matches(ShortcutManager.ID_VIEWER_NEXT_MOUSE_ACTION, keyCode, modifiers)) {
       eventManager.nextLeftMouseAction();
-    } else if (e.getModifiers() == 0
-        && (e.getKeyCode() == KeyEvent.VK_SPACE || e.getKeyCode() == KeyEvent.VK_I)) {
+    } else if (sm.matches(ShortcutManager.ID_VIEWER_TOGGLE_INFO, keyCode, modifiers)
+        || sm.matches(ShortcutManager.ID_VIEWER_TOGGLE_INFO_ALT, keyCode, modifiers)) {
       eventManager.fireSeriesViewerListeners(
           new SeriesViewerEvent(
               eventManager.getSelectedView2dContainer(), null, null, EVENT.TOGGLE_INFO));
-    } else if (e.getKeyCode() == KeyEvent.VK_F11) {
+    } else if (sm.matches(ShortcutManager.ID_VIEWER_FULLSCREEN, keyCode, modifiers)) {
       ImageViewerPlugin<E> c = (ImageViewerPlugin<E>) eventManager.getSelectedView2dContainer();
       if (c != null) {
-        c.maximizedSelectedImagePane(c.getSelectedImagePane(), null);
+        c.maximizedSelectedImagePane(c.getSelectedViewCanvas(), null);
       }
-    } else if (e.isAltDown() && e.getKeyCode() == KeyEvent.VK_L) {
+    } else if (sm.matches(ShortcutManager.ID_VIEWER_ROTATE_LEFT, keyCode, modifiers)) {
       // Counterclockwise
       eventManager
           .getAction(ActionW.ROTATION)
           .ifPresent(a -> a.setSliderValue((a.getSliderValue() + 270) % 360));
-    } else if (e.isAltDown() && e.getKeyCode() == KeyEvent.VK_R) {
+    } else if (sm.matches(ShortcutManager.ID_VIEWER_ROTATE_RIGHT, keyCode, modifiers)) {
       // Clockwise
       eventManager
           .getAction(ActionW.ROTATION)
           .ifPresent(a -> a.setSliderValue((a.getSliderValue() + 90) % 360));
-    } else if (e.isAltDown() && e.getKeyCode() == KeyEvent.VK_F) {
+    } else if (sm.matches(ShortcutManager.ID_VIEWER_FLIP_HORIZONTAL, keyCode, modifiers)) {
       // Flip horizontal
       eventManager.getAction(ActionW.FLIP).ifPresent(f -> f.setSelected(!f.isSelected()));
     } else {

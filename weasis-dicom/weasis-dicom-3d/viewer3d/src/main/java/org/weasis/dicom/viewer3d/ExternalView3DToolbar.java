@@ -9,20 +9,26 @@
  */
 package org.weasis.dicom.viewer3d;
 
+import java.util.List;
 import javax.swing.JButton;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.GuiUtils;
+import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.api.util.ResourceUtil.ActionIcon;
 import org.weasis.core.ui.editor.SeriesViewerFactory;
+import org.weasis.core.ui.editor.SplitLayout;
+import org.weasis.core.ui.editor.ViewerOpenOptions;
+import org.weasis.core.ui.editor.ViewerPlacement;
 import org.weasis.core.ui.editor.ViewerPluginBuilder;
 import org.weasis.core.ui.util.WtoolBar;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.explorer.LoadLocalDicom;
 import org.weasis.dicom.viewer2d.EventManager;
+import org.weasis.dicom.viewer2d.mpr.MprContainer;
 
 public class ExternalView3DToolbar extends WtoolBar {
 
@@ -40,8 +46,19 @@ public class ExternalView3DToolbar extends WtoolBar {
             if (s == null) {
               return;
             }
-            ViewerPluginBuilder.openSequenceInPlugin(
-                factory, s, (DataExplorerModel) s.getTagValue(TagW.ExplorerModel), false, false);
+            boolean split =
+                EventManager.getInstance().getSelectedView2dContainer() instanceof MprContainer;
+            ViewerOpenOptions opts =
+                ViewerOpenOptions.builder()
+                    .placement(
+                        split
+                            ? ViewerPlacement.split(SplitLayout.auto())
+                            : ViewerPlacement.newTab())
+                    .build();
+            List<MediaSeries<MediaElement>> seriesList =
+                List.of((MediaSeries<MediaElement>) (MediaSeries<?>) s);
+            DataExplorerModel model = (DataExplorerModel) s.getTagValue(TagW.ExplorerModel);
+            new ViewerPluginBuilder(factory, seriesList, model, opts).open();
           }
         });
 

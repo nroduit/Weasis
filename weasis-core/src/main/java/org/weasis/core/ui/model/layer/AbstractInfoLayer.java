@@ -49,7 +49,7 @@ import org.weasis.opencv.op.lut.ColorLut;
 import org.weasis.opencv.op.lut.WlParams;
 
 public abstract class AbstractInfoLayer<E extends ImageElement> extends DefaultUUID
-    implements LayerAnnotation {
+    implements LayerAnnotation<E> {
 
   protected static final Color highlight = new Color(255, 153, 153);
   public static final AtomicBoolean applyToAllView = new AtomicBoolean(true);

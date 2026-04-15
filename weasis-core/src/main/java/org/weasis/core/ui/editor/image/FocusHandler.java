@@ -81,7 +81,7 @@ public final class FocusHandler<E extends ImageElement> extends MouseActionAdapt
     if (!container.equals(eventManager.getSelectedView2dContainer())) {
       eventManager.setSelectedView2dContainer(container);
     }
-    if (!container.getSelectedImagePane().equals(viewCanvas)) {
+    if (!container.getSelectedViewCanvas().equals(viewCanvas)) {
       container.setSelectedImagePane(viewCanvas);
     }
   }
@@ -106,7 +106,7 @@ public final class FocusHandler<E extends ImageElement> extends MouseActionAdapt
   }
 
   private void selectViewIfNeeded(ImageViewerPlugin<E> pane) {
-    if (pane.isContainingView(viewCanvas) && pane.getSelectedImagePane() != viewCanvas) {
+    if (pane.isContainingView(viewCanvas) && pane.getSelectedViewCanvas() != viewCanvas) {
       // Register all EventManager actions immediately with this view. Waiting for focus gain
       // is not enough since other MouseListeners may trigger before the focus event occurs,
       // resulting in the view not yet being registered in the EventManager.

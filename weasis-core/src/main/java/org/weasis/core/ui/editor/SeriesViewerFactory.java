@@ -11,15 +11,21 @@ package org.weasis.core.ui.editor;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import javax.swing.Action;
+import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.core.api.gui.util.GUIEntry;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaSeries;
 
 public interface SeriesViewerFactory extends GUIEntry {
 
-  SeriesViewer<?> createSeriesViewer(Map<String, Object> properties);
+  /**
+   * Creates a new {@link SeriesViewer} instance.
+   *
+   * @param options typed open options (may be {@code null} for defaults)
+   * @param model the data explorer model for property-change registration (may be {@code null})
+   */
+  SeriesViewer<?> createSeriesViewer(ViewerOpenOptions options, DataExplorerModel model);
 
   boolean canReadMimeType(String mimeType);
 

@@ -30,7 +30,7 @@
     <weasis.releasenotes>https://github.com/nroduit/Weasis/blob/master/CHANGELOG.md#v466-2025-12-29</weasis.releasenotes>
 
     <felix.framework.version>7.0.5</felix.framework.version>
-    <flatlaf.version>3.7</flatlaf.version>
+    <flatlaf.version>3.7.1</flatlaf.version>
     <miglayout.version>11.4.2</miglayout.version>
     <xz.version>1.11</xz.version>
 
@@ -50,7 +50,7 @@
     <slf4j.version>2.0.17</slf4j.version>
     <logback.version>1.5.25</logback.version>
     <dockingframes.version>1.1.7</dockingframes.version>
-    <weasis-dicom-tools.version>5.34.2-SNAPSHOT</weasis-dicom-tools.version>
+    <weasis-dicom-tools.version>5.34.2</weasis-dicom-tools.version>
     <weasis.core.img.version>4.13.0</weasis.core.img.version>
     <weasis.opencv.native.version>4.13.0-dcm</weasis.opencv.native.version>
     <weasis.opencv.pkg.version>4.13.0-dcm</weasis.opencv.pkg.version>

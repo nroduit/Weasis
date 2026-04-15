@@ -12,6 +12,7 @@ package org.weasis.core.ui.editor.image;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.util.Objects;
+import org.weasis.core.api.gui.util.ShortcutManager;
 import org.weasis.core.ui.model.GraphicModel;
 
 public class DrawingsKeyListeners implements KeyListener {
@@ -23,12 +24,13 @@ public class DrawingsKeyListeners implements KeyListener {
 
   @Override
   public void keyPressed(KeyEvent e) {
+    ShortcutManager sm = ShortcutManager.getInstance();
     GraphicModel graphicManager = canvas.getGraphicManager();
-    if (e.getKeyCode() == KeyEvent.VK_DELETE) {
+    if (sm.matches(ShortcutManager.ID_DRAW_DELETE, e)) {
       graphicManager.deleteSelectedGraphics(canvas, true);
-    } else if (e.isControlDown() && e.getKeyCode() == KeyEvent.VK_D) {
+    } else if (sm.matches(ShortcutManager.ID_DRAW_DESELECT_ALL, e)) {
       graphicManager.setSelectedGraphic(null);
-    } else if (e.isControlDown() && e.getKeyCode() == KeyEvent.VK_A) {
+    } else if (sm.matches(ShortcutManager.ID_DRAW_SELECT_ALL, e)) {
       graphicManager.setSelectedAllGraphics();
     }
     // FIXME arrows is already used with pan!

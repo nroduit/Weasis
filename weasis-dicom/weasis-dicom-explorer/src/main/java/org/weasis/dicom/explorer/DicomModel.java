@@ -67,6 +67,8 @@ import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.api.util.ResourceUtil.OtherIcon;
 import org.weasis.core.api.util.ThreadUtil;
 import org.weasis.core.ui.editor.SeriesViewerFactory;
+import org.weasis.core.ui.editor.ViewerOpenOptions;
+import org.weasis.core.ui.editor.ViewerPlacement;
 import org.weasis.core.ui.editor.ViewerPluginBuilder;
 import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.codec.AbstractKOSpecialElement;
@@ -92,10 +94,8 @@ import org.weasis.dicom.codec.utils.SplittingModalityRules;
 import org.weasis.dicom.codec.utils.SplittingModalityRules.Rule;
 import org.weasis.dicom.codec.utils.SplittingRules;
 import org.weasis.dicom.explorer.HangingProtocols.OpeningViewer;
-import org.weasis.dicom.explorer.imp.DicomDirImport;
 import org.weasis.dicom.explorer.imp.DicomDirLoader;
 import org.weasis.dicom.explorer.imp.DicomZipMediaIO;
-import org.weasis.dicom.explorer.imp.LocalImport;
 import org.weasis.dicom.explorer.main.SeriesPane;
 import org.weasis.dicom.explorer.rs.RsQueryParams;
 import org.weasis.dicom.explorer.wado.DicomManager;
@@ -692,28 +692,25 @@ public class DicomModel implements TreeModel, DataExplorerModel {
           }
         }
         if (!seriesList.isEmpty()) {
-          Map<String, Object> props = createViewerKeyImagePluginProperties();
-          ViewerPluginBuilder builder = new ViewerPluginBuilder(plugin, seriesList, this, props);
-          ViewerPluginBuilder.openSequenceInPlugin(builder);
+          ViewerOpenOptions opts = createViewerKeyImageOpenOptions();
+          ViewerPluginBuilder builder = new ViewerPluginBuilder(plugin, seriesList, this, opts);
+          builder.open();
           this.firePropertyChange(
               new ObservableEvent(
-                  ObservableEvent.BasicAction.SELECT,
-                  props.get(ViewerPluginBuilder.UID),
-                  null,
-                  koSpecialElement));
+                  ObservableEvent.BasicAction.SELECT, opts.uid(), null, koSpecialElement));
         }
       }
     }
   }
 
-  public Map<String, Object> createViewerKeyImagePluginProperties() {
+  /** Creates typed open options for a Key Image viewer plugin. */
+  public ViewerOpenOptions createViewerKeyImageOpenOptions() {
     String uid = UUID.randomUUID().toString();
-    Map<String, Object> props = Collections.synchronizedMap(new HashMap<>());
-    props.put(ViewerPluginBuilder.CMP_ENTRY_BUILD_NEW_VIEWER, false);
-    props.put(ViewerPluginBuilder.BEST_DEF_LAYOUT, false);
-    props.put(ViewerPluginBuilder.ICON, ResourceUtil.getIcon(OtherIcon.KEY_IMAGE));
-    props.put(ViewerPluginBuilder.UID, uid);
-    return props;
+    return ViewerOpenOptions.builder()
+        .placement(ViewerPlacement.newTab())
+        .icon(ResourceUtil.getIcon(OtherIcon.KEY_IMAGE))
+        .uid(uid)
+        .build();
   }
 
   private void splitSeries(DicomMediaIO mediaIo, DicomSeries original, DicomImageElement media) {
@@ -1156,8 +1153,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
       for (int i = 0; i < files.length; i++) {
         files[i] = new File(largs.get(i));
       }
-      OpeningViewer openingViewer =
-          OpeningViewer.getOpeningViewerByLocalKey(LocalImport.LAST_OPEN_VIEWER_MODE);
+      OpeningViewer openingViewer = OpeningViewer.ALL_PATIENTS;
       LOADING_EXECUTOR.execute(new LoadLocalDicom(files, true, DicomModel.this, openingViewer));
     }
 
@@ -1232,13 +1228,11 @@ public class DicomModel implements TreeModel, DataExplorerModel {
           loadSeries = dirImport.readDicomDir();
         }
         if (loadSeries != null && !loadSeries.isEmpty()) {
-          OpeningViewer openingViewer =
-              OpeningViewer.getOpeningViewerByLocalKey(DicomDirImport.LAST_DICOMDIR_OPEN_MODE);
-          LOADING_EXECUTOR.execute(new LoadDicomDir(loadSeries, DicomModel.this, openingViewer));
+          LOADING_EXECUTOR.execute(
+              new LoadDicomDir(loadSeries, DicomModel.this, OpeningViewer.ALL_PATIENTS));
         } else {
-          OpeningViewer openingViewer =
-              OpeningViewer.getOpeningViewerByLocalKey(LocalImport.LAST_OPEN_VIEWER_MODE);
-          LOADING_EXECUTOR.execute(new LoadLocalDicom(files, true, DicomModel.this, openingViewer));
+          LOADING_EXECUTOR.execute(
+              new LoadLocalDicom(files, true, DicomModel.this, OpeningViewer.ALL_PATIENTS));
         }
       }
     }

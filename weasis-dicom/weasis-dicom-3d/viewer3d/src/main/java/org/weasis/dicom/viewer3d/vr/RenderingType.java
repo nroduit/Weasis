@@ -10,37 +10,34 @@
 package org.weasis.dicom.viewer3d.vr;
 
 import org.weasis.dicom.viewer3d.Messages;
-import org.weasis.dicom.viewer3d.vr.View3d.ViewType;
 
 public enum RenderingType {
-  COMPOSITE(Messages.getString("composite"), 0, ViewType.VOLUME3D),
-  MIP(Messages.getString("mip"), 1, ViewType.VOLUME3D),
-  ISO2(Messages.getString("iso.surface"), 2, ViewType.VOLUME3D),
-  SLICE(Messages.getString("slice"), 3, ViewType.SLICE);
-  //  SLICE_AXIAL("MPR Axial", 4, ViewType.AXIAL),
-  //  SLICE_CORONAL("MPR Coronal", 5, ViewType.CORONAL),
-  //  SLICE_SAGITTAL("MPR Sagittal", 6, ViewType.SAGITTAL);
+  COMPOSITE(Messages.getString("composite"), 0, 0),
+  MIP_MAX(Messages.getString("mip.max"), 1, 3),
+  MIP_MIN(Messages.getString("mip.min"), 1, 1),
+  MIP_MEAN(Messages.getString("mip.mean"), 1, 2),
+  ISO2(Messages.getString("iso.surface"), 2, 0);
 
   final int id;
+  final int mipTypeId;
   final String title;
-  final ViewType viewType;
 
-  RenderingType(String title, int id, ViewType viewType) {
+  RenderingType(String title, int id, int mipTypeId) {
     this.title = title;
     this.id = id;
-    this.viewType = viewType;
+    this.mipTypeId = mipTypeId;
   }
 
   public int getId() {
     return id;
   }
 
-  public String getTitle() {
-    return title;
+  public int getMipTypeId() {
+    return mipTypeId;
   }
 
-  public ViewType getViewType() {
-    return viewType;
+  public String getTitle() {
+    return title;
   }
 
   @Override

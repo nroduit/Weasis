@@ -9,73 +9,59 @@
  */
 package org.weasis.core.ui.editor;
 
-import java.awt.Rectangle;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.ObservableEvent;
-import org.weasis.core.api.explorer.model.AbstractFileModel;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
-import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.gui.util.GuiUtils;
-import org.weasis.core.api.media.MimeInspector;
-import org.weasis.core.api.media.data.Codec;
-import org.weasis.core.api.media.data.FileCache;
-import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaReader;
 import org.weasis.core.api.media.data.MediaSeries;
-import org.weasis.core.api.media.data.MediaSeriesGroup;
-import org.weasis.core.api.media.data.MediaSeriesGroupNode;
-import org.weasis.core.api.media.data.Series;
-import org.weasis.core.api.media.data.TagW;
-import org.weasis.core.api.service.BundleTools;
-import org.weasis.core.ui.model.GraphicModel;
-import org.weasis.core.ui.serialize.XmlSerializer;
 
 public class ViewerPluginBuilder {
-  private static final Logger LOGGER = LoggerFactory.getLogger(ViewerPluginBuilder.class);
-
-  public static final String CMP_ENTRY_BUILD_NEW_VIEWER = "cmp.entry.viewer";
-  public static final String BEST_DEF_LAYOUT = "best.def.layout";
-  public static final String OPEN_IN_SELECTION = "add.in.selected.view"; // For only one image
-  public static final String ADD_IN_SELECTED_VIEW = "add.in.selected.view"; // For non DICOM images
-  public static final String SCREEN_BOUND = "screen.bound";
-  public static final String ICON = "plugin.icon";
-  public static final String UID = "plugin.uid";
-
   public static final FileModel DefaultDataModel = new FileModel();
+
   private final SeriesViewerFactory factory;
   private final List<? extends MediaSeries<? extends MediaElement>> series;
   private final DataExplorerModel model;
-  private final Map<String, Object> properties;
+  private final ViewerOpenOptions options;
 
+  // ------------------------------------------------------------------
+  //  Constructor
+  // ------------------------------------------------------------------
+
+  /**
+   * Creates a builder with typed {@link ViewerOpenOptions}.
+   *
+   * @param factory the factory that will create the viewer
+   * @param series the series to display
+   * @param model the data explorer model
+   * @param options typed open options (may be {@code null} for defaults)
+   */
   public ViewerPluginBuilder(
       SeriesViewerFactory factory,
       List<? extends MediaSeries<? extends MediaElement>> series,
       DataExplorerModel model,
-      Map<String, Object> props) {
+      ViewerOpenOptions options) {
     if (factory == null || series == null || model == null) {
       throw new IllegalArgumentException();
     }
     this.factory = factory;
     this.series = series;
     this.model = model;
-    this.properties = props == null ? Collections.synchronizedMap(new HashMap<>()) : props;
+    this.options = options == null ? ViewerOpenOptions.defaults() : options;
   }
+
+  // ------------------------------------------------------------------
+  //  Accessors
+  // ------------------------------------------------------------------
 
   public SeriesViewerFactory getFactory() {
     return factory;
   }
 
+  @SuppressWarnings("unchecked")
   public List<MediaSeries<MediaElement>> getSeries() {
     return (List<MediaSeries<MediaElement>>) series;
   }
@@ -84,66 +70,64 @@ public class ViewerPluginBuilder {
     return model;
   }
 
-  public Map<String, Object> getProperties() {
-    return properties;
+  /** Returns the typed open options. */
+  public ViewerOpenOptions getViewerOpenOptions() {
+    return options;
   }
 
-  public static void openSequenceInPlugin(
-      SeriesViewerFactory factory,
+  // ------------------------------------------------------------------
+  //  Open orchestration
+  // ------------------------------------------------------------------
+
+  /**
+   * Terminal operation: fires a {@code REGISTER} event through the model, causing the main window
+   * listener to create or reuse a viewer and display the series.
+   */
+  public void open() {
+    model.firePropertyChange(
+        new ObservableEvent(ObservableEvent.BasicAction.REGISTER, model, null, this));
+  }
+
+  // ------------------------------------------------------------------
+  //  Default-viewer convenience openers
+  // ------------------------------------------------------------------
+
+  /**
+   * Looks up the best factory for the series' MIME type and opens it.
+   *
+   * @param series the series to display
+   * @param model the data explorer model (falls back to {@link #DefaultDataModel} if {@code null})
+   * @param options typed open options
+   */
+  public static void openInDefaultViewer(
       MediaSeries<? extends MediaElement> series,
       DataExplorerModel model,
-      boolean compareEntryToBuildNewViewer,
-      boolean removeOldSeries) {
-    if (factory == null || series == null || model == null) {
+      ViewerOpenOptions options) {
+    if (series == null) {
       return;
     }
-    openSequenceInPlugin(
-        factory, List.of(series), model, compareEntryToBuildNewViewer, removeOldSeries);
+    SeriesViewerFactory factory = GuiUtils.getUICore().getViewerFactory(series.getMimeType());
+    if (factory != null) {
+      new ViewerPluginBuilder(
+              factory, List.of(series), model == null ? DefaultDataModel : model, options)
+          .open();
+    }
   }
 
-  public static void openSequenceInPlugin(
-      SeriesViewerFactory factory,
+  /**
+   * Groups series by MIME type, looks up the best factory for each, and opens them.
+   *
+   * @param series the series to display
+   * @param model the data explorer model
+   * @param options typed open options
+   */
+  public static void openInDefaultViewer(
       List<? extends MediaSeries<? extends MediaElement>> series,
       DataExplorerModel model,
-      boolean compareEntryToBuildNewViewer,
-      boolean removeOldSeries) {
-    openSequenceInPlugin(
-        factory, series, model, compareEntryToBuildNewViewer, removeOldSeries, null);
-  }
-
-  public static void openSequenceInPlugin(
-      SeriesViewerFactory factory,
-      List<? extends MediaSeries<? extends MediaElement>> series,
-      DataExplorerModel model,
-      boolean compareEntryToBuildNewViewer,
-      boolean removeOldSeries,
-      Rectangle screenBound) {
-    if (factory == null || series == null || model == null) {
+      ViewerOpenOptions options) {
+    if (series == null || series.isEmpty()) {
       return;
     }
-    Map<String, Object> props = Collections.synchronizedMap(new HashMap<>());
-    props.put(CMP_ENTRY_BUILD_NEW_VIEWER, compareEntryToBuildNewViewer);
-    props.put(BEST_DEF_LAYOUT, removeOldSeries);
-    props.put(SCREEN_BOUND, screenBound);
-    ViewerPluginBuilder builder = new ViewerPluginBuilder(factory, series, model, props);
-    model.firePropertyChange(
-        new ObservableEvent(ObservableEvent.BasicAction.REGISTER, model, null, builder));
-  }
-
-  public static void openSequenceInPlugin(ViewerPluginBuilder builder) {
-    if (builder == null) {
-      return;
-    }
-    DataExplorerModel model = builder.getModel();
-    model.firePropertyChange(
-        new ObservableEvent(ObservableEvent.BasicAction.REGISTER, model, null, builder));
-  }
-
-  public static void openSequenceInDefaultPlugin(
-      List<? extends MediaSeries<? extends MediaElement>> series,
-      DataExplorerModel model,
-      boolean compareEntryToBuildNewViewer,
-      boolean removeOldSeries) {
     ArrayList<String> mimes = new ArrayList<>();
     for (MediaSeries<?> s : series) {
       String mime = s.getMimeType();
@@ -160,161 +144,36 @@ public class ViewerPluginBuilder {
             seriesList.add(s);
           }
         }
-        openSequenceInPlugin(
-            plugin, seriesList, model, compareEntryToBuildNewViewer, removeOldSeries);
+        new ViewerPluginBuilder(plugin, seriesList, model, options).open();
       }
     }
   }
 
-  public static void openSequenceInDefaultPlugin(
-      MediaSeries<? extends MediaElement> series,
-      DataExplorerModel model,
-      boolean compareEntryToBuildNewViewer,
-      boolean removeOldSeries) {
-    if (series != null) {
-      String mime = series.getMimeType();
-      SeriesViewerFactory plugin = GuiUtils.getUICore().getViewerFactory(mime);
-      openSequenceInPlugin(
-          plugin,
-          series,
-          model == null ? DefaultDataModel : model,
-          compareEntryToBuildNewViewer,
-          removeOldSeries);
-    }
-  }
-
-  public static void openSequenceInDefaultPlugin(
-      MediaElement media,
-      DataExplorerModel model,
-      boolean compareEntryToBuildNewViewer,
-      boolean bestDefaultLayout) {
+  /**
+   * Extracts the series from the media element's reader and opens it in the default viewer.
+   *
+   * @param media the media element
+   * @param model the data explorer model
+   * @param options typed open options
+   */
+  public static void openInDefaultViewer(
+      MediaElement media, DataExplorerModel model, ViewerOpenOptions options) {
     if (media != null) {
-      openSequenceInDefaultPlugin(
-          media.getMediaReader().getMediaSeries(),
-          model,
-          compareEntryToBuildNewViewer,
-          bestDefaultLayout);
+      openInDefaultViewer(media.getMediaReader().getMediaSeries(), model, options);
     }
   }
 
-  public static void openSequenceInDefaultPlugin(
-      Path file, boolean compareEntryToBuildNewViewer, boolean bestDefaultLayout) {
-    MediaReader<MediaElement> reader = getMedia(file);
+  /**
+   * Reads a file, builds a series with the default model, and opens it in the default viewer.
+   *
+   * @param file the file to open
+   * @param options typed open options
+   */
+  public static void openInDefaultViewer(Path file, ViewerOpenOptions options) {
+    MediaReader<MediaElement> reader = MediaFactory.getMedia(file);
     if (reader != null) {
-      MediaSeries<MediaElement> s = buildMediaSeriesWithDefaultModel(reader);
-      openSequenceInDefaultPlugin(
-          s, DefaultDataModel, compareEntryToBuildNewViewer, bestDefaultLayout);
-    }
-  }
-
-  public static MediaReader<MediaElement> getMedia(Path file) {
-    return getMedia(file, true);
-  }
-
-  public static MediaReader<MediaElement> getMedia(Path file, boolean systemReader) {
-    if (file != null && Files.isReadable(file)) {
-      // If file has been downloaded or copied
-      boolean cache = file.startsWith(AppProperties.FILE_CACHE_DIR.toString());
-      String mimeType = MimeInspector.getMimeType(file);
-      if (mimeType != null) {
-        Codec<?> codec = BundleTools.getCodec(mimeType, "dcm4che"); // NON-NLS
-        if (codec != null) {
-          MediaReader mreader = codec.getMediaIO(file.toUri(), mimeType, null);
-          if (cache) {
-            mreader.getFileCache().setOriginalTempFile(file);
-          }
-          return mreader;
-        }
-      }
-      if (systemReader) {
-        MediaReader<MediaElement> mreader = new DefaultMimeIO(file.toUri(), mimeType);
-        if (cache) {
-          mreader.getFileCache().setOriginalTempFile(file);
-        }
-        return mreader;
-      }
-    }
-    return null;
-  }
-
-  public static MediaSeries<MediaElement> buildMediaSeriesWithDefaultModel(MediaReader reader) {
-    return buildMediaSeriesWithDefaultModel(reader, null, null, null);
-  }
-
-  public static MediaSeries<MediaElement> buildMediaSeriesWithDefaultModel(
-      MediaReader reader, String groupUID, TagW groupName, String groupValue) {
-    return buildMediaSeriesWithDefaultModel(reader, groupUID, groupName, groupValue, null);
-  }
-
-  public static MediaSeries<MediaElement> buildMediaSeriesWithDefaultModel(
-      MediaReader<MediaElement> reader,
-      String groupUID,
-      TagW groupName,
-      String groupValue,
-      String seriesUID) {
-    if (reader instanceof DefaultMimeIO) {
-      return reader.getMediaSeries();
-    }
-    MediaSeries<MediaElement> series = null;
-    // Require to read the header
-    MediaElement[] medias = reader.getMediaElement();
-    if (medias == null) {
-      return null;
-    }
-
-    String sUID = seriesUID == null ? UUID.randomUUID().toString() : seriesUID;
-    String gUID = groupUID == null ? UUID.randomUUID().toString() : groupUID;
-    MediaSeriesGroup group1 =
-        DefaultDataModel.getHierarchyNode(MediaSeriesGroupNode.rootNode, gUID);
-    if (group1 == null) {
-      group1 = new MediaSeriesGroupNode(TagW.Group, gUID, AbstractFileModel.group.tagView());
-      group1.setTagNoNull(groupName, groupValue);
-      DefaultDataModel.addHierarchyNode(MediaSeriesGroupNode.rootNode, group1);
-    }
-
-    MediaSeriesGroup group2 = DefaultDataModel.getHierarchyNode(group1, sUID);
-    if (group2 instanceof Series) {
-      series = (Series<MediaElement>) group2;
-    }
-
-    try {
-      if (series == null) {
-        series = reader.getMediaSeries();
-        series.setTag(TagW.ExplorerModel, DefaultDataModel);
-        DefaultDataModel.addHierarchyNode(group1, series);
-      } else {
-        // Test if SOPInstanceUID already exists
-        TagW sopTag = TagW.get("SOPInstanceUID");
-        if (((Series<?>) series).hasMediaContains(sopTag, reader.getTagValue(sopTag))) {
-          return series;
-        }
-
-        for (MediaElement media : medias) {
-          series.addMedia(media);
-        }
-      }
-
-      for (MediaElement media : medias) {
-        openAssociatedGraphics(media);
-      }
-
-    } catch (Exception e) {
-      LOGGER.error("Build series error", e);
-    }
-    return series;
-  }
-
-  public static void openAssociatedGraphics(MediaElement media) {
-    if (media instanceof ImageElement) {
-      FileCache fc = media.getFileCache();
-      Optional<Path> fo = fc.getOriginalFile();
-      if (fc.isLocalFile() && fo.isPresent()) {
-        Path gpxFile = Path.of(fo.get() + ".xml");
-        GraphicModel graphicModel = XmlSerializer.readPresentationModel(gpxFile.toFile());
-        if (graphicModel != null) {
-          media.setTag(TagW.PresentationModel, graphicModel);
-        }
-      }
+      MediaSeries<MediaElement> s = MediaFactory.buildMediaSeriesWithDefaultModel(reader);
+      openInDefaultViewer(s, DefaultDataModel, options);
     }
   }
 }

@@ -129,7 +129,7 @@ public class HistogramView extends JComponent
 
   private void updatePane(SeriesViewerEvent event) {
     if (event.getSeriesViewer() instanceof ImageViewerPlugin) {
-      view2DPane = ((ImageViewerPlugin<?>) event.getSeriesViewer()).getSelectedImagePane();
+      view2DPane = ((ImageViewerPlugin<?>) event.getSeriesViewer()).getSelectedViewCanvas();
       displayHistogram();
     } else {
       view2DPane = null;
