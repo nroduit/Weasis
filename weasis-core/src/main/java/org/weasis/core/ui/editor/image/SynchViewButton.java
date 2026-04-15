@@ -25,8 +25,7 @@ public class SynchViewButton extends ViewButton {
 
   public enum State {
     OFF("Off", IconColor.ACTIONS_RED.getColor()),
-    ON("On", GuiUtils.IconColor.ACTIONS_GREEN.getColor()),
-    MANUAL("Manual", IconColor.ACTIONS_BLUE.getColor());
+    ON("On", GuiUtils.IconColor.ACTIONS_GREEN.getColor());
 
     private final String name;
     private final FlatSVGIcon icon;

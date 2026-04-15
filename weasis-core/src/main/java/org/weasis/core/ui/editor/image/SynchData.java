@@ -82,6 +82,14 @@ public class SynchData implements Copyable<SynchData> {
     return autoSyncState == State.ON || manualSyncState == State.ON;
   }
 
+  public boolean isAutoSynchActivated() {
+    return autoSyncState == State.ON;
+  }
+
+  public boolean isManualSynchActivated() {
+    return manualSyncState == State.ON;
+  }
+
   @Override
   public SynchData copy() {
     SynchData synchData = new SynchData(this);

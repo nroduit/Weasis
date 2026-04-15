@@ -9,15 +9,18 @@
  */
 package org.weasis.core.ui.editor.image;
 
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 
 public class ViewSynchData extends SynchData {
 
-  protected ManualSyncData manualSyncData;
+  protected Set<ManualSyncData> manualSyncDataSet;
 
   private boolean orphan; // view that does not share frUID, not synced automatically
   private boolean canBeManuallySynced;
+  private String frameOfReferenceUID;
 
   public ViewSynchData(Mode mode, Map<String, Boolean> actions, boolean synch) {
     if (actions == null) {
@@ -25,7 +28,7 @@ public class ViewSynchData extends SynchData {
     }
     super(mode, actions, synch);
     this.orphan = false;
-        this.canBeManuallySynced = false;
+    this.canBeManuallySynced = false;
   }
 
   public ViewSynchData(ViewSynchData synchData) {
@@ -34,6 +37,7 @@ public class ViewSynchData extends SynchData {
     super(synchData);
     this.orphan = synchData.orphan;
     this.canBeManuallySynced = synchData.canBeManuallySynced;
+    this.frameOfReferenceUID = synchData.frameOfReferenceUID;
   }
 
   public boolean isOrphan() {
@@ -51,25 +55,49 @@ public class ViewSynchData extends SynchData {
     return synchData;
   }
 
-  public void setManualSyncData(double sourceLocation, double targetLocation, ViewCanvas<?> targetPane) {
-    this.manualSyncData = new ManualSyncData(sourceLocation, targetLocation, targetPane);
-  }
-
-  public void removeManualSyncData() {
-    this.manualSyncData = null;
-  }
-
-  public ManualSyncData getManualSyncData() {
-    return manualSyncData;
-  }
-
-    public boolean isCanBeManuallySynced() {
-        return canBeManuallySynced;
+  public void addManualSyncData(double sourceLocation, double targetLocation, ViewCanvas<?> targetPane) {
+    if (this.manualSyncDataSet == null) {
+      this.manualSyncDataSet = new HashSet<>();
     }
+    this.manualSyncDataSet.add(new ManualSyncData(sourceLocation, targetLocation, targetPane));
+  }
 
-    public void setCanBeManuallySynced(boolean canBeManuallySynced) {
-        this.canBeManuallySynced = canBeManuallySynced;
+  public void removeManualSyncData(ManualSyncData manualSyncData) {
+    this.manualSyncDataSet.remove(manualSyncData);
+  }
+
+  public void emptyManualSyncDataSet() {
+    this.manualSyncDataSet.clear();
+  }
+
+  public Set<ManualSyncData> getManualSyncDataSet() {
+    return manualSyncDataSet;
+  }
+
+  public ManualSyncData getManualSyncDataByPane(ViewCanvas<?> targetPane) {
+    for (ManualSyncData data : manualSyncDataSet) {
+      if (data.getTargetPane() == targetPane) {
+        return data;
+      }
     }
+    return null;
+  }
+
+  public boolean isCanBeManuallySynced() {
+      return canBeManuallySynced;
+  }
+
+  public void setCanBeManuallySynced(boolean canBeManuallySynced) {
+      this.canBeManuallySynced = canBeManuallySynced;
+  }
+
+  public String getFrameOfReferenceUID() {
+    return frameOfReferenceUID;
+  }
+
+  public void setFrameOfReferenceUID(String frameOfReferenceUID) {
+    this.frameOfReferenceUID = frameOfReferenceUID;
+  }
 
     public class ManualSyncData {
 
