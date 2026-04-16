@@ -83,7 +83,8 @@ public abstract class SynchManager<E extends ImageElement> {
     }
 
     // Mark orphans
-    ViewSynchData mainSynch = (ViewSynchData) viewPane.getActionsInView().get(ActionW.SYNCH_LINK.cmd());
+    ViewSynchData mainSynch =
+        (ViewSynchData) viewPane.getActionsInView().get(ActionW.SYNCH_LINK.cmd());
     if (mainSynch != null) {
       boolean isOrphan = mainFruid == null || frameOfReferenceCount.getOrDefault(mainFruid, 0) <= 1;
       mainSynch.setOrphan(isOrphan);
@@ -114,8 +115,7 @@ public abstract class SynchManager<E extends ImageElement> {
     return null;
   }
 
-  protected boolean hasSameFrUid(
-          MediaSeries<E> series1, MediaSeries<E> series2) {
+  protected boolean hasSameFrUid(MediaSeries<E> series1, MediaSeries<E> series2) {
     if (series1 == null || series2 == null) {
       return false;
     }
@@ -133,7 +133,8 @@ public abstract class SynchManager<E extends ImageElement> {
     Boolean forceSyncOrphans = (Boolean) eventManager.getOptions().get("force.sync.orphans");
 
     for (ViewCanvas<E> pane : panes) {
-      ViewSynchData paneSynch = (ViewSynchData) pane.getActionsInView().get(ActionW.SYNCH_LINK.cmd());
+      ViewSynchData paneSynch =
+          (ViewSynchData) pane.getActionsInView().get(ActionW.SYNCH_LINK.cmd());
 
       // Skip orphan views unless force sync is enabled
       if (paneSynch != null && paneSynch.isOrphan() && !Boolean.TRUE.equals(forceSyncOrphans)) {
@@ -164,21 +165,21 @@ public abstract class SynchManager<E extends ImageElement> {
   protected void applyManualSync(ViewCanvas<E> viewPane, ViewSynchData synchData) {
     final List<ViewCanvas<E>> panes = eventManager.getSelectedView2dContainer().getView2ds();
     // UnsupportedOperationException !!
-    //panes.remove(viewPane);
-    //panes.remove(synchData.getManualSyncData().getTargetPane());
+    // panes.remove(viewPane);
+    // panes.remove(synchData.getManualSyncData().getTargetPane());
 
     // recompute "canBeManuallySynced", update buttons on views
     // Activate synchronize menu
     ComboItemListener<SynchView> synchAction = eventManager.getAction(ActionW.SYNCH).orElse(null);
     if (synchAction != null && synchAction.getSelectedItem() instanceof SynchView sel) {
-      //sel.getSynchData().setAutoSyncState(SyncState.OFF);
+      // sel.getSynchData().setAutoSyncState(SyncState.OFF);
       sel.getSynchData().setManualSyncState(SyncState.ON);
       Optional<ToggleButtonListener> synchMode = eventManager.getAction(ActionW.SYNCH_MODE);
       synchMode.ifPresent(
-              e -> {
-                e.setSelectedWithoutTriggerAction(true);
-                e.enableAction(true);
-              });
+          e -> {
+            e.setSelectedWithoutTriggerAction(true);
+            e.enableAction(true);
+          });
     }
   }
 

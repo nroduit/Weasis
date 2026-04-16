@@ -406,7 +406,8 @@ public abstract class ImageViewerEventManager<E extends ImageElement> implements
             .ifPresent(
                 a -> {
                   if (a.getSelectedItem() instanceof SynchView sel) {
-                    // If selected is false, deactivate manual sync, if selected is true, manual sync is deactivated as well since it must be set from the view
+                    // If selected is false, deactivate manual sync, if selected is true, manual
+                    // sync is deactivated as well since it must be set from the view
                     sel.getSynchData().setManualSyncState(SyncState.OFF);
                     sel.getSynchData().setAutoSyncState(SyncState.OFF);
                     sel.getSynchData().setOriginal(selected);

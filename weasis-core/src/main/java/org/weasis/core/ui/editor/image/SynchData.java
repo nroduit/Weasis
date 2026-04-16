@@ -22,9 +22,7 @@ public class SynchData implements Copyable<SynchData> {
     TILE
   }
 
-  /**
-   * Domain-level synchronization state. Independent of any UI widget.
-   */
+  /** Domain-level synchronization state. Independent of any UI widget. */
   public enum SyncState {
     OFF,
     ON
@@ -35,11 +33,12 @@ public class SynchData implements Copyable<SynchData> {
   protected SyncState autoSyncState;
 
   /**
-   * Indicates whether this SynchData has not been user-modified since the last
-   * {@code updateAllListeners} call. When {@code true}, the sync configuration is in its
-   * default/computed state. Set to {@code false} when the user manually toggles sync on/off.
+   * Indicates whether this SynchData has not been user-modified since the last {@code
+   * updateAllListeners} call. When {@code true}, the sync configuration is in its default/computed
+   * state. Set to {@code false} when the user manually toggles sync on/off.
    */
   private boolean original;
+
   protected SyncState manualSyncState;
 
   public SynchData(Mode mode, Map<String, Boolean> actions, boolean synch) {

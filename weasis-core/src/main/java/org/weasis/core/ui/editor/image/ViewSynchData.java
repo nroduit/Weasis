@@ -49,7 +49,8 @@ public class ViewSynchData extends SynchData {
     return synchData;
   }
 
-  public void addManualSyncData(double sourceLocation, double targetLocation, ViewCanvas<?> targetPane) {
+  public void addManualSyncData(
+      double sourceLocation, double targetLocation, ViewCanvas<?> targetPane) {
     this.manualSyncDataSet.add(new ManualSyncData(sourceLocation, targetLocation, targetPane));
   }
 
@@ -75,11 +76,11 @@ public class ViewSynchData extends SynchData {
   }
 
   public boolean isCanBeManuallySynced() {
-      return canBeManuallySynced;
+    return canBeManuallySynced;
   }
 
   public void setCanBeManuallySynced(boolean canBeManuallySynced) {
-      this.canBeManuallySynced = canBeManuallySynced;
+    this.canBeManuallySynced = canBeManuallySynced;
   }
 
   public String getFrameOfReferenceUID() {
@@ -90,41 +91,40 @@ public class ViewSynchData extends SynchData {
     this.frameOfReferenceUID = frameOfReferenceUID;
   }
 
-    public static class ManualSyncData {
+  public static class ManualSyncData {
 
-      protected double sourceLocation;
-      protected double targetLocation;
-      protected ViewCanvas<?> targetPane;
+    protected double sourceLocation;
+    protected double targetLocation;
+    protected ViewCanvas<?> targetPane;
 
-      public ManualSyncData(double sourceLocation, double targetLocation, ViewCanvas<?> targetPane) {
-        this.sourceLocation = sourceLocation;
-        this.targetLocation = targetLocation;
-        this.targetPane = targetPane;
-      }
-
-      public double getSourceLocation() {
-        return sourceLocation;
-      }
-
-      public void setSourceLocation(double sourceLocation) {
-        this.sourceLocation = sourceLocation;
-      }
-
-      public double getTargetLocation() {
-        return targetLocation;
-      }
-
-      public void setTargetLocation(double targetLocation) {
-        this.targetLocation = targetLocation;
-      }
-
-      public ViewCanvas<?> getTargetPane() {
-        return targetPane;
-      }
-
-      public void setTargetPane(ViewCanvas<?> targetPane) {
-        this.targetPane = targetPane;
-      }
+    public ManualSyncData(double sourceLocation, double targetLocation, ViewCanvas<?> targetPane) {
+      this.sourceLocation = sourceLocation;
+      this.targetLocation = targetLocation;
+      this.targetPane = targetPane;
     }
 
+    public double getSourceLocation() {
+      return sourceLocation;
+    }
+
+    public void setSourceLocation(double sourceLocation) {
+      this.sourceLocation = sourceLocation;
+    }
+
+    public double getTargetLocation() {
+      return targetLocation;
+    }
+
+    public void setTargetLocation(double targetLocation) {
+      this.targetLocation = targetLocation;
+    }
+
+    public ViewCanvas<?> getTargetPane() {
+      return targetPane;
+    }
+
+    public void setTargetPane(ViewCanvas<?> targetPane) {
+      this.targetPane = targetPane;
+    }
+  }
 }
