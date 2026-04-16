@@ -30,7 +30,7 @@ import org.weasis.core.ui.editor.image.SynchData;
 import org.weasis.core.ui.editor.image.SynchData.Mode;
 import org.weasis.core.ui.editor.image.SynchManager;
 import org.weasis.core.ui.editor.image.SynchView;
-import org.weasis.core.ui.editor.image.SynchViewButton.State;
+import org.weasis.core.ui.editor.image.SynchData.SyncState;
 import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.editor.image.ViewSynchData;
 import org.weasis.core.ui.editor.image.ViewerPlugin;
@@ -55,7 +55,7 @@ public class DicomSynchManager extends SynchManager<DicomImageElement> {
     if (viewerPlugin == null) {
       return;
     }
-    ViewCanvas<DicomImageElement> viewPane = viewerPlugin.getSelectedImagePane();
+    ViewCanvas<DicomImageElement> viewPane = viewerPlugin.getSelectedViewCanvas();
     if (viewPane == null) {
       return;
     }
@@ -136,15 +136,6 @@ public class DicomSynchManager extends SynchManager<DicomImageElement> {
     String paneFrameUID = TagD.getTagValue(paneSeries, Tag.FrameOfReferenceUID, String.class);
     return frameOfReferenceUID.equals(paneFrameUID)
         && !ImageOrientation.hasSameOrientation(series, paneSeries);
-  }
-
-  private void updatePaneSynchData(ViewCanvas<DicomImageElement> pane, SynchData synch) {
-    SynchData oldSynch = (SynchData) pane.getActionValue(ActionW.SYNCH_LINK.cmd());
-    if (oldSynch == null || !oldSynch.getMode().equals(synch.getMode())) {
-      // pane.setActionsInView(ActionW.SYNCH_LINK.cmd(), synch);
-      oldSynch = synch;
-    }
-    //pane.setActionsInView(ActionW.SYNCH_LINK.cmd(), oldSynch);
   }
 
   private boolean handleActiveSync(
@@ -282,7 +273,7 @@ public class DicomSynchManager extends SynchManager<DicomImageElement> {
       e.enableAction(true);
     });
     if (synchActivated) {
-      synch.setAutoSyncState(State.ON);
+      synch.setAutoSyncState(SyncState.ON);
     }
 
     boolean manualSyncActivated = synch.isManualSynchActivated();
@@ -345,11 +336,11 @@ public class DicomSynchManager extends SynchManager<DicomImageElement> {
         paneSeries, pane, synchActivated, slicePosition, paneFrameUID, frUidsMap)) {
       configurePaneSynchData(pane, series, paneSeries, synch, paneFrameUID);
     } else if (sd != null && sd.isAutoSynchActivated()) {
-      sd.setAutoSyncState(State.OFF);
+      sd.setAutoSyncState(SyncState.OFF);
     }
 
     // If manual sync already activated, add listener to panes synced
-    if (synch.getManualSyncState() == State.ON && sd != null && sd.getManualSyncDataSet() != null && !sd.getManualSyncDataSet().isEmpty()) {
+    if (synch.getManualSyncState() == SyncState.ON && sd != null && !sd.getManualSyncDataSet().isEmpty()) {
       eventManager.addPropertyChangeListener(ActionW.SYNCH.cmd(), pane);
     }
 
@@ -357,8 +348,8 @@ public class DicomSynchManager extends SynchManager<DicomImageElement> {
       // If we get here, we have several views that are automatically synced in the container, but if the current one was also automatically synchronized, its SynchData would have been set before
       // We are in the case where multiple other views are automatically synced but not that one
       sd = getOrCreateSynchData(pane, synch);
-      sd.setAutoSyncState(State.OFF);
-      sd.setManualSyncState(State.OFF);
+      sd.setAutoSyncState(SyncState.OFF);
+      sd.setManualSyncState(SyncState.OFF);
     }
     if (!manuallySyncableViews.isEmpty()) {
         // Configure for manual synchronization
@@ -421,9 +412,8 @@ public class DicomSynchManager extends SynchManager<DicomImageElement> {
     } else {
       return;
     }
-    paneSynch.setAutoSyncState(State.ON);
+    paneSynch.setAutoSyncState(SyncState.ON);
     paneSynch.setFrameOfReferenceUID(paneFrameUID);
-    //System.err.println(paneSeries + " set fruid to " + paneFrameUID);
 
     eventManager.getAction(ActionW.SYNCH_MODE).ifPresent(e -> {
       e.setSelectedWithoutTriggerAction(true);
@@ -484,8 +474,8 @@ public class DicomSynchManager extends SynchManager<DicomImageElement> {
   private void handleSingleViewInStack() {
     ComboItemListener<SynchView> synchAction = eventManager.getAction(ActionW.SYNCH).orElse(null);
     if (synchAction != null && synchAction.getSelectedItem() instanceof SynchView sel) {
-      sel.getSynchData().setAutoSyncState(State.OFF);
-      sel.getSynchData().setManualSyncState(State.OFF);
+      sel.getSynchData().setAutoSyncState(SyncState.OFF);
+      sel.getSynchData().setManualSyncState(SyncState.OFF);
       Optional<ToggleButtonListener> synchMode = eventManager.getAction(ActionW.SYNCH_MODE);
       synchMode.ifPresent(
           e -> {

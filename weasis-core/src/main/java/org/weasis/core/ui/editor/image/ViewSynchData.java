@@ -9,31 +9,25 @@
  */
 package org.weasis.core.ui.editor.image;
 
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class ViewSynchData extends SynchData {
 
-  protected Set<ManualSyncData> manualSyncDataSet;
+  protected final Set<ManualSyncData> manualSyncDataSet = ConcurrentHashMap.newKeySet();
 
   private boolean orphan; // view that does not share frUID, not synced automatically
   private boolean canBeManuallySynced;
   private String frameOfReferenceUID;
 
   public ViewSynchData(Mode mode, Map<String, Boolean> actions, boolean synch) {
-    if (actions == null) {
-      throw new IllegalArgumentException("A parameter is null!");
-    }
     super(mode, actions, synch);
     this.orphan = false;
     this.canBeManuallySynced = false;
   }
 
   public ViewSynchData(ViewSynchData synchData) {
-    // Deep copy ?
-    Objects.requireNonNull(synchData);
     super(synchData);
     this.orphan = synchData.orphan;
     this.canBeManuallySynced = synchData.canBeManuallySynced;
@@ -56,9 +50,6 @@ public class ViewSynchData extends SynchData {
   }
 
   public void addManualSyncData(double sourceLocation, double targetLocation, ViewCanvas<?> targetPane) {
-    if (this.manualSyncDataSet == null) {
-      this.manualSyncDataSet = new HashSet<>();
-    }
     this.manualSyncDataSet.add(new ManualSyncData(sourceLocation, targetLocation, targetPane));
   }
 
@@ -99,7 +90,7 @@ public class ViewSynchData extends SynchData {
     this.frameOfReferenceUID = frameOfReferenceUID;
   }
 
-    public class ManualSyncData {
+    public static class ManualSyncData {
 
       protected double sourceLocation;
       protected double targetLocation;

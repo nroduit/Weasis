@@ -10,7 +10,6 @@
 package org.weasis.core.ui.editor.image;
 
 import java.awt.Color;
-import java.awt.Component;
 import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.Font;
@@ -41,7 +40,6 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import javax.swing.Action;
-import javax.swing.Icon;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPopupMenu;
@@ -79,7 +77,7 @@ import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.service.AuditLog;
 import org.weasis.core.api.util.FontItem;
 import org.weasis.core.ui.docking.DockableTool;
-import org.weasis.core.ui.editor.image.SynchViewButton.State;
+import org.weasis.core.ui.editor.image.SynchData.SyncState;
 import org.weasis.core.ui.editor.image.dockable.MeasureTool;
 import org.weasis.core.ui.model.AbstractGraphicModel;
 import org.weasis.core.ui.model.GraphicModel;
@@ -232,7 +230,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
 
     if (synchData == null) {
         if (synchButton != null) {
-            synchButton.setState(State.OFF);
+            synchButton.setState(SynchViewButton.State.OFF);
             synchButton.setVisible(false);
         }
         if (manualSynchButton != null) {
@@ -251,11 +249,11 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
                         if (synchButton.getState() == SynchViewButton.State.OFF) {
                           synchButton.setState(SynchViewButton.State.ON);
                           sd.setOriginal(false);
-                          sd.setAutoSyncState(State.ON);
+                          sd.setAutoSyncState(SyncState.ON);
                         } else {
                           synchButton.setState(SynchViewButton.State.OFF);
                           sd.setOriginal(false);
-                          sd.setAutoSyncState(State.OFF);
+                          sd.setAutoSyncState(SyncState.OFF);
                         }
                       });
       synchButton.setPosition(GridBagConstraints.EAST);
@@ -265,58 +263,17 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     }
 
     //TODO Display only if it makes sense, multiple views with different fruids and same orientation
-      if (manualSynchButton == null && synchData.isCanBeManuallySynced()) {
+      if (manualSynchButton == null) {
           manualSynchButton = new ManualSynchViewButton(
                   (invoker, x, y) -> {
+                    // Always read synchData fresh — it may have been replaced since button creation
+                    ViewSynchData currentSynchData = (ViewSynchData) actionsInView.get(ActionW.SYNCH_LINK.cmd());
+                    if (currentSynchData == null) return;
+
                     if (manualSynchButton.getState() == ManualSynchViewButton.State.OFF) {
-                      // Get all series in container with their FrameOfReferenceUID
-                      ImageViewerPlugin<E> container = eventManager.getSelectedView2dContainer();
-                      if (container == null) return;
-
-                      ViewCanvas<E> pane = container.getSelectedImagePane();
-                      List<ViewCanvas<E>> list = container.getImagePanels().stream()
-                              .filter(view -> view != null && view.getSeries() != null
-                                      && eventManager.synchManager.hasSameOrientation(view.getSeries(), pane.getSeries())
-                                      && !eventManager.synchManager.hasSameFrUid(pane.getSeries(), view.getSeries()))
-                              .toList();
-
-                      SynchData globalSynchData = getGlobalSynchData();
-                      if (globalSynchData != null && globalSynchData.isManualSynchActivated()) {
-                        // setup manual sync with one view already synchronized
-                        for (ViewCanvas<E> v : list) {
-                          ViewSynchData sd = (ViewSynchData) v.getActionsInView().get(ActionW.SYNCH_LINK.cmd());
-                          if (sd != null && sd.isManualSynchActivated()) {
-                            for (ViewSynchData.ManualSyncData msd : sd.getManualSyncDataSet()) {
-                              setupManualSync(pane, msd.getTargetPane());
-                            }
-                            setupManualSync(pane, v);
-                            break;
-                          }
-                          // problem
-                        }
-                      } else {
-                        if (list.size() == 1) {
-                          // Only one other view to sync with
-                          setupManualSync(pane, list.getFirst());
-                        } else if (list.size() > 1) {
-                          JPopupMenu popupMenu = new JPopupMenu();
-                          addOrphanSeriesSelectionMenu(popupMenu, pane, list);
-                          popupMenu.show(invoker, x, y);
-                        }
-                      }
+                      activateManualSync(currentSynchData, invoker, x, y);
                     } else {
-                      // Deactivate manual sync
-                      manualSynchButton.setState(ManualSynchViewButton.State.OFF);
-                      synchData.setManualSyncState(State.OFF);
-                      for (ViewSynchData.ManualSyncData manualSynchData : synchData.getManualSyncDataSet()) {
-                        //manualSynchData.
-                      }
-                      /*if (view != null && view instanceof DefaultView2d<?> v) {
-                        v.setManualSynchState(ManualSynchViewButton.State.OFF);
-                        ViewSynchData sd = (ViewSynchData) actionsInView.get(ActionW.SYNCH_LINK.cmd());
-                        sd.removeManualSyncData();
-                      }*/
-                      //synchData.removeManualSyncData();
+                      deactivateManualSync(currentSynchData);
                     }
           });
 
@@ -328,22 +285,24 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
 
       boolean repaint = false;
     SynchData globalSynchData = getGlobalSynchData();
-    boolean globalAutoSynch = globalSynchData != null && globalSynchData.getAutoSyncState() == State.ON;
+    boolean globalAutoSynch = globalSynchData != null && globalSynchData.getAutoSyncState() == SyncState.ON;
 
       // TODO Critères d'affichage des boutons auto/manuel
       if (synchButton != null) {
-        if (synchData.getAutoSyncState() == State.ON) {
+        if (synchData.getAutoSyncState() == SyncState.ON) {
           synchButton.setVisible(true);
-          synchButton.setState(State.ON);
+          synchButton.setState(SynchViewButton.State.ON);
         } else {
           synchButton.setVisible(globalAutoSynch);
-          synchButton.setState(State.OFF);
+          synchButton.setState(SynchViewButton.State.OFF);
         }
         repaint = true;
       }
       if (manualSynchButton != null) {
         if (synchData.isCanBeManuallySynced()) {
           manualSynchButton.setVisible(true);
+          manualSynchButton.setState(synchData.isManualSynchActivated()
+              ? ManualSynchViewButton.State.ON : ManualSynchViewButton.State.OFF);
         } else {
           manualSynchButton.setVisible(false);
         }
@@ -359,11 +318,99 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     this.manualSynchButton.setState(state);
   }
 
+  private void activateManualSync(ViewSynchData currentSynchData, java.awt.Component invoker, int x, int y) {
+    ImageViewerPlugin<E> container = eventManager.getSelectedView2dContainer();
+    if (container == null) return;
+
+    ViewCanvas<E> pane = container.getSelectedViewCanvas();
+    if (pane == null || pane.getSeries() == null) return;
+
+    // Find all candidate views: same orientation, different FrameOfReferenceUID
+    List<ViewCanvas<E>> candidates = container.getImagePanels().stream()
+        .filter(view -> view != null && view != pane && view.getSeries() != null
+            && eventManager.synchManager.hasSameOrientation(view.getSeries(), pane.getSeries())
+            && !eventManager.synchManager.hasSameFrUid(pane.getSeries(), view.getSeries()))
+        .toList();
+
+    if (candidates.isEmpty()) return;
+
+    SynchData globalSynchData = getGlobalSynchData();
+    if (globalSynchData != null && globalSynchData.isManualSynchActivated()) {
+      // Join the existing manual sync group: collect ALL already-synced views
+      java.util.Set<ViewCanvas<?>> existingGroup = new java.util.LinkedHashSet<>();
+      for (ViewCanvas<E> v : candidates) {
+        ViewSynchData sd = (ViewSynchData) v.getActionsInView().get(ActionW.SYNCH_LINK.cmd());
+        if (sd != null && sd.isManualSynchActivated()) {
+          existingGroup.add(v);
+          for (ViewSynchData.ManualSyncData msd : sd.getManualSyncDataSet()) {
+            existingGroup.add(msd.getTargetPane());
+          }
+        }
+      }
+      existingGroup.remove(pane);
+      // Setup bidirectional links between the new pane and every member of the group
+      for (ViewCanvas<?> member : existingGroup) {
+        setupManualSync(pane, member);
+      }
+    } else {
+      if (candidates.size() == 1) {
+        setupManualSync(pane, candidates.getFirst());
+      } else {
+        // Show a multi-select popup for choosing which views to sync with
+        JPopupMenu popupMenu = new JPopupMenu();
+        addOrphanSeriesSelectionMenu(popupMenu, pane, candidates);
+        popupMenu.show(invoker, x, y);
+      }
+    }
+  }
+
+  private void deactivateManualSync(ViewSynchData currentSynchData) {
+    // Remove this view from its sync group
+    manualSynchButton.setState(ManualSynchViewButton.State.OFF);
+    currentSynchData.setManualSyncState(SyncState.OFF);
+
+    for (ViewSynchData.ManualSyncData msd : new java.util.HashSet<>(currentSynchData.getManualSyncDataSet())) {
+      ViewCanvas<?> targetPane = msd.getTargetPane();
+      ViewSynchData targetSd = (ViewSynchData) targetPane.getActionsInView().get(ActionW.SYNCH_LINK.cmd());
+      if (targetSd != null) {
+        targetSd.getManualSyncDataSet().removeIf(d -> d.getTargetPane() == this);
+        if (targetSd.getManualSyncDataSet().isEmpty()) {
+          targetSd.setManualSyncState(SyncState.OFF);
+          if (targetPane instanceof DefaultView2d<?> v) {
+            v.setManualSynchState(ManualSynchViewButton.State.OFF);
+            v.repaint();
+          }
+          eventManager.removePropertyChangeListener(ActionW.SYNCH.cmd(), targetPane);
+        }
+      }
+    }
+    currentSynchData.emptyManualSyncDataSet();
+    eventManager.removePropertyChangeListener(ActionW.SYNCH.cmd(), this);
+
+    // Update global manual sync state
+    SynchData globalSd = getGlobalSynchData();
+    if (globalSd != null) {
+      ImageViewerPlugin<E> container = eventManager.getSelectedView2dContainer();
+      boolean anyRemains = container != null && container.getImagePanels().stream()
+          .anyMatch(v -> {
+            ViewSynchData sd = (ViewSynchData) v.getActionsInView().get(ActionW.SYNCH_LINK.cmd());
+            return sd != null && sd.isManualSynchActivated();
+          });
+      if (!anyRemains) {
+        globalSd.setManualSyncState(SyncState.OFF);
+      }
+    }
+    repaint();
+  }
+
   private void setupManualSync(ViewCanvas<?> source, ViewCanvas<?> target) {
+    if (source == target) return;
     ViewSynchData synchDataSource = (ViewSynchData) source.getActionsInView().get(ActionW.SYNCH_LINK.cmd());
     ViewSynchData synchDataTarget = (ViewSynchData) target.getActionsInView().get(ActionW.SYNCH_LINK.cmd());
 
     if (synchDataSource != null && synchDataTarget != null) {
+      // Skip if already linked
+      if (synchDataSource.getManualSyncDataByPane(target) != null) return;
 
       Double sourcePosition = (Double) source.getImage().getTagValue(TagW.SlicePosition);
       Double targetPosition = (Double) target.getImage().getTagValue(TagW.SlicePosition);
@@ -371,8 +418,8 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
       // If location not defined, cannot sync views
       if (sourcePosition != null && targetPosition != null) {
         // Set this orphan view to ON and sync with selected series
-        synchDataSource.setManualSyncState(State.ON);
-        synchDataTarget.setManualSyncState(State.ON);
+        synchDataSource.setManualSyncState(SyncState.ON);
+        synchDataTarget.setManualSyncState(SyncState.ON);
         synchDataSource.setOrphan(false); // No longer orphan after selection ??????
         synchDataTarget.setOrphan(false);
         synchDataSource.setOriginal(false);
@@ -381,8 +428,8 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         synchDataSource.addManualSyncData(sourcePosition, targetPosition, target);
         synchDataTarget.addManualSyncData(targetPosition, sourcePosition, source);
 
-        source.getActionsInView().put(ActionW.SYNCH_LINK.cmd(), synchDataSource);
-        target.getActionsInView().put(ActionW.SYNCH_LINK.cmd(), synchDataTarget);
+        source.setActionsInView(ActionW.SYNCH_LINK.cmd(), synchDataSource);
+        target.setActionsInView(ActionW.SYNCH_LINK.cmd(), synchDataTarget);
 
         eventManager.addPropertyChangeListener(ActionW.SYNCH.cmd(), source);
         eventManager.addPropertyChangeListener(ActionW.SYNCH.cmd(), target);
@@ -399,7 +446,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
             v.repaint();
           }
         }
-        eventManager.synchManager.applyManualSync();
+        eventManager.synchManager.applyManualSync(null, null);
       }
       // TODO Error message if no location information ??
     }
@@ -424,102 +471,6 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
       }
     }
   }
-
-  /*private void addNonOrphanActivationMenu(JPopupMenu popupMenu, SynchData synchData) {
-    // Add menu to activate ON with same FrameOfReferenceUID
-    Icon icon = getRectangleIcon(State.ON);
-    JMenuItem onSameFrameItem = new JMenuItem("Synchronize with same Frame of Reference", icon);
-    onSameFrameItem.addActionListener(
-        e -> {
-          synchData.setState(State.ON);
-          updateSynchState();
-          repaint();
-        });
-    popupMenu.add(onSameFrameItem);
-
-    popupMenu.addSeparator();
-
-    // Add menu to select another series (with different or no FrameOfReferenceUID)
-    addOrphanSeriesSelectionMenu(popupMenu, synchData);
-  }*/
-
-  protected Icon getRectangleIcon(State state) {
-    return new Icon() {
-      @Override
-      public void paintIcon(Component c, Graphics g, int x, int y) {
-        Graphics2D g2d = (Graphics2D) g.create();
-        g2d.setColor(state.getColor());
-        g2d.fillRect(x, y, 8, 8);
-        g2d.dispose();
-      }
-
-      @Override
-      public int getIconWidth() {
-        return 8;
-      }
-
-      @Override
-      public int getIconHeight() {
-        return 8;
-      }
-    };
-  }
-
- /* private JCheckBoxMenuItem buildSynchMenuItem(State state, SynchData synchData) {
-    Icon icon = getRectangleIcon(state);
-    return new JCheckBoxMenuItem(state.getName(), icon, synchData.getState() == state);
-  }*/
-
-  /*private void addStandardSynchMenu(JPopupMenu popupMenu, SynchData synchData) {
-    // Existing synchronization menu for active states
-    TitleMenuItem titleItem = new TitleMenuItem("Synchronization");
-    popupMenu.add(titleItem);
-    popupMenu.addSeparator();
-
-    JCheckBoxMenuItem offItem = buildSynchMenuItem(State.OFF, synchData);
-    offItem.addActionListener(
-        e -> {
-          synchData.setState(State.OFF);
-          updateSynchState();
-          repaint();
-        });
-    popupMenu.add(offItem);
-
-    JCheckBoxMenuItem onItem = buildSynchMenuItem(State.ON, synchData);
-    onItem.addActionListener(
-        e -> {
-          synchData.setState(State.ON);
-          updateSynchState();
-          repaint();
-        });
-    popupMenu.add(onItem);
-
-    JCheckBoxMenuItem manualItem = buildSynchMenuItem(State.MANUAL, synchData);
-    manualItem.addActionListener(
-        e -> {
-          synchData.setState(State.MANUAL);
-          updateSynchState();
-          repaint();
-        });
-    popupMenu.add(manualItem);
-
-    popupMenu.addSeparator();
-
-    // Add synchronized actions
-    /*for (Entry<String, Boolean> entry : synchData.getActions().entrySet()) {
-      String actionKey = entry.getKey();
-      Boolean selected = entry.getValue();
-      String title =
-          eventManager.actions.values().stream()
-              .filter(a -> a.getActionW().cmd().equals(actionKey))
-              .findFirst()
-              .map(a -> a.getActionW().getTitle())
-              .orElse("Unknown Action");
-      JCheckBoxMenuItem item = new JCheckBoxMenuItem(title, selected);
-      item.addActionListener(e -> synchData.getActions().put(actionKey, item.isSelected()));
-      popupMenu.add(item);
-    }*/
-  //}
 
   protected PlanarImage getPreprocessedImage(E imageElement) {
     return imageElement.getImage((OpManager) actionsInView.get(ActionW.PREPROCESSING.cmd()));
@@ -1209,7 +1160,6 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         // Propagate manual sync event only to relevant views
          if (issuerSyncData.isManualSynchActivated()) {
             if (synchData != null && synchData.isManualSynchActivated() &&
-                    synchData.getManualSyncDataSet() != null && issuerSyncData.getManualSyncDataSet() != null &&
                     issuerSyncData.getManualSyncDataByPane(this) != null) {
                 propagateSync = true;
             }
@@ -1249,9 +1199,12 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         }
       } else {
         double location = synch.getLocation().doubleValue();
-        if (synchData.getManualSyncState() == State.ON && issuerSyncData.getManualSyncState() == State.ON) {
+        if (synchData != null && synchData.getManualSyncState() == SyncState.ON
+            && issuerSyncData != null && issuerSyncData.getManualSyncState() == SyncState.ON) {
           ViewSynchData.ManualSyncData manualSyncData = issuerSyncData.getManualSyncDataByPane(this);
-          location = location + manualSyncData.getTargetLocation() - manualSyncData.getSourceLocation();
+          if (manualSyncData != null) {
+            location = location + manualSyncData.getTargetLocation() - manualSyncData.getSourceLocation();
+          }
         }
           imgElement =
                   series.getNearestImage(
@@ -1608,29 +1561,31 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     ViewSynchData synchData = (ViewSynchData) actionsInView.get(ActionW.SYNCH_LINK.cmd());
     if (synchData == null) return;
     SynchData globalSynchData = getGlobalSynchData();
-    if (globalSynchData != null && globalSynchData.getAutoSyncState() == State.ON) {
+    if (globalSynchData != null && globalSynchData.getAutoSyncState() == SyncState.ON) {
       globalSynchData.setOriginal(true);
-      globalSynchData.setAutoSyncState(State.OFF);
+      globalSynchData.setAutoSyncState(SyncState.OFF);
     }
 
     Set<ViewSynchData.ManualSyncData> manualSyncDataSet = synchData.getManualSyncDataSet();
 
-    if (manualSyncDataSet != null && !manualSyncDataSet.isEmpty()) {
-      // The updated view is included in manual synchronization, disable it for this view and remove this view from the other synchronized views
-      /*ViewSynchData synchData2 = (ViewSynchData) synchData.getManualSyncData().getTargetPane().getActionsInView().get(ActionW.SYNCH_LINK.cmd());
-      if (synchData2 != null) {
-        synchData2.removeManualSyncData();
-        synchData.setManualSyncState(SynchViewButton.State.OFF);
+    if (!manualSyncDataSet.isEmpty()) {
+      for (ViewSynchData.ManualSyncData msd : new java.util.HashSet<>(manualSyncDataSet)) {
+        ViewCanvas<?> targetPane = msd.getTargetPane();
+        ViewSynchData targetSd = (ViewSynchData) targetPane.getActionsInView().get(ActionW.SYNCH_LINK.cmd());
+        if (targetSd != null) {
+          targetSd.getManualSyncDataSet().removeIf(d -> d.getTargetPane() == this);
+          if (targetSd.getManualSyncDataSet().isEmpty()) {
+            targetSd.setManualSyncState(SyncState.OFF);
+          }
+        }
       }
-      synchData.removeManualSyncData();
-      synchData.setManualSyncState(SynchViewButton.State.OFF);*/
-
+      manualSyncDataSet.clear();
+      synchData.setManualSyncState(SyncState.OFF);
     }
     // Disable auto sync, will be recomputed afterwards if relevant
-    synchData.setAutoSyncState(State.OFF);
+    synchData.setAutoSyncState(SyncState.OFF);
     synchData.setOriginal(true);
     synchData.setFrameOfReferenceUID(null);
-    System.err.println(this.series + " set fruid to null reset");
   }
 
   /**

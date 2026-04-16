@@ -73,8 +73,8 @@ import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.editor.image.MouseActions;
 import org.weasis.core.ui.editor.image.PixelInfo;
 import org.weasis.core.ui.editor.image.SynchData;
+import org.weasis.core.ui.editor.image.SynchData.SyncState;
 import org.weasis.core.ui.editor.image.SynchEvent;
-import org.weasis.core.ui.editor.image.SynchViewButton;
 import org.weasis.core.ui.editor.image.ViewButton;
 import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.model.AbstractGraphicModel;
@@ -255,7 +255,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
         }
         // In MANUAL mode, only allow SCROLL_SERIES action
         if (synchData != null
-            && synchData.getManualSyncState() == SynchViewButton.State.ON
+            && synchData.getManualSyncState() == SyncState.ON
             && !ActionW.SCROLL_SERIES.cmd().equals(command)) {
           continue;
         }

@@ -12,6 +12,7 @@ package org.weasis.core.ui.editor.image;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.ComboItemListener;
@@ -20,7 +21,7 @@ import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.ui.editor.image.SynchData.Mode;
-import org.weasis.core.ui.editor.image.SynchViewButton.State;
+import org.weasis.core.ui.editor.image.SynchData.SyncState;
 
 public abstract class SynchManager<E extends ImageElement> {
 
@@ -35,7 +36,7 @@ public abstract class SynchManager<E extends ImageElement> {
       return;
     }
 
-    ViewCanvas<E> viewPane = viewerPlugin.getSelectedImagePane();
+    ViewCanvas<E> viewPane = viewerPlugin.getSelectedViewCanvas();
     if (viewPane == null || viewPane.getSeries() == null) {
       return;
     }
@@ -118,7 +119,7 @@ public abstract class SynchManager<E extends ImageElement> {
     if (series1 == null || series2 == null) {
       return false;
     }
-    return getFrameOfReferenceUID(series1).equals(getFrameOfReferenceUID(series2));
+    return Objects.equals(getFrameOfReferenceUID(series1), getFrameOfReferenceUID(series2));
   }
 
   protected void applySynchToAllPanes(List<ViewCanvas<E>> panes, SynchData synch) {
@@ -144,7 +145,7 @@ public abstract class SynchManager<E extends ImageElement> {
       if (synchByDefault) {
         // Views with same FrameOfReferenceUID default to ON
         SynchData copy = synch.copy();
-        copy.setAutoSyncState(State.ON);
+        copy.setAutoSyncState(SyncState.ON);
         pane.setActionsInView(ActionW.SYNCH_LINK.cmd(), copy);
         eventManager.addPropertyChangeListener(ActionW.SYNCH.cmd(), pane);
       } else {
@@ -170,8 +171,8 @@ public abstract class SynchManager<E extends ImageElement> {
     // Activate synchronize menu
     ComboItemListener<SynchView> synchAction = eventManager.getAction(ActionW.SYNCH).orElse(null);
     if (synchAction != null && synchAction.getSelectedItem() instanceof SynchView sel) {
-      //sel.getSynchData().setAutoSyncState(State.OFF);
-      sel.getSynchData().setManualSyncState(State.ON);
+      //sel.getSynchData().setAutoSyncState(SyncState.OFF);
+      sel.getSynchData().setManualSyncState(SyncState.ON);
       Optional<ToggleButtonListener> synchMode = eventManager.getAction(ActionW.SYNCH_MODE);
       synchMode.ifPresent(
               e -> {
@@ -185,7 +186,7 @@ public abstract class SynchManager<E extends ImageElement> {
     // Deactivate synchronize menu if no more manual sync possible
     ComboItemListener<SynchView> synchAction = eventManager.getAction(ActionW.SYNCH).orElse(null);
     if (synchAction != null && synchAction.getSelectedItem() instanceof SynchView sel) {
-      sel.getSynchData().setManualSyncState(State.OFF);
+      sel.getSynchData().setManualSyncState(SyncState.OFF);
       // Disable global sync if no auto sync in current container -> call update all listeners ??
     }
   }

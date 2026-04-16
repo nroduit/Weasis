@@ -13,7 +13,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import org.weasis.core.api.util.Copyable;
-import org.weasis.core.ui.editor.image.SynchViewButton.State;
 import org.weasis.core.util.LangUtil;
 
 public class SynchData implements Copyable<SynchData> {
@@ -22,12 +21,26 @@ public class SynchData implements Copyable<SynchData> {
     STACK,
     TILE
   }
+
+  /**
+   * Domain-level synchronization state. Independent of any UI widget.
+   */
+  public enum SyncState {
+    OFF,
+    ON
+  }
+
   protected final Map<String, Boolean> actions;
   protected final Mode mode;
-  protected State autoSyncState;
+  protected SyncState autoSyncState;
 
-  private boolean original;// view that does not share frUID, not synced automatically
-  protected State manualSyncState;
+  /**
+   * Indicates whether this SynchData has not been user-modified since the last
+   * {@code updateAllListeners} call. When {@code true}, the sync configuration is in its
+   * default/computed state. Set to {@code false} when the user manually toggles sync on/off.
+   */
+  private boolean original;
+  protected SyncState manualSyncState;
 
   public SynchData(Mode mode, Map<String, Boolean> actions, boolean synch) {
     if (actions == null) {
@@ -36,12 +49,11 @@ public class SynchData implements Copyable<SynchData> {
     this.actions = actions;
     this.mode = mode;
     this.original = true;
-    this.autoSyncState = synch ? State.ON : State.OFF;
-    this.manualSyncState = State.OFF;
+    this.autoSyncState = synch ? SyncState.ON : SyncState.OFF;
+    this.manualSyncState = SyncState.OFF;
   }
 
   public SynchData(SynchData synchData) {
-    // Deep copy ?
     Objects.requireNonNull(synchData);
     this.actions = new HashMap<>(synchData.actions);
     this.mode = synchData.mode;
@@ -62,39 +74,37 @@ public class SynchData implements Copyable<SynchData> {
     return mode;
   }
 
-  public State getAutoSyncState() {
+  public SyncState getAutoSyncState() {
     return autoSyncState;
   }
 
-  public void setAutoSyncState(State state) {
+  public void setAutoSyncState(SyncState state) {
     this.autoSyncState = state;
   }
 
-  public State getManualSyncState() {
+  public SyncState getManualSyncState() {
     return manualSyncState;
   }
 
-  public void setManualSyncState(State state) {
+  public void setManualSyncState(SyncState state) {
     this.manualSyncState = state;
   }
 
   public boolean isSynchActivated() {
-    return autoSyncState == State.ON || manualSyncState == State.ON;
+    return autoSyncState == SyncState.ON || manualSyncState == SyncState.ON;
   }
 
   public boolean isAutoSynchActivated() {
-    return autoSyncState == State.ON;
+    return autoSyncState == SyncState.ON;
   }
 
   public boolean isManualSynchActivated() {
-    return manualSyncState == State.ON;
+    return manualSyncState == SyncState.ON;
   }
 
   @Override
   public SynchData copy() {
-    SynchData synchData = new SynchData(this);
-    // synchData.original = false;
-    return synchData;
+    return new SynchData(this);
   }
 
   public boolean isOriginal() {

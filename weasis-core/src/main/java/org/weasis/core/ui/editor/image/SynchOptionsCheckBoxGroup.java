@@ -41,57 +41,5 @@ public class SynchOptionsCheckBoxGroup extends GroupCheckBoxMenu {
     }
 
     this.setModel(menuItems);
-
-    /*syncButton.addActionListener(
-            e -> {
-                if (e.getSource() instanceof JRadioButtonMenuItem item) {
-                    sync = item.isSelected();
-                    ComboItemListener<SynchView> synch = (ComboItemListener<SynchView>) eventManager.getAction(ActionW.SYNCH).orElse(null);
-                    if (synch != null) {
-                        if (synch.getSelectedItem() instanceof SynchView sel) {
-                            sel.getSynchData().synch = sync;
-                            sel.getSynchData().setOriginal(false);
-                            eventManager.updateAllListeners(eventManager.getSelectedView2dContainer(), sel);
-                        }
-                    }
-                }
-            });
-    scrollButton.addActionListener(
-            e -> {
-                if (e.getSource() instanceof JCheckBoxMenuItem item) {
-                    scroll = item.isSelected();
-                    ComboItemListener<SynchView> synch = (ComboItemListener<SynchView>) eventManager.getAction(ActionW.SYNCH).orElse(null);
-                    if (synch != null) {
-                        if (synch.getSelectedItem() instanceof SynchView sel) {
-                            sel.getSynchData().getActions().put(item.getText(), item.isSelected());
-                        }
-                    }
-                }
-            });
-    rotateButton.addActionListener(
-            e -> {
-                if (e.getSource() instanceof JCheckBoxMenuItem item) {
-                    rotate = item.isSelected();
-                    ComboItemListener<SynchView> synch = (ComboItemListener<SynchView>) eventManager.getAction(ActionW.SYNCH).orElse(null);
-                    if (synch != null) {
-                        if (synch.getSelectedItem() instanceof SynchView sel) {
-                            sel.getSynchData().getActions().put(item.getText(), item.isSelected());
-                        }
-                    }
-                }
-            });
-    zoomButton.addActionListener(
-            e -> {
-                if (e.getSource() instanceof JCheckBoxMenuItem item) {
-                    zoom = item.isSelected();
-                    ComboItemListener<SynchView> synch = (ComboItemListener<SynchView>) eventManager.getAction(ActionW.SYNCH).orElse(null);
-                    if (synch != null) {
-                        if (synch.getSelectedItem() instanceof SynchView sel) {
-                            sel.getSynchData().getActions().put(item.getText(), item.isSelected());
-                        }
-                    }
-                }
-            });
-    */
   }
 }

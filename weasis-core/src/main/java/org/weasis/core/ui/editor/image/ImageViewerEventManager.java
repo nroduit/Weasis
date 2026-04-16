@@ -44,7 +44,7 @@ import org.weasis.core.api.service.WProperties;
 import org.weasis.core.ui.editor.SeriesViewerEvent;
 import org.weasis.core.ui.editor.SeriesViewerEvent.EVENT;
 import org.weasis.core.ui.editor.SeriesViewerListener;
-import org.weasis.core.ui.editor.image.SynchViewButton.State;
+import org.weasis.core.ui.editor.image.SynchData.SyncState;
 import org.weasis.core.ui.editor.image.dockable.MeasureTool;
 import org.weasis.core.ui.launcher.Launcher;
 import org.weasis.core.ui.model.graphic.Graphic;
@@ -407,8 +407,8 @@ public abstract class ImageViewerEventManager<E extends ImageElement> implements
                 a -> {
                   if (a.getSelectedItem() instanceof SynchView sel) {
                     // If selected is false, deactivate manual sync, if selected is true, manual sync is deactivated as well since it must be set from the view
-                    sel.getSynchData().setManualSyncState(State.OFF);
-                    sel.getSynchData().setAutoSyncState(State.OFF);
+                    sel.getSynchData().setManualSyncState(SyncState.OFF);
+                    sel.getSynchData().setAutoSyncState(SyncState.OFF);
                     sel.getSynchData().setOriginal(selected);
                     updateAllListeners(getSelectedView2dContainer(), sel);
                     // TODO block sync activation if nothing can be synches together ??

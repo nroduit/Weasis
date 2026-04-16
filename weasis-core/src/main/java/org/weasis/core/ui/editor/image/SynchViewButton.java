@@ -11,7 +11,7 @@ package org.weasis.core.ui.editor.image;
 
 import com.formdev.flatlaf.extras.FlatSVGIcon;
 import com.formdev.flatlaf.extras.FlatSVGIcon.ColorFilter;
-import java.awt.*;
+import java.awt.Color;
 import javax.swing.Icon;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.GuiUtils.IconColor;
@@ -41,6 +41,7 @@ public class SynchViewButton extends ViewButton {
       return name;
     }
 
+    @Override
     public String toString() {
       return name;
     }
