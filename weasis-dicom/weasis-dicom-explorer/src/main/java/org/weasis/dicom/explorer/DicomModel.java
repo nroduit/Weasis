@@ -227,7 +227,7 @@ public class DicomModel implements TreeModel, DataExplorerModel, CommandExtensio
                     codec != null
                         && !"JDK ImageIO".equals(codec.getCodecName()) // NON-NLS
                         && (codec.isMimeTypeSupported(DicomMediaIO.DICOM_MIMETYPE)
-                        || codec.isMimeTypeSupported(DicomZipMediaIO.MIME_TYPE)))
+                            || codec.isMimeTypeSupported(DicomZipMediaIO.MIME_TYPE)))
             .findFirst()
             .orElse(null);
     return dicom != null ? List.of((Codec<MediaElement>) dicom) : Collections.emptyList();

@@ -43,7 +43,6 @@ public record OpenGLInfo(
     return getVersion().compareTo(minimalVersion) >= 0;
   }
 
-
   /** Check if the renderer is a software renderer without real GPU. */
   public boolean looksSoftware() {
     return renderer.contains("llvmpipe")

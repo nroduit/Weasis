@@ -53,6 +53,7 @@ import java.util.ResourceBundle.Control;
 import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 import javax.management.ObjectName;
 import javax.swing.JComponent;
@@ -636,10 +637,10 @@ Starting PF4J Plugins...
     if (desktopApp.isSupported(Action.APP_OPEN_URI)) {
       long time = System.currentTimeMillis();
       boolean noArgs = configData.getArguments().isEmpty();
-      desktopApp.setOpenURIHandler(e -> handleOpenURI(e, time, noArgs));
+      desktopApp.setOpenURIHandler(e -> handleOpenURI(e, time, noArgs, this));
     }
     if (desktopApp.isSupported(Action.APP_OPEN_FILE)) {
-      desktopApp.setOpenFileHandler(this::handleOpenFile);
+      desktopApp.setOpenFileHandler(e -> handleOpenFile(e, this));
     }
 
     /*
@@ -939,17 +940,21 @@ Starting PF4J Plugins...
     return Locale.getDefault();
   }
 
-  private void handleOpenURI(OpenURIEvent e, long time, boolean noArgs) {
+  private static void handleOpenURI(
+      OpenURIEvent e, long time, boolean noArgs, WeasisLauncher instance) {
     String uri = e.getURI().toString();
     LOGGER.info("Get URI event from OS. URI: {}", uri);
     int index = Utils.getWeasisProtocolIndex(uri);
     if (index < 0) {
       uri = "dicom:get -r \"" + uri + "\""; // NON-NLS
-      executeCommands(List.of(uri), null);
+      CommandManager commandManager = new CommandManager(instance.configData.getPluginManager());
+      instance.executeCommands(commandManager, List.of(uri));
     } else {
       boolean sameInstance = System.currentTimeMillis() - time < 3000;
       String[] args = getArgsForURI(uri);
-      Thread.ofVirtual().start(() -> launchProcess(args, sameInstance, noArgs));
+      Thread launcherThread =
+          Thread.ofVirtual().start(() -> launchProcess(args, sameInstance, noArgs, instance));
+      launcherThread.start();
     }
   }
 
@@ -963,13 +968,14 @@ Starting PF4J Plugins...
     }
   }
 
-  private void launchProcess(String[] args, boolean sameInstance, boolean noArgs) {
+  private static void launchProcess(
+      String[] args, boolean sameInstance, boolean noArgs, WeasisLauncher instance) {
     try {
       ProcessBuilder pb = new ProcessBuilder(args);
       pb.start().waitFor(15, TimeUnit.SECONDS);
       if (sameInstance && noArgs) {
         LOGGER.info("Configuration with URI is different, restart Weasis with new configuration");
-        shutdownHook();
+        instance.shutdownHook();
       }
     } catch (Exception ex) {
       LOGGER.error("Cannot start Weasis from URI", ex);
@@ -979,13 +985,14 @@ Starting PF4J Plugins...
     }
   }
 
-  private void handleOpenFile(OpenFilesEvent e) {
+  private static void handleOpenFile(OpenFilesEvent e, WeasisLauncher instance) {
     List<String> files =
         e.getFiles().stream()
             .map(f -> "dicom:get -l \"" + f.getPath() + "\"") // NON-NLS
             .toList();
     LOGGER.info("Get open file event from OS. Files: {}", files);
-    executeCommands(files, null);
+    CommandManager commandManager = new CommandManager(instance.configData.getPluginManager());
+    instance.executeCommands(commandManager, files);
   }
 
   protected void shutdownHook() {
