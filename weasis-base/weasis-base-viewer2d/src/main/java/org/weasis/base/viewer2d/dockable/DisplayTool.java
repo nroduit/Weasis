@@ -260,7 +260,7 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
     EVENT e = event.getEventType();
     if (EVENT.SELECT_VIEW.equals(e)
         && event.getSeriesViewer() instanceof View2dContainer container) {
-      iniTreeValues(container.getSelectedImagePane());
+      iniTreeValues(container.getSelectedViewCanvas());
     }
   }
 

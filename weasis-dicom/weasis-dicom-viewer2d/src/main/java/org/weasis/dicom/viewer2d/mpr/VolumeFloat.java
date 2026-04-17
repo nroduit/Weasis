@@ -23,8 +23,8 @@ public final class VolumeFloat extends Volume<Float, float[]> {
     super(sizeX, sizeY, sizeZ, CvType.CV_32FC(channels), progressBar);
   }
 
-  public VolumeFloat(OriginalStack stack, JProgressBar progressBar) {
-    super(stack, progressBar);
+  public VolumeFloat(OriginalStack stack, JProgressBar progressBar, boolean isBasic) {
+    super(stack, progressBar, isBasic);
   }
 
   @Override

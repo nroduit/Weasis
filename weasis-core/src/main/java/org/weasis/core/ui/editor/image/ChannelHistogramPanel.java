@@ -9,13 +9,13 @@
  */
 package org.weasis.core.ui.editor.image;
 
+import com.formdev.flatlaf.util.SystemFileChooser;
 import java.awt.BorderLayout;
 import java.awt.FlowLayout;
 import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
-import javax.swing.JFileChooser;
 import javax.swing.JPanel;
 import org.weasis.core.Messages;
 import org.weasis.core.api.gui.util.GuiUtils;
@@ -110,9 +110,9 @@ public class ChannelHistogramPanel extends JPanel {
   }
 
   private void save() {
-    JFileChooser saveFC = new JFileChooser();
+    SystemFileChooser saveFC = new SystemFileChooser();
     int ret = saveFC.showSaveDialog(this);
-    if (ret == JFileChooser.APPROVE_OPTION) {
+    if (ret == SystemFileChooser.APPROVE_OPTION) {
       jPanelHistogram.saveHistogramInCSV(saveFC.getSelectedFile());
     }
   }

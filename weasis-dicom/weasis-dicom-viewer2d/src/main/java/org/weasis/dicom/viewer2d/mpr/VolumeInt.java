@@ -23,8 +23,8 @@ public final class VolumeInt extends Volume<Integer, int[]> {
     super(sizeX, sizeY, sizeZ, CvType.CV_32SC(channels), progressBar);
   }
 
-  public VolumeInt(OriginalStack stack, JProgressBar progressBar) {
-    super(stack, progressBar);
+  public VolumeInt(OriginalStack stack, JProgressBar progressBar, boolean isBasic) {
+    super(stack, progressBar, isBasic);
   }
 
   public VolumeInt(

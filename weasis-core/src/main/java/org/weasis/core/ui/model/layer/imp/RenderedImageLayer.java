@@ -241,8 +241,7 @@ public class RenderedImageLayer<E extends ImageElement> extends DefaultUUID
       LOGGER.error("Cannot draw the image", e);
       if ("java.io.IOException: closed".equals(e.getMessage())) { // NON-NLS
         // Issue when the stream has been closed of a tiled image (problem that readAsRendered do
-        // not read data
-        // immediately)
+        // not read data immediately)
         if (sourceImage.isImageInCache()) {
           sourceImage.removeImageFromCache();
         }
@@ -251,7 +250,7 @@ public class RenderedImageLayer<E extends ImageElement> extends DefaultUUID
       }
     } catch (OutOfMemoryError e) {
       LOGGER.error("Cannot draw the image", e);
-      CvUtil.runGarbageCollectorAndWait(100);
+      CvUtil.runGarbageCollectorAndWait(200);
     }
     g2d.setClip(clip);
   }

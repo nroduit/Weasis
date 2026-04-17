@@ -132,38 +132,12 @@ public class AxisDirection {
     int axisLength = GuiUtils.getScaleLength(30);
     MprAxis axis = mprView.getMprAxis();
 
-    Vector3d dirX = new Vector3d(axisX);
-    Vector3d dirY = new Vector3d(axisY);
-    Vector3d dirZ = new Vector3d(axisZ);
-
-    Vector3d arrow1 = getArrowDirection(axis, dirX, axisLength);
-    Vector3d arrow2 = getArrowDirection(axis, dirY, axisLength);
-    Vector3d arrow3 = getArrowDirection(axis, dirZ, axisLength);
-
-    Vector3d[] arrows = {arrow1, arrow2, arrow3};
-    double minX = Double.MAX_VALUE;
-    double minY = Double.MAX_VALUE;
-    double maxX = Double.MIN_VALUE;
-    double maxY = Double.MIN_VALUE;
-    for (Vector3d arrow : arrows) {
-      if (arrow.x < minX) minX = arrow.x;
-      if (arrow.y < minY) minY = arrow.y;
-      if (arrow.x > maxX) maxX = arrow.x;
-      if (arrow.y > maxY) maxY = arrow.y;
-    }
+    Vector3d arrow1 = getArrowDirection(axis, new Vector3d(axisX), axisLength);
+    Vector3d arrow2 = getArrowDirection(axis, new Vector3d(axisY), axisLength);
+    Vector3d arrow3 = getArrowDirection(axis, new Vector3d(axisZ), axisLength);
 
     Point2D pt = mprView.getInfoLayer().getPosition(Position.TopLeft);
-    double dimX = Math.sqrt((double) axisLength * axisLength) * 2.0;
-    double dimY = dimX;
-
-    if (pt != null) {
-      dimX += pt.getX();
-      dimY += pt.getY() * 2.0;
-    }
-
-    Point offset =
-        new Point(
-            (int) ((dimX - (maxX - minX)) / 2 - minX), (int) ((dimY - (maxY - minY)) / 2 - minY));
+    Point offset = computeOrigin(axisLength, new Vector3d[] {arrow1, arrow2, arrow3}, pt);
 
     g2d.setColor(xColor);
     drawAxisLine(g2d, arrow1, offset);
@@ -173,6 +147,35 @@ public class AxisDirection {
 
     g2d.setColor(zColor);
     drawAxisLine(g2d, arrow3, offset);
+  }
+
+  /**
+   * Computes the screen-space origin point that centres the three arrow tips inside a square of
+   * side {@code 2 × axisLength}, optionally offset to the top-left info-layer position.
+   *
+   * <p>Used by both {@link #drawAxes} (2D MPR) and {@code View3d.drawLpsOrientation} (3D volume).
+   *
+   * @param axisLength desired length of each arrow in pixels
+   * @param arrows the three projected, scaled arrow direction vectors (tips relative to origin)
+   * @param topLeft top-left info-layer position, or {@code null}
+   * @return the common origin point from which all arrows should be drawn
+   */
+  public static Point computeOrigin(int axisLength, Vector3d[] arrows, Point2D topLeft) {
+    double minX = 0, minY = 0, maxX = 0, maxY = 0;
+    for (Vector3d arr : arrows) {
+      if (arr.x < minX) minX = arr.x;
+      if (arr.y < minY) minY = arr.y;
+      if (arr.x > maxX) maxX = arr.x;
+      if (arr.y > maxY) maxY = arr.y;
+    }
+    double dimX = axisLength * 2.0;
+    double dimY = axisLength * 2.0;
+    if (topLeft != null) {
+      dimX += topLeft.getX();
+      dimY += topLeft.getY() * 2.0;
+    }
+    return new Point(
+        (int) ((dimX - (maxX - minX)) / 2.0 - minX), (int) ((dimY - (maxY - minY)) / 2.0 - minY));
   }
 
   private Vector3d getArrowDirection(MprAxis axis, Vector3d direction, int length) {
@@ -194,19 +197,23 @@ public class AxisDirection {
     return end;
   }
 
-  private void drawAxisLine(Graphics2D g2d, Vector3d arrow, Point offset) {
+  /**
+   * Draws a single labelled arrow from {@code offset} (the common origin) to {@code offset +
+   * arrow}. Skipped when the resulting segment is shorter than 10 px.
+   */
+  public static void drawAxisLine(Graphics2D g2d, Vector3d arrow, Point offset) {
     int x1 = offset.x;
     int y1 = offset.y;
     int x2 = offset.x + (int) arrow.x;
     int y2 = offset.y + (int) arrow.y;
-    double distance = Math.sqrt(Math.pow((double) x2 - x1, 2) + Math.pow((double) y2 - y1, 2));
+    double distance = Math.hypot((double) x2 - x1, (double) y2 - y1);
     if (distance >= 10.0) {
       g2d.drawLine(x1, y1, x2, y2);
       drawArrowHead(g2d, x2, y2, x1, y1);
     }
   }
 
-  private void drawArrowHead(Graphics2D g2d, int xTip, int yTip, int xBase, int yBase) {
+  private static void drawArrowHead(Graphics2D g2d, int xTip, int yTip, int xBase, int yBase) {
     final int arrowHeadSize = 10;
     double angle = Math.atan2((double) yTip - yBase, (double) xTip - xBase);
 

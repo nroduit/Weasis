@@ -50,6 +50,7 @@ import org.weasis.core.api.gui.util.Feature;
 import org.weasis.core.api.gui.util.Filter;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.RadioMenuItem;
+import org.weasis.core.api.gui.util.ShortcutManager;
 import org.weasis.core.api.gui.util.SliderChangeListener;
 import org.weasis.core.api.gui.util.SliderCineListener;
 import org.weasis.core.api.gui.util.SliderCineListener.TIME;
@@ -250,7 +251,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
             defaultPresetAction.isEmpty() || defaultPresetAction.get().isSelected();
 
         if (selectedView2dContainer != null) {
-          view2d = selectedView2dContainer.getSelectedImagePane();
+          view2d = selectedView2dContainer.getSelectedViewCanvas();
         }
 
         if (view2d instanceof MprView mprView) {
@@ -264,6 +265,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
           axis.updateImage();
           image = axis.getImageElement();
           controller.setAdjusting(oldAdjusting);
+          controller.fireCrossHairChanged();
           mediaEvent = new SynchCineEvent(view2d, image, index);
         } else if (view2d != null && view2d.getSeries() instanceof Series) {
           series = (Series<DicomImageElement>) view2d.getSeries();
@@ -305,9 +307,9 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
 
           SynchView synchview = (SynchView) synchAction.get().getSelectedItem();
           if (synchview.getSynchData().isActionEnable(ActionW.SCROLL_SERIES.cmd())) {
-            double[] val = (double[]) image.getTagValue(TagW.SlicePosition);
+            Double val = (Double) image.getTagValue(TagW.SlicePosition);
             if (val != null) {
-              mediaEvent.setLocation(val[0] + val[1] + val[2]);
+              mediaEvent.setLocation(val);
             }
           } else {
             if (selectedView2dContainer != null) {
@@ -316,9 +318,9 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
               for (ViewCanvas<DicomImageElement> p : panes) {
                 Boolean cutlines = (Boolean) p.getActionValue(ActionW.SYNCH_CROSSLINE.cmd());
                 if (cutlines != null && cutlines) {
-                  double[] val = (double[]) image.getTagValue(TagW.SlicePosition);
+                  Double val = (Double) image.getTagValue(TagW.SlicePosition);
                   if (val != null) {
-                    mediaEvent.setLocation(val[0] + val[1] + val[2]);
+                    mediaEvent.setLocation(val);
                   } else {
                     return; // Do not throw event
                   }
@@ -618,7 +620,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
         Boolean enableFilter =
             (Boolean)
                 (filterSelection ? selected : selectedView.getActionValue(ActionW.KO_FILTER.cmd()));
-        ViewCanvas<DicomImageElement> viewPane = container.getSelectedImagePane();
+        ViewCanvas<DicomImageElement> viewPane = container.getSelectedViewCanvas();
         int frameIndex =
             LangUtil.nullToFalse(enableFilter)
                 ? 0
@@ -721,55 +723,59 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
       int keyEvent = e.getKeyCode();
       int modifiers = e.getModifiers();
       boolean isMpr = selectedView2dContainer instanceof MprContainer;
+      ShortcutManager sm = ShortcutManager.getInstance();
 
-      if (keyEvent == KeyEvent.VK_LEFT && !e.isAltDown()) {
-        if (e.isControlDown()) {
-          moveStudy(ListPosition.PREVIOUS);
-        } else {
-          moveSeries(ListPosition.PREVIOUS);
-        }
-      } else if (keyEvent == KeyEvent.VK_RIGHT && !e.isAltDown()) {
-        if (e.isControlDown()) {
-          moveStudy(ListPosition.NEXT);
-        } else {
-          moveSeries(ListPosition.NEXT);
-        }
-      } else if (keyEvent == KeyEvent.VK_UP && !e.isAltDown() && e.isControlDown()) {
+      if (sm.matches(ShortcutManager.ID_DICOM_PREV_STUDY, keyEvent, modifiers)) {
+        moveStudy(ListPosition.PREVIOUS);
+      } else if (sm.matches(ShortcutManager.ID_DICOM_NEXT_STUDY, keyEvent, modifiers)) {
+        moveStudy(ListPosition.NEXT);
+      } else if (sm.matches(ShortcutManager.ID_DICOM_PREV_SERIES, keyEvent, modifiers)) {
+        moveSeries(ListPosition.PREVIOUS);
+      } else if (sm.matches(ShortcutManager.ID_DICOM_NEXT_SERIES, keyEvent, modifiers)) {
+        moveSeries(ListPosition.NEXT);
+      } else if (sm.matches(ShortcutManager.ID_DICOM_PREV_PATIENT, keyEvent, modifiers)) {
         movePatient(ListPosition.PREVIOUS);
-      } else if (keyEvent == KeyEvent.VK_DOWN && !e.isAltDown() && e.isControlDown()) {
+      } else if (sm.matches(ShortcutManager.ID_DICOM_NEXT_PATIENT, keyEvent, modifiers)) {
         movePatient(ListPosition.NEXT);
-      } else if (keyEvent == KeyEvent.VK_PAGE_UP) {
-        if (e.isControlDown()) {
-          moveStudy(ListPosition.FIRST);
-        } else {
-          moveSeries(ListPosition.FIRST);
-        }
-      } else if (keyEvent == KeyEvent.VK_PAGE_DOWN) {
-        if (e.isControlDown()) {
-          moveStudy(ListPosition.LAST);
-        } else {
-          moveSeries(ListPosition.LAST);
-        }
-      } else if (keyEvent == KeyEvent.VK_HOME && e.isControlDown()) {
+      } else if (sm.matches(ShortcutManager.ID_DICOM_FIRST_STUDY, keyEvent, modifiers)) {
+        moveStudy(ListPosition.FIRST);
+      } else if (sm.matches(ShortcutManager.ID_DICOM_LAST_STUDY, keyEvent, modifiers)) {
+        moveStudy(ListPosition.LAST);
+      } else if (sm.matches(ShortcutManager.ID_DICOM_FIRST_SERIES, keyEvent, modifiers)) {
+        moveSeries(ListPosition.FIRST);
+      } else if (sm.matches(ShortcutManager.ID_DICOM_LAST_SERIES, keyEvent, modifiers)) {
+        moveSeries(ListPosition.LAST);
+      } else if (sm.matches(ShortcutManager.ID_DICOM_FIRST_PATIENT, keyEvent, modifiers)) {
         movePatient(ListPosition.FIRST);
-      } else if (keyEvent == KeyEvent.VK_END && e.isControlDown()) {
+      } else if (sm.matches(ShortcutManager.ID_DICOM_LAST_PATIENT, keyEvent, modifiers)) {
         movePatient(ListPosition.LAST);
-      } else if (isMpr && keyEvent == KeyEvent.VK_X && e.isAltDown()) {
-        if (selectedView2dContainer.getSelectedImagePane() instanceof MprView mprView) {
-          mprView.recenterAxis(e.isControlDown());
+      } else if (isMpr
+          && (sm.matches(ShortcutManager.ID_MPR_RECENTER, keyEvent, modifiers)
+              || sm.matches(ShortcutManager.ID_MPR_RECENTER_ALL, keyEvent, modifiers))) {
+        if (selectedView2dContainer.getSelectedViewCanvas() instanceof MprView mprView) {
+          mprView.recenterAxis(
+              sm.matches(ShortcutManager.ID_MPR_RECENTER_ALL, keyEvent, modifiers));
         }
-      } else if (isMpr && keyEvent == KeyEvent.VK_C && e.isAltDown()) {
-        if (selectedView2dContainer.getSelectedImagePane() instanceof MprView mprView) {
+      } else if (isMpr
+          && (sm.matches(ShortcutManager.ID_MPR_TOGGLE_CENTER, keyEvent, modifiers)
+              || sm.matches(ShortcutManager.ID_MPR_TOGGLE_CENTER_ALL, keyEvent, modifiers))) {
+        if (selectedView2dContainer.getSelectedViewCanvas() instanceof MprView mprView) {
           boolean showCenter = MprView.getViewProperty(mprView, MprView.SHOW_CROSS_CENTER);
-          mprView.showCrossCenter(!showCenter, e.isControlDown());
+          mprView.showCrossCenter(
+              !showCenter,
+              sm.matches(ShortcutManager.ID_MPR_TOGGLE_CENTER_ALL, keyEvent, modifiers));
         }
-      } else if (isMpr && keyEvent == KeyEvent.VK_V && e.isAltDown()) {
-        if (selectedView2dContainer.getSelectedImagePane() instanceof MprView mprView) {
+      } else if (isMpr
+          && (sm.matches(ShortcutManager.ID_MPR_TOGGLE_CROSS_LINES, keyEvent, modifiers)
+              || sm.matches(ShortcutManager.ID_MPR_TOGGLE_CROSS_LINES_ALL, keyEvent, modifiers))) {
+        if (selectedView2dContainer.getSelectedViewCanvas() instanceof MprView mprView) {
           boolean showCrossLines = MprView.getViewProperty(mprView, MprView.HIDE_CROSSLINES);
-          mprView.showCrossLines(showCrossLines, e.isControlDown());
+          mprView.showCrossLines(
+              showCrossLines,
+              sm.matches(ShortcutManager.ID_MPR_TOGGLE_CROSS_LINES_ALL, keyEvent, modifiers));
         }
-      } else if (isMpr && keyEvent == KeyEvent.VK_B && e.isAltDown() && e.isControlDown()) {
-        if (selectedView2dContainer.getSelectedImagePane() instanceof MprView mprView) {
+      } else if (isMpr && sm.matches(ShortcutManager.ID_MPR_CYCLE_MIP, keyEvent, modifiers)) {
+        if (selectedView2dContainer.getSelectedViewCanvas() instanceof MprView mprView) {
           MprController controller = mprView.getMprController();
           if (controller != null) {
             ComboItemListener<MipView.Type> mipCombo = controller.getMipTypeOption();
@@ -872,7 +878,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
                     selectedView2dContainer.getLayoutList().toArray(new MigLayoutModel[0])));
       }
       if (oldContainer != null) {
-        ViewCanvas<DicomImageElement> pane = oldContainer.getSelectedImagePane();
+        ViewCanvas<DicomImageElement> pane = oldContainer.getSelectedViewCanvas();
         if (pane != null) {
           pane.setFocused(false);
         }
@@ -883,9 +889,9 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
           a ->
               a.setSelectedItemWithoutTriggerAction(
                   selectedView2dContainer.getOriginalLayoutModel()));
-      updateComponentsListener(selectedView2dContainer.getSelectedImagePane());
+      updateComponentsListener(selectedView2dContainer.getSelectedViewCanvas());
       selectedView2dContainer.setMouseActions(mouseActions);
-      ViewCanvas<DicomImageElement> pane = selectedView2dContainer.getSelectedImagePane();
+      ViewCanvas<DicomImageElement> pane = selectedView2dContainer.getSelectedViewCanvas();
       if (pane != null) {
         pane.setFocused(true);
       }
@@ -953,7 +959,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
       getAction(ActionW.PRESET).ifPresent(a -> a.setSelectedItem(a.getFirstItem()));
     } else if (ResetTools.PAN.equals(action)) {
       if (selectedView2dContainer != null) {
-        ViewCanvas viewPane = selectedView2dContainer.getSelectedImagePane();
+        ViewCanvas viewPane = selectedView2dContainer.getSelectedViewCanvas();
         if (viewPane != null) {
           viewPane.resetPan();
         }
@@ -968,7 +974,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
     }
 
     if (selectedView2dContainer == null
-        || view2d != selectedView2dContainer.getSelectedImagePane()) {
+        || view2d != selectedView2dContainer.getSelectedViewCanvas()) {
       return false;
     }
 
@@ -1086,7 +1092,8 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
             a ->
                 a.setSelectedWithoutTriggerAction(
                     (Boolean) view2d.getActionValue(ActionW.INVERSE_STACK.cmd())));
-    getAction(ActionW.VOLUME).ifPresent(a -> a.enableAction(series.isSuitableFor3d()));
+    getAction(ActionW.VOLUME)
+        .ifPresent(a -> a.enableAction(isMprOrOblique || series.isSuitableFor3d()));
 
     getAction(ActionW.CROSSHAIR).ifPresent(a -> a.enableAction(!isMprOrOblique));
     updateKeyObjectComponentsListener(view2d);
@@ -1280,7 +1287,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
     clearAllPropertyChangeListeners();
 
     if (viewerPlugin != null) {
-      ViewCanvas<DicomImageElement> viewPane = viewerPlugin.getSelectedImagePane();
+      ViewCanvas<DicomImageElement> viewPane = viewerPlugin.getSelectedViewCanvas();
       if (viewPane == null) {
         return;
       }
@@ -1311,8 +1318,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
 
             MediaSeries<DicomImageElement> s = pane.getSeries();
             String fruid = TagD.getTagValue(series, Tag.FrameOfReferenceUID, String.class);
-            boolean specialView = pane instanceof MipView;
-            if (s != null && fruid != null && !specialView) {
+            if (s != null && fruid != null) {
               if (fruid.equals(TagD.getTagValue(s, Tag.FrameOfReferenceUID))) {
                 if (!ImageOrientation.hasSameOrientation(series, s)) {
                   pane.setActionsInView(ActionW.SYNCH_CROSSLINE.cmd(), true);
@@ -1334,14 +1340,13 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
           if (Mode.STACK.equals(synch.getMode())) {
             String fruid = TagD.getTagValue(series, Tag.FrameOfReferenceUID, String.class);
             DicomImageElement img = series.getMedia(MEDIA_POSITION.MIDDLE, null, null);
-            double[] val = img == null ? null : (double[]) img.getTagValue(TagW.SlicePosition);
+            Double val = img == null ? null : (Double) img.getTagValue(TagW.SlicePosition);
 
             for (ViewCanvas<DicomImageElement> pane : getViews(viewerPlugin, viewPane, true)) {
               pane.getGraphicManager().deleteByLayerType(LayerType.CROSSLINES);
 
               MediaSeries<DicomImageElement> s = pane.getSeries();
-              boolean specialView = pane instanceof MipView;
-              if (s != null && fruid != null && val != null && !specialView) {
+              if (s != null && fruid != null && val != null) {
                 boolean synchByDefault = fruid.equals(TagD.getTagValue(s, Tag.FrameOfReferenceUID));
                 oldSynch = (SynchData) pane.getActionValue(ActionW.SYNCH_LINK.cmd());
                 if (synchByDefault) {
@@ -1522,6 +1527,17 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
       return pane.getSeries();
     }
     return null;
+  }
+
+  public MediaSeries<DicomImageElement> getSelectedOriginalSeries() {
+    ViewCanvas<DicomImageElement> pane = getSelectedViewPane();
+    if (pane instanceof MprView mprView) {
+      return mprView.getMprController().getVolume().getStack().getSeries();
+    }
+    if (pane == null) {
+      return null;
+    }
+    return pane.getSeries();
   }
 
   public JMenu getResetMenu(String prop) {

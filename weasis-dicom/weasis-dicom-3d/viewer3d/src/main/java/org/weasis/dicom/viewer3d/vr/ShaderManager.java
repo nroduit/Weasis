@@ -24,8 +24,13 @@ public class ShaderManager {
   public static final String FRAGMENT_SHADER = "volume.frag";
   public static final String COMPUTE_SHADER = "volume.comp";
 
-  public static final String OLD_VERTEX_SHADER = "oldVolume.vert";
-  public static final String OLD_FRAGMENT_SHADER = "oldVolume.frag";
+  /**
+   * OpenGL 3.3-compatible FBO-based shaders used as a fallback when compute shaders are not
+   * available (e.g., macOS).
+   */
+  public static final String FBO_VERTEX_SHADER = "volumeFbo.vert";
+
+  public static final String FBO_FRAGMENT_SHADER = "volumeFbo.frag";
 
   private static final SoftCache<String, String> cache = new SoftCache<>();
 

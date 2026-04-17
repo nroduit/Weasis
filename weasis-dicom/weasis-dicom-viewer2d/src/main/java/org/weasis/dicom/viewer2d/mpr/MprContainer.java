@@ -75,7 +75,8 @@ import org.weasis.dicom.viewer2d.View2dContainer;
 import org.weasis.dicom.viewer2d.View2dFactory;
 import org.weasis.dicom.viewer2d.mpr.MprView.Plane;
 
-public class MprContainer extends DicomViewerPlugin implements PropertyChangeListener {
+public class MprContainer extends DicomViewerPlugin
+    implements PropertyChangeListener, VolumeProvider {
   private static final Logger LOGGER = LoggerFactory.getLogger(MprContainer.class);
 
   static SynchView defaultMpr;
@@ -341,6 +342,18 @@ public class MprContainer extends DicomViewerPlugin implements PropertyChangeLis
     return mprController;
   }
 
+  /**
+   * Delegates to the {@link MprController} to find a volume whose {@link OriginalStack} matches the
+   * given one.
+   *
+   * @param originalStack the stack to match; must not be {@code null}
+   * @return the matching volume, or {@code null}
+   */
+  @Override
+  public Volume<?, ?> getVolumeForStack(OriginalStack originalStack) {
+    return getMprController().getVolumeForStack(originalStack);
+  }
+
   @Override
   public DefaultView2d<DicomImageElement> createDefaultView(String classType) {
     return new MprView(eventManager, getMprController());
@@ -457,7 +470,7 @@ public class MprContainer extends DicomViewerPlugin implements PropertyChangeLis
             @Override
             public void run() {
               try {
-                MPRGenerator.createMissingSeries(this, MprContainer.this, view);
+                MPRGenerator.createMissingSeries(MprContainer.this, view);
 
                 // Following actions need to be executed in EDT thread
                 GuiExecutor.execute(

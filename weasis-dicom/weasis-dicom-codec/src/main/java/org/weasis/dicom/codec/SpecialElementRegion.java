@@ -14,7 +14,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import org.dcm4che3.data.Tag;
-import org.joml.Vector3d;
 import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.opencv.seg.RegionAttributes;
@@ -65,10 +64,9 @@ public interface SpecialElementRegion {
       Map<String, Set<LazyContourLoader>> map = getRefMap().get(seriesUID);
       Map<String, Set<LazyContourLoader>> positionMap = getPositionMap();
       if (!positionMap.isEmpty()) {
-        double[] loc = (double[]) img.getTagValue(TagW.SlicePosition);
+        Double loc = (Double) img.getTagValue(TagW.SlicePosition);
         if (loc != null) {
-          String position =
-              new Vector3d(loc).toString(SegSpecialElement.roundFloat).replace("-0 ", "0 ");
+          String position = SegSpecialElement.roundFloat.format(loc).replace("-0", "0");
           return positionMap.get(position);
         }
       } else if (map != null && sopInstanceUID != null) {

@@ -28,7 +28,7 @@ import org.weasis.base.explorer.TreeNode;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaReader;
-import org.weasis.core.ui.editor.ViewerPluginBuilder;
+import org.weasis.core.ui.editor.MediaFactory;
 
 public abstract class AThumbnailModel<E extends MediaElement> extends AbstractListModel<E>
     implements IThumbnailModel<E> {
@@ -140,7 +140,7 @@ public abstract class AThumbnailModel<E extends MediaElement> extends AbstractLi
           .sorted(Comparator.comparing(Path::getFileName))
           .forEachOrdered(
               p -> {
-                MediaReader media = ViewerPluginBuilder.getMedia(p);
+                MediaReader media = MediaFactory.getMedia(p);
                 if (media != null) {
                   MediaElement preview = media.getPreview();
                   if (preview instanceof ImageElement) {

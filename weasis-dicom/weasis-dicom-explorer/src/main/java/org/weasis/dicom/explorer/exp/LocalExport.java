@@ -9,6 +9,8 @@
  */
 package org.weasis.dicom.explorer.exp;
 
+import com.formdev.flatlaf.util.SystemFileChooser;
+import com.formdev.flatlaf.util.SystemFileChooser.FileNameExtensionFilter;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.event.ItemEvent;
@@ -31,7 +33,6 @@ import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JComponent;
-import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
@@ -60,7 +61,6 @@ import org.weasis.core.api.explorer.ObservableEvent;
 import org.weasis.core.api.gui.util.AbstractItemDialogPage;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.AppProperties;
-import org.weasis.core.api.gui.util.FileFormatFilter;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.WinUtil;
 import org.weasis.core.api.image.SimpleOpManager;
@@ -415,17 +415,17 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
 
     boolean isSaveFileMode = format == Format.DICOM_ZIP;
 
-    JFileChooser fileChooser = new JFileChooser(targetDirectoryPath);
+    SystemFileChooser fileChooser = new SystemFileChooser(targetDirectoryPath);
 
     if (isSaveFileMode) {
-      fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+      fileChooser.setFileSelectionMode(SystemFileChooser.FILES_ONLY);
       fileChooser.setAcceptAllFileFilterUsed(false);
-      FileFormatFilter filter = new FileFormatFilter("zip", "ZIP"); // NON-NLS
+      FileNameExtensionFilter filter = new FileNameExtensionFilter("Zip file", "zip"); // NON-NLS
       fileChooser.addChoosableFileFilter(filter);
       fileChooser.setFileFilter(filter);
 
     } else {
-      fileChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+      fileChooser.setFileSelectionMode(SystemFileChooser.DIRECTORIES_ONLY);
     }
 
     fileChooser.setMultiSelectionEnabled(false);
@@ -446,7 +446,7 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
     File selectedFile;
 
     if (fileChooser.showSaveDialog(WinUtil.getParentWindow(this))
-            != JFileChooser.APPROVE_OPTION // Use parent window because this has large size
+            != SystemFileChooser.APPROVE_OPTION // Use parent window because this has large size
         || (selectedFile = fileChooser.getSelectedFile()) == null) {
       outputFolder = null;
     } else {

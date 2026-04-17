@@ -145,7 +145,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
   protected ViewButton synchButton;
 
   protected MediaSeries<E> series = null;
-  protected LayerAnnotation infoLayer;
+  protected LayerAnnotation<E> infoLayer;
   protected int tileOffset;
 
   protected final ImageViewerEventManager<E> eventManager;

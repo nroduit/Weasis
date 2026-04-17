@@ -12,6 +12,8 @@ layout (binding = 2) uniform sampler2D lightingMap;
 
 #include "vrFunctions.glsl"
 
+#include "crosshairOverlay.glsl"
+
 void main() {
 
     ivec2 pixelCoords = ivec2(gl_GlobalInvocationID.xy);
@@ -45,4 +47,10 @@ void main() {
         }
     }
     imageStore(outputImage, pixelCoords, pixelVal);
+
+    // ---- MPR crosshair overlay ----
+    vec4 crosshairColor = computeCrosshairColor(pixelCoords, imageDims);
+    if (crosshairColor.a >= 0.0) {
+        imageStore(outputImage, pixelCoords, crosshairColor);
+    }
 }

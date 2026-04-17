@@ -10,7 +10,7 @@
 package org.weasis.dicom.viewer3d.vr;
 
 import com.jogamp.opengl.GL2ES2;
-import com.jogamp.opengl.GL4;
+import com.jogamp.opengl.GL2ES3;
 import com.jogamp.opengl.GLContext;
 import com.jogamp.opengl.util.GLPixelStorageModes;
 import java.awt.Dimension;
@@ -123,28 +123,28 @@ public final class VolumeBuilder {
       if (!slices.isEmpty()) {
         GLContext glContext = OpenglUtils.getDefaultGlContext();
         glContext.makeCurrent();
-        GL4 gl4 = glContext.getGL().getGL4();
-        gl4.glBindTexture(GL2ES2.GL_TEXTURE_3D, volumeBuilder.volTexture.getId());
+        GL2ES3 gl = glContext.getGL().getGL2ES3();
+        gl.glBindTexture(GL2ES2.GL_TEXTURE_3D, volumeBuilder.volTexture.getId());
         GLPixelStorageModes storageModes = new GLPixelStorageModes();
-        storageModes.setPackAlignment(gl4, 1); // buffer has not ending row space
+        storageModes.setPackAlignment(gl, 1); // buffer has not ending row space
 
-        TextureSliceDataBuffer textureSliceData = setTexImage3DBuffer(gl4, slices, offset);
+        TextureSliceDataBuffer textureSliceData = setTexImage3DBuffer(gl, slices, offset);
         textureSliceData.releaseMemory();
 
-        storageModes.restore(gl4);
-        gl4.glFinish();
+        storageModes.restore(gl);
+        gl.glFinish();
         glContext.release();
       }
     }
 
-    private TextureSliceDataBuffer setTexImage3DBuffer(GL4 gl4, List<Mat> slices, int offset) {
+    private TextureSliceDataBuffer setTexImage3DBuffer(GL2ES3 gl, List<Mat> slices, int offset) {
       DicomVolTexture volTexture = volumeBuilder.volTexture;
       TextureSliceDataBuffer textureSliceData = TextureSliceDataBuffer.toImageData(slices);
       if (volTexture.getId() <= 0) {
-        volTexture.init(gl4);
+        volTexture.init(gl);
       }
       // See https://docs.gl/gl4/glTexSubImage3D
-      gl4.glTexSubImage3D(
+      gl.glTexSubImage3D(
           GL2ES2.GL_TEXTURE_3D,
           0,
           0,
@@ -157,7 +157,7 @@ public final class VolumeBuilder {
           volTexture.getType(),
           textureSliceData.buffer());
       int error;
-      if ((error = gl4.glGetError()) != 0) {
+      if ((error = gl.glGetError()) != 0) {
         LOGGER.error(
             "Cannot load volume ({} images) in OpenGL texture3D. OpenGL error: {}",
             volTexture.getDepth(),

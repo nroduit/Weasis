@@ -511,7 +511,7 @@ public class DicomMediaIO implements DcmMediaReader {
       }
     }
 
-    DicomMediaUtils.computeSlicePositionVector(this);
+    DicomMediaUtils.computeSlicePosition(this);
     DicomMediaUtils.setShutter(this, header);
     DicomMediaUtils.computeSUVFactor(header, this, 0);
   }
@@ -848,7 +848,7 @@ public class DicomMediaIO implements DcmMediaReader {
       SimpleTaggable taggable = new SimpleTaggable(tagList);
       if (DicomMediaUtils.writePerFrameFunctionalGroupsSequence(
           taggable, getDicomMetaData(), val)) {
-        DicomMediaUtils.computeSlicePositionVector(taggable);
+        DicomMediaUtils.computeSlicePosition(taggable);
       }
       return tagList;
     }

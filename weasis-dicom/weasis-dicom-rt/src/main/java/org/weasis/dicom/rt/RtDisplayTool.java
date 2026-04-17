@@ -1005,7 +1005,7 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener, S
   public void changingViewContentEvent(SeriesViewerEvent event) {
     if (SeriesViewerEvent.EVENT.SELECT.equals(event.getEventType())
         && event.getSeriesViewer() instanceof ImageViewerPlugin<?> plugin) {
-      initTreeValues(plugin.getSelectedImagePane());
+      initTreeValues(plugin.getSelectedViewCanvas());
     }
   }
 

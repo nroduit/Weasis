@@ -104,7 +104,7 @@ public final class ChunkedArray<A> {
     while (remaining > 0) {
       int ci = chunkIndex(gIdx);
       int co = chunkOffset(gIdx);
-      int toCopy = (int) Math.min(remaining, CHUNK_SIZE - co);
+      int toCopy = (int) Math.min(remaining, CHUNK_SIZE - (long) co);
       System.arraycopy(chunks[ci], co, dest, dIdx, toCopy);
       remaining -= toCopy;
       gIdx += toCopy;
@@ -127,7 +127,7 @@ public final class ChunkedArray<A> {
     while (remaining > 0) {
       int ci = chunkIndex(gIdx);
       int co = chunkOffset(gIdx);
-      int toCopy = (int) Math.min(remaining, CHUNK_SIZE - co);
+      int toCopy = (int) Math.min(remaining, CHUNK_SIZE - (long) co);
       System.arraycopy(src, sIdx, chunks[ci], co, toCopy);
       remaining -= toCopy;
       gIdx += toCopy;

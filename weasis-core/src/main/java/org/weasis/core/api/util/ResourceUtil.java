@@ -140,6 +140,7 @@ public class ResourceUtil {
     SYNCH_STAR("svg/action/synchStar.svg"), // NON-NLS
     TILE("svg/action/tile.svg"), // NON-NLS
     VOLUME("svg/action/volume.svg"), // NON-NLS
+    VOLUME_CUT("svg/action/volumeCut.svg"), // NON-NLS
     VOLUME_SETTINGS("svg/action/volumeSettings.svg"), // NON-NLS
     VOLUME_SLICING("svg/action/volumeSlicing.svg"), // NON-NLS
     WINDOW_LEVEL("svg/action/winLevel.svg"), // NON-NLS

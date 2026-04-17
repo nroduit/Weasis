@@ -50,6 +50,7 @@ public class GeneralSetting extends AbstractItemDialogPage {
         List.of(
             new LanguageSetting(),
             new ThemeSetting(),
+            new ShortcutPrefView(),
             new ScreenPrefView(),
             new ProxyPrefView(),
             new LoggingPrefView(),

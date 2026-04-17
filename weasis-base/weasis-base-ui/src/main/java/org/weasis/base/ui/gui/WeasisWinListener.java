@@ -37,10 +37,11 @@ import org.weasis.core.ui.docking.DockableTool;
 import org.weasis.core.ui.docking.PluginTool;
 import org.weasis.core.ui.editor.SeriesViewerFactory;
 import org.weasis.core.ui.editor.SeriesViewerUI;
+import org.weasis.core.ui.editor.ViewerOpenOptions;
+import org.weasis.core.ui.editor.ViewerPlacement;
 import org.weasis.core.ui.editor.ViewerPluginBuilder;
 import org.weasis.core.ui.editor.image.ViewerPlugin;
 import org.weasis.core.ui.util.Toolbar;
-import org.weasis.core.util.LangUtil;
 import org.weasis.core.util.StringUtil;
 
 public class WeasisWinListener implements PropertyChangeListener, PluginStateListener {
@@ -102,15 +103,13 @@ public class WeasisWinListener implements PropertyChangeListener, PluginStateLis
           } else if (source instanceof ViewerPluginBuilder builder) {
             DataExplorerModel model = builder.getModel();
             List<MediaSeries<MediaElement>> series = builder.getSeries();
-            Map<String, Object> props = builder.getProperties();
+            ViewerOpenOptions opts = builder.getViewerOpenOptions();
             if (series != null
-                && LangUtil.nullToTrue(
-                    (Boolean) props.get(ViewerPluginBuilder.CMP_ENTRY_BUILD_NEW_VIEWER))
+                && opts.placement() instanceof ViewerPlacement.ReuseViewer reuse
                 && model.getTreeModelNodeForNewPlugin() != null
                 && model instanceof TreeModel treeModel) {
               boolean inSelView =
-                  LangUtil.nullToFalse(
-                          (Boolean) props.get(ViewerPluginBuilder.ADD_IN_SELECTED_VIEW))
+                  reuse.openInSelection()
                       && builder.getFactory().isViewerCreatedByThisFactory(selectedPlugin);
 
               if (series.size() == 1) {

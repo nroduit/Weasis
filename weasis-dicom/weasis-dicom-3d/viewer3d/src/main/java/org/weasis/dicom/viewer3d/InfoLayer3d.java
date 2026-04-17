@@ -10,18 +10,14 @@
 package org.weasis.dicom.viewer3d;
 
 import java.awt.Color;
-import java.awt.Dimension;
 import java.awt.FontMetrics;
 import java.awt.Graphics2D;
 import java.awt.Rectangle;
 import org.dcm4che3.data.Tag;
-import org.joml.Vector3d;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.DecFormatter;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.GuiUtils.IconColor;
-import org.weasis.core.api.image.util.Unit;
-import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.TagView;
@@ -42,17 +38,11 @@ import org.weasis.dicom.codec.display.ModalityInfoData;
 import org.weasis.dicom.codec.display.ModalityView;
 import org.weasis.dicom.explorer.DicomModel;
 import org.weasis.dicom.viewer2d.InfoLayer;
-import org.weasis.dicom.viewer2d.mip.MipView;
 import org.weasis.dicom.viewer3d.vr.DicomVolTexture;
 import org.weasis.dicom.viewer3d.vr.RenderingLayer;
-import org.weasis.dicom.viewer3d.vr.RenderingType;
 import org.weasis.dicom.viewer3d.vr.View3d;
-import org.weasis.dicom.viewer3d.vr.View3d.ViewType;
 
 public class InfoLayer3d extends AbstractInfoLayer<DicomImageElement> {
-
-  private static final String UNDEFINED = "Undefined"; // NON-NLS
-  static final double RESCALE = 1.0;
 
   public InfoLayer3d(View3d view3d) {
     this(view3d, false);
@@ -63,14 +53,36 @@ public class InfoLayer3d extends AbstractInfoLayer<DicomImageElement> {
     displayPreferences.put(LayerItem.ANNOTATIONS, true);
     displayPreferences.put(LayerItem.MIN_ANNOTATIONS, true);
     displayPreferences.put(LayerItem.ANONYM_ANNOTATIONS, false);
-    displayPreferences.put(LayerItem.SCALE, true);
+    displayPreferences.put(LayerItem.SCALE, false);
     displayPreferences.put(LayerItem.LUT, false);
     displayPreferences.put(LayerItem.IMAGE_ORIENTATION, true);
     displayPreferences.put(LayerItem.WINDOW_LEVEL, true);
     displayPreferences.put(LayerItem.ZOOM, true);
     displayPreferences.put(LayerItem.ROTATION, false);
     displayPreferences.put(LayerItem.FRAME, false);
-    displayPreferences.put(LayerItem.PIXEL, true);
+    displayPreferences.put(LayerItem.PIXEL, false);
+  }
+
+  @Override
+  public LayerAnnotation<DicomImageElement> getLayerCopy(
+      ViewCanvas<DicomImageElement> view2DPane, boolean useGlobalPreferences) {
+    InfoLayer layer = new InfoLayer(view2DPane, useGlobalPreferences);
+    setLayerValue(layer, LayerItem.ANNOTATIONS);
+    setLayerValue(layer, LayerItem.MIN_ANNOTATIONS);
+    setLayerValue(layer, LayerItem.ANONYM_ANNOTATIONS);
+    setLayerValue(layer, LayerItem.SCALE);
+    setLayerValue(layer, LayerItem.LUT);
+    setLayerValue(layer, LayerItem.IMAGE_ORIENTATION);
+    setLayerValue(layer, LayerItem.WINDOW_LEVEL);
+    setLayerValue(layer, LayerItem.ZOOM);
+    setLayerValue(layer, LayerItem.ROTATION);
+    setLayerValue(layer, LayerItem.FRAME);
+    setLayerValue(layer, LayerItem.PIXEL);
+    return layer;
+  }
+
+  protected void setLayerValue(InfoLayer layer, LayerItem item) {
+    layer.setDisplayPreferencesValue(item, getDisplayPreferences(item));
   }
 
   @Override
@@ -107,260 +119,281 @@ public class InfoLayer3d extends AbstractInfoLayer<DicomImageElement> {
     Object[] oldRenderingHints =
         GuiUtils.setRenderingHints(g2d, true, false, view2DPane.requiredTextAntialiasing());
 
+    try {
+      paintContent(g2d, bound);
+    } finally {
+      GuiUtils.resetRenderingHints(g2d, oldRenderingHints);
+    }
+  }
+
+  private void paintContent(Graphics2D g2d, Rectangle bound) {
     Modality mod =
         Modality.getModality(TagD.getTagValue(view2DPane.getSeries(), Tag.Modality, String.class));
     ModalityInfoData modality = ModalityView.getModlatityInfos(mod);
 
+    FontMetrics fontMetrics = g2d.getFontMetrics();
     final int fontHeight = fontMetrics.getHeight();
     thickLength = Math.max(fontHeight, GuiUtils.getScaleLength(5.0));
 
     g2d.setPaint(Color.BLACK);
 
     boolean hideMin = !getDisplayPreferences(LayerItem.MIN_ANNOTATIONS);
-    float drawY = bound.height - border - GuiUtils.getScaleLength(1.5f); // -1.5 for outline
-
     View3d owner = getView2DPane();
     DicomVolTexture imSeries = owner.getVolTexture();
 
-    if (getView2DPane().isReadyForRendering()) {
-      if (getView2DPane().getViewType() != ViewType.VOLUME3D
-          && getDisplayPreferences(LayerItem.SCALE)) {
-        Dimension sourceDim = getOwnerContentDimensions();
-        ImageProperties props =
-            new ImageProperties(
-                sourceDim.width,
-                sourceDim.height,
-                getPixelSize(),
-                getRescaleX(),
-                getRescaleY(),
-                getPixelSpacingUnit(),
-                getPixelSizeCalibrationDescription());
-        drawScale(g2d, bound, fontHeight, props);
-      }
-      if (getDisplayPreferences(LayerItem.IMAGE_ORIENTATION)) {
-        //  drawOrientation(g2);
-      }
-      if (getDisplayPreferences(LayerItem.LUT)) {
-        // drawLUT(g2, bound, fontHeight);
-      }
-    }
-    drawY -= fontHeight;
-    if (imSeries.getVolume().isTransformed()) {
-      drawY = InfoLayer.drawGeometricTransformationMessage(g2d, drawY, fontHeight, border);
+    float drawY = paintBottomLeftInfo(g2d, owner, imSeries, bound, fontHeight, hideMin);
+    setPosition(Position.BottomLeft, border, drawY - GuiUtils.getScaleLength(5));
+
+    if (getDisplayPreferences(LayerItem.ANNOTATIONS)) {
+      paintAnnotations(g2d, modality, imSeries, bound, fontHeight, hideMin, mod);
+    } else {
+      setDefaultCornerPositions(bound);
     }
 
-    if (imSeries.getVolume().isVariableSliceSpacing()) {
-      String message = Messages.getString("non.regular.volume.msg");
+    drawExtendedActions(g2d);
+  }
+
+  private float paintBottomLeftInfo(
+      Graphics2D g2d,
+      View3d owner,
+      DicomVolTexture imSeries,
+      Rectangle bound,
+      int fontHeight,
+      boolean hideMin) {
+    float drawY = bound.height - border - GuiUtils.getScaleLength(1.5f);
+
+    drawY -= fontHeight;
+    if (imSeries.getVolume().isTransformed()) {
+      String message = org.weasis.dicom.viewer2d.Messages.getString("geometric.transformation.msg");
+      FontTools.paintColorFontOutline(
+          g2d, message, border, drawY, IconColor.ACTIONS_RED.getColor());
+      drawY -= fontHeight;
+    } else if (imSeries.getVolume().isSkipRectification()) {
+      String message = org.weasis.dicom.viewer2d.Messages.getString("skip.rectification.msg");
       FontTools.paintColorFontOutline(
           g2d, message, border, drawY, IconColor.ACTIONS_RED.getColor());
       drawY -= fontHeight;
     }
 
-    if (!isVolumetricView() && getDisplayPreferences(LayerItem.PIXEL) && hideMin) {
-      StringBuilder sb =
-          new StringBuilder(org.weasis.dicom.viewer2d.Messages.getString("InfoLayer.pixel"));
-      sb.append(StringUtil.COLON_AND_SPACE);
-      if (pixelInfo != null) {
-        if (pixelInfo.getPixelValueText() != null) {
-          sb.append(pixelInfo.getPixelValueText());
-          sb.append(" - ");
-        }
-        sb.append(pixelInfo.getPixelPositionText());
-      }
-      String str = sb.toString();
-      FontTools.paintFontOutline(g2d, str, border, drawY);
-      drawY -= fontHeight;
-      pixelInfoBound.setBounds(
-          border,
-          (int) drawY + fontMetrics.getDescent(),
-          fontMetrics.stringWidth(str) + GuiUtils.getScaleLength(2),
-          fontHeight);
-    }
-
     if (getDisplayPreferences(LayerItem.WINDOW_LEVEL) && hideMin) {
-      StringBuilder sb = new StringBuilder();
-      RenderingLayer rendering = owner.getRenderingLayer();
-      int window = rendering.getWindowWidth();
-      int level = rendering.getWindowCenter();
-      boolean outside = false;
-
-      sb.append(ActionW.WINLEVEL.getTitle());
-      sb.append(StringUtil.COLON_AND_SPACE);
-      sb.append(DecFormatter.allNumber(window));
-      sb.append("/");
-      sb.append(DecFormatter.allNumber(level));
-
-      double minModLUT = owner.getVolTexture().getLevelMin();
-      double maxModLUT = owner.getVolTexture().getLevelMax();
-      double minp = level - window / 2.0;
-      double maxp = level + window / 2.0;
-      if (minp > maxModLUT || maxp < minModLUT) {
-        outside = true;
-        sb.append(" - ");
-        sb.append(org.weasis.dicom.viewer2d.Messages.getString("InfoLayer.msg_outside_levels"));
-      }
-
-      if (outside) {
-        FontTools.paintColorFontOutline(
-            g2d, sb.toString(), border, drawY, IconColor.ACTIONS_RED.getColor());
-      } else {
-        FontTools.paintFontOutline(g2d, sb.toString(), border, drawY);
-      }
-      drawY -= fontHeight;
+      drawY = paintWindowLevel(g2d, owner, drawY, fontHeight);
     }
-
     if (getDisplayPreferences(LayerItem.ZOOM) && hideMin) {
-      FontTools.paintFontOutline(
-          g2d,
-          org.weasis.dicom.viewer2d.Messages.getString("InfoLayer.zoom")
-              + StringUtil.COLON_AND_SPACE
-              + DecFormatter.percentTwoDecimal(getView2DPane().getZoom()),
-          border,
-          drawY);
-      drawY -= fontHeight;
+      drawY = paintZoom(g2d, drawY, fontHeight);
     }
     if (getDisplayPreferences(LayerItem.ROTATION) && hideMin) {
-      FontTools.paintFontOutline(
-          g2d,
-          org.weasis.dicom.viewer2d.Messages.getString("InfoLayer.angle")
-              + StringUtil.COLON_AND_SPACE
-              + view2DPane.getActionValue(ActionW.ROTATION.cmd())
-              + " °",
-          border,
-          drawY);
-      drawY -= fontHeight;
+      drawY = paintRotation(g2d, drawY, fontHeight);
     }
 
-    if (getDisplayPreferences(LayerItem.ANNOTATIONS)) {
-      MediaSeries<DicomImageElement> series = view2DPane.getSeries();
-      MediaSeriesGroup study = InfoLayer.getParent(series, DicomModel.study);
-      MediaSeriesGroup patient = InfoLayer.getParent(series, DicomModel.patient);
-      CornerInfoData corner = modality.getCornerInfo(CornerDisplay.TOP_LEFT);
-      boolean anonymize = getDisplayPreferences(LayerItem.ANONYM_ANNOTATIONS);
-      drawY = fontHeight;
+    return drawY;
+  }
+
+  private float paintWindowLevel(Graphics2D g2d, View3d owner, float drawY, int fontHeight) {
+    RenderingLayer<DicomImageElement> rendering = owner.getRenderingLayer();
+    int window = rendering.getWindowWidth();
+    int level = rendering.getWindowCenter();
+
+    StringBuilder sb = new StringBuilder();
+    sb.append(ActionW.WINLEVEL.getTitle());
+    sb.append(StringUtil.COLON_AND_SPACE);
+    sb.append(DecFormatter.allNumber(window));
+    sb.append("/");
+    sb.append(DecFormatter.allNumber(level));
+
+    double minModLUT = owner.getVolTexture().getLevelMin();
+    double maxModLUT = owner.getVolTexture().getLevelMax();
+    double minp = level - window / 2.0;
+    double maxp = level + window / 2.0;
+    boolean outside = minp > maxModLUT || maxp < minModLUT;
+    if (outside) {
+      sb.append(" - ");
+      sb.append(org.weasis.dicom.viewer2d.Messages.getString("InfoLayer.msg_outside_levels"));
+      FontTools.paintColorFontOutline(
+          g2d, sb.toString(), border, drawY, IconColor.ACTIONS_RED.getColor());
+    } else {
+      FontTools.paintFontOutline(g2d, sb.toString(), border, drawY);
+    }
+    return drawY - fontHeight;
+  }
+
+  private float paintZoom(Graphics2D g2d, float drawY, int fontHeight) {
+    FontTools.paintFontOutline(
+        g2d,
+        org.weasis.dicom.viewer2d.Messages.getString("InfoLayer.zoom")
+            + StringUtil.COLON_AND_SPACE
+            + DecFormatter.percentTwoDecimal(getView2DPane().getZoom()),
+        border,
+        drawY);
+    return drawY - fontHeight;
+  }
+
+  private float paintRotation(Graphics2D g2d, float drawY, int fontHeight) {
+    FontTools.paintFontOutline(
+        g2d,
+        org.weasis.dicom.viewer2d.Messages.getString("InfoLayer.angle")
+            + StringUtil.COLON_AND_SPACE
+            + view2DPane.getActionValue(ActionW.ROTATION.cmd())
+            + " °",
+        border,
+        drawY);
+    return drawY - fontHeight;
+  }
+
+  private void paintAnnotations(
+      Graphics2D g2d,
+      ModalityInfoData modality,
+      DicomVolTexture imSeries,
+      Rectangle bound,
+      int fontHeight,
+      boolean hideMin,
+      Modality mod) {
+    MediaSeries<DicomImageElement> series = view2DPane.getSeries();
+    MediaSeriesGroup study = InfoLayer.getParent(series, DicomModel.study);
+    MediaSeriesGroup patient = InfoLayer.getParent(series, DicomModel.patient);
+    boolean anonymize = getDisplayPreferences(LayerItem.ANONYM_ANNOTATIONS);
+
+    float drawY =
+        paintTopLeftCorner(g2d, modality, patient, study, series, fontHeight, hideMin, anonymize);
+    setPosition(Position.TopLeft, border, drawY - fontHeight + GuiUtils.getScaleLength(5));
+
+    drawY =
+        paintTopRightCorner(
+            g2d, modality, patient, study, series, bound, fontHeight, hideMin, anonymize);
+    setPosition(
+        Position.TopRight,
+        (double) bound.width - border,
+        drawY - fontHeight + GuiUtils.getScaleLength(5));
+
+    drawY =
+        paintBottomRightCorner(
+            g2d, modality, patient, study, series, bound, fontHeight, hideMin, anonymize);
+    setPosition(
+        Position.BottomRight, (double) bound.width - border, drawY - GuiUtils.getScaleLength(5));
+
+    paintBottomLeftAnnotations(g2d, imSeries, bound, mod);
+  }
+
+  private float paintTopLeftCorner(
+      Graphics2D g2d,
+      ModalityInfoData modality,
+      MediaSeriesGroup patient,
+      MediaSeriesGroup study,
+      MediaSeries<DicomImageElement> series,
+      int fontHeight,
+      boolean hideMin,
+      boolean anonymize) {
+    CornerInfoData corner = modality.getCornerInfo(CornerDisplay.TOP_LEFT);
+    float drawY = fontHeight;
+    for (TagView tagView : corner.getInfos()) {
+      if (tagView != null && (hideMin || tagView.containsTag(TagD.get(Tag.PatientName)))) {
+        String text = getFormattedTag(tagView, patient, study, series, anonymize);
+        if (text != null) {
+          FontTools.paintFontOutline(g2d, text, border, drawY);
+          drawY += fontHeight;
+        }
+      }
+    }
+    return drawY;
+  }
+
+  private float paintTopRightCorner(
+      Graphics2D g2d,
+      ModalityInfoData modality,
+      MediaSeriesGroup patient,
+      MediaSeriesGroup study,
+      MediaSeries<DicomImageElement> series,
+      Rectangle bound,
+      int fontHeight,
+      boolean hideMin,
+      boolean anonymize) {
+    CornerInfoData corner = modality.getCornerInfo(CornerDisplay.TOP_RIGHT);
+    float drawY = fontHeight;
+    for (TagView info : corner.getInfos()) {
+      if (info != null && (hideMin || info.containsTag(TagD.get(Tag.SeriesDate)))) {
+        String text = getFormattedTag(info, patient, study, series, anonymize);
+        if (text != null) {
+          FontTools.paintFontOutline(
+              g2d,
+              text,
+              bound.width - g2d.getFontMetrics().stringWidth(text) - (float) border,
+              drawY);
+          drawY += fontHeight;
+        }
+      }
+    }
+    return drawY;
+  }
+
+  private float paintBottomRightCorner(
+      Graphics2D g2d,
+      ModalityInfoData modality,
+      MediaSeriesGroup patient,
+      MediaSeriesGroup study,
+      MediaSeries<DicomImageElement> series,
+      Rectangle bound,
+      int fontHeight,
+      boolean hideMin,
+      boolean anonymize) {
+    float drawY = bound.height - border - GuiUtils.getScaleLength(1.5f);
+    if (hideMin) {
+      CornerInfoData corner = modality.getCornerInfo(CornerDisplay.BOTTOM_RIGHT);
       TagView[] infos = corner.getInfos();
-      for (TagView tagView : infos) {
-        if (tagView != null && (hideMin || tagView.containsTag(TagD.get(Tag.PatientName)))) {
-          for (TagW tag : tagView.getTag()) {
-            if (!anonymize || tag.getAnonymizationType() != 1) {
-              Object value = getFrameTagValue(tag, patient, study, series);
-              if (value != null) {
-                String format = tag.addGMTOffset(tagView.getFormat(), series);
-                String str = tag.getFormattedTagValue(value, format);
-                if (StringUtil.hasText(str)) {
-                  FontTools.paintFontOutline(g2d, str, border, drawY);
-                  drawY += fontHeight;
-                }
-                break;
-              }
-            }
+      for (int j = infos.length - 1; j >= 0; j--) {
+        if (infos[j] != null) {
+          String text = getFormattedTag(infos[j], patient, study, series, anonymize);
+          if (text != null) {
+            FontTools.paintFontOutline(
+                g2d,
+                text,
+                bound.width - g2d.getFontMetrics().stringWidth(text) - (float) border,
+                drawY);
+            drawY -= fontHeight;
           }
         }
       }
-
-      corner = modality.getCornerInfo(CornerDisplay.TOP_RIGHT);
-      drawY = fontHeight;
-      infos = corner.getInfos();
-      for (TagView info : infos) {
-        if (info != null) {
-          if (hideMin || info.containsTag(TagD.get(Tag.SeriesDate))) {
-            Object value;
-            for (TagW tag : info.getTag()) {
-              if (!anonymize || tag.getAnonymizationType() != 1) {
-                value = getFrameTagValue(tag, patient, study, series);
-                if (value != null) {
-                  String format = tag.addGMTOffset(info.getFormat(), series);
-                  String str = tag.getFormattedTagValue(value, format);
-                  if (StringUtil.hasText(str)) {
-                    FontTools.paintFontOutline(
-                        g2d,
-                        str,
-                        bound.width - g2d.getFontMetrics().stringWidth(str) - (float) border,
-                        drawY);
-                    drawY += fontHeight;
-                  }
-                  break;
-                }
-              }
-            }
-          }
-        }
-      }
-
-      drawY = bound.height - border - GuiUtils.getScaleLength(1.5f); // -1.5 for outline
-      if (hideMin) {
-        corner = modality.getCornerInfo(CornerDisplay.BOTTOM_RIGHT);
-        infos = corner.getInfos();
-        for (int j = infos.length - 1; j >= 0; j--) {
-          if (infos[j] != null) {
-            Object value;
-            for (TagW tag : infos[j].getTag()) {
-              if (!anonymize || tag.getAnonymizationType() != 1) {
-                value = getFrameTagValue(tag, patient, study, series);
-                if (value != null) {
-                  String format = tag.addGMTOffset(infos[j].getFormat(), series);
-                  String str = tag.getFormattedTagValue(value, format);
-                  if (StringUtil.hasText(str)) {
-                    FontTools.paintFontOutline(
-                        g2d,
-                        str,
-                        bound.width - g2d.getFontMetrics().stringWidth(str) - (float) border,
-                        drawY);
-                    drawY -= fontHeight;
-                  }
-                  break;
-                }
-              }
-            }
-          }
-        }
-        drawY -= 5;
-        //    drawSeriesInMemoryState(g2, view2DPane.getSeries(), bound.width - border, (int)
-        // (drawY));
-      }
-
-      // Boolean synchLink = (Boolean) view2DPane.getActionValue(ActionW.SYNCH_LINK);
-      // String str = synchLink != null && synchLink ? "linked" : "unlinked"; // NON-NLS
-      // paintFontOutline(g2, str, bound.width - g2.getFontMetrics().stringWidth(str) - BORDER,
-      // drawY);
-
-      StringBuilder orientation = new StringBuilder();
-      orientation.append(mod.name());
-      orientation.append(" (").append(imSeries.getWidth());
-      orientation.append("x").append(imSeries.getHeight()); // NON-NLS
-      orientation.append("x").append(imSeries.getDepth()); // NON-NLS
-      orientation.append(")");
-
-      if (getDisplayPreferences(LayerItem.IMAGE_ORIENTATION)) {
-        //          double[] imagePosition = owner.getImagePatientOrientation();
-        //          if (imagePosition != null) {
-        //            Plan imgOrientation =
-        //                ImageOrientation.getPlan(
-        //                    new Vector3d(imagePosition),
-        //                    new Vector3d(imagePosition[3], imagePosition[4], imagePosition[5]));
-        //            if (imgOrientation != null) {
-        //              orientation.append(" - ");
-        //              orientation.append(imgOrientation);
-        //            }
-        //          }
-      }
-
-      FontTools.paintFontOutline(
-          g2d,
-          orientation.toString(),
-          border,
-          bound.height - border - GuiUtils.getScaleLength(1.5f)); // -1.5 for outline
+      drawY -= 5;
     }
-
-    GuiUtils.resetRenderingHints(g2d, oldRenderingHints);
+    return drawY;
   }
 
-  private boolean isMipActive() {
-    return !MipView.Type.NONE.equals(getView2DPane().getRenderingLayer().getMipType());
+  private String getFormattedTag(
+      TagView tagView,
+      MediaSeriesGroup patient,
+      MediaSeriesGroup study,
+      MediaSeries<DicomImageElement> series,
+      boolean anonymize) {
+    for (TagW tag : tagView.getTag()) {
+      if (!anonymize || tag.getAnonymizationType() != 1) {
+        Object value = getFrameTagValue(tag, patient, study, series);
+        if (value != null) {
+          String format = tag.addGMTOffset(tagView.getFormat(), series);
+          String str = tag.getFormattedTagValue(value, format);
+          if (StringUtil.hasText(str)) {
+            return str;
+          }
+        }
+      }
+    }
+    return null;
   }
 
-  private boolean isSliceActive() {
-    return RenderingType.SLICE.equals(getView2DPane().getRenderingLayer().getRenderingType());
+  private void paintBottomLeftAnnotations(
+      Graphics2D g2d, DicomVolTexture imSeries, Rectangle bound, Modality mod) {
+    String orientation =
+        mod.name()
+            + " ("
+            + imSeries.getWidth()
+            + "x"
+            + imSeries.getHeight() // NON-NLS
+            + "x"
+            + imSeries.getDepth() // NON-NLS
+            + ")";
+
+    FontTools.paintFontOutline(
+        g2d,
+        orientation,
+        border,
+        bound.height - border - GuiUtils.getScaleLength(1.5f)); // -1.5 for outline
   }
 
   private Object getFrameTagValue(
@@ -369,28 +402,14 @@ public class InfoLayer3d extends AbstractInfoLayer<DicomImageElement> {
       final MediaSeriesGroup study,
       final MediaSeries<DicomImageElement> series) {
 
-    if ((tag.getKeyword().equals("SliceLocation") || tag.getKeyword().equals("SliceThickness"))
-        && getView2DPane().getVolTexture() != null
-        //      && owner.isShowingAcquisitionAxis()
-        && !isVolumetricView()) {
-
-      if (isMipActive()) {
-        return UNDEFINED;
-      } else {
-      }
-    }
-    return getTagValue(tag, patient, study, series, null);
+    return getTagValue(tag, patient, study, series);
   }
 
   private Object getTagValue(
       TagW tag,
       MediaSeriesGroup patient,
       MediaSeriesGroup study,
-      MediaSeries<DicomImageElement> series,
-      ImageElement image) {
-    if (image != null && image.containTagKey(tag)) {
-      return image.getTagValue(tag);
-    }
+      MediaSeries<DicomImageElement> series) {
     if (series.containTagKey(tag)) {
       return series.getTagValue(tag);
     }
@@ -403,62 +422,8 @@ public class InfoLayer3d extends AbstractInfoLayer<DicomImageElement> {
     return null;
   }
 
-  public Unit getPixelSpacingUnit() {
-    DicomVolTexture volTexture = getView2DPane().getVolTexture();
-    return volTexture == null ? Unit.PIXEL : volTexture.getPixelSpacingUnit();
-  }
-
-  public double getZoomFactor() {
-    Object zoom = getView2DPane().getActionValue(ActionW.ZOOM.cmd());
-    if (zoom instanceof Double val) {
-      return Math.abs(val);
-    }
-    return 0;
-  }
-
-  public double getPixelSize() {
-    return getView2DPane().getVolTexture().getMaxDimensionLength();
-  }
-
-  public Dimension getOwnerContentDimensions() {
-    View3d owner = (View3d) view2DPane;
-    Vector3d imageSize = owner.getVolTexture().getVolumeSize();
-    return new Dimension((int) imageSize.x, (int) imageSize.y);
-  }
-
-  public double getRescaleX() {
-    return RESCALE;
-  }
-
-  public double getRescaleY() {
-    return RESCALE;
-  }
-
-  public String getPixelSizeCalibrationDescription() {
-    String tagValue = null;
-    DicomVolTexture ser = getView2DPane().getVolTexture();
-    if (ser != null) {
-      tagValue = TagD.getTagValue(ser, Tag.PixelSpacingCalibrationDescription, String.class);
-    }
-    return tagValue;
-  }
-
   @Override
   public Rectangle getPreloadingProgressBound() {
     return null;
-  }
-
-  @Override
-  public LayerAnnotation getLayerCopy(ViewCanvas view2DPane, boolean useGlobalPreferences) {
-    throw new UnsupportedOperationException("Not supported yet.");
-  }
-
-  private boolean isVolumetricView() {
-    return getView2DPane().getRenderingLayer().getRenderingType() != RenderingType.SLICE;
-  }
-
-  @Override
-  public void resetToDefault() {
-    // TODO implement the persistence
   }
 }

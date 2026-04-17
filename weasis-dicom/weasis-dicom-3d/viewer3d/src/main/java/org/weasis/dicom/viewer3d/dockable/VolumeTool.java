@@ -108,7 +108,7 @@ public class VolumeTool extends PluginTool {
               JLabel label = new JLabel(ActionVol.RENDERING_TYPE.getTitle() + StringUtil.COLON);
               JComboBox<?> combo = c.createCombo(140);
               combo.setMaximumRowCount(10);
-              volumePanel.add(GuiUtils.getHorizontalBoxLayoutPanel(5, label, combo));
+              volumePanel.add(GuiUtils.getHorizontalBoxLayoutPanel(3, label, combo));
               volumePanel.add(GuiUtils.boxVerticalStrut(gabY));
             });
 
@@ -149,27 +149,6 @@ public class VolumeTool extends PluginTool {
                   GuiUtils.getFlowLayoutPanel(box, GuiUtils.boxHorizontalStrut(10), btnOptions));
               volumePanel.add(GuiUtils.boxVerticalStrut(gabY));
             });
-
-    EventManager.getInstance()
-        .getAction(ActionVol.MIP_TYPE)
-        .ifPresent(
-            c -> {
-              JPanel panel = GuiUtils.getHorizontalBoxLayoutPanel(5);
-              EventManager.getInstance()
-                  .getAction(ActionVol.MIP_DEPTH)
-                  .ifPresent(
-                      s -> {
-                        JSliderW slider = s.createSlider(0, true);
-                        GuiUtils.setPreferredWidth(slider, 140);
-                        panel.add(slider);
-                      });
-              JComboBox<?> combo = c.createCombo();
-              GuiUtils.setWidth(combo, 80);
-              panel.add(combo);
-              volumePanel.add(panel);
-              volumePanel.add(GuiUtils.boxVerticalStrut(gabY));
-            });
-
     return volumePanel;
   }
 

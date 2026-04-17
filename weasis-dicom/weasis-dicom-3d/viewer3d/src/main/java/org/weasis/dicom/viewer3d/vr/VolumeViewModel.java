@@ -15,31 +15,16 @@ public class VolumeViewModel extends DefaultViewModel {
 
   @Override
   public double getModelOffsetX() {
-    if (hasContent()) {}
     return 0;
   }
 
   @Override
   public double getModelOffsetY() {
-    if (hasContent()) {}
     return 0;
   }
 
   @Override
   public double getViewScale() {
-    if (hasContent()) {
-      double displayZoom = 1;
-      //     double displayZoom = getActualDisplayZoom();
-      if (displayZoom <= 0) {
-        displayZoom = 1;
-      }
-      return displayZoom;
-    }
     return 1;
-  }
-
-  public boolean hasContent() {
-    //  return (getVolTexture() != null);
-    return false;
   }
 }

@@ -97,7 +97,9 @@ public class MprAxis {
     Volume<?, ?> volume = rawIO.getVolume();
     int sliceImageSize = volume.getSliceSize();
     Vector3d voxelRatio = volume.getVoxelRatio();
+    // volSize is the volume dimensions in voxelRatio-scaled space (used for interpolation)
     Vector3d volSize = new Vector3d(volume.getSize()).mul(voxelRatio);
+    // center is the volume center in voxelRatio-scaled space
     Vector3d center = new Vector3d(volSize).mul(0.5);
     Vector3d crossHair;
     if (volumeCenter == null) {
@@ -105,34 +107,53 @@ public class MprAxis {
     } else {
       crossHair = new Vector3d(volumeCenter);
     }
-    Vector3d volCenter = new Vector3d(sliceImageSize / 2.0);
+
+    // The center of the slice image in slice coordinates
+    double halfSlice = sliceImageSize / 2.0;
+    // volCenter is the slice image center position (same coordinate system as crossHair)
+    Vector3d volCenter = new Vector3d(halfSlice, halfSlice, halfSlice);
+    // crossHairOffset is the offset from slice center to crosshair in sliceSize-space
     Vector3d crossHairOffset = new Vector3d(crossHair).sub(volCenter);
-    Vector3d t1 = new Vector3d(center).add(crossHairOffset);
 
     Matrix4d matrix4d = new Matrix4d();
     Quaterniond r = new Quaterniond(rotation);
-    matrix4d
-        .translate(t1)
-        .rotate(r)
-        .translate(t1.negate())
-        .translate(center)
-        .translate(volCenter.negate());
-    applyPlaneSpecificTransformations(matrix4d, plane, crossHair);
-    return matrix4d;
-  }
 
-  private void applyPlaneSpecificTransformations(Matrix4d matrix, Plane plane, Vector3d crossHair) {
+    // Build the transformation:
+    // The rotation happens around the volume center.
+    // When the plane is tilted, we compute the perpendicular distance
+    // by projecting the crosshair offset onto the slice's rotated normal direction.
+
     switch (plane) {
       case AXIAL -> {
-        matrix.translate(0, 0, crossHair.z);
+        Vector3d sliceNormal = new Vector3d(0, 0, 1);
+        r.transform(sliceNormal);
+        double perpendicularOffset = crossHairOffset.dot(sliceNormal);
+        matrix4d.translate(center).rotate(r).translate(-halfSlice, -halfSlice, perpendicularOffset);
       }
       case CORONAL -> {
-        matrix.rotateX(-Math.toRadians(90)).scale(1.0, -1.0, 1.0).translate(0, 0, crossHair.y);
+        Vector3d sliceNormal = new Vector3d(0, 1, 0);
+        r.transform(sliceNormal);
+        double perpendicularOffset = crossHairOffset.dot(sliceNormal);
+        matrix4d
+            .translate(center)
+            .rotate(r)
+            .rotateX(-Math.toRadians(90))
+            .scale(1.0, -1.0, 1.0)
+            .translate(-halfSlice, -halfSlice, perpendicularOffset);
       }
       case SAGITTAL -> {
-        matrix.rotateY(Math.toRadians(90)).rotateZ(Math.toRadians(90)).translate(0, 0, crossHair.x);
+        Vector3d sliceNormal = new Vector3d(1, 0, 0);
+        r.transform(sliceNormal);
+        double perpendicularOffset = crossHairOffset.dot(sliceNormal);
+        matrix4d
+            .translate(center)
+            .rotate(r)
+            .rotateY(Math.toRadians(90))
+            .rotateZ(Math.toRadians(90))
+            .translate(-halfSlice, -halfSlice, perpendicularOffset);
       }
     }
+    return matrix4d;
   }
 
   public void setThicknessExtension(int extend) {

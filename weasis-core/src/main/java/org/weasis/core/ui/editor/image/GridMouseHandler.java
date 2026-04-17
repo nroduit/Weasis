@@ -15,6 +15,8 @@ import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.util.Arrays;
+import java.util.Objects;
 import javax.swing.JPanel;
 import org.weasis.core.api.gui.layout.ConstraintSpec;
 import org.weasis.core.api.gui.layout.LayoutCellManager;
@@ -147,7 +149,7 @@ public class GridMouseHandler extends MouseAdapter {
   }
 
   private void resizeColumns(Point currentPoint) {
-    double dx = currentPoint.x - dragState.startPoint.x;
+    double dx = currentPoint.getX() - dragState.startPoint.x;
     int leftIdx = dragState.border.cell.x() - 1;
     int rightIdx = dragState.border.cell.x();
 
@@ -168,7 +170,7 @@ public class GridMouseHandler extends MouseAdapter {
   }
 
   private void resizeRows(Point currentPoint) {
-    double dy = currentPoint.y - dragState.startPoint.y;
+    double dy = currentPoint.getY() - dragState.startPoint.y;
     int topIdx = dragState.border.cell().y() - 1;
     int bottomIdx = dragState.border.cell().y();
 
@@ -261,7 +263,43 @@ public class GridMouseHandler extends MouseAdapter {
       ResizeBorder border,
       Rectangle gridBounds,
       ConstraintSpec[] colSpecs,
-      ConstraintSpec[] rowSpecs) {}
+      ConstraintSpec[] rowSpecs) {
+
+    @Override
+    public boolean equals(Object obj) {
+      if (this == obj) return true;
+      if (!(obj instanceof DragState other)) return false;
+      return Objects.equals(startPoint, other.startPoint)
+          && Objects.equals(border, other.border)
+          && Objects.equals(gridBounds, other.gridBounds)
+          && Arrays.equals(colSpecs, other.colSpecs)
+          && Arrays.equals(rowSpecs, other.rowSpecs);
+    }
+
+    @Override
+    public int hashCode() {
+      int result = Objects.hash(startPoint, border, gridBounds);
+      result = 31 * result + Arrays.hashCode(colSpecs);
+      result = 31 * result + Arrays.hashCode(rowSpecs);
+      return result;
+    }
+
+    @Override
+    public String toString() {
+      return "DragState["
+          + "startPoint="
+          + startPoint
+          + ", border="
+          + border
+          + ", gridBounds="
+          + gridBounds
+          + ", colSpecs="
+          + Arrays.toString(colSpecs)
+          + ", rowSpecs="
+          + Arrays.toString(rowSpecs)
+          + ']';
+    }
+  }
 
   private record ResizeBorder(boolean isVertical, MigCell cell) {}
 

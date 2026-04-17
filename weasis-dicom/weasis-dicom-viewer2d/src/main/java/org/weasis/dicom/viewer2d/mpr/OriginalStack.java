@@ -38,13 +38,15 @@ public abstract class OriginalStack extends AbstractStack {
   protected double sliceSpace;
   protected boolean variableSliceSpacing;
   protected boolean nonParallelSlices;
+  protected boolean tooFewSlicesForTransformation;
 
   public OriginalStack(
       Plane plane, MediaSeries<DicomImageElement> series, Filter<DicomImageElement> filter) {
     super(plane, series);
     this.sourceStack = series.copyOfMedias(filter, SortSeriesStack.slicePosition);
-    this.fistSliceGeometry = new GeometryOfSlice(getStartingImage().getSliceGeometry());
+    this.fistSliceGeometry = new GeometryOfSlice(getFirstImage().getSliceGeometry());
     this.sliceSpace = initSliceSpace();
+    checkTooFewSlicesForTransformation();
   }
 
   public DicomImageElement getMiddleImage() {
@@ -61,14 +63,6 @@ public abstract class OriginalStack extends AbstractStack {
 
   public List<DicomImageElement> getSourceStack() {
     return sourceStack;
-  }
-
-  protected DicomImageElement getStartingImage() {
-    return plane == AXIAL ? getLastImage() : getFirstImage();
-  }
-
-  protected DicomImageElement getEndingImage() {
-    return plane == AXIAL ? getFirstImage() : getLastImage();
   }
 
   public GeometryOfSlice getFirstSliceGeometry() {
@@ -93,27 +87,27 @@ public abstract class OriginalStack extends AbstractStack {
       return 0.0;
     }
 
-    double[] firstPos = (double[]) sourceStack.getFirst().getTagValue(TagW.SlicePosition);
-    if (firstPos == null || firstPos.length != 3) {
+    Double firstPos = (Double) sourceStack.getFirst().getTagValue(TagW.SlicePosition);
+    if (firstPos == null) {
       return 0.0;
     }
 
     // Check for slice parallelism
     checkSliceParallelism();
 
-    // Collect all spacing measurements
+    // Collect all spacing measurements using the scalar slice position (dot product with normal)
+    // which gives the correct inter-slice distance for any orientation including oblique.
     List<Double> spacings = new ArrayList<>(sourceStack.size() - 1);
-    Vector3d lastPosVector = new Vector3d(firstPos[0], firstPos[1], firstPos[2]);
+    double lastScalar = firstPos;
     for (int i = 1; i < sourceStack.size(); i++) {
-      double[] sp = (double[]) sourceStack.get(i).getTagValue(TagW.SlicePosition);
-      if (sp == null || sp.length != 3) {
+      Double sp = (Double) sourceStack.get(i).getTagValue(TagW.SlicePosition);
+      if (sp == null) {
         continue;
       }
 
-      Vector3d currentPosVector = new Vector3d(sp[0], sp[1], sp[2]);
-      double space = lastPosVector.distance(currentPosVector);
+      double space = Math.abs(sp - lastScalar);
       spacings.add(space);
-      lastPosVector.set(currentPosVector);
+      lastScalar = sp;
     }
 
     // Check for variable spacing (using median as reference)
@@ -166,6 +160,23 @@ public abstract class OriginalStack extends AbstractStack {
     }
   }
 
+  private void checkTooFewSlicesForTransformation() {
+    double shearFactor = 0.0;
+    Vector3d col = getFirstSliceGeometry().getColumn();
+    switch (getPlane()) {
+      case AXIAL -> shearFactor = col.z();
+      case CORONAL -> shearFactor = col.y();
+      case SAGITTAL -> shearFactor = col.x();
+    }
+    int maxImageSize = Math.max(getWidth(), getHeight());
+    int numSlices = getSourceStack().size();
+    double volRatio = (double) maxImageSize / numSlices;
+
+    // If there are few slices compared to the image size and the transformation is significant,
+    // allow the user to bypass the transformation
+    this.tooFewSlicesForTransformation = Math.abs(shearFactor) > 0.1 && volRatio > 5.0;
+  }
+
   public double getSliceSpace() {
     return sliceSpace;
   }
@@ -176,6 +187,10 @@ public abstract class OriginalStack extends AbstractStack {
 
   public boolean isNonParallelSlices() {
     return nonParallelSlices;
+  }
+
+  public boolean isTooFewSlicesForTransformation() {
+    return tooFewSlicesForTransformation;
   }
 
   public abstract void generate(BuildContext context);
@@ -209,7 +224,7 @@ public abstract class OriginalStack extends AbstractStack {
       return null;
     }
 
-    DicomImageElement firstImg = getStartingImage();
+    DicomImageElement firstImg = getFirstImage();
     GeometryOfSlice firstGeom = firstImg.getSliceGeometry();
 
     Vector3d row = new Vector3d(firstGeom.getRow());

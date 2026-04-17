@@ -73,7 +73,6 @@ public class DicomImport extends AbstractWizardDialog {
   protected void initializePages() {
     ArrayList<AbstractItemDialogPage> list = new ArrayList<>();
     list.add(new LocalImport());
-    list.add(new DicomZipImport());
     list.add(new DicomDirImport());
 
     try {

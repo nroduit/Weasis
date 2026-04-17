@@ -19,6 +19,7 @@ import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.BasicActionState;
 import org.weasis.core.api.gui.util.Feature;
 import org.weasis.core.api.gui.util.MouseActionAdapter;
+import org.weasis.core.api.gui.util.ShortcutManager;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.service.AuditLog;
 import org.weasis.core.ui.model.utils.bean.PanPoint;
@@ -151,17 +152,26 @@ public abstract class PannerListener extends MouseActionAdapter
 
   @Override
   public void keyPressed(KeyEvent e) {
-    if (e.isAltDown()) {
-      int shift = e.isShiftDown() ? 10 : 5;
-      if (e.getKeyCode() == KeyEvent.VK_LEFT) {
-        setPoint(new PanPoint(PanPoint.State.MOVE, shift, 0));
-      } else if (e.getKeyCode() == KeyEvent.VK_UP) {
-        setPoint(new PanPoint(PanPoint.State.MOVE, 0, shift));
-      } else if (e.getKeyCode() == KeyEvent.VK_RIGHT) {
-        setPoint(new PanPoint(PanPoint.State.MOVE, -shift, 0));
-      } else if (e.getKeyCode() == KeyEvent.VK_DOWN) {
-        setPoint(new PanPoint(PanPoint.State.MOVE, 0, -shift));
-      }
+    ShortcutManager sm = ShortcutManager.getInstance();
+    int keyCode = e.getKeyCode();
+    int modifiers = e.getModifiers();
+
+    if (sm.matches(ShortcutManager.ID_PAN_LEFT_FAST, keyCode, modifiers)) {
+      setPoint(new PanPoint(PanPoint.State.MOVE, 10, 0));
+    } else if (sm.matches(ShortcutManager.ID_PAN_RIGHT_FAST, keyCode, modifiers)) {
+      setPoint(new PanPoint(PanPoint.State.MOVE, -10, 0));
+    } else if (sm.matches(ShortcutManager.ID_PAN_UP_FAST, keyCode, modifiers)) {
+      setPoint(new PanPoint(PanPoint.State.MOVE, 0, 10));
+    } else if (sm.matches(ShortcutManager.ID_PAN_DOWN_FAST, keyCode, modifiers)) {
+      setPoint(new PanPoint(PanPoint.State.MOVE, 0, -10));
+    } else if (sm.matches(ShortcutManager.ID_PAN_LEFT, keyCode, modifiers)) {
+      setPoint(new PanPoint(PanPoint.State.MOVE, 5, 0));
+    } else if (sm.matches(ShortcutManager.ID_PAN_RIGHT, keyCode, modifiers)) {
+      setPoint(new PanPoint(PanPoint.State.MOVE, -5, 0));
+    } else if (sm.matches(ShortcutManager.ID_PAN_UP, keyCode, modifiers)) {
+      setPoint(new PanPoint(PanPoint.State.MOVE, 0, 5));
+    } else if (sm.matches(ShortcutManager.ID_PAN_DOWN, keyCode, modifiers)) {
+      setPoint(new PanPoint(PanPoint.State.MOVE, 0, -5));
     }
   }
 

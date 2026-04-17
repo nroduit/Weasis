@@ -36,6 +36,7 @@ public class LanguageSetting extends AbstractItemDialogPage {
       new JLabel(Messages.getString("GeneralSetting.language") + StringUtil.COLON);
   private final JLabel labelLocale2 =
       new JLabel(Messages.getString("GeneralSetting.language.data") + StringUtil.COLON);
+
   private final JLocaleFormat comboBoxFormat =
       new JLocaleFormat() {
         @Override
@@ -154,6 +155,7 @@ public class LanguageSetting extends AbstractItemDialogPage {
     WProperties preferences = GuiUtils.getUICore().getSystemPreferences();
     comboBoxLang.selectLocale(preferences.getProperty("locale.lang.code"));
     comboBoxFormat.selectLocale();
+    textPane.setText(getText());
   }
 
   @Override

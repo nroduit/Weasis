@@ -29,8 +29,8 @@ public final class VolumeByte extends Volume<Byte, byte[]> {
         progressBar);
   }
 
-  public VolumeByte(OriginalStack stack, JProgressBar progressBar) {
-    super(stack, progressBar);
+  public VolumeByte(OriginalStack stack, JProgressBar progressBar, boolean isBasic) {
+    super(stack, progressBar, isBasic);
   }
 
   public VolumeByte(

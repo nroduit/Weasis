@@ -59,6 +59,9 @@ public class ThemeSetting extends AbstractItemDialogPage {
   private final JCheckBox checkboxDecoration =
       new JCheckBox(Messages.getString("menu.integrated.into.title.bar"));
 
+  private final JCheckBox checkboxFileChooser =
+      new JCheckBox(Messages.getString("use.system.file.chooser"));
+
   record LookInfo(String name, String className) {
     @Override
     public String toString() {
@@ -126,6 +129,10 @@ public class ThemeSetting extends AbstractItemDialogPage {
               ITEM_SEPARATOR_SMALL, ITEM_SEPARATOR_LARGE, checkboxDecoration));
     }
 
+    add(
+        GuiUtils.getFlowLayoutPanel(
+            ITEM_SEPARATOR_SMALL, ITEM_SEPARATOR_LARGE, checkboxFileChooser));
+
     add(GuiUtils.boxVerticalStrut(ITEM_SEPARATOR_LARGE));
     String alert =
         """
@@ -185,6 +192,8 @@ public class ThemeSetting extends AbstractItemDialogPage {
       checkboxDecoration.setSelected(
           preferences.getBooleanProperty(UICore.LINUX_WINDOWS_DECORATION, false));
     }
+    checkboxFileChooser.setSelected(
+        preferences.getBooleanProperty(UICore.USE_SYSTEM_FILE_CHOOSER, true));
   }
 
   public void setList(JComboBox<LookInfo> jComboBox, LookAndFeelInfo[] look) {
@@ -252,6 +261,11 @@ public class ThemeSetting extends AbstractItemDialogPage {
       preferences.putBooleanProperty(
           UICore.LINUX_WINDOWS_DECORATION, checkboxDecoration.isSelected());
     }
+
+    boolean useSystemFileChooser = checkboxFileChooser.isSelected();
+    preferences.putBooleanProperty(UICore.USE_SYSTEM_FILE_CHOOSER, useSystemFileChooser);
+    System.setProperty(
+        FlatSystemProperties.USE_SYSTEM_FILE_CHOOSER, String.valueOf(useSystemFileChooser));
   }
 
   @Override
@@ -262,6 +276,7 @@ public class ThemeSetting extends AbstractItemDialogPage {
     if (SystemInfo.isLinux) {
       preferences.setProperty(UICore.LINUX_WINDOWS_DECORATION, Boolean.FALSE.toString());
     }
+    preferences.putBooleanProperty(UICore.USE_SYSTEM_FILE_CHOOSER, true);
     initialize(false);
   }
 }

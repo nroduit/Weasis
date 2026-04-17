@@ -62,7 +62,7 @@ public abstract class LoadDicom extends ExplorerTask<Boolean, String> {
     this.dicomModel = (DicomModel) explorerModel;
     this.openingStrategy =
         Optional.ofNullable(openingStrategy)
-            .orElseGet(() -> new PluginOpeningStrategy(OpeningViewer.ONE_PATIENT));
+            .orElseGet(() -> new PluginOpeningStrategy(OpeningViewer.ALL_PATIENTS));
   }
 
   protected void startLoadingEvent() {

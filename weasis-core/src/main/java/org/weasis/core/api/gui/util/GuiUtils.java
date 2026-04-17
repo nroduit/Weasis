@@ -22,6 +22,7 @@ import java.awt.ComponentOrientation;
 import java.awt.Container;
 import java.awt.Desktop;
 import java.awt.Dimension;
+import java.awt.Event;
 import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.Graphics;
@@ -36,7 +37,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.io.IOException;
-import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -599,7 +599,7 @@ public class GuiUtils {
       item.setMnemonic((char) mnemonic);
     }
     if (acceleratorKey != 0) {
-      item.setAccelerator(KeyStroke.getKeyStroke(acceleratorKey, java.awt.Event.CTRL_MASK));
+      item.setAccelerator(KeyStroke.getKeyStroke(acceleratorKey, Event.CTRL_MASK));
     }
     return item;
   }
@@ -613,16 +613,12 @@ public class GuiUtils {
   }
 
   public static ActionListener createHelpActionListener(JButton jButtonHelp, String topic) {
-    return e -> {
-      try {
-        GuiUtils.openInDefaultBrowser(
-            jButtonHelp,
-            new URL(
-                GuiUtils.getUICore().getSystemPreferences().getProperty("weasis.help.online")
-                    + topic));
-      } catch (MalformedURLException e1) {
-        LOGGER.error("Cannot open online help", e1);
-      }
+    return _ -> {
+      GuiUtils.openInDefaultBrowser(
+          jButtonHelp,
+          URI.create(
+              GuiUtils.getUICore().getSystemPreferences().getProperty("weasis.help.online")
+                  + topic));
     };
   }
 

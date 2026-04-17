@@ -29,8 +29,8 @@ public final class VolumeShort extends Volume<Short, short[]> {
         progressBar);
   }
 
-  public VolumeShort(OriginalStack stack, JProgressBar progressBar) {
-    super(stack, progressBar);
+  public VolumeShort(OriginalStack stack, JProgressBar progressBar, boolean isBasic) {
+    super(stack, progressBar, isBasic);
   }
 
   public VolumeShort(

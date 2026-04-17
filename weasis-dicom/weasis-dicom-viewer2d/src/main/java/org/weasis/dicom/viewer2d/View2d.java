@@ -776,15 +776,14 @@ public class View2d extends DefaultView2d<DicomImageElement> {
                   getCurrentSortComparator());
           synchronized (selSeries) {
             for (DicomImageElement dcm : list) {
-              double[] loc = (double[]) dcm.getTagValue(TagW.SlicePosition);
+              Double loc = (Double) dcm.getTagValue(TagW.SlicePosition);
               if (loc != null) {
-                double position = loc[0] + loc[1] + loc[2];
-                if (min > position) {
-                  min = position;
+                if (min > loc) {
+                  min = loc;
                   firstImage = dcm;
                 }
-                if (max < position) {
-                  max = position;
+                if (max < loc) {
+                  max = loc;
                   lastImage = dcm;
                 }
               }

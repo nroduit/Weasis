@@ -11,7 +11,6 @@ package org.weasis.dicom.viewer3d.vr;
 
 import com.jogamp.opengl.GL2ES2;
 import com.jogamp.opengl.GL3ES3;
-import com.jogamp.opengl.GL4;
 import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
 import java.nio.charset.StandardCharsets;
@@ -25,7 +24,7 @@ public class Program {
   private static final Logger LOGGER = LoggerFactory.getLogger(Program.class);
 
   private final Map<String, Integer> uniformLocations = new HashMap<>();
-  private final Map<String, BiConsumer<GL4, Integer>> uniforms = new HashMap<>();
+  private final Map<String, BiConsumer<GL2ES2, Integer>> uniforms = new HashMap<>();
 
   private final String name;
   private final Map<Integer, String> shaderCode = new HashMap<>();
@@ -52,7 +51,7 @@ public class Program {
     }
   }
 
-  public void init(GL4 gl4) {
+  public void init(GL2ES2 gl) {
     if (programId != null) {
       return;
     }
@@ -60,64 +59,68 @@ public class Program {
     IntBuffer success = IntBuffer.allocate(1);
     ByteBuffer openglLog = ByteBuffer.allocate(512);
     for (Map.Entry<Integer, String> shader : shaderCode.entrySet()) {
-      int shaderId = gl4.glCreateShader(shader.getKey());
+      int shaderId = gl.glCreateShader(shader.getKey());
       shaderIds.put(shader.getKey(), shaderId);
-      gl4.glShaderSource(shaderId, 1, new String[] {shader.getValue()}, null);
-      gl4.glCompileShader(shaderId);
-      gl4.glGetShaderiv(shaderId, GL2ES2.GL_COMPILE_STATUS, success);
+      gl.glShaderSource(shaderId, 1, new String[] {shader.getValue()}, null);
+      gl.glCompileShader(shaderId);
+      gl.glGetShaderiv(shaderId, GL2ES2.GL_COMPILE_STATUS, success);
       if (success.get(0) != 1) {
-        gl4.glGetShaderInfoLog(shaderId, 512, null, openglLog);
+        gl.glGetShaderInfoLog(shaderId, 512, null, openglLog);
         LOGGER.warn(
             "Not success compiled status of shader: {}",
             new String(openglLog.array(), StandardCharsets.UTF_8));
       }
     }
 
-    programId = gl4.glCreateProgram();
+    programId = gl.glCreateProgram();
     for (Map.Entry<Integer, Integer> shaderId : shaderIds.entrySet()) {
-      gl4.glAttachShader(programId, shaderId.getValue());
+      gl.glAttachShader(programId, shaderId.getValue());
     }
-    if (shaderIds.size() == 0) {
+    if (shaderIds.isEmpty()) {
       return;
     }
-    gl4.glLinkProgram(programId);
+    gl.glLinkProgram(programId);
 
-    gl4.glGetProgramiv(programId, GL2ES2.GL_LINK_STATUS, success);
+    gl.glGetProgramiv(programId, GL2ES2.GL_LINK_STATUS, success);
     if (success.get(0) != 1) {
-      gl4.glGetProgramInfoLog(programId, 512, null, openglLog);
+      gl.glGetProgramInfoLog(programId, 512, null, openglLog);
       LOGGER.warn("Cannot link shader: {}", new String(openglLog.array(), StandardCharsets.UTF_8));
     }
 
     for (Map.Entry<Integer, Integer> shaderId : shaderIds.entrySet()) {
-      gl4.glDetachShader(programId, shaderId.getValue());
-      gl4.glDeleteShader(shaderId.getValue());
+      gl.glDetachShader(programId, shaderId.getValue());
+      gl.glDeleteShader(shaderId.getValue());
     }
   }
 
-  public void allocateUniform(GL4 gl4, String uniformName, BiConsumer<GL4, Integer> function) {
-    init(gl4);
-    uniformLocations.put(uniformName, gl4.glGetUniformLocation(programId, uniformName));
+  public void allocateUniform(GL2ES2 gl, String uniformName, BiConsumer<GL2ES2, Integer> function) {
+    init(gl);
+    uniformLocations.put(uniformName, gl.glGetUniformLocation(programId, uniformName));
     uniforms.put(uniformName, function);
   }
 
-  public void setUniforms(GL4 gl4) {
-    for (Map.Entry<String, BiConsumer<GL4, Integer>> uniform : uniforms.entrySet()) {
-      uniform.getValue().accept(gl4, uniformLocations.get(uniform.getKey()));
+  public void setUniforms(GL2ES2 gl) {
+    for (Map.Entry<String, BiConsumer<GL2ES2, Integer>> uniform : uniforms.entrySet()) {
+      uniform.getValue().accept(gl, uniformLocations.get(uniform.getKey()));
     }
   }
 
-  public void use(GL4 gl4) {
-    init(gl4);
-    gl4.glUseProgram(programId);
+  public void use(GL2ES2 gl) {
+    init(gl);
+    gl.glUseProgram(programId);
   }
 
-  public void destroy(GL4 gl4) {
+  public int getProgramId() {
+    return programId != null ? programId : 0;
+  }
+
+  public void destroy(GL2ES2 gl) {
     if (programId != null) {
       for (final Map.Entry<Integer, Integer> shaderId : shaderIds.entrySet()) {
-        gl4.glDetachShader(programId, shaderId.getValue());
-        gl4.glDeleteShader(shaderId.getValue());
+        gl.glDetachShader(programId, shaderId.getValue());
+        gl.glDeleteShader(shaderId.getValue());
       }
-      gl4.glDeleteProgram(programId);
+      gl.glDeleteProgram(programId);
       programId = null;
       uniforms.clear();
       uniformLocations.clear();

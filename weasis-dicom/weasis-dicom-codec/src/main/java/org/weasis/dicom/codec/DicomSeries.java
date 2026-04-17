@@ -216,9 +216,9 @@ public class DicomSeries extends Series<DicomImageElement> {
     synchronized (this) {
       double bestDiff = Double.MAX_VALUE;
       for (DicomImageElement dcm : mediaList) {
-        double[] val = (double[]) dcm.getTagValue(TagW.SlicePosition);
+        Double val = (Double) dcm.getTagValue(TagW.SlicePosition);
         if (val != null) {
-          double diff = Math.abs(location - (val[0] + val[1] + val[2]));
+          double diff = Math.abs(location - val);
           if (diff < bestDiff) {
             bestDiff = diff;
             nearest = dcm;
@@ -249,9 +249,9 @@ public class DicomSeries extends Series<DicomImageElement> {
     synchronized (this) {
       double bestDiff = Double.MAX_VALUE;
       for (DicomImageElement dcm : mediaList) {
-        double[] val = (double[]) dcm.getTagValue(TagW.SlicePosition);
+        Double val = (Double) dcm.getTagValue(TagW.SlicePosition);
         if (val != null) {
-          double diff = Math.abs(location - (val[0] + val[1] + val[2]));
+          double diff = Math.abs(location - val);
           if (diff < bestDiff) {
             bestDiff = diff;
             bestIndex = index;

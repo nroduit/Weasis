@@ -41,10 +41,12 @@ import org.weasis.core.api.image.SimpleOpManager;
 import org.weasis.core.api.image.WindowOp;
 import org.weasis.core.api.image.util.ImageLayer;
 import org.weasis.core.api.media.data.ImageElement;
+import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.ui.dialog.MeasureDialog;
+import org.weasis.core.ui.editor.ViewerOpenOptions;
 import org.weasis.core.ui.editor.ViewerPluginBuilder;
 import org.weasis.core.ui.editor.image.CalibrationView;
 import org.weasis.core.ui.editor.image.ContextMenuHandler;
@@ -395,70 +397,87 @@ public class View2d extends DefaultView2d<ImageElement> {
 
     @Override
     protected boolean importDataExt(TransferSupport support) {
-      Transferable transferable = support.getTransferable();
-
-      ImageViewerPlugin<ImageElement> selPlugin = eventManager.getSelectedView2dContainer();
-      Series seq;
       try {
-        seq = (Series) transferable.getTransferData(Series.sequenceDataFlavor);
-        // Do not add series without medias. BUG WEA-100
-        if (seq.size(null) == 0) {
+        Series<?> seq = extractSeries(support.getTransferable());
+        if (seq == null) {
           return false;
         }
-        DataExplorerModel model = (DataExplorerModel) seq.getTagValue(TagW.ExplorerModel);
-        if (seq.getMedia(0, null, null) instanceof ImageElement
-            && model instanceof TreeModel treeModel) {
 
-          MediaSeriesGroup p1 = treeModel.getParent(seq, model.getTreeModelNodeForNewPlugin());
-          ViewerPlugin openPlugin = null;
-          if (p1 != null) {
-            if (selPlugin instanceof View2dContainer
-                && selPlugin.isContainingView(View2d.this)
-                && p1.equals(selPlugin.getGroupID())) {
-            } else {
-              List<ViewerPlugin<?>> viewerPlugins = GuiUtils.getUICore().getViewerPlugins();
-              synchronized (viewerPlugins) {
-                for (final ViewerPlugin<?> p : viewerPlugins) {
-                  if (p1.equals(p.getGroupID())) {
-                    if (!((View2dContainer) p).isContainingView(View2d.this)) {
-                      openPlugin = p;
-                    }
-                    break;
-                  }
-                }
-              }
-              if (openPlugin == null) {
-                if (View2d.this.getSeries() != null) {
-                  ViewerPluginBuilder.openSequenceInDefaultPlugin(seq, model, true, true);
-                  return true;
-                }
-              } else {
-                openPlugin.setSelectedAndGetFocus();
-                openPlugin.addSeries(seq);
-                // openPlugin.setSelected(true);
-                return false;
-              }
-            }
-          }
-        } else {
-          ViewerPluginBuilder.openSequenceInDefaultPlugin(
-              seq, model == null ? ViewerPluginBuilder.DefaultDataModel : model, true, true);
+        DataExplorerModel model = (DataExplorerModel) seq.getTagValue(TagW.ExplorerModel);
+        if (!(seq.getMedia(0, null, null) instanceof ImageElement)
+            || !(model instanceof TreeModel treeModel)) {
+          ViewerPluginBuilder.openInDefaultViewer(
+              seq,
+              model == null ? ViewerPluginBuilder.DefaultDataModel : model,
+              ViewerOpenOptions.defaults());
           return true;
         }
+
+        ImageViewerPlugin<ImageElement> selPlugin = eventManager.getSelectedView2dContainer();
+        MediaSeriesGroup parentGroup =
+            treeModel.getParent(seq, model.getTreeModelNodeForNewPlugin());
+
+        if (parentGroup != null && !isCurrentPluginMatch(selPlugin, parentGroup)) {
+          View2dContainer existingPlugin = findPluginForGroup(parentGroup);
+          if (existingPlugin != null) {
+            existingPlugin.setSelectedAndGetFocus();
+            @SuppressWarnings("unchecked")
+            MediaSeries<ImageElement> imageSeries = (MediaSeries<ImageElement>) seq;
+            existingPlugin.addSeries(imageSeries);
+            return false;
+          }
+          if (getSeries() != null) {
+            ViewerPluginBuilder.openInDefaultViewer(seq, model, ViewerOpenOptions.defaults());
+            return true;
+          }
+        }
+
+        return addSeriesToCurrentView(seq, selPlugin);
       } catch (Exception e) {
         LOGGER.error("Opening series", e);
         return false;
       }
+    }
 
+    private Series<?> extractSeries(Transferable transferable) throws Exception {
+      Series<?> seq = (Series<?>) transferable.getTransferData(Series.sequenceDataFlavor);
+      // Do not add series without medias. BUG WEA-100
+      return seq.size(null) > 0 ? seq : null;
+    }
+
+    private boolean isCurrentPluginMatch(
+        ImageViewerPlugin<ImageElement> selPlugin, MediaSeriesGroup parentGroup) {
+      return selPlugin instanceof View2dContainer
+          && selPlugin.isContainingView(View2d.this)
+          && parentGroup.equals(selPlugin.getGroupID());
+    }
+
+    private View2dContainer findPluginForGroup(MediaSeriesGroup parentGroup) {
+      List<ViewerPlugin<?>> viewerPlugins = GuiUtils.getUICore().getViewerPlugins();
+      synchronized (viewerPlugins) {
+        for (ViewerPlugin<?> p : viewerPlugins) {
+          if (parentGroup.equals(p.getGroupID())) {
+            if (p instanceof View2dContainer container
+                && !container.isContainingView(View2d.this)) {
+              return container;
+            }
+            return null;
+          }
+        }
+      }
+      return null;
+    }
+
+    @SuppressWarnings("unchecked")
+    private boolean addSeriesToCurrentView(
+        Series<?> seq, ImageViewerPlugin<ImageElement> selPlugin) {
       if (selPlugin != null
           && SynchData.Mode.TILE.equals(selPlugin.getSynchView().getSynchData().getMode())) {
-        selPlugin.addSeries(seq);
+        selPlugin.addSeries((MediaSeries<ImageElement>) seq);
         return true;
       }
-
-      setSeries(seq);
+      setSeries((MediaSeries<ImageElement>) seq);
       // Getting the focus has a delay and so it will trigger the view selection later
-      // requestFocusInWindow();
       if (selPlugin != null && selPlugin.isContainingView(View2d.this)) {
         selPlugin.setSelectedImagePaneFromFocus(View2d.this);
       }

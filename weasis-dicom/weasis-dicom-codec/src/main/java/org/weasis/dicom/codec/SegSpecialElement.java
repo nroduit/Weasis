@@ -420,9 +420,8 @@ public class SegSpecialElement extends HiddenSpecialElement
         if (imagePosition != null && imagePosition.length == 6) {
           Vector3d vr = new Vector3d(imagePosition);
           Vector3d vc = new Vector3d(imagePosition[3], imagePosition[4], imagePosition[5]);
-          Vector3d normal = VectorUtils.computeNormalOfSurface(vr, vc);
-          normal.mul(pPos);
-          String position = normal.toString(roundFloat).replace("-0 ", "0 ");
+          double dot = VectorUtils.computeNormalOfSurface(vr, vc).dot(pPos);
+          String position = roundFloat.format(dot).replace("-0", "0");
           Set<LazyContourLoader> set =
               postitionMap.computeIfAbsent(position, _ -> new LinkedHashSet<>());
           set.add(loader);

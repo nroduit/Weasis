@@ -26,11 +26,23 @@ public record OpenGLInfo(
     }
   }
 
+  /**
+   * Returns true if the OpenGL version is at least 3.3, which is the minimum required for the
+   * FBO-based fragment shader fallback. GLSL 3.30 (OpenGL 3.3) is the first version where {@code
+   * layout(location=N)} on vertex inputs and fragment outputs is core, and where FBOs, {@code
+   * sampler3D}, {@code uint} uniforms and {@code textureSize()} are all guaranteed.
+   */
   public boolean isVersionCompliant() {
-    // Compliant with Compute Shaders
+    Version minimalVersion = Version.of(3, 3, 0);
+    return getVersion().compareTo(minimalVersion) >= 0;
+  }
+
+  /** Returns true if the OpenGL version is at least 4.3, which is required for compute shaders. */
+  public boolean isComputeShaderCapable() {
     Version minimalVersion = Version.of(4, 3, 0);
     return getVersion().compareTo(minimalVersion) >= 0;
   }
+
 
   /** Check if the renderer is a software renderer without real GPU. */
   public boolean looksSoftware() {

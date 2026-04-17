@@ -9,10 +9,10 @@
  */
 package org.weasis.dicom.sr;
 
-import java.util.Map;
 import javax.swing.Icon;
 import org.pf4j.Extension;
 import org.weasis.core.api.explorer.DataExplorerView;
+import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaSeries;
@@ -20,6 +20,7 @@ import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.api.util.ResourceUtil.FileIcon;
 import org.weasis.core.ui.editor.SeriesViewer;
 import org.weasis.core.ui.editor.SeriesViewerFactory;
+import org.weasis.core.ui.editor.ViewerOpenOptions;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin.LayoutModel;
 import org.weasis.dicom.explorer.main.DicomExplorer;
@@ -45,10 +46,10 @@ public class SRFactory implements SeriesViewerFactory {
   }
 
   @Override
-  public SeriesViewer<?> createSeriesViewer(Map<String, Object> properties) {
-    LayoutModel layout = ImageViewerPlugin.getLayoutModel(properties, SRContainer.VIEWS_SR, null);
+  public SeriesViewer<?> createSeriesViewer(ViewerOpenOptions options, DataExplorerModel model) {
+    LayoutModel layout = ImageViewerPlugin.getLayoutModel(options, SRContainer.VIEWS_SR, null);
     SRContainer instance = new SRContainer(layout.model(), layout.uid());
-    ImageViewerPlugin.registerInDataExplorerModel(properties, instance);
+    ImageViewerPlugin.registerInDataExplorerModel(model, instance);
     return instance;
   }
 

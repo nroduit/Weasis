@@ -32,27 +32,22 @@ public final class AsyncCallbackServerHandler implements Runnable, AutoCloseable
 
   private final AtomicBoolean stopped = new AtomicBoolean(true);
   private final AcceptCallbackHandler responseHandler;
-  private final AsynchronousServerSocketChannel socketChannel;
+  private volatile AsynchronousServerSocketChannel socketChannel; // NOSONAR visibility reference
   private final int port;
   private final ExecutorService executor;
-  private volatile CountDownLatch latch;
+  private volatile CountDownLatch latch; // NOSONAR guarantees visibility of the reference
 
   /**
    * Creates a new async callback server handler.
    *
    * @param port the port to bind the server to
    * @param responseHandler the handler for processing incoming connections
-   * @throws IOException if the server socket cannot be created or bound
    */
-  public AsyncCallbackServerHandler(int port, AcceptCallbackHandler responseHandler)
-      throws IOException {
+  public AsyncCallbackServerHandler(int port, AcceptCallbackHandler responseHandler) {
     this.port = port;
     this.responseHandler = responseHandler;
     this.latch = new CountDownLatch(1);
     this.executor = Executors.newVirtualThreadPerTaskExecutor();
-    this.socketChannel = AsynchronousServerSocketChannel.open().bind(new InetSocketAddress(port));
-
-    LOGGER.info("Async callback server initialized on port {}", port);
   }
 
   @Override
@@ -69,10 +64,23 @@ public final class AsyncCallbackServerHandler implements Runnable, AutoCloseable
     }
   }
 
-  /** Starts the callback server in a background virtual thread. */
-  public synchronized void start() {
+  /**
+   * Opens the server socket and starts the callback server in a background virtual thread.
+   *
+   * @throws IOException if the server socket cannot be created or bound
+   */
+  public synchronized void start() throws IOException {
     if (isStopped()) {
       this.latch = new CountDownLatch(1);
+      AsynchronousServerSocketChannel channel = AsynchronousServerSocketChannel.open();
+      try {
+        channel.bind(new InetSocketAddress(port));
+      } catch (IOException e) {
+        channel.close();
+        throw e;
+      }
+      this.socketChannel = channel;
+      LOGGER.info("Async callback server initialized on port {}", port);
       executor.submit(this);
     }
   }
@@ -89,7 +97,7 @@ public final class AsyncCallbackServerHandler implements Runnable, AutoCloseable
   @Override
   public void close() {
     try {
-      if (socketChannel.isOpen()) {
+      if (socketChannel != null && socketChannel.isOpen()) {
         socketChannel.close();
       }
       latch.countDown();

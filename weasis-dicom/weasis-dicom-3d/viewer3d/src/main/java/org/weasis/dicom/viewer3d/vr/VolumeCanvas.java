@@ -68,6 +68,7 @@ public class VolumeCanvas extends GLJPanel implements Canvas {
       ImageViewerEventManager<DicomImageElement> eventManager,
       DicomVolTexture volTexture,
       VolumeViewModel viewModel) {
+    super(OpenglUtils.getDefaultCapabilities());
     this.volTexture = volTexture;
     this.eventManager = (EventManager) eventManager;
     this.camera = new Camera(this);

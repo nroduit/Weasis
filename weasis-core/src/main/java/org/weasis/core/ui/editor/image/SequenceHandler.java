@@ -21,6 +21,7 @@ import org.slf4j.LoggerFactory;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.SeriesThumbnail;
+import org.weasis.core.ui.editor.ViewerOpenOptions;
 import org.weasis.core.ui.editor.ViewerPluginBuilder;
 import org.weasis.core.ui.util.UriListFlavor;
 
@@ -136,7 +137,8 @@ public class SequenceHandler extends TransferHandler {
   }
 
   protected boolean dropFiles(List<Path> files) {
-    files.forEach(file -> ViewerPluginBuilder.openSequenceInDefaultPlugin(file, true, true));
+    files.forEach(
+        file -> ViewerPluginBuilder.openInDefaultViewer(file, ViewerOpenOptions.defaults()));
     return true;
   }
 }
