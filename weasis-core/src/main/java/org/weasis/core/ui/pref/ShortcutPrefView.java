@@ -20,6 +20,7 @@ import java.awt.event.KeyListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.List;
+import java.util.prefs.Preferences;
 import javax.swing.JButton;
 import javax.swing.JEditorPane;
 import javax.swing.JLabel;
@@ -41,7 +42,6 @@ import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableRowSorter;
 import javax.swing.text.html.HTMLEditorKit;
 import net.miginfocom.swing.MigLayout;
-import org.osgi.service.prefs.Preferences;
 import org.weasis.core.Messages;
 import org.weasis.core.api.gui.util.AbstractItemDialogPage;
 import org.weasis.core.api.gui.util.AppProperties;
@@ -223,8 +223,9 @@ public class ShortcutPrefView extends AbstractItemDialogPage {
     // Apply changes: persist and update Feature objects
     ShortcutManager manager = ShortcutManager.getInstance();
     manager.applyToFeatures();
+    String plugInId = GuiUtils.getUICore().getPluginManager().getPluginId(this.getClass());
     Preferences prefs =
-        BundlePreferences.getDefaultPreferences(AppProperties.getBundleContext(this.getClass()));
+        BundlePreferences.getDefaultPreferences(plugInId);
     manager.savePreferences(prefs);
   }
 

@@ -10,14 +10,16 @@
 package org.weasis.dicom.explorer.imp;
 
 import java.net.URI;
-import java.util.Hashtable;
-import org.osgi.service.component.annotations.Component;
+import java.util.Map;
+import org.pf4j.Extension;
 import org.weasis.core.api.media.data.Codec;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaReader;
+import org.weasis.plugin.SingletonExtension;
 
-/** An OSGi {@link Codec} service that handles {@code .zip} files containing DICOM data. */
-@Component(service = Codec.class)
+/** An {@link Codec} service that handles {@code .zip} files containing DICOM data. */
+@Extension
+@SingletonExtension
 public class DicomZipCodec implements Codec<MediaElement> {
 
   public static final String NAME = "DICOM-ZIP"; // NON-NLS
@@ -56,7 +58,7 @@ public class DicomZipCodec implements Codec<MediaElement> {
 
   @Override
   public MediaReader<MediaElement> getMediaIO(
-      URI media, String mimeType, Hashtable<String, Object> properties) {
+      URI media, String mimeType, Map<String, Object> properties) {
     if (isMimeTypeSupported(mimeType)) {
       return new DicomZipMediaIO(media, this);
     }
