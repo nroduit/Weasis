@@ -171,14 +171,14 @@ public abstract class AbstractInfoLayer<E extends ImageElement> extends DefaultU
       case GridBagConstraints.NORTHEAST -> {
         b.x = topRight.getX() - icon.getIconWidth();
         b.y = topRight.getY();
-        topRight.setLocation(topRight.getX() - icon.getIconWidth() + space, topRight.getY());
+        topRight.setLocation(topRight.getX() - icon.getIconWidth() - space, topRight.getY());
       }
       case GridBagConstraints.SOUTHEAST -> {
         Point2D bottomRight = getPosition(Position.BottomRight);
         b.x = bottomRight.getX() - icon.getIconWidth();
         b.y = bottomRight.getY() - icon.getIconHeight();
         bottomRight.setLocation(
-            bottomRight.getX() - icon.getIconWidth() + space, bottomRight.getY());
+            bottomRight.getX() - icon.getIconWidth() - space, bottomRight.getY());
       }
       case GridBagConstraints.NORTHWEST -> {
         Point2D topLeft = getPosition(Position.TopLeft);
