@@ -9,9 +9,14 @@
  */
 package org.weasis.dicom.viewer2d.mpr;
 
+import java.awt.BorderLayout;
 import java.awt.Component;
+import javax.swing.JButton;
 import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JTextArea;
 import org.weasis.core.api.gui.util.GuiExecutor;
+import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.WinUtil;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.dicom.codec.DicomImageElement;
@@ -57,7 +62,7 @@ public class MPRGenerator {
           int usrChoice =
               JOptionPane.showConfirmDialog(
                   WinUtil.getValidComponent(context.getMainView()),
-                  message + Messages.getString("warn.rectify.limitation"),
+                  buildMessagePanel(message),
                   MprFactory.NAME,
                   JOptionPane.YES_NO_OPTION,
                   JOptionPane.QUESTION_MESSAGE);
@@ -75,7 +80,7 @@ public class MPRGenerator {
           int usrChoice =
               JOptionPane.showConfirmDialog(
                   WinUtil.getValidComponent(parent),
-                  message + Messages.getString("warn.rectify.limitation"),
+                  buildMessagePanel(message),
                   MprFactory.NAME,
                   JOptionPane.YES_NO_OPTION,
                   JOptionPane.QUESTION_MESSAGE);
@@ -84,5 +89,19 @@ public class MPRGenerator {
     if (skipRectification[0]) {
       throw new IllegalStateException(message);
     }
+  }
+
+  private static JPanel buildMessagePanel(String message) {
+    JPanel panel = new JPanel(new BorderLayout(10, 0));
+    JTextArea textArea = new JTextArea(message + Messages.getString("warn.rectify.limitation"));
+    textArea.setEditable(false);
+    textArea.setOpaque(false);
+    textArea.setLineWrap(true);
+    textArea.setWrapStyleWord(true);
+    textArea.setColumns(40);
+    panel.add(textArea, BorderLayout.CENTER);
+    JButton helpButton = GuiUtils.createHelpButton("mpr/#volume-geometry");
+    panel.add(helpButton, BorderLayout.EAST);
+    return panel;
   }
 }

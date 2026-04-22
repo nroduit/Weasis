@@ -56,6 +56,7 @@ public class PreferenceDialog extends AbstractWizardDialog {
     jPanelBottom.add(bottomPrefPanel, 0);
 
     jButtonHelp.putClientProperty("JButton.buttonType", "help");
+    jButtonHelp.setToolTipText(Messages.getString("online.documentation"));
     applyButton.addActionListener(
         e -> {
           if (currentPage != null) currentPage.closeAdditionalWindow();

@@ -474,7 +474,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
       Object ko = actionsInView.get(ActionW.KO_SELECTION.cmd());
       Object filter = actionsInView.get(ActionW.FILTERED_SERIES.cmd());
       OpManager disOp = getDisplayOpManager();
-      Object preset = disOp.getParamValue(WindowOp.OP_NAME, ActionW.PRESET.cmd());
+      Object preset = disOp.getParamValue(WindowOp.OP_NAME, ActionW.PRESET.cmd()).orElse(null);
       initActionWState();
       setActionsInView(ActionW.KO_SELECTION.cmd(), ko);
       setActionsInView(ActionW.FILTERED_SERIES.cmd(), filter);

@@ -565,6 +565,14 @@
       "category": "UI"
     },
     {
+      "code": "weasis.export.annotations",
+      "value": "false",
+      "description": "Show the Export Annotations button in the toolbar",
+      "type": "A",
+      "javaType": "BOOLEAN",
+      "category": "UI"
+    },
+    {
       "code": "weasis.toolbar.mouse.buttons",
       "value": "7170",
       "description": "Show all mouse buttons. Sum of LEFT=1024 + MIDDLE=2048 + RIGHT=4096 + SCROLL=2. Show all:7170 and show none:0.",
