@@ -385,29 +385,6 @@ public class View2dContainer extends DicomViewerPlugin implements PropertyChange
     }
   }
 
-  /*private boolean activateSync() {
-    String fruid = null;
-
-    for (ViewCanvas<DicomImageElement> pane : getView2ds()) {
-      MediaSeries<DicomImageElement> s = pane.getSeries();
-      boolean specialView = pane instanceof MipView;
-      if (s != null && !specialView) {
-        Object paneFruid = TagD.getTagValue(s, Tag.FrameOfReferenceUID);
-        if (fruid == null && paneFruid != null) {
-          // First view of the container instantiate the value for the comparison
-          // TODO Should be compared against a list ? What if first element not linked but the others are ?
-          fruid = paneFruid.toString();
-          continue;
-        }
-        if (fruid.equals(TagD.getTagValue(s, Tag.FrameOfReferenceUID))) {
-          return true;
-          // At least 2 views have the same Frame of Reference UID and synchronization should be activated
-        }
-      }
-    }
-    return false;
-  }*/
-
   @Override
   public void setSelectedImagePaneFromFocus(ViewCanvas<DicomImageElement> viewCanvas) {
     setSelectedImagePane(viewCanvas);

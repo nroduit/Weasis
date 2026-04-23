@@ -69,7 +69,6 @@ public class DicomSynchManager extends SynchManager<DicomImageElement> {
 
     boolean needsRepaint = false;
 
-    // TODO problem with deactivated sync and original syncdata
     if (!synchView.isSynch() && !synch.isOriginal()) {
       handleManuallyDisabledSync(viewerPlugin, viewPane, series, synch);
     } else {
@@ -247,6 +246,7 @@ public class DicomSynchManager extends SynchManager<DicomImageElement> {
       handleMultipleViewsInStack(views, series, synch, val);
     } else {
       handleSingleViewInStack();
+      viewPane.setActionsInView(ActionW.SYNCH_LINK.cmd(), null);
     }
 
     // Force drawing crosslines without changing the slice position
@@ -279,13 +279,10 @@ public class DicomSynchManager extends SynchManager<DicomImageElement> {
     }
 
     boolean manualSyncActivated = synch.isManualSynchActivated();
-    ImageOrientation.Plan orientation =
-        ImageOrientation.getPlan(series.getMedia(MEDIA_POSITION.MIDDLE, null, null));
 
     for (ViewCanvas<DicomImageElement> pane : views) {
-      // TODO Adapt list of manually syncable views if the synchronization is already on or not
       List<ViewCanvas<DicomImageElement>> manuallySyncableViews =
-          collectManuallySyncableViews(pane, views, manualSyncActivated ? orientation : null);
+          collectManuallySyncableViews(pane, views, manualSyncActivated);
       configurePaneForStack(
           pane, series, synch, synchActivated, slicePosition, frUidsMap, manuallySyncableViews);
     }
@@ -311,7 +308,28 @@ public class DicomSynchManager extends SynchManager<DicomImageElement> {
   private List<ViewCanvas<DicomImageElement>> collectManuallySyncableViews(
       ViewCanvas<DicomImageElement> pane,
       List<ViewCanvas<DicomImageElement>> views,
-      ImageOrientation.Plan orientation) {
+      boolean manualSyncActivated) {
+    if (manualSyncActivated) {
+      if (pane.getSeries() == null) return Collections.emptyList();
+      // Identify the orientation of the currently manual synced views, compare that orientation to
+      // the current view
+      ImageOrientation.Plan curentViewOrientation =
+          ImageOrientation.getPlan(pane.getSeries().getMedia(MEDIA_POSITION.MIDDLE, null, null));
+      for (ViewCanvas<DicomImageElement> v : views) {
+        ViewSynchData sd = (ViewSynchData) v.getActionValue(ActionW.SYNCH_LINK.cmd());
+        if (sd != null && sd.isManualSynchActivated()) {
+          ImageOrientation.Plan orientation =
+              ImageOrientation.getPlan(v.getSeries().getMedia(MEDIA_POSITION.MIDDLE, null, null));
+          if (orientation != curentViewOrientation) {
+            // If at least one of the already manually synced view has a different orientation than
+            // the current view, we cannot propose manual sync for the current view
+            return Collections.emptyList();
+          } else {
+            break;
+          }
+        }
+      }
+    }
     return views.stream()
         .filter(
             view ->
@@ -346,8 +364,13 @@ public class DicomSynchManager extends SynchManager<DicomImageElement> {
     if (shouldConfigurePaneSync(
         paneSeries, pane, synchActivated, slicePosition, paneFrameUID, frUidsMap)) {
       configurePaneSynchData(pane, series, paneSeries, synch, paneFrameUID);
-    } else if (sd != null && sd.isAutoSynchActivated()) {
+      sd = (ViewSynchData) pane.getActionValue(ActionW.SYNCH_LINK.cmd());
+    } else if (sd != null) {
       sd.setAutoSyncState(SyncState.OFF);
+      List<ViewCanvas<DicomImageElement>> autoSyncViews = frUidsMap.get(paneFrameUID);
+      // 2 cases : Manually disabled auto sync in a view or globally auto sync activated but current
+      // view is not auto syncable with the others
+      sd.setCanBeAutoSynced(autoSyncViews != null && autoSyncViews.size() > 1);
     }
 
     // If manual sync already activated, add listener to panes synced
@@ -365,6 +388,7 @@ public class DicomSynchManager extends SynchManager<DicomImageElement> {
       sd = getOrCreateSynchData(pane, synch);
       sd.setAutoSyncState(SyncState.OFF);
       sd.setManualSyncState(SyncState.OFF);
+      sd.setCanBeAutoSynced(false);
     }
     if (!manuallySyncableViews.isEmpty()) {
       // Configure for manual synchronization
@@ -372,8 +396,6 @@ public class DicomSynchManager extends SynchManager<DicomImageElement> {
       sd.setCanBeManuallySynced(true);
       // Scroll-only synchronization
       configureScrollOnlyActions(sd);
-      // TODO probably tries to sync but sync may not be active
-      // eventManager.addPropertyChangeListener(ActionW.SYNCH.cmd(), pane);
       eventManager
           .getAction(ActionW.SYNCH_MODE)
           .ifPresent(
@@ -385,6 +407,8 @@ public class DicomSynchManager extends SynchManager<DicomImageElement> {
       pane.updateSynchState();
     } else {
       sd.setCanBeManuallySynced(false);
+      pane.setActionsInView(ActionW.SYNCH_LINK.cmd(), sd);
+      pane.updateSynchState();
     }
   }
 
@@ -395,7 +419,7 @@ public class DicomSynchManager extends SynchManager<DicomImageElement> {
       Double slicePosition,
       String paneFrameUID,
       Map<String, List<ViewCanvas<DicomImageElement>>> frUidsMap) {
-    if (paneSeries == null || pane instanceof MipView) {
+    if (paneSeries == null) {
       return false;
     }
 
@@ -430,7 +454,8 @@ public class DicomSynchManager extends SynchManager<DicomImageElement> {
     } else {
       return;
     }
-    paneSynch.setAutoSyncState(SyncState.ON);
+    if (paneSynch.isOriginal()) paneSynch.setAutoSyncState(SyncState.ON);
+    paneSynch.setCanBeAutoSynced(true);
     paneSynch.setFrameOfReferenceUID(paneFrameUID);
 
     eventManager

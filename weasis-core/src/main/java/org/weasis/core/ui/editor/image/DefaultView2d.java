@@ -254,9 +254,16 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
                   synchButton.setState(SynchViewButton.State.OFF);
                   sd.setOriginal(false);
                   sd.setAutoSyncState(SyncState.OFF);
+                  ComboItemListener<SynchView> synchAction =
+                      eventManager.getAction(ActionW.SYNCH).orElse(null);
+                  eventManager.synchManager.updateAllListeners(
+                      eventManager.getSelectedView2dContainer(),
+                      synchAction == null
+                          ? SynchView.DEFAULT_STACK
+                          : (SynchView) synchAction.getSelectedItem());
                 }
               });
-      synchButton.setPosition(GridBagConstraints.EAST);
+      synchButton.setPosition(GridBagConstraints.SOUTHEAST);
       if (!getViewButtons().contains(synchButton)) {
         getViewButtons().add(synchButton);
       }
@@ -278,6 +285,13 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
                 } else {
                   deactivateManualSync(currentSynchData);
                 }
+                ComboItemListener<SynchView> synchAction =
+                    eventManager.getAction(ActionW.SYNCH).orElse(null);
+                eventManager.synchManager.updateAllListeners(
+                    eventManager.getSelectedView2dContainer(),
+                    synchAction == null
+                        ? SynchView.DEFAULT_STACK
+                        : (SynchView) synchAction.getSelectedItem());
               });
 
       manualSynchButton.setPosition(GridBagConstraints.SOUTHEAST);
@@ -287,17 +301,12 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     }
 
     boolean repaint = false;
-    SynchData globalSynchData = getGlobalSynchData();
-    boolean globalAutoSynch =
-        globalSynchData != null && globalSynchData.getAutoSyncState() == SyncState.ON;
-
-    // TODO Critères d'affichage des boutons auto/manuel
     if (synchButton != null) {
       if (synchData.getAutoSyncState() == SyncState.ON) {
         synchButton.setVisible(true);
         synchButton.setState(SynchViewButton.State.ON);
       } else {
-        synchButton.setVisible(globalAutoSynch);
+        synchButton.setVisible(synchData.isCanBeAutoSynced());
         synchButton.setState(SynchViewButton.State.OFF);
       }
       repaint = true;
@@ -468,9 +477,8 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
             v.repaint();
           }
         }
-        eventManager.synchManager.applyManualSync(null, null);
+        eventManager.synchManager.applyManualSync();
       }
-      // TODO Error message if no location information ??
     }
   }
 
@@ -1218,7 +1226,14 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
       }
     } else if (synch.getLocation() != null) {
       Boolean cutlines = (Boolean) actionsInView.get(ActionW.SYNCH_CROSSLINE.cmd());
-      if (cutlines != null && cutlines) {
+      boolean sameOrientation = false;
+      if (synch.getMedia() instanceof ImageElement) {
+        sameOrientation =
+            eventManager.synchManager.hasSameOrientation(
+                series, (MediaSeries<E>) synch.getView().getSeries());
+      }
+
+      if (cutlines != null && cutlines && !sameOrientation) {
         if (LangUtil.nullToTrue((Boolean) actionsInView.get(LayerType.CROSSLINES.name()))) {
           // Compute cutlines from the location of selected image
           computeCrosslines(synch.getLocation().doubleValue());
@@ -1433,6 +1448,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     ToolTipManager.sharedInstance().unregisterComponent(this);
     imageLayer.removeLayerChangeListener(this);
     Optional.ofNullable(lens).ifPresent(l -> l.showLens(false));
+    resetSynchState();
     if (series != null) {
       setSeries(null);
     }
@@ -1591,7 +1607,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     ViewSynchData synchData = (ViewSynchData) actionsInView.get(ActionW.SYNCH_LINK.cmd());
     if (synchData == null) return;
     SynchData globalSynchData = getGlobalSynchData();
-    if (globalSynchData != null && globalSynchData.getAutoSyncState() == SyncState.ON) {
+    if (globalSynchData != null && globalSynchData.isAutoSynchActivated()) {
       globalSynchData.setOriginal(true);
       globalSynchData.setAutoSyncState(SyncState.OFF);
     }

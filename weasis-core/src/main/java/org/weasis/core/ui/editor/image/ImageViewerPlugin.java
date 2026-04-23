@@ -427,6 +427,12 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
           .forEach(ViewCanvas::disposeView);
       return new ArrayList<>(viewsWithImages.subList(0, layoutCapacity));
     }
+    ComboItemListener<SynchView> synch = eventManager.getAction(ActionW.SYNCH).orElse(null);
+    if (synch != null) {
+      if (synch.getSelectedItem() instanceof SynchView sel) {
+        sel.resetSynchData();
+      }
+    }
 
     return new ArrayList<>(viewsWithImages);
   }

@@ -19,7 +19,12 @@ public class DefaultSynchManager<E extends ImageElement> extends SynchManager<E>
   }
 
   @Override
+  public void updateAllListeners(ImageViewerPlugin<E> viewerPlugin, SynchView synchView) {
+    // Non DICOM cannot be synchronized
+  }
+
+  @Override
   public boolean hasSameOrientation(MediaSeries series1, MediaSeries series2) {
-    return true;
+    return false;
   }
 }

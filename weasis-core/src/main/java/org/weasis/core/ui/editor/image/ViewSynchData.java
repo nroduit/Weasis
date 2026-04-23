@@ -19,18 +19,21 @@ public class ViewSynchData extends SynchData {
 
   private boolean orphan; // view that does not share frUID, not synced automatically
   private boolean canBeManuallySynced;
+  private boolean canBeAutoSynced;
   private String frameOfReferenceUID;
 
   public ViewSynchData(Mode mode, Map<String, Boolean> actions, boolean synch) {
     super(mode, actions, synch);
     this.orphan = false;
     this.canBeManuallySynced = false;
+    this.canBeAutoSynced = true;
   }
 
   public ViewSynchData(ViewSynchData synchData) {
     super(synchData);
     this.orphan = synchData.orphan;
     this.canBeManuallySynced = synchData.canBeManuallySynced;
+    this.canBeAutoSynced = synchData.canBeAutoSynced;
     this.frameOfReferenceUID = synchData.frameOfReferenceUID;
   }
 
@@ -81,6 +84,14 @@ public class ViewSynchData extends SynchData {
 
   public void setCanBeManuallySynced(boolean canBeManuallySynced) {
     this.canBeManuallySynced = canBeManuallySynced;
+  }
+
+  public boolean isCanBeAutoSynced() {
+    return canBeAutoSynced;
+  }
+
+  public void setCanBeAutoSynced(boolean canBeAutoSynced) {
+    this.canBeAutoSynced = canBeAutoSynced;
   }
 
   public String getFrameOfReferenceUID() {

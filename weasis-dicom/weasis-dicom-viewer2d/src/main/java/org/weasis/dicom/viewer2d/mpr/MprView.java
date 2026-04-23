@@ -921,4 +921,9 @@ public class MprView extends View2d implements SliceCanvas, ViewProgress {
         };
     worker.execute();
   }
+
+  @Override
+  public void updateSynchState() {
+    // Not relevant for MPR views
+  }
 }
