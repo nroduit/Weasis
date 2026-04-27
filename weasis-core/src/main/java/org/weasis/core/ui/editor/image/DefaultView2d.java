@@ -302,26 +302,32 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
 
     boolean repaint = false;
     if (synchButton != null) {
-      if (synchData.getAutoSyncState() == SyncState.ON) {
+      if (synchData.getMode().equals(SynchData.Mode.TILE)) {
+        synchButton.setVisible(false);
+      } else if (synchData.getAutoSyncState() == SyncState.ON) {
         synchButton.setVisible(true);
         synchButton.setState(SynchViewButton.State.ON);
+        repaint = true;
       } else {
         synchButton.setVisible(synchData.isCanBeAutoSynced());
         synchButton.setState(SynchViewButton.State.OFF);
+        repaint = true;
       }
-      repaint = true;
     }
     if (manualSynchButton != null) {
-      if (synchData.isCanBeManuallySynced()) {
+      if (synchData.getMode().equals(SynchData.Mode.TILE)) {
+        manualSynchButton.setVisible(false);
+      } else if (synchData.isCanBeManuallySynced()) {
         manualSynchButton.setVisible(true);
         manualSynchButton.setState(
             synchData.isManualSynchActivated()
                 ? ManualSynchViewButton.State.ON
                 : ManualSynchViewButton.State.OFF);
+        repaint = true;
       } else {
         manualSynchButton.setVisible(false);
+        repaint = true;
       }
-      repaint = true;
     }
     if (repaint) {
       repaint();
@@ -1207,6 +1213,12 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         if (!synchData.isSynchActivated()) {
           return;
         }
+      }
+
+      // If TILE mode is activated in issuer and current view, then propagate the event
+      if (synchData != null && issuerSyncData != null && synchData.getMode().equals(SynchData.Mode.TILE) && synchData.isAutoSynchActivated()
+      && issuerSyncData.getMode().equals(SynchData.Mode.TILE) && issuerSyncData.isAutoSynchActivated()) {
+        propagateSync = true;
       }
 
       if (!propagateSync) return;

@@ -157,7 +157,8 @@ public class DicomSynchManager extends SynchManager<DicomImageElement> {
       SynchData synch) {
 
     final List<ViewCanvas<DicomImageElement>> panes = getViews(viewerPlugin, viewPane, false);
-    if (panes.isEmpty()) {
+    panes.add(viewPane);
+    if (panes.size() == 1) {
       return false;
     }
 
@@ -169,7 +170,7 @@ public class DicomSynchManager extends SynchManager<DicomImageElement> {
   }
 
   private void configureSynchModeAction(List<ViewCanvas<DicomImageElement>> panes) {
-    if (!panes.isEmpty()) {
+    if (panes.size() > 1) {
       eventManager
           .getAction(ActionW.SYNCH_MODE)
           .ifPresent(
@@ -213,6 +214,7 @@ public class DicomSynchManager extends SynchManager<DicomImageElement> {
       ViewSynchData oldSynch = getOrCreateSynchData(pane, synch);
       oldSynch.getActions().put(ActionW.KO_SELECTION.cmd(), true);
       oldSynch.getActions().put(ActionW.KO_FILTER.cmd(), true);
+      oldSynch.setAutoSyncState(SyncState.ON);
       KOManager.updateKOFilter(pane, selectedKO, enableFilter, frameIndex);
 
       pane.setActionsInView(ActionW.SYNCH_LINK.cmd(), oldSynch);
@@ -223,7 +225,7 @@ public class DicomSynchManager extends SynchManager<DicomImageElement> {
   }
 
   private boolean ensureViewPaneSynchLink(ViewCanvas<DicomImageElement> viewPane, SynchData synch) {
-    if (viewPane.getAction(ActionW.SYNCH_LINK) == null) {
+    if (viewPane.getActionsInView().get(ActionW.SYNCH_LINK.cmd()) == null) {
       viewPane.setActionsInView(
           ActionW.SYNCH_LINK.cmd(),
           new ViewSynchData(synch.getMode(), synch.getActions(), synch.isSynchActivated()));
