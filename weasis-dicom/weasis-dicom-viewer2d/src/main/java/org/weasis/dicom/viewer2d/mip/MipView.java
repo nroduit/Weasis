@@ -109,6 +109,7 @@ public class MipView extends View2d {
   private volatile Type lastBuiltType;
   private volatile Integer lastBuiltExtend;
   private volatile boolean pendingCrosslineUpdate = false;
+  private volatile boolean pendingSeriesChange = false;
 
   public MipView(ImageViewerEventManager<DicomImageElement> eventManager) {
     super(eventManager);
@@ -137,6 +138,12 @@ public class MipView extends View2d {
     // Propagate the preset
     OpManager disOp = getDisplayOpManager();
     disOp.setParamValue(WindowOp.OP_NAME, ActionW.DEFAULT_PRESET.cmd(), false);
+  }
+
+  @Override
+  public void setSeries(MediaSeries<DicomImageElement> newSeries, DicomImageElement selectedMedia) {
+    pendingSeriesChange = true;
+    super.setSeries(newSeries, selectedMedia);
   }
 
   public void initMIPSeries(ViewCanvas<DicomImageElement> selView) {
@@ -331,7 +338,7 @@ public class MipView extends View2d {
   protected void setMip(DicomImageElement dicom) {
     DicomImageElement oldImage = getImage();
     if (dicom != null) {
-      if (oldImage != null) {
+      if (oldImage != null && !pendingSeriesChange) {
         // Preserve the current zoom level when updating the MIP slab (e.g. while scrolling).
         // Without this guard, DefaultView2d.resetZoom() would reset to BEST_FIT on every update
         // because the scroll handler restores ZOOM_TYPE_CMD before the async build finishes.
@@ -340,8 +347,15 @@ public class MipView extends View2d {
         super.setImage(dicom);
         actionsInView.put(ViewCanvas.ZOOM_TYPE_CMD, oldZoomType);
       } else {
+        // Either no previous image (first load) or a new series was dropped – use best-fit so
+        // the image is not shown with a stale zoom level from the previous series.
+        pendingSeriesChange = false;
         super.setImage(dicom);
       }
+    } else {
+      // Clear the displayed image
+      pendingSeriesChange = false;
+      super.setImage(null);
     }
 
     if (oldImage == null) {

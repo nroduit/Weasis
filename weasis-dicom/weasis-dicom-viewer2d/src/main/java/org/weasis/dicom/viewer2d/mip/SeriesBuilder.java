@@ -180,8 +180,11 @@ public class SeriesBuilder {
       PlanarImage image, boolean fullSeries, String seriesUID, Path viewCacheDir) {
     FileRawImage raw = null;
     try {
+      // Full-series output is stored directly under MIP_CACHE_DIR (not inside viewCacheDir) so
+      // that exitMipMode's FileUtil.delete(viewCacheDir) cannot accidentally delete files that are
+      // still referenced by a DicomSeries living in the DicomModel.
       Path dir =
-          fullSeries ? Files.createDirectories(viewCacheDir.resolve(seriesUID)) : viewCacheDir;
+          fullSeries ? Files.createDirectories(MIP_CACHE_DIR.resolve(seriesUID)) : viewCacheDir;
       raw = new FileRawImage(Files.createTempFile(dir, "mip_", ".wcv")); // NON-NLS
       if (raw.write(image)) return raw;
       FileUtil.delete(raw.path());
