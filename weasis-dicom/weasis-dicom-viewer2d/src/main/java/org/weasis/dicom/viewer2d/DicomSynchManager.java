@@ -515,6 +515,7 @@ public class DicomSynchManager extends SynchManager<DicomImageElement> {
       a.setValue(false);
     }
     synchData.getActions().put(ActionW.SCROLL_SERIES.cmd(), true);
+    synchData.getActions().put(ActionW.CROSSHAIR.cmd(), true);
   }
 
   private void handleSingleViewInStack() {
