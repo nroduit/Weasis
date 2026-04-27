@@ -12,7 +12,7 @@ package org.weasis.core.api.net.auth;
 import com.github.scribejava.core.httpclient.HttpClient;
 import com.github.scribejava.core.httpclient.multipart.BodyPartPayload;
 import java.io.InputStream;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 /** File body part payload for multipart HTTP requests. */
@@ -33,7 +33,7 @@ public class FileBodyPartPayload extends BodyPartPayload {
   /**
    * @param contentType content type header (optional)
    * @param bodySupplier input stream supplier for file content
-   * @param filename filename for Content-Disposition header (optional)
+   * @param filename filename for {@code Content-Disposition} header (optional)
    */
   public FileBodyPartPayload(
       String contentType, BodySupplier<InputStream> bodySupplier, String filename) {
@@ -46,16 +46,15 @@ public class FileBodyPartPayload extends BodyPartPayload {
   }
 
   private static Map<String, String> buildHeaders(String contentType, String filename) {
-    var headers = new HashMap<String, String>();
-
+    var headers = new LinkedHashMap<String, String>(2);
     if (contentType != null) {
       headers.put(HttpClient.CONTENT_TYPE, contentType);
     }
-
-    headers.put(
-        CONTENT_DISPOSITION,
-        filename != null ? FORM_DATA + "; filename=\"" + filename + "\"" : FORM_DATA);
-
+    headers.put(CONTENT_DISPOSITION, disposition(filename));
     return Map.copyOf(headers);
+  }
+
+  private static String disposition(String filename) {
+    return filename == null ? FORM_DATA : FORM_DATA + "; filename=\"" + filename + "\"";
   }
 }

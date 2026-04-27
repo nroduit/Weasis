@@ -9,10 +9,11 @@
  */
 package org.weasis.core.api.net;
 
+import com.formdev.flatlaf.util.SystemInfo;
+import java.io.File;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Objects;
 import org.weasis.core.util.StringUtil;
 
@@ -22,7 +23,7 @@ public final class URIUtils {
   private URIUtils() {}
 
   public static URI getURI(String pathOrUri) throws URISyntaxException {
-    Objects.requireNonNull(pathOrUri, "Path or URI cannot be null");
+    Objects.requireNonNull(pathOrUri, "pathOrUri");
     try {
       return new URI(pathOrUri);
     } catch (URISyntaxException e) {
@@ -33,7 +34,7 @@ public final class URIUtils {
   private static URI convertPathToURI(String path, URISyntaxException originalException)
       throws URISyntaxException {
     try {
-      return Paths.get(path).toUri();
+      return Path.of(path).toUri();
     } catch (Exception ex) {
       originalException.addSuppressed(ex);
       throw originalException;
@@ -59,13 +60,27 @@ public final class URIUtils {
     return protocol.equalsIgnoreCase(uri.getScheme());
   }
 
-  public static Path getAbsolutePath(URI uri) {
-    Objects.requireNonNull(uri, "URI cannot be null");
-
-    if (!isFileURI(uri)) {
-      return null;
+  /**
+   * Converts a file URI to a Path, handling Windows UNC paths (e.g. {@code file://server/share}).
+   */
+  public static Path toPath(URI uri) {
+    Objects.requireNonNull(uri, "uri");
+    if (uri.getScheme() == null) {
+      return Path.of(uri.getPath());
     }
-    String path = uri.getPath();
-    return path != null ? Paths.get(path).toAbsolutePath() : null;
+    if (uri.getAuthority() != null && SystemInfo.isWindows) {
+      return Path.of("\\\\" + uri.getAuthority() + uri.getPath());
+    }
+    return Path.of(uri);
+  }
+
+  /** Converts a file URI to a File, handling Windows UNC paths. */
+  public static File toFile(URI uri) {
+    return toPath(uri).toFile();
+  }
+
+  public static Path getAbsolutePath(URI uri) {
+    Objects.requireNonNull(uri, "uri");
+    return isFileURI(uri) ? toPath(uri).toAbsolutePath() : null;
   }
 }

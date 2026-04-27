@@ -7,7 +7,7 @@ on:
     types: [ opened, synchronize, reopened ]
 jobs:
   build:
-    name: Build
+    name: Build & Sonar
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
@@ -17,7 +17,7 @@ jobs:
         uses: actions/setup-java@v5
         with:
           distribution: 'temurin'
-          java-version: '25'
+          java-version: '26'
           cache: 'maven'
       - name: Cache SonarCloud packages
         uses: actions/cache@v4
@@ -25,8 +25,21 @@ jobs:
           path: ~/.sonar/cache
           key: ${{ runner.os }}-sonar
           restore-keys: ${{ runner.os }}-sonar
-      - name: Build and analyze
+
+      - name: Build with coverage
+        run: mvn -Pcoverage -B -ntp verify
+
+      - name: Upload coverage report
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: jacoco-aggregate
+          path: tests/target/site/jacoco-aggregate/
+
+      - name: Sonar analysis
+        if: ${{ env.SONAR_TOKEN != '' }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        run: mvn -Pcoverage -B verify org.sonarsource.scanner.maven:sonar-maven-plugin:5.1.0.4751:sonar
+        # Version is taken from <pluginManagement> in weasis-parent/pom.xml
+        run: mvn -B -ntp sonar:sonar

@@ -28,6 +28,7 @@ import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.AbstractItemDialogPage;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.WinUtil;
+import org.weasis.core.api.net.URIUtils;
 import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.api.util.ResourceUtil.ActionIcon;
 import org.weasis.core.util.LangUtil;
@@ -326,7 +327,7 @@ public class LocalImport extends AbstractItemDialogPage implements ImportDicom {
 
     // Try as URI
     try {
-      return new File(new URI(path));
+      return URIUtils.toFile(new URI(path));
     } catch (Exception e) {
       LOGGER.error("Cannot import DICOM from {}", path);
 

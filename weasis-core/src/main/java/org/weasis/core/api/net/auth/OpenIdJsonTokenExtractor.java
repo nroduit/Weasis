@@ -12,8 +12,10 @@ package org.weasis.core.api.net.auth;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.github.scribejava.core.extractors.OAuth2AccessTokenJsonExtractor;
 
-/** OAuth2 token extractor that parses OpenID Connect id_token from JSON responses. */
+/** OAuth2 token extractor that parses OpenID Connect {@code id_token} from JSON responses. */
 public class OpenIdJsonTokenExtractor extends OAuth2AccessTokenJsonExtractor {
+
+  private static final String ID_TOKEN_FIELD = "id_token"; // NON-NLS
 
   private OpenIdJsonTokenExtractor() {}
 
@@ -30,14 +32,15 @@ public class OpenIdJsonTokenExtractor extends OAuth2AccessTokenJsonExtractor {
       String scope,
       JsonNode response,
       String rawResponse) {
-    var idTokenValue = extractIdToken(response);
+    JsonNode idToken = response.get(ID_TOKEN_FIELD);
     return new OpenIdOAuth2AccessToken(
-        accessToken, tokenType, expiresIn, refreshToken, scope, idTokenValue, rawResponse);
-  }
-
-  private String extractIdToken(JsonNode response) {
-    var idToken = response.get("id_token"); // NON-NLS
-    return idToken != null ? idToken.asText() : null;
+        accessToken,
+        tokenType,
+        expiresIn,
+        refreshToken,
+        scope,
+        idToken != null ? idToken.asText() : null,
+        rawResponse);
   }
 
   private static final class InstanceHolder {

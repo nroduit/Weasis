@@ -72,22 +72,24 @@ public final class AsyncCallbackServerHandler implements Runnable, AutoCloseable
   public synchronized void start() throws IOException {
     if (isStopped()) {
       this.latch = new CountDownLatch(1);
-      AsynchronousServerSocketChannel channel = AsynchronousServerSocketChannel.open();
-      try {
-        channel.bind(new InetSocketAddress(port));
-      } catch (IOException e) {
-        channel.close();
-        throw e;
-      }
-      this.socketChannel = channel;
+      this.socketChannel = openChannel();
       LOGGER.info("Async callback server initialized on port {}", port);
       executor.submit(this);
     }
   }
 
+  @SuppressWarnings("java:S2095") // channel is intentionally kept open and closed via close()
+  private AsynchronousServerSocketChannel openChannel() throws IOException {
+    AsynchronousServerSocketChannel channel = AsynchronousServerSocketChannel.open();
+    try {
+      return channel.bind(new InetSocketAddress(port));
+    } catch (IOException e) {
+      channel.close();
+      throw e;
+    }
+  }
+
   /**
-   * Checks if the server is currently stopped.
-   *
    * @return true if the server is stopped, false otherwise
    */
   public boolean isStopped() {
@@ -100,12 +102,12 @@ public final class AsyncCallbackServerHandler implements Runnable, AutoCloseable
       if (socketChannel != null && socketChannel.isOpen()) {
         socketChannel.close();
       }
-      latch.countDown();
-      executor.close(); // Java 19+ auto-shutdown
-      LOGGER.info("Async callback server shutdown completed");
-    } catch (Exception e) {
-      LOGGER.error("Failed to shutdown async callback server", e);
+    } catch (IOException e) {
+      LOGGER.error("Failed to close async callback server socket", e);
     }
+    latch.countDown();
+    executor.close(); // Java 19+ auto-shutdown
+    LOGGER.info("Async callback server shutdown completed");
   }
 
   AsynchronousServerSocketChannel getSocketChannel() {

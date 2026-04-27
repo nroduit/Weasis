@@ -363,7 +363,7 @@ public class SeriesDownloadManager {
       handleAuthenticationIfNeeded(httpStream);
 
       try (InputStream stream = httpStream.getInputStream()) {
-        Path tempFile = writeInCache ? createTempFile() : Path.of(uri);
+        Path tempFile = writeInCache ? createTempFile() : URIUtils.toPath(uri);
 
         if (writeInCache) {
           LOGGER.debug("Downloading DICOM instance {} to {}", url, tempFile.getFileName());

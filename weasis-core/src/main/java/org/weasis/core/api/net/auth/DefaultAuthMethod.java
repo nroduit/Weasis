@@ -16,8 +16,8 @@ import java.net.URI;
 import java.time.Duration;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,6 +31,12 @@ public class DefaultAuthMethod implements AuthMethod {
   private static final Duration POLLING_TIMEOUT = Duration.ofSeconds(60);
   private static final Duration TOKEN_RETRIEVAL_TIMEOUT = Duration.ofSeconds(15);
   private static final Duration POLLING_INTERVAL = Duration.ofSeconds(1);
+
+  private static final String PARAM_ACCESS_TYPE = "access_type"; // NON-NLS
+  private static final String PARAM_PROMPT = "prompt"; // NON-NLS
+  private static final String PARAM_AUDIENCE = "audience"; // NON-NLS
+  private static final String VALUE_OFFLINE = "offline"; // NON-NLS
+  private static final String VALUE_CONSENT = "consent"; // NON-NLS
 
   private final String uid;
   private final AuthProvider authProvider;
@@ -120,12 +126,13 @@ public class DefaultAuthMethod implements AuthMethod {
     }
     try {
       this.token = service.refreshAccessToken(code);
+    } catch (InterruptedException e) {
+      token = null;
+      Thread.currentThread().interrupt();
+      LOGGER.error("Cannot refresh existing token", e);
     } catch (Exception e) {
       token = null;
       LOGGER.error("Cannot refresh existing token", e);
-      if (e instanceof InterruptedException) {
-        Thread.currentThread().interrupt();
-      }
     }
   }
 
@@ -150,32 +157,19 @@ public class DefaultAuthMethod implements AuthMethod {
     if (service == null) {
       throw new IOException("Cannot build OAuth service for " + getName());
     }
-
-    var handler = new AcceptCompletionHandler(service);
-    int port = extractPortFromCallback(service.getCallback());
-    return new AsyncCallbackServerHandler(port, handler);
-  }
-
-  private static int extractPortFromCallback(String callback) {
-    return Integer.parseInt(callback.substring(OAuth2ServiceFactory.CALLBACK_URL.length()));
+    int port =
+        Integer.parseInt(
+            service.getCallback().substring(OAuth2ServiceFactory.CALLBACK_URL.length()));
+    return new AsyncCallbackServerHandler(port, new AcceptCompletionHandler(service));
   }
 
   private OAuth2AccessToken performOAuthFlow(AsyncCallbackServerHandler server) {
+    var service = server.getResponseHandler().service();
     try {
-      var service = server.getResponseHandler().service();
-
       openAuthorizationUrl(service);
-      var authCode = waitForAuthorizationCode(server);
-
-      if (authCode == null) {
-        return null;
-      }
-
-      var accessToken = retrieveAccessToken(service, authCode);
-      this.code = accessToken != null ? accessToken.getRefreshToken() : null;
-
-      return accessToken != null ? service.refreshAccessToken(this.code) : null;
-
+      return waitForAuthorizationCode(server)
+          .map(authCode -> exchangeAndRefresh(service, authCode))
+          .orElse(null);
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
       LOGGER.error("Authentication flow interrupted", e);
@@ -186,58 +180,61 @@ public class DefaultAuthMethod implements AuthMethod {
     }
   }
 
-  private void openAuthorizationUrl(OAuth20Service service) throws Exception {
-    var additionalParams = createAuthParams();
-    var authorizationUrl =
-        service.createAuthorizationUrlBuilder().additionalParams(additionalParams).build();
+  private OAuth2AccessToken exchangeAndRefresh(OAuth20Service service, String authCode) {
+    try {
+      var accessToken = retrieveAccessToken(service, authCode);
+      if (accessToken == null) {
+        return null;
+      }
+      this.code = accessToken.getRefreshToken();
+      return service.refreshAccessToken(this.code);
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+      LOGGER.error("Token exchange interrupted", e);
+      return null;
+    } catch (Exception e) {
+      LOGGER.error("Token exchange failed", e);
+      return null;
+    }
+  }
 
+  private void openAuthorizationUrl(OAuth20Service service) throws IOException {
+    var authorizationUrl =
+        service.createAuthorizationUrlBuilder().additionalParams(createAuthParams()).build();
     GuiUtils.openInDefaultBrowser(null, URI.create(authorizationUrl).toURL());
   }
 
   private Map<String, String> createAuthParams() {
     var audience = authRegistration.audience();
     return StringUtil.hasText(audience)
-        ? Map.of("access_type", "offline", "prompt", "consent", "audience", audience)
-        : Map.of("access_type", "offline", "prompt", "consent");
+        ? Map.of(
+            PARAM_ACCESS_TYPE, VALUE_OFFLINE,
+            PARAM_PROMPT, VALUE_CONSENT,
+            PARAM_AUDIENCE, audience)
+        : Map.of(PARAM_ACCESS_TYPE, VALUE_OFFLINE, PARAM_PROMPT, VALUE_CONSENT);
   }
 
-  private String waitForAuthorizationCode(AsyncCallbackServerHandler server)
+  private static Optional<String> waitForAuthorizationCode(AsyncCallbackServerHandler server)
       throws InterruptedException {
-    long timeoutMillis = POLLING_TIMEOUT.toMillis();
-    long intervalMillis = POLLING_INTERVAL.toMillis();
-    long iterations = timeoutMillis / intervalMillis;
-
+    long deadline = System.nanoTime() + POLLING_TIMEOUT.toNanos();
     var handler = server.getResponseHandler();
-
-    for (long i = 0; i < iterations; i++) {
+    while (System.nanoTime() < deadline) {
       var authCode = handler.code();
       if (authCode.isPresent()) {
-        return authCode.get();
+        return authCode;
       }
-      Thread.sleep(intervalMillis);
+      Thread.sleep(POLLING_INTERVAL.toMillis());
     }
-
     LOGGER.warn(
         "Timeout waiting for authorization code after {} seconds", POLLING_TIMEOUT.toSeconds());
-    return null;
+    return Optional.empty();
   }
 
   private static OAuth2AccessToken retrieveAccessToken(OAuth20Service service, String authCode)
       throws Exception {
-    var future =
-        CompletableFuture.supplyAsync(
-            () -> {
-              try {
-                return service.getAccessTokenAsync(authCode).get();
-              } catch (Exception e) {
-                if (e instanceof InterruptedException) {
-                  Thread.currentThread().interrupt();
-                }
-                throw new RuntimeException("Failed to get access token", e);
-              }
-            });
-
-    return future.get(TOKEN_RETRIEVAL_TIMEOUT.toSeconds(), TimeUnit.SECONDS);
+    return service
+        .getAccessTokenAsync(authCode)
+        .get(TOKEN_RETRIEVAL_TIMEOUT.toSeconds(), TimeUnit.SECONDS);
   }
 
   private static void shutdownServer(AsyncCallbackServerHandler server) {

@@ -21,22 +21,19 @@
         <groupId>org.jacoco</groupId>
         <artifactId>jacoco-maven-plugin</artifactId>
         <configuration>
-          <includes>
-            <include>org/weasis/core/**/*.*</include>
-            <include>org/weasis/acquire/**/*.*</include>
-            <include>org/weasis/dicom/**/*.*</include>
-          </includes>
           <excludes>
-            <exclude>**/package-info.java</exclude>
+            <exclude>**/package-info.class</exclude>
+            <exclude>**/module-info.class</exclude>
+            <exclude>**/Messages.class</exclude>
             <!-- Exclude weasis-dicom-tools library-->
-            <exclude>org/weasis/dicom/mf/*.*</exclude>
-            <exclude>org/weasis/dicom/op/*.*</exclude>
-            <exclude>org/weasis/dicom/param/*.*</exclude>
-            <exclude>org/weasis/dicom/tool/*.*</exclude>
-            <exclude>org/weasis/dicom/util/*.*</exclude>
-            <exclude>org/weasis/dicom/web/*.*</exclude>
+            <exclude>org/weasis/dicom/mf/**</exclude>
+            <exclude>org/weasis/dicom/op/**</exclude>
+            <exclude>org/weasis/dicom/param/**</exclude>
+            <exclude>org/weasis/dicom/tool/**</exclude>
+            <exclude>org/weasis/dicom/util/**</exclude>
+            <exclude>org/weasis/dicom/web/**</exclude>
             <!-- Exclude weasis-core-img library-->
-            <exclude>org/weasis/core/util/*.*</exclude>
+            <exclude>org/weasis/core/util/**</exclude>
           </excludes>
         </configuration>
         <executions>

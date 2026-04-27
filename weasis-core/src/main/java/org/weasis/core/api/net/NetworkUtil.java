@@ -14,9 +14,7 @@ import com.github.scribejava.core.model.Verb;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.nio.charset.StandardCharsets;
@@ -24,11 +22,10 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.net.auth.AuthMethod;
-import org.weasis.core.api.net.auth.OAuth2ServiceFactory;
 import org.weasis.core.util.StreamIOException;
 import org.weasis.core.util.StringUtil;
 
@@ -38,6 +35,15 @@ public final class NetworkUtil {
 
   private static final int MAX_REDIRECTS = 3;
   private static final String HTTP_SCHEME_PREFIX = "http";
+  private static final String HEADER_LOCATION = "Location";
+  private static final String HEADER_COOKIE = "Cookie";
+  private static final String HEADER_SET_COOKIE = "Set-Cookie";
+
+  private static final Set<Integer> REDIRECT_CODES =
+      Set.of(
+          HttpURLConnection.HTTP_MOVED_TEMP,
+          HttpURLConnection.HTTP_MOVED_PERM,
+          HttpURLConnection.HTTP_SEE_OTHER);
 
   private NetworkUtil() {}
 
@@ -49,9 +55,9 @@ public final class NetworkUtil {
     return StringUtil.getInt(System.getProperty("UrlReadTimeout"), 15000);
   }
 
-  public static URI getURI(String pathOrUri) throws MalformedURLException, URISyntaxException {
+  public static URI getURI(String pathOrUri) {
     if (!pathOrUri.startsWith(HTTP_SCHEME_PREFIX)) {
-      URI fileUri = tryCreateFileUri(pathOrUri);
+      var fileUri = tryCreateFileUri(pathOrUri);
       if (fileUri != null) {
         return fileUri;
       }
@@ -61,7 +67,7 @@ public final class NetworkUtil {
 
   private static URI tryCreateFileUri(String pathOrUri) {
     try {
-      Path path = Path.of(pathOrUri);
+      var path = Path.of(pathOrUri);
       return Files.isReadable(path) ? path.toUri() : null;
     } catch (Exception e) {
       LOGGER.debug("Failed to create file URI for path: {}", pathOrUri, e);
@@ -77,18 +83,14 @@ public final class NetworkUtil {
   public static HttpStream getHttpResponse(
       String url, URLParameters urlParameters, AuthMethod authMethod, OAuthRequest authRequest)
       throws IOException {
-    if (isNoAuth(authMethod)) {
+    if (HttpUtils.isNoAuthRequired(authMethod)) {
       return prepareConnection(URI.create(url).toURL().openConnection(), urlParameters);
     }
-    OAuthRequest request =
+    var request =
         Objects.requireNonNullElseGet(
             authRequest,
             () -> new OAuthRequest(urlParameters.httpPost() ? Verb.POST : Verb.GET, url));
     return HttpUtils.executeAuthenticatedRequest(request, urlParameters, authMethod);
-  }
-
-  private static boolean isNoAuth(AuthMethod authMethod) {
-    return authMethod == null || OAuth2ServiceFactory.NO_AUTH.equals(authMethod);
   }
 
   public static ClosableURLConnection getUrlConnection(String url, URLParameters urlParameters)
@@ -101,21 +103,14 @@ public final class NetworkUtil {
     return prepareConnection(url.openConnection(), urlParameters);
   }
 
-  private static void setAppHeaders(URLConnection urlConnection) {
-    urlConnection.setRequestProperty("User-Agent", AppProperties.WEASIS_USER_AGENT);
-    urlConnection.setRequestProperty("Weasis-User", AppProperties.WEASIS_USER);
-  }
-
   private static ClosableURLConnection prepareConnection(
       URLConnection urlConnection, URLParameters urlParameters) throws StreamIOException {
-    urlParameters.headers().forEach(urlConnection::setRequestProperty);
-    setAppHeaders(urlConnection);
+    HttpUtils.applyHeaders(urlParameters.headers(), urlConnection::setRequestProperty);
     configureConnection(urlConnection, urlParameters);
 
     if (urlConnection instanceof HttpURLConnection httpConn) {
       return handleHttpConnection(httpConn, urlParameters);
     }
-
     return new ClosableURLConnection(urlConnection);
   }
 
@@ -126,10 +121,7 @@ public final class NetworkUtil {
     connection.setUseCaches(parameters.useCaches());
     connection.setIfModifiedSince(parameters.ifModifiedSince());
     connection.setDoInput(true);
-
-    if (parameters.httpPost()) {
-      connection.setDoOutput(true);
-    }
+    connection.setDoOutput(parameters.httpPost());
   }
 
   private static ClosableURLConnection handleHttpConnection(
@@ -137,15 +129,12 @@ public final class NetworkUtil {
     try {
       if (parameters.httpPost()) {
         httpConn.setRequestMethod("POST");
-      } else {
-        return new ClosableURLConnection(readResponse(httpConn, parameters.headers()));
+        return new ClosableURLConnection(httpConn);
       }
-    } catch (StreamIOException e) {
-      throw e;
+      return new ClosableURLConnection(readResponse(httpConn, parameters.headers()));
     } catch (IOException e) {
-      throw new StreamIOException(e);
+      throw e instanceof StreamIOException s ? s : new StreamIOException(e);
     }
-    return new ClosableURLConnection(httpConn);
   }
 
   public static URLConnection readResponse(
@@ -155,32 +144,16 @@ public final class NetworkUtil {
     if (isSuccessResponse(responseCode)) {
       return httpConnection;
     }
-
-    if (isRedirectResponse(responseCode)) {
+    if (REDIRECT_CODES.contains(responseCode)) {
       return applyRedirectionStream(httpConnection, headers);
     }
 
-    handleErrorResponse(httpConnection, responseCode);
+    logErrorResponse(httpConnection, responseCode);
     throw new StreamIOException(httpConnection.getResponseMessage());
   }
 
   private static boolean isSuccessResponse(int code) {
     return code >= HttpURLConnection.HTTP_OK && code < HttpURLConnection.HTTP_MULT_CHOICE;
-  }
-
-  private static boolean isRedirectResponse(int code) {
-    return code == HttpURLConnection.HTTP_MOVED_TEMP
-        || code == HttpURLConnection.HTTP_MOVED_PERM
-        || code == HttpURLConnection.HTTP_SEE_OTHER;
-  }
-
-  private static void handleErrorResponse(HttpURLConnection connection, int code)
-      throws IOException {
-    LOGGER.warn("HTTP Status {} - {}", code, connection.getResponseMessage());
-
-    if (LOGGER.isTraceEnabled()) {
-      logErrorResponse(connection);
-    }
   }
 
   public static String read(URLConnection urlConnection) throws IOException {
@@ -192,29 +165,27 @@ public final class NetworkUtil {
 
   public static URLConnection applyRedirectionStream(
       URLConnection urlConnection, Map<String, String> headers) throws IOException {
-    URLConnection connection = urlConnection;
-    String redirectUrl = connection.getHeaderField("Location");
+    var connection = urlConnection;
+    var redirectUrl = connection.getHeaderField(HEADER_LOCATION);
 
     for (int i = 0; i < MAX_REDIRECTS && redirectUrl != null; i++) {
       connection = followRedirect(connection, redirectUrl, headers);
-      redirectUrl = connection.getHeaderField("Location");
+      redirectUrl = connection.getHeaderField(HEADER_LOCATION);
     }
-
     return connection;
   }
 
   private static URLConnection followRedirect(
       URLConnection current, String redirectUrl, Map<String, String> headers) throws IOException {
-    String cookies = current.getHeaderField("Set-Cookie");
+    var cookies = current.getHeaderField(HEADER_SET_COOKIE);
 
     if (current instanceof HttpURLConnection httpConn) {
       httpConn.disconnect();
     }
 
-    URLConnection newConnection = URI.create(redirectUrl).toURL().openConnection();
-
+    var newConnection = URI.create(redirectUrl).toURL().openConnection();
     if (cookies != null) {
-      newConnection.setRequestProperty("Cookie", cookies);
+      newConnection.setRequestProperty(HEADER_COOKIE, cookies);
     }
     if (headers != null && !headers.isEmpty()) {
       headers.forEach(newConnection::addRequestProperty);
@@ -224,20 +195,25 @@ public final class NetworkUtil {
 
   public static boolean isValidUrlLikeUri(String uri) {
     try {
-      URI parsed = URI.create(uri);
+      var parsed = URI.create(uri);
       return parsed.getScheme() != null && parsed.getHost() != null;
     } catch (IllegalArgumentException e) {
       return false;
     }
   }
 
-  private static void logErrorResponse(HttpURLConnection connection) throws IOException {
+  private static void logErrorResponse(HttpURLConnection connection, int code) throws IOException {
+    LOGGER.warn("HTTP Status {} - {}", code, connection.getResponseMessage());
+    if (!LOGGER.isTraceEnabled()) {
+      return;
+    }
     try (InputStream errorStream = connection.getErrorStream()) {
-      if (errorStream != null) {
-        String errorContent = new String(errorStream.readAllBytes(), StandardCharsets.UTF_8);
-        if (StringUtil.hasText(errorContent)) {
-          LOGGER.trace("HttpURLConnection ERROR, server response: {}", errorContent);
-        }
+      if (errorStream == null) {
+        return;
+      }
+      var errorContent = new String(errorStream.readAllBytes(), StandardCharsets.UTF_8);
+      if (StringUtil.hasText(errorContent)) {
+        LOGGER.trace("HttpURLConnection ERROR, server response: {}", errorContent);
       }
     }
   }

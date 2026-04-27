@@ -16,7 +16,7 @@ jobs:
         uses: actions/setup-java@v5
         with:
           distribution: 'temurin'
-          java-version: '25'
+          java-version: '26'
           cache: 'maven'
 
       - name: Build with Maven
@@ -40,7 +40,7 @@ jobs:
           echo "WEASIS_CLEAN_VERSION=${CVERSION}" >> $GITHUB_ENV
 
       - name: Upload the weasis package for building the native distribution
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: weasis-native-${{ env.WEASIS_VERSION }}
           path: weasis-distributions/target/native-dist/weasis-native.*
@@ -83,10 +83,10 @@ jobs:
         uses: actions/setup-java@v5
         with:
           distribution: 'temurin'
-          java-version: '25'
+          java-version: '26'
 
       - name: Download weasis-native
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           name: weasis-native-${{ env.WEASIS_VERSION }}
           path: native-dist
@@ -169,7 +169,7 @@ jobs:
           RES: "native-dist/weasis-native/build/script/resources/${{ matrix.wsystem }}"
           FILE_ASSOC: "native-dist/weasis-native/build/script/file-associations.properties"
           VENDOR: "Weasis Team"
-          COPYRIGHT: "© 2009-2025 Weasis Team"
+          COPYRIGHT: "© 2009-2026 Weasis Team"
         run: |
           mkdir -p final-dist
           machine=${{ matrix.wsystem }}
@@ -231,7 +231,7 @@ jobs:
           done
 
       - name: Upload the installer
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: ${{ env.APP_ARTIFACT }}
           path: final-dist
@@ -245,7 +245,7 @@ jobs:
 
     steps:
       - name: Download weasis-native
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           name: weasis-native-${{ needs.build.outputs.version }}
           path: native-dist
@@ -299,7 +299,7 @@ jobs:
         continue-on-error: false
 
       - name: Upload Linux multi-arch installers
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: ${{ env.PKG_ARTIFACT }}
           path: final-dist

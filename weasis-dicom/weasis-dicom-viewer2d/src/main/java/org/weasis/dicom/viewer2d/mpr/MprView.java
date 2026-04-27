@@ -9,7 +9,6 @@
  */
 package org.weasis.dicom.viewer2d.mpr;
 
-import com.formdev.flatlaf.util.SystemFileChooser;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
@@ -27,6 +26,9 @@ import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.beans.PropertyChangeEvent;
 import java.io.File;
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import javax.swing.JCheckBoxMenuItem;
@@ -52,7 +54,9 @@ import org.joml.Vector4d;
 import org.opencv.core.Point3;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.core.api.gui.util.ActionW;
+import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.gui.util.ComboItemListener;
 import org.weasis.core.api.gui.util.DecFormatter;
 import org.weasis.core.api.gui.util.GeomUtil;
@@ -60,7 +64,9 @@ import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.image.OpManager;
 import org.weasis.core.api.image.WindowOp;
+import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.SeriesComparator;
+import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.api.util.ResourceUtil.OtherIcon;
 import org.weasis.core.ui.editor.image.ImageViewerEventManager;
@@ -80,12 +86,16 @@ import org.weasis.core.util.LangUtil;
 import org.weasis.core.util.Pair;
 import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.codec.DicomImageElement;
+import org.weasis.dicom.codec.DicomMediaIO;
+import org.weasis.dicom.codec.DicomSeries;
 import org.weasis.dicom.codec.SortSeriesStack;
 import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.geometry.GeometryOfSlice;
 import org.weasis.dicom.codec.geometry.LocalizerPoster;
+import org.weasis.dicom.explorer.DicomModel;
 import org.weasis.dicom.viewer2d.Messages;
 import org.weasis.dicom.viewer2d.View2d;
+import org.weasis.dicom.viewer2d.mip.MipView;
 import org.weasis.dicom.viewer2d.mpr.MprController.ControlPoints;
 
 public class MprView extends View2d implements SliceCanvas, ViewProgress {
@@ -793,40 +803,24 @@ public class MprView extends View2d implements SliceCanvas, ViewProgress {
   }
 
   private void rebuildView(boolean all) {
-    SystemFileChooser fc = new SystemFileChooser();
-    fc.setDialogType(SystemFileChooser.OPEN_DIALOG);
-    fc.setMultiSelectionEnabled(false);
-    fc.setFileSelectionMode(SystemFileChooser.DIRECTORIES_ONLY);
-
-    int returnVal = fc.showOpenDialog(this);
-    File folder = null;
-
-    if (returnVal == SystemFileChooser.APPROVE_OPTION) {
-      try {
-        folder = fc.getSelectedFile();
-      } catch (SecurityException e) {
-        LOGGER.warn("directory cannot be accessed", e);
-      }
-    }
-
     if (all) {
-      rebuildView(mprController.getAxial(), folder);
-      rebuildView(mprController.getCoronal(), folder);
-      rebuildView(mprController.getSagittal(), folder);
+      rebuildView(mprController.getAxial());
+      rebuildView(mprController.getCoronal());
+      rebuildView(mprController.getSagittal());
     } else {
-      rebuildView(getMprAxis(), folder);
+      rebuildView(getMprAxis());
     }
   }
 
-  protected void rebuildView(MprAxis axis, File folder) {
-    if (axis == null || folder == null || !folder.canWrite()) return;
+  protected void rebuildView(MprAxis axis) {
+    if (axis == null) return;
+
+    Path tempDir = AppProperties.buildAccessibleTempDirectory(AppProperties.CACHE_NAME, "mpr");
+    File dir = tempDir.toFile();
 
     Vector3d oldPosition = mprController.getAxesControl().getCenter();
     String uid = UIDUtils.createUID();
     int sliceImageSize = mprController.getVolume().getSliceSize();
-
-    File dir = new File(folder, uid);
-    dir.mkdirs();
 
     MprView view = axis.getMprView();
     // Two passes (analysis + export) → double the progress bar range
@@ -845,15 +839,15 @@ public class MprView extends View2d implements SliceCanvas, ViewProgress {
           view.repaint();
         });
 
-    SwingWorker<Void, Integer> worker =
+    SwingWorker<List<File>, Integer> worker =
         new SwingWorker<>() {
           @Override
-          protected Void doInBackground() {
+          protected List<File> doInBackground() {
             VolImageIO rawIO = axis.getRawIO();
             DicomImageElement imageElement = axis.getImageElement();
+            List<File> exportedFiles = new ArrayList<>();
 
             // ── Pass 1: analysis ─────────────────────────────────────────────
-            // Render every slice to build the union of all non-background
             int globalMinX = sliceImageSize;
             int globalMinY = sliceImageSize;
             int globalMaxX = -1;
@@ -875,9 +869,8 @@ public class MprView extends View2d implements SliceCanvas, ViewProgress {
               publish(i + 1);
             }
 
-            if (firstValid < 0) return null; // all slices background – nothing to export
+            if (firstValid < 0) return exportedFiles;
 
-            // Derive the uniform crop region from the union bounding box.
             int[] uniformCrop = null;
             if (globalMaxX >= 0) {
               int cropW = globalMaxX - globalMinX + 1;
@@ -891,18 +884,19 @@ public class MprView extends View2d implements SliceCanvas, ViewProgress {
             }
 
             // ── Pass 2: export ────────────────────────────────────────────────
-            // Write only the valid slice range, applying the same crop to every
-            // slice so all images in the series share identical dimensions.
             int exportIndex = 0;
             for (int i = firstValid; i <= lastValid; i++) {
               axis.setSliceIndex(i);
               if (imageElement != null) {
                 imageElement.setTag(TagD.get(Tag.SeriesInstanceUID), uid);
-                rawIO.buildCroppedFile(dir, uniformCrop);
+                File output = rawIO.buildCroppedFile(dir, uniformCrop);
+                if (output != null) {
+                  exportedFiles.add(output);
+                }
               }
               publish(sliceImageSize + (++exportIndex));
             }
-            return null;
+            return exportedFiles;
           }
 
           @Override
@@ -917,13 +911,124 @@ public class MprView extends View2d implements SliceCanvas, ViewProgress {
             bar.setValue(bar.getMaximum());
             mprController.getAxesControl().reset();
             mprController.getAxesControl().setCenter(oldPosition);
+
+            try {
+              List<File> files = get();
+              if (files != null && !files.isEmpty()) {
+                loadExportedSeriesInExplorer(files, uid, axis);
+              }
+            } catch (InterruptedException e) {
+              LOGGER.error("MPR export interrupted", e);
+              Thread.currentThread().interrupt();
+            } catch (Exception e) {
+              LOGGER.error("MPR export failed", e);
+            }
           }
         };
+
+    // ******* DEBUG START *******
+    Volume<?, ?> volume = mprController.getVolume();
+    LOGGER.info(
+        "[{}] source IOP row={}, col={}",
+        axis.getPlane(),
+        volume.getStack().getFirstSliceGeometry().getRow(),
+        volume.getStack().getFirstSliceGeometry().getColumn());
+    LOGGER.info(
+        "[{}] rectified origin={}, axes X={}, Y={}, Z={}",
+        axis.getPlane(),
+        volume.getVolumeOrigin(),
+        volume.getVolumeAxisX(),
+        volume.getVolumeAxisY(),
+        volume.getVolumeAxisZ());
+    LOGGER.info(
+        "[{}] source TLHC.x range = [{}, {}]",
+        axis.getPlane(),
+        volume.getStack().getFirstImage().getSliceGeometry().getTLHC().x,
+        volume.getStack().getLastImage().getSliceGeometry().getTLHC().x);
+    LOGGER.info(
+        "[{}] volume size={}, pixelRatio={}, voxelRatio={}, minRatio={}, sliceSize={}",
+        axis.getPlane(),
+        volume.getSize(),
+        volume.getPixelRatio(),
+        volume.getVoxelRatio(),
+        volume.getMinPixelRatio(),
+        sliceImageSize);
+    // ******* DEBUG END *******
+
     worker.execute();
   }
 
   @Override
   public void updateSynchState() {
     // Not relevant for MPR views
+  }
+
+  private void loadExportedSeriesInExplorer(List<File> files, String seriesUID, MprAxis axis) {
+    DicomSeries series = new DicomSeries(seriesUID, null, DicomModel.series.tagView());
+    series.setTag(TagD.get(Tag.SeriesInstanceUID), seriesUID);
+
+    for (File file : files) {
+      try {
+        DicomMediaIO dicomReader = new DicomMediaIO(file);
+        if (dicomReader.isReadableDicom()) {
+          DicomImageElement[] elements = dicomReader.getMediaElement();
+          if (elements != null) {
+            for (DicomImageElement element : elements) {
+              series.addMedia(element);
+            }
+            if (series.getTagValue(TagD.get(Tag.Modality)) == null) {
+              dicomReader.writeMetaData(series);
+            }
+          }
+        }
+      } catch (Exception e) {
+        LOGGER.error("Cannot load exported DICOM file: {}", file, e);
+      }
+    }
+
+    int n = series.size(null);
+    if (n > 0) {
+      List<DicomImageElement> all = new ArrayList<>();
+      for (DicomImageElement el : series.getMedias(null, null)) {
+        all.add(el);
+      }
+
+      // ******* DEBUG START *******
+      // Debug: dump IPP / IOP / SliceLocation / InstanceNumber of the first, middle and last
+      // exported slice so we can verify whether the position shift is at write-time or later.
+      int[] indices = {0, all.size() / 2, all.size() - 1};
+      for (int idx : indices) {
+        if (idx >= 0 && idx < all.size()) {
+          DicomImageElement el = all.get(idx);
+          double[] ipp = TagD.getTagValue(el, Tag.ImagePositionPatient, double[].class);
+          double[] iop = TagD.getTagValue(el, Tag.ImageOrientationPatient, double[].class);
+          Integer in = TagD.getTagValue(el, Tag.InstanceNumber, Integer.class);
+          Double sl = TagD.getTagValue(el, Tag.SliceLocation, Double.class);
+          LOGGER.info(
+              "[{}] exported slice idx={} InstanceNumber={} IPP={} IOP={} SliceLocation={}",
+              axis.getPlane(),
+              idx,
+              in,
+              ipp == null ? "null" : Arrays.toString(ipp),
+              iop == null ? "null" : Arrays.toString(iop),
+              sl);
+        }
+      }
+      // ******* DEBUG END *******
+    }
+
+    if (series.size(null) == 0) return;
+
+    MprView mprView = axis.getMprView();
+    if (mprView == null || mprView.getSeries() == null) return;
+
+    DataExplorerModel model =
+        (DataExplorerModel) mprView.getSeries().getTagValue(TagW.ExplorerModel);
+    if (model instanceof DicomModel dicomModel) {
+      MediaSeriesGroup study =
+          dicomModel.getParent(
+              mprView.getMprController().getVolume().getStack().getSeries(), DicomModel.study);
+      MipView.openSeries(series, model, dicomModel, study, false);
+    }
   }
 }

@@ -17,7 +17,6 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import javax.swing.ImageIcon;
 import org.dcm4che3.data.Tag;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -53,7 +52,6 @@ import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.explorer.DicomModel;
 import org.weasis.dicom.viewer2d.Messages;
 import org.weasis.dicom.viewer2d.View2d;
-import org.weasis.dicom.viewer2d.View2dFactory;
 
 /**
  * MIP (Maximum/Mean/Minimum Intensity Projection) view with responsive UI. Heavy work runs in
@@ -61,8 +59,6 @@ import org.weasis.dicom.viewer2d.View2dFactory;
  */
 public class MipView extends View2d {
   private static final Logger LOGGER = LoggerFactory.getLogger(MipView.class);
-
-  public static final ImageIcon MIP_ICON_SETTING = ResourceUtil.getIcon(OtherIcon.VIEW_MIP);
 
   public static final class MipViewType extends Feature<MipView.Type> {
     public MipViewType(String title, String command, int keyEvent, int modifier, Cursor cursor) {
@@ -113,6 +109,7 @@ public class MipView extends View2d {
   private volatile Type lastBuiltType;
   private volatile Integer lastBuiltExtend;
   private volatile boolean pendingCrosslineUpdate = false;
+  private volatile boolean pendingSeriesChange = false;
 
   public MipView(ImageViewerEventManager<DicomImageElement> eventManager) {
     super(eventManager);
@@ -141,6 +138,12 @@ public class MipView extends View2d {
     // Propagate the preset
     OpManager disOp = getDisplayOpManager();
     disOp.setParamValue(WindowOp.OP_NAME, ActionW.DEFAULT_PRESET.cmd(), false);
+  }
+
+  @Override
+  public void setSeries(MediaSeries<DicomImageElement> newSeries, DicomImageElement selectedMedia) {
+    pendingSeriesChange = true;
+    super.setSeries(newSeries, selectedMedia);
   }
 
   public void initMIPSeries(ViewCanvas<DicomImageElement> selView) {
@@ -305,14 +308,24 @@ public class MipView extends View2d {
     DataExplorerModel model = (DataExplorerModel) ser.getTagValue(TagW.ExplorerModel);
     if (model instanceof DicomModel dicomModel) {
       MediaSeriesGroup study = dicomModel.getParent(ser, DicomModel.study);
-      if (study != null) {
-        s.setTag(TagW.ExplorerModel, dicomModel);
-        dicomModel.addHierarchyNode(study, s);
-        dicomModel.firePropertyChange(
-            new ObservableEvent(ObservableEvent.BasicAction.ADD, dicomModel, null, s));
-      }
+      openSeries(s, model, dicomModel, study, false);
+    }
+  }
 
-      SeriesViewerFactory factory = GuiUtils.getUICore().getViewerFactory(View2dFactory.NAME);
+  public static void openSeries(
+      DicomSeries s,
+      DataExplorerModel model,
+      DicomModel dicomModel,
+      MediaSeriesGroup study,
+      boolean openTab) {
+    if (study != null) {
+      s.setTag(TagW.ExplorerModel, dicomModel);
+      dicomModel.addHierarchyNode(study, s);
+      dicomModel.firePropertyChange(
+          new ObservableEvent(ObservableEvent.BasicAction.ADD, dicomModel, null, s));
+    }
+    if (openTab) {
+      SeriesViewerFactory factory = GuiUtils.getUICore().getViewerFactory(s.getMimeType());
       new ViewerPluginBuilder(
               factory,
               List.of(s),
@@ -325,7 +338,7 @@ public class MipView extends View2d {
   protected void setMip(DicomImageElement dicom) {
     DicomImageElement oldImage = getImage();
     if (dicom != null) {
-      if (oldImage != null) {
+      if (oldImage != null && !pendingSeriesChange) {
         // Preserve the current zoom level when updating the MIP slab (e.g. while scrolling).
         // Without this guard, DefaultView2d.resetZoom() would reset to BEST_FIT on every update
         // because the scroll handler restores ZOOM_TYPE_CMD before the async build finishes.
@@ -334,8 +347,15 @@ public class MipView extends View2d {
         super.setImage(dicom);
         actionsInView.put(ViewCanvas.ZOOM_TYPE_CMD, oldZoomType);
       } else {
+        // Either no previous image (first load) or a new series was dropped – use best-fit so
+        // the image is not shown with a stale zoom level from the previous series.
+        pendingSeriesChange = false;
         super.setImage(dicom);
       }
+    } else {
+      // Clear the displayed image
+      pendingSeriesChange = false;
+      super.setImage(null);
     }
 
     if (oldImage == null) {

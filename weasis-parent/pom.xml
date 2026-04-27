@@ -240,6 +240,11 @@
           <artifactId>jacoco-maven-plugin</artifactId>
           <version>0.8.14</version>
         </plugin>
+       <plugin>
+         <groupId>org.sonarsource.scanner.maven</groupId>
+         <artifactId>sonar-maven-plugin</artifactId>
+         <version>5.6.0.6792</version>
+       </plugin>
       </plugins>
     </pluginManagement>
 
@@ -360,11 +365,6 @@
     </profile>
     <profile>
       <id>coverage</id>
-      <activation>
-        <property>
-          <name>weasis.tests</name>
-        </property>
-      </activation>
       <build>
         <plugins>
           <plugin>
