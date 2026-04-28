@@ -108,13 +108,10 @@ import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.display.OverlayOp;
 import org.weasis.dicom.codec.display.ShutterOp;
 import org.weasis.dicom.codec.display.WindowAndPresetsOp;
-import org.weasis.dicom.codec.geometry.GeometryOfSlice;
-import org.weasis.dicom.codec.geometry.ImageOrientation;
+import org.weasis.dicom.codec.geometry.*;
 import org.weasis.dicom.codec.geometry.ImageOrientation.Plan;
-import org.weasis.dicom.codec.geometry.IntersectSlice;
-import org.weasis.dicom.codec.geometry.IntersectVolume;
-import org.weasis.dicom.codec.geometry.LocalizerPoster;
 import org.weasis.dicom.codec.geometry.PatientOrientation.Biped;
+import org.weasis.dicom.codec.geometry.VectorUtils;
 import org.weasis.dicom.explorer.DicomModel;
 import org.weasis.dicom.explorer.DicomSeriesHandler;
 import org.weasis.dicom.explorer.pr.PrGraphicUtil;
@@ -368,9 +365,8 @@ public class View2d extends DefaultView2d<DicomImageElement> {
             if (imgToUpdate != null) {
               GeometryOfSlice geometry = imgToUpdate.getSliceGeometry();
               if (geometry != null) {
-                Vector3d vn = geometry.getNormal();
-                // vn.absolute();
-                double location = p3.x * vn.x + p3.y * vn.y + p3.z * vn.z;
+                Vector3d vn = VectorUtils.orientNormalToDominantPositiveAxis(geometry.getNormal());
+                double location = vn.dot(p3);
                 DicomImageElement img =
                     s.getNearestImage(
                         location,
