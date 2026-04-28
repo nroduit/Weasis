@@ -118,6 +118,9 @@ public final class FocusHandler<E extends ImageElement> extends MouseActionAdapt
     viewCanvas.getJComponent().setCursor(DefaultView2d.DEFAULT_CURSOR);
     evt.consume(); // Consume event to not select the view
     button.showPopup(evt.getComponent(), evt.getX(), evt.getY());
+    if (button instanceof SynchViewButton) {
+      viewCanvas.getJComponent().repaint();
+    }
   }
 
   private void updateCursorForMouseAction(MouseEvent evt) {
