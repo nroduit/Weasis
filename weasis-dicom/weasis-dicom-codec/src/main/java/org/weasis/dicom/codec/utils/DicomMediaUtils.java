@@ -316,21 +316,15 @@ public class DicomMediaUtils {
         if (vr != null && vc != null) {
           // Project IPP onto the slice normal: scalar distance along normal axis.
           // Geometrically correct for any orientation (axial, sagittal, coronal, oblique).
-          Vector3d normal = VectorUtils.computeNormalOfSurface(vr, vc);
           // Ensure the normal points in the positive direction of its dominant axis to sort
           // slices in the anatomical direction. The cross product (row × column) can point in
           // either direction for the same anatomical plane (e.g., +X or -X for sagittal), which
           // would reverse the sort order. This normalization must match the DICOM LPS+ coordinate
           // system (Left +X, Posterior +Y, Superior +Z) because the Slice Location tag is not
           // always correct.
-          double ax = Math.abs(normal.x);
-          double ay = Math.abs(normal.y);
-          double az = Math.abs(normal.z);
-          double dominantComponent =
-              ax >= ay && ax >= az ? normal.x : ay >= az ? normal.y : normal.z;
-          if (dominantComponent < 0) {
-            normal.negate();
-          }
+          Vector3d normal =
+              VectorUtils.orientNormalToDominantPositiveAxis(
+                  VectorUtils.computeNormalOfSurface(vr, vc));
           double dot = normal.dot(pPos);
           taggable.setTag(TagW.SlicePosition, dot);
           return dot;

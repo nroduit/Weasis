@@ -24,4 +24,31 @@ public class VectorUtils {
     Vector3d normal = u.cross(w);
     return normal.lengthSquared() > 0.0 ? normal.normalize() : normal;
   }
+
+  /**
+   * Flips the given normal in place so that its dominant component is positive in the DICOM LPS+
+   * coordinate system (Left +X, Posterior +Y, Superior +Z).
+   *
+   * <p>The cross product (row × column) of the Image Orientation (Patient) vectors can point in
+   * either direction for the same anatomical plane (e.g., +X or -X for sagittal). Forcing the
+   * dominant axis to be positive yields a deterministic sign convention so that scalar projections
+   * {@code dot(normal, IPP)} can be compared across slices and across series sharing the same Frame
+   * of Reference.
+   *
+   * @param normal the normal vector to orient (modified in place)
+   * @return the same vector, oriented so that its dominant axis component is non-negative
+   */
+  public static Vector3d orientNormalToDominantPositiveAxis(Vector3d normal) {
+    if (normal == null) {
+      return null;
+    }
+    double ax = Math.abs(normal.x);
+    double ay = Math.abs(normal.y);
+    double az = Math.abs(normal.z);
+    double dominantComponent = ax >= ay && ax >= az ? normal.x : ay >= az ? normal.y : normal.z;
+    if (dominantComponent < 0) {
+      normal.negate();
+    }
+    return normal;
+  }
 }
