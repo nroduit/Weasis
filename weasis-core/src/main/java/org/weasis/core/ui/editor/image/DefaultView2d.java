@@ -672,7 +672,15 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
           lens.setFreezeImage(null);
         }
         setImage(media);
-        resetSynchState();
+
+        ComboItemListener<SynchView> synchAction = eventManager.getAction(ActionW.SYNCH).orElse(null);
+        if (synchAction != null && synchAction.getSelectedItem() instanceof SynchView sel) {
+          if (!sel.getSynchData().getMode().equals(SynchData.Mode.TILE)) {
+            // If tile mode is selected, the other views are updated according to the first view. Resetting the synch state breaks the auto sync behavior of tile mode.
+            // In case the synch is not defined, then there is no need for resetting the synch configuration.
+            resetSynchState();
+          }
+        }
       }
     } catch (Exception e) {
       AuditLog.logError(LOGGER, e, "Unexpected error:"); // NON-NLS

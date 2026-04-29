@@ -166,7 +166,7 @@ public class DicomSynchManager extends SynchManager<DicomImageElement> {
     configureScrollLimits(viewPane, series, panes);
     applyKOFilterToPanes(viewPane, panes, synch);
 
-    return ensureViewPaneSynchLink(viewPane, synch);
+    return false;
   }
 
   private void configureSynchModeAction(List<ViewCanvas<DicomImageElement>> panes) {
@@ -220,18 +220,9 @@ public class DicomSynchManager extends SynchManager<DicomImageElement> {
       pane.setActionsInView(ActionW.SYNCH_LINK.cmd(), oldSynch);
       pane.setActionsInView(ActionW.SYNCH_CROSSLINE.cmd(), false);
       eventManager.addPropertyChangeListener(ActionW.SYNCH.cmd(), pane);
+      System.out.println(pane.getSeries() + " " + oldSynch + " " + oldSynch.isAutoSynchActivated());
       pane.updateSynchState();
     }
-  }
-
-  private boolean ensureViewPaneSynchLink(ViewCanvas<DicomImageElement> viewPane, SynchData synch) {
-    if (viewPane.getActionsInView().get(ActionW.SYNCH_LINK.cmd()) == null) {
-      viewPane.setActionsInView(
-          ActionW.SYNCH_LINK.cmd(),
-          new ViewSynchData(synch.getMode(), synch.getActions(), synch.isSynchActivated()));
-      return true;
-    }
-    return false;
   }
 
   private boolean handleStackMode(
