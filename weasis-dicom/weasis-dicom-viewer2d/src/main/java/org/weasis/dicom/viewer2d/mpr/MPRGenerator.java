@@ -9,12 +9,9 @@
  */
 package org.weasis.dicom.viewer2d.mpr;
 
-import java.awt.BorderLayout;
 import java.awt.Component;
-import javax.swing.JButton;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
-import javax.swing.JTextArea;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.WinUtil;
@@ -92,16 +89,7 @@ public class MPRGenerator {
   }
 
   private static JPanel buildMessagePanel(String message) {
-    JPanel panel = new JPanel(new BorderLayout(10, 0));
-    JTextArea textArea = new JTextArea(message + Messages.getString("warn.rectify.limitation"));
-    textArea.setEditable(false);
-    textArea.setOpaque(false);
-    textArea.setLineWrap(true);
-    textArea.setWrapStyleWord(true);
-    textArea.setColumns(40);
-    panel.add(textArea, BorderLayout.CENTER);
-    JButton helpButton = GuiUtils.createHelpButton("mpr/#volume-geometry");
-    panel.add(helpButton, BorderLayout.EAST);
-    return panel;
+    return GuiUtils.buildHelpMessagePanel(
+        message + Messages.getString("warn.rectify.limitation"), "mpr/#volume-geometry"); // NON-NLS
   }
 }

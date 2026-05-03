@@ -110,10 +110,18 @@ public class ShadingPrefDialog extends JDialog {
           updateValues(specularPower);
           dispose();
         });
+    JButton helpButton = GuiUtils.createHelpButton("dicom-3d-viewer/#volume-rendering"); // NON-NLS
 
     JPanel panel =
         GuiUtils.getFlowLayoutPanel(
-            FlowLayout.TRAILING, 5, 5, okButton, GuiUtils.boxHorizontalStrut(20), cancelButton);
+            FlowLayout.TRAILING,
+            5,
+            5,
+            helpButton,
+            GuiUtils.boxHorizontalStrut(20),
+            okButton,
+            GuiUtils.boxHorizontalStrut(20),
+            cancelButton);
     panel.setBorder(GuiUtils.getEmptyBorder(20, 15, 10, 15));
     contentPane.add(panel);
     contentPane.add(GuiUtils.boxYLastElement(1));
