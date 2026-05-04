@@ -380,8 +380,25 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> {
       public void itemStateChanged(Object object) {
         ImageViewerPlugin<DicomImageElement> container = getSelectedView2dContainer();
         if (container instanceof View3DContainer view3DContainer) {
-          view3DContainer.setSegmentationType((SegmentationTool.Type) object);
-          view3DContainer.reload();
+          SegmentationTool.Type type = (SegmentationTool.Type) object;
+          view3DContainer.setSegmentationType(type);
+          if (type == SegmentationTool.Type.SEG_OVERLAY) {
+            // Overlay mode: build/update the segmentation texture without reloading the volume
+            for (ViewCanvas<DicomImageElement> v : view3DContainer.getImagePanels()) {
+              if (v instanceof View3d view3d) {
+                view3d.updateSegmentation();
+              }
+            }
+          } else if (type == SegmentationTool.Type.SEG_ONLY) {
+            view3DContainer.reload();
+          } else {
+            // NONE: destroy any existing seg overlay and reload to reset the volume
+            for (ViewCanvas<DicomImageElement> v : view3DContainer.getImagePanels()) {
+              if (v instanceof View3d view3d) {
+                view3d.updateSegmentation();
+              }
+            }
+          }
         }
       }
     };

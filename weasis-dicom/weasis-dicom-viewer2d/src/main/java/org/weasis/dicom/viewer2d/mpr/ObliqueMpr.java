@@ -19,6 +19,7 @@ import java.util.concurrent.RecursiveAction;
 import javax.swing.JProgressBar;
 import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Tag;
+import org.dcm4che3.data.VR;
 import org.dcm4che3.util.UIDUtils;
 import org.opencv.core.CvType;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
@@ -31,6 +32,7 @@ import org.weasis.core.ui.editor.image.ViewProgress;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.DicomSeries;
 import org.weasis.dicom.codec.TagD;
+import org.weasis.dicom.codec.utils.DicomMediaUtils;
 import org.weasis.dicom.explorer.DicomModel;
 import org.weasis.dicom.viewer2d.mip.SeriesBuilder;
 import org.weasis.dicom.viewer2d.mpr.MprView.Plane;
@@ -115,23 +117,10 @@ public class ObliqueMpr extends OriginalStack {
       pool.invoke(new CreateSeriesTask(context, uidsRef, AXIAL, SAGITTAL, CORONAL));
     }
 
-    //    ArcBallController arcBall =
-    //        new ArcBallController(controller) {
-    //          @Override
-    //          public void stateChanged(BoundedRangeModel model) {
-    //            Quaterniond rotation = new Quaterniond();
-    //            rotation.rotateZ(Math.toRadians(model.getValue()));
-    //            controller.initRotation(rotation);
-    //          }
-    //        };
-    //    arcBall.enableAction(true);
-    //    controller.setArcBall(arcBall);
-    //    controller.getAxial().getMprView().addMouseListener(arcBall);
-    //    controller.getAxial().getMprView().addMouseMotionListener(arcBall);
-    //    controller.getCoronal().getMprView().addMouseListener(arcBall);
-    //    controller.getCoronal().getMprView().addMouseMotionListener(arcBall);
-    //    controller.getSagittal().getMprView().addMouseListener(arcBall);
-    //    controller.getSagittal().getMprView().addMouseMotionListener(arcBall);
+    // Build SEG overlays asynchronously AFTER the three MPR views have been populated, so the
+    // user sees the MPR images immediately. Segmentation overlays will appear as soon as the
+    // resampled SegmentationVolumes are ready.
+    controller.buildSegElementsAsync(context.getMprContainer());
   }
 
   private class CreateSeriesTask extends RecursiveAction {
@@ -156,7 +145,19 @@ public class ObliqueMpr extends OriginalStack {
   private void createSeries(BuildContext context, String uid, Plane orientation) {
     DicomSeries series = new DicomSeries(uid, null, DicomModel.series.tagView());
     series.setTag(TagD.get(Tag.SeriesInstanceUID), uid);
-    getMiddleImage().getMediaReader().writeMetaData(series);
+    // Build a header that carries the new MPR identity so that writeMetaData does not (a) emit
+    // a spurious "Inconsistent Series Instance UID" warning and (b) silently overwrite the
+    // freshly generated MPR SeriesInstanceUID with the source series UID.
+    Attributes srcHeader = getMiddleImage().getMediaReader().getDicomObject();
+    if (srcHeader != null) {
+      Attributes mprHeader = new Attributes(srcHeader);
+      mprHeader.setString(Tag.SeriesInstanceUID, VR.UI, uid);
+      String mprDesc = "MPR " + orientation; // NON-NLS
+      String desc = srcHeader.getString(Tag.SeriesDescription);
+      mprHeader.setString(
+          Tag.SeriesDescription, VR.LO, desc == null ? mprDesc : desc + " [%s]".formatted(mprDesc));
+      DicomMediaUtils.writeMetaData(series, mprHeader);
+    }
     DataExplorerModel model = (DataExplorerModel) this.series.getTagValue(TagW.ExplorerModel);
     series.setTag(TagW.ExplorerModel, model);
 

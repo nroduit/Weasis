@@ -30,6 +30,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JLabel;
@@ -77,6 +78,7 @@ import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.editor.image.ViewProgress;
 import org.weasis.core.ui.model.AbstractGraphicModel;
 import org.weasis.core.ui.model.graphic.Graphic;
+import org.weasis.core.ui.model.graphic.imp.seg.SegContour;
 import org.weasis.core.ui.model.layer.GraphicLayer;
 import org.weasis.core.ui.model.layer.LayerItem;
 import org.weasis.core.ui.model.layer.LayerType;
@@ -92,6 +94,8 @@ import org.weasis.dicom.codec.SortSeriesStack;
 import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.geometry.GeometryOfSlice;
 import org.weasis.dicom.codec.geometry.LocalizerPoster;
+import org.weasis.dicom.codec.seg.SegSpecialElement;
+import org.weasis.dicom.codec.seg.SegmentationVolume;
 import org.weasis.dicom.explorer.DicomModel;
 import org.weasis.dicom.viewer2d.Messages;
 import org.weasis.dicom.viewer2d.View2d;
@@ -504,6 +508,72 @@ public class MprView extends View2d implements SliceCanvas, ViewProgress {
 
   public JProgressBar getProgressBar() {
     return progressBar;
+  }
+
+  /**
+   * Overrides the default segmentation overlay to reslice the per-MPR-session {@link
+   * SegmentationVolume}s held by {@link MprController}, using the same combined transformation
+   * matrix that places the MPR slice in the image volume's voxel grid. The underlying {@link
+   * SegSpecialElement} list (visibility, segment colours / attributes) is sourced from the same
+   * {@code HiddenSeriesManager} registry as 2D and 3D viewers.
+   */
+  @Override
+  public void updateSegmentation() {
+    graphicManager.deleteByLayerType(LayerType.DICOM_SEG);
+    if (mprController == null) {
+      return;
+    }
+
+    List<SegmentationVolume> segVolumes = mprController.getSegVolumes();
+    List<SegSpecialElement> segElements = mprController.getSegElements();
+    if (segVolumes.isEmpty() || segElements.isEmpty()) {
+      return;
+    }
+
+    MprAxis axis = getMprAxis();
+    if (axis == null || axis.getRawIO() == null) {
+      return;
+    }
+    Volume<?, ?> imageVolume = axis.getRawIO().getVolume();
+    if (imageVolume == null) {
+      return;
+    }
+
+    Matrix4d combinedTransform = axis.getTransformation();
+    int sliceSize = imageVolume.getSliceSize();
+    Vector3d voxelRatio = imageVolume.getVoxelRatio();
+
+    int n = Math.min(segVolumes.size(), segElements.size());
+    for (int i = 0; i < n; i++) {
+      SegSpecialElement seg = segElements.get(i);
+      if (!seg.isVisible()) {
+        continue;
+      }
+      SegmentationVolume segVolume = segVolumes.get(i);
+      if (segVolume == null) {
+        continue;
+      }
+      Map<Integer, List<SegContour>> contourMap =
+          segVolume.getSliceContours(combinedTransform, sliceSize, voxelRatio);
+      if (contourMap == null || contourMap.isEmpty()) {
+        continue;
+      }
+      for (List<SegContour> contours : contourMap.values()) {
+        addSegContours(contours);
+      }
+    }
+  }
+
+  private void addSegContours(Iterable<SegContour> contours) {
+    for (SegContour c : contours) {
+      Graphic graphic = c.getSegGraphic();
+      if (graphic != null) {
+        for (java.beans.PropertyChangeListener listener : graphicManager.getGraphicsListeners()) {
+          graphic.addPropertyChangeListener(listener);
+        }
+        graphicManager.addGraphic(graphic);
+      }
+    }
   }
 
   @Override

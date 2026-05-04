@@ -17,8 +17,10 @@ import org.weasis.core.api.explorer.DataExplorerView;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.service.BundlePreferences;
 import org.weasis.core.util.PropertiesUtil;
+import org.weasis.dicom.codec.seg.SegSpecialElement;
 import org.weasis.dicom.explorer.DicomModel;
 import org.weasis.dicom.explorer.LocalPersistence;
+import org.weasis.dicom.explorer.UISegmentationVolumeBuildExecutor;
 import org.weasis.dicom.explorer.main.DicomExplorer;
 import org.weasis.dicom.explorer.wado.DicomManager;
 
@@ -34,10 +36,15 @@ public class Activator implements BundleActivator {
     PropertiesUtil.loadProperties(
         BundlePreferences.getFileInDataFolder(context, "import-export.properties"),
         LocalPersistence.getProperties());
+
+    // Surface canonical segmentation volume builds in the explorer's bottom loading panel,
+    // so the user can monitor and cancel long-running SEG volume builds.
+    SegSpecialElement.setVolumeBuildExecutor(new UISegmentationVolumeBuildExecutor());
   }
 
   @Override
   public void stop(BundleContext context) {
+    SegSpecialElement.setVolumeBuildExecutor(null);
     PropertiesUtil.storeProperties(
         BundlePreferences.getFileInDataFolder(context, "import-export.properties"),
         LocalPersistence.getProperties(),

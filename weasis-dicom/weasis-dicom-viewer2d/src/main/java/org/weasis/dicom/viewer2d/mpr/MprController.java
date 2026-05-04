@@ -21,10 +21,16 @@ import java.awt.geom.Line2D;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ForkJoinPool;
 import java.util.stream.Stream;
 import javax.swing.Timer;
+import org.dcm4che3.data.Tag;
 import org.joml.Quaterniond;
 import org.joml.Vector3d;
 import org.joml.Vector3i;
@@ -33,11 +39,19 @@ import org.weasis.core.api.gui.util.ComboItemListener;
 import org.weasis.core.api.gui.util.Feature;
 import org.weasis.core.api.gui.util.Feature.ComboItemListenerValue;
 import org.weasis.core.api.gui.util.GeomUtil;
+import org.weasis.core.api.gui.util.GuiExecutor;
+import org.weasis.core.ui.editor.SeriesViewerEvent;
+import org.weasis.core.ui.editor.SeriesViewerEvent.EVENT;
 import org.weasis.core.ui.editor.image.DefaultView2d;
 import org.weasis.core.ui.editor.image.ImageViewerEventManager;
 import org.weasis.core.ui.model.utils.imp.DefaultViewModel;
 import org.weasis.core.util.Pair;
 import org.weasis.dicom.codec.DicomImageElement;
+import org.weasis.dicom.codec.DicomSeries;
+import org.weasis.dicom.codec.HiddenSeriesManager;
+import org.weasis.dicom.codec.TagD;
+import org.weasis.dicom.codec.seg.SegSpecialElement;
+import org.weasis.dicom.codec.seg.SegmentationVolume;
 import org.weasis.dicom.viewer2d.EventManager;
 import org.weasis.dicom.viewer2d.View2d;
 import org.weasis.dicom.viewer2d.mip.MipView;
@@ -64,6 +78,9 @@ public class MprController
 
   private static final int PIX_TOLERANCE = 7;
   private Volume<?, ?> volume;
+  private final List<SegSpecialElement> segElements = new ArrayList<>();
+  private final List<SegmentationVolume> segVolumes = new ArrayList<>();
+  private volatile CompletableFuture<Void> segBuildFuture;
   private final MprAxis axial;
   private final MprAxis coronal;
   private final MprAxis sagittal;
@@ -148,6 +165,191 @@ public class MprController
   public void setVolume(Volume<?, ?> volume) {
     this.volume = volume;
     axesControl.reset();
+  }
+
+  public List<SegSpecialElement> getSegElements() {
+    return segElements;
+  }
+
+  public List<SegmentationVolume> getSegVolumes() {
+    return segVolumes;
+  }
+
+  /**
+   * Collects all visible DICOM SEG special elements that reference the current image series and
+   * builds an image-volume-aligned {@link SegmentationVolume} for each one. The {@link
+   * SegSpecialElement} list is also exposed via {@link #getSegElements()} so consumers can still
+   * resolve SEG metadata (colours, visibility, segment attributes) from the same single source as
+   * 2D and 3D viewers, while {@link #getSegVolumes()} provides the per-MPR-session resliceable
+   * volume used by {@link MprView#updateSegmentation()}.
+   */
+  public void buildSegElements() {
+    disposeSegVolumes();
+    segElements.clear();
+    if (volume == null || volume.getStack() == null) {
+      return;
+    }
+
+    String patientPseudoUID =
+        org.weasis.dicom.explorer.DicomModel.getPatientPseudoUID(volume.getStack().getSeries());
+    if (patientPseudoUID == null) {
+      return;
+    }
+
+    List<SegSpecialElement> elements =
+        HiddenSeriesManager.getHiddenElementsFromPatient(SegSpecialElement.class, patientPseudoUID);
+    if (elements.isEmpty()) {
+      return;
+    }
+
+    // Restrict to SEGs that actually reference the current source series, either via the
+    // ReferencedSeriesSequence (reference2Series map) or the same Frame of Reference. This
+    // avoids resampling unrelated SEG objects from other series of the same patient.
+    elements = filterSegsForCurrentSeries(elements);
+    if (elements.isEmpty()) {
+      return;
+    }
+
+    // Per-segment work is independent and CPU-bound: process in parallel and only mutate the
+    // shared lists once with the collected results.
+    record SegPair(SegSpecialElement seg, SegmentationVolume vol) {}
+    final Volume<?, ?> imageVolume = volume;
+    List<SegPair> built =
+        elements.parallelStream()
+            .map(
+                seg -> {
+                  DicomSeries segSeries =
+                      seg.getMediaReader() == null ? null : seg.getMediaReader().getMediaSeries();
+                  if (segSeries == null) {
+                    return null;
+                  }
+                  // Reuse the SEG's per-image-volume cached resample when available so a second
+                  // MPR open (or the 3D viewer for the same image volume) does not redo the
+                  // expensive frame splatting.
+                  SegmentationVolume segVolume =
+                      seg.getOrBuildAlignedVolume(
+                          imageVolume, s -> SegVolumeBuilder.build(s, segSeries, imageVolume));
+                  return segVolume == null ? null : new SegPair(seg, segVolume);
+                })
+            .filter(Objects::nonNull)
+            .toList();
+
+    for (SegPair p : built) {
+      segElements.add(p.seg());
+      segVolumes.add(p.vol());
+      p.vol().retain(); // MprController holds one consumer reference per entry in segVolumes
+    }
+  }
+
+  /**
+   * Schedules {@link #buildSegElements()} on the common ForkJoin pool and, once finished, refreshes
+   * each MPR view's segmentation overlay on the EDT. Returns immediately so the caller does not
+   * block the MPR display.
+   */
+  public CompletableFuture<Void> buildSegElementsAsync(MprContainer container) {
+    // Cancel any previous in-flight build so we do not race or accumulate work.
+    CompletableFuture<Void> previous = this.segBuildFuture;
+    if (previous != null && !previous.isDone()) {
+      previous.cancel(true);
+    }
+    CompletableFuture<Void> future =
+        CompletableFuture.runAsync(this::buildSegElements, ForkJoinPool.commonPool())
+            .thenRun(
+                () ->
+                    GuiExecutor.execute(
+                        () -> {
+                          if (container == null) {
+                            return;
+                          }
+                          for (Plane plane : Plane.values()) {
+                            MprView view = container.getMprView(plane);
+                            if (view != null) {
+                              view.updateSegmentation();
+                              view.repaint();
+                            }
+                          }
+                          // Refresh the Segmentation Tool tree if this MPR container is currently
+                          // selected so that initTreeValues picks up the newly-built segElements.
+                          if (container.equals(
+                              EventManager.getInstance().getSelectedView2dContainer())) {
+                            var selectedView = container.getSelectedViewCanvas();
+                            EventManager.getInstance()
+                                .fireSeriesViewerListeners(
+                                    new SeriesViewerEvent(
+                                        container,
+                                        selectedView != null ? selectedView.getSeries() : null,
+                                        null,
+                                        EVENT.SELECT_VIEW));
+                          }
+                        }));
+    this.segBuildFuture = future;
+    return future;
+  }
+
+  /**
+   * Keep only SEGs whose ReferencedSeriesSequence points at the current source series, or that
+   * share the same Frame of Reference (AI-generated SEGs that omit explicit references).
+   */
+  private List<SegSpecialElement> filterSegsForCurrentSeries(List<SegSpecialElement> all) {
+    var sourceSeries = volume.getStack().getSeries();
+    if (sourceSeries == null) {
+      return all;
+    }
+    String sourceSeriesUID = TagD.getTagValue(sourceSeries, Tag.SeriesInstanceUID, String.class);
+    String sourceFoR = TagD.getTagValue(sourceSeries, Tag.FrameOfReferenceUID, String.class);
+
+    Set<String> referencingSegSeries = new HashSet<>();
+    if (sourceSeriesUID != null) {
+      Set<String> refs = HiddenSeriesManager.getInstance().reference2Series.get(sourceSeriesUID);
+      if (refs != null) {
+        referencingSegSeries.addAll(refs);
+      }
+    }
+
+    List<SegSpecialElement> filtered = new ArrayList<>(all.size());
+    for (SegSpecialElement seg : all) {
+      DicomSeries segSeries =
+          seg.getMediaReader() == null ? null : seg.getMediaReader().getMediaSeries();
+      if (segSeries == null) {
+        continue;
+      }
+      String segSeriesUID = TagD.getTagValue(segSeries, Tag.SeriesInstanceUID, String.class);
+      boolean directRef = segSeriesUID != null && referencingSegSeries.contains(segSeriesUID);
+      boolean forMatch =
+          sourceFoR != null
+              && sourceFoR.equals(
+                  TagD.getTagValue(segSeries, Tag.FrameOfReferenceUID, String.class));
+      if (directRef || forMatch) {
+        filtered.add(seg);
+      }
+    }
+    return filtered;
+  }
+
+  private void disposeSegVolumes() {
+    // Release MprController's consumer reference for each volume before dropping the list.
+    // If no other consumer (e.g. a SegVolumeTexture in a View3D) still retains the volume its
+    // CPU buffers are freed here; otherwise they remain alive until the last retain is released.
+    for (SegmentationVolume v : segVolumes) {
+      v.release();
+    }
+    segVolumes.clear();
+  }
+
+  /**
+   * Releases the per-image-volume cached SEG resamples held by every {@link SegSpecialElement}
+   * referenced by this controller. Called from {@link #dispose()} so the SEG copies tied to the
+   * image volume we are about to release do not linger until the soft references are cleared.
+   */
+  private void releaseAlignedSegVolumes(Volume<?, ?> imageVolume) {
+    if (imageVolume == null) {
+      return;
+    }
+    for (SegSpecialElement seg : segElements) {
+      if (seg != null) {
+        seg.disposeAlignedVolume(imageVolume);
+      }
+    }
   }
 
   @Override
@@ -689,9 +891,18 @@ public class MprController
   }
 
   public void dispose() {
+    CompletableFuture<Void> future = this.segBuildFuture;
+    if (future != null && !future.isDone()) {
+      future.cancel(true);
+    }
     axial.dispose();
     coronal.dispose();
     sagittal.dispose();
+    // Free the per-image-volume SEG resamples cached on each SegSpecialElement before we drop
+    // our local references and release the image volume itself.
+    releaseAlignedSegVolumes(volume);
+    disposeSegVolumes();
+    segElements.clear();
     if (volume != null && !volume.isSharedVolume()) {
       volume.removeData();
     }

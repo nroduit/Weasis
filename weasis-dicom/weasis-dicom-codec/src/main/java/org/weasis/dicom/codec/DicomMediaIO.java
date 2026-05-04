@@ -64,6 +64,7 @@ import org.weasis.dicom.codec.display.Modality;
 import org.weasis.dicom.codec.display.ModalityInfoData;
 import org.weasis.dicom.codec.display.ModalityView;
 import org.weasis.dicom.codec.geometry.ImageOrientation;
+import org.weasis.dicom.codec.seg.SegSpecialElement;
 import org.weasis.dicom.codec.utils.DicomMediaUtils;
 import org.weasis.dicom.codec.utils.PatientComparator;
 import org.weasis.opencv.data.PlanarImage;
