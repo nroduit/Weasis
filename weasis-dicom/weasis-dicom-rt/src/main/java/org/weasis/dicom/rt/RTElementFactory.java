@@ -9,22 +9,22 @@
  */
 package org.weasis.dicom.rt;
 
-import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Tag;
 import org.weasis.dicom.codec.DicomMediaIO;
 import org.weasis.dicom.codec.DicomSpecialElement;
 import org.weasis.dicom.codec.DicomSpecialElementFactory;
 
 /**
- * @author Tomas Skripcak
- * @author Nicolas Roduit
+ * OSGi factory turning RTSTRUCT / RTPLAN / RTDOSE DICOM objects into typed {@link
+ * DicomSpecialElement} instances; any other modality falls back to a generic {@link
+ * RtSpecialElement}.
  */
 @org.osgi.service.component.annotations.Component(service = DicomSpecialElementFactory.class)
 public class RTElementFactory implements DicomSpecialElementFactory {
 
   public static final String SERIES_RT_MIMETYPE = "rt/dicom"; // NON-NLS
 
-  private static final String[] modalities = {"RTSTRUCT", "RTPLAN", "RTDOSE"};
+  private static final String[] MODALITIES = {"RTSTRUCT", "RTPLAN", "RTDOSE"};
 
   @Override
   public String getSeriesMimeType() {
@@ -33,7 +33,7 @@ public class RTElementFactory implements DicomSpecialElementFactory {
 
   @Override
   public String[] getModalities() {
-    return modalities;
+    return MODALITIES.clone();
   }
 
   @Override
@@ -43,15 +43,12 @@ public class RTElementFactory implements DicomSpecialElementFactory {
 
   @Override
   public DicomSpecialElement buildDicomSpecialElement(DicomMediaIO mediaIO) {
-    Attributes dicom = mediaIO.getDicomObject();
-    String modality = dicom.getString(Tag.Modality);
-    if ("RTDOSE".equals(modality)) {
-      return new Dose(mediaIO);
-    } else if ("RTSTRUCT".equals(modality)) {
-      return new StructureSet(mediaIO);
-    } else if ("RTPLAN".equals(modality)) {
-      return new Plan(mediaIO);
-    }
-    return new RtSpecialElement(mediaIO);
+    String modality = mediaIO.getDicomObject().getString(Tag.Modality);
+    return switch (modality) {
+      case "RTDOSE" -> new Dose(mediaIO);
+      case "RTSTRUCT" -> new StructureSet(mediaIO);
+      case "RTPLAN" -> new Plan(mediaIO);
+      case null, default -> new RtSpecialElement(mediaIO);
+    };
   }
 }

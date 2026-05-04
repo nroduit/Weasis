@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009-2020 Weasis Team and other contributors.
+ * Copyright (c) 2009-2026 Weasis Team and other contributors.
  *
  * This program and the accompanying materials are made available under the terms of the Eclipse
  * Public License 2.0 which is available at https://www.eclipse.org/legal/epl-2.0, or the Apache
@@ -9,8 +9,5 @@
  */
 package org.weasis.dicom.rt;
 
-/** Origin of a derived RT value (e.g. DVH, volume): read from DICOM or computed locally. */
-public enum DataSource {
-  PROVIDED,
-  CALCULATED
-}
+/** Index and area of the largest contour found in a plane. */
+public record LargestContour(int index, double area) {}

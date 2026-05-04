@@ -39,14 +39,8 @@ public class RtDisplayToolFactory extends ExtToolFactory<DicomImageElement> {
 
   @Override
   protected boolean isCompatible(Hashtable<String, Object> properties) {
-    Object val = null;
-    if (properties != null) {
-      val = properties.get(MediaSeries.class.getName());
-    }
-    if (val instanceof MediaSeries<?> mediaSeries) {
-      return RtDisplayTool.isCtLinkedRT(mediaSeries);
-    }
-    return false;
+    Object val = properties == null ? null : properties.get(MediaSeries.class.getName());
+    return val instanceof MediaSeries<?> mediaSeries && RtDisplayTool.isCtLinkedRT(mediaSeries);
   }
 
   @Override

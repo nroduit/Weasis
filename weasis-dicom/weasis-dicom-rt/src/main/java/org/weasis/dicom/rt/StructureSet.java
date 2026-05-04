@@ -9,9 +9,17 @@
  */
 package org.weasis.dicom.rt;
 
-import java.awt.Color;
+import static org.weasis.dicom.codec.geometry.GeometryOfSlice.MIN_SPACING;
+
 import java.awt.geom.Path2D;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.NavigableMap;
+import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
 import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Sequence;
@@ -30,10 +38,10 @@ import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.DicomMediaIO;
 import org.weasis.dicom.codec.HiddenSeriesManager;
-import org.weasis.dicom.codec.LazyContourLoader;
 import org.weasis.dicom.codec.SpecialElementRegion;
 import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.geometry.GeometryOfSlice;
+import org.weasis.dicom.codec.seg.LazyContourLoader;
 import org.weasis.opencv.data.ImageCV;
 import org.weasis.opencv.op.ImageAnalyzer;
 import org.weasis.opencv.op.ImageConversion;
@@ -42,6 +50,9 @@ import org.weasis.opencv.seg.RegionAttributes;
 import org.weasis.opencv.seg.Segment;
 
 /**
+ * RTSTRUCT element: a set of {@link StructRegion} ROIs (one per anatomical structure) with their
+ * 3-D contours, observation metadata and references to the underlying CT/MR series.
+ *
  * @author Tomas Skripcak
  * @author Nicolas Roduit
  */
@@ -61,8 +72,8 @@ public class StructureSet extends RtSpecialElement implements SpecialElementRegi
   }
 
   @Override
-  public Map<String, Set<LazyContourLoader>> getPositionMap() {
-    return Map.of();
+  public NavigableMap<Double, Set<LazyContourLoader>> getPositionMap() {
+    return SpecialElementRegion.emptyPositionMap();
   }
 
   public Map<Integer, StructRegion> getSegAttributes() {
@@ -82,7 +93,7 @@ public class StructureSet extends RtSpecialElement implements SpecialElementRegi
   }
 
   public void setOpacity(float opacity) {
-    this.opacity = Math.max(0.0f, Math.min(opacity, 1.0f));
+    this.opacity = Math.clamp(opacity, 0.0f, 1.0f);
     updateOpacityInSegAttributes(this.opacity);
   }
 
@@ -91,225 +102,237 @@ public class StructureSet extends RtSpecialElement implements SpecialElementRegi
     String name = TagD.getTagValue(getMediaReader(), Tag.StructureSetName, String.class);
     if (!StringUtil.hasText(label)) {
       return StringUtil.hasText(name) ? name : TagW.NO_VALUE;
-    } else if (StringUtil.hasText(name) && !name.equals(label)) {
-      return label + " (" + name + ")";
-    } else {
-      return label;
     }
+    return (StringUtil.hasText(name) && !name.equals(label)) ? label + " (" + name + ")" : label;
   }
 
   @Override
   public void initReferences(String originSeriesUID) {
     refMap.clear();
     Attributes dcmItems = getMediaReader().getDicomObject();
-    if (dcmItems != null) {
-      Sequence seriesRef = dcmItems.getSequence(Tag.ReferencedFrameOfReferenceSequence);
-      if (seriesRef != null) {
-        for (Attributes ref : seriesRef) {
-          String frameUID = ref.getString(Tag.FrameOfReferenceUID);
-          Sequence refSeq = ref.getSequence(Tag.RTReferencedStudySequence);
-          if (refSeq != null) {
-            for (Attributes refStudy : refSeq) {
-              String studyUID = refStudy.getString(Tag.ReferencedSOPInstanceUID);
-              Sequence refSeriesSeq = refStudy.getSequence(Tag.RTReferencedSeriesSequence);
-              if (refSeriesSeq != null) {
-                for (Attributes refSeries : refSeriesSeq) {
-                  String seriesUID = refSeries.getString(Tag.SeriesInstanceUID);
-                  if (StringUtil.hasText(seriesUID)) {
-                    HiddenSeriesManager.getInstance()
-                        .reference2Series
-                        .computeIfAbsent(seriesUID, _ -> new CopyOnWriteArraySet<>())
-                        .add(originSeriesUID);
+    if (dcmItems == null) {
+      return;
+    }
+    Sequence seriesRef = dcmItems.getSequence(Tag.ReferencedFrameOfReferenceSequence);
+    if (seriesRef == null) {
+      return;
+    }
+    for (Attributes ref : seriesRef) {
+      Sequence refSeq = ref.getSequence(Tag.RTReferencedStudySequence);
+      if (refSeq != null) {
+        for (Attributes refStudy : refSeq) {
+          processReferencedStudy(refStudy, originSeriesUID);
+        }
+      }
+    }
+  }
 
-                    Map<String, Set<LazyContourLoader>> map =
-                        refMap.computeIfAbsent(seriesUID, _ -> new HashMap<>());
-                    Sequence instanceSeq = refSeries.getSequence(Tag.ContourImageSequence);
-                    if (instanceSeq != null) {
-                      for (Attributes instance : instanceSeq) {
-                        String sopInstanceUID = instance.getString(Tag.ReferencedSOPInstanceUID);
-                        if (StringUtil.hasText(sopInstanceUID)) {
-                          map.put(sopInstanceUID, null);
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
+  private void processReferencedStudy(Attributes refStudy, String originSeriesUID) {
+    Sequence refSeriesSeq = refStudy.getSequence(Tag.RTReferencedSeriesSequence);
+    if (refSeriesSeq == null) {
+      return;
+    }
+    for (Attributes refSeries : refSeriesSeq) {
+      String seriesUID = refSeries.getString(Tag.SeriesInstanceUID);
+      if (!StringUtil.hasText(seriesUID)) {
+        continue;
+      }
+      HiddenSeriesManager.getInstance()
+          .reference2Series
+          .computeIfAbsent(seriesUID, _ -> new CopyOnWriteArraySet<>())
+          .add(originSeriesUID);
+
+      Map<String, Set<LazyContourLoader>> map =
+          refMap.computeIfAbsent(seriesUID, _ -> new HashMap<>());
+      Sequence instanceSeq = refSeries.getSequence(Tag.ContourImageSequence);
+      if (instanceSeq != null) {
+        for (Attributes instance : instanceSeq) {
+          String sopInstanceUID = instance.getString(Tag.ReferencedSOPInstanceUID);
+          if (StringUtil.hasText(sopInstanceUID)) {
+            map.put(sopInstanceUID, null);
           }
         }
       }
     }
   }
 
+  /**
+   * Parses the structure set ROIs, observations and per-slice contours from the underlying DICOM
+   * dataset. Must be called once {@code img} (any image of the referenced CT/MR series) is known so
+   * that contours can be projected into the patient image grid.
+   */
   public void initContours(DicomImageElement img) {
     Attributes dcmItems = getMediaReader().getDicomObject();
-    if (dcmItems != null) {
-      String seriesUID = TagD.getTagValue(img, Tag.SeriesInstanceUID, String.class);
-      setTagNoNull(TagD.get(Tag.StructureSetName), dcmItems.getString(Tag.StructureSetName));
-      Date datetime = dcmItems.getDate(Tag.StructureSetDateAndTime);
-      setTagNoNull(TagD.get(Tag.StructureSetDate), datetime);
+    if (dcmItems == null) {
+      return;
+    }
+    String seriesUID = TagD.getTagValue(img, Tag.SeriesInstanceUID, String.class);
+    setTagNoNull(TagD.get(Tag.StructureSetName), dcmItems.getString(Tag.StructureSetName));
+    Date datetime = dcmItems.getDate(Tag.StructureSetDateAndTime);
+    setTagNoNull(TagD.get(Tag.StructureSetDate), datetime);
 
-      // Locate the name and number of each ROI
-      Sequence structRoiSeq = dcmItems.getSequence(Tag.StructureSetROISequence);
-      if (structRoiSeq != null) {
-        for (Attributes ssROIseq : structRoiSeq) {
-          int nb = ssROIseq.getInt(Tag.ROINumber, -1);
-          String name = ssROIseq.getString(Tag.ROIName);
-          if (!StringUtil.hasText(name)) {
-            name = "ROI_" + nb; // NON-NLS
-          }
+    loadRoiDefinitions(dcmItems);
+    applyRoiObservations(dcmItems);
+    loadRoiContours(dcmItems, img, seriesUID);
+  }
 
-          StructRegion structRegion = new StructRegion(nb, name, null);
+  private void loadRoiDefinitions(Attributes dcmItems) {
+    Sequence structRoiSeq = dcmItems.getSequence(Tag.StructureSetROISequence);
+    if (structRoiSeq == null) {
+      return;
+    }
+    for (Attributes ssROIseq : structRoiSeq) {
+      int nb = ssROIseq.getInt(Tag.ROINumber, -1);
+      String name = ssROIseq.getString(Tag.ROIName);
+      if (!StringUtil.hasText(name)) {
+        name = "ROI_" + nb; // NON-NLS
+      }
+      StructRegion region = new StructRegion(nb, name, null);
+      region.setDescription(ssROIseq.getString(Tag.ROIDescription));
+      region.setType(ssROIseq.getString(Tag.ROIGenerationAlgorithm));
+      region.setInteriorOpacity(0.2f);
+      segAttributes.put(nb, region);
+    }
+  }
 
-          structRegion.setDescription(ssROIseq.getString(Tag.ROIDescription));
-          structRegion.setType(ssROIseq.getString(Tag.ROIGenerationAlgorithm));
-          structRegion.setInteriorOpacity(0.2f);
+  private void applyRoiObservations(Attributes dcmItems) {
+    Sequence roiObsSeq = dcmItems.getSequence(Tag.RTROIObservationsSequence);
+    if (roiObsSeq == null) {
+      return;
+    }
+    for (Attributes obs : roiObsSeq) {
+      StructRegion region = segAttributes.get(obs.getInt(Tag.ReferencedROINumber, -1));
+      if (region != null) {
+        region.setObservationNumber(obs.getInt(Tag.ObservationNumber, -1));
+        region.setRtRoiInterpretedType(obs.getString(Tag.RTROIInterpretedType));
+        region.setRoiObservationLabel(obs.getString(Tag.ROIObservationLabel));
+      }
+    }
+  }
 
-          segAttributes.put(nb, structRegion);
-        }
+  private void loadRoiContours(Attributes dcmItems, DicomImageElement img, String seriesUID) {
+    Sequence roiContSeq = dcmItems.getSequence(Tag.ROIContourSequence);
+    if (roiContSeq == null) {
+      return;
+    }
+    for (Attributes roiContourSeq : roiContSeq) {
+      int nb = roiContourSeq.getInt(Tag.ReferencedROINumber, -1);
+      if (nb == -1) {
+        continue;
+      }
+      StructRegion region = segAttributes.get(nb);
+      if (region == null) {
+        continue;
+      }
+      if (region.getColor() == null) {
+        region.setColor(RegionAttributes.getColor(extractRoiColor(roiContourSeq), nb, opacity));
       }
 
-      // Determine the type of each structure (PTV, organ, external, etc)
-      Sequence roiObsSeq = dcmItems.getSequence(Tag.RTROIObservationsSequence);
-      if (roiObsSeq != null) {
-        for (Attributes rtROIObsSeq : roiObsSeq) {
-          StructRegion region = segAttributes.get(rtROIObsSeq.getInt(Tag.ReferencedROINumber, -1));
-          if (region != null) {
-            region.setObservationNumber(rtROIObsSeq.getInt(Tag.ObservationNumber, -1));
-            region.setRtRoiInterpretedType(rtROIObsSeq.getString(Tag.RTROIInterpretedType));
-            region.setRoiObservationLabel(rtROIObsSeq.getString(Tag.ROIObservationLabel));
-          }
+      Map<KeyDouble, List<StructContour>> planes = new HashMap<>();
+      Sequence contourSeq = roiContourSeq.getSequence(Tag.ContourSequence);
+      if (contourSeq != null) {
+        for (Attributes contour : contourSeq) {
+          parseRoiContour(contour, img, region, nb, seriesUID, planes);
         }
       }
+      region.setThickness(RtSet.calculatePlaneThickness(planes.keySet()));
+      region.setPlanes(planes);
+    }
+  }
 
-      // The coordinate data of each ROI is stored within ROIContourSequence
-      Sequence roiContSeq = dcmItems.getSequence(Tag.ROIContourSequence);
-      if (roiContSeq != null) {
-        for (Attributes roiContourSeq : roiContSeq) {
-          int nb = roiContourSeq.getInt(Tag.ReferencedROINumber, -1);
-          if (nb == -1) {
-            continue;
-          }
-          StructRegion region = segAttributes.get(nb);
-          if (region == null) {
-            continue;
-          }
+  private void parseRoiContour(
+      Attributes contour,
+      DicomImageElement img,
+      StructRegion region,
+      int nb,
+      String seriesUID,
+      Map<KeyDouble, List<StructContour>> planes) {
+    double[] pts = contour.getDoubles(Tag.ContourData);
+    if (pts == null || pts.length % 3 != 0 || pts.length < 6) {
+      return;
+    }
+    StructContour plane = buildGraphic(img, contour, nb, region, pts);
+    if (plane == null) {
+      return;
+    }
+    plane.setPoints(pts);
 
-          if (region.getColor() == null) {
-            // Get the RGB color triplet for the current ROI if it exists
-            String[] valColors = roiContourSeq.getStrings(Tag.ROIDisplayColor);
-            int[] rgb;
-            if (valColors != null && valColors.length == 3) {
-              rgb =
-                  new int[] {
-                    Integer.parseInt(valColors[0]),
-                    Integer.parseInt(valColors[1]),
-                    Integer.parseInt(valColors[2])
-                  };
-            } else {
-              rgb = null;
-            }
+    PlaneContourLoader contours = new PlaneContourLoader();
+    contours.addContour(plane);
+    attachContourToImageRefs(contour, contours, seriesUID);
 
-            Color rgbColor = RegionAttributes.getColor(rgb, nb, opacity);
-            region.setColor(rgbColor);
-          }
+    // Multiple contours can share the same z position (e.g. holes or disjoint regions)
+    KeyDouble z = new KeyDouble(plane.getPositionZ());
+    planes.computeIfAbsent(z, _ -> new ArrayList<>(2)).add(plane);
+  }
 
-          Map<KeyDouble, List<StructContour>> planes = new HashMap<>();
-
-          Sequence contourSeq = roiContourSeq.getSequence(Tag.ContourSequence);
-          if (contourSeq != null) {
-            // Locate the contour sequence for each referenced ROI
-            for (Attributes contour : contourSeq) {
-              PlaneContourLoader contours = new PlaneContourLoader();
-              // For each plane, initialize a new plane dictionary
-              StructContour plane = buildGraphic(img, contour, nb, region);
-              if (plane == null) {
-                continue;
-              }
-              contours.addContour(plane);
-
-              // Each plane that coincides with an image slice will have a unique ID
-              // take the first one
-              Sequence contImgSeq = contour.getSequence(Tag.ContourImageSequence);
-              if (contImgSeq != null) {
-                double[] pts = contour.getDoubles(Tag.ContourData);
-                if (pts != null && pts.length % 3 == 0 && pts.length > 1) {
-                  plane.setPoints(pts);
-                } else {
-                  continue;
-                }
-                for (Attributes attributes : contImgSeq) {
-                  String sopUID = attributes.getString(Tag.ReferencedSOPInstanceUID);
-                  if (StringUtil.hasText(sopUID)) {
-                    refMap
-                        .get(seriesUID)
-                        .computeIfAbsent(sopUID, _ -> new LinkedHashSet<>())
-                        .add(contours);
-                  }
-                }
-              }
-
-              // Add each plane to the planes' dictionary of the current ROI
-              KeyDouble z = new KeyDouble(plane.getPositionZ());
-
-              // If there is no contour on a specific z position
-              if (!planes.containsKey(z)) {
-                List<StructContour> stack = new ArrayList<>();
-                stack.add(plane);
-                planes.put(z, stack);
-              }
-            }
-          }
-
-          // Calculate the plane thickness for the current ROI
-          region.setThickness(RtSet.calculatePlaneThickness(planes.keySet()));
-
-          // Add the planes' dictionary to the current ROI
-          region.setPlanes(planes);
-        }
+  private void attachContourToImageRefs(
+      Attributes contour, PlaneContourLoader contours, String seriesUID) {
+    Sequence contImgSeq = contour.getSequence(Tag.ContourImageSequence);
+    if (contImgSeq == null) {
+      return;
+    }
+    Map<String, Set<LazyContourLoader>> seriesMap = refMap.get(seriesUID);
+    if (seriesMap == null) {
+      return;
+    }
+    for (Attributes attributes : contImgSeq) {
+      String sopUID = attributes.getString(Tag.ReferencedSOPInstanceUID);
+      if (StringUtil.hasText(sopUID)) {
+        seriesMap.computeIfAbsent(sopUID, _ -> new LinkedHashSet<>()).add(contours);
       }
+    }
+  }
+
+  private static int[] extractRoiColor(Attributes roiContourSeq) {
+    String[] valColors = roiContourSeq.getStrings(Tag.ROIDisplayColor);
+    if (valColors == null || valColors.length != 3) {
+      return null;
+    }
+    try {
+      return new int[] {
+        Integer.parseInt(valColors[0]),
+        Integer.parseInt(valColors[1]),
+        Integer.parseInt(valColors[2])
+      };
+    } catch (NumberFormatException e) {
+      return null;
     }
   }
 
   private static StructContour buildGraphic(
-      DicomImageElement img, Attributes contour, int id, StructRegion region) {
+      DicomImageElement img, Attributes contour, int id, StructRegion region, double[] points) {
+    if (img == null) {
+      return null;
+    }
     if (region.getMeasurableLayer() == null) {
       region.setMeasurableLayer(getMeasurableLayer(img, contour));
     }
+    GeometryOfSlice geometry = img.getSliceGeometry();
+    Vector3d voxelSpacing = geometry.getVoxelSpacing();
+    if (voxelSpacing.x < MIN_SPACING || voxelSpacing.y < MIN_SPACING) {
+      return null;
+    }
+    Path2D path = getPath2D(geometry, points, voxelSpacing);
+    if ("CLOSED_PLANAR".equals(contour.getString(Tag.ContourGeometricType))) { // NON-NLS
+      path.closePath();
+    }
 
-    // Determine all the plane properties
-    String geometricType = contour.getString(Tag.ContourGeometricType);
-
-    Double z = null;
-    double[] points = contour.getDoubles(Tag.ContourData);
-    if (img != null && points != null && points.length % 3 == 0 && points.length > 1) {
-      GeometryOfSlice geometry = img.getSliceGeometry();
-      Vector3d voxelSpacing = geometry.getVoxelSpacing();
-      if (voxelSpacing.x < 0.00001 || voxelSpacing.y < 0.00001) {
-        return null;
-      }
-      Path2D path = getPath2D(geometry, points, voxelSpacing);
-      z = points[2];
-      if ("CLOSED_PLANAR".equals(geometricType)) { // NON-NLS
-        path.closePath();
-      }
-
-      Mat binary = Mat.zeros(img.getImage().size(), CvType.CV_8UC1);
+    Mat binary = Mat.zeros(img.getImage().size(), CvType.CV_8UC1);
+    try {
       List<MatOfPoint> pts = ImageAnalyzer.transformShapeToContour(path, true);
       Imgproc.fillPoly(binary, pts, new Scalar(255));
       List<Segment> segmentList = Region.buildSegmentList(ImageCV.fromMat(binary));
       int nbPixels = Core.countNonZero(binary);
-      ImageConversion.releasePlanarImage(ImageCV.fromMat(binary));
 
       StructContour segContour = new StructContour(String.valueOf(id), segmentList, nbPixels);
-      segContour.setPositionZ(z);
+      segContour.setPositionZ(points[2]);
       segContour.setAttributes(region);
       region.addPixels(segContour);
       return segContour;
+    } finally {
+      ImageConversion.releasePlanarImage(ImageCV.fromMat(binary));
     }
-
-    return null;
   }
 
   private static Path2D getPath2D(
@@ -317,40 +340,32 @@ public class StructureSet extends RtSpecialElement implements SpecialElementRegi
     Vector3d tlhc = geometry.getTLHC();
     Vector3d row = geometry.getRow();
     Vector3d column = geometry.getColumn();
+    double invX = 1.0 / voxelSpacing.x;
+    double invY = 1.0 / voxelSpacing.y;
 
     Path2D path = new Path2D.Double(Path2D.WIND_NON_ZERO);
-    double x =
-        ((points[0] - tlhc.x) * row.x + (points[1] - tlhc.y) * row.y + (points[2] - tlhc.z) * row.z)
-            / voxelSpacing.x;
-    double y =
-        ((points[0] - tlhc.x) * column.x
-                + (points[1] - tlhc.y) * column.y
-                + (points[2] - tlhc.z) * column.z)
-            / voxelSpacing.y;
-    path.moveTo(x, y);
-    for (int i = 3; i < points.length; i = i + 3) {
-      x =
-          ((points[i] - tlhc.x) * row.x
-                  + (points[i + 1] - tlhc.y) * row.y
-                  + (points[i + 2] - tlhc.z) * row.z)
-              / voxelSpacing.x;
-      y =
-          ((points[i] - tlhc.x) * column.x
-                  + (points[i + 1] - tlhc.y) * column.y
-                  + (points[i + 2] - tlhc.z) * column.z)
-              / voxelSpacing.y;
-      path.lineTo(x, y);
+    for (int i = 0; i < points.length; i += 3) {
+      double dx = points[i] - tlhc.x;
+      double dy = points[i + 1] - tlhc.y;
+      double dz = points[i + 2] - tlhc.z;
+      double x = (dx * row.x + dy * row.y + dz * row.z) * invX;
+      double y = (dx * column.x + dy * column.y + dz * column.z) * invY;
+      if (i == 0) {
+        path.moveTo(x, y);
+      } else {
+        path.lineTo(x, y);
+      }
     }
     return path;
   }
 
   private static SegMeasurableLayer<DicomImageElement> getMeasurableLayer(
       DicomImageElement img, Attributes contour) {
-    if (img != null) {
-      double slabThickness =
-          DicomUtils.getDoubleFromDicomElement(contour, Tag.ContourSlabThickness, 1.0);
-      return new SegMeasurableLayer<>(img, slabThickness);
+    if (img == null) {
+      return null;
     }
-    return null;
+    double slabThickness =
+        DicomUtils.getDoubleFromDicomElement(contour, Tag.ContourSlabThickness, 1.0);
+    return new SegMeasurableLayer<>(img, slabThickness);
   }
 }
