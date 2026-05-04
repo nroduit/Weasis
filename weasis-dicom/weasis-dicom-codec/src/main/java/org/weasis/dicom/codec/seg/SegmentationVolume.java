@@ -1184,8 +1184,8 @@ public final class SegmentationVolume {
    * <p>Use-count interactions:
    *
    * <ul>
-   *   <li>{@code SegVolumeTexture} retains on construction, releases on {@code destroy()} — the
-   *       3D overlay texture owns one reference.
+   *   <li>{@code SegVolumeTexture} retains on construction, releases on {@code destroy()} — the 3D
+   *       overlay texture owns one reference.
    *   <li>{@code MprController} retains each volume added to its {@code segVolumes} list and
    *       releases when the list is cleared in {@code disposeSegVolumes()}.
    * </ul>
@@ -1224,8 +1224,8 @@ public final class SegmentationVolume {
 
   /**
    * Returns the current active-consumer reference count. A value of {@code 0} means no consumers
-   * are holding an explicit retain; the data may be freed by the next
-   * {@code SegSpecialElement.disposeAlignedVolume} call.
+   * are holding an explicit retain; the data may be freed by the next {@code
+   * SegSpecialElement.disposeAlignedVolume} call.
    */
   public int getUseCount() {
     return useCount.get();

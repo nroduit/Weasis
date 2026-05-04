@@ -36,7 +36,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.DataExplorerView;
 import org.weasis.core.api.explorer.ObservableEvent;
-import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.core.api.gui.util.DecFormatter;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.gui.util.GuiUtils;
@@ -47,7 +46,6 @@ import org.weasis.core.api.util.ResourceUtil.ResourceIconPath;
 import org.weasis.core.ui.model.graphic.imp.seg.SegMeasurableLayer;
 import org.weasis.core.ui.model.graphic.imp.seg.SegRegion;
 import org.weasis.core.ui.util.StructToolTipTreeNode;
-import org.weasis.core.util.LangUtil;
 import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.DicomMediaIO;
@@ -550,10 +548,13 @@ public class SegSpecialElement extends HiddenSpecialElement
   private void fireSegUpdateEvent() {
     List<DataExplorerView> explorerPlugins = GuiUtils.getUICore().getExplorerPlugins();
     explorerPlugins.stream()
-            .map(DataExplorerView::getDataExplorerModel)
-            .filter(m -> "DICOM".equals(m.toString()))
-            .findFirst()
-            .ifPresent(model -> model.firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.UPDATE, model, null, this)));
+        .map(DataExplorerView::getDataExplorerModel)
+        .filter(m -> "DICOM".equals(m.toString()))
+        .findFirst()
+        .ifPresent(
+            model ->
+                model.firePropertyChange(
+                    new ObservableEvent(ObservableEvent.BasicAction.UPDATE, model, null, this)));
   }
 
   @Override

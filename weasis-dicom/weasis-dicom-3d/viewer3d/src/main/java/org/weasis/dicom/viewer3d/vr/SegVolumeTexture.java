@@ -283,7 +283,9 @@ public final class SegVolumeTexture {
     return new Vector3d(scale);
   }
 
-  /** Releases all OpenGL resources and the CPU-buffer reference. Must be called from the GL thread. */
+  /**
+   * Releases all OpenGL resources and the CPU-buffer reference. Must be called from the GL thread.
+   */
   public void destroy(GL2ES2 gl) {
     if (segTextureId > 0) {
       gl.glDeleteTextures(2, new int[] {segTextureId, segColorTextureId}, 0);
