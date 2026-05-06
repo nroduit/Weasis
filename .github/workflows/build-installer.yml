@@ -124,6 +124,14 @@ jobs:
           p12-file-base64: ${{ secrets.MACOS_CERTIFICATE_INSTALLER }}
           p12-password: ${{ secrets.MACOS_CERTIFICATE_PWD }}
 
+      - name: Install WiX Toolset (Windows only)
+        if: matrix.wsystem == 'windows'
+        shell: pwsh
+        run: |
+          dotnet tool install --global wix
+          wix extension add --global WixToolset.UI.wixext
+          wix extension add --global WixToolset.Util.wixext
+
       - name: Build app binary with jpackage
         shell: bash
         env:
