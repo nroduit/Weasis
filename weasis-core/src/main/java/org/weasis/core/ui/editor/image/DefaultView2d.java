@@ -673,11 +673,14 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         }
         setImage(media);
 
-        ComboItemListener<SynchView> synchAction = eventManager.getAction(ActionW.SYNCH).orElse(null);
+        ComboItemListener<SynchView> synchAction =
+            eventManager.getAction(ActionW.SYNCH).orElse(null);
         if (synchAction != null && synchAction.getSelectedItem() instanceof SynchView sel) {
           if (!sel.getSynchData().getMode().equals(SynchData.Mode.TILE)) {
-            // If tile mode is selected, the other views are updated according to the first view. Resetting the synch state breaks the auto sync behavior of tile mode.
-            // In case the synch is not defined, then there is no need for resetting the synch configuration.
+            // If tile mode is selected, the other views are updated according to the first view.
+            // Resetting the synch state breaks the auto sync behavior of tile mode.
+            // In case the synch is not defined, then there is no need for resetting the synch
+            // configuration.
             resetSynchState();
           }
         }
@@ -1224,8 +1227,12 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
       }
 
       // If TILE mode is activated in issuer and current view, then propagate the event
-      if (synchData != null && issuerSyncData != null && synchData.getMode().equals(SynchData.Mode.TILE) && synchData.isAutoSynchActivated()
-      && issuerSyncData.getMode().equals(SynchData.Mode.TILE) && issuerSyncData.isAutoSynchActivated()) {
+      if (synchData != null
+          && issuerSyncData != null
+          && synchData.getMode().equals(SynchData.Mode.TILE)
+          && synchData.isAutoSynchActivated()
+          && issuerSyncData.getMode().equals(SynchData.Mode.TILE)
+          && issuerSyncData.isAutoSynchActivated()) {
         propagateSync = true;
       }
 

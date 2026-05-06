@@ -77,6 +77,7 @@ import org.weasis.core.ui.editor.image.SynchData.SyncState;
 import org.weasis.core.ui.editor.image.SynchEvent;
 import org.weasis.core.ui.editor.image.ViewButton;
 import org.weasis.core.ui.editor.image.ViewCanvas;
+import org.weasis.core.ui.editor.image.ViewSynchData;
 import org.weasis.core.ui.model.AbstractGraphicModel;
 import org.weasis.core.ui.model.graphic.DragGraphic;
 import org.weasis.core.ui.model.graphic.Graphic;
@@ -247,7 +248,10 @@ public class View2d extends DefaultView2d<DicomImageElement> {
       for (Entry<String, Object> entry : synch.getEvents().entrySet()) {
         final String command = entry.getKey();
         final Object val = entry.getValue();
-        if (synchData != null && !synchData.isActionEnable(command)) {
+        if (synchData != null
+            && !synchData.isActionEnable(command)
+            && !(command.equals(ActionW.CROSSHAIR.cmd())
+                && this == eventManager.getSelectedViewPane())) {
           continue;
         }
         // In MANUAL mode, only allow SCROLL_SERIES action
@@ -361,12 +365,15 @@ public class View2d extends DefaultView2d<DicomImageElement> {
         Map<String, Object> actionsInView = selectedView.getActionsInView();
         for (ViewCanvas<DicomImageElement> v : view2ds) {
           MediaSeries<DicomImageElement> s = v.getSeries();
+          ViewSynchData synchData = (ViewSynchData) v.getActionValue(ActionW.SYNCH_LINK.cmd());
           if (s == null) {
             continue;
           }
           if (v instanceof View2d view2d
               && fruid.equals(TagD.getTagValue(s, Tag.FrameOfReferenceUID))
-              && v != selectedView) {
+              && v != selectedView
+              && synchData != null
+              && synchData.isAutoSynchActivated()) {
             DicomImageElement imgToUpdate = v.getImage();
             if (imgToUpdate != null) {
               GeometryOfSlice geometry = imgToUpdate.getSliceGeometry();
@@ -395,9 +402,12 @@ public class View2d extends DefaultView2d<DicomImageElement> {
           if (s == null) {
             continue;
           }
+          ViewSynchData synchData = (ViewSynchData) v.getActionValue(ActionW.SYNCH_LINK.cmd());
           if (v instanceof View2d view2d
               && fruid.equals(TagD.getTagValue(s, Tag.FrameOfReferenceUID))
-              && LangUtil.nullToTrue((Boolean) actionsInView.get(LayerType.CROSSLINES.name()))) {
+              && LangUtil.nullToTrue((Boolean) actionsInView.get(LayerType.CROSSLINES.name()))
+              && synchData != null
+              && synchData.isAutoSynchActivated()) {
             view2d.computeCrosshair(p3, p);
             view2d.repaint();
           }
