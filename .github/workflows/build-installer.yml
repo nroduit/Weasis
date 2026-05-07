@@ -128,7 +128,7 @@ jobs:
         if: matrix.wsystem == 'windows'
         shell: pwsh
         run: |
-          dotnet tool install --global wix --version "4.*"
+          dotnet tool install --global wix --version "5.*"
           echo "$env:USERPROFILE\.dotnet\tools" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
           $WIX_VERSION = & "$env:USERPROFILE\.dotnet\tools\wix.exe" --version
           Write-Host "Installed WiX version: $WIX_VERSION"
@@ -208,6 +208,7 @@ jobs:
           FILE_ASSOC: "native-dist/weasis-native/build/script/file-associations.properties"
           VENDOR: "Weasis Team"
           COPYRIGHT: "© 2009-2026 Weasis Team"
+          KEYCHAIN_PWD: ${{ steps.cert.outputs.keychain-password }}
         run: |
           mkdir -p final-dist
           machine=${{ matrix.wsystem }}
@@ -234,6 +235,8 @@ jobs:
             # Do NOT use --mac-sign: it re-signs the app bundle inside the pkg, undoing our manual Developer ID signing
             jpackage --type "pkg" --app-image "${{ env.WEASIS_OUTPUT }}/${{ env.NAME }}.app" --dest "${{ env.WEASIS_OUTPUT }}" --name "${{ env.NAME }}" --resource-dir "${{ env.RES }}" \
             --license-file "${{ env.WEASIS_INPUT }}/Licence.txt" --copyright "${{ env.COPYRIGHT }}" --app-version "${{ env.WEASIS_CLEAN_VERSION }}" --mac-package-identifier "${{ env.IDENTIFIER }}"
+            # Unlock the keychain so productsign can access it without a GUI prompt
+            security unlock-keychain -p "$KEYCHAIN_PWD" "$HOME/Library/Keychains/signing_temp.keychain-db"
             # Sign the unsigned pkg with Developer ID Installer cert from keychain
             INSTALLER_ID=$(security find-identity -v "$HOME/Library/Keychains/signing_temp.keychain-db" | grep "Developer ID Installer" | head -1 | awk -F'"' '{print $2}')
             echo "Signing pkg with installer identity: $INSTALLER_ID"
