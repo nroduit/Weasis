@@ -129,8 +129,10 @@ jobs:
         shell: pwsh
         run: |
           dotnet tool install --global wix
-          wix extension add --global WixToolset.UI.wixext
-          wix extension add --global WixToolset.Util.wixext
+          echo "$env:USERPROFILE\.dotnet\tools" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+          & "$env:USERPROFILE\.dotnet\tools\wix.exe" --accept-license
+          & "$env:USERPROFILE\.dotnet\tools\wix.exe" extension add --global WixToolset.UI.wixext
+          & "$env:USERPROFILE\.dotnet\tools\wix.exe" extension add --global WixToolset.Util.wixext
 
       - name: Build app binary with jpackage
         shell: bash
@@ -146,6 +148,25 @@ jobs:
             jar cfv weasis-launcher.jar -C jar_contents .
             mv -f weasis-launcher.jar "${{ env.WEASIS_INPUT_BIN }}"/weasis-launcher.jar
             rm -rf jar_contents
+            # Sign native dylibs inside OpenCV and JogAmp JARs
+            for jar_file in "${{ env.WEASIS_INPUT_BIN }}/bundle/weasis-opencv-core-${{ matrix.wsystem }}-${{ matrix.warc }}"*.jar \
+                            "${{ env.WEASIS_INPUT_BIN }}/bundle/jogamp-${{ matrix.wsystem }}-${{ matrix.warc }}"*.jar; do
+              if [[ -f "$jar_file" ]]; then
+                echo "Signing dylibs in: $jar_file"
+                tmp_dir=$(mktemp -d)
+                unzip -q "$jar_file" -d "$tmp_dir"
+                find "$tmp_dir" -name "*.dylib" | while read -r dylib; do
+                  codesign --force --timestamp --options runtime \
+                    --sign "${{ secrets.MACOS__DEVELOPER_ID }}" \
+                    --keychain "$HOME/Library/Keychains/signing_temp.keychain-db" \
+                    "$dylib"
+                done
+                jar_name=$(basename "$jar_file")
+                jar cf "${jar_name}" -C "$tmp_dir" .
+                mv -f "${jar_name}" "$jar_file"
+                rm -rf "$tmp_dir"
+              fi
+            done
             declare -a customOptions=("--java-options" "-splash:\$APPDIR/resources/images/about-round.png" "--java-options" "-Dapple.laf.useScreenMenuBar=true" "--java-options" "-Dapple.awt.application.appearance=NSAppearanceNameDarkAqua")
             declare -a signArgs=("--mac-package-identifier" "${{ env.IDENTIFIER }}" "--mac-signing-keychain" "$HOME/Library/Keychains/signing_temp.keychain-db" "--mac-sign")
           elif [ "$machine" = "windows" ] ; then
