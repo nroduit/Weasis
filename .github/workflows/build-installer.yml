@@ -386,11 +386,6 @@ jobs:
       - name: Run Docker container to package Weasis for ${{ matrix.arch }}
         run: |
           ARCH="${{ matrix.arch }}"
-          
-          # Prepare required directories
-          echo "Preparing bin-dist for ${ARCH}..."
-          rm -rf bin-dist
-          cp -r native-dist/weasis-native/bin-dist .
 
           # Build Docker image for the current architecture
           echo "Building Docker image for ${ARCH}..."

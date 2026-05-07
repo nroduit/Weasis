@@ -207,14 +207,27 @@ rm -f "$INPUT_DIR"/*.jar.pack.gz
 find "$INPUT_DIR"/bundle/weasis-opencv-core-* -type f ! -name '*-'"${ARC_OS}"'-*'  -exec rm -f {} \;
 find "$INPUT_DIR"/bundle/jogamp-* -type f ! -name '*-'"${ARC_OS}"'-*' ! -name 'jogamp-[0-9]*' -exec rm -f {} \;
 
-if [ "$machine" = "macosx" ] ; then
-    mkdir jar_contents
-    unzip "$INPUT_DIR"/weasis-launcher.jar -d jar_contents
-    codesign --force --deep --timestamp --sign "$CERTIFICATE" -vvv jar_contents/com/formdev/flatlaf/natives/libflatlaf-macos-arm64.dylib
-    codesign --force --deep --timestamp --sign "$CERTIFICATE" -vvv jar_contents/com/formdev/flatlaf/natives/libflatlaf-macos-x86_64.dylib
-    jar cfv weasis-launcher.jar -C jar_contents .
-    mv -f weasis-launcher.jar "$INPUT_DIR"/weasis-launcher.jar
-    rm -rf jar_contents
+# Pre-sign ALL native libraries embedded in JARs (macOS only).
+# jpackage --mac-sign will sign the extracted content of the app image,
+# but dylibs INSIDE jars must be signed before jpackage repackages them.
+if [ "$machine" = "macosx" ] && [[ -n "$CERTIFICATE" ]] ; then
+    for jar_file in "$INPUT_DIR"/*.jar "$INPUT_DIR"/bundle/*.jar; do
+      [ -f "$jar_file" ] || continue
+      if unzip -l "$jar_file" 2>/dev/null | grep -qE '\.(dylib|jnilib)$'; then
+        echo "--- Signing native libs in: $jar_file"
+        tmpdir=$(mktemp -d)
+        unzip -q "$jar_file" -d "$tmpdir"
+        while IFS= read -r -d '' lib; do
+          echo "  Signing: $lib"
+          codesign --force --options runtime --timestamp \
+            --sign "$CERTIFICATE" "$lib"
+        done < <(find "$tmpdir" \( -name "*.dylib" -o -name "*.jnilib" \) -print0)
+        jar_name=$(basename "$jar_file")
+        (cd "$tmpdir" && jar cf "/tmp/$jar_name" .)
+        mv -f "/tmp/$jar_name" "$jar_file"
+        rm -rf "$tmpdir"
+      fi
+    done
 fi
 
 # Remove previous package
@@ -259,9 +272,6 @@ $JPKGCMD --type app-image --input "$INPUT_DIR" --dest "$OUTPUT_PATH" --name "$NA
 --add-launcher "${DICOMIZER_CONFIG}" --resource-dir "$RES"  --app-version "$WEASIS_CLEAN_VERSION" \
 "${tmpArgs[@]}" --verbose "${signArgs[@]}" "${customOptions[@]}" "${commonOptions[@]}"
 
-if [ "$machine" = "macosx" ] && [[ -n "$CERTIFICATE" ]] ; then
-    codesign --timestamp --entitlements "$RES/uri-launcher.entitlements" --options runtime --force -vvv --sign "$CERTIFICATE" "$RES/$NAME.app"
-fi
 
 if [ "$PACKAGE" = "YES" ] ; then
   VENDOR="Weasis Team"
@@ -295,8 +305,24 @@ if [ "$PACKAGE" = "YES" ] ; then
       fi
     done
   elif [ "$machine" = "macosx" ] ; then
+    # Do NOT pass --mac-sign here: the app bundle was already signed with proper
+    # --options runtime + --timestamp in the app-image step above.
+    # Using --mac-sign at the pkg stage causes jpackage to re-sign every dylib
+    # without --timestamp, which breaks Apple notarization.
     $JPKGCMD --type "pkg" --app-image "$IMAGE_PATH.app" --dest "$OUTPUT_PATH" --name "$NAME" --resource-dir "$RES" \
     --license-file "$INPUT_PATH/Licence.txt" --copyright "$COPYRIGHT" --app-version "$WEASIS_CLEAN_VERSION" \
-    "${tmpArgs[@]}" --verbose "${signArgs[@]}"
+    --mac-package-identifier "$IDENTIFIER" "${tmpArgs[@]}" --verbose
+
+    if [[ -n "$CERTIFICATE" ]] ; then
+      UNSIGNED_PKG="$OUTPUT_PATH/$NAME-$WEASIS_CLEAN_VERSION.pkg"
+      SIGNED_PKG="$OUTPUT_PATH/$NAME-$WEASIS_CLEAN_VERSION-${arc}.pkg"
+      # Sign the unsigned .pkg with the Developer ID Installer certificate.
+      # productsign only wraps the outer package; it does not touch the app contents.
+      INSTALLER_ID=$(security find-identity -v -p basic \
+        | grep "Developer ID Installer" | head -1 | awk -F'"' '{print $2}')
+      echo "Signing pkg with installer identity: $INSTALLER_ID"
+      productsign --sign "$INSTALLER_ID" --timestamp "$UNSIGNED_PKG" "$SIGNED_PKG"
+      rm -f "$UNSIGNED_PKG"
+    fi
   fi
 fi
