@@ -2,6 +2,9 @@ name: Build installers
 on:
   workflow_dispatch:
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -142,15 +145,35 @@ jobs:
         run: |
           machine=${{ matrix.wsystem }}
           if [ "$machine" = "macosx" ] ; then
-            mkdir jar_contents
-            unzip "${{ env.WEASIS_INPUT_BIN }}"/weasis-launcher.jar -d jar_contents
-            codesign --force --deep --timestamp --sign "${{ secrets.MACOS__DEVELOPER_ID }}" -vvv --keychain "$HOME/Library/Keychains/signing_temp.keychain-db" jar_contents/com/formdev/flatlaf/natives/libflatlaf-macos-arm64.dylib
-            codesign --force --deep --timestamp --sign "${{ secrets.MACOS__DEVELOPER_ID }}" -vvv --keychain "$HOME/Library/Keychains/signing_temp.keychain-db" jar_contents/com/formdev/flatlaf/natives/libflatlaf-macos-x86_64.dylib
-            jar cfv weasis-launcher.jar -C jar_contents .
-            mv -f weasis-launcher.jar "${{ env.WEASIS_INPUT_BIN }}"/weasis-launcher.jar
-            rm -rf jar_contents
+            KEYCHAIN="$HOME/Library/Keychains/signing_temp.keychain-db"
+            SIGN_ID="${{ secrets.MACOS__DEVELOPER_ID }}"
+
+            # Sign ALL native libraries embedded in every JAR in the bundle.
+            # JDK 26 jpackage now requires all bundled native binaries to be
+            # pre-signed with a valid Developer ID before it assembles the app image.
+            for jar_file in "${{ env.WEASIS_INPUT_BIN }}"/*.jar "${{ env.WEASIS_INPUT_BIN }}"/bundle/*.jar; do
+              [ -f "$jar_file" ] || continue
+              if unzip -l "$jar_file" 2>/dev/null | grep -qE '\.(dylib|jnilib)$'; then
+                echo "--- Signing native libs in: $jar_file"
+                tmpdir=$(mktemp -d)
+                unzip -q "$jar_file" -d "$tmpdir"
+                while IFS= read -r -d '' lib; do
+                  echo "  Signing: $lib"
+                  codesign --force --options runtime --timestamp \
+                    --sign "$SIGN_ID" --keychain "$KEYCHAIN" "$lib"
+                done < <(find "$tmpdir" \( -name "*.dylib" -o -name "*.jnilib" \) -print0)
+                jar_name=$(basename "$jar_file")
+                (cd "$tmpdir" && jar cf "/tmp/$jar_name" .)
+                mv -f "/tmp/$jar_name" "$jar_file"
+                rm -rf "$tmpdir"
+              fi
+            done
+
+            # jpackage --mac-sign for app-image type requires --mac-signing-key-user-name
+            # in JDK 26 to locate the identity; instead we sign everything manually
+            # after app-image creation in the correct inside-out order.
             declare -a customOptions=("--java-options" "-splash:\$APPDIR/resources/images/about-round.png" "--java-options" "-Dapple.laf.useScreenMenuBar=true" "--java-options" "-Dapple.awt.application.appearance=NSAppearanceNameDarkAqua")
-            declare -a signArgs=("--mac-package-identifier" "${{ env.IDENTIFIER }}" "--mac-signing-keychain" "$HOME/Library/Keychains/signing_temp.keychain-db" "--mac-sign")
+            declare -a signArgs=("--mac-package-identifier" "${{ env.IDENTIFIER }}")
           elif [ "$machine" = "windows" ] ; then
             declare -a customOptions=("--java-options" "-splash:\$APPDIR\resources\images\about-round.png" )
             declare -a signArgs=()
@@ -169,7 +192,34 @@ jobs:
           "${signArgs[@]}" "${customOptions[@]}" "${commonOptions[@]}"
 
           if [ "$machine" = "macosx" ] ; then
-              codesign --timestamp --entitlements "${{ env.RES }}/uri-launcher.entitlements" --options runtime --force -vvv --keychain "$HOME/Library/Keychains/signing_temp.keychain-db" --sign "${{ secrets.MACOS__DEVELOPER_ID }}" "${{ env.WEASIS_OUTPUT }}/${{ env.NAME }}.app"
+            APP_PATH="${{ env.WEASIS_OUTPUT }}/${{ env.NAME }}.app"
+            ENTITLEMENTS="${{ env.RES }}/uri-launcher.entitlements"
+
+            echo "--- Step 1: Sign JRE runtime libraries (inside-out order)"
+            find "$APP_PATH/Contents/runtime" -type f \( -name "*.dylib" -o -name "*.so" \) -print0 | \
+              xargs -0 -I{} codesign --force --options runtime --timestamp \
+                --sign "$SIGN_ID" --keychain "$KEYCHAIN" {}
+
+            # jspawnhelper is a helper executable bundled with the JRE
+            find "$APP_PATH/Contents/runtime" -type f -name "jspawnhelper" -print0 | \
+              xargs -0 -I{} codesign --force --options runtime --timestamp \
+                --sign "$SIGN_ID" --keychain "$KEYCHAIN" {}
+
+            echo "--- Step 2: Sign any dylibs in Frameworks (e.g. FlatLaf)"
+            find "$APP_PATH/Contents/Frameworks" -type f \( -name "*.dylib" -o -name "*.so" \) -print0 2>/dev/null | \
+              xargs -0 -I{} codesign --force --options runtime --timestamp \
+                --sign "$SIGN_ID" --keychain "$KEYCHAIN" {}
+
+            echo "--- Step 3: Sign launcher executables (Weasis, Dicomizer, ...)"
+            find "$APP_PATH/Contents/MacOS" -type f -print0 | \
+              xargs -0 -I{} codesign --force --options runtime --timestamp \
+                --entitlements "$ENTITLEMENTS" --sign "$SIGN_ID" --keychain "$KEYCHAIN" {}
+
+            echo "--- Step 4: Sign the app bundle itself"
+            codesign --force --options runtime --timestamp \
+              --entitlements "$ENTITLEMENTS" \
+              --sign "$SIGN_ID" --keychain "$KEYCHAIN" \
+              -vvv "$APP_PATH"
           fi
 
           echo "$(ls -la ${{ env.WEASIS_OUTPUT }})"
@@ -304,16 +354,26 @@ jobs:
             bash -c "export JAVA_TOOL_OPTIONS=-Djdk.lang.Process.launchMechanism=vfork; mkdir -p /work/installer; \
             cd /work/installer; /work/build/script/package-weasis.sh --jdk /opt/java/openjdk --temp /work/temp"
 
-          PKG_ARTIFACT=$(ls -d native-dist/weasis-native/installer/*/ | head -n 1 | xargs -n 1 basename)
-          echo "PKG_ARTIFACT=${PKG_ARTIFACT}" >> $GITHUB_ENV
-          
           mkdir -p final-dist
-          # Copy .deb and .rpm files to the final-dist directory
-          cp native-dist/weasis-native/installer/${PKG_ARTIFACT}/*.deb final-dist 2>/dev/null || echo "[INFO] No .deb files found to copy."
-          cp native-dist/weasis-native/installer/${PKG_ARTIFACT}/*.rpm final-dist 2>/dev/null || echo "[INFO] No .rpm files found to copy."
+          # Copy .deb and .rpm files to the final-dist directory (search recursively under installer/)
+          find native-dist/weasis-native/installer -maxdepth 2 -name "*.deb" -exec cp {} final-dist/ \; 2>/dev/null && echo "[INFO] .deb files copied." || echo "[INFO] No .deb files found to copy."
+          find native-dist/weasis-native/installer -maxdepth 2 -name "*.rpm" -exec cp {} final-dist/ \; 2>/dev/null && echo "[INFO] .rpm files copied." || echo "[INFO] No .rpm files found to copy."
+
+          echo "[INFO] Contents of final-dist:"
+          ls -la final-dist/
+
+          if [ -z "$(ls -A final-dist)" ]; then
+            echo "[ERROR] No installer files were produced. Listing installer directory for debugging:"
+            ls -laR native-dist/weasis-native/installer/ || echo "[INFO] installer directory not found"
+            exit 1
+          fi
+
+          PKG_ARTIFACT=$(ls final-dist/*.deb final-dist/*.rpm 2>/dev/null | head -n 1 | xargs -n 1 basename | sed 's/\.[^.]*$//')
+          [ -z "$PKG_ARTIFACT" ] && PKG_ARTIFACT="weasis-linux-$(echo "${{ matrix.arch }}" | tr '/' '-')-installer"
+          echo "PKG_ARTIFACT=${PKG_ARTIFACT}" >> $GITHUB_ENV
 
           for file in final-dist/*; do
-            if [[ -f "$file" ]]; then
+            if [[ -f "$file" ]] && [[ "$file" != *.sha256 ]]; then
               sha256sum "$file" >> "$file.sha256"
             fi
           done
