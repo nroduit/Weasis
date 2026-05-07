@@ -143,21 +143,30 @@ jobs:
           machine=${{ matrix.wsystem }}
           if [ "$machine" = "macosx" ] ; then
             KEYCHAIN="$HOME/Library/Keychains/signing_temp.keychain-db"
-            # Resolve the exact Developer ID Application identity from the keychain so that
-            # codesign always targets the right certificate, regardless of what the secret
-            # contains (full CN, short name, or SHA1).
-            SIGN_ID=$(security find-identity -v -p codesigning "$KEYCHAIN" \
+
+            # Enumerate all identities in the keychain for diagnostics.
+            echo "=== Identities found in signing keychain ==="
+            security find-identity -v "$KEYCHAIN"
+
+            # Resolve the Developer ID Application identity (without -p codesigning
+            # to avoid trust-policy filtering on non-default keychains).
+            SIGN_ID=$(security find-identity -v "$KEYCHAIN" \
               | grep "Developer ID Application" | head -1 | awk -F'"' '{print $2}')
-            echo "Using signing identity: $SIGN_ID"
+            echo "Developer ID Application identity: $SIGN_ID"
             if [ -z "$SIGN_ID" ]; then
               echo "ERROR: No 'Developer ID Application' certificate found in $KEYCHAIN"
-              security find-identity -v "$KEYCHAIN"
               exit 1
             fi
 
-            # Sign ALL native libraries embedded in every JAR in the bundle.
-            # JDK 26 jpackage now requires all bundled native binaries to be
-            # pre-signed with a valid Developer ID before it assembles the app image.
+            # Extract just the user-name portion required by jpackage
+            # e.g.  "Developer ID Application: Nicolas Roduit (TEAMID)" -> "Nicolas Roduit"
+            MAC_SIGNING_USER=$(echo "$SIGN_ID" \
+              | sed 's/^Developer ID Application: //' | sed 's/ (.*//')
+            echo "jpackage signing user name: $MAC_SIGNING_USER"
+
+            # Pre-sign ALL native libraries embedded in JARs.
+            # jpackage --mac-sign will sign the extracted content of the app image,
+            # but dylibs INSIDE jars must be signed before jpackage repackages them.
             for jar_file in "${{ env.WEASIS_INPUT_BIN }}"/*.jar "${{ env.WEASIS_INPUT_BIN }}"/bundle/*.jar; do
               [ -f "$jar_file" ] || continue
               if unzip -l "$jar_file" 2>/dev/null | grep -qE '\.(dylib|jnilib)$'; then
@@ -176,11 +185,12 @@ jobs:
               fi
             done
 
-            # jpackage --mac-sign for app-image type requires --mac-signing-key-user-name
-            # in JDK 26 to locate the identity; instead we sign everything manually
-            # after app-image creation in the correct inside-out order.
             declare -a customOptions=("--java-options" "-splash:\$APPDIR/resources/images/about-round.png" "--java-options" "-Dapple.laf.useScreenMenuBar=true" "--java-options" "-Dapple.awt.application.appearance=NSAppearanceNameDarkAqua")
-            declare -a signArgs=("--mac-package-identifier" "${{ env.IDENTIFIER }}")
+            # Use jpackage's built-in signing (--mac-sign) which applies --options runtime
+            # and --timestamp correctly in inside-out order, exactly like package-weasis.sh.
+            declare -a signArgs=("--mac-package-identifier" "${{ env.IDENTIFIER }}" \
+              "--mac-signing-key-user-name" "$MAC_SIGNING_USER" \
+              "--mac-sign")
           elif [ "$machine" = "windows" ] ; then
             declare -a customOptions=("--java-options" "-splash:\$APPDIR\resources\images\about-round.png" )
             declare -a signArgs=()
@@ -200,39 +210,46 @@ jobs:
 
           if [ "$machine" = "macosx" ] ; then
             APP_PATH="${{ env.WEASIS_OUTPUT }}/${{ env.NAME }}.app"
-            ENTITLEMENTS="${{ env.RES }}/uri-launcher.entitlements"
-
-            echo "--- Step 1: Sign JRE runtime libraries (inside-out order)"
-            find "$APP_PATH/Contents/runtime" -type f \( -name "*.dylib" -o -name "*.so" \) -print0 | \
-              xargs -0 -I{} codesign --force --options runtime --timestamp \
-                --sign "$SIGN_ID" --keychain "$KEYCHAIN" {}
-
-            # jspawnhelper is a helper executable bundled with the JRE
-            find "$APP_PATH/Contents/runtime" -type f -name "jspawnhelper" -print0 | \
-              xargs -0 -I{} codesign --force --options runtime --timestamp \
-                --sign "$SIGN_ID" --keychain "$KEYCHAIN" {}
-
-            echo "--- Step 2: Sign any dylibs in Frameworks (e.g. FlatLaf)"
-            if [ -d "$APP_PATH/Contents/Frameworks" ]; then
-              find "$APP_PATH/Contents/Frameworks" -type f \( -name "*.dylib" -o -name "*.so" \) -print0 | \
-                xargs -0 -I{} codesign --force --options runtime --timestamp \
-                  --sign "$SIGN_ID" --keychain "$KEYCHAIN" {}
-            fi
-
-            echo "--- Step 3: Sign launcher executables (Weasis, Dicomizer, ...)"
-            find "$APP_PATH/Contents/MacOS" -type f -print0 | \
-              xargs -0 -I{} codesign --force --options runtime --timestamp \
-                --entitlements "$ENTITLEMENTS" --sign "$SIGN_ID" --keychain "$KEYCHAIN" {}
-
-            echo "--- Step 4: Sign the app bundle itself"
-            codesign --force --options runtime --timestamp \
-              --entitlements "$ENTITLEMENTS" \
-              --sign "$SIGN_ID" --keychain "$KEYCHAIN" \
-              -vvv "$APP_PATH"
-
-            echo "--- Verify the final app bundle signature"
+            echo "--- Verifying app bundle signature (deep + strict)"
             codesign --verify --deep --strict --verbose=2 "$APP_PATH"
-            spctl --assess --type exec --verbose "$APP_PATH" || true
+
+            echo "--- Checking notarization requirements on all Mach-O binaries"
+            fail=0
+            while IFS= read -r -d '' bin; do
+              # codesign -dvvv writes to stderr
+              info=$(codesign -dvvv "$bin" 2>&1)
+              cert=$(echo "$info" | grep "Authority=Developer ID Application" || true)
+              ts=$(echo   "$info" | grep "^Timestamp=" || true)
+              hr=$(echo   "$info" | grep "flags=0x10000(runtime)" || true)
+              if [ -z "$cert" ] || [ -z "$ts" ] || [ -z "$hr" ]; then
+                echo "FAIL: $bin"
+                [ -z "$cert" ] && echo "  ✗ Developer ID Application authority not found"
+                [ -z "$ts"   ] && echo "  ✗ Secure timestamp missing"
+                [ -z "$hr"   ] && echo "  ✗ Hardened runtime flag (0x10000) missing"
+                fail=1
+              fi
+            done < <(find "$APP_PATH/Contents/MacOS" "$APP_PATH/Contents/runtime" \
+              -type f \( -name "*.dylib" -o -name "*.so" -o -name "jspawnhelper" \) -print0)
+            # Also check the main launcher executables explicitly
+            for bin in "$APP_PATH/Contents/MacOS/Weasis" "$APP_PATH/Contents/MacOS/Dicomizer"; do
+              [ -f "$bin" ] || continue
+              info=$(codesign -dvvv "$bin" 2>&1)
+              cert=$(echo "$info" | grep "Authority=Developer ID Application" || true)
+              ts=$(echo   "$info" | grep "^Timestamp=" || true)
+              hr=$(echo   "$info" | grep "flags=0x10000(runtime)" || true)
+              if [ -z "$cert" ] || [ -z "$ts" ] || [ -z "$hr" ]; then
+                echo "FAIL: $bin"
+                [ -z "$cert" ] && echo "  ✗ Developer ID Application authority not found"
+                [ -z "$ts"   ] && echo "  ✗ Secure timestamp missing"
+                [ -z "$hr"   ] && echo "  ✗ Hardened runtime flag (0x10000) missing"
+                fail=1
+              fi
+            done
+            if [ "$fail" -ne 0 ]; then
+              echo "ERROR: One or more binaries do not meet notarization requirements."
+              exit 1
+            fi
+            echo "All checked binaries meet notarization requirements."
           fi
 
           echo "$(ls -la ${{ env.WEASIS_OUTPUT }})"
@@ -260,16 +277,16 @@ jobs:
             for installerType in ${installerTypes[@]}; do
               if [ "${installerType}" = "rpm" ]; then
                 DEPENDENCIES=""
-                declare -a rpmArgs=("--linux-rpm-license-type" "EPL-2.0")
+                declare -a typeArgs=("--linux-rpm-license-type" "EPL-2.0")
               else
                 DEPENDENCIES="libstdc++6, libgcc1"
-                declare -a rpmArgs=()
+                declare -a typeArgs=("--linux-deb-maintainer" "Nicolas Roduit")
               fi
               jpackage --type "${installerType}" --app-image "${{ env.WEASIS_OUTPUT }}/${{ env.NAME }}" --dest "${{ env.WEASIS_OUTPUT }}" --name "${{ env.NAME }}" --resource-dir "${{ env.RES }}" \
               --license-file "${{ env.WEASIS_INPUT }}/Licence.txt" --description "Weasis DICOM viewer" --vendor "${{ env.VENDOR }}" \
               --copyright "${{ env.COPYRIGHT }}" --app-version "${{ env.WEASIS_CLEAN_VERSION }}" --file-associations "${{ env.FILE_ASSOC }}" \
-              --linux-app-release "1" --linux-package-name "weasis" --linux-deb-maintainer "Nicolas Roduit" \
-              "${rpmArgs[@]}" \
+              --linux-app-release "1" --linux-package-name "weasis" \
+              "${typeArgs[@]}" \
               --linux-menu-group "Viewer;MedicalSoftware;Graphics;" --linux-app-category "science" --linux-package-deps "${DEPENDENCIES}" --linux-shortcut --verbose
               cp ${{ env.WEASIS_OUTPUT }}/*.${installerType} final-dist
             done
