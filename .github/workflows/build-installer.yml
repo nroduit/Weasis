@@ -143,7 +143,17 @@ jobs:
           machine=${{ matrix.wsystem }}
           if [ "$machine" = "macosx" ] ; then
             KEYCHAIN="$HOME/Library/Keychains/signing_temp.keychain-db"
-            SIGN_ID="${{ secrets.MACOS__DEVELOPER_ID }}"
+            # Resolve the exact Developer ID Application identity from the keychain so that
+            # codesign always targets the right certificate, regardless of what the secret
+            # contains (full CN, short name, or SHA1).
+            SIGN_ID=$(security find-identity -v -p codesigning "$KEYCHAIN" \
+              | grep "Developer ID Application" | head -1 | awk -F'"' '{print $2}')
+            echo "Using signing identity: $SIGN_ID"
+            if [ -z "$SIGN_ID" ]; then
+              echo "ERROR: No 'Developer ID Application' certificate found in $KEYCHAIN"
+              security find-identity -v "$KEYCHAIN"
+              exit 1
+            fi
 
             # Sign ALL native libraries embedded in every JAR in the bundle.
             # JDK 26 jpackage now requires all bundled native binaries to be
@@ -219,6 +229,10 @@ jobs:
               --entitlements "$ENTITLEMENTS" \
               --sign "$SIGN_ID" --keychain "$KEYCHAIN" \
               -vvv "$APP_PATH"
+
+            echo "--- Verify the final app bundle signature"
+            codesign --verify --deep --strict --verbose=2 "$APP_PATH"
+            spctl --assess --type exec --verbose "$APP_PATH" || true
           fi
 
           echo "$(ls -la ${{ env.WEASIS_OUTPUT }})"
