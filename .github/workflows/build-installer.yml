@@ -2,9 +2,6 @@ name: Build installers
 on:
   workflow_dispatch:
 
-env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -206,9 +203,11 @@ jobs:
                 --sign "$SIGN_ID" --keychain "$KEYCHAIN" {}
 
             echo "--- Step 2: Sign any dylibs in Frameworks (e.g. FlatLaf)"
-            find "$APP_PATH/Contents/Frameworks" -type f \( -name "*.dylib" -o -name "*.so" \) -print0 2>/dev/null | \
-              xargs -0 -I{} codesign --force --options runtime --timestamp \
-                --sign "$SIGN_ID" --keychain "$KEYCHAIN" {}
+            if [ -d "$APP_PATH/Contents/Frameworks" ]; then
+              find "$APP_PATH/Contents/Frameworks" -type f \( -name "*.dylib" -o -name "*.so" \) -print0 | \
+                xargs -0 -I{} codesign --force --options runtime --timestamp \
+                  --sign "$SIGN_ID" --keychain "$KEYCHAIN" {}
+            fi
 
             echo "--- Step 3: Sign launcher executables (Weasis, Dicomizer, ...)"
             find "$APP_PATH/Contents/MacOS" -type f -print0 | \
@@ -328,10 +327,10 @@ jobs:
           unzip -o "native-dist/weasis-native.zip" -d "native-dist/weasis-native"
 
       - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
+        uses: docker/setup-qemu-action@v4
 
       - name: Set up Docker Buildx for multi-arch
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@v4
 
       - name: Run Docker container to package Weasis for ${{ matrix.arch }}
         run: |
