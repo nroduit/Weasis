@@ -128,7 +128,7 @@ jobs:
         if: matrix.wsystem == 'windows'
         shell: pwsh
         run: |
-          dotnet tool install --global wix
+          dotnet tool install --global wix --version "5.*"
           echo "$env:USERPROFILE\.dotnet\tools" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
           & "$env:USERPROFILE\.dotnet\tools\wix.exe" --accept-license
           & "$env:USERPROFILE\.dotnet\tools\wix.exe" extension add --global WixToolset.UI.wixext
@@ -143,8 +143,8 @@ jobs:
           if [ "$machine" = "macosx" ] ; then
             mkdir jar_contents
             unzip "${{ env.WEASIS_INPUT_BIN }}"/weasis-launcher.jar -d jar_contents
-            codesign --force --deep --timestamp --sign "${{ secrets.MACOS__DEVELOPER_ID }}" -vvv --keychain "$HOME/Library/Keychains/signing_temp.keychain-db" jar_contents/com/formdev/flatlaf/natives/libflatlaf-macos-arm64.dylib
-            codesign --force --deep --timestamp --sign "${{ secrets.MACOS__DEVELOPER_ID }}" -vvv --keychain "$HOME/Library/Keychains/signing_temp.keychain-db" jar_contents/com/formdev/flatlaf/natives/libflatlaf-macos-x86_64.dylib
+            codesign --force --timestamp --options runtime --sign "${{ secrets.MACOS__DEVELOPER_ID }}" -vvv --keychain "$HOME/Library/Keychains/signing_temp.keychain-db" jar_contents/com/formdev/flatlaf/natives/libflatlaf-macos-arm64.dylib
+            codesign --force --timestamp --options runtime --sign "${{ secrets.MACOS__DEVELOPER_ID }}" -vvv --keychain "$HOME/Library/Keychains/signing_temp.keychain-db" jar_contents/com/formdev/flatlaf/natives/libflatlaf-macos-x86_64.dylib
             jar cfv weasis-launcher.jar -C jar_contents .
             mv -f weasis-launcher.jar "${{ env.WEASIS_INPUT_BIN }}"/weasis-launcher.jar
             rm -rf jar_contents
@@ -233,12 +233,23 @@ jobs:
       - name: Notarize Release Build
         if: matrix.wsystem == 'macosx'
         run: |
-          xcrun notarytool submit \
+          SUBMISSION=$(xcrun notarytool submit \
             "final-dist/${{ env.NAME }}-${{ env.WEASIS_CLEAN_VERSION }}-${{ matrix.warc }}.pkg" \
             --apple-id "${{ secrets.APPLE_DEVELOPER_AC_USERNAME }}" \
             --team-id "${{ secrets.APPLE_TEAM_ID }}" \
             --password "${{ secrets.WEASIS_PWD }}" \
-            --wait
+            --wait --output-format json)
+          echo "$SUBMISSION"
+          STATUS=$(echo "$SUBMISSION" | python3 -c "import sys,json; print(json.load(sys.stdin)['status'])")
+          ID=$(echo "$SUBMISSION" | python3 -c "import sys,json; print(json.load(sys.stdin)['id'])")
+          if [ "$STATUS" != "Accepted" ]; then
+            echo "Notarization failed with status: $STATUS. Fetching log..."
+            xcrun notarytool log "$ID" \
+              --apple-id "${{ secrets.APPLE_DEVELOPER_AC_USERNAME }}" \
+              --team-id "${{ secrets.APPLE_TEAM_ID }}" \
+              --password "${{ secrets.WEASIS_PWD }}"
+            exit 1
+          fi
 
       - name: Staple Release Build
         if: matrix.wsystem == 'macosx'

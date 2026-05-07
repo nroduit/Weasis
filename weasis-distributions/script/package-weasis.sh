@@ -110,7 +110,7 @@ fi
 
 cp "$INPUT_PATH/weasis/bundle/weasis-core-img-"* weasis-core-img.jar.xz
 xz --decompress weasis-core-img.jar.xz
-ARC_OS=$("$JDK_PATH_UNIX/bin/java" -cp "weasis-core-img.jar" org.weasis.core.util.NativeLibrary)
+ARC_OS=$("$JDK_PATH_UNIX/bin/java" -cp "weasis-core-img.jar" org.weasis.opencv.natives.NativeLibrary)
 rm -f weasis-core-img.jar
 if [ -z "$ARC_OS" ] ; then
   die "Cannot get Java system architecture"
