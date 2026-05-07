@@ -144,32 +144,13 @@ jobs:
           if [ "$machine" = "macosx" ] ; then
             mkdir jar_contents
             unzip "${{ env.WEASIS_INPUT_BIN }}"/weasis-launcher.jar -d jar_contents
-            codesign --force --timestamp --options runtime --sign "${{ secrets.MACOS__DEVELOPER_ID }}" -vvv --keychain "$HOME/Library/Keychains/signing_temp.keychain-db" jar_contents/com/formdev/flatlaf/natives/libflatlaf-macos-arm64.dylib
-            codesign --force --timestamp --options runtime --sign "${{ secrets.MACOS__DEVELOPER_ID }}" -vvv --keychain "$HOME/Library/Keychains/signing_temp.keychain-db" jar_contents/com/formdev/flatlaf/natives/libflatlaf-macos-x86_64.dylib
+            codesign --force --deep --timestamp --sign "${{ secrets.MACOS__DEVELOPER_ID }}" -vvv --keychain "$HOME/Library/Keychains/signing_temp.keychain-db" jar_contents/com/formdev/flatlaf/natives/libflatlaf-macos-arm64.dylib
+            codesign --force --deep --timestamp --sign "${{ secrets.MACOS__DEVELOPER_ID }}" -vvv --keychain "$HOME/Library/Keychains/signing_temp.keychain-db" jar_contents/com/formdev/flatlaf/natives/libflatlaf-macos-x86_64.dylib
             jar cfv weasis-launcher.jar -C jar_contents .
             mv -f weasis-launcher.jar "${{ env.WEASIS_INPUT_BIN }}"/weasis-launcher.jar
             rm -rf jar_contents
-            # Sign native dylibs inside OpenCV and JogAmp JARs
-            for jar_file in "${{ env.WEASIS_INPUT_BIN }}/bundle/weasis-opencv-core-${{ matrix.wsystem }}-${{ matrix.warc }}"*.jar \
-                            "${{ env.WEASIS_INPUT_BIN }}/bundle/jogamp-${{ matrix.wsystem }}-${{ matrix.warc }}"*.jar; do
-              if [[ -f "$jar_file" ]]; then
-                echo "Signing dylibs in: $jar_file"
-                tmp_dir=$(mktemp -d)
-                unzip -q "$jar_file" -d "$tmp_dir"
-                find "$tmp_dir" -name "*.dylib" | while read -r dylib; do
-                  codesign --force --timestamp --options runtime \
-                    --sign "${{ secrets.MACOS__DEVELOPER_ID }}" \
-                    --keychain "$HOME/Library/Keychains/signing_temp.keychain-db" \
-                    "$dylib"
-                done
-                jar_name=$(basename "$jar_file")
-                jar cf "${jar_name}" -C "$tmp_dir" .
-                mv -f "${jar_name}" "$jar_file"
-                rm -rf "$tmp_dir"
-              fi
-            done
             declare -a customOptions=("--java-options" "-splash:\$APPDIR/resources/images/about-round.png" "--java-options" "-Dapple.laf.useScreenMenuBar=true" "--java-options" "-Dapple.awt.application.appearance=NSAppearanceNameDarkAqua")
-            declare -a signArgs=("--mac-package-identifier" "${{ env.IDENTIFIER }}")
+            declare -a signArgs=("--mac-package-identifier" "${{ env.IDENTIFIER }}" "--mac-signing-keychain" "$HOME/Library/Keychains/signing_temp.keychain-db" "--mac-sign")
           elif [ "$machine" = "windows" ] ; then
             declare -a customOptions=("--java-options" "-splash:\$APPDIR\resources\images\about-round.png" )
             declare -a signArgs=()
@@ -188,14 +169,6 @@ jobs:
           "${signArgs[@]}" "${customOptions[@]}" "${commonOptions[@]}"
 
           if [ "$machine" = "macosx" ] ; then
-              # Re-sign all JDK runtime dylibs and executables with Developer ID (Temurin pre-signs with its own cert)
-              find "${{ env.WEASIS_OUTPUT }}/${{ env.NAME }}.app/Contents/runtime" -type f \( -name "*.dylib" -o -perm +111 \) | while read -r binary; do
-                codesign --force --timestamp --options runtime \
-                  --sign "${{ secrets.MACOS__DEVELOPER_ID }}" \
-                  --keychain "$HOME/Library/Keychains/signing_temp.keychain-db" \
-                  "$binary"
-              done
-              # Final sign of the whole app bundle with entitlements (must be last)
               codesign --timestamp --entitlements "${{ env.RES }}/uri-launcher.entitlements" --options runtime --force -vvv --keychain "$HOME/Library/Keychains/signing_temp.keychain-db" --sign "${{ secrets.MACOS__DEVELOPER_ID }}" "${{ env.WEASIS_OUTPUT }}/${{ env.NAME }}.app"
           fi
 
@@ -208,7 +181,6 @@ jobs:
           FILE_ASSOC: "native-dist/weasis-native/build/script/file-associations.properties"
           VENDOR: "Weasis Team"
           COPYRIGHT: "© 2009-2026 Weasis Team"
-          KEYCHAIN_PWD: ${{ steps.cert.outputs.keychain-password }}
         run: |
           mkdir -p final-dist
           machine=${{ matrix.wsystem }}
@@ -232,18 +204,11 @@ jobs:
               cp ${{ env.WEASIS_OUTPUT }}/*.${installerType} final-dist
             done
           elif [ "$machine" = "macosx" ] ; then
-            # Do NOT use --mac-sign: it re-signs the app bundle inside the pkg, undoing our manual Developer ID signing
+            # Do not set verbose for public build
             jpackage --type "pkg" --app-image "${{ env.WEASIS_OUTPUT }}/${{ env.NAME }}.app" --dest "${{ env.WEASIS_OUTPUT }}" --name "${{ env.NAME }}" --resource-dir "${{ env.RES }}" \
-            --license-file "${{ env.WEASIS_INPUT }}/Licence.txt" --copyright "${{ env.COPYRIGHT }}" --app-version "${{ env.WEASIS_CLEAN_VERSION }}" --mac-package-identifier "${{ env.IDENTIFIER }}"
-            # Unlock the keychain so productsign can access it without a GUI prompt
-            security unlock-keychain -p "$KEYCHAIN_PWD" "$HOME/Library/Keychains/signing_temp.keychain-db"
-            # Sign the unsigned pkg with Developer ID Installer cert from keychain
-            INSTALLER_ID=$(security find-identity -v "$HOME/Library/Keychains/signing_temp.keychain-db" | grep "Developer ID Installer" | head -1 | awk -F'"' '{print $2}')
-            echo "Signing pkg with installer identity: $INSTALLER_ID"
-            productsign --sign "$INSTALLER_ID" \
-              --keychain "$HOME/Library/Keychains/signing_temp.keychain-db" \
-              "${{ env.WEASIS_OUTPUT }}/${{ env.NAME }}-${{ env.WEASIS_CLEAN_VERSION }}.pkg" \
-              "final-dist/${{ env.NAME }}-${{ env.WEASIS_CLEAN_VERSION }}-${ARC_NAME}.pkg"
+            --license-file "${{ env.WEASIS_INPUT }}/Licence.txt" --copyright "${{ env.COPYRIGHT }}" --app-version "${{ env.WEASIS_CLEAN_VERSION }}" --mac-package-identifier "${{ env.IDENTIFIER }}" \
+            --mac-signing-keychain "$HOME/Library/Keychains/signing_temp.keychain-db" --mac-sign
+            cp ${{ env.WEASIS_OUTPUT }}/*.pkg final-dist/${{ env.NAME }}-${{ env.WEASIS_CLEAN_VERSION }}-${ARC_NAME}.pkg
           fi
           echo "APP_ARTIFACT=weasis-${machine}-${ARC_NAME}-${{ env.WEASIS_VERSION }}" >> $GITHUB_ENV
 

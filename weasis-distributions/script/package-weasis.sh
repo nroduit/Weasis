@@ -215,22 +215,6 @@ if [ "$machine" = "macosx" ] ; then
     jar cfv weasis-launcher.jar -C jar_contents .
     mv -f weasis-launcher.jar "$INPUT_DIR"/weasis-launcher.jar
     rm -rf jar_contents
-    # Sign native dylibs inside OpenCV and JogAmp JARs
-    for jar_file in "$INPUT_DIR/bundle/weasis-opencv-core-${ARC_OS}"*.jar \
-                    "$INPUT_DIR/bundle/jogamp-${ARC_OS}"*.jar; do
-      if [[ -f "$jar_file" ]]; then
-        echo "Signing dylibs in: $jar_file"
-        tmp_dir=$(mktemp -d)
-        unzip -q "$jar_file" -d "$tmp_dir"
-        find "$tmp_dir" -name "*.dylib" | while read -r dylib; do
-          codesign --force --timestamp --options runtime --sign "$CERTIFICATE" -vvv "$dylib"
-        done
-        jar_name=$(basename "$jar_file")
-        jar cf "${jar_name}" -C "$tmp_dir" .
-        mv -f "${jar_name}" "$jar_file"
-        rm -rf "$tmp_dir"
-      fi
-    done
 fi
 
 # Remove previous package
@@ -276,14 +260,7 @@ $JPKGCMD --type app-image --input "$INPUT_DIR" --dest "$OUTPUT_PATH" --name "$NA
 "${tmpArgs[@]}" --verbose "${signArgs[@]}" "${customOptions[@]}" "${commonOptions[@]}"
 
 if [ "$machine" = "macosx" ] && [[ -n "$CERTIFICATE" ]] ; then
-    # Re-sign all JDK runtime dylibs and executables with Developer ID (Temurin pre-signs with its own cert)
-    find "$OUTPUT_PATH/$NAME.app/Contents/runtime" -type f \( -name "*.dylib" -o -perm +111 \) | while read -r binary; do
-      codesign --force --timestamp --options runtime \
-        --sign "$CERTIFICATE" \
-        "$binary"
-    done
-    # Final sign of the whole app bundle with entitlements (must be last)
-    codesign --timestamp --entitlements "$RES/uri-launcher.entitlements" --options runtime --force -vvv --sign "$CERTIFICATE" "$OUTPUT_PATH/$NAME.app"
+    codesign --timestamp --entitlements "$RES/uri-launcher.entitlements" --options runtime --force -vvv --sign "$CERTIFICATE" "$RES/$NAME.app"
 fi
 
 if [ "$PACKAGE" = "YES" ] ; then
