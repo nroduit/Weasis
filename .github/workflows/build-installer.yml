@@ -108,7 +108,7 @@ jobs:
           echo "$(ls ${{ env.WEASIS_INPUT_BIN }}/bundle/)"
 
       - name: Import Developer Certificate
-        uses: apple-actions/import-codesign-certs@v5
+        uses: apple-actions/import-codesign-certs@v7
         if: matrix.wsystem == 'macosx'
         id: cert
         with:
@@ -116,7 +116,7 @@ jobs:
           p12-password: ${{ secrets.MACOS_CERTIFICATE_PWD }}
 
       - name: Import Installer Certificate
-        uses: apple-actions/import-codesign-certs@v5
+        uses: apple-actions/import-codesign-certs@v7
         if: matrix.wsystem == 'macosx'
         with:
           create-keychain: "false"
@@ -353,13 +353,42 @@ jobs:
             bash -c "export JAVA_TOOL_OPTIONS=-Djdk.lang.Process.launchMechanism=vfork; mkdir -p /work/installer; \
             cd /work/installer; /work/build/script/package-weasis.sh --jdk /opt/java/openjdk --temp /work/temp"
 
-          PKG_ARTIFACT=$(ls -d native-dist/weasis-native/installer/*/ | head -n 1 | xargs -n 1 basename)
+          echo "--- Contents of installer directory:"
+          ls -la native-dist/weasis-native/installer/ || echo "[WARN] No installer directory found"
+
+          PKG_ARTIFACT=$(ls -d native-dist/weasis-native/installer/*/ 2>/dev/null | head -n 1 | xargs -n 1 basename)
+          if [ -z "$PKG_ARTIFACT" ]; then
+            echo "[ERROR] No installer subdirectory found under native-dist/weasis-native/installer/"
+            exit 1
+          fi
           echo "PKG_ARTIFACT=${PKG_ARTIFACT}" >> $GITHUB_ENV
+          echo "Found package artifact: ${PKG_ARTIFACT}"
+
+          echo "--- Contents of installer/${PKG_ARTIFACT}:"
+          ls -la "native-dist/weasis-native/installer/${PKG_ARTIFACT}/"
 
           mkdir -p final-dist
           # Copy .deb and .rpm files to the final-dist directory
-          cp native-dist/weasis-native/installer/${PKG_ARTIFACT}/*.deb final-dist 2>/dev/null || echo "[INFO] No .deb files found to copy."
-          cp native-dist/weasis-native/installer/${PKG_ARTIFACT}/*.rpm final-dist 2>/dev/null || echo "[INFO] No .rpm files found to copy."
+          DEB_COUNT=$(find "native-dist/weasis-native/installer/${PKG_ARTIFACT}" -maxdepth 1 -name "*.deb" | wc -l)
+          RPM_COUNT=$(find "native-dist/weasis-native/installer/${PKG_ARTIFACT}" -maxdepth 1 -name "*.rpm" | wc -l)
+          if [ "$DEB_COUNT" -gt 0 ]; then
+            cp native-dist/weasis-native/installer/${PKG_ARTIFACT}/*.deb final-dist/
+          else
+            echo "[INFO] No .deb files found to copy."
+          fi
+          if [ "$RPM_COUNT" -gt 0 ]; then
+            cp native-dist/weasis-native/installer/${PKG_ARTIFACT}/*.rpm final-dist/
+          else
+            echo "[INFO] No .rpm files found to copy."
+          fi
+
+          echo "--- Contents of final-dist:"
+          ls -la final-dist/
+
+          if [ -z "$(ls -A final-dist/)" ]; then
+            echo "[ERROR] final-dist is empty — no .deb or .rpm files were produced."
+            exit 1
+          fi
 
           for file in final-dist/*; do
             if [[ -f "$file" ]]; then
@@ -374,3 +403,4 @@ jobs:
         with:
           name: ${{ env.PKG_ARTIFACT }}
           path: final-dist
+          if-no-files-found: error
