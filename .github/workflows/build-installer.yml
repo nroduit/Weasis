@@ -244,20 +244,40 @@ jobs:
           elif [ "$machine" = "linux" ] ; then
             declare -a installerTypes=("deb" "rpm")
             for installerType in ${installerTypes[@]}; do
-              [ "${installerType}" = "rpm" ] && DEPENDENCIES="" || DEPENDENCIES="libstdc++6, libgcc1"
+              if [ "${installerType}" = "rpm" ]; then
+                DEPENDENCIES=""
+                declare -a rpmArgs=("--linux-rpm-license-type" "EPL-2.0")
+              else
+                DEPENDENCIES="libstdc++6, libgcc1"
+                declare -a rpmArgs=()
+              fi
               jpackage --type "${installerType}" --app-image "${{ env.WEASIS_OUTPUT }}/${{ env.NAME }}" --dest "${{ env.WEASIS_OUTPUT }}" --name "${{ env.NAME }}" --resource-dir "${{ env.RES }}" \
               --license-file "${{ env.WEASIS_INPUT }}/Licence.txt" --description "Weasis DICOM viewer" --vendor "${{ env.VENDOR }}" \
               --copyright "${{ env.COPYRIGHT }}" --app-version "${{ env.WEASIS_CLEAN_VERSION }}" --file-associations "${{ env.FILE_ASSOC }}" \
-              --linux-app-release "1" --linux-package-name "weasis" --linux-deb-maintainer "Nicolas Roduit" --linux-rpm-license-type "EPL-2.0" \
+              --linux-app-release "1" --linux-package-name "weasis" --linux-deb-maintainer "Nicolas Roduit" \
+              "${rpmArgs[@]}" \
               --linux-menu-group "Viewer;MedicalSoftware;Graphics;" --linux-app-category "science" --linux-package-deps "${DEPENDENCIES}" --linux-shortcut --verbose
               cp ${{ env.WEASIS_OUTPUT }}/*.${installerType} final-dist
             done
           elif [ "$machine" = "macosx" ] ; then
-            # Do not set verbose for public build
+            # Do not set verbose for public build.
+            # Do NOT pass --mac-sign here: the app bundle was already signed with proper
+            # --options runtime + --timestamp in the app-image step above.
+            # Using --mac-sign at the pkg stage causes jpackage to re-sign every dylib
+            # without --timestamp, which breaks Apple notarization.
             jpackage --type "pkg" --app-image "${{ env.WEASIS_OUTPUT }}/${{ env.NAME }}.app" --dest "${{ env.WEASIS_OUTPUT }}" --name "${{ env.NAME }}" --resource-dir "${{ env.RES }}" \
-            --license-file "${{ env.WEASIS_INPUT }}/Licence.txt" --copyright "${{ env.COPYRIGHT }}" --app-version "${{ env.WEASIS_CLEAN_VERSION }}" --mac-package-identifier "${{ env.IDENTIFIER }}" \
-            --mac-signing-keychain "$HOME/Library/Keychains/signing_temp.keychain-db" --mac-sign
-            cp ${{ env.WEASIS_OUTPUT }}/*.pkg final-dist/${{ env.NAME }}-${{ env.WEASIS_CLEAN_VERSION }}-${ARC_NAME}.pkg
+            --license-file "${{ env.WEASIS_INPUT }}/Licence.txt" --copyright "${{ env.COPYRIGHT }}" --app-version "${{ env.WEASIS_CLEAN_VERSION }}" --mac-package-identifier "${{ env.IDENTIFIER }}"
+
+            # Sign the unsigned .pkg with the Developer ID Installer certificate.
+            # productsign only wraps the outer package; it does not touch the app contents.
+            UNSIGNED_PKG="${{ env.WEASIS_OUTPUT }}/${{ env.NAME }}-${{ env.WEASIS_CLEAN_VERSION }}.pkg"
+            SIGNED_PKG="final-dist/${{ env.NAME }}-${{ env.WEASIS_CLEAN_VERSION }}-${ARC_NAME}.pkg"
+            KEYCHAIN="$HOME/Library/Keychains/signing_temp.keychain-db"
+            INSTALLER_ID=$(security find-identity -v -p basic "$KEYCHAIN" \
+              | grep "Developer ID Installer" | head -1 | awk -F'"' '{print $2}')
+            echo "Signing pkg with installer identity: $INSTALLER_ID"
+            productsign --sign "$INSTALLER_ID" --keychain "$KEYCHAIN" --timestamp \
+              "$UNSIGNED_PKG" "$SIGNED_PKG"
           fi
           echo "APP_ARTIFACT=weasis-${machine}-${ARC_NAME}-${{ env.WEASIS_VERSION }}" >> $GITHUB_ENV
 
