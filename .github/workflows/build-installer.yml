@@ -128,7 +128,7 @@ jobs:
         if: matrix.wsystem == 'windows'
         shell: pwsh
         run: |
-          dotnet tool install --global wix --version "5.*"
+          dotnet tool install --global wix --version "4.*"
           echo "$env:USERPROFILE\.dotnet\tools" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
           $WIX_VERSION = & "$env:USERPROFILE\.dotnet\tools\wix.exe" --version
           Write-Host "Installed WiX version: $WIX_VERSION"
@@ -169,7 +169,7 @@ jobs:
               fi
             done
             declare -a customOptions=("--java-options" "-splash:\$APPDIR/resources/images/about-round.png" "--java-options" "-Dapple.laf.useScreenMenuBar=true" "--java-options" "-Dapple.awt.application.appearance=NSAppearanceNameDarkAqua")
-            declare -a signArgs=("--mac-package-identifier" "${{ env.IDENTIFIER }}" "--mac-signing-keychain" "$HOME/Library/Keychains/signing_temp.keychain-db" "--mac-sign")
+            declare -a signArgs=("--mac-package-identifier" "${{ env.IDENTIFIER }}")
           elif [ "$machine" = "windows" ] ; then
             declare -a customOptions=("--java-options" "-splash:\$APPDIR\resources\images\about-round.png" )
             declare -a signArgs=()
@@ -231,11 +231,16 @@ jobs:
               cp ${{ env.WEASIS_OUTPUT }}/*.${installerType} final-dist
             done
           elif [ "$machine" = "macosx" ] ; then
-            # Do not set verbose for public build
+            # Do NOT use --mac-sign: it re-signs the app bundle inside the pkg, undoing our manual Developer ID signing
             jpackage --type "pkg" --app-image "${{ env.WEASIS_OUTPUT }}/${{ env.NAME }}.app" --dest "${{ env.WEASIS_OUTPUT }}" --name "${{ env.NAME }}" --resource-dir "${{ env.RES }}" \
-            --license-file "${{ env.WEASIS_INPUT }}/Licence.txt" --copyright "${{ env.COPYRIGHT }}" --app-version "${{ env.WEASIS_CLEAN_VERSION }}" --mac-package-identifier "${{ env.IDENTIFIER }}" \
-            --mac-signing-keychain "$HOME/Library/Keychains/signing_temp.keychain-db" --mac-sign
-            cp ${{ env.WEASIS_OUTPUT }}/*.pkg final-dist/${{ env.NAME }}-${{ env.WEASIS_CLEAN_VERSION }}-${ARC_NAME}.pkg
+            --license-file "${{ env.WEASIS_INPUT }}/Licence.txt" --copyright "${{ env.COPYRIGHT }}" --app-version "${{ env.WEASIS_CLEAN_VERSION }}" --mac-package-identifier "${{ env.IDENTIFIER }}"
+            # Sign the unsigned pkg with Developer ID Installer cert from keychain
+            INSTALLER_ID=$(security find-identity -v "$HOME/Library/Keychains/signing_temp.keychain-db" | grep "Developer ID Installer" | head -1 | awk -F'"' '{print $2}')
+            echo "Signing pkg with installer identity: $INSTALLER_ID"
+            productsign --sign "$INSTALLER_ID" \
+              --keychain "$HOME/Library/Keychains/signing_temp.keychain-db" \
+              "${{ env.WEASIS_OUTPUT }}/${{ env.NAME }}-${{ env.WEASIS_CLEAN_VERSION }}.pkg" \
+              "final-dist/${{ env.NAME }}-${{ env.WEASIS_CLEAN_VERSION }}-${ARC_NAME}.pkg"
           fi
           echo "APP_ARTIFACT=weasis-${machine}-${ARC_NAME}-${{ env.WEASIS_VERSION }}" >> $GITHUB_ENV
 
