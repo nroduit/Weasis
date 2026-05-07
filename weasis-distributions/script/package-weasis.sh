@@ -276,6 +276,13 @@ $JPKGCMD --type app-image --input "$INPUT_DIR" --dest "$OUTPUT_PATH" --name "$NA
 "${tmpArgs[@]}" --verbose "${signArgs[@]}" "${customOptions[@]}" "${commonOptions[@]}"
 
 if [ "$machine" = "macosx" ] && [[ -n "$CERTIFICATE" ]] ; then
+    # Re-sign all JDK runtime dylibs and executables with Developer ID (Temurin pre-signs with its own cert)
+    find "$OUTPUT_PATH/$NAME.app/Contents/runtime" -type f \( -name "*.dylib" -o -perm +111 \) | while read -r binary; do
+      codesign --force --timestamp --options runtime \
+        --sign "$CERTIFICATE" \
+        "$binary"
+    done
+    # Final sign of the whole app bundle with entitlements (must be last)
     codesign --timestamp --entitlements "$RES/uri-launcher.entitlements" --options runtime --force -vvv --sign "$CERTIFICATE" "$OUTPUT_PATH/$NAME.app"
 fi
 

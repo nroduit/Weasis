@@ -130,9 +130,10 @@ jobs:
         run: |
           dotnet tool install --global wix --version "5.*"
           echo "$env:USERPROFILE\.dotnet\tools" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
-          & "$env:USERPROFILE\.dotnet\tools\wix.exe" --accept-license
-          & "$env:USERPROFILE\.dotnet\tools\wix.exe" extension add --global WixToolset.UI.wixext
-          & "$env:USERPROFILE\.dotnet\tools\wix.exe" extension add --global WixToolset.Util.wixext
+          $WIX_VERSION = & "$env:USERPROFILE\.dotnet\tools\wix.exe" --version
+          Write-Host "Installed WiX version: $WIX_VERSION"
+          & "$env:USERPROFILE\.dotnet\tools\wix.exe" extension add --global WixToolset.UI.wixext/$WIX_VERSION
+          & "$env:USERPROFILE\.dotnet\tools\wix.exe" extension add --global WixToolset.Util.wixext/$WIX_VERSION
 
       - name: Build app binary with jpackage
         shell: bash
@@ -187,6 +188,14 @@ jobs:
           "${signArgs[@]}" "${customOptions[@]}" "${commonOptions[@]}"
 
           if [ "$machine" = "macosx" ] ; then
+              # Re-sign all JDK runtime dylibs and executables with Developer ID (Temurin pre-signs with its own cert)
+              find "${{ env.WEASIS_OUTPUT }}/${{ env.NAME }}.app/Contents/runtime" -type f \( -name "*.dylib" -o -perm +111 \) | while read -r binary; do
+                codesign --force --timestamp --options runtime \
+                  --sign "${{ secrets.MACOS__DEVELOPER_ID }}" \
+                  --keychain "$HOME/Library/Keychains/signing_temp.keychain-db" \
+                  "$binary"
+              done
+              # Final sign of the whole app bundle with entitlements (must be last)
               codesign --timestamp --entitlements "${{ env.RES }}/uri-launcher.entitlements" --options runtime --force -vvv --keychain "$HOME/Library/Keychains/signing_temp.keychain-db" --sign "${{ secrets.MACOS__DEVELOPER_ID }}" "${{ env.WEASIS_OUTPUT }}/${{ env.NAME }}.app"
           fi
 
