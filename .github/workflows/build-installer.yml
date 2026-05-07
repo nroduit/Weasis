@@ -353,26 +353,16 @@ jobs:
             bash -c "export JAVA_TOOL_OPTIONS=-Djdk.lang.Process.launchMechanism=vfork; mkdir -p /work/installer; \
             cd /work/installer; /work/build/script/package-weasis.sh --jdk /opt/java/openjdk --temp /work/temp"
 
-          mkdir -p final-dist
-          # Copy .deb and .rpm files to the final-dist directory (search recursively under installer/)
-          find native-dist/weasis-native/installer -maxdepth 2 -name "*.deb" -exec cp {} final-dist/ \; 2>/dev/null && echo "[INFO] .deb files copied." || echo "[INFO] No .deb files found to copy."
-          find native-dist/weasis-native/installer -maxdepth 2 -name "*.rpm" -exec cp {} final-dist/ \; 2>/dev/null && echo "[INFO] .rpm files copied." || echo "[INFO] No .rpm files found to copy."
-
-          echo "[INFO] Contents of final-dist:"
-          ls -la final-dist/
-
-          if [ -z "$(ls -A final-dist)" ]; then
-            echo "[ERROR] No installer files were produced. Listing installer directory for debugging:"
-            ls -laR native-dist/weasis-native/installer/ || echo "[INFO] installer directory not found"
-            exit 1
-          fi
-
-          PKG_ARTIFACT=$(ls final-dist/*.deb final-dist/*.rpm 2>/dev/null | head -n 1 | xargs -n 1 basename | sed 's/\.[^.]*$//')
-          [ -z "$PKG_ARTIFACT" ] && PKG_ARTIFACT="weasis-linux-$(echo "${{ matrix.arch }}" | tr '/' '-')-installer"
+          PKG_ARTIFACT=$(ls -d native-dist/weasis-native/installer/*/ | head -n 1 | xargs -n 1 basename)
           echo "PKG_ARTIFACT=${PKG_ARTIFACT}" >> $GITHUB_ENV
 
+          mkdir -p final-dist
+          # Copy .deb and .rpm files to the final-dist directory
+          cp native-dist/weasis-native/installer/${PKG_ARTIFACT}/*.deb final-dist 2>/dev/null || echo "[INFO] No .deb files found to copy."
+          cp native-dist/weasis-native/installer/${PKG_ARTIFACT}/*.rpm final-dist 2>/dev/null || echo "[INFO] No .rpm files found to copy."
+
           for file in final-dist/*; do
-            if [[ -f "$file" ]] && [[ "$file" != *.sha256 ]]; then
+            if [[ -f "$file" ]]; then
               sha256sum "$file" >> "$file.sha256"
             fi
           done
