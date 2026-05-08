@@ -51,7 +51,7 @@
             !sun.swing,*
             Export-Package: !org.weasis.core.internal,!org.weasis.core.util,org.weasis.core.*
             -exportcontents: com.github.scribejava.*,eu.essilab.lablib.checkboxtree.*,\
-            com.privatejgoodies.*,org.knowm.xchart.*,de.erichseifert.*
+            org.knowm.xchart.*,de.erichseifert.*
           </bnd>
         </configuration>
       </plugin>
