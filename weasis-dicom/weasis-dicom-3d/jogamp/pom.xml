@@ -40,7 +40,7 @@
           <bnd>
             -includeresource.all: lib/=target/dependency/;lib:=true
             Import-Package: \
-            !com.jogamp.openal.*,!org.eclipse.*,!com.jogamp.plugin.applet,!org.jdesktop.applet.*,\
+            !com.jogamp.openal.*,!org.eclipse.*,!com.jogamp.plugin.applet,!org.jdesktop.applet.*,!java.applet,\
             javafx.*;resolution:=optional,com.jogamp.plugin.ui;resolution:=optional,\
             com.sun.javafx.tk;resolution:=optional,jdk.internal.module;resolution:=optional,*
 
