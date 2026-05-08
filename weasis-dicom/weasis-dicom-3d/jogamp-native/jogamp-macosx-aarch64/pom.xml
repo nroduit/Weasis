@@ -13,7 +13,7 @@
   <packaging>jar</packaging>
   <artifactId>jogamp-macosx-aarch64</artifactId>
   <name>JOGL - MacOSX aarch64 [${project.artifactId}]</name>
-  <version>${jogamp.version}</version>
+  <version>${sha1}</version>
   <properties>
     <native.configuration>
       natives/macosx-universal/libgluegen_rt.dylib; \

@@ -14,7 +14,7 @@
   <groupId>org.weasis.thirdparty.org.jogamp</groupId>
   <artifactId>jogamp</artifactId>
   <name>JOGL - Java Bindings for OpenGL [${project.artifactId}]</name>
-  <version>${jogamp.version}</version>
+  <version>${sha1}</version>
 
   <build>
     <plugins>

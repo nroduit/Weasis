@@ -20,4 +20,12 @@
     <module>jogamp-native</module>
     <module>viewer3d</module>
   </modules>
+
+  <properties>
+    <!-- Bind the JOGL package version to the CI-friendly ${sha1} placeholder so that
+         the jogamp / jogamp-native child modules can use it inside <version> without
+         triggering the Maven warning "'version' contains an expression but should be a constant".
+         The single source of truth remains jogamp.version in weasis-parent/pom.xml. -->
+    <sha1>${jogamp.version}</sha1>
+  </properties>
 </project>
