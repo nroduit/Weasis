@@ -73,3 +73,8 @@ uniform vec3  crosshairPos;
 uniform mat3  crosshairRot;
 uniform bool  crosshairVisible;
 uniform int   crosshairCutMode;
+
+// Segmentation overlay
+uniform bool segOverlayEnabled = false;
+uniform int  segSegmentCount = 0;
+

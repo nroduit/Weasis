@@ -20,8 +20,8 @@ import org.weasis.core.ui.editor.image.ImageViewerEventManager;
 import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.HiddenSeriesManager;
-import org.weasis.dicom.codec.SegSpecialElement;
 import org.weasis.dicom.codec.TagD;
+import org.weasis.dicom.codec.seg.SegSpecialElement;
 import org.weasis.dicom.viewer2d.EventManager;
 
 @org.osgi.service.component.annotations.Component(
@@ -54,9 +54,15 @@ public class SegmentationToolFactory extends ExtToolFactory<DicomImageElement> {
       if (StringUtil.hasText(seriesUID)) {
         Set<String> list = HiddenSeriesManager.getInstance().reference2Series.get(seriesUID);
         if (list != null && !list.isEmpty()) {
-          return HiddenSeriesManager.hasHiddenElementsFromSeries(
-              SegSpecialElement.class, list.toArray(new String[0]));
+          if (HiddenSeriesManager.hasHiddenElementsFromSeries(
+              SegSpecialElement.class, list.toArray(new String[0]))) {
+            return true;
+          }
         }
+        // Fallback: SEG referenced indirectly through a shared FrameOfReferenceUID (e.g.
+        // AI-generated SEG without ReferencedSeriesSequence, or SEG loaded before this series).
+        return HiddenSeriesManager.hasHiddenElementsByFrameOfReference(
+            SegSpecialElement.class, mediaSeries);
       }
     }
     return false;

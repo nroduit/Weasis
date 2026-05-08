@@ -75,3 +75,6 @@ uniform mat3  crosshairRot;
 uniform bool  crosshairVisible;
 uniform int   crosshairCutMode;
 
+// Segmentation overlay (no default initializers in GLSL 3.30; set via Java)
+uniform bool segOverlayEnabled;
+uniform int  segSegmentCount;

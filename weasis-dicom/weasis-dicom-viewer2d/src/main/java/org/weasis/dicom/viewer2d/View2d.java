@@ -11,6 +11,7 @@ package org.weasis.dicom.viewer2d;
 
 import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.Graphics2D;
 import java.awt.GridBagConstraints;
 import java.awt.Point;
 import java.awt.Rectangle;
@@ -22,6 +23,7 @@ import java.awt.event.MouseEvent;
 import java.awt.geom.Path2D;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
+import java.awt.image.BufferedImage;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
@@ -100,7 +102,6 @@ import org.weasis.core.util.MathUtil;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.HiddenSeriesManager;
 import org.weasis.dicom.codec.KOSpecialElement;
-import org.weasis.dicom.codec.LazyContourLoader;
 import org.weasis.dicom.codec.PRSpecialElement;
 import org.weasis.dicom.codec.PresentationStateReader;
 import org.weasis.dicom.codec.SortSeriesStack;
@@ -113,6 +114,7 @@ import org.weasis.dicom.codec.geometry.*;
 import org.weasis.dicom.codec.geometry.ImageOrientation.Plan;
 import org.weasis.dicom.codec.geometry.PatientOrientation.Biped;
 import org.weasis.dicom.codec.geometry.VectorUtils;
+import org.weasis.dicom.codec.seg.LazyContourLoader;
 import org.weasis.dicom.explorer.DicomModel;
 import org.weasis.dicom.explorer.DicomSeriesHandler;
 import org.weasis.dicom.explorer.pr.PrGraphicUtil;
@@ -130,6 +132,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
   public static final String P_CROSSHAIR_MODE = "mpr.crosshair.mode";
   private final Dimension oldSize;
   private final ContextMenuHandler contextMenuHandler;
+  private volatile BufferedImage segOverlayImage;
 
   protected final KOViewButton koStarButton;
 
@@ -717,6 +720,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
 
   private void updateSegmentation(DicomImageElement img) {
     graphicManager.deleteByLayerType(LayerType.DICOM_SEG);
+    segOverlayImage = null;
     if (series != null && img != null) {
       String patientPseudoUID = DicomModel.getPatientPseudoUID(series);
       List<SpecialElementRegion> segList =
@@ -742,17 +746,46 @@ public class View2d extends DefaultView2d<DicomImageElement> {
           }
         }
 
+        // Separate fractional (raster overlay) and binary (vector contour) segmentations
+        List<SegContour> fractionalContours = new ArrayList<>();
         for (SegContour c : contours) {
-          // Structure graphics
-          Graphic graphic = c.getSegGraphic();
-          if (graphic != null) {
-            for (PropertyChangeListener listener : graphicManager.getGraphicsListeners()) {
-              graphic.addPropertyChangeListener(listener);
+          if (c.isFractional()) {
+            fractionalContours.add(c);
+          } else {
+            // Binary contours: render as vector graphics (existing path)
+            Graphic graphic = c.getSegGraphic();
+            if (graphic != null) {
+              for (PropertyChangeListener listener : graphicManager.getGraphicsListeners()) {
+                graphic.addPropertyChangeListener(listener);
+              }
+              graphicManager.addGraphic(graphic);
             }
-            graphicManager.addGraphic(graphic);
+          }
+        }
+
+        // Fractional contours: composite into a single RGBA overlay image
+        if (!fractionalContours.isEmpty()) {
+          PlanarImage sourceImg = img.getImage();
+          if (sourceImg != null) {
+            segOverlayImage =
+                org.weasis.core.ui.model.graphic.imp.seg.FractionalOverlay.compositeOverlays(
+                    fractionalContours, sourceImg.width(), sourceImg.height());
           }
         }
       }
+    }
+  }
+
+  @Override
+  protected void drawOnTop(Graphics2D g2d) {
+    BufferedImage overlay = segOverlayImage;
+    if (overlay != null) {
+      // Re-enter the image coordinate space (translate + affineTransform) to draw the overlay
+      // aligned with the source image pixels.
+      java.awt.geom.Point2D p = getClipViewCoordinatesOffset();
+      g2d.translate(p.getX(), p.getY());
+      g2d.drawImage(overlay, affineTransform, null);
+      g2d.translate(-p.getX(), -p.getY());
     }
   }
 

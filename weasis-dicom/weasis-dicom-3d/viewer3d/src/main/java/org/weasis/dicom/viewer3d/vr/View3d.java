@@ -39,6 +39,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Optional;
@@ -82,18 +83,24 @@ import org.weasis.core.ui.editor.image.ViewButton;
 import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.editor.image.ViewProgress;
 import org.weasis.core.ui.model.graphic.Graphic;
+import org.weasis.core.ui.model.graphic.imp.seg.SegRegion;
 import org.weasis.core.ui.model.layer.LayerAnnotation;
 import org.weasis.core.ui.model.layer.LayerItem;
 import org.weasis.core.ui.model.layer.LayerType;
 import org.weasis.core.ui.model.utils.bean.PanPoint;
 import org.weasis.core.util.LangUtil;
 import org.weasis.dicom.codec.DicomImageElement;
+import org.weasis.dicom.codec.DicomSeries;
+import org.weasis.dicom.codec.SpecialElementRegion;
 import org.weasis.dicom.codec.geometry.PatientOrientation;
+import org.weasis.dicom.codec.seg.SegSpecialElement;
+import org.weasis.dicom.codec.seg.SegmentationVolume;
 import org.weasis.dicom.explorer.DicomSeriesHandler;
 import org.weasis.dicom.viewer2d.mpr.AxisDirection;
 import org.weasis.dicom.viewer2d.mpr.MprContainer;
 import org.weasis.dicom.viewer2d.mpr.MprFactory;
 import org.weasis.dicom.viewer2d.mpr.OriginalStack;
+import org.weasis.dicom.viewer2d.mpr.SegVolumeBuilder;
 import org.weasis.dicom.viewer2d.mpr.Volume;
 import org.weasis.dicom.viewer3d.ActionVol;
 import org.weasis.dicom.viewer3d.EventManager;
@@ -108,6 +115,7 @@ import org.weasis.dicom.viewer3d.geometry.View;
 import org.weasis.dicom.viewer3d.vr.TextureData.PixelFormat;
 import org.weasis.opencv.data.PlanarImage;
 import org.weasis.opencv.op.lut.LutShape;
+import org.weasis.opencv.seg.RegionAttributes;
 
 public class View3d extends VolumeCanvas
     implements ViewCanvas<DicomImageElement>,
@@ -150,6 +158,9 @@ public class View3d extends VolumeCanvas
 
   private PropertyChangeListener mprCrossHairListener;
   private DicomVolTexture mprCrossHairListenerSource;
+
+  /** Segmentation overlay 3D texture — null when no segmentation is active. */
+  private volatile SegVolumeTexture segVolumeTexture;
 
   public View3d(
       ImageViewerEventManager<DicomImageElement> eventManager, DicomVolTexture volTexture) {
@@ -290,6 +301,14 @@ public class View3d extends VolumeCanvas
       program.destroy(gl);
       quadProgram.destroy(gl);
       texture.destroy(gl);
+      SegVolumeTexture svt = segVolumeTexture;
+      if (svt != null) {
+        // destroy() releases the SegVolumeTexture's retain on the SegmentationVolume.
+        // If no other consumer (e.g. MprController) is still holding the volume the CPU
+        // buffers are freed inside release(); otherwise they stay alive for the MPR overlay.
+        svt.destroy(gl);
+        segVolumeTexture = null;
+      }
     }
     super.disposeView();
   }
@@ -663,6 +682,24 @@ public class View3d extends VolumeCanvas
           g.glUniform1i(loc, mode != null ? mode.getId() : 0);
         });
 
+    // ---- Segmentation overlay uniforms ----
+    program.allocateUniform(
+        gl,
+        "segOverlayEnabled", // NON-NLS
+        (g, loc) -> g.glUniform1i(loc, isSegOverlayActive() ? 1 : 0));
+    program.allocateUniform(
+        gl,
+        "segSegmentCount", // NON-NLS
+        (g, loc) -> {
+          SegVolumeTexture svt = segVolumeTexture;
+          g.glUniform1i(
+              loc, svt != null && svt.isReady() ? svt.getSegVolume().getSegmentCount() : 0);
+        });
+    program.allocateUniform(
+        gl, "segTexture", (g, loc) -> g.glUniform1i(loc, SegVolumeTexture.SEG_TEXTURE_UNIT));
+    program.allocateUniform(
+        gl, "segColorMap", (g, loc) -> g.glUniform1i(loc, SegVolumeTexture.SEG_COLOR_UNIT));
+
     quadProgram.init(gl);
     gl.glGenBuffers(1, intBuffer);
     vertexBuffer = intBuffer.get(0);
@@ -722,6 +759,11 @@ public class View3d extends VolumeCanvas
         if (volumePreset != null) {
           volumePreset.render(gl4, renderingLayer.isInvertLut());
         }
+        // Bind segmentation overlay textures (units 4 and 5)
+        SegVolumeTexture svt = segVolumeTexture;
+        if (svt != null && svt.isReady()) {
+          svt.bind(gl4);
+        }
         texture.render(gl4);
         quadProgram.use(gl4);
 
@@ -745,6 +787,11 @@ public class View3d extends VolumeCanvas
         volTexture.render(gl2);
         if (volumePreset != null) {
           volumePreset.render(gl2, renderingLayer.isInvertLut());
+        }
+        // Bind segmentation overlay textures (units 4 and 5)
+        SegVolumeTexture svt = segVolumeTexture;
+        if (svt != null && svt.isReady()) {
+          svt.bind(gl2);
         }
 
         // Set up the vertex array so FboRenderTexture.render() can call glDrawArrays
@@ -793,7 +840,165 @@ public class View3d extends VolumeCanvas
     //    }
   }
 
-  public void updateSegmentation() {}
+  public void updateSegmentation() {
+    ComboItemListener<Type> segType = eventManager.getAction(ActionVol.SEG_TYPE).orElse(null);
+    if (segType == null || segType.getSelectedItem() != Type.SEG_OVERLAY) {
+      // Not in overlay mode — destroy existing seg texture if any
+      destroySegTexture();
+      display();
+      return;
+    }
+
+    DicomVolTexture tex = volTexture;
+    if (tex == null) {
+      destroySegTexture();
+      return;
+    }
+
+    Volume<?, ?> volume = tex.getVolume();
+    if (volume == null) {
+      destroySegTexture();
+      return;
+    }
+
+    // Find segmentation elements for this volume's series
+    List<SpecialElementRegion> segList = tex.getSegmentations();
+    if (segList == null || segList.isEmpty()) {
+      destroySegTexture();
+      display();
+      return;
+    }
+
+    // Build the SegmentationVolume from the first available SegSpecialElement
+    SegmentationVolume segVolume = null;
+    SegSpecialElement segOwner = null;
+    final Volume<?, ?> imageVolume = volume;
+    for (SpecialElementRegion seg : segList) {
+      if (seg instanceof SegSpecialElement segElement) {
+        DicomSeries segSeries = segElement.getMediaReader().getMediaSeries();
+        if (segSeries != null) {
+          // Reuse the SEG's per-image-volume cached resample when available so we do not redo
+          // the expensive frame splatting if MPR (or another 3D view) already built it for the
+          // same image volume.
+          segVolume =
+              segElement.getOrBuildAlignedVolume(
+                  imageVolume, s -> SegVolumeBuilder.build(s, segSeries, imageVolume));
+          if (segVolume != null) {
+            segOwner = segElement;
+            break;
+          }
+        }
+      }
+    }
+
+    if (segVolume == null || segVolume.isEmpty()) {
+      if (segVolume != null) {
+        // Empty resample is useless to keep cached: drop it from the SEG so a future request can
+        // retry (e.g. once the image volume finishes loading).
+        segOwner.disposeAlignedVolume(imageVolume);
+      }
+      destroySegTexture();
+      display();
+      return;
+    }
+
+    // Create and upload the segmentation texture
+    Vector3d scale = new Vector3d(1.0, 1.0, 1.0);
+    SegVolumeTexture newSvt = new SegVolumeTexture(segVolume, scale);
+    // Upload on the shared GL context
+    newSvt.uploadVolumeDataAsync();
+
+    // Apply the tree's visibility/opacity state to the colour LUT
+    Map<Integer, RegionAttributes> overrideAttrs = buildRegionOverrideMap();
+    if (!overrideAttrs.isEmpty()) {
+      byte[] colorLut = segVolume.buildSegmentColorLUT(overrideAttrs);
+      GL2ES2 gl = OpenglUtils.getGL();
+      if (gl != null) {
+        newSvt.updateColorLUT(gl, colorLut);
+      }
+    }
+
+    // Swap in the new texture
+    SegVolumeTexture old = this.segVolumeTexture;
+    this.segVolumeTexture = newSvt;
+    if (old != null) {
+      GL2ES2 gl = OpenglUtils.getGL();
+      if (gl != null) {
+        old.destroy(gl);
+      }
+      // Do NOT free the underlying SegmentationVolume here: it is now owned by the
+      // SegSpecialElement's per-image-volume cache (see SegSpecialElement.alignedVolumes) and
+      // may still be in use by the MPR overlay or by a re-upload of this very texture.
+    }
+
+    display();
+  }
+
+  /**
+   * Refreshes only the segment colour LUT on the GPU using the current visibility / opacity state
+   * from the UI tree ({@link Preset#getRegionMap()}). This is much cheaper than rebuilding the
+   * entire segmentation texture and should be used when only segment visibility or opacity has
+   * changed.
+   */
+  public void refreshSegColorLUT() {
+    SegVolumeTexture svt = segVolumeTexture;
+    if (svt == null || !svt.isReady()) {
+      return;
+    }
+
+    // Build an id→attributes map from the Preset's region map (reflects tree state)
+    Map<Integer, RegionAttributes> overrideAttrs = buildRegionOverrideMap();
+
+    byte[] colorLut = svt.getSegVolume().buildSegmentColorLUT(overrideAttrs);
+
+    GL2ES2 gl = OpenglUtils.getGL();
+    if (gl != null) {
+      svt.updateColorLUT(gl, colorLut);
+    }
+    display();
+  }
+
+  /**
+   * Builds a flat segment-number → RegionAttributes map from the Preset's region map. The Preset
+   * region map is grouped by label prefix; this method flattens it into a simple lookup by segment
+   * ID, suitable for passing to {@link SegmentationVolume#buildSegmentColorLUT(Map)}.
+   */
+  private Map<Integer, RegionAttributes> buildRegionOverrideMap() {
+    Map<String, List<SegRegion<?>>> regionMap = Preset.getRegionMap();
+    if (regionMap == null || regionMap.isEmpty()) {
+      return Collections.emptyMap();
+    }
+    Map<Integer, RegionAttributes> result = new HashMap<>();
+    for (List<SegRegion<?>> regions : regionMap.values()) {
+      for (SegRegion<?> region : regions) {
+        result.put(region.getId(), region);
+      }
+    }
+    return result;
+  }
+
+  /** Returns true when segmentation overlay mode is active and a seg texture is ready. */
+  private boolean isSegOverlayActive() {
+    SegVolumeTexture svt = segVolumeTexture;
+    if (svt == null || !svt.isReady()) {
+      return false;
+    }
+    ComboItemListener<Type> segType = eventManager.getAction(ActionVol.SEG_TYPE).orElse(null);
+    return segType != null && segType.getSelectedItem() == Type.SEG_OVERLAY;
+  }
+
+  private void destroySegTexture() {
+    SegVolumeTexture svt = segVolumeTexture;
+    if (svt != null) {
+      segVolumeTexture = null;
+      GL2ES2 gl = OpenglUtils.getGL();
+      if (gl != null) {
+        svt.destroy(gl);
+      }
+      // The underlying SegmentationVolume is owned by the SegSpecialElement's per-image-volume
+      // cache; only the GL texture is released here.
+    }
+  }
 
   public void setVolumePreset(Preset preset) {
     this.volumePreset = Objects.requireNonNull(preset);

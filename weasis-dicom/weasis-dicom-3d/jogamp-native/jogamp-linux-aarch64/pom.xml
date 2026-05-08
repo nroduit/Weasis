@@ -13,7 +13,7 @@
   <packaging>jar</packaging>
   <artifactId>jogamp-linux-aarch64</artifactId>
   <name>JOGL - Linux aarch64 [${project.artifactId}]</name>
-  <version>${jogamp.version}</version>
+  <version>${sha1}</version>
   <properties>
     <native.configuration>
       natives/linux-aarch64/libgluegen_rt.so; \

@@ -7,7 +7,7 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
  */
-package org.weasis.dicom.viewer2d.mpr;
+package org.weasis.core.api.vol;
 
 import java.util.Arrays;
 

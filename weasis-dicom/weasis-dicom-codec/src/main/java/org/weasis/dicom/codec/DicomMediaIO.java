@@ -64,6 +64,7 @@ import org.weasis.dicom.codec.display.Modality;
 import org.weasis.dicom.codec.display.ModalityInfoData;
 import org.weasis.dicom.codec.display.ModalityView;
 import org.weasis.dicom.codec.geometry.ImageOrientation;
+import org.weasis.dicom.codec.seg.SegSpecialElement;
 import org.weasis.dicom.codec.utils.DicomMediaUtils;
 import org.weasis.dicom.codec.utils.PatientComparator;
 import org.weasis.opencv.data.PlanarImage;
@@ -90,8 +91,12 @@ public class DicomMediaIO implements DcmMediaReader {
   public static final String SERIES_XDSI = "xds-i/dicom"; // NON-NLS
 
   public enum Reading {
+    /** Truly unreadable/corrupted/malformed DICOM file. */
     ERROR,
+    /** Silently excluded (e.g. DICOMDIR, in-memory placeholder). */
     EXCLUDED,
+    /** Valid DICOM file but the SOP Class is not handled by Weasis. */
+    UNSUPPORTED,
     READABLE
   }
 
@@ -388,10 +393,14 @@ public class DicomMediaIO implements DcmMediaReader {
       } else {
         boolean special = setDicomSpecialType(header);
         if (!special) {
-          // Not supported DICOM file
+          // Valid DICOM file but the SOP Class is not supported by Weasis
+          String sopClassUID = header.getString(Tag.SOPClassUID);
+          LOGGER.info(
+              "Unsupported DICOM SOP Class (no pixel data, no registered handler in Weasis): {}",
+              sopClassUID);
           mimeType = UNREADABLE;
           close();
-          return Reading.ERROR;
+          return Reading.UNSUPPORTED;
         }
       }
 

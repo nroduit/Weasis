@@ -108,7 +108,7 @@ jobs:
           echo "$(ls ${{ env.WEASIS_INPUT_BIN }}/bundle/)"
 
       - name: Import Developer Certificate
-        uses: apple-actions/import-codesign-certs@v5
+        uses: apple-actions/import-codesign-certs@v7
         if: matrix.wsystem == 'macosx'
         id: cert
         with:
@@ -116,13 +116,24 @@ jobs:
           p12-password: ${{ secrets.MACOS_CERTIFICATE_PWD }}
 
       - name: Import Installer Certificate
-        uses: apple-actions/import-codesign-certs@v5
+        uses: apple-actions/import-codesign-certs@v7
         if: matrix.wsystem == 'macosx'
         with:
           create-keychain: "false"
           keychain-password: ${{ steps.cert.outputs.keychain-password }}
           p12-file-base64: ${{ secrets.MACOS_CERTIFICATE_INSTALLER }}
           p12-password: ${{ secrets.MACOS_CERTIFICATE_PWD }}
+
+      - name: Install WiX Toolset (Windows only)
+        if: matrix.wsystem == 'windows'
+        shell: pwsh
+        run: |
+          dotnet tool install --global wix --version "5.*"
+          echo "$env:USERPROFILE\.dotnet\tools" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+          $WIX_VERSION = & "$env:USERPROFILE\.dotnet\tools\wix.exe" --version
+          Write-Host "Installed WiX version: $WIX_VERSION"
+          & "$env:USERPROFILE\.dotnet\tools\wix.exe" extension add --global WixToolset.UI.wixext/$WIX_VERSION
+          & "$env:USERPROFILE\.dotnet\tools\wix.exe" extension add --global WixToolset.Util.wixext/$WIX_VERSION
 
       - name: Build app binary with jpackage
         shell: bash
@@ -131,15 +142,55 @@ jobs:
         run: |
           machine=${{ matrix.wsystem }}
           if [ "$machine" = "macosx" ] ; then
-            mkdir jar_contents
-            unzip "${{ env.WEASIS_INPUT_BIN }}"/weasis-launcher.jar -d jar_contents
-            codesign --force --deep --timestamp --sign "${{ secrets.MACOS__DEVELOPER_ID }}" -vvv --keychain "$HOME/Library/Keychains/signing_temp.keychain-db" jar_contents/com/formdev/flatlaf/natives/libflatlaf-macos-arm64.dylib
-            codesign --force --deep --timestamp --sign "${{ secrets.MACOS__DEVELOPER_ID }}" -vvv --keychain "$HOME/Library/Keychains/signing_temp.keychain-db" jar_contents/com/formdev/flatlaf/natives/libflatlaf-macos-x86_64.dylib
-            jar cfv weasis-launcher.jar -C jar_contents .
-            mv -f weasis-launcher.jar "${{ env.WEASIS_INPUT_BIN }}"/weasis-launcher.jar
-            rm -rf jar_contents
+            KEYCHAIN="$HOME/Library/Keychains/signing_temp.keychain-db"
+
+            # Enumerate all identities in the keychain for diagnostics.
+            echo "=== Identities found in signing keychain ==="
+            security find-identity -v "$KEYCHAIN"
+
+            # Resolve the Developer ID Application identity (without -p codesigning
+            # to avoid trust-policy filtering on non-default keychains).
+            SIGN_ID=$(security find-identity -v "$KEYCHAIN" \
+              | grep "Developer ID Application" | head -1 | awk -F'"' '{print $2}')
+            echo "Developer ID Application identity: $SIGN_ID"
+            if [ -z "$SIGN_ID" ]; then
+              echo "ERROR: No 'Developer ID Application' certificate found in $KEYCHAIN"
+              exit 1
+            fi
+
+            # Extract just the user-name portion required by jpackage
+            # e.g.  "Developer ID Application: Nicolas Roduit (TEAMID)" -> "Nicolas Roduit"
+            MAC_SIGNING_USER=$(echo "$SIGN_ID" \
+              | sed 's/^Developer ID Application: //' | sed 's/ (.*//')
+            echo "jpackage signing user name: $MAC_SIGNING_USER"
+
+            # Pre-sign ALL native libraries embedded in JARs.
+            # jpackage --mac-sign will sign the extracted content of the app image,
+            # but dylibs INSIDE jars must be signed before jpackage repackages them.
+            for jar_file in "${{ env.WEASIS_INPUT_BIN }}"/*.jar "${{ env.WEASIS_INPUT_BIN }}"/bundle/*.jar; do
+              [ -f "$jar_file" ] || continue
+              if unzip -l "$jar_file" 2>/dev/null | grep -qE '\.(dylib|jnilib)$'; then
+                echo "--- Signing native libs in: $jar_file"
+                tmpdir=$(mktemp -d)
+                unzip -q "$jar_file" -d "$tmpdir"
+                while IFS= read -r -d '' lib; do
+                  echo "  Signing: $lib"
+                  codesign --force --options runtime --timestamp \
+                    --sign "$SIGN_ID" --keychain "$KEYCHAIN" "$lib"
+                done < <(find "$tmpdir" \( -name "*.dylib" -o -name "*.jnilib" \) -print0)
+                jar_name=$(basename "$jar_file")
+                (cd "$tmpdir" && jar cf "/tmp/$jar_name" .)
+                mv -f "/tmp/$jar_name" "$jar_file"
+                rm -rf "$tmpdir"
+              fi
+            done
+
             declare -a customOptions=("--java-options" "-splash:\$APPDIR/resources/images/about-round.png" "--java-options" "-Dapple.laf.useScreenMenuBar=true" "--java-options" "-Dapple.awt.application.appearance=NSAppearanceNameDarkAqua")
-            declare -a signArgs=("--mac-package-identifier" "${{ env.IDENTIFIER }}" "--mac-signing-keychain" "$HOME/Library/Keychains/signing_temp.keychain-db" "--mac-sign")
+            # Use jpackage's built-in signing (--mac-sign) which applies --options runtime
+            # and --timestamp correctly in inside-out order, exactly like package-weasis.sh.
+            declare -a signArgs=("--mac-package-identifier" "${{ env.IDENTIFIER }}" \
+              "--mac-signing-key-user-name" "$MAC_SIGNING_USER" \
+              "--mac-sign")
           elif [ "$machine" = "windows" ] ; then
             declare -a customOptions=("--java-options" "-splash:\$APPDIR\resources\images\about-round.png" )
             declare -a signArgs=()
@@ -158,7 +209,47 @@ jobs:
           "${signArgs[@]}" "${customOptions[@]}" "${commonOptions[@]}"
 
           if [ "$machine" = "macosx" ] ; then
-              codesign --timestamp --entitlements "${{ env.RES }}/uri-launcher.entitlements" --options runtime --force -vvv --keychain "$HOME/Library/Keychains/signing_temp.keychain-db" --sign "${{ secrets.MACOS__DEVELOPER_ID }}" "${{ env.WEASIS_OUTPUT }}/${{ env.NAME }}.app"
+            APP_PATH="${{ env.WEASIS_OUTPUT }}/${{ env.NAME }}.app"
+            echo "--- Verifying app bundle signature (deep + strict)"
+            codesign --verify --deep --strict --verbose=2 "$APP_PATH"
+
+            echo "--- Checking notarization requirements on all Mach-O binaries"
+            fail=0
+            while IFS= read -r -d '' bin; do
+              # codesign -dvvv writes to stderr
+              info=$(codesign -dvvv "$bin" 2>&1)
+              cert=$(echo "$info" | grep "Authority=Developer ID Application" || true)
+              ts=$(echo   "$info" | grep "^Timestamp=" || true)
+              hr=$(echo   "$info" | grep "flags=0x10000(runtime)" || true)
+              if [ -z "$cert" ] || [ -z "$ts" ] || [ -z "$hr" ]; then
+                echo "FAIL: $bin"
+                [ -z "$cert" ] && echo "  ✗ Developer ID Application authority not found"
+                [ -z "$ts"   ] && echo "  ✗ Secure timestamp missing"
+                [ -z "$hr"   ] && echo "  ✗ Hardened runtime flag (0x10000) missing"
+                fail=1
+              fi
+            done < <(find "$APP_PATH/Contents/MacOS" "$APP_PATH/Contents/runtime" \
+              -type f \( -name "*.dylib" -o -name "*.so" -o -name "jspawnhelper" \) -print0)
+            # Also check the main launcher executables explicitly
+            for bin in "$APP_PATH/Contents/MacOS/Weasis" "$APP_PATH/Contents/MacOS/Dicomizer"; do
+              [ -f "$bin" ] || continue
+              info=$(codesign -dvvv "$bin" 2>&1)
+              cert=$(echo "$info" | grep "Authority=Developer ID Application" || true)
+              ts=$(echo   "$info" | grep "^Timestamp=" || true)
+              hr=$(echo   "$info" | grep "flags=0x10000(runtime)" || true)
+              if [ -z "$cert" ] || [ -z "$ts" ] || [ -z "$hr" ]; then
+                echo "FAIL: $bin"
+                [ -z "$cert" ] && echo "  ✗ Developer ID Application authority not found"
+                [ -z "$ts"   ] && echo "  ✗ Secure timestamp missing"
+                [ -z "$hr"   ] && echo "  ✗ Hardened runtime flag (0x10000) missing"
+                fail=1
+              fi
+            done
+            if [ "$fail" -ne 0 ]; then
+              echo "ERROR: One or more binaries do not meet notarization requirements."
+              exit 1
+            fi
+            echo "All checked binaries meet notarization requirements."
           fi
 
           echo "$(ls -la ${{ env.WEASIS_OUTPUT }})"
@@ -184,32 +275,63 @@ jobs:
           elif [ "$machine" = "linux" ] ; then
             declare -a installerTypes=("deb" "rpm")
             for installerType in ${installerTypes[@]}; do
-              [ "${installerType}" = "rpm" ] && DEPENDENCIES="" || DEPENDENCIES="libstdc++6, libgcc1"
+              if [ "${installerType}" = "rpm" ]; then
+                DEPENDENCIES=""
+                declare -a typeArgs=("--linux-rpm-license-type" "EPL-2.0")
+              else
+                DEPENDENCIES="libstdc++6, libgcc1"
+                declare -a typeArgs=("--linux-deb-maintainer" "Nicolas Roduit")
+              fi
               jpackage --type "${installerType}" --app-image "${{ env.WEASIS_OUTPUT }}/${{ env.NAME }}" --dest "${{ env.WEASIS_OUTPUT }}" --name "${{ env.NAME }}" --resource-dir "${{ env.RES }}" \
               --license-file "${{ env.WEASIS_INPUT }}/Licence.txt" --description "Weasis DICOM viewer" --vendor "${{ env.VENDOR }}" \
               --copyright "${{ env.COPYRIGHT }}" --app-version "${{ env.WEASIS_CLEAN_VERSION }}" --file-associations "${{ env.FILE_ASSOC }}" \
-              --linux-app-release "1" --linux-package-name "weasis" --linux-deb-maintainer "Nicolas Roduit" --linux-rpm-license-type "EPL-2.0" \
+              --linux-app-release "1" --linux-package-name "weasis" \
+              "${typeArgs[@]}" \
               --linux-menu-group "Viewer;MedicalSoftware;Graphics;" --linux-app-category "science" --linux-package-deps "${DEPENDENCIES}" --linux-shortcut --verbose
               cp ${{ env.WEASIS_OUTPUT }}/*.${installerType} final-dist
             done
           elif [ "$machine" = "macosx" ] ; then
-            # Do not set verbose for public build
+            # Do not set verbose for public build.
+            # Do NOT pass --mac-sign here: the app bundle was already signed with proper
+            # --options runtime + --timestamp in the app-image step above.
+            # Using --mac-sign at the pkg stage causes jpackage to re-sign every dylib
+            # without --timestamp, which breaks Apple notarization.
             jpackage --type "pkg" --app-image "${{ env.WEASIS_OUTPUT }}/${{ env.NAME }}.app" --dest "${{ env.WEASIS_OUTPUT }}" --name "${{ env.NAME }}" --resource-dir "${{ env.RES }}" \
-            --license-file "${{ env.WEASIS_INPUT }}/Licence.txt" --copyright "${{ env.COPYRIGHT }}" --app-version "${{ env.WEASIS_CLEAN_VERSION }}" --mac-package-identifier "${{ env.IDENTIFIER }}" \
-            --mac-signing-keychain "$HOME/Library/Keychains/signing_temp.keychain-db" --mac-sign
-            cp ${{ env.WEASIS_OUTPUT }}/*.pkg final-dist/${{ env.NAME }}-${{ env.WEASIS_CLEAN_VERSION }}-${ARC_NAME}.pkg
+            --license-file "${{ env.WEASIS_INPUT }}/Licence.txt" --copyright "${{ env.COPYRIGHT }}" --app-version "${{ env.WEASIS_CLEAN_VERSION }}" --mac-package-identifier "${{ env.IDENTIFIER }}"
+
+            # Sign the unsigned .pkg with the Developer ID Installer certificate.
+            # productsign only wraps the outer package; it does not touch the app contents.
+            UNSIGNED_PKG="${{ env.WEASIS_OUTPUT }}/${{ env.NAME }}-${{ env.WEASIS_CLEAN_VERSION }}.pkg"
+            SIGNED_PKG="final-dist/${{ env.NAME }}-${{ env.WEASIS_CLEAN_VERSION }}-${ARC_NAME}.pkg"
+            KEYCHAIN="$HOME/Library/Keychains/signing_temp.keychain-db"
+            INSTALLER_ID=$(security find-identity -v -p basic "$KEYCHAIN" \
+              | grep "Developer ID Installer" | head -1 | awk -F'"' '{print $2}')
+            echo "Signing pkg with installer identity: $INSTALLER_ID"
+            productsign --sign "$INSTALLER_ID" --keychain "$KEYCHAIN" --timestamp \
+              "$UNSIGNED_PKG" "$SIGNED_PKG"
           fi
           echo "APP_ARTIFACT=weasis-${machine}-${ARC_NAME}-${{ env.WEASIS_VERSION }}" >> $GITHUB_ENV
 
       - name: Notarize Release Build
         if: matrix.wsystem == 'macosx'
         run: |
-          xcrun notarytool submit \
+          SUBMISSION=$(xcrun notarytool submit \
             "final-dist/${{ env.NAME }}-${{ env.WEASIS_CLEAN_VERSION }}-${{ matrix.warc }}.pkg" \
             --apple-id "${{ secrets.APPLE_DEVELOPER_AC_USERNAME }}" \
             --team-id "${{ secrets.APPLE_TEAM_ID }}" \
             --password "${{ secrets.WEASIS_PWD }}" \
-            --wait
+            --wait --output-format json)
+          echo "$SUBMISSION"
+          STATUS=$(echo "$SUBMISSION" | python3 -c "import sys,json; print(json.load(sys.stdin)['status'])")
+          ID=$(echo "$SUBMISSION" | python3 -c "import sys,json; print(json.load(sys.stdin)['id'])")
+          if [ "$STATUS" != "Accepted" ]; then
+            echo "Notarization failed with status: $STATUS. Fetching log..."
+            xcrun notarytool log "$ID" \
+              --apple-id "${{ secrets.APPLE_DEVELOPER_AC_USERNAME }}" \
+              --team-id "${{ secrets.APPLE_TEAM_ID }}" \
+              --password "${{ secrets.WEASIS_PWD }}"
+            exit 1
+          fi
 
       - name: Staple Release Build
         if: matrix.wsystem == 'macosx'
@@ -256,19 +378,14 @@ jobs:
           unzip -o "native-dist/weasis-native.zip" -d "native-dist/weasis-native"
 
       - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
+        uses: docker/setup-qemu-action@v4
 
       - name: Set up Docker Buildx for multi-arch
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@v4
 
       - name: Run Docker container to package Weasis for ${{ matrix.arch }}
         run: |
           ARCH="${{ matrix.arch }}"
-          
-          # Prepare required directories
-          echo "Preparing bin-dist for ${ARCH}..."
-          rm -rf bin-dist
-          cp -r native-dist/weasis-native/bin-dist .
 
           # Build Docker image for the current architecture
           echo "Building Docker image for ${ARCH}..."
@@ -282,13 +399,42 @@ jobs:
             bash -c "export JAVA_TOOL_OPTIONS=-Djdk.lang.Process.launchMechanism=vfork; mkdir -p /work/installer; \
             cd /work/installer; /work/build/script/package-weasis.sh --jdk /opt/java/openjdk --temp /work/temp"
 
-          PKG_ARTIFACT=$(ls -d native-dist/weasis-native/installer/*/ | head -n 1 | xargs -n 1 basename)
+          echo "--- Contents of installer directory:"
+          ls -la native-dist/weasis-native/installer/ || echo "[WARN] No installer directory found"
+
+          PKG_ARTIFACT=$(ls -d native-dist/weasis-native/installer/*/ 2>/dev/null | head -n 1 | xargs -n 1 basename)
+          if [ -z "$PKG_ARTIFACT" ]; then
+            echo "[ERROR] No installer subdirectory found under native-dist/weasis-native/installer/"
+            exit 1
+          fi
           echo "PKG_ARTIFACT=${PKG_ARTIFACT}" >> $GITHUB_ENV
-          
+          echo "Found package artifact: ${PKG_ARTIFACT}"
+
+          echo "--- Contents of installer/${PKG_ARTIFACT}:"
+          ls -la "native-dist/weasis-native/installer/${PKG_ARTIFACT}/"
+
           mkdir -p final-dist
           # Copy .deb and .rpm files to the final-dist directory
-          cp native-dist/weasis-native/installer/${PKG_ARTIFACT}/*.deb final-dist 2>/dev/null || echo "[INFO] No .deb files found to copy."
-          cp native-dist/weasis-native/installer/${PKG_ARTIFACT}/*.rpm final-dist 2>/dev/null || echo "[INFO] No .rpm files found to copy."
+          DEB_COUNT=$(find "native-dist/weasis-native/installer/${PKG_ARTIFACT}" -maxdepth 1 -name "*.deb" | wc -l)
+          RPM_COUNT=$(find "native-dist/weasis-native/installer/${PKG_ARTIFACT}" -maxdepth 1 -name "*.rpm" | wc -l)
+          if [ "$DEB_COUNT" -gt 0 ]; then
+            cp native-dist/weasis-native/installer/${PKG_ARTIFACT}/*.deb final-dist/
+          else
+            echo "[INFO] No .deb files found to copy."
+          fi
+          if [ "$RPM_COUNT" -gt 0 ]; then
+            cp native-dist/weasis-native/installer/${PKG_ARTIFACT}/*.rpm final-dist/
+          else
+            echo "[INFO] No .rpm files found to copy."
+          fi
+
+          echo "--- Contents of final-dist:"
+          ls -la final-dist/
+
+          if [ -z "$(ls -A final-dist/)" ]; then
+            echo "[ERROR] final-dist is empty — no .deb or .rpm files were produced."
+            exit 1
+          fi
 
           for file in final-dist/*; do
             if [[ -f "$file" ]]; then
@@ -303,3 +449,4 @@ jobs:
         with:
           name: ${{ env.PKG_ARTIFACT }}
           path: final-dist
+          if-no-files-found: error

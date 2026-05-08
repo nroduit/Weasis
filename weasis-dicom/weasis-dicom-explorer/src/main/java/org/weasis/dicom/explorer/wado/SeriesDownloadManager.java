@@ -443,6 +443,8 @@ public class SeriesDownloadManager {
         updateUI(reader, isFirstImage);
       } else if (reading == Reading.ERROR) {
         errors.incrementAndGet();
+      } else if (reading == Reading.UNSUPPORTED) {
+        LOGGER.info("Skipping unsupported DICOM SOP Class for file: {}", file);
       }
     }
 

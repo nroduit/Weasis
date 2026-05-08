@@ -607,6 +607,7 @@ public class View2dContainer extends DicomViewerPlugin implements PropertyChange
             if (view instanceof View2d view2d) {
               if (region.containsSopInstanceUIDReference(view.getImage())) {
                 view2d.updateSegmentation();
+                view2d.repaint();
               }
               if (view2d == pane) {
                 UI.updateDynamicTools(view2d.getSeries());

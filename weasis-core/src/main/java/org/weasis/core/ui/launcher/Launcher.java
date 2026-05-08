@@ -432,7 +432,7 @@ public class Launcher {
 
       Thread launcherThread =
           Thread.ofVirtual()
-              .start(
+              .unstarted(
                   () -> {
                     try {
                       Process p = processBuilder.start();

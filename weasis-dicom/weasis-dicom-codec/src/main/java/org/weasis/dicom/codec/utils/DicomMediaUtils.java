@@ -298,6 +298,31 @@ public class DicomMediaUtils {
   }
 
   /**
+   * Computes the sign-normalized unit normal of the image plane described by the
+   * ImageOrientationPatient tags in {@code taggable}. The dominant axis of the cross product (row ×
+   * column) is forced to be positive (LPS+) so the result is directly comparable across images and
+   * segmentations regardless of the cross-product sign convention.
+   *
+   * @param taggable source with ImageOrientationPatient tags
+   * @return sign-normalized unit normal, or {@code null} when IOP is absent
+   */
+  public static Vector3d computeImageNormal(TagReadable taggable) {
+    Vector3d vr = ImageOrientation.getRowImagePosition(taggable);
+    Vector3d vc = ImageOrientation.getColumnImagePosition(taggable);
+    if (vr == null || vc == null) {
+      return null;
+    }
+    Vector3d normal = VectorUtils.computeNormalOfSurface(vr, vc);
+    // Ensure the normal points in the positive direction of its dominant axis to sort
+    // slices in the anatomical direction. The cross product (row × column) can point in
+    // either direction for the same anatomical plane (e.g., +X or -X for sagittal), which
+    // would reverse the sort order. This normalization must match the DICOM LPS+ coordinate
+    // system (Left +X, Posterior +Y, Superior +Z) because the Slice Location tag is not
+    // always correct.
+    return VectorUtils.orientNormalToDominantPositiveAxis(normal);
+  }
+
+  /**
    * Computes the signed scalar slice position, caches it as {@link TagW#SlicePosition}, and returns
    * it.
    *
@@ -311,24 +336,20 @@ public class DicomMediaUtils {
     if (taggable != null) {
       Vector3d pPos = PatientOrientation.getPatientPosition(taggable);
       if (pPos != null) {
-        Vector3d vr = ImageOrientation.getRowImagePosition(taggable);
-        Vector3d vc = ImageOrientation.getColumnImagePosition(taggable);
-        if (vr != null && vc != null) {
-          // Project IPP onto the slice normal: scalar distance along normal axis.
-          // Geometrically correct for any orientation (axial, sagittal, coronal, oblique).
-          // Ensure the normal points in the positive direction of its dominant axis to sort
-          // slices in the anatomical direction. The cross product (row × column) can point in
-          // either direction for the same anatomical plane (e.g., +X or -X for sagittal), which
-          // would reverse the sort order. This normalization must match the DICOM LPS+ coordinate
-          // system (Left +X, Posterior +Y, Superior +Z) because the Slice Location tag is not
-          // always correct.
-          Vector3d normal =
-              VectorUtils.orientNormalToDominantPositiveAxis(
-                  VectorUtils.computeNormalOfSurface(vr, vc));
+        Vector3d normal = computeImageNormal(taggable);
+        if (normal != null) {
           double dot = normal.dot(pPos);
           taggable.setTag(TagW.SlicePosition, dot);
           return dot;
         }
+      }
+      // Fallback to SliceLocation when ImageOrientationPatient is absent (e.g., NM images).
+      // SliceLocation (0020,1041) provides a scalar position that is sufficient for
+      // matching segmentation frames to source images when IOP is unavailable.
+      Double sliceLoc = TagD.getTagValue(taggable, Tag.SliceLocation, Double.class);
+      if (sliceLoc != null) {
+        taggable.setTag(TagW.SlicePosition, sliceLoc);
+        return sliceLoc;
       }
     }
     return null;

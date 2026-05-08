@@ -62,11 +62,11 @@ parts:
   remote-openjdk:
     plugin: dump
     source:
-      - on amd64: https://github.com/adoptium/temurin26-binaries/releases/download/jdk-26%2B35/OpenJDK26U-jdk_x64_linux_hotspot_26_35.tar.gz
-      - on arm64: https://github.com/adoptium/temurin26-binaries/releases/download/jdk-26%2B35/OpenJDK26U-jdk_aarch64_linux_hotspot_26_35.tar.gz
+      - on amd64: https://github.com/adoptium/temurin26-binaries/releases/download/jdk-26.0.1%2B8/OpenJDK26U-jdk_x64_linux_hotspot_26.0.1_8.tar.gz
+      - on arm64: https://github.com/adoptium/temurin26-binaries/releases/download/jdk-26.0.1%2B8/OpenJDK26U-jdk_aarch64_linux_hotspot_26.0.1_8.tar.gz
     source-checksum:
-      - on amd64: sha256/68e19ba53b7f1f74635c13f809e5db36cebccf3ae9e752423dd92d2ad7d831ef
-      - on arm64: sha256/e8ff1f23c5acef74d1b4937dadd67286d67be06758f5d9dca5478c35bf404e83
+      - on amd64: sha256/8e512f13e575a43655fc92319436c94890c137b9035cc6bd6f9cf24239704d3a
+      - on arm64: sha256/613f9b2861dea937b24d5eca745ef8567733b377d0bb612195acaad0e3f61360
     organize:
       '*': java-runtime/
     override-stage: 'true'

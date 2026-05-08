@@ -29,6 +29,7 @@ public class CopyPixelsTask extends RecursiveAction {
   @Override
   protected void compute() {
     if (end - start <= THRESHOLD) {
+      if (start >= end || width <= 0) return;
       int x = start % width;
       int y = start / width;
       for (int i = start; i < end; i++) {

@@ -11,21 +11,33 @@ package org.weasis.dicom.rt;
 
 import java.util.List;
 import org.weasis.core.ui.model.graphic.imp.seg.SegContour;
+import org.weasis.opencv.data.PlanarImage;
 import org.weasis.opencv.seg.Segment;
 
+/** RT-specific {@link SegContour} carrying its raw patient-coordinate points and slice Z. */
 public class StructContour extends SegContour {
 
+  private static final double UNCOMPUTED_AREA = -1.0;
+
   private Double positionZ;
-  private double area;
+  private double area = UNCOMPUTED_AREA;
+  private double[] points;
 
   public StructContour(String id, List<Segment> segmentList) {
     super(id, segmentList);
-    this.area = -1.0;
   }
 
   public StructContour(String id, List<Segment> segmentList, int numberOfPixels) {
     super(id, segmentList, numberOfPixels);
-    this.area = -1.0;
+  }
+
+  /**
+   * Creates a {@code StructContour} backed by a raster fractional mask (single-channel grayscale,
+   * normalized to {@code [0, 255]}) instead of vector contours. Used for raster-based RT overlays
+   * such as isodose regions, which are computed by thresholding the RT Dose grid.
+   */
+  public StructContour(String id, PlanarImage fractionalMask, double weightedPixelCount) {
+    super(id, fractionalMask, weightedPixelCount);
   }
 
   public void setPositionZ(Double z) {
@@ -33,13 +45,28 @@ public class StructContour extends SegContour {
   }
 
   public Double getPositionZ() {
-    return this.positionZ;
+    return positionZ;
   }
 
+  @Override
   public double getArea() {
-    if (this.area < 0) {
-      this.area = super.getArea();
+    if (area < 0) {
+      area = super.getArea();
     }
     return area;
+  }
+
+  /**
+   * Returns the raw RTSTRUCT contour points as a flat array of patient-coordinate triplets {@code
+   * [x0, y0, z0, x1, y1, z1, ...]} in millimeters.
+   *
+   * @return the contour points, or {@code null} if not set
+   */
+  public double[] getPoints() {
+    return points;
+  }
+
+  public void setPoints(double[] points) {
+    this.points = points;
   }
 }

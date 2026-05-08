@@ -84,12 +84,12 @@ import org.weasis.dicom.codec.HiddenSpecialElement;
 import org.weasis.dicom.codec.KOSpecialElement;
 import org.weasis.dicom.codec.PRSpecialElement;
 import org.weasis.dicom.codec.RejectedKOSpecialElement;
-import org.weasis.dicom.codec.SegSpecialElement;
 import org.weasis.dicom.codec.SortSeriesStack;
 import org.weasis.dicom.codec.SpecialElementReferences;
 import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.TagD.Level;
 import org.weasis.dicom.codec.display.Modality;
+import org.weasis.dicom.codec.seg.SegSpecialElement;
 import org.weasis.dicom.codec.utils.SplittingModalityRules;
 import org.weasis.dicom.codec.utils.SplittingModalityRules.Rule;
 import org.weasis.dicom.codec.utils.SplittingRules;
@@ -986,7 +986,37 @@ public class DicomModel implements TreeModel, DataExplorerModel {
               .filter(series -> series instanceof DicomSeries)
               .map(series -> (DicomSeries) series)
               .toList();
-      seg.initContours(originalSeries, refSeriesList);
+
+      // Build SEG contours asynchronously so a heavy multi-frame SEG never blocks the
+      // import/Q-R session. The work runs silently on the common pool: heavier per-volume
+      // construction (segmentation volume, MPR overlays) is deferred to the viewer
+      // initializers (e.g. MprController#buildSegElementsAsync), so we no longer surface
+      // a dedicated loading task in the DICOM explorer's bottom bar.
+      java.util.concurrent.CompletableFuture.runAsync(
+          () -> {
+            try {
+              seg.initContours(originalSeries, refSeriesList);
+            } catch (RuntimeException e) {
+              LOGGER.error("SEG loading failed for series {}", seriesUID, e);
+              return;
+            }
+            if (!seg.isReady()) {
+              return;
+            }
+            // When no referenced series could be resolved (either the ReferencedSeriesSequence
+            // is absent, or the referenced series UIDs are not present in the current model)
+            // but spatial matching succeeded (positionMap is populated), populate
+            // reference2Series by finding all non-hidden series for the same patient with
+            // matching FrameOfReferenceUID. This ensures the segmentation icon appears on
+            // thumbnails and the SegmentationTool can discover the SEG element even when the
+            // series UIDs differ.
+            if (refSeriesList.isEmpty() && !seg.getPositionMap().isEmpty()) {
+              populateReferencesByFrameOfRef(seriesUID, originalSeries);
+            }
+            // Notify viewers (View2dContainer, etc.) that the SEG is ready so they refresh
+            // overlays.
+            firePropertyChange(new ObservableEvent(BasicAction.UPDATE, DicomModel.this, null, seg));
+          });
     } else if (hiddenElement instanceof PRSpecialElement pr) {
       PrDicomObject prDicomObject = pr.getPrDicomObject();
       if (StringUtil.hasText(seriesUID) && prDicomObject != null) {
@@ -1022,6 +1052,46 @@ public class DicomModel implements TreeModel, DataExplorerModel {
                 .patient2Series
                 .computeIfAbsent(patientPseudoUID, _ -> new CopyOnWriteArraySet<>());
         patients.add(seriesUID);
+      }
+    }
+  }
+
+  /**
+   * Populates reference2Series by finding all non-hidden series for the same patient that share the
+   * same FrameOfReferenceUID as the SEG. This is used as a fallback when the SEG DICOM object does
+   * not contain a ReferencedSeriesSequence (common for AI-generated segmentations).
+   */
+  private void populateReferencesByFrameOfRef(String segSeriesUID, DicomSeries originalSeries) {
+    String segFrameOfRefUID =
+        TagD.getTagValue(originalSeries, Tag.FrameOfReferenceUID, String.class);
+    if (segFrameOfRefUID == null) {
+      return;
+    }
+
+    MediaSeriesGroup studyGroup = getParent(originalSeries, DicomModel.study);
+    if (studyGroup == null) {
+      return;
+    }
+    MediaSeriesGroup patientGroup = getParent(studyGroup, DicomModel.patient);
+    if (patientGroup == null) {
+      return;
+    }
+
+    for (MediaSeriesGroup st : getChildren(patientGroup)) {
+      for (MediaSeriesGroup item : getChildren(st)) {
+        String itemSeriesUID = TagD.getTagValue(item, Tag.SeriesInstanceUID, String.class);
+        String itemFrameOfRef = TagD.getTagValue(item, Tag.FrameOfReferenceUID, String.class);
+        // Link non-self series with matching FrameOfReferenceUID that are regular image series
+        // (not hidden special series like other SEGs, KOs, PRs, or RT objects)
+        if (segFrameOfRefUID.equals(itemFrameOfRef)
+            && !segSeriesUID.equals(itemSeriesUID)
+            && item instanceof DicomSeries ds
+            && DicomMediaIO.SERIES_MIMETYPE.equals(ds.getMimeType())) {
+          HiddenSeriesManager.getInstance()
+              .reference2Series
+              .computeIfAbsent(itemSeriesUID, _ -> new CopyOnWriteArraySet<>())
+              .add(segSeriesUID);
+        }
       }
     }
   }
