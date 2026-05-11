@@ -304,6 +304,9 @@ public class DicomImageElement extends ImageElement implements DicomElement {
 
   public PlanarImage getModalityLutImage(OpManager manager, DicomImageReadParam params) {
     PlanarImage image = getImage(manager, adapter == null);
+    if (image == null || adapter == null) {
+      return image;
+    }
     return ImageRendering.getModalityLutImage(image, adapter, params);
   }
 
