@@ -50,12 +50,23 @@ public class SynchView implements GUIEntry {
             actions);
 
     actions = new HashMap<>();
+    // Stack mode default: only Scroll is propagated. Every other option is initialized to false
+    // so the user must explicitly enable Pan / Zoom / W/L / etc. (per-view via the sync popup
+    // or globally via the toolbar dropdown). Keys are still listed so the popup checkboxes
+    // render with explicit "off" states (rather than appearing as missing entries).
     actions.put(ActionW.SCROLL_SERIES.cmd(), true);
-    actions.put(ActionW.PAN.cmd(), true);
-    actions.put(ActionW.ZOOM.cmd(), true);
-    actions.put(ActionW.ROTATION.cmd(), true);
-    actions.put(ActionW.FLIP.cmd(), true);
-    actions.put(ActionW.SPATIAL_UNIT.cmd(), true);
+    actions.put(ActionW.PAN.cmd(), false);
+    actions.put(ActionW.ZOOM.cmd(), false);
+    actions.put(ActionW.ROTATION.cmd(), false);
+    actions.put(ActionW.FLIP.cmd(), false);
+    actions.put(ActionW.WINDOW.cmd(), false);
+    actions.put(ActionW.LEVEL.cmd(), false);
+    actions.put(ActionW.PRESET.cmd(), false);
+    actions.put(ActionW.LUT_SHAPE.cmd(), false);
+    actions.put(ActionW.LUT.cmd(), false);
+    actions.put(ActionW.INVERT_LUT.cmd(), false);
+    actions.put(ActionW.FILTER.cmd(), false);
+    actions.put(ActionW.SPATIAL_UNIT.cmd(), false);
     DEFAULT_STACK =
         new SynchView(
             Messages.getString("SynchView.def_s"),
@@ -99,6 +110,24 @@ public class SynchView implements GUIEntry {
 
   public void resetSynchData() {
     this.synchData = originalSynchData.copy();
+  }
+
+  /**
+   * Set the enabled state of a synchronizable action and persist it across {@link
+   * #resetSynchData()} calls (which happen on layout changes and viewer container creation).
+   *
+   * <p>Updates both the live {@link #synchData} and the {@link #originalSynchData} snapshot so user
+   * preferences survive view/layout changes.
+   *
+   * @param cmd the action command (e.g. {@code ActionW.ZOOM.cmd()})
+   * @param enabled whether the action should be propagated to other views
+   */
+  public void setActionEnabled(String cmd, boolean enabled) {
+    if (cmd == null) {
+      return;
+    }
+    synchData.getActions().put(cmd, enabled);
+    originalSynchData.getActions().put(cmd, enabled);
   }
 
   public boolean isSynch() {

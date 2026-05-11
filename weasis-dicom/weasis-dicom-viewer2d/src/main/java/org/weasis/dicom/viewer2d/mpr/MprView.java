@@ -694,6 +694,13 @@ public class MprView extends View2d implements SliceCanvas, ViewProgress {
         });
     menu.add(item);
 
+    // Per-view sync options + "Apply to all synchronized views"
+    JMenu syncOptions = buildSynchOptionsMenu(org.weasis.core.Messages.getString("ActionW.synch"));
+    if (syncOptions != null) {
+      popupMenu.addSeparator();
+      popupMenu.add(syncOptions);
+    }
+
     popupMenu.addSeparator();
     popupMenu.add(menu);
     popupMenu.show(invoker, x, y);

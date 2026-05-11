@@ -1,4 +1,4 @@
-# Analysis of mhex's Synchronization Refactoring (branch `4.7-synchro`)
+# Analysis of Synchronization Refactoring
 
 ## Overview
 
@@ -112,20 +112,9 @@ The core algorithm in stack mode:
 
 ---
 
-## Known Issues & Incomplete Areas
+### Remaining known limitation
 
-1. **Manual sync deactivation not implemented** – The commit message explicitly states this. The "OFF" path in `ManualSynchViewButton` click handler has empty loops and commented-out code.
-2. **Multiple TODOs** throughout:
-    - Adapting list of manually syncable views depending on existing auto-sync.
-    - Error message if no location information is available for manual sync.
-    - Display criteria for auto/manual buttons.
-    - Blocking sync activation when nothing can be synced.
-3. **Debug output** – `System.err.println` calls left in production code (`resetSynchState`, `configurePaneSynchData`).
-4. **`SynchOptionsCheckBoxGroup`** – The action listeners for individual sync options (scroll, zoom, rotation, etc.) are entirely commented out. The class is instantiated in `ViewerToolBar` but the menu items are not wired up.
-5. **`DefaultView2d.resetSynchState()`** – Manual sync cleanup on series change is commented out ("The updated view is included in manual synchronization, disable it for this view...").
-6. **`SynchManager.markOrphanViews()`** – References an `eventManager.getOptions()` map with key `"force.sync.orphans"` that doesn't appear to be populated anywhere.
-7. **`updatePaneSynchData()` in `DicomSynchManager`** – The entire method body is commented out (both `setActionsInView` calls), making it a no-op.
-8. **Black background fill** – `DefaultView2d.draw()` now fills the entire view with `Color.BLACK` at the beginning of every paint, which may have performance implications or be unintended debug code.
+- **Sync options per-SynchView reset** – When the user switches the global SynchView (e.g. from Stack to Tile and back), the per-action checkbox state in `SynchOptionsCheckBoxGroup` is not persisted or restored. The checkboxes always reset to all-enabled. A full solution would require observing `ActionW.SYNCH` combo changes and synchronising the checkbox model.
 
 ---
 

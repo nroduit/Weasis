@@ -12,63 +12,91 @@ package org.weasis.core.ui.editor.image;
 import com.formdev.flatlaf.extras.FlatSVGIcon;
 import com.formdev.flatlaf.extras.FlatSVGIcon.ColorFilter;
 import java.awt.Color;
+import java.awt.Graphics2D;
+import java.awt.RenderingHints;
+import java.util.EnumMap;
+import java.util.Map;
 import javax.swing.Icon;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.GuiUtils.IconColor;
 import org.weasis.core.api.util.ResourceUtil;
+import org.weasis.core.ui.editor.image.SynchData.SyncState;
 
+/**
+ * Per-view overlay button toggling automatic synchronization for a single view.
+ *
+ * <p>The button only renders the current {@link SyncState}; all state transitions are owned by
+ * {@link DefaultView2d#updateSynchState()} which is the single source of truth.
+ */
 public class SynchViewButton extends ViewButton {
-  private static final FlatSVGIcon ICON =
+  private static final FlatSVGIcon BASE_ICON =
       ResourceUtil.getIcon(ResourceUtil.ActionIcon.SYNCH, 20, 20);
+  private static final Color BASE_COLOR = new Color(0x6E6E6E);
 
-  protected State state = State.OFF;
+  /** Colored icons keyed by the domain {@link SyncState}, computed once at class init. */
+  private static final Map<SyncState, FlatSVGIcon> ICONS = new EnumMap<>(SyncState.class);
 
-  public enum State {
-    OFF("Off", IconColor.ACTIONS_RED.getColor()),
-    ON("On", GuiUtils.IconColor.ACTIONS_GREEN.getColor());
-
-    private final String name;
-    private final FlatSVGIcon icon;
-    private final Color color;
-
-    State(String name, Color color) {
-      this.name = name;
-      this.color = color;
-      this.icon = GuiUtils.getDerivedIcon(ICON, new ColorFilter().add(new Color(0x6E6E6E), color));
-    }
-
-    public String getName() {
-      return name;
-    }
-
-    @Override
-    public String toString() {
-      return name;
-    }
-
-    public FlatSVGIcon getIcon() {
-      return icon;
-    }
-
-    public Color getColor() {
-      return color;
-    }
+  static {
+    ICONS.put(SyncState.OFF, derive(IconColor.ACTIONS_RED.getColor()));
+    ICONS.put(SyncState.ON, derive(IconColor.ACTIONS_GREEN.getColor()));
   }
+
+  private static FlatSVGIcon derive(Color color) {
+    return GuiUtils.getDerivedIcon(BASE_ICON, new ColorFilter().add(BASE_COLOR, color));
+  }
+
+  protected SyncState state = SyncState.OFF;
+  private Color chipColor;
 
   public SynchViewButton(ShowPopup popup) {
-    super(popup, State.OFF.getIcon(), "sync"); // NON-NLS
+    super(popup, ICONS.get(SyncState.OFF), "sync"); // NON-NLS
   }
 
-  public State getState() {
+  public SyncState getState() {
     return state;
   }
 
-  public void setState(State state) {
+  public void setState(SyncState state) {
     this.state = state;
+  }
+
+  /**
+   * Set the FoR chip color. {@code null} suppresses the chip — used for views without a known frame
+   * of reference, or when the container has no other view to group with.
+   */
+  public void setChipColor(Color chipColor) {
+    this.chipColor = chipColor;
   }
 
   @Override
   public Icon getIcon() {
-    return state.getIcon();
+    return ICONS.get(state);
+  }
+
+  /**
+   * Paint a small filled square at the icon center using the per-view chip color (set externally
+   * from container-aware logic). Skipped when no color is set.
+   */
+  @Override
+  protected void paintOverlay(Graphics2D g2d, int x, int y, int width, int height) {
+    Color chip = chipColor;
+    if (chip == null) {
+      return;
+    }
+    int side = Math.max(4, Math.round(width * 0.35f));
+    int cx = x + (width - side) / 2;
+    int cy = y + (height - side) / 2;
+
+    Object oldAA = g2d.getRenderingHint(RenderingHints.KEY_ANTIALIASING);
+    Color oldColor = g2d.getColor();
+    g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+    g2d.setColor(chip);
+    g2d.fillRect(cx, cy, side, side);
+    g2d.setColor(chip.darker());
+    g2d.drawRect(cx, cy, side - 1, side - 1);
+    g2d.setColor(oldColor);
+    if (oldAA != null) {
+      g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, oldAA);
+    }
   }
 }

@@ -37,6 +37,8 @@ public final class FocusHandler<E extends ImageElement> extends MouseActionAdapt
   private final ViewCanvas<E> viewCanvas;
   private long lastUpdateTime;
 
+  private boolean buttonPressActive;
+
   public FocusHandler(ViewCanvas<E> viewCanvas) {
     this.viewCanvas = viewCanvas;
   }
@@ -49,21 +51,35 @@ public final class FocusHandler<E extends ImageElement> extends MouseActionAdapt
     }
 
     var selectedButton = findViewButtonAt(evt.getPoint());
-    // Do select the view when pressing on a view button
-    if (evt.getClickCount() == 2 && selectedButton.isEmpty()) {
+
+    if (selectedButton.isPresent()) {
+      // Consume immediately so action adapters that check isConsumed() (SliderChangeListener,
+      // CrosshairListener, GraphicMouseHandler, …) skip the event before any side effect runs.
+      buttonPressActive = true;
+      evt.consume();
+      selectViewIfNeeded(pane);
+      viewCanvas.getJComponent().requestFocusInWindow();
+      handleViewButtonClick(evt, selectedButton.get());
+      return;
+    }
+
+    buttonPressActive = false;
+
+    if (evt.getClickCount() == 2) {
       pane.maximizedSelectedImagePane(viewCanvas, evt);
       return;
     }
 
     selectViewIfNeeded(pane);
     viewCanvas.getJComponent().requestFocusInWindow();
-
-    if (selectedButton.isPresent()) {
-      handleViewButtonClick(evt, selectedButton.get());
-      return;
-    }
-
     updateCursorForMouseAction(evt);
+  }
+
+  @Override
+  public void mouseDragged(MouseEvent evt) {
+    if (buttonPressActive) {
+      evt.consume();
+    }
   }
 
   @Override
@@ -95,7 +111,14 @@ public final class FocusHandler<E extends ImageElement> extends MouseActionAdapt
   @Override
   public void mouseReleased(MouseEvent evt) {
     viewCanvas.getJComponent().setCursor(DefaultView2d.DEFAULT_CURSOR);
-    findViewButtonAt(evt.getPoint()).ifPresent(_ -> evt.consume());
+    if (buttonPressActive) {
+      // Consume even if the release point drifted off the button; clear the flag so a real
+      // subsequent drag (Pan, Scroll, …) is not wrongly suppressed.
+      evt.consume();
+      buttonPressActive = false;
+    } else {
+      findViewButtonAt(evt.getPoint()).ifPresent(_ -> evt.consume());
+    }
   }
 
   private Optional<ViewButton> findViewButtonAt(Point point) {

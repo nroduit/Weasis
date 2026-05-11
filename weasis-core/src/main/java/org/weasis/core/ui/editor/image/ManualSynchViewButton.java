@@ -12,63 +12,54 @@ package org.weasis.core.ui.editor.image;
 import com.formdev.flatlaf.extras.FlatSVGIcon;
 import com.formdev.flatlaf.extras.FlatSVGIcon.ColorFilter;
 import java.awt.Color;
+import java.util.EnumMap;
+import java.util.Map;
 import javax.swing.Icon;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.GuiUtils.IconColor;
 import org.weasis.core.api.util.ResourceUtil;
+import org.weasis.core.ui.editor.image.SynchData.SyncState;
 
+/**
+ * Per-view overlay button activating manual synchronization with another view (different
+ * FrameOfReferenceUID, same orientation). Click opens a series-picker popup when several candidates
+ * are eligible.
+ *
+ * <p>The button only renders the current {@link SyncState}; all state transitions are owned by
+ * {@link DefaultView2d#updateSynchState()} which is the single source of truth.
+ */
 public class ManualSynchViewButton extends ViewButton {
-  private static final FlatSVGIcon ICON =
+  private static final FlatSVGIcon BASE_ICON =
       ResourceUtil.getIcon(ResourceUtil.ActionIcon.HAND, 20, 20);
+  private static final Color BASE_COLOR = new Color(0x6E6E6E);
 
-  protected State state = State.OFF;
+  private static final Map<SyncState, FlatSVGIcon> ICONS = new EnumMap<>(SyncState.class);
 
-  public enum State {
-    OFF("Off", IconColor.ACTIONS_RED.getColor()),
-    ON("On", IconColor.ACTIONS_GREEN.getColor());
-
-    private final String name;
-    private final FlatSVGIcon icon;
-    private final Color color;
-
-    State(String name, Color color) {
-      this.name = name;
-      this.color = color;
-      this.icon = GuiUtils.getDerivedIcon(ICON, new ColorFilter().add(new Color(0x6E6E6E), color));
-    }
-
-    public String getName() {
-      return name;
-    }
-
-    @Override
-    public String toString() {
-      return name;
-    }
-
-    public FlatSVGIcon getIcon() {
-      return icon;
-    }
-
-    public Color getColor() {
-      return color;
-    }
+  static {
+    ICONS.put(SyncState.OFF, derive(IconColor.ACTIONS_RED.getColor()));
+    ICONS.put(SyncState.ON, derive(IconColor.ACTIONS_GREEN.getColor()));
   }
+
+  private static FlatSVGIcon derive(Color color) {
+    return GuiUtils.getDerivedIcon(BASE_ICON, new ColorFilter().add(BASE_COLOR, color));
+  }
+
+  protected SyncState state = SyncState.OFF;
 
   public ManualSynchViewButton(ShowPopup popup) {
-    super(popup, State.OFF.getIcon(), "manualsync"); // NON-NLS
+    super(popup, ICONS.get(SyncState.OFF), "manualsync"); // NON-NLS
   }
 
-  public State getState() {
+  public SyncState getState() {
     return state;
   }
 
-  public void setState(State state) {
+  public void setState(SyncState state) {
     this.state = state;
   }
 
   @Override
   public Icon getIcon() {
-    return state.getIcon();
+    return ICONS.get(state);
   }
 }
