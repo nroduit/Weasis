@@ -102,6 +102,7 @@ import javax.swing.JScrollPane;
 import javax.swing.JSeparator;
 import javax.swing.KeyStroke;
 import javax.swing.RootPaneContainer;
+import javax.swing.ScrollPaneConstants;
 import javax.swing.TransferHandler.DropLocation;
 import javax.swing.WindowConstants;
 import org.osgi.framework.BundleContext;
@@ -283,9 +284,8 @@ public class WeasisWin {
           }
         };
 
-    scrollPane.setHorizontalScrollBarPolicy(
-        javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-    scrollPane.setVerticalScrollBarPolicy(javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
+    scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+    scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
     scrollPane.setBorder(null);
     rootPaneContainer.getContentPane().add(scrollPane, BorderLayout.NORTH);
 

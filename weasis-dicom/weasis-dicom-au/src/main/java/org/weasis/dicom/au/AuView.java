@@ -212,7 +212,7 @@ public class AuView extends JPanel implements SeriesViewerListener {
 
     // This timer calls the tick( ) method 10 times a second to keep
     // our slider in sync with the music.
-    timer = new javax.swing.Timer(100, e -> tick());
+    timer = new Timer(100, e -> tick());
     add(GuiUtils.boxVerticalStrut(15));
     add(GuiUtils.getHorizontalBoxLayoutPanel(10, play, progress, time));
     add(GuiUtils.boxVerticalStrut(15));

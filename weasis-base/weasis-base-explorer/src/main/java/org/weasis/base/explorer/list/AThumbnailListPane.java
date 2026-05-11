@@ -19,6 +19,7 @@ import javax.swing.JScrollPane;
 import javax.swing.ScrollPaneConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 import org.weasis.base.explorer.JIExplorerContext;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.media.data.MediaElement;
@@ -58,7 +59,7 @@ public abstract class AThumbnailListPane<E extends MediaElement> extends JScroll
         });
   }
 
-  final class JIListSelectionAdapter implements javax.swing.event.ListSelectionListener {
+  final class JIListSelectionAdapter implements ListSelectionListener {
 
     JIListSelectionAdapter() {}
 

@@ -38,7 +38,9 @@ import javax.swing.JSplitPane;
 import javax.swing.JTree;
 import javax.swing.SwingUtilities;
 import javax.swing.event.TreeExpansionEvent;
+import javax.swing.event.TreeExpansionListener;
 import javax.swing.event.TreeSelectionEvent;
+import javax.swing.event.TreeWillExpandListener;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.ExpandVetoException;
@@ -433,8 +435,7 @@ public class DefaultExplorer extends PluginTool implements DataExplorerView {
     tree.scrollPathToVisible(newPath);
   }
 
-  static final class JITreeDiskWillExpandAdapter
-      implements javax.swing.event.TreeWillExpandListener {
+  static final class JITreeDiskWillExpandAdapter implements TreeWillExpandListener {
 
     @Override
     public void treeWillExpand(final TreeExpansionEvent e) throws ExpandVetoException {
@@ -453,7 +454,7 @@ public class DefaultExplorer extends PluginTool implements DataExplorerView {
     }
   }
 
-  final class JITreeDiskExpansionAdapter implements javax.swing.event.TreeExpansionListener {
+  final class JITreeDiskExpansionAdapter implements TreeExpansionListener {
 
     @Override
     public void treeExpanded(final TreeExpansionEvent e) {
