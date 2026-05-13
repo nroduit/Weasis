@@ -70,8 +70,8 @@ public class SegSpecialElement extends HiddenSpecialElement
    * cancellable task in the explorer's bottom loading panel; in headless contexts the {@link
    * SegmentationVolumeBuildExecutor#DEFAULT default} fork-join pool executor is used.
    */
-  private static volatile SegmentationVolumeBuildExecutor volumeBuildExecutor =
-      SegmentationVolumeBuildExecutor.DEFAULT; // NOSONAR visibility reference
+  private static volatile SegmentationVolumeBuildExecutor volumeBuildExecutor = // NOSONAR ref
+      SegmentationVolumeBuildExecutor.DEFAULT;
 
   /**
    * Installs a custom scheduler for the asynchronous canonical segmentation volume build (e.g. the
