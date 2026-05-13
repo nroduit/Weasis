@@ -77,10 +77,7 @@ public class SegMeasurableLayer<E extends ImageElement> implements MeasurableLay
   @Override
   public double pixelToRealValue(Number pixelValue) {
     Number val = sourceImage.pixelToRealValue(pixelValue, null);
-    if (val != null) {
-      return val.doubleValue();
-    }
-    return 0;
+    return val == null ? 0 : val.doubleValue();
   }
 
   @Override

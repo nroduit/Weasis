@@ -78,6 +78,48 @@ float getAabb(float val, int dir) {
     return dir == 0 ? -val : val;
 }
 
+// *************************************************************************************************
+// Crosshair cut — mirrors the legacy volumetricCenterSlicing logic.
+//
+// The cut plane(s) pass through crosshairPos (normalised [0,1]³ texture space) and are oriented by
+// crosshairRot (MPR global rotation matrix, volume space → volume space).
+//
+//   localVec = crosshairRot * (texCoord - crosshairPos)
+//   Axes: X = Left/Right,  Y = Up/Down,  Z = Front/Back (view depth)
+// *************************************************************************************************
+bool isCrosshairCut(vec3 texCoord) {
+    if (crosshairCutMode == 0 || !crosshairVisible) return false;
+
+    // Vector from the cut centre to the current sample in the crosshair local frame.
+    vec3 v = crosshairRot * (texCoord - crosshairPos);
+
+    // Half-space modes
+    if      (crosshairCutMode == 1) return v.x < 0.0;               // RIGHT
+    else if (crosshairCutMode == 2) return v.x > 0.0;               // LEFT
+    else if (crosshairCutMode == 3) return v.y < 0.0;               // FRONT
+    else if (crosshairCutMode == 4) return v.y > 0.0;               // BACK
+    else if (crosshairCutMode == 5) return v.z > 0.0;               // UP
+    else if (crosshairCutMode == 6) return v.z < 0.0;               // DOWN
+
+    // Quadrant modes — two simultaneous 1/4-space tests along X and Z
+    else if (crosshairCutMode == 7) return v.x < 0.0 && v.z > 0.0; // RIGHT_UP
+    else if (crosshairCutMode == 8)  return v.x > 0.0 && v.z > 0.0; // LEFT_UP
+    else if (crosshairCutMode == 9)  return v.x < 0.0 && v.z < 0.0; // RIGHT_DOWN
+    else if (crosshairCutMode == 10)  return v.x > 0.0 && v.z < 0.0; // LEFT_DOWN
+
+    // Octant modes — three simultaneous 1/8-space tests along X, Y, and Z
+    else if (crosshairCutMode == 11) return v.x < 0.0 && v.z > 0.0 && v.y < 0.0; // UP_RIGHT_FRONT
+    else if (crosshairCutMode == 12) return v.x > 0.0 && v.z > 0.0 && v.y < 0.0; // UP_LEFT_FRONT
+    else if (crosshairCutMode == 13) return v.x < 0.0 && v.z < 0.0 && v.y < 0.0; // DOWN_RIGHT_FRONT
+    else if (crosshairCutMode == 14) return v.x > 0.0 && v.z < 0.0 && v.y < 0.0; // DOWN_LEFT_FRONT
+    else if (crosshairCutMode == 15) return v.x < 0.0 && v.z > 0.0 && v.y > 0.0; // UP_RIGHT_BACK
+    else if (crosshairCutMode == 16) return v.x > 0.0 && v.z > 0.0 && v.y > 0.0; // UP_LEFT_BACK
+    else if (crosshairCutMode == 17) return v.x < 0.0 && v.z < 0.0 && v.y > 0.0; // DOWN_RIGHT_BACK
+    else if (crosshairCutMode == 18) return v.x > 0.0 && v.z < 0.0 && v.y > 0.0; // DOWN_LEFT_BACK
+
+    return false;
+}
+
 void intersect(in Ray ray, out float tmin, out float tmax) {
     float tymin, tymax, tzmin, tzmax;
     tmin = (getAabb(texelSize.x, ray.sign[0]) - ray.origin.x) * ray.invDirection.x;
@@ -92,6 +134,28 @@ void intersect(in Ray ray, out float tmin, out float tmax) {
 
 vec4 applyTextureColor(float pix){
     return texture(colorMap, vec2(pix, 0.0));
+}
+
+// *************************************************************************************************
+// Segmentation overlay — samples the segTexture (usampler3D, GL_R32UI) which now stores per-voxel
+// storage IDs (one ID per segment, plus extra IDs for overlap combinations) and looks the colour
+// up in segColorMap (RGBA8) which is indexed by storage ID. Overlap combinations are pre-blended
+// in the LUT by SegmentationVolume.buildSegmentColorLUT(), so no per-bit compositing is needed
+// here. Returns vec4(0) when no segment is present or the overlay is disabled.
+// *************************************************************************************************
+vec4 sampleSegOverlay(vec3 texCoord) {
+    if (!segOverlayEnabled || segSegmentCount <= 0) return vec4(0.0);
+
+    // Convert from [0,1]³ volume-texture coordinates to integer voxel coordinates for texelFetch.
+    ivec3 segSize = textureSize(segTexture, 0);
+    ivec3 voxel = ivec3(round(texCoord * vec3(segSize) - vec3(0.5)));
+    if (any(lessThan(voxel, ivec3(0))) || any(greaterThanEqual(voxel, segSize))) return vec4(0.0);
+
+    uint id = texelFetch(segTexture, voxel, 0).r;
+    if (id == 0u) return vec4(0.0);
+
+    // Single LUT lookup — combination IDs already point to a pre-composited RGBA.
+    return texelFetch(segColorMap, ivec2(int(id), 0), 0);
 }
 
 vec4 rayCastingMip(Ray ray, float tmin, float tmax, vec2 uv) {
@@ -114,6 +178,7 @@ vec4 rayCastingMip(Ray ray, float tmin, float tmax, vec2 uv) {
     for (int count = 0; count < sampleCount; count++) {
         rayPos += stepPos;
         texCoord = rayPos + ditheredRayStep;
+        if (isCrosshairCut(texCoord)) continue;
         pix = getNormalizedWindowLevel(texCoord);
 
         if (mipType == mipTypeMin) {
@@ -143,6 +208,29 @@ vec4 rayCastingMip(Ray ray, float tmin, float tmax, vec2 uv) {
     }
     vec4 pixel = applyTextureColor(mipPix);
     pixel.a = min(pixel.a * opacityFactor, 1.0);
+
+    // Overlay segmentation colours on top of the MIP result
+    if (segOverlayEnabled && pixel.a > 0.0) {
+        rayPos = start;
+        vec4 segAccum = vec4(0.0);
+        for (int count = 0; count < sampleCount; count++) {
+            rayPos += stepPos;
+            texCoord = rayPos + ditheredRayStep;
+            if (isCrosshairCut(texCoord)) continue;
+            vec4 segColor = sampleSegOverlay(texCoord);
+            if (segColor.a > 0.0) {
+                float alpha = (1.0 - segAccum.a) * segColor.a;
+                segAccum.rgb += alpha * segColor.rgb;
+                segAccum.a += alpha;
+                if (segAccum.a >= 0.99) break;
+            }
+        }
+        if (segAccum.a > 0.0) {
+            pixel.rgb = segAccum.rgb * segAccum.a + pixel.rgb * (1.0 - segAccum.a);
+            pixel.a = max(pixel.a, segAccum.a);
+        }
+    }
+
     return pixel;
 }
 
@@ -165,6 +253,7 @@ vec4 rayCastingComposite(Ray ray, float tmin, float tmax, vec2 uv) {
     for (int count = 0; count < sampleCount; count++) {
         rayPos += stepPos;
         texCoord = rayPos + ditheredRayStep;
+        if (isCrosshairCut(texCoord)) continue;
         pix = getNormalizedWindowLevel(texCoord);
         //pix = guassianFilter(texCoord, stepSize);
         vec4 pixel = applyTextureColor(pix);
@@ -194,6 +283,31 @@ vec4 rayCastingComposite(Ray ray, float tmin, float tmax, vec2 uv) {
             break;
         }
     }
+
+    // Overlay segmentation colours on top of the composited volume
+    if (segOverlayEnabled && pxColor.a > 0.0) {
+        // Re-trace with fewer samples just for the seg overlay
+        rayPos = start;
+        vec4 segAccum = vec4(0.0);
+        for (int count = 0; count < sampleCount; count++) {
+            rayPos += stepPos;
+            texCoord = rayPos + ditheredRayStep;
+            if (isCrosshairCut(texCoord)) continue;
+            vec4 segColor = sampleSegOverlay(texCoord);
+            if (segColor.a > 0.0) {
+                float alpha = (1.0 - segAccum.a) * segColor.a;
+                segAccum.rgb += alpha * segColor.rgb;
+                segAccum.a += alpha;
+                if (segAccum.a >= 0.99) break;
+            }
+        }
+        if (segAccum.a > 0.0) {
+            // Alpha-blend the segmentation overlay over the volume
+            pxColor.rgb = segAccum.rgb * segAccum.a + pxColor.rgb * (1.0 - segAccum.a);
+            pxColor.a = max(pxColor.a, segAccum.a);
+        }
+    }
+
     if (pxColor.a >= 0.99) {
         pxColor.a = 1.0;
     }
@@ -223,6 +337,7 @@ vec4 rayCastingIsoSurface(Ray ray, float tmin, float tmax, vec2 uv) {
     for (int count = 0; count < sampleCount; count++) {
         rayPos += stepPos;
         texCoord = rayPos + ditheredRayStep;
+        if (isCrosshairCut(texCoord)) continue;
         pix = getNormalizedWindowLevel(texCoord);
         vec4 pixel = applyTextureColor(pix);
         bool sign_cur = pix > center;
@@ -256,6 +371,29 @@ vec4 rayCastingIsoSurface(Ray ray, float tmin, float tmax, vec2 uv) {
     if (pxColor.a >= 0.99) {
         pxColor.a = 1.0;
     }
+
+    // Overlay segmentation colours on top of the iso-surface result
+    if (segOverlayEnabled && pxColor.a > 0.0) {
+        rayPos = start;
+        vec4 segAccum = vec4(0.0);
+        for (int count = 0; count < sampleCount; count++) {
+            rayPos += stepPos;
+            texCoord = rayPos + ditheredRayStep;
+            if (isCrosshairCut(texCoord)) continue;
+            vec4 segColor = sampleSegOverlay(texCoord);
+            if (segColor.a > 0.0) {
+                float alpha = (1.0 - segAccum.a) * segColor.a;
+                segAccum.rgb += alpha * segColor.rgb;
+                segAccum.a += alpha;
+                if (segAccum.a >= 0.99) break;
+            }
+        }
+        if (segAccum.a > 0.0) {
+            pxColor.rgb = segAccum.rgb * segAccum.a + pxColor.rgb * (1.0 - segAccum.a);
+            pxColor.a = max(pxColor.a, segAccum.a);
+        }
+    }
+
     return pxColor;
 }
 

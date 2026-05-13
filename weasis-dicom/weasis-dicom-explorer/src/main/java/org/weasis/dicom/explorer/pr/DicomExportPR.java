@@ -84,6 +84,7 @@ public class DicomExportPR extends DicomExport {
     iniTree();
   }
 
+  @Override
   protected void initTreeCheckingModel() {
     TreeCheckingModel checkingModel = getTreeModel().getCheckingModel();
     checkingModel.setCheckingMode(TreeCheckingModel.CheckingMode.PROPAGATE_PRESERVING_UNCHECK);

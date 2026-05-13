@@ -95,7 +95,8 @@ public class InfoLayer extends AbstractInfoLayer<DicomImageElement> {
   }
 
   @Override
-  public LayerAnnotation getLayerCopy(ViewCanvas view2DPane, boolean useGlobalPreferences) {
+  public LayerAnnotation<DicomImageElement> getLayerCopy(
+      ViewCanvas<DicomImageElement> view2DPane, boolean useGlobalPreferences) {
     InfoLayer layer = new InfoLayer(view2DPane, useGlobalPreferences);
     copyLayerValues(layer.displayPreferences);
     return layer;
@@ -137,7 +138,7 @@ public class InfoLayer extends AbstractInfoLayer<DicomImageElement> {
         GuiUtils.setRenderingHints(g2, true, false, view2DPane.requiredTextAntialiasing());
 
     try {
-      paintContent(g2, image, fontMetrics, bound);
+      paintContent(g2, image, bound);
     } finally {
       GuiUtils.resetRenderingHints(g2, oldRenderingHints);
     }
@@ -148,13 +149,13 @@ public class InfoLayer extends AbstractInfoLayer<DicomImageElement> {
     return visible && image != null && minSize <= bound.width && minSize / 2 <= bound.height;
   }
 
-  private void paintContent(
-      Graphics2D g2, DicomImageElement image, FontMetrics fontMetrics, Rectangle bound) {
+  private void paintContent(Graphics2D g2, DicomImageElement image, Rectangle bound) {
     OpManager disOp = view2DPane.getDisplayOpManager();
     Modality mod =
         Modality.getModality(TagD.getTagValue(view2DPane.getSeries(), Tag.Modality, String.class));
     ModalityInfoData modality = ModalityView.getModlatityInfos(mod);
 
+    FontMetrics fontMetrics = g2.getFontMetrics();
     float midX = bound.width / 2f;
     float midY = bound.height / 2f;
     int fontHeight = fontMetrics.getHeight();
@@ -277,7 +278,15 @@ public class InfoLayer extends AbstractInfoLayer<DicomImageElement> {
     MprController controller = mprView.getMprController();
     if (controller != null && controller.getVolume() != null) {
       if (controller.getVolume().isTransformed()) {
-        drawY = drawGeometricTransformationMessage(g2, drawY, fontHeight, border);
+        String message = Messages.getString("geometric.transformation.msg");
+        FontTools.paintColorFontOutline(
+            g2, message, border, drawY, IconColor.ACTIONS_RED.getColor());
+        drawY -= fontHeight;
+      } else if (controller.getVolume().isSkipRectification()) {
+        String message = Messages.getString("skip.rectification.msg");
+        FontTools.paintColorFontOutline(
+            g2, message, border, drawY, IconColor.ACTIONS_RED.getColor());
+        drawY -= fontHeight;
       }
     }
     return drawY;
@@ -792,13 +801,6 @@ public class InfoLayer extends AbstractInfoLayer<DicomImageElement> {
       int shiftY = bound.height - border - size;
       g2.fillRect(border + shiftX, shiftY, size - 1, size - 1);
     }
-  }
-
-  public static float drawGeometricTransformationMessage(
-      Graphics2D g2d, float drawY, int fontHeight, int border) {
-    String message = Messages.getString("geometric.transformation.msg");
-    FontTools.paintColorFontOutline(g2d, message, border, drawY, IconColor.ACTIONS_RED.getColor());
-    return drawY - fontHeight;
   }
 
   public static MediaSeriesGroup getParent(

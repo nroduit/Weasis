@@ -9,7 +9,7 @@
  */
 package org.weasis.dicom.viewer3d;
 
-import com.jogamp.opengl.GL4;
+import com.jogamp.opengl.GL2ES2;
 import java.awt.Component;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
@@ -68,8 +68,9 @@ import org.weasis.dicom.explorer.main.DicomExplorer;
 import org.weasis.dicom.viewer2d.LutToolBar;
 import org.weasis.dicom.viewer2d.View2dContainer;
 import org.weasis.dicom.viewer2d.mpr.MprContainer;
-import org.weasis.dicom.viewer2d.mpr.MprView;
-import org.weasis.dicom.viewer2d.mpr.MprView.Plane;
+import org.weasis.dicom.viewer2d.mpr.OriginalStack;
+import org.weasis.dicom.viewer2d.mpr.Volume;
+import org.weasis.dicom.viewer2d.mpr.VolumeProvider;
 import org.weasis.dicom.viewer3d.dockable.DisplayTool;
 import org.weasis.dicom.viewer3d.dockable.SegmentationTool;
 import org.weasis.dicom.viewer3d.dockable.VolumeTool;
@@ -77,10 +78,10 @@ import org.weasis.dicom.viewer3d.vr.DicomVolTexture;
 import org.weasis.dicom.viewer3d.vr.DicomVolTextureFactory;
 import org.weasis.dicom.viewer3d.vr.OpenglUtils;
 import org.weasis.dicom.viewer3d.vr.View3d;
-import org.weasis.dicom.viewer3d.vr.View3d.ViewType;
 import org.weasis.dicom.viewer3d.vr.VolumeBuilder;
 
-public class View3DContainer extends DicomViewerPlugin implements PropertyChangeListener {
+public class View3DContainer extends DicomViewerPlugin
+    implements PropertyChangeListener, VolumeProvider {
   private static final Logger LOGGER = LoggerFactory.getLogger(View3DContainer.class);
 
   static SynchView defaultMpr;
@@ -96,18 +97,17 @@ public class View3DContainer extends DicomViewerPlugin implements PropertyChange
     actions.put(ActionVol.VOL_PRESET.cmd(), true);
     actions.put(ActionW.INVERT_LUT.cmd(), true);
     actions.put(ActionW.FILTER.cmd(), true);
-    actions.put(ActionVol.MIP_TYPE.cmd(), true);
-    actions.put(ActionVol.MIP_DEPTH.cmd(), true);
     defaultMpr =
         new SynchView(
             org.weasis.dicom.viewer2d.Messages.getString("mpr.synchronisation"),
             "mpr", // NON-NLS
             SynchData.Mode.STACK,
+            true,
             ActionIcon.TILE,
             actions);
   }
 
-  public static final List<SynchView> SYNCH_LIST = List.of(SynchView.NONE, defaultMpr);
+  public static final List<SynchView> SYNCH_LIST = List.of(defaultMpr);
 
   public static final MigLayoutModel VIEWS_vr =
       new MigLayoutModel(
@@ -162,21 +162,9 @@ public class View3DContainer extends DicomViewerPlugin implements PropertyChange
   public View3DContainer(
       MigLayoutModel layoutModel, String uid, String pluginName, Icon icon, String tooltips) {
     super(EventManager.getInstance(), layoutModel, uid, pluginName, icon, tooltips);
-    setSynchView(SynchView.NONE);
     this.factory = new DicomVolTextureFactory();
     this.segType = SegmentationTool.Type.NONE;
     initTools();
-
-    //    final ViewerToolBar toolBar = getViewerToolBar();
-    //    if (toolBar != null) {
-    //      String command = ActionW.CROSSHAIR.cmd();
-    //      MouseActions mouseActions = eventManager.getMouseActions();
-    //      String lastAction = mouseActions.getAction(MouseActions.T_LEFT);
-    //      if (!command.equals(lastAction)) {
-    //        mouseActions.setAction(MouseActions.T_LEFT, command);
-    //        toolBar.changeButtonState(MouseActions.T_LEFT, command);
-    //      }
-    //    }
     factory.addPropertyChangeListener(this);
   }
 
@@ -344,7 +332,7 @@ public class View3DContainer extends DicomViewerPlugin implements PropertyChange
         MediaSeries<DicomImageElement> oldSequence = null;
         if (volumeBuilder != null) {
           oldSequence = volumeBuilder.getVolTexture().getSeries();
-          GL4 gl4 = OpenglUtils.getGL4();
+          GL2ES2 gl4 = OpenglUtils.getGL();
           if (gl4 != null && !series.equals(oldSequence)) {
             volumeBuilder.getVolTexture().destroy(gl4);
           }
@@ -386,7 +374,10 @@ public class View3DContainer extends DicomViewerPlugin implements PropertyChange
   public void reload() {
     if (volumeBuilder != null) {
       MediaSeries<DicomImageElement> oldSequence = volumeBuilder.getVolTexture().getSeries();
-      volumeBuilder.getVolTexture().destroy(OpenglUtils.getGL4());
+      GL2ES2 gl = OpenglUtils.getGL();
+      if (gl != null) {
+        volumeBuilder.getVolTexture().destroy(gl);
+      }
       // Force to rebuild
       this.volumeBuilder = null;
       addSeries(oldSequence);
@@ -408,42 +399,37 @@ public class View3DContainer extends DicomViewerPlugin implements PropertyChange
     return null;
   }
 
+  /**
+   * Returns the {@link Volume} held by this container's {@link DicomVolTexture} when its {@link
+   * OriginalStack} matches the given one, enabling volume sharing between Volume Rendering and MPR
+   * views for the same DICOM series.
+   *
+   * @param originalStack the stack to match; must not be {@code null}
+   * @return the matching volume, or {@code null} if this container has no matching volume
+   */
+  @Override
+  public Volume<?, ?> getVolumeForStack(OriginalStack originalStack) {
+    DicomVolTexture volTexture = getVolTexture();
+    if (volTexture != null) {
+      Volume<?, ?> volume = volTexture.getVolume();
+      if (volume != null && volume.getStack().equals(originalStack)) {
+        return volume;
+      }
+    }
+    return null;
+  }
+
   @Override
   protected synchronized void setLayoutModel(MigLayoutModel layoutModel) {
     super.setLayoutModel(layoutModel);
 
     DicomVolTexture curVolTexture = getVolTexture();
     final List<MigCell> cells = getLayoutModel().getCells();
-    int position = 0;
     for (MigCell cell : cells) {
       // Get the component directly from cellManager using the cell's position
       Component component = cellManager.getComponent(cell.position());
-
       if (component instanceof View3d vt) {
-        ViewType viewType;
-        if (layoutModel.getCellCount() < 3) {
-          viewType = ViewType.VOLUME3D;
-        } else {
-          viewType =
-              switch (position) {
-                case 0 -> ViewType.AXIAL;
-                case 1 -> ViewType.CORONAL;
-                case 2 -> ViewType.SAGITTAL;
-                default -> ViewType.VOLUME3D;
-              };
-        }
-        vt.setViewType(viewType);
-        position++;
         vt.setVolTexture(curVolTexture);
-      } else if (component instanceof MprView mpr) {
-        Plane plane =
-            switch (position) {
-              case 1 -> Plane.CORONAL;
-              case 2 -> Plane.SAGITTAL;
-              default -> Plane.AXIAL;
-            };
-        mpr.setType(plane);
-        position++;
       }
     }
   }
@@ -460,15 +446,14 @@ public class View3DContainer extends DicomViewerPlugin implements PropertyChange
     if (menuRoot != null) {
       menuRoot.removeAll();
       if (eventManager instanceof EventManager manager) {
-        GuiUtils.addItemToMenu(menuRoot, manager.getPresetMenu(null));
-        GuiUtils.addItemToMenu(menuRoot, manager.getLutShapeMenu(null));
         GuiUtils.addItemToMenu(menuRoot, manager.getLutMenu(null));
+        GuiUtils.addItemToMenu(menuRoot, manager.getLutShapeMenu(null));
         menuRoot.add(new JSeparator());
         GuiUtils.addItemToMenu(menuRoot, manager.getViewTypeMenu(null));
-        GuiUtils.addItemToMenu(menuRoot, manager.getMipTypeMenu(null));
         GuiUtils.addItemToMenu(menuRoot, manager.getShadingMenu(null));
         GuiUtils.addItemToMenu(menuRoot, manager.getSProjectionMenu(null));
-        GuiUtils.addItemToMenu(menuRoot, manager.getSlicingMenu(null));
+        menuRoot.add(new JSeparator());
+        GuiUtils.addItemToMenu(menuRoot, manager.getMprCutMenu(null));
         menuRoot.add(new JSeparator());
         GuiUtils.addItemToMenu(menuRoot, manager.getZoomMenu(null));
         GuiUtils.addItemToMenu(menuRoot, manager.getOrientationMenu(null));
@@ -581,7 +566,7 @@ public class View3DContainer extends DicomViewerPlugin implements PropertyChange
 
   @Override
   public Component createComponent(String clazz) {
-    if (isViewType(View3d.class, clazz) || isViewType(MprView.class, clazz)) {
+    if (isViewType(View3d.class, clazz)) {
       return createDefaultView(clazz).getJComponent();
     }
 

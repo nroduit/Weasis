@@ -45,6 +45,50 @@ public abstract class StructToolTipTreeNode extends DefaultMutableTreeNode {
     return buf.toString();
   }
 
+  /**
+   * Builds an HTML snippet representing a horizontal LUT gradient bar surrounded by optional
+   * min/max value labels (left = min, right = max).
+   *
+   * @param color the segment color (full opacity end of the ramp)
+   * @param steps the number of discrete cells used to approximate the gradient (min 2)
+   * @param minLabel optional label rendered to the left of the bar (may be null)
+   * @param maxLabel optional label rendered to the right of the bar (may be null)
+   * @return an HTML snippet rendering the gradient with its value range
+   */
+  public static String buildHorizontalLutBar(
+      Color color, int steps, String minLabel, String maxLabel) {
+    int n = Math.max(2, steps);
+    StringBuilder gradient = new StringBuilder();
+    gradient.append("<table cellspacing='0' cellpadding='0' border='0'><tr>"); // NON-NLS
+    for (int i = 0; i < n; i++) {
+      float t = (float) i / (n - 1);
+      int r = Math.round(255 * (1 - t) + color.getRed() * t);
+      int g = Math.round(255 * (1 - t) + color.getGreen() * t);
+      int b = Math.round(255 * (1 - t) + color.getBlue() * t);
+      gradient.append(
+          String.format(
+              "<td bgcolor='#%02x%02x%02x' width='8' height='12'>&nbsp;</td>", // NON-NLS
+              r, g, b));
+    }
+    gradient.append("</tr></table>"); // NON-NLS
+
+    if (minLabel == null && maxLabel == null) {
+      return gradient.toString();
+    }
+
+    StringBuilder sb = new StringBuilder();
+    sb.append("<table cellspacing='2' cellpadding='0' border='0'><tr>"); // NON-NLS
+    sb.append("<td valign='middle'>") // NON-NLS
+        .append(minLabel == null ? "" : minLabel)
+        .append("</td>");
+    sb.append("<td valign='middle'>").append(gradient).append("</td>"); // NON-NLS
+    sb.append("<td valign='middle'>") // NON-NLS
+        .append(maxLabel == null ? "" : maxLabel)
+        .append("</td>");
+    sb.append("</tr></table>"); // NON-NLS
+    return sb.toString();
+  }
+
   public static String getSegItemToolTipText(TreePath curPath) {
     if (curPath != null) {
       Object object = curPath.getLastPathComponent();

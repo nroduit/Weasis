@@ -20,6 +20,10 @@ import org.weasis.dicom.codec.HiddenSpecialElement;
 import org.weasis.dicom.codec.SpecialElementReferences;
 
 /**
+ * Base hidden DICOM element type for the DICOM-RT family (RTSTRUCT, RTPLAN, RTDOSE…). Concrete
+ * subclasses ({@link Plan}, {@link Dose}, {@link StructureSet}) refine the per-modality behavior;
+ * raw instances of this class are used as a generic fallback.
+ *
  * @author Tomas Skripcak
  * @author Nicolas Roduit
  */
@@ -38,28 +42,36 @@ public class RtSpecialElement extends HiddenSpecialElement implements SpecialEle
         .add(this);
 
     Attributes dcmItems = getMediaReader().getDicomObject();
-    if (dcmItems != null) {
-      if (this instanceof Plan) {
-        Attributes seriesRef = dcmItems.getNestedDataset(Tag.ReferencedStructureSetSequence);
-        HiddenSeriesManager.addReferencedSOPInstanceUID(seriesRef, originSeriesUID);
-      } else if (this instanceof Dose) {
-        Attributes seriesRef = dcmItems.getNestedDataset(Tag.ReferencedRTPlanSequence);
-        HiddenSeriesManager.addReferencedSOPInstanceUID(seriesRef, originSeriesUID);
-      }
+    if (dcmItems == null) {
+      return;
+    }
+    int refTag =
+        switch (this) {
+          case Plan _ -> Tag.ReferencedStructureSetSequence;
+          case Dose _ -> Tag.ReferencedRTPlanSequence;
+          default -> 0;
+        };
+    if (refTag != 0) {
+      HiddenSeriesManager.addReferencedSOPInstanceUID(
+          dcmItems.getNestedDataset(refTag), originSeriesUID);
     }
   }
 
   @Override
   protected void initLabel() {
     Attributes dicom = ((DicomMediaIO) mediaIO).getDicomObject();
+    if (dicom == null) {
+      super.initLabel();
+      return;
+    }
     this.modality = dicom.getString(Tag.Modality);
 
-    String rtLabel = null;
-    if (isRtStruct()) {
-      rtLabel = dicom.getString(Tag.StructureSetLabel);
-    } else if (isRtPlan()) {
-      rtLabel = dicom.getString(Tag.RTPlanLabel);
-    }
+    String rtLabel =
+        switch (modality) {
+          case "RTSTRUCT" -> dicom.getString(Tag.StructureSetLabel);
+          case "RTPLAN" -> dicom.getString(Tag.RTPlanLabel);
+          case null, default -> null;
+        };
 
     if (rtLabel == null) {
       super.initLabel();
@@ -68,10 +80,12 @@ public class RtSpecialElement extends HiddenSpecialElement implements SpecialEle
     }
   }
 
+  /** {@code true} if the underlying object is an RT Structure Set. */
   public boolean isRtStruct() {
     return "RTSTRUCT".equals(modality);
   }
 
+  /** {@code true} if the underlying object is an RT Plan. */
   public boolean isRtPlan() {
     return "RTPLAN".equals(modality);
   }

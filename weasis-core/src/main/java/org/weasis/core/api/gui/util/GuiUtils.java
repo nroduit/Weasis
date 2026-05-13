@@ -22,6 +22,7 @@ import java.awt.ComponentOrientation;
 import java.awt.Container;
 import java.awt.Desktop;
 import java.awt.Dimension;
+import java.awt.Event;
 import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.Graphics;
@@ -36,7 +37,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.io.IOException;
-import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -61,6 +61,7 @@ import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
 import javax.swing.JSlider;
 import javax.swing.JSpinner;
+import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.JTextPane;
 import javax.swing.KeyStroke;
@@ -599,7 +600,7 @@ public class GuiUtils {
       item.setMnemonic((char) mnemonic);
     }
     if (acceleratorKey != 0) {
-      item.setAccelerator(KeyStroke.getKeyStroke(acceleratorKey, java.awt.Event.CTRL_MASK));
+      item.setAccelerator(KeyStroke.getKeyStroke(acceleratorKey, Event.CTRL_MASK));
     }
     return item;
   }
@@ -612,17 +613,35 @@ public class GuiUtils {
     return jButtonHelp;
   }
 
+  /**
+   * Build a panel containing a wrapped read-only message and a help button on the right side that
+   * opens the given documentation topic. Useful for {@code JOptionPane.showXxxDialog(..., panel,
+   * ...)} confirmations where the user must understand the implications of the choice.
+   *
+   * @param message the message to display
+   * @param helpTopic the documentation topic appended to {@code weasis.help.online}
+   * @return a JPanel ready to be passed to a JOptionPane
+   */
+  public static JPanel buildHelpMessagePanel(String message, String helpTopic) {
+    JPanel panel = new JPanel(new java.awt.BorderLayout(10, 0));
+    JTextArea textArea = new JTextArea(message);
+    textArea.setEditable(false);
+    textArea.setOpaque(false);
+    textArea.setLineWrap(true);
+    textArea.setWrapStyleWord(true);
+    textArea.setColumns(40);
+    panel.add(textArea, java.awt.BorderLayout.CENTER);
+    panel.add(createHelpButton(helpTopic), java.awt.BorderLayout.EAST);
+    return panel;
+  }
+
   public static ActionListener createHelpActionListener(JButton jButtonHelp, String topic) {
-    return e -> {
-      try {
-        GuiUtils.openInDefaultBrowser(
-            jButtonHelp,
-            new URL(
-                GuiUtils.getUICore().getSystemPreferences().getProperty("weasis.help.online")
-                    + topic));
-      } catch (MalformedURLException e1) {
-        LOGGER.error("Cannot open online help", e1);
-      }
+    return _ -> {
+      GuiUtils.openInDefaultBrowser(
+          jButtonHelp,
+          URI.create(
+              GuiUtils.getUICore().getSystemPreferences().getProperty("weasis.help.online")
+                  + topic));
     };
   }
 

@@ -127,7 +127,7 @@ public class DicomExport extends AbstractWizardDialog {
    * Set the checking Paths for the CheckTreeModel to the open Series for the current selected
    * Patient only <br>
    */
-  private void initTreeCheckingModel() {
+  protected void initTreeCheckingModel() {
     TreeCheckingModel checkingModel = treeModel.getCheckingModel();
     checkingModel.setCheckingMode(CheckingMode.PROPAGATE_PRESERVING_UNCHECK);
 

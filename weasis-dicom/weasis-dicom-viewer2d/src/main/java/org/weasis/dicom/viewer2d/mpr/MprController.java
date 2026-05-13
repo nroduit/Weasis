@@ -21,29 +21,45 @@ import java.awt.geom.Line2D;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ForkJoinPool;
 import java.util.stream.Stream;
 import javax.swing.Timer;
+import org.dcm4che3.data.Tag;
 import org.joml.Quaterniond;
 import org.joml.Vector3d;
+import org.joml.Vector3i;
 import org.weasis.core.api.gui.model.ViewModel;
 import org.weasis.core.api.gui.util.ComboItemListener;
 import org.weasis.core.api.gui.util.Feature;
 import org.weasis.core.api.gui.util.Feature.ComboItemListenerValue;
 import org.weasis.core.api.gui.util.GeomUtil;
+import org.weasis.core.api.gui.util.GuiExecutor;
+import org.weasis.core.ui.editor.SeriesViewerEvent;
+import org.weasis.core.ui.editor.SeriesViewerEvent.EVENT;
 import org.weasis.core.ui.editor.image.DefaultView2d;
 import org.weasis.core.ui.editor.image.ImageViewerEventManager;
 import org.weasis.core.ui.model.utils.imp.DefaultViewModel;
 import org.weasis.core.util.Pair;
 import org.weasis.dicom.codec.DicomImageElement;
+import org.weasis.dicom.codec.DicomSeries;
+import org.weasis.dicom.codec.HiddenSeriesManager;
+import org.weasis.dicom.codec.TagD;
+import org.weasis.dicom.codec.seg.SegSpecialElement;
+import org.weasis.dicom.codec.seg.SegmentationVolume;
 import org.weasis.dicom.viewer2d.EventManager;
 import org.weasis.dicom.viewer2d.View2d;
 import org.weasis.dicom.viewer2d.mip.MipView;
 import org.weasis.dicom.viewer2d.mip.MipView.Type;
 import org.weasis.dicom.viewer2d.mpr.MprView.Plane;
 
-public class MprController implements MouseListener, MouseMotionListener, MouseWheelListener {
+public class MprController
+    implements MouseListener, MouseMotionListener, MouseWheelListener, VolumeProvider {
   public static final Cursor HAND_CURSOR =
       Feature.getSvgCursor("mpr-hand.svg", "mpr-hand", 0.5f, 0.5f); // NON-NLS
   public static final Cursor EXTEND_CURSOR =
@@ -62,6 +78,9 @@ public class MprController implements MouseListener, MouseMotionListener, MouseW
 
   private static final int PIX_TOLERANCE = 7;
   private Volume<?, ?> volume;
+  private final List<SegSpecialElement> segElements = new ArrayList<>();
+  private final List<SegmentationVolume> segVolumes = new ArrayList<>();
+  private volatile CompletableFuture<Void> segBuildFuture; // NOSONAR visibility reference
   private final MprAxis axial;
   private final MprAxis coronal;
   private final MprAxis sagittal;
@@ -145,6 +164,200 @@ public class MprController implements MouseListener, MouseMotionListener, MouseW
 
   public void setVolume(Volume<?, ?> volume) {
     this.volume = volume;
+    axesControl.reset();
+  }
+
+  public List<SegSpecialElement> getSegElements() {
+    return segElements;
+  }
+
+  public List<SegmentationVolume> getSegVolumes() {
+    return segVolumes;
+  }
+
+  /**
+   * Collects all visible DICOM SEG special elements that reference the current image series and
+   * builds an image-volume-aligned {@link SegmentationVolume} for each one. The {@link
+   * SegSpecialElement} list is also exposed via {@link #getSegElements()} so consumers can still
+   * resolve SEG metadata (colours, visibility, segment attributes) from the same single source as
+   * 2D and 3D viewers, while {@link #getSegVolumes()} provides the per-MPR-session resliceable
+   * volume used by {@link MprView#updateSegmentation()}.
+   */
+  public void buildSegElements() {
+    disposeSegVolumes();
+    segElements.clear();
+    if (volume == null || volume.getStack() == null) {
+      return;
+    }
+
+    String patientPseudoUID =
+        org.weasis.dicom.explorer.DicomModel.getPatientPseudoUID(volume.getStack().getSeries());
+    if (patientPseudoUID == null) {
+      return;
+    }
+
+    List<SegSpecialElement> elements =
+        HiddenSeriesManager.getHiddenElementsFromPatient(SegSpecialElement.class, patientPseudoUID);
+    if (elements.isEmpty()) {
+      return;
+    }
+
+    // Restrict to SEGs that actually reference the current source series, either via the
+    // ReferencedSeriesSequence (reference2Series map) or the same Frame of Reference. This
+    // avoids resampling unrelated SEG objects from other series of the same patient.
+    elements = filterSegsForCurrentSeries(elements);
+    if (elements.isEmpty()) {
+      return;
+    }
+
+    // Per-segment work is independent and CPU-bound: process in parallel and only mutate the
+    // shared lists once with the collected results.
+    record SegPair(SegSpecialElement seg, SegmentationVolume vol) {}
+    final Volume<?, ?> imageVolume = volume;
+    List<SegPair> built =
+        elements.parallelStream()
+            .map(
+                seg -> {
+                  DicomSeries segSeries =
+                      seg.getMediaReader() == null ? null : seg.getMediaReader().getMediaSeries();
+                  if (segSeries == null) {
+                    return null;
+                  }
+                  // Reuse the SEG's per-image-volume cached resample when available so a second
+                  // MPR open (or the 3D viewer for the same image volume) does not redo the
+                  // expensive frame splatting.
+                  SegmentationVolume segVolume =
+                      seg.getOrBuildAlignedVolume(
+                          imageVolume, s -> SegVolumeBuilder.build(s, segSeries, imageVolume));
+                  return segVolume == null ? null : new SegPair(seg, segVolume);
+                })
+            .filter(Objects::nonNull)
+            .toList();
+
+    for (SegPair p : built) {
+      segElements.add(p.seg());
+      segVolumes.add(p.vol());
+      p.vol().retain(); // MprController holds one consumer reference per entry in segVolumes
+    }
+  }
+
+  /**
+   * Schedules {@link #buildSegElements()} on the common ForkJoin pool and, once finished, refreshes
+   * each MPR view's segmentation overlay on the EDT. Returns immediately so the caller does not
+   * block the MPR display.
+   */
+  public CompletableFuture<Void> buildSegElementsAsync(MprContainer container) {
+    // Cancel any previous in-flight build so we do not race or accumulate work.
+    CompletableFuture<Void> previous = this.segBuildFuture;
+    if (previous != null && !previous.isDone()) {
+      previous.cancel(true);
+    }
+    CompletableFuture<Void> future =
+        CompletableFuture.runAsync(this::buildSegElements, ForkJoinPool.commonPool())
+            .thenRun(
+                () ->
+                    GuiExecutor.execute(
+                        () -> {
+                          if (container == null) {
+                            return;
+                          }
+                          for (Plane plane : Plane.values()) {
+                            MprView view = container.getMprView(plane);
+                            if (view != null) {
+                              view.updateSegmentation();
+                              view.repaint();
+                            }
+                          }
+                          // Refresh the Segmentation Tool tree if this MPR container is currently
+                          // selected so that initTreeValues picks up the newly-built segElements.
+                          if (container.equals(
+                              EventManager.getInstance().getSelectedView2dContainer())) {
+                            var selectedView = container.getSelectedViewCanvas();
+                            EventManager.getInstance()
+                                .fireSeriesViewerListeners(
+                                    new SeriesViewerEvent(
+                                        container,
+                                        selectedView != null ? selectedView.getSeries() : null,
+                                        null,
+                                        EVENT.SELECT_VIEW));
+                          }
+                        }));
+    this.segBuildFuture = future;
+    return future;
+  }
+
+  /**
+   * Keep only SEGs whose ReferencedSeriesSequence points at the current source series, or that
+   * share the same Frame of Reference (AI-generated SEGs that omit explicit references).
+   */
+  private List<SegSpecialElement> filterSegsForCurrentSeries(List<SegSpecialElement> all) {
+    var sourceSeries = volume.getStack().getSeries();
+    if (sourceSeries == null) {
+      return all;
+    }
+    String sourceSeriesUID = TagD.getTagValue(sourceSeries, Tag.SeriesInstanceUID, String.class);
+    String sourceFoR = TagD.getTagValue(sourceSeries, Tag.FrameOfReferenceUID, String.class);
+
+    Set<String> referencingSegSeries = new HashSet<>();
+    if (sourceSeriesUID != null) {
+      Set<String> refs = HiddenSeriesManager.getInstance().reference2Series.get(sourceSeriesUID);
+      if (refs != null) {
+        referencingSegSeries.addAll(refs);
+      }
+    }
+
+    List<SegSpecialElement> filtered = new ArrayList<>(all.size());
+    for (SegSpecialElement seg : all) {
+      DicomSeries segSeries =
+          seg.getMediaReader() == null ? null : seg.getMediaReader().getMediaSeries();
+      if (segSeries == null) {
+        continue;
+      }
+      String segSeriesUID = TagD.getTagValue(segSeries, Tag.SeriesInstanceUID, String.class);
+      boolean directRef = segSeriesUID != null && referencingSegSeries.contains(segSeriesUID);
+      boolean forMatch =
+          sourceFoR != null
+              && sourceFoR.equals(
+                  TagD.getTagValue(segSeries, Tag.FrameOfReferenceUID, String.class));
+      if (directRef || forMatch) {
+        filtered.add(seg);
+      }
+    }
+    return filtered;
+  }
+
+  private void disposeSegVolumes() {
+    // Release MprController's consumer reference for each volume before dropping the list.
+    // If no other consumer (e.g. a SegVolumeTexture in a View3D) still retains the volume its
+    // CPU buffers are freed here; otherwise they remain alive until the last retain is released.
+    for (SegmentationVolume v : segVolumes) {
+      v.release();
+    }
+    segVolumes.clear();
+  }
+
+  /**
+   * Releases the per-image-volume cached SEG resamples held by every {@link SegSpecialElement}
+   * referenced by this controller. Called from {@link #dispose()} so the SEG copies tied to the
+   * image volume we are about to release do not linger until the soft references are cleared.
+   */
+  private void releaseAlignedSegVolumes(Volume<?, ?> imageVolume) {
+    if (imageVolume == null) {
+      return;
+    }
+    for (SegSpecialElement seg : segElements) {
+      if (seg != null) {
+        seg.disposeAlignedVolume(imageVolume);
+      }
+    }
+  }
+
+  @Override
+  public Volume<?, ?> getVolumeForStack(OriginalStack originalStack) {
+    if (volume != null && volume.getStack().equals(originalStack)) {
+      return volume;
+    }
+    return null;
   }
 
   public Quaterniond getRotation(Plane plane) {
@@ -183,18 +396,11 @@ public class MprController implements MouseListener, MouseMotionListener, MouseW
   }
 
   public MprAxis getMprAxis(Plane plane) {
-    switch (plane) {
-      case AXIAL -> {
-        return axial;
-      }
-      case CORONAL -> {
-        return coronal;
-      }
-      case SAGITTAL -> {
-        return sagittal;
-      }
-    }
-    return null;
+    return switch (plane) {
+      case AXIAL -> axial;
+      case CORONAL -> coronal;
+      case SAGITTAL -> sagittal;
+    };
   }
 
   public void initRotation(Quaterniond rotation) {
@@ -206,27 +412,22 @@ public class MprController implements MouseListener, MouseMotionListener, MouseW
     axesControl.setGlobalRotation(r);
   }
 
-  public Vector3d getCenterCoordinate() {
-    return getCenterCoordinate(axial);
-  }
-
   public Vector3d getCenterCoordinate(MprAxis axis) {
     if (axis != null && volume != null) {
-      return axesControl.getCenterForCanvas(axis.getMprView(), false);
+      return axesControl.getCenterForCanvas(axis.getMprView());
     }
     return null;
   }
 
   public Vector3d getCrossHairPosition() {
-    return getCrossHairPosition(axial);
+    if (volume != null) {
+      return axesControl.getCenter();
+    }
+    return null;
   }
 
   public Vector3d getCrossHairPosition(MprAxis axis) {
-    Vector3d v = getCenterCoordinate(axis);
-    if (v != null) {
-      return v.mul(volume.getSliceSize());
-    }
-    return null;
+    return getCenterCoordinate(axis);
   }
 
   protected Pair<MprAxis, MprAxis> getCrossAxis(MprAxis axis) {
@@ -287,8 +488,7 @@ public class MprController implements MouseListener, MouseMotionListener, MouseW
           return;
         }
         Point2D pt = view.getPlaneCoordinatesFromMouse(e.getX(), e.getY());
-        int size = axesControl.getSliceSize();
-        if (center.distance(pt.getX(), pt.getY(), center.z) <= 20.0 / size) {
+        if (center.distance(pt.getX(), pt.getY(), center.z) <= 20.0) {
           e.consume();
           adjusting = true;
           updatePosition(view, pt, center);
@@ -320,7 +520,7 @@ public class MprController implements MouseListener, MouseMotionListener, MouseW
           Vector3d center = getCenterCoordinate(axis);
           view.setCursor(selectedCursor);
           boolean vertical = view.isVerticalLine(selAxis);
-          Vector3d crossHair = new Vector3d(center).mul(axesControl.getSliceSize());
+          Vector3d crossHair = new Vector3d(center);
           List<Point2D> pts = getLinePoints(axis, crossHair, vertical);
           if (pts != null && pts.size() == 2) {
             Line2D line = new Line2D.Double(pts.get(0), pts.get(1));
@@ -514,9 +714,8 @@ public class MprController implements MouseListener, MouseMotionListener, MouseW
     MprAxis axis = selectedAxis;
     Point2D pt1 = selectedPoint;
     if (axis != null && pt1 != null) {
-      int size = axesControl.getSliceSize();
-      Line2D line = new Line2D.Double(pt1, new Point2D.Double(center.x * size, center.y * size));
-      Point2D point = new Point2D.Double(pt.getX() * size, pt.getY() * size);
+      Line2D line = new Line2D.Double(pt1, new Point2D.Double(center.x, center.y));
+      Point2D point = new Point2D.Double(pt.getX(), pt.getY());
       Point2D extPoint = GeomUtil.getPerpendicularPointToLine(line, point);
       axis.setThicknessExtension((int) Math.round(pt.distance(extPoint)));
       axis.updateImage();
@@ -537,8 +736,7 @@ public class MprController implements MouseListener, MouseMotionListener, MouseW
     Pair<MprAxis, MprAxis> pair = getCrossAxis(axis);
     if (pair != null) {
       boolean vertical = selectedAxis == pair.second();
-      int size = axesControl.getSliceSize();
-      Point2D ptCenter = new Point2D.Double(center.x * size, center.y * size);
+      Point2D ptCenter = new Point2D.Double(center.x, center.y);
       Point2D selPt = selectedPoint;
       boolean firstPoint =
           selPt != null
@@ -561,6 +759,8 @@ public class MprController implements MouseListener, MouseMotionListener, MouseW
       center(view);
     }
     view.repaint();
+
+    fireCrossHairChanged();
   }
 
   public void updateSelectedPosition(MprView view, Point2D pt, Vector3d crossHair) {
@@ -571,11 +771,8 @@ public class MprController implements MouseListener, MouseMotionListener, MouseW
     Pair<MprAxis, MprAxis> pair = getCrossAxis(view.getMprAxis());
     MprAxis axis = selectedAxis;
     if (axis != null && pair != null) {
-      int size = axesControl.getSliceSize();
       Point2D pta = controlPoints.p1Rotate;
-      pta = new Point2D.Double(pta.getX() / size, pta.getY() / size);
       Point2D ptb = controlPoints.p2Rotate;
-      ptb = new Point2D.Double(ptb.getX() / size, ptb.getY() / size);
       Point2D extPoint = GeomUtil.getPerpendicularPointToLine(pta, ptb, pt);
       double distance = extPoint.distance(pt);
       double dotProduct =
@@ -606,13 +803,13 @@ public class MprController implements MouseListener, MouseMotionListener, MouseW
     }
     Pair<MprAxis, MprAxis> pair = getCrossAxis(view.getMprAxis());
     if (pair != null) {
-      setNewCenter(view, new Vector3d(pt.getX(), pt.getY(), crossHair.z));
+      setNewCenter(view, new Vector3d(pt.getX(), pt.getY(), 0));
       pair.first().updateImage();
       pair.second().updateImage();
       center(view);
     }
-    view.getMprAxis().updateImage();
     view.repaint();
+    fireCrossHairChanged();
   }
 
   private void center(MprView view) {
@@ -634,9 +831,8 @@ public class MprController implements MouseListener, MouseMotionListener, MouseW
       return;
     }
 
-    int size = axesControl.getSliceSize();
     Vector3d p = axesControl.getCenterForCanvas(view);
-    Point2D pt = new Point2D.Double(p.x * size, p.y * size);
+    Point2D pt = new Point2D.Double(p.x, p.y);
     if (mode == 2 || mode == 1 && view.isAutoCenter(pt)) {
       Rectangle2D dim = view.getViewModel().getModelArea();
       double mx = pt.getX() - dim.getWidth() * 0.5;
@@ -672,10 +868,41 @@ public class MprController implements MouseListener, MouseMotionListener, MouseW
     this.arcBall = arcBall;
   }
 
+  public void fireCrossHairChanged() {
+    if (volume == null) {
+      return;
+    }
+    Vector3d center = axesControl.getCenter();
+    double sliceSize = volume.getSliceSize();
+    Vector3i volSize = volume.getSize();
+    Vector3d voxelRatio = volume.getVoxelRatio();
+    center.div(sliceSize);
+    center.sub(0.5, 0.5, 0.5);
+    center.div(voxelRatio);
+    Vector3d pos =
+        new Vector3d(
+            center.x * sliceSize / volSize.x,
+            center.y * sliceSize / volSize.y,
+            -center.z * sliceSize / volSize.z);
+    pos.add(0.5, 0.5, 0.5);
+    Quaterniond globalRot = axesControl.getGlobalRotation();
+    Quaterniond rot = new Quaterniond(-globalRot.x, -globalRot.y, globalRot.z, globalRot.w);
+    volume.fireCrossHairChanged(pos, rot);
+  }
+
   public void dispose() {
+    CompletableFuture<Void> future = this.segBuildFuture;
+    if (future != null && !future.isDone()) {
+      future.cancel(true);
+    }
     axial.dispose();
     coronal.dispose();
     sagittal.dispose();
+    // Free the per-image-volume SEG resamples cached on each SegSpecialElement before we drop
+    // our local references and release the image volume itself.
+    releaseAlignedSegVolumes(volume);
+    disposeSegVolumes();
+    segElements.clear();
     if (volume != null && !volume.isSharedVolume()) {
       volume.removeData();
     }
@@ -695,10 +922,12 @@ public class MprController implements MouseListener, MouseMotionListener, MouseW
     axial.reset();
     coronal.reset();
     sagittal.reset();
+    fireCrossHairChanged();
   }
 
   public double getBestFitViewScale() {
-    if (volume == null) {
+    var pane = EventManager.getInstance().getSelectedViewPane();
+    if (volume == null || pane == null) {
       return 0.0;
     }
 
@@ -708,7 +937,7 @@ public class MprController implements MouseListener, MouseMotionListener, MouseW
     double sagittalScale = calculateViewScale(volSize.y, volSize.z, sagittal);
 
     double viewScale = Math.min(axialScale, Math.min(coronalScale, sagittalScale));
-    return EventManager.getInstance().getSelectedViewPane().adjustViewScale(viewScale);
+    return pane.adjustViewScale(viewScale);
   }
 
   private double calculateViewScale(double width, double height, MprAxis axis) {

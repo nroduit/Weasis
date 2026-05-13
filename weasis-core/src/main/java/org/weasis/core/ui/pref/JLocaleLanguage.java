@@ -16,6 +16,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
+import javax.swing.DefaultComboBoxModel;
 import javax.swing.JComboBox;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.util.LocalUtil;
@@ -24,6 +25,8 @@ import org.weasis.core.util.StringUtil;
 public class JLocaleLanguage extends JComboBox<JLocale> implements ItemListener, Refreshable {
 
   private final ArrayList<JLocalePercentage> languages = new ArrayList<>();
+  private final Map<Locale, JLocalePercentage> localeMap = new HashMap<>();
+  private JLocalePercentage englishEntry = null;
 
   public JLocaleLanguage() {
     super();
@@ -64,12 +67,20 @@ public class JLocaleLanguage extends JComboBox<JLocale> implements ItemListener,
         String langCode = index > 0 ? item.substring(0, index) : item;
         Locale locale = LocalUtil.textToLocale(langCode);
         if (locale != null && percentages.getOrDefault(langCode, 0) > 30) {
-          languages.add(new JLocalePercentage(locale, percentages.get(langCode)));
+          JLocalePercentage entry = new JLocalePercentage(locale, percentages.get(langCode));
+          languages.add(entry);
+          localeMap.put(locale, entry);
+          if (Locale.ENGLISH.equals(locale)) {
+            englishEntry = entry;
+          }
         }
       }
     }
     if (languages.isEmpty()) {
-      languages.add(new JLocalePercentage(Locale.ENGLISH, 100)); // Default to English
+      JLocalePercentage defaultEntry = new JLocalePercentage(Locale.ENGLISH, 100);
+      languages.add(defaultEntry);
+      localeMap.put(Locale.ENGLISH, defaultEntry);
+      englishEntry = defaultEntry;
     }
   }
 
@@ -81,42 +92,38 @@ public class JLocaleLanguage extends JComboBox<JLocale> implements ItemListener,
         (l1, l2) ->
             collator.compare(l1.getLocale().getDisplayName(), l2.getLocale().getDisplayName()));
 
+    // Swap the model in one shot to avoid firing an event per addItem() call
+    DefaultComboBoxModel<JLocale> model = new DefaultComboBoxModel<>();
     JLocalePercentage defaultLocaleEntry = null;
     for (JLocalePercentage localePercentage : languages) {
       if (localePercentage.getLocale().equals(defaultLocale)) {
         defaultLocaleEntry = localePercentage;
       }
-      addItem(localePercentage);
+      model.addElement(localePercentage);
     }
+    setModel(model);
     if (defaultLocaleEntry != null) {
-      this.setSelectedItem(defaultLocaleEntry);
+      setSelectedItem(defaultLocaleEntry);
     }
   }
 
   public void selectLocale(String localeCode) {
     Locale selectedLocale = LocalUtil.textToLocale(localeCode);
+
+    // Fast early-exit: already showing the right locale
     Object item = getSelectedItem();
     if (item instanceof JLocalePercentage jLocalePercentage
         && selectedLocale != null
         && selectedLocale.equals(jLocalePercentage.getLocale())) {
-      valueHasChanged();
       return;
     }
 
-    int defaultIndex = -1;
-    for (int i = 0; i < getItemCount(); i++) {
-      JLocalePercentage localePercentage = (JLocalePercentage) getItemAt(i);
-      if (localePercentage.getLocale().equals(selectedLocale)) {
-        defaultIndex = i;
-        break;
-      }
-      if (localePercentage.getLocale().equals(Locale.ENGLISH)) {
-        defaultIndex = i;
-      }
+    JLocalePercentage target = selectedLocale != null ? localeMap.get(selectedLocale) : null;
+    if (target == null) {
+      target = englishEntry; // fall back to English
     }
-
-    if (defaultIndex >= 0) {
-      setSelectedIndex(defaultIndex);
+    if (target != null) {
+      setSelectedItem(target);
     }
   }
 
@@ -131,7 +138,7 @@ public class JLocaleLanguage extends JComboBox<JLocale> implements ItemListener,
         GuiUtils.getUICore()
             .getSystemPreferences()
             .setProperty("locale.lang.code", LocalUtil.localeToText(locale));
-        removeAllItems();
+        // Re-sort display names for the new locale and swap the model in one shot
         sortLocales();
         addItemListener(this);
         firePropertyChange("locale", null, locale);

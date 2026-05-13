@@ -10,6 +10,7 @@
 package org.weasis.core.ui.editor.image;
 
 import java.awt.Color;
+import java.awt.Component;
 import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.Font;
@@ -34,14 +35,21 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import javax.swing.Action;
 import javax.swing.JCheckBoxMenuItem;
+import javax.swing.JMenu;
+import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPopupMenu;
+import javax.swing.MenuSelectionManager;
 import javax.swing.SwingUtilities;
 import javax.swing.ToolTipManager;
 import org.opencv.core.CvType;
@@ -51,6 +59,7 @@ import org.weasis.core.Messages;
 import org.weasis.core.api.gui.Image2DViewer;
 import org.weasis.core.api.gui.model.ViewModel;
 import org.weasis.core.api.gui.util.ActionW;
+import org.weasis.core.api.gui.util.ComboItemListener;
 import org.weasis.core.api.gui.util.Feature;
 import org.weasis.core.api.gui.util.Filter;
 import org.weasis.core.api.gui.util.GuiUtils;
@@ -74,10 +83,8 @@ import org.weasis.core.api.media.data.SeriesComparator;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.service.AuditLog;
 import org.weasis.core.api.util.FontItem;
-import org.weasis.core.api.util.ResourceUtil;
-import org.weasis.core.api.util.ResourceUtil.ActionIcon;
 import org.weasis.core.ui.docking.DockableTool;
-import org.weasis.core.ui.editor.image.SynchData.Mode;
+import org.weasis.core.ui.editor.image.SynchData.SyncState;
 import org.weasis.core.ui.editor.image.dockable.MeasureTool;
 import org.weasis.core.ui.model.AbstractGraphicModel;
 import org.weasis.core.ui.model.GraphicModel;
@@ -91,7 +98,6 @@ import org.weasis.core.ui.model.layer.imp.RenderedImageLayer;
 import org.weasis.core.ui.model.utils.Draggable;
 import org.weasis.core.ui.model.utils.bean.GraphicClipboard;
 import org.weasis.core.ui.model.utils.bean.PanPoint;
-import org.weasis.core.ui.model.utils.bean.PanPoint.State;
 import org.weasis.core.ui.model.utils.imp.DefaultViewModel;
 import org.weasis.core.ui.pref.Monitor;
 import org.weasis.core.ui.util.DefaultAction;
@@ -99,6 +105,7 @@ import org.weasis.core.ui.util.MouseEventDouble;
 import org.weasis.core.ui.util.TitleMenuItem;
 import org.weasis.core.util.LangUtil;
 import org.weasis.core.util.MathUtil;
+import org.weasis.core.util.StringUtil;
 import org.weasis.opencv.data.PlanarImage;
 import org.weasis.opencv.op.lut.ColorLut;
 
@@ -134,18 +141,19 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
   protected final FocusHandler<E> focusHandler;
   protected final GraphicMouseHandler<E> graphicMouseHandler;
 
-  private final PanPoint highlightedPosition = new PanPoint(State.CENTER);
-  private final PanPoint startedDragPoint = new PanPoint(State.DRAGSTART);
+  private final PanPoint highlightedPosition = new PanPoint(PanPoint.State.CENTER);
+  private final PanPoint startedDragPoint = new PanPoint(PanPoint.State.DRAGSTART);
   private int pointerType = 0;
 
   protected final RenderedImageLayer<E> imageLayer;
   protected Panner<E> panner;
   protected ZoomWin<E> lens;
   private final List<ViewButton> viewButtons;
-  protected ViewButton synchButton;
+  protected SynchViewButton synchButton;
+  protected ManualSynchViewButton manualSynchButton;
 
   protected MediaSeries<E> series = null;
-  protected LayerAnnotation infoLayer;
+  protected LayerAnnotation<E> infoLayer;
   protected int tileOffset;
 
   protected final ImageViewerEventManager<E> eventManager;
@@ -224,47 +232,505 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     return eventManager;
   }
 
+  /**
+   * Render the sync overlay buttons from the per-view {@link ViewSynchData}. This method is the
+   * single source of truth for button state — every other place that mutates {@link SyncState} on
+   * the view must end with a call to {@code updateSynchState()} (typically through {@link
+   * SynchManager#updateAllListeners}).
+   */
   @Override
   public void updateSynchState() {
-    if (getActionValue(ActionW.SYNCH_LINK.cmd()) != null) {
-      if (synchButton == null) {
-        synchButton =
-            new ViewButton(
-                (invoker, x, y) -> {
-                  final SynchData synch = (SynchData) getActionValue(ActionW.SYNCH_LINK.cmd());
-                  if (synch == null) {
-                    return;
-                  }
+    ViewSynchData synchData = (ViewSynchData) actionsInView.get(ActionW.SYNCH_LINK.cmd());
 
-                  JPopupMenu popupMenu = new JPopupMenu();
-                  TitleMenuItem itemTitle = new TitleMenuItem(ActionW.SYNCH.getTitle());
-                  popupMenu.add(itemTitle);
-                  popupMenu.addSeparator();
+    ensureSynchButtons();
 
-                  for (Entry<String, Boolean> a : synch.getActions().entrySet()) {
-                    JCheckBoxMenuItem menuItem = new JCheckBoxMenuItem(a.getKey(), a.getValue());
-                    menuItem.addActionListener(
-                        e -> {
-                          if (e.getSource() instanceof JCheckBoxMenuItem item) {
-                            synch.getActions().put(item.getText(), item.isSelected());
-                          }
-                        });
-                    popupMenu.add(menuItem);
-                  }
-                  popupMenu.show(invoker, x, y);
-                },
-                ResourceUtil.getIcon(ActionIcon.SYNCH).derive(24, 24),
-                ActionW.SYNCH.getTitle());
-        synchButton.setVisible(true);
-        synchButton.setPosition(GridBagConstraints.SOUTHEAST);
-      }
+    if (synchData == null) {
+      hideSyncButtons();
+      repaint();
+      return;
+    }
+    renderAutoSyncButton(synchData);
+    renderManualSyncButton(synchData);
+    repaint();
+  }
+
+  /** Lazily create the two overlay buttons. Click handlers delegate to instance methods. */
+  private void ensureSynchButtons() {
+    if (synchButton == null) {
+      // Clicking the per-view sync button opens a popup: it offers the on/off toggle for this
+      // view AND lets the user choose which actions (zoom, pan, W/L, ...) propagate. A popup is
+      // used (rather than a contextual right-click) because the right mouse button is already
+      // bound to a configurable mouse action elsewhere in Weasis.
+      synchButton = new SynchViewButton(this::showPerViewSyncPopup);
+      synchButton.setPosition(GridBagConstraints.SOUTHEAST);
       if (!getViewButtons().contains(synchButton)) {
         getViewButtons().add(synchButton);
       }
-      SynchData synch = (SynchData) getActionValue(ActionW.SYNCH_LINK.cmd());
-      synchButton.setVisible(!SynchData.Mode.NONE.equals(synch.getMode()));
+    }
+    if (manualSynchButton == null) {
+      manualSynchButton = new ManualSynchViewButton(this::onManualSyncButtonClicked);
+      manualSynchButton.setPosition(GridBagConstraints.SOUTHEAST);
+      if (!getViewButtons().contains(manualSynchButton)) {
+        getViewButtons().add(manualSynchButton);
+      }
+    }
+  }
+
+  /** Build and display the per-view sync popup. */
+  private void showPerViewSyncPopup(java.awt.Component invoker, int x, int y) {
+    ViewSynchData sd = (ViewSynchData) actionsInView.get(ActionW.SYNCH_LINK.cmd());
+    if (sd == null) {
+      // Falling back to the legacy single-click behaviour ensures the button is never inert.
+      onAutoSyncButtonClicked();
+      return;
+    }
+
+    boolean manualSyncOn = sd.isManualSynchActivated();
+    // Manual sync is built on top of scroll: ensure Scroll is on (as a per-view override).
+    if (manualSyncOn) {
+      sd.setUserActionOverride(ActionW.SCROLL_SERIES.cmd(), true);
+    }
+
+    // Build the popup checkbox states from the per-view effective state (override or template).
+    // Use a temporary view of the merged map so the popup builder sees the right initial values
+    // without exposing internals.
+    Map<String, Boolean> effective = new HashMap<>(sd.getActions());
+    effective.putAll(sd.getUserActionOverrides());
+
+    SynchOptionsCheckBoxGroup group = new SynchOptionsCheckBoxGroup();
+    JPopupMenu popup =
+        group.buildPopupMenu(
+            effective,
+            (cmd, selected) -> {
+              // Manual sync requires Scroll to stay enabled; silently ignore an attempt to
+              // uncheck it. All other options remain freely toggleable.
+              if (sd.isManualSynchActivated()
+                  && ActionW.SCROLL_SERIES.cmd().equals(cmd)
+                  && !selected) {
+                return;
+              }
+              // Persist the user's choice as a per-view override (does NOT mutate the shared
+              // template, so other views and future refreshes are unaffected).
+              sd.setUserActionOverride(cmd, selected);
+              sd.setOriginal(false);
+              getJComponent().repaint();
+            });
+
+    // When manual sync is active, lock ONLY the Scroll checkbox (forced ticked, disabled).
+    if (manualSyncOn) {
+      for (java.awt.Component c : popup.getComponents()) {
+        if (c instanceof JCheckBoxMenuItem item
+            && ActionW.SCROLL_SERIES.cmd().equals(item.getActionCommand())) {
+          item.setSelected(true);
+          item.setEnabled(false);
+          break;
+        }
+      }
+    }
+
+    // Prepend the on/off toggle for this view (closes the popup on click — single decisive action).
+    JCheckBoxMenuItem syncToggle =
+        new JCheckBoxMenuItem(Messages.getString("ActionW.synch"), sd.isAutoSynchActivated());
+    syncToggle.addActionListener(e -> onAutoSyncButtonClicked());
+    popup.insert(syncToggle, 0);
+    popup.insert(new JPopupMenu.Separator(), 1);
+
+    popup.addSeparator();
+    JMenuItem applyToAll = new JMenuItem(Messages.getString("ViewerToolBar.synch_apply_to_all"));
+    // Decorate with this view's FoR chip so the user knows which group is being propagated.
+    applyToAll.setIcon(
+        FrameOfReferenceColor.swatch(
+            resolveChipColor(sd.getFrameOfReferenceUID()), GuiUtils.getScaleLength(12)));
+    applyToAll.addActionListener(e -> applySyncOptionsToOtherSynchronizedViews(sd));
+    popup.add(applyToAll);
+
+    popup.addSeparator();
+    JMenuItem closeItem = new JMenuItem(Messages.getString("AbstractWizardDialog.close"));
+    closeItem.addActionListener(e -> popup.setVisible(false));
+    popup.add(closeItem);
+
+    popup.show(invoker, x, y);
+  }
+
+  /**
+   * Copy the given source view's effective sync options (template + per-view overrides) as explicit
+   * per-view overrides on every other view in the selected container that shares the source's
+   * {@code FrameOfReferenceUID}. Views with a different (or missing) FrameOfReferenceUID —
+   * typically manually-synced orphan views — are intentionally left untouched: they are not in the
+   * same spatial reference frame, so propagating sync options across that boundary would not be
+   * meaningful. Views with neither sync mode active are also skipped — there is nothing to keep
+   * aligned. Manual targets keep Scroll forced on regardless of the source choice (manual sync is
+   * built on top of scroll).
+   *
+   * @param source the source view's {@link ViewSynchData}; must not be {@code null}
+   */
+  private void applySyncOptionsToOtherSynchronizedViews(ViewSynchData source) {
+    if (source == null) {
+      return;
+    }
+    ImageViewerPlugin<E> container = eventManager.getSelectedView2dContainer();
+    if (container == null) {
+      return;
+    }
+    String sourceFruid = source.getFrameOfReferenceUID();
+    if (sourceFruid == null) {
+      return;
+    }
+    // Compute the source view's effective state once (template + overrides).
+    Map<String, Boolean> effective = new HashMap<>(source.getActions());
+    effective.putAll(source.getUserActionOverrides());
+
+    for (ViewCanvas<E> v : container.getImagePanels()) {
+      if (v == this
+          || !(v.getActionValue(ActionW.SYNCH_LINK.cmd()) instanceof ViewSynchData target)) {
+        continue;
+      }
+      // Only propagate to views in the same spatial reference frame.
+      if (!sourceFruid.equals(target.getFrameOfReferenceUID())) {
+        continue;
+      }
+      // Skip views with neither sync mode active — there is nothing to keep aligned.
+      if (!target.isAutoSynchActivated() && !target.isManualSynchActivated()) {
+        continue;
+      }
+      // Mark non-original BEFORE writing so a concurrent updateAllListeners pass cannot replace
+      // this instance via getOrCreateSynchData (which discards overrides on original instances).
+      target.setOriginal(false);
+      // Copy each managed command as an explicit override.
+      for (String cmd : SynchOptionsCheckBoxGroup.getAllManagedCommands()) {
+        // Manual sync mandates Scroll on; never let an "apply" disable it on a manual target.
+        if (target.isManualSynchActivated() && ActionW.SCROLL_SERIES.cmd().equals(cmd)) {
+          target.setUserActionOverride(cmd, true);
+          continue;
+        }
+        Boolean value = effective.get(cmd);
+        target.setUserActionOverride(cmd, Boolean.TRUE.equals(value));
+      }
+      v.updateSynchState();
+    }
+  }
+
+  private void hideSyncButtons() {
+    if (synchButton != null) {
+      synchButton.setState(SyncState.OFF);
+      synchButton.setVisible(false);
+    }
+    if (manualSynchButton != null) {
+      manualSynchButton.setState(SyncState.OFF);
+      manualSynchButton.setVisible(false);
+    }
+  }
+
+  private void renderAutoSyncButton(ViewSynchData synchData) {
+    if (synchData.getMode() == SynchData.Mode.TILE) {
+      synchButton.setVisible(false);
+      return;
+    }
+    boolean activated = synchData.getAutoSyncState() == SyncState.ON;
+    synchButton.setState(activated ? SyncState.ON : SyncState.OFF);
+    // Container-local color: pick the slot from this view's position in the ordered set of
+    // distinct FoRs in the container (no chip when alone — there's nothing to group with).
+    synchButton.setChipColor(resolveChipColor(synchData.getFrameOfReferenceUID()));
+    synchButton.setVisible(activated || synchData.canBeAutoSynced());
+  }
+
+  private Color resolveChipColor(String fruid) {
+    if (fruid == null || fruid.isBlank()) {
+      return null;
+    }
+    ImageViewerPlugin<E> container = eventManager.getSelectedView2dContainer();
+    if (container == null) {
+      return null;
+    }
+    LinkedHashSet<String> distinct = new LinkedHashSet<>();
+    for (ViewCanvas<E> v : container.getImagePanels()) {
+      if (v.getActionValue(ActionW.SYNCH_LINK.cmd()) instanceof ViewSynchData vsd) {
+        String uid = vsd.getFrameOfReferenceUID();
+        if (uid != null && !uid.isBlank()) {
+          distinct.add(uid);
+        }
+      }
+    }
+    // Single-FoR container: no chip — nothing to disambiguate.
+    if (distinct.size() < 2) {
+      return null;
+    }
+    return FrameOfReferenceColor.colorFor(fruid, distinct);
+  }
+
+  /**
+   * Build a reusable submenu containing the per-view sync option checkboxes (scroll, pan, zoom, …)
+   * and an "Apply to all synchronized views" entry. Subclasses can drop this into their own popup
+   */
+  protected JMenu buildSynchOptionsMenu(String title) {
+    ViewSynchData sd = (ViewSynchData) actionsInView.get(ActionW.SYNCH_LINK.cmd());
+    if (sd == null) {
+      return null;
+    }
+    boolean manualSyncOn = sd.isManualSynchActivated();
+    if (manualSyncOn) {
+      sd.setUserActionOverride(ActionW.SCROLL_SERIES.cmd(), true);
+    }
+    Map<String, Boolean> effective = new HashMap<>(sd.getActions());
+    effective.putAll(sd.getUserActionOverrides());
+
+    JMenu menu = new JMenu(title);
+    new SynchOptionsCheckBoxGroup()
+        .addStayOpenItemsTo(
+            menu,
+            effective,
+            (cmd, selected) -> {
+              if (sd.isManualSynchActivated()
+                  && ActionW.SCROLL_SERIES.cmd().equals(cmd)
+                  && !selected) {
+                return;
+              }
+              sd.setUserActionOverride(cmd, selected);
+              sd.setOriginal(false);
+              getJComponent().repaint();
+            });
+
+    // Lock Scroll when manual sync is active (manual sync is built on top of scroll).
+    if (manualSyncOn) {
+      for (Component c : menu.getMenuComponents()) {
+        if (c instanceof JCheckBoxMenuItem item
+            && ActionW.SCROLL_SERIES.cmd().equals(item.getActionCommand())) {
+          item.setSelected(true);
+          item.setEnabled(false);
+          break;
+        }
+      }
+    }
+
+    menu.addSeparator();
+    JMenuItem applyToAll = new JMenuItem(Messages.getString("ViewerToolBar.synch_apply_to_all"));
+    applyToAll.setIcon(
+        FrameOfReferenceColor.swatch(
+            resolveChipColor(sd.getFrameOfReferenceUID()), GuiUtils.getScaleLength(12)));
+    applyToAll.addActionListener(e -> applySyncOptionsToOtherSynchronizedViews(sd));
+    menu.add(applyToAll);
+
+    menu.addSeparator();
+    JMenuItem closeItem = new JMenuItem(Messages.getString("AbstractWizardDialog.close"));
+    closeItem.addActionListener(e -> MenuSelectionManager.defaultManager().clearSelectedPath());
+    menu.add(closeItem);
+    return menu;
+  }
+
+  private void renderManualSyncButton(ViewSynchData synchData) {
+    if (synchData.getMode() == SynchData.Mode.TILE) {
+      manualSynchButton.setVisible(false);
+      return;
+    }
+    if (synchData.canBeManuallySynced() || synchData.isManualSynchActivated()) {
+      manualSynchButton.setVisible(true);
+      manualSynchButton.setState(synchData.isManualSynchActivated() ? SyncState.ON : SyncState.OFF);
     } else {
-      getViewButtons().remove(synchButton);
+      manualSynchButton.setVisible(false);
+    }
+  }
+
+  /** Toggle automatic synchronization for this view, then refresh all listeners. */
+  private void onAutoSyncButtonClicked() {
+    SynchData sd = (SynchData) actionsInView.get(ActionW.SYNCH_LINK.cmd());
+    if (sd == null) {
+      return;
+    }
+    sd.setOriginal(false);
+    if (synchButton.getState() == SyncState.OFF) {
+      sd.setAutoSyncState(SyncState.ON);
+      synchButton.setState(SyncState.ON);
+    } else {
+
+      sd.setAutoSyncState(SyncState.OFF);
+      synchButton.setState(SyncState.OFF);
+    }
+    refreshAllListeners();
+  }
+
+  /** Toggle manual synchronization for this view, then refresh all listeners. */
+  private void onManualSyncButtonClicked(Component invoker, int x, int y) {
+    // Always read synchData fresh — it may have been replaced since the button was created
+    ViewSynchData currentSynchData = (ViewSynchData) actionsInView.get(ActionW.SYNCH_LINK.cmd());
+    if (currentSynchData == null) {
+      return;
+    }
+    if (manualSynchButton.getState() == SyncState.OFF) {
+      activateManualSync(invoker, x, y);
+    } else {
+      deactivateManualSync(currentSynchData);
+    }
+    refreshAllListeners();
+  }
+
+  /** Recompute the synchronization wiring across all views in the active container. */
+  private void refreshAllListeners() {
+    ComboItemListener<SynchView> synchAction = eventManager.getAction(ActionW.SYNCH).orElse(null);
+    SynchView selected =
+        synchAction != null && synchAction.getSelectedItem() instanceof SynchView sv
+            ? sv
+            : SynchView.DEFAULT_STACK;
+    eventManager.synchManager.updateAllListeners(
+        eventManager.getSelectedView2dContainer(), selected);
+  }
+
+  private void activateManualSync(Component invoker, int x, int y) {
+    ImageViewerPlugin<E> container = eventManager.getSelectedView2dContainer();
+    if (container == null) return;
+
+    ViewCanvas<E> pane = container.getSelectedViewCanvas();
+    if (pane == null || pane.getSeries() == null) return;
+
+    // Find all candidate views: same orientation, different FrameOfReferenceUID
+    List<ViewCanvas<E>> candidates =
+        container.getImagePanels().stream()
+            .filter(
+                view ->
+                    view != null
+                        && view != pane
+                        && view.getSeries() != null
+                        && eventManager.synchManager.hasSameOrientation(
+                            view.getSeries(), pane.getSeries())
+                        && !eventManager.synchManager.hasSameFrUid(
+                            pane.getSeries(), view.getSeries()))
+            .toList();
+
+    if (candidates.isEmpty()) return;
+
+    SynchData globalSynchData = getGlobalSynchData();
+    if (globalSynchData != null && globalSynchData.isManualSynchActivated()) {
+      // Join the existing manual sync group: collect ALL already-synced views
+      Set<ViewCanvas<?>> existingGroup = new LinkedHashSet<>();
+      for (ViewCanvas<E> v : candidates) {
+        ViewSynchData sd = (ViewSynchData) v.getActionsInView().get(ActionW.SYNCH_LINK.cmd());
+        if (sd != null && sd.isManualSynchActivated()) {
+          existingGroup.add(v);
+          for (ViewSynchData.ManualSyncData msd : sd.getManualSyncDataSet()) {
+            existingGroup.add(msd.getTargetPane());
+          }
+        }
+      }
+      existingGroup.remove(pane);
+      // Setup bidirectional links between the new pane and every member of the group
+      for (ViewCanvas<?> member : existingGroup) {
+        setupManualSync(pane, member);
+      }
+    } else if (candidates.size() == 1) {
+      setupManualSync(pane, candidates.getFirst());
+    } else {
+      // Show a multi-select popup for choosing which views to sync with
+      JPopupMenu popupMenu = new JPopupMenu();
+      addOrphanSeriesSelectionMenu(popupMenu, pane, candidates);
+      popupMenu.show(invoker, x, y);
+    }
+  }
+
+  private void deactivateManualSync(ViewSynchData currentSynchData) {
+    // Remove this view from its sync group. The actual button state is repainted by
+    // updateSynchState() once the global wiring has been refreshed.
+    currentSynchData.setManualSyncState(SyncState.OFF);
+
+    for (ViewSynchData.ManualSyncData msd :
+        new HashSet<>(currentSynchData.getManualSyncDataSet())) {
+      ViewCanvas<?> targetPane = msd.getTargetPane();
+      ViewSynchData targetSd =
+          (ViewSynchData) targetPane.getActionsInView().get(ActionW.SYNCH_LINK.cmd());
+      if (targetSd != null) {
+        targetSd.getManualSyncDataSet().removeIf(d -> d.getTargetPane() == this);
+        if (targetSd.getManualSyncDataSet().isEmpty()) {
+          targetSd.setManualSyncState(SyncState.OFF);
+          eventManager.removePropertyChangeListener(ActionW.SYNCH.cmd(), targetPane);
+        }
+      }
+    }
+    currentSynchData.clearManualSyncData();
+    eventManager.removePropertyChangeListener(ActionW.SYNCH.cmd(), this);
+
+    // Update global manual sync state if no view is manually synced anymore
+    SynchData globalSd = getGlobalSynchData();
+    if (globalSd != null) {
+      ImageViewerPlugin<E> container = eventManager.getSelectedView2dContainer();
+      boolean anyRemains =
+          container != null
+              && container.getImagePanels().stream()
+                  .anyMatch(
+                      v -> {
+                        ViewSynchData sd =
+                            (ViewSynchData) v.getActionsInView().get(ActionW.SYNCH_LINK.cmd());
+                        return sd != null && sd.isManualSynchActivated();
+                      });
+      if (!anyRemains) {
+        globalSd.setManualSyncState(SyncState.OFF);
+      }
+    }
+  }
+
+  private void setupManualSync(ViewCanvas<?> source, ViewCanvas<?> target) {
+    if (source == target) {
+      return;
+    }
+    ViewSynchData synchDataSource =
+        (ViewSynchData) source.getActionsInView().get(ActionW.SYNCH_LINK.cmd());
+    ViewSynchData synchDataTarget =
+        (ViewSynchData) target.getActionsInView().get(ActionW.SYNCH_LINK.cmd());
+    if (synchDataSource == null || synchDataTarget == null) {
+      return;
+    }
+    // Skip if already linked
+    if (synchDataSource.getManualSyncDataByPane(target) != null) {
+      return;
+    }
+    Double sourcePosition = (Double) source.getImage().getTagValue(TagW.SlicePosition);
+    Double targetPosition = (Double) target.getImage().getTagValue(TagW.SlicePosition);
+    // Cannot sync without slice locations — inform the user so the silent no-op is not confusing.
+    if (sourcePosition == null || targetPosition == null) {
+      LOGGER.warn("Cannot set up manual sync: SlicePosition tag is missing on one of the views");
+      JOptionPane.showMessageDialog(
+          SwingUtilities.getWindowAncestor(getJComponent()),
+          Messages.getString("DefaultView2d.manual_sync_no_position"),
+          Messages.getString("DefaultView2d.manual_sync_no_position_title"),
+          JOptionPane.WARNING_MESSAGE);
+      return;
+    }
+    // A view that takes part in a manual sync group is no longer considered orphan
+    synchDataSource.setManualSyncState(SyncState.ON);
+    synchDataTarget.setManualSyncState(SyncState.ON);
+    synchDataSource.setOrphan(false);
+    synchDataTarget.setOrphan(false);
+    synchDataSource.setOriginal(false);
+    synchDataTarget.setOriginal(false);
+
+    synchDataSource.addManualSyncData(sourcePosition, targetPosition, target);
+    synchDataTarget.addManualSyncData(targetPosition, sourcePosition, source);
+
+    source.setActionsInView(ActionW.SYNCH_LINK.cmd(), synchDataSource);
+    target.setActionsInView(ActionW.SYNCH_LINK.cmd(), synchDataTarget);
+
+    eventManager.addPropertyChangeListener(ActionW.SYNCH.cmd(), source);
+    eventManager.addPropertyChangeListener(ActionW.SYNCH.cmd(), target);
+    eventManager.synchManager.applyManualSync();
+    // Button repaint is centralized in updateSynchState() — no manual setState here.
+  }
+
+  private void addOrphanSeriesSelectionMenu(
+      JPopupMenu popupMenu, ViewCanvas<E> pane, List<ViewCanvas<E>> list) {
+    if (list.isEmpty()) {
+      return;
+    }
+    popupMenu.add(
+        new TitleMenuItem(
+            Messages.getString("DefaultView2d.select_series_to_sync") + StringUtil.COLON));
+    popupMenu.addSeparator();
+    for (ViewCanvas<E> entry : list) {
+      // Label: series description + slice count
+      MediaSeries<E> entrySeries = entry.getSeries();
+      JMenuItem menuItem = new JMenuItem(entrySeries.toString() + " -- " + entrySeries.size(null));
+      menuItem.addActionListener(
+          e -> {
+            setupManualSync(pane, entry);
+            refreshAllListeners();
+          });
+      popupMenu.add(menuItem);
     }
   }
 
@@ -415,6 +881,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     try {
       if (newSeries == null) {
         setImage(null);
+        resetSynchState();
       } else {
         E media = selectedMedia;
         if (selectedMedia == null) {
@@ -430,6 +897,18 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
           lens.setFreezeImage(null);
         }
         setImage(media);
+
+        ComboItemListener<SynchView> synchAction =
+            eventManager.getAction(ActionW.SYNCH).orElse(null);
+        if (synchAction != null && synchAction.getSelectedItem() instanceof SynchView sel) {
+          if (!sel.getSynchData().getMode().equals(SynchData.Mode.TILE)) {
+            // If tile mode is selected, the other views are updated according to the first view.
+            // Resetting the synch state breaks the auto sync behavior of tile mode.
+            // In case the synch is not defined, then there is no need for resetting the synch
+            // configuration.
+            resetSynchState();
+          }
+        }
       }
     } catch (Exception e) {
       AuditLog.logError(LOGGER, e, "Unexpected error:"); // NON-NLS
@@ -918,51 +1397,142 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
   }
 
   public void propertyChange(SynchCineEvent synch) {
-    E imgElement = getImage();
     graphicManager.deleteByLayerType(LayerType.CROSSLINES);
 
-    if (synch.getView() == this) {
-      if (tileOffset != 0) {
-        // Index could have changed when loading series.
-        imgElement =
-            series.getMedia(
-                synch.getSeriesIndex() + tileOffset,
-                (Filter<E>) actionsInView.get(ActionW.FILTERED_SERIES.cmd()),
-                getCurrentSortComparator());
-      } else if (synch.getMedia() instanceof ImageElement) {
-        imgElement = (E) synch.getMedia();
-      }
-    } else if (synch.getLocation() != null) {
-      Boolean cutlines = (Boolean) actionsInView.get(ActionW.SYNCH_CROSSLINE.cmd());
-      if (cutlines != null && cutlines) {
-        if (LangUtil.nullToTrue((Boolean) actionsInView.get(LayerType.CROSSLINES.name()))) {
-          // Compute cutlines from the location of selected image
-          computeCrosslines(synch.getLocation().doubleValue());
-        }
-      } else {
-        double location = synch.getLocation().doubleValue();
-        imgElement =
-            series.getNearestImage(
-                location,
-                tileOffset,
-                (Filter<E>) actionsInView.get(ActionW.FILTERED_SERIES.cmd()),
-                getCurrentSortComparator());
+    ViewSynchData issuerSyncData =
+        (ViewSynchData) synch.getView().getActionsInView().get(ActionW.SYNCH_LINK.cmd());
+    ViewSynchData selfSyncData =
+        (ViewSynchData) this.getActionsInView().get(ActionW.SYNCH_LINK.cmd());
 
-        AuditLog.LOGGER.info("synch:series nb:{}", series.getSeriesNumber());
-      }
-    } else {
-      // When no 3D information on the slice position
-      imgElement =
-          series.getMedia(
-              synch.getSeriesIndex() + tileOffset,
-              (Filter<E>) actionsInView.get(ActionW.FILTERED_SERIES.cmd()),
-              getCurrentSortComparator());
-
-      AuditLog.LOGGER.info("synch:series nb:{}", series.getSeriesNumber());
+    if (synch.getView() != this && !shouldAcceptSyncEvent(synch, issuerSyncData, selfSyncData)) {
+      return;
     }
 
+    E imgElement = resolveImageForSyncEvent(synch, issuerSyncData, selfSyncData);
+    if (imgElement == null) {
+      // Crosslines were drawn or no image change required
+      return;
+    }
+    applyImagePreservingZoom(imgElement);
+  }
+
+  /**
+   * Decide whether a sync event from another view must be propagated to this view. Returns {@code
+   * true} when one of the three sync rules holds:
+   *
+   * <ul>
+   *   <li>both views have auto-sync ON and share the same {@code FrameOfReferenceUID},
+   *   <li>both views have manual-sync ON and the issuer holds a {@link
+   *       ViewSynchData.ManualSyncData} entry pointing at this view,
+   *   <li>both views are in TILE mode with auto-sync ON.
+   * </ul>
+   */
+  private boolean shouldAcceptSyncEvent(
+      SynchCineEvent synch, ViewSynchData issuer, ViewSynchData self) {
+    // Issuer must be synchronized at all
+    if (issuer != null && !issuer.isSynchActivated()) {
+      return false;
+    }
+    // This view must be synchronized at all
+    if (self != null && !self.isSynchActivated()) {
+      return false;
+    }
+    return isAutoSyncMatch(issuer, self)
+        || isManualSyncMatch(issuer, self)
+        || isTileSyncMatch(issuer, self);
+  }
+
+  private boolean isAutoSyncMatch(ViewSynchData issuer, ViewSynchData self) {
+    return issuer != null
+        && self != null
+        && issuer.isAutoSynchActivated()
+        && self.isAutoSynchActivated()
+        && issuer.getFrameOfReferenceUID() != null
+        && issuer.getFrameOfReferenceUID().equals(self.getFrameOfReferenceUID());
+  }
+
+  private boolean isManualSyncMatch(ViewSynchData issuer, ViewSynchData self) {
+    return issuer != null
+        && self != null
+        && issuer.isManualSynchActivated()
+        && self.isManualSynchActivated()
+        && issuer.getManualSyncDataByPane(this) != null;
+  }
+
+  private boolean isTileSyncMatch(ViewSynchData issuer, ViewSynchData self) {
+    return issuer != null
+        && self != null
+        && issuer.getMode() == SynchData.Mode.TILE
+        && self.getMode() == SynchData.Mode.TILE
+        && issuer.isAutoSynchActivated()
+        && self.isAutoSynchActivated();
+  }
+
+  /**
+   * Resolve which image to display for the given sync event. Returns {@code null} when crosslines
+   * were drawn instead of changing the image.
+   */
+  @SuppressWarnings("unchecked")
+  private E resolveImageForSyncEvent(
+      SynchCineEvent synch, ViewSynchData issuer, ViewSynchData self) {
+    Filter<E> filter = (Filter<E>) actionsInView.get(ActionW.FILTERED_SERIES.cmd());
+
+    // Self-emitted event: use series index or carried media
+    if (synch.getView() == this) {
+      if (tileOffset != 0) {
+        return series.getMedia(
+            synch.getSeriesIndex() + tileOffset, filter, getCurrentSortComparator());
+      }
+      if (synch.getMedia() instanceof ImageElement) {
+        return (E) synch.getMedia();
+      }
+      return getImage();
+    }
+
+    // External event with no slice location: fall back to series index
+    if (synch.getLocation() == null) {
+      AuditLog.LOGGER.info("synch:series nb:{}", series.getSeriesNumber());
+      return series.getMedia(
+          synch.getSeriesIndex() + tileOffset, filter, getCurrentSortComparator());
+    }
+
+    // External event with a slice location: either draw crosslines or pick the nearest image
+    Boolean cutlines = (Boolean) actionsInView.get(ActionW.SYNCH_CROSSLINE.cmd());
+    boolean sameOrientation =
+        synch.getMedia() instanceof ImageElement
+            && eventManager.synchManager.hasSameOrientation(
+                series, (MediaSeries<E>) synch.getView().getSeries());
+
+    if (Boolean.TRUE.equals(cutlines) && !sameOrientation) {
+      if (LangUtil.nullToTrue((Boolean) actionsInView.get(LayerType.CROSSLINES.name()))) {
+        computeCrosslines(synch.getLocation().doubleValue());
+      }
+      return null; // crosslines drawn, no image change
+    }
+
+    double location = applyManualSyncOffset(synch.getLocation().doubleValue(), issuer, self);
+    AuditLog.LOGGER.info("synch:series nb:{}", series.getSeriesNumber());
+    return series.getNearestImage(location, tileOffset, filter, getCurrentSortComparator());
+  }
+
+  /**
+   * Translate the issuer slice location into this view's coordinate space when both views are
+   * manually synchronized: {@code location += target - source}.
+   */
+  private double applyManualSyncOffset(double location, ViewSynchData issuer, ViewSynchData self) {
+    if (self == null
+        || issuer == null
+        || self.getManualSyncState() != SyncState.ON
+        || issuer.getManualSyncState() != SyncState.ON) {
+      return location;
+    }
+    ViewSynchData.ManualSyncData msd = issuer.getManualSyncDataByPane(this);
+    return msd == null ? location : location + msd.getTargetLocation() - msd.getSourceLocation();
+  }
+
+  /** Set the image while preserving the current zoom mode (best-fit / real-size / current). */
+  private void applyImagePreservingZoom(E imgElement) {
     Double zoomFactor = (Double) actionsInView.get(ActionW.ZOOM.cmd());
-    // Avoid resetting zoom when the mode is not best fit
     if (zoomFactor != null && zoomFactor >= 0.0) {
       Object zoomType = actionsInView.get(ViewCanvas.ZOOM_TYPE_CMD);
       actionsInView.put(ViewCanvas.ZOOM_TYPE_CMD, ZoomType.CURRENT);
@@ -978,6 +1548,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     if (series == null) {
       return;
     }
+
     PlanarImage dispImage = imageLayer.getDisplayImage();
     OpManager manager = imageLayer.getDisplayOpManager();
     final String command = evt.getPropertyName();
@@ -1008,36 +1579,58 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
   }
 
   private void propertyChange(final SynchEvent synch) {
-    SynchData synchData = (SynchData) actionsInView.get(ActionW.SYNCH_LINK.cmd());
-    if (synchData != null && Mode.NONE.equals(synchData.getMode())) {
-      return;
+    // Retrieve synchronization data from both originating and current view
+    // synch.getView() may be null for broadcast events (e.g., zoom toolbar actions)
+    SynchData issuerSyncData =
+        synch.getView() != null
+            ? (SynchData) synch.getView().getActionsInView().get(ActionW.SYNCH_LINK.cmd())
+            : null;
+    SynchData synchData = (SynchData) this.getActionsInView().get(ActionW.SYNCH_LINK.cmd());
+
+    // Block synchronization if either view has sync disabled
+    if (synch.getView() != this) {
+      if (synchData != null && !synchData.isSynchActivated()) {
+        return;
+      }
+      if (issuerSyncData != null && !issuerSyncData.isSynchActivated()) {
+        return;
+      }
     }
 
     OpManager manager = imageLayer.getDisplayOpManager();
 
+    // Process each synchronized action from the event
     for (Entry<String, Object> entry : synch.getEvents().entrySet()) {
       String command = entry.getKey();
-      if (synchData != null && !synchData.isActionEnable(command)) {
+      // Skip actions not enabled in current view's sync configuration
+      if (this != synch.getView() && synchData != null && !synchData.isActionEnable(command)) {
         continue;
       }
+      // Apply the synchronized action based on its type
       if (command.equals(ActionW.WINDOW.cmd()) || command.equals(ActionW.LEVEL.cmd())) {
+        // Adjust window (brightness) or level (contrast)
         if (manager.setParamValue(
             WindowOp.OP_NAME, command, ((Number) entry.getValue()).doubleValue())) {
           imageLayer.updateDisplayOperations();
         }
       } else if (command.equals(ActionW.ROTATION.cmd())) {
+        // Apply rotation transformation
         Object old = actionsInView.put(ActionW.ROTATION.cmd(), entry.getValue());
         if (!Objects.equals(old, entry.getValue())) {
           updateAffineTransform();
         }
       } else if (command.equals(ActionW.RESET.cmd())) {
+        // Reset all settings to defaults
         reset();
       } else if (command.equals(ActionW.ZOOM.cmd())) {
+        // Handle zoom with special values for best fit and real world size
         double val = (Double) entry.getValue();
-        // Special Cases: -200.0 => best fit, -100.0 => real world size
+        // Special values: -200.0 => best fit, -100.0 => real world size
         if (MathUtil.isDifferent(val, -200.0) && MathUtil.isDifferent(val, -100.0)) {
+          // Standard zoom value
           zoom(val);
         } else {
+          // Apply special zoom type
           Object zoomType = actionsInView.get(ViewCanvas.ZOOM_TYPE_CMD);
           actionsInView.put(
               ViewCanvas.ZOOM_TYPE_CMD,
@@ -1046,18 +1639,20 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
           actionsInView.put(ViewCanvas.ZOOM_TYPE_CMD, zoomType);
         }
       } else if (command.equals(ActionW.LENS_ZOOM.cmd())) {
+        // Update zoom level within the magnification lens
         if (lens != null) {
           lens.setActionInView(ActionW.ZOOM.cmd(), entry.getValue());
           lens.updateZoom();
         }
       } else if (command.equals(ActionW.LENS.cmd())) {
+        // Toggle lens visibility and initialize if needed
         Boolean showLens = (Boolean) entry.getValue();
         actionsInView.put(command, showLens);
         if (showLens) {
           if (lens == null) {
             lens = new ZoomWin<>(this);
           }
-          // resize if to big
+          // Constrain lens size to 1/3 of view dimensions
           int maxWidth = getWidth() / 3;
           int maxHeight = getHeight() / 3;
           lens.setSize(Math.min(lens.getWidth(), maxWidth), Math.min(lens.getHeight(), maxHeight));
@@ -1069,41 +1664,39 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         }
 
       } else if (command.equals(ActionW.PAN.cmd())) {
+        // Apply image translation (panning)
         Object point = entry.getValue();
-        // ImageViewerPlugin<E> view = eventManager.getSelectedView2dContainer();
-        // if (view != null) {
-        // if(!view.getSynchView().isActionEnable(ActionW.ROTATION)){
-        //
-        // }
-        // }
         if (point instanceof PanPoint) {
           moveOrigin((PanPoint) entry.getValue());
         }
 
       } else if (command.equals(ActionW.FLIP.cmd())) {
-        // Horizontal flip is applied after rotation (To be compliant with DICOM PR)
+        // Apply horizontal flip (executed after rotation per DICOM PR standard)
         Object old = actionsInView.put(ActionW.FLIP.cmd(), entry.getValue());
         if (!Objects.equals(old, entry.getValue())) {
           updateAffineTransform();
         }
       } else if (command.equals(ActionW.LUT.cmd())) {
+        // Apply lookup table (color mapping)
         if (manager.setParamValue(PseudoColorOp.OP_NAME, PseudoColorOp.P_LUT, entry.getValue())) {
           imageLayer.updateDisplayOperations();
         }
       } else if (command.equals(ActionW.INVERT_LUT.cmd())) {
+        // Invert the lookup table colors
         if (manager.setParamValue(WindowOp.OP_NAME, command, entry.getValue())) {
           manager.setParamValue(
               PseudoColorOp.OP_NAME, PseudoColorOp.P_LUT_INVERSE, entry.getValue());
-          // Update VOI LUT if pixel padding
           imageLayer.updateDisplayOperations();
         }
       } else if (command.equals(ActionW.FILTER.cmd())) {
+        // Apply image filter (e.g., smoothing, sharpening)
         if (manager.setParamValue(FilterOp.OP_NAME, FilterOp.P_KERNEL_DATA, entry.getValue())) {
           imageLayer.updateDisplayOperations();
         }
       } else if (command.equals(ActionW.SPATIAL_UNIT.cmd())) {
+        // Change measurement unit (e.g., mm, pixels)
         actionsInView.put(command, entry.getValue());
-        // TODO update only measure and limit when selected view share graphics
+        // Update measurement labels for all graphics in this view
         graphicManager.updateLabels(Boolean.TRUE, this);
       }
     }
@@ -1118,6 +1711,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     ToolTipManager.sharedInstance().unregisterComponent(this);
     imageLayer.removeLayerChangeListener(this);
     Optional.ofNullable(lens).ifPresent(l -> l.showLens(false));
+    resetSynchState();
     if (series != null) {
       setSeries(null);
     }
@@ -1270,5 +1864,79 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
 
   public static Cursor getNewCursor(int type) {
     return new Cursor(type);
+  }
+
+  protected void resetSynchState() {
+    ViewSynchData synchData = (ViewSynchData) actionsInView.get(ActionW.SYNCH_LINK.cmd());
+    if (synchData == null) return;
+    SynchData globalSynchData = getGlobalSynchData();
+    if (globalSynchData != null && globalSynchData.isAutoSynchActivated()) {
+      globalSynchData.setOriginal(true);
+      globalSynchData.setAutoSyncState(SyncState.OFF);
+    }
+
+    Set<ViewSynchData.ManualSyncData> manualSyncDataSet = synchData.getManualSyncDataSet();
+
+    if (!manualSyncDataSet.isEmpty()) {
+      for (ViewSynchData.ManualSyncData msd : new HashSet<>(manualSyncDataSet)) {
+        ViewCanvas<?> targetPane = msd.getTargetPane();
+        ViewSynchData targetSd =
+            (ViewSynchData) targetPane.getActionsInView().get(ActionW.SYNCH_LINK.cmd());
+        if (targetSd != null) {
+          targetSd.getManualSyncDataSet().removeIf(d -> d.getTargetPane() == this);
+          if (targetSd.getManualSyncDataSet().isEmpty()) {
+            targetSd.setManualSyncState(SyncState.OFF);
+          }
+        }
+      }
+      manualSyncDataSet.clear();
+      synchData.setManualSyncState(SyncState.OFF);
+
+      // Also reset the global manual sync state when no peer view remains manually synced.
+      // Without this, activateManualSync() would wrongly enter the "join existing group"
+      // branch (because globalSynchData.isManualSynchActivated() is still true), find zero
+      // live members, and silently do nothing — leaving the button red with no popup.
+      if (globalSynchData != null && globalSynchData.isManualSynchActivated()) {
+        ImageViewerPlugin<E> container = eventManager.getSelectedView2dContainer();
+        if (container != null) {
+          boolean anyRemains =
+              container.getImagePanels().stream()
+                  .filter(v -> v != this) // this view is still in the container during disposeView
+                  .anyMatch(
+                      v -> {
+                        ViewSynchData sd =
+                            (ViewSynchData) v.getActionsInView().get(ActionW.SYNCH_LINK.cmd());
+                        return sd != null && sd.isManualSynchActivated();
+                      });
+          if (!anyRemains) {
+            globalSynchData.setManualSyncState(SyncState.OFF);
+          }
+        }
+      }
+    }
+    // Disable auto sync, will be recomputed afterwards if relevant
+    synchData.setAutoSyncState(SyncState.OFF);
+    synchData.setOriginal(true);
+    synchData.setFrameOfReferenceUID(null);
+  }
+
+  /**
+   * Sets up a manual synchronization link between this view and the given target view. Intended for
+   * use when this view replaces another view that was previously manually synchronized, so that the
+   * sync relationship is preserved after the replacement.
+   */
+  public void syncManuallyWith(ViewCanvas<?> target) {
+    setupManualSync(this, target);
+  }
+
+  /**
+   * Get the global SynchData stored at the container level. It returns the original instance and
+   * not a copy to apply modifications
+   *
+   * @return null if synch data is not defined, the instance otherwise
+   */
+  private SynchData getGlobalSynchData() {
+    ComboItemListener<SynchView> synchAction = eventManager.getAction(ActionW.SYNCH).orElse(null);
+    return synchAction == null ? null : ((SynchView) synchAction.getSelectedItem()).getSynchData();
   }
 }

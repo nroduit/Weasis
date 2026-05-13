@@ -24,7 +24,10 @@ import org.weasis.core.ui.serialize.XmlSerializer;
 import org.weasis.core.util.FileUtil;
 import org.weasis.dicom.codec.*;
 import org.weasis.dicom.codec.DicomMediaIO.Reading;
+import org.weasis.dicom.codec.utils.DicomMediaUtils;
 import org.weasis.dicom.explorer.HangingProtocols.OpeningViewer;
+import org.weasis.dicom.explorer.imp.DicomZipCodec;
+import org.weasis.dicom.explorer.imp.DicomZipMediaIO;
 
 public class LoadLocalDicom extends LoadDicom {
 
@@ -67,7 +70,7 @@ public class LoadLocalDicom extends LoadDicom {
       if (isCancelled()) {
         return;
       }
-      if (value == null) {
+      if (value == null || !value.canRead()) {
         continue;
       }
 
@@ -75,8 +78,7 @@ public class LoadLocalDicom extends LoadDicom {
         if (firstLevel || recursive) {
           folders.add(value);
         }
-      } else if (value.canRead()
-              && FileUtil.isFileExtensionMatching(value.toPath(), DicomCodec.FILE_EXTENSIONS)
+      } else if (FileUtil.isFileExtensionMatching(value.toPath(), DicomCodec.FILE_EXTENSIONS)
           || MimeInspector.isMatchingMimeTypeFromMagicNumber(value, DicomMediaIO.DICOM_MIMETYPE)) {
         DicomMediaIO loader = new DicomMediaIO(value);
         Reading reading = loader.getReadingStatus();
@@ -93,7 +95,12 @@ public class LoadLocalDicom extends LoadDicom {
           }
         } else if (reading == Reading.ERROR) {
           errors.incrementAndGet();
+        } else if (reading == Reading.UNSUPPORTED) {
+          unsupported.incrementAndGet();
         }
+      } else if (FileUtil.isFileExtensionMatching(value.toPath(), DicomZipCodec.FILE_EXTENSIONS)
+          || MimeInspector.isMatchingMimeTypeFromMagicNumber(value, DicomZipMediaIO.MIME_TYPE)) {
+        new DicomZipMediaIO(value.toURI(), null).delegate(dicomModel);
       }
     }
 
@@ -233,13 +240,11 @@ public class LoadLocalDicom extends LoadDicom {
   static int calculateSamplingRateFor4d(List<DicomImageElement> imageList) {
     try {
       if (imageList.size() >= 2) {
-        double[] firstPos = (double[]) imageList.getFirst().getTagValue(TagW.SlicePosition);
-        double firstPosSum = firstPos[0] + firstPos[1] + firstPos[2];
+        double firstPosSum = DicomMediaUtils.getSlicePositionValue(imageList.getFirst());
 
         int samePositionCount = 1;
         for (int i = 1; i < imageList.size(); i++) {
-          double[] pos = (double[]) imageList.get(i).getTagValue(TagW.SlicePosition);
-          double posSum = pos[0] + pos[1] + pos[2];
+          double posSum = DicomMediaUtils.getSlicePositionValue(imageList.get(i));
           if (Math.abs(posSum - firstPosSum) < 0.05) {
             samePositionCount++;
           } else {

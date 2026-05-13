@@ -41,13 +41,12 @@ public final class SortSeriesStack {
 
         @Override
         public int compare(DicomImageElement m1, DicomImageElement m2) {
-          double[] val1 = (double[]) m1.getTagValue(TagW.SlicePosition);
-          double[] val2 = (double[]) m2.getTagValue(TagW.SlicePosition);
+          Double val1 = (Double) m1.getTagValue(TagW.SlicePosition);
+          Double val2 = (Double) m2.getTagValue(TagW.SlicePosition);
           if (val1 == null || val2 == null) {
             return 0;
           }
-          // Invert the x-axis to have the same orientation as the Patient Coordinate System
-          return Double.compare(-val1[0] + val1[1] + val1[2], -val2[0] + val2[1] + val2[2]);
+          return Double.compare(val1, val2);
         }
 
         @Override

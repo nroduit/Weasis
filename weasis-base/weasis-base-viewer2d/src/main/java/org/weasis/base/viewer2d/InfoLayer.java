@@ -55,7 +55,8 @@ public class InfoLayer extends AbstractInfoLayer<ImageElement> {
   }
 
   @Override
-  public LayerAnnotation getLayerCopy(ViewCanvas view2dPane, boolean useGlobalPreferences) {
+  public LayerAnnotation<ImageElement> getLayerCopy(
+      ViewCanvas<ImageElement> view2dPane, boolean useGlobalPreferences) {
     InfoLayer layer = new InfoLayer(view2DPane, useGlobalPreferences);
     Map<LayerItem, Boolean> prefMap = layer.displayPreferences;
     setLayerValue(prefMap, LayerItem.ANNOTATIONS);

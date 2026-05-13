@@ -36,6 +36,7 @@ import org.weasis.core.api.explorer.model.AbstractFileModel;
 import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.gui.util.GuiUtils;
+import org.weasis.core.api.gui.util.ShortcutManager;
 import org.weasis.core.api.media.data.Codec;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.service.AuditLog;
@@ -83,6 +84,12 @@ public class Activator implements BundleActivator, ServiceListener {
     MeasureTool.viewSetting.initMonitors();
     MeasureTool.viewSetting.applyPreferences(prefs);
 
+    // Initialize keyboard shortcut manager
+    ShortcutManager shortcutManager = ShortcutManager.getInstance();
+    shortcutManager.registerDefaults();
+    shortcutManager.loadPreferences(prefs);
+    shortcutManager.applyToFeatures();
+
     // Must be instantiated in EDT
     GuiExecutor.execute(
         () -> {
@@ -108,6 +115,7 @@ public class Activator implements BundleActivator, ServiceListener {
     Preferences prefs = BundlePreferences.getDefaultPreferences(bundleContext);
     AbstractInfoLayer.savePreferences(prefs);
     MeasureTool.viewSetting.savePreferences(prefs);
+    ShortcutManager.getInstance().savePreferences(prefs);
     prefs.sync(); // Force to save as PreferencesManager (as specific bundle managing preferences)
 
     Path dataFolder = AppProperties.getBundleDataFolder(bundleContext);

@@ -20,12 +20,38 @@
     <url>https://github.com/nroduit/Weasis</url>
   </scm>
   <properties>
-    <sonar.moduleKey>${project.artifactId}</sonar.moduleKey>
+    <sonar.projectKey>org.weasis:weasis-framework</sonar.projectKey>
     <sonar.organization>nroduit-github</sonar.organization>
     <sonar.host.url>https://sonarcloud.io</sonar.host.url>
+
     <sonar.language>java</sonar.language>
+    <sonar.sourceEncoding>UTF-8</sonar.sourceEncoding>
     <sonar.java.source>${java-version}</sonar.java.source>
-    <sonar.exclusions>**/src/test/**</sonar.exclusions>
+    <sonar.java.target>${java-version}</sonar.java.target>
+
+    <sonar.scm.provider>git</sonar.scm.provider>
+    <sonar.links.homepage>https://weasis.org</sonar.links.homepage>
+    <sonar.links.ci>https://github.com/nroduit/Weasis/actions</sonar.links.ci>
+    <sonar.links.scm>https://github.com/nroduit/Weasis</sonar.links.scm>
+    <sonar.links.issue>https://github.com/nroduit/Weasis/issues</sonar.links.issue>
+
+    <!-- Code & coverage scope -->
+    <sonar.exclusions>
+      **/src/test/**,
+      **/target/**,
+      **/generated-sources/**,
+      archetype/**,
+      snap/**,
+      weasis-distributions/**
+    </sonar.exclusions>
+    <sonar.coverage.exclusions>
+      **/Messages.java,
+      **/Activator.java,
+      **/module-info.java,
+      **/package-info.java
+    </sonar.coverage.exclusions>
+    <sonar.cpd.exclusions>**/Messages.java</sonar.cpd.exclusions>
+
     <!--suppress UnresolvedMavenProperty -->
     <sonar.coverage.jacoco.xmlReportPaths>${maven.multiModuleProjectDirectory}/tests/target/site/jacoco-aggregate/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
   </properties>

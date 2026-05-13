@@ -9,48 +9,30 @@
  */
 package org.weasis.dicom.explorer;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.weasis.core.util.StringUtil;
-
 public class HangingProtocols {
-  private static final Logger LOGGER = LoggerFactory.getLogger(HangingProtocols.class);
 
+  /** Key for the "close previous viewers" flag in local persistence. */
+  public static final String CLOSE_PREVIOUS_KEY = "weasis.open.viewer.clean";
+
+  /**
+   * Controls whether a viewer tab should be opened for a patient.
+   *
+   * <p>{@code NONE} is used only programmatically for internal DICOM objects (KO, SR) that must be
+   * imported without opening a viewer. {@code ALL_PATIENTS} is the standard mode: every patient
+   * gets a tab, with the first one focused and subsequent ones opening in the background.
+   */
   public enum OpeningViewer {
-    NONE(Messages.getString("none")),
-    ONE_PATIENT(Messages.getString("only.the.first.patient")),
-    ONE_PATIENT_CLEAN(Messages.getString("only.the.first.patient.remove.previous")),
-    ALL_PATIENTS(Messages.getString("all.the.patients")),
-    ALL_PATIENTS_CLEAN(Messages.getString("all.the.patients.remove.previous"));
+    NONE,
+    ALL_PATIENTS
+  }
 
-    private final String title;
+  public static boolean isClosePreviousFromPreferences() {
+    return Boolean.parseBoolean(
+        LocalPersistence.getProperties().getProperty(CLOSE_PREVIOUS_KEY, "false"));
+  }
 
-    OpeningViewer(String title) {
-      this.title = title;
-    }
-
-    public String getTitle() {
-      return title;
-    }
-
-    @Override
-    public String toString() {
-      return title;
-    }
-
-    public static OpeningViewer getOpeningViewerByLocalKey(String key) {
-      return getOpeningViewer(LocalPersistence.getProperties().getProperty(key), ONE_PATIENT);
-    }
-
-    public static OpeningViewer getOpeningViewer(String name, OpeningViewer defaultOpeningViewer) {
-      if (StringUtil.hasText(name)) {
-        try {
-          return OpeningViewer.valueOf(name);
-        } catch (Exception e) {
-          LOGGER.error("Cannot get OpeningViewer from {}", name, e);
-        }
-      }
-      return defaultOpeningViewer;
-    }
+  public static void setClosePrevious(boolean closePrevious) {
+    LocalPersistence.getProperties()
+        .setProperty(CLOSE_PREVIOUS_KEY, Boolean.toString(closePrevious));
   }
 }

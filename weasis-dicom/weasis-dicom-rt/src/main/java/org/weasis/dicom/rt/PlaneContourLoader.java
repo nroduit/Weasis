@@ -12,15 +12,12 @@ package org.weasis.dicom.rt;
 import java.util.LinkedHashSet;
 import java.util.Set;
 import org.weasis.core.ui.model.graphic.imp.seg.SegContour;
-import org.weasis.dicom.codec.LazyContourLoader;
+import org.weasis.dicom.codec.seg.LazyContourLoader;
 
+/** Lazy loader collecting all {@link SegContour} instances belonging to a single image plane. */
 public class PlaneContourLoader implements LazyContourLoader {
 
-  private final Set<SegContour> contours;
-
-  public PlaneContourLoader() {
-    this.contours = new LinkedHashSet<>();
-  }
+  private final Set<SegContour> contours = new LinkedHashSet<>();
 
   public void addContour(SegContour contour) {
     if (contour != null) {
@@ -29,7 +26,7 @@ public class PlaneContourLoader implements LazyContourLoader {
   }
 
   public void addContours(Set<SegContour> contourList) {
-    if (contourList != null && !contourList.isEmpty()) {
+    if (contourList != null) {
       contours.addAll(contourList);
     }
   }

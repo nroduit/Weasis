@@ -50,6 +50,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
+import org.weasis.core.api.media.data.TagReadable;
 import org.weasis.core.api.media.data.TagUtil;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.media.data.TagW.TagType;
@@ -296,19 +297,77 @@ public class DicomMediaUtils {
     }
   }
 
-  public static void computeSlicePositionVector(Taggable taggable) {
+  /**
+   * Computes the sign-normalized unit normal of the image plane described by the
+   * ImageOrientationPatient tags in {@code taggable}. The dominant axis of the cross product (row ×
+   * column) is forced to be positive (LPS+) so the result is directly comparable across images and
+   * segmentations regardless of the cross-product sign convention.
+   *
+   * @param taggable source with ImageOrientationPatient tags
+   * @return sign-normalized unit normal, or {@code null} when IOP is absent
+   */
+  public static Vector3d computeImageNormal(TagReadable taggable) {
+    Vector3d vr = ImageOrientation.getRowImagePosition(taggable);
+    Vector3d vc = ImageOrientation.getColumnImagePosition(taggable);
+    if (vr == null || vc == null) {
+      return null;
+    }
+    Vector3d normal = VectorUtils.computeNormalOfSurface(vr, vc);
+    // Ensure the normal points in the positive direction of its dominant axis to sort
+    // slices in the anatomical direction. The cross product (row × column) can point in
+    // either direction for the same anatomical plane (e.g., +X or -X for sagittal), which
+    // would reverse the sort order. This normalization must match the DICOM LPS+ coordinate
+    // system (Left +X, Posterior +Y, Superior +Z) because the Slice Location tag is not
+    // always correct.
+    return VectorUtils.orientNormalToDominantPositiveAxis(normal);
+  }
+
+  /**
+   * Computes the signed scalar slice position, caches it as {@link TagW#SlicePosition}, and returns
+   * it.
+   *
+   * <p>The value equals {@code dot(normal, IPP)} and is used for sorting slices, finding the
+   * nearest image, and synchronizing scroll positions as Slice Location is not always available and
+   * sometimes not reliable.
+   *
+   * @return the signed scalar distance along the normal, or {@code null} if IPP/IOP are missing
+   */
+  public static Double computeSlicePosition(Taggable taggable) {
     if (taggable != null) {
       Vector3d pPos = PatientOrientation.getPatientPosition(taggable);
       if (pPos != null) {
-        Vector3d vr = ImageOrientation.getRowImagePosition(taggable);
-        Vector3d vc = ImageOrientation.getColumnImagePosition(taggable);
-        if (vr != null && vc != null) {
-          Vector3d normal = VectorUtils.computeNormalOfSurface(vr, vc);
-          normal.mul(pPos);
-          taggable.setTag(TagW.SlicePosition, new double[] {normal.x, normal.y, normal.z});
+        Vector3d normal = computeImageNormal(taggable);
+        if (normal != null) {
+          double dot = normal.dot(pPos);
+          taggable.setTag(TagW.SlicePosition, dot);
+          return dot;
         }
       }
+      // Fallback to SliceLocation when ImageOrientationPatient is absent (e.g., NM images).
+      // SliceLocation (0020,1041) provides a scalar position that is sufficient for
+      // matching segmentation frames to source images when IOP is unavailable.
+      Double sliceLoc = TagD.getTagValue(taggable, Tag.SliceLocation, Double.class);
+      if (sliceLoc != null) {
+        taggable.setTag(TagW.SlicePosition, sliceLoc);
+        return sliceLoc;
+      }
     }
+    return null;
+  }
+
+  /**
+   * Returns the signed scalar slice position cached by {@link #computeSlicePosition}, or {@code 0}
+   * if not available.
+   *
+   * @param taggable source with a {@link TagW#SlicePosition} tag
+   * @return the signed scalar distance along the normal, or 0 if the tag is missing
+   */
+  public static double getSlicePositionValue(TagReadable taggable) {
+    if (taggable == null) {
+      return 0;
+    }
+    Double loc = (Double) taggable.getTagValue(TagW.SlicePosition);
+    return loc == null ? 0 : loc;
   }
 
   /**
@@ -1041,10 +1100,10 @@ public class DicomMediaUtils {
   }
 
   public static double getThickness(ImageElement firstDcm, ImageElement lastDcm) {
-    double[] p1 = (double[]) firstDcm.getTagValue(TagW.SlicePosition);
-    double[] p2 = (double[]) lastDcm.getTagValue(TagW.SlicePosition);
-    if (p1 != null && p2 != null) {
-      double diff = Math.abs((p2[0] + p2[1] + p2[2]) - (p1[0] + p1[1] + p1[2]));
+    double p1Val = getSlicePositionValue(firstDcm);
+    double p2Val = getSlicePositionValue(lastDcm);
+    if (p1Val != 0 || p2Val != 0) {
+      double diff = Math.abs(p2Val - p1Val);
 
       Double t1 = TagD.getTagValue(firstDcm, Tag.SliceThickness, Double.class);
       if (t1 != null) {

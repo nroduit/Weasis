@@ -14,6 +14,8 @@ import static org.weasis.core.api.gui.Insertable.ITEM_SEPARATOR;
 import static org.weasis.core.api.gui.Insertable.ITEM_SEPARATOR_LARGE;
 import static org.weasis.core.api.gui.Insertable.ITEM_SEPARATOR_SMALL;
 
+import com.formdev.flatlaf.util.SystemFileChooser;
+import com.formdev.flatlaf.util.SystemFileChooser.FileNameExtensionFilter;
 import java.awt.FlowLayout;
 import java.awt.Toolkit;
 import java.awt.Window;
@@ -25,7 +27,6 @@ import javax.swing.ButtonGroup;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JDialog;
-import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JRadioButton;
@@ -39,7 +40,6 @@ import org.opencv.core.MatOfInt;
 import org.opencv.imgcodecs.Imgcodecs;
 import org.weasis.core.Messages;
 import org.weasis.core.api.gui.util.ActionW;
-import org.weasis.core.api.gui.util.FileFormatFilter;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.image.SimpleOpManager;
 import org.weasis.core.api.media.data.ImageElement;
@@ -230,26 +230,27 @@ public class ScreenshotDialog<I extends ImageElement> extends JDialog {
     if (image != null) {
       WProperties localPersistence = GuiUtils.getUICore().getLocalPersistence();
       String targetDirectoryPath = localPersistence.getProperty(P_LAST_DIR, "");
-      JFileChooser fileChooser = new JFileChooser(targetDirectoryPath);
-      fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+      SystemFileChooser fileChooser = new SystemFileChooser(targetDirectoryPath);
+      fileChooser.setFileSelectionMode(SystemFileChooser.FILES_ONLY);
       fileChooser.setAcceptAllFileFilterUsed(false);
-      FileFormatFilter filter = new FileFormatFilter(Format.PNG.extension, Format.PNG.title);
+      FileNameExtensionFilter filter =
+          new FileNameExtensionFilter(Format.PNG.title, Format.PNG.extension);
       fileChooser.addChoosableFileFilter(
-          new FileFormatFilter(Format.JP2.extension, Format.JP2.title));
+          new FileNameExtensionFilter(Format.JP2.title, Format.JP2.extension));
       fileChooser.addChoosableFileFilter(
-          new FileFormatFilter(Format.JPEG.extension, Format.JPEG.title));
+          new FileNameExtensionFilter(Format.JPEG.title, Format.JPEG.extension));
       fileChooser.addChoosableFileFilter(
-          new FileFormatFilter(Format.JPEG_XL.extension, Format.JPEG_XL.title));
+          new FileNameExtensionFilter(Format.JPEG_XL.title, Format.JPEG_XL.extension));
       fileChooser.addChoosableFileFilter(filter);
       fileChooser.addChoosableFileFilter(
-          new FileFormatFilter(Format.TIFF.extension, Format.TIFF.title));
+          new FileNameExtensionFilter(Format.TIFF.title, Format.TIFF.extension));
       fileChooser.setFileFilter(filter);
 
-      if (fileChooser.showSaveDialog(null) == JFileChooser.APPROVE_OPTION
+      if (fileChooser.showSaveDialog(null) == SystemFileChooser.APPROVE_OPTION
           && fileChooser.getSelectedFile() != null) {
         File file = fileChooser.getSelectedFile();
-        filter = (FileFormatFilter) fileChooser.getFileFilter();
-        String extension = filter == null ? Format.PNG.extension : filter.getDefaultExtension();
+        filter = (FileNameExtensionFilter) fileChooser.getFileFilter();
+        String extension = filter == null ? Format.PNG.extension : filter.getExtensions()[0];
         String extFile = "." + extension;
         String filename =
             file.getName().endsWith(extFile) ? file.getPath() : file.getPath() + extFile;

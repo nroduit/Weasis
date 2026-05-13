@@ -24,7 +24,11 @@ import static org.weasis.pref.ConfigData.P_WEASIS_VERSION;
 
 import com.formdev.flatlaf.FlatSystemProperties;
 import com.formdev.flatlaf.util.SystemInfo;
+import java.awt.Desktop;
+import java.awt.Desktop.Action;
 import java.awt.EventQueue;
+import java.awt.desktop.OpenFilesEvent;
+import java.awt.desktop.OpenURIEvent;
 import java.io.File;
 import java.io.FileDescriptor;
 import java.io.FileInputStream;
@@ -736,6 +740,13 @@ Starting OSGI Bundles...
     loadI18nModules();
 
     Locale locale = textToLocale(lang);
+    // JVM Locale
+    Locale.setDefault(locale);
+    // LookAndFeel Locale
+    UIManager.getDefaults().setDefaultLocale(locale);
+    // For new components
+    JComponent.setDefaultLocale(locale);
+
     if (Locale.ENGLISH.equals(locale)) {
       // if English no need to load i18n bundle fragments
       modulesi18n.clear();
@@ -796,13 +807,6 @@ Starting OSGI Bundles...
           lookAndFeelInfo.isDark() ? "NSAppearanceNameDarkAqua" : "NSAppearanceNameAqua");
     }
 
-    // JVM Locale
-    Locale.setDefault(locale);
-    // LookAndFeel Locale
-    UIManager.getDefaults().setDefaultLocale(locale);
-    // For new components
-    JComponent.setDefaultLocale(locale);
-
     UIManager.setInstalledLookAndFeels(
         lookAndFeels.getLookAndFeels().toArray(new LookAndFeelInfo[0]));
 
@@ -811,6 +815,24 @@ Starting OSGI Bundles...
             FlatSystemProperties.UI_SCALE, null, serverProp, currentProps, true, false);
     if (scaleFactor != null) {
       System.setProperty(FlatSystemProperties.UI_SCALE, scaleFactor);
+    }
+
+    final String useSystemFileChooser =
+        getGeneralProperty(
+            "weasis.use.system.file.chooser", null, serverProp, currentProps, true, false);
+    if (useSystemFileChooser != null) {
+      System.setProperty(FlatSystemProperties.USE_SYSTEM_FILE_CHOOSER, useSystemFileChooser);
+    }
+
+    // Init handler for open URI and open file events (after setting the locale for Toolkit init)
+    Desktop desktopApp = Desktop.getDesktop();
+    if (desktopApp.isSupported(Action.APP_OPEN_URI)) {
+      long time = System.currentTimeMillis();
+      boolean noArgs = configData.getArguments().isEmpty();
+      desktopApp.setOpenURIHandler(e -> handleOpenURI(e, time, noArgs));
+    }
+    if (desktopApp.isSupported(Action.APP_OPEN_FILE)) {
+      desktopApp.setOpenFileHandler(this::handleOpenFile);
     }
 
     /*
@@ -1110,6 +1132,55 @@ Starting OSGI Bundles...
       return Locale.forLanguageTag(value.replace("_", "-"));
     }
     return Locale.getDefault();
+  }
+
+  private void handleOpenURI(OpenURIEvent e, long time, boolean noArgs) {
+    String uri = e.getURI().toString();
+    LOGGER.info("Get URI event from OS. URI: {}", uri);
+    int index = Utils.getWeasisProtocolIndex(uri);
+    if (index < 0) {
+      uri = "dicom:get -r \"" + uri + "\""; // NON-NLS
+      executeCommands(List.of(uri), null);
+    } else {
+      boolean sameInstance = System.currentTimeMillis() - time < 3000;
+      String[] args = getArgsForURI(uri);
+      Thread.ofVirtual().start(() -> launchProcess(args, sameInstance, noArgs));
+    }
+  }
+
+  private static String[] getArgsForURI(String uri) {
+    if (SystemInfo.isMacOS) {
+      return new String[] {"open", "-n", "-b", "org.weasis.launcher", "--args", uri}; // NON-NLS
+    } else if (SystemInfo.isWindows) {
+      return new String[] {"cmd", "/c", "start", uri}; // NON-NLS
+    } else {
+      return new String[] {"xdg-open", uri}; // NON-NLS
+    }
+  }
+
+  private void launchProcess(String[] args, boolean sameInstance, boolean noArgs) {
+    try {
+      ProcessBuilder pb = new ProcessBuilder(args);
+      pb.start().waitFor(15, TimeUnit.SECONDS);
+      if (sameInstance && noArgs) {
+        LOGGER.info("Configuration with URI is different, restart Weasis with new configuration");
+        shutdownHook();
+      }
+    } catch (Exception ex) {
+      LOGGER.error("Cannot start Weasis from URI", ex);
+      if (ex instanceof InterruptedException) {
+        Thread.currentThread().interrupt();
+      }
+    }
+  }
+
+  private void handleOpenFile(OpenFilesEvent e) {
+    List<String> files =
+        e.getFiles().stream()
+            .map(f -> "dicom:get -l \"" + f.getPath() + "\"") // NON-NLS
+            .toList();
+    LOGGER.info("Get open file event from OS. Files: {}", files);
+    executeCommands(files, null);
   }
 
   protected void shutdownHook() {

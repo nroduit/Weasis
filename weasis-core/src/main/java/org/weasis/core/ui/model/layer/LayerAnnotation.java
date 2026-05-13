@@ -12,10 +12,11 @@ package org.weasis.core.ui.model.layer;
 import java.awt.Graphics2D;
 import java.awt.Rectangle;
 import java.awt.geom.Point2D;
+import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.ui.editor.image.PixelInfo;
 import org.weasis.core.ui.editor.image.ViewCanvas;
 
-public interface LayerAnnotation extends Layer {
+public interface LayerAnnotation<E extends ImageElement> extends Layer {
   enum Position {
     TopLeft,
     TopRight,
@@ -41,7 +42,7 @@ public interface LayerAnnotation extends Layer {
 
   void paint(Graphics2D g2d);
 
-  LayerAnnotation getLayerCopy(ViewCanvas view2DPane, boolean useGlobalPreferences);
+  LayerAnnotation<E> getLayerCopy(ViewCanvas<E> view2DPane, boolean useGlobalPreferences);
 
   boolean isShowBottomScale();
 

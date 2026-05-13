@@ -56,7 +56,10 @@ import org.weasis.core.api.media.data.MediaReader;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.TagUtil;
 import org.weasis.core.api.media.data.TagW;
+import org.weasis.core.ui.editor.MediaFactory;
 import org.weasis.core.ui.editor.SeriesViewerFactory;
+import org.weasis.core.ui.editor.ViewerOpenOptions;
+import org.weasis.core.ui.editor.ViewerPlacement;
 import org.weasis.core.ui.editor.ViewerPluginBuilder;
 import org.weasis.core.ui.util.DefaultAction;
 import org.weasis.core.util.FileUtil;
@@ -273,8 +276,7 @@ public abstract class AbstractThumbnailList<E extends MediaElement> extends JLis
         tvalue = mediaElement.getName();
       }
 
-      return ViewerPluginBuilder.buildMediaSeriesWithDefaultModel(
-          reader, gUID, tname, tvalue, sUID);
+      return MediaFactory.buildMediaSeriesWithDefaultModel(reader, gUID, tname, tvalue, sUID);
     }
     return null;
   }
@@ -324,14 +326,14 @@ public abstract class AbstractThumbnailList<E extends MediaElement> extends JLis
         }
 
         MediaSeries s =
-            ViewerPluginBuilder.buildMediaSeriesWithDefaultModel(reader, gUID, tname, tvalue, sUID);
+            MediaFactory.buildMediaSeriesWithDefaultModel(reader, gUID, tname, tvalue, sUID);
         if (s != null && !list.contains(s)) {
           list.add(s);
         }
       }
       if (!list.isEmpty()) {
-        Map<String, Object> props =
-            buildPropertiesMap(compareEntryToBuildNewViewer, bestDefaultLayout, inSelView);
+        ViewerOpenOptions opts =
+            buildOpenOptions(compareEntryToBuildNewViewer, bestDefaultLayout, inSelView);
         ArrayList<String> mimes = new ArrayList<>();
         for (MediaSeries s : list) {
           String mime = s.getMimeType();
@@ -348,26 +350,22 @@ public abstract class AbstractThumbnailList<E extends MediaElement> extends JLis
                 seriesList.add(s);
               }
             }
-            ViewerPluginBuilder builder =
-                new ViewerPluginBuilder(
-                    plugin, seriesList, ViewerPluginBuilder.DefaultDataModel, props);
-            ViewerPluginBuilder.openSequenceInPlugin(builder);
+            new ViewerPluginBuilder(plugin, seriesList, ViewerPluginBuilder.DefaultDataModel, opts)
+                .open();
           }
         }
       }
     }
   }
 
-  private Map<String, Object> buildPropertiesMap(
+  private ViewerOpenOptions buildOpenOptions(
       boolean compareEntryToBuildNewViewer, boolean bestDefaultLayout, boolean inSelView) {
-    Map<String, Object> props = Collections.synchronizedMap(new HashMap<>());
-    props.put(ViewerPluginBuilder.CMP_ENTRY_BUILD_NEW_VIEWER, compareEntryToBuildNewViewer);
-    props.put(ViewerPluginBuilder.BEST_DEF_LAYOUT, bestDefaultLayout);
-    props.put(ViewerPluginBuilder.SCREEN_BOUND, null);
-    if (inSelView) {
-      props.put(ViewerPluginBuilder.ADD_IN_SELECTED_VIEW, true);
+    if (compareEntryToBuildNewViewer) {
+      return ViewerOpenOptions.builder()
+          .placement(ViewerPlacement.reuseViewer(bestDefaultLayout, inSelView))
+          .build();
     }
-    return props;
+    return ViewerOpenOptions.builder().placement(ViewerPlacement.newTab(bestDefaultLayout)).build();
   }
 
   public void openGroup(
@@ -395,7 +393,7 @@ public abstract class AbstractThumbnailList<E extends MediaElement> extends JLis
             MediaReader mreader = m.getMediaReader();
             if (modeLayout) {
               MediaSeries<MediaElement> series =
-                  ViewerPluginBuilder.buildMediaSeriesWithDefaultModel(
+                  MediaFactory.buildMediaSeriesWithDefaultModel(
                       mreader, groupUID, null, null, null);
               if (series != null) {
                 list.add(series);
@@ -403,7 +401,7 @@ public abstract class AbstractThumbnailList<E extends MediaElement> extends JLis
             } else {
               MediaSeries<MediaElement> series;
               if (list.isEmpty()) {
-                series = ViewerPluginBuilder.buildMediaSeriesWithDefaultModel(mreader);
+                series = MediaFactory.buildMediaSeriesWithDefaultModel(mreader);
                 if (series != null) {
                   list.add(series);
                 }
@@ -429,14 +427,13 @@ public abstract class AbstractThumbnailList<E extends MediaElement> extends JLis
         }
       }
 
-      Map<String, Object> props =
-          buildPropertiesMap(compareEntryToBuildNewViewer, bestDefaultLayout, inSelView);
+      ViewerOpenOptions opts =
+          buildOpenOptions(compareEntryToBuildNewViewer, bestDefaultLayout, inSelView);
 
       for (Entry<SeriesViewerFactory, List<MediaSeries<MediaElement>>> item : plugins.entrySet()) {
-        ViewerPluginBuilder builder =
-            new ViewerPluginBuilder(
-                item.getKey(), item.getValue(), ViewerPluginBuilder.DefaultDataModel, props);
-        ViewerPluginBuilder.openSequenceInPlugin(builder);
+        new ViewerPluginBuilder(
+                item.getKey(), item.getValue(), ViewerPluginBuilder.DefaultDataModel, opts)
+            .open();
       }
     }
   }

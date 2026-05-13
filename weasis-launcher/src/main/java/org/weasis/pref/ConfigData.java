@@ -11,12 +11,14 @@ package org.weasis.pref;
 
 import static java.util.stream.Collectors.*;
 
+import com.formdev.flatlaf.util.SystemInfo;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.*;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -474,7 +476,12 @@ public class ConfigData {
         // DICOM files
         if (val.startsWith("file:")) { // NON-NLS
           try {
-            val = new File(new URI(arg)).getPath();
+            URI u = new URI(arg);
+            if (u.getAuthority() != null && SystemInfo.isWindows) {
+              val = "\\\\" + u.getAuthority() + u.getPath();
+            } else {
+              val = Paths.get(u).toFile().getPath();
+            }
           } catch (URISyntaxException e) {
             LOGGER.error("Convert URI to file", e);
           }

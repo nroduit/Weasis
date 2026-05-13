@@ -37,6 +37,8 @@ public final class FocusHandler<E extends ImageElement> extends MouseActionAdapt
   private final ViewCanvas<E> viewCanvas;
   private long lastUpdateTime;
 
+  private boolean buttonPressActive;
+
   public FocusHandler(ViewCanvas<E> viewCanvas) {
     this.viewCanvas = viewCanvas;
   }
@@ -49,21 +51,35 @@ public final class FocusHandler<E extends ImageElement> extends MouseActionAdapt
     }
 
     var selectedButton = findViewButtonAt(evt.getPoint());
-    // Do select the view when pressing on a view button
-    if (evt.getClickCount() == 2 && selectedButton.isEmpty()) {
+
+    if (selectedButton.isPresent()) {
+      // Consume immediately so action adapters that check isConsumed() (SliderChangeListener,
+      // CrosshairListener, GraphicMouseHandler, …) skip the event before any side effect runs.
+      buttonPressActive = true;
+      evt.consume();
+      selectViewIfNeeded(pane);
+      viewCanvas.getJComponent().requestFocusInWindow();
+      handleViewButtonClick(evt, selectedButton.get());
+      return;
+    }
+
+    buttonPressActive = false;
+
+    if (evt.getClickCount() == 2) {
       pane.maximizedSelectedImagePane(viewCanvas, evt);
       return;
     }
 
     selectViewIfNeeded(pane);
     viewCanvas.getJComponent().requestFocusInWindow();
-
-    if (selectedButton.isPresent()) {
-      handleViewButtonClick(evt, selectedButton.get());
-      return;
-    }
-
     updateCursorForMouseAction(evt);
+  }
+
+  @Override
+  public void mouseDragged(MouseEvent evt) {
+    if (buttonPressActive) {
+      evt.consume();
+    }
   }
 
   @Override
@@ -81,7 +97,7 @@ public final class FocusHandler<E extends ImageElement> extends MouseActionAdapt
     if (!container.equals(eventManager.getSelectedView2dContainer())) {
       eventManager.setSelectedView2dContainer(container);
     }
-    if (!container.getSelectedImagePane().equals(viewCanvas)) {
+    if (!container.getSelectedViewCanvas().equals(viewCanvas)) {
       container.setSelectedImagePane(viewCanvas);
     }
   }
@@ -95,7 +111,14 @@ public final class FocusHandler<E extends ImageElement> extends MouseActionAdapt
   @Override
   public void mouseReleased(MouseEvent evt) {
     viewCanvas.getJComponent().setCursor(DefaultView2d.DEFAULT_CURSOR);
-    findViewButtonAt(evt.getPoint()).ifPresent(_ -> evt.consume());
+    if (buttonPressActive) {
+      // Consume even if the release point drifted off the button; clear the flag so a real
+      // subsequent drag (Pan, Scroll, …) is not wrongly suppressed.
+      evt.consume();
+      buttonPressActive = false;
+    } else {
+      findViewButtonAt(evt.getPoint()).ifPresent(_ -> evt.consume());
+    }
   }
 
   private Optional<ViewButton> findViewButtonAt(Point point) {
@@ -106,7 +129,7 @@ public final class FocusHandler<E extends ImageElement> extends MouseActionAdapt
   }
 
   private void selectViewIfNeeded(ImageViewerPlugin<E> pane) {
-    if (pane.isContainingView(viewCanvas) && pane.getSelectedImagePane() != viewCanvas) {
+    if (pane.isContainingView(viewCanvas) && pane.getSelectedViewCanvas() != viewCanvas) {
       // Register all EventManager actions immediately with this view. Waiting for focus gain
       // is not enough since other MouseListeners may trigger before the focus event occurs,
       // resulting in the view not yet being registered in the EventManager.
@@ -118,6 +141,9 @@ public final class FocusHandler<E extends ImageElement> extends MouseActionAdapt
     viewCanvas.getJComponent().setCursor(DefaultView2d.DEFAULT_CURSOR);
     evt.consume(); // Consume event to not select the view
     button.showPopup(evt.getComponent(), evt.getX(), evt.getY());
+    if (button instanceof SynchViewButton) {
+      viewCanvas.getJComponent().repaint();
+    }
   }
 
   private void updateCursorForMouseAction(MouseEvent evt) {
@@ -178,8 +204,7 @@ public final class FocusHandler<E extends ImageElement> extends MouseActionAdapt
         viewCanvas.getPixelInfo(
             new Point((int) Math.floor(pModel.getX()), (int) Math.floor(pModel.getY())));
     if (pixelInfo != null) {
-      Point3 point3d =
-          viewCanvas.getVolumeCoordinatesFromMouse(mouseevent.getX(), mouseevent.getY());
+      Point3 point3d = viewCanvas.getVolumePoint3FromMouse(mouseevent.getX(), mouseevent.getY());
       pixelInfo.setPosition3d(point3d);
     }
 

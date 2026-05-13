@@ -18,6 +18,11 @@
 
   <properties>
     <native.configuration>changeMeInChildModule</native.configuration>
+    <!-- Bind the OpenCV package version to the CI-friendly ${sha1} placeholder so that
+         child modules can use it inside <version> without triggering the Maven warning
+         "'version' contains an expression but should be a constant".
+         The single source of truth remains weasis.opencv.pkg.version in weasis-parent/pom.xml. -->
+    <sha1>${weasis.opencv.pkg.version}</sha1>
   </properties>
 
   <build>

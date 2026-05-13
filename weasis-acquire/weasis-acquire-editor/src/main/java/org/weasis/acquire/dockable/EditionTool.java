@@ -93,7 +93,7 @@ public class EditionTool extends PluginTool implements SeriesViewerListener {
       ViewCanvas<ImageElement> oldView = AcquireManager.getCurrentView();
 
       if (event.getSeriesViewer() instanceof View2dContainer view2dContainer) {
-        ViewCanvas<ImageElement> view = view2dContainer.getSelectedImagePane();
+        ViewCanvas<ImageElement> view = view2dContainer.getSelectedViewCanvas();
         if (view != null) {
           // For better performance use nearest neighbor scaling
           view.changeZoomInterpolation(Interpolation.BILINEAR);

@@ -12,11 +12,14 @@ package org.weasis.core.api.service;
 import bibliothek.gui.DockStation;
 import bibliothek.gui.Dockable;
 import bibliothek.gui.dock.DockElement;
+import bibliothek.gui.dock.StackDockStation;
 import bibliothek.gui.dock.common.CContentArea;
 import bibliothek.gui.dock.common.CControl;
 import bibliothek.gui.dock.common.CWorkingArea;
+import bibliothek.gui.dock.common.DefaultSingleCDockable;
 import bibliothek.gui.dock.common.event.CVetoFocusListener;
 import bibliothek.gui.dock.common.intern.CDockable;
+import bibliothek.gui.dock.common.intern.CommonDockable;
 import bibliothek.gui.dock.event.KeyboardListener;
 import java.awt.GraphicsEnvironment;
 import java.awt.Window;
@@ -49,6 +52,7 @@ import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.DataExplorerView;
 import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.gui.util.GuiExecutor;
+import org.weasis.core.api.gui.util.ShortcutManager;
 import org.weasis.core.api.gui.util.WinUtil;
 import org.weasis.core.api.media.data.Codec;
 import org.weasis.core.api.media.data.MediaElement;
@@ -73,6 +77,7 @@ public final class UICore {
 
   public static final String CONFIRM_CLOSE = "weasis.confirm.closing";
   public static final String LINUX_WINDOWS_DECORATION = "weasis.linux.windows.decoration";
+  public static final String USE_SYSTEM_FILE_CHOOSER = "weasis.use.system.file.chooser";
   private static final Logger LOGGER = LoggerFactory.getLogger(UICore.class);
   private final ToolBarContainer toolbarContainer;
   private final List<Launcher> dicomLaunchers;
@@ -154,7 +159,9 @@ public final class UICore {
     ResourceUtil.setResourcePath(path);
 
     Path dataFolder = AppProperties.getBundleDataFolder(context);
-    PropertiesUtil.loadProperties(dataFolder.resolve("persistence.properties"), localPersistence);
+    if (dataFolder != null) {
+      PropertiesUtil.loadProperties(dataFolder.resolve("persistence.properties"), localPersistence);
+    }
 
     this.dicomLaunchers = Launcher.loadLaunchers(Launcher.Type.DICOM);
     this.otherLaunchers = Launcher.loadLaunchers(Launcher.Type.OTHER);
@@ -233,6 +240,17 @@ public final class UICore {
     return new URLParameters(map, post);
   }
 
+  /**
+   * Handles keyboard-driven tab navigation within {@link StackDockStation} containers only.
+   *
+   * <ul>
+   *   <li>{@code Ctrl+Tab} / {@code Ctrl+Shift+Tab} — cycles tabs within a {@link StackDockStation}
+   *       (tabbed views)
+   * </ul>
+   *
+   * <p>Navigation is intentionally restricted to {@link StackDockStation}; other station types such
+   * as {@code SplitDockStation} display all dockables simultaneously and do not use tab semantics.
+   */
   public static final class StackTabSwitcher implements KeyboardListener {
     @Override
     public DockElement getTreeLocation() {
@@ -241,11 +259,11 @@ public final class UICore {
 
     @Override
     public boolean keyPressed(DockElement element, KeyEvent event) {
-      if (event.getKeyCode() == KeyEvent.VK_TAB && event.isControlDown()) {
-        if (event.isShiftDown()) {
-          return shift(element, -1);
-        }
+      ShortcutManager sm = ShortcutManager.getInstance();
+      if (sm.matches(ShortcutManager.ID_DOCKING_NEXT_TAB, event)) {
         return shift(element, 1);
+      } else if (sm.matches(ShortcutManager.ID_DOCKING_PREV_TAB, event)) {
+        return shift(element, -1);
       }
       return false;
     }
@@ -261,39 +279,53 @@ public final class UICore {
     }
 
     private boolean shift(DockElement element, int delta) {
-      // 'element' is the DockElement that currently has the focus. After the
-      // tab changed this could be the DockStation (the parent) itself.
-
-      DockStation parent = element.asDockStation();
-      if (parent == null) {
-        parent = element.asDockable().getDockParent();
+      StackDockStation stack = resolveStackDockStation(element);
+      if (stack == null) {
+        return false;
       }
-
-      // we can make the method more general by not checking explicitly whether
-      // the parent is a StackDockStation or not
-      // if( parent instanceof StackDockStation ){
-      if (parent != null) {
-        Dockable focused = parent.getFrontDockable();
-
-        int index = -1;
-        for (int i = 0, n = parent.getDockableCount(); i < n; i++) {
-          if (parent.getDockable(i) == focused) {
-            index = i;
-            break;
-          }
+      Dockable focused = stack.getFrontDockable();
+      int index = -1;
+      for (int i = 0, n = stack.getDockableCount(); i < n; i++) {
+        if (stack.getDockable(i) == focused) {
+          index = i;
+          break;
         }
-        if (index != -1) {
-          index += delta;
-          index %= parent.getDockableCount();
-          if (index < 0) {
-            index += parent.getDockableCount();
-          }
-          Dockable next = parent.getDockable(index);
-          parent.getController().setFocusedDockable(next, true);
-          return true;
+      }
+      if (index != -1) {
+        index = Math.floorMod(index + delta, stack.getDockableCount());
+        Dockable next = stack.getDockable(index);
+        stack.getController().setFocusedDockable(next, true);
+        if (next instanceof CommonDockable commonDockable
+            && commonDockable.getDockable() instanceof DefaultSingleCDockable single) {
+          single.toFront();
         }
+        return true;
       }
       return false;
+    }
+
+    private static StackDockStation resolveStackDockStation(DockElement element) {
+      DockStation asStation = element.asDockStation();
+      if (asStation instanceof StackDockStation stack) {
+        return stack;
+      }
+      DockStation container;
+      if (asStation != null) {
+        container = asStation;
+      } else {
+        if (element instanceof CommonDockable commonDockable
+            && commonDockable.getDockable() instanceof DefaultSingleCDockable single) {
+          if (single.intern().getDockParent() instanceof StackDockStation stack) {
+            return stack;
+          }
+        }
+        return null;
+      }
+      Dockable front = container.getFrontDockable();
+      if (front != null && front.asDockStation() instanceof StackDockStation stack) {
+        return stack;
+      }
+      return null;
     }
   }
 
@@ -325,14 +357,16 @@ public final class UICore {
     systemPreferences.setProperty(key, System.getProperty(key));
 
     if (!systemPreferences.equals(initialSystemPreferences)) {
-      PropertiesUtil.storeProperties(propsFile.toPath(), systemPreferences, null);
-      String remotePrefURL = getPrefServiceUrl();
-      if (remotePrefURL != null) {
-        try {
-          storeLauncherPref(systemPreferences, remotePrefURL);
-        } catch (Exception e) {
-          LOGGER.error(
-              "Cannot store Launcher preference for user: {}", AppProperties.WEASIS_USER, e);
+      if (propsFile != null) {
+        PropertiesUtil.storeProperties(propsFile.toPath(), systemPreferences, null);
+        String remotePrefURL = getPrefServiceUrl();
+        if (remotePrefURL != null) {
+          try {
+            storeLauncherPref(systemPreferences, remotePrefURL);
+          } catch (Exception e) {
+            LOGGER.error(
+                "Cannot store Launcher preference for user: {}", AppProperties.WEASIS_USER, e);
+          }
         }
       }
       initialSystemPreferences.clear();

@@ -12,7 +12,9 @@ package org.weasis.dicom.explorer;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
+import javax.swing.JCheckBox;
 import javax.swing.JOptionPane;
+import javax.swing.JPanel;
 import javax.swing.JTextPane;
 import javax.swing.border.EmptyBorder;
 import org.dcm4che3.data.Tag;
@@ -40,7 +42,12 @@ public abstract class LoadDicom extends ExplorerTask<Boolean, String> {
 
   private static final org.slf4j.Logger LOGGER = LoggerFactory.getLogger(LoadDicom.class);
 
+  /** Preference key: when {@code false} the "unsupported SOP class" info dialog is suppressed. */
+  public static final String SHOW_UNSUPPORTED_SOP_CLASS_INFO =
+      "weasis.show.unsupported.sop.class.info"; // NON-NLS
+
   protected final AtomicInteger errors = new AtomicInteger(0);
+  protected final AtomicInteger unsupported = new AtomicInteger(0);
 
   protected final DicomModel dicomModel;
 
@@ -62,7 +69,7 @@ public abstract class LoadDicom extends ExplorerTask<Boolean, String> {
     this.dicomModel = (DicomModel) explorerModel;
     this.openingStrategy =
         Optional.ofNullable(openingStrategy)
-            .orElseGet(() -> new PluginOpeningStrategy(OpeningViewer.ONE_PATIENT));
+            .orElseGet(() -> new PluginOpeningStrategy(OpeningViewer.ALL_PATIENTS));
   }
 
   protected void startLoadingEvent() {
@@ -87,6 +94,26 @@ public abstract class LoadDicom extends ExplorerTask<Boolean, String> {
             Messages.getString("DicomImport.imp_dicom"),
             JOptionPane.ERROR_MESSAGE);
       }
+      int nbUnsupported = unsupported.get();
+      if (nbUnsupported > 0
+          && GuiUtils.getUICore()
+              .getSystemPreferences()
+              .getBooleanProperty(SHOW_UNSUPPORTED_SOP_CLASS_INFO, true)) {
+        JCheckBox dontShowAgain =
+            new JCheckBox(Messages.getString("dicom.unsupported.dont.show.again"));
+        JPanel panel =
+            GuiUtils.getVerticalBoxLayoutPanel(getUnsupportedPanel(nbUnsupported), dontShowAgain);
+        JOptionPane.showMessageDialog(
+            GuiUtils.getUICore().getApplicationWindow(),
+            panel,
+            Messages.getString("DicomImport.imp_dicom"),
+            JOptionPane.INFORMATION_MESSAGE);
+        if (dontShowAgain.isSelected()) {
+          GuiUtils.getUICore()
+              .getSystemPreferences()
+              .putBooleanProperty(SHOW_UNSUPPORTED_SOP_CLASS_INFO, false);
+        }
+      }
     }
   }
 
@@ -105,6 +132,21 @@ public abstract class LoadDicom extends ExplorerTask<Boolean, String> {
                 GuiUtils.getUICore().getSystemPreferences().getProperty("weasis.help.online")
                     + "logging",
                 logOutput);
+    JTextPane jTextPane1 = GuiUtils.getPanelWithHyperlink(html);
+    jTextPane1.setBorder(new EmptyBorder(5, 5, 15, 5));
+    return jTextPane1;
+  }
+
+  private JTextPane getUnsupportedPanel(int nbUnsupported) {
+    String message =
+        Messages.getString("dicom.file.unsupported.sop.class").formatted(nbUnsupported);
+    String html =
+        """
+      <P>
+      %s
+      </P>
+    """
+            .formatted(message);
     JTextPane jTextPane1 = GuiUtils.getPanelWithHyperlink(html);
     jTextPane1.setBorder(new EmptyBorder(5, 5, 15, 5));
     return jTextPane1;

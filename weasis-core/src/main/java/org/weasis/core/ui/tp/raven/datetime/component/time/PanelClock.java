@@ -208,7 +208,7 @@ public class PanelClock extends JPanel {
     }
     g2.setColor(getSelectedColor());
     float angle = animationChange.getAngle();
-    g2.rotate(Math.toRadians(angle), x + size, y + size);
+    g2.rotate(Math.toRadians(angle), (double) x + size, (double) y + size);
     g2.fill(area);
     g2.setTransform(tran);
   }

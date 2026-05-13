@@ -15,14 +15,12 @@ import eu.essilab.lablib.checkboxtree.TreeCheckingModel;
 import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.Dimension;
-import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
 import java.util.Collection;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import javax.swing.JComboBox;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -37,6 +35,7 @@ import org.weasis.core.api.gui.util.JSliderW;
 import org.weasis.core.api.gui.util.SliderCineListener;
 import org.weasis.core.api.image.util.MeasurableLayer;
 import org.weasis.core.api.media.data.MediaSeries;
+import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.api.util.ResourceUtil.OtherIcon;
 import org.weasis.core.ui.dialog.PropertiesDialog;
@@ -54,12 +53,14 @@ import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.DicomSeries;
 import org.weasis.dicom.codec.HiddenSeriesManager;
-import org.weasis.dicom.codec.LazyContourLoader;
-import org.weasis.dicom.codec.SegSpecialElement;
 import org.weasis.dicom.codec.TagD;
+import org.weasis.dicom.codec.seg.LazyContourLoader;
+import org.weasis.dicom.codec.seg.SegSpecialElement;
 import org.weasis.dicom.viewer2d.EventManager;
 import org.weasis.dicom.viewer2d.Messages;
 import org.weasis.dicom.viewer2d.View2d;
+import org.weasis.dicom.viewer2d.mpr.MprController;
+import org.weasis.dicom.viewer2d.mpr.MprView;
 import org.weasis.opencv.data.PlanarImage;
 import org.weasis.opencv.seg.RegionAttributes;
 
@@ -75,15 +76,7 @@ public class SegmentationTool extends PluginTool implements SeriesViewerListener
   private boolean initPathSelection;
   private final DefaultMutableTreeNode rootNodeStructures =
       new DefaultMutableTreeNode("rootNode", true); // NON-NLS
-  private final JComboBox<SegSpecialElement> comboSeg = new JComboBox<>();
-
-  private final GroupTreeNode nodeStructures;
-  private final transient ItemListener structureChangeListener =
-      e -> {
-        if (e.getStateChange() == ItemEvent.SELECTED) {
-          updateTree((SegSpecialElement) e.getItem());
-        }
-      };
+  private final Map<GroupTreeNode, SegSpecialElement> segNodeMap = new LinkedHashMap<>();
   private final JSliderW slider;
 
   public SegmentationTool() {
@@ -102,14 +95,12 @@ public class SegmentationTool extends PluginTool implements SeriesViewerListener
     tree.setToolTipText(StringUtil.EMPTY_STRING);
     tree.setCellRenderer(TreeBuilder.buildNoIconCheckboxTreeCellRenderer());
 
-    this.nodeStructures = new GroupTreeNode(Messages.getString("list.of.regions"), true);
     this.initData();
 
     initListeners();
   }
 
   private void initListeners() {
-    comboSeg.addItemListener(structureChangeListener);
     tree.initListeners();
   }
 
@@ -123,10 +114,10 @@ public class SegmentationTool extends PluginTool implements SeriesViewerListener
   private SegContour getContour(DicomImageElement imageElement, RegionAttributes attributes) {
     PlanarImage img = imageElement.getImage();
     if (img != null) {
-      if (comboSeg.getSelectedItem() instanceof SegSpecialElement seg) {
+      for (SegSpecialElement seg : segNodeMap.values()) {
         Set<LazyContourLoader> loaders = seg.getContours(imageElement);
         if (loaders == null || loaders.isEmpty()) {
-          return null;
+          continue;
         }
         for (LazyContourLoader loader : loaders) {
           Collection<SegContour> segments = loader.getLazyContours();
@@ -182,12 +173,6 @@ public class SegmentationTool extends PluginTool implements SeriesViewerListener
   }
 
   public void initData() {
-    MigLayout layout =
-        new MigLayout("fillx, ins 5lp 3lp 0lp 3lp", "[grow,fill]", "[]10lp[]"); // NON-NLS
-    JPanel panelMain = new JPanel(layout);
-    panelMain.add(comboSeg, "width 50lp:min:320lp"); // NON-NLS
-    add(panelMain, BorderLayout.NORTH);
-
     initStructureTree();
     Dimension minimumSize = GuiUtils.getDimension(150, 150);
     JScrollPane scrollPane = new JScrollPane(tree);
@@ -199,15 +184,6 @@ public class SegmentationTool extends PluginTool implements SeriesViewerListener
     JPanel panelBottom = new JPanel(layout2);
     panelBottom.add(slider);
     add(panelBottom, BorderLayout.SOUTH);
-
-    initSlider();
-  }
-
-  private void initSlider() {
-    SegSpecialElement item = (SegSpecialElement) comboSeg.getSelectedItem();
-    float opacity = item == null ? 1.0f : item.getOpacity();
-    slider.setValue((int) (opacity * 100));
-    PropertiesDialog.updateSlider(slider, GRAPHIC_OPACITY);
   }
 
   public void initStructureTree() {
@@ -215,7 +191,6 @@ public class SegmentationTool extends PluginTool implements SeriesViewerListener
     DefaultTreeModel model = new DefaultTreeModel(rootNodeStructures, false);
     tree.setModel(model);
 
-    rootNodeStructures.add(nodeStructures);
     TreePath rootPath = new TreePath(rootNodeStructures.getPath());
     tree.addCheckingPath(rootPath);
     tree.setShowsRootHandles(true);
@@ -224,14 +199,15 @@ public class SegmentationTool extends PluginTool implements SeriesViewerListener
     tree.setCellRenderer(TreeBuilder.buildNoIconCheckboxTreeCellRenderer());
     tree.addTreeCheckingListener(this::treeValueChanged);
 
-    TreeBuilder.expandTree(tree, rootNodeStructures, 2);
+    TreeBuilder.expandTree(tree, rootNodeStructures, 3);
   }
 
   private void updateSlider() {
     float value = PropertiesDialog.updateSlider(slider, GRAPHIC_OPACITY);
-    SegSpecialElement seg = (SegSpecialElement) comboSeg.getSelectedItem();
-    if (seg != null) {
+    for (SegSpecialElement seg : segNodeMap.values()) {
       seg.setOpacity(value);
+    }
+    if (!segNodeMap.isEmpty()) {
       updateVisibleNode();
     }
   }
@@ -243,14 +219,14 @@ public class SegmentationTool extends PluginTool implements SeriesViewerListener
   }
 
   public void updateVisibleNode() {
-    boolean all = tree.getCheckingModel().isPathChecked(new TreePath(nodeStructures.getPath()));
-    SegSpecialElement seg = (SegSpecialElement) comboSeg.getSelectedItem();
-    if (seg != null) {
-      seg.setVisible(all);
+    for (Map.Entry<GroupTreeNode, SegSpecialElement> entry : segNodeMap.entrySet()) {
+      GroupTreeNode segNode = entry.getKey();
+      SegSpecialElement seg = entry.getValue();
+      boolean checked = tree.getCheckingModel().isPathChecked(new TreePath(segNode.getPath()));
+      seg.setVisible(checked);
+      segNode.setSelected(checked);
+      tree.updateVisibleNode(segNode, segNode);
     }
-
-    nodeStructures.setSelected(all);
-    tree.updateVisibleNode(rootNodeStructures, nodeStructures);
 
     ImageViewerPlugin<DicomImageElement> container =
         EventManager.getInstance().getSelectedView2dContainer();
@@ -270,7 +246,8 @@ public class SegmentationTool extends PluginTool implements SeriesViewerListener
 
   private void resetTree() {
     initPathSelection = true;
-    nodeStructures.removeAllChildren();
+    segNodeMap.clear();
+    rootNodeStructures.removeAllChildren();
     tree.setModel(new DefaultTreeModel(rootNodeStructures, false));
     initPathSelection = false;
   }
@@ -278,73 +255,99 @@ public class SegmentationTool extends PluginTool implements SeriesViewerListener
   public void updateCanvas(List<SegSpecialElement> list) {
     if (list == null || list.isEmpty()) {
       resetTree();
-      comboSeg.removeAllItems();
-      return;
-    }
-
-    comboSeg.removeItemListener(structureChangeListener);
-    SegSpecialElement oldStructure = (SegSpecialElement) comboSeg.getSelectedItem();
-    comboSeg.removeAllItems();
-    list.forEach(comboSeg::addItem);
-
-    boolean update = !list.contains(oldStructure);
-    if (update) {
-      comboSeg.setSelectedIndex(0);
-      updateTree((SegSpecialElement) comboSeg.getSelectedItem());
-    } else {
-      comboSeg.setSelectedItem(oldStructure);
-    }
-
-    comboSeg.addItemListener(structureChangeListener);
-  }
-
-  public void updateTree(SegSpecialElement specialElement) {
-    // Empty tree when no RtSet
-    if (specialElement == null) {
-      resetTree();
       return;
     }
 
     initPathSelection = true;
-    specialElement.setOpacity(slider.getValue() / 100f);
+    float opacityValue = slider.getValue() / 100f;
     try {
-      // Prepare root tree model
+      segNodeMap.clear();
+      rootNodeStructures.removeAllChildren();
       tree.setModel(new DefaultTreeModel(rootNodeStructures, false));
 
-      // Prepare parent node for structures
-      nodeStructures.removeAllChildren();
-      Map<String, List<SegRegion<DicomImageElement>>> map =
-          SegRegion.groupRegions(specialElement.getSegAttributes().values());
-      for (List<SegRegion<DicomImageElement>> list : map.values()) {
-        if (list.size() == 1) {
-          SegRegion<DicomImageElement> region = list.getFirst();
-          DefaultMutableTreeNode node = SegSpecialElement.buildStructRegionNode(region);
-          nodeStructures.add(node);
-          tree.setPathSelection(new TreePath(node.getPath()), region.isSelected());
-        } else {
-          GroupTreeNode node = new GroupTreeNode(list.getFirst().getPrefix(), true);
-          nodeStructures.add(node);
-          for (SegRegion<DicomImageElement> structRegion : list) {
-            DefaultMutableTreeNode childNode =
-                SegSpecialElement.buildStructRegionNode(structRegion);
-            node.add(childNode);
-            tree.setPathSelection(new TreePath(childNode.getPath()), structRegion.isSelected());
-          }
-          tree.setPathSelection(new TreePath(node.getPath()), true);
-        }
-      }
-      tree.setPathSelection(new TreePath(nodeStructures.getPath()), specialElement.isVisible());
+      for (SegSpecialElement seg : list) {
+        seg.setOpacity(opacityValue);
+        GroupTreeNode segNode = new GroupTreeNode(seg.getLabel(), true);
+        segNodeMap.put(segNode, seg);
+        rootNodeStructures.add(segNode);
 
-      // Expand
-      TreeBuilder.expandTree(tree, rootNodeStructures, 2);
+        addRegionsToNode(segNode, seg);
+        tree.setPathSelection(new TreePath(segNode.getPath()), seg.isVisible());
+      }
+
+      TreeBuilder.expandTree(tree, rootNodeStructures, 3);
     } finally {
       initPathSelection = false;
+    }
+  }
+
+  private void addRegionsToNode(GroupTreeNode parentNode, SegSpecialElement seg) {
+    Map<String, List<SegRegion<DicomImageElement>>> map =
+        SegRegion.groupRegions(seg.getSegAttributes().values());
+    for (List<SegRegion<DicomImageElement>> regionList : map.values()) {
+      if (regionList.size() == 1) {
+        SegRegion<DicomImageElement> region = regionList.getFirst();
+        DefaultMutableTreeNode node = SegSpecialElement.buildStructRegionNode(region);
+        parentNode.add(node);
+        tree.setPathSelection(new TreePath(node.getPath()), region.isSelected());
+      } else {
+        SegRegion<DicomImageElement> first = regionList.getFirst();
+        if (first.getLabel().equals(first.getPrefix())) {
+          // Labels are identical: skip parent node, add regions directly
+          for (SegRegion<DicomImageElement> structRegion : regionList) {
+            DefaultMutableTreeNode childNode =
+                SegSpecialElement.buildStructRegionNode(structRegion);
+            parentNode.add(childNode);
+            tree.setPathSelection(new TreePath(childNode.getPath()), structRegion.isSelected());
+          }
+        } else {
+          GroupTreeNode groupNode = new GroupTreeNode(first.getPrefix(), true);
+          parentNode.add(groupNode);
+          for (SegRegion<DicomImageElement> structRegion : regionList) {
+            DefaultMutableTreeNode childNode =
+                SegSpecialElement.buildStructRegionNode(structRegion);
+            groupNode.add(childNode);
+            tree.setPathSelection(new TreePath(childNode.getPath()), structRegion.isSelected());
+          }
+          tree.setPathSelection(new TreePath(groupNode.getPath()), true);
+        }
+      }
     }
   }
 
   public void initTreeValues(ViewCanvas<?> viewCanvas) {
     List<SegSpecialElement> segList = null;
     if (viewCanvas != null) {
+      // For MPR views the current series is a synthetic MPR series whose UID is never registered
+      // in reference2Series. If the async seg build has already completed, return those elements
+      // directly; otherwise fall back to the original source series UID so that the
+      // reference2Series lookup still works.
+      if (viewCanvas instanceof MprView mprView) {
+        MprController ctrl = mprView.getMprController();
+        if (ctrl != null) {
+          List<SegSpecialElement> elements = ctrl.getSegElements();
+          if (!elements.isEmpty()) {
+            updateCanvas(elements);
+            return;
+          }
+          var vol = ctrl.getVolume();
+          if (vol != null) {
+            String seriesUID =
+                TagD.getTagValue(vol.getStack().getSeries(), Tag.SeriesInstanceUID, String.class);
+            if (StringUtil.hasText(seriesUID)) {
+              Set<String> list = HiddenSeriesManager.getInstance().reference2Series.get(seriesUID);
+              if (list != null && !list.isEmpty()) {
+                segList =
+                    HiddenSeriesManager.getHiddenElementsFromSeries(
+                        SegSpecialElement.class, list.toArray(new String[0]));
+              }
+            }
+          }
+        }
+        updateCanvas(segList);
+        return;
+      }
+
       MediaSeries<?> dcmSeries = viewCanvas.getSeries();
       String seriesUID = TagD.getTagValue(dcmSeries, Tag.SeriesInstanceUID, String.class);
       if (StringUtil.hasText(seriesUID)) {
@@ -353,6 +356,23 @@ public class SegmentationTool extends PluginTool implements SeriesViewerListener
           segList =
               HiddenSeriesManager.getHiddenElementsFromSeries(
                   SegSpecialElement.class, list.toArray(new String[0]));
+        }
+
+        // Fallback: use patient-level lookup when reference2Series has no entries.
+        if ((segList == null || segList.isEmpty())
+            && viewCanvas.getImage() instanceof DicomImageElement img) {
+          String patientPseudoUID = (String) img.getTagValue(TagW.PatientPseudoUID);
+          if (StringUtil.hasText(patientPseudoUID)) {
+            List<SegSpecialElement> patientSegs =
+                HiddenSeriesManager.getHiddenElementsFromPatient(
+                    SegSpecialElement.class, patientPseudoUID);
+            if (!patientSegs.isEmpty()) {
+              segList =
+                  patientSegs.stream()
+                      .filter(seg -> seg.containsSopInstanceUIDReference(img))
+                      .toList();
+            }
+          }
         }
       }
     }
@@ -368,7 +388,7 @@ public class SegmentationTool extends PluginTool implements SeriesViewerListener
   public void changingViewContentEvent(SeriesViewerEvent event) {
     SeriesViewerEvent.EVENT e = event.getEventType();
     if (EVENT.SELECT_VIEW.equals(e) && event.getSeriesViewer() instanceof ImageViewerPlugin) {
-      initTreeValues(((ImageViewerPlugin<?>) event.getSeriesViewer()).getSelectedImagePane());
+      initTreeValues(((ImageViewerPlugin<?>) event.getSeriesViewer()).getSelectedViewCanvas());
     }
   }
 

@@ -13,7 +13,7 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeNode;
 
 public class GroupTreeNode extends DefaultMutableTreeNode {
-  private boolean selected;
+  private boolean selected = true;
 
   public GroupTreeNode(Object userObject) {
     this(userObject, true);
@@ -21,7 +21,6 @@ public class GroupTreeNode extends DefaultMutableTreeNode {
 
   public GroupTreeNode(Object userObject, boolean allowsChildren) {
     super(userObject, allowsChildren);
-    this.selected = true;
   }
 
   public boolean isSelected() {
@@ -32,16 +31,17 @@ public class GroupTreeNode extends DefaultMutableTreeNode {
     this.selected = selected;
   }
 
+  /** Returns true only if this node and every {@link GroupTreeNode} ancestor is selected. */
   public boolean isParentVisible() {
     if (!selected) {
       return false;
     }
-    TreeNode node = getParent();
-    while (node instanceof GroupTreeNode group) {
+    for (TreeNode node = getParent();
+        node instanceof GroupTreeNode group;
+        node = node.getParent()) {
       if (!group.isSelected()) {
         return false;
       }
-      node = node.getParent();
     }
     return true;
   }

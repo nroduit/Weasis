@@ -11,6 +11,7 @@ package org.weasis.dicom.viewer2d;
 
 import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.Graphics2D;
 import java.awt.GridBagConstraints;
 import java.awt.Point;
 import java.awt.Rectangle;
@@ -22,6 +23,7 @@ import java.awt.event.MouseEvent;
 import java.awt.geom.Path2D;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
+import java.awt.image.BufferedImage;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
@@ -73,10 +75,11 @@ import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.editor.image.MouseActions;
 import org.weasis.core.ui.editor.image.PixelInfo;
 import org.weasis.core.ui.editor.image.SynchData;
-import org.weasis.core.ui.editor.image.SynchData.Mode;
+import org.weasis.core.ui.editor.image.SynchData.SyncState;
 import org.weasis.core.ui.editor.image.SynchEvent;
 import org.weasis.core.ui.editor.image.ViewButton;
 import org.weasis.core.ui.editor.image.ViewCanvas;
+import org.weasis.core.ui.editor.image.ViewSynchData;
 import org.weasis.core.ui.model.AbstractGraphicModel;
 import org.weasis.core.ui.model.graphic.DragGraphic;
 import org.weasis.core.ui.model.graphic.Graphic;
@@ -99,7 +102,6 @@ import org.weasis.core.util.MathUtil;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.HiddenSeriesManager;
 import org.weasis.dicom.codec.KOSpecialElement;
-import org.weasis.dicom.codec.LazyContourLoader;
 import org.weasis.dicom.codec.PRSpecialElement;
 import org.weasis.dicom.codec.PresentationStateReader;
 import org.weasis.dicom.codec.SortSeriesStack;
@@ -108,13 +110,11 @@ import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.display.OverlayOp;
 import org.weasis.dicom.codec.display.ShutterOp;
 import org.weasis.dicom.codec.display.WindowAndPresetsOp;
-import org.weasis.dicom.codec.geometry.GeometryOfSlice;
-import org.weasis.dicom.codec.geometry.ImageOrientation;
+import org.weasis.dicom.codec.geometry.*;
 import org.weasis.dicom.codec.geometry.ImageOrientation.Plan;
-import org.weasis.dicom.codec.geometry.IntersectSlice;
-import org.weasis.dicom.codec.geometry.IntersectVolume;
-import org.weasis.dicom.codec.geometry.LocalizerPoster;
 import org.weasis.dicom.codec.geometry.PatientOrientation.Biped;
+import org.weasis.dicom.codec.geometry.VectorUtils;
+import org.weasis.dicom.codec.seg.LazyContourLoader;
 import org.weasis.dicom.explorer.DicomModel;
 import org.weasis.dicom.explorer.DicomSeriesHandler;
 import org.weasis.dicom.explorer.pr.PrGraphicUtil;
@@ -132,6 +132,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
   public static final String P_CROSSHAIR_MODE = "mpr.crosshair.mode";
   private final Dimension oldSize;
   private final ContextMenuHandler contextMenuHandler;
+  private volatile BufferedImage segOverlayImage; // NOSONAR visibility reference
 
   protected final KOViewButton koStarButton;
 
@@ -244,13 +245,22 @@ public class View2d extends DefaultView2d<DicomImageElement> {
       SynchEvent synch = (SynchEvent) evt.getNewValue();
       SynchData synchData = (SynchData) actionsInView.get(ActionW.SYNCH_LINK.cmd());
       boolean tile = synchData != null && SynchData.Mode.TILE.equals(synchData.getMode());
-      if (synchData != null && Mode.NONE.equals(synchData.getMode())) {
+      if (synchData != null && !synchData.isSynchActivated()) {
         return;
       }
       for (Entry<String, Object> entry : synch.getEvents().entrySet()) {
         final String command = entry.getKey();
         final Object val = entry.getValue();
-        if (synchData != null && !synchData.isActionEnable(command)) {
+        if (synchData != null
+            && !synchData.isActionEnable(command)
+            && !(command.equals(ActionW.CROSSHAIR.cmd())
+                && this == eventManager.getSelectedViewPane())) {
+          continue;
+        }
+        // In MANUAL mode, only allow SCROLL_SERIES action
+        if (synchData != null
+            && synchData.getManualSyncState() == SyncState.ON
+            && !ActionW.SCROLL_SERIES.cmd().equals(command)) {
           continue;
         }
 
@@ -358,19 +368,21 @@ public class View2d extends DefaultView2d<DicomImageElement> {
         Map<String, Object> actionsInView = selectedView.getActionsInView();
         for (ViewCanvas<DicomImageElement> v : view2ds) {
           MediaSeries<DicomImageElement> s = v.getSeries();
+          ViewSynchData synchData = (ViewSynchData) v.getActionValue(ActionW.SYNCH_LINK.cmd());
           if (s == null) {
             continue;
           }
           if (v instanceof View2d view2d
               && fruid.equals(TagD.getTagValue(s, Tag.FrameOfReferenceUID))
-              && v != selectedView) {
+              && v != selectedView
+              && synchData != null
+              && synchData.isAutoSynchActivated()) {
             DicomImageElement imgToUpdate = v.getImage();
             if (imgToUpdate != null) {
               GeometryOfSlice geometry = imgToUpdate.getSliceGeometry();
               if (geometry != null) {
-                Vector3d vn = geometry.getNormal();
-                // vn.absolute();
-                double location = p3.x * vn.x + p3.y * vn.y + p3.z * vn.z;
+                Vector3d vn = VectorUtils.orientNormalToDominantPositiveAxis(geometry.getNormal());
+                double location = vn.dot(p3);
                 DicomImageElement img =
                     s.getNearestImage(
                         location,
@@ -393,9 +405,12 @@ public class View2d extends DefaultView2d<DicomImageElement> {
           if (s == null) {
             continue;
           }
+          ViewSynchData synchData = (ViewSynchData) v.getActionValue(ActionW.SYNCH_LINK.cmd());
           if (v instanceof View2d view2d
               && fruid.equals(TagD.getTagValue(s, Tag.FrameOfReferenceUID))
-              && LangUtil.nullToTrue((Boolean) actionsInView.get(LayerType.CROSSLINES.name()))) {
+              && LangUtil.nullToTrue((Boolean) actionsInView.get(LayerType.CROSSLINES.name()))
+              && synchData != null
+              && synchData.isAutoSynchActivated()) {
             view2d.computeCrosshair(p3, p);
             view2d.repaint();
           }
@@ -468,7 +483,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
       Object ko = actionsInView.get(ActionW.KO_SELECTION.cmd());
       Object filter = actionsInView.get(ActionW.FILTERED_SERIES.cmd());
       OpManager disOp = getDisplayOpManager();
-      Object preset = disOp.getParamValue(WindowOp.OP_NAME, ActionW.PRESET.cmd());
+      Object preset = disOp.getParamValue(WindowOp.OP_NAME, ActionW.PRESET.cmd()).orElse(null);
       initActionWState();
       setActionsInView(ActionW.KO_SELECTION.cmd(), ko);
       setActionsInView(ActionW.FILTERED_SERIES.cmd(), filter);
@@ -705,6 +720,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
 
   private void updateSegmentation(DicomImageElement img) {
     graphicManager.deleteByLayerType(LayerType.DICOM_SEG);
+    segOverlayImage = null;
     if (series != null && img != null) {
       String patientPseudoUID = DicomModel.getPatientPseudoUID(series);
       List<SpecialElementRegion> segList =
@@ -730,17 +746,46 @@ public class View2d extends DefaultView2d<DicomImageElement> {
           }
         }
 
+        // Separate fractional (raster overlay) and binary (vector contour) segmentations
+        List<SegContour> fractionalContours = new ArrayList<>();
         for (SegContour c : contours) {
-          // Structure graphics
-          Graphic graphic = c.getSegGraphic();
-          if (graphic != null) {
-            for (PropertyChangeListener listener : graphicManager.getGraphicsListeners()) {
-              graphic.addPropertyChangeListener(listener);
+          if (c.isFractional()) {
+            fractionalContours.add(c);
+          } else {
+            // Binary contours: render as vector graphics (existing path)
+            Graphic graphic = c.getSegGraphic();
+            if (graphic != null) {
+              for (PropertyChangeListener listener : graphicManager.getGraphicsListeners()) {
+                graphic.addPropertyChangeListener(listener);
+              }
+              graphicManager.addGraphic(graphic);
             }
-            graphicManager.addGraphic(graphic);
+          }
+        }
+
+        // Fractional contours: composite into a single RGBA overlay image
+        if (!fractionalContours.isEmpty()) {
+          PlanarImage sourceImg = img.getImage();
+          if (sourceImg != null) {
+            segOverlayImage =
+                org.weasis.core.ui.model.graphic.imp.seg.FractionalOverlay.compositeOverlays(
+                    fractionalContours, sourceImg.width(), sourceImg.height());
           }
         }
       }
+    }
+  }
+
+  @Override
+  protected void drawOnTop(Graphics2D g2d) {
+    BufferedImage overlay = segOverlayImage;
+    if (overlay != null) {
+      // Re-enter the image coordinate space (translate + affineTransform) to draw the overlay
+      // aligned with the source image pixels.
+      java.awt.geom.Point2D p = getClipViewCoordinatesOffset();
+      g2d.translate(p.getX(), p.getY());
+      g2d.drawImage(overlay, affineTransform, null);
+      g2d.translate(-p.getX(), -p.getY());
     }
   }
 
@@ -776,15 +821,14 @@ public class View2d extends DefaultView2d<DicomImageElement> {
                   getCurrentSortComparator());
           synchronized (selSeries) {
             for (DicomImageElement dcm : list) {
-              double[] loc = (double[]) dcm.getTagValue(TagW.SlicePosition);
+              Double loc = (Double) dcm.getTagValue(TagW.SlicePosition);
               if (loc != null) {
-                double position = loc[0] + loc[1] + loc[2];
-                if (min > position) {
-                  min = position;
+                if (min > loc) {
+                  min = loc;
                   firstImage = dcm;
                 }
-                if (max < position) {
-                  max = position;
+                if (max < loc) {
+                  max = loc;
                   lastImage = dcm;
                 }
               }

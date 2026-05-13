@@ -14,7 +14,7 @@
   <groupId>org.weasis.thirdparty.org.jogamp</groupId>
   <artifactId>jogamp</artifactId>
   <name>JOGL - Java Bindings for OpenGL [${project.artifactId}]</name>
-  <version>${jogamp.version}</version>
+  <version>${sha1}</version>
 
   <build>
     <plugins>
@@ -40,7 +40,7 @@
           <bnd>
             -includeresource.all: lib/=target/dependency/;lib:=true
             Import-Package: \
-            !com.jogamp.openal.*,!org.eclipse.*,!com.jogamp.plugin.applet,!org.jdesktop.applet.*,\
+            !com.jogamp.openal.*,!org.eclipse.*,!com.jogamp.plugin.applet,!org.jdesktop.applet.*,!java.applet,\
             javafx.*;resolution:=optional,com.jogamp.plugin.ui;resolution:=optional,\
             com.sun.javafx.tk;resolution:=optional,jdk.internal.module;resolution:=optional,*
 

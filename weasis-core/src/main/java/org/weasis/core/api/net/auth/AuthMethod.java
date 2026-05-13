@@ -24,13 +24,13 @@ public interface AuthMethod {
    */
   String getUid();
 
-  /** Invalidates the current authentication token, forcing re-authentication on next access */
+  /** Invalidates the current authentication token, forcing re-authentication on next access. */
   void resetToken();
 
   /**
    * Retrieves the current OAuth2 access token, refreshing if necessary.
    *
-   * @return OAuth2 access token, or null if authentication fails
+   * @return OAuth2 access token, or {@code null} if authentication fails
    */
   OAuth2AccessToken getToken();
 
@@ -40,7 +40,7 @@ public interface AuthMethod {
   AuthRegistration getAuthRegistration();
 
   /**
-   * @return true if this is a local authentication method
+   * @return {@code true} if this is a local authentication method
    */
   boolean isLocal();
 
@@ -62,7 +62,7 @@ public interface AuthMethod {
   }
 
   /**
-   * @return true if the authentication token is currently valid
+   * @return {@code true} if the authentication token is currently valid
    */
   default boolean hasValidToken() {
     var token = getToken();

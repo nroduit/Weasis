@@ -43,7 +43,7 @@ public class ExportToolBar extends WtoolBar {
 
     if (GuiUtils.getUICore()
         .getSystemPreferences()
-        .getBooleanProperty("weasis.export.dicom", true)) {
+        .getBooleanProperty("weasis.export.annotations", false)) {
       final JButton sendButton = new JButton();
 
       sendButton.setToolTipText(Messages.getString("AnnotationsToolBar.export_pr"));

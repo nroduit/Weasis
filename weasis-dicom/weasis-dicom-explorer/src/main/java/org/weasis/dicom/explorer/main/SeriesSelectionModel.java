@@ -20,6 +20,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.swing.*;
 import org.weasis.core.api.media.data.*;
+import org.weasis.core.ui.editor.ViewerOpenOptions;
 import org.weasis.core.ui.editor.ViewerPluginBuilder;
 import org.weasis.dicom.codec.DicomSeries;
 import org.weasis.dicom.explorer.DicomModel;
@@ -663,8 +664,8 @@ public class SeriesSelectionModel extends ArrayList<DicomSeries> {
 
     setOpeningSeries(true);
     try {
-      ViewerPluginBuilder.openSequenceInDefaultPlugin(
-          new ArrayList<>(this), dicomModel, true, true);
+      ViewerPluginBuilder.openInDefaultViewer(
+          new ArrayList<>(this), dicomModel, ViewerOpenOptions.defaults());
       return true;
     } catch (Exception ex) {
       // Log the error but don't rethrow to avoid breaking the UI

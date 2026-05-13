@@ -5,12 +5,16 @@ layout (rgba32f, binding = 0) uniform image2D outputImage;
 layout (binding = 0) uniform sampler3D volTexture;
 layout (binding = 1) uniform sampler2D colorMap;
 layout (binding = 2) uniform sampler2D lightingMap;
+layout (binding = 4) uniform usampler3D segTexture;
+layout (binding = 5) uniform sampler2D segColorMap;
 
 #include "voxelUniforms.glsl"
 
 #include "voxelFunctions.glsl"
 
 #include "vrFunctions.glsl"
+
+#include "crosshairOverlay.glsl"
 
 void main() {
 
@@ -45,4 +49,10 @@ void main() {
         }
     }
     imageStore(outputImage, pixelCoords, pixelVal);
+
+    // ---- MPR crosshair overlay ----
+    vec4 crosshairColor = computeCrosshairColor(pixelCoords, imageDims);
+    if (crosshairColor.a >= 0.0) {
+        imageStore(outputImage, pixelCoords, crosshairColor);
+    }
 }

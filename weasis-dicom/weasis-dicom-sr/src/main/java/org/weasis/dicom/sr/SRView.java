@@ -40,6 +40,7 @@ import org.weasis.core.ui.editor.SeriesViewerEvent;
 import org.weasis.core.ui.editor.SeriesViewerEvent.EVENT;
 import org.weasis.core.ui.editor.SeriesViewerFactory;
 import org.weasis.core.ui.editor.SeriesViewerListener;
+import org.weasis.core.ui.editor.ViewerOpenOptions;
 import org.weasis.core.ui.editor.ViewerPluginBuilder;
 import org.weasis.core.ui.editor.image.SequenceHandler;
 import org.weasis.core.ui.editor.image.ViewerPlugin;
@@ -234,16 +235,11 @@ public class SRView extends JScrollPane implements SeriesViewerListener {
                 List<DicomSeries> seriesList = new ArrayList<>();
                 seriesList.add((DicomSeries) s);
 
-                Map<String, Object> props = model.createViewerKeyImagePluginProperties();
-                ViewerPluginBuilder builder =
-                    new ViewerPluginBuilder(plugin, seriesList, model, props);
-                ViewerPluginBuilder.openSequenceInPlugin(builder);
+                ViewerOpenOptions opts = model.createViewerKeyImageOpenOptions();
+                new ViewerPluginBuilder(plugin, seriesList, model, opts).open();
                 model.firePropertyChange(
                     new ObservableEvent(
-                        ObservableEvent.BasicAction.SELECT,
-                        props.get(ViewerPluginBuilder.UID),
-                        null,
-                        keyReferences));
+                        ObservableEvent.BasicAction.SELECT, opts.uid(), null, keyReferences));
               }
             }
           } else {

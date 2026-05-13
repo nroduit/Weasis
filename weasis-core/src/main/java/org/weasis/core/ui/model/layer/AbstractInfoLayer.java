@@ -49,7 +49,7 @@ import org.weasis.opencv.op.lut.ColorLut;
 import org.weasis.opencv.op.lut.WlParams;
 
 public abstract class AbstractInfoLayer<E extends ImageElement> extends DefaultUUID
-    implements LayerAnnotation {
+    implements LayerAnnotation<E> {
 
   protected static final Color highlight = new Color(255, 153, 153);
   public static final AtomicBoolean applyToAllView = new AtomicBoolean(true);
@@ -171,14 +171,14 @@ public abstract class AbstractInfoLayer<E extends ImageElement> extends DefaultU
       case GridBagConstraints.NORTHEAST -> {
         b.x = topRight.getX() - icon.getIconWidth();
         b.y = topRight.getY();
-        topRight.setLocation(topRight.getX() - icon.getIconWidth() + space, topRight.getY());
+        topRight.setLocation(topRight.getX() - icon.getIconWidth() - space, topRight.getY());
       }
       case GridBagConstraints.SOUTHEAST -> {
         Point2D bottomRight = getPosition(Position.BottomRight);
         b.x = bottomRight.getX() - icon.getIconWidth();
         b.y = bottomRight.getY() - icon.getIconHeight();
         bottomRight.setLocation(
-            bottomRight.getX() - icon.getIconWidth() + space, bottomRight.getY());
+            bottomRight.getX() - icon.getIconWidth() - space, bottomRight.getY());
       }
       case GridBagConstraints.NORTHWEST -> {
         Point2D topLeft = getPosition(Position.TopLeft);

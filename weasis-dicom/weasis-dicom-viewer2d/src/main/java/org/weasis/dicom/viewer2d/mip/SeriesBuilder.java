@@ -9,15 +9,11 @@
  */
 package org.weasis.dicom.viewer2d.mip;
 
-import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Comparator;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Optional;
 import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Tag;
 import org.dcm4che3.data.VR;
@@ -29,15 +25,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.AppProperties;
-import org.weasis.core.api.gui.util.ComboItemListener;
 import org.weasis.core.api.gui.util.Filter;
-import org.weasis.core.api.gui.util.SliderChangeListener;
-import org.weasis.core.api.gui.util.SliderCineListener;
 import org.weasis.core.api.image.op.ImageStackOperations;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.SeriesComparator;
 import org.weasis.core.api.media.data.TagW;
-import org.weasis.core.ui.editor.image.ImageViewerEventManager;
 import org.weasis.core.util.FileUtil;
 import org.weasis.core.util.Pair;
 import org.weasis.dicom.codec.DcmMediaReader;
@@ -108,136 +100,146 @@ public class SeriesBuilder {
 
   private SeriesBuilder() {}
 
+  /**
+   * Computes MIP slices for the given series and appends the resulting {@link DicomImageElement}s
+   * to {@code dicoms}.
+   *
+   * <p>The medias iterable is materialized into a {@link List} once so that the inner loop can use
+   * O(1) random access instead of re-creating an iterator for every slice index.
+   */
+  @SuppressWarnings("unchecked")
   public static void applyMipParameters(
-      final View2d view,
-      final MediaSeries<DicomImageElement> series,
+      MipView view,
+      MediaSeries<DicomImageElement> series,
       List<DicomImageElement> dicoms,
       Type mipType,
       Integer extend,
       boolean fullSeries) {
 
-    PlanarImage curImage;
-    if (series != null) {
-      SeriesComparator sort = (SeriesComparator) view.getActionValue(ActionW.SORT_STACK.cmd());
-      Boolean reverse = (Boolean) view.getActionValue(ActionW.INVERSE_STACK.cmd());
-      Comparator sortFilter = (reverse != null && reverse) ? sort.getReversOrderComparator() : sort;
-      Filter filter = (Filter) view.getActionValue(ActionW.FILTERED_SERIES.cmd());
-      Iterable<DicomImageElement> medias = series.copyOfMedias(filter, sortFilter);
+    if (series == null) return;
 
-      int curImg = extend - 1;
-      Optional<SliderCineListener> sequence =
-          view.getEventManager().getAction(ActionW.SCROLL_SERIES);
-      if (sequence.isPresent()) {
-        curImg = sequence.get().getSliderValue() - 1;
+    var sort = (SeriesComparator<DicomImageElement>) view.getActionValue(ActionW.SORT_STACK.cmd());
+    var reverse = (Boolean) view.getActionValue(ActionW.INVERSE_STACK.cmd());
+    var sortFilter = (reverse != null && reverse) ? sort.getReversOrderComparator() : sort;
+    var filter = (Filter<DicomImageElement>) view.getActionValue(ActionW.FILTERED_SERIES.cmd());
+
+    var allMedia = new ArrayList<>(series.copyOfMedias(filter, sortFilter));
+
+    // For a single-slab build use the index that MipView already resolved from the received image
+    // in setImage(), so the slab centre always matches the scrolled-to position even before the
+    // EDT has had a chance to update the SCROLL_SERIES slider.
+    int curImg = view.getFrameIndex();
+    int minImg = fullSeries ? extend : curImg;
+    int maxImg = fullSeries ? allMedia.size() - extend : curImg;
+
+    var img = series.getMedia(MediaSeries.MEDIA_POSITION.MIDDLE, filter, sortFilter);
+    var cpTags = getMipBaseAttributes(img.getMediaReader().getDicomObject());
+    adaptWindowLevel(view, cpTags);
+    String seriesUID = UIDUtils.createUID();
+
+    for (int index = minImg; index <= maxImg; index++) {
+      var sources = collectSources(allMedia, index, extend);
+      if (sources.size() <= 1) continue;
+
+      var curImage = addCollectionOperation(mipType, sources.stream().map(Pair::second).toList());
+      if (curImage == null) continue;
+
+      var imgRef = sources.get(sources.size() / 2).first();
+
+      // For a single-slab build, tell the MipView which original-series image sits at the center
+      if (!fullSeries) {
+        view.setCenterImage(imgRef, mipType, extend);
       }
 
-      int minImg = fullSeries ? extend : curImg;
-      int maxImg = fullSeries ? series.size(filter) - extend : curImg;
+      var raw = writeMipImage(curImage, fullSeries, seriesUID, view.getCacheDir());
+      if (raw == null) return;
 
-      DicomImageElement img =
-          series.getMedia(MediaSeries.MEDIA_POSITION.MIDDLE, filter, sortFilter);
-      final Attributes attributes = img.getMediaReader().getDicomObject();
-      final Attributes cpTags = getMipBaseAttributes(attributes);
-      adaptWindowLevel(view, cpTags);
-      String seriesUID = UIDUtils.createUID();
-
-      for (int index = minImg; index <= maxImg; index++) {
-        Iterator<DicomImageElement> iter = medias.iterator();
-        final List<Pair<DicomImageElement, PlanarImage>> sources = new ArrayList<>();
-        int startIndex = index - extend;
-        if (startIndex < 0) {
-          startIndex = 0;
-        }
-        int stopIndex = index + extend;
-        int k = 0;
-        while (iter.hasNext()) {
-          DicomImageElement dcm = iter.next();
-          if (k >= startIndex) {
-            sources.add(new Pair<>(dcm, dcm.getModalityLutImage(null, null)));
-          }
-
-          if (k >= stopIndex) {
-            break;
-          }
-          k++;
-        }
-
-        if (sources.size() > 1) {
-          curImage = addCollectionOperation(mipType, sources.stream().map(Pair::second).toList());
-        } else {
-          curImage = null;
-        }
-
-        if (curImage != null) {
-          DicomImageElement imgRef = sources.get(sources.size() / 2).first();
-          FileRawImage raw = null;
-          try {
-            File dir = MIP_CACHE_DIR.toFile();
-            if (fullSeries) {
-              dir = new File(MIP_CACHE_DIR.toFile(), seriesUID);
-              dir.mkdirs();
-            }
-            raw = new FileRawImage(Files.createTempFile(dir.toPath(), "mip_", ".wcv")); // NON-NLS
-            if (!raw.write(curImage)) {
-              raw = null;
-            }
-          } catch (Exception e) {
-            if (raw != null) {
-              FileUtil.delete(raw.path());
-              raw = null;
-            }
-            LOGGER.error("Writing MIP", e);
-          }
-          if (raw == null) {
-            return;
-          }
-          RawImageIO rawIO = new RawImageIO(raw, null);
-          rawIO.getFileCache().setOriginalTempFile(raw.path());
-          rawIO.setBaseAttributes(cpTags);
-
-          // Tags with same values for all the Series
-          rawIO.setTag(TagD.get(Tag.Columns), curImage.width());
-          rawIO.setTag(TagD.get(Tag.Rows), curImage.height());
-
-          int channels = CvType.channels(curImage.type());
-          writePixelDataAttributes(channels, curImage.type(), rawIO);
-
-          double thickness =
-              DicomMediaUtils.getThickness(sources.getFirst().first(), sources.getLast().first());
-          if (thickness <= 0.0) {
-            thickness = sources.size();
-          }
-          rawIO.setTag(TagD.get(Tag.SliceThickness), thickness);
-          double[] loc = (double[]) imgRef.getTagValue(TagW.SlicePosition);
-          if (loc != null) {
-            rawIO.setTag(TagW.SlicePosition, loc);
-            rawIO.setTag(TagD.get(Tag.SliceLocation), loc[0] + loc[1] + loc[2]);
-          }
-
-          rawIO.setTag(TagD.get(Tag.SeriesInstanceUID), seriesUID);
-
-          // Mandatory tags
-          DerivedStack.copyMandatoryTags(img, rawIO);
-          TagW[] tagList2;
-
-          tagList2 =
-              TagD.getTagFromIDs(
-                  Tag.ImageOrientationPatient,
-                  Tag.ImagePositionPatient,
-                  Tag.PixelSpacing,
-                  Tag.ImagerPixelSpacing,
-                  Tag.NominalScannedPixelSpacing,
-                  Tag.PixelSpacingCalibrationDescription,
-                  Tag.PixelAspectRatio);
-          rawIO.copyTags(tagList2, imgRef, false);
-
-          // Image specific tags
-          rawIO.setTag(TagD.get(Tag.SOPInstanceUID), UIDUtils.createUID());
-          rawIO.setTag(TagD.get(Tag.InstanceNumber), index + 1);
-          dicoms.add(DerivedStack.buildDicomImageElement(rawIO));
-        }
-      }
+      dicoms.add(
+          buildMipDicomElement(raw, cpTags, curImage, sources, imgRef, img, seriesUID, index));
     }
+  }
+
+  /**
+   * Collects the source (image, planar-image) pairs centred at {@code index} ± {@code extend},
+   * clamped to the available range.
+   */
+  private static List<Pair<DicomImageElement, PlanarImage>> collectSources(
+      List<DicomImageElement> allMedia, int index, int extend) {
+
+    int start = Math.max(0, index - extend);
+    int stop = Math.min(allMedia.size() - 1, index + extend);
+    var sources = new ArrayList<Pair<DicomImageElement, PlanarImage>>(stop - start + 1);
+    for (int k = start; k <= stop; k++) {
+      var dcm = allMedia.get(k);
+      sources.add(new Pair<>(dcm, dcm.getModalityLutImage(null, null)));
+    }
+    return sources;
+  }
+
+  private static FileRawImage writeMipImage(
+      PlanarImage image, boolean fullSeries, String seriesUID, Path viewCacheDir) {
+    FileRawImage raw = null;
+    try {
+      // Full-series output is stored directly under MIP_CACHE_DIR (not inside viewCacheDir) so
+      // that exitMipMode's FileUtil.delete(viewCacheDir) cannot accidentally delete files that are
+      // still referenced by a DicomSeries living in the DicomModel.
+      Path dir =
+          fullSeries ? Files.createDirectories(MIP_CACHE_DIR.resolve(seriesUID)) : viewCacheDir;
+      raw = new FileRawImage(Files.createTempFile(dir, "mip_", ".wcv")); // NON-NLS
+      if (raw.write(image)) return raw;
+      FileUtil.delete(raw.path());
+    } catch (Exception e) {
+      if (raw != null) FileUtil.delete(raw.path());
+      LOGGER.error("Writing MIP", e);
+    }
+    return null;
+  }
+
+  private static DicomImageElement buildMipDicomElement(
+      FileRawImage raw,
+      Attributes cpTags,
+      PlanarImage image,
+      List<Pair<DicomImageElement, PlanarImage>> sources,
+      DicomImageElement imgRef,
+      DicomImageElement img,
+      String seriesUID,
+      int index) {
+
+    var rawIO = new RawImageIO(raw, null);
+    rawIO.getFileCache().setOriginalTempFile(raw.path());
+    rawIO.setBaseAttributes(cpTags);
+
+    rawIO.setTag(TagD.get(Tag.Columns), image.width());
+    rawIO.setTag(TagD.get(Tag.Rows), image.height());
+    writePixelDataAttributes(CvType.channels(image.type()), image.type(), rawIO);
+
+    double thickness =
+        DicomMediaUtils.getThickness(sources.getFirst().first(), sources.getLast().first());
+    rawIO.setTag(TagD.get(Tag.SliceThickness), thickness > 0.0 ? thickness : sources.size());
+
+    Double loc = (Double) imgRef.getTagValue(TagW.SlicePosition);
+    if (loc != null) {
+      rawIO.setTag(TagW.SlicePosition, loc);
+      rawIO.setTag(TagD.get(Tag.SliceLocation), loc);
+    }
+
+    rawIO.setTag(TagD.get(Tag.SeriesInstanceUID), seriesUID);
+    DerivedStack.copyMandatoryTags(img, rawIO);
+
+    var spatialTags =
+        TagD.getTagFromIDs(
+            Tag.ImageOrientationPatient,
+            Tag.ImagePositionPatient,
+            Tag.PixelSpacing,
+            Tag.ImagerPixelSpacing,
+            Tag.NominalScannedPixelSpacing,
+            Tag.PixelSpacingCalibrationDescription,
+            Tag.PixelAspectRatio);
+    rawIO.copyTags(spatialTags, imgRef, false);
+
+    rawIO.setTag(TagD.get(Tag.SOPInstanceUID), UIDUtils.createUID());
+    rawIO.setTag(TagD.get(Tag.InstanceNumber), index + 1);
+    return DerivedStack.buildDicomImageElement(rawIO);
   }
 
   public static void writePixelDataAttributes(int channels, int cvType, DcmMediaReader rawIO) {
@@ -247,8 +249,8 @@ public class SeriesBuilder {
     if (CvType.isInteger(cvType)) {
       rawIO.setTag(TagD.get(Tag.BitsStored), bpc);
       rawIO.setTag(TagD.get(Tag.HighBit), bpc - 1);
-      boolean isSigned = PixelDataUtils.isSignedCvType(cvType);
-      rawIO.setTag(TagD.get(Tag.PixelRepresentation), isSigned ? 1 : 0);
+      rawIO.setTag(
+          TagD.get(Tag.PixelRepresentation), PixelDataUtils.isSignedCvType(cvType) ? 1 : 0);
     }
   }
 
@@ -257,7 +259,7 @@ public class SeriesBuilder {
   }
 
   public static Attributes getMipBaseAttributes(Attributes attributes) {
-    final Attributes cpTags = getBaseAttributes(attributes);
+    var cpTags = getBaseAttributes(attributes);
     cpTags.setString(
         Tag.SeriesDescription,
         VR.LO,
@@ -266,48 +268,50 @@ public class SeriesBuilder {
     return cpTags;
   }
 
+  /**
+   * Inserts the current window/level values from the event manager as the first entry of the {@code
+   * WindowCenter} / {@code WindowWidth} arrays in {@code cpTags}, unless a named preset is already
+   * active (in which case the preset stored in the tag is used as-is).
+   */
   public static void adaptWindowLevel(View2d view2d, Attributes cpTags) {
-    ImageViewerEventManager<DicomImageElement> manager = view2d.getEventManager();
-    Optional<SliderChangeListener> windowAction = manager.getAction(ActionW.WINDOW);
-    Optional<SliderChangeListener> levelAction = manager.getAction(ActionW.LEVEL);
-    if (windowAction.isPresent() && levelAction.isPresent()) {
-      Optional<? extends ComboItemListener<?>> presetAction = manager.getAction(ActionW.PRESET);
-      PresetWindowLevel oldPreset =
-          presetAction
-              .map(comboItemListener -> (PresetWindowLevel) comboItemListener.getSelectedItem())
-              .orElse(null);
-      if (oldPreset == null) {
-        double[] wc = cpTags.getDoubles(Tag.WindowCenter);
-        double[] ww = cpTags.getDoubles(Tag.WindowWidth);
-        double center = levelAction.get().getRealValue();
-        double width = windowAction.get().getRealValue();
-        if (wc != null && ww != null && wc.length > 0 && ww.length > 0) {
-          wc = insertAtFirst(wc, center);
-          ww = insertAtFirst(ww, width);
-        } else {
-          wc = new double[] {center};
-          ww = new double[] {width};
-        }
-        cpTags.setDouble(Tag.WindowCenter, VR.DS, wc);
-        cpTags.setDouble(Tag.WindowWidth, VR.DS, ww);
-      }
+    var manager = view2d.getEventManager();
+    var windowAction = manager.getAction(ActionW.WINDOW);
+    var levelAction = manager.getAction(ActionW.LEVEL);
+    if (windowAction.isEmpty() || levelAction.isEmpty()) return;
+
+    var presetAction = manager.getAction(ActionW.PRESET);
+    var oldPreset = presetAction.map(a -> (PresetWindowLevel) a.getSelectedItem()).orElse(null);
+    if (oldPreset != null) return; // named preset – keep tag values unchanged
+
+    double center = levelAction.get().getRealValue();
+    double width = windowAction.get().getRealValue();
+    double[] wc = cpTags.getDoubles(Tag.WindowCenter);
+    double[] ww = cpTags.getDoubles(Tag.WindowWidth);
+
+    if (wc != null && ww != null && wc.length > 0 && ww.length > 0) {
+      cpTags.setDouble(Tag.WindowCenter, VR.DS, insertAtFirst(wc, center));
+      cpTags.setDouble(Tag.WindowWidth, VR.DS, insertAtFirst(ww, width));
+    } else {
+      cpTags.setDouble(Tag.WindowCenter, VR.DS, center);
+      cpTags.setDouble(Tag.WindowWidth, VR.DS, width);
     }
   }
 
+  /** Returns a new array with {@code newItem} prepended to {@code originalArray}. */
   public static double[] insertAtFirst(double[] originalArray, double newItem) {
-    double[] newArray = new double[originalArray.length + 1];
-    newArray[0] = newItem;
-    System.arraycopy(originalArray, 0, newArray, 1, originalArray.length);
-    return newArray;
+    double[] result = new double[originalArray.length + 1];
+    result[0] = newItem;
+    System.arraycopy(originalArray, 0, result, 1, originalArray.length);
+    return result;
   }
 
+  /** Applies the projection operation matching {@code mipType} to the given image stack. */
   public static PlanarImage addCollectionOperation(Type mipType, List<PlanarImage> sources) {
-    if (Type.MIN.equals(mipType)) {
-      return ImageStackOperations.min(sources);
-    }
-    if (Type.MEAN.equals(mipType)) {
-      return ImageStackOperations.mean(sources);
-    }
-    return ImageStackOperations.max(sources);
+    return switch (mipType) {
+      case NONE -> null;
+      case MIN -> ImageStackOperations.min(sources);
+      case MEAN -> ImageStackOperations.mean(sources);
+      case MAX -> ImageStackOperations.max(sources);
+    };
   }
 }

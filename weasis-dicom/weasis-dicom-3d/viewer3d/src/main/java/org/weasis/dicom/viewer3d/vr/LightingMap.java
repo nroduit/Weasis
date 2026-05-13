@@ -11,7 +11,7 @@ package org.weasis.dicom.viewer3d.vr;
 
 import com.jogamp.common.nio.Buffers;
 import com.jogamp.opengl.GL;
-import com.jogamp.opengl.GL4;
+import com.jogamp.opengl.GL2ES2;
 
 public class LightingMap extends TextureData {
 
@@ -23,15 +23,15 @@ public class LightingMap extends TextureData {
   }
 
   @Override
-  public void init(GL4 gl4) {
-    super.init(gl4);
-    gl4.glActiveTexture(GL.GL_TEXTURE2);
-    gl4.glBindTexture(GL.GL_TEXTURE_2D, getId());
-    gl4.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MIN_FILTER, GL.GL_LINEAR);
-    gl4.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MAG_FILTER, GL.GL_LINEAR);
-    gl4.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_WRAP_S, GL.GL_CLAMP_TO_EDGE);
-    gl4.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_WRAP_T, GL.GL_CLAMP_TO_EDGE);
-    gl4.glTexImage2D(
+  public void init(GL2ES2 gl) {
+    super.init(gl);
+    gl.glActiveTexture(GL.GL_TEXTURE2);
+    gl.glBindTexture(GL.GL_TEXTURE_2D, getId());
+    gl.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MIN_FILTER, GL.GL_LINEAR);
+    gl.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MAG_FILTER, GL.GL_LINEAR);
+    gl.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_WRAP_S, GL.GL_CLAMP_TO_EDGE);
+    gl.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_WRAP_T, GL.GL_CLAMP_TO_EDGE);
+    gl.glTexImage2D(
         GL.GL_TEXTURE_2D,
         0,
         internalFormat,
@@ -44,17 +44,17 @@ public class LightingMap extends TextureData {
   }
 
   @Override
-  public void render(GL4 gl4) {
-    update(gl4);
+  public void render(GL2ES2 gl) {
+    update(gl);
   }
 
-  void update(GL4 gl4) {
-    if (gl4 != null) {
+  void update(GL2ES2 gl) {
+    if (gl != null) {
       if (getId() <= 0) {
-        init(gl4);
+        init(gl);
       }
-      gl4.glActiveTexture(GL.GL_TEXTURE2);
-      gl4.glTexImage2D(
+      gl.glActiveTexture(GL.GL_TEXTURE2);
+      gl.glTexImage2D(
           GL.GL_TEXTURE_2D,
           0,
           internalFormat,

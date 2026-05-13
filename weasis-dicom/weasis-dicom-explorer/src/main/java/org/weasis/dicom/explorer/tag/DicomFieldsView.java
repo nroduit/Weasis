@@ -181,7 +181,8 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
       currentMedia = event.getMediaElement();
       currentSeries = event.getSeries();
       if (event.getSeriesViewer() instanceof ImageViewerPlugin) {
-        ViewCanvas<?> sel = ((ImageViewerPlugin<?>) event.getSeriesViewer()).getSelectedImagePane();
+        ViewCanvas<?> sel =
+            ((ImageViewerPlugin<?>) event.getSeriesViewer()).getSelectedViewCanvas();
         if (sel != null) {
           anonymize = sel.getInfoLayer().getDisplayPreferences(LayerItem.ANONYM_ANNOTATIONS);
         }
@@ -421,7 +422,7 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
 
   public static void displayHeader(ImageViewerPlugin<?> container) {
     if (container != null) {
-      ViewCanvas<?> selView = container.getSelectedImagePane();
+      ViewCanvas<?> selView = container.getSelectedViewCanvas();
       if (selView != null) {
         showHeaderDialog(container, selView.getSeries(), selView.getImage());
       }

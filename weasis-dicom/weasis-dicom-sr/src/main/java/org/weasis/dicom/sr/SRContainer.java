@@ -75,7 +75,7 @@ public class SRContainer extends DicomViewerPlugin implements PropertyChangeList
 
   public static final List<MigLayoutModel> LAYOUT_LIST = List.of(VIEWS_SR);
 
-  public static final List<SynchView> SYNCH_LIST = List.of(SynchView.NONE);
+  public static final List<SynchView> SYNCH_LIST = Collections.emptyList();
 
   public static final SeriesViewerUI UI = new SeriesViewerUI(SRContainer.class);
   static final ImageViewerEventManager<DicomImageElement> SR_EVENT_MANAGER =
@@ -133,7 +133,6 @@ public class SRContainer extends DicomViewerPlugin implements PropertyChangeList
         SRFactory.NAME,
         ResourceUtil.getIcon(FileIcon.TEXT),
         null);
-    setSynchView(SynchView.NONE);
 
     if (!UI.init.getAndSet(true)) {
       List<Toolbar> toolBars = UI.toolBars;

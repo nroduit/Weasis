@@ -12,10 +12,7 @@ package org.weasis.dicom.explorer;
 import java.awt.datatransfer.Transferable;
 import java.io.File;
 import java.nio.file.Path;
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,6 +22,8 @@ import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.ui.editor.SeriesViewerFactory;
+import org.weasis.core.ui.editor.ViewerOpenOptions;
+import org.weasis.core.ui.editor.ViewerPlacement;
 import org.weasis.core.ui.editor.ViewerPluginBuilder;
 import org.weasis.core.ui.editor.image.SequenceHandler;
 import org.weasis.core.ui.editor.image.SynchData;
@@ -32,7 +31,6 @@ import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.DicomSeries;
 import org.weasis.dicom.explorer.HangingProtocols.OpeningViewer;
-import org.weasis.dicom.explorer.imp.LocalImport;
 import org.weasis.dicom.explorer.main.DicomExplorer;
 import org.weasis.dicom.explorer.main.SeriesSelectionModel;
 
@@ -70,7 +68,7 @@ public class DicomSeriesHandler extends SequenceHandler {
 
       var model = (DataExplorerModel) series.getTagValue(TagW.ExplorerModel);
       if (shouldBuildNewPlugin(plugin, series)) {
-        ViewerPluginBuilder.openSequenceInDefaultPlugin(series, model, true, true);
+        ViewerPluginBuilder.openInDefaultViewer(series, model, ViewerOpenOptions.defaults());
         return true;
       }
 
@@ -101,11 +99,9 @@ public class DicomSeriesHandler extends SequenceHandler {
         .map(
             explorer -> {
               var model = explorer.getDataExplorerModel();
-              var openingViewer =
-                  OpeningViewer.getOpeningViewerByLocalKey(LocalImport.LAST_OPEN_VIEWER_MODE);
               var files = paths.stream().map(Path::toFile).toArray(File[]::new);
               DicomModel.LOADING_EXECUTOR.execute(
-                  new LoadLocalDicom(files, true, model, openingViewer));
+                  new LoadLocalDicom(files, true, model, OpeningViewer.ALL_PATIENTS));
               return true;
             })
         .orElse(false);
@@ -198,7 +194,7 @@ public class DicomSeriesHandler extends SequenceHandler {
   private void openInAppropriatePlugin(
       DicomSeries series, DataExplorerModel model, SeriesViewerFactory plugin) {
     if (plugin.canReadSeries(series) || plugin.canAddSeries()) {
-      ViewerPluginBuilder.openSequenceInPlugin(plugin, series, model, true, true);
+      new ViewerPluginBuilder(plugin, List.of(series), model, ViewerOpenOptions.defaults()).open();
     } else {
       openDicomSeriesInViewer(series, model);
     }
@@ -213,12 +209,9 @@ public class DicomSeriesHandler extends SequenceHandler {
   public static void openDicomSeriesInViewer(DicomSeries series, DataExplorerModel model) {
     var plugin = GuiUtils.getUICore().getViewerFactory(series.getMimeType());
     if (plugin != null) {
-      Map<String, Object> props = Collections.synchronizedMap(new HashMap<>());
-      props.put(ViewerPluginBuilder.CMP_ENTRY_BUILD_NEW_VIEWER, true);
-      props.put(ViewerPluginBuilder.BEST_DEF_LAYOUT, false);
-      props.put(ViewerPluginBuilder.OPEN_IN_SELECTION, true);
-      var builder = new ViewerPluginBuilder(plugin, List.of(series), model, props);
-      ViewerPluginBuilder.openSequenceInPlugin(builder);
+      ViewerOpenOptions opts =
+          ViewerOpenOptions.builder().placement(ViewerPlacement.reuseViewer(false, true)).build();
+      new ViewerPluginBuilder(plugin, List.of(series), model, opts).open();
     }
   }
 

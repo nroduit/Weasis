@@ -16,29 +16,23 @@ import java.util.Optional;
 
 /**
  * Handles OAuth2 callback server operations for asynchronous socket connections. Processes OAuth2
- * authorization code responses via the CompletionHandler interface.
+ * authorization code responses via the {@link CompletionHandler} interface.
  */
 public interface AcceptCallbackHandler
     extends CompletionHandler<AsynchronousSocketChannel, AsyncCallbackServerHandler> {
 
   /**
-   * Gets the OAuth2 authorization code received from the callback.
-   *
-   * @return an Optional containing the authorization code, or empty if not yet received
+   * @return the OAuth2 authorization code received from the callback, or empty if not yet received
    */
   Optional<String> code();
 
   /**
-   * Sets the OAuth2 authorization code received from the callback.
-   *
-   * @param code the authorization code (must not be null)
+   * @param code the OAuth2 authorization code received from the callback
    */
   void code(String code);
 
   /**
-   * Gets the OAuth2 service used for authentication.
-   *
-   * @return the OAuth2 service instance
+   * @return the OAuth2 service used for authentication
    */
   OAuth20Service service();
 }

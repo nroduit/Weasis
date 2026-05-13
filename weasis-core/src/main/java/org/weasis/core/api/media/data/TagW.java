@@ -148,7 +148,7 @@ public class TagW {
       new TagW("WadoInstanceReferenceList", TagType.LIST);
   public static final TagW DicomSpecialElementList =
       new TagW("DicomSpecialElementList", TagType.LIST);
-  public static final TagW SlicePosition = new TagW("SlicePosition", TagType.DOUBLE, 3, 3);
+  public static final TagW SlicePosition = new TagW("SlicePosition", TagType.DOUBLE);
   public static final TagW SuvFactor = new TagW("SUVFactor", TagType.DOUBLE);
 
   public static final TagW RootElement = new TagW("RootElement", TagType.STRING);

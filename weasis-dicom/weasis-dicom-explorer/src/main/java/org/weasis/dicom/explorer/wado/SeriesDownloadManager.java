@@ -13,6 +13,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InterruptedIOException;
 import java.net.HttpURLConnection;
+import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -343,11 +344,26 @@ public class SeriesDownloadManager {
       boolean isFirstImage =
           dicomSeries.size(null) == 0 && seriesInitialized.compareAndSet(false, true);
 
+      // Handle local file:// URIs directly without HTTP download
+      URI uri = URIUtils.getURI(url);
+      if (URIUtils.isFileURI(uri)) {
+        Path localFile = URIUtils.getAbsolutePath(uri);
+        if (localFile == null || !Files.exists(localFile)) {
+          throw new IOException("Local file not found: " + url);
+        }
+        try {
+          processDownloadedFile(localFile, isFirstImage);
+        } finally {
+          progressBar.setIndeterminate(progressBar.getMaximum() < 3);
+        }
+        return;
+      }
+
       HttpStream httpStream = HttpUtils.getHttpResponse(url, urlParams, authMethod);
       handleAuthenticationIfNeeded(httpStream);
 
       try (InputStream stream = httpStream.getInputStream()) {
-        Path tempFile = writeInCache ? createTempFile() : Path.of(URIUtils.getURI(url));
+        Path tempFile = writeInCache ? createTempFile() : URIUtils.toPath(uri);
 
         if (writeInCache) {
           LOGGER.debug("Downloading DICOM instance {} to {}", url, tempFile.getFileName());
@@ -427,6 +443,8 @@ public class SeriesDownloadManager {
         updateUI(reader, isFirstImage);
       } else if (reading == Reading.ERROR) {
         errors.incrementAndGet();
+      } else if (reading == Reading.UNSUPPORTED) {
+        LOGGER.info("Skipping unsupported DICOM SOP Class for file: {}", file);
       }
     }
 

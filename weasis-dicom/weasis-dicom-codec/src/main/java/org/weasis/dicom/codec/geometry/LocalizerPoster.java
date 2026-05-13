@@ -276,37 +276,46 @@ public abstract class LocalizerPoster {
   }
 
   protected List<Vector3d> getIntersectionsOfCubeWithZPlane(Vector3d[] corners) {
-    ArrayList<Vector3d> intersections = new ArrayList<>(4);
-
-    // the check and traversal order are very dependent on the order of the
-    // corners which are: tlhcT, trhcT, brhcT, blhcT, tlhcB, trhcB, brhcB, blhcB
-    // as established in LocalizerPoster.getCornersOfSourceCubeInSourceSpace()
-
-    // traverse each of the (three) possibilities for which opposite edges intersect the Z plane ...
-
-    int[][] edgePairs = {
-      {0, 1, 2, 3, 6, 7, 4, 5},
-      {0, 3, 1, 2, 5, 6, 4, 7},
-      {0, 4, 1, 5, 2, 6, 3, 7}
+    // All 12 edges of the cube (pairs of corner indices sharing an edge)
+    int[][] edges = {
+      // 4 top-face edges
+      {0, 1}, {1, 2}, {2, 3}, {3, 0},
+      // 4 bottom-face edges
+      {4, 5}, {5, 6}, {6, 7}, {7, 4},
+      // 4 vertical edges connecting top to bottom
+      {0, 4}, {1, 5}, {2, 6}, {3, 7}
     };
 
-    for (int[] pair : edgePairs) {
-      if (classifyCornersIntoEdgeCrossingZPlane(corners[pair[0]], corners[pair[1]])
-          && classifyCornersIntoEdgeCrossingZPlane(corners[pair[2]], corners[pair[3]])
-          && classifyCornersIntoEdgeCrossingZPlane(corners[pair[4]], corners[pair[5]])
-          && classifyCornersIntoEdgeCrossingZPlane(corners[pair[6]], corners[pair[7]])) {
-        intersections.add(
-            intersectLineBetweenTwoPointsWithPlaneWhereZIsZero(corners[pair[0]], corners[pair[1]]));
-        intersections.add(
-            intersectLineBetweenTwoPointsWithPlaneWhereZIsZero(corners[pair[2]], corners[pair[3]]));
-        intersections.add(
-            intersectLineBetweenTwoPointsWithPlaneWhereZIsZero(corners[pair[4]], corners[pair[5]]));
-        intersections.add(
-            intersectLineBetweenTwoPointsWithPlaneWhereZIsZero(corners[pair[6]], corners[pair[7]]));
-        break;
+    ArrayList<Vector3d> rawIntersections = new ArrayList<>(6);
+    for (int[] edge : edges) {
+      if (classifyCornersIntoEdgeCrossingZPlane(corners[edge[0]], corners[edge[1]])) {
+        rawIntersections.add(
+            intersectLineBetweenTwoPointsWithPlaneWhereZIsZero(corners[edge[0]], corners[edge[1]]));
       }
     }
-    return intersections;
+
+    if (rawIntersections.size() < 2) {
+      return rawIntersections;
+    }
+
+    // Sort the intersection points into a convex polygon order using their angle around the
+    // centroid (in the XY plane, Z is zero for all points).
+    double cx = 0, cy = 0;
+    for (Vector3d p : rawIntersections) {
+      cx += p.x;
+      cy += p.y;
+    }
+    cx /= rawIntersections.size();
+    cy /= rawIntersections.size();
+    final double centX = cx, centY = cy;
+    rawIntersections.sort(
+        (a, b) -> {
+          double angleA = Math.atan2(a.y - centY, a.x - centX);
+          double angleB = Math.atan2(b.y - centY, b.x - centX);
+          return Double.compare(angleA, angleB);
+        });
+
+    return rawIntersections;
   }
 
   protected void doCommonConstructorStuff() {
@@ -346,7 +355,7 @@ public abstract class LocalizerPoster {
    * Get the shape on the localizer of a zero-thickness slice specified by the geometry of a 2D
    * rectangle.
    *
-   * @param geometry
+   * @param geometry the geometry of the slice for which to get the shape on the localizer
    * @return vector of shapes {@link java.awt.Shape java.awt.Shape} to be drawn in the localizer row
    *     and column coordinates
    */

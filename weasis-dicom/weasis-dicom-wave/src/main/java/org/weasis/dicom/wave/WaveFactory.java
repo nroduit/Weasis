@@ -9,11 +9,11 @@
  */
 package org.weasis.dicom.wave;
 
-import java.util.Map;
 import javax.swing.Icon;
 import org.osgi.service.component.ComponentContext;
 import org.osgi.service.component.annotations.Deactivate;
 import org.weasis.core.api.explorer.DataExplorerView;
+import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaSeries;
@@ -21,6 +21,7 @@ import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.api.util.ResourceUtil.FileIcon;
 import org.weasis.core.ui.editor.SeriesViewer;
 import org.weasis.core.ui.editor.SeriesViewerFactory;
+import org.weasis.core.ui.editor.ViewerOpenOptions;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin.LayoutModel;
 import org.weasis.dicom.explorer.main.DicomExplorer;
@@ -50,11 +51,12 @@ public class WaveFactory implements SeriesViewerFactory {
   }
 
   @Override
-  public SeriesViewer<? extends MediaElement> createSeriesViewer(Map<String, Object> properties) {
+  public SeriesViewer<? extends MediaElement> createSeriesViewer(
+      ViewerOpenOptions options, DataExplorerModel model) {
     LayoutModel layout =
-        ImageViewerPlugin.getLayoutModel(properties, WaveContainer.DEFAULT_VIEW, null);
+        ImageViewerPlugin.getLayoutModel(options, WaveContainer.DEFAULT_VIEW, null);
     WaveContainer instance = new WaveContainer(layout.model(), layout.uid());
-    ImageViewerPlugin.registerInDataExplorerModel(properties, instance);
+    ImageViewerPlugin.registerInDataExplorerModel(model, instance);
     return instance;
   }
 

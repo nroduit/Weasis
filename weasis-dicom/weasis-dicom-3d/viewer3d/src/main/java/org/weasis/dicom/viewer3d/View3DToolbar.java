@@ -9,9 +9,15 @@
  */
 package org.weasis.dicom.viewer3d;
 
+import java.util.Optional;
 import javax.swing.JButton;
+import javax.swing.JPopupMenu;
 import javax.swing.JToggleButton;
 import javax.swing.SwingUtilities;
+import org.weasis.core.api.gui.util.ComboItemListener;
+import org.weasis.core.api.gui.util.DropButtonIcon;
+import org.weasis.core.api.gui.util.DropDownButton;
+import org.weasis.core.api.gui.util.GroupPopup;
 import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.api.util.ResourceUtil.ActionIcon;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
@@ -19,6 +25,7 @@ import org.weasis.core.ui.pref.PreferenceDialog;
 import org.weasis.core.ui.util.ColorLayerUI;
 import org.weasis.core.ui.util.WtoolBar;
 import org.weasis.dicom.codec.DicomImageElement;
+import org.weasis.dicom.viewer3d.vr.CrosshairCutMode;
 
 public class View3DToolbar extends WtoolBar {
   private EventManager eventManager;
@@ -55,16 +62,28 @@ public class View3DToolbar extends WtoolBar {
               add(toggleButton);
             });
 
-    eventManager
-        .getAction(ActionVol.VOL_SLICING)
-        .ifPresent(
-            b -> {
-              JToggleButton toggleButton = new JToggleButton();
-              toggleButton.setToolTipText(ActionVol.VOL_SLICING.getTitle());
-              toggleButton.setIcon(ResourceUtil.getToolBarIcon(ActionIcon.VOLUME_SLICING));
-              b.registerActionState(toggleButton);
-              add(toggleButton);
-            });
+    GroupPopup menuCut = null;
+    Optional<ComboItemListener<CrosshairCutMode>> cutAction =
+        eventManager.getAction(ActionVol.CROSSHAIR_CUT_MODE);
+    if (cutAction.isPresent()) {
+      menuCut = cutAction.get().createGroupRadioMenu();
+    }
+
+    final DropDownButton cutButton =
+        new DropDownButton(
+            ActionVol.CROSSHAIR_CUT_MODE.cmd(),
+            DropButtonIcon.createDropButtonIcon(ResourceUtil.getToolBarIcon(ActionIcon.VOLUME_CUT)),
+            menuCut) {
+          @Override
+          protected JPopupMenu getPopupMenu() {
+            JPopupMenu menu =
+                (getMenuModel() == null) ? new JPopupMenu() : getMenuModel().createJPopupMenu();
+            menu.setInvoker(this);
+            return menu;
+          }
+        };
+    cutButton.setToolTipText(ActionVol.CROSSHAIR_CUT_MODE.getTitle());
+    add(cutButton);
 
     JButton config = new JButton(ResourceUtil.getToolBarIcon(ActionIcon.VOLUME_SETTINGS));
     config.setToolTipText(Messages.getString("3d.settings"));

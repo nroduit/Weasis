@@ -9,22 +9,26 @@
  */
 package org.weasis.base.viewer2d;
 
+import com.formdev.flatlaf.util.SystemFileChooser;
+import com.formdev.flatlaf.util.SystemFileChooser.FileNameExtensionFilter;
 import java.awt.event.ActionEvent;
 import java.io.File;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
+import java.util.stream.Collectors;
 import javax.swing.Action;
 import javax.swing.Icon;
-import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.core.api.gui.layout.MigCell;
 import org.weasis.core.api.gui.layout.MigLayoutModel;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.ComboItemListener;
-import org.weasis.core.api.gui.util.FileFormatFilter;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.media.MimeInspector;
 import org.weasis.core.api.media.data.Codec;
@@ -36,8 +40,11 @@ import org.weasis.core.api.service.WProperties;
 import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.api.util.ResourceUtil.ActionIcon;
 import org.weasis.core.api.util.ResourceUtil.OtherIcon;
+import org.weasis.core.ui.editor.MediaFactory;
 import org.weasis.core.ui.editor.SeriesViewer;
 import org.weasis.core.ui.editor.SeriesViewerFactory;
+import org.weasis.core.ui.editor.ViewerOpenOptions;
+import org.weasis.core.ui.editor.ViewerPlacement;
 import org.weasis.core.ui.editor.ViewerPluginBuilder;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin.LayoutModel;
@@ -76,13 +83,13 @@ public class ViewerFactory implements SeriesViewerFactory {
   }
 
   @Override
-  public SeriesViewer<?> createSeriesViewer(Map<String, Object> properties) {
+  public SeriesViewer<?> createSeriesViewer(ViewerOpenOptions options, DataExplorerModel model) {
     ComboItemListener<MigLayoutModel> layoutAction =
         EventManager.getInstance().getAction(ActionW.LAYOUT).orElse(null);
     LayoutModel layout =
-        ImageViewerPlugin.getLayoutModel(properties, ImageViewerPlugin.VIEWS_1x1, layoutAction);
+        ImageViewerPlugin.getLayoutModel(options, ImageViewerPlugin.VIEWS_1x1, layoutAction);
     View2dContainer instance = new View2dContainer(layout.model(), layout.uid());
-    ImageViewerPlugin.registerInDataExplorerModel(properties, instance);
+    ImageViewerPlugin.registerInDataExplorerModel(model, instance);
 
     return instance;
   }
@@ -147,15 +154,15 @@ public class ViewerFactory implements SeriesViewerFactory {
   static void getOpenImageAction(ActionEvent e) {
     WProperties localPersistence = GuiUtils.getUICore().getLocalPersistence();
     String directory = localPersistence.getProperty("last.open.image.dir", ""); // NON-NLS
-    JFileChooser fileChooser = new JFileChooser(directory);
+    SystemFileChooser fileChooser = new SystemFileChooser(directory);
 
-    fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+    fileChooser.setFileSelectionMode(SystemFileChooser.FILES_ONLY);
     fileChooser.setMultiSelectionEnabled(true);
 
-    FileFormatFilter.setImageDecodeFilters(fileChooser);
+    setImageDecodeFilters(fileChooser);
     File[] selectedFiles;
     if (fileChooser.showOpenDialog(GuiUtils.getUICore().getApplicationWindow())
-            != JFileChooser.APPROVE_OPTION
+            != SystemFileChooser.APPROVE_OPTION
         || (selectedFiles = fileChooser.getSelectedFiles()) == null) {
       return;
     } else {
@@ -173,7 +180,7 @@ public class ViewerFactory implements SeriesViewerFactory {
                 MediaElement[] elements = reader.getMediaElement();
                 if (elements != null) {
                   for (MediaElement media : elements) {
-                    ViewerPluginBuilder.openAssociatedGraphics(media);
+                    MediaFactory.openAssociatedGraphics(media);
                   }
                 }
               } else {
@@ -181,7 +188,7 @@ public class ViewerFactory implements SeriesViewerFactory {
                 if (elements != null) {
                   for (MediaElement media : elements) {
                     series.addMedia(media);
-                    ViewerPluginBuilder.openAssociatedGraphics(media);
+                    MediaFactory.openAssociatedGraphics(media);
                   }
                 }
               }
@@ -191,8 +198,12 @@ public class ViewerFactory implements SeriesViewerFactory {
       }
 
       if (series != null && series.size(null) > 0) {
-        ViewerPluginBuilder.openSequenceInDefaultPlugin(
-            series, ViewerPluginBuilder.DefaultDataModel, true, false);
+        ViewerPluginBuilder.openInDefaultViewer(
+            series,
+            ViewerPluginBuilder.DefaultDataModel,
+            ViewerOpenOptions.builder()
+                .placement(ViewerPlacement.reuseViewer(false, false))
+                .build());
       } else {
         JOptionPane.showMessageDialog(
             GuiUtils.getUICore().getApplicationWindow(),
@@ -207,5 +218,36 @@ public class ViewerFactory implements SeriesViewerFactory {
   @Override
   public boolean canReadSeries(MediaSeries<?> series) {
     return series != null && series.size(null) > 0;
+  }
+
+  private static void setImageDecodeFilters(SystemFileChooser chooser) {
+    // Get the current available codecs.
+    List<String> namesList =
+        GuiUtils.getUICore().getCodecPlugins().stream()
+            .filter(c -> c.getCodecName().contains("OpenCV"))
+            .flatMap(c -> Arrays.stream(c.getReaderExtensions()))
+            .distinct()
+            .sorted()
+            .collect(Collectors.toList());
+    Iterator<String> it = namesList.iterator();
+    String desc = org.weasis.core.Messages.getString("FileFormatFilter.all_supported");
+    ArrayList<String> names = new ArrayList<>();
+    while (it.hasNext()) {
+      String name = it.next();
+      names.add(name);
+    }
+
+    FileNameExtensionFilter imageFilter =
+        new FileNameExtensionFilter(desc, names.toArray(new String[0]));
+    chooser.addChoosableFileFilter(imageFilter);
+    it = namesList.iterator();
+    while (it.hasNext()) {
+      String name = it.next();
+      desc = name.toUpperCase();
+      FileNameExtensionFilter filter = new FileNameExtensionFilter(desc, name);
+      chooser.addChoosableFileFilter(filter);
+    }
+    chooser.setAcceptAllFileFilterUsed(true);
+    chooser.setFileFilter(imageFilter);
   }
 }

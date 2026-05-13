@@ -154,10 +154,11 @@ public class Viewer3dPrefView extends AbstractItemDialogPage {
       openglPanel.add(GuiUtils.getFlowLayoutPanel(texture));
 
       // This minimal version must match with the shader version
-      Version minimalVersion = new Version(4, 3, 0);
+      Version minimalVersion = new Version(3, 3, 0);
       boolean versionIssue = !info.isVersionCompliant();
       boolean software = info.looksSoftware();
-      if (versionIssue || software || info.max3dTextureSize() < RenderingLayer.MAX_QUALITY) {
+
+      if (versionIssue || software || info.max3dTextureSize() < RenderingLayer.MIN_TEXTURE_SIZE) {
         String alert =
             GuiUtils.HTML_COLOR_PATTERN.formatted(
                 IconColor.ACTIONS_RED.getHtmlCode(),
@@ -182,7 +183,7 @@ public class Viewer3dPrefView extends AbstractItemDialogPage {
           openglPanel.add(GuiUtils.getFlowLayoutPanel(new JLabel(alert)));
         }
 
-        if (info.max3dTextureSize() < RenderingLayer.MAX_QUALITY) {
+        if (info.max3dTextureSize() < RenderingLayer.MIN_TEXTURE_SIZE) {
           alert =
               GuiUtils.HTML_COLOR_PATTERN.formatted(
                   IconColor.ACTIONS_RED.getHtmlCode(),

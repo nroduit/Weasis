@@ -45,11 +45,11 @@ import org.weasis.core.ui.util.DefaultAction;
 import org.weasis.core.ui.util.TitleMenuItem;
 import org.weasis.dicom.codec.*;
 import org.weasis.dicom.explorer.*;
+import org.weasis.dicom.explorer.HangingProtocols.OpeningViewer;
 import org.weasis.dicom.explorer.Messages;
 import org.weasis.dicom.explorer.exp.ExplorerTask;
 import org.weasis.dicom.explorer.exp.ExportToolBar;
 import org.weasis.dicom.explorer.imp.ImportToolBar;
-import org.weasis.dicom.explorer.imp.LocalImport;
 
 public class DicomExplorer extends PluginTool
     implements DataExplorerView, SeriesViewerListener, PropertyChangeListener {
@@ -944,11 +944,8 @@ public class DicomExplorer extends PluginTool
   @Override
   public void importFiles(File[] files, boolean recursive) {
     if (files != null) {
-      HangingProtocols.OpeningViewer openingViewer =
-          HangingProtocols.OpeningViewer.getOpeningViewerByLocalKey(
-              LocalImport.LAST_OPEN_VIEWER_MODE);
       DicomModel.LOADING_EXECUTOR.execute(
-          new LoadLocalDicom(files, recursive, model, openingViewer));
+          new LoadLocalDicom(files, recursive, model, OpeningViewer.ALL_PATIENTS));
     }
   }
 
@@ -980,7 +977,7 @@ public class DicomExplorer extends PluginTool
     SeriesViewerEvent.EVENT type = event.getEventType();
     if (SeriesViewerEvent.EVENT.SELECT_VIEW.equals(type)
         && event.getSeriesViewer() instanceof ImageViewerPlugin) {
-      ViewCanvas<?> pane = ((ImageViewerPlugin<?>) event.getSeriesViewer()).getSelectedImagePane();
+      ViewCanvas<?> pane = ((ImageViewerPlugin<?>) event.getSeriesViewer()).getSelectedViewCanvas();
       if (pane != null) {
         MediaSeries<?> s = pane.getSeries();
         if (s != null

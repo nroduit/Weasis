@@ -15,6 +15,7 @@ import java.io.IOException;
 import javax.swing.JProgressBar;
 import org.joml.Vector3d;
 import org.opencv.core.CvType;
+import org.weasis.core.api.vol.ChunkedArray;
 import org.weasis.opencv.data.PlanarImage;
 
 public final class VolumeFloat extends Volume<Float, float[]> {
@@ -23,8 +24,8 @@ public final class VolumeFloat extends Volume<Float, float[]> {
     super(sizeX, sizeY, sizeZ, CvType.CV_32FC(channels), progressBar);
   }
 
-  public VolumeFloat(OriginalStack stack, JProgressBar progressBar) {
-    super(stack, progressBar);
+  public VolumeFloat(OriginalStack stack, JProgressBar progressBar, boolean isBasic) {
+    super(stack, progressBar, isBasic);
   }
 
   @Override

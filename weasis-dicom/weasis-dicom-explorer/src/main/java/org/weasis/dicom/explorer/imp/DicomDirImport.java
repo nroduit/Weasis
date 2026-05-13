@@ -9,6 +9,7 @@
  */
 package org.weasis.dicom.explorer.imp;
 
+import com.formdev.flatlaf.util.SystemFileChooser;
 import com.formdev.flatlaf.util.SystemInfo;
 import java.awt.Dialog;
 import java.io.File;
@@ -17,22 +18,18 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.Objects;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
-import javax.swing.JComboBox;
-import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import javax.swing.JProgressBar;
 import javax.swing.JTextField;
-import javax.swing.filechooser.FileFilter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.AbstractItemDialogPage;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.WinUtil;
+import org.weasis.core.api.net.URIUtils;
 import org.weasis.core.api.util.ResourceUtil;
-import org.weasis.core.api.util.ResourceUtil.ActionIcon;
 import org.weasis.core.api.util.ResourceUtil.OtherIcon;
 import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.explorer.*;
@@ -43,11 +40,8 @@ public class DicomDirImport extends AbstractItemDialogPage implements ImportDico
   private static final Logger LOGGER = LoggerFactory.getLogger(DicomDirImport.class);
 
   private static final String LAST_DICOM_DIR = "lastDicomDir";
-  public static final String LAST_DICOMDIR_OPEN_MODE = "last.dicomdir.open.mode";
   private final JTextField textField = new JTextField();
   private JCheckBox checkboxWriteInCache;
-  private final JComboBox<OpeningViewer> openingViewerJComboBox =
-      new JComboBox<>(OpeningViewer.values());
 
   public DicomDirImport() {
     super(Messages.getString("DicomDirImport.dicomdir"), 5);
@@ -55,11 +49,12 @@ public class DicomDirImport extends AbstractItemDialogPage implements ImportDico
   }
 
   public void initGUI() {
-    JButton btnSearch = new JButton(ResourceUtil.getIcon(ActionIcon.MORE_H));
-    btnSearch.addActionListener(e -> browseDicomDirFile());
     add(
-        LocalImport.buildSearchPanel(
-            textField, btnSearch, Messages.getString("DicomDirImport.path"), LAST_DICOM_DIR));
+        LocalImport.createSearchPanel(
+            textField,
+            Messages.getString("DicomDirImport.path"),
+            LAST_DICOM_DIR,
+            this::browseDicomDirFile));
 
     JButton btnCdrom =
         new JButton(
@@ -78,7 +73,6 @@ public class DicomDirImport extends AbstractItemDialogPage implements ImportDico
     add(GuiUtils.getFlowLayoutPanel(ITEM_SEPARATOR_SMALL, ITEM_SEPARATOR, btnCdrom));
     add(GuiUtils.getFlowLayoutPanel(ITEM_SEPARATOR_SMALL, ITEM_SEPARATOR, checkboxWriteInCache));
 
-    add(LocalImport.buildOpenViewerPanel(openingViewerJComboBox, LAST_DICOMDIR_OPEN_MODE));
     add(GuiUtils.boxYLastElement(LAST_FILLER_HEIGHT));
   }
 
@@ -87,28 +81,9 @@ public class DicomDirImport extends AbstractItemDialogPage implements ImportDico
     if (directory == null) {
       directory = LocalPersistence.getProperties().getProperty(LAST_DICOM_DIR, "");
     }
-    JFileChooser fileChooser = new JFileChooser(directory);
-    fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
-    fileChooser.setMultiSelectionEnabled(false);
-    fileChooser.setFileFilter(
-        new FileFilter() {
-
-          @Override
-          public String getDescription() {
-            return "DICOMDIR";
-          }
-
-          @Override
-          public boolean accept(File f) {
-            if (f.isDirectory()) {
-              return true;
-            }
-            return f.getName().equalsIgnoreCase("dicomdir") // NON-NLS
-                || f.getName().equalsIgnoreCase("dicomdir."); // NON-NLS
-          }
-        });
+    SystemFileChooser fileChooser = getSystemFileChooser(directory);
     File selectedFile;
-    if (fileChooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION
+    if (fileChooser.showOpenDialog(this) == SystemFileChooser.APPROVE_OPTION
         && (selectedFile = fileChooser.getSelectedFile()) != null) {
       String path = selectedFile.getPath();
       textField.setText(path);
@@ -116,15 +91,38 @@ public class DicomDirImport extends AbstractItemDialogPage implements ImportDico
     }
   }
 
+  private static SystemFileChooser getSystemFileChooser(String directory) {
+    SystemFileChooser fileChooser = new SystemFileChooser(directory);
+    fileChooser.setFileSelectionMode(SystemFileChooser.FILES_ONLY);
+    fileChooser.setMultiSelectionEnabled(false);
+    fileChooser.setApproveCallback(
+        (selectedFiles, context) -> {
+          if (selectedFiles.length > 0) {
+            File f = selectedFiles[0];
+            String name = f.getName().toUpperCase();
+            if (name.equals("DICOMDIR") || name.startsWith("DICOMDIR.")) {
+              return SystemFileChooser.APPROVE_OPTION;
+            } else {
+              context.showMessageDialog(
+                  JOptionPane.WARNING_MESSAGE,
+                  "Select a \"DICOMDIR\" filename.",
+                  null,
+                  0,
+                  Messages.getString("HttpHeadersEditor.close"));
+            }
+          }
+          return SystemFileChooser.CANCEL_OPTION;
+        });
+    return fileChooser;
+  }
+
   @Override
   public void closeAdditionalWindow() {
-    LocalPersistence.getProperties()
-        .setProperty(LAST_DICOMDIR_OPEN_MODE, getOpeningViewer().name());
+    // No additional window to close
   }
 
   private OpeningViewer getOpeningViewer() {
-    return Objects.requireNonNullElse(
-        (OpeningViewer) openingViewerJComboBox.getSelectedItem(), OpeningViewer.ONE_PATIENT);
+    return OpeningViewer.ALL_PATIENTS;
   }
 
   @Override
@@ -150,7 +148,7 @@ public class DicomDirImport extends AbstractItemDialogPage implements ImportDico
         file = f;
       } else {
         try {
-          f = new File(new URI(path));
+          f = URIUtils.toFile(new URI(path));
           if (f.canRead()) {
             file = f;
           }

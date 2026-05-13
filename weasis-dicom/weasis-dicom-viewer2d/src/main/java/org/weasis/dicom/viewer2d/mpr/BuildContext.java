@@ -10,19 +10,21 @@
 package org.weasis.dicom.viewer2d.mpr;
 
 public class BuildContext {
-  private final Thread thread;
   private final MprContainer mprContainer;
   private final MprView mainView;
-  private final boolean[] abort = new boolean[] {false, false};
+  private boolean skipRectification = false;
 
-  public BuildContext(Thread thread, MprContainer mprContainer, MprView mainView) {
-    this.thread = thread;
+  public BuildContext(MprContainer mprContainer, MprView mainView) {
     this.mprContainer = mprContainer;
     this.mainView = mainView;
   }
 
-  public boolean[] getAbort() {
-    return abort;
+  public boolean isSkipRectification() {
+    return skipRectification;
+  }
+
+  public void setSkipRectification(boolean skipRectification) {
+    this.skipRectification = skipRectification;
   }
 
   public MprView getMainView() {
@@ -31,9 +33,5 @@ public class BuildContext {
 
   public MprContainer getMprContainer() {
     return mprContainer;
-  }
-
-  public Thread getThread() {
-    return thread;
   }
 }

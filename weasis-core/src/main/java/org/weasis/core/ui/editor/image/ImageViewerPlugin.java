@@ -23,7 +23,6 @@ import java.lang.reflect.Constructor;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import javax.swing.Icon;
@@ -50,7 +49,7 @@ import org.weasis.core.ui.editor.SeriesViewer;
 import org.weasis.core.ui.editor.SeriesViewerEvent;
 import org.weasis.core.ui.editor.SeriesViewerEvent.EVENT;
 import org.weasis.core.ui.editor.SeriesViewerListener;
-import org.weasis.core.ui.editor.ViewerPluginBuilder;
+import org.weasis.core.ui.editor.ViewerOpenOptions;
 import org.weasis.core.ui.model.graphic.DragGraphic;
 import org.weasis.core.ui.model.graphic.Graphic;
 import org.weasis.core.ui.model.graphic.GraphicSelectionListener;
@@ -140,7 +139,7 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
   /** The layout cell manager that handles ViewCanvas and Component placement */
   protected final LayoutCellManager<E> cellManager;
 
-  protected SynchView synchView = SynchView.NONE;
+  protected SynchView synchView = SynchView.DEFAULT_STACK;
 
   protected final ImageViewerEventManager<E> eventManager;
   protected final JPanel grid;
@@ -191,7 +190,7 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
 
   public abstract MigLayoutModel getDefaultLayoutModel();
 
-  public ViewCanvas<E> getSelectedImagePane() {
+  public ViewCanvas<E> getSelectedViewCanvas() {
     return selectedImagePane;
   }
 
@@ -261,39 +260,38 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
         buf.toString(), String.format(ImageViewerPlugin.F_VIEWS, buf), rows, cols, type);
   }
 
+  /**
+   * Registers the given listener in the data explorer model for property-change events.
+   *
+   * @param model the data explorer model (may be {@code null})
+   * @param instance the listener to register (may be {@code null})
+   */
   public static void registerInDataExplorerModel(
-      Map<String, Object> properties, PropertyChangeListener instance) {
-    if (properties != null && instance != null) {
-      Object obj = properties.get(DataExplorerModel.class.getName());
-      if (obj instanceof DataExplorerModel m) {
-        // Register the PropertyChangeListener
-        m.addPropertyChangeListener(instance);
-      }
+      DataExplorerModel model, PropertyChangeListener instance) {
+    if (model != null && instance != null) {
+      model.addPropertyChangeListener(instance);
     }
   }
 
+  /**
+   * Determines the layout model to use when creating a viewer.
+   *
+   * @param options typed open options (may be {@code null})
+   * @param defaultModel the fallback layout model
+   * @param layoutAction the layout action providing available layouts (may be {@code null})
+   */
   public static LayoutModel getLayoutModel(
-      Map<String, Object> properties,
+      ViewerOpenOptions options,
       MigLayoutModel defaultModel,
       ComboItemListener<MigLayoutModel> layoutAction) {
     MigLayoutModel model = defaultModel;
     String uid = null;
-    if (properties != null) {
-      Object obj = properties.get(MigLayoutModel.class.getName());
-      if (obj instanceof MigLayoutModel currentLayout) {
-        model = currentLayout;
-      } else {
-        obj = properties.get(ViewCanvas.class.getName());
-        if (obj instanceof Integer intVal && layoutAction != null) {
-          model = ImageViewerPlugin.getBestDefaultViewLayout(layoutAction, intVal, defaultModel);
-        }
+    if (options != null) {
+      int viewCount = options.seriesCount();
+      if (viewCount > 1 && layoutAction != null) {
+        model = ImageViewerPlugin.getBestDefaultViewLayout(layoutAction, viewCount, defaultModel);
       }
-
-      // Set UID
-      Object val = properties.get(ViewerPluginBuilder.UID);
-      if (val instanceof String s) {
-        uid = s;
-      }
+      uid = options.uid();
     }
     return new LayoutModel(uid, model);
   }
@@ -306,7 +304,7 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
         updateTileOffset();
         return;
       }
-      ViewCanvas<E> viewPane = getSelectedImagePane();
+      ViewCanvas<E> viewPane = getSelectedViewCanvas();
       if (viewPane != null) {
         viewPane.setSeries(sequence);
         viewPane.getJComponent().repaint();
@@ -428,6 +426,12 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
           .subList(layoutCapacity, viewsWithImages.size())
           .forEach(ViewCanvas::disposeView);
       return new ArrayList<>(viewsWithImages.subList(0, layoutCapacity));
+    }
+    ComboItemListener<SynchView> synch = eventManager.getAction(ActionW.SYNCH).orElse(null);
+    if (synch != null) {
+      if (synch.getSelectedItem() instanceof SynchView sel) {
+        sel.resetSynchData();
+      }
     }
 
     return new ArrayList<>(viewsWithImages);
@@ -649,7 +653,7 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
     grid.removeAll();
 
     MigLayoutModel currentLayout = cellManager.getLayoutModel();
-    updateMigLayoutContraints(currentLayout);
+    migLayout.setLayoutConstraints(currentLayout.getLayoutConstraints());
 
     // Iterate through cells and add components from cellManager
     for (MigCell cell : currentLayout.getCells()) {
@@ -659,7 +663,7 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
       }
     }
 
-    grid.revalidate();
+    currentLayout.applyConstraintsToLayout(grid);
   }
 
   public void resetMaximizedSelectedImagePane(ViewCanvas<E> viewCanvas) {
@@ -862,7 +866,7 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
   public List<ViewCanvas<E>> getImagePanels(boolean selectedImagePaneLast) {
     List<ViewCanvas<E>> viewList = new ArrayList<>(cellManager.getAllViewCanvases());
     if (selectedImagePaneLast) {
-      ViewCanvas<E> selectedView = getSelectedImagePane();
+      ViewCanvas<E> selectedView = getSelectedViewCanvas();
 
       if (selectedView != null && viewList.size() > 1) {
         viewList.remove(selectedView);
@@ -1210,7 +1214,7 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
     if (views.size() > requiredCount) {
       setSelectedImagePane(views.get(requiredCount));
       for (int i = requiredCount; i < views.size(); i++) {
-        ViewCanvas<E> viewPane = getSelectedImagePane();
+        ViewCanvas<E> viewPane = getSelectedViewCanvas();
         if (viewPane != null) {
           viewPane.setSeries(null, null);
         }
