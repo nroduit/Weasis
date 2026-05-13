@@ -94,7 +94,8 @@ public final class VolumeSliceContourLoader implements LazyContourLoader {
   }
 
   /** Bundles all metadata needed for a reslice request. */
-  private record PlaneParams(Vector3d ipp, Vector3d row, Vector3d col, double[] ps, int w, int h) {}
+  private record PlaneParams( // NOSONAR private DTO, never compared
+      Vector3d ipp, Vector3d row, Vector3d col, double[] ps, int w, int h) {}
 
   private PlaneParams resolvePlaneParams() {
     double[] ipp = TagD.getTagValue(image, Tag.ImagePositionPatient, double[].class);

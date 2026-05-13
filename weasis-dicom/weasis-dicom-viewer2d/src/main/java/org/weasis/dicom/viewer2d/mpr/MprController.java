@@ -80,7 +80,7 @@ public class MprController
   private Volume<?, ?> volume;
   private final List<SegSpecialElement> segElements = new ArrayList<>();
   private final List<SegmentationVolume> segVolumes = new ArrayList<>();
-  private volatile CompletableFuture<Void> segBuildFuture;
+  private volatile CompletableFuture<Void> segBuildFuture; // NOSONAR visibility reference
   private final MprAxis axial;
   private final MprAxis coronal;
   private final MprAxis sagittal;

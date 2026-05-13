@@ -160,7 +160,7 @@ public class View3d extends VolumeCanvas
   private DicomVolTexture mprCrossHairListenerSource;
 
   /** Segmentation overlay 3D texture — null when no segmentation is active. */
-  private volatile SegVolumeTexture segVolumeTexture;
+  private volatile SegVolumeTexture segVolumeTexture; // NOSONAR visibility reference
 
   public View3d(
       ImageViewerEventManager<DicomImageElement> eventManager, DicomVolTexture volTexture) {

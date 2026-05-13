@@ -71,7 +71,7 @@ public class SegSpecialElement extends HiddenSpecialElement
    * SegmentationVolumeBuildExecutor#DEFAULT default} fork-join pool executor is used.
    */
   private static volatile SegmentationVolumeBuildExecutor volumeBuildExecutor =
-      SegmentationVolumeBuildExecutor.DEFAULT;
+      SegmentationVolumeBuildExecutor.DEFAULT; // NOSONAR visibility reference
 
   /**
    * Installs a custom scheduler for the asynchronous canonical segmentation volume build (e.g. the
@@ -122,14 +122,14 @@ public class SegSpecialElement extends HiddenSpecialElement
    * project the queried image's IPP onto a comparable axis even when the image and segmentation use
    * different row/column directions or sign conventions.
    */
-  private volatile Vector3d referenceNormal;
+  private volatile Vector3d referenceNormal; // NOSONAR visibility reference
 
   /**
    * Lazily-built canonical 3D segmentation volume, kept under a {@link SoftReference} so it can be
    * reclaimed under memory pressure and re-built on demand. Shared by 2D overlays (when image and
    * SEG orientations diverge), MPR overlays and Volume Rendering.
    */
-  private volatile SoftReference<SegmentationVolume> segVolumeRef;
+  private volatile SoftReference<SegmentationVolume> segVolumeRef; // NOSONAR visibility reference
 
   private final Object segVolumeLock = new Object();
 
@@ -155,7 +155,7 @@ public class SegSpecialElement extends HiddenSpecialElement
    * ObservableEvent.BasicAction#UPDATE} event is fired so views can repaint and pick up the
    * now-cached volume.
    */
-  private volatile CompletableFuture<SegmentationVolume> segVolumeBuildFuture;
+  private volatile CompletableFuture<SegmentationVolume> segVolumeBuildFuture; // NOSONAR visibility
 
   /**
    * Sticky flag set when the user cancels (or the build otherwise fails with a {@link
@@ -617,7 +617,7 @@ public class SegSpecialElement extends HiddenSpecialElement
     Set<HiddenSpecialElement> set = manager.series2Elements.get(seriesUID);
     boolean seriesEmptyAfter = false;
     if (set != null) {
-      set.remove(this);
+      set.remove(this); // NOSONAR SegSpecialElement extends HiddenSpecialElement
       if (set.isEmpty()) {
         manager.series2Elements.remove(seriesUID);
         seriesEmptyAfter = true;

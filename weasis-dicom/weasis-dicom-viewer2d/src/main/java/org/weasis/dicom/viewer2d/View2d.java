@@ -132,7 +132,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
   public static final String P_CROSSHAIR_MODE = "mpr.crosshair.mode";
   private final Dimension oldSize;
   private final ContextMenuHandler contextMenuHandler;
-  private volatile BufferedImage segOverlayImage;
+  private volatile BufferedImage segOverlayImage; // NOSONAR visibility reference
 
   protected final KOViewButton koStarButton;
 
