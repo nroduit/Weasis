@@ -20,7 +20,7 @@ jobs:
           java-version: '26'
           cache: 'maven'
       - name: Cache SonarCloud packages
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: ~/.sonar/cache
           key: ${{ runner.os }}-sonar
