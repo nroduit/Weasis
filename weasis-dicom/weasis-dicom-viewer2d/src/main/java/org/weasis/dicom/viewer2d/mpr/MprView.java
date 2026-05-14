@@ -104,8 +104,10 @@ import org.weasis.dicom.viewer2d.Messages;
 import org.weasis.dicom.viewer2d.View2d;
 import org.weasis.dicom.viewer2d.mip.MipView;
 import org.weasis.dicom.viewer2d.mpr.MprController.ControlPoints;
-import org.weasis.dicom.viewer2d.mpr.cmpr.CurvedMprFactory;
-import org.weasis.dicom.viewer2d.mpr.cmpr.CurvedMprImageIO;
+import org.weasis.dicom.viewer2d.mpr.cmpr.CrossSectionDialog;
+import org.weasis.dicom.viewer2d.mpr.cmpr.CrossSectionParams;
+import org.weasis.dicom.viewer2d.mpr.cmpr.CurvedMprAxis;
+import org.weasis.dicom.viewer2d.mpr.cmpr.CurvedMprView;
 
 public class MprView extends View2d implements SliceCanvas, ViewProgress {
   private static final Logger LOGGER = LoggerFactory.getLogger(MprView.class);
@@ -265,8 +267,12 @@ public class MprView extends View2d implements SliceCanvas, ViewProgress {
     double offsetY = (sliceSize - volSize.y * voxelRatio.y) / 2.0;
     double offsetZ = (sliceSize - volSize.z * voxelRatio.z) / 2.0;
 
-    // Get the raw center position (not canvas-transformed) for the depth axis
+    // The crosshair position is stored in slice-size space (centred around halfSlice), not the
+    // normalised [0, 1] space the original formula assumed. Derived from the canonical transform
+    // in MprAxis.getRealVolumeTransformation: voxel_depth = (crossHair_axis - halfSlice) /
+    // voxelRatio_axis + size_axis / 2.
     Vector3d rawCenter = mprController.getAxesControl().getCenter();
+    double halfSlice = sliceSize / 2.0;
 
     // Convert image pixel coordinate to raw voxel index:
     // voxelIndex = (imgCoord - offset) / voxelRatio
@@ -276,24 +282,24 @@ public class MprView extends View2d implements SliceCanvas, ViewProgress {
         // Axial: image X->volume X, image Y->volume Y, depth->volume Z
         voxelX = (imgX - offsetX) / voxelRatio.x;
         voxelY = (imgY - offsetY) / voxelRatio.y;
-        voxelZ = rawCenter.z * volSize.z;
+        voxelZ = (rawCenter.z - halfSlice) / voxelRatio.z + volSize.z / 2.0;
       }
       case CORONAL -> {
         // Coronal: image X->volume X, image Y->volume Z, depth->volume Y
         voxelX = (imgX - offsetX) / voxelRatio.x;
         voxelZ = (imgY - offsetZ) / voxelRatio.z;
-        voxelY = rawCenter.y * volSize.y;
+        voxelY = (rawCenter.y - halfSlice) / voxelRatio.y + volSize.y / 2.0;
       }
       case SAGITTAL -> {
         // Sagittal: image X->volume Y, image Y->volume Z, depth->volume X
         voxelY = (imgX - offsetY) / voxelRatio.y;
         voxelZ = (imgY - offsetZ) / voxelRatio.z;
-        voxelX = rawCenter.x * volSize.x;
+        voxelX = (rawCenter.x - halfSlice) / voxelRatio.x + volSize.x / 2.0;
       }
       default -> {
         voxelX = (imgX - offsetX) / voxelRatio.x;
         voxelY = (imgY - offsetY) / voxelRatio.y;
-        voxelZ = rawCenter.z * volSize.z;
+        voxelZ = (rawCenter.z - halfSlice) / voxelRatio.z + volSize.z / 2.0;
       }
     }
 
@@ -390,7 +396,6 @@ public class MprView extends View2d implements SliceCanvas, ViewProgress {
 
   @Override
   public JPopupMenu buildContextMenu(final MouseEvent evt) {
-    LOGGER.info("MprView.buildContextMenu called at ({}, {})", evt.getX(), evt.getY());
     ComboItemListener<SeriesComparator<?>> action =
         eventManager.getAction(ActionW.SORT_STACK).orElse(null);
     JPopupMenu ctx;
@@ -467,28 +472,45 @@ public class MprView extends View2d implements SliceCanvas, ViewProgress {
           polyline.getHandlePointList().size());
       final PolylineGraphic finalPolyline = polyline;
       popupMenu.addSeparator();
-      JMenuItem curvedMprItem = new JMenuItem("Generate Curved MPR");
-      curvedMprItem.addActionListener(
-          e -> {
-            List<Point2D> pts = finalPolyline.getHandlePointList();
-            if (pts.size() >= 2) {
-              java.util.List<org.joml.Vector3d> points3D = new java.util.ArrayList<>();
-              for (Point2D pt : pts) {
-                if (pt != null) {
-                  // Use getVolumeCoordinatesFromImage since polyline points are in image coords
-                  Point3 volCoord = getVolumeCoordinatesFromImage(pt.getX(), pt.getY());
-                  if (volCoord != null) {
-                    points3D.add(new org.joml.Vector3d(volCoord.x, volCoord.y, volCoord.z));
-                  }
-                }
-              }
-              if (points3D.size() >= 2) {
-                CurvedMprFactory.openCurvedMpr(this, points3D);
-              }
-            }
-          });
+      JMenuItem curvedMprItem = new JMenuItem("Build panoramic view");
+      curvedMprItem.addActionListener(e -> openCurvedMprFromPolyline(finalPolyline));
       popupMenu.add(curvedMprItem);
+      JMenuItem crossSectionsItem = new JMenuItem("Build cross-cectional slices");
+      crossSectionsItem.addActionListener(e -> openCrossSectionsFromPolyline(finalPolyline));
+      popupMenu.add(crossSectionsItem);
     }
+  }
+
+  private void openCurvedMprFromPolyline(PolylineGraphic polyline) {
+    if (polyline == null || polyline.getHandlePointList().size() < 2) {
+      return;
+    }
+    MprContainer container =
+        (MprContainer) SwingUtilities.getAncestorOfClass(MprContainer.class, this);
+    if (container != null) {
+      container.openCurvedMpr(this, polyline);
+    }
+  }
+
+  /**
+   * Ask the enclosing {@link MprContainer} to build a DICOM series of perpendicular cross-section
+   * slabs along this polyline. A small parameter dialog (slab width, height, spacing) is shown
+   * before generation; cancelling the dialog aborts the build.
+   */
+  private void openCrossSectionsFromPolyline(PolylineGraphic polyline) {
+    if (polyline == null || polyline.getHandlePointList().size() < 2) {
+      return;
+    }
+    MprContainer container =
+        (MprContainer) SwingUtilities.getAncestorOfClass(MprContainer.class, this);
+    if (container == null || mprController == null || mprController.getVolume() == null) {
+      return;
+    }
+    CrossSectionParams params = CrossSectionDialog.prompt(this);
+    if (params == null) {
+      return; // user cancelled
+    }
+    container.openCrossSections(this, polyline, params);
   }
 
   @Override
@@ -546,120 +568,17 @@ public class MprView extends View2d implements SliceCanvas, ViewProgress {
     super.drawOnTop(g2d);
     drawProgressBar(g2d, progressBar);
 
-    // Draw debug visualization for curved MPR
-    drawCurvedMprDebug(g2d);
-  }
-
-  /**
-   * Draw debug visualization for the curved MPR curve and sampling directions. Shows: original
-   * points (red), smoothed curve (green), perpendicular directions (cyan).
-   */
-  private void drawCurvedMprDebug(Graphics2D g2d) {
-    CurvedMprImageIO.DebugCurveData debug = CurvedMprImageIO.getLastDebugData();
-    if (debug == null || plane != Plane.AXIAL) {
-      return; // Only draw on axial view where the curve was drawn
-    }
-
-    var vol = mprController.getVolume();
-    if (vol == null) return;
-
-    int sliceSize = vol.getSliceSize();
-    Vector3i volSize = vol.getSize();
-    Vector3d voxelRatio = vol.getVoxelRatio();
-
-    // Centering offsets: the volume is centered in the sliceSize×sliceSize image
-    double offsetX = (sliceSize - volSize.x * voxelRatio.x) / 2.0;
-    double offsetY = (sliceSize - volSize.y * voxelRatio.y) / 2.0;
-
-    java.awt.Stroke oldStroke = g2d.getStroke();
-    java.awt.Color oldColor = g2d.getColor();
-
-    // Draw original user points (large red circles)
-    g2d.setColor(Color.RED);
-    g2d.setStroke(new java.awt.BasicStroke(2f));
-    for (Vector3d pt : debug.originalPoints) {
-      double imgX = pt.x * voxelRatio.x + offsetX;
-      double imgY = pt.y * voxelRatio.y + offsetY;
-      Point2D screenPt = getImageCoordinatesToScreen(imgX, imgY);
-      int r = 6;
-      g2d.drawOval((int) screenPt.getX() - r, (int) screenPt.getY() - r, r * 2, r * 2);
-    }
-
-    // Draw smoothed curve (green line)
-    g2d.setColor(Color.GREEN);
-    g2d.setStroke(new java.awt.BasicStroke(1.5f));
-    Point2D prevPt = null;
-    for (Vector3d pt : debug.smoothedPoints) {
-      double imgX = pt.x * voxelRatio.x + offsetX;
-      double imgY = pt.y * voxelRatio.y + offsetY;
-      Point2D screenPt = getImageCoordinatesToScreen(imgX, imgY);
-      if (prevPt != null) {
-        g2d.drawLine(
-            (int) prevPt.getX(), (int) prevPt.getY(),
-            (int) screenPt.getX(), (int) screenPt.getY());
+    if (CurvedMprAxis.DEBUG_DRAW && plane == Plane.AXIAL) {
+      MprContainer container =
+          (MprContainer) SwingUtilities.getAncestorOfClass(MprContainer.class, this);
+      if (container != null) {
+        CurvedMprView curvedView = container.getCurvedMprView();
+        CurvedMprAxis curvedAxis = curvedView == null ? null : curvedView.getCurvedMprAxis();
+        if (curvedAxis != null) {
+          curvedAxis.drawDebug(g2d, this);
+        }
       }
-      prevPt = screenPt;
     }
-
-    // Draw perpendicular directions at sampled points (cyan lines showing slab extent)
-    g2d.setColor(Color.CYAN);
-    g2d.setStroke(new java.awt.BasicStroke(1f));
-    // Convert slab thickness from mm to voxels for correct visualization
-    double pixelMm = vol.getMinPixelRatio();
-    double halfSlabVoxels = (debug.slabThicknessMm / 2.0) / pixelMm;
-
-    // Sample every Nth point to avoid clutter
-    int step = Math.max(1, debug.sampledPoints.size() / 30);
-    for (int i = 0; i < debug.sampledPoints.size(); i += step) {
-      Vector3d pt = debug.sampledPoints.get(i);
-      Vector3d dir = debug.perpDirections.get(i);
-
-      // Compute endpoints of perpendicular line (in voxel coords)
-      Vector3d p1 = new Vector3d(pt).add(new Vector3d(dir).mul(halfSlabVoxels));
-      Vector3d p2 = new Vector3d(pt).sub(new Vector3d(dir).mul(halfSlabVoxels));
-
-      // Convert to image coordinates
-      double img1X = p1.x * voxelRatio.x + offsetX;
-      double img1Y = p1.y * voxelRatio.y + offsetY;
-      double img2X = p2.x * voxelRatio.x + offsetX;
-      double img2Y = p2.y * voxelRatio.y + offsetY;
-
-      Point2D screen1 = getImageCoordinatesToScreen(img1X, img1Y);
-      Point2D screen2 = getImageCoordinatesToScreen(img2X, img2Y);
-
-      g2d.drawLine(
-          (int) screen1.getX(), (int) screen1.getY(),
-          (int) screen2.getX(), (int) screen2.getY());
-    }
-
-    // Draw info text
-    g2d.setColor(Color.YELLOW);
-    g2d.drawString(
-        "Debug: orig="
-            + debug.originalPoints.size()
-            + " smooth="
-            + debug.smoothedPoints.size()
-            + " sampled="
-            + debug.sampledPoints.size()
-            + " slab="
-            + debug.slabThicknessMm
-            + "mm",
-        10,
-        50);
-
-    g2d.setStroke(oldStroke);
-    g2d.setColor(oldColor);
-  }
-
-  private Point2D getImageCoordinatesToScreen(double imgX, double imgY) {
-    java.awt.geom.AffineTransform transform = getAffineTransform();
-    if (transform == null) {
-      return new Point2D.Double(imgX, imgY);
-    }
-    Point2D.Double src = new Point2D.Double(imgX, imgY);
-    Point2D.Double dst = new Point2D.Double();
-    transform.transform(src, dst);
-    return dst;
   }
 
   public ControlPoints getControlPoints(Line2D line, Point2D center) {
@@ -1391,27 +1310,12 @@ public class MprView extends View2d implements SliceCanvas, ViewProgress {
       if (graphic instanceof PolylineGraphic polyline && graphic.isGraphicComplete()) {
         LOGGER.info("Adding Curved MPR menu item in buildGraphicContextMenu");
         popupMenu.addSeparator();
-        JMenuItem curvedMprItem = new JMenuItem("Generate Curved MPR");
-        curvedMprItem.addActionListener(
-            e -> {
-              List<Point2D> pts = polyline.getHandlePointList();
-              if (pts.size() >= 2) {
-                java.util.List<org.joml.Vector3d> points3D = new java.util.ArrayList<>();
-                for (Point2D pt : pts) {
-                  if (pt != null) {
-                    // Use getVolumeCoordinatesFromImage since polyline points are in image coords
-                    Point3 volCoord = getVolumeCoordinatesFromImage(pt.getX(), pt.getY());
-                    if (volCoord != null) {
-                      points3D.add(new org.joml.Vector3d(volCoord.x, volCoord.y, volCoord.z));
-                    }
-                  }
-                }
-                if (points3D.size() >= 2) {
-                  CurvedMprFactory.openCurvedMpr(this, points3D);
-                }
-              }
-            });
+        JMenuItem curvedMprItem = new JMenuItem("Build Panoramic View"); // NON-NLS
+        curvedMprItem.addActionListener(e -> openCurvedMprFromPolyline(polyline));
         popupMenu.add(curvedMprItem);
+        JMenuItem crossSectionsItem = new JMenuItem("Build Cross-Sectional Slices"); // NON-NLS
+        crossSectionsItem.addActionListener(e -> openCrossSectionsFromPolyline(polyline));
+        popupMenu.add(crossSectionsItem);
       }
     }
     return popupMenu;

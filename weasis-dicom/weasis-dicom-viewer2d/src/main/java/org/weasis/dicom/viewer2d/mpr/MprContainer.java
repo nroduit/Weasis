@@ -31,6 +31,7 @@ import org.weasis.core.api.explorer.ObservableEvent;
 import org.weasis.core.api.gui.Insertable.Type;
 import org.weasis.core.api.gui.InsertableUtil;
 import org.weasis.core.api.gui.layout.MergedCellsBuilder;
+import org.weasis.core.api.gui.layout.MigCell;
 import org.weasis.core.api.gui.layout.MigLayoutModel;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.AppProperties;
@@ -52,6 +53,7 @@ import org.weasis.core.ui.editor.image.SynchView;
 import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.editor.image.ViewerToolBar;
 import org.weasis.core.ui.editor.image.ZoomToolBar;
+import org.weasis.core.ui.model.graphic.imp.line.PolylineGraphic;
 import org.weasis.core.ui.util.ColorLayerUI;
 import org.weasis.core.ui.util.DefaultAction;
 import org.weasis.core.ui.util.PrintDialog;
@@ -76,6 +78,9 @@ import org.weasis.dicom.viewer2d.ResetTools;
 import org.weasis.dicom.viewer2d.View2dContainer;
 import org.weasis.dicom.viewer2d.View2dFactory;
 import org.weasis.dicom.viewer2d.mpr.MprView.Plane;
+import org.weasis.dicom.viewer2d.mpr.cmpr.CrossSectionParams;
+import org.weasis.dicom.viewer2d.mpr.cmpr.CurvedMprBuilder;
+import org.weasis.dicom.viewer2d.mpr.cmpr.CurvedMprView;
 
 public class MprContainer extends DicomViewerPlugin
     implements PropertyChangeListener, VolumeProvider {
@@ -142,6 +147,31 @@ public class MprContainer extends DicomViewerPlugin
           MprView.class.getName());
 
   public static final List<MigLayoutModel> LAYOUT_LIST = List.of(view1, view2, view3, view4, view5);
+
+  /**
+   * Layout used to display the three MPR views together with a curved-MPR panoramic view. The
+   * curved cell is empty until a polyline is drawn on one of the MPR views and "Generate Curved
+   * MPR" is triggered; {@link #openCurvedMpr} also switches to this layout automatically.
+   */
+  public static final MigLayoutModel mprWithCurved = buildMprWithCurvedLayout();
+
+  private static MigLayoutModel buildMprWithCurvedLayout() {
+    String mprClass = MprView.class.getName();
+    String curvedClass = CurvedMprView.class.getName();
+    List<MigCell> cells =
+        List.of(
+            new MigCell(0, mprClass, "grow", 0, 0, 1, 1), // AXIAL
+            new MigCell(1, mprClass, "grow", 1, 0, 1, 1), // CORONAL
+            new MigCell(2, mprClass, "newline, grow", 0, 1, 1, 1), // SAGITTAL
+            new MigCell(3, curvedClass, "grow", 1, 1, 1, 1)); // CURVED
+    return new MigLayoutModel(
+        "mpr-curved",
+        "3 MPR + Curved",
+        "wrap 2, ins 0, gap " + MigLayoutModel.DEFAULT_INTERCELL_GAP,
+        "[grow,fill][grow,fill]",
+        "[grow,fill][grow,fill]",
+        cells);
+  }
 
   public static final SeriesViewerUI UI =
       new SeriesViewerUI(MprContainer.class, null, View2dContainer.UI.tools, null);
@@ -359,6 +389,9 @@ public class MprContainer extends DicomViewerPlugin
 
   @Override
   public DefaultView2d<DicomImageElement> createDefaultView(String classType) {
+    if (CurvedMprView.class.getName().equals(classType)) {
+      return new CurvedMprView(eventManager);
+    }
     return new MprView(eventManager, getMprController());
   }
 
@@ -435,6 +468,43 @@ public class MprContainer extends DicomViewerPlugin
       }
     }
     return null;
+  }
+
+  /** Returns the curved-MPR view in the current layout, or {@code null} if absent. */
+  public CurvedMprView getCurvedMprView() {
+    for (ViewCanvas<?> v : cellManager) {
+      if (v instanceof CurvedMprView curvedView) {
+        return curvedView;
+      }
+    }
+    return null;
+  }
+
+  /** Build the curved-MPR axis from a user-drawn polyline */
+  public void openCurvedMpr(MprView sourceView, PolylineGraphic polyline) {
+    CurvedMprBuilder.buildAxis(sourceView, polyline)
+        .ifPresent(
+            axis -> {
+              axis.bindPolyline(sourceView, polyline);
+              GuiExecutor.execute(
+                  () -> {
+                    if (!mprWithCurved.equals(cellManager.getLayoutModel())) {
+                      setLayoutModel(mprWithCurved);
+                    }
+                    CurvedMprView curvedView = getCurvedMprView();
+                    if (curvedView != null) {
+                      curvedView.setCurvedMprAxis(axis);
+                    } else {
+                      LOGGER.warn("Curved MPR layout does not expose a CurvedMprView cell");
+                    }
+                  });
+            });
+  }
+
+  /** Build a DICOM series of perpendicular cross-section slices along the polyline */
+  public void openCrossSections(
+      MprView sourceView, PolylineGraphic polyline, CrossSectionParams params) {
+    CurvedMprBuilder.openCrossSectionSeries(sourceView, polyline, params);
   }
 
   @Override
