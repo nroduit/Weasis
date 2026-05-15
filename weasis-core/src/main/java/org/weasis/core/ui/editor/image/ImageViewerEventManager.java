@@ -254,14 +254,10 @@ public abstract class ImageViewerEventManager<E extends ImageElement> implements
 
       @Override
       public void pointChanged(Point2D point) {
-        SynchData synchData =
-            (SynchData) getSelectedViewPane().getActionsInView().get(ActionW.SYNCH_LINK.cmd());
-        if (synchData != null && synchData.isSynchActivated()) {
-          firePropertyChange(
-              ActionW.SYNCH.cmd(),
-              null,
-              new SynchEvent(getSelectedViewPane(), getActionW().cmd(), point));
-        }
+        firePropertyChange(
+            ActionW.SYNCH.cmd(),
+            null,
+            new SynchEvent(getSelectedViewPane(), getActionW().cmd(), point));
       }
     };
   }
