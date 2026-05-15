@@ -14,7 +14,6 @@ import static java.lang.Double.NaN;
 import jakarta.xml.bind.annotation.XmlRootElement;
 import jakarta.xml.bind.annotation.XmlType;
 import java.awt.Shape;
-import java.awt.event.KeyEvent;
 import java.awt.geom.Area;
 import java.awt.geom.Line2D;
 import java.awt.geom.Path2D;
@@ -31,6 +30,7 @@ import java.util.Optional;
 import java.util.Set;
 import javax.swing.Icon;
 import org.weasis.core.Messages;
+import org.weasis.core.api.gui.util.ShortcutManager;
 import org.weasis.core.api.image.measure.MeasurementsAdapter;
 import org.weasis.core.api.image.util.MeasurableLayer;
 import org.weasis.core.api.image.util.Unit;
@@ -116,12 +116,12 @@ public class PolygonGraphic extends AbstractDragGraphicArea {
 
   @Override
   public int getKeyCode() {
-    return KeyEvent.VK_Y;
+    return ShortcutManager.getInstance().getKeyCode(ShortcutManager.ID_GRAPHIC_POLYGON);
   }
 
   @Override
   public int getModifier() {
-    return 0;
+    return ShortcutManager.getInstance().getModifier(ShortcutManager.ID_GRAPHIC_POLYGON);
   }
 
   @Override
