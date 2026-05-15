@@ -44,6 +44,8 @@ import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.image.cv.CvUtil;
 import org.weasis.core.api.util.ThreadUtil;
+import org.weasis.core.api.vol.ChunkedArray;
+import org.weasis.core.api.vol.ChunkedMappedBuffer;
 import org.weasis.core.ui.editor.image.ViewerPlugin;
 import org.weasis.core.util.MathUtil;
 import org.weasis.dicom.codec.DicomImageElement;
@@ -433,6 +435,7 @@ public abstract sealed class Volume<T extends Number, A>
     final int n = dicomImages.size();
 
     final long totalVoxels = (long) size.x * size.y * size.z * channels;
+    final long[] tBeforeClose = new long[1];
     try (SplatContext sharedCtx = SplatContext.create(!isBasic, totalVoxels)) {
 
       // Submit per-slice tasks with bounded concurrency
@@ -441,6 +444,7 @@ public abstract sealed class Volume<T extends Number, A>
       final AtomicInteger submitted = new AtomicInteger(0);
       final AtomicInteger completed = new AtomicInteger(0);
 
+      final long t0 = System.nanoTime();
       for (int z = 0; z < n; z++) {
         final int zi = z;
         ecs.submit(
@@ -491,8 +495,43 @@ public abstract sealed class Volume<T extends Number, A>
       } catch (Exception e) {
         LOGGER.error("Error while building volume", e);
       }
-      sharedCtx.normalize(this);
+      final long tSplatEnd = System.nanoTime();
+      LOGGER.debug(
+          "MPR volume splat phase finished: {} slices in {} ms", n, (tSplatEnd - t0) / 1_000_000L);
+
+      // --- Normalisation phase: extend the progress bar and feed it per-slice progress so
+      // the user sees activity instead of an "idle" bar between the last decoded slice and
+      // the moment the three MPR views are populated.
+      final JProgressBar pb = this.progressBar;
+      final int normSlices = size.z;
+      final int baseValue;
+      if (pb != null && sharedCtx.isWeighted() && normSlices > 0) {
+        baseValue = pb.getValue();
+        final int newMax = baseValue + normSlices;
+        GuiExecutor.execute(
+            () -> {
+              pb.setMaximum(newMax);
+              pb.setString("Normalizing volume…"); // NON-NLS
+            });
+      } else {
+        baseValue = 0;
+      }
+
+      sharedCtx.normalize(
+          this, pb == null ? null : throttledProgressListener(pb, baseValue, normSlices));
+
+      final long tNormEnd = System.nanoTime();
+      LOGGER.debug(
+          "MPR volume normalize phase finished in {} ms", (tNormEnd - tSplatEnd) / 1_000_000L);
+
+      if (pb != null && sharedCtx.isWeighted() && normSlices > 0) {
+        GuiExecutor.execute(() -> pb.setString(null));
+      }
+      tBeforeClose[0] = System.nanoTime();
     }
+    LOGGER.debug(
+        "MPR volume splat-context close finished in {} ms (unmap + temp file delete)",
+        (System.nanoTime() - tBeforeClose[0]) / 1_000_000L);
   }
 
   private Matrix4d computeSliceToVolumeTransform() {
@@ -687,6 +726,14 @@ public abstract sealed class Volume<T extends Number, A>
   protected abstract int pixelArrayLength(A pixelData);
 
   private void copyFrom(PlanarImage image, int sliceIndex, SplatContext ctx) {
+    // Safety net: convert the image to the volume's expected depth if they differ.
+    // This can happen when individual slices produce a different modality-LUT output type
+    // than the type that was detected from the representative (middle) image at construction time
+    if (image != null && CvType.depth(image.type()) != CvType.depth(cvType)) {
+      ImageCV converted = new ImageCV();
+      image.toImageCV().convertTo(converted, cvType);
+      image = converted;
+    }
     int pixelCount = ctx.dim().width * ctx.dim().height;
     A pixelData = allocatePixelArray(pixelCount);
     readImagePixels(image, pixelData);
@@ -716,6 +763,292 @@ public abstract sealed class Volume<T extends Number, A>
       setInMappedBuffer(index * byteDepth, value);
     } else {
       setElementInData(index, value);
+    }
+  }
+
+  /**
+   * Writes a normalised {@code float} value at the precomputed linear index {@code idx}, converting
+   * it to the volume's element type. Used by {@link SplatContext#normalize} to avoid the redundant
+   * {@code linearIndex(x, y, z, c)} recomputation that {@link #setChannelValue} would perform — the
+   * splat accumulator layout already matches the volume's data layout, so we have {@code idx} for
+   * free.
+   *
+   * <p><b>Hot path:</b> called once per sampled voxel during normalisation (~10⁸ calls per volume).
+   * The implementation deliberately avoids {@link #convertToGeneric}, which boxes a {@code
+   * Short}/{@code Integer}/etc per call and was responsible for ≈1 GB of garbage on a 200-megavoxel
+   * {@code VolumeShort} build. Instead it directly stores the primitive into the destination chunk
+   * via a pattern-matched {@code switch}, which the JIT compiles to a type-specialised store with
+   * zero allocation.
+   */
+  final void setNormalizedFloatAt(long idx, float value) {
+    if (data != null) {
+      int ci = data.chunkIndex(idx);
+      int co = data.chunkOffset(idx);
+      A chunk = data.getChunk(ci);
+      switch (chunk) {
+        case byte[] a -> a[co] = (byte) Math.round(value);
+        case short[] a -> a[co] = (short) Math.round(value);
+        case int[] a -> a[co] = Math.round(value);
+        case float[] a -> a[co] = value;
+        case double[] a -> a[co] = value;
+        default -> throw new IllegalStateException("Unsupported chunk type: " + chunk.getClass());
+      }
+    } else {
+      long byteOffset = idx * byteDepth;
+      switch (byteDepth) {
+        case 1 -> mappedBuffer.put(byteOffset, (byte) Math.round(value));
+        case 2 -> mappedBuffer.putShort(byteOffset, (short) Math.round(value));
+        case 4 -> {
+          if (this instanceof VolumeInt) {
+            mappedBuffer.putInt(byteOffset, Math.round(value));
+          } else {
+            mappedBuffer.putFloat(byteOffset, value);
+          }
+        }
+        case 8 -> mappedBuffer.putDouble(byteOffset, value);
+        default -> throw new IllegalStateException("Unsupported byteDepth: " + byteDepth);
+      }
+    }
+  }
+
+  /**
+   * Hoisted hot-loop normalisation of a chunk-aligned run of voxels into the heap-backed {@link
+   * #data} array. The destination type is decoded <b>once</b> per call (instead of per voxel) by
+   * pattern-matching on the chunk and dispatching to a primitive-typed static helper. The resulting
+   * inner loops contain only primitive locals and array stores, so the JIT can fully inline /
+   * unroll / auto-vectorise them.
+   *
+   * <p>Both {@link ChunkedArray}s involved (accumulator and {@link #data}) share the same {@code
+   * CHUNK_SIZE} so chunk indices align — the caller passes accumulator runs that never cross a
+   * destination chunk boundary, and we use the same {@code dco} as {@code wco}.
+   *
+   * <p>An additional fast-path skips voxels whose accumulated weight is exactly {@code 0} (raw int
+   * bits), avoiding the {@code Float.intBitsToFloat} on the unsampled half of the volume.
+   *
+   * @param wChunk weight accumulator chunk
+   * @param vChunk value accumulator chunk
+   * @param accOff offset within the accumulator chunks (same for both)
+   * @param destStartIdx global linear voxel index where this run starts in {@link #data}
+   * @param run number of voxels to normalise
+   */
+  final void normalizeHeapRun(int[] wChunk, int[] vChunk, int accOff, long destStartIdx, int run) {
+    int dco = data.chunkOffset(destStartIdx);
+    A dChunk = data.getChunk(data.chunkIndex(destStartIdx));
+    switch (dChunk) {
+      case byte[] da -> normalizeByteRun(wChunk, vChunk, accOff, da, dco, run);
+      case short[] da -> normalizeShortRun(wChunk, vChunk, accOff, da, dco, run);
+      case int[] da -> normalizeIntRun(wChunk, vChunk, accOff, da, dco, run);
+      case float[] da -> normalizeFloatRun(wChunk, vChunk, accOff, da, dco, run);
+      case double[] da -> normalizeDoubleRun(wChunk, vChunk, accOff, da, dco, run);
+      default -> throw new IllegalStateException("Unsupported chunk type: " + dChunk.getClass());
+    }
+  }
+
+  private static void normalizeByteRun(int[] w, int[] v, int aOff, byte[] d, int dOff, int run) {
+    final float eps = SplatContext.WEIGHT_EPSILON;
+    for (int k = 0; k < run; k++) {
+      int wb = w[aOff + k];
+      if (wb == 0) continue; // 0 raw bits == 0.0f → unsampled, leave background
+      float fw = Float.intBitsToFloat(wb);
+      if (fw < eps) continue;
+      d[dOff + k] = (byte) Math.round(Float.intBitsToFloat(v[aOff + k]) / fw);
+    }
+  }
+
+  private static void normalizeShortRun(int[] w, int[] v, int aOff, short[] d, int dOff, int run) {
+    final float eps = SplatContext.WEIGHT_EPSILON;
+    for (int k = 0; k < run; k++) {
+      int wb = w[aOff + k];
+      if (wb == 0) continue;
+      float fw = Float.intBitsToFloat(wb);
+      if (fw < eps) continue;
+      d[dOff + k] = (short) Math.round(Float.intBitsToFloat(v[aOff + k]) / fw);
+    }
+  }
+
+  private static void normalizeIntRun(int[] w, int[] v, int aOff, int[] d, int dOff, int run) {
+    final float eps = SplatContext.WEIGHT_EPSILON;
+    for (int k = 0; k < run; k++) {
+      int wb = w[aOff + k];
+      if (wb == 0) continue;
+      float fw = Float.intBitsToFloat(wb);
+      if (fw < eps) continue;
+      d[dOff + k] = Math.round(Float.intBitsToFloat(v[aOff + k]) / fw);
+    }
+  }
+
+  private static void normalizeFloatRun(int[] w, int[] v, int aOff, float[] d, int dOff, int run) {
+    final float eps = SplatContext.WEIGHT_EPSILON;
+    for (int k = 0; k < run; k++) {
+      int wb = w[aOff + k];
+      if (wb == 0) continue;
+      float fw = Float.intBitsToFloat(wb);
+      if (fw < eps) continue;
+      d[dOff + k] = Float.intBitsToFloat(v[aOff + k]) / fw;
+    }
+  }
+
+  private static void normalizeDoubleRun(
+      int[] w, int[] v, int aOff, double[] d, int dOff, int run) {
+    final float eps = SplatContext.WEIGHT_EPSILON;
+    for (int k = 0; k < run; k++) {
+      int wb = w[aOff + k];
+      if (wb == 0) continue;
+      float fw = Float.intBitsToFloat(wb);
+      if (fw < eps) continue;
+      d[dOff + k] = (double) Float.intBitsToFloat(v[aOff + k]) / fw;
+    }
+  }
+
+  /**
+   * Variant of {@link #normalizeHeapRun} for the mapped-accumulator → heap-data path: the inputs
+   * are already-decoded {@code float[]} weight / value slabs read in bulk from the disk-backed
+   * accumulators, so we skip the {@code Float.intBitsToFloat} step. Same hoisted destination-type
+   * dispatch ⇒ tight typed inner loop, JIT-friendly.
+   */
+  final void normalizeFloatRunToHeap(
+      float[] weights, float[] values, int srcOff, long destStartIdx, int run) {
+    int dco = data.chunkOffset(destStartIdx);
+    A dChunk = data.getChunk(data.chunkIndex(destStartIdx));
+    switch (dChunk) {
+      case byte[] da -> normalizeFloatToByteRun(weights, values, srcOff, da, dco, run);
+      case short[] da -> normalizeFloatToShortRun(weights, values, srcOff, da, dco, run);
+      case int[] da -> normalizeFloatToIntRun(weights, values, srcOff, da, dco, run);
+      case float[] da -> normalizeFloatToFloatRun(weights, values, srcOff, da, dco, run);
+      case double[] da -> normalizeFloatToDoubleRun(weights, values, srcOff, da, dco, run);
+      default -> throw new IllegalStateException("Unsupported chunk type: " + dChunk.getClass());
+    }
+  }
+
+  private static void normalizeFloatToByteRun(
+      float[] w, float[] v, int sOff, byte[] d, int dOff, int run) {
+    final float eps = SplatContext.WEIGHT_EPSILON;
+    for (int k = 0; k < run; k++) {
+      float fw = w[sOff + k];
+      if (fw < eps) continue;
+      d[dOff + k] = (byte) Math.round(v[sOff + k] / fw);
+    }
+  }
+
+  private static void normalizeFloatToShortRun(
+      float[] w, float[] v, int sOff, short[] d, int dOff, int run) {
+    final float eps = SplatContext.WEIGHT_EPSILON;
+    for (int k = 0; k < run; k++) {
+      float fw = w[sOff + k];
+      if (fw < eps) continue;
+      d[dOff + k] = (short) Math.round(v[sOff + k] / fw);
+    }
+  }
+
+  private static void normalizeFloatToIntRun(
+      float[] w, float[] v, int sOff, int[] d, int dOff, int run) {
+    final float eps = SplatContext.WEIGHT_EPSILON;
+    for (int k = 0; k < run; k++) {
+      float fw = w[sOff + k];
+      if (fw < eps) continue;
+      d[dOff + k] = Math.round(v[sOff + k] / fw);
+    }
+  }
+
+  private static void normalizeFloatToFloatRun(
+      float[] w, float[] v, int sOff, float[] d, int dOff, int run) {
+    final float eps = SplatContext.WEIGHT_EPSILON;
+    for (int k = 0; k < run; k++) {
+      float fw = w[sOff + k];
+      if (fw < eps) continue;
+      d[dOff + k] = v[sOff + k] / fw;
+    }
+  }
+
+  private static void normalizeFloatToDoubleRun(
+      float[] w, float[] v, int sOff, double[] d, int dOff, int run) {
+    final float eps = SplatContext.WEIGHT_EPSILON;
+    for (int k = 0; k < run; k++) {
+      float fw = w[sOff + k];
+      if (fw < eps) continue;
+      d[dOff + k] = (double) v[sOff + k] / fw;
+    }
+  }
+
+  /**
+   * Bulk-writes a contiguous slice of normalised float values into the disk-backed {@link
+   * #mappedBuffer}, converting them to the volume's element type. For voxels whose accumulated
+   * weight is below {@link SplatContext#WEIGHT_EPSILON} the configured background ({@link
+   * #minValue}) is written instead — matching what {@code initValueMappedBuffer} placed at volume
+   * construction.
+   *
+   * <p>This avoids the per-voxel {@code mappedBuffer.put*(...)} dispatch (n random writes spread
+   * over the same mapped pages) by building one typed scratch array and issuing a single bulk
+   * {@code putBytes/putShorts/putInts/putFloats/putDoubles} call. When the mapped accumulators are
+   * also disk-backed, this turns the entire normalisation pass into three sequential mapped-file
+   * streams (W read, V read, data write) instead of three random-access patterns competing for the
+   * page cache.
+   *
+   * <p>Caller invariants:
+   *
+   * <ul>
+   *   <li>{@code data == null} (i.e. the volume is disk-backed); a precondition is asserted.
+   *   <li>{@code values[k] == accumulatedValue / accumulatedWeight} for sampled voxels and may be
+   *       arbitrary for unsampled voxels.
+   *   <li>{@code weights[k]} is the accumulated weight, used solely as a sampled / not-sampled
+   *       discriminator against {@link SplatContext#WEIGHT_EPSILON}.
+   * </ul>
+   *
+   * @param startIdx starting linear voxel index of the slice (channel-aware, matches {@link
+   *     #linearIndex(int, int, int, int)})
+   * @param values per-voxel normalised float values (length ≥ {@code n})
+   * @param weights per-voxel accumulated weights, parallel to {@code values}
+   * @param n number of voxels to write
+   */
+  final void writeNormalizedSliceMappedBulk(long startIdx, float[] values, float[] weights, int n) {
+    if (mappedBuffer == null || data != null) {
+      throw new IllegalStateException("writeNormalizedSliceMappedBulk requires a mapped volume");
+    }
+    long byteStart = startIdx * byteDepth;
+    final float epsilon = SplatContext.WEIGHT_EPSILON;
+    switch (byteDepth) {
+      case 1 -> {
+        byte bg = minValue.byteValue();
+        byte[] scratch = new byte[n];
+        for (int k = 0; k < n; k++) {
+          scratch[k] = weights[k] < epsilon ? bg : (byte) Math.round(values[k]);
+        }
+        mappedBuffer.putBytes(byteStart, scratch, 0, n);
+      }
+      case 2 -> {
+        short bg = minValue.shortValue();
+        short[] scratch = new short[n];
+        for (int k = 0; k < n; k++) {
+          scratch[k] = weights[k] < epsilon ? bg : (short) Math.round(values[k]);
+        }
+        mappedBuffer.putShorts(byteStart, scratch, 0, n);
+      }
+      case 4 -> {
+        if (this instanceof VolumeInt) {
+          int bg = minValue.intValue();
+          int[] scratch = new int[n];
+          for (int k = 0; k < n; k++) {
+            scratch[k] = weights[k] < epsilon ? bg : Math.round(values[k]);
+          }
+          mappedBuffer.putInts(byteStart, scratch, 0, n);
+        } else {
+          float bg = minValue.floatValue();
+          float[] scratch = new float[n];
+          for (int k = 0; k < n; k++) {
+            scratch[k] = weights[k] < epsilon ? bg : values[k];
+          }
+          mappedBuffer.putFloats(byteStart, scratch, 0, n);
+        }
+      }
+      case 8 -> {
+        double bg = minValue.doubleValue();
+        double[] scratch = new double[n];
+        for (int k = 0; k < n; k++) {
+          scratch[k] = weights[k] < epsilon ? bg : values[k];
+        }
+        mappedBuffer.putDoubles(byteStart, scratch, 0, n);
+      }
+      default -> throw new IllegalStateException("Unsupported byteDepth: " + byteDepth);
     }
   }
 
@@ -872,6 +1205,9 @@ public abstract sealed class Volume<T extends Number, A>
   }
 
   protected void copyPixels(Dimension dim, IntBinaryOperator setPixel) {
+    if (dim.width <= 0 || dim.height <= 0) {
+      return;
+    }
     try (ForkJoinPool pool = ForkJoinPool.commonPool()) {
       pool.invoke(new CopyPixelsTask(0, dim.width * dim.height, dim.width, setPixel));
     }
@@ -1037,6 +1373,46 @@ public abstract sealed class Volume<T extends Number, A>
     GuiExecutor.execute(() -> pb.setValue(target));
   }
 
+  /**
+   * Builds a throttled progress listener for the normalisation phase. The {@code IntStream
+   * .parallel()} normalisation can fire ~10⁰² to 10⁰³ completion events from worker threads; if
+   * each one was forwarded to the EDT via {@link GuiExecutor#execute} the event queue would
+   * saturate (paint events behind every {@code setValue}) and add seconds to the perceived build
+   * time. We coalesce updates so only meaningful steps reach the EDT:
+   *
+   * <ul>
+   *   <li>at least 1% of {@code totalSlices} must have advanced since the last update, AND
+   *   <li>at most one update per ~30 ms (≈30 fps),
+   * </ul>
+   *
+   * with the final {@code totalSlices} value always delivered so the bar reaches its end.
+   */
+  private static java.util.function.IntConsumer throttledProgressListener(
+      JProgressBar pb, int baseValue, int totalSlices) {
+    final int step = Math.max(1, totalSlices / 100);
+    final java.util.concurrent.atomic.AtomicInteger lastReported =
+        new java.util.concurrent.atomic.AtomicInteger(0);
+    final java.util.concurrent.atomic.AtomicLong lastTimeNs =
+        new java.util.concurrent.atomic.AtomicLong(0);
+    final long minIntervalNs = 30_000_000L; // 30 ms
+    return done -> {
+      boolean isFinal = done >= totalSlices;
+      int prev = lastReported.get();
+      long now = System.nanoTime();
+      if (!isFinal
+          && (done - prev < step
+              || now - lastTimeNs.get() < minIntervalNs
+              || !lastReported.compareAndSet(prev, done))) {
+        return;
+      }
+      if (isFinal) {
+        lastReported.set(done);
+      }
+      lastTimeNs.set(now);
+      GuiExecutor.execute(() -> pb.setValue(baseValue + done));
+    };
+  }
+
   public static Volume<?, ?> createVolume(
       OriginalStack stack, JProgressBar progressBar, boolean isBasic) {
     if (stack == null || stack.getSourceStack().isEmpty()) {
@@ -1064,9 +1440,30 @@ public abstract sealed class Volume<T extends Number, A>
     return volume;
   }
 
+  /**
+   * Determines the OpenCV type for the volume by sampling the first, middle, and last images from
+   * the stack. The highest-precision (highest depth value) type found wins. This avoids the case
+   * where the middle image uses a low-depth modality LUT output (e.g. CV_16U) while other slices
+   * produce a higher-depth output (e.g. CV_32F for PET with float rescale slope).
+   */
   public static int getCvType(OriginalStack stack) {
-    PlanarImage middleImage = stack.getMiddleImage().getModalityLutImage(null, null);
-    return middleImage.type();
+    List<DicomImageElement> sourceStack = stack.getSourceStack();
+    int size = sourceStack.size();
+    // Sample first, middle and last to detect heterogeneous types (e.g. PET with float rescale)
+    int[] indices = {0, size / 2, size - 1};
+    int maxDepth = -1;
+    int resultType = CvType.CV_8U;
+    for (int idx : indices) {
+      PlanarImage img = sourceStack.get(idx).getModalityLutImage(null, null);
+      if (img != null) {
+        int depth = CvType.depth(img.type());
+        if (depth > maxDepth) {
+          maxDepth = depth;
+          resultType = img.type();
+        }
+      }
+    }
+    return resultType;
   }
 
   public boolean isSharedVolume() {
@@ -1141,6 +1538,79 @@ public abstract sealed class Volume<T extends Number, A>
 
   public Vector3d getVolumeAxisZ() {
     return new Vector3d(volumeAxisZ);
+  }
+
+  /**
+   * Maps a patient-space LPS point (mm) into this volume's <em>voxel</em> coordinate system, using
+   * the EXACT same convention as {@link #setValue(int, int, int, Object, SplatContext)} during
+   * volume construction. This is the only correct way for external code (e.g. {@link
+   * org.weasis.dicom.viewer2d.mpr.SegVolumeBuilder}) to overlay data on top of the image volume:
+   * relying on {@code (LPS - volumeOrigin) · volumeAxis / pixelRatio} would silently disagree with
+   * where the image pixels were actually written for non-axial rectified volumes (the construction
+   * code applies a per-plane Z-flip and uses a {@code translation} offset that differs from {@code
+   * volumeOrigin}).
+   *
+   * <p>For the basic ({@code isBasic == true}) path this method is unsupported because writes go
+   * through {@link #computeSliceToVolumeTransform()} which depends on the source slice index, not
+   * the LPS position; callers should rebuild the SEG in the SEG's own grid in that case.
+   *
+   * @param lps the patient-space LPS coordinate in mm
+   * @param dst the destination vector (may be the same instance as {@code lps}); receives the
+   *     fractional voxel index ({@code (vx, vy, vz)}). Out-of-volume points return values outside
+   *     {@code [0, size)}.
+   * @return {@code dst}
+   */
+  public Vector3d lpsToVoxel(Vector3d lps, Vector3d dst) {
+    if (isBasic || stack == null) {
+      // Basic volumes: writes use per-source-pixel coordinates rotated by
+      // computeSliceToVolumeTransform() and never see an LPS position. There is no closed-form
+      // LPS → voxel mapping that is consistent with what was written, so callers must pre-resample.
+      throw new UnsupportedOperationException("lpsToVoxel is only valid for rectified volumes");
+    }
+    // Replicate the writes from setValue():
+    //   In copyImageToVolume the per-slice transform's translation column is set to
+    //     slice_TLHC - origin   (where origin == volumeOrigin == rectified min corner).
+    //   So  p = LPS - volumeOrigin   after  transform.transform(pixel).
+    //   Then p /= pixelRatio
+    //   if (axial) p.z = -p.z; else p.z = size.z - p.z;
+    double vx = (lps.x - volumeOrigin.x) / pixelRatio.x;
+    double vy = (lps.y - volumeOrigin.y) / pixelRatio.y;
+    double vz = (lps.z - volumeOrigin.z) / pixelRatio.z;
+    if (stack.getPlane() == MprView.Plane.AXIAL) {
+      vz = -vz;
+    } else {
+      vz = size.z - vz;
+    }
+    dst.set(vx, vy, vz);
+    return dst;
+  }
+
+  /**
+   * Converts a (fractional) voxel coordinate {@code (vx, vy, vz)} in this volume's grid back to the
+   * corresponding patient-space (LPS) position in mm. This is the exact inverse of {@link
+   * #lpsToVoxel(Vector3d, Vector3d)} and shares its restriction: only rectified, non-basic volumes
+   * have a well-defined closed-form mapping.
+   *
+   * <p>Both Z branches of {@code lpsToVoxel} ({@code -vz} for axial and {@code size.z - vz} for
+   * sagittal/coronal) are involutions, so the same inverse formula applies regardless of the
+   * acquisition plane.
+   *
+   * @param vx voxel X coordinate (may be fractional)
+   * @param vy voxel Y coordinate (may be fractional)
+   * @param vz voxel Z coordinate (may be fractional)
+   * @param dst destination receiving the LPS position in mm
+   * @return {@code dst}
+   */
+  public Vector3d voxelToLps(double vx, double vy, double vz, Vector3d dst) {
+    if (isBasic || stack == null) {
+      throw new UnsupportedOperationException("voxelToLps is only valid for rectified volumes");
+    }
+    double internalZ = stack.getPlane() == MprView.Plane.AXIAL ? -vz : size.z - vz;
+    dst.set(
+        vx * pixelRatio.x + volumeOrigin.x,
+        vy * pixelRatio.y + volumeOrigin.y,
+        internalZ * pixelRatio.z + volumeOrigin.z);
+    return dst;
   }
 
   protected T getInterpolatedValueFromSource(double x, double y, double z, int channel) {

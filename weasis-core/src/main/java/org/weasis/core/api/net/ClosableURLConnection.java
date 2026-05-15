@@ -15,6 +15,7 @@ import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URLConnection;
 import java.util.Objects;
+import java.util.concurrent.Callable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.util.StringUtil;
@@ -25,7 +26,7 @@ public record ClosableURLConnection(URLConnection urlConnection) implements Http
   private static final Logger LOGGER = LoggerFactory.getLogger(ClosableURLConnection.class);
 
   public ClosableURLConnection {
-    Objects.requireNonNull(urlConnection, "URLConnection cannot be null");
+    Objects.requireNonNull(urlConnection, "urlConnection");
   }
 
   @Override
@@ -42,18 +43,16 @@ public record ClosableURLConnection(URLConnection urlConnection) implements Http
 
   @Override
   public int getResponseCode() {
-    if (urlConnection instanceof HttpURLConnection httpConnection) {
-      return getResponseCodeSafely(httpConnection);
-    }
-    return HttpURLConnection.HTTP_OK;
+    return urlConnection instanceof HttpURLConnection http
+        ? safeGet(http::getResponseCode, HttpURLConnection.HTTP_OK, "response code")
+        : HttpURLConnection.HTTP_OK;
   }
 
   @Override
   public String getResponseMessage() {
-    if (urlConnection instanceof HttpURLConnection httpConnection) {
-      return getResponseMessageSafely(httpConnection);
-    }
-    return StringUtil.EMPTY_STRING;
+    return urlConnection instanceof HttpURLConnection http
+        ? safeGet(http::getResponseMessage, StringUtil.EMPTY_STRING, "response message")
+        : StringUtil.EMPTY_STRING;
   }
 
   @Override
@@ -65,21 +64,12 @@ public record ClosableURLConnection(URLConnection urlConnection) implements Http
     return urlConnection.getOutputStream();
   }
 
-  private int getResponseCodeSafely(HttpURLConnection httpConnection) {
+  private static <T> T safeGet(Callable<T> supplier, T fallback, String what) {
     try {
-      return httpConnection.getResponseCode();
-    } catch (IOException e) {
-      LOGGER.warn("Failed to retrieve HTTP response code", e);
-      return HttpURLConnection.HTTP_OK;
-    }
-  }
-
-  private String getResponseMessageSafely(HttpURLConnection httpConnection) {
-    try {
-      return httpConnection.getResponseMessage();
-    } catch (IOException e) {
-      LOGGER.warn("Failed to retrieve HTTP response message", e);
-      return StringUtil.EMPTY_STRING;
+      return supplier.call();
+    } catch (Exception e) {
+      LOGGER.warn("Failed to retrieve HTTP {}", what, e);
+      return fallback;
     }
   }
 }

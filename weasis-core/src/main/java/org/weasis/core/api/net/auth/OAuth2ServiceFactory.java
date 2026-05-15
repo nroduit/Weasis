@@ -17,12 +17,16 @@ import com.github.scribejava.core.model.OAuth2AccessToken;
 import com.github.scribejava.core.oauth.OAuth20Service;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.weasis.core.Messages;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.net.SocketUtil;
 
 /** Factory for creating and caching OAuth2 services with predefined authentication methods. */
 public final class OAuth2ServiceFactory {
+
+  private static final Logger LOGGER = LoggerFactory.getLogger(OAuth2ServiceFactory.class);
 
   public static final String CALLBACK_URL = "http://127.0.0.1:";
   public static final String NO_AUTH_ID = "5aa85854-8f1f-11eb-b339-d3daace59a05"; // NOSONAR !secret
@@ -31,26 +35,25 @@ public final class OAuth2ServiceFactory {
 
   public static final DefaultAuthMethod GOOGLE_AUTH_TEMPLATE = createGoogleAuthTemplate();
   public static final DefaultAuthMethod KEYCLOAK_TEMPLATE = createKeycloakTemplate();
+
+  private static final String PORT_PREF_KEY = "weasis.auth.back.port"; // NON-NLS
   private static final Map<String, OAuth20Service> services = new ConcurrentHashMap<>();
 
-  private OAuth2ServiceFactory() {
-    // Utility class
-  }
+  private OAuth2ServiceFactory() {}
 
   public static OAuth20Service getService(AuthMethod authMethod) {
-    var port =
-        GuiUtils.getUICore().getSystemPreferences().getIntProperty("weasis.auth.back.port", 0);
+    int port = GuiUtils.getUICore().getSystemPreferences().getIntProperty(PORT_PREF_KEY, 0);
     return getService(authMethod, port);
   }
 
   public static OAuth20Service getService(AuthMethod authMethod, int port) {
-    return services.computeIfAbsent(
-        authMethod.getUid(), uid -> createOAuth20Service(authMethod, port));
+    String serviceKey = authMethod.getUid() + ":" + port; // NON-NLS
+    return services.computeIfAbsent(serviceKey, uid -> createOAuth20Service(authMethod, port));
   }
 
   public static AuthProvider buildKeycloakProvider(String name, String baseUrl, String realm) {
-    var normalizedUrl = baseUrl.endsWith("/") ? baseUrl : baseUrl + "/";
-    var realmUrl = normalizedUrl + "realms/" + realm.trim(); // NON-NLS
+    String normalizedUrl = baseUrl.endsWith("/") ? baseUrl : baseUrl + "/";
+    String realmUrl = normalizedUrl + "realms/" + realm.trim(); // NON-NLS
 
     return new AuthProvider(
         name,
@@ -101,11 +104,12 @@ public final class OAuth2ServiceFactory {
   private static OAuth20Service createOAuth20Service(AuthMethod authMethod, int port) {
     var registration = authMethod.getAuthRegistration();
     var provider = authMethod.getAuthProvider();
-
     if (registration == null || provider == null) {
+      LOGGER.debug(
+          "Cannot build OAuth service for '{}': missing registration/provider", authMethod);
       return null;
     }
-    var actualPort = port <= 0 ? SocketUtil.findAvailablePort() : port;
+    int actualPort = port <= 0 ? SocketUtil.findAvailablePort() : port;
 
     return new ServiceBuilder(registration.clientId())
         .apiSecret(registration.clientSecret())

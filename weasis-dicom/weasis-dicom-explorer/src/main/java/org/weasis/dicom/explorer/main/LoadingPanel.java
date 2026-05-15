@@ -14,6 +14,7 @@ import java.util.ArrayList;
 import javax.swing.BoxLayout;
 import javax.swing.JPanel;
 import org.weasis.core.api.gui.util.GuiExecutor;
+import org.weasis.core.api.util.FontItem;
 import org.weasis.dicom.explorer.exp.ExplorerTask;
 
 public class LoadingPanel extends JPanel {
@@ -25,6 +26,7 @@ public class LoadingPanel extends JPanel {
     this.setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
     this.setAlignmentX(LEFT_ALIGNMENT);
     this.setAlignmentY(TOP_ALIGNMENT);
+    globalDownloadTask.setFont(FontItem.MICRO_SEMIBOLD.getFont());
   }
 
   public void setGlobalMessage(String msg) {

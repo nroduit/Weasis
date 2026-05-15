@@ -21,7 +21,7 @@ import org.weasis.core.util.StreamUtil;
 public record HttpResponseStream(Response response) implements HttpStream {
 
   public HttpResponseStream {
-    Objects.requireNonNull(response, "Response cannot be null");
+    Objects.requireNonNull(response, "response");
   }
 
   public HttpResponseStream(HttpResponse<InputStream> httpResponse) {

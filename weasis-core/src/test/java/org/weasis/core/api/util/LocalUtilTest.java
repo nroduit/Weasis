@@ -12,6 +12,8 @@ package org.weasis.core.api.util;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertSame;
 
+import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
 import java.text.NumberFormat;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
@@ -91,9 +93,13 @@ class LocalUtilTest {
     Locale.setDefault(Locale.Category.FORMAT, locale);
 
     NumberFormat nf = NumberFormat.getInstance();
-    assertEquals("2’543’456.346", nf.format(number));
-    assertEquals("2’543’456.346", String.format("%,.3f", number));
-    assertEquals("2’543’456.346", "%,.3f".formatted(number));
+    DecimalFormatSymbols symbols = ((DecimalFormat) nf).getDecimalFormatSymbols();
+    String grpSep = String.valueOf(symbols.getGroupingSeparator());
+    String decSep = String.valueOf(symbols.getDecimalSeparator());
+    String expected = "2" + grpSep + "543" + grpSep + "456" + decSep + "346";
+    assertEquals(expected, nf.format(number));
+    assertEquals(expected, String.format("%,.3f", number));
+    assertEquals(expected, "%,.3f".formatted(number));
     assertEquals(
         "Donnerstag, 25. November 2021, 15:39:59 Mittlere Greenwich-Zeit",
         DateTimeFormatter.ofLocalizedDateTime(FormatStyle.FULL)
@@ -102,9 +108,13 @@ class LocalUtilTest {
     locale = Locale.of("fr", "CH"); // NON-NLS
     Locale.setDefault(Locale.Category.FORMAT, locale);
     nf = NumberFormat.getInstance();
-    assertEquals("2 543 456,346", nf.format(number));
-    assertEquals("2 543 456,346", String.format("%,.3f", number));
-    assertEquals("2 543 456,346", "%,.3f".formatted(number));
+    symbols = ((DecimalFormat) nf).getDecimalFormatSymbols();
+    grpSep = String.valueOf(symbols.getGroupingSeparator());
+    decSep = String.valueOf(symbols.getDecimalSeparator());
+    expected = "2" + grpSep + "543" + grpSep + "456" + decSep + "346";
+    assertEquals(expected, nf.format(number));
+    assertEquals(expected, String.format("%,.3f", number));
+    assertEquals(expected, "%,.3f".formatted(number));
     assertEquals(
         "jeudi, 25 novembre 2021, 15.39:59 h heure moyenne de Greenwich",
         DateTimeFormatter.ofLocalizedDateTime(FormatStyle.FULL)

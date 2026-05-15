@@ -20,6 +20,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.UncheckedIOException;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -34,13 +35,23 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+import java.util.stream.Collectors;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.weasis.core.api.net.HttpUtils;
 import org.weasis.core.util.StringUtil;
 
 /** HTTP client implementation using Java's {@link HttpClient} for ScribeJava OAuth integration. */
 public class JavaNetHttpClient implements com.github.scribejava.core.httpclient.HttpClient {
 
-  // Hold a reference to the shared client to avoid recreation
+  private static final Logger LOGGER = LoggerFactory.getLogger(JavaNetHttpClient.class);
+
+  private static final String CRLF = "\r\n";
+  private static final String BOUNDARY_PREFIX = "--";
+  private static final String HEADER_USER_AGENT = "User-Agent";
+  private static final String HEADER_CONTENT_TYPE = "Content-Type";
+  private static final String MULTIPART_CT_PREFIX = "multipart/form-data; boundary=";
+
   private final HttpClient sharedClient;
   private final Duration readTimeout;
 
@@ -71,7 +82,6 @@ public class JavaNetHttpClient implements com.github.scribejava.core.httpclient.
       byte[] bodyContents,
       OAuthAsyncRequestCallback<T> callback,
       OAuthRequest.ResponseConverter<T> converter) {
-
     return doExecuteAsync(
         userAgent, headers, httpVerb, completeUrl, bodyContents, callback, converter);
   }
@@ -85,7 +95,6 @@ public class JavaNetHttpClient implements com.github.scribejava.core.httpclient.
       MultipartPayload bodyContents,
       OAuthAsyncRequestCallback<T> callback,
       OAuthRequest.ResponseConverter<T> converter) {
-
     return doExecuteAsync(
         userAgent, headers, httpVerb, completeUrl, bodyContents, callback, converter);
   }
@@ -99,7 +108,6 @@ public class JavaNetHttpClient implements com.github.scribejava.core.httpclient.
       String bodyContents,
       OAuthAsyncRequestCallback<T> callback,
       OAuthRequest.ResponseConverter<T> converter) {
-
     return doExecuteAsync(
         userAgent, headers, httpVerb, completeUrl, bodyContents, callback, converter);
   }
@@ -170,11 +178,12 @@ public class JavaNetHttpClient implements com.github.scribejava.core.httpclient.
       OAuthAsyncRequestCallback<T> callback,
       OAuthRequest.ResponseConverter<T> converter) {
 
-    var requestBuilder =
-        createRequestBuilder(userAgent, headers, httpVerb, completeUrl, bodyContents, readTimeout);
+    var request =
+        createRequestBuilder(userAgent, headers, httpVerb, completeUrl, bodyContents, readTimeout)
+            .build();
 
     return sharedClient
-        .sendAsync(requestBuilder.build(), HttpResponse.BodyHandlers.ofInputStream())
+        .sendAsync(request, HttpResponse.BodyHandlers.ofInputStream())
         .thenApply(httpResponse -> processAsyncResponse(httpResponse, callback, converter))
         .exceptionally(
             throwable -> {
@@ -193,17 +202,12 @@ public class JavaNetHttpClient implements com.github.scribejava.core.httpclient.
       Object bodyContents)
       throws IOException {
 
-    var requestBuilder =
-        createRequestBuilder(userAgent, headers, httpVerb, completeUrl, bodyContents, readTimeout);
+    var request =
+        createRequestBuilder(userAgent, headers, httpVerb, completeUrl, bodyContents, readTimeout)
+            .build();
 
     try {
-      var httpResponse =
-          sharedClient.send(requestBuilder.build(), HttpResponse.BodyHandlers.ofInputStream());
-      return new Response(
-          httpResponse.statusCode(),
-          httpResponse.version().toString(),
-          parseHeaders(httpResponse),
-          httpResponse.body());
+      return toResponse(sharedClient.send(request, HttpResponse.BodyHandlers.ofInputStream()));
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
       throw new IOException("Request interrupted", e);
@@ -212,26 +216,27 @@ public class JavaNetHttpClient implements com.github.scribejava.core.httpclient.
     }
   }
 
+  private static Response toResponse(HttpResponse<InputStream> httpResponse) {
+    return new Response(
+        httpResponse.statusCode(),
+        httpResponse.version().toString(),
+        parseHeaders(httpResponse),
+        httpResponse.body());
+  }
+
   private <T> T processAsyncResponse(
       HttpResponse<InputStream> httpResponse,
       OAuthAsyncRequestCallback<T> callback,
       OAuthRequest.ResponseConverter<T> converter) {
     try {
-      var response =
-          new Response(
-              httpResponse.statusCode(),
-              httpResponse.version().toString(),
-              parseHeaders(httpResponse),
-              httpResponse.body());
-
       @SuppressWarnings("unchecked")
-      T result = converter == null ? (T) httpResponse : converter.convert(response);
-
+      T result = converter == null ? (T) httpResponse : converter.convert(toResponse(httpResponse));
       if (callback != null) {
         callback.onCompleted(result);
       }
       return result;
     } catch (IOException e) {
+      LOGGER.warn("Failed to process async HTTP response", e);
       if (callback != null) {
         callback.onThrowable(e);
       }
@@ -247,14 +252,12 @@ public class JavaNetHttpClient implements com.github.scribejava.core.httpclient.
       Object bodyContents,
       Duration readTimeout) {
     var requestBuilder = HttpRequest.newBuilder(URI.create(completeUrl)).timeout(readTimeout);
-
     if (StringUtil.hasText(userAgent)) {
-      requestBuilder.setHeader("User-Agent", userAgent);
+      requestBuilder.setHeader(HEADER_USER_AGENT, userAgent);
     }
     if (headers != null) {
       headers.forEach(requestBuilder::setHeader);
     }
-
     setBody(requestBuilder, bodyContents, httpVerb);
     return requestBuilder;
   }
@@ -262,9 +265,9 @@ public class JavaNetHttpClient implements com.github.scribejava.core.httpclient.
   public static Map<String, String> parseHeaders(HttpResponse<?> response) {
     return response.headers().map().entrySet().stream()
         .collect(
-            java.util.stream.Collectors.toMap(
+            Collectors.toMap(
                 Map.Entry::getKey,
-                entry -> String.join(", ", entry.getValue()),
+                e -> String.join(", ", e.getValue()),
                 (existing, replacement) -> existing));
   }
 
@@ -288,120 +291,91 @@ public class JavaNetHttpClient implements com.github.scribejava.core.httpclient.
           requestBuilder.method(
               httpVerb.name(),
               HttpRequest.BodyPublishers.ofByteArray(str.getBytes(StandardCharsets.UTF_8)));
-      case Path path -> {
-        try {
-          requestBuilder.method(httpVerb.name(), HttpRequest.BodyPublishers.ofFile(path));
-        } catch (Exception e) {
-          throw new RuntimeException("Failed to read file: " + path, e);
-        }
-      }
-      case MultipartPayload multi -> addMultipartBody(requestBuilder, multi, httpVerb);
+      case Path path ->
+          requestBuilder.method(httpVerb.name(), MultipartEncoder.filePublisher(path));
+      case MultipartPayload multi -> MultipartEncoder.applyTo(requestBuilder, multi, httpVerb);
       default ->
           throw new IllegalArgumentException("Unsupported body type: " + bodyContents.getClass());
     }
   }
 
-  private static void addMultipartBody(
-      HttpRequest.Builder requestBuilder, MultipartPayload multipartPayload, Verb httpVerb) {
-    var bodySuppliers = new ArrayList<BodySupplier<InputStream>>();
-    prepareMultipartPayload(bodySuppliers, multipartPayload);
+  /** Encodes a {@link MultipartPayload} into a single byte-array body. */
+  private static final class MultipartEncoder {
 
-    try {
-      var multipartData = combineBodySuppliers(bodySuppliers);
-      var boundary = multipartPayload.getBoundary();
-      requestBuilder.setHeader("Content-Type", "multipart/form-data; boundary=" + boundary);
-      requestBuilder.method(httpVerb.name(), HttpRequest.BodyPublishers.ofByteArray(multipartData));
-    } catch (IOException e) {
-      throw new RuntimeException("Failed to prepare multipart payload", e);
-    }
-  }
+    private MultipartEncoder() {}
 
-  private static byte[] combineBodySuppliers(List<BodySupplier<InputStream>> bodySuppliers)
-      throws IOException {
-    var outputStream = new ByteArrayOutputStream();
-    for (var supplier : bodySuppliers) {
-      try (var inputStream = supplier.get()) {
-        inputStream.transferTo(outputStream);
+    static HttpRequest.BodyPublisher filePublisher(Path path) {
+      try {
+        return HttpRequest.BodyPublishers.ofFile(path);
+      } catch (IOException e) {
+        throw new UncheckedIOException("Failed to read file: " + path, e);
       }
     }
 
-    return outputStream.toByteArray();
-  }
-
-  private static void prepareMultipartPayload(
-      List<BodySupplier<InputStream>> bodySuppliers, MultipartPayload multipartPayload) {
-
-    addPreambleIfPresent(bodySuppliers, multipartPayload.getPreamble());
-
-    var bodyParts = multipartPayload.getBodyParts();
-    if (!bodyParts.isEmpty()) {
-      processBodyParts(bodySuppliers, bodyParts, multipartPayload.getBoundary());
-      addEpilogueIfPresent(bodySuppliers, multipartPayload.getEpilogue());
-    } else {
-      bodySuppliers.add(BodySupplier.empty());
-    }
-  }
-
-  private static void addPreambleIfPresent(
-      List<BodySupplier<InputStream>> bodySuppliers, String preamble) {
-    if (preamble != null) {
-      bodySuppliers.add(BodySupplier.ofString(preamble + "\r\n"));
-    }
-  }
-
-  private static void processBodyParts(
-      List<BodySupplier<InputStream>> bodySuppliers,
-      List<BodyPartPayload> bodyParts,
-      String boundary) {
-
-    for (var bodyPart : bodyParts) {
-      addBoundaryAndHeaders(bodySuppliers, bodyPart, boundary);
-      addBodyPartContent(bodySuppliers, bodyPart);
+    static void applyTo(HttpRequest.Builder requestBuilder, MultipartPayload payload, Verb verb) {
+      var parts = new ArrayList<BodySupplier<InputStream>>();
+      collectParts(parts, payload);
+      try {
+        byte[] body = serialize(parts);
+        requestBuilder.setHeader(HEADER_CONTENT_TYPE, MULTIPART_CT_PREFIX + payload.getBoundary());
+        requestBuilder.method(verb.name(), HttpRequest.BodyPublishers.ofByteArray(body));
+      } catch (IOException e) {
+        throw new UncheckedIOException("Failed to prepare multipart payload", e);
+      }
     }
 
-    addClosingBoundary(bodySuppliers, boundary);
-  }
-
-  private static void addBoundaryAndHeaders(
-      List<BodySupplier<InputStream>> bodySuppliers, BodyPartPayload bodyPart, String boundary) {
-
-    var buf = new StringBuilder().append("--").append(boundary).append("\r\n");
-
-    var headers = bodyPart.getHeaders();
-    if (headers != null) {
-      headers.forEach((key, value) -> buf.append(key).append(": ").append(value).append("\r\n"));
+    private static byte[] serialize(List<BodySupplier<InputStream>> parts) throws IOException {
+      var out = new ByteArrayOutputStream();
+      for (var supplier : parts) {
+        try (var in = supplier.get()) {
+          in.transferTo(out);
+        }
+      }
+      return out.toByteArray();
     }
 
-    buf.append("\r\n");
-    bodySuppliers.add(BodySupplier.ofString(buf.toString()));
-  }
-
-  private static void addBodyPartContent(
-      List<BodySupplier<InputStream>> bodySuppliers, BodyPartPayload bodyPart) {
-
-    switch (bodyPart) {
-      case MultipartPayload multi -> prepareMultipartPayload(bodySuppliers, multi);
-      case ByteArrayBodyPartPayload byteArrayPart ->
-          bodySuppliers.add(
-              BodySupplier.ofBytes(
-                  byteArrayPart.getPayload(), byteArrayPart.getOff(), byteArrayPart.getLen()));
-      case FileBodyPartPayload filePart -> bodySuppliers.add(filePart.getPayload());
-      default ->
-          throw new IllegalArgumentException("Unsupported body part type: " + bodyPart.getClass());
+    private static void collectParts(
+        List<BodySupplier<InputStream>> parts, MultipartPayload payload) {
+      if (payload.getPreamble() != null) {
+        parts.add(BodySupplier.ofString(payload.getPreamble() + CRLF));
+      }
+      var bodyParts = payload.getBodyParts();
+      if (bodyParts.isEmpty()) {
+        parts.add(BodySupplier.empty());
+        return;
+      }
+      String boundary = payload.getBoundary();
+      for (var bodyPart : bodyParts) {
+        parts.add(BodySupplier.ofString(renderBoundaryAndHeaders(bodyPart, boundary)));
+        appendContent(parts, bodyPart);
+        parts.add(BodySupplier.ofString(CRLF));
+      }
+      parts.add(BodySupplier.ofString(BOUNDARY_PREFIX + boundary + BOUNDARY_PREFIX));
+      if (payload.getEpilogue() != null) {
+        parts.add(BodySupplier.ofString(CRLF + payload.getEpilogue()));
+      }
     }
 
-    bodySuppliers.add(BodySupplier.ofString("\r\n"));
-  }
+    private static String renderBoundaryAndHeaders(BodyPartPayload bodyPart, String boundary) {
+      var buf = new StringBuilder().append(BOUNDARY_PREFIX).append(boundary).append(CRLF);
+      var headers = bodyPart.getHeaders();
+      if (headers != null) {
+        headers.forEach((k, v) -> buf.append(k).append(": ").append(v).append(CRLF));
+      }
+      return buf.append(CRLF).toString();
+    }
 
-  private static void addClosingBoundary(
-      List<BodySupplier<InputStream>> bodySuppliers, String boundary) {
-    bodySuppliers.add(BodySupplier.ofString("--" + boundary + "--"));
-  }
-
-  private static void addEpilogueIfPresent(
-      List<BodySupplier<InputStream>> bodySuppliers, String epilogue) {
-    if (epilogue != null) {
-      bodySuppliers.add(BodySupplier.ofString("\r\n" + epilogue));
+    private static void appendContent(
+        List<BodySupplier<InputStream>> parts, BodyPartPayload bodyPart) {
+      switch (bodyPart) {
+        case MultipartPayload multi -> collectParts(parts, multi);
+        case ByteArrayBodyPartPayload b ->
+            parts.add(BodySupplier.ofBytes(b.getPayload(), b.getOff(), b.getLen()));
+        case FileBodyPartPayload f -> parts.add(f.getPayload());
+        default ->
+            throw new IllegalArgumentException(
+                "Unsupported body part type: " + bodyPart.getClass());
+      }
     }
   }
 }

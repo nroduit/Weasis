@@ -41,6 +41,7 @@ import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.net.ClosableURLConnection;
 import org.weasis.core.api.net.NetworkUtil;
+import org.weasis.core.api.net.URIUtils;
 import org.weasis.core.api.net.URLParameters;
 import org.weasis.core.util.FileUtil;
 import org.weasis.core.util.StringUtil;
@@ -88,7 +89,7 @@ public class DicomZipMediaIO implements MediaReader<MediaElement> {
 
   @Override
   public boolean delegate(DataExplorerModel explorerModel) {
-    File zipFile = new File(uri);
+    File zipFile = URIUtils.toFile(uri);
     if (zipFile.canRead() && explorerModel instanceof DicomModel dicomModel) {
       loadDicomZip(
           zipFile,
@@ -243,7 +244,7 @@ public class DicomZipMediaIO implements MediaReader<MediaElement> {
       try {
         URI u = new URI(uri);
         if ("file".equals(u.getScheme())) { // NON-NLS
-          zipFile = new File(u.getPath());
+          zipFile = URIUtils.toFile(u);
         } else {
           zipFile =
               Files.createTempFile(AppProperties.APP_TEMP_DIR, "dicom_", ".zip")

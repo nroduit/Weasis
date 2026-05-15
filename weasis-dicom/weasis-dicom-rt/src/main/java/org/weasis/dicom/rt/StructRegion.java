@@ -10,9 +10,9 @@
 package org.weasis.dicom.rt;
 
 import java.awt.Color;
-import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import org.weasis.core.ui.model.graphic.imp.seg.SegRegion;
@@ -37,7 +37,7 @@ public class StructRegion extends SegRegion<DicomImageElement> {
   }
 
   public int getObservationNumber() {
-    return this.observationNumber;
+    return observationNumber;
   }
 
   public void setObservationNumber(int observationNumber) {
@@ -45,7 +45,7 @@ public class StructRegion extends SegRegion<DicomImageElement> {
   }
 
   public String getRtRoiInterpretedType() {
-    return this.rtRoiInterpretedType;
+    return rtRoiInterpretedType;
   }
 
   public void setRtRoiInterpretedType(String value) {
@@ -54,7 +54,7 @@ public class StructRegion extends SegRegion<DicomImageElement> {
   }
 
   public String getRoiObservationLabel() {
-    return this.roiObservationLabel;
+    return roiObservationLabel;
   }
 
   public void setRoiObservationLabel(String roiObservationLabel) {
@@ -62,7 +62,7 @@ public class StructRegion extends SegRegion<DicomImageElement> {
   }
 
   public double getThickness() {
-    return this.thickness;
+    return thickness;
   }
 
   public void setThickness(double value) {
@@ -70,7 +70,7 @@ public class StructRegion extends SegRegion<DicomImageElement> {
   }
 
   public Map<KeyDouble, List<StructContour>> getPlanes() {
-    return this.planes;
+    return planes;
   }
 
   public void setPlanes(Map<KeyDouble, List<StructContour>> contours) {
@@ -78,7 +78,7 @@ public class StructRegion extends SegRegion<DicomImageElement> {
   }
 
   public Dvh getDvh() {
-    return this.dvh;
+    return dvh;
   }
 
   public void setDvh(Dvh dvh) {
@@ -86,17 +86,15 @@ public class StructRegion extends SegRegion<DicomImageElement> {
   }
 
   public DataSource getVolumeSource() {
-    return this.volumeSource;
+    return volumeSource;
   }
 
   public double getVolume() {
-    // If volume was not initialised from DVH (e.g. DVH does not exist) recalculate it
-    if (this.volume < 0) {
-      this.volume = this.calculateVolume();
-      this.volumeSource = DataSource.CALCULATED;
+    if (volume < 0) {
+      volume = calculateVolume();
+      volumeSource = DataSource.CALCULATED;
     }
-
-    return this.volume;
+    return volume;
   }
 
   public void setVolume(double value) {
@@ -104,102 +102,63 @@ public class StructRegion extends SegRegion<DicomImageElement> {
     this.volumeSource = DataSource.PROVIDED;
   }
 
-  public AbstractMap.SimpleImmutableEntry<Integer, Double> calculateLargestContour(
-      List<StructContour> planeContours) {
+  /** Returns the index and area of the largest contour in the given plane. */
+  public LargestContour calculateLargestContour(List<StructContour> planeContours) {
     double maxContourArea = 0.0;
     int maxContourIndex = 0;
-
-    // Calculate the area for each contour of this structure in provided plane
     for (int i = 0; i < planeContours.size(); i++) {
-      StructContour polygon = planeContours.get(i);
-
-      // Find the largest polygon of contour
-      if (polygon.getArea() > maxContourArea) {
-        maxContourArea = polygon.getArea();
+      double area = planeContours.get(i).getArea();
+      if (area > maxContourArea) {
+        maxContourArea = area;
         maxContourIndex = i;
       }
     }
-
-    return new AbstractMap.SimpleImmutableEntry<>(maxContourIndex, maxContourArea);
+    return new LargestContour(maxContourIndex, maxContourArea);
   }
 
   public String getSortLabel() {
-    if (StringUtil.hasText(rtRoiInterpretedType)) {
-      return rtRoiInterpretedType + getLabel();
-    }
-    return this.getLabel();
+    return StringUtil.hasText(rtRoiInterpretedType)
+        ? rtRoiInterpretedType + getLabel()
+        : getLabel();
   }
 
   public static List<List<StructRegion>> sort(Collection<List<StructRegion>> regions) {
     List<List<StructRegion>> sortedRegions = new ArrayList<>(regions);
     sortedRegions.sort(
-        (List<StructRegion> a, List<StructRegion> b) -> {
-          if (a.isEmpty() && b.isEmpty()) {
-            return 0;
-          }
-          if (a.isEmpty()) {
-            return 1;
-          }
-          if (b.isEmpty()) {
-            return -1;
-          }
-          return a.getFirst().compareTo(b.getFirst());
-        });
+        Comparator.comparing(
+            (List<StructRegion> list) -> list.isEmpty() ? null : list.getFirst(),
+            Comparator.nullsLast(Comparator.naturalOrder())));
     return sortedRegions;
   }
 
   private double calculateVolume() {
+    if (planes == null || planes.isEmpty()) {
+      return 0.0;
+    }
     double structureVolume = 0.0;
-
-    // Iterate over structure planes (z)
     int n = 0;
-    for (List<StructContour> structurePlaneContours : this.planes.values()) {
-
-      // Calculate the area for each contour in the current plane
-      AbstractMap.SimpleImmutableEntry<Integer, Double> maxContour =
-          this.calculateLargestContour(structurePlaneContours);
-      int maxContourIndex = maxContour.getKey();
-      double maxContourArea = maxContour.getValue();
-
-      for (int i = 0; i < structurePlaneContours.size(); i++) {
-        StructContour polygon = structurePlaneContours.get(i);
-
-        // Find the largest polygon of contour
-        if (polygon.getArea() > maxContourArea) {
-          maxContourArea = polygon.getArea();
-          maxContourIndex = i;
-        }
-      }
-
-      // Sum the area of contours in the current plane
-      StructContour largestPolygon = structurePlaneContours.get(maxContourIndex);
-      double area = largestPolygon.getArea();
-      for (int i = 0; i < structurePlaneContours.size(); i++) {
-        StructContour polygon = structurePlaneContours.get(i);
-        if (i != maxContourIndex) {
-          area += polygon.getArea();
-        }
-      }
-
-      // For first and last plane calculate with half of thickness
-      if ((n == 0) || (n == this.planes.size() - 1)) {
-        structureVolume += area * this.thickness * 0.5;
-      } else {
-        // For rest use the full slice thickness
-        structureVolume += area * this.thickness;
-      }
-
+    int last = planes.size() - 1;
+    for (List<StructContour> planeContours : planes.values()) {
+      double weight = (n == 0 || n == last) ? 0.5 : 1.0;
+      structureVolume += planeArea(planeContours) * thickness * weight;
       n++;
     }
-
     // DICOM uses millimeters -> convert from mm^3 to cm^3
     return structureVolume / 1000;
   }
 
+  private static double planeArea(List<StructContour> planeContours) {
+    double area = 0.0;
+    for (StructContour c : planeContours) {
+      area += c.getArea();
+    }
+    return area;
+  }
+
   @Override
   public int compareTo(RegionAttributes o) {
-    if (o instanceof StructRegion) {
-      return StringUtil.collator.compare(getSortLabel(), ((StructRegion) o).getSortLabel());
+    if (o instanceof StructRegion other) {
+      return StringUtil.collator.compare(getSortLabel(), other.getSortLabel());
     }
     return super.compareTo(o);
   }

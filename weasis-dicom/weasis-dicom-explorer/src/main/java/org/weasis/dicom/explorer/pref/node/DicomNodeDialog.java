@@ -125,10 +125,22 @@ public class DicomNodeDialog extends JDialog {
     okButton.addActionListener(e -> okButtonActionPerformed());
     JButton cancelButton = new JButton(Messages.getString("PrinterDialog.cancel"));
     cancelButton.addActionListener(e -> dispose());
+    JButton helpButton =
+        GuiUtils.createHelpButton(
+            typeNode == AbstractDicomNode.Type.PRINTER
+                ? "print/#dicom-print" // NON-NLS
+                : "dicom-import/#dicom-queryretrieve"); // NON-NLS
 
     panel.add(
         GuiUtils.getFlowLayoutPanel(
-            FlowLayout.TRAILING, 0, 5, okButton, GuiUtils.boxHorizontalStrut(20), cancelButton),
+            FlowLayout.TRAILING,
+            0,
+            5,
+            helpButton,
+            GuiUtils.boxHorizontalStrut(20),
+            okButton,
+            GuiUtils.boxHorizontalStrut(20),
+            cancelButton),
         "newline, spanx, gaptop 10lp"); // NON-NLS
     setContentPane(panel);
   }

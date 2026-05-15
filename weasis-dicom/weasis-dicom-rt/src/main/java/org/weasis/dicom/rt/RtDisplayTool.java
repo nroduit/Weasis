@@ -18,8 +18,28 @@ import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
-import java.util.*;
-import javax.swing.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
+import javax.swing.BorderFactory;
+import javax.swing.BoxLayout;
+import javax.swing.JButton;
+import javax.swing.JComboBox;
+import javax.swing.JDialog;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTabbedPane;
+import javax.swing.SwingWorker;
 import javax.swing.SwingWorker.StateValue;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
@@ -58,7 +78,12 @@ import org.weasis.core.ui.util.StructToolTipTreeNode;
 import org.weasis.core.ui.util.TreeBuilder;
 import org.weasis.core.util.SoftHashMap;
 import org.weasis.core.util.StringUtil;
-import org.weasis.dicom.codec.*;
+import org.weasis.dicom.codec.DicomImageElement;
+import org.weasis.dicom.codec.DicomSeries;
+import org.weasis.dicom.codec.HiddenSeriesManager;
+import org.weasis.dicom.codec.SpecialElementRegion;
+import org.weasis.dicom.codec.TagD;
+import org.weasis.dicom.codec.seg.LazyContourLoader;
 import org.weasis.dicom.viewer2d.EventManager;
 import org.weasis.dicom.viewer2d.View2d;
 import org.weasis.opencv.data.PlanarImage;
@@ -72,20 +97,31 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener, S
 
   public static final String BUTTON_NAME = Messages.getString("rt.tool");
 
+  /**
+   * System property (configurable in {@code base.json}) enabling the experimental DVH recalculation
+   * feature. The DVH calculation algorithm (derived from dicompyler) has not been clinically
+   * validated; it is therefore disabled by default.
+   */
+  public static final String P_DVH_RECALCULATE = "weasis.rt.dvh.recalculate.enable";
+
   private static final String GRAPHIC_OPACITY = Messages.getString("graphic.opacity");
   private static final SoftHashMap<String, RtSet> RT_SET_CACHE = new SoftHashMap<>();
 
-  // UI Components
+  private static final String ROOT_KEY = "ROOT"; // NON-NLS
+  private static final String GROUP_PREFIX = "GROUP_"; // NON-NLS
+  private static final String REGION_PREFIX = "REGION_"; // NON-NLS
+
+  private final boolean dvhRecalculateEnabled =
+      GuiUtils.getUICore().getSystemPreferences().getBooleanProperty(P_DVH_RECALCULATE, false);
+
   private final JScrollPane rootPane = new JScrollPane();
   private final JTabbedPane tabbedPane = new JTabbedPane();
   private final JButton btnLoad = new JButton(Messages.getString("load.rt"));
-  private final JCheckBox cbDvhRecalculate = new JCheckBox(Messages.getString("dvh.recalculate"));
   private final JComboBox<StructureSet> comboRtStructureSet = new JComboBox<>();
   private final JComboBox<Plan> comboRtPlan = new JComboBox<>();
   private final JSliderW slider;
   private final SpinnerProgress progressBar = new SpinnerProgress();
 
-  // Tree components
   private final StructRegionTree treeStructures;
   private final SegRegionTree treeIsodoses;
   private final DefaultMutableTreeNode rootNodeStructures =
@@ -95,17 +131,34 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener, S
   private final GroupTreeNode nodeStructures;
   private final GroupTreeNode nodeIsodoses;
 
-  // Labels
-  private final JTextField txtRtPlanDoseValue = new JTextField();
+  /** Map a tree to its root group node. */
+  private final Map<SegRegionTree, GroupTreeNode> rootGroupOf = new HashMap<>(2);
 
-  // State
+  private final JLabel txtRtPlanDoseValue = new JLabel();
+
   private RtSet rtSet;
   private boolean initPathSelection;
 
-  // Store selection state for all GroupTreeNode items
   private final Map<String, Map<String, Boolean>> structureSetSelections = new HashMap<>();
+  private final Map<String, Map<String, Boolean>> planSelections = new HashMap<>();
 
-  // Listeners
+  /**
+   * Tracks the keys that the user has explicitly toggled, per structure/plan SOPInstanceUID. Only
+   * these keys are persisted in {@link #structureSetSelections} / {@link #planSelections};
+   * everything else falls back to defaults on restore.
+   */
+  private final Map<String, Set<String>> userToggledKeys = new HashMap<>();
+
+  /**
+   * Remembers, per {@link RtSet}, the SOPInstanceUID of the last structure/plan the user explicitly
+   * selected in the combo. Used by {@link #selectDefaultItems} to restore that choice when the user
+   * navigates back to a previously visited RT exam, so the saved tree state is applied to the right
+   * element.
+   */
+  private final Map<RtSet, String> lastStructureUidByRtSet = new HashMap<>();
+
+  private final Map<RtSet, String> lastPlanUidByRtSet = new HashMap<>();
+
   private final transient ItemListener structureChangeListener;
   private final transient ItemListener planChangeListener;
 
@@ -120,6 +173,8 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener, S
     this.treeIsodoses = new SegRegionTree(this);
     this.nodeStructures = new GroupTreeNode(Messages.getString("structures"), true);
     this.nodeIsodoses = new GroupTreeNode(Messages.getString("isodoses"), true);
+    this.rootGroupOf.put(treeStructures, nodeStructures);
+    this.rootGroupOf.put(treeIsodoses, nodeIsodoses);
 
     // Initialize listeners after trees are created
     this.structureChangeListener =
@@ -130,19 +185,24 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener, S
                 treeStructures, getSopInstanceUid(oldStructure), structureSetSelections);
           } else if (e.getStateChange() == ItemEvent.SELECTED
               && e.getItem() instanceof StructureSet newStructure) {
+            rememberLastSelection(lastStructureUidByRtSet, newStructure);
             updateTree(newStructure, null);
           }
         };
     this.planChangeListener =
         e -> {
-          if (e.getStateChange() == ItemEvent.SELECTED && e.getItem() instanceof Plan newPlan) {
+          if (e.getStateChange() == ItemEvent.DESELECTED && e.getItem() instanceof Plan oldPlan) {
+            saveTreeSelection(treeIsodoses, getSopInstanceUid(oldPlan), planSelections);
+          } else if (e.getStateChange() == ItemEvent.SELECTED
+              && e.getItem() instanceof Plan newPlan) {
+            rememberLastSelection(lastPlanUidByRtSet, newPlan);
             updateTree(null, newPlan);
           }
         };
 
     // Initialize slider
     this.slider = PropertiesDialog.createOpacitySlider(GRAPHIC_OPACITY);
-    slider.setValue(80);
+    slider.setValue(100);
     slider.addChangeListener(l -> updateSlider());
 
     initializeUI();
@@ -204,8 +264,6 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener, S
 
     // DVH panel
     JPanel dvhPanel = createFlowPanel(FlowLayout.LEFT);
-    cbDvhRecalculate.setToolTipText(Messages.getString("when.enabled.recalculate"));
-    dvhPanel.add(cbDvhRecalculate);
     JButton btnShowDvh = new JButton(Messages.getString("display.dvh.chart"));
     btnShowDvh.addActionListener(e -> showDvhChart());
     dvhPanel.add(btnShowDvh);
@@ -215,8 +273,7 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener, S
   }
 
   private JPanel createFlowPanel(int alignment) {
-    JPanel panel = new JPanel(new FlowLayout(alignment));
-    return panel;
+    return new JPanel(new FlowLayout(alignment));
   }
 
   private void initializeListeners() {
@@ -240,7 +297,7 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener, S
     tree.setVisible(false);
     tree.setToolTipText(StringUtil.EMPTY_STRING);
     tree.setCellRenderer(TreeBuilder.buildNoIconCheckboxTreeCellRenderer());
-    tree.addTreeCheckingListener(this::treeValueChanged);
+    tree.addTreeCheckingListener(e -> handleTreeChecking(tree, e));
 
     DefaultTreeModel model = new DefaultTreeModel(rootNode, false);
     tree.setModel(model);
@@ -281,35 +338,54 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener, S
       SegRegionTree tree, String key, Map<String, Map<String, Boolean>> selectionMap) {
     if (key == null || tree == null) return;
 
+    Set<String> toggled = userToggledKeys.get(key);
+    if (toggled == null || toggled.isEmpty()) {
+      // No user interaction: drop any previous save so the default state applies on next load.
+      selectionMap.remove(key);
+      return;
+    }
+
     Map<String, Boolean> nodeSelections = new HashMap<>();
+    GroupTreeNode rootNode = rootGroupOf.get(tree);
+    TreeCheckingModel checking = tree.getCheckingModel();
+    if (toggled.contains(ROOT_KEY)) {
+      nodeSelections.put(ROOT_KEY, checking.isPathChecked(new TreePath(rootNode.getPath())));
+    }
+    walkAllNodes(
+        rootNode,
+        node -> {
+          String nodeKey = nodeToKey(tree, node);
+          if (nodeKey != null && toggled.contains(nodeKey)) {
+            nodeSelections.put(nodeKey, checking.isPathChecked(new TreePath(node.getPath())));
+          }
+        });
 
-    // Save root node selection
-    GroupTreeNode rootNode = (tree == treeStructures) ? nodeStructures : nodeIsodoses;
-    TreePath rootPath = new TreePath(rootNode.getPath());
-    boolean isRootChecked = tree.getCheckingModel().isPathChecked(rootPath);
-    nodeSelections.put("ROOT", isRootChecked);
-
-    // Save all GroupTreeNode selections
-    saveGroupNodeSelections(tree, rootNode, nodeSelections);
-
-    selectionMap.put(key, nodeSelections);
+    if (nodeSelections.isEmpty()) {
+      selectionMap.remove(key);
+    } else {
+      selectionMap.put(key, nodeSelections);
+    }
   }
 
-  private void saveGroupNodeSelections(
-      SegRegionTree tree, DefaultMutableTreeNode parentNode, Map<String, Boolean> nodeSelections) {
+  /** Visits every {@link GroupTreeNode} descendant (depth-first) of {@code parentNode}. */
+  private static void walkGroupNodes(
+      DefaultMutableTreeNode parentNode, java.util.function.Consumer<GroupTreeNode> action) {
     for (int i = 0; i < parentNode.getChildCount(); i++) {
-      DefaultMutableTreeNode childNode = (DefaultMutableTreeNode) parentNode.getChildAt(i);
+      if (parentNode.getChildAt(i) instanceof GroupTreeNode groupNode) {
+        action.accept(groupNode);
+        walkGroupNodes(groupNode, action);
+      }
+    }
+  }
 
-      if (childNode instanceof GroupTreeNode groupNode) {
-        TreePath groupPath = new TreePath(groupNode.getPath());
-        boolean isGroupChecked = tree.getCheckingModel().isPathChecked(groupPath);
-
-        // Use group node's toString() as unique key
-        String groupKey = "GROUP_" + groupNode; // NON-NLS
-        nodeSelections.put(groupKey, isGroupChecked);
-
-        // Recursively save nested group nodes if any
-        saveGroupNodeSelections(tree, groupNode, nodeSelections);
+  /** Visits every {@link DefaultMutableTreeNode} descendant (depth-first) of {@code parentNode}. */
+  private static void walkAllNodes(
+      DefaultMutableTreeNode parentNode,
+      java.util.function.Consumer<DefaultMutableTreeNode> action) {
+    for (int i = 0; i < parentNode.getChildCount(); i++) {
+      if (parentNode.getChildAt(i) instanceof DefaultMutableTreeNode node) {
+        action.accept(node);
+        walkAllNodes(node, action);
       }
     }
   }
@@ -323,88 +399,43 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener, S
       SegRegionTree tree, String key, Map<String, Map<String, Boolean>> selectionMap) {
     if (key == null || tree == null) return;
 
+    // Always start from the defaults: this guarantees that nodes not explicitly toggled by the
+    // user fall back to their default checked state on every reload (e.g. the structures root
+    // node remains checked when no user action was taken).
+    applyDefaultTreeSelection(tree);
+
     Map<String, Boolean> savedSelections = selectionMap.get(key);
     if (savedSelections != null && !savedSelections.isEmpty()) {
-      // Restore saved selections
-      restoreSavedSelections(tree, savedSelections);
-    } else {
-      // Apply default selection
-      applyDefaultTreeSelection(tree);
+      overlaySavedSelections(tree, savedSelections);
     }
   }
 
-  private void restoreSavedSelections(SegRegionTree tree, Map<String, Boolean> savedSelections) {
-    initPathSelection = true;
-    try {
-      // Restore root node selection
-      GroupTreeNode rootNode = (tree == treeStructures) ? nodeStructures : nodeIsodoses;
-      TreePath rootPath = new TreePath(rootNode.getPath());
-      Boolean rootSelection = savedSelections.get("ROOT");
-      if (rootSelection != null) {
-        tree.setPathSelection(rootPath, rootSelection);
-      }
-
-      // Restore GroupTreeNode selections
-      restoreGroupNodeSelections(tree, rootNode, savedSelections);
-
-    } finally {
-      initPathSelection = false;
+  private void overlaySavedSelections(SegRegionTree tree, Map<String, Boolean> savedSelections) {
+    GroupTreeNode rootNode = rootGroupOf.get(tree);
+    Boolean rootSelection = savedSelections.get(ROOT_KEY);
+    if (rootSelection != null) {
+      tree.setPathSelection(new TreePath(rootNode.getPath()), rootSelection);
     }
-  }
-
-  private void restoreGroupNodeSelections(
-      SegRegionTree tree, DefaultMutableTreeNode parentNode, Map<String, Boolean> savedSelections) {
-    for (int i = 0; i < parentNode.getChildCount(); i++) {
-      DefaultMutableTreeNode childNode = (DefaultMutableTreeNode) parentNode.getChildAt(i);
-
-      if (childNode instanceof GroupTreeNode groupNode) {
-        String groupKey = "GROUP_" + groupNode; // NON-NLS
-        Boolean groupSelection = savedSelections.get(groupKey);
-
-        if (groupSelection != null) {
-          TreePath groupPath = new TreePath(groupNode.getPath());
-          tree.setPathSelection(groupPath, groupSelection);
-        }
-
-        // Recursively restore nested group nodes if any
-        restoreGroupNodeSelections(tree, groupNode, savedSelections);
-      }
-    }
+    walkAllNodes(
+        rootNode,
+        node -> {
+          String nodeKey = nodeToKey(tree, node);
+          if (nodeKey == null) {
+            return;
+          }
+          Boolean sel = savedSelections.get(nodeKey);
+          if (sel != null) {
+            tree.setPathSelection(new TreePath(node.getPath()), sel);
+          }
+        });
   }
 
   private void applyDefaultTreeSelection(SegRegionTree tree) {
-    initPathSelection = true;
-    try {
-      GroupTreeNode rootNode = (tree == treeStructures) ? nodeStructures : nodeIsodoses;
-      TreePath rootPath = new TreePath(rootNode.getPath());
-
-      if (tree == treeStructures) {
-        // Default: structures tree root node checked (true)
-        tree.setPathSelection(rootPath, true);
-        setAllGroupNodesSelection(tree, rootNode, true);
-      } else if (tree == treeIsodoses) {
-        // Default: isodoses tree root node unchecked (false)
-        tree.setPathSelection(rootPath, false);
-        setAllGroupNodesSelection(tree, rootNode, true);
-      }
-    } finally {
-      initPathSelection = false;
-    }
-  }
-
-  private void setAllGroupNodesSelection(
-      SegRegionTree tree, DefaultMutableTreeNode parentNode, boolean selected) {
-    for (int i = 0; i < parentNode.getChildCount(); i++) {
-      DefaultMutableTreeNode childNode = (DefaultMutableTreeNode) parentNode.getChildAt(i);
-
-      if (childNode instanceof GroupTreeNode groupNode) {
-        TreePath groupPath = new TreePath(groupNode.getPath());
-        tree.setPathSelection(groupPath, selected);
-
-        // Recursively apply to nested group nodes
-        setAllGroupNodesSelection(tree, groupNode, selected);
-      }
-    }
+    // initPathSelection is always managed by the caller
+    GroupTreeNode rootNode = rootGroupOf.get(tree);
+    // Structures tree defaults to checked, isodoses tree defaults to unchecked
+    tree.setPathSelection(new TreePath(rootNode.getPath()), tree == treeStructures);
+    walkGroupNodes(rootNode, group -> tree.setPathSelection(new TreePath(group.getPath()), true));
   }
 
   private void loadData() {
@@ -413,21 +444,20 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener, S
     SwingWorker<Boolean, Void> loadTask =
         new SwingWorker<>() {
           @Override
-          protected Boolean doInBackground() throws Exception {
-            rtSet.reloadRtCase(cbDvhRecalculate.isSelected());
+          protected Boolean doInBackground() {
+            rtSet.reloadRtCase();
             return true;
           }
         };
 
     loadTask.addPropertyChangeListener(
         evt -> {
-          String propertyName = evt.getPropertyName();
-          if ("state".equals(propertyName)) {
+          if ("state".equals(evt.getPropertyName())) {
             handleLoadTaskStateChange((StateValue) evt.getNewValue());
           }
         });
 
-    new Thread(loadTask).start();
+    loadTask.execute();
   }
 
   private void handleLoadTaskStateChange(StateValue state) {
@@ -440,23 +470,89 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener, S
       progressBar.setVisible(false);
       btnLoad.setEnabled(false);
       btnLoad.setToolTipText(Messages.getString("rt.objects.from.loaded"));
-      cbDvhRecalculate.setEnabled(false);
-      cbDvhRecalculate.setToolTipText(Messages.getString("dvh.calculation"));
       setInitialVisibility(true);
-      initSlider();
 
-      // Update GUI
+      // Update GUI (initSlider is called inside updateCanvas)
       updateCanvas(EventManager.getInstance().getSelectedViewPane());
       updateCurrentContainer();
     }
   }
 
+  /** Build and show the DVH chart for the currently selected structures. */
   private void showDvhChart() {
     if (rtSet == null) return;
 
-    List<StructRegion> structs = getCheckedStructRegions();
-    if (structs.isEmpty()) return;
+    List<StructRegion> selected = getCheckedStructRegions();
+    if (selected.isEmpty()) return;
 
+    List<StructRegion> withDvh = new ArrayList<>();
+    List<StructRegion> withoutDvh = new ArrayList<>();
+    for (StructRegion region : selected) {
+      if (region.getDvh() != null) {
+        withDvh.add(region);
+      } else {
+        withoutDvh.add(region);
+      }
+    }
+
+    if (!withoutDvh.isEmpty() && dvhRecalculateEnabled) {
+      promptAndComputeMissingDvh(withDvh, withoutDvh);
+    } else {
+      buildAndShowChart(withDvh);
+    }
+  }
+
+  private void promptAndComputeMissingDvh(
+      List<StructRegion> withDvh, List<StructRegion> withoutDvh) {
+    String message =
+        String.format(
+            Messages.getString("dvh.compute.missing.confirm"),
+            withoutDvh.size(),
+            withoutDvh.stream().map(StructRegion::getLabel).collect(Collectors.joining(", ")));
+    int answer =
+        JOptionPane.showConfirmDialog(
+            WinUtil.getParentWindow(this),
+            message,
+            Messages.getString("dvh.experimental.warning"),
+            JOptionPane.YES_NO_OPTION,
+            JOptionPane.WARNING_MESSAGE);
+    if (answer != JOptionPane.YES_OPTION) {
+      buildAndShowChart(withDvh);
+      return;
+    }
+
+    SwingWorker<List<StructRegion>, Void> task = getListVoidSwingWorker(withDvh, withoutDvh);
+    progressBar.setVisible(true);
+    progressBar.setIndeterminate(true);
+    task.execute();
+  }
+
+  private SwingWorker<List<StructRegion>, Void> getListVoidSwingWorker(
+      List<StructRegion> withDvh, List<StructRegion> withoutDvh) {
+    final List<StructRegion> all = new ArrayList<>(withDvh);
+    return new SwingWorker<>() {
+      @Override
+      protected List<StructRegion> doInBackground() {
+        for (StructRegion region : withoutDvh) {
+          if (rtSet.computeDvhOnDemand(region) && region.getDvh() != null) {
+            all.add(region);
+          }
+        }
+        return all;
+      }
+
+      @Override
+      protected void done() {
+        progressBar.setVisible(false);
+        buildAndShowChart(all);
+      }
+    };
+  }
+
+  private void buildAndShowChart(List<StructRegion> regions) {
+    if (regions.isEmpty()) {
+      return;
+    }
     XYChart chart =
         new XYChartBuilder()
             .width(800)
@@ -468,7 +564,7 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener, S
 
     chart.getStyler().setDefaultSeriesRenderStyle(XYSeries.XYSeriesRenderStyle.Line);
 
-    for (StructRegion region : structs) {
+    for (StructRegion region : regions) {
       Dvh dvh = region.getDvh();
       if (dvh != null) {
         dvh.appendChart(region, chart);
@@ -486,17 +582,21 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener, S
     GuiUtils.showCenterScreen(dialog);
   }
 
+  /**
+   * Return all currently checked structure regions. The DVH may be {@code null} for some of them
+   * (see {@link #showDvhChart()} for the handling of missing DVHs).
+   */
   private List<StructRegion> getCheckedStructRegions() {
-    List<StructRegion> list = new ArrayList<>();
-    for (TreePath path : treeStructures.getCheckingModel().getCheckingPaths()) {
-      if (treeStructures.hasAllParentsChecked(path)) {
-        DefaultMutableTreeNode node = (DefaultMutableTreeNode) path.getLastPathComponent();
-        if (node.getUserObject() instanceof StructRegion region && region.getDvh() != null) {
-          list.add(region);
-        }
-      }
-    }
-    return list;
+    return Arrays.stream(treeStructures.getCheckingModel().getCheckingPaths())
+        .filter(treeStructures::hasAllParentsChecked)
+        .<StructRegion>mapMulti(
+            (p, sink) -> {
+              if (((DefaultMutableTreeNode) p.getLastPathComponent()).getUserObject()
+                  instanceof StructRegion r) {
+                sink.accept(r);
+              }
+            })
+        .toList();
   }
 
   private void initSlider() {
@@ -530,10 +630,92 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener, S
     }
   }
 
-  private void treeValueChanged(TreeCheckingEvent e) {
-    if (!initPathSelection) {
-      updateVisibleNode();
+  /**
+   * Routes a tree checking event: records the user-driven toggle (so the choice persists across
+   * loads) and then refreshes the visible nodes. The selection is also saved immediately so that
+   * the state survives intermediate operations such as tab switches or programmatic refreshes that
+   * might rebuild the tree without going through the combo-box change listener.
+   */
+  private void handleTreeChecking(SegRegionTree tree, TreeCheckingEvent e) {
+    if (initPathSelection) {
+      return;
     }
+    recordUserToggle(tree, e.getPath());
+    persistCurrentSelection(tree);
+    updateVisibleNode();
+  }
+
+  /** Persists the current selection state of {@code tree} into the appropriate selection map. */
+  private void persistCurrentSelection(SegRegionTree tree) {
+    String uid = currentSelectionUid(tree);
+    if (uid == null) {
+      return;
+    }
+    Map<String, Map<String, Boolean>> map =
+        (tree == treeIsodoses) ? planSelections : structureSetSelections;
+    saveTreeSelection(tree, uid, map);
+  }
+
+  /**
+   * Marks the key associated with {@code path} as user-modified for the currently selected
+   * structure (for the structures tree) or plan (for the isodoses tree), so that it is persisted by
+   * {@link #saveTreeSelection}.
+   */
+  private void recordUserToggle(SegRegionTree tree, TreePath path) {
+    if (path == null) {
+      return;
+    }
+    String uid = currentSelectionUid(tree);
+    if (uid == null) {
+      return;
+    }
+    String key = pathToKey(tree, path);
+    if (key != null) {
+      userToggledKeys.computeIfAbsent(uid, k -> new HashSet<>()).add(key);
+    }
+  }
+
+  /** Returns the SOPInstanceUID of the combo selection that backs {@code tree}. */
+  private String currentSelectionUid(SegRegionTree tree) {
+    if (tree == treeStructures) {
+      return getSopInstanceUid((StructureSet) comboRtStructureSet.getSelectedItem());
+    }
+    if (tree == treeIsodoses) {
+      return getSopInstanceUid((Plan) comboRtPlan.getSelectedItem());
+    }
+    return null;
+  }
+
+  /**
+   * Returns the persistence key associated with {@code path} or {@code null} if the last component
+   * is not a node we know how to identify.
+   */
+  private String pathToKey(SegRegionTree tree, TreePath path) {
+    if (path.getLastPathComponent() instanceof DefaultMutableTreeNode node) {
+      return nodeToKey(tree, node);
+    }
+    return null;
+  }
+
+  /**
+   * Returns a stable persistence key for {@code node}: {@link #ROOT_KEY} for the visible root
+   * group, {@code GROUP_<label>} for inner {@link GroupTreeNode}s, and {@code REGION_<id>} for leaf
+   * nodes whose user object is a {@link SegRegion} (struct regions, isodose regions). Returns
+   * {@code null} for nodes that should not be persisted.
+   */
+  private String nodeToKey(SegRegionTree tree, DefaultMutableTreeNode node) {
+    GroupTreeNode rootGroup = rootGroupOf.get(tree);
+    if (node == rootGroup) {
+      return ROOT_KEY;
+    }
+    if (node instanceof GroupTreeNode group) {
+      return GROUP_PREFIX + group;
+    }
+    Object userObject = node.getUserObject();
+    if (userObject instanceof SegRegion<?> region) {
+      return REGION_PREFIX + region.getId();
+    }
+    return null;
   }
 
   public void updateVisibleNode() {
@@ -551,7 +733,8 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener, S
     boolean isChecked = tree.getCheckingModel().isPathChecked(new TreePath(node.getPath()));
     region.setVisible(isChecked);
     node.setSelected(isChecked);
-    tree.updateVisibleNode(tree == treeStructures ? rootNodeStructures : rootNodeIsodoses, node);
+    DefaultMutableTreeNode root = tree == treeStructures ? rootNodeStructures : rootNodeIsodoses;
+    tree.updateVisibleNode(root, node);
   }
 
   public void updateCurrentContainer() {
@@ -579,11 +762,8 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener, S
     }
 
     updateComboBoxes();
+    initSlider();
     updateGraphics(viewCanvas);
-  }
-
-  private void clearSelectionMemory() {
-    structureSetSelections.clear();
   }
 
   private void clearTrees() {
@@ -594,6 +774,9 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener, S
     if (currentStructure != null) {
       saveTreeSelection(
           treeStructures, getSopInstanceUid(currentStructure), structureSetSelections);
+    }
+    if (currentPlan != null) {
+      saveTreeSelection(treeIsodoses, getSopInstanceUid(currentPlan), planSelections);
     }
 
     initPathSelection = true;
@@ -610,6 +793,9 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener, S
     applyDefaultTreeSelection(treeStructures);
     applyDefaultTreeSelection(treeIsodoses);
 
+    // Discard any tracked user toggles: defaults must apply on next load.
+    userToggledKeys.clear();
+
     initPathSelection = false;
   }
 
@@ -617,6 +803,11 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener, S
     // Save current selections
     StructureSet oldStructure = (StructureSet) comboRtStructureSet.getSelectedItem();
     Plan oldPlan = (Plan) comboRtPlan.getSelectedItem();
+
+    // Persist the tree selection for the current structure/plan before switching away,
+    // because removing the item listener prevents the DESELECTED event from firing.
+    saveTreeSelection(treeStructures, getSopInstanceUid(oldStructure), structureSetSelections);
+    saveTreeSelection(treeIsodoses, getSopInstanceUid(oldPlan), planSelections);
 
     // Update combo boxes
     comboRtStructureSet.removeItemListener(structureChangeListener);
@@ -637,32 +828,16 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener, S
   private void selectDefaultItems(StructureSet oldStructure, Plan oldPlan) {
     boolean updateTree = false;
 
-    if (rtSet.getStructures().contains(oldStructure)) {
-      comboRtStructureSet.setSelectedItem(oldStructure);
-    } else {
-      Set<StructureSet> structures = rtSet.getStructures();
-      if (!structures.isEmpty()) {
-        StructureSet mostRecentStructure =
-            structures.stream()
-                .filter(structure -> structure.getTagValue(TagD.get(Tag.StructureSetDate)) != null)
-                .max(
-                    Comparator.comparing(
-                        structure -> (Date) structure.getTagValue(TagD.get(Tag.StructureSetDate))))
-                .orElse(structures.iterator().next());
-
-        comboRtStructureSet.setSelectedItem(mostRecentStructure);
-        updateTree = true;
-      }
+    StructureSet structureToSelect = pickStructureToSelect(oldStructure);
+    if (structureToSelect != null) {
+      comboRtStructureSet.setSelectedItem(structureToSelect);
+      updateTree |= structureToSelect != oldStructure;
     }
 
-    if (rtSet.getPlans().contains(oldPlan)) {
-      comboRtPlan.setSelectedItem(oldPlan);
-    } else {
-      RtSpecialElement firstPlan = rtSet.getFirstPlan();
-      if (firstPlan != null) {
-        comboRtPlan.setSelectedItem(firstPlan);
-        updateTree = true;
-      }
+    Plan planToSelect = pickPlanToSelect(oldPlan);
+    if (planToSelect != null) {
+      comboRtPlan.setSelectedItem(planToSelect);
+      updateTree |= planToSelect != oldPlan;
     }
 
     if (updateTree) {
@@ -670,6 +845,77 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener, S
           (StructureSet) comboRtStructureSet.getSelectedItem(),
           (Plan) comboRtPlan.getSelectedItem());
     }
+  }
+
+  /**
+   * Returns the {@link StructureSet} that should be selected: prefer the outgoing one if still
+   * present, otherwise the last user-chosen structure for this {@link RtSet}, otherwise the most
+   * recent.
+   */
+  private StructureSet pickStructureToSelect(StructureSet oldStructure) {
+    Set<StructureSet> structures = rtSet.getStructures();
+    if (structures.contains(oldStructure)) {
+      return oldStructure;
+    }
+    StructureSet remembered =
+        findByUid(structures, lastStructureUidByRtSet.get(rtSet), this::getSopInstanceUid);
+    if (remembered != null) {
+      return remembered;
+    }
+    return pickMostRecentStructure(structures).orElse(null);
+  }
+
+  /**
+   * Returns the {@link Plan} that should be selected: prefer the outgoing one if still present,
+   * otherwise the last user-chosen plan for this {@link RtSet}, otherwise the first plan.
+   */
+  private Plan pickPlanToSelect(Plan oldPlan) {
+    Set<Plan> plans = rtSet.getPlans();
+    if (plans.contains(oldPlan)) {
+      return oldPlan;
+    }
+    Plan remembered = findByUid(plans, lastPlanUidByRtSet.get(rtSet), this::getSopInstanceUid);
+    if (remembered != null) {
+      return remembered;
+    }
+    return rtSet.getFirstPlan() instanceof Plan p ? p : null;
+  }
+
+  private static <T> T findByUid(
+      Set<T> elements, String uid, java.util.function.Function<T, String> uidExtractor) {
+    if (uid == null || elements == null || elements.isEmpty()) {
+      return null;
+    }
+    for (T e : elements) {
+      if (uid.equals(uidExtractor.apply(e))) {
+        return e;
+      }
+    }
+    return null;
+  }
+
+  /**
+   * Records the SOPInstanceUID of {@code element} as the last user choice for the current RtSet.
+   */
+  private void rememberLastSelection(Map<RtSet, String> map, RtSpecialElement element) {
+    if (rtSet == null || element == null) {
+      return;
+    }
+    String uid = getSopInstanceUid(element);
+    if (uid != null) {
+      map.put(rtSet, uid);
+    }
+  }
+
+  private static Optional<StructureSet> pickMostRecentStructure(Set<StructureSet> structures) {
+    if (structures.isEmpty()) {
+      return Optional.empty();
+    }
+    return Optional.of(
+        structures.stream()
+            .filter(s -> s.getTagValue(TagD.get(Tag.StructureSetDate)) != null)
+            .max(Comparator.comparing(s -> (Date) s.getTagValue(TagD.get(Tag.StructureSetDate))))
+            .orElse(structures.iterator().next()));
   }
 
   public void updateTree(StructureSet selectedStructure, Plan selectedPlan) {
@@ -687,56 +933,87 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener, S
     } finally {
       initPathSelection = false;
     }
+    // Make sure the displayed graphics reflect the freshly restored tree state. The check events
+    // fired during the rebuild were ignored (initPathSelection was true), so region visibility
+    // would otherwise stay stale until the user manually toggled or moved the slider.
+    syncAllRegionsFromTrees();
+  }
+
+  /**
+   * Reads the current checking state of both trees and pushes it down to each region's {@code
+   * visible} flag, then asks the viewer to repaint. Safe to call after any rebuild that temporarily
+   * sets {@link #initPathSelection} to {@code true}.
+   */
+  private void syncAllRegionsFromTrees() {
+    StructureSet structure = (StructureSet) comboRtStructureSet.getSelectedItem();
+    if (structure != null) {
+      updateTreeVisibility(treeStructures, nodeStructures, structure);
+    }
+    Plan plan = (Plan) comboRtPlan.getSelectedItem();
+    if (plan != null) {
+      Dose dose = plan.getFirstDose();
+      if (dose != null) {
+        updateTreeVisibility(treeIsodoses, nodeIsodoses, dose);
+      }
+    }
+    updateCurrentContainer();
   }
 
   private void updateStructuresTree(StructureSet selectedStructure) {
+    if (selectedStructure == null) {
+      // Nothing to update: preserve the current struct tree state as-is.
+      return;
+    }
+    nodeStructures.removeAllChildren();
     treeStructures.setModel(new DefaultTreeModel(rootNodeStructures, false));
 
-    if (selectedStructure != null) {
-      nodeStructures.removeAllChildren();
-      Map<String, List<StructRegion>> regionMap =
-          SegRegion.groupRegions(selectedStructure.getSegAttributes().values());
+    Map<String, List<StructRegion>> regionMap =
+        SegRegion.groupRegions(selectedStructure.getSegAttributes().values());
 
-      for (List<StructRegion> regionList : StructRegion.sort(regionMap.values())) {
-        addRegionsToTree(regionList);
-      }
-
-      // Restore saved selection or apply default (checked = true)
-      String key = getSopInstanceUid(selectedStructure);
-      restoreTreeSelection(treeStructures, key, structureSetSelections);
+    for (List<StructRegion> regionList : StructRegion.sort(regionMap.values())) {
+      addRegionsToTree(regionList);
     }
+
+    // Restore saved selection or apply default (checked = true)
+    String key = getSopInstanceUid(selectedStructure);
+    restoreTreeSelection(treeStructures, key, structureSetSelections);
   }
 
   private void addRegionsToTree(List<StructRegion> regionList) {
     if (regionList.size() == 1) {
-      StructRegion region = regionList.getFirst();
-      DefaultMutableTreeNode node = buildStructRegionNode(region);
-      nodeStructures.add(node);
-      treeStructures.setPathSelection(new TreePath(node.getPath()), region.isSelected());
-    } else {
-      GroupTreeNode groupNode = new GroupTreeNode(regionList.getFirst().getPrefix(), true);
-      nodeStructures.add(groupNode);
-
-      for (StructRegion region : regionList) {
-        DefaultMutableTreeNode childNode = buildStructRegionNode(region);
-        groupNode.add(childNode);
-        treeStructures.setPathSelection(new TreePath(childNode.getPath()), region.isSelected());
-      }
-
-      treeStructures.addCheckingPath(new TreePath(groupNode.getPath()));
+      addRegionNode(regionList.getFirst(), nodeStructures);
+      return;
     }
+    StructRegion first = regionList.getFirst();
+    if (first.getLabel().equals(first.getPrefix())) {
+      // Labels are identical: skip parent node, add regions directly
+      regionList.forEach(r -> addRegionNode(r, nodeStructures));
+      return;
+    }
+    GroupTreeNode groupNode = new GroupTreeNode(first.getPrefix(), true);
+    nodeStructures.add(groupNode);
+    regionList.forEach(r -> addRegionNode(r, groupNode));
+    treeStructures.addCheckingPath(new TreePath(groupNode.getPath()));
+  }
+
+  private void addRegionNode(StructRegion region, DefaultMutableTreeNode parent) {
+    DefaultMutableTreeNode node = buildStructRegionNode(region);
+    parent.add(node);
+    treeStructures.setPathSelection(new TreePath(node.getPath()), region.isSelected());
   }
 
   private void updateIsodosesTree(Plan selectedPlan) {
     if (selectedPlan != null) {
-      treeIsodoses.setModel(new DefaultTreeModel(rootNodeIsodoses, false));
       nodeIsodoses.removeAllChildren();
+      treeIsodoses.setModel(new DefaultTreeModel(rootNodeIsodoses, false));
       updatePlanInfo(selectedPlan);
 
       Dose planDose = selectedPlan.getFirstDose();
       if (planDose != null) {
         addIsodosesToTree(planDose);
       }
+      // Restore saved selection or apply default (root unchecked).
+      restoreTreeSelection(treeIsodoses, getSopInstanceUid(selectedPlan), planSelections);
     }
   }
 
@@ -753,7 +1030,6 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener, S
         treeIsodoses.addCheckingPath(new TreePath(node.getPath()));
       }
     }
-    treeIsodoses.removeCheckingPath(new TreePath(nodeIsodoses.getPath()));
   }
 
   private DefaultMutableTreeNode createIsodoseNode(IsoDoseRegion isoDoseRegion) {
@@ -767,20 +1043,20 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener, S
   }
 
   private String buildIsodoseTooltip(IsoDoseRegion layer) {
-    StringBuilder buf = new StringBuilder();
-    buf.append(GuiUtils.HTML_START);
-    buf.append("<b>").append(layer.getLabel()).append("</b>");
-    buf.append(GuiUtils.HTML_BR);
-    buf.append(Messages.getString("level")).append(StringUtil.COLON_AND_SPACE);
-    buf.append(String.format("%d%%", layer.getLevel())); // NON-NLS
-    buf.append(GuiUtils.HTML_BR);
-    buf.append(Messages.getString("thickness")).append(StringUtil.COLON_AND_SPACE);
-    buf.append(DecFormatter.twoDecimal(layer.getThickness()));
-    buf.append(GuiUtils.HTML_BR);
-
-    buf.append(GuiUtils.HTML_END);
-
-    return buf.toString();
+    return GuiUtils.HTML_START
+        + "<b>"
+        + layer.getLabel()
+        + "</b>"
+        + GuiUtils.HTML_BR
+        + Messages.getString("level")
+        + StringUtil.COLON_AND_SPACE
+        + "%d%%".formatted(layer.getLevel())
+        + GuiUtils.HTML_BR // NON-NLS
+        + Messages.getString("thickness")
+        + StringUtil.COLON_AND_SPACE
+        + DecFormatter.twoDecimal(layer.getThickness())
+        + GuiUtils.HTML_BR
+        + GuiUtils.HTML_END;
   }
 
   private void expandTrees() {
@@ -839,30 +1115,21 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener, S
   private void appendDvhInfo(StringBuilder buf, Dvh dvh) {
     String source = dvh.getDvhSource().toString();
     double rxDose = dvh.getPlan().getRxDose();
+    appendDoseLine(buf, source, "min.dose", dvh.getDvhMinimumDoseCGy(), rxDose);
+    appendDoseLine(buf, source, "max.dose", dvh.getDvhMaximumDoseCGy(), rxDose);
+    appendDoseLine(buf, source, "mean.dose", dvh.getDvhMeanDoseCGy(), rxDose);
+  }
 
-    buf.append(source).append(" ").append(Messages.getString("min.dose"));
+  private static void appendDoseLine(
+      StringBuilder buf, String source, String i18nKey, double doseCGy, double rxDose) {
+    buf.append(source).append(' ').append(Messages.getString(i18nKey));
     buf.append(StringUtil.COLON_AND_SPACE);
-    buf.append(
-        DecFormatter.percentTwoDecimal(
-            Dose.calculateRelativeDose(dvh.getDvhMinimumDoseCGy(), rxDose) / 100.0));
-    buf.append(GuiUtils.HTML_BR);
-
-    buf.append(source).append(" ").append(Messages.getString("max.dose"));
-    buf.append(StringUtil.COLON_AND_SPACE);
-    buf.append(
-        DecFormatter.percentTwoDecimal(
-            Dose.calculateRelativeDose(dvh.getDvhMaximumDoseCGy(), rxDose) / 100.0));
-    buf.append(GuiUtils.HTML_BR);
-
-    buf.append(source).append(" ").append(Messages.getString("mean.dose"));
-    buf.append(StringUtil.COLON_AND_SPACE);
-    buf.append(
-        DecFormatter.percentTwoDecimal(
-            Dose.calculateRelativeDose(dvh.getDvhMeanDoseCGy(), rxDose) / 100.0));
+    buf.append(DecFormatter.percentTwoDecimal(Dose.calculateRelativeDose(doseCGy, rxDose) / 100.0));
     buf.append(GuiUtils.HTML_BR);
   }
 
   // Simplified utility methods for SegRegionTool interface
+  /** Scrolls the active viewer to the slice that contains the largest part of {@code region}. */
   public void show(SegRegion<?> region) {
     ViewCanvas<DicomImageElement> view = EventManager.getInstance().getSelectedViewPane();
     if (view == null || !(view.getSeries() instanceof DicomSeries series)) return;
@@ -936,6 +1203,10 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener, S
     return (view != null && view.getImage() instanceof DicomImageElement element) ? element : null;
   }
 
+  /**
+   * Reset the tool to reflect the RT objects associated with {@code viewCanvas}; falls back to an
+   * empty state if no RT element is linked or if the series is not RT-compatible.
+   */
   public void initTreeValues(ViewCanvas<?> viewCanvas) {
     if (viewCanvas == null) {
       this.rtSet = null;
@@ -975,13 +1246,14 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener, S
 
   private List<RtSpecialElement> getRTSpecialElements(String seriesUID) {
     Set<String> hiddenSeries = HiddenSeriesManager.getInstance().reference2Series.get(seriesUID);
-    if (hiddenSeries != null && !hiddenSeries.isEmpty()) {
-      return HiddenSeriesManager.getHiddenElementsFromSeries(
-          RtSpecialElement.class, hiddenSeries.toArray(new String[0]));
+    if (hiddenSeries == null || hiddenSeries.isEmpty()) {
+      return List.of();
     }
-    return Collections.emptyList();
+    return HiddenSeriesManager.getHiddenElementsFromSeries(
+        RtSpecialElement.class, hiddenSeries.toArray(new String[0]));
   }
 
+  /** {@code true} if {@code dcmSeries} is a CT/MR series referenced by at least one RT object. */
   public static boolean isCtLinkedRT(MediaSeries<?> dcmSeries) {
     if (dcmSeries == null) return false;
 

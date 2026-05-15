@@ -14,8 +14,7 @@
   <packaging>jar</packaging>
   <artifactId>weasis-opencv-core-macosx-aarch64</artifactId>
   <name>OpenCV - Mac Silicone ARM-64 [${project.artifactId}]</name>
-  <version>${weasis.opencv.pkg.version}</version>
-
+  <version>${sha1}</version>
   <properties>
     <native.files>libopencv_java.dylib</native.files>
   </properties>

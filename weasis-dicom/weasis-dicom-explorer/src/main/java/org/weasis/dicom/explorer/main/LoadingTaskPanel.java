@@ -12,6 +12,7 @@ package org.weasis.dicom.explorer.main;
 import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import org.weasis.core.api.util.FontItem;
 import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.api.util.ResourceUtil.ActionIcon;
 import org.weasis.core.ui.tp.raven.spinner.SpinnerProgress;
@@ -38,6 +39,7 @@ public class LoadingTaskPanel extends JPanel {
   }
 
   private void init() {
+    message.setFont(FontItem.MICRO_SEMIBOLD.getFont());
     if (globalLoadingManager) {
       JButton globalResumeButton = new JButton(ResourceUtil.getIcon(ActionIcon.EXECUTE));
       globalResumeButton.setToolTipText(Messages.getString("DicomExplorer.resume_all"));

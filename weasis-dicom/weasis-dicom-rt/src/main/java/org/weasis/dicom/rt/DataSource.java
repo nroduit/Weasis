@@ -9,6 +9,7 @@
  */
 package org.weasis.dicom.rt;
 
+/** Origin of a derived RT value (e.g. DVH, volume): read from DICOM or computed locally. */
 public enum DataSource {
   PROVIDED,
   CALCULATED

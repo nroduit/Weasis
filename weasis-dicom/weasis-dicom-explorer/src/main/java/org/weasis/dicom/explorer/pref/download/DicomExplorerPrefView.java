@@ -26,6 +26,7 @@ import org.weasis.core.ui.pref.PreferenceDialog;
 import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.explorer.DicomSorter;
 import org.weasis.dicom.explorer.DicomSorter.SortingTime;
+import org.weasis.dicom.explorer.LoadDicom;
 import org.weasis.dicom.explorer.Messages;
 import org.weasis.dicom.explorer.main.DicomExplorer;
 
@@ -38,6 +39,9 @@ public class DicomExplorerPrefView extends AbstractItemDialogPage {
 
   private final JComboBox<SortingTime> studyDateSortingComboBox =
       new JComboBox<>(SortingTime.values());
+
+  private final JCheckBox showUnsupportedSopInfoCheckbox =
+      new JCheckBox(Messages.getString("dicom.unsupported.sop.notify"));
 
   public DicomExplorerPrefView() {
     super(Messages.getString("DicomExplorer.title"), 607);
@@ -78,6 +82,16 @@ public class DicomExplorerPrefView extends AbstractItemDialogPage {
 
     panel2.setBorder(GuiUtils.getTitledBorder(Messages.getString("DicomExplorer.open_win")));
     add(panel2);
+    add(GuiUtils.boxVerticalStrut(BLOCK_SEPARATOR));
+
+    JPanel panel3 = GuiUtils.getVerticalBoxLayoutPanel();
+    showUnsupportedSopInfoCheckbox.setSelected(
+        preferences.getBooleanProperty(LoadDicom.SHOW_UNSUPPORTED_SOP_CLASS_INFO, true));
+    panel3.add(
+        GuiUtils.getFlowLayoutPanel(
+            ITEM_SEPARATOR_SMALL, ITEM_SEPARATOR, showUnsupportedSopInfoCheckbox));
+    panel3.setBorder(GuiUtils.getTitledBorder(Messages.getString("notifications")));
+    add(panel3);
 
     add(GuiUtils.boxYLastElement(LAST_FILLER_HEIGHT));
 
@@ -101,6 +115,10 @@ public class DicomExplorerPrefView extends AbstractItemDialogPage {
     studyDateSortingComboBox.setSelectedItem(DicomSorter.getStudyDateSorting());
 
     spinner.setValue(Thumbnail.DEFAULT_SIZE);
+
+    preferences.resetProperty(LoadDicom.SHOW_UNSUPPORTED_SOP_CLASS_INFO, Boolean.TRUE.toString());
+    showUnsupportedSopInfoCheckbox.setSelected(
+        preferences.getBooleanProperty(LoadDicom.SHOW_UNSUPPORTED_SOP_CLASS_INFO, true));
   }
 
   @Override
@@ -119,6 +137,9 @@ public class DicomExplorerPrefView extends AbstractItemDialogPage {
       preferences.putIntProperty(Thumbnail.KEY_SIZE, size);
       explorer.updateThumbnailSize(size);
     }
+
+    preferences.putBooleanProperty(
+        LoadDicom.SHOW_UNSUPPORTED_SOP_CLASS_INFO, showUnsupportedSopInfoCheckbox.isSelected());
 
     GuiUtils.getUICore().saveSystemPreferences();
   }

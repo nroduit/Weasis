@@ -76,6 +76,7 @@ public class ShortcutPrefView extends AbstractItemDialogPage {
 
     getProperties().put(PreferenceDialog.KEY_SHOW_RESTORE, Boolean.TRUE.toString());
     getProperties().put(PreferenceDialog.KEY_SHOW_APPLY, Boolean.TRUE.toString());
+    getProperties().setProperty(PreferenceDialog.KEY_HELP, "../basics/shortcuts"); // NON-NLS
 
     setLayout(new BorderLayout(5, 5));
 

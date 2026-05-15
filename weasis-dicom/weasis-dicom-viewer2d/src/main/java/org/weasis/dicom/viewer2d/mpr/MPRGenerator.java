@@ -11,7 +11,9 @@ package org.weasis.dicom.viewer2d.mpr;
 
 import java.awt.Component;
 import javax.swing.JOptionPane;
+import javax.swing.JPanel;
 import org.weasis.core.api.gui.util.GuiExecutor;
+import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.WinUtil;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.dicom.codec.DicomImageElement;
@@ -57,7 +59,7 @@ public class MPRGenerator {
           int usrChoice =
               JOptionPane.showConfirmDialog(
                   WinUtil.getValidComponent(context.getMainView()),
-                  message + Messages.getString("warn.rectify.limitation"),
+                  buildMessagePanel(message),
                   MprFactory.NAME,
                   JOptionPane.YES_NO_OPTION,
                   JOptionPane.QUESTION_MESSAGE);
@@ -75,7 +77,7 @@ public class MPRGenerator {
           int usrChoice =
               JOptionPane.showConfirmDialog(
                   WinUtil.getValidComponent(parent),
-                  message + Messages.getString("warn.rectify.limitation"),
+                  buildMessagePanel(message),
                   MprFactory.NAME,
                   JOptionPane.YES_NO_OPTION,
                   JOptionPane.QUESTION_MESSAGE);
@@ -84,5 +86,10 @@ public class MPRGenerator {
     if (skipRectification[0]) {
       throw new IllegalStateException(message);
     }
+  }
+
+  private static JPanel buildMessagePanel(String message) {
+    return GuiUtils.buildHelpMessagePanel(
+        message + Messages.getString("warn.rectify.limitation"), "mpr/#volume-geometry"); // NON-NLS
   }
 }

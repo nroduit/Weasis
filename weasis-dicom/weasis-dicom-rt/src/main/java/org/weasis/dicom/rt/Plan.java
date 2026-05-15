@@ -12,6 +12,7 @@ package org.weasis.dicom.rt;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Objects;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.codec.DicomMediaIO;
@@ -33,7 +34,7 @@ public class Plan extends RtSpecialElement {
   }
 
   public String getSopInstanceUid() {
-    return this.sopInstanceUid;
+    return sopInstanceUid;
   }
 
   public void setSopInstanceUid(String sopInstanceUid) {
@@ -45,15 +46,15 @@ public class Plan extends RtSpecialElement {
   }
 
   public Date getDate() {
-    return this.date;
+    return date == null ? null : new Date(date.getTime());
   }
 
   public void setDate(Date value) {
-    this.date = value;
+    this.date = value == null ? null : new Date(value.getTime());
   }
 
   public String getName() {
-    return this.name;
+    return name;
   }
 
   public void setName(String name) {
@@ -61,7 +62,7 @@ public class Plan extends RtSpecialElement {
   }
 
   public String getDescription() {
-    return this.description;
+    return description;
   }
 
   public void setDescription(String description) {
@@ -69,7 +70,7 @@ public class Plan extends RtSpecialElement {
   }
 
   public String getGeometry() {
-    return this.geometry;
+    return geometry;
   }
 
   public void setGeometry(String geometry) {
@@ -77,7 +78,7 @@ public class Plan extends RtSpecialElement {
   }
 
   public Double getRxDose() {
-    return this.rxDose;
+    return rxDose;
   }
 
   public void setRxDose(Double rxDose) {
@@ -89,52 +90,30 @@ public class Plan extends RtSpecialElement {
   }
 
   public Dose getFirstDose() {
-    if (!doses.isEmpty()) {
-      return doses.getFirst();
-    }
-
-    return null;
+    return doses.isEmpty() ? null : doses.getFirst();
   }
 
   public void appendName(String text) {
-    if (StringUtil.hasText(this.name)) {
-      this.name += " - " + text;
-    } else {
-      this.name = text;
-    }
+    this.name = StringUtil.hasText(this.name) ? this.name + " - " + text : text;
   }
 
   @Override
   public String toString() {
     if (!StringUtil.hasText(label)) {
       return StringUtil.hasText(name) ? name : TagW.NO_VALUE;
-    } else if (StringUtil.hasText(name) && !name.equals(label)) {
-      return label + " (" + name + ")";
-    } else {
-      return label;
     }
+    return (StringUtil.hasText(name) && !name.equals(label)) ? label + " (" + name + ")" : label;
   }
 
   @Override
   public int hashCode() {
-    final int prime = 31;
-    int result = super.hashCode();
-    result = prime * result + ((date == null) ? 0 : date.hashCode());
-    result = prime * result + ((label == null) ? 0 : label.hashCode());
-    return result;
+    return Objects.hash(super.hashCode(), date, label);
   }
 
   @Override
   public boolean equals(Object obj) {
     if (this == obj) return true;
-    if (!super.equals(obj)) return false;
-    if (getClass() != obj.getClass()) return false;
-    Plan other = (Plan) obj;
-    if (date == null) {
-      if (other.date != null) return false;
-    } else if (!date.equals(other.date)) return false;
-    if (label == null) {
-      return other.label == null;
-    } else return label.equals(other.label);
+    if (!(obj instanceof Plan other) || !super.equals(obj)) return false;
+    return Objects.equals(date, other.date) && Objects.equals(label, other.label);
   }
 }

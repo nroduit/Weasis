@@ -44,22 +44,40 @@ import org.weasis.core.util.MathUtil;
 import org.weasis.dicom.codec.PresentationStateReader;
 
 /**
- * Utility class for handling DICOM Presentation State graphics conversion.
+ * Utility class for handling DICOM Presentation State (PR) and Structured Report (SR) graphics
+ * conversion.
  *
- * <p>This class provides methods to convert DICOM PR graphics to Weasis graphics and vice versa,
- * supporting both editable and non-editable graphics with proper style handling.
+ * <p>This class provides methods to convert DICOM PR and SR graphics to Weasis graphics and vice
+ * versa, supporting both editable and non-editable graphics with proper style handling.
+ *
+ * <p>Key differences between PR and SR graphics:
+ *
+ * <ul>
+ *   <li><b>ELLIPSE</b>: PR uses 4 points (major+minor axes, 8 coords), SR uses 2 points
+ *       (center+boundary, 4 coords) with rotation
+ *   <li><b>RECTANGLE</b>: Both use 2 points (opposite corners, 4 coords), but SR supports rotation
+ *   <li><b>Rotation</b>: SR supports rotation via Rotation Angle and Rotation Point
+ * </ul>
+ *
+ * @author Nicolas Roduit
+ * @see <a
+ *     href="https://dicom.nema.org/medical/dicom/current/output/chtml/part03/sect_C.10.5.html#sect_C.10.5.1.2">PR
+ *     Graphic Data and Graphic Type</a>
+ * @see <a
+ *     href="https://dicom.nema.org/medical/dicom/current/output/chtml/part03/sect_C.10.5.html#sect_C.10.5.1.3">SR
+ *     Graphic Data</a>
  */
 public class PrGraphicUtil {
   private static final Logger LOGGER = LoggerFactory.getLogger(PrGraphicUtil.class);
 
-  // Graphic type constants
+  // Graphic type (PR)
   public static final String POINT = "POINT";
   public static final String POLYLINE = "POLYLINE";
   public static final String INTERPOLATED = "INTERPOLATED";
   public static final String CIRCLE = "CIRCLE";
-  public static final String ELLIPSE = "ELLIPSE";
-  public static final String RECTANGLE = "RECTANGLE";
-  public static final String MULTIPOINT = "MULTIPOINT";
+  public static final String ELLIPSE = "ELLIPSE"; // Both PR and SR
+
+  // Compound graphic type (SR)
   public static final String MULTILINE = "MULTILINE";
   public static final String INFINITELINE = "INFINITELINE";
   public static final String CUTLINE = "CUTLINE";
@@ -68,6 +86,8 @@ public class PrGraphicUtil {
   public static final String AXIS = "AXIS";
   public static final String CROSSHAIR = "CROSSHAIR";
   public static final String ARROW = "ARROW";
+  public static final String RECTANGLE = "RECTANGLE";
+  public static final String MULTIPOINT = "MULTIPOINT";
 
   // Default values
   private static final int DEFAULT_POINT_SIZE = 3;
@@ -184,6 +204,49 @@ public class PrGraphicUtil {
     };
   }
 
+  // ========== DICOM SR Specific Methods ==========
+
+  private static double getRotationAngle(Attributes attributes) {
+    Float angle = DicomUtils.getFloatFromDicomElement(attributes, Tag.RotationAngle, null);
+    return angle != null ? Math.toRadians(angle) : 0.0;
+  }
+
+  private static Point2D getRotationPoint(Attributes attributes, BaseGraphicContext context) {
+    float[] rotPoint =
+        DicomUtils.getFloatArrayFromDicomElement(attributes, Tag.RotationPoint, null);
+    if (rotPoint != null && rotPoint.length >= 2) {
+      return context.transformPoint(rotPoint[0], rotPoint[1]);
+    }
+    return null;
+  }
+
+  private static Graphic buildSrEllipse(BaseGraphicContext context, float[] pts)
+      throws InvalidShapeException {
+    Point2D center = context.transformPoint(pts[0], pts[1]);
+    Point2D boundary = context.transformPoint(pts[2], pts[3]);
+
+    // Calculate radius from distance between center and boundary
+    double radius = center.distance(boundary);
+
+    Ellipse2D ellipse = new Ellipse2D.Double();
+    ellipse.setFrameFromCenter(
+        center.getX(), center.getY(), center.getX() + radius, center.getY() + radius);
+
+    // Apply rotation if present
+    double rotation = getRotationAngle(context.attributes);
+    Point2D rotPoint = getRotationPoint(context.attributes, context);
+
+    if (MathUtil.isDifferentFromZero(rotation)) {
+      double rx = rotPoint != null ? rotPoint.getX() : center.getX();
+      double ry = rotPoint != null ? rotPoint.getY() : center.getY();
+      AffineTransform rotate = AffineTransform.getRotateInstance(rotation, rx, ry);
+      Shape rotatedEllipse = rotate.createTransformedShape(ellipse);
+      return createNonEditableGraphic(context, rotatedEllipse, context.isFilled());
+    }
+
+    return createEllipseGraphic(context, ellipse);
+  }
+
   // ========== Graphic Builders ==========
 
   private static Graphic buildPoint(BaseGraphicContext context) throws InvalidShapeException {
@@ -240,11 +303,26 @@ public class PrGraphicUtil {
   }
 
   private static Graphic buildEllipse(BaseGraphicContext context) throws InvalidShapeException {
-    EllipseData data = validateAndExtractEllipseData(context);
-    if (data == null) return null;
+    float[] pts = context.getPoints();
+    if (pts == null) {
+      return null;
+    }
 
-    EllipseGeometry geometry = calculateEllipseGeometry(data);
-    return createEllipseWithRotation(context, geometry);
+    // SR format: 2 points (center + boundary, 4 coords)
+    if (context.isDcmSR() && pts.length == 4) {
+      return buildSrEllipse(context, pts);
+    }
+
+    // PR format: 4 points (major + minor axes, 8 coords)
+    if (pts.length >= 8) {
+      EllipseData data = validateAndExtractEllipseData(context);
+      if (data == null) return null;
+      EllipseGeometry geometry = calculateEllipseGeometry(data);
+      return createEllipseWithRotation(context, geometry);
+    }
+
+    LOGGER.warn("Invalid ellipse data: expected 4 (SR) or 8 (PR) coordinates, got {}", pts.length);
+    return null;
   }
 
   private static Graphic buildMultiPoint(BaseGraphicContext context) {
@@ -260,6 +338,20 @@ public class PrGraphicUtil {
     if (data == null) return null;
 
     Rectangle2D rectangle = createRectangle(data);
+
+    if (context.isDcmSR()) {
+      double rotation = getRotationAngle(context.attributes);
+      if (MathUtil.isDifferentFromZero(rotation)) {
+        Point2D rotPoint = getRotationPoint(context.attributes, context);
+        double rx = rotPoint != null ? rotPoint.getX() : rectangle.getCenterX();
+        double ry = rotPoint != null ? rotPoint.getY() : rectangle.getCenterY();
+
+        AffineTransform rotate = AffineTransform.getRotateInstance(rotation, rx, ry);
+        Shape rotatedRect = rotate.createTransformedShape(rectangle);
+        return createNonEditableGraphic(context, rotatedRect, context.isFilled());
+      }
+    }
+
     return createRectangleGraphic(context, rectangle);
   }
 

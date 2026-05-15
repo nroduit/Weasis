@@ -146,6 +146,7 @@
             <configuration>
               <name>build.year</name>
               <pattern>yyyy</pattern>
+              <locale>en</locale>
             </configuration>
           </execution>
         </executions>

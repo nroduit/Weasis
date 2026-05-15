@@ -13,6 +13,7 @@ import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.List;
+import java.util.function.ToDoubleFunction;
 import javax.swing.JMenuItem;
 import javax.swing.SwingUtilities;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -27,52 +28,58 @@ public class StructRegionTree extends SegRegionTree {
     super(segRegionTool);
   }
 
+  @Override
   protected void mousePressed(MouseEvent e) {
     popupMenu.removeAll();
-    if (SwingUtilities.isRightMouseButton(e)) {
-      DefaultMutableTreeNode node = getTreeNode(e.getPoint());
-      if (node != null) {
-        boolean leaf = node.isLeaf();
-        if (!leaf) {
-          popupMenu.add(getCheckAllMenuItem(node, true));
-          popupMenu.add(getCheckAllMenuItem(node, false));
-        }
-        popupMenu.add(getOpacityMenuItem(node, e.getPoint()));
-        popupMenu.add(getExportMenuItem(node));
-        if (leaf) {
-          popupMenu.add(getStatisticMenuItem(node));
-        }
-        popupMenu.show(StructRegionTree.this, e.getX(), e.getY());
-      }
+    if (!SwingUtilities.isRightMouseButton(e)) {
+      return;
     }
+    DefaultMutableTreeNode node = getTreeNode(e.getPoint());
+    if (node == null) {
+      return;
+    }
+    boolean leaf = node.isLeaf();
+    if (!leaf) {
+      popupMenu.add(getCheckAllMenuItem(node, true));
+      popupMenu.add(getCheckAllMenuItem(node, false));
+    }
+    popupMenu.add(getOpacityMenuItem(node, e.getPoint()));
+    popupMenu.add(getExportMenuItem(node));
+    if (leaf) {
+      popupMenu.add(getStatisticMenuItem(node));
+    }
+    popupMenu.show(this, e.getX(), e.getY());
   }
 
   private JMenuItem getExportMenuItem(DefaultMutableTreeNode node) {
-    JMenuItem jMenuItem = new JMenuItem(Messages.getString("export.as.csv"));
-    jMenuItem.addActionListener(_ -> exportToCSV(node));
-    return jMenuItem;
+    JMenuItem item = new JMenuItem(Messages.getString("export.as.csv"));
+    item.addActionListener(_ -> exportToCSV(node));
+    return item;
   }
 
   private void exportToCSV(DefaultMutableTreeNode node) {
-    if (node != null) {
-      List<StructRegion> segRegions = new ArrayList<>();
-      if (node.isLeaf() && node.getUserObject() instanceof StructRegion region) {
-        segRegions.add(region);
-      } else {
-        Enumeration<?> children = node.children();
-        while (children.hasMoreElements()) {
-          Object child = children.nextElement();
-          if (child instanceof DefaultMutableTreeNode dtm
-              && dtm.getUserObject() instanceof StructRegion region) {
-            segRegions.add(region);
-          }
-        }
-      }
+    if (node == null) {
+      return;
+    }
+    List<StructRegion> segRegions = collectStructRegions(node);
+    if (!segRegions.isEmpty()) {
+      writeToCsv(segRegions);
+    }
+  }
 
-      if (!segRegions.isEmpty()) {
-        writeToCsv(segRegions);
+  private static List<StructRegion> collectStructRegions(DefaultMutableTreeNode node) {
+    if (node.isLeaf() && node.getUserObject() instanceof StructRegion region) {
+      return List.of(region);
+    }
+    List<StructRegion> regions = new ArrayList<>(node.getChildCount());
+    Enumeration<?> children = node.children();
+    while (children.hasMoreElements()) {
+      if (children.nextElement() instanceof DefaultMutableTreeNode dtm
+          && dtm.getUserObject() instanceof StructRegion region) {
+        regions.add(region);
       }
     }
+    return regions;
   }
 
   private static void writeToCsv(List<StructRegion> segRegions) {
@@ -81,7 +88,8 @@ public class StructRegionTree extends SegRegionTree {
     csv.addQuotedNameAndSeparator("ROI Observation Label"); // NON-NLS
     csv.addQuotedNameAndSeparator(Messages.getString("thickness") + " [mm]"); // NON-NLS
     csv.addQuotedNameAndSeparator(Messages.getString("volume") + " [cm³]"); // NON-NLS
-    if (hasDvh(segRegions)) {
+    boolean withDvh = hasDvh(segRegions);
+    if (withDvh) {
       csv.addQuotedNameAndSeparator(Messages.getString("min.dose") + " [%]");
       csv.addQuotedNameAndSeparator(Messages.getString("max.dose") + " [%]");
       csv.addQuotedName(Messages.getString("mean.dose") + " [%]");
@@ -90,7 +98,7 @@ public class StructRegionTree extends SegRegionTree {
 
     StringBuilder sb = csv.getBuilder();
     for (StructRegion region : segRegions) {
-      Dvh structureDvh = region.getDvh();
+      Dvh dvh = region.getDvh();
       csv.addQuotedName(region.getLabel());
       csv.addQuotedName(region.getRoiObservationLabel());
       csv.addSeparator();
@@ -98,35 +106,27 @@ public class StructRegionTree extends SegRegionTree {
       csv.addSeparator();
       sb.append(region.getVolume());
       csv.addSeparator();
-      sb.append(
-          structureDvh == null
-              ? StringUtil.EMPTY_STRING
-              : Dose.calculateRelativeDose(
-                  structureDvh.getDvhMinimumDoseCGy(), structureDvh.getPlan().getRxDose()));
+      appendRelativeDose(sb, dvh, Dvh::getDvhMinimumDoseCGy);
       csv.addSeparator();
-      sb.append(
-          structureDvh == null
-              ? StringUtil.EMPTY_STRING
-              : Dose.calculateRelativeDose(
-                  structureDvh.getDvhMaximumDoseCGy(), structureDvh.getPlan().getRxDose()));
+      appendRelativeDose(sb, dvh, Dvh::getDvhMaximumDoseCGy);
       csv.addSeparator();
-      sb.append(
-          structureDvh == null
-              ? StringUtil.EMPTY_STRING
-              : Dose.calculateRelativeDose(
-                  structureDvh.getDvhMeanDoseCGy(), structureDvh.getPlan().getRxDose()));
+      appendRelativeDose(sb, dvh, Dvh::getDvhMeanDoseCGy);
       csv.addEndOfLine();
     }
-
     csv.copyToClipboard();
   }
 
-  static boolean hasDvh(List<StructRegion> segRegions) {
-    for (StructRegion region : segRegions) {
-      if (region.getDvh() != null) {
-        return true;
-      }
+  private static void appendRelativeDose(
+      StringBuilder sb, Dvh dvh, ToDoubleFunction<Dvh> doseInCGy) {
+    if (dvh == null) {
+      sb.append(StringUtil.EMPTY_STRING);
+    } else {
+      sb.append(
+          Dose.calculateRelativeDose(doseInCGy.applyAsDouble(dvh), dvh.getPlan().getRxDose()));
     }
-    return false;
+  }
+
+  static boolean hasDvh(List<StructRegion> segRegions) {
+    return segRegions.stream().anyMatch(r -> r.getDvh() != null);
   }
 }

@@ -12,9 +12,9 @@ package org.weasis.core.api.net;
 import java.net.URL;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -30,6 +30,20 @@ public record URLParameters(
     boolean allowUserInteraction) {
 
   public static final URLParameters DEFAULT = new URLParameters();
+
+  public URLParameters {
+    if (connectTimeout < 0) {
+      throw new IllegalArgumentException("Connect timeout cannot be negative: " + connectTimeout);
+    }
+    if (readTimeout < 0) {
+      throw new IllegalArgumentException("Read timeout cannot be negative: " + readTimeout);
+    }
+    if (ifModifiedSince < 0) {
+      throw new IllegalArgumentException(
+          "If-Modified-Since cannot be negative: " + ifModifiedSince);
+    }
+    headers = headers == null ? Collections.emptyMap() : Map.copyOf(headers);
+  }
 
   public URLParameters() {
     this(Collections.emptyMap());
@@ -54,43 +68,6 @@ public record URLParameters(
     this(headers, 0L, connectTimeout, readTimeout, false, true, false);
   }
 
-  public URLParameters(
-      Map<String, String> headers,
-      long ifModifiedSince,
-      int connectTimeout,
-      int readTimeout,
-      boolean httpPost,
-      boolean useCaches,
-      boolean allowUserInteraction) {
-
-    validateTimeouts(connectTimeout, readTimeout);
-    validateIfModifiedSince(ifModifiedSince);
-
-    this.headers = headers == null ? Collections.emptyMap() : Map.copyOf(headers);
-    this.ifModifiedSince = ifModifiedSince;
-    this.connectTimeout = connectTimeout;
-    this.readTimeout = readTimeout;
-    this.httpPost = httpPost;
-    this.useCaches = useCaches;
-    this.allowUserInteraction = allowUserInteraction;
-  }
-
-  private static void validateTimeouts(int connectTimeout, int readTimeout) {
-    if (connectTimeout < 0) {
-      throw new IllegalArgumentException("Connect timeout cannot be negative: " + connectTimeout);
-    }
-    if (readTimeout < 0) {
-      throw new IllegalArgumentException("Read timeout cannot be negative: " + readTimeout);
-    }
-  }
-
-  private static void validateIfModifiedSince(long ifModifiedSince) {
-    if (ifModifiedSince < 0) {
-      throw new IllegalArgumentException(
-          "If-Modified-Since cannot be negative: " + ifModifiedSince);
-    }
-  }
-
   public static Builder builder() {
     return new Builder();
   }
@@ -100,87 +77,49 @@ public record URLParameters(
   }
 
   public static Map<String, String> splitParameter(URL url) {
-    Objects.requireNonNull(url, "URL cannot be null");
-
-    String query = url.getQuery();
-    if (query == null || query.isEmpty()) {
+    var query = queryOf(url);
+    if (query.isEmpty()) {
       return Collections.emptyMap();
     }
-
-    return parseQueryString(query);
+    Map<String, String> result = new LinkedHashMap<>();
+    for (var pair : query.split("&")) {
+      var kv = parsePair(pair, "");
+      result.put(kv[0], kv[1]);
+    }
+    return Map.copyOf(result);
   }
 
   public static Map<String, List<String>> splitMultipleValuesParameter(URL url) {
-    Objects.requireNonNull(url, "URL cannot be null");
-
-    String query = url.getQuery();
-    if (query == null || query.isEmpty()) {
+    var query = queryOf(url);
+    if (query.isEmpty()) {
       return Collections.emptyMap();
     }
-
-    return parseMultiValueQueryString(query);
-  }
-
-  private static Map<String, String> parseQueryString(String query) {
-    Map<String, String> queryPairs = new LinkedHashMap<>();
-    String[] pairs = query.split("&");
-    for (String pair : pairs) {
-      parsePair(pair, queryPairs);
+    Map<String, List<String>> result = new LinkedHashMap<>();
+    for (var pair : query.split("&")) {
+      var kv = parsePair(pair, null);
+      result.computeIfAbsent(kv[0], _ -> new ArrayList<>()).add(kv[1]);
     }
-
-    return Map.copyOf(queryPairs);
+    return Map.copyOf(result);
   }
 
-  private static void parsePair(String pair, Map<String, String> queryPairs) {
-    int idx = pair.indexOf("=");
-    String key = decodeUrlComponent(idx > 0 ? pair.substring(0, idx) : pair);
-    String value =
-        (idx > 0 && pair.length() > idx + 1) ? decodeUrlComponent(pair.substring(idx + 1)) : "";
-
-    queryPairs.put(key, value);
+  private static String queryOf(URL url) {
+    Objects.requireNonNull(url, "url");
+    var query = url.getQuery();
+    return query == null ? "" : query;
   }
 
-  private static Map<String, List<String>> parseMultiValueQueryString(String query) {
-    Map<String, List<String>> queryPairs = new LinkedHashMap<>();
-    String[] pairs = query.split("&");
-    for (String pair : pairs) {
-      parseMultiValuePair(pair, queryPairs);
-    }
-
-    return Map.copyOf(queryPairs);
-  }
-
-  private static void parseMultiValuePair(String pair, Map<String, List<String>> queryPairs) {
-    int idx = pair.indexOf("=");
-    String key = decodeUrlComponent(idx > 0 ? pair.substring(0, idx) : pair);
-    String value =
-        (idx > 0 && pair.length() > idx + 1) ? decodeUrlComponent(pair.substring(idx + 1)) : null;
-
-    queryPairs.computeIfAbsent(key, k -> new LinkedList<>()).add(value);
+  private static String[] parsePair(String pair, String missingValue) {
+    int idx = pair.indexOf('=');
+    var key = decodeUrlComponent(idx > 0 ? pair.substring(0, idx) : pair);
+    var value =
+        (idx > 0 && pair.length() > idx + 1)
+            ? decodeUrlComponent(pair.substring(idx + 1))
+            : missingValue;
+    return new String[] {key, value};
   }
 
   private static String decodeUrlComponent(String component) {
     return URLDecoder.decode(component, StandardCharsets.UTF_8);
-  }
-
-  @Override
-  public String toString() {
-    return "URLParameters{"
-        + "headers="
-        + headers
-        + ", ifModifiedSince="
-        + ifModifiedSince
-        + ", connectTimeout="
-        + connectTimeout
-        + ", readTimeout="
-        + readTimeout
-        + ", httpPost="
-        + httpPost
-        + ", useCaches="
-        + useCaches
-        + ", allowUserInteraction="
-        + allowUserInteraction
-        + '}';
   }
 
   public static final class Builder {

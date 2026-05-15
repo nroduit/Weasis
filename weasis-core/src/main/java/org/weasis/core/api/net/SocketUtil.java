@@ -9,6 +9,7 @@
  */
 package org.weasis.core.api.net;
 
+import java.io.IOException;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.security.SecureRandom;
@@ -22,7 +23,8 @@ public final class SocketUtil {
   public static final int PORT_MIN = 1024;
   public static final int PORT_MAX = 65535;
 
-  private static final int MAX_ATTEMPTS_MULTIPLIER = 500;
+  private static final int PORT_RANGE = PORT_MAX - PORT_MIN + 1;
+  private static final int EXTRA_ATTEMPTS = 500;
   private static final String LOCALHOST = "localhost";
 
   private static final SecureRandom RANDOM = new SecureRandom();
@@ -32,17 +34,18 @@ public final class SocketUtil {
   public static boolean isPortAvailable(int port) {
     try (ServerSocket _ = createServerSocket(port)) {
       return true;
-    } catch (Exception ex) {
+    } catch (IOException | IllegalArgumentException ex) {
       return false;
     }
   }
 
   public static SortedSet<Integer> findAvailablePorts(int numberOfPorts) {
-    validatePortCount(numberOfPorts);
+    if (numberOfPorts <= 0) {
+      throw new IllegalArgumentException("Number of ports must be positive: " + numberOfPorts);
+    }
 
     var availablePorts = new TreeSet<Integer>();
-    int maxAttempts = numberOfPorts + MAX_ATTEMPTS_MULTIPLIER;
-
+    int maxAttempts = numberOfPorts + EXTRA_ATTEMPTS;
     for (int attempt = 0;
         attempt < maxAttempts && availablePorts.size() < numberOfPorts;
         attempt++) {
@@ -58,31 +61,19 @@ public final class SocketUtil {
   }
 
   public static int findAvailablePort() {
-    int portRange = PORT_MAX - PORT_MIN + 1;
-
-    for (int attempt = 0; attempt < portRange; attempt++) {
-      int port = generateRandomPort();
+    for (int attempt = 0; attempt < PORT_RANGE; attempt++) {
+      int port = PORT_MIN + RANDOM.nextInt(PORT_RANGE);
       if (isPortAvailable(port)) {
         return port;
       }
     }
     throw new IllegalStateException(
         "Could not find an available TCP port in the range [%d, %d] after %d attempts"
-            .formatted(PORT_MIN, PORT_MAX, portRange));
+            .formatted(PORT_MIN, PORT_MAX, PORT_RANGE));
   }
 
-  private static ServerSocket createServerSocket(int port) throws Exception {
+  private static ServerSocket createServerSocket(int port) throws IOException {
     return ServerSocketFactory.getDefault()
         .createServerSocket(port, 1, InetAddress.getByName(LOCALHOST));
-  }
-
-  private static int generateRandomPort() {
-    return PORT_MIN + RANDOM.nextInt(PORT_MAX - PORT_MIN + 1);
-  }
-
-  private static void validatePortCount(int numberOfPorts) {
-    if (numberOfPorts <= 0) {
-      throw new IllegalArgumentException("Number of ports must be positive: " + numberOfPorts);
-    }
   }
 }

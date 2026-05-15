@@ -16,10 +16,13 @@ import java.lang.invoke.MethodHandles;
 import java.lang.invoke.VarHandle;
 import java.util.concurrent.locks.ReentrantLock;
 import org.joml.Matrix4d;
+import org.joml.Vector3i;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.image.cv.CvUtil;
+import org.weasis.core.api.vol.ChunkedArray;
+import org.weasis.core.api.vol.ChunkedMappedBuffer;
 
 /**
  * Carries all per-build state needed for one splatting pass:
@@ -298,7 +301,390 @@ public final class SplatContext implements AutoCloseable {
    *
    * <p>No-op when the accumulators are {@code null} (non-weighted mode).
    */
+  /**
+   * Normalisation pass: for every voxel divides the accumulated weighted value by the accumulated
+   * weight and writes the result into the volume's data array. Voxels whose total weight is below
+   * {@link #WEIGHT_EPSILON} keep the background value written by {@code createData()}.
+   *
+   * <p>Two execution strategies are used depending on the back-end:
+   *
+   * <ul>
+   *   <li><b>Heap path</b> — work is split into Z-slabs and processed in parallel on the common
+   *       ForkJoin pool. Each slab walks its accumulators chunk-by-chunk, hoisting chunk lookups
+   *       out of the inner loop, and writes directly through {@link Volume#setNormalizedFloatAt}
+   *       (no {@code (x,y,z,c)} decomposition, no {@code linearIndex} recomputation).
+   *   <li><b>Disk (mapped) path</b> — runs serially. This back-end is only chosen when heap
+   *       allocation has already failed, so the host is RAM-starved and parallel mapped-file access
+   *       would thrash the page cache. The slice's accumulators are bulk-read into temp {@code
+   *       float[]} arrays via {@link ChunkedMappedBuffer#getFloats}, replacing two per-voxel mapped
+   *       reads with two big sequential ones.
+   * </ul>
+   *
+   * <p>If {@code progressListener} is non-null it is invoked once per completed Z-slice so that the
+   * caller can advance a UI progress indicator.
+   *
+   * <p>No-op when the accumulators are {@code null} (non-weighted mode).
+   */
+  public <T extends Number, A> void normalize(
+      Volume<T, A> volume, java.util.function.IntConsumer progressListener) {
+    if (!isWeighted()) return;
+
+    final int nx = volume.size.x;
+    final int ny = volume.size.y;
+    final int nz = volume.size.z;
+    final int channels = volume.channels;
+
+    java.util.concurrent.atomic.AtomicInteger doneSlices =
+        new java.util.concurrent.atomic.AtomicInteger();
+
+    if (weightAcc != null && valueAcc != null) {
+      if (volume.data != null) {
+        LOGGER.debug("normalize path: heap-acc → heap-data");
+        // Heap → heap: parallel by flat element range using RecursiveAction. The leaf threshold
+        // is chosen so each task is large enough (~hundreds of µs) to amortise FJP overhead but
+        // small enough to keep all cores busy on uneven volumes.
+        long total = (long) nx * ny * nz * channels;
+        long sliceLen = (long) nx * ny * channels;
+        java.util.concurrent.ForkJoinPool pool = java.util.concurrent.ForkJoinPool.commonPool();
+        java.util.concurrent.atomic.AtomicLong cpuNanos =
+            new java.util.concurrent.atomic.AtomicLong();
+        java.util.concurrent.atomic.AtomicInteger leafCount =
+            new java.util.concurrent.atomic.AtomicInteger();
+        long t0 = System.nanoTime();
+        pool.invoke(
+            new HeapNormalizeTask(
+                volume,
+                0L,
+                total,
+                sliceLen,
+                doneSlices,
+                progressListener,
+                nz,
+                cpuNanos,
+                leafCount));
+        long wallMs = (System.nanoTime() - t0) / 1_000_000L;
+        long cpuMs = cpuNanos.get() / 1_000_000L;
+        LOGGER.debug(
+            "normalize heap-heap: {} voxels, {} leaves, parallelism={}, wall={} ms, sumCpu={} ms,"
+                + " speedup≈{}x",
+            total,
+            leafCount.get(),
+            pool.getParallelism(),
+            wallMs,
+            cpuMs,
+            wallMs == 0
+                ? 0
+                : String.format(java.util.Locale.ROOT, "%.2f", cpuMs / (double) wallMs));
+      } else {
+        LOGGER.debug("normalize path: heap-acc → mapped-data");
+        // Heap accumulators + mapped destination data: each Z-slice still emits a single bulk
+        // mapped write; parallelism stays per-slab so the bulk writes don't interleave.
+        java.util.stream.IntStream.range(0, nz)
+            .parallel()
+            .forEach(
+                z -> {
+                  normalizeSliceHeapToMapped(volume, z, nx, ny, channels);
+                  if (progressListener != null) {
+                    progressListener.accept(doneSlices.incrementAndGet());
+                  }
+                });
+      }
+    } else if (mappedWeightAcc != null && mappedValueAcc != null) {
+      long sliceLen = (long) nx * ny * channels;
+      if (volume.data != null) {
+        LOGGER.debug("normalize path: mapped-acc → heap-data (parallel)");
+        // Mapped accumulators but heap-resident destination: parallel by Z-slice. Each slice
+        // does two bulk mapped reads (sequential per slice, the OS prefetches pages) into a
+        // per-thread scratch float[] pair, then runs a hoisted-dispatch typed inner loop into
+        // the heap data array. The mapped reads happen concurrently from multiple threads but
+        // the byte ranges are disjoint so there's no false sharing on the page cache lines.
+        ThreadLocal<float[][]> scratchTL =
+            ThreadLocal.withInitial(
+                () -> new float[][] {new float[(int) sliceLen], new float[(int) sliceLen]});
+        long t0 = System.nanoTime();
+        java.util.stream.IntStream.range(0, nz)
+            .parallel()
+            .forEach(
+                z -> {
+                  float[][] sc = scratchTL.get();
+                  normalizeSliceMappedToHeap(volume, z, sliceLen, sc[0], sc[1]);
+                  if (progressListener != null) {
+                    progressListener.accept(doneSlices.incrementAndGet());
+                  }
+                });
+        long wallMs = (System.nanoTime() - t0) / 1_000_000L;
+        LOGGER.debug(
+            "normalize mapped-heap: {} slices × {} voxels, wall={} ms", nz, sliceLen, wallMs);
+      } else {
+        LOGGER.debug("normalize path: mapped-acc → mapped-data (serial)");
+        // Disk path on both ends: serial, with bulk reads. Parallel access to a memory-mapped
+        // file when the working set exceeds RAM (which is why we ended up on disk in the first
+        // place) leads to page-cache thrash that more than wipes out the parallel speedup.
+        // Reuse the same scratch buffers for every slice — single-threaded so no contention.
+        float[] wSlab = new float[(int) sliceLen];
+        float[] vSlab = new float[(int) sliceLen];
+        for (int z = 0; z < nz; z++) {
+          normalizeSliceMapped(volume, z, sliceLen, wSlab, vSlab);
+          if (progressListener != null) {
+            progressListener.accept(doneSlices.incrementAndGet());
+          }
+        }
+      }
+    }
+  }
+
+  /** Backward-compatible overload without progress reporting. */
   public <T extends Number, A> void normalize(Volume<T, A> volume) {
+    normalize(volume, null);
+  }
+
+  /**
+   * Heap-accumulator → mapped-data normalisation of a single Z-slice. Materialises the slice into
+   * scratch float arrays then bulk-writes it through {@link Volume#writeNormalizedSliceMappedBulk}.
+   * Used only when accumulators are heap-resident but the destination volume had to fall back to
+   * disk.
+   */
+  private <T extends Number, A> void normalizeSliceHeapToMapped(
+      Volume<T, A> volume, int z, int nx, int ny, int channels) {
+    final ChunkedArray<int[]> wa = weightAcc;
+    final ChunkedArray<int[]> va = valueAcc;
+
+    long sliceStart = volume.linearIndex(0, 0, z, 0);
+    long sliceLen = (long) nx * ny * channels;
+    long end = sliceStart + sliceLen;
+    int n = (int) sliceLen;
+    float[] vals = new float[n];
+    float[] weights = new float[n];
+    long idx = sliceStart;
+    int outOff = 0;
+    while (idx < end) {
+      int wco = wa.chunkOffset(idx);
+      int[] wChunk = wa.getChunk(wa.chunkIndex(idx));
+      int[] vChunk = va.getChunk(va.chunkIndex(idx));
+      int vco = va.chunkOffset(idx);
+      int chunkRemaining = wChunk.length - wco;
+      long maxRunByEnd = end - idx;
+      int run = (int) Math.min(chunkRemaining, maxRunByEnd);
+      for (int k = 0; k < run; k++) {
+        float fw = Float.intBitsToFloat(wChunk[wco + k]);
+        weights[outOff + k] = fw;
+        if (fw >= WEIGHT_EPSILON) {
+          vals[outOff + k] = Float.intBitsToFloat(vChunk[vco + k]) / fw;
+        }
+      }
+      idx += run;
+      outOff += run;
+    }
+    volume.writeNormalizedSliceMappedBulk(sliceStart, vals, weights, n);
+  }
+
+  /**
+   * ForkJoin task for the heap-to-heap normalisation path. Recursively splits a flat element range,
+   * eventually walking each leaf chunk-by-chunk and dispatching to {@link Volume#normalizeHeapRun}
+   * (which hoists the destination-type switch out of the inner loop).
+   */
+  private final class HeapNormalizeTask extends java.util.concurrent.RecursiveAction {
+    /**
+     * Leaf size: balances FJP overhead against load balancing. ~4M elements ≈ 16 MB read of
+     * accumulators per leaf — fits comfortably in L3 on modern CPUs.
+     */
+    private static final long LEAF_THRESHOLD = 1L << 22;
+
+    private final Volume<?, ?> volume;
+    private final long start;
+    private final long end;
+    private final long sliceLen;
+    private final java.util.concurrent.atomic.AtomicInteger doneSlices;
+    private final java.util.function.IntConsumer progressListener;
+    private final int totalSlices;
+    private final java.util.concurrent.atomic.AtomicLong cpuNanos;
+    private final java.util.concurrent.atomic.AtomicInteger leafCount;
+
+    HeapNormalizeTask(
+        Volume<?, ?> volume,
+        long start,
+        long end,
+        long sliceLen,
+        java.util.concurrent.atomic.AtomicInteger doneSlices,
+        java.util.function.IntConsumer progressListener,
+        int totalSlices,
+        java.util.concurrent.atomic.AtomicLong cpuNanos,
+        java.util.concurrent.atomic.AtomicInteger leafCount) {
+      this.volume = volume;
+      this.start = start;
+      this.end = end;
+      this.sliceLen = sliceLen;
+      this.doneSlices = doneSlices;
+      this.progressListener = progressListener;
+      this.totalSlices = totalSlices;
+      this.cpuNanos = cpuNanos;
+      this.leafCount = leafCount;
+    }
+
+    @Override
+    protected void compute() {
+      if (end - start <= LEAF_THRESHOLD) {
+        runLeaf();
+        return;
+      }
+      // Split, but keep the split point on a slice boundary so progress accounting stays exact.
+      long mid = start + ((end - start) >>> 1);
+      if (sliceLen > 0) {
+        long rounded = (mid / sliceLen) * sliceLen;
+        if (rounded > start && rounded < end) {
+          mid = rounded;
+        }
+      }
+      HeapNormalizeTask left =
+          new HeapNormalizeTask(
+              volume,
+              start,
+              mid,
+              sliceLen,
+              doneSlices,
+              progressListener,
+              totalSlices,
+              cpuNanos,
+              leafCount);
+      HeapNormalizeTask right =
+          new HeapNormalizeTask(
+              volume,
+              mid,
+              end,
+              sliceLen,
+              doneSlices,
+              progressListener,
+              totalSlices,
+              cpuNanos,
+              leafCount);
+      invokeAll(left, right);
+    }
+
+    private void runLeaf() {
+      long t0 = System.nanoTime();
+      final ChunkedArray<int[]> wa = weightAcc;
+      final ChunkedArray<int[]> va = valueAcc;
+      long idx = start;
+      while (idx < end) {
+        int wco = wa.chunkOffset(idx);
+        int[] wChunk = wa.getChunk(wa.chunkIndex(idx));
+        int[] vChunk = va.getChunk(va.chunkIndex(idx));
+        // Accumulator chunks share offsets — wco == vco by construction.
+        int chunkRemaining = wChunk.length - wco;
+        long maxRunByEnd = end - idx;
+        int run = (int) Math.min(chunkRemaining, maxRunByEnd);
+        // One destination-type dispatch per chunk-aligned run, then a tight primitive inner loop.
+        volume.normalizeHeapRun(wChunk, vChunk, wco, idx, run);
+        idx += run;
+      }
+      cpuNanos.addAndGet(System.nanoTime() - t0);
+      leafCount.incrementAndGet();
+      // Slice-granular progress reporting: count whole slices completed within [start, end).
+      if (progressListener != null && sliceLen > 0) {
+        long firstSlice = (start + sliceLen - 1) / sliceLen;
+        long lastSlice = end / sliceLen;
+        int slicesInLeaf = (int) Math.max(0, lastSlice - firstSlice);
+        if (slicesInLeaf > 0) {
+          int done = doneSlices.addAndGet(slicesInLeaf);
+          // Always report; the caller throttles delivery to the EDT.
+          progressListener.accept(Math.min(done, totalSlices));
+        }
+      }
+    }
+  }
+
+  /**
+   * Mapped-file normalisation of a single Z-slice using bulk reads into reusable scratch arrays.
+   */
+  private <T extends Number, A> void normalizeSliceMapped(
+      Volume<T, A> volume, int z, long sliceLen, float[] wSlab, float[] vSlab) {
+    final ChunkedMappedBuffer mw = mappedWeightAcc;
+    final ChunkedMappedBuffer mv = mappedValueAcc;
+
+    long sliceStart = volume.linearIndex(0, 0, z, 0);
+    long byteStart = sliceStart * Float.BYTES;
+    int n = (int) sliceLen;
+
+    // Two big sequential reads (OS prefetched) replace 2 × n random mapped-buffer dereferences.
+    mw.getFloats(byteStart, wSlab, 0, n);
+    mv.getFloats(byteStart, vSlab, 0, n);
+
+    if (volume.data == null) {
+      // Worst case: accumulators AND data are both disk-backed. Convert in-place into vSlab
+      // (vals/weights are independent across iterations) and bulk-write the typed slice via
+      // ChunkedMappedBuffer.put*. End-to-end the slice is now three sequential mapped-file
+      // streams (W read, V read, data write) — page cache friendly.
+      for (int k = 0; k < n; k++) {
+        float fw = wSlab[k];
+        if (fw >= WEIGHT_EPSILON) {
+          vSlab[k] = vSlab[k] / fw;
+        }
+      }
+      volume.writeNormalizedSliceMappedBulk(sliceStart, vSlab, wSlab, n);
+      return;
+    }
+
+    for (int k = 0; k < n; k++) {
+      float fw = wSlab[k];
+      if (fw < WEIGHT_EPSILON) continue;
+      volume.setNormalizedFloatAt(sliceStart + k, vSlab[k] / fw);
+    }
+  }
+
+  /**
+   * Mapped-accumulator → heap-data normalisation of a single Z-slice. Two bulk {@code getFloats}
+   * reads from the mapped weight/value files into per-thread scratch arrays, then a chunk-walk over
+   * the destination data array dispatching once per chunk-aligned run to a typed inner loop via
+   * {@link Volume#normalizeFloatRunToHeap}. This eliminates the per-voxel {@link
+   * Volume#setNormalizedFloatAt} switch that dominated the previous serial path.
+   */
+  private <T extends Number, A> void normalizeSliceMappedToHeap(
+      Volume<T, A> volume, int z, long sliceLen, float[] wSlab, float[] vSlab) {
+    final ChunkedMappedBuffer mw = mappedWeightAcc;
+    final ChunkedMappedBuffer mv = mappedValueAcc;
+    long sliceStart = volume.linearIndex(0, 0, z, 0);
+    long byteStart = sliceStart * Float.BYTES;
+    int n = (int) sliceLen;
+    mw.getFloats(byteStart, wSlab, 0, n);
+    mv.getFloats(byteStart, vSlab, 0, n);
+
+    long idx = sliceStart;
+    long end = sliceStart + n;
+    int srcOff = 0;
+    while (idx < end) {
+      int dco = volume.data.chunkOffset(idx);
+      A dChunk = volume.data.getChunk(volume.data.chunkIndex(idx));
+      int chunkRemaining = java.lang.reflect.Array.getLength(dChunk) - dco;
+      long maxRunByEnd = end - idx;
+      int run = (int) Math.min(chunkRemaining, maxRunByEnd);
+      volume.normalizeFloatRunToHeap(wSlab, vSlab, srcOff, idx, run);
+      idx += run;
+      srcOff += run;
+    }
+  }
+
+  /**
+   * Callback invoked by {@link #normalizeBinary} for each voxel whose accumulated value crosses the
+   * given threshold.
+   */
+  @FunctionalInterface
+  public interface VoxelLabelSink {
+    void accept(int x, int y, int z);
+  }
+
+  /**
+   * Binary normalisation pass for label/mask splatting: for every voxel divides the accumulated
+   * weighted value by the accumulated weight and invokes {@code sink} when the resulting fraction
+   * is at least {@code threshold} (and weight ≥ {@link #WEIGHT_EPSILON}).
+   *
+   * <p>Used when accumulating binary masks (value=1.0 per source pixel) through trilinear splat to
+   * obtain an artefact-free, volume-grid label map regardless of the source plane orientation.
+   *
+   * @param size the volume size (X, Y, Z)
+   * @param threshold majority threshold in [0,1] (typically 0.5)
+   * @param sink callback invoked for each voxel that should receive a label
+   */
+  public void normalizeBinary(Vector3i size, float threshold, VoxelLabelSink sink) {
     if (!isWeighted()) return;
 
     final ChunkedArray<int[]> wa = weightAcc;
@@ -306,37 +692,35 @@ public final class SplatContext implements AutoCloseable {
     final ChunkedMappedBuffer mw = mappedWeightAcc;
     final ChunkedMappedBuffer mv = mappedValueAcc;
 
-    int nx = volume.size.x;
-    int ny = volume.size.y;
-    int nz = volume.size.z;
-    for (int z = 0; z < nz; z++) {
-      for (int y = 0; y < ny; y++) {
-        for (int x = 0; x < nx; x++) {
-          for (int c = 0; c < volume.channels; c++) {
-            long idx = volume.linearIndex(x, y, z, c);
-            float w;
-            float v;
-            if (wa != null && va != null) {
-              w =
-                  Float.intBitsToFloat(
-                      (int)
-                          INT_ARRAY_HANDLE.get(
-                              wa.getChunk(wa.chunkIndex(idx)), wa.chunkOffset(idx)));
-              if (w < WEIGHT_EPSILON) continue;
-              v =
-                  Float.intBitsToFloat(
-                      (int)
-                          INT_ARRAY_HANDLE.get(
-                              va.getChunk(va.chunkIndex(idx)), va.chunkOffset(idx)));
-            } else if (mw != null && mv != null) {
-              long byteOffset = idx * Float.BYTES;
-              w = mw.getFloat(byteOffset);
-              if (w < WEIGHT_EPSILON) continue;
-              v = mv.getFloat(byteOffset);
-            } else {
-              continue;
-            }
-            volume.setChannelValue(x, y, z, c, volume.convertToGeneric(v / w));
+    long sliceStride = (long) size.x * size.y;
+    for (int z = 0; z < size.z; z++) {
+      long zOff = (long) z * sliceStride;
+      for (int y = 0; y < size.y; y++) {
+        long yOff = zOff + (long) y * size.x;
+        for (int x = 0; x < size.x; x++) {
+          long idx = yOff + x;
+          float w;
+          float v;
+          if (wa != null && va != null) {
+            w =
+                Float.intBitsToFloat(
+                    (int)
+                        INT_ARRAY_HANDLE.get(wa.getChunk(wa.chunkIndex(idx)), wa.chunkOffset(idx)));
+            if (w < WEIGHT_EPSILON) continue;
+            v =
+                Float.intBitsToFloat(
+                    (int)
+                        INT_ARRAY_HANDLE.get(va.getChunk(va.chunkIndex(idx)), va.chunkOffset(idx)));
+          } else if (mw != null && mv != null) {
+            long byteOffset = idx * Float.BYTES;
+            w = mw.getFloat(byteOffset);
+            if (w < WEIGHT_EPSILON) continue;
+            v = mv.getFloat(byteOffset);
+          } else {
+            continue;
+          }
+          if ((v / w) >= threshold) {
+            sink.accept(x, y, z);
           }
         }
       }

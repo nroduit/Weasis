@@ -268,9 +268,9 @@ public class DicomDirLoader {
                   return switch (pixelData) {
                     case byte[] data -> ByteBuffer.wrap(data);
                     case BulkData bulkData ->
-                        ByteBuffer.wrap(bulkData.toBytes(holder.vr, bigEndian()));
+                        ByteBuffer.wrap(bulkData.toBytes(holder.vr, isBigEndian()));
                     case Fragments fragments ->
-                        ByteBuffer.wrap(fragments.toBytes(holder.vr, bigEndian()));
+                        ByteBuffer.wrap(fragments.toBytes(holder.vr, isBigEndian()));
                     default -> null;
                   };
                 }
@@ -281,7 +281,7 @@ public class DicomDirLoader {
                 }
 
                 @Override
-                public boolean bigEndian() {
+                public boolean isBigEndian() {
                   if (pixelData instanceof BulkData bulkData) {
                     return bulkData.bigEndian();
                   } else if (pixelData instanceof Fragments fragments) {

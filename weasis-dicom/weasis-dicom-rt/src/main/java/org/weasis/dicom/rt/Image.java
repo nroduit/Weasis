@@ -9,16 +9,13 @@
  */
 package org.weasis.dicom.rt;
 
-import java.util.AbstractMap;
 import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Tag;
 import org.joml.Vector3d;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.TagD;
 
-/**
- * @author Tomas Skripcak
- */
+/** Lightweight wrapper around a CT/MR slice exposing the geometry needed by the RT layer. */
 public class Image {
 
   private final DicomImageElement image;
@@ -29,44 +26,41 @@ public class Image {
   private final int feetFirst;
   private final Vector3d imageSpacing;
 
-  // Image LUT
-  AbstractMap.SimpleImmutableEntry<double[], double[]> imageLUT;
+  private DoseLut imageLUT;
 
   public Image(DicomImageElement image) {
     this.image = image;
-    // Determine if the patient is prone or supine
     Attributes dcmItems = image.getMediaReader().getDicomObject();
-    this.patientPosition = dcmItems.getString(Tag.PatientPosition).toLowerCase();
+    String pp = dcmItems.getString(Tag.PatientPosition);
+    this.patientPosition = pp == null ? "" : pp.toLowerCase();
     this.prone = patientPosition.contains("p") ? -1 : 1; // NON-NLS
     this.feetFirst = patientPosition.contains("ff") ? -1 : 1; // NON-NLS
-
-    // Get the image pixel spacing
     this.imageSpacing = image.getRawSliceGeometry().getVoxelSpacing();
     this.width = TagD.getTagValue(image, Tag.Columns, Integer.class);
     this.height = TagD.getTagValue(image, Tag.Rows, Integer.class);
   }
 
   public String getPatientPosition() {
-    return this.patientPosition;
+    return patientPosition;
   }
 
   public int getProne() {
-    return this.prone;
+    return prone;
   }
 
   public int getFeetFirst() {
-    return this.feetFirst;
+    return feetFirst;
   }
 
   public Vector3d getImageSpacing() {
-    return this.imageSpacing;
+    return imageSpacing;
   }
 
-  public AbstractMap.SimpleImmutableEntry<double[], double[]> getImageLUT() {
-    return this.imageLUT;
+  public DoseLut getImageLUT() {
+    return imageLUT;
   }
 
-  public void setImageLUT(AbstractMap.SimpleImmutableEntry<double[], double[]> imageLUT) {
+  public void setImageLUT(DoseLut imageLUT) {
     this.imageLUT = imageLUT;
   }
 
@@ -79,6 +73,6 @@ public class Image {
   }
 
   public DicomImageElement getImage() {
-    return this.image;
+    return image;
   }
 }

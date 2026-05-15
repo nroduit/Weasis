@@ -222,6 +222,7 @@ public class EllipseGraphic extends ObliqueRectangleGraphic {
     updateTool();
     List<Point2D> pts = new ArrayList<>();
     if (lineABvalid && lineCDvalid) {
+      // Endpoints of the major and minor axis (non-compatible with DICOM SR SCOORD)
       double abDistance = ptA.distance(ptB);
       double cdDistance = ptC.distance(ptD);
       Point2D n = new Point2D.Double(ptC.getX(), ptC.getY());

@@ -541,49 +541,6 @@ public class VolImageIO implements DcmMediaReader {
     return null;
   }
 
-  public File buildCroppedFile(File directory) {
-    try {
-      // Render the slice – also refreshes SOPInstanceUID, Rows, Columns, IPP, IOP, …
-      PlanarImage image = getImageFragment(null);
-      if (image == null) return null;
-
-      // Name the output file after the SOPInstanceUID that was just assigned
-      String sopUID = (String) tags.get(TagD.get(Tag.SOPInstanceUID));
-      if (sopUID == null) {
-        sopUID = UIDUtils.createUID();
-      }
-
-      double bgValue = volume.getMinimumAsDouble();
-      int[] crop = detectNonBlackBoundingBox(image, bgValue, BORDER_CROP_TOLERANCE);
-
-      PlanarImage finalImage = image;
-      if (crop != null) {
-        // Crop via OpenCV submatrix
-        Mat cropped = new Mat(image.toMat(), new Rect(crop[0], crop[1], crop[2], crop[3]));
-        ImageCV croppedImg = new ImageCV();
-        cropped.copyTo(croppedImg);
-        finalImage = croppedImg;
-
-        // Update dimension tags to match the cropped image
-        this.setTag(TagD.get(Tag.Columns), crop[2]);
-        this.setTag(TagD.get(Tag.Rows), crop[3]);
-
-        // Shift ImagePositionPatient to the new top-left corner
-        adjustImagePositionPatient(crop[0], crop[1]);
-      }
-
-      File output = new File(directory, sopUID);
-      writeImageToFile(output, finalImage);
-      return output;
-    } catch (Exception e) {
-      LOGGER.error("Cannot write cropped DICOM file", e);
-    } finally {
-      // Clear the metadata cache so the next slice gets a clean start
-      HEADER_CACHE.remove(this);
-    }
-    return null;
-  }
-
   private static int[] detectNonBlackBoundingBox(PlanarImage image, double bgValue, int tolerance) {
     int width = image.width();
     int height = image.height();

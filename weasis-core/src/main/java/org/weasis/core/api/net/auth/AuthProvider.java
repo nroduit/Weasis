@@ -23,7 +23,7 @@ import org.weasis.core.util.StringUtil;
 public record AuthProvider(
     String name, String authorizationUri, String tokenUri, String revokeTokenUri, boolean openId) {
   /**
-   * @return true if token revocation is supported
+   * @return {@code true} if token revocation is supported
    */
   public boolean supportsTokenRevocation() {
     return StringUtil.hasText(revokeTokenUri);

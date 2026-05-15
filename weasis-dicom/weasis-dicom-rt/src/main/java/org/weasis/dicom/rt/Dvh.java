@@ -13,9 +13,14 @@ import org.knowm.xchart.XYChart;
 import org.knowm.xchart.style.markers.SeriesMarkers;
 
 /**
+ * Dose-Volume Histogram for a single ROI. Stores either a CUMULATIVE or DIFFERENTIAL DVH together
+ * with the metadata needed to convert raw bins into clinically meaningful percentages.
+ *
  * @author Tomas Skripcak
  */
 public class Dvh {
+
+  private static final double UNCOMPUTED = -1.0;
 
   private int referencedRoiNumber;
   private String type;
@@ -24,20 +29,13 @@ public class Dvh {
   private double dvhDoseScaling;
   private String dvhVolumeUnit;
   private int dvhNumberOfBins;
-  private double dvhMinimumDose;
-  private double dvhMaximumDose;
-  private double dvhMeanDose;
+  private double dvhMinimumDose = UNCOMPUTED;
+  private double dvhMaximumDose = UNCOMPUTED;
+  private double dvhMeanDose = UNCOMPUTED;
   private double[] dvhData;
   private double[] otherDvhData;
   private DataSource dvhSource;
   private Plan plan;
-
-  public Dvh() {
-    // Initial -> need to be calculated later
-    this.dvhMinimumDose = -1.0;
-    this.dvhMaximumDose = -1.0;
-    this.dvhMeanDose = -1.0;
-  }
 
   public int getReferencedRoiNumber() {
     return referencedRoiNumber;
@@ -95,17 +93,17 @@ public class Dvh {
     this.dvhNumberOfBins = dvhNumberOfBins;
   }
 
+  private double toCGy(double value) {
+    return "GY".equals(doseUnit) ? value * 100 : value;
+  }
+
   public double getDvhMinimumDoseCGy() {
-    if (this.doseUnit.equals("GY")) {
-      return this.getDvhMinimumDose() * 100;
-    } else {
-      return this.getDvhMinimumDose();
-    }
+    return toCGy(getDvhMinimumDose());
   }
 
   public double getDvhMinimumDose() {
-    if (this.dvhMinimumDose < 0) {
-      this.dvhMinimumDose = this.calculateDvhMin();
+    if (dvhMinimumDose < 0) {
+      dvhMinimumDose = calculateDvhMin();
     }
     return dvhMinimumDose;
   }
@@ -115,16 +113,12 @@ public class Dvh {
   }
 
   public double getDvhMaximumDoseCGy() {
-    if (this.doseUnit.equals("GY")) {
-      return this.getDvhMaximumDose() * 100;
-    } else {
-      return this.getDvhMaximumDose();
-    }
+    return toCGy(getDvhMaximumDose());
   }
 
   public double getDvhMaximumDose() {
-    if (this.dvhMaximumDose < 0) {
-      this.dvhMaximumDose = this.calculateDvhMax();
+    if (dvhMaximumDose < 0) {
+      dvhMaximumDose = calculateDvhMax();
     }
     return dvhMaximumDose;
   }
@@ -134,16 +128,12 @@ public class Dvh {
   }
 
   public double getDvhMeanDoseCGy() {
-    if (this.doseUnit.equals("GY")) {
-      return this.getDvhMeanDose() * 100;
-    } else {
-      return this.getDvhMeanDose();
-    }
+    return toCGy(getDvhMeanDose());
   }
 
   public double getDvhMeanDose() {
-    if (this.dvhMeanDose < 0) {
-      this.dvhMeanDose = this.calculateDvhMean();
+    if (dvhMeanDose < 0) {
+      dvhMeanDose = calculateDvhMean();
     }
     return dvhMeanDose;
   }
@@ -161,7 +151,7 @@ public class Dvh {
   }
 
   public DataSource getDvhSource() {
-    return this.dvhSource;
+    return dvhSource;
   }
 
   public void setDvhSource(DataSource dvhSource) {
@@ -169,133 +159,115 @@ public class Dvh {
   }
 
   public Plan getPlan() {
-    return this.plan;
+    return plan;
   }
 
   public void setPlan(Plan plan) {
     this.plan = plan;
   }
 
+  /**
+   * Adds this DVH as a series on the given chart, expressed as relative volume (%) versus dose bin
+   * index. A unique series name is derived from the region label to avoid collisions.
+   */
   public XYChart appendChart(StructRegion region, XYChart dvhChart) {
-    if (dvhChart == null || dvhData.length == 0) {
+    if (dvhChart == null || dvhData == null || dvhData.length == 0) {
       return null;
     }
 
-    // Each element represent 1cGY bin on x axes
-    double[] x = new double[this.dvhData.length];
-    for (int i = 0; i < x.length; i++) {
+    int n = dvhData.length;
+    // Normalize by the DVH's own total volume so the curve starts at 100 %.
+    double reference;
+    if ("DIFFERENTIAL".equals(type)) {
+      double sum = 0.0;
+      for (double v : dvhData) {
+        sum += v;
+      }
+      reference = sum;
+    } else {
+      reference = dvhData[0];
+    }
+    if (reference <= 0.0) {
+      // Fallback to the geometric ROI volume if the DVH does not provide one.
+      reference = region.getVolume();
+    }
+    double scale = reference == 0.0 ? 0.0 : 100.0 / reference;
+    double[] x = new double[n];
+    double[] y = new double[n];
+    for (int i = 0; i < n; i++) {
       x[i] = i;
+      y[i] = scale * dvhData[i];
     }
 
-    // Convert structure DVH data in cm^3 to relative volume representation
-    double[] y = new double[this.dvhData.length];
-    for (int i = 0; i < y.length; i++) {
-      y[i] = (100 / region.getVolume()) * this.dvhData[i];
-    }
-
-    String sName = region.getLabel();
-    int k = 2;
-    while (dvhChart.getSeriesMap().get(sName) != null) {
-      sName = region.getLabel() + " " + k;
-      k++;
-    }
-    // Create a line
-    dvhChart.addSeries(sName, x, y).setMarker(SeriesMarkers.NONE).setLineColor(region.getColor());
-
-    // axes.set_xlim(0, maxlen)
-    // axes.set_ylim(0, 100)
-
+    String seriesName = uniqueSeriesName(dvhChart, region.getLabel());
+    dvhChart
+        .addSeries(seriesName, x, y)
+        .setMarker(SeriesMarkers.NONE)
+        .setLineColor(region.getColor());
     return dvhChart;
   }
 
+  private static String uniqueSeriesName(XYChart chart, String base) {
+    String name = base;
+    int k = 2;
+    while (chart.getSeriesMap().get(name) != null) {
+      name = base + " " + k++;
+    }
+    return name;
+  }
+
+  /** Lazily computes and returns the differential DVH (negative slope of the cumulative DVH). */
   public double[] getOtherDvhData() {
-    if (this.otherDvhData == null) {
-      this.otherDvhData = new double[this.dvhData.length];
-
-      // When original is cumulative the other will be differential
-      if (this.type.equals("CUMULATIVE")) {
-        this.otherDvhData = this.calculateDDvh();
-      }
+    if (otherDvhData == null) {
+      otherDvhData = "CUMULATIVE".equals(type) ? calculateDDvh() : new double[dvhData.length];
     }
-
-    return this.otherDvhData;
+    return otherDvhData;
   }
 
-  /** Return minimal dose received by 100% of ROI volume (derived from cumulative DVH) */
+  /** Returns the minimal dose received by 100% of the ROI volume (derived from cumulative DVH). */
   public double calculateDvhMin() {
-
-    // ROI volume (always receives at least 0 dose)
-    double minDose = 0.0;
-
-    // Each i - bin is 1 cGy
-    for (int i = 1; i < this.dvhData.length - 1; i++) {
-      // If bin (dose level) found that was received by less than 100% of ROI volume
-      if (this.dvhData[i] < this.dvhData[0]) {
-        minDose = (2 * i - 1) / 2.0;
-        break;
+    for (int i = 1; i < dvhData.length - 1; i++) {
+      if (dvhData[i] < dvhData[0]) {
+        return (2 * i - 1) / 2.0;
       }
     }
-
-    return minDose;
+    return 0.0;
   }
 
-  /** Return maximum dose received by any % of ROI volume (derived from cumulative DVH) */
+  /** Returns the maximum dose received by any % of the ROI volume (derived from cumulative DVH). */
   public double calculateDvhMax() {
-
-    double[] dDvh = this.getOtherDvhData();
-
-    double maxDose = 0.0;
-
-    // Detect the increase from the right (each i - bin is 1 cGy)
+    double[] dDvh = getOtherDvhData();
     for (int i = dDvh.length - 1; i >= 0; i--) {
-      // If bin (dose level) found that was received by more than 0 % of ROI volume
       if (dDvh[i] > 0.0) {
-        maxDose = i + 1.0;
-        break;
+        return i + 1.0;
       }
     }
-
-    return maxDose;
+    return 0.0;
   }
 
-  /** Return mean dose to ROI derived from cumulative DVH */
+  /** Returns the mean dose to the ROI derived from the cumulative DVH. */
   public double calculateDvhMean() {
-
-    double[] dDvh = this.getOtherDvhData();
-
-    double totalDose = 0.0;
-
-    if (dDvh.length == 0) {
-      return totalDose;
+    double[] dDvh = getOtherDvhData();
+    if (dDvh.length == 0 || dvhData[0] == 0.0) {
+      return 0.0;
     }
-
-    // From left to right (each i - bin is 1 cGy)
+    double totalDose = 0.0;
     for (int i = 1; i < dDvh.length; i++) {
       totalDose += dDvh[i] * i;
     }
-
-    // Mean dose = total dose / 100 % of ROI volume
-    return totalDose / this.dvhData[0];
+    return totalDose / dvhData[0];
   }
 
-  /**
-   * Return dDVH from this DVH array (dDVH is the negative "slope" of the cDVH)
-   *
-   * @return dDVH array
-   */
   private double[] calculateDDvh() {
-
-    int size = this.dvhData.length;
+    int size = dvhData.length;
     double[] dDvh = new double[size];
     if (size == 0) {
       return dDvh;
     }
-
     for (int i = 0; i < size - 1; i++) {
-      dDvh[i] = this.dvhData[i] - this.dvhData[i + 1];
+      dDvh[i] = dvhData[i] - dvhData[i + 1];
     }
-    dDvh[size - 1] = this.dvhData[size - 1];
-
+    dDvh[size - 1] = dvhData[size - 1];
     return dDvh;
   }
 }

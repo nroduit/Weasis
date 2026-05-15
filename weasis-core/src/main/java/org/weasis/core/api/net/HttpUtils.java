@@ -13,6 +13,7 @@ import com.github.scribejava.core.model.OAuthRequest;
 import com.github.scribejava.core.model.Verb;
 import com.github.scribejava.core.oauth.OAuth20Service;
 import java.io.IOException;
+import java.net.HttpURLConnection;
 import java.net.ProxySelector;
 import java.net.URI;
 import java.net.URL;
@@ -22,6 +23,7 @@ import java.net.http.HttpResponse;
 import java.time.Duration;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.Callable;
 import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.net.auth.AuthMethod;
 import org.weasis.core.api.net.auth.OAuth2ServiceFactory;
@@ -30,7 +32,6 @@ import org.weasis.core.util.StreamIOException;
 /** HTTP operations utility with OAuth2 authentication support. */
 public final class HttpUtils {
 
-  private static final int HTTP_OK = 200;
   // Use a shared client to enable connection pooling (Keep-Alive) and avoid handshake overhead
   private static final HttpClient SHARED_CLIENT = buildHttpClient();
 
@@ -56,19 +57,20 @@ public final class HttpUtils {
   }
 
   public static HttpClient buildHttpClient() {
-    return createHttpClient(
-        Duration.ofMillis(NetworkUtil.getUrlConnectionTimeout()),
-        HttpClient.Redirect.NORMAL,
-        ProxySelector.getDefault());
+    return buildHttpClient(Duration.ofMillis(NetworkUtil.getUrlConnectionTimeout()));
   }
 
   public static HttpClient buildHttpClient(Duration timeout) {
-    return createHttpClient(timeout, HttpClient.Redirect.NORMAL, ProxySelector.getDefault());
+    return buildHttpClient(timeout, HttpClient.Redirect.NORMAL, ProxySelector.getDefault());
   }
 
   public static HttpClient buildHttpClient(
       Duration timeout, HttpClient.Redirect redirect, ProxySelector proxySelector) {
-    return createHttpClient(timeout, redirect, proxySelector);
+    return HttpClient.newBuilder()
+        .connectTimeout(timeout)
+        .followRedirects(redirect)
+        .proxy(proxySelector)
+        .build();
   }
 
   public static HttpStream getHttpResponse(
@@ -107,23 +109,16 @@ public final class HttpUtils {
     return executeAuthenticatedRequest(request, urlParameters, authMethod);
   }
 
-  private static boolean isNoAuthRequired(AuthMethod authMethod) {
+  public static AuthResponse executeAuthenticatedRequest(
+      OAuthRequest request, URLParameters urlParameters, AuthMethod authMethod) throws IOException {
+    applyHeaders(urlParameters.headers(), request::addHeader);
+    var service = getOAuth20Service(authMethod);
+    service.signRequest(authMethod.getToken(), request);
+    return new AuthResponse(runInterruptibly(() -> service.execute(request), "Authentication"));
+  }
+
+  static boolean isNoAuthRequired(AuthMethod authMethod) {
     return authMethod == null || OAuth2ServiceFactory.NO_AUTH.equals(authMethod);
-  }
-
-  private static HttpClient createHttpClient(
-      Duration timeout, HttpClient.Redirect redirect, ProxySelector proxySelector) {
-    return HttpClient.newBuilder()
-        .connectTimeout(timeout)
-        .followRedirects(redirect)
-        .proxy(proxySelector)
-        .build();
-  }
-
-  private static <S> HttpResponse<S> createHttpRequest(
-      String url, URLParameters urlParameters, HttpResponse.BodyHandler<S> bodyHandler)
-      throws IOException {
-    return createHttpRequest(SHARED_CLIENT, url, urlParameters, bodyHandler);
   }
 
   private static <S> HttpResponse<S> createHttpRequest(
@@ -137,65 +132,55 @@ public final class HttpUtils {
             .uri(URI.create(url))
             .timeout(Duration.ofMillis(urlParameters.readTimeout()));
 
-    addHeaders(requestBuilder, urlParameters.headers());
-    addApplicationHeaders(requestBuilder);
+    applyHeaders(urlParameters.headers(), requestBuilder::header);
 
     var request =
         urlParameters.httpPost()
             ? requestBuilder.POST(HttpRequest.BodyPublishers.noBody()).build()
             : requestBuilder.GET().build();
 
-    return executeRequest(client, request, bodyHandler);
+    var response = runInterruptibly(() -> client.send(request, bodyHandler), "Request");
+    validateResponseStatus(response.statusCode());
+    return response;
   }
 
-  private static void addHeaders(HttpRequest.Builder requestBuilder, Map<String, String> headers) {
-    headers.forEach(requestBuilder::header);
+  /**
+   * Applies user-supplied headers followed by the standard application headers (skipping nulls).
+   */
+  static void applyHeaders(Map<String, String> headers, HeaderSetter setter) {
+    headers.forEach((k, v) -> setIfPresent(setter, k, v));
+    setIfPresent(setter, "User-Agent", AppProperties.WEASIS_USER_AGENT);
+    setIfPresent(setter, "Weasis-User", AppProperties.WEASIS_USER);
   }
 
-  private static void addApplicationHeaders(HttpRequest.Builder requestBuilder) {
-    requestBuilder.header("User-Agent", AppProperties.WEASIS_USER_AGENT);
-    requestBuilder.header("Weasis-User", AppProperties.WEASIS_USER);
+  private static void setIfPresent(HeaderSetter setter, String name, String value) {
+    if (value != null) {
+      setter.set(name, value);
+    }
   }
 
-  private static <S> HttpResponse<S> executeRequest(
-      HttpClient client, HttpRequest request, HttpResponse.BodyHandler<S> bodyHandler)
-      throws IOException {
+  @FunctionalInterface
+  interface HeaderSetter {
+    void set(String name, String value);
+  }
+
+  private static <T> T runInterruptibly(Callable<T> task, String what) throws IOException {
     try {
-      var response = client.send(request, bodyHandler);
-      validateResponseStatus(response.statusCode());
-      return response;
+      return task.call();
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
-      throw new IOException("Request interrupted", e);
+      throw new StreamIOException(what + " interrupted", e);
+    } catch (IOException e) {
+      throw e;
+    } catch (Exception e) {
+      throw new StreamIOException(what + " failed", e);
     }
   }
 
   private static void validateResponseStatus(int statusCode) throws IOException {
-    if (statusCode != HTTP_OK) {
+    if (statusCode != HttpURLConnection.HTTP_OK) {
       throw new IOException("HTTP request failed with status code: " + statusCode);
     }
-  }
-
-  public static AuthResponse executeAuthenticatedRequest(
-      OAuthRequest request, URLParameters urlParameters, AuthMethod authMethod) throws IOException {
-    addOAuthHeaders(request, urlParameters.headers());
-
-    try {
-      var service = getOAuth20Service(authMethod);
-      service.signRequest(authMethod.getToken(), request);
-      return new AuthResponse(service.execute(request));
-    } catch (InterruptedException e) {
-      Thread.currentThread().interrupt();
-      throw new StreamIOException("Authentication request interrupted", e);
-    } catch (Exception e) {
-      throw new StreamIOException("Authentication failed", e);
-    }
-  }
-
-  private static void addOAuthHeaders(OAuthRequest request, Map<String, String> headers) {
-    headers.forEach(request::addHeader);
-    request.addHeader("User-Agent", AppProperties.WEASIS_USER_AGENT);
-    request.addHeader("Weasis-User", AppProperties.WEASIS_USER);
   }
 
   private static OAuth20Service getOAuth20Service(AuthMethod authMethod) throws IOException {

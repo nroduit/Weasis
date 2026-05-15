@@ -61,6 +61,7 @@ import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
 import javax.swing.JSlider;
 import javax.swing.JSpinner;
+import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.JTextPane;
 import javax.swing.KeyStroke;
@@ -610,6 +611,28 @@ public class GuiUtils {
     jButtonHelp.setToolTipText(Messages.getString("online.documentation"));
     jButtonHelp.addActionListener(createHelpActionListener(jButtonHelp, topic));
     return jButtonHelp;
+  }
+
+  /**
+   * Build a panel containing a wrapped read-only message and a help button on the right side that
+   * opens the given documentation topic. Useful for {@code JOptionPane.showXxxDialog(..., panel,
+   * ...)} confirmations where the user must understand the implications of the choice.
+   *
+   * @param message the message to display
+   * @param helpTopic the documentation topic appended to {@code weasis.help.online}
+   * @return a JPanel ready to be passed to a JOptionPane
+   */
+  public static JPanel buildHelpMessagePanel(String message, String helpTopic) {
+    JPanel panel = new JPanel(new java.awt.BorderLayout(10, 0));
+    JTextArea textArea = new JTextArea(message);
+    textArea.setEditable(false);
+    textArea.setOpaque(false);
+    textArea.setLineWrap(true);
+    textArea.setWrapStyleWord(true);
+    textArea.setColumns(40);
+    panel.add(textArea, java.awt.BorderLayout.CENTER);
+    panel.add(createHelpButton(helpTopic), java.awt.BorderLayout.EAST);
+    return panel;
   }
 
   public static ActionListener createHelpActionListener(JButton jButtonHelp, String topic) {

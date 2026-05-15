@@ -15,9 +15,10 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
-import javax.swing.ImageIcon;
+import javax.swing.JPopupMenu;
 import org.dcm4che3.data.Tag;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -46,6 +47,7 @@ import org.weasis.core.ui.editor.image.ImageViewerEventManager;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.editor.image.ViewButton;
 import org.weasis.core.ui.editor.image.ViewCanvas;
+import org.weasis.core.ui.editor.image.ViewSynchData;
 import org.weasis.core.util.FileUtil;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.DicomSeries;
@@ -53,7 +55,6 @@ import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.explorer.DicomModel;
 import org.weasis.dicom.viewer2d.Messages;
 import org.weasis.dicom.viewer2d.View2d;
-import org.weasis.dicom.viewer2d.View2dFactory;
 
 /**
  * MIP (Maximum/Mean/Minimum Intensity Projection) view with responsive UI. Heavy work runs in
@@ -61,8 +62,6 @@ import org.weasis.dicom.viewer2d.View2dFactory;
  */
 public class MipView extends View2d {
   private static final Logger LOGGER = LoggerFactory.getLogger(MipView.class);
-
-  public static final ImageIcon MIP_ICON_SETTING = ResourceUtil.getIcon(OtherIcon.VIEW_MIP);
 
   public static final class MipViewType extends Feature<MipView.Type> {
     public MipViewType(String title, String command, int keyEvent, int modifier, Cursor cursor) {
@@ -113,6 +112,7 @@ public class MipView extends View2d {
   private volatile Type lastBuiltType;
   private volatile Integer lastBuiltExtend;
   private volatile boolean pendingCrosslineUpdate = false;
+  private volatile boolean pendingSeriesChange = false;
 
   public MipView(ImageViewerEventManager<DicomImageElement> eventManager) {
     super(eventManager);
@@ -125,7 +125,7 @@ public class MipView extends View2d {
     ViewButton button =
         new ViewButton(
             (invoker, x, y) -> {
-              javax.swing.JPopupMenu popup = MipMenu.buildViewButtonPopup(this);
+              JPopupMenu popup = MipMenu.buildViewButtonPopup(this);
               popup.show(invoker, x, y);
             },
             ResourceUtil.getIcon(OtherIcon.VIEW_MIP, 24, 24),
@@ -141,6 +141,12 @@ public class MipView extends View2d {
     // Propagate the preset
     OpManager disOp = getDisplayOpManager();
     disOp.setParamValue(WindowOp.OP_NAME, ActionW.DEFAULT_PRESET.cmd(), false);
+  }
+
+  @Override
+  public void setSeries(MediaSeries<DicomImageElement> newSeries, DicomImageElement selectedMedia) {
+    pendingSeriesChange = true;
+    super.setSeries(newSeries, selectedMedia);
   }
 
   public void initMIPSeries(ViewCanvas<DicomImageElement> selView) {
@@ -236,6 +242,10 @@ public class MipView extends View2d {
     setMip(null);
     FileUtil.delete(viewCacheDir);
 
+    // Capture manual sync targets BEFORE the view is disposed so the wiring can be transferred
+    // to the replacement View2d (disposeView → resetSynchState clears the per-view link).
+    List<ViewCanvas<DicomImageElement>> manualSyncTargets = collectManualSyncTargets();
+
     // When no explicit target image is given, restore the slab-centre position so the replacement
     // view opens at the same frame the user was looking at rather than jumping to the first image.
     DicomImageElement targetImage = selectedDicom != null ? selectedDicom : centerImage;
@@ -247,8 +257,33 @@ public class MipView extends View2d {
     newView2d.setSeries(series, targetImage);
     container.replaceView(this, newView2d);
 
+    // Re-establish manual sync on the successor view using the same slice-position offsets.
+    if (!manualSyncTargets.isEmpty()) {
+      for (ViewCanvas<DicomImageElement> target : manualSyncTargets) {
+        newView2d.syncManuallyWith(target);
+      }
+      getEventManager().updateAllListeners(container, container.getSynchView());
+    }
+
     pendingCrosslineUpdate = true;
     updateCrosslines();
+  }
+
+  /**
+   * Returns the list of views that this MIP view is currently manually synchronized with, so that
+   * the wiring can be transferred to a replacement view before this view is disposed.
+   */
+  @SuppressWarnings("unchecked")
+  private List<ViewCanvas<DicomImageElement>> collectManualSyncTargets() {
+    ViewSynchData sd = (ViewSynchData) getActionValue(ActionW.SYNCH_LINK.cmd());
+    if (sd == null || !sd.isManualSynchActivated()) {
+      return Collections.emptyList();
+    }
+    List<ViewCanvas<DicomImageElement>> targets = new ArrayList<>();
+    for (ViewSynchData.ManualSyncData msd : sd.getManualSyncDataSet()) {
+      targets.add((ViewCanvas<DicomImageElement>) msd.getTargetPane());
+    }
+    return targets;
   }
 
   public static void buildMip(final MipView view) {
@@ -305,14 +340,24 @@ public class MipView extends View2d {
     DataExplorerModel model = (DataExplorerModel) ser.getTagValue(TagW.ExplorerModel);
     if (model instanceof DicomModel dicomModel) {
       MediaSeriesGroup study = dicomModel.getParent(ser, DicomModel.study);
-      if (study != null) {
-        s.setTag(TagW.ExplorerModel, dicomModel);
-        dicomModel.addHierarchyNode(study, s);
-        dicomModel.firePropertyChange(
-            new ObservableEvent(ObservableEvent.BasicAction.ADD, dicomModel, null, s));
-      }
+      openSeries(s, model, dicomModel, study, false);
+    }
+  }
 
-      SeriesViewerFactory factory = GuiUtils.getUICore().getViewerFactory(View2dFactory.NAME);
+  public static void openSeries(
+      DicomSeries s,
+      DataExplorerModel model,
+      DicomModel dicomModel,
+      MediaSeriesGroup study,
+      boolean openTab) {
+    if (study != null) {
+      s.setTag(TagW.ExplorerModel, dicomModel);
+      dicomModel.addHierarchyNode(study, s);
+      dicomModel.firePropertyChange(
+          new ObservableEvent(ObservableEvent.BasicAction.ADD, dicomModel, null, s));
+    }
+    if (openTab) {
+      SeriesViewerFactory factory = GuiUtils.getUICore().getViewerFactory(s.getMimeType());
       new ViewerPluginBuilder(
               factory,
               List.of(s),
@@ -325,7 +370,7 @@ public class MipView extends View2d {
   protected void setMip(DicomImageElement dicom) {
     DicomImageElement oldImage = getImage();
     if (dicom != null) {
-      if (oldImage != null) {
+      if (oldImage != null && !pendingSeriesChange) {
         // Preserve the current zoom level when updating the MIP slab (e.g. while scrolling).
         // Without this guard, DefaultView2d.resetZoom() would reset to BEST_FIT on every update
         // because the scroll handler restores ZOOM_TYPE_CMD before the async build finishes.
@@ -334,8 +379,15 @@ public class MipView extends View2d {
         super.setImage(dicom);
         actionsInView.put(ViewCanvas.ZOOM_TYPE_CMD, oldZoomType);
       } else {
+        // Either no previous image (first load) or a new series was dropped – use best-fit so
+        // the image is not shown with a stale zoom level from the previous series.
+        pendingSeriesChange = false;
         super.setImage(dicom);
       }
+    } else {
+      // Clear the displayed image
+      pendingSeriesChange = false;
+      super.setImage(null);
     }
 
     if (oldImage == null) {

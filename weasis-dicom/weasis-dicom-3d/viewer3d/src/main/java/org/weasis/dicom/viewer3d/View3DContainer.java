@@ -100,11 +100,12 @@ public class View3DContainer extends DicomViewerPlugin
             org.weasis.dicom.viewer2d.Messages.getString("mpr.synchronisation"),
             "mpr", // NON-NLS
             SynchData.Mode.STACK,
+            true,
             ActionIcon.TILE,
             actions);
   }
 
-  public static final List<SynchView> SYNCH_LIST = List.of(SynchView.NONE, defaultMpr);
+  public static final List<SynchView> SYNCH_LIST = List.of(defaultMpr);
 
   public static final MigLayoutModel VIEWS_vr =
       new MigLayoutModel(
@@ -159,7 +160,6 @@ public class View3DContainer extends DicomViewerPlugin
   public View3DContainer(
       MigLayoutModel layoutModel, String uid, String pluginName, Icon icon, String tooltips) {
     super(EventManager.getInstance(), layoutModel, uid, pluginName, icon, tooltips);
-    setSynchView(SynchView.NONE);
     this.factory = new DicomVolTextureFactory();
     this.segType = SegmentationTool.Type.NONE;
     initTools();

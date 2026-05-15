@@ -28,6 +28,7 @@ import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.AbstractItemDialogPage;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.WinUtil;
+import org.weasis.core.api.net.URIUtils;
 import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.api.util.ResourceUtil.OtherIcon;
 import org.weasis.core.util.StringUtil;
@@ -147,7 +148,7 @@ public class DicomDirImport extends AbstractItemDialogPage implements ImportDico
         file = f;
       } else {
         try {
-          f = new File(new URI(path));
+          f = URIUtils.toFile(new URI(path));
           if (f.canRead()) {
             file = f;
           }

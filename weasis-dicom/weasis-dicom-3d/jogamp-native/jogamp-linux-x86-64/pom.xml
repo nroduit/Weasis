@@ -14,8 +14,7 @@
   <packaging>jar</packaging>
   <artifactId>jogamp-linux-x86-64</artifactId>
   <name>JOGL - Linux x86-64 [${project.artifactId}]</name>
-  <version>${jogamp.version}</version>
-
+  <version>${sha1}</version>
   <properties>
     <native.folder>natives/linux-amd64</native.folder>
     <native.files>

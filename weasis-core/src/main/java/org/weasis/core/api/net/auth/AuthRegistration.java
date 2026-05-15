@@ -23,7 +23,7 @@ import org.weasis.core.util.StringUtil;
 public record AuthRegistration(
     String clientId, String clientSecret, String scope, String audience, String user) {
 
-  /** OAuth2 authorization code grant type constant */
+  /** OAuth2 authorization code grant type constant. */
   public static final String CODE = "code"; // NON-NLS
 
   public AuthRegistration {
@@ -47,34 +47,38 @@ public record AuthRegistration(
   }
 
   /**
-   * @return OAuth2 authorization grant type (always "code")
+   * @return OAuth2 authorization grant type (always {@value #CODE})
    */
   public String getAuthorizationGrantType() {
     return CODE;
   }
 
   /**
-   * @return true if client ID is configured
+   * @return {@code true} if client ID is configured
    */
   public boolean hasClientId() {
     return StringUtil.hasText(clientId);
   }
 
   /**
-   * @return true if client secret is configured
+   * @return {@code true} if client secret is configured
    */
   public boolean hasClientSecret() {
     return StringUtil.hasText(clientSecret);
   }
 
   /**
-   * @return true if registration is properly configured for OAuth2
+   * @return {@code true} if registration is properly configured for OAuth2
    */
   public boolean isComplete() {
     return hasClientId() && hasClientSecret();
   }
 
   private static String normalizeString(String value) {
-    return value == null || value.isBlank() ? null : value.trim();
+    if (value == null) {
+      return null;
+    }
+    var trimmed = value.strip();
+    return trimmed.isEmpty() ? null : trimmed;
   }
 }

@@ -12,9 +12,12 @@ package org.weasis.dicom.rt;
 import org.weasis.core.util.MathUtil;
 
 /**
+ * Wraps a {@code double} value with a stable rounded key (2 decimals) so it can be safely used as a
+ * {@link java.util.Map} key while remaining ordered by its full-precision value.
+ *
  * @author Tomas Skripcak
  */
-public class KeyDouble implements Comparable<KeyDouble> {
+public final class KeyDouble implements Comparable<KeyDouble> {
   private final double value;
   private final double key;
 
@@ -38,14 +41,16 @@ public class KeyDouble implements Comparable<KeyDouble> {
 
   @Override
   public boolean equals(Object obj) {
-    if (this == obj) return true;
-    if (obj == null) return false;
-    if (getClass() != obj.getClass()) return false;
-    return MathUtil.isEqual(key, ((KeyDouble) obj).key);
+    return obj instanceof KeyDouble other && MathUtil.isEqual(key, other.key);
   }
 
   @Override
   public int compareTo(KeyDouble v) {
-    return Double.compare(value, v.getValue());
+    return Double.compare(value, v.value);
+  }
+
+  @Override
+  public String toString() {
+    return Double.toString(value);
   }
 }

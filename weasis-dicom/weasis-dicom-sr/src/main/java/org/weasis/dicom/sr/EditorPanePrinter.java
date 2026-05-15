@@ -29,6 +29,7 @@ import java.awt.print.PrinterException;
 import java.util.ArrayList;
 import javax.swing.JEditorPane;
 import javax.swing.JPanel;
+import javax.swing.plaf.PanelUI;
 import javax.swing.plaf.basic.BasicEditorPaneUI;
 import javax.swing.text.Position;
 import javax.swing.text.View;
@@ -143,7 +144,7 @@ public class EditorPanePrinter extends JPanel implements Pageable, Printable {
   }
 
   private static void updateUIToRemoveLF(JPanel panel) {
-    panel.setUI(new javax.swing.plaf.PanelUI() {});
+    panel.setUI(new PanelUI() {});
     panel.setBackground(Color.WHITE);
     panel.setForeground(Color.BLACK);
     panel.setBorder(null);

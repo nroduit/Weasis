@@ -73,7 +73,7 @@ public class AcceptCompletionHandler implements AcceptCallbackHandler {
       return reader
           .lines()
           .filter(StringUtil::hasText)
-          .map(this::parseCodeFromLine)
+          .map(AcceptCompletionHandler::parseCodeFromLine)
           .filter(Objects::nonNull)
           .findFirst()
           .orElse(null);
@@ -83,35 +83,21 @@ public class AcceptCompletionHandler implements AcceptCallbackHandler {
     }
   }
 
-  private String parseCodeFromLine(String line) {
+  private static String parseCodeFromLine(String line) {
     int codeIndex = line.indexOf(CODE_PARAM);
     if (codeIndex < 0) {
       return null;
     }
-
-    String codeSection = line.substring(codeIndex + CODE_PARAM.length()).trim();
-    int endIndex = findParameterEnd(codeSection);
-    return endIndex > 0 ? codeSection.substring(0, endIndex) : codeSection;
+    // The authorization code is delimited by either '&' (next param) or ' ' (end of HTTP path).
+    return line.substring(codeIndex + CODE_PARAM.length()).trim().split("[ &]", 2)[0];
   }
 
-  private int findParameterEnd(String codeSection) {
-    int ampersandIndex = codeSection.indexOf('&');
-    int spaceIndex = codeSection.indexOf(' ');
-
-    if (ampersandIndex >= 0 && spaceIndex >= 0) {
-      return Math.min(ampersandIndex, spaceIndex);
-    }
-    return Math.max(ampersandIndex, spaceIndex);
+  private static String createResponse(boolean success) {
+    return success
+        ? HTTP_OK + Messages.getString("code.has.been.transmitted")
+        : HTTP_NOT_FOUND + Messages.getString("code.has.failed") + "\n";
   }
 
-  private String createResponse(boolean success) {
-    if (success) {
-      return HTTP_OK + Messages.getString("code.has.been.transmitted");
-    }
-    return HTTP_NOT_FOUND + Messages.getString("code.has.failed") + "\n";
-  }
-
-  /** Handles incoming HTTP request and processes authorization code. */
   private final class RequestHandler implements CompletionHandler<Integer, ByteBuffer> {
     private final AsynchronousSocketChannel channel;
 
@@ -122,18 +108,12 @@ public class AcceptCompletionHandler implements AcceptCallbackHandler {
     @Override
     public void completed(Integer result, ByteBuffer buffer) {
       buffer.flip();
-      byte[] requestBytes = new byte[buffer.remaining()];
-      buffer.get(requestBytes);
-      String request = new String(requestBytes, StandardCharsets.UTF_8);
-
+      String request = StandardCharsets.UTF_8.decode(buffer).toString();
       String extractedCode = extractCodeFromRequest(request);
-      boolean success = extractedCode != null;
-
-      if (success) {
+      if (extractedCode != null) {
         code(extractedCode);
       }
-
-      sendResponse(createResponse(success));
+      sendResponse(createResponse(extractedCode != null));
     }
 
     @Override
@@ -147,7 +127,6 @@ public class AcceptCompletionHandler implements AcceptCallbackHandler {
     }
   }
 
-  /** Handles writing HTTP response back to client. */
   private record WriteHandler(ByteBuffer buffer)
       implements CompletionHandler<Integer, AsynchronousSocketChannel> {
 

@@ -209,8 +209,10 @@ public class DicomPrintDialog<I extends ImageElement> extends JDialog {
     getRootPane().setDefaultButton(printButton);
     JButton cancelButton = new JButton(Messages.getString("DicomPrintDialog.cancel"));
     cancelButton.addActionListener(evt -> doClose());
+    JButton helpButton = GuiUtils.createHelpButton("print/#dicom-print"); // NON-NLS
 
-    panel.add(printButton, "skip, growx 0, alignx trailing"); // NON-NLS
+    panel.add(helpButton, "newline, growx 0, alignx leading"); // NON-NLS
+    panel.add(printButton, "growx 0, alignx trailing, split 2"); // NON-NLS
     panel.add(cancelButton, "gap 15lp 0lp 10lp 10lp"); // NON-NLS
     setContentPane(panel);
   }

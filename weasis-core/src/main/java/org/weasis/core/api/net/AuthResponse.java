@@ -19,7 +19,7 @@ import org.weasis.core.util.StreamUtil;
 public record AuthResponse(Response response) implements HttpStream {
 
   public AuthResponse {
-    Objects.requireNonNull(response, "Response cannot be null");
+    Objects.requireNonNull(response, "response");
   }
 
   @Override

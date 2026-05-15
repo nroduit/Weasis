@@ -177,12 +177,15 @@ public final class CvUtil {
     }
 
     var context = createStackContext(sources);
+    if (context.referenceImage == null) {
+      return null;
+    }
     ImageCV result = new ImageCV();
     context.referenceImage.toMat().copyTo(result);
 
     for (int i = 1; i < context.sourceCount(); i++) {
       PlanarImage image = sources.get(i);
-      if (hasSameDimensions(image, result)) {
+      if (image != null && hasSameDimensions(image, result)) {
         operation.apply(result, image.toImageCV());
       }
     }

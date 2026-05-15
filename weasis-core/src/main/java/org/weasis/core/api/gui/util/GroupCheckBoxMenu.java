@@ -129,4 +129,9 @@ public class GroupCheckBoxMenu implements GroupPopup {
       itemList.add(m);
     }
   }
+
+  public void setModel(List<CheckBoxModel> model) {
+    itemList.clear();
+    itemList.addAll(model);
+  }
 }

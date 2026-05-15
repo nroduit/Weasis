@@ -378,8 +378,25 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> {
       public void itemStateChanged(Object object) {
         ImageViewerPlugin<DicomImageElement> container = getSelectedView2dContainer();
         if (container instanceof View3DContainer view3DContainer) {
-          view3DContainer.setSegmentationType((SegmentationTool.Type) object);
-          view3DContainer.reload();
+          SegmentationTool.Type type = (SegmentationTool.Type) object;
+          view3DContainer.setSegmentationType(type);
+          if (type == SegmentationTool.Type.SEG_OVERLAY) {
+            // Overlay mode: build/update the segmentation texture without reloading the volume
+            for (ViewCanvas<DicomImageElement> v : view3DContainer.getImagePanels()) {
+              if (v instanceof View3d view3d) {
+                view3d.updateSegmentation();
+              }
+            }
+          } else if (type == SegmentationTool.Type.SEG_ONLY) {
+            view3DContainer.reload();
+          } else {
+            // NONE: destroy any existing seg overlay and reload to reset the volume
+            for (ViewCanvas<DicomImageElement> v : view3DContainer.getImagePanels()) {
+              if (v instanceof View3d view3d) {
+                view3d.updateSegmentation();
+              }
+            }
+          }
         }
       }
     };
@@ -628,7 +645,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> {
     ComboItemListener<SynchView> synchAction = getAction(ActionW.SYNCH).orElse(null);
     updateAllListeners(
         selectedView2dContainer,
-        synchAction == null ? SynchView.NONE : (SynchView) synchAction.getSelectedItem());
+        synchAction == null ? SynchView.DEFAULT_STACK : (SynchView) synchAction.getSelectedItem());
 
     view2d.updateGraphicSelectionListener(selectedView2dContainer);
     return true;
@@ -746,7 +763,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> {
         panes.remove(viewPane);
         viewPane.setActionsInView(ActionW.SYNCH_CROSSLINE.cmd(), false);
 
-        if (SynchView.NONE.equals(synchView)) {
+        if (!synchView.isSynch()) {
           for (ViewCanvas<DicomImageElement> pane : panes) {
             pane.getGraphicManager().deleteByLayerType(LayerType.CROSSLINES);
 

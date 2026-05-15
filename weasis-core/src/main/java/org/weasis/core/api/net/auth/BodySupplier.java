@@ -16,6 +16,7 @@ import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Arrays;
 
 /**
  * Supplies request body content for HTTP operations.
@@ -42,33 +43,11 @@ public interface BodySupplier<T> {
   long length();
 
   static BodySupplier<InputStream> ofBytes(byte[] bytes) {
-    return new BodySupplier<>() {
-      @Override
-      public InputStream get() {
-        return new ByteArrayInputStream(bytes);
-      }
-
-      @Override
-      public long length() {
-        return bytes.length;
-      }
-    };
+    return new ByteArraySupplier(bytes, 0, bytes.length);
   }
 
   static BodySupplier<InputStream> ofBytes(byte[] bytes, int offset, int length) {
-    return offset == 0 && length == bytes.length
-        ? ofBytes(bytes)
-        : new BodySupplier<>() {
-          @Override
-          public InputStream get() {
-            return new ByteArrayInputStream(bytes, offset, length);
-          }
-
-          @Override
-          public long length() {
-            return length;
-          }
-        };
+    return new ByteArraySupplier(bytes, offset, length);
   }
 
   static BodySupplier<InputStream> ofString(String content) {
@@ -80,21 +59,64 @@ public interface BodySupplier<T> {
   }
 
   static BodySupplier<InputStream> ofPath(Path path) throws IOException {
-    long size = Files.size(path);
-    return new BodySupplier<>() {
-      @Override
-      public InputStream get() throws IOException {
-        return Files.newInputStream(path);
-      }
-
-      @Override
-      public long length() {
-        return size;
-      }
-    };
+    return new PathSupplier(path, Files.size(path));
   }
 
   static BodySupplier<InputStream> empty() {
     return ofBytes(new byte[0]);
+  }
+
+  /** In-memory byte-array body. */
+  record ByteArraySupplier(byte[] bytes, int offset, int len) implements BodySupplier<InputStream> {
+    @Override
+    public InputStream get() {
+      return new ByteArrayInputStream(bytes, offset, len);
+    }
+
+    @Override
+    public long length() {
+      return len;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (!(o instanceof ByteArraySupplier(byte[] otherBytes, int otherOffset, int otherLen)))
+        return false;
+      return offset == otherOffset && len == otherLen && Arrays.equals(bytes, otherBytes);
+    }
+
+    @Override
+    public int hashCode() {
+      int result = Arrays.hashCode(bytes);
+      result = 31 * result + offset;
+      result = 31 * result + len;
+      return result;
+    }
+
+    @Override
+    @org.jetbrains.annotations.NotNull
+    public String toString() {
+      return "ByteArraySupplier[bytes="
+          + Arrays.toString(bytes)
+          + ", offset="
+          + offset
+          + ", len="
+          + len
+          + "]";
+    }
+  }
+
+  /** File-backed body, lazily opened on each call to {@link #get()}. */
+  record PathSupplier(Path path, long size) implements BodySupplier<InputStream> {
+    @Override
+    public InputStream get() throws IOException {
+      return Files.newInputStream(path);
+    }
+
+    @Override
+    public long length() {
+      return size;
+    }
   }
 }

@@ -95,6 +95,8 @@ public class LoadLocalDicom extends LoadDicom {
           }
         } else if (reading == Reading.ERROR) {
           errors.incrementAndGet();
+        } else if (reading == Reading.UNSUPPORTED) {
+          unsupported.incrementAndGet();
         }
       } else if (FileUtil.isFileExtensionMatching(value.toPath(), DicomZipCodec.FILE_EXTENSIONS)
           || MimeInspector.isMatchingMimeTypeFromMagicNumber(value, DicomZipMediaIO.MIME_TYPE)) {

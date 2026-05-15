@@ -139,7 +139,7 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
   /** The layout cell manager that handles ViewCanvas and Component placement */
   protected final LayoutCellManager<E> cellManager;
 
-  protected SynchView synchView = SynchView.NONE;
+  protected SynchView synchView = SynchView.DEFAULT_STACK;
 
   protected final ImageViewerEventManager<E> eventManager;
   protected final JPanel grid;
@@ -426,6 +426,12 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
           .subList(layoutCapacity, viewsWithImages.size())
           .forEach(ViewCanvas::disposeView);
       return new ArrayList<>(viewsWithImages.subList(0, layoutCapacity));
+    }
+    ComboItemListener<SynchView> synch = eventManager.getAction(ActionW.SYNCH).orElse(null);
+    if (synch != null) {
+      if (synch.getSelectedItem() instanceof SynchView sel) {
+        sel.resetSynchData();
+      }
     }
 
     return new ArrayList<>(viewsWithImages);

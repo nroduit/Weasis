@@ -7,18 +7,14 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
  */
-package org.weasis.dicom.codec;
+package org.weasis.dicom.codec.seg;
 
 import java.util.Set;
 import org.weasis.core.ui.model.graphic.imp.seg.SegContour;
 
-/** Interface for different implementations of lazy contour loading strategies. */
+/** Strategy interface for lazily loading or generating segmentation contours per frame. */
 public interface LazyContourLoader {
 
-  /**
-   * Retrieve or generate contours lazily.
-   *
-   * @return a set of {@link SegContour} representing the contours.
-   */
+  /** Returns the (possibly cached) set of contours for this frame. */
   Set<SegContour> getLazyContours();
 }

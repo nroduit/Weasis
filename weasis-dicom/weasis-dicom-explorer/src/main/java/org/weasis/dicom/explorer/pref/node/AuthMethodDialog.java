@@ -9,6 +9,7 @@
  */
 package org.weasis.dicom.explorer.pref.node;
 
+import java.awt.FlowLayout;
 import java.awt.Window;
 import java.util.UUID;
 import javax.swing.BorderFactory;
@@ -93,8 +94,18 @@ public class AuthMethodDialog extends JDialog {
     okButton.addActionListener(e -> okButtonActionPerformed());
     JButton cancelButton = new JButton(Messages.getString("PrinterDialog.cancel"));
     cancelButton.addActionListener(e -> dispose());
-    panel.add(okButton, "newline, skip, growx 0, alignx trailing"); // NON-NLS
-    panel.add(cancelButton, "gap 15lp 0lp 10lp 10lp"); // NON-NLS
+    JButton helpButton = GuiUtils.createHelpButton("dicomweb-config"); // NON-NLS
+    panel.add(
+        GuiUtils.getFlowLayoutPanel(
+            FlowLayout.TRAILING,
+            0,
+            0,
+            helpButton,
+            GuiUtils.boxHorizontalStrut(15),
+            okButton,
+            GuiUtils.boxHorizontalStrut(15),
+            cancelButton),
+        "newline, spanx, gap 15lp 0lp 10lp 10lp, alignx trailing"); // NON-NLS
   }
 
   public void buildHeader(JPanel panel) {

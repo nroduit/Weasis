@@ -12,29 +12,29 @@ package org.weasis.dicom.rt;
 import java.util.Arrays;
 import java.util.Objects;
 
-public class PolynomialFunction {
+/**
+ * Immutable polynomial function evaluated with Horner's scheme. Trailing zero coefficients are
+ * dropped so that two equivalent polynomials compare equal.
+ */
+public final class PolynomialFunction {
 
   private final double[] coefs;
 
   public PolynomialFunction(double[] c) {
     int length = Objects.requireNonNull(c).length;
     if (length == 0) {
-      throw new IllegalStateException("empty data");
+      throw new IllegalArgumentException("empty coefficients");
     }
-    while ((length > 1) && (c[length - 1] == 0)) {
-      --length;
+    while (length > 1 && c[length - 1] == 0) {
+      length--;
     }
-    this.coefs = new double[length];
-    System.arraycopy(c, 0, this.coefs, 0, length);
+    this.coefs = Arrays.copyOf(c, length);
   }
 
+  /** Evaluates the polynomial at {@code x} using Horner's scheme. */
   public double value(double x) {
-    int length = Objects.requireNonNull(coefs).length;
-    if (length == 0) {
-      throw new IllegalStateException("empty data");
-    }
-    double result = coefs[length - 1];
-    for (int j = length - 2; j >= 0; j--) {
+    double result = coefs[coefs.length - 1];
+    for (int j = coefs.length - 2; j >= 0; j--) {
       result = x * result + coefs[j];
     }
     return result;
@@ -42,14 +42,7 @@ public class PolynomialFunction {
 
   @Override
   public boolean equals(Object o) {
-    if (this == o) {
-      return true;
-    }
-    if (o == null || getClass() != o.getClass()) {
-      return false;
-    }
-    PolynomialFunction that = (PolynomialFunction) o;
-    return Arrays.equals(coefs, that.coefs);
+    return o instanceof PolynomialFunction other && Arrays.equals(coefs, other.coefs);
   }
 
   @Override

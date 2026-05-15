@@ -34,6 +34,9 @@ public class ContextMenuHandler<E extends ImageElement> extends MouseActionAdapt
   }
 
   private void showPopup(final MouseEvent evt) {
+    if (evt.isConsumed()) {
+      return;
+    }
     // Context menu
     if ((evt.getModifiersEx() & getButtonMaskEx()) != 0) {
       JPopupMenu popupMenu = null;

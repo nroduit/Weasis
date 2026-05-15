@@ -192,6 +192,8 @@ public class MprAxis {
           rawIO.setGraphicModel(oldGeometry, oldModel);
         }
       }
+      // Update segmentation overlays using volume-based reslicing
+      mprView.updateSegmentation();
       // mprView.center();
       mprView.repaint();
     }

@@ -9,7 +9,6 @@
  */
 package org.weasis.dicom.viewer3d.vr;
 
-import java.awt.Component;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import javax.swing.JProgressBar;
@@ -72,16 +71,13 @@ public class DicomVolTextureFactory {
 
     Volume<?, ?> volume = Volume.getSharedVolume(stack);
     if (volume == null) {
-      Component parentComponent = progress instanceof Component c ? c : null;
       try {
         if (stack.isNonParallelSlices()) {
-          MPRGenerator.confirmMessage(
-              parentComponent, Messages.getString("SeriesBuilder.orientation_varying"));
+          MPRGenerator.confirmMessage(bar, Messages.getString("SeriesBuilder.orientation_varying"));
         } else if (stack.isVariableSliceSpacing()) {
-          MPRGenerator.confirmMessage(parentComponent, Messages.getString("SeriesBuilder.space"));
+          MPRGenerator.confirmMessage(bar, Messages.getString("SeriesBuilder.space"));
         } else if (stack.isTooFewSlicesForTransformation()) {
-          MPRGenerator.confirmMessage(
-              parentComponent, Messages.getString("SeriesBuilder.too_few_slices"));
+          MPRGenerator.confirmMessage(bar, Messages.getString("SeriesBuilder.too_few_slices"));
         }
         // If yes is selected or none of the conditions are met, the volume is generated with
         // geometric rectification

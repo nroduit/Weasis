@@ -458,6 +458,14 @@
       "category": "DICOM"
     },
     {
+      "code": "weasis.rt.dvh.recalculate.enable",
+      "value": "true",
+      "description": "Enable the experimental DVH (re)calculation in the RT plugin. The DVH calculation algorithm (derived from dicompyler) has not been clinically validated and must not be used for medical decisions. When false (default), only DVHs stored in the RTDOSE files are displayed.",
+      "type": "F",
+      "javaType": "BOOLEAN",
+      "category": "DICOM"
+    },
+    {
       "code": "weasis.color.wl.apply",
       "value": "true",
       "description": "Allow applying Window/Level on color images",
@@ -553,6 +561,14 @@
       "code": "weasis.export.dicom.send",
       "value": "true",
       "description": "Show the send page in the DICOM Export dialog",
+      "type": "A",
+      "javaType": "BOOLEAN",
+      "category": "UI"
+    },
+    {
+      "code": "weasis.export.annotations",
+      "value": "false",
+      "description": "Show the Export Annotations button in the toolbar",
       "type": "A",
       "javaType": "BOOLEAN",
       "category": "UI"

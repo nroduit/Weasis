@@ -15,6 +15,7 @@ import org.weasis.core.ui.model.graphic.imp.seg.SegRegion;
 import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.codec.DicomImageElement;
 
+/** A single isodose level (percentage of the prescribed dose) rendered as a coloured region. */
 public class IsoDoseRegion extends SegRegion<DicomImageElement> {
   private final int level;
   private final double absoluteDose;
@@ -24,13 +25,13 @@ public class IsoDoseRegion extends SegRegion<DicomImageElement> {
     super(level, TagW.NO_VALUE, color);
     this.level = level;
     setInteriorOpacity(0.2f);
-    this.absoluteDose = ((this.level) * planDose) / 100.0;
-    String result =
-        this.level + " % / " + String.format("%.6g", this.absoluteDose) + " cGy"; // NON-NLS
-    if (StringUtil.hasText(name)) {
-      result += " [" + name + "]";
-    }
-    setLabel(result);
+    this.absoluteDose = (level * planDose) / 100.0;
+    setLabel(buildLabel(level, absoluteDose, name));
+  }
+
+  private static String buildLabel(int level, double absoluteDose, String name) {
+    String base = "%d %% / %.6g cGy".formatted(level, absoluteDose); // NON-NLS
+    return StringUtil.hasText(name) ? base + " [" + name + "]" : base;
   }
 
   public int getLevel() {

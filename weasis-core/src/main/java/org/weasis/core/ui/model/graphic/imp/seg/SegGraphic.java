@@ -15,7 +15,6 @@ import java.awt.geom.AffineTransform;
 import java.awt.geom.Area;
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
 import org.weasis.core.api.image.util.MeasurableLayer;
 import org.weasis.core.ui.model.graphic.AbstractGraphic;
 import org.weasis.core.ui.model.graphic.Graphic;
@@ -46,8 +45,8 @@ public class SegGraphic extends AbstractGraphic implements GraphicArea {
   @Override
   protected void initCopy(Graphic graphic) {
     super.initCopy(graphic);
-    if (graphic instanceof SegGraphic SegGraphic) {
-      this.stroke = SegGraphic.stroke;
+    if (graphic instanceof SegGraphic other) {
+      this.stroke = other.stroke;
     }
   }
 
@@ -59,7 +58,7 @@ public class SegGraphic extends AbstractGraphic implements GraphicArea {
   @Override
   public void setFilled(Boolean filled) {
     if (!Objects.equals(this.filled, filled)) {
-      this.filled = Optional.ofNullable(filled).orElse(DEFAULT_FILLED);
+      this.filled = filled == null ? DEFAULT_FILLED : filled;
       fireDrawingChanged();
     }
   }
@@ -107,10 +106,7 @@ public class SegGraphic extends AbstractGraphic implements GraphicArea {
 
   @Override
   public Stroke getStroke(Float lineThickness) {
-    if (stroke != null) {
-      return stroke;
-    }
-    return super.getStroke(lineThickness);
+    return stroke != null ? stroke : super.getStroke(lineThickness);
   }
 
   @Override

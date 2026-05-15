@@ -23,6 +23,7 @@ public class SegRegion<E extends ImageElement> extends RegionAttributes
   private String algorithmName;
   private List<String> anatomicRegionCodes;
   private List<String> categories;
+  private String fractionalType;
 
   public SegRegion(int id, String label, Color color) {
     super(id, label, color);
@@ -32,19 +33,23 @@ public class SegRegion<E extends ImageElement> extends RegionAttributes
 
   public SegRegion(SegRegion<E> region) {
     super(region.getId(), region.getLabel(), new Color(region.getColor().getRGB()));
-    this.setDescription(region.getDescription());
-    this.setType(region.getType());
-    this.setFilled(region.isFilled());
-    this.setLineThickness(region.getLineThickness());
-    this.setVisible(region.isVisible());
-    this.setInteriorOpacity(region.getInteriorOpacity());
-    this.algorithmName = region.algorithmName;
-    this.anatomicRegionCodes = region.anatomicRegionCodes;
-    this.categories = region.categories;
+    copyAttributesFrom(region);
+  }
 
-    this.numberOfPixels = region.numberOfPixels;
-    this.selected = region.selected;
-    this.measurableLayer = region.measurableLayer;
+  private void copyAttributesFrom(SegRegion<E> other) {
+    setDescription(other.getDescription());
+    setType(other.getType());
+    setFilled(other.isFilled());
+    setLineThickness(other.getLineThickness());
+    setVisible(other.isVisible());
+    setInteriorOpacity(other.getInteriorOpacity());
+    this.algorithmName = other.algorithmName;
+    this.anatomicRegionCodes = other.anatomicRegionCodes;
+    this.categories = other.categories;
+    this.fractionalType = other.fractionalType;
+    this.numberOfPixels = other.numberOfPixels;
+    this.selected = other.selected;
+    this.measurableLayer = other.measurableLayer;
   }
 
   public SegMeasurableLayer<E> getMeasurableLayer() {
@@ -77,7 +82,7 @@ public class SegRegion<E extends ImageElement> extends RegionAttributes
   }
 
   public void setAnatomicRegionCodes(List<String> anatomicRegions) {
-    this.anatomicRegionCodes = anatomicRegions;
+    this.anatomicRegionCodes = anatomicRegions == null ? null : List.copyOf(anatomicRegions);
   }
 
   public List<String> getAnatomicRegionCodes() {
@@ -85,10 +90,24 @@ public class SegRegion<E extends ImageElement> extends RegionAttributes
   }
 
   public void setCategories(List<String> categories) {
-    this.categories = categories;
+    this.categories = categories == null ? null : List.copyOf(categories);
   }
 
   public List<String> getCategories() {
     return categories;
+  }
+
+  /** Returns the fractional type (PROBABILITY or OCCUPANCY) or null for BINARY segmentations. */
+  public String getFractionalType() {
+    return fractionalType;
+  }
+
+  public void setFractionalType(String fractionalType) {
+    this.fractionalType = fractionalType;
+  }
+
+  /** Returns true if this region is from a FRACTIONAL segmentation. */
+  public boolean isFractional() {
+    return fractionalType != null;
   }
 }

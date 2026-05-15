@@ -11,7 +11,11 @@ package org.weasis.dicom.rt;
 
 import java.util.Arrays;
 
-public class PolynomialSplineFunction {
+/**
+ * Piecewise polynomial function over a strictly increasing set of knots. Each segment {@code
+ * [knots[i], knots[i+1]]} is evaluated by {@code functions[i]} translated by {@code -knots[i]}.
+ */
+public final class PolynomialSplineFunction {
   private final double[] knots;
   private final PolynomialFunction[] functions;
   private final int n;
@@ -21,24 +25,22 @@ public class PolynomialSplineFunction {
         || functions == null
         || knots.length < 2
         || knots.length - 1 != functions.length) {
-      throw new IllegalArgumentException();
+      throw new IllegalArgumentException("invalid knots/functions length");
     }
     this.n = knots.length - 1;
-    this.knots = new double[n + 1];
-    System.arraycopy(knots, 0, this.knots, 0, n + 1);
-    this.functions = new PolynomialFunction[n];
-    System.arraycopy(functions, 0, this.functions, 0, n);
+    this.knots = Arrays.copyOf(knots, n + 1);
+    this.functions = Arrays.copyOf(functions, n);
   }
 
+  /** Evaluates the spline at {@code v}; throws if {@code v} is outside the knot range. */
   public double value(double v) {
     if (v < knots[0] || v > knots[n]) {
-      throw new IllegalStateException("out of range");
+      throw new IllegalArgumentException("out of range: " + v);
     }
     int i = Arrays.binarySearch(knots, v);
     if (i < 0) {
       i = -i - 2;
     }
-    // When v is the last knot value
     if (i >= functions.length) {
       i--;
     }

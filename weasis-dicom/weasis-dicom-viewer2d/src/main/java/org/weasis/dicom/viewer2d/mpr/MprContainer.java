@@ -98,11 +98,12 @@ public class MprContainer extends DicomViewerPlugin
             Messages.getString("mpr.synchronisation"),
             "mpr", // NON-NLS
             SynchData.Mode.STACK,
+            true,
             ActionIcon.TILE,
             actions);
   }
 
-  public static final List<SynchView> SYNCH_LIST = List.of(SynchView.NONE, defaultMpr);
+  public static final List<SynchView> SYNCH_LIST = List.of(defaultMpr);
 
   public static final MigLayoutModel view1 =
       new MergedCellsBuilder(2, 2, "mpr1", "3 views (left merged)", MprView.class.getName())
@@ -158,7 +159,6 @@ public class MprContainer extends DicomViewerPlugin
         MprFactory.NAME,
         ResourceUtil.getIcon(OtherIcon.VIEW_3D),
         null);
-    setSynchView(SynchView.NONE);
     if (!UI.init.getAndSet(true)) {
       List<Toolbar> toolBars = UI.toolBars;
 

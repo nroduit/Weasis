@@ -14,8 +14,7 @@
 	<packaging>jar</packaging>
 	<artifactId>weasis-opencv-core-linux-aarch64</artifactId>
 	<name>OpenCV - Linux aarch64 [${project.artifactId}]</name>
-	<version>${weasis.opencv.pkg.version}</version>
-
+	<version>${sha1}</version>
 	<properties>
 		<native.files>libopencv_java.so</native.files>
 	</properties>

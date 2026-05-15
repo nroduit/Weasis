@@ -15,6 +15,7 @@ import java.io.IOException;
 import javax.swing.JProgressBar;
 import org.joml.Vector3d;
 import org.opencv.core.CvType;
+import org.weasis.core.api.vol.ChunkedArray;
 import org.weasis.opencv.data.PlanarImage;
 
 public final class VolumeByte extends Volume<Byte, byte[]> {

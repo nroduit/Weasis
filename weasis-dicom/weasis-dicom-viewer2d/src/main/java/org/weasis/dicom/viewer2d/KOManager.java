@@ -22,6 +22,7 @@ import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.Filter;
 import org.weasis.core.api.gui.util.GuiExecutor;
+import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.WinUtil;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaSeries;
@@ -43,6 +44,8 @@ import org.weasis.dicom.macro.HierarchicalSOPInstanceReference;
 import org.weasis.dicom.macro.KODocumentModule;
 
 public final class KOManager {
+
+  private static final String KO_HELP_TOPIC = "build-ko-pr/#key-object-selection-ko"; // NON-NLS
 
   public static List<Object> getKOElementListWithNone(ViewCanvas<DicomImageElement> currentView) {
 
@@ -86,16 +89,7 @@ public final class KOManager {
           Messages.getString("KOManager.select_last_ko"), Messages.getString("KOManager.new_ko")
         };
 
-        int response =
-            JOptionPane.showOptionDialog(
-                WinUtil.getValidComponent(view2d.getJComponent()),
-                message,
-                Messages.getString("KOManager.ko_title"),
-                JOptionPane.YES_NO_OPTION,
-                JOptionPane.WARNING_MESSAGE,
-                null,
-                options,
-                options[0]);
+        int response = showKOOptionDialog(view2d.getJComponent(), message, options);
 
         if (response == 0) {
           newKOSelection = validKOSelection;
@@ -125,16 +119,7 @@ public final class KOManager {
             Messages.getString("KOManager.use_ko"), Messages.getString("KOManager.new_ko")
           };
 
-          int response =
-              JOptionPane.showOptionDialog(
-                  WinUtil.getValidComponent(view2d.getJComponent()),
-                  message,
-                  Messages.getString("KOManager.ko_title"),
-                  JOptionPane.YES_NO_OPTION,
-                  JOptionPane.WARNING_MESSAGE,
-                  null,
-                  options,
-                  options[0]);
+          int response = showKOOptionDialog(view2d.getJComponent(), message, options);
 
           if (response == 0) {
             newKOSelection = currentSelectedKO;
@@ -152,16 +137,7 @@ public final class KOManager {
           Messages.getString("KOManager.new_ko"), Messages.getString("KOManager.new_ko_from")
         };
 
-        int response =
-            JOptionPane.showOptionDialog(
-                WinUtil.getValidComponent(view2d.getJComponent()),
-                message,
-                Messages.getString("KOManager.ko_title"),
-                JOptionPane.YES_NO_OPTION,
-                JOptionPane.WARNING_MESSAGE,
-                null,
-                options,
-                options[0]);
+        int response = showKOOptionDialog(view2d.getJComponent(), message, options);
 
         if (response == 0) {
           newDicomKO = createNewDicomKeyObject(currentImage, view2d.getJComponent());
@@ -508,6 +484,19 @@ public final class KOManager {
       }
       view2d.updateKOButtonVisibleState();
     }
+  }
+
+  private static int showKOOptionDialog(
+      Component parentComponent, String message, Object[] options) {
+    return JOptionPane.showOptionDialog(
+        WinUtil.getValidComponent(parentComponent),
+        GuiUtils.buildHelpMessagePanel(message, KO_HELP_TOPIC),
+        Messages.getString("KOManager.ko_title"),
+        JOptionPane.YES_NO_OPTION,
+        JOptionPane.WARNING_MESSAGE,
+        null,
+        options,
+        options[0]);
   }
 
   private static void updateImage(

@@ -20,11 +20,10 @@ public class JavaNetHttpClientProvider implements HttpClientProvider {
   @Override
   public HttpClient createClient(HttpClientConfig httpClientConfig) {
     Objects.requireNonNull(httpClientConfig, "HTTP client configuration cannot be null");
-    return switch (httpClientConfig) {
-      case JavaNetHttpClientConfig config -> new JavaNetHttpClient(config);
-      default ->
-          throw new IllegalArgumentException(
-              "Unsupported configuration type: " + httpClientConfig.getClass().getName());
-    };
+    if (httpClientConfig instanceof JavaNetHttpClientConfig config) {
+      return new JavaNetHttpClient(config);
+    }
+    throw new IllegalArgumentException(
+        "Unsupported configuration type: " + httpClientConfig.getClass().getName());
   }
 }

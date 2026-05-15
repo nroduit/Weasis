@@ -21,10 +21,13 @@ import java.util.function.Function;
 import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Sequence;
 import org.dcm4che3.data.Tag;
+import org.weasis.core.api.media.data.MediaElement;
+import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.util.ResourceUtil.ResourceIconPath;
 import org.weasis.core.util.StringUtil;
+import org.weasis.dicom.codec.seg.LazyContourLoader;
 import org.weasis.dicom.macro.SOPInstanceReference;
 
 public class HiddenSeriesManager {
@@ -214,6 +217,107 @@ public class HiddenSeriesManager {
       }
     }
     return Collections.emptyList();
+  }
+
+  private static String resolvePatientPseudoUID(MediaSeries<?> series) {
+    if (series == null) {
+      return null;
+    }
+    Object first = series.getMedia(MediaSeries.MEDIA_POSITION.FIRST, null, null);
+    if (first instanceof MediaElement element) {
+      return (String) element.getTagValue(TagW.PatientPseudoUID);
+    }
+    return null;
+  }
+
+  /**
+   * Tests whether any hidden element of {@code clazz} is registered for the same patient as {@code
+   * series} and shares the same {@code FrameOfReferenceUID}. This is used as a fallback when the
+   * direct {@link #reference2Series} mapping (built from the {@code ReferencedSeriesSequence}) is
+   * not populated — typically for AI-generated SEG objects that omit explicit series references but
+   * are still spatially aligned through the Frame of Reference.
+   */
+  public static <E> boolean hasHiddenElementsByFrameOfReference(
+      Class<E> clazz, MediaSeries<?> series) {
+    if (clazz == null || series == null) {
+      return false;
+    }
+    String frameOfRef = TagD.getTagValue(series, Tag.FrameOfReferenceUID, String.class);
+    if (!StringUtil.hasText(frameOfRef)) {
+      return false;
+    }
+    String patientPseudoUID = resolvePatientPseudoUID(series);
+    if (!StringUtil.hasText(patientPseudoUID)) {
+      return false;
+    }
+    Set<String> patientSeries = getInstance().patient2Series.get(patientPseudoUID);
+    if (patientSeries == null) {
+      return false;
+    }
+    String selfSeriesUID = TagD.getTagValue(series, Tag.SeriesInstanceUID, String.class);
+    for (String segSeriesUID : patientSeries) {
+      if (segSeriesUID.equals(selfSeriesUID)) {
+        continue;
+      }
+      Set<HiddenSpecialElement> hiddenElements = getInstance().series2Elements.get(segSeriesUID);
+      if (hiddenElements == null) {
+        continue;
+      }
+      for (HiddenSpecialElement e : hiddenElements) {
+        if (clazz.isInstance(e)
+            && frameOfRef.equals(
+                TagD.getTagValue(
+                    e.getMediaReader().getMediaSeries(), Tag.FrameOfReferenceUID, String.class))) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  /**
+   * Returns hidden elements of {@code clazz} that share the same {@code FrameOfReferenceUID} as the
+   * given series and belong to the same patient. See {@link
+   * #hasHiddenElementsByFrameOfReference(Class, MediaSeries)}.
+   */
+  public static <E> List<E> getHiddenElementsByFrameOfReference(
+      Class<E> clazz, MediaSeries<?> series) {
+    if (clazz == null || series == null) {
+      return Collections.emptyList();
+    }
+    String frameOfRef = TagD.getTagValue(series, Tag.FrameOfReferenceUID, String.class);
+    if (!StringUtil.hasText(frameOfRef)) {
+      return Collections.emptyList();
+    }
+    String patientPseudoUID = resolvePatientPseudoUID(series);
+    if (!StringUtil.hasText(patientPseudoUID)) {
+      return Collections.emptyList();
+    }
+    Set<String> patientSeries = getInstance().patient2Series.get(patientPseudoUID);
+    if (patientSeries == null) {
+      return Collections.emptyList();
+    }
+    String selfSeriesUID = TagD.getTagValue(series, Tag.SeriesInstanceUID, String.class);
+    List<E> result = new ArrayList<>();
+    for (String segSeriesUID : patientSeries) {
+      if (segSeriesUID.equals(selfSeriesUID)) {
+        continue;
+      }
+      Set<HiddenSpecialElement> hiddenElements = getInstance().series2Elements.get(segSeriesUID);
+      if (hiddenElements == null) {
+        continue;
+      }
+      for (HiddenSpecialElement e : hiddenElements) {
+        if (clazz.isInstance(e)
+            && frameOfRef.equals(
+                TagD.getTagValue(
+                    e.getMediaReader().getMediaSeries(), Tag.FrameOfReferenceUID, String.class))
+            && !result.contains(e)) {
+          result.add((E) e);
+        }
+      }
+    }
+    return result;
   }
 
   public static Set<ResourceIconPath> getRelatedIcons(String seriesUID) {
