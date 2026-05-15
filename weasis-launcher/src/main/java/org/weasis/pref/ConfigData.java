@@ -11,8 +11,8 @@ package org.weasis.pref;
 
 import static java.util.stream.Collectors.*;
 
-import com.github.zafarkhaja.semver.Version;
 import com.formdev.flatlaf.util.SystemInfo;
+import com.github.zafarkhaja.semver.Version;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;

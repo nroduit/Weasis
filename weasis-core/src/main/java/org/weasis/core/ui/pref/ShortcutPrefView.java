@@ -44,7 +44,6 @@ import javax.swing.text.html.HTMLEditorKit;
 import net.miginfocom.swing.MigLayout;
 import org.weasis.core.Messages;
 import org.weasis.core.api.gui.util.AbstractItemDialogPage;
-import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.GuiUtils.IconColor;
 import org.weasis.core.api.gui.util.ShortcutManager;
@@ -225,8 +224,7 @@ public class ShortcutPrefView extends AbstractItemDialogPage {
     ShortcutManager manager = ShortcutManager.getInstance();
     manager.applyToFeatures();
     String plugInId = GuiUtils.getUICore().getPluginManager().getPluginId(this.getClass());
-    Preferences prefs =
-        BundlePreferences.getDefaultPreferences(plugInId);
+    Preferences prefs = BundlePreferences.getDefaultPreferences(plugInId);
     manager.savePreferences(prefs);
   }
 

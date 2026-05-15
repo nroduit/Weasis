@@ -12,8 +12,8 @@ package org.weasis.dicom.viewer3d.dockable;
 import java.util.Map;
 import java.util.Set;
 import org.dcm4che3.data.Tag;
+import org.pf4j.Extension;
 import org.weasis.core.api.gui.Insertable;
-import org.weasis.core.api.gui.InsertableFactory;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.ui.docking.ExtToolFactory;
 import org.weasis.core.ui.editor.image.ImageViewerEventManager;
@@ -23,10 +23,10 @@ import org.weasis.dicom.codec.HiddenSeriesManager;
 import org.weasis.dicom.codec.SpecialElementRegion;
 import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.viewer3d.EventManager;
+import org.weasis.plugin.SingletonExtension;
 
-@org.osgi.service.component.annotations.Component(
-    service = InsertableFactory.class,
-    property = {"org.weasis.dicom.viewer3d.View3DContainer=true"})
+@Extension
+@SingletonExtension
 public class SegmentationToolFactory extends ExtToolFactory<DicomImageElement> {
 
   public SegmentationToolFactory() {

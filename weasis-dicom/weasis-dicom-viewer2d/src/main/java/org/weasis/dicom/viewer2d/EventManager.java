@@ -83,13 +83,9 @@ import org.weasis.core.ui.editor.image.SynchEvent;
 import org.weasis.core.ui.editor.image.SynchManager;
 import org.weasis.core.ui.editor.image.SynchView;
 import org.weasis.core.ui.editor.image.ViewCanvas;
-import org.weasis.core.ui.editor.image.ViewerPlugin;
-import org.weasis.core.ui.editor.image.ViewerToolBar;
 import org.weasis.core.ui.editor.image.ZoomToolBar;
 import org.weasis.core.ui.launcher.Launcher;
 import org.weasis.core.ui.model.graphic.Graphic;
-import org.weasis.core.ui.model.layer.LayerType;
-import org.weasis.core.ui.model.utils.bean.PanPoint;
 import org.weasis.core.util.LangUtil;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.DicomSeries;
@@ -1260,7 +1256,6 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
     // Have the two series the same image plane orientation
     return ImageOrientation.hasSameOrientation(series1, series2);
   }
-
 
   public void savePreferences() {
     String plugInId = GuiUtils.getUICore().getPluginManager().getPluginId(this.getClass());
