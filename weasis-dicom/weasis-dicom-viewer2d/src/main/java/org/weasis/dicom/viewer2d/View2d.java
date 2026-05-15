@@ -133,6 +133,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
   private final Dimension oldSize;
   private final ContextMenuHandler contextMenuHandler;
   private volatile BufferedImage segOverlayImage; // NOSONAR visibility reference
+  protected Vector3d lastCrosshairPosition;
 
   protected final KOViewButton koStarButton;
 
@@ -979,6 +980,10 @@ public class View2d extends DefaultView2d<DicomImageElement> {
               pts2.add(new Point2D.Double(-50.0, p.getY()));
               pts2.add(new Point2D.Double(dim.y + 50, p.getY()));
               addCrosshairLine(layer, pts2, color2, centerPt, centerGap);
+
+              // Remember the position so the crosshair can be redrawn after an asynchronous
+              // image change swaps the graphic model and discards these graphics.
+              lastCrosshairPosition = p3;
 
               //            PlanarImage dispImg = image.getImage();
               //            if (dispImg != null) {
