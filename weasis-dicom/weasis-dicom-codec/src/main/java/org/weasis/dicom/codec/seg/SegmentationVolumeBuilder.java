@@ -203,6 +203,11 @@ public final class SegmentationVolumeBuilder {
             noOverlap);
 
     // Second pass: stamp each mask frame into the canonical grid.
+    // Detect upfront whether this SEG hits the OpenCV native 1-bit-decoder bug for widths that
+    // are not a multiple of 8 (phantom column + bit-stream shift across rows). When affected,
+    // stampFrame will re-decode each frame from the raw Pixel Data bytes via
+    // SegBinaryMaskWorkaround until the native fix ships.
+    boolean binaryDecoderWorkaround = SegBinaryMaskWorkaround.isAffected(dicom);
     StampStats stats;
     try {
       stats =
@@ -224,7 +229,8 @@ public final class SegmentationVolumeBuilder {
               minProj,
               isLabelMap,
               segAttrs,
-              segUid);
+              segUid,
+              binaryDecoderWorkaround ? dicom : null);
     } catch (CancellationException ce) {
       // Build was interrupted (user clicked the cancel button on the loading panel). Release
       // the partially-stamped volume and propagate the cancellation up to the async wrapper so
@@ -290,7 +296,8 @@ public final class SegmentationVolumeBuilder {
       double minProj,
       boolean isLabelMap,
       Map<Integer, ? extends RegionAttributes> segAttrs,
-      String segUid) {
+      String segUid,
+      Attributes binaryDecoderWorkaroundDicom) {
     StampStats stats = new StampStats();
     for (int i = 0; i < frames.size(); i++) {
       // Per-frame interrupt check: each iteration can decode a multi-MB DICOM mask and stamp
@@ -325,7 +332,9 @@ public final class SegmentationVolumeBuilder {
           sliceSpacing,
           minProj,
           segUid,
-          stats);
+          stats,
+          binaryDecoderWorkaroundDicom,
+          i);
     }
     return stats;
   }
@@ -359,12 +368,30 @@ public final class SegmentationVolumeBuilder {
       double sliceSpacing,
       double minProj,
       String segUid,
-      StampStats stats) {
+      StampStats stats,
+      Attributes binaryDecoderWorkaroundDicom,
+      int frameIndex) {
     PlanarImage rawMask = maskElement.getImage();
     if (rawMask == null || rawMask.width() <= 0 || rawMask.height() <= 0) {
       if (rawMask != null) ImageConversion.releasePlanarImage(rawMask);
       maskElement.removeImageFromCache();
       return;
+    }
+    // OpenCV-native-decoder workaround: re-decode this frame from the raw Pixel Data bytes when
+    // the SEG is BINARY and its width is not a multiple of 8 (the native decoder allocates
+    // width/8 bytes per row and reads past the end into uninitialised memory, producing a
+    // phantom column and shifting every row after the first). Skip the original (broken) mask
+    // entirely and use the re-decoded one for the rest of stampFrame.
+    PlanarImage workaroundMask = null;
+    if (binaryDecoderWorkaroundDicom != null) {
+      workaroundMask =
+          SegBinaryMaskWorkaround.reDecodeFrame(
+              binaryDecoderWorkaroundDicom, frameIndex, sizeX, sizeY);
+      if (workaroundMask != null) {
+        ImageConversion.releasePlanarImage(rawMask);
+        maskElement.removeImageFromCache();
+        rawMask = workaroundMask;
+      }
     }
     // Re-align decoded mask to the SEG's declared (Columns, Rows) — handles the highdicom
     // packed-bit binary SEG case where dcm4che delivers a non-square frame transposed.
