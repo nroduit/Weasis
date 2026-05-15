@@ -68,21 +68,7 @@ public class ScreenPrefView extends AbstractItemDialogPage {
       final String title = buf.toString();
       defMonitorComboBox.addItem(title);
 
-      if (monitor.getRealScaleFactor() > 0) {
-        buf.append(" (");
-        buf.append(
-            (int)
-                Math.round(
-                    mb.width * Unit.MILLIMETER.getConversionRatio(monitor.getRealScaleFactor())));
-        buf.append("x"); // NON-NLS
-        buf.append(
-            (int)
-                Math.round(
-                    mb.height * Unit.MILLIMETER.getConversionRatio(monitor.getRealScaleFactor())));
-        buf.append(" ");
-        buf.append(Unit.MILLIMETER.getAbbreviation());
-        buf.append(")");
-      }
+      final JLabel monitorLabel = new JLabel(buildMonitorLabel(title, monitor));
 
       JButton realZoomButton = new JButton(Messages.getString("ScreenPrefView.sp_calib"));
       realZoomButton.addActionListener(
@@ -95,9 +81,10 @@ public class ScreenPrefView extends AbstractItemDialogPage {
                     monitor);
             dialog.setBounds(monitor.getFullscreenBounds());
             dialog.setVisible(true);
+            monitorLabel.setText(buildMonitorLabel(title, monitor));
           });
       realZoomButton.setToolTipText(Messages.getString("ScreenPrefView.calib_real"));
-      add(GuiUtils.getFlowLayoutPanel(new JLabel(buf.toString()), realZoomButton));
+      add(GuiUtils.getFlowLayoutPanel(monitorLabel, realZoomButton));
     }
 
     int defIndex = getDefaultMonitor();
@@ -130,6 +117,22 @@ public class ScreenPrefView extends AbstractItemDialogPage {
 
   public static int getDefaultMonitor() {
     return GuiUtils.getUICore().getLocalPersistence().getIntProperty("default.monitor", 0);
+  }
+
+  private static String buildMonitorLabel(String title, Monitor monitor) {
+    StringBuilder buf = new StringBuilder(title);
+    if (monitor.getRealScaleFactor() > 0) {
+      Rectangle mb = monitor.getBounds();
+      double ratio = Unit.MILLIMETER.getConversionRatio(monitor.getRealScaleFactor());
+      buf.append(" (");
+      buf.append((int) Math.round(mb.width * ratio));
+      buf.append("x"); // NON-NLS
+      buf.append((int) Math.round(mb.height * ratio));
+      buf.append(" ");
+      buf.append(Unit.MILLIMETER.getAbbreviation());
+      buf.append(")");
+    }
+    return buf.toString();
   }
 
   @Override
