@@ -9,6 +9,7 @@
  */
 package org.weasis.acquire.explorer.gui.control;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
@@ -53,7 +54,13 @@ public class ImportPanel extends JPanel {
               selection.stream().filter(media -> !(media instanceof ImageElement)).toList();
           if (!nonImageElements.isEmpty()) {
             SeriesGroup seriesGroup = null;
+            List<String> nonCompliantVideos = new ArrayList<>();
+            List<String> oversizedVideos = new ArrayList<>();
             for (MediaElement mediaElement : nonImageElements) {
+              if (AcquireManager.isVideoOverSizeLimit(mediaElement)) {
+                oversizedVideos.add(mediaElement.getName());
+                continue;
+              }
               var type = Type.fromMimeType(mediaElement);
               if (type != null) {
                 AcquireMediaInfo info = AcquireManager.findByMedia(mediaElement);
@@ -62,11 +69,15 @@ public class ImportPanel extends JPanel {
                   AcquireManager.importMedia(info, seriesGroup);
                   info.setStatus(AcquireImageStatus.SUBMITTED);
                 }
+              } else if (Type.isVideo(mediaElement)) {
+                nonCompliantVideos.add(mediaElement.getName());
               }
             }
             if (seriesGroup != null) {
               AcquireManager.getInstance().notifySeriesSelection(seriesGroup);
             }
+            AcquireManager.warnRejectedVideos(
+                WinUtil.getParentWindow(mainPanel), nonCompliantVideos, oversizedVideos);
           }
           List<ImageElement> selectedImages = AcquireManager.toImageElement(selection);
           if (!selectedImages.isEmpty()) {
