@@ -372,27 +372,26 @@ public final class SegmentationVolumeBuilder {
       StampStats stats,
       Attributes binaryDecoderWorkaroundDicom,
       int frameIndex) {
-    PlanarImage rawMask = maskElement.getImage();
+    // OpenCV-native-decoder workaround: for BINARY SEGs whose width is not a multiple of 8 the
+    // native 1-bit decoder allocates width/8 bytes per row and reads past the end into
+    // uninitialised memory (phantom column + per-row bit-stream shift), and for some frames
+    // fails to decode at all (empty Mat, which makes findMinMaxValues log a spurious "Cannot
+    // read image" error). Re-decode the frame from the raw Pixel Data bytes BEFORE touching
+    // maskElement.getImage(), so the broken native decoder is never invoked for an affected
+    // SEG. Mirrors BasicContourLoader's handling for the 2D overlay contours.
+    PlanarImage rawMask = null;
+    if (binaryDecoderWorkaroundDicom != null) {
+      rawMask =
+          SegBinaryMaskWorkaround.reDecodeFrame(
+              binaryDecoderWorkaroundDicom, frameIndex, sizeX, sizeY);
+    }
+    if (rawMask == null) {
+      rawMask = maskElement.getImage();
+    }
     if (rawMask == null || rawMask.width() <= 0 || rawMask.height() <= 0) {
       if (rawMask != null) ImageConversion.releasePlanarImage(rawMask);
       maskElement.removeImageFromCache();
       return;
-    }
-    // OpenCV-native-decoder workaround: re-decode this frame from the raw Pixel Data bytes when
-    // the SEG is BINARY and its width is not a multiple of 8 (the native decoder allocates
-    // width/8 bytes per row and reads past the end into uninitialised memory, producing a
-    // phantom column and shifting every row after the first). Skip the original (broken) mask
-    // entirely and use the re-decoded one for the rest of stampFrame.
-    PlanarImage workaroundMask = null;
-    if (binaryDecoderWorkaroundDicom != null) {
-      workaroundMask =
-          SegBinaryMaskWorkaround.reDecodeFrame(
-              binaryDecoderWorkaroundDicom, frameIndex, sizeX, sizeY);
-      if (workaroundMask != null) {
-        ImageConversion.releasePlanarImage(rawMask);
-        maskElement.removeImageFromCache();
-        rawMask = workaroundMask;
-      }
     }
     // Re-align decoded mask to the SEG's declared (Columns, Rows) — handles the highdicom
     // packed-bit binary SEG case where dcm4che delivers a non-square frame transposed.

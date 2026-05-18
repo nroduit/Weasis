@@ -146,6 +146,10 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
   private int pointerType = 0;
 
   protected final RenderedImageLayer<E> imageLayer;
+
+  /** Image currently pinned in the memory cache on behalf of this viewport (may be null). */
+  private E pinnedImage;
+
   protected Panner<E> panner;
   protected ZoomWin<E> lens;
   private final List<ViewButton> viewButtons;
@@ -973,7 +977,26 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     updateCanvas(getImage(), triggerViewModelChangeListeners);
   }
 
+  /**
+   * Keeps the image displayed by this viewport pinned in the memory cache so it is never evicted
+   * under memory pressure while in use. The previously pinned image is released and becomes
+   * eligible for eviction (and transparent reload). Tracking the pin per viewport keeps it correct
+   * regardless of how subclasses reorder {@link #setImage} and {@code imageLayer} updates.
+   */
+  private void updatePinnedImage(E img) {
+    if (!Objects.equals(pinnedImage, img)) {
+      if (pinnedImage != null) {
+        pinnedImage.unpinFromCache();
+      }
+      if (img != null) {
+        img.pinInCache();
+      }
+      pinnedImage = img;
+    }
+  }
+
   protected void setImage(E img) {
+    updatePinnedImage(img);
     boolean updateGraphics = false;
     imageLayer.setEnableDispOperations(false);
     if (img == null) {
