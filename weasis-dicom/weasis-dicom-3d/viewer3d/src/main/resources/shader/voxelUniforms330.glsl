@@ -77,4 +77,6 @@ uniform int   crosshairCutMode;
 
 // Segmentation overlay (no default initializers in GLSL 3.30; set via Java)
 uniform bool segOverlayEnabled;
+// When true, only the segmentation is rendered; the anatomy volume raymarch is skipped.
+uniform bool segOnly;
 uniform int  segSegmentCount;

@@ -107,7 +107,6 @@ import org.weasis.dicom.viewer3d.EventManager;
 import org.weasis.dicom.viewer3d.InfoLayer3d;
 import org.weasis.dicom.viewer3d.OpenGLInfo;
 import org.weasis.dicom.viewer3d.View3DFactory;
-import org.weasis.dicom.viewer3d.dockable.SegmentationTool;
 import org.weasis.dicom.viewer3d.dockable.SegmentationTool.Type;
 import org.weasis.dicom.viewer3d.geometry.Axis;
 import org.weasis.dicom.viewer3d.geometry.Camera;
@@ -354,16 +353,11 @@ public class View3d extends VolumeCanvas
       eventManager
           .getAction(ActionVol.VOL_QUALITY)
           .ifPresent(a -> a.setSliderValue(quality, false));
-      ComboItemListener<Type> segType = eventManager.getAction(ActionVol.SEG_TYPE).orElse(null);
-      Preset preset;
-      if (segType != null && segType.getSelectedItem() == SegmentationTool.Type.SEG_ONLY) {
-        preset = Preset.getSegmentationLut();
-      } else {
-        preset = Preset.getDefaultPreset(volTexture.getModality());
-      }
-
       renderingLayer.setEnableRepaint(true);
-      setVolumePreset(preset);
+      // The anatomy volume always uses the modality's default preset.
+      setVolumePreset(Preset.getDefaultPreset(volTexture.getModality()));
+      // (Re)build the segmentation texture for this volume.
+      updateSegmentation();
     } else {
       display();
     }
@@ -686,7 +680,9 @@ public class View3d extends VolumeCanvas
     program.allocateUniform(
         gl,
         "segOverlayEnabled", // NON-NLS
-        (g, loc) -> g.glUniform1i(loc, isSegOverlayActive() ? 1 : 0));
+        (g, loc) -> g.glUniform1i(loc, isSegTextureActive() ? 1 : 0));
+    program.allocateUniform(
+        gl, "segOnly", (g, loc) -> g.glUniform1i(loc, isSegOnly() ? 1 : 0)); // NON-NLS
     program.allocateUniform(
         gl,
         "segSegmentCount", // NON-NLS
@@ -841,9 +837,9 @@ public class View3d extends VolumeCanvas
   }
 
   public void updateSegmentation() {
-    ComboItemListener<Type> segType = eventManager.getAction(ActionVol.SEG_TYPE).orElse(null);
-    if (segType == null || segType.getSelectedItem() != Type.SEG_OVERLAY) {
-      // Not in overlay mode — destroy existing seg texture if any
+    Type segType = getSegType();
+    if (segType != Type.SEG_OVERLAY && segType != Type.SEG_ONLY) {
+      // Neither overlay nor segmentation-only mode — destroy existing seg texture if any
       destroySegTexture();
       display();
       return;
@@ -908,14 +904,12 @@ public class View3d extends VolumeCanvas
     // Upload on the shared GL context
     newSvt.uploadVolumeDataAsync();
 
-    // Apply the tree's visibility/opacity state to the colour LUT
+    // Apply the tree's visibility/opacity state to the colour LUT. This method runs on the EDT
+    // (no current GL context), so stash the LUT — SegVolumeTexture.bind() uploads it on the GL
+    // thread at the next render. buildSegmentColorLUT() is pure CPU work.
     Map<Integer, RegionAttributes> overrideAttrs = buildRegionOverrideMap();
     if (!overrideAttrs.isEmpty()) {
-      byte[] colorLut = segVolume.buildSegmentColorLUT(overrideAttrs);
-      GL2ES2 gl = OpenglUtils.getGL();
-      if (gl != null) {
-        newSvt.updateColorLUT(gl, colorLut);
-      }
+      newSvt.setPendingColorLut(segVolume.buildSegmentColorLUT(overrideAttrs));
     }
 
     // Swap in the new texture
@@ -942,19 +936,12 @@ public class View3d extends VolumeCanvas
    */
   public void refreshSegColorLUT() {
     SegVolumeTexture svt = segVolumeTexture;
-    if (svt == null || !svt.isReady()) {
+    if (svt == null) {
       return;
     }
-
-    // Build an id→attributes map from the Preset's region map (reflects tree state)
+    // Build the colour LUT from the Preset region map (reflects the tree's checkbox state)
     Map<Integer, RegionAttributes> overrideAttrs = buildRegionOverrideMap();
-
-    byte[] colorLut = svt.getSegVolume().buildSegmentColorLUT(overrideAttrs);
-
-    GL2ES2 gl = OpenglUtils.getGL();
-    if (gl != null) {
-      svt.updateColorLUT(gl, colorLut);
-    }
+    svt.setPendingColorLut(svt.getSegVolume().buildSegmentColorLUT(overrideAttrs));
     display();
   }
 
@@ -977,14 +964,27 @@ public class View3d extends VolumeCanvas
     return result;
   }
 
-  /** Returns true when segmentation overlay mode is active and a seg texture is ready. */
-  private boolean isSegOverlayActive() {
+  /** Returns the currently selected segmentation display mode, or {@code null} when unavailable. */
+  private Type getSegType() {
+    ComboItemListener<Type> segType = eventManager.getAction(ActionVol.SEG_TYPE).orElse(null);
+    return segType == null ? null : (Type) segType.getSelectedItem();
+  }
+
+  private boolean isSegOnly() {
+    return getSegType() == Type.SEG_ONLY;
+  }
+
+  /**
+   * Returns true when a segmentation texture is ready and the current mode renders it — either the
+   * overlay ({@link Type#SEG_OVERLAY}) or the segmentation-only ({@link Type#SEG_ONLY}) mode.
+   */
+  private boolean isSegTextureActive() {
     SegVolumeTexture svt = segVolumeTexture;
     if (svt == null || !svt.isReady()) {
       return false;
     }
-    ComboItemListener<Type> segType = eventManager.getAction(ActionVol.SEG_TYPE).orElse(null);
-    return segType != null && segType.getSelectedItem() == Type.SEG_OVERLAY;
+    Type segType = getSegType();
+    return segType == Type.SEG_OVERLAY || segType == Type.SEG_ONLY;
   }
 
   private void destroySegTexture() {

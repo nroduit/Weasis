@@ -53,6 +53,7 @@ public final class SegVolumeTexture {
   private int segColorTextureId;
   private boolean needsUpload = true;
   private boolean needsColorUpdate = true;
+  private byte[] pendingColorLut;
 
   /**
    * Creates a new SegVolumeTexture.
@@ -251,6 +252,17 @@ public final class SegVolumeTexture {
   }
 
   /**
+   * Stores a pre-built segment colour LUT to be uploaded on the next {@link #bind(GL2ES2)} call.
+   *
+   * @param colorLut an RGBA8 byte[] indexed by storage ID, or {@code null} to fall back to the
+   *     volume's built-in attributes
+   */
+  public void setPendingColorLut(byte[] colorLut) {
+    this.pendingColorLut = colorLut;
+    this.needsColorUpdate = true;
+  }
+
+  /**
    * Binds the segmentation textures to their respective texture units for rendering. Call this
    * before dispatching the volume rendering shader.
    */
@@ -263,7 +275,11 @@ public final class SegVolumeTexture {
       uploadVolumeData(gl);
     }
     if (needsColorUpdate) {
-      updateColorLUT(gl);
+      if (pendingColorLut != null) {
+        updateColorLUT(gl, pendingColorLut);
+      } else {
+        updateColorLUT(gl);
+      }
     }
 
     gl.glActiveTexture(GL.GL_TEXTURE0 + SEG_TEXTURE_UNIT);

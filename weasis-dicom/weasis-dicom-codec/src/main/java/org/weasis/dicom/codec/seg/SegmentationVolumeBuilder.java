@@ -266,6 +266,7 @@ public final class SegmentationVolumeBuilder {
           sliceSpacing,
           origin);
     }
+    volume.applySegmentVoxelCounts();
     return volume;
   }
 

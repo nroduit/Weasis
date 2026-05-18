@@ -13,7 +13,6 @@ import bibliothek.gui.dock.common.CLocation;
 import eu.essilab.lablib.checkboxtree.TreeCheckingEvent;
 import eu.essilab.lablib.checkboxtree.TreeCheckingModel;
 import java.awt.BorderLayout;
-import java.awt.Component;
 import java.awt.Dimension;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -59,6 +58,7 @@ import org.weasis.dicom.viewer2d.mpr.MprController;
 import org.weasis.dicom.viewer2d.mpr.MprView;
 import org.weasis.dicom.viewer3d.ActionVol;
 import org.weasis.dicom.viewer3d.EventManager;
+import org.weasis.dicom.viewer3d.Messages;
 import org.weasis.dicom.viewer3d.vr.Preset;
 import org.weasis.dicom.viewer3d.vr.View3d;
 import org.weasis.opencv.data.PlanarImage;
@@ -69,12 +69,13 @@ import org.weasis.opencv.seg.RegionAttributes;
  */
 public class SegmentationTool extends PluginTool implements SeriesViewerListener, SegRegionTool {
 
-  public static final String BUTTON_NAME = "Segmentation";
+  public static final String BUTTON_NAME =
+      org.weasis.dicom.viewer2d.Messages.getString("segmentation");
 
   public enum Type {
-    NONE("None"),
-    SEG_ONLY("Segmentation only"),
-    SEG_OVERLAY("Segmentation overlay");
+    NONE(Messages.getString("segmentation.none")),
+    SEG_ONLY(Messages.getString("segmentation.only")),
+    SEG_OVERLAY(Messages.getString("segmentation.overlay"));
 
     private final String title;
 
@@ -232,16 +233,8 @@ public class SegmentationTool extends PluginTool implements SeriesViewerListener
           EventManager.getInstance().getAction(ActionVol.SEG_TYPE).orElse(null);
       if (segType != null) {
         Type selectedType = (Type) segType.getSelectedItem();
-        if (selectedType == Type.SEG_ONLY) {
-          Preset p = Preset.getSegmentationLut();
-          for (ViewCanvas<DicomImageElement> v : views) {
-            if (v instanceof View3d view3d) {
-              view3d.setVolumePreset(p);
-              view3d.updateSegmentation();
-              view3d.repaint();
-            }
-          }
-        } else if (selectedType == Type.SEG_OVERLAY) {
+        if (selectedType == Type.SEG_ONLY || selectedType == Type.SEG_OVERLAY) {
+          // Visibility/opacity changed — refresh only the segment colour LUT on the GPU.
           for (ViewCanvas<DicomImageElement> v : views) {
             if (v instanceof View3d view3d) {
               view3d.refreshSegColorLUT();
@@ -270,6 +263,15 @@ public class SegmentationTool extends PluginTool implements SeriesViewerListener
       return;
     }
 
+    // Keep the existing tree (and its checkbox state) when the same segmentations are already shown
+    if (segNodeMap.size() == list.size() && segNodeMap.values().containsAll(list)) {
+      // Same segmentations already shown — keep the tree and its checkbox state, but refresh the
+      // per-region voxel counts: the SegmentationVolume decodes in the background, so the counts
+      // may have become available only after the tree was first built.
+      syncRegionPixelCounts();
+      return;
+    }
+
     initPathSelection = true;
     try {
       segNodeMap.clear();
@@ -291,6 +293,26 @@ public class SegmentationTool extends PluginTool implements SeriesViewerListener
       TreeBuilder.expandTree(tree, rootNodeStructures, 3);
     } finally {
       initPathSelection = false;
+    }
+  }
+
+  /**
+   * Refreshes the voxel count of every region node from the live {@link SegRegion} held by the
+   * segmentation, without rebuilding the tree. The counts are computed in the background once the
+   * {@code SegmentationVolume} is decoded, so a tree built earlier keeps the tooltips up to date.
+   */
+  private void syncRegionPixelCounts() {
+    for (Map.Entry<GroupTreeNode, SpecialElementRegion> entry : segNodeMap.entrySet()) {
+      Map<Integer, ? extends RegionAttributes> live = entry.getValue().getSegAttributes();
+      if (live == null) {
+        continue;
+      }
+      for (SegRegion<?> region : collectRegions(entry.getKey())) {
+        RegionAttributes src = live.get(region.getId());
+        if (src != null) {
+          region.setNumberOfPixels(src.getNumberOfPixels());
+        }
+      }
     }
   }
 
@@ -430,11 +452,6 @@ public class SegmentationTool extends PluginTool implements SeriesViewerListener
       }
     }
     updateCanvas(segList);
-  }
-
-  @Override
-  public Component getToolComponent() {
-    return this;
   }
 
   @Override

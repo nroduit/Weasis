@@ -33,6 +33,7 @@ import org.weasis.core.api.image.cv.CvUtil;
 import org.weasis.core.api.vol.ChunkedArray;
 import org.weasis.core.api.vol.ChunkedMappedBuffer;
 import org.weasis.core.ui.model.graphic.imp.seg.SegContour;
+import org.weasis.core.ui.model.graphic.imp.seg.SegRegion;
 import org.weasis.opencv.data.ImageCV;
 import org.weasis.opencv.data.PlanarImage;
 import org.weasis.opencv.seg.Region;
@@ -1238,6 +1239,56 @@ public final class SegmentationVolume {
     if (mappedBuffer != null) {
       mappedBuffer.close();
       mappedBuffer = null;
+    }
+  }
+
+  /**
+   * Returns {@code true} when the CPU buffers have been freed by {@link #removeData()} — typically
+   * after the last consumer called {@link #release()}. A disposed volume reads as all-background
+   * and must be rebuilt before it can be reused.
+   */
+  public boolean isDisposed() {
+    return byteData == null && shortData == null && mappedBuffer == null;
+  }
+
+  /**
+   * Counts, in a single pass over the whole volume, how many voxels belong to each segment and
+   * stores the total on the matching {@link SegRegion} via {@link SegRegion#setNumberOfPixels}. An
+   * overlap-combination storage ID contributes to every constituent segment. This gives the
+   * Segmentation tool an exact voxel count / volume without relying on lazy per-slice contour
+   * loading.
+   */
+  public void applySegmentVoxelCounts() {
+    if (segAttributes == null || segAttributes.isEmpty() || isDisposed()) {
+      return;
+    }
+    // Per storage-ID voxel counts, gathered in a single pass over the raster.
+    long[] idCounts = new long[nextId];
+    long total = totalVoxels();
+    for (long i = 0; i < total; i++) {
+      int id = readId(i);
+      if (id > 0 && id < idCounts.length) {
+        idCounts[id]++;
+      }
+    }
+    // Distribute each storage ID's count to the segment(s) it represents.
+    Map<Integer, Long> segCounts = new HashMap<>();
+    for (int id = 1; id < idCounts.length; id++) {
+      long c = idCounts[id];
+      if (c == 0) {
+        continue;
+      }
+      List<Integer> segs = idToSegments.get(id);
+      if (segs != null) {
+        for (int segNum : segs) {
+          segCounts.merge(segNum, c, Long::sum);
+        }
+      }
+    }
+    for (Map.Entry<Integer, ? extends RegionAttributes> e : segAttributes.entrySet()) {
+      if (e.getValue() instanceof SegRegion<?> region) {
+        region.setNumberOfPixels(segCounts.getOrDefault(e.getKey(), 0L));
+      }
     }
   }
 
