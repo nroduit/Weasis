@@ -259,7 +259,10 @@ elif [ "$machine" = "windows" ] ; then
   declare -a signArgs=()
 else
   DICOMIZER_CONFIG="Dicomizer=$RES/dicomizer-launcher.properties"
-  declare -a customOptions=("--java-options" "-splash:\$APPDIR/resources/images/about-round.png" )
+  # sun.awt.disablegrab works around unreliable X11 pointer grabs on XWayland (GNOME/mutter),
+  # which can leave Swing popup menus invisible until the window regains focus (see issue #819).
+  declare -a customOptions=("--java-options" "-splash:\$APPDIR/resources/images/about-round.png" \
+  "--java-options" "-Dsun.awt.disablegrab=true" )
   declare -a signArgs=()
 fi
 declare -a commonOptions=("--java-options" "-Dgosh.port=17179" \
