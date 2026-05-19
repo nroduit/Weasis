@@ -1460,9 +1460,17 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     if (self != null && !self.isSynchActivated()) {
       return false;
     }
-    return isAutoSyncMatch(issuer, self)
-        || isManualSyncMatch(issuer, self)
-        || isTileSyncMatch(issuer, self);
+    boolean linked =
+        isAutoSyncMatch(issuer, self)
+            || isManualSyncMatch(issuer, self)
+            || isTileSyncMatch(issuer, self);
+    if (!linked) {
+      return false;
+    }
+    // Honour the per-view "Scroll Series" checkbox: a scroll/cine event links two views only when
+    // both have that action enabled in their sync options (manual sync keeps Scroll forced on).
+    return issuer.isActionEnable(ActionW.SCROLL_SERIES.cmd())
+        && self.isActionEnable(ActionW.SCROLL_SERIES.cmd());
   }
 
   private boolean isAutoSyncMatch(ViewSynchData issuer, ViewSynchData self) {
@@ -1625,8 +1633,15 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     // Process each synchronized action from the event
     for (Entry<String, Object> entry : synch.getEvents().entrySet()) {
       String command = entry.getKey();
-      // Skip actions not enabled in current view's sync configuration
-      if (this != synch.getView() && synchData != null && !synchData.isActionEnable(command)) {
+      // A synchronized action links two views only when BOTH have it checked in their per-view
+      // sync options. The issuing view always applies the action to itself; for every other view
+      // the action is skipped unless the issuer AND this receiving view both enabled it. This
+      // keeps each action's sync group restricted to the views that opted into that action
+      // (directly or through the "apply to all views" menu), instead of leaking to every view
+      // sharing the same FrameOfReferenceUID.
+      if (this != synch.getView()
+          && ((synchData != null && !synchData.isActionEnable(command))
+              || (issuerSyncData != null && !issuerSyncData.isActionEnable(command)))) {
         continue;
       }
       // Apply the synchronized action based on its type
