@@ -89,6 +89,8 @@ import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.TransferSyntax;
 import org.weasis.dicom.codec.display.WindowAndPresetsOp;
 import org.weasis.dicom.explorer.DicomModel;
+import org.weasis.dicom.explorer.HangingProtocols;
+import org.weasis.dicom.explorer.LoadLocalDicom;
 import org.weasis.dicom.explorer.LocalPersistence;
 import org.weasis.dicom.explorer.Messages;
 import org.weasis.dicom.explorer.imp.DicomDirLoader;
@@ -768,8 +770,13 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
                   if (grModel != null && grModel.hasSerializableGraphics()) {
                     String path =
                         buildPath(dcm, keepNames, cdCompatible, node, getUIDs(editor, dcm));
-                    buildAndWritePR(
+                    String outputFile = buildAndWritePR(
                         dcm, keepNames, new File(exportDir, path), writer, node, seriesInstanceUID);
+                    if (outputFile != null) {
+                      File f = new File(outputFile);
+                      DicomModel.LOADING_EXECUTOR.execute(
+                              new LoadLocalDicom(new File[] { f }, false, dicomModel, HangingProtocols.OpeningViewer.ALL_PATIENTS));
+                    }
                   }
                 }
               }
@@ -796,7 +803,7 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
     return Collections.emptyList();
   }
 
-  public static void buildAndWritePR(
+  public static String buildAndWritePR(
       MediaElement img,
       boolean keepNames,
       File destinationDir,
@@ -821,12 +828,14 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
         if (prAttributes != null) {
           try {
             writeInDicomDir(writer, prAttributes, node, outputFile.getName(), outputFile);
+            return outputFile.getPath();
           } catch (IOException e) {
             LOGGER.error("Writing DICOMDIR", e);
           }
         }
       }
     }
+    return null;
   }
 
   public static String buildPath(

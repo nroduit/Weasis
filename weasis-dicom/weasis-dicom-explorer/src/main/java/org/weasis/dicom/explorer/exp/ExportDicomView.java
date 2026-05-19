@@ -11,6 +11,8 @@ package org.weasis.dicom.explorer.exp;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
@@ -41,6 +43,8 @@ import org.weasis.dicom.codec.DicomElement.DicomExportParameters;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.explorer.DicomModel;
+import org.weasis.dicom.explorer.HangingProtocols;
+import org.weasis.dicom.explorer.LoadLocalDicom;
 import org.weasis.dicom.param.DicomProgress;
 
 public class ExportDicomView extends AbstractItemDialogPage implements ExportDicom {
@@ -108,8 +112,12 @@ public class ExportDicomView extends AbstractItemDialogPage implements ExportDic
     File exportDir =
         FileUtil.createTempDir(AppProperties.buildAccessibleTempDirectory("tmp", "send"))
             .toFile(); // NON-NLS
+
+    File prTempStorage =
+            FileUtil.createTempDir(AppProperties.buildAccessibleTempDirectory("tmp", "pr"))
+                    .toFile(); // NON-NLS
     try {
-      writeDicom(t, exportDir, model);
+      writeDicom(t, exportDir, prTempStorage, model);
 
       if (t.isCancelled()) {
         return false;
@@ -120,9 +128,14 @@ public class ExportDicomView extends AbstractItemDialogPage implements ExportDic
 
       DicomProgress dicomProgress = getDicomProgress(t);
       t.addCancelListener(dicomProgress);
+      if (exportAction(files, dicomProgress)) {
+        DicomModel.LOADING_EXECUTOR.execute(
+                new LoadLocalDicom(prTempStorage.listFiles(), false, dicomModel, HangingProtocols.OpeningViewer.ALL_PATIENTS));
+      }
       return exportAction(files, dicomProgress);
     } finally {
       FileUtil.recursiveDelete(exportDir.toPath());
+      prTempStorage.deleteOnExit();
     }
   }
 
@@ -145,7 +158,7 @@ public class ExportDicomView extends AbstractItemDialogPage implements ExportDic
     return true;
   }
 
-  private void writeDicom(ExplorerTask<Boolean, String> task, File writeDir, CheckTreeModel model) {
+  private void writeDicom(ExplorerTask<Boolean, String> task, File writeDir, File prTempDir, CheckTreeModel model) {
     synchronized (this) {
       ArrayList<String> uids = new ArrayList<>();
       TreePath[] paths = model.getCheckingPaths();
@@ -172,13 +185,22 @@ public class ExportDicomView extends AbstractItemDialogPage implements ExportDic
 
           String path = LocalExport.buildPath((MediaElement) dcm, false, false, node, null);
           saveFile(writeDir, dcm, iuid, path);
-        } else if (node.getUserObject() instanceof MediaSeries<?> s)
-          saveOtherMediaSeries(writeDir, s, node);
+        } else if (node.getUserObject() instanceof MediaSeries<?> s) {
+          String prFile = saveOtherMediaSeries(writeDir, s, node);
+          if (prFile != null) {
+            File pr = new File(prFile);
+            try {
+              Files.copy(pr.toPath(), new File(prTempDir, pr.getName()).toPath(), StandardCopyOption.REPLACE_EXISTING);
+            } catch (IOException e) {
+              LOGGER.error("Failed to copy PR file to temporary directory ", e);
+            }
+          }
+        }
       }
     }
   }
 
-  private static void saveOtherMediaSeries(
+  private static String saveOtherMediaSeries(
       File writeDir, MediaSeries<?> s, DefaultMutableTreeNode node) {
     if (LangUtil.nullToFalse((Boolean) s.getTagValue(TagW.ObjectToSave))) {
       Series<?> series = (Series<?>) s.getTagValue(CheckTreeModel.SourceSeriesForPR);
@@ -188,12 +210,13 @@ public class ExportDicomView extends AbstractItemDialogPage implements ExportDic
           GraphicModel grModel = (GraphicModel) dcm.getTagValue(TagW.PresentationModel);
           if (grModel != null && grModel.hasSerializableGraphics()) {
             String path = LocalExport.buildPath(dcm, false, false, node, null);
-            LocalExport.buildAndWritePR(
+            return LocalExport.buildAndWritePR(
                 dcm, false, new File(writeDir, path), null, node, seriesInstanceUID);
           }
         }
       }
     }
+    return null;
   }
 
   private void saveFile(File writeDir, DicomElement dcm, String iuid, String path) {
