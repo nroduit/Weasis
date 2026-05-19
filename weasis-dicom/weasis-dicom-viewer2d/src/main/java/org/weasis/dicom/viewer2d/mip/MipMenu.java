@@ -14,6 +14,7 @@ import static org.weasis.dicom.explorer.DicomModel.LOADING_EXECUTOR;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicReference;
@@ -32,12 +33,14 @@ import javax.swing.SpinnerNumberModel;
 import javax.swing.SwingUtilities;
 import org.weasis.core.api.explorer.ObservableEvent;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
+import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.DecFormatter;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.ui.editor.image.DefaultView2d;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.editor.image.ViewCanvas;
+import org.weasis.core.ui.editor.image.ViewSynchData;
 import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.utils.DicomMediaUtils;
@@ -357,14 +360,47 @@ public final class MipMenu {
     s = LoadLocalDicom.confirmSplittingMultiPhaseSeries(s);
     if (s == null) return null;
 
+    // Capture manual sync targets BEFORE the old view is disposed. The replacement will call
+    // disposeView() → resetSynchState(), which clears the per-view sync wiring.
+    List<ViewCanvas<DicomImageElement>> manualSyncTargets = collectManualSyncTargets(selView);
+
     container.setSelectedAndGetFocus();
     MipView newView = new MipView(em);
     newView.registerDefaultListeners();
     newView.initMIPSeries(selView);
     container.replaceView(selView, newView);
 
+    // Re-establish manual sync between the new MIP view and the previously linked views.
+    // At this point MipView.getImage() still holds the original series image (the async MIP
+    // build has not started yet), so SlicePosition tags are available for offset recording.
+    if (!manualSyncTargets.isEmpty()) {
+      for (ViewCanvas<DicomImageElement> target : manualSyncTargets) {
+        newView.syncManuallyWith(target);
+      }
+      em.updateAllListeners(container, container.getSynchView());
+    }
+
     // Restore focus after the replacement is rendered
     SwingUtilities.invokeLater(() -> container.setSelectedImagePaneFromFocus(newView));
     return newView;
+  }
+
+  /**
+   * Returns the list of views that {@code selView} is currently manually synchronized with. Called
+   * before the view is replaced so that the wiring can be transferred to its successor.
+   */
+  @SuppressWarnings("unchecked")
+  private static List<ViewCanvas<DicomImageElement>> collectManualSyncTargets(
+      ViewCanvas<DicomImageElement> selView) {
+    ViewSynchData synchData =
+        (ViewSynchData) selView.getActionsInView().get(ActionW.SYNCH_LINK.cmd());
+    if (synchData == null || !synchData.isManualSynchActivated()) {
+      return List.of();
+    }
+    List<ViewCanvas<DicomImageElement>> targets = new ArrayList<>();
+    for (ViewSynchData.ManualSyncData msd : synchData.getManualSyncDataSet()) {
+      targets.add((ViewCanvas<DicomImageElement>) msd.getTargetPane());
+    }
+    return targets;
   }
 }

@@ -100,6 +100,9 @@ public abstract class PannerListener extends MouseActionAdapter
 
   @Override
   public void mousePressed(MouseEvent e) {
+    if (e.isConsumed()) {
+      return;
+    }
     int buttonMask = getButtonMaskEx();
     if ((e.getModifiersEx() & buttonMask) != 0) {
       ViewCanvas<?> panner = getViewCanvas(e);

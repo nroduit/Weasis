@@ -22,7 +22,6 @@ import java.awt.Font;
 import java.awt.Graphics2D;
 import java.awt.Paint;
 import java.awt.Rectangle;
-import java.awt.event.KeyEvent;
 import java.awt.font.FontRenderContext;
 import java.awt.font.TextLayout;
 import java.awt.geom.AffineTransform;
@@ -36,6 +35,7 @@ import java.util.Optional;
 import javax.swing.Icon;
 import org.weasis.core.Messages;
 import org.weasis.core.api.gui.util.GeomUtil;
+import org.weasis.core.api.gui.util.ShortcutManager;
 import org.weasis.core.api.util.FontTools;
 import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.api.util.ResourceUtil.ActionIcon;
@@ -223,12 +223,12 @@ public class AnnotationGraphic extends AbstractDragGraphic {
 
   @Override
   public int getKeyCode() {
-    return KeyEvent.VK_B;
+    return ShortcutManager.getInstance().getKeyCode(ShortcutManager.ID_GRAPHIC_ANNOTATION);
   }
 
   @Override
   public int getModifier() {
-    return 0;
+    return ShortcutManager.getInstance().getModifier(ShortcutManager.ID_GRAPHIC_ANNOTATION);
   }
 
   protected void updateTool() {

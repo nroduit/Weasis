@@ -88,6 +88,11 @@ public class AcquireManager {
   public static final List<String> functions = Collections.singletonList("patient"); // NON-NLS
   public static final Global GLOBAL = new Global();
 
+  public static final String P_MAX_VIDEO_SIZE_MB = "weasis.acquire.video.max.size"; // NON-NLS
+
+  /** Default value for {@link #P_MAX_VIDEO_SIZE_MB} when the preference is not set. */
+  public static final int DEFAULT_MAX_VIDEO_SIZE_MB = 1024;
+
   private static final int OPT_NONE = 0;
   private static final int OPT_B64 = 1;
   private static final int OPT_ZIP = 2;
@@ -291,6 +296,70 @@ public class AcquireManager {
     mediaInfo.setSeries(group);
 
     getInstance().notifyImageAdded(mediaInfo);
+  }
+
+  /**
+   * Returns the maximum size, in megabytes, allowed for an imported video file, as configured by
+   * the {@link #P_MAX_VIDEO_SIZE_MB} system preference. A value of {@code 0} or less means the size
+   * is not limited.
+   */
+  public static int getMaxVideoSizeMB() {
+    return GuiUtils.getUICore()
+        .getSystemPreferences()
+        .getIntProperty(P_MAX_VIDEO_SIZE_MB, DEFAULT_MAX_VIDEO_SIZE_MB);
+  }
+
+  /**
+   * Returns {@code true} when the given media is a video file whose size exceeds the configured
+   * maximum (see {@link #getMaxVideoSizeMB()}). Returns {@code false} when the media is not a video
+   * or when the limit is disabled.
+   */
+  public static boolean isVideoOverSizeLimit(MediaElement media) {
+    int maxSizeMB = getMaxVideoSizeMB();
+    if (maxSizeMB <= 0 || !SeriesGroup.Type.isVideo(media)) {
+      return false;
+    }
+    return media.getLength() > maxSizeMB * 1024L * 1024L;
+  }
+
+  /**
+   * Displays a warning dialog listing the video files that could not be imported, either because
+   * their codec profile is not compliant with the DICOM standard or because they exceed the
+   * configured maximum size (see {@link #getMaxVideoSizeMB()}). Does nothing when both lists are
+   * empty.
+   *
+   * @param parent the component used to position the dialog
+   * @param nonCompliantVideoNames the names of videos rejected for a non-compliant codec profile
+   * @param oversizedVideoNames the names of videos rejected for exceeding the maximum size
+   */
+  public static void warnRejectedVideos(
+      Component parent, List<String> nonCompliantVideoNames, List<String> oversizedVideoNames) {
+    StringBuilder message = new StringBuilder();
+    if (!nonCompliantVideoNames.isEmpty()) {
+      message.append(
+          Messages.getString("video.not.compliant").formatted(toFileList(nonCompliantVideoNames)));
+    }
+    if (!oversizedVideoNames.isEmpty()) {
+      if (!message.isEmpty()) {
+        message.append("\n\n");
+      }
+      message.append(
+          Messages.getString("video.too.large")
+              .formatted(getMaxVideoSizeMB(), toFileList(oversizedVideoNames)));
+    }
+    if (!message.isEmpty()) {
+      JOptionPane.showMessageDialog(
+          parent,
+          message.toString(),
+          Messages.getString("ImportPanel.import"),
+          JOptionPane.WARNING_MESSAGE);
+    }
+  }
+
+  private static String toFileList(List<String> names) {
+    return names.stream()
+        .map(name -> "  - " + name) // NON-NLS
+        .collect(Collectors.joining("\n"));
   }
 
   private static SeriesGroup findSeries(

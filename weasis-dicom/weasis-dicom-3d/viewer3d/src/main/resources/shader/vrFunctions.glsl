@@ -175,7 +175,8 @@ vec4 rayCastingMip(Ray ray, float tmin, float tmax, vec2 uv) {
     vec3 ditheredRayStep = ditherRay ? stepPos * dithering(uv) : stepPos;
 
     int sumNb = 0;
-    for (int count = 0; count < sampleCount; count++) {
+    // In "segmentation only" mode the anatomy volume raymarch is skipped entirely.
+    for (int count = 0; count < sampleCount && !segOnly; count++) {
         rayPos += stepPos;
         texCoord = rayPos + ditheredRayStep;
         if (isCrosshairCut(texCoord)) continue;
@@ -209,8 +210,8 @@ vec4 rayCastingMip(Ray ray, float tmin, float tmax, vec2 uv) {
     vec4 pixel = applyTextureColor(mipPix);
     pixel.a = min(pixel.a * opacityFactor, 1.0);
 
-    // Overlay segmentation colours on top of the MIP result
-    if (segOverlayEnabled && pixel.a > 0.0) {
+    // Overlay segmentation colours on top of the MIP result (or render them alone in seg-only mode)
+    if (segOverlayEnabled && (pixel.a > 0.0 || segOnly)) {
         rayPos = start;
         vec4 segAccum = vec4(0.0);
         for (int count = 0; count < sampleCount; count++) {
@@ -225,7 +226,9 @@ vec4 rayCastingMip(Ray ray, float tmin, float tmax, vec2 uv) {
                 if (segAccum.a >= 0.99) break;
             }
         }
-        if (segAccum.a > 0.0) {
+        if (segOnly) {
+            pixel = segAccum;
+        } else if (segAccum.a > 0.0) {
             pixel.rgb = segAccum.rgb * segAccum.a + pixel.rgb * (1.0 - segAccum.a);
             pixel.a = max(pixel.a, segAccum.a);
         }
@@ -250,7 +253,8 @@ vec4 rayCastingComposite(Ray ray, float tmin, float tmax, vec2 uv) {
     vec3 stepPos = (end - start) * stepSize;
     vec3 ditheredRayStep = ditherRay ? stepPos * dithering(uv) : stepPos;
 
-    for (int count = 0; count < sampleCount; count++) {
+    // In "segmentation only" mode the anatomy volume raymarch is skipped entirely.
+    for (int count = 0; count < sampleCount && !segOnly; count++) {
         rayPos += stepPos;
         texCoord = rayPos + ditheredRayStep;
         if (isCrosshairCut(texCoord)) continue;
@@ -285,7 +289,7 @@ vec4 rayCastingComposite(Ray ray, float tmin, float tmax, vec2 uv) {
     }
 
     // Overlay segmentation colours on top of the composited volume
-    if (segOverlayEnabled && pxColor.a > 0.0) {
+    if (segOverlayEnabled && (pxColor.a > 0.0 || segOnly)) {
         // Re-trace with fewer samples just for the seg overlay
         rayPos = start;
         vec4 segAccum = vec4(0.0);
@@ -301,7 +305,9 @@ vec4 rayCastingComposite(Ray ray, float tmin, float tmax, vec2 uv) {
                 if (segAccum.a >= 0.99) break;
             }
         }
-        if (segAccum.a > 0.0) {
+        if (segOnly) {
+            pxColor = segAccum;
+        } else if (segAccum.a > 0.0) {
             // Alpha-blend the segmentation overlay over the volume
             pxColor.rgb = segAccum.rgb * segAccum.a + pxColor.rgb * (1.0 - segAccum.a);
             pxColor.a = max(pxColor.a, segAccum.a);
@@ -334,7 +340,8 @@ vec4 rayCastingIsoSurface(Ray ray, float tmin, float tmax, vec2 uv) {
 
     bool prev_sign = pix < center;
 
-    for (int count = 0; count < sampleCount; count++) {
+    // In "segmentation only" mode the anatomy volume raymarch is skipped entirely.
+    for (int count = 0; count < sampleCount && !segOnly; count++) {
         rayPos += stepPos;
         texCoord = rayPos + ditheredRayStep;
         if (isCrosshairCut(texCoord)) continue;
@@ -373,7 +380,7 @@ vec4 rayCastingIsoSurface(Ray ray, float tmin, float tmax, vec2 uv) {
     }
 
     // Overlay segmentation colours on top of the iso-surface result
-    if (segOverlayEnabled && pxColor.a > 0.0) {
+    if (segOverlayEnabled && (pxColor.a > 0.0 || segOnly)) {
         rayPos = start;
         vec4 segAccum = vec4(0.0);
         for (int count = 0; count < sampleCount; count++) {
@@ -388,7 +395,9 @@ vec4 rayCastingIsoSurface(Ray ray, float tmin, float tmax, vec2 uv) {
                 if (segAccum.a >= 0.99) break;
             }
         }
-        if (segAccum.a > 0.0) {
+        if (segOnly) {
+            pxColor = segAccum;
+        } else if (segAccum.a > 0.0) {
             pxColor.rgb = segAccum.rgb * segAccum.a + pxColor.rgb * (1.0 - segAccum.a);
             pxColor.a = max(pxColor.a, segAccum.a);
         }

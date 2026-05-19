@@ -131,6 +131,11 @@ public class ViewButton extends Rectangle2D.Double implements ShowPopup {
     }
 
     icon.paintIcon(c, g2d, (int) b.x, (int) b.y);
+    b.paintOverlay(g2d, (int) b.x, (int) b.y, icon.getIconWidth(), icon.getIconHeight());
     g2d.setColor(oldColor);
+  }
+
+  protected void paintOverlay(Graphics2D g2d, int x, int y, int width, int height) {
+    // no-op by default
   }
 }

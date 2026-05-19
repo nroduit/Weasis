@@ -13,6 +13,7 @@ import com.formdev.flatlaf.FlatClientProperties;
 import java.awt.*;
 import java.text.ParseException;
 import javax.swing.*;
+import org.weasis.core.Messages;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.ui.tp.raven.datetime.DatePicker;
 import org.weasis.core.ui.tp.raven.datetime.TimePicker;
@@ -61,7 +62,7 @@ public abstract class PanelPopupEditor extends JPanel {
   }
 
   protected JPanel createButtonPanel() {
-    JButton nowButton = new JButton("Now");
+    JButton nowButton = new JButton(Messages.getString("now"));
     nowButton.setFocusable(false);
     nowButton.addActionListener(
         _ -> {
@@ -72,7 +73,7 @@ public abstract class PanelPopupEditor extends JPanel {
           }
         });
 
-    JButton closeButton = new JButton("Close");
+    JButton closeButton = new JButton(Messages.getString("close"));
     closeButton.setFocusable(false);
     closeButton.addActionListener(
         _ -> {

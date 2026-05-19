@@ -37,14 +37,12 @@ class SimpleTypesTest {
   }
 
   @Test
-  void dose_lut_record_equality_and_hash_use_array_identity() {
-    double[] x = {0, 1};
-    double[] y = {0, 1};
-    DoseLut a = new DoseLut(x, y);
-    DoseLut b = new DoseLut(x, y);
+  void dose_lut_record_equality_and_hash_compare_array_content() {
+    DoseLut a = new DoseLut(new double[] {0, 1}, new double[] {0, 1});
+    DoseLut b = new DoseLut(new double[] {0, 1}, new double[] {0, 1});
     assertEquals(a, b);
-    // Records with array components compare by reference identity of those components.
-    assertNotEquals(new DoseLut(new double[] {0, 1}, new double[] {0, 1}), a);
+    assertEquals(a.hashCode(), b.hashCode());
+    assertNotEquals(new DoseLut(new double[] {0, 2}, new double[] {0, 1}), a);
   }
 
   @Test

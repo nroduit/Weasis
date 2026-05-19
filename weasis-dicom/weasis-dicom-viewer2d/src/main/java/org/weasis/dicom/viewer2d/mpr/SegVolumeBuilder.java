@@ -581,7 +581,7 @@ public final class SegVolumeBuilder {
   }
 
   /** Holds the spatial metadata extracted from a single DICOM SEG frame. */
-  private record FrameSpatialInfo(
+  private record FrameSpatialInfo( // NOSONAR private DTO, never compared
       Vector3d position, Vector3d rowDir, Vector3d colDir, double[] pixelSpacing) {}
 
   /** Pairs a frame's index in the SEG series with its parsed spatial metadata. */

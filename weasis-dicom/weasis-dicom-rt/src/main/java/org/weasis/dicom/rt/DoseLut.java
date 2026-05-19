@@ -9,5 +9,23 @@
  */
 package org.weasis.dicom.rt;
 
+import java.util.Arrays;
+
 /** Pair of axis lookup tables (x and y) used to map dose / image grid coordinates. */
-public record DoseLut(double[] x, double[] y) {}
+public record DoseLut(double[] x, double[] y) {
+
+  @Override
+  public boolean equals(Object o) {
+    return o instanceof DoseLut other && Arrays.equals(x, other.x) && Arrays.equals(y, other.y);
+  }
+
+  @Override
+  public int hashCode() {
+    return 31 * Arrays.hashCode(x) + Arrays.hashCode(y);
+  }
+
+  @Override
+  public String toString() {
+    return "DoseLut[x=" + Arrays.toString(x) + ", y=" + Arrays.toString(y) + "]";
+  }
+}

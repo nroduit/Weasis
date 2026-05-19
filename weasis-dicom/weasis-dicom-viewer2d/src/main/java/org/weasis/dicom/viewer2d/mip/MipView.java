@@ -15,9 +15,12 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import javax.swing.JPopupMenu;
 import org.dcm4che3.data.Tag;
+import org.joml.Vector3d;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.ObservableEvent;
@@ -43,8 +46,12 @@ import org.weasis.core.ui.editor.ViewerPlacement;
 import org.weasis.core.ui.editor.ViewerPluginBuilder;
 import org.weasis.core.ui.editor.image.ImageViewerEventManager;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
+import org.weasis.core.ui.editor.image.SynchCineEvent;
 import org.weasis.core.ui.editor.image.ViewButton;
 import org.weasis.core.ui.editor.image.ViewCanvas;
+import org.weasis.core.ui.editor.image.ViewSynchData;
+import org.weasis.core.ui.model.utils.bean.PanPoint;
+import org.weasis.core.ui.model.utils.bean.PanPoint.State;
 import org.weasis.core.util.FileUtil;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.DicomSeries;
@@ -110,6 +117,7 @@ public class MipView extends View2d {
   private volatile Integer lastBuiltExtend;
   private volatile boolean pendingCrosslineUpdate = false;
   private volatile boolean pendingSeriesChange = false;
+  private volatile boolean crosshairRebuildPending = false;
 
   public MipView(ImageViewerEventManager<DicomImageElement> eventManager) {
     super(eventManager);
@@ -122,7 +130,7 @@ public class MipView extends View2d {
     ViewButton button =
         new ViewButton(
             (invoker, x, y) -> {
-              javax.swing.JPopupMenu popup = MipMenu.buildViewButtonPopup(this);
+              JPopupMenu popup = MipMenu.buildViewButtonPopup(this);
               popup.show(invoker, x, y);
             },
             ResourceUtil.getIcon(OtherIcon.VIEW_MIP, 24, 24),
@@ -143,6 +151,8 @@ public class MipView extends View2d {
   @Override
   public void setSeries(MediaSeries<DicomImageElement> newSeries, DicomImageElement selectedMedia) {
     pendingSeriesChange = true;
+    // A new series invalidates any crosshair captured from the previous one.
+    lastCrosshairPosition = null;
     super.setSeries(newSeries, selectedMedia);
   }
 
@@ -239,6 +249,10 @@ public class MipView extends View2d {
     setMip(null);
     FileUtil.delete(viewCacheDir);
 
+    // Capture manual sync targets BEFORE the view is disposed so the wiring can be transferred
+    // to the replacement View2d (disposeView → resetSynchState clears the per-view link).
+    List<ViewCanvas<DicomImageElement>> manualSyncTargets = collectManualSyncTargets();
+
     // When no explicit target image is given, restore the slab-centre position so the replacement
     // view opens at the same frame the user was looking at rather than jumping to the first image.
     DicomImageElement targetImage = selectedDicom != null ? selectedDicom : centerImage;
@@ -250,8 +264,33 @@ public class MipView extends View2d {
     newView2d.setSeries(series, targetImage);
     container.replaceView(this, newView2d);
 
+    // Re-establish manual sync on the successor view using the same slice-position offsets.
+    if (!manualSyncTargets.isEmpty()) {
+      for (ViewCanvas<DicomImageElement> target : manualSyncTargets) {
+        newView2d.syncManuallyWith(target);
+      }
+      getEventManager().updateAllListeners(container, container.getSynchView());
+    }
+
     pendingCrosslineUpdate = true;
     updateCrosslines();
+  }
+
+  /**
+   * Returns the list of views that this MIP view is currently manually synchronized with, so that
+   * the wiring can be transferred to a replacement view before this view is disposed.
+   */
+  @SuppressWarnings("unchecked")
+  private List<ViewCanvas<DicomImageElement>> collectManualSyncTargets() {
+    ViewSynchData sd = (ViewSynchData) getActionValue(ActionW.SYNCH_LINK.cmd());
+    if (sd == null || !sd.isManualSynchActivated()) {
+      return Collections.emptyList();
+    }
+    List<ViewCanvas<DicomImageElement>> targets = new ArrayList<>();
+    for (ViewSynchData.ManualSyncData msd : sd.getManualSyncDataSet()) {
+      targets.add((ViewCanvas<DicomImageElement>) msd.getTargetPane());
+    }
+    return targets;
   }
 
   public static void buildMip(final MipView view) {
@@ -363,7 +402,44 @@ public class MipView extends View2d {
     } else {
       cleanupOldImageAsync(oldImage);
     }
+    restoreCrosshair();
     updateCrosslines();
+  }
+
+  private void restoreCrosshair() {
+    if (!crosshairRebuildPending) {
+      return;
+    }
+    crosshairRebuildPending = false;
+    Vector3d p3 = lastCrosshairPosition;
+    if (p3 == null || getImage() == null) {
+      return;
+    }
+    ViewSynchData synchData = (ViewSynchData) getActionValue(ActionW.SYNCH_LINK.cmd());
+    if (synchData != null && synchData.isAutoSynchActivated()) {
+      // super: redrawing here is the restore itself, not a new cursor move, so it must not
+      // re-arm crosshairRebuildPending.
+      super.computeCrosshair(p3, new PanPoint(State.MOVE));
+      repaint();
+    }
+  }
+
+  @Override
+  public void computeCrosshair(Vector3d p3, PanPoint panPoint) {
+    super.computeCrosshair(p3, panPoint);
+    // A 3D-cursor move on a MIP view schedules an async slab rebuild that will discard these
+    // graphics; flag it so the rebuild's setMip() redraws the crosshair.
+    if (p3 != null && panPoint != null && panPoint.getState() != State.DRAGEND) {
+      crosshairRebuildPending = true;
+    }
+  }
+
+  @Override
+  public void propertyChange(SynchCineEvent synch) {
+    // A scroll/cine sync is not a 3D-cursor move: drop any pending crosshair restore so the
+    // rebuild it triggers leaves the crosshair off.
+    crosshairRebuildPending = false;
+    super.propertyChange(synch);
   }
 
   void activateCrosslinesUpdate() {

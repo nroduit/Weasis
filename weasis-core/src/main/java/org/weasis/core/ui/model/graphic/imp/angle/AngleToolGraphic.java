@@ -12,7 +12,6 @@ package org.weasis.core.ui.model.graphic.imp.angle;
 import jakarta.xml.bind.annotation.XmlRootElement;
 import jakarta.xml.bind.annotation.XmlType;
 import java.awt.Shape;
-import java.awt.event.KeyEvent;
 import java.awt.geom.Arc2D;
 import java.awt.geom.Line2D;
 import java.awt.geom.Path2D;
@@ -24,6 +23,7 @@ import java.util.List;
 import javax.swing.Icon;
 import org.weasis.core.Messages;
 import org.weasis.core.api.gui.util.GeomUtil;
+import org.weasis.core.api.gui.util.ShortcutManager;
 import org.weasis.core.api.image.measure.MeasurementsAdapter;
 import org.weasis.core.api.image.util.MeasurableLayer;
 import org.weasis.core.api.image.util.Unit;
@@ -201,12 +201,12 @@ public class AngleToolGraphic extends AbstractDragGraphic {
 
   @Override
   public int getKeyCode() {
-    return KeyEvent.VK_A;
+    return ShortcutManager.getInstance().getKeyCode(ShortcutManager.ID_GRAPHIC_ANGLE);
   }
 
   @Override
   public int getModifier() {
-    return 0;
+    return ShortcutManager.getInstance().getModifier(ShortcutManager.ID_GRAPHIC_ANGLE);
   }
 
   protected void updateTool() {

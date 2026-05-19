@@ -29,6 +29,10 @@ import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.ComboItemListener;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.gui.util.GuiUtils;
+import org.weasis.core.api.util.MemoryManager;
+import org.weasis.core.api.util.NativeMemoryConsumer;
+import org.weasis.core.api.util.ResourceMonitor;
+import org.weasis.core.api.util.SystemMemory;
 import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.dicom.codec.*;
 import org.weasis.dicom.viewer2d.mpr.Volume;
@@ -44,6 +48,12 @@ public final class VolumeBuilder {
   private volatile boolean completed;
   private volatile boolean hasError;
   private TextureLoader textureLoader;
+
+  /**
+   * Reports the off-heap volume staging footprint to the {@link MemoryManager} while a build runs,
+   * so the image caches yield room to the 3D load.
+   */
+  private final NativeMemoryConsumer stagingConsumer = SystemMemory::getVolumeStagingMemory;
 
   public VolumeBuilder(DicomVolTexture volTexture) {
     this.volTexture = Objects.requireNonNull(volTexture);
@@ -84,6 +94,7 @@ public final class VolumeBuilder {
   public synchronized void start() {
     if (textureLoader == null || hasError) {
       hasError = false;
+      MemoryManager.getInstance().register(stagingConsumer);
       textureLoader = new TextureLoader(this);
       textureLoader.start();
     }
@@ -93,6 +104,7 @@ public final class VolumeBuilder {
     TextureLoader moribund = textureLoader;
     textureLoader = null;
     completed = true;
+    MemoryManager.getInstance().unregister(stagingConsumer);
     if (moribund != null) {
       moribund.interrupt();
     }
@@ -200,7 +212,9 @@ public final class VolumeBuilder {
       }
 
       int sliceOffset = 0;
-      long maxMemory = Runtime.getRuntime().maxMemory() / 3;
+      // Slices are staged in off-heap Arena memory before the GPU upload: bound the chunk to a
+      // share of physical RAM, not to the JVM heap (which is unrelated to native memory).
+      long maxMemory = SystemMemory.getVolumeStagingMemory();
       long sumMemory = 0L;
 
       ArrayList<Mat> slices = new ArrayList<>(size);
@@ -264,6 +278,8 @@ public final class VolumeBuilder {
           "Loading 3D texture time: {} ms",
           Duration.between(timeStarted, Instant.now()).toMillis());
       volumeBuilder.completed = true;
+      MemoryManager.getInstance().unregister(volumeBuilder.stagingConsumer);
+      ResourceMonitor.getInstance().recordVolume(volTexture.getDepth());
 
       if (view instanceof View3d view3d) {
         view3d.setProgressBar(null);
