@@ -22,7 +22,6 @@ import java.time.format.FormatStyle;
 import java.util.Locale;
 import java.util.ResourceBundle.Control;
 import org.junit.jupiter.api.Test;
-import org.junitpioneer.jupiter.DefaultLocale;
 
 class LocalUtilTest {
 
@@ -35,46 +34,51 @@ class LocalUtilTest {
    * </ul>
    */
   @Test
-  @DefaultLocale(language = "fr", country = "CH")
   void testTextToLocale() {
-    Control control = Control.getControl(Control.FORMAT_PROPERTIES);
+    Locale previousDefault = Locale.getDefault();
+    Locale.setDefault(Locale.of("fr", "CH")); // NON-NLS
+    try {
+      Control control = Control.getControl(Control.FORMAT_PROPERTIES);
 
-    Locale result = LocalUtil.textToLocale(null);
-    assertSame(Locale.ENGLISH, result);
-    assertEquals("en", LocalUtil.localeToText(null));
+      Locale result = LocalUtil.textToLocale(null);
+      assertSame(Locale.ENGLISH, result);
+      assertEquals("en", LocalUtil.localeToText(null));
 
-    result = LocalUtil.textToLocale("");
-    assertSame(Locale.ENGLISH, result);
-    assertEquals("en", LocalUtil.localeToText(result));
+      result = LocalUtil.textToLocale("");
+      assertSame(Locale.ENGLISH, result);
+      assertEquals("en", LocalUtil.localeToText(result));
 
-    result = LocalUtil.textToLocale("system"); // NON-NLS
-    assertSame(Locale.getDefault(), result);
+      result = LocalUtil.textToLocale("system"); // NON-NLS
+      assertSame(Locale.getDefault(), result);
 
-    result = LocalUtil.textToLocale("test-invalid$"); // NON-NLS
-    assertEquals("test", LocalUtil.localeToText(result));
+      result = LocalUtil.textToLocale("test-invalid$"); // NON-NLS
+      assertEquals("test", LocalUtil.localeToText(result));
 
-    result = LocalUtil.textToLocale("en"); // NON-NLS
-    assertSame(Locale.ENGLISH, result);
-    assertEquals("en", LocalUtil.localeToText(result));
+      result = LocalUtil.textToLocale("en"); // NON-NLS
+      assertSame(Locale.ENGLISH, result);
+      assertEquals("en", LocalUtil.localeToText(result));
 
-    result = LocalUtil.textToLocale("fr_FR"); // NON-NLS
-    assertSame(Locale.FRANCE, result);
+      result = LocalUtil.textToLocale("fr_FR"); // NON-NLS
+      assertSame(Locale.FRANCE, result);
 
-    result = LocalUtil.textToLocale("zh_Hans"); // NON-NLS
-    String val = control.toBundleName("", result);
-    assertEquals("_zh_Hans", val);
-    result = LocalUtil.textToLocale("zh-Hans-TW"); // NON-NLS
-    val = control.toBundleName("message", result); // NON-NLS
-    assertEquals("message_zh_Hans_TW", val);
+      result = LocalUtil.textToLocale("zh_Hans"); // NON-NLS
+      String val = control.toBundleName("", result);
+      assertEquals("_zh_Hans", val);
+      result = LocalUtil.textToLocale("zh-Hans-TW"); // NON-NLS
+      val = control.toBundleName("message", result); // NON-NLS
+      assertEquals("message_zh_Hans_TW", val);
 
-    // ISO3 language code: SRP
-    result = LocalUtil.textToLocale("en_BA-SRP"); // NON-NLS
-    val = control.toBundleName("message", result); // NON-NLS
-    assertEquals("message_en_BA", val);
+      // ISO3 language code: SRP
+      result = LocalUtil.textToLocale("en_BA-SRP"); // NON-NLS
+      val = control.toBundleName("message", result); // NON-NLS
+      assertEquals("message_en_BA", val);
 
-    result = LocalUtil.textToLocale("sr_Latn"); // NON-NLS
-    val = control.toBundleName("message", result); // NON-NLS
-    assertEquals("message_sr_Latn", val);
+      result = LocalUtil.textToLocale("sr_Latn"); // NON-NLS
+      val = control.toBundleName("message", result); // NON-NLS
+      assertEquals("message_sr_Latn", val);
+    } finally {
+      Locale.setDefault(previousDefault);
+    }
   }
 
   /**

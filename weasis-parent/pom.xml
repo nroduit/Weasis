@@ -64,9 +64,8 @@
     <scribejava.version>8.3.3</scribejava.version>
     <zip4j.version>2.11.6</zip4j.version>
 
-    <junit-bom.version>6.1.0-RC1</junit-bom.version>
+    <junit-bom.version>6.1.0</junit-bom.version>
     <mockito.version>5.23.0</mockito.version>
-    <junit-pioneer.version>2.3.0</junit-pioneer.version>
 
     <!--suppress UnresolvedMavenProperty -->
     <argLine>-Djava.library.path=${project.build.directory}/lib/${os-name}-${cpu-name}</argLine>
@@ -667,12 +666,6 @@
     <dependency>
       <groupId>org.junit.jupiter</groupId>
       <artifactId>junit-jupiter-params</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.junit-pioneer</groupId>
-      <artifactId>junit-pioneer</artifactId>
-      <version>${junit-pioneer.version}</version>
       <scope>test</scope>
     </dependency>
     <dependency>

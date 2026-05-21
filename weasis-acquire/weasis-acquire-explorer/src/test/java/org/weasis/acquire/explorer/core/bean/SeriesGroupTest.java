@@ -15,9 +15,9 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.FormatStyle;
 import java.util.Arrays;
+import java.util.Locale;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import org.junitpioneer.jupiter.DefaultLocale;
 
 class SeriesGroupTest {
 
@@ -49,23 +49,28 @@ class SeriesGroupTest {
   }
 
   @Test
-  @DefaultLocale(language = "fr", country = "CH")
   void testSort() {
-    SeriesGroup s1 = new SeriesGroup(today);
-    SeriesGroup s2 = new SeriesGroup();
-    SeriesGroup s3 = new SeriesGroup("series3"); // NON-NLS
-    assetSorted(new SeriesGroup[] {s3, s2, s1}, new SeriesGroup[] {s1, s2, s3});
-    assetSorted(new SeriesGroup[] {s2, s3, s1}, new SeriesGroup[] {s1, s2, s3});
+    Locale previousDefault = Locale.getDefault();
+    Locale.setDefault(Locale.of("fr", "CH")); // NON-NLS
+    try {
+      SeriesGroup s1 = new SeriesGroup(today);
+      SeriesGroup s2 = new SeriesGroup();
+      SeriesGroup s3 = new SeriesGroup("series3"); // NON-NLS
+      assetSorted(new SeriesGroup[] {s3, s2, s1}, new SeriesGroup[] {s1, s2, s3});
+      assetSorted(new SeriesGroup[] {s2, s3, s1}, new SeriesGroup[] {s1, s2, s3});
 
-    SeriesGroup s4 = new SeriesGroup(today.minusDays(1));
-    assetSorted(new SeriesGroup[] {s3, s2, s1, s4}, new SeriesGroup[] {s4, s1, s2, s3});
+      SeriesGroup s4 = new SeriesGroup(today.minusDays(1));
+      assetSorted(new SeriesGroup[] {s3, s2, s1, s4}, new SeriesGroup[] {s4, s1, s2, s3});
 
-    SeriesGroup s5 = new SeriesGroup("series2"); // NON-NLS
-    assetSorted(new SeriesGroup[] {s3, s2, s1, s4, s5}, new SeriesGroup[] {s4, s1, s2, s5, s3});
+      SeriesGroup s5 = new SeriesGroup("series2"); // NON-NLS
+      assetSorted(new SeriesGroup[] {s3, s2, s1, s4, s5}, new SeriesGroup[] {s4, s1, s2, s5, s3});
 
-    SeriesGroup s6 = new SeriesGroup("2015");
-    assetSorted(
-        new SeriesGroup[] {s3, s2, s1, s4, s5, s6}, new SeriesGroup[] {s4, s1, s6, s2, s5, s3});
+      SeriesGroup s6 = new SeriesGroup("2015");
+      assetSorted(
+          new SeriesGroup[] {s3, s2, s1, s4, s5, s6}, new SeriesGroup[] {s4, s1, s6, s2, s5, s3});
+    } finally {
+      Locale.setDefault(previousDefault);
+    }
   }
 
   private void assetSorted(SeriesGroup[] input, SeriesGroup[] expected) {
