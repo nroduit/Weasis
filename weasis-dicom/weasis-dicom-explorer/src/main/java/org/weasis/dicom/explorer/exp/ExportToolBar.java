@@ -59,7 +59,7 @@ public class ExportToolBar extends WtoolBar {
               ColorLayerUI layer = ColorLayerUI.createTransparentLayerUI(this);
               ColorLayerUI.showCenterScreen(dialog, layer);
             } else {
-                // TODO different error messages for missing graphics or not the allowed modality
+              // TODO different error messages for missing graphics or not the allowed modality
               JOptionPane.showMessageDialog(
                   win, Messages.getString("AnnotationsToolBar.error_no_pr"));
             }

@@ -114,8 +114,8 @@ public class ExportDicomView extends AbstractItemDialogPage implements ExportDic
             .toFile(); // NON-NLS
 
     File prTempStorage =
-            FileUtil.createTempDir(AppProperties.buildAccessibleTempDirectory("tmp", "pr"))
-                    .toFile(); // NON-NLS
+        FileUtil.createTempDir(AppProperties.buildAccessibleTempDirectory("tmp", "pr"))
+            .toFile(); // NON-NLS
     try {
       writeDicom(t, exportDir, prTempStorage, model);
 
@@ -130,7 +130,11 @@ public class ExportDicomView extends AbstractItemDialogPage implements ExportDic
       t.addCancelListener(dicomProgress);
       if (exportAction(files, dicomProgress)) {
         DicomModel.LOADING_EXECUTOR.execute(
-                new LoadLocalDicom(prTempStorage.listFiles(), false, dicomModel, HangingProtocols.OpeningViewer.ALL_PATIENTS));
+            new LoadLocalDicom(
+                prTempStorage.listFiles(),
+                false,
+                dicomModel,
+                HangingProtocols.OpeningViewer.ALL_PATIENTS));
       }
       return exportAction(files, dicomProgress);
     } finally {
@@ -158,7 +162,8 @@ public class ExportDicomView extends AbstractItemDialogPage implements ExportDic
     return true;
   }
 
-  private void writeDicom(ExplorerTask<Boolean, String> task, File writeDir, File prTempDir, CheckTreeModel model) {
+  private void writeDicom(
+      ExplorerTask<Boolean, String> task, File writeDir, File prTempDir, CheckTreeModel model) {
     synchronized (this) {
       ArrayList<String> uids = new ArrayList<>();
       TreePath[] paths = model.getCheckingPaths();
@@ -190,7 +195,10 @@ public class ExportDicomView extends AbstractItemDialogPage implements ExportDic
           if (prFile != null) {
             File pr = new File(prFile);
             try {
-              Files.copy(pr.toPath(), new File(prTempDir, pr.getName()).toPath(), StandardCopyOption.REPLACE_EXISTING);
+              Files.copy(
+                  pr.toPath(),
+                  new File(prTempDir, pr.getName()).toPath(),
+                  StandardCopyOption.REPLACE_EXISTING);
             } catch (IOException e) {
               LOGGER.error("Failed to copy PR file to temporary directory ", e);
             }

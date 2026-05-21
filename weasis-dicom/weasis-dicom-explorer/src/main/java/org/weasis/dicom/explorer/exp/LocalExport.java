@@ -770,12 +770,22 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
                   if (grModel != null && grModel.hasSerializableGraphics()) {
                     String path =
                         buildPath(dcm, keepNames, cdCompatible, node, getUIDs(editor, dcm));
-                    String outputFile = buildAndWritePR(
-                        dcm, keepNames, new File(exportDir, path), writer, node, seriesInstanceUID);
+                    String outputFile =
+                        buildAndWritePR(
+                            dcm,
+                            keepNames,
+                            new File(exportDir, path),
+                            writer,
+                            node,
+                            seriesInstanceUID);
                     if (outputFile != null) {
                       File f = new File(outputFile);
                       DicomModel.LOADING_EXECUTOR.execute(
-                              new LoadLocalDicom(new File[] { f }, false, dicomModel, HangingProtocols.OpeningViewer.ALL_PATIENTS));
+                          new LoadLocalDicom(
+                              new File[] {f},
+                              false,
+                              dicomModel,
+                              HangingProtocols.OpeningViewer.ALL_PATIENTS));
                     }
                   }
                 }
