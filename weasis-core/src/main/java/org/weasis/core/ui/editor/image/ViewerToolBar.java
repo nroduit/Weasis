@@ -13,6 +13,7 @@ import com.formdev.flatlaf.extras.FlatSVGIcon;
 import com.formdev.flatlaf.extras.FlatSVGIcon.ColorFilter;
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -48,6 +49,7 @@ import org.weasis.core.api.gui.util.GroupPopup;
 import org.weasis.core.api.gui.util.GroupRadioMenu;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.media.data.ImageElement;
+import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.service.WProperties;
 import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.api.util.ResourceUtil.ActionIcon;
@@ -415,6 +417,16 @@ public class ViewerToolBar<E extends ImageElement> extends WtoolBar implements A
                             instanceof ViewSynchData vsd)
                     ? vsd
                     : null;
+
+
+            MediaSeries<E> series = selectedView != null ? selectedView.getSeries() : null;
+            if (series != null) {
+              JCheckBoxMenuItem seriesName = new JCheckBoxMenuItem(series.toString(),
+                      false);
+              seriesName.setEnabled(false);
+              seriesName.setFont(new Font("Italic", Font.ITALIC, 12));
+              menu.add(seriesName);
+            }
 
             // Build the effective state shown by the checkboxes: start from the selected view's
             // shared template (or the global template if no view is selected), then layer the
