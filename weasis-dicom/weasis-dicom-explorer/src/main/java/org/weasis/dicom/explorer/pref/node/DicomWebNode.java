@@ -32,7 +32,7 @@ public class DicomWebNode extends AbstractDicomNode {
   public static final String T_AUTH = "auth"; // NON-NLS
 
   public enum WebType {
-    DICOMWEB("DICOMWeb (all RESTful services)"), // NON-NLS
+    DICOMWEB("DICOMweb (all RESTful services)"), // NON-NLS
     QIDORS("QIDO-RS (query)"), // NON-NLS
     STOWRS("STOW-RS (store)"), // NON-NLS
     WADO("WADO-URI (non-RS)"), // NON-NLS

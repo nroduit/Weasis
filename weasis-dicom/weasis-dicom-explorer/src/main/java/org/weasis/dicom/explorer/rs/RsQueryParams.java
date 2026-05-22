@@ -79,7 +79,7 @@ public class RsQueryParams extends ExplorerTask<Boolean, String> {
         properties.setProperty(P_DICOMWEB_URL, url.substring(0, url.length() - 1));
       }
     } else {
-      throw new IllegalArgumentException("DICOMWeb URL cannot be null");
+      throw new IllegalArgumentException("DICOMweb URL cannot be null");
     }
 
     this.seriesMap = new HashMap<>();
