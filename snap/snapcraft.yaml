@@ -19,7 +19,7 @@ description: |
   - Configuration of preferences on server-side and client-side
   - API for building custom plug-ins
   - DICOM Send (storeSCU and STOW-RS)
-  - DICOM Query/Retrieve (C-GET, C-MOVE and WADO-URI) and DICOMWeb (QUERY and RETRIEVE)
+  - DICOM Query/Retrieve (C-GET, C-MOVE and WADO-URI) and DICOMweb (QUERY and RETRIEVE)
   - Dicomizer module (allow importing standard images and convert them in DICOM)
 license: Apache-2.0
 grade: stable

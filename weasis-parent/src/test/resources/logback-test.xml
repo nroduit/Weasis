@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Shared Logback configuration for the test classpath.
+
+  Purpose:
+    1. Route log output to stdout (default is stderr), so Surefire does not render
+       expected-error log lines from negative-path tests in red.
+    2. Keep the format compact (level + short logger + message) — no date or thread,
+       matching the SLF4J-simple defaults configured in weasis-parent/pom.xml.
+    3. Default to WARN: noisy INFO chatter from third-party libraries is hidden, but
+       a genuinely unexpected log line still surfaces.
+
+  Production behaviour is untouched: this file lives in weasis-parent's test
+  resources and is added to every child module's test classpath by surefire's
+  additionalClasspathElements directive. A module that needs per-logger silencing
+  for production loggers exercised by negative-path tests can drop its own
+  src/test/resources/logback-test.xml — module-local classpath entries win.
+-->
+<configuration>
+  <!--
+    Propagate Logback levels back into java.util.logging so the JUL bridge
+    (installed via weasis-parent/src/test/resources/logging.properties) does not
+    pay per-call filtering cost for log lines Logback will drop anyway.
+  -->
+  <contextListener class="ch.qos.logback.classic.jul.LevelChangePropagator">
+    <resetJUL>true</resetJUL>
+  </contextListener>
+
+  <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+    <target>System.out</target>
+    <encoder>
+      <pattern>%-5level [%logger{0}] - %msg%n</pattern>
+    </encoder>
+  </appender>
+
+  <!--
+    Silence JSVG's cursor-load WARNINGs. ActionW.<clinit> tries to resolve
+    svg/cursor/*.svg as filesystem files during tests; in production those paths
+    are bundle resources, but in unit tests they're not on the classpath. The
+    failure is benign and the WARN is not part of any contract under test.
+  -->
+  <logger name="com.github.weisj.jsvg" level="ERROR"/>
+
+  <root level="WARN">
+    <appender-ref ref="STDOUT"/>
+  </root>
+</configuration>
