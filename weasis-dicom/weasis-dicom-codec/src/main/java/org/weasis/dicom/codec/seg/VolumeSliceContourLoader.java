@@ -41,7 +41,7 @@ public final class VolumeSliceContourLoader implements LazyContourLoader {
   private final SegmentationVolume volume;
   private final DicomImageElement image;
 
-  private volatile Set<SegContour> cached;
+  private volatile Set<SegContour> cached; // NOSONAR visibility reference
 
   public VolumeSliceContourLoader(SegmentationVolume volume, DicomImageElement image) {
     this.volume = volume;

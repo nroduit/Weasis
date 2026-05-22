@@ -24,7 +24,7 @@ public final class GraphicsInfo {
   /** The OpenGL renderer backing the 3D viewer. */
   public record Gpu(String vendor, String renderer, String glVersion, boolean softwareRendered) {}
 
-  private static volatile Gpu gpu;
+  private static volatile Gpu gpu; // NOSONAR visibility reference
 
   private GraphicsInfo() {}
 

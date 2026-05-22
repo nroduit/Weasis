@@ -65,7 +65,7 @@ public final class OAuth2ServiceFactory {
 
   private static DefaultAuthMethod createNoAuthMethod() {
     return new DefaultAuthMethod(
-        NO_AUTH_ID,
+        NO_AUTH_ID, // NOSONAR !secret
         new AuthProvider(Messages.getString("no.authentication"), null, null, null, false),
         AuthRegistration.empty()) {
       @Override
