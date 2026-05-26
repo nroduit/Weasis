@@ -162,6 +162,9 @@ public final class SegVolumeTexture {
     GLPixelStorageModes storageModes = new GLPixelStorageModes();
     storageModes.setPackAlignment(gl, 1);
 
+    // VolumeBuilder uploads the volume slices in reverse Z order (axial[depth-1] → z=0),
+    // so the seg texture must mirror that reversal to stay aligned — otherwise the overlay
+    // is rendered upside-down along the superior/inferior axis.
     for (int z = 0; z < sizeZ; z++) {
       int[] sliceData = segVolume.exportSliceBitmask(z);
       if (sliceData != null) {
@@ -171,7 +174,7 @@ public final class SegVolumeTexture {
             0,
             0,
             0,
-            z,
+            sizeZ - 1 - z,
             sizeX,
             sizeY,
             1,

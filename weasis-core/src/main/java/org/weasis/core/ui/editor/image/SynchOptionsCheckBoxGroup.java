@@ -44,8 +44,8 @@ public class SynchOptionsCheckBoxGroup extends GroupCheckBoxMenu {
     }
   }
 
-  /** Ordered list of synchronizable options shown in the popup. */
-  private static final List<SyncOption> SYNC_OPTIONS =
+  /** Default 2D synchronizable options shown in the popup. */
+  private static final List<SyncOption> DEFAULT_SYNC_OPTIONS =
       List.of(
           new SyncOption(ActionW.SCROLL_SERIES),
           new SyncOption(ActionW.PAN),
@@ -56,31 +56,51 @@ public class SynchOptionsCheckBoxGroup extends GroupCheckBoxMenu {
           new SyncOption(ActionW.WINLEVEL, List.of(ActionW.WINDOW.cmd(), ActionW.LEVEL.cmd())),
           new SyncOption(ActionW.SPATIAL_UNIT));
 
-  /** Returns the immutable list of synchronizable options exposed by this menu. */
+  private final List<SyncOption> syncOptions;
+
+  /** Returns the immutable default 2D synchronizable options list. */
   public static List<SyncOption> getSyncOptions() {
-    return SYNC_OPTIONS;
+    return DEFAULT_SYNC_OPTIONS;
   }
 
   /**
-   * Return the flat list of every {@link SynchData} action key managed by the popup (after
+   * Return the flat list of every {@link SynchData} action key managed by the default popup (after
    * expanding multi-target options like Window/Level into their underlying commands).
    */
   public static List<String> getAllManagedCommands() {
+    return getAllManagedCommands(DEFAULT_SYNC_OPTIONS);
+  }
+
+  /**
+   * Return the flat list of every {@link SynchData} action key managed by the given options list
+   * (after expanding multi-target options like Window/Level into their underlying commands).
+   */
+  public static List<String> getAllManagedCommands(List<SyncOption> options) {
     List<String> commands = new ArrayList<>();
-    for (SyncOption opt : SYNC_OPTIONS) {
+    for (SyncOption opt : options) {
       commands.addAll(opt.commands());
     }
     return commands;
   }
 
   public SynchOptionsCheckBoxGroup() {
+    this(DEFAULT_SYNC_OPTIONS);
+  }
+
+  public SynchOptionsCheckBoxGroup(List<SyncOption> options) {
+    this.syncOptions = options != null ? options : DEFAULT_SYNC_OPTIONS;
     List<CheckBoxModel> items = new ArrayList<>();
-    for (SyncOption option : SYNC_OPTIONS) {
+    for (SyncOption option : this.syncOptions) {
       // Store the Feature object — Feature.toString() returns getTitle(), so the display is
       // correct.
       items.add(new CheckBoxModel(option.primary(), true));
     }
     this.setModel(items);
+  }
+
+  /** Returns the option list this instance was constructed with. */
+  public List<SyncOption> getOptions() {
+    return syncOptions;
   }
 
   /**
@@ -101,7 +121,7 @@ public class SynchOptionsCheckBoxGroup extends GroupCheckBoxMenu {
   public List<JCheckBoxMenuItem> createSyncOptionItems(Map<String, Boolean> currentActions) {
     Map<String, Boolean> source = currentActions != null ? currentActions : Collections.emptyMap();
     List<JCheckBoxMenuItem> result = new ArrayList<>();
-    for (SyncOption option : SYNC_OPTIONS) {
+    for (SyncOption option : syncOptions) {
       boolean selected = true;
       for (String cmd : option.commands()) {
         if (!Boolean.TRUE.equals(source.get(cmd))) {
@@ -147,7 +167,7 @@ public class SynchOptionsCheckBoxGroup extends GroupCheckBoxMenu {
       target.add(stayOpen);
       String triggerCmd = stayOpen.getActionCommand();
       List<String> targets =
-          SYNC_OPTIONS.stream()
+          syncOptions.stream()
               .filter(o -> o.primary().cmd().equals(triggerCmd))
               .findFirst()
               .map(SyncOption::commands)

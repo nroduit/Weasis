@@ -83,10 +83,6 @@ import org.weasis.dicom.viewer3d.vr.View3d;
 import org.weasis.opencv.op.lut.LutShape;
 
 public class EventManager extends ImageViewerEventManager<DicomImageElement> {
-  private boolean orthographicProjection;
-  private Axis rotationAxis = Axis.Z;
-  private double currentAxisAngle = 0.0;
-
   private static EventManager instance;
 
   public static synchronized EventManager getInstance() {
@@ -118,9 +114,13 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> {
     setAction(newInverseLutAction());
     setAction(newSegmentationMode());
     setAction(newLayoutAction(View2dContainer.DEFAULT_LAYOUT_LIST.toArray(new MigLayoutModel[0])));
-    setAction(newSynchAction(View2dContainer.DEFAULT_SYNCH_LIST.toArray(new SynchView[0])));
+    setAction(newSynchAction(View3DContainer.DEFAULT_SYNCH_LIST.toArray(new SynchView[0])));
     getAction(ActionW.SYNCH)
-        .ifPresent(a -> a.setSelectedItemWithoutTriggerAction(SynchView.DEFAULT_STACK));
+        .ifPresent(a -> a.setSelectedItemWithoutTriggerAction(View3DContainer.SYNCH_VOLUME));
+    // Register SYNCH_MODE so the toolbar Synchronize checkbox is actually bound to something.
+    // The 2D EventManager does the same; the 3D class previously omitted it, leaving the
+    // toolbar item inert.
+    setAction(newSynchModeAction());
     setAction(newRenderingTypeOption());
 
     setAction(buildPanAction());
@@ -648,7 +648,9 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> {
     ComboItemListener<SynchView> synchAction = getAction(ActionW.SYNCH).orElse(null);
     updateAllListeners(
         selectedView2dContainer,
-        synchAction == null ? SynchView.DEFAULT_STACK : (SynchView) synchAction.getSelectedItem());
+        synchAction == null
+            ? View3DContainer.SYNCH_VOLUME
+            : (SynchView) synchAction.getSelectedItem());
 
     view2d.updateGraphicSelectionListener(selectedView2dContainer);
     return true;
@@ -741,6 +743,54 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> {
     }
   }
 
+  /**
+   * Broadcast a free-form arcball rotation to all views. The {@link ActionW#ROTATION} slider only
+   * carries a single-axis integer angle, which can't represent the full 3D rotation produced by the
+   * arcball drag — so the arcball ships the resulting quaternion directly via a SynchEvent and
+   * {@link View3d#propertyChange} applies it to non-source cameras.
+   */
+  public void fireRotationSync(View3d source, Quaterniond rotation, boolean valueIsAdjusting) {
+    firePropertyChange(
+        ActionW.SYNCH.cmd(),
+        null,
+        new SynchEvent(source, ActionW.ROTATION.cmd(), rotation, valueIsAdjusting));
+  }
+
+  /**
+   * 3D-specific SYNCH_MODE toggle. Defaults to ON (the 3D viewer is most useful when sync is
+   * already on after opening). Acts as a master switch: toggling it resets every view's per-view
+   * customization (isOriginal=true) so the global state wins, then {@code updateAllListeners}
+   * propagates it to all views. Mirrors the 2D toolbar Synchronize toggle.
+   */
+  @Override
+  protected ToggleButtonListener newSynchModeAction() {
+    return new ToggleButtonListener(ActionW.SYNCH_MODE, true) {
+      @Override
+      public void actionPerformed(boolean selected) {
+        getAction(ActionW.SYNCH)
+            .ifPresent(
+                a -> {
+                  if (a.getSelectedItem() instanceof SynchView sel) {
+                    sel.getSynchData()
+                        .setAutoSyncState(
+                            selected ? SynchData.SyncState.ON : SynchData.SyncState.OFF);
+                    ImageViewerPlugin<DicomImageElement> container = getSelectedView2dContainer();
+                    if (container != null) {
+                      // Wipe per-view customization so the master toggle propagates everywhere.
+                      for (ViewCanvas<DicomImageElement> v : container.getImagePanels()) {
+                        if (v.getActionValue(ActionW.SYNCH_LINK.cmd())
+                            instanceof ViewSynchData sd) {
+                          sd.setOriginal(true);
+                        }
+                      }
+                      updateAllListeners(container, sel);
+                    }
+                  }
+                });
+      }
+    };
+  }
+
   @Override
   public void updateAllListeners(
       ImageViewerPlugin<DicomImageElement> viewerPlugin, SynchView synchView) {
@@ -753,34 +803,50 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> {
         return;
       }
       SynchData synch = synchView.getSynchData();
+      // Per-view SynchData inherits the current SYNCH_MODE state, so toggling Synchronize in the
+      // toolbar / popup is reflected on every view's button after the next layout-change refresh.
+      boolean synchModeOn =
+          getAction(ActionW.SYNCH_MODE)
+              .filter(ToggleButtonListener.class::isInstance)
+              .map(a -> ((ToggleButtonListener) a).isSelected())
+              .orElse(true);
+      SynchData.SyncState paneState =
+          synchModeOn ? SynchData.SyncState.ON : SynchData.SyncState.OFF;
       MediaSeries<DicomImageElement> series = canvas.getVolTexture().getSeries();
       if (series != null) {
-        SynchData oldSynch = (SynchData) viewPane.getActionValue(ActionW.SYNCH_LINK.cmd());
-        if (oldSynch == null || !oldSynch.getMode().equals(synch.getMode())) {
-          oldSynch = synch;
+        // Wrap in ViewSynchData so the toolbar's "Apply to all views" entry and per-view user
+        // overrides keep working — ViewerToolBar gates that menu on instanceof ViewSynchData.
+        // Only original (auto-managed) views inherit the global SYNCH_MODE state; user-customized
+        // views (isOriginal=false) keep their per-view autoSyncState across refreshes.
+        ViewSynchData oldSynch = getOrCreateSynchData(viewPane, synch);
+        if (oldSynch.isOriginal()) {
+          oldSynch.setAutoSyncState(paneState);
         }
-        viewPane.setActionsInView(ActionW.SYNCH_LINK.cmd(), null);
+        viewPane.setActionsInView(ActionW.SYNCH_LINK.cmd(), oldSynch);
         addPropertyChangeListener(ActionW.SYNCH.cmd(), viewPane);
 
         final List<ViewCanvas<DicomImageElement>> panes = viewerPlugin.getImagePanels();
         panes.remove(viewPane);
         viewPane.setActionsInView(ActionW.SYNCH_CROSSLINE.cmd(), false);
 
-        if (!synchView.isSynch()) {
-          for (ViewCanvas<DicomImageElement> pane : panes) {
+        for (ViewCanvas<DicomImageElement> pane : panes) {
+          if (!synchView.isSynch()) {
             pane.getGraphicManager().deleteByLayerType(LayerType.CROSSLINES);
-
-            oldSynch = (SynchData) pane.getActionValue(ActionW.SYNCH_LINK.cmd());
-            if (oldSynch == null || !oldSynch.getMode().equals(synch.getMode())) {
-              oldSynch = synch;
-            }
-            pane.setActionsInView(ActionW.SYNCH_LINK.cmd(), oldSynch);
-            // pane.updateSynchState();
           }
+          ViewSynchData paneSynch = getOrCreateSynchData(pane, synch);
+          if (paneSynch.isOriginal()) {
+            paneSynch.setAutoSyncState(paneState);
+          }
+          pane.setActionsInView(ActionW.SYNCH_LINK.cmd(), paneSynch);
+          // Every view must listen for SYNCH events so a change in any one view is forwarded to
+          // all other views; without this only the selected view received the propagated event
+          // and the others stayed stale.
+          addPropertyChangeListener(ActionW.SYNCH.cmd(), pane);
+          pane.updateSynchState();
         }
       }
 
-      // viewPane.updateSynchState();
+      viewPane.updateSynchState();
     }
   }
 

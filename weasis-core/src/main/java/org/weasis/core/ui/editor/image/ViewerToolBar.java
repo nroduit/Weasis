@@ -27,10 +27,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import javax.swing.AbstractButton;
+import javax.swing.BorderFactory;
 import javax.swing.ButtonGroup;
 import javax.swing.Icon;
 import javax.swing.JButton;
 import javax.swing.JCheckBoxMenuItem;
+import javax.swing.JLabel;
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
 import javax.swing.JPopupMenu;
@@ -90,17 +92,35 @@ public class ViewerToolBar<E extends ImageElement> extends WtoolBar implements A
   private final DropDownButton mouseRight;
   private final DropDownButton mouseWheel;
   private final DropDownButton synchButton;
+  private final boolean showSynchModeItems;
 
   public ViewerToolBar(
       final ImageViewerEventManager<E> eventManager,
       int activeMouse,
       WProperties props,
       int index) {
+    this(eventManager, activeMouse, props, index, true);
+  }
+
+  /**
+   * Same as {@link #ViewerToolBar(ImageViewerEventManager, int, WProperties, int)} but with
+   * explicit control over the SynchView mode chooser at the top of the SYNCH dropdown's popup.
+   * Containers with a single SynchView (e.g. the 3D volume viewer) should pass {@code
+   * showSynchModeItems=false} so the redundant single-entry mode list is hidden — the on/off
+   * toggle, per-view sync option checkboxes, and Apply-to-all entry stay.
+   */
+  public ViewerToolBar(
+      final ImageViewerEventManager<E> eventManager,
+      int activeMouse,
+      WProperties props,
+      int index,
+      boolean showSynchModeItems) {
     super(Messages.getString("ViewerToolBar.title"), index);
     if (eventManager == null) {
       throw new IllegalArgumentException("EventManager cannot be null");
     }
     this.eventManager = eventManager;
+    this.showSynchModeItems = showSynchModeItems;
 
     MouseActions actions = eventManager.getMouseActions();
 
@@ -373,29 +393,49 @@ public class ViewerToolBar<E extends ImageElement> extends WtoolBar implements A
       if (synch.getSelectedItem() instanceof SynchView sel) {
         synchView = sel;
       }
-      menuLut = new ViewGroupMenu();
-
-      synch.registerActionState(menuLut);
+      // showSynchModeItems == false hides the SynchView mode chooser at the top of the popup
+      // (used by containers with a single SynchView entry — the choice is meaningless there).
+      if (showSynchModeItems) {
+        menuLut = new ViewGroupMenu();
+        synch.registerActionState(menuLut);
+      }
     }
 
     final JCheckBoxMenuItem jButtonSynch =
         new JCheckBoxMenuItem(
-            Messages.getString("ActionW.synch"),
+            Messages.getString("ViewerToolBar.synch_all_views"),
             ResourceUtil.getToolBarIcon(ActionIcon.SYNCH).derive(20, 20),
             false);
-    jButtonSynch.setToolTipText(Messages.getString("ViewerToolBar.synch_toggle_tooltip"));
+    jButtonSynch.setToolTipText(Messages.getString("ViewerToolBar.synch_all_views_tooltip"));
     eventManager.getAction(ActionW.SYNCH_MODE).ifPresent(b -> b.registerActionState(jButtonSynch));
-    SynchOptionsCheckBoxGroup synchOptions = new SynchOptionsCheckBoxGroup();
 
     final DropDownButton button =
         new DropDownButton(ActionW.SYNCH.cmd(), buildSynchIcon(synchView), menuLut) {
           @Override
           protected JPopupMenu getPopupMenu() {
-            JPopupMenu menu =
-                (getMenuModel() == null) ? new JPopupMenu() : getMenuModel().createJPopupMenu();
-            menu.addSeparator();
+            JPopupMenu menu = new JPopupMenu();
+
+            // SynchView mode chooser (when shown), then the master Synchronize toggle, separated
+            // by a plain rule. The mode chooser is at the top; the rule visually attaches the
+            // Synchronize toggle to the per-view options that follow.
+            if (getMenuModel() != null) {
+              JPopupMenu modelMenu = getMenuModel().createJPopupMenu();
+              for (Component item : modelMenu.getComponents()) {
+                menu.add(item);
+              }
+              menu.addSeparator();
+            }
             menu.add(jButtonSynch);
             menu.addSeparator();
+
+            // Build the popup against the SELECTED container's options (3D containers override
+            // getSyncOptions() to expose only 3D-meaningful entries).
+            ImageViewerPlugin<E> optionContainer = eventManager.getSelectedView2dContainer();
+            List<SynchOptionsCheckBoxGroup.SyncOption> opts =
+                optionContainer != null
+                    ? optionContainer.getSyncOptions()
+                    : SynchOptionsCheckBoxGroup.getSyncOptions();
+            SynchOptionsCheckBoxGroup synchOptions = new SynchOptionsCheckBoxGroup(opts);
 
             // The toolbar synch popup mirrors the SELECTED view: checkbox states reflect that
             // view's effective configuration (per-view overrides + shared template) and toggles
@@ -418,14 +458,10 @@ public class ViewerToolBar<E extends ImageElement> extends WtoolBar implements A
                     ? vsd
                     : null;
 
-
+            // The series description acts as the title for the per-view sync options below it.
             MediaSeries<E> series = selectedView != null ? selectedView.getSeries() : null;
             if (series != null) {
-              JCheckBoxMenuItem seriesName = new JCheckBoxMenuItem(series.toString(),
-                      false);
-              seriesName.setEnabled(false);
-              seriesName.setFont(new Font("Italic", Font.ITALIC, 12));
-              menu.add(seriesName);
+              menu.add(createSeriesTitle(series.toString()));
             }
 
             // Build the effective state shown by the checkboxes: start from the selected view's
@@ -443,8 +479,7 @@ public class ViewerToolBar<E extends ImageElement> extends WtoolBar implements A
             // SynchData action keys (Window/Level is exposed as a single "winLevel" item but maps
             // to both WINDOW and LEVEL).
             Map<String, List<String>> cmdMapping = new HashMap<>();
-            for (SynchOptionsCheckBoxGroup.SyncOption opt :
-                SynchOptionsCheckBoxGroup.getSyncOptions()) {
+            for (SynchOptionsCheckBoxGroup.SyncOption opt : synchOptions.getOptions()) {
               cmdMapping.put(opt.primary().cmd(), opt.commands());
             }
 
@@ -527,58 +562,110 @@ public class ViewerToolBar<E extends ImageElement> extends WtoolBar implements A
   }
 
   /**
+   * Title row showing the selected series description. Rendered as a prominent bold label that
+   * serves as the heading for the per-view sync options listed below it.
+   */
+  private static Component createSeriesTitle(String text) {
+    JLabel label = new JLabel(text);
+    Font base = label.getFont();
+    label.setFont(base.deriveFont(Font.BOLD, base.getSize2D() + 1f));
+    label.setBorder(BorderFactory.createEmptyBorder(8, 8, 4, 8));
+    return label;
+  }
+
+  /**
    * Build a small swatch icon coloured with the source view's FoR chip — the same scheme as the
    * per-view popup. Returns {@code null} (no icon) when the UID is missing or the container only
-   * holds one distinct FoR (nothing to disambiguate).
+   * holds one distinct FoR (nothing to disambiguate). The color itself is resolved against the
+   * global set of FoRs across every open container, so the same UID keeps a stable color in all
+   * containers.
    */
   private Icon resolveChipSwatch(String fruid, ImageViewerPlugin<E> container) {
     if (fruid == null || fruid.isBlank() || container == null) {
       return null;
     }
-    LinkedHashSet<String> distinct = new LinkedHashSet<>();
+    LinkedHashSet<String> localDistinct = new LinkedHashSet<>();
     for (ViewCanvas<E> v : container.getImagePanels()) {
       if (v.getActionValue(ActionW.SYNCH_LINK.cmd()) instanceof ViewSynchData vsd) {
         String uid = vsd.getFrameOfReferenceUID();
         if (uid != null && !uid.isBlank()) {
-          distinct.add(uid);
+          localDistinct.add(uid);
         }
       }
     }
-    if (distinct.size() < 2) {
+    if (localDistinct.size() < 2) {
       return null;
     }
+    LinkedHashSet<String> globalDistinct = new LinkedHashSet<>();
+    List<ViewerPlugin<?>> plugins = GuiUtils.getUICore().getViewerPlugins();
+    synchronized (plugins) {
+      for (ViewerPlugin<?> p : plugins) {
+        if (p instanceof ImageViewerPlugin<?> ivp) {
+          for (ViewCanvas<?> v : ivp.getImagePanels()) {
+            if (v.getActionValue(ActionW.SYNCH_LINK.cmd()) instanceof ViewSynchData vsd) {
+              String uid = vsd.getFrameOfReferenceUID();
+              if (uid != null && !uid.isBlank()) {
+                globalDistinct.add(uid);
+              }
+            }
+          }
+        }
+      }
+    }
     int size = GuiUtils.getScaleLength(12);
-    return FrameOfReferenceColor.swatch(FrameOfReferenceColor.colorFor(fruid, distinct), size);
+    return FrameOfReferenceColor.swatch(
+        FrameOfReferenceColor.colorFor(fruid, globalDistinct), size);
   }
 
   /**
    * Copy {@code source}'s effective sync options (shared template + per-view overrides) as explicit
-   * overrides on every other synchronized view in the selected container — both auto-synced and
-   * manual-synced. Manual targets keep Scroll forced on (manual sync is built on top of scroll).
-   * Only views with neither sync mode active are skipped.
+   * overrides on every other synchronized view — both auto-synced and manual-synced. Scope: every
+   * open container by default; only the source container when its auto-sync is container-scoped
+   * (e.g. the 3D volume viewer). Manual targets keep Scroll forced on (manual sync is built on top
+   * of scroll). Views with neither sync mode active are skipped.
    */
   private void applySyncOptionsToOtherViews(ViewSynchData source) {
     if (source == null) {
       return;
     }
-    ImageViewerPlugin<E> container = eventManager.getSelectedView2dContainer();
-    if (container == null) {
+    ImageViewerPlugin<E> sourceContainer = eventManager.getSelectedView2dContainer();
+    if (sourceContainer == null) {
       return;
     }
-    ViewCanvas<E> selectedView = container.getSelectedViewCanvas();
+    ViewCanvas<E> selectedView = sourceContainer.getSelectedViewCanvas();
     Map<String, Boolean> effective = new HashMap<>(source.getActions());
     effective.putAll(source.getUserActionOverrides());
+    List<String> managedCommands =
+        SynchOptionsCheckBoxGroup.getAllManagedCommands(sourceContainer.getSyncOptions());
 
-    for (ViewCanvas<E> v : container.getImagePanels()) {
+    if (sourceContainer.isAutoSyncContainerScoped()) {
+      applyToContainer(sourceContainer, selectedView, effective, managedCommands);
+      return;
+    }
+    List<ViewerPlugin<?>> plugins = GuiUtils.getUICore().getViewerPlugins();
+    synchronized (plugins) {
+      for (ViewerPlugin<?> p : plugins) {
+        if (p instanceof ImageViewerPlugin<?> ivp) {
+          applyToContainer(ivp, selectedView, effective, managedCommands);
+        }
+      }
+    }
+  }
+
+  private static void applyToContainer(
+      ImageViewerPlugin<?> container,
+      ViewCanvas<?> selectedView,
+      Map<String, Boolean> effective,
+      List<String> managedCommands) {
+    for (ViewCanvas<?> v : container.getImagePanels()) {
       if (v == selectedView
           || !(v.getActionValue(ActionW.SYNCH_LINK.cmd()) instanceof ViewSynchData target)) {
         continue;
       }
-      if (!target.isAutoSynchActivated() && !target.isManualSynchActivated()) {
-        continue;
-      }
+      // Apply overrides even when the target's sync is currently OFF — the values are stored on
+      // the per-view SynchData and become effective the moment sync is re-enabled.
       target.setOriginal(false);
-      for (String cmd : SynchOptionsCheckBoxGroup.getAllManagedCommands()) {
+      for (String cmd : managedCommands) {
         if (target.isManualSynchActivated() && ActionW.SCROLL_SERIES.cmd().equals(cmd)) {
           target.setUserActionOverride(cmd, true);
           continue;

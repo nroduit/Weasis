@@ -18,6 +18,7 @@ import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import javax.swing.BoundedRangeModel;
@@ -31,6 +32,7 @@ import org.weasis.core.api.gui.util.ComboItemListener;
 import org.weasis.core.api.gui.util.DecFormatter;
 import org.weasis.core.api.gui.util.Feature;
 import org.weasis.core.api.gui.util.Filter;
+import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.ShortcutManager;
 import org.weasis.core.api.gui.util.SliderChangeListener;
 import org.weasis.core.api.gui.util.SliderCineListener;
@@ -407,13 +409,36 @@ public abstract class ImageViewerEventManager<E extends ImageElement> implements
                     sel.getSynchData().setManualSyncState(SyncState.OFF);
                     sel.getSynchData().setAutoSyncState(SyncState.OFF);
                     sel.getSynchData().setOriginal(selected);
-                    updateAllListeners(getSelectedView2dContainer(), sel);
-                    // TODO block sync activation if nothing can be synches together ??
-                    // global can manually be synched + global can be auto sync
+                    refreshAllContainers(sel);
                   }
                 });
       }
     };
+  }
+
+  /**
+   * Re-register property change listeners and refresh per-view sync button state across every open
+   * container served by this event manager — needed because the SYNCH toggle is global state but
+   * each container's views must be re-wired and repainted, not just the selected container's.
+   */
+  private void refreshAllContainers(SynchView sel) {
+    clearAllPropertyChangeListeners();
+    ImageViewerPlugin<E> selectedContainer = getSelectedView2dContainer();
+    if (selectedContainer != null) {
+      synchManager.updateAllListeners(selectedContainer, sel);
+    }
+    List<ViewerPlugin<?>> plugins = GuiUtils.getUICore().getViewerPlugins();
+    synchronized (plugins) {
+      for (ViewerPlugin<?> p : plugins) {
+        if (p instanceof ImageViewerPlugin<?> ivp
+            && ivp != selectedContainer
+            && ivp.getEventManager() == this) {
+          @SuppressWarnings("unchecked")
+          ImageViewerPlugin<E> typed = (ImageViewerPlugin<E>) ivp;
+          synchManager.updateAllListeners(typed, sel);
+        }
+      }
+    }
   }
 
   protected ToggleButtonListener newInverseStackAction() {
