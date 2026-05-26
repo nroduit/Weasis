@@ -27,6 +27,7 @@ import javax.swing.JMenuItem;
 import javax.swing.JRadioButtonMenuItem;
 import javax.swing.KeyStroke;
 import org.dcm4che3.img.lut.PresetWindowLevel;
+import org.joml.Quaterniond;
 import org.osgi.framework.BundleContext;
 import org.osgi.service.prefs.Preferences;
 import org.weasis.core.api.gui.layout.MigLayoutModel;
@@ -54,6 +55,7 @@ import org.weasis.core.ui.editor.image.SynchData;
 import org.weasis.core.ui.editor.image.SynchEvent;
 import org.weasis.core.ui.editor.image.SynchView;
 import org.weasis.core.ui.editor.image.ViewCanvas;
+import org.weasis.core.ui.editor.image.ViewSynchData;
 import org.weasis.core.ui.editor.image.ZoomToolBar;
 import org.weasis.core.ui.model.layer.LayerType;
 import org.weasis.core.ui.model.utils.bean.PanPoint;
@@ -170,6 +172,16 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> {
             view3d.getCamera().setAdjusting(true);
             view3d.getCamera().init(e.getPoint());
           }
+          // Anchor every synced view's pan reference at the press point. Without this, target
+          // views compute their first DRAGGING delta against a stale Camera.prevMousePos and
+          // jump visibly before the actual drag begins.
+          firePropertyChange(
+              ActionW.SYNCH.cmd(),
+              null,
+              new SynchEvent(
+                  getSelectedViewPane(),
+                  getActionW().cmd(),
+                  new PanPoint(PanPoint.State.DRAGSTART, e.getX(), e.getY())));
         }
       }
 
@@ -770,6 +782,19 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> {
 
       // viewPane.updateSynchState();
     }
+  }
+
+  private static ViewSynchData getOrCreateSynchData(
+      ViewCanvas<DicomImageElement> pane, SynchData synch) {
+    // Mirror DicomSynchManager: only keep an existing ViewSynchData if the user has customized it
+    // (isOriginal=false). Auto-managed (original) instances are rebuilt from the global template
+    // so the global SYNCH_MODE state can take effect.
+    if (pane.getActionValue(ActionW.SYNCH_LINK.cmd()) instanceof ViewSynchData existing
+        && !existing.isOriginal()
+        && existing.getMode().equals(synch.getMode())) {
+      return existing;
+    }
+    return new ViewSynchData(synch.getMode(), synch.getActions(), synch.isSynchActivated());
   }
 
   public JMenu getResetMenu(String prop) {

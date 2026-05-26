@@ -68,8 +68,7 @@ import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.service.AuditLog;
 import org.weasis.core.api.service.WProperties;
 import org.weasis.core.api.util.FontItem;
-import org.weasis.core.ui.editor.image.ContextMenuHandler;
-import org.weasis.core.ui.editor.image.DefaultView2d;
+import org.weasis.core.ui.editor.image.*;
 import org.weasis.core.ui.editor.image.DefaultView2d.ZoomType;
 import org.weasis.core.ui.editor.image.FocusHandler;
 import org.weasis.core.ui.editor.image.GraphicMouseHandler;
@@ -622,12 +621,10 @@ public class View3d extends VolumeCanvas
       program.allocateUniform(gl, "volTexture", (g, loc) -> g.glUniform1i(loc, 0));
       program.allocateUniform(gl, "colorMap", (g, loc) -> g.glUniform1i(loc, 1));
       program.allocateUniform(gl, "lightingMap", (g, loc) -> g.glUniform1i(loc, 2));
-      // FBO framebuffer dimensions for the crosshair overlay (imageSize() is unavailable in
-      // fragment shaders; we pass the logical FBO size instead).
-      program.allocateUniform(
-          gl,
-          "viewportSize", // NON-NLS
-          (g, loc) -> g.glUniform2i(loc, texture.getWidth(), texture.getHeight()));
+      // The crosshair overlay derives the viewport pixel resolution from screen-space
+      // derivatives of quadCoordinates in volumeFbo.frag, which is robust to the macOS GLJPanel
+      // quirk that lets gl_FragCoord range over physical pixels even when the FBO color
+      // attachment is sized at logical resolution — so no viewportSize uniform is needed here.
     }
 
     final IntBuffer intBuffer = IntBuffer.allocate(1);
@@ -1092,10 +1089,17 @@ public class View3d extends VolumeCanvas
 
   @Override
   public void moveOrigin(PanPoint point) {
-    if (point != null) {
-      if (PanPoint.State.DRAGGING.equals(point.getState())) {
-        camera.translate(point);
-      }
+    if (point == null) {
+      return;
+    }
+    PanPoint.State state = point.getState();
+    if (PanPoint.State.DRAGSTART.equals(state)) {
+      // Anchor the pan reference point so the first DRAGGING delta is computed against the
+      // press position rather than this view's stale prevMousePos (which would shift the
+      // image visibly when sync is on).
+      camera.anchorMouse(point);
+    } else if (PanPoint.State.DRAGGING.equals(state)) {
+      camera.translate(point);
     }
   }
 
@@ -1348,7 +1352,8 @@ public class View3d extends VolumeCanvas
         final Object val = entry.getValue();
         if (synchData != null && !synchData.isActionEnable(command)) {
           continue;
-        } else if (command.equals(ActionW.WINDOW.cmd())) {
+        }
+        if (command.equals(ActionW.WINDOW.cmd())) {
           renderingLayer.setWindowWidth(((Double) val).intValue(), forceRepaint);
         } else if (command.equals(ActionW.LEVEL.cmd())) {
           renderingLayer.setWindowCenter(((Double) val).intValue(), forceRepaint);
@@ -1364,6 +1369,14 @@ public class View3d extends VolumeCanvas
           }
         } else if (command.equals(ActionW.ROTATION.cmd()) && val instanceof Integer rotation) {
           setRotation(rotation);
+        } else if (command.equals(ActionW.ROTATION.cmd()) && val instanceof Quaterniond quat) {
+          // Arcball path: the source view already applied the rotation via Camera.rotate(), so
+          // re-applying here would only trigger a redundant repaint. Targets adopt the full 3D
+          // rotation that the integer slider angle cannot represent.
+          if (!isSource) {
+            camera.getRotation().set(quat);
+            camera.updateCameraTransform();
+          }
         } else if (command.equals(ActionW.RESET.cmd())) {
           reset();
         } else if (command.equals(ActionW.ZOOM.cmd())) {
