@@ -259,6 +259,9 @@ public class AuthMethodDialog extends JDialog {
 
     comboBoxAuth.repaint();
 
+    // Persist so the new/edited method is still available the next time any dialog reopens.
+    AuthenticationPersistence.addOrUpdateMethod(updatedAuth);
+
     dispose();
   }
 

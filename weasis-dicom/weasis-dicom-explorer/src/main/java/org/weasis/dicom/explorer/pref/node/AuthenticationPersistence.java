@@ -104,6 +104,29 @@ public class AuthenticationPersistence {
     }
   }
 
+  public static void addOrUpdateMethod(AuthMethod method) {
+    if (method == null || !StringUtil.hasText(method.getUid())) {
+      return;
+    }
+    if (methods.isEmpty()) {
+      loadMethods();
+    }
+    methods.put(method.getUid(), method);
+    saveMethod();
+  }
+
+  public static void removeMethod(AuthMethod method) {
+    if (method == null || !StringUtil.hasText(method.getUid())) {
+      return;
+    }
+    if (methods.isEmpty()) {
+      loadMethods();
+    }
+    if (methods.remove(method.getUid()) != null) {
+      saveMethod();
+    }
+  }
+
   public static void saveMethod() {
     XMLStreamWriter writer = null;
     XMLOutputFactory factory = XMLOutputFactory.newInstance();
