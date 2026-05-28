@@ -105,7 +105,9 @@ public class RsQueryParams extends ExplorerTask<Boolean, String> {
                 true);
 
         String user = properties.getProperty(RsQueryParams.P_OIDC_USER);
-        AuthRegistration r = new AuthRegistration(null, null, "openid", null, user); // NON-NLS
+        AuthRegistration r =
+            new AuthRegistration(
+                null, null, "openid", null, user, AuthRegistration.CODE); // NON-NLS
         method = new DefaultAuthMethod(UUID.randomUUID().toString(), p, r);
       }
     }

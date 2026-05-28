@@ -57,6 +57,8 @@ import org.weasis.dicom.explorer.exp.ExplorerTask;
 import org.weasis.dicom.mf.HttpTag;
 import org.weasis.dicom.mf.SopInstance;
 import org.weasis.dicom.mf.WadoParameters;
+import org.weasis.dicom.web.MultipartConstants;
+import org.weasis.dicom.web.MultipartConstants.DicomContentType;
 
 public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesImporter {
 
@@ -425,8 +427,9 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
   private static Map<String, String> getHttpTags(WadoParameters wadoParams) {
     boolean hasWadoTags = wadoParams != null && wadoParams.getHttpTaglist() != null;
     boolean hasWadoLogin = wadoParams != null && wadoParams.getWebLogin() != null;
+    boolean needsWadoRsAccept = wadoParams != null && wadoParams.isWadoRS();
 
-    if (hasWadoTags || hasWadoLogin) {
+    if (hasWadoTags || hasWadoLogin || needsWadoRsAccept) {
       HashMap<String, String> map = new HashMap<>();
       if (hasWadoTags) {
         for (HttpTag tag : wadoParams.getHttpTaglist()) {
@@ -437,9 +440,29 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
         // Set http login (no protection, only convert in base64)
         map.put("Authorization", "Basic " + wadoParams.getWebLogin()); // NON-NLS
       }
+      if (needsWadoRsAccept && !containsKeyIgnoreCase(map, "Accept")) {
+        // DICOMweb-compliant servers may return an empty multipart envelope when no Accept
+        // header is supplied. Request the standard multipart/related DICOM media type with
+        // transfer-syntax=* so any stored transfer syntax is preserved by the server.
+        map.put(
+            "Accept", // NON-NLS
+            MultipartConstants.MULTIPART_RELATED
+                + ";type=\""
+                + DicomContentType.DICOM
+                + "\";transfer-syntax=*");
+      }
       return map;
     }
     return null;
+  }
+
+  private static boolean containsKeyIgnoreCase(Map<String, String> map, String key) {
+    for (String k : map.keySet()) {
+      if (k != null && k.equalsIgnoreCase(key)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   public void startDownloadImageReference(final WadoParameters wadoParameters) {

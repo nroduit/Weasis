@@ -110,7 +110,14 @@ public class DefaultAuthMethod implements AuthMethod {
 
   @Override
   public OAuth2AccessToken getToken() {
-    if (token == null && code != null) {
+    if (token != null) {
+      return token;
+    }
+    if (authRegistration.isClientCredentialsGrant()) {
+      requestClientCredentialsToken();
+      return token;
+    }
+    if (StringUtil.hasText(code)) {
       refreshExistingToken();
     }
     if (token == null) {
@@ -119,7 +126,27 @@ public class DefaultAuthMethod implements AuthMethod {
     return token;
   }
 
+  private void requestClientCredentialsToken() {
+    var service = OAuth2ServiceFactory.getService(this);
+    if (service == null) {
+      return;
+    }
+    try {
+      token = service.getAccessTokenClientCredentialsGrant();
+    } catch (InterruptedException e) {
+      token = null;
+      Thread.currentThread().interrupt();
+      LOGGER.error("Client-credentials token request interrupted", e);
+    } catch (Exception e) {
+      token = null;
+      LOGGER.error("Client-credentials token request failed", e);
+    }
+  }
+
   private void refreshExistingToken() {
+    if (!StringUtil.hasText(code)) {
+      return;
+    }
     var service = OAuth2ServiceFactory.getService(this);
     if (service == null) {
       return;
@@ -184,10 +211,17 @@ public class DefaultAuthMethod implements AuthMethod {
     try {
       var accessToken = retrieveAccessToken(service, authCode);
       if (accessToken == null) {
+        LOGGER.warn("Token exchange returned no access token for {}", getName());
         return null;
       }
-      this.code = accessToken.getRefreshToken();
-      return service.refreshAccessToken(this.code);
+      var refreshToken = accessToken.getRefreshToken();
+      this.code = StringUtil.hasText(refreshToken) ? refreshToken : null;
+      if (this.code == null) {
+        LOGGER.info(
+            "{} did not return a refresh_token; re-authentication will be required when the access token expires",
+            getName());
+      }
+      return accessToken;
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
       LOGGER.error("Token exchange interrupted", e);

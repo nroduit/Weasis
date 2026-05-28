@@ -128,7 +128,8 @@ public class ExportDicomView extends AbstractItemDialogPage implements ExportDic
 
       DicomProgress dicomProgress = getDicomProgress(t);
       t.addCancelListener(dicomProgress);
-      if (exportAction(files, dicomProgress)) {
+      boolean ok = exportAction(files, dicomProgress);
+      if (ok) {
         DicomModel.LOADING_EXECUTOR.execute(
             new LoadLocalDicom(
                 prTempStorage.listFiles(),
@@ -136,7 +137,7 @@ public class ExportDicomView extends AbstractItemDialogPage implements ExportDic
                 dicomModel,
                 HangingProtocols.OpeningViewer.ALL_PATIENTS));
       }
-      return exportAction(files, dicomProgress);
+      return ok;
     } finally {
       FileUtil.recursiveDelete(exportDir.toPath());
       prTempStorage.deleteOnExit();
