@@ -1,7 +1,7 @@
 name: weasis
 title: Weasis
 base: core24
-version: '4.6.6'
+version: '4.7.0'
 summary: A free/libre/open medical DICOM viewer
 description: |
   Weasis is a multipurpose standalone and web-based DICOM viewer with 
@@ -80,10 +80,10 @@ parts:
       - xdg-utils
       - zlib1g
       - libstdc++6
-      - libgcc1
+      - libgcc-s1
     #source: weasis-distributions/target/native-dist/weasis-native.zip
-    source: https://github.com/nroduit/Weasis/releases/download/v4.6.6/weasis-native.zip
-    source-checksum: sha256/fed30e2576934cdb9cf27e4d8caab20f6d0c7f228e4bc4afda9b948b8c55a9e2
+    source: https://github.com/nroduit/Weasis/releases/download/v4.7.0/weasis-native.zip
+    source-checksum: sha256/bad1334c0ddfa1f381211879e83d37ae78621f573eab0edaff6e1adc217f4862
     organize:
       '*': weasis-native/
     override-stage: 'true'
@@ -97,13 +97,13 @@ parts:
     source-subdir: weasis-distributions
     override-build: |
       echo "Preparing Weasis build environment..."
-      WEASIS_REMOTE=$(echo ${SNAPCRAFT_PART_INSTALL} | sed 's|parts/weasis/|parts/remote-weasis-build/|g')
-      WEASIS_JDK=$(echo ${SNAPCRAFT_PART_INSTALL} | sed 's|parts/weasis/|parts/remote-openjdk/|g')
-      cp -Rf ${WEASIS_REMOTE}/weasis-native ${SNAPCRAFT_PART_BUILD}/
-      weasis-native/build/script/package-weasis.sh --output ${SNAPCRAFT_PART_INSTALL} --no-installer --jdk ${WEASIS_JDK}/java-runtime
-      mv ${SNAPCRAFT_PART_INSTALL}/Weasis/* ${SNAPCRAFT_PART_INSTALL}/
-      rm -rf ${SNAPCRAFT_PART_INSTALL}/Weasis
-      snapcraftctl build
+      WEASIS_REMOTE=$(echo ${CRAFT_PART_INSTALL} | sed 's|parts/weasis/|parts/remote-weasis-build/|g')
+      WEASIS_JDK=$(echo ${CRAFT_PART_INSTALL} | sed 's|parts/weasis/|parts/remote-openjdk/|g')
+      cp -Rf ${WEASIS_REMOTE}/weasis-native ${CRAFT_PART_BUILD}/
+      weasis-native/build/script/package-weasis.sh --output ${CRAFT_PART_INSTALL} --no-installer --jdk ${WEASIS_JDK}/java-runtime
+      mv ${CRAFT_PART_INSTALL}/Weasis/* ${CRAFT_PART_INSTALL}/
+      rm -rf ${CRAFT_PART_INSTALL}/Weasis
+      craftctl default
 
 apps:
   weasis:
