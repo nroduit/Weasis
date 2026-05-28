@@ -50,12 +50,6 @@
 - Update to weasis-dicom-tools 5.34.2 [\#788](https://github.com/nroduit/Weasis/issues/788)
 - Use only java.net.http.HttpClient for all HTTP requests [\#787](https://github.com/nroduit/Weasis/issues/787)
 
-**Merged pull requests:**
-
-- Bump org.codehaus.plexus:plexus-utils from 4.0.0 to 4.0.3 in /weasis-distributions in the maven group across 1 directory [\#803](https://github.com/nroduit/Weasis/pull/803) ([dependabot[bot]](https://github.com/apps/dependabot))
-- Quality: OAuth service cache key ignores callback port, reusing wrong service instance [\#801](https://github.com/nroduit/Weasis/pull/801) ([Nam0101](https://github.com/Nam0101))
-- Bump ch.qos.logback:logback-core from 1.5.23 to 1.5.25 in /weasis-parent in the maven group across 1 directory [\#774](https://github.com/nroduit/Weasis/pull/774) ([dependabot[bot]](https://github.com/apps/dependabot))
-
 ## [v4.6.6](https://github.com/nroduit/Weasis/tree/v4.6.6) (2025-12-29)
 
 [Full Changelog](https://github.com/nroduit/Weasis/compare/v4.6.5...v4.6.6)
