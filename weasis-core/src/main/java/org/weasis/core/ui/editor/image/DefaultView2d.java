@@ -146,6 +146,10 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
   private int pointerType = 0;
 
   protected final RenderedImageLayer<E> imageLayer;
+
+  /** Image currently pinned in the memory cache on behalf of this viewport (may be null). */
+  private E pinnedImage;
+
   protected Panner<E> panner;
   protected ZoomWin<E> lens;
   private final List<ViewButton> viewButtons;
@@ -297,7 +301,12 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     Map<String, Boolean> effective = new HashMap<>(sd.getActions());
     effective.putAll(sd.getUserActionOverrides());
 
-    SynchOptionsCheckBoxGroup group = new SynchOptionsCheckBoxGroup();
+    ImageViewerPlugin<E> container = eventManager.getSelectedView2dContainer();
+    SynchOptionsCheckBoxGroup group =
+        new SynchOptionsCheckBoxGroup(
+            container != null
+                ? container.getSyncOptions()
+                : SynchOptionsCheckBoxGroup.getSyncOptions());
     JPopupMenu popup =
         group.buildPopupMenu(
             effective,
@@ -330,7 +339,9 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
 
     // Prepend the on/off toggle for this view (closes the popup on click — single decisive action).
     JCheckBoxMenuItem syncToggle =
-        new JCheckBoxMenuItem(Messages.getString("ActionW.synch"), sd.isAutoSynchActivated());
+        new JCheckBoxMenuItem(
+            Messages.getString("ViewerToolBar.synch_this_view"), sd.isAutoSynchActivated());
+    syncToggle.setToolTipText(Messages.getString("ViewerToolBar.synch_this_view_tooltip"));
     syncToggle.addActionListener(e -> onAutoSyncButtonClicked());
     popup.insert(syncToggle, 0);
     popup.insert(new JPopupMenu.Separator(), 1);
@@ -354,10 +365,10 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
 
   /**
    * Copy the given source view's effective sync options (template + per-view overrides) as explicit
-   * per-view overrides on every other view in the selected container that shares the source's
-   * {@code FrameOfReferenceUID}. Views with a different (or missing) FrameOfReferenceUID —
-   * typically manually-synced orphan views — are intentionally left untouched: they are not in the
-   * same spatial reference frame, so propagating sync options across that boundary would not be
+   * per-view overrides on every other view in every open container that shares the source's {@code
+   * FrameOfReferenceUID}. Views with a different (or missing) FrameOfReferenceUID — typically
+   * manually-synced orphan views — are intentionally left untouched: they are not in the same
+   * spatial reference frame, so propagating sync options across that boundary would not be
    * meaningful. Views with neither sync mode active are also skipped — there is nothing to keep
    * aligned. Manual targets keep Scroll forced on regardless of the source choice (manual sync is
    * built on top of scroll).
@@ -368,43 +379,46 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     if (source == null) {
       return;
     }
-    ImageViewerPlugin<E> container = eventManager.getSelectedView2dContainer();
-    if (container == null) {
-      return;
-    }
     String sourceFruid = source.getFrameOfReferenceUID();
     if (sourceFruid == null) {
       return;
     }
-    // Compute the source view's effective state once (template + overrides).
     Map<String, Boolean> effective = new HashMap<>(source.getActions());
     effective.putAll(source.getUserActionOverrides());
 
-    for (ViewCanvas<E> v : container.getImagePanels()) {
+    List<ViewerPlugin<?>> plugins = GuiUtils.getUICore().getViewerPlugins();
+    synchronized (plugins) {
+      for (ViewerPlugin<?> p : plugins) {
+        if (p instanceof ImageViewerPlugin<?> ivp) {
+          applyOverridesInContainer(ivp, sourceFruid, effective);
+        }
+      }
+    }
+  }
+
+  private void applyOverridesInContainer(
+      ImageViewerPlugin<?> container, String sourceFruid, Map<String, Boolean> effective) {
+    List<String> managedCommands =
+        SynchOptionsCheckBoxGroup.getAllManagedCommands(container.getSyncOptions());
+    for (ViewCanvas<?> v : container.getImagePanels()) {
       if (v == this
           || !(v.getActionValue(ActionW.SYNCH_LINK.cmd()) instanceof ViewSynchData target)) {
         continue;
       }
-      // Only propagate to views in the same spatial reference frame.
       if (!sourceFruid.equals(target.getFrameOfReferenceUID())) {
         continue;
       }
-      // Skip views with neither sync mode active — there is nothing to keep aligned.
-      if (!target.isAutoSynchActivated() && !target.isManualSynchActivated()) {
-        continue;
-      }
+      // Apply overrides even when the target's sync is currently OFF — the values stay on the
+      // per-view SynchData and take effect the moment sync is re-enabled.
       // Mark non-original BEFORE writing so a concurrent updateAllListeners pass cannot replace
       // this instance via getOrCreateSynchData (which discards overrides on original instances).
       target.setOriginal(false);
-      // Copy each managed command as an explicit override.
-      for (String cmd : SynchOptionsCheckBoxGroup.getAllManagedCommands()) {
-        // Manual sync mandates Scroll on; never let an "apply" disable it on a manual target.
+      for (String cmd : managedCommands) {
         if (target.isManualSynchActivated() && ActionW.SCROLL_SERIES.cmd().equals(cmd)) {
           target.setUserActionOverride(cmd, true);
           continue;
         }
-        Boolean value = effective.get(cmd);
-        target.setUserActionOverride(cmd, Boolean.TRUE.equals(value));
+        target.setUserActionOverride(cmd, Boolean.TRUE.equals(effective.get(cmd)));
       }
       v.updateSynchState();
     }
@@ -438,12 +452,28 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     if (fruid == null || fruid.isBlank()) {
       return null;
     }
-    ImageViewerPlugin<E> container = eventManager.getSelectedView2dContainer();
+    // Resolve the OWNING container so the "chip needed?" decision is local to this view's
+    // container — a chip only appears when that container has at least two distinct FoRs to
+    // disambiguate.
+    @SuppressWarnings("unchecked")
+    ImageViewerPlugin<E> container =
+        (ImageViewerPlugin<E>)
+            SwingUtilities.getAncestorOfClass(ImageViewerPlugin.class, getJComponent());
     if (container == null) {
       return null;
     }
+    if (collectDistinctFrameOfReferenceUIDs(container).size() < 2) {
+      return null;
+    }
+    // Color is derived from a GLOBAL ordered set covering every open ImageViewerPlugin, so the
+    // same FoR UID always resolves to the same palette slot across containers.
+    return FrameOfReferenceColor.colorFor(fruid, collectGlobalDistinctFrameOfReferenceUIDs());
+  }
+
+  private static LinkedHashSet<String> collectDistinctFrameOfReferenceUIDs(
+      ImageViewerPlugin<?> container) {
     LinkedHashSet<String> distinct = new LinkedHashSet<>();
-    for (ViewCanvas<E> v : container.getImagePanels()) {
+    for (ViewCanvas<?> v : container.getImagePanels()) {
       if (v.getActionValue(ActionW.SYNCH_LINK.cmd()) instanceof ViewSynchData vsd) {
         String uid = vsd.getFrameOfReferenceUID();
         if (uid != null && !uid.isBlank()) {
@@ -451,11 +481,20 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         }
       }
     }
-    // Single-FoR container: no chip — nothing to disambiguate.
-    if (distinct.size() < 2) {
-      return null;
+    return distinct;
+  }
+
+  private static LinkedHashSet<String> collectGlobalDistinctFrameOfReferenceUIDs() {
+    LinkedHashSet<String> distinct = new LinkedHashSet<>();
+    List<ViewerPlugin<?>> plugins = GuiUtils.getUICore().getViewerPlugins();
+    synchronized (plugins) {
+      for (ViewerPlugin<?> p : plugins) {
+        if (p instanceof ImageViewerPlugin<?> ivp) {
+          distinct.addAll(collectDistinctFrameOfReferenceUIDs(ivp));
+        }
+      }
     }
-    return FrameOfReferenceColor.colorFor(fruid, distinct);
+    return distinct;
   }
 
   /**
@@ -973,7 +1012,26 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     updateCanvas(getImage(), triggerViewModelChangeListeners);
   }
 
+  /**
+   * Keeps the image displayed by this viewport pinned in the memory cache so it is never evicted
+   * under memory pressure while in use. The previously pinned image is released and becomes
+   * eligible for eviction (and transparent reload). Tracking the pin per viewport keeps it correct
+   * regardless of how subclasses reorder {@link #setImage} and {@code imageLayer} updates.
+   */
+  private void updatePinnedImage(E img) {
+    if (!Objects.equals(pinnedImage, img)) {
+      if (pinnedImage != null) {
+        pinnedImage.unpinFromCache();
+      }
+      if (img != null) {
+        img.pinInCache();
+      }
+      pinnedImage = img;
+    }
+  }
+
   protected void setImage(E img) {
+    updatePinnedImage(img);
     boolean updateGraphics = false;
     imageLayer.setEnableDispOperations(false);
     if (img == null) {
@@ -1437,9 +1495,17 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     if (self != null && !self.isSynchActivated()) {
       return false;
     }
-    return isAutoSyncMatch(issuer, self)
-        || isManualSyncMatch(issuer, self)
-        || isTileSyncMatch(issuer, self);
+    boolean linked =
+        isAutoSyncMatch(issuer, self)
+            || isManualSyncMatch(issuer, self)
+            || isTileSyncMatch(issuer, self);
+    if (!linked) {
+      return false;
+    }
+    // Honour the per-view "Scroll Series" checkbox: a scroll/cine event links two views only when
+    // both have that action enabled in their sync options (manual sync keeps Scroll forced on).
+    return issuer.isActionEnable(ActionW.SCROLL_SERIES.cmd())
+        && self.isActionEnable(ActionW.SCROLL_SERIES.cmd());
   }
 
   private boolean isAutoSyncMatch(ViewSynchData issuer, ViewSynchData self) {
@@ -1602,8 +1668,15 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     // Process each synchronized action from the event
     for (Entry<String, Object> entry : synch.getEvents().entrySet()) {
       String command = entry.getKey();
-      // Skip actions not enabled in current view's sync configuration
-      if (this != synch.getView() && synchData != null && !synchData.isActionEnable(command)) {
+      // A synchronized action links two views only when BOTH have it checked in their per-view
+      // sync options. The issuing view always applies the action to itself; for every other view
+      // the action is skipped unless the issuer AND this receiving view both enabled it. This
+      // keeps each action's sync group restricted to the views that opted into that action
+      // (directly or through the "apply to all views" menu), instead of leaking to every view
+      // sharing the same FrameOfReferenceUID.
+      if (this != synch.getView()
+          && ((synchData != null && !synchData.isActionEnable(command))
+              || (issuerSyncData != null && !issuerSyncData.isActionEnable(command)))) {
         continue;
       }
       // Apply the synchronized action based on its type

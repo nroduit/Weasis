@@ -231,6 +231,15 @@ public class Camera {
     updateCameraTransform();
   }
 
+  /**
+   * Anchor the next pan/rotate delta at {@code p} without triggering a render. Used when a sync
+   * event needs to align a target view's reference point before the dragging stream starts.
+   */
+  public void anchorMouse(Point2D p) {
+    prevMousePos.x = p.getX();
+    prevMousePos.y = p.getY();
+  }
+
   public void setZoomFactor(double zoomFactor) {
     setZoomFactor(zoomFactor, true);
   }

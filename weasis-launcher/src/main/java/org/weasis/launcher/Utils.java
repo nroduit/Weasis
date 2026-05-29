@@ -17,6 +17,7 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.slf4j.LoggerFactory;
@@ -106,12 +107,7 @@ public class Utils {
   public static void openInDefaultBrowser(URL url) {
     if (url != null) {
       if (SystemInfo.isLinux) {
-        try {
-          String[] cmd = new String[] {"xdg-open", url.toString()}; // NON-NLS
-          Runtime.getRuntime().exec(cmd);
-        } catch (IOException e) {
-          LOGGER.error("Cannot open URL to the system browser", e);
-        }
+        openInLinuxBrowser(url);
       } else if (Desktop.isDesktopSupported()) {
         final Desktop desktop = Desktop.getDesktop();
         if (desktop.isSupported(Desktop.Action.BROWSE)) {
@@ -124,6 +120,24 @@ public class Utils {
       } else {
         LOGGER.warn("Cannot open URL to the system browser");
       }
+    }
+  }
+
+  private static void openInLinuxBrowser(URL url) {
+    try {
+      Process process =
+          new ProcessBuilder("xdg-open", url.toString()) // NON-NLS
+              .redirectOutput(ProcessBuilder.Redirect.DISCARD)
+              .redirectError(ProcessBuilder.Redirect.DISCARD)
+              .start();
+      process.getOutputStream().close();
+      if (process.waitFor(5, TimeUnit.SECONDS) && process.exitValue() != 0) {
+        LOGGER.error("'xdg-open' failed (exit {}) for {}", process.exitValue(), url); // NON-NLS
+      }
+    } catch (IOException e) {
+      LOGGER.error("Cannot open URL to the system browser", e);
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
     }
   }
 }

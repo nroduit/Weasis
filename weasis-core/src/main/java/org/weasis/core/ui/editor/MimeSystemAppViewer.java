@@ -15,6 +15,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import javax.swing.JMenu;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -40,10 +41,19 @@ public abstract class MimeSystemAppViewer implements SeriesViewer<MediaElement> 
   public static void startAssociatedProgramFromLinux(Path path) {
     if (path != null && Files.isReadable(path)) {
       try {
-        String[] cmd = new String[] {"xdg-open", path.toString()}; // NON-NLS
-        Runtime.getRuntime().exec(cmd);
+        Process process =
+            new ProcessBuilder("xdg-open", path.toString()) // NON-NLS
+                .redirectOutput(ProcessBuilder.Redirect.DISCARD)
+                .redirectError(ProcessBuilder.Redirect.DISCARD)
+                .start();
+        process.getOutputStream().close();
+        if (process.waitFor(5, TimeUnit.SECONDS) && process.exitValue() != 0) {
+          LOGGER.error("'xdg-open' failed (exit {}) for {}", process.exitValue(), path); // NON-NLS
+        }
       } catch (IOException e) {
         LOGGER.error(ERROR_MSG, path, e);
+      } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
       }
     }
   }

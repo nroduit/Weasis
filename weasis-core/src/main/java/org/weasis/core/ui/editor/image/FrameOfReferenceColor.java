@@ -33,24 +33,24 @@ public final class FrameOfReferenceColor {
   private static final Color[] PALETTE = {
     new Color(0xF3C300), // vivid yellow
     new Color(0x0067A5), // strong blue
-    new Color(0xE25822), // vivid reddish orange
-    new Color(0x008856), // vivid green
-    new Color(0xE68FAC), // strong purplish pink
+    new Color(0x875692), // strong purple
     new Color(0xA1CAF1), // very light blue
-    new Color(0xC2B280), // grayish yellow (buff)
+    new Color(0xF6A600), // vivid orange yellow
+    new Color(0xE68FAC), // strong purplish pink
+    new Color(0x008856), // vivid green
     new Color(0x882D17), // strong reddish brown
     new Color(0x8DB600), // vivid yellowish green
     new Color(0x848482), // medium gray
     new Color(0xF99379), // strong yellowish pink
-    new Color(0x875692), // strong purple
     new Color(0xB3446C), // strong purplish red
     new Color(0x654522), // deep yellowish brown
     new Color(0x222222), // black
-    new Color(0xF6A600), // vivid orange yellow
     new Color(0x2B3D26), // dark olive green
     new Color(0xF38400), // vivid orange
     new Color(0x604E97), // strong violet
     new Color(0xDCD300), // vivid greenish yellow
+    new Color(0xE25822), // vivid reddish orange
+    new Color(0xC2B280), // grayish yellow (buff)
   };
 
   private FrameOfReferenceColor() {}

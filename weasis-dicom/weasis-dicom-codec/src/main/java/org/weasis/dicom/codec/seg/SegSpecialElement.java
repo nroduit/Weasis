@@ -723,10 +723,12 @@ public class SegSpecialElement extends HiddenSpecialElement
     synchronized (segVolumeLock) {
       SoftReference<SegmentationVolume> ref = alignedVolumes.get(imageVolumeKey);
       SegmentationVolume v = ref == null ? null : ref.get();
-      if (v != null) {
+      if (v != null && !v.isDisposed()) {
         return v;
       }
-      // Drop the stale soft reference (if any) before rebuilding.
+      // Drop a stale soft reference, or a cached volume whose CPU buffers were already freed by
+      // its last consumer's release() (e.g. the 3D overlay texture was destroyed when switching
+      // to "No Segmentation"). Either way, rebuild from scratch below.
       if (ref != null) {
         alignedVolumes.remove(imageVolumeKey);
       }

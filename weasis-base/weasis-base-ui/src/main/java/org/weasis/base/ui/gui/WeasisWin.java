@@ -879,6 +879,15 @@ public class WeasisWin {
       helpMenuItem.add(new JSeparator());
     }
 
+    final JMenuItem resourcesMenuItem = new JMenuItem(Messages.getString("ResourceMonitor.title"));
+    resourcesMenuItem.addActionListener(
+        e -> {
+          ColorLayerUI layer = ColorLayerUI.createTransparentLayerUI(rootPaneContainer);
+          ResourceMonitorDialog dialog = new ResourceMonitorDialog(getFrame());
+          ColorLayerUI.showCenterScreen(dialog, layer);
+        });
+    helpMenuItem.add(resourcesMenuItem);
+
     final JMenuItem aboutMenuItem =
         new JMenuItem(
             String.format(Messages.getString("WeasisAboutBox.about"), AppProperties.WEASIS_NAME));

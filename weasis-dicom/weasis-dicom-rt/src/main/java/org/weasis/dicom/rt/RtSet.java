@@ -264,7 +264,7 @@ public class RtSet {
     plan.setGeometry(dcm.getString(Tag.RTPlanGeometry));
   }
 
-  private static void extractRxDoseFromDoseRef(Plan plan, Sequence doseRefSeq) {
+  static void extractRxDoseFromDoseRef(Plan plan, Sequence doseRefSeq) {
     for (Attributes doseRef : doseRefSeq) {
       String type = doseRef.getString(Tag.DoseReferenceStructureType);
       Double targetDose =
@@ -295,7 +295,7 @@ public class RtSet {
     }
   }
 
-  private static void extractRxDoseFromFractionGroup(Plan plan, Attributes dcmItems) {
+  static void extractRxDoseFromFractionGroup(Plan plan, Attributes dcmItems) {
     Attributes fractionGroup = dcmItems.getNestedDataset(Tag.FractionGroupSequence);
     Integer fx =
         DicomUtils.getIntegerFromDicomElement(fractionGroup, Tag.NumberOfFractionsPlanned, null);

@@ -10,6 +10,7 @@
 package org.weasis.core.api.net;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -26,6 +27,7 @@ import java.net.InetSocketAddress;
 import java.net.ProxySelector;
 import java.net.URI;
 import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
 import java.util.Map;
@@ -315,6 +317,43 @@ class HttpUtilsTest {
               () -> HttpUtils.executeAuthenticatedRequest(request, URLParameters.DEFAULT, auth));
       assertEquals("io", ex.getMessage());
     }
+  }
+
+  @Test
+  void isIdempotentRecognizesSafeMethodsOnly() {
+    HttpRequest get = HttpRequest.newBuilder(URI.create(baseUrl + "/ok")).GET().build();
+    HttpRequest post =
+        HttpRequest.newBuilder(URI.create(baseUrl + "/ok"))
+            .POST(HttpRequest.BodyPublishers.noBody())
+            .build();
+    HttpRequest put =
+        HttpRequest.newBuilder(URI.create(baseUrl + "/ok"))
+            .PUT(HttpRequest.BodyPublishers.noBody())
+            .build();
+    assertTrue(HttpUtils.isIdempotent(get));
+    assertFalse(HttpUtils.isIdempotent(post));
+    assertFalse(HttpUtils.isIdempotent(put));
+  }
+
+  @Test
+  void isStaleConnectionFailureMatchesKnownSignatures() {
+    // Direct SocketException with "Connection reset"
+    assertTrue(
+        HttpUtils.isStaleConnectionFailure(new java.net.SocketException("Connection reset")));
+
+    // Wrapped: top-level IOException with the JDK HttpClient header-parser message
+    var outer = new IOException("HTTP/1.1 header parser received no bytes");
+    assertTrue(HttpUtils.isStaleConnectionFailure(outer));
+
+    // Nested cause chain — the actual stack we see from the JDK
+    var rst = new java.net.SocketException("Connection reset");
+    var headerErr = new IOException("HTTP/1.1 header parser received no bytes", rst);
+    assertTrue(HttpUtils.isStaleConnectionFailure(headerErr));
+
+    // Unrelated errors must NOT match
+    assertFalse(HttpUtils.isStaleConnectionFailure(new IOException("404 Not Found")));
+    assertFalse(HttpUtils.isStaleConnectionFailure(new IOException("Connection refused")));
+    assertFalse(HttpUtils.isStaleConnectionFailure(null));
   }
 
   @Test

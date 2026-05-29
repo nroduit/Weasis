@@ -79,7 +79,7 @@ public class RsQueryParams extends ExplorerTask<Boolean, String> {
         properties.setProperty(P_DICOMWEB_URL, url.substring(0, url.length() - 1));
       }
     } else {
-      throw new IllegalArgumentException("DICOMWeb URL cannot be null");
+      throw new IllegalArgumentException("DICOMweb URL cannot be null");
     }
 
     this.seriesMap = new HashMap<>();
@@ -105,7 +105,9 @@ public class RsQueryParams extends ExplorerTask<Boolean, String> {
                 true);
 
         String user = properties.getProperty(RsQueryParams.P_OIDC_USER);
-        AuthRegistration r = new AuthRegistration(null, null, "openid", null, user); // NON-NLS
+        AuthRegistration r =
+            new AuthRegistration(
+                null, null, "openid", null, user, AuthRegistration.CODE); // NON-NLS
         method = new DefaultAuthMethod(UUID.randomUUID().toString(), p, r);
       }
     }

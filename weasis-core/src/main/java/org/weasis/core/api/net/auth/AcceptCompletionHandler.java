@@ -31,8 +31,8 @@ public class AcceptCompletionHandler implements AcceptCallbackHandler {
   private static final Logger LOGGER = LoggerFactory.getLogger(AcceptCompletionHandler.class);
   private static final int BUFFER_SIZE = 1024;
   private static final String CODE_PARAM = "code=";
-  private static final String HTTP_OK = "HTTP/1.1 200 OK\r\n\r\n";
-  private static final String HTTP_NOT_FOUND = "HTTP/1.1 404 Not Found\r\n\r\n";
+  private static final String HTTP_OK = "HTTP/1.1 200 OK\r\n";
+  private static final String HTTP_NOT_FOUND = "HTTP/1.1 404 Not Found\r\n";
 
   private final OAuth20Service service;
   private String code;
@@ -92,10 +92,25 @@ public class AcceptCompletionHandler implements AcceptCallbackHandler {
     return line.substring(codeIndex + CODE_PARAM.length()).trim().split("[ &]", 2)[0];
   }
 
-  private static String createResponse(boolean success) {
-    return success
-        ? HTTP_OK + Messages.getString("code.has.been.transmitted")
-        : HTTP_NOT_FOUND + Messages.getString("code.has.failed") + "\n";
+  private static byte[] createResponse(boolean success) {
+    String statusLine = success ? HTTP_OK : HTTP_NOT_FOUND;
+    String body =
+        success
+            ? Messages.getString("code.has.been.transmitted")
+            : Messages.getString("code.has.failed") + "\n";
+    byte[] bodyBytes = body.getBytes(StandardCharsets.UTF_8);
+    String headers =
+        statusLine
+            + "Content-Type: text/plain; charset=UTF-8\r\n"
+            + "Content-Length: "
+            + bodyBytes.length
+            + "\r\n"
+            + "Connection: close\r\n\r\n";
+    byte[] headerBytes = headers.getBytes(StandardCharsets.US_ASCII);
+    byte[] response = new byte[headerBytes.length + bodyBytes.length];
+    System.arraycopy(headerBytes, 0, response, 0, headerBytes.length);
+    System.arraycopy(bodyBytes, 0, response, headerBytes.length, bodyBytes.length);
+    return response;
   }
 
   private final class RequestHandler implements CompletionHandler<Integer, ByteBuffer> {
@@ -121,8 +136,8 @@ public class AcceptCompletionHandler implements AcceptCallbackHandler {
       LOGGER.error("Cannot get code from callback", exc);
     }
 
-    private void sendResponse(String response) {
-      ByteBuffer responseBuffer = ByteBuffer.wrap(response.getBytes(StandardCharsets.UTF_8));
+    private void sendResponse(byte[] response) {
+      ByteBuffer responseBuffer = ByteBuffer.wrap(response);
       channel.write(responseBuffer, channel, new WriteHandler(responseBuffer));
     }
   }
@@ -132,7 +147,12 @@ public class AcceptCompletionHandler implements AcceptCallbackHandler {
 
     @Override
     public void completed(Integer result, AsynchronousSocketChannel channel) {
-      buffer.clear();
+      // Loop until the whole buffer is drained — async writes can be partial under load,
+      // and leaving bytes pending would keep the client blocked on read until SO_TIMEOUT.
+      if (buffer.hasRemaining()) {
+        channel.write(buffer, channel, this);
+        return;
+      }
       StreamUtil.safeClose(channel);
     }
 

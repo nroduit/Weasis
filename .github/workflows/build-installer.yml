@@ -1,8 +1,48 @@
 name: Build installers
 on:
   workflow_dispatch:
+    inputs:
+      platforms:
+        description: 'Platforms to build: "all", "none" (only the shared native package), or a comma-separated subset of windows-x86-64,macosx-x86-64,macosx-aarch64,linux-x86-64,linux-aarch64'
+        required: false
+        default: 'all'
 
 jobs:
+  setup:
+    runs-on: ubuntu-latest
+    outputs:
+      jpackage_matrix: ${{ steps.set.outputs.jpackage_matrix }}
+      linux_matrix: ${{ steps.set.outputs.linux_matrix }}
+    steps:
+      - name: Compute build matrices from the platforms input
+        id: set
+        shell: bash
+        run: |
+          sel="${{ inputs.platforms }}"
+          [ -z "$sel" ] && sel="all"
+          jpkg=$(jq -cn --arg sel "$sel" '
+            [
+              {key:"macosx-x86-64",  os:"macos-15-intel", platform:"x64",   wsystem:"macosx",  warc:"x86-64"},
+              {key:"macosx-aarch64", os:"macos-latest",   platform:"arm64", wsystem:"macosx",  warc:"aarch64"},
+              {key:"windows-x86-64", os:"windows-latest", platform:"x64",   wsystem:"windows", warc:"x86-64"}
+            ]
+            | map(select($sel == "all" or (.key as $k | ($sel | split(",")) | index($k) != null)))
+            | map(del(.key))')
+          linux=$(jq -cn --arg sel "$sel" '
+            [
+              {key:"linux-x86-64",  arch:"linux/amd64"},
+              {key:"linux-aarch64", arch:"linux/arm64"}
+            ]
+            | map(select($sel == "all" or (.key as $k | ($sel | split(",")) | index($k) != null)))
+            | map(.arch)')
+          {
+            echo "jpackage_matrix=$jpkg"
+            echo "linux_matrix=$linux"
+          } >> "$GITHUB_OUTPUT"
+          echo "Selected platforms: $sel"
+          echo "jpackage matrix: $jpkg"
+          echo "linux matrix:    $linux"
+
   build:
     runs-on: ubuntu-latest
     outputs:
@@ -53,23 +93,21 @@ jobs:
       WEASIS_OUTPUT: "output-dist"
       WEASIS_INPUT_BIN: "native-dist/weasis-native/bin-dist/weasis"
     runs-on: ${{ matrix.os }}
-    needs: build
+    needs: [setup, build]
+    if: ${{ needs.setup.outputs.jpackage_matrix != '[]' }}
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - { os: macos-15-intel, platform: x64, wsystem: macosx, warc: x86-64 }
-          - { os: macos-latest, platform: arm64, wsystem: macosx, warc: aarch64 }
-          - { os: windows-latest, platform: x64, wsystem: windows, warc: x86-64 }
+        include: ${{ fromJSON(needs.setup.outputs.jpackage_matrix) }}
 
     steps:
       - name: Set JDK modules based on OS
         shell: bash
         run: |
           if [ "${{ matrix.wsystem }}" = "windows" ]; then
-            echo "JDK_MODULES=java.base,java.compiler,java.datatransfer,java.net.http,java.desktop,java.logging,java.management,java.prefs,java.xml,jdk.localedata,jdk.charsets,jdk.crypto.ec,jdk.crypto.cryptoki,jdk.crypto.mscapi,jdk.jdwp.agent,java.sql" >> $GITHUB_ENV
+            echo "JDK_MODULES=java.base,java.compiler,java.datatransfer,java.net.http,java.desktop,java.logging,java.management,jdk.management,java.prefs,java.xml,jdk.localedata,jdk.charsets,jdk.crypto.ec,jdk.crypto.cryptoki,jdk.crypto.mscapi,jdk.jdwp.agent,java.sql" >> $GITHUB_ENV
           else
-            echo "JDK_MODULES=java.base,java.compiler,java.datatransfer,java.net.http,java.desktop,java.logging,java.management,java.prefs,java.xml,jdk.localedata,jdk.charsets,jdk.crypto.ec,jdk.crypto.cryptoki,jdk.jdwp.agent,java.sql" >> $GITHUB_ENV
+            echo "JDK_MODULES=java.base,java.compiler,java.datatransfer,java.net.http,java.desktop,java.logging,java.management,jdk.management,java.prefs,java.xml,jdk.localedata,jdk.charsets,jdk.crypto.ec,jdk.crypto.cryptoki,jdk.jdwp.agent,java.sql" >> $GITHUB_ENV
           fi
       - name: Set output version from build
         shell: bash
@@ -195,11 +233,16 @@ jobs:
             declare -a customOptions=("--java-options" "-splash:\$APPDIR\resources\images\about-round.png" )
             declare -a signArgs=()
           else
-            declare -a customOptions=("--java-options" "-splash:\$APPDIR/resources/images/about-round.png" )
+            # sun.awt.disablegrab works around unreliable X11 pointer grabs on XWayland (GNOME/mutter),
+            # which can leave Swing popup menus invisible until the window regains focus (see issue #819).
+            declare -a customOptions=("--java-options" "-splash:\$APPDIR/resources/images/about-round.png" \
+            "--java-options" "-Dsun.awt.disablegrab=true" )
             declare -a signArgs=()
           fi
           declare -a commonOptions=("--java-options" "-Dgosh.port=17179" \
           "--java-options" "--enable-native-access=ALL-UNNAMED" \
+          "--java-options" "-XX:MaxRAMPercentage=25" \
+          "--java-options" "-XX:+UseStringDeduplication" \
           "--java-options" "-Djavax.accessibility.assistive_technologies=org.weasis.launcher.EmptyAccessibilityProvider" \
           "--java-options" "-Djavax.accessibility.screen_magnifier_present=false" )
 
@@ -359,11 +402,12 @@ jobs:
           path: final-dist
 
   linux-multiarch:
-    needs: build
+    needs: [setup, build]
     runs-on: ubuntu-latest
+    if: ${{ needs.setup.outputs.linux_matrix != '[]' }}
     strategy:
       matrix:
-        arch: ["linux/amd64", "linux/arm64"]
+        arch: ${{ fromJSON(needs.setup.outputs.linux_matrix) }}
 
     steps:
       - name: Download weasis-native

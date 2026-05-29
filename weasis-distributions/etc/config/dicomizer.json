@@ -92,6 +92,14 @@
       "category": "DICOM"
     },
     {
+      "code": "weasis.acquire.video.max.size",
+      "value": "1024",
+      "description": "Maximum size in MB of a video file that can be imported into the Dicomizer. A video file larger than this value is rejected with a message. A value of 0 or less disables the limit.",
+      "type": "A",
+      "javaType": "INT",
+      "category": "DICOM"
+    },
+    {
       "code": "weasis.acquire.meta.global.display",
       "value": "PatientID,PatientName,PatientBirthDate,PatientSex,AccessionNumber,StudyDescription",
       "description": "Comma-separated list of patient and study tags which are displayed in UI. When a required tag has no value, it will be displayed.",

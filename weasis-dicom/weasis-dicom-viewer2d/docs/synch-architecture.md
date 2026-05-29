@@ -77,11 +77,12 @@ The `propertyChange(SynchCineEvent)` method now includes a **sync propagation gu
     - The issuer view's sync is activated.
     - For **auto-sync**: both views share the same `frameOfReferenceUID` and both have auto-sync ON.
     - For **manual sync**: both views have manual sync ON and the issuer has a `ManualSyncData` entry targeting the current view.
+    - In every case, the per-view *Scroll Series* checkbox must be enabled on **both** the issuing and the receiving view, so an unchecked *Scroll* in the per-view sync popup actually stops scroll/cine propagation to that view (`shouldAcceptSyncEvent`).
 2. **Location offset for manual sync:** When in manual mode, the slice location is adjusted by the offset: `location = location + targetLocation - sourceLocation`. This enables synchronizing views that don't share the same spatial reference but are aligned by the user at a specific pair of slices.
 
 The `propertyChange(SynchEvent)` (non-cine, e.g., zoom/pan/rotation) also now:
 - Blocks propagation if either view has sync disabled.
-- Only filters actions for non-self events (`this != synch.getView()`).
+- For non-self events (`this != synch.getView()`), applies an action only when **both** the issuing view and this receiving view have it enabled in their sync options (`issuerSyncData.isActionEnable(cmd) && synchData.isActionEnable(cmd)`). This restricts each action's sync group to the views that opted into that action — directly or via *Apply to all views* — instead of leaking it to every view that merely shares the same `FrameOfReferenceUID`. The issuing view always applies the action to itself; broadcast events (no source view, e.g. toolbar actions) keep their previous receiver-only filtering.
 
 ### 6. Manual Sync Workflow
 

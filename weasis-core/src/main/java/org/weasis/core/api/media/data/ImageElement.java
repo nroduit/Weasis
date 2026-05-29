@@ -33,6 +33,8 @@ import org.weasis.core.api.image.ZoomOp;
 import org.weasis.core.api.image.cv.CvUtil;
 import org.weasis.core.api.image.measure.MeasurementsAdapter;
 import org.weasis.core.api.image.util.Unit;
+import org.weasis.core.api.util.ResourceMonitor;
+import org.weasis.core.api.util.SystemMemory;
 import org.weasis.core.api.util.ThreadUtil;
 import org.weasis.core.util.MathUtil;
 import org.weasis.opencv.data.ImageCV;
@@ -53,13 +55,13 @@ public class ImageElement extends MediaElement {
       ThreadUtil.newManagedImageIOThreadPool("ImageLoader");
 
   private static final NativeCache<ImageElement, PlanarImage> mCache =
-      new NativeCache<>(Runtime.getRuntime().maxMemory() / 2) {
+      new NativeCache<>(SystemMemory.getNativeMemoryBudget()) {
 
         @Override
         protected void afterEntryRemove(ImageElement key, PlanarImage img) {
           if (key != null) {
             key.setTag(TagW.ImageCache, false);
-            MediaReader reader = key.getMediaReader();
+            MediaReader<? extends MediaElement> reader = key.getMediaReader();
             if (reader != null) {
               // Close the image stream
               reader.close();
@@ -83,7 +85,7 @@ public class ImageElement extends MediaElement {
   protected Double minPixelValue;
   protected Double maxPixelValue;
 
-  public ImageElement(MediaReader mediaIO, Object key) {
+  public ImageElement(MediaReader<? extends MediaElement> mediaIO, Object key) {
     super(mediaIO, key);
   }
 
@@ -267,6 +269,19 @@ public class ImageElement extends MediaElement {
     mCache.remove(this);
   }
 
+  /**
+   * Pins this image in the memory cache so it cannot be evicted while displayed in a viewport. Each
+   * call must be balanced by a call to {@link #unpinFromCache()}.
+   */
+  public void pinInCache() {
+    mCache.pin(this);
+  }
+
+  /** Releases a pin acquired with {@link #pinInCache()}. */
+  public void unpinFromCache() {
+    mCache.unpin(this);
+  }
+
   public boolean hasSameSize(ImageElement image) {
     if (image != null) {
       PlanarImage img = getImage();
@@ -399,6 +414,7 @@ public class ImageElement extends MediaElement {
     try {
       return getCacheImage(startImageLoading(), manager, findMinMax);
     } catch (OutOfMemoryError e1) {
+      ResourceMonitor.getInstance().recordOutOfMemory();
       mCache.expungeStaleEntries();
       CvUtil.runGarbageCollectorAndWait(100);
 
@@ -417,8 +433,15 @@ public class ImageElement extends MediaElement {
         findMinMaxValues(cacheImage, true);
       } catch (Exception e) {
         mCache.remove(this);
-        readable = false;
-        LOGGER.error("Cannot read image: {}", this, e);
+        if (cacheImage != null && cacheImage.width() <= 0) {
+          // The native buffer was released by a concurrent cache eviction (memory pressure):
+          // a transient failure. Keep the element readable so it can be decoded again instead
+          // of being permanently blanked.
+          LOGGER.warn("Image buffer released during concurrent access, will reload: {}", this);
+        } else {
+          readable = false;
+          LOGGER.error("Cannot read image: {}", this, e);
+        }
       }
     }
     if (manager != null && cacheImage != null) {
@@ -469,6 +492,7 @@ public class ImageElement extends MediaElement {
         readable = img.width() > 0;
         if (readable) {
           mCache.put(this, img);
+          ResourceMonitor.getInstance().recordImageLoaded(img.physicalBytes());
           cacheImage = img;
           this.setTag(TagW.ImageCache, true);
         }

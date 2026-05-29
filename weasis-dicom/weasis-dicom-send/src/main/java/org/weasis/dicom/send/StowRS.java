@@ -17,6 +17,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -116,27 +117,63 @@ public class StowRS extends DicomStowRS {
   public DicomState uploadDicom(
       List<String> filesOrFolders, boolean recursive, AuthMethod authMethod) {
     DicomState state = new DicomState(new DicomProgress());
-    Attributes error = null;
-    int nbFile = 0;
-
     String url = getRequestURL();
     OAuthRequest authRequest = prepareAuthConnection(filesOrFolders, recursive);
-    nbFile = authRequest.getMultipartPayload().getBodyParts().size();
+    int nbFile = authRequest.getMultipartPayload().getBodyParts().size();
 
     try (HttpStream httpCon =
         HttpUtils.getHttpResponse(
             url, new URLParameters(getHeaders(), true), authMethod, authRequest)) {
       int code = httpCon.getResponseCode();
       if (code >= HttpURLConnection.HTTP_OK && code < HttpURLConnection.HTTP_BAD_REQUEST) {
-        error = getResponseOutput(httpCon);
-      } else if (code == HttpURLConnection.HTTP_UNAUTHORIZED && authMethod != null) {
-        authMethod.resetToken();
-        authMethod.getToken();
+        return buildErrorMessage(getResponseOutput(httpCon), state, nbFile);
       }
-      return buildErrorMessage(error, state, nbFile);
+      if (code == HttpURLConnection.HTTP_UNAUTHORIZED && authMethod != null) {
+        authMethod.resetToken();
+      }
+      return buildHttpFailure(state, httpCon, code);
     } catch (Exception e) {
       LOGGER.error("STOW-RS: error when posting data", e);
       return DicomState.buildMessage(state, e.getMessage(), null);
+    }
+  }
+
+  private static final int MAX_BODY_LOG = 2048;
+  private static final int MAX_BODY_DIALOG = 200;
+
+  private static DicomState buildHttpFailure(DicomState state, HttpStream httpCon, int code) {
+    String reason = httpCon.getResponseMessage();
+    String body = readBodyQuietly(httpCon);
+    String header =
+        String.format(
+            "STOW-RS server response message: HTTP Status-Code %d: %s",
+            code, reason == null ? "" : reason);
+    if (body != null && !body.isBlank()) {
+      LOGGER.error("{} - body: {}", header, body);
+    } else {
+      LOGGER.error(header);
+    }
+    state.setStatus(Status.UnableToProcess);
+    String dialogMessage =
+        body != null && !body.isBlank() ? header + " - " + truncate(body, MAX_BODY_DIALOG) : header;
+    return DicomState.buildMessage(state, null, new HttpServerErrorException(dialogMessage));
+  }
+
+  private static String truncate(String s, int max) {
+    var stripped = s.replaceAll("\\s+", " ").strip();
+    return stripped.length() <= max ? stripped : stripped.substring(0, max) + "...";
+  }
+
+  private static String readBodyQuietly(HttpStream httpCon) {
+    try (InputStream in = httpCon.getInputStream()) {
+      if (in == null) {
+        return null;
+      }
+      var bytes = in.readNBytes(MAX_BODY_LOG);
+      return bytes.length == 0 ? null : new String(bytes, StandardCharsets.UTF_8);
+    } catch (IOException e) {
+      LOGGER.debug("Cannot read STOW-RS error response body", e);
+      return null;
     }
   }
 

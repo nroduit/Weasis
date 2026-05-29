@@ -64,7 +64,7 @@ public class RsQuery implements Callable<Boolean> {
         properties.setProperty(RsQueryParams.P_DICOMWEB_URL, url.substring(0, url.length() - 1));
       }
     } else {
-      throw new IllegalArgumentException("DICOMWeb URL cannot be null");
+      throw new IllegalArgumentException("DICOMweb URL cannot be null");
     }
     this.authMethod = authMethod;
     this.queryHeaders = queryHeaders == null ? Collections.emptyMap() : queryHeaders;

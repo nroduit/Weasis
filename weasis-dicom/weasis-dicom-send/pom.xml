@@ -14,7 +14,7 @@
   <modelVersion>4.0.0</modelVersion>
   <artifactId>weasis-dicom-send</artifactId>
   <packaging>jar</packaging>
-  <name>DICOM - Send (DICOM and DICOMWeb protocols) [${project.artifactId}]</name>
+  <name>DICOM - Send (DICOM and DICOMweb protocols) [${project.artifactId}]</name>
 
   <build>
     <plugins>

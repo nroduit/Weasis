@@ -91,18 +91,13 @@ public class DicomSynchManager extends SynchManager<DicomImageElement> {
     SynchData synch = synchView.getSynchData();
     setupViewPane(viewPane, synch);
 
-    boolean needsRepaint = false;
-
     if (!synchView.isSynch() && !synch.isOriginal()) {
       handleManuallyDisabledSync(viewerPlugin, viewPane, series);
     } else {
-      needsRepaint = handleActiveSync(viewerPlugin, viewPane, series, synch);
+      handleActiveSync(viewerPlugin, viewPane, series, synch);
     }
 
     viewPane.updateSynchState();
-    if (needsRepaint && viewPane instanceof View2d view) {
-      view.repaint();
-    }
   }
 
   private void setupViewPane(ViewCanvas<DicomImageElement> viewPane, SynchData synch) {
@@ -156,18 +151,16 @@ public class DicomSynchManager extends SynchManager<DicomImageElement> {
         && !ImageOrientation.hasSameOrientation(series, paneSeries);
   }
 
-  private boolean handleActiveSync(
+  private void handleActiveSync(
       ImageViewerPlugin<DicomImageElement> viewerPlugin,
       ViewCanvas<DicomImageElement> viewPane,
       MediaSeries<DicomImageElement> series,
       SynchData synch) {
     if (Mode.TILE.equals(synch.getMode())) {
       handleTileMode(viewerPlugin, viewPane, series, synch);
-      return false;
     } else if (Mode.STACK.equals(synch.getMode())) {
-      return handleStackMode(viewerPlugin, viewPane, series, synch);
+      handleStackMode(viewerPlugin, viewPane, series, synch);
     }
-    return false;
   }
 
   private void handleTileMode(
@@ -228,7 +221,7 @@ public class DicomSynchManager extends SynchManager<DicomImageElement> {
     }
   }
 
-  private boolean handleStackMode(
+  private void handleStackMode(
       ImageViewerPlugin<DicomImageElement> viewerPlugin,
       ViewCanvas<DicomImageElement> viewPane,
       MediaSeries<DicomImageElement> series,
@@ -253,7 +246,6 @@ public class DicomSynchManager extends SynchManager<DicomImageElement> {
           .getAction(ActionW.SCROLL_SERIES)
           .ifPresent(a -> a.stateChanged(a.getSliderModel()));
     }
-    return false;
   }
 
   private void handleMultipleViewsInStack(

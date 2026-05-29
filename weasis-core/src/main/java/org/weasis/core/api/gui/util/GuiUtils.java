@@ -36,13 +36,19 @@ import java.awt.Window;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
+import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.text.NumberFormat;
 import java.text.ParseException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
 import javax.swing.AbstractAction;
 import javax.swing.AbstractButton;
@@ -662,12 +668,7 @@ public class GuiUtils {
   public static void openInDefaultBrowser(Component parent, URI uri) {
     if (uri != null) {
       if (SystemInfo.isLinux) {
-        try {
-          String[] cmd = new String[] {"xdg-open", uri.toString()}; // NON-NLS
-          Runtime.getRuntime().exec(cmd);
-        } catch (IOException e) {
-          LOGGER.error("Cannot open URL to the system browser", e);
-        }
+        openInLinuxBrowser(parent, uri);
       } else if (Desktop.isDesktopSupported()) {
         final Desktop desktop = Desktop.getDesktop();
         if (desktop.isSupported(Desktop.Action.BROWSE)) {
@@ -690,14 +691,14 @@ public class GuiUtils {
   public static void openSystemExplorer(Component parent, Path path) {
     if (path != null) {
       if (SystemInfo.isLinux) {
-        openCommand("xdg-open", path); // NON-NLS
+        openCommand(parent, "xdg-open", path.toString()); // NON-NLS
       } else if (Desktop.isDesktopSupported()
           && Desktop.getDesktop().isSupported(Desktop.Action.BROWSE_FILE_DIR)) {
         Desktop.getDesktop().browseFileDirectory(path.toFile());
       } else if (SystemInfo.isWindows) {
-        openCommand("explorer", path); // NON-NLS
+        openCommand(parent, "explorer", path.toString()); // NON-NLS
       } else if (SystemInfo.isMacOS) {
-        openCommand("/usr/bin/open", path); // NON-NLS
+        openCommand(parent, "/usr/bin/open", path.toString()); // NON-NLS
       } else {
         JOptionPane.showMessageDialog(
             WinUtil.getValidComponent(parent),
@@ -708,13 +709,187 @@ public class GuiUtils {
     }
   }
 
-  private static void openCommand(String cmd, Path path) {
-    try {
-      String[] command = new String[] {cmd, path.toString()}; // NON-NLS
-      Runtime.getRuntime().exec(command);
-    } catch (IOException e) {
-      LOGGER.error("Cannot open a file to the system explorer", e);
+  /** Browser executables tried, in order, when no user preference can be resolved. */
+  private static final List<String> LINUX_BROWSER_FALLBACKS =
+      List.of(
+          "x-www-browser", // Debian/Ubuntu alternatives symlink to the system browser
+          "google-chrome",
+          "google-chrome-stable",
+          "brave-browser",
+          "brave-browser-stable",
+          "vivaldi",
+          "vivaldi-stable",
+          "microsoft-edge",
+          "microsoft-edge-stable",
+          "opera",
+          "chromium",
+          "chromium-browser",
+          "firefox"); // last: on Ubuntu this is a snap and cannot read host /tmp // NON-NLS
+
+  /**
+   * Opens a URI in a web browser on Linux.
+   *
+   * <p>{@code xdg-open} resolves a {@code file://} URI by the file's MIME type, so a local HTML
+   * page is handed to whatever application is registered for {@code text/html} — which is not
+   * necessarily a browser, and may be a sandboxed app unable to read the file. For {@code file://}
+   * URIs a web browser is therefore launched directly. Other schemes keep going through {@code
+   * xdg-open}, which dispatches them to the user's default browser.
+   */
+  private static void openInLinuxBrowser(Component parent, URI uri) {
+    if ("file".equalsIgnoreCase(uri.getScheme())) { // NON-NLS
+      String browser = findLinuxBrowserCommand();
+      openCommand(parent, browser == null ? "xdg-open" : browser, uri.toString()); // NON-NLS
+    } else {
+      openCommand(parent, "xdg-open", uri.toString()); // NON-NLS
     }
+  }
+
+  /**
+   * Resolves a web browser executable on Linux, preferring the {@code $BROWSER} environment
+   * variable, then the user's configured default web browser, then a list of well-known browsers.
+   *
+   * @return a browser command (name or path), or {@code null} if none could be found
+   */
+  private static String findLinuxBrowserCommand() {
+    List<String> candidates = new ArrayList<>();
+    String browserEnv = System.getenv("BROWSER");
+    if (StringUtil.hasText(browserEnv)) {
+      for (String entry : browserEnv.split(File.pathSeparator)) {
+        String exe = entry.trim().split("\\s+")[0]; // drop any %s placeholder
+        if (!exe.isEmpty()) {
+          candidates.add(exe);
+        }
+      }
+    }
+    String defaultBrowser = resolveLinuxDefaultBrowser();
+    if (defaultBrowser != null) {
+      candidates.add(defaultBrowser);
+    }
+    candidates.addAll(LINUX_BROWSER_FALLBACKS);
+    return candidates.stream().filter(GuiUtils::isExecutableOnPath).findFirst().orElse(null);
+  }
+
+  /** Returns the executable of the user's default web browser, via {@code xdg-settings}. */
+  private static String resolveLinuxDefaultBrowser() {
+    try {
+      Process process =
+          new ProcessBuilder("xdg-settings", "get", "default-web-browser") // NON-NLS
+              .redirectError(ProcessBuilder.Redirect.DISCARD)
+              .start();
+      process.getOutputStream().close();
+      if (process.waitFor(5, TimeUnit.SECONDS) && process.exitValue() == 0) {
+        String desktopEntry =
+            new String(process.getInputStream().readAllBytes(), StandardCharsets.UTF_8).strip();
+        if (StringUtil.hasText(desktopEntry)) {
+          return execFromDesktopEntry(desktopEntry);
+        }
+      }
+    } catch (IOException e) {
+      LOGGER.debug("Cannot query the default web browser", e);
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+    }
+    return null;
+  }
+
+  /**
+   * Extracts the executable from the {@code Exec=} line of a freedesktop {@code .desktop} entry.
+   */
+  private static String execFromDesktopEntry(String desktopEntry) {
+    String fileName = desktopEntry.endsWith(".desktop") ? desktopEntry : desktopEntry + ".desktop";
+    for (Path dir : linuxApplicationDirs()) {
+      Path desktopFile = dir.resolve(fileName);
+      if (Files.isReadable(desktopFile)) {
+        try {
+          for (String line : Files.readAllLines(desktopFile, StandardCharsets.UTF_8)) {
+            if (line.startsWith("Exec=")) { // NON-NLS
+              String exec = line.substring(5).trim();
+              return exec.isEmpty() ? null : exec.split("\\s+")[0]; // drop %U/%f field codes
+            }
+          }
+        } catch (IOException e) {
+          LOGGER.debug("Cannot read desktop entry {}", desktopFile, e);
+        }
+      }
+    }
+    return null;
+  }
+
+  /** Standard freedesktop directories holding {@code .desktop} application entries. */
+  private static List<Path> linuxApplicationDirs() {
+    List<Path> dirs = new ArrayList<>();
+    String dataHome = System.getenv("XDG_DATA_HOME");
+    if (StringUtil.hasText(dataHome)) {
+      dirs.add(Path.of(dataHome, "applications"));
+    } else {
+      dirs.add(Path.of(System.getProperty("user.home"), ".local", "share", "applications"));
+    }
+    String dataDirs = System.getenv("XDG_DATA_DIRS");
+    if (!StringUtil.hasText(dataDirs)) {
+      dataDirs = "/usr/local/share:/usr/share"; // NON-NLS
+    }
+    for (String dir : dataDirs.split(File.pathSeparator)) {
+      if (!dir.isEmpty()) {
+        dirs.add(Path.of(dir, "applications"));
+      }
+    }
+    dirs.add(Path.of("/var/lib/snapd/desktop/applications")); // NON-NLS
+    return dirs;
+  }
+
+  /** Tests whether the given command resolves to an executable file (absolute path or on PATH). */
+  private static boolean isExecutableOnPath(String command) {
+    if (command.indexOf(File.separatorChar) >= 0) {
+      return Files.isExecutable(Path.of(command));
+    }
+    String path = System.getenv("PATH");
+    if (!StringUtil.hasText(path)) {
+      return false;
+    }
+    for (String dir : path.split(File.pathSeparator)) {
+      if (!dir.isEmpty() && Files.isExecutable(Path.of(dir, command))) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /**
+   * Launches an external command (a launcher such as {@code xdg-open}, {@code explorer} or {@code
+   * open}, or a browser executable) to open the given target.
+   *
+   * <p>Launchers delegate to the target application and return promptly, as does a browser when an
+   * instance is already running; a freshly started browser instead stays in the foreground. The
+   * method therefore waits only briefly: a non-zero exit within that window is reported as a
+   * failure, while a process still running afterwards is assumed to have opened the target and is
+   * left running (destroying it would close the browser it just opened).
+   */
+  private static void openCommand(Component parent, String cmd, String target) {
+    try {
+      Process process =
+          new ProcessBuilder(cmd, target)
+              .redirectOutput(ProcessBuilder.Redirect.DISCARD)
+              .redirectError(ProcessBuilder.Redirect.DISCARD)
+              .start();
+      process.getOutputStream().close();
+      if (process.waitFor(5, TimeUnit.SECONDS) && process.exitValue() != 0) {
+        LOGGER.error("'{}' failed (exit {}) for {}", cmd, process.exitValue(), target);
+        showOpenCommandError(parent, target);
+      }
+    } catch (IOException e) {
+      LOGGER.error("Cannot run '{}' for {}", cmd, target, e);
+      showOpenCommandError(parent, target);
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+    }
+  }
+
+  private static void showOpenCommandError(Component parent, String target) {
+    JOptionPane.showMessageDialog(
+        WinUtil.getValidComponent(parent),
+        Messages.getString("JMVUtils.browser") + StringUtil.COLON_AND_SPACE + target,
+        Messages.getString("JMVUtils.error"),
+        JOptionPane.ERROR_MESSAGE);
   }
 
   public static HyperlinkListener buildHyperlinkListener() {

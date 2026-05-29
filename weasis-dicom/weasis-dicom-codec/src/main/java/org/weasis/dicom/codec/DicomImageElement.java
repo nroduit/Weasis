@@ -310,6 +310,45 @@ public class DicomImageElement extends ImageElement implements DicomElement {
     return ImageRendering.getModalityLutImage(image, adapter, params);
   }
 
+  /**
+   * Builds the modality-LUT image without routing the decoded pixel data through the shared image
+   * cache.
+   *
+   * <p>Intended for batch consumers such as MPR volume building that read each frame exactly once.
+   * Going through the shared cache there yields no cache-hit benefit, evicts genuinely useful
+   * interactive images, and — because cache eviction releases the native {@code Mat} — races with
+   * sibling threads still reading the frame (producing {@code "Source image cannot be empty"}
+   * errors and black slices).
+   *
+   * <p>The returned image is owned by the caller and MUST be released when no longer needed.
+   *
+   * @param params optional rendering parameters
+   * @return the modality-LUT image owned by the caller, or {@code null} if the frame is unreadable
+   */
+  public synchronized PlanarImage getUncachedModalityLutImage(DicomImageReadParam params) {
+    PlanarImage raw;
+    try {
+      raw = loadImage();
+    } catch (Exception e) {
+      LOGGER.error("Cannot read image: {}", this, e);
+      return null;
+    }
+    if (raw == null || raw.width() <= 0) {
+      return null;
+    }
+    // Initialize the adapter and min/max from the privately held image: it never enters the
+    // shared cache, so no other thread can release its native buffer underneath us.
+    findMinMaxValues(raw, true);
+    if (adapter == null) {
+      return raw;
+    }
+    PlanarImage modImage = ImageRendering.getModalityLutImage(raw, adapter, params);
+    if (modImage != raw) {
+      raw.release();
+    }
+    return modImage;
+  }
+
   public LutParameters getModalityLutParameters(
       boolean pixelPadding, LookupTableCV mLUTSeq, boolean inversePaddingMLUT, PrDicomObject pr) {
     if (isImageInitialized()) {
@@ -394,7 +433,7 @@ public class DicomImageElement extends ImageElement implements DicomElement {
      * This function can be called several times from the inner class Load. min and max will be computed only once.
      */
 
-    if (img != null && !isImageAvailable()) {
+    if (img != null && !isImageAvailable() && img.width() > 0) {
       DicomMetaData meta = getMediaReader().getDicomMetaData();
       if (meta != null) {
         int frameIndex = 0;

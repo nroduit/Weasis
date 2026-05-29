@@ -49,6 +49,8 @@ public class AuthMethodDialog extends JDialog {
   private final JTextField clientSecret = new JTextField(50);
   private final JTextField scope = new JTextField(50);
   private final JTextField audience = new JTextField(50);
+  private final JComboBox<String> grantType =
+      new JComboBox<>(new String[] {AuthRegistration.CODE, AuthRegistration.CLIENT_CREDENTIALS});
 
   public AuthMethodDialog(
       Window parent, String title, AuthMethod authMethod, JComboBox<AuthMethod> parentCombobox) {
@@ -182,6 +184,8 @@ public class AuthMethodDialog extends JDialog {
         BorderFactory.createCompoundBorder(
             spaceY, GuiUtils.getTitledBorder("Registration"))); // NON-NLS
 
+    panel.add(new JLabel("Grant Type" + StringUtil.COLON), GuiUtils.NEWLINE); // NON-NLS
+    panel.add(grantType, "");
     panel.add(new JLabel("Client ID" + StringUtil.COLON), GuiUtils.NEWLINE); // NON-NLS
     panel.add(clientID, "");
     panel.add(new JLabel("Client Secret" + StringUtil.COLON), GuiUtils.NEWLINE); // NON-NLS
@@ -207,6 +211,7 @@ public class AuthMethodDialog extends JDialog {
       clientSecret.setText(reg.clientSecret());
       scope.setText(reg.scope());
       audience.setText(reg.audience());
+      grantType.setSelectedItem(reg.getAuthorizationGrantType());
     }
   }
 
@@ -259,6 +264,9 @@ public class AuthMethodDialog extends JDialog {
 
     comboBoxAuth.repaint();
 
+    // Persist so the new/edited method is still available the next time any dialog reopens.
+    AuthenticationPersistence.addOrUpdateMethod(updatedAuth);
+
     dispose();
   }
 
@@ -269,8 +277,8 @@ public class AuthMethodDialog extends JDialog {
             clientSecret.getText(),
             scope.getText(),
             audience.getText(),
-            authMethod.getAuthRegistration().user() // preserve existing user
-            );
+            authMethod.getAuthRegistration().user(), // preserve existing user
+            (String) grantType.getSelectedItem());
 
     // Since AuthMethod implementations might be immutable too, we need to handle this properly
     DefaultAuthMethod updatedAuth =

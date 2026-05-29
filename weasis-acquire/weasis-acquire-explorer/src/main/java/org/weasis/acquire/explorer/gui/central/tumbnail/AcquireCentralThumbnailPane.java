@@ -13,6 +13,7 @@ import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.UnsupportedFlavorException;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
@@ -30,6 +31,7 @@ import org.weasis.acquire.explorer.gui.central.SeriesButton;
 import org.weasis.base.explorer.JIThumbnailCache;
 import org.weasis.base.explorer.list.AThumbnailListPane;
 import org.weasis.base.explorer.list.IThumbnailModel;
+import org.weasis.core.api.gui.util.WinUtil;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaReader;
 import org.weasis.core.api.media.data.Series;
@@ -133,10 +135,19 @@ public class AcquireCentralThumbnailPane<E extends MediaElement> extends AThumbn
 
       SeriesGroup selectedGroup = getSelectedSeriesGroup();
       SeriesGroup targetGroup = null;
+      List<String> nonCompliantVideos = new ArrayList<>();
+      List<String> oversizedVideos = new ArrayList<>();
 
       for (MediaElement media : medias) {
+        if (AcquireManager.isVideoOverSizeLimit(media)) {
+          oversizedVideos.add(media.getName());
+          continue;
+        }
         Type type = Type.fromMimeType(media);
         if (type == null) {
+          if (Type.isVideo(media)) {
+            nonCompliantVideos.add(media.getName());
+          }
           continue;
         }
         AcquireMediaInfo info = AcquireManager.findByMedia(media);
@@ -149,6 +160,10 @@ public class AcquireCentralThumbnailPane<E extends MediaElement> extends AThumbn
       if (targetGroup != null) {
         AcquireManager.getInstance().notifySeriesSelection(targetGroup);
       }
+      AcquireManager.warnRejectedVideos(
+          WinUtil.getParentWindow(AcquireCentralThumbnailPane.this),
+          nonCompliantVideos,
+          oversizedVideos);
     }
 
     private SeriesGroup getSelectedSeriesGroup() {

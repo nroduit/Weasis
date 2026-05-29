@@ -126,9 +126,9 @@ public class DicomModel implements TreeModel, DataExplorerModel, CommandExtensio
 
   private static final String RS_USAGE =
       """
-        Load DICOM files from DICOMWeb API (QIDO/WADO-RS)
+        Load DICOM files from DICOMweb API (QIDO/WADO-RS)
         Usage: dicom:rs -u URL -r QUERYPARAMS... [-H HEADER]... [--query-header HEADER]... [--retrieve-header HEADER]... [--query-ext EXT] [--retrieve-ext EXT] [--accept-ext EXT]
-          -u --url=URL               URL of the DICOMWeb service
+          -u --url=URL               URL of the DICOMweb service
           -r --request=QUERYPARAMS   Query params of the URL, see weasis-pacs-connector
           -H --header=HEADER         Pass custom header(s) to all the requests
           --query-header=HEADER      Pass custom header(s) to the query requests (QIDO)

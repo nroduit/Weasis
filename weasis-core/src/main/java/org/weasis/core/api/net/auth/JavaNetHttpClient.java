@@ -32,7 +32,9 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.stream.Collectors;
@@ -50,6 +52,7 @@ public class JavaNetHttpClient implements com.github.scribejava.core.httpclient.
   private static final String BOUNDARY_PREFIX = "--";
   private static final String HEADER_USER_AGENT = "User-Agent";
   private static final String HEADER_CONTENT_TYPE = "Content-Type";
+  private static final String DEFAULT_FORM_CONTENT_TYPE = "application/x-www-form-urlencoded";
   private static final String MULTIPART_CT_PREFIX = "multipart/form-data; boundary=";
 
   private final HttpClient sharedClient;
@@ -187,11 +190,24 @@ public class JavaNetHttpClient implements com.github.scribejava.core.httpclient.
         .thenApply(httpResponse -> processAsyncResponse(httpResponse, callback, converter))
         .exceptionally(
             throwable -> {
+              var cause = unwrap(throwable);
+              LOGGER.warn("Async HTTP request to {} failed", completeUrl, cause);
               if (callback != null) {
-                callback.onThrowable(throwable);
+                callback.onThrowable(cause);
               }
-              return null;
+              // Propagate the failure so Future.get() throws ExecutionException(cause) instead of
+              // silently returning null and hiding the underlying error.
+              throw cause instanceof RuntimeException re ? re : new CompletionException(cause);
             });
+  }
+
+  private static Throwable unwrap(Throwable t) {
+    Throwable current = t;
+    while ((current instanceof CompletionException || current instanceof UncheckedIOException)
+        && current.getCause() != null) {
+      current = current.getCause();
+    }
+    return current;
   }
 
   private Response doExecute(
@@ -236,11 +252,10 @@ public class JavaNetHttpClient implements com.github.scribejava.core.httpclient.
       }
       return result;
     } catch (IOException e) {
-      LOGGER.warn("Failed to process async HTTP response", e);
-      if (callback != null) {
-        callback.onThrowable(e);
-      }
-      return null;
+      LOGGER.warn(
+          "Failed to process async HTTP response (status={})", httpResponse.statusCode(), e);
+      // Surface the failure via the future so callers see the real cause instead of a null result.
+      throw new UncheckedIOException(e);
     }
   }
 
@@ -255,11 +270,28 @@ public class JavaNetHttpClient implements com.github.scribejava.core.httpclient.
     if (StringUtil.hasText(userAgent)) {
       requestBuilder.setHeader(HEADER_USER_AGENT, userAgent);
     }
+    boolean callerSetContentType = false;
     if (headers != null) {
-      headers.forEach(requestBuilder::setHeader);
+      for (var entry : headers.entrySet()) {
+        requestBuilder.setHeader(entry.getKey(), entry.getValue());
+        if (HEADER_CONTENT_TYPE.equalsIgnoreCase(entry.getKey())) {
+          callerSetContentType = true;
+        }
+      }
+    }
+    // Match scribejava's JDKHttpClient: default to form-urlencoded for body-bearing verbs.
+    // Without this, providers like Google reject the token request with "Invalid JSON payload".
+    if (!callerSetContentType && httpVerb.isPermitBody() && needsFormContentType(bodyContents)) {
+      requestBuilder.setHeader(HEADER_CONTENT_TYPE, DEFAULT_FORM_CONTENT_TYPE);
     }
     setBody(requestBuilder, bodyContents, httpVerb);
     return requestBuilder;
+  }
+
+  private static boolean needsFormContentType(Object bodyContents) {
+    // MultipartPayload sets its own Content-Type in MultipartEncoder; files/paths shouldn't be
+    // declared as form-urlencoded.
+    return bodyContents instanceof byte[] || bodyContents instanceof String || bodyContents == null;
   }
 
   public static Map<String, String> parseHeaders(HttpResponse<?> response) {
@@ -268,7 +300,8 @@ public class JavaNetHttpClient implements com.github.scribejava.core.httpclient.
             Collectors.toMap(
                 Map.Entry::getKey,
                 e -> String.join(", ", e.getValue()),
-                (existing, replacement) -> existing));
+                (existing, replacement) -> existing,
+                () -> new TreeMap<>(String.CASE_INSENSITIVE_ORDER)));
   }
 
   private static void setBody(

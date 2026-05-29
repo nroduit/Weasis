@@ -12,10 +12,12 @@ package org.weasis.dicom.viewer3d.geometry;
 import java.awt.event.InputEvent;
 import java.awt.event.MouseEvent;
 import java.util.Objects;
+import org.joml.Quaterniond;
 import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.MouseActionAdapter;
 import org.weasis.core.api.gui.util.SliderChangeListener;
+import org.weasis.dicom.viewer3d.EventManager;
 import org.weasis.dicom.viewer3d.vr.View3d;
 
 public abstract class ArcballMouseListener extends SliderChangeListener implements ActionState {
@@ -56,6 +58,8 @@ public abstract class ArcballMouseListener extends SliderChangeListener implemen
             }
           } else {
             view3d.getCamera().rotate(e.getPoint());
+            EventManager.getInstance()
+                .fireRotationSync(view3d, new Quaterniond(view3d.getCamera().getRotation()), true);
           }
         }
       }
@@ -112,6 +116,12 @@ public abstract class ArcballMouseListener extends SliderChangeListener implemen
         view3d.getCamera().setAdjusting(false);
         if ((modifier & mask) == mask) {
           view3d.setCursor(null);
+        } else {
+          // Mirror the drag's end-of-gesture transition to other views so their progressive
+          // (adjusting) renderers can drop back to full quality, matching the slider path which
+          // fires stateChanged with valueIsAdjusting=false on release.
+          EventManager.getInstance()
+              .fireRotationSync(view3d, new Quaterniond(view3d.getCamera().getRotation()), false);
         }
         view3d.getCamera().init(e.getPoint());
       }

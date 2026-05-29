@@ -19,12 +19,6 @@ mvn -pl <module-path> -am test -Dtest=ClassName#methodName
 # Apply the mandatory license header + Google Java Format (1.33.0)
 mvn spotless:apply
 mvn spotless:check          # CI-equivalent verification
-
-# Aggregate JaCoCo report (output: tests/target/site/jacoco-aggregate/)
-mvn -Pcoverage verify
-
-# Override the version at build time
-mvn install -Drevision=4.7.0 -Dchangelist=
 ```
 
 Surefire runs tests with `<parallel>all</parallel>` — tests must not share mutable static state. The `argLine` injects `-Djava.library.path=target/lib/<os>-<arch>` for OpenCV native libs, so tests that need them must run via Maven (not directly from the IDE without the same `java.library.path`).
@@ -83,3 +77,7 @@ weasis-launcher  →  weasis-core  →  weasis-base/*       (generic image viewe
 - **Versions**: never hard-code `4.7.0-SNAPSHOT` in a child POM — always use `${project.parent.version}` or the `${revision}${changelist}` pair. The `flatten-maven-plugin` resolves these into the published POM.
 - **Native libs (OpenCV / JOGL)**: per-OS native packages live in `weasis-opencv-core-*` and `jogamp-*` bundles. The installer workflow strips out non-target-arch payloads in `build-installer.yml`; if you add a new native bundle, follow that pattern or installers will balloon.
 - **Sonar excludes** (in root `pom.xml`): `Messages.java`, `Activator.java`, `module-info.java`, `package-info.java` are coverage-excluded; `archetype/`, `snap/`, `weasis-distributions/` are analysis-excluded.
+- **Javadoc**: keep it minimal. **Private methods**: one-line comment max, or none if the name and signature are self-explanatory. **Public/protected API**: as compact as possible — one short sentence describing intent, `@param` / `@return` / `@throws` only when they add information the signature doesn't already convey. Never restate the method name in prose, never document obvious getters/setters, never leave `TODO`-style placeholders.
+- **Modern Java (25)**: prefer `java.nio.file.Path` + `java.nio.file.Files` over `java.io.File` and `FileInputStream`/`FileOutputStream`. Use records, pattern matching (`switch`, `instanceof`), sealed types, text blocks, `var` for obvious local types, and `List.of` / `Map.of` / `Stream.toList()` over legacy collection idioms. Favor `Optional` returns over nullable returns at API boundaries; do not wrap fields or parameters in `Optional`.
+- **Code quality**: favor readability and maintainability — small focused methods, expressive names, early returns. Remove redundant code (unused imports/locals, dead branches, duplicated logic, defensive null checks for values that cannot be null, comments that duplicate the code). Prefer extracting a private helper over copy-pasting a block.
+- **Tests**: use **JUnit 6** (`org.junit.jupiter.*`) and **Mockito** only. Do **not** add AssertJ (`org.assertj.*`) — use JUnit's built-in `Assertions` (`assertEquals`, `assertThrows`, `assertAll`, …) for assertions. Tests follow the same Spotless / formatting rules as production code.

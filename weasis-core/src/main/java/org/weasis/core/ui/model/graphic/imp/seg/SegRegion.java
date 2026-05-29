@@ -68,6 +68,10 @@ public class SegRegion<E extends ImageElement> extends RegionAttributes
     this.selected = selected;
   }
 
+  public void setNumberOfPixels(long numberOfPixels) {
+    this.numberOfPixels = numberOfPixels;
+  }
+
   @Override
   public SegRegion<E> copy() {
     return new SegRegion<>(this);

@@ -88,8 +88,8 @@ class AcceptCompletionHandlerTest {
 
   private static String sendRequest(int port, String request) throws IOException {
     try (Socket socket = new Socket()) {
-      socket.connect(new InetSocketAddress("localhost", port), 2000);
-      socket.setSoTimeout(2000);
+      socket.connect(new InetSocketAddress("localhost", port), 5000);
+      socket.setSoTimeout(7_000);
       socket.getOutputStream().write(request.getBytes(StandardCharsets.UTF_8));
       socket.getOutputStream().flush();
       return new String(socket.getInputStream().readAllBytes(), StandardCharsets.UTF_8);

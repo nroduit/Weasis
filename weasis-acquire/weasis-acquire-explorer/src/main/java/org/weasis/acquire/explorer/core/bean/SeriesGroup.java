@@ -39,8 +39,8 @@ public class SeriesGroup extends DefaultTaggable implements Comparable<SeriesGro
     IMAGE_DATE("Date", "XC"), // NON-NLS
     IMAGE_NAME("Name", "XC"), // NON-NLS
     //    AUDIO("Audio", "AU"),
-    VIDEO_MP2(Messages.getString("video.mpeg4"), "XC"),
-    VIDEO_MP4(Messages.getString("video.mpeg2"), "XC"),
+    VIDEO_MP2(Messages.getString("video.mpeg2"), "XC"),
+    VIDEO_MP4(Messages.getString("video.mpeg4"), "XC"),
     PDF(Messages.getString("pdf.document"), "DOC"),
     STL(Messages.getString("stl.3d.model"), "M3D");
 
@@ -90,6 +90,17 @@ public class SeriesGroup extends DefaultTaggable implements Comparable<SeriesGro
         }
       }
       return null;
+    }
+
+    /**
+     * Returns {@code true} when the media is a video file according to its MIME type, regardless of
+     * whether its codec profile is compliant with the DICOM standard. When {@link #fromMimeType}
+     * returns {@code null} for such a media, the video uses a profile that is not DICOM compliant
+     * and must be converted before it can be imported.
+     */
+    public static boolean isVideo(MediaElement media) {
+      String mime = media == null ? null : media.getMimeType();
+      return mime != null && mime.toLowerCase().startsWith("video/"); // NON-NLS
     }
 
     private static Type videoType(MediaElement media) {

@@ -326,7 +326,6 @@ public class PRManager {
             TagD.getTagValue(context.reader(), Tag.PresentationPixelAspectRatio, int[].class);
         if (aspects != null && aspects.length == 2) {
           applyAspectRatio(context.img(), actionsInView, new double[] {aspects[0], aspects[1]});
-          context.img().setPixelSizeCalibrationDescription("From DICOM PR");
         }
       }
     }
