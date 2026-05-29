@@ -44,8 +44,6 @@ import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.media.data.Thumbnail;
-import org.weasis.core.api.net.AuthResponse;
-import org.weasis.core.api.net.ClosableURLConnection;
 import org.weasis.core.api.net.HttpStream;
 import org.weasis.core.api.net.HttpUtils;
 import org.weasis.core.api.net.URIUtils;
@@ -480,11 +478,7 @@ public class SeriesDownloadManager {
     }
 
     private int downloadWadoRS(HttpStream response, Path targetFile) throws IOException {
-      String contentType =
-          response instanceof ClosableURLConnection(java.net.URLConnection urlConnection)
-              ? urlConnection.getContentType()
-              : ((AuthResponse) response).response().getHeader("Content-Type");
-
+      String contentType = response.getHeaderField("Content-Type");
       byte[] boundary =
           BoundaryExtractor.extractBoundary(contentType, MultipartConstants.MULTIPART_RELATED);
       if (boundary == null) {
@@ -492,15 +486,10 @@ public class SeriesDownloadManager {
       }
 
       try (MultipartReader reader = new MultipartReader(response.getInputStream(), boundary)) {
-
-        if (!reader.skipFirstBoundary()) {
-          throw new MultipartStreamException("Failed to skip first boundary");
-        }
-
+        reader.skipFirstBoundary();
         int totalBytes;
         do {
           reader.readHeaders();
-
           try (var partStream = reader.newPartInputStream()) {
             totalBytes =
                 FileUtil.writeStream(

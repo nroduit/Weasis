@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Objects;
 import javax.swing.JPopupMenu;
 import org.dcm4che3.data.Tag;
+import org.joml.Vector3d;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.ObservableEvent;
@@ -45,9 +46,12 @@ import org.weasis.core.ui.editor.ViewerPlacement;
 import org.weasis.core.ui.editor.ViewerPluginBuilder;
 import org.weasis.core.ui.editor.image.ImageViewerEventManager;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
+import org.weasis.core.ui.editor.image.SynchCineEvent;
 import org.weasis.core.ui.editor.image.ViewButton;
 import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.editor.image.ViewSynchData;
+import org.weasis.core.ui.model.utils.bean.PanPoint;
+import org.weasis.core.ui.model.utils.bean.PanPoint.State;
 import org.weasis.core.util.FileUtil;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.DicomSeries;
@@ -113,6 +117,7 @@ public class MipView extends View2d {
   private volatile Integer lastBuiltExtend;
   private volatile boolean pendingCrosslineUpdate = false;
   private volatile boolean pendingSeriesChange = false;
+  private volatile boolean crosshairRebuildPending = false;
 
   public MipView(ImageViewerEventManager<DicomImageElement> eventManager) {
     super(eventManager);
@@ -146,6 +151,8 @@ public class MipView extends View2d {
   @Override
   public void setSeries(MediaSeries<DicomImageElement> newSeries, DicomImageElement selectedMedia) {
     pendingSeriesChange = true;
+    // A new series invalidates any crosshair captured from the previous one.
+    lastCrosshairPosition = null;
     super.setSeries(newSeries, selectedMedia);
   }
 
@@ -395,7 +402,44 @@ public class MipView extends View2d {
     } else {
       cleanupOldImageAsync(oldImage);
     }
+    restoreCrosshair();
     updateCrosslines();
+  }
+
+  private void restoreCrosshair() {
+    if (!crosshairRebuildPending) {
+      return;
+    }
+    crosshairRebuildPending = false;
+    Vector3d p3 = lastCrosshairPosition;
+    if (p3 == null || getImage() == null) {
+      return;
+    }
+    ViewSynchData synchData = (ViewSynchData) getActionValue(ActionW.SYNCH_LINK.cmd());
+    if (synchData != null && synchData.isAutoSynchActivated()) {
+      // super: redrawing here is the restore itself, not a new cursor move, so it must not
+      // re-arm crosshairRebuildPending.
+      super.computeCrosshair(p3, new PanPoint(State.MOVE));
+      repaint();
+    }
+  }
+
+  @Override
+  public void computeCrosshair(Vector3d p3, PanPoint panPoint) {
+    super.computeCrosshair(p3, panPoint);
+    // A 3D-cursor move on a MIP view schedules an async slab rebuild that will discard these
+    // graphics; flag it so the rebuild's setMip() redraws the crosshair.
+    if (p3 != null && panPoint != null && panPoint.getState() != State.DRAGEND) {
+      crosshairRebuildPending = true;
+    }
+  }
+
+  @Override
+  public void propertyChange(SynchCineEvent synch) {
+    // A scroll/cine sync is not a 3D-cursor move: drop any pending crosshair restore so the
+    // rebuild it triggers leaves the crosshair off.
+    crosshairRebuildPending = false;
+    super.propertyChange(synch);
   }
 
   void activateCrosslinesUpdate() {

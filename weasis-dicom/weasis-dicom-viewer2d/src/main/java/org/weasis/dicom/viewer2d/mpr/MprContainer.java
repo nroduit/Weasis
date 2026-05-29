@@ -37,10 +37,12 @@ import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.gui.util.GuiUtils;
+import org.weasis.core.api.image.cv.CvUtil;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.service.BundlePreferences;
+import org.weasis.core.api.util.ResourceMonitor;
 import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.api.util.ResourceUtil.ActionIcon;
 import org.weasis.core.api.util.ResourceUtil.OtherIcon;
@@ -561,6 +563,20 @@ public class MprContainer extends DicomViewerPlugin
                                 c.setSelectedItem(c.getFirstItem());
                               });
                     });
+              } catch (final OutOfMemoryError e) {
+                // OutOfMemoryError is an Error, not an Exception: caught explicitly so an
+                // out-of-memory MPR build fails gracefully instead of killing the build thread
+                // and leaving the views stuck. Releasing the half-built volume lets the heap
+                // recover before the message dialog is shown.
+                ResourceMonitor.getInstance().recordOutOfMemory();
+                LOGGER.error("Out of memory while building MPR views", e);
+                GuiExecutor.execute(
+                    () ->
+                        showErrorMessage(
+                            cellManager.getAllViewCanvases(),
+                            view,
+                            Messages.getString("MPRContainer.out_of_memory")));
+                CvUtil.runGarbageCollectorAndWait(50);
               } catch (final Exception e) {
                 LOGGER.error("Build MPR", e);
                 // Following actions need to be executed in EDT thread

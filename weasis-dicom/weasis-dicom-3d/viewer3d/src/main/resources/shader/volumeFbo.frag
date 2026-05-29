@@ -22,10 +22,6 @@ uniform sampler2D segColorMap;  // unit 5 — set from Java
 
 #include "voxelUniforms330.glsl"
 
-// Framebuffer dimensions (logical pixels) — set from Java each frame.
-// Needed by computeCrosshairColor() since imageSize() is not available in fragment shaders.
-uniform ivec2 viewportSize;
-
 #include "voxelFunctions.glsl"
 
 #include "vrFunctions.glsl"
@@ -57,8 +53,16 @@ void main() {
     fragColor = pixelVal;
 
     // ---- MPR crosshair overlay ----
+    // Derive the viewport pixel resolution from screen-space derivatives of quadCoordinates
+    // (which spans [-1, 1] across the framebuffer). 2 / |dFdx(quadCoordinates.x)| is the actual
+    // number of fragments along X regardless of any DPI scaling the GL driver may apply between
+    // the FBO's logical size and gl_FragCoord's coordinate system. Notably on macOS Retina, JOGL
+    // appears to report gl_FragCoord in physical pixels even though the FBO is sized at logical
+    // resolution, so a uniform set to the FBO's logical dimensions misaligned the crosshair.
+    vec2 invStep = abs(vec2(dFdx(quadCoordinates.x), dFdy(quadCoordinates.y)));
+    ivec2 viewportDims = ivec2(round(2.0 / max(invStep, vec2(1e-6))));
     ivec2 pixelCoords = ivec2(gl_FragCoord.xy);
-    vec4 crosshairColor = computeCrosshairColor(pixelCoords, viewportSize);
+    vec4 crosshairColor = computeCrosshairColor(pixelCoords, viewportDims);
     if (crosshairColor.a >= 0.0) {
         fragColor = crosshairColor;
     }

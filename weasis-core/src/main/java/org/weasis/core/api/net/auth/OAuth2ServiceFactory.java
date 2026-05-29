@@ -65,7 +65,7 @@ public final class OAuth2ServiceFactory {
 
   private static DefaultAuthMethod createNoAuthMethod() {
     return new DefaultAuthMethod(
-        NO_AUTH_ID,
+        NO_AUTH_ID, // NOSONAR !secret
         new AuthProvider(Messages.getString("no.authentication"), null, null, null, false),
         AuthRegistration.empty()) {
       @Override
@@ -109,16 +109,22 @@ public final class OAuth2ServiceFactory {
           "Cannot build OAuth service for '{}': missing registration/provider", authMethod);
       return null;
     }
-    int actualPort = port <= 0 ? SocketUtil.findAvailablePort() : port;
 
-    return new ServiceBuilder(registration.clientId())
-        .apiSecret(registration.clientSecret())
-        .httpClient(new JavaNetHttpClient())
-        .defaultScope(registration.scope())
-        .callback(CALLBACK_URL + actualPort)
-        .responseType(registration.getAuthorizationGrantType())
-        .userAgent(System.getProperty("http.agent"))
-        .build(new OAuth2Api(provider));
+    var builder =
+        new ServiceBuilder(registration.clientId())
+            .apiSecret(registration.clientSecret())
+            .httpClient(new JavaNetHttpClient())
+            .defaultScope(registration.scope())
+            .userAgent(System.getProperty("http.agent"));
+
+    if (!registration.isClientCredentialsGrant()) {
+      // Authorization-code grant needs a loopback redirect URI for the browser callback.
+      int actualPort = port <= 0 ? SocketUtil.findAvailablePort() : port;
+      builder
+          .callback(CALLBACK_URL + actualPort)
+          .responseType(registration.getAuthorizationGrantType());
+    }
+    return builder.build(new OAuth2Api(provider));
   }
 
   /** OAuth2 API implementation for custom providers. */

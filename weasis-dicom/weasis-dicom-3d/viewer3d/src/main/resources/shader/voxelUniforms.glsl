@@ -76,5 +76,7 @@ uniform int   crosshairCutMode;
 
 // Segmentation overlay
 uniform bool segOverlayEnabled = false;
+// When true, only the segmentation is rendered; the anatomy volume raymarch is skipped.
+uniform bool segOnly = false;
 uniform int  segSegmentCount = 0;
 

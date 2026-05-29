@@ -11,8 +11,8 @@ package org.weasis.core.api.net.auth;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -322,8 +322,9 @@ class JavaNetHttpClientTest {
             (byte[]) null,
             callback,
             Response::getBody);
-    // The future itself completes with null (exceptionally handler swallows)
-    assertNull(future.get());
+    // The future propagates the underlying failure so callers see the real cause.
+    var ex = assertThrows(ExecutionException.class, future::get);
+    assertNotNull(ex.getCause());
     assertNotNull(failure.get());
     failingClient.close();
   }
@@ -349,7 +350,9 @@ class JavaNetHttpClientTest {
       var future =
           client.executeAsync(
               null, Map.of(), Verb.POST, baseUrl + "/echo", "x", callback, throwing);
-      future.get(); // returns null, swallowed
+      var ex = assertThrows(ExecutionException.class, future::get);
+      assertInstanceOf(IOException.class, ex.getCause());
+      assertEquals("boom", ex.getCause().getMessage());
       assertNotNull(failure.get());
       assertEquals("boom", failure.get().getMessage());
     }

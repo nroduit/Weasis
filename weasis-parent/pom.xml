@@ -14,7 +14,7 @@
   <properties>
     <!-- force command line arguments settings to set version -->
     <!-- $ mvn clean install -Drevision=4.2.2 -Dchangelist=-SNAPSHOT -->
-    <revision>4.7.0</revision>
+    <revision>4.7.1</revision>
     <changelist>-SNAPSHOT</changelist>  <!-- Remove "-SNAPSHOT" for release -->
 
     <java-version>25</java-version>
@@ -27,7 +27,7 @@
     <app.version>${revision}${changelist}</app.version>
     <base.minimal.version>4.7.0</base.minimal.version>
     <i18n.version>4.0.0-SNAPSHOT</i18n.version>
-    <weasis.releasenotes>https://github.com/nroduit/Weasis/blob/master/CHANGELOG.md#v466-2025-12-29</weasis.releasenotes>
+    <weasis.releasenotes>https://github.com/nroduit/Weasis/blob/master/CHANGELOG.md#v470-2026-05-28</weasis.releasenotes>
 
     <felix.framework.version>7.0.5</felix.framework.version>
     <flatlaf.version>3.7.1</flatlaf.version>
@@ -50,7 +50,7 @@
     <slf4j.version>2.0.17</slf4j.version>
     <logback.version>1.5.32</logback.version>
     <dockingframes.version>1.1.7</dockingframes.version>
-    <weasis-dicom-tools.version>5.34.2</weasis-dicom-tools.version>
+    <weasis-dicom-tools.version>5.34.3</weasis-dicom-tools.version>
     <weasis.core.img.version>4.13.0</weasis.core.img.version>
     <weasis.opencv.native.version>4.13.0-dcm</weasis.opencv.native.version>
     <weasis.opencv.pkg.version>4.13.0-dcm</weasis.opencv.pkg.version>
@@ -64,9 +64,8 @@
     <scribejava.version>8.3.3</scribejava.version>
     <zip4j.version>2.11.6</zip4j.version>
 
-    <junit-bom.version>6.1.0-RC1</junit-bom.version>
+    <junit-bom.version>6.1.0</junit-bom.version>
     <mockito.version>5.23.0</mockito.version>
-    <junit-pioneer.version>2.3.0</junit-pioneer.version>
 
     <!--suppress UnresolvedMavenProperty -->
     <argLine>-Djava.library.path=${project.build.directory}/lib/${os-name}-${cpu-name}</argLine>
@@ -188,6 +187,21 @@
           <configuration>
             <argLine>@{argLine} -Xshare:off -XX:+EnableDynamicAgentLoading</argLine>
             <parallel>all</parallel>
+            <!--
+              Shared Logback configuration for the test classpath. Logback is the active
+              SLF4J binding in tests (logback-classic is inherited from the provided
+              scope). The file at weasis-parent/src/test/resources/logback-test.xml
+              routes output to stdout (so Surefire does not render expected-error log
+              lines from negative-path tests in red) and keeps the format compact. A
+              module that needs per-logger silencing can drop its own
+              src/test/resources/logback-test.xml — module classpath entries win.
+            -->
+            <additionalClasspathElements>
+              <additionalClasspathElement>${maven.multiModuleProjectDirectory}/weasis-parent/src/test/resources</additionalClasspathElement>
+            </additionalClasspathElements>
+            <systemPropertyVariables>
+              <java.util.logging.config.file>${maven.multiModuleProjectDirectory}/weasis-parent/src/test/resources/logging.properties</java.util.logging.config.file>
+            </systemPropertyVariables>
           </configuration>
         </plugin>
          <plugin>
@@ -664,20 +678,21 @@
       <scope>test</scope>
     </dependency>
 
+    <!--
+      Bridge java.util.logging (used by libraries like JSVG/JOGL/dcm4che) to SLF4J so
+      every test-time log line is filtered by the shared logback-test.xml. The bridge
+      is installed by the JUL config file referenced from surefire's
+      java.util.logging.config.file system property.
+    -->
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>jul-to-slf4j</artifactId>
+      <scope>test</scope>
+    </dependency>
+
     <dependency>
       <groupId>org.junit.jupiter</groupId>
       <artifactId>junit-jupiter-params</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.junit-pioneer</groupId>
-      <artifactId>junit-pioneer</artifactId>
-      <version>${junit-pioneer.version}</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.slf4j</groupId>
-      <artifactId>slf4j-simple</artifactId>
       <scope>test</scope>
     </dependency>
   </dependencies>

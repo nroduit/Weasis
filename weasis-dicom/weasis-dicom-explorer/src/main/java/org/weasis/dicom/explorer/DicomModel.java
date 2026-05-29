@@ -1310,9 +1310,9 @@ public class DicomModel implements TreeModel, DataExplorerModel {
 
   public void rs(String[] argv) throws IOException {
     final String[] usage = {
-      "Load DICOM files from DICOMWeb API (QIDO/WADO-RS)", // NON-NLS
+      "Load DICOM files from DICOMweb API (QIDO/WADO-RS)", // NON-NLS
       "Usage: dicom:rs -u URL -r QUERYPARAMS... [-H HEADER]... [--query-header HEADER]... [--retrieve-header HEADER]... [--query-ext EXT] [--retrieve-ext EXT] [--accept-ext EXT]", // NON-NLS
-      "  -u --url=URL               URL of the DICOMWeb service", // NON-NLS
+      "  -u --url=URL               URL of the DICOMweb service", // NON-NLS
       "  -r --request=QUERYPARAMS   Query params of the URL, see weasis-pacs-connector", // NON-NLS
       "  -H --header=HEADER         Pass custom header(s) to all the requests", // NON-NLS
       "  --query-header=HEADER      Pass custom header(s) to the query requests (QIDO)", // NON-NLS

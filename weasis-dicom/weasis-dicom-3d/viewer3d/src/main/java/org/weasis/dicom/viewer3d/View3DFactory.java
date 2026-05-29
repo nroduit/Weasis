@@ -40,6 +40,7 @@ import org.weasis.core.api.gui.util.WinUtil;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.service.AuditLog;
 import org.weasis.core.api.service.WProperties;
+import org.weasis.core.api.util.GraphicsInfo;
 import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.api.util.ResourceUtil.ActionIcon;
 import org.weasis.core.ui.editor.SeriesViewer;
@@ -237,6 +238,11 @@ public class View3DFactory implements SeriesViewerFactory {
               var2.glGetString(GL.GL_RENDERER),
               textMax[0]);
       glContext.release();
+      GraphicsInfo.set(
+          openGLInfo.vendor(),
+          openGLInfo.renderer(),
+          openGLInfo.shortVersion(),
+          openGLInfo.looksSoftware());
       LOGGER.info(
           "{} 3D initialization, type:INIT time:{}",
           AuditLog.MARKER_PERF,

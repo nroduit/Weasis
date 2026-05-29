@@ -14,7 +14,6 @@ import jakarta.xml.bind.annotation.XmlAccessorType;
 import jakarta.xml.bind.annotation.XmlRootElement;
 import jakarta.xml.bind.annotation.XmlType;
 import java.awt.Shape;
-import java.awt.event.KeyEvent;
 import java.awt.geom.Line2D;
 import java.awt.geom.Point2D;
 import java.util.ArrayList;
@@ -22,6 +21,7 @@ import java.util.Collections;
 import java.util.List;
 import javax.swing.Icon;
 import org.weasis.core.Messages;
+import org.weasis.core.api.gui.util.ShortcutManager;
 import org.weasis.core.api.image.measure.MeasurementsAdapter;
 import org.weasis.core.api.image.util.MeasurableLayer;
 import org.weasis.core.api.image.util.Unit;
@@ -134,12 +134,12 @@ public class LineGraphic extends AbstractDragGraphic {
 
   @Override
   public int getKeyCode() {
-    return KeyEvent.VK_D;
+    return ShortcutManager.getInstance().getKeyCode(ShortcutManager.ID_GRAPHIC_LINE);
   }
 
   @Override
   public int getModifier() {
-    return 0;
+    return ShortcutManager.getInstance().getModifier(ShortcutManager.ID_GRAPHIC_LINE);
   }
 
   @Override

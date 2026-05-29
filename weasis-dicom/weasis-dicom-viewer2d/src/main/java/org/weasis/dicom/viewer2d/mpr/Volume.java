@@ -43,6 +43,7 @@ import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.image.cv.CvUtil;
+import org.weasis.core.api.util.ResourceMonitor;
 import org.weasis.core.api.util.ThreadUtil;
 import org.weasis.core.api.vol.ChunkedArray;
 import org.weasis.core.api.vol.ChunkedMappedBuffer;
@@ -154,6 +155,7 @@ public abstract sealed class Volume<T extends Number, A>
     this.isBasic = isBasic;
     if (isBasic) copyFromAnyOrientationWithoutRectification();
     else copyFromAnyOrientationWithRectification();
+    ResourceMonitor.getInstance().recordVolume(getSizeZ());
   }
 
   private static boolean isSigned(int depth) {
@@ -221,6 +223,7 @@ public abstract sealed class Volume<T extends Number, A>
           File.createTempFile("volume_data", ".tmp", AppProperties.FILE_CACHE_DIR.toFile());
       long totalBytes = (long) sizeX * sizeY * sizeZ * byteDepth * channels;
       this.mappedBuffer = new ChunkedMappedBuffer(dataFile, totalBytes);
+      ResourceMonitor.getInstance().recordVolumeDiskFallback();
     } catch (IOException ioException) {
       throw new RuntimeException("Failed to create a 3D volume file!", ioException);
     }
@@ -249,7 +252,7 @@ public abstract sealed class Volume<T extends Number, A>
       Collections.reverse(medias);
     }
 
-    copyImageToVolume(medias, bounds, new Vector3d(0, 0, 0));
+    copyImageToVolume(medias, new Vector3d(0, 0, 0));
   }
 
   /**
@@ -316,7 +319,7 @@ public abstract sealed class Volume<T extends Number, A>
       Collections.reverse(medias);
     }
 
-    copyImageToVolume(medias, bounds, origin);
+    copyImageToVolume(medias, origin);
   }
 
   /**
@@ -428,8 +431,7 @@ public abstract sealed class Volume<T extends Number, A>
     }
   }
 
-  private void copyImageToVolume(
-      List<DicomImageElement> dicomImages, VolumeBounds bounds, Vector3d translation) {
+  private void copyImageToVolume(List<DicomImageElement> dicomImages, Vector3d translation) {
     createData(size.x, size.y, size.z);
 
     final int n = dicomImages.size();
@@ -451,31 +453,43 @@ public abstract sealed class Volume<T extends Number, A>
             () -> {
               DicomImageElement dcm = dicomImages.get(zi);
 
-              // Load source image (IO and decode may run concurrently with other slices)
-              PlanarImage src = dcm.getModalityLutImage(null, null);
-              // Get min/max after loading the image
-              Core.MinMaxLocResult minMaxLoc = new Core.MinMaxLocResult();
-              minMaxLoc.minVal = dcm.getMinValue(null);
-              minMaxLoc.maxVal = dcm.getMaxValue(null);
-
-              Matrix4d transform;
-              if (isBasic) {
-                transform = computeSliceToVolumeTransform();
-              } else {
-                Vector3d position = dcm.getSliceGeometry().getTLHC();
-                transform = getBasisMatrix();
-                position.sub(translation);
-                transform.set(3, 0, position.x());
-                transform.set(3, 1, position.y());
-                transform.set(3, 2, position.z());
+              // Load the slice on a private path that bypasses the shared image cache: the
+              // volume reads each frame exactly once, so caching yields no hit benefit, and
+              // — because cache eviction releases the native Mat — would race with sibling
+              // build threads (black slices, "Source image cannot be empty"). The returned
+              // image is owned here and released once the slice has been splatted.
+              PlanarImage src = dcm.getUncachedModalityLutImage(null);
+              if (src == null) {
+                LOGGER.warn("Skipping unreadable slice {} while building MPR volume", zi);
+                updateProgressBar(completed.incrementAndGet() - 1);
+                return null;
               }
+              try {
+                // Get min/max after loading the image
+                Core.MinMaxLocResult minMaxLoc = new Core.MinMaxLocResult();
+                minMaxLoc.minVal = dcm.getMinValue(null);
+                minMaxLoc.maxVal = dcm.getMaxValue(null);
 
-              Dimension dim = new Dimension(src.width(), src.height());
-              SplatContext sliceCtx = sharedCtx.withTransformAndDim(transform, dim);
-              copyFrom(src, zi, sliceCtx);
-              int done = completed.incrementAndGet();
-              updateProgressBar(done - 1);
-              return minMaxLoc;
+                Matrix4d transform;
+                if (isBasic) {
+                  transform = computeSliceToVolumeTransform();
+                } else {
+                  Vector3d position = dcm.getSliceGeometry().getTLHC();
+                  transform = getBasisMatrix();
+                  position.sub(translation);
+                  transform.set(3, 0, position.x());
+                  transform.set(3, 1, position.y());
+                  transform.set(3, 2, position.z());
+                }
+
+                Dimension dim = new Dimension(src.width(), src.height());
+                SplatContext sliceCtx = sharedCtx.withTransformAndDim(transform, dim);
+                copyFrom(src, zi, sliceCtx);
+                updateProgressBar(completed.incrementAndGet() - 1);
+                return minMaxLoc;
+              } finally {
+                src.release();
+              }
             });
         submitted.incrementAndGet();
       }
@@ -487,8 +501,10 @@ public abstract sealed class Volume<T extends Number, A>
         for (int i = 0; i < submitted.get(); i++) {
           Future<Core.MinMaxLocResult> f = ecs.take();
           var minMax = f.get(); // propagate exceptions if any
-          this.minValue = compareMin(convertToGeneric(minMax.minVal), minValue);
-          this.maxValue = compareMax(convertToGeneric(minMax.maxVal), maxValue);
+          if (minMax != null) { // null when a slice was unreadable and skipped
+            this.minValue = compareMin(convertToGeneric(minMax.minVal), minValue);
+            this.maxValue = compareMax(convertToGeneric(minMax.maxVal), maxValue);
+          }
         }
       } catch (InterruptedException ie) {
         Thread.currentThread().interrupt();

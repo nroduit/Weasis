@@ -44,12 +44,13 @@ class AuthRegistrationTest {
 
   @Test
   void compactConstructorNormalizesBlankToNullAndStripsWhitespace() {
-    var r = new AuthRegistration("  id ", "", "  ", "\t\n", "  bob ");
+    var r = new AuthRegistration("  id ", "", "  ", "\t\n", "  bob ", null);
     assertEquals("id", r.clientId());
     assertNull(r.clientSecret());
     assertNull(r.scope());
     assertNull(r.audience());
     assertEquals("bob", r.user());
+    assertEquals(AuthRegistration.CODE, r.getAuthorizationGrantType()); // null defaults to CODE
   }
 
   @Test
@@ -71,5 +72,34 @@ class AuthRegistrationTest {
   void getAuthorizationGrantTypeReturnsCodeConstant() {
     assertEquals(AuthRegistration.CODE, AuthRegistration.empty().getAuthorizationGrantType());
     assertEquals("code", AuthRegistration.CODE);
+    assertEquals("client_credentials", AuthRegistration.CLIENT_CREDENTIALS);
+  }
+
+  @Test
+  void clientCredentialsGrantIsRecognized() {
+    var r = AuthRegistration.of("id", "s", "scope", null, AuthRegistration.CLIENT_CREDENTIALS);
+    assertTrue(r.isClientCredentialsGrant());
+    assertEquals(AuthRegistration.CLIENT_CREDENTIALS, r.getAuthorizationGrantType());
+    assertFalse(AuthRegistration.empty().isClientCredentialsGrant());
+  }
+
+  @Test
+  void blankGrantTypeFallsBackToCode() {
+    var r = new AuthRegistration("id", "s", null, null, null, "   ");
+    assertEquals(AuthRegistration.CODE, r.getAuthorizationGrantType());
+  }
+
+  @Test
+  void scopeNormalizationAcceptsCommaAndSpaceSeparated() {
+    // Spring-style "read, write" must be canonicalized to the on-the-wire form "read write".
+    assertEquals("read write", AuthRegistration.of("c", "s", "read, write", null).scope());
+    assertEquals("read write", AuthRegistration.of("c", "s", "read,write", null).scope());
+    assertEquals("read write", AuthRegistration.of("c", "s", "read write", null).scope());
+    assertEquals("read write", AuthRegistration.of("c", "s", " read , write ", null).scope());
+    assertEquals(
+        "openid profile email",
+        AuthRegistration.of("c", "s", "openid, profile, email", null).scope());
+    assertEquals("read write", AuthRegistration.of("c", "s", "read;write", null).scope());
+    assertNull(AuthRegistration.of("c", "s", " , , ", null).scope());
   }
 }

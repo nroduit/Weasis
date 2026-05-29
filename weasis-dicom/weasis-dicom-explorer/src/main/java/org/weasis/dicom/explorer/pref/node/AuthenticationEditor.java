@@ -44,6 +44,7 @@ public class AuthenticationEditor extends AbstractListEditor<AuthMethod> {
   @Override
   protected void deleteItem(AuthMethod item) {
     comboBox.removeItem(item);
+    AuthenticationPersistence.removeMethod(item);
   }
 
   @Override

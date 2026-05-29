@@ -891,6 +891,28 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
 
   public abstract List<MigLayoutModel> getLayoutList();
 
+  /**
+   * Synchronizable options shown in the per-view and toolbar sync popups for this container. The
+   * default returns {@link SynchOptionsCheckBoxGroup#getSyncOptions()} (the 2D set: Scroll, Pan,
+   * Zoom, Rotation, Flip, Window/Level, Spatial Unit). Containers with different semantics — e.g.
+   * the 3D volume viewer — should override this to expose only the actions that make sense.
+   */
+  public List<SynchOptionsCheckBoxGroup.SyncOption> getSyncOptions() {
+    return SynchOptionsCheckBoxGroup.getSyncOptions();
+  }
+
+  /**
+   * Whether auto-sync semantics for this container are confined to its own views. {@code false}
+   * (default) means auto-sync can fan out across sibling containers — used by the 2D viewer where
+   * STACK mode synchronises views across every visible container with the same group. {@code true}
+   * means auto-sync is meaningful only within this container (e.g. the 3D volume viewer, where each
+   * container owns its own volume), so the toolbar's "Apply to all views" entry should stay inside
+   * this container.
+   */
+  public boolean isAutoSyncContainerScoped() {
+    return false;
+  }
+
   public Boolean isContainingView(ViewCanvas<?> view2DPane) {
     return cellManager.getAllViewCanvases().stream()
         .filter(v -> Objects.equals(v, view2DPane))

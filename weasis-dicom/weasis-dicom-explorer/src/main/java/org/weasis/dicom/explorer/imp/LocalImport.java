@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.Properties;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
+import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JProgressBar;
@@ -70,37 +71,50 @@ public class LocalImport extends AbstractItemDialogPage implements ImportDicom {
 
   public void initGUI() {
     add(
-        createSearchPanel(
-            textFieldFiles,
+        createGroupPanel(
             Messages.getString("LocalImport.files"),
-            LAST_OPEN_FILES,
-            this::browseFiles));
+            GuiUtils.getHorizontalBoxLayoutPanel(
+                ITEM_SEPARATOR,
+                createSearchField(textFieldFiles, LAST_OPEN_FILES, this::browseFiles))));
     add(GuiUtils.boxVerticalStrut(BLOCK_SEPARATOR));
-    add(
-        createSearchPanel(
-            textFieldFolders,
-            Messages.getString("LocalImport.folders"),
-            LAST_OPEN_DIR,
-            this::browseFolders));
 
     Properties props = LocalPersistence.getProperties();
     boolean recursive = LangUtil.emptyToTrue(props.getProperty(LAST_RECURSIVE_MODE));
     checkboxSearch.setSelected(recursive);
-    add(GuiUtils.getFlowLayoutPanel(ITEM_SEPARATOR_SMALL, ITEM_SEPARATOR, checkboxSearch));
+
+    add(
+        createGroupPanel(
+            Messages.getString("LocalImport.folders"),
+            GuiUtils.getHorizontalBoxLayoutPanel(
+                ITEM_SEPARATOR,
+                createSearchField(textFieldFolders, LAST_OPEN_DIR, this::browseFolders)),
+            GuiUtils.getFlowLayoutPanel(ITEM_SEPARATOR_SMALL, 0, checkboxSearch)));
 
     add(GuiUtils.boxYLastElement(LAST_FILLER_HEIGHT));
+  }
+
+  private static JPanel createGroupPanel(String title, JComponent... items) {
+    JPanel panel = GuiUtils.getVerticalBoxLayoutPanel(ITEM_SEPARATOR, items);
+    panel.setBorder(GuiUtils.getTitledBorder(title));
+    return panel;
   }
 
   static JPanel createSearchPanel(
       JTextField textField, String title, String key, Runnable browseAction) {
     JLabel label = new JLabel(title + StringUtil.COLON);
+    return GuiUtils.getHorizontalBoxLayoutPanel(
+        label,
+        GuiUtils.boxHorizontalStrut(ITEM_SEPARATOR_SMALL),
+        createSearchField(textField, key, browseAction));
+  }
+
+  static JTextField createSearchField(JTextField textField, String key, Runnable browseAction) {
     JButton btnSearch = new JButton(ResourceUtil.getIcon(ActionIcon.MORE_H));
     btnSearch.addActionListener(_ -> browseAction.run());
 
     configureTextField(textField, key);
     textField.putClientProperty(FlatClientProperties.TEXT_FIELD_TRAILING_COMPONENT, btnSearch);
-    return GuiUtils.getHorizontalBoxLayoutPanel(
-        label, GuiUtils.boxHorizontalStrut(ITEM_SEPARATOR_SMALL), textField);
+    return textField;
   }
 
   private static void configureTextField(JTextField textField, String key) {

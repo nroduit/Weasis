@@ -12,6 +12,7 @@ package org.weasis.core.api.gui.util;
 import com.formdev.flatlaf.extras.FlatSVGIcon;
 import java.awt.Cursor;
 import java.awt.Dimension;
+import java.awt.GraphicsEnvironment;
 import java.awt.Point;
 import java.awt.Toolkit;
 import java.util.Map;
@@ -194,6 +195,11 @@ public abstract class Feature<T> implements KeyActionValue {
   }
 
   private static Cursor getCursor(String path, String cursorName, float hotSpotX, float hotSpotY) {
+    // Headless environments (CI without X11) cannot build custom cursors; static initializers
+    // that reach this code must not fail to load — return a default cursor instead.
+    if (GraphicsEnvironment.isHeadless()) {
+      return Cursor.getDefaultCursor();
+    }
     Toolkit defaultToolkit = Toolkit.getDefaultToolkit();
     ImageIcon icon;
     Dimension bestCursorSize;

@@ -22,6 +22,7 @@ import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.GridBagConstraints;
 import java.awt.Paint;
 import java.awt.Point;
 import java.awt.Stroke;
@@ -44,6 +45,9 @@ import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Optional;
 import javax.swing.Action;
+import javax.swing.JCheckBoxMenuItem;
+import javax.swing.JMenu;
+import javax.swing.JMenuItem;
 import javax.swing.JPopupMenu;
 import javax.swing.JProgressBar;
 import javax.swing.ToolTipManager;
@@ -68,20 +72,8 @@ import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.service.AuditLog;
 import org.weasis.core.api.service.WProperties;
 import org.weasis.core.api.util.FontItem;
-import org.weasis.core.ui.editor.image.ContextMenuHandler;
-import org.weasis.core.ui.editor.image.DefaultView2d;
+import org.weasis.core.ui.editor.image.*;
 import org.weasis.core.ui.editor.image.DefaultView2d.ZoomType;
-import org.weasis.core.ui.editor.image.FocusHandler;
-import org.weasis.core.ui.editor.image.GraphicMouseHandler;
-import org.weasis.core.ui.editor.image.ImageViewerEventManager;
-import org.weasis.core.ui.editor.image.ImageViewerPlugin;
-import org.weasis.core.ui.editor.image.Panner;
-import org.weasis.core.ui.editor.image.PixelInfo;
-import org.weasis.core.ui.editor.image.SynchData;
-import org.weasis.core.ui.editor.image.SynchEvent;
-import org.weasis.core.ui.editor.image.ViewButton;
-import org.weasis.core.ui.editor.image.ViewCanvas;
-import org.weasis.core.ui.editor.image.ViewProgress;
 import org.weasis.core.ui.model.graphic.Graphic;
 import org.weasis.core.ui.model.graphic.imp.seg.SegRegion;
 import org.weasis.core.ui.model.layer.LayerAnnotation;
@@ -107,7 +99,6 @@ import org.weasis.dicom.viewer3d.EventManager;
 import org.weasis.dicom.viewer3d.InfoLayer3d;
 import org.weasis.dicom.viewer3d.OpenGLInfo;
 import org.weasis.dicom.viewer3d.View3DFactory;
-import org.weasis.dicom.viewer3d.dockable.SegmentationTool;
 import org.weasis.dicom.viewer3d.dockable.SegmentationTool.Type;
 import org.weasis.dicom.viewer3d.geometry.Axis;
 import org.weasis.dicom.viewer3d.geometry.Camera;
@@ -161,6 +152,13 @@ public class View3d extends VolumeCanvas
 
   /** Segmentation overlay 3D texture — null when no segmentation is active. */
   private volatile SegVolumeTexture segVolumeTexture; // NOSONAR visibility reference
+
+  /**
+   * Per-view auto-sync button rendered as a corner overlay. Lazily created the first time {@link
+   * #updateSynchState()} is invoked, so it picks up the per-view {@link SynchData} attached by
+   * {@link org.weasis.dicom.viewer3d.EventManager#updateAllListeners}.
+   */
+  private SynchViewButton synchButton;
 
   public View3d(
       ImageViewerEventManager<DicomImageElement> eventManager, DicomVolTexture volTexture) {
@@ -354,16 +352,11 @@ public class View3d extends VolumeCanvas
       eventManager
           .getAction(ActionVol.VOL_QUALITY)
           .ifPresent(a -> a.setSliderValue(quality, false));
-      ComboItemListener<Type> segType = eventManager.getAction(ActionVol.SEG_TYPE).orElse(null);
-      Preset preset;
-      if (segType != null && segType.getSelectedItem() == SegmentationTool.Type.SEG_ONLY) {
-        preset = Preset.getSegmentationLut();
-      } else {
-        preset = Preset.getDefaultPreset(volTexture.getModality());
-      }
-
       renderingLayer.setEnableRepaint(true);
-      setVolumePreset(preset);
+      // The anatomy volume always uses the modality's default preset.
+      setVolumePreset(Preset.getDefaultPreset(volTexture.getModality()));
+      // (Re)build the segmentation texture for this volume.
+      updateSegmentation();
     } else {
       display();
     }
@@ -628,12 +621,10 @@ public class View3d extends VolumeCanvas
       program.allocateUniform(gl, "volTexture", (g, loc) -> g.glUniform1i(loc, 0));
       program.allocateUniform(gl, "colorMap", (g, loc) -> g.glUniform1i(loc, 1));
       program.allocateUniform(gl, "lightingMap", (g, loc) -> g.glUniform1i(loc, 2));
-      // FBO framebuffer dimensions for the crosshair overlay (imageSize() is unavailable in
-      // fragment shaders; we pass the logical FBO size instead).
-      program.allocateUniform(
-          gl,
-          "viewportSize", // NON-NLS
-          (g, loc) -> g.glUniform2i(loc, texture.getWidth(), texture.getHeight()));
+      // The crosshair overlay derives the viewport pixel resolution from screen-space
+      // derivatives of quadCoordinates in volumeFbo.frag, which is robust to the macOS GLJPanel
+      // quirk that lets gl_FragCoord range over physical pixels even when the FBO color
+      // attachment is sized at logical resolution — so no viewportSize uniform is needed here.
     }
 
     final IntBuffer intBuffer = IntBuffer.allocate(1);
@@ -686,7 +677,9 @@ public class View3d extends VolumeCanvas
     program.allocateUniform(
         gl,
         "segOverlayEnabled", // NON-NLS
-        (g, loc) -> g.glUniform1i(loc, isSegOverlayActive() ? 1 : 0));
+        (g, loc) -> g.glUniform1i(loc, isSegTextureActive() ? 1 : 0));
+    program.allocateUniform(
+        gl, "segOnly", (g, loc) -> g.glUniform1i(loc, isSegOnly() ? 1 : 0)); // NON-NLS
     program.allocateUniform(
         gl,
         "segSegmentCount", // NON-NLS
@@ -841,9 +834,9 @@ public class View3d extends VolumeCanvas
   }
 
   public void updateSegmentation() {
-    ComboItemListener<Type> segType = eventManager.getAction(ActionVol.SEG_TYPE).orElse(null);
-    if (segType == null || segType.getSelectedItem() != Type.SEG_OVERLAY) {
-      // Not in overlay mode — destroy existing seg texture if any
+    Type segType = getSegType();
+    if (segType != Type.SEG_OVERLAY && segType != Type.SEG_ONLY) {
+      // Neither overlay nor segmentation-only mode — destroy existing seg texture if any
       destroySegTexture();
       display();
       return;
@@ -908,14 +901,12 @@ public class View3d extends VolumeCanvas
     // Upload on the shared GL context
     newSvt.uploadVolumeDataAsync();
 
-    // Apply the tree's visibility/opacity state to the colour LUT
+    // Apply the tree's visibility/opacity state to the colour LUT. This method runs on the EDT
+    // (no current GL context), so stash the LUT — SegVolumeTexture.bind() uploads it on the GL
+    // thread at the next render. buildSegmentColorLUT() is pure CPU work.
     Map<Integer, RegionAttributes> overrideAttrs = buildRegionOverrideMap();
     if (!overrideAttrs.isEmpty()) {
-      byte[] colorLut = segVolume.buildSegmentColorLUT(overrideAttrs);
-      GL2ES2 gl = OpenglUtils.getGL();
-      if (gl != null) {
-        newSvt.updateColorLUT(gl, colorLut);
-      }
+      newSvt.setPendingColorLut(segVolume.buildSegmentColorLUT(overrideAttrs));
     }
 
     // Swap in the new texture
@@ -942,19 +933,12 @@ public class View3d extends VolumeCanvas
    */
   public void refreshSegColorLUT() {
     SegVolumeTexture svt = segVolumeTexture;
-    if (svt == null || !svt.isReady()) {
+    if (svt == null) {
       return;
     }
-
-    // Build an id→attributes map from the Preset's region map (reflects tree state)
+    // Build the colour LUT from the Preset region map (reflects the tree's checkbox state)
     Map<Integer, RegionAttributes> overrideAttrs = buildRegionOverrideMap();
-
-    byte[] colorLut = svt.getSegVolume().buildSegmentColorLUT(overrideAttrs);
-
-    GL2ES2 gl = OpenglUtils.getGL();
-    if (gl != null) {
-      svt.updateColorLUT(gl, colorLut);
-    }
+    svt.setPendingColorLut(svt.getSegVolume().buildSegmentColorLUT(overrideAttrs));
     display();
   }
 
@@ -977,14 +961,27 @@ public class View3d extends VolumeCanvas
     return result;
   }
 
-  /** Returns true when segmentation overlay mode is active and a seg texture is ready. */
-  private boolean isSegOverlayActive() {
+  /** Returns the currently selected segmentation display mode, or {@code null} when unavailable. */
+  private Type getSegType() {
+    ComboItemListener<Type> segType = eventManager.getAction(ActionVol.SEG_TYPE).orElse(null);
+    return segType == null ? null : (Type) segType.getSelectedItem();
+  }
+
+  private boolean isSegOnly() {
+    return getSegType() == Type.SEG_ONLY;
+  }
+
+  /**
+   * Returns true when a segmentation texture is ready and the current mode renders it — either the
+   * overlay ({@link Type#SEG_OVERLAY}) or the segmentation-only ({@link Type#SEG_ONLY}) mode.
+   */
+  private boolean isSegTextureActive() {
     SegVolumeTexture svt = segVolumeTexture;
     if (svt == null || !svt.isReady()) {
       return false;
     }
-    ComboItemListener<Type> segType = eventManager.getAction(ActionVol.SEG_TYPE).orElse(null);
-    return segType != null && segType.getSelectedItem() == Type.SEG_OVERLAY;
+    Type segType = getSegType();
+    return segType == Type.SEG_OVERLAY || segType == Type.SEG_ONLY;
   }
 
   private void destroySegTexture() {
@@ -1039,7 +1036,124 @@ public class View3d extends VolumeCanvas
   }
 
   @Override
-  public void updateSynchState() {}
+  public void updateSynchState() {
+    SynchData synchData = (SynchData) actionsInView.get(ActionW.SYNCH_LINK.cmd());
+    ImageViewerPlugin<DicomImageElement> container = eventManager.getSelectedView2dContainer();
+    boolean multiView = container != null && container.getImagePanels().size() > 1;
+
+    // Hide the per-view sync button when nothing can be synced — either no SynchData attached or
+    // the layout has a single view (no other view to mirror).
+    if (synchData == null || !multiView) {
+      if (synchButton != null) {
+        synchButton.setVisible(false);
+      }
+      repaint();
+      return;
+    }
+    if (synchButton == null) {
+      synchButton = new SynchViewButton(this::showSyncPopup);
+      synchButton.setPosition(GridBagConstraints.SOUTHEAST);
+      getViewButtons().add(synchButton);
+    }
+    synchButton.setState(
+        synchData.isSynchActivated() ? SynchData.SyncState.ON : SynchData.SyncState.OFF);
+    synchButton.setVisible(true);
+    repaint();
+  }
+
+  /**
+   * Invoked when the user clicks the auto-sync overlay button: shows the per-view sync popup at the
+   * click location. Same content as the right-click "Volume sync" submenu, presented as a
+   * standalone popup with an additional auto-sync on/off toggle at the top.
+   */
+  private void showSyncPopup(java.awt.Component invoker, int x, int y) {
+    SynchData sd = (SynchData) actionsInView.get(ActionW.SYNCH_LINK.cmd());
+    if (sd == null) {
+      return;
+    }
+    ImageViewerPlugin<DicomImageElement> container = eventManager.getSelectedView2dContainer();
+    if (container == null) {
+      return;
+    }
+
+    SynchOptionsCheckBoxGroup group = new SynchOptionsCheckBoxGroup(container.getSyncOptions());
+    JPopupMenu popup = group.buildPopupMenu(sd.getActions(), this::onSyncOptionToggled);
+
+    // Top auto-sync on/off toggle.
+    JCheckBoxMenuItem syncToggle =
+        new JCheckBoxMenuItem(
+            org.weasis.core.Messages.getString("ViewerToolBar.synch_this_view"),
+            sd.isSynchActivated());
+    syncToggle.setToolTipText(
+        org.weasis.core.Messages.getString("ViewerToolBar.synch_this_view_tooltip"));
+    syncToggle.addActionListener(e -> toggleAutoSync(sd, syncToggle.isSelected()));
+    popup.insert(syncToggle, 0);
+    popup.insert(new JPopupMenu.Separator(), 1);
+
+    popup.addSeparator();
+    popup.add(buildApplyToAllItem(sd, container));
+
+    popup.show(invoker, x, y);
+  }
+
+  private void toggleAutoSync(SynchData sd, boolean enabled) {
+    // Per-view toggle: only mutate this view's state and mark non-original so a subsequent
+    // refresh (updateAllListeners → getOrCreateSynchData) preserves it. Do NOT touch SYNCH_MODE
+    // — that would trigger the master toggle and propagate to every other view.
+    sd.setOriginal(false);
+    sd.setAutoSyncState(enabled ? SynchData.SyncState.ON : SynchData.SyncState.OFF);
+    refreshAllListeners();
+  }
+
+  private void refreshAllListeners() {
+    ComboItemListener<SynchView> synchAction = eventManager.getAction(ActionW.SYNCH).orElse(null);
+    SynchView selected =
+        synchAction != null && synchAction.getSelectedItem() instanceof SynchView sv
+            ? sv
+            : SynchView.DEFAULT_STACK;
+    eventManager.updateAllListeners(eventManager.getSelectedView2dContainer(), selected);
+  }
+
+  private void onSyncOptionToggled(String cmd, boolean selected) {
+    SynchData sd = (SynchData) actionsInView.get(ActionW.SYNCH_LINK.cmd());
+    if (sd != null) {
+      sd.getActions().put(cmd, selected);
+      repaint();
+    }
+  }
+
+  private JMenuItem buildApplyToAllItem(
+      SynchData source, ImageViewerPlugin<DicomImageElement> container) {
+    JMenuItem applyToAll =
+        new JMenuItem(org.weasis.core.Messages.getString("ViewerToolBar.synch_apply_to_all"));
+    applyToAll.addActionListener(e -> applySyncOptionsToOtherViews(source, container));
+    return applyToAll;
+  }
+
+  /**
+   * Copy this view's sync actions map to every other view in the container. All 3D views show the
+   * same volume so no FrameOfReferenceUID filter is applied; views with sync deactivated are still
+   * updated so the user gets a consistent map when they re-enable.
+   */
+  private void applySyncOptionsToOtherViews(
+      SynchData source, ImageViewerPlugin<DicomImageElement> container) {
+    if (source == null || container == null) {
+      return;
+    }
+    Map<String, Boolean> snapshot = new HashMap<>(source.getActions());
+    for (ViewCanvas<DicomImageElement> v : container.getImagePanels()) {
+      if (v == this) {
+        continue;
+      }
+      SynchData target = (SynchData) v.getActionValue(ActionW.SYNCH_LINK.cmd());
+      if (target == null) {
+        continue;
+      }
+      target.getActions().clear();
+      target.getActions().putAll(snapshot);
+      v.getJComponent().repaint();
+    }
+  }
 
   @Override
   public PixelInfo getPixelInfo(Point p) {
@@ -1092,10 +1206,17 @@ public class View3d extends VolumeCanvas
 
   @Override
   public void moveOrigin(PanPoint point) {
-    if (point != null) {
-      if (PanPoint.State.DRAGGING.equals(point.getState())) {
-        camera.translate(point);
-      }
+    if (point == null) {
+      return;
+    }
+    PanPoint.State state = point.getState();
+    if (PanPoint.State.DRAGSTART.equals(state)) {
+      // Anchor the pan reference point so the first DRAGGING delta is computed against the
+      // press position rather than this view's stale prevMousePos (which would shift the
+      // image visibly when sync is on).
+      camera.anchorMouse(point);
+    } else if (PanPoint.State.DRAGGING.equals(state)) {
+      camera.translate(point);
     }
   }
 
@@ -1249,9 +1370,11 @@ public class View3d extends VolumeCanvas
     eventManager.updateComponentsListener(this);
   }
 
+  private final List<ViewButton> viewButtons = new java.util.ArrayList<>();
+
   @Override
   public List<ViewButton> getViewButtons() {
-    return Collections.emptyList();
+    return viewButtons;
   }
 
   @Override
@@ -1294,11 +1417,33 @@ public class View3d extends VolumeCanvas
 
       GuiUtils.addItemToMenu(popupMenu, manager.getZoomMenu(null));
       GuiUtils.addItemToMenu(popupMenu, manager.getOrientationMenu(null));
-      addSeparatorToPopupMenu(popupMenu, count);
+      count = addSeparatorToPopupMenu(popupMenu, count);
+
+      GuiUtils.addItemToMenu(popupMenu, buildSyncOptionsMenu());
+      count = addSeparatorToPopupMenu(popupMenu, count);
 
       GuiUtils.addItemToMenu(popupMenu, manager.getResetMenu(null));
     }
     return popupMenu;
+  }
+
+  /**
+   * Per-view sync options submenu shown in the right-click context menu. Reads/writes this view's
+   * own {@link SynchData} (attached by {@code EventManager.updateAllListeners}); the Apply-to-all
+   * entry then copies this view's actions map to every other view in the container.
+   */
+  private JMenu buildSyncOptionsMenu() {
+    ImageViewerPlugin<DicomImageElement> container = eventManager.getSelectedView2dContainer();
+    SynchData sd = (SynchData) actionsInView.get(ActionW.SYNCH_LINK.cmd());
+    if (container == null || sd == null) {
+      return null;
+    }
+    SynchOptionsCheckBoxGroup group = new SynchOptionsCheckBoxGroup(container.getSyncOptions());
+    JMenu menu = new JMenu(org.weasis.core.Messages.getString("ActionW.synch"));
+    group.addStayOpenItemsTo(menu, sd.getActions(), this::onSyncOptionToggled);
+    menu.addSeparator();
+    menu.add(buildApplyToAllItem(sd, container));
+    return menu;
   }
 
   @Override
@@ -1336,8 +1481,18 @@ public class View3d extends VolumeCanvas
   private void propertyChange(final SynchEvent synch) {
     {
       SynchData synchData = (SynchData) actionsInView.get(ActionW.SYNCH_LINK.cmd());
-      if (synchData != null && !synchData.isSynchActivated()) {
-        return;
+      SynchData issuerSyncData =
+          synch.getView() != null
+              ? (SynchData) synch.getView().getActionsInView().get(ActionW.SYNCH_LINK.cmd())
+              : null;
+      boolean isSource = synch.getView() == this;
+      if (!isSource) {
+        if (synchData != null && !synchData.isSynchActivated()) {
+          return;
+        }
+        if (issuerSyncData != null && !issuerSyncData.isSynchActivated()) {
+          return;
+        }
       }
       // Progressive mode for VR
       boolean forceRepaint = camera.isAdjusting() != synch.isValueIsAdjusting();
@@ -1346,9 +1501,15 @@ public class View3d extends VolumeCanvas
       for (Entry<String, Object> entry : synch.getEvents().entrySet()) {
         String command = entry.getKey();
         final Object val = entry.getValue();
-        if (synchData != null && !synchData.isActionEnable(command)) {
+        // The originator always applies its own action (otherwise unchecking e.g. W/L in the
+        // popup would also break the slider locally). For target views, both the issuer's and
+        // the receiver's sync option must be enabled for this action.
+        if (!isSource
+            && ((synchData != null && !synchData.isActionEnable(command))
+                || (issuerSyncData != null && !issuerSyncData.isActionEnable(command)))) {
           continue;
-        } else if (command.equals(ActionW.WINDOW.cmd())) {
+        }
+        if (command.equals(ActionW.WINDOW.cmd())) {
           renderingLayer.setWindowWidth(((Double) val).intValue(), forceRepaint);
         } else if (command.equals(ActionW.LEVEL.cmd())) {
           renderingLayer.setWindowCenter(((Double) val).intValue(), forceRepaint);
@@ -1364,6 +1525,14 @@ public class View3d extends VolumeCanvas
           }
         } else if (command.equals(ActionW.ROTATION.cmd()) && val instanceof Integer rotation) {
           setRotation(rotation);
+        } else if (command.equals(ActionW.ROTATION.cmd()) && val instanceof Quaterniond quat) {
+          // Arcball path: the source view already applied the rotation via Camera.rotate(), so
+          // re-applying here would only trigger a redundant repaint. Targets adopt the full 3D
+          // rotation that the integer slider angle cannot represent.
+          if (!isSource) {
+            camera.getRotation().set(quat);
+            camera.updateCameraTransform();
+          }
         } else if (command.equals(ActionW.RESET.cmd())) {
           reset();
         } else if (command.equals(ActionW.ZOOM.cmd())) {

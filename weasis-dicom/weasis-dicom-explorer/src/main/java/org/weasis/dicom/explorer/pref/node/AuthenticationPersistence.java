@@ -57,6 +57,7 @@ public class AuthenticationPersistence {
   private static final String T_REVOKE_URI = "revoke"; // NON-NLS
   private static final String T_OPENID = "openid"; // NON-NLS
   private static final String T_AUDIENCE = "audience"; // NON-NLS
+  private static final String T_GRANT_TYPE = "grantType"; // NON-NLS
 
   private static final Map<String, AuthMethod> methods = new HashMap<>();
 
@@ -104,6 +105,29 @@ public class AuthenticationPersistence {
     }
   }
 
+  public static void addOrUpdateMethod(AuthMethod method) {
+    if (method == null || !StringUtil.hasText(method.getUid())) {
+      return;
+    }
+    if (methods.isEmpty()) {
+      loadMethods();
+    }
+    methods.put(method.getUid(), method);
+    saveMethod();
+  }
+
+  public static void removeMethod(AuthMethod method) {
+    if (method == null || !StringUtil.hasText(method.getUid())) {
+      return;
+    }
+    if (methods.isEmpty()) {
+      loadMethods();
+    }
+    if (methods.remove(method.getUid()) != null) {
+      saveMethod();
+    }
+  }
+
   public static void saveMethod() {
     XMLStreamWriter writer = null;
     XMLOutputFactory factory = XMLOutputFactory.newInstance();
@@ -138,6 +162,7 @@ public class AuthenticationPersistence {
           writeNode(writer, T_CLIENT_SECRET, reg.clientSecret());
           writeNode(writer, T_SCOPE, reg.scope());
           writeNode(writer, T_AUDIENCE, reg.audience());
+          writeNode(writer, T_GRANT_TYPE, reg.getAuthorizationGrantType());
           writer.writeEndElement();
 
           writer.writeEndElement();
@@ -243,6 +268,7 @@ public class AuthenticationPersistence {
       registrationBuilder.clientSecret = xmler.getAttributeValue(null, T_CLIENT_SECRET);
       registrationBuilder.scope = xmler.getAttributeValue(null, T_SCOPE);
       registrationBuilder.audience = xmler.getAttributeValue(null, T_AUDIENCE);
+      registrationBuilder.grantType = xmler.getAttributeValue(null, T_GRANT_TYPE);
     }
   }
 
@@ -264,9 +290,10 @@ public class AuthenticationPersistence {
     String clientSecret;
     String scope;
     String audience;
+    String grantType;
 
     AuthRegistration build() {
-      return new AuthRegistration(clientId, clientSecret, scope, audience, null);
+      return new AuthRegistration(clientId, clientSecret, scope, audience, null, grantType);
     }
   }
 }

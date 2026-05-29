@@ -9,6 +9,8 @@
  */
 package org.weasis.core.api.net.auth;
 
+import java.util.Arrays;
+import java.util.stream.Collectors;
 import org.weasis.core.util.StringUtil;
 
 /**
@@ -19,57 +21,68 @@ import org.weasis.core.util.StringUtil;
  * @param scope OAuth2 scope permissions
  * @param audience OAuth2 audience claim
  * @param user associated username
+ * @param grantType OAuth2 grant type ({@link #CODE} or {@link #CLIENT_CREDENTIALS}); {@code null}
+ *     defaults to {@link #CODE} for backward compatibility
  */
 public record AuthRegistration(
-    String clientId, String clientSecret, String scope, String audience, String user) {
+    String clientId,
+    String clientSecret,
+    String scope,
+    String audience,
+    String user,
+    String grantType) {
 
-  /** OAuth2 authorization code grant type constant. */
+  /** OAuth2 authorization code grant type. */
   public static final String CODE = "code"; // NON-NLS
+
+  /** OAuth2 client credentials grant type (RFC 6749 §4.4). */
+  public static final String CLIENT_CREDENTIALS = "client_credentials"; // NON-NLS
 
   public AuthRegistration {
     clientId = normalizeString(clientId);
     clientSecret = normalizeString(clientSecret);
-    scope = normalizeString(scope);
+    scope = normalizeScope(scope);
     audience = normalizeString(audience);
     user = normalizeString(user);
+    grantType = StringUtil.hasText(grantType) ? grantType.strip() : CODE;
   }
 
   /**
-   * @return empty AuthRegistration with all null values
+   * @return empty AuthRegistration (defaults to {@link #CODE} grant type)
    */
   public static AuthRegistration empty() {
-    return new AuthRegistration(null, null, null, null, null);
+    return new AuthRegistration(null, null, null, null, null, CODE);
   }
 
   public static AuthRegistration of(
       String clientId, String clientSecret, String scope, String audience) {
-    return new AuthRegistration(clientId, clientSecret, scope, audience, null);
+    return new AuthRegistration(clientId, clientSecret, scope, audience, null, CODE);
+  }
+
+  public static AuthRegistration of(
+      String clientId, String clientSecret, String scope, String audience, String grantType) {
+    return new AuthRegistration(clientId, clientSecret, scope, audience, null, grantType);
   }
 
   /**
-   * @return OAuth2 authorization grant type (always {@value #CODE})
+   * @return OAuth2 authorization grant type (never {@code null})
    */
   public String getAuthorizationGrantType() {
-    return CODE;
+    return grantType;
   }
 
-  /**
-   * @return {@code true} if client ID is configured
-   */
+  public boolean isClientCredentialsGrant() {
+    return CLIENT_CREDENTIALS.equals(grantType);
+  }
+
   public boolean hasClientId() {
     return StringUtil.hasText(clientId);
   }
 
-  /**
-   * @return {@code true} if client secret is configured
-   */
   public boolean hasClientSecret() {
     return StringUtil.hasText(clientSecret);
   }
 
-  /**
-   * @return {@code true} if registration is properly configured for OAuth2
-   */
   public boolean isComplete() {
     return hasClientId() && hasClientSecret();
   }
@@ -80,5 +93,21 @@ public record AuthRegistration(
     }
     var trimmed = value.strip();
     return trimmed.isEmpty() ? null : trimmed;
+  }
+
+  /**
+   * Accepts scopes separated by commas, semicolons, or whitespace and rejoins them as a single
+   * space-separated list (the on-the-wire form per RFC 6749 §3.3). This lets users paste
+   * Spring-style {@code "read, write"} without producing an {@code invalid_scope} error.
+   */
+  private static String normalizeScope(String value) {
+    if (value == null) {
+      return null;
+    }
+    var joined =
+        Arrays.stream(value.split("[,;\\s]+"))
+            .filter(s -> !s.isEmpty())
+            .collect(Collectors.joining(" "));
+    return joined.isEmpty() ? null : joined;
   }
 }

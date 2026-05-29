@@ -15,10 +15,10 @@ import java.time.LocalDate;
 import org.junit.jupiter.api.Test;
 import org.weasis.dicom.codec.TagD;
 
-public class IntegrationTest {
+class IntegrationTest {
 
   @Test
-  public void integrationTest1() {
+  void integrationTest1() {
     LocalDate date1 = TagD.getDicomDate("19930822");
     assertThat(date1).isEqualTo(LocalDate.of(1993, 8, 22));
   }

@@ -860,12 +860,12 @@ public class MprView extends View2d implements SliceCanvas, ViewProgress {
     menu.add(menuItem);
 
     popupMenu.addSeparator();
-    JMenuItem item = new JMenuItem("Export this view in DICOM");
+    JMenuItem item = new JMenuItem(Messages.getString("build.series.from.current.view"));
     item.addActionListener(_ -> rebuildView(false));
     popupMenu.add(item);
 
     menu.addSeparator();
-    item = new JMenuItem("Export in DICOM");
+    item = new JMenuItem(Messages.getString("build.series.from.all.views"));
     item.addActionListener(_ -> rebuildView(true));
     menu.add(item);
 
@@ -1065,22 +1065,37 @@ public class MprView extends View2d implements SliceCanvas, ViewProgress {
   }
 
   private void rebuildView(boolean all) {
+    // Capture the crosshair centre once, before any export worker mutates it
+    Vector3d initialCenter = mprController.getAxesControl().getCenter();
+    Runnable restoreCrosshair =
+        () -> {
+          mprController.getAxesControl().setCenter(initialCenter);
+          mprController.updateAllViews();
+          mprController.fireCrossHairChanged();
+        };
     if (all) {
-      rebuildView(mprController.getAxial());
-      rebuildView(mprController.getCoronal());
-      rebuildView(mprController.getSagittal());
+      // Export the three axes sequentially: each pass moves the shared crosshair centre, so
+      // running them concurrently would corrupt both the exported slices and the restore.
+      rebuildView(
+          mprController.getAxial(),
+          () ->
+              rebuildView(
+                  mprController.getCoronal(),
+                  () -> rebuildView(mprController.getSagittal(), restoreCrosshair)));
     } else {
-      rebuildView(getMprAxis());
+      rebuildView(getMprAxis(), restoreCrosshair);
     }
   }
 
-  protected void rebuildView(MprAxis axis) {
-    if (axis == null) return;
+  protected void rebuildView(MprAxis axis, Runnable onComplete) {
+    if (axis == null) {
+      onComplete.run();
+      return;
+    }
 
     Path tempDir = AppProperties.buildAccessibleTempDirectory(AppProperties.CACHE_NAME, "mpr");
     File dir = tempDir.toFile();
 
-    Vector3d oldPosition = mprController.getAxesControl().getCenter();
     String uid = UIDUtils.createUID();
     int sliceImageSize = mprController.getVolume().getSliceSize();
 
@@ -1171,9 +1186,6 @@ public class MprView extends View2d implements SliceCanvas, ViewProgress {
           @Override
           protected void done() {
             bar.setValue(bar.getMaximum());
-            mprController.getAxesControl().reset();
-            mprController.getAxesControl().setCenter(oldPosition);
-
             try {
               List<File> files = get();
               if (files != null && !files.isEmpty()) {
@@ -1184,6 +1196,9 @@ public class MprView extends View2d implements SliceCanvas, ViewProgress {
               Thread.currentThread().interrupt();
             } catch (Exception e) {
               LOGGER.error("MPR export failed", e);
+            } finally {
+              // Restore the crosshair (or start the next axis export) whatever the outcome.
+              onComplete.run();
             }
           }
         };
