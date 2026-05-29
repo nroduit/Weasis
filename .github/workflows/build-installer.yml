@@ -1,8 +1,48 @@
 name: Build installers
 on:
   workflow_dispatch:
+    inputs:
+      platforms:
+        description: 'Platforms to build: "all", "none" (only the shared native package), or a comma-separated subset of windows-x86-64,macosx-x86-64,macosx-aarch64,linux-x86-64,linux-aarch64'
+        required: false
+        default: 'all'
 
 jobs:
+  setup:
+    runs-on: ubuntu-latest
+    outputs:
+      jpackage_matrix: ${{ steps.set.outputs.jpackage_matrix }}
+      linux_matrix: ${{ steps.set.outputs.linux_matrix }}
+    steps:
+      - name: Compute build matrices from the platforms input
+        id: set
+        shell: bash
+        run: |
+          sel="${{ inputs.platforms }}"
+          [ -z "$sel" ] && sel="all"
+          jpkg=$(jq -cn --arg sel "$sel" '
+            [
+              {key:"macosx-x86-64",  os:"macos-15-intel", platform:"x64",   wsystem:"macosx",  warc:"x86-64"},
+              {key:"macosx-aarch64", os:"macos-latest",   platform:"arm64", wsystem:"macosx",  warc:"aarch64"},
+              {key:"windows-x86-64", os:"windows-latest", platform:"x64",   wsystem:"windows", warc:"x86-64"}
+            ]
+            | map(select($sel == "all" or (.key as $k | ($sel | split(",")) | index($k) != null)))
+            | map(del(.key))')
+          linux=$(jq -cn --arg sel "$sel" '
+            [
+              {key:"linux-x86-64",  arch:"linux/amd64"},
+              {key:"linux-aarch64", arch:"linux/arm64"}
+            ]
+            | map(select($sel == "all" or (.key as $k | ($sel | split(",")) | index($k) != null)))
+            | map(.arch)')
+          {
+            echo "jpackage_matrix=$jpkg"
+            echo "linux_matrix=$linux"
+          } >> "$GITHUB_OUTPUT"
+          echo "Selected platforms: $sel"
+          echo "jpackage matrix: $jpkg"
+          echo "linux matrix:    $linux"
+
   build:
     runs-on: ubuntu-latest
     outputs:
@@ -53,14 +93,12 @@ jobs:
       WEASIS_OUTPUT: "output-dist"
       WEASIS_INPUT_BIN: "native-dist/weasis-native/bin-dist/weasis"
     runs-on: ${{ matrix.os }}
-    needs: build
+    needs: [setup, build]
+    if: ${{ needs.setup.outputs.jpackage_matrix != '[]' }}
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - { os: macos-15-intel, platform: x64, wsystem: macosx, warc: x86-64 }
-          - { os: macos-latest, platform: arm64, wsystem: macosx, warc: aarch64 }
-          - { os: windows-latest, platform: x64, wsystem: windows, warc: x86-64 }
+        include: ${{ fromJSON(needs.setup.outputs.jpackage_matrix) }}
 
     steps:
       - name: Set JDK modules based on OS
@@ -364,11 +402,12 @@ jobs:
           path: final-dist
 
   linux-multiarch:
-    needs: build
+    needs: [setup, build]
     runs-on: ubuntu-latest
+    if: ${{ needs.setup.outputs.linux_matrix != '[]' }}
     strategy:
       matrix:
-        arch: ["linux/amd64", "linux/arm64"]
+        arch: ${{ fromJSON(needs.setup.outputs.linux_matrix) }}
 
     steps:
       - name: Download weasis-native
