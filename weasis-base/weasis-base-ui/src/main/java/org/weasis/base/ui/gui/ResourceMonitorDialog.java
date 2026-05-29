@@ -27,6 +27,7 @@ import javax.swing.UIManager;
 import javax.swing.WindowConstants;
 import net.miginfocom.swing.MigLayout;
 import org.weasis.base.ui.Messages;
+import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.GuiUtils.IconColor;
 import org.weasis.core.api.util.GraphicsInfo;
 import org.weasis.core.api.util.ResourceAdvisor;
@@ -111,11 +112,13 @@ public class ResourceMonitorDialog extends JDialog {
     addRow(content, "ResourceMonitor.diskFallbacks", diskFallbackValue);
     addRow(content, "ResourceMonitor.gcOverhead", gcValue);
 
+    JButton helpButton = GuiUtils.createHelpButton("../basics/system-resources/"); // NON-NLS
     JButton copyButton = new JButton(Messages.getString("ResourceMonitor.copyReport"));
     copyButton.addActionListener(e -> copyReport());
     JButton closeButton = new JButton(Messages.getString("WeasisAboutBox.close"));
     closeButton.addActionListener(e -> dispose());
-    content.add(copyButton, "span 2, split 2, gaptop 15, align right");
+    content.add(helpButton, "span 2, split 3, gaptop 15");
+    content.add(copyButton, "gapbefore push");
     content.add(closeButton);
 
     setContentPane(content);
@@ -126,6 +129,7 @@ public class ResourceMonitorDialog extends JDialog {
           if ((e.getChangeFlags() & HierarchyEvent.SHOWING_CHANGED) != 0) {
             if (isShowing()) {
               timer.start();
+              closeButton.requestFocusInWindow();
             } else {
               timer.stop();
             }
