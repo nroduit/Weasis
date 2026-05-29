@@ -26,12 +26,18 @@ import java.util.concurrent.TimeUnit;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.command.CommandManager;
 import org.weasis.pref.ConfigData;
+import org.weasis.pref.PlatformDirectories;
 
 public class AppLauncher extends WeasisLauncher implements Singleton.SingletonApp {
 
   static {
-    String home = System.getProperty("user.home", "");
-    File bootLog = new File(home + File.separator + ".weasis" + File.separator + "log");
+    // Runs before the configuration is loaded, so the per-OS state directory is resolved directly
+    // (XDG_STATE_HOME on Linux). In portable mode this initial boot.log lands here rather than next
+    // to the executable.
+    File bootLog =
+        PlatformDirectories.get(PlatformDirectories.BaseDir.STATE)
+            .resolve("log")
+            .toFile(); // NON-NLS
     bootLog.mkdirs();
 
     LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();

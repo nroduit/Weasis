@@ -35,14 +35,16 @@ import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.pref.ConfigData;
+import org.weasis.pref.PlatformDirectories;
 
 public class Singleton {
   private static final Logger LOGGER = LoggerFactory.getLogger(Singleton.class);
 
   private static final String LOCALHOST = "127.0.0.1";
   private static final File SI_FILEDIR =
-      new File(
-          System.getProperty("user.home") + File.separator + ".weasis", "singleton"); // NON-NLS
+      PlatformDirectories.get(PlatformDirectories.BaseDir.STATE)
+          .resolve("singleton")
+          .toFile(); // NON-NLS
   private static final String SI_MAGICWORD = "si.init";
   private static final String SI_ARG = "si.arg";
   private static final String SI_PROP = "si.prop";

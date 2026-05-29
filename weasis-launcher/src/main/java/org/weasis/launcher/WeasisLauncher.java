@@ -444,6 +444,7 @@ Starting PF4J Plugins...
 
   public WeasisLoader loadProperties(Map<String, String> serverProp, StringBuilder conf) {
     String dir = configData.getProperty(P_WEASIS_PATH);
+    String configDir = configData.getProperty(ConfigData.P_WEASIS_CONFIG_DIR, dir);
     String profileName = configData.getProperty(ConfigData.P_WEASIS_PROFILE, "default"); // NON-NLS
     String user = configData.getProperty(ConfigData.P_WEASIS_USER);
 
@@ -452,7 +453,7 @@ Starting PF4J Plugins...
         dir + File.separator + "data" + File.separator + "weasis-core"); // NON-NLS
 
     String bufDir =
-        dir
+        configDir
             + File.separator
             + "preferences" // NON-NLS
             + File.separator
@@ -521,7 +522,8 @@ Starting PF4J Plugins...
             true,
             true);
     if (Utils.emptyToFalse(logActivation)) {
-      String logFile = dir + File.separator + "log" + File.separator + "default.log"; // NON-NLS
+      String logDir = configData.getProperty(ConfigData.P_WEASIS_LOG_DIR, dir);
+      String logFile = logDir + File.separator + "log" + File.separator + "default.log"; // NON-NLS
       serverProp.put("org.apache.sling.commons.log.file", logFile);
       currentProps.remove("org.apache.sling.commons.log.file");
     }

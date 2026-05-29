@@ -9,7 +9,9 @@ description: |
   used in healthcare by hospitals, health networks, multicenter research 
   trials, and patients.
   
-  Note: With Snap, the .weasis directory is now located in /home/<username>/snap/weasis/current/.
+  Note: With Snap, Weasis stores its files under /home/<username>/snap/weasis/current/
+  following the XDG Base Directory Specification (.config/weasis, .local/share/weasis,
+  .local/state/weasis and .cache/weasis).
   
   Key features:
   - Flexible integration to PACS, VNA, RIS, HIS or PHR

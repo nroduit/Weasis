@@ -19,6 +19,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.*;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 import java.util.regex.Pattern;
@@ -45,6 +47,11 @@ public class ConfigData {
   public static final String P_WEASIS_NAME = "weasis.name";
   public static final String P_PLUGIN_DIR_PROP = "org.osgi.framework.storage";
   public static final String P_WEASIS_PATH = "weasis.path";
+  public static final String P_WEASIS_CONFIG_DIR = "weasis.config.dir";
+  public static final String P_WEASIS_DATA_DIR = "weasis.data.dir";
+  public static final String P_WEASIS_CACHE_DIR = "weasis.cache.dir";
+  public static final String P_WEASIS_LOG_DIR = "weasis.log.dir";
+  public static final String P_WEASIS_PORTABLE_DIR = "weasis.portable.dir";
   public static final String P_WEASIS_RES_DATE = "weasis.resources.date";
   public static final String P_WEASIS_CODEBASE_LOCAL = "weasis.codebase.local";
   public static final String P_WEASIS_SOURCE_ID = "weasis.source.id";
@@ -211,12 +218,16 @@ public class ConfigData {
     // Define the http user agent
     addProperty("http.agent", getHttpAgent(version, profile));
 
-    String portable = properties.getProperty("weasis.portable.dir");
+    String portable = properties.getProperty(P_WEASIS_PORTABLE_DIR);
     if (portable != null) {
       LOGGER.info("Set default relative folders");
       String pkey = "weasis.portable.dicom.directory";
       addProperty(pkey, preferences.getValue(pkey, "dicom,DICOM,IMAGES,images")); // NON-NLS
     }
+
+    // Resolve the per-OS base directories (XDG on Linux, ~/Library on macOS, %APPDATA% on
+    // Windows). Done before variable substitution so base.json can reference ${weasis.cache.dir}.
+    WeasisDirectories dirs = resolveBaseDirectories(portable);
 
     // Set weasis properties to Java System Properties before variables substitution.
     applyConfigToSystemProperties();
@@ -226,13 +237,53 @@ public class ConfigData {
       felixProps.forEach((k, v) -> LOGGER.trace("Felix config: {} = {}", k, v));
     }
 
-    // Set plugin directory for PF4J
-    String pluginDir = felixProps.getOrDefault(P_PLUGIN_DIR_PROP, F_ROOT_PLUGIN_FOLDER);
-    File appFolder = new File(pluginDir).getParentFile();
-    appFolder.mkdirs();
-    addProperty(P_WEASIS_PATH, appFolder.getPath());
-    System.setProperty(P_WEASIS_PATH, appFolder.getPath());
+    // weasis.path is kept as a backward-compatible alias of the data directory.
+    addProperty(P_WEASIS_PATH, dirs.data().toString(), true);
+    System.setProperty(P_WEASIS_PATH, dirs.data().toString());
+    dirs.createDirectories();
+    if (portable == null) {
+      PlatformDirectories.migrateLegacyLayout(dirs.config(), dirs.data(), dirs.state());
+    }
     LOGGER.info("Properties: {}", properties);
+  }
+
+  /**
+   * Resolves the config/data/cache/state directories and exposes them as system properties. Uses a
+   * single historical {@code ~/.weasis} root in portable mode or when {@code weasis.path} is set
+   * explicitly; otherwise the per-OS {@link PlatformDirectories} locations.
+   */
+  private WeasisDirectories resolveBaseDirectories(String portable) {
+    String explicitPath = properties.getProperty(P_WEASIS_PATH);
+    WeasisDirectories dirs;
+    if (portable != null || Utils.hasText(explicitPath)) {
+      Path root =
+          Utils.hasText(explicitPath) ? Paths.get(explicitPath) : PlatformDirectories.legacyDir();
+      dirs = new WeasisDirectories(root, root, root, root);
+    } else {
+      dirs =
+          new WeasisDirectories(
+              PlatformDirectories.get(PlatformDirectories.BaseDir.CONFIG),
+              PlatformDirectories.get(PlatformDirectories.BaseDir.DATA),
+              PlatformDirectories.get(PlatformDirectories.BaseDir.CACHE),
+              PlatformDirectories.get(PlatformDirectories.BaseDir.STATE));
+    }
+    addProperty(P_WEASIS_CONFIG_DIR, dirs.config().toString());
+    addProperty(P_WEASIS_DATA_DIR, dirs.data().toString());
+    addProperty(P_WEASIS_CACHE_DIR, dirs.cache().toString());
+    addProperty(P_WEASIS_LOG_DIR, dirs.state().toString());
+    return dirs;
+  }
+
+  private record WeasisDirectories(Path config, Path data, Path cache, Path state) {
+    void createDirectories() {
+      for (Path p : List.of(config, data, state)) {
+        try {
+          Files.createDirectories(p);
+        } catch (IOException e) {
+          LOGGER.error("Cannot create directory {}", p, e);
+        }
+      }
+    }
   }
 
   private void filterConfigProperties(AppPreferences preferences) {

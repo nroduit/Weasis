@@ -23,8 +23,8 @@
     },
     {
       "code": "org.osgi.framework.storage",
-      "value": "${felix.cache.rootdir}/.weasis/cache-plugins-dev",
-      "description": "Location of the bundle cache (if not absolute concatenate with felix.cache.rootdir)",
+      "value": "${weasis.cache.dir}/cache-plugins-dev",
+      "description": "Location of the bundle cache (resolved under the per-OS cache directory, e.g. $XDG_CACHE_HOME/weasis on Linux)",
       "type": "A",
       "category": "FELIX_CONFIG"
     },

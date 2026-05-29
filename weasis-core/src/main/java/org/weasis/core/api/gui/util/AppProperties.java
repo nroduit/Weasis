@@ -55,8 +55,17 @@ public final class AppProperties {
   /** The directory for writing temporary files */
   public static final Path APP_TEMP_DIR = initializeTempDirectory();
 
-  /** The path of the directory ".weasis" (containing the installation and the preferences) */
+  /** The base directory for user data (per-bundle data and downloaded resources). */
   public static final Path WEASIS_PATH = initializeWeasisPath();
+
+  /** The base directory for user configuration (preferences). */
+  public static final Path WEASIS_CONFIG_PATH = initWeasisDir("weasis.config.dir"); // NON-NLS
+
+  /** The base directory for state data such as logs. */
+  public static final Path WEASIS_LOG_PATH = initWeasisDir("weasis.log.dir"); // NON-NLS
+
+  /** The base directory for the regenerable cache (OSGi bundle cache). */
+  public static final Path WEASIS_CACHE_PATH = initWeasisDir("weasis.cache.dir"); // NON-NLS
 
   public static final String CACHE_NAME = "cache";
 
@@ -112,6 +121,12 @@ public final class AppProperties {
         System.getProperty(
             "weasis.path", System.getProperty("user.home") + File.separator + ".weasis"); // NON-NLS
     return Paths.get(weasisPath);
+  }
+
+  /** Reads a per-OS base directory property, falling back to the data directory if unset. */
+  private static Path initWeasisDir(String key) {
+    String value = System.getProperty(key);
+    return StringUtil.hasText(value) ? Paths.get(value) : WEASIS_PATH;
   }
 
   /**

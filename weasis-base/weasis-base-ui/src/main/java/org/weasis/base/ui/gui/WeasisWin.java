@@ -832,7 +832,7 @@ public class WeasisWin {
     openLogFolderMenuItem.addActionListener(
         _ ->
             GuiUtils.openSystemExplorer(
-                openLogFolderMenuItem, AppProperties.WEASIS_PATH.resolve("log")));
+                openLogFolderMenuItem, AppProperties.WEASIS_LOG_PATH.resolve("log")));
     helpMenuItem.add(openLogFolderMenuItem);
 
     final JMenuItem reportMenuItem = new JMenuItem(Messages.getString("submit.bug.report"));
