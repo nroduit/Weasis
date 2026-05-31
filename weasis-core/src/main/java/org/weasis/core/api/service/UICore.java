@@ -76,6 +76,7 @@ public final class UICore {
   public static final String P_FORMAT_CODE = "locale.format.code";
 
   public static final String CONFIRM_CLOSE = "weasis.confirm.closing";
+  public static final String CONFIRM_DELETE_MEASUREMENT = "weasis.confirm.delete.measurement";
   public static final String LINUX_WINDOWS_DECORATION = "weasis.linux.windows.decoration";
   public static final String USE_SYSTEM_FILE_CHOOSER = "weasis.use.system.file.chooser";
   private static final Logger LOGGER = LoggerFactory.getLogger(UICore.class);
