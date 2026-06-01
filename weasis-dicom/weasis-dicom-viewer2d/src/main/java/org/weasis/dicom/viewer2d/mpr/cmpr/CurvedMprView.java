@@ -202,9 +202,17 @@ public class CurvedMprView extends View2d {
   }
 
   private String unitAbbreviation() {
-    DicomImageElement img = curvedMprAxis == null ? null : curvedMprAxis.getImageElement();
-    Unit unit = img == null ? Unit.MILLIMETER : img.getPixelSpacingUnit();
-    return unit == null ? Unit.MILLIMETER.getAbbreviation() : unit.getAbbreviation();
+    Unit unit = Unit.MILLIMETER;
+    if (curvedMprAxis != null) {
+      DicomImageElement img = curvedMprAxis.getImageElement();
+      if (img != null) {
+        Unit spacingUnit = img.getPixelSpacingUnit();
+        if (spacingUnit != null) {
+          unit = spacingUnit;
+        }
+      }
+    }
+    return unit.getAbbreviation();
   }
 
   /** Fall back to 1.0 if the volume reports a degenerate (0 or negative) pixel spacing. */

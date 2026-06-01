@@ -78,7 +78,7 @@ public class CurvedMprAxis {
   private CurvedMprImageIO io;
   private DicomImageElement imageElement;
   private CurvedMprView view;
-  private volatile DebugCurveData debugData;
+  private volatile DebugCurveData debugData; // NOSONAR guarantees visibility of the reference
 
   // Live-edit binding to the source polyline. Optional.
   private MprView sourceView;
