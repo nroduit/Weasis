@@ -17,8 +17,10 @@ jobs:
       - name: Compute build matrices from the platforms input
         id: set
         shell: bash
+        env:
+          PLATFORMS_INPUT: ${{ inputs.platforms }}
         run: |
-          sel="${{ inputs.platforms }}"
+          sel="$PLATFORMS_INPUT"
           [ -z "$sel" ] && sel="all"
           jpkg=$(jq -cn --arg sel "$sel" '
             [
