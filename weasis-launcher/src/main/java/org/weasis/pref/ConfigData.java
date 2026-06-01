@@ -292,16 +292,20 @@ public class ConfigData {
   }
 
   private void applyLocalCodebase() {
+    applyLocalCodebase(false);
+  }
+
+  private void applyLocalCodebase(boolean force) {
     File localCodebase = findLocalCodebase();
     String baseURI = localCodebase.toURI().toString();
     if (baseURI.endsWith("/")) {
       baseURI = baseURI.substring(0, baseURI.length() - 1);
     }
     try {
-      addProperty(P_WEASIS_CODEBASE_LOCAL, localCodebase.getAbsolutePath());
-      addProperty(P_WEASIS_CODEBASE_URL, baseURI);
+      addProperty(P_WEASIS_CODEBASE_LOCAL, localCodebase.getAbsolutePath(), force);
+      addProperty(P_WEASIS_CODEBASE_URL, baseURI, force);
       baseURI += "/" + CONFIG_DIRECTORY + "/";
-      addProperty(CONFIG_PROPERTIES_PROP, baseURI + CONFIG_PROPERTIES_FILE_VALUE);
+      addProperty(CONFIG_PROPERTIES_PROP, baseURI + CONFIG_PROPERTIES_FILE_VALUE, force);
     } catch (Exception e) {
       LOGGER.error("Apply Codebase", e);
     }
@@ -715,7 +719,22 @@ public class ConfigData {
     if (propURI != null) {
       configOutput.append("\n  Application configuration file = "); // NON-NLS
       configOutput.append(propURI);
-      preferences.readJson(propURI);
+      if (!preferences.readJson(propURI)) {
+        // The configuration server is unreachable (or returned an invalid file): fall back to the
+        // self-contained local installation so Weasis can still start without the remote server.
+        URI localURI = getLocalPropertiesURI(CONFIG_PROPERTIES_FILE_VALUE);
+        if (localURI != null && !localURI.equals(propURI)) {
+          LOGGER.warn(
+              "Cannot load configuration from {}, falling back to the local installation {}",
+              propURI,
+              localURI);
+          // Force the codebase to local so bundle locations resolve to the bundled jars.
+          applyLocalCodebase(true);
+          configOutput.append("\n  Fallback to local configuration file = "); // NON-NLS
+          configOutput.append(localURI);
+          preferences.readJson(localURI);
+        }
+      }
 
     } else {
       LOGGER.error("No base.json path found, Weasis cannot start!");
