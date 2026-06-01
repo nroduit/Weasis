@@ -24,6 +24,7 @@ import javax.swing.Timer;
 import org.joml.Vector3d;
 import org.joml.Vector3i;
 import org.opencv.core.Point3;
+import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.ui.model.graphic.Graphic;
 import org.weasis.core.ui.model.graphic.imp.line.PolylineGraphic;
 import org.weasis.dicom.codec.DicomImageElement;
@@ -70,11 +71,15 @@ public class CurvedMprAxis {
   /** Debounce delay before regenerating the panoramic image after a polyline edit. */
   private static final int REFRESH_DEBOUNCE_MS = 150;
 
+  /** Default slab vertical extent (mm) used when an axis is created and on settings reset. */
+  public static final double DEFAULT_WIDTH_MM = 40.0;
+
   private final Volume<?, ?> volume;
   private final List<Vector3d> curvePoints3D;
   private final Vector3d planeNormal;
   private double widthMm;
   private double stepMm;
+  private Unit pixelSpacingUnit = Unit.PIXEL;
   private CurvedMprImageIO io;
   private DicomImageElement imageElement;
   private CurvedMprView view;
@@ -97,7 +102,7 @@ public class CurvedMprAxis {
     this.volume = Objects.requireNonNull(volume);
     this.curvePoints3D = new ArrayList<>(curvePoints3D);
     this.planeNormal = new Vector3d(planeNormal).normalize();
-    this.widthMm = 40.0;
+    this.widthMm = DEFAULT_WIDTH_MM;
     this.stepMm = volume.getMinPixelRatio();
   }
 
@@ -122,6 +127,15 @@ public class CurvedMprAxis {
       this.widthMm = widthMm;
       updateImage();
     }
+  }
+
+  /** Pixel-spacing unit of the source volume: {@code mm} when calibrated, {@code pix} otherwise. */
+  public Unit getPixelSpacingUnit() {
+    return pixelSpacingUnit;
+  }
+
+  public void setPixelSpacingUnit(Unit pixelSpacingUnit) {
+    this.pixelSpacingUnit = pixelSpacingUnit == null ? Unit.PIXEL : pixelSpacingUnit;
   }
 
   public double getStepMm() {

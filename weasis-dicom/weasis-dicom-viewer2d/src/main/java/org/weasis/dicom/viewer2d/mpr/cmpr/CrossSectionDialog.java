@@ -9,6 +9,7 @@
  */
 package org.weasis.dicom.viewer2d.mpr.cmpr;
 
+import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
@@ -66,6 +67,15 @@ public final class CrossSectionDialog {
     panel.add(
         new JLabel("Spacing between cuts (%s)".formatted(unitLabel) + StringUtil.COLON)); // NON-NLS
     panel.add(spacingSpinner);
+
+    JButton reset = new JButton("Reset to defaults"); // NON-NLS
+    reset.addActionListener(
+        e -> {
+          widthSpinner.setValue(defaults.widthMm());
+          heightSpinner.setValue(defaults.heightMm());
+          spacingSpinner.setValue(defaults.spacingMm());
+        });
+    panel.add(reset, "span 2, align right"); // NON-NLS
 
     int result =
         JOptionPane.showConfirmDialog(

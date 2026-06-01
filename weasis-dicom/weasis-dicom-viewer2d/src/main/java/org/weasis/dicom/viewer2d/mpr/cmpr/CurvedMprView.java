@@ -11,6 +11,9 @@ package org.weasis.dicom.viewer2d.mpr.cmpr;
 
 import java.awt.Component;
 import java.awt.GridBagConstraints;
+import java.util.ArrayList;
+import java.util.List;
+import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
@@ -122,10 +125,15 @@ public class CurvedMprView extends View2d {
     JPanel panel =
         new JPanel(
             new MigLayout(
-                "fillx, ins 6lp, wrap 1", "[grow, fill]", "[]2lp[]8lp[]2lp[]")); // NON-NLS
+                "fillx, ins 6lp, wrap 1", "[grow, fill]", "[]2lp[]8lp[]2lp[]8lp[]")); // NON-NLS
 
-    addHeightSlider(panel, pixelMm, unitLabel);
-    addStepSlider(panel, pixelMm, unitLabel);
+    List<Runnable> resetActions = new ArrayList<>(2);
+    addHeightSlider(panel, pixelMm, unitLabel, resetActions);
+    addStepSlider(panel, pixelMm, unitLabel, resetActions);
+
+    JButton reset = new JButton("Reset to defaults"); // NON-NLS
+    reset.addActionListener(e -> resetActions.forEach(Runnable::run));
+    panel.add(reset, "align right"); // NON-NLS
 
     JPopupMenu popup = new JPopupMenu();
     popup.add(panel);
@@ -136,7 +144,8 @@ public class CurvedMprView extends View2d {
    * Append a header + slider that drives {@link CurvedMprAxis#setWidthMm}. The slider uses
    * voxel-aligned ticks so granularity matches the underlying sampling resolution.
    */
-  private void addHeightSlider(JPanel panel, double pixelMm, String unitLabel) {
+  private void addHeightSlider(
+      JPanel panel, double pixelMm, String unitLabel, List<Runnable> resetActions) {
     double current = Math.max(1.0, curvedMprAxis.getWidthMm());
     double min = Math.min(5.0, current);
     double max = Math.max(200.0, current * 2);
@@ -161,19 +170,29 @@ public class CurvedMprView extends View2d {
         });
     panel.add(label);
     panel.add(slider, "growx, w 260lp"); // NON-NLS
+
+    int defaultValue =
+        Math.clamp((int) Math.round(CurvedMprAxis.DEFAULT_WIDTH_MM * scale), sliderMin, sliderMax);
+    resetActions.add(() -> slider.setValue(defaultValue));
   }
 
   /**
    * Append a header + slider that drives {@link CurvedMprAxis#setStepMm}. The label includes the
    * resulting sample count (curve arc-length ÷ step) so the user understands the cost.
+   *
+   * <p>The panoramic's vertical resolution is one output row per {@code pixelMm} (the image height
+   * ratio), so the range is anchored to it — from 0.5× (oversampled) to 10× (coarse) of a row —
+   * rather than a fixed millimetre cap. This keeps the useful choices in range for both fine and
+   * coarse volumes.
    */
-  private void addStepSlider(JPanel panel, double pixelMm, String unitLabel) {
+  private void addStepSlider(
+      JPanel panel, double pixelMm, String unitLabel, List<Runnable> resetActions) {
     double current = Math.max(pixelMm / 2.0, curvedMprAxis.getStepMm());
     double min = Math.min(pixelMm / 2.0, current);
-    double max = Math.max(10.0, current * 2);
+    double max = Math.max(pixelMm * 10.0, current);
 
-    // 10 slider units per mm gives ~0.1 mm granularity, fine enough for sample-step tuning.
-    final int scale = 10;
+    // Granularity finer than a row; clamped to at least 10 slider units per mm (~0.1 mm).
+    final int scale = (int) Math.clamp(Math.round(4.0 / pixelMm), 10, 1000);
     int sliderMin = Math.max(1, (int) Math.round(min * scale));
     int sliderMax = Math.max(sliderMin + 1, (int) Math.round(max * scale));
     int sliderInit = Math.clamp((int) Math.round(current * scale), sliderMin, sliderMax);
@@ -199,20 +218,21 @@ public class CurvedMprView extends View2d {
         });
     panel.add(label);
     panel.add(slider, "growx, w 260lp"); // NON-NLS
+
+    // Default sampling step is the volume's min pixel ratio (i.e. pixelMm).
+    int defaultValue = Math.clamp((int) Math.round(pixelMm * scale), sliderMin, sliderMax);
+    resetActions.add(() -> slider.setValue(defaultValue));
   }
 
+  /**
+   * The unit the height/step values are shown in. The panoramic image itself carries no {@code
+   * PixelSpacing} (its X axis is arc-length, not Euclidean distance), so the slab parameters are
+   * reported in the <em>source</em> volume's unit instead — {@code mm} when calibrated, {@code pix}
+   * otherwise.
+   */
   private String unitAbbreviation() {
-    Unit unit = Unit.MILLIMETER;
-    if (curvedMprAxis != null) {
-      DicomImageElement img = curvedMprAxis.getImageElement();
-      if (img != null) {
-        Unit spacingUnit = img.getPixelSpacingUnit();
-        if (spacingUnit != null) {
-          unit = spacingUnit;
-        }
-      }
-    }
-    return unit.getAbbreviation();
+    Unit unit = curvedMprAxis == null ? Unit.MILLIMETER : curvedMprAxis.getPixelSpacingUnit();
+    return (unit == null ? Unit.MILLIMETER : unit).getAbbreviation();
   }
 
   /** Fall back to 1.0 if the volume reports a degenerate (0 or negative) pixel spacing. */

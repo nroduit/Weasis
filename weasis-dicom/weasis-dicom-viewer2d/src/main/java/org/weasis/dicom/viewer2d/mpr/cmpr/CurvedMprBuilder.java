@@ -10,6 +10,8 @@
 package org.weasis.dicom.viewer2d.mpr.cmpr;
 
 import java.awt.geom.Point2D;
+import java.io.File;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -23,11 +25,13 @@ import org.opencv.core.Point3;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
+import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.media.data.Taggable;
 import org.weasis.core.ui.model.graphic.imp.line.PolylineGraphic;
 import org.weasis.dicom.codec.DicomImageElement;
+import org.weasis.dicom.codec.DicomMediaIO;
 import org.weasis.dicom.codec.DicomSeries;
 import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.utils.DicomMediaUtils;
@@ -121,6 +125,7 @@ public final class CurvedMprBuilder {
     if (refImg != null) {
       copyBaseTags(io, refImg);
       io.setBaseAttributes(buildBaseAttributes(refImg));
+      axis.setPixelSpacingUnit(refImg.getPixelSpacingUnit());
     }
     axis.setImageElement(new DicomImageElement(io, 0));
     return Optional.of(axis);
@@ -178,6 +183,12 @@ public final class CurvedMprBuilder {
     DicomMediaUtils.writeMetaData(series, baseHeader);
     series.setTag(TagW.ExplorerModel, dicomModel);
 
+    // Each slab is rendered and written to a real DICOM file (header + pixel data), then
+    // re-imported as a genuine on-disk image. This makes the resulting series behave like any
+    // imported series — in particular it exports with pixel data, unlike a purely synthetic reader
+    // whose getDicomObject() carries headers only.
+    Path tempDir = AppProperties.buildAccessibleTempDirectory(AppProperties.CACHE_NAME, "cmpr");
+
     int instance = 0;
     for (int i = 0; i < sampled.size(); i++) {
       instance++;
@@ -185,12 +196,19 @@ public final class CurvedMprBuilder {
           new CrossSectionImageIO(
               volume, sampled.get(i), perps.get(i), params.widthMm(), params.heightMm(), instance);
       copyBaseTags(io, refImg);
+      String sopUid = (String) io.getTagValue(TagD.get(Tag.SOPInstanceUID));
       Attributes perInstance = new Attributes(baseHeader);
-      perInstance.setString(Tag.SOPInstanceUID, VR.UI, UIDUtils.createUID());
+      perInstance.setString(Tag.SOPInstanceUID, VR.UI, sopUid);
       perInstance.setInt(Tag.InstanceNumber, VR.IS, instance);
       io.setBaseAttributes(perInstance);
       io.setTag(TagD.get(Tag.SeriesInstanceUID), seriesUid);
-      series.addMedia(new DicomImageElement(io, 0));
+
+      File file = new File(tempDir.toFile(), sopUid);
+      if (io.buildFile(file)) {
+        addDicomFileToSeries(series, file);
+      } else {
+        LOGGER.warn("Failed to write cross-section slice {}", instance);
+      }
     }
 
     if (series.size(null) == 0) {
@@ -236,6 +254,23 @@ public final class CurvedMprBuilder {
       rotation.transform(planeNormal);
     }
     return planeNormal;
+  }
+
+  /** Read back a written cross-section file and append its image element(s) to the series. */
+  private static void addDicomFileToSeries(DicomSeries series, File file) {
+    try {
+      DicomMediaIO reader = new DicomMediaIO(file);
+      if (reader.isReadableDicom()) {
+        DicomImageElement[] elements = reader.getMediaElement();
+        if (elements != null) {
+          for (DicomImageElement element : elements) {
+            series.addMedia(element);
+          }
+        }
+      }
+    } catch (Exception e) {
+      LOGGER.error("Cannot load cross-section DICOM file: {}", file, e);
+    }
   }
 
   /** Copy the standard curved-MPR base tag set onto any {@link Taggable} reader. */

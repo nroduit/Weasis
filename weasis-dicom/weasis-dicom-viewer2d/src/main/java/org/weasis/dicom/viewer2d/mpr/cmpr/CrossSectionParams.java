@@ -22,6 +22,7 @@ public record CrossSectionParams(double widthMm, double heightMm, double spacing
 
   /** Default parameters: 40mm wide perpendicular slab, full volume Z height, 1mm between cuts. */
   public static CrossSectionParams defaults(Volume<?, ?> volume) {
-    return new CrossSectionParams(40.0, volume.getSizeZ() * volume.getPixelRatio().z, 1.0);
+    return new CrossSectionParams(
+        CurvedMprAxis.DEFAULT_WIDTH_MM, volume.getSizeZ() * volume.getPixelRatio().z, 1.0);
   }
 }

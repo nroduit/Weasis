@@ -10,6 +10,7 @@
 package org.weasis.dicom.viewer2d.mpr.cmpr;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.HashMap;
@@ -22,11 +23,17 @@ import org.dcm4che3.data.SpecificCharacterSet;
 import org.dcm4che3.data.Tag;
 import org.dcm4che3.data.UID;
 import org.dcm4che3.data.VR;
+import org.dcm4che3.img.DicomJpegWriteParam;
 import org.dcm4che3.img.DicomMetaData;
+import org.dcm4che3.img.DicomOutputData;
+import org.dcm4che3.img.DicomTranscodeParam;
 import org.dcm4che3.img.stream.ImageDescriptor;
+import org.dcm4che3.io.DicomOutputStream;
 import org.dcm4che3.util.UIDUtils;
 import org.joml.Vector3d;
 import org.opencv.core.Core.MinMaxLocResult;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.core.api.media.data.Codec;
 import org.weasis.core.api.media.data.FileCache;
@@ -49,6 +56,8 @@ import org.weasis.opencv.data.PlanarImage;
  * series of these instances forms the dental "cross-cuts" companion to the panoramic image.
  */
 public class CrossSectionImageIO implements DcmMediaReader {
+
+  private static final Logger LOGGER = LoggerFactory.getLogger(CrossSectionImageIO.class);
 
   private static final String MIME_TYPE = "image/cmpr-xs";
 
@@ -268,7 +277,49 @@ public class CrossSectionImageIO implements DcmMediaReader {
 
   @Override
   public boolean buildFile(File output) {
-    return false;
+    try {
+      PlanarImage image = getImageFragment(null);
+      return image != null && writeImageToFile(output, image);
+    } catch (Exception e) {
+      LOGGER.error("Cannot write cross-section DICOM file", e);
+      return false;
+    }
+  }
+
+  private boolean writeImageToFile(File output, PlanarImage image) throws Exception {
+    DicomMetaData metadata = getDicomMetaData();
+    Attributes dataSet = metadata.getDicomObject();
+    if (dataSet == null) {
+      return false;
+    }
+    // The base attributes are cloned from the source header, which may carry the source image's
+    // PixelData. Drop it so the writer emits only the freshly generated slab pixels.
+    dataSet.remove(Tag.PixelData);
+    String dstTsuid = metadata.getTransferSyntaxUID();
+    ImageDescriptor desc = metadata.getImageDescriptor();
+    DicomTranscodeParam params = new DicomTranscodeParam(dstTsuid);
+    DicomJpegWriteParam writeParams = params.getWriteJpegParam();
+
+    DicomOutputData imgData = new DicomOutputData(image, desc, dstTsuid);
+    if (!dstTsuid.equals(imgData.getTsuid())) {
+      dstTsuid = imgData.getTsuid();
+      if (!DicomOutputData.isNativeSyntax(dstTsuid)) {
+        writeParams = DicomJpegWriteParam.buildDicomImageWriteParam(dstTsuid);
+      }
+    }
+
+    try (DicomOutputStream dos = new DicomOutputStream(new FileOutputStream(output), dstTsuid)) {
+      dos.writeFileMetaInformation(dataSet.createFileMetaInformation(dstTsuid));
+      if (DicomOutputData.isNativeSyntax(dstTsuid)) {
+        imgData.writeRawImageData(dos, dataSet);
+      } else {
+        int[] jpegWriteParams =
+            imgData.adaptTagsToCompressedImage(
+                dataSet, imgData.getFirstImage().get(), desc, writeParams);
+        imgData.writeCompressedImageData(dos, dataSet, jpegWriteParams);
+      }
+    }
+    return true;
   }
 
   @Override
