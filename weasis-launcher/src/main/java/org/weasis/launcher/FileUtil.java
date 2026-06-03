@@ -34,7 +34,6 @@ import javax.xml.stream.XMLStreamReader;
 import org.apache.felix.framework.util.Util;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.weasis.core.util.StreamUtil;
 
 public class FileUtil {
   private static final Logger LOGGER = LoggerFactory.getLogger(FileUtil.class);
@@ -333,7 +332,7 @@ public class FileUtil {
         ZipInputStream zis = new ZipInputStream(bufInStream)) {
       extractZipEntries(zis, targetDir);
     } finally {
-      StreamUtil.safeClose(inputStream);
+      safeClose(inputStream);
     }
   }
 
