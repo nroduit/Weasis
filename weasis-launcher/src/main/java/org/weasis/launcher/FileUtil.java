@@ -315,9 +315,7 @@ public class FileUtil {
    * @throws IOException if an I/O error occurs or a resource limit is exceeded
    * @throws IllegalArgumentException if inputStream or targetDir is null
    */
-  @SuppressWarnings(
-      "java:S5042") // Zip-bomb protections are enforced: entry count, total size, and compression
-  // ratio
+  @SuppressWarnings("java:S5042") // Zip-bomb protections are enforced
   public static void unzip(InputStream inputStream, Path targetDir) throws IOException {
     if (inputStream == null) {
       throw new IllegalArgumentException("Input stream cannot be null");
