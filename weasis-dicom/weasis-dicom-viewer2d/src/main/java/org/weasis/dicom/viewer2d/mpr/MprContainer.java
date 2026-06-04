@@ -622,7 +622,7 @@ public class MprContainer extends DicomViewerPlugin
   public void addSeriesList(
       List<MediaSeries<DicomImageElement>> seriesList, boolean removeOldSeries) {
     if (seriesList != null && !seriesList.isEmpty()) {
-      addSeries(seriesList.get(0));
+      addSeries(seriesList.getFirst());
     }
   }
 

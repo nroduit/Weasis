@@ -13,12 +13,14 @@ import java.awt.Component;
 import java.awt.GridBagConstraints;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
 import javax.swing.JSlider;
 import net.miginfocom.swing.MigLayout;
+import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.api.util.ResourceUtil.OtherIcon;
@@ -151,14 +153,12 @@ public class CurvedMprView extends View2d {
     double max = Math.max(200.0, current * 2);
 
     // 1 slider unit ≈ 1 voxel. Cap to avoid integer overflow on tiny pixelMm values.
-    final int scale = (int) Math.clamp(Math.round(1.0 / pixelMm), 1, 1000);
+    final int scale = Math.clamp(Math.round(1.0 / pixelMm), 1, 1000);
     int sliderMin = (int) Math.round(min * scale);
     int sliderMax = Math.max(sliderMin + 1, (int) Math.round(max * scale));
     int sliderInit = Math.clamp((int) Math.round(current * scale), sliderMin, sliderMax);
 
-    JSlider slider = new JSlider(sliderMin, sliderMax, sliderInit);
-    slider.setMajorTickSpacing(Math.max(1, (sliderMax - sliderMin) / 4));
-    slider.setPaintTicks(true);
+    JSlider slider = GuiUtils.createSlider(sliderMin, sliderMax, sliderInit, 4);
     JLabel label = new JLabel("Height: %.1f %s".formatted(current, unitLabel)); // NON-NLS
     slider.addChangeListener(
         e -> {
@@ -192,7 +192,7 @@ public class CurvedMprView extends View2d {
     double max = Math.max(pixelMm * 10.0, current);
 
     // Granularity finer than a row; clamped to at least 10 slider units per mm (~0.1 mm).
-    final int scale = (int) Math.clamp(Math.round(4.0 / pixelMm), 10, 1000);
+    final int scale = Math.clamp(Math.round(4.0 / pixelMm), 10, 1000);
     int sliderMin = Math.max(1, (int) Math.round(min * scale));
     int sliderMax = Math.max(sliderMin + 1, (int) Math.round(max * scale));
     int sliderInit = Math.clamp((int) Math.round(current * scale), sliderMin, sliderMax);
@@ -231,8 +231,8 @@ public class CurvedMprView extends View2d {
    * otherwise.
    */
   private String unitAbbreviation() {
-    Unit unit = curvedMprAxis == null ? Unit.MILLIMETER : curvedMprAxis.getPixelSpacingUnit();
-    return (unit == null ? Unit.MILLIMETER : unit).getAbbreviation();
+    Unit unit = curvedMprAxis == null ? null : curvedMprAxis.getPixelSpacingUnit();
+    return Objects.requireNonNullElse(unit, Unit.MILLIMETER).getAbbreviation();
   }
 
   /** Fall back to 1.0 if the volume reports a degenerate (0 or negative) pixel spacing. */

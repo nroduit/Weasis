@@ -19,7 +19,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
 import org.dcm4che3.data.Attributes;
-import org.dcm4che3.data.SpecificCharacterSet;
 import org.dcm4che3.data.Tag;
 import org.dcm4che3.data.UID;
 import org.dcm4che3.data.VR;
@@ -254,13 +253,7 @@ public class CrossSectionImageIO implements DcmMediaReader {
 
   @Override
   public Attributes getDicomObject() {
-    Attributes dcm = new Attributes(tags.size() + (attributes != null ? attributes.size() : 0));
-    if (attributes != null) {
-      SpecificCharacterSet cs = attributes.getSpecificCharacterSet();
-      dcm.setSpecificCharacterSet(cs.toCodes());
-      dcm.addAll(attributes);
-    }
-    DicomMediaUtils.fillAttributes(tags, dcm);
+    Attributes dcm = CurvedMprImageIO.buildAttributes(tags, attributes);
     // Ensure the per-instance SeriesInstanceUID stays the one assigned to the series, not the
     // ref-image one copied by the base attributes.
     Object seriesUid = tags.get(TagD.get(Tag.SeriesInstanceUID));

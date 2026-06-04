@@ -97,8 +97,8 @@ public class CurvedMprImageIO implements DcmMediaReader {
    *
    * <ul>
    *   <li>The curve lies in the XY plane at a fixed Z (the axial slice level)
-   *   <li>At each curve point, the tangent is computed in XY
-   *   <li>The in-plane perpendicular (Z × tangent) is used for MIP slab (depth)
+   *   <li>At each curve point a single voxel on the curve is sampled (a thin curved slice, like the
+   *       cross-section slices and the MPR views) so the pixel values match the source exactly
    *   <li>The vertical (Z) direction is used for height sampling
    *   <li>Output X = arc-length position along the curve
    *   <li>Output Y = vertical (Z) position
@@ -111,7 +111,7 @@ public class CurvedMprImageIO implements DcmMediaReader {
     }
 
     double stepMm = axis.getStepMm();
-    double widthMm = axis.getWidthMm();
+    double sliceSizeMm = axis.getWidthMm();
     double pixelMm = volume.getMinPixelRatio();
     Vector3d voxelRatio = volume.getVoxelRatio();
 
@@ -120,7 +120,7 @@ public class CurvedMprImageIO implements DcmMediaReader {
         "curvePoints: {}, stepMm: {}, widthMm: {}, pixelMm: {}",
         curvePoints.size(),
         stepMm,
-        widthMm,
+        sliceSizeMm,
         pixelMm);
     LOGGER.info(
         "volume size: {}x{}x{}, voxelRatio: ({},{},{})",
@@ -140,12 +140,7 @@ public class CurvedMprImageIO implements DcmMediaReader {
       return null;
     }
 
-    // Slab thickness (in mm) for MIP along the perpendicular direction
-    double slabThicknessMm = 10.0;
-    int slabSamples = (int) Math.max(1, Math.round(slabThicknessMm / pixelMm));
-
     // Vertical extent: height in Z direction (in mm)
-    double sliceSizeMm = widthMm;
     int heightPx = (int) Math.round(sliceSizeMm / pixelMm);
     if (heightPx < 1) heightPx = 1;
 
@@ -154,16 +149,10 @@ public class CurvedMprImageIO implements DcmMediaReader {
     if (CurvedMprAxis.DEBUG_DRAW) {
       axis.setDebugData(
           new CurvedMprAxis.DebugCurveData(
-              curvePoints, smoothedPoints, sampledPoints, perpDirs, slabThicknessMm));
+              curvePoints, smoothedPoints, sampledPoints, perpDirs, pixelMm));
     }
 
-    LOGGER.info(
-        "Output: {}x{} px, slab={}mm ({} samples), height={}mm",
-        widthPx,
-        heightPx,
-        slabThicknessMm,
-        slabSamples,
-        sliceSizeMm);
+    LOGGER.info("Output: {}x{} px, height={}mm", widthPx, heightPx, sliceSizeMm);
 
     int cvType = volume.getCvType();
     ImageCV dst = new ImageCV(heightPx, widthPx, cvType);
@@ -190,7 +179,6 @@ public class CurvedMprImageIO implements DcmMediaReader {
     // For each point along the curve (horizontal axis of panoramic)
     for (int i = 0; i < widthPx; i++) {
       Vector3d curvePoint = sampledPoints.get(i);
-      Vector3d perp = perpDirs.get(i); // in-plane perpendicular for MIP slab
 
       // For each pixel in the vertical direction (Z axis)
       for (int j = 0; j < heightPx; j++) {
@@ -199,21 +187,10 @@ public class CurvedMprImageIO implements DcmMediaReader {
         double zOffsetVoxels = (j - heightPx / 2.0) / voxelRatio.z;
         double sampleZ = curveZ + zOffsetVoxels;
 
-        // MIP along the in-plane perpendicular direction (slab thickness)
-        double maxValue = Double.NEGATIVE_INFINITY;
-        for (int k = 0; k < slabSamples; k++) {
-          double perpOffset = (k - slabSamples / 2.0);
-          double sampleX = curvePoint.x + perp.x * perpOffset;
-          double sampleY = curvePoint.y + perp.y * perpOffset;
-
-          Number value = volume.getInterpolatedValueFromSource(sampleX, sampleY, sampleZ, 0);
-          if (value != null && value.doubleValue() > maxValue) {
-            maxValue = value.doubleValue();
-          }
-        }
-
-        if (maxValue > Double.NEGATIVE_INFINITY) {
-          setPixelValue(dst, j, i, maxValue, cvType);
+        Number value =
+            volume.getInterpolatedValueFromSource(curvePoint.x, curvePoint.y, sampleZ, 0);
+        if (value != null) {
+          setPixelValue(dst, j, i, value, cvType);
         }
       }
     }
@@ -354,6 +331,10 @@ public class CurvedMprImageIO implements DcmMediaReader {
 
   @Override
   public Attributes getDicomObject() {
+    return buildAttributes(tags, attributes);
+  }
+
+  static Attributes buildAttributes(HashMap<TagW, Object> tags, Attributes attributes) {
     Attributes dcm = new Attributes(tags.size() + (attributes != null ? attributes.size() : 0));
     if (attributes != null) {
       SpecificCharacterSet cs = attributes.getSpecificCharacterSet();

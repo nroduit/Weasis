@@ -61,7 +61,6 @@ public final class CurvedMprBuilder {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(CurvedMprBuilder.class);
 
-  /** Tags copied verbatim from the source axial image onto every derived curved-MPR reader. */
   private static final int[] BASE_TAG_IDS = {
     Tag.PatientID,
     Tag.PatientName,
@@ -73,6 +72,7 @@ public final class CurvedMprBuilder {
     Tag.StudyTime,
     Tag.AccessionNumber,
     Tag.ReferringPhysicianName,
+    Tag.SOPClassUID,
     Tag.Modality,
     Tag.BodyPartExamined,
     Tag.PhotometricInterpretation,
@@ -80,14 +80,16 @@ public final class CurvedMprBuilder {
     Tag.BitsAllocated,
     Tag.BitsStored,
     Tag.HighBit,
-    Tag.PixelRepresentation,
-    Tag.RescaleSlope,
-    Tag.RescaleIntercept,
-    Tag.RescaleType,
+    Tag.PixelRepresentation
+  };
+
+  private static final int[] VOI_LUT_ATTRS = {
     Tag.WindowCenter,
     Tag.WindowWidth,
     Tag.WindowCenterWidthExplanation,
-    Tag.VOILUTFunction
+    Tag.VOILUTFunction,
+    Tag.VOILUTSequence,
+    Tag.Units
   };
 
   private CurvedMprBuilder() {}
@@ -180,6 +182,13 @@ public final class CurvedMprBuilder {
     String csDesc = "Curved MPR Cross-Sections"; // NON-NLS
     baseHeader.setString(
         Tag.SeriesDescription, VR.LO, desc == null ? csDesc : desc + " [%s]".formatted(csDesc));
+    // The slabs are perpendicular to the curve, so the source axial slice's localization (inherited
+    // by cloning its header) does not describe them. Drop it rather than emit a wrong orientation:
+    // the cross-sections are then shown without patient-space orientation/position (and
+    // crosslines).
+    baseHeader.remove(Tag.ImageOrientationPatient);
+    baseHeader.remove(Tag.ImagePositionPatient);
+    baseHeader.remove(Tag.SliceLocation);
     DicomMediaUtils.writeMetaData(series, baseHeader);
     series.setTag(TagW.ExplorerModel, dicomModel);
 
@@ -279,9 +288,9 @@ public final class CurvedMprBuilder {
   }
 
   /**
-   * Build a minimal {@link Attributes} carrying patient/study identity for the panoramic header.
-   * Cross-sections clone the full source header instead (they need every photometric/VOI tag in
-   * order to drop in as a real DICOM series in the explorer).
+   * Build a minimal {@link Attributes} carrying patient/study identity plus the VOI/window tags for
+   * the panoramic header. Cross-sections clone the full source header instead (they need every
+   * photometric/VOI tag in order to drop in as a real DICOM series in the explorer).
    */
   public static Attributes buildBaseAttributes(DicomImageElement refImg) {
     Attributes attrs = new Attributes();
@@ -293,6 +302,11 @@ public final class CurvedMprBuilder {
     if (val != null) attrs.setString(Tag.StudyInstanceUID, VR.UI, val.toString());
     val = refImg.getTagValue(TagD.get(Tag.Modality));
     if (val != null) attrs.setString(Tag.Modality, VR.CS, val.toString());
+
+    Attributes src = refImg.getMediaReader().getDicomObject();
+    if (src != null) {
+      attrs.addSelected(src, VOI_LUT_ATTRS);
+    }
     return attrs;
   }
 }

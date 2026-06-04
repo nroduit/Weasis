@@ -23,7 +23,7 @@ import org.slf4j.LoggerFactory;
 public final class CurveSampler {
   private static final Logger LOGGER = LoggerFactory.getLogger(CurveSampler.class);
 
-  /** Derived curve geometry produced by {@link #sample(List, Vector3d)}. */
+  /** Derived curve geometry produced by {@link #sample(List, Vector3d ,double, double)}. */
   public record Sampling(
       List<Vector3d> smoothedPoints, List<Vector3d> sampledPoints, List<Vector3d> perpDirections) {}
 

@@ -102,7 +102,7 @@ public final class CrossSectionDialog {
     double safeMin = Math.max(0.0, min);
     double safeMax = Math.max(safeMin + 1.0, max);
     double safeStep = step > 0 ? step : 1.0;
-    double safeValue = Math.max(safeMin, Math.min(safeMax, value));
+    double safeValue = Math.clamp(safeMax, safeMin, value);
     if (value > safeMax) {
       safeMax = value;
       safeValue = value;
