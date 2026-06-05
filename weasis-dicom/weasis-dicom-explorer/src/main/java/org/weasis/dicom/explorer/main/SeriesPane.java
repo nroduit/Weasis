@@ -41,7 +41,8 @@ import org.weasis.dicom.explorer.wado.LoadSeries;
 public class SeriesPane extends JPanel {
   private static final Logger LOGGER = LoggerFactory.getLogger(SeriesPane.class);
 
-  private static final String LAYOUT_CONSTRAINTS = "wrap 1, insets 0, gapy 0";
+  private static final int LABEL_GAP = 1;
+  private static final String LAYOUT_CONSTRAINTS = "wrap 1, insets 0, gapy " + LABEL_GAP + "lp";
   private static final String COLUMN_CONSTRAINTS = "[center]";
 
   private final DicomSeries dicomSeries;
@@ -154,7 +155,9 @@ public class SeriesPane extends JPanel {
     try {
       FontRenderContext frc = new FontRenderContext(null, false, false);
       int width = GuiUtils.getScaleLength(thumbnailSize);
-      int height = (int) Math.ceil(label.getFont().getStringBounds("0", frc).getHeight());
+      int height =
+          (int) Math.ceil(label.getFont().getStringBounds("0", frc).getHeight())
+              + GuiUtils.getScaleLength(LABEL_GAP);
 
       Dimension dimension = new Dimension(width, height);
       label.setPreferredSize(dimension);
