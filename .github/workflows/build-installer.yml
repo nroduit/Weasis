@@ -234,12 +234,6 @@ jobs:
           elif [ "$machine" = "windows" ] ; then
             declare -a customOptions=("--java-options" "-splash:\$APPDIR\resources\images\about-round.png" )
             declare -a signArgs=()
-          else
-            # sun.awt.disablegrab works around unreliable X11 pointer grabs on XWayland (GNOME/mutter),
-            # which can leave Swing popup menus invisible until the window regains focus (see issue #819).
-            declare -a customOptions=("--java-options" "-splash:\$APPDIR/resources/images/about-round.png" \
-            "--java-options" "-Dsun.awt.disablegrab=true" )
-            declare -a signArgs=()
           fi
           declare -a commonOptions=("--java-options" "-Dgosh.port=17179" \
           "--java-options" "--enable-native-access=ALL-UNNAMED" \
@@ -317,24 +311,6 @@ jobs:
             --win-menu --win-menu-group "${{ env.NAME }}" --copyright "${{ env.COPYRIGHT }}" --app-version "${{ env.WEASIS_CLEAN_VERSION }}" \
             --vendor "${{ env.VENDOR }}" --file-associations "${{ env.FILE_ASSOC }}" --verbose
             cp ${{ env.WEASIS_OUTPUT }}/*.msi final-dist/${{ env.NAME }}-${{ env.WEASIS_CLEAN_VERSION }}-${ARC_NAME}.msi
-          elif [ "$machine" = "linux" ] ; then
-            declare -a installerTypes=("deb" "rpm")
-            for installerType in ${installerTypes[@]}; do
-              if [ "${installerType}" = "rpm" ]; then
-                DEPENDENCIES=""
-                declare -a typeArgs=("--linux-rpm-license-type" "EPL-2.0")
-              else
-                DEPENDENCIES="libstdc++6, libgcc1"
-                declare -a typeArgs=("--linux-deb-maintainer" "Nicolas Roduit")
-              fi
-              jpackage --type "${installerType}" --app-image "${{ env.WEASIS_OUTPUT }}/${{ env.NAME }}" --dest "${{ env.WEASIS_OUTPUT }}" --name "${{ env.NAME }}" --resource-dir "${{ env.RES }}" \
-              --license-file "${{ env.WEASIS_INPUT }}/Licence.txt" --description "Weasis DICOM viewer" --vendor "${{ env.VENDOR }}" \
-              --copyright "${{ env.COPYRIGHT }}" --app-version "${{ env.WEASIS_CLEAN_VERSION }}" --file-associations "${{ env.FILE_ASSOC }}" \
-              --linux-app-release "1" --linux-package-name "weasis" \
-              "${typeArgs[@]}" \
-              --linux-menu-group "Viewer;MedicalSoftware;Graphics;" --linux-app-category "science" --linux-package-deps "${DEPENDENCIES}" --linux-shortcut --verbose
-              cp ${{ env.WEASIS_OUTPUT }}/*.${installerType} final-dist
-            done
           elif [ "$machine" = "macosx" ] ; then
             # Do not set verbose for public build.
             # Do NOT pass --mac-sign here: the app bundle was already signed with proper

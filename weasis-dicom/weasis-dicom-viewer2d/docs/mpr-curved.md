@@ -84,13 +84,14 @@ re-reads its points and regenerates the image after a **150 ms** debounce
    - `heightPx = round(widthMm / pixelMm)` — the Y axis is the **volume Z direction**, centered on
      the curve's Z level (`zOffsetVoxels = (j - heightPx/2) / voxelRatio.z` corrects for
      anisotropic Z spacing).
-3. Each pixel is a **maximum-intensity projection** across a fixed **10 mm** slab
-   (`slabThicknessMm = 10.0`) taken along the in-plane perpendicular, sampled with
-   `volume.getInterpolatedValueFromSource(...)`. Out-of-range samples return `null` and are
-   skipped (the pixel keeps its default 0).
+3. Each pixel is a **single interpolated sample** taken on the curve at
+   `(curvePoint.x, curvePoint.y, sampleZ)` via `volume.getInterpolatedValueFromSource(...)` — a
+   thin curved reformat, so pixel values match the source exactly (no slab, no MIP). Out-of-range
+   samples return `null` and are skipped (the pixel keeps its default 0).
 
-> The slab thickness is **hardcoded at 10 mm** and is not exposed in the UI. Only Height and
-> Step are user-adjustable.
+> Only **Height** and **Step** are user-adjustable; there is no slab-thickness parameter. The
+> per-sample perpendiculars from `CurveSampler` are used by the cross-sections and the debug
+> overlay, but the panoramic itself samples a thin slice directly on the curve.
 
 ### Pixel spacing / measurements
 
@@ -142,7 +143,8 @@ view is on the curve's slice, `drawDebug` overlays the original handles (red), t
 - **Plane assumption**: the panoramic generator assumes the curve lies in the axial XY plane at a
   fixed Z and samples height along world Z. Curves drawn on coronal / sagittal / oblique planes are
   not handled correctly by the current generator.
-- **Fixed slab thickness**: the panoramic MIP slab is fixed at 10 mm.
+- **Thin sample**: each panoramic pixel is a single on-curve sample, not a thick-slab MIP, so
+  structures off the curve plane are not projected in.
 - **Minimum 2 points**; very tight or self-intersecting curves may distort the result.
 - **Out-of-volume samples** are skipped (left at 0), not filled with a background value.
 - **Panoramic is uncalibrated**: measurements are in pixels (see above).
