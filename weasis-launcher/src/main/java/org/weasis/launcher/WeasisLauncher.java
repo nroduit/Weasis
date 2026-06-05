@@ -48,6 +48,7 @@ import java.nio.file.Paths;
 import java.nio.file.attribute.FileTime;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -129,6 +130,8 @@ public class WeasisLauncher {
 
   protected final Properties modulesi18n;
   protected final ConfigData configData;
+
+  private final List<String> pendingCommands = new ArrayList<>();
 
   public WeasisLauncher(ConfigData configData) {
     this.configData = Objects.requireNonNull(configData);
@@ -218,7 +221,16 @@ public class WeasisLauncher {
       executeCommands(configData.getArguments(), goshArgs);
 
       checkBundleUI(serverProp);
-      frameworkLoaded = true;
+
+      List<String> deferred;
+      synchronized (pendingCommands) {
+        frameworkLoaded = true;
+        deferred = List.copyOf(pendingCommands);
+        pendingCommands.clear();
+      }
+      if (!deferred.isEmpty()) {
+        executeCommands(deferred, null);
+      }
 
       showMessage(mainFrame, serverProp);
 
@@ -295,6 +307,19 @@ Starting OSGI Bundles...
 
                      """;
     LOGGER.info("\u001B[32m{}\u001B[0m", asciiArt);
+  }
+
+  // Run the commands now if the framework is ready, otherwise queue them until it is loaded. Used
+  // by the macOS Apple "open file/URI" events, which can arrive while the OSGI framework is still
+  // starting (e.g. cold start from a Finder file association), before the dicom:get command exists.
+  protected void executeCommandsWhenLoaded(List<String> commandList) {
+    synchronized (pendingCommands) {
+      if (!frameworkLoaded) {
+        pendingCommands.addAll(commandList);
+        return;
+      }
+    }
+    executeCommands(commandList, null);
   }
 
   protected void executeCommands(List<String> commandList, String goshArgs) {
@@ -1140,7 +1165,7 @@ Starting OSGI Bundles...
     int index = Utils.getWeasisProtocolIndex(uri);
     if (index < 0) {
       uri = "dicom:get -r \"" + uri + "\""; // NON-NLS
-      executeCommands(List.of(uri), null);
+      executeCommandsWhenLoaded(List.of(uri));
     } else {
       boolean sameInstance = System.currentTimeMillis() - time < 3000;
       String[] args = getArgsForURI(uri);
@@ -1180,7 +1205,7 @@ Starting OSGI Bundles...
             .map(f -> "dicom:get -l \"" + f.getPath() + "\"") // NON-NLS
             .toList();
     LOGGER.info("Get open file event from OS. Files: {}", files);
-    executeCommands(files, null);
+    executeCommandsWhenLoaded(files);
   }
 
   protected void shutdownHook() {
