@@ -33,7 +33,7 @@ mvn -B -P compressXZ -f weasis-distributions clean package
 # Then weasis-distributions/script/package-weasis.sh drives jpackage for the installer.
 ```
 
-The full installer pipeline (Windows MSI, macOS PKG with notarization, Linux DEB/RPM via Docker for multi-arch) lives in `.github/workflows/build-installer.yml` and is gated to `workflow_dispatch`.
+The full installer pipeline (Windows MSI, macOS PKG with notarization, Linux DEB/RPM via Docker for multi-arch) lives in `.github/workflows/build-installer.yml` and is gated to `workflow_dispatch`. See `weasis-distributions/docs/Native-Build-Overview.md` for the build jobs and the binary-compatibility constraints.
 
 ### Plugin archetype
 
