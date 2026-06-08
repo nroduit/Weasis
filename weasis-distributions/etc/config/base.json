@@ -268,7 +268,7 @@
     },
     {
       "code": "weasis.clean.previous.version",
-      "value": "false",
+      "value": "true",
       "description": "If true, the bundle cache is cleared when the weasis version has changed from the previous launch",
       "type": "A",
       "javaType": "BOOLEAN",
