@@ -10,11 +10,10 @@
 package org.weasis.core.api.gui.util;
 
 import com.formdev.flatlaf.util.SystemInfo;
-import java.util.Timer;
-import java.util.TimerTask;
 import javax.swing.Action;
 import javax.swing.JMenu;
 import javax.swing.JPopupMenu;
+import javax.swing.Timer;
 import javax.swing.event.PopupMenuEvent;
 import javax.swing.event.PopupMenuListener;
 
@@ -39,17 +38,12 @@ public abstract class DynamicMenu extends JMenu {
   public abstract void popupMenuWillBecomeVisible();
 
   public void popupMenuWillBecomeInvisible() {
-    // Wait the action performed of JMenuItem (Bug on Mac menu bar)
-    TimerTask task =
-        new TimerTask() {
-
-          @Override
-          public void run() {
-            removeAll();
-          }
-        };
-    Timer timer = new Timer();
-    timer.schedule(task, 250);
+    // Delay removeAll() so the selected JMenuItem action can fire first (Bug on Mac menu bar).
+    // Use a Swing Timer so removeAll() runs on the EDT: mutating the (native, on macOS screen menu
+    // bar) component tree from a background thread can freeze the UI.
+    Timer timer = new Timer(250, e -> removeAll());
+    timer.setRepeats(false);
+    timer.start();
   }
 
   public void popupMenuCanceled() {}
