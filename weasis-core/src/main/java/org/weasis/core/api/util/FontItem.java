@@ -34,6 +34,9 @@ public enum FontItem {
   MICRO_SEMIBOLD("micro.semibold.font", "Micro semibold"), // NON-NLS
   MICRO("micro.font", "Micro"); // NON-NLS
 
+  /** Last-resort font when neither the custom key nor "defaultFont" is registered in the L&F. */
+  private static final Font FALLBACK_FONT = new Font(Font.SANS_SERIF, Font.PLAIN, 12);
+
   private final String key;
   private final String name;
 
@@ -51,7 +54,11 @@ public enum FontItem {
   }
 
   public Font getFont() {
-    return UIManager.getFont(key);
+    Font font = UIManager.getFont(key);
+    if (font == null) {
+      font = UIManager.getFont("defaultFont"); // NON-NLS
+    }
+    return font == null ? FALLBACK_FONT : font;
   }
 
   @Override

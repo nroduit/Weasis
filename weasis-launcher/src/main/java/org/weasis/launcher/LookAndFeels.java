@@ -46,7 +46,7 @@ public final class LookAndFeels {
   };
 
   LookAndFeels() {
-    FlatLaf.registerCustomDefaultsSource("org.weasis.theme");
+    FlatLaf.registerCustomDefaultsSource("org.weasis.theme", LookAndFeels.class.getClassLoader());
     defaultLightTheme =
         new ReadableLookAndFeelInfo(
             "Core Light - FlatIntelliJ", "com.formdev.flatlaf.FlatIntelliJLaf", false); // NON-NLS
