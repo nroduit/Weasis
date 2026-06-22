@@ -321,9 +321,6 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
 
         if (image != null
             && layoutAction.isPresent()
-            && View2dFactory.getViewTypeNumber(
-                    (MigLayoutModel) layoutAction.get().getSelectedItem(), ViewCanvas.class)
-                > 1
             && synchAction.isPresent()) {
 
           SynchView synchview = (SynchView) synchAction.get().getSelectedItem();
