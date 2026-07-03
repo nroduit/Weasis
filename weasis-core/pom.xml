@@ -47,7 +47,7 @@
             -includeresource.all: lib/=target/dependency/;filter:=!lablib*.jar;lib:=true
             Import-Package: org.slf4j;version=!,ch.qos.logback.*;version=!,\
             !org.apache.commons.codec.binary;resolution:=optional,com.madgag.gif.fmsware;resolution:=optional,de.rototor.pdfbox.graphics2d;\
-            resolution:=optional,org.apache.pdfbox.pdmodel.*;resolution:=optional,\
+            resolution:=optional,org.apache.pdfbox.pdmodel.*;resolution:=optional,org.scilab.forge.jlatexmath.*;resolution:=optional,\
             !sun.swing,*
             Export-Package: !org.weasis.core.internal,!org.weasis.core.util,org.weasis.core.*
             -exportcontents: com.github.scribejava.*,eu.essilab.lablib.checkboxtree.*,\

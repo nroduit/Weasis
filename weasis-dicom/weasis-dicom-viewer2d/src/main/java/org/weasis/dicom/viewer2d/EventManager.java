@@ -319,9 +319,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
         Optional<ComboItemListener<MigLayoutModel>> layoutAction = getAction(ActionW.LAYOUT);
         Optional<ComboItemListener<SynchView>> synchAction = getAction(ActionW.SYNCH);
 
-        if (image != null
-            && layoutAction.isPresent()
-            && synchAction.isPresent()) {
+        if (image != null && layoutAction.isPresent() && synchAction.isPresent()) {
 
           SynchView synchview = (SynchView) synchAction.get().getSelectedItem();
           if (synchview.getSynchData().isActionEnable(ActionW.SCROLL_SERIES.cmd())) {

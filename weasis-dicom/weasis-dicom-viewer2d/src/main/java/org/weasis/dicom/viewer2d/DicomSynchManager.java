@@ -265,13 +265,17 @@ public class DicomSynchManager extends SynchManager<DicomImageElement> {
 
     boolean manualSyncActivated = synch.isManualSynchActivated();
     // Add check if any of the views has manualSync activated
-    long manuallySyncedViews = views.stream().filter(v -> {
-      ViewSynchData sd = (ViewSynchData) v.getActionValue(ActionW.SYNCH_LINK.cmd());
-      return (sd != null && sd.isManualSynchActivated());
-    }).count();
+    long manuallySyncedViews =
+        views.stream()
+            .filter(
+                v -> {
+                  ViewSynchData sd = (ViewSynchData) v.getActionValue(ActionW.SYNCH_LINK.cmd());
+                  return (sd != null && sd.isManualSynchActivated());
+                })
+            .count();
     if (manuallySyncedViews > 0) {
-        manualSyncActivated = true;
-        synch.setManualSyncState(SyncState.ON);
+      manualSyncActivated = true;
+      synch.setManualSyncState(SyncState.ON);
     }
     StackSyncContext ctx =
         new StackSyncContext(series, synch, slicePosition, frUidsMap, synchActivated);
@@ -542,9 +546,12 @@ public class DicomSynchManager extends SynchManager<DicomImageElement> {
     List<ViewCanvas<DicomImageElement>> views = getSiblingViews(viewerPlugin, viewPane);
     if (!views.isEmpty() || viewPane != null) {
       if (viewerPlugin instanceof View2dContainer) {
-        List<ViewCanvas<DicomImageElement>> viewsFromOtherContainers = addVisibleViews(viewerPlugin);
+        List<ViewCanvas<DicomImageElement>> viewsFromOtherContainers =
+            addVisibleViews(viewerPlugin);
         for (ViewCanvas<DicomImageElement> vc : viewsFromOtherContainers) {
-          if (vc != null && vc.getSeries() != null && hasSameFrUid(vc.getSeries(), viewPane.getSeries())) {
+          if (vc != null
+              && vc.getSeries() != null
+              && hasSameFrUid(vc.getSeries(), viewPane.getSeries())) {
             views.add(vc);
           }
         }
@@ -553,14 +560,15 @@ public class DicomSynchManager extends SynchManager<DicomImageElement> {
     return views;
   }
 
-  private List<ViewCanvas<DicomImageElement>> addVisibleViews(ImageViewerPlugin<DicomImageElement> viewerPlugin) {
+  private List<ViewCanvas<DicomImageElement>> addVisibleViews(
+      ImageViewerPlugin<DicomImageElement> viewerPlugin) {
     List<ViewerPlugin<?>> viewerPlugins = GuiUtils.getUICore().getViewerPlugins();
     List<ViewCanvas<DicomImageElement>> viewsFromOtherContainers = new java.util.ArrayList<>();
     synchronized (viewerPlugins) {
       viewerPlugins.stream()
-              .filter(plugin -> shouldIncludePlugin(plugin, viewerPlugin))
-              .map(plugin -> (View2dContainer) plugin)
-              .forEach(container -> viewsFromOtherContainers.addAll(container.getImagePanels()));
+          .filter(plugin -> shouldIncludePlugin(plugin, viewerPlugin))
+          .map(plugin -> (View2dContainer) plugin)
+          .forEach(container -> viewsFromOtherContainers.addAll(container.getImagePanels()));
     }
     return viewsFromOtherContainers;
   }
