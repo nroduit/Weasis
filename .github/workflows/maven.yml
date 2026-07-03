@@ -29,7 +29,10 @@ jobs:
           cache: 'maven'
 
       - name: Build with coverage
-        run: mvn -Pcoverage -B -ntp verify
+        # install (not verify) so every reactor module — including inter-module provided deps
+        # such as weasis-launcher — lands in the local repo, where the standalone
+        # dependency:copy-dependencies invocation below can resolve them.
+        run: mvn -Pcoverage -B -ntp install
 
       - name: Upload coverage report
         if: always()
