@@ -26,14 +26,14 @@ jobs:
           # Get config from .github_changelog_generator file
       - name: Git Auto Commit
         id: commit
-        uses: stefanzweifel/git-auto-commit-action@b863ae1933cb653a53c021fe36dbb774e1fb9403  # v5
+        uses: stefanzweifel/git-auto-commit-action@4a55954c782fc1ea30b9056cd3e7a2b40ca8887d  # v7.2.0
         with:
           branch: master
           commit_message: "Automatic changelog update"
           file_pattern: "CHANGELOG.md"
       - name: Extract release notes
         id: extract-release-notes
-        uses: ffurrer2/extract-release-notes@cae32133495112d23e3569ad04fef240ba4e7bc8  # v2
+        uses: ffurrer2/extract-release-notes@273da39a24fb7db106a35526c8162815faffd31d  # v3.1.0
         with:
           prerelease: true
       - name: Create release
