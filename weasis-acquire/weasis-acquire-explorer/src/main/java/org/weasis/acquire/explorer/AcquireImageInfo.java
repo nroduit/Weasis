@@ -25,7 +25,6 @@ import org.opencv.core.Mat;
 import org.opencv.core.Rect;
 import org.opencv.core.RotatedRect;
 import org.opencv.core.Size;
-import org.opencv.imgproc.Imgproc;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.image.AutoLevelsOp;
@@ -261,7 +260,7 @@ public class AcquireImageInfo extends AcquireMediaInfo {
       double w = modelArea.getWidth();
       double h = modelArea.getHeight();
       org.opencv.core.Point ptCenter = new org.opencv.core.Point(w / 2.0, h / 2.0);
-      Mat rot = Imgproc.getRotationMatrix2D(ptCenter, -rotation, 1.0);
+      Mat rot = RotationOp.getRotationMatrix2D(ptCenter, -rotation, 1.0);
 
       Rect bbox = new RotatedRect(ptCenter, new Size(w, h), -rotation).boundingRect();
       double[] m = RotationOp.transformMatrixWithOffset(rot, bbox, ptCenter);

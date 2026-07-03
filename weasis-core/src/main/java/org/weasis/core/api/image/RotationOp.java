@@ -11,6 +11,7 @@ package org.weasis.core.api.image;
 
 import java.util.Objects;
 import org.opencv.core.Core;
+import org.opencv.core.CvType;
 import org.opencv.core.Mat;
 import org.opencv.core.Point;
 import org.opencv.core.Rect;
@@ -92,7 +93,7 @@ public final class RotationOp extends AbstractOp {
     }
     var srcImg = Objects.requireNonNull(source, "Source image cannot be null");
     var center = new Point(centerX, centerY);
-    var rotationMatrix = Imgproc.getRotationMatrix2D(center, -angle, 1.0);
+    var rotationMatrix = getRotationMatrix2D(center, -angle, 1.0);
     var bbox = new RotatedRect(center, srcImg.size(), -angle).boundingRect();
 
     double[] matrix = transformMatrixWithOffset(rotationMatrix, bbox, center);
@@ -101,6 +102,32 @@ public final class RotationOp extends AbstractOp {
     var dstImg = new ImageCV();
     Imgproc.warpAffine(srcImg, dstImg, rotationMatrix, bbox.size());
     return dstImg;
+  }
+
+  /**
+   * Builds the 2x3 affine rotation matrix, equivalent to the OpenCV {@code getRotationMatrix2D}
+   * helper that was dropped from the imgproc bindings in OpenCV 5. The matrix is computed directly
+   * from the documented closed form, so it stays binding-independent.
+   *
+   * @param center rotation center
+   * @param angle rotation angle in degrees (positive is counter-clockwise, origin at the top-left)
+   * @param scale isotropic scale factor
+   */
+  public static Mat getRotationMatrix2D(Point center, double angle, double scale) {
+    double rad = Math.toRadians(angle);
+    double alpha = scale * Math.cos(rad);
+    double beta = scale * Math.sin(rad);
+    Mat m = new Mat(2, 3, CvType.CV_64F);
+    m.put(
+        0,
+        0,
+        alpha,
+        beta,
+        (1 - alpha) * center.x - beta * center.y,
+        -beta,
+        alpha,
+        beta * center.x + (1 - alpha) * center.y);
+    return m;
   }
 
   public static double[] transformMatrixWithOffset(
