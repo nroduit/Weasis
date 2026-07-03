@@ -5,41 +5,83 @@ on:
       - master
   pull_request:
     types: [ opened, synchronize, reopened ]
+permissions:
+  contents: read
+# Cancel superseded runs on the same branch/PR; the latest push is the only one worth building.
+concurrency:
+  group: build-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 jobs:
   build:
-    name: Build & Sonar
+    name: Build
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v7.0.0
         with:
-          fetch-depth: 0  # Shallow clones should be disabled for a better relevancy of analysis
+          fetch-depth: 0  # full history is handed to Sonar for blame / new-code relevancy
+          persist-credentials: false
       - name: Set up JDK for compilation
-        uses: actions/setup-java@v5
+        uses: actions/setup-java@1bcf9fb12cf4aa7d266a90ae39939e61372fe520  # v5.4.0
         with:
           distribution: 'temurin'
           java-version: '26'
           cache: 'maven'
-      - name: Cache SonarCloud packages
-        uses: actions/cache@v5
-        with:
-          path: ~/.sonar/cache
-          key: ${{ runner.os }}-sonar
-          restore-keys: ${{ runner.os }}-sonar
 
       - name: Build with coverage
         run: mvn -Pcoverage -B -ntp verify
 
       - name: Upload coverage report
         if: always()
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a  # v7.0.1
         with:
           name: jacoco-aggregate
           path: tests/target/site/jacoco-aggregate/
 
-      - name: Sonar analysis
-        if: ${{ env.SONAR_TOKEN != '' }}
+      # Sonar runs in a separate workflow_run-triggered workflow (sonar.yml) so it has access to
+      # SONAR_TOKEN even for pull requests from forks and Dependabot (where secrets are withheld
+      # from the triggering workflow). To keep that privileged job from ever executing untrusted
+      # fork code, ALL building happens here (this job has no secrets) and only the prebuilt
+      # analysis inputs below are handed over; the Sonar job runs the standalone scanner on them
+      # and never builds the PR head.
+      - name: Collect dependency jars for Sonar (sonar.java.libraries)
+        # One flat, de-duplicated directory across every reactor module.
+        run: mvn -B -ntp dependency:copy-dependencies -DincludeScope=test -DoutputDirectory="$GITHUB_WORKSPACE/sonar-libs"
+      - name: Save PR context for Sonar analysis
+        if: github.event_name == 'pull_request'
+        # The head ref is attacker-controlled (fork branch names may contain shell
+        # metacharacters). Pass every value through env and write it literally with printf
+        # rather than interpolating ${{ }} into the script. The privileged sonar.yml job
+        # re-validates these files before use.
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        # Version is taken from <pluginManagement> in weasis-parent/pom.xml
-        run: mvn -B -ntp sonar:sonar
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_HEAD_REF: ${{ github.event.pull_request.head.ref }}
+          PR_BASE_REF: ${{ github.event.pull_request.base.ref }}
+        run: |
+          mkdir -p pr-context
+          printf '%s\n' "$PR_NUMBER"   > pr-context/pr_number
+          printf '%s\n' "$PR_HEAD_REF" > pr-context/head_ref
+          printf '%s\n' "$PR_BASE_REF" > pr-context/base_ref
+      # Package only what the scanner needs: for every module that actually compiled (has a
+      # target/classes), ship its sources and classes, plus the shared dependency jars, the
+      # aggregate JaCoCo report and .git (for SCM blame). A single tarball keeps .git intact
+      # regardless of the upload action's hidden-file handling. The 185M distributions and the
+      # opencv native bundles are intentionally left out — they are not analysed.
+      - name: Package Sonar analysis input
+        run: |
+          modules=$(find . -type d -path '*/target/classes' | sed 's#/target/classes##')
+          paths=""
+          for m in $modules; do
+            paths="$paths $m/target/classes"
+            [ -d "$m/src/main/java" ] && paths="$paths $m/src/main/java"
+          done
+          tar czf sonar-input.tgz \
+            .git sonar-libs tests/target/site/jacoco-aggregate/jacoco.xml \
+            $paths \
+            $([ -d pr-context ] && echo pr-context)
+      - name: Upload Sonar analysis input
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a  # v7.0.1
+        with:
+          name: sonar-input
+          path: sonar-input.tgz
+          retention-days: 1

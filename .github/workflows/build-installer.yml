@@ -7,6 +7,10 @@ on:
         required: false
         default: 'all'
 
+# Least privilege: this pipeline only builds and uploads artifacts; it never writes to the repo.
+permissions:
+  contents: read
+
 jobs:
   setup:
     runs-on: ubuntu-latest
@@ -52,10 +56,12 @@ jobs:
       cleanversion: ${{ env.WEASIS_CLEAN_VERSION }}
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v7.0.0
+        with:
+          persist-credentials: false
 
       - name: Set up JDK for compilation
-        uses: actions/setup-java@v5
+        uses: actions/setup-java@1bcf9fb12cf4aa7d266a90ae39939e61372fe520  # v5.4.0
         with:
           distribution: 'temurin'
           java-version: '26'
@@ -82,7 +88,7 @@ jobs:
           echo "WEASIS_CLEAN_VERSION=${CVERSION}" >> $GITHUB_ENV
 
       - name: Upload the weasis package for building the native distribution
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a  # v7.0.1
         with:
           name: weasis-native-${{ env.WEASIS_VERSION }}
           path: weasis-distributions/target/native-dist/weasis-native.*
@@ -120,13 +126,13 @@ jobs:
           echo "WEASIS_CLEAN_VERSION=${{needs.build.outputs.cleanversion}}" >> $GITHUB_ENV
 
       - name: Set up JDK
-        uses: actions/setup-java@v5
+        uses: actions/setup-java@1bcf9fb12cf4aa7d266a90ae39939e61372fe520  # v5.4.0
         with:
           distribution: 'temurin'
           java-version: '26'
 
       - name: Download weasis-native
-        uses: actions/download-artifact@v8
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c  # v8.0.1
         with:
           name: weasis-native-${{ env.WEASIS_VERSION }}
           path: native-dist
@@ -148,7 +154,7 @@ jobs:
           echo "$(ls ${{ env.WEASIS_INPUT_BIN }}/bundle/)"
 
       - name: Import Developer Certificate
-        uses: apple-actions/import-codesign-certs@v7
+        uses: apple-actions/import-codesign-certs@5142e029c445c10ffc7149d172e540235a065466  # v7
         if: matrix.wsystem == 'macosx'
         id: cert
         with:
@@ -156,7 +162,7 @@ jobs:
           p12-password: ${{ secrets.MACOS_CERTIFICATE_PWD }}
 
       - name: Import Installer Certificate
-        uses: apple-actions/import-codesign-certs@v7
+        uses: apple-actions/import-codesign-certs@5142e029c445c10ffc7149d172e540235a065466  # v7
         if: matrix.wsystem == 'macosx'
         with:
           create-keychain: "false"
@@ -374,7 +380,7 @@ jobs:
           done
 
       - name: Upload the installer
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a  # v7.0.1
         with:
           name: ${{ env.APP_ARTIFACT }}
           path: final-dist
@@ -389,7 +395,7 @@ jobs:
 
     steps:
       - name: Download weasis-native
-        uses: actions/download-artifact@v8
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c  # v8.0.1
         with:
           name: weasis-native-${{ needs.build.outputs.version }}
           path: native-dist
@@ -400,10 +406,10 @@ jobs:
           unzip -o "native-dist/weasis-native.zip" -d "native-dist/weasis-native"
 
       - name: Set up QEMU
-        uses: docker/setup-qemu-action@v4
+        uses: docker/setup-qemu-action@96fe6ef7f33517b61c61be40b68a1882f3264fb8  # v4
 
       - name: Set up Docker Buildx for multi-arch
-        uses: docker/setup-buildx-action@v4
+        uses: docker/setup-buildx-action@bb05f3f5519dd87d3ba754cc423b652a5edd6d2c  # v4
 
       - name: Run Docker container to package Weasis for ${{ matrix.arch }}
         run: |
@@ -467,7 +473,7 @@ jobs:
         continue-on-error: false
 
       - name: Upload Linux multi-arch installers
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a  # v7.0.1
         with:
           name: ${{ env.PKG_ARTIFACT }}
           path: final-dist

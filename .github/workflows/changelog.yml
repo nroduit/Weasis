@@ -3,34 +3,41 @@ on:
   push:
     tags:
       - 'v*'
+# Least privilege: the job commits CHANGELOG.md and creates a release (contents: write)
+# and the generator reads closed issues / merged PRs.
+permissions:
+  contents: write
+  issues: read
+  pull-requests: read
 jobs:
   release:
     if: startsWith(github.ref, 'refs/tags/')
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v7.0.0
       - name: Changelog Generator from github issues
         id: generate_changelog_file
-        uses: heinrichreimer/github-changelog-generator-action@v2.4
+        uses: heinrichreimer/github-changelog-generator-action@e60b5a2bd9fcd88dadf6345ff8327863fb8b490f  # v2.4
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           compareLink: true
           # Get config from .github_changelog_generator file
       - name: Git Auto Commit
         id: commit
-        uses: stefanzweifel/git-auto-commit-action@v5
+        uses: stefanzweifel/git-auto-commit-action@b863ae1933cb653a53c021fe36dbb774e1fb9403  # v5
         with:
           branch: master
           commit_message: "Automatic changelog update"
           file_pattern: "CHANGELOG.md"
       - name: Extract release notes
         id: extract-release-notes
-        uses: ffurrer2/extract-release-notes@v2
+        uses: ffurrer2/extract-release-notes@cae32133495112d23e3569ad04fef240ba4e7bc8  # v2
         with:
           prerelease: true
       - name: Create release
-        uses: ncipollo/release-action@v1
+        uses: ncipollo/release-action@339a81892b84b4eeb0f6e744e4574d79d0d9b8dd  # v1
         with:
           tag: ${{ github.ref }}
           name: ${{ github.ref }}
