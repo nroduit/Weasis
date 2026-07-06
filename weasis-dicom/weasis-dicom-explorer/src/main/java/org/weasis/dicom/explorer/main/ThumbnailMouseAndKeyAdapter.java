@@ -77,7 +77,9 @@ public class ThumbnailMouseAndKeyAdapter extends MouseAdapter implements KeyList
   public void mousePressed(MouseEvent e) {
     requestFocusIfNeeded(e.getComponent());
 
-    final SeriesSelectionModel selList = getSeriesSelectionModel();
+    DicomExplorer explorer = getDicomExplorer();
+    explorer.ensurePatientComboSelection();
+    final SeriesSelectionModel selList = explorer.getSelectionList();
 
     if (SwingUtilities.isRightMouseButton(e)) {
       showContextMenu(e, selList);
@@ -88,7 +90,9 @@ public class ThumbnailMouseAndKeyAdapter extends MouseAdapter implements KeyList
 
   @Override
   public void keyPressed(KeyEvent e) {
-    SeriesSelectionModel selList = getSeriesSelectionModel();
+    DicomExplorer explorer = getDicomExplorer();
+    explorer.ensurePatientComboSelection();
+    SeriesSelectionModel selList = explorer.getSelectionList();
     ShortcutManager sm = ShortcutManager.getInstance();
 
     if (sm.matches(ShortcutManager.ID_EXPLORER_OPEN, e)) {
@@ -481,13 +485,17 @@ public class ThumbnailMouseAndKeyAdapter extends MouseAdapter implements KeyList
     }
   }
 
-  public static SeriesSelectionModel getSeriesSelectionModel() {
+  public static DicomExplorer getDicomExplorer() {
     DataExplorerView explorer = GuiUtils.getUICore().getExplorerPlugin(DicomExplorer.NAME);
     if (explorer instanceof DicomExplorer dicomExplorer) {
-      return dicomExplorer.getSelectionList();
+      return dicomExplorer;
     }
     throw new IllegalStateException(
         "DicomExplorer plugin is not available, cannot get SeriesSelectionModel");
+  }
+
+  public static SeriesSelectionModel getSeriesSelectionModel() {
+    return getDicomExplorer().getSelectionList();
   }
 
   public static void openSeriesInDefaultPlugin(DicomSeries series, DicomModel dicomModel) {

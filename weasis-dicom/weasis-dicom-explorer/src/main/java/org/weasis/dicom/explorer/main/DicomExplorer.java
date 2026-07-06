@@ -12,17 +12,27 @@ package org.weasis.dicom.explorer.main;
 import bibliothek.gui.dock.common.CLocation;
 import bibliothek.gui.dock.common.mode.ExtendedMode;
 import bibliothek.gui.dock.control.focus.DefaultFocusRequest;
+import com.formdev.flatlaf.FlatClientProperties;
+import com.formdev.flatlaf.icons.FlatSearchIcon;
+import com.formdev.flatlaf.ui.FlatUIUtils;
+import com.formdev.flatlaf.util.UIScale;
 import java.awt.*;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.nio.file.Path;
+import java.text.MessageFormat;
 import java.util.*;
 import java.util.List;
 import javax.swing.*;
+import javax.swing.event.PopupMenuEvent;
+import javax.swing.event.PopupMenuListener;
 import net.miginfocom.swing.MigLayout;
+import org.dcm4che3.data.Tag;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.DataExplorerView;
@@ -42,7 +52,9 @@ import org.weasis.core.ui.editor.image.SequenceHandler;
 import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.util.ArrayListComboBoxModel;
 import org.weasis.core.ui.util.DefaultAction;
+import org.weasis.core.ui.util.SearchableComboBox;
 import org.weasis.core.ui.util.TitleMenuItem;
+import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.codec.*;
 import org.weasis.dicom.explorer.*;
 import org.weasis.dicom.explorer.HangingProtocols.OpeningViewer;
@@ -88,12 +100,25 @@ public class DicomExplorer extends PluginTool
   private JPanel panelMain;
 
   private final ArrayListComboBoxModel<Object> modelPatient;
-  private final ArrayListComboBoxModel<Object> modelStudy;
-  private final JComboBox<Object> patientCombobox;
-  private final JComboBox<Object> studyCombobox;
+  private final SearchableComboBox<Object> patientCombobox;
 
-  private final ItemListener studyItemListener;
   private final ItemListener patientItemListener;
+
+  // Series filter, memorized per patient for the whole session; the active mode selects the
+  // dimension
+  private final Map<MediaSeriesGroup, SeriesFilter> filtersByPatient = new HashMap<>();
+  private SeriesFilter seriesFilter = new SeriesFilter();
+  private final SearchableComboBox<Object> seriesFilterField = new SearchableComboBox<>();
+  private final JButton modeButton = new JButton();
+  private final JPopupMenu modePopup = new JPopupMenu();
+  private final Map<SeriesFilter.Mode, JRadioButtonMenuItem> modeItems =
+      new EnumMap<>(SeriesFilter.Mode.class);
+  private final JLabel filterStatusLabel = new JLabel();
+  private final javax.swing.Timer filterDebounce = new javax.swing.Timer(250, _ -> runFilter());
+  private final Set<String> availableModalities = new TreeSet<>();
+  private JPanel filterBar;
+  private JTextField seriesFilterEditor;
+  private boolean adjustingFilterUi;
 
   private final PatientSelectionManager patientSelectionManager;
 
@@ -122,9 +147,7 @@ public class DicomExplorer extends PluginTool
 
     // Initialize combo box models
     this.modelPatient = new ArrayListComboBoxModel<>(DicomSorter.PATIENT_COMPARATOR);
-    this.modelStudy = new ArrayListComboBoxModel<>(DicomSorter.STUDY_COMPARATOR);
-    this.patientCombobox = new JComboBox<>(modelPatient);
-    this.studyCombobox = new JComboBox<>(modelStudy);
+    this.patientCombobox = new SearchableComboBox<>(modelPatient);
 
     // Initialize KO button
     this.koOpen =
@@ -134,7 +157,6 @@ public class DicomExplorer extends PluginTool
 
     // Create event listeners
     this.patientItemListener = createPatientItemListener();
-    this.studyItemListener = createStudyItemListener();
 
     // Initialize patient selection manager
     this.patientSelectionManager = new PatientSelectionManager(this);
@@ -146,6 +168,7 @@ public class DicomExplorer extends PluginTool
 
     // Setup UI
     setupComboBoxes();
+    setupFilterBar();
     setupThumbnailView();
     this.model.addPropertyChangeListener(this);
   }
@@ -206,9 +229,18 @@ public class DicomExplorer extends PluginTool
     patientCombobox.removeItemListener(patientItemListener);
     try {
       patientCombobox.setSelectedItem(patient);
+      showSelectedPatientFromStart();
     } finally {
       patientCombobox.addItemListener(patientItemListener);
     }
+  }
+
+  /**
+   * Re-displays the current patient in the combo, e.g. after the user cleared the search field but
+   * the patient's thumbnails are still shown and one gets selected or opened.
+   */
+  public void ensurePatientComboSelection() {
+    updatePatientComboBoxSelection(getSelectedPatient());
   }
 
   public boolean isVerticalLayout() {
@@ -221,16 +253,16 @@ public class DicomExplorer extends PluginTool
           new MigLayout("fillx, ins 3", "[right]rel[grow,fill]", "[]10lp[]"); // NON-NLS
       panelMain = new JPanel(layout);
 
-      final JLabel label = new JLabel(ResourceUtil.getIcon(ResourceUtil.OtherIcon.PATIENT, 24, 24));
-      panelMain.add(label, GuiUtils.NEWLINE);
-      label.setLabelFor(patientCombobox);
-      panelMain.add(patientCombobox, "width 30lp:min:250lp"); // NON-NLS
+      // Small preferred width so the combos grow to fill the panel but never drive its width
+      JPanel patientBar = new JPanel(new MigLayout("ins 1, fillx", "[grow,fill]", "")); // NON-NLS
+      patientBar.add(patientCombobox, "growx, width 30lp:30lp:250lp"); // NON-NLS
+      panelMain.add(patientBar, "newline, spanx, growx"); // NON-NLS
 
-      final JLabel labelStudy =
-          new JLabel(ResourceUtil.getIcon(ResourceUtil.OtherIcon.CALENDAR, 24, 24));
-      labelStudy.setLabelFor(studyCombobox);
-      panelMain.add(labelStudy, GuiUtils.NEWLINE);
-      panelMain.add(studyCombobox, "width 30lp:min:250lp"); // NON-NLS
+      filterBar = new JPanel(new MigLayout("ins 1, fillx", "[grow,fill]", "")); // NON-NLS
+      filterBar.add(seriesFilterField, "growx, width 30lp:30lp:250lp"); // NON-NLS
+      panelMain.add(filterBar, "newline, spanx, growx"); // NON-NLS
+      panelMain.add(filterStatusLabel, "newline, spanx, growx, hidemode 3"); // NON-NLS
+      updateFilterIndicator();
 
       koOpen.setToolTipText(koOpen.getText());
       panelMain.add(
@@ -270,22 +302,416 @@ public class DicomExplorer extends PluginTool
   // ========== Initialization Methods ==========
 
   private void setupInitialSize() {
-    int thumbnailSize = SeriesThumbnail.getThumbnailSizeFromPreferences();
-    setDockableWidth(Math.max(thumbnailSize, Thumbnail.DEFAULT_SIZE) + 35);
+    setDockableWidth(computeThumbnailPanelWidth(SeriesThumbnail.getThumbnailSizeFromPreferences()));
+  }
+
+  /**
+   * Logical width to pass to {@code setDockableWidth}, which fits exactly one thumbnail column and
+   * its chrome (study-pane border + sub-panel insets). The vertical scrollbar width is always
+   * reserved so the panel width stays stable whether or not the scrollbar is shown. The
+   * device-pixel sum is converted back to logical units because {@code setDockableWidth} re-applies
+   * UI scaling; otherwise the width would be scaled twice (too wide when zoomed).
+   */
+  private int computeThumbnailPanelWidth(int thumbnailSize) {
+    int scrollBar = thumbnailView.getVerticalScrollBar().getPreferredSize().width;
+    int margin = GuiUtils.getScaleLength(2);
+    int column = measuredSingleColumnWidth();
+    if (column <= 0) {
+      // Fallback estimate before any study pane exists; corrected by adjustDockableWidth() on load
+      column =
+          GuiUtils.getScaleLength(Math.max(thumbnailSize, Thumbnail.DEFAULT_SIZE))
+              + StudyPane.getHorizontalChrome(selectedPatient);
+    }
+    return Math.round((column + scrollBar + margin) / UIScale.getUserScaleFactor());
+  }
+
+  /** Widest exact one-column width among the selected patient's study panes, or 0 if none. */
+  private int measuredSingleColumnWidth() {
+    int max = 0;
+    for (StudyPane studyPane : paneManager.getStudyList(getSelectedPatient())) {
+      max = Math.max(max, studyPane.getSingleColumnWidth());
+    }
+    return max;
+  }
+
+  /** Re-applies the dock width from the actual laid-out study panes; a no-op if already correct. */
+  private void adjustDockableWidth() {
+    int width = computeThumbnailPanelWidth(SeriesThumbnail.getThumbnailSizeFromPreferences());
+    if (width != getDockableWidth()) {
+      updateDockableWidth(width);
+    }
   }
 
   private void setupComboBoxes() {
-    // Patient combo box
     patientCombobox.setMaximumRowCount(15);
     patientCombobox.setFont(FontItem.SMALL_SEMIBOLD.getFont());
+    JTextField patientEditor = (JTextField) patientCombobox.getEditor().getEditorComponent();
+    patientCombobox.putClientProperty(
+        FlatClientProperties.PLACEHOLDER_TEXT, Messages.getString("DicomExplorer.search_patient"));
+    patientEditor.putClientProperty(
+        FlatClientProperties.TEXT_FIELD_LEADING_COMPONENT,
+        new JLabel(ResourceUtil.getIcon(ResourceUtil.OtherIcon.PATIENT, 16, 16)));
     patientCombobox.addItemListener(patientItemListener);
+  }
 
-    // Study combo box
-    studyCombobox.setMaximumRowCount(15);
-    studyCombobox.setFont(FontItem.SMALL_SEMIBOLD.getFont());
-    modelStudy.insertElementAt(ALL_STUDIES, 0);
-    modelStudy.setSelectedItem(ALL_STUDIES);
-    studyCombobox.addItemListener(studyItemListener);
+  // ========== Series Filter ==========
+
+  public SeriesFilter getSeriesFilter() {
+    return seriesFilter;
+  }
+
+  private void setupFilterBar() {
+    filterDebounce.setRepeats(false);
+
+    seriesFilterField.setMaximumRowCount(15);
+    seriesFilterField.setFont(FontItem.SMALL_SEMIBOLD.getFont());
+    seriesFilterEditor = (JTextField) seriesFilterField.getEditor().getEditorComponent();
+    seriesFilterField.setSearchCallback(_ -> onFilterInput());
+    seriesFilterField.addActionListener(_ -> onFilterSelection());
+    // Rebuild the suggestion list on open so it reflects series loaded after the patient selection
+    seriesFilterField.addPopupMenuListener(
+        new PopupMenuListener() {
+          @Override
+          public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
+            refreshSuggestions();
+          }
+
+          @Override
+          public void popupMenuWillBecomeInvisible(PopupMenuEvent e) {
+            // no-op
+          }
+
+          @Override
+          public void popupMenuCanceled(PopupMenuEvent e) {
+            // no-op
+          }
+        });
+
+    modeButton.setFocusable(false);
+    modeButton.putClientProperty(
+        FlatClientProperties.BUTTON_TYPE, FlatClientProperties.BUTTON_TYPE_TOOLBAR_BUTTON);
+    modeButton.addActionListener(_ -> modePopup.show(modeButton, 0, modeButton.getHeight()));
+    // Place the mode selector inside the field, in place of the default search icon
+    seriesFilterEditor.putClientProperty(
+        FlatClientProperties.TEXT_FIELD_LEADING_COMPONENT, modeButton);
+
+    buildModePopup();
+
+    filterStatusLabel.setFont(FontItem.SMALL.getFont());
+    filterStatusLabel.setVisible(false);
+
+    applyMode(SeriesFilter.Mode.TEXT);
+  }
+
+  private void buildModePopup() {
+    ButtonGroup group = new ButtonGroup();
+    for (SeriesFilter.Mode mode : SeriesFilter.Mode.values()) {
+      JRadioButtonMenuItem item = new JRadioButtonMenuItem(modeLabel(mode), modeIcon(mode));
+      item.setSelected(mode == seriesFilter.getMode());
+      item.addActionListener(_ -> applyMode(mode));
+      group.add(item);
+      modePopup.add(item);
+      modeItems.put(mode, item);
+    }
+  }
+
+  private void applyMode(SeriesFilter.Mode mode) {
+    seriesFilter.setMode(mode);
+    syncFilterToState(getSelectedPatient());
+    runFilter();
+  }
+
+  /** Activates the given patient's memorized filter (creating a default one on first visit). */
+  private void loadFilterForPatient(MediaSeriesGroup patient) {
+    seriesFilter =
+        patient == null
+            ? new SeriesFilter()
+            : filtersByPatient.computeIfAbsent(patient, _ -> new SeriesFilter());
+    syncFilterToState(patient);
+  }
+
+  /** Reflects the active filter's mode and criteria in the mode button and search field. */
+  private void syncFilterToState(MediaSeriesGroup patient) {
+    SeriesFilter.Mode mode = seriesFilter.getMode();
+    modeButton.setIcon(modeIcon(mode));
+    modeButton.setToolTipText(
+        MessageFormat.format(Messages.getString("DicomExplorer.filter_mode"), modeLabel(mode)));
+    JRadioButtonMenuItem modeItem = modeItems.get(mode);
+    if (modeItem != null) {
+      modeItem.setSelected(true);
+    }
+    availableModalities.clear();
+    availableModalities.addAll(collectSeriesValues(patient, Tag.Modality));
+    adjustingFilterUi = true;
+    try {
+      seriesFilterField.putClientProperty(
+          FlatClientProperties.PLACEHOLDER_TEXT, modePlaceholder(mode));
+      switch (mode) {
+        case TEXT -> {
+          Set<String> suggestions = collectSeriesValues(patient, Tag.SeriesDescription);
+          suggestions.addAll(collectStudyValues(patient, Tag.StudyDescription));
+          setFieldItems(suggestions.toArray());
+          seriesFilterEditor.setText(seriesFilter.getText());
+        }
+        case MODALITY -> {
+          setFieldItems(buildModalitySuggestions(patient).toArray());
+          seriesFilterEditor.setText(String.join(", ", seriesFilter.getModalities()));
+        }
+        case DATE -> {
+          MediaSeriesGroup study = seriesFilter.getStudy();
+          if (study != null && paneManager.getStudyPane(study) == null) {
+            seriesFilter.setStudy(null); // stored study no longer exists
+            study = null;
+          }
+          setFieldItems(buildStudyItems(patient));
+          seriesFilterField.setSelectedItem(study != null ? study : ALL_STUDIES);
+          seriesFilterEditor.setText(StringUtil.EMPTY_STRING);
+        }
+      }
+    } finally {
+      adjustingFilterUi = false;
+    }
+    showFilterValueFromStart();
+    updateFilterIndicator();
+  }
+
+  /**
+   * Rebuilds the suggestion list for the current mode from the up-to-date panes, keeping the user's
+   * typed text or study selection. Called when the dropdown opens, as series can be registered
+   * after the patient was first selected.
+   */
+  private void refreshSuggestions() {
+    if (adjustingFilterUi || seriesFilterField.isFiltering()) {
+      return;
+    }
+    MediaSeriesGroup patient = getSelectedPatient();
+    availableModalities.clear();
+    availableModalities.addAll(collectSeriesValues(patient, Tag.Modality));
+    adjustingFilterUi = true;
+    try {
+      String current = seriesFilterEditor.getText();
+      switch (seriesFilter.getMode()) {
+        case TEXT -> {
+          Set<String> suggestions = collectSeriesValues(patient, Tag.SeriesDescription);
+          suggestions.addAll(collectStudyValues(patient, Tag.StudyDescription));
+          setFieldItems(suggestions.toArray());
+          seriesFilterEditor.setText(current);
+        }
+        case MODALITY -> {
+          setFieldItems(buildModalitySuggestions(patient).toArray());
+          seriesFilterEditor.setText(current);
+        }
+        case DATE -> {
+          MediaSeriesGroup study = seriesFilter.getStudy();
+          setFieldItems(buildStudyItems(patient));
+          seriesFilterField.setSelectedItem(study != null ? study : ALL_STUDIES);
+        }
+      }
+    } finally {
+      adjustingFilterUi = false;
+    }
+  }
+
+  private void onFilterInput() {
+    if (adjustingFilterUi) {
+      return;
+    }
+    String value = seriesFilterEditor.getText();
+    switch (seriesFilter.getMode()) {
+      case TEXT -> seriesFilter.setText(value);
+      case MODALITY -> seriesFilter.setModalities(parseModalities(value));
+      case DATE -> {
+        // Study selection is applied on item selection (onFilterSelection)
+      }
+    }
+    filterDebounce.restart();
+  }
+
+  private void onFilterSelection() {
+    if (adjustingFilterUi) {
+      return;
+    }
+    if (seriesFilter.getMode() == SeriesFilter.Mode.DATE) {
+      Object selected = seriesFilterField.getSelectedItem();
+      seriesFilter.setStudy(selected instanceof MediaSeriesGroup study ? study : null);
+      filterDebounce.restart();
+    } else {
+      onFilterInput();
+    }
+    // On a real selection (not while filtering), show a long value from its start
+    if (!seriesFilterField.isFiltering()) {
+      showFilterValueFromStart();
+    }
+  }
+
+  /** Scrolls the filter field back to the beginning so a long value is not shown from its end. */
+  private void showFilterValueFromStart() {
+    if (seriesFilterEditor != null) {
+      SwingUtilities.invokeLater(() -> seriesFilterEditor.setCaretPosition(0));
+    }
+  }
+
+  private void runFilter() {
+    applyFilterLayout();
+  }
+
+  /** Re-lays out the selected patient applying the current filter, then refreshes the indicator. */
+  private void applyFilterLayout() {
+    selectionList.clear();
+    if (getSelectedPatient() != null) {
+      selectedPatient.showAllStudies();
+    } else {
+      selectedPatient.removeAll();
+    }
+    selectedPatient.repaint();
+    updateFilterIndicator();
+    // Once study panes are laid out, size the dock to their exact one-column width
+    SwingUtilities.invokeLater(this::adjustDockableWidth);
+  }
+
+  private void setFieldItems(Object[] items) {
+    seriesFilterField.setModel(new DefaultComboBoxModel<>(items));
+    // Avoid auto-selecting the first suggestion so an empty field shows its placeholder
+    seriesFilterField.setSelectedItem(null);
+  }
+
+  private Object[] buildStudyItems(MediaSeriesGroup patient) {
+    List<Object> items = new ArrayList<>();
+    items.add(ALL_STUDIES);
+    if (patient != null) {
+      for (StudyPane studyPane : paneManager.getStudyList(patient)) {
+        items.add(studyPane.getDicomStudy());
+      }
+    }
+    return items.toArray();
+  }
+
+  private List<String> buildModalitySuggestions(MediaSeriesGroup patient) {
+    List<String> suggestions = new ArrayList<>(availableModalities);
+    if (patient != null) {
+      Set<String> combinations = new TreeSet<>();
+      for (StudyPane studyPane : paneManager.getStudyList(patient)) {
+        Set<String> perStudy = new TreeSet<>();
+        for (SeriesPane seriesPane : paneManager.getSeriesList(studyPane.getDicomStudy())) {
+          String modality =
+              TagD.getTagValue(seriesPane.getDicomSeries(), Tag.Modality, String.class);
+          if (StringUtil.hasText(modality)) {
+            perStudy.add(modality);
+          }
+        }
+        if (perStudy.size() > 1) {
+          combinations.add(String.join(", ", perStudy));
+        }
+      }
+      suggestions.addAll(combinations);
+    }
+    return suggestions;
+  }
+
+  private Set<String> parseModalities(String value) {
+    Set<String> result = new LinkedHashSet<>();
+    if (StringUtil.hasText(value)) {
+      for (String token : value.split("[,\\s]+")) { // NON-NLS
+        if (StringUtil.hasText(token)) {
+          result.add(token.trim().toUpperCase());
+        }
+      }
+    }
+    return result;
+  }
+
+  private Set<String> collectSeriesValues(MediaSeriesGroup patient, int tagId) {
+    Set<String> values = new TreeSet<>();
+    if (patient != null) {
+      for (StudyPane studyPane : paneManager.getStudyList(patient)) {
+        for (SeriesPane seriesPane : paneManager.getSeriesList(studyPane.getDicomStudy())) {
+          String value = TagD.getTagValue(seriesPane.getDicomSeries(), tagId, String.class);
+          if (StringUtil.hasText(value)) {
+            values.add(value);
+          }
+        }
+      }
+    }
+    return values;
+  }
+
+  private Set<String> collectStudyValues(MediaSeriesGroup patient, int tagId) {
+    Set<String> values = new TreeSet<>();
+    if (patient != null) {
+      for (StudyPane studyPane : paneManager.getStudyList(patient)) {
+        String value = TagD.getTagValue(studyPane.getDicomStudy(), tagId, String.class);
+        if (StringUtil.hasText(value)) {
+          values.add(value);
+        }
+      }
+    }
+    return values;
+  }
+
+  private void updateFilterIndicator() {
+    boolean active = seriesFilter.isActive();
+    if (filterBar == null) {
+      return;
+    }
+    if (active) {
+      int[] counts = countSeries();
+      Color accent = FlatUIUtils.getUIColor("Component.accentColor", Color.BLUE); // NON-NLS
+      filterBar.setBorder(BorderFactory.createLineBorder(accent));
+      filterStatusLabel.setForeground(accent);
+      filterStatusLabel.setText(
+          MessageFormat.format(
+              Messages.getString("DicomExplorer.filter_status"), counts[0], counts[1]));
+      filterStatusLabel.setVisible(true);
+    } else {
+      filterBar.setBorder(BorderFactory.createEmptyBorder(1, 1, 1, 1));
+      filterStatusLabel.setText(StringUtil.EMPTY_STRING);
+      filterStatusLabel.setVisible(false);
+    }
+    filterBar.revalidate();
+    filterBar.repaint();
+  }
+
+  /** Counts the series of the selected patient as {@code {matching, total}}. */
+  private int[] countSeries() {
+    MediaSeriesGroup patient = getSelectedPatient();
+    int matching = 0;
+    int total = 0;
+    if (patient != null) {
+      for (StudyPane studyPane : paneManager.getStudyList(patient)) {
+        MediaSeriesGroup study = studyPane.getDicomStudy();
+        for (SeriesPane seriesPane : paneManager.getSeriesList(study)) {
+          total++;
+          if (seriesFilter.test(seriesPane.getDicomSeries(), study)) {
+            matching++;
+          }
+        }
+      }
+    }
+    return new int[] {matching, total};
+  }
+
+  private static String modeLabel(SeriesFilter.Mode mode) {
+    return switch (mode) {
+      case TEXT -> Messages.getString("DicomExplorer.filter_mode_text");
+      case DATE -> Messages.getString("DicomExplorer.filter_mode_date");
+      case MODALITY -> Messages.getString("DicomExplorer.filter_mode_modality");
+    };
+  }
+
+  private static String modePlaceholder(SeriesFilter.Mode mode) {
+    return switch (mode) {
+      case TEXT -> Messages.getString("DicomExplorer.filter_ph_text");
+      case DATE -> Messages.getString("DicomExplorer.filter_ph_date");
+      case MODALITY -> Messages.getString("DicomExplorer.filter_ph_modality");
+    };
+  }
+
+  private static Icon modeIcon(SeriesFilter.Mode mode) {
+    return switch (mode) {
+      case TEXT -> new FlatSearchIcon();
+      case DATE -> ResourceUtil.getIcon(ResourceUtil.OtherIcon.CALENDAR, 16, 16);
+      case MODALITY -> ResourceUtil.getIcon(ResourceUtil.OtherIcon.MODALITY, 16, 16);
+    };
   }
 
   private void setupThumbnailView() {
@@ -294,6 +720,18 @@ public class DicomExplorer extends PluginTool
     thumbnailView.setViewportView(selectedPatient);
     thumbnailView.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
     thumbnailView.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+    // Study panes keep their content width, so recompute their columns on viewport resize
+    thumbnailView
+        .getViewport()
+        .addComponentListener(
+            new ComponentAdapter() {
+              @Override
+              public void componentResized(ComponentEvent e) {
+                paneManager
+                    .getStudyList(getSelectedPatient())
+                    .forEach(StudyPane::refreshLayoutAsync);
+              }
+            });
 
     rebuildLayout();
     setTransferHandler(new SeriesHandler());
@@ -313,18 +751,21 @@ public class DicomExplorer extends PluginTool
 
   private ItemListener createPatientItemListener() {
     return e -> {
-      if (e.getStateChange() == ItemEvent.SELECTED) {
-        selectPatient((MediaSeriesGroup) e.getItem());
+      // Ignore the transient String selections emitted while the search field is filtering
+      if (e.getStateChange() == ItemEvent.SELECTED
+          && !patientCombobox.isFiltering()
+          && e.getItem() instanceof MediaSeriesGroup patient) {
+        selectPatient(patient);
+        showSelectedPatientFromStart();
       }
     };
   }
 
-  private ItemListener createStudyItemListener() {
-    return e -> {
-      if (e.getStateChange() == ItemEvent.SELECTED) {
-        selectStudy();
-      }
-    };
+  /** Scrolls the patient field back to the beginning so a long name is not shown from its end. */
+  private void showSelectedPatientFromStart() {
+    if (patientCombobox.getEditor().getEditorComponent() instanceof JTextField field) {
+      SwingUtilities.invokeLater(() -> field.setCaretPosition(0));
+    }
   }
 
   // ========== Property Change Handling ==========
@@ -418,33 +859,19 @@ public class DicomExplorer extends PluginTool
     if (!patientSelectionManager.isCurrentPatient(patient)) {
       patientSelectionManager.setCurrentPatient(patient);
       updatePatientComboBoxSelection(patient);
-      updateStudyComboBoxSelection(patient);
+      onPatientChanged(patient);
       selectedPatient.repaint();
     }
   }
 
-  private void updateStudyComboBoxSelection(MediaSeriesGroup patient) {
-    studyCombobox.removeItemListener(studyItemListener);
-    try {
-      modelStudy.removeAllElements();
-      // do not use addElement
-      modelStudy.insertElementAt(ALL_STUDIES, 0);
-      List<StudyPane> studies = paneManager.getStudyList(patient);
-      if (studies != null) {
-        for (StudyPane studyPane : studies) {
-          modelStudy.addElement(studyPane.getDicomStudy());
-        }
-      }
-      modelStudy.setSelectedItem(ALL_STUDIES);
-    } finally {
-      studyCombobox.addItemListener(studyItemListener);
-      selectStudy();
-      koOpen.setVisible(
-          HiddenSeriesManager.hasHiddenSpecialElements(KOSpecialElement.class, patient));
-      // Send message for selecting related plug-ins window
-      model.firePropertyChange(
-          new ObservableEvent(ObservableEvent.BasicAction.SELECT, model, null, patient));
-    }
+  private void onPatientChanged(MediaSeriesGroup patient) {
+    loadFilterForPatient(patient);
+    applyFilterLayout();
+    koOpen.setVisible(
+        HiddenSeriesManager.hasHiddenSpecialElements(KOSpecialElement.class, patient));
+    // Send message for selecting related plug-ins window
+    model.firePropertyChange(
+        new ObservableEvent(ObservableEvent.BasicAction.SELECT, model, null, patient));
   }
 
   /** Gets the currently selected patient. */
@@ -477,53 +904,72 @@ public class DicomExplorer extends PluginTool
       }
     }
 
-    List<StudyPane> studies = paneManager.getStudyList(patient);
-    Object selectedStudy = modelStudy.getSelectedItem();
     int[] positionStudy = new int[1];
     StudyPane studyPane = paneManager.createStudyPaneInstance(study, positionStudy);
 
     int[] positionSeries = new int[1];
     paneManager.createSeriesPaneInstance(series, positionSeries);
     if (isSelectedPatient(patient) && positionSeries[0] != -1) {
-      // If new study
       if (positionStudy[0] != -1) {
-        if (modelStudy.getIndexOf(study) < 0) {
-          modelStudy.addElement(study);
-        }
-        // if modelStudy has the value "All studies"
-        if (ALL_STUDIES.equals(selectedStudy)) {
-          selectedPatient.removeAll();
-          for (StudyPane s : studies) {
-            selectedPatient.addPane(s);
-          }
-          selectedPatient.revalidate();
-        }
-      }
-      if (selectedPatient.isStudyVisible(study)) {
-        int thumbnailSize = SeriesThumbnail.getThumbnailSizeFromPreferences();
-        studyPane.removeAll();
-        List<SeriesPane> seriesList = paneManager.getSeriesList(study);
-        for (int i = 0; i < seriesList.size(); i++) {
-          SeriesPane pane = seriesList.get(i);
-          pane.updateThumbnail();
-          studyPane.addPane(pane, i, thumbnailSize);
-        }
-        studyPane.refreshLayout();
-        studyPane.revalidate();
-        studyPane.repaint();
+        // New study: re-lay out all studies in sorted order applying the filter
+        applyFilterLayout();
+      } else {
+        addSeriesToStudyView(study, studyPane, series);
       }
     }
+  }
+
+  /**
+   * Inserts a single newly added series into an already displayed study at its sorted position,
+   * without tearing down and rebuilding the whole study pane. Rebuilding the entire study on every
+   * new series (as happens during a Q/R retrieve, where series are discovered one downloaded image
+   * at a time) makes all sibling thumbnails flicker.
+   */
+  private void addSeriesToStudyView(
+      MediaSeriesGroup study, StudyPane studyPane, DicomSeries series) {
+    if (!seriesFilter.test(series, study)) {
+      return; // Series hidden by the current filter
+    }
+    SeriesPane seriesPane = paneManager.getSeriesPane(series);
+    if (seriesPane == null) {
+      return;
+    }
+    boolean wasVisible = selectedPatient.isStudyVisible(study);
+    studyPane.addPane(
+        seriesPane,
+        visibleSeriesIndex(study, series),
+        SeriesThumbnail.getThumbnailSizeFromPreferences());
+    if (!wasVisible) {
+      selectedPatient.addPane(studyPane);
+    }
+    studyPane.refreshLayout();
+    selectedPatient.revalidate();
+    selectedPatient.repaint();
+  }
+
+  /** Index of {@code series} among the currently visible (filtered) series of the study. */
+  private int visibleSeriesIndex(MediaSeriesGroup study, DicomSeries series) {
+    int index = 0;
+    for (SeriesPane pane : paneManager.getSeriesList(study)) {
+      DicomSeries current = pane.getDicomSeries();
+      if (current.equals(series)) {
+        break;
+      }
+      if (seriesFilter.test(current, study)) {
+        index++;
+      }
+    }
+    return index;
   }
 
   public void updateRemovedPatient(MediaSeriesGroup patient) {
     SwingUtilities.invokeLater(
         () -> {
           modelPatient.removeElement(patient);
+          filtersByPatient.remove(patient);
           if (modelPatient.getSize() == 0) {
-            modelStudy.removeAllElements();
-            modelStudy.insertElementAt(ALL_STUDIES, 0);
-            modelStudy.setSelectedItem(ALL_STUDIES);
             koOpen.setVisible(false);
+            resetFilter();
           }
           if (selectedPatient.isPatient(patient)) {
             selectedPatient.refreshLayout();
@@ -531,12 +977,17 @@ public class DicomExplorer extends PluginTool
         });
   }
 
+  private void resetFilter() {
+    filtersByPatient.clear();
+    seriesFilter = new SeriesFilter();
+    syncFilterToState(null);
+  }
+
   public void updateRemovedStudy(StudyPane studyPane, MediaSeriesGroup study) {
     SwingUtilities.invokeLater(
         () -> {
           if (selectedPatient.isStudyVisible(study)) {
             selectedPatient.remove(studyPane);
-            modelStudy.removeElement(study);
             selectedPatient.revalidate();
             selectedPatient.repaint();
           }
@@ -575,26 +1026,10 @@ public class DicomExplorer extends PluginTool
     return selectedPatient;
   }
 
-  private void selectStudy() {
-    selectionList.clear();
-    Object selectedItem = modelStudy.getSelectedItem();
-    if (ALL_STUDIES.equals(selectedItem)) {
-      MediaSeriesGroupNode patient = getSelectedPatient();
-      if (patient != null) {
-        selectedPatient.showAllStudies();
-      } else {
-        selectedPatient.removeAll();
-      }
-    } else if (selectedItem instanceof MediaSeriesGroup study) {
-      selectedPatient.showSpecificStudy(study);
-    }
-    selectedPatient.repaint();
-  }
-
   // ========== Thumbnail Size Management ==========
 
   public void updateThumbnailSize(int thumbnailSize) {
-    updateDockableWidth(Math.max(thumbnailSize, Thumbnail.DEFAULT_SIZE) + 35);
+    updateDockableWidth(computeThumbnailPanelWidth(thumbnailSize));
     MediaSeriesGroup patient = getSelectedPatient();
     for (StudyPane studyPane : paneManager.getStudyList(patient)) {
       studyPane.updateThumbnailSize(thumbnailSize);

@@ -17,6 +17,8 @@ import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.util.Vector;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Consumer;
+import java.util.function.Function;
 import javax.swing.ComboBoxModel;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JButton;
@@ -26,8 +28,10 @@ import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
 
 public class SearchableComboBox<E> extends JComboBox<E> {
-  private final DefaultComboBoxModel<E> originalModel;
+  private ComboBoxModel<E> baseModel;
   private final AtomicBoolean isFiltering = new AtomicBoolean(false);
+  private transient Function<? super E, String> matcher;
+  private transient Consumer<String> searchCallback;
 
   public SearchableComboBox() {
     this(new DefaultComboBoxModel<>());
@@ -43,17 +47,16 @@ public class SearchableComboBox<E> extends JComboBox<E> {
 
   public SearchableComboBox(ComboBoxModel<E> comboBoxModel) {
     super(comboBoxModel);
-    this.originalModel = new DefaultComboBoxModel<>();
-    copyModel(comboBoxModel);
+    this.baseModel = comboBoxModel;
 
     this.addItemListener(
         e -> {
-          if (e.getStateChange() == ItemEvent.SELECTED) {
-            if (!isFiltering.get() && !comboBoxModel.equals(originalModel)) {
-              E item = (E) getSelectedItem();
-              super.setModel(originalModel);
-              setSelectedItem(item);
-            }
+          if (e.getStateChange() == ItemEvent.SELECTED
+              && !isFiltering.get()
+              && getModel() != baseModel) {
+            E item = (E) getSelectedItem();
+            super.setModel(baseModel);
+            setSelectedItem(item);
           }
         });
     this.setEditable(true);
@@ -73,24 +76,43 @@ public class SearchableComboBox<E> extends JComboBox<E> {
     clearButton.addActionListener(
         _ -> {
           editorComponent.setText("");
-          super.setModel(originalModel);
+          if (getModel() != baseModel) {
+            super.setModel(baseModel);
+          }
           setSelectedItem(null);
+          if (searchCallback != null) {
+            searchCallback.accept("");
+          }
         });
   }
 
-  private void copyModel(ComboBoxModel<E> comboBoxModel) {
-    if (originalModel == null || comboBoxModel == null) {
-      return;
+  /**
+   * Sets the function used to derive the searchable text of an item (defaults to {@code toString}).
+   */
+  public void setMatcher(Function<? super E, String> matcher) {
+    this.matcher = matcher;
+  }
+
+  /** Registers a callback invoked with the trimmed lowercase text on each keystroke. */
+  public void setSearchCallback(Consumer<String> searchCallback) {
+    this.searchCallback = searchCallback;
+  }
+
+  private String matchText(E value) {
+    if (value == null) {
+      return null;
     }
-    originalModel.removeAllElements();
-    for (int i = 0; i < comboBoxModel.getSize(); i++) {
-      originalModel.addElement(comboBoxModel.getElementAt(i));
-    }
+    return matcher != null ? matcher.apply(value) : value.toString();
+  }
+
+  /** Returns true while the popup shows a filtered subset (used to ignore transient selections). */
+  public boolean isFiltering() {
+    return isFiltering.get();
   }
 
   @Override
   public void setModel(ComboBoxModel<E> aModel) {
-    copyModel(aModel);
+    this.baseModel = aModel;
     super.setModel(aModel);
   }
 
@@ -99,17 +121,25 @@ public class SearchableComboBox<E> extends JComboBox<E> {
     Vector<E> entriesFiltered = new Vector<>();
     String compText = text.trim().toLowerCase();
     if (compText.length() > 1) {
-      for (int i = 0; i < originalModel.getSize(); i++) {
-        E val = originalModel.getElementAt(i);
-        if (val != null && val.toString().toLowerCase().contains(compText)) {
+      for (int i = 0; i < baseModel.getSize(); i++) {
+        E val = baseModel.getElementAt(i);
+        String searchable = matchText(val);
+        if (searchable != null && searchable.toLowerCase().contains(compText)) {
           entriesFiltered.add(val);
         }
       }
     }
 
+    if (searchCallback != null) {
+      searchCallback.accept(compText);
+    }
+
     SwingUtilities.invokeLater(
         () -> {
           if (entriesFiltered.isEmpty()) {
+            if (getModel() != baseModel) {
+              super.setModel(baseModel);
+            }
             setSelectedItem(text);
             if (compText.length() > 1) {
               getUI().setPopupVisible(this, false);
