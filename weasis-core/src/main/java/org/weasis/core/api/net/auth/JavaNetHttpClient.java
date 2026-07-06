@@ -76,6 +76,15 @@ public class JavaNetHttpClient implements com.github.scribejava.core.httpclient.
     // HttpClient is managed externally, no cleanup required
   }
 
+  /**
+   * Serializes {@code payload} into an in-memory body and applies it to {@code builder} as a POST,
+   * setting the multipart Content-Type declared by the payload. Shared with the no-auth STOW-RS
+   * path in {@link HttpUtils}.
+   */
+  public static void applyMultipart(HttpRequest.Builder builder, MultipartPayload payload) {
+    MultipartEncoder.applyTo(builder, payload, Verb.POST);
+  }
+
   @Override
   public <T> Future<T> executeAsync(
       String userAgent,
@@ -350,11 +359,24 @@ public class JavaNetHttpClient implements com.github.scribejava.core.httpclient.
       collectParts(parts, payload);
       try {
         byte[] body = serialize(parts);
-        requestBuilder.setHeader(HEADER_CONTENT_TYPE, MULTIPART_CT_PREFIX + payload.getBoundary());
+        requestBuilder.setHeader(HEADER_CONTENT_TYPE, resolveContentType(payload));
         requestBuilder.method(verb.name(), HttpRequest.BodyPublishers.ofByteArray(body));
       } catch (IOException e) {
         throw new UncheckedIOException("Failed to prepare multipart payload", e);
       }
+    }
+
+    /** Honors the payload's own Content-Type (e.g. STOW-RS multipart/related), else form-data. */
+    private static String resolveContentType(MultipartPayload payload) {
+      var headers = payload.getHeaders();
+      if (headers != null) {
+        for (var entry : headers.entrySet()) {
+          if (HEADER_CONTENT_TYPE.equalsIgnoreCase(entry.getKey())) {
+            return entry.getValue();
+          }
+        }
+      }
+      return MULTIPART_CT_PREFIX + payload.getBoundary();
     }
 
     private static byte[] serialize(List<BodySupplier<InputStream>> parts) throws IOException {

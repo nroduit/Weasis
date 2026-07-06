@@ -9,6 +9,7 @@
  */
 package org.weasis.core.api.net;
 
+import com.github.scribejava.core.httpclient.multipart.MultipartPayload;
 import com.github.scribejava.core.model.OAuthRequest;
 import com.github.scribejava.core.model.Verb;
 import com.github.scribejava.core.oauth.OAuth20Service;
@@ -29,6 +30,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.net.auth.AuthMethod;
+import org.weasis.core.api.net.auth.JavaNetHttpClient;
 import org.weasis.core.api.net.auth.OAuth2ServiceFactory;
 import org.weasis.core.util.StreamIOException;
 
@@ -103,6 +105,10 @@ public final class HttpUtils {
       OAuthRequest authRequest)
       throws IOException {
     if (isNoAuthRequired(authMethod)) {
+      MultipartPayload multipart = authRequest == null ? null : authRequest.getMultipartPayload();
+      if (multipart != null) {
+        return sendMultipartRequest(client, url, urlParameters, multipart);
+      }
       var response =
           createHttpRequest(client, url, urlParameters, HttpResponse.BodyHandlers.ofInputStream());
       return new HttpResponseStream(response);
@@ -124,6 +130,22 @@ public final class HttpUtils {
 
   static boolean isNoAuthRequired(AuthMethod authMethod) {
     return authMethod == null || OAuth2ServiceFactory.NO_AUTH.equals(authMethod);
+  }
+
+  private static HttpStream sendMultipartRequest(
+      HttpClient client, String url, URLParameters urlParameters, MultipartPayload multipart)
+      throws IOException {
+    var builder =
+        HttpRequest.newBuilder()
+            .uri(URI.create(url))
+            .timeout(Duration.ofMillis(urlParameters.readTimeout()));
+    applyHeaders(urlParameters.headers(), builder::header);
+    JavaNetHttpClient.applyMultipart(builder, multipart);
+    var request = builder.build();
+    var response =
+        runInterruptibly(
+            () -> client.send(request, HttpResponse.BodyHandlers.ofInputStream()), "Request");
+    return new HttpResponseStream(response);
   }
 
   private static <S> HttpResponse<S> createHttpRequest(

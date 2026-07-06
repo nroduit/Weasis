@@ -128,6 +128,29 @@ class JavaNetHttpClientTest {
   }
 
   @Test
+  void executePostMultipartHonoursDeclaredRelatedContentType() throws Exception {
+    // Mirrors the authenticated STOW-RS path: the payload declares its own multipart/related
+    // content type, which must reach the server verbatim instead of being forced to form-data.
+    String boundary = "weasisDicomBoundary";
+    var headers = new java.util.HashMap<String, String>();
+    headers.put(
+        "Content-Type", "multipart/related;type=\"application/dicom\";boundary=" + boundary);
+    var multipart = new MultipartPayload(boundary, headers);
+    multipart.addBodyPart(
+        new ByteArrayBodyPartPayload(
+            "DICM-body".getBytes(StandardCharsets.UTF_8),
+            Map.of("Content-Type", "application/dicom")));
+    try (var client = newClient()) {
+      Response r = client.execute(null, Map.of(), Verb.POST, baseUrl + "/echo", multipart);
+      assertEquals(200, r.getCode());
+      assertTrue(LAST_CONTENT_TYPE.get().startsWith("multipart/related"), LAST_CONTENT_TYPE.get());
+      assertTrue(
+          LAST_CONTENT_TYPE.get().contains("type=\"application/dicom\""), LAST_CONTENT_TYPE.get());
+      assertTrue(LAST_BODY.get().contains("DICM-body"));
+    }
+  }
+
+  @Test
   void executeGetIgnoresBodyAndReturnsResponse() throws Exception {
     try (var client = newClient()) {
       Response r = client.execute(null, Map.of(), Verb.GET, baseUrl + "/echo", "ignored");
