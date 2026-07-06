@@ -944,7 +944,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
     if (launcher != null && launcher.getConfiguration().isDicomSelectionAction()) {
       DicomExplorer dicom = getDicomExplorer();
       if (dicom != null) {
-        DicomModel dicomModel = (DicomModel) dicom.getDataExplorerModel();
+        DicomModel dicomModel = dicom.getDataExplorerModel();
         DicomExportAction action = new DicomExportAction(launcher, dicomModel);
         try {
           action.execute();
@@ -963,28 +963,56 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
   public void reset(ResetTools action) {
     AuditLog.LOGGER.info("reset action:{}", action.name());
     if (ResetTools.ALL.equals(action)) {
-      firePropertyChange(
-          ActionW.SYNCH.cmd(),
-          null,
-          new SynchEvent(getSelectedViewPane(), ActionW.RESET.cmd(), true));
+      resetAll();
     } else if (ResetTools.ZOOM.equals(action)) {
       // Pass the value 0.0 (convention: default value according the zoom type) directly to the
-      // property change,
-      // otherwise the value is adjusted by the BoundedRangeModel
+      // property change, otherwise the value is adjusted by the BoundedRangeModel
       firePropertyChange(
           ActionW.SYNCH.cmd(),
           null,
           new SynchEvent(getSelectedViewPane(), ActionW.ZOOM.cmd(), 0.0));
     } else if (ResetTools.WL.equals(action)) {
-      getAction(ActionW.PRESET).ifPresent(a -> a.setSelectedItem(a.getFirstItem()));
+      resetWindowLevel();
     } else if (ResetTools.PAN.equals(action)) {
-      if (selectedView2dContainer != null) {
-        ViewCanvas viewPane = selectedView2dContainer.getSelectedViewCanvas();
-        if (viewPane != null) {
-          viewPane.resetPan();
-        }
-      }
+      // Broadcast so the selected view and every PAN-synchronized view re-center through the
+      // per-action gate. A CENTER pan point is the reset signal (see DefaultView2d PAN handling).
+      firePropertyChange(
+          ActionW.SYNCH.cmd(),
+          null,
+          new SynchEvent(
+              getSelectedViewPane(), ActionW.PAN.cmd(), new PanPoint(PanPoint.State.CENTER)));
     }
+  }
+
+  private void resetWindowLevel() {
+    // Select the default preset: this updates the window/level sliders and the preset combo and
+    // propagates the preset to the views that synchronize it.
+    getAction(ActionW.PRESET).ifPresent(a -> a.setSelectedItem(a.getFirstItem()));
+    SynchEvent event = new SynchEvent(getSelectedViewPane());
+    getAction(ActionW.WINDOW).ifPresent(a -> event.put(ActionW.WINDOW.cmd(), a.getRealValue()));
+    getAction(ActionW.LEVEL).ifPresent(a -> event.put(ActionW.LEVEL.cmd(), a.getRealValue()));
+    firePropertyChange(ActionW.SYNCH.cmd(), null, event);
+  }
+
+  private void resetAll() {
+    ViewCanvas<DicomImageElement> selectedView = getSelectedViewPane();
+    // RESET is not a per-view synchronizable action, so linked views filter it out: only the
+    // selected (issuing) view performs the full reset here.
+    firePropertyChange(
+        ActionW.SYNCH.cmd(), null, new SynchEvent(selectedView, ActionW.RESET.cmd(), true));
+    if (selectedView == null) {
+      return;
+    }
+    // Propagate the reset of each individually synchronized action to the linked views
+    SynchEvent event = new SynchEvent(selectedView);
+    event.put(ActionW.ZOOM.cmd(), 0.0);
+    event.put(ActionW.ROTATION.cmd(), selectedView.getActionValue(ActionW.ROTATION.cmd()));
+    event.put(
+        ActionW.FLIP.cmd(),
+        LangUtil.nullToFalse((Boolean) selectedView.getActionValue(ActionW.FLIP.cmd())));
+    getAction(ActionW.WINDOW).ifPresent(a -> event.put(ActionW.WINDOW.cmd(), a.getRealValue()));
+    getAction(ActionW.LEVEL).ifPresent(a -> event.put(ActionW.LEVEL.cmd(), a.getRealValue()));
+    firePropertyChange(ActionW.SYNCH.cmd(), null, event);
   }
 
   @Override
@@ -1653,7 +1681,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
         }
       }
     } catch (Exception e) {
-      LOGGER.error("Zoom command: {}", args.get(0), e);
+      LOGGER.error("Zoom command: {}", args.getFirst(), e);
     }
   }
 
