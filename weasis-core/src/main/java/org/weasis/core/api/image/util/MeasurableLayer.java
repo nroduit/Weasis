@@ -12,6 +12,7 @@ package org.weasis.core.api.image.util;
 import java.awt.Point;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Rectangle2D;
+import java.util.List;
 import java.util.Optional;
 import org.weasis.core.api.image.measure.MeasurementsAdapter;
 import org.weasis.core.api.media.data.TagW;
@@ -124,4 +125,25 @@ public interface MeasurableLayer {
    * @return maximum pixel value
    */
   double getPixelMax();
+
+  /**
+   * Returns additional layers whose region statistics should be reported alongside this layer's
+   * (e.g. a fused PET overlay contributing SUV values to a CT measurement). The shapes are sampled
+   * on the same pixel grid as this layer.
+   *
+   * @return secondary measurable layers, empty by default
+   */
+  default List<MeasurableLayer> getSecondaryLayers() {
+    return List.of();
+  }
+
+  /**
+   * Returns the label suffix used to tag statistics contributed by this layer when reported on
+   * another layer's measurement (e.g. {@code "PET"}), or {@code null} for none.
+   *
+   * @return the statistics label suffix, or null
+   */
+  default String getStatLabel() {
+    return null;
+  }
 }

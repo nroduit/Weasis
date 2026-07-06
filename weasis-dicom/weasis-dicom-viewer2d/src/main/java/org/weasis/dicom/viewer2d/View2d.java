@@ -62,6 +62,7 @@ import org.weasis.core.api.image.PseudoColorOp;
 import org.weasis.core.api.image.SimpleOpManager;
 import org.weasis.core.api.image.WindowOp;
 import org.weasis.core.api.image.util.ImageLayer;
+import org.weasis.core.api.image.util.MeasurableLayer;
 import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.TagW;
@@ -120,6 +121,7 @@ import org.weasis.dicom.explorer.DicomSeriesHandler;
 import org.weasis.dicom.explorer.pr.PrGraphicUtil;
 import org.weasis.dicom.viewer2d.KOComponentFactory.KOViewButton;
 import org.weasis.dicom.viewer2d.KOComponentFactory.KOViewButton.eState;
+import org.weasis.dicom.viewer2d.fusion.FusionOp;
 import org.weasis.dicom.viewer2d.mpr.MprView.Plane;
 import org.weasis.opencv.data.PlanarImage;
 import org.weasis.opencv.op.lut.WlPresentation;
@@ -146,6 +148,10 @@ public class View2d extends DefaultView2d<DicomImageElement> {
     manager.addImageOperationAction(new PseudoColorOp());
     manager.addImageOperationAction(new ShutterOp());
     manager.addImageOperationAction(new OverlayOp());
+    // Fusion must be after W/L and LUT but before zoom/rotation
+    manager.addImageOperationAction(new FusionOp());
+    // Report PET SUV statistics for area measurements drawn on the fused CT image.
+    imageLayer.setSecondaryLayersSupplier(this::getFusionStatsLayers);
     // Zoom and Rotation must be the last operations for the lens
     manager.addImageOperationAction(new AffineTransformOp());
 
@@ -158,6 +164,17 @@ public class View2d extends DefaultView2d<DicomImageElement> {
     this.koStarButton = KOComponentFactory.buildKoStarButton(this);
     koStarButton.setPosition(GridBagConstraints.NORTHEAST);
     getViewButtons().add(koStarButton);
+  }
+
+  private List<MeasurableLayer> getFusionStatsLayers() {
+    Optional<ImageOpNode> node = imageLayer.getDisplayOpManager().getNode(FusionOp.OP_NAME);
+    if (node.isPresent() && node.get() instanceof FusionOp fusionOp) {
+      return fusionOp
+          .getStatsLayer(getImage(), imageLayer.getSourceRenderedImage())
+          .map(List::of)
+          .orElseGet(List::of);
+    }
+    return List.of();
   }
 
   @Override

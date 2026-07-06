@@ -70,6 +70,34 @@ public record ByteLutAlpha(String name, byte[][] lutTable) {
     return new ByteLutAlpha(name, new byte[][] {alpha, blue, green, red});
   }
 
+  /**
+   * Builds an ABGR LUT from a 3-channel BGR color LUT, with a per-entry alpha that ramps with the
+   * input intensity and {@code opacity} (entry {@code 0} forced fully transparent). Turns a
+   * grayscale image into an alpha-modulated color overlay where both the color <em>and</em> the
+   * transparency follow the pixel intensity, which is the standard way to overlay a continuous
+   * functional image (e.g. PET) on top of an anatomical one.
+   *
+   * @param name a human-readable LUT name
+   * @param bgrLut a {@code [3][256]} table in {@code B, G, R} channel order (the layout used by
+   *     {@link org.weasis.opencv.op.lut.ByteLut})
+   * @param opacity the global opacity multiplier in {@code [0.0, 1.0]}
+   */
+  public static ByteLutAlpha fromColorLut(String name, byte[][] bgrLut, float opacity) {
+    Objects.requireNonNull(bgrLut, "Color LUT cannot be null");
+    if (bgrLut.length < 3) {
+      throw new IllegalArgumentException("Color LUT must have at least 3 channels (BGR)");
+    }
+    for (int c = 0; c < 3; c++) {
+      if (bgrLut[c] == null || bgrLut[c].length != CHANNEL_SIZE) {
+        throw new IllegalArgumentException(
+            "Each color LUT channel must have exactly %d values".formatted(CHANNEL_SIZE));
+      }
+    }
+    byte[] alpha = buildAlphaRamp(Math.clamp(opacity, 0.0f, 1.0f));
+    return new ByteLutAlpha(
+        name, new byte[][] {alpha, bgrLut[0].clone(), bgrLut[1].clone(), bgrLut[2].clone()});
+  }
+
   private static byte[] filled(byte value) {
     byte[] out = new byte[CHANNEL_SIZE];
     Arrays.fill(out, value);

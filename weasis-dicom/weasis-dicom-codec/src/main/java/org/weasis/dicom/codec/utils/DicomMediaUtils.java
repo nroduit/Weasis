@@ -473,6 +473,18 @@ public class DicomMediaUtils {
     }
   }
 
+  /**
+   * Writes per-frame geometry from the Per-frame Functional Groups Sequence, falling back to NM
+   * tomographic detector geometry when the former is absent.
+   *
+   * @param index zero-based frame index
+   * @return {@code true} when frame geometry was written
+   */
+  public static boolean writeFrameGeometry(Taggable taggable, DicomMetaData md, int index) {
+    return writePerFrameFunctionalGroupsSequence(taggable, md, index)
+        || writeNmTomoGeometry(taggable, md, index);
+  }
+
   public static boolean writePerFrameFunctionalGroupsSequence(
       Taggable taggable, DicomMetaData md, int index) {
     Attributes header = md.getDicomObject();
@@ -487,6 +499,51 @@ public class DicomMediaUtils {
       }
     }
     return false;
+  }
+
+  /**
+   * Derives the per-frame Image Position/Orientation (Patient) of an NM tomographic (SPECT)
+   * multi-frame image. NM stores plane geometry in the Detector Information Sequence (0054,0022).
+   *
+   * @param frameIndex zero-based frame index
+   * @return {@code true} when NM tomographic geometry was found and written
+   */
+  public static boolean writeNmTomoGeometry(Taggable taggable, DicomMetaData md, int frameIndex) {
+    Attributes header = md == null ? null : md.getDicomObject();
+    if (header == null || taggable == null || !"NM".equals(header.getString(Tag.Modality))) {
+      return false;
+    }
+    Attributes detector = header.getNestedDataset(Tag.DetectorInformationSequence);
+    if (detector == null) {
+      return false;
+    }
+    double[] iop = detector.getDoubles(Tag.ImageOrientationPatient);
+    double[] ipp = detector.getDoubles(Tag.ImagePositionPatient);
+    double spacing = header.getDouble(Tag.SpacingBetweenSlices, 0.0);
+    if (iop == null || iop.length != 6 || ipp == null || ipp.length != 3 || spacing == 0.0) {
+      return false;
+    }
+
+    Vector3d normal = new Vector3d();
+    new Vector3d(iop[0], iop[1], iop[2]).cross(new Vector3d(iop[3], iop[4], iop[5]), normal);
+    if (normal.lengthSquared() == 0.0) {
+      return false;
+    }
+    normal.normalize();
+
+    int sliceOffset = frameIndex;
+    int[] sliceVector = header.getInts(Tag.SliceVector);
+    if (sliceVector != null && frameIndex >= 0 && frameIndex < sliceVector.length) {
+      sliceOffset = sliceVector[frameIndex] - 1;
+    }
+    double step = spacing * sliceOffset;
+    double[] framePos = {
+      ipp[0] + normal.x * step, ipp[1] + normal.y * step, ipp[2] + normal.z * step
+    };
+
+    taggable.setTag(TagD.get(Tag.ImageOrientationPatient), iop);
+    taggable.setTag(TagD.get(Tag.ImagePositionPatient), framePos);
+    return true;
   }
 
   public static void computeSUVFactor(Attributes dicomObject, Taggable taggable, int index) {

@@ -27,6 +27,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import org.opencv.core.CvType;
 import org.opencv.core.Mat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -159,11 +160,81 @@ public class ImageRegionStatistics {
           Integer bandIndex = hists.size() == 1 ? null : data.getBandIndex();
           measVal.addAll(getStatistics(data, bandIndex, i == 0));
         }
+        for (MeasurableLayer secondary : layer.getSecondaryLayers()) {
+          measVal.addAll(getSuvStatistics(graphic, secondary));
+        }
       }
       return measVal;
     }
 
     return Collections.emptyList();
+  }
+
+  /**
+   * Computes SUV min/max/mean for {@code petLayer} (a PET overlay sampled on the base layer's pixel
+   * grid) within the ROI, labeled with a "PT" extension so they read alongside the base statistics.
+   * Returns an empty list when the layer carries no SUV factor or the ROI covers no PET voxel.
+   */
+  private static List<MeasureItem> getSuvStatistics(GraphicArea graphic, MeasurableLayer petLayer) {
+    if (petLayer == null || !petLayer.hasContent()) {
+      return Collections.emptyList();
+    }
+    Double suv = (Double) petLayer.getSourceTagValue(TagW.SuvFactor);
+    if (suv == null
+        || !(IMAGE_MIN.getComputed() || IMAGE_MAX.getComputed() || IMAGE_MEAN.getComputed())) {
+      return Collections.emptyList();
+    }
+    List<Mat> imgPr = prepareInputImages(graphic, petLayer);
+    if (imgPr.size() != 2) {
+      return Collections.emptyList();
+    }
+    Mat mask = imgPr.get(1); // null when the whole image is measured (no ROI shape)
+    // The source may be any depth (native PET is CV_16S, the resampled volume CV_32F): read it as
+    // float so a single code path handles both. The volume path uses NaN to mark voxels outside it.
+    Mat src = new Mat();
+    imgPr.get(0).convertTo(src, CvType.CV_32F);
+    int rows = src.rows();
+    int cols = src.cols();
+    float[] values = new float[cols];
+    byte[] selected = mask == null ? null : new byte[cols];
+    double min = Double.MAX_VALUE;
+    double max = -Double.MAX_VALUE;
+    double sum = 0.0;
+    long count = 0;
+    for (int r = 0; r < rows; r++) {
+      src.get(r, 0, values);
+      if (mask != null) {
+        mask.get(r, 0, selected);
+      }
+      for (int c = 0; c < cols; c++) {
+        if ((selected == null || selected[c] != 0) && !Float.isNaN(values[c])) {
+          double v = values[c];
+          min = Math.min(min, v);
+          max = Math.max(max, v);
+          sum += v;
+          count++;
+        }
+      }
+    }
+    src.release();
+    if (count == 0) {
+      return Collections.emptyList();
+    }
+    String unit = "SUVbw, g/ml"; // NON-NLS
+    String label = petLayer.getStatLabel();
+    String ext = " " + (label == null ? "PT" : label); // NON-NLS
+    List<MeasureItem> measList = new ArrayList<>(3);
+    addSuvMeasure(measList, IMAGE_MIN, ext, petLayer.pixelToRealValue(min) * suv, unit);
+    addSuvMeasure(measList, IMAGE_MAX, ext, petLayer.pixelToRealValue(max) * suv, unit);
+    addSuvMeasure(measList, IMAGE_MEAN, ext, petLayer.pixelToRealValue(sum / count) * suv, unit);
+    return measList;
+  }
+
+  private static void addSuvMeasure(
+      List<MeasureItem> measList, Measurement measure, String ext, double value, String unit) {
+    if (measure.getComputed()) {
+      measList.add(new MeasureItem(measure, ext, value, unit));
+    }
   }
 
   private static boolean isOneComputed() {

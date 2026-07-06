@@ -36,6 +36,8 @@ import org.weasis.dicom.explorer.LoadLocalDicom;
 import org.weasis.dicom.explorer.main.DicomExplorer;
 import org.weasis.dicom.viewer2d.EventManager;
 import org.weasis.dicom.viewer2d.Messages;
+import org.weasis.dicom.viewer2d.fusion.FusionController;
+import org.weasis.dicom.viewer2d.fusion.FusionState;
 import org.weasis.dicom.viewer2d.mpr.MprView.Plane;
 
 @org.osgi.service.component.annotations.Component(service = SeriesViewerFactory.class)
@@ -43,6 +45,7 @@ public class MprFactory implements SeriesViewerFactory {
 
   public static final String NAME = Messages.getString("oblique.mpr");
   public static final String P_DEFAULT_LAYOUT = "mpr.default.layout";
+  private static FusionState pendingFusion;
 
   @Override
   public Icon getIcon() {
@@ -76,6 +79,9 @@ public class MprFactory implements SeriesViewerFactory {
     LayoutModel layout =
         ImageViewerPlugin.getLayoutModel(options, getDefaultMigLayoutModel(), null);
     MprContainer instance = new MprContainer(layout.model(), layout.uid());
+    // Hand off the fusion captured by getMprAction; open() reaches here synchronously on the EDT.
+    instance.setInheritedFusion(pendingFusion);
+    pendingFusion = null;
     ImageViewerPlugin.registerInDataExplorerModel(model, instance);
     int index = 0;
     for (MigCell cell : layout.model().getCells()) {
@@ -143,6 +149,10 @@ public class MprFactory implements SeriesViewerFactory {
         if (s == null) {
           return;
         }
+
+        // Inherit the fusion shown in the 2D view this MPR is launched from (consumed in
+        // createSeriesViewer). Null when fusion is off or the overlay is incompatible.
+        pendingFusion = FusionController.snapshot(EventManager.getInstance().getSelectedViewPane());
 
         ViewerOpenOptions opts =
             ViewerOpenOptions.builder().placement(ViewerPlacement.newTab()).build();

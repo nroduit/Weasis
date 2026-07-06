@@ -17,6 +17,7 @@ import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
+import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
@@ -26,6 +27,7 @@ import javax.swing.border.Border;
 import javax.swing.text.NumberFormatter;
 import org.weasis.core.api.gui.Insertable;
 import org.weasis.core.api.gui.util.ActionW;
+import org.weasis.core.api.gui.util.CollapsiblePanel;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.JSliderW;
 import org.weasis.core.api.util.ResourceUtil;
@@ -38,10 +40,15 @@ import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.viewer2d.EventManager;
 import org.weasis.dicom.viewer2d.Messages;
 import org.weasis.dicom.viewer2d.ResetTools;
+import org.weasis.dicom.viewer2d.fusion.FusionAction;
 
 public class ImageTool extends PluginTool {
 
   public static final String BUTTON_NAME = Messages.getString("ImageTool.img_tool");
+
+  // Local-persistence keys for the expanded/collapsed state of each collapsible section.
+  private static final String PREF_SECTION = "weasis.image.tool.section."; // NON-NLS
+  private static final Border SECTION_CONTENT_BORDER = GuiUtils.getEmptyBorder(2, 6, 6, 6);
 
   private final JScrollPane rootPane = new JScrollPane();
   private final Border spaceY = GuiUtils.getEmptyBorder(15, 3, 0, 3);
@@ -55,12 +62,30 @@ public class ImageTool extends PluginTool {
 
   private void init() {
     setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
-    add(getWindowLevelPanel(EventManager.getInstance(), spaceY, true));
-    add(getTransformPanel(spaceY));
-    add(getSlicePanel(spaceY));
-    add(getResetPanel(spaceY));
+    addSection(
+        Messages.getString("ImageTool.wl"),
+        getWindowLevelPanel(EventManager.getInstance(), spaceY, true),
+        true,
+        "wl"); // NON-NLS
+    addSection(
+        Messages.getString("ImageTool.transform"), getTransformPanel(spaceY), true, "transform");
+    addSection(Messages.getString("cine"), getSlicePanel(spaceY), true, "slice"); // NON-NLS
+    // Advanced image operations are collapsed by default to keep the tool compact.
+    addSection(Messages.getString("FusionTool.title"), getFusionPanel(spaceY), false, "fusion");
+    addSection(ActionW.RESET.getTitle(), getResetPanel(spaceY), true, "reset"); // NON-NLS
     add(GuiUtils.boxYLastElement(3));
     rootPane.setBorder(BorderFactory.createEmptyBorder()); // remove default line
+  }
+
+  /**
+   * Wraps a section panel in a {@link CollapsiblePanel}: the panel's own titled border is dropped
+   * (the collapsible header carries the title) and its expanded state is persisted under {@code
+   * name}.
+   */
+  private void addSection(
+      String title, JComponent content, boolean expandedByDefault, String name) {
+    content.setBorder(SECTION_CONTENT_BORDER);
+    add(new CollapsiblePanel(title, content, expandedByDefault, PREF_SECTION + name));
   }
 
   @Override
@@ -267,6 +292,63 @@ public class ImageTool extends PluginTool {
               transform.add(pane);
             });
     return transform;
+  }
+
+  public static JPanel getFusionPanel(Border hspace) {
+    int gabY = 7;
+    EventManager manager = EventManager.getInstance();
+    JPanel fusionPanel = GuiUtils.getVerticalBoxLayoutPanel();
+    fusionPanel.setBorder(
+        BorderFactory.createCompoundBorder(
+            hspace, GuiUtils.getTitledBorder(Messages.getString("FusionTool.title"))));
+
+    manager
+        .getAction(FusionAction.ENABLE)
+        .ifPresent(
+            a -> {
+              fusionPanel.add(
+                  GuiUtils.getFlowLayoutPanel(a.createCheckBox(FusionAction.ENABLE.getTitle())));
+              fusionPanel.add(GuiUtils.boxVerticalStrut(gabY));
+            });
+
+    manager
+        .getAction(FusionAction.SERIES)
+        .ifPresent(
+            a -> {
+              JLabel label = new JLabel(Messages.getString("FusionTool.series") + StringUtil.COLON);
+              fusionPanel.add(GuiUtils.getHorizontalBoxLayoutPanel(5, label, a.createCombo(160)));
+              fusionPanel.add(GuiUtils.boxVerticalStrut(gabY));
+            });
+
+    manager
+        .getAction(FusionAction.LUT)
+        .ifPresent(
+            a -> {
+              JLabel label = new JLabel(Messages.getString("FusionTool.lut") + StringUtil.COLON);
+              fusionPanel.add(GuiUtils.getHorizontalBoxLayoutPanel(5, label, a.createCombo(160)));
+              fusionPanel.add(GuiUtils.boxVerticalStrut(gabY));
+            });
+
+    manager
+        .getAction(FusionAction.BASE_OPACITY)
+        .ifPresent(
+            a -> {
+              JSliderW slider = a.createSlider(0, true);
+              GuiUtils.setPreferredWidth(slider, 100);
+              fusionPanel.add(slider);
+              fusionPanel.add(GuiUtils.boxVerticalStrut(gabY));
+            });
+
+    manager
+        .getAction(FusionAction.OVERLAY_OPACITY)
+        .ifPresent(
+            a -> {
+              JSliderW slider = a.createSlider(0, true);
+              GuiUtils.setPreferredWidth(slider, 100);
+              fusionPanel.add(slider);
+              fusionPanel.add(GuiUtils.boxVerticalStrut(5));
+            });
+    return fusionPanel;
   }
 
   @Override

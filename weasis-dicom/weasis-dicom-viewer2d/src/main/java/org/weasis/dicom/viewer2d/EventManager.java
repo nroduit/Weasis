@@ -108,6 +108,10 @@ import org.weasis.dicom.explorer.DicomModel;
 import org.weasis.dicom.explorer.exp.DicomExportAction;
 import org.weasis.dicom.explorer.main.DicomExplorer;
 import org.weasis.dicom.explorer.main.DicomExplorer.ListPosition;
+import org.weasis.dicom.viewer2d.fusion.FusionAction;
+import org.weasis.dicom.viewer2d.fusion.FusionController;
+import org.weasis.dicom.viewer2d.fusion.FusionOp;
+import org.weasis.dicom.viewer2d.fusion.FusionOpacityListener;
 import org.weasis.dicom.viewer2d.mip.MipView;
 import org.weasis.dicom.viewer2d.mpr.MprAxis;
 import org.weasis.dicom.viewer2d.mpr.MprContainer;
@@ -142,6 +146,10 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
 
   /** The single instance of this singleton class. */
   private static EventManager instance;
+
+  // Opacity actions are kept typed so their title can follow the real modality of each fused layer.
+  private final FusionOpacityListener fusionBaseOpacity;
+  private final FusionOpacityListener fusionOverlayOpacity;
 
   /**
    * Return the single instance of this class. This method guarantees the singleton property of this
@@ -200,6 +208,18 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
     setAction(newKOToggleAction());
     setAction(newKOFilterAction());
     setAction(newKOSelectionAction());
+
+    setAction(newFusionEnableAction());
+    setAction(newFusionSeriesAction());
+    setAction(newFusionLutAction());
+    fusionBaseOpacity =
+        new FusionOpacityListener(
+            FusionAction.BASE_OPACITY, FusionOp.P_OPACITY_BASE, 100, "CT"); // NON-NLS
+    fusionOverlayOpacity =
+        new FusionOpacityListener(
+            FusionAction.OVERLAY_OPACITY, FusionOp.P_OPACITY_OVERLAY, 75, "PT"); // NON-NLS
+    setAction(fusionBaseOpacity);
+    setAction(fusionOverlayOpacity);
 
     final BundleContext context = AppProperties.getBundleContext(this.getClass());
     Preferences prefs = BundlePreferences.getDefaultPreferences(context);
@@ -586,6 +606,147 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
       }
     };
   }
+
+  // --- Fusion actions ------------------------------------------------------------------------
+  // Fusion is strictly per-view: the listeners apply the change directly to every pane of the
+  // selected container (so MPR planes stay in sync) rather than routing through SynchView, and
+  // updateFusionComponentsListener mirrors the selected view's FusionOp params back into the
+  // controls on view selection.
+
+  private ToggleButtonListener newFusionEnableAction() {
+    return new ToggleButtonListener(FusionAction.ENABLE, false) {
+      @Override
+      public void actionPerformed(boolean selected) {
+        FusionController.applyParam(FusionOp.P_FUSION_ENABLED, selected);
+        setFusionControlsEnabled(selected);
+        if (selected) {
+          getAction(FusionAction.LUT)
+              .ifPresent(
+                  a -> FusionController.applyParam(FusionOp.P_FUSION_LUT, a.getSelectedItem()));
+          // The series combo is populated without triggering its listener, so push the current
+          // selection to the op here; otherwise the overlay has no PET series and stays hidden.
+          getAction(FusionAction.SERIES)
+              .ifPresent(
+                  a -> {
+                    Object overlaySeries = a.getSelectedItem();
+                    FusionController.applyParam(FusionOp.P_FUSION_SERIES, overlaySeries);
+                    FusionController.buildVolume(overlaySeries);
+                  });
+        }
+      }
+    };
+  }
+
+  private ComboItemListener<Object> newFusionSeriesAction() {
+    return new ComboItemListener<>(FusionAction.SERIES, null) {
+      @Override
+      public void itemStateChanged(Object object) {
+        FusionController.applyParam(FusionOp.P_FUSION_SERIES, object);
+        fusionOverlayOpacity.setModalityLabel(FusionController.modalityOf(object));
+        FusionController.buildVolume(object);
+      }
+    };
+  }
+
+  private ComboItemListener<ByteLut> newFusionLutAction() {
+    ByteLut[] luts = fusionLutList();
+    ComboItemListener<ByteLut> action =
+        new ComboItemListener<>(FusionAction.LUT, luts) {
+          @Override
+          public void itemStateChanged(Object object) {
+            FusionController.applyParam(FusionOp.P_FUSION_LUT, object);
+          }
+        };
+    // PET is a hot-metal palette (monotonic luminance) tuned for PET overlays; use it by default.
+    for (ByteLut lut : luts) {
+      if ("PET".equals(lut.name())) { // NON-NLS
+        action.setSelectedItemWithoutTriggerAction(lut);
+        break;
+      }
+    }
+    return action;
+  }
+
+  private static ByteLut[] fusionLutList() {
+    List<ByteLut> lutEntries = new ArrayList<>();
+    lutEntries.add(ColorLut.GRAY.getByteLut());
+    ByteLutCollection.readLutFilesFromResourcesDir(
+        lutEntries, ResourceUtil.getResource(DicomResource.LUTS).toPath());
+    return lutEntries.toArray(new ByteLut[0]);
+  }
+
+  /**
+   * Mirrors the selected view's FusionOp state into the fusion controls (see PRESET/LUT pattern).
+   */
+  private void updateFusionComponentsListener(ViewCanvas<DicomImageElement> view2d) {
+    OpManager disOp = view2d.getDisplayOpManager();
+    List<MediaSeries<DicomImageElement>> compatible = FusionController.compatibleSeries(view2d);
+    boolean available = !compatible.isEmpty();
+
+    getAction(FusionAction.SERIES)
+        .ifPresent(
+            a -> {
+              a.setDataListWithoutTriggerAction(compatible.toArray());
+              Object stored =
+                  disOp.getParamValue(FusionOp.OP_NAME, FusionOp.P_FUSION_SERIES).orElse(null);
+              if (stored != null && compatible.contains(stored)) {
+                a.setSelectedItemWithoutTriggerAction(stored);
+              }
+            });
+
+    boolean enabled =
+        available
+            && disOp
+                .getParamValue(FusionOp.OP_NAME, FusionOp.P_FUSION_ENABLED, Boolean.class)
+                .orElse(Boolean.FALSE);
+    getAction(FusionAction.ENABLE)
+        .ifPresent(
+            a -> {
+              a.enableAction(available);
+              a.setSelectedWithoutTriggerAction(enabled);
+            });
+
+    getAction(FusionAction.LUT)
+        .ifPresent(
+            a ->
+                disOp
+                    .getParamValue(FusionOp.OP_NAME, FusionOp.P_FUSION_LUT)
+                    .ifPresent(a::setSelectedItemWithoutTriggerAction));
+
+    // Title each opacity slider with the real modality of the layer it controls.
+    fusionBaseOpacity.setModalityLabel(FusionController.baseModality(view2d));
+    fusionBaseOpacity.setSliderValue(toFusionPercent(disOp, FusionOp.P_OPACITY_BASE, 1.0), false);
+    Object overlay =
+        getAction(FusionAction.SERIES).map(ComboItemListener::getSelectedItem).orElse(null);
+    fusionOverlayOpacity.setModalityLabel(FusionController.modalityOf(overlay));
+    fusionOverlayOpacity.setSliderValue(
+        toFusionPercent(disOp, FusionOp.P_OPACITY_OVERLAY, 0.5), false);
+
+    setFusionControlsEnabled(enabled);
+  }
+
+  /** Re-syncs the fusion controls with the selected view (e.g. after MPR inherits fusion). */
+  public void refreshFusionControls() {
+    ViewCanvas<DicomImageElement> view = getSelectedViewPane();
+    if (view != null) {
+      updateFusionComponentsListener(view);
+    }
+  }
+
+  private static int toFusionPercent(OpManager disOp, String param, double def) {
+    return (int)
+        Math.round(disOp.getParamValue(FusionOp.OP_NAME, param, Double.class).orElse(def) * 100);
+  }
+
+  /** Series/LUT/opacity controls are usable only while fusion is enabled. */
+  private void setFusionControlsEnabled(boolean enabled) {
+    getAction(FusionAction.SERIES).ifPresent(a -> a.enableAction(enabled));
+    getAction(FusionAction.LUT).ifPresent(a -> a.enableAction(enabled));
+    getAction(FusionAction.BASE_OPACITY).ifPresent(a -> a.enableAction(enabled));
+    getAction(FusionAction.OVERLAY_OPACITY).ifPresent(a -> a.enableAction(enabled));
+  }
+
+  // ---  End of Fusion actions ------------------------------------------------------------------
 
   private ToggleButtonListener newKOToggleAction() {
     return new ToggleButtonListener(ActionW.KO_TOGGLE_STATE, false) {
@@ -996,6 +1157,15 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
 
   private void resetAll() {
     ViewCanvas<DicomImageElement> selectedView = getSelectedViewPane();
+    // Fusion is an opt-in, container-wide overlay: reset disables it on every pane and updates
+    // the fusion controls, so the view returns to the plain base image like any non-fused view.
+    getAction(FusionAction.ENABLE)
+        .ifPresent(
+            a -> {
+              if (a.isSelected()) {
+                a.setSelected(false);
+              }
+            });
     // RESET is not a per-view synchronizable action, so linked views filter it out: only the
     // selected (issuing) view performs the full reset here.
     firePropertyChange(
@@ -1145,6 +1315,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
 
     getAction(ActionW.CROSSHAIR).ifPresent(a -> a.enableAction(!isMprOrOblique));
     updateKeyObjectComponentsListener(view2d);
+    updateFusionComponentsListener(view2d);
 
     // register all actions for the selected view and for the other views register according to
     // synchview.

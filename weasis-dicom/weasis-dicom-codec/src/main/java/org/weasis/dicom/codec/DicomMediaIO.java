@@ -502,7 +502,7 @@ public class DicomMediaIO implements DcmMediaReader {
 
     writeImageValues(md);
     writeSharedFunctionalGroupsSequence(header, md);
-    DicomMediaUtils.writePerFrameFunctionalGroupsSequence(this, md, 0);
+    DicomMediaUtils.writeFrameGeometry(this, md, 0);
 
     boolean pr = SERIES_PR_MIMETYPE.equals(mimeType);
     boolean ko = SERIES_KO_MIMETYPE.equals(mimeType);
@@ -855,8 +855,7 @@ public class DicomMediaIO implements DcmMediaReader {
       // Clone the shared tag
       Map<TagW, Object> tagList = new HashMap<>(tags);
       SimpleTaggable taggable = new SimpleTaggable(tagList);
-      if (DicomMediaUtils.writePerFrameFunctionalGroupsSequence(
-          taggable, getDicomMetaData(), val)) {
+      if (DicomMediaUtils.writeFrameGeometry(taggable, getDicomMetaData(), val)) {
         DicomMediaUtils.computeSlicePosition(taggable);
       }
       return tagList;

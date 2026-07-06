@@ -79,6 +79,8 @@ import org.weasis.dicom.viewer2d.Messages;
 import org.weasis.dicom.viewer2d.ResetTools;
 import org.weasis.dicom.viewer2d.View2dContainer;
 import org.weasis.dicom.viewer2d.View2dFactory;
+import org.weasis.dicom.viewer2d.fusion.FusionController;
+import org.weasis.dicom.viewer2d.fusion.FusionState;
 import org.weasis.dicom.viewer2d.mpr.MprView.Plane;
 import org.weasis.dicom.viewer2d.mpr.cmpr.CrossSectionParams;
 import org.weasis.dicom.viewer2d.mpr.cmpr.CurvedMprBuilder;
@@ -180,6 +182,7 @@ public class MprContainer extends DicomViewerPlugin
   private MprController mprController;
 
   private Thread process;
+  private FusionState inheritedFusion;
 
   public MprContainer() {
     this(VIEWS_1x1, null);
@@ -562,6 +565,8 @@ public class MprContainer extends DicomViewerPlugin
                                 c.setSelectedItemWithoutTriggerAction(null);
                                 c.setSelectedItem(c.getFirstItem());
                               });
+
+                      applyInheritedFusion();
                     });
               } catch (final OutOfMemoryError e) {
                 // OutOfMemoryError is an Error, not an Exception: caught explicitly so an
@@ -591,6 +596,32 @@ public class MprContainer extends DicomViewerPlugin
           cellManager.getAllViewCanvases(),
           null,
           Messages.getString("MPRContainer.mesg_missing_3d"));
+    }
+  }
+
+  /** Fusion captured from the launching 2D view; applied once the MPR build completes. */
+  public void setInheritedFusion(FusionState fusion) {
+    this.inheritedFusion = fusion;
+  }
+
+  /**
+   * Applies the inherited 2D fusion to the MPR panes once they are built, but only if the overlay
+   * series is still a compatible overlay for the MPR base. Each pane keeps its own FusionOp, so the
+   * planes can be tuned independently afterwards.
+   */
+  private void applyInheritedFusion() {
+    FusionState fusion = inheritedFusion;
+    inheritedFusion = null;
+    if (fusion == null) {
+      return;
+    }
+    List<ViewCanvas<DicomImageElement>> views = getView2ds();
+    if (!views.isEmpty()
+        && FusionController.compatibleSeries(views.getFirst()).contains(fusion.series())) {
+      FusionController.applyState(views, fusion);
+      if (eventManager instanceof EventManager manager) {
+        manager.refreshFusionControls();
+      }
     }
   }
 

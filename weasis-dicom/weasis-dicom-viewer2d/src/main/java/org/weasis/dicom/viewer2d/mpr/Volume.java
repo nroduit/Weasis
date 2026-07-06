@@ -861,57 +861,52 @@ public abstract sealed class Volume<T extends Number, A>
   }
 
   private static void normalizeByteRun(int[] w, int[] v, int aOff, byte[] d, int dOff, int run) {
-    final float eps = SplatContext.WEIGHT_EPSILON;
     for (int k = 0; k < run; k++) {
       int wb = w[aOff + k];
       if (wb == 0) continue; // 0 raw bits == 0.0f → unsampled, leave background
       float fw = Float.intBitsToFloat(wb);
-      if (fw < eps) continue;
+      if (fw < SplatContext.WEIGHT_EPSILON) continue;
       d[dOff + k] = (byte) Math.round(Float.intBitsToFloat(v[aOff + k]) / fw);
     }
   }
 
   private static void normalizeShortRun(int[] w, int[] v, int aOff, short[] d, int dOff, int run) {
-    final float eps = SplatContext.WEIGHT_EPSILON;
     for (int k = 0; k < run; k++) {
       int wb = w[aOff + k];
       if (wb == 0) continue;
       float fw = Float.intBitsToFloat(wb);
-      if (fw < eps) continue;
+      if (fw < SplatContext.WEIGHT_EPSILON) continue;
       d[dOff + k] = (short) Math.round(Float.intBitsToFloat(v[aOff + k]) / fw);
     }
   }
 
   private static void normalizeIntRun(int[] w, int[] v, int aOff, int[] d, int dOff, int run) {
-    final float eps = SplatContext.WEIGHT_EPSILON;
     for (int k = 0; k < run; k++) {
       int wb = w[aOff + k];
       if (wb == 0) continue;
       float fw = Float.intBitsToFloat(wb);
-      if (fw < eps) continue;
+      if (fw < SplatContext.WEIGHT_EPSILON) continue;
       d[dOff + k] = Math.round(Float.intBitsToFloat(v[aOff + k]) / fw);
     }
   }
 
   private static void normalizeFloatRun(int[] w, int[] v, int aOff, float[] d, int dOff, int run) {
-    final float eps = SplatContext.WEIGHT_EPSILON;
     for (int k = 0; k < run; k++) {
       int wb = w[aOff + k];
       if (wb == 0) continue;
       float fw = Float.intBitsToFloat(wb);
-      if (fw < eps) continue;
+      if (fw < SplatContext.WEIGHT_EPSILON) continue;
       d[dOff + k] = Float.intBitsToFloat(v[aOff + k]) / fw;
     }
   }
 
   private static void normalizeDoubleRun(
       int[] w, int[] v, int aOff, double[] d, int dOff, int run) {
-    final float eps = SplatContext.WEIGHT_EPSILON;
     for (int k = 0; k < run; k++) {
       int wb = w[aOff + k];
       if (wb == 0) continue;
       float fw = Float.intBitsToFloat(wb);
-      if (fw < eps) continue;
+      if (fw < SplatContext.WEIGHT_EPSILON) continue;
       d[dOff + k] = (double) Float.intBitsToFloat(v[aOff + k]) / fw;
     }
   }
@@ -938,50 +933,45 @@ public abstract sealed class Volume<T extends Number, A>
 
   private static void normalizeFloatToByteRun(
       float[] w, float[] v, int sOff, byte[] d, int dOff, int run) {
-    final float eps = SplatContext.WEIGHT_EPSILON;
     for (int k = 0; k < run; k++) {
       float fw = w[sOff + k];
-      if (fw < eps) continue;
+      if (fw < SplatContext.WEIGHT_EPSILON) continue;
       d[dOff + k] = (byte) Math.round(v[sOff + k] / fw);
     }
   }
 
   private static void normalizeFloatToShortRun(
       float[] w, float[] v, int sOff, short[] d, int dOff, int run) {
-    final float eps = SplatContext.WEIGHT_EPSILON;
     for (int k = 0; k < run; k++) {
       float fw = w[sOff + k];
-      if (fw < eps) continue;
+      if (fw < SplatContext.WEIGHT_EPSILON) continue;
       d[dOff + k] = (short) Math.round(v[sOff + k] / fw);
     }
   }
 
   private static void normalizeFloatToIntRun(
       float[] w, float[] v, int sOff, int[] d, int dOff, int run) {
-    final float eps = SplatContext.WEIGHT_EPSILON;
     for (int k = 0; k < run; k++) {
       float fw = w[sOff + k];
-      if (fw < eps) continue;
+      if (fw < SplatContext.WEIGHT_EPSILON) continue;
       d[dOff + k] = Math.round(v[sOff + k] / fw);
     }
   }
 
   private static void normalizeFloatToFloatRun(
       float[] w, float[] v, int sOff, float[] d, int dOff, int run) {
-    final float eps = SplatContext.WEIGHT_EPSILON;
     for (int k = 0; k < run; k++) {
       float fw = w[sOff + k];
-      if (fw < eps) continue;
+      if (fw < SplatContext.WEIGHT_EPSILON) continue;
       d[dOff + k] = v[sOff + k] / fw;
     }
   }
 
   private static void normalizeFloatToDoubleRun(
       float[] w, float[] v, int sOff, double[] d, int dOff, int run) {
-    final float eps = SplatContext.WEIGHT_EPSILON;
     for (int k = 0; k < run; k++) {
       float fw = w[sOff + k];
-      if (fw < eps) continue;
+      if (fw < SplatContext.WEIGHT_EPSILON) continue;
       d[dOff + k] = (double) v[sOff + k] / fw;
     }
   }
@@ -1676,6 +1666,62 @@ public abstract sealed class Volume<T extends Number, A>
 
     double result = v0 * (1 - fz) + v1 * fz;
     return convertToGeneric(result);
+  }
+
+  /**
+   * Trilinear sample at fractional voxel coordinates returned as a sign-corrected {@code double}
+   * (unsigned types are widened, not wrapped). Returns {@link Double#NaN} outside the volume.
+   *
+   * <p>Unlike {@link #getInterpolatedValueFromSource} this skips the narrowing back to {@code T},
+   * so 16-bit unsigned values above 32767 are preserved. This is required when an external consumer
+   * (e.g. fusion overlay resampling) reslices a functional volume such as PET and then normalises
+   * the raw values to 8-bit.
+   */
+  public double getInterpolatedDouble(double x, double y, double z, int channel) {
+    if (x < 0 || x >= size.x - 1 || y < 0 || y >= size.y - 1 || z < 0 || z >= size.z - 1) {
+      return Double.NaN;
+    }
+    int x0 = (int) Math.floor(x);
+    int y0 = (int) Math.floor(y);
+    int z0 = (int) Math.floor(z);
+    int x1 = Math.min(x0 + 1, size.x - 1);
+    int y1 = Math.min(y0 + 1, size.y - 1);
+    int z1 = Math.min(z0 + 1, size.z - 1);
+    double fx = x - x0;
+    double fy = y - y0;
+    double fz = z - z0;
+
+    double v00 = lerp(value(x0, y0, z0, channel), value(x1, y0, z0, channel), fx);
+    double v01 = lerp(value(x0, y0, z1, channel), value(x1, y0, z1, channel), fx);
+    double v10 = lerp(value(x0, y1, z0, channel), value(x1, y1, z0, channel), fx);
+    double v11 = lerp(value(x0, y1, z1, channel), value(x1, y1, z1, channel), fx);
+
+    double v0 = v00 * (1 - fy) + v10 * fy;
+    double v1 = v01 * (1 - fy) + v11 * fy;
+    return v0 * (1 - fz) + v1 * fz;
+  }
+
+  /**
+   * Nearest-neighbour sample at the given voxel coordinates, returning {@code NaN} outside the
+   * volume. Unlike {@link #getInterpolatedDouble} this does not blend neighbours, so it preserves
+   * the original voxel values (e.g. for faithful SUV min/max statistics).
+   */
+  public double getNearestDouble(double x, double y, double z, int channel) {
+    int xi = (int) Math.round(x);
+    int yi = (int) Math.round(y);
+    int zi = (int) Math.round(z);
+    if (xi < 0 || xi >= size.x || yi < 0 || yi >= size.y || zi < 0 || zi >= size.z) {
+      return Double.NaN;
+    }
+    return value(xi, yi, zi, channel);
+  }
+
+  private double value(int x, int y, int z, int channel) {
+    return convertToUnsigned(getValue(x, y, z, channel));
+  }
+
+  private static double lerp(double v0, double v1, double factor) {
+    return v0 * (1 - factor) + v1 * factor;
   }
 
   @SuppressWarnings("unchecked")
