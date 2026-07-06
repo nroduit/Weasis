@@ -371,7 +371,8 @@ public class JavaNetHttpClient implements com.github.scribejava.core.httpclient.
       var headers = payload.getHeaders();
       if (headers != null) {
         for (var entry : headers.entrySet()) {
-          if (HEADER_CONTENT_TYPE.equalsIgnoreCase(entry.getKey())) {
+          if (HEADER_CONTENT_TYPE.equalsIgnoreCase(entry.getKey())
+              && StringUtil.hasText(entry.getValue())) {
             return entry.getValue();
           }
         }

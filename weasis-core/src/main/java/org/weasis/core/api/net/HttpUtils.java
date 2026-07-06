@@ -161,13 +161,17 @@ public final class HttpUtils {
 
     applyHeaders(urlParameters.headers(), requestBuilder::header);
 
+    boolean post = urlParameters.httpPost();
     var request =
-        urlParameters.httpPost()
+        post
             ? requestBuilder.POST(HttpRequest.BodyPublishers.noBody()).build()
             : requestBuilder.GET().build();
 
     var response = sendWithStaleConnectionRetry(client, request, bodyHandler);
-    validateResponseStatus(response.statusCode());
+    // POST responses (e.g. STOW-RS 202/409) carry meaningful non-200 codes the caller inspects.
+    if (!post) {
+      validateResponseStatus(response.statusCode());
+    }
     return response;
   }
 
