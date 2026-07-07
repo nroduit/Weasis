@@ -23,7 +23,6 @@ import java.util.Objects;
 import javax.swing.Timer;
 import org.joml.Vector3d;
 import org.joml.Vector3i;
-import org.opencv.core.Point3;
 import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.ui.model.graphic.Graphic;
 import org.weasis.core.ui.model.graphic.imp.line.PolylineGraphic;
@@ -95,8 +94,8 @@ public class CurvedMprAxis {
    * Create a new CurvedMprAxis.
    *
    * @param volume the 3D volume to sample
-   * @param curvePoints3D the polyline control points in voxel coordinates
-   * @param planeNormal the source plane normal (effective after rotation)
+   * @param curvePoints3D the polyline control points in voxel-ratio-scaled coordinates
+   * @param planeNormal the source plane normal in scaled space (effective after rotation)
    */
   public CurvedMprAxis(Volume<?, ?> volume, List<Vector3d> curvePoints3D, Vector3d planeNormal) {
     this.volume = Objects.requireNonNull(volume);
@@ -195,13 +194,13 @@ public class CurvedMprAxis {
     Vector3i volSize = volume.getSize();
     Vector3d voxelRatio = volume.getVoxelRatio();
 
-    // Only draw when the current axial slice matches the curve's Z (in raw voxel coordinates —
-    // same formula as MprView.getVolumeCoordinatesFromImage).
+    // Curve points are in voxel-ratio-scaled space; the image coordinate of a point is its scaled
+    // XY plus the centering offset. Only draw when the current axial slice matches the curve's Z.
     double halfSlice = sliceSize / 2.0;
     double currentVoxelZ =
         (canvas.getMprController().getAxesControl().getCenter().z - halfSlice) / voxelRatio.z
             + volSize.z / 2.0;
-    double curveVoxelZ = debug.originalPoints.getFirst().z;
+    double curveVoxelZ = debug.originalPoints.getFirst().z / voxelRatio.z;
     if (Math.abs(currentVoxelZ - curveVoxelZ) > 0.5) {
       return;
     }
@@ -217,9 +216,7 @@ public class CurvedMprAxis {
     g2d.setStroke(new BasicStroke(2f));
     int r = 6;
     for (Vector3d pt : debug.originalPoints) {
-      Point screenPt =
-          canvas.getMouseCoordinatesFromImage(
-              pt.x * voxelRatio.x + offsetX, pt.y * voxelRatio.y + offsetY);
+      Point screenPt = canvas.getMouseCoordinatesFromImage(pt.x + offsetX, pt.y + offsetY);
       g2d.drawOval(screenPt.x - r, screenPt.y - r, r * 2, r * 2);
     }
 
@@ -227,9 +224,7 @@ public class CurvedMprAxis {
     g2d.setStroke(new BasicStroke(1.5f));
     Point prevPt = null;
     for (Vector3d pt : debug.smoothedPoints) {
-      Point screenPt =
-          canvas.getMouseCoordinatesFromImage(
-              pt.x * voxelRatio.x + offsetX, pt.y * voxelRatio.y + offsetY);
+      Point screenPt = canvas.getMouseCoordinatesFromImage(pt.x + offsetX, pt.y + offsetY);
       if (prevPt != null) {
         g2d.drawLine(prevPt.x, prevPt.y, screenPt.x, screenPt.y);
       }
@@ -245,12 +240,8 @@ public class CurvedMprAxis {
       Vector3d dir = debug.perpDirections.get(i);
       double dx = dir.x * halfSlabVoxels;
       double dy = dir.y * halfSlabVoxels;
-      Point s1 =
-          canvas.getMouseCoordinatesFromImage(
-              (pt.x + dx) * voxelRatio.x + offsetX, (pt.y + dy) * voxelRatio.y + offsetY);
-      Point s2 =
-          canvas.getMouseCoordinatesFromImage(
-              (pt.x - dx) * voxelRatio.x + offsetX, (pt.y - dy) * voxelRatio.y + offsetY);
+      Point s1 = canvas.getMouseCoordinatesFromImage(pt.x + dx + offsetX, pt.y + dy + offsetY);
+      Point s2 = canvas.getMouseCoordinatesFromImage(pt.x - dx + offsetX, pt.y - dy + offsetY);
       g2d.drawLine(s1.x, s1.y, s2.x, s2.y);
     }
 
@@ -328,9 +319,9 @@ public class CurvedMprAxis {
     List<Vector3d> newPoints = new ArrayList<>(handles.size());
     for (Point2D pt : handles) {
       if (pt != null) {
-        Point3 v = sourceView.getVolumeCoordinatesFromImage(pt.getX(), pt.getY());
+        Vector3d v = sourceView.getScaledVolumeCoordinatesFromImage(pt.getX(), pt.getY());
         if (v != null) {
-          newPoints.add(new Vector3d(v.x, v.y, v.z));
+          newPoints.add(v);
         }
       }
     }

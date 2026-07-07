@@ -92,16 +92,16 @@ public class CurvedMprImageIO implements DcmMediaReader {
   /**
    * Generate the panoramic image using Curved Planar Reformation (CPR).
    *
-   * <p>For a dental arch curve drawn on the axial plane (XY plane), this uses a straightforward
-   * approach:
+   * <p>The curve is drawn on one of the MPR planes (axial, coronal, sagittal or an oblique rotation
+   * of them); the reconstruction is built relative to that plane rather than assuming axial:
    *
    * <ul>
-   *   <li>The curve lies in the XY plane at a fixed Z (the axial slice level)
+   *   <li>The curve lies in the source plane; the vertical (height) axis marches along the plane
+   *       normal — the direction orthogonal to the plane the polyline was drawn on
    *   <li>At each curve point a single voxel on the curve is sampled (a thin curved slice, like the
    *       cross-section slices and the MPR views) so the pixel values match the source exactly
-   *   <li>The vertical (Z) direction is used for height sampling
    *   <li>Output X = arc-length position along the curve
-   *   <li>Output Y = vertical (Z) position
+   *   <li>Output Y = position along the plane normal, centered on the curve
    * </ul>
    */
   private PlanarImage generatePanoramicImage() {
@@ -140,7 +140,7 @@ public class CurvedMprImageIO implements DcmMediaReader {
       return null;
     }
 
-    // Vertical extent: height in Z direction (in mm)
+    // Vertical extent: slab height along the plane normal (in mm)
     int heightPx = (int) Math.round(sliceSizeMm / pixelMm);
     if (heightPx < 1) heightPx = 1;
 
@@ -156,9 +156,7 @@ public class CurvedMprImageIO implements DcmMediaReader {
 
     int cvType = volume.getCvType();
     ImageCV dst = new ImageCV(heightPx, widthPx, cvType);
-
-    // The Z coordinate of the curve (axial slice level)
-    double curveZ = sampledPoints.getFirst().z;
+    Vector3d normal = axis.getPlaneNormal();
 
     // Diagnostic logging
     int midI = widthPx / 2;
@@ -180,15 +178,14 @@ public class CurvedMprImageIO implements DcmMediaReader {
     for (int i = 0; i < widthPx; i++) {
       Vector3d curvePoint = sampledPoints.get(i);
 
-      // For each pixel in the vertical direction (Z axis)
+      // For each pixel in the vertical direction (along the plane normal)
       for (int j = 0; j < heightPx; j++) {
-        // Vertical offset in voxels along Z, centered on the curve's Z level
-        // Account for voxel ratio: convert pixel offset to voxel offset
-        double zOffsetVoxels = (j - heightPx / 2.0) / voxelRatio.z;
-        double sampleZ = curveZ + zOffsetVoxels;
+        double offset = j - heightPx / 2.0;
+        double sampleX = (curvePoint.x + normal.x * offset) / voxelRatio.x;
+        double sampleY = (curvePoint.y + normal.y * offset) / voxelRatio.y;
+        double sampleZ = (curvePoint.z + normal.z * offset) / voxelRatio.z;
 
-        Number value =
-            volume.getInterpolatedValueFromSource(curvePoint.x, curvePoint.y, sampleZ, 0);
+        Number value = volume.getInterpolatedValueFromSource(sampleX, sampleY, sampleZ, 0);
         if (value != null) {
           setPixelValue(dst, j, i, value, cvType);
         }

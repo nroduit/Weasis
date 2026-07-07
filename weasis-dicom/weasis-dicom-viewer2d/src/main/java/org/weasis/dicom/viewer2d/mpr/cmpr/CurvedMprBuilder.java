@@ -19,9 +19,7 @@ import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Tag;
 import org.dcm4che3.data.VR;
 import org.dcm4che3.util.UIDUtils;
-import org.joml.Quaterniond;
 import org.joml.Vector3d;
-import org.opencv.core.Point3;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
@@ -39,7 +37,6 @@ import org.weasis.dicom.explorer.DicomModel;
 import org.weasis.dicom.viewer2d.mip.MipView;
 import org.weasis.dicom.viewer2d.mpr.MprController;
 import org.weasis.dicom.viewer2d.mpr.MprView;
-import org.weasis.dicom.viewer2d.mpr.MprView.Plane;
 import org.weasis.dicom.viewer2d.mpr.Volume;
 
 /**
@@ -203,7 +200,13 @@ public final class CurvedMprBuilder {
       instance++;
       CrossSectionImageIO io =
           new CrossSectionImageIO(
-              volume, sampled.get(i), perps.get(i), params.widthMm(), params.heightMm(), instance);
+              volume,
+              sampled.get(i),
+              perps.get(i),
+              planeNormal,
+              params.widthMm(),
+              params.heightMm(),
+              instance);
       copyBaseTags(io, refImg);
       String sopUid = (String) io.getTagValue(TagD.get(Tag.SOPInstanceUID));
       Attributes perInstance = new Attributes(baseHeader);
@@ -235,34 +238,27 @@ public final class CurvedMprBuilder {
   }
 
   /**
-   * Convert the polyline's screen-space handles to volume voxel coordinates on the source view's
-   * current plane.
+   * Convert the polyline's image-plane handles to volume coordinates in voxel-ratio-scaled space,
+   * honoring the source view's current plane and rotation. Working in scaled space (which is
+   * physically isotropic) keeps the downstream curve geometry — tangents, perpendiculars and the
+   * plane-normal extrusion — correct on any plane, not just the canonical axial one.
    */
   public static List<Vector3d> extractCurvePoints(MprView sourceView, PolylineGraphic polyline) {
     List<Vector3d> points = new ArrayList<>();
     for (Point2D pt : polyline.getHandlePointList()) {
       if (pt != null) {
-        Point3 v = sourceView.getVolumeCoordinatesFromImage(pt.getX(), pt.getY());
+        Vector3d v = sourceView.getScaledVolumeCoordinatesFromImage(pt.getX(), pt.getY());
         if (v != null) {
-          points.add(new Vector3d(v.x, v.y, v.z));
+          points.add(v);
         }
       }
     }
     return points;
   }
 
-  /**
-   * Plane normal of the source view, transformed by the controller's current rotation. Falls back
-   * to the canonical plane direction when no rotation is present.
-   */
+  /** Unit out-of-plane normal of the source view in voxel-ratio-scaled space. */
   public static Vector3d effectivePlaneNormal(MprView sourceView) {
-    Plane plane = sourceView.getPlane();
-    Vector3d planeNormal = plane.getDirection();
-    Quaterniond rotation = sourceView.getMprController().getRotation(plane);
-    if (rotation != null) {
-      rotation.transform(planeNormal);
-    }
-    return planeNormal;
+    return sourceView.getScaledPlaneNormal();
   }
 
   /** Read back a written cross-section file and append its image element(s) to the series. */

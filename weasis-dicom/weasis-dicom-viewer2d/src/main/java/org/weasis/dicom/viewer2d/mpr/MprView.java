@@ -306,6 +306,38 @@ public class MprView extends View2d implements SliceCanvas, ViewProgress {
     return new Point3(voxelX, voxelY, voxelZ);
   }
 
+  /**
+   * Map an image-plane point to volume coordinates in voxel-ratio-scaled space, honoring the
+   * current plane rotation. This applies the exact transform the renderer uses per pixel (see
+   * {@link Volume#getVolumeSlice}), so the result matches what is displayed on any plane — axial,
+   * coronal, sagittal or an oblique rotation of them. Divide the result component-wise by {@link
+   * Volume#getVoxelRatio()} to obtain a raw voxel index for {@link
+   * Volume#getInterpolatedValueFromSource}.
+   */
+  public Vector3d getScaledVolumeCoordinatesFromImage(double imgX, double imgY) {
+    MprAxis axis = getMprAxis();
+    if (mprController.getVolume() == null || axis == null) {
+      return null;
+    }
+    Vector3d p = new Vector3d(imgX, imgY, 0);
+    axis.getTransformation().transformPosition(p);
+    return p;
+  }
+
+  /**
+   * Unit slice normal (the out-of-plane direction, orthogonal to the drawn image) in
+   * voxel-ratio-scaled space for the current plane and rotation.
+   */
+  public Vector3d getScaledPlaneNormal() {
+    MprAxis axis = getMprAxis();
+    if (axis == null) {
+      return plane.getDirection();
+    }
+    Vector3d normal = new Vector3d(0, 0, 1);
+    axis.getTransformation().transformDirection(normal);
+    return normal.normalize();
+  }
+
   public Vector3d getVolumeCoordinates(Vector3d planePosition) {
     Vector3d p = new Vector3d(planePosition);
     Matrix4d matrix = getDisplayPointToTexturePointMatrix();

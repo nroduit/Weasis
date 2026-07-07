@@ -51,8 +51,9 @@ import org.weasis.opencv.data.PlanarImage;
 
 /**
  * Image I/O handler for a single curved-MPR cross-section: a slab perpendicular to the curve at a
- * sample point, spanning {@code perp} (slab horizontal axis) and Z (vertical axis). Together a
- * series of these instances forms the dental "cross-cuts" companion to the panoramic image.
+ * sample point, spanning {@code perp} (slab horizontal axis) and the source plane normal (vertical
+ * axis). Together a series of these instances forms the dental "cross-cuts" companion to the
+ * panoramic image.
  */
 public class CrossSectionImageIO implements DcmMediaReader {
 
@@ -67,8 +68,9 @@ public class CrossSectionImageIO implements DcmMediaReader {
   private final HashMap<TagW, Object> tags;
   private final URI uri;
   private final Volume<?, ?> volume;
-  private final Vector3d centerVoxel;
+  private final Vector3d center;
   private final Vector3d perp;
+  private final Vector3d normal;
   private final double widthMm;
   private final double heightMm;
   private final double pixelMm;
@@ -76,22 +78,25 @@ public class CrossSectionImageIO implements DcmMediaReader {
 
   /**
    * @param volume source volume
-   * @param centerVoxel curve sample point in raw voxel coordinates
-   * @param perp in-plane perpendicular direction (unit length in voxel-coord space)
+   * @param center curve sample point in voxel-ratio-scaled coordinates
+   * @param perp in-plane perpendicular direction (unit length in scaled space)
+   * @param normal source plane normal (unit length in scaled space); the slab's vertical axis
    * @param widthMm slab extent along {@code perp} (mm)
-   * @param heightMm slab extent along Z (mm)
+   * @param heightMm slab extent along {@code normal} (mm)
    * @param instanceNumber 1-based DICOM InstanceNumber for the slice
    */
   public CrossSectionImageIO(
       Volume<?, ?> volume,
-      Vector3d centerVoxel,
+      Vector3d center,
       Vector3d perp,
+      Vector3d normal,
       double widthMm,
       double heightMm,
       int instanceNumber) {
     this.volume = Objects.requireNonNull(volume);
-    this.centerVoxel = new Vector3d(centerVoxel);
+    this.center = new Vector3d(center);
     this.perp = new Vector3d(perp);
+    this.normal = new Vector3d(normal);
     this.widthMm = widthMm;
     this.heightMm = heightMm;
     this.pixelMm = volume.getMinPixelRatio();
@@ -116,9 +121,10 @@ public class CrossSectionImageIO implements DcmMediaReader {
   }
 
   /**
-   * Sample the volume on the plane spanned by {@code perp} (output X) and Z (output Y), centered at
-   * {@link #centerVoxel}. Output pixel pitch is {@code pixelMm} on both axes; Z is corrected for
-   * non-unit Z voxel spacing via {@code voxelRatio.z}.
+   * Sample the volume on the plane spanned by {@code perp} (output X) and {@code normal} (output
+   * Y), centered at {@link #center}. Geometry is in voxel-ratio-scaled space (physically isotropic,
+   * one unit == pixelMm), so each output pixel is a one-unit step; samples are converted to a raw
+   * voxel index just before interpolation.
    */
   private PlanarImage generateSlice() {
     int widthPx = Math.max(1, (int) Math.round(widthMm / pixelMm));
@@ -129,17 +135,17 @@ public class CrossSectionImageIO implements DcmMediaReader {
     Vector3d voxelRatio = volume.getVoxelRatio();
 
     for (int j = 0; j < heightPx; j++) {
-      // Y axis = Z: account for non-unit Z voxel spacing so output pixels are pixelMm tall.
-      double zOffsetVoxels = (j - heightPx / 2.0) / voxelRatio.z;
-      double sampleZ = centerVoxel.z + zOffsetVoxels;
+      // Y axis = plane normal (orthogonal to the drawing plane).
+      double vOffset = j - heightPx / 2.0;
       for (int i = 0; i < widthPx; i++) {
-        // X axis = perp: one voxel-coord step ≈ one pixelMm because perp is unit in voxel coords.
-        double xOffsetVoxels = (i - widthPx / 2.0);
-        double sampleX = centerVoxel.x + perp.x * xOffsetVoxels;
-        double sampleY = centerVoxel.y + perp.y * xOffsetVoxels;
-        // perp.z is normally 0 for an axial-drawn curve; include it for generality.
-        double sampleZAdj = sampleZ + perp.z * xOffsetVoxels;
-        Number value = volume.getInterpolatedValueFromSource(sampleX, sampleY, sampleZAdj, 0);
+        // X axis = perp (in-plane, perpendicular to the curve tangent).
+        double hOffset = i - widthPx / 2.0;
+        double wx = center.x + perp.x * hOffset + normal.x * vOffset;
+        double wy = center.y + perp.y * hOffset + normal.y * vOffset;
+        double wz = center.z + perp.z * hOffset + normal.z * vOffset;
+        Number value =
+            volume.getInterpolatedValueFromSource(
+                wx / voxelRatio.x, wy / voxelRatio.y, wz / voxelRatio.z, 0);
         if (value != null) {
           CurvedMprImageIO.setPixelValue(dst, j, i, value, cvType);
         }
