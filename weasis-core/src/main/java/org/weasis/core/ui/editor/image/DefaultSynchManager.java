@@ -9,6 +9,7 @@
  */
 package org.weasis.core.ui.editor.image;
 
+import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaSeries;
 
@@ -20,7 +21,18 @@ public class DefaultSynchManager<E extends ImageElement> extends SynchManager<E>
 
   @Override
   public void updateAllListeners(ImageViewerPlugin<E> viewerPlugin, SynchView synchView) {
-    // Non DICOM cannot be synchronized
+    // Non-DICOM series cannot be synchronized across views, but the selected view must still
+    // receive its own action events (zoom, pan, …), which are dispatched through the SYNCH
+    // property change. Register it so mouse actions apply to the view.
+    if (viewerPlugin == null) {
+      return;
+    }
+    ViewCanvas<E> viewPane = viewerPlugin.getSelectedViewCanvas();
+    if (viewPane == null || viewPane.getSeries() == null) {
+      return;
+    }
+    viewPane.setActionsInView(ActionW.SYNCH_LINK.cmd(), null);
+    eventManager.addPropertyChangeListener(ActionW.SYNCH.cmd(), viewPane);
   }
 
   @Override
