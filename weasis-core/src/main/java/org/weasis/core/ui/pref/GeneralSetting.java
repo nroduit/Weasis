@@ -30,9 +30,6 @@ public class GeneralSetting extends AbstractItemDialogPage {
   private final JCheckBox checkboxConfirmClosing =
       new JCheckBox(Messages.getString("GeneralSetting.closingConfirmation"));
 
-  private final JCheckBox checkboxConfirmDeleteMeasurement =
-          new JCheckBox("Confirm delete measurement");
-
   private final JPanel menuPanel = new JPanel();
 
   public GeneralSetting(PreferenceDialog dialog) {
@@ -63,7 +60,6 @@ public class GeneralSetting extends AbstractItemDialogPage {
 
   private void jbInit() {
     add(GuiUtils.getFlowLayoutPanel(0, ITEM_SEPARATOR_LARGE, checkboxConfirmClosing));
-    add(GuiUtils.getFlowLayoutPanel(0, ITEM_SEPARATOR_LARGE, checkboxConfirmDeleteMeasurement));
     add(GuiUtils.boxVerticalStrut(BLOCK_SEPARATOR));
 
     add(GuiUtils.boxYLastElement(LAST_FILLER_HEIGHT));
@@ -78,8 +74,6 @@ public class GeneralSetting extends AbstractItemDialogPage {
   protected void initialize() {
     WProperties preferences = GuiUtils.getUICore().getSystemPreferences();
     checkboxConfirmClosing.setSelected(preferences.getBooleanProperty(UICore.CONFIRM_CLOSE, false));
-    checkboxConfirmDeleteMeasurement.setSelected(
-            preferences.getBooleanProperty(UICore.CONFIRM_DELETE_MEASUREMENT, true));
   }
 
   @Override
@@ -91,21 +85,13 @@ public class GeneralSetting extends AbstractItemDialogPage {
     GuiUtils.getUICore()
         .getSystemPreferences()
         .putBooleanProperty(UICore.CONFIRM_CLOSE, checkboxConfirmClosing.isSelected());
-
-    GuiUtils.getUICore()
-            .getSystemPreferences()
-            .putBooleanProperty(UICore.CONFIRM_DELETE_MEASUREMENT, checkboxConfirmDeleteMeasurement.isSelected());
   }
-
 
   @Override
   public void resetToDefaultValues() {
     GuiUtils.getUICore()
         .getSystemPreferences()
         .resetProperty(UICore.CONFIRM_CLOSE, Boolean.FALSE.toString());
-    GuiUtils.getUICore()
-            .getSystemPreferences()
-            .resetProperty(UICore.CONFIRM_DELETE_MEASUREMENT, Boolean.TRUE.toString());
     initialize();
   }
 }

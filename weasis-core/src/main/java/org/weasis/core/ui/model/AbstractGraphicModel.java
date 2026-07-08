@@ -31,13 +31,17 @@ import java.util.Optional;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+import javax.swing.JCheckBox;
+import javax.swing.JLabel;
 import javax.swing.JOptionPane;
+import javax.swing.JPanel;
 import org.weasis.core.Messages;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.image.util.MeasurableLayer;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.service.UICore;
+import org.weasis.core.api.service.WProperties;
 import org.weasis.core.ui.editor.image.Canvas;
 import org.weasis.core.ui.editor.image.MeasureToolBar;
 import org.weasis.core.ui.editor.image.ViewCanvas;
@@ -561,24 +565,30 @@ public abstract class AbstractGraphicModel extends DefaultUUID implements Graphi
   @Override
   public void deleteSelectedGraphics(Canvas canvas, Boolean warningMessage) {
     List<Graphic> list = getSelectedGraphics();
-    if (!list.isEmpty()) {
-      int response = 0;
-      boolean confirmPref = GuiUtils.getUICore()
-              .getSystemPreferences()
-              .getBooleanProperty(UICore.CONFIRM_DELETE_MEASUREMENT, true);
-      if (warningMessage && confirmPref) {
-        response =
-                JOptionPane.showConfirmDialog(
-                        canvas.getJComponent(),
-                        String.format(Messages.getString("AbstractLayerModel.del_conf"), list.size()),
-                        Messages.getString("AbstractLayerModel.del_graphs"),
-                        JOptionPane.YES_NO_OPTION,
-                        JOptionPane.WARNING_MESSAGE);
+    if (list.isEmpty()) {
+      return;
+    }
+    int response = 0;
+    WProperties preferences = GuiUtils.getUICore().getSystemPreferences();
+    if (warningMessage && preferences.getBooleanProperty(UICore.CONFIRM_DELETE_MEASUREMENT, true)) {
+      JLabel label =
+          new JLabel(String.format(Messages.getString("AbstractLayerModel.del_conf"), list.size()));
+      JCheckBox dontAskAgain = new JCheckBox(Messages.getString("don.t.ask.again"));
+      JPanel panel = GuiUtils.getVerticalBoxLayoutPanel(label, dontAskAgain);
+      response =
+          JOptionPane.showConfirmDialog(
+              canvas.getJComponent(),
+              panel,
+              Messages.getString("AbstractLayerModel.del_graphs"),
+              JOptionPane.YES_NO_OPTION,
+              JOptionPane.WARNING_MESSAGE);
+      if (dontAskAgain.isSelected()) {
+        preferences.putBooleanProperty(UICore.CONFIRM_DELETE_MEASUREMENT, false);
       }
-      if (Objects.equals(response, 0)) {
-        list.forEach(Graphic::fireRemoveAction);
-        canvas.getJComponent().repaint();
-      }
+    }
+    if (response == 0) {
+      list.forEach(Graphic::fireRemoveAction);
+      canvas.getJComponent().repaint();
     }
   }
 
