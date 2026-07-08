@@ -250,7 +250,7 @@ public class DicomExplorer extends PluginTool
   protected JPanel getMainPanel() {
     if (panelMain == null) {
       MigLayout layout =
-          new MigLayout("fillx, ins 3", "[right]rel[grow,fill]", "[]10lp[]"); // NON-NLS
+          new MigLayout("fillx, ins 5 0 5 0", "[right]rel[grow,fill]", "[]10lp[]"); // NON-NLS
       panelMain = new JPanel(layout);
 
       // Small preferred width so the combos grow to fill the panel but never drive its width
@@ -345,12 +345,12 @@ public class DicomExplorer extends PluginTool
   private void setupComboBoxes() {
     patientCombobox.setMaximumRowCount(15);
     patientCombobox.setFont(FontItem.SMALL_SEMIBOLD.getFont());
+    patientCombobox.putClientProperty(FlatClientProperties.STYLE, "padding: 3,2,3,0"); // NON-NLS
     JTextField patientEditor = (JTextField) patientCombobox.getEditor().getEditorComponent();
     patientCombobox.putClientProperty(
         FlatClientProperties.PLACEHOLDER_TEXT, Messages.getString("DicomExplorer.search_patient"));
-    patientEditor.putClientProperty(
-        FlatClientProperties.TEXT_FIELD_LEADING_COMPONENT,
-        new JLabel(ResourceUtil.getIcon(ResourceUtil.OtherIcon.PATIENT, 16, 16)));
+    JLabel patientIcon = new JLabel(ResourceUtil.getIcon(ResourceUtil.OtherIcon.PATIENT, 16, 16));
+    patientEditor.putClientProperty(FlatClientProperties.TEXT_FIELD_LEADING_COMPONENT, patientIcon);
     patientCombobox.addItemListener(patientItemListener);
   }
 
@@ -365,6 +365,7 @@ public class DicomExplorer extends PluginTool
 
     seriesFilterField.setMaximumRowCount(15);
     seriesFilterField.setFont(FontItem.SMALL_SEMIBOLD.getFont());
+    seriesFilterField.putClientProperty(FlatClientProperties.STYLE, "padding: 3,2,3,0"); // NON-NLS
     seriesFilterEditor = (JTextField) seriesFilterField.getEditor().getEditorComponent();
     seriesFilterField.setSearchCallback(_ -> onFilterInput());
     seriesFilterField.addActionListener(_ -> onFilterSelection());
@@ -390,6 +391,8 @@ public class DicomExplorer extends PluginTool
     modeButton.setFocusable(false);
     modeButton.putClientProperty(
         FlatClientProperties.BUTTON_TYPE, FlatClientProperties.BUTTON_TYPE_TOOLBAR_BUTTON);
+    modeButton.setBorder(BorderFactory.createEmptyBorder());
+    modeButton.setMargin(new Insets(0, 0, 0, 0));
     modeButton.addActionListener(_ -> modePopup.show(modeButton, 0, modeButton.getHeight()));
     // Place the mode selector inside the field, in place of the default search icon
     seriesFilterEditor.putClientProperty(
