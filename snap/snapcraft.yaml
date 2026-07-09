@@ -1,7 +1,7 @@
 name: weasis
 title: Weasis
 base: core24
-version: '4.7.0'
+version: '4.7.1'
 summary: A free/libre/open medical DICOM viewer
 description: |
   Weasis is a multipurpose standalone and web-based DICOM viewer with 
@@ -82,8 +82,8 @@ parts:
       - libstdc++6
       - libgcc-s1
     #source: weasis-distributions/target/native-dist/weasis-native.zip
-    source: https://github.com/nroduit/Weasis/releases/download/v4.7.0/weasis-native.zip
-    source-checksum: sha256/bad1334c0ddfa1f381211879e83d37ae78621f573eab0edaff6e1adc217f4862
+    source: https://github.com/nroduit/Weasis/releases/download/v4.7.1/weasis-native.zip
+    source-checksum: sha256/e54a329f6e925c802509808d0c9c34e585f15b70008afd6b6dd34583fb8ea1e7
     organize:
       '*': weasis-native/
     override-stage: 'true'
