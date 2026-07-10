@@ -210,9 +210,57 @@ public class StreamBackingStoreImpl implements BackingStore {
 
     for (PreferencesImpl uchild : uchildren) {
       final String name = uchild.name();
+      // Never merge a corrupted node name
+      if (!isValidElementName(name)) {
+        LOGGER.warn("Skip merging remote preference node with invalid XML name: {}", name);
+        continue;
+      }
       children.computeIfAbsent(name, prefs::getOrCreateNode);
       update(children.get(name), uchild);
     }
+  }
+
+  /** Checks if a name is a valid XML element name according to the XML 1.0 specification. */
+  static boolean isValidElementName(String name) {
+    if (!StringUtil.hasText(name) || !isNameStartChar(name.charAt(0))) {
+      return false;
+    }
+    for (int i = 1; i < name.length(); i++) {
+      if (!isNameChar(name.charAt(i))) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  /** Checks if a character is a valid XML name start character (NameStartChar production). */
+  private static boolean isNameStartChar(char c) {
+    return c == ':'
+        || c == '_'
+        || (c >= 'A' && c <= 'Z')
+        || (c >= 'a' && c <= 'z')
+        || (c >= 0xC0 && c <= 0xD6)
+        || (c >= 0xD8 && c <= 0xF6)
+        || (c >= 0xF8 && c <= 0x2FF)
+        || (c >= 0x370 && c <= 0x37D)
+        || (c >= 0x37F && c <= 0x1FFF)
+        || (c >= 0x200C && c <= 0x200D)
+        || (c >= 0x2070 && c <= 0x218F)
+        || (c >= 0x2C00 && c <= 0x2FEF)
+        || (c >= 0x3001 && c <= 0xD7FF)
+        || (c >= 0xF900 && c <= 0xFDCF)
+        || (c >= 0xFDF0 && c <= 0xFFFD);
+  }
+
+  /** Checks if a character is a valid XML name character (NameChar production). */
+  private static boolean isNameChar(char c) {
+    return isNameStartChar(c)
+        || c == '-'
+        || c == '.'
+        || (c >= '0' && c <= '9')
+        || c == 0xB7
+        || (c >= 0x0300 && c <= 0x036F)
+        || (c >= 0x203F && c <= 0x2040);
   }
 
   protected static void clearAllChangeSet(PreferencesImpl prefs) {
@@ -253,7 +301,13 @@ public class StreamBackingStoreImpl implements BackingStore {
 
   private static URLParameters getURLParameters(boolean post) {
     Map<String, String> map = new HashMap<>();
-    map.put(post ? "Content-Type" : "Accept", "text/plain"); // NON-NLS
+    if (post) {
+      // Advertise the UTF-8 charset explicitly: the body is written as UTF-8 but the HTTP
+      // default charset for text/* is ISO-8859-1, which lets the server mangle the payload.
+      map.put("Content-Type", "text/plain; charset=UTF-8"); // NON-NLS
+    } else {
+      map.put("Accept", "text/plain"); // NON-NLS
+    }
     return new URLParameters(map, post);
   }
 
@@ -446,7 +500,12 @@ public class StreamBackingStoreImpl implements BackingStore {
     final Collection<?> children = prefs.getChildren();
     for (Object o : children) {
       final PreferencesImpl child = (PreferencesImpl) o;
-      writer.writeStartElement(child.name());
+      final String name = child.name();
+      if (!isValidElementName(name)) {
+        LOGGER.warn("Skip preference node with invalid XML name: {}", name);
+        continue;
+      }
+      writer.writeStartElement(name);
       this.write(child, writer);
       writer.writeEndElement();
     }
@@ -483,7 +542,12 @@ public class StreamBackingStoreImpl implements BackingStore {
   protected void writePreferences(PreferencesImpl prefs, XMLStreamWriter writer)
       throws XMLStreamException {
     for (Entry<String, String> stringStringEntry : prefs.getProperties().entrySet()) {
-      writer.writeStartElement(stringStringEntry.getKey());
+      final String key = stringStringEntry.getKey();
+      if (!isValidElementName(key)) {
+        LOGGER.warn("Skip preference with invalid XML name: {}", key);
+        continue;
+      }
+      writer.writeStartElement(key);
       writer.writeCharacters(EscapeChars.forXML(stringStringEntry.getValue()));
       writer.writeEndElement();
     }
