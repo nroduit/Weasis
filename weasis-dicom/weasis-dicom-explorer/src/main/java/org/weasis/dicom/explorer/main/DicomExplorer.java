@@ -391,7 +391,6 @@ public class DicomExplorer extends PluginTool
     modeButton.setFocusable(false);
     modeButton.putClientProperty(
         FlatClientProperties.BUTTON_TYPE, FlatClientProperties.BUTTON_TYPE_TOOLBAR_BUTTON);
-    modeButton.setBorder(BorderFactory.createEmptyBorder());
     modeButton.setMargin(new Insets(0, 0, 0, 0));
     modeButton.addActionListener(_ -> modePopup.show(modeButton, 0, modeButton.getHeight()));
     // Place the mode selector inside the field, in place of the default search icon
