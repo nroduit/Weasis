@@ -30,7 +30,7 @@
     <weasis.releasenotes>https://github.com/nroduit/Weasis/blob/master/CHANGELOG.md#v471-2026-07-09</weasis.releasenotes>
 
     <felix.framework.version>7.0.5</felix.framework.version>
-    <flatlaf.version>3.7.1</flatlaf.version>
+    <flatlaf.version>3.7.2</flatlaf.version>
     <miglayout.version>11.4.3</miglayout.version>
     <xz.version>1.12</xz.version>
 
@@ -48,7 +48,7 @@
     <felix.scr.version>2.2.18</felix.scr.version>
 
     <slf4j.version>2.0.18</slf4j.version>
-    <logback.version>1.5.37</logback.version>
+    <logback.version>1.5.38</logback.version>
     <dockingframes.version>1.1.7</dockingframes.version>
     <weasis-dicom-tools.version>5.34.3.1</weasis-dicom-tools.version>
     <weasis.core.img.version>5.0.0</weasis.core.img.version>
@@ -59,7 +59,7 @@
     <xml.bind-api.version>4.0.5</xml.bind-api.version>
     <joml.version>1.10.9</joml.version>
     <jogamp.version>2.6.0</jogamp.version>
-    <jackson.version>2.22.0</jackson.version>
+    <jackson.version>2.22.1</jackson.version>
     <jackson.an.version>2.22</jackson.an.version>
     <scribejava.version>8.3.3</scribejava.version>
     <zip4j.version>2.11.6</zip4j.version>
