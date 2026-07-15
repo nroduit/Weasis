@@ -296,15 +296,25 @@ public class HistogramData {
     if (channels.size() == 1) {
       Mat hist = new Mat();
       Imgproc.calcHist(channels, new MatOfInt(0), msk, hist, histSize, histRange, false);
-      return Collections.singletonList(hist);
+      return Collections.singletonList(asColumn(hist));
     }
 
     List<Mat> histograms = new ArrayList<>(selChannels.length);
     for (int selChannel : selChannels) {
       Mat hist = new Mat();
       Imgproc.calcHist(channels, new MatOfInt(selChannel), msk, hist, histSize, histRange, false);
-      histograms.add(hist);
+      histograms.add(asColumn(hist));
     }
     return histograms;
+  }
+
+  /**
+   * Returns the histogram as a single-column ({@code nbBins} rows × 1) matrix. OpenCV 4 returned
+   * {@code calcHist} results in that shape, but OpenCV 5 returns a 1-row vector; callers read the
+   * bins with {@code hist.rows()}, so a row vector would expose only the first bin. Normalizing
+   * here keeps every reader correct regardless of the OpenCV version.
+   */
+  private static Mat asColumn(Mat hist) {
+    return hist.rows() == 1 && hist.cols() > 1 ? hist.reshape(0, hist.cols()) : hist;
   }
 }
