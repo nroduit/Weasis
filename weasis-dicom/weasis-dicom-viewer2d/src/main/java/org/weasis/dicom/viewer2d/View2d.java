@@ -269,7 +269,8 @@ public class View2d extends DefaultView2d<DicomImageElement> {
       for (Entry<String, Object> entry : synch.getEvents().entrySet()) {
         final String command = entry.getKey();
         final Object val = entry.getValue();
-        if (synchData != null
+        if (this != synch.getView()
+            && synchData != null
             && !synchData.isActionEnable(command)
             && !(command.equals(ActionW.CROSSHAIR.cmd())
                 && this == eventManager.getSelectedViewPane())) {
