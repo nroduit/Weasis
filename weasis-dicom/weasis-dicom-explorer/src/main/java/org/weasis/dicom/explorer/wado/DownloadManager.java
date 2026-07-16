@@ -300,7 +300,7 @@ public class DownloadManager {
       String path = uri.getPath();
       URLParameters urlParameters =
           new URLParameters(
-                  manifestAcceptHeaders(),
+              manifestAcceptHeaders(),
               StringUtil.getInt(System.getProperty("UrlConnectionTimeout"), 7000),
               StringUtil.getInt(System.getProperty("UrlReadTimeout"), 15000) * 2);
 
@@ -310,7 +310,11 @@ public class DownloadManager {
       LOGGER.info("Downloading XML manifest: {}", path);
       InputStream urlInputStream = urlConnection.getInputStream();
 
-      if (path.endsWith(".gz")) {
+      // Transfer-level gzip negotiated with Accept-Encoding must be decompressed according to the
+      // response Content-Encoding, independently of the resource extension (.gz content coding).
+      boolean gzipEncoded =
+          "gzip".equalsIgnoreCase(urlConnection.getHeaderField("Content-Encoding")); // NON-NLS
+      if (gzipEncoded || path.endsWith(".gz")) {
         stream = new BufferedInputStream(new GZIPInputStream(urlInputStream));
       } else if (path.endsWith(".xml")) {
         stream = urlInputStream;
