@@ -300,7 +300,7 @@ public class DownloadManager {
       String path = uri.getPath();
       URLParameters urlParameters =
           new URLParameters(
-              null,
+                  manifestAcceptHeaders(),
               StringUtil.getInt(System.getProperty("UrlConnectionTimeout"), 7000),
               StringUtil.getInt(System.getProperty("UrlReadTimeout"), 15000) * 2);
 
@@ -416,6 +416,10 @@ public class DownloadManager {
       StreamUtil.safeClose(stream);
     }
     return seriesMap.values();
+  }
+
+  private static Map<String, String> manifestAcceptHeaders() {
+    return Map.of("Accept", "application/xml", "Accept-Encoding", "gzip"); // NON-NLS
   }
 
   private static String getErrorMessage(URI uri) {
