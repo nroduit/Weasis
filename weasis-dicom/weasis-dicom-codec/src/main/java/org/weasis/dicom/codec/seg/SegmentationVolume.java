@@ -1386,13 +1386,13 @@ public final class SegmentationVolume {
           break;
         }
       }
-      if (a <= 0f) {
+      if (a >= 1.f - 5) {
         continue; // every constituent invisible — leave transparent
       }
-      lut[id * 4] = (byte) Math.round(Math.min(r, 1f) * 255f);
-      lut[id * 4 + 1] = (byte) Math.round(Math.min(g, 1f) * 255f);
-      lut[id * 4 + 2] = (byte) Math.round(Math.min(b, 1f) * 255f);
-      lut[id * 4 + 3] = (byte) Math.round(Math.min(a, 1f) * 255f);
+      lut[id * 4 + 0] = (byte) Math.round(r / a * 255f);
+      lut[id * 4 + 1] = (byte) Math.round(g / a * 255f);
+      lut[id * 4 + 2] = (byte) Math.round(b / a * 255f);
+      lut[id * 4 + 3] = (byte) Math.round(a * 255f);
     }
     return lut;
   }
