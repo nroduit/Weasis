@@ -42,7 +42,7 @@
     <felix.prefs.version>1.1.0</felix.prefs.version>
     <felix.scr.version>2.2.18</felix.scr.version>
 
-    <pf4j.version>3.14.0</pf4j.version>
+    <pf4j.version>3.15.0</pf4j.version>
     <slf4j.version>2.0.18</slf4j.version>
     <logback.version>1.5.38</logback.version>
     <dockingframes.version>1.1.8</dockingframes.version>

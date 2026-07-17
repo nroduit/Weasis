@@ -13,6 +13,8 @@ import java.io.IOException;
 import java.lang.instrument.Instrumentation;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.jar.JarFile;
 import java.util.stream.Stream;
 import org.pf4j.CompoundPluginDescriptorFinder;
@@ -31,6 +33,8 @@ public class WeasisPluginManager extends DefaultPluginManager {
 
   private static Instrumentation instrumentation;
 
+  private final Set<Path> loadedLibraries = new HashSet<>();
+
   public WeasisPluginManager() {
     super();
   }
@@ -42,7 +46,6 @@ public class WeasisPluginManager extends DefaultPluginManager {
   @Override
   protected void initialize() {
     if (!pluginsRoots.isEmpty()) {
-      loadCommonLibraries();
       super.initialize();
     }
   }
@@ -75,8 +78,14 @@ public class WeasisPluginManager extends DefaultPluginManager {
     instrumentation = inst;
   }
 
-  /** Loads JAR files from F_LIB_FOLDER into the current classloader. */
-  private void loadCommonLibraries() {
+  /**
+   * Adds the shared library JARs (e.g. weasis-core) from {@link ConfigData#F_LIB_FOLDER} to the
+   * system classloader. Must be called after {@code AutoProcessor} has downloaded them and before
+   * plugins are loaded and started, otherwise plugins fail with {@code NoClassDefFoundError} on
+   * {@code org.weasis.core.*} classes on the first launch with a clean cache. Idempotent: each JAR
+   * is added at most once.
+   */
+  public void loadCommonLibraries() {
     Path pluginsDir = getPluginCachePath();
     if (pluginsDir == null || instrumentation == null) {
       return;
@@ -93,6 +102,9 @@ public class WeasisPluginManager extends DefaultPluginManager {
           .filter(path -> path.toString().endsWith(".jar"))
           .forEach(
               path -> {
+                if (!loadedLibraries.add(path.toAbsolutePath())) {
+                  return;
+                }
                 try {
                   addJarToClassLoader(path);
                   LOGGER.info("Added common library: {}", path.getFileName());

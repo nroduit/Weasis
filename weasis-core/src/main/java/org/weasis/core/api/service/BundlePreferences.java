@@ -322,7 +322,13 @@ public class BundlePreferences {
 
   private static URLParameters getURLParameters(boolean post) {
     Map<String, String> map = new HashMap<>();
-    map.put(post ? "Content-Type" : "Accept", "text/plain"); // NON-NLS
+    if (post) {
+      // Advertise the UTF-8 charset explicitly: the body is written as UTF-8 but the HTTP
+      // default charset for text/* is ISO-8859-1, which lets the server mangle the payload.
+      map.put("Content-Type", "text/plain; charset=UTF-8"); // NON-NLS
+    } else {
+      map.put("Accept", "text/plain"); // NON-NLS
+    }
     return new URLParameters(map, post);
   }
 
