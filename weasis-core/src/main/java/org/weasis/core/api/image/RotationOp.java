@@ -15,6 +15,7 @@ import org.opencv.core.Mat;
 import org.opencv.core.Point;
 import org.opencv.core.Rect;
 import org.opencv.core.RotatedRect;
+import org.opencv.geometry.Geometry;
 import org.opencv.imgproc.Imgproc;
 import org.weasis.core.Messages;
 import org.weasis.core.util.MathUtil;
@@ -92,7 +93,7 @@ public final class RotationOp extends AbstractOp {
     }
     var srcImg = Objects.requireNonNull(source, "Source image cannot be null");
     var center = new Point(centerX, centerY);
-    var rotationMatrix = Imgproc.getRotationMatrix2D(center, -angle, 1.0);
+    var rotationMatrix = Geometry.getRotationMatrix2D(center, -angle, 1.0);
     var bbox = new RotatedRect(center, srcImg.size(), -angle).boundingRect();
 
     double[] matrix = transformMatrixWithOffset(rotationMatrix, bbox, center);

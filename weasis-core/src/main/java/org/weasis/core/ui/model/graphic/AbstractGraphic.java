@@ -870,7 +870,12 @@ public abstract class AbstractGraphic extends DefaultUUID implements Graphic {
       }
     }
 
-    if (labels == null && view2d == null && graphicLabel != null) {
+    // Only MEASURE graphics recompute their label from measurements. For any other graphic the
+    // label is static, so an empty computed label must not wipe the existing one (e.g. a DICOM PR
+    // text object rendered as a labeled PointGraphic) See #827.
+    if (labels == null
+        && graphicLabel != null
+        && (view2d == null || getLayerType() != LayerType.MEASURE)) {
       labels = graphicLabel.getLabels();
     }
 

@@ -43,6 +43,7 @@ import java.nio.file.Paths;
 import java.nio.file.attribute.FileTime;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -98,6 +99,8 @@ public class WeasisLauncher {
 
   protected final Properties modulesi18n;
   protected final ConfigData configData;
+
+  private final List<String> pendingCommands = new ArrayList<>();
 
   public WeasisLauncher(ConfigData configData) {
     this.configData = Objects.requireNonNull(configData);

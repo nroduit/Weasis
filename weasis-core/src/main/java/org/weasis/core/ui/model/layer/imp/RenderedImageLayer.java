@@ -18,6 +18,7 @@ import java.awt.geom.Rectangle2D;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Supplier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.image.AffineTransformOp;
@@ -31,6 +32,7 @@ import org.weasis.core.api.image.ZoomOp;
 import org.weasis.core.api.image.cv.CvUtil;
 import org.weasis.core.api.image.measure.MeasurementsAdapter;
 import org.weasis.core.api.image.util.ImageLayer;
+import org.weasis.core.api.image.util.MeasurableLayer;
 import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.TagW;
@@ -63,6 +65,7 @@ public class RenderedImageLayer<E extends ImageElement> extends DefaultUUID
   private Boolean visible = true;
   private boolean enableDispOperations = true;
   private Point offset;
+  private transient Supplier<List<MeasurableLayer>> secondaryLayersSupplier;
 
   public RenderedImageLayer() {
     this(null);
@@ -545,5 +548,17 @@ public class RenderedImageLayer<E extends ImageElement> extends DefaultUUID
       return imageElement.getPixelMax();
     }
     return 0;
+  }
+
+  /**
+   * Registers a lazy provider of secondary layers (e.g. a fused PET overlay for SUV statistics).
+   */
+  public void setSecondaryLayersSupplier(Supplier<List<MeasurableLayer>> supplier) {
+    this.secondaryLayersSupplier = supplier;
+  }
+
+  @Override
+  public List<MeasurableLayer> getSecondaryLayers() {
+    return secondaryLayersSupplier == null ? List.of() : secondaryLayersSupplier.get();
   }
 }

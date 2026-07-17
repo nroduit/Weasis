@@ -1,0 +1,121 @@
+name: Sonar
+# Runs after the "Build" workflow completes. Using workflow_run means this job executes in the
+# base-repository context, so SONAR_TOKEN is available even for pull requests from forks and
+# Dependabot (where secrets are withheld from the triggering workflow).
+#
+# SECURITY: this privileged job must never execute untrusted fork code. It therefore does NOT
+# check out the PR head and does NOT run Maven (which would evaluate the fork's pom.xml and
+# tests). The Build workflow already compiled, tested and produced coverage in the unprivileged
+# fork context; here we only download those prebuilt outputs and run the standalone SonarScanner
+# CLI, which merely reads source and report files — it never runs the project's build.
+on:
+  workflow_run:
+    workflows: [ "Build" ]
+    types: [ completed ]
+permissions:
+  contents: read
+jobs:
+  sonar:
+    name: SonarCloud
+    if: github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Download analysis input
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c  # v8.0.1
+        with:
+          name: sonar-input
+          # SECURITY (artifact poisoning): the artifact is produced by the unprivileged Build job
+          # running untrusted fork code, so download it into an isolated dir under RUNNER_TEMP —
+          # never the workspace — so it cannot sit next to or overwrite this workflow's files.
+          path: ${{ runner.temp }}/artifact
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Unpack analysis input
+        # Extract the untrusted tarball into its own directory (again under RUNNER_TEMP, not the
+        # workspace) so a crafted archive cannot overwrite workflow files such as the SonarScanner
+        # binary that later runs with SONAR_TOKEN. Default GNU tar strips leading '/' and refuses
+        # '..' members, confining extraction to $SRC; do NOT add -P, which disables that.
+        env:
+          SRC: ${{ runner.temp }}/src
+        run: |
+          set -euo pipefail
+          mkdir -p "$SRC"
+          tar -xzf "$RUNNER_TEMP/artifact/sonar-input.tgz" -C "$SRC" --no-same-owner
+          echo "SONAR_SRC=$SRC" >> "$GITHUB_ENV"
+      - name: Resolve analysis parameters
+        id: ctx
+        # SECURITY: event/head_branch and the pr-context files all originate from the untrusted
+        # fork PR. Never interpolate them directly into the shell — pass through env, validate
+        # strictly, then emit via a fixed-delimiter heredoc (safe once newlines are rejected).
+        env:
+          EVENT: ${{ github.event.workflow_run.event }}
+          HEAD_BRANCH: ${{ github.event.workflow_run.head_branch }}
+        run: |
+          set -euo pipefail
+          if [ "$EVENT" = "pull_request" ]; then
+            pr=$(cat "$SONAR_SRC/pr-context/pr_number")
+            head=$(cat "$SONAR_SRC/pr-context/head_ref")
+            base=$(cat "$SONAR_SRC/pr-context/base_ref")
+            [[ "$pr"   =~ ^[0-9]+$ ]]           || { echo "invalid pr_number"; exit 1; }
+            [[ "$head" =~ ^[A-Za-z0-9._/-]+$ ]] || { echo "invalid head_ref";  exit 1; }
+            [[ "$base" =~ ^[A-Za-z0-9._/-]+$ ]] || { echo "invalid base_ref";  exit 1; }
+            args="-Dsonar.pullrequest.key=${pr} -Dsonar.pullrequest.branch=${head} -Dsonar.pullrequest.base=${base}"
+          else
+            [[ "$HEAD_BRANCH" =~ ^[A-Za-z0-9._/-]+$ ]] || { echo "invalid head_branch"; exit 1; }
+            args="-Dsonar.branch.name=${HEAD_BRANCH}"
+          fi
+          { echo "sonar_args<<__SONAR_EOF__"; echo "$args"; echo "__SONAR_EOF__"; } >> "$GITHUB_OUTPUT"
+      - name: Cache SonarCloud packages
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9  # v6.1.0
+        with:
+          path: ~/.sonar/cache
+          key: ${{ runner.os }}-sonar
+          restore-keys: ${{ runner.os }}-sonar
+      - name: Install SonarScanner CLI
+        env:
+          SCANNER_VERSION: 8.0.1.6346
+          SCANNER_SHA256: 4bd40bf8411ed104853e94a3746ec92bc92845fde2b27dbf5c33fb5cfa8ecbe9
+        run: |
+          curl -sSLo scanner.zip "https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-${SCANNER_VERSION}-linux-x64.zip"
+          echo "${SCANNER_SHA256}  scanner.zip" | sha256sum -c -
+          unzip -q scanner.zip
+          echo "${PWD}/sonar-scanner-${SCANNER_VERSION}-linux-x64/bin" >> "$GITHUB_PATH"
+      - name: Analyze
+        # SONAR_ARGS is validated in the "Resolve analysis parameters" step, so the intentional
+        # word-splitting below is safe. It is passed via env rather than inlined as ${{ }} to
+        # avoid shell injection.
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_ARGS: ${{ steps.ctx.outputs.sonar_args }}
+        run: |
+          set -euo pipefail
+          # Analyse the untrusted inputs from their isolated dir; never from the workspace.
+          cd "$SONAR_SRC"
+          # Derive the analysed modules from what actually compiled, mirroring the packaging step.
+          modules=$(find . -type d -path '*/target/classes' | sed 's#/target/classes##')
+          sources=""
+          binaries=""
+          for m in $modules; do
+            binaries="${binaries:+$binaries,}$m/target/classes"
+            [ -d "$m/src/main/java" ] && sources="${sources:+$sources,}$m/src/main/java"
+          done
+          # shellcheck disable=SC2086
+          sonar-scanner \
+            -Dsonar.host.url=https://sonarcloud.io \
+            -Dsonar.organization=nroduit-github \
+            -Dsonar.projectKey=org.weasis:weasis-framework \
+            -Dsonar.projectBaseDir="$SONAR_SRC" \
+            -Dsonar.java.source=25 \
+            -Dsonar.sourceEncoding=UTF-8 \
+            -Dsonar.sources="$sources" \
+            -Dsonar.java.binaries="$binaries" \
+            -Dsonar.java.libraries='sonar-libs/*.jar' \
+            -Dsonar.coverage.jacoco.xmlReportPaths=tests/target/site/jacoco-aggregate/jacoco.xml \
+            -Dsonar.coverage.exclusions='**/Messages.java,**/Activator.java,**/module-info.java,**/package-info.java' \
+            -Dsonar.cpd.exclusions='**/Messages.java' \
+            -Dsonar.links.homepage=https://weasis.org \
+            -Dsonar.links.ci=https://github.com/nroduit/Weasis/actions \
+            -Dsonar.links.scm=https://github.com/nroduit/Weasis \
+            -Dsonar.links.issue=https://github.com/nroduit/Weasis/issues \
+            $SONAR_ARGS

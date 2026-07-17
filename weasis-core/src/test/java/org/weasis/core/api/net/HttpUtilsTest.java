@@ -16,6 +16,8 @@ import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import com.github.scribejava.core.httpclient.multipart.ByteArrayBodyPartPayload;
+import com.github.scribejava.core.httpclient.multipart.MultipartPayload;
 import com.github.scribejava.core.model.OAuthRequest;
 import com.github.scribejava.core.model.Response;
 import com.github.scribejava.core.model.Verb;
@@ -47,6 +49,7 @@ class HttpUtilsTest {
   private static String baseUrl;
   private static final AtomicReference<Map<String, java.util.List<String>>> LAST_HEADERS =
       new AtomicReference<>();
+  private static final AtomicReference<byte[]> LAST_BODY = new AtomicReference<>();
 
   @BeforeAll
   static void start() throws IOException {
@@ -75,6 +78,23 @@ class HttpUtilsTest {
         ex -> {
           ex.sendResponseHeaders(500, -1);
           ex.close();
+        });
+    server.createContext(
+        "/stow",
+        ex -> {
+          LAST_HEADERS.set(Map.copyOf(ex.getRequestHeaders()));
+          byte[] received = ex.getRequestBody().readAllBytes();
+          LAST_BODY.set(received);
+          // Reject unless the caller declares the DICOM multipart/related content type,
+          // mimicking dcm4chee's 415 response.
+          String contentType = ex.getRequestHeaders().getFirst("Content-Type");
+          int status =
+              contentType != null && contentType.startsWith("multipart/related") ? 200 : 415;
+          byte[] body = "stow".getBytes();
+          ex.sendResponseHeaders(status, body.length);
+          try (var os = ex.getResponseBody()) {
+            os.write(body);
+          }
         });
     server.start();
     baseUrl = "http://localhost:" + server.getAddress().getPort();
@@ -208,6 +228,51 @@ class HttpUtilsTest {
     URLParameters post = new URLParameters(Map.of(), true);
     try (HttpStream s = HttpUtils.getHttpResponse(baseUrl + "/echo-method", post, null)) {
       assertEquals("POST", new String(s.getInputStream().readAllBytes()));
+    }
+  }
+
+  private static MultipartPayload dicomMultipart(byte[] content) {
+    String boundary = "weasisBoundary";
+    var headers = new java.util.HashMap<String, String>();
+    headers.put(
+        "Content-Type", "multipart/related;type=\"application/dicom\";boundary=" + boundary);
+    headers.put("Accept", "application/dicom+xml");
+    var multipart = new MultipartPayload(boundary, headers);
+    multipart.addBodyPart(new ByteArrayBodyPartPayload(content, "application/dicom"));
+    return multipart;
+  }
+
+  @Test
+  void noAuthMultipartSendsBodyWithRelatedContentType() throws Exception {
+    LAST_BODY.set(null);
+    byte[] content = "DICM-payload".getBytes();
+    var request = new OAuthRequest(Verb.POST, baseUrl + "/stow");
+    request.setMultipartPayload(dicomMultipart(content));
+    URLParameters post = new URLParameters(Map.of(), true);
+
+    try (HttpStream stream =
+        HttpUtils.getHttpResponse(baseUrl + "/stow", post, OAuth2ServiceFactory.NO_AUTH, request)) {
+      // The multipart/related content type is preserved, so the server accepts it (no 415).
+      assertEquals(200, stream.getResponseCode());
+    }
+    String contentType = LAST_HEADERS.get().get("Content-type").getFirst();
+    assertTrue(contentType.startsWith("multipart/related"), contentType);
+    // The DICOM payload actually reached the server instead of an empty body.
+    assertNotNull(LAST_BODY.get());
+    assertTrue(new String(LAST_BODY.get()).contains("DICM-payload"));
+  }
+
+  @Test
+  void noAuthMultipartReturnsServerStatusWithoutThrowing() throws Exception {
+    // A server that rejects the content type (415) must surface the code to the caller rather
+    // than throwing, so STOW-RS can build a proper error message.
+    var request = new OAuthRequest(Verb.POST, baseUrl + "/stow");
+    request.setMultipartPayload(
+        new MultipartPayload("b", new java.util.HashMap<>(Map.of("Content-Type", "text/plain"))));
+    URLParameters post = new URLParameters(Map.of(), true);
+    try (HttpStream stream =
+        HttpUtils.getHttpResponse(baseUrl + "/stow", post, OAuth2ServiceFactory.NO_AUTH, request)) {
+      assertEquals(415, stream.getResponseCode());
     }
   }
 

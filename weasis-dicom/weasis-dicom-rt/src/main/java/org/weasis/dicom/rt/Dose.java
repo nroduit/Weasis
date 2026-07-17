@@ -534,7 +534,9 @@ public class Dose extends RtSpecialElement implements SpecialElementRegion {
 
     ImageConversion.releaseMat(maskSrc);
     ImageConversion.releaseMat(doseMatrix);
-    return hist;
+    // OpenCV 4 returned calcHist as a column (maxDose rows × 1); OpenCV 5 returns a 1-row vector.
+    // The DVH accumulator and readers expect a column, so normalize the shape here.
+    return hist.rows() == 1 && hist.cols() > 1 ? hist.reshape(0, hist.cols()) : hist;
   }
 
   public StructContour getIsoDoseContour(

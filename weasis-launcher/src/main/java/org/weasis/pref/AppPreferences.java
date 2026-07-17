@@ -46,17 +46,30 @@ public class AppPreferences extends HashMap<String, Preference> {
     super(m);
   }
 
-  public void readJson(URI uri) {
+  /**
+   * Reads the Weasis preferences from the given JSON location.
+   *
+   * @return {@code true} if the configuration was reachable and successfully parsed; {@code false}
+   *     when the location is unreachable or the content is not a valid configuration. Callers can
+   *     use this to fall back to another (e.g. local) configuration.
+   */
+  public boolean readJson(URI uri) {
     Map<String, Object> json;
     try (InputStream is = FileUtil.getAdaptedConnection(uri.toURL(), false).getInputStream();
         Reader reader = new InputStreamReader(is, StandardCharsets.UTF_8)) {
       json = (Map<String, Object>) Json.parse(reader);
     } catch (ParseException | IOException ex) {
       LOGGER.error("Cannot read json file: {}", uri, ex);
-      return;
+      return false;
     }
 
-    for (Map<String, Object> map : (List<Map<String, Object>>) json.get("weasisPreferences")) {
+    List<Map<String, Object>> prefList = (List<Map<String, Object>>) json.get("weasisPreferences");
+    if (prefList == null) {
+      LOGGER.error("No weasisPreferences found in json file: {}", uri);
+      return false;
+    }
+
+    for (Map<String, Object> map : prefList) {
       String code = (String) map.get(CODE);
       Preference p =
           new Preference(
@@ -70,6 +83,7 @@ public class AppPreferences extends HashMap<String, Preference> {
       p.setDefaultValue((String) map.get(DEFAULT));
       put(code, p);
     }
+    return true;
   }
 
   public String getValue(String key) {

@@ -272,10 +272,14 @@ declare -a commonOptions=("--java-options" "-Dgosh.port=17179" \
 "--java-options" "-Djavax.accessibility.assistive_technologies=org.weasis.launcher.EmptyAccessibilityProvider" \
 "--java-options" "-Djavax.accessibility.screen_magnifier_present=false");
 
-$JPKGCMD --type app-image --input "$INPUT_DIR" --dest "$OUTPUT_PATH" --name "$NAME" \
---main-jar weasis-launcher.jar --main-class org.weasis.launcher.AppLauncher --add-modules "$JDK_MODULES" \
---add-launcher "${DICOMIZER_CONFIG}" --resource-dir "$RES"  --app-version "$WEASIS_CLEAN_VERSION" \
-"${tmpArgs[@]}" --verbose "${signArgs[@]}" "${customOptions[@]}" "${commonOptions[@]}"
+# On Linux the deb/rpm are built in a single jpackage step from --input (see below), so the
+# standalone app-image is only needed for the other platforms or for --no-installer builds.
+if [ "$machine" != "linux" ] || [ "$PACKAGE" = "NO" ] ; then
+  $JPKGCMD --type app-image --input "$INPUT_DIR" --dest "$OUTPUT_PATH" --name "$NAME" \
+  --main-jar weasis-launcher.jar --main-class org.weasis.launcher.AppLauncher --add-modules "$JDK_MODULES" \
+  --add-launcher "${DICOMIZER_CONFIG}" --resource-dir "$RES"  --app-version "$WEASIS_CLEAN_VERSION" \
+  "${tmpArgs[@]}" --verbose "${signArgs[@]}" "${customOptions[@]}" "${commonOptions[@]}"
+fi
 
 
 if [ "$PACKAGE" = "YES" ] ; then
@@ -298,13 +302,19 @@ if [ "$PACKAGE" = "YES" ] ; then
         DEPENDENCIES="libstdc++6, libgcc1"
         declare -a typeArgs=("--linux-deb-maintainer" "Nicolas Roduit")
       fi
-      $JPKGCMD --type "$installerType" --app-image "$IMAGE_PATH" --dest "$OUTPUT_PATH"  --name "$NAME" --resource-dir "$RES" \
+      # Build the deb/rpm in a single step directly from --input (not from a prebuilt --app-image).
+      # On JDK 26+ the two-step "--type deb --app-image <image>" path fails to resolve the launcher
+      # icons from --resource-dir and falls back to the default JavaApp.png, so both the main and the
+      # Dicomizer launchers end up with the generic Java icon. The single-step build resolves them.
+      $JPKGCMD --type "$installerType" --input "$INPUT_DIR" --dest "$OUTPUT_PATH" --name "$NAME" \
+      --main-jar weasis-launcher.jar --main-class org.weasis.launcher.AppLauncher --add-modules "$JDK_MODULES" \
+      --add-launcher "${DICOMIZER_CONFIG}" --resource-dir "$RES" \
       --license-file "$INPUT_PATH/Licence.txt" --description "Weasis DICOM viewer" --vendor "$VENDOR" \
       --copyright "$COPYRIGHT" --app-version "$WEASIS_CLEAN_VERSION" --file-associations "${curPath}/file-associations.properties" \
       --linux-app-release "$REVISON_INC" --linux-package-name "weasis" \
       "${typeArgs[@]}" \
       --linux-menu-group "Viewer;MedicalSoftware;Graphics;" --linux-app-category "science" --linux-package-deps "${DEPENDENCIES}" \
-      --linux-shortcut "${tmpArgs[@]}" --verbose
+      --linux-shortcut "${customOptions[@]}" "${commonOptions[@]}" "${tmpArgs[@]}" --verbose
       if [ -d "${TEMP_PATH}" ] ; then
         rm -rf "${TEMP_PATH}"
       fi

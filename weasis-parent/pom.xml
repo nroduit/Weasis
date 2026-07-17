@@ -14,7 +14,7 @@
   <properties>
     <!-- force command line arguments settings to set version -->
     <!-- $ mvn clean install -Drevision=4.2.2 -Dchangelist=-SNAPSHOT -->
-    <revision>4.7.1</revision>
+    <revision>4.7.2</revision>
     <changelist>-SNAPSHOT</changelist>  <!-- Remove "-SNAPSHOT" for release -->
 
     <java-version>25</java-version>
@@ -27,10 +27,10 @@
     <app.version>${revision}${changelist}</app.version>
     <base.minimal.version>5.0.0</base.minimal.version>
     <i18n.version>4.0.0-SNAPSHOT</i18n.version>
-    <weasis.releasenotes>https://github.com/nroduit/Weasis/blob/master/CHANGELOG.md#v470-2026-05-28</weasis.releasenotes>
+    <weasis.releasenotes>https://github.com/nroduit/Weasis/blob/master/CHANGELOG.md#v471-2026-07-09</weasis.releasenotes>
 
     <felix.framework.version>7.0.5</felix.framework.version>
-    <flatlaf.version>3.7.1</flatlaf.version>
+    <flatlaf.version>3.7.2</flatlaf.version>
     <miglayout.version>11.4.3</miglayout.version>
     <xz.version>1.12</xz.version>
 
@@ -43,24 +43,24 @@
     <felix.scr.version>2.2.18</felix.scr.version>
 
     <pf4j.version>3.14.0</pf4j.version>
-    <slf4j.version>2.0.17</slf4j.version>
-    <logback.version>1.5.32</logback.version>
+    <slf4j.version>2.0.18</slf4j.version>
+    <logback.version>1.5.38</logback.version>
     <dockingframes.version>1.1.8</dockingframes.version>
-    <weasis-dicom-tools.version>5.34.3</weasis-dicom-tools.version>
-    <weasis.core.img.version>4.13.0</weasis.core.img.version>
-    <weasis.opencv.native.version>4.13.0-dcm</weasis.opencv.native.version>
-    <weasis.opencv.pkg.version>4.13.0-dcm</weasis.opencv.pkg.version>
+    <weasis-dicom-tools.version>5.34.3.1</weasis-dicom-tools.version>
+    <weasis.core.img.version>5.0.0</weasis.core.img.version>
+    <weasis.opencv.native.version>5.0.0-dcm</weasis.opencv.native.version>
+    <weasis.opencv.pkg.version>5.0.0-dcm</weasis.opencv.pkg.version>
     <osgi.resource.locator.version>3.0.0</osgi.resource.locator.version>
     <jaxb.osgi.version>4.0.3</jaxb.osgi.version>
     <xml.bind-api.version>4.0.5</xml.bind-api.version>
-    <joml.version>1.10.8</joml.version>
+    <joml.version>1.10.9</joml.version>
     <jogamp.version>2.6.0</jogamp.version>
-    <jackson.version>2.21.3</jackson.version>
-    <jackson.an.version>2.21</jackson.an.version>
+    <jackson.version>2.22.1</jackson.version>
+    <jackson.an.version>2.22</jackson.an.version>
     <scribejava.version>8.3.3</scribejava.version>
     <zip4j.version>2.11.6</zip4j.version>
 
-    <junit-bom.version>6.1.0</junit-bom.version>
+    <junit-bom.version>6.1.1</junit-bom.version>
     <mockito.version>5.23.0</mockito.version>
 
     <!--suppress UnresolvedMavenProperty -->
@@ -104,7 +104,7 @@
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-compiler-plugin</artifactId>
-          <version>3.14.1</version>
+          <version>3.15.0</version>
           <configuration>
             <release>${java-version}</release>
             <!-- Enable annotation processing for PF4J -->
@@ -162,19 +162,19 @@
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-dependency-plugin</artifactId>
-          <version>3.9.0</version>
-          <executions>
-            <execution>
-              <goals>
-                <goal>properties</goal>
-              </goals>
-            </execution>
-          </executions>
+          <version>3.11.0</version>
+           <executions>
+             <execution>
+               <goals>
+                 <goal>properties</goal>
+               </goals>
+             </execution>
+           </executions>
         </plugin>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-surefire-plugin</artifactId>
-          <version>3.5.4</version>
+          <version>3.5.6</version>
           <configuration>
             <argLine>@{argLine} -Xshare:off -XX:+EnableDynamicAgentLoading</argLine>
             <parallel>all</parallel>
@@ -203,12 +203,12 @@
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-enforcer-plugin</artifactId>
-          <version>3.6.2</version>
+          <version>3.6.3</version>
         </plugin>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-resources-plugin</artifactId>
-          <version>3.4.0</version>
+          <version>3.5.0</version>
         </plugin>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
@@ -223,7 +223,7 @@
         <plugin>
           <groupId>com.diffplug.spotless</groupId>
           <artifactId>spotless-maven-plugin</artifactId>
-          <version>3.1.0</version>
+          <version>3.8.0</version>
         </plugin>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
@@ -233,22 +233,22 @@
         <plugin>
           <groupId>org.codehaus.mojo</groupId>
           <artifactId>exec-maven-plugin</artifactId>
-          <version>3.6.2</version>
+          <version>3.6.3</version>
         </plugin>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-shade-plugin</artifactId>
-          <version>3.6.1</version>
+          <version>3.6.2</version>
         </plugin>
         <plugin>
           <groupId>org.jacoco</groupId>
           <artifactId>jacoco-maven-plugin</artifactId>
-          <version>0.8.14</version>
+          <version>0.8.15</version>
         </plugin>
        <plugin>
          <groupId>org.sonarsource.scanner.maven</groupId>
          <artifactId>sonar-maven-plugin</artifactId>
-         <version>5.6.0.6792</version>
+         <version>5.7.0.6970</version>
        </plugin>
       </plugins>
     </pluginManagement>

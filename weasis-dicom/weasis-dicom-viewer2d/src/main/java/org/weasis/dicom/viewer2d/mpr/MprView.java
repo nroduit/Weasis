@@ -51,6 +51,7 @@ import org.dcm4che3.util.UIDUtils;
 import org.joml.Matrix4d;
 import org.joml.Quaterniond;
 import org.joml.Vector3d;
+import org.joml.Vector3i;
 import org.joml.Vector4d;
 import org.opencv.core.Point3;
 import org.slf4j.Logger;
@@ -78,12 +79,14 @@ import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.editor.image.ViewProgress;
 import org.weasis.core.ui.model.AbstractGraphicModel;
 import org.weasis.core.ui.model.graphic.Graphic;
+import org.weasis.core.ui.model.graphic.imp.line.PolylineGraphic;
 import org.weasis.core.ui.model.graphic.imp.seg.SegContour;
 import org.weasis.core.ui.model.layer.GraphicLayer;
 import org.weasis.core.ui.model.layer.LayerItem;
 import org.weasis.core.ui.model.layer.LayerType;
 import org.weasis.core.ui.model.utils.exceptions.InvalidShapeException;
 import org.weasis.core.ui.pref.PreferenceDialog;
+import org.weasis.core.ui.util.MouseEventDouble;
 import org.weasis.core.util.LangUtil;
 import org.weasis.core.util.Pair;
 import org.weasis.core.util.StringUtil;
@@ -101,6 +104,10 @@ import org.weasis.dicom.viewer2d.Messages;
 import org.weasis.dicom.viewer2d.View2d;
 import org.weasis.dicom.viewer2d.mip.MipView;
 import org.weasis.dicom.viewer2d.mpr.MprController.ControlPoints;
+import org.weasis.dicom.viewer2d.mpr.cmpr.CrossSectionDialog;
+import org.weasis.dicom.viewer2d.mpr.cmpr.CrossSectionParams;
+import org.weasis.dicom.viewer2d.mpr.cmpr.CurvedMprAxis;
+import org.weasis.dicom.viewer2d.mpr.cmpr.CurvedMprView;
 
 public class MprView extends View2d implements SliceCanvas, ViewProgress {
   private static final Logger LOGGER = LoggerFactory.getLogger(MprView.class);
@@ -237,6 +244,100 @@ public class MprView extends View2d implements SliceCanvas, ViewProgress {
     return getVolumeCoordinates(planePos);
   }
 
+  /**
+   * Convert image coordinates to volume coordinates. Use this when you have coordinates from a
+   * graphic (which are in image space), not mouse/screen coordinates.
+   *
+   * <p>Note: The MPR uses a cubic texture (sliceSize³) for rendering, but the actual volume may be
+   * non-cubic (e.g., 640x640x218). This method returns coordinates in actual voxel space.
+   */
+  public Point3 getVolumeCoordinatesFromImage(double imgX, double imgY) {
+    if (mprController.getVolume() == null) {
+      return null;
+    }
+    var volume = mprController.getVolume();
+    int sliceSize = volume.getSliceSize();
+    Vector3i volSize = volume.getSize();
+    Vector3d voxelRatio = volume.getVoxelRatio();
+
+    // The volume is centered in the sliceSize×sliceSize image.
+    // The rendered extent along each axis is volSize * voxelRatio.
+    // The centering offset is (sliceSize - volSize*voxelRatio) / 2.
+    double offsetX = (sliceSize - volSize.x * voxelRatio.x) / 2.0;
+    double offsetY = (sliceSize - volSize.y * voxelRatio.y) / 2.0;
+    double offsetZ = (sliceSize - volSize.z * voxelRatio.z) / 2.0;
+
+    // The crosshair position is stored in slice-size space (centred around halfSlice), not the
+    // normalised [0, 1] space the original formula assumed. Derived from the canonical transform
+    // in MprAxis.getRealVolumeTransformation: voxel_depth = (crossHair_axis - halfSlice) /
+    // voxelRatio_axis + size_axis / 2.
+    Vector3d rawCenter = mprController.getAxesControl().getCenter();
+    double halfSlice = sliceSize / 2.0;
+
+    // Convert image pixel coordinate to raw voxel index:
+    // voxelIndex = (imgCoord - offset) / voxelRatio
+    double voxelX, voxelY, voxelZ;
+    switch (plane) {
+      case AXIAL -> {
+        // Axial: image X->volume X, image Y->volume Y, depth->volume Z
+        voxelX = (imgX - offsetX) / voxelRatio.x;
+        voxelY = (imgY - offsetY) / voxelRatio.y;
+        voxelZ = (rawCenter.z - halfSlice) / voxelRatio.z + volSize.z / 2.0;
+      }
+      case CORONAL -> {
+        // Coronal: image X->volume X, image Y->volume Z, depth->volume Y
+        voxelX = (imgX - offsetX) / voxelRatio.x;
+        voxelZ = (imgY - offsetZ) / voxelRatio.z;
+        voxelY = (rawCenter.y - halfSlice) / voxelRatio.y + volSize.y / 2.0;
+      }
+      case SAGITTAL -> {
+        // Sagittal: image X->volume Y, image Y->volume Z, depth->volume X
+        voxelY = (imgX - offsetY) / voxelRatio.y;
+        voxelZ = (imgY - offsetZ) / voxelRatio.z;
+        voxelX = (rawCenter.x - halfSlice) / voxelRatio.x + volSize.x / 2.0;
+      }
+      default -> {
+        voxelX = (imgX - offsetX) / voxelRatio.x;
+        voxelY = (imgY - offsetY) / voxelRatio.y;
+        voxelZ = (rawCenter.z - halfSlice) / voxelRatio.z + volSize.z / 2.0;
+      }
+    }
+
+    return new Point3(voxelX, voxelY, voxelZ);
+  }
+
+  /**
+   * Map an image-plane point to volume coordinates in voxel-ratio-scaled space, honoring the
+   * current plane rotation. This applies the exact transform the renderer uses per pixel (see
+   * {@link Volume#getVolumeSlice}), so the result matches what is displayed on any plane — axial,
+   * coronal, sagittal or an oblique rotation of them. Divide the result component-wise by {@link
+   * Volume#getVoxelRatio()} to obtain a raw voxel index for {@link
+   * Volume#getInterpolatedValueFromSource}.
+   */
+  public Vector3d getScaledVolumeCoordinatesFromImage(double imgX, double imgY) {
+    MprAxis axis = getMprAxis();
+    if (mprController.getVolume() == null || axis == null) {
+      return null;
+    }
+    Vector3d p = new Vector3d(imgX, imgY, 0);
+    axis.getTransformation().transformPosition(p);
+    return p;
+  }
+
+  /**
+   * Unit slice normal (the out-of-plane direction, orthogonal to the drawn image) in
+   * voxel-ratio-scaled space for the current plane and rotation.
+   */
+  public Vector3d getScaledPlaneNormal() {
+    MprAxis axis = getMprAxis();
+    if (axis == null) {
+      return plane.getDirection();
+    }
+    Vector3d normal = new Vector3d(0, 0, 1);
+    axis.getTransformation().transformDirection(normal);
+    return normal.normalize();
+  }
+
   public Vector3d getVolumeCoordinates(Vector3d planePosition) {
     Vector3d p = new Vector3d(planePosition);
     Matrix4d matrix = getDisplayPointToTexturePointMatrix();
@@ -329,15 +430,119 @@ public class MprView extends View2d implements SliceCanvas, ViewProgress {
   public JPopupMenu buildContextMenu(final MouseEvent evt) {
     ComboItemListener<SeriesComparator<?>> action =
         eventManager.getAction(ActionW.SORT_STACK).orElse(null);
+    JPopupMenu ctx;
     if (action != null && action.isActionEnabled()) {
       // Force to disable sort stack menu
       action.enableAction(false);
-      JPopupMenu ctx = super.buildContextMenu(evt);
+      ctx = super.buildContextMenu(evt);
       action.enableAction(true);
-      return ctx;
+    } else {
+      ctx = super.buildContextMenu(evt);
     }
 
-    return super.buildContextMenu(evt);
+    // Add "Generate Curved MPR" option if a polyline is under the cursor
+    addCurvedMprMenuItem(ctx, evt);
+    return ctx;
+  }
+
+  private void addCurvedMprMenuItem(JPopupMenu popupMenu, MouseEvent evt) {
+    LOGGER.info("addCurvedMprMenuItem called");
+    if (popupMenu == null) {
+      LOGGER.warn("popupMenu is null");
+      return;
+    }
+    if (mprController == null) {
+      LOGGER.warn("mprController is null");
+      return;
+    }
+    if (mprController.getVolume() == null) {
+      LOGGER.warn("volume is null");
+      return;
+    }
+
+    // Log all graphics in the manager
+    List<Graphic> allGraphics = getGraphicManager().getAllGraphics();
+    LOGGER.info("Total graphics in manager: {}", allGraphics.size());
+    for (Graphic g : allGraphics) {
+      LOGGER.info(
+          "  Graphic: {} complete={} class={}",
+          g,
+          g.isGraphicComplete(),
+          g.getClass().getSimpleName());
+    }
+
+    // Try to find graphic under the cursor (like "Remove this point" does)
+    PolylineGraphic polyline = null;
+    Point2D imageCoords = getImageCoordinatesFromMouse(evt.getX(), evt.getY());
+    LOGGER.info("Mouse at screen ({}, {}), image coords: {}", evt.getX(), evt.getY(), imageCoords);
+
+    MouseEventDouble mouseEvt =
+        new MouseEventDouble(
+            this, MouseEvent.MOUSE_RELEASED, evt.getWhen(), 16, 0, 0, 0, 0, 1, true, 1);
+    mouseEvt.setSource(this);
+    mouseEvt.setImageCoordinates(imageCoords);
+
+    java.util.Optional<Graphic> graphicUnderCursor =
+        getGraphicManager().getFirstGraphicIntersecting(mouseEvt);
+    LOGGER.info("Graphic under cursor: {}", graphicUnderCursor.orElse(null));
+
+    if (graphicUnderCursor.isPresent()) {
+      Graphic g = graphicUnderCursor.get();
+      LOGGER.info(
+          "Found graphic: {} isPolyline={} isComplete={}",
+          g.getClass().getSimpleName(),
+          g instanceof PolylineGraphic,
+          g.isGraphicComplete());
+      if (g instanceof PolylineGraphic pl && pl.isGraphicComplete()) {
+        polyline = pl;
+      }
+    }
+
+    if (polyline != null) {
+      LOGGER.info(
+          "Adding Curved MPR menu item for polyline with {} points",
+          polyline.getHandlePointList().size());
+      final PolylineGraphic finalPolyline = polyline;
+      popupMenu.addSeparator();
+      JMenuItem curvedMprItem = new JMenuItem("Build panoramic view");
+      curvedMprItem.addActionListener(e -> openCurvedMprFromPolyline(finalPolyline));
+      popupMenu.add(curvedMprItem);
+      JMenuItem crossSectionsItem = new JMenuItem("Build cross-cectional slices");
+      crossSectionsItem.addActionListener(e -> openCrossSectionsFromPolyline(finalPolyline));
+      popupMenu.add(crossSectionsItem);
+    }
+  }
+
+  private void openCurvedMprFromPolyline(PolylineGraphic polyline) {
+    if (polyline == null || polyline.getHandlePointList().size() < 2) {
+      return;
+    }
+    MprContainer container =
+        (MprContainer) SwingUtilities.getAncestorOfClass(MprContainer.class, this);
+    if (container != null) {
+      container.openCurvedMpr(this, polyline);
+    }
+  }
+
+  /**
+   * Ask the enclosing {@link MprContainer} to build a DICOM series of perpendicular cross-section
+   * slabs along this polyline. A small parameter dialog (slab width, height, spacing) is shown
+   * before generation; cancelling the dialog aborts the build.
+   */
+  private void openCrossSectionsFromPolyline(PolylineGraphic polyline) {
+    if (polyline == null || polyline.getHandlePointList().size() < 2) {
+      return;
+    }
+    MprContainer container =
+        (MprContainer) SwingUtilities.getAncestorOfClass(MprContainer.class, this);
+    if (container == null || mprController == null || mprController.getVolume() == null) {
+      return;
+    }
+    CrossSectionParams params = CrossSectionDialog.prompt(this);
+    if (params == null) {
+      return; // user cancelled
+    }
+    container.openCrossSections(this, polyline, params);
   }
 
   @Override
@@ -394,6 +599,18 @@ public class MprView extends View2d implements SliceCanvas, ViewProgress {
 
     super.drawOnTop(g2d);
     drawProgressBar(g2d, progressBar);
+
+    if (CurvedMprAxis.DEBUG_DRAW && plane == Plane.AXIAL) {
+      MprContainer container =
+          (MprContainer) SwingUtilities.getAncestorOfClass(MprContainer.class, this);
+      if (container != null) {
+        CurvedMprView curvedView = container.getCurvedMprView();
+        CurvedMprAxis curvedAxis = curvedView == null ? null : curvedView.getCurvedMprAxis();
+        if (curvedAxis != null) {
+          curvedAxis.drawDebug(g2d, this);
+        }
+      }
+    }
   }
 
   public ControlPoints getControlPoints(Line2D line, Point2D center) {
@@ -1122,5 +1339,32 @@ public class MprView extends View2d implements SliceCanvas, ViewProgress {
               mprView.getMprController().getVolume().getStack().getSeries(), DicomModel.study);
       MipView.openSeries(series, model, dicomModel, study, false);
     }
+  }
+
+  @Override
+  public JPopupMenu buildGraphicContextMenu(final MouseEvent evt, final List<Graphic> selected) {
+    LOGGER.info(
+        "MprView.buildGraphicContextMenu called, selected={}",
+        selected != null ? selected.size() : 0);
+    JPopupMenu popupMenu = super.buildGraphicContextMenu(evt, selected);
+    if (popupMenu != null && selected != null && selected.size() == 1) {
+      Graphic graphic = selected.getFirst();
+      LOGGER.info(
+          "Selected graphic: {} isPolyline={} isComplete={}",
+          graphic.getClass().getSimpleName(),
+          graphic instanceof PolylineGraphic,
+          graphic.isGraphicComplete());
+      if (graphic instanceof PolylineGraphic polyline && graphic.isGraphicComplete()) {
+        LOGGER.info("Adding Curved MPR menu item in buildGraphicContextMenu");
+        popupMenu.addSeparator();
+        JMenuItem curvedMprItem = new JMenuItem("Build Panoramic View"); // NON-NLS
+        curvedMprItem.addActionListener(e -> openCurvedMprFromPolyline(polyline));
+        popupMenu.add(curvedMprItem);
+        JMenuItem crossSectionsItem = new JMenuItem("Build Cross-Sectional Slices"); // NON-NLS
+        crossSectionsItem.addActionListener(e -> openCrossSectionsFromPolyline(polyline));
+        popupMenu.add(crossSectionsItem);
+      }
+    }
+    return popupMenu;
   }
 }

@@ -210,7 +210,7 @@ public class Dvh {
   private static String uniqueSeriesName(XYChart chart, String base) {
     String name = base;
     int k = 2;
-    while (chart.getSeriesMap().get(name) != null) {
+    while (chart.getSeries(name) != null) {
       name = base + " " + k++;
     }
     return name;

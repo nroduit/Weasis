@@ -35,7 +35,6 @@ import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.weasis.core.util.StreamUtil;
 
 public class FileUtil {
   private static final Logger LOGGER = LoggerFactory.getLogger(FileUtil.class);
@@ -318,9 +317,7 @@ public class FileUtil {
    * @throws IOException if an I/O error occurs or a resource limit is exceeded
    * @throws IllegalArgumentException if inputStream or targetDir is null
    */
-  @SuppressWarnings(
-      "java:S5042") // Zip-bomb protections are enforced: entry count, total size, and compression
-  // ratio
+  @SuppressWarnings("java:S5042") // Zip-bomb protections are enforced
   public static void unzip(InputStream inputStream, Path targetDir) throws IOException {
     if (inputStream == null) {
       throw new IllegalArgumentException("Input stream cannot be null");
@@ -335,7 +332,7 @@ public class FileUtil {
         ZipInputStream zis = new ZipInputStream(bufInStream)) {
       extractZipEntries(zis, targetDir);
     } finally {
-      StreamUtil.safeClose(inputStream);
+      safeClose(inputStream);
     }
   }
 

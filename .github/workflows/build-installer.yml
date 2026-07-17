@@ -7,6 +7,10 @@ on:
         required: false
         default: 'all'
 
+# Least privilege: this pipeline only builds and uploads artifacts; it never writes to the repo.
+permissions:
+  contents: read
+
 jobs:
   setup:
     runs-on: ubuntu-latest
@@ -17,8 +21,10 @@ jobs:
       - name: Compute build matrices from the platforms input
         id: set
         shell: bash
+        env:
+          PLATFORMS_INPUT: ${{ inputs.platforms }}
         run: |
-          sel="${{ inputs.platforms }}"
+          sel="$PLATFORMS_INPUT"
           [ -z "$sel" ] && sel="all"
           jpkg=$(jq -cn --arg sel "$sel" '
             [
@@ -50,10 +56,12 @@ jobs:
       cleanversion: ${{ env.WEASIS_CLEAN_VERSION }}
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v7.0.0
+        with:
+          persist-credentials: false
 
       - name: Set up JDK for compilation
-        uses: actions/setup-java@v5
+        uses: actions/setup-java@0f481fcb613427c0f801b606911222b5b6f3083a  # v5.5.0
         with:
           distribution: 'temurin'
           java-version: '26'
@@ -80,7 +88,7 @@ jobs:
           echo "WEASIS_CLEAN_VERSION=${CVERSION}" >> $GITHUB_ENV
 
       - name: Upload the weasis package for building the native distribution
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a  # v7.0.1
         with:
           name: weasis-native-${{ env.WEASIS_VERSION }}
           path: weasis-distributions/target/native-dist/weasis-native.*
@@ -118,13 +126,13 @@ jobs:
           echo "WEASIS_CLEAN_VERSION=${{needs.build.outputs.cleanversion}}" >> $GITHUB_ENV
 
       - name: Set up JDK
-        uses: actions/setup-java@v5
+        uses: actions/setup-java@0f481fcb613427c0f801b606911222b5b6f3083a  # v5.5.0
         with:
           distribution: 'temurin'
           java-version: '26'
 
       - name: Download weasis-native
-        uses: actions/download-artifact@v8
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c  # v8.0.1
         with:
           name: weasis-native-${{ env.WEASIS_VERSION }}
           path: native-dist
@@ -146,7 +154,7 @@ jobs:
           echo "$(ls ${{ env.WEASIS_INPUT_BIN }}/bundle/)"
 
       - name: Import Developer Certificate
-        uses: apple-actions/import-codesign-certs@v7
+        uses: apple-actions/import-codesign-certs@5142e029c445c10ffc7149d172e540235a065466  # v7
         if: matrix.wsystem == 'macosx'
         id: cert
         with:
@@ -154,7 +162,7 @@ jobs:
           p12-password: ${{ secrets.MACOS_CERTIFICATE_PWD }}
 
       - name: Import Installer Certificate
-        uses: apple-actions/import-codesign-certs@v7
+        uses: apple-actions/import-codesign-certs@5142e029c445c10ffc7149d172e540235a065466  # v7
         if: matrix.wsystem == 'macosx'
         with:
           create-keychain: "false"
@@ -231,12 +239,6 @@ jobs:
               "--mac-sign")
           elif [ "$machine" = "windows" ] ; then
             declare -a customOptions=("--java-options" "-splash:\$APPDIR\resources\images\about-round.png" )
-            declare -a signArgs=()
-          else
-            # sun.awt.disablegrab works around unreliable X11 pointer grabs on XWayland (GNOME/mutter),
-            # which can leave Swing popup menus invisible until the window regains focus (see issue #819).
-            declare -a customOptions=("--java-options" "-splash:\$APPDIR/resources/images/about-round.png" \
-            "--java-options" "-Dsun.awt.disablegrab=true" )
             declare -a signArgs=()
           fi
           declare -a commonOptions=("--java-options" "-Dgosh.port=17179" \
@@ -315,24 +317,6 @@ jobs:
             --win-menu --win-menu-group "${{ env.NAME }}" --copyright "${{ env.COPYRIGHT }}" --app-version "${{ env.WEASIS_CLEAN_VERSION }}" \
             --vendor "${{ env.VENDOR }}" --file-associations "${{ env.FILE_ASSOC }}" --verbose
             cp ${{ env.WEASIS_OUTPUT }}/*.msi final-dist/${{ env.NAME }}-${{ env.WEASIS_CLEAN_VERSION }}-${ARC_NAME}.msi
-          elif [ "$machine" = "linux" ] ; then
-            declare -a installerTypes=("deb" "rpm")
-            for installerType in ${installerTypes[@]}; do
-              if [ "${installerType}" = "rpm" ]; then
-                DEPENDENCIES=""
-                declare -a typeArgs=("--linux-rpm-license-type" "EPL-2.0")
-              else
-                DEPENDENCIES="libstdc++6, libgcc1"
-                declare -a typeArgs=("--linux-deb-maintainer" "Nicolas Roduit")
-              fi
-              jpackage --type "${installerType}" --app-image "${{ env.WEASIS_OUTPUT }}/${{ env.NAME }}" --dest "${{ env.WEASIS_OUTPUT }}" --name "${{ env.NAME }}" --resource-dir "${{ env.RES }}" \
-              --license-file "${{ env.WEASIS_INPUT }}/Licence.txt" --description "Weasis DICOM viewer" --vendor "${{ env.VENDOR }}" \
-              --copyright "${{ env.COPYRIGHT }}" --app-version "${{ env.WEASIS_CLEAN_VERSION }}" --file-associations "${{ env.FILE_ASSOC }}" \
-              --linux-app-release "1" --linux-package-name "weasis" \
-              "${typeArgs[@]}" \
-              --linux-menu-group "Viewer;MedicalSoftware;Graphics;" --linux-app-category "science" --linux-package-deps "${DEPENDENCIES}" --linux-shortcut --verbose
-              cp ${{ env.WEASIS_OUTPUT }}/*.${installerType} final-dist
-            done
           elif [ "$machine" = "macosx" ] ; then
             # Do not set verbose for public build.
             # Do NOT pass --mac-sign here: the app bundle was already signed with proper
@@ -396,7 +380,7 @@ jobs:
           done
 
       - name: Upload the installer
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a  # v7.0.1
         with:
           name: ${{ env.APP_ARTIFACT }}
           path: final-dist
@@ -411,7 +395,7 @@ jobs:
 
     steps:
       - name: Download weasis-native
-        uses: actions/download-artifact@v8
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c  # v8.0.1
         with:
           name: weasis-native-${{ needs.build.outputs.version }}
           path: native-dist
@@ -422,10 +406,10 @@ jobs:
           unzip -o "native-dist/weasis-native.zip" -d "native-dist/weasis-native"
 
       - name: Set up QEMU
-        uses: docker/setup-qemu-action@v4
+        uses: docker/setup-qemu-action@96fe6ef7f33517b61c61be40b68a1882f3264fb8  # v4
 
       - name: Set up Docker Buildx for multi-arch
-        uses: docker/setup-buildx-action@v4
+        uses: docker/setup-buildx-action@bb05f3f5519dd87d3ba754cc423b652a5edd6d2c  # v4
 
       - name: Run Docker container to package Weasis for ${{ matrix.arch }}
         run: |
@@ -489,7 +473,7 @@ jobs:
         continue-on-error: false
 
       - name: Upload Linux multi-arch installers
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a  # v7.0.1
         with:
           name: ${{ env.PKG_ARTIFACT }}
           path: final-dist

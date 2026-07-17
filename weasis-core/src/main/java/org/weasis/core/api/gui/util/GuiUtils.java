@@ -473,6 +473,13 @@ public class GuiUtils {
     slider.addChangeListener(listener);
   }
 
+  public static JSlider createSlider(int min, int max, int value, int tickDivisions) {
+    JSlider slider = new JSlider(min, max, value);
+    slider.setMajorTickSpacing(Math.max(1, (max - min) / tickDivisions));
+    slider.setPaintTicks(true);
+    return slider;
+  }
+
   private static void addCheckActionToJFormattedTextField(final JFormattedTextField textField) {
     textField.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), "check"); // NON-NLS
     textField

@@ -27,6 +27,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import org.opencv.core.CvType;
 import org.opencv.core.Mat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -153,17 +154,115 @@ public class ImageRegionStatistics {
     if (layer != null && layer.hasContent()) {
       List<MeasureItem> measVal = new ArrayList<>();
       if (releaseEvent && isOneComputed()) {
-        List<HistogramData> hists = getHistogram(graphic, layer);
-        for (int i = 0; i < hists.size(); i++) {
-          HistogramData data = hists.get(i);
-          Integer bandIndex = hists.size() == 1 ? null : data.getBandIndex();
-          measVal.addAll(getStatistics(data, bandIndex, i == 0));
+        List<Mat> imgPr = prepareInputImages(graphic, layer);
+        if (imgPr.size() == 2) {
+          Mat srcImg = imgPr.get(0);
+          Mat mask = imgPr.get(1);
+          RoiPixelStats direct = srcImg.channels() == 1 ? computeRoiPixelStats(srcImg, mask) : null;
+          List<HistogramData> hists = getHistogram(srcImg, mask, layer);
+          for (int i = 0; i < hists.size(); i++) {
+            HistogramData data = hists.get(i);
+            Integer bandIndex = hists.size() == 1 ? null : data.getBandIndex();
+            measVal.addAll(
+                getStatistics(data, bandIndex, i == 0, bandIndex == null ? direct : null));
+          }
+        }
+        for (MeasurableLayer secondary : layer.getSecondaryLayers()) {
+          measVal.addAll(getSuvStatistics(graphic, secondary));
         }
       }
       return measVal;
     }
 
     return Collections.emptyList();
+  }
+
+  /** Direct ROI statistics in stored-pixel units (min, max, mean, standard deviation, count). */
+  private record RoiPixelStats(double min, double max, double mean, double stdDev, double count) {}
+
+  /**
+   * Measures min/max/mean/std/count on the masked ROI pixels via {@link ImageAnalyzer#meanStdDev};
+   * values are in stored-pixel units. Returns {@code null} when the ROI selects no pixel or the
+   * measurement fails.
+   */
+  private static RoiPixelStats computeRoiPixelStats(Mat srcImg, Mat mask) {
+    try {
+      double[][] s = ImageAnalyzer.meanStdDev(srcImg, mask, null, null);
+      if (s.length < 5 || s[0].length == 0 || s[4][0] <= 0.0) {
+        return null;
+      }
+      return new RoiPixelStats(s[0][0], s[1][0], s[2][0], s[3][0], s[4][0]);
+    } catch (Exception e) {
+      LOGGER.error("Compute ROI pixel statistics", e);
+      return null;
+    }
+  }
+
+  /**
+   * Computes SUV min/max/mean for {@code petLayer} (a PET overlay sampled on the base layer's pixel
+   * grid) within the ROI, labeled with a "PT" extension so they read alongside the base statistics.
+   * Returns an empty list when the layer carries no SUV factor or the ROI covers no PET voxel.
+   */
+  private static List<MeasureItem> getSuvStatistics(GraphicArea graphic, MeasurableLayer petLayer) {
+    if (petLayer == null || !petLayer.hasContent()) {
+      return Collections.emptyList();
+    }
+    Double suv = (Double) petLayer.getSourceTagValue(TagW.SuvFactor);
+    if (suv == null
+        || !(IMAGE_MIN.getComputed() || IMAGE_MAX.getComputed() || IMAGE_MEAN.getComputed())) {
+      return Collections.emptyList();
+    }
+    List<Mat> imgPr = prepareInputImages(graphic, petLayer);
+    if (imgPr.size() != 2) {
+      return Collections.emptyList();
+    }
+    Mat mask = imgPr.get(1); // null when the whole image is measured (no ROI shape)
+    // The source may be any depth (native PET is CV_16S, the resampled volume CV_32F): read it as
+    // float so a single code path handles both. The volume path uses NaN to mark voxels outside it.
+    Mat src = new Mat();
+    imgPr.get(0).convertTo(src, CvType.CV_32F);
+    int rows = src.rows();
+    int cols = src.cols();
+    float[] values = new float[cols];
+    byte[] selected = mask == null ? null : new byte[cols];
+    double min = Double.MAX_VALUE;
+    double max = -Double.MAX_VALUE;
+    double sum = 0.0;
+    long count = 0;
+    for (int r = 0; r < rows; r++) {
+      src.get(r, 0, values);
+      if (mask != null) {
+        mask.get(r, 0, selected);
+      }
+      for (int c = 0; c < cols; c++) {
+        if ((selected == null || selected[c] != 0) && !Float.isNaN(values[c])) {
+          double v = values[c];
+          min = Math.min(min, v);
+          max = Math.max(max, v);
+          sum += v;
+          count++;
+        }
+      }
+    }
+    src.release();
+    if (count == 0) {
+      return Collections.emptyList();
+    }
+    String unit = "SUVbw, g/ml"; // NON-NLS
+    String label = petLayer.getStatLabel();
+    String ext = " " + (label == null ? "PT" : label); // NON-NLS
+    List<MeasureItem> measList = new ArrayList<>(3);
+    addSuvMeasure(measList, IMAGE_MIN, ext, petLayer.pixelToRealValue(min) * suv, unit);
+    addSuvMeasure(measList, IMAGE_MAX, ext, petLayer.pixelToRealValue(max) * suv, unit);
+    addSuvMeasure(measList, IMAGE_MEAN, ext, petLayer.pixelToRealValue(sum / count) * suv, unit);
+    return measList;
+  }
+
+  private static void addSuvMeasure(
+      List<MeasureItem> measList, Measurement measure, String ext, double value, String unit) {
+    if (measure.getComputed()) {
+      measList.add(new MeasureItem(measure, ext, value, unit));
+    }
   }
 
   private static boolean isOneComputed() {
@@ -195,6 +294,11 @@ public class ImageRegionStatistics {
 
   public static List<MeasureItem> getStatistics(
       HistogramData data, Integer channelIndex, boolean imagePixels) {
+    return getStatistics(data, channelIndex, imagePixels, null);
+  }
+
+  private static List<MeasureItem> getStatistics(
+      HistogramData data, Integer channelIndex, boolean imagePixels, RoiPixelStats direct) {
     MeasurableLayer layer = data.getLayer();
     if (layer != null && layer.hasContent()) {
       float[] bins = data.getHistValues();
@@ -205,7 +309,9 @@ public class ImageRegionStatistics {
       double max = -Float.MAX_VALUE;
       double mean = 0.0;
 
-      double binFactor = (data.getPixMax() - offset) / (bins.length - 1);
+      // A single bin means a uniform ROI: keep the factor at 0 so every level maps to the bin
+      // value instead of dividing by zero (which would yield an infinite median).
+      double binFactor = bins.length > 1 ? (data.getPixMax() - offset) / (bins.length - 1) : 0.0;
 
       for (int k = 0; k < bins.length; k++) {
         boolean valid = MathUtil.isDifferentFromZero(bins[k]) && bins[k] > 0.0f;
@@ -257,20 +363,42 @@ public class ImageRegionStatistics {
         skew = 0.0;
         kurtosis = 0.0;
       }
+      // Prefer the values measured directly on the ROI pixels (real-value units) when available;
+      // otherwise fall back to the histogram-derived estimates.
+      double pixelCount = sum;
+      double dispMin = min;
+      double dispMax = max;
+      double dispMean = mean;
+      double dispStd = stdev;
+      if (direct != null) {
+        pixelCount = direct.count();
+        double realA = layer.pixelToRealValue(direct.min());
+        double realB = layer.pixelToRealValue(direct.max());
+        dispMin = Math.min(realA, realB);
+        dispMax = Math.max(realA, realB);
+        dispMean = layer.pixelToRealValue(direct.mean());
+        // Scale the stored-value standard deviation into real-value units (modality LUT slope).
+        double scale =
+            direct.max() > direct.min()
+                ? Math.abs(realB - realA) / (direct.max() - direct.min())
+                : 1.0;
+        dispStd = direct.stdDev() * scale;
+      }
+
       String unit = layer.getPixelValueUnit();
       if (imagePixels) {
-        addMeasure(measList, IMAGE_PIXELS, channelIndex, sum, Unit.PIXEL.getAbbreviation());
+        addMeasure(measList, IMAGE_PIXELS, channelIndex, pixelCount, Unit.PIXEL.getAbbreviation());
       }
-      addMeasure(measList, IMAGE_MIN, channelIndex, min, unit);
-      addMeasure(measList, IMAGE_MAX, channelIndex, max, unit);
+      addMeasure(measList, IMAGE_MIN, channelIndex, dispMin, unit);
+      addMeasure(measList, IMAGE_MAX, channelIndex, dispMax, unit);
       addMeasure(
           measList,
           IMAGE_MEDIAN,
           channelIndex,
           layer.pixelToRealValue(medianBin(bins, sum / 2.0) * binFactor + offset),
           unit);
-      addMeasure(measList, IMAGE_MEAN, channelIndex, mean, unit);
-      addMeasure(measList, IMAGE_STD, channelIndex, stdev, null);
+      addMeasure(measList, IMAGE_MEAN, channelIndex, dispMean, unit);
+      addMeasure(measList, IMAGE_STD, channelIndex, dispStd, null);
       addMeasure(measList, IMAGE_SKEW, channelIndex, skew, null);
       addMeasure(measList, IMAGE_KURTOSIS, channelIndex, kurtosis, null);
       addMeasure(measList, IMAGE_ENTROPY, channelIndex, entropy, null);
@@ -278,9 +406,9 @@ public class ImageRegionStatistics {
       Double suv = (Double) layer.getSourceTagValue(TagW.SuvFactor);
       if (channelIndex == null && Objects.nonNull(suv)) {
         unit = "SUVbw, g/ml"; // NON-NLS
-        addMeasure(measList, IMAGE_MIN, null, min * suv, unit);
-        addMeasure(measList, IMAGE_MAX, null, max * suv, unit);
-        addMeasure(measList, IMAGE_MEAN, null, mean * suv, unit);
+        addMeasure(measList, IMAGE_MIN, null, dispMin * suv, unit);
+        addMeasure(measList, IMAGE_MAX, null, dispMax * suv, unit);
+        addMeasure(measList, IMAGE_MEAN, null, dispMean * suv, unit);
       }
 
       return measList;

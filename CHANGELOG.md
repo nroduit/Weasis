@@ -1,5 +1,39 @@
 # Changelog
 
+## [v4.7.1](https://github.com/nroduit/Weasis/tree/v4.7.1) (2026-07-09)
+
+[Full Changelog](https://github.com/nroduit/Weasis/compare/v4.7.0...v4.7.1)
+
+**Implemented enhancements:**
+
+- PET/CT Image Fusion Overlay [\#850](https://github.com/nroduit/Weasis/issues/850)
+- DICOM Explorer: add a per-patient series filter and a searchable patient selector [\#849](https://github.com/nroduit/Weasis/issues/849)
+- Upgrade codecs to OpenCV 5 [\#843](https://github.com/nroduit/Weasis/issues/843)
+- Curved MPR View [\#828](https://github.com/nroduit/Weasis/issues/828)
+
+**Fixed bugs:**
+
+- Mouse actions \(zoom and pan\) not applied to non-DICOM views [\#851](https://github.com/nroduit/Weasis/issues/851)
+- Reset tools do not synchronize to other linked views [\#848](https://github.com/nroduit/Weasis/issues/848)
+- Flatpak: 3D Viewer fails to load due to missing java.applet dependency under Java 26 \(OSGi BundleException for jogamp\) [\#847](https://github.com/nroduit/Weasis/issues/847)
+- Dicomizer: cannot import color images with 16-bit per channel [\#842](https://github.com/nroduit/Weasis/issues/842)
+- Manual synchronization setup lost when opening another series [\#840](https://github.com/nroduit/Weasis/issues/840)
+- Weasis freezes after using the File or Help menu on macOS [\#839](https://github.com/nroduit/Weasis/issues/839)
+- NPE when reloading DICOM Presentation State on Linux created on MacOS [\#836](https://github.com/nroduit/Weasis/issues/836)
+- I dont have the 3d viewer option in 4.7 [\#834](https://github.com/nroduit/Weasis/issues/834)
+- Cannot send study with STOW-RS without authentication [\#833](https://github.com/nroduit/Weasis/issues/833)
+- Cannot open dicom files from Finder on macOS [\#832](https://github.com/nroduit/Weasis/issues/832)
+- The deb installer do not have the correct Weasis icon for desktop shortcuts [\#831](https://github.com/nroduit/Weasis/issues/831)
+- GSPS TextObject annotations not showing in 4.7 [\#827](https://github.com/nroduit/Weasis/issues/827)
+- File/View/Help menus not \(always\) responding [\#819](https://github.com/nroduit/Weasis/issues/819)
+
+**Merged pull requests:**
+
+- build: bump the maven group with 21 updates [\#846](https://github.com/nroduit/Weasis/pull/846) ([dependabot[bot]](https://github.com/apps/dependabot))
+- ci: bump the actions group with 2 updates [\#845](https://github.com/nroduit/Weasis/pull/845) ([dependabot[bot]](https://github.com/apps/dependabot))
+- Bump com.fasterxml.jackson.core:jackson-databind from 2.21.3 to 2.22.0 in /weasis-parent in the maven group across 1 directory [\#844](https://github.com/nroduit/Weasis/pull/844) ([dependabot[bot]](https://github.com/apps/dependabot))
+- Add preference to toggle delete measurement confirmation dialog \(fixe… [\#809](https://github.com/nroduit/Weasis/pull/809) ([LornaReilly](https://github.com/LornaReilly))
+
 ## [v4.7.0](https://github.com/nroduit/Weasis/tree/v4.7.0) (2026-05-28)
 
 [Full Changelog](https://github.com/nroduit/Weasis/compare/v4.6.6...v4.7.0)
@@ -25,6 +59,7 @@
 - Add a new date picker [\#789](https://github.com/nroduit/Weasis/issues/789)
 - Upgrade to Java 25 LTS and fix related issues [\#786](https://github.com/nroduit/Weasis/issues/786)
 - Add OpenGL 3.3 volume rendering backend \(FBO + Fragment Shader\) to enable macOS support [\#784](https://github.com/nroduit/Weasis/issues/784)
+- Remove the confirmation to delete measurements [\#783](https://github.com/nroduit/Weasis/issues/783)
 - Speed up MPR loading when no patient-orientation rectification is required [\#781](https://github.com/nroduit/Weasis/issues/781)
 - Enable color image rendering in MPR views [\#780](https://github.com/nroduit/Weasis/issues/780)
 - Use system file chooser instead of the Java common one [\#761](https://github.com/nroduit/Weasis/issues/761)
@@ -39,7 +74,6 @@
 - The current view will also move when MPR is orthogonal. [\#769](https://github.com/nroduit/Weasis/issues/769)
 - MPR generates deformed axial image in non-axially scanned volumes. [\#752](https://github.com/nroduit/Weasis/issues/752)
 - MPR scrolling follows the image axes instead of the oblique MPR axis [\#702](https://github.com/nroduit/Weasis/issues/702)
-- Print 2x3 images using 2d Viewer Layout result on low quality and pixelate image. [\#509](https://github.com/nroduit/Weasis/issues/509)
 
 **Closed issues:**
 
@@ -49,6 +83,12 @@
 - Deprecate 32-bit ARM build support due to lack of official JDK compatibility [\#790](https://github.com/nroduit/Weasis/issues/790)
 - Update to weasis-dicom-tools 5.34.2 [\#788](https://github.com/nroduit/Weasis/issues/788)
 - Use only java.net.http.HttpClient for all HTTP requests [\#787](https://github.com/nroduit/Weasis/issues/787)
+
+**Merged pull requests:**
+
+- Bump org.codehaus.plexus:plexus-utils from 4.0.0 to 4.0.3 in /weasis-distributions in the maven group across 1 directory [\#803](https://github.com/nroduit/Weasis/pull/803) ([dependabot[bot]](https://github.com/apps/dependabot))
+- Quality: OAuth service cache key ignores callback port, reusing wrong service instance [\#801](https://github.com/nroduit/Weasis/pull/801) ([Nam0101](https://github.com/Nam0101))
+- Bump ch.qos.logback:logback-core from 1.5.23 to 1.5.25 in /weasis-parent in the maven group across 1 directory [\#774](https://github.com/nroduit/Weasis/pull/774) ([dependabot[bot]](https://github.com/apps/dependabot))
 
 ## [v4.6.6](https://github.com/nroduit/Weasis/tree/v4.6.6) (2025-12-29)
 

@@ -35,6 +35,9 @@ public class StudyPane extends JPanel {
   private static final String COLUMN_CONSTRAINTS = "[fill]";
   private static final String SUB_PANEL_CONSTRAINTS = "shrinky 100";
   private static final int GAP = 5;
+  private static final int SUB_PANEL_INSET = 3; // subPanel MigLayout "insets Nlp"
+  private static final int BORDER_INSET = 3; // study pane empty border left/right
+  private static final int SEPARATION = 4; // gap kept between the last column and the scrollbar
 
   private final JPanel subPanel;
   private final MediaSeriesGroup dicomStudy;
@@ -51,7 +54,10 @@ public class StudyPane extends JPanel {
     super(new MigLayout(LAYOUT_CONSTRAINTS, COLUMN_CONSTRAINTS));
 
     this.dicomStudy = Objects.requireNonNull(dicomStudy);
-    this.subPanel = new JPanel(new MigLayout("insets 3lp, gap " + GAP + " " + GAP + ", flowx"));
+    // Sub-panel padding uses a Swing border (measurable via getInsets), not MigLayout "lp" insets,
+    // so the dock width can reserve exactly one column at any UI scale.
+    this.subPanel = new JPanel(new MigLayout("insets 0, gap " + GAP + " " + GAP + ", flowx"));
+    this.subPanel.setBorder(GuiUtils.getEmptyBorder(SUB_PANEL_INSET));
     this.titleBorder = GuiUtils.getTitledBorder(dicomStudy.toString());
     this.resizeHandler = new ComponentResizeHandler();
 
@@ -59,10 +65,45 @@ public class StudyPane extends JPanel {
   }
 
   private void initializeComponent() {
-    setBorder(BorderFactory.createCompoundBorder(GuiUtils.getEmptyBorder(0, 3, 0, 3), titleBorder));
+    setBorder(
+        BorderFactory.createCompoundBorder(
+            GuiUtils.getEmptyBorder(0, BORDER_INSET, 0, BORDER_INSET), titleBorder));
     setFocusable(false);
     add(subPanel, SUB_PANEL_CONSTRAINTS);
     addComponentListener(resizeHandler);
+  }
+
+  /**
+   * Estimated horizontal space a study pane adds around a single thumbnail column (its border plus
+   * the sub-panel padding). Used only as a fallback for the initial dock width before any study
+   * pane exists; once one does, {@link #getSingleColumnWidth()} gives the exact width.
+   *
+   * @param c a component used to measure the (font-dependent) titled border insets
+   */
+  public static int getHorizontalChrome(Component c) {
+    Insets border =
+        BorderFactory.createCompoundBorder(
+                GuiUtils.getEmptyBorder(0, BORDER_INSET, 0, BORDER_INSET),
+                GuiUtils.getTitledBorder(" "))
+            .getBorderInsets(c);
+    Insets subPanelPadding = GuiUtils.getEmptyBorder(SUB_PANEL_INSET).getBorderInsets(c);
+    return border.left + border.right + subPanelPadding.left + subPanelPadding.right;
+  }
+
+  /**
+   * Exact width of this study pane laid out with a single thumbnail column: the series pane's
+   * preferred width plus the measured sub-panel padding and study-pane border.
+   *
+   * @return the one-column width in device pixels, or 0 if the study has no series pane yet
+   */
+  public int getSingleColumnWidth() {
+    if (subPanel.getComponentCount() == 0) {
+      return 0;
+    }
+    int itemWidth = subPanel.getComponent(0).getPreferredSize().width;
+    Insets sub = subPanel.getInsets();
+    Insets study = getInsets();
+    return itemWidth + sub.left + sub.right + study.left + study.right;
   }
 
   @Override
@@ -97,11 +138,16 @@ public class StudyPane extends JPanel {
         width -= (insets.left + insets.right);
       }
 
+      // Exclude the sub-panel padding (and a small separation) so the last column and the study
+      // border never extend under the vertical scrollbar
+      Insets subInsets = subPanel.getInsets();
+      width -= subInsets.left + subInsets.right + GuiUtils.getScaleLength(SEPARATION);
+
       if (width > 0 && subPanel.getComponentCount() > 0) {
         int itemWidth = subPanel.getComponent(0).getPreferredSize().width;
         int count = (width + GAP) / (itemWidth + GAP);
         migLayout.setLayoutConstraints(
-            "insets 3lp, gap " + GAP + " " + GAP + ", flowx, wrap " + Math.max(1, count));
+            "insets 0, gap " + GAP + " " + GAP + ", flowx, wrap " + Math.max(1, count));
       }
     }
   }
@@ -152,11 +198,12 @@ public class StudyPane extends JPanel {
       return;
     }
 
+    SeriesFilter filter = paneManager.getSeriesFilter();
     int thumbnailSize = SeriesThumbnail.getThumbnailSizeFromPreferences();
-    for (int i = 0; i < seriesList.size(); i++) {
-      SeriesPane series = seriesList.get(i);
-      if (series != null) {
-        addPane(series, i, thumbnailSize);
+    int index = 0;
+    for (SeriesPane series : seriesList) {
+      if (series != null && filter.test(series.getDicomSeries(), dicomStudy)) {
+        addPane(series, index++, thumbnailSize);
       }
     }
     revalidate();

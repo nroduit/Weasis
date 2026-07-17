@@ -268,7 +268,7 @@
     },
     {
       "code": "weasis.clean.previous.version",
-      "value": "false",
+      "value": "true",
       "description": "If true, the bundle cache is cleared when the weasis version has changed from the previous launch",
       "type": "A",
       "javaType": "BOOLEAN",
@@ -460,7 +460,7 @@
     {
       "code": "weasis.rt.dvh.recalculate.enable",
       "value": "true",
-      "description": "Enable the experimental DVH (re)calculation in the RT plugin. The DVH calculation algorithm (derived from dicompyler) has not been clinically validated and must not be used for medical decisions. When false (default), only DVHs stored in the RTDOSE files are displayed.",
+      "description": "Enables experimental DVH (re)calculation in the RT plugin (derived from dicompyler, not clinically validated). When false (default), only DVHs stored in RTDOSE files are displayed.",
       "type": "F",
       "javaType": "BOOLEAN",
       "category": "DICOM"

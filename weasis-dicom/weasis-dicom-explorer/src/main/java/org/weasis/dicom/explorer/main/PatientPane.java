@@ -31,7 +31,7 @@ public class PatientPane extends JPanel
 
   private static final String VERTICAL_LAYOUT_CONSTRAINTS = "fillx, flowy, insets 0";
   private static final String HORIZONTAL_LAYOUT_CONSTRAINTS = "fillx, flowx, insets 0";
-  private static final String COLUMN_CONSTRAINTS = "[fill]";
+  private static final String COLUMN_CONSTRAINTS = "[grow,left]";
   private static final Dimension STUDY_PANE_SIZE = new Dimension(50, 50);
   private final DicomExplorer explorer;
   private MediaSeriesGroup currentPatient;
@@ -135,30 +135,6 @@ public class PatientPane extends JPanel
   }
 
   /**
-   * Displays the specified study in the patient pane.
-   *
-   * @param study the study to be displayed in this patient pane; if null, all studies for the
-   *     current patient will be shown
-   */
-  public void showSpecificStudy(MediaSeriesGroup study) {
-    removeAll();
-    if (study == null) {
-      showAllStudies();
-    } else {
-      var paneManager = explorer.getPaneManager();
-      StudyPane studyPane = paneManager.getStudyPane(study);
-      if (studyPane != null) {
-        studyPane.showAllSeries(paneManager);
-        if (hasVisibleContent(studyPane)) {
-          addPane(studyPane);
-        }
-        studyPane.doLayout();
-      }
-    }
-    revalidate();
-  }
-
-  /**
    * Adds a study pane to this patient pane.
    *
    * @param studyPane the study pane to add
@@ -197,7 +173,7 @@ public class PatientPane extends JPanel
   }
 
   private boolean hasVisibleContent(StudyPane studyPane) {
-    return studyPane != null && studyPane.getComponentCount() > 0;
+    return studyPane != null && studyPane.hasSeriesPanes();
   }
 
   private void addStudyPane(StudyPane studyPane) {

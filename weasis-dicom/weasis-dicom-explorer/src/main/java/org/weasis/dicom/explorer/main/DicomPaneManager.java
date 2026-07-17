@@ -29,6 +29,11 @@ public class DicomPaneManager {
     this.explorer = explorer;
   }
 
+  /** Returns the shared session filter applied to the thumbnail grid. */
+  public SeriesFilter getSeriesFilter() {
+    return explorer.getSeriesFilter();
+  }
+
   // ========== Patient Pane Management ==========
 
   /**

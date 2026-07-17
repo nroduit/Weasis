@@ -10,19 +10,101 @@
 package org.weasis.core.ui.editor.image;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+import static org.weasis.core.ui.model.utils.ImageStatistics.IMAGE_ENTROPY;
+import static org.weasis.core.ui.model.utils.ImageStatistics.IMAGE_KURTOSIS;
+import static org.weasis.core.ui.model.utils.ImageStatistics.IMAGE_MAX;
+import static org.weasis.core.ui.model.utils.ImageStatistics.IMAGE_MEAN;
+import static org.weasis.core.ui.model.utils.ImageStatistics.IMAGE_MEDIAN;
+import static org.weasis.core.ui.model.utils.ImageStatistics.IMAGE_MIN;
+import static org.weasis.core.ui.model.utils.ImageStatistics.IMAGE_PIXELS;
+import static org.weasis.core.ui.model.utils.ImageStatistics.IMAGE_SKEW;
+import static org.weasis.core.ui.model.utils.ImageStatistics.IMAGE_STD;
 
+import java.util.HashMap;
+import java.util.Map;
 import org.junit.jupiter.api.Test;
+import org.weasis.core.api.image.util.MeasurableLayer;
+import org.weasis.core.ui.model.utils.bean.MeasureItem;
+import org.weasis.core.ui.model.utils.bean.Measurement;
 
 /**
- * Tests the {@link ImageRegionStatistics#medianBin(float[], double)} histogram-median kernel.
+ * Tests the {@link ImageRegionStatistics#medianBin(float[], double)} histogram-median kernel and
+ * the {@link ImageRegionStatistics#getStatistics} distribution measures computed from a histogram.
  *
- * <p>This is the function that produces the IMAGE_MEDIAN measurement displayed next to ROI
- * statistics; an off-by-one or biased interpolation here directly distorts numbers a clinician acts
- * on.
+ * <p>These produce the numbers displayed next to ROI statistics; an off-by-one or biased
+ * interpolation, or a degenerate histogram, directly distorts values a clinician acts on.
  */
 class ImageRegionStatisticsTest {
 
   private static final double EPS = 1.0e-9;
+
+  /**
+   * Runs {@link ImageRegionStatistics#getStatistics} over a synthetic histogram with an identity +
+   * {@code intercept} modality LUT, returning the emitted measures keyed by measurement.
+   */
+  private static Map<Measurement, Double> statsFor(
+      float[] bins, double pixMin, double pixMax, double intercept) {
+    MeasurableLayer layer = mock(MeasurableLayer.class);
+    when(layer.hasContent()).thenReturn(true);
+    when(layer.getPixelValueUnit()).thenReturn("HU"); // NON-NLS
+    when(layer.getSourceTagValue(any())).thenReturn(null);
+    when(layer.pixelToRealValue(any()))
+        .thenAnswer(inv -> ((Number) inv.getArgument(0)).doubleValue() + intercept);
+    HistogramData data =
+        new HistogramData(bins, null, 0, HistogramData.Model.GRAY, null, pixMin, pixMax, layer);
+    Map<Measurement, Double> map = new HashMap<>();
+    for (MeasureItem item : ImageRegionStatistics.getStatistics(data, null, true)) {
+      map.put(item.getMeasurement(), ((Number) item.getValue()).doubleValue());
+    }
+    return map;
+  }
+
+  @Test
+  void getStatistics_distributedHistogramProducesExpectedMeasures() {
+    // Symmetric distribution over stored levels 0..6 (binFactor 1), identity modality LUT.
+    // sum=16; mean=48/16=3; m2=40 -> var=40/15, std=sqrt(40/15); median (from medianBin)=3.5.
+    Map<Measurement, Double> s = statsFor(new float[] {1, 2, 3, 4, 3, 2, 1}, 0.0, 6.0, 0.0);
+    assertEquals(16.0, s.get(IMAGE_PIXELS), EPS);
+    assertEquals(0.0, s.get(IMAGE_MIN), EPS);
+    assertEquals(6.0, s.get(IMAGE_MAX), EPS);
+    assertEquals(3.0, s.get(IMAGE_MEAN), EPS);
+    assertEquals(3.5, s.get(IMAGE_MEDIAN), EPS);
+    assertEquals(Math.sqrt(40.0 / 15.0), s.get(IMAGE_STD), 1.0e-6);
+    assertEquals(0.0, s.get(IMAGE_SKEW), EPS); // symmetric -> zero skew
+    assertTrue(Double.isFinite(s.get(IMAGE_KURTOSIS)));
+    assertTrue(s.get(IMAGE_ENTROPY) > 0.0); // a spread-out histogram carries information
+  }
+
+  @Test
+  void getStatistics_appliesModalityInterceptToRealValues() {
+    // Same shape, CT intercept -1024: every real value shifts by -1024.
+    Map<Measurement, Double> s = statsFor(new float[] {1, 2, 3, 4, 3, 2, 1}, 0.0, 6.0, -1024.0);
+    assertEquals(-1024.0, s.get(IMAGE_MIN), EPS);
+    assertEquals(-1018.0, s.get(IMAGE_MAX), EPS);
+    assertEquals(-1021.0, s.get(IMAGE_MEAN), EPS);
+    assertEquals(-1020.5, s.get(IMAGE_MEDIAN), EPS);
+  }
+
+  @Test
+  void getStatistics_singleBinHistogramStaysFiniteAndUniform() {
+    // Regression guard: a 1-bin histogram (uniform ROI, or the OpenCV-5 read-only-bin-0 bug) must
+    // NOT divide by (bins.length-1)==0 and yield an infinite median. All mass sits at one level.
+    Map<Measurement, Double> s = statsFor(new float[] {20}, 5.0, 5.0, 0.0);
+    assertEquals(20.0, s.get(IMAGE_PIXELS), EPS);
+    assertEquals(5.0, s.get(IMAGE_MIN), EPS);
+    assertEquals(5.0, s.get(IMAGE_MAX), EPS);
+    assertEquals(5.0, s.get(IMAGE_MEAN), EPS);
+    assertEquals(5.0, s.get(IMAGE_MEDIAN), EPS); // finite, not Infinity
+    assertTrue(Double.isFinite(s.get(IMAGE_MEDIAN)));
+    assertEquals(0.0, s.get(IMAGE_STD), EPS);
+    assertEquals(0.0, s.get(IMAGE_SKEW), EPS);
+    assertEquals(0.0, s.get(IMAGE_KURTOSIS), EPS);
+    assertEquals(0.0, s.get(IMAGE_ENTROPY), EPS);
+  }
 
   @Test
   void medianBin_nullArrayReturnsZero() {
