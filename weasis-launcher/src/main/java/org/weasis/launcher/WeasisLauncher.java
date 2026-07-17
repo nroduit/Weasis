@@ -199,7 +199,16 @@ public class WeasisLauncher {
       executeCommands(commandManager, configData.getArguments());
 
       checkPluginUI(serverProp);
-      frameworkLoaded = true;
+
+      List<String> deferred;
+      synchronized (pendingCommands) {
+        frameworkLoaded = true;
+        deferred = List.copyOf(pendingCommands);
+        pendingCommands.clear();
+      }
+      if (!deferred.isEmpty()) {
+        executeCommands(commandManager, deferred);
+      }
 
       showMessage(mainFrame, serverProp);
 
@@ -265,6 +274,20 @@ Starting PF4J Plugins...
 
                      """;
     LOGGER.info("\u001B[32m{}\u001B[0m", asciiArt);
+  }
+
+  // Run the commands now if the framework is ready, otherwise queue them until it is loaded. Used
+  // by the macOS Apple "open file/URI" events, which can arrive while the plugin framework is still
+  // starting (e.g. cold start from a Finder file association), before the dicom:get command exists.
+  protected void executeCommandsWhenLoaded(
+      CommandManager commandManager, List<String> commandList) {
+    synchronized (pendingCommands) {
+      if (!frameworkLoaded) {
+        pendingCommands.addAll(commandList);
+        return;
+      }
+    }
+    executeCommands(commandManager, commandList);
   }
 
   /**
@@ -953,7 +976,7 @@ Starting PF4J Plugins...
     if (index < 0) {
       uri = "dicom:get -r \"" + uri + "\""; // NON-NLS
       CommandManager commandManager = new CommandManager(instance.configData.getPluginManager());
-      instance.executeCommands(commandManager, List.of(uri));
+      instance.executeCommandsWhenLoaded(commandManager, List.of(uri));
     } else {
       boolean sameInstance = System.currentTimeMillis() - time < 3000;
       String[] args = getArgsForURI(uri);
@@ -997,7 +1020,7 @@ Starting PF4J Plugins...
             .toList();
     LOGGER.info("Get open file event from OS. Files: {}", files);
     CommandManager commandManager = new CommandManager(instance.configData.getPluginManager());
-    instance.executeCommands(commandManager, files);
+    instance.executeCommandsWhenLoaded(commandManager, files);
   }
 
   protected void shutdownHook() {
