@@ -34,6 +34,7 @@ import org.weasis.core.api.vol.ChunkedArray;
 import org.weasis.core.api.vol.ChunkedMappedBuffer;
 import org.weasis.core.ui.model.graphic.imp.seg.SegContour;
 import org.weasis.core.ui.model.graphic.imp.seg.SegRegion;
+import org.weasis.core.util.MathUtil;
 import org.weasis.opencv.data.ImageCV;
 import org.weasis.opencv.data.PlanarImage;
 import org.weasis.opencv.seg.Region;
@@ -1386,10 +1387,10 @@ public final class SegmentationVolume {
           break;
         }
       }
-      if (a >= 1.f - 5) {
+      if (MathUtil.isEqualToZero(a, 1e-3f)) {
         continue; // every constituent invisible — leave transparent
       }
-      lut[id * 4 + 0] = (byte) Math.round(r / a * 255f);
+      lut[id * 4] = (byte) Math.round(r / a * 255f);
       lut[id * 4 + 1] = (byte) Math.round(g / a * 255f);
       lut[id * 4 + 2] = (byte) Math.round(b / a * 255f);
       lut[id * 4 + 3] = (byte) Math.round(a * 255f);

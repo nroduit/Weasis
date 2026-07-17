@@ -136,6 +136,11 @@ vec4 applyTextureColor(float pix){
     return texture(colorMap, vec2(pix, 0.0));
 }
 
+// Reference thickness (in normalized volume-texture units) over which a segment's slider opacity is
+// realized. The per-sample seg opacity is corrected to this reference so the rendered result no longer
+// depends on the ray sampling rate; smaller values make the slider ramp up faster.
+const float SEG_OPACITY_REF_DIST = 0.1;
+
 // *************************************************************************************************
 // Segmentation overlay — samples the segTexture (usampler3D, GL_R32UI) which now stores per-voxel
 // storage IDs (one ID per segment, plus extra IDs for overlap combinations) and looks the colour
@@ -220,7 +225,10 @@ vec4 rayCastingMip(Ray ray, float tmin, float tmax, vec2 uv) {
             if (isCrosshairCut(texCoord)) continue;
             vec4 segColor = sampleSegOverlay(texCoord);
             if (segColor.a > 0.0) {
-                float alpha = (1.0 - segAccum.a) * segColor.a;
+                // Correct the per-voxel opacity for the ray step so the result is independent of the
+                // sampling rate (depthSampleNumber) and the opacity slider stays perceptually usable.
+                float segA = 1.0 - pow(1.0 - segColor.a, 1.0 / (float(depthSampleNumber) * SEG_OPACITY_REF_DIST));
+                float alpha = (1.0 - segAccum.a) * segA;
                 segAccum.rgb += alpha * segColor.rgb;
                 segAccum.a += alpha;
                 if (segAccum.a >= 0.99) break;
@@ -229,7 +237,8 @@ vec4 rayCastingMip(Ray ray, float tmin, float tmax, vec2 uv) {
         if (segOnly) {
             pixel = segAccum;
         } else if (segAccum.a > 0.0) {
-            pixel.rgb = segAccum.rgb * segAccum.a + pixel.rgb * (1.0 - segAccum.a);
+            // segAccum.rgb is already premultiplied, so blend it over without re-scaling by its alpha
+            pixel.rgb = segAccum.rgb + pixel.rgb * (1.0 - segAccum.a);
             pixel.a = max(pixel.a, segAccum.a);
         }
     }
@@ -299,7 +308,10 @@ vec4 rayCastingComposite(Ray ray, float tmin, float tmax, vec2 uv) {
             if (isCrosshairCut(texCoord)) continue;
             vec4 segColor = sampleSegOverlay(texCoord);
             if (segColor.a > 0.0) {
-                float alpha = (1.0 - segAccum.a) * segColor.a;
+                // Correct the per-voxel opacity for the ray step so the result is independent of the
+                // sampling rate (depthSampleNumber) and the opacity slider stays perceptually usable.
+                float segA = 1.0 - pow(1.0 - segColor.a, 1.0 / (float(depthSampleNumber) * SEG_OPACITY_REF_DIST));
+                float alpha = (1.0 - segAccum.a) * segA;
                 segAccum.rgb += alpha * segColor.rgb;
                 segAccum.a += alpha;
                 if (segAccum.a >= 0.99) break;
@@ -308,8 +320,8 @@ vec4 rayCastingComposite(Ray ray, float tmin, float tmax, vec2 uv) {
         if (segOnly) {
             pxColor = segAccum;
         } else if (segAccum.a > 0.0) {
-            // Alpha-blend the segmentation overlay over the volume
-            pxColor.rgb = segAccum.rgb * segAccum.a + pxColor.rgb * (1.0 - segAccum.a);
+            // segAccum.rgb is already premultiplied, so blend it over the volume without re-scaling by its alpha
+            pxColor.rgb = segAccum.rgb + pxColor.rgb * (1.0 - segAccum.a);
             pxColor.a = max(pxColor.a, segAccum.a);
         }
     }
@@ -389,7 +401,10 @@ vec4 rayCastingIsoSurface(Ray ray, float tmin, float tmax, vec2 uv) {
             if (isCrosshairCut(texCoord)) continue;
             vec4 segColor = sampleSegOverlay(texCoord);
             if (segColor.a > 0.0) {
-                float alpha = (1.0 - segAccum.a) * segColor.a;
+                // Correct the per-voxel opacity for the ray step so the result is independent of the
+                // sampling rate (depthSampleNumber) and the opacity slider stays perceptually usable.
+                float segA = 1.0 - pow(1.0 - segColor.a, 1.0 / (float(depthSampleNumber) * SEG_OPACITY_REF_DIST));
+                float alpha = (1.0 - segAccum.a) * segA;
                 segAccum.rgb += alpha * segColor.rgb;
                 segAccum.a += alpha;
                 if (segAccum.a >= 0.99) break;
@@ -398,7 +413,8 @@ vec4 rayCastingIsoSurface(Ray ray, float tmin, float tmax, vec2 uv) {
         if (segOnly) {
             pxColor = segAccum;
         } else if (segAccum.a > 0.0) {
-            pxColor.rgb = segAccum.rgb * segAccum.a + pxColor.rgb * (1.0 - segAccum.a);
+            // segAccum.rgb is already premultiplied, so blend it over without re-scaling by its alpha
+            pxColor.rgb = segAccum.rgb + pxColor.rgb * (1.0 - segAccum.a);
             pxColor.a = max(pxColor.a, segAccum.a);
         }
     }
