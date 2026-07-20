@@ -1,5 +1,20 @@
 # Changelog
 
+## Unreleased (pf4j branch)
+
+**Breaking changes:**
+
+- The plugin runtime is now pf4j; OSGi/Felix is removed. Configuration keys were renamed (clean break — server-side deployments must ship a configuration in the new format):
+  - `felix.auto.install.N` / `felix.auto.start.N` → `weasis.plugins.N`
+  - `org.osgi.framework.startlevel.beginning` → `weasis.plugins.max.level`
+  - `felix.config.properties` → `weasis.config.properties`
+  - `felix.extended.config.properties` → `weasis.extended.config.properties`
+  - `org.osgi.framework.storage` → `weasis.plugin.cache.dir`
+  - `org.osgi.framework.storage.clean` → `weasis.plugin.cache.clean` (values `none` / `onFirstInit`)
+  - Removed dead keys: `framework.system.packages.extra*`, `felix.cache.rootdir`, `felix.startlevel.bundle`, `felix.log.level`, `-Dgosh.port`
+- The Felix runtime bundles (gogo shell/runtime/command, SCR, ConfigAdmin, Felix prefs, bundlerepository, osgi.promise) are no longer shipped or started.
+- Crash recovery now actually clears the plugin cache on the next start after an abnormal exit (the previous key mismatch made it a no-op).
+
 ## [v4.7.1](https://github.com/nroduit/Weasis/tree/v4.7.1) (2026-07-09)
 
 [Full Changelog](https://github.com/nroduit/Weasis/compare/v4.7.0...v4.7.1)

@@ -165,79 +165,14 @@
             <configuration>
               <artifactItems>
                 <!-- ===================================== -->
-                <!-- OSGI Framework and Launcher -->
+                <!-- Launcher -->
                 <!-- ===================================== -->
-                <artifactItem>
-                  <groupId>org.apache.felix</groupId>
-                  <artifactId>org.apache.felix.framework</artifactId>
-                  <version>${felix.framework.version}</version>
-                  <outputDirectory>${tmp.dir}</outputDirectory>
-                  <destFileName>felix.jar</destFileName>
-                </artifactItem>
                 <artifactItem>
                   <groupId>org.weasis.launcher</groupId>
                   <artifactId>weasis-launcher</artifactId>
                   <version>${app.version}</version>
                   <outputDirectory>${tmp.dir}</outputDirectory>
                   <destFileName>weasis-launcher.jar</destFileName>
-                </artifactItem>
-
-                <!-- ===================================== -->
-                <!-- Felix bundles -->
-                <!-- ===================================== -->
-                <artifactItem>
-                  <groupId>org.apache.felix</groupId>
-                  <artifactId>org.apache.felix.gogo.runtime</artifactId>
-                  <version>${felix.gogo.version}</version>
-                  <outputDirectory>${tmp.bundle.dir}</outputDirectory>
-                </artifactItem>
-                <artifactItem>
-                  <groupId>org.apache.felix</groupId>
-                  <artifactId>org.apache.felix.gogo.shell</artifactId>
-                  <version>${felix.gogo.shell.version}</version>
-                  <outputDirectory>${tmp.bundle.dir}</outputDirectory>
-                </artifactItem>
-                <artifactItem>
-                  <groupId>org.apache.felix</groupId>
-                  <artifactId>org.apache.felix.gogo.command</artifactId>
-                  <version>${felix.gogo.command.version}</version>
-                  <outputDirectory>${tmp.bundle.dir}</outputDirectory>
-                </artifactItem>
-                <artifactItem>
-                  <groupId>org.osgi</groupId>
-                  <artifactId>osgi.promise</artifactId>
-                  <version>${osgi.promise.version}</version>
-                  <outputDirectory>${tmp.bundle.dir}</outputDirectory>
-                </artifactItem>
-                <artifactItem>
-                  <groupId>org.apache.felix</groupId>
-                  <artifactId>org.apache.felix.scr</artifactId>
-                  <version>${felix.scr.version}</version>
-                  <outputDirectory>${tmp.bundle.dir}</outputDirectory>
-                </artifactItem>
-                <artifactItem>
-                  <groupId>org.apache.felix</groupId>
-                  <artifactId>org.apache.felix.prefs</artifactId>
-                  <version>${felix.prefs.version}</version>
-                  <outputDirectory>${tmp.bundle.dir}</outputDirectory>
-                </artifactItem>
-                <artifactItem>
-                  <groupId>org.apache.felix</groupId>
-                  <artifactId>org.apache.felix.bundlerepository</artifactId>
-                  <version>${felix.bundlerepository.version}</version>
-                  <outputDirectory>${tmp.bundle.dir}</outputDirectory>
-                </artifactItem>
-                <artifactItem>
-                  <groupId>org.apache.felix</groupId>
-                  <artifactId>org.apache.felix.configadmin</artifactId>
-                  <version>${felix.configadmin.version}</version>
-                  <outputDirectory>${tmp.bundle.dir}</outputDirectory>
-                </artifactItem>
-                <artifactItem>
-                  <groupId>org.osgi</groupId>
-                  <artifactId>org.osgi.service.component</artifactId>
-                  <version>${osgi.component.version}</version>
-                  <outputDirectory>${tmp.bundle.dir}</outputDirectory>
                 </artifactItem>
 
                 <!-- ===================================== -->

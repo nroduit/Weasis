@@ -1,6 +1,6 @@
 # Security Policy
 
-Weasis is a desktop DICOM viewer (an Apache Felix OSGi / Swing application) used
+Weasis is a desktop DICOM viewer (a pf4j / Swing application) used
 in clinical and research settings for diagnostic imaging. Because it opens and
 processes medical-imaging data that may contain sensitive health information
 (PHI/PII) — from local files, DICOMDIRs, and remote DICOMWeb/DICOM network
@@ -60,7 +60,7 @@ any public disclosure.
 
 This policy covers the Weasis application and its source code in this repository.
 Vulnerabilities in third-party dependencies (dcm4che / weasis-dicom-tools,
-OpenCV, Apache Felix, FlatLaf, JOGL, etc.) should be reported to the respective
+OpenCV, pf4j, FlatLaf, JOGL, etc.) should be reported to the respective
 upstream projects; if a dependency issue affects Weasis, feel free to let us
 know so we can update.
 

@@ -44,13 +44,13 @@ mvn archetype:generate -DarchetypeCatalog=local   # generate weasis-plugin-{base
 
 ## Architecture
 
-Weasis is an **OSGi application** (Apache Felix 7) packaged as a desktop DICOM viewer. Understanding three things is enough to navigate the codebase:
+Weasis is a **pf4j plugin application** packaged as a desktop DICOM viewer. Understanding three things is enough to navigate the codebase:
 
-### 1. Launcher vs. bundles
+### 1. Launcher vs. plugins
 
-- `weasis-launcher/` is a **plain JAR**, not an OSGi bundle (see its POM comment). `org.weasis.launcher.AppLauncher` (extends `WeasisLauncher`) bootstraps the Felix framework, sets up logging via Logback to `~/.weasis/log/`, then `AutoProcessor` installs and starts the bundles listed in `weasis-launcher/conf/config.properties`. `EmptyAccessibilityProvider` is wired in via `-Djavax.accessibility.assistive_technologies=...` to suppress AT discovery on launch.
-- Everything under `weasis-core`, `weasis-base/*`, `weasis-dicom/*`, `weasis-acquire/*`, `weasis-imageio/*`, `weasis-opencv/*` is an **OSGi bundle**. Each bundle has an `Activator` in a package ending in `.internal` and is built via `biz.aQute.bnd:bnd-maven-plugin`.
-- The bnd convention used everywhere: `Export-Package: !<groupPkg>.internal, <groupPkg>.*` — anything in `.internal` is bundle-private. Don't add cross-bundle imports of `internal` packages.
+- `weasis-launcher/` is a **plain JAR**, not a plugin. `org.weasis.launcher.AppLauncher` (extends `WeasisLauncher`) sets up boot logging via Logback, builds `ConfigData` from `conf/base.json` (+ optional profile JSON via `weasis.extended.config.properties`), then `AutoProcessor` downloads the jars listed in the `weasis.plugins.N` entries into the per-user cache and `WeasisPluginManager` (pf4j `DefaultPluginManager`) loads and starts them. Jars without a `Plugin-Id` manifest header are **common libraries** (`common-lib/`) loaded into the system classloader; jars with one are pf4j plugins with their own classloader. `EmptyAccessibilityProvider` is wired in via `-Djavax.accessibility.assistive_technologies=...` to suppress AT discovery on launch.
+- Everything under `weasis-core`, `weasis-base/*`, `weasis-dicom/*`, `weasis-acquire/*`, `weasis-imageio/*`, `weasis-opencv/*` is a **pf4j plugin** (except `weasis-core`, which is a common library — its `Plugin-ID` is deliberately blanked). Each plugin has an `Activator extends WeasisPlugin` in a package ending in `.internal`; pf4j manifest headers (`Plugin-Id`, `Plugin-Class`, …) are injected by `maven-jar-plugin` config in `weasis-parent/pom.xml`.
+- Keep `.internal` packages plugin-private by convention — don't add cross-plugin imports of `internal` packages.
 
 ### 2. Module layering
 

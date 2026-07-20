@@ -31,7 +31,7 @@ public class Activator extends WeasisPlugin {
   @Override
   public void start() {
     String cache =
-        GuiUtils.getUICore().getConfigData().getFelixProps().get("weasis.portable.dicom.cache");
+        GuiUtils.getUICore().getConfigData().getSystemProps().get("weasis.portable.dicom.cache");
     DicomManager.getInstance()
         .setPortableDirCache(
             !((cache != null) && cache.equalsIgnoreCase(Boolean.FALSE.toString())));

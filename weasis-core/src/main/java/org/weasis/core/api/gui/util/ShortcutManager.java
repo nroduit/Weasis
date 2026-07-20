@@ -1128,8 +1128,8 @@ public final class ShortcutManager {
   // -- Persistence --
 
   /**
-   * Loads user-customized shortcuts from OSGi preferences. Only overrides entries that exist in the
-   * preferences node; missing entries keep their defaults.
+   * Loads user-customized shortcuts from local preferences. Only overrides entries that exist in
+   * the preferences node; missing entries keep their defaults.
    */
   public void loadPreferences(Preferences prefs) {
     if (prefs == null) {
@@ -1149,8 +1149,8 @@ public final class ShortcutManager {
   }
 
   /**
-   * Saves user-customized shortcuts to OSGi preferences. Only entries that differ from defaults are
-   * persisted; default entries are removed from the preferences node.
+   * Saves user-customized shortcuts to local preferences. Only entries that differ from defaults
+   * are persisted; default entries are removed from the preferences node.
    */
   public void savePreferences(Preferences prefs) {
     if (prefs == null) {

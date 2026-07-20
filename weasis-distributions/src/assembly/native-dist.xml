@@ -32,7 +32,7 @@
       <outputDirectory>bin-dist/weasis/resources</outputDirectory>
     </fileSet>
     <fileSet>
-      <!-- copy OSGI framework config -->
+      <!-- copy application config -->
       <directory>etc/config</directory>
       <outputDirectory>bin-dist/weasis/conf</outputDirectory>
       <includes>

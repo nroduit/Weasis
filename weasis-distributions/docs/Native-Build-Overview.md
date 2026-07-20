@@ -108,7 +108,7 @@ objdump -T <file>.so | grep -oE 'GLIBC_[0-9]+\.[0-9]+' | sort -V | tail -1
 
 Each build path declares the runtime options as `customOptions` (per-OS, e.g. the splash screen and
 Linux-only `-Dsun.awt.disablegrab=true`) plus `commonOptions` (identical everywhere):
-`-Dgosh.port=17179`, `--enable-native-access=ALL-UNNAMED`, `-XX:MaxRAMPercentage=25`,
+`--enable-native-access=ALL-UNNAMED`, `-XX:MaxRAMPercentage=25`,
 `-XX:+UseStringDeduplication`,
 `-Djavax.accessibility.assistive_technologies=org.weasis.launcher.EmptyAccessibilityProvider`,
 `-Djavax.accessibility.screen_magnifier_present=false`.

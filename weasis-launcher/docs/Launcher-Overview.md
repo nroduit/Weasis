@@ -26,11 +26,13 @@ the application before any plugin is started:
   must be decided *before* plugins exist: configuration loading, logging setup,
   single-instance control, and the resolution of the on-disk directories described below.
 
-> **Note on legacy naming.** Several configuration keys retain their historical OSGi/Felix
-> names for backward compatibility — for example `org.osgi.framework.storage` (now the PF4J
-> plugin cache location) and the `felix.*` entries in `base.json`. These names are kept so
-> existing deployments and configuration files continue to work; the underlying mechanism is
-> PF4J.
+> **Configuration keys.** Since 5.0 the configuration uses `weasis.*` names only — the
+> historical OSGi/Felix names (`felix.auto.start.N`, `felix.config.properties`,
+> `org.osgi.framework.storage`, …) are gone. The plugin entries are `weasis.plugins.N`
+> (numeric suffix, filtered by `weasis.plugins.max.level`), the configuration file URL is
+> `weasis.config.properties` / `weasis.extended.config.properties`, and the plugin cache is
+> `weasis.plugin.cache.dir` / `weasis.plugin.cache.clean`. Server-side deployments must ship
+> a configuration in this format.
 
 ## Startup Sequence
 

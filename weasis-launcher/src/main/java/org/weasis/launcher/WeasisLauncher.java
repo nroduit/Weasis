@@ -108,7 +108,7 @@ public class WeasisLauncher {
   }
 
   public final void launch(Type type) throws Exception {
-    Map<String, String> serverProp = configData.getFelixProps();
+    Map<String, String> serverProp = configData.getSystemProps();
     String cacheDir = serverProp.get(P_PLUGIN_DIR_PROP) + "-" + configData.getSourceID();
     // If there is a passed in the plugin cache directory, then
     // that overwrites anything in the config file.
@@ -436,7 +436,7 @@ Starting PF4J Plugins...
     }
   }
 
-  /** This following part has been copied from the Main class of the Felix project */
+  /** Derived from the Apache Felix project (Main.java), kept for attribution. */
   public static void readProperties(URI propURI, Properties props) {
     try (InputStream is = FileUtil.getAdaptedConnection(propURI.toURL(), false).getInputStream()) {
       props.load(is);
@@ -539,8 +539,7 @@ Starting PF4J Plugins...
     getGeneralProperty(
         "locale.format.code", "system", serverProp, currentProps, true, false); // NON-NLS
 
-    // Set value back to the bundle context properties, sling logger uses
-    // bundleContext.getProperty(prop)
+    // Set value back to the system properties used by the logging configuration
     getGeneralProperty(
         "org.apache.sling.commons.log.level", "INFO", serverProp, currentProps, true, true);
     // Empty string make the file log writer disable
@@ -808,7 +807,8 @@ Starting PF4J Plugins...
     // Clean cache if Weasis has crashed during the previous launch
     boolean cleanCache = Boolean.parseBoolean(serverProp.get("weasis.clean.previous.version"));
     if (Boolean.TRUE.toString().equals(cleanCacheAfterCrash)) {
-      serverProp.put("weasis.clean.plugin.cache", Boolean.TRUE.toString());
+      serverProp.put(
+          AutoProcessor.PLUGIN_STORAGE_CLEAN, AutoProcessor.PLUGIN_STORAGE_CLEAN_ONFIRSTINIT);
       localSourceProp.remove(ConfigData.P_WEASIS_CLEAN_CACHE);
       update = true;
       LOGGER.info("Clean plugin cache because Weasis has crashed during the previous launch");
@@ -816,7 +816,8 @@ Starting PF4J Plugins...
     // Clean cache when version has changed
     else if (cleanCache && versionNew != null && !versionNew.equals(versionOld)) {
       LOGGER.info("Clean previous Weasis version: {}", versionOld);
-      serverProp.put("weasis.clean.plugin.cache", Boolean.TRUE.toString());
+      serverProp.put(
+          AutoProcessor.PLUGIN_STORAGE_CLEAN, AutoProcessor.PLUGIN_STORAGE_CLEAN_ONFIRSTINIT);
       LOGGER.info("Clean plugin cache because the version has changed");
     }
 

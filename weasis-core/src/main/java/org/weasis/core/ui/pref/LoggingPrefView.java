@@ -171,7 +171,7 @@ public class LoggingPrefView extends AbstractItemDialogPage {
 
   @Override
   public void resetToDefaultValues() {
-    // Reset properties used by OSGI service (Sling Logger)
+    // Reset the logging configuration properties
     WProperties preferences = GuiUtils.getUICore().getSystemPreferences();
     preferences.resetServiceProperty(AuditLog.LOG_STACKTRACE_LIMIT, "3");
     preferences.resetServiceProperty(AuditLog.LOG_LEVEL, "INFO");

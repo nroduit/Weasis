@@ -111,7 +111,7 @@ public final class UICore {
     private static final UICore INSTANCE = new UICore();
   }
 
-  /** Do not instantiate UICore, get OSGI singleton service from GuiUtils.getUICore() */
+  /** Do not instantiate UICore, get the singleton service from GuiUtils.getUICore() */
   private UICore() {
     this.dockingControl = new CControl();
     if (GraphicsEnvironment.isHeadless()) {
@@ -123,8 +123,8 @@ public final class UICore {
     this.toolbarContainer = new ToolBarContainer();
 
     this.configData = retrieveconfigData();
-    this.initialSystemPreferences = new WProperties(configData.getFelixProps());
-    this.systemPreferences = new WProperties(configData.getFelixProps());
+    this.initialSystemPreferences = new WProperties(configData.getSystemProps());
+    this.systemPreferences = new WProperties(configData.getSystemProps());
     this.pluginPersistenceMap = new HashMap<>();
     this.localPersistence = new WProperties();
     this.viewerPlugins = Collections.synchronizedList(new ArrayList<>());
@@ -273,7 +273,7 @@ public final class UICore {
   private void readSystemPreferences() {
     systemPreferences.clear();
     if (configData != null) {
-      Map<String, String> props = configData.getFelixProps();
+      Map<String, String> props = configData.getSystemProps();
       String pkeys = props.get("wp.list");
       if (StringUtil.hasText(pkeys)) {
         for (String key : pkeys.split(",")) {

@@ -28,8 +28,8 @@ import org.weasis.dicom.codec.TagD;
  * patient pseudo-UID across the Weasis model.
  *
  * <p>{@code buildPatientPseudoUID()} is intentionally NOT tested here because it depends on {@code
- * GuiUtils.getUICore().getSystemPreferences()}, a singleton initialized only from the OSGi runtime,
- * and {@code UICore} is a final class that Mockito cannot subclass-mock in this project's
+ * GuiUtils.getUICore().getSystemPreferences()}, a singleton initialized only at application
+ * startup, and {@code UICore} is a final class that Mockito cannot subclass-mock in this project's
  * configuration. The IHE-default branch is a single concatenation of three fields — the per-field
  * setters and constructors below pin the identity components (null-handling, upper-casing, trim),
  * so the concatenation contract is verified indirectly. See {@code dicom-decoding-traceability.md}

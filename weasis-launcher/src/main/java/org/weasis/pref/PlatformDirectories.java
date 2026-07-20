@@ -47,7 +47,7 @@ public final class PlatformDirectories {
     CONFIG,
     /** User data (per-bundle data, downloaded resources). XDG_DATA_HOME. */
     DATA,
-    /** Non-essential, regenerable cached data (OSGi bundle cache). XDG_CACHE_HOME. */
+    /** Non-essential, regenerable cached data (plugin cache). XDG_CACHE_HOME. */
     CACHE,
     /** State data such as logs. XDG_STATE_HOME. */
     STATE

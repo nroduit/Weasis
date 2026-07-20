@@ -17,7 +17,7 @@ import org.weasis.dicom.codec.DicomSpecialElementFactory;
 import org.weasis.plugin.SingletonExtension;
 
 /**
- * OSGi factory turning RTSTRUCT / RTPLAN / RTDOSE DICOM objects into typed {@link
+ * Media factory turning RTSTRUCT / RTPLAN / RTDOSE DICOM objects into typed {@link
  * DicomSpecialElement} instances; any other modality falls back to a generic {@link
  * RtSpecialElement}.
  */

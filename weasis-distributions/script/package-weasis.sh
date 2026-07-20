@@ -265,7 +265,7 @@ else
   "--java-options" "-Dsun.awt.disablegrab=true" )
   declare -a signArgs=()
 fi
-declare -a commonOptions=("--java-options" "-Dgosh.port=17179" \
+declare -a commonOptions=(\
 "--java-options" "--enable-native-access=ALL-UNNAMED" \
 "--java-options" "-XX:MaxRAMPercentage=25" \
 "--java-options" "-XX:+UseStringDeduplication" \

@@ -45,7 +45,7 @@ public class ConfigData {
   public static final String P_WEASIS_VERSION = "weasis.version";
   public static final String P_WEASIS_PROFILE = "weasis.profile";
   public static final String P_WEASIS_NAME = "weasis.name";
-  public static final String P_PLUGIN_DIR_PROP = "org.osgi.framework.storage";
+  public static final String P_PLUGIN_DIR_PROP = "weasis.plugin.cache.dir";
   public static final String P_WEASIS_PATH = "weasis.path";
   public static final String P_WEASIS_CONFIG_DIR = "weasis.config.dir";
   public static final String P_WEASIS_DATA_DIR = "weasis.data.dir";
@@ -78,17 +78,14 @@ public class ConfigData {
   public static final String F_LIB_FOLDER = "common-lib";
   public static final String F_TRANSLATION_FOLDER = "i18n";
 
-  /**
-   * The property name used to specify a URL to the configuration property file to be used for the
-   * created the framework instance.
-   */
-  public static final String CONFIG_PROPERTIES_PROP = "felix.config.properties";
+  /** The property name used to specify a URL to the application configuration file. */
+  public static final String CONFIG_PROPERTIES_PROP = "weasis.config.properties";
 
   /** The default name used for the configuration file. */
   public static final String CONFIG_PROPERTIES_FILE_VALUE = "base.json";
 
   /** The property name used to specify a URL to the extended configuration file. */
-  public static final String EXTENDED_PROPERTIES_PROP = "felix.extended.config.properties";
+  public static final String EXTENDED_PROPERTIES_PROP = "weasis.extended.config.properties";
 
   // Params, see
   // https://nroduit.github.io/en/getting-started/weasis-protocol/#modify-the-launch-parameters
@@ -102,7 +99,7 @@ public class ConfigData {
   private final Properties properties = new Properties();
 
   private final StringBuilder configOutput = new StringBuilder();
-  private final Map<String, String> felixProps = new HashMap<>();
+  private final Map<String, String> systemProps = new HashMap<>();
   private final AppPreferences preferences = new AppPreferences();
   private final WeasisPluginManager pluginManager = new WeasisPluginManager();
 
@@ -148,7 +145,7 @@ public class ConfigData {
     // Extract config and weasis properties from arguments, but has no effect on those already set
     applyConfigFromArguments();
 
-    // Load all the felix properties
+    // Load the application configuration (base.json + profile)
     loadConfigProperties();
 
     // Set "application config" properties, but has no effect on those already set
@@ -187,14 +184,14 @@ public class ConfigData {
     addProperty(key, System.getProperty(key));
   }
 
-  public Map<String, String> getFelixProps() {
-    return felixProps;
+  public Map<String, String> getSystemProps() {
+    return systemProps;
   }
 
   private void initWeasisProperties(AppPreferences preferences) {
     // Set system property for dynamically loading only native libraries corresponding of the
     // current platform
-    setOsgiNativeLibSpecification();
+    setNativeLibSpecification();
 
     String profile = preferences.getValue(P_WEASIS_PROFILE, "default");
     addProperty(P_WEASIS_PROFILE, profile);
@@ -234,7 +231,7 @@ public class ConfigData {
 
     filterConfigProperties(preferences);
     if (LOGGER.isTraceEnabled()) {
-      felixProps.forEach((k, v) -> LOGGER.trace("Felix config: {} = {}", k, v));
+      systemProps.forEach((k, v) -> LOGGER.trace("Config: {} = {}", k, v));
     }
 
     // weasis.path is kept as a backward-compatible alias of the data directory.
@@ -298,7 +295,7 @@ public class ConfigData {
     // Perform variable substitution for system properties and convert to dictionary.
     for (Preference p : preferences.values()) {
       String name = p.getCode();
-      felixProps.put(name, preferences.substVars(p.getValue(), name, null));
+      systemProps.put(name, preferences.substVars(p.getValue(), name, null));
     }
   }
 
@@ -918,8 +915,8 @@ public class ConfigData {
     return properties.getProperty(key, defaultValue);
   }
 
-  public static void setOsgiNativeLibSpecification() {
-    // Follows the OSGI specification to use Bundle-NativeCode in the bundle fragment:
+  public static void setNativeLibSpecification() {
+    // The value format intentionally follows the OSGi os-names specification:
     // See https://docs.osgi.org/reference/osnames.html
     String osName = System.getProperty(P_OS_NAME);
     String osArch = System.getProperty("os.arch");

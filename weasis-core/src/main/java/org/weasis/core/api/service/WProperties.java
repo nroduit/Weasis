@@ -76,7 +76,7 @@ public class WProperties extends Properties {
     }
   }
 
-  // Special property used by a OSGI service through BundleContext
+  // Special property propagated through the launcher system properties
   public void resetServiceProperty(String key, String defaultValue) {
     if (isKeyValid(key)) {
       String value = System.getProperty(key, null);

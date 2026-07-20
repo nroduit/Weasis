@@ -44,7 +44,7 @@ Keeping them distinct is the first step to reasoning about a memory problem.
 
 | Arena | What lives there | Reclaimed by | Bounded by |
 |---|---|---|---|
-| **JVM heap** | Swing UI, OSGi/Felix, DICOM metadata, Java pixel copies | Garbage collector | `-Xmx` / `-XX:MaxRAMPercentage` |
+| **JVM heap** | Swing UI, pf4j plugin framework, DICOM metadata, Java pixel copies | Garbage collector | `-Xmx` / `-XX:MaxRAMPercentage` |
 | **OpenCV native heap** | Decoded image pixel buffers (`org.opencv.core.Mat` / `ImageCV`), off-heap C++ `malloc` | Explicit `release()`, driven by the image caches | The native-memory budget |
 | **GPU and native staging** | 3D volume textures in VRAM; off-heap FFM `Arena` slice staging | GL driver; explicit `Arena` close | VRAM; the volume staging chunk size |
 
@@ -268,11 +268,6 @@ Shipped `java-options`:
 `SystemMemory` uses `com.sun.management.OperatingSystemMXBean`. Without it the
 bundled runtime lacks the class and `SystemMemory` fails at startup.
 
-**OSGi note:** `com.sun.management` is exported to bundles via
-`framework.system.packages.extra.basic` in **both** `base.json` files —
-`weasis-launcher/conf/base.json` (development) and
-`weasis-distributions/etc/config/base.json` (shipped app).
-
 ## Reference: files and symbols
 
 | File | Role |
@@ -288,8 +283,8 @@ bundled runtime lacks the class and `SystemMemory` fails at startup.
 | `weasis-core/.../ui/editor/image/DefaultView2d.java` | `updatePinnedImage()` — one pin per viewport |
 | `weasis-dicom-3d/.../viewer3d/vr/VolumeBuilder.java` | Chunked 3D volume upload; registers the staging consumer |
 | `weasis-dicom-3d/.../viewer3d/vr/TextureSliceDataBuffer.java` | Off-heap FFM `Arena` staging buffer for volume slices |
-| `weasis-launcher/conf/base.json` | OSGi system packages (development) |
-| `weasis-distributions/etc/config/base.json` | OSGi system packages (shipped app) |
+| `weasis-launcher/conf/base.json` | Application configuration (development) |
+| `weasis-distributions/etc/config/base.json` | Application configuration (shipped app) |
 | `weasis-distributions/script/package-weasis.sh` | jpackage options and jlink modules |
 | `.github/workflows/build-installer.yml` | CI jpackage options and jlink modules |
 

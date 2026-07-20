@@ -64,7 +64,7 @@ public final class AppProperties {
   /** The base directory for state data such as logs. */
   public static final Path WEASIS_LOG_PATH = initWeasisDir("weasis.log.dir"); // NON-NLS
 
-  /** The base directory for the regenerable cache (OSGi bundle cache). */
+  /** The base directory for the regenerable cache (plugin cache). */
   public static final Path WEASIS_CACHE_PATH = initWeasisDir("weasis.cache.dir"); // NON-NLS
 
   public static final String CACHE_NAME = "cache";

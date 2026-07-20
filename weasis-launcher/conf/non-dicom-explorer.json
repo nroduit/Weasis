@@ -1,26 +1,26 @@
 {
   "weasisPreferences": [
     {
-      "code": "org.osgi.framework.startlevel.beginning",
+      "code": "weasis.plugins.max.level",
       "value": "100"
     },
     {
-      "code": "felix.auto.start.30",
+      "code": "weasis.plugins.30",
       "value": "",
       "description": "REMOVE - DICOM Codec"
     },
     {
-      "code": "felix.auto.start.40",
+      "code": "weasis.plugins.40",
       "value": "file:${maven.localRepository}/org/weasis/base/weasis-base-explorer/${app.version}/weasis-base-explorer-${app.version}.jar",
       "description": "Replace DICOM explorer by a standard image explorer"
     },
     {
-      "code": "felix.auto.start.70",
+      "code": "weasis.plugins.70",
       "value": "",
       "description": "REMOVE - DICOM Viewer 2D and SR viewer"
     },
     {
-      "code": "felix.auto.start.75",
+      "code": "weasis.plugins.75",
       "value": "",
       "description": "REMOVE - DICOM AU and ECG"
     },

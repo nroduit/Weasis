@@ -29,18 +29,9 @@
     <i18n.version>4.0.0-SNAPSHOT</i18n.version>
     <weasis.releasenotes>https://github.com/nroduit/Weasis/blob/master/CHANGELOG.md#v471-2026-07-09</weasis.releasenotes>
 
-    <felix.framework.version>7.0.5</felix.framework.version>
     <flatlaf.version>3.7.2</flatlaf.version>
     <miglayout.version>11.4.3</miglayout.version>
     <xz.version>1.12</xz.version>
-
-    <felix.gogo.version>1.1.6</felix.gogo.version>
-    <felix.gogo.shell.version>1.1.4</felix.gogo.shell.version>
-    <felix.gogo.command.version>1.1.2</felix.gogo.command.version>
-    <felix.bundlerepository.version>2.0.10</felix.bundlerepository.version>
-    <felix.configadmin.version>1.9.26</felix.configadmin.version>
-    <felix.prefs.version>1.1.0</felix.prefs.version>
-    <felix.scr.version>2.2.18</felix.scr.version>
 
     <pf4j.version>3.15.0</pf4j.version>
     <slf4j.version>2.0.18</slf4j.version>

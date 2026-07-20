@@ -1,35 +1,35 @@
 {
   "weasisPreferences": [
     {
-      "code": "org.osgi.framework.startlevel.beginning",
+      "code": "weasis.plugins.max.level",
       "value": "110"
     },
     {
-      "code": "felix.auto.start.45",
+      "code": "weasis.plugins.45",
       "value": "${dollar}{weasis.codebase.url}/bundle/weasis-base-explorer-${app.version}.jar${xz.ext} ${dollar}{weasis.codebase.url}/bundle/weasis-acquire-explorer-${app.version}.jar${xz.ext}",
       "description": "Base and Thumbnail explorer",
       "type": "A",
-      "category": "FELIX_INSTALL"
+      "category": "PLUGIN_INSTALL"
     },
     {
-      "code": "felix.auto.start.70",
+      "code": "weasis.plugins.70",
       "value": "",
       "description": "REMOVE - DICOM Viewer 2D and SR viewer"
     },
     {
-      "code": "felix.auto.start.75",
+      "code": "weasis.plugins.75",
       "value": "",
       "description": "REMOVE - DICOM AU and ECG"
     },
     {
-      "code": "felix.auto.start.85",
+      "code": "weasis.plugins.85",
       "value": "${dollar}{weasis.codebase.url}/bundle/weasis-acquire-editor-${app.version}.jar${xz.ext}",
       "description": "Image editor",
       "type": "A",
-      "category": "FELIX_INSTALL"
+      "category": "PLUGIN_INSTALL"
     },
     {
-      "code": "felix.auto.start.110",
+      "code": "weasis.plugins.110",
       "value": "${dollar}{weasis.codebase.url}/bundle/weasis-dicom-send-${app.version}.jar${xz.ext}",
       "description": "DICOM send only, REMOVE - Q/R and ISO writer"
     },

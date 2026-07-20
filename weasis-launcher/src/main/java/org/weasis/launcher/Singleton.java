@@ -235,7 +235,7 @@ public class Singleton {
         }
         TimeUnit.MILLISECONDS.sleep(100);
         loop++;
-        if (loop > 300) { // Let 30s max to set up Felix framework
+        if (loop > 300) { // Let 30s max to set up the plugin framework
           LOGGER.error("The pid of the singleton still exists. Try to start the new instance.");
           runLoop = false;
         }

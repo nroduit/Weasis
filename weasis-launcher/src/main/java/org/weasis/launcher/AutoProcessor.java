@@ -39,11 +39,11 @@ import org.weasis.pref.ConfigData;
 public class AutoProcessor {
   private static final Logger LOGGER = LoggerFactory.getLogger(AutoProcessor.class);
 
-  /** The property name prefix for the launcher's auto-install property. */
-  public static final String AUTO_INSTALL_PROP = "felix.auto.install";
+  /** The property name prefix for the plugin location entries (e.g. {@code weasis.plugins.60}). */
+  public static final String PLUGINS_PROP = "weasis.plugins.";
 
-  /** The property name prefix for the launcher's auto-start property. */
-  public static final String AUTO_START_PROP = "felix.auto.start";
+  /** The property limiting which numeric plugin entries are processed for the current profile. */
+  public static final String PLUGINS_MAX_LEVEL_PROP = "weasis.plugins.max.level";
 
   public static final String XZ_COMPRESSION = ".xz";
   public static final String JAR_EXTENSION = ".jar";
@@ -70,10 +70,7 @@ public class AutoProcessor {
     processAutoProperties(map, modulesI18n, pluginManager, weasisLoader);
   }
 
-  /**
-   * Processes the auto-installation and auto-start properties and downloads plugins to the plugin
-   * directory.
-   */
+  /** Processes the {@code weasis.plugins.N} entries and downloads plugins to the cache. */
   private static void processAutoProperties(
       Map<String, String> configMap,
       Properties modulesi18n,
@@ -94,43 +91,22 @@ public class AutoProcessor {
       FileUtil.delete(cacheDir);
     }
 
-    int maxStartLevel =
-        Integer.parseInt(configMap.getOrDefault("org.osgi.framework.startlevel.beginning", "300"));
+    int maxLevel = Integer.parseInt(configMap.getOrDefault(PLUGINS_MAX_LEVEL_PROP, "300"));
 
     // Collect all plugin locations from configuration
-    Map<String, PluginElement> pluginList = new HashMap<>();
+    Map<String, String> pluginList = new HashMap<>();
     Set<String> configKeys = configMap.keySet();
 
     for (String key : configKeys) {
-      String lowerKey = key.toLowerCase();
-
-      // Process auto-install and auto-start properties
-      if (!lowerKey.startsWith(AUTO_INSTALL_PROP) && !lowerKey.startsWith(AUTO_START_PROP)) {
+      int level = getPluginLevel(key);
+      if (level < 0 || level > maxLevel) {
         continue;
       }
 
-      // Parse priority level (if specified)
-      int priority = 0;
-      try {
-        priority = Integer.parseInt(lowerKey.substring(lowerKey.lastIndexOf('.') + 1));
-      } catch (NumberFormatException ex) {
-        LOGGER.debug("No priority level specified for {}", key);
-      }
-
-      if (priority < 0 || priority > maxStartLevel) {
-        continue;
-      }
-
-      boolean autoStart = lowerKey.startsWith(AUTO_START_PROP);
       String value = configMap.get(key);
-
       StringTokenizer st = new StringTokenizer(value, "\" ", true);
       for (String location = nextLocation(st); location != null; location = nextLocation(st)) {
-        String pluginName = getPluginNameFromLocation(location);
-        if (!"System Bundle".equals(pluginName)) { // NON-NLS
-          PluginElement element = new PluginElement(priority, location, autoStart);
-          pluginList.put(pluginName, element);
-        }
+        pluginList.put(getPluginNameFromLocation(location), location);
       }
     }
 
@@ -150,15 +126,15 @@ public class AutoProcessor {
     int pluginIter = 0;
 
     // Download and prepare plugins
-    for (Entry<String, PluginElement> entry : pluginList.entrySet()) {
+    for (Entry<String, String> entry : pluginList.entrySet()) {
       String pluginName = entry.getKey();
-      PluginElement plugin = entry.getValue();
+      String location = entry.getValue();
 
       try {
         weasisLoader.writeLabel(WeasisLoader.LBL_DOWNLOADING + " " + pluginName);
 
         // Download plugin to plugins directory
-        Path pluginPath = downloadPlugin(cacheDir, plugin.getLocation(), pluginName, httpCache);
+        Path pluginPath = downloadPlugin(cacheDir, location, pluginName, httpCache);
 
         if (pluginPath != null) {
           LOGGER.info("Downloaded plugin: {} to {}", pluginName, pluginPath);
@@ -454,28 +430,22 @@ public class AutoProcessor {
     return retVal;
   }
 
-  /** Represents a plugin element with its configuration. */
-  static class PluginElement {
-    private final int priority;
-    private final String location;
-    private final boolean autoStart;
-
-    public PluginElement(int priority, String location, boolean autoStart) {
-      this.priority = priority;
-      this.location = location;
-      this.autoStart = autoStart;
+  /**
+   * Returns the numeric level of a {@code weasis.plugins.N} key, or -1 when the key is not a
+   * numeric plugin entry (e.g. {@link #PLUGINS_MAX_LEVEL_PROP}).
+   */
+  static int getPluginLevel(String key) {
+    if (key == null || !key.toLowerCase().startsWith(PLUGINS_PROP)) {
+      return -1;
     }
-
-    public int getPriority() {
-      return priority;
+    String suffix = key.substring(PLUGINS_PROP.length());
+    if (suffix.isEmpty() || !suffix.chars().allMatch(Character::isDigit)) {
+      return -1;
     }
-
-    public String getLocation() {
-      return location;
-    }
-
-    public boolean isAutoStart() {
-      return autoStart;
+    try {
+      return Integer.parseInt(suffix);
+    } catch (NumberFormatException e) {
+      return -1;
     }
   }
 }

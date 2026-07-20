@@ -1402,7 +1402,7 @@ public class WeasisWin {
       out.println("  Path for temporary files: " + AppProperties.APP_TEMP_DIR); // NON-NLS
       out.println("  Profile: " + AppProperties.WEASIS_PROFILE); // NON-NLS
       out.println("  User: " + AppProperties.WEASIS_USER); // NON-NLS
-      out.println("  OSGI native specs: " + System.getProperty("native.library.spec")); // NON-NLS
+      out.println("  Native specs: " + System.getProperty("native.library.spec")); // NON-NLS
       out.format(
           "  Operating system: %s %s %s", // NON-NLS
           System.getProperty("os.name"),
