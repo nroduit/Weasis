@@ -1006,6 +1006,8 @@ Starting PF4J Plugins...
       String[] args, boolean sameInstance, boolean noArgs, WeasisLauncher instance) {
     try {
       ProcessBuilder pb = new ProcessBuilder(args);
+      // Do not leak the AOT stage-2 flags into a URI-triggered secondary instance
+      pb.environment().remove("JAVA_TOOL_OPTIONS");
       pb.start().waitFor(15, TimeUnit.SECONDS);
       if (sameInstance && noArgs) {
         LOGGER.info("Configuration with URI is different, restart Weasis with new configuration");

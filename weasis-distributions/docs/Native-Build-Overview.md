@@ -109,7 +109,8 @@ objdump -T <file>.so | grep -oE 'GLIBC_[0-9]+\.[0-9]+' | sort -V | tail -1
 Each build path declares the runtime options as `customOptions` (per-OS, e.g. the splash screen and
 Linux-only `-Dsun.awt.disablegrab=true`) plus `commonOptions` (identical everywhere):
 `--enable-native-access=ALL-UNNAMED`, `-XX:MaxRAMPercentage=25`,
-`-XX:+UseStringDeduplication`,
+`-XX:+UseStringDeduplication`, `-javaagent:$APPDIR/weasis-launcher.jar`,
+`-Dweasis.launch.type=NATIVE`,
 `-Djavax.accessibility.assistive_technologies=org.weasis.launcher.EmptyAccessibilityProvider`,
 `-Djavax.accessibility.screen_magnifier_present=false`.
 
@@ -117,3 +118,25 @@ Linux-only `-Dsun.awt.disablegrab=true`) plus `commonOptions` (identical everywh
   the app-image; the package step reuses that image.
 - **Linux** — declared in `package-weasis.sh`, which (since the app-image step is skipped) passes them
   directly to the single-step `.deb`/`.rpm` build.
+
+## 7. Common-library split and the AOT cache
+
+Before jpackage runs, every `bundle/*.jar.xz` is inspected: jars **without** a `Plugin-Id`
+manifest header (or `plugin.properties` `plugin.id`) are common libraries — they are
+decompressed into `common-lib/` inside the `--input` tree and jpackage automatically adds
+them to the application classpath in the generated `.cfg`. pf4j plugins must remain
+`.jar.xz` in `bundle/` to stay **off** the classpath — the split step fails hard if a plain
+jar remains there, so **`-P compressXZ` is required** when building `weasis-distributions`
+for native packaging (CI always uses it).
+
+The classpath placement is what makes the common libraries eligible for the JDK AOT cache
+(agent-appended jars never are). Two related constraints on the jpackage runtime:
+
+- `--jlink-options "--strip-debug --no-man-pages --no-header-files --generate-cds-archive"`
+  replaces jpackage's defaults **on purpose**: the default set includes
+  `--strip-native-commands`, but `bin/java` must remain because the AOT assembly phase
+  (`-XX:AOTCacheOutput`) spawns `<java.home>/bin/java` at JVM exit.
+- `--generate-cds-archive` ships a base CDS archive (`lib/server/classes.jsa`) that speeds up
+  the first (untrained) launch and the AOT stage-1 relauncher.
+
+See `weasis-launcher/docs/Launcher-Overview.md` (“Launch Pipeline”) for the runtime side.

@@ -11,7 +11,7 @@ PACKAGE=YES
 # jdk.localedata => other locale (en_us) data are included in the jdk.localedata
 # jdk.jdwp.agent => package for debugging agent
 # Base modules for all platforms
-JDK_MODULES_BASE="java.base,java.compiler,java.datatransfer,java.net.http,java.desktop,java.logging,java.management,jdk.management,java.prefs,java.xml,jdk.localedata,jdk.charsets,jdk.crypto.ec,jdk.crypto.cryptoki,jdk.jdwp.agent,java.sql"
+JDK_MODULES_BASE="java.base,java.compiler,java.datatransfer,java.instrument,java.net.http,java.desktop,java.logging,java.management,jdk.management,java.prefs,java.xml,jdk.localedata,jdk.charsets,jdk.crypto.ec,jdk.crypto.cryptoki,jdk.jdwp.agent,java.sql"
 NAME="Weasis"
 IDENTIFIER="org.weasis.launcher"
 
@@ -108,8 +108,13 @@ if [ ! -d "${INPUT_PATH}" ] ; then
   die "The input path ${INPUT_PATH} doesn't exist, provide a valid value for --input"
 fi
 
-cp "$INPUT_PATH/weasis/bundle/weasis-core-img-"* weasis-core-img.jar.xz
-xz --decompress weasis-core-img.jar.xz
+# weasis-core-img is in bundle/ (fresh input) or already in common-lib/ (re-run after the split)
+if compgen -G "$INPUT_PATH/weasis/bundle/weasis-core-img-*" > /dev/null ; then
+  cp "$INPUT_PATH/weasis/bundle/weasis-core-img-"* weasis-core-img.jar.xz
+  xz --decompress weasis-core-img.jar.xz
+else
+  cp "$INPUT_PATH/weasis/common-lib/weasis-core-img-"*.jar weasis-core-img.jar
+fi
 ARC_OS=$("$JDK_PATH_UNIX/bin/java" -cp "weasis-core-img.jar" org.weasis.opencv.natives.NativeLibrary)
 rm -f weasis-core-img.jar
 if [ -z "$ARC_OS" ] ; then
@@ -306,8 +311,16 @@ declare -a commonOptions=(\
 
 # On Linux the deb/rpm are built in a single jpackage step from --input (see below), so the
 # standalone app-image is only needed for the other platforms or for --no-installer builds.
+# --jlink-options replaces jpackage's defaults on purpose: the default set includes
+# --strip-native-commands, but bin/java must remain in the runtime because the AOT cache
+# assembly phase (-XX:AOTCacheOutput) spawns <java.home>/bin/java at exit.
+# --generate-cds-archive ships a base CDS archive that speeds up the first (untrained)
+# launch and the AOT stage-1 relauncher.
+JLINK_OPTIONS="--strip-debug --no-man-pages --no-header-files --generate-cds-archive"
+
 if [ "$machine" != "linux" ] || [ "$PACKAGE" = "NO" ] ; then
   $JPKGCMD --type app-image --input "$INPUT_DIR" --dest "$OUTPUT_PATH" --name "$NAME" \
+  --jlink-options "$JLINK_OPTIONS" \
   --main-jar weasis-launcher.jar --main-class org.weasis.launcher.AppLauncher --add-modules "$JDK_MODULES" \
   --add-launcher "${DICOMIZER_CONFIG}" --resource-dir "$RES"  --app-version "$WEASIS_CLEAN_VERSION" \
   "${tmpArgs[@]}" --verbose "${signArgs[@]}" "${customOptions[@]}" "${commonOptions[@]}"
@@ -339,6 +352,7 @@ if [ "$PACKAGE" = "YES" ] ; then
       # icons from --resource-dir and falls back to the default JavaApp.png, so both the main and the
       # Dicomizer launchers end up with the generic Java icon. The single-step build resolves them.
       $JPKGCMD --type "$installerType" --input "$INPUT_DIR" --dest "$OUTPUT_PATH" --name "$NAME" \
+      --jlink-options "$JLINK_OPTIONS" \
       --main-jar weasis-launcher.jar --main-class org.weasis.launcher.AppLauncher --add-modules "$JDK_MODULES" \
       --add-launcher "${DICOMIZER_CONFIG}" --resource-dir "$RES" \
       --license-file "$INPUT_PATH/Licence.txt" --description "Weasis DICOM viewer" --vendor "$VENDOR" \

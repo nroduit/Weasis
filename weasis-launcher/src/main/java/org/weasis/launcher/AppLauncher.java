@@ -90,9 +90,13 @@ public class AppLauncher extends WeasisLauncher implements Singleton.SingletonAp
   }
 
   static void main(String[] argv) throws Exception {
+    if (AotCache.relaunch(argv)) {
+      return; // parent path: never touches Singleton or the configuration
+    }
     LOGGER.info(
         "*PERF* JVM start, type:INIT time:{}",
         (System.currentTimeMillis() - ManagementFactory.getRuntimeMXBean().getStartTime()));
+    AotCache.logStatus();
 
     long startTime = System.currentTimeMillis();
     try {

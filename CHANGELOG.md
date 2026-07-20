@@ -15,6 +15,11 @@
 - The Felix runtime bundles (gogo shell/runtime/command, SCR, ConfigAdmin, Felix prefs, bundlerepository, osgi.promise) are no longer shipped or started.
 - Crash recovery now actually clears the plugin cache on the next start after an abnormal exit (the previous key mismatch made it a no-op).
 
+**Implemented enhancements:**
+
+- Faster startup and warmup in the packaged application: common libraries (weasis-core, weasis-core-img, docking-frames, …) now ship on the application classpath (`common-lib/` in the app image) and a per-user JDK AOT cache (JEP 483/514/515) is trained on the first launch after install/update and used afterwards. Disable with `-Dweasis.aot.cache=false`. The jpackage runtime ships a base CDS archive and keeps `bin/java` (required by the AOT assembly phase).
+- Remote-codebase (`cdb=`) launches keep working through the packaged `-javaagent` fallback: server-provided library versions are appended to the system classloader when they differ from the shipped ones.
+
 ## [v4.7.1](https://github.com/nroduit/Weasis/tree/v4.7.1) (2026-07-09)
 
 [Full Changelog](https://github.com/nroduit/Weasis/compare/v4.7.0...v4.7.1)

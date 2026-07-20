@@ -36,18 +36,60 @@ the application before any plugin is started:
 
 ## Startup Sequence
 
-1. **Boot logging** — a static initializer in `AppLauncher` configures a temporary Logback
+1. **AOT relaunch check** (packaged app only) — `AotCache.relaunch` re-executes the native
+   launcher with the JDK AOT cache flags (see [Launch Pipeline](#launch-pipeline)); the
+   re-executed child performs all the following steps.
+2. **Boot logging** — a static initializer in `AppLauncher` configures a temporary Logback
    appender (`boot.log`) so that early failures are captured before the real logging
    configuration is available.
-2. **Configuration loading** — `ConfigData` reads launch arguments, Java system properties,
+3. **Configuration loading** — `ConfigData` reads launch arguments, Java system properties,
    the shipped/remote `base.json`, and any profile-specific JSON, then performs variable
    substitution.
-3. **Base directory resolution** — the per-OS config/data/cache/state directories are
+4. **Base directory resolution** — the per-OS config/data/cache/state directories are
    resolved and published as system properties (see [Base Directories](#base-directories)).
-4. **Single-instance check** — `Singleton` decides whether to hand the arguments to an
+5. **Single-instance check** — `Singleton` decides whether to hand the arguments to an
    already-running instance or to start a new one.
-5. **Plugin framework start** — the PF4J plugin manager loads and starts the plugins
+6. **Plugin framework start** — the PF4J plugin manager loads and starts the plugins
    (`loadPlugins()` / `startPlugins()`).
+
+## Launch Pipeline
+
+How code reaches the JVM differs between development and the packaged application:
+
+- **Development (IDE)** — the run configuration passes
+  `-javaagent:weasis-launcher/target/weasis-launcher-<version>.jar`. `AutoProcessor` copies
+  the `weasis.plugins.N` jars from the local Maven repository into the per-user cache;
+  non-plugin jars land in `common-lib/` and `WeasisPluginManager.loadCommonLibraries()`
+  appends them to the system classloader through the agent
+  (`Instrumentation.appendToSystemClassLoaderSearch`). No AOT cache is used in dev.
+- **Packaged application** — the packaging step splits the bundle jars: jars **without** a
+  `Plugin-Id` manifest header (weasis-core, weasis-core-img, docking-frames, …) ship
+  uncompressed in `$APPDIR/common-lib/` and jpackage puts them on the **application
+  classpath**, so they live in the system classloader from process start; pf4j plugins stay
+  `.jar.xz` in `$APPDIR/bundle/`. The `.cfg` still carries `-javaagent:$APPDIR/weasis-launcher.jar`
+  as a fallback: a **remote codebase** launch (`cdb=` parameter) whose server ships different
+  library versions downloads them to the per-user cache and appends them via the agent
+  (classpath jars win for equal file names and are skipped).
+- **AOT cache (JEP 483/514/515)** — on Windows/Linux packaged launches, stage 1
+  (`AotCache.relaunch`, first line of `AppLauncher.main`, before any Singleton interaction)
+  re-executes the native launcher with `JAVA_TOOL_OPTIONS` containing either
+  `-XX:AOTCache=<file>` (cache exists) or `-XX:AOTCacheOutput=<file>` (first launch after
+  install/update trains the cache; the assembly phase spawns `bin/java` at JVM exit — kept in
+  the runtime for this reason). Classpath jars are AOT-cached; agent-appended jars and pf4j
+  plugin classes are not. The cache lives in the per-OS cache directory under
+  `aot/weasis-<version>-<runtime-stamp>.aot`; stale files are pruned. Disable with
+  `-Dweasis.aot.cache=false` (the Dicomizer launcher does). macOS is excluded for now
+  (open-file events target the first process). Any failure falls back to a normal launch:
+  in particular, if the stage-2 child dies within seconds while a cache was in use, stage 1
+  deletes the cache and relaunches once without AOT, so a bad cache can never block startup.
+  Two hard-earned constraints baked into `AotCache`: the child environment must not inherit
+  `_JPACKAGE_LAUNCHER` (the Linux jpackage launcher would then skip its `.cfg` and die on the
+  java usage screen), and training passes `-XX:-AOTClassLinking` — a cache with AOT-linked
+  classes trained against this application crashes the JVM at use time (`InternalError` in
+  `AppClassLoader.<clinit>` on JDK 26; to revisit with future JDK releases).
+- **PERF markers** — `*PERF* AOT cache, type:INIT mode:use|train|off` and
+  `*PERF* AOT relaunch overhead, type:INIT time:<ms>` in `boot.log` measure the pipeline;
+  compare with `*PERF* JVM start` across cold/warm launches.
 
 ## Configuration Sources and Precedence
 

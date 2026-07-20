@@ -113,9 +113,9 @@ jobs:
         shell: bash
         run: |
           if [ "${{ matrix.wsystem }}" = "windows" ]; then
-            echo "JDK_MODULES=java.base,java.compiler,java.datatransfer,java.net.http,java.desktop,java.logging,java.management,jdk.management,java.prefs,java.xml,jdk.localedata,jdk.charsets,jdk.crypto.ec,jdk.crypto.cryptoki,jdk.crypto.mscapi,jdk.jdwp.agent,java.sql" >> $GITHUB_ENV
+            echo "JDK_MODULES=java.base,java.compiler,java.datatransfer,java.instrument,java.net.http,java.desktop,java.logging,java.management,jdk.management,java.prefs,java.xml,jdk.localedata,jdk.charsets,jdk.crypto.ec,jdk.crypto.cryptoki,jdk.crypto.mscapi,jdk.jdwp.agent,java.sql" >> $GITHUB_ENV
           else
-            echo "JDK_MODULES=java.base,java.compiler,java.datatransfer,java.net.http,java.desktop,java.logging,java.management,jdk.management,java.prefs,java.xml,jdk.localedata,jdk.charsets,jdk.crypto.ec,jdk.crypto.cryptoki,jdk.jdwp.agent,java.sql" >> $GITHUB_ENV
+            echo "JDK_MODULES=java.base,java.compiler,java.datatransfer,java.instrument,java.net.http,java.desktop,java.logging,java.management,jdk.management,java.prefs,java.xml,jdk.localedata,jdk.charsets,jdk.crypto.ec,jdk.crypto.cryptoki,jdk.jdwp.agent,java.sql" >> $GITHUB_ENV
           fi
       - name: Set output version from build
         shell: bash
@@ -282,7 +282,11 @@ jobs:
           "--java-options" "-Djavax.accessibility.assistive_technologies=org.weasis.launcher.EmptyAccessibilityProvider" \
           "--java-options" "-Djavax.accessibility.screen_magnifier_present=false" )
 
+          # --jlink-options replaces jpackage's defaults on purpose: bin/java must remain in the
+          # runtime (AOT cache assembly spawns it) and --generate-cds-archive ships a base CDS
+          # archive for the first launch and the AOT stage-1 relauncher.
           jpackage --type app-image --input "${{ env.WEASIS_INPUT_BIN }}" --dest "${{ env.WEASIS_OUTPUT }}" --name "${{ env.NAME }}" \
+          --jlink-options "--strip-debug --no-man-pages --no-header-files --generate-cds-archive" \
           --main-jar weasis-launcher.jar --main-class org.weasis.launcher.AppLauncher --add-modules "${{ env.JDK_MODULES }}" \
           --resource-dir "${{ env.RES }}" --app-version "${{ env.WEASIS_CLEAN_VERSION }}" --add-launcher "Dicomizer=${{ env.RES }}/dicomizer-launcher.properties" \
           "${signArgs[@]}" "${customOptions[@]}" "${commonOptions[@]}"
