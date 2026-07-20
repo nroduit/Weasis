@@ -124,21 +124,31 @@ public class AutoProcessor {
             .equals(System.getProperty("http.bundle.cache", Boolean.TRUE.toString()));
 
     int pluginIter = 0;
+    Set<String> classpathJars = WeasisPluginManager.classpathJarNames();
 
     // Download and prepare plugins
     for (Entry<String, String> entry : pluginList.entrySet()) {
       String pluginName = entry.getKey();
       String location = entry.getValue();
 
+      // Jars shipped on the application classpath (packaged app: common-lib/) are already in the
+      // system classloader and must not be duplicated in the per-user cache.
+      boolean onClasspath =
+          !pluginName.endsWith("-SNAPSHOT") && classpathJars.contains(pluginName + JAR_EXTENSION);
+
       try {
-        weasisLoader.writeLabel(WeasisLoader.LBL_DOWNLOADING + " " + pluginName);
+        Path pluginPath = null;
+        if (onClasspath) {
+          LOGGER.debug("On the application classpath, skipping download: {}", pluginName);
+        } else {
+          weasisLoader.writeLabel(WeasisLoader.LBL_DOWNLOADING + " " + pluginName);
+          pluginPath = downloadPlugin(cacheDir, location, pluginName, httpCache);
+        }
 
-        // Download plugin to plugins directory
-        Path pluginPath = downloadPlugin(cacheDir, location, pluginName, httpCache);
-
-        if (pluginPath != null) {
-          LOGGER.info("Downloaded plugin: {} to {}", pluginName, pluginPath);
-
+        if (onClasspath || pluginPath != null) {
+          if (pluginPath != null) {
+            LOGGER.info("Downloaded plugin: {} to {}", pluginName, pluginPath);
+          }
           // Download translation bundles if available
           downloadTranslationPlugin(cacheDir, pluginName, modulesi18n, httpCache, loadedPlugins);
         }

@@ -207,11 +207,41 @@ rm -f "$INPUT_DIR"/*.jar.pack.gz
 find "$INPUT_DIR"/bundle/weasis-opencv-core-* -type f ! -name '*-'"${ARC_OS}"'-*'  -exec rm -f {} \;
 find "$INPUT_DIR"/bundle/jogamp-* -type f ! -name '*-'"${ARC_OS}"'-*' ! -name 'jogamp-[0-9]*' -exec rm -f {} \;
 
+# Split non-plugin jars out of bundle/ into common-lib/. jpackage adds every plain jar found
+# under --input to the application classpath, so the common libraries become part of the system
+# classloader (required for the AOT cache: agent-appended jars are never AOT-cached) while the
+# pf4j plugins must remain .jar.xz in bundle/ to stay OFF the classpath.
+COMMON_LIB_DIR="$INPUT_DIR/common-lib"
+mkdir -p "$COMMON_LIB_DIR"
+TMP_CHECK=$(mktemp -d)
+for f in "$INPUT_DIR"/bundle/*.jar.xz; do
+  [ -f "$f" ] || continue
+  jarname=$(basename "$f" .xz)
+  xz -dc "$f" > "$TMP_CHECK/$jarname"
+  # plugin <=> manifest has a non-empty Plugin-Id (case-insensitive) or
+  # META-INF/plugin.properties defines plugin.id (same rule as AutoProcessor.isValidPF4JPlugin)
+  ( cd "$TMP_CHECK" && "$JDK_PATH_UNIX/bin/jar" -xf "$jarname" META-INF/MANIFEST.MF META-INF/plugin.properties 2>/dev/null )
+  if grep -qiE '^Plugin-Id: *[^ ]' "$TMP_CHECK/META-INF/MANIFEST.MF" 2>/dev/null \
+     || grep -qE '^plugin\.id=.+' "$TMP_CHECK/META-INF/plugin.properties" 2>/dev/null ; then
+    rm -f "$TMP_CHECK/$jarname"                   # plugin: keep the .xz in bundle/
+  else
+    echo "common-lib: $jarname"
+    mv "$TMP_CHECK/$jarname" "$COMMON_LIB_DIR/"   # common lib: plain jar on the classpath
+    rm -f "$f"
+  fi
+  rm -rf "$TMP_CHECK/META-INF"
+done
+rm -rf "$TMP_CHECK"
+# Safety: any plain jar left in bundle/ would be added to the app classpath by jpackage
+if compgen -G "$INPUT_DIR/bundle/*.jar" > /dev/null; then
+  die "bundle/ contains uncompressed jars; build weasis-distributions with -P compressXZ"
+fi
+
 # Pre-sign ALL native libraries embedded in JARs (macOS only).
 # jpackage --mac-sign will sign the extracted content of the app image,
 # but dylibs INSIDE jars must be signed before jpackage repackages them.
 if [ "$machine" = "macosx" ] && [[ -n "$CERTIFICATE" ]] ; then
-    for jar_file in "$INPUT_DIR"/*.jar "$INPUT_DIR"/bundle/*.jar; do
+    for jar_file in "$INPUT_DIR"/*.jar "$INPUT_DIR"/common-lib/*.jar "$INPUT_DIR"/bundle/*.jar; do
       [ -f "$jar_file" ] || continue
       if unzip -l "$jar_file" 2>/dev/null | grep -qE '\.(dylib|jnilib)$'; then
         echo "--- Signing native libs in: $jar_file"
@@ -269,6 +299,8 @@ declare -a commonOptions=(\
 "--java-options" "--enable-native-access=ALL-UNNAMED" \
 "--java-options" "-XX:MaxRAMPercentage=25" \
 "--java-options" "-XX:+UseStringDeduplication" \
+"--java-options" "-javaagent:\$APPDIR/weasis-launcher.jar" \
+"--java-options" "-Dweasis.launch.type=NATIVE" \
 "--java-options" "-Djavax.accessibility.assistive_technologies=org.weasis.launcher.EmptyAccessibilityProvider" \
 "--java-options" "-Djavax.accessibility.screen_magnifier_present=false");
 

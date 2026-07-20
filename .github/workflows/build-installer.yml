@@ -153,6 +153,38 @@ jobs:
           find ${{ env.WEASIS_INPUT_BIN }}/bundle/jogamp-* -type f ! -name "*-${{ matrix.wsystem }}-${{ matrix.warc }}-*" ! -name "jogamp-[0-9]*" -exec rm -f {} \;
           echo "$(ls ${{ env.WEASIS_INPUT_BIN }}/bundle/)"
 
+      - name: Split common libraries out of bundle/ onto the application classpath
+        shell: bash
+        run: |
+          # jpackage adds every plain jar found under --input to the application classpath, so
+          # the common libraries become part of the system classloader (required for the AOT
+          # cache) while pf4j plugins must remain .jar.xz in bundle/ to stay OFF the classpath.
+          # Same classification rule as AutoProcessor.isValidPF4JPlugin.
+          COMMON_LIB_DIR="${{ env.WEASIS_INPUT_BIN }}/common-lib"
+          mkdir -p "$COMMON_LIB_DIR"
+          TMP_CHECK=$(mktemp -d)
+          for f in ${{ env.WEASIS_INPUT_BIN }}/bundle/*.jar.xz; do
+            [ -f "$f" ] || continue
+            jarname=$(basename "$f" .xz)
+            xz -dc "$f" > "$TMP_CHECK/$jarname"
+            ( cd "$TMP_CHECK" && jar -xf "$jarname" META-INF/MANIFEST.MF META-INF/plugin.properties 2>/dev/null )
+            if grep -qiE '^Plugin-Id: *[^ ]' "$TMP_CHECK/META-INF/MANIFEST.MF" 2>/dev/null \
+               || grep -qE '^plugin\.id=.+' "$TMP_CHECK/META-INF/plugin.properties" 2>/dev/null ; then
+              rm -f "$TMP_CHECK/$jarname"
+            else
+              echo "common-lib: $jarname"
+              mv "$TMP_CHECK/$jarname" "$COMMON_LIB_DIR/"
+              rm -f "$f"
+            fi
+            rm -rf "$TMP_CHECK/META-INF"
+          done
+          rm -rf "$TMP_CHECK"
+          # Safety: any plain jar left in bundle/ would be added to the app classpath by jpackage
+          if compgen -G "${{ env.WEASIS_INPUT_BIN }}/bundle/*.jar" > /dev/null; then
+            echo "ERROR: bundle/ contains uncompressed jars; build weasis-distributions with -P compressXZ"
+            exit 1
+          fi
+
       - name: Import Developer Certificate
         uses: apple-actions/import-codesign-certs@5142e029c445c10ffc7149d172e540235a065466  # v7
         if: matrix.wsystem == 'macosx'
@@ -213,7 +245,7 @@ jobs:
             # Pre-sign ALL native libraries embedded in JARs.
             # jpackage --mac-sign will sign the extracted content of the app image,
             # but dylibs INSIDE jars must be signed before jpackage repackages them.
-            for jar_file in "${{ env.WEASIS_INPUT_BIN }}"/*.jar "${{ env.WEASIS_INPUT_BIN }}"/bundle/*.jar; do
+            for jar_file in "${{ env.WEASIS_INPUT_BIN }}"/*.jar "${{ env.WEASIS_INPUT_BIN }}"/common-lib/*.jar "${{ env.WEASIS_INPUT_BIN }}"/bundle/*.jar; do
               [ -f "$jar_file" ] || continue
               if unzip -l "$jar_file" 2>/dev/null | grep -qE '\.(dylib|jnilib)$'; then
                 echo "--- Signing native libs in: $jar_file"
@@ -245,6 +277,8 @@ jobs:
           "--java-options" "--enable-native-access=ALL-UNNAMED" \
           "--java-options" "-XX:MaxRAMPercentage=25" \
           "--java-options" "-XX:+UseStringDeduplication" \
+          "--java-options" "-javaagent:\$APPDIR/weasis-launcher.jar" \
+          "--java-options" "-Dweasis.launch.type=NATIVE" \
           "--java-options" "-Djavax.accessibility.assistive_technologies=org.weasis.launcher.EmptyAccessibilityProvider" \
           "--java-options" "-Djavax.accessibility.screen_magnifier_present=false" )
 

@@ -9,6 +9,7 @@
  */
 package org.weasis.plugin;
 
+import java.io.File;
 import java.io.IOException;
 import java.lang.instrument.Instrumentation;
 import java.nio.file.Files;
@@ -71,8 +72,9 @@ public class WeasisPluginManager extends DefaultPluginManager {
   }
 
   /**
-   * This method is called by the Java agent to provide the Instrumentation instance. Add this to
-   * your MANIFEST.MF: Premain-Class: org.weasis.launcher.WeasisPluginManager
+   * Called by the Java agent to provide the Instrumentation instance ({@code Premain-Class:
+   * org.weasis.plugin.WeasisPluginManager} in the launcher MANIFEST, activated with {@code
+   * -javaagent:weasis-launcher.jar}).
    */
   public static void premain(String agentArgs, Instrumentation inst) {
     instrumentation = inst;
@@ -83,7 +85,8 @@ public class WeasisPluginManager extends DefaultPluginManager {
    * system classloader. Must be called after {@code AutoProcessor} has downloaded them and before
    * plugins are loaded and started, otherwise plugins fail with {@code NoClassDefFoundError} on
    * {@code org.weasis.core.*} classes on the first launch with a clean cache. Idempotent: each JAR
-   * is added at most once.
+   * is added at most once, and jars already present on the application classpath (packaged app:
+   * {@code common-lib/} in the app image) are skipped so they stay AOT-cacheable.
    */
   public void loadCommonLibraries() {
     Path pluginsDir = getPluginCachePath();
@@ -97,11 +100,16 @@ public class WeasisPluginManager extends DefaultPluginManager {
       return;
     }
 
+    Set<String> classpathJars = classpathJarNames();
     try (Stream<Path> stream = Files.list(libDir)) {
       stream
           .filter(path -> path.toString().endsWith(".jar"))
           .forEach(
               path -> {
+                if (classpathJars.contains(path.getFileName().toString())) {
+                  LOGGER.debug("Already on the application classpath, skipping: {}", path);
+                  return;
+                }
                 if (!loadedLibraries.add(path.toAbsolutePath())) {
                   return;
                 }
@@ -115,6 +123,21 @@ public class WeasisPluginManager extends DefaultPluginManager {
     } catch (IOException e) {
       LOGGER.error("Failed to list common libraries from: {}", libDir, e);
     }
+  }
+
+  /** Returns the file names of the jars on the application classpath. */
+  public static Set<String> classpathJarNames() {
+    return classpathJarNames(System.getProperty("java.class.path", ""));
+  }
+
+  static Set<String> classpathJarNames(String classpath) {
+    Set<String> names = new HashSet<>();
+    for (String entry : classpath.split(File.pathSeparator)) {
+      if (entry.endsWith(".jar")) {
+        names.add(Path.of(entry).getFileName().toString());
+      }
+    }
+    return names;
   }
 
   /** Adds a JAR file to the given classloader using reflection. */
