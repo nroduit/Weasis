@@ -321,7 +321,7 @@ JLINK_OPTIONS="--strip-debug --no-man-pages --no-header-files --generate-cds-arc
 if [ "$machine" != "linux" ] || [ "$PACKAGE" = "NO" ] ; then
   $JPKGCMD --type app-image --input "$INPUT_DIR" --dest "$OUTPUT_PATH" --name "$NAME" \
   --jlink-options "$JLINK_OPTIONS" \
-  --main-jar weasis-launcher.jar --main-class org.weasis.launcher.AppLauncher --add-modules "$JDK_MODULES" \
+  --main-jar weasis-launcher.jar --main-class org.weasis.launcher.Bootstrap --add-modules "$JDK_MODULES" \
   --add-launcher "${DICOMIZER_CONFIG}" --resource-dir "$RES"  --app-version "$WEASIS_CLEAN_VERSION" \
   "${tmpArgs[@]}" --verbose "${signArgs[@]}" "${customOptions[@]}" "${commonOptions[@]}"
 fi
@@ -353,7 +353,7 @@ if [ "$PACKAGE" = "YES" ] ; then
       # Dicomizer launchers end up with the generic Java icon. The single-step build resolves them.
       $JPKGCMD --type "$installerType" --input "$INPUT_DIR" --dest "$OUTPUT_PATH" --name "$NAME" \
       --jlink-options "$JLINK_OPTIONS" \
-      --main-jar weasis-launcher.jar --main-class org.weasis.launcher.AppLauncher --add-modules "$JDK_MODULES" \
+      --main-jar weasis-launcher.jar --main-class org.weasis.launcher.Bootstrap --add-modules "$JDK_MODULES" \
       --add-launcher "${DICOMIZER_CONFIG}" --resource-dir "$RES" \
       --license-file "$INPUT_PATH/Licence.txt" --description "Weasis DICOM viewer" --vendor "$VENDOR" \
       --copyright "$COPYRIGHT" --app-version "$WEASIS_CLEAN_VERSION" --file-associations "${curPath}/file-associations.properties" \

@@ -29,10 +29,26 @@ class AotCacheTest {
     System.clearProperty("jpackage.app-version");
     System.clearProperty(AotCache.STAGE_PROP);
     System.clearProperty(AotCache.ENABLE_PROP);
+    System.clearProperty(AotCache.CLASSLINKING_PROP);
+  }
+
+  @Test
+  void classLinkingEnabledFromJdk27() {
+    assertFalse(AotCache.useClassLinking(25, null));
+    assertFalse(AotCache.useClassLinking(26, null), "JDK 26: crashes at use (JDK-8373392)");
+    assertTrue(AotCache.useClassLinking(27, null), "JDK 27: fix landed");
+    assertTrue(AotCache.useClassLinking(28, null));
+  }
+
+  @Test
+  void classLinkingPropertyOverridesVersionGate() {
+    assertTrue(AotCache.useClassLinking(26, "true"), "force on even on JDK 26");
+    assertFalse(AotCache.useClassLinking(27, "false"), "force off even on JDK 27");
   }
 
   @Test
   void buildToolOptionsTrainsWhenCacheMissing() {
+    System.setProperty(AotCache.CLASSLINKING_PROP, "false"); // deterministic regardless of test JVM
     Path cache = tempDir.resolve("weasis-5.0.0-abc.aot");
     String options = AotCache.buildToolOptions(cache);
     assertTrue(options.contains("-XX:AOTCacheOutput="));
@@ -55,6 +71,7 @@ class AotCacheTest {
     Path keep = Files.createFile(tempDir.resolve("weasis-5.0.0-abc.aot"));
     Path stale1 = Files.createFile(tempDir.resolve("weasis-4.9.0-abc.aot"));
     Path stale2 = Files.createFile(tempDir.resolve("weasis-5.0.0-old.aot"));
+    Path staleMarker = Files.createFile(tempDir.resolve("weasis-4.9.0-abc.disabled"));
     Path other = Files.createFile(tempDir.resolve("unrelated.txt"));
 
     AotCache.pruneOtherCaches(tempDir, keep);
@@ -63,6 +80,13 @@ class AotCacheTest {
     assertTrue(Files.exists(other));
     assertFalse(Files.exists(stale1));
     assertFalse(Files.exists(stale2));
+    assertFalse(Files.exists(staleMarker), "stale .disabled markers are swept too");
+  }
+
+  @Test
+  void disabledMarkerSharesTheCacheStamp() {
+    Path cache = tempDir.resolve("weasis-5.0.0-abc.aot");
+    assertEquals(tempDir.resolve("weasis-5.0.0-abc.disabled"), AotCache.disabledMarker(cache));
   }
 
   @Test
@@ -100,5 +124,36 @@ class AotCacheTest {
   void relaunchIsNoOpWhenNotEligible() {
     System.clearProperty("jpackage.app-version");
     assertFalse(AotCache.relaunch(List.of("arg").toArray(new String[0])));
+  }
+
+  @Test
+  void writeAotOptionAppendsFlagToCfg() throws Exception {
+    Path cfg =
+        Files.writeString(tempDir.resolve("Weasis.cfg"), "[JavaOptions]\njava-options=-Xmx1g\n");
+    Path cache = tempDir.resolve("weasis-5.0.0-abc.aot");
+
+    assertTrue(AotCache.writeAotOption(cfg, cache));
+
+    List<String> lines = Files.readAllLines(cfg);
+    assertTrue(lines.contains("java-options=-Xmx1g"), "existing options are kept");
+    assertEquals(1, lines.stream().filter(l -> l.startsWith("java-options=-XX:AOTCache=")).count());
+    assertTrue(lines.contains("java-options=-XX:AOTCache=" + cache));
+  }
+
+  @Test
+  void writeAotOptionReplacesStaleFlagAndIsIdempotent() throws Exception {
+    Path cache = tempDir.resolve("weasis-5.0.0-new.aot");
+    Path cfg =
+        Files.writeString(
+            tempDir.resolve("Weasis.cfg"),
+            "[JavaOptions]\njava-options=-XX:AOTCache=/old/weasis-4.9.0-stale.aot\n");
+
+    assertTrue(AotCache.writeAotOption(cfg, cache));
+    assertTrue(AotCache.writeAotOption(cfg, cache)); // idempotent
+
+    List<String> lines = Files.readAllLines(cfg);
+    assertEquals(1, lines.stream().filter(l -> l.startsWith("java-options=-XX:AOTCache=")).count());
+    assertTrue(lines.contains("java-options=-XX:AOTCache=" + cache));
+    assertFalse(lines.stream().anyMatch(l -> l.contains("stale")));
   }
 }

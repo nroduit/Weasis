@@ -71,8 +71,9 @@ How code reaches the JVM differs between development and the packaged applicatio
   library versions downloads them to the per-user cache and appends them via the agent
   (classpath jars win for equal file names and are skipped).
 - **AOT cache (JEP 483/514/515)** — on Windows/Linux packaged launches, stage 1
-  (`AotCache.relaunch`, first line of `AppLauncher.main`, before any Singleton interaction)
-  re-executes the native launcher with `JAVA_TOOL_OPTIONS` containing either
+  (`AotCache.relaunch`, called from the dependency-free `Bootstrap.main` entry point before
+  `AppLauncher` — and thus its Logback/static init — is ever loaded, and before any Singleton
+  interaction) re-executes the native launcher with `JAVA_TOOL_OPTIONS` containing either
   `-XX:AOTCache=<file>` (cache exists) or `-XX:AOTCacheOutput=<file>` (first launch after
   install/update trains the cache; the assembly phase spawns `bin/java` at JVM exit — kept in
   the runtime for this reason). Classpath jars are AOT-cached; agent-appended jars and pf4j

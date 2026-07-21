@@ -15,10 +15,76 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.security.KeyStore;
 import java.util.Enumeration;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManagerFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class PlatformCertificateLoader {
+
+  private static final Logger LOGGER = LoggerFactory.getLogger(PlatformCertificateLoader.class);
+
+  /** Background task installing the merged system trust store; awaited before any network use. */
+  private static volatile CompletableFuture<Void> setupTask;
+
+  /**
+   * Builds the merged system trust store and installs it as the default {@link SSLContext} on a
+   * daemon thread, so it overlaps configuration loading and the L&amp;F/splash setup. Consumers
+   * that open a connection must first call {@link #awaitReady()} (all launcher network access goes
+   * through {@code FileUtil.getAdaptedConnection}), so downloads never start before it is ready.
+   */
+  public static void startAsyncSetup() {
+    long startTime = System.currentTimeMillis();
+    setupTask =
+        CompletableFuture.runAsync(
+            () -> {
+              try {
+                setupDefaultSSLContext();
+                LOGGER.info(
+                    "*PERF* Loading system trust store, type:INIT time:{}",
+                    System.currentTimeMillis() - startTime);
+              } catch (Exception e) {
+                LOGGER.error(
+                    "Cannot setup default SSL context by merging with system certificates", e);
+              }
+            },
+            runnable -> {
+              Thread thread = new Thread(runnable, "weasis-ssl-truststore"); // NON-NLS
+              thread.setDaemon(true);
+              thread.start();
+            });
+  }
+
+  /**
+   * Blocks until the asynchronous trust-store setup started by {@link #startAsyncSetup()} has
+   * finished (no-op if it was never started or is already done). The setup swallows its own
+   * failures, so this never throws; on interruption or timeout it logs and lets the launch continue
+   * with the JVM default trust store.
+   */
+  public static void awaitReady() {
+    CompletableFuture<Void> task = setupTask;
+    if (task == null || task.isDone()) {
+      return;
+    }
+    long start = System.currentTimeMillis();
+    try {
+      task.get(30, TimeUnit.SECONDS);
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+      LOGGER.warn("Interrupted while waiting for the system trust store setup");
+      return;
+    } catch (TimeoutException | java.util.concurrent.ExecutionException e) {
+      LOGGER.warn("System trust store setup did not complete in time, using the default", e);
+      return;
+    }
+    long waited = System.currentTimeMillis() - start;
+    if (waited > 5) {
+      LOGGER.info("*PERF* Awaited system trust store, type:INIT time:{}", waited);
+    }
+  }
 
   public static void main(String[] args) throws Exception {
     long startTime = System.nanoTime();

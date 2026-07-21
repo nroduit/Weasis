@@ -48,3 +48,10 @@ weasis_*.snap
 #comlile
 build-dist
 
+
+# jpackage / native app-image build output (package-weasis.sh --output, throwaway)
+/pkgout/
+/pkgout27/
+/weasis-linux-*/
+/weasis-macosx-*/
+/weasis-windows-*/

@@ -174,39 +174,6 @@ public class WeasisPluginManager extends DefaultPluginManager {
     LOGGER.info("*PERF* Plugins start total, time:{}", System.currentTimeMillis() - total);
   }
 
-  /**
-   * Progressive startup: starts every resolved plugin except those in {@code deferredIds}, and
-   * starts the main-UI plugin last so the window is built after the eager plugins (DICOM codec,
-   * explorer, 2D viewer, OpenCV native) have registered their factories. The caller opens the
-   * launch images next, then {@link #startRemainingPlugins()} starts the deferred (secondary)
-   * plugins behind the already-visible window.
-   */
-  public void startEagerPlugins(String mainUiId, Set<String> deferredIds) {
-    long total = System.currentTimeMillis();
-    PluginWrapper mainUi = null;
-    for (PluginWrapper wrapper : getResolvedPlugins()) {
-      String id = wrapper.getPluginId();
-      if (id.equals(mainUiId)) {
-        mainUi = wrapper;
-      } else if (!deferredIds.contains(id)) {
-        startPluginTimed(wrapper);
-      }
-    }
-    if (mainUi != null) {
-      startPluginTimed(mainUi);
-    }
-    LOGGER.info("*PERF* Eager plugins start total, time:{}", System.currentTimeMillis() - total);
-  }
-
-  /** Starts every resolved plugin not yet started (the deferred set), in dependency order. */
-  public void startRemainingPlugins() {
-    long total = System.currentTimeMillis();
-    for (PluginWrapper wrapper : getResolvedPlugins()) {
-      startPluginTimed(wrapper);
-    }
-    LOGGER.info("*PERF* Deferred plugins start total, time:{}", System.currentTimeMillis() - total);
-  }
-
   private void startPluginTimed(PluginWrapper wrapper) {
     if (wrapper.getPluginState() == PluginState.STARTED) {
       return;

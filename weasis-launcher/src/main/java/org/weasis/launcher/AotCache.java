@@ -38,17 +38,37 @@ public final class AotCache {
   /** Set to "false" to disable the AOT cache relaunch entirely. */
   public static final String ENABLE_PROP = "weasis.aot.cache";
 
+  /**
+   * Overrides the JDK-version gate for {@code AOTClassLinking} (JEP 515 method profiles +
+   * pre-linked classes). By default the linked tier is used only from JDK 27, where JDK-8373392
+   * fixed the use-time crash present on JDK ≤ 26 ({@code InternalError} in {@code
+   * AppClassLoader.<clinit>}); set "true"/"false" to force it on/off regardless of the runtime
+   * version.
+   */
+  public static final String CLASSLINKING_PROP = "weasis.aot.classlinking";
+
   /** Start time of the stage-1 process, used to measure the relaunch overhead. */
   private static final String PARENT_START_PROP = "weasis.aot.t0";
 
   private AotCache() {}
 
   /**
-   * Re-executes the native launcher with the AOT flags when eligible. Does not return on success
-   * (the parent exits with the child's exit code); returns false to continue a normal launch.
+   * Ensures the AOT cache is used with the least overhead, safely. Once the {@code -XX:AOTCache}
+   * flag has been persisted into the launcher {@code .cfg}, warm launches start with it already
+   * active and this is a no-op — a single process, no re-execution. The flag is persisted only
+   * <em>after</em> a re-exec has used the cache without an early crash (verify-before-persist), so
+   * a fatal cache — one that aborts the JVM at init, where single-process mode has no recovery hook
+   * — can never be baked into the {@code .cfg}. A cache that does crash early is discarded, its
+   * flag stripped, and AOT is marked disabled for this build so startup neither loops nor bricks.
+   * Returns true only when the parent must exit (it re-executed and waited for the child).
    */
   public static boolean relaunch(String[] args) {
     if (!isEligible()) {
+      return false;
+    }
+    // Warm launch: the JVM already started with the persisted (and previously verified) flag, so
+    // this process is the real, single application process — nothing to re-execute.
+    if (hasAotCacheFlag()) {
       return false;
     }
     Optional<String> command = nativeCommand();
@@ -67,23 +87,32 @@ public final class AotCache {
             "AOT cache path contains unsupported characters, skipping AOT relaunch: {}", cache);
         return false;
       }
+      Path disabled = disabledMarker(cache);
+      if (Files.exists(disabled)) {
+        // A previous launch found this build's cache fatal; run without AOT until an app/runtime
+        // update changes the stamp (and so this marker's name).
+        return false;
+      }
       Files.createDirectories(cache.getParent());
       pruneOtherCaches(cache.getParent(), cache);
-
       closeSplashScreen();
 
-      List<String> cmd = new ArrayList<>();
-      cmd.add(command.get());
-      cmd.addAll(List.of(args));
       boolean useMode = Files.exists(cache);
       long start = System.currentTimeMillis();
       int exitCode = spawnStage2(command.get(), args, buildToolOptions(cache));
+
       if (useMode && exitCode != 0 && System.currentTimeMillis() - start < 10_000) {
-        // The child died right away: the cache is likely unusable. Discard it and run once
-        // without any AOT flag so a bad cache can never prevent the application from starting.
-        LOGGER.warn("Child process failed early with AOT cache {}, retrying without it", cache);
+        // The child died right away: the cache is unusable. Discard it and any persisted flag,
+        // disable AOT for this build, and run once without AOT so startup can never be blocked.
+        LOGGER.warn("Child failed early with AOT cache {}; disabling AOT for this build", cache);
         FileUtil.delete(cache);
+        clearAotFlag();
+        markAotDisabled(disabled);
         exitCode = spawnStage2(command.get(), args, "-D%s=2".formatted(STAGE_PROP));
+      } else if (useMode) {
+        // The cache was used without an early crash → verified safe; persist the flag so the next
+        // launch is single-process (no-op on a read-only install, which keeps re-executing).
+        persistAotFlag(cache);
       }
       System.exit(exitCode);
       return true; // unreachable
@@ -94,6 +123,97 @@ public final class AotCache {
     } catch (Exception e) {
       LOGGER.warn("AOT relaunch failed, continuing with a normal launch", e);
       return false;
+    }
+  }
+
+  /** True when this JVM was started with {@code -XX:AOTCache=} (not {@code -XX:AOTCacheOutput}). */
+  private static boolean hasAotCacheFlag() {
+    return ManagementFactory.getRuntimeMXBean().getInputArguments().stream()
+        .anyMatch(arg -> arg.startsWith("-XX:AOTCache="));
+  }
+
+  /** Locates the jpackage launcher configuration file ({@code <app>/lib/app/<launcher>.cfg}). */
+  static Optional<Path> configFile() {
+    Optional<String> command = ProcessHandle.current().info().command();
+    if (command.isEmpty()) {
+      return Optional.empty();
+    }
+    Path launcher = Path.of(command.get());
+    Path appRoot = launcher.getParent() == null ? null : launcher.getParent().getParent();
+    if (appRoot == null) {
+      return Optional.empty();
+    }
+    String name = launcher.getFileName().toString();
+    if (name.toLowerCase().endsWith(".exe")) { // NON-NLS
+      name = name.substring(0, name.length() - 4);
+    }
+    return Optional.of(appRoot.resolve("lib").resolve("app").resolve(name + ".cfg")); // NON-NLS
+  }
+
+  /**
+   * Appends {@code java-options=-XX:AOTCache=<cache>} to the launcher {@code .cfg} (replacing any
+   * stale entry) so the next launch starts with the cache and skips the re-execution. Returns false
+   * when the file is absent or not writable (a read-only system install), keeping the re-exec path.
+   */
+  static boolean persistAotFlag(Path cache) {
+    Optional<Path> configFile = configFile();
+    if (configFile.isEmpty() || !Files.isWritable(configFile.get())) {
+      return false;
+    }
+    return writeAotOption(configFile.get(), cache);
+  }
+
+  /** Rewrites {@code file} so it carries exactly one {@code -XX:AOTCache=<cache>} java-option. */
+  static boolean writeAotOption(Path file, Path cache) {
+    try {
+      String option = "java-options=-XX:AOTCache=" + cache; // NON-NLS
+      List<String> lines = new ArrayList<>(Files.readAllLines(file));
+      if (lines.contains(option)) {
+        return true;
+      }
+      lines.removeIf(line -> line.startsWith("java-options=-XX:AOTCache=")); // NON-NLS
+      lines.add(option);
+      Files.write(file, lines);
+      LOGGER.info("Persisted AOT cache flag to {}", file);
+      return true;
+    } catch (Exception e) {
+      LOGGER.warn("Cannot persist the AOT cache flag to {}", file, e);
+      return false;
+    }
+  }
+
+  /** Removes any persisted {@code -XX:AOTCache} option from the launcher {@code .cfg}. */
+  static void clearAotFlag() {
+    Optional<Path> configFile = configFile();
+    if (configFile.isEmpty() || !Files.isWritable(configFile.get())) {
+      return;
+    }
+    Path file = configFile.get();
+    try {
+      List<String> lines = new ArrayList<>(Files.readAllLines(file));
+      if (lines.removeIf(line -> line.startsWith("java-options=-XX:AOTCache="))) { // NON-NLS
+        Files.write(file, lines);
+        LOGGER.info("Removed the AOT cache flag from {}", file);
+      }
+    } catch (Exception e) {
+      LOGGER.warn("Cannot clear the AOT cache flag from {}", file, e);
+    }
+  }
+
+  /**
+   * Marker written next to a fatal cache to skip AOT for this build (same version+runtime stamp).
+   */
+  static Path disabledMarker(Path cache) {
+    String name = cache.getFileName().toString();
+    String base = name.endsWith(".aot") ? name.substring(0, name.length() - 4) : name; // NON-NLS
+    return cache.resolveSibling(base + ".disabled"); // NON-NLS
+  }
+
+  private static void markAotDisabled(Path marker) {
+    try {
+      Files.writeString(marker, ""); // NON-NLS
+    } catch (Exception e) {
+      LOGGER.warn("Cannot write the AOT disabled marker {}", marker, e);
     }
   }
 
@@ -161,7 +281,11 @@ public final class AotCache {
   static void pruneOtherCaches(Path aotDir, Path keep) {
     try (Stream<Path> stream = Files.list(aotDir)) {
       stream
-          .filter(p -> p.getFileName().toString().endsWith(".aot") && !p.equals(keep))
+          .filter(
+              p -> {
+                String name = p.getFileName().toString();
+                return (name.endsWith(".aot") || name.endsWith(".disabled")) && !p.equals(keep);
+              })
           .forEach(FileUtil::delete);
     } catch (Exception e) {
       LOGGER.warn("Cannot prune old AOT caches in {}", aotDir, e);
@@ -187,17 +311,35 @@ public final class AotCache {
   /**
    * Builds the {@code JAVA_TOOL_OPTIONS} value for the child: use the cache when it exists,
    * otherwise train it this launch ({@code -XX:AOTCache} and {@code -XX:AOTCacheOutput} must never
-   * be combined — the JVM refuses to start). Training disables {@code AOTClassLinking}: a cache
-   * with AOT-linked classes trained against this application crashes the JVM at use time
-   * (InternalError in AppClassLoader.&lt;clinit&gt; on JDK 26); the class-parsing tier is stable.
+   * be combined — the JVM refuses to start). Training disables {@code AOTClassLinking} on JDK ≤ 26,
+   * where a cache with AOT-linked classes crashes at use on the jpackage runtime (InternalError in
+   * AppClassLoader.&lt;clinit&gt;, JDK-8373392); from JDK 27 the fix landed so the faster linked
+   * tier is used.
    */
   static String buildToolOptions(Path cache) {
+    // t0 is the parent JVM start (not the spawn time), so the child's relaunch-overhead metric
+    // captures the whole stage-1 cost — including the class loading the Bootstrap split removes.
+    long t0 = ManagementFactory.getRuntimeMXBean().getStartTime();
     if (Files.exists(cache)) {
-      return "-D%s=2 -D%s=%d -XX:AOTCache=%s"
-          .formatted(STAGE_PROP, PARENT_START_PROP, System.currentTimeMillis(), cache);
+      return "-D%s=2 -D%s=%d -XX:AOTCache=%s".formatted(STAGE_PROP, PARENT_START_PROP, t0, cache);
     }
-    return "-D%s=2 -D%s=%d -XX:AOTCacheOutput=%s -XX:-AOTClassLinking"
-        .formatted(STAGE_PROP, PARENT_START_PROP, System.currentTimeMillis(), cache);
+    boolean linked =
+        useClassLinking(Runtime.version().feature(), System.getProperty(CLASSLINKING_PROP));
+    String linking = linked ? "" : " -XX:-AOTClassLinking";
+    return "-D%s=2 -D%s=%d -XX:AOTCacheOutput=%s%s"
+        .formatted(STAGE_PROP, PARENT_START_PROP, t0, cache, linking);
+  }
+
+  /**
+   * Whether to train with {@code AOTClassLinking} (the faster pre-linked + JEP 515 profile tier).
+   * Enabled from JDK 27, where JDK-8373392 fixed the use-time crash seen on JDK ≤ 26; an explicit
+   * {@link #CLASSLINKING_PROP} value overrides the version gate (for testing / a known-good build).
+   */
+  static boolean useClassLinking(int runtimeFeature, String override) {
+    if (override != null) {
+      return Boolean.parseBoolean(override);
+    }
+    return runtimeFeature >= 27;
   }
 
   /** Closes the stage-1 native splash so only the child shows one. */

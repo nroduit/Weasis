@@ -44,7 +44,6 @@ import java.nio.file.attribute.FileTime;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -180,16 +179,8 @@ public class WeasisLauncher {
       pluginManager.loadPlugins();
       LOGGER.info("Loaded {} plugins", pluginManager.getPlugins().size());
 
-      // Start plugins. Progressive mode (weasis.plugins.progressive / weasis.plugins.deferred)
-      // brings up the main UI and DICOM viewing path first, opens the launch images, then starts
-      // the secondary feature plugins behind the visible window. Empty deferred set = start all.
-      Set<String> deferredPlugins = deferredPluginIds(serverProp);
-      if (deferredPlugins.isEmpty()) {
-        pluginManager.startPluginsTimed();
-      } else {
-        pluginManager.startEagerPlugins(
-            serverProp.getOrDefault("weasis.main.ui", "").trim(), deferredPlugins);
-      }
+      // Start plugins (instrumented: logs per-plugin *PERF* start times to rank slow activators)
+      pluginManager.startPluginsTimed();
 
       // End of splash screen
       loader.close();
@@ -202,12 +193,6 @@ public class WeasisLauncher {
 
       CommandManager commandManager = new CommandManager(configData.getPluginManager());
       executeCommands(commandManager, configData.getArguments());
-
-      // Progressive mode: start the deferred (secondary) plugins now that the window is up and the
-      // launch images have been opened.
-      if (!deferredPlugins.isEmpty()) {
-        pluginManager.startRemainingPlugins();
-      }
 
       // Log plugin states
       for (PluginWrapper plugin : pluginManager.getPlugins()) {
@@ -265,41 +250,6 @@ public class WeasisLauncher {
     } finally {
       Runtime.getRuntime().halt(exitStatus);
     }
-  }
-
-  /**
-   * Secondary feature plugins deferred until after the window is shown when progressive mode is on.
-   */
-  static final List<String> DEFAULT_DEFERRED_PLUGINS =
-      List.of(
-          "weasis-dicom-sr",
-          "weasis-dicom-rt",
-          "weasis-dicom-au",
-          "weasis-dicom-wave",
-          "weasis-dicom-send",
-          "weasis-dicom-qr",
-          "weasis-dicom-isowriter",
-          "weasis-base-viewer2d",
-          "weasis-dicom-viewer3d",
-          "jogamp",
-          "weasis-acquire-explorer",
-          "weasis-acquire-editor");
-
-  /**
-   * Plugins to start after the main window is shown and the launch images are opened. An explicit
-   * {@code weasis.plugins.deferred} (space-separated ids) wins; otherwise {@code
-   * weasis.plugins.progressive=true} selects the built-in secondary set. Empty means start all at
-   * once (the default, unchanged behavior).
-   */
-  static Set<String> deferredPluginIds(Map<String, String> serverProp) {
-    String explicit = serverProp.get("weasis.plugins.deferred");
-    if (Utils.hasText(explicit)) {
-      return new HashSet<>(List.of(explicit.trim().split("\\s+")));
-    }
-    if (Boolean.parseBoolean(serverProp.get("weasis.plugins.progressive"))) {
-      return new HashSet<>(DEFAULT_DEFERRED_PLUGINS);
-    }
-    return Set.of();
   }
 
   private void checkPluginUI(Map<String, String> serverProp) {

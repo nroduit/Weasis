@@ -90,27 +90,19 @@ public class AppLauncher extends WeasisLauncher implements Singleton.SingletonAp
   }
 
   static void main(String[] argv) throws Exception {
-    if (AotCache.relaunch(argv)) {
-      return; // parent path: never touches Singleton or the configuration
-    }
+    // The AOT relaunch check runs in Bootstrap, before this class is loaded. Reaching here means
+    // this is the real application process (the stage-2 child, or a launch with AOT disabled).
     LOGGER.info(
         "*PERF* JVM start, type:INIT time:{}",
         (System.currentTimeMillis() - ManagementFactory.getRuntimeMXBean().getStartTime()));
     AotCache.logStatus();
 
-    long startTime = System.currentTimeMillis();
-    try {
-      PlatformCertificateLoader.setupDefaultSSLContext();
-      LOGGER.info(
-          "*PERF* Loading system trust store, type:INIT time:{}",
-          (System.currentTimeMillis() - startTime));
-    } catch (Exception e) {
-      LOGGER.error("Cannot setup default SSL context by merging with system certificates", e);
-    }
+    // Build the merged system trust store on a background thread
+    PlatformCertificateLoader.startAsyncSetup();
 
     final Type launchType = Type.NATIVE;
 
-    startTime = System.currentTimeMillis();
+    long startTime = System.currentTimeMillis();
     ConfigData configData = new ConfigData(argv);
     LOGGER.info(
         "*PERF* Loading config, type:INIT time:{}", (System.currentTimeMillis() - startTime));

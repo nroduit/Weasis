@@ -19,14 +19,37 @@ activator, plus `*PERF* JVM start` for the JVM-init slice.
 ## 1. Baseline configurations (measured)
 
 End-to-end = what the user actually waits for, including the stage-1 relaunch when AOT is on.
+**Measured 2026-07-19 on the packaged Linux app-image (Temurin 26.0.1, base CDS present, A+B+C
+in the build), values in ms; end-to-end = relaunch overhead + Global starting.**
 
-| # | Configuration | JVM start | Global starting (end-to-end) | Δ vs baseline | Source |
-|---|---------------|-----------|------------------------------|---------------|--------|
-| 0 | **Baseline** — AOT off, no CDS | ~122–158 ms | **~1.93 s** | — | ⏱ |
-| 1 | AOT off, base CDS archive | ~120 ms | ~2.07 s | +0.14 s (worse) | ⏱ |
-| 2 | AOT **use** (warm), in-process only | 71 ms | ~1.63 s | −0.30 s | ⏱ |
-| 3 | AOT **use** (warm), end-to-end (incl. ~0.40 s relaunch) | 71 ms | ~2.02 s | +0.09 s (worse) | ⏱ |
-| 4 | AOT **train** (cold, first launch) | 71 ms | ~2.9 s (one-time) | +0.97 s once | ⏱ |
+| # | Configuration | JVM start | relaunch | Global starting | **end-to-end** | Δ vs baseline |
+|---|---------------|-----------|----------|-----------------|----------------|---------------|
+| 0 | **Baseline** — AOT off (single process) | 116–118 | — | ~2040 | **~2040** | — |
+| 1 | AOT **use**, re-exec (warm), prog off | 70–73 | ~485 | ~1612 | **~2097** | +57 (worse) |
+| 2 | AOT **use**, re-exec (warm), prog on | 70–75 | ~482 | ~1590–1732 | **~2130** | +90 (worse) |
+| 3 | AOT **train** (cold, first launch) | 163 | 542 | 1953 | ~2495 (once) | +455 once |
+| 4 | AOT off, progressive on | 116 | — | ~2036 | **~2036** | ~0 |
+| 5 | **AOT use, persisted flag (single process)** | 75–77 | **none** | ~1581–1593 | **~1585** | **−455 (−22%)** ✅ |
+
+Row 5 is the fix: after the one training run persists `-XX:AOTCache` into the launcher `.cfg`, every
+warm launch starts with it already active — **single process, no re-exec** — so the ~430 ms
+in-process AOT gain is no longer cancelled by the ~485 ms relaunch. Measured single-process warm
+launches were consistently 1581/1584/1593 ms (2 processes → 1; relaunch-overhead line gone).
+
+**Reading (the decisive result)**
+
+- **AOT is genuinely ~430 ms faster in-process** (Global starting 2040 → 1612; JVM start 116 → 71;
+  plugin-start total 834 → 521; `dicom-codec` 413 → 226; `base-ui` 249 → 159). But the stage-1
+  **relaunch costs ~485 ms** (a whole second JVM: parent bootstrap + fork + child start), so AOT
+  ends up **~57 ms net worse end-to-end** even with the Bootstrap split. The second-JVM spawn is
+  the wall; C trims the parent's class loading but can't remove the JVM-start cost itself.
+- **Progressive (A) buys ~0** — the plugins it defers are all cheap (2–15 ms each, ~60 ms total),
+  and the one expensive plugin, `dicom-codec` (226–413 ms), must stay eager for DICOM. Points
+  straight at **Opt F** (un-shade codec so its classes get AOT-cached — codec already dropped
+  413 → 226 just from cached common-libs).
+- **B works** — SSL trust store (~100–130 ms) is now fully overlapped: the `*PERF* Awaited system
+  trust store` line is **gone** in every run (before the https-only fix it blocked ~101 ms on the
+  first `file://` read). ~100 ms saved every launch, no downside.
 
 **Reading of the baselines**
 
@@ -176,48 +199,159 @@ surprising because those classes come from the shared archive.
 
 ## 5. Optimization options (progression)
 
-Applied roughly in impact order. "Cumulative" assumes the rows above it are already applied.
-Replace 📐 rows with ⏱ as each is implemented and measured.
+Applied in impact order. **Cumulative (measured)** = end-to-end to the main window with this row
+and every row above it applied, on this machine. Pre-optimization start (no B, no AOT) ≈ **2.14 s**.
 
-| Opt | Change | Mechanism | Est. gain | Cumulative target | Status |
-|-----|--------|-----------|-----------|-------------------|--------|
-| **A** | **Show window before non-essential plugins** | Progressive start: eager DICOM path + `base-ui` → open launch images → then start the deferred secondary plugins; they register toolbars/views dynamically | 📐 **−0.4 to −0.6 s** | ~1.4 s | **implemented (flag, default off)** |
-| **B** | **Overlap independent boot phases** | Run SSL trust-store merge (~98 ms) + `AutoProcessor` cache check on background threads while the EDT builds L&F/splash | 📐 **−0.2 to −0.3 s** | ~1.1 s | proposed |
-| **C** | **`Bootstrap` split → make AOT net-positive** | Dependency-free stage-1 main class (skips Logback/static init) cuts relaunch from ~400 ms to ~100 ms, so AOT's −300 ms in-process win becomes a real net gain | 📐 **−0.3 to −0.4 s** | ~0.8 s | proposed |
-| **D** | Re-enable `AOTClassLinking` + JEP 515 profiles | Blocked by JDK 26 `InternalError` at cache use; revisit on newer JDK. Also lifts post-window warmup (first render), not measured here | 📐 further | — | blocked (JDK) |
-| **E** | Ship common-lib jars uncompressed (done) | `.jar.xz` → plain jars in `common-lib/` on classpath; no per-launch xz decompress for common libs | ✅ folded into baseline | — | done |
-| **F** | **Un-shade plugin libraries into `common-lib/`** | Stop shading dcm4che + parsson + jakarta.json + hk2 + weasis-dicom-tools into `dicom-codec`; ship them as separate no-`Plugin-Id` bundle jars → auto-routed to `common-lib/` → AOT-cached | 📐 modest alone, **grows AOT set by ~800 classes**; compounds with C/D | — | proposed (do after C) |
+| Opt | Change | Mechanism | Gain | Cumulative (measured) | Status |
+|-----|--------|-----------|------|-----------------------|--------|
+| **B** | **Overlap independent boot phases** | SSL trust-store merge (~100 ms) runs on a daemon thread while `ConfigData` + L&F/splash build; every HTTPS use joins it first, so downloads never precede the trust store | **−~100 ms** | **~2.04 s** | **implemented** |
+| **C** | **`Bootstrap` split + persist AOT flag (C′)** | Bootstrap trims the stage-1 relaunch; C′ persists `-XX:AOTCache` into the launcher `.cfg` so warm launches are single-process with no re-exec | **−455 ms** | **~1.585 s** | **shipped default** |
+| **D** | **`AOTClassLinking` + JEP 515 profiles** | Pre-linked classes + method profiles. Crashed at use on JDK ≤ 26 (JDK-8373392); **fixed in JDK 27**, so **auto-enabled from JDK 27** (version-gated, no flag needed) | **−335 ms** (JDK 27) | **~1.25 s** (JDK 27) | **auto on JDK 27+** |
+| **A** | ~~Show window before non-essential plugins~~ | Progressive start — deferred plugins all cheap; the slow one, `dicom-codec`, must stay eager. Code removed. | **~0** | — | **dropped** |
+| **E** | Ship common-lib jars uncompressed | `.jar.xz` → plain jars in `common-lib/` on classpath; no per-launch xz decompress for common libs | folded in | (in baseline) | done |
+| **F** | ~~Un-shade plugin libraries into `common-lib/`~~ | Premise invalidated by measurement — dcm4che is already AOT-cached as a plugin class (see below) | **~0** | — | **dropped** |
 
-**Realistic combined target:** from **~2.0 s → ~1.0–1.2 s** to the main window on this
-machine, with **A + C** delivering most of it.
+**Shipped result (JDK 26):** ~2.14 s → **~1.585 s** to the main window on this machine (−26%),
+from **B + C/C′**. **On JDK 27** (D on): **~1.25 s (−42%)**. A and F were tried and measured to add
+~0, so both were dropped.
 
-### Opt A detail — progressive startup (DICOM path first)
+### Opt A — DROPPED (measured ~0 gain, code removed)
 
-The overwhelmingly common launch opens DICOM images, so the eager set keeps the **DICOM viewing
-path** — `dicom-codec → dicom-explorer → dicom-viewer2d`, the OpenCV native decoder, and
-`base-ui` (started **last**, so the window is built after those register their factories). Then
-`executeCommands(...)` opens the launch images, and only afterwards do the **secondary** plugins
-start behind the visible window.
+Progressive startup (defer secondary plugins, show the window on the DICOM path first) was
+implemented behind `weasis.plugins.progressive` and measured: **no meaningful gain**. The deferred
+plugins are all cheap (2–15 ms each, ~60 ms total) while the one expensive plugin, `dicom-codec`
+(226 ms warm), must stay eager for DICOM — so there was nothing worth deferring. The flag, the
+eager/deferred split (`startEagerPlugins`/`startRemainingPlugins`), and the deferred-set config
+were removed; only the harmless per-plugin `startPluginsTimed` instrumentation (`*PERF* Plugin
+start, id:<id>`) was kept.
 
-- **Mechanism:** `WeasisPluginManager.startEagerPlugins(mainUi, deferred)` +
-  `startRemainingPlugins()`, with `executeCommands` moved between them in `WeasisLauncher`. It's a
-  **deny-list** (defer secondary plugins), not an allow-list — so codec/explorer/viewer2d/OpenCV
-  stay eager automatically and no arch-specific native id has to be enumerated. Every plugin
-  `start()` is timed: `*PERF* Plugin start, id:<id> time:<ms>` + per-phase totals.
-- **Enable / measure (default is unchanged all-at-once start):**
-  - `-Dweasis.plugins.progressive=true` → uses the built-in deferred set (`dicom-sr, rt, au, wave,
-    send, qr, isowriter, base-viewer2d, viewer3d, jogamp, acquire-*`).
-  - `-Dweasis.plugins.deferred="id1 id2 …"` → explicit override of the deferred set.
-  - Best measured in dev with `-Dweasis.plugin.cache.warmup=true` (warm cache). Compare
-    `*PERF* Global starting` and the per-plugin lines with/without the flag.
-- **Watch for (why it's default-off until validated):** `base-ui` now starts *before* the
-  deferred plugins (today it starts near-last), so `WeasisWin` is built before their toolbars/
-  tools/`SeriesViewerFactory` register — those should attach dynamically a moment later, but a
-  hard dependency at window-build time would surface here. Also: opening an initial **SR/RT/ECG**
-  object renders in the default viewer until its (deferred) plugin starts. Turn the flag off (or
-  add the id to the eager side) if either misbehaves.
+### Opt D detail — AOTClassLinking on JDK 27-EA (measured working)
 
-### Opt F detail — un-shade `dicom-codec` (and check other shaded plugins)
+The faster AOT tier (`AOTClassLinking`: classes stored **pre-linked** + JEP 515 method profiles)
+crashed at use on JDK ≤ 26 (`InternalError` in `AppClassLoader.<clinit>`) — the root cause is
+[JDK-8373392](https://bugs.openjdk.org/browse/JDK-8373392) (*Replace CDS object subgraphs with
+`@AOTSafeClassInitializer`*), **fixed in JDK 27**. So `AotCache` **version-gates** it:
+`useClassLinking(Runtime.version().feature())` enables the linked tier only from JDK 27 (training
+adds `-XX:-AOTClassLinking` on JDK ≤ 26). `-Dweasis.aot.classlinking=true|false` overrides the gate
+for testing. Verified on **`openjdk-ea-27-ea+31` (2026-09-15)** by repackaging the app-image with
+that JDK:
+
+- **No crash.** The linked cache is used cleanly, single-process (`mode:use`, no relaunch line).
+  (The `InternalError`/`AppClassLoader` strings in the log are only pf4j DEBUG lines naming the
+  classloader — not a fault.)
+- Measured warm: **JVM start 35 ms** (vs 71 ms non-linked, 116 ms baseline), **Global starting
+  1224/1280 ms** (vs ~1585 non-linked, ~2040 baseline), **`dicom-codec` 128 ms** (vs 226 / 413).
+- Cache is ~84.5 MB (vs ~73 MB non-linked) — the extra profiles/pre-linking.
+- **Net: ~1.25 s end-to-end = −790 ms (−39%) vs baseline**, i.e. ~335 ms beyond the persisted-flag
+  non-linked AOT.
+
+**Auto-gated, no manual step.** On the current JDK 26 build `useClassLinking(26)` is false, so the
+safe non-linked tier is used automatically; when the packaged runtime moves to **JDK 27 GA** the
+linked tier turns on by itself. Re-verify once on 27 GA (27-EA is not GA). Notes:
+1. **Bad-cache recovery — implemented and verified.** The flag is now persisted only *after* a
+   re-exec has used the cache without an early crash (**verify-before-persist**), so a fatal cache
+   can never be baked into the `.cfg`. If a cache does crash early, it is deleted, the `.cfg` flag
+   is stripped, and a `weasis-<ver>-<stamp>.disabled` marker is written so AOT is skipped for that
+   build (no loop, no brick) until an app/runtime update changes the stamp. Verified end-to-end on
+   **JDK 26 with `classlinking=true`** (a genuinely fatal cache): L1 trains (not persisted), L2
+   crashes → recovers and starts without AOT, L3 skips AOT single-process — the app started every
+   time. This is the safety prerequisite for ever defaulting `classlinking` on.
+2. On the 27-EA jlink runtime, `jogamp-linux-x86-64` failed to load (`libjawt.so` missing) — a
+   runtime/module packaging issue to check for JDK 27, unrelated to AOT (3D only).
+
+### Opt B detail — overlap SSL trust store with the boot work
+
+The merged system trust store (platform certs + JVM cacerts, ~98 ms) was built **synchronously**
+before `ConfigData` and the L&F/splash. None of that non-network work needs it, so it now runs on
+a daemon thread and is **joined at the one network choke point** instead.
+
+- **Mechanism:** `PlatformCertificateLoader.startAsyncSetup()` (fired first thing in
+  `AppLauncher.main`) + `awaitReady()`, called at the top of `FileUtil.getAdaptedConnection` — the
+  single method every launcher HTTPS use (remote config, remote prefs, plugin downloads,
+  resources) routes through. So **consistency is structural**: no connection opens until the trust
+  store is installed, exactly the "SSL before downloads" requirement — and it also covers remote
+  config/prefs, not just downloads.
+- **Gain:** overlaps ~98 ms of SSL with `ConfigData` + `loadProperties` (~488 ms of non-network
+  work) → hidden on the common **local-config** launch (packaged/dev), saving ~0.1 s every launch.
+  A **remote-config** launch (`cdb=`) makes its first HTTPS call during `ConfigData`, so `awaitReady`
+  blocks there ~98 ms — same as before, no regression, just no gain in that case.
+- **Markers:** `*PERF* Loading system trust store` (now logged from the async thread) and
+  `*PERF* Awaited system trust store` (only if a consumer actually had to wait — a signal the
+  overlap didn't fully hide it).
+- **Not done (bigger, but warm-neutral):** overlapping the *download* phase with L&F was considered
+  and rejected for now — on a warm stable-release launch there are **no downloads** (classpath +
+  cached non-SNAPSHOT jars are all skipped), so it would only help cold/remote launches, and it
+  couples to the splash/`WeasisLoader` progress UI. SSL is the universally-present cost, so it was
+  the right target.
+
+### Opt C detail — Bootstrap split (make the AOT relaunch net-positive)
+
+The AOT cache is faster in-process (−300 ms) but the stage-1 relaunch cancels it end-to-end. The
+cost was that stage 1 only reached `AotCache.relaunch` **after** the JVM loaded `AppLauncher`,
+whose static initializer builds the whole Logback boot-log stack (and pulls in the launcher's
+dependency graph). The parent paid all of that just to spawn the child and exit.
+
+- **Mechanism:** a new dependency-free `Bootstrap.main` is the packaged `--main-class`. It calls
+  `AotCache.relaunch(argv)` first; only in the non-relaunch path (stage-2 child / AOT off) does it
+  reference `AppLauncher.main`, so the JVM loads `AppLauncher` (and its static Logback setup)
+  **lazily, never in the stage-1 parent**. `AppLauncher.main` no longer does the relaunch check.
+- **Measurement fix:** `t0` (the relaunch-overhead baseline in `AotCache.buildToolOptions`) now uses
+  the parent **JVM start time** instead of the spawn time, so `*PERF* AOT relaunch overhead` +
+  `*PERF* Global starting` together give the honest end-to-end number. The old spawn-time baseline
+  would have hidden C's improvement (C shrinks the parent's *pre-spawn* class loading, which the old
+  baseline started counting after).
+- **Scope:** only the main app uses `Bootstrap` (packaged `package-weasis.sh` ×2 +
+  `build-installer.yml`); the **Dicomizer** and the **IDE dev** run keep `AppLauncher` directly —
+  they don't want the relaunch (Dicomizer sets `-Dweasis.aot.cache=false`). Linux
+  `Weasis.desktop` `StartupWMClass` updated to `org-weasis-launcher-Bootstrap` to keep taskbar
+  grouping (AWT derives WM_CLASS from the main class).
+- **Validate on a packaged build:** cold run trains; warm run should show `*PERF* AOT relaunch
+  overhead` markedly lower than before C, and a lower end-to-end `Global starting`. Watch the Linux
+  taskbar icon still groups under the app.
+- **Measured verdict:** C was necessary but **not sufficient** — the re-exec still costs ~485 ms
+  (a whole second JVM), which cancels AOT's ~430 ms in-process gain (net +57 ms). The follow-up
+  below removes the re-exec on warm launches and is what actually makes AOT pay off.
+
+### Opt C′ detail — persist the AOT flag, drop the warm re-exec (the real win)
+
+`-XX:AOTCache` must be present at JVM start, which is the *only* reason for the re-exec. So after
+the cache is trained once, `AotCache.persistAotFlag` appends `java-options=-XX:AOTCache=<cache>` to
+the launcher `.cfg`; every later launch then starts the JVM with the flag already set — **single
+process, no re-exec**. `relaunch()` returns immediately when it sees the flag active
+(`hasAotCacheFlag`).
+
+- **Flow:** launch 1 (cache missing) trains via the one re-exec, then persists the flag (never
+  *before* the training child, or it would get both `-XX:AOTCache` and `-XX:AOTCacheOutput` and
+  refuse to start); launch 2+ are single-process `mode:use`. Measured **~1585 ms end-to-end vs
+  ~2040 ms baseline = −455 ms (−22%)** (see §1 row 5).
+- **Read-only installs:** if the `.cfg` is not writable (system install, `/opt`, Program Files),
+  `persistAotFlag` returns false and it falls back to the per-launch re-exec — correct, just not
+  single-process. A writable `.cfg` (app-image / per-user install) is also effectively single-user,
+  so persisting a per-user cache path into it is safe.
+- **Staleness / update:** the persisted line is version+runtime-stamped; a reinstall ships a fresh
+  `.cfg` (line gone → retrain+repersist), and a stale path just degrades gracefully (missing cache
+  → JVM runs normally) then gets replaced on the next training.
+
+### Opt F — DROPPED (premise invalidated by measurement, 2026-07-19)
+
+Opt F assumed pf4j **plugin-classloader** classes (and the libraries shaded into a plugin jar)
+are never AOT-cached, so un-shading dcm4che into `common-lib/` would let the cache reach it. A
+`-Xlog:class+load=info` run on the warm single-process AOT build proved otherwise:
+
+- `org.dcm4che3.*` at startup: **46/46 classes `source: shared objects file`** (AOT-cached) —
+  *while still shaded inside the `dicom-codec` plugin jar*.
+- `org.weasis.dicom.codec.*` (the plugin's own classes): **48/48 cached** too.
+
+So on **JDK 26 the AOT cache already serves pf4j plugin classes** (this is unlike *agent-appended*
+jars via `appendToSystemClassLoaderSearch`, which are never cached — the earlier note that
+misled this plan). Un-shading would move dcm4che from "cached plugin class" to "cached classpath
+class" — the same cache at the same speed, **~0 warm-up gain**. `dicom-codec`'s residual ~226 ms
+warm is the dcm4che **dictionary XML parse** (`uids.xml`/`dataelements.xml`, data not classes) plus
+SPI/init work, neither of which un-shading touches. F's only remaining upside is cosmetic (thinner
+jar, possible `osgi-resource-locator` removal) — not worth the build-refactor risk for the warm-up
+goal. **Not pursued.** Original analysis kept below for the record.
+
+### Opt F detail (original, superseded) — un-shade `dicom-codec`
 
 `weasis-dicom-codec` is a shaded fat jar: of **913 classes only 114** (`org.weasis.dicom.codec`)
 are the plugin; **~800 (~87%) are embedded libraries** that load through the pf4j plugin
