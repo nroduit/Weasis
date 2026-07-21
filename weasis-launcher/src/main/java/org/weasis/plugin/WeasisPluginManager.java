@@ -24,6 +24,7 @@ import org.pf4j.ExtensionFactory;
 import org.pf4j.PluginDescriptorFinder;
 import org.pf4j.PluginFactory;
 import org.pf4j.PluginLoader;
+import org.pf4j.PluginState;
 import org.pf4j.PluginWrapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -156,6 +157,66 @@ public class WeasisPluginManager extends DefaultPluginManager {
     pluginsRoots.add(path);
     if (wasEmpty) {
       initialize();
+    }
+  }
+
+  /**
+   * Starts the resolved plugins one by one in dependency order, logging each plugin's start time so
+   * the slow activators can be ranked ({@code *PERF* Plugin start, id:<id> time:<ms>}). Equivalent
+   * to {@link #startPlugins()} but instrumented; dependencies are already started when their
+   * dependents are reached, so each measurement reflects only that plugin's own {@code start()}.
+   */
+  public void startPluginsTimed() {
+    long total = System.currentTimeMillis();
+    for (PluginWrapper wrapper : getResolvedPlugins()) {
+      startPluginTimed(wrapper);
+    }
+    LOGGER.info("*PERF* Plugins start total, time:{}", System.currentTimeMillis() - total);
+  }
+
+  /**
+   * Progressive startup: starts every resolved plugin except those in {@code deferredIds}, and
+   * starts the main-UI plugin last so the window is built after the eager plugins (DICOM codec,
+   * explorer, 2D viewer, OpenCV native) have registered their factories. The caller opens the
+   * launch images next, then {@link #startRemainingPlugins()} starts the deferred (secondary)
+   * plugins behind the already-visible window.
+   */
+  public void startEagerPlugins(String mainUiId, Set<String> deferredIds) {
+    long total = System.currentTimeMillis();
+    PluginWrapper mainUi = null;
+    for (PluginWrapper wrapper : getResolvedPlugins()) {
+      String id = wrapper.getPluginId();
+      if (id.equals(mainUiId)) {
+        mainUi = wrapper;
+      } else if (!deferredIds.contains(id)) {
+        startPluginTimed(wrapper);
+      }
+    }
+    if (mainUi != null) {
+      startPluginTimed(mainUi);
+    }
+    LOGGER.info("*PERF* Eager plugins start total, time:{}", System.currentTimeMillis() - total);
+  }
+
+  /** Starts every resolved plugin not yet started (the deferred set), in dependency order. */
+  public void startRemainingPlugins() {
+    long total = System.currentTimeMillis();
+    for (PluginWrapper wrapper : getResolvedPlugins()) {
+      startPluginTimed(wrapper);
+    }
+    LOGGER.info("*PERF* Deferred plugins start total, time:{}", System.currentTimeMillis() - total);
+  }
+
+  private void startPluginTimed(PluginWrapper wrapper) {
+    if (wrapper.getPluginState() == PluginState.STARTED) {
+      return;
+    }
+    String id = wrapper.getPluginId();
+    long start = System.currentTimeMillis();
+    try {
+      startPlugin(id);
+    } finally {
+      LOGGER.info("*PERF* Plugin start, id:{} time:{}", id, System.currentTimeMillis() - start);
     }
   }
 

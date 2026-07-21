@@ -10,7 +10,9 @@
 package org.weasis.launcher;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -64,5 +66,17 @@ class AutoProcessorTest {
   @Test
   void getPluginNameFromLocationHandlesNull() {
     assertNull(AutoProcessor.getPluginNameFromLocation(null));
+  }
+
+  @Test
+  void releaseJarsAreAlwaysCacheable() {
+    assertTrue(AutoProcessor.isCacheable("weasis-core-5.0.0", false));
+    assertTrue(AutoProcessor.isCacheable("weasis-core-5.0.0", true));
+  }
+
+  @Test
+  void snapshotJarsAreCacheableOnlyInWarmupMode() {
+    assertFalse(AutoProcessor.isCacheable("weasis-core-5.0.0-SNAPSHOT", false));
+    assertTrue(AutoProcessor.isCacheable("weasis-core-5.0.0-SNAPSHOT", true));
   }
 }

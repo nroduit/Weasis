@@ -113,9 +113,9 @@ jobs:
         shell: bash
         run: |
           if [ "${{ matrix.wsystem }}" = "windows" ]; then
-            echo "JDK_MODULES=java.base,java.compiler,java.datatransfer,java.instrument,java.net.http,java.desktop,java.logging,java.management,jdk.management,java.prefs,java.xml,jdk.localedata,jdk.charsets,jdk.crypto.ec,jdk.crypto.cryptoki,jdk.crypto.mscapi,jdk.jdwp.agent,java.sql" >> $GITHUB_ENV
+            echo "JDK_MODULES=java.base,java.compiler,java.datatransfer,java.instrument,java.net.http,java.desktop,java.logging,java.management,jdk.management,java.prefs,java.xml,jdk.localedata,jdk.charsets,jdk.crypto.ec,jdk.crypto.cryptoki,jdk.crypto.mscapi,jdk.jdwp.agent,jdk.jfr,java.sql" >> $GITHUB_ENV
           else
-            echo "JDK_MODULES=java.base,java.compiler,java.datatransfer,java.instrument,java.net.http,java.desktop,java.logging,java.management,jdk.management,java.prefs,java.xml,jdk.localedata,jdk.charsets,jdk.crypto.ec,jdk.crypto.cryptoki,jdk.jdwp.agent,java.sql" >> $GITHUB_ENV
+            echo "JDK_MODULES=java.base,java.compiler,java.datatransfer,java.instrument,java.net.http,java.desktop,java.logging,java.management,jdk.management,java.prefs,java.xml,jdk.localedata,jdk.charsets,jdk.crypto.ec,jdk.crypto.cryptoki,jdk.jdwp.agent,jdk.jfr,java.sql" >> $GITHUB_ENV
           fi
       - name: Set output version from build
         shell: bash

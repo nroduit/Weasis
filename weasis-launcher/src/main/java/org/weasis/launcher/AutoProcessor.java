@@ -51,6 +51,14 @@ public class AutoProcessor {
   public static final String PLUGIN_STORAGE_CLEAN = "weasis.plugin.cache.clean";
   public static final String PLUGIN_STORAGE_CLEAN_ONFIRSTINIT = "onFirstInit";
 
+  /**
+   * Launcher-only system property ({@code -Dweasis.plugin.cache.warmup=true}, not a shipped
+   * configuration key): keeps the populated cache across launches so a development ({@code
+   * -SNAPSHOT}) build can be benchmarked like a stable release — the startup wipe is skipped and
+   * {@code -SNAPSHOT} jars are treated as immutable (reused from the cache instead of re-copied).
+   */
+  public static final String PLUGIN_CACHE_WARMUP = "weasis.plugin.cache.warmup";
+
   private AutoProcessor() {}
 
   /**
@@ -82,13 +90,18 @@ public class AutoProcessor {
     Path pluginsDir = pluginManager.getPluginCachePath();
     Path cacheDir = pluginsDir.getParent();
 
-    // Check if we need to clean cache
+    boolean warmup = Boolean.getBoolean(PLUGIN_CACHE_WARMUP);
+
+    // Warm-up mode keeps the cache to benchmark a warm start, so it overrides the startup wipe.
     boolean cleanCache =
-        PLUGIN_STORAGE_CLEAN_ONFIRSTINIT.equals(configMap.get(PLUGIN_STORAGE_CLEAN));
+        !warmup && PLUGIN_STORAGE_CLEAN_ONFIRSTINIT.equals(configMap.get(PLUGIN_STORAGE_CLEAN));
 
     if (cleanCache) {
       LOGGER.info("Cleaning plugin cache");
       FileUtil.delete(cacheDir);
+    }
+    if (warmup) {
+      LOGGER.info("*PERF* Plugin cache warm-up mode enabled (SNAPSHOT jars treated as cacheable)");
     }
 
     int maxLevel = Integer.parseInt(configMap.getOrDefault(PLUGINS_MAX_LEVEL_PROP, "300"));
@@ -131,10 +144,11 @@ public class AutoProcessor {
       String pluginName = entry.getKey();
       String location = entry.getValue();
 
+      boolean cacheable = isCacheable(pluginName, warmup);
+
       // Jars shipped on the application classpath (packaged app: common-lib/) are already in the
       // system classloader and must not be duplicated in the per-user cache.
-      boolean onClasspath =
-          !pluginName.endsWith("-SNAPSHOT") && classpathJars.contains(pluginName + JAR_EXTENSION);
+      boolean onClasspath = cacheable && classpathJars.contains(pluginName + JAR_EXTENSION);
 
       try {
         Path pluginPath = null;
@@ -142,7 +156,7 @@ public class AutoProcessor {
           LOGGER.debug("On the application classpath, skipping download: {}", pluginName);
         } else {
           weasisLoader.writeLabel(WeasisLoader.LBL_DOWNLOADING + " " + pluginName);
-          pluginPath = downloadPlugin(cacheDir, location, pluginName, httpCache);
+          pluginPath = downloadPlugin(cacheDir, location, pluginName, httpCache, cacheable);
         }
 
         if (onClasspath || pluginPath != null) {
@@ -221,7 +235,8 @@ public class AutoProcessor {
    * @return The path to the downloaded plugin, or null if failed
    */
   private static Path downloadPlugin(
-      Path pluginsDir, String location, String pluginName, boolean httpCache) throws IOException {
+      Path pluginsDir, String location, String pluginName, boolean httpCache, boolean cacheable)
+      throws IOException {
 
     // Check if it's a compressed plugin
     boolean isCompressed = location.endsWith(XZ_COMPRESSION);
@@ -234,7 +249,7 @@ public class AutoProcessor {
     String fileName = pluginName + JAR_EXTENSION;
     Path targetPath = pluginsDir.resolve(ConfigData.F_PLUGIN_FOLDER).resolve(fileName);
 
-    if (!pluginName.endsWith("-SNAPSHOT")) {
+    if (cacheable) {
       if (Files.exists(targetPath)) {
         LOGGER.debug("Plugin already exists in cache: {}", targetPath);
         return targetPath;
@@ -354,7 +369,7 @@ public class AutoProcessor {
           }
 
           if (needsDownload) {
-            downloadPlugin(pluginsDir, uri, i18nPluginName, httpCache);
+            downloadPlugin(pluginsDir, uri, i18nPluginName, httpCache, true);
             LOGGER.info("Downloaded translation plugin: {}", i18nPluginName);
           }
 
@@ -371,6 +386,14 @@ public class AutoProcessor {
    * @param location The plugin location
    * @return The plugin name without extension
    */
+  /**
+   * A jar is treated as immutable — its cached copy is reused instead of re-downloaded — when it is
+   * a fixed release version, or when warm-up mode forces even {@code -SNAPSHOT} jars to be cached.
+   */
+  static boolean isCacheable(String pluginName, boolean warmup) {
+    return warmup || !pluginName.endsWith("-SNAPSHOT");
+  }
+
   static String getPluginNameFromLocation(String location) {
     if (location != null) {
       int index = location.lastIndexOf('/');
