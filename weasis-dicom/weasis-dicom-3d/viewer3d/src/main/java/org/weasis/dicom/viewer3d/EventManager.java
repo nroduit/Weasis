@@ -372,7 +372,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> {
 
   private ComboItemListener<Preset> newPreset3DAction() {
     return new ComboItemListener<>(
-        ActionVol.VOL_PRESET, Preset.basicPresets.toArray(new Preset[0])) {
+        ActionVol.VOL_PRESET, Preset.getAllPresets().toArray(new Preset[0])) {
 
       @Override
       public void itemStateChanged(Object object) {

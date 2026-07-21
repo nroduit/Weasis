@@ -91,6 +91,42 @@ public class PresetPoint {
     return diffuse;
   }
 
+  public void setIntensity(int intensity) {
+    this.intensity = intensity;
+  }
+
+  public void setOpacity(float opacity) {
+    this.opacity = opacity;
+  }
+
+  public void setRed(Float red) {
+    this.red = red;
+  }
+
+  public void setGreen(Float green) {
+    this.green = green;
+  }
+
+  public void setBlue(Float blue) {
+    this.blue = blue;
+  }
+
+  public void setSpecular(Float specular) {
+    this.specular = specular;
+  }
+
+  public void setAmbient(Float ambient) {
+    this.ambient = ambient;
+  }
+
+  public void setDiffuse(Float diffuse) {
+    this.diffuse = diffuse;
+  }
+
+  public PresetPoint copy() {
+    return new PresetPoint(intensity, opacity, red, green, blue, specular, ambient, diffuse);
+  }
+
   public static float convertFloat(Float val, float defaultValue) {
     return val == null ? defaultValue : val;
   }

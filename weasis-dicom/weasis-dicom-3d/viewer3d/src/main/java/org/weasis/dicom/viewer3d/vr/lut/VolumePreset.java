@@ -52,6 +52,30 @@ public class VolumePreset {
     return specularPower;
   }
 
+  public void setName(String name) {
+    this.name = name;
+  }
+
+  public void setModality(String modality) {
+    this.modality = modality;
+  }
+
+  public void setDefaultElement(boolean defaultElement) {
+    this.defaultElement = defaultElement;
+  }
+
+  public void setShade(boolean shade) {
+    this.shade = shade;
+  }
+
+  public void setSpecularPower(float specularPower) {
+    this.specularPower = specularPower;
+  }
+
+  public void setGroups(PresetGroup[] groups) {
+    this.groups = groups;
+  }
+
   public List<PresetGroup> getGroups() {
     if (groups.length > 0) {
       PresetGroup lastGroup = groups[groups.length - 1];

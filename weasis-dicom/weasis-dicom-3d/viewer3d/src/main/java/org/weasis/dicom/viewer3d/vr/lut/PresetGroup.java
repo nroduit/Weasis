@@ -10,6 +10,7 @@
 package org.weasis.dicom.viewer3d.vr.lut;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import java.util.Arrays;
 
 public class PresetGroup {
   @JsonProperty("name")
@@ -33,5 +34,19 @@ public class PresetGroup {
 
   public PresetPoint[] getPoints() {
     return points;
+  }
+
+  public void setName(String name) {
+    this.name = name;
+  }
+
+  public void setPoints(PresetPoint[] points) {
+    this.points = points;
+  }
+
+  public PresetGroup copy() {
+    PresetPoint[] copiedPoints =
+        Arrays.stream(points).map(PresetPoint::copy).toArray(PresetPoint[]::new);
+    return new PresetGroup(name, copiedPoints);
   }
 }

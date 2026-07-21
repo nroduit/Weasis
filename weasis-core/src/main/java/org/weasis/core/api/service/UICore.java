@@ -32,6 +32,7 @@ import java.lang.management.ManagementFactory;
 import java.net.HttpURLConnection;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -227,6 +228,41 @@ public final class UICore {
       }
       if (http.urlConnection() instanceof HttpURLConnection httpURLConnection) {
         NetworkUtil.readResponse(httpURLConnection, urlParameters.headers());
+      }
+    }
+  }
+
+  /**
+   * Stores a file remotely to the preference service URL when it is configured. Does nothing if no
+   * remote pref URL is set or the session conditions prevent remote storage.
+   *
+   * @param filePath the local file to upload
+   * @param contentType the MIME type of the content (e.g. {@code "application/json"})
+   */
+  public void storeRemotePref(Path filePath, String contentType) {
+    String remotePrefURL = getPrefServiceUrl();
+    if (remotePrefURL != null) {
+      try {
+        if (!isLocalSession() || isStoreLocalSession()) {
+          String sURL =
+              String.format(
+                  "%s?user=%s&profile=%s", // NON-NLS
+                  remotePrefURL,
+                  getUrlEncoding(AppProperties.WEASIS_USER),
+                  getUrlEncoding(AppProperties.WEASIS_PROFILE));
+          Map<String, String> map = new HashMap<>();
+          map.put("Content-Type", contentType); // NON-NLS
+          URLParameters urlParameters = new URLParameters(map, true);
+          ClosableURLConnection http = NetworkUtil.getUrlConnection(sURL, urlParameters);
+          try (OutputStream out = http.getOutputStream()) {
+            Files.copy(filePath, out);
+          }
+          if (http.urlConnection() instanceof HttpURLConnection httpURLConnection) {
+            NetworkUtil.readResponse(httpURLConnection, urlParameters.headers());
+          }
+        }
+      } catch (Exception e) {
+        LOGGER.error("Cannot store remote preference for user: {}", AppProperties.WEASIS_USER, e);
       }
     }
   }
