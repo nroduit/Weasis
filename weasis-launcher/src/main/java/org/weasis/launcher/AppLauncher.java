@@ -87,19 +87,12 @@ public class AppLauncher extends WeasisLauncher implements Singleton.SingletonAp
         "*PERF* JVM start, type:INIT time:{}",
         (System.currentTimeMillis() - ManagementFactory.getRuntimeMXBean().getStartTime()));
 
-    long startTime = System.currentTimeMillis();
-    try {
-      PlatformCertificateLoader.setupDefaultSSLContext();
-      LOGGER.info(
-          "*PERF* Loading system trust store, type:INIT time:{}",
-          (System.currentTimeMillis() - startTime));
-    } catch (Exception e) {
-      LOGGER.error("Cannot setup default SSL context by merging with system certificates", e);
-    }
+    // Build the merged system trust store on a background thread
+    PlatformCertificateLoader.startAsyncSetup();
 
     final Type launchType = Type.NATIVE;
 
-    startTime = System.currentTimeMillis();
+    long startTime = System.currentTimeMillis();
     ConfigData configData = new ConfigData(argv);
     LOGGER.info(
         "*PERF* Loading config, type:INIT time:{}", (System.currentTimeMillis() - startTime));

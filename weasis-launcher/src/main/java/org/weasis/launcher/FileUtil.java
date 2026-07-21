@@ -241,6 +241,11 @@ public class FileUtil {
   }
 
   public static URLConnection getAdaptedConnection(URL url, boolean useCaches) throws IOException {
+    // Only an HTTPS connection needs the merged system trust store; file:/http: reads must not
+    // block on it, otherwise an early local config/prefs read would wait out the whole async setup.
+    if ("https".equalsIgnoreCase(url.getProtocol())) { // NON-NLS
+      PlatformCertificateLoader.awaitReady();
+    }
     URLConnection connection = url.openConnection();
     connection.setUseCaches(useCaches);
     // Support for http proxy authentication. To remove in version 5
