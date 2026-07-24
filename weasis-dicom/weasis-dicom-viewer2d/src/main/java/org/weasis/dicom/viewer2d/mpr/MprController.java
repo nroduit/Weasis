@@ -10,6 +10,7 @@
 package org.weasis.dicom.viewer2d.mpr;
 
 import java.awt.Cursor;
+import java.awt.Dimension;
 import java.awt.Point;
 import java.awt.Toolkit;
 import java.awt.event.MouseEvent;
@@ -28,7 +29,10 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ForkJoinPool;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.BiConsumer;
 import java.util.stream.Stream;
+import javax.swing.JProgressBar;
 import javax.swing.Timer;
 import org.dcm4che3.data.Tag;
 import org.joml.Quaterniond;
@@ -40,6 +44,7 @@ import org.weasis.core.api.gui.util.Feature;
 import org.weasis.core.api.gui.util.Feature.ComboItemListenerValue;
 import org.weasis.core.api.gui.util.GeomUtil;
 import org.weasis.core.api.gui.util.GuiExecutor;
+import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.ui.editor.SeriesViewerEvent;
 import org.weasis.core.ui.editor.SeriesViewerEvent.EVENT;
 import org.weasis.core.ui.editor.image.DefaultView2d;
@@ -53,6 +58,7 @@ import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.seg.SegSpecialElement;
 import org.weasis.dicom.codec.seg.SegmentationVolume;
 import org.weasis.dicom.viewer2d.EventManager;
+import org.weasis.dicom.viewer2d.Messages;
 import org.weasis.dicom.viewer2d.View2d;
 import org.weasis.dicom.viewer2d.mip.MipView;
 import org.weasis.dicom.viewer2d.mip.MipView.Type;
@@ -184,6 +190,14 @@ public class MprController
    * volume used by {@link MprView#updateSegmentation()}.
    */
   public void buildSegElements() {
+    buildSegElements(null);
+  }
+
+  /**
+   * Same as {@link #buildSegElements()} with an optional progress callback invoked after each SEG
+   * volume is built with {@code (done, total)}.
+   */
+  private void buildSegElements(BiConsumer<Integer, Integer> progress) {
     disposeSegVolumes();
     segElements.clear();
     if (volume == null || volume.getStack() == null) {
@@ -214,22 +228,30 @@ public class MprController
     // shared lists once with the collected results.
     record SegPair(SegSpecialElement seg, SegmentationVolume vol) {}
     final Volume<?, ?> imageVolume = volume;
+    final int total = elements.size();
+    final AtomicInteger done = new AtomicInteger();
     List<SegPair> built =
         elements.parallelStream()
             .map(
                 seg -> {
-                  DicomSeries segSeries =
-                      seg.getMediaReader() == null ? null : seg.getMediaReader().getMediaSeries();
-                  if (segSeries == null) {
-                    return null;
+                  try {
+                    DicomSeries segSeries =
+                        seg.getMediaReader() == null ? null : seg.getMediaReader().getMediaSeries();
+                    if (segSeries == null) {
+                      return null;
+                    }
+                    // Reuse the SEG's per-image-volume cached resample when available so a second
+                    // MPR open (or the 3D viewer for the same image volume) does not redo the
+                    // expensive frame splatting.
+                    SegmentationVolume segVolume =
+                        seg.getOrBuildAlignedVolume(
+                            imageVolume, s -> SegVolumeBuilder.build(s, segSeries, imageVolume));
+                    return segVolume == null ? null : new SegPair(seg, segVolume);
+                  } finally {
+                    if (progress != null) {
+                      progress.accept(done.incrementAndGet(), total);
+                    }
                   }
-                  // Reuse the SEG's per-image-volume cached resample when available so a second
-                  // MPR open (or the 3D viewer for the same image volume) does not redo the
-                  // expensive frame splatting.
-                  SegmentationVolume segVolume =
-                      seg.getOrBuildAlignedVolume(
-                          imageVolume, s -> SegVolumeBuilder.build(s, segSeries, imageVolume));
-                  return segVolume == null ? null : new SegPair(seg, segVolume);
                 })
             .filter(Objects::nonNull)
             .toList();
@@ -252,8 +274,22 @@ public class MprController
     if (previous != null && !previous.isDone()) {
       previous.cancel(true);
     }
+    // Inform the user in every MPR view while the SEG volumes build in the background.
+    JProgressBar bar = createSegProgressBar();
+    setSegProgressBar(container, bar);
     CompletableFuture<Void> future =
-        CompletableFuture.runAsync(this::buildSegElements, ForkJoinPool.commonPool())
+        CompletableFuture.runAsync(
+                () ->
+                    buildSegElements(
+                        (done, total) ->
+                            GuiExecutor.execute(
+                                () -> {
+                                  bar.setMaximum(total);
+                                  bar.setValue(done);
+                                  repaintMprViews(container);
+                                })),
+                ForkJoinPool.commonPool())
+            .whenComplete((r, t) -> setSegProgressBar(container, null))
             .thenRun(
                 () ->
                     GuiExecutor.execute(
@@ -284,6 +320,46 @@ public class MprController
                         }));
     this.segBuildFuture = future;
     return future;
+  }
+
+  private static JProgressBar createSegProgressBar() {
+    JProgressBar bar = new JProgressBar(0, 1);
+    Dimension dim = new Dimension(GuiUtils.getScaleLength(200), GuiUtils.getScaleLength(30));
+    bar.setSize(dim);
+    bar.setPreferredSize(dim);
+    bar.setMaximumSize(dim);
+    bar.setStringPainted(true);
+    bar.setString(Messages.getString("seg.loading"));
+    return bar;
+  }
+
+  /** Sets (or clears with {@code null}) the seg loading bar on every MPR view of the container. */
+  private static void setSegProgressBar(MprContainer container, JProgressBar bar) {
+    if (container == null) {
+      return;
+    }
+    GuiExecutor.execute(
+        () -> {
+          for (Plane plane : Plane.values()) {
+            MprView view = container.getMprView(plane);
+            if (view != null) {
+              view.setProgressBar(bar);
+              view.repaint();
+            }
+          }
+        });
+  }
+
+  private static void repaintMprViews(MprContainer container) {
+    if (container == null) {
+      return;
+    }
+    for (Plane plane : Plane.values()) {
+      MprView view = container.getMprView(plane);
+      if (view != null) {
+        view.repaint();
+      }
+    }
   }
 
   /**
