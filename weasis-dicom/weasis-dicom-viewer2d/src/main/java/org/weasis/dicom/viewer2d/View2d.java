@@ -11,6 +11,7 @@ package org.weasis.dicom.viewer2d;
 
 import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.FontMetrics;
 import java.awt.Graphics2D;
 import java.awt.GridBagConstraints;
 import java.awt.Point;
@@ -67,6 +68,7 @@ import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.service.AuditLog;
+import org.weasis.core.api.util.FontTools;
 import org.weasis.core.ui.dialog.MeasureDialog;
 import org.weasis.core.ui.editor.image.CalibrationView;
 import org.weasis.core.ui.editor.image.ContextMenuHandler;
@@ -135,9 +137,14 @@ public class View2d extends DefaultView2d<DicomImageElement> {
   private final Dimension oldSize;
   private final ContextMenuHandler contextMenuHandler;
   private volatile BufferedImage segOverlayImage; // NOSONAR visibility reference
+
+  /** {@code true} while a displayed segmentation's canonical volume builds in the background. */
+  private volatile boolean segLoading;
+
   protected Vector3d lastCrosshairPosition;
 
   protected final KOViewButton koStarButton;
+  protected final ViewButton segSelectionButton;
 
   public View2d(ImageViewerEventManager<DicomImageElement> eventManager) {
     super(eventManager);
@@ -164,6 +171,8 @@ public class View2d extends DefaultView2d<DicomImageElement> {
     this.koStarButton = KOComponentFactory.buildKoStarButton(this);
     koStarButton.setPosition(GridBagConstraints.NORTHEAST);
     getViewButtons().add(koStarButton);
+    this.segSelectionButton = SegComponentFactory.buildSegSelectionButton(this);
+    getViewButtons().add(segSelectionButton);
   }
 
   private List<MeasurableLayer> getFusionStatsLayers() {
@@ -740,6 +749,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
   private void updateSegmentation(DicomImageElement img) {
     graphicManager.deleteByLayerType(LayerType.DICOM_SEG);
     segOverlayImage = null;
+    boolean building = false;
     if (series != null && img != null) {
       String patientPseudoUID = DicomModel.getPatientPseudoUID(series);
       List<SpecialElementRegion> segList =
@@ -749,6 +759,9 @@ public class View2d extends DefaultView2d<DicomImageElement> {
         Set<SegContour> contours = new LinkedHashSet<>();
         for (SpecialElementRegion seg : segList) {
           if (seg.isVisible() && seg.containsSopInstanceUIDReference(img)) {
+            if (seg.isSegmentationVolumeBuilding()) {
+              building = true;
+            }
             Set<LazyContourLoader> loaders = seg.getContours(img);
             if (loaders != null && !loaders.isEmpty()) {
               for (LazyContourLoader lazyLoader : loaders) {
@@ -793,6 +806,17 @@ public class View2d extends DefaultView2d<DicomImageElement> {
         }
       }
     }
+    this.segLoading = building;
+    updateSegButtonVisibleState(img);
+  }
+
+  private void updateSegButtonVisibleState(DicomImageElement img) {
+    boolean available =
+        series != null && img != null && !SegComponentFactory.getRelatedSegments(this).isEmpty();
+    if (segSelectionButton.isVisible() != available) {
+      segSelectionButton.setVisible(available);
+      repaint();
+    }
   }
 
   @Override
@@ -806,6 +830,18 @@ public class View2d extends DefaultView2d<DicomImageElement> {
       g2d.drawImage(overlay, affineTransform, null);
       g2d.translate(-p.getX(), -p.getY());
     }
+    if (segLoading) {
+      drawSegLoadingMessage(g2d);
+    }
+  }
+
+  private void drawSegLoadingMessage(Graphics2D g2d) {
+    String msg = Messages.getString("seg.loading");
+    g2d.setFont(getLayerFont());
+    FontMetrics fm = g2d.getFontMetrics();
+    float x = (getWidth() - fm.stringWidth(msg)) / 2f;
+    float y = getHeight() - fm.getHeight() * 2f;
+    FontTools.paintColorFontOutline(g2d, msg, x, y, Color.ORANGE);
   }
 
   protected void sortStack(Comparator<DicomImageElement> sortComparator) {

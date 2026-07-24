@@ -18,8 +18,11 @@ import java.util.Objects;
 import java.util.Set;
 import org.dcm4che3.data.Tag;
 import org.joml.Vector3d;
+import org.weasis.core.api.media.data.MediaElement;
+import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.TagW;
+import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.codec.geometry.ImageOrientation;
 import org.weasis.dicom.codec.seg.LazyContourLoader;
 import org.weasis.dicom.codec.seg.SegmentationVolume;
@@ -55,6 +58,21 @@ public interface SpecialElementRegion {
   boolean isVisible();
 
   void setVisible(boolean visible);
+
+  /**
+   * Returns a stable key uniquely identifying this element (the SOP Instance UID when available).
+   * Unlike the display label — which may be identical for several objects of the same series — this
+   * key is safe for maps that associate per-element state across UI components.
+   */
+  default String getRegionUID() {
+    if (this instanceof MediaElement media) {
+      String uid = TagD.getTagValue(media, Tag.SOPInstanceUID, String.class);
+      if (StringUtil.hasText(uid)) {
+        return uid;
+      }
+    }
+    return Integer.toHexString(System.identityHashCode(this));
+  }
 
   /**
    * Returns {@code true} when the region's contour data is fully built and safe to query. The
@@ -160,6 +178,32 @@ public interface SpecialElementRegion {
    * false}.
    */
   default boolean isFractionalSeg() {
+    return false;
+  }
+
+  /**
+   * Returns {@code true} when this segmentation can be overlaid on images of the given series:
+   * either it explicitly references the series, or it shares the series' FrameOfReferenceUID and
+   * carries spatial data usable for position-based matching. This is the series-level counterpart
+   * of {@link #containsSopInstanceUIDReference(DicomImageElement)} — every segmentation that can
+   * render on some image of the series matches, so UI lists built from it cover everything the
+   * views may display.
+   */
+  default boolean matchesSeries(MediaSeries<?> series) {
+    if (series == null) {
+      return false;
+    }
+    String seriesUID = TagD.getTagValue(series, Tag.SeriesInstanceUID, String.class);
+    if (seriesUID != null && getRefMap().containsKey(seriesUID)) {
+      return true;
+    }
+    if (isReady() && !getPositionMap().isEmpty() && this instanceof DicomElement group) {
+      String frameOfRef = TagD.getTagValue(series, Tag.FrameOfReferenceUID, String.class);
+      String segFrameOfRef =
+          TagD.getTagValue(
+              group.getMediaReader().getMediaSeries(), Tag.FrameOfReferenceUID, String.class);
+      return frameOfRef != null && frameOfRef.equals(segFrameOfRef);
+    }
     return false;
   }
 
