@@ -96,6 +96,8 @@ import org.weasis.dicom.codec.DicomSeries;
 import org.weasis.dicom.codec.SortSeriesStack;
 import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.geometry.GeometryOfSlice;
+import org.weasis.dicom.codec.geometry.ImageOrientation;
+import org.weasis.dicom.codec.geometry.ImageOrientation.Plan;
 import org.weasis.dicom.codec.geometry.LocalizerPoster;
 import org.weasis.dicom.codec.seg.SegSpecialElement;
 import org.weasis.dicom.codec.seg.SegmentationVolume;
@@ -139,6 +141,24 @@ public class MprView extends View2d implements SliceCanvas, ViewProgress {
         if (plane.axisIndex == axisIndex) {
           return plane;
         }
+      }
+      return AXIAL;
+    }
+
+    /**
+     * Acquisition plane of an image, used to lay out the voxel axes of the volume built from its
+     * series. All the builders sharing a volume must agree on it, so they must all call this
+     * method.
+     *
+     * @return the closest standard plane, AXIAL when the orientation is oblique or unknown
+     */
+    public static Plane getAcquisitionPlane(DicomImageElement image) {
+      Plan orientation = ImageOrientation.getPlan(image);
+      if (Plan.CORONAL.equals(orientation)) {
+        return CORONAL;
+      }
+      if (Plan.SAGITTAL.equals(orientation)) {
+        return SAGITTAL;
       }
       return AXIAL;
     }

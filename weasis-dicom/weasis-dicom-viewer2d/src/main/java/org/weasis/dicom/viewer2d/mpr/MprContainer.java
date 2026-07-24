@@ -66,7 +66,6 @@ import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.TagD.Level;
 import org.weasis.dicom.codec.geometry.ImageOrientation;
-import org.weasis.dicom.codec.geometry.ImageOrientation.Plan;
 import org.weasis.dicom.explorer.DicomModel;
 import org.weasis.dicom.explorer.DicomViewerPlugin;
 import org.weasis.dicom.explorer.exp.ExportToolBar;
@@ -665,20 +664,13 @@ public class MprContainer extends DicomViewerPlugin
   public MprView selectLayoutPositionForAddingSeries(MediaSeries<DicomImageElement> s) {
     if (s != null) {
       Object img = s.getMedia(MediaSeries.MEDIA_POSITION.MIDDLE, null, null);
-      if (img instanceof DicomImageElement imageElement) {
-        Plan orientation = ImageOrientation.getPlan(imageElement);
-        if (orientation != null) {
-          Plane plane = Plane.AXIAL;
-          if (Plan.CORONAL.equals(orientation)) {
-            plane = Plane.CORONAL;
-          } else if (Plan.SAGITTAL.equals(orientation)) {
-            plane = Plane.SAGITTAL;
-          }
-          MprView view = getMprView(plane);
-          if (view != null) {
-            setSelectedImagePane(view);
-            return view;
-          }
+      // A null plan means no orientation tags, hence no geometry to build the volume from
+      if (img instanceof DicomImageElement imageElement
+          && ImageOrientation.getPlan(imageElement) != null) {
+        MprView view = getMprView(Plane.getAcquisitionPlane(imageElement));
+        if (view != null) {
+          setSelectedImagePane(view);
+          return view;
         }
       }
     }

@@ -202,6 +202,7 @@ public abstract class OriginalStack extends AbstractStack {
     }
     return Double.compare(getSliceSpace(), that.getSliceSpace()) == 0
         && isVariableSliceSpacing() == that.isVariableSliceSpacing()
+        && getPlane() == that.getPlane()
         && Objects.equals(getSourceStack(), that.getSourceStack())
         && Objects.equals(getFirstSliceGeometry(), that.getFirstSliceGeometry());
   }
@@ -209,7 +210,11 @@ public abstract class OriginalStack extends AbstractStack {
   @Override
   public int hashCode() {
     return Objects.hash(
-        getSourceStack(), getFirstSliceGeometry(), getSliceSpace(), isVariableSliceSpacing());
+        getSourceStack(),
+        getFirstSliceGeometry(),
+        getSliceSpace(),
+        isVariableSliceSpacing(),
+        getPlane());
   }
 
   /**

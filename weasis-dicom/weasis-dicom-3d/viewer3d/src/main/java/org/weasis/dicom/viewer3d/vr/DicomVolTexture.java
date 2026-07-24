@@ -9,6 +9,7 @@
  */
 package org.weasis.dicom.viewer3d.vr;
 
+import java.awt.Dimension;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
@@ -24,12 +25,9 @@ import org.joml.Vector3d;
 import org.joml.Vector3i;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
-import org.opencv.core.Rect;
 import org.opencv.core.Size;
+import org.opencv.imgproc.Imgproc;
 import org.weasis.core.api.gui.util.GuiExecutor;
-import org.weasis.core.api.image.SimpleOpManager;
-import org.weasis.core.api.image.ZoomOp;
-import org.weasis.core.api.image.ZoomOp.Interpolation;
 import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
@@ -42,8 +40,8 @@ import org.weasis.dicom.codec.geometry.ImageOrientation.Plan;
 import org.weasis.dicom.viewer2d.SegComponentFactory;
 import org.weasis.dicom.viewer2d.mpr.Volume;
 import org.weasis.dicom.viewer3d.ActionVol;
-import org.weasis.opencv.data.ImageCV;
 import org.weasis.opencv.data.PlanarImage;
+import org.weasis.opencv.op.ImageTransformer;
 import org.weasis.opencv.op.lut.DefaultWlPresentation;
 import org.weasis.opencv.op.lut.LutShape;
 
@@ -52,7 +50,6 @@ public class DicomVolTexture extends VolumeTexture implements MediaSeriesGroup {
   private final TagW tagID;
   private final Map<TagW, Object> tags;
   private final PropertyChangeSupport changeSupport;
-  private final SimpleOpManager manager;
   private final Vector3d scale;
   private final Volume<?, ?> volume;
   private final PropertyChangeListener crossHairRelay;
@@ -88,16 +85,6 @@ public class DicomVolTexture extends VolumeTexture implements MediaSeriesGroup {
     tex.y /= scale.y;
     tex.z /= scale.z;
     setTexelSize(tex);
-    if ((MathUtil.isDifferent(scale.x, 1.0) || MathUtil.isDifferent(scale.y, 1.0))) {
-      this.manager = new SimpleOpManager();
-      ZoomOp node = new ZoomOp();
-      node.setParam(ZoomOp.P_RATIO_X, scale.x);
-      node.setParam(ZoomOp.P_RATIO_Y, scale.y);
-      node.setParam(ZoomOp.P_INTERPOLATION, Interpolation.BILINEAR);
-      manager.addImageOperationAction(node);
-    } else {
-      this.manager = null;
-    }
     this.crossHairRelay =
         evt -> firePropertyChange(this, ActionVol.MPR_CROSSHAIR.cmd(), evt.getNewValue());
   }
@@ -119,19 +106,16 @@ public class DicomVolTexture extends VolumeTexture implements MediaSeriesGroup {
     volume.removeCrossHairChangeListener(crossHairRelay);
   }
 
+  /**
+   * Resizes a slice to the exact texture dimensions. A ratio-based zoom can produce an off-by-one
+   * size from floating-point truncation, which corrupts the {@code glTexSubImage3D} upload.
+   */
   public PlanarImage getScaledImage(PlanarImage image) {
-    PlanarImage output = null;
-    if (image != null) {
-      output = image;
-      if (manager != null) {
-        manager.setFirstNode(output);
-        output = manager.process().orElse(null);
-        manager.clearNodeIOCache();
-      } else {
-        if (width != output.width() || height != output.height()) {
-          output = ImageCV.fromMat(output.toMat().submat(new Rect(0, 0, width, height)));
-        }
-      }
+    PlanarImage output = image;
+    if (output != null && (width != output.width() || height != output.height())) {
+      output =
+          ImageTransformer.scale(
+              output.toMat(), new Dimension(width, height), Imgproc.INTER_LINEAR);
     }
     return output;
   }
