@@ -442,6 +442,13 @@
       "category": "DICOM"
     },
     {
+      "code": "weasis.dicom.explorer.filter.mode",
+      "value": "TEXT",
+      "description": "Default series filter mode in the DICOM explorer. Possible values: TEXT (full text), DATE (study date), MODALITY",
+      "type": "F",
+      "category": "DICOM"
+    },
+    {
       "code": "download.concurrent.series",
       "value": "3",
       "description": "Controls the number of series downloaded simultaneously",

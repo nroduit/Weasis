@@ -17,6 +17,7 @@ import org.dcm4che3.data.Tag;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.codec.TagD;
+import org.weasis.dicom.explorer.Messages;
 
 /**
  * Stateful, single-mode filter for the DICOM explorer thumbnail grid. Only the active {@link
@@ -27,9 +28,24 @@ public class SeriesFilter {
 
   /** The dimension the filter currently acts on. */
   public enum Mode {
-    TEXT,
-    DATE,
-    MODALITY
+    TEXT(Messages.getString("DicomExplorer.filter_mode_text")),
+    DATE(Messages.getString("DicomExplorer.filter_mode_date")),
+    MODALITY(Messages.getString("DicomExplorer.filter_mode_modality"));
+
+    private final String title;
+
+    Mode(String title) {
+      this.title = title;
+    }
+
+    public String getTitle() {
+      return title;
+    }
+
+    @Override
+    public String toString() {
+      return title;
+    }
   }
 
   private static final int[] SERIES_TEXT_TAGS = {
