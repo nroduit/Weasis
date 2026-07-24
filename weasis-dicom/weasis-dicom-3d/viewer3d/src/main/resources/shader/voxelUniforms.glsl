@@ -79,4 +79,7 @@ uniform bool segOverlayEnabled = false;
 // When true, only the segmentation is rendered; the anatomy volume raymarch is skipped.
 uniform bool segOnly = false;
 uniform int  segSegmentCount = 0;
+// Segmentation voxel mask: 0 = none, 1 = include (render only the real voxels inside visible
+// segments), 2 = exclude (remove those voxels from the rendering). No colour overlay is drawn.
+uniform int  segMaskMode = 0;
 

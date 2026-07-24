@@ -36,6 +36,7 @@ import java.awt.geom.Point2D;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.nio.IntBuffer;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -44,6 +45,8 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicInteger;
 import javax.swing.Action;
 import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JMenu;
@@ -61,6 +64,7 @@ import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.ComboItemListener;
 import org.weasis.core.api.gui.util.Feature;
+import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.MouseActionAdapter;
 import org.weasis.core.api.image.OpManager;
@@ -152,6 +156,26 @@ public class View3d extends VolumeCanvas
 
   /** Segmentation overlay 3D texture — null when no segmentation is active. */
   private volatile SegVolumeTexture segVolumeTexture; // NOSONAR visibility reference
+
+  /**
+   * The SEG files contained in the current segmentation texture, each with the segment-number
+   * offset applied when several files were merged into one volume — see {@link #mergeSegVolumes}.
+   * Consumed by {@link #buildRegionOverrideMap()} so the colour LUT overrides target the shifted
+   * IDs and so unchecked files are always forced invisible.
+   */
+  private volatile List<RenderedSeg> renderedSegs = Collections.emptyList();
+
+  /** Per-view segmentation display mode — applied through the synchronization mechanism. */
+  private volatile Type segType = Type.NONE;
+
+  /** Generation stamp; bumping it invalidates any in-flight asynchronous seg texture build. */
+  private final AtomicInteger segBuildGeneration = new AtomicInteger();
+
+  /** {@code true} while an asynchronous seg texture build is running for this view. */
+  private volatile boolean segBuildRunning;
+
+  /** Loading bar painted in the view while the seg texture builds; {@code null} when idle. */
+  private volatile JProgressBar segProgressBar; // NOSONAR visibility reference
 
   /**
    * Per-view auto-sync button rendered as a corner overlay. Lazily created the first time {@link
@@ -410,6 +434,19 @@ public class View3d extends VolumeCanvas
       drawLpsOrientation(g2d);
     }
     drawProgressBar(g2d, progressBar);
+    drawSegProgressBar(g2d);
+  }
+
+  /** Paints the segmentation loading bar slightly below the view centre. */
+  private void drawSegProgressBar(Graphics2D g2d) {
+    JProgressBar bar = segProgressBar;
+    if (bar != null && bar.isVisible()) {
+      int x = (getWidth() - bar.getWidth()) / 2;
+      int y = getHeight() / 2 + bar.getHeight();
+      g2d.translate(x, y);
+      bar.paint(g2d);
+      g2d.translate(-x, -y);
+    }
   }
 
   private void drawLpsOrientation(Graphics2D g2d) {
@@ -681,6 +718,8 @@ public class View3d extends VolumeCanvas
     program.allocateUniform(
         gl, "segOnly", (g, loc) -> g.glUniform1i(loc, isSegOnly() ? 1 : 0)); // NON-NLS
     program.allocateUniform(
+        gl, "segMaskMode", (g, loc) -> g.glUniform1i(loc, getSegMaskMode())); // NON-NLS
+    program.allocateUniform(
         gl,
         "segSegmentCount", // NON-NLS
         (g, loc) -> {
@@ -834,82 +873,127 @@ public class View3d extends VolumeCanvas
   }
 
   public void updateSegmentation() {
-    Type segType = getSegType();
-    if (segType != Type.SEG_OVERLAY && segType != Type.SEG_ONLY) {
-      // Neither overlay nor segmentation-only mode — destroy existing seg texture if any
-      destroySegTexture();
-      display();
-      return;
-    }
-
+    Type currentType = getSegType();
     DicomVolTexture tex = volTexture;
-    if (tex == null) {
-      destroySegTexture();
-      return;
-    }
-
-    Volume<?, ?> volume = tex.getVolume();
-    if (volume == null) {
-      destroySegTexture();
-      return;
-    }
-
-    // Find segmentation elements for this volume's series
-    List<SpecialElementRegion> segList = tex.getSegmentations();
+    Volume<?, ?> volume = tex == null ? null : tex.getVolume();
+    List<SpecialElementRegion> segList =
+        currentType.requiresSegTexture() && volume != null ? tex.getSegmentations() : null;
     if (segList == null || segList.isEmpty()) {
+      segBuildGeneration.incrementAndGet(); // invalidate any in-flight build
+      hideSegProgress();
       destroySegTexture();
       display();
       return;
     }
 
-    // Build the SegmentationVolume from the first available SegSpecialElement
-    SegmentationVolume segVolume = null;
-    SegSpecialElement segOwner = null;
+    // The heavy work (mask decoding, splatting, resampling, GPU upload) runs asynchronously so
+    // the EDT never freezes on large SEG objects; a progress bar is shown in the view meanwhile.
+    int generation = segBuildGeneration.incrementAndGet();
+    showSegProgress(segList.size());
     final Volume<?, ?> imageVolume = volume;
+    CompletableFuture.runAsync(() -> buildSegTexture(generation, segList, imageVolume))
+        .exceptionally(
+            e -> {
+              LOGGER.error("Building segmentation texture", e);
+              GuiExecutor.execute(
+                  () -> {
+                    if (generation == segBuildGeneration.get()) {
+                      hideSegProgress();
+                      destroySegTexture();
+                      display();
+                    }
+                  });
+              return null;
+            });
+  }
+
+  /**
+   * Background part of {@link #updateSegmentation()}: builds one image-aligned volume per SEG file,
+   * combines them when needed, uploads the GPU texture through the shared GL context, then installs
+   * the result on the EDT. Aborts silently when a newer build supersedes this one.
+   */
+  private void buildSegTexture(
+      int generation, List<SpecialElementRegion> segList, Volume<?, ?> imageVolume) {
+    List<AlignedSeg> aligned = new ArrayList<>();
+    int done = 0;
     for (SpecialElementRegion seg : segList) {
+      if (generation != segBuildGeneration.get()) {
+        return; // superseded by a newer request
+      }
       if (seg instanceof SegSpecialElement segElement) {
         DicomSeries segSeries = segElement.getMediaReader().getMediaSeries();
         if (segSeries != null) {
           // Reuse the SEG's per-image-volume cached resample when available so we do not redo
           // the expensive frame splatting if MPR (or another 3D view) already built it for the
           // same image volume.
-          segVolume =
+          SegmentationVolume segVol =
               segElement.getOrBuildAlignedVolume(
                   imageVolume, s -> SegVolumeBuilder.build(s, segSeries, imageVolume));
-          if (segVolume != null) {
-            segOwner = segElement;
-            break;
+          if (segVol != null) {
+            if (segVol.isEmpty()) {
+              // Empty resample is useless to keep cached: drop it from the SEG so a future
+              // request can retry (e.g. once the image volume finishes loading).
+              segElement.disposeAlignedVolume(imageVolume);
+            } else {
+              aligned.add(new AlignedSeg(segElement, segVol));
+            }
           }
         }
       }
+      updateSegProgress(++done);
     }
 
-    if (segVolume == null || segVolume.isEmpty()) {
-      if (segVolume != null) {
-        // Empty resample is useless to keep cached: drop it from the SEG so a future request can
-        // retry (e.g. once the image volume finishes loading).
-        segOwner.disposeAlignedVolume(imageVolume);
-      }
-      destroySegTexture();
-      display();
+    if (generation != segBuildGeneration.get()) {
+      return;
+    }
+    if (aligned.isEmpty()) {
+      GuiExecutor.execute(
+          () -> {
+            if (generation == segBuildGeneration.get()) {
+              hideSegProgress();
+              destroySegTexture();
+              display();
+            }
+          });
       return;
     }
 
-    // Create and upload the segmentation texture
-    Vector3d scale = new Vector3d(1.0, 1.0, 1.0);
-    SegVolumeTexture newSvt = new SegVolumeTexture(segVolume, scale);
-    // Upload on the shared GL context
-    newSvt.uploadVolumeDataAsync();
-
-    // Apply the tree's visibility/opacity state to the colour LUT. This method runs on the EDT
-    // (no current GL context), so stash the LUT — SegVolumeTexture.bind() uploads it on the GL
-    // thread at the next render. buildSegmentColorLUT() is pure CPU work.
-    Map<Integer, RegionAttributes> overrideAttrs = buildRegionOverrideMap();
-    if (!overrideAttrs.isEmpty()) {
-      newSvt.setPendingColorLut(segVolume.buildSegmentColorLUT(overrideAttrs));
+    // A single SEG file renders its cached volume directly; several SEG files are combined into
+    // one volume whose segment numbers are shifted by a per-file offset so they cannot collide.
+    List<RenderedSeg> rendered = new ArrayList<>();
+    SegmentationVolume segVolume;
+    if (aligned.size() == 1) {
+      AlignedSeg single = aligned.getFirst();
+      segVolume = single.volume();
+      rendered.add(new RenderedSeg(single.seg(), 0));
+    } else {
+      segVolume = mergeSegVolumes(aligned, rendered);
     }
 
-    // Swap in the new texture
+    SegVolumeTexture newSvt = new SegVolumeTexture(segVolume, new Vector3d(1.0, 1.0, 1.0));
+    // Upload from this worker thread through the shared GL context
+    newSvt.uploadVolumeDataAsync();
+
+    GuiExecutor.execute(() -> installSegTexture(generation, newSvt, rendered));
+  }
+
+  /** EDT part of the asynchronous build: swaps the new texture in and refreshes the view. */
+  private void installSegTexture(
+      int generation, SegVolumeTexture newSvt, List<RenderedSeg> rendered) {
+    if (generation != segBuildGeneration.get()) {
+      // Superseded while uploading — discard the freshly-built texture.
+      GL2ES2 gl = OpenglUtils.getGL();
+      if (gl != null) {
+        newSvt.destroy(gl);
+      }
+      return;
+    }
+    this.renderedSegs = rendered;
+    // Apply the tree's visibility/opacity state to the colour LUT. This runs on the EDT (no
+    // current GL context), so stash the LUT — SegVolumeTexture.bind() uploads it on the GL
+    // thread at the next render. buildSegmentColorLUT() is pure CPU work.
+    newSvt.setPendingColorLut(newSvt.getSegVolume().buildSegmentColorLUT(buildRegionOverrideMap()));
+
     SegVolumeTexture old = this.segVolumeTexture;
     this.segVolumeTexture = newSvt;
     if (old != null) {
@@ -921,8 +1005,41 @@ public class View3d extends VolumeCanvas
       // SegSpecialElement's per-image-volume cache (see SegSpecialElement.alignedVolumes) and
       // may still be in use by the MPR overlay or by a re-upload of this very texture.
     }
-
+    hideSegProgress();
     display();
+  }
+
+  /** Shows the segmentation loading bar in the view (one step per SEG file). */
+  private void showSegProgress(int steps) {
+    JProgressBar bar = new JProgressBar(0, steps);
+    Dimension dim =
+        new Dimension(
+            Math.max(GuiUtils.getScaleLength(150), getWidth() / 2), GuiUtils.getScaleLength(30));
+    bar.setSize(dim);
+    bar.setPreferredSize(dim);
+    bar.setMaximumSize(dim);
+    bar.setStringPainted(true);
+    bar.setString(org.weasis.dicom.viewer2d.Messages.getString("seg.loading"));
+    this.segProgressBar = bar;
+    this.segBuildRunning = true;
+    repaint();
+  }
+
+  private void updateSegProgress(int value) {
+    JProgressBar bar = segProgressBar;
+    if (bar != null) {
+      GuiExecutor.execute(
+          () -> {
+            bar.setValue(value);
+            repaint();
+          });
+    }
+  }
+
+  private void hideSegProgress() {
+    this.segProgressBar = null;
+    this.segBuildRunning = false;
+    repaint();
   }
 
   /**
@@ -932,8 +1049,16 @@ public class View3d extends VolumeCanvas
    * changed.
    */
   public void refreshSegColorLUT() {
+    if (segBuildRunning) {
+      // A texture build is in flight; it reads the tree state when it installs the texture.
+      return;
+    }
     SegVolumeTexture svt = segVolumeTexture;
-    if (svt == null) {
+    if (svt == null || hasUnrenderedVisibleSeg()) {
+      // No texture yet, or the user enabled a SEG file that is not part of the current texture
+      // (e.g. its volume could not be built when the texture was created): rebuild it fully.
+      // updateSegmentation() is a no-op when no segmentation display mode is active.
+      updateSegmentation();
       return;
     }
     // Build the colour LUT from the Preset region map (reflects the tree's checkbox state)
@@ -942,29 +1067,123 @@ public class View3d extends VolumeCanvas
     display();
   }
 
+  /** Returns {@code true} when a visible SEG file is missing from the rendered texture. */
+  private boolean hasUnrenderedVisibleSeg() {
+    DicomVolTexture tex = volTexture;
+    if (tex == null) {
+      return false;
+    }
+    List<RenderedSeg> rendered = renderedSegs;
+    for (SpecialElementRegion seg : tex.getSegmentations()) {
+      if (seg.isVisible()
+          && seg instanceof SegSpecialElement sse
+          && rendered.stream().noneMatch(rs -> rs.seg() == sse)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /** A SEG file together with its volume resampled onto the displayed image volume's grid. */
+  private record AlignedSeg(SegSpecialElement seg, SegmentationVolume volume) {}
+
+  /** A SEG file contained in the current texture and its segment-number offset. */
+  private record RenderedSeg(SegSpecialElement seg, int offset) {}
+
   /**
-   * Builds a flat segment-number → RegionAttributes map from the Preset's region map. The Preset
-   * region map is grouped by label prefix; this method flattens it into a simple lookup by segment
-   * ID, suitable for passing to {@link SegmentationVolume#buildSegmentColorLUT(Map)}.
+   * Combines several image-aligned SEG volumes into a single volume. Segment numbers of each file
+   * are shifted by a running offset (recorded in {@code rendered}) so that files whose segments
+   * share the same numbers do not overwrite each other.
+   */
+  private static SegmentationVolume mergeSegVolumes(
+      List<AlignedSeg> aligned, List<RenderedSeg> rendered) {
+    Map<Integer, RegionAttributes> combined = new HashMap<>();
+    int offset = 0;
+    for (AlignedSeg as : aligned) {
+      rendered.add(new RenderedSeg(as.seg(), offset));
+      int maxSegNum = 0;
+      for (Map.Entry<Integer, ? extends RegionAttributes> e :
+          as.seg().getSegAttributes().entrySet()) {
+        combined.put(offset + e.getKey(), e.getValue());
+        maxSegNum = Math.max(maxSegNum, e.getKey());
+      }
+      offset += maxSegNum;
+    }
+    SegmentationVolume merged = aligned.getFirst().volume().createCompatible(combined);
+    for (int i = 0; i < aligned.size(); i++) {
+      int base = rendered.get(i).offset();
+      aligned.get(i).volume().mergeInto(merged, segNum -> segNum + base);
+    }
+    return merged;
+  }
+
+  /**
+   * Builds a flat segment-number → RegionAttributes map suitable for {@link
+   * SegmentationVolume#buildSegmentColorLUT(Map)}. Region-level state comes from the Preset's
+   * region map (the tool tree's copies, keyed by {@code "<regionUID>::<groupKey>"}), shifted by the
+   * per-file offset used when the rendered volume was merged. On top of that, the file-level
+   * checkbox is authoritative: every region of an unchecked SEG file is forced invisible, even when
+   * the tree copies are unavailable or stale.
    */
   private Map<Integer, RegionAttributes> buildRegionOverrideMap() {
-    Map<String, List<SegRegion<?>>> regionMap = Preset.getRegionMap();
-    if (regionMap == null || regionMap.isEmpty()) {
-      return Collections.emptyMap();
-    }
+    List<RenderedSeg> rendered = renderedSegs;
     Map<Integer, RegionAttributes> result = new HashMap<>();
-    for (List<SegRegion<?>> regions : regionMap.values()) {
-      for (SegRegion<?> region : regions) {
-        result.put(region.getId(), region);
+
+    Map<String, List<SegRegion<?>>> regionMap = Preset.getRegionMap();
+    if (regionMap != null && !regionMap.isEmpty()) {
+      for (Map.Entry<String, List<SegRegion<?>>> entry : regionMap.entrySet()) {
+        Integer offset = resolveSegOffset(rendered, entry.getKey());
+        if (offset == null) {
+          continue; // this segmentation is not part of the rendered texture
+        }
+        for (SegRegion<?> region : entry.getValue()) {
+          result.put(region.getId() + offset, region);
+        }
+      }
+    }
+
+    for (RenderedSeg rs : rendered) {
+      if (!rs.seg().isVisible()) {
+        for (Map.Entry<Integer, ? extends RegionAttributes> e :
+            rs.seg().getSegAttributes().entrySet()) {
+          if (e.getValue() instanceof SegRegion<?> region) {
+            SegRegion<?> hidden = region.copy();
+            hidden.setVisible(false);
+            result.put(e.getKey() + rs.offset(), hidden);
+          }
+        }
       }
     }
     return result;
   }
 
-  /** Returns the currently selected segmentation display mode, or {@code null} when unavailable. */
-  private Type getSegType() {
-    ComboItemListener<Type> segType = eventManager.getAction(ActionVol.SEG_TYPE).orElse(null);
-    return segType == null ? null : (Type) segType.getSelectedItem();
+  /**
+   * Resolves the segment-number offset of the segmentation owning the given Preset region-map key
+   * ({@code "<regionUID>::<groupKey>"}), or {@code null} when that segmentation is not rendered.
+   */
+  private static Integer resolveSegOffset(List<RenderedSeg> rendered, String key) {
+    if (rendered.isEmpty()) {
+      return 0;
+    }
+    for (RenderedSeg rs : rendered) {
+      if (key.startsWith(rs.seg().getRegionUID() + "::")) { // NON-NLS
+        return rs.offset();
+      }
+    }
+    return null;
+  }
+
+  /** Returns this view's segmentation display mode (never {@code null}). */
+  public Type getSegType() {
+    return segType;
+  }
+
+  /** Applies a new segmentation display mode to this view and rebuilds/destroys its texture. */
+  public void setSegType(Type type) {
+    if (type != null && type != segType) {
+      this.segType = type;
+      updateSegmentation();
+    }
   }
 
   private boolean isSegOnly() {
@@ -972,19 +1191,28 @@ public class View3d extends VolumeCanvas
   }
 
   /**
-   * Returns true when a segmentation texture is ready and the current mode renders it — either the
-   * overlay ({@link Type#SEG_OVERLAY}) or the segmentation-only ({@link Type#SEG_ONLY}) mode.
+   * Returns true when a segmentation texture is ready and the current mode renders it — overlay,
+   * segmentation-only, or one of the voxel mask modes.
    */
   private boolean isSegTextureActive() {
     SegVolumeTexture svt = segVolumeTexture;
-    if (svt == null || !svt.isReady()) {
-      return false;
+    return svt != null && svt.isReady() && segType.requiresSegTexture();
+  }
+
+  /**
+   * Returns the mask mode passed to the shader: {@code 0} = none, {@code 1} = include (only the
+   * real voxels inside visible segments are rendered), {@code 2} = exclude (those voxels are
+   * removed from the rendering).
+   */
+  private int getSegMaskMode() {
+    if (segType == Type.SEG_MASK_INCLUDE) {
+      return 1;
     }
-    Type segType = getSegType();
-    return segType == Type.SEG_OVERLAY || segType == Type.SEG_ONLY;
+    return segType == Type.SEG_MASK_EXCLUDE ? 2 : 0;
   }
 
   private void destroySegTexture() {
+    renderedSegs = Collections.emptyList();
     SegVolumeTexture svt = segVolumeTexture;
     if (svt != null) {
       segVolumeTexture = null;
@@ -1598,6 +1826,10 @@ public class View3d extends VolumeCanvas
         } else if (command.equals(ActionVol.VOL_SHADING.cmd())) {
           if (val instanceof Boolean shading) {
             renderingLayer.setShading(shading);
+          }
+        } else if (command.equals(ActionVol.SEG_TYPE.cmd())) {
+          if (val instanceof Type type) {
+            setSegType(type);
           }
         } else if (command.equals(ActionVol.CROSSHAIR_CUT_MODE.cmd())) {
           if (val instanceof CrosshairCutMode cutMode) {

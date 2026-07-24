@@ -13,13 +13,11 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
 import org.dcm4che3.data.Tag;
 import org.dcm4che3.img.lut.PresetWindowLevel;
 import org.joml.Vector3d;
@@ -36,13 +34,12 @@ import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.TagW;
-import org.weasis.core.util.MathUtil;
 import org.weasis.dicom.codec.DicomImageElement;
-import org.weasis.dicom.codec.HiddenSeriesManager;
 import org.weasis.dicom.codec.SpecialElementRegion;
 import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.display.Modality;
 import org.weasis.dicom.codec.geometry.ImageOrientation.Plan;
+import org.weasis.dicom.viewer2d.SegComponentFactory;
 import org.weasis.dicom.viewer2d.mpr.Volume;
 import org.weasis.dicom.viewer3d.ActionVol;
 import org.weasis.opencv.data.ImageCV;
@@ -296,14 +293,8 @@ public class DicomVolTexture extends VolumeTexture implements MediaSeriesGroup {
   }
 
   public List<SpecialElementRegion> getSegmentations() {
-    String seriesUID =
-        TagD.getTagValue(volume.getStack().getSeries(), Tag.SeriesInstanceUID, String.class);
-    Set<String> list = HiddenSeriesManager.getInstance().reference2Series.get(seriesUID);
-    if (list != null && !list.isEmpty()) {
-      return HiddenSeriesManager.getHiddenElementsFromSeries(
-          SpecialElementRegion.class, list.toArray(new String[0]));
-    }
-    return Collections.emptyList();
+    return SegComponentFactory.getRelatedSegments(
+        SpecialElementRegion.class, volume.getStack().getSeries());
   }
 
   public Mat getEmptyImage() {

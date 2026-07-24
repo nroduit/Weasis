@@ -21,6 +21,7 @@ import java.util.Map;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.RecursiveAction;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.IntUnaryOperator;
 import org.joml.Matrix4d;
 import org.joml.Vector3d;
 import org.joml.Vector3i;
@@ -575,6 +576,57 @@ public final class SegmentationVolume {
     while (i < sa) out[k++] = a.get(i++);
     while (j < sb) out[k++] = b.get(j++);
     return List.of(Arrays.copyOf(out, k));
+  }
+
+  /** Creates an empty volume sharing this volume's grid geometry but with its own segment table. */
+  public SegmentationVolume createCompatible(Map<Integer, ? extends RegionAttributes> attributes) {
+    return new SegmentationVolume(
+        size.x,
+        size.y,
+        size.z,
+        pixelSpacing,
+        volumeOrigin,
+        volumeAxisX,
+        volumeAxisY,
+        volumeAxisZ,
+        attributes);
+  }
+
+  /**
+   * Copies every labelled voxel of this volume into {@code target} — which must share the same grid
+   * — remapping each segment number through {@code segmentRemap}. Used to combine several
+   * image-aligned SEG volumes into a single multi-file volume for the 3D segmentation texture.
+   *
+   * @return the number of source voxels copied
+   */
+  public long mergeInto(SegmentationVolume target, IntUnaryOperator segmentRemap) {
+    if (target == null
+        || segmentRemap == null
+        || target.size.x != size.x
+        || target.size.y != size.y
+        || target.size.z != size.z) {
+      return 0L;
+    }
+    long total = totalVoxels();
+    long stamped = 0L;
+    for (long i = 0; i < total; i++) {
+      int id = readId(i);
+      if (id == 0) {
+        continue;
+      }
+      List<Integer> segs = idToSegments.get(id);
+      if (segs == null) {
+        continue;
+      }
+      int x = (int) (i % size.x);
+      int y = (int) ((i / size.x) % size.y);
+      int z = (int) (i / sliceStride);
+      for (int segNum : segs) {
+        target.addLabel(x, y, z, segmentRemap.applyAsInt(segNum));
+      }
+      stamped++;
+    }
+    return stamped;
   }
 
   /**

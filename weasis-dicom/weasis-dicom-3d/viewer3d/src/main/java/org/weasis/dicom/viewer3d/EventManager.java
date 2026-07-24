@@ -66,7 +66,6 @@ import org.weasis.dicom.viewer2d.Messages;
 import org.weasis.dicom.viewer2d.ResetTools;
 import org.weasis.dicom.viewer2d.View2dContainer;
 import org.weasis.dicom.viewer3d.dockable.SegmentationTool;
-import org.weasis.dicom.viewer3d.dockable.SegmentationTool.Type;
 import org.weasis.dicom.viewer3d.geometry.ArcballMouseListener;
 import org.weasis.dicom.viewer3d.geometry.Axis;
 import org.weasis.dicom.viewer3d.geometry.Camera;
@@ -390,17 +389,8 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> {
 
       @Override
       public void itemStateChanged(Object object) {
-        ImageViewerPlugin<DicomImageElement> container = getSelectedView2dContainer();
-        if (container instanceof View3DContainer view3DContainer) {
-          SegmentationTool.Type type = (SegmentationTool.Type) object;
-          view3DContainer.setSegmentationType(type);
-          // Build (SEG_OVERLAY / SEG_ONLY) or destroy (NONE) the segmentation texture in place.
-          for (ViewCanvas<DicomImageElement> v : view3DContainer.getImagePanels()) {
-            if (v instanceof View3d view3d) {
-              view3d.updateSegmentation();
-            }
-          }
-        }
+        firePropertyChange(
+            ActionW.SYNCH.cmd(), null, new SynchEvent(getSelectedViewPane(), action.cmd(), object));
       }
     };
   }
@@ -626,22 +616,8 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> {
     getAction(ActionW.INVERT_LUT)
         .ifPresent(a -> a.setSelectedWithoutTriggerAction(rendering.isInvertLut()));
 
-    Optional<ComboItemListener<Type>> segType = getAction(ActionVol.SEG_TYPE);
-    Type segmenationType;
-    if (selectedView2dContainer instanceof View3DContainer view3DContainer) {
-      segmenationType = view3DContainer.getSegmentationType();
-      segType.ifPresent(a -> a.setSelectedItemWithoutTriggerAction(segmenationType));
-    } else {
-      segmenationType = Type.NONE;
-    }
-
-    boolean segDisable = segmenationType == Type.NONE;
-    // getAction(ActionVol.VOL_PRESET).ifPresent(a -> a.enableAction(segDisable));
-    //    getAction(ActionW.WINLEVEL).ifPresent(a -> a.enableAction(segDisable));
-    //    getAction(ActionW.WINDOW).ifPresent(a -> a.enableAction(segDisable));
-    //    getAction(ActionW.LEVEL).ifPresent(a -> a.enableAction(segDisable));
-    // getAction(ActionW.PRESET).ifPresent(a -> a.enableAction(segDisable));
-    // getAction(ActionW.LUT_SHAPE).ifPresent(a -> a.enableAction(segDisable));
+    getAction(ActionVol.SEG_TYPE)
+        .ifPresent(a -> a.setSelectedItemWithoutTriggerAction(canvas.getSegType()));
 
     // register all actions for the selected view and for the other views register according to
     // synchview.

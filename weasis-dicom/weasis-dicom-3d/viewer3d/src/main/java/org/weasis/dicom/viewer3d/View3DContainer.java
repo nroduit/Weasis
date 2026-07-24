@@ -71,7 +71,6 @@ import org.weasis.dicom.viewer2d.mpr.OriginalStack;
 import org.weasis.dicom.viewer2d.mpr.Volume;
 import org.weasis.dicom.viewer2d.mpr.VolumeProvider;
 import org.weasis.dicom.viewer3d.dockable.DisplayTool;
-import org.weasis.dicom.viewer3d.dockable.SegmentationTool;
 import org.weasis.dicom.viewer3d.dockable.VolumeTool;
 import org.weasis.dicom.viewer3d.vr.DicomVolTexture;
 import org.weasis.dicom.viewer3d.vr.DicomVolTextureFactory;
@@ -136,6 +135,7 @@ public class View3DContainer extends DicomViewerPlugin
     actions.put(ActionVol.VOL_SHADING.cmd(), false);
     actions.put(ActionVol.VOL_PROJECTION.cmd(), false);
     actions.put(ActionVol.CROSSHAIR_CUT_MODE.cmd(), false);
+    actions.put(ActionVol.SEG_TYPE.cmd(), false);
     SYNCH_VOLUME =
         new SynchView(
             "Volume Synchronization", // NON-NLS
@@ -167,14 +167,14 @@ public class View3DContainer extends DicomViewerPlugin
           new SyncOption(ActionVol.VOL_OPACITY),
           new SyncOption(ActionVol.VOL_SHADING),
           new SyncOption(ActionVol.VOL_PROJECTION),
-          new SyncOption(ActionVol.CROSSHAIR_CUT_MODE));
+          new SyncOption(ActionVol.CROSSHAIR_CUT_MODE),
+          new SyncOption(ActionVol.SEG_TYPE));
 
   public static final SeriesViewerUI UI = new SeriesViewerUI(View3DContainer.class);
 
   // protected ControlAxes controlAxes;
   protected final DicomVolTextureFactory factory;
   protected VolumeBuilder volumeBuilder;
-  protected SegmentationTool.Type segType;
 
   private final Object volumeBuilderLock = new Object();
 
@@ -188,7 +188,6 @@ public class View3DContainer extends DicomViewerPlugin
       MigLayoutModel layoutModel, String uid, String pluginName, Icon icon, String tooltips) {
     super(EventManager.getInstance(), layoutModel, uid, pluginName, icon, tooltips);
     this.factory = new DicomVolTextureFactory();
-    this.segType = SegmentationTool.Type.NONE;
     initTools();
     factory.addPropertyChangeListener(this);
   }
@@ -666,14 +665,6 @@ public class View3DContainer extends DicomViewerPlugin
   @Override
   public List<MigLayoutModel> getLayoutList() {
     return LAYOUT_LIST;
-  }
-
-  public void setSegmentationType(SegmentationTool.Type type) {
-    this.segType = type;
-  }
-
-  public SegmentationTool.Type getSegmentationType() {
-    return segType;
   }
 
   public Map<String, List<SegRegion<?>>> getRegionMap() {

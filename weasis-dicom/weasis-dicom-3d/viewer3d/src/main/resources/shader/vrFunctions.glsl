@@ -163,6 +163,16 @@ vec4 sampleSegOverlay(vec3 texCoord) {
     return texelFetch(segColorMap, ivec2(int(id), 0), 0);
 }
 
+// Segmentation voxel mask — in include mode only the real voxels inside a visible segment are
+// composited (the segmentation acts as a stencil, no colour overlay); in exclude mode those
+// voxels are removed from the rendering. Visibility follows the colour LUT, so the mask reacts to
+// the Segmentation tool checkboxes like the overlay does.
+bool isSegMasked(vec3 texCoord) {
+    if (segMaskMode == 0) return false;
+    bool inside = sampleSegOverlay(texCoord).a > 0.0;
+    return segMaskMode == 1 ? !inside : inside;
+}
+
 vec4 rayCastingMip(Ray ray, float tmin, float tmax, vec2 uv) {
     vec3 start = (ray.origin.xyz + tmin * ray.direction.xyz + texelSize) / (texelSize + texelSize);
     vec3 end = (ray.origin.xyz + tmax * ray.direction.xyz + texelSize) / (texelSize + texelSize);
@@ -185,6 +195,7 @@ vec4 rayCastingMip(Ray ray, float tmin, float tmax, vec2 uv) {
         rayPos += stepPos;
         texCoord = rayPos + ditheredRayStep;
         if (isCrosshairCut(texCoord)) continue;
+        if (isSegMasked(texCoord)) continue;
         pix = getNormalizedWindowLevel(texCoord);
 
         if (mipType == mipTypeMin) {
@@ -215,8 +226,9 @@ vec4 rayCastingMip(Ray ray, float tmin, float tmax, vec2 uv) {
     vec4 pixel = applyTextureColor(mipPix);
     pixel.a = min(pixel.a * opacityFactor, 1.0);
 
-    // Overlay segmentation colours on top of the MIP result (or render them alone in seg-only mode)
-    if (segOverlayEnabled && (pixel.a > 0.0 || segOnly)) {
+    // Overlay segmentation colours on top of the MIP result (or render them alone in seg-only
+    // mode). Skipped in mask modes: the mask shows real voxels, not segment colours.
+    if (segMaskMode == 0 && segOverlayEnabled && (pixel.a > 0.0 || segOnly)) {
         rayPos = start;
         vec4 segAccum = vec4(0.0);
         for (int count = 0; count < sampleCount; count++) {
@@ -267,6 +279,7 @@ vec4 rayCastingComposite(Ray ray, float tmin, float tmax, vec2 uv) {
         rayPos += stepPos;
         texCoord = rayPos + ditheredRayStep;
         if (isCrosshairCut(texCoord)) continue;
+        if (isSegMasked(texCoord)) continue;
         pix = getNormalizedWindowLevel(texCoord);
         //pix = guassianFilter(texCoord, stepSize);
         vec4 pixel = applyTextureColor(pix);
@@ -298,7 +311,7 @@ vec4 rayCastingComposite(Ray ray, float tmin, float tmax, vec2 uv) {
     }
 
     // Overlay segmentation colours on top of the composited volume
-    if (segOverlayEnabled && (pxColor.a > 0.0 || segOnly)) {
+    if (segMaskMode == 0 && segOverlayEnabled && (pxColor.a > 0.0 || segOnly)) {
         // Re-trace with fewer samples just for the seg overlay
         rayPos = start;
         vec4 segAccum = vec4(0.0);
@@ -357,6 +370,7 @@ vec4 rayCastingIsoSurface(Ray ray, float tmin, float tmax, vec2 uv) {
         rayPos += stepPos;
         texCoord = rayPos + ditheredRayStep;
         if (isCrosshairCut(texCoord)) continue;
+        if (isSegMasked(texCoord)) continue;
         pix = getNormalizedWindowLevel(texCoord);
         vec4 pixel = applyTextureColor(pix);
         bool sign_cur = pix > center;
@@ -392,7 +406,7 @@ vec4 rayCastingIsoSurface(Ray ray, float tmin, float tmax, vec2 uv) {
     }
 
     // Overlay segmentation colours on top of the iso-surface result
-    if (segOverlayEnabled && (pxColor.a > 0.0 || segOnly)) {
+    if (segMaskMode == 0 && segOverlayEnabled && (pxColor.a > 0.0 || segOnly)) {
         rayPos = start;
         vec4 segAccum = vec4(0.0);
         for (int count = 0; count < sampleCount; count++) {

@@ -20,6 +20,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JMenuItem;
@@ -28,13 +29,9 @@ import javax.swing.JScrollPane;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
-import org.dcm4che3.data.Tag;
 import org.weasis.core.api.gui.Insertable;
-import org.weasis.core.api.gui.util.ComboItemListener;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.image.util.MeasurableLayer;
-import org.weasis.core.api.media.data.MediaSeries;
-import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.api.util.ResourceUtil.OtherIcon;
 import org.weasis.core.ui.docking.PluginTool;
@@ -49,13 +46,10 @@ import org.weasis.core.ui.model.graphic.imp.seg.SegRegion;
 import org.weasis.core.ui.util.*;
 import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.codec.DicomImageElement;
-import org.weasis.dicom.codec.HiddenSeriesManager;
 import org.weasis.dicom.codec.SpecialElementRegion;
-import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.seg.LazyContourLoader;
 import org.weasis.dicom.codec.seg.SegSpecialElement;
-import org.weasis.dicom.viewer2d.mpr.MprController;
-import org.weasis.dicom.viewer2d.mpr.MprView;
+import org.weasis.dicom.viewer2d.SegComponentFactory;
 import org.weasis.dicom.viewer3d.ActionVol;
 import org.weasis.dicom.viewer3d.EventManager;
 import org.weasis.dicom.viewer3d.Messages;
@@ -75,12 +69,19 @@ public class SegmentationTool extends PluginTool implements SeriesViewerListener
   public enum Type {
     NONE(Messages.getString("segmentation.none")),
     SEG_ONLY(Messages.getString("segmentation.only")),
-    SEG_OVERLAY(Messages.getString("segmentation.overlay"));
+    SEG_OVERLAY(Messages.getString("segmentation.overlay")),
+    SEG_MASK_INCLUDE(Messages.getString("segmentation.mask.include")),
+    SEG_MASK_EXCLUDE(Messages.getString("segmentation.mask.exclude"));
 
     private final String title;
 
     Type(String title) {
       this.title = title;
+    }
+
+    /** Returns {@code true} when this mode needs the segmentation texture to render. */
+    public boolean requiresSegTexture() {
+      return this != NONE;
     }
 
     @Override
@@ -185,8 +186,28 @@ public class SegmentationTool extends PluginTool implements SeriesViewerListener
               combo.setMaximumRowCount(10);
               panel.add(GuiUtils.getHorizontalBoxLayoutPanel(5, label, combo));
             });
+    JButton showAll =
+        new JButton(org.weasis.dicom.viewer2d.Messages.getString("show.all")); // NON-NLS
+    showAll.addActionListener(_ -> setAllSegVisible(true));
+    JButton hideAll =
+        new JButton(org.weasis.dicom.viewer2d.Messages.getString("hide.all")); // NON-NLS
+    hideAll.addActionListener(_ -> setAllSegVisible(false));
+    panel.add(GuiUtils.getFlowLayoutPanel(showAll, hideAll));
     panel.add(GuiUtils.boxVerticalStrut(gabY));
     add(panel, BorderLayout.SOUTH);
+  }
+
+  /** Checks or unchecks every segmentation node at once and refreshes the views. */
+  private void setAllSegVisible(boolean visible) {
+    initPathSelection = true;
+    try {
+      for (GroupTreeNode node : segNodeMap.keySet()) {
+        tree.setPathSelection(new TreePath(node.getPath()), visible);
+      }
+    } finally {
+      initPathSelection = false;
+    }
+    updateVisibleNode();
   }
 
   public void initStructureTree() {
@@ -229,17 +250,9 @@ public class SegmentationTool extends PluginTool implements SeriesViewerListener
       views = container.getImagePanels();
     }
     if (views != null && !views.isEmpty()) {
-      ComboItemListener<Type> segType =
-          EventManager.getInstance().getAction(ActionVol.SEG_TYPE).orElse(null);
-      if (segType != null) {
-        Type selectedType = (Type) segType.getSelectedItem();
-        if (selectedType == Type.SEG_ONLY || selectedType == Type.SEG_OVERLAY) {
-          // Visibility/opacity changed — refresh only the segment colour LUT on the GPU.
-          for (ViewCanvas<DicomImageElement> v : views) {
-            if (v instanceof View3d view3d) {
-              view3d.refreshSegColorLUT();
-            }
-          }
+      for (ViewCanvas<DicomImageElement> v : views) {
+        if (v instanceof View3d view3d && view3d.getSegType().requiresSegTexture()) {
+          view3d.refreshSegColorLUT();
         }
       }
     }
@@ -358,8 +371,9 @@ public class SegmentationTool extends PluginTool implements SeriesViewerListener
 
   /**
    * Rebuilds the container's region map (consumed by {@link Preset#getRegionMap()}) by aggregating
-   * the regions of every segmentation currently shown in the tree. Keys are namespaced by
-   * segmentation label to avoid collisions across multiple SEG files.
+   * the regions of every segmentation currently shown in the tree. Keys are namespaced by {@link
+   * SpecialElementRegion#getRegionUID()} — NOT by label, which may be identical for several SEG
+   * objects of the same series — so per-file state never collides across multiple SEG files.
    */
   private void refreshContainerRegionMap() {
     Map<String, List<SegRegion<?>>> map = Preset.getRegionMap();
@@ -368,9 +382,8 @@ public class SegmentationTool extends PluginTool implements SeriesViewerListener
     }
     map.clear();
     for (Map.Entry<GroupTreeNode, SpecialElementRegion> entry : segNodeMap.entrySet()) {
-      GroupTreeNode segNode = entry.getKey();
-      String prefix = String.valueOf(segNode.getUserObject());
-      List<SegRegion<?>> regions = collectRegions(segNode);
+      String prefix = entry.getValue().getRegionUID();
+      List<SegRegion<?>> regions = collectRegions(entry.getKey());
       Map<String, List<SegRegion<?>>> grouped = SegRegion.groupRegions(regions);
       for (Map.Entry<String, List<SegRegion<?>>> e : grouped.entrySet()) {
         map.put(prefix + "::" + e.getKey(), e.getValue()); // NON-NLS
@@ -392,66 +405,10 @@ public class SegmentationTool extends PluginTool implements SeriesViewerListener
   }
 
   public void initTreeValues(ViewCanvas<?> viewCanvas) {
-    List<SpecialElementRegion> segList = null;
-    if (viewCanvas != null) {
-      // For MPR views the current series is a synthetic MPR series whose UID is never registered
-      // in reference2Series. If the async seg build has already completed, return those elements
-      // directly; otherwise fall back to the original source series UID.
-      if (viewCanvas instanceof MprView mprView) {
-        MprController ctrl = mprView.getMprController();
-        if (ctrl != null) {
-          List<SegSpecialElement> elements = ctrl.getSegElements();
-          if (!elements.isEmpty()) {
-            updateCanvas(new java.util.ArrayList<>(elements));
-            return;
-          }
-          var vol = ctrl.getVolume();
-          if (vol != null) {
-            String seriesUID =
-                TagD.getTagValue(vol.getStack().getSeries(), Tag.SeriesInstanceUID, String.class);
-            if (StringUtil.hasText(seriesUID)) {
-              Set<String> list = HiddenSeriesManager.getInstance().reference2Series.get(seriesUID);
-              if (list != null && !list.isEmpty()) {
-                segList =
-                    HiddenSeriesManager.getHiddenElementsFromSeries(
-                        SpecialElementRegion.class, list.toArray(new String[0]));
-              }
-            }
-          }
-        }
-        updateCanvas(segList);
-        return;
-      }
-
-      MediaSeries<?> dcmSeries = viewCanvas.getSeries();
-      String seriesUID = TagD.getTagValue(dcmSeries, Tag.SeriesInstanceUID, String.class);
-      if (StringUtil.hasText(seriesUID)) {
-        Set<String> list = HiddenSeriesManager.getInstance().reference2Series.get(seriesUID);
-        if (list != null && !list.isEmpty()) {
-          segList =
-              HiddenSeriesManager.getHiddenElementsFromSeries(
-                  SpecialElementRegion.class, list.toArray(new String[0]));
-        }
-
-        // Fallback: use patient-level lookup when reference2Series has no entries.
-        if ((segList == null || segList.isEmpty())
-            && viewCanvas.getImage() instanceof DicomImageElement img) {
-          String patientPseudoUID = (String) img.getTagValue(TagW.PatientPseudoUID);
-          if (StringUtil.hasText(patientPseudoUID)) {
-            List<SpecialElementRegion> patientSegs =
-                HiddenSeriesManager.getHiddenElementsFromPatient(
-                    SpecialElementRegion.class, patientPseudoUID);
-            if (!patientSegs.isEmpty()) {
-              segList =
-                  patientSegs.stream()
-                      .filter(seg -> seg.containsSopInstanceUIDReference(img))
-                      .toList();
-            }
-          }
-        }
-      }
-    }
-    updateCanvas(segList);
+    updateCanvas(
+        viewCanvas == null
+            ? null
+            : SegComponentFactory.getRelatedSegments(SpecialElementRegion.class, viewCanvas));
   }
 
   @Override
