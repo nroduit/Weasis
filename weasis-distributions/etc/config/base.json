@@ -449,6 +449,21 @@
       "category": "DICOM"
     },
     {
+      "code": "weasis.dicom.seg.hide.all",
+      "value": "false",
+      "description": "If true, no segmentation is displayed when loaded; the user must enable them in the Segmentation tool or with the segmentation button in the view",
+      "type": "F",
+      "javaType": "BOOLEAN",
+      "category": "DICOM"
+    },
+    {
+      "code": "weasis.dicom.seg.hide.keywords",
+      "value": "table removal, tabletop, couch, patient support, bed removal",
+      "description": "Comma-separated keywords to hide segmentations by default (case, spaces, underscores and hyphens are ignored when matching)",
+      "type": "F",
+      "category": "DICOM"
+    },
+    {
       "code": "download.concurrent.series",
       "value": "3",
       "description": "Controls the number of series downloaded simultaneously",

@@ -65,6 +65,21 @@ public class SegSpecialElement extends HiddenSpecialElement
   private static final Logger LOGGER = LoggerFactory.getLogger(SegSpecialElement.class);
 
   /**
+   * Preference key holding the comma-separated, case-insensitive keywords that mark a segmentation
+   * as hidden by default (see {@link #isHiddenByDefault}). An empty value disables the feature.
+   */
+  public static final String HIDE_KEYWORDS_PREF = "weasis.dicom.seg.hide.keywords"; // NON-NLS
+
+  public static final String DEFAULT_HIDE_KEYWORDS =
+      "table removal, tabletop, couch, patient support, bed removal"; // NON-NLS
+
+  /**
+   * Preference key: when {@code true}, every segmentation is hidden when loaded and must be enabled
+   * by the user (Segmentation tool or the view's segmentation button).
+   */
+  public static final String HIDE_ALL_PREF = "weasis.dicom.seg.hide.all"; // NON-NLS
+
+  /**
    * Pluggable scheduler for the asynchronous build of the canonical segmentation volume. The
    * weasis-dicom-explorer module installs a UI-aware executor that surfaces the build as a
    * cancellable task in the explorer's bottom loading panel; in headless contexts the {@link
@@ -183,6 +198,9 @@ public class SegSpecialElement extends HiddenSpecialElement
 
   private volatile float opacity = 1.0f;
   private volatile boolean visible = true;
+
+  /** Ensures the default-visibility classification is applied only on the first contour build. */
+  private volatile boolean defaultVisibilityApplied;
 
   /**
    * Async loading lifecycle. {@link #initContours} flips this to {@code LOADING} on entry and to
@@ -849,6 +867,13 @@ public class SegSpecialElement extends HiddenSpecialElement
       Map<SegRegion<DicomImageElement>, FrameRange> regionPosition =
           parseSegmentSequence(dicom.getSequence(Tag.SegmentSequence), kind, fractionalType);
 
+      if (!defaultVisibilityApplied) {
+        defaultVisibilityApplied = true;
+        if (isAllHiddenByDefault() || isHiddenByDefault(dicom)) {
+          visible = false;
+        }
+      }
+
       Sequence perFrameSeq = dicom.getSequence(Tag.PerFrameFunctionalGroupsSequence);
       if (perFrameSeq != null) {
         processPerFrameSequence(
@@ -913,6 +938,59 @@ public class SegSpecialElement extends HiddenSpecialElement
       regionPosition.put(attributes, FrameRange.EMPTY);
     }
     return regionPosition;
+  }
+
+  private static boolean isAllHiddenByDefault() {
+    return GuiUtils.getUICore().getSystemPreferences().getBooleanProperty(HIDE_ALL_PREF, false);
+  }
+
+  private boolean isHiddenByDefault(Attributes dicom) {
+    List<String> keywords = getHideKeywords();
+    if (keywords.isEmpty()) {
+      return false;
+    }
+    if (matchesAny(dicom.getString(Tag.SeriesDescription), keywords)
+        || matchesAny(dicom.getString(Tag.ContentDescription), keywords)
+        || matchesAny(dicom.getString(Tag.ContentLabel), keywords)) {
+      return true;
+    }
+    return !segAttributes.isEmpty()
+        && segAttributes.values().stream()
+            .allMatch(
+                r ->
+                    matchesAny(r.getLabel(), keywords)
+                        || matchesAny(r.getDescription(), keywords)
+                        || matchesAny(r.getAlgorithmName(), keywords));
+  }
+
+  private static List<String> getHideKeywords() {
+    String pref =
+        GuiUtils.getUICore()
+            .getSystemPreferences()
+            .getProperty(HIDE_KEYWORDS_PREF, DEFAULT_HIDE_KEYWORDS);
+    if (!StringUtil.hasText(pref)) {
+      return List.of();
+    }
+    return Arrays.stream(pref.split(","))
+        .map(SegSpecialElement::normalizeKeyword)
+        .filter(StringUtil::hasText)
+        .toList();
+  }
+
+  private static boolean matchesAny(String value, List<String> keywords) {
+    if (!StringUtil.hasText(value)) {
+      return false;
+    }
+    String normalized = normalizeKeyword(value);
+    return keywords.stream().anyMatch(normalized::contains);
+  }
+
+  /**
+   * Lower-cases and strips all non-alphanumeric characters so that "table removal" matches
+   * "TableRemoval", "Table_Removal" or "table-removal".
+   */
+  private static String normalizeKeyword(String value) {
+    return value.toLowerCase(Locale.ROOT).replaceAll("[^\\p{L}\\p{Nd}]", "");
   }
 
   private void processPerFrameSequence(
