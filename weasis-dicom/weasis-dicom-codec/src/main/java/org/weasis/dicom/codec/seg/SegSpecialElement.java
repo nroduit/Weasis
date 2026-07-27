@@ -24,6 +24,8 @@ import java.util.TreeMap;
 import java.util.WeakHashMap;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import javax.swing.tree.DefaultMutableTreeNode;
 import org.dcm4che3.data.Attributes;
@@ -36,10 +38,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.DataExplorerView;
 import org.weasis.core.api.explorer.ObservableEvent;
-import org.weasis.core.api.gui.util.DecFormatter;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.gui.util.GuiUtils;
-import org.weasis.core.api.image.measure.MeasurementsAdapter;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.util.ResourceUtil.OtherIcon;
 import org.weasis.core.api.util.ResourceUtil.ResourceIconPath;
@@ -87,6 +87,11 @@ public class SegSpecialElement extends HiddenSpecialElement
    */
   private static volatile SegmentationVolumeBuildExecutor volumeBuildExecutor = // NOSONAR ref
       SegmentationVolumeBuildExecutor.DEFAULT;
+
+  /** Palette index range allocated to each SEG file, keyed by SOP Instance UID. */
+  private static final Map<String, Integer> PALETTE_BASES = new ConcurrentHashMap<>();
+
+  private static final AtomicInteger NEXT_PALETTE_INDEX = new AtomicInteger(1);
 
   /**
    * Installs a custom scheduler for the asynchronous canonical segmentation volume build (e.g. the
@@ -183,6 +188,14 @@ public class SegSpecialElement extends HiddenSpecialElement
   private volatile boolean segVolumeBuildAborted;
 
   /**
+   * Sticky flag set when a completed build produced no volume (missing spatial metadata, no
+   * stampable frame, build error). The outcome only depends on the SEG content, so retrying on
+   * every paint / scroll would burn CPU for nothing. Cleared by {@link
+   * #retrySegmentationVolumeBuild()} or {@link #disposeSegmentationVolume()}.
+   */
+  private volatile boolean segVolumeUnavailable;
+
+  /**
    * Native slice spacing of the SEG (in mm) along {@link #referenceNormal}, captured from
    * PixelMeasuresSequence (SpacingBetweenSlices, fallback SliceThickness) on the first frame that
    * contributes to the {@link #positionMap}. Used to:
@@ -249,85 +262,9 @@ public class SegSpecialElement extends HiddenSpecialElement
     return new StructToolTipTreeNode(contour, false) {
       @Override
       public String getToolTipText() {
-        return buildSegRegionTooltip((SegRegion<?>) getUserObject());
+        return ((SegRegion<?>) getUserObject()).getToolTipHtml();
       }
     };
-  }
-
-  private static String buildSegRegionTooltip(SegRegion<?> seg) {
-    StringBuilder buf = new StringBuilder();
-    buf.append(GuiUtils.HTML_START)
-        .append("<b>")
-        .append(seg.getLabel())
-        .append("</b>")
-        .append(GuiUtils.HTML_BR);
-    appendLine(buf, "Algorithm type", seg.getType());
-    appendLine(buf, "Algorithm name", seg.getAlgorithmName());
-    appendList(buf, "Categories", seg.getCategories());
-    appendList(buf, "Anatomic regions", seg.getAnatomicRegionCodes());
-    appendVoxelCount(buf, seg);
-    appendVolume(buf, seg);
-    if (seg.isFractional()) {
-      appendFractionalLut(buf, seg);
-    }
-    buf.append(GuiUtils.HTML_END);
-    return buf.toString();
-  }
-
-  private static void appendLine(StringBuilder buf, String label, String value) {
-    if (StringUtil.hasText(value)) {
-      buf.append(label).append(StringUtil.COLON_AND_SPACE).append(value).append(GuiUtils.HTML_BR);
-    }
-  }
-
-  private static void appendList(StringBuilder buf, String label, List<String> values) {
-    if (values != null && !values.isEmpty()) {
-      buf.append(label)
-          .append(StringUtil.COLON_AND_SPACE)
-          .append(String.join(", ", values))
-          .append(GuiUtils.HTML_BR);
-    }
-  }
-
-  private static void appendVoxelCount(StringBuilder buf, SegRegion<?> seg) {
-    buf.append("Voxel count");
-    if (seg.isFractional()) {
-      buf.append(" (weighted");
-      if (StringUtil.hasText(seg.getFractionalType())) {
-        buf.append(", ").append(seg.getFractionalType().toLowerCase());
-      }
-      buf.append(")");
-    }
-    buf.append(StringUtil.COLON_AND_SPACE)
-        .append(DecFormatter.allNumber(seg.getNumberOfPixels()))
-        .append(GuiUtils.HTML_BR);
-  }
-
-  private static void appendVolume(StringBuilder buf, SegRegion<?> seg) {
-    SegMeasurableLayer<?> layer = seg.getMeasurableLayer();
-    if (layer == null) {
-      return;
-    }
-    MeasurementsAdapter adapter =
-        layer.getMeasurementAdapter(layer.getSourceImage().getPixelSpacingUnit());
-    double ratio = adapter.calibrationRatio();
-    buf.append("Volume (%s3)".formatted(adapter.unit()))
-        .append(StringUtil.COLON_AND_SPACE)
-        .append(
-            DecFormatter.twoDecimal(seg.getNumberOfPixels() * ratio * ratio * layer.getThickness()))
-        .append(GuiUtils.HTML_BR);
-  }
-
-  private static void appendFractionalLut(StringBuilder buf, SegRegion<?> seg) {
-    boolean occupancy = "OCCUPANCY".equalsIgnoreCase(seg.getFractionalType());
-    String unit = occupancy ? " %" : "";
-    String minLabel = "0" + unit;
-    String maxLabel = (occupancy ? "100" : "1") + unit;
-    buf.append("LUT")
-        .append(StringUtil.COLON_AND_SPACE)
-        .append(GuiUtils.HTML_BR)
-        .append(
-            StructToolTipTreeNode.buildHorizontalLutBar(seg.getColor(), 24, minLabel, maxLabel));
   }
 
   @Override
@@ -479,7 +416,7 @@ public class SegSpecialElement extends HiddenSpecialElement
       // If the user previously canceled the build, do not silently re-launch it on every
       // scroll / repaint — the SEG stays without a 3D volume until the user explicitly retries
       // via retrySegmentationVolumeBuild().
-      if (segVolumeBuildAborted) {
+      if (segVolumeBuildAborted || segVolumeUnavailable) {
         return null;
       }
       ensureAsyncBuild();
@@ -491,9 +428,14 @@ public class SegSpecialElement extends HiddenSpecialElement
       if (v != null) {
         return v;
       }
+      if (segVolumeUnavailable) {
+        return null;
+      }
       DicomSeries series = getMediaReader() == null ? null : getMediaReader().getMediaSeries();
       v = SegmentationVolumeBuilder.buildCanonical(this, series);
-      if (v != null) {
+      if (v == null) {
+        segVolumeUnavailable = true;
+      } else {
         segVolumeRef = new SoftReference<>(v);
       }
       return v;
@@ -513,7 +455,7 @@ public class SegSpecialElement extends HiddenSpecialElement
     if (ref != null && ref.get() != null) {
       return;
     }
-    if (segVolumeBuildFuture != null || segVolumeBuildAborted) {
+    if (segVolumeBuildFuture != null || segVolumeBuildAborted || segVolumeUnavailable) {
       return;
     }
     synchronized (segVolumeLock) {
@@ -521,7 +463,7 @@ public class SegSpecialElement extends HiddenSpecialElement
       if (ref != null && ref.get() != null) {
         return;
       }
-      if (segVolumeBuildFuture != null || segVolumeBuildAborted) {
+      if (segVolumeBuildFuture != null || segVolumeBuildAborted || segVolumeUnavailable) {
         return;
       }
       DicomSeries series = getMediaReader() == null ? null : getMediaReader().getMediaSeries();
@@ -537,6 +479,9 @@ public class SegSpecialElement extends HiddenSpecialElement
             synchronized (segVolumeLock) {
               if (vol != null) {
                 segVolumeRef = new SoftReference<>(vol);
+              } else if (!(err instanceof CancellationException)) {
+                // Nothing to build from: do not re-schedule this build on every paint / scroll.
+                segVolumeUnavailable = true;
               }
               segVolumeBuildFuture = null;
               if (err instanceof CancellationException) {
@@ -552,10 +497,12 @@ public class SegSpecialElement extends HiddenSpecialElement
               // the user just aborted. Done on the EDT to avoid racing with paint reads of the
               // (non-thread-safe) maps.
               GuiExecutor.execute(() -> unloadAfterAbort(series));
-            } else if (err != null) {
-              LOGGER.error("Async build of canonical segmentation volume failed", err);
-            }
-            if (vol != null) {
+            } else {
+              if (err != null) {
+                LOGGER.error("Async build of canonical segmentation volume failed", err);
+              }
+              // Always notify, even when no volume could be built: the views must clear their
+              // "loading" state and fall back to the per-frame contour path.
               fireSegUpdateEvent();
             }
           });
@@ -591,13 +538,14 @@ public class SegSpecialElement extends HiddenSpecialElement
   }
 
   /**
-   * Clears the "aborted" flag set by a previous cancellation so the canonical segmentation volume
-   * can be rebuilt on the next call to {@link #getOrBuildSegmentationVolume()}. Safe to call
-   * repeatedly; no-op when no abort is pending.
+   * Clears the "aborted" and "unavailable" flags set by a previous cancellation or failed build so
+   * the canonical segmentation volume can be rebuilt on the next call to {@link
+   * #getOrBuildSegmentationVolume()}. Safe to call repeatedly.
    */
   public void retrySegmentationVolumeBuild() {
     synchronized (segVolumeLock) {
       segVolumeBuildAborted = false;
+      segVolumeUnavailable = false;
     }
   }
 
@@ -684,6 +632,7 @@ public class SegSpecialElement extends HiddenSpecialElement
       }
       // Full reset: a subsequent getOrBuildSegmentationVolume() should be allowed to rebuild.
       segVolumeBuildAborted = false;
+      segVolumeUnavailable = false;
       SoftReference<SegmentationVolume> ref = segVolumeRef;
       if (ref != null) {
         SegmentationVolume v = ref.get();
@@ -865,7 +814,11 @@ public class SegSpecialElement extends HiddenSpecialElement
               : null;
 
       Map<SegRegion<DicomImageElement>, FrameRange> regionPosition =
-          parseSegmentSequence(dicom.getSequence(Tag.SegmentSequence), kind, fractionalType);
+          parseSegmentSequence(
+              dicom.getSequence(Tag.SegmentSequence),
+              kind,
+              fractionalType,
+              dicom.getString(Tag.SOPInstanceUID));
 
       if (!defaultVisibilityApplied) {
         defaultVisibilityApplied = true;
@@ -900,11 +853,12 @@ public class SegSpecialElement extends HiddenSpecialElement
   }
 
   private Map<SegRegion<DicomImageElement>, FrameRange> parseSegmentSequence(
-      Sequence segSeq, SegmentationKind kind, String fractionalType) {
+      Sequence segSeq, SegmentationKind kind, String fractionalType, String sopInstanceUID) {
     Map<SegRegion<DicomImageElement>, FrameRange> regionPosition = new HashMap<>();
     if (segSeq == null) {
       return regionPosition;
     }
+    int colorIndex = paletteBase(sopInstanceUID, segSeq.size());
     for (Attributes seg : segSeq) {
       int nb = seg.getInt(Tag.SegmentNumber, -1);
       String segmentLabel = seg.getString(Tag.SegmentLabel, "" + nb);
@@ -912,7 +866,7 @@ public class SegSpecialElement extends HiddenSpecialElement
       int[] colorRgb =
           CIELab.dicomLab2rgb(
               DicomUtils.getIntArrayFromDicomElement(seg, Tag.RecommendedDisplayCIELabValue, null));
-      Color rgbColor = RegionAttributes.getColor(colorRgb, nb, opacity);
+      Color rgbColor = RegionAttributes.getColor(colorRgb, colorIndex++, opacity);
 
       SegRegion<DicomImageElement> attributes = new SegRegion<>(nb, segmentLabel, rgbColor);
       attributes.setInteriorOpacity(0.2f);
@@ -938,6 +892,21 @@ public class SegSpecialElement extends HiddenSpecialElement
       regionPosition.put(attributes, FrameRange.EMPTY);
     }
     return regionPosition;
+  }
+
+  /**
+   * Returns the first palette index reserved for {@code sopInstanceUID}, allocating a range of
+   * {@code segmentCount} consecutive indexes on first use. Colors generated for segments without a
+   * {@code RecommendedDisplayCIELabValue} are therefore distinct across SEG files, and stable when
+   * the same file is parsed again (reload, or reopened study). Starting at 1 keeps the very first
+   * loaded segmentation on the color it had when the segment number was used as index.
+   */
+  static int paletteBase(String sopInstanceUID, int segmentCount) {
+    if (!StringUtil.hasText(sopInstanceUID)) {
+      return NEXT_PALETTE_INDEX.getAndAdd(segmentCount);
+    }
+    return PALETTE_BASES.computeIfAbsent(
+        sopInstanceUID, _ -> NEXT_PALETTE_INDEX.getAndAdd(segmentCount));
   }
 
   private static boolean isAllHiddenByDefault() {

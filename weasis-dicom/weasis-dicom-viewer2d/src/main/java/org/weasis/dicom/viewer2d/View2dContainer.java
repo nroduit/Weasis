@@ -605,7 +605,10 @@ public class View2dContainer extends DicomViewerPlugin implements PropertyChange
           ViewCanvas<DicomImageElement> pane = getSelectedViewCanvas();
           for (ViewCanvas<DicomImageElement> view : cellManager) {
             if (view instanceof View2d view2d) {
-              if (region.containsSopInstanceUIDReference(view.getImage())) {
+              // Also refresh views with a pending build: when it ends without producing a volume
+              // the region may no longer match the image, and the loading message would stay.
+              if (view2d.hasPendingSegLoading()
+                  || region.containsSopInstanceUIDReference(view.getImage())) {
                 view2d.updateSegmentation();
                 view2d.repaint();
               }

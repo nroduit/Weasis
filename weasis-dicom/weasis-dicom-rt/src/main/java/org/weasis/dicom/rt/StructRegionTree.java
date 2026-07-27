@@ -15,7 +15,6 @@ import java.util.Enumeration;
 import java.util.List;
 import java.util.function.ToDoubleFunction;
 import javax.swing.JMenuItem;
-import javax.swing.SwingUtilities;
 import javax.swing.tree.DefaultMutableTreeNode;
 import org.weasis.core.ui.util.CsvExporter;
 import org.weasis.core.ui.util.SegRegionTool;
@@ -29,11 +28,7 @@ public class StructRegionTree extends SegRegionTree {
   }
 
   @Override
-  protected void mousePressed(MouseEvent e) {
-    popupMenu.removeAll();
-    if (!SwingUtilities.isRightMouseButton(e)) {
-      return;
-    }
+  protected void showPopupMenu(MouseEvent e) {
     DefaultMutableTreeNode node = getTreeNode(e.getPoint());
     if (node == null) {
       return;
@@ -43,6 +38,7 @@ public class StructRegionTree extends SegRegionTree {
       popupMenu.add(getCheckAllMenuItem(node, true));
       popupMenu.add(getCheckAllMenuItem(node, false));
     }
+    popupMenu.add(getColorMenuItem(node));
     popupMenu.add(getOpacityMenuItem(node, e.getPoint()));
     popupMenu.add(getExportMenuItem(node));
     if (leaf) {

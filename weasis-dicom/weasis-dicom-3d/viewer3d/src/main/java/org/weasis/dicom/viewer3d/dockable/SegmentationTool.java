@@ -114,7 +114,7 @@ public class SegmentationTool extends PluginTool implements SeriesViewerListener
           }
         };
     tree.setToolTipText(StringUtil.EMPTY_STRING);
-    tree.setCellRenderer(TreeBuilder.buildNoIconCheckboxTreeCellRenderer());
+    tree.setCellRenderer(TreeBuilder.buildSegRegionCellRenderer());
 
     this.initData();
 
@@ -218,7 +218,7 @@ public class SegmentationTool extends PluginTool implements SeriesViewerListener
     tree.setShowsRootHandles(true);
     tree.setRootVisible(false);
     tree.setExpandsSelectedPaths(true);
-    tree.setCellRenderer(TreeBuilder.buildNoIconCheckboxTreeCellRenderer());
+    tree.setCellRenderer(TreeBuilder.buildSegRegionCellRenderer());
     tree.addTreeCheckingListener(this::treeValueChanged);
 
     TreeBuilder.expandTree(tree, rootNodeStructures, 3);

@@ -1430,11 +1430,19 @@ public abstract sealed class Volume<T extends Number, A>
       if (progressBar != null) {
         progressBar.setValue(volume.size.z + 1);
       }
-
+      LOGGER.info(
+          "MPR/fusion volume: reusing shared volume cvType={} for {} frames",
+          CvType.typeToString(volume.cvType),
+          stack.getSourceStack().size());
       return volume;
     }
 
-    int depth = CvType.depth(getCvType(stack));
+    int cvType = getCvType(stack);
+    int depth = CvType.depth(cvType);
+    LOGGER.info(
+        "MPR/fusion volume: building cvType={} for {} frames",
+        CvType.typeToString(cvType),
+        stack.getSourceStack().size());
     switch (depth) {
       case CvType.CV_8U, CvType.CV_8S -> volume = new VolumeByte(stack, progressBar, isBasic);
       case CvType.CV_16U, CvType.CV_16S -> volume = new VolumeShort(stack, progressBar, isBasic);

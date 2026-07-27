@@ -392,12 +392,13 @@ public class DicomExplorer extends PluginTool
     modeButton.setFocusable(false);
     modeButton.putClientProperty(
         FlatClientProperties.BUTTON_TYPE, FlatClientProperties.BUTTON_TYPE_TOOLBAR_BUTTON);
-    // Increase the hover/pressed contrast so the mode selector stands out as a clickable control
+    // Reuse the toolbar "selected" highlight for hover so the mode selector reads as a clickable
+    // control while keeping the icon fully legible
     modeButton.putClientProperty(
         FlatClientProperties.STYLE,
         "arc: 6;"
-            + " toolbar.hoverBackground: $Component.accentColor;"
-            + " toolbar.pressedBackground: darken($Component.accentColor,12%)"); // NON-NLS
+            + " toolbar.hoverBackground: $Button.toolbar.selectedBackground;"
+            + " toolbar.pressedBackground: $Button.toolbar.pressedBackground"); // NON-NLS
     modeButton.setMargin(new Insets(0, 0, 0, 0));
     modeButton.addActionListener(_ -> modePopup.show(modeButton, 0, modeButton.getHeight()));
     // Place the mode selector inside the field, in place of the default search icon

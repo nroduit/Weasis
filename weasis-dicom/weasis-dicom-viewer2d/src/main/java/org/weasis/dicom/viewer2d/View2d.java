@@ -138,8 +138,8 @@ public class View2d extends DefaultView2d<DicomImageElement> {
   private final ContextMenuHandler contextMenuHandler;
   private volatile BufferedImage segOverlayImage; // NOSONAR visibility reference
 
-  /** {@code true} while a displayed segmentation's canonical volume builds in the background. */
-  private volatile boolean segLoading;
+  /** Segmentations whose canonical volume was still building at the last update pass. */
+  private volatile List<SpecialElementRegion> loadingSegs = List.of(); // NOSONAR visibility ref
 
   protected Vector3d lastCrosshairPosition;
 
@@ -749,7 +749,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
   private void updateSegmentation(DicomImageElement img) {
     graphicManager.deleteByLayerType(LayerType.DICOM_SEG);
     segOverlayImage = null;
-    boolean building = false;
+    List<SpecialElementRegion> building = new ArrayList<>();
     if (series != null && img != null) {
       String patientPseudoUID = DicomModel.getPatientPseudoUID(series);
       List<SpecialElementRegion> segList =
@@ -759,10 +759,11 @@ public class View2d extends DefaultView2d<DicomImageElement> {
         Set<SegContour> contours = new LinkedHashSet<>();
         for (SpecialElementRegion seg : segList) {
           if (seg.isVisible() && seg.containsSopInstanceUIDReference(img)) {
-            if (seg.isSegmentationVolumeBuilding()) {
-              building = true;
-            }
+            // Checked after getContours(): that call may itself schedule the volume build
             Set<LazyContourLoader> loaders = seg.getContours(img);
+            if (seg.isSegmentationVolumeBuilding()) {
+              building.add(seg);
+            }
             if (loaders != null && !loaders.isEmpty()) {
               for (LazyContourLoader lazyLoader : loaders) {
                 try {
@@ -806,8 +807,21 @@ public class View2d extends DefaultView2d<DicomImageElement> {
         }
       }
     }
-    this.segLoading = building;
-    updateSegButtonVisibleState(img);
+    this.loadingSegs = List.copyOf(building);
+  }
+
+  /**
+   * {@code true} while at least one tracked segmentation is still building its canonical volume.
+   * Evaluated live at paint time so the message disappears on the next repaint even if the build
+   * ended without notifying this view.
+   */
+  protected boolean isSegLoading() {
+    return loadingSegs.stream().anyMatch(SpecialElementRegion::isSegmentationVolumeBuilding);
+  }
+
+  /** {@code true} when a segmentation build was pending at the last update pass. */
+  boolean hasPendingSegLoading() {
+    return !loadingSegs.isEmpty();
   }
 
   private void updateSegButtonVisibleState(DicomImageElement img) {
@@ -830,7 +844,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
       g2d.drawImage(overlay, affineTransform, null);
       g2d.translate(-p.getX(), -p.getY());
     }
-    if (segLoading) {
+    if (isSegLoading()) {
       drawSegLoadingMessage(g2d);
     }
   }

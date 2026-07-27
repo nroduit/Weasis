@@ -25,10 +25,22 @@ public abstract class StructToolTipTreeNode extends DefaultMutableTreeNode {
 
   public abstract String getToolTipText();
 
+  /** Returns the region attributes carried by this node. */
+  public RegionAttributes getRegion() {
+    return (RegionAttributes) getUserObject();
+  }
+
+  /**
+   * Returns the plain text displayed next to the color swatch. Subclasses override it to decorate
+   * the label (e.g. with the ROI interpreted type).
+   */
+  public String getDisplayLabel() {
+    return getRegion().getLabel();
+  }
+
   @Override
   public String toString() {
-    RegionAttributes seg = (RegionAttributes) getUserObject();
-    return getColorBullet(seg.getColor(), seg.getLabel());
+    return getColorBullet(getRegion().getColor(), getDisplayLabel());
   }
 
   protected static String getColorBullet(Color c, String label) {
