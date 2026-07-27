@@ -11,10 +11,10 @@ package org.weasis.dicom.codec.utils;
 
 import java.time.LocalDate;
 import java.util.Optional;
-import javax.xml.stream.XMLStreamReader;
 import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Tag;
 import org.weasis.core.api.gui.util.GuiUtils;
+import org.weasis.core.api.media.data.AttributeSource;
 import org.weasis.core.api.media.data.TagReadable;
 import org.weasis.core.api.media.data.TagUtil;
 import org.weasis.core.api.media.data.TagW;
@@ -37,13 +37,14 @@ public class PatientComparator {
     setBirthdate(item.getString(Tag.PatientBirthDate));
   }
 
-  public PatientComparator(XMLStreamReader xmler) {
-    setPatientId(TagUtil.getTagAttribute(xmler, TagD.get(Tag.PatientID).getKeyword(), null));
+  public PatientComparator(AttributeSource source) {
+    setPatientId(TagUtil.getTagAttribute(source, TagD.get(Tag.PatientID).getKeyword(), null));
     setIssuerOfPatientID(
-        TagUtil.getTagAttribute(xmler, TagD.get(Tag.IssuerOfPatientID).getKeyword(), null));
-    setName(TagUtil.getTagAttribute(xmler, TagD.get(Tag.PatientName).getKeyword(), null));
-    setSex(TagUtil.getTagAttribute(xmler, TagD.get(Tag.PatientSex).getKeyword(), null));
-    setBirthdate(TagUtil.getTagAttribute(xmler, TagD.get(Tag.PatientBirthDate).getKeyword(), null));
+        TagUtil.getTagAttribute(source, TagD.get(Tag.IssuerOfPatientID).getKeyword(), null));
+    setName(TagUtil.getTagAttribute(source, TagD.get(Tag.PatientName).getKeyword(), null));
+    setSex(TagUtil.getTagAttribute(source, TagD.get(Tag.PatientSex).getKeyword(), null));
+    setBirthdate(
+        TagUtil.getTagAttribute(source, TagD.get(Tag.PatientBirthDate).getKeyword(), null));
   }
 
   public PatientComparator(TagReadable taggable) {

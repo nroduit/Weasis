@@ -169,7 +169,7 @@ public class LoadRemoteDicomManifest extends ExplorerTask<Boolean, String> {
   private void downloadManifest(String path) throws DownloadException {
     try {
       URI uri = URIUtils.getURI(path);
-      Collection<LoadSeries> wadoTasks = DownloadManager.buildDicomSeriesFromXml(uri, dicomModel);
+      Collection<LoadSeries> wadoTasks = DownloadManager.buildDicomSeries(uri, dicomModel);
 
       loadSeriesList.addAll(wadoTasks);
       boolean downloadImmediately =

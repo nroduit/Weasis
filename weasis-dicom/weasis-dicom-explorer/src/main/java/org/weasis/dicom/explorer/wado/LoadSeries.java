@@ -71,10 +71,36 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
   public static final TagW DOWNLOAD_TIME = new TagW("DownloadTime", TagType.TIME);
   public static final TagW DOWNLOAD_ERRORS = new TagW("DownloadErrors", TagType.INTEGER);
 
+  /**
+   * Marks a series to be retrieved with a single series-level WADO-RS multipart request (partial
+   * {@code DICOM_WEB} manifest opted into bulk retrieve) rather than instance by instance.
+   */
+  public static final TagW SERIES_BULK_RETRIEVE = new TagW("SeriesBulkRetrieve", TagType.BOOLEAN);
+
   public static final String LOAD_TYPE_DICOMDIR = "DICOMDIR";
   public static final String LOAD_TYPE_URL = "URL";
   public static final String LOAD_TYPE_LOCAL = "local"; // NON-NLS
   public static final String LOAD_TYPE_WADO = "WADO";
+
+  /**
+   * DICOMweb service root of the series. The manifest path stores it in {@link
+   * WadoParameters#getBaseURL()}; the RS-query path leaves that empty and keeps the absolute series
+   * URL in {@link Tag#RetrieveURL}, from which the root is derived.
+   */
+  static String dicomWebBaseUrl(WadoParameters wado, MediaSeriesGroup dicomSeries) {
+    String baseUrl = wado.getBaseURL();
+    if (StringUtil.hasText(baseUrl)) {
+      return baseUrl;
+    }
+    String retrieveUrl = TagD.getTagValue(dicomSeries, Tag.RetrieveURL, String.class);
+    if (StringUtil.hasText(retrieveUrl)) {
+      int index = retrieveUrl.indexOf("/studies/"); // NON-NLS
+      if (index > 0) {
+        return retrieveUrl.substring(0, index);
+      }
+    }
+    return baseUrl;
+  }
 
   private PluginOpeningStrategy openingStrategy;
 
@@ -473,6 +499,11 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
 
       thumbnailManager.createSeriesThumbnail(this, progressBar);
       thumbnailManager.loadThumbnail(instance, wadoParameters, authMethod);
+    } else if (Boolean.TRUE.equals(dicomSeries.getTagValue(SERIES_BULK_RETRIEVE))) {
+      // Series-level bulk retrieve: no instance list yet. Show the progress thumbnail and fetch a
+      // preview through the DICOMweb thumbnail service (WADO-URI fallback) before downloading.
+      thumbnailManager.createSeriesThumbnail(this, progressBar);
+      thumbnailManager.loadSeriesThumbnail(wadoParameters, authMethod);
     }
   }
 

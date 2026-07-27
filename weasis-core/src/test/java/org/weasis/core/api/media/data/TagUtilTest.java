@@ -26,9 +26,7 @@ import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.Date;
 import java.util.TimeZone;
-import javax.xml.stream.XMLStreamReader;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
 import org.weasis.core.api.media.data.TagW.TagType;
 
 /**
@@ -335,73 +333,71 @@ class TagUtilTest {
   // against missing attributes (default-value fallback).
   // ---------------------------------------------------------------------------
 
-  private static XMLStreamReader stubReader(String attribute, String value) {
-    XMLStreamReader reader = Mockito.mock(XMLStreamReader.class);
-    Mockito.when(reader.getAttributeValue(null, attribute)).thenReturn(value);
-    return reader;
+  private static AttributeSource stubSource(String attribute, String value) {
+    return name -> attribute.equals(name) ? value : null;
   }
 
   @Test
   void getTagAttribute_returnsValueOrDefault() {
-    assertEquals("v", TagUtil.getTagAttribute(stubReader("k", "v"), "k", "def"));
-    assertEquals("def", TagUtil.getTagAttribute(stubReader("k", null), "k", "def"));
-    assertEquals("def", TagUtil.getTagAttribute(stubReader("k", "v"), null, "def"));
+    assertEquals("v", TagUtil.getTagAttribute(stubSource("k", "v"), "k", "def"));
+    assertEquals("def", TagUtil.getTagAttribute(stubSource("k", null), "k", "def"));
+    assertEquals("def", TagUtil.getTagAttribute(stubSource("k", "v"), null, "def"));
   }
 
   @Test
   void getBooleanTagAttribute_parsesValueOrFallsBack() {
-    assertEquals(Boolean.TRUE, TagUtil.getBooleanTagAttribute(stubReader("k", "true"), "k", false));
+    assertEquals(Boolean.TRUE, TagUtil.getBooleanTagAttribute(stubSource("k", "true"), "k", false));
     assertEquals(
-        Boolean.FALSE, TagUtil.getBooleanTagAttribute(stubReader("k", "false"), "k", true));
+        Boolean.FALSE, TagUtil.getBooleanTagAttribute(stubSource("k", "false"), "k", true));
     assertEquals(
-        Boolean.TRUE, TagUtil.getBooleanTagAttribute(stubReader("k", null), "k", Boolean.TRUE));
+        Boolean.TRUE, TagUtil.getBooleanTagAttribute(stubSource("k", null), "k", Boolean.TRUE));
   }
 
   @Test
   void getIntegerTagAttribute_fallsBackOnNumberFormatException() {
-    assertEquals(42, TagUtil.getIntegerTagAttribute(stubReader("k", "42"), "k", 0));
+    assertEquals(42, TagUtil.getIntegerTagAttribute(stubSource("k", "42"), "k", 0));
     // Malformed value → caught NumberFormatException → default returned (no propagation to UI)
-    assertEquals(99, TagUtil.getIntegerTagAttribute(stubReader("k", "not-a-number"), "k", 99));
-    assertEquals(99, TagUtil.getIntegerTagAttribute(stubReader("k", null), "k", 99));
+    assertEquals(99, TagUtil.getIntegerTagAttribute(stubSource("k", "not-a-number"), "k", 99));
+    assertEquals(99, TagUtil.getIntegerTagAttribute(stubSource("k", null), "k", 99));
   }
 
   @Test
   void getDoubleTagAttribute_handlesScientificAndNegativeValues() {
-    assertEquals(3.14, TagUtil.getDoubleTagAttribute(stubReader("k", "3.14"), "k", 0.0));
-    assertEquals(-1.5e3, TagUtil.getDoubleTagAttribute(stubReader("k", "-1.5e3"), "k", 0.0));
-    assertEquals(0.0, TagUtil.getDoubleTagAttribute(stubReader("k", "bogus"), "k", 0.0));
+    assertEquals(3.14, TagUtil.getDoubleTagAttribute(stubSource("k", "3.14"), "k", 0.0));
+    assertEquals(-1.5e3, TagUtil.getDoubleTagAttribute(stubSource("k", "-1.5e3"), "k", 0.0));
+    assertEquals(0.0, TagUtil.getDoubleTagAttribute(stubSource("k", "bogus"), "k", 0.0));
   }
 
   @Test
   void getStringArrayTagAttribute_splitsOnDefaultBackslashSeparator() {
     String[] result =
-        TagUtil.getStringArrayTagAttribute(stubReader("k", "a\\b\\c"), "k", new String[0]);
+        TagUtil.getStringArrayTagAttribute(stubSource("k", "a\\b\\c"), "k", new String[0]);
     assertArrayEquals(new String[] {"a", "b", "c"}, result);
   }
 
   @Test
   void getStringArrayTagAttribute_customSeparator() {
     String[] result =
-        TagUtil.getStringArrayTagAttribute(stubReader("k", "a,b,c"), "k", new String[0], ",");
+        TagUtil.getStringArrayTagAttribute(stubSource("k", "a,b,c"), "k", new String[0], ",");
     assertArrayEquals(new String[] {"a", "b", "c"}, result);
   }
 
   @Test
   void getStringArrayTagAttribute_missingAttributeReturnsDefault() {
     String[] def = {"x"};
-    assertSame(def, TagUtil.getStringArrayTagAttribute(stubReader("k", null), "k", def));
+    assertSame(def, TagUtil.getStringArrayTagAttribute(stubSource("k", null), "k", def));
   }
 
   @Test
   void getIntArrayTagAttribute_parsesBackslashSeparatedIntegers() {
-    int[] result = TagUtil.getIntArrayTagAttribute(stubReader("k", "1\\2\\3"), "k", new int[0]);
+    int[] result = TagUtil.getIntArrayTagAttribute(stubSource("k", "1\\2\\3"), "k", new int[0]);
     assertArrayEquals(new int[] {1, 2, 3}, result);
   }
 
   @Test
   void getIntArrayTagAttribute_missingAttributeReturnsDefault() {
     int[] def = {7};
-    assertSame(def, TagUtil.getIntArrayTagAttribute(stubReader("k", null), "k", def));
+    assertSame(def, TagUtil.getIntArrayTagAttribute(stubSource("k", null), "k", def));
   }
 
   @Test
@@ -409,25 +405,25 @@ class TagUtilTest {
     // Defensive: when the attribute name itself is null, the lookup is skipped and the default
     // is returned (no NPE inside the XML parser).
     assertEquals(
-        Float.valueOf(2.0f), TagUtil.getFloatTagAttribute(stubReader("k", "1.0"), null, 2.0f));
+        Float.valueOf(2.0f), TagUtil.getFloatTagAttribute(stubSource("k", "1.0"), null, 2.0f));
   }
 
   @Test
   void getDateFromElement_parsesLocalDateFromIsoString() {
-    var result = TagUtil.getDateFromElement(stubReader("k", "2026-05-22"), "k", TagType.DATE, null);
+    var result = TagUtil.getDateFromElement(stubSource("k", "2026-05-22"), "k", TagType.DATE, null);
     assertEquals(LocalDate.of(2026, 5, 22), result);
   }
 
   @Test
   void getDateFromElement_parsesLocalTimeFromIsoString() {
-    var result = TagUtil.getDateFromElement(stubReader("k", "13:45:30"), "k", TagType.TIME, null);
+    var result = TagUtil.getDateFromElement(stubSource("k", "13:45:30"), "k", TagType.TIME, null);
     assertEquals(LocalTime.of(13, 45, 30), result);
   }
 
   @Test
   void getDateFromElement_unparsableValueReturnsDefault() {
     LocalDate def = LocalDate.of(2026, 1, 1);
-    var result = TagUtil.getDateFromElement(stubReader("k", "not-a-date"), "k", TagType.DATE, def);
+    var result = TagUtil.getDateFromElement(stubSource("k", "not-a-date"), "k", TagType.DATE, def);
     assertSame(def, result);
   }
 }

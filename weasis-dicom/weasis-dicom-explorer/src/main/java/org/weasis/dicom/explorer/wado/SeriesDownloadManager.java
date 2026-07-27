@@ -18,7 +18,9 @@ import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.Callable;
@@ -31,6 +33,7 @@ import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.ElementDictionary;
 import org.dcm4che3.data.Tag;
 import org.dcm4che3.data.UID;
+import org.dcm4che3.img.util.DicomUtils;
 import org.dcm4che3.io.DicomInputStream;
 import org.dcm4che3.io.DicomInputStream.IncludeBulkData;
 import org.dcm4che3.io.DicomOutputStream;
@@ -65,9 +68,10 @@ import org.weasis.dicom.codec.TagD.Level;
 import org.weasis.dicom.codec.utils.DicomMediaUtils;
 import org.weasis.dicom.codec.utils.SeriesInstanceList;
 import org.weasis.dicom.explorer.DicomModel;
-import org.weasis.dicom.explorer.wado.LoadSeries.Status;
+import org.weasis.dicom.explorer.rs.RsQueryResult;
 import org.weasis.dicom.mf.SopInstance;
 import org.weasis.dicom.mf.WadoParameters;
+import org.weasis.dicom.param.CancelListener;
 import org.weasis.dicom.web.BoundaryExtractor;
 import org.weasis.dicom.web.MultipartConstants;
 import org.weasis.dicom.web.MultipartReader;
@@ -80,6 +84,8 @@ import org.weasis.dicom.web.MultipartStreamException;
 public class SeriesDownloadManager {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(SeriesDownloadManager.class);
+
+  private static final int INSTANCE_PAGE_SIZE = 1000;
 
   private final LoadSeries loadSeries;
   private final DicomModel dicomModel;
@@ -127,6 +133,18 @@ public class SeriesDownloadManager {
     WadoParameters wado = (WadoParameters) dicomSeries.getTagValue(TagW.WadoParameters);
     if (wado == null) {
       return false;
+    }
+
+    if (Boolean.TRUE.equals(dicomSeries.getTagValue(LoadSeries.SERIES_BULK_RETRIEVE))) {
+      // First pass on an empty series uses the single bulk stream. On resume, or when that stream
+      // is truncated (some DICOMweb servers cap a retrieve), complete the missing instances one by
+      // one rather than re-fetching the whole series.
+      if (dicomSeries.size(null) == 0 && startBulkSeriesDownload(wado)) {
+        return true;
+      }
+      if (!completeMissingInstances(wado)) {
+        return startBulkSeriesDownload(wado);
+      }
     }
 
     SeriesInstanceList seriesInstanceList = loadSeries.getSeriesInstanceList();
@@ -300,14 +318,477 @@ public class SeriesDownloadManager {
     return LoadSeries.DICOM_TMP_DIR;
   }
 
+  private Path createTempFile() throws IOException {
+    return Files.createTempFile(ensureDicomTmpDir(), "image_", ".dcm");
+  }
+
+  /**
+   * Enumerates the series instances through QIDO-RS into {@link #loadSeries}'s instance list so a
+   * resumed bulk series can be completed one instance at a time (the per-instance download skips
+   * the instances already stored). Returns {@code false} when nothing could be enumerated, so the
+   * caller falls back to the single bulk stream.
+   */
+  private boolean completeMissingInstances(WadoParameters wado) {
+    SeriesInstanceList seriesInstanceList = loadSeries.getSeriesInstanceList();
+    if (!seriesInstanceList.getSortedList().isEmpty()) {
+      return true; // Already enumerated on a previous attempt.
+    }
+    MediaSeriesGroup study = dicomModel.getParent(dicomSeries, DicomModel.study);
+    String studyUID = TagD.getTagValue(study, Tag.StudyInstanceUID, String.class);
+    String seriesUID = TagD.getTagValue(dicomSeries, Tag.SeriesInstanceUID, String.class);
+    if (!StringUtil.hasText(studyUID) || !StringUtil.hasText(seriesUID)) {
+      return false;
+    }
+
+    String baseUrl = LoadSeries.dicomWebBaseUrl(wado, dicomSeries);
+    // The manifest origin keeps a non-empty WadoParameters base and a relative retrieve path; the
+    // RS-query origin has an empty base and needs an absolute one. buildDownloadUrl() prepends
+    // wado.getBaseURL(), so match the retrieve path to whichever the origin uses.
+    String retrievePrefix = StringUtil.hasText(wado.getBaseURL()) ? "" : baseUrl;
+
+    Map<String, String> headers = new HashMap<>(urlParams.headers());
+    headers.put("Accept", "application/dicom+json"); // NON-NLS
+    URLParameters queryParams = new URLParameters(headers);
+    String baseQuery =
+        baseUrl
+            + "/studies/" // NON-NLS
+            + studyUID
+            + "/series/" // NON-NLS
+            + seriesUID
+            + "/instances?includefield=00080016,00080018,00200013"; // NON-NLS
+
+    int offset = 0;
+    while (true) {
+      String url = baseQuery + "&offset=" + offset + "&limit=" + INSTANCE_PAGE_SIZE; // NON-NLS
+      List<Attributes> instances;
+      try {
+        instances = RsQueryResult.parseJSON(url, authMethod, queryParams);
+      } catch (Exception e) {
+        LOGGER.error("QIDO-RS enumeration failed for resumed bulk series {}", seriesUID, e);
+        break;
+      }
+      if (instances.isEmpty()) {
+        break;
+      }
+      for (Attributes instance : instances) {
+        addSopInstance(instance, seriesInstanceList, studyUID, seriesUID, retrievePrefix);
+      }
+      offset += instances.size();
+      if (instances.size() < INSTANCE_PAGE_SIZE) {
+        break;
+      }
+    }
+    return !seriesInstanceList.getSortedList().isEmpty();
+  }
+
+  private static void addSopInstance(
+      Attributes instance,
+      SeriesInstanceList seriesInstanceList,
+      String studyUID,
+      String seriesUID,
+      String retrievePrefix) {
+    String sopUID = instance.getString(Tag.SOPInstanceUID);
+    if (!StringUtil.hasText(sopUID)) {
+      return;
+    }
+    Integer frame = DicomUtils.getIntegerFromDicomElement(instance, Tag.InstanceNumber, null);
+    if (seriesInstanceList.getSopInstance(sopUID, frame) == null) {
+      SopInstance sop = new SopInstance(sopUID, instance.getString(Tag.SOPClassUID), frame);
+      sop.setDirectDownloadFile(
+          retrievePrefix
+              + "/studies/" // NON-NLS
+              + studyUID
+              + "/series/" // NON-NLS
+              + seriesUID
+              + "/instances/" // NON-NLS
+              + sopUID);
+      seriesInstanceList.addSopInstance(sop);
+    }
+  }
+
+  /**
+   * Downloads a whole series in a single WADO-RS request ({@code
+   * {base}/studies/{study}/series/{series}}) and ingests each part of the {@code multipart/related}
+   * response. Used for partial {@code DICOM_WEB} manifests opted into the series-level bulk
+   * retrieve on the first pass (see {@link #completeMissingInstances} for the resume path).
+   */
+  private Boolean startBulkSeriesDownload(WadoParameters wado) {
+    MediaSeriesGroup study = dicomModel.getParent(dicomSeries, DicomModel.study);
+    String studyUID = TagD.getTagValue(study, Tag.StudyInstanceUID, String.class);
+    String seriesUID = TagD.getTagValue(dicomSeries, Tag.SeriesInstanceUID, String.class);
+    if (!StringUtil.hasText(studyUID) || !StringUtil.hasText(seriesUID)) {
+      return false;
+    }
+
+    String url =
+        LoadSeries.dicomWebBaseUrl(wado, dicomSeries)
+            + "/studies/" // NON-NLS
+            + studyUID
+            + "/series/" // NON-NLS
+            + seriesUID
+            + wado.getAdditionalParameters();
+    LOGGER.info("Bulk downloading series {}", url);
+
+    // A cheap QIDO count makes the progress bar determinate; fall back to indeterminate otherwise.
+    Integer count = fetchSeriesInstanceCount(wado, studyUID, seriesUID);
+    if (count != null && count > 0) {
+      initializeProgressBar(count);
+      GuiExecutor.execute(() -> progressBar.setIndeterminate(false));
+    } else {
+      GuiExecutor.execute(() -> progressBar.setIndeterminate(true));
+    }
+
+    dicomSeries.setTag(LoadSeries.DOWNLOAD_START_TIME, System.currentTimeMillis());
+    HttpStream httpStream = null;
+    CancelListener onCancel = null;
+    int parts = 0;
+    try {
+      httpStream = HttpUtils.getHttpResponse(url, urlParams, authMethod);
+      // Close the stream on cancel so a part read blocked mid-stream unblocks immediately instead
+      // of waiting for the current part to finish.
+      HttpStream toClose = httpStream;
+      onCancel = () -> closeQuietly(toClose);
+      loadSeries.addCancelListener(onCancel);
+
+      int code = httpStream.getResponseCode();
+      if (code >= HttpURLConnection.HTTP_BAD_REQUEST) {
+        if (authMethod != null && code == HttpURLConnection.HTTP_UNAUTHORIZED) {
+          authMethod.resetToken();
+          authMethod.getToken();
+        }
+        throw new IOException("Server response code: " + code);
+      }
+      parts = downloadSeriesMultipart(httpStream);
+    } catch (StreamIOException e) {
+      if (!loadSeries.isCancelled()) {
+        loadSeries.setHasError(true);
+        dicomSeries.setTag(LoadSeries.DOWNLOAD_ERRORS, errors.incrementAndGet());
+        LOGGER.error("Bulk series download failed: {}", url, e);
+      }
+    } catch (IOException e) {
+      // A cancel closes the stream, which surfaces here as an IOException: not a real error.
+      if (!loadSeries.isCancelled()) {
+        dicomSeries.setTag(LoadSeries.DOWNLOAD_ERRORS, errors.incrementAndGet());
+        LOGGER.error("Bulk series download failed: {}", url, e);
+      }
+    } finally {
+      if (onCancel != null) {
+        loadSeries.removeCancelListener(onCancel);
+      }
+      closeQuietly(httpStream);
+      GuiExecutor.execute(() -> progressBar.setIndeterminate(false));
+    }
+    // The series is complete unless the server returned fewer parts than it holds (some DICOMweb
+    // servers cap a retrieve); the caller then completes the remaining instances individually.
+    boolean complete = loadSeries.isCancelled() || count == null || parts >= count;
+    if (!complete) {
+      LOGGER.info(
+          "Bulk retrieve returned {}/{} instances for series {}; completing per-instance",
+          parts,
+          count,
+          seriesUID);
+    }
+    return complete;
+  }
+
+  private static void closeQuietly(AutoCloseable closeable) {
+    if (closeable != null) {
+      try {
+        closeable.close();
+      } catch (Exception e) {
+        LOGGER.debug("Error closing HTTP stream", e);
+      }
+    }
+  }
+
+  /**
+   * Queries {@code NumberOfSeriesRelatedInstances} for the series so bulk progress can be
+   * determinate. Returns {@code null} when the server does not provide it.
+   */
+  private Integer fetchSeriesInstanceCount(WadoParameters wado, String studyUID, String seriesUID) {
+    int n =
+        RsQueryResult.seriesInstanceCount(
+            LoadSeries.dicomWebBaseUrl(wado, dicomSeries),
+            studyUID,
+            seriesUID,
+            urlParams,
+            authMethod);
+    return n > 0 ? n : null;
+  }
+
+  private int downloadSeriesMultipart(HttpStream httpStream) throws IOException {
+    String contentType = httpStream.getHeaderField("Content-Type"); // NON-NLS
+    byte[] boundary =
+        BoundaryExtractor.extractBoundary(contentType, MultipartConstants.MULTIPART_RELATED);
+    if (boundary == null) {
+      throw new IOException("No boundary in Content-Type: " + contentType);
+    }
+
+    int[] overrideList =
+        Optional.ofNullable((WadoParameters) dicomSeries.getTagValue(TagW.WadoParameters))
+            .map(WadoParameters::getOverrideDicomTagIDList)
+            .orElse(null);
+
+    int parts = 0;
+    try (MultipartReader reader = new MultipartReader(httpStream.getInputStream(), boundary)) {
+      reader.skipFirstBoundary();
+      do {
+        if (loadSeries.isCancelled()) {
+          break;
+        }
+        reader.readHeaders();
+        boolean isFirstImage =
+            dicomSeries.size(null) == 0 && seriesInitialized.compareAndSet(false, true);
+        Path tempFile = createTempFile();
+        boolean written;
+        try (var partStream = reader.newPartInputStream()) {
+          InputStream monitored = new SeriesProgressMonitor(dicomSeries, partStream);
+          // -1 means fully written; anything else means interrupted/failed (temp file deleted).
+          written =
+              overrideList == null
+                  ? FileUtil.writeStream(monitored, tempFile, false) == -1
+                  : writeFileWithOverrides(monitored, tempFile, overrideList) == -1;
+        }
+        if (!written) {
+          // Interrupted or failed part: drop the temp file (the override path already deleted it).
+          FileUtil.delete(tempFile);
+          continue;
+        }
+        parts++;
+        try {
+          // Resume re-streams the whole series: skip instances already stored.
+          ingest(tempFile, isFirstImage, true);
+        } catch (IOException e) {
+          dicomSeries.setTag(LoadSeries.DOWNLOAD_ERRORS, errors.incrementAndGet());
+          LOGGER.error("Failed to ingest a series part", e);
+        }
+      } while (reader.readBoundary());
+    } catch (MultipartStreamException e) {
+      throw new IOException("Failed to parse multipart content", e);
+    }
+    return parts;
+  }
+
+  private int writeFileWithOverrides(InputStream in, Path targetFile, int[] overrideList)
+      throws StreamIOException {
+    try (DicomInputStream dis = new DicomInputStream(in)) {
+      dis.setIncludeBulkData(IncludeBulkData.URI);
+      Attributes dataset = dis.readDataset();
+      String tsuid = dis.getTransferSyntax();
+
+      applyOverrides(dataset, overrideList);
+
+      try (DicomOutputStream dos = new DicomOutputStream(targetFile.toFile())) {
+        dos.writeDataset(dataset.createFileMetaInformation(tsuid), dataset);
+        dos.finish();
+        dos.flush();
+      }
+
+      cleanupBulkDataFiles(dis);
+      return -1;
+    } catch (InterruptedIOException e) {
+      FileUtil.delete(targetFile);
+      LOGGER.error("Interrupted while writing: {}", e.getMessage());
+      return e.bytesTransferred;
+    } catch (IOException e) {
+      FileUtil.delete(targetFile);
+      throw new StreamIOException(e);
+    } catch (Exception e) {
+      FileUtil.delete(targetFile);
+      LOGGER.error("Error writing DICOM file", e);
+      return 0;
+    }
+  }
+
+  private void applyOverrides(Attributes dataset, int[] overrideList) {
+    if (overrideList == null) {
+      return;
+    }
+
+    MediaSeriesGroup study = dicomModel.getParent(dicomSeries, DicomModel.study);
+    MediaSeriesGroup patient = dicomModel.getParent(dicomSeries, DicomModel.patient);
+    ElementDictionary dic = ElementDictionary.getStandardElementDictionary();
+
+    for (int tag : overrideList) {
+      TagW tagElement = patient.getTagElement(tag);
+      Object value =
+          tagElement != null
+              ? patient.getTagValue(tagElement)
+              : study.getTagValue(study.getTagElement(tag));
+
+      if (tagElement != null || study.getTagElement(tag) != null) {
+        DicomMediaUtils.fillAttributes(
+            dataset, tagElement != null ? tagElement : study.getTagElement(tag), value, dic);
+      }
+    }
+  }
+
+  private void cleanupBulkDataFiles(DicomInputStream dis) {
+    List<java.io.File> bulkFiles = dis.getBulkDataFiles();
+    if (bulkFiles != null) {
+      bulkFiles.forEach(file -> FileUtil.delete(file.toPath()));
+    }
+  }
+
+  /** Reads a downloaded DICOM file into the model and refreshes the UI. */
+  private void ingest(Path file, boolean isFirstImage, boolean skipIfExists) throws IOException {
+    DicomMediaIO dicomReader = new DicomMediaIO(file.toFile());
+    if (skipIfExists && dicomReader.isReadableDicom() && isAlreadyStored(dicomReader)) {
+      dicomReader.close();
+      FileUtil.delete(file);
+      incrementProgressBarValue();
+      return;
+    }
+    if (dicomReader.isReadableDicom() && isFirstImage) {
+      updateSeriesMetadata(dicomReader);
+    }
+    handleReadableFile(dicomReader, file, isFirstImage);
+    incrementProgressBarValue();
+  }
+
+  private boolean isAlreadyStored(DicomMediaIO reader) {
+    String sopUID = TagD.getTagValue(reader, Tag.SOPInstanceUID, String.class);
+    if (sopUID == null) {
+      return false;
+    }
+    MediaSeriesGroup study = dicomModel.getParent(dicomSeries, DicomModel.study);
+    return isSOPInstanceUIDExist(study, dicomSeries, sopUID);
+  }
+
+  private void updateSeriesMetadata(DicomMediaIO reader) {
+    MediaSeriesGroup patient = dicomModel.getParent(dicomSeries, DicomModel.patient);
+    MediaSeriesGroup study = dicomModel.getParent(dicomSeries, DicomModel.study);
+    reader.writeMetaData(patient);
+    reader.writeMetaData(study);
+    reader.writeMetaData(dicomSeries);
+
+    GuiExecutor.invokeAndWait(
+        () -> {
+          Thumbnail thumb = (Thumbnail) dicomSeries.getTagValue(TagW.Thumbnail);
+          if (thumb != null) {
+            thumb.repaint();
+          }
+          dicomModel.firePropertyChange(
+              new ObservableEvent(
+                  ObservableEvent.BasicAction.UPDATE_PARENT, dicomModel, null, dicomSeries));
+        });
+  }
+
+  private void handleReadableFile(DicomMediaIO reader, Path file, boolean isFirstImage) {
+    Reading reading = reader.getReadingStatus();
+    if (reading == Reading.READABLE) {
+      if (file.startsWith(AppProperties.APP_TEMP_DIR)) {
+        reader.getFileCache().setOriginalTempFile(file);
+      }
+      updateUI(reader, isFirstImage);
+    } else if (reading == Reading.ERROR) {
+      errors.incrementAndGet();
+    } else if (reading == Reading.UNSUPPORTED) {
+      LOGGER.info("Skipping unsupported DICOM SOP Class for file: {}", file);
+    }
+  }
+
+  private void updateUI(DicomMediaIO reader, boolean firstImageToDisplay) {
+    DicomMediaIO.ResultContainer result =
+        reader.getMediaElement(factory -> factory.buildDicomSpecialElement(reader));
+
+    DicomImageElement[] medias = result.getImage();
+    if (medias != null) {
+      if (firstImageToDisplay) {
+        reconcilePatientAndStudyUIDs(reader);
+      }
+
+      for (DicomImageElement media : medias) {
+        applyPresentationModel(media);
+        dicomModel.applySplittingRules(dicomSeries, media);
+      }
+    }
+
+    DicomSpecialElement specialElement = result.getSpecialElement();
+    if (specialElement != null) {
+      dicomModel.applySplittingRules(dicomSeries, specialElement);
+    }
+
+    openViewerIfNeeded();
+    refreshThumbnail();
+  }
+
+  private void reconcilePatientAndStudyUIDs(DicomMediaIO reader) {
+    MediaSeriesGroup patient = dicomModel.getParent(dicomSeries, DicomModel.patient);
+    if (patient != null) {
+      String oldPatientUID = (String) patient.getTagValue(TagW.PatientPseudoUID);
+      String newPatientUID = (String) reader.getTagValue(TagW.PatientPseudoUID);
+      if (!Objects.equals(oldPatientUID, newPatientUID)) {
+        dicomModel.mergePatientUID(oldPatientUID, newPatientUID, loadSeries.getOpeningStrategy());
+      }
+    }
+    MediaSeriesGroup study = dicomModel.getParent(dicomSeries, DicomModel.study);
+    if (study != null) {
+      String oldStudyUID = (String) study.getTagValue(TagD.get(Tag.StudyInstanceUID));
+      String newStudyUID = TagD.getTagValue(reader, Tag.StudyInstanceUID, String.class);
+      if (!Objects.equals(oldStudyUID, newStudyUID)) {
+        dicomModel.mergeStudyUID(oldStudyUID, newStudyUID);
+      }
+    }
+  }
+
+  private void openViewerIfNeeded() {
+    MediaSeriesGroup patient = dicomModel.getParent(dicomSeries, DicomModel.patient);
+    if (patient != null) {
+      var openingStrategy = loadSeries.getOpeningStrategy();
+      if (openingStrategy != null) {
+        openingStrategy.openViewerPlugin(patient, dicomModel, dicomSeries);
+      }
+    }
+  }
+
+  private void refreshThumbnail() {
+    GuiExecutor.execute(
+        () -> {
+          Thumbnail thumb = (Thumbnail) dicomSeries.getTagValue(TagW.Thumbnail);
+          if (thumb != null) {
+            thumb.repaint();
+          }
+        });
+  }
+
+  private void applyPresentationModel(DicomImageElement media) {
+    String sopUID = TagD.getTagValue(media, Tag.SOPInstanceUID, String.class);
+
+    SeriesInstanceList seriesInstanceList = loadSeries.getSeriesInstanceList();
+    SopInstance sop =
+        seriesInstanceList.isContainsMultiframes()
+            ? seriesInstanceList.getSopInstance(
+                sopUID, TagD.getTagValue(media, Tag.InstanceNumber, Integer.class))
+            : seriesInstanceList.getSopInstance(sopUID);
+
+    if (sop != null && sop.getGraphicModel() instanceof GraphicModel model) {
+      if (shouldApplyModel(media, model, sopUID)) {
+        media.setTag(TagW.PresentationModel, model);
+      }
+    }
+  }
+
+  private boolean shouldApplyModel(DicomImageElement media, GraphicModel model, String sopUID) {
+    int frames = media.getMediaReader().getMediaElementNumber();
+    if (frames <= 1 || !(media.getKey() instanceof Integer frameKey)) {
+      return true;
+    }
+    String seriesUID = TagD.getTagValue(media, Tag.SeriesInstanceUID, String.class);
+
+    return model.getReferencedSeries().stream()
+        .filter(s -> s.getUuid().equals(seriesUID))
+        .flatMap(s -> s.getImages().stream())
+        .filter(img -> img.getUuid().equals(sopUID))
+        .anyMatch(img -> img.getFrames() == null || img.getFrames().contains(frameKey));
+  }
+
   /** Handles individual DICOM instance download task. */
   class Download implements Callable<Boolean> {
     private final String url;
-    private Status status;
 
     public Download(String url) {
       this.url = url;
-      this.status = Status.DOWNLOADING;
     }
 
     @Override
@@ -334,7 +815,6 @@ public class SeriesDownloadManager {
     }
 
     private void markAsError() {
-      status = Status.ERROR;
       dicomSeries.setTag(LoadSeries.DOWNLOAD_ERRORS, errors.incrementAndGet());
     }
 
@@ -350,7 +830,7 @@ public class SeriesDownloadManager {
           throw new IOException("Local file not found: " + url);
         }
         try {
-          processDownloadedFile(localFile, isFirstImage);
+          ingest(localFile, isFirstImage, false);
         } finally {
           progressBar.setIndeterminate(progressBar.getMaximum() < 3);
         }
@@ -373,7 +853,7 @@ public class SeriesDownloadManager {
         }
 
         StreamUtil.safeClose(stream);
-        processDownloadedFile(tempFile, isFirstImage);
+        ingest(tempFile, isFirstImage, false);
       } finally {
         progressBar.setIndeterminate(progressBar.getMaximum() < 3);
       }
@@ -390,60 +870,9 @@ public class SeriesDownloadManager {
       }
     }
 
-    private Path createTempFile() throws IOException {
-      return Files.createTempFile(ensureDicomTmpDir(), "image_", ".dcm");
-    }
-
     private Path moveToExportDir(Path tempFile) throws IOException {
       Path targetPath = DicomMediaIO.DICOM_EXPORT_DIR.resolve(tempFile.getFileName());
       return Files.move(tempFile, targetPath);
-    }
-
-    private void processDownloadedFile(Path file, boolean isFirstImage) throws IOException {
-      DicomMediaIO dicomReader = new DicomMediaIO(file.toFile());
-
-      if (dicomReader.isReadableDicom() && isFirstImage) {
-        updateSeriesMetadata(dicomReader);
-      }
-
-      if (status == Status.DOWNLOADING) {
-        status = Status.COMPLETE;
-        handleReadableFile(dicomReader, file, isFirstImage);
-      }
-      incrementProgressBarValue();
-    }
-
-    private void updateSeriesMetadata(DicomMediaIO reader) {
-      MediaSeriesGroup patient = dicomModel.getParent(dicomSeries, DicomModel.patient);
-      MediaSeriesGroup study = dicomModel.getParent(dicomSeries, DicomModel.study);
-      reader.writeMetaData(patient);
-      reader.writeMetaData(study);
-      reader.writeMetaData(dicomSeries);
-
-      GuiExecutor.invokeAndWait(
-          () -> {
-            Thumbnail thumb = (Thumbnail) dicomSeries.getTagValue(TagW.Thumbnail);
-            if (thumb != null) {
-              thumb.repaint();
-            }
-            dicomModel.firePropertyChange(
-                new ObservableEvent(
-                    ObservableEvent.BasicAction.UPDATE_PARENT, dicomModel, null, dicomSeries));
-          });
-    }
-
-    private void handleReadableFile(DicomMediaIO reader, Path file, boolean isFirstImage) {
-      Reading reading = reader.getReadingStatus();
-      if (reading == Reading.READABLE) {
-        if (file.startsWith(AppProperties.APP_TEMP_DIR)) {
-          reader.getFileCache().setOriginalTempFile(file);
-        }
-        updateUI(reader, isFirstImage);
-      } else if (reading == Reading.ERROR) {
-        errors.incrementAndGet();
-      } else if (reading == Reading.UNSUPPORTED) {
-        LOGGER.info("Skipping unsupported DICOM SOP Class for file: {}", file);
-      }
     }
 
     private int downloadToCache(HttpStream response, Path targetFile) throws IOException {
@@ -530,163 +959,6 @@ public class SeriesDownloadManager {
                   "&transferSyntax=[^&]*", "&transferSyntax=" + UID.ExplicitVRLittleEndian)
               : url + "&transferSyntax=" + UID.ExplicitVRLittleEndian;
       return HttpUtils.getHttpResponse(modifiedUrl, urlParams, authMethod);
-    }
-
-    private int writeFileWithOverrides(InputStream in, Path targetFile, int[] overrideList)
-        throws StreamIOException {
-      try (DicomInputStream dis = new DicomInputStream(in)) {
-        dis.setIncludeBulkData(IncludeBulkData.URI);
-        Attributes dataset = dis.readDataset();
-        String tsuid = dis.getTransferSyntax();
-
-        applyOverrides(dataset, overrideList);
-
-        try (DicomOutputStream dos = new DicomOutputStream(targetFile.toFile())) {
-          dos.writeDataset(dataset.createFileMetaInformation(tsuid), dataset);
-          dos.finish();
-          dos.flush();
-        }
-
-        cleanupBulkDataFiles(dis);
-        return -1;
-      } catch (InterruptedIOException e) {
-        FileUtil.delete(targetFile);
-        LOGGER.error("Interrupted while writing: {}", e.getMessage());
-        return e.bytesTransferred;
-      } catch (IOException e) {
-        FileUtil.delete(targetFile);
-        throw new StreamIOException(e);
-      } catch (Exception e) {
-        FileUtil.delete(targetFile);
-        LOGGER.error("Error writing DICOM file", e);
-        return 0;
-      }
-    }
-
-    private void applyOverrides(Attributes dataset, int[] overrideList) {
-      if (overrideList == null) {
-        return;
-      }
-
-      MediaSeriesGroup study = dicomModel.getParent(dicomSeries, DicomModel.study);
-      MediaSeriesGroup patient = dicomModel.getParent(dicomSeries, DicomModel.patient);
-      ElementDictionary dic = ElementDictionary.getStandardElementDictionary();
-
-      for (int tag : overrideList) {
-        TagW tagElement = patient.getTagElement(tag);
-        Object value =
-            tagElement != null
-                ? patient.getTagValue(tagElement)
-                : study.getTagValue(study.getTagElement(tag));
-
-        if (tagElement != null || study.getTagElement(tag) != null) {
-          DicomMediaUtils.fillAttributes(
-              dataset, tagElement != null ? tagElement : study.getTagElement(tag), value, dic);
-        }
-      }
-    }
-
-    private void cleanupBulkDataFiles(DicomInputStream dis) {
-      List<java.io.File> bulkFiles = dis.getBulkDataFiles();
-      if (bulkFiles != null) {
-        bulkFiles.forEach(file -> FileUtil.delete(file.toPath()));
-      }
-    }
-
-    private void updateUI(DicomMediaIO reader, boolean firstImageToDisplay) {
-      DicomMediaIO.ResultContainer result =
-          reader.getMediaElement(factory -> factory.buildDicomSpecialElement(reader));
-
-      DicomImageElement[] medias = result.getImage();
-      if (medias != null) {
-        if (firstImageToDisplay) {
-          reconcilePatientAndStudyUIDs(reader);
-        }
-
-        for (DicomImageElement media : medias) {
-          applyPresentationModel(media);
-          dicomModel.applySplittingRules(dicomSeries, media);
-        }
-      }
-
-      DicomSpecialElement specialElement = result.getSpecialElement();
-      if (specialElement != null) {
-        dicomModel.applySplittingRules(dicomSeries, specialElement);
-      }
-
-      openViewerIfNeeded();
-      refreshThumbnail();
-    }
-
-    private void reconcilePatientAndStudyUIDs(DicomMediaIO reader) {
-      MediaSeriesGroup patient = dicomModel.getParent(dicomSeries, DicomModel.patient);
-      if (patient != null) {
-        String oldPatientUID = (String) patient.getTagValue(TagW.PatientPseudoUID);
-        String newPatientUID = (String) reader.getTagValue(TagW.PatientPseudoUID);
-        if (!Objects.equals(oldPatientUID, newPatientUID)) {
-          dicomModel.mergePatientUID(oldPatientUID, newPatientUID, loadSeries.getOpeningStrategy());
-        }
-      }
-      MediaSeriesGroup study = dicomModel.getParent(dicomSeries, DicomModel.study);
-      if (study != null) {
-        String oldStudyUID = (String) study.getTagValue(TagD.get(Tag.StudyInstanceUID));
-        String newStudyUID = TagD.getTagValue(reader, Tag.StudyInstanceUID, String.class);
-        if (!Objects.equals(oldStudyUID, newStudyUID)) {
-          dicomModel.mergeStudyUID(oldStudyUID, newStudyUID);
-        }
-      }
-    }
-
-    private void openViewerIfNeeded() {
-
-      MediaSeriesGroup patient = dicomModel.getParent(dicomSeries, DicomModel.patient);
-      if (patient != null) {
-        var openingStrategy = loadSeries.getOpeningStrategy();
-        if (openingStrategy != null) {
-          openingStrategy.openViewerPlugin(patient, dicomModel, dicomSeries);
-        }
-      }
-    }
-
-    private void refreshThumbnail() {
-      GuiExecutor.execute(
-          () -> {
-            Thumbnail thumb = (Thumbnail) dicomSeries.getTagValue(TagW.Thumbnail);
-            if (thumb != null) {
-              thumb.repaint();
-            }
-          });
-    }
-
-    private void applyPresentationModel(DicomImageElement media) {
-      String sopUID = TagD.getTagValue(media, Tag.SOPInstanceUID, String.class);
-
-      SeriesInstanceList seriesInstanceList = loadSeries.getSeriesInstanceList();
-      SopInstance sop =
-          seriesInstanceList.isContainsMultiframes()
-              ? seriesInstanceList.getSopInstance(
-                  sopUID, TagD.getTagValue(media, Tag.InstanceNumber, Integer.class))
-              : seriesInstanceList.getSopInstance(sopUID);
-
-      if (sop != null && sop.getGraphicModel() instanceof GraphicModel model) {
-        if (shouldApplyModel(media, model, sopUID)) {
-          media.setTag(TagW.PresentationModel, model);
-        }
-      }
-    }
-
-    private boolean shouldApplyModel(DicomImageElement media, GraphicModel model, String sopUID) {
-      int frames = media.getMediaReader().getMediaElementNumber();
-      if (frames <= 1 || !(media.getKey() instanceof Integer frameKey)) {
-        return true;
-      }
-      String seriesUID = TagD.getTagValue(media, Tag.SeriesInstanceUID, String.class);
-
-      return model.getReferencedSeries().stream()
-          .filter(s -> s.getUuid().equals(seriesUID))
-          .flatMap(s -> s.getImages().stream())
-          .filter(img -> img.getUuid().equals(sopUID))
-          .anyMatch(img -> img.getFrames() == null || img.getFrames().contains(frameKey));
     }
   }
 }

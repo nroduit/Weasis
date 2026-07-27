@@ -10,21 +10,18 @@
 package org.weasis.dicom.explorer.wado;
 
 import java.io.BufferedInputStream;
-import java.io.FileInputStream;
+import java.io.IOException;
 import java.io.InputStream;
+import java.io.PushbackInputStream;
 import java.net.URI;
-import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.PriorityBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -32,18 +29,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.zip.GZIPInputStream;
 import javax.swing.JOptionPane;
 import javax.swing.SwingWorker.StateValue;
-import javax.xml.XMLConstants;
-import javax.xml.stream.XMLInputFactory;
-import javax.xml.stream.XMLStreamConstants;
-import javax.xml.stream.XMLStreamException;
-import javax.xml.stream.XMLStreamReader;
-import javax.xml.transform.Source;
-import javax.xml.transform.stax.StAXSource;
-import javax.xml.validation.Schema;
-import javax.xml.validation.SchemaFactory;
-import javax.xml.validation.Validator;
-import org.dcm4che3.data.Attributes;
-import org.dcm4che3.data.Tag;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.ObservableEvent;
@@ -51,53 +36,23 @@ import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.WinUtil;
-import org.weasis.core.api.media.MimeInspector;
-import org.weasis.core.api.media.data.MediaSeriesGroup;
-import org.weasis.core.api.media.data.MediaSeriesGroupNode;
-import org.weasis.core.api.media.data.TagUtil;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.media.data.Thumbnail;
 import org.weasis.core.api.net.ClosableURLConnection;
 import org.weasis.core.api.net.NetworkUtil;
 import org.weasis.core.api.net.URLParameters;
-import org.weasis.core.api.net.auth.AuthMethod;
-import org.weasis.core.api.util.BiConsumerWithException;
+import org.weasis.core.api.util.GzipManager;
 import org.weasis.core.api.util.ThreadUtil;
-import org.weasis.core.ui.editor.image.ViewerPlugin;
-import org.weasis.core.ui.model.GraphicModel;
-import org.weasis.core.ui.model.ReferencedImage;
-import org.weasis.core.ui.model.ReferencedSeries;
-import org.weasis.core.ui.serialize.XmlSerializer;
 import org.weasis.core.ui.util.ColorLayerUI;
 import org.weasis.core.util.FileUtil;
 import org.weasis.core.util.StreamIOException;
-import org.weasis.core.util.StreamUtil;
 import org.weasis.core.util.StringUtil;
 import org.weasis.core.util.StringUtil.Suffix;
 import org.weasis.dicom.codec.DicomSeries;
-import org.weasis.dicom.codec.KOSpecialElement;
-import org.weasis.dicom.codec.TagD;
-import org.weasis.dicom.codec.TagD.Level;
-import org.weasis.dicom.codec.utils.DicomMediaUtils;
-import org.weasis.dicom.codec.utils.PatientComparator;
-import org.weasis.dicom.codec.utils.SeriesInstanceList;
 import org.weasis.dicom.explorer.DicomModel;
 import org.weasis.dicom.explorer.DicomSorter;
 import org.weasis.dicom.explorer.HangingProtocols.OpeningViewer;
-import org.weasis.dicom.explorer.LoadDicomObjects;
 import org.weasis.dicom.explorer.Messages;
-import org.weasis.dicom.explorer.pref.node.AbstractDicomNode;
-import org.weasis.dicom.explorer.pref.node.DicomWebNode;
-import org.weasis.dicom.explorer.pref.node.DicomWebNode.WebType;
-import org.weasis.dicom.macro.HierarchicalSOPInstanceReference;
-import org.weasis.dicom.macro.KODocumentModule;
-import org.weasis.dicom.macro.SOPInstanceReferenceAndMAC;
-import org.weasis.dicom.macro.SeriesAndInstanceReference;
-import org.weasis.dicom.mf.ArcParameters;
-import org.weasis.dicom.mf.SopInstance;
-import org.weasis.dicom.mf.WadoParameters;
-import org.weasis.dicom.mf.Xml;
-import org.xml.sax.SAXException;
 
 public class DownloadManager {
 
@@ -286,117 +241,22 @@ public class DownloadManager {
     void handle(LoadSeries loadSeries);
   }
 
-  public static Collection<LoadSeries> buildDicomSeriesFromXml(URI uri, final DicomModel model)
+  public static Collection<LoadSeries> buildDicomSeries(URI uri, final DicomModel model)
       throws DownloadException {
     Map<String, LoadSeries> seriesMap = new HashMap<>();
-    XMLStreamReader xmler = null;
-    InputStream stream = null;
     try {
-      XMLInputFactory factory = XMLInputFactory.newInstance();
-      // disable external entities for security
-      factory.setProperty(XMLInputFactory.IS_SUPPORTING_EXTERNAL_ENTITIES, Boolean.FALSE);
-      factory.setProperty(XMLInputFactory.SUPPORT_DTD, Boolean.FALSE);
-
-      String path = uri.getPath();
-      URLParameters urlParameters =
-          new URLParameters(
-              manifestAcceptHeaders(),
-              StringUtil.getInt(System.getProperty("UrlConnectionTimeout"), 7000),
-              StringUtil.getInt(System.getProperty("UrlReadTimeout"), 15000) * 2);
-
-      ClosableURLConnection urlConnection =
-          NetworkUtil.getUrlConnection(uri.toURL(), urlParameters);
-
-      LOGGER.info("Downloading XML manifest: {}", path);
-      InputStream urlInputStream = urlConnection.getInputStream();
-
-      // Transfer-level gzip negotiated with Accept-Encoding must be decompressed according to the
-      // response Content-Encoding, independently of the resource extension (.gz content coding).
-      boolean gzipEncoded =
-          "gzip".equalsIgnoreCase(urlConnection.getHeaderField("Content-Encoding")); // NON-NLS
-      if (gzipEncoded || path.endsWith(".gz")) {
-        stream = new BufferedInputStream(new GZIPInputStream(urlInputStream));
-      } else if (path.endsWith(".xml")) {
-        stream = urlInputStream;
-      } else {
-        // In case wado file has no extension
-        Path outFile = Files.createTempFile(AppProperties.APP_TEMP_DIR, "wado_", ""); // NON-NLS
-        FileUtil.writeStreamWithIOException(urlInputStream, outFile);
-        if (MimeInspector.isMatchingMimeTypeFromMagicNumber(
-            outFile.toFile(), "application/x-gzip")) { // NON-NLS
-          stream =
-              new BufferedInputStream(new GZIPInputStream(new FileInputStream(outFile.toFile())));
-        } else {
-          stream = new FileInputStream(outFile.toFile());
-        }
-      }
-
-      Path tempFile;
-      if (uri.toString().startsWith("file:") && path.endsWith(".xml")) { // NON-NLS
-        tempFile = Path.of(path);
-      } else {
-        tempFile = Files.createTempFile(AppProperties.APP_TEMP_DIR, "wado_", ".xml"); // NON-NLS
-        FileUtil.writeStreamWithIOException(stream, tempFile);
-      }
-      xmler = factory.createXMLStreamReader(new FileInputStream(tempFile.toFile()));
-
-      Source xmlFile = new StAXSource(xmler);
-      SchemaFactory schemaFactory = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
-      try {
-        Schema schema =
-            schemaFactory.newSchema(DownloadManager.class.getResource("/config/manifest.xsd"));
-        Validator validator = schema.newValidator();
-        validator.setProperty(XMLConstants.ACCESS_EXTERNAL_DTD, StringUtil.EMPTY_STRING);
-        validator.setProperty(XMLConstants.ACCESS_EXTERNAL_SCHEMA, StringUtil.EMPTY_STRING);
-        validator.validate(xmlFile);
-        LOGGER.info("[Validate with XSD schema] the manifest is valid");
-      } catch (SAXException e) {
-        LOGGER.error("[Validate with XSD schema] the manifest is NOT valid", e);
-      } catch (Exception e) {
-        LOGGER.error("Error when validate XSD schema.", e);
-      }
-
+      Path manifestFile = downloadManifest(uri);
       ReaderParams params = new ReaderParams(model, seriesMap);
-      // Try to read the xml even it is not valid.
-      xmler = factory.createXMLStreamReader(new FileInputStream(tempFile.toFile()));
-
-      BiConsumerWithException<XMLStreamReader, ReaderParams, XMLStreamException> method =
-          (x, r) -> {
-            String key = x.getName().getLocalPart();
-            // xmlns="http://www.weasis.org/xsd/2.5"
-            if (ArcParameters.TAG_DOCUMENT_ROOT.equals(key)) {
-              BiConsumerWithException<XMLStreamReader, ReaderParams, XMLStreamException> method2 =
-                  (x2, r2) -> {
-                    String key2 = x2.getName().getLocalPart();
-                    if (ArcParameters.TAG_ARC_QUERY.equals(key2)) {
-                      readArcQuery(x2, r2);
-                    } else if (ArcParameters.TAG_PR_ROOT.equals(key2)) {
-                      BiConsumerWithException<XMLStreamReader, ReaderParams, XMLStreamException>
-                          method3 = DownloadManager::readPresentation;
-                      readElement(x2, ArcParameters.TAG_PR, ArcParameters.TAG_PR_ROOT, method3, r2);
-                    } else if (ArcParameters.TAG_SEL_ROOT.equals(key2)) {
-                      BiConsumerWithException<XMLStreamReader, ReaderParams, XMLStreamException>
-                          method3 = DownloadManager::readSelection;
-                      readElement(
-                          x2, ArcParameters.TAG_SEL, ArcParameters.TAG_SEL_ROOT, method3, r2);
-                    }
-                  };
-              readElement(x, ArcParameters.TAG_DOCUMENT_ROOT, method2, r);
-            } else {
-              // Read old manifest: xmlns="http://www.weasis.org/xsd"
-              if (WadoParameters.TAG_WADO_QUERY.equals(key)) {
-                readLegacyWadoQuery(x, r);
-              }
-            }
-          };
-      readElement(xmler, ArcParameters.TAG_DOCUMENT_ROOT, method, params);
-
+      if (isJsonManifest(manifestFile)) {
+        JsonManifestParser.parse(manifestFile, params);
+      } else {
+        XmlManifestParser.parse(manifestFile, params);
+      }
     } catch (StreamIOException e) {
       throw new DownloadException(getErrorMessage(uri), e); // rethrow network issue
     } catch (Exception e) {
       String message = getErrorMessage(uri);
       LOGGER.error("{}", message, e);
-      final int messageType = JOptionPane.ERROR_MESSAGE;
 
       GuiExecutor.execute(
           () -> {
@@ -407,7 +267,7 @@ public class DownloadManager {
                 StringUtil.getTruncatedString(message, 130, Suffix.THREE_PTS),
                 null,
                 JOptionPane.DEFAULT_OPTION,
-                messageType,
+                JOptionPane.ERROR_MESSAGE,
                 null,
                 null,
                 null);
@@ -415,503 +275,90 @@ public class DownloadManager {
               layer.hideUI();
             }
           });
-    } finally {
-      StreamUtil.safeClose(xmler);
-      StreamUtil.safeClose(stream);
     }
     return seriesMap.values();
   }
 
+  /** Downloads the manifest, decompressing it if needed, and returns a local file to parse. */
+  private static Path downloadManifest(URI uri) throws IOException {
+    String path = uri.getPath();
+    URLParameters urlParameters =
+        new URLParameters(
+            manifestAcceptHeaders(),
+            StringUtil.getInt(System.getProperty("UrlConnectionTimeout"), 7000),
+            StringUtil.getInt(System.getProperty("UrlReadTimeout"), 15000) * 2);
+    ClosableURLConnection urlConnection = NetworkUtil.getUrlConnection(uri.toURL(), urlParameters);
+
+    LOGGER.info("Downloading manifest: {}", path);
+    try (InputStream urlInputStream = urlConnection.getInputStream()) {
+      // Detect gzip by its magic number rather than the file extension, so a compressed manifest
+      // is decompressed whatever its name (.gz, .json, .xml or no extension). The parser format is
+      // then chosen from the content itself (see isJsonManifest).
+      PushbackInputStream pb = new PushbackInputStream(new BufferedInputStream(urlInputStream), 4);
+      boolean gzip = startsWithGzipMagic(pb);
+      InputStream stream = gzip ? new GZIPInputStream(pb) : pb;
+
+      // A local, uncompressed manifest can be parsed in place without copying it to a temp file.
+      if (!gzip
+          && uri.toString().startsWith("file:") // NON-NLS
+          && (path.endsWith(".xml") || path.endsWith(".json"))) {
+        return Path.of(path);
+      }
+
+      Path tempFile =
+          Files.createTempFile(AppProperties.APP_TEMP_DIR, "wado_", ".manifest"); // NON-NLS
+      FileUtil.writeStreamWithIOException(stream, tempFile);
+      return tempFile;
+    }
+  }
+
+  /** Peeks the first two bytes for the gzip magic number, leaving the stream repositioned. */
+  private static boolean startsWithGzipMagic(PushbackInputStream in) throws IOException {
+    byte[] header = new byte[4];
+    int n = in.read(header, 0, 4);
+    if (n > 0) {
+      in.unread(header, 0, n);
+    }
+    return n == 4 && GzipManager.isGzip(header);
+  }
+
+  /** Detects a JSON manifest by sniffing the first meaningful character. */
+  private static boolean isJsonManifest(Path file) throws IOException {
+    try (InputStream in = new BufferedInputStream(Files.newInputStream(file))) {
+      int c = in.read();
+      // Skip an optional UTF-8 BOM
+      if (c == 0xEF) {
+        in.read();
+        in.read();
+        c = in.read();
+      }
+      while (c != -1 && Character.isWhitespace(c)) {
+        c = in.read();
+      }
+      return c == '{';
+    }
+  }
+
+  /**
+   * Negotiates the manifest format. XML is requested by default: the manifest size is unknown
+   * before it is fetched and an instance-level manifest can be large, so the StAX parser streams it
+   * instead of buffering the whole document like the JSON parser. A single value (not a {@code
+   * q}-weighted list) is sent on purpose: the manifest server (viewer-hub) selects the format by a
+   * plain substring match on the header, so any {@code application/json} token would make it return
+   * JSON. The response format is still detected from the bytes (see {@link #isJsonManifest}), so a
+   * single-format server keeps working. Set {@code -Dweasis.manifest.accept=json} to force JSON.
+   */
   private static Map<String, String> manifestAcceptHeaders() {
-    return Map.of("Accept", "application/xml", "Accept-Encoding", "gzip"); // NON-NLS
+    String accept =
+        "json".equalsIgnoreCase(System.getProperty("weasis.manifest.accept")) // NON-NLS
+            ? "application/json" // NON-NLS
+            : "application/xml"; // NON-NLS
+    return Map.of("Accept", accept, "Accept-Encoding", "gzip"); // NON-NLS
   }
 
   private static String getErrorMessage(URI uri) {
     return Messages.getString("DownloadManager.error_load_xml")
         + StringUtil.COLON_AND_SPACE
         + uri.toString();
-  }
-
-  private static void readArcQuery(XMLStreamReader xmler, ReaderParams params)
-      throws XMLStreamException {
-    String arcID = TagUtil.getTagAttribute(xmler, ArcParameters.ARCHIVE_ID, "");
-    String wadoURL = TagUtil.getTagAttribute(xmler, ArcParameters.BASE_URL, null);
-    boolean onlySopUID =
-        Boolean.parseBoolean(
-            TagUtil.getTagAttribute(
-                xmler, WadoParameters.WADO_ONLY_SOP_UID, Boolean.FALSE.toString()));
-    String additionalParameters =
-        TagUtil.getTagAttribute(xmler, ArcParameters.ADDITIONAL_PARAMETERS, "");
-    String overrideList = TagUtil.getTagAttribute(xmler, ArcParameters.OVERRIDE_TAGS, null);
-    String webLogin = TagUtil.getTagAttribute(xmler, ArcParameters.WEB_LOGIN, null);
-    String queryMode = TagUtil.getTagAttribute(xmler, ArcParameters.QUERY_MODE, null);
-    boolean wadoRs = "DICOM_WEB".equals(queryMode); // NON-NLS
-    final WadoParameters wadoParameters =
-        new WadoParameters(
-            arcID, wadoURL, onlySopUID, additionalParameters, overrideList, webLogin, wadoRs);
-    params.wadoUri = getWadoUrl(wadoURL);
-    readQuery(xmler, params, wadoParameters, ArcParameters.TAG_ARC_QUERY);
-  }
-
-  private static void readLegacyWadoQuery(XMLStreamReader xmler, ReaderParams params)
-      throws XMLStreamException {
-    String wadoURL = TagUtil.getTagAttribute(xmler, WadoParameters.WADO_URL, null);
-    boolean onlySopUID =
-        Boolean.parseBoolean(
-            TagUtil.getTagAttribute(
-                xmler, WadoParameters.WADO_ONLY_SOP_UID, Boolean.FALSE.toString()));
-    String additionalParameters =
-        TagUtil.getTagAttribute(xmler, ArcParameters.ADDITIONAL_PARAMETERS, "");
-    String overrideList = TagUtil.getTagAttribute(xmler, ArcParameters.OVERRIDE_TAGS, null);
-    String webLogin = TagUtil.getTagAttribute(xmler, ArcParameters.WEB_LOGIN, null);
-    final WadoParameters wadoParameters =
-        new WadoParameters("", wadoURL, onlySopUID, additionalParameters, overrideList, webLogin);
-    params.wadoUri = getWadoUrl(wadoURL);
-    readQuery(xmler, params, wadoParameters, WadoParameters.TAG_WADO_QUERY);
-  }
-
-  private static void readQuery(
-      XMLStreamReader xmler,
-      ReaderParams params,
-      final WadoParameters wadoParameters,
-      String endElement)
-      throws XMLStreamException {
-    Set<MediaSeriesGroup> patients = new LinkedHashSet<>();
-
-    BiConsumerWithException<XMLStreamReader, ReaderParams, XMLStreamException> method =
-        (x, r) -> {
-          String key = xmler.getName().getLocalPart();
-          // <Patient> Tag
-          if (TagD.Level.PATIENT.getTagName().equals(key)) {
-            MediaSeriesGroup patient = readPatient(xmler, params, wadoParameters);
-            patients.add(patient);
-          } else if (ArcParameters.TAG_HTTP_TAG.equals(key)) {
-            String httpKey = TagUtil.getTagAttribute(xmler, "key", null); // NON-NLS
-            String httpValue = TagUtil.getTagAttribute(xmler, "value", null); // NON-NLS
-            wadoParameters.addHttpTag(httpKey, httpValue);
-          } else if ("Message".equals(key)) { // NON-NLS
-            final String title = TagUtil.getTagAttribute(xmler, "title", null); // NON-NLS
-            final String message = TagUtil.getTagAttribute(xmler, "description", null);
-            if (StringUtil.hasText(title) && StringUtil.hasText(message)) {
-              String severity = TagUtil.getTagAttribute(xmler, "severity", "WARN"); // NON-NLS
-              final int messageType =
-                  "ERROR".equals(severity)
-                      ? JOptionPane.ERROR_MESSAGE
-                      : "INFO".equals(severity)
-                          ? JOptionPane.INFORMATION_MESSAGE
-                          : JOptionPane.WARNING_MESSAGE;
-
-              GuiExecutor.execute(
-                  () -> {
-                    ColorLayerUI layer =
-                        ColorLayerUI.createTransparentLayerUI(GuiUtils.getUICore().getBaseArea());
-                    JOptionPane.showMessageDialog(
-                        ColorLayerUI.getContentPane(layer), message, title, messageType);
-                    if (layer != null) {
-                      layer.hideUI();
-                    }
-                  });
-            }
-          }
-        };
-
-    readElement(xmler, endElement, method, params);
-
-    if (patients.size() == 1) {
-      // In case of the patient already exists, select it
-      final MediaSeriesGroup uniquePatient = patients.iterator().next();
-      GuiExecutor.execute(
-          () -> {
-            List<ViewerPlugin<?>> viewerPlugins = GuiUtils.getUICore().getViewerPlugins();
-            synchronized (viewerPlugins) {
-              for (final ViewerPlugin<?> p : viewerPlugins) {
-                if (uniquePatient.equals(p.getGroupID())) {
-                  p.setSelectedAndGetFocus();
-                  break;
-                }
-              }
-            }
-          });
-    }
-    for (LoadSeries loadSeries : params.getSeriesMap().values()) {
-      if (!DicomModel.isHiddenModality(loadSeries.getDicomSeries())) {
-        loadSeries.startDownloadImageReference(wadoParameters);
-      }
-    }
-  }
-
-  private static MediaSeriesGroup readPatient(
-      XMLStreamReader xmler, ReaderParams params, WadoParameters wadoParameters)
-      throws XMLStreamException {
-    // PatientID, PatientBirthDate, StudyInstanceUID, SeriesInstanceUID and SOPInstanceUID override
-    // the tags located in DICOM object (because original DICOM can contain different values after
-    // merging
-    // patient or study
-    TagW idTag = TagD.get(Tag.PatientID);
-    TagW issuerIdTag = TagD.get(Tag.IssuerOfPatientID);
-    TagW nameTag = TagD.get(Tag.PatientName);
-
-    PatientComparator patientComparator = new PatientComparator(xmler);
-    String patientPseudoUID = patientComparator.buildPatientPseudoUID();
-
-    DicomModel model = params.getModel();
-    MediaSeriesGroup patient =
-        model.getHierarchyNode(MediaSeriesGroupNode.rootNode, patientPseudoUID);
-    if (patient == null) {
-      patient =
-          new MediaSeriesGroupNode(
-              TagD.getUID(Level.PATIENT), patientPseudoUID, DicomModel.patient.tagView());
-      patient.setTag(idTag, TagUtil.getTagAttribute(xmler, idTag.getKeyword(), TagW.NO_VALUE));
-      patient.setTag(nameTag, TagUtil.getTagAttribute(xmler, nameTag.getKeyword(), TagW.NO_VALUE));
-      patient.setTagNoNull(
-          issuerIdTag, TagUtil.getTagAttribute(xmler, issuerIdTag.getKeyword(), null));
-
-      TagW[] tags = TagD.getTagFromIDs(Tag.PatientSex, Tag.PatientBirthDate, Tag.PatientBirthTime);
-      for (TagW tag : tags) {
-        tag.readValue(xmler, patient);
-      }
-
-      model.addHierarchyNode(MediaSeriesGroupNode.rootNode, patient);
-      LOGGER.info("Adding new patient: {}", patient);
-    }
-
-    final MediaSeriesGroup patient2 = patient;
-    BiConsumerWithException<XMLStreamReader, ReaderParams, XMLStreamException> method =
-        (x, r) -> readStudy(xmler, params, patient2, wadoParameters);
-
-    readElement(
-        xmler, TagD.Level.STUDY.getTagName(), TagD.Level.PATIENT.getTagName(), method, params);
-
-    return patient;
-  }
-
-  private static MediaSeriesGroup readStudy(
-      XMLStreamReader xmler,
-      ReaderParams params,
-      MediaSeriesGroup patient,
-      WadoParameters wadoParameters)
-      throws XMLStreamException {
-    DicomModel model = params.getModel();
-    String studyUID = (String) TagD.getUID(Level.STUDY).getValue(xmler);
-    MediaSeriesGroup study = model.getHierarchyNode(patient, studyUID);
-    if (study == null) {
-      study =
-          new MediaSeriesGroupNode(TagD.getUID(Level.STUDY), studyUID, DicomModel.study.tagView());
-      TagW[] tags =
-          TagD.getTagFromIDs(
-              Tag.StudyDate, Tag.StudyTime, Tag.StudyDescription, Tag.AccessionNumber, Tag.StudyID);
-      for (TagW tag : tags) {
-        tag.readValue(xmler, study);
-      }
-
-      model.addHierarchyNode(patient, study);
-    }
-
-    final MediaSeriesGroup study2 = study;
-    BiConsumerWithException<XMLStreamReader, ReaderParams, XMLStreamException> method =
-        (x, r) -> readSeries(x, r, patient, study2, wadoParameters);
-
-    readElement(
-        xmler, TagD.Level.SERIES.getTagName(), TagD.Level.STUDY.getTagName(), method, params);
-
-    return study;
-  }
-
-  private static DicomSeries readSeries(
-      XMLStreamReader xmler,
-      ReaderParams params,
-      MediaSeriesGroup patient,
-      MediaSeriesGroup study,
-      WadoParameters wadoParameters)
-      throws XMLStreamException {
-
-    DicomModel model = params.getModel();
-    TagW seriesTag = TagD.get(Tag.SeriesInstanceUID);
-    String seriesUID = (String) seriesTag.getValue(xmler);
-    DicomSeries dicomSeries = (DicomSeries) model.getHierarchyNode(study, seriesUID);
-
-    if (dicomSeries == null) {
-      dicomSeries = new DicomSeries(seriesUID);
-      dicomSeries.setTag(seriesTag, seriesUID);
-      dicomSeries.setTag(TagW.ExplorerModel, model);
-      dicomSeries.setTag(TagW.WadoParameters, wadoParameters);
-
-      TagW[] tags =
-          TagD.getTagFromIDs(
-              Tag.Modality,
-              Tag.SeriesNumber,
-              Tag.SeriesDate,
-              Tag.SeriesTime,
-              Tag.SeriesDescription,
-              Tag.ReferringPhysicianName);
-      for (TagW tag : tags) {
-        tag.readValue(xmler, dicomSeries);
-      }
-
-      dicomSeries.setTagNoNull(
-          TagW.WadoTransferSyntaxUID,
-          TagUtil.getTagAttribute(xmler, TagW.WadoTransferSyntaxUID.getKeyword(), null));
-      dicomSeries.setTagNoNull(
-          TagW.WadoCompressionRate,
-          TagUtil.getIntegerTagAttribute(xmler, TagW.WadoCompressionRate.getKeyword(), null));
-      dicomSeries.setTagNoNull(
-          TagW.DirectDownloadThumbnail,
-          TagUtil.getTagAttribute(xmler, TagW.DirectDownloadThumbnail.getKeyword(), null));
-
-      model.addHierarchyNode(study, dicomSeries);
-    } else {
-      WadoParameters wado = (WadoParameters) dicomSeries.getTagValue(TagW.WadoParameters);
-      if (wado == null) {
-        // Should not happen
-        dicomSeries.setTag(TagW.WadoParameters, wadoParameters);
-      } else if (!wado.getBaseURL().equals(wadoParameters.getBaseURL())) {
-        LOGGER.error("Wado parameters must be unique within a DICOM Series: {}", dicomSeries);
-        return dicomSeries;
-      }
-    }
-
-    SeriesInstanceList seriesInstanceList =
-        Optional.ofNullable(
-                (SeriesInstanceList) dicomSeries.getTagValue(TagW.WadoInstanceReferenceList))
-            .orElseGet(SeriesInstanceList::new);
-
-    BiConsumerWithException<XMLStreamReader, ReaderParams, XMLStreamException> method =
-        (x, r) -> {
-          String sopInstanceUID =
-              TagUtil.getTagAttribute(
-                  xmler, TagD.getKeywordFromTag(Tag.SOPInstanceUID, null), null);
-          if (sopInstanceUID != null) {
-            Integer frame =
-                TagUtil.getIntegerTagAttribute(
-                    xmler, TagD.getKeywordFromTag(Tag.InstanceNumber, null), null);
-            SopInstance sop = seriesInstanceList.getSopInstance(sopInstanceUID, frame);
-            if (sop == null) {
-              String sopClassUID =
-                  TagUtil.getTagAttribute(
-                      xmler, TagD.getKeywordFromTag(Tag.SOPClassUID, null), null);
-              sop = new SopInstance(sopInstanceUID, sopClassUID, frame);
-              sop.setDirectDownloadFile(
-                  TagUtil.getTagAttribute(xmler, TagW.DirectDownloadFile.getKeyword(), null));
-              seriesInstanceList.addSopInstance(sop);
-            }
-          }
-        };
-    readElement(
-        xmler, TagD.Level.INSTANCE.getTagName(), TagD.Level.SERIES.getTagName(), method, params);
-    dicomSeries.setTag(TagW.WadoInstanceReferenceList, seriesInstanceList);
-
-    if (!seriesInstanceList.isEmpty()) {
-      AuthMethod authMethod = params.wadoUri == null ? null : params.wadoUri.getAuthMethod();
-      final LoadSeries loadSeries =
-          new LoadSeries(
-              dicomSeries,
-              model,
-              authMethod,
-              GuiUtils.getUICore()
-                  .getSystemPreferences()
-                  .getIntProperty(LoadSeries.CONCURRENT_DOWNLOADS_IN_SERIES, 4),
-              true,
-              true);
-      loadSeries.setPriority(new DownloadPriority(patient, study, dicomSeries, true));
-      params.getSeriesMap().put(seriesUID, loadSeries);
-    }
-    return dicomSeries;
-  }
-
-  static DicomWebNode getWadoUrl(String url) {
-    List<AbstractDicomNode> webNodes =
-        AbstractDicomNode.loadDicomNodes(
-            AbstractDicomNode.Type.WEB, AbstractDicomNode.UsageType.RETRIEVE, WebType.WADO);
-    for (AbstractDicomNode n : webNodes) {
-      if (n instanceof DicomWebNode wn) {
-        URL wadoURL = wn.getUrl();
-        if (wadoURL != null && wadoURL.toString().equals(url)) {
-          return wn;
-        }
-      }
-    }
-    return null;
-  }
-
-  private static void readPresentation(XMLStreamReader xmler, ReaderParams params) {
-    GraphicModel model = XmlSerializer.readPresentation(xmler);
-    if (model != null) {
-      model.getLayers().forEach(l -> l.setSerializable(Boolean.TRUE));
-      for (ReferencedSeries refSeries : model.getReferencedSeries()) {
-        LoadSeries series = params.getSeriesMap().get(refSeries.getUuid());
-        if (series != null) {
-          SeriesInstanceList dicomInstanceMap =
-              (SeriesInstanceList)
-                  series.getDicomSeries().getTagValue(TagW.WadoInstanceReferenceList);
-
-          if (dicomInstanceMap != null) {
-            for (ReferencedImage refImg : refSeries.getImages()) {
-              List<Integer> frames = refImg.getFrames();
-              if (frames == null || frames.isEmpty()) {
-                SopInstance sop = dicomInstanceMap.getSopInstance(refImg.getUuid());
-                if (sop != null) {
-                  sop.setGraphicModel(model);
-                }
-              } else {
-                for (Integer f : refImg.getFrames()) {
-                  // Convert MediaElement InstanceNumber to Dicom InstanceNumber
-                  SopInstance sop = dicomInstanceMap.getSopInstance(refImg.getUuid(), f + 1);
-                  if (sop != null) {
-                    sop.setGraphicModel(model);
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-  }
-
-  private static void readSelection(XMLStreamReader xmler, ReaderParams params)
-      throws XMLStreamException {
-
-    String seriesUIDKey = TagD.get(Tag.SeriesInstanceUID).getKeyword();
-    String name = TagUtil.getTagAttribute(xmler, KOSpecialElement.SEL_NAME, null);
-    String koSeriesUID = TagUtil.getTagAttribute(xmler, seriesUIDKey, null);
-    List<HierarchicalSOPInstanceReference> referencedStudies = new ArrayList<>();
-    List<SeriesAndInstanceReference> referencedSeries = new ArrayList<>();
-    HierarchicalSOPInstanceReference hierarchicalDicom = new HierarchicalSOPInstanceReference();
-    referencedStudies.add(hierarchicalDicom);
-
-    DicomModel model = params.getModel();
-    BiConsumerWithException<XMLStreamReader, ReaderParams, XMLStreamException> method =
-        (x, r) -> {
-          String seriesUID = TagUtil.getTagAttribute(xmler, seriesUIDKey, null);
-          SeriesAndInstanceReference refSerInst = new SeriesAndInstanceReference();
-          refSerInst.setSeriesInstanceUID(seriesUID);
-          referencedSeries.add(refSerInst);
-
-          readImages(refSerInst, xmler, r);
-        };
-    readElement(xmler, Xml.Level.SERIES.getTagName(), ArcParameters.TAG_SEL, method, params);
-
-    if (!referencedSeries.isEmpty()) {
-      MediaSeriesGroup s = model.getSeriesNode(referencedSeries.get(0).getSeriesInstanceUID());
-      MediaSeriesGroup study = model.getParent(s, DicomModel.study);
-      if (study == null) {
-        return; // When the related series has not been loaded
-      }
-      Attributes srcAttribute = new Attributes(15);
-      DicomMediaUtils.fillAttributes(study.getTagEntrySetIterator(), srcAttribute);
-      MediaSeriesGroup patient = model.getParent(study, DicomModel.patient);
-      DicomMediaUtils.fillAttributes(patient.getTagEntrySetIterator(), srcAttribute);
-      Attributes attributes = DicomMediaUtils.createDicomKeyObject(srcAttribute, name, koSeriesUID);
-      hierarchicalDicom.setStudyInstanceUID(
-          TagD.getTagValue(study, Tag.StudyInstanceUID, String.class));
-      hierarchicalDicom.setReferencedSeries(referencedSeries);
-
-      new KODocumentModule(attributes).setCurrentRequestedProcedureEvidences(referencedStudies);
-      LoadDicomObjects loadDicomObjects =
-          new LoadDicomObjects(model, OpeningViewer.NONE, attributes);
-      GuiExecutor.invokeAndWait(loadDicomObjects);
-    }
-  }
-
-  private static void readImages(
-      SeriesAndInstanceReference rfSeries, XMLStreamReader xmler, ReaderParams params)
-      throws XMLStreamException {
-    List<SOPInstanceReferenceAndMAC> instances = new ArrayList<>();
-
-    BiConsumerWithException<XMLStreamReader, ReaderParams, XMLStreamException> method =
-        (x, r) -> {
-          String sopUID =
-              TagUtil.getTagAttribute(
-                  xmler, TagD.get(Tag.ReferencedSOPInstanceUID).getKeyword(), null);
-          String sopClassUID =
-              TagUtil.getTagAttribute(
-                  xmler, TagD.get(Tag.ReferencedSOPClassUID).getKeyword(), null);
-          Integer nb =
-              TagUtil.getIntegerTagAttribute(
-                  xmler, TagD.get(Tag.InstanceNumber).getKeyword(), null);
-          int[] seqFrame = (int[]) TagD.get(Tag.ReferencedFrameNumber).getValue(xmler);
-
-          SOPInstanceReferenceAndMAC referencedSOP = new SOPInstanceReferenceAndMAC();
-          referencedSOP.setReferencedSOPInstanceUID(sopUID);
-          referencedSOP.setReferencedSOPClassUID(sopClassUID);
-          referencedSOP.setInstanceNumber(nb);
-          referencedSOP.setReferencedFrameNumber(seqFrame);
-          instances.add(referencedSOP);
-        };
-
-    readElement(
-        xmler, Xml.Level.INSTANCE.getTagName(), Xml.Level.SERIES.getTagName(), method, params);
-    rfSeries.setReferencedSOPInstances(instances);
-  }
-
-  private static void readElement(
-      XMLStreamReader xmler,
-      String endElement,
-      BiConsumerWithException<XMLStreamReader, ReaderParams, XMLStreamException> method,
-      ReaderParams params)
-      throws XMLStreamException {
-    boolean state = true;
-    while (xmler.hasNext() && state) {
-      int eventType = xmler.next();
-      switch (eventType) {
-        case XMLStreamConstants.START_ELEMENT:
-          method.accept(xmler, params);
-          break;
-        case XMLStreamConstants.END_ELEMENT:
-          if (endElement.equals(xmler.getName().getLocalPart())) {
-            state = false;
-          }
-          break;
-        default:
-          break;
-      }
-    }
-  }
-
-  private static void readElement(
-      XMLStreamReader xmler,
-      String startElement,
-      String endElement,
-      BiConsumerWithException<XMLStreamReader, ReaderParams, XMLStreamException> method,
-      ReaderParams params)
-      throws XMLStreamException {
-    boolean state = true;
-    while (xmler.hasNext() && state) {
-      int eventType = xmler.next();
-      switch (eventType) {
-        case XMLStreamConstants.START_ELEMENT:
-          String key = xmler.getName().getLocalPart();
-          if (startElement.equals(key)) {
-            method.accept(xmler, params);
-          }
-          break;
-        case XMLStreamConstants.END_ELEMENT:
-          if (endElement.equals(xmler.getName().getLocalPart())) {
-            state = false;
-          }
-          break;
-        default:
-          break;
-      }
-    }
-  }
-
-  static class ReaderParams {
-    private final DicomModel model;
-    private final Map<String, LoadSeries> seriesMap;
-    private DicomWebNode wadoUri;
-
-    public ReaderParams(DicomModel model, Map<String, LoadSeries> seriesMap) {
-      this.model = model;
-      this.seriesMap = seriesMap;
-    }
-
-    public DicomModel getModel() {
-      return model;
-    }
-
-    public Map<String, LoadSeries> getSeriesMap() {
-      return seriesMap;
-    }
   }
 }

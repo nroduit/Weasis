@@ -38,6 +38,7 @@ import org.dcm4che3.img.util.DicomUtils;
 import org.dcm4che3.util.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.weasis.core.api.media.data.AttributeSource;
 import org.weasis.core.api.media.data.TagReadable;
 import org.weasis.core.api.media.data.TagUtil;
 import org.weasis.core.api.media.data.TagW;
@@ -275,8 +276,8 @@ public class TagD extends TagW {
     Object value = null;
     if (data instanceof Attributes attributes) {
       value = readValue(attributes);
-    } else if (data instanceof XMLStreamReader xmlStreamReader) {
-      value = readValue(xmlStreamReader);
+    } else if (data instanceof AttributeSource source) {
+      value = readValue(source);
     } else if (data instanceof String s) {
       value = readValue(s);
     }
@@ -329,42 +330,42 @@ public class TagD extends TagW {
     return value;
   }
 
-  private Object readValue(XMLStreamReader xmler) {
+  private Object readValue(AttributeSource source) {
     Object value;
     if (isStringFamilyType()) {
       value =
           vmMax > 1
-              ? TagUtil.getStringArrayTagAttribute(xmler, keyword, (String[]) defaultValue)
-              : TagUtil.getTagAttribute(xmler, keyword, (String) defaultValue);
+              ? TagUtil.getStringArrayTagAttribute(source, keyword, (String[]) defaultValue)
+              : TagUtil.getTagAttribute(source, keyword, (String) defaultValue);
     } else if (TagType.DICOM_DATE.equals(type)
         || TagType.DICOM_TIME.equals(type)
         || TagType.DICOM_DATETIME.equals(type)) {
       value =
           vmMax > 1
-              ? getDatesFromElement(xmler, keyword, type, (TemporalAccessor[]) defaultValue)
-              : getDateFromElement(xmler, keyword, type, (TemporalAccessor) defaultValue);
+              ? getDatesFromElement(source, keyword, type, (TemporalAccessor[]) defaultValue)
+              : getDateFromElement(source, keyword, type, (TemporalAccessor) defaultValue);
     } else if (TagType.INTEGER.equals(type)) {
       value =
           vmMax > 1
-              ? TagUtil.getIntArrayTagAttribute(xmler, keyword, (int[]) defaultValue)
-              : TagUtil.getIntegerTagAttribute(xmler, keyword, (Integer) defaultValue);
+              ? TagUtil.getIntArrayTagAttribute(source, keyword, (int[]) defaultValue)
+              : TagUtil.getIntegerTagAttribute(source, keyword, (Integer) defaultValue);
     } else if (TagType.FLOAT.equals(type)) {
       value =
           vmMax > 1
-              ? TagUtil.getFloatArrayTagAttribute(xmler, keyword, (float[]) defaultValue)
-              : TagUtil.getFloatTagAttribute(xmler, keyword, (Float) defaultValue);
+              ? TagUtil.getFloatArrayTagAttribute(source, keyword, (float[]) defaultValue)
+              : TagUtil.getFloatTagAttribute(source, keyword, (Float) defaultValue);
     } else if (TagType.DOUBLE.equals(type)) {
       value =
           vmMax > 1
-              ? TagUtil.getDoubleArrayTagAttribute(xmler, keyword, (double[]) defaultValue)
-              : TagUtil.getDoubleTagAttribute(xmler, keyword, (Double) defaultValue);
+              ? TagUtil.getDoubleArrayTagAttribute(source, keyword, (double[]) defaultValue)
+              : TagUtil.getDoubleTagAttribute(source, keyword, (Double) defaultValue);
     } else if (TagType.DICOM_SEQUENCE.equals(type)) {
-      value = TagUtil.getTagAttribute(xmler, keyword, (String) defaultValue);
+      value = TagUtil.getTagAttribute(source, keyword, (String) defaultValue);
     } else {
       value =
           vmMax > 1
-              ? TagUtil.getStringArrayTagAttribute(xmler, keyword, (String[]) defaultValue)
-              : TagUtil.getTagAttribute(xmler, keyword, (String) defaultValue);
+              ? TagUtil.getStringArrayTagAttribute(source, keyword, (String[]) defaultValue)
+              : TagUtil.getTagAttribute(source, keyword, (String) defaultValue);
     }
     return value;
   }
@@ -847,9 +848,9 @@ public class TagD extends TagW {
   }
 
   public static TemporalAccessor getDateFromElement(
-      XMLStreamReader xmler, String attribute, TagType type, TemporalAccessor defaultValue) {
+      AttributeSource source, String attribute, TagType type, TemporalAccessor defaultValue) {
     if (attribute != null) {
-      String val = xmler.getAttributeValue(null, attribute);
+      String val = source.getAttribute(attribute);
       if (val != null) {
         if (TagType.DICOM_TIME.equals(type)) {
           return getDicomTime(val);
@@ -864,18 +865,18 @@ public class TagD extends TagW {
   }
 
   public static TemporalAccessor[] getDatesFromElement(
-      XMLStreamReader xmler, String attribute, TagType type, TemporalAccessor[] defaultValue) {
-    return getDatesFromElement(xmler, attribute, type, defaultValue, "\\");
+      AttributeSource source, String attribute, TagType type, TemporalAccessor[] defaultValue) {
+    return getDatesFromElement(source, attribute, type, defaultValue, "\\");
   }
 
   public static TemporalAccessor[] getDatesFromElement(
-      XMLStreamReader xmler,
+      AttributeSource source,
       String attribute,
       TagType type,
       TemporalAccessor[] defaultValue,
       String separator) {
     if (attribute != null) {
-      String val = xmler.getAttributeValue(null, attribute);
+      String val = source.getAttribute(attribute);
       if (val != null) {
         String[] strs = val.split(Pattern.quote(separator));
         TemporalAccessor[] vals = new TemporalAccessor[strs.length];

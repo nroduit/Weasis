@@ -12,7 +12,9 @@ package org.weasis.dicom.explorer.pref.node;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
 import javax.xml.stream.XMLStreamWriter;
+import org.weasis.core.api.media.data.AttributeSource;
 import org.weasis.core.api.media.data.TagUtil;
+import org.weasis.core.api.media.data.XmlAttributeSource;
 import org.weasis.core.ui.util.PrintOptions;
 import org.weasis.dicom.codec.TransferSyntax;
 import org.weasis.dicom.explorer.print.DicomPrintDialog.FilmSize;
@@ -84,49 +86,51 @@ public class DicomPrintNode extends DefaultDicomNode {
   }
 
   public static DicomPrintNode buildDicomPrintNode(XMLStreamReader xmler) {
+    AttributeSource source = new XmlAttributeSource(xmler);
     DicomPrintNode node =
         new DicomPrintNode(
             xmler.getAttributeValue(null, T_DESCRIPTION),
             xmler.getAttributeValue(null, T_AETITLE),
             xmler.getAttributeValue(null, T_HOST),
-            TagUtil.getIntegerTagAttribute(xmler, T_PORT, 104));
+            TagUtil.getIntegerTagAttribute(source, T_PORT, 104));
     node.setTsuid(TransferSyntax.getTransferSyntax(xmler.getAttributeValue(null, T_TSUID)));
 
     node.printOptions.setMediumType(
-        TagUtil.getTagAttribute(xmler, T_MEDIUM_TYPE, DicomPrintOptions.DEF_MEDIUM_TYPE));
+        TagUtil.getTagAttribute(source, T_MEDIUM_TYPE, DicomPrintOptions.DEF_MEDIUM_TYPE));
     node.printOptions.setPriority(
-        TagUtil.getTagAttribute(xmler, T_PRIORITY, DicomPrintOptions.DEF_PRIORITY));
+        TagUtil.getTagAttribute(source, T_PRIORITY, DicomPrintOptions.DEF_PRIORITY));
     node.printOptions.setFilmDestination(
-        TagUtil.getTagAttribute(xmler, T_FILM_DEST, DicomPrintOptions.DEF_FILM_DEST));
+        TagUtil.getTagAttribute(source, T_FILM_DEST, DicomPrintOptions.DEF_FILM_DEST));
     node.printOptions.setNumOfCopies(
-        TagUtil.getIntegerTagAttribute(xmler, T_NUM_COPIES, DicomPrintOptions.DEF_NUM_COPIES));
+        TagUtil.getIntegerTagAttribute(source, T_NUM_COPIES, DicomPrintOptions.DEF_NUM_COPIES));
     node.printOptions.setColorPrint(
-        TagUtil.getBooleanTagAttribute(xmler, T_COLOR, DicomPrintOptions.DEF_COLOR));
+        TagUtil.getBooleanTagAttribute(source, T_COLOR, DicomPrintOptions.DEF_COLOR));
 
     node.printOptions.setFilmOrientation(
-        TagUtil.getTagAttribute(xmler, T_FILM_ORIENTATION, DicomPrintOptions.DEF_FILM_ORIENTATION));
+        TagUtil.getTagAttribute(
+            source, T_FILM_ORIENTATION, DicomPrintOptions.DEF_FILM_ORIENTATION));
     node.printOptions.setFilmSizeId(
         FilmSize.getInstance(
             xmler.getAttributeValue(null, T_FILM_SIZE), DicomPrintOptions.DEF_FILM_SIZE));
     node.printOptions.setImageDisplayFormat(
-        TagUtil.getTagAttribute(xmler, T_IMG_DISP_FORMAT, DicomPrintOptions.DEF_IMG_DISP_FORMAT));
+        TagUtil.getTagAttribute(source, T_IMG_DISP_FORMAT, DicomPrintOptions.DEF_IMG_DISP_FORMAT));
     node.printOptions.setMagnificationType(
         TagUtil.getTagAttribute(
-            xmler, T_MAGNIFICATION_TYPE, DicomPrintOptions.DEF_MAGNIFICATION_TYPE));
+            source, T_MAGNIFICATION_TYPE, DicomPrintOptions.DEF_MAGNIFICATION_TYPE));
     node.printOptions.setSmoothingType(
-        TagUtil.getTagAttribute(xmler, T_SMOOTHING_TYPE, DicomPrintOptions.DEF_SMOOTHING_TYPE));
+        TagUtil.getTagAttribute(source, T_SMOOTHING_TYPE, DicomPrintOptions.DEF_SMOOTHING_TYPE));
     node.printOptions.setBorderDensity(
-        TagUtil.getTagAttribute(xmler, T_BORDER_DENSITY, DicomPrintOptions.DEF_BORDER_DENSITY));
-    node.printOptions.setTrim(TagUtil.getTagAttribute(xmler, T_TRIM, DicomPrintOptions.DEF_TRIM));
+        TagUtil.getTagAttribute(source, T_BORDER_DENSITY, DicomPrintOptions.DEF_BORDER_DENSITY));
+    node.printOptions.setTrim(TagUtil.getTagAttribute(source, T_TRIM, DicomPrintOptions.DEF_TRIM));
     node.printOptions.setEmptyDensity(
-        TagUtil.getTagAttribute(xmler, T_EMPTY_DENSITY, DicomPrintOptions.DEF_EMPTY_DENSITY));
+        TagUtil.getTagAttribute(source, T_EMPTY_DENSITY, DicomPrintOptions.DEF_EMPTY_DENSITY));
 
     node.printOptions.setShowingAnnotations(
         TagUtil.getBooleanTagAttribute(
-            xmler, T_SHOW_ANNOTATIONS, DicomPrintOptions.DEF_SHOW_ANNOTATIONS));
+            source, T_SHOW_ANNOTATIONS, DicomPrintOptions.DEF_SHOW_ANNOTATIONS));
     node.printOptions.setPrintOnlySelectedView(
         TagUtil.getBooleanTagAttribute(
-            xmler, T_PRINT_SEL_VIEW, DicomPrintOptions.DEF_PRINT_SEL_VIEW));
+            source, T_PRINT_SEL_VIEW, DicomPrintOptions.DEF_PRINT_SEL_VIEW));
     node.printOptions.setDpi(
         PrintOptions.DotPerInches.getInstance(
             xmler.getAttributeValue(null, T_DPI), DicomPrintOptions.DEF_DPI));

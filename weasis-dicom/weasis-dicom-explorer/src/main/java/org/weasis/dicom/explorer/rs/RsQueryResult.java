@@ -17,8 +17,10 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Tag;
@@ -156,6 +158,35 @@ public class RsQueryResult extends AbstractQueryResult {
       }
     }
     return items;
+  }
+
+  /**
+   * Number of instances in the series ({@code NumberOfSeriesRelatedInstances}) from a single QIDO
+   * count query, or {@code 0} when the server does not report it.
+   */
+  public static int seriesInstanceCount(
+      String dicomWebBaseUrl,
+      String studyUID,
+      String seriesUID,
+      URLParameters urlParameters,
+      AuthMethod authMethod) {
+    String url =
+        "%s/studies/%s/series?0020000E=%s&includefield=00201209" // NON-NLS
+            .formatted(dicomWebBaseUrl, studyUID, seriesUID);
+    Map<String, String> headers = new HashMap<>(urlParameters.headers());
+    headers.put("Accept", "application/dicom+json"); // NON-NLS
+    try {
+      for (Attributes series : parseJSON(url, authMethod, new URLParameters(headers))) {
+        // Match the exact series in case the server ignores the query filter.
+        if (seriesUID.equals(series.getString(Tag.SeriesInstanceUID))) {
+          return DicomUtils.getIntegerFromDicomElement(
+              series, Tag.NumberOfSeriesRelatedInstances, 0);
+        }
+      }
+    } catch (Exception e) {
+      LOGGER.debug("Cannot fetch instance count for series {}", seriesUID, e);
+    }
+    return 0;
   }
 
   private void applyAllFilters(List<Attributes> studies) {
@@ -369,7 +400,7 @@ public class RsQueryResult extends AbstractQueryResult {
           MediaSeriesGroup study = getStudy(patient, dataset, rsQueryParams.getDicomModel());
           for (Attributes seriesDataset : series) {
             Series<?> dicomSeries = getSeries(study, seriesDataset, defaultStartDownloading);
-            fillInstance(seriesDataset, dicomSeries);
+            fillSeriesContent(dicomSeries);
           }
           studyHashSet.add(dataset.getString(Tag.StudyInstanceUID));
         }
@@ -443,7 +474,7 @@ public class RsQueryResult extends AbstractQueryResult {
           MediaSeriesGroup study = getStudy(patient, studyDataSet, rsQueryParams.getDicomModel());
           for (Attributes seriesDataset : series) {
             Series<?> dicomSeries = getSeries(study, seriesDataset, startDownloading);
-            fillInstance(seriesDataset, dicomSeries);
+            fillSeriesContent(dicomSeries);
           }
         }
       } catch (Exception e) {
@@ -452,48 +483,10 @@ public class RsQueryResult extends AbstractQueryResult {
     }
   }
 
-  private void fillInstance(Attributes seriesDataset, Series<?> dicomSeries) {
-    String seriesUID = seriesDataset.getString(Tag.SeriesInstanceUID);
-    if (StringUtil.hasText(seriesUID)) {
-      String seriesRetrieveURL = TagD.getTagValue(dicomSeries, Tag.RetrieveURL, String.class);
-      StringBuilder baseQuery = new StringBuilder(seriesRetrieveURL);
-      baseQuery.append("/instances?includefield="); // NON-NLS
-      baseQuery.append(INSTANCE_QUERY);
-      baseQuery.append(rsQueryParams.getProperties().getProperty(RsQueryParams.P_QUERY_EXT, ""));
-
-      int offset = 0;
-      int limit = 1000; // Maximum number of instances to fetch per query
-      try {
-        while (true) {
-          StringBuilder paginatedQuery = new StringBuilder(baseQuery);
-          paginatedQuery.append("&offset=").append(offset); // NON-NLS
-          paginatedQuery.append("&limit=").append(limit); // NON-NLS
-          LOGGER.debug(QIDO_REQUEST, paginatedQuery);
-          List<Attributes> instances =
-              parseJSON(
-                  paginatedQuery.toString(),
-                  authMethod,
-                  new URLParameters(rsQueryParams.getQueryHeaders()));
-          if (instances.isEmpty()) {
-            break;
-          }
-
-          SeriesInstanceList seriesInstanceList =
-              (SeriesInstanceList) dicomSeries.getTagValue(TagW.WadoInstanceReferenceList);
-          if (seriesInstanceList != null) {
-            for (Attributes instanceDataSet : instances) {
-              addSopInstance(instanceDataSet, seriesInstanceList, seriesRetrieveURL);
-            }
-          }
-          offset += instances.size();
-          if (instances.size() < limit) {
-            break;
-          }
-        }
-      } catch (Exception e) {
-        LOGGER.error("QIDO-RS all instances with seriesUID {}", seriesUID, e);
-      }
-    }
+  private void fillSeriesContent(Series<?> dicomSeries) {
+    // A series queried at the series level is always retrieved with a single series-level WADO-RS
+    // multipart request; per-instance enumeration is the archive connector's responsibility.
+    dicomSeries.setTag(LoadSeries.SERIES_BULK_RETRIEVE, Boolean.TRUE);
   }
 
   public static void addSopInstance(

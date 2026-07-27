@@ -23,7 +23,6 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.TimeZone;
 import java.util.regex.Pattern;
-import javax.xml.stream.XMLStreamReader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.media.data.TagW.TagType;
@@ -137,9 +136,9 @@ public final class TagUtil {
   }
 
   public static String getTagAttribute(
-      XMLStreamReader xmler, String attribute, String defaultValue) {
+      AttributeSource source, String attribute, String defaultValue) {
     if (attribute != null) {
-      String val = xmler.getAttributeValue(null, attribute);
+      String val = source.getAttribute(attribute);
       if (val != null) {
         return val;
       }
@@ -148,14 +147,14 @@ public final class TagUtil {
   }
 
   public static String[] getStringArrayTagAttribute(
-      XMLStreamReader xmler, String attribute, String[] defaultValue) {
-    return getStringArrayTagAttribute(xmler, attribute, defaultValue, "\\");
+      AttributeSource source, String attribute, String[] defaultValue) {
+    return getStringArrayTagAttribute(source, attribute, defaultValue, "\\");
   }
 
   public static String[] getStringArrayTagAttribute(
-      XMLStreamReader xmler, String attribute, String[] defaultValue, String separator) {
+      AttributeSource source, String attribute, String[] defaultValue, String separator) {
     if (attribute != null) {
-      String val = xmler.getAttributeValue(null, attribute);
+      String val = source.getAttribute(attribute);
       if (val != null) {
         return val.split(Pattern.quote(separator));
       }
@@ -164,9 +163,9 @@ public final class TagUtil {
   }
 
   public static Boolean getBooleanTagAttribute(
-      XMLStreamReader xmler, String attribute, Boolean defaultValue) {
+      AttributeSource source, String attribute, Boolean defaultValue) {
     if (attribute != null) {
-      String val = xmler.getAttributeValue(null, attribute);
+      String val = source.getAttribute(attribute);
       try {
         if (val != null) {
           return Boolean.valueOf(val);
@@ -179,9 +178,9 @@ public final class TagUtil {
   }
 
   public static Integer getIntegerTagAttribute(
-      XMLStreamReader xmler, String attribute, Integer defaultValue) {
+      AttributeSource source, String attribute, Integer defaultValue) {
     if (attribute != null) {
-      String val = xmler.getAttributeValue(null, attribute);
+      String val = source.getAttribute(attribute);
       try {
         if (val != null) {
           return Integer.valueOf(val);
@@ -194,14 +193,14 @@ public final class TagUtil {
   }
 
   public static int[] getIntArrayTagAttribute(
-      XMLStreamReader xmler, String attribute, int[] defaultValue) {
-    return getIntArrayTagAttribute(xmler, attribute, defaultValue, "\\");
+      AttributeSource source, String attribute, int[] defaultValue) {
+    return getIntArrayTagAttribute(source, attribute, defaultValue, "\\");
   }
 
   public static int[] getIntArrayTagAttribute(
-      XMLStreamReader xmler, String attribute, int[] defaultValue, String separator) {
+      AttributeSource source, String attribute, int[] defaultValue, String separator) {
     if (attribute != null) {
-      String val = xmler.getAttributeValue(null, attribute);
+      String val = source.getAttribute(attribute);
       if (val != null) {
         String[] strs = val.split(Pattern.quote(separator));
         int[] vals = new int[strs.length];
@@ -215,9 +214,9 @@ public final class TagUtil {
   }
 
   public static Double getDoubleTagAttribute(
-      XMLStreamReader xmler, String attribute, Double defaultValue) {
+      AttributeSource source, String attribute, Double defaultValue) {
     if (attribute != null) {
-      String val = xmler.getAttributeValue(null, attribute);
+      String val = source.getAttribute(attribute);
       try {
         if (val != null) {
           return Double.valueOf(val);
@@ -230,14 +229,14 @@ public final class TagUtil {
   }
 
   public static double[] getDoubleArrayTagAttribute(
-      XMLStreamReader xmler, String attribute, double[] defaultValue) {
-    return getDoubleArrayTagAttribute(xmler, attribute, defaultValue, "\\");
+      AttributeSource source, String attribute, double[] defaultValue) {
+    return getDoubleArrayTagAttribute(source, attribute, defaultValue, "\\");
   }
 
   public static double[] getDoubleArrayTagAttribute(
-      XMLStreamReader xmler, String attribute, double[] defaultValue, String separator) {
+      AttributeSource source, String attribute, double[] defaultValue, String separator) {
     if (attribute != null) {
-      String val = xmler.getAttributeValue(null, attribute);
+      String val = source.getAttribute(attribute);
       if (val != null) {
         String[] strs = val.split(Pattern.quote(separator));
         double[] vals = new double[strs.length];
@@ -251,9 +250,9 @@ public final class TagUtil {
   }
 
   public static Float getFloatTagAttribute(
-      XMLStreamReader xmler, String attribute, Float defaultValue) {
+      AttributeSource source, String attribute, Float defaultValue) {
     if (attribute != null) {
-      String val = xmler.getAttributeValue(null, attribute);
+      String val = source.getAttribute(attribute);
       try {
         if (val != null) {
           return Float.valueOf(val);
@@ -266,14 +265,14 @@ public final class TagUtil {
   }
 
   public static float[] getFloatArrayTagAttribute(
-      XMLStreamReader xmler, String attribute, float[] defaultValue) {
-    return getFloatArrayTagAttribute(xmler, attribute, defaultValue, "\\");
+      AttributeSource source, String attribute, float[] defaultValue) {
+    return getFloatArrayTagAttribute(source, attribute, defaultValue, "\\");
   }
 
   public static float[] getFloatArrayTagAttribute(
-      XMLStreamReader xmler, String attribute, float[] defaultValue, String separator) {
+      AttributeSource source, String attribute, float[] defaultValue, String separator) {
     if (attribute != null) {
-      String val = xmler.getAttributeValue(null, attribute);
+      String val = source.getAttribute(attribute);
       if (val != null) {
         String[] strs = val.split(Pattern.quote(separator));
         float[] vals = new float[strs.length];
@@ -287,9 +286,9 @@ public final class TagUtil {
   }
 
   public static TemporalAccessor getDateFromElement(
-      XMLStreamReader xmler, String attribute, TagType type, TemporalAccessor defaultValue) {
+      AttributeSource source, String attribute, TagType type, TemporalAccessor defaultValue) {
     if (attribute != null) {
-      String val = xmler.getAttributeValue(null, attribute);
+      String val = source.getAttribute(attribute);
       if (val != null) {
         try {
           if (TagType.TIME.equals(type)) {
@@ -308,18 +307,18 @@ public final class TagUtil {
   }
 
   public static TemporalAccessor[] getDatesFromElement(
-      XMLStreamReader xmler, String attribute, TagType type, TemporalAccessor[] defaultValue) {
-    return getDatesFromElement(xmler, attribute, type, defaultValue, "\\");
+      AttributeSource source, String attribute, TagType type, TemporalAccessor[] defaultValue) {
+    return getDatesFromElement(source, attribute, type, defaultValue, "\\");
   }
 
   public static TemporalAccessor[] getDatesFromElement(
-      XMLStreamReader xmler,
+      AttributeSource source,
       String attribute,
       TagType type,
       TemporalAccessor[] defaultValue,
       String separator) {
     if (attribute != null) {
-      String val = xmler.getAttributeValue(null, attribute);
+      String val = source.getAttribute(attribute);
       if (val != null) {
         String[] strs = val.split(Pattern.quote(separator));
         TemporalAccessor[] vals = new TemporalAccessor[strs.length];

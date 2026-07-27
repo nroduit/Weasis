@@ -26,7 +26,6 @@ import java.util.stream.Collectors;
 import java.util.stream.DoubleStream;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
-import javax.xml.stream.XMLStreamReader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.Messages;
@@ -378,42 +377,47 @@ public class TagW {
   }
 
   public Object getValue(Object data) {
-    Object value = null;
-    if (data instanceof XMLStreamReader xmler) {
-      if (isStringFamilyType()) {
-        value =
-            vmMax > 1
-                ? TagUtil.getStringArrayTagAttribute(xmler, keyword, (String[]) defaultValue)
-                : TagUtil.getTagAttribute(xmler, keyword, (String) defaultValue);
-      } else if (TagType.DATE.equals(type)
-          || TagType.TIME.equals(type)
-          || TagType.DATETIME.equals(type)) {
-        value =
-            vmMax > 1
-                ? TagUtil.getDatesFromElement(
-                    xmler, keyword, type, (TemporalAccessor[]) defaultValue)
-                : TagUtil.getDateFromElement(xmler, keyword, type, (TemporalAccessor) defaultValue);
-      } else if (TagType.INTEGER.equals(type)) {
-        value =
-            vmMax > 1
-                ? TagUtil.getIntArrayTagAttribute(xmler, keyword, (int[]) defaultValue)
-                : TagUtil.getIntegerTagAttribute(xmler, keyword, (Integer) defaultValue);
-      } else if (TagType.FLOAT.equals(type)) {
-        value =
-            vmMax > 1
-                ? TagUtil.getFloatArrayTagAttribute(xmler, keyword, (float[]) defaultValue)
-                : TagUtil.getFloatTagAttribute(xmler, keyword, (Float) defaultValue);
-      } else if (TagType.DOUBLE.equals(type)) {
-        value =
-            vmMax > 1
-                ? TagUtil.getDoubleArrayTagAttribute(xmler, keyword, (double[]) defaultValue)
-                : TagUtil.getDoubleTagAttribute(xmler, keyword, (Double) defaultValue);
-      } else {
-        value =
-            vmMax > 1
-                ? TagUtil.getStringArrayTagAttribute(xmler, keyword, (String[]) defaultValue)
-                : TagUtil.getTagAttribute(xmler, keyword, (String) defaultValue);
-      }
+    if (data instanceof AttributeSource source) {
+      return getValue(source);
+    }
+    return null;
+  }
+
+  protected Object getValue(AttributeSource source) {
+    Object value;
+    if (isStringFamilyType()) {
+      value =
+          vmMax > 1
+              ? TagUtil.getStringArrayTagAttribute(source, keyword, (String[]) defaultValue)
+              : TagUtil.getTagAttribute(source, keyword, (String) defaultValue);
+    } else if (TagType.DATE.equals(type)
+        || TagType.TIME.equals(type)
+        || TagType.DATETIME.equals(type)) {
+      value =
+          vmMax > 1
+              ? TagUtil.getDatesFromElement(
+                  source, keyword, type, (TemporalAccessor[]) defaultValue)
+              : TagUtil.getDateFromElement(source, keyword, type, (TemporalAccessor) defaultValue);
+    } else if (TagType.INTEGER.equals(type)) {
+      value =
+          vmMax > 1
+              ? TagUtil.getIntArrayTagAttribute(source, keyword, (int[]) defaultValue)
+              : TagUtil.getIntegerTagAttribute(source, keyword, (Integer) defaultValue);
+    } else if (TagType.FLOAT.equals(type)) {
+      value =
+          vmMax > 1
+              ? TagUtil.getFloatArrayTagAttribute(source, keyword, (float[]) defaultValue)
+              : TagUtil.getFloatTagAttribute(source, keyword, (Float) defaultValue);
+    } else if (TagType.DOUBLE.equals(type)) {
+      value =
+          vmMax > 1
+              ? TagUtil.getDoubleArrayTagAttribute(source, keyword, (double[]) defaultValue)
+              : TagUtil.getDoubleTagAttribute(source, keyword, (Double) defaultValue);
+    } else {
+      value =
+          vmMax > 1
+              ? TagUtil.getStringArrayTagAttribute(source, keyword, (String[]) defaultValue)
+              : TagUtil.getTagAttribute(source, keyword, (String) defaultValue);
     }
     return value;
   }

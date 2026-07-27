@@ -43,7 +43,7 @@ class SplittingModalityRulesTest {
 
   // Stable test-only TagW instances so we don't collide with the DICOM dictionary.
   // `DefaultCondition` parses its literal value via TagW.getValue(String), which on the base
-  // class only handles an XMLStreamReader; we override getValue(Object) here so a plain String
+  // class only handles an AttributeSource; we override getValue(Object) here so a plain String
   // round-trips unchanged. That lets us cover the condition-matching contract without standing
   // up a real splitting-rules XML loader.
   private static final TagW TAG_STRING = new StringPassThroughTag(97_000, "TestTagString");
