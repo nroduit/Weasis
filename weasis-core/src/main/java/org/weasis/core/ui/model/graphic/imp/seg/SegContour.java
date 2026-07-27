@@ -70,6 +70,7 @@ public class SegContour extends Region {
       return null;
     }
     var graphic = new SegGraphic(path);
+    graphic.setContour(this);
     graphic.setFilled(attributes.isFilled());
     graphic.setLineThickness(attributes.getLineThickness());
     graphic.setFillOpacity(attributes.getInteriorOpacity());

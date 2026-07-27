@@ -930,6 +930,8 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
         movePatient(ListPosition.FIRST);
       } else if (sm.matches(ShortcutManager.ID_DICOM_LAST_PATIENT, keyEvent, modifiers)) {
         movePatient(ListPosition.LAST);
+      } else if (sm.matches(ShortcutManager.ID_DICOM_TOGGLE_SEG, keyEvent, modifiers)) {
+        SegComponentFactory.toggleSegmentationsVisibility(selectedView2dContainer);
       } else if (isMpr
           && (sm.matches(ShortcutManager.ID_MPR_RECENTER, keyEvent, modifiers)
               || sm.matches(ShortcutManager.ID_MPR_RECENTER_ALL, keyEvent, modifiers))) {

@@ -120,13 +120,23 @@ public final class FusionController {
 
   /** Applies a FusionOp parameter to every pane of the current container. */
   public static void applyParam(String propertyName, Object value) {
-    // The cached overlays bake in the color LUT (and series), so they must be invalidated when
-    // either changes. Opacity is applied at composite time and does not need a cache clear.
+    // The cached overlays bake in the color LUT, the selected series and the resampled volume, so
+    // they must be invalidated when any of those changes. Opacity is applied at composite time and
+    // does not need a cache clear.
+    boolean seriesChange = FusionOp.P_FUSION_SERIES.equals(propertyName);
     boolean clearCache =
-        FusionOp.P_FUSION_LUT.equals(propertyName) || FusionOp.P_FUSION_SERIES.equals(propertyName);
+        seriesChange
+            || FusionOp.P_FUSION_LUT.equals(propertyName)
+            || FusionOp.P_FUSION_VOLUME.equals(propertyName);
     for (ViewCanvas<DicomImageElement> view : targetViews()) {
       OpManager disOp = view.getDisplayOpManager();
       disOp.setParamValue(FusionOp.OP_NAME, propertyName, value);
+      // A new overlay series invalidates the volume built for the previous one; drop it so fusion
+      // falls back to the single-slice path until buildVolume() supplies the matching volume,
+      // instead of reslicing the previous series' voxels.
+      if (seriesChange) {
+        disOp.setParamValue(FusionOp.OP_NAME, FusionOp.P_FUSION_VOLUME, null);
+      }
       if (clearCache) {
         clearCache(disOp);
       }
@@ -161,12 +171,30 @@ public final class FusionController {
             () -> {
               Volume<?, ?> volume = FusionVolumeBuilder.build(overlaySeries);
               if (volume != null) {
-                GuiExecutor.execute(() -> applyParam(FusionOp.P_FUSION_VOLUME, volume));
+                GuiExecutor.execute(() -> applyVolume(overlaySeries, volume));
               }
             },
             "fusion-volume-builder"); // NON-NLS
     worker.setDaemon(true);
     worker.start();
+  }
+
+  /**
+   * Applies an asynchronously built volume, but only to panes still showing {@code series}. The
+   * user may have switched the overlay series (or turned fusion off) while the build ran, and two
+   * builds can finish out of order; applying unconditionally would overlay the previous series'
+   * voxels.
+   */
+  private static void applyVolume(MediaSeries<DicomImageElement> series, Volume<?, ?> volume) {
+    for (ViewCanvas<DicomImageElement> view : targetViews()) {
+      OpManager disOp = view.getDisplayOpManager();
+      if (disOp.getParamValue(FusionOp.OP_NAME, FusionOp.P_FUSION_SERIES).orElse(null) != series) {
+        continue;
+      }
+      disOp.setParamValue(FusionOp.OP_NAME, FusionOp.P_FUSION_VOLUME, volume);
+      clearCache(disOp);
+      view.getImageLayer().updateDisplayOperations();
+    }
   }
 
   /**

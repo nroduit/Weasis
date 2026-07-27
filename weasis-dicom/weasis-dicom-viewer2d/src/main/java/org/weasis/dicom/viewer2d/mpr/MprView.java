@@ -164,7 +164,6 @@ public class MprView extends View2d implements SliceCanvas, ViewProgress {
     }
   }
 
-  private JProgressBar progressBar;
   private Plane plane;
 
   protected final MprController mprController;
@@ -618,7 +617,6 @@ public class MprView extends View2d implements SliceCanvas, ViewProgress {
     }
 
     super.drawOnTop(g2d);
-    drawProgressBar(g2d, progressBar);
 
     if (CurvedMprAxis.DEBUG_DRAW && plane == Plane.AXIAL) {
       MprContainer container =
@@ -739,14 +737,6 @@ public class MprView extends View2d implements SliceCanvas, ViewProgress {
     super.drawLayers(g2d, transform, inverseTransform);
   }
 
-  public void setProgressBar(JProgressBar bar) {
-    this.progressBar = bar;
-  }
-
-  public JProgressBar getProgressBar() {
-    return progressBar;
-  }
-
   /**
    * Overrides the default segmentation overlay to reslice the per-MPR-session {@link
    * SegmentationVolume}s held by {@link MprController}, using the same combined transformation
@@ -759,6 +749,18 @@ public class MprView extends View2d implements SliceCanvas, ViewProgress {
     graphicManager.deleteByLayerType(LayerType.DICOM_SEG);
     if (mprController == null) {
       return;
+    }
+
+    // A SEG hidden when the volumes were last built has no volume; build it now that it is visible.
+    // Skip while a build is already running so we do not cancel it (repaint/scroll also lands
+    // here).
+    if (mprController.hasUnbuiltVisibleSeg() && !mprController.isSegBuildInProgress()) {
+      MprContainer container =
+          (MprContainer) SwingUtilities.getAncestorOfClass(MprContainer.class, this);
+      if (container != null) {
+        mprController.buildSegElementsAsync(container);
+      }
+      // Render what is currently built; the async completion refreshes every plane when done.
     }
 
     List<SegmentationVolume> segVolumes = mprController.getSegVolumes();
@@ -799,6 +801,17 @@ public class MprView extends View2d implements SliceCanvas, ViewProgress {
         addSegContours(contours);
       }
     }
+  }
+
+  /**
+   * MPR builds its SEG overlays as resliceable volumes on the controller (not per-slice like the 2D
+   * view), so drive the shared "Loading segmentations..." message off that build instead of the 2D
+   * per-region building flag. The base {@link View2d#drawOnTop} paints it at the bottom of the
+   * view.
+   */
+  @Override
+  protected boolean isSegLoading() {
+    return mprController != null && mprController.isSegBuildInProgress();
   }
 
   private void addSegContours(Iterable<SegContour> contours) {

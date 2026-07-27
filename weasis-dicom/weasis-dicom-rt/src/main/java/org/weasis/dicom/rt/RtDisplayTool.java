@@ -51,12 +51,8 @@ import org.knowm.xchart.XYChart;
 import org.knowm.xchart.XYChartBuilder;
 import org.knowm.xchart.XYSeries;
 import org.weasis.core.api.gui.Insertable;
-import org.weasis.core.api.gui.util.ActionW;
-import org.weasis.core.api.gui.util.DecFormatter;
-import org.weasis.core.api.gui.util.Filter;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.JSliderW;
-import org.weasis.core.api.gui.util.SliderCineListener;
 import org.weasis.core.api.gui.util.WinUtil;
 import org.weasis.core.api.image.util.MeasurableLayer;
 import org.weasis.core.api.media.data.MediaSeries;
@@ -85,6 +81,7 @@ import org.weasis.dicom.codec.SpecialElementRegion;
 import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.seg.LazyContourLoader;
 import org.weasis.dicom.viewer2d.EventManager;
+import org.weasis.dicom.viewer2d.SegRegionLocator;
 import org.weasis.dicom.viewer2d.View2d;
 import org.weasis.opencv.data.PlanarImage;
 import org.weasis.opencv.seg.RegionAttributes;
@@ -296,7 +293,7 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener, S
     tree.getCheckingModel().setCheckingMode(TreeCheckingModel.CheckingMode.SIMPLE);
     tree.setVisible(false);
     tree.setToolTipText(StringUtil.EMPTY_STRING);
-    tree.setCellRenderer(TreeBuilder.buildNoIconCheckboxTreeCellRenderer());
+    tree.setCellRenderer(TreeBuilder.buildSegRegionCellRenderer());
     tree.addTreeCheckingListener(e -> handleTreeChecking(tree, e));
 
     DefaultTreeModel model = new DefaultTreeModel(rootNode, false);
@@ -1036,27 +1033,9 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener, S
     return new StructToolTipTreeNode(isoDoseRegion, false) {
       @Override
       public String getToolTipText() {
-        IsoDoseRegion layer = (IsoDoseRegion) getUserObject();
-        return buildIsodoseTooltip(layer);
+        return ((IsoDoseRegion) getUserObject()).getToolTipHtml();
       }
     };
-  }
-
-  private String buildIsodoseTooltip(IsoDoseRegion layer) {
-    return GuiUtils.HTML_START
-        + "<b>"
-        + layer.getLabel()
-        + "</b>"
-        + GuiUtils.HTML_BR
-        + Messages.getString("level")
-        + StringUtil.COLON_AND_SPACE
-        + "%d%%".formatted(layer.getLevel())
-        + GuiUtils.HTML_BR // NON-NLS
-        + Messages.getString("thickness")
-        + StringUtil.COLON_AND_SPACE
-        + DecFormatter.twoDecimal(layer.getThickness())
-        + GuiUtils.HTML_BR
-        + GuiUtils.HTML_END;
   }
 
   private void expandTrees() {
@@ -1069,101 +1048,27 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener, S
     return new StructToolTipTreeNode(structRegion, false) {
       @Override
       public String getToolTipText() {
-        return buildStructRegionTooltip((StructRegion) getUserObject());
+        return ((StructRegion) getUserObject()).getToolTipHtml();
       }
 
       @Override
-      public String toString() {
+      public String getDisplayLabel() {
         StructRegion layer = (StructRegion) getUserObject();
         String label = layer.getLabel();
         String type = layer.getRtRoiInterpretedType();
         if (StringUtil.hasText(type)) {
           label += " [" + type + "]";
         }
-        return getColorBullet(layer.getColor(), label);
+        return label;
       }
     };
-  }
-
-  private String buildStructRegionTooltip(StructRegion region) {
-    StringBuilder buf = new StringBuilder();
-    buf.append(GuiUtils.HTML_START);
-    buf.append("<b>").append(region.getLabel()).append("</b>");
-    buf.append(GuiUtils.HTML_BR);
-
-    if (StringUtil.hasText(region.getRoiObservationLabel())) {
-      buf.append(region.getRoiObservationLabel()).append(GuiUtils.HTML_BR);
-    }
-
-    buf.append(Messages.getString("thickness")).append(StringUtil.COLON_AND_SPACE);
-    buf.append(String.format("%s mm", DecFormatter.twoDecimal(region.getThickness()))); // NON-NLS
-    buf.append(GuiUtils.HTML_BR);
-
-    buf.append(Messages.getString("volume")).append(StringUtil.COLON_AND_SPACE);
-    buf.append(String.format("%s cm³", DecFormatter.fourDecimal(region.getVolume()))); // NON-NLS
-    buf.append(GuiUtils.HTML_BR);
-
-    Dvh dvh = region.getDvh();
-    if (dvh != null) {
-      appendDvhInfo(buf, dvh);
-    }
-
-    buf.append(GuiUtils.HTML_END);
-    return buf.toString();
-  }
-
-  private void appendDvhInfo(StringBuilder buf, Dvh dvh) {
-    String source = dvh.getDvhSource().toString();
-    double rxDose = dvh.getPlan().getRxDose();
-    appendDoseLine(buf, source, "min.dose", dvh.getDvhMinimumDoseCGy(), rxDose);
-    appendDoseLine(buf, source, "max.dose", dvh.getDvhMaximumDoseCGy(), rxDose);
-    appendDoseLine(buf, source, "mean.dose", dvh.getDvhMeanDoseCGy(), rxDose);
-  }
-
-  private static void appendDoseLine(
-      StringBuilder buf, String source, String i18nKey, double doseCGy, double rxDose) {
-    buf.append(source).append(' ').append(Messages.getString(i18nKey));
-    buf.append(StringUtil.COLON_AND_SPACE);
-    buf.append(DecFormatter.percentTwoDecimal(Dose.calculateRelativeDose(doseCGy, rxDose) / 100.0));
-    buf.append(GuiUtils.HTML_BR);
   }
 
   // Simplified utility methods for SegRegionTool interface
   /** Scrolls the active viewer to the slice that contains the largest part of {@code region}. */
   public void show(SegRegion<?> region) {
     ViewCanvas<DicomImageElement> view = EventManager.getInstance().getSelectedViewPane();
-    if (view == null || !(view.getSeries() instanceof DicomSeries series)) return;
-
-    DicomImageElement bestImage = findBestImageForRegion(series, region);
-    if (bestImage != null) {
-      navigateToImage(view, series, bestImage);
-    }
-  }
-
-  private DicomImageElement findBestImageForRegion(DicomSeries series, SegRegion<?> region) {
-    long maxPixels = Long.MIN_VALUE;
-    DicomImageElement bestImage = null;
-
-    for (DicomImageElement dcm : series.getMedias(null, null)) {
-      SegContour contour = getContour(dcm, region);
-      if (contour != null && contour.getNumberOfPixels() > maxPixels) {
-        maxPixels = contour.getNumberOfPixels();
-        bestImage = dcm;
-      }
-    }
-    return bestImage;
-  }
-
-  private void navigateToImage(
-      ViewCanvas<DicomImageElement> view, DicomSeries series, DicomImageElement image) {
-    Optional<SliderCineListener> action =
-        EventManager.getInstance().getAction(ActionW.SCROLL_SERIES);
-    if (action.isPresent()) {
-      Filter<DicomImageElement> filter =
-          (Filter<DicomImageElement>) view.getActionValue(ActionW.FILTERED_SERIES.cmd());
-      int imgIndex = series.getImageIndex(image, filter, view.getCurrentSortComparator());
-      action.get().setSliderValue(imgIndex + 1);
-    }
+    SegRegionLocator.show(view, region, (image, reg) -> getContour(image, reg));
   }
 
   private SegContour getContour(DicomImageElement imageElement, RegionAttributes attributes) {

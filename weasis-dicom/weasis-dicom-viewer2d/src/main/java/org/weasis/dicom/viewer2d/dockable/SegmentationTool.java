@@ -19,7 +19,6 @@ import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import javax.swing.JButton;
 import javax.swing.JPanel;
@@ -28,11 +27,8 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 import net.miginfocom.swing.MigLayout;
-import org.weasis.core.api.gui.util.ActionW;
-import org.weasis.core.api.gui.util.Filter;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.JSliderW;
-import org.weasis.core.api.gui.util.SliderCineListener;
 import org.weasis.core.api.image.util.MeasurableLayer;
 import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.api.util.ResourceUtil.OtherIcon;
@@ -49,12 +45,12 @@ import org.weasis.core.ui.model.graphic.imp.seg.SegRegion;
 import org.weasis.core.ui.util.*;
 import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.codec.DicomImageElement;
-import org.weasis.dicom.codec.DicomSeries;
 import org.weasis.dicom.codec.seg.LazyContourLoader;
 import org.weasis.dicom.codec.seg.SegSpecialElement;
 import org.weasis.dicom.viewer2d.EventManager;
 import org.weasis.dicom.viewer2d.Messages;
 import org.weasis.dicom.viewer2d.SegComponentFactory;
+import org.weasis.dicom.viewer2d.SegRegionLocator;
 import org.weasis.dicom.viewer2d.View2d;
 import org.weasis.opencv.data.PlanarImage;
 import org.weasis.opencv.seg.RegionAttributes;
@@ -129,30 +125,7 @@ public class SegmentationTool extends PluginTool implements SeriesViewerListener
 
   public void show(SegRegion<?> region) {
     ViewCanvas<DicomImageElement> view = EventManager.getInstance().getSelectedViewPane();
-    DicomSeries series = (DicomSeries) view.getSeries();
-    if (series != null) {
-      long max = Long.MIN_VALUE;
-      DicomImageElement bestImage = null;
-      for (DicomImageElement dcm : series.getMedias(null, null)) {
-        SegContour c = getContour(dcm, region);
-        if (c != null) {
-          if (c.getNumberOfPixels() > max) {
-            max = c.getNumberOfPixels();
-            bestImage = dcm;
-          }
-        }
-      }
-      if (bestImage != null) {
-        Optional<SliderCineListener> action =
-            EventManager.getInstance().getAction(ActionW.SCROLL_SERIES);
-        if (action.isPresent()) {
-          Filter<DicomImageElement> filter =
-              (Filter<DicomImageElement>) view.getActionValue(ActionW.FILTERED_SERIES.cmd());
-          int imgIndex = series.getImageIndex(bestImage, filter, view.getCurrentSortComparator());
-          action.get().setSliderValue(imgIndex + 1);
-        }
-      }
-    }
+    SegRegionLocator.show(view, region, (image, reg) -> getContour(image, reg));
   }
 
   public void computeStatistics(SegRegion<?> region) {

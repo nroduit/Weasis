@@ -21,6 +21,7 @@ import java.util.Map;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.RecursiveAction;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.BiConsumer;
 import java.util.function.IntUnaryOperator;
 import org.joml.Matrix4d;
 import org.joml.Vector3d;
@@ -1225,6 +1226,92 @@ public final class SegmentationVolume {
       }
     }
     return true;
+  }
+
+  /**
+   * Returns the segment number of the given region in this volume, or {@code -1} if absent. The
+   * same instance is matched first: two SEG objects of a patient may declare segments sharing an id
+   * and a label, which {@link RegionAttributes#equals} cannot tell apart.
+   */
+  public int getSegmentNumber(RegionAttributes attributes) {
+    if (attributes == null || segAttributes == null) {
+      return -1;
+    }
+    int equalKey = -1;
+    for (Map.Entry<Integer, ? extends RegionAttributes> entry : segAttributes.entrySet()) {
+      if (entry.getValue() == attributes) {
+        return entry.getKey();
+      }
+      if (equalKey < 0 && attributes.equals(entry.getValue())) {
+        equalKey = entry.getKey();
+      }
+    }
+    return equalKey;
+  }
+
+  /**
+   * Locates the voxel a view should be centred on to display the given segment: the centroid of its
+   * densest slice, so the result lies inside the largest cross-section of the segment. The scan is
+   * linear in the volume size, so it must not run on the EDT.
+   *
+   * @param segmentNumber the segment to look for
+   * @param progress optional callback invoked with (scanned slices, total slices)
+   * @return the voxel position, or {@code null} when the segment has no voxel in this volume
+   */
+  public Vector3i findSegmentCenter(int segmentNumber, BiConsumer<Integer, Integer> progress) {
+    boolean[] matchingIds = buildMatchingIds(segmentNumber);
+    if (matchingIds == null || isDisposed()) {
+      return null;
+    }
+    long bestCount = 0;
+    int bestZ = -1;
+    double bestSumX = 0;
+    double bestSumY = 0;
+    for (int z = 0; z < size.z; z++) {
+      long count = 0;
+      double sumX = 0;
+      double sumY = 0;
+      long base = (long) z * sliceStride;
+      for (int y = 0; y < size.y; y++) {
+        long row = base + (long) y * size.x;
+        for (int x = 0; x < size.x; x++) {
+          int id = readId(row + x);
+          if (id > 0 && id < matchingIds.length && matchingIds[id]) {
+            count++;
+            sumX += x;
+            sumY += y;
+          }
+        }
+      }
+      if (count > bestCount) {
+        bestCount = count;
+        bestZ = z;
+        bestSumX = sumX;
+        bestSumY = sumY;
+      }
+      if (progress != null) {
+        progress.accept(z + 1, size.z);
+      }
+    }
+    if (bestZ < 0) {
+      return null;
+    }
+    return new Vector3i(
+        (int) Math.round(bestSumX / bestCount), (int) Math.round(bestSumY / bestCount), bestZ);
+  }
+
+  /** Storage IDs (singleton and overlap combinations) that contain the given segment. */
+  private boolean[] buildMatchingIds(int segmentNumber) {
+    boolean[] matchingIds = new boolean[nextId];
+    boolean found = false;
+    for (Map.Entry<Integer, List<Integer>> entry : idToSegments.entrySet()) {
+      int id = entry.getKey();
+      if (id > 0 && id < matchingIds.length && entry.getValue().contains(segmentNumber)) {
+        matchingIds[id] = true;
+        found = true;
+      }
+    }
+    return found ? matchingIds : null;
   }
 
   // ---- Reference counting ----

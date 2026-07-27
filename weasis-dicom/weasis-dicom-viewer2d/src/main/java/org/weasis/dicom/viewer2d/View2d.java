@@ -144,7 +144,6 @@ public class View2d extends DefaultView2d<DicomImageElement> {
   protected Vector3d lastCrosshairPosition;
 
   protected final KOViewButton koStarButton;
-  protected final ViewButton segSelectionButton;
 
   public View2d(ImageViewerEventManager<DicomImageElement> eventManager) {
     super(eventManager);
@@ -171,8 +170,6 @@ public class View2d extends DefaultView2d<DicomImageElement> {
     this.koStarButton = KOComponentFactory.buildKoStarButton(this);
     koStarButton.setPosition(GridBagConstraints.NORTHEAST);
     getViewButtons().add(koStarButton);
-    this.segSelectionButton = SegComponentFactory.buildSegSelectionButton(this);
-    getViewButtons().add(segSelectionButton);
   }
 
   private List<MeasurableLayer> getFusionStatsLayers() {
@@ -824,17 +821,9 @@ public class View2d extends DefaultView2d<DicomImageElement> {
     return !loadingSegs.isEmpty();
   }
 
-  private void updateSegButtonVisibleState(DicomImageElement img) {
-    boolean available =
-        series != null && img != null && !SegComponentFactory.getRelatedSegments(this).isEmpty();
-    if (segSelectionButton.isVisible() != available) {
-      segSelectionButton.setVisible(available);
-      repaint();
-    }
-  }
-
   @Override
   protected void drawOnTop(Graphics2D g2d) {
+    super.drawOnTop(g2d);
     BufferedImage overlay = segOverlayImage;
     if (overlay != null) {
       // Re-enter the image coordinate space (translate + affineTransform) to draw the overlay

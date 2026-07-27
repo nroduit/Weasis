@@ -10,7 +10,6 @@
 package org.weasis.dicom.viewer2d.mpr;
 
 import java.awt.Cursor;
-import java.awt.Dimension;
 import java.awt.Point;
 import java.awt.Toolkit;
 import java.awt.event.MouseEvent;
@@ -32,7 +31,6 @@ import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiConsumer;
 import java.util.stream.Stream;
-import javax.swing.JProgressBar;
 import javax.swing.Timer;
 import org.dcm4che3.data.Tag;
 import org.joml.Quaterniond;
@@ -44,7 +42,6 @@ import org.weasis.core.api.gui.util.Feature;
 import org.weasis.core.api.gui.util.Feature.ComboItemListenerValue;
 import org.weasis.core.api.gui.util.GeomUtil;
 import org.weasis.core.api.gui.util.GuiExecutor;
-import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.ui.editor.SeriesViewerEvent;
 import org.weasis.core.ui.editor.SeriesViewerEvent.EVENT;
 import org.weasis.core.ui.editor.image.DefaultView2d;
@@ -58,7 +55,6 @@ import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.seg.SegSpecialElement;
 import org.weasis.dicom.codec.seg.SegmentationVolume;
 import org.weasis.dicom.viewer2d.EventManager;
-import org.weasis.dicom.viewer2d.Messages;
 import org.weasis.dicom.viewer2d.View2d;
 import org.weasis.dicom.viewer2d.mip.MipView;
 import org.weasis.dicom.viewer2d.mip.MipView.Type;
@@ -86,7 +82,12 @@ public class MprController
   private Volume<?, ?> volume;
   private final List<SegSpecialElement> segElements = new ArrayList<>();
   private final List<SegmentationVolume> segVolumes = new ArrayList<>();
+  // SEGs whose volume build was attempted in the last build (those visible then), succeeded or not.
+  // Lets hasUnbuiltVisibleSeg() tell a SEG made visible since the last build (needs a build) from
+  // one whose build was attempted but produced no volume (must not loop rebuilding).
+  private final Set<SegSpecialElement> attemptedSegs = new HashSet<>();
   private volatile CompletableFuture<Void> segBuildFuture; // NOSONAR visibility reference
+  private volatile boolean segBuilding;
   private final MprAxis axial;
   private final MprAxis coronal;
   private final MprAxis sagittal;
@@ -182,12 +183,13 @@ public class MprController
   }
 
   /**
-   * Collects all visible DICOM SEG special elements that reference the current image series and
-   * builds an image-volume-aligned {@link SegmentationVolume} for each one. The {@link
-   * SegSpecialElement} list is also exposed via {@link #getSegElements()} so consumers can still
-   * resolve SEG metadata (colours, visibility, segment attributes) from the same single source as
-   * 2D and 3D viewers, while {@link #getSegVolumes()} provides the per-MPR-session resliceable
-   * volume used by {@link MprView#updateSegmentation()}.
+   * Collects the DICOM SEG special elements that reference the current image series and builds an
+   * image-volume-aligned {@link SegmentationVolume} for each one that is currently <b>visible</b>.
+   * Hidden SEGs are skipped (their volume is expensive to build and would not be drawn anyway);
+   * they are built lazily by {@link #hasUnbuiltVisibleSeg()} once the user makes them visible.
+   * {@link #getSegVolumes()} provides the per-MPR-session resliceable volumes used by {@link
+   * MprView#updateSegmentation()}; the full related SEG list (visible or not) is exposed via {@link
+   * #getRelatedSegs()} so the Segmentation tool can still list and toggle hidden ones.
    */
   public void buildSegElements() {
     buildSegElements(null);
@@ -200,29 +202,16 @@ public class MprController
   private void buildSegElements(BiConsumer<Integer, Integer> progress) {
     disposeSegVolumes();
     segElements.clear();
-    if (volume == null || volume.getStack() == null) {
-      return;
-    }
+    attemptedSegs.clear();
 
-    String patientPseudoUID =
-        org.weasis.dicom.explorer.DicomModel.getPatientPseudoUID(volume.getStack().getSeries());
-    if (patientPseudoUID == null) {
-      return;
-    }
-
+    // Only currently-visible SEGs are worth the expensive resample; hidden ones are built on
+    // demand.
     List<SegSpecialElement> elements =
-        HiddenSeriesManager.getHiddenElementsFromPatient(SegSpecialElement.class, patientPseudoUID);
+        collectRelatedSegs().stream().filter(SegSpecialElement::isVisible).toList();
     if (elements.isEmpty()) {
       return;
     }
-
-    // Restrict to SEGs that actually reference the current source series, either via the
-    // ReferencedSeriesSequence (reference2Series map) or the same Frame of Reference. This
-    // avoids resampling unrelated SEG objects from other series of the same patient.
-    elements = filterSegsForCurrentSeries(elements);
-    if (elements.isEmpty()) {
-      return;
-    }
+    attemptedSegs.addAll(elements);
 
     // Per-segment work is independent and CPU-bound: process in parallel and only mutate the
     // shared lists once with the collected results.
@@ -264,9 +253,56 @@ public class MprController
   }
 
   /**
+   * SEGs referencing the current source series, either via the ReferencedSeriesSequence
+   * (reference2Series map) or the same Frame of Reference — visible or not. Filtering out unrelated
+   * SEG objects from other series of the same patient avoids resampling them needlessly.
+   */
+  private List<SegSpecialElement> collectRelatedSegs() {
+    if (volume == null || volume.getStack() == null) {
+      return List.of();
+    }
+    String patientPseudoUID =
+        org.weasis.dicom.explorer.DicomModel.getPatientPseudoUID(volume.getStack().getSeries());
+    if (patientPseudoUID == null) {
+      return List.of();
+    }
+    List<SegSpecialElement> elements =
+        HiddenSeriesManager.getHiddenElementsFromPatient(SegSpecialElement.class, patientPseudoUID);
+    return elements.isEmpty() ? List.of() : filterSegsForCurrentSeries(elements);
+  }
+
+  /** Related SEGs (visible or hidden) for the current series; source of truth for the SEG tree. */
+  public List<SegSpecialElement> getRelatedSegs() {
+    return collectRelatedSegs();
+  }
+
+  /**
+   * {@code true} when a SEG referencing the current series is visible but has no built volume,
+   * because it was hidden when the volumes were last built. The caller schedules a rebuild so the
+   * newly shown SEG appears (see {@link MprView#updateSegmentation()}).
+   */
+  public boolean hasUnbuiltVisibleSeg() {
+    for (SegSpecialElement seg : collectRelatedSegs()) {
+      if (seg.isVisible() && !attemptedSegs.contains(seg)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /**
+   * {@code true} while an async SEG volume build is running. Drives the "Loading segmentations..."
+   * message painted by {@link MprView#isSegLoading()}.
+   */
+  public boolean isSegBuildInProgress() {
+    return segBuilding;
+  }
+
+  /**
    * Schedules {@link #buildSegElements()} on the common ForkJoin pool and, once finished, refreshes
    * each MPR view's segmentation overlay on the EDT. Returns immediately so the caller does not
-   * block the MPR display.
+   * block the MPR display. While it runs, {@link MprView} paints the "Loading segmentations..."
+   * message at the bottom of every plane (same indicator as the 2D view).
    */
   public CompletableFuture<Void> buildSegElementsAsync(MprContainer container) {
     // Cancel any previous in-flight build so we do not race or accumulate work.
@@ -274,22 +310,14 @@ public class MprController
     if (previous != null && !previous.isDone()) {
       previous.cancel(true);
     }
-    // Inform the user in every MPR view while the SEG volumes build in the background.
-    JProgressBar bar = createSegProgressBar();
-    setSegProgressBar(container, bar);
+    segBuilding = true;
+    repaintMprViews(container); // reveal the loading message immediately
     CompletableFuture<Void> future =
         CompletableFuture.runAsync(
                 () ->
                     buildSegElements(
-                        (done, total) ->
-                            GuiExecutor.execute(
-                                () -> {
-                                  bar.setMaximum(total);
-                                  bar.setValue(done);
-                                  repaintMprViews(container);
-                                })),
+                        (done, total) -> GuiExecutor.execute(() -> repaintMprViews(container))),
                 ForkJoinPool.commonPool())
-            .whenComplete((r, t) -> setSegProgressBar(container, null))
             .thenRun(
                 () ->
                     GuiExecutor.execute(
@@ -319,35 +347,18 @@ public class MprController
                           }
                         }));
     this.segBuildFuture = future;
+    // Clear the loading message when this build ends (also on cancel/failure), but only if a newer
+    // build has not superseded it in the meantime.
+    future.whenComplete(
+        (r, t) ->
+            GuiExecutor.execute(
+                () -> {
+                  if (this.segBuildFuture == future) {
+                    segBuilding = false;
+                    repaintMprViews(container);
+                  }
+                }));
     return future;
-  }
-
-  private static JProgressBar createSegProgressBar() {
-    JProgressBar bar = new JProgressBar(0, 1);
-    Dimension dim = new Dimension(GuiUtils.getScaleLength(200), GuiUtils.getScaleLength(30));
-    bar.setSize(dim);
-    bar.setPreferredSize(dim);
-    bar.setMaximumSize(dim);
-    bar.setStringPainted(true);
-    bar.setString(Messages.getString("seg.loading"));
-    return bar;
-  }
-
-  /** Sets (or clears with {@code null}) the seg loading bar on every MPR view of the container. */
-  private static void setSegProgressBar(MprContainer container, JProgressBar bar) {
-    if (container == null) {
-      return;
-    }
-    GuiExecutor.execute(
-        () -> {
-          for (Plane plane : Plane.values()) {
-            MprView view = container.getMprView(plane);
-            if (view != null) {
-              view.setProgressBar(bar);
-              view.repaint();
-            }
-          }
-        });
   }
 
   private static void repaintMprViews(MprContainer container) {
@@ -493,6 +504,42 @@ public class MprController
       return axesControl.getCenterForCanvas(axis.getMprView());
     }
     return null;
+  }
+
+  /**
+   * Moves the crosshair to the given raw voxel of the image volume and refreshes the three planes,
+   * so that the voxel becomes the displayed slice position of every view.
+   */
+  public void setCrossHairAtVoxel(Vector3i voxel) {
+    if (volume == null || voxel == null) {
+      return;
+    }
+    int sliceSize = volume.getSliceSize();
+    Vector3i volSize = volume.getSize();
+    Vector3d ratio = volume.getVoxelRatio();
+    axesControl.setCenter(
+        new Vector3d(
+            toSliceSpace(voxel.x, ratio.x, volSize.x, sliceSize),
+            toSliceSpace(voxel.y, ratio.y, volSize.y, sliceSize),
+            toSliceSpace(voxel.z, ratio.z, volSize.z, sliceSize)));
+    updateAllViews();
+
+    int mode = 1;
+    for (MprView view : getMprViews()) {
+      if (view != null) {
+        mode = view.getEventManager().getOptions().getIntProperty(View2d.P_CROSSHAIR_MODE, 1);
+        break;
+      }
+    }
+    for (MprAxis axis : List.of(axial, coronal, sagittal)) {
+      recenter(axis, mode);
+    }
+    fireCrossHairChanged();
+  }
+
+  /** Voxel index to the slice-size cube space used by {@link AxesControl#setCenter}. */
+  private static double toSliceSpace(int voxel, double ratio, int size, int sliceSize) {
+    return voxel * ratio + (sliceSize - size * ratio) / 2.0;
   }
 
   public Vector3d getCrossHairPosition() {
@@ -979,6 +1026,7 @@ public class MprController
     releaseAlignedSegVolumes(volume);
     disposeSegVolumes();
     segElements.clear();
+    attemptedSegs.clear();
     if (volume != null && !volume.isSharedVolume()) {
       volume.removeData();
     }

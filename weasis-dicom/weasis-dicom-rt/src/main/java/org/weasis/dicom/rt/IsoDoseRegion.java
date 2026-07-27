@@ -10,6 +10,8 @@
 package org.weasis.dicom.rt;
 
 import java.awt.Color;
+import org.weasis.core.api.gui.util.DecFormatter;
+import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.ui.model.graphic.imp.seg.SegRegion;
 import org.weasis.core.util.StringUtil;
@@ -48,5 +50,23 @@ public class IsoDoseRegion extends SegRegion<DicomImageElement> {
 
   public void setThickness(double thickness) {
     this.thickness = thickness;
+  }
+
+  @Override
+  public String getToolTipHtml() {
+    return GuiUtils.HTML_START
+        + "<b>"
+        + getLabel()
+        + "</b>"
+        + GuiUtils.HTML_BR
+        + Messages.getString("level")
+        + StringUtil.COLON_AND_SPACE
+        + "%d%%".formatted(level)
+        + GuiUtils.HTML_BR
+        + Messages.getString("thickness")
+        + StringUtil.COLON_AND_SPACE
+        + DecFormatter.twoDecimal(thickness)
+        + GuiUtils.HTML_BR
+        + GuiUtils.HTML_END;
   }
 }

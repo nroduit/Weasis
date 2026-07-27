@@ -9,35 +9,18 @@
  */
 package org.weasis.dicom.viewer2d;
 
-import eu.essilab.lablib.checkboxtree.CheckboxTree;
-import eu.essilab.lablib.checkboxtree.TreeCheckingModel;
-import java.awt.Component;
-import java.awt.Dimension;
-import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
-import javax.swing.JButton;
-import javax.swing.JPopupMenu;
-import javax.swing.JScrollPane;
-import javax.swing.tree.DefaultMutableTreeNode;
-import javax.swing.tree.DefaultTreeModel;
-import javax.swing.tree.TreePath;
 import org.dcm4che3.data.Tag;
-import org.weasis.core.api.gui.util.GuiUtils;
+import org.weasis.core.api.gui.util.ShortcutManager;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeries.MEDIA_POSITION;
 import org.weasis.core.api.media.data.TagW;
-import org.weasis.core.api.util.ResourceUtil;
-import org.weasis.core.api.util.ResourceUtil.OtherIcon;
 import org.weasis.core.ui.editor.SeriesViewerEvent;
 import org.weasis.core.ui.editor.SeriesViewerEvent.EVENT;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
-import org.weasis.core.ui.editor.image.ViewButton;
 import org.weasis.core.ui.editor.image.ViewCanvas;
-import org.weasis.core.ui.util.TitleMenuItem;
-import org.weasis.core.ui.util.TreeBuilder;
 import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.HiddenSeriesManager;
@@ -47,7 +30,7 @@ import org.weasis.dicom.codec.seg.SegSpecialElement;
 import org.weasis.dicom.viewer2d.mpr.MprController;
 import org.weasis.dicom.viewer2d.mpr.MprView;
 
-/** Builds the segmentation selection button displayed in the corner of a 2D view. */
+/** Resolves the segmentations displayable on a view and toggles their visibility. */
 public final class SegComponentFactory {
 
   private SegComponentFactory() {}
@@ -103,9 +86,10 @@ public final class SegComponentFactory {
 
   /**
    * For MPR views the current series is a synthetic MPR series whose UID is never registered in
-   * reference2Series. If the async seg build has already completed, return those elements directly;
-   * otherwise fall back to the original source series UID so that the reference2Series lookup still
-   * works.
+   * reference2Series, so the SEG list comes from the controller's related-series resolution ({@link
+   * MprController#getRelatedSegs()}). It returns every related SEG (visible or hidden) regardless
+   * of which volumes have been built, so the tool can still list and toggle SEGs whose volume is
+   * built lazily on demand.
    */
   private static <E extends SpecialElementRegion> List<E> getMprRelatedSegments(
       Class<E> clazz, MprView mprView) {
@@ -113,132 +97,36 @@ public final class SegComponentFactory {
     if (ctrl == null) {
       return List.of();
     }
-    List<E> elements =
-        ctrl.getSegElements().stream().filter(clazz::isInstance).map(clazz::cast).toList();
-    if (!elements.isEmpty()) {
-      return elements;
-    }
-    var vol = ctrl.getVolume();
-    if (vol != null) {
-      String seriesUID =
-          TagD.getTagValue(vol.getStack().getSeries(), Tag.SeriesInstanceUID, String.class);
-      if (StringUtil.hasText(seriesUID)) {
-        Set<String> list = HiddenSeriesManager.getInstance().reference2Series.get(seriesUID);
-        if (list != null && !list.isEmpty()) {
-          return HiddenSeriesManager.getHiddenElementsFromSeries(
-              clazz, list.toArray(new String[0]));
-        }
-      }
-    }
-    return List.of();
+    return ctrl.getRelatedSegs().stream().filter(clazz::isInstance).map(clazz::cast).toList();
   }
 
-  public static ViewButton buildSegSelectionButton(View2d view) {
-    return new ViewButton(
-        (invoker, x, y) -> new SegSelectionPopup(view).show(invoker, x, y),
-        ResourceUtil.getIcon(OtherIcon.SEGMENTATION).derive(24, 24),
-        Messages.getString("segmentation"));
-  }
-
-  /** Popup letting the user check the segmentations to display on the view. */
-  private static final class SegSelectionPopup {
-    private final View2d view;
-    private final CheckboxTree tree = new CheckboxTree();
-    private final Map<DefaultMutableTreeNode, SegSpecialElement> nodeMap = new LinkedHashMap<>();
-    private boolean updating;
-
-    SegSelectionPopup(View2d view) {
-      this.view = view;
+  /**
+   * Toggles the display of every segmentation available on the selected view: hides them all when
+   * at least one is visible, shows them all otherwise. Bound to {@link
+   * ShortcutManager#ID_DICOM_TOGGLE_SEG}; a per-segmentation selection remains available in the
+   * Segmentation tool.
+   */
+  public static void toggleSegmentationsVisibility(ImageViewerPlugin<DicomImageElement> container) {
+    if (container == null) {
+      return;
     }
-
-    void show(Component invoker, int x, int y) {
-      List<SegSpecialElement> segs = getRelatedSegments(view);
-      if (segs.isEmpty()) {
-        return;
-      }
-      buildTree(segs);
-
-      JPopupMenu popupMenu = new JPopupMenu();
-      popupMenu.add(new TitleMenuItem(Messages.getString("segmentation")));
-      popupMenu.addSeparator();
-
-      JScrollPane scrollPane = new JScrollPane(tree);
-      Dimension treeSize = tree.getPreferredSize();
-      int width = Math.clamp(treeSize.width + GuiUtils.getScaleLength(30), 250, 500);
-      int height = Math.min(treeSize.height + GuiUtils.getScaleLength(10), 300);
-      scrollPane.setPreferredSize(new Dimension(width, height));
-      popupMenu.add(scrollPane);
-
-      JButton showAll = new JButton(Messages.getString("show.all"));
-      showAll.addActionListener(_ -> setAllChecked(true));
-      JButton hideAll = new JButton(Messages.getString("hide.all"));
-      hideAll.addActionListener(_ -> setAllChecked(false));
-      popupMenu.add(GuiUtils.getFlowLayoutPanel(showAll, hideAll));
-      popupMenu.show(invoker, x, y);
+    ViewCanvas<DicomImageElement> view = container.getSelectedViewCanvas();
+    List<SegSpecialElement> segs = getRelatedSegments(view);
+    if (segs.isEmpty()) {
+      return;
     }
+    boolean visible = segs.stream().noneMatch(SegSpecialElement::isVisible);
+    segs.forEach(seg -> seg.setVisible(visible));
 
-    private void buildTree(List<SegSpecialElement> segs) {
-      DefaultMutableTreeNode root = new DefaultMutableTreeNode("rootNode", true); // NON-NLS
-      for (SegSpecialElement seg : segs) {
-        DefaultMutableTreeNode node = new DefaultMutableTreeNode(seg.getShortLabel(), false);
-        nodeMap.put(node, seg);
-        root.add(node);
+    for (ViewCanvas<DicomImageElement> v : container.getImagePanels()) {
+      if (v instanceof View2d view2d) {
+        view2d.updateSegmentation();
+        view2d.repaint();
       }
-      tree.getCheckingModel().setCheckingMode(TreeCheckingModel.CheckingMode.SIMPLE);
-      tree.setModel(new DefaultTreeModel(root, false));
-      tree.setRootVisible(false);
-      tree.setShowsRootHandles(true);
-      tree.setCellRenderer(TreeBuilder.buildNoIconCheckboxTreeCellRenderer());
-      updating = true;
-      try {
-        nodeMap.forEach(
-            (node, seg) ->
-                TreeBuilder.setPathSelection(tree, new TreePath(node.getPath()), seg.isVisible()));
-      } finally {
-        updating = false;
-      }
-      tree.addTreeCheckingListener(_ -> applySelection());
     }
-
-    private void setAllChecked(boolean checked) {
-      updating = true;
-      try {
-        for (DefaultMutableTreeNode node : nodeMap.keySet()) {
-          TreeBuilder.setPathSelection(tree, new TreePath(node.getPath()), checked);
-        }
-      } finally {
-        updating = false;
-      }
-      applySelection();
-    }
-
-    private void applySelection() {
-      if (updating) {
-        return;
-      }
-      nodeMap.forEach(
-          (node, seg) ->
-              seg.setVisible(tree.getCheckingModel().isPathChecked(new TreePath(node.getPath()))));
-      refreshViews();
-    }
-
-    private void refreshViews() {
-      ImageViewerPlugin<DicomImageElement> container =
-          EventManager.getInstance().getSelectedView2dContainer();
-      if (container == null) {
-        return;
-      }
-      for (ViewCanvas<DicomImageElement> v : container.getImagePanels()) {
-        if (v instanceof View2d view2d) {
-          view2d.updateSegmentation();
-          view2d.repaint();
-        }
-      }
-      // Keep the Segmentation tool tree in sync with the new visibility states
-      EventManager.getInstance()
-          .fireSeriesViewerListeners(
-              new SeriesViewerEvent(
-                  container, view.getSeries(), view.getImage(), EVENT.SELECT_VIEW));
-    }
+    // Keep the Segmentation tool tree in sync with the new visibility states
+    EventManager.getInstance()
+        .fireSeriesViewerListeners(
+            new SeriesViewerEvent(container, view.getSeries(), view.getImage(), EVENT.SELECT_VIEW));
   }
 }
