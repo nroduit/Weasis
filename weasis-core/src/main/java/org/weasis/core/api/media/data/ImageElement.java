@@ -412,14 +412,14 @@ public class ImageElement extends MediaElement {
 
   public synchronized PlanarImage getImage(OpManager manager, boolean findMinMax) {
     try {
-      return getCacheImage(startImageLoading(), manager, findMinMax);
+      return getCacheImage(startImageLoading(), manager, findMinMax, true);
     } catch (OutOfMemoryError e1) {
       ResourceMonitor.getInstance().recordOutOfMemory();
       mCache.expungeStaleEntries();
       CvUtil.runGarbageCollectorAndWait(100);
 
       try {
-        return getCacheImage(startImageLoading(), manager, findMinMax);
+        return getCacheImage(startImageLoading(), manager, findMinMax, true);
       } catch (OutOfMemoryError e) {
         LOGGER.warn("Reading image data: {}", this, e1);
       }
@@ -427,17 +427,24 @@ public class ImageElement extends MediaElement {
     }
   }
 
-  private PlanarImage getCacheImage(PlanarImage cacheImage, OpManager manager, boolean findMinMax) {
+  private PlanarImage getCacheImage(
+      PlanarImage cacheImage, OpManager manager, boolean findMinMax, boolean reloadIfReleased) {
+    if (reloadIfReleased && isBufferReleased(cacheImage)) {
+      // The native buffer was released by a concurrent cache eviction (memory pressure). Returning
+      // it would blank the displayed frame, so drop the stale entry and decode again, once.
+      LOGGER.warn("Image buffer released during concurrent access, reloading: {}", this);
+      mCache.remove(this);
+      return getCacheImage(startImageLoading(), manager, findMinMax, false);
+    }
     if (findMinMax) {
       try {
         findMinMaxValues(cacheImage, true);
       } catch (Exception e) {
         mCache.remove(this);
-        if (cacheImage != null && cacheImage.width() <= 0) {
-          // The native buffer was released by a concurrent cache eviction (memory pressure):
-          // a transient failure. Keep the element readable so it can be decoded again instead
-          // of being permanently blanked.
-          LOGGER.warn("Image buffer released during concurrent access, will reload: {}", this);
+        if (isBufferReleased(cacheImage)) {
+          // Released again while computing: keep the element readable so the next access decodes
+          // it instead of blanking it permanently.
+          LOGGER.warn("Image buffer released during concurrent access: {}", this);
         } else {
           readable = false;
           LOGGER.error("Cannot read image: {}", this, e);
@@ -459,6 +466,11 @@ public class ImageElement extends MediaElement {
       }
     }
     return cacheImage;
+  }
+
+  /** An image whose native buffer has been freed by a concurrent eviction has no dimension. */
+  private static boolean isBufferReleased(PlanarImage image) {
+    return image != null && image.width() <= 0;
   }
 
   public PlanarImage getImage() {

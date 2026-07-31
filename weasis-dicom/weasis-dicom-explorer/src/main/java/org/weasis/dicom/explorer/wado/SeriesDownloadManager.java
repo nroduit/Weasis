@@ -841,15 +841,7 @@ public class SeriesDownloadManager {
       // Handle local file:// URIs directly without HTTP download
       URI uri = URIUtils.getURI(url);
       if (URIUtils.isFileURI(uri)) {
-        Path localFile = URIUtils.getAbsolutePath(uri);
-        if (localFile == null || !Files.exists(localFile)) {
-          throw new IOException("Local file not found: " + url);
-        }
-        try {
-          ingest(localFile, isFirstImage, false);
-        } finally {
-          progressBar.setIndeterminate(progressBar.getMaximum() < 3);
-        }
+        ingestLocalFile(uri, isFirstImage);
         return;
       }
 
@@ -870,6 +862,38 @@ public class SeriesDownloadManager {
 
         StreamUtil.safeClose(stream);
         ingest(tempFile, isFirstImage, false);
+      } finally {
+        progressBar.setIndeterminate(progressBar.getMaximum() < 3);
+      }
+    }
+
+    /**
+     * Reads an instance from a local source. When the cache is enabled, the file is first copied
+     * into the application cache so decoding does not hit a slow source (CD/DVD, network share) on
+     * every cache miss.
+     */
+    private void ingestLocalFile(URI uri, boolean isFirstImage) throws IOException {
+      Path localFile = URIUtils.getAbsolutePath(uri);
+      if (localFile == null || !Files.exists(localFile)) {
+        throw new IOException("Local file not found: " + url);
+      }
+      try {
+        Path file = localFile;
+        if (writeInCache) {
+          Path tempFile = createTempFile();
+          LOGGER.debug("Copying DICOM instance {} to {}", localFile, tempFile.getFileName());
+          try (InputStream in = Files.newInputStream(localFile)) {
+            if (FileUtil.writeStream(
+                    new DicomSeriesProgressMonitor(dicomSeries, in, false), tempFile, false)
+                >= 0) {
+              // Interrupted or truncated copy: do not ingest a partial instance.
+              FileUtil.delete(tempFile);
+              return;
+            }
+          }
+          file = moveToExportDir(tempFile);
+        }
+        ingest(file, isFirstImage, false);
       } finally {
         progressBar.setIndeterminate(progressBar.getMaximum() < 3);
       }
