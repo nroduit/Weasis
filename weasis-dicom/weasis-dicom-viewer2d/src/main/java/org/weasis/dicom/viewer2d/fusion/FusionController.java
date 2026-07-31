@@ -11,6 +11,8 @@ package org.weasis.dicom.viewer2d.fusion;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import org.dcm4che3.data.Tag;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.image.OpManager;
@@ -34,23 +36,24 @@ import org.weasis.opencv.op.lut.ByteLut;
  */
 public final class FusionController {
 
+  private static final Set<MediaSeries<DicomImageElement>> buildingVolumes =
+      ConcurrentHashMap.newKeySet();
+
   private FusionController() {}
+
+  /** {@code true} while the rectified volume of the given overlay series is being built. */
+  public static boolean isVolumeBuilding(Object series) {
+    return series instanceof MediaSeries<?> ms && buildingVolumes.contains(ms);
+  }
 
   /**
    * Every pane of the selected container, so fusion applies to all MPR planes (each plane is a
-   * separate view with its own FusionOp). Falls back to the selected pane alone.
+   * separate view with its own FusionOp).
    */
   private static List<ViewCanvas<DicomImageElement>> targetViews() {
     ImageViewerPlugin<DicomImageElement> container =
         EventManager.getInstance().getSelectedView2dContainer();
-    if (container != null) {
-      List<ViewCanvas<DicomImageElement>> views = container.getView2ds();
-      if (views != null && !views.isEmpty()) {
-        return views;
-      }
-    }
-    ViewCanvas<DicomImageElement> view = EventManager.getInstance().getSelectedViewPane();
-    return view != null ? List.of(view) : List.of();
+    return container == null ? List.of() : container.getView2ds();
   }
 
   /**
@@ -166,17 +169,33 @@ public final class FusionController {
     }
     @SuppressWarnings("unchecked")
     MediaSeries<DicomImageElement> overlaySeries = (MediaSeries<DicomImageElement>) selectedSeries;
+    buildingVolumes.add(overlaySeries);
+    GuiExecutor.execute(FusionController::repaintViews);
     Thread worker =
         new Thread(
             () -> {
-              Volume<?, ?> volume = FusionVolumeBuilder.build(overlaySeries);
-              if (volume != null) {
-                GuiExecutor.execute(() -> applyVolume(overlaySeries, volume));
+              try {
+                Volume<?, ?> volume = FusionVolumeBuilder.build(overlaySeries);
+                if (volume != null) {
+                  GuiExecutor.execute(() -> applyVolume(overlaySeries, volume));
+                }
+              } finally {
+                buildingVolumes.remove(overlaySeries);
+                // The loading message is evaluated at paint time: repaint whatever the outcome so
+                // it also disappears when the volume could not be built.
+                GuiExecutor.execute(FusionController::repaintViews);
               }
             },
             "fusion-volume-builder"); // NON-NLS
     worker.setDaemon(true);
     worker.start();
+  }
+
+  /** Repaints every pane of the selected container. */
+  private static void repaintViews() {
+    for (ViewCanvas<DicomImageElement> view : targetViews()) {
+      view.getJComponent().repaint();
+    }
   }
 
   /**

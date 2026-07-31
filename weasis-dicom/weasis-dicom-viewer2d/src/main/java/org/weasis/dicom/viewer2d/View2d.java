@@ -123,6 +123,7 @@ import org.weasis.dicom.explorer.DicomSeriesHandler;
 import org.weasis.dicom.explorer.pr.PrGraphicUtil;
 import org.weasis.dicom.viewer2d.KOComponentFactory.KOViewButton;
 import org.weasis.dicom.viewer2d.KOComponentFactory.KOViewButton.eState;
+import org.weasis.dicom.viewer2d.fusion.FusionController;
 import org.weasis.dicom.viewer2d.fusion.FusionOp;
 import org.weasis.dicom.viewer2d.mpr.MprView.Plane;
 import org.weasis.opencv.data.PlanarImage;
@@ -821,6 +822,22 @@ public class View2d extends DefaultView2d<DicomImageElement> {
     return !loadingSegs.isEmpty();
   }
 
+  /**
+   * {@code true} while the rectified volume of the fusion overlay displayed by this view is still
+   * being built. Like {@link #isSegLoading()} it is evaluated at paint time, so the message
+   * disappears on the repaint that follows the build.
+   */
+  protected boolean isFusionLoading() {
+    OpManager disOp = getDisplayOpManager();
+    if (!disOp
+        .getParamValue(FusionOp.OP_NAME, FusionOp.P_FUSION_ENABLED, Boolean.class)
+        .orElse(Boolean.FALSE)) {
+      return false;
+    }
+    return FusionController.isVolumeBuilding(
+        disOp.getParamValue(FusionOp.OP_NAME, FusionOp.P_FUSION_SERIES).orElse(null));
+  }
+
   @Override
   protected void drawOnTop(Graphics2D g2d) {
     super.drawOnTop(g2d);
@@ -833,18 +850,29 @@ public class View2d extends DefaultView2d<DicomImageElement> {
       g2d.drawImage(overlay, affineTransform, null);
       g2d.translate(-p.getX(), -p.getY());
     }
-    if (isSegLoading()) {
-      drawSegLoadingMessage(g2d);
-    }
+    drawLoadingMessages(g2d);
   }
 
-  private void drawSegLoadingMessage(Graphics2D g2d) {
-    String msg = Messages.getString("seg.loading");
+  /** Paints the pending background builds, stacked at the bottom of the view. */
+  private void drawLoadingMessages(Graphics2D g2d) {
+    List<String> messages = new ArrayList<>(2);
+    if (isSegLoading()) {
+      messages.add(Messages.getString("seg.loading"));
+    }
+    if (isFusionLoading()) {
+      messages.add(Messages.getString("fusion.loading"));
+    }
+    if (messages.isEmpty()) {
+      return;
+    }
     g2d.setFont(getLayerFont());
     FontMetrics fm = g2d.getFontMetrics();
-    float x = (getWidth() - fm.stringWidth(msg)) / 2f;
-    float y = getHeight() - fm.getHeight() * 2f;
-    FontTools.paintColorFontOutline(g2d, msg, x, y, Color.ORANGE);
+    float y = getHeight() - fm.getHeight() * (messages.size() + 1f);
+    for (String msg : messages) {
+      float x = (getWidth() - fm.stringWidth(msg)) / 2f;
+      FontTools.paintColorFontOutline(g2d, msg, x, y, Color.ORANGE);
+      y += fm.getHeight();
+    }
   }
 
   protected void sortStack(Comparator<DicomImageElement> sortComparator) {
