@@ -62,14 +62,10 @@ public class DicomPaneManager {
    * @return the StudyPane if found, otherwise null
    */
   public StudyPane getStudyPane(MediaSeriesGroup study) {
-    MediaSeriesGroup patient = getPatientForStudy(study);
-    if (patient != null) {
-      List<StudyPane> studyList = getStudyList(patient);
-      if (studyList != null) {
-        return studyList.stream().filter(pane -> pane.isStudy(study)).findFirst().orElse(null);
-      }
-    }
-    return null;
+    return getStudyList(getPatientForStudy(study)).stream()
+        .filter(pane -> pane.isStudy(study))
+        .findFirst()
+        .orElse(null);
   }
 
   /**
@@ -86,17 +82,15 @@ public class DicomPaneManager {
       studyPane = new StudyPane(study);
       MediaSeriesGroup patient = getPatientForStudy(study);
       if (patient != null) {
-        List<StudyPane> studies = getStudyList(patient);
-        if (studies != Collections.EMPTY_LIST) {
-          int index = Collections.binarySearch(studies, studyPane, DicomSorter.STUDY_COMPARATOR);
-          if (index < 0) {
-            index = -(index + 1);
-          }
-          if (position != null) {
-            position[0] = index;
-          }
-          studies.add(index, studyPane);
+        List<StudyPane> studies = patient2study.computeIfAbsent(patient, _ -> new ArrayList<>());
+        int index = Collections.binarySearch(studies, studyPane, DicomSorter.STUDY_COMPARATOR);
+        if (index < 0) {
+          index = -(index + 1);
         }
+        if (position != null) {
+          position[0] = index;
+        }
+        studies.add(index, studyPane);
       }
     } else if (position != null) {
       position[0] = -1;
@@ -111,10 +105,8 @@ public class DicomPaneManager {
    * @return a list of StudyPanes associated with the patient, or an empty list if none found
    */
   public List<StudyPane> getStudyList(MediaSeriesGroup patient) {
-    if (patient == null) {
-      return Collections.emptyList();
-    }
-    return patient2study.computeIfAbsent(patient, _ -> new ArrayList<>());
+    List<StudyPane> studies = patient == null ? null : patient2study.get(patient);
+    return studies == null ? Collections.emptyList() : studies;
   }
 
   /**
@@ -160,11 +152,10 @@ public class DicomPaneManager {
       return null;
     }
 
-    List<SeriesPane> seriesList = study2series.get(study);
-    if (seriesList != null) {
-      return seriesList.stream().filter(pane -> pane.isSeries(series)).findFirst().orElse(null);
-    }
-    return null;
+    return getSeriesList(study).stream()
+        .filter(pane -> pane.isSeries(series))
+        .findFirst()
+        .orElse(null);
   }
 
   /**
@@ -180,8 +171,9 @@ public class DicomPaneManager {
     if (seriesPane == null) {
       DicomModel model = explorer.getDataExplorerModel();
       seriesPane = new SeriesPane(series, model);
-      List<SeriesPane> seriesList = getSeriesList(getStudyForSeries(series));
-      if (seriesList != Collections.EMPTY_LIST) {
+      MediaSeriesGroup study = getStudyForSeries(series);
+      if (study != null) {
+        List<SeriesPane> seriesList = study2series.computeIfAbsent(study, _ -> new ArrayList<>());
         int index = Collections.binarySearch(seriesList, seriesPane, DicomSorter.SERIES_COMPARATOR);
         if (index < 0) {
           index = -(index + 1);
@@ -224,10 +216,8 @@ public class DicomPaneManager {
    * @return a list of SeriesPanes associated with the study, or an empty list if none found
    */
   public List<SeriesPane> getSeriesList(MediaSeriesGroup study) {
-    if (study == null) {
-      return Collections.emptyList();
-    }
-    return study2series.computeIfAbsent(study, _ -> new ArrayList<>());
+    List<SeriesPane> seriesList = study == null ? null : study2series.get(study);
+    return seriesList == null ? Collections.emptyList() : seriesList;
   }
 
   /**
@@ -313,16 +303,6 @@ public class DicomPaneManager {
     return explorer.getDataExplorerModel().getParent(series, DicomModel.study);
   }
 
-  private int getStudyPaneIndex(MediaSeriesGroup patient, StudyPane studyPane) {
-    List<StudyPane> studyList = patient2study.get(patient);
-    return studyList != null ? studyList.indexOf(studyPane) : -1;
-  }
-
-  private int getSeriesPaneIndex(MediaSeriesGroup study, SeriesPane seriesPane) {
-    List<SeriesPane> seriesList = study2series.get(study);
-    return seriesList != null ? seriesList.indexOf(seriesPane) : -1;
-  }
-
   // ========== Information ==========
 
   /**
@@ -332,8 +312,7 @@ public class DicomPaneManager {
    * @return true if the study has visible series, false otherwise
    */
   public boolean hasVisibleSeries(MediaSeriesGroup study) {
-    List<SeriesPane> seriesList = study2series.get(study);
-    return seriesList != null && !seriesList.isEmpty();
+    return !getSeriesList(study).isEmpty();
   }
 
   /**
@@ -343,8 +322,7 @@ public class DicomPaneManager {
    * @return true if the patient has visible studies, false otherwise
    */
   public boolean hasVisibleStudies(MediaSeriesGroup patient) {
-    List<StudyPane> studyList = patient2study.get(patient);
-    return studyList != null && !studyList.isEmpty();
+    return !getStudyList(patient).isEmpty();
   }
 
   // ========== Cleanup ==========

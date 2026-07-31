@@ -979,10 +979,15 @@ public class DicomExplorer extends PluginTool
           if (modelPatient.getSize() == 0) {
             koOpen.setVisible(false);
             resetFilter();
+            selectionList.clear();
+            // No patient left to select: clear the pane, otherwise its thumbnails stay displayed
+            patientSelectionManager.clearCurrentPatient();
           }
           if (selectedPatient.isPatient(patient)) {
             selectedPatient.refreshLayout();
           }
+          thumbnailView.revalidate();
+          thumbnailView.repaint();
         });
   }
 
