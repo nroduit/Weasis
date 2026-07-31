@@ -48,9 +48,9 @@
     <felix.scr.version>2.2.18</felix.scr.version>
 
     <slf4j.version>2.0.18</slf4j.version>
-    <logback.version>1.5.38</logback.version>
+    <logback.version>1.6.0</logback.version>
     <dockingframes.version>1.1.7</dockingframes.version>
-    <weasis-dicom-tools.version>5.34.3.1</weasis-dicom-tools.version>
+    <weasis-dicom-tools.version>5.34.3.2</weasis-dicom-tools.version>
     <weasis.core.img.version>5.0.0</weasis.core.img.version>
     <weasis.opencv.native.version>5.0.0-dcm</weasis.opencv.native.version>
     <weasis.opencv.pkg.version>5.0.0-dcm</weasis.opencv.pkg.version>
@@ -64,7 +64,7 @@
     <scribejava.version>8.3.3</scribejava.version>
     <zip4j.version>2.11.6</zip4j.version>
 
-    <junit-bom.version>6.1.1</junit-bom.version>
+    <junit-bom.version>6.1.2</junit-bom.version>
     <mockito.version>5.23.0</mockito.version>
 
     <!--suppress UnresolvedMavenProperty -->
@@ -151,7 +151,7 @@
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-jar-plugin</artifactId>
-          <version>3.5.0</version>
+          <version>3.5.1</version>
           <configuration>
             <archive>
               <manifestFile>${project.build.outputDirectory}/META-INF/MANIFEST.MF</manifestFile>
@@ -166,7 +166,7 @@
         <plugin>
           <groupId>org.codehaus.mojo</groupId>
           <artifactId>flatten-maven-plugin</artifactId>
-          <version>1.7.3</version>
+          <version>1.8.0</version>
         </plugin>
          <plugin>
           <groupId>org.apache.maven.plugins</groupId>
@@ -232,7 +232,7 @@
         <plugin>
           <groupId>com.diffplug.spotless</groupId>
           <artifactId>spotless-maven-plugin</artifactId>
-          <version>3.8.0</version>
+          <version>3.9.0</version>
         </plugin>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
