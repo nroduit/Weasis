@@ -103,6 +103,7 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
     dicomInfo.add(new DefaultMutableTreeNode(LayerItem.ANONYM_ANNOTATIONS, false));
     dicomInfo.add(new DefaultMutableTreeNode(LayerItem.SCALE, true));
     dicomInfo.add(new DefaultMutableTreeNode(LayerItem.LUT, true));
+    dicomInfo.add(new DefaultMutableTreeNode(LayerItem.FUSION_LUT, true));
     dicomInfo.add(new DefaultMutableTreeNode(LayerItem.IMAGE_ORIENTATION, true));
     dicomInfo.add(new DefaultMutableTreeNode(LayerItem.WINDOW_LEVEL, true));
     dicomInfo.add(new DefaultMutableTreeNode(LayerItem.ZOOM, true));

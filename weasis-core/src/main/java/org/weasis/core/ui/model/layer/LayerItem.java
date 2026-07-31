@@ -23,6 +23,8 @@ public enum LayerItem {
 
   LUT("lut", Messages.getString("AnnotationsLayer.lut"), false), // NON-NLS
 
+  FUSION_LUT("fusionLut", Messages.getString("AnnotationsLayer.fusion_lut"), true), // NON-NLS
+
   IMAGE_ORIENTATION("orientation", Messages.getString("AnnotationsLayer.or"), true), // NON-NLS
 
   WINDOW_LEVEL("wl", Messages.getString("AnnotationsLayer.wl"), true), // NON-NLS

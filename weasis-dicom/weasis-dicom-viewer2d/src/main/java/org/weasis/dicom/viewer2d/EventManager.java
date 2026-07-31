@@ -112,6 +112,7 @@ import org.weasis.dicom.viewer2d.fusion.FusionAction;
 import org.weasis.dicom.viewer2d.fusion.FusionController;
 import org.weasis.dicom.viewer2d.fusion.FusionOp;
 import org.weasis.dicom.viewer2d.fusion.FusionOpacityListener;
+import org.weasis.dicom.viewer2d.fusion.FusionWindow;
 import org.weasis.dicom.viewer2d.mip.MipView;
 import org.weasis.dicom.viewer2d.mpr.MprAxis;
 import org.weasis.dicom.viewer2d.mpr.MprContainer;
@@ -214,10 +215,16 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
     setAction(newFusionLutAction());
     fusionBaseOpacity =
         new FusionOpacityListener(
-            FusionAction.BASE_OPACITY, FusionOp.P_OPACITY_BASE, 100, "CT"); // NON-NLS
+            FusionAction.BASE_OPACITY,
+            FusionOp.P_OPACITY_BASE,
+            FusionOp.DEFAULT_BASE_OPACITY,
+            "CT"); // NON-NLS
     fusionOverlayOpacity =
         new FusionOpacityListener(
-            FusionAction.OVERLAY_OPACITY, FusionOp.P_OPACITY_OVERLAY, 75, "PT"); // NON-NLS
+            FusionAction.OVERLAY_OPACITY,
+            FusionOp.P_OPACITY_OVERLAY,
+            FusionOp.DEFAULT_OVERLAY_OPACITY,
+            "PT"); // NON-NLS
     setAction(fusionBaseOpacity);
     setAction(fusionOverlayOpacity);
 
@@ -630,6 +637,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
                   a -> {
                     Object overlaySeries = a.getSelectedItem();
                     FusionController.applyParam(FusionOp.P_FUSION_SERIES, overlaySeries);
+                    applyDefaultFusionWindow(overlaySeries);
                     FusionController.buildVolume(overlaySeries);
                   });
         }
@@ -643,9 +651,21 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
       public void itemStateChanged(Object object) {
         FusionController.applyParam(FusionOp.P_FUSION_SERIES, object);
         fusionOverlayOpacity.setModalityLabel(FusionController.modalityOf(object));
+        applyDefaultFusionWindow(object);
         FusionController.buildVolume(object);
       }
     };
+  }
+
+  /**
+   * Pushes the display window of {@code series} to every pane. Measured on a single slice until
+   * {@link FusionController#buildVolume} can measure the whole series.
+   */
+  private static void applyDefaultFusionWindow(Object series) {
+    FusionWindow window = FusionController.provisionalWindow(series);
+    if (window != null) {
+      FusionController.applyParam(FusionOp.P_FUSION_WINDOW, window);
+    }
   }
 
   private ComboItemListener<ByteLut> newFusionLutAction() {
@@ -715,12 +735,14 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
 
     // Title each opacity slider with the real modality of the layer it controls.
     fusionBaseOpacity.setModalityLabel(FusionController.baseModality(view2d));
-    fusionBaseOpacity.setSliderValue(toFusionPercent(disOp, FusionOp.P_OPACITY_BASE, 1.0), false);
+    fusionBaseOpacity.setSliderValue(
+        toFusionPercent(disOp, FusionOp.P_OPACITY_BASE, FusionOp.DEFAULT_BASE_OPACITY), false);
     Object overlay =
         getAction(FusionAction.SERIES).map(ComboItemListener::getSelectedItem).orElse(null);
     fusionOverlayOpacity.setModalityLabel(FusionController.modalityOf(overlay));
     fusionOverlayOpacity.setSliderValue(
-        toFusionPercent(disOp, FusionOp.P_OPACITY_OVERLAY, 0.5), false);
+        toFusionPercent(disOp, FusionOp.P_OPACITY_OVERLAY, FusionOp.DEFAULT_OVERLAY_OPACITY),
+        false);
 
     setFusionControlsEnabled(enabled);
   }

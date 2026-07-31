@@ -44,9 +44,9 @@ import org.weasis.opencv.op.lut.ByteLut;
  * Image operation that overlays a PET (or other functional) image onto the current CT/MR image and
  * blends them with an intensity-modulated alpha.
  *
- * <p>The PET image is colorised through a {@link ByteLut} and turned into a per-pixel ABGR overlay
- * (alpha proportional to the PET intensity), so cold/background voxels stay transparent and hot
- * spots stay opaque instead of the whole PET frame being laid over the anatomy uniformly.
+ * <p>Values are mapped to the LUT through a series-wide {@link FusionWindow}, then colorised
+ * through a {@link ByteLut} into a per-pixel ABGR overlay: background stays fully transparent while
+ * everything above it is blended at the overlay opacity, so the palette alone carries the value.
  *
  * <p>Two geometries are supported for placing the PET data onto the displayed plane:
  *
@@ -65,6 +65,7 @@ import org.weasis.opencv.op.lut.ByteLut;
  *   <li>{@link #P_FUSION_SERIES} - The PET MediaSeries (MediaSeries)
  *   <li>{@link #P_FUSION_VOLUME} - The resampled PET Volume, optional (Volume)
  *   <li>{@link #P_FUSION_LUT} - The PET color lookup table (ByteLut)
+ *   <li>{@link #P_FUSION_WINDOW} - The PET display window (FusionWindow)
  *   <li>{@link #P_OPACITY_BASE} - CT opacity 0.0–1.0 (Double)
  *   <li>{@link #P_OPACITY_OVERLAY} - PET opacity 0.0–1.0 (Double)
  *   <li>{@link #P_BASE_IMAGE} - The current CT DicomImageElement (DicomImageElement)
@@ -86,6 +87,9 @@ public class FusionOp extends AbstractOp {
   /** The PET color LUT. */
   public static final String P_FUSION_LUT = "fusion.lut";
 
+  /** The PET display window ({@link FusionWindow}, in modality-LUT values). */
+  public static final String P_FUSION_WINDOW = "fusion.window";
+
   /** CT/MR opacity (0.0 to 1.0). */
   public static final String P_OPACITY_BASE = "fusion.opacity.base";
 
@@ -95,9 +99,28 @@ public class FusionOp extends AbstractOp {
   /** The current base (CT/MR) image element. */
   public static final String P_BASE_IMAGE = "fusion.base.image";
 
-  private static final double DEFAULT_BASE_OPACITY = 1.0;
-  private static final double DEFAULT_OVERLAY_OPACITY = 0.75;
+  /** Default {@link #P_OPACITY_BASE}: the anatomy is shown untouched where the overlay is cold. */
+  public static final double DEFAULT_BASE_OPACITY = 1.0;
+
+  /**
+   * Default {@link #P_OPACITY_OVERLAY}. An even split is what PET/CT readers are used to: the LUT
+   * bottom is black, so the overlay dims the anatomy by this much wherever uptake is low, and going
+   * higher darkens the CT more than it reveals.
+   */
+  public static final double DEFAULT_OVERLAY_OPACITY = 0.5;
+
   private static final int LUT_SIZE = 256;
+
+  /** Overlay entries up to this LUT index are painted fully transparent (air, outside the body). */
+  private static final int ALPHA_TRANSPARENT_BELOW = LUT_SIZE / 100;
+
+  /**
+   * LUT index from which the overlay reaches the full overlay opacity. Alpha must saturate early:
+   * the color LUT already encodes the value, so low uptake belongs on screen as the dark end of the
+   * palette. Fading it out as well — the entry is then dark <em>and</em> transparent — is what
+   * makes everything but the hottest voxels disappear.
+   */
+  private static final int ALPHA_OPAQUE_FROM = LUT_SIZE / 10;
 
   /** Identity gray BGR LUT used when no color LUT is selected. */
   private static final byte[][] GRAY_LUT = buildGrayLut();
@@ -151,6 +174,7 @@ public class FusionOp extends AbstractOp {
       setParam(P_FUSION_ENABLED, Boolean.FALSE);
       setParam(P_BASE_IMAGE, null);
       setParam(P_FUSION_VOLUME, null);
+      setParam(P_FUSION_WINDOW, null);
       clearCache();
     } else if (OpEvent.SERIES_CHANGE.equals(type)) {
       setParam(P_BASE_IMAGE, null);
@@ -162,6 +186,7 @@ public class FusionOp extends AbstractOp {
         setParam(P_FUSION_ENABLED, Boolean.FALSE);
         setParam(P_FUSION_SERIES, null);
         setParam(P_FUSION_VOLUME, null);
+        setParam(P_FUSION_WINDOW, null);
       }
     }
   }
@@ -240,15 +265,13 @@ public class FusionOp extends AbstractOp {
     if (cached != null) {
       return cached;
     }
-    DicomImageElement refOverlay = overlaySeries.getMedia(MEDIA_POSITION.MIDDLE, null, null);
-    if (refOverlay == null) {
+    FusionWindow window = resolveWindow(overlaySeries);
+    if (window == null) {
       return null;
     }
-    double min = refOverlay.getMinValue(null);
-    double max = refOverlay.getMaxValue(null);
     PlanarImage overlayGray =
         FusionVolumeResampler.resampleToGray(
-            volume, plane, baseSource.width(), baseSource.height(), min, max);
+            volume, plane, baseSource.width(), baseSource.height(), window.min(), window.max());
     if (overlayGray == null) {
       return null;
     }
@@ -271,11 +294,14 @@ public class FusionOp extends AbstractOp {
     if (cached != null) {
       return cached;
     }
-    PlanarImage overlayRaw = overlayImage.getImage();
-    if (overlayRaw == null) {
+    // The window is expressed in modality-LUT values, so the slice must be rescaled the same way
+    // the volume path already is; getImage() would yield raw stored values.
+    PlanarImage overlayReal = overlayImage.getModalityLutImage(null, null);
+    FusionWindow window = resolveWindow(overlaySeries);
+    if (overlayReal == null || window == null) {
       return null;
     }
-    PlanarImage overlayGray = normalizeOverlayImage(overlayImage, overlayRaw);
+    PlanarImage overlayGray = normalizeOverlayImage(overlayReal, window);
     PlanarImage colorized = applyAlphaLut(overlayGray);
     PlanarImage aligned =
         FusionRegistration.alignOverlayToBase(overlayImage, colorized, baseImage, baseSource);
@@ -283,31 +309,38 @@ public class FusionOp extends AbstractOp {
     return aligned;
   }
 
-  /** Normalizes PET pixel values to 8-bit grayscale using the image's min/max. */
-  private PlanarImage normalizeOverlayImage(
-      DicomImageElement overlayImage, PlanarImage overlayRaw) {
-    double min = overlayImage.getMinValue(null);
-    double max = overlayImage.getMaxValue(null);
-    double range = max - min;
-    if (range <= 0) {
-      range = 1.0;
-    }
-    double slope = 255.0 / range;
-    double intercept = -slope * min;
+  /**
+   * The window set by the fusion controls, falling back to the series default so the overlay is
+   * still scaled consistently before the controls have pushed one (e.g. a restored view state).
+   */
+  private FusionWindow resolveWindow(MediaSeries<DicomImageElement> overlaySeries) {
+    FusionWindow window = getParam(P_FUSION_WINDOW, FusionWindow.class);
+    return window == null ? FusionWindow.fromSlice(overlaySeries) : window;
+  }
+
+  /** Maps the overlay's real values to 8-bit grayscale through the series-wide window. */
+  private static PlanarImage normalizeOverlayImage(PlanarImage overlayReal, FusionWindow window) {
+    double slope = 255.0 / (window.max() - window.min());
     ImageCV result = new ImageCV();
-    overlayRaw.toMat().convertTo(result, CvType.CV_8U, slope, intercept);
+    overlayReal.toMat().convertTo(result, CvType.CV_8U, slope, -slope * window.min());
     return result;
   }
 
   /**
-   * Colorises a grayscale PET image into an ABGR overlay where alpha ramps with intensity. The
-   * global PET opacity is applied later at composite time, so it is not baked into the cached
-   * overlay.
+   * The ABGR LUT the overlay is colorized with: color from the selected {@link ByteLut}, alpha
+   * reaching full opacity by {@link #ALPHA_OPAQUE_FROM}. The global PET opacity is applied later at
+   * composite time, so it is not baked in.
    */
-  private PlanarImage applyAlphaLut(PlanarImage overlayGray) {
+  private ByteLutAlpha buildAlphaLut() {
     ByteLut lut = getParam(P_FUSION_LUT, ByteLut.class);
     byte[][] bgr = lut != null && lut.lutTable() != null ? lut.lutTable() : GRAY_LUT;
-    ByteLutAlpha abgrLut = ByteLutAlpha.fromColorLut(OP_NAME, bgr, 1.0f);
+    return ByteLutAlpha.fromColorLut(
+        OP_NAME, bgr, 1.0f, ALPHA_TRANSPARENT_BELOW, ALPHA_OPAQUE_FROM);
+  }
+
+  /** Colorizes a grayscale PET image into an ABGR overlay. */
+  private PlanarImage applyAlphaLut(PlanarImage overlayGray) {
+    ByteLutAlpha abgrLut = buildAlphaLut();
 
     Mat src = overlayGray.toMat();
     Mat src4 = new Mat();
@@ -526,6 +559,22 @@ public class FusionOp extends AbstractOp {
       return null;
     }
     return overlay.getImagePosition(base.getPosition(new Point2D.Double(col, row)));
+  }
+
+  /**
+   * The window and ABGR LUT the overlay is currently colorized with, so the color bar can show the
+   * exact scale being painted. Empty when fusion is off or has no overlay series.
+   */
+  @SuppressWarnings("unchecked")
+  public Optional<FusionColorScale> getColorScale() {
+    Boolean enabled = getParam(P_FUSION_ENABLED, Boolean.class);
+    if (enabled == null
+        || !enabled
+        || !(params.get(P_FUSION_SERIES) instanceof MediaSeries<?> overlaySeries)) {
+      return Optional.empty();
+    }
+    FusionWindow window = resolveWindow((MediaSeries<DicomImageElement>) overlaySeries);
+    return Optional.ofNullable(window).map(w -> new FusionColorScale(w, buildAlphaLut()));
   }
 
   /** Clears the aligned overlay caches. Called when the LUT, series or volume changes. */

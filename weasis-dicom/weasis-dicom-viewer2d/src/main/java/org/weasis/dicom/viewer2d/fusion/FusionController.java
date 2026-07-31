@@ -46,14 +46,27 @@ public final class FusionController {
     return series instanceof MediaSeries<?> ms && buildingVolumes.contains(ms);
   }
 
-  /**
-   * Every pane of the selected container, so fusion applies to all MPR planes (each plane is a
-   * separate view with its own FusionOp).
-   */
-  private static List<ViewCanvas<DicomImageElement>> targetViews() {
+  /** Every pane of the selected container, whatever it displays. */
+  private static List<ViewCanvas<DicomImageElement>> containerViews() {
     ImageViewerPlugin<DicomImageElement> container =
         EventManager.getInstance().getSelectedView2dContainer();
     return container == null ? List.of() : container.getView2ds();
+  }
+
+  /**
+   * The panes a fusion change applies to: the selected one. Fusion is per-view, so the other panes
+   * of a layout keep whatever they show — the same series left unfused for comparison as much as an
+   * unrelated one, or the functional series itself.
+   *
+   * <p>MPR is the exception: its panes are three planes of a single acquisition and only ever show
+   * that one volume, so they take the change together and stay in sync.
+   */
+  private static List<ViewCanvas<DicomImageElement>> targetViews() {
+    ViewCanvas<DicomImageElement> selected = EventManager.getInstance().getSelectedViewPane();
+    if (selected == null) {
+      return List.of();
+    }
+    return selected instanceof MprView ? containerViews() : List.of(selected);
   }
 
   /**
@@ -79,12 +92,18 @@ public final class FusionController {
                 instanceof ByteLut l
             ? l
             : null;
+    FusionWindow window =
+        disOp
+            .getParamValue(FusionOp.OP_NAME, FusionOp.P_FUSION_WINDOW, FusionWindow.class)
+            .orElse(null);
     double base =
-        disOp.getParamValue(FusionOp.OP_NAME, FusionOp.P_OPACITY_BASE, Double.class).orElse(1.0);
+        disOp
+            .getParamValue(FusionOp.OP_NAME, FusionOp.P_OPACITY_BASE, Double.class)
+            .orElse(FusionOp.DEFAULT_BASE_OPACITY);
     double overlay =
         disOp
             .getParamValue(FusionOp.OP_NAME, FusionOp.P_OPACITY_OVERLAY, Double.class)
-            .orElse(0.75);
+            .orElse(FusionOp.DEFAULT_OVERLAY_OPACITY);
     Volume<?, ?> volume =
         disOp.getParamValue(FusionOp.OP_NAME, FusionOp.P_FUSION_VOLUME).orElse(null)
                 instanceof Volume<?, ?> v
@@ -92,7 +111,7 @@ public final class FusionController {
             : null;
     @SuppressWarnings("unchecked")
     MediaSeries<DicomImageElement> overlaySeries = (MediaSeries<DicomImageElement>) series;
-    return new FusionState(overlaySeries, lut, base, overlay, volume);
+    return new FusionState(overlaySeries, lut, window, base, overlay, volume);
   }
 
   /**
@@ -107,6 +126,7 @@ public final class FusionController {
       OpManager disOp = view.getDisplayOpManager();
       disOp.setParamValue(FusionOp.OP_NAME, FusionOp.P_FUSION_SERIES, state.series());
       disOp.setParamValue(FusionOp.OP_NAME, FusionOp.P_FUSION_LUT, state.lut());
+      disOp.setParamValue(FusionOp.OP_NAME, FusionOp.P_FUSION_WINDOW, state.window());
       disOp.setParamValue(FusionOp.OP_NAME, FusionOp.P_OPACITY_BASE, state.baseOpacity());
       disOp.setParamValue(FusionOp.OP_NAME, FusionOp.P_OPACITY_OVERLAY, state.overlayOpacity());
       if (state.volume() != null) {
@@ -130,21 +150,35 @@ public final class FusionController {
     boolean clearCache =
         seriesChange
             || FusionOp.P_FUSION_LUT.equals(propertyName)
+            || FusionOp.P_FUSION_WINDOW.equals(propertyName)
             || FusionOp.P_FUSION_VOLUME.equals(propertyName);
     for (ViewCanvas<DicomImageElement> view : targetViews()) {
       OpManager disOp = view.getDisplayOpManager();
       disOp.setParamValue(FusionOp.OP_NAME, propertyName, value);
       // A new overlay series invalidates the volume built for the previous one; drop it so fusion
       // falls back to the single-slice path until buildVolume() supplies the matching volume,
-      // instead of reslicing the previous series' voxels.
+      // instead of reslicing the previous series' voxels. Its window is just as stale: dropping it
+      // makes the op fall back to the new series' default until applyDefaultWindow() pushes one.
       if (seriesChange) {
         disOp.setParamValue(FusionOp.OP_NAME, FusionOp.P_FUSION_VOLUME, null);
+        disOp.setParamValue(FusionOp.OP_NAME, FusionOp.P_FUSION_WINDOW, null);
       }
       if (clearCache) {
         clearCache(disOp);
       }
       view.getImageLayer().updateDisplayOperations();
     }
+  }
+
+  /**
+   * The provisional window of an overlay series, measured on a single slice, or {@code null} when
+   * it holds no image. Refined by {@link #buildVolume} once the whole series can be measured.
+   */
+  @SuppressWarnings("unchecked")
+  public static FusionWindow provisionalWindow(Object series) {
+    return series instanceof MediaSeries<?> ms
+        ? FusionWindow.fromSlice((MediaSeries<DicomImageElement>) ms)
+        : null;
   }
 
   private static void clearCache(OpManager disOp) {
@@ -177,7 +211,9 @@ public final class FusionController {
               try {
                 Volume<?, ?> volume = FusionVolumeBuilder.build(overlaySeries);
                 if (volume != null) {
-                  GuiExecutor.execute(() -> applyVolume(overlaySeries, volume));
+                  // Measured here rather than in applyVolume: it scans the voxels.
+                  FusionWindow window = FusionWindow.fromVolume(overlaySeries, volume);
+                  GuiExecutor.execute(() -> applyVolume(overlaySeries, volume, window));
                 }
               } finally {
                 buildingVolumes.remove(overlaySeries);
@@ -193,7 +229,7 @@ public final class FusionController {
 
   /** Repaints every pane of the selected container. */
   private static void repaintViews() {
-    for (ViewCanvas<DicomImageElement> view : targetViews()) {
+    for (ViewCanvas<DicomImageElement> view : containerViews()) {
       view.getJComponent().repaint();
     }
   }
@@ -203,14 +239,22 @@ public final class FusionController {
    * user may have switched the overlay series (or turned fusion off) while the build ran, and two
    * builds can finish out of order; applying unconditionally would overlay the previous series'
    * voxels.
+   *
+   * <p>Scans the whole container rather than the current fusion targets: the selection can have
+   * moved while the build ran, and carrying {@code series} as the overlay is the condition that
+   * matters here.
    */
-  private static void applyVolume(MediaSeries<DicomImageElement> series, Volume<?, ?> volume) {
-    for (ViewCanvas<DicomImageElement> view : targetViews()) {
+  private static void applyVolume(
+      MediaSeries<DicomImageElement> series, Volume<?, ?> volume, FusionWindow refined) {
+    for (ViewCanvas<DicomImageElement> view : containerViews()) {
       OpManager disOp = view.getDisplayOpManager();
       if (disOp.getParamValue(FusionOp.OP_NAME, FusionOp.P_FUSION_SERIES).orElse(null) != series) {
         continue;
       }
       disOp.setParamValue(FusionOp.OP_NAME, FusionOp.P_FUSION_VOLUME, volume);
+      if (refined != null) {
+        disOp.setParamValue(FusionOp.OP_NAME, FusionOp.P_FUSION_WINDOW, refined);
+      }
       clearCache(disOp);
       view.getImageLayer().updateDisplayOperations();
     }

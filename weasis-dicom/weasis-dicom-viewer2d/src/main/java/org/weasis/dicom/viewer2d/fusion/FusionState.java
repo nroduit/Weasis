@@ -21,6 +21,7 @@ import org.weasis.opencv.op.lut.ByteLut;
  *
  * @param series the overlay (e.g. PET/NM) series fused on top of the base image
  * @param lut the overlay color LUT
+ * @param window the overlay display window
  * @param baseOpacity the base (CT/MR) opacity in {@code [0, 1]}
  * @param overlayOpacity the overlay opacity in {@code [0, 1]}
  * @param volume the rectified overlay volume already built for the source view, or {@code null} to
@@ -29,6 +30,7 @@ import org.weasis.opencv.op.lut.ByteLut;
 public record FusionState(
     MediaSeries<DicomImageElement> series,
     ByteLut lut,
+    FusionWindow window,
     double baseOpacity,
     double overlayOpacity,
     Volume<?, ?> volume) {}
