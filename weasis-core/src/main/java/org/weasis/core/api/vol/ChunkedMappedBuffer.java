@@ -31,6 +31,11 @@ public final class ChunkedMappedBuffer {
    */
   static final long CHUNK_BYTE_SIZE = 1L << 30; // 1 GB per chunk
 
+  /** Power-of-two exponent of {@link #CHUNK_BYTE_SIZE}, so index splitting needs no division. */
+  private static final int CHUNK_SHIFT = 30;
+
+  private static final long CHUNK_MASK = CHUNK_BYTE_SIZE - 1L;
+
   private final MappedByteBuffer[] chunks;
   private final long totalBytes;
   private final File backingFile;
@@ -69,11 +74,11 @@ public final class ChunkedMappedBuffer {
   }
 
   private int chunkIndex(long byteOffset) {
-    return (int) (byteOffset / CHUNK_BYTE_SIZE);
+    return (int) (byteOffset >>> CHUNK_SHIFT);
   }
 
   private int chunkOffset(long byteOffset) {
-    return (int) (byteOffset % CHUNK_BYTE_SIZE);
+    return (int) (byteOffset & CHUNK_MASK);
   }
 
   /**

@@ -11,9 +11,11 @@ package org.weasis.dicom.codec.seg;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -23,6 +25,8 @@ import java.util.concurrent.RecursiveAction;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiConsumer;
 import java.util.function.IntUnaryOperator;
+import java.util.stream.IntStream;
+import org.joml.Matrix3d;
 import org.joml.Matrix4d;
 import org.joml.Vector3d;
 import org.joml.Vector3i;
@@ -144,6 +148,9 @@ public final class SegmentationVolume {
    * logging in {@link #logBuildContoursDiagnostics}.
    */
   private final long[] segStampCount;
+
+  /** Lazily grown {@code [idA][idB] → union id} memo, see {@link #cachedUnionId}. */
+  private int[][] unionCache;
 
   // ---- Adaptive storage fields ----
 
@@ -416,16 +423,20 @@ public final class SegmentationVolume {
    * #combinationToId} and the resulting ID is written.
    */
   public void addLabel(int x, int y, int z, int segmentNumber) {
+    if (x < 0 || x >= size.x || y < 0 || y >= size.y || z < 0 || z >= size.z) {
+      return;
+    }
+    addLabelAt(linearIndex(x, y, z), segmentNumber);
+  }
+
+  /** {@link #addLabel} for a voxel whose linear index the caller already holds. */
+  private void addLabelAt(long index, int segmentNumber) {
     if (segmentNumber < 0
         || segmentNumber >= segNumToSoloId.length
         || segNumToSoloId[segmentNumber] == 0) {
       return;
     }
-    if (x < 0 || x >= size.x || y < 0 || y >= size.y || z < 0 || z >= size.z) {
-      return;
-    }
     int soloId = segNumToSoloId[segmentNumber];
-    long index = linearIndex(x, y, z);
     segStampCount[segmentNumber]++;
 
     if (forceExclusiveMode) {
@@ -436,7 +447,10 @@ public final class SegmentationVolume {
     }
 
     int currentId = readId(index);
-    if (currentId == soloId) {
+    if (currentId == 0 || currentId == soloId) {
+      // Background, or already carrying exactly this segment: the union is the singleton ID.
+      // Short-circuiting here matters — this is the path every first stamp of a voxel takes, and
+      // resolving it through getOrAllocateCombination would allocate and hash a list per voxel.
       writeId(index, soloId);
       return;
     }
@@ -517,6 +531,9 @@ public final class SegmentationVolume {
       existing = combinationToId.get(merged);
       if (existing != null) return existing;
       int candidate = nextId;
+      if (!shortMode && candidate > MAX_BYTE_ID) {
+        promoteToShortMode();
+      }
       if (candidate > MAX_SHORT_ID) {
         // ID space exhausted — degrade gracefully by keeping the dominant id.
         return idA;
@@ -524,6 +541,59 @@ public final class SegmentationVolume {
       nextId = candidate + 1;
       registerCombinationId(candidate, merged);
       return candidate;
+    }
+  }
+
+  /**
+   * {@link #idForUnion} memoised on the {@code (idA, idB)} pair. Merging overlapping segmentations
+   * hits the same few pairs on hundreds of millions of voxels, and the uncached call allocates and
+   * hashes a list of boxed segment numbers every time. Not thread-safe: the merge walks are
+   * single-threaded.
+   */
+  private int cachedUnionId(int idA, int idB) {
+    if (idA == idB || idB == 0) return idA;
+    if (idA == 0) return idB;
+    int[][] cache = unionCache;
+    if (cache != null && idA < cache.length) {
+      int[] row = cache[idA];
+      if (row != null && idB < row.length && row[idB] != 0) {
+        return row[idB];
+      }
+    }
+    synchronized (idLock) {
+      if (unionCache == null || idA >= unionCache.length) {
+        unionCache = Arrays.copyOf(unionCache == null ? new int[0][] : unionCache, idA + 1);
+      }
+      int[] row = unionCache[idA];
+      if (row == null || idB >= row.length) {
+        row = row == null ? new int[idB + 1] : Arrays.copyOf(row, idB + 1);
+        unionCache[idA] = row;
+      }
+      if (row[idB] == 0) {
+        row[idB] = idForUnion(idA, idB);
+      }
+      return row[idB];
+    }
+  }
+
+  /**
+   * Resolves the union of every storage ID already allocated here with every {@code incomingIds}
+   * entry. Within a single merge each voxel is visited once, so no union result can itself feed
+   * another union — one pass therefore covers every pair the walk can ask for. Warming the cache
+   * (and with it every combination ID and any byte→short promotion) before the walk is what lets
+   * the walk run in parallel without mutating shared state.
+   */
+  private void warmUnionCache(int[] incomingIds) {
+    int allocated = nextId;
+    boolean[] done = new boolean[allocated];
+    for (int incoming : incomingIds) {
+      if (incoming <= 0 || incoming >= done.length || done[incoming]) {
+        continue;
+      }
+      done[incoming] = true;
+      for (int existing = 1; existing < allocated; existing++) {
+        cachedUnionId(existing, incoming);
+      }
     }
   }
 
@@ -608,26 +678,89 @@ public final class SegmentationVolume {
         || target.size.z != size.z) {
       return 0L;
     }
-    long total = totalVoxels();
-    long stamped = 0L;
-    for (long i = 0; i < total; i++) {
-      int id = readId(i);
-      if (id == 0) {
-        continue;
-      }
-      List<Integer> segs = idToSegments.get(id);
-      if (segs == null) {
-        continue;
-      }
-      int x = (int) (i % size.x);
-      int y = (int) ((i / size.x) % size.y);
-      int z = (int) (i / sliceStride);
-      for (int segNum : segs) {
-        target.addLabel(x, y, z, segmentRemap.applyAsInt(segNum));
-      }
-      stamped++;
+    // Both volumes share the grid, so a source linear index addresses the very same target voxel:
+    // there is no need to decompose it into (x, y, z) and have addLabel rebuild it.
+    IdMapping mapping = mapIdsInto(target, segmentRemap);
+    // Allocate every storage ID the walk can need before it starts. Nothing below then mutates
+    // shared state, so the slices can be merged concurrently.
+    target.warmUnionCache(mapping.targetIds());
+
+    return IntStream.range(0, size.z)
+        .parallel()
+        .mapToLong(
+            z -> {
+              long[] stamps = new long[target.segStampCount.length];
+              long from = (long) z * sliceStride;
+              long to = from + sliceStride;
+              long stamped = 0L;
+              for (long i = from; i < to; i++) {
+                int id = readId(i);
+                if (mapping.maps(id)) {
+                  mapping.stampInto(target, i, id, stamps);
+                  stamped++;
+                }
+              }
+              target.addStampCounts(stamps);
+              return stamped;
+            })
+        .sum();
+  }
+
+  /**
+   * Per-source-storage-ID resolution of the matching destination ID and of the segments the
+   * destination actually declares, plus the voxel tally to fold back into its stamp counters.
+   */
+  private record IdMapping(int[] targetIds, int[][] targetSegs) {
+
+    /** {@code true} when source storage ID {@code id} maps onto something the target declares. */
+    boolean maps(int id) {
+      return id > 0 && id < targetIds.length && targetIds[id] != 0;
     }
-    return stamped;
+
+    /**
+     * Copies the label(s) of source ID {@code id} onto the target voxel at {@code targetIndex},
+     * tallying the affected segments into the caller's {@code stamps}.
+     */
+    void stampInto(SegmentationVolume target, long targetIndex, int id, long[] stamps) {
+      int current = target.readId(targetIndex);
+      // The union of two storage IDs depends only on the pair, so it is resolved through a cache:
+      // when several segmentations overlap, the same handful of pairs recurs on every voxel.
+      int merged = current == 0 ? targetIds[id] : target.cachedUnionId(current, targetIds[id]);
+      if (merged != current) {
+        target.writeId(targetIndex, merged);
+      }
+      for (int segNum : targetSegs[id]) {
+        stamps[segNum]++;
+      }
+    }
+  }
+
+  /** Adds a walk's private stamp tallies into this volume's counters. */
+  private synchronized void addStampCounts(long[] stamps) {
+    for (int segNum = 0; segNum < stamps.length; segNum++) {
+      segStampCount[segNum] += stamps[segNum];
+    }
+  }
+
+  /**
+   * Resolves every storage ID of this volume to its counterpart in {@code target}, remapping
+   * segment numbers through {@code segmentRemap}. Allocating the combination IDs up front (rather
+   * than per voxel) means any storage promotion happens before the first write, so the copy loops
+   * can write raw IDs.
+   */
+  private IdMapping mapIdsInto(SegmentationVolume target, IntUnaryOperator segmentRemap) {
+    List<Integer>[] segsById = segmentsByIdTable();
+    int[] targetIds = new int[segsById.length];
+    int[][] targetSegs = new int[segsById.length][];
+    for (int id = 1; id < segsById.length; id++) {
+      List<Integer> segs = segsById[id];
+      if (segs != null && segmentRemap != null) {
+        segs = segs.stream().map(segmentRemap::applyAsInt).toList();
+      }
+      targetIds[id] = target.idForSegments(segs);
+      targetSegs[id] = target.declaredSegments(segs);
+    }
+    return new IdMapping(targetIds, targetSegs);
   }
 
   /**
@@ -682,52 +815,179 @@ public final class SegmentationVolume {
     if (target == null || targetVoxelToLps == null) {
       return 0L;
     }
-    final double invSx = 1.0 / pixelSpacing.x;
-    final double invSy = 1.0 / pixelSpacing.y;
-    final double invSz = 1.0 / pixelSpacing.z;
-    final int tx = target.size.x;
-    final int ty = target.size.y;
-    final int tz = target.size.z;
-    Vector3d lps = new Vector3d();
-    long stamped = 0L;
-    for (int z = 0; z < tz; z++) {
-      for (int y = 0; y < ty; y++) {
-        for (int x = 0; x < tx; x++) {
-          targetVoxelToLps.apply(x, y, z, lps);
-          double dx = lps.x - volumeOrigin.x;
-          double dy = lps.y - volumeOrigin.y;
-          double dz = lps.z - volumeOrigin.z;
-          int sx =
-              (int)
-                  Math.round(
-                      (dx * volumeAxisX.x + dy * volumeAxisX.y + dz * volumeAxisX.z) * invSx);
-          int sy =
-              (int)
-                  Math.round(
-                      (dx * volumeAxisY.x + dy * volumeAxisY.y + dz * volumeAxisY.z) * invSy);
-          int sz =
-              (int)
-                  Math.round(
-                      (dx * volumeAxisZ.x + dy * volumeAxisZ.y + dz * volumeAxisZ.z) * invSz);
-          int id = getStorageId(sx, sy, sz);
-          if (id == 0) continue;
-          List<Integer> segs = idToSegments.get(id);
-          if (segs == null || segs.isEmpty()) continue;
-          for (int segNum : segs) {
-            target.addLabel(x, y, z, segNum);
-          }
-          stamped++;
-        }
+    // targetVoxelToLps and this volume's LPS→voxel mapping are both affine, so their composition
+    // target voxel → source voxel is a single affine map. Sampling it at the origin and at the
+    // three unit steps yields it exactly, which lets the walk advance by constant increments
+    // instead of re-evaluating the whole transform (through a lambda) for every voxel.
+    Vector3d origin = toSourceVoxel(targetVoxelToLps, 0, 0, 0);
+    Vector3d stepX = toSourceVoxel(targetVoxelToLps, 1, 0, 0).sub(origin);
+    Vector3d stepY = toSourceVoxel(targetVoxelToLps, 0, 1, 0).sub(origin);
+    Vector3d stepZ = toSourceVoxel(targetVoxelToLps, 0, 0, 1).sub(origin);
+
+    // Only target voxels landing inside this volume's grid can pick up a label, so restrict the
+    // walk to the source grid mapped back into target space. A SEG usually covers a small part of
+    // the image volume, which is where most of the speed-up comes from.
+    VoxelBox box = targetBounds(origin, stepX, stepY, stepZ, target.size);
+    if (box == null) {
+      return 0L;
+    }
+    IdMapping mapping = mapIdsInto(target, null);
+    target.warmUnionCache(mapping.targetIds());
+
+    return IntStream.rangeClosed(box.z0(), box.z1())
+        .parallel()
+        .mapToLong(
+            z -> {
+              long[] stamps = new long[target.segStampCount.length];
+              long stamped = 0L;
+              for (int y = box.y0(); y <= box.y1(); y++) {
+                // Recomputed per row from the exact affine so the increments cannot drift.
+                double px = origin.x + stepZ.x * z + stepY.x * y + stepX.x * box.x0();
+                double py = origin.y + stepZ.y * z + stepY.y * y + stepX.y * box.x0();
+                double pz = origin.z + stepZ.z * z + stepY.z * y + stepX.z * box.x0();
+                long targetIndex = target.linearIndex(box.x0(), y, z);
+                for (int x = box.x0();
+                    x <= box.x1();
+                    x++, targetIndex++, px += stepX.x, py += stepX.y, pz += stepX.z) {
+                  int id =
+                      getStorageId(
+                          (int) Math.round(px), (int) Math.round(py), (int) Math.round(pz));
+                  if (mapping.maps(id)) {
+                    mapping.stampInto(target, targetIndex, id, stamps);
+                    stamped++;
+                  }
+                }
+              }
+              target.addStampCounts(stamps);
+              return stamped;
+            })
+        .sum();
+  }
+
+  /**
+   * Returns the storage ID representing exactly {@code segs} in this volume, allocating the
+   * combination when first seen. Segments this volume does not declare are ignored; {@code 0} means
+   * none of them applies.
+   */
+  private int idForSegments(List<Integer> segs) {
+    int id = 0;
+    for (int segNum : declaredSegments(segs)) {
+      id =
+          id == 0 ? segNumToSoloId[segNum] : getOrAllocateCombination(idToSegments.get(id), segNum);
+      if (id == 0) {
+        return 0; // ID space exhausted
       }
     }
-    return stamped;
+    return id;
+  }
+
+  /** Keeps only the segment numbers of {@code segs} that this volume actually declares. */
+  private int[] declaredSegments(List<Integer> segs) {
+    if (segs == null || segs.isEmpty()) {
+      return new int[0];
+    }
+    return segs.stream()
+        .mapToInt(Integer::intValue)
+        .filter(s -> s >= 0 && s < segNumToSoloId.length && segNumToSoloId[s] != 0)
+        .toArray();
+  }
+
+  /** Maps a target voxel to this volume's (fractional) voxel coordinates through LPS. */
+  private Vector3d toSourceVoxel(VoxelToLps targetVoxelToLps, double x, double y, double z) {
+    Vector3d lps = targetVoxelToLps.apply(x, y, z, new Vector3d());
+    double dx = lps.x - volumeOrigin.x;
+    double dy = lps.y - volumeOrigin.y;
+    double dz = lps.z - volumeOrigin.z;
+    return new Vector3d(
+        (dx * volumeAxisX.x + dy * volumeAxisX.y + dz * volumeAxisX.z) / pixelSpacing.x,
+        (dx * volumeAxisY.x + dy * volumeAxisY.y + dz * volumeAxisY.z) / pixelSpacing.y,
+        (dx * volumeAxisZ.x + dy * volumeAxisZ.y + dz * volumeAxisZ.z) / pixelSpacing.z);
+  }
+
+  /** An inclusive voxel range on all three axes. */
+  private record VoxelBox(int x0, int x1, int y0, int y1, int z0, int z1) {}
+
+  /**
+   * Returns the inclusive target-space bounding box of this volume's grid under the affine {@code
+   * source = origin + x·stepX + y·stepY + z·stepZ}, clamped to {@code targetSize}. Returns {@code
+   * null} when the two grids do not intersect, and the full target grid when the affine is
+   * degenerate (not invertible).
+   */
+  private VoxelBox targetBounds(
+      Vector3d origin, Vector3d stepX, Vector3d stepY, Vector3d stepZ, Vector3i targetSize) {
+    VoxelBox full = new VoxelBox(0, targetSize.x - 1, 0, targetSize.y - 1, 0, targetSize.z - 1);
+    Matrix3d m = new Matrix3d(stepX, stepY, stepZ);
+    double det = m.determinant();
+    if (!Double.isFinite(det) || det == 0.0) {
+      return full;
+    }
+    Matrix3d inv = m.invert(new Matrix3d());
+
+    // Rounding accepts a source coordinate in [-0.5, dim - 0.5], so that is the box to map back.
+    double[] bounds = null;
+    Vector3d corner = new Vector3d();
+    for (int i = 0; i < 8; i++) {
+      corner.set(
+          (i & 1) == 0 ? -0.5 : size.x - 0.5,
+          (i & 2) == 0 ? -0.5 : size.y - 0.5,
+          (i & 4) == 0 ? -0.5 : size.z - 0.5);
+      inv.transform(corner.sub(origin));
+      bounds = expandBounds(bounds, corner);
+    }
+    for (double b : bounds) {
+      if (!Double.isFinite(b)) {
+        return full;
+      }
+    }
+
+    int x0 = Math.max(0, (int) Math.ceil(bounds[0]));
+    int x1 = Math.min(targetSize.x - 1, (int) Math.floor(bounds[1]));
+    int y0 = Math.max(0, (int) Math.ceil(bounds[2]));
+    int y1 = Math.min(targetSize.y - 1, (int) Math.floor(bounds[3]));
+    int z0 = Math.max(0, (int) Math.ceil(bounds[4]));
+    int z1 = Math.min(targetSize.z - 1, (int) Math.floor(bounds[5]));
+    if (x0 > x1 || y0 > y1 || z0 > z1) {
+      return null;
+    }
+    return new VoxelBox(x0, x1, y0, y1, z0, z1);
+  }
+
+  /** Grows {@code bounds} (min/max per axis, allocated on first call) to include {@code p}. */
+  private static double[] expandBounds(double[] bounds, Vector3d p) {
+    if (bounds == null) {
+      return new double[] {p.x, p.x, p.y, p.y, p.z, p.z};
+    }
+    bounds[0] = Math.min(bounds[0], p.x);
+    bounds[1] = Math.max(bounds[1], p.x);
+    bounds[2] = Math.min(bounds[2], p.y);
+    bounds[3] = Math.max(bounds[3], p.y);
+    bounds[4] = Math.min(bounds[4], p.z);
+    bounds[5] = Math.max(bounds[5], p.z);
+    return bounds;
+  }
+
+  /** Snapshots {@link #idToSegments} as an array indexed by storage ID. */
+  @SuppressWarnings("unchecked")
+  private List<Integer>[] segmentsByIdTable() {
+    int max = 0;
+    for (Integer id : idToSegments.keySet()) {
+      max = Math.max(max, id);
+    }
+    List<Integer>[] table = new List[max + 1];
+    idToSegments.forEach((id, segs) -> table[id] = segs);
+    return table;
   }
 
   // ---- Stamping binary masks ----
 
+  /**
+   * Receives every non-zero mask pixel with both its linear index in the raster and its {@code (x,
+   * y)} coordinates, so axis-aligned stamping can address the voxel directly while the affine path
+   * still gets the coordinates it needs.
+   */
   @FunctionalInterface
   private interface NonZeroPixelConsumer {
-    void accept(int x, int y);
+    void accept(int index, int x, int y);
   }
 
   /** Pulls one int sample from a typed pixel buffer. */
@@ -780,7 +1040,7 @@ public final class SegmentationVolume {
     int y = 0;
     for (int i = 0; i < total; i++) {
       if (extractor.valueAt(i) != 0) {
-        consumer.accept(x, y);
+        consumer.accept(i, x, y);
         count++;
       }
       if (++x == cols) {
@@ -800,7 +1060,7 @@ public final class SegmentationVolume {
       for (int x = 0; x < cols; x++) {
         double[] pixel = mat.get(y, x);
         if (pixel != null && pixel.length > 0 && pixel[0] != 0) {
-          consumer.accept(x, y);
+          consumer.accept(y * cols + x, x, y);
           count++;
         }
       }
@@ -839,7 +1099,10 @@ public final class SegmentationVolume {
       return;
     }
     Mat mat = mask.toMat();
-    NonZeroPixelConsumer stamp = (x, y) -> addLabel(x, y, sliceZ, segmentNumber);
+    // The mask matches the volume's X/Y, so pixel index i of this slice is voxel base + i: the
+    // raster walk already holds the linear index that addLabel(x, y, z) would recompute.
+    long base = (long) sliceZ * sliceStride;
+    NonZeroPixelConsumer stamp = (i, x, y) -> addLabelAt(base + i, segmentNumber);
     int stamped = forEachNonZero(mat, stamp);
     if (stamped < 0) {
       stamped = forEachNonZeroGeneric(mat, stamp);
@@ -896,7 +1159,7 @@ public final class SegmentationVolume {
     double invSz = 1.0 / pixelSpacing.z;
 
     NonZeroPixelConsumer stamp =
-        (mx, my) -> {
+        (i, mx, my) -> {
           double dx = maskOrigin.x + mx * stepXx + my * stepYx - volumeOrigin.x;
           double dy = maskOrigin.y + mx * stepXy + my * stepYy - volumeOrigin.y;
           double dz = maskOrigin.z + mx * stepXz + my * stepYz - volumeOrigin.z;
@@ -1252,7 +1515,7 @@ public final class SegmentationVolume {
   /**
    * Locates the voxel a view should be centred on to display the given segment: the centroid of its
    * densest slice, so the result lies inside the largest cross-section of the segment. The scan is
-   * linear in the volume size, so it must not run on the EDT.
+   * linear in the volume size and runs on the common fork-join pool, so it must not run on the EDT.
    *
    * @param segmentNumber the segment to look for
    * @param progress optional callback invoked with (scanned slices, total slices)
@@ -1263,41 +1526,59 @@ public final class SegmentationVolume {
     if (matchingIds == null || isDisposed()) {
       return null;
     }
-    long bestCount = 0;
-    int bestZ = -1;
-    double bestSumX = 0;
-    double bestSumY = 0;
-    for (int z = 0; z < size.z; z++) {
-      long count = 0;
-      double sumX = 0;
-      double sumY = 0;
-      long base = (long) z * sliceStride;
-      for (int y = 0; y < size.y; y++) {
-        long row = base + (long) y * size.x;
-        for (int x = 0; x < size.x; x++) {
-          int id = readId(row + x);
-          if (id > 0 && id < matchingIds.length && matchingIds[id]) {
-            count++;
-            sumX += x;
-            sumY += y;
-          }
-        }
-      }
-      if (count > bestCount) {
-        bestCount = count;
-        bestZ = z;
-        bestSumX = sumX;
-        bestSumY = sumY;
-      }
-      if (progress != null) {
-        progress.accept(z + 1, size.z);
-      }
-    }
-    if (bestZ < 0) {
+    AtomicInteger scanned = new AtomicInteger();
+    SliceStat best =
+        IntStream.range(0, size.z)
+            .parallel()
+            .mapToObj(
+                z -> {
+                  SliceStat stat = scanSlice(z, matchingIds);
+                  if (progress != null) {
+                    progress.accept(scanned.incrementAndGet(), size.z);
+                  }
+                  return stat;
+                })
+            .filter(s -> s.count() > 0)
+            // Ordered reduction: on equal counts the lowest slice index wins.
+            .max(Comparator.comparingLong(SliceStat::count))
+            .orElse(null);
+    if (best == null) {
       return null;
     }
     return new Vector3i(
-        (int) Math.round(bestSumX / bestCount), (int) Math.round(bestSumY / bestCount), bestZ);
+        (int) Math.round(best.sumX() / best.count()),
+        (int) Math.round(best.sumY() / best.count()),
+        best.z());
+  }
+
+  /** Voxel count and in-plane centroid sums of one slice, for {@link #findSegmentCenter}. */
+  private record SliceStat(int z, long count, double sumX, double sumY) {}
+
+  private SliceStat scanSlice(int z, boolean[] matchingIds) {
+    long count = 0;
+    double sumX = 0;
+    double sumY = 0;
+    long base = (long) z * sliceStride;
+    for (int y = 0; y < size.y; y++) {
+      long row = base + (long) y * size.x;
+      for (int x = 0; x < size.x; x++) {
+        int id = readId(row + x);
+        if (id > 0 && id < matchingIds.length && matchingIds[id]) {
+          count++;
+          sumX += x;
+          sumY += y;
+        }
+      }
+    }
+    return new SliceStat(z, count, sumX, sumY);
+  }
+
+  /** Converts a voxel of this volume to its LPS patient position. */
+  public Vector3d voxelToLps(int x, int y, int z) {
+    return new Vector3d(volumeOrigin)
+        .fma(x * pixelSpacing.x, volumeAxisX)
+        .fma(y * pixelSpacing.y, volumeAxisY)
+        .fma(z * pixelSpacing.z, volumeAxisZ);
   }
 
   /** Storage IDs (singleton and overlap combinations) that contain the given segment. */
@@ -1465,6 +1746,52 @@ public final class SegmentationVolume {
       }
     }
     return raster;
+  }
+
+  /**
+   * Appends slice {@code z} at {@code dst}'s current position in this volume's <em>native</em>
+   * storage width — one byte per voxel in byte mode, one unsigned short in short mode — and
+   * advances the position past it. Unlike {@link #exportSliceBitmask(int)} the raster is
+   * bulk-copied out of the backing storage instead of being read voxel by voxel, and the caller
+   * owns the buffer, so a GPU uploader can pack many slices into one direct buffer and issue a
+   * single transfer.
+   *
+   * @param z the slice index (0-based, in volume Z order)
+   * @param dst a direct, native-ordered buffer with at least {@code sizeX * sizeY * (shortMode ? 2
+   *     : 1)} bytes remaining
+   * @return {@code false} when {@code z} is out of bounds or {@code dst} has no room left
+   */
+  public boolean exportSliceInto(int z, ByteBuffer dst) {
+    if (z < 0 || z >= size.z || dst == null) {
+      return false;
+    }
+    int sliceSize = size.x * size.y;
+    int byteLength = shortMode ? sliceSize * Short.BYTES : sliceSize;
+    if (dst.remaining() < byteLength) {
+      return false;
+    }
+    long base = (long) z * sliceStride;
+    if (shortMode && shortData != null) {
+      short[] staging = new short[sliceSize];
+      shortData.copyTo(base, staging, 0, sliceSize);
+      dst.slice().order(dst.order()).asShortBuffer().put(staging);
+      dst.position(dst.position() + byteLength);
+    } else if (!shortMode && byteData != null) {
+      byte[] staging = new byte[sliceSize];
+      byteData.copyTo(base, staging, 0, sliceSize);
+      dst.put(staging);
+    } else {
+      // Memory-mapped fallback: no bulk accessor, read voxel by voxel.
+      for (int i = 0; i < sliceSize; i++) {
+        int id = readId(base + i);
+        if (shortMode) {
+          dst.putShort((short) id);
+        } else {
+          dst.put((byte) id);
+        }
+      }
+    }
+    return true;
   }
 
   /**

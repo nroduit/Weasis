@@ -52,7 +52,6 @@ import org.weasis.dicom.viewer2d.Messages;
 import org.weasis.dicom.viewer2d.SegComponentFactory;
 import org.weasis.dicom.viewer2d.SegRegionLocator;
 import org.weasis.dicom.viewer2d.View2d;
-import org.weasis.opencv.data.PlanarImage;
 import org.weasis.opencv.seg.RegionAttributes;
 
 /**
@@ -102,20 +101,24 @@ public class SegmentationTool extends PluginTool implements SeriesViewerListener
     return null;
   }
 
-  private SegContour getContour(DicomImageElement imageElement, RegionAttributes attributes) {
-    PlanarImage img = imageElement.getImage();
-    if (img != null) {
-      for (SegSpecialElement seg : segNodeMap.values()) {
-        Set<LazyContourLoader> loaders = seg.getContours(imageElement);
-        if (loaders == null || loaders.isEmpty()) {
-          continue;
-        }
-        for (LazyContourLoader loader : loaders) {
-          Collection<SegContour> segments = loader.getLazyContours();
-          for (SegContour c : segments) {
-            if (c.getAttributes().equals(attributes)) {
-              return c;
-            }
+  /**
+   * Searches {@code segments} for the contour of {@code attributes} in the given image. Takes an
+   * explicit collection rather than reading {@link #segNodeMap} so background searches iterate over
+   * an EDT-built snapshot instead of the live map.
+   */
+  private static SegContour getContour(
+      Collection<SegSpecialElement> segments,
+      DicomImageElement imageElement,
+      RegionAttributes attributes) {
+    for (SegSpecialElement seg : segments) {
+      Set<LazyContourLoader> loaders = seg.getContours(imageElement);
+      if (loaders == null || loaders.isEmpty()) {
+        continue;
+      }
+      for (LazyContourLoader loader : loaders) {
+        for (SegContour c : loader.getLazyContours()) {
+          if (c.getAttributes().equals(attributes)) {
+            return c;
           }
         }
       }
@@ -125,14 +128,15 @@ public class SegmentationTool extends PluginTool implements SeriesViewerListener
 
   public void show(SegRegion<?> region) {
     ViewCanvas<DicomImageElement> view = EventManager.getInstance().getSelectedViewPane();
-    SegRegionLocator.show(view, region, (image, reg) -> getContour(image, reg));
+    List<SegSpecialElement> segments = List.copyOf(segNodeMap.values());
+    SegRegionLocator.show(view, region, segments, (image, reg) -> getContour(segments, image, reg));
   }
 
   public void computeStatistics(SegRegion<?> region) {
     ViewCanvas<DicomImageElement> view = EventManager.getInstance().getSelectedViewPane();
     DicomImageElement imageElement = getImageElement(view);
     if (imageElement != null) {
-      SegContour c = getContour(imageElement, region);
+      SegContour c = getContour(segNodeMap.values(), imageElement, region);
       if (c != null) {
         MeasurableLayer layer = view.getMeasurableLayer();
         tree.showStatistics(c, layer);

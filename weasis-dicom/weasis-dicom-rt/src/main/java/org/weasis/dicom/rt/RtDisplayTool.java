@@ -83,7 +83,6 @@ import org.weasis.dicom.codec.seg.LazyContourLoader;
 import org.weasis.dicom.viewer2d.EventManager;
 import org.weasis.dicom.viewer2d.SegRegionLocator;
 import org.weasis.dicom.viewer2d.View2d;
-import org.weasis.opencv.data.PlanarImage;
 import org.weasis.opencv.seg.RegionAttributes;
 
 /**
@@ -1068,16 +1067,20 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener, S
   /** Scrolls the active viewer to the slice that contains the largest part of {@code region}. */
   public void show(SegRegion<?> region) {
     ViewCanvas<DicomImageElement> view = EventManager.getInstance().getSelectedViewPane();
-    SegRegionLocator.show(view, region, (image, reg) -> getContour(image, reg));
+    SpecialElementRegion selected = getSelectedRegion();
+    if (selected == null) {
+      return;
+    }
+    SegRegionLocator.show(
+        view, region, List.of(selected), (image, reg) -> getContour(selected, image, reg));
   }
 
-  private SegContour getContour(DicomImageElement imageElement, RegionAttributes attributes) {
-    PlanarImage img = imageElement.getImage();
-    if (img == null) return null;
-
-    SpecialElementRegion region = getSelectedRegion();
-    if (region == null) return null;
-
+  /**
+   * Searches {@code region} for the contour of {@code attributes} in the given image. The region is
+   * resolved by the caller on the EDT, since the search itself may run in the background.
+   */
+  private static SegContour getContour(
+      SpecialElementRegion region, DicomImageElement imageElement, RegionAttributes attributes) {
     Set<LazyContourLoader> loaders = region.getContours(imageElement);
     if (loaders == null || loaders.isEmpty()) return null;
 
@@ -1091,9 +1094,10 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener, S
   public void computeStatistics(SegRegion<?> region) {
     ViewCanvas<DicomImageElement> view = EventManager.getInstance().getSelectedViewPane();
     DicomImageElement imageElement = getImageElement(view);
-    if (imageElement == null) return;
+    SpecialElementRegion selected = getSelectedRegion();
+    if (imageElement == null || selected == null) return;
 
-    SegContour contour = getContour(imageElement, region);
+    SegContour contour = getContour(selected, imageElement, region);
     if (contour != null) {
       MeasurableLayer layer = view.getMeasurableLayer();
       if (region instanceof IsoDoseRegion) {

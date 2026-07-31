@@ -29,8 +29,13 @@ public final class ChunkedArray<A> {
     void fill(A array, Number value);
   }
 
+  /** Power-of-two exponent of {@link #CHUNK_SIZE}, so index splitting needs no division. */
+  private static final int CHUNK_SHIFT = 27;
+
   /** Maximum elements per chunk — kept under Integer.MAX_VALUE for safe int indexing. */
-  static final int CHUNK_SIZE = 1 << 27; // ~128M elements per chunk
+  static final int CHUNK_SIZE = 1 << CHUNK_SHIFT; // ~128M elements per chunk
+
+  private static final long CHUNK_MASK = CHUNK_SIZE - 1L;
 
   private final A[] chunks;
   private final long totalElements;
@@ -75,11 +80,11 @@ public final class ChunkedArray<A> {
   }
 
   public int chunkOffset(long globalIndex) {
-    return (int) (globalIndex % CHUNK_SIZE);
+    return (int) (globalIndex & CHUNK_MASK);
   }
 
   public int chunkIndex(long globalIndex) {
-    return (int) (globalIndex / CHUNK_SIZE);
+    return (int) (globalIndex >>> CHUNK_SHIFT);
   }
 
   /** Fills the entire chunked array with the given value. */

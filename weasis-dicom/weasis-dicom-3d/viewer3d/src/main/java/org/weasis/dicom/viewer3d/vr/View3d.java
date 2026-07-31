@@ -20,6 +20,7 @@ import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;
+import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.GridBagConstraints;
@@ -46,6 +47,10 @@ import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
 import javax.swing.Action;
 import javax.swing.JCheckBoxMenuItem;
@@ -76,6 +81,7 @@ import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.service.AuditLog;
 import org.weasis.core.api.service.WProperties;
 import org.weasis.core.api.util.FontItem;
+import org.weasis.core.api.util.FontTools;
 import org.weasis.core.ui.editor.image.*;
 import org.weasis.core.ui.editor.image.DefaultView2d.ZoomType;
 import org.weasis.core.ui.model.graphic.Graphic;
@@ -171,11 +177,11 @@ public class View3d extends VolumeCanvas
   /** Generation stamp; bumping it invalidates any in-flight asynchronous seg texture build. */
   private final AtomicInteger segBuildGeneration = new AtomicInteger();
 
+  /** How many SEG files are decoded at once — bounded because each holds a full-size volume. */
+  private static final int MAX_CONCURRENT_SEG_BUILDS = 3;
+
   /** {@code true} while an asynchronous seg texture build is running for this view. */
   private volatile boolean segBuildRunning;
-
-  /** Loading bar painted in the view while the seg texture builds; {@code null} when idle. */
-  private volatile JProgressBar segProgressBar; // NOSONAR visibility reference
 
   /**
    * Per-view auto-sync button rendered as a corner overlay. Lazily created the first time {@link
@@ -434,19 +440,22 @@ public class View3d extends VolumeCanvas
       drawLpsOrientation(g2d);
     }
     drawProgressBar(g2d, progressBar);
-    drawSegProgressBar(g2d);
+    drawSegLoadingMessage(g2d);
   }
 
-  /** Paints the segmentation loading bar slightly below the view centre. */
-  private void drawSegProgressBar(Graphics2D g2d) {
-    JProgressBar bar = segProgressBar;
-    if (bar != null && bar.isVisible()) {
-      int x = (getWidth() - bar.getWidth()) / 2;
-      int y = getHeight() / 2 + bar.getHeight();
-      g2d.translate(x, y);
-      bar.paint(g2d);
-      g2d.translate(-x, -y);
+  /**
+   * Paints the pending segmentation build at the bottom of the view, as the 2D and MPR views do.
+   */
+  private void drawSegLoadingMessage(Graphics2D g2d) {
+    if (!segBuildRunning) {
+      return;
     }
+    String msg = org.weasis.dicom.viewer2d.Messages.getString("seg.loading");
+    g2d.setFont(getLayerFont());
+    FontMetrics fm = g2d.getFontMetrics();
+    float x = (getWidth() - fm.stringWidth(msg)) / 2f;
+    float y = getHeight() - fm.getHeight() * 2f;
+    FontTools.paintColorFontOutline(g2d, msg, x, y, Color.ORANGE);
   }
 
   private void drawLpsOrientation(Graphics2D g2d) {
@@ -880,16 +889,23 @@ public class View3d extends VolumeCanvas
         currentType.requiresSegTexture() && volume != null ? tex.getSegmentations() : null;
     if (segList == null || segList.isEmpty()) {
       segBuildGeneration.incrementAndGet(); // invalidate any in-flight build
-      hideSegProgress();
+      setSegBuildRunning(false);
       destroySegTexture();
       display();
       return;
     }
 
+    if (!segBuildRunning && isSegTextureUpToDate(segList)) {
+      // The same SEG files are already uploaded: switching between the display modes only changes
+      // shader uniforms, so render the existing texture instead of rebuilding it.
+      display();
+      return;
+    }
+
     // The heavy work (mask decoding, splatting, resampling, GPU upload) runs asynchronously so
-    // the EDT never freezes on large SEG objects; a progress bar is shown in the view meanwhile.
+    // the EDT never freezes on large SEG objects; a message is shown in the view meanwhile.
     int generation = segBuildGeneration.incrementAndGet();
-    showSegProgress(segList.size());
+    setSegBuildRunning(true);
     final Volume<?, ?> imageVolume = volume;
     CompletableFuture.runAsync(() -> buildSegTexture(generation, segList, imageVolume))
         .exceptionally(
@@ -898,7 +914,7 @@ public class View3d extends VolumeCanvas
               GuiExecutor.execute(
                   () -> {
                     if (generation == segBuildGeneration.get()) {
-                      hideSegProgress();
+                      setSegBuildRunning(false);
                       destroySegTexture();
                       display();
                     }
@@ -914,33 +930,14 @@ public class View3d extends VolumeCanvas
    */
   private void buildSegTexture(
       int generation, List<SpecialElementRegion> segList, Volume<?, ?> imageVolume) {
-    List<AlignedSeg> aligned = new ArrayList<>();
-    int done = 0;
-    for (SpecialElementRegion seg : segList) {
-      if (generation != segBuildGeneration.get()) {
-        return; // superseded by a newer request
-      }
-      if (seg instanceof SegSpecialElement segElement) {
-        DicomSeries segSeries = segElement.getMediaReader().getMediaSeries();
-        if (segSeries != null) {
-          // Reuse the SEG's per-image-volume cached resample when available so we do not redo
-          // the expensive frame splatting if MPR (or another 3D view) already built it for the
-          // same image volume.
-          SegmentationVolume segVol =
-              segElement.getOrBuildAlignedVolume(
-                  imageVolume, s -> SegVolumeBuilder.build(s, segSeries, imageVolume));
-          if (segVol != null) {
-            if (segVol.isEmpty()) {
-              // Empty resample is useless to keep cached: drop it from the SEG so a future
-              // request can retry (e.g. once the image volume finishes loading).
-              segElement.disposeAlignedVolume(imageVolume);
-            } else {
-              aligned.add(new AlignedSeg(segElement, segVol));
-            }
-          }
-        }
-      }
-      updateSegProgress(++done);
+    // Each SEG file decodes its own frames into its own volume, so the files are built
+    // concurrently — otherwise a study with several large SEGs pays the sum of their build times.
+    // A fixed pool rather than a parallel stream: it caps how many full-size volumes are live at
+    // once (they reach several hundred MB each) without imposing a barrier, so a small SEG starts
+    // as soon as a slot frees instead of waiting for the slowest file of a batch.
+    List<AlignedSeg> aligned = buildAlignedSegs(generation, segList, imageVolume);
+    if (aligned == null) {
+      return; // superseded by a newer request
     }
 
     if (generation != segBuildGeneration.get()) {
@@ -950,7 +947,7 @@ public class View3d extends VolumeCanvas
       GuiExecutor.execute(
           () -> {
             if (generation == segBuildGeneration.get()) {
-              hideSegProgress();
+              setSegBuildRunning(false);
               destroySegTexture();
               display();
             }
@@ -975,6 +972,69 @@ public class View3d extends VolumeCanvas
     newSvt.uploadVolumeDataAsync();
 
     GuiExecutor.execute(() -> installSegTexture(generation, newSvt, rendered));
+  }
+
+  /**
+   * Builds the image-aligned volume of every SEG file, at most {@value #MAX_CONCURRENT_SEG_BUILDS}
+   * at a time, preserving {@code segList} order so the segment-number offsets stay reproducible.
+   * Returns {@code null} when a newer segmentation request superseded this build.
+   */
+  private List<AlignedSeg> buildAlignedSegs(
+      int generation, List<SpecialElementRegion> segList, Volume<?, ?> imageVolume) {
+    int threads = Math.min(segList.size(), MAX_CONCURRENT_SEG_BUILDS);
+    ExecutorService executor = Executors.newFixedThreadPool(threads);
+    try {
+      List<Future<AlignedSeg>> futures =
+          segList.stream()
+              .map(seg -> executor.submit(() -> buildAlignedSeg(generation, seg, imageVolume)))
+              .toList();
+      List<AlignedSeg> aligned = new ArrayList<>(futures.size());
+      for (Future<AlignedSeg> future : futures) {
+        AlignedSeg seg = future.get();
+        if (seg != null) {
+          aligned.add(seg);
+        }
+      }
+      return generation == segBuildGeneration.get() ? aligned : null;
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+      return null;
+    } catch (ExecutionException e) {
+      LOGGER.error("Building the image-aligned segmentation volumes", e.getCause());
+      return null;
+    } finally {
+      executor.shutdownNow();
+    }
+  }
+
+  /**
+   * Builds (or reuses) the image-aligned volume of a single SEG file. Returns {@code null} when the
+   * file yields nothing usable or when a newer segmentation request has superseded this build.
+   */
+  private AlignedSeg buildAlignedSeg(
+      int generation, SpecialElementRegion seg, Volume<?, ?> imageVolume) {
+    if (generation != segBuildGeneration.get() || !(seg instanceof SegSpecialElement segElement)) {
+      return null;
+    }
+    DicomSeries segSeries = segElement.getMediaReader().getMediaSeries();
+    if (segSeries == null) {
+      return null;
+    }
+    // Reuse the SEG's per-image-volume cached resample when available so we do not redo the
+    // expensive frame splatting if MPR (or another 3D view) already built it for the same volume.
+    SegmentationVolume segVol =
+        segElement.getOrBuildAlignedVolume(
+            imageVolume, s -> SegVolumeBuilder.build(s, segSeries, imageVolume));
+    if (segVol == null) {
+      return null;
+    }
+    if (segVol.isEmpty()) {
+      // Empty resample is useless to keep cached: drop it from the SEG so a future request can
+      // retry (e.g. once the image volume finishes loading).
+      segElement.disposeAlignedVolume(imageVolume);
+      return null;
+    }
+    return new AlignedSeg(segElement, segVol);
   }
 
   /** EDT part of the asynchronous build: swaps the new texture in and refreshes the view. */
@@ -1005,41 +1065,33 @@ public class View3d extends VolumeCanvas
       // SegSpecialElement's per-image-volume cache (see SegSpecialElement.alignedVolumes) and
       // may still be in use by the MPR overlay or by a re-upload of this very texture.
     }
-    hideSegProgress();
+    setSegBuildRunning(false);
     display();
   }
 
-  /** Shows the segmentation loading bar in the view (one step per SEG file). */
-  private void showSegProgress(int steps) {
-    JProgressBar bar = new JProgressBar(0, steps);
-    Dimension dim =
-        new Dimension(
-            Math.max(GuiUtils.getScaleLength(150), getWidth() / 2), GuiUtils.getScaleLength(30));
-    bar.setSize(dim);
-    bar.setPreferredSize(dim);
-    bar.setMaximumSize(dim);
-    bar.setStringPainted(true);
-    bar.setString(org.weasis.dicom.viewer2d.Messages.getString("seg.loading"));
-    this.segProgressBar = bar;
-    this.segBuildRunning = true;
+  private void setSegBuildRunning(boolean running) {
+    this.segBuildRunning = running;
     repaint();
   }
 
-  private void updateSegProgress(int value) {
-    JProgressBar bar = segProgressBar;
-    if (bar != null) {
-      GuiExecutor.execute(
-          () -> {
-            bar.setValue(value);
-            repaint();
-          });
+  /**
+   * {@code true} when the current texture already holds exactly the SEG files of {@code segList}.
+   */
+  private boolean isSegTextureUpToDate(List<SpecialElementRegion> segList) {
+    SegVolumeTexture svt = segVolumeTexture;
+    if (svt == null) {
+      return false;
     }
-  }
-
-  private void hideSegProgress() {
-    this.segProgressBar = null;
-    this.segBuildRunning = false;
-    repaint();
+    List<RenderedSeg> rendered = renderedSegs;
+    if (rendered.size() != segList.size()) {
+      return false;
+    }
+    for (int i = 0; i < rendered.size(); i++) {
+      if (rendered.get(i).seg() != segList.get(i)) {
+        return false;
+      }
+    }
+    return true;
   }
 
   /**
@@ -1110,10 +1162,17 @@ public class View3d extends VolumeCanvas
       offset += maxSegNum;
     }
     SegmentationVolume merged = aligned.getFirst().volume().createCompatible(combined);
+    long start = System.nanoTime();
+    long stamped = 0;
     for (int i = 0; i < aligned.size(); i++) {
       int base = rendered.get(i).offset();
-      aligned.get(i).volume().mergeInto(merged, segNum -> segNum + base);
+      stamped += aligned.get(i).volume().mergeInto(merged, segNum -> segNum + base);
     }
+    LOGGER.debug(
+        "Merged {} segmentation volumes ({} stamped voxels) in {} ms",
+        aligned.size(),
+        stamped,
+        (System.nanoTime() - start) / 1_000_000);
     return merged;
   }
 
