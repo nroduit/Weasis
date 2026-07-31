@@ -563,13 +563,12 @@ public class Launcher {
     }
   }
 
+  /** Returns the live, mutable list backing the given type: callers may add or remove entries. */
   static List<Launcher> getLaunchers(Type type) {
-    if (type == Type.OTHER) {
-      return GuiUtils.getUICore().getOtherLaunchers();
-    } else if (type == Type.DICOM) {
-      return GuiUtils.getUICore().getDicomLaunchers();
-    }
-    return Collections.emptyList();
+    return switch (type) {
+      case OTHER -> GuiUtils.getUICore().getOtherLaunchers();
+      case DICOM -> GuiUtils.getUICore().getDicomLaunchers();
+    };
   }
 
   static void saveLaunchers(Type type) {

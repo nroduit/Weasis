@@ -414,6 +414,7 @@ public class VolumeLutEditorDialog extends JDialog {
   }
 
   private JPanel buildBottomPanel() {
+    JButton helpBtn = GuiUtils.createHelpButton("dicom-3d-viewer/#lut-editor"); // NON-NLS
     JButton applyBtn = new JButton(Messages.getString("apply.preview"));
     JButton saveBtn = new JButton(Messages.getString("save"));
     JButton cancelBtn = new JButton(Messages.getString("cancel"));
@@ -422,9 +423,10 @@ public class VolumeLutEditorDialog extends JDialog {
     saveBtn.addActionListener(e -> onSaveAndClose());
     cancelBtn.addActionListener(e -> onCancel());
 
-    // "push" right-aligns Save and Cancel, leaving Apply Preview on the left
-    JPanel panel = new JPanel(new MigLayout("insets 5lp 0 5lp 0", "[]push[][]", "[]")); // NON-NLS
+    // "push" right-aligns Help, Save and Cancel, leaving Apply Preview on the left
+    JPanel panel = new JPanel(new MigLayout("insets 5lp 0 5lp 0", "[]push[][][]", "[]")); // NON-NLS
     panel.add(applyBtn);
+    panel.add(helpBtn);
     panel.add(saveBtn);
     panel.add(cancelBtn);
     return panel;
