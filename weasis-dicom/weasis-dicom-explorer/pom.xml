@@ -44,5 +44,11 @@
       <artifactId>zip4j</artifactId>
       <scope>provided</scope>
     </dependency>
+    <!-- Only for tests loading DicomMediaUtils: at runtime joml is resolved from its own bundle -->
+    <dependency>
+      <groupId>org.joml</groupId>
+      <artifactId>joml</artifactId>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
 </project>

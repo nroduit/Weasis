@@ -28,6 +28,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Stream;
 import javax.swing.JProgressBar;
 import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.ElementDictionary;
@@ -601,24 +602,39 @@ public class SeriesDownloadManager {
   }
 
   private void applyOverrides(Attributes dataset, int[] overrideList) {
-    if (overrideList == null) {
+    applyOverrides(
+        dataset,
+        overrideList,
+        dicomModel.getParent(dicomSeries, DicomModel.patient),
+        dicomModel.getParent(dicomSeries, DicomModel.study));
+  }
+
+  /**
+   * Replaces in the dataset the tags listed in the manifest {@code overrideDicomTagsList} by the
+   * values held by the patient node, then the study node. Tags absent from both nodes and tags
+   * without a value are left untouched, as is the Study Instance UID, which identifies the study
+   * node and cannot be changed without breaking the model hierarchy.
+   */
+  static void applyOverrides(
+      Attributes dataset, int[] overrideList, MediaSeriesGroup patient, MediaSeriesGroup study) {
+    if (dataset == null || overrideList == null) {
       return;
     }
-
-    MediaSeriesGroup study = dicomModel.getParent(dicomSeries, DicomModel.study);
-    MediaSeriesGroup patient = dicomModel.getParent(dicomSeries, DicomModel.patient);
+    List<MediaSeriesGroup> groups = Stream.of(patient, study).filter(Objects::nonNull).toList();
     ElementDictionary dic = ElementDictionary.getStandardElementDictionary();
 
     for (int tag : overrideList) {
-      TagW tagElement = patient.getTagElement(tag);
-      Object value =
-          tagElement != null
-              ? patient.getTagValue(tagElement)
-              : study.getTagValue(study.getTagElement(tag));
-
-      if (tagElement != null || study.getTagElement(tag) != null) {
-        DicomMediaUtils.fillAttributes(
-            dataset, tagElement != null ? tagElement : study.getTagElement(tag), value, dic);
+      if (tag == Tag.StudyInstanceUID) {
+        // Logged at debug level: this runs for every downloaded instance.
+        LOGGER.debug("Study Instance UID cannot be overridden, ignoring it in the override list");
+        continue;
+      }
+      for (MediaSeriesGroup group : groups) {
+        TagW tagElement = group.getTagElement(tag);
+        if (tagElement != null) {
+          DicomMediaUtils.fillAttributes(dataset, tagElement, group.getTagValue(tagElement), dic);
+          break;
+        }
       }
     }
   }
