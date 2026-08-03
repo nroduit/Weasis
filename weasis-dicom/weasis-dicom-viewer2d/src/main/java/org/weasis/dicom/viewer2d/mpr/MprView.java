@@ -523,10 +523,10 @@ public class MprView extends View2d implements SliceCanvas, ViewProgress {
           polyline.getHandlePointList().size());
       final PolylineGraphic finalPolyline = polyline;
       popupMenu.addSeparator();
-      JMenuItem curvedMprItem = new JMenuItem("Build panoramic view");
+      JMenuItem curvedMprItem = new JMenuItem(Messages.getString("build.panoramic.view"));
       curvedMprItem.addActionListener(e -> openCurvedMprFromPolyline(finalPolyline));
       popupMenu.add(curvedMprItem);
-      JMenuItem crossSectionsItem = new JMenuItem("Build cross-cectional slices");
+      JMenuItem crossSectionsItem = new JMenuItem(Messages.getString("build.cross.sectional"));
       crossSectionsItem.addActionListener(e -> openCrossSectionsFromPolyline(finalPolyline));
       popupMenu.add(crossSectionsItem);
     }
