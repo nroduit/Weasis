@@ -87,7 +87,7 @@ public class AnatomicRegionView extends JPanel {
   void jbInit() {
     setLayout(new MigLayout("wrap 2, insets 0", "[right][grow]", "[]10[]10[]20[]")); // NON-NLS
     CategoryBuilder[] sortedCategories =
-        AnatomicBuilder.categoryMap.keySet().stream()
+        AnatomicBuilder.getCategoryMap().keySet().stream()
             .sorted(Comparator.comparing(CategoryBuilder::toString))
             .toArray(CategoryBuilder[]::new);
     comboBox1 = new JComboBox<>(sortedCategories);
@@ -102,7 +102,7 @@ public class AnatomicRegionView extends JPanel {
       font = FontItem.DEFAULT.getFont();
     }
     int maxWidth = 0;
-    Collection<List<AnatomicItem>> categories = AnatomicBuilder.categoryMap.values();
+    Collection<List<AnatomicItem>> categories = AnatomicBuilder.getCategoryMap().values();
     for (List<AnatomicItem> list : categories) {
       for (AnatomicItem item : list) {
         int width = comboBox2.getFontMetrics(font).stringWidth(item.getCodeMeaning());
@@ -153,12 +153,8 @@ public class AnatomicRegionView extends JPanel {
   }
 
   void updateComboBox2() {
-    List<AnatomicItem> list = AnatomicBuilder.categoryMap.get(getSelectedCategory());
-    if (list != null) {
-      comboBox2.setModel(new DefaultComboBoxModel<>(list.toArray(new AnatomicItem[0])));
-    } else {
-      comboBox2.setModel(new DefaultComboBoxModel<>());
-    }
+    List<AnatomicItem> list = AnatomicBuilder.getCategoryItems(getSelectedCategory());
+    comboBox2.setModel(new DefaultComboBoxModel<>(list.toArray(new AnatomicItem[0])));
   }
 
   public boolean isApplyingToSeries() {
