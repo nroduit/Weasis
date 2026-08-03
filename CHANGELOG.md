@@ -1,8 +1,8 @@
 # Changelog
 
-## [Unreleased](https://github.com/nroduit/Weasis/tree/HEAD)
+## [v4.7.2](https://github.com/nroduit/Weasis/tree/v4.7.2) (2026-08-03)
 
-[Full Changelog](https://github.com/nroduit/Weasis/compare/v4.7.2...HEAD)
+[Full Changelog](https://github.com/nroduit/Weasis/compare/v4.7.1...v4.7.2)
 
 **Implemented enhancements:**
 
@@ -13,32 +13,22 @@
 - Add segmentation selection controls: Show/Hide all, view button and complete tool listing [\#879](https://github.com/nroduit/Weasis/issues/879)
 - Hide non-relevant segmentations by default \(keyword list and global preference\) [\#878](https://github.com/nroduit/Weasis/issues/878)
 - Refactor Thumbnail rendering to avoid AWT tree lock during icon updates [\#877](https://github.com/nroduit/Weasis/issues/877)
-
-**Fixed bugs:**
-
-- "Copy images into the local temporary directory" option is not applied [\#887](https://github.com/nroduit/Weasis/issues/887)
-- Fix determining plane from DICOM images when building volume [\#882](https://github.com/nroduit/Weasis/issues/882)
-
-**Security fixes:**
-
-- Enhance property handling to prevent path injection and ensure safe directory names [\#888](https://github.com/nroduit/Weasis/issues/888)
-
-## [v4.7.2](https://github.com/nroduit/Weasis/tree/v4.7.2) (2026-08-03)
-
-[Full Changelog](https://github.com/nroduit/Weasis/compare/v4.7.1...v4.7.2)
-
-**Implemented enhancements:**
-
 - Add user-configurable default filter mode for DICOM explorer [\#874](https://github.com/nroduit/Weasis/issues/874)
 - Allow adding and editing custom 3D LUTs [\#805](https://github.com/nroduit/Weasis/issues/805)
 
 **Fixed bugs:**
 
+- "Copy images into the local temporary directory" option is not applied [\#887](https://github.com/nroduit/Weasis/issues/887)
+- Fix determining plane from DICOM images when building volume [\#882](https://github.com/nroduit/Weasis/issues/882)
 - Ellipse showing wrong Mean [\#870](https://github.com/nroduit/Weasis/issues/870)
 - Fixed blackening when setting segment opacity in 3D viewer [\#865](https://github.com/nroduit/Weasis/issues/865)
 - Preset changes are only applied after scrolling in multi-view layouts [\#860](https://github.com/nroduit/Weasis/issues/860)
 - Attenuation measurement returns incorrect HU values in v4.7.1 [\#858](https://github.com/nroduit/Weasis/issues/858)
 - Area-based intensity measurement issue [\#855](https://github.com/nroduit/Weasis/issues/855)
+
+**Security fixes:**
+
+- Enhance property handling to prevent path injection and ensure safe directory names [\#888](https://github.com/nroduit/Weasis/issues/888)
 
 **Merged pull requests:**
 
