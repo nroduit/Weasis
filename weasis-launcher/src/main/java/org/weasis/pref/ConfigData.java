@@ -68,6 +68,29 @@ public class ConfigData {
   public static final String F_RESOURCES = "resources"; // NON-NLS
 
   /**
+   * Properties computed by the launcher. They resolve to filesystem locations, so a launch argument
+   * (see {@link #PARAM_PROPERTY}) must never override them.
+   */
+  private static final Set<String> PROTECTED_PROPERTIES =
+      Set.of(P_WEASIS_SOURCE_ID, P_WEASIS_PATH, P_WEASIS_CODEBASE_LOCAL, P_WEASIS_CONFIG_HASH);
+
+  /**
+   * Namespaces owned by the JVM. Weasis derives paths from them (user.home, java.io.tmpdir) or
+   * selects native code with them (os.name, java.library.path).
+   */
+  private static final List<String> PROTECTED_PREFIXES =
+      List.of("java.", "javax.", "jdk.", "sun.", "os.", "user."); // NON-NLS
+
+  /**
+   * Properties that name a folder. They are concatenated into the preferences location, so a launch
+   * argument must not turn them into a path.
+   */
+  private static final Set<String> FOLDER_NAME_PROPERTIES = Set.of(P_WEASIS_PROFILE, P_WEASIS_USER);
+
+  /** Path separators and the characters Windows rejects in a file name. */
+  private static final Pattern PATH_CHARS = Pattern.compile("[\\\\/:*?\"<>|\\p{Cntrl}]");
+
+  /**
    * The property name used to specify a URL to the configuration property file to be used for the
    * created the framework instance.
    */
@@ -374,12 +397,31 @@ public class ConfigData {
     properties.forEach(
         value -> {
           String[] result = pattern.split(value, 2);
-          if (result.length == 2) {
-            addProperty(result[0], result[1]);
-          } else {
+          if (result.length != 2) {
             LOGGER.warn("Cannot parse property: {}", value);
+          } else if (isProtected(result[0])) {
+            LOGGER.warn("Reject the launch property {}: it cannot be set externally", result[0]);
+          } else if (isInvalidFolderName(result[0], result[1])) {
+            LOGGER.warn(
+                "Reject the launch property {}: '{}' is not a folder name", result[0], result[1]);
+          } else {
+            addProperty(result[0], result[1]);
           }
         });
+  }
+
+  private static boolean isProtected(String key) {
+    return PROTECTED_PROPERTIES.contains(key)
+        || PROTECTED_PREFIXES.stream().anyMatch(key::startsWith);
+  }
+
+  /** A property naming a folder must stay a single path element. */
+  private static boolean isInvalidFolderName(String key, String value) {
+    if (!FOLDER_NAME_PROPERTIES.contains(key)) {
+      return false;
+    }
+    String name = value.strip();
+    return PATH_CHARS.matcher(name).find() || name.chars().allMatch(c -> c == '.');
   }
 
   public StringBuilder getConfigOutput() {

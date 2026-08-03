@@ -16,6 +16,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Optional;
+import java.util.regex.Pattern;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.FrameworkUtil;
@@ -31,6 +32,12 @@ public final class AppProperties {
   private static final Logger LOGGER = LoggerFactory.getLogger(AppProperties.class);
 
   private static final String UNKNOWN = "unknown"; // NON-NLS
+
+  /**
+   * Matches the path separators of every platform and the characters Windows rejects in a file
+   * name. Letters of any script are kept, so a user name is not mangled.
+   */
+  private static final Pattern UNSAFE_PATH_CHARS = Pattern.compile("[\\\\/:*?\"<>|\\p{Cntrl}]");
 
   /** The version of the application (for display) */
   public static final String WEASIS_VERSION =
@@ -87,9 +94,9 @@ public final class AppProperties {
     Path appTempDir =
         tempDir.resolve(
             "weasis-"
-                + System.getProperty("user.name", "tmp") // NON-NLS
+                + toSafePathElement(System.getProperty("user.name"), "tmp") // NON-NLS
                 + "."
-                + System.getProperty("weasis.source.id", UNKNOWN));
+                + toSafePathElement(System.getProperty("weasis.source.id"), UNKNOWN));
 
     System.setProperty("weasis.tmp.dir", appTempDir.toAbsolutePath().toString());
     try {
@@ -99,6 +106,17 @@ public final class AppProperties {
       LOGGER.error("Error cleaning temporary files", e);
     }
     return appTempDir;
+  }
+
+  /**
+   * Reduces a launch property to a single path element: such a value can be supplied by a {@code
+   * weasis://} link and the resulting directory is deleted recursively at startup.
+   */
+  private static String toSafePathElement(String value, String defaultValue) {
+    if (!StringUtil.hasText(value)) {
+      return defaultValue;
+    }
+    return UNSAFE_PATH_CHARS.matcher(value.strip()).replaceAll("_");
   }
 
   private static Path getTempDirectoryPath() {
