@@ -52,7 +52,7 @@ Defined in `weasis-distributions/docker/Dockerfile`:
 |----------|-------|
 | Base | `ubuntu:26.04` (codename *resolute*) — **LTS** |
 | Host glibc | `2.43` (Ubuntu 26.04) |
-| JDK | Temurin **26.0.1+8** (downloaded, GPG + SHA256 verified) |
+| JDK | Temurin **26.0.2+10** (downloaded, GPG + SHA256 verified) |
 | Extra tooling | `fakeroot`, `rpm`, `unzip`, `xz-utils`, `bzip2`, `fontconfig`, locales |
 | Tag | `weasis/builder:latest`, built per-arch via Buildx |
 
