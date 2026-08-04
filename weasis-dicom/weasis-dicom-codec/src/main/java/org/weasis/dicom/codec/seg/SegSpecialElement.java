@@ -971,6 +971,9 @@ public class SegSpecialElement extends HiddenSpecialElement
       int maxFractionalValue) {
 
     Attributes dicom = dicomObject();
+    if (dicom == null) {
+      return;
+    }
     Attributes sharedFG = dicom.getNestedDataset(Tag.SharedFunctionalGroupsSequence);
     String segFrameOfRefUID = dicom.getString(Tag.FrameOfReferenceUID);
     String seriesFrameOfRefUID = TagD.getTagValue(series, Tag.FrameOfReferenceUID, String.class);

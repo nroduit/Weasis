@@ -651,9 +651,6 @@ public class Launcher {
   }
 
   public static void loadLaunchers(JComboBox<Launcher> comboBox, Type type) {
-    if (comboBox == null) {
-      return;
-    }
     if (type == Type.DICOM) {
       for (Launcher node : GuiUtils.getUICore().getDicomLaunchers()) {
         comboBox.addItem(node);

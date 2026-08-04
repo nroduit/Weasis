@@ -93,7 +93,7 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
       return baseUrl;
     }
     String retrieveUrl = TagD.getTagValue(dicomSeries, Tag.RetrieveURL, String.class);
-    if (StringUtil.hasText(retrieveUrl)) {
+    if (retrieveUrl != null) {
       int index = retrieveUrl.indexOf("/studies/"); // NON-NLS
       if (index > 0) {
         return retrieveUrl.substring(0, index);

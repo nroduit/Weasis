@@ -9,6 +9,7 @@
  */
 package org.weasis.dicom.rt;
 
+import java.util.Objects;
 import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Tag;
 import org.joml.Vector3d;
@@ -36,8 +37,8 @@ public class Image {
     this.prone = patientPosition.contains("p") ? -1 : 1; // NON-NLS
     this.feetFirst = patientPosition.contains("ff") ? -1 : 1; // NON-NLS
     this.imageSpacing = image.getRawSliceGeometry().getVoxelSpacing();
-    this.width = TagD.getTagValue(image, Tag.Columns, Integer.class);
-    this.height = TagD.getTagValue(image, Tag.Rows, Integer.class);
+    this.width = Objects.requireNonNullElse(TagD.getTagValue(image, Tag.Columns, Integer.class), 0);
+    this.height = Objects.requireNonNullElse(TagD.getTagValue(image, Tag.Rows, Integer.class), 0);
   }
 
   public String getPatientPosition() {

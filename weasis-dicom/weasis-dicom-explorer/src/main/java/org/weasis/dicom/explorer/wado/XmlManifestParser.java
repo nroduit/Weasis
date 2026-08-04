@@ -53,7 +53,7 @@ final class XmlManifestParser {
       Boolean.getBoolean("weasis.manifest.xsd.validation");
 
   // Lazily compiled and cached: schema compilation is expensive and the schema is immutable.
-  private static volatile Schema manifestSchema;
+  private static volatile Schema manifestSchema; // NOSONAR visibility reference
 
   private XmlManifestParser() {}
 

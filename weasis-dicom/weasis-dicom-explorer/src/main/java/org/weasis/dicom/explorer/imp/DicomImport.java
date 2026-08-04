@@ -78,19 +78,21 @@ public class DicomImport extends AbstractWizardDialog {
     list.add(new DicomDirImport());
 
     BundleContext context = AppProperties.getBundleContext(this.getClass());
-    try {
-      for (ServiceReference<DicomImportFactory> service :
-          context.getServiceReferences(DicomImportFactory.class, null)) {
-        DicomImportFactory factory = context.getService(service);
-        if (factory != null) {
-          ImportDicom page = factory.createDicomImportPage(null);
-          if (page instanceof AbstractItemDialogPage dialogPage) {
-            list.add(dialogPage);
+    if (context != null) {
+      try {
+        for (ServiceReference<DicomImportFactory> service :
+            context.getServiceReferences(DicomImportFactory.class, null)) {
+          DicomImportFactory factory = context.getService(service);
+          if (factory != null) {
+            ImportDicom page = factory.createDicomImportPage(null);
+            if (page instanceof AbstractItemDialogPage dialogPage) {
+              list.add(dialogPage);
+            }
           }
         }
+      } catch (Exception e) {
+        LOGGER.error("init import pages", e);
       }
-    } catch (Exception e) {
-      LOGGER.error("init import pages", e);
     }
 
     InsertableUtil.sortInsertable(list);

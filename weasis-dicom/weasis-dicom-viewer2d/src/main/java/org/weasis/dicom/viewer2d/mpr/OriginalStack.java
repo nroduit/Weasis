@@ -44,7 +44,10 @@ public abstract class OriginalStack extends AbstractStack {
       Plane plane, MediaSeries<DicomImageElement> series, Filter<DicomImageElement> filter) {
     super(plane, series);
     this.sourceStack = series.copyOfMedias(filter, SortSeriesStack.slicePosition);
-    this.fistSliceGeometry = new GeometryOfSlice(getFirstImage().getSliceGeometry());
+    this.fistSliceGeometry =
+        new GeometryOfSlice(
+            Objects.requireNonNull(
+                getFirstImage().getSliceGeometry(), "The first slice has no geometry"));
     this.sliceSpace = initSliceSpace();
     checkTooFewSlicesForTransformation();
   }
@@ -132,7 +135,11 @@ public abstract class OriginalStack extends AbstractStack {
       return;
     }
 
-    Vector3d firstNormal = sourceStack.getFirst().getSliceGeometry().getNormal();
+    GeometryOfSlice firstGeometry = sourceStack.getFirst().getSliceGeometry();
+    if (firstGeometry == null) {
+      return;
+    }
+    Vector3d firstNormal = firstGeometry.getNormal();
     if (firstNormal == null) {
       return;
     }

@@ -164,7 +164,7 @@ public abstract class AbstractGraphic extends DefaultUUID implements Graphic {
   @Override
   public Graphic buildGraphic(List<Point2D> pts) throws InvalidShapeException {
     setPts(pts);
-    if (!pts.isEmpty()) {
+    if (!this.pts.isEmpty()) {
       prepareShape();
     }
     return this;

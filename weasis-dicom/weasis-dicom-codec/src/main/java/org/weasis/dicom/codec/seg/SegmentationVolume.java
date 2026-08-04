@@ -710,7 +710,7 @@ public final class SegmentationVolume {
    * Per-source-storage-ID resolution of the matching destination ID and of the segments the
    * destination actually declares, plus the voxel tally to fold back into its stamp counters.
    */
-  private record IdMapping(int[] targetIds, int[][] targetSegs) {
+  private record IdMapping(int[] targetIds, int[][] targetSegs) { // NOSONAR lookup table only
 
     /** {@code true} when source storage ID {@code id} maps onto something the target declares. */
     boolean maps(int id) {

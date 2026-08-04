@@ -362,9 +362,6 @@ public class LayoutCellManager<E extends ImageElement> implements Iterable<ViewC
    * @return the MigCell, or null if not found
    */
   private MigCell getCellAtPosition(int position) {
-    if (layoutModel == null) {
-      return null;
-    }
     return layoutModel.getCells().stream()
         .filter(c -> c.position() == position)
         .findFirst()

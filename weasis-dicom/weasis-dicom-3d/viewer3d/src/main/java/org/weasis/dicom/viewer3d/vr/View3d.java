@@ -38,7 +38,6 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.nio.IntBuffer;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
@@ -46,6 +45,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -169,7 +169,7 @@ public class View3d extends VolumeCanvas
    * Consumed by {@link #buildRegionOverrideMap()} so the colour LUT overrides target the shifted
    * IDs and so unchecked files are always forced invisible.
    */
-  private volatile List<RenderedSeg> renderedSegs = Collections.emptyList();
+  private volatile List<RenderedSeg> renderedSegs = List.of(); // NOSONAR visibility ref
 
   /** Per-view segmentation display mode — applied through the synchronization mechanism. */
   private volatile Type segType = Type.NONE;
@@ -982,14 +982,15 @@ public class View3d extends VolumeCanvas
   private List<AlignedSeg> buildAlignedSegs(
       int generation, List<SpecialElementRegion> segList, Volume<?, ?> imageVolume) {
     int threads = Math.min(segList.size(), MAX_CONCURRENT_SEG_BUILDS);
-    ExecutorService executor = Executors.newFixedThreadPool(threads);
-    try {
-      List<Future<AlignedSeg>> futures =
+    // invokeAll returns only once every task is done or cancelled, so close() never waits
+    try (ExecutorService executor = Executors.newFixedThreadPool(threads)) {
+      List<Callable<AlignedSeg>> tasks =
           segList.stream()
-              .map(seg -> executor.submit(() -> buildAlignedSeg(generation, seg, imageVolume)))
+              .map(
+                  seg -> (Callable<AlignedSeg>) () -> buildAlignedSeg(generation, seg, imageVolume))
               .toList();
-      List<AlignedSeg> aligned = new ArrayList<>(futures.size());
-      for (Future<AlignedSeg> future : futures) {
+      List<AlignedSeg> aligned = new ArrayList<>(tasks.size());
+      for (Future<AlignedSeg> future : executor.invokeAll(tasks)) {
         AlignedSeg seg = future.get();
         if (seg != null) {
           aligned.add(seg);
@@ -1002,8 +1003,6 @@ public class View3d extends VolumeCanvas
     } catch (ExecutionException e) {
       LOGGER.error("Building the image-aligned segmentation volumes", e.getCause());
       return null;
-    } finally {
-      executor.shutdownNow();
     }
   }
 
@@ -1271,7 +1270,7 @@ public class View3d extends VolumeCanvas
   }
 
   private void destroySegTexture() {
-    renderedSegs = Collections.emptyList();
+    renderedSegs = List.of();
     SegVolumeTexture svt = segVolumeTexture;
     if (svt != null) {
       segVolumeTexture = null;

@@ -131,6 +131,9 @@ public class Activator implements BundleActivator, ServiceListener {
 
     ServiceReference<?> sRef = event.getServiceReference();
     BundleContext context = AppProperties.getBundleContext(sRef);
+    if (context == null) {
+      return;
+    }
     Object service = null;
     try {
       service = context.getService(sRef);

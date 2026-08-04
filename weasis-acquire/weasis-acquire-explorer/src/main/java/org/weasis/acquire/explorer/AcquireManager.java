@@ -23,6 +23,7 @@ import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.Collection;
@@ -376,13 +377,18 @@ public class AcquireManager {
               .filter(s -> SeriesGroup.Type.IMAGE_DATE.equals(s.getType()))
               .filter(
                   s -> {
+                    if (imageDate == null) {
+                      return false;
+                    }
                     LocalDateTime start = s.getDate();
                     LocalDateTime end = imageDate;
-                    if (end != null && end.isBefore(start)) {
+                    if (end.isBefore(start)) {
                       start = imageDate;
                       end = s.getDate();
                     }
-                    Duration duration = Duration.between(start, end);
+                    // Zone-aware so a DST shift between the two acquisitions is accounted for
+                    ZoneId zone = ZoneId.systemDefault();
+                    Duration duration = Duration.between(start.atZone(zone), end.atZone(zone));
                     return duration.toMinutes() < maxRangeInMinutes;
                   })
               .findFirst();
@@ -404,7 +410,7 @@ public class AcquireManager {
                       LocalDateTime val =
                           TagD.dateTime(Tag.ContentDate, Tag.ContentTime, i.getMedia());
                       if (val == null) {
-                        val = LocalDateTime.now();
+                        val = LocalDateTime.now(ZoneId.systemDefault());
                       }
                       return val;
                     }))

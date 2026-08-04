@@ -1016,7 +1016,7 @@ public class VolumeLutEditorDialog extends JDialog {
       PresetPoint a = pts.get(i);
       PresetPoint b = pts.get(i + 1);
       if (intensity >= a.getIntensity() && intensity <= b.getIntensity()) {
-        double n = b.getIntensity() - a.getIntensity();
+        double n = (double) b.getIntensity() - a.getIntensity();
         double f = n <= 0 ? 0 : (intensity - a.getIntensity()) / n;
         return new Color(
             Math.clamp((float) (cf(a.getRed()) + (cf(b.getRed()) - cf(a.getRed())) * f), 0f, 1f),
@@ -1527,9 +1527,9 @@ public class VolumeLutEditorDialog extends JDialog {
         g2.drawLine(px, top + handle, px, bottom);
         // Downward triangle handle filled with the point color
         Path2D tri = new Path2D.Float();
-        tri.moveTo(px - handle, top);
-        tri.lineTo(px + handle, top);
-        tri.lineTo(px, top + handle);
+        tri.moveTo((float) px - handle, top);
+        tri.lineTo((float) px + handle, top);
+        tri.lineTo(px, (float) top + handle);
         tri.closePath();
         g2.setColor(colorOf(p));
         g2.fill(tri);

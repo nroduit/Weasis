@@ -140,14 +140,15 @@ public abstract class AbstractDragGraphic extends AbstractGraphic implements Dra
   @Override
   public Integer moveAndResizeOnDrawing(
       Integer handlePointIndex, Double deltaX, Double deltaY, MouseEventDouble mouseEvent) {
-    if (Objects.equals(handlePointIndex, UNDEFINED)) {
+    int index = handlePointIndex == null ? UNDEFINED : handlePointIndex;
+    if (index == UNDEFINED) {
       pts.stream()
           .filter(Objects::nonNull)
           .forEach(p -> p.setLocation(p.getX() + deltaX, p.getY() + deltaY));
-    } else if (handlePointIndex >= 0 && handlePointIndex < pts.size()) {
-      Point2D point = pts.get(handlePointIndex);
+    } else if (index >= 0 && index < pts.size()) {
+      Point2D point = pts.get(index);
       Optional.ofNullable(point).ifPresent(p -> p.setLocation(mouseEvent.getImageCoordinates()));
     }
-    return handlePointIndex;
+    return index;
   }
 }

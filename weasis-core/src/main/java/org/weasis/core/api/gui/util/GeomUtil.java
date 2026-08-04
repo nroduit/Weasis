@@ -690,10 +690,6 @@ public final class GeomUtil {
   }
 
   public static void growRectangle(Rectangle2D rect, double growingSize) {
-    if (rect == null) {
-      return;
-    }
-
     if (MathUtil.isDifferentFromZero(growingSize)) {
       double newX = rect.getX() - growingSize;
       double newY = rect.getY() - growingSize;

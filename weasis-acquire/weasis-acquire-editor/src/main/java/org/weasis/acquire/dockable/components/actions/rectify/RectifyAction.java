@@ -139,7 +139,9 @@ public class RectifyAction extends AbstractAcquireAction {
     imageInfo.removeLayer(view);
     this.centralPanel.restoreLastAction();
 
-    if (view.getImageLayer() instanceof RenderedImageLayer && currentCropArea != null) {
+    if (view != null
+        && view.getImageLayer() instanceof RenderedImageLayer
+        && currentCropArea != null) {
       view.getGraphicManager().deleteByLayerType(LayerType.DICOM_PR);
       applyGraphicsTransformation(view, null, getAffineTransform(imageInfo, false));
 

@@ -758,7 +758,8 @@ public class DicomModel implements TreeModel, DataExplorerModel {
 
   private void rebuildSeries(DicomMediaIO dicomReader, DicomImageElement media) {
     String studyUID = TagD.getTagValue(dicomReader, Tag.StudyInstanceUID, String.class);
-    String patientPseudoUID = (String) dicomReader.getTagValue(TagW.PatientPseudoUID);
+    // The reader comes from an instanceof pattern, so it cannot be null
+    String patientPseudoUID = (String) dicomReader.getTagValue(TagW.PatientPseudoUID); // NOSONAR
     MediaSeriesGroup pt = getHierarchyNode(MediaSeriesGroupNode.rootNode, patientPseudoUID);
     if (pt == null) {
       MediaSeriesGroup st = getStudyNode(studyUID);

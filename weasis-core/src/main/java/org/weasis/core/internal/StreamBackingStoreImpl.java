@@ -83,6 +83,9 @@ public class StreamBackingStoreImpl implements BackingStore {
   /** Get the output stream to write the preferences. */
   protected OutputStream getOutputStream(PreferencesDescription desc) throws IOException {
     File file = getFile(desc);
+    if (file == null) {
+      throw new IOException("Cannot find the bundle " + desc.getBundleId());
+    }
     // Write user folder if not exists
     FileUtil.prepareToWriteFile(file.toPath());
     return new FileOutputStream(file);

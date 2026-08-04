@@ -10,6 +10,7 @@
 package org.weasis.core.ui.tp.raven.datetime;
 
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -62,27 +63,36 @@ public class PanelDateOptionLabel {
 
   public interface LabelCallback {
 
-    LabelCallback TODAY = () -> new LocalDate[] {LocalDate.now()};
-    LabelCallback YESTERDAY = () -> new LocalDate[] {LocalDate.now().minusDays(1)};
+    LabelCallback TODAY = () -> new LocalDate[] {LocalDate.now(ZoneId.systemDefault())};
+    LabelCallback YESTERDAY =
+        () -> new LocalDate[] {LocalDate.now(ZoneId.systemDefault()).minusDays(1)};
     LabelCallback LAST_7_DAYS =
-        () -> new LocalDate[] {LocalDate.now().minusDays(7), LocalDate.now()};
+        () ->
+            new LocalDate[] {
+              LocalDate.now(ZoneId.systemDefault()).minusDays(7),
+              LocalDate.now(ZoneId.systemDefault())
+            };
     LabelCallback LAST_30_DAYS =
-        () -> new LocalDate[] {LocalDate.now().minusDays(30), LocalDate.now()};
+        () ->
+            new LocalDate[] {
+              LocalDate.now(ZoneId.systemDefault()).minusDays(30),
+              LocalDate.now(ZoneId.systemDefault())
+            };
     LabelCallback THIS_MONTH =
         () -> {
-          LocalDate now = LocalDate.now();
+          LocalDate now = LocalDate.now(ZoneId.systemDefault());
           return new LocalDate[] {now.withDayOfMonth(1), now.withDayOfMonth(now.lengthOfMonth())};
         };
     LabelCallback LAST_MONTH =
         () -> {
-          LocalDate lastMonth = LocalDate.now().minusMonths(1);
+          LocalDate lastMonth = LocalDate.now(ZoneId.systemDefault()).minusMonths(1);
           return new LocalDate[] {
             lastMonth.withDayOfMonth(1), lastMonth.withDayOfMonth(lastMonth.lengthOfMonth())
           };
         };
     LabelCallback LAST_YEAR =
         () -> {
-          LocalDate lastYear = LocalDate.now().minusYears(1).withDayOfYear(1);
+          LocalDate lastYear = LocalDate.now(ZoneId.systemDefault()).minusYears(1).withDayOfYear(1);
           return new LocalDate[] {lastYear, lastYear.withDayOfYear(lastYear.lengthOfYear())};
         };
 

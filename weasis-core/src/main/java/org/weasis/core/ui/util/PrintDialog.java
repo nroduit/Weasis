@@ -104,9 +104,11 @@ public class PrintDialog<I extends ImageElement> extends JDialog {
             positionComboBox.getSelectedItem(), Messages.getString("PrintDialog.center")));
 
     ImageViewerPlugin<I> container = eventManager.getSelectedView2dContainer();
+    ViewCanvas<I> selectedView = eventManager.getSelectedViewPane();
+    boolean singleView = selectedViewCheckbox.isSelected();
 
-    List<ViewCanvas<I>> views = container.getImagePanels();
-    if (views.isEmpty()) {
+    List<ViewCanvas<I>> views = container == null ? List.of() : container.getImagePanels();
+    if (views.isEmpty() || (singleView && selectedView == null)) {
       JOptionPane.showMessageDialog(
           WinUtil.getValidComponent(this),
           Messages.getString("PrintDialog.no_print"),
@@ -117,14 +119,9 @@ public class PrintDialog<I extends ImageElement> extends JDialog {
     }
     dispose();
 
-    ExportLayout<I> layout;
-    if (!selectedViewCheckbox.isSelected()) {
-      // Several views
-      layout = new ExportLayout<>(container);
-    } else {
-      // One View
-      layout = new ExportLayout<>(eventManager.getSelectedViewPane());
-    }
+    // One view or several views
+    ExportLayout<I> layout =
+        singleView ? new ExportLayout<>(selectedView) : new ExportLayout<>(container);
 
     ImagePrint print = new ImagePrint(layout, printOptions);
     print.print();

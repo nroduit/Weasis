@@ -12,6 +12,7 @@ package org.weasis.acquire.explorer.core.bean;
 import java.nio.channels.FileChannel;
 import java.nio.channels.SeekableByteChannel;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -139,7 +140,8 @@ public class SeriesGroup extends DefaultTaggable implements Comparable<SeriesGro
   private final List<SeriesDataListener> listenerList = new ArrayList<>();
   private boolean needUpdateFromGlobalTags = false;
 
-  public static final SeriesGroup DATE_SERIES = new SeriesGroup(LocalDateTime.now());
+  public static final SeriesGroup DATE_SERIES =
+      new SeriesGroup(LocalDateTime.now(ZoneId.systemDefault()));
 
   public SeriesGroup() {
     this(Type.IMAGE);

@@ -229,9 +229,11 @@ public class DicomPrintDialog<I extends ImageElement> extends JDialog {
 
     DicomPrint dicomPrint = new DicomPrint(node, options);
     ImageViewerPlugin<I> container = eventManager.getSelectedView2dContainer();
+    ViewCanvas<I> selectedView = eventManager.getSelectedViewPane();
+    boolean singleView = optionPane.checkboxSelectedView.isSelected();
 
-    List<ViewCanvas<I>> views = container.getImagePanels();
-    if (views.isEmpty()) {
+    List<ViewCanvas<I>> views = container == null ? List.of() : container.getImagePanels();
+    if (views.isEmpty() || (singleView && selectedView == null)) {
       JOptionPane.showMessageDialog(
           WinUtil.getValidComponent(this),
           Messages.getString("DicomPrintDialog.no_print"),
@@ -243,12 +245,8 @@ public class DicomPrintDialog<I extends ImageElement> extends JDialog {
 
     doClose();
 
-    ExportLayout<I> layout;
-    if (optionPane.checkboxSelectedView.isSelected()) {
-      layout = new ExportLayout<>(eventManager.getSelectedViewPane());
-    } else {
-      layout = new ExportLayout<>(container);
-    }
+    ExportLayout<I> layout =
+        singleView ? new ExportLayout<>(selectedView) : new ExportLayout<>(container);
 
     try {
       dicomPrint.printImage(

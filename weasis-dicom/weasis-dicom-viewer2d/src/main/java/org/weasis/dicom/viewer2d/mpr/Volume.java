@@ -266,8 +266,13 @@ public abstract sealed class Volume<T extends Number, A>
       return;
     }
 
-    Vector3d firstTlhc = stack.getFirstImage().getSliceGeometry().getTLHC();
-    Vector3d lastTlhc = stack.getLastImage().getSliceGeometry().getTLHC();
+    GeometryOfSlice firstGeometry = stack.getFirstImage().getSliceGeometry();
+    GeometryOfSlice lastGeometry = stack.getLastImage().getSliceGeometry();
+    if (firstGeometry == null || lastGeometry == null) {
+      return;
+    }
+    Vector3d firstTlhc = firstGeometry.getTLHC();
+    Vector3d lastTlhc = lastGeometry.getTLHC();
 
     // Calculate the new bounds after rectification
     Vector3d[] transformedBounds = calculateBoundsForSize(firstTlhc, lastTlhc);

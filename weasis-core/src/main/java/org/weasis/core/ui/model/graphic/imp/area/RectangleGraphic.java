@@ -173,10 +173,11 @@ public class RectangleGraphic extends AbstractDragGraphicArea {
     Rectangle2D rectangle = null;
 
     if (pts.size() > 1) {
-      if (!getHandlePoint(eHandlePoint.NW.index).equals(getHandlePoint(eHandlePoint.SE.index))) {
+      Point2D nw = getHandlePoint(eHandlePoint.NW.index);
+      Point2D se = getHandlePoint(eHandlePoint.SE.index);
+      if (nw != null && !nw.equals(se)) {
         rectangle = new Rectangle2D.Double();
-        rectangle.setFrameFromDiagonal(
-            getHandlePoint(eHandlePoint.NW.index), getHandlePoint(eHandlePoint.SE.index));
+        rectangle.setFrameFromDiagonal(nw, se);
       }
     }
 

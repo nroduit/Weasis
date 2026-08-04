@@ -9,6 +9,7 @@
  */
 package org.weasis.dicom.viewer2d.mpr;
 
+import java.util.Objects;
 import org.dcm4che3.data.Tag;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeries.MEDIA_POSITION;
@@ -24,7 +25,7 @@ public class AbstractStack {
 
   public AbstractStack(Plane plane, MediaSeries<DicomImageElement> series) {
     this.plane = plane;
-    this.series = series;
+    this.series = Objects.requireNonNull(series);
 
     final DicomImageElement img = series.getMedia(MEDIA_POSITION.MIDDLE, null, null);
     if (img == null || img.getMediaReader() == null) {
@@ -32,8 +33,8 @@ public class AbstractStack {
       this.height = 0;
       return;
     }
-    this.width = TagD.getTagValue(img, Tag.Columns, Integer.class);
-    this.height = TagD.getTagValue(img, Tag.Rows, Integer.class);
+    this.width = Objects.requireNonNullElse(TagD.getTagValue(img, Tag.Columns, Integer.class), 0);
+    this.height = Objects.requireNonNullElse(TagD.getTagValue(img, Tag.Rows, Integer.class), 0);
   }
 
   public int getWidth() {

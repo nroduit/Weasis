@@ -112,7 +112,7 @@ public class SeriesDownloadManager {
       AtomicBoolean seriesInitialized) {
     this.loadSeries = loadSeries;
     this.dicomModel = dicomModel;
-    this.dicomSeries = dicomSeries;
+    this.dicomSeries = Objects.requireNonNull(dicomSeries);
     this.progressBar = progressBar;
     this.urlParams = urlParams;
     this.authMethod = authMethod;

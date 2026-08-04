@@ -28,7 +28,7 @@ public class ItemListComboBoxModel<T> extends ItemListModel<T> implements ComboB
 
   public ItemListComboBoxModel(ItemList<T> itemList) {
     super(itemList);
-    if (itemList.getSize() > 0) {
+    if (itemList != null && itemList.getSize() > 0) {
       selectedItem = itemList.getItem(0);
     }
   }

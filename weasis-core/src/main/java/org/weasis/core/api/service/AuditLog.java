@@ -40,6 +40,11 @@ public class AuditLog {
   public static final String LOG_FILE_NUMBER = "org.apache.sling.commons.log.file.number";
   public static final String LOG_FILE_SIZE = "org.apache.sling.commons.log.file.size";
   public static final String LOG_PATTERN = "org.apache.sling.commons.log.pattern";
+
+  /** Mirrors the value installed by the launcher when the preference is not set. */
+  public static final String DEFAULT_LOG_PATTERN =
+      "%d{dd.MM.yyyy HH:mm:ss.SSS} *%-5level* [%thread] %logger{36}: %msg%ex{3}%n"; // NON-NLS
+
   public static final String LOG_LOGGERS = "org.apache.sling.commons.log.names";
 
   public static final String MARKER_PERF = "*PERF*"; // NON-NLS
@@ -177,7 +182,8 @@ public class AuditLog {
     encoder.setContext(loggerContext);
 
     String limit = StringUtil.hasText(stackLimit) && !"-1".equals(stackLimit) ? stackLimit : "full";
-    String str = pattern.replaceAll("ex\\{\\d+}", "ex{" + limit + "}"); // NON-NLS
+    String layout = StringUtil.hasText(pattern) ? pattern : DEFAULT_LOG_PATTERN;
+    String str = layout.replaceAll("ex\\{\\d+}", "ex{" + limit + "}"); // NON-NLS
     encoder.setPattern(str);
     encoder.start();
     return encoder;

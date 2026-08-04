@@ -59,21 +59,23 @@ public class DicomExportPR extends DicomExport {
 
     ArrayList<AbstractItemDialogPage> list = new ArrayList<>();
     BundleContext context = AppProperties.getBundleContext(this.getClass());
-    try {
-      for (ServiceReference<DicomExportFactory> service :
-          context.getServiceReferences(
-              DicomExportFactory.class,
-              "(component.name=org.weasis.dicom.send.SendDicomFactory)")) {
-        DicomExportFactory factory = context.getService(service);
-        if (factory != null) {
-          ExportDicom page = factory.createDicomExportPage(properties);
-          if (page instanceof AbstractItemDialogPage dialogPage) {
-            list.add(dialogPage);
+    if (context != null) {
+      try {
+        for (ServiceReference<DicomExportFactory> service :
+            context.getServiceReferences(
+                DicomExportFactory.class,
+                "(component.name=org.weasis.dicom.send.SendDicomFactory)")) {
+          DicomExportFactory factory = context.getService(service);
+          if (factory != null) {
+            ExportDicom page = factory.createDicomExportPage(properties);
+            if (page instanceof AbstractItemDialogPage dialogPage) {
+              list.add(dialogPage);
+            }
           }
         }
+      } catch (Exception e) {
+        LOGGER.error("Insert DICOM export plugins", e);
       }
-    } catch (Exception e) {
-      LOGGER.error("Insert DICOM export plugins", e);
     }
 
     InsertableUtil.sortInsertable(list);

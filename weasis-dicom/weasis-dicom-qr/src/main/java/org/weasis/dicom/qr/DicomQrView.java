@@ -17,6 +17,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.nio.file.Path;
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.time.temporal.TemporalAdjusters;
 import java.time.temporal.WeekFields;
 import java.util.ArrayList;
@@ -117,73 +118,51 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
   public enum Period {
     ALL(Messages.getString("DicomQrView.all_dates"), () -> null),
 
-    TODAY(Messages.getString("DicomQrView.today"), LocalDate::now),
+    TODAY(Messages.getString("DicomQrView.today"), Period::today),
 
-    YESTERDAY(Messages.getString("DicomQrView.yesterday"), () -> LocalDate.now().minusDays(1)),
+    YESTERDAY(Messages.getString("DicomQrView.yesterday"), () -> today().minusDays(1)),
 
-    BEFORE_YESTERDAY(
-        Messages.getString("DicomQrView.day_before_yest"), () -> LocalDate.now().minusDays(2)),
+    BEFORE_YESTERDAY(Messages.getString("DicomQrView.day_before_yest"), () -> today().minusDays(2)),
 
     CUR_WEEK(
         Messages.getString("DicomQrView.this_week"),
-        () ->
-            LocalDate.now().with(WeekFields.of(Locale.getDefault(Category.FORMAT)).dayOfWeek(), 1),
-        LocalDate::now),
+        () -> today().with(WeekFields.of(Locale.getDefault(Category.FORMAT)).dayOfWeek(), 1),
+        Period::today),
 
     CUR_MONTH(
         Messages.getString("DicomQrView.this_month"),
-        () -> LocalDate.now().with(TemporalAdjusters.firstDayOfMonth()),
-        LocalDate::now),
+        () -> today().with(TemporalAdjusters.firstDayOfMonth()),
+        Period::today),
 
     CUR_YEAR(
         Messages.getString("DicomQrView.this_year"),
-        () -> LocalDate.now().with(TemporalAdjusters.firstDayOfYear()),
-        LocalDate::now),
+        () -> today().with(TemporalAdjusters.firstDayOfYear()),
+        Period::today),
 
-    LAST_DAY(
-        Messages.getString("DicomQrView.last_24h"),
-        () -> LocalDate.now().minusDays(1),
-        LocalDate::now),
+    LAST_DAY(Messages.getString("DicomQrView.last_24h"), () -> today().minusDays(1), Period::today),
 
     LAST_2_DAYS(
-        Messages.getString("DicomQrView.last_2_d"),
-        () -> LocalDate.now().minusDays(2),
-        LocalDate::now),
+        Messages.getString("DicomQrView.last_2_d"), () -> today().minusDays(2), Period::today),
 
     LAST_3_DAYS(
-        Messages.getString("DicomQrView.last_3_d"),
-        () -> LocalDate.now().minusDays(3),
-        LocalDate::now),
+        Messages.getString("DicomQrView.last_3_d"), () -> today().minusDays(3), Period::today),
 
-    LAST_WEEK(
-        Messages.getString("DicomQrView.last_w"),
-        () -> LocalDate.now().minusWeeks(1),
-        LocalDate::now),
+    LAST_WEEK(Messages.getString("DicomQrView.last_w"), () -> today().minusWeeks(1), Period::today),
 
     LAST_2_WEEKS(
-        Messages.getString("DicomQrView.last_2_w"),
-        () -> LocalDate.now().minusWeeks(2),
-        LocalDate::now),
+        Messages.getString("DicomQrView.last_2_w"), () -> today().minusWeeks(2), Period::today),
 
     LAST_MONTH(
-        Messages.getString("DicomQrView.last_m"),
-        () -> LocalDate.now().minusMonths(1),
-        LocalDate::now),
+        Messages.getString("DicomQrView.last_m"), () -> today().minusMonths(1), Period::today),
 
     LAST_3_MONTHS(
-        Messages.getString("DicomQrView.last_3_m"),
-        () -> LocalDate.now().minusMonths(3),
-        LocalDate::now),
+        Messages.getString("DicomQrView.last_3_m"), () -> today().minusMonths(3), Period::today),
 
     LAST_6_MONTHS(
-        Messages.getString("DicomQrView.last_6_m"),
-        () -> LocalDate.now().minusMonths(6),
-        LocalDate::now),
+        Messages.getString("DicomQrView.last_6_m"), () -> today().minusMonths(6), Period::today),
 
     LAST_YEAR(
-        Messages.getString("DicomQrView.last_year"),
-        () -> LocalDate.now().minusYears(1),
-        LocalDate::now);
+        Messages.getString("DicomQrView.last_year"), () -> today().minusYears(1), Period::today);
 
     private final String displayName;
     private final Supplier<LocalDate> startSupplier;
@@ -207,6 +186,10 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
 
     public LocalDate getEnd() {
       return endSupplier.get();
+    }
+
+    private static LocalDate today() {
+      return LocalDate.now(ZoneId.systemDefault());
     }
 
     @Override

@@ -1281,7 +1281,7 @@ Starting OSGI Bundles...
   private boolean isOlderThan(Path path, long days) {
     try {
       FileTime fileTime = Files.getLastModifiedTime(path);
-      LocalDateTime now = LocalDateTime.now();
+      LocalDateTime now = LocalDateTime.now(ZoneId.systemDefault());
       LocalDateTime convertedFileTime =
           LocalDateTime.ofInstant(fileTime.toInstant(), ZoneId.systemDefault());
       long daysBetween = DAYS.between(convertedFileTime, now);

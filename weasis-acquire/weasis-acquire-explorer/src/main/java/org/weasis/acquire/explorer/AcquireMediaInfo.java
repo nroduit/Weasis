@@ -95,7 +95,7 @@ public class AcquireMediaInfo {
   }
 
   protected static void setContentDateTime(MediaElement media, LocalDateTime dateTime) {
-    LocalDateTime now = LocalDateTime.now();
+    LocalDateTime now = LocalDateTime.now(ZoneId.systemDefault());
     if (dateTime == null
         || dateTime.isAfter(now.plusDays(1))
         || dateTime.isBefore(now.minusYears(30))) {

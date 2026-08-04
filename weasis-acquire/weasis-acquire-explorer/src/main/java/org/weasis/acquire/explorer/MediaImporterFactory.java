@@ -68,24 +68,21 @@ public class MediaImporterFactory implements DataExplorerViewFactory {
   }
 
   private void registerCommands(ComponentContext context) {
-    if (context != null) {
-      ServiceReference<?>[] val = null;
+    ServiceReference<?>[] val = null;
 
-      String serviceClassName = AcquireManager.class.getName();
-      try {
-        val = context.getBundleContext().getServiceReferences(serviceClassName, null);
-      } catch (InvalidSyntaxException e) {
-        LOGGER.error("Get media importer services", e);
-      }
-      if (val == null || val.length == 0) {
-        Dictionary<String, Object> dict = new Hashtable<>();
-        dict.put(CommandProcessor.COMMAND_SCOPE, "acquire"); // NON-NLS
-        dict.put(
-            CommandProcessor.COMMAND_FUNCTION, AcquireManager.functions.toArray(new String[0]));
-        context
-            .getBundleContext()
-            .registerService(serviceClassName, AcquireManager.getInstance(), dict);
-      }
+    String serviceClassName = AcquireManager.class.getName();
+    try {
+      val = context.getBundleContext().getServiceReferences(serviceClassName, null);
+    } catch (InvalidSyntaxException e) {
+      LOGGER.error("Get media importer services", e);
+    }
+    if (val == null || val.length == 0) {
+      Dictionary<String, Object> dict = new Hashtable<>();
+      dict.put(CommandProcessor.COMMAND_SCOPE, "acquire"); // NON-NLS
+      dict.put(CommandProcessor.COMMAND_FUNCTION, AcquireManager.functions.toArray(new String[0]));
+      context
+          .getBundleContext()
+          .registerService(serviceClassName, AcquireManager.getInstance(), dict);
     }
   }
 }

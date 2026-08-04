@@ -564,10 +564,7 @@ public abstract class ImageViewerEventManager<E extends ImageElement> implements
   }
 
   public <T> Optional<T> getAction(Feature<T> feature) {
-    if (feature != null) {
-      return Optional.ofNullable((T) actions.get(feature));
-    }
-    return Optional.empty();
+    return Optional.ofNullable((T) actions.get(feature));
   }
 
   public boolean isActionRegistered(Feature<?> feature) {
