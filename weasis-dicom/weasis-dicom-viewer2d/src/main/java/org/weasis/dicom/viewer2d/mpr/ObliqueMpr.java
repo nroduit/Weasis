@@ -213,7 +213,8 @@ public class ObliqueMpr extends OriginalStack {
     String frUID = TagD.getTagValue(stack.series, Tag.FrameOfReferenceUID, String.class);
     if (frUID == null) {
       frUID = UIDUtils.createUID();
-      stack.series.setTag(TagD.get(Tag.FrameOfReferenceUID), frUID);
+      // The series is required by the AbstractStack constructor
+      stack.series.setTag(TagD.get(Tag.FrameOfReferenceUID), frUID); // NOSONAR
     }
     return frUID;
   }

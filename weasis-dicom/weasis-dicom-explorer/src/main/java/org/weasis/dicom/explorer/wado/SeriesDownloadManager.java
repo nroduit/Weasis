@@ -234,7 +234,8 @@ public class SeriesDownloadManager {
   }
 
   private void appendTransferSyntaxParameters(StringBuilder url) {
-    String wadoTsuid = (String) dicomSeries.getTagValue(TagW.WadoTransferSyntaxUID);
+    // The series is required by the constructor
+    String wadoTsuid = (String) dicomSeries.getTagValue(TagW.WadoTransferSyntaxUID); // NOSONAR
     if (StringUtil.hasText(wadoTsuid)) {
       url.append("&transferSyntax=").append(wadoTsuid);
       Integer rate = (Integer) dicomSeries.getTagValue(TagW.WadoCompressionRate);

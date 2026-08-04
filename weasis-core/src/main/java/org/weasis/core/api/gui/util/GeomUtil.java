@@ -684,12 +684,18 @@ public final class GeomUtil {
   }
 
   public static Rectangle2D getGrowingRectangle(Rectangle2D rect, double growingSize) {
-    Rectangle2D growingRect = rect != null ? (Rectangle2D) rect.clone() : null;
+    if (rect == null) {
+      return null;
+    }
+    Rectangle2D growingRect = (Rectangle2D) rect.clone();
     growRectangle(growingRect, growingSize);
     return growingRect;
   }
 
   public static void growRectangle(Rectangle2D rect, double growingSize) {
+    if (rect == null) {
+      return;
+    }
     if (MathUtil.isDifferentFromZero(growingSize)) {
       double newX = rect.getX() - growingSize;
       double newY = rect.getY() - growingSize;
