@@ -106,14 +106,38 @@ objdump -T <file>.so | grep -oE 'GLIBC_[0-9]+\.[0-9]+' | sort -V | tail -1
 
 ## 6. Shared `--java-options`
 
-Each build path declares the runtime options as `customOptions` (per-OS, e.g. the splash screen and
-Linux-only `-Dsun.awt.disablegrab=true`) plus `commonOptions` (identical everywhere):
-`-Dgosh.port=17179`, `--enable-native-access=ALL-UNNAMED`, `-XX:MaxRAMPercentage=25`,
+`script/launch-options.sh` is the single source of truth for `JDK_MODULES`, `customOptions` (per-OS,
+e.g. the splash screen and Linux-only `-Dsun.awt.disablegrab=true`) and `commonOptions` (identical
+everywhere): `-Dgosh.port=17179`, `--enable-native-access=ALL-UNNAMED`, `-XX:MaxRAMPercentage=25`,
 `-XX:+UseStringDeduplication`,
 `-Djavax.accessibility.assistive_technologies=org.weasis.launcher.EmptyAccessibilityProvider`,
 `-Djavax.accessibility.screen_magnifier_present=false`.
 
-- **macOS / Windows** — declared once in the `jpackage` job's *"Build app binary"* step and applied to
-  the app-image; the package step reuses that image.
-- **Linux** — declared in `package-weasis.sh`, which (since the app-image step is skipped) passes them
-  directly to the single-step `.deb`/`.rpm` build.
+Both build paths source it with the platform as argument, so the launchers cannot drift apart:
+
+- **macOS / Windows** — sourced by the `jpackage` job's *"Build app binary"* step and applied to the
+  app-image; the package step reuses that image.
+- **Linux** — sourced by `package-weasis.sh`, which (since the app-image step is skipped) passes the
+  options directly to the single-step `.deb`/`.rpm` build.
+
+### The Dicomizer launcher does not inherit them
+
+`--add-launcher Dicomizer=resources/<platform>/dicomizer-launcher.properties` defines `java-options`,
+and jpackage **discards** the command line `--java-options` for a launcher whose properties file sets
+that key (`AddLauncherArguments.merge`). The options are therefore repeated in each
+`dicomizer-launcher.properties`, minus any deployment option pointing to a remote configuration
+service: the Dicomizer reads its configuration from `conf/dicomizer.json`.
+
+## 7. Deployment specific customisation
+
+Both build paths look for two optional scripts next to `package-weasis.sh`. Neither is part of the
+public distribution: when absent the build produces the stock installers, so a deployment can carry
+its own settings without patching the shared scripts.
+
+| Script | Called | Purpose |
+|--------|--------|---------|
+| `script/launch-options-site.sh` | sourced last by `launch-options.sh` | appends to `commonOptions` — e.g. the URL of a configuration service |
+| `script/prepare-input-site.sh` | before jpackage, with `bin-dist/weasis` as argument | adapts the packaged payload — e.g. deletes `conf/*.json` properties that only the server must provide |
+
+Because `weasis-native.zip` is uploaded by the `build` job before any packaging, changes made by
+`prepare-input-site.sh` never reach the published server payload.

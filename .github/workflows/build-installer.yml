@@ -100,6 +100,7 @@ jobs:
       WEASIS_INPUT: "native-dist/weasis-native/bin-dist"
       WEASIS_OUTPUT: "output-dist"
       WEASIS_INPUT_BIN: "native-dist/weasis-native/bin-dist/weasis"
+      WEASIS_SCRIPT: "native-dist/weasis-native/build/script"
     runs-on: ${{ matrix.os }}
     needs: [setup, build]
     if: ${{ needs.setup.outputs.jpackage_matrix != '[]' }}
@@ -109,14 +110,6 @@ jobs:
         include: ${{ fromJSON(needs.setup.outputs.jpackage_matrix) }}
 
     steps:
-      - name: Set JDK modules based on OS
-        shell: bash
-        run: |
-          if [ "${{ matrix.wsystem }}" = "windows" ]; then
-            echo "JDK_MODULES=java.base,java.compiler,java.datatransfer,java.net.http,java.desktop,java.logging,java.management,jdk.management,java.prefs,java.xml,jdk.localedata,jdk.charsets,jdk.crypto.ec,jdk.crypto.cryptoki,jdk.crypto.mscapi,jdk.jdwp.agent,java.sql" >> $GITHUB_ENV
-          else
-            echo "JDK_MODULES=java.base,java.compiler,java.datatransfer,java.net.http,java.desktop,java.logging,java.management,jdk.management,java.prefs,java.xml,jdk.localedata,jdk.charsets,jdk.crypto.ec,jdk.crypto.cryptoki,jdk.jdwp.agent,java.sql" >> $GITHUB_ENV
-          fi
       - name: Set output version from build
         shell: bash
         run: |
@@ -153,6 +146,16 @@ jobs:
           find ${{ env.WEASIS_INPUT_BIN }}/bundle/jogamp-* -type f ! -name "*-${{ matrix.wsystem }}-${{ matrix.warc }}-*" ! -name "jogamp-[0-9]*" -exec rm -f {} \;
           echo "$(ls ${{ env.WEASIS_INPUT_BIN }}/bundle/)"
 
+      - name: Apply the deployment specific preparation
+        shell: bash
+        run: |
+          siteHook="${{ env.WEASIS_SCRIPT }}/prepare-input-site.sh"
+          if [[ -f "$siteHook" ]] ; then
+            bash "$siteHook" "${{ env.WEASIS_INPUT_BIN }}"
+          else
+            echo "No deployment specific preparation"
+          fi
+
       - name: Import Developer Certificate
         uses: apple-actions/import-codesign-certs@5142e029c445c10ffc7149d172e540235a065466  # v7
         if: matrix.wsystem == 'macosx'
@@ -184,9 +187,14 @@ jobs:
       - name: Build app binary with jpackage
         shell: bash
         env:
-          RES: "native-dist/weasis-native/build/script/resources/${{ matrix.wsystem }}"
+          RES: "${{ env.WEASIS_SCRIPT }}/resources/${{ matrix.wsystem }}"
         run: |
           machine=${{ matrix.wsystem }}
+
+          # JDK_MODULES, customOptions and commonOptions are shared with package-weasis.sh
+          source "${{ env.WEASIS_SCRIPT }}/launch-options.sh" "$machine"
+
+          declare -a signArgs=()
           if [ "$machine" = "macosx" ] ; then
             KEYCHAIN="$HOME/Library/Keychains/signing_temp.keychain-db"
 
@@ -231,25 +239,15 @@ jobs:
               fi
             done
 
-            declare -a customOptions=("--java-options" "-splash:\$APPDIR/resources/images/about-round.png" "--java-options" "-Dapple.laf.useScreenMenuBar=true" "--java-options" "-Dapple.awt.application.appearance=NSAppearanceNameDarkAqua")
             # Use jpackage's built-in signing (--mac-sign) which applies --options runtime
             # and --timestamp correctly in inside-out order, exactly like package-weasis.sh.
-            declare -a signArgs=("--mac-package-identifier" "${{ env.IDENTIFIER }}" \
+            signArgs=("--mac-package-identifier" "${{ env.IDENTIFIER }}" \
               "--mac-signing-key-user-name" "$MAC_SIGNING_USER" \
               "--mac-sign")
-          elif [ "$machine" = "windows" ] ; then
-            declare -a customOptions=("--java-options" "-splash:\$APPDIR\resources\images\about-round.png" )
-            declare -a signArgs=()
           fi
-          declare -a commonOptions=("--java-options" "-Dgosh.port=17179" \
-          "--java-options" "--enable-native-access=ALL-UNNAMED" \
-          "--java-options" "-XX:MaxRAMPercentage=25" \
-          "--java-options" "-XX:+UseStringDeduplication" \
-          "--java-options" "-Djavax.accessibility.assistive_technologies=org.weasis.launcher.EmptyAccessibilityProvider" \
-          "--java-options" "-Djavax.accessibility.screen_magnifier_present=false" )
 
           jpackage --type app-image --input "${{ env.WEASIS_INPUT_BIN }}" --dest "${{ env.WEASIS_OUTPUT }}" --name "${{ env.NAME }}" \
-          --main-jar weasis-launcher.jar --main-class org.weasis.launcher.AppLauncher --add-modules "${{ env.JDK_MODULES }}" \
+          --main-jar weasis-launcher.jar --main-class org.weasis.launcher.AppLauncher --add-modules "$JDK_MODULES" \
           --resource-dir "${{ env.RES }}" --app-version "${{ env.WEASIS_CLEAN_VERSION }}" --add-launcher "Dicomizer=${{ env.RES }}/dicomizer-launcher.properties" \
           "${signArgs[@]}" "${customOptions[@]}" "${commonOptions[@]}"
 
@@ -302,8 +300,8 @@ jobs:
       - name: Build package with jpackage
         shell: bash
         env:
-          RES: "native-dist/weasis-native/build/script/resources/${{ matrix.wsystem }}"
-          FILE_ASSOC: "native-dist/weasis-native/build/script/file-associations.properties"
+          RES: "${{ env.WEASIS_SCRIPT }}/resources/${{ matrix.wsystem }}"
+          FILE_ASSOC: "${{ env.WEASIS_SCRIPT }}/file-associations.properties"
           VENDOR: "Weasis Team"
           COPYRIGHT: "© 2009-2026 Weasis Team"
         run: |
@@ -341,6 +339,7 @@ jobs:
 
       - name: Notarize Release Build
         if: matrix.wsystem == 'macosx'
+        shell: bash
         run: |
           SUBMISSION=$(xcrun notarytool submit \
             "final-dist/${{ env.NAME }}-${{ env.WEASIS_CLEAN_VERSION }}-${{ matrix.warc }}.pkg" \
@@ -362,6 +361,7 @@ jobs:
 
       - name: Staple Release Build
         if: matrix.wsystem == 'macosx'
+        shell: bash
         run: |
           xcrun stapler staple \
             "final-dist/${{ env.NAME }}-${{ env.WEASIS_CLEAN_VERSION }}-${{ matrix.warc }}.pkg"
@@ -412,6 +412,7 @@ jobs:
         uses: docker/setup-buildx-action@bb05f3f5519dd87d3ba754cc423b652a5edd6d2c  # v4
 
       - name: Run Docker container to package Weasis for ${{ matrix.arch }}
+        shell: bash
         run: |
           ARCH="${{ matrix.arch }}"
 
