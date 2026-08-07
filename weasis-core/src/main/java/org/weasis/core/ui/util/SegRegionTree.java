@@ -38,6 +38,9 @@ public class SegRegionTree extends CheckboxTree {
 
   protected final SegRegionTool segRegionTool;
 
+  /** Row whose color swatch is currently hovered, or {@code -1} when none. */
+  private int hoveredSwatchRow = -1;
+
   public SegRegionTree(SegRegionTool segRegionTool) {
     this.segRegionTool = segRegionTool;
   }
@@ -53,20 +56,27 @@ public class SegRegionTree extends CheckboxTree {
   protected void mousePressed(MouseEvent e) {
     popupMenu.removeAll();
     if (SwingUtilities.isRightMouseButton(e)) {
-      DefaultMutableTreeNode node = getTreeNode(e.getPoint());
-      if (node != null) {
-        boolean leaf = node.isLeaf();
-        if (!leaf) {
-          addPopupMenuItem(getCheckAllMenuItem(node, true));
-          addPopupMenuItem(getCheckAllMenuItem(node, false));
-        }
-        addPopupMenuItem(getOpacityMenuItem(node, e.getPoint()));
-        if (leaf) {
-          addPopupMenuItem(getSelectionMenuItem(node));
-          addPopupMenuItem(getStatisticMenuItem(node));
-        }
-        popupMenu.show(SegRegionTree.this, e.getX(), e.getY());
+      showPopupMenu(e);
+    } else if (SwingUtilities.isLeftMouseButton(e)) {
+      pickColorOnSwatch(e.getPoint());
+    }
+  }
+
+  protected void showPopupMenu(MouseEvent e) {
+    DefaultMutableTreeNode node = getTreeNode(e.getPoint());
+    if (node != null) {
+      boolean leaf = node.isLeaf();
+      if (!leaf) {
+        addPopupMenuItem(getCheckAllMenuItem(node, true));
+        addPopupMenuItem(getCheckAllMenuItem(node, false));
       }
+      addPopupMenuItem(getColorMenuItem(node));
+      addPopupMenuItem(getOpacityMenuItem(node, e.getPoint()));
+      if (leaf) {
+        addPopupMenuItem(getSelectionMenuItem(node));
+        addPopupMenuItem(getStatisticMenuItem(node));
+      }
+      popupMenu.show(SegRegionTree.this, e.getX(), e.getY());
     }
   }
 
@@ -77,13 +87,59 @@ public class SegRegionTree extends CheckboxTree {
   }
 
   public void initListeners() {
-    addMouseListener(
+    MouseAdapter adapter =
         new MouseAdapter() {
           @Override
           public void mousePressed(MouseEvent e) {
             SegRegionTree.this.mousePressed(e);
           }
-        });
+
+          @Override
+          public void mouseMoved(MouseEvent e) {
+            setHoveredSwatchRow(swatchRowAt(e.getPoint()));
+          }
+
+          @Override
+          public void mouseExited(MouseEvent e) {
+            setHoveredSwatchRow(-1);
+          }
+        };
+    addMouseListener(adapter);
+    addMouseMotionListener(adapter);
+  }
+
+  /** Returns {@code true} when the color swatch of the given row is hovered by the mouse. */
+  public boolean isSwatchHovered(int row) {
+    return row >= 0 && row == hoveredSwatchRow;
+  }
+
+  private int swatchRowAt(Point pt) {
+    TreePath path = getPathForLocation(pt.x, pt.y);
+    if (path != null
+        && path.getLastPathComponent() instanceof DefaultMutableTreeNode node
+        && isOnColorSwatch(pt, path, node)) {
+      return getRowForPath(path);
+    }
+    return -1;
+  }
+
+  private void setHoveredSwatchRow(int row) {
+    if (row == hoveredSwatchRow) {
+      return;
+    }
+    int previous = hoveredSwatchRow;
+    hoveredSwatchRow = row;
+    // A null cursor inherits the parent one, restoring the default tree cursor.
+    setCursor(row < 0 ? null : Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+    repaintRow(previous);
+    repaintRow(row);
+  }
+
+  private void repaintRow(int row) {
+    Rectangle bounds = row < 0 ? null : getRowBounds(row);
+    if (bounds != null) {
+      repaint(bounds);
+    }
   }
 
   @Override
@@ -125,6 +181,75 @@ public class SegRegionTree extends CheckboxTree {
     return selectAllMenuItem;
   }
 
+  protected JMenuItem getColorMenuItem(DefaultMutableTreeNode node) {
+    JMenuItem jMenuItem = new JMenuItem(Messages.getString("MeasureTool.pick_color"));
+    jMenuItem.addActionListener(_ -> pickColor(collectRegions(node)));
+    return jMenuItem;
+  }
+
+  /** Opens the color chooser when the click lands on the color swatch of a region node. */
+  private void pickColorOnSwatch(Point pt) {
+    TreePath path = getPathForLocation(pt.x, pt.y);
+    if (path != null
+        && path.getLastPathComponent() instanceof DefaultMutableTreeNode node
+        && isOnColorSwatch(pt, path, node)) {
+      List<SegRegion<?>> segRegions = collectRegions(node);
+      // Let the tree finish handling the click before showing the modal chooser.
+      SwingUtilities.invokeLater(() -> pickColor(segRegions));
+    }
+  }
+
+  private boolean isOnColorSwatch(Point pt, TreePath path, DefaultMutableTreeNode node) {
+    Component comp =
+        getCellRenderer()
+            .getTreeCellRendererComponent(
+                this, node, false, isExpanded(path), node.isLeaf(), getRowForPath(path), false);
+    if (comp instanceof SegRegionCellRenderer renderer) {
+      Rectangle swatch = renderer.getSwatchBounds(getPathBounds(path));
+      return swatch != null && swatch.contains(pt);
+    }
+    return false;
+  }
+
+  /** Applies a user-picked color to the given regions, preserving their current opacity. */
+  protected void pickColor(List<SegRegion<?>> segRegions) {
+    if (segRegions.isEmpty()) {
+      return;
+    }
+    Color color =
+        JColorChooser.showDialog(
+            this, Messages.getString("MeasureTool.pick_color"), segRegions.getFirst().getColor());
+    if (color == null) {
+      return;
+    }
+    for (SegRegion<?> region : segRegions) {
+      Color previous = region.getColor();
+      int alpha = previous == null ? 255 : previous.getAlpha();
+      region.setColor(new Color(color.getRed(), color.getGreen(), color.getBlue(), alpha));
+    }
+    repaint();
+    segRegionTool.updateVisibleNode();
+  }
+
+  /** Returns the region of a leaf node, or the regions of all the children of a group node. */
+  protected static List<SegRegion<?>> collectRegions(DefaultMutableTreeNode node) {
+    if (node == null) {
+      return List.of();
+    }
+    if (node.isLeaf()) {
+      return node.getUserObject() instanceof SegRegion<?> region ? List.of(region) : List.of();
+    }
+    List<SegRegion<?>> segRegions = new ArrayList<>(node.getChildCount());
+    Enumeration<?> children = node.children();
+    while (children.hasMoreElements()) {
+      if (children.nextElement() instanceof DefaultMutableTreeNode dtm
+          && dtm.getUserObject() instanceof SegRegion<?> region) {
+        segRegions.add(region);
+      }
+    }
+    return segRegions;
+  }
+
   protected JMenuItem getOpacityMenuItem(DefaultMutableTreeNode node, Point pt) {
     JMenuItem jMenuItem = new JMenuItem(PropertiesDialog.FILL_OPACITY);
     jMenuItem.addActionListener(_ -> showSliderInPopup(node, pt));
@@ -133,20 +258,7 @@ public class SegRegionTree extends CheckboxTree {
 
   private void showSliderInPopup(DefaultMutableTreeNode node, Point pt) {
     if (node != null) {
-      List<SegRegion<?>> segRegions = new ArrayList<>();
-      if (node.isLeaf() && node.getUserObject() instanceof SegRegion<?> region) {
-        segRegions.add(region);
-      } else {
-        Enumeration<?> children = node.children();
-        while (children.hasMoreElements()) {
-          Object child = children.nextElement();
-          if (child instanceof DefaultMutableTreeNode dtm
-              && dtm.getUserObject() instanceof SegRegion<?> region) {
-            segRegions.add(region);
-          }
-        }
-      }
-
+      List<SegRegion<?>> segRegions = collectRegions(node);
       if (segRegions.isEmpty()) {
         return;
       }

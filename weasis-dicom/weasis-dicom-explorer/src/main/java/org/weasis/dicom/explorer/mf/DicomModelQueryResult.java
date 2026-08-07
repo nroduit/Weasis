@@ -13,21 +13,16 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Objects;
-import java.util.Set;
 import org.dcm4che3.data.Tag;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.MediaSeriesGroupNode;
 import org.weasis.core.api.media.data.TagW;
-import org.weasis.core.ui.model.GraphicModel;
 import org.weasis.core.util.StringUtil;
-import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.DicomSpecialElement;
-import org.weasis.dicom.codec.KOSpecialElement;
 import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.explorer.DicomModel;
 import org.weasis.dicom.mf.AbstractQueryResult;
@@ -40,8 +35,6 @@ import org.weasis.dicom.mf.WadoParameters;
 public class DicomModelQueryResult extends AbstractQueryResult {
 
   private final WadoParameters wadoParameters;
-  private final Set<KOSpecialElement> koEditable;
-  private final Set<DicomImageElement> images;
 
   public DicomModelQueryResult(DicomModel model, WadoParameters wadoParameters) {
     this(model, wadoParameters, (MediaSeriesGroup[]) null);
@@ -50,22 +43,12 @@ public class DicomModelQueryResult extends AbstractQueryResult {
   public DicomModelQueryResult(
       DicomModel model, WadoParameters wadoParameters, MediaSeriesGroup... patient) {
     this.wadoParameters = Objects.requireNonNull(wadoParameters);
-    this.koEditable = new LinkedHashSet<>();
-    this.images = new LinkedHashSet<>();
     init(model, patient);
   }
 
   @Override
   public WadoParameters getWadoParameters() {
     return wadoParameters;
-  }
-
-  public Set<KOSpecialElement> getKoEditable() {
-    return koEditable;
-  }
-
-  public Set<DicomImageElement> getImages() {
-    return images;
   }
 
   private void init(DicomModel model, MediaSeriesGroup... patientGroups) {
@@ -111,7 +94,6 @@ public class DicomModelQueryResult extends AbstractQueryResult {
           }
         }
       }
-      koEditable.addAll(DicomModel.getEditableKoSpecialElements(patient));
     }
 
     removeItemsWithoutElements();
@@ -189,13 +171,6 @@ public class DicomModelQueryResult extends AbstractQueryResult {
         // Out of date (as the real server syntax is unknown and client has now all the codecs)
         // sop.setTransferSyntaxUID(TagD.getTagValue(media, Tag.TransferSyntaxUID, String.class));
         s.addSopInstance(sop);
-      }
-
-      if (media instanceof DicomImageElement imageElement) {
-        GraphicModel model = (GraphicModel) media.getTagValue(TagW.PresentationModel);
-        if (model != null && model.hasSerializableGraphics()) {
-          images.add(imageElement);
-        }
       }
     }
   }

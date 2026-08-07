@@ -10,16 +10,13 @@
 package org.weasis.core.ui.serialize;
 
 import jakarta.xml.bind.JAXBContext;
-import jakarta.xml.bind.JAXBElement;
 import jakarta.xml.bind.JAXBException;
 import jakarta.xml.bind.Marshaller;
 import jakarta.xml.bind.Unmarshaller;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.Reader;
-import java.io.Writer;
 import java.util.Map;
-import javax.xml.stream.XMLStreamReader;
 import org.glassfish.jaxb.runtime.v2.ContextFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -67,39 +64,6 @@ public class XmlSerializer {
     }
   }
 
-  public static void writePresentation(ImageElement img, Writer writer) {
-    GraphicModel model = (GraphicModel) img.getTagValue(TagW.PresentationModel);
-    writePresentation(model, writer);
-  }
-
-  public static void writePresentation(GraphicModel model, Writer writer) {
-    if (model != null && model.hasSerializableGraphics()) {
-      try {
-        JAXBContext jaxbContext = getJaxbContext(model.getClass());
-        Marshaller jaxbMarshaller = jaxbContext.createMarshaller();
-        // Remove the xml header tag
-        jaxbMarshaller.setProperty(Marshaller.JAXB_FRAGMENT, Boolean.TRUE);
-        jaxbMarshaller.marshal(model, writer);
-      } catch (Exception e) {
-        LOGGER.error("Cannot write GraphicModel", e);
-      }
-    }
-  }
-
-  public static GraphicModel readPresentation(XMLStreamReader xmler) {
-    try {
-      JAXBContext jaxbContext = getJaxbContext(XmlGraphicModel.class);
-      Unmarshaller jaxbUnmarshaller = jaxbContext.createUnmarshaller();
-      JAXBElement<XmlGraphicModel> unmarshalledObj =
-          jaxbUnmarshaller.unmarshal(
-              new NoNamespaceStreamReaderDelegate(xmler), XmlGraphicModel.class);
-      return getGraphicModel(unmarshalledObj.getValue());
-    } catch (Exception e) {
-      LOGGER.error("Cannot write GraphicModel", e);
-    }
-    return null;
-  }
-
   @SuppressWarnings("unchecked")
   public static <T> T deserialize(Reader reader, Class<T> clazz) throws JAXBException {
     JAXBContext context = getJaxbContext(clazz);
@@ -132,7 +96,7 @@ public class XmlSerializer {
   }
 
   public static JAXBContext getJaxbContext(Class<?>... clazz) throws JAXBException {
-    return ContextFactory.createContext(clazz, null);
+    return getJaxbContext(null, clazz);
   }
 
   public static JAXBContext getJaxbContext(Map<String, Object> properties, Class<?>... clazz)

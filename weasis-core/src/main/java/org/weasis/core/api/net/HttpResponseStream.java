@@ -25,12 +25,21 @@ public record HttpResponseStream(Response response) implements HttpStream {
   }
 
   public HttpResponseStream(HttpResponse<InputStream> httpResponse) {
-    this(
-        new Response(
-            httpResponse.statusCode(),
-            httpResponse.version().toString(),
-            JavaNetHttpClient.parseHeaders(httpResponse),
-            httpResponse.body()));
+    this(httpResponse, 0);
+  }
+
+  /** Guards the body against stalled reads; {@code stallTimeoutMillis <= 0} disables the guard. */
+  public HttpResponseStream(HttpResponse<InputStream> httpResponse, int stallTimeoutMillis) {
+    this(toResponse(httpResponse, stallTimeoutMillis));
+  }
+
+  private static Response toResponse(
+      HttpResponse<InputStream> httpResponse, int stallTimeoutMillis) {
+    return new Response(
+        httpResponse.statusCode(),
+        httpResponse.version().toString(),
+        JavaNetHttpClient.parseHeaders(httpResponse),
+        StallGuardInputStream.wrap(httpResponse.body(), stallTimeoutMillis));
   }
 
   @Override

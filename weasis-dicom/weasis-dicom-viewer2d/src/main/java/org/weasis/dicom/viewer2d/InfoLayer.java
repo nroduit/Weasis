@@ -58,6 +58,7 @@ import org.weasis.dicom.codec.geometry.ImageOrientation.Plan;
 import org.weasis.dicom.codec.geometry.PatientOrientation.Biped;
 import org.weasis.dicom.codec.geometry.VectorUtils;
 import org.weasis.dicom.explorer.DicomModel;
+import org.weasis.dicom.viewer2d.fusion.FusionColorBar;
 import org.weasis.dicom.viewer2d.mpr.MprController;
 import org.weasis.dicom.viewer2d.mpr.MprView;
 import org.weasis.opencv.data.PlanarImage;
@@ -85,6 +86,7 @@ public class InfoLayer extends AbstractInfoLayer<DicomImageElement> {
     displayPreferences.put(LayerItem.ANONYM_ANNOTATIONS, false);
     displayPreferences.put(LayerItem.SCALE, true);
     displayPreferences.put(LayerItem.LUT, false);
+    displayPreferences.put(LayerItem.FUSION_LUT, true);
     displayPreferences.put(LayerItem.IMAGE_ORIENTATION, true);
     displayPreferences.put(LayerItem.WINDOW_LEVEL, true);
     displayPreferences.put(LayerItem.ZOOM, true);
@@ -108,6 +110,7 @@ public class InfoLayer extends AbstractInfoLayer<DicomImageElement> {
     setLayerValue(prefMap, LayerItem.IMAGE_ORIENTATION);
     setLayerValue(prefMap, LayerItem.SCALE);
     setLayerValue(prefMap, LayerItem.LUT);
+    setLayerValue(prefMap, LayerItem.FUSION_LUT);
     setLayerValue(prefMap, LayerItem.PIXEL);
     setLayerValue(prefMap, LayerItem.WINDOW_LEVEL);
     setLayerValue(prefMap, LayerItem.ZOOM);
@@ -224,8 +227,12 @@ public class InfoLayer extends AbstractInfoLayer<DicomImageElement> {
         drawScale(g2, bound, fontHeight, props);
       }
     }
-    if (getDisplayPreferences(LayerItem.LUT) && hideMin) {
+    boolean baseLut = getDisplayPreferences(LayerItem.LUT) && hideMin;
+    if (baseLut) {
       drawLUT(g2, bound, midFontHeight);
+    }
+    if (getDisplayPreferences(LayerItem.FUSION_LUT) && hideMin) {
+      FusionColorBar.paint(g2, view2DPane, bound, midFontHeight, baseLut);
     }
   }
 

@@ -19,6 +19,7 @@ import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.media.data.MediaSeries;
+import org.weasis.core.api.media.data.MediaSeries.MEDIA_POSITION;
 import org.weasis.core.api.service.WProperties;
 import org.weasis.core.ui.editor.image.ViewProgress;
 import org.weasis.dicom.codec.DicomImageElement;
@@ -46,8 +47,13 @@ public class DicomVolTextureFactory {
 
   public DicomVolTexture createImageSeries(
       final MediaSeries<DicomImageElement> series, ViewProgress progress) {
+    DicomImageElement middle = series.getMedia(MEDIA_POSITION.MIDDLE, null, null);
+    if (middle == null) {
+      throw new IllegalStateException("No image");
+    }
+
     OriginalStack stack =
-        new OriginalStack(Plane.AXIAL, series, null) {
+        new OriginalStack(Plane.getAcquisitionPlane(middle), series, null) {
           @Override
           public void generate(BuildContext context) {}
         };

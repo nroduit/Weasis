@@ -96,6 +96,8 @@ import org.weasis.dicom.codec.DicomSeries;
 import org.weasis.dicom.codec.SortSeriesStack;
 import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.geometry.GeometryOfSlice;
+import org.weasis.dicom.codec.geometry.ImageOrientation;
+import org.weasis.dicom.codec.geometry.ImageOrientation.Plan;
 import org.weasis.dicom.codec.geometry.LocalizerPoster;
 import org.weasis.dicom.codec.seg.SegSpecialElement;
 import org.weasis.dicom.codec.seg.SegmentationVolume;
@@ -142,9 +144,26 @@ public class MprView extends View2d implements SliceCanvas, ViewProgress {
       }
       return AXIAL;
     }
+
+    /**
+     * Acquisition plane of an image, used to lay out the voxel axes of the volume built from its
+     * series. All the builders sharing a volume must agree on it, so they must all call this
+     * method.
+     *
+     * @return the closest standard plane, AXIAL when the orientation is oblique or unknown
+     */
+    public static Plane getAcquisitionPlane(DicomImageElement image) {
+      Plan orientation = ImageOrientation.getPlan(image);
+      if (Plan.CORONAL.equals(orientation)) {
+        return CORONAL;
+      }
+      if (Plan.SAGITTAL.equals(orientation)) {
+        return SAGITTAL;
+      }
+      return AXIAL;
+    }
   }
 
-  private JProgressBar progressBar;
   private Plane plane;
 
   protected final MprController mprController;
@@ -504,10 +523,10 @@ public class MprView extends View2d implements SliceCanvas, ViewProgress {
           polyline.getHandlePointList().size());
       final PolylineGraphic finalPolyline = polyline;
       popupMenu.addSeparator();
-      JMenuItem curvedMprItem = new JMenuItem("Build panoramic view");
+      JMenuItem curvedMprItem = new JMenuItem(Messages.getString("build.panoramic.view"));
       curvedMprItem.addActionListener(e -> openCurvedMprFromPolyline(finalPolyline));
       popupMenu.add(curvedMprItem);
-      JMenuItem crossSectionsItem = new JMenuItem("Build cross-cectional slices");
+      JMenuItem crossSectionsItem = new JMenuItem(Messages.getString("build.cross.sectional"));
       crossSectionsItem.addActionListener(e -> openCrossSectionsFromPolyline(finalPolyline));
       popupMenu.add(crossSectionsItem);
     }
@@ -598,7 +617,6 @@ public class MprView extends View2d implements SliceCanvas, ViewProgress {
     }
 
     super.drawOnTop(g2d);
-    drawProgressBar(g2d, progressBar);
 
     if (CurvedMprAxis.DEBUG_DRAW && plane == Plane.AXIAL) {
       MprContainer container =
@@ -719,14 +737,6 @@ public class MprView extends View2d implements SliceCanvas, ViewProgress {
     super.drawLayers(g2d, transform, inverseTransform);
   }
 
-  public void setProgressBar(JProgressBar bar) {
-    this.progressBar = bar;
-  }
-
-  public JProgressBar getProgressBar() {
-    return progressBar;
-  }
-
   /**
    * Overrides the default segmentation overlay to reslice the per-MPR-session {@link
    * SegmentationVolume}s held by {@link MprController}, using the same combined transformation
@@ -739,6 +749,18 @@ public class MprView extends View2d implements SliceCanvas, ViewProgress {
     graphicManager.deleteByLayerType(LayerType.DICOM_SEG);
     if (mprController == null) {
       return;
+    }
+
+    // A SEG hidden when the volumes were last built has no volume; build it now that it is visible.
+    // Skip while a build is already running so we do not cancel it (repaint/scroll also lands
+    // here).
+    if (mprController.hasUnbuiltVisibleSeg() && !mprController.isSegBuildInProgress()) {
+      MprContainer container =
+          (MprContainer) SwingUtilities.getAncestorOfClass(MprContainer.class, this);
+      if (container != null) {
+        mprController.buildSegElementsAsync(container);
+      }
+      // Render what is currently built; the async completion refreshes every plane when done.
     }
 
     List<SegmentationVolume> segVolumes = mprController.getSegVolumes();
@@ -779,6 +801,17 @@ public class MprView extends View2d implements SliceCanvas, ViewProgress {
         addSegContours(contours);
       }
     }
+  }
+
+  /**
+   * MPR builds its SEG overlays as resliceable volumes on the controller (not per-slice like the 2D
+   * view), so drive the shared "Loading segmentations..." message off that build instead of the 2D
+   * per-region building flag. The base {@link View2d#drawOnTop} paints it at the bottom of the
+   * view.
+   */
+  @Override
+  protected boolean isSegLoading() {
+    return mprController != null && mprController.isSegBuildInProgress();
   }
 
   private void addSegContours(Iterable<SegContour> contours) {

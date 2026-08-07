@@ -28,6 +28,11 @@ public class TreeBuilder {
     return renderer;
   }
 
+  /** Renderer for segmentation trees: a clickable color swatch in front of each region label. */
+  public static SegRegionCellRenderer buildSegRegionCellRenderer() {
+    return new SegRegionCellRenderer();
+  }
+
   public static void expandTree(JTree tree, DefaultMutableTreeNode start) {
     expandTree(tree, start, 5);
   }

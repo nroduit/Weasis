@@ -7,11 +7,8 @@
 REVISON_INC="1"
 PACKAGE=YES
 
-# Options
-# jdk.localedata => other locale (en_us) data are included in the jdk.localedata
-# jdk.jdwp.agent => package for debugging agent
-# Base modules for all platforms
-JDK_MODULES_BASE="java.base,java.compiler,java.datatransfer,java.instrument,java.net.http,java.desktop,java.logging,java.management,jdk.management,java.prefs,java.xml,jdk.localedata,jdk.charsets,jdk.crypto.ec,jdk.crypto.cryptoki,jdk.jdwp.agent,jdk.jfr,java.sql"
+# The JDK modules and the launch options are defined in launch-options.sh, shared with the
+# GitHub workflow building the macOS and Windows installers.
 NAME="Weasis"
 IDENTIFIER="org.weasis.launcher"
 
@@ -123,12 +120,9 @@ fi
 machine=$(echo "${ARC_OS}" | cut -d'-' -f1)
 arc=$(echo "${ARC_OS}" | cut -d'-' -f2-3)
 
-# Set JDK modules based on the platform
-if [ "$machine" = "windows" ] ; then
-  JDK_MODULES="${JDK_MODULES_BASE},jdk.crypto.mscapi"
-else
-  JDK_MODULES="${JDK_MODULES_BASE}"
-fi
+# Set the JDK modules and the launch options (JDK_MODULES, customOptions, commonOptions)
+# shellcheck source=launch-options.sh
+source "${curPath}/launch-options.sh" "$machine" || die "Cannot read the launch options"
 
 echo "Platform: $machine"
 echo "JDK Modules: $JDK_MODULES"
@@ -242,6 +236,12 @@ if compgen -G "$INPUT_DIR/bundle/*.jar" > /dev/null; then
   die "bundle/ contains uncompressed jars; build weasis-distributions with -P compressXZ"
 fi
 
+# Optional deployment specific preparation of the input directory, absent from the public distribution
+siteHook="${curPath}/prepare-input-site.sh"
+if [[ -f "$siteHook" ]] ; then
+  bash "$siteHook" "$INPUT_PATH_UNIX/weasis" || die "Cannot prepare the input directory"
+fi
+
 # Pre-sign ALL native libraries embedded in JARs (macOS only).
 # jpackage --mac-sign will sign the extracted content of the app image,
 # but dylibs INSIDE jars must be signed before jpackage repackages them.
@@ -280,34 +280,19 @@ if [ -d "${TEMP_PATH}" ] ; then
   rm -rf "${TEMP_PATH}"
 fi
 
-if [ "$machine" = "macosx" ] ; then
-  DICOMIZER_CONFIG="Dicomizer=$RES/dicomizer-launcher.properties"
-  declare -a customOptions=("--java-options" "-splash:\$APPDIR/resources/images/about-round.png" "--java-options" "-Dapple.laf.useScreenMenuBar=true" "--java-options" "-Dapple.awt.application.appearance=NSAppearanceNameDarkAqua")
-  if [[ -n "$CERTIFICATE" ]] ; then
-    declare -a signArgs=("--mac-package-identifier" "$IDENTIFIER" "--mac-signing-key-user-name" "$CERTIFICATE"  "--mac-sign")
-  else
-    declare -a signArgs=("--mac-package-identifier" "$IDENTIFIER")
-  fi
-elif [ "$machine" = "windows" ] ; then
+declare -a signArgs=()
+if [ "$machine" = "windows" ] ; then
   DICOMIZER_CONFIG="Dicomizer=$RES\dicomizer-launcher.properties"
-  declare -a customOptions=("--java-options" "-splash:\$APPDIR\resources\images\about-round.png" )
-  declare -a signArgs=()
 else
   DICOMIZER_CONFIG="Dicomizer=$RES/dicomizer-launcher.properties"
-  # sun.awt.disablegrab works around unreliable X11 pointer grabs on XWayland (GNOME/mutter),
-  # which can leave Swing popup menus invisible until the window regains focus (see issue #819).
-  declare -a customOptions=("--java-options" "-splash:\$APPDIR/resources/images/about-round.png" \
-  "--java-options" "-Dsun.awt.disablegrab=true" )
-  declare -a signArgs=()
+  if [ "$machine" = "macosx" ] ; then
+    if [[ -n "$CERTIFICATE" ]] ; then
+      signArgs=("--mac-package-identifier" "$IDENTIFIER" "--mac-signing-key-user-name" "$CERTIFICATE" "--mac-sign")
+    else
+      signArgs=("--mac-package-identifier" "$IDENTIFIER")
+    fi
+  fi
 fi
-declare -a commonOptions=(\
-"--java-options" "--enable-native-access=ALL-UNNAMED" \
-"--java-options" "-XX:MaxRAMPercentage=25" \
-"--java-options" "-XX:+UseStringDeduplication" \
-"--java-options" "-javaagent:\$APPDIR/weasis-launcher.jar" \
-"--java-options" "-Dweasis.launch.type=NATIVE" \
-"--java-options" "-Djavax.accessibility.assistive_technologies=org.weasis.launcher.EmptyAccessibilityProvider" \
-"--java-options" "-Djavax.accessibility.screen_magnifier_present=false");
 
 # On Linux the deb/rpm are built in a single jpackage step from --input (see below), so the
 # standalone app-image is only needed for the other platforms or for --no-installer builds.
@@ -319,6 +304,7 @@ declare -a commonOptions=(\
 JLINK_OPTIONS="--strip-debug --no-man-pages --no-header-files --generate-cds-archive"
 
 if [ "$machine" != "linux" ] || [ "$PACKAGE" = "NO" ] ; then
+  # shellcheck disable=SC2154 # customOptions and commonOptions come from launch-options.sh
   $JPKGCMD --type app-image --input "$INPUT_DIR" --dest "$OUTPUT_PATH" --name "$NAME" \
   --jlink-options "$JLINK_OPTIONS" \
   --main-jar weasis-launcher.jar --main-class org.weasis.launcher.Bootstrap --add-modules "$JDK_MODULES" \
@@ -351,6 +337,7 @@ if [ "$PACKAGE" = "YES" ] ; then
       # On JDK 26+ the two-step "--type deb --app-image <image>" path fails to resolve the launcher
       # icons from --resource-dir and falls back to the default JavaApp.png, so both the main and the
       # Dicomizer launchers end up with the generic Java icon. The single-step build resolves them.
+      # shellcheck disable=SC2154 # customOptions and commonOptions come from launch-options.sh
       $JPKGCMD --type "$installerType" --input "$INPUT_DIR" --dest "$OUTPUT_PATH" --name "$NAME" \
       --jlink-options "$JLINK_OPTIONS" \
       --main-jar weasis-launcher.jar --main-class org.weasis.launcher.Bootstrap --add-modules "$JDK_MODULES" \

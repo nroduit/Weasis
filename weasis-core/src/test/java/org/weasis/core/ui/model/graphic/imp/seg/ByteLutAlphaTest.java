@@ -11,6 +11,7 @@ package org.weasis.core.ui.model.graphic.imp.seg;
 
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import org.junit.jupiter.api.Test;
@@ -52,6 +53,38 @@ class ByteLutAlphaTest {
     // At full intensity, alpha is halved by the opacity multiplier.
     assertEquals(128, Byte.toUnsignedInt(lut.lutTable()[ByteLutAlpha.A][255]));
     assertEquals(0, lut.lutTable()[ByteLutAlpha.A][0]);
+  }
+
+  @Test
+  void fromColorLutReachesFullOpacityAtTheEndOfTheRampAndHoldsIt() {
+    byte[][] table = ByteLutAlpha.fromColorLut("fusion", rampBgrLut(), 1.0f, 2, 25).lutTable();
+    assertAll(
+        // Below the floor nothing is painted, so air keeps the base image untouched.
+        () -> assertEquals(0, table[ByteLutAlpha.A][2]),
+        () -> assertNotEquals(0, table[ByteLutAlpha.A][3]),
+        // Full opacity is reached early and held: color, not alpha, carries the value above it.
+        () -> assertEquals(255, Byte.toUnsignedInt(table[ByteLutAlpha.A][25])),
+        () -> assertEquals(255, Byte.toUnsignedInt(table[ByteLutAlpha.A][60])),
+        () -> assertEquals(255, Byte.toUnsignedInt(table[ByteLutAlpha.A][255])),
+        // Colors are unaffected by the alpha shape.
+        () -> assertEquals((byte) 25, table[ByteLutAlpha.B][25]));
+  }
+
+  @Test
+  void fromColorLutHoldsTheOpacityCeilingAboveTheRamp() {
+    byte[][] table = ByteLutAlpha.fromColorLut("fusion", rampBgrLut(), 0.5f, 2, 25).lutTable();
+    assertAll(
+        () -> assertEquals(128, Byte.toUnsignedInt(table[ByteLutAlpha.A][25])),
+        () -> assertEquals(128, Byte.toUnsignedInt(table[ByteLutAlpha.A][255])));
+  }
+
+  @Test
+  void fromColorLutDefaultsToRampingAcrossTheWholeRange() {
+    byte[][] table = ByteLutAlpha.fromColorLut("b", rampBgrLut(), 1.0f).lutTable();
+    assertAll(
+        () -> assertEquals(0, table[ByteLutAlpha.A][0]),
+        () -> assertEquals(128, Byte.toUnsignedInt(table[ByteLutAlpha.A][128])),
+        () -> assertEquals(255, Byte.toUnsignedInt(table[ByteLutAlpha.A][255])));
   }
 
   @Test

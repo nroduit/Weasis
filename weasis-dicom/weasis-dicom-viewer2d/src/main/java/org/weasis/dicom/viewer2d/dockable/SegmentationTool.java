@@ -19,23 +19,17 @@ import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
+import javax.swing.JButton;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 import net.miginfocom.swing.MigLayout;
-import org.dcm4che3.data.Tag;
-import org.weasis.core.api.gui.util.ActionW;
-import org.weasis.core.api.gui.util.Filter;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.JSliderW;
-import org.weasis.core.api.gui.util.SliderCineListener;
 import org.weasis.core.api.image.util.MeasurableLayer;
-import org.weasis.core.api.media.data.MediaSeries;
-import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.api.util.ResourceUtil.OtherIcon;
 import org.weasis.core.ui.dialog.PropertiesDialog;
@@ -51,17 +45,13 @@ import org.weasis.core.ui.model.graphic.imp.seg.SegRegion;
 import org.weasis.core.ui.util.*;
 import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.codec.DicomImageElement;
-import org.weasis.dicom.codec.DicomSeries;
-import org.weasis.dicom.codec.HiddenSeriesManager;
-import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.seg.LazyContourLoader;
 import org.weasis.dicom.codec.seg.SegSpecialElement;
 import org.weasis.dicom.viewer2d.EventManager;
 import org.weasis.dicom.viewer2d.Messages;
+import org.weasis.dicom.viewer2d.SegComponentFactory;
+import org.weasis.dicom.viewer2d.SegRegionLocator;
 import org.weasis.dicom.viewer2d.View2d;
-import org.weasis.dicom.viewer2d.mpr.MprController;
-import org.weasis.dicom.viewer2d.mpr.MprView;
-import org.weasis.opencv.data.PlanarImage;
 import org.weasis.opencv.seg.RegionAttributes;
 
 /**
@@ -93,7 +83,7 @@ public class SegmentationTool extends PluginTool implements SeriesViewerListener
         });
     this.tree = new SegRegionTree(this);
     tree.setToolTipText(StringUtil.EMPTY_STRING);
-    tree.setCellRenderer(TreeBuilder.buildNoIconCheckboxTreeCellRenderer());
+    tree.setCellRenderer(TreeBuilder.buildSegRegionCellRenderer());
 
     this.initData();
 
@@ -111,20 +101,24 @@ public class SegmentationTool extends PluginTool implements SeriesViewerListener
     return null;
   }
 
-  private SegContour getContour(DicomImageElement imageElement, RegionAttributes attributes) {
-    PlanarImage img = imageElement.getImage();
-    if (img != null) {
-      for (SegSpecialElement seg : segNodeMap.values()) {
-        Set<LazyContourLoader> loaders = seg.getContours(imageElement);
-        if (loaders == null || loaders.isEmpty()) {
-          continue;
-        }
-        for (LazyContourLoader loader : loaders) {
-          Collection<SegContour> segments = loader.getLazyContours();
-          for (SegContour c : segments) {
-            if (c.getAttributes().equals(attributes)) {
-              return c;
-            }
+  /**
+   * Searches {@code segments} for the contour of {@code attributes} in the given image. Takes an
+   * explicit collection rather than reading {@link #segNodeMap} so background searches iterate over
+   * an EDT-built snapshot instead of the live map.
+   */
+  private static SegContour getContour(
+      Collection<SegSpecialElement> segments,
+      DicomImageElement imageElement,
+      RegionAttributes attributes) {
+    for (SegSpecialElement seg : segments) {
+      Set<LazyContourLoader> loaders = seg.getContours(imageElement);
+      if (loaders == null || loaders.isEmpty()) {
+        continue;
+      }
+      for (LazyContourLoader loader : loaders) {
+        for (SegContour c : loader.getLazyContours()) {
+          if (c.getAttributes().equals(attributes)) {
+            return c;
           }
         }
       }
@@ -134,37 +128,15 @@ public class SegmentationTool extends PluginTool implements SeriesViewerListener
 
   public void show(SegRegion<?> region) {
     ViewCanvas<DicomImageElement> view = EventManager.getInstance().getSelectedViewPane();
-    DicomSeries series = (DicomSeries) view.getSeries();
-    if (series != null) {
-      long max = Long.MIN_VALUE;
-      DicomImageElement bestImage = null;
-      for (DicomImageElement dcm : series.getMedias(null, null)) {
-        SegContour c = getContour(dcm, region);
-        if (c != null) {
-          if (c.getNumberOfPixels() > max) {
-            max = c.getNumberOfPixels();
-            bestImage = dcm;
-          }
-        }
-      }
-      if (bestImage != null) {
-        Optional<SliderCineListener> action =
-            EventManager.getInstance().getAction(ActionW.SCROLL_SERIES);
-        if (action.isPresent()) {
-          Filter<DicomImageElement> filter =
-              (Filter<DicomImageElement>) view.getActionValue(ActionW.FILTERED_SERIES.cmd());
-          int imgIndex = series.getImageIndex(bestImage, filter, view.getCurrentSortComparator());
-          action.get().setSliderValue(imgIndex + 1);
-        }
-      }
-    }
+    List<SegSpecialElement> segments = List.copyOf(segNodeMap.values());
+    SegRegionLocator.show(view, region, segments, (image, reg) -> getContour(segments, image, reg));
   }
 
   public void computeStatistics(SegRegion<?> region) {
     ViewCanvas<DicomImageElement> view = EventManager.getInstance().getSelectedViewPane();
     DicomImageElement imageElement = getImageElement(view);
     if (imageElement != null) {
-      SegContour c = getContour(imageElement, region);
+      SegContour c = getContour(segNodeMap.values(), imageElement, region);
       if (c != null) {
         MeasurableLayer layer = view.getMeasurableLayer();
         tree.showStatistics(c, layer);
@@ -183,7 +155,26 @@ public class SegmentationTool extends PluginTool implements SeriesViewerListener
     MigLayout layout2 = new MigLayout("fillx, ins 5lp", "[fill]", "[]10lp[]"); // NON-NLS
     JPanel panelBottom = new JPanel(layout2);
     panelBottom.add(slider);
+
+    JButton showAll = new JButton(Messages.getString("show.all"));
+    showAll.addActionListener(_ -> setAllSegVisible(true));
+    JButton hideAll = new JButton(Messages.getString("hide.all"));
+    hideAll.addActionListener(_ -> setAllSegVisible(false));
+    panelBottom.add(GuiUtils.getFlowLayoutPanel(showAll, hideAll), "newline"); // NON-NLS
     add(panelBottom, BorderLayout.SOUTH);
+  }
+
+  /** Checks or unchecks every segmentation node at once and refreshes the views. */
+  private void setAllSegVisible(boolean visible) {
+    initPathSelection = true;
+    try {
+      for (GroupTreeNode node : segNodeMap.keySet()) {
+        tree.setPathSelection(new TreePath(node.getPath()), visible);
+      }
+    } finally {
+      initPathSelection = false;
+    }
+    updateVisibleNode();
   }
 
   public void initStructureTree() {
@@ -196,7 +187,7 @@ public class SegmentationTool extends PluginTool implements SeriesViewerListener
     tree.setShowsRootHandles(true);
     tree.setRootVisible(false);
     tree.setExpandsSelectedPaths(true);
-    tree.setCellRenderer(TreeBuilder.buildNoIconCheckboxTreeCellRenderer());
+    tree.setCellRenderer(TreeBuilder.buildSegRegionCellRenderer());
     tree.addTreeCheckingListener(this::treeValueChanged);
 
     TreeBuilder.expandTree(tree, rootNodeStructures, 3);
@@ -316,67 +307,7 @@ public class SegmentationTool extends PluginTool implements SeriesViewerListener
   }
 
   public void initTreeValues(ViewCanvas<?> viewCanvas) {
-    List<SegSpecialElement> segList = null;
-    if (viewCanvas != null) {
-      // For MPR views the current series is a synthetic MPR series whose UID is never registered
-      // in reference2Series. If the async seg build has already completed, return those elements
-      // directly; otherwise fall back to the original source series UID so that the
-      // reference2Series lookup still works.
-      if (viewCanvas instanceof MprView mprView) {
-        MprController ctrl = mprView.getMprController();
-        if (ctrl != null) {
-          List<SegSpecialElement> elements = ctrl.getSegElements();
-          if (!elements.isEmpty()) {
-            updateCanvas(elements);
-            return;
-          }
-          var vol = ctrl.getVolume();
-          if (vol != null) {
-            String seriesUID =
-                TagD.getTagValue(vol.getStack().getSeries(), Tag.SeriesInstanceUID, String.class);
-            if (StringUtil.hasText(seriesUID)) {
-              Set<String> list = HiddenSeriesManager.getInstance().reference2Series.get(seriesUID);
-              if (list != null && !list.isEmpty()) {
-                segList =
-                    HiddenSeriesManager.getHiddenElementsFromSeries(
-                        SegSpecialElement.class, list.toArray(new String[0]));
-              }
-            }
-          }
-        }
-        updateCanvas(segList);
-        return;
-      }
-
-      MediaSeries<?> dcmSeries = viewCanvas.getSeries();
-      String seriesUID = TagD.getTagValue(dcmSeries, Tag.SeriesInstanceUID, String.class);
-      if (StringUtil.hasText(seriesUID)) {
-        Set<String> list = HiddenSeriesManager.getInstance().reference2Series.get(seriesUID);
-        if (list != null && !list.isEmpty()) {
-          segList =
-              HiddenSeriesManager.getHiddenElementsFromSeries(
-                  SegSpecialElement.class, list.toArray(new String[0]));
-        }
-
-        // Fallback: use patient-level lookup when reference2Series has no entries.
-        if ((segList == null || segList.isEmpty())
-            && viewCanvas.getImage() instanceof DicomImageElement img) {
-          String patientPseudoUID = (String) img.getTagValue(TagW.PatientPseudoUID);
-          if (StringUtil.hasText(patientPseudoUID)) {
-            List<SegSpecialElement> patientSegs =
-                HiddenSeriesManager.getHiddenElementsFromPatient(
-                    SegSpecialElement.class, patientPseudoUID);
-            if (!patientSegs.isEmpty()) {
-              segList =
-                  patientSegs.stream()
-                      .filter(seg -> seg.containsSopInstanceUIDReference(img))
-                      .toList();
-            }
-          }
-        }
-      }
-    }
-    updateCanvas(segList);
+    updateCanvas(viewCanvas == null ? null : SegComponentFactory.getRelatedSegments(viewCanvas));
   }
 
   @Override

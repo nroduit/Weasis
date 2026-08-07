@@ -42,6 +42,13 @@ public class PatientSelectionManager {
     }
   }
 
+  /** Clears the current patient and notifies all listeners. */
+  public void clearCurrentPatient() {
+    if (getCurrentPatient().isPresent()) {
+      notifyPatientCleared();
+    }
+  }
+
   /**
    * Gets the current patient.
    *

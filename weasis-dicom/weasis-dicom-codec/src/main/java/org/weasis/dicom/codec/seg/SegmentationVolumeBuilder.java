@@ -255,6 +255,10 @@ public final class SegmentationVolumeBuilder {
         stats.transform);
     if (LOGGER.isDebugEnabled()) {
       LOGGER.debug(
+          "  {} ms decoding frames, {} ms stamping",
+          stats.decodeNanos / 1_000_000,
+          stats.stampNanos / 1_000_000);
+      LOGGER.debug(
           "  first decoded mask: {}x{}, axisX={}, axisY={}, axisZ={}, ps=[{}, {}, {}], origin={}",
           stats.firstW,
           stats.firstH,
@@ -277,6 +281,8 @@ public final class SegmentationVolumeBuilder {
     int transform;
     int firstW = -1;
     int firstH = -1;
+    long decodeNanos;
+    long stampNanos;
   }
 
   private static StampStats stampAllFrames(
@@ -379,6 +385,7 @@ public final class SegmentationVolumeBuilder {
     // read image" error). Re-decode the frame from the raw Pixel Data bytes BEFORE touching
     // maskElement.getImage(), so the broken native decoder is never invoked for an affected
     // SEG. Mirrors BasicContourLoader's handling for the 2D overlay contours.
+    long decodeStart = System.nanoTime();
     PlanarImage rawMask = null;
     if (binaryDecoderWorkaroundDicom != null) {
       rawMask =
@@ -388,6 +395,7 @@ public final class SegmentationVolumeBuilder {
     if (rawMask == null) {
       rawMask = maskElement.getImage();
     }
+    stats.decodeNanos += System.nanoTime() - decodeStart;
     if (rawMask == null || rawMask.width() <= 0 || rawMask.height() <= 0) {
       if (rawMask != null) ImageConversion.releasePlanarImage(rawMask);
       maskElement.removeImageFromCache();
@@ -418,6 +426,7 @@ public final class SegmentationVolumeBuilder {
           isLabelMap ? collectLabelMapSegments(maskImage, segAttrs) : declaredSegs;
       if (resolvedSegs.isEmpty()) return;
 
+      long stampStart = System.nanoTime();
       for (Integer segNum : resolvedSegs) {
         PlanarImage stampMask = isLabelMap ? extractLabelMask(maskImage, segNum) : maskImage;
         try {
@@ -442,6 +451,7 @@ public final class SegmentationVolumeBuilder {
           }
         }
       }
+      stats.stampNanos += System.nanoTime() - stampStart;
     } finally {
       if (transposed) {
         maskImage.release();

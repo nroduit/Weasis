@@ -15,6 +15,8 @@ import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import org.weasis.core.api.gui.util.DecFormatter;
+import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.ui.model.graphic.imp.seg.SegRegion;
 import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.codec.DicomImageElement;
@@ -153,6 +155,49 @@ public class StructRegion extends SegRegion<DicomImageElement> {
       area += c.getArea();
     }
     return area;
+  }
+
+  @Override
+  public String getToolTipHtml() {
+    StringBuilder buf = new StringBuilder();
+    buf.append(GuiUtils.HTML_START);
+    buf.append("<b>").append(getLabel()).append("</b>");
+    buf.append(GuiUtils.HTML_BR);
+
+    if (StringUtil.hasText(roiObservationLabel)) {
+      buf.append(roiObservationLabel).append(GuiUtils.HTML_BR);
+    }
+
+    buf.append(Messages.getString("thickness")).append(StringUtil.COLON_AND_SPACE);
+    buf.append("%s mm".formatted(DecFormatter.twoDecimal(thickness))); // NON-NLS
+    buf.append(GuiUtils.HTML_BR);
+
+    buf.append(Messages.getString("volume")).append(StringUtil.COLON_AND_SPACE);
+    buf.append("%s cm³".formatted(DecFormatter.fourDecimal(getVolume()))); // NON-NLS
+    buf.append(GuiUtils.HTML_BR);
+
+    if (dvh != null) {
+      appendDvhInfo(buf, dvh);
+    }
+
+    buf.append(GuiUtils.HTML_END);
+    return buf.toString();
+  }
+
+  private static void appendDvhInfo(StringBuilder buf, Dvh dvh) {
+    String source = dvh.getDvhSource().toString();
+    double rxDose = dvh.getPlan().getRxDose();
+    appendDoseLine(buf, source, "min.dose", dvh.getDvhMinimumDoseCGy(), rxDose);
+    appendDoseLine(buf, source, "max.dose", dvh.getDvhMaximumDoseCGy(), rxDose);
+    appendDoseLine(buf, source, "mean.dose", dvh.getDvhMeanDoseCGy(), rxDose);
+  }
+
+  private static void appendDoseLine(
+      StringBuilder buf, String source, String i18nKey, double doseCGy, double rxDose) {
+    buf.append(source).append(' ').append(Messages.getString(i18nKey));
+    buf.append(StringUtil.COLON_AND_SPACE);
+    buf.append(DecFormatter.percentTwoDecimal(Dose.calculateRelativeDose(doseCGy, rxDose) / 100.0));
+    buf.append(GuiUtils.HTML_BR);
   }
 
   @Override

@@ -13,6 +13,7 @@ import java.awt.Color;
 import java.awt.Component;
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -247,7 +248,7 @@ public abstract class AcquireMetadataPanel extends JPanel implements TableModelL
           datePicker.setSelectedDate(localDate);
         }
         datePicker.setStartWeekOnMonday(true);
-        datePicker.setDateSelectionAble(d -> !d.isAfter(LocalDate.now()));
+        datePicker.setDateSelectionAble(d -> !d.isAfter(LocalDate.now(ZoneId.systemDefault())));
         datePicker.setEditor(pickerEditor);
         cellEditor =
             new DefaultCellEditor(pickerEditor) {

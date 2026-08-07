@@ -15,10 +15,13 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import javax.swing.JProgressBar;
+import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Tag;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -43,6 +46,7 @@ import org.weasis.dicom.codec.HiddenSeriesManager;
 import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.explorer.DicomModel;
 import org.weasis.dicom.explorer.main.ThumbnailMouseAndKeyAdapter;
+import org.weasis.dicom.explorer.rs.RsQueryResult;
 import org.weasis.dicom.mf.SopInstance;
 import org.weasis.dicom.mf.WadoParameters;
 
@@ -57,7 +61,17 @@ public record ThumbnailManager(
 
   private static final String JPEG_EXTENSION = ".jpg";
   private static final String IMAGE_JPEG_MIME = "image/jpeg";
+  private static final String DICOM_JSON_MIME = "application/dicom+json"; // NON-NLS
   private static final int THUMBNAIL_QUALITY = 75;
+
+  /** How a given DICOMweb server delivers thumbnails. */
+  private enum ThumbnailMode {
+    RS_THUMBNAIL,
+    RENDERED
+  }
+
+  // WADO-RS thumbnail-service support, probed once and reused per DICOMweb server for the session.
+  private static final Map<String, ThumbnailMode> SERVER_THUMBNAIL_MODE = new ConcurrentHashMap<>();
 
   /**
    * Loads and displays a thumbnail for the given SOP instance.
@@ -68,14 +82,155 @@ public record ThumbnailManager(
    */
   public void loadThumbnail(
       SopInstance instance, WadoParameters wadoParameters, AuthMethod authMethod) {
-    Path thumbnailPath =
-        instance.getDirectDownloadFile() == null
-            ? downloadThumbnailFromWado(instance, wadoParameters, authMethod)
-            : downloadDirectThumbnail(wadoParameters, authMethod);
+    Path thumbnailPath;
+    if (wadoParameters.isWadoRS()
+        && instance.getDirectDownloadFile() != null
+        && dicomSeries.getTagValue(TagW.DirectDownloadThumbnail) == null) {
+      // WADO-RS: capability-aware instance thumbnail with rendered fallback.
+      thumbnailPath =
+          fetchInstanceThumbnail(wadoParameters, instance.getSopInstanceUID(), authMethod);
+    } else if (instance.getDirectDownloadFile() == null) {
+      thumbnailPath = downloadThumbnailFromWado(instance, wadoParameters, authMethod);
+    } else {
+      thumbnailPath = downloadDirectThumbnail(wadoParameters, authMethod);
+    }
 
     if (thumbnailPath != null) {
       updateSeriesThumbnail(thumbnailPath);
     }
+  }
+
+  /**
+   * Loads a preview thumbnail for a series-level bulk retrieve, where no instance is known yet.
+   * Uses the WADO-RS series thumbnail service, falling back to the rendered service on a
+   * representative instance.
+   */
+  public void loadSeriesThumbnail(WadoParameters wadoParameters, AuthMethod authMethod) {
+    if (!DicomMediaIO.SERIES_MIMETYPE.equals(dicomSeries.getMimeType())) {
+      return;
+    }
+    MediaSeriesGroup study = dicomModel.getParent(dicomSeries, DicomModel.study);
+    String studyUID = TagD.getTagValue(study, Tag.StudyInstanceUID, String.class);
+    String seriesUID = TagD.getTagValue(dicomSeries, Tag.SeriesInstanceUID, String.class);
+    if (!StringUtil.hasText(studyUID) || !StringUtil.hasText(seriesUID)) {
+      return;
+    }
+    // A null instance UID selects the series-level thumbnail service.
+    Path thumbnailPath = fetchRsThumbnail(wadoParameters, studyUID, seriesUID, null, authMethod);
+    if (thumbnailPath != null) {
+      updateSeriesThumbnail(thumbnailPath);
+    }
+  }
+
+  private Path fetchInstanceThumbnail(
+      WadoParameters wadoParameters, String sopInstanceUID, AuthMethod authMethod) {
+    MediaSeriesGroup study = dicomModel.getParent(dicomSeries, DicomModel.study);
+    String studyUID = TagD.getTagValue(study, Tag.StudyInstanceUID, String.class);
+    String seriesUID = TagD.getTagValue(dicomSeries, Tag.SeriesInstanceUID, String.class);
+    if (!StringUtil.hasText(studyUID) || !StringUtil.hasText(seriesUID)) {
+      return null;
+    }
+    return fetchRsThumbnail(wadoParameters, studyUID, seriesUID, sopInstanceUID, authMethod);
+  }
+
+  /**
+   * Fetches a WADO-RS thumbnail for the series ({@code sopInstanceUID == null}) or a single
+   * instance, then caches — per DICOMweb server, for the session — whether the thumbnail service is
+   * available. When it is not implemented (HTTP 404/405/501), the server is switched to the
+   * DICOMweb rendered service and every later series reuses that decision without re-probing.
+   */
+  private Path fetchRsThumbnail(
+      WadoParameters wadoParameters,
+      String studyUID,
+      String seriesUID,
+      String sopInstanceUID,
+      AuthMethod authMethod) {
+    String baseUrl = LoadSeries.dicomWebBaseUrl(wadoParameters, dicomSeries);
+    if (SERVER_THUMBNAIL_MODE.getOrDefault(baseUrl, ThumbnailMode.RS_THUMBNAIL)
+        == ThumbnailMode.RS_THUMBNAIL) {
+      String url =
+          sopInstanceUID == null
+              ? "%s/studies/%s/series/%s/thumbnail?viewport=%d%%2C%d"
+                  .formatted(baseUrl, studyUID, seriesUID, Thumbnail.MAX_SIZE, Thumbnail.MAX_SIZE)
+              : "%s/studies/%s/series/%s/instances/%s/thumbnail?viewport=%d%%2C%d"
+                  .formatted(
+                      baseUrl,
+                      studyUID,
+                      seriesUID,
+                      sopInstanceUID,
+                      Thumbnail.MAX_SIZE,
+                      Thumbnail.MAX_SIZE);
+      FetchResult result = download(url, JPEG_EXTENSION, createWadoRsParams(), authMethod);
+      if (result.file() != null) {
+        return result.file();
+      }
+      // Any RS failure falls back to /rendered below; only a definitive "not implemented" also
+      // downgrades the server for the session. A transient failure keeps probing /thumbnail later.
+      if (isThumbnailServiceUnsupported(result.code())) {
+        LOGGER.info(
+            "WADO-RS thumbnail service unavailable on {} (HTTP {}); switching to rendered service",
+            baseUrl,
+            result.code());
+        SERVER_THUMBNAIL_MODE.put(baseUrl, ThumbnailMode.RENDERED);
+      }
+    }
+    return fetchRenderedThumbnail(baseUrl, studyUID, seriesUID, sopInstanceUID, authMethod);
+  }
+
+  /**
+   * DICOMweb rendered fallback. Only the instance-level {@code /rendered} resource is portable
+   * (series-level rendering is rejected by some archives), so a bulk series first resolves a
+   * representative instance.
+   */
+  private Path fetchRenderedThumbnail(
+      String baseUrl,
+      String studyUID,
+      String seriesUID,
+      String sopInstanceUID,
+      AuthMethod authMethod) {
+    String instanceUID =
+        sopInstanceUID != null
+            ? sopInstanceUID
+            : fetchRepresentativeInstanceUID(baseUrl, studyUID, seriesUID, authMethod);
+    if (!StringUtil.hasText(instanceUID)) {
+      return null;
+    }
+    String url =
+        "%s/studies/%s/series/%s/instances/%s/rendered?viewport=%d%%2C%d"
+            .formatted(
+                baseUrl, studyUID, seriesUID, instanceUID, Thumbnail.MAX_SIZE, Thumbnail.MAX_SIZE);
+    return download(url, JPEG_EXTENSION, createWadoRsParams(), authMethod).file();
+  }
+
+  private static boolean isThumbnailServiceUnsupported(int code) {
+    return code == HttpURLConnection.HTTP_NOT_FOUND
+        || code == HttpURLConnection.HTTP_BAD_METHOD
+        || code == HttpURLConnection.HTTP_NOT_IMPLEMENTED;
+  }
+
+  private String fetchRepresentativeInstanceUID(
+      String baseUrl, String studyUID, String seriesUID, AuthMethod authMethod) {
+    // Target a middle instance (representative slice) without listing the series: get the instance
+    // count, then fetch a single UID at that offset (order is server-defined).
+    int offset =
+        RsQueryResult.seriesInstanceCount(baseUrl, studyUID, seriesUID, urlParams, authMethod) / 2;
+    String url =
+        "%s/studies/%s/series/%s/instances?includefield=00080018&limit=1&offset=%d" // NON-NLS
+            .formatted(baseUrl, studyUID, seriesUID, offset);
+    var headers = new HashMap<>(urlParams.headers());
+    headers.put("Accept", DICOM_JSON_MIME);
+    try {
+      for (Attributes instance :
+          RsQueryResult.parseJSON(url, authMethod, new URLParameters(headers))) {
+        String sopUID = instance.getString(Tag.SOPInstanceUID);
+        if (StringUtil.hasText(sopUID)) {
+          return sopUID;
+        }
+      }
+    } catch (Exception e) {
+      LOGGER.debug("Cannot fetch a representative instance for series {}", seriesUID, e);
+    }
+    return null;
   }
 
   private Path downloadThumbnailFromWado(
@@ -83,15 +238,14 @@ public record ThumbnailManager(
     if (!DicomMediaIO.SERIES_MIMETYPE.equals(dicomSeries.getMimeType())) {
       return null;
     }
-    try {
-      String studyUID = getStudyUID(wadoParameters);
-      String seriesUID = getSeriesUID(wadoParameters);
-      return fetchJpegThumbnail(
-          wadoParameters, studyUID, seriesUID, instance.getSopInstanceUID(), authMethod);
-    } catch (Exception e) {
-      LOGGER.error("Error downloading thumbnail from WADO", e);
-      return null;
-    }
+    String url =
+        buildWadoUrl(
+            wadoParameters.getBaseURL(),
+            getStudyUID(wadoParameters),
+            getSeriesUID(wadoParameters),
+            instance.getSopInstanceUID(),
+            wadoParameters.getAdditionalParameters());
+    return download(url, JPEG_EXTENSION, urlParams, authMethod).file();
   }
 
   private Path downloadDirectThumbnail(WadoParameters wadoParameters, AuthMethod authMethod) {
@@ -144,20 +298,32 @@ public record ThumbnailManager(
     return new URLParameters(headers);
   }
 
-  private Path downloadFromUrl(
+  /**
+   * Downloaded thumbnail file (or {@code null}) together with the HTTP status ({@code -1} on I/O).
+   */
+  private record FetchResult(Path file, int code) {}
+
+  private FetchResult download(
       String url, String extension, URLParameters params, AuthMethod authMethod) {
     try (HttpStream httpCon = HttpUtils.getHttpResponse(url, params, authMethod)) {
       int code = httpCon.getResponseCode();
       if (code >= HttpURLConnection.HTTP_OK && code < HttpURLConnection.HTTP_BAD_REQUEST) {
-        return saveThumbnailFile(httpCon, extension);
-      } else if (code == HttpURLConnection.HTTP_UNAUTHORIZED && authMethod != null) {
+        return new FetchResult(saveThumbnailFile(httpCon, extension), code);
+      }
+      if (code == HttpURLConnection.HTTP_UNAUTHORIZED && authMethod != null) {
         authMethod.resetToken();
         authMethod.getToken();
       }
+      return new FetchResult(null, code);
     } catch (Exception e) {
       LOGGER.error("Error downloading thumbnail from {}", url, e);
+      return new FetchResult(null, -1);
     }
-    return null;
+  }
+
+  private Path downloadFromUrl(
+      String url, String extension, URLParameters params, AuthMethod authMethod) {
+    return download(url, extension, params, authMethod).file();
   }
 
   private Path saveThumbnailFile(HttpStream httpCon, String extension) throws IOException {
@@ -171,42 +337,16 @@ public record ThumbnailManager(
     return outFile;
   }
 
-  private Path fetchJpegThumbnail(
-      WadoParameters wadoParameters,
+  private String buildWadoUrl(
+      String baseUrl,
       String studyUID,
       String seriesUID,
       String sopInstanceUID,
-      AuthMethod authMethod)
-      throws Exception {
-    String url = buildWadoUrl(wadoParameters, studyUID, seriesUID, sopInstanceUID);
-    Path outFile = Files.createTempFile(Thumbnail.THUMBNAIL_CACHE_DIR, "thumb_", JPEG_EXTENSION);
-
-    LOGGER.debug("Downloading JPEG thumbnail from {} to {}", url, outFile.getFileName());
-
-    try (HttpStream httpCon = HttpUtils.getHttpResponse(url, urlParams, authMethod)) {
-      int code = httpCon.getResponseCode();
-      if (code >= HttpURLConnection.HTTP_OK && code < HttpURLConnection.HTTP_BAD_REQUEST) {
-        FileUtil.writeStreamWithIOException(httpCon.getInputStream(), outFile);
-      } else if (code == HttpURLConnection.HTTP_UNAUTHORIZED && authMethod != null) {
-        authMethod.resetToken();
-        authMethod.getToken();
-      }
-      if (Files.size(outFile) == 0) {
-        throw new IllegalStateException("Thumbnail file is empty");
-      }
-      return outFile;
-    } catch (Exception e) {
-      Files.deleteIfExists(outFile);
-      throw e;
-    }
-  }
-
-  private String buildWadoUrl(
-      WadoParameters wadoParameters, String studyUID, String seriesUID, String sopInstanceUID) {
-    String addParams = filterAdditionalParameters(wadoParameters.getAdditionalParameters());
+      String additionalParameters) {
+    String addParams = filterAdditionalParameters(additionalParameters);
     return "%s?requestType=WADO&studyUID=%s&seriesUID=%s&objectUID=%s&contentType=%s&imageQuality=%d&rows=%d&columns=%d%s"
         .formatted(
-            wadoParameters.getBaseURL(),
+            baseUrl,
             studyUID,
             seriesUID,
             sopInstanceUID,

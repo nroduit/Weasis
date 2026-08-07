@@ -1,24 +1,40 @@
 # Changelog
 
-## Unreleased (pf4j branch)
+## [v4.7.2](https://github.com/nroduit/Weasis/tree/v4.7.2) (2026-08-03)
 
-**Breaking changes:**
-
-- The plugin runtime is now pf4j; OSGi/Felix is removed. Configuration keys were renamed (clean break — server-side deployments must ship a configuration in the new format):
-  - `felix.auto.install.N` / `felix.auto.start.N` → `weasis.plugins.N`
-  - `org.osgi.framework.startlevel.beginning` → `weasis.plugins.max.level`
-  - `felix.config.properties` → `weasis.config.properties`
-  - `felix.extended.config.properties` → `weasis.extended.config.properties`
-  - `org.osgi.framework.storage` → `weasis.plugin.cache.dir`
-  - `org.osgi.framework.storage.clean` → `weasis.plugin.cache.clean` (values `none` / `onFirstInit`)
-  - Removed dead keys: `framework.system.packages.extra*`, `felix.cache.rootdir`, `felix.startlevel.bundle`, `felix.log.level`, `-Dgosh.port`
-- The Felix runtime bundles (gogo shell/runtime/command, SCR, ConfigAdmin, Felix prefs, bundlerepository, osgi.promise) are no longer shipped or started.
-- Crash recovery now actually clears the plugin cache on the next start after an abnormal exit (the previous key mismatch made it a no-op).
+[Full Changelog](https://github.com/nroduit/Weasis/compare/v4.7.1...v4.7.2)
 
 **Implemented enhancements:**
 
-- Faster startup and warmup in the packaged application: common libraries (weasis-core, weasis-core-img, docking-frames, …) now ship on the application classpath (`common-lib/` in the app image) and a per-user JDK AOT cache (JEP 483/514/515) is trained on the first launch after install/update and used afterwards. Disable with `-Dweasis.aot.cache=false`. The jpackage runtime ships a base CDS archive and keeps `bin/java` (required by the AOT assembly phase).
-- Remote-codebase (`cdb=`) launches keep working through the packaged `-javaagent` fallback: server-provided library versions are appended to the system classloader when they differ from the shipped ones.
+- Add segmentation region tooltip and visibility toggle functionality [\#885](https://github.com/nroduit/Weasis/issues/885)
+- Add SegRegionCellRenderer for color swatch display in segmentation tree [\#884](https://github.com/nroduit/Weasis/issues/884)
+- Refactor DICOM manifest handling [\#883](https://github.com/nroduit/Weasis/issues/883)
+- Render multiple SEG files in 3D \(merged volume\), add voxel mask modes and async texture build [\#881](https://github.com/nroduit/Weasis/issues/881)
+- Add segmentation selection controls: Show/Hide all, view button and complete tool listing [\#879](https://github.com/nroduit/Weasis/issues/879)
+- Hide non-relevant segmentations by default \(keyword list and global preference\) [\#878](https://github.com/nroduit/Weasis/issues/878)
+- Refactor Thumbnail rendering to avoid AWT tree lock during icon updates [\#877](https://github.com/nroduit/Weasis/issues/877)
+- Add user-configurable default filter mode for DICOM explorer [\#874](https://github.com/nroduit/Weasis/issues/874)
+- Allow adding and editing custom 3D LUTs [\#805](https://github.com/nroduit/Weasis/issues/805)
+
+**Fixed bugs:**
+
+- "Copy images into the local temporary directory" option is not applied [\#887](https://github.com/nroduit/Weasis/issues/887)
+- Fix determining plane from DICOM images when building volume [\#882](https://github.com/nroduit/Weasis/issues/882)
+- Ellipse showing wrong Mean [\#870](https://github.com/nroduit/Weasis/issues/870)
+- Fixed blackening when setting segment opacity in 3D viewer [\#865](https://github.com/nroduit/Weasis/issues/865)
+- Preset changes are only applied after scrolling in multi-view layouts [\#860](https://github.com/nroduit/Weasis/issues/860)
+- Attenuation measurement returns incorrect HU values in v4.7.1 [\#858](https://github.com/nroduit/Weasis/issues/858)
+- Area-based intensity measurement issue [\#855](https://github.com/nroduit/Weasis/issues/855)
+
+**Security fixes:**
+
+- Enhance property handling to prevent path injection and ensure safe directory names [\#888](https://github.com/nroduit/Weasis/issues/888)
+
+**Merged pull requests:**
+
+- Fixed blackening when setting segment opacity in 3D viewer. [\#857](https://github.com/nroduit/Weasis/pull/857) ([loximann](https://github.com/loximann))
+- build: bump the maven group with 7 updates [\#854](https://github.com/nroduit/Weasis/pull/854) ([dependabot[bot]](https://github.com/apps/dependabot))
+- ci: bump actions/setup-java from 5.4.0 to 5.5.0 in the actions group [\#853](https://github.com/nroduit/Weasis/pull/853) ([dependabot[bot]](https://github.com/apps/dependabot))
 
 ## [v4.7.1](https://github.com/nroduit/Weasis/tree/v4.7.1) (2026-07-09)
 

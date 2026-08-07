@@ -29,8 +29,8 @@ public class FusionOpacityListener extends SliderChangeListener {
   private JSliderW slider;
 
   public FusionOpacityListener(
-      Feature<SliderChangeListener> feature, String param, int defaultPercent, String modality) {
-    super(feature, 0, 100, defaultPercent, true, 0.1);
+      Feature<SliderChangeListener> feature, String param, double defaultOpacity, String modality) {
+    super(feature, 0, 100, (int) Math.round(defaultOpacity * 100), true, 0.1);
     this.param = param;
     this.modalityLabel = modality;
   }

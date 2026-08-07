@@ -23,7 +23,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Set;
-import java.util.TimeZone;
 import java.util.TreeSet;
 import java.util.regex.Pattern;
 import javax.xml.stream.XMLInputFactory;
@@ -546,110 +545,156 @@ public class DicomMediaUtils {
     return true;
   }
 
+  /**
+   * Sets {@link TagW#SuvFactor} on a PET image when its values can be converted to SUVbw. Otherwise
+   * the attribute that prevents it is logged, so a series displayed in raw units can be traced back
+   * to the missing element instead of looking like a viewer limitation.
+   */
   public static void computeSUVFactor(Attributes dicomObject, Taggable taggable, int index) {
     // From vendor neutral code at
     // http://qibawiki.rsna.org/index.php?title=Standardized_Uptake_Value_%28SUV%29
     String modality = TagD.getTagValue(taggable, Tag.Modality, String.class);
-    if ("PT".equals(modality)) {
-      String correctedImage = DicomUtils.getStringFromDicomElement(dicomObject, Tag.CorrectedImage);
-      if (correctedImage != null
-          && correctedImage.contains("ATTN")
-          && correctedImage.contains("DECY")) { // NON-NLS
-        double suvFactor = 0.0;
-        String units = dicomObject.getString(Tag.Units);
-        // DICOM $C.8.9.1.1.3 Units
-        // The units of the pixel values obtained after conversion from the stored pixel values (SV)
-        // (Pixel Data (7FE0,0010)) to pixel value units (U), as defined by Rescale Intercept
-        // (0028,1052) and Rescale Slope (0028,1053). Defined Terms:
-        // CNTS = counts
-        // NONE = unitless
-        // CM2 = centimeter**2
-        // PCNT = percent
-        // CPS = counts/second
-        // BQML = Becquerels/milliliter
-        // MGMINML = milligram/minute/milliliter
-        // UMOLMINML = micromole/minute/milliliter
-        // MLMING = milliliter/minute/gram
-        // MLG = milliliter/gram
-        // 1CM = 1/centimeter
-        // UMOLML = micromole/milliliter
-        // PROPCNTS = proportional to counts
-        // PROPCPS = proportional to counts/sec
-        // MLMINML = milliliter/minute/milliliter
-        // MLML = milliliter/milliliter
-        // GML = grams/milliliter
-        // STDDEV = standard deviations
-        if ("BQML".equals(units)) {
-          Float weight =
-              DicomUtils.getFloatFromDicomElement(dicomObject, Tag.PatientWeight, 0.0f); // in Kg
-          if (MathUtil.isDifferentFromZero(weight)) {
-            Attributes dcm =
-                dicomObject.getNestedDataset(Tag.RadiopharmaceuticalInformationSequence, index);
-            if (dcm != null) {
-              Float totalDose =
-                  DicomUtils.getFloatFromDicomElement(dcm, Tag.RadionuclideTotalDose, null);
-              Float halfLife =
-                  DicomUtils.getFloatFromDicomElement(dcm, Tag.RadionuclideHalfLife, null);
-              Date injectTime =
-                  DicomUtils.getDateFromDicomElement(dcm, Tag.RadiopharmaceuticalStartTime, null);
-              Date injectDateTime =
-                  DicomUtils.getDateFromDicomElement(
-                      dcm, Tag.RadiopharmaceuticalStartDateTime, null);
-              Date acquisitionDateTime = dicomObject.getDate(Tag.AcquisitionDateAndTime);
-              Date scanDate = dicomObject.getDate(Tag.SeriesDateAndTime);
-              if ("START".equals(dicomObject.getString(Tag.DecayCorrection))
-                  && totalDose != null
-                  && halfLife != null
-                  && acquisitionDateTime != null
-                  && (injectDateTime != null || (scanDate != null && injectTime != null))) {
-                double time = 0.0;
-                long scanDateTime = scanDate.getTime();
-                if (injectDateTime == null) {
-                  if (scanDateTime > acquisitionDateTime.getTime()) {
-                    // per GE docs, may have been updated during post-processing into new series
-                    String privateCreator = dicomObject.getString(0x00090010);
-                    Date privateScanDateTime =
-                        DicomUtils.getDateFromDicomElement(dcm, 0x0009100d, null);
-                    if ("GEMS_PETD_01".equals(privateCreator) // NON-NLS
-                        && privateScanDateTime != null) {
-                      scanDate = privateScanDateTime;
-                    } else {
-                      scanDate = null;
-                    }
-                  }
-                  if (scanDate != null) {
-                    TimeZone tz = dicomObject.getTimeZone();
-                    injectDateTime = DateTimeUtils.dateTime(tz, scanDate, injectTime, false);
-                    time = (double) scanDateTime - injectDateTime.getTime();
-                  }
-
-                } else {
-                  time = (double) scanDateTime - injectDateTime.getTime();
-                }
-                // Exclude negative value (case over midnight)
-                if (time > 0) {
-                  double correctedDose = totalDose * Math.pow(2, -time / (1000.0 * halfLife));
-                  // Weight converts in kg to g
-                  suvFactor = weight * 1000.0 / correctedDose;
-                }
-              }
-            }
-          }
-        } else if ("CNTS".equals(units)) {
-          String privateTagCreator = dicomObject.getString(0x70530010);
-          double privateSUVFactor = dicomObject.getDouble(0x70531000, 0.0);
-          if ("Philips PET Private Group".equals(privateTagCreator) // NON-NLS
-              && MathUtil.isDifferentFromZero(privateSUVFactor)) {
-            suvFactor = privateSUVFactor; // units => "g/ml"
-          }
-        } else if ("GML".equals(units)) {
-          suvFactor = 1.0;
-        }
-        if (MathUtil.isDifferentFromZero(suvFactor)) {
-          taggable.setTag(TagW.SuvFactor, suvFactor);
-        }
-      }
+    if (!"PT".equals(modality)) {
+      return;
     }
+    double suvFactor = suvFactor(dicomObject, index);
+    if (MathUtil.isDifferentFromZero(suvFactor)) {
+      taggable.setTag(TagW.SuvFactor, suvFactor);
+    }
+  }
+
+  /**
+   * Logs the attribute that makes the SUVbw conversion impossible and returns no factor. Debug
+   * level: it is one line per image, and a PET without SUV is a data property, not an error.
+   */
+  private static double noSuvFactor(int tag) {
+    LOGGER.debug(
+        "No SUV factor: {} is missing or not supported", ElementDictionary.keywordOf(tag, null));
+    return 0.0;
+  }
+
+  private static double suvFactor(Attributes dicomObject, int index) {
+    String correctedImage = DicomUtils.getStringFromDicomElement(dicomObject, Tag.CorrectedImage);
+    if (correctedImage == null
+        || !correctedImage.contains("ATTN")
+        || !correctedImage.contains("DECY")) { // NON-NLS
+      return noSuvFactor(Tag.CorrectedImage);
+    }
+    // DICOM $C.8.9.1.1.3 Units
+    // The units of the pixel values obtained after conversion from the stored pixel values (SV)
+    // (Pixel Data (7FE0,0010)) to pixel value units (U), as defined by Rescale Intercept
+    // (0028,1052) and Rescale Slope (0028,1053). Defined Terms:
+    // CNTS = counts
+    // NONE = unitless
+    // CM2 = centimeter**2
+    // PCNT = percent
+    // CPS = counts/second
+    // BQML = Becquerels/milliliter
+    // MGMINML = milligram/minute/milliliter
+    // UMOLMINML = micromole/minute/milliliter
+    // MLMING = milliliter/minute/gram
+    // MLG = milliliter/gram
+    // 1CM = 1/centimeter
+    // UMOLML = micromole/milliliter
+    // PROPCNTS = proportional to counts
+    // PROPCPS = proportional to counts/sec
+    // MLMINML = milliliter/minute/milliliter
+    // MLML = milliliter/milliliter
+    // GML = grams/milliliter
+    // STDDEV = standard deviations
+    String units = dicomObject.getString(Tag.Units);
+    return switch (units == null ? StringUtil.EMPTY_STRING : units) {
+      case "BQML" -> bqmlSuvFactor(dicomObject, index);
+      case "CNTS" -> philipsSuvFactor(dicomObject);
+      // Already grams/milliliter, which is SUVbw.
+      case "GML" -> 1.0;
+      default -> noSuvFactor(Tag.Units);
+    };
+  }
+
+  /** SUVbw factor from the injected dose decayed to the series time. */
+  private static double bqmlSuvFactor(Attributes dicomObject, int index) {
+    Float weight =
+        DicomUtils.getFloatFromDicomElement(dicomObject, Tag.PatientWeight, 0.0f); // in Kg
+    if (!MathUtil.isDifferentFromZero(weight)) {
+      return noSuvFactor(Tag.PatientWeight);
+    }
+    Attributes dcm =
+        dicomObject.getNestedDataset(Tag.RadiopharmaceuticalInformationSequence, index);
+    if (dcm == null) {
+      return noSuvFactor(Tag.RadiopharmaceuticalInformationSequence);
+    }
+    Float totalDose = DicomUtils.getFloatFromDicomElement(dcm, Tag.RadionuclideTotalDose, null);
+    if (totalDose == null) {
+      return noSuvFactor(Tag.RadionuclideTotalDose);
+    }
+    Float halfLife = DicomUtils.getFloatFromDicomElement(dcm, Tag.RadionuclideHalfLife, null);
+    if (halfLife == null || halfLife <= 0.0f) {
+      return noSuvFactor(Tag.RadionuclideHalfLife);
+    }
+    if (!"START".equals(dicomObject.getString(Tag.DecayCorrection))) {
+      return noSuvFactor(Tag.DecayCorrection);
+    }
+    double time = uptakeTime(dicomObject, dcm);
+    if (time <= 0.0) {
+      return noSuvFactor(Tag.RadiopharmaceuticalStartDateTime);
+    }
+    double correctedDose = totalDose * Math.pow(2, -time / (1000.0 * halfLife));
+    if (correctedDose <= 0.0) {
+      return noSuvFactor(Tag.RadionuclideTotalDose);
+    }
+    // Weight converts in kg to g
+    return weight * 1000.0 / correctedDose;
+  }
+
+  /** Philips writes the factor directly when the values are counts. */
+  private static double philipsSuvFactor(Attributes dicomObject) {
+    String privateTagCreator = dicomObject.getString(0x70530010);
+    double privateSUVFactor = dicomObject.getDouble(0x70531000, 0.0);
+    if ("Philips PET Private Group".equals(privateTagCreator) // NON-NLS
+        && MathUtil.isDifferentFromZero(privateSUVFactor)) {
+      return privateSUVFactor; // units => "g/ml"
+    }
+    return noSuvFactor(Tag.Units);
+  }
+
+  /**
+   * Milliseconds elapsed between the injection and the series time, {@code 0} when the two cannot
+   * be related: times missing, or an injection recorded after the scan (case over midnight).
+   */
+  private static double uptakeTime(Attributes dicomObject, Attributes radiopharmaceutical) {
+    Date acquisitionDateTime = dicomObject.getDate(Tag.AcquisitionDateAndTime);
+    Date scanDate = dicomObject.getDate(Tag.SeriesDateAndTime);
+    if (acquisitionDateTime == null || scanDate == null) {
+      return 0.0;
+    }
+    long scanDateTime = scanDate.getTime();
+    Date injectDateTime =
+        DicomUtils.getDateFromDicomElement(
+            radiopharmaceutical, Tag.RadiopharmaceuticalStartDateTime, null);
+    if (injectDateTime == null) {
+      Date injectTime =
+          DicomUtils.getDateFromDicomElement(
+              radiopharmaceutical, Tag.RadiopharmaceuticalStartTime, null);
+      if (injectTime == null) {
+        return 0.0;
+      }
+      if (scanDateTime > acquisitionDateTime.getTime()) {
+        // per GE docs, may have been updated during post-processing into new series
+        String privateCreator = dicomObject.getString(0x00090010);
+        Date privateScanDateTime =
+            DicomUtils.getDateFromDicomElement(radiopharmaceutical, 0x0009100d, null);
+        if (!"GEMS_PETD_01".equals(privateCreator) || privateScanDateTime == null) { // NON-NLS
+          return 0.0;
+        }
+        scanDate = privateScanDateTime;
+      }
+      // The injection time carries no date: it is dated with the (corrected) scan day, while the
+      // uptake stays measured from the original series time.
+      injectDateTime =
+          DateTimeUtils.dateTime(dicomObject.getTimeZone(), scanDate, injectTime, false);
+    }
+    return (double) scanDateTime - injectDateTime.getTime();
   }
 
   public static double[] getFrameTime(Attributes attributes) {

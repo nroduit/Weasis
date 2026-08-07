@@ -11,6 +11,7 @@ package org.weasis.dicom.viewer2d;
 
 import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.FontMetrics;
 import java.awt.Graphics2D;
 import java.awt.GridBagConstraints;
 import java.awt.Point;
@@ -67,6 +68,7 @@ import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.service.AuditLog;
+import org.weasis.core.api.util.FontTools;
 import org.weasis.core.ui.dialog.MeasureDialog;
 import org.weasis.core.ui.editor.image.CalibrationView;
 import org.weasis.core.ui.editor.image.ContextMenuHandler;
@@ -121,6 +123,7 @@ import org.weasis.dicom.explorer.DicomSeriesHandler;
 import org.weasis.dicom.explorer.pr.PrGraphicUtil;
 import org.weasis.dicom.viewer2d.KOComponentFactory.KOViewButton;
 import org.weasis.dicom.viewer2d.KOComponentFactory.KOViewButton.eState;
+import org.weasis.dicom.viewer2d.fusion.FusionController;
 import org.weasis.dicom.viewer2d.fusion.FusionOp;
 import org.weasis.dicom.viewer2d.mpr.MprView.Plane;
 import org.weasis.opencv.data.PlanarImage;
@@ -135,6 +138,10 @@ public class View2d extends DefaultView2d<DicomImageElement> {
   private final Dimension oldSize;
   private final ContextMenuHandler contextMenuHandler;
   private volatile BufferedImage segOverlayImage; // NOSONAR visibility reference
+
+  /** Segmentations whose canonical volume was still building at the last update pass. */
+  private volatile List<SpecialElementRegion> loadingSegs = List.of(); // NOSONAR visibility ref
+
   protected Vector3d lastCrosshairPosition;
 
   protected final KOViewButton koStarButton;
@@ -740,6 +747,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
   private void updateSegmentation(DicomImageElement img) {
     graphicManager.deleteByLayerType(LayerType.DICOM_SEG);
     segOverlayImage = null;
+    List<SpecialElementRegion> building = new ArrayList<>();
     if (series != null && img != null) {
       String patientPseudoUID = DicomModel.getPatientPseudoUID(series);
       List<SpecialElementRegion> segList =
@@ -749,7 +757,11 @@ public class View2d extends DefaultView2d<DicomImageElement> {
         Set<SegContour> contours = new LinkedHashSet<>();
         for (SpecialElementRegion seg : segList) {
           if (seg.isVisible() && seg.containsSopInstanceUIDReference(img)) {
+            // Checked after getContours(): that call may itself schedule the volume build
             Set<LazyContourLoader> loaders = seg.getContours(img);
+            if (seg.isSegmentationVolumeBuilding()) {
+              building.add(seg);
+            }
             if (loaders != null && !loaders.isEmpty()) {
               for (LazyContourLoader lazyLoader : loaders) {
                 try {
@@ -793,10 +805,42 @@ public class View2d extends DefaultView2d<DicomImageElement> {
         }
       }
     }
+    this.loadingSegs = List.copyOf(building);
+  }
+
+  /**
+   * {@code true} while at least one tracked segmentation is still building its canonical volume.
+   * Evaluated live at paint time so the message disappears on the next repaint even if the build
+   * ended without notifying this view.
+   */
+  protected boolean isSegLoading() {
+    return loadingSegs.stream().anyMatch(SpecialElementRegion::isSegmentationVolumeBuilding);
+  }
+
+  /** {@code true} when a segmentation build was pending at the last update pass. */
+  boolean hasPendingSegLoading() {
+    return !loadingSegs.isEmpty();
+  }
+
+  /**
+   * {@code true} while the rectified volume of the fusion overlay displayed by this view is still
+   * being built. Like {@link #isSegLoading()} it is evaluated at paint time, so the message
+   * disappears on the repaint that follows the build.
+   */
+  protected boolean isFusionLoading() {
+    OpManager disOp = getDisplayOpManager();
+    if (!disOp
+        .getParamValue(FusionOp.OP_NAME, FusionOp.P_FUSION_ENABLED, Boolean.class)
+        .orElse(Boolean.FALSE)) {
+      return false;
+    }
+    return FusionController.isVolumeBuilding(
+        disOp.getParamValue(FusionOp.OP_NAME, FusionOp.P_FUSION_SERIES).orElse(null));
   }
 
   @Override
   protected void drawOnTop(Graphics2D g2d) {
+    super.drawOnTop(g2d);
     BufferedImage overlay = segOverlayImage;
     if (overlay != null) {
       // Re-enter the image coordinate space (translate + affineTransform) to draw the overlay
@@ -805,6 +849,29 @@ public class View2d extends DefaultView2d<DicomImageElement> {
       g2d.translate(p.getX(), p.getY());
       g2d.drawImage(overlay, affineTransform, null);
       g2d.translate(-p.getX(), -p.getY());
+    }
+    drawLoadingMessages(g2d);
+  }
+
+  /** Paints the pending background builds, stacked at the bottom of the view. */
+  private void drawLoadingMessages(Graphics2D g2d) {
+    List<String> messages = new ArrayList<>(2);
+    if (isSegLoading()) {
+      messages.add(Messages.getString("seg.loading"));
+    }
+    if (isFusionLoading()) {
+      messages.add(Messages.getString("fusion.loading"));
+    }
+    if (messages.isEmpty()) {
+      return;
+    }
+    g2d.setFont(getLayerFont());
+    FontMetrics fm = g2d.getFontMetrics();
+    float y = getHeight() - fm.getHeight() * (messages.size() + 1f);
+    for (String msg : messages) {
+      float x = (getWidth() - fm.stringWidth(msg)) / 2f;
+      FontTools.paintColorFontOutline(g2d, msg, x, y, Color.ORANGE);
+      y += fm.getHeight();
     }
   }
 

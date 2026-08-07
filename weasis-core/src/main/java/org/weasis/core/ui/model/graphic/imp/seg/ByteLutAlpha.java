@@ -16,16 +16,17 @@ import org.opencv.core.CvType;
 import org.opencv.core.Mat;
 
 /**
- * A 4-channel (BGRA) byte lookup table dedicated to fractional segmentation overlays.
+ * A 4-channel (BGRA) byte lookup table for alpha-modulated overlays: fractional segmentation masks
+ * and continuous functional images (e.g. PET fusion).
  *
  * <p>Unlike {@link org.weasis.opencv.op.lut.ByteLut} which is a 3-channel BGR LUT, this LUT carries
- * a per-entry alpha so that a grayscale fractional mask can be turned into an alpha-modulated color
- * overlay in a single native {@link org.opencv.core.Core#LUT(Mat, Mat, Mat)} call.
+ * a per-entry alpha so that a grayscale image can be turned into an alpha-modulated color overlay
+ * in a single native {@link org.opencv.core.Core#LUT(Mat, Mat, Mat)} call.
  *
  * <p>The channel order ({@code A, B, G, R}) matches the byte layout of {@link
  * java.awt.image.BufferedImage#TYPE_4BYTE_ABGR}, allowing bulk-copy without per-pixel reordering.
- * Entry {@code 0} of the alpha channel is always {@code 0} so background pixels (mask value 0) are
- * fully transparent.
+ * Entry {@code 0} of the alpha channel is always {@code 0} so background pixels are fully
+ * transparent; a wider transparent band can be requested with a threshold.
  */
 public record ByteLutAlpha(String name, byte[][] lutTable) {
 
@@ -83,6 +84,25 @@ public record ByteLutAlpha(String name, byte[][] lutTable) {
    * @param opacity the global opacity multiplier in {@code [0.0, 1.0]}
    */
   public static ByteLutAlpha fromColorLut(String name, byte[][] bgrLut, float opacity) {
+    return fromColorLut(name, bgrLut, opacity, 0, CHANNEL_SIZE - 1);
+  }
+
+  /**
+   * Same as {@link #fromColorLut(String, byte[][], float)} but reaching full opacity early instead
+   * of ramping across the whole range: entries up to {@code transparentBelow} are invisible, alpha
+   * then ramps up to {@code opaqueFrom} and stays at {@code opacity} above it.
+   *
+   * <p>This is how a continuous functional overlay (e.g. PET) is normally blended: the color LUT
+   * alone carries the value, so low uptake shows as the dark end of the palette rather than being
+   * faded out. Ramping alpha across the full range instead makes everything but the hottest voxels
+   * vanish, since a low entry is then both dark <em>and</em> nearly transparent.
+   *
+   * @param transparentBelow the highest fully transparent entry, clamped to {@code [0, 255]}
+   * @param opaqueFrom the entry from which alpha reaches {@code opacity}, clamped above {@code
+   *     transparentBelow}
+   */
+  public static ByteLutAlpha fromColorLut(
+      String name, byte[][] bgrLut, float opacity, int transparentBelow, int opaqueFrom) {
     Objects.requireNonNull(bgrLut, "Color LUT cannot be null");
     if (bgrLut.length < 3) {
       throw new IllegalArgumentException("Color LUT must have at least 3 channels (BGR)");
@@ -93,7 +113,7 @@ public record ByteLutAlpha(String name, byte[][] lutTable) {
             "Each color LUT channel must have exactly %d values".formatted(CHANNEL_SIZE));
       }
     }
-    byte[] alpha = buildAlphaRamp(Math.clamp(opacity, 0.0f, 1.0f));
+    byte[] alpha = buildAlphaRamp(Math.clamp(opacity, 0.0f, 1.0f), transparentBelow, opaqueFrom);
     return new ByteLutAlpha(
         name, new byte[][] {alpha, bgrLut[0].clone(), bgrLut[1].clone(), bgrLut[2].clone()});
   }
@@ -105,10 +125,17 @@ public record ByteLutAlpha(String name, byte[][] lutTable) {
   }
 
   private static byte[] buildAlphaRamp(float clampedOpacity) {
+    return buildAlphaRamp(clampedOpacity, 0, CHANNEL_SIZE - 1);
+  }
+
+  private static byte[] buildAlphaRamp(float clampedOpacity, int transparentBelow, int opaqueFrom) {
     byte[] alpha = new byte[CHANNEL_SIZE];
-    // alpha[0] stays 0 (transparent background); ramp the rest.
-    for (int i = 1; i < CHANNEL_SIZE; i++) {
-      int a = Math.round((i / 255.0f) * clampedOpacity * 255.0f);
+    // Entries up to start stay 0 (transparent background); ramp to full opacity by end, hold above.
+    int start = Math.clamp(transparentBelow, 0, CHANNEL_SIZE - 1);
+    int end = Math.clamp(opaqueFrom, start + 1, CHANNEL_SIZE - 1);
+    int full = Math.round(clampedOpacity * 255.0f);
+    for (int i = start + 1; i < CHANNEL_SIZE; i++) {
+      int a = i >= end ? full : Math.round(((float) (i - start) / (end - start)) * full);
       alpha[i] = (byte) Math.clamp(a, 0, 255);
     }
     return alpha;

@@ -29,16 +29,21 @@ import org.weasis.dicom.explorer.DicomSorter.SortingTime;
 import org.weasis.dicom.explorer.LoadDicom;
 import org.weasis.dicom.explorer.Messages;
 import org.weasis.dicom.explorer.main.DicomExplorer;
+import org.weasis.dicom.explorer.main.SeriesFilter;
 
 public class DicomExplorerPrefView extends AbstractItemDialogPage {
   public static final String DOWNLOAD_IMMEDIATELY = "weasis.download.immediately";
   public static final String STUDY_DATE_SORTING = "weasis.sorting.study.date";
+  public static final String FILTER_DEFAULT_MODE = "weasis.dicom.explorer.filter.mode";
   private final JCheckBox downloadImmediatelyCheckbox =
       new JCheckBox(Messages.getString("SeriesDownloadPrefView.downloadImmediatelyCheckbox"));
   private final JSpinner spinner;
 
   private final JComboBox<SortingTime> studyDateSortingComboBox =
       new JComboBox<>(SortingTime.values());
+
+  private final JComboBox<SeriesFilter.Mode> filterModeComboBox =
+      new JComboBox<>(SeriesFilter.Mode.values());
 
   private final JCheckBox showUnsupportedSopInfoCheckbox =
       new JCheckBox(Messages.getString("dicom.unsupported.sop.notify"));
@@ -69,6 +74,11 @@ public class DicomExplorerPrefView extends AbstractItemDialogPage {
     JLabel labelStudyDate = new JLabel(Messages.getString("study.date.sorting") + StringUtil.COLON);
     studyDateSortingComboBox.setSelectedItem(DicomSorter.getStudyDateSorting());
     panel.add(GuiUtils.getFlowLayoutPanel(labelStudyDate, studyDateSortingComboBox));
+
+    JLabel labelFilterMode =
+        new JLabel(Messages.getString("DicomExplorer.filter_default") + StringUtil.COLON);
+    filterModeComboBox.setSelectedItem(getDefaultFilterMode());
+    panel.add(GuiUtils.getFlowLayoutPanel(labelFilterMode, filterModeComboBox));
     panel.setBorder(GuiUtils.getTitledBorder(Messages.getString("display")));
     add(panel);
     add(GuiUtils.boxVerticalStrut(BLOCK_SEPARATOR));
@@ -114,6 +124,9 @@ public class DicomExplorerPrefView extends AbstractItemDialogPage {
         STUDY_DATE_SORTING, String.valueOf(SortingTime.INVERSE_CHRONOLOGICAL.getId()));
     studyDateSortingComboBox.setSelectedItem(DicomSorter.getStudyDateSorting());
 
+    preferences.resetProperty(FILTER_DEFAULT_MODE, SeriesFilter.Mode.TEXT.name());
+    filterModeComboBox.setSelectedItem(getDefaultFilterMode());
+
     spinner.setValue(Thumbnail.DEFAULT_SIZE);
 
     preferences.resetProperty(LoadDicom.SHOW_UNSUPPORTED_SOP_CLASS_INFO, Boolean.TRUE.toString());
@@ -131,6 +144,11 @@ public class DicomExplorerPrefView extends AbstractItemDialogPage {
       preferences.putIntProperty(STUDY_DATE_SORTING, sortingTime.getId());
     }
 
+    SeriesFilter.Mode filterMode = (SeriesFilter.Mode) filterModeComboBox.getSelectedItem();
+    if (filterMode != null) {
+      preferences.setProperty(FILTER_DEFAULT_MODE, filterMode.name());
+    }
+
     DataExplorerView dicomView = GuiUtils.getUICore().getExplorerPlugin(DicomExplorer.NAME);
     if (dicomView instanceof DicomExplorer explorer) {
       int size = (int) spinner.getValue();
@@ -142,5 +160,18 @@ public class DicomExplorerPrefView extends AbstractItemDialogPage {
         LoadDicom.SHOW_UNSUPPORTED_SOP_CLASS_INFO, showUnsupportedSopInfoCheckbox.isSelected());
 
     GuiUtils.getUICore().saveSystemPreferences();
+  }
+
+  /** Returns the user-configured default series filter mode, falling back to {@code TEXT}. */
+  public static SeriesFilter.Mode getDefaultFilterMode() {
+    String value =
+        GuiUtils.getUICore()
+            .getSystemPreferences()
+            .getProperty(FILTER_DEFAULT_MODE, SeriesFilter.Mode.TEXT.name());
+    try {
+      return SeriesFilter.Mode.valueOf(value);
+    } catch (IllegalArgumentException e) {
+      return SeriesFilter.Mode.TEXT;
+    }
   }
 }

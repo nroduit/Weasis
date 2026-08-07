@@ -19,6 +19,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.NavigableMap;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
 import org.dcm4che3.data.Attributes;
@@ -103,7 +104,9 @@ public class StructureSet extends RtSpecialElement implements SpecialElementRegi
     if (!StringUtil.hasText(label)) {
       return StringUtil.hasText(name) ? name : TagW.NO_VALUE;
     }
-    return (StringUtil.hasText(name) && !name.equals(label)) ? label + " (" + name + ")" : label;
+    return StringUtil.hasText(name) && !Objects.equals(name, label)
+        ? label + " (" + name + ")"
+        : label;
   }
 
   @Override

@@ -26,6 +26,7 @@ import java.awt.Stroke;
 import java.awt.Window;
 import java.awt.event.FocusEvent;
 import java.awt.event.KeyEvent;
+import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
@@ -49,6 +50,7 @@ import javax.swing.JMenu;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPopupMenu;
+import javax.swing.JProgressBar;
 import javax.swing.MenuSelectionManager;
 import javax.swing.SwingUtilities;
 import javax.swing.ToolTipManager;
@@ -62,6 +64,7 @@ import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.ComboItemListener;
 import org.weasis.core.api.gui.util.Feature;
 import org.weasis.core.api.gui.util.Filter;
+import org.weasis.core.api.gui.util.GeomUtil;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.SliderCineListener;
 import org.weasis.core.api.image.AffineTransformOp;
@@ -91,6 +94,8 @@ import org.weasis.core.ui.model.GraphicModel;
 import org.weasis.core.ui.model.graphic.DragGraphic;
 import org.weasis.core.ui.model.graphic.Graphic;
 import org.weasis.core.ui.model.graphic.GraphicSelectionListener;
+import org.weasis.core.ui.model.graphic.imp.seg.SegGraphic;
+import org.weasis.core.ui.model.graphic.imp.seg.SegRegion;
 import org.weasis.core.ui.model.imp.XmlGraphicModel;
 import org.weasis.core.ui.model.layer.LayerAnnotation;
 import org.weasis.core.ui.model.layer.LayerType;
@@ -114,7 +119,7 @@ import org.weasis.opencv.op.lut.ColorLut;
  * @author Benoit Jacquemoud
  */
 public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
-    implements ViewCanvas<E> {
+    implements ViewCanvas<E>, ViewProgress {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(DefaultView2d.class);
 
@@ -126,6 +131,9 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
   }
 
   public static final int MINIMAL_IMAGES_FOR_3D = 5;
+
+  /** Minimal hit distance, in display pixels, to a segmentation contour outline. */
+  private static final float SEG_HOVER_TOLERANCE = 4f;
 
   public static final GraphicClipboard GRAPHIC_CLIPBOARD = new GraphicClipboard();
 
@@ -140,6 +148,13 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
 
   protected final FocusHandler<E> focusHandler;
   protected final GraphicMouseHandler<E> graphicMouseHandler;
+  private final SegHoverHandler segHoverHandler = new SegHoverHandler();
+
+  /** Segmentation region currently hovered, highlighted with a thicker outline. */
+  private SegRegion<?> highlightedSegRegion;
+
+  /** Progress bar painted at the centre of the view while a background task runs. */
+  private JProgressBar progressBar;
 
   private final PanPoint highlightedPosition = new PanPoint(PanPoint.State.CENTER);
   private final PanPoint startedDragPoint = new PanPoint(PanPoint.State.DRAGSTART);
@@ -1368,7 +1383,19 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
 
   private void drawAffineInvariant(Graphics2D g2d) {}
 
-  protected void drawOnTop(Graphics2D g2d) {}
+  protected void drawOnTop(Graphics2D g2d) {
+    drawProgressBar(g2d, progressBar);
+  }
+
+  @Override
+  public void setProgressBar(JProgressBar bar) {
+    this.progressBar = bar;
+  }
+
+  @Override
+  public JProgressBar getProgressBar() {
+    return progressBar;
+  }
 
   public boolean requiredTextAntialiasing() {
     Optional<SliderCineListener> cineAction = eventManager.getAction(ActionW.SCROLL_SERIES);
@@ -1803,6 +1830,100 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     this.addMouseListener(focusHandler);
     this.addMouseMotionListener(focusHandler);
     this.addMouseWheelListener(focusHandler);
+    this.addMouseListener(segHoverHandler);
+    this.addMouseMotionListener(segHoverHandler);
+    // All the mouse listeners have just been removed (see disableMouseAndKeyListener), so the
+    // tooltip handling of this view must be restored as well.
+    ToolTipManager.sharedInstance().registerComponent(this);
+  }
+
+  /**
+   * Shows the properties of the segmentation region under the pointer. The hit test runs only when
+   * the tooltip manager asks for a text (that is, after the hover delay and while the tooltip is
+   * displayed), never on every mouse move.
+   */
+  @Override
+  public String getToolTipText(MouseEvent event) {
+    SegRegion<?> region = findSegRegionAt(event);
+    setHighlightedSegRegion(region);
+    return region == null ? null : region.getToolTipHtml();
+  }
+
+  /**
+   * Hit test restricted to the segmentation graphics: their layer is not selectable, so they are
+   * ignored by the regular graphic selection.
+   */
+  private SegRegion<?> findSegRegionAt(MouseEvent event) {
+    if (!LangUtil.nullToTrue((Boolean) actionsInView.get(ActionW.DRAWINGS.cmd()))) {
+      return null;
+    }
+    Point2D p = getImageCoordinatesFromMouse(event.getX(), event.getY());
+    double scale = GeomUtil.extractScalingFactor(affineTransform);
+    List<Graphic> graphics = graphicManager.getAllGraphics();
+    for (int i = graphics.size() - 1; i >= 0; i--) {
+      if (graphics.get(i) instanceof SegGraphic seg && seg.getRegion() != null) {
+        double tolerance = Math.max(seg.getLineThickness(), SEG_HOVER_TOLERANCE) / scale;
+        if (seg.isOnOutline(p, tolerance)) {
+          return seg.getRegion();
+        }
+      }
+    }
+    return null;
+  }
+
+  /** Highlights all the contours of {@code region} (may be null) and repaints only their bounds. */
+  private void setHighlightedSegRegion(SegRegion<?> region) {
+    highlightedSegRegion = region;
+    Rectangle dirty = null;
+    for (Graphic graphic : graphicManager.getAllGraphics()) {
+      if (graphic instanceof SegGraphic seg) {
+        boolean highlight = region != null && seg.getRegion() == region;
+        if (seg.isHighlighted() != highlight) {
+          seg.setHighlighted(highlight);
+          Rectangle bounds = getSegHighlightBounds(seg);
+          if (bounds != null) {
+            dirty = dirty == null ? bounds : dirty.union(bounds);
+          }
+        }
+      }
+    }
+    if (dirty != null) {
+      repaint(dirty);
+    }
+  }
+
+  private Rectangle getSegHighlightBounds(SegGraphic graphic) {
+    if (graphic.getShape() == null) {
+      return null;
+    }
+    Rectangle rect = graphic.getTransformedBounds(graphic.getShape(), affineTransform);
+    if (rect == null) {
+      return null;
+    }
+    int pad = (int) Math.ceil(SegGraphic.HIGHLIGHT_EXTRA_THICKNESS);
+    rect.grow(pad, pad);
+    Point2D offset = getClipViewCoordinatesOffset();
+    rect.translate((int) offset.getX(), (int) offset.getY());
+    return rect;
+  }
+
+  /**
+   * Keeps the segmentation highlight consistent outside the tooltip lifecycle: the hit test is
+   * evaluated on move only while a region is highlighted, and the highlight is dropped as soon as
+   * the pointer leaves the view.
+   */
+  private class SegHoverHandler extends MouseAdapter {
+    @Override
+    public void mouseExited(MouseEvent e) {
+      setHighlightedSegRegion(null);
+    }
+
+    @Override
+    public void mouseMoved(MouseEvent e) {
+      if (highlightedSegRegion != null) {
+        setHighlightedSegRegion(findSegRegionAt(e));
+      }
+    }
   }
 
   @Override

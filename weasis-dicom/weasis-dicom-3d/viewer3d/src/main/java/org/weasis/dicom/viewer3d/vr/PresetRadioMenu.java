@@ -18,12 +18,16 @@ import java.util.Map.Entry;
 import javax.swing.Icon;
 import javax.swing.JComponent;
 import javax.swing.JMenu;
+import javax.swing.JMenuItem;
 import javax.swing.JPopupMenu;
 import javax.swing.JSeparator;
 import org.weasis.core.api.gui.util.GroupRadioMenu;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.RadioMenuItem;
+import org.weasis.core.util.StringUtil.Suffix;
 import org.weasis.dicom.codec.display.Modality;
+import org.weasis.dicom.viewer3d.EventManager;
+import org.weasis.dicom.viewer3d.Messages;
 
 public class PresetRadioMenu extends GroupRadioMenu<Preset> {
 
@@ -107,6 +111,18 @@ public class PresetRadioMenu extends GroupRadioMenu<Preset> {
         modMenu.add(menuItem);
       }
     }
+
+    // ── Edit Volume LUT entry ──
+    component.add(new JSeparator());
+    JMenuItem editLutItem = new JMenuItem(Messages.getString("edit.volume.lut") + Suffix.THREE_PTS);
+    editLutItem.addActionListener(
+        e -> {
+          if (EventManager.getInstance().getSelectedViewPane() instanceof View3d view3d) {
+            VolumeLutEditorDialog dialog = new VolumeLutEditorDialog(view3d);
+            GuiUtils.showCenterScreen(dialog);
+          }
+        });
+    component.add(editLutItem);
   }
 
   private static void addRootMenu(

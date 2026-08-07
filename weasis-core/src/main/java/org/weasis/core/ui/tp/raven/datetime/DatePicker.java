@@ -13,6 +13,7 @@ import com.formdev.flatlaf.FlatClientProperties;
 import java.awt.*;
 import java.text.DateFormatSymbols;
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import javax.swing.*;
@@ -112,7 +113,7 @@ public class DatePicker extends PanelPopupEditor
   }
 
   private void initDate() {
-    LocalDate date = LocalDate.now();
+    LocalDate date = LocalDate.now(ZoneId.systemDefault());
     int month = date.getMonthValue() - 1;
     int year = date.getYear();
     this.month = month;
@@ -220,7 +221,7 @@ public class DatePicker extends PanelPopupEditor
   }
 
   public void now() {
-    LocalDate date = LocalDate.now();
+    LocalDate date = LocalDate.now(ZoneId.systemDefault());
     if (getDateSelectionMode() == DateSelectionMode.BETWEEN_DATE_SELECTED) {
       setSelectedDateRange(date, date);
     } else {
@@ -231,7 +232,7 @@ public class DatePicker extends PanelPopupEditor
   public void toDateSelectionView() {
     LocalDate date = getSelectedDate();
     if (date == null) {
-      date = LocalDate.now();
+      date = LocalDate.now(ZoneId.systemDefault());
     }
     int m = date.getMonthValue() - 1;
     int y = date.getYear();
@@ -247,7 +248,7 @@ public class DatePicker extends PanelPopupEditor
   }
 
   public void selectCurrentMonth() {
-    LocalDate date = LocalDate.now();
+    LocalDate date = LocalDate.now(ZoneId.systemDefault());
     if (getDateSelectionMode() == DateSelectionMode.BETWEEN_DATE_SELECTED) {
       setSelectedDateRange(date.withDayOfMonth(1), date);
     } else {

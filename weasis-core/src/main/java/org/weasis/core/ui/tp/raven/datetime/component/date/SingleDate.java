@@ -10,6 +10,7 @@
 package org.weasis.core.ui.tp.raven.datetime.component.date;
 
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.Calendar;
 
 /* SingleDate is a class that provides a single date.
@@ -24,7 +25,7 @@ public class SingleDate {
   private int year;
 
   public SingleDate() {
-    this(LocalDate.now());
+    this(LocalDate.now(ZoneId.systemDefault()));
   }
 
   public SingleDate(LocalDate date) {

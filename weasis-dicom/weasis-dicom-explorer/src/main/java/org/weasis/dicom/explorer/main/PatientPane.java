@@ -11,7 +11,6 @@ package org.weasis.dicom.explorer.main;
 
 import java.awt.*;
 import java.util.Arrays;
-import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Stream;
@@ -57,6 +56,7 @@ public class PatientPane extends JPanel
   @Override
   public void patientCleared() {
     this.currentPatient = null;
+    showTitle(false);
     removeAll();
     revalidate();
     repaint();
@@ -93,20 +93,15 @@ public class PatientPane extends JPanel
   /** Refreshes the layout of the patient pane, reorganizing all study panes. */
   void refreshLayout() {
     updateLayout();
-
-    Optional<MediaSeriesGroup> patient = getCurrentPatient();
-    if (patient.isEmpty()) {
-      removeAll();
-      revalidate();
-      return;
-    }
-    List<StudyPane> studies = explorer.getPaneManager().getStudyList(patient.get());
     removeAll();
 
-    if (studies != null) {
-      studies.stream().filter(this::hasVisibleContent).forEach(this::addStudyPane);
-    }
+    getCurrentPatient()
+        .map(patient -> explorer.getPaneManager().getStudyList(patient))
+        .ifPresent(
+            studies ->
+                studies.stream().filter(this::hasVisibleContent).forEach(this::addStudyPane));
     revalidate();
+    repaint();
   }
 
   /** Shows all studies for the current patient. */
@@ -120,16 +115,12 @@ public class PatientPane extends JPanel
     }
 
     var paneManager = explorer.getPaneManager();
-    List<StudyPane> studies = paneManager.getStudyList(patient.get());
-    if (studies != null) {
-      studies.forEach(
-          studyPane -> {
-            studyPane.showAllSeries(paneManager);
-            if (hasVisibleContent(studyPane)) {
-              addPane(studyPane);
-            }
-            studyPane.doLayout();
-          });
+    for (StudyPane studyPane : paneManager.getStudyList(patient.get())) {
+      studyPane.showAllSeries(paneManager);
+      if (hasVisibleContent(studyPane)) {
+        addPane(studyPane);
+      }
+      studyPane.doLayout();
     }
     revalidate();
   }

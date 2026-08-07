@@ -40,15 +40,15 @@ import org.weasis.opencv.data.PlanarImage;
  */
 public final class FractionalOverlay {
 
-  /** Cache of {@link ByteLutAlpha} keyed by (rgb, quantised opacity). */
+  /** Cache of {@link ByteLutAlpha} keyed by (rgb, quantized opacity). */
   private static final Map<LutKey, ByteLutAlpha> LUT_CACHE = new ConcurrentHashMap<>();
 
   private FractionalOverlay() {}
 
-  /** Composite cache key: 24-bit RGB + 8-bit quantised opacity. */
+  /** Composite cache key: 24-bit RGB + 8-bit quantized opacity. */
   private record LutKey(int rgb, int opacity) {}
 
-  /** Returns a cached LUT for the given color and opacity (opacity quantised to 8 bits). */
+  /** Returns a cached LUT for the given color and opacity (opacity quantized to 8 bits). */
   public static ByteLutAlpha getOrBuildLut(Color color, float opacity) {
     int rgb = color.getRGB() & 0xFFFFFF;
     int op = Math.clamp(Math.round(opacity * 255.0f), 0, 255);

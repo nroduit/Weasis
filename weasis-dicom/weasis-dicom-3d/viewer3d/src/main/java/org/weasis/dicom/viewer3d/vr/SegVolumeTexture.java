@@ -12,9 +12,11 @@ package org.weasis.dicom.viewer3d.vr;
 import com.jogamp.common.nio.Buffers;
 import com.jogamp.opengl.GL;
 import com.jogamp.opengl.GL2ES2;
+import com.jogamp.opengl.GL2ES3;
 import com.jogamp.opengl.GL2GL3;
 import com.jogamp.opengl.GLContext;
 import com.jogamp.opengl.util.GLPixelStorageModes;
+import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
 import org.joml.Vector3d;
 import org.slf4j.Logger;
@@ -22,9 +24,10 @@ import org.slf4j.LoggerFactory;
 import org.weasis.dicom.codec.seg.SegmentationVolume;
 
 /**
- * A 3D OpenGL texture that stores a {@link SegmentationVolume}'s per-voxel <em>storage IDs</em> as
- * {@code GL_R32UI} (unsigned-integer single-channel 3D texture), paired with a 1D colour lookup
- * texture ({@code GL_RGBA8}) mapping each storage ID to its (pre-blended) segment RGBA colour.
+ * A 3D OpenGL texture that stores a {@link SegmentationVolume}'s per-voxel <em>storage IDs</em> in
+ * the volume's own width — {@code GL_R8UI} in byte mode, {@code GL_R16UI} once overlap combinations
+ * promoted it — paired with a 1D colour lookup texture ({@code GL_RGBA8}) mapping each storage ID
+ * to its (pre-blended) segment RGBA colour.
  *
  * <p>The segmentation texture is bound on texture unit {@value #SEG_TEXTURE_UNIT} and the colour
  * LUT on unit {@value #SEG_COLOR_UNIT}. These units are above the ones used by the volume renderer
@@ -46,6 +49,9 @@ public final class SegVolumeTexture {
   /** Texture unit for the 1D segment colour lookup texture. */
   public static final int SEG_COLOR_UNIT = 5;
 
+  /** Upper bound on the staging block used to batch slices into a single GL transfer. */
+  private static final int MAX_UPLOAD_BLOCK_BYTES = 32 << 20;
+
   private final SegmentationVolume segVolume;
   private final Vector3d scale;
 
@@ -54,6 +60,12 @@ public final class SegVolumeTexture {
   private boolean needsUpload = true;
   private boolean needsColorUpdate = true;
   private byte[] pendingColorLut;
+
+  /**
+   * Storage width the texture was allocated with, captured in {@link #init(GL2ES2)} so that {@link
+   * #uploadVolumeData(GL2ES2)} always transfers in the format the texture was created for.
+   */
+  private boolean shortStorage;
 
   /**
    * Creates a new SegVolumeTexture.
@@ -92,7 +104,7 @@ public final class SegVolumeTexture {
     int sizeY = segVolume.getSizeY();
     int sizeZ = segVolume.getSizeZ();
 
-    // ---- 3D segmentation storage-ID texture (GL_R32UI) ----
+    // ---- 3D segmentation storage-ID texture ----
     gl.glActiveTexture(GL.GL_TEXTURE0 + SEG_TEXTURE_UNIT);
     gl.glBindTexture(GL2ES2.GL_TEXTURE_3D, segTextureId);
     gl.glTexParameteri(GL2ES2.GL_TEXTURE_3D, GL.GL_TEXTURE_MIN_FILTER, GL.GL_NEAREST);
@@ -101,17 +113,21 @@ public final class SegVolumeTexture {
     gl.glTexParameteri(GL2ES2.GL_TEXTURE_3D, GL.GL_TEXTURE_WRAP_T, GL.GL_CLAMP_TO_EDGE);
     gl.glTexParameteri(GL2ES2.GL_TEXTURE_3D, GL2ES2.GL_TEXTURE_WRAP_R, GL.GL_CLAMP_TO_EDGE);
 
-    // Allocate the 3D texture (GL_R32UI = unsigned int, one channel)
+    // Allocate the 3D texture in the volume's own storage width: storage IDs never exceed a byte
+    // (or a short once overlap combinations promote the volume), so GL_R32UI would waste 2–4× the
+    // GPU memory and the same factor of upload bandwidth. usampler3D reads all three formats
+    // identically, so the shaders are unaffected.
+    this.shortStorage = segVolume.isShortMode();
     gl.glTexImage3D(
         GL2ES2.GL_TEXTURE_3D,
         0,
-        GL2GL3.GL_R32UI,
+        shortStorage ? GL2ES3.GL_R16UI : GL2ES3.GL_R8UI,
         sizeX,
         sizeY,
         sizeZ,
         0,
         GL2GL3.GL_RED_INTEGER,
-        GL.GL_UNSIGNED_INT,
+        shortStorage ? GL.GL_UNSIGNED_SHORT : GL.GL_UNSIGNED_BYTE,
         null);
 
     // ---- 1D segment colour LUT texture (RGBA8) ----
@@ -122,7 +138,6 @@ public final class SegVolumeTexture {
     gl.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_WRAP_S, GL.GL_CLAMP_TO_EDGE);
     gl.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_WRAP_T, GL.GL_CLAMP_TO_EDGE);
 
-    int segCount = Math.max(segVolume.getSegmentCount(), 1);
     byte[] colorLut = segVolume.buildSegmentColorLUT();
     // LUT width = number of allocated storage IDs (= segments + overlap combinations + slot 0
     // for background). Derived directly from the LUT byte length so it stays in sync with
@@ -144,8 +159,8 @@ public final class SegVolumeTexture {
   }
 
   /**
-   * Uploads the full SegmentationVolume storage-ID data into the 3D texture, slice by slice. This
-   * should be called from the GL thread after {@link #init(GL2ES2)}.
+   * Uploads the full SegmentationVolume storage-ID data into the 3D texture, in blocks of slices.
+   * Must be called from the GL thread after {@link #init(GL2ES2)}.
    */
   public void uploadVolumeData(GL2ES2 gl) {
     if (segTextureId <= 0) {
@@ -160,28 +175,46 @@ public final class SegVolumeTexture {
     gl.glBindTexture(GL2ES2.GL_TEXTURE_3D, segTextureId);
 
     GLPixelStorageModes storageModes = new GLPixelStorageModes();
-    storageModes.setPackAlignment(gl, 1);
+    // Uploads are UNPACK operations: rows of a byte texture whose width is not a multiple of 4
+    // would be misread with the default alignment.
+    storageModes.setUnpackAlignment(gl, 1);
 
-    // VolumeBuilder uploads the volume slices in reverse Z order (axial[depth-1] → z=0),
-    // so the seg texture must mirror that reversal to stay aligned — otherwise the overlay
-    // is rendered upside-down along the superior/inferior axis.
-    for (int z = 0; z < sizeZ; z++) {
-      int[] sliceData = segVolume.exportSliceBitmask(z);
-      if (sliceData != null) {
-        IntBuffer buffer = Buffers.newDirectIntBuffer(sliceData);
-        gl.glTexSubImage3D(
-            GL2ES2.GL_TEXTURE_3D,
-            0,
-            0,
-            0,
-            sizeZ - 1 - z,
-            sizeX,
-            sizeY,
-            1,
-            GL2GL3.GL_RED_INTEGER,
-            GL.GL_UNSIGNED_INT,
-            buffer);
+    int type = shortStorage ? GL.GL_UNSIGNED_SHORT : GL.GL_UNSIGNED_BYTE;
+    int sliceBytes = sizeX * sizeY * (shortStorage ? Short.BYTES : Byte.BYTES);
+    // Transfer several slices per call: one glTexSubImage3D per slice costs far more in driver
+    // round-trips than the memory the staging block occupies.
+    int slicesPerBlock = Math.max(1, Math.min(sizeZ, MAX_UPLOAD_BLOCK_BYTES / sliceBytes));
+    ByteBuffer buffer = Buffers.newDirectByteBuffer(slicesPerBlock * sliceBytes);
+
+    // VolumeBuilder uploads the volume slices in reverse Z order (axial[depth-1] → z=0), so the seg
+    // texture must mirror that reversal to stay aligned — otherwise the overlay is rendered
+    // upside-down along the superior/inferior axis. Blocks are therefore packed by descending
+    // source Z so that each one is contiguous in texture Z.
+    long exportNanos = 0;
+    long uploadNanos = 0;
+    for (int texZ = 0; texZ < sizeZ; texZ += slicesPerBlock) {
+      int depth = Math.min(slicesPerBlock, sizeZ - texZ);
+      long start = System.nanoTime();
+      buffer.clear();
+      for (int i = 0; i < depth; i++) {
+        segVolume.exportSliceInto(sizeZ - 1 - (texZ + i), buffer);
       }
+      buffer.flip();
+      long exported = System.nanoTime();
+      gl.glTexSubImage3D(
+          GL2ES2.GL_TEXTURE_3D,
+          0,
+          0,
+          0,
+          texZ,
+          sizeX,
+          sizeY,
+          depth,
+          GL2GL3.GL_RED_INTEGER,
+          type,
+          buffer);
+      exportNanos += exported - start;
+      uploadNanos += System.nanoTime() - exported;
     }
 
     storageModes.restore(gl);
@@ -189,11 +222,17 @@ public final class SegVolumeTexture {
     needsUpload = false;
 
     LOGGER.info(
-        "Uploaded SegmentationVolume 3D texture: {}x{}x{} ({} segments)",
+        "Uploaded SegmentationVolume 3D texture: {}x{}x{} ({} segments, {} per voxel)",
         sizeX,
         sizeY,
         sizeZ,
-        segVolume.getSegmentCount());
+        segVolume.getSegmentCount(),
+        shortStorage ? "16 bits" : "8 bits");
+    LOGGER.debug(
+        "  {} ms reading the volume, {} ms in {} GL transfers",
+        exportNanos / 1_000_000,
+        uploadNanos / 1_000_000,
+        (sizeZ + slicesPerBlock - 1) / slicesPerBlock);
   }
 
   /**

@@ -12,6 +12,7 @@ package org.weasis.core.ui.tp.raven.datetime;
 import com.formdev.flatlaf.FlatClientProperties;
 import java.awt.*;
 import java.time.LocalTime;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.Locale;
 import javax.swing.*;
@@ -158,7 +159,7 @@ public class TimePicker extends PanelPopupEditor implements TimeSelectionModelLi
 
   /** Set time to current local time */
   public void now() {
-    setSelectedTime(LocalTime.now());
+    setSelectedTime(LocalTime.now(ZoneId.systemDefault()));
   }
 
   public void setSelectedTime(LocalTime time) {

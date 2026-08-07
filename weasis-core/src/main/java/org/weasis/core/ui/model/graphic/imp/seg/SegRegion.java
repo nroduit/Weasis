@@ -11,8 +11,13 @@ package org.weasis.core.ui.model.graphic.imp.seg;
 
 import java.awt.Color;
 import java.util.List;
+import org.weasis.core.api.gui.util.DecFormatter;
+import org.weasis.core.api.gui.util.GuiUtils;
+import org.weasis.core.api.image.measure.MeasurementsAdapter;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.util.Copyable;
+import org.weasis.core.ui.util.StructToolTipTreeNode;
+import org.weasis.core.util.StringUtil;
 import org.weasis.opencv.seg.RegionAttributes;
 
 public class SegRegion<E extends ImageElement> extends RegionAttributes
@@ -113,5 +118,82 @@ public class SegRegion<E extends ImageElement> extends RegionAttributes
   /** Returns true if this region is from a FRACTIONAL segmentation. */
   public boolean isFractional() {
     return fractionalType != null;
+  }
+
+  /**
+   * Builds the HTML description of this region, shared by the region tree tooltips and the hover
+   * popup displayed over the image.
+   */
+  public String getToolTipHtml() {
+    StringBuilder buf = new StringBuilder();
+    buf.append(GuiUtils.HTML_START).append("<b>").append(getLabel()).append("</b>");
+    buf.append(GuiUtils.HTML_BR);
+    appendLine(buf, "Algorithm type", getType());
+    appendLine(buf, "Algorithm name", algorithmName);
+    appendList(buf, "Categories", categories);
+    appendList(buf, "Anatomic regions", anatomicRegionCodes);
+    appendVoxelCount(buf);
+    appendVolume(buf);
+    if (isFractional()) {
+      appendFractionalLut(buf);
+    }
+    buf.append(GuiUtils.HTML_END);
+    return buf.toString();
+  }
+
+  protected static void appendLine(StringBuilder buf, String label, String value) {
+    if (StringUtil.hasText(value)) {
+      buf.append(label).append(StringUtil.COLON_AND_SPACE).append(value).append(GuiUtils.HTML_BR);
+    }
+  }
+
+  protected static void appendList(StringBuilder buf, String label, List<String> values) {
+    if (values != null && !values.isEmpty()) {
+      buf.append(label)
+          .append(StringUtil.COLON_AND_SPACE)
+          .append(String.join(", ", values))
+          .append(GuiUtils.HTML_BR);
+    }
+  }
+
+  private void appendVoxelCount(StringBuilder buf) {
+    buf.append("Voxel count");
+    if (isFractional()) {
+      buf.append(" (weighted");
+      if (StringUtil.hasText(fractionalType)) {
+        buf.append(", ").append(fractionalType.toLowerCase());
+      }
+      buf.append(")");
+    }
+    buf.append(StringUtil.COLON_AND_SPACE)
+        .append(DecFormatter.allNumber(getNumberOfPixels()))
+        .append(GuiUtils.HTML_BR);
+  }
+
+  private void appendVolume(StringBuilder buf) {
+    if (measurableLayer == null) {
+      return;
+    }
+    MeasurementsAdapter adapter =
+        measurableLayer.getMeasurementAdapter(
+            measurableLayer.getSourceImage().getPixelSpacingUnit());
+    double ratio = adapter.calibrationRatio();
+    buf.append("Volume (%s3)".formatted(adapter.unit()))
+        .append(StringUtil.COLON_AND_SPACE)
+        .append(
+            DecFormatter.twoDecimal(
+                getNumberOfPixels() * ratio * ratio * measurableLayer.getThickness()))
+        .append(GuiUtils.HTML_BR);
+  }
+
+  private void appendFractionalLut(StringBuilder buf) {
+    boolean occupancy = "OCCUPANCY".equalsIgnoreCase(fractionalType);
+    String unit = occupancy ? " %" : "";
+    String minLabel = "0" + unit;
+    String maxLabel = (occupancy ? "100" : "1") + unit;
+    buf.append("LUT")
+        .append(StringUtil.COLON_AND_SPACE)
+        .append(GuiUtils.HTML_BR)
+        .append(StructToolTipTreeNode.buildHorizontalLutBar(getColor(), 24, minLabel, maxLabel));
   }
 }

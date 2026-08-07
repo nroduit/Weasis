@@ -14,8 +14,6 @@ import org.slf4j.LoggerFactory;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeries.MEDIA_POSITION;
 import org.weasis.dicom.codec.DicomImageElement;
-import org.weasis.dicom.codec.geometry.ImageOrientation;
-import org.weasis.dicom.codec.geometry.ImageOrientation.Plan;
 import org.weasis.dicom.viewer2d.mpr.MprView.Plane;
 import org.weasis.dicom.viewer2d.mpr.Volume;
 
@@ -44,7 +42,7 @@ public final class FusionVolumeBuilder {
     if (middle == null) {
       return null;
     }
-    FusionStack stack = new FusionStack(planeOf(middle), series, null);
+    FusionStack stack = new FusionStack(Plane.getAcquisitionPlane(middle), series, null);
     if (stack.getWidth() == 0 || stack.getHeight() == 0) {
       return null;
     }
@@ -54,16 +52,5 @@ public final class FusionVolumeBuilder {
       LOGGER.error("Cannot build fusion overlay volume", e);
       return null;
     }
-  }
-
-  private static Plane planeOf(DicomImageElement image) {
-    Plan orientation = ImageOrientation.getPlan(image);
-    if (Plan.CORONAL.equals(orientation)) {
-      return Plane.CORONAL;
-    }
-    if (Plan.SAGITTAL.equals(orientation)) {
-      return Plane.SAGITTAL;
-    }
-    return Plane.AXIAL;
   }
 }

@@ -62,6 +62,7 @@ import org.weasis.dicom.explorer.Messages;
 import org.weasis.dicom.explorer.exp.ExplorerTask;
 import org.weasis.dicom.explorer.exp.ExportToolBar;
 import org.weasis.dicom.explorer.imp.ImportToolBar;
+import org.weasis.dicom.explorer.pref.download.DicomExplorerPrefView;
 
 public class DicomExplorer extends PluginTool
     implements DataExplorerView, SeriesViewerListener, PropertyChangeListener {
@@ -391,6 +392,13 @@ public class DicomExplorer extends PluginTool
     modeButton.setFocusable(false);
     modeButton.putClientProperty(
         FlatClientProperties.BUTTON_TYPE, FlatClientProperties.BUTTON_TYPE_TOOLBAR_BUTTON);
+    // Reuse the toolbar "selected" highlight for hover so the mode selector reads as a clickable
+    // control while keeping the icon fully legible
+    modeButton.putClientProperty(
+        FlatClientProperties.STYLE,
+        "arc: 6;"
+            + " toolbar.hoverBackground: $Button.toolbar.selectedBackground;"
+            + " toolbar.pressedBackground: $Button.toolbar.pressedBackground"); // NON-NLS
     modeButton.setMargin(new Insets(0, 0, 0, 0));
     modeButton.addActionListener(_ -> modePopup.show(modeButton, 0, modeButton.getHeight()));
     // Place the mode selector inside the field, in place of the default search icon
@@ -402,13 +410,20 @@ public class DicomExplorer extends PluginTool
     filterStatusLabel.setFont(FontItem.SMALL.getFont());
     filterStatusLabel.setVisible(false);
 
-    applyMode(SeriesFilter.Mode.TEXT);
+    applyMode(DicomExplorerPrefView.getDefaultFilterMode());
+  }
+
+  /** Creates a filter initialized with the user-configured default mode. */
+  private static SeriesFilter newSeriesFilter() {
+    SeriesFilter filter = new SeriesFilter();
+    filter.setMode(DicomExplorerPrefView.getDefaultFilterMode());
+    return filter;
   }
 
   private void buildModePopup() {
     ButtonGroup group = new ButtonGroup();
     for (SeriesFilter.Mode mode : SeriesFilter.Mode.values()) {
-      JRadioButtonMenuItem item = new JRadioButtonMenuItem(modeLabel(mode), modeIcon(mode));
+      JRadioButtonMenuItem item = new JRadioButtonMenuItem(mode.getTitle(), modeIcon(mode));
       item.setSelected(mode == seriesFilter.getMode());
       item.addActionListener(_ -> applyMode(mode));
       group.add(item);
@@ -427,8 +442,8 @@ public class DicomExplorer extends PluginTool
   private void loadFilterForPatient(MediaSeriesGroup patient) {
     seriesFilter =
         patient == null
-            ? new SeriesFilter()
-            : filtersByPatient.computeIfAbsent(patient, _ -> new SeriesFilter());
+            ? newSeriesFilter()
+            : filtersByPatient.computeIfAbsent(patient, _ -> newSeriesFilter());
     syncFilterToState(patient);
   }
 
@@ -437,7 +452,7 @@ public class DicomExplorer extends PluginTool
     SeriesFilter.Mode mode = seriesFilter.getMode();
     modeButton.setIcon(modeIcon(mode));
     modeButton.setToolTipText(
-        MessageFormat.format(Messages.getString("DicomExplorer.filter_mode"), modeLabel(mode)));
+        MessageFormat.format(Messages.getString("DicomExplorer.filter_mode"), mode.getTitle()));
     JRadioButtonMenuItem modeItem = modeItems.get(mode);
     if (modeItem != null) {
       modeItem.setSelected(true);
@@ -690,14 +705,6 @@ public class DicomExplorer extends PluginTool
       }
     }
     return new int[] {matching, total};
-  }
-
-  private static String modeLabel(SeriesFilter.Mode mode) {
-    return switch (mode) {
-      case TEXT -> Messages.getString("DicomExplorer.filter_mode_text");
-      case DATE -> Messages.getString("DicomExplorer.filter_mode_date");
-      case MODALITY -> Messages.getString("DicomExplorer.filter_mode_modality");
-    };
   }
 
   private static String modePlaceholder(SeriesFilter.Mode mode) {
@@ -972,16 +979,21 @@ public class DicomExplorer extends PluginTool
           if (modelPatient.getSize() == 0) {
             koOpen.setVisible(false);
             resetFilter();
+            selectionList.clear();
+            // No patient left to select: clear the pane, otherwise its thumbnails stay displayed
+            patientSelectionManager.clearCurrentPatient();
           }
           if (selectedPatient.isPatient(patient)) {
             selectedPatient.refreshLayout();
           }
+          thumbnailView.revalidate();
+          thumbnailView.repaint();
         });
   }
 
   private void resetFilter() {
     filtersByPatient.clear();
-    seriesFilter = new SeriesFilter();
+    seriesFilter = newSeriesFilter();
     syncFilterToState(null);
   }
 

@@ -14,7 +14,7 @@
   <properties>
     <!-- force command line arguments settings to set version -->
     <!-- $ mvn clean install -Drevision=4.2.2 -Dchangelist=-SNAPSHOT -->
-    <revision>4.7.2</revision>
+    <revision>4.7.3</revision>
     <changelist>-SNAPSHOT</changelist>  <!-- Remove "-SNAPSHOT" for release -->
 
     <java-version>25</java-version>
@@ -27,7 +27,7 @@
     <app.version>${revision}${changelist}</app.version>
     <base.minimal.version>5.0.0</base.minimal.version>
     <i18n.version>4.0.0-SNAPSHOT</i18n.version>
-    <weasis.releasenotes>https://github.com/nroduit/Weasis/blob/master/CHANGELOG.md#v471-2026-07-09</weasis.releasenotes>
+    <weasis.releasenotes>https://github.com/nroduit/Weasis/blob/master/CHANGELOG.md#v472-2026-08-03</weasis.releasenotes>
 
     <flatlaf.version>3.7.2</flatlaf.version>
     <miglayout.version>11.4.3</miglayout.version>
@@ -35,9 +35,9 @@
 
     <pf4j.version>3.15.0</pf4j.version>
     <slf4j.version>2.0.18</slf4j.version>
-    <logback.version>1.5.38</logback.version>
+    <logback.version>1.6.1</logback.version>
     <dockingframes.version>1.1.8</dockingframes.version>
-    <weasis-dicom-tools.version>5.34.3.1</weasis-dicom-tools.version>
+    <weasis-dicom-tools.version>5.34.3.3</weasis-dicom-tools.version>
     <weasis.core.img.version>5.0.0</weasis.core.img.version>
     <weasis.opencv.native.version>5.0.0-dcm</weasis.opencv.native.version>
     <weasis.opencv.pkg.version>5.0.0-dcm</weasis.opencv.pkg.version>
@@ -51,7 +51,7 @@
     <scribejava.version>8.3.3</scribejava.version>
     <zip4j.version>2.11.6</zip4j.version>
 
-    <junit-bom.version>6.1.1</junit-bom.version>
+    <junit-bom.version>6.1.2</junit-bom.version>
     <mockito.version>5.23.0</mockito.version>
 
     <!--suppress UnresolvedMavenProperty -->
@@ -126,7 +126,7 @@
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-jar-plugin</artifactId>
-          <version>3.5.0</version>
+          <version>3.5.1</version>
           <configuration>
             <archive>
               <manifestEntries>
@@ -148,7 +148,7 @@
         <plugin>
           <groupId>org.codehaus.mojo</groupId>
           <artifactId>flatten-maven-plugin</artifactId>
-          <version>1.7.3</version>
+          <version>1.8.0</version>
         </plugin>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
@@ -214,7 +214,7 @@
         <plugin>
           <groupId>com.diffplug.spotless</groupId>
           <artifactId>spotless-maven-plugin</artifactId>
-          <version>3.8.0</version>
+          <version>3.9.0</version>
         </plugin>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>

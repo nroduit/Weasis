@@ -28,7 +28,7 @@ public class PlatformCertificateLoader {
   private static final Logger LOGGER = LoggerFactory.getLogger(PlatformCertificateLoader.class);
 
   /** Background task installing the merged system trust store; awaited before any network use. */
-  private static volatile CompletableFuture<Void> setupTask;
+  private static volatile CompletableFuture<Void> setupTask; // NOSONAR visibility reference
 
   /**
    * Builds the merged system trust store and installs it as the default {@link SSLContext} on a

@@ -40,7 +40,8 @@ public class PresentationStateReader implements Taggable {
   public PresentationStateReader(PRSpecialElement dicom) {
     Objects.requireNonNull(dicom, "Dicom parameter cannot be null");
     this.prSpecialElement = dicom;
-    this.prDicomObject = dicom.getPrDicomObject();
+    this.prDicomObject =
+        Objects.requireNonNull(dicom.getPrDicomObject(), "PR DICOM object cannot be null");
     this.dicomObject = prDicomObject.getDicomObject();
   }
 

@@ -52,7 +52,7 @@ Weasis supports every common DICOM transport and authentication standard, fittin
 * **Client-side**, by configuring **DICOM nodes and DICOMweb sources** directly in Weasis — useful for standalone workstations, smaller sites, or when no gateway is available.
 * **Classic DIMSE** — Query/Retrieve (C-FIND, C-GET, C-MOVE) and Store (C-STORE).
 * **DICOMweb** — [QIDO-RS, WADO-RS and STOW-RS](https://nroduit.github.io/en/tutorials/dicomweb-config) over HTTPS, configurable per source.
-* **WADO-URI** — for legacy PACS servers and the [Weasis manifest](https://nroduit.github.io/en/tutorials/dicom-import/index.html#wado) flow.
+* **WADO-URI** — for legacy PACS servers and the [Weasis manifest](https://nroduit.github.io/en/basics/customize/integration/index.html#build-an-xml-manifest) flow.
 * **`weasis://` protocol** — single-click launch from browsers, EHR and RIS portals.
 * **Authentication** — Basic auth, OAuth 2.0 and **OpenID Connect** (Authorization Code with PKCE and loopback redirect, RFC 8252) — works against Keycloak, Google Cloud Healthcare and any compliant OIDC provider.
 * **Send / Export** — store to a PACS or DICOMweb server (C-STORE or STOW-RS), or export locally as DICOMDIR ZIP, ISO with the Weasis CD viewer embedded, JPEG, PNG, TIFF, AVI / MP4.
@@ -61,53 +61,57 @@ Weasis supports every common DICOM transport and authentication standard, fittin
 ## Viewer Features (see also [Tutorials](https://nroduit.github.io/en/tutorials/))
 
 * **Data type support**
-  * Display every common DICOM file including multi-frame, **Enhanced** (CT / MR / US Volume), MPEG-2, MPEG-4, MIME Encapsulation, DOC, **SR**, **PR**, **KOS**, **SEG**, AU, **RT**, **ECG** and **Parametric Map** (float / double pixels)
+  * Display every common DICOM file including multi-frame, **Enhanced** (CT / MR / US Volume), MPEG-2, MPEG-4, MIME Encapsulation, DOC, **[SR](https://nroduit.github.io/en/tutorials/dicom-sr/)**, **[PR](https://nroduit.github.io/en/tutorials/build-ko-pr/)**, **[KOS](https://nroduit.github.io/en/tutorials/build-ko-pr/)**, **[SEG](https://nroduit.github.io/en/tutorials/dicom-segmentation/)**, [AU](https://nroduit.github.io/en/tutorials/dicom-audio/), **[RT](https://nroduit.github.io/en/tutorials/dicom-rt/)**, **[ECG](https://nroduit.github.io/en/tutorials/dicom-ecg/)** and **[Parametric Map](https://nroduit.github.io/en/tutorials/dicom-artificial-intelligence/index.html#dicom-parametric-map-pmap)** (float / double pixels)
   * Modern codecs: JPEG (baseline, extended, lossless), JPEG-LS, JPEG 2000, **JPEG-XL**, RLE, Deflated Explicit VR Little Endian
-  * Import and export DICOM CD/DVD with DICOMDIR
-  * Import and export DICOM ZIP files
+  * [Import](https://nroduit.github.io/en/tutorials/dicom-import/) and [export](https://nroduit.github.io/en/tutorials/dicom-export/) DICOM CD/DVD with DICOMDIR
+  * [Import](https://nroduit.github.io/en/tutorials/dicom-import/) and [export](https://nroduit.github.io/en/tutorials/dicom-export/) DICOM ZIP files
   * Viewer for common image formats (TIFF, BMP, GIF, JPEG, PNG, RAS, HDR, PNM)
 
 * **Exporting data**
-  * Export DICOM files locally with several options (DICOMDIR, ZIP, ISO image with Weasis embedded, TIFF, JPEG, PNG…)
-  * Send DICOM files to a remote PACS or DICOMweb server (C-STORE or STOW-RS)
-  * Save measurements and annotations as DICOM Presentation States or XML
+  * [Export DICOM files locally](https://nroduit.github.io/en/tutorials/dicom-export/index.html#exporting) with several options (DICOMDIR, ZIP, ISO image with Weasis embedded, TIFF, JPEG, PNG…)
+  * [Send DICOM files](https://nroduit.github.io/en/tutorials/dicom-export/index.html#exporting) to a remote PACS or DICOMweb server (C-STORE or STOW-RS)
+  * Save measurements and annotations as [DICOM Presentation States](https://nroduit.github.io/en/tutorials/build-ko-pr/) or XML
 
 * **Viewing and image rendering**
-  * Multi-monitor support with **per-monitor calibration**, HiDPI, full-screen mode
-  * Image manipulation with mouse buttons (pan, zoom, windowing, rotation, scroll, crosshair) and **customizable keyboard shortcuts**
-  * DICOM Modality LUTs, VOI LUTs, LUT Shapes, and Presentation LUTs (including non-linear)
-  * DICOM Presentation States (GSPS) — applied with graphics rendered as overlays
-  * DICOM Overlays, Shutters and Pixel Padding
-  * **Lossy compression indicator** in the information layer so the user knows the source quality, messages when geometry issues are detected (inconsistent pixel spacing, slice spacing, or orientation across the series)
-  * **Per-view synchronization** with explicit overrides and **FrameOfReferenceUID-aware** grouping (orphan views are excluded from auto-sync to prevent comparing unrelated anatomy)
+  * Multi-monitor support with **[per-monitor calibration](https://nroduit.github.io/en/tutorials/zoom/index.html#real-world-size-display)**, HiDPI, full-screen mode
+  * Image manipulation with mouse buttons (pan, zoom, windowing, rotation, scroll, crosshair) and **[customizable keyboard shortcuts](https://nroduit.github.io/en/basics/shortcuts/)**
+  * [DICOM Modality LUTs, VOI LUTs, LUT Shapes, and Presentation LUTs](https://nroduit.github.io/en/tutorials/lut/) (including non-linear)
+  * [DICOM Presentation States (GSPS)](https://nroduit.github.io/en/tutorials/build-ko-pr/) — applied with graphics rendered as overlays
+  * [DICOM Overlays, Shutters and Pixel Padding](https://nroduit.github.io/en/tutorials/dicom-2d-viewer/index.html#display)
+  * **Lossy compression indicator** in the [information layer](https://nroduit.github.io/en/tutorials/dicom-2d-viewer/index.html#display) so the user knows the source quality, messages when geometry issues are detected (inconsistent pixel spacing, slice spacing, or orientation across the series)
+  * **[Per-view synchronization](https://nroduit.github.io/en/tutorials/synch-view/)** with explicit overrides and **FrameOfReferenceUID-aware** grouping (orphan views are excluded from auto-sync to prevent comparing unrelated anatomy)
 
 * **Advanced imaging**
-  * **Oblique Multi-Planar Reconstruction (MPR)** with **gantry-tilt correction** (backward mapping + trilinear interpolation) and 3D matrix transformations for non-standard patient positioning
-  * **Maximum Intensity Projection (MIP)**
-  * **3D Volume Rendering** with presets and **segmentation overlay**
-  * **4D / multi-phase series**: automatic dialog to split a multi-phase series into per-phase sub-series for MPR, MIP and VR
-  * Cross-lines, 3D cursor 
-  * Persistent magnifier glass
-  * Layouts for comparing series, studies or modalities side-by-side
+  * **[Oblique Multi-Planar Reconstruction (MPR)](https://nroduit.github.io/en/tutorials/mpr/)** with **gantry-tilt correction** (backward mapping + trilinear interpolation) and 3D matrix transformations for non-standard patient positioning
+  * **[Curved MPR (CPR)](https://nroduit.github.io/en/tutorials/mpr-curved/)**: trace a curve on the axial plane — typically the dental arch on a cone-beam CT — to build a panoramic view and cross-sectional slices
+  * **[Maximum Intensity Projection (MIP / MinIP / Mean IP)](https://nroduit.github.io/en/tutorials/mip/)** available in the 2D, MPR and 3D views
+  * **[3D Volume Rendering](https://nroduit.github.io/en/tutorials/dicom-3d-viewer/)** with presets, custom Volume LUTs, and [segmentation modes](https://nroduit.github.io/en/tutorials/dicom-segmentation/index.html#segmentation-overlay-in-the-3d-volume-renderer) including **masks** that keep or remove the voxels inside the segmentation
+  * **[DICOM Segmentation (SEG)](https://nroduit.github.io/en/tutorials/dicom-segmentation/)** overlay in 2D, MPR and 3D, with per-region visibility, color, opacity and statistics
+  * **[PET/CT fusion](https://nroduit.github.io/en/tutorials/fusion/)**: overlay a PET or SPECT series on its CT / MR base, with SUV display window and color scale
+  * **[4D / multi-phase series](https://nroduit.github.io/en/tutorials/dicom-explorer/index.html#4d-splitting)**: automatic dialog to split a multi-phase series into per-phase sub-series for MPR, MIP and VR
+  * Cross-lines, [3D cursor](https://nroduit.github.io/en/tutorials/cursor-3d/)
+  * [Persistent magnifier glass](https://nroduit.github.io/en/tutorials/zoom/)
+  * [Layouts](https://nroduit.github.io/en/tutorials/docking/) for comparing series, studies or modalities side-by-side
 
 * **Measurement and annotation tools**
-  * Length, area, angle (incl. Cobb), perpendicular, parallel and free-shape
-  * Region statistics of pixels (Min, Max, Mean, StDev, Skewness, Kurtosis, Entropy)
-  * Histogram of modality values
-  * SUV measurement (PET / nuclear medicine)
-  * Pixel-info inspector (raw value, modality value, presentation value)
+  * [Length, area, angle (incl. Cobb), perpendicular, parallel and free-shape](https://nroduit.github.io/en/tutorials/draw-measure/index.html#measurement-tools)
+  * [Region statistics of pixels](https://nroduit.github.io/en/tutorials/draw-measure/index.html#selected-measurement) (Min, Max, Mean, StDev, Skewness, Kurtosis, Entropy)
+  * [Histogram](https://nroduit.github.io/en/tutorials/histogram/) of modality values
+  * SUV measurement (PET / nuclear medicine), also on a [fused PET/CT view](https://nroduit.github.io/en/tutorials/fusion/index.html#suv)
+  * [Volume and voxel count of segmented regions](https://nroduit.github.io/en/tutorials/dicom-segmentation/index.html#region-info)
+  * [Pixel-info inspector](https://nroduit.github.io/en/tutorials/dicom-2d-viewer/index.html#display) (raw value, modality value, presentation value)
 
 * **Specific viewers**
-  * **DICOM ECG**: display all the DICOM waveforms and allow measurements
-  * **DICOM SR**: structured report viewer with hyperlinks to images and associated graphics
-  * **DICOM AU**: audio player (allow to export to WAV files)
-  * **DICOM RT**: structure-set, dose distribution and DVH viewer
+  * **[DICOM ECG](https://nroduit.github.io/en/tutorials/dicom-ecg/)**: display all the DICOM waveforms and allow measurements
+  * **[DICOM SR](https://nroduit.github.io/en/tutorials/dicom-sr/)**: structured report viewer with hyperlinks to images and associated graphics
+  * **[DICOM AU](https://nroduit.github.io/en/tutorials/dicom-audio/)**: audio player (allow to export to WAV files)
+  * **[DICOM RT](https://nroduit.github.io/en/tutorials/dicom-rt/)**: structure-set, dose distribution and DVH viewer
 
 * **Other tools**
-  * Printing views to DICOM and system printers
-  * Apply and Create DICOM Key Object Selection by selecting images with the star button
-  * Display and search across all DICOM attributes
-  * **Acquire / Dicomizer**: capture or import non-DICOM media (images, videos, PDFs, STL meshes) and convert into DICOM, with video size validation and per-modality presets
+  * [Printing views](https://nroduit.github.io/en/tutorials/print/) to DICOM and system printers
+  * Apply and Create [DICOM Key Object Selection](https://nroduit.github.io/en/tutorials/build-ko-pr/) by selecting images with the star button
+  * [Display and search across all DICOM attributes](https://nroduit.github.io/en/tutorials/tags/)
+  * **[Acquire / Dicomizer](https://nroduit.github.io/en/tutorials/dicomizer/)**: capture or import non-DICOM media (images, videos, PDFs, STL meshes) and convert into DICOM, with video size validation and per-modality presets
 
 ## Security & Quality
 

@@ -30,7 +30,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
-import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.swing.JLabel;
 import javax.swing.SwingConstants;
@@ -41,6 +40,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.Messages;
 import org.weasis.core.api.gui.util.AppProperties;
+import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.image.OpManager;
 import org.weasis.core.api.util.ResourceUtil;
@@ -167,8 +167,6 @@ public class Thumbnail extends JLabel implements Thumbnailable {
       final String description,
       final boolean keepMediaCache,
       OpManager opManager) {
-    this.setSize(thumbnailSize, thumbnailSize);
-
     ImageIcon imageIcon =
         new ImageIcon() {
 
@@ -180,7 +178,6 @@ public class Thumbnail extends JLabel implements Thumbnailable {
             final PlanarImage thumbnail = Thumbnail.this.getImage(media, keepMediaCache, opManager);
             if (thumbnail == null) {
               FontMetrics fm = g2d.getFontMetrics();
-              Icon icon = mimeIcon;
               int insetY = 5;
               int textLength = fm.stringWidth(description);
               int fontHeight = 0;
@@ -188,14 +185,15 @@ public class Thumbnail extends JLabel implements Thumbnailable {
               if (displayText) {
                 fontHeight = fm.getHeight();
               }
-              int fy = y + (thumbnailSize - fontHeight - icon.getIconHeight()) / 2;
-              icon.paintIcon(c, g2d, x + (thumbnailSize - icon.getIconWidth()) / 2, fy);
+              int fy = y + (thumbnailSize - fontHeight - mimeIcon.getIconHeight()) / 2;
+              mimeIcon.paintIcon(c, g2d, x + (thumbnailSize - mimeIcon.getIconWidth()) / 2, fy);
 
               if (displayText) {
                 Object[] oldRenderingHints = GuiUtils.setRenderingHints(g2d, true, false, true);
                 int startX = x + (thumbnailSize - textLength) / 2;
                 int startY = fm.getAscent() - fm.getDescent() - fm.getLeading();
-                g2d.drawString(description, startX, fy + icon.getIconHeight() + startY + insetY);
+                g2d.drawString(
+                    description, startX, fy + mimeIcon.getIconHeight() + startY + insetY);
                 GuiUtils.resetRenderingHints(g2d, oldRenderingHints);
               }
             } else {
@@ -225,7 +223,14 @@ public class Thumbnail extends JLabel implements Thumbnailable {
             return thumbnailSize;
           }
         };
-    setIcon(imageIcon);
+    // Swing mutations must not run while holding this instance monitor: setSize() and the
+    // revalidate() triggered by setIcon() take the AWT tree lock, which the EDT already owns while
+    // painting and calling getImage() on this thumbnail.
+    GuiExecutor.execute(
+        () -> {
+          setSize(thumbnailSize, thumbnailSize);
+          setIcon(imageIcon);
+        });
   }
 
   protected void drawOverIcon(Graphics2D g2d, int x, int y, int width, int height) {
@@ -237,7 +242,7 @@ public class Thumbnail extends JLabel implements Thumbnailable {
     return thumbnailPath;
   }
 
-  protected synchronized PlanarImage getImage(
+  protected PlanarImage getImage(
       final MediaElement media, final boolean keepMediaCache, final OpManager opManager) {
     PlanarImage cacheImage;
     if ((cacheImage = mCache.get(this)) == null && readable && loading.compareAndSet(false, true)) {

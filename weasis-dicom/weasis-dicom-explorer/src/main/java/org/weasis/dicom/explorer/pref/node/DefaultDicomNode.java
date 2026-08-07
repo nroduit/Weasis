@@ -13,6 +13,7 @@ import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
 import javax.xml.stream.XMLStreamWriter;
 import org.weasis.core.api.media.data.TagUtil;
+import org.weasis.core.api.media.data.XmlAttributeSource;
 import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.codec.TransferSyntax;
 import org.weasis.dicom.param.DicomNode;
@@ -114,7 +115,7 @@ public class DefaultDicomNode extends AbstractDicomNode {
             xmler.getAttributeValue(null, T_DESCRIPTION),
             xmler.getAttributeValue(null, T_AETITLE),
             xmler.getAttributeValue(null, T_HOST),
-            TagUtil.getIntegerTagAttribute(xmler, T_PORT, 104),
+            TagUtil.getIntegerTagAttribute(new XmlAttributeSource(xmler), T_PORT, 104),
             UsageType.valueOf(xmler.getAttributeValue(null, T_USAGE_TYPE)));
     node.setTsuid(TransferSyntax.getTransferSyntax(xmler.getAttributeValue(null, T_TSUID)));
 

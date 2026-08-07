@@ -14,6 +14,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.function.BiConsumer;
 import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JPopupMenu;
@@ -88,7 +89,7 @@ public class SynchOptionsCheckBoxGroup extends GroupCheckBoxMenu {
   }
 
   public SynchOptionsCheckBoxGroup(List<SyncOption> options) {
-    this.syncOptions = options != null ? options : DEFAULT_SYNC_OPTIONS;
+    this.syncOptions = Objects.requireNonNullElse(options, DEFAULT_SYNC_OPTIONS);
     List<CheckBoxModel> items = new ArrayList<>();
     for (SyncOption option : this.syncOptions) {
       // Store the Feature object — Feature.toString() returns getTitle(), so the display is

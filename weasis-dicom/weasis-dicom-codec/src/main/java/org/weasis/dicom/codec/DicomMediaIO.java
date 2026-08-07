@@ -777,18 +777,13 @@ public class DicomMediaIO implements DcmMediaReader {
       if (numberOfFrame > 1) {
         buildMultiframe();
       }
-      if (factory != null) {
-        return buildSpecialElement.apply(factory);
-      }
-    } else {
-      if (factory == null) {
-        // Corrupted image => should have one frame
-        image = new DicomImageElement[0];
-      } else {
-        return buildSpecialElement.apply(factory);
-      }
+    } else if (factory == null) {
+      // Corrupted image => should have one frame
+      image = new DicomImageElement[0];
     }
-    return null;
+    return factory == null || buildSpecialElement == null
+        ? null
+        : buildSpecialElement.apply(factory);
   }
 
   private void buildMultiframe() {

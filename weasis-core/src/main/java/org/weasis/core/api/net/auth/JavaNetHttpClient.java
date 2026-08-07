@@ -25,7 +25,6 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-import java.net.http.HttpTimeoutException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.time.Duration;
@@ -37,10 +36,13 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.net.HttpUtils;
+import org.weasis.core.api.net.StallGuardInputStream;
 import org.weasis.core.util.StringUtil;
 
 /** HTTP client implementation using Java's {@link HttpClient} for ScribeJava OAuth integration. */
@@ -191,11 +193,11 @@ public class JavaNetHttpClient implements com.github.scribejava.core.httpclient.
       OAuthRequest.ResponseConverter<T> converter) {
 
     var request =
-        createRequestBuilder(userAgent, headers, httpVerb, completeUrl, bodyContents, readTimeout)
-            .build();
+        createRequestBuilder(userAgent, headers, httpVerb, completeUrl, bodyContents).build();
 
-    return sharedClient
-        .sendAsync(request, HttpResponse.BodyHandlers.ofInputStream())
+    var pending = sharedClient.sendAsync(request, HttpResponse.BodyHandlers.ofInputStream());
+    long millis = readTimeout.toMillis();
+    return (millis > 0 ? pending.orTimeout(millis, TimeUnit.MILLISECONDS) : pending)
         .thenApply(httpResponse -> processAsyncResponse(httpResponse, callback, converter))
         .exceptionally(
             throwable -> {
@@ -228,25 +230,35 @@ public class JavaNetHttpClient implements com.github.scribejava.core.httpclient.
       throws IOException {
 
     var request =
-        createRequestBuilder(userAgent, headers, httpVerb, completeUrl, bodyContents, readTimeout)
-            .build();
+        createRequestBuilder(userAgent, headers, httpVerb, completeUrl, bodyContents).build();
 
+    var future = sharedClient.sendAsync(request, HttpResponse.BodyHandlers.ofInputStream());
     try {
-      return toResponse(sharedClient.send(request, HttpResponse.BodyHandlers.ofInputStream()));
+      long millis = readTimeout.toMillis();
+      return toResponse(millis > 0 ? future.get(millis, TimeUnit.MILLISECONDS) : future.get());
+    } catch (TimeoutException e) {
+      future.cancel(true);
+      throw new IOException("No response after " + readTimeout.toMillis() + "ms", e);
     } catch (InterruptedException e) {
+      future.cancel(true);
       Thread.currentThread().interrupt();
       throw new IOException("Request interrupted", e);
-    } catch (HttpTimeoutException e) {
-      throw new IOException("Request timed out after " + readTimeout.toMillis() + "ms", e);
+    } catch (ExecutionException e) {
+      var cause = unwrap(e.getCause());
+      throw cause instanceof IOException io ? io : new IOException("Request failed", cause);
     }
   }
 
-  private static Response toResponse(HttpResponse<InputStream> httpResponse) {
+  /**
+   * The body is guarded against stalled reads rather than capped by a request deadline, so a large
+   * retrieve on a slow link is only aborted when the data actually stops flowing.
+   */
+  private Response toResponse(HttpResponse<InputStream> httpResponse) {
     return new Response(
         httpResponse.statusCode(),
         httpResponse.version().toString(),
         parseHeaders(httpResponse),
-        httpResponse.body());
+        StallGuardInputStream.wrap(httpResponse.body(), (int) readTimeout.toMillis()));
   }
 
   private <T> T processAsyncResponse(
@@ -273,9 +285,8 @@ public class JavaNetHttpClient implements com.github.scribejava.core.httpclient.
       Map<String, String> headers,
       Verb httpVerb,
       String completeUrl,
-      Object bodyContents,
-      Duration readTimeout) {
-    var requestBuilder = HttpRequest.newBuilder(URI.create(completeUrl)).timeout(readTimeout);
+      Object bodyContents) {
+    var requestBuilder = HttpRequest.newBuilder(URI.create(completeUrl));
     if (StringUtil.hasText(userAgent)) {
       requestBuilder.setHeader(HEADER_USER_AGENT, userAgent);
     }

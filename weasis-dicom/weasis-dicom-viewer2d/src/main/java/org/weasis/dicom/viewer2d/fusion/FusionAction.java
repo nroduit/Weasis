@@ -17,8 +17,10 @@ import org.weasis.opencv.op.lut.ByteLut;
 
 /**
  * EventManager action identifiers for the PET/CT fusion controls. The command strings match the
- * {@link FusionOp} parameters so the values flow straight to the op. The series combo is typed
- * {@code <Object>} (like {@code ActionW.PRESET}) so its list can be replaced dynamically per study.
+ * {@link FusionOp} parameters so the values flow straight to the op. The display window has no
+ * control: it is derived from the overlay series (see {@link FusionWindow}). The series combo is
+ * typed {@code <Object>} (like {@code ActionW.PRESET}) so its list can be replaced dynamically per
+ * study.
  */
 public final class FusionAction {
 

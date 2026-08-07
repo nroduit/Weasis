@@ -722,9 +722,11 @@ public class DicomPrSerializer {
 
     Attributes attributes = new Attributes(7);
     attributes.setString(Tag.BoundingBoxAnnotationUnits, VR.CS, PIXEL);
-    attributes.setFloat(Tag.AnchorPoint, VR.FL, (float) anchor.getX(), (float) anchor.getY());
-    attributes.setString(Tag.AnchorPointVisibility, VR.CS, YES);
-    attributes.setString(Tag.AnchorPointAnnotationUnits, VR.CS, PIXEL);
+    if (anchor != null) {
+      attributes.setFloat(Tag.AnchorPoint, VR.FL, (float) anchor.getX(), (float) anchor.getY());
+      attributes.setString(Tag.AnchorPointVisibility, VR.CS, YES);
+      attributes.setString(Tag.AnchorPointAnnotationUnits, VR.CS, PIXEL);
+    }
     attributes.setDouble(
         Tag.BoundingBoxTopLeftHandCorner, VR.FL, bounds.getMinX(), bounds.getMinY());
     attributes.setDouble(
