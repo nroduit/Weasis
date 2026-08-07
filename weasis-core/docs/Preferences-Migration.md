@@ -76,7 +76,7 @@ The file-based helpers took the same `BundleContext -> String pluginId` change a
 the directory:
 
 ```java
-BundlePreferences.getDataFolder(String pluginId);                 // ~/.weasis/data/<pluginId>
+BundlePreferences.getDataFolder(String pluginId);                 // <data root>/data/<pluginId>
 BundlePreferences.getFileInDataFolder(String pluginId, String filename);
 ```
 
@@ -282,6 +282,8 @@ The preferences service stores and serves the payload **opaquely** (keyed by `us
   `View*Container` / `AuthenticationPersistence` / `AbstractDicomNode` — same `BundleContext →
   pluginId` and `@Component → @Extension` migration.
 
-> Note: `ConfigData.java` and the new `PlatformDirectories.java` (XDG base-directory support) also
-> changed on this branch, but those concern *where* `~/.weasis` resolves, not the preferences
-> load/store mechanism described here.
+> Note: `ConfigData.java` and the new `PlatformDirectories.java` also changed on this branch. They
+> replace the single `~/.weasis` root with per-OS config/data/cache/state directories (XDG on Linux,
+> `~/Library` on macOS, `%APPDATA%`/`%LOCALAPPDATA%` on Windows) — see
+> [Launcher-Overview.md](../../weasis-launcher/docs/Launcher-Overview.md#base-directories). That
+> concerns *where* the roots resolve, not the preferences load/store mechanism described here.

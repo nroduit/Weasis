@@ -39,7 +39,7 @@
                   <type>dylib</type>
                   <classifier>macosx-aarch64</classifier>
                   <overWrite>true</overWrite>
-                  <outputDirectory>target/classes</outputDirectory>
+                  <outputDirectory>target/classes/${native.folder}</outputDirectory>
                   <destFileName>libopencv_java.dylib</destFileName>
                 </artifactItem>
               </artifactItems>

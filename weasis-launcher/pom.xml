@@ -117,6 +117,18 @@
                     <exclude>META-INF/MANIFEST.MF</exclude>
                   </excludes>
                 </filter>
+                <filter>
+                  <artifact>org.pf4j:*</artifact>
+                  <excludes>
+                    <exclude>META-INF/MANIFEST.MF</exclude>
+                  </excludes>
+                </filter>
+                <filter>
+                  <artifact>com.github.zafarkhaja:java-semver</artifact>
+                  <excludes>
+                    <exclude>META-INF/MANIFEST.MF</exclude>
+                  </excludes>
+                </filter>
               </filters>
             </configuration>
           </execution>

@@ -43,6 +43,19 @@
                     <exclude>META-INF/*.RSA</exclude>
                   </excludes>
                 </filter>
+                <!-- Drop the dependency manifests: the uber jar keeps the pf4j manifest of this module -->
+                <filter>
+                  <artifact>net.samuelcampos:usbdrivedetector</artifact>
+                  <excludes>
+                    <exclude>META-INF/MANIFEST.MF</exclude>
+                  </excludes>
+                </filter>
+                <filter>
+                  <artifact>com.github.tuupertunut:powershell-lib-java</artifact>
+                  <excludes>
+                    <exclude>META-INF/MANIFEST.MF</exclude>
+                  </excludes>
+                </filter>
               </filters>
               <transformers>
                 <transformer

@@ -10,20 +10,33 @@
 package org.weasis.dicom.viewer3d;
 
 import com.github.zafarkhaja.semver.Version;
+import java.util.Locale;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import org.slf4j.LoggerFactory;
-import org.weasis.core.util.StringUtil;
 
 public record OpenGLInfo(
     String shortVersion, String version, String vendor, String renderer, int max3dTextureSize) {
 
+  /**
+   * {@code GL_VERSION} is {@code <major>.<minor>[.<release>]} followed by vendor-specific text, and
+   * OpenGL ES prefixes it with {@code "OpenGL ES "}. The release number is optional, so the raw
+   * string is not valid semver: macOS reports {@code "4.1 Metal - 90.5"}.
+   */
+  private static final Pattern GL_VERSION = Pattern.compile("(\\d+)\\.(\\d+)(?:\\.(\\d+))?");
+
   public Version getVersion() {
-    try {
-      return Version.parse(shortVersion().split(StringUtil.SPACE)[0]);
-    } catch (Exception e) {
-      LoggerFactory.getLogger(OpenGLInfo.class)
-          .error("Cannot read opengl version {}", shortVersion().split(StringUtil.SPACE)[0]);
-      return Version.of(0);
+    Matcher matcher = GL_VERSION.matcher(shortVersion());
+    if (matcher.find()) {
+      String release = matcher.group(3);
+      return Version.of(
+          Integer.parseInt(matcher.group(1)),
+          Integer.parseInt(matcher.group(2)),
+          release == null ? 0 : Integer.parseInt(release));
     }
+    LoggerFactory.getLogger(OpenGLInfo.class)
+        .error("Cannot read opengl version {}", shortVersion());
+    return Version.of(0);
   }
 
   /**
@@ -43,11 +56,18 @@ public record OpenGLInfo(
     return getVersion().compareTo(minimalVersion) >= 0;
   }
 
-  /** Check if the renderer is a software renderer without real GPU. */
+  /**
+   * Check if the renderer is a software renderer without real GPU. Drivers report mixed case
+   * ({@code "SwiftShader Device"}, {@code "ANGLE (… WARP …)"}), so the match is case-insensitive.
+   */
   public boolean looksSoftware() {
-    return renderer.contains("llvmpipe")
-        || renderer.contains("softpipe")
-        || renderer.contains("swiftshader")
-        || (renderer.contains("angle") && renderer.contains("warp"));
+    if (renderer == null) {
+      return false;
+    }
+    String name = renderer.toLowerCase(Locale.ROOT);
+    return name.contains("llvmpipe")
+        || name.contains("softpipe")
+        || name.contains("swiftshader")
+        || (name.contains("angle") && name.contains("warp"));
   }
 }

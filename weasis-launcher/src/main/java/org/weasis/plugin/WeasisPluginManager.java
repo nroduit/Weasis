@@ -15,6 +15,7 @@ import java.lang.instrument.Instrumentation;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.jar.JarFile;
 import java.util.stream.Stream;
@@ -52,9 +53,13 @@ public class WeasisPluginManager extends DefaultPluginManager {
     }
   }
 
+  /**
+   * Uses {@link WeasisPluginClassLoader} instead of the pf4j one, which is not parallel capable and
+   * deadlocks when two threads load classes across plugins at the same time.
+   */
   @Override
   protected PluginLoader createPluginLoader() {
-    return super.createPluginLoader();
+    return new WeasisPluginLoader(this);
   }
 
   @Override
@@ -184,6 +189,22 @@ public class WeasisPluginManager extends DefaultPluginManager {
       startPlugin(id);
     } finally {
       LOGGER.info("*PERF* Plugin start, id:{} time:{}", id, System.currentTimeMillis() - start);
+    }
+  }
+
+  /**
+   * Stops the started plugins in reverse start order, so a plugin is always stopped before its
+   * dependencies. Overrides {@link org.pf4j.AbstractPluginManager#stopPlugins()}, which iterates
+   * its live {@code startedPlugins} list while removing from it: that throws {@link
+   * java.util.ConcurrentModificationException} on shutdown and leaves every plugin after the first
+   * one running. Iterating a snapshot avoids the comodification.
+   */
+  @Override
+  public void stopPlugins() {
+    for (PluginWrapper wrapper : List.copyOf(getStartedPlugins()).reversed()) {
+      if (wrapper.getPluginState().isStarted()) {
+        stopPlugin(wrapper.getPluginId(), false);
+      }
     }
   }
 

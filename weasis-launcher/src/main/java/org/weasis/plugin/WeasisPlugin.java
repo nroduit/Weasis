@@ -9,6 +9,7 @@
  */
 package org.weasis.plugin;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
@@ -79,11 +80,14 @@ public abstract class WeasisPlugin extends Plugin {
   private void extractAndLoadLibrary(Path libName, Path nativeLibDir, Consumer<Path> libraryLoader)
       throws IOException {
     try (InputStream is = getClass().getResourceAsStream(libName.toString())) {
-      if (is != null) {
-        Path targetPath = nativeLibDir.resolve(libName.getFileName());
-        Files.copy(is, targetPath, StandardCopyOption.REPLACE_EXISTING);
-        libraryLoader.accept(targetPath);
+      if (is == null) {
+        throw new FileNotFoundException(
+            "Native library %s is missing from the plugin %s"
+                .formatted(libName, getPluginWrapper().getPluginId()));
       }
+      Path targetPath = nativeLibDir.resolve(libName.getFileName());
+      Files.copy(is, targetPath, StandardCopyOption.REPLACE_EXISTING);
+      libraryLoader.accept(targetPath);
     }
   }
 }

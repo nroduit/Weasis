@@ -146,13 +146,17 @@ Any other platform falls back to the historical single `~/.weasis` root.
 `ConfigData`) so it can also be used during boot logging. For each category it applies, in
 order:
 
-1. An explicit `weasis.*.dir` system property, if set.
-2. On Linux, the matching `XDG_*` environment variable — **only if it holds an absolute
+1. On Linux, the matching `XDG_*` environment variable — **only if it holds an absolute
    path** (relative values are ignored, as the specification requires).
-3. The OS default from the table above.
+2. The OS default from the table above.
 
 On Linux the `XDG_*` variables are honored when the user has customized them; otherwise the
 spec defaults apply.
+
+The four categories cannot be relocated individually: the `weasis.*.dir` properties listed
+below are **outputs** of the resolution, not inputs. The only way to override the layout is
+to redirect all four categories to a single root, as described in
+[Portable Mode and Explicit Overrides](#portable-mode-and-explicit-overrides).
 
 ### System Properties
 
@@ -168,7 +172,9 @@ application (notably `org.weasis.core.api.gui.util.AppProperties`):
 | `weasis.path` | **backward-compatible alias of the data root** |
 
 `weasis.path` is retained because external scripts and older integrations read it; it now
-points at the data directory.
+points at the data directory. It is also the only one of these properties that is read back
+as an input — when set explicitly it becomes the single root for all four categories (see
+below).
 
 ### Migration from `~/.weasis`
 

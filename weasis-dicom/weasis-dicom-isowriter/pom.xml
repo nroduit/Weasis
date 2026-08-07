@@ -44,6 +44,13 @@
                     <exclude>META-INF/*.RSA</exclude>
                   </excludes>
                 </filter>
+                <!-- Drop the dependency manifests: the uber jar keeps the pf4j manifest of this module -->
+                <filter>
+                  <artifact>com.github.stephenc.java-iso-tools:*</artifact>
+                  <excludes>
+                    <exclude>META-INF/MANIFEST.MF</exclude>
+                  </excludes>
+                </filter>
               </filters>
               <transformers>
                 <transformer

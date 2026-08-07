@@ -39,7 +39,7 @@
 									<type>so</type>
 									<classifier>linux-aarch64-dyn</classifier>
 									<overWrite>true</overWrite>
-									<outputDirectory>target/classes</outputDirectory>
+									<outputDirectory>target/classes/${native.folder}</outputDirectory>
 									<destFileName>libopencv_java.so</destFileName>
 								</artifactItem>
 							</artifactItems>

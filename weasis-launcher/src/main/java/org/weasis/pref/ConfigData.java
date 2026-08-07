@@ -101,12 +101,11 @@ public class ConfigData {
   /** Path separators and the characters Windows rejects in a file name. */
   private static final Pattern PATH_CHARS = Pattern.compile("[\\\\/:*?\"<>|\\p{Cntrl}]");
 
-    /** The property name used to specify a URL to the application configuration file. */
-    public static final String CONFIG_PROPERTIES_PROP = "weasis.config.properties";
+  /** The property name used to specify a URL to the application configuration file. */
+  public static final String CONFIG_PROPERTIES_PROP = "weasis.config.properties";
 
-    /** The default name used for the configuration file. */
-    public static final String CONFIG_PROPERTIES_FILE_VALUE = "base.json";
-
+  /** The default name used for the configuration file. */
+  public static final String CONFIG_PROPERTIES_FILE_VALUE = "base.json";
 
   /** The property name used to specify a URL to the extended configuration file. */
   public static final String EXTENDED_PROPERTIES_PROP = "weasis.extended.config.properties";

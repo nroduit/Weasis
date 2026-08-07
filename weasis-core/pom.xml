@@ -44,10 +44,30 @@
                 </includes>
               </artifactSet>
               <filters>
+                <!-- The dependency manifests are dropped: the uber jar keeps the manifest of this module -->
                 <filter>
                   <artifact>eu.essilab:lablib-checkboxtree</artifact>
                   <excludes>
                     <exclude>eu/essilab/lablib/checkboxtree/examples/**</exclude>
+                    <exclude>META-INF/MANIFEST.MF</exclude>
+                  </excludes>
+                </filter>
+                <filter>
+                  <artifact>com.github.scribejava:*</artifact>
+                  <excludes>
+                    <exclude>META-INF/MANIFEST.MF</exclude>
+                  </excludes>
+                </filter>
+                <filter>
+                  <artifact>org.knowm.xchart:xchart</artifact>
+                  <excludes>
+                    <exclude>META-INF/MANIFEST.MF</exclude>
+                  </excludes>
+                </filter>
+                <filter>
+                  <artifact>de.erichseifert.vectorgraphics2d:VectorGraphics2D</artifact>
+                  <excludes>
+                    <exclude>META-INF/MANIFEST.MF</exclude>
                   </excludes>
                 </filter>
               </filters>
