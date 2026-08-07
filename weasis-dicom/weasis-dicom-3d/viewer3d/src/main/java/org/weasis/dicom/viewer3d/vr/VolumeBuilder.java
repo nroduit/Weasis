@@ -274,7 +274,7 @@ public final class VolumeBuilder {
           sliceOffset + slices.size() - 1,
           Duration.between(start, Instant.now()).toMillis());
 
-      LOGGER.info(
+        LOGGER.info(
           "Loading 3D texture time: {} ms",
           Duration.between(timeStarted, Instant.now()).toMillis());
       volumeBuilder.completed = true;

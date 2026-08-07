@@ -109,8 +109,7 @@ objdump -T <file>.so | grep -oE 'GLIBC_[0-9]+\.[0-9]+' | sort -V | tail -1
 `script/launch-options.sh` is the single source of truth for `JDK_MODULES`, `customOptions` (per-OS,
 e.g. the splash screen and Linux-only `-Dsun.awt.disablegrab=true`) and `commonOptions` (identical
 everywhere): `--enable-native-access=ALL-UNNAMED`, `-XX:MaxRAMPercentage=25`,
-`-XX:+UseStringDeduplication`, `-javaagent:$APPDIR/weasis-launcher.jar`,
-`-Dweasis.launch.type=NATIVE`,
+`-XX:+UseStringDeduplication`, `-Dweasis.launch.type=NATIVE`,
 `-Djavax.accessibility.assistive_technologies=org.weasis.launcher.EmptyAccessibilityProvider`,
 `-Djavax.accessibility.screen_magnifier_present=false`.
 
@@ -153,8 +152,8 @@ them to the application classpath in the generated `.cfg`. pf4j plugins must rem
 jar remains there, so **`-P compressXZ` is required** when building `weasis-distributions`
 for native packaging (CI always uses it).
 
-The classpath placement is what makes the common libraries eligible for the JDK AOT cache
-(agent-appended jars never are). Two related constraints on the jpackage runtime:
+The classpath placement is what makes the common libraries reliably eligible for the JDK AOT
+cache. Two related constraints on the jpackage runtime:
 
 - `--jlink-options "--strip-debug --no-man-pages --no-header-files --generate-cds-archive"`
   replaces jpackage's defaults **on purpose**: the default set includes

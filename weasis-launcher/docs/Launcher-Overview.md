@@ -3,6 +3,8 @@
 ## Table of Contents
 - [Introduction](#introduction)
 - [Startup Sequence](#startup-sequence)
+- [Launch Pipeline](#launch-pipeline)
+- [Class Loaders](#class-loaders)
 - [Configuration Sources and Precedence](#configuration-sources-and-precedence)
 - [Base Directories](#base-directories)
   - [Per-OS Layout](#per-os-layout)
@@ -56,28 +58,27 @@ the application before any plugin is started:
 
 How code reaches the JVM differs between development and the packaged application:
 
-- **Development (IDE)** — the run configuration passes
-  `-javaagent:weasis-launcher/target/weasis-launcher-<version>.jar`. `AutoProcessor` copies
-  the `weasis.plugins.N` jars from the local Maven repository into the per-user cache;
-  non-plugin jars land in `common-lib/` and `WeasisPluginManager.loadCommonLibraries()`
-  appends them to the system classloader through the agent
-  (`Instrumentation.appendToSystemClassLoaderSearch`). No AOT cache is used in dev.
+- **Development (IDE)** — `AutoProcessor` copies the `weasis.plugins.N` jars from the local
+  Maven repository into the per-user cache; non-plugin jars land in `common-lib/` and
+  `WeasisPluginManager.loadCommonLibraries()` publishes them through the common library
+  classloader (see below). No AOT cache is used in dev.
 - **Packaged application** — the packaging step splits the bundle jars: jars **without** a
   `Plugin-Id` manifest header (weasis-core, weasis-core-img, docking-frames, …) ship
   uncompressed in `$APPDIR/common-lib/` and jpackage puts them on the **application
   classpath**, so they live in the system classloader from process start; pf4j plugins stay
-  `.jar.xz` in `$APPDIR/bundle/`. The `.cfg` still carries `-javaagent:$APPDIR/weasis-launcher.jar`
-  as a fallback: a **remote codebase** launch (`cdb=` parameter) whose server ships different
-  library versions downloads them to the per-user cache and appends them via the agent
-  (classpath jars win for equal file names and are skipped).
+  `.jar.xz` in `$APPDIR/bundle/`. Only a **remote codebase** launch (`cdb=` parameter) whose
+  server ships libraries that are not in the app image needs the common library classloader.
 - **AOT cache (JEP 483/514/515)** — on Windows/Linux packaged launches, stage 1
   (`AotCache.relaunch`, called from the dependency-free `Bootstrap.main` entry point before
   `AppLauncher` — and thus its Logback/static init — is ever loaded, and before any Singleton
   interaction) re-executes the native launcher with `JAVA_TOOL_OPTIONS` containing either
   `-XX:AOTCache=<file>` (cache exists) or `-XX:AOTCacheOutput=<file>` (first launch after
   install/update trains the cache; the assembly phase spawns `bin/java` at JVM exit — kept in
-  the runtime for this reason). Classpath jars are AOT-cached; agent-appended jars and pf4j
-  plugin classes are not. The cache lives in the per-OS cache directory under
+  the runtime for this reason). Classpath jars are AOT-cached. Classes defined by the common
+  library classloader and by the pf4j plugin classloaders are cached too, but only while the
+  jar is byte-identical to the one seen by the training run — any jar that changed since then
+  silently falls back to a normal load, so keeping the shared libraries on the classpath
+  remains the reliable option. The cache lives in the per-OS cache directory under
   `aot/weasis-<version>-<runtime-stamp>.aot`; stale files are pruned. Disable with
   `-Dweasis.aot.cache=false` (the Dicomizer launcher does). macOS is excluded for now
   (open-file events target the first process). Any failure falls back to a normal launch:
@@ -91,6 +92,25 @@ How code reaches the JVM differs between development and the packaged applicatio
 - **PERF markers** — `*PERF* AOT cache, type:INIT mode:use|train|off` and
   `*PERF* AOT relaunch overhead, type:INIT time:<ms>` in `boot.log` measure the pipeline;
   compare with `*PERF* JVM start` across cold/warm launches.
+
+## Class Loaders
+
+```
+AppClassLoader          weasis-launcher.jar + $APPDIR/common-lib/*.jar (packaged app)
+  └── CommonLibClassLoader    shared libraries downloaded at runtime into <cache>/common-lib/
+        └── WeasisPluginClassLoader   one per pf4j plugin (parent-last: plugin → deps → parent)
+```
+
+`WeasisPluginManager.loadCommonLibraries()` is called once, after `AutoProcessor` has
+downloaded the jars and before `loadPlugins()`. It adds every jar of `<cache>/common-lib/` to
+`CommonLibClassLoader` — skipping the file names already on the application classpath, so a
+library shipped in the app image keeps being loaded by the `AppClassLoader` and stays
+AOT-cacheable — and sets it as the context classloader of the main thread.
+
+Delegation to the parent is the standard parent-first one, so a classpath jar always wins over
+a downloaded copy of the same library. Consequently the launcher's own classes never see the
+downloaded libraries: everything the launcher needs before this point (`weasis-core-img`, …)
+must be on the classpath, which the packaging step guarantees.
 
 ## Configuration Sources and Precedence
 

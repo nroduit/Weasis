@@ -208,7 +208,7 @@ find "$INPUT_DIR"/bundle/jogamp-* -type f ! -name '*-'"${ARC_OS}"'-*' ! -name 'j
 
 # Split non-plugin jars out of bundle/ into common-lib/. jpackage adds every plain jar found
 # under --input to the application classpath, so the common libraries become part of the system
-# classloader (required for the AOT cache: agent-appended jars are never AOT-cached) while the
+# classloader from process start, and are the jars the AOT cache archives most reliably, while the
 # pf4j plugins must remain .jar.xz in bundle/ to stay OFF the classpath.
 COMMON_LIB_DIR="$INPUT_DIR/common-lib"
 mkdir -p "$COMMON_LIB_DIR"

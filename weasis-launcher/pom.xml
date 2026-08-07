@@ -141,7 +141,6 @@
           <archive>
             <manifestEntries>
               <Multi-Release>true</Multi-Release>
-              <Premain-Class>org.weasis.plugin.WeasisPluginManager</Premain-Class>
             </manifestEntries>
           </archive>
         </configuration>

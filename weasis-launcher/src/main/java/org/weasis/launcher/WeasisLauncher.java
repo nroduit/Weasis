@@ -170,9 +170,10 @@ public class WeasisLauncher {
         return;
       }
 
-      // Shared libraries (e.g. weasis-core) were downloaded by AutoProcessor above. Add them to the
-      // system classloader now, before plugins are loaded and started, so plugin classloaders can
-      // resolve org.weasis.core.* through their parent on the first launch with a clean cache.
+      // Shared libraries (e.g. weasis-core) were downloaded by AutoProcessor above. Publish them
+      // through the common library classloader now, before plugins are loaded and started, so
+      // plugin classloaders resolve org.weasis.core.* through their parent on the first launch
+      // with a clean cache.
       pluginManager.loadCommonLibraries();
 
       // Load plugins

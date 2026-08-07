@@ -11,13 +11,12 @@ package org.weasis.plugin;
 
 import java.io.File;
 import java.io.IOException;
-import java.lang.instrument.Instrumentation;
+import java.net.MalformedURLException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.jar.JarFile;
 import java.util.stream.Stream;
 import org.pf4j.CompoundPluginDescriptorFinder;
 import org.pf4j.DefaultPluginManager;
@@ -34,9 +33,8 @@ import org.weasis.pref.ConfigData;
 public class WeasisPluginManager extends DefaultPluginManager {
   private static final Logger LOGGER = LoggerFactory.getLogger(WeasisPluginManager.class);
 
-  private static Instrumentation instrumentation;
-
-  private final Set<Path> loadedLibraries = new HashSet<>();
+  private final CommonLibClassLoader commonLibClassLoader =
+      new CommonLibClassLoader(WeasisPluginManager.class.getClassLoader());
 
   public WeasisPluginManager() {
     super();
@@ -78,30 +76,25 @@ public class WeasisPluginManager extends DefaultPluginManager {
   }
 
   /**
-   * Called by the Java agent to provide the Instrumentation instance ({@code Premain-Class:
-   * org.weasis.plugin.WeasisPluginManager} in the launcher MANIFEST, activated with {@code
-   * -javaagent:weasis-launcher.jar}).
-   */
-  public static void premain(String agentArgs, Instrumentation inst) {
-    instrumentation = inst;
-  }
-
-  /**
-   * Adds the shared library JARs (e.g. weasis-core) from {@link ConfigData#F_LIB_FOLDER} to the
-   * system classloader. Must be called after {@code AutoProcessor} has downloaded them and before
-   * plugins are loaded and started, otherwise plugins fail with {@code NoClassDefFoundError} on
-   * {@code org.weasis.core.*} classes on the first launch with a clean cache. Idempotent: each JAR
-   * is added at most once, and jars already present on the application classpath (packaged app:
-   * {@code common-lib/} in the app image) are skipped so they stay AOT-cacheable.
+   * Publishes the shared library JARs (e.g. weasis-core) of {@link ConfigData#F_LIB_FOLDER} through
+   * {@link #getCommonLibClassLoader()}, the parent of every plugin class loader. Must be called
+   * after {@code AutoProcessor} has downloaded them and before plugins are loaded and started,
+   * otherwise plugins fail with {@code NoClassDefFoundError} on {@code org.weasis.core.*} classes
+   * on the first launch with a clean cache. Idempotent: each JAR is added at most once, and jars
+   * already present on the application classpath (packaged app: {@code common-lib/} in the app
+   * image) are skipped so they stay AOT-cacheable.
    */
   public void loadCommonLibraries() {
+    // Threads started from here on inherit a context class loader that sees the shared libraries.
+    Thread.currentThread().setContextClassLoader(commonLibClassLoader);
+
     Path pluginsDir = getPluginCachePath();
-    if (pluginsDir == null || instrumentation == null) {
+    if (pluginsDir == null) {
       return;
     }
 
     Path libDir = pluginsDir.resolveSibling(ConfigData.F_LIB_FOLDER);
-    if (!Files.exists(libDir)) {
+    if (!Files.isDirectory(libDir)) {
       LOGGER.debug("Common library directory does not exist: {}", libDir);
       return;
     }
@@ -110,25 +103,29 @@ public class WeasisPluginManager extends DefaultPluginManager {
     try (Stream<Path> stream = Files.list(libDir)) {
       stream
           .filter(path -> path.toString().endsWith(".jar"))
-          .forEach(
-              path -> {
-                if (classpathJars.contains(path.getFileName().toString())) {
-                  LOGGER.debug("Already on the application classpath, skipping: {}", path);
-                  return;
-                }
-                if (!loadedLibraries.add(path.toAbsolutePath())) {
-                  return;
-                }
-                try {
-                  addJarToClassLoader(path);
-                  LOGGER.info("Added common library: {}", path.getFileName());
-                } catch (Exception e) {
-                  LOGGER.error("Failed to add library: {}", path, e);
-                }
-              });
+          .forEach(path -> addCommonLibrary(path, classpathJars));
     } catch (IOException e) {
       LOGGER.error("Failed to list common libraries from: {}", libDir, e);
     }
+  }
+
+  private void addCommonLibrary(Path path, Set<String> classpathJars) {
+    if (classpathJars.contains(path.getFileName().toString())) {
+      LOGGER.debug("Already on the application classpath, skipping: {}", path);
+      return;
+    }
+    try {
+      if (commonLibClassLoader.addFile(path)) {
+        LOGGER.info("Added common library: {}", path.getFileName());
+      }
+    } catch (MalformedURLException e) {
+      LOGGER.error("Failed to add library: {}", path, e);
+    }
+  }
+
+  /** Parent of the plugin class loaders, delegating to the application class loader. */
+  public ClassLoader getCommonLibClassLoader() {
+    return commonLibClassLoader;
   }
 
   /** Returns the file names of the jars on the application classpath. */
@@ -144,12 +141,6 @@ public class WeasisPluginManager extends DefaultPluginManager {
       }
     }
     return names;
-  }
-
-  /** Adds a JAR file to the given classloader using reflection. */
-  private void addJarToClassLoader(Path jarPath) throws Exception {
-    JarFile jarFile = new JarFile(jarPath.toFile());
-    instrumentation.appendToSystemClassLoaderSearch(jarFile);
   }
 
   public void addPluginCachePath(Path path) {

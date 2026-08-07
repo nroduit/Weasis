@@ -92,7 +92,7 @@ locations, under `${weasis.cache.dir}/cache/`:
 | Folder | Constant | Holds | Loaded by |
 |--------|----------|-------|-----------|
 | `plugins/` | `F_PLUGIN_FOLDER` | pf4j plugins (jars with a `Plugin-Id` / `plugin.id`) | pf4j child classloaders |
-| `common-lib/` | `F_LIB_FOLDER` | non-plugin jars (weasis-core, jackson, …) | agent → system classloader |
+| `common-lib/` | `F_LIB_FOLDER` | non-plugin jars (weasis-core, jackson, …) | `CommonLibClassLoader` (parent of the pf4j ones) |
 | `i18n/` | `F_TRANSLATION_FOLDER` | `*-i18n` translation bundles | pf4j |
 | `tmp/` | — | download staging | — |
 
@@ -161,10 +161,11 @@ depends on **only two things**: the app version and the runtime-image timestamp 
 reinstall/JDK update). **The downloaded plugin/lib set is NOT part of the key** — nothing in
 `bundle/`, no SNAPSHOT, no remote-codebase lib ever invalidates or refreshes it.
 
-**What is cached:** only system-classloader classes — the launcher jar + everything jpackage
-put on the classpath from `common-lib/` (~8.6k classes warm). **Never cached:** pf4j plugin
-classes (child classloaders) and anything agent-appended (`appendToSystemClassLoaderSearch`)
-— a JVM constraint, not a policy choice.
+**What is cached:** the launcher jar + everything jpackage put on the classpath from
+`common-lib/` (~8.6k classes warm), and — measured on JDK 26, see [Opt F](#opt-f--dropped-premise-invalidated-by-measurement-2026-07-19)
+— the pf4j plugin classes too. A class is served from the archive only while its jar is
+unchanged since the training run; anything downloaded **after** the cache was trained is read
+from disk.
 
 **Mode** (`buildToolOptions`): cache file exists → `-XX:AOTCache=` (**use**, fast); missing →
 `-XX:AOTCacheOutput= -XX:-AOTClassLinking` (**train**, one-time, assembly spawns `bin/java`
@@ -178,15 +179,16 @@ at exit).
 | **First run after install** | new key (no file) | **train** | One-time ~2.9 s + assembly, then every later launch is "use". |
 | **App update** (4.7.0 → 4.7.1) | yes (version) | **train once** | Old `.aot` pruned, retrains once. Expected. |
 | **Runtime / JDK update** (reinstall) | yes (java.home mtime) | **train once** | Same as app update — a new JVM never reads a mismatched cache. |
-| **Plugin download** to `bundle/` | **no** | unchanged | Plugin classes aren't cacheable → no retrain, no effect. |
-| **Remote SNAPSHOT common-lib download** | **no** | unchanged | Downloaded, agent-appended, **not** AOT-cached. Cache keeps mapping the packaged classpath copy. |
+| **Plugin download** to `bundle/` | **no** | unchanged | Downloaded after training → read from disk, no retrain, no effect. |
+| **Remote SNAPSHOT common-lib download** | **no** | unchanged | Loaded by `CommonLibClassLoader`, **not** in a cache trained before it existed. Cache keeps mapping the packaged classpath copy. |
 | **Bad / incompatible cache** | — | use → fail → recover | Child dies <10 s → `AotCache` deletes the cache, relaunches once **without** AOT; next launch retrains. |
 
 **The SNAPSHOT / remote-update caveat:** the plugin cache and the AOT cache don't talk to
 each other. A remote-codebase deployment that ships an updated common library either (a)
-uses a new filename → downloaded + agent-appended → runs but is **not** AOT-cached (no
-warm-up benefit), or (b) duplicates a packaged `common-lib/` class → the **classpath (cached)
-copy wins** (agent appends to the end of the search path), silently shadowing the update.
+uses a new filename → loaded by `CommonLibClassLoader` → runs but is **not** in the existing
+cache (no warm-up benefit), or (b) reuses a packaged `common-lib/` filename → the download is
+skipped as already on the classpath and the **classpath (cached) copy wins**, silently
+shadowing the update.
 This is a remote-update correctness caveat independent of AOT, but AOT makes it more
 surprising because those classes come from the shared archive.
 
@@ -342,9 +344,8 @@ are never AOT-cached, so un-shading dcm4che into `common-lib/` would let the cac
   *while still shaded inside the `dicom-codec` plugin jar*.
 - `org.weasis.dicom.codec.*` (the plugin's own classes): **48/48 cached** too.
 
-So on **JDK 26 the AOT cache already serves pf4j plugin classes** (this is unlike *agent-appended*
-jars via `appendToSystemClassLoaderSearch`, which are never cached — the earlier note that
-misled this plan). Un-shading would move dcm4che from "cached plugin class" to "cached classpath
+So on **JDK 26 the AOT cache already serves pf4j plugin classes**, contrary to the earlier note
+that misled this plan. Un-shading would move dcm4che from "cached plugin class" to "cached classpath
 class" — the same cache at the same speed, **~0 warm-up gain**. `dicom-codec`'s residual ~226 ms
 warm is the dcm4che **dictionary XML parse** (`uids.xml`/`dataelements.xml`, data not classes) plus
 SPI/init work, neither of which un-shading touches. F's only remaining upside is cosmetic (thinner

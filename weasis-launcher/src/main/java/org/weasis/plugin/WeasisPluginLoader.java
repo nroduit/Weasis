@@ -41,13 +41,23 @@ public class WeasisPluginLoader implements PluginLoader {
   @Override
   public ClassLoader loadPlugin(Path pluginPath, PluginDescriptor pluginDescriptor) {
     WeasisPluginClassLoader classLoader =
-        new WeasisPluginClassLoader(pluginManager, pluginDescriptor, getClass().getClassLoader());
+        new WeasisPluginClassLoader(pluginManager, pluginDescriptor, parentClassLoader());
     if (Files.isDirectory(pluginPath)) {
       loadDirectory(pluginPath, classLoader);
     } else {
       classLoader.addFile(pluginPath.toFile());
     }
     return classLoader;
+  }
+
+  /**
+   * Plugins resolve the shared libraries through the common library class loader, which itself
+   * delegates to the application class loader for the jars already on the classpath.
+   */
+  private ClassLoader parentClassLoader() {
+    return pluginManager instanceof WeasisPluginManager manager
+        ? manager.getCommonLibClassLoader()
+        : getClass().getClassLoader();
   }
 
   /** Adds the classes directories then the jars directories of an exploded plugin. */
