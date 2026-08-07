@@ -22,10 +22,14 @@ import java.net.URL;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.net.http.HttpTimeoutException;
 import java.time.Duration;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.AppProperties;
@@ -111,7 +115,7 @@ public final class HttpUtils {
       }
       var response =
           createHttpRequest(client, url, urlParameters, HttpResponse.BodyHandlers.ofInputStream());
-      return new HttpResponseStream(response);
+      return new HttpResponseStream(response, urlParameters.readTimeout());
     }
     var request =
         Objects.requireNonNullElseGet(
@@ -135,17 +139,17 @@ public final class HttpUtils {
   private static HttpStream sendMultipartRequest(
       HttpClient client, String url, URLParameters urlParameters, MultipartPayload multipart)
       throws IOException {
-    var builder =
-        HttpRequest.newBuilder()
-            .uri(URI.create(url))
-            .timeout(Duration.ofMillis(urlParameters.readTimeout()));
+    var builder = HttpRequest.newBuilder().uri(URI.create(url));
     applyHeaders(urlParameters.headers(), builder::header);
     JavaNetHttpClient.applyMultipart(builder, multipart);
     var request = builder.build();
     var response =
-        runInterruptibly(
-            () -> client.send(request, HttpResponse.BodyHandlers.ofInputStream()), "Request");
-    return new HttpResponseStream(response);
+        send(
+            client,
+            request,
+            HttpResponse.BodyHandlers.ofInputStream(),
+            urlParameters.readTimeout());
+    return new HttpResponseStream(response, urlParameters.readTimeout());
   }
 
   private static <S> HttpResponse<S> createHttpRequest(
@@ -154,10 +158,7 @@ public final class HttpUtils {
       URLParameters urlParameters,
       HttpResponse.BodyHandler<S> bodyHandler)
       throws IOException {
-    var requestBuilder =
-        HttpRequest.newBuilder()
-            .uri(URI.create(url))
-            .timeout(Duration.ofMillis(urlParameters.readTimeout()));
+    var requestBuilder = HttpRequest.newBuilder().uri(URI.create(url));
 
     applyHeaders(urlParameters.headers(), requestBuilder::header);
 
@@ -167,12 +168,45 @@ public final class HttpUtils {
             ? requestBuilder.POST(HttpRequest.BodyPublishers.noBody()).build()
             : requestBuilder.GET().build();
 
-    var response = sendWithStaleConnectionRetry(client, request, bodyHandler);
+    var response =
+        sendWithStaleConnectionRetry(client, request, bodyHandler, urlParameters.readTimeout());
     // POST responses (e.g. STOW-RS 202/409) carry meaningful non-200 codes the caller inspects.
     if (!post) {
       validateResponseStatus(response.statusCode());
     }
     return response;
+  }
+
+  /**
+   * Bounds how long the caller waits for the response instead of how long the whole exchange may
+   * take. With {@code BodyHandlers.ofInputStream} the future completes once the headers are in, so
+   * the deadline covers the server's time to respond and never the body transfer, which is guarded
+   * by {@link StallGuardInputStream}. Buffering body handlers still complete only once the body has
+   * been read, keeping the deadline whole-exchange for those small control-plane responses.
+   */
+  private static <S> HttpResponse<S> send(
+      HttpClient client,
+      HttpRequest request,
+      HttpResponse.BodyHandler<S> bodyHandler,
+      int responseTimeoutMillis)
+      throws IOException {
+    var future = client.sendAsync(request, bodyHandler);
+    try {
+      return responseTimeoutMillis > 0
+          ? future.get(responseTimeoutMillis, TimeUnit.MILLISECONDS)
+          : future.get();
+    } catch (TimeoutException e) {
+      future.cancel(true);
+      throw new HttpTimeoutException(
+          "No response from " + request.uri() + " within " + responseTimeoutMillis + " ms");
+    } catch (InterruptedException e) {
+      future.cancel(true);
+      Thread.currentThread().interrupt();
+      throw new StreamIOException("Request interrupted", e);
+    } catch (ExecutionException e) {
+      var cause = e.getCause();
+      throw cause instanceof IOException io ? io : new StreamIOException("Request failed", cause);
+    }
   }
 
   private static final int STALE_RETRY_ATTEMPTS = 3;
@@ -187,12 +221,15 @@ public final class HttpUtils {
    * POST is not retried.
    */
   private static <S> HttpResponse<S> sendWithStaleConnectionRetry(
-      HttpClient client, HttpRequest request, HttpResponse.BodyHandler<S> bodyHandler)
+      HttpClient client,
+      HttpRequest request,
+      HttpResponse.BodyHandler<S> bodyHandler,
+      int responseTimeoutMillis)
       throws IOException {
     IOException last = null;
     for (int attempt = 0; attempt <= STALE_RETRY_ATTEMPTS; attempt++) {
       try {
-        return runInterruptibly(() -> client.send(request, bodyHandler), "Request");
+        return send(client, request, bodyHandler, responseTimeoutMillis);
       } catch (IOException e) {
         last = e;
         if (!isIdempotent(request) || !isStaleConnectionFailure(e)) {

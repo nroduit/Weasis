@@ -25,6 +25,7 @@ import com.github.scribejava.core.oauth.OAuth20Service;
 import com.sun.net.httpserver.HttpServer;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.InetSocketAddress;
 import java.net.ProxySelector;
 import java.net.URI;
@@ -33,6 +34,8 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicReference;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
@@ -45,7 +48,11 @@ import org.weasis.core.util.StreamIOException;
 
 class HttpUtilsTest {
 
+  private static final int SLOW_CHUNKS = 8;
+  private static final int CHUNK_SIZE = 1024;
+
   private static HttpServer server;
+  private static ExecutorService serverPool;
   private static String baseUrl;
   private static final AtomicReference<Map<String, java.util.List<String>>> LAST_HEADERS =
       new AtomicReference<>();
@@ -96,13 +103,49 @@ class HttpUtilsTest {
             os.write(body);
           }
         });
+    server.createContext(
+        "/slow-stream",
+        ex -> {
+          ex.sendResponseHeaders(200, 0);
+          try (var os = ex.getResponseBody()) {
+            for (int i = 0; i < SLOW_CHUNKS; i++) {
+              os.write(new byte[CHUNK_SIZE]);
+              os.flush();
+              sleepQuietly(120);
+            }
+          }
+        });
+    server.createContext(
+        "/stalled-stream",
+        ex -> {
+          ex.sendResponseHeaders(200, 0);
+          try (var os = ex.getResponseBody()) {
+            os.write(new byte[CHUNK_SIZE]);
+            os.flush();
+            // Headers and a first chunk arrive, then the peer goes quiet without closing.
+            sleepQuietly(3_000);
+          }
+        });
+    // Without an explicit executor the handlers run on the dispatcher thread, so the slow
+    // endpoints above would serialize every other request in this class.
+    serverPool = Executors.newCachedThreadPool();
+    server.setExecutor(serverPool);
     server.start();
     baseUrl = "http://localhost:" + server.getAddress().getPort();
+  }
+
+  private static void sleepQuietly(long millis) {
+    try {
+      Thread.sleep(millis);
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+    }
   }
 
   @AfterAll
   static void stop() {
     server.stop(0);
+    serverPool.shutdownNow();
   }
 
   @Test
@@ -273,6 +316,29 @@ class HttpUtilsTest {
     try (HttpStream stream =
         HttpUtils.getHttpResponse(baseUrl + "/stow", post, OAuth2ServiceFactory.NO_AUTH, request)) {
       assertEquals(415, stream.getResponseCode());
+    }
+  }
+
+  @Test
+  void slowStreamOutlivesTheReadTimeoutWhileDataKeepsFlowing() throws Exception {
+    // ~1s of streaming under a 400ms timeout: the timeout bounds a stalled read, not the transfer.
+    URLParameters params = URLParameters.builder().connectTimeout(2_000).readTimeout(400).build();
+    try (HttpStream stream =
+        HttpUtils.getHttpResponse(baseUrl + "/slow-stream", params, OAuth2ServiceFactory.NO_AUTH)) {
+      assertEquals(200, stream.getResponseCode());
+      assertEquals(SLOW_CHUNKS * CHUNK_SIZE, stream.getInputStream().readAllBytes().length);
+    }
+  }
+
+  @Test
+  void stalledStreamIsAbortedOnceDataStopsFlowing() throws Exception {
+    URLParameters params = URLParameters.builder().connectTimeout(2_000).readTimeout(400).build();
+    try (HttpStream stream =
+        HttpUtils.getHttpResponse(
+            baseUrl + "/stalled-stream", params, OAuth2ServiceFactory.NO_AUTH)) {
+      assertEquals(200, stream.getResponseCode());
+      InputStream body = stream.getInputStream();
+      assertThrows(StallTimeoutException.class, body::readAllBytes);
     }
   }
 
