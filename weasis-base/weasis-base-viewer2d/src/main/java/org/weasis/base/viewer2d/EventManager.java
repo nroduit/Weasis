@@ -104,9 +104,7 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
     setAction(newLutAction());
     setAction(newFilterAction());
     setAction(newLayoutAction(View2dContainer.DEFAULT_LAYOUT_LIST.toArray(new MigLayoutModel[0])));
-    setAction(newSynchAction(View2dContainer.DEFAULT_SYNCH_LIST.toArray(new SynchView[0])));
-    getAction(ActionW.SYNCH)
-        .ifPresent(a -> a.setSelectedItemWithoutTriggerAction(SynchView.DEFAULT_STACK));
+    setAction(newSynchAction(SynchView.DEFAULT_STACK));
     setAction(newMeasurementAction(MeasureToolBar.getMeasureGraphicList().toArray(new Graphic[0])));
     setAction(newDrawAction(MeasureToolBar.getDrawGraphicList().toArray(new Graphic[0])));
     setAction(newSpatialUnit(Unit.values()));
@@ -234,10 +232,6 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
       Optional<ComboItemListener<MigLayoutModel>> layoutAction = getAction(ActionW.LAYOUT);
       if (oldContainer == null
           || !oldContainer.getClass().equals(selectedView2dContainer.getClass())) {
-        synchAction.ifPresent(
-            a ->
-                a.setDataListWithoutTriggerAction(
-                    selectedView2dContainer.getSynchList().toArray(new SynchView[0])));
         layoutAction.ifPresent(
             a ->
                 a.setDataListWithoutTriggerAction(

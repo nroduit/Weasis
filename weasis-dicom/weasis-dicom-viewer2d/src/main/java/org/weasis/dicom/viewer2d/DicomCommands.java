@@ -20,7 +20,6 @@ import org.weasis.core.api.command.Option;
 import org.weasis.core.api.command.Options;
 import org.weasis.core.api.gui.layout.MigLayoutModel;
 import org.weasis.core.api.gui.util.ActionW;
-import org.weasis.core.api.gui.util.ComboItemListener;
 import org.weasis.core.api.gui.util.Feature;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.gui.util.SliderChangeListener;
@@ -29,7 +28,6 @@ import org.weasis.core.api.service.AuditLog;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.editor.image.MouseActions;
 import org.weasis.core.ui.editor.image.SynchEvent;
-import org.weasis.core.ui.editor.image.SynchView;
 import org.weasis.core.ui.editor.image.ViewerToolBar;
 import org.weasis.core.ui.model.utils.bean.PanPoint;
 import org.weasis.dicom.codec.DicomImageElement;
@@ -91,14 +89,6 @@ public class DicomCommands implements CommandExtension {
         -? --help       show help
       """;
 
-  private static final String SYNCH_USAGE =
-      """
-      Set a synchronization mode
-      Usage: dcmview2d:synch VALUE
-      VALUE is (none|tile|stack)
-        -? --help       show help
-      """;
-
   private static final String RESET_USAGE =
       """
       Reset image display
@@ -134,9 +124,6 @@ public class DicomCommands implements CommandExtension {
       case "mouseLeftAction":
         mouseLeftAction(args);
         break;
-      case "synch":
-        synch(args);
-        break;
       case "reset":
         reset(args);
         break;
@@ -158,8 +145,6 @@ public class DicomCommands implements CommandExtension {
         + String.join("\n", LAYOUT_USAGE)
         + "\n\n"
         + String.join("\n", MOUSE_LEFT_ACTION_USAGE)
-        + "\n\n"
-        + String.join("\n", SYNCH_USAGE)
         + "\n\n"
         + String.join("\n", RESET_USAGE);
   }
@@ -374,40 +359,6 @@ public class DicomCommands implements CommandExtension {
         }
       }
     }
-  }
-
-  public void synch(String[] argv) throws IOException {
-    final Option opt = Options.compile(SYNCH_USAGE).parse(argv);
-    final List<String> args = opt.args();
-
-    if (opt.isSet("help") || args.size() != 1) { // NON-NLS
-      opt.usage();
-      return;
-    }
-    GuiExecutor.execute(
-        () -> {
-          String command = args.getFirst();
-          if (command != null) {
-            EventManager e = EventManager.getInstance();
-            ImageViewerPlugin<DicomImageElement> view = e.getSelectedView2dContainer();
-            if (view != null) {
-              try {
-                Optional<ComboItemListener<SynchView>> synchAction = e.getAction(ActionW.SYNCH);
-                if (synchAction.isPresent()) {
-                  for (SynchView synch : view.getSynchList()) {
-                    if (synch.getCommand().equals(command)) {
-                      synchAction.get().setSelectedItem(synch);
-                      return;
-                    }
-                  }
-                  throw new IllegalArgumentException(command + " not found!");
-                }
-              } catch (Exception ex) {
-                LOGGER.error("Synch command: {}", command, ex);
-              }
-            }
-          }
-        });
   }
 
   public void reset(String[] argv) throws IOException {

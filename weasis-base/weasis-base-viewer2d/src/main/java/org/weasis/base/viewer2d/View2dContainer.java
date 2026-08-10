@@ -78,10 +78,6 @@ public class View2dContainer extends ImageViewerPlugin<ImageElement>
 
   private static final Logger LOGGER = LoggerFactory.getLogger(View2dContainer.class);
 
-  // Unmodifiable list of the default synchronization elements
-  public static final List<SynchView> DEFAULT_SYNCH_LIST =
-      List.of(SynchView.DEFAULT_STACK, SynchView.DEFAULT_TILE);
-
   public static final MigLayoutModel VIEWS_2x1_r1xc2_histo =
       new MigLayoutModel(
           View2dContainer.class.getResourceAsStream("/config/layoutModelHisto.properties"),
@@ -432,7 +428,7 @@ public class View2dContainer extends ImageViewerPlugin<ImageElement>
 
   @Override
   public Class<?> getSeriesViewerClass() {
-    return view2dClass;
+    return VIEWPORT_CLASS;
   }
 
   @Override
@@ -442,9 +438,8 @@ public class View2dContainer extends ImageViewerPlugin<ImageElement>
 
   @Override
   public List<Action> getExportActions() {
-    return selectedImagePane == null
-        ? super.getExportActions()
-        : selectedImagePane.getExportActions();
+    ViewCanvas<ImageElement> selected = getSelectedViewCanvas();
+    return selected == null ? super.getExportActions() : selected.getExportActions();
   }
 
   @Override
@@ -482,11 +477,6 @@ public class View2dContainer extends ImageViewerPlugin<ImageElement>
     printStd.putValue(Action.ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_P, 0));
     actions.add(printStd);
     return actions;
-  }
-
-  @Override
-  public List<SynchView> getSynchList() {
-    return DEFAULT_SYNCH_LIST;
   }
 
   @Override
