@@ -78,7 +78,7 @@ class OAuth2ServiceFactoryTest {
             new AuthProvider("p", "https://a", "https://old-token", null, false),
             AuthRegistration.of("client", "secret", "scope", null));
     var first = OAuth2ServiceFactory.getService(method, port);
-    assertEquals("https://old-token", first.getApi().getAccessTokenEndpoint());
+    assertEquals("https://old-token", first.getProvider().tokenUri());
 
     var edited =
         new DefaultAuthMethod(
@@ -90,7 +90,7 @@ class OAuth2ServiceFactoryTest {
     OAuth2ServiceFactory.invalidateService(edited.getUid());
     var second = OAuth2ServiceFactory.getService(edited, port);
     assertNotSame(first, second);
-    assertEquals("https://new-token", second.getApi().getAccessTokenEndpoint());
+    assertEquals("https://new-token", second.getProvider().tokenUri());
   }
 
   @Test

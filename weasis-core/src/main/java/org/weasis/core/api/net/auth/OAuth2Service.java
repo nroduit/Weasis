@@ -59,6 +59,10 @@ public final class OAuth2Service {
     this.httpClient = Objects.requireNonNull(httpClient, "httpClient");
   }
 
+  public AuthProvider getProvider() {
+    return provider;
+  }
+
   public String getCallbackUrl() {
     return callbackUrl;
   }
