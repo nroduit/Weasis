@@ -11,6 +11,7 @@ package org.weasis.core.api.net.auth;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -66,6 +67,43 @@ class OAuth2ServiceFactoryTest {
     var first = OAuth2ServiceFactory.getService(method, port);
     var second = OAuth2ServiceFactory.getService(method, port);
     assertSame(first, second);
+  }
+
+  @Test
+  void invalidateServiceRebuildsFromUpdatedConfiguration() {
+    int port = 64998;
+    var method =
+        new DefaultAuthMethod(
+            "uid-invalidate",
+            new AuthProvider("p", "https://a", "https://old-token", null, false),
+            AuthRegistration.of("client", "secret", "scope", null));
+    var first = OAuth2ServiceFactory.getService(method, port);
+    assertEquals("https://old-token", first.getApi().getAccessTokenEndpoint());
+
+    var edited =
+        new DefaultAuthMethod(
+            method.getUid(),
+            new AuthProvider("p", "https://a", "https://new-token", null, false),
+            method.getAuthRegistration());
+    assertSame(first, OAuth2ServiceFactory.getService(edited, port));
+
+    OAuth2ServiceFactory.invalidateService(edited.getUid());
+    var second = OAuth2ServiceFactory.getService(edited, port);
+    assertNotSame(first, second);
+    assertEquals("https://new-token", second.getApi().getAccessTokenEndpoint());
+  }
+
+  @Test
+  void invalidateServiceIgnoresBlankUid() {
+    int port = 64997;
+    var method =
+        new DefaultAuthMethod(
+            "uid-blank-invalidate",
+            new AuthProvider("p", "https://a", "https://t", null, false),
+            AuthRegistration.of("client", "secret", "scope", null));
+    var service = OAuth2ServiceFactory.getService(method, port);
+    OAuth2ServiceFactory.invalidateService("  ");
+    assertSame(service, OAuth2ServiceFactory.getService(method, port));
   }
 
   // -------------------------------------------------------------------------
