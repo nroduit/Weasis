@@ -14,12 +14,23 @@ import java.awt.BorderLayout;
 import java.awt.Component;
 import java.util.Objects;
 import javax.swing.JPanel;
+import javax.swing.event.TreeExpansionEvent;
+import javax.swing.event.TreeExpansionListener;
+import javax.swing.tree.DefaultMutableTreeNode;
+import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.dicom.explorer.DicomModel;
 import org.weasis.dicom.explorer.exp.ExportTree;
 
 public class RetrieveTree extends JPanel {
 
+  /** Queries the series of a study, on expansion of its node in the tree. */
+  @FunctionalInterface
+  public interface SeriesLoader {
+    void loadSeries(RetrieveTreeModel treeModel, DefaultMutableTreeNode studyNode);
+  }
+
   private RetrieveTreeModel retrieveTreeModel;
+  private SeriesLoader seriesLoader;
 
   public RetrieveTree() {
     this(new RetrieveTreeModel());
@@ -38,10 +49,16 @@ public class RetrieveTree extends JPanel {
     return retrieveTreeModel;
   }
 
+  /** Registers the query run when a study is expanded for the first time. */
+  public void setSeriesLoader(SeriesLoader seriesLoader) {
+    this.seriesLoader = seriesLoader;
+  }
+
   public void setRetrieveTreeModel(RetrieveTreeModel retrieveTreeModel) {
     this.retrieveTreeModel = Objects.requireNonNull(retrieveTreeModel);
     CheckboxTree checkboxTree = ExportTree.buildCheckboxTree(retrieveTreeModel);
     ExportTree.initTree(retrieveTreeModel, checkboxTree);
+    checkboxTree.addTreeExpansionListener(new SeriesExpansionListener());
     removeAll();
     add(checkboxTree, BorderLayout.CENTER);
   }
@@ -54,5 +71,26 @@ public class RetrieveTree extends JPanel {
       }
     }
     throw new IllegalStateException("CheckboxTree cannot be null");
+  }
+
+  private class SeriesExpansionListener implements TreeExpansionListener {
+
+    @Override
+    public void treeExpanded(TreeExpansionEvent event) {
+      // A study sits at the third level: root, patient, study
+      if (seriesLoader == null || event.getPath().getPathCount() != 3) {
+        return;
+      }
+      if (event.getPath().getLastPathComponent() instanceof DefaultMutableTreeNode studyNode
+          && studyNode.getUserObject() instanceof MediaSeriesGroup
+          && RetrieveTreeModel.hasPlaceholder(studyNode)) {
+        seriesLoader.loadSeries(retrieveTreeModel, studyNode);
+      }
+    }
+
+    @Override
+    public void treeCollapsed(TreeExpansionEvent event) {
+      // Series already queried are kept, so that the checked ones survive a collapse
+    }
   }
 }

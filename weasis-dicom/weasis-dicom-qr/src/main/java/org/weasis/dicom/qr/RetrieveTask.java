@@ -9,12 +9,7 @@
  */
 package org.weasis.dicom.qr;
 
-import java.io.ByteArrayInputStream;
-import java.io.File;
-import java.net.MalformedURLException;
 import java.net.URL;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -23,32 +18,28 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Properties;
+import java.util.concurrent.CancellationException;
+import java.util.concurrent.atomic.AtomicBoolean;
 import javax.swing.JOptionPane;
 import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Tag;
-import org.dcm4che3.net.Status;
+import org.dcm4che3.net.service.QueryRetrieveLevel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.ObservableEvent;
-import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.WinUtil;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.MediaSeriesGroupNode;
-import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.net.URLParameters;
-import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.ui.tp.raven.spinner.SpinnerProgress;
-import org.weasis.core.util.FileUtil;
 import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.codec.DicomSeries;
 import org.weasis.dicom.codec.TagD;
-import org.weasis.dicom.codec.utils.DicomResource;
 import org.weasis.dicom.codec.utils.SeriesInstanceList;
 import org.weasis.dicom.explorer.DicomModel;
-import org.weasis.dicom.explorer.LoadLocalDicom;
 import org.weasis.dicom.explorer.PluginOpeningStrategy;
 import org.weasis.dicom.explorer.exp.ExplorerTask;
 import org.weasis.dicom.explorer.pref.download.DicomExplorerPrefView;
@@ -62,33 +53,30 @@ import org.weasis.dicom.explorer.rs.RsQueryResult;
 import org.weasis.dicom.explorer.wado.DownloadManager;
 import org.weasis.dicom.explorer.wado.DownloadManager.PriorityTaskComparator;
 import org.weasis.dicom.explorer.wado.DownloadPriority;
-import org.weasis.dicom.explorer.wado.LoadRemoteDicomManifest;
 import org.weasis.dicom.explorer.wado.LoadSeries;
-import org.weasis.dicom.mf.ArcQuery;
 import org.weasis.dicom.mf.WadoParameters;
-import org.weasis.dicom.op.CGet;
-import org.weasis.dicom.op.CMove;
+import org.weasis.dicom.op.CFind;
 import org.weasis.dicom.param.AdvancedParams;
 import org.weasis.dicom.param.ConnectOptions;
 import org.weasis.dicom.param.DicomParam;
-import org.weasis.dicom.param.DicomProgress;
 import org.weasis.dicom.param.DicomState;
-import org.weasis.dicom.param.ListenerParams;
-import org.weasis.dicom.qr.manisfest.CFindQueryResult;
 import org.weasis.dicom.tool.DicomListener;
 import org.weasis.dicom.web.MultipartConstants;
 
 public class RetrieveTask extends ExplorerTask<ExplorerTask<Boolean, String>, String> {
   private static final Logger LOGGER = LoggerFactory.getLogger(RetrieveTask.class);
 
-  private final List<String> studies;
+  private final RetrieveSelection selection;
   private final DicomModel explorerDcmModel;
   private final DicomQrView dicomQrView;
   protected final PluginOpeningStrategy openingStrategy;
 
-  public RetrieveTask(List<String> studies, DicomModel explorerDcmModel, DicomQrView dicomQrView) {
+  private final AtomicBoolean cancelRequested = new AtomicBoolean();
+
+  public RetrieveTask(
+      RetrieveSelection selection, DicomModel explorerDcmModel, DicomQrView dicomQrView) {
     super(AbstractDicomNode.UsageType.RETRIEVE.toString(), false);
-    this.studies = studies;
+    this.selection = selection;
     this.explorerDcmModel = explorerDcmModel;
     this.dicomQrView = dicomQrView;
     this.openingStrategy = new PluginOpeningStrategy(DownloadManager.getOpeningViewer());
@@ -100,28 +88,8 @@ public class RetrieveTask extends ExplorerTask<ExplorerTask<Boolean, String>, St
         new ObservableEvent(
             ObservableEvent.BasicAction.LOADING_START, explorerDcmModel, null, this));
 
-    ExplorerTask<Boolean, String> loadingTask = null;
     String errorMessage = null;
-    final SpinnerProgress progressBar = getBar();
-    DicomProgress progress = new DicomProgress();
-    progress.addProgressListener(
-        p ->
-            GuiExecutor.execute(
-                () -> {
-                  int c =
-                      p.getNumberOfCompletedSuboperations() + p.getNumberOfFailedSuboperations();
-                  int r = p.getNumberOfRemainingSuboperations();
-                  int t = c + r;
-                  if (t > 0) {
-                    progressBar.setValue((c * 100) / t);
-                  }
-                }));
 
-    addCancelListener(progress);
-
-    DicomParam[] dcmParams = {new DicomParam(Tag.StudyInstanceUID, studies.toArray(new String[0]))};
-
-    Path tempFolder = null;
     Object selectedItem = dicomQrView.getComboDestinationNode().getSelectedItem();
     if (selectedItem instanceof final DefaultDicomNode node) {
       DefaultDicomNode callingNode =
@@ -269,17 +237,13 @@ public class RetrieveTask extends ExplorerTask<ExplorerTask<Boolean, String>, St
           }
           LOGGER.error("Dicom retrieve error: {}", errorMessage);
         }
-
-        if (tempFolder != null) {
-          explorerDcmModel.allSeriesPostProcessing();
-        }
       }
 
     } else if (selectedItem instanceof DicomWebNode) {
       fillSeries();
     }
 
-    if (errorMessage != null) {
+    if (errorMessage != null && !cancelRequested.get()) {
       final String mes = errorMessage;
       final String errorTitle =
           StringUtil.getEmptyStringIfNull(
@@ -296,6 +260,243 @@ public class RetrieveTask extends ExplorerTask<ExplorerTask<Boolean, String>, St
     return null;
   }
 
+  /** Retrieve parameters of the WADO node serving the archive, null when there is no match. */
+  private WadoParameters buildWadoUriParameters(DefaultDicomNode node) {
+    List<AbstractDicomNode> webNodes =
+        AbstractDicomNode.loadDicomNodes(
+            AbstractDicomNode.Type.WEB, AbstractDicomNode.UsageType.RETRIEVE, WebType.WADO);
+    String host = getHostname(node.getDicomNode().getHostname());
+    String m1 = Messages.getString("RetrieveTask.no_wado_url_match");
+    DicomWebNode wnode = getWadoUrl(dicomQrView, host, webNodes, m1);
+    if (wnode == null) {
+      return null;
+    }
+    WadoParameters wadoParameters =
+        new WadoParameters("local", wnode.getUrl().toString(), false, null, null, null); // NON-NLS
+    wnode.getHeaders().forEach(wadoParameters::addHttpTag);
+    return wadoParameters;
+  }
+
+  /**
+   * Enumerates the studies with C-FIND and hands one retrieve task per series to the download
+   * manager, so that the retrieve is stopped and resumed series by series like a DICOMweb download.
+   *
+   * @param wadoParameters the WADO node downloading the images, null to retrieve them with the
+   *     DIMSE service of the archive
+   * @return null on success, otherwise the message to report
+   */
+  private String queueSeriesRetrieve(
+      AdvancedParams params,
+      DefaultDicomNode callingNode,
+      DefaultDicomNode calledNode,
+      RetrieveType type,
+      WadoParameters wadoParameters) {
+    DicomModel queryModel = dicomQrView.getDicomModel();
+    if (queryModel == null) {
+      return Messages.getString("RetrieveTask.msg_unexpected_error");
+    }
+
+    DicomListener dicomListener = dicomQrView.getDicomListener();
+    Path storageDir;
+    if (RetrieveType.CMOVE == type) {
+      if (dicomListener == null) {
+        return Messages.getString("RetrieveTask.msg_start_listener");
+      }
+      if (dicomListener.isRunning()) {
+        return Messages.getString("RetrieveTask.msg_running_listener");
+      }
+      storageDir = dicomListener.getStoreSCP().getStorageDir();
+    } else {
+      storageDir = DicomQrView.getSessionTempFolder();
+    }
+
+    openingStrategy.setFullImportSession(false);
+    RetrieveContext context =
+        new RetrieveContext(
+            type,
+            params,
+            callingNode,
+            calledNode,
+            explorerDcmModel,
+            openingStrategy,
+            dicomListener,
+            storageDir);
+
+    // Each study is queued as soon as it is enumerated: the images of the first one transfer while
+    // the remaining studies are still being queried
+    boolean queued = false;
+    for (String studyUid : selection.getStudyUids()) {
+      if (cancelRequested.get()) {
+        break;
+      }
+      List<LoadSeries> tasks = buildStudyTasks(context, queryModel, studyUid, wadoParameters);
+      if (!tasks.isEmpty()) {
+        if (!queued) {
+          openingStrategy.prepareImport();
+          queued = true;
+        }
+        startTasks(context, tasks);
+      }
+    }
+
+    if (!queued) {
+      return cancelRequested.get() ? null : Messages.getString("RetrieveTask.no_series_found");
+    }
+    return null;
+  }
+
+  private List<LoadSeries> buildStudyTasks(
+      RetrieveContext context,
+      DicomModel queryModel,
+      String studyUid,
+      WadoParameters wadoParameters) {
+    DicomParam[] keys = {
+      new DicomParam(Tag.StudyInstanceUID, studyUid),
+      CFind.SeriesInstanceUID,
+      CFind.Modality,
+      CFind.SeriesNumber,
+      CFind.SeriesDescription,
+      // Gives the progress bar a total without an extra query
+      new DicomParam(Tag.NumberOfSeriesRelatedInstances)
+    };
+    DicomState state =
+        CFind.process(
+            context.getParams(),
+            context.getCallingNodeForQuery(),
+            context.getCalledNode(),
+            0,
+            QueryRetrieveLevel.SERIES,
+            keys);
+    List<Attributes> seriesRsp = state.getDicomRSP();
+    if (seriesRsp == null || seriesRsp.isEmpty()) {
+      LOGGER.warn("No series found for study {}: {}", studyUid, state.getMessage());
+      return List.of();
+    }
+
+    MediaSeriesGroup study = getStudyNode(queryModel, studyUid);
+    if (study == null) {
+      return List.of();
+    }
+
+    boolean startDownloading =
+        GuiUtils.getUICore()
+            .getSystemPreferences()
+            .getBooleanProperty(DicomExplorerPrefView.DOWNLOAD_IMMEDIATELY, true);
+    List<LoadSeries> tasks = new ArrayList<>(seriesRsp.size());
+    int enumerated = 0;
+    for (Attributes seriesDataset : seriesRsp) {
+      if (cancelRequested.get()) {
+        break;
+      }
+      if (!selection.contains(studyUid, seriesDataset.getString(Tag.SeriesInstanceUID))) {
+        continue;
+      }
+      DicomSeries dicomSeries = getCFindSeries(study, seriesDataset);
+      if (dicomSeries == null) {
+        continue;
+      }
+      LoadSeries task = createSeriesTask(context, dicomSeries, wadoParameters, startDownloading);
+      task.setPriority(
+          new DownloadPriority(
+              explorerDcmModel.getParent(study, DicomModel.patient),
+              study,
+              dicomSeries,
+              context.hasConcurrentRetrieve()));
+      tasks.add(task);
+      updateEnumerationProgress(++enumerated, seriesRsp.size());
+    }
+    return tasks;
+  }
+
+  /** Downloads the series over HTTP when a WADO node serves the archive, with DIMSE otherwise. */
+  private static LoadSeries createSeriesTask(
+      RetrieveContext context,
+      DicomSeries dicomSeries,
+      WadoParameters wadoParameters,
+      boolean startDownloading) {
+    if (wadoParameters == null) {
+      return new LoadQrSeries(dicomSeries, context, startDownloading);
+    }
+    dicomSeries.setTag(TagW.WadoParameters, wadoParameters);
+    return new LoadWadoUriSeries(
+        dicomSeries, context, getConcurrentDownloadsInSeries(), startDownloading);
+  }
+
+  private static int getConcurrentDownloadsInSeries() {
+    return GuiUtils.getUICore()
+        .getSystemPreferences()
+        .getIntProperty(LoadSeries.CONCURRENT_DOWNLOADS_IN_SERIES, 4);
+  }
+
+  /** Adds the series returned by C-FIND to the explorer model, without its instances yet. */
+  private DicomSeries getCFindSeries(MediaSeriesGroup study, Attributes seriesDataset) {
+    String seriesUid = seriesDataset.getString(Tag.SeriesInstanceUID);
+    if (!StringUtil.hasText(seriesUid)) {
+      return null;
+    }
+    if (explorerDcmModel.getHierarchyNode(study, seriesUid) instanceof DicomSeries existing) {
+      return existing;
+    }
+    DicomSeries dicomSeries = new DicomSeries(seriesUid);
+    dicomSeries.setTag(TagD.get(Tag.SeriesInstanceUID), seriesUid);
+    dicomSeries.setTag(TagW.ExplorerModel, explorerDcmModel);
+    dicomSeries.setTag(TagW.WadoInstanceReferenceList, new SeriesInstanceList());
+    for (TagW tag :
+        TagD.getTagFromIDs(
+            Tag.Modality,
+            Tag.SeriesNumber,
+            Tag.SeriesDescription,
+            Tag.NumberOfSeriesRelatedInstances)) {
+      tag.readValue(seriesDataset, dicomSeries);
+    }
+    explorerDcmModel.addHierarchyNode(study, dicomSeries);
+    return dicomSeries;
+  }
+
+  private void startTasks(RetrieveContext context, List<LoadSeries> tasks) {
+    for (LoadSeries task : tasks) {
+      if (!DicomModel.isHiddenModality(task.getDicomSeries())) {
+        task.createSeriesThumbnail();
+      }
+      DownloadManager.addLoadSeries(task, explorerDcmModel, task.isStartDownloading());
+    }
+
+    // Sort tasks from the download priority order (low number has a higher priority), TASKS
+    // is sorted from low to high priority.
+    DownloadManager.getTasks().sort(Collections.reverseOrder(new PriorityTaskComparator()));
+
+    if (context.hasConcurrentRetrieve()) {
+      DownloadManager.CONCURRENT_EXECUTOR.prestartAllCoreThreads();
+    } else {
+      DownloadManager.UNIQUE_EXECUTOR.prestartAllCoreThreads();
+    }
+  }
+
+  private void updateEnumerationProgress(int done, int total) {
+    GuiExecutor.execute(
+        () -> {
+          if (cancelRequested.get()) {
+            return;
+          }
+          SpinnerProgress bar = getBar();
+          bar.setIndeterminate(false);
+          bar.setMaximum(total);
+          bar.setValue(done);
+          bar.setString(done + "/" + total);
+        });
+  }
+
+  /**
+   * Stops the enumeration. The series already handed to the download manager keep their own stop
+   * and resume controls.
+   */
+  @Override
+  public boolean cancel() {
+    cancelRequested.set(true);
+    GuiExecutor.execute(() -> getBar().setString(Messages.getString("RetrieveTask.cancelling")));
+    return super.cancel();
+  }
+
   @Override
   protected void done() {
     this.removeAllCancelListeners();
@@ -310,6 +511,8 @@ public class RetrieveTask extends ExplorerTask<ExplorerTask<Boolean, String>, St
       }
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
+    } catch (CancellationException e) {
+      LOGGER.info("The DICOM retrieve has been cancelled");
     } catch (Exception e) {
       LOGGER.error("Retrieving DICOM data:", e);
     }
@@ -396,27 +599,23 @@ public class RetrieveTask extends ExplorerTask<ExplorerTask<Boolean, String>, St
             + "\";"
             + props.getProperty(RsQueryParams.P_ACCEPT_EXT));
 
-    for (String studyInstanceUID : studies) {
-      MediaSeriesGroup study = getStudyNode(dicomModel, studyInstanceUID);
+    // The retrieve headers carry the multipart Accept of the download, which a query must not send
+    URLParameters queryParameters = RsQueryResult.jsonQueryParameters(retrieveNode.getHeaders());
 
-      StringBuilder buf = new StringBuilder(baseUrl);
-      buf.append("/studies/"); // NON-NLS
-      buf.append(studyInstanceUID);
-      buf.append("/series?includefield="); // NON-NLS
-      buf.append(RsQueryResult.SERIES_QUERY);
-      buf.append(props.getProperty(RsQueryParams.P_QUERY_EXT, ""));
+    for (String studyInstanceUID : selection.getStudyUids()) {
+      MediaSeriesGroup study = getStudyNode(dicomModel, studyInstanceUID);
+      String url = RsQueryResult.seriesQueryUrl(baseUrl, studyInstanceUID, null);
 
       try {
-        LOGGER.debug(RsQueryResult.QIDO_REQUEST, buf);
-        URLParameters urlParameters = new URLParameters(retrieveNode.getHeaders());
+        LOGGER.debug(RsQueryResult.QIDO_REQUEST, url);
         List<Attributes> series =
-            RsQueryResult.parseJSON(buf.toString(), dicomQrView.getAuthMethod(), urlParameters);
-        if (!series.isEmpty()) {
-          for (Attributes seriesDataset : series) {
-            Series<?> dicomSeries =
-                getSeries(study, seriesDataset, loadMap, wadoParameters, baseUrl, startDownloading);
-            fillInstance(seriesDataset, dicomSeries, props, urlParameters);
+            RsQueryResult.parseJSON(url, dicomQrView.getAuthMethod(), queryParameters);
+        for (Attributes seriesDataset : series) {
+          if (!selection.contains(
+              studyInstanceUID, seriesDataset.getString(Tag.SeriesInstanceUID))) {
+            continue;
           }
+          getSeries(study, seriesDataset, loadMap, wadoParameters, baseUrl, startDownloading);
         }
       } catch (Exception e) {
         LOGGER.error("QIDO-RS all series with studyUID {}", studyInstanceUID, e);

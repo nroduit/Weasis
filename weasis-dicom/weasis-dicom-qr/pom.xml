@@ -37,5 +37,12 @@
       <version>${project.version}</version>
       <scope>provided</scope>
     </dependency>
+    <!-- Transitive dependency of the codec, not inherited because that bundle is provided.
+         Needed to build a DicomModel in the tests. -->
+    <dependency>
+      <groupId>org.joml</groupId>
+      <artifactId>joml</artifactId>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
 </project>

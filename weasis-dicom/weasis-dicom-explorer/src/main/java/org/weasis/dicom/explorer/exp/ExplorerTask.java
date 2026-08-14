@@ -10,8 +10,8 @@
 package org.weasis.dicom.explorer.exp;
 
 import java.awt.Dimension;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 import javax.swing.SwingWorker;
 import org.weasis.core.ui.tp.raven.spinner.SpinnerProgress;
 import org.weasis.dicom.param.CancelListener;
@@ -37,12 +37,13 @@ public abstract class ExplorerTask<T, V> extends SwingWorker<T, V> {
     bar.setPreferredSize(dim);
     bar.setMaximumSize(dim);
     this.subTask = subTask;
-    this.cancelListeners = new ArrayList<>();
+    // Registered from the worker thread, fired from the EDT
+    this.cancelListeners = new CopyOnWriteArrayList<>();
   }
 
   public boolean cancel() {
     stopProgress();
-    fireProgress();
+    fireCancelListeners();
     if (isDone()) {
       // Execute again in case of error (e.g., OOM)
       this.done();
@@ -86,7 +87,8 @@ public abstract class ExplorerTask<T, V> extends SwingWorker<T, V> {
     cancelListeners.clear();
   }
 
-  private void fireProgress() {
+  /** Notifies the listeners that the underlying operation must stop. */
+  protected void fireCancelListeners() {
     for (CancelListener cancelListener : cancelListeners) {
       cancelListener.cancel();
     }
