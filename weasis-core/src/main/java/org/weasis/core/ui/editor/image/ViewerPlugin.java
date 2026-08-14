@@ -20,6 +20,7 @@ import bibliothek.gui.dock.common.CWorkingArea;
 import bibliothek.gui.dock.common.DefaultSingleCDockable;
 import bibliothek.gui.dock.common.action.CAction;
 import bibliothek.gui.dock.common.action.CButton;
+import bibliothek.gui.dock.common.action.CSeparator;
 import bibliothek.gui.dock.common.action.core.CommonSimpleButtonAction;
 import bibliothek.gui.dock.common.action.predefined.CCloseAction;
 import bibliothek.gui.dock.common.event.CVetoFocusListener;
@@ -122,6 +123,8 @@ public abstract class ViewerPlugin<E extends MediaElement> extends JPanel
     this.dockable.setExternalizable(false);
     this.dockable.addAction(new CloseOthersAction(dockable, false));
     this.dockable.addAction(new CloseOthersAction(dockable, true));
+    this.dockable.addAction(CSeparator.MENU_SEPARATOR);
+    TabPlacement.actions(this).forEach(this.dockable::addAction);
   }
 
   @Override
@@ -391,9 +394,16 @@ public abstract class ViewerPlugin<E extends MediaElement> extends JPanel
     }
   }
 
-  private static class MenuOnlySimpleAction extends CommonSimpleButtonAction {
+  static class MenuOnlySimpleAction extends CommonSimpleButtonAction {
+    private final Runnable beforeCreateView;
+
     public MenuOnlySimpleAction(CAction action) {
+      this(action, null);
+    }
+
+    public MenuOnlySimpleAction(CAction action, Runnable beforeCreateView) {
       super(action);
+      this.beforeCreateView = beforeCreateView;
     }
 
     @Override
@@ -403,6 +413,9 @@ public abstract class ViewerPlugin<E extends MediaElement> extends JPanel
       // to show it up everywhere, we just ignore some places (targets).
       if (ViewTarget.TITLE == target) {
         return null;
+      }
+      if (beforeCreateView != null) {
+        beforeCreateView.run();
       }
       return super.createView(target, converter, dockable);
     }
