@@ -50,6 +50,7 @@ import org.weasis.core.api.net.auth.AuthMethod;
 import org.weasis.core.api.service.AuditLog;
 import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.codec.*;
+import org.weasis.dicom.codec.TagD.Level;
 import org.weasis.dicom.codec.utils.SeriesInstanceList;
 import org.weasis.dicom.explorer.*;
 import org.weasis.dicom.explorer.Messages;
@@ -259,7 +260,8 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
     return true;
   }
 
-  static void notifyDownloadCompletion(DicomModel model) {
+  /** Announces that nothing is downloading anymore, once the last task has really ended. */
+  public static void notifyDownloadCompletion(DicomModel model) {
     if (!DownloadManager.hasRunningTasks()) {
       model.firePropertyChange(
           new ObservableEvent(
@@ -507,6 +509,11 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
     }
   }
 
+  /** Shows the series thumbnail and its download progress bar, without fetching a preview. */
+  public void createSeriesThumbnail() {
+    thumbnailManager.createSeriesThumbnail(this, progressBar);
+  }
+
   public DicomSeries getDicomSeries() {
     return dicomSeries;
   }
@@ -548,16 +555,23 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
     }
   }
 
+  /**
+   * Builds the task continuing the download of {@code this} series. Overridden when the series is
+   * retrieved with another protocol than DICOMweb.
+   */
+  protected LoadSeries createResumeTask() {
+    return new LoadSeries(
+        dicomSeries,
+        dicomModel,
+        authMethod,
+        progressBar,
+        concurrentDownloads,
+        writeInCache,
+        startDownloading);
+  }
+
   public LoadSeries cancelAndReplace(LoadSeries s, boolean restartAllDownload) {
-    LoadSeries taskResume =
-        new LoadSeries(
-            s.getDicomSeries(),
-            dicomModel,
-            s.authMethod,
-            s.getProgressBar(),
-            s.getConcurrentDownloads(),
-            s.writeInCache,
-            s.startDownloading);
+    LoadSeries taskResume = s.createResumeTask();
     s.cancel();
     taskResume.setPriority(s.getPriority());
     taskResume.setPOpeningStrategy(s.getOpeningStrategy());
@@ -579,5 +593,26 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
 
   public int getConcurrentDownloads() {
     return concurrentDownloads;
+  }
+
+  public DicomModel getDicomModel() {
+    return dicomModel;
+  }
+
+  /** Tells whether the instance is already loaded, in this series or in one of its split series. */
+  public static boolean isSOPInstanceUIDExist(
+      DicomModel dicomModel, MediaSeriesGroup study, Series<?> series, String sopUID) {
+    TagW sopTag = TagD.getUID(Level.INSTANCE);
+    if (series.hasMediaContains(sopTag, sopUID)) {
+      return true;
+    }
+    String seriesUID = TagD.getTagValue(series, Tag.SeriesInstanceUID, String.class);
+    if (study != null && seriesUID != null) {
+      return dicomModel.getChildren(study).stream()
+          .filter(group -> series != group && group instanceof Series<?>)
+          .filter(group -> seriesUID.equals(TagD.getTagValue(group, Tag.SeriesInstanceUID)))
+          .anyMatch(group -> ((Series<?>) group).hasMediaContains(sopTag, sopUID));
+    }
+    return false;
   }
 }

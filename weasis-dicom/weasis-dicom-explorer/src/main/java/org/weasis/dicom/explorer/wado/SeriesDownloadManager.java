@@ -65,7 +65,6 @@ import org.weasis.dicom.codec.DicomMediaIO.Reading;
 import org.weasis.dicom.codec.DicomSeries;
 import org.weasis.dicom.codec.DicomSpecialElement;
 import org.weasis.dicom.codec.TagD;
-import org.weasis.dicom.codec.TagD.Level;
 import org.weasis.dicom.codec.utils.DicomMediaUtils;
 import org.weasis.dicom.codec.utils.SeriesInstanceList;
 import org.weasis.dicom.explorer.DicomModel;
@@ -285,19 +284,7 @@ public class SeriesDownloadManager {
   }
 
   private boolean isSOPInstanceUIDExist(MediaSeriesGroup study, Series<?> series, String sopUID) {
-    TagW sopTag = TagD.getUID(Level.INSTANCE);
-    if (series.hasMediaContains(sopTag, sopUID)) {
-      return true;
-    }
-    // Check split series
-    String seriesUID = TagD.getTagValue(series, Tag.SeriesInstanceUID, String.class);
-    if (study != null && seriesUID != null) {
-      return dicomModel.getChildren(study).stream()
-          .filter(group -> series != group && group instanceof Series<?> s)
-          .filter(group -> seriesUID.equals(TagD.getTagValue(group, Tag.SeriesInstanceUID)))
-          .anyMatch(group -> ((Series<?>) group).hasMediaContains(sopTag, sopUID));
-    }
-    return false;
+    return LoadSeries.isSOPInstanceUIDExist(dicomModel, study, series, sopUID);
   }
 
   private void initializeProgressBar(int max) {
@@ -616,7 +603,7 @@ public class SeriesDownloadManager {
    * without a value are left untouched, as is the Study Instance UID, which identifies the study
    * node and cannot be changed without breaking the model hierarchy.
    */
-  static void applyOverrides(
+  public static void applyOverrides(
       Attributes dataset, int[] overrideList, MediaSeriesGroup patient, MediaSeriesGroup study) {
     if (dataset == null || overrideList == null) {
       return;

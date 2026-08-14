@@ -72,6 +72,7 @@ import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.WinUtil;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
+import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.net.auth.AuthMethod;
 import org.weasis.core.api.net.auth.OAuth2ServiceFactory;
@@ -85,6 +86,7 @@ import org.weasis.core.ui.tp.raven.spinner.SpinnerProgress;
 import org.weasis.core.util.FileUtil;
 import org.weasis.core.util.StreamUtil;
 import org.weasis.core.util.StringUtil;
+import org.weasis.dicom.codec.DicomSeries;
 import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.display.CharsetEncoding;
 import org.weasis.dicom.codec.display.Modality;
@@ -101,6 +103,7 @@ import org.weasis.dicom.explorer.pref.node.DefaultDicomNode;
 import org.weasis.dicom.explorer.pref.node.DicomWebNode;
 import org.weasis.dicom.explorer.pref.node.DicomWebNode.WebType;
 import org.weasis.dicom.explorer.rs.RsQueryParams;
+import org.weasis.dicom.explorer.rs.RsQueryResult;
 import org.weasis.dicom.explorer.wado.DownloadManager;
 import org.weasis.dicom.op.CFind;
 import org.weasis.dicom.param.AdvancedParams;
@@ -113,6 +116,12 @@ import org.weasis.dicom.tool.DicomListener;
 public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(DicomQrView.class);
+
+  /** Depth of a study path in the result tree: root, patient, study. */
+  private static final int STUDY_LEVEL = 3;
+
+  private static final int SERIES_LEVEL = 4;
+
   private DicomWebNode retrieveNode;
 
   public enum Period {
@@ -321,6 +330,9 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
             p -> {
               Path current = p.getProcessedFile();
               if (current != null && p.getAttributes() == null) {
+                // The series this object belongs to is resolved from the object itself: a C-MOVE
+                // sends it here instead of through the retrieve association
+                LoadQrSeries.applyIdentityOverrides(current, model, null);
                 LoadLocalDicom task =
                     new LoadLocalDicom(
                         new File[] {current.toFile()}, false, model, openingStrategy);
@@ -348,6 +360,7 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
   }
 
   public void initGUI() {
+    tree.setSeriesLoader(this::loadSeriesInTree);
     JTabbedPane tabbedPane = new JTabbedPane();
     tabbedPane.setBorder(GuiUtils.getEmptyBorder(5));
     tabbedPane.putClientProperty(FlatClientProperties.TABBED_PANE_HAS_FULL_BORDER, true);
@@ -1025,12 +1038,19 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
   @Override
   public void resetToDefaultValues() {}
 
-  private List<String> getCheckedStudies(TreePath[] paths) {
-    List<String> studies = new ArrayList<>();
+  /**
+   * Collects the checked studies and series. The checkbox tree propagates the state, so a fully
+   * checked study is reported as a study path and a partial one only through its series paths.
+   */
+  private RetrieveSelection getSelection(TreePath[] paths) {
+    RetrieveSelection selection = new RetrieveSelection();
     for (TreePath treePath : paths) {
-      DefaultMutableTreeNode node = (DefaultMutableTreeNode) treePath.getLastPathComponent();
-      if (node.getUserObject() instanceof MediaSeriesGroup study) {
-        String uid = TagD.getTagValue(study, Tag.StudyInstanceUID, String.class);
+      if (!(treePath.getLastPathComponent() instanceof DefaultMutableTreeNode node)
+          || !(node.getUserObject() instanceof MediaSeriesGroup group)) {
+        continue;
+      }
+      if (treePath.getPathCount() == STUDY_LEVEL) {
+        String uid = TagD.getTagValue(group, Tag.StudyInstanceUID, String.class);
         if (StringUtil.hasText(uid)) {
           studies.add(uid);
         }
@@ -1041,8 +1061,8 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
 
   @Override
   public void importDICOM(DicomModel explorerDcmModel, JProgressBar info) {
-    List<String> studies = getCheckedStudies(tree.getCheckboxTree().getCheckingPaths());
-    if (!studies.isEmpty()) {
+    RetrieveSelection selection = getSelection(tree.getCheckboxTree().getCheckingPaths());
+    if (!selection.isEmpty()) {
       Object selectedItem = getComboDestinationNode().getSelectedItem();
       if (selectedItem instanceof DicomWebNode webNode && webNode.getWebType() == WebType.QIDORS) {
         List<AbstractDicomNode> webNodes =
@@ -1055,7 +1075,7 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
           this.retrieveNode = wnode;
         }
       }
-      executor.execute(new RetrieveTask(studies, explorerDcmModel, this));
+      executor.execute(new RetrieveTask(selection, explorerDcmModel, this));
     }
   }
 
