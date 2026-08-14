@@ -63,9 +63,9 @@ public class RsQueryResult extends AbstractQueryResult {
       LangUtil.emptyToFalse(System.getProperty("dicom.qido.query.multi.params"));
   public static final String STUDY_QUERY =
       multiParams(
-          "&includefield=00080020,00080030,00080050,00080061,00080090,00081030,00100010,00100020,00100021,00100030,00100040,0020000D,00200010"); // NON-NLS
+          "&includefield=00080020,00080030,00080050,00080061,00080090,00081030,00100010,00100020,00100021,00100030,00100040,0020000D,00200010");
   public static final String SERIES_QUERY =
-      multiParams("0008103E,00080060,0020000E,00200011,00081190"); // NON-NLS
+      multiParams("0008103E,00080060,0020000E,00200011,00081190,00201209");
   public static final String INSTANCE_QUERY = multiParams("00080018,00200013,00081190");
   public static final String QIDO_REQUEST = "QIDO-RS request: {}"; // NON-NLS
 
@@ -137,6 +137,27 @@ public class RsQueryResult extends AbstractQueryResult {
     }
   }
 
+  /** QIDO-RS query listing the series of a study with the fields the explorer needs. */
+  public static String seriesQueryUrl(String baseUrl, String studyUid, String queryExtension) {
+    return baseUrl
+        + "/studies/" // NON-NLS
+        + studyUid
+        + "/series?includefield=" // NON-NLS
+        + SERIES_QUERY
+        + StringUtil.getEmptyStringIfNull(queryExtension);
+  }
+
+  /**
+   * The given headers, with the DICOM JSON media type {@link #parseJSON} reads. A node configured
+   * for the retrieve carries the multipart Accept of a WADO-RS request, which a query must not
+   * send.
+   */
+  public static URLParameters jsonQueryParameters(Map<String, String> headers) {
+    Map<String, String> jsonHeaders = new HashMap<>(headers);
+    jsonHeaders.put("Accept", "application/dicom+json"); // NON-NLS
+    return new URLParameters(jsonHeaders);
+  }
+
   public static List<Attributes> parseJSON(
       String url, AuthMethod authMethod, URLParameters urlParameters) throws Exception {
     List<Attributes> items = new ArrayList<>();
@@ -173,10 +194,9 @@ public class RsQueryResult extends AbstractQueryResult {
     String url =
         "%s/studies/%s/series?0020000E=%s&includefield=00201209" // NON-NLS
             .formatted(dicomWebBaseUrl, studyUID, seriesUID);
-    Map<String, String> headers = new HashMap<>(urlParameters.headers());
-    headers.put("Accept", "application/dicom+json"); // NON-NLS
     try {
-      for (Attributes series : parseJSON(url, authMethod, new URLParameters(headers))) {
+      for (Attributes series :
+          parseJSON(url, authMethod, jsonQueryParameters(urlParameters.headers()))) {
         // Match the exact series in case the server ignores the query filter.
         if (seriesUID.equals(series.getString(Tag.SeriesInstanceUID))) {
           return DicomUtils.getIntegerFromDicomElement(
@@ -456,18 +476,18 @@ public class RsQueryResult extends AbstractQueryResult {
   private void fillSeries(Attributes studyDataSet, boolean startDownloading) {
     String studyInstanceUID = studyDataSet.getString(Tag.StudyInstanceUID);
     if (StringUtil.hasText(studyInstanceUID)) {
-      StringBuilder buf = new StringBuilder(rsQueryParams.getBaseUrl());
-      buf.append("/studies/"); // NON-NLS
-      buf.append(studyInstanceUID);
-      buf.append("/series?includefield="); // NON-NLS
-      buf.append(SERIES_QUERY);
-      buf.append(rsQueryParams.getProperties().getProperty(RsQueryParams.P_QUERY_EXT, ""));
+      String url =
+          seriesQueryUrl(
+              rsQueryParams.getBaseUrl(),
+              studyInstanceUID,
+              rsQueryParams.getProperties().getProperty(RsQueryParams.P_QUERY_EXT));
 
       try {
-        LOGGER.debug(QIDO_REQUEST, buf);
+        LOGGER.debug(QIDO_REQUEST, url);
+        // Headers configured for the query are used as they are, unlike the retrieve headers the
+        // explorer reuses elsewhere
         List<Attributes> series =
-            parseJSON(
-                buf.toString(), authMethod, new URLParameters(rsQueryParams.getQueryHeaders()));
+            parseJSON(url, authMethod, new URLParameters(rsQueryParams.getQueryHeaders()));
         if (!series.isEmpty()) {
           // Get patient from each study in case IssuerOfPatientID is different
           MediaSeriesGroup patient = getPatient(studyDataSet, rsQueryParams.getDicomModel());
@@ -581,7 +601,11 @@ public class RsQueryResult extends AbstractQueryResult {
 
       TagW[] tags =
           TagD.getTagFromIDs(
-              Tag.Modality, Tag.SeriesNumber, Tag.SeriesDescription, Tag.RetrieveURL);
+              Tag.Modality,
+              Tag.SeriesNumber,
+              Tag.SeriesDescription,
+              Tag.RetrieveURL,
+              Tag.NumberOfSeriesRelatedInstances);
       for (TagW tag : tags) {
         tag.readValue(seriesDataset, dicomSeries);
       }

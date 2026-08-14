@@ -1052,11 +1052,139 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
       if (treePath.getPathCount() == STUDY_LEVEL) {
         String uid = TagD.getTagValue(group, Tag.StudyInstanceUID, String.class);
         if (StringUtil.hasText(uid)) {
-          studies.add(uid);
+          selection.addStudy(uid);
         }
+      } else if (treePath.getPathCount() == SERIES_LEVEL) {
+        addSeriesSelection(selection, treePath, group);
       }
     }
-    return studies;
+    return selection;
+  }
+
+  private static void addSeriesSelection(
+      RetrieveSelection selection, TreePath seriesPath, MediaSeriesGroup series) {
+    String seriesUid = TagD.getTagValue(series, Tag.SeriesInstanceUID, String.class);
+    if (!StringUtil.hasText(seriesUid)
+        || !(seriesPath.getParentPath().getLastPathComponent()
+            instanceof DefaultMutableTreeNode studyNode)
+        || !(studyNode.getUserObject() instanceof MediaSeriesGroup study)) {
+      return;
+    }
+    String studyUid = TagD.getTagValue(study, Tag.StudyInstanceUID, String.class);
+    if (StringUtil.hasText(studyUid)) {
+      selection.addSeries(studyUid, seriesUid);
+    }
+  }
+
+  /** Queries the series of an expanded study and adds them to the tree. */
+  private void loadSeriesInTree(RetrieveTreeModel treeModel, DefaultMutableTreeNode studyNode) {
+    MediaSeriesGroup study = (MediaSeriesGroup) studyNode.getUserObject();
+    String studyUid = TagD.getTagValue(study, Tag.StudyInstanceUID, String.class);
+    Object selectedItem = comboDestinationNode.getSelectedItem();
+    if (!StringUtil.hasText(studyUid)) {
+      treeModel.removePlaceholder(studyNode);
+      return;
+    }
+    treeModel.setPlaceholderLoading(studyNode, true);
+    executor.execute(
+        () -> {
+          List<Attributes> datasets = querySeries(selectedItem, studyUid);
+          GuiExecutor.execute(
+              () -> {
+                if (tree.getRetrieveTreeModel() != treeModel) {
+                  return; // A new query has replaced the result
+                }
+                if (datasets == null) {
+                  // The query failed: leave the placeholder so it can be tried again
+                  treeModel.setPlaceholderLoading(studyNode, false);
+                } else if (datasets.isEmpty()) {
+                  treeModel.removePlaceholder(studyNode);
+                } else {
+                  treeModel.setSeriesNodes(
+                      studyNode, buildQuerySeries(treeModel.getDicomModel(), study, datasets));
+                }
+              });
+        });
+  }
+
+  /** Runs the series level query matching the archive type, null when it failed. */
+  private List<Attributes> querySeries(Object selectedItem, String studyUid) {
+    try {
+      if (selectedItem instanceof DefaultDicomNode node) {
+        return findSeries(node, studyUid);
+      }
+      if (selectedItem instanceof DicomWebNode node) {
+        String url = RsQueryResult.seriesQueryUrl(node.getUrl().toString(), studyUid, null);
+        LOGGER.debug(RsQueryResult.QIDO_REQUEST, url);
+        return RsQueryResult.parseJSON(
+            url, authMethod, RsQueryResult.jsonQueryParameters(node.getHeaders()));
+      }
+    } catch (Exception e) {
+      LOGGER.error("Query the series of study {}", studyUid, e);
+    }
+    return null;
+  }
+
+  private List<Attributes> findSeries(DefaultDicomNode node, String studyUid) {
+    DefaultDicomNode callingNode = (DefaultDicomNode) comboCallingNode.getSelectedItem();
+    if (callingNode == null) {
+      return null;
+    }
+    AdvancedParams params = new AdvancedParams();
+    ConnectOptions connectOptions = new ConnectOptions();
+    connectOptions.setConnectTimeout(3000);
+    connectOptions.setAcceptTimeout(5000);
+    params.setConnectOptions(connectOptions);
+
+    DicomParam[] keys = {
+      new DicomParam(Tag.StudyInstanceUID, studyUid),
+      CFind.SeriesInstanceUID,
+      CFind.Modality,
+      CFind.SeriesNumber,
+      CFind.SeriesDescription,
+      new DicomParam(Tag.NumberOfSeriesRelatedInstances)
+    };
+    DicomState state =
+        CFind.process(
+            params,
+            callingNode.getDicomNodeWithOnlyAET(),
+            node.getDicomNode(),
+            0,
+            QueryRetrieveLevel.SERIES,
+            keys);
+    if (state.getStatus() != Status.Success && state.getDicomRSP() == null) {
+      LOGGER.error("Dicom C-FIND series error: {}", state.getMessage());
+    }
+    return state.getDicomRSP();
+  }
+
+  /** Adds the queried series to the result model and returns them in query order. */
+  private static List<Series<?>> buildQuerySeries(
+      DicomModel queryModel, MediaSeriesGroup study, List<Attributes> datasets) {
+    List<Series<?>> list = new ArrayList<>(datasets.size());
+    for (Attributes dataset : datasets) {
+      String seriesUid = dataset.getString(Tag.SeriesInstanceUID);
+      if (!StringUtil.hasText(seriesUid)) {
+        continue;
+      }
+      if (queryModel.getHierarchyNode(study, seriesUid) instanceof Series<?> existing) {
+        list.add(existing);
+        continue;
+      }
+      DicomSeries series = new DicomSeries(seriesUid);
+      series.setTag(TagD.get(Tag.SeriesInstanceUID), seriesUid);
+      for (TagW tag :
+          TagD.getTagFromIDs(
+              Tag.Modality,
+              Tag.SeriesNumber,
+              Tag.SeriesDescription,
+              Tag.NumberOfSeriesRelatedInstances)) {
+        tag.readValue(dataset, series);
+      }
+      queryModel.addHierarchyNode(study, series);
+      list.add(series);
+    }
+    return list;
   }
 
   @Override

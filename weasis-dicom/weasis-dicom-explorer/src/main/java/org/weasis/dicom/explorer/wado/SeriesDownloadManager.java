@@ -18,9 +18,7 @@ import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.Callable;
@@ -335,9 +333,7 @@ public class SeriesDownloadManager {
     // wado.getBaseURL(), so match the retrieve path to whichever the origin uses.
     String retrievePrefix = StringUtil.hasText(wado.getBaseURL()) ? "" : baseUrl;
 
-    Map<String, String> headers = new HashMap<>(urlParams.headers());
-    headers.put("Accept", "application/dicom+json"); // NON-NLS
-    URLParameters queryParams = new URLParameters(headers);
+    URLParameters queryParams = RsQueryResult.jsonQueryParameters(urlParams.headers());
     String baseQuery =
         baseUrl
             + "/studies/" // NON-NLS
@@ -491,10 +487,15 @@ public class SeriesDownloadManager {
   }
 
   /**
-   * Queries {@code NumberOfSeriesRelatedInstances} for the series so bulk progress can be
-   * determinate. Returns {@code null} when the server does not provide it.
+   * {@code NumberOfSeriesRelatedInstances} of the series so bulk progress can be determinate,
+   * queried only when the series query did not already return it. Null when it stays unknown.
    */
   private Integer fetchSeriesInstanceCount(WadoParameters wado, String studyUID, String seriesUID) {
+    Integer queried =
+        TagD.getTagValue(dicomSeries, Tag.NumberOfSeriesRelatedInstances, Integer.class);
+    if (queried != null && queried > 0) {
+      return queried;
+    }
     int n =
         RsQueryResult.seriesInstanceCount(
             LoadSeries.dicomWebBaseUrl(wado, dicomSeries),
