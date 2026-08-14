@@ -15,6 +15,7 @@ import java.awt.event.KeyListener;
 import java.awt.event.MouseWheelEvent;
 import java.awt.geom.Point2D;
 import java.beans.PropertyChangeListener;
+import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -22,6 +23,9 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import javax.swing.BoundedRangeModel;
+import javax.swing.JCheckBoxMenuItem;
+import javax.swing.JMenu;
+import javax.swing.JSeparator;
 import javax.swing.SwingUtilities;
 import javax.swing.event.SwingPropertyChangeSupport;
 import org.weasis.core.Messages;
@@ -383,9 +387,8 @@ public abstract class ImageViewerEventManager<E extends ImageElement> implements
     };
   }
 
-  protected ComboItemListener<SynchView> newSynchAction(SynchView[] synchViewList) {
-    return new ComboItemListener<>(
-        ActionW.SYNCH, Optional.ofNullable(synchViewList).orElseGet(() -> new SynchView[0])) {
+  protected ComboItemListener<SynchView> newSynchAction(SynchView defaultSynchView) {
+    return new ComboItemListener<>(ActionW.SYNCH, new SynchView[] {defaultSynchView}) {
 
       @Override
       public void itemStateChanged(Object object) {
@@ -426,6 +429,7 @@ public abstract class ImageViewerEventManager<E extends ImageElement> implements
     ImageViewerPlugin<E> selectedContainer = getSelectedView2dContainer();
     if (selectedContainer != null) {
       synchManager.updateAllListeners(selectedContainer, sel);
+      restoreTiledPaneSynch(selectedContainer);
     }
     List<ViewerPlugin<?>> plugins = GuiUtils.getUICore().getViewerPlugins();
     synchronized (plugins) {
@@ -436,6 +440,7 @@ public abstract class ImageViewerEventManager<E extends ImageElement> implements
           @SuppressWarnings("unchecked")
           ImageViewerPlugin<E> typed = (ImageViewerPlugin<E>) ivp;
           synchManager.updateAllListeners(typed, sel);
+          restoreTiledPaneSynch(typed);
         }
       }
     }
@@ -695,21 +700,104 @@ public abstract class ImageViewerEventManager<E extends ImageElement> implements
     return null;
   }
 
-  public ImageViewerPlugin<E> getSelectedView2dContainer() {
-    return selectedView2dContainer;
-  }
-
-  public boolean isSelectedView2dContainerInTileMode() {
+  public ViewportPane<E> getSelectedViewPortPane() {
     ImageViewerPlugin<E> container = selectedView2dContainer;
     if (container != null) {
-      return SynchData.Mode.TILE.equals(container.getSynchView().getSynchData().getMode());
+      return container.getSelectedViewportPane();
     }
-    return false;
+    return null;
+  }
+
+  /**
+   * Builds a "Viewport Layout" submenu that lets the user switch the selected {@link ViewportPane}
+   * between STACK mode and various TILED presets.
+   *
+   * @param prop preference key enabling the menu; {@code null} to always show it
+   * @return the menu, or {@code null} when the selected container does not support viewport panes
+   *     or the menu is disabled by the preference
+   */
+  public JMenu getViewportLayoutMenu(String prop) {
+    ImageViewerPlugin<E> container = getSelectedView2dContainer();
+    ViewportPane<E> pane = getSelectedViewPortPane();
+    if (container == null
+        || !container.supportsViewportPanes()
+        || pane == null
+        || !GuiUtils.getUICore().getSystemPreferences().getBooleanProperty(prop, true)) {
+      return null;
+    }
+
+    JMenu menu = new JMenu(Messages.getString("ImageViewerEventManager.viewport_layout"));
+
+    boolean isTiled = pane.isTiled();
+    JCheckBoxMenuItem stackItem =
+        new JCheckBoxMenuItem(
+            Messages.getString("ImageViewerEventManager.viewport_stack"), !isTiled);
+    stackItem.addActionListener(
+        e -> {
+          pane.switchToStack();
+          updateComponentsListener(pane.getSelectedCanvas());
+        });
+    menu.add(stackItem);
+    menu.add(new JSeparator());
+
+    int[][] presets = {{1, 2}, {2, 1}, {2, 2}, {2, 3}, {3, 2}, {3, 3}, {4, 4}};
+    for (int[] preset : presets) {
+      int cols = preset[0];
+      int rows = preset[1];
+      boolean isCurrent = isTiled && pane.getTiledCols() == cols && pane.getTiledRows() == rows;
+
+      String label =
+          MessageFormat.format(
+              Messages.getString("ImageViewerEventManager.viewport_tiled"), cols, rows);
+      JCheckBoxMenuItem item = new JCheckBoxMenuItem(label, isCurrent);
+      item.addActionListener(
+          e -> {
+            if (!isCurrent) {
+              pane.switchToTiled(cols, rows, () -> container.createDefaultView(null));
+              updateComponentsListener(pane.getSelectedCanvas());
+            }
+          });
+      menu.add(item);
+    }
+    return menu;
+  }
+
+  public ImageViewerPlugin<E> getSelectedView2dContainer() {
+    return selectedView2dContainer;
   }
 
   public void updateAllListeners(ImageViewerPlugin<E> viewerPlugin, SynchView synchView) {
     clearAllPropertyChangeListeners();
     synchManager.updateAllListeners(viewerPlugin, synchView);
+    restoreTiledPaneSynch(viewerPlugin);
+  }
+
+  /**
+   * Restores the TILE synchronization of every tiled {@link ViewportPane} after the global listener
+   * rebuild (which removes all SYNCH listeners), and adapts the scroll range when the selected
+   * canvas belongs to a tiled pane so the last tiles cannot run past the series end.
+   */
+  private void restoreTiledPaneSynch(ImageViewerPlugin<E> viewerPlugin) {
+    if (viewerPlugin == null) {
+      return;
+    }
+    for (ViewportPane<E> pane : viewerPlugin.getViewportPanes()) {
+      pane.updateSynchRegistration();
+    }
+
+    ViewportPane<E> selectedPane = viewerPlugin.getSelectedViewportPane();
+    if (selectedPane != null && selectedPane.isTiled()) {
+      ViewCanvas<E> canvas = selectedPane.getSelectedCanvas();
+      MediaSeries<E> series = canvas.getSeries();
+      if (series != null) {
+        @SuppressWarnings("unchecked")
+        Filter<E> filter = (Filter<E>) canvas.getActionValue(ActionW.FILTERED_SERIES.cmd());
+        int maxShift = series.size(filter) - selectedPane.getAllViewCanvases().size();
+        int value = Math.max(1, canvas.getFrameIndex() - canvas.getTileOffset() + 1);
+        getAction(ActionW.SCROLL_SERIES)
+            .ifPresent(a -> a.setSliderMinMaxValue(1, Math.max(maxShift, 1), value, false));
+      }
+    }
   }
 
   protected boolean commonDisplayShortcuts(KeyEvent e) {

@@ -17,7 +17,6 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.ComboItemListener;
-import org.weasis.core.api.gui.util.Filter;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.SliderCineListener;
 import org.weasis.core.api.media.data.MediaSeries;
@@ -32,8 +31,8 @@ import org.weasis.core.ui.editor.image.SynchView;
 import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.editor.image.ViewSynchData;
 import org.weasis.core.ui.editor.image.ViewerPlugin;
+import org.weasis.core.ui.editor.image.ViewportPane;
 import org.weasis.core.ui.model.layer.LayerType;
-import org.weasis.core.util.LangUtil;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.geometry.ImageOrientation;
 import org.weasis.dicom.viewer2d.mip.MipView;
@@ -48,10 +47,10 @@ import org.weasis.dicom.viewer2d.mpr.MprView;
  *
  * <pre>
  *   updateAllListeners
+ *     ├── (skip when the selection is a tiled ViewportPane — TILE sync is wired per pane)
  *     ├── setupViewPane                — register the active view as a SYNCH listener
  *     ├── handleManuallyDisabledSync   — selected view sync was turned OFF by the user
  *     └── handleActiveSync
- *           ├── handleTileMode         — fan out KO filter / scroll bounds across tiles
  *           └── handleStackMode
  *                 └── per pane → configurePaneForStack(StackSyncContext, pane)
  * </pre>
@@ -81,6 +80,15 @@ public class DicomSynchManager extends SynchManager<DicomImageElement> {
     }
     ViewCanvas<DicomImageElement> viewPane = viewerPlugin.getSelectedViewCanvas();
     if (viewPane == null) {
+      return;
+    }
+
+    ViewportPane<DicomImageElement> selectedPane = viewerPlugin.getSelectedViewportPane();
+    if (selectedPane != null && selectedPane.isTiled()) {
+      // The selected canvas belongs to a tiled viewport: intra-pane TILE synchronization is
+      // wired by ViewportPane (restored after each listener rebuild); container-level stack
+      // sync does not apply to a tiled viewport.
+      eventManager.getAction(ActionW.SCROLL_SERIES).ifPresent(a -> a.enableAction(true));
       return;
     }
 
@@ -156,68 +164,8 @@ public class DicomSynchManager extends SynchManager<DicomImageElement> {
       ViewCanvas<DicomImageElement> viewPane,
       MediaSeries<DicomImageElement> series,
       SynchData synch) {
-    if (Mode.TILE.equals(synch.getMode())) {
-      handleTileMode(viewerPlugin, viewPane, series, synch);
-    } else if (Mode.STACK.equals(synch.getMode())) {
+    if (Mode.STACK.equals(synch.getMode())) {
       handleStackMode(viewerPlugin, viewPane, series, synch);
-    }
-  }
-
-  private void handleTileMode(
-      ImageViewerPlugin<DicomImageElement> viewerPlugin,
-      ViewCanvas<DicomImageElement> viewPane,
-      MediaSeries<DicomImageElement> series,
-      SynchData synch) {
-
-    List<ViewCanvas<DicomImageElement>> panes = getSiblingViews(viewerPlugin, viewPane);
-    panes.add(viewPane);
-    if (panes.size() == 1) {
-      return;
-    }
-    setSyncModeButton(true, true);
-    configureScrollLimits(viewPane, series, panes);
-    applyKOFilterToPanes(viewPane, panes, synch);
-  }
-
-  private void configureScrollLimits(
-      ViewCanvas<DicomImageElement> viewPane,
-      MediaSeries<DicomImageElement> series,
-      List<ViewCanvas<DicomImageElement>> panes) {
-
-    @SuppressWarnings("unchecked")
-    Filter<DicomImageElement> filter =
-        (Filter<DicomImageElement>) viewPane.getActionValue(ActionW.FILTERED_SERIES.cmd());
-    int maxShift = series.size(filter) - panes.size();
-    eventManager
-        .getAction(ActionW.SCROLL_SERIES)
-        .ifPresent(
-            a ->
-                a.setSliderMinMaxValue(
-                    1, Math.max(maxShift, 1), viewPane.getFrameIndex() + 1, false));
-  }
-
-  private void applyKOFilterToPanes(
-      ViewCanvas<DicomImageElement> viewPane,
-      List<ViewCanvas<DicomImageElement>> panes,
-      SynchData synch) {
-
-    Object selectedKO = viewPane.getActionValue(ActionW.KO_SELECTION.cmd());
-    Boolean enableFilter = (Boolean) viewPane.getActionValue(ActionW.KO_FILTER.cmd());
-    int frameIndex =
-        LangUtil.nullToFalse(enableFilter)
-            ? 0
-            : viewPane.getFrameIndex() - viewPane.getTileOffset();
-    for (ViewCanvas<DicomImageElement> pane : panes) {
-      ViewSynchData oldSynch = getOrCreateSynchData(pane, synch);
-      oldSynch.getActions().put(ActionW.KO_SELECTION.cmd(), true);
-      oldSynch.getActions().put(ActionW.KO_FILTER.cmd(), true);
-      oldSynch.setAutoSyncState(SyncState.ON);
-      KOManager.updateKOFilter(pane, selectedKO, enableFilter, frameIndex);
-
-      pane.setActionsInView(ActionW.SYNCH_LINK.cmd(), oldSynch);
-      pane.setActionsInView(ActionW.SYNCH_CROSSLINE.cmd(), false);
-      eventManager.addPropertyChangeListener(ActionW.SYNCH.cmd(), pane);
-      pane.updateSynchState();
     }
   }
 
@@ -532,7 +480,7 @@ public class DicomSynchManager extends SynchManager<DicomImageElement> {
     if (viewPane == null || viewPane.getSeries() == null) {
       return Collections.emptyList();
     }
-    List<ViewCanvas<DicomImageElement>> views = viewerPlugin.getImagePanels();
+    List<ViewCanvas<DicomImageElement>> views = viewerPlugin.getSynchableImagePanels();
     views.remove(viewPane);
     return views;
   }
@@ -568,7 +516,8 @@ public class DicomSynchManager extends SynchManager<DicomImageElement> {
       viewerPlugins.stream()
           .filter(plugin -> shouldIncludePlugin(plugin, viewerPlugin))
           .map(plugin -> (View2dContainer) plugin)
-          .forEach(container -> viewsFromOtherContainers.addAll(container.getImagePanels()));
+          .forEach(
+              container -> viewsFromOtherContainers.addAll(container.getSynchableImagePanels()));
     }
     return viewsFromOtherContainers;
   }

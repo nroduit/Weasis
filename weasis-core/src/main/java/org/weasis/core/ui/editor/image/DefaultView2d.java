@@ -191,7 +191,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     actionsInView.put(ActionW.LENS.cmd(), false);
     initActionWState();
     this.graphicMouseHandler = new GraphicMouseHandler<>(this);
-    this.focusHandler = new FocusHandler(this);
+    this.focusHandler = new FocusHandler<>(this);
 
     setBorder(viewBorder);
     setFocusable(true);
@@ -415,7 +415,8 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
       ImageViewerPlugin<?> container, String sourceFruid, Map<String, Boolean> effective) {
     List<String> managedCommands =
         SynchOptionsCheckBoxGroup.getAllManagedCommands(container.getSyncOptions());
-    for (ViewCanvas<?> v : container.getImagePanels()) {
+    // Tiled viewports are isolated from cross-view synchronization: their canvases are excluded
+    for (ViewCanvas<?> v : container.getSynchableImagePanels()) {
       if (v == this
           || !(v.getActionValue(ActionW.SYNCH_LINK.cmd()) instanceof ViewSynchData target)) {
         continue;
@@ -952,16 +953,11 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         }
         setImage(media);
 
-        ComboItemListener<SynchView> synchAction =
-            eventManager.getAction(ActionW.SYNCH).orElse(null);
-        if (synchAction != null && synchAction.getSelectedItem() instanceof SynchView sel) {
-          if (!sel.getSynchData().getMode().equals(SynchData.Mode.TILE)) {
-            // If tile mode is selected, the other views are updated according to the first view.
-            // Resetting the synch state breaks the auto sync behavior of tile mode.
-            // In case the synch is not defined, then there is no need for resetting the synch
-            // configuration.
-            resetSynchState();
-          }
+        if (!(actionsInView.get(ActionW.SYNCH_LINK.cmd()) instanceof SynchData sd
+            && sd.getMode() == SynchData.Mode.TILE)) {
+          // A tiled canvas keeps its TILE synchronization when the series changes; resetting it
+          // would break the auto sync of its ViewportPane.
+          resetSynchState();
         }
       }
     } catch (Exception e) {
@@ -1525,7 +1521,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     boolean linked =
         isAutoSyncMatch(issuer, self)
             || isManualSyncMatch(issuer, self)
-            || isTileSyncMatch(issuer, self);
+            || isTileSyncMatch(synch, issuer, self);
     if (!linked) {
       return false;
     }
@@ -1552,13 +1548,15 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         && issuer.getManualSyncDataByPane(this) != null;
   }
 
-  private boolean isTileSyncMatch(ViewSynchData issuer, ViewSynchData self) {
+  private boolean isTileSyncMatch(SynchCineEvent synch, ViewSynchData issuer, ViewSynchData self) {
     return issuer != null
         && self != null
         && issuer.getMode() == SynchData.Mode.TILE
         && self.getMode() == SynchData.Mode.TILE
         && issuer.isAutoSynchActivated()
-        && self.isAutoSynchActivated();
+        && self.isAutoSynchActivated()
+        // TILE synchronization is scoped to a single viewport
+        && ViewportPane.isSameViewportPane(synch.getView(), this);
   }
 
   /**
@@ -1686,6 +1684,16 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         return;
       }
       if (issuerSyncData != null && !issuerSyncData.isSynchActivated()) {
+        return;
+      }
+      // TILE synchronization is scoped to a single viewport: block events crossing pane
+      // boundaries when either side is in TILE mode (broadcast events with no view still apply)
+      boolean tileInvolved =
+          (issuerSyncData != null && issuerSyncData.getMode() == SynchData.Mode.TILE)
+              || (synchData != null && synchData.getMode() == SynchData.Mode.TILE);
+      if (tileInvolved
+          && synch.getView() != null
+          && !ViewportPane.isSameViewportPane(synch.getView(), this)) {
         return;
       }
     }

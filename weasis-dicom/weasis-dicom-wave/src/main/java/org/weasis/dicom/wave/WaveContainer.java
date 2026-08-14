@@ -18,7 +18,6 @@ import java.awt.print.PrinterJob;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import javax.print.attribute.HashPrintRequestAttributeSet;
@@ -51,7 +50,6 @@ import org.weasis.core.ui.editor.SeriesViewerUI;
 import org.weasis.core.ui.editor.image.DefaultView2d;
 import org.weasis.core.ui.editor.image.ImageViewerEventManager;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
-import org.weasis.core.ui.editor.image.SynchView;
 import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.editor.image.dockable.MeasureTool;
 import org.weasis.core.ui.pref.LauncherToolBar;
@@ -82,8 +80,6 @@ public class WaveContainer extends DicomViewerPlugin implements PropertyChangeLi
           WaveView.class.getName()); // NON-NLS
 
   public static final List<MigLayoutModel> LAYOUT_LIST = List.of(DEFAULT_VIEW);
-
-  public static final List<SynchView> SYNCH_LIST = Collections.emptyList();
 
   public static final SeriesViewerUI UI = new SeriesViewerUI(WaveContainer.class);
   static final ImageViewerEventManager<DicomImageElement> ECG_EVENT_MANAGER =
@@ -393,11 +389,6 @@ public class WaveContainer extends DicomViewerPlugin implements PropertyChangeLi
   @Override
   public void selectLayoutPositionForAddingSeries(List<MediaSeries<DicomImageElement>> seriesList) {
     // Do it in addSeries()
-  }
-
-  @Override
-  public List<SynchView> getSynchList() {
-    return SYNCH_LIST;
   }
 
   @Override

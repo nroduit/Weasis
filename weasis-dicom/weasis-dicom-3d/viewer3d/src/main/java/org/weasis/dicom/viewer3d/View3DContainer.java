@@ -146,8 +146,6 @@ public class View3DContainer extends DicomViewerPlugin
             actions);
   }
 
-  public static final List<SynchView> DEFAULT_SYNCH_LIST = List.of(SYNCH_VOLUME);
-
   /**
    * 3D popup entries. Pan / Zoom / Rotation are on by default (per {@link #SYNCH_VOLUME}); the rest
    * are listed so the user can opt into syncing them but start unchecked.
@@ -223,11 +221,7 @@ public class View3DContainer extends DicomViewerPlugin
           true)) {
         toolBars.add(
             new ViewerToolBar<>(
-                eventManager,
-                eventManager.getMouseActions().getActiveButtons(),
-                preferences,
-                10,
-                false));
+                eventManager, eventManager.getMouseActions().getActiveButtons(), preferences, 10));
       }
       //      if (InsertableUtil.getBooleanProperty(
       //          GuiUtils.getUICore().getSystemPreferences(),
@@ -466,8 +460,9 @@ public class View3DContainer extends DicomViewerPlugin
     // early-return in EventManager.updateAllListeners and never registered any SYNCH listener.
     // Now that textures are attached, re-run it so toolbar/slider/mouse actions can deliver
     // their SynchEvents to the views.
-    if (curVolTexture != null && selectedImagePane != null) {
-      eventManager.updateComponentsListener(selectedImagePane);
+    var viewCanvas = getSelectedViewCanvas();
+    if (curVolTexture != null && viewCanvas != null) {
+      eventManager.updateComponentsListener(viewCanvas);
     }
   }
 
@@ -628,6 +623,12 @@ public class View3DContainer extends DicomViewerPlugin
   }
 
   @Override
+  public boolean supportsViewportPanes() {
+    // 3D views own their volume rendering and must never be tiled
+    return false;
+  }
+
+  @Override
   public MigLayoutModel getDefaultLayoutModel() {
     return VIEWS_vr;
   }
@@ -645,11 +646,6 @@ public class View3DContainer extends DicomViewerPlugin
   @Override
   public List<Action> getPrintActions() {
     return null;
-  }
-
-  @Override
-  public List<SynchView> getSynchList() {
-    return DEFAULT_SYNCH_LIST;
   }
 
   @Override
