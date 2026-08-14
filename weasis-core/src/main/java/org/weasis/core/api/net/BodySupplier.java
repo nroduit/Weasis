@@ -7,7 +7,7 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
  */
-package org.weasis.core.api.net.auth;
+package org.weasis.core.api.net;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -95,7 +95,6 @@ public interface BodySupplier<T> {
     }
 
     @Override
-    @org.jetbrains.annotations.NotNull
     public String toString() {
       return "ByteArraySupplier[bytes="
           + Arrays.toString(bytes)
