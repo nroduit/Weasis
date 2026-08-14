@@ -613,7 +613,9 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
     return graphicListener;
   }
 
-  /** Creates a component for the given cell, either reusing a preserved view or creating new one. */
+  /**
+   * Creates a component for the given cell, either reusing a preserved view or creating new one.
+   */
   private Component createComponentForCell(MigCell cell, PreservedContent<E> preserved) {
     if (isViewType(VIEWPORT_CLASS, cell.type())) {
       return createViewportPaneForCell(cell, preserved);

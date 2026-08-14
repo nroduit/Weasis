@@ -211,6 +211,13 @@ public abstract class LoadDicom extends ExplorerTask<Boolean, String> {
           return null;
         }
 
+        if (dicomSeries.size(null) == 0) {
+          // The series was declared by a query before its objects arrived, so it only holds what
+          // that query returned. The first object carries the series attributes the viewer needs,
+          // Frame of Reference UID in particular, without which series cannot be synchronized.
+          dicomReader.writeMetaData(dicomSeries);
+        }
+
         DicomImageElement[] medias = getDicomImageElements(dicomReader, dicomSeries, editableDicom);
         if (medias != null && medias.length > 0) {
           // Refresh the number of images on the thumbnail

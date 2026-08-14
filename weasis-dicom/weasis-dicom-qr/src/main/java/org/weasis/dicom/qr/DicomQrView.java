@@ -71,6 +71,7 @@ import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.WinUtil;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
+import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.net.auth.AuthMethod;
 import org.weasis.core.api.net.auth.OAuth2ServiceFactory;
@@ -84,6 +85,7 @@ import org.weasis.core.ui.tp.raven.spinner.SpinnerProgress;
 import org.weasis.core.util.FileUtil;
 import org.weasis.core.util.StreamUtil;
 import org.weasis.core.util.StringUtil;
+import org.weasis.dicom.codec.DicomSeries;
 import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.display.CharsetEncoding;
 import org.weasis.dicom.codec.display.Modality;
@@ -100,6 +102,7 @@ import org.weasis.dicom.explorer.pref.node.DefaultDicomNode;
 import org.weasis.dicom.explorer.pref.node.DicomWebNode;
 import org.weasis.dicom.explorer.pref.node.DicomWebNode.WebType;
 import org.weasis.dicom.explorer.rs.RsQueryParams;
+import org.weasis.dicom.explorer.rs.RsQueryResult;
 import org.weasis.dicom.explorer.wado.DownloadManager;
 import org.weasis.dicom.op.CFind;
 import org.weasis.dicom.param.AdvancedParams;
@@ -112,6 +115,12 @@ import org.weasis.dicom.tool.DicomListener;
 public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(DicomQrView.class);
+
+  /** Depth of a study path in the result tree: root, patient, study. */
+  private static final int STUDY_LEVEL = 3;
+
+  private static final int SERIES_LEVEL = 4;
+
   private DicomWebNode retrieveNode;
 
   public enum Period {
@@ -320,6 +329,9 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
             p -> {
               Path current = p.getProcessedFile();
               if (current != null && p.getAttributes() == null) {
+                // The series this object belongs to is resolved from the object itself: a C-MOVE
+                // sends it here instead of through the retrieve association
+                LoadQrSeries.applyIdentityOverrides(current, model, null);
                 LoadLocalDicom task =
                     new LoadLocalDicom(
                         new File[] {current.toFile()}, false, model, openingStrategy);
@@ -347,6 +359,7 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
   }
 
   public void initGUI() {
+    tree.setSeriesLoader(this::loadSeriesInTree);
     JTabbedPane tabbedPane = new JTabbedPane();
     tabbedPane.setBorder(GuiUtils.getEmptyBorder(5));
     tabbedPane.putClientProperty(FlatClientProperties.TABBED_PANE_HAS_FULL_BORDER, true);
@@ -1024,24 +1037,159 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
   @Override
   public void resetToDefaultValues() {}
 
-  private List<String> getCheckedStudies(TreePath[] paths) {
-    List<String> studies = new ArrayList<>();
+  /**
+   * Collects the checked studies and series. The checkbox tree propagates the state, so a fully
+   * checked study is reported as a study path and a partial one only through its series paths.
+   */
+  private RetrieveSelection getSelection(TreePath[] paths) {
+    RetrieveSelection selection = new RetrieveSelection();
     for (TreePath treePath : paths) {
-      DefaultMutableTreeNode node = (DefaultMutableTreeNode) treePath.getLastPathComponent();
-      if (node.getUserObject() instanceof MediaSeriesGroup study) {
-        String uid = TagD.getTagValue(study, Tag.StudyInstanceUID, String.class);
+      if (!(treePath.getLastPathComponent() instanceof DefaultMutableTreeNode node)
+          || !(node.getUserObject() instanceof MediaSeriesGroup group)) {
+        continue;
+      }
+      if (treePath.getPathCount() == STUDY_LEVEL) {
+        String uid = TagD.getTagValue(group, Tag.StudyInstanceUID, String.class);
         if (StringUtil.hasText(uid)) {
-          studies.add(uid);
+          selection.addStudy(uid);
         }
+      } else if (treePath.getPathCount() == SERIES_LEVEL) {
+        addSeriesSelection(selection, treePath, group);
       }
     }
-    return studies;
+    return selection;
+  }
+
+  private static void addSeriesSelection(
+      RetrieveSelection selection, TreePath seriesPath, MediaSeriesGroup series) {
+    String seriesUid = TagD.getTagValue(series, Tag.SeriesInstanceUID, String.class);
+    if (!StringUtil.hasText(seriesUid)
+        || !(seriesPath.getParentPath().getLastPathComponent()
+            instanceof DefaultMutableTreeNode studyNode)
+        || !(studyNode.getUserObject() instanceof MediaSeriesGroup study)) {
+      return;
+    }
+    String studyUid = TagD.getTagValue(study, Tag.StudyInstanceUID, String.class);
+    if (StringUtil.hasText(studyUid)) {
+      selection.addSeries(studyUid, seriesUid);
+    }
+  }
+
+  /** Queries the series of an expanded study and adds them to the tree. */
+  private void loadSeriesInTree(RetrieveTreeModel treeModel, DefaultMutableTreeNode studyNode) {
+    MediaSeriesGroup study = (MediaSeriesGroup) studyNode.getUserObject();
+    String studyUid = TagD.getTagValue(study, Tag.StudyInstanceUID, String.class);
+    Object selectedItem = comboDestinationNode.getSelectedItem();
+    if (!StringUtil.hasText(studyUid)) {
+      treeModel.removePlaceholder(studyNode);
+      return;
+    }
+    treeModel.setPlaceholderLoading(studyNode, true);
+    executor.execute(
+        () -> {
+          List<Attributes> datasets = querySeries(selectedItem, studyUid);
+          GuiExecutor.execute(
+              () -> {
+                if (tree.getRetrieveTreeModel() != treeModel) {
+                  return; // A new query has replaced the result
+                }
+                if (datasets == null) {
+                  // The query failed: leave the placeholder so it can be tried again
+                  treeModel.setPlaceholderLoading(studyNode, false);
+                } else if (datasets.isEmpty()) {
+                  treeModel.removePlaceholder(studyNode);
+                } else {
+                  treeModel.setSeriesNodes(
+                      studyNode, buildQuerySeries(treeModel.getDicomModel(), study, datasets));
+                }
+              });
+        });
+  }
+
+  /** Runs the series level query matching the archive type, null when it failed. */
+  private List<Attributes> querySeries(Object selectedItem, String studyUid) {
+    try {
+      if (selectedItem instanceof DefaultDicomNode node) {
+        return findSeries(node, studyUid);
+      }
+      if (selectedItem instanceof DicomWebNode node) {
+        String url = RsQueryResult.seriesQueryUrl(node.getUrl().toString(), studyUid, null);
+        LOGGER.debug(RsQueryResult.QIDO_REQUEST, url);
+        return RsQueryResult.parseJSON(
+            url, authMethod, RsQueryResult.jsonQueryParameters(node.getHeaders()));
+      }
+    } catch (Exception e) {
+      LOGGER.error("Query the series of study {}", studyUid, e);
+    }
+    return null;
+  }
+
+  private List<Attributes> findSeries(DefaultDicomNode node, String studyUid) {
+    DefaultDicomNode callingNode = (DefaultDicomNode) comboCallingNode.getSelectedItem();
+    if (callingNode == null) {
+      return null;
+    }
+    AdvancedParams params = new AdvancedParams();
+    ConnectOptions connectOptions = new ConnectOptions();
+    connectOptions.setConnectTimeout(3000);
+    connectOptions.setAcceptTimeout(5000);
+    params.setConnectOptions(connectOptions);
+
+    DicomParam[] keys = {
+      new DicomParam(Tag.StudyInstanceUID, studyUid),
+      CFind.SeriesInstanceUID,
+      CFind.Modality,
+      CFind.SeriesNumber,
+      CFind.SeriesDescription,
+      new DicomParam(Tag.NumberOfSeriesRelatedInstances)
+    };
+    DicomState state =
+        CFind.process(
+            params,
+            callingNode.getDicomNodeWithOnlyAET(),
+            node.getDicomNode(),
+            0,
+            QueryRetrieveLevel.SERIES,
+            keys);
+    if (state.getStatus() != Status.Success && state.getDicomRSP() == null) {
+      LOGGER.error("Dicom C-FIND series error: {}", state.getMessage());
+    }
+    return state.getDicomRSP();
+  }
+
+  /** Adds the queried series to the result model and returns them in query order. */
+  private static List<Series<?>> buildQuerySeries(
+      DicomModel queryModel, MediaSeriesGroup study, List<Attributes> datasets) {
+    List<Series<?>> list = new ArrayList<>(datasets.size());
+    for (Attributes dataset : datasets) {
+      String seriesUid = dataset.getString(Tag.SeriesInstanceUID);
+      if (!StringUtil.hasText(seriesUid)) {
+        continue;
+      }
+      if (queryModel.getHierarchyNode(study, seriesUid) instanceof Series<?> existing) {
+        list.add(existing);
+        continue;
+      }
+      DicomSeries series = new DicomSeries(seriesUid);
+      series.setTag(TagD.get(Tag.SeriesInstanceUID), seriesUid);
+      for (TagW tag :
+          TagD.getTagFromIDs(
+              Tag.Modality,
+              Tag.SeriesNumber,
+              Tag.SeriesDescription,
+              Tag.NumberOfSeriesRelatedInstances)) {
+        tag.readValue(dataset, series);
+      }
+      queryModel.addHierarchyNode(study, series);
+      list.add(series);
+    }
+    return list;
   }
 
   @Override
   public void importDICOM(DicomModel explorerDcmModel, JProgressBar info) {
-    List<String> studies = getCheckedStudies(tree.getCheckboxTree().getCheckingPaths());
-    if (!studies.isEmpty()) {
+    RetrieveSelection selection = getSelection(tree.getCheckboxTree().getCheckingPaths());
+    if (!selection.isEmpty()) {
       Object selectedItem = getComboDestinationNode().getSelectedItem();
       if (selectedItem instanceof DicomWebNode webNode && webNode.getWebType() == WebType.QIDORS) {
         List<AbstractDicomNode> webNodes =
@@ -1054,7 +1202,7 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
           this.retrieveNode = wnode;
         }
       }
-      executor.execute(new RetrieveTask(studies, explorerDcmModel, this));
+      executor.execute(new RetrieveTask(selection, explorerDcmModel, this));
     }
   }
 

@@ -31,16 +31,7 @@ public class ConvexHull {
 
   public static List<Point2D> removeDuplicates(List<Point2D> points) {
     TreeSet<Point2D> treeSet =
-        new TreeSet<>(
-            (p1, p2) -> {
-              if (p1.getY() < p2.getY()) {
-                return -1;
-              }
-              if (p1.getY() > p2.getY()) {
-                return +1;
-              }
-              return Double.compare(p1.getX(), p2.getX());
-            });
+        new TreeSet<>(Comparator.comparingDouble(Point2D::getY).thenComparingDouble(Point2D::getX));
     treeSet.addAll(points);
     return new ArrayList<>(treeSet);
   }
@@ -55,7 +46,7 @@ public class ConvexHull {
 
   private static List<Point2D> preSort(List<Point2D> pts) {
 
-    Point2D p = pts.get(0);
+    Point2D p = pts.getFirst();
     for (int i = 1; i < pts.size(); i++) {
       Point2D pc = pts.get(i);
       if ((pc.getY() < p.getY())
@@ -91,7 +82,7 @@ public class ConvexHull {
       ps.addLast(p);
       ps.addLast(pc);
     }
-    ps.addLast(pts.get(0));
+    ps.addLast(pts.getFirst());
     return ps;
   }
 
@@ -120,12 +111,7 @@ public class ConvexHull {
             - (b.getY() - a.getY()) * (c.getX() - a.getX()));
   }
 
-  private static class RadialSorter implements Comparator<Point2D> {
-    private final Point2D origin;
-
-    public RadialSorter(Point2D origin) {
-      this.origin = origin;
-    }
+  private record RadialSorter(Point2D origin) implements Comparator<Point2D> {
 
     @Override
     public int compare(Point2D p1, Point2D p2) {

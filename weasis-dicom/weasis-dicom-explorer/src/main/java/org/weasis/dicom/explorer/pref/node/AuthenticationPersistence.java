@@ -113,6 +113,7 @@ public class AuthenticationPersistence {
       loadMethods();
     }
     methods.put(method.getUid(), method);
+    OAuth2ServiceFactory.invalidateService(method.getUid());
     saveMethod();
   }
 
@@ -124,6 +125,7 @@ public class AuthenticationPersistence {
       loadMethods();
     }
     if (methods.remove(method.getUid()) != null) {
+      OAuth2ServiceFactory.invalidateService(method.getUid());
       saveMethod();
     }
   }

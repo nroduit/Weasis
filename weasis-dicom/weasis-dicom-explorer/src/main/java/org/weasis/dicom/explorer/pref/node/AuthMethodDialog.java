@@ -11,6 +11,7 @@ package org.weasis.dicom.explorer.pref.node;
 
 import java.awt.FlowLayout;
 import java.awt.Window;
+import java.util.Objects;
 import java.util.UUID;
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
@@ -284,7 +285,23 @@ public class AuthMethodDialog extends JDialog {
     DefaultAuthMethod updatedAuth =
         new DefaultAuthMethod(authMethod.getUid(), newProvider, newRegistration);
     updatedAuth.setLocal(authMethod.isLocal());
-    updatedAuth.setCode(authMethod.getCode());
+    // The refresh token belongs to the previous endpoints and client, keep it only if both are kept
+    if (isSameGrantContext(newProvider, newRegistration)) {
+      updatedAuth.setCode(authMethod.getCode());
+    }
     return updatedAuth;
+  }
+
+  private boolean isSameGrantContext(AuthProvider provider, AuthRegistration registration) {
+    AuthProvider oldProvider = authMethod.getAuthProvider();
+    AuthRegistration oldRegistration = authMethod.getAuthRegistration();
+    return Objects.equals(oldProvider.authorizationUri(), provider.authorizationUri())
+        && Objects.equals(oldProvider.tokenUri(), provider.tokenUri())
+        && Objects.equals(oldProvider.openId(), provider.openId())
+        && Objects.equals(oldRegistration.clientId(), registration.clientId())
+        && Objects.equals(oldRegistration.clientSecret(), registration.clientSecret())
+        && Objects.equals(oldRegistration.scope(), registration.scope())
+        && Objects.equals(
+            oldRegistration.getAuthorizationGrantType(), registration.getAuthorizationGrantType());
   }
 }

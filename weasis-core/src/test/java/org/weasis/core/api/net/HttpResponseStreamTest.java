@@ -11,12 +11,9 @@ package org.weasis.core.api.net;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-import com.github.scribejava.core.model.Response;
 import com.sun.net.httpserver.HttpServer;
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.InetSocketAddress;
@@ -24,6 +21,7 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
@@ -58,20 +56,7 @@ class HttpResponseStreamTest {
 
   @Test
   void constructorRejectsNullResponse() {
-    assertThrows(NullPointerException.class, () -> new HttpResponseStream((Response) null));
-  }
-
-  @Test
-  void wrapsScribeResponseDirectly() throws IOException {
-    Response r =
-        new Response(
-            418, "I'm a teapot", Map.of("k", "v"), new ByteArrayInputStream("x".getBytes()));
-    HttpResponseStream stream = new HttpResponseStream(r);
-    assertSame(r, stream.response());
-    assertEquals(418, stream.getResponseCode());
-    assertEquals("I'm a teapot", stream.getResponseMessage());
-    assertEquals("v", stream.getHeaderField("k"));
-    assertEquals("x", new String(stream.getInputStream().readAllBytes()));
+    assertThrows(NullPointerException.class, () -> new HttpResponseStream(null));
   }
 
   @Test
@@ -85,8 +70,74 @@ class HttpResponseStreamTest {
     HttpResponseStream stream = new HttpResponseStream(response);
     assertEquals(200, stream.getResponseCode());
     assertNotNull(stream.getResponseMessage()); // HTTP/1.1
-    // Header lookup may be case-sensitive depending on the underlying parser; just verify body.
+    assertEquals("ok", stream.getHeaderField("X-Test"));
     assertEquals("hello", new String(stream.getInputStream().readAllBytes()));
     stream.close();
+  }
+
+  @Test
+  void headerLookupIsCaseInsensitive() throws Exception {
+    HttpClient client = HttpClient.newHttpClient();
+    HttpResponse<InputStream> response =
+        client.send(
+            HttpRequest.newBuilder(URI.create("http://localhost:" + port + "/echo")).build(),
+            HttpResponse.BodyHandlers.ofInputStream());
+    try (var stream = new HttpResponseStream(response)) {
+      assertEquals("ok", stream.getHeaderField("x-test"));
+    }
+  }
+
+  @Test
+  void parseHeadersMergesDuplicateKeysKeepingFirst() {
+    HttpResponse<?> response =
+        stubResponseWithHeaders(Map.of("X-Multi", List.of("a", "b"), "X-Single", List.of("z")));
+    Map<String, String> result = HttpResponseStream.parseHeaders(response);
+    assertEquals("a, b", result.get("X-Multi"));
+    assertEquals("z", result.get("X-Single"));
+  }
+
+  private static HttpResponse<?> stubResponseWithHeaders(Map<String, List<String>> raw) {
+    var headers = java.net.http.HttpHeaders.of(raw, (k, v) -> true);
+    return new HttpResponse<Object>() {
+      @Override
+      public int statusCode() {
+        return 200;
+      }
+
+      @Override
+      public java.net.http.HttpRequest request() {
+        return null;
+      }
+
+      @Override
+      public java.util.Optional<HttpResponse<Object>> previousResponse() {
+        return java.util.Optional.empty();
+      }
+
+      @Override
+      public java.net.http.HttpHeaders headers() {
+        return headers;
+      }
+
+      @Override
+      public Object body() {
+        return null;
+      }
+
+      @Override
+      public java.util.Optional<javax.net.ssl.SSLSession> sslSession() {
+        return java.util.Optional.empty();
+      }
+
+      @Override
+      public java.net.URI uri() {
+        return java.net.URI.create("http://example/");
+      }
+
+      @Override
+      public java.net.http.HttpClient.Version version() {
+        return java.net.http.HttpClient.Version.HTTP_1_1;
+      }
+    };
   }
 }

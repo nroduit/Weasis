@@ -310,8 +310,8 @@ public abstract class LocalizerPoster {
     final double centX = cx, centY = cy;
     rawIntersections.sort(
         (a, b) -> {
-          double angleA = Math.atan2(a.y - centY, a.x - centX);
-          double angleB = Math.atan2(b.y - centY, b.x - centX);
+          double angleA = Math.atan2(a.y - centY, a.x - centX); // NOSONAR not a comparison
+          double angleB = Math.atan2(b.y - centY, b.x - centX); // NOSONAR not a comparison
           return Double.compare(angleA, angleB);
         });
 

@@ -16,14 +16,7 @@ import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import com.github.scribejava.core.httpclient.multipart.ByteArrayBodyPartPayload;
-import com.github.scribejava.core.httpclient.multipart.MultipartPayload;
-import com.github.scribejava.core.model.OAuthRequest;
-import com.github.scribejava.core.model.Response;
-import com.github.scribejava.core.model.Verb;
-import com.github.scribejava.core.oauth.OAuth20Service;
 import com.sun.net.httpserver.HttpServer;
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.InetSocketAddress;
@@ -40,11 +33,10 @@ import java.util.concurrent.atomic.AtomicReference;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 import org.weasis.core.api.net.auth.AuthMethod;
 import org.weasis.core.api.net.auth.OAuth2ServiceFactory;
-import org.weasis.core.util.StreamIOException;
+import org.weasis.core.api.net.auth.OAuth2Token;
 
 class HttpUtilsTest {
 
@@ -274,14 +266,15 @@ class HttpUtilsTest {
     }
   }
 
-  private static MultipartPayload dicomMultipart(byte[] content) {
+  private static MultipartBody dicomMultipart(byte[] content) {
     String boundary = "weasisBoundary";
     var headers = new java.util.HashMap<String, String>();
     headers.put(
         "Content-Type", "multipart/related;type=\"application/dicom\";boundary=" + boundary);
     headers.put("Accept", "application/dicom+xml");
-    var multipart = new MultipartPayload(boundary, headers);
-    multipart.addBodyPart(new ByteArrayBodyPartPayload(content, "application/dicom"));
+    var multipart = new MultipartBody(boundary, headers);
+    multipart.addBodyPart(
+        new BodyPart(Map.of("Content-Type", "application/dicom"), BodySupplier.ofBytes(content)));
     return multipart;
   }
 
@@ -289,8 +282,8 @@ class HttpUtilsTest {
   void noAuthMultipartSendsBodyWithRelatedContentType() throws Exception {
     LAST_BODY.set(null);
     byte[] content = "DICM-payload".getBytes();
-    var request = new OAuthRequest(Verb.POST, baseUrl + "/stow");
-    request.setMultipartPayload(dicomMultipart(content));
+    var request = new WebRequest(WebRequest.Method.POST, baseUrl + "/stow");
+    request.setMultipartBody(dicomMultipart(content));
     URLParameters post = new URLParameters(Map.of(), true);
 
     try (HttpStream stream =
@@ -309,9 +302,8 @@ class HttpUtilsTest {
   void noAuthMultipartReturnsServerStatusWithoutThrowing() throws Exception {
     // A server that rejects the content type (415) must surface the code to the caller rather
     // than throwing, so STOW-RS can build a proper error message.
-    var request = new OAuthRequest(Verb.POST, baseUrl + "/stow");
-    request.setMultipartPayload(
-        new MultipartPayload("b", new java.util.HashMap<>(Map.of("Content-Type", "text/plain"))));
+    var request = new WebRequest(WebRequest.Method.POST, baseUrl + "/stow");
+    request.setMultipartBody(new MultipartBody("b", Map.of("Content-Type", "text/plain")));
     URLParameters post = new URLParameters(Map.of(), true);
     try (HttpStream stream =
         HttpUtils.getHttpResponse(baseUrl + "/stow", post, OAuth2ServiceFactory.NO_AUTH, request)) {
@@ -352,102 +344,35 @@ class HttpUtilsTest {
   }
 
   // -------------------------------------------------------------------------
-  // executeAuthenticatedRequest / runInterruptibly / getOAuth20Service
+  // executeAuthenticatedRequest
   // -------------------------------------------------------------------------
 
-  private static AuthMethod fakeAuthMethod() {
-    return Mockito.mock(AuthMethod.class);
+  private static AuthMethod fakeAuthMethod(OAuth2Token token) {
+    AuthMethod auth = Mockito.mock(AuthMethod.class);
+    Mockito.when(auth.getToken()).thenReturn(token);
+    return auth;
   }
 
   @Test
-  void executeAuthenticatedRequestThrowsWhenServiceMissing() {
-    AuthMethod auth = fakeAuthMethod();
-    try (MockedStatic<OAuth2ServiceFactory> mocked =
-        Mockito.mockStatic(OAuth2ServiceFactory.class)) {
-      mocked.when(() -> OAuth2ServiceFactory.getService(auth)).thenReturn(null);
-      var request = new OAuthRequest(Verb.GET, baseUrl + "/ok");
-      IOException ex =
-          assertThrows(
-              IOException.class,
-              () -> HttpUtils.executeAuthenticatedRequest(request, URLParameters.DEFAULT, auth));
-      assertTrue(ex.getMessage().startsWith("Invalid authentication method"));
-    }
+  void executeAuthenticatedRequestThrowsWhenTokenMissing() {
+    AuthMethod auth = fakeAuthMethod(null);
+    var request = new WebRequest(WebRequest.Method.GET, baseUrl + "/ok");
+    IOException ex =
+        assertThrows(
+            IOException.class,
+            () -> HttpUtils.executeAuthenticatedRequest(request, URLParameters.DEFAULT, auth));
+    assertTrue(ex.getMessage().startsWith("Cannot get an access token"));
   }
 
   @Test
-  void executeAuthenticatedRequestReturnsAuthResponseOnSuccess() throws Exception {
-    AuthMethod auth = fakeAuthMethod();
-    OAuth20Service service = Mockito.mock(OAuth20Service.class);
-    Response response =
-        new Response(200, "OK", Map.of(), new ByteArrayInputStream("body".getBytes()));
-    Mockito.when(service.execute(Mockito.any(OAuthRequest.class))).thenReturn(response);
-
-    try (MockedStatic<OAuth2ServiceFactory> mocked =
-        Mockito.mockStatic(OAuth2ServiceFactory.class)) {
-      mocked.when(() -> OAuth2ServiceFactory.getService(auth)).thenReturn(service);
-      var request = new OAuthRequest(Verb.GET, baseUrl + "/ok");
-      AuthResponse result =
-          HttpUtils.executeAuthenticatedRequest(request, URLParameters.DEFAULT, auth);
+  void executeAuthenticatedRequestSignsWithBearerToken() throws Exception {
+    AuthMethod auth = fakeAuthMethod(new OAuth2Token("tok-123", "Bearer", 3600, null, null, null));
+    var request = new WebRequest(WebRequest.Method.GET, baseUrl + "/ok");
+    try (var result = HttpUtils.executeAuthenticatedRequest(request, URLParameters.DEFAULT, auth)) {
       assertEquals(200, result.getResponseCode());
-      assertEquals("body", new String(result.getInputStream().readAllBytes()));
+      assertEquals("ok", new String(result.getInputStream().readAllBytes()));
     }
-  }
-
-  @Test
-  void executeAuthenticatedRequestWrapsInterruptedException() throws Exception {
-    AuthMethod auth = fakeAuthMethod();
-    OAuth20Service service = Mockito.mock(OAuth20Service.class);
-    Mockito.when(service.execute(Mockito.any(OAuthRequest.class)))
-        .thenThrow(new InterruptedException("boom"));
-
-    try (MockedStatic<OAuth2ServiceFactory> mocked =
-        Mockito.mockStatic(OAuth2ServiceFactory.class)) {
-      mocked.when(() -> OAuth2ServiceFactory.getService(auth)).thenReturn(service);
-      var request = new OAuthRequest(Verb.GET, baseUrl + "/ok");
-      StreamIOException ex =
-          assertThrows(
-              StreamIOException.class,
-              () -> HttpUtils.executeAuthenticatedRequest(request, URLParameters.DEFAULT, auth));
-      assertTrue(ex.getMessage().contains("interrupted"));
-      assertTrue(Thread.interrupted(), "Thread interrupt flag should have been re-set");
-    }
-  }
-
-  @Test
-  void executeAuthenticatedRequestWrapsRuntimeException() throws Exception {
-    AuthMethod auth = fakeAuthMethod();
-    OAuth20Service service = Mockito.mock(OAuth20Service.class);
-    Mockito.when(service.execute(Mockito.any(OAuthRequest.class)))
-        .thenThrow(new IllegalStateException("oops"));
-
-    try (MockedStatic<OAuth2ServiceFactory> mocked =
-        Mockito.mockStatic(OAuth2ServiceFactory.class)) {
-      mocked.when(() -> OAuth2ServiceFactory.getService(auth)).thenReturn(service);
-      var request = new OAuthRequest(Verb.GET, baseUrl + "/ok");
-      StreamIOException ex =
-          assertThrows(
-              StreamIOException.class,
-              () -> HttpUtils.executeAuthenticatedRequest(request, URLParameters.DEFAULT, auth));
-      assertTrue(ex.getMessage().contains("failed"));
-    }
-  }
-
-  @Test
-  void executeAuthenticatedRequestPropagatesIOException() throws Exception {
-    AuthMethod auth = fakeAuthMethod();
-    OAuth20Service service = Mockito.mock(OAuth20Service.class);
-    Mockito.when(service.execute(Mockito.any(OAuthRequest.class))).thenThrow(new IOException("io"));
-
-    try (MockedStatic<OAuth2ServiceFactory> mocked =
-        Mockito.mockStatic(OAuth2ServiceFactory.class)) {
-      mocked.when(() -> OAuth2ServiceFactory.getService(auth)).thenReturn(service);
-      var request = new OAuthRequest(Verb.GET, baseUrl + "/ok");
-      IOException ex =
-          assertThrows(
-              IOException.class,
-              () -> HttpUtils.executeAuthenticatedRequest(request, URLParameters.DEFAULT, auth));
-      assertEquals("io", ex.getMessage());
-    }
+    assertEquals("Bearer tok-123", LAST_HEADERS.get().get("Authorization").getFirst());
   }
 
   @Test
@@ -489,19 +414,10 @@ class HttpUtilsTest {
 
   @Test
   void getHttpResponseWithAuthDelegatesToExecuteAuthenticatedRequest() throws Exception {
-    AuthMethod auth = fakeAuthMethod();
-    OAuth20Service service = Mockito.mock(OAuth20Service.class);
-    Response response =
-        new Response(200, "OK", Map.of(), new ByteArrayInputStream("body".getBytes()));
-    Mockito.when(service.execute(Mockito.any(OAuthRequest.class))).thenReturn(response);
-
-    try (MockedStatic<OAuth2ServiceFactory> mocked =
-        Mockito.mockStatic(OAuth2ServiceFactory.class)) {
-      mocked.when(() -> OAuth2ServiceFactory.getService(auth)).thenReturn(service);
-      try (HttpStream stream =
-          HttpUtils.getHttpResponse(baseUrl + "/ok", URLParameters.DEFAULT, auth)) {
-        assertEquals(200, stream.getResponseCode());
-      }
+    AuthMethod auth = fakeAuthMethod(new OAuth2Token("tok", null, null, null, null, null));
+    try (HttpStream stream =
+        HttpUtils.getHttpResponse(baseUrl + "/ok", URLParameters.DEFAULT, auth)) {
+      assertEquals(200, stream.getResponseCode());
     }
   }
 }

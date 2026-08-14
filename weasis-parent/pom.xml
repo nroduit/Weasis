@@ -37,7 +37,7 @@
     <slf4j.version>2.0.18</slf4j.version>
     <logback.version>1.6.1</logback.version>
     <dockingframes.version>1.1.7</dockingframes.version>
-    <weasis-dicom-tools.version>5.34.3.3</weasis-dicom-tools.version>
+    <weasis-dicom-tools.version>5.34.3.4-SNAPSHOT</weasis-dicom-tools.version>
     <weasis.core.img.version>5.0.0</weasis.core.img.version>
     <weasis.opencv.native.version>5.0.0-dcm</weasis.opencv.native.version>
     <weasis.opencv.pkg.version>5.0.0-dcm</weasis.opencv.pkg.version>
@@ -48,7 +48,6 @@
     <jogamp.version>2.6.0</jogamp.version>
     <jackson.version>2.22.1</jackson.version>
     <jackson.an.version>2.22</jackson.an.version>
-    <scribejava.version>8.3.3</scribejava.version>
     <zip4j.version>2.11.6</zip4j.version>
 
     <junit-bom.version>6.1.2</junit-bom.version>

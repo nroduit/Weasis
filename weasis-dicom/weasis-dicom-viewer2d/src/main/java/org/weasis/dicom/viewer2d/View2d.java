@@ -1027,7 +1027,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
     if (path instanceof Path2D path2D) {
       return !path2D.contains(p);
     }
-    return !bounds.contains(p);
+    return !bounds.contains(p); // NOSONAR false positive
   }
 
   public void computeCrosshair(Vector3d p3, PanPoint panPoint) {

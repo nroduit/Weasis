@@ -36,8 +36,6 @@
             <configuration>
               <artifactSet>
                 <includes>
-                  <include>com.github.scribejava:scribejava-core</include>
-                  <include>com.github.scribejava:scribejava-java8</include>
                   <include>eu.essilab:lablib-checkboxtree</include>
                   <include>org.knowm.xchart:xchart</include>
                   <include>de.erichseifert.vectorgraphics2d:VectorGraphics2D</include>
@@ -49,12 +47,6 @@
                   <artifact>eu.essilab:lablib-checkboxtree</artifact>
                   <excludes>
                     <exclude>eu/essilab/lablib/checkboxtree/examples/**</exclude>
-                    <exclude>META-INF/MANIFEST.MF</exclude>
-                  </excludes>
-                </filter>
-                <filter>
-                  <artifact>com.github.scribejava:*</artifact>
-                  <excludes>
                     <exclude>META-INF/MANIFEST.MF</exclude>
                   </excludes>
                 </filter>
@@ -96,28 +88,6 @@
     <dependency>
       <groupId>org.weasis.thirdparty</groupId>
       <artifactId>jaxb-osgi</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.github.scribejava</groupId>
-      <artifactId>scribejava-core</artifactId>
-      <version>${scribejava.version}</version>
-      <exclusions>
-        <exclusion>
-          <groupId>com.fasterxml.jackson.core</groupId>
-          <artifactId>jackson-databind</artifactId>
-        </exclusion>
-      </exclusions>
-    </dependency>
-    <dependency>
-      <groupId>com.github.scribejava</groupId>
-      <artifactId>scribejava-java8</artifactId>
-      <version>${scribejava.version}</version>
-      <exclusions>
-        <exclusion>
-          <groupId>com.fasterxml.jackson.core</groupId>
-          <artifactId>jackson-databind</artifactId>
-        </exclusion>
-      </exclusions>
     </dependency>
     <dependency>
       <groupId>com.fasterxml.jackson.core</groupId>

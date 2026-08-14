@@ -18,9 +18,7 @@ import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.Callable;
@@ -65,7 +63,6 @@ import org.weasis.dicom.codec.DicomMediaIO.Reading;
 import org.weasis.dicom.codec.DicomSeries;
 import org.weasis.dicom.codec.DicomSpecialElement;
 import org.weasis.dicom.codec.TagD;
-import org.weasis.dicom.codec.TagD.Level;
 import org.weasis.dicom.codec.utils.DicomMediaUtils;
 import org.weasis.dicom.codec.utils.SeriesInstanceList;
 import org.weasis.dicom.explorer.DicomModel;
@@ -285,19 +282,7 @@ public class SeriesDownloadManager {
   }
 
   private boolean isSOPInstanceUIDExist(MediaSeriesGroup study, Series<?> series, String sopUID) {
-    TagW sopTag = TagD.getUID(Level.INSTANCE);
-    if (series.hasMediaContains(sopTag, sopUID)) {
-      return true;
-    }
-    // Check split series
-    String seriesUID = TagD.getTagValue(series, Tag.SeriesInstanceUID, String.class);
-    if (study != null && seriesUID != null) {
-      return dicomModel.getChildren(study).stream()
-          .filter(group -> series != group && group instanceof Series<?> s)
-          .filter(group -> seriesUID.equals(TagD.getTagValue(group, Tag.SeriesInstanceUID)))
-          .anyMatch(group -> ((Series<?>) group).hasMediaContains(sopTag, sopUID));
-    }
-    return false;
+    return LoadSeries.isSOPInstanceUIDExist(dicomModel, study, series, sopUID);
   }
 
   private void initializeProgressBar(int max) {
@@ -348,9 +333,7 @@ public class SeriesDownloadManager {
     // wado.getBaseURL(), so match the retrieve path to whichever the origin uses.
     String retrievePrefix = StringUtil.hasText(wado.getBaseURL()) ? "" : baseUrl;
 
-    Map<String, String> headers = new HashMap<>(urlParams.headers());
-    headers.put("Accept", "application/dicom+json"); // NON-NLS
-    URLParameters queryParams = new URLParameters(headers);
+    URLParameters queryParams = RsQueryResult.jsonQueryParameters(urlParams.headers());
     String baseQuery =
         baseUrl
             + "/studies/" // NON-NLS
@@ -504,10 +487,15 @@ public class SeriesDownloadManager {
   }
 
   /**
-   * Queries {@code NumberOfSeriesRelatedInstances} for the series so bulk progress can be
-   * determinate. Returns {@code null} when the server does not provide it.
+   * {@code NumberOfSeriesRelatedInstances} of the series so bulk progress can be determinate,
+   * queried only when the series query did not already return it. Null when it stays unknown.
    */
   private Integer fetchSeriesInstanceCount(WadoParameters wado, String studyUID, String seriesUID) {
+    Integer queried =
+        TagD.getTagValue(dicomSeries, Tag.NumberOfSeriesRelatedInstances, Integer.class);
+    if (queried != null && queried > 0) {
+      return queried;
+    }
     int n =
         RsQueryResult.seriesInstanceCount(
             LoadSeries.dicomWebBaseUrl(wado, dicomSeries),
@@ -616,7 +604,7 @@ public class SeriesDownloadManager {
    * without a value are left untouched, as is the Study Instance UID, which identifies the study
    * node and cannot be changed without breaking the model hierarchy.
    */
-  static void applyOverrides(
+  public static void applyOverrides(
       Attributes dataset, int[] overrideList, MediaSeriesGroup patient, MediaSeriesGroup study) {
     if (dataset == null || overrideList == null) {
       return;

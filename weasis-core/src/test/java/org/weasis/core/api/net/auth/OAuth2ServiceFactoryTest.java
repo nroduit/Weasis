@@ -11,6 +11,7 @@ package org.weasis.core.api.net.auth;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -68,9 +69,45 @@ class OAuth2ServiceFactoryTest {
     assertSame(first, second);
   }
 
+  @Test
+  void invalidateServiceRebuildsFromUpdatedConfiguration() {
+    int port = 64998;
+    var method =
+        new DefaultAuthMethod(
+            "uid-invalidate",
+            new AuthProvider("p", "https://a", "https://old-token", null, false),
+            AuthRegistration.of("client", "secret", "scope", null));
+    var first = OAuth2ServiceFactory.getService(method, port);
+    assertEquals("https://old-token", first.getApi().getAccessTokenEndpoint());
+
+    var edited =
+        new DefaultAuthMethod(
+            method.getUid(),
+            new AuthProvider("p", "https://a", "https://new-token", null, false),
+            method.getAuthRegistration());
+    assertSame(first, OAuth2ServiceFactory.getService(edited, port));
+
+    OAuth2ServiceFactory.invalidateService(edited.getUid());
+    var second = OAuth2ServiceFactory.getService(edited, port);
+    assertNotSame(first, second);
+    assertEquals("https://new-token", second.getApi().getAccessTokenEndpoint());
+  }
+
+  @Test
+  void invalidateServiceIgnoresBlankUid() {
+    int port = 64997;
+    var method =
+        new DefaultAuthMethod(
+            "uid-blank-invalidate",
+            new AuthProvider("p", "https://a", "https://t", null, false),
+            AuthRegistration.of("client", "secret", "scope", null));
+    var service = OAuth2ServiceFactory.getService(method, port);
+    OAuth2ServiceFactory.invalidateService("  ");
+    assertSame(service, OAuth2ServiceFactory.getService(method, port));
+  }
+
   // -------------------------------------------------------------------------
-  // Branch coverage: getService(AuthMethod), createOAuth20Service null path,
-  // OAuth2Api accessor branches.
+  // Branch coverage: getService(AuthMethod), createService null path.
   // -------------------------------------------------------------------------
 
   @Test
@@ -93,7 +130,7 @@ class OAuth2ServiceFactoryTest {
   }
 
   @Test
-  void createOAuth20ServiceReturnsNullWhenAuthRegistrationIsNull() {
+  void createServiceReturnsNullWhenAuthRegistrationIsNull() {
     var method =
         new AuthMethod() {
           @Override
@@ -110,7 +147,7 @@ class OAuth2ServiceFactoryTest {
           public void resetToken() {}
 
           @Override
-          public com.github.scribejava.core.model.OAuth2AccessToken getToken() {
+          public OAuth2Token getToken() {
             return null;
           }
 
@@ -136,7 +173,7 @@ class OAuth2ServiceFactoryTest {
   }
 
   @Test
-  void createOAuth20ServiceReturnsNullWhenAuthProviderIsNull() {
+  void createServiceReturnsNullWhenAuthProviderIsNull() {
     var method =
         new AuthMethod() {
           @Override
@@ -153,7 +190,7 @@ class OAuth2ServiceFactoryTest {
           public void resetToken() {}
 
           @Override
-          public com.github.scribejava.core.model.OAuth2AccessToken getToken() {
+          public OAuth2Token getToken() {
             return null;
           }
 
@@ -179,33 +216,28 @@ class OAuth2ServiceFactoryTest {
   }
 
   @Test
-  void createOAuth20ServicePicksAvailablePortWhenZero() {
+  void createServicePicksAvailablePortWhenZero() {
     var provider = new AuthProvider("p", "https://a", "https://t", null, false);
     var method =
         new DefaultAuthMethod(
             "uid-zero-port", provider, AuthRegistration.of("client", "secret", "scope", null));
     var service = OAuth2ServiceFactory.getService(method, 0);
     assertNotNull(service);
-    assertTrue(service.getCallback().startsWith(OAuth2ServiceFactory.CALLBACK_URL));
+    assertTrue(service.getCallbackUrl().startsWith(OAuth2ServiceFactory.CALLBACK_URL));
+    assertTrue(service.getCallbackPort() > 0);
   }
 
   @Test
-  void oauth2ApiExposesProviderEndpoints() {
-    var provider =
-        new AuthProvider("p", "https://auth/", "https://token/", "https://revoke/", false);
-    var api = new OAuth2ServiceFactory.OAuth2Api(provider);
-    assertEquals("https://token/", api.getAccessTokenEndpoint());
-    assertEquals("https://auth/", api.getAuthorizationBaseUrl());
-    assertEquals("https://revoke/", api.getRevokeTokenEndpoint());
-  }
-
-  @Test
-  void oauth2ApiAccessTokenExtractorVariesByOpenIdFlag() {
-    var openId = new OAuth2ServiceFactory.OAuth2Api(new AuthProvider("p", "a", "t", null, true));
-    var classic = new OAuth2ServiceFactory.OAuth2Api(new AuthProvider("p", "a", "t", null, false));
-    assertSame(OpenIdJsonTokenExtractor.instance(), openId.getAccessTokenExtractor());
-    assertSame(
-        com.github.scribejava.core.extractors.OAuth2AccessTokenJsonExtractor.instance(),
-        classic.getAccessTokenExtractor());
+  void createServiceOmitsCallbackForClientCredentialsGrant() {
+    var provider = new AuthProvider("p", null, "https://t", null, false);
+    var method =
+        new DefaultAuthMethod(
+            "uid-cc",
+            provider,
+            AuthRegistration.of(
+                "client", "secret", null, null, AuthRegistration.CLIENT_CREDENTIALS));
+    var service = OAuth2ServiceFactory.getService(method, 65012);
+    assertNotNull(service);
+    assertNull(service.getCallbackUrl());
   }
 }

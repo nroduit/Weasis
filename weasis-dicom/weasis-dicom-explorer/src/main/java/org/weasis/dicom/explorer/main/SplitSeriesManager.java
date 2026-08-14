@@ -81,12 +81,16 @@ public class SplitSeriesManager {
         splitSeriesCache.remove(seriesUID);
         return;
       }
-      splitSeriesCache.put(seriesUID, new ArrayList<>(splitSeries));
+      List<DicomSeries> previous = splitSeriesCache.put(seriesUID, new ArrayList<>(splitSeries));
 
       if (splitSeries.size() > 1) {
-        updateSplitSeriesNumbers(splitSeries);
-        rebuildThumbnails(splitSeries);
-        SwingUtilities.invokeLater(() -> refreshAffectedStudyPanes(splitSeries));
+        ensureThumbnails(splitSeries);
+        // A downloading series sends an update for every received instance, and only a change in
+        // the set of split series can alter the numbering. Renumbering on every instance is churn.
+        if (!isSameSplitSet(previous, splitSeries)) {
+          updateSplitSeriesNumbers(splitSeries);
+          SwingUtilities.invokeLater(() -> refreshAffectedStudyPanes(splitSeries));
+        }
       }
     } finally {
       cacheLock.writeLock().unlock();
@@ -144,16 +148,15 @@ public class SplitSeriesManager {
     }
   }
 
-  /**
-   * Rebuilds thumbnails for all split series. This forces thumbnail regeneration to reflect the
-   * split series numbering.
-   */
-  private void rebuildThumbnails(List<DicomSeries> splitSeries) {
-    for (DicomSeries series : splitSeries) {
-      // Clear existing thumbnail to force rebuild
-      series.setTag(TagW.Thumbnail, null);
-      model.buildThumbnail(series);
-    }
+  private static boolean isSameSplitSet(List<DicomSeries> previous, List<DicomSeries> current) {
+    return previous != null && previous.size() == current.size() && previous.containsAll(current);
+  }
+
+  /** Gives a thumbnail to the split series that do not have one yet. */
+  private void ensureThumbnails(List<DicomSeries> splitSeries) {
+    // An existing thumbnail is kept: it reads the split number on each repaint, so replacing it
+    // would only make it display the default icon again while its image is reloaded.
+    splitSeries.forEach(model::buildThumbnail);
   }
 
   /** Refreshes the UI for all study panes that contain the split series. */
@@ -165,6 +168,10 @@ public class SplitSeriesManager {
       SeriesPane seriesPane = paneManager.getSeriesPane(series);
       if (seriesPane != null) {
         seriesPane.updateThumbnail();
+      }
+      // The split number is drawn over the thumbnail, which now keeps the same instance
+      if (series.getTagValue(TagW.Thumbnail) instanceof Thumbnail thumbnail) {
+        thumbnail.repaint();
       }
 
       MediaSeriesGroup study = model.getParent(series, DicomModel.study);

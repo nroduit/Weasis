@@ -9,20 +9,21 @@
  */
 package org.weasis.core.api.net;
 
-import com.github.scribejava.core.model.Response;
-import java.io.IOException;
 import java.io.InputStream;
 import java.net.http.HttpResponse;
+import java.util.Map;
 import java.util.Objects;
-import org.weasis.core.api.net.auth.JavaNetHttpClient;
+import java.util.TreeMap;
+import java.util.stream.Collectors;
 import org.weasis.core.util.StreamUtil;
 
-/** HTTP response wrapper providing HttpStream compatibility for OAuth2 and Java 11+ responses. */
-public record HttpResponseStream(Response response) implements HttpStream {
+/** HTTP response wrapper providing {@link HttpStream} access to a {@link HttpResponse} body. */
+public final class HttpResponseStream implements HttpStream {
 
-  public HttpResponseStream {
-    Objects.requireNonNull(response, "response");
-  }
+  private final int code;
+  private final String message;
+  private final Map<String, String> headers;
+  private final InputStream stream;
 
   public HttpResponseStream(HttpResponse<InputStream> httpResponse) {
     this(httpResponse, 0);
@@ -30,40 +31,46 @@ public record HttpResponseStream(Response response) implements HttpStream {
 
   /** Guards the body against stalled reads; {@code stallTimeoutMillis <= 0} disables the guard. */
   public HttpResponseStream(HttpResponse<InputStream> httpResponse, int stallTimeoutMillis) {
-    this(toResponse(httpResponse, stallTimeoutMillis));
+    Objects.requireNonNull(httpResponse, "httpResponse");
+    this.code = httpResponse.statusCode();
+    this.message = httpResponse.version().toString();
+    this.headers = parseHeaders(httpResponse);
+    this.stream = StallGuardInputStream.wrap(httpResponse.body(), stallTimeoutMillis);
   }
 
-  private static Response toResponse(
-      HttpResponse<InputStream> httpResponse, int stallTimeoutMillis) {
-    return new Response(
-        httpResponse.statusCode(),
-        httpResponse.version().toString(),
-        JavaNetHttpClient.parseHeaders(httpResponse),
-        StallGuardInputStream.wrap(httpResponse.body(), stallTimeoutMillis));
+  /** Flattens multi-valued headers into a case-insensitive map of comma-joined values. */
+  public static Map<String, String> parseHeaders(HttpResponse<?> response) {
+    return response.headers().map().entrySet().stream()
+        .collect(
+            Collectors.toMap(
+                Map.Entry::getKey,
+                e -> String.join(", ", e.getValue()),
+                (existing, replacement) -> existing,
+                () -> new TreeMap<>(String.CASE_INSENSITIVE_ORDER)));
   }
 
   @Override
   public void close() {
-    StreamUtil.safeClose(response);
+    StreamUtil.safeClose(stream);
   }
 
   @Override
-  public InputStream getInputStream() throws IOException {
-    return response.getStream();
+  public InputStream getInputStream() {
+    return stream;
   }
 
   @Override
   public int getResponseCode() {
-    return response.getCode();
+    return code;
   }
 
   @Override
   public String getResponseMessage() {
-    return response.getMessage();
+    return message;
   }
 
   @Override
   public String getHeaderField(String key) {
-    return response.getHeader(key);
+    return headers.get(key);
   }
 }

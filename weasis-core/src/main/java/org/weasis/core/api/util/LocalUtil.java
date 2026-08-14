@@ -10,6 +10,7 @@
 package org.weasis.core.api.util;
 
 import java.util.Locale;
+import org.weasis.core.util.StringUtil;
 
 public class LocalUtil {
 
@@ -35,12 +36,12 @@ public class LocalUtil {
    * @return the <code>Locale</code> value
    */
   public static Locale textToLocale(String value) {
-    if (value == null || value.isBlank()) {
+    if (!StringUtil.hasText(value)) { // NOSONAR hasText does the job
       return Locale.ENGLISH;
     }
 
     if (!"system".equals(value)) { // NON-NLS
-      return Locale.forLanguageTag(value.replace("_", "-"));
+      return Locale.forLanguageTag(value.replace("_", "-")); // NOSONAR
     }
     return Locale.getDefault();
   }

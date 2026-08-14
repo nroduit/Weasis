@@ -9,12 +9,11 @@
  */
 package org.weasis.core.api.net.auth;
 
-import com.github.scribejava.core.httpclient.HttpClientConfig;
 import java.net.ProxySelector;
 import org.weasis.core.api.net.NetworkUtil;
 
 /** Configuration for JavaNet HTTP client with timeout and proxy settings. */
-public class JavaNetHttpClientConfig implements HttpClientConfig {
+public class JavaNetHttpClientConfig {
 
   private final int connectTimeout;
   private final int readTimeout;
@@ -43,10 +42,5 @@ public class JavaNetHttpClientConfig implements HttpClientConfig {
 
   public ProxySelector getProxy() {
     return proxySelector;
-  }
-
-  @Override
-  public HttpClientConfig createDefaultConfig() {
-    return new JavaNetHttpClientConfig();
   }
 }

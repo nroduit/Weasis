@@ -13,6 +13,7 @@ import com.sun.management.OperatingSystemMXBean;
 import java.lang.management.ManagementFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.weasis.core.util.StringUtil;
 
 /**
  * System memory probe used to size the off-heap (native) image caches.
@@ -149,7 +150,7 @@ public final class SystemMemory {
 
   private static long longProperty(String key) {
     String value = System.getProperty(key);
-    if (value != null && !value.isBlank()) {
+    if (StringUtil.hasText(value)) { // NOSONAR hasText does the job
       try {
         return Long.parseLong(value.trim());
       } catch (NumberFormatException e) {
