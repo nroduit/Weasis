@@ -16,12 +16,10 @@ import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import com.github.scribejava.core.oauth.OAuth20Service;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
 
 class AsyncCallbackServerHandlerTest {
 
@@ -38,8 +36,8 @@ class AsyncCallbackServerHandlerTest {
       }
 
       @Override
-      public OAuth20Service service() {
-        return Mockito.mock(OAuth20Service.class);
+      public OAuth2Service service() {
+        return null;
       }
 
       @Override

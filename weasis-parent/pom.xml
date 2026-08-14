@@ -61,7 +61,6 @@
     <jogamp.version>2.6.0</jogamp.version>
     <jackson.version>2.22.1</jackson.version>
     <jackson.an.version>2.22</jackson.an.version>
-    <scribejava.version>8.3.3</scribejava.version>
     <zip4j.version>2.11.6</zip4j.version>
 
     <junit-bom.version>6.1.2</junit-bom.version>

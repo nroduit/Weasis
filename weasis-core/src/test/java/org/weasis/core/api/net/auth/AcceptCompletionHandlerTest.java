@@ -14,21 +14,27 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import com.github.scribejava.core.oauth.OAuth20Service;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
 
 class AcceptCompletionHandlerTest {
 
   private static final long POLL_TIMEOUT_MS = 5_000;
 
+  private static OAuth2Service dummyService() {
+    return new OAuth2Service(
+        new AuthProvider("p", "https://a", "https://t", null, false),
+        AuthRegistration.empty(),
+        OAuth2ServiceFactory.CALLBACK_URL + "1",
+        new JavaNetHttpClient());
+  }
+
   @Test
   void serviceAccessorReturnsConstructorArgument() {
-    OAuth20Service service = Mockito.mock(OAuth20Service.class);
+    OAuth2Service service = dummyService();
     var handler = new AcceptCompletionHandler(service);
     assertSame(service, handler.service());
     assertTrue(handler.code().isEmpty());
@@ -36,14 +42,14 @@ class AcceptCompletionHandlerTest {
 
   @Test
   void manualCodeSetterUpdatesAccessor() {
-    var handler = new AcceptCompletionHandler(Mockito.mock(OAuth20Service.class));
+    var handler = new AcceptCompletionHandler(dummyService());
     handler.code("ABC");
     assertEquals("ABC", handler.code().orElseThrow());
   }
 
   @Test
   void incomingHttpRequestExtractsAuthorizationCodeAndAcknowledges() throws Exception {
-    var handler = new AcceptCompletionHandler(Mockito.mock(OAuth20Service.class));
+    var handler = new AcceptCompletionHandler(dummyService());
     try (var server = new AsyncCallbackServerHandler(0, handler)) {
       server.start();
       int port =
@@ -64,7 +70,7 @@ class AcceptCompletionHandlerTest {
 
   @Test
   void incomingRequestWithoutCodeReturns404() throws Exception {
-    var handler = new AcceptCompletionHandler(Mockito.mock(OAuth20Service.class));
+    var handler = new AcceptCompletionHandler(dummyService());
     try (var server = new AsyncCallbackServerHandler(0, handler)) {
       server.start();
       int port = ((InetSocketAddress) server.getSocketChannel().getLocalAddress()).getPort();
@@ -76,7 +82,7 @@ class AcceptCompletionHandlerTest {
 
   @Test
   void codeWithoutTrailingParamIsExtracted() throws Exception {
-    var handler = new AcceptCompletionHandler(Mockito.mock(OAuth20Service.class));
+    var handler = new AcceptCompletionHandler(dummyService());
     try (var server = new AsyncCallbackServerHandler(0, handler)) {
       server.start();
       int port = ((InetSocketAddress) server.getSocketChannel().getLocalAddress()).getPort();

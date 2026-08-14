@@ -33,7 +33,7 @@
               <goal>copy-dependencies</goal>
             </goals>
             <configuration>
-              <includeArtifactIds>scribejava-core,scribejava-java8,lablib-checkboxtree,xchart,VectorGraphics2D</includeArtifactIds>
+              <includeArtifactIds>lablib-checkboxtree,xchart,VectorGraphics2D</includeArtifactIds>
             </configuration>
           </execution>
         </executions>
@@ -50,7 +50,7 @@
             resolution:=optional,org.apache.pdfbox.pdmodel.*;resolution:=optional,org.scilab.forge.jlatexmath.*;resolution:=optional,\
             !sun.swing,*
             Export-Package: !org.weasis.core.internal,!org.weasis.core.util,org.weasis.core.*
-            -exportcontents: com.github.scribejava.*,eu.essilab.lablib.checkboxtree.*,\
+            -exportcontents: eu.essilab.lablib.checkboxtree.*,\
             org.knowm.xchart.*,de.erichseifert.*
           </bnd>
         </configuration>
@@ -80,28 +80,6 @@
     <dependency>
       <groupId>org.weasis.thirdparty</groupId>
       <artifactId>jaxb-osgi</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.github.scribejava</groupId>
-      <artifactId>scribejava-core</artifactId>
-      <version>${scribejava.version}</version>
-      <exclusions>
-        <exclusion>
-          <groupId>com.fasterxml.jackson.core</groupId>
-          <artifactId>jackson-databind</artifactId>
-        </exclusion>
-      </exclusions>
-    </dependency>
-    <dependency>
-      <groupId>com.github.scribejava</groupId>
-      <artifactId>scribejava-java8</artifactId>
-      <version>${scribejava.version}</version>
-      <exclusions>
-        <exclusion>
-          <groupId>com.fasterxml.jackson.core</groupId>
-          <artifactId>jackson-databind</artifactId>
-        </exclusion>
-      </exclusions>
     </dependency>
     <dependency>
       <groupId>com.fasterxml.jackson.core</groupId>

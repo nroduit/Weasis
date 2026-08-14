@@ -14,17 +14,16 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import com.github.scribejava.core.model.OAuth2AccessToken;
 import org.junit.jupiter.api.Test;
 
 class AuthMethodTest {
 
   /** Minimal {@link AuthMethod} that only fills the abstract API to exercise default methods. */
   private static final class StubAuthMethod implements AuthMethod {
-    private final OAuth2AccessToken token;
+    private final OAuth2Token token;
     private boolean local;
 
-    StubAuthMethod(OAuth2AccessToken token) {
+    StubAuthMethod(OAuth2Token token) {
       this.token = token;
     }
 
@@ -44,7 +43,7 @@ class AuthMethodTest {
     }
 
     @Override
-    public OAuth2AccessToken getToken() {
+    public OAuth2Token getToken() {
       return token;
     }
 
@@ -81,13 +80,13 @@ class AuthMethodTest {
 
   @Test
   void hasValidTokenIsFalseForEmptyAccessToken() {
-    var token = new OAuth2AccessToken("", "raw");
+    var token = new OAuth2Token("", null, null, null, null, null);
     assertFalse(new StubAuthMethod(token).hasValidToken());
   }
 
   @Test
   void hasValidTokenIsTrueForNonEmptyAccessToken() {
-    var token = new OAuth2AccessToken("at", "raw");
+    var token = new OAuth2Token("at", null, null, null, null, null);
     assertTrue(new StubAuthMethod(token).hasValidToken());
   }
 
