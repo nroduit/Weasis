@@ -52,8 +52,7 @@ public class AuthenticationEditor extends AbstractListEditor<AuthMethod> {
     AuthMethodDialog dialog =
         new AuthMethodDialog(this, Messages.getString("auth.method"), input, comboBox);
     GuiUtils.showCenterScreen(dialog);
-    if (input == null) {
-      initializeList();
-    }
+    // The combo box holds a new instance after an edit, rebuild the list to drop the stale one
+    initializeList();
   }
 }

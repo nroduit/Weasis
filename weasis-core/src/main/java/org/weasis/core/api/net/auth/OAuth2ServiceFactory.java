@@ -22,6 +22,7 @@ import org.slf4j.LoggerFactory;
 import org.weasis.core.Messages;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.net.SocketUtil;
+import org.weasis.core.util.StringUtil;
 
 /** Factory for creating and caching OAuth2 services with predefined authentication methods. */
 public final class OAuth2ServiceFactory {
@@ -49,6 +50,17 @@ public final class OAuth2ServiceFactory {
   public static OAuth20Service getService(AuthMethod authMethod, int port) {
     String serviceKey = authMethod.getUid() + ":" + port; // NON-NLS
     return services.computeIfAbsent(serviceKey, uid -> createOAuth20Service(authMethod, port));
+  }
+
+  /**
+   * Discards the services cached for this method so that the next request is built from the current
+   * provider and registration. Must be called whenever an authentication method is edited or
+   * removed.
+   */
+  public static void invalidateService(String uid) {
+    if (StringUtil.hasText(uid)) {
+      services.keySet().removeIf(key -> key.startsWith(uid + ":"));
+    }
   }
 
   public static AuthProvider buildKeycloakProvider(String name, String baseUrl, String realm) {
