@@ -97,7 +97,6 @@ public class RetrieveTask extends ExplorerTask<ExplorerTask<Boolean, String>, St
       if (callingNode == null) {
         errorMessage = Messages.getString("RetrieveTask.no_calling_node");
       } else {
-        final DicomState state;
         RetrieveType type =
             (RetrieveType) dicomQrView.getComboDicomRetrieveType().getSelectedItem();
         AdvancedParams params = new AdvancedParams();
@@ -106,135 +105,16 @@ public class RetrieveTask extends ExplorerTask<ExplorerTask<Boolean, String>, St
         connectOptions.setAcceptTimeout(5000);
         params.setConnectOptions(connectOptions);
 
-        if (RetrieveType.CGET == type) {
-          File sopClass = ResourceUtil.getResource(DicomResource.CGET_SOP_UID);
-          URL url = null;
-          if (sopClass.canRead()) {
-            try {
-              url = sopClass.toURI().toURL();
-            } catch (MalformedURLException e) {
-              LOGGER.error("SOP Class url conversion", e);
-            }
-          }
-          tempFolder = DicomQrView.getSessionTempFolder();
-          openingStrategy.setFullImportSession(false);
-          progress.addProgressListener(
-              p -> {
-                Path current = p.getProcessedFile();
-                if (current != null && p.getAttributes() == null) {
-                  LoadLocalDicom task =
-                      new LoadLocalDicom(
-                          new File[] {current.toFile()}, false, explorerDcmModel, openingStrategy);
-                  DicomModel.LOADING_EXECUTOR.execute(task);
-                }
-              });
-          state =
-              CGet.process(
-                  params,
-                  callingNode.getDicomNodeWithOnlyAET(),
-                  node.getDicomNode(),
-                  progress,
-                  tempFolder,
-                  url,
-                  dcmParams);
-        } else if (RetrieveType.CMOVE == type) {
-          DicomListener dicomListener = dicomQrView.getDicomListener();
-          try {
-            if (dicomListener == null) {
-              errorMessage = Messages.getString("RetrieveTask.msg_start_listener");
-            } else {
-              tempFolder = dicomListener.getStoreSCP().getStorageDir();
-              if (dicomListener.isRunning()) {
-                errorMessage = Messages.getString("RetrieveTask.msg_running_listener");
-              } else {
-                ListenerParams lparams = new ListenerParams(params, true);
-                dicomListener.start(callingNode.getDicomNode(), lparams);
-              }
-            }
-          } catch (Exception e) {
-            if (dicomListener != null) {
-              dicomListener.stop();
-            }
-            String msg = Messages.getString("RetrieveTask.msg_start_listener");
-            errorMessage = String.format("%s: %s.", msg, e.getMessage()); // NON-NLS
-            LOGGER.error("Start DICOM listener", e);
-          }
-
-          if (errorMessage != null) {
-            state = new DicomState(Status.UnableToProcess, errorMessage, null);
-          } else {
-            state =
-                CMove.process(
-                    params,
-                    callingNode.getDicomNode(),
-                    node.getDicomNode(),
-                    callingNode.getAeTitle(),
-                    progress,
-                    dcmParams);
-            if (dicomListener != null) {
-              dicomListener.stop();
-            }
-          }
+        if (RetrieveType.CGET == type || RetrieveType.CMOVE == type) {
+          errorMessage = queueSeriesRetrieve(params, callingNode, node, type, null);
         } else if (RetrieveType.WADO == type) {
-          List<AbstractDicomNode> webNodes =
-              AbstractDicomNode.loadDicomNodes(
-                  AbstractDicomNode.Type.WEB, AbstractDicomNode.UsageType.RETRIEVE, WebType.WADO);
-          String host = getHostname(node.getDicomNode().getHostname());
-          String m1 = Messages.getString("RetrieveTask.no_wado_url_match");
-          DicomWebNode wnode = getWadoUrl(dicomQrView, host, webNodes, m1);
-          DicomModel dicomModel = dicomQrView.getDicomModel();
-          if (wnode == null || dicomModel == null) return null;
-          WadoParameters wadoParameters =
-              new WadoParameters(
-                  "local", wnode.getUrl().toString(), false, null, null, null); // NON-NLS
-          wnode.getHeaders().forEach(wadoParameters::addHttpTag);
-
-          CFindQueryResult query = new CFindQueryResult(wadoParameters);
-          query.fillSeries(
-              params,
-              callingNode.getDicomNodeWithOnlyAET(),
-              node.getDicomNode(),
-              dicomModel,
-              studies);
-          ArcQuery arquery = new ArcQuery(Collections.singletonList(query));
-          String wadoXmlGenerated = arquery.xmlManifest(null);
-          if (wadoXmlGenerated == null) {
-            state =
-                new DicomState(
-                    Status.UnableToProcess,
-                    Messages.getString("RetrieveTask.msg_build_manifest"),
-                    null);
-          } else {
-            List<String> xmlFiles = new ArrayList<>(1);
-            try {
-              Path tempFile = Files.createTempFile(AppProperties.APP_TEMP_DIR, "wado_", ".xml");
-              FileUtil.writeStreamWithIOException(
-                  new ByteArrayInputStream(wadoXmlGenerated.getBytes(StandardCharsets.UTF_8)),
-                  tempFile);
-              xmlFiles.add(tempFile.toString());
-
-            } catch (Exception e) {
-              LOGGER.info("ungzip manifest", e);
-            }
-
-            return new LoadRemoteDicomManifest(xmlFiles, explorerDcmModel);
+          WadoParameters wadoParameters = buildWadoUriParameters(node);
+          if (wadoParameters == null) {
+            return null; // No WADO node matches the archive, the reason is already reported
           }
+          errorMessage = queueSeriesRetrieve(params, callingNode, node, type, wadoParameters);
         } else {
-          state =
-              new DicomState(
-                  Status.UnableToProcess,
-                  Messages.getString("RetrieveTask.msg_retrieve_type"),
-                  null);
-        }
-
-        if (state.getStatus() != Status.Success && state.getStatus() != Status.Cancel) {
-          errorMessage = state.getMessage();
-          if (!StringUtil.hasText(errorMessage)) {
-            DicomState.buildMessage(state, null, null);
-          }
-          if (!StringUtil.hasText(errorMessage)) {
-            errorMessage = Messages.getString("RetrieveTask.msg_unexpected_error");
-          }
+          errorMessage = Messages.getString("RetrieveTask.msg_retrieve_type");
           LOGGER.error("Dicom retrieve error: {}", errorMessage);
         }
       }
@@ -695,10 +575,17 @@ public class RetrieveTask extends ExplorerTask<ExplorerTask<Boolean, String>, St
       dicomSeries.setTag(TagW.ExplorerModel, explorerDcmModel);
       dicomSeries.setTag(TagW.WadoParameters, wadoParameters);
       dicomSeries.setTag(TagW.WadoInstanceReferenceList, new SeriesInstanceList());
+      // A series queried at the series level is retrieved with a single series-level WADO-RS
+      // request, so its instances are never enumerated unless the download has to be resumed.
+      dicomSeries.setTag(LoadSeries.SERIES_BULK_RETRIEVE, Boolean.TRUE);
 
       TagW[] tags =
           TagD.getTagFromIDs(
-              Tag.Modality, Tag.SeriesNumber, Tag.SeriesDescription, Tag.RetrieveURL);
+              Tag.Modality,
+              Tag.SeriesNumber,
+              Tag.SeriesDescription,
+              Tag.RetrieveURL,
+              Tag.NumberOfSeriesRelatedInstances);
       for (TagW tag : tags) {
         tag.readValue(seriesDataset, dicomSeries);
       }
@@ -718,9 +605,7 @@ public class RetrieveTask extends ExplorerTask<ExplorerTask<Boolean, String>, St
               dicomSeries,
               explorerDcmModel,
               dicomQrView.getAuthMethod(),
-              GuiUtils.getUICore()
-                  .getSystemPreferences()
-                  .getIntProperty(LoadSeries.CONCURRENT_DOWNLOADS_IN_SERIES, 4),
+              getConcurrentDownloadsInSeries(),
               true,
               startDownloading);
       loadSeries.setPriority(
@@ -729,51 +614,5 @@ public class RetrieveTask extends ExplorerTask<ExplorerTask<Boolean, String>, St
       loadMap.put(TagD.getTagValue(dicomSeries, Tag.SeriesInstanceUID, String.class), loadSeries);
     }
     return dicomSeries;
-  }
-
-  private void fillInstance(
-      Attributes seriesDataset,
-      Series<?> dicomSeries,
-      Properties props,
-      URLParameters urlParameters) {
-    String seriesUID = seriesDataset.getString(Tag.SeriesInstanceUID);
-    String seriesRetrieveURL = TagD.getTagValue(dicomSeries, Tag.RetrieveURL, String.class);
-    if (StringUtil.hasText(seriesUID) && StringUtil.hasText(seriesRetrieveURL)) {
-      StringBuilder baseQuery = new StringBuilder(seriesRetrieveURL);
-      baseQuery.append("/instances?includefield="); // NON-NLS
-      baseQuery.append(RsQueryResult.INSTANCE_QUERY);
-      baseQuery.append(props.getProperty(RsQueryParams.P_QUERY_EXT, ""));
-
-      int offset = 0;
-      int limit = 1000; // Maximum number of instances to fetch per query
-      try {
-        while (true) {
-          StringBuilder paginatedQuery = new StringBuilder(baseQuery);
-          paginatedQuery.append("&offset=").append(offset); // NON-NLS
-          paginatedQuery.append("&limit=").append(limit); // NON-NLS
-          LOGGER.debug(RsQueryResult.QIDO_REQUEST, paginatedQuery);
-          List<Attributes> instances =
-              RsQueryResult.parseJSON(
-                  paginatedQuery.toString(), dicomQrView.getAuthMethod(), urlParameters);
-          if (instances.isEmpty()) {
-            break;
-          }
-
-          SeriesInstanceList seriesInstanceList =
-              (SeriesInstanceList) dicomSeries.getTagValue(TagW.WadoInstanceReferenceList);
-          if (seriesInstanceList != null) {
-            for (Attributes instanceDataSet : instances) {
-              RsQueryResult.addSopInstance(instanceDataSet, seriesInstanceList, seriesRetrieveURL);
-            }
-          }
-          offset += instances.size();
-          if (instances.size() < limit) {
-            break;
-          }
-        }
-      } catch (Exception e) {
-        LOGGER.error("QIDO-RS all instances with seriesUID {}", seriesUID, e);
-      }
-    }
   }
 }
