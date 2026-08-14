@@ -113,8 +113,6 @@ public class MprContainer extends DicomViewerPlugin
             actions);
   }
 
-  public static final List<SynchView> SYNCH_LIST = List.of(defaultMpr);
-
   public static final MigLayoutModel view1 =
       new MergedCellsBuilder(2, 2, "mpr1", "3 views (left merged)", MprView.class.getName())
           .addMergedCell(0, 0, 1, 2)
@@ -417,7 +415,13 @@ public class MprContainer extends DicomViewerPlugin
 
   @Override
   public Class<?> getSeriesViewerClass() {
-    return view2dClass;
+    return MprView.class;
+  }
+
+  @Override
+  public boolean supportsViewportPanes() {
+    // MPR views are fixed orthogonal planes and must never be tiled
+    return false;
   }
 
   @Override
@@ -427,9 +431,8 @@ public class MprContainer extends DicomViewerPlugin
 
   @Override
   public List<Action> getExportActions() {
-    return selectedImagePane == null
-        ? super.getExportActions()
-        : selectedImagePane.getExportActions();
+    ViewCanvas<DicomImageElement> selected = getSelectedViewCanvas();
+    return selected == null ? super.getExportActions() : selected.getExportActions();
   }
 
   @Override
@@ -675,11 +678,6 @@ public class MprContainer extends DicomViewerPlugin
       }
     }
     return null;
-  }
-
-  @Override
-  public List<SynchView> getSynchList() {
-    return SYNCH_LIST;
   }
 
   @Override

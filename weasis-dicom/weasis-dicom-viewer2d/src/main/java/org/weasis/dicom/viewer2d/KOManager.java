@@ -267,6 +267,10 @@ public final class KOManager {
   public static boolean setKeyObjectReference(
       boolean selectedState, final ViewCanvas<DicomImageElement> view2d) {
 
+    // Capture the displayed image first: the KO selection change below may trigger actions
+    // (scroll reset in tiled mode) that alter which image the view displays
+    DicomImageElement currentImage = view2d.getImage();
+
     KOSpecialElement validKOSelection = getValidKOSelection(view2d);
 
     if (validKOSelection == null) {
@@ -287,8 +291,6 @@ public final class KOManager {
     if (validKOSelection == currentSelectedKO || currentSelectedKO == null) {
       // KO Toggle State is changed only if KO Selection remains the same,
       // or if there was no previous KO Selection
-
-      DicomImageElement currentImage = view2d.getImage();
       hasKeyObjectReferenceChanged =
           validKOSelection.setKeyObjectReference(selectedState, currentImage);
 

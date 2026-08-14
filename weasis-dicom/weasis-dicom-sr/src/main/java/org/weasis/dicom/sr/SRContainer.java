@@ -45,7 +45,6 @@ import org.weasis.core.api.util.ResourceUtil.FileIcon;
 import org.weasis.core.ui.editor.SeriesViewerUI;
 import org.weasis.core.ui.editor.image.ImageViewerEventManager;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
-import org.weasis.core.ui.editor.image.SynchView;
 import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.pref.LauncherToolBar;
 import org.weasis.core.ui.util.DefaultAction;
@@ -74,8 +73,6 @@ public class SRContainer extends DicomViewerPlugin implements PropertyChangeList
           SRView.class.getName());
 
   public static final List<MigLayoutModel> LAYOUT_LIST = List.of(VIEWS_SR);
-
-  public static final List<SynchView> SYNCH_LIST = Collections.emptyList();
 
   public static final SeriesViewerUI UI = new SeriesViewerUI(SRContainer.class);
   static final ImageViewerEventManager<DicomImageElement> SR_EVENT_MANAGER =
@@ -408,11 +405,6 @@ public class SRContainer extends DicomViewerPlugin implements PropertyChangeList
   @Override
   public void selectLayoutPositionForAddingSeries(List<MediaSeries<DicomImageElement>> seriesList) {
     // Do it in addSeries()
-  }
-
-  @Override
-  public List<SynchView> getSynchList() {
-    return SYNCH_LIST;
   }
 
   @Override

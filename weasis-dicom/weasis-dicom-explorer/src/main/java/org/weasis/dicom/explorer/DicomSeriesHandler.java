@@ -26,7 +26,6 @@ import org.weasis.core.ui.editor.ViewerOpenOptions;
 import org.weasis.core.ui.editor.ViewerPlacement;
 import org.weasis.core.ui.editor.ViewerPluginBuilder;
 import org.weasis.core.ui.editor.image.SequenceHandler;
-import org.weasis.core.ui.editor.image.SynchData;
 import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.DicomSeries;
@@ -176,19 +175,12 @@ public class DicomSeriesHandler extends SequenceHandler {
   }
 
   private void addSeriesToPlugin(DicomSeries series, DicomViewerPlugin selectedPlugin) {
-    if (isTileMode(selectedPlugin)) {
-      selectedPlugin.addSeries(series);
-    } else {
-      viewCanvas.setSeries(series);
-      // Getting the focus has a delay, and so it will trigger the view selection later
-      if (Boolean.TRUE.equals(selectedPlugin.isContainingView(viewCanvas))) {
-        selectedPlugin.setSelectedImagePaneFromFocus(viewCanvas);
-      }
+    // A drop on a tile assigns the series to its whole viewport (all tiles show the same series)
+    selectedPlugin.setSeriesToView(viewCanvas, series);
+    // Getting the focus has a delay, and so it will trigger the view selection later
+    if (selectedPlugin.isContainingView(viewCanvas)) {
+      selectedPlugin.setSelectedImagePaneFromFocus(viewCanvas);
     }
-  }
-
-  private boolean isTileMode(DicomViewerPlugin selectedPlugin) {
-    return SynchData.Mode.TILE.equals(selectedPlugin.getSynchView().getSynchData().getMode());
   }
 
   private void openInAppropriatePlugin(

@@ -352,6 +352,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
               (Boolean) val,
               frameIndex);
         } else if (command.equals(ActionW.CROSSHAIR.cmd())
+            && !tile
             && series != null
             && val instanceof PanPoint p) {
           GeometryOfSlice sliceGeometry = this.getImage().getSliceGeometry();
@@ -359,7 +360,9 @@ public class View2d extends DefaultView2d<DicomImageElement> {
           ImageViewerPlugin<DicomImageElement> container =
               eventManager.getSelectedView2dContainer();
           if (container != null) {
-            crosshairAction(sliceGeometry, container.getView2ds(), this, fruid, p);
+            // Tiled viewports are isolated from cross-view synchronization: exclude their
+            // canvases from the crosshair fan-out
+            crosshairAction(sliceGeometry, container.getSynchableImagePanels(), this, fruid, p);
           }
         }
       }
@@ -1376,6 +1379,10 @@ public class View2d extends DefaultView2d<DicomImageElement> {
           popupMenu, manager.getOrientationMenu("weasis.contextmenu.orientation"));
       GuiUtils.addItemToMenu(popupMenu, manager.getCineMenu("weasis.contextmenu.cine"));
       GuiUtils.addItemToMenu(popupMenu, manager.getSortStackMenu("weasis.contextmenu.sortstack"));
+      count = addSeparatorToPopupMenu(popupMenu, count);
+
+      GuiUtils.addItemToMenu(
+          popupMenu, manager.getViewportLayoutMenu("weasis.contextmenu.viewport"));
       addSeparatorToPopupMenu(popupMenu, count);
 
       GuiUtils.addItemToMenu(popupMenu, manager.getResetMenu("weasis.contextmenu.reset"));

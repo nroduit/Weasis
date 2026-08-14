@@ -23,7 +23,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.BiFunction;
-import java.util.stream.Collectors;
 import javax.swing.BoundedRangeModel;
 import javax.swing.ButtonGroup;
 import javax.swing.DefaultComboBoxModel;
@@ -85,7 +84,6 @@ import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.editor.image.MeasureToolBar;
 import org.weasis.core.ui.editor.image.MouseActions;
 import org.weasis.core.ui.editor.image.SynchCineEvent;
-import org.weasis.core.ui.editor.image.SynchData;
 import org.weasis.core.ui.editor.image.SynchEvent;
 import org.weasis.core.ui.editor.image.SynchManager;
 import org.weasis.core.ui.editor.image.SynchView;
@@ -98,6 +96,7 @@ import org.weasis.core.ui.model.utils.bean.PanPoint;
 import org.weasis.core.util.LangUtil;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.DicomSeries;
+import org.weasis.dicom.codec.KOSpecialElement;
 import org.weasis.dicom.codec.PRSpecialElement;
 import org.weasis.dicom.codec.PresentationStateReader;
 import org.weasis.dicom.codec.SortSeriesStack;
@@ -142,7 +141,6 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
           "scroll", // NON-NLS
           "layout", // NON-NLS
           "mouseLeftAction", // NON-NLS
-          "synch", // NON-NLS
           "reset"); // NON-NLS
 
   /** The single instance of this singleton class. */
@@ -194,9 +192,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
     setAction(newFilterAction());
     setAction(newSortStackAction());
     setAction(newLayoutAction(View2dContainer.DEFAULT_LAYOUT_LIST.toArray(new MigLayoutModel[0])));
-    setAction(newSynchAction(View2dContainer.DEFAULT_SYNCH_LIST.toArray(new SynchView[0])));
-    getAction(ActionW.SYNCH)
-        .ifPresent(a -> a.setSelectedItemWithoutTriggerAction(SynchView.DEFAULT_STACK));
+    setAction(newSynchAction(SynchView.DEFAULT_STACK));
     setAction(newSynchModeAction());
     setAction(newMeasurementAction(MeasureToolBar.getMeasureGraphicList().toArray(new Graphic[0])));
     setAction(newDrawAction(MeasureToolBar.getDrawGraphicList().toArray(new Graphic[0])));
@@ -807,14 +803,9 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
   }
 
   private void koAction(Feature<?> action, Object selected) {
-    Optional<ComboItemListener<SynchView>> synchAction = getAction(ActionW.SYNCH);
-    SynchView synchView =
-        synchAction
-            .map(comboItemListener -> (SynchView) comboItemListener.getSelectedItem())
-            .orElse(null);
-    boolean tileMode =
-        synchView != null && SynchData.Mode.TILE.equals(synchView.getSynchData().getMode());
-    ViewCanvas<DicomImageElement> selectedView = getSelectedViewPane();
+    var selectedView = getSelectedViewPane();
+    var viewport = getSelectedViewPortPane();
+    boolean tileMode = viewport != null && viewport.isTiled();
     if (tileMode) {
       if (selectedView2dContainer instanceof View2dContainer container && selectedView != null) {
         boolean filterSelection = selected instanceof Boolean;
@@ -829,7 +820,8 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
                 ? 0
                 : viewPane.getFrameIndex() - viewPane.getTileOffset();
 
-        for (ViewCanvas<DicomImageElement> view : container.getImagePanels(true)) {
+        // KO filtering in tile mode is scoped to the canvases of the tiled viewport
+        for (ViewCanvas<DicomImageElement> view : viewport.getAllViewCanvases()) {
           if (!(view.getSeries() instanceof DicomSeries) || !(view instanceof View2d)) {
             continue;
           }
@@ -837,7 +829,6 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
           KOManager.updateKOFilter(view, selectedKO, enableFilter, frameIndex, false);
         }
 
-        container.updateTileOffset();
         if (!(selectedView.getSeries() instanceof DicomSeries)) {
           List<ViewCanvas<DicomImageElement>> panes = selectedView2dContainer.getImagePanels(false);
           if (!panes.isEmpty()) {
@@ -853,13 +844,32 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
 
     if (tileMode) {
       Optional<SliderCineListener> cineAction = getAction(ActionW.SCROLL_SERIES);
-      if (cineAction.isPresent() && cineAction.get().isActionEnabled()) {
+      if (cineAction.isPresent() && cineAction.get().isActionEnabled() && selectedView != null) {
         SliderCineListener moveTroughSliceAction = cineAction.get();
-        if (moveTroughSliceAction.getSliderValue() == 1) {
-          moveTroughSliceAction.stateChanged(moveTroughSliceAction.getSliderModel());
-        } else {
-          moveTroughSliceAction.setSliderValue(1);
+        boolean koFilterActive =
+            LangUtil.nullToFalse((Boolean) selectedView.getActionValue(ActionW.KO_FILTER.cmd()))
+                && selectedView.getActionValue(ActionW.KO_SELECTION.cmd())
+                    instanceof KOSpecialElement;
+        if (koFilterActive) {
+          // The filtered sequence starts over: jump to its first image
+          if (moveTroughSliceAction.getSliderValue() == 1) {
+            moveTroughSliceAction.stateChanged(moveTroughSliceAction.getSliderModel());
+          } else {
+            moveTroughSliceAction.setSliderValue(1);
+          }
+        } else if (selected instanceof Boolean) {
+          // The KO filter has been turned off: re-display consecutive unfiltered images while
+          // keeping the image of the selected tile in place. The fired value is the pane base
+          // index (each tile adds its own offset).
+          int value = Math.max(1, selectedView.getFrameIndex() - selectedView.getTileOffset() + 1);
+          if (moveTroughSliceAction.getSliderValue() == value) {
+            moveTroughSliceAction.stateChanged(moveTroughSliceAction.getSliderModel());
+          } else {
+            moveTroughSliceAction.setSliderValue(value);
+          }
         }
+        // A KO selection change with the filter off does not alter the displayed images:
+        // do not touch the scroll position
       }
     }
   }
@@ -1073,10 +1083,6 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
       Optional<ComboItemListener<MigLayoutModel>> layoutAction = getAction(ActionW.LAYOUT);
       if (oldContainer == null
           || !oldContainer.getClass().equals(selectedView2dContainer.getClass())) {
-        synchAction.ifPresent(
-            a ->
-                a.setDataListWithoutTriggerAction(
-                    selectedView2dContainer.getSynchList().toArray(new SynchView[0])));
         layoutAction.ifPresent(
             a ->
                 a.setDataListWithoutTriggerAction(
@@ -2069,48 +2075,6 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
         }
       }
     }
-  }
-
-  public void synch(String[] argv) throws IOException {
-    final String[] usage = {
-      "Set a synchronization mode", // NON-NLS
-      "Usage: dcmview2d:synch VALUE", // NON-NLS
-      "VALUE is " // NON-NLS
-          + View2dContainer.DEFAULT_SYNCH_LIST.stream()
-              .map(SynchView::getCommand) // NON-NLS
-              .collect(Collectors.joining("|", "(", ")")),
-      "  -? --help       show help" // NON-NLS
-    };
-    final Option opt = Options.compile(usage).parse(argv);
-    final List<String> args = opt.args();
-
-    if (opt.isSet("help") || args.size() != 1) { // NON-NLS
-      opt.usage();
-      return;
-    }
-    GuiExecutor.execute(
-        () -> {
-          String command = args.getFirst();
-          if (command != null) {
-            ImageViewerPlugin<DicomImageElement> view = getSelectedView2dContainer();
-            if (view != null) {
-              try {
-                Optional<ComboItemListener<SynchView>> synchAction = getAction(ActionW.SYNCH);
-                if (synchAction.isPresent()) {
-                  for (SynchView synch : view.getSynchList()) {
-                    if (synch.getCommand().equals(command)) {
-                      synchAction.get().setSelectedItem(synch);
-                      return;
-                    }
-                  }
-                  throw new IllegalArgumentException(command + " not found!");
-                }
-              } catch (Exception e) {
-                LOGGER.error("Synch command: {}", command, e);
-              }
-            }
-          }
-        });
   }
 
   public void reset(String[] argv) throws IOException {

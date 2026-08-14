@@ -21,6 +21,7 @@ import java.awt.event.WindowEvent;
 import java.beans.PropertyChangeListener;
 import java.lang.reflect.Constructor;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
@@ -39,7 +40,6 @@ import org.weasis.core.api.gui.layout.MigLayoutModel;
 import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.ComboItemListener;
-import org.weasis.core.api.gui.util.Filter;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.gui.util.WinUtil;
 import org.weasis.core.api.media.data.ImageElement;
@@ -61,50 +61,51 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
   public static final String F_VIEWS = Messages.getString("ImageViewerPlugin.2");
 
   // A model must have at least one view that inherited of DefaultView2d
-  public static final Class<?> view2dClass = ViewCanvas.class;
+  public static final Class<?> VIEWPORT_CLASS = ViewportPane.class;
   public static final MigLayoutModel VIEWS_1x1 =
       new MigLayoutModel(
           "1x1", // NON-NLS
           String.format(Messages.getString("ImageViewerPlugin.1"), "1x1"), // NON-NLS
           1,
           1,
-          view2dClass.getName());
+          VIEWPORT_CLASS.getName());
   public static final MigLayoutModel VIEWS_2x1 =
       new MigLayoutModel(
           "2x1", // NON-NLS
           String.format(F_VIEWS, "2x1"), // NON-NLS
           2,
           1,
-          view2dClass.getName());
+          VIEWPORT_CLASS.getName());
   public static final MigLayoutModel VIEWS_1x2 =
       new MigLayoutModel(
           "1x2", // NON-NLS
           String.format(F_VIEWS, "1x2"), // NON-NLS
           1,
           2,
-          view2dClass.getName());
+          VIEWPORT_CLASS.getName());
   public static final MigLayoutModel VIEWS_1x3 =
       new MigLayoutModel(
           "1x3", // NON-NLS
           String.format(F_VIEWS, "1x3"), // NON-NLS
           1,
           3,
-          view2dClass.getName());
+          VIEWPORT_CLASS.getName());
   public static final MigLayoutModel VIEWS_1x4 =
       new MigLayoutModel(
           "1x4", // NON-NLS
           String.format(F_VIEWS, "1x4"), // NON-NLS
           1,
           4,
-          view2dClass.getName());
+          VIEWPORT_CLASS.getName());
   public static final MigLayoutModel VIEWS_2x2_f2 =
-      new MergedCellsBuilder(2, 2, "layout_c2x1", "3 views (right merged)", view2dClass.getName())
+      new MergedCellsBuilder(
+              2, 2, "layout_c2x1", "3 views (right merged)", VIEWPORT_CLASS.getName())
           .addCell(0, 0)
           .addMergedCell(0, 1, 1, 2)
           .addCell(1, 0)
           .build();
   public static final MigLayoutModel VIEWS_2_f1x2 =
-      new MergedCellsBuilder(2, 2, "layout_r1x2", "3 views (top merged)", view2dClass.getName())
+      new MergedCellsBuilder(2, 2, "layout_r1x2", "3 views (top merged)", VIEWPORT_CLASS.getName())
           .addMergedCell(0, 0, 2, 1)
           .addCell(1, 0)
           .addCell(1, 1)
@@ -115,26 +116,32 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
           String.format(F_VIEWS, "2x2"), // NON-NLS
           2,
           2,
-          view2dClass.getName());
+          VIEWPORT_CLASS.getName());
   public static final MigLayoutModel VIEWS_2x3 =
       new MigLayoutModel(
           "2x3", // NON-NLS
           String.format(F_VIEWS, "2x3"), // NON-NLS
           2,
           3,
-          view2dClass.getName());
+          VIEWPORT_CLASS.getName());
   public static final MigLayoutModel VIEWS_2x4 =
       new MigLayoutModel(
           "2x4", // NON-NLS
           String.format(F_VIEWS, "2x4"), // NON-NLS
           2,
           4,
-          view2dClass.getName());
+          VIEWPORT_CLASS.getName());
 
   public record LayoutModel(String uid, MigLayoutModel model) {}
 
-  /** The current focused <code>ImagePane</code>. The default is 0. */
-  protected ViewCanvas<E> selectedImagePane = null;
+  /** The currently selected/focused {@link ViewportPane}. The default is {@code null}. */
+  protected ViewportPane<E> selectedPane = null;
+
+  /**
+   * The selected canvas for layouts whose cells host a {@link ViewCanvas} directly, without a
+   * {@link ViewportPane} (e.g. MPR and 3D layouts). {@code null} when a pane is selected.
+   */
+  protected ViewCanvas<E> selectedCanvas = null;
 
   /** The layout cell manager that handles ViewCanvas and Component placement */
   protected final LayoutCellManager<E> cellManager;
@@ -190,12 +197,129 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
 
   public abstract MigLayoutModel getDefaultLayoutModel();
 
+  /**
+   * Returns the selected/focused canvas: the one of the selected {@link ViewportPane}, or the
+   * directly selected canvas for layouts without panes (e.g. MPR, 3D).
+   *
+   * @return the selected {@link ViewCanvas}, or {@code null} if none
+   */
   public ViewCanvas<E> getSelectedViewCanvas() {
-    return selectedImagePane;
+    return selectedPane != null ? selectedPane.getSelectedCanvas() : selectedCanvas;
+  }
+
+  /**
+   * Whether this container's layouts host {@link ViewportPane} slots, enabling per-viewport tiled
+   * mode and hanging-protocol layouts. Containers with fixed, specialized views (MPR, 3D) return
+   * {@code false}.
+   */
+  public boolean supportsViewportPanes() {
+    return true;
+  }
+
+  /**
+   * Returns the currently selected {@link ViewportPane}.
+   *
+   * @return the selected pane, or {@code null} if none
+   */
+  public ViewportPane<E> getSelectedViewportPane() {
+    return selectedPane;
+  }
+
+  /**
+   * Returns the {@link ViewportPane} that owns the given canvas, or {@code null} when the canvas is
+   * hosted directly by a layout cell (MPR, 3D).
+   *
+   * @param canvas the canvas to look up
+   * @return the owning pane, or {@code null}
+   */
+  public ViewportPane<E> getOwningPane(ViewCanvas<E> canvas) {
+    if (canvas == null) {
+      return null;
+    }
+    for (ViewportPane<E> pane : getViewportPanes()) {
+      if (pane.getAllViewCanvases().contains(canvas)) {
+        return pane;
+      }
+    }
+    return null;
+  }
+
+  /**
+   * Assigns a series to the given view. A canvas belonging to a TILED {@link ViewportPane} receives
+   * the series through its whole pane so every tile keeps showing the same series at successive
+   * tile offsets.
+   *
+   * @param view the target canvas
+   * @param series the series to display (may be {@code null} to clear)
+   */
+  public void setSeriesToView(ViewCanvas<E> view, MediaSeries<E> series) {
+    ViewportPane<E> pane = getOwningPane(view);
+    if (pane != null && pane.isTiled()) {
+      pane.setSeries(series);
+    } else if (view != null) {
+      view.setSeries(series, null);
+    }
   }
 
   public List<ViewCanvas<E>> getView2ds() {
-    return cellManager.getAllViewCanvases();
+    return getAllCanvasesIncludingPanes();
+  }
+
+  /**
+   * Returns all {@link ViewCanvas} instances visible in this plugin, including those nested inside
+   * {@link ViewportPane} components.
+   *
+   * <p>For a plain (non-HP) layout every entry comes directly from {@code cellManager}. For an
+   * HP-driven layout, each outer cell holds a {@link ViewportPane}: STACK panes contribute their
+   * single canvas, TILED panes contribute all inner tile canvases.
+   *
+   * @return flattened, ordered list of every active ViewCanvas
+   */
+  public List<ViewCanvas<E>> getAllCanvasesIncludingPanes() {
+    List<ViewCanvas<E>> direct = cellManager.getAllViewCanvases();
+    List<ViewCanvas<E>> result = new ArrayList<>(direct);
+    for (Component c : cellManager.getNonViewCanvasComponents()) {
+      if (c instanceof ViewportPane<?> pane) {
+        @SuppressWarnings("unchecked")
+        ViewportPane<E> typedPane = (ViewportPane<E>) pane;
+        result.addAll(typedPane.getAllViewCanvases());
+      }
+    }
+    return result;
+  }
+
+  /**
+   * Returns all top-level {@link ViewportPane} components owned by this plugin.
+   *
+   * @return list of viewport panes (may be empty for classic non-HP layouts)
+   */
+  public List<ViewportPane<E>> getViewportPanes() {
+    List<ViewportPane<E>> panes = new ArrayList<>();
+    for (Component c : cellManager.getNonViewCanvasComponents()) {
+      if (c instanceof ViewportPane<?> pane) {
+        @SuppressWarnings("unchecked")
+        ViewportPane<E> typedPane = (ViewportPane<E>) pane;
+        panes.add(typedPane);
+      }
+    }
+    return panes;
+  }
+
+  /**
+   * Returns the canvases participating in container-level (cross-viewport) synchronization: all
+   * direct canvases plus the canvases of non-tiled panes. Canvases inside a TILED pane are excluded
+   * — they synchronize with each other within their pane only.
+   *
+   * @return mutable list of synchronizable canvases
+   */
+  public List<ViewCanvas<E>> getSynchableImagePanels() {
+    List<ViewCanvas<E>> result = new ArrayList<>(cellManager.getAllViewCanvases());
+    for (ViewportPane<E> pane : getViewportPanes()) {
+      if (!pane.isTiled()) {
+        result.addAll(pane.getAllViewCanvases());
+      }
+    }
+    return result;
   }
 
   public ImageViewerEventManager<E> getEventManager() {
@@ -209,9 +333,17 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
     GuiExecutor.execute(
         () -> {
           removeComponents();
+          // Dispose direct canvases
           for (ViewCanvas<E> v : cellManager) {
             resetMaximizedSelectedImagePane(v);
             v.disposeView();
+          }
+          // Dispose panes (their active canvases and the hidden stack canvas of tiled panes)
+          for (ViewportPane<E> pane : getViewportPanes()) {
+            for (ViewCanvas<E> v : pane.getAllViewCanvases()) {
+              resetMaximizedSelectedImagePane(v);
+            }
+            pane.dispose();
           }
         });
   }
@@ -298,18 +430,13 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
 
   @Override
   public void addSeries(MediaSeries<E> sequence) {
-    if (sequence != null && selectedImagePane != null) {
-      if (SynchData.Mode.TILE.equals(synchView.getSynchData().getMode())) {
-        selectedImagePane.setSeries(sequence, null);
-        updateTileOffset();
-        return;
-      }
+    if (sequence != null) {
       ViewCanvas<E> viewPane = getSelectedViewCanvas();
       if (viewPane != null) {
-        viewPane.setSeries(sequence);
+        setSeriesToView(viewPane, sequence);
         viewPane.getJComponent().repaint();
 
-        // Set selection to the next view
+        // Set selection to the next view slot
         setSelectedImagePane(getNextSelectedImagePane());
       }
     }
@@ -318,7 +445,7 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
   @Override
   public void removeSeries(MediaSeries<E> series) {
     if (series != null) {
-      for (ViewCanvas<E> v : cellManager) {
+      for (ViewCanvas<E> v : getAllCanvasesIncludingPanes()) {
         if (v.getSeries() == series) {
           v.setSeries(null, null);
         }
@@ -338,7 +465,7 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
   @Override
   public List<MediaSeries<E>> getOpenSeries() {
     List<MediaSeries<E>> list = new ArrayList<>();
-    for (ViewCanvas<E> v : cellManager) {
+    for (ViewCanvas<E> v : getAllCanvasesIncludingPanes()) {
       MediaSeries<E> s = v.getSeries();
       if (s != null) {
         list.add(s);
@@ -392,64 +519,86 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
   protected synchronized void setLayoutModel(MigLayoutModel layoutModel) {
     MigLayoutModel newLayout = layoutModel == null ? VIEWS_1x1.copy() : layoutModel.copy();
 
-    List<ViewCanvas<E>> preservedViews = preserveViewsWithImages(newLayout);
+    PreservedContent<E> preserved = preserveContent(newLayout);
     removeComponents();
 
     cellManager.setLayoutModel(newLayout);
     grid.removeAll();
     updateMigLayoutContraints(newLayout);
 
-    var graphicListener = populateGridWithComponents(newLayout, preservedViews);
+    var graphicListener = populateGridWithComponents(newLayout, preserved);
     configureViewsAndFireEvents(graphicListener);
   }
 
+  /** Content carried over to a new layout: whole panes (keeping their mode) and direct canvases. */
+  private record PreservedContent<E extends ImageElement>(
+      List<ViewportPane<E>> panes, List<ViewCanvas<E>> canvases) {}
+
   /**
-   * Preserves views containing images, disposes empty ones, and adjusts count to layout capacity.
+   * Preserves displayed content across a layout change and adjusts it to the new layout capacity.
    *
-   * @param newLayout the new layout model
-   * @return list of preserved ViewCanvas instances
+   * <p>A {@link ViewportPane} with content is preserved as a whole, keeping its STACK/TILED
+   * configuration and series — a pane counts as ONE slot whatever its tile count. Directly hosted
+   * canvases (MPR, 3D, and the mixed layouts pairing a view with a histogram or a DICOM dump) are
+   * preserved individually.
+   *
+   * <p>Panes and canvases share a single slot budget: a pane can be unwrapped to fill a {@link
+   * ViewCanvas} cell and a canvas can be wrapped into a new pane, so content survives a switch
+   * between pane-based and canvas-based layouts. Empty panes/canvases and any excess beyond the new
+   * layout's capacity are disposed.
    */
-  private List<ViewCanvas<E>> preserveViewsWithImages(MigLayoutModel newLayout) {
-    List<ViewCanvas<E>> allCanvases = cellManager.getAllViewCanvases();
-
-    List<ViewCanvas<E>> viewsWithImages =
-        allCanvases.stream().filter(v -> v.getSeries() != null && v.getImage() != null).toList();
-
-    allCanvases.stream()
-        .filter(v -> v.getSeries() == null || v.getImage() == null)
-        .forEach(ViewCanvas::disposeView);
-
-    // Trim excess views if new layout has fewer slots
-    int layoutCapacity = getViewTypeNumber(newLayout, view2dClass);
-    if (viewsWithImages.size() > layoutCapacity) {
-      viewsWithImages
-          .subList(layoutCapacity, viewsWithImages.size())
-          .forEach(ViewCanvas::disposeView);
-      return new ArrayList<>(viewsWithImages.subList(0, layoutCapacity));
-    }
-    ComboItemListener<SynchView> synch = eventManager.getAction(ActionW.SYNCH).orElse(null);
-    if (synch != null) {
-      if (synch.getSelectedItem() instanceof SynchView sel) {
-        sel.resetSynchData();
+  private PreservedContent<E> preserveContent(MigLayoutModel newLayout) {
+    List<ViewportPane<E>> panes = new ArrayList<>();
+    for (ViewportPane<E> pane : getViewportPanes()) {
+      boolean hasContent =
+          pane.getAllViewCanvases().stream()
+              .anyMatch(v -> v.getSeries() != null && v.getImage() != null);
+      if (hasContent) {
+        panes.add(pane);
+      } else {
+        pane.dispose();
       }
     }
 
-    return new ArrayList<>(viewsWithImages);
+    List<ViewCanvas<E>> canvases = new ArrayList<>();
+    for (ViewCanvas<E> v : cellManager.getAllViewCanvases()) {
+      if (v.getSeries() != null && v.getImage() != null) {
+        canvases.add(v);
+      } else {
+        v.disposeView();
+      }
+    }
+
+    // Drop the excess from the end, canvases first: a pane carries the richer state (tile grid,
+    // per-tile synchronization) and is the more expensive content to rebuild.
+    int excess = panes.size() + canvases.size() - getViewSlotNumber(newLayout);
+    for (; excess > 0 && !canvases.isEmpty(); excess--) {
+      canvases.removeLast().disposeView();
+    }
+    for (; excess > 0 && !panes.isEmpty(); excess--) {
+      panes.removeLast().dispose();
+    }
+
+    ComboItemListener<SynchView> synch = eventManager.getAction(ActionW.SYNCH).orElse(null);
+    if (synch != null && synch.getSelectedItem() instanceof SynchView sel) {
+      sel.resetSynchData();
+    }
+    return new PreservedContent<>(panes, canvases);
   }
 
   /**
    * Populates the grid with components based on the layout cells.
    *
    * @param layout the layout model
-   * @param preservedViews list of preserved ViewCanvas instances to reuse
+   * @param preserved panes and canvases to reuse
    * @return GraphicSelectionListener if a HistogramView was created, null otherwise
    */
   private GraphicSelectionListener populateGridWithComponents(
-      MigLayoutModel layout, List<ViewCanvas<E>> preservedViews) {
+      MigLayoutModel layout, PreservedContent<E> preserved) {
     GraphicSelectionListener graphicListener = null;
 
     for (MigCell cell : layout.getCells()) {
-      Component component = createComponentForCell(cell, preservedViews);
+      Component component = createComponentForCell(cell, preserved);
 
       if (component instanceof HistogramView histogramView) {
         graphicListener = histogramView;
@@ -466,27 +615,53 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
 
   /**
    * Creates a component for the given cell, either reusing a preserved view or creating new one.
-   *
-   * @param cell the layout cell
-   * @param preservedViews list of preserved ViewCanvas instances
-   * @return the created or reused component
    */
-  private Component createComponentForCell(MigCell cell, List<ViewCanvas<E>> preservedViews) {
-    boolean isView2d = isViewType(view2dClass, cell.type());
-
-    if (isView2d) {
-      return createViewCanvasForCell(cell, preservedViews);
-    } else {
-      return createNonViewComponent(cell);
+  private Component createComponentForCell(MigCell cell, PreservedContent<E> preserved) {
+    if (isViewType(VIEWPORT_CLASS, cell.type())) {
+      return createViewportPaneForCell(cell, preserved);
     }
+    if (isViewType(ViewCanvas.class, cell.type())) {
+      return createViewCanvasForCell(cell, preserved);
+    }
+    return createNonViewComponent(cell);
+  }
+
+  /**
+   * Creates or reuses a {@link ViewportPane} for the given cell and registers it in the cell
+   * manager.
+   *
+   * <p>A preserved pane is reused as-is, keeping its STACK/TILED configuration and displayed
+   * series. Otherwise a new STACK pane is built around a preserved canvas when available, or a
+   * fresh canvas created via {@link #createDefaultView(String)}.
+   */
+  private Component createViewportPaneForCell(MigCell cell, PreservedContent<E> preserved) {
+    if (!preserved.panes().isEmpty()) {
+      ViewportPane<E> pane = preserved.panes().removeFirst();
+      cellManager.addComponent(cell.position(), pane);
+      return pane;
+    }
+    ViewCanvas<E> initialCanvas = takePreservedCanvas(preserved);
+    if (initialCanvas == null) {
+      initialCanvas = createFreshViewCanvas(null);
+    }
+    if (initialCanvas == null) {
+      return null;
+    }
+    ViewportPane<E> pane = new ViewportPane<>(initialCanvas);
+    pane.setEventManager(eventManager);
+    cellManager.addComponent(cell.position(), pane);
+    if (initialCanvas.getSeries() != null) {
+      initialCanvas.getSeries().setOpen(true);
+    }
+    return pane;
   }
 
   /** Creates or reuses a ViewCanvas for the given cell. */
-  private Component createViewCanvasForCell(MigCell cell, List<ViewCanvas<E>> preservedViews) {
-    ViewCanvas<E> viewCanvas =
-        preservedViews.isEmpty()
-            ? createFreshViewCanvas(cell.type())
-            : preservedViews.removeFirst();
+  private Component createViewCanvasForCell(MigCell cell, PreservedContent<E> preserved) {
+    ViewCanvas<E> viewCanvas = takePreservedCanvas(preserved);
+    if (viewCanvas == null) {
+      viewCanvas = createFreshViewCanvas(cell.type());
+    }
 
     if (viewCanvas != null) {
       cellManager.addViewCanvas(cell.position(), viewCanvas);
@@ -494,6 +669,20 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
         viewCanvas.getSeries().setOpen(true);
       }
       return viewCanvas.getJComponent();
+    }
+    return null;
+  }
+
+  /**
+   * Takes the next preserved canvas, unwrapping a preserved pane when no bare canvas is left, or
+   * {@code null} when nothing is left to reuse.
+   */
+  private ViewCanvas<E> takePreservedCanvas(PreservedContent<E> preserved) {
+    if (!preserved.canvases().isEmpty()) {
+      return preserved.canvases().removeFirst();
+    }
+    if (!preserved.panes().isEmpty()) {
+      return preserved.panes().removeFirst().extractContentCanvas();
     }
     return null;
   }
@@ -520,53 +709,48 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
   }
 
   /**
-   * Configures all views with mouse listeners, tiled mode settings, and fires layout events.
+   * Configures all views with mouse listeners and fires layout events.
    *
    * @param graphicListener optional GraphicSelectionListener to register with views
    */
   private void configureViewsAndFireEvents(GraphicSelectionListener graphicListener) {
-    List<ViewCanvas<E>> allViews = cellManager.getAllViewCanvases();
+    List<ViewCanvas<E>> allViews = getAllCanvasesIncludingPanes();
     if (allViews.isEmpty()) {
       return;
     }
 
-    selectedImagePane = allViews.getFirst();
+    // Prefer the first ViewportPane as the selected pane; direct-canvas layouts (MPR, 3D)
+    // have no pane and select the first canvas instead.
+    List<ViewportPane<E>> panes = getViewportPanes();
+    if (!panes.isEmpty()) {
+      selectedPane = panes.getFirst();
+      selectedCanvas = null;
+    } else {
+      selectedPane = null;
+      selectedCanvas = allViews.getFirst();
+    }
+
+    ViewCanvas<E> selected = getSelectedViewCanvas();
+    if (selected == null) {
+      return;
+    }
+
     MouseActions mouseActions = eventManager.getMouseActions();
-    boolean tiledMode = SynchData.Mode.TILE.equals(synchView.getSynchData().getMode());
 
-    for (int i = 0; i < allViews.size(); i++) {
-      ViewCanvas<E> view = allViews.get(i);
-      configureView(view, i, tiledMode, mouseActions, graphicListener);
+    for (ViewCanvas<E> view : allViews) {
+      view.closeLens();
+      view.enableMouseAndKeyListener(mouseActions);
+      if (graphicListener != null) {
+        view.getGraphicManager().addGraphicSelectionListener(graphicListener);
+      }
     }
 
-    selectedImagePane.setSelected(true);
-    eventManager.updateComponentsListener(selectedImagePane);
+    selected.setSelected(true);
+    eventManager.updateComponentsListener(selected);
 
-    if (selectedImagePane.getSeries() instanceof Series) {
+    if (selected.getSeries() instanceof Series) {
       eventManager.fireSeriesViewerListeners(
-          new SeriesViewerEvent(
-              this, selectedImagePane.getSeries(), selectedImagePane.getImage(), EVENT.LAYOUT));
-    }
-  }
-
-  /** Configures a single view with appropriate settings. */
-  private void configureView(
-      ViewCanvas<E> view,
-      int index,
-      boolean tiledMode,
-      MouseActions mouseActions,
-      GraphicSelectionListener graphicListener) {
-    view.closeLens(); // Close lens because update does not work
-
-    if (tiledMode) {
-      view.setTileOffset(index);
-      view.setSeries(selectedImagePane.getSeries(), null);
-    }
-
-    view.enableMouseAndKeyListener(mouseActions);
-
-    if (graphicListener != null) {
-      view.getGraphicManager().addGraphicSelectionListener(graphicListener);
+          new SeriesViewerEvent(this, selected.getSeries(), selected.getImage(), EVENT.LAYOUT));
     }
   }
 
@@ -586,9 +770,13 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
 
   /** Performs the actual view replacement operations. */
   private void performViewReplacement(ViewCanvas<E> oldView, ViewCanvas<E> newView, int position) {
-    // Update selected pane reference if needed
-    if (selectedImagePane == oldView) {
-      selectedImagePane = newView;
+    // If the replaced view was selected, update the owning pane's selection
+    ViewportPane<E> owning = getOwningPane(oldView);
+    if (owning != null && owning == selectedPane) {
+      owning.setSelectedCanvas(newView);
+    }
+    if (selectedCanvas == oldView) {
+      selectedCanvas = newView;
     }
 
     // Dispose old view and replace in cell manager
@@ -606,41 +794,43 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
 
   /** Updates all views after replacement with proper configuration. */
   private void updateViewsAfterReplacement() {
-    List<ViewCanvas<E>> allViews = cellManager.getAllViewCanvases();
+    List<ViewCanvas<E>> allViews = getAllCanvasesIncludingPanes();
     if (allViews.isEmpty()) {
       return;
     }
 
-    ensureSelectedImagePane(allViews);
+    ensureSelection(allViews);
+
+    ViewCanvas<E> selected = getSelectedViewCanvas();
+    if (selected == null) {
+      return;
+    }
 
     MouseActions mouseActions = eventManager.getMouseActions();
-    boolean tiledMode = SynchData.Mode.TILE.equals(synchView.getSynchData().getMode());
+    configureViewsAfterReplacement(allViews, mouseActions);
 
-    configureViewsAfterReplacement(allViews, tiledMode, mouseActions);
-
-    selectedImagePane.setSelected(true);
-    eventManager.updateComponentsListener(selectedImagePane);
+    selected.setSelected(true);
+    eventManager.updateComponentsListener(selected);
   }
 
-  /** Ensures selectedImagePane is valid. */
-  private void ensureSelectedImagePane(List<ViewCanvas<E>> allViews) {
-    if (selectedImagePane == null) {
-      selectedImagePane = allViews.getFirst();
+  /** Ensures a valid selection exists, preferring the first pane then the first canvas. */
+  private void ensureSelection(List<ViewCanvas<E>> allViews) {
+    if (getSelectedViewCanvas() == null) {
+      List<ViewportPane<E>> panes = getViewportPanes();
+      if (!panes.isEmpty()) {
+        selectedPane = panes.getFirst();
+        selectedCanvas = null;
+      } else if (!allViews.isEmpty()) {
+        selectedCanvas = allViews.getFirst();
+      }
     }
   }
 
   /** Configures all views with appropriate settings after replacement. */
   private void configureViewsAfterReplacement(
-      List<ViewCanvas<E>> allViews, boolean tiledMode, MouseActions mouseActions) {
-    for (int i = 0; i < allViews.size(); i++) {
-      ViewCanvas<E> view = allViews.get(i);
+      List<ViewCanvas<E>> allViews, MouseActions mouseActions) {
+    for (ViewCanvas<E> view : allViews) {
       view.closeLens();
-
-      if (tiledMode) {
-        view.setTileOffset(i);
-        view.setSeries(selectedImagePane.getSeries(), null);
-      }
-
       view.enableMouseAndKeyListener(mouseActions);
     }
   }
@@ -724,12 +914,12 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
 
   /** Removes focus listeners from all views. */
   private void removeFocusListenersFromViews() {
-    cellManager.getAllViewCanvases().forEach(v -> v.getJComponent().removeFocusListener(v));
+    getAllCanvasesIncludingPanes().forEach(v -> v.getJComponent().removeFocusListener(v));
   }
 
   /** Adds focus listeners back to all views. */
   private void addFocusListenersToViews() {
-    cellManager.getAllViewCanvases().forEach(v -> v.getJComponent().addFocusListener(v));
+    getAllCanvasesIncludingPanes().forEach(v -> v.getJComponent().addFocusListener(v));
   }
 
   /** Enters fullscreen mode by creating a modal dialog with the view. */
@@ -738,7 +928,7 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
     remove(grid);
 
     // Configure grid for single fullscreen view
-    grid.setLayout(new net.miginfocom.swing.MigLayout("fill, ins 0", "[grow,fill]", "[grow,fill]"));
+    grid.setLayout(new MigLayout("fill, ins 0", "[grow,fill]", "[grow,fill]"));
     grid.add(viewCanvas.getJComponent(), "grow");
     viewCanvas.getJComponent().addFocusListener(viewCanvas);
 
@@ -782,13 +972,22 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
 
   /** Exits fullscreen mode by restoring the original grid layout. */
   private void exitFullscreenMode(ViewCanvas<E> viewCanvas, Dialog fullscreenDialog) {
-    rebuildGridLayout();
-    addFocusListenersToViews();
-
+    viewCanvas.getJComponent().removeFocusListener(viewCanvas);
+    Arrays.stream(fullscreenDialog.getWindowListeners())
+        .forEach(fullscreenDialog::removeWindowListener);
     fullscreenDialog.removeAll();
     fullscreenDialog.dispose();
 
+    rebuildGridLayout();
+    // Re-attach the maximized canvas to its owning pane (it was reparented into the
+    // fullscreen grid and rebuildGridLayout only restores the outer cells)
+    ViewportPane<E> owning = getOwningPane(viewCanvas);
+    if (owning != null) {
+      owning.restoreView();
+    }
     add(grid, BorderLayout.CENTER);
+    addFocusListenersToViews();
+
     viewCanvas.getJComponent().requestFocusInWindow();
   }
 
@@ -804,7 +1003,7 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
       for (MigCell cell : layout.getCells()) {
         try {
           Class<?> clazz = Class.forName(cell.type());
-          if (view2dClass.isAssignableFrom(clazz)) {
+          if (VIEWPORT_CLASS.isAssignableFrom(clazz) || ViewCanvas.class.isAssignableFrom(clazz)) {
             val++;
           }
         } catch (Exception e) {
@@ -815,14 +1014,23 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
     return val;
   }
 
+  /**
+   * Number of view slots in the layout: {@link ViewportPane} cells plus direct {@link ViewCanvas}
+   * cells (MPR, 3D). Delegated to the bundle-specific counters so all cell classes are visible.
+   */
+  private int getViewSlotNumber(MigLayoutModel layout) {
+    return getViewTypeNumber(layout, VIEWPORT_CLASS) + getViewTypeNumber(layout, ViewCanvas.class);
+  }
+
   public void setSelectedImagePaneFromFocus(ViewCanvas<E> viewCanvas) {
     setSelectedImagePane(viewCanvas);
   }
 
   public void setSelectedImagePane(ViewCanvas<E> viewCanvas) {
-    if (this.selectedImagePane != null && this.selectedImagePane.getSeries() != null) {
-      this.selectedImagePane.getSeries().setSelected(false, null);
-      this.selectedImagePane.getSeries().setFocused(false);
+    ViewCanvas<E> current = getSelectedViewCanvas();
+    if (current != null && current.getSeries() != null) {
+      current.getSeries().setSelected(false, null);
+      current.getSeries().setFocused(false);
     }
 
     if (viewCanvas != null && viewCanvas.getSeries() != null) {
@@ -830,19 +1038,28 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
       viewCanvas.getSeries().setFocused(eventManager.getSelectedView2dContainer() == this);
     }
 
-    boolean newView = this.selectedImagePane != viewCanvas && viewCanvas != null;
+    boolean newView = current != viewCanvas && viewCanvas != null;
     if (newView) {
-      if (this.selectedImagePane != null) {
-        this.selectedImagePane.setSelected(false);
+      if (current != null) {
+        current.setSelected(false);
       }
       viewCanvas.setSelected(true);
-      this.selectedImagePane = viewCanvas;
+      // Update the selection to the pane owning this canvas, or to the canvas itself when it
+      // is not hosted by a ViewportPane (MPR, 3D)
+      ViewportPane<E> owning = getOwningPane(viewCanvas);
+      if (owning != null) {
+        selectedPane = owning;
+        selectedPane.setSelectedCanvas(viewCanvas);
+        selectedCanvas = null;
+      } else {
+        selectedPane = null;
+        selectedCanvas = viewCanvas;
+      }
       eventManager.updateComponentsListener(viewCanvas);
     }
     if (newView && viewCanvas.getSeries() instanceof Series) {
       eventManager.fireSeriesViewerListeners(
-          new SeriesViewerEvent(
-              this, selectedImagePane.getSeries(), selectedImagePane.getImage(), EVENT.SELECT));
+          new SeriesViewerEvent(this, viewCanvas.getSeries(), viewCanvas.getImage(), EVENT.SELECT));
     }
     eventManager.fireSeriesViewerListeners(
         new SeriesViewerEvent(
@@ -851,9 +1068,9 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
 
   /** Return the image in the image display panel. */
   public E getImage(int i) {
-    ViewCanvas<E> viewCanvas = cellManager.getViewCanvasByIndex(i);
-    if (viewCanvas != null) {
-      return viewCanvas.getImage();
+    List<ViewCanvas<E>> allViews = getAllCanvasesIncludingPanes();
+    if (i >= 0 && i < allViews.size()) {
+      return allViews.get(i).getImage();
     }
     return null;
   }
@@ -864,7 +1081,7 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
   }
 
   public List<ViewCanvas<E>> getImagePanels(boolean selectedImagePaneLast) {
-    List<ViewCanvas<E>> viewList = new ArrayList<>(cellManager.getAllViewCanvases());
+    List<ViewCanvas<E>> viewList = new ArrayList<>(getAllCanvasesIncludingPanes());
     if (selectedImagePaneLast) {
       ViewCanvas<E> selectedView = getSelectedViewCanvas();
 
@@ -877,17 +1094,36 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
     return viewList;
   }
 
-  public ViewCanvas<E> getNextSelectedImagePane() {
-    List<ViewCanvas<E>> allViews = cellManager.getAllViewCanvases();
-    for (int i = 0; i < allViews.size() - 1; i++) {
-      if (allViews.get(i) == selectedImagePane) {
-        return allViews.get(i + 1);
+  /**
+   * Returns one selectable canvas per layout slot, in cell-position order: the selected canvas of
+   * each {@link ViewportPane} (a whole pane is a single slot, whatever its tile count) and every
+   * directly hosted canvas (MPR, 3D).
+   */
+  public List<ViewCanvas<E>> getSelectableSlots() {
+    List<ViewCanvas<E>> slots = new ArrayList<>();
+    for (MigCell cell : cellManager.getLayoutModel().getCells()) {
+      Component comp = cellManager.getComponent(cell.position());
+      if (comp instanceof ViewportPane<?> pane) {
+        @SuppressWarnings("unchecked")
+        ViewportPane<E> typedPane = (ViewportPane<E>) pane;
+        slots.add(typedPane.getSelectedCanvas());
+      } else {
+        cellManager.getViewCanvas(cell.position()).ifPresent(slots::add);
       }
     }
-    return selectedImagePane;
+    return slots;
   }
 
-  public abstract List<SynchView> getSynchList();
+  public ViewCanvas<E> getNextSelectedImagePane() {
+    ViewCanvas<E> current = getSelectedViewCanvas();
+    List<ViewCanvas<E>> slots = getSelectableSlots();
+    for (int i = 0; i < slots.size() - 1; i++) {
+      if (slots.get(i) == current) {
+        return slots.get(i + 1);
+      }
+    }
+    return current;
+  }
 
   public abstract List<MigLayoutModel> getLayoutList();
 
@@ -914,11 +1150,7 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
   }
 
   public Boolean isContainingView(ViewCanvas<?> view2DPane) {
-    return cellManager.getAllViewCanvases().stream()
-        .filter(v -> Objects.equals(v, view2DPane))
-        .findFirst()
-        .map(_ -> Boolean.TRUE)
-        .orElse(Boolean.FALSE);
+    return getAllCanvasesIncludingPanes().stream().anyMatch(v -> Objects.equals(v, view2DPane));
   }
 
   public SynchView getSynchView() {
@@ -927,87 +1159,19 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
 
   public void setSynchView(SynchView synchView) {
     this.synchView = Objects.requireNonNull(synchView);
-    updateTileOffset();
     eventManager.updateAllListeners(this, synchView);
   }
 
-  public void updateTileOffset() {
-    boolean isTileMode = SynchData.Mode.TILE.equals(synchView.getSynchData().getMode());
-
-    if (isTileMode && selectedImagePane != null) {
-      updateTileModeLayout();
-    } else {
-      resetTileOffsets();
-    }
-  }
-
-  /** Updates layout in tile mode by distributing series across views. */
-  private void updateTileModeLayout() {
-    MediaSeries<E> series = findAvailableSeries();
-    if (series == null) {
-      return;
-    }
-
-    ViewCanvas<E> selectedView = findViewWithSeries(series);
-    int seriesLimit = calculateSeriesLimit(series, selectedView);
-    distributeSeriesAcrossViews(series, seriesLimit);
-  }
-
-  /** Finds an available series from selectedImagePane or other views. */
-  private MediaSeries<E> findAvailableSeries() {
-    if (selectedImagePane.getSeries() != null) {
-      return selectedImagePane.getSeries();
-    }
-
-    return cellManager.getAllViewCanvases().stream()
-        .map(ViewCanvas::getSeries)
-        .filter(Objects::nonNull)
-        .findFirst()
-        .orElse(null);
-  }
-
-  /** Finds the view containing the given series. */
-  private ViewCanvas<E> findViewWithSeries(MediaSeries<E> series) {
-    return cellManager.getAllViewCanvases().stream()
-        .filter(v -> v.getSeries() == series)
-        .findFirst()
-        .orElse(selectedImagePane);
-  }
-
-  /** Calculates the series limit based on filtered series size. */
-  @SuppressWarnings("unchecked")
-  private int calculateSeriesLimit(MediaSeries<E> series, ViewCanvas<E> view) {
-    return series.size((Filter<E>) view.getActionValue(ActionW.FILTERED_SERIES.cmd()));
-  }
-
-  /** Distributes series across views up to the specified limit. */
-  private void distributeSeriesAcrossViews(MediaSeries<E> series, int limit) {
-    List<ViewCanvas<E>> allViews = cellManager.getAllViewCanvases();
-    for (int i = 0; i < allViews.size(); i++) {
-      ViewCanvas<E> view = allViews.get(i);
-      if (i < limit) {
-        view.setTileOffset(i);
-        view.setSeries(series, null);
-      } else {
-        view.setSeries(null, null);
-      }
-    }
-  }
-
-  /** Resets tile offsets to 0 for all views. */
-  private void resetTileOffsets() {
-    cellManager.getAllViewCanvases().forEach(v -> v.setTileOffset(0));
-  }
-
   public synchronized void setMouseActions(MouseActions mouseActions) {
+    List<ViewCanvas<E>> all = getAllCanvasesIncludingPanes();
     if (mouseActions == null) {
-      for (ViewCanvas<E> v : cellManager) {
+      for (ViewCanvas<E> v : all) {
         v.disableMouseAndKeyListener();
         // Let the possibility get the focus
         v.iniDefaultMouseListener();
       }
     } else {
-      for (ViewCanvas<E> v : cellManager) {
+      for (ViewCanvas<E> v : all) {
         v.enableMouseAndKeyListener(mouseActions);
       }
     }
@@ -1165,7 +1329,7 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
         int scaledRows = factor * rows;
         int scaledCols = factor * cols;
         if (scaledRows < 50 && scaledCols < 50) {
-          layouts.add(buildMigLayoutModel(scaledRows, scaledCols, view2dClass.getName()));
+          layouts.add(buildMigLayoutModel(scaledRows, scaledCols, VIEWPORT_CLASS.getName()));
         }
       }
     }
@@ -1199,11 +1363,6 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
       return;
     }
 
-    if (SynchData.Mode.TILE.equals(synchView.getSynchData().getMode())) {
-      addSeries(seriesList.getFirst());
-      return;
-    }
-
     setSelectedAndGetFocus();
 
     if (bestDefaultLayout) {
@@ -1219,57 +1378,44 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
   private void addSeriesWithBestLayout(List<MediaSeries<E>> seriesList) {
     changeLayoutModel(getBestDefaultViewLayout(seriesList.size()));
 
-    List<ViewCanvas<E>> allViews = cellManager.getAllViewCanvases();
+    List<ViewCanvas<E>> slots = getSelectableSlots();
 
-    // Clear excess views if layout is larger than series list
-    clearExcessViews(allViews, seriesList.size());
-
-    // Reset to first view and add all series
-    if (!allViews.isEmpty()) {
-      setSelectedImagePane(allViews.getFirst());
-      seriesList.forEach(this::addSeries);
+    // Clear excess view slots if the layout is larger than the series list
+    for (int i = seriesList.size(); i < slots.size(); i++) {
+      setSeriesToView(slots.get(i), null);
     }
-  }
 
-  /** Clears views beyond the required count. */
-  private void clearExcessViews(List<ViewCanvas<E>> views, int requiredCount) {
-    if (views.size() > requiredCount) {
-      setSelectedImagePane(views.get(requiredCount));
-      for (int i = requiredCount; i < views.size(); i++) {
-        ViewCanvas<E> viewPane = getSelectedViewCanvas();
-        if (viewPane != null) {
-          viewPane.setSeries(null, null);
-        }
-        getNextSelectedImagePane();
-      }
+    // Reset to the first slot and add all series
+    if (!slots.isEmpty()) {
+      setSelectedImagePane(slots.getFirst());
+      seriesList.forEach(this::addSeries);
     }
   }
 
   /** Adds series to available empty view slots, expanding layout if necessary. */
   private void addSeriesToAvailableSlots(List<MediaSeries<E>> seriesList) {
     int emptyViewCount = countEmptyViews();
-    List<ViewCanvas<E>> allViews = cellManager.getAllViewCanvases();
 
-    // Expand layout if not enough empty views
+    // Expand layout if not enough empty view slots
     if (emptyViewCount < seriesList.size()) {
-      int totalNeeded = allViews.size() + seriesList.size();
+      int totalNeeded = getSelectableSlots().size() + seriesList.size();
       changeLayoutModel(getBestDefaultViewLayout(totalNeeded));
     }
 
-    // Add series to empty views
+    // Add series to empty slots only, so occupied views are never overwritten
     int seriesIndex = 0;
-    for (ViewCanvas<E> view : cellManager) {
+    for (ViewCanvas<E> view : getSelectableSlots()) {
       if (view.getSeries() == null && seriesIndex < seriesList.size()) {
         setSelectedImagePane(view);
-        addSeries(seriesList.get(seriesIndex++));
+        setSeriesToView(view, seriesList.get(seriesIndex++));
+        view.getJComponent().repaint();
       }
     }
   }
 
-  /** Counts the number of empty views in the current layout. */
+  /** Counts the number of empty view slots in the current layout. */
   private int countEmptyViews() {
-    return (int)
-        cellManager.getAllViewCanvases().stream().filter(v -> v.getSeries() == null).count();
+    return (int) getSelectableSlots().stream().filter(v -> v.getSeries() == null).count();
   }
 
   public void selectLayoutPositionForAddingSeries(List<MediaSeries<E>> seriesList) {
@@ -1280,11 +1426,11 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
         nbSeriesToAdd = 1;
       }
     }
-    List<ViewCanvas<E>> allViews = cellManager.getAllViewCanvases();
-    int pos = allViews.size() - nbSeriesToAdd;
+    List<ViewCanvas<E>> slots = getSelectableSlots();
+    int pos = slots.size() - nbSeriesToAdd;
     if (pos < 0) {
       pos = 0;
     }
-    setSelectedImagePane(allViews.get(pos));
+    setSelectedImagePane(slots.get(pos));
   }
 }
