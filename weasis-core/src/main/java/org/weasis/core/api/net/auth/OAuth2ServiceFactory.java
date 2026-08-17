@@ -57,6 +57,17 @@ public final class OAuth2ServiceFactory {
     }
   }
 
+  /**
+   * Discards the services cached for this method so that the next request is built from the current
+   * provider and registration. Must be called whenever an authentication method is edited or
+   * removed.
+   */
+  public static void invalidateService(String uid) {
+    if (StringUtil.hasText(uid)) {
+      services.keySet().removeIf(key -> key.startsWith(uid + ":"));
+    }
+  }
+
   public static AuthProvider buildKeycloakProvider(String name, String baseUrl, String realm) {
     String normalizedUrl = baseUrl.endsWith("/") ? baseUrl : baseUrl + "/";
     String realmUrl = normalizedUrl + "realms/" + realm.trim(); // NON-NLS
