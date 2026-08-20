@@ -9,9 +9,8 @@
  */
 package org.weasis.dicom.explorer.wado;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import java.io.OutputStream;
 import java.io.OutputStreamWriter;
+import java.io.Writer;
 import java.net.HttpURLConnection;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
@@ -331,10 +330,9 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
           try {
             ClosableURLConnection http =
                 NetworkUtil.getUrlConnection(statisticServicePath, urlParameters);
-            try (OutputStream out = http.getOutputStream()) {
-              OutputStreamWriter writer =
-                  new OutputStreamWriter(out, StandardCharsets.UTF_8); // NON-NLS
-              writer.write(new ObjectMapper().writeValueAsString(model));
+            try (Writer writer =
+                new OutputStreamWriter(http.getOutputStream(), StandardCharsets.UTF_8)) {
+              writer.write(model.toJson().toString());
             }
             if (http.urlConnection() instanceof HttpURLConnection httpURLConnection) {
               NetworkUtil.readResponse(httpURLConnection, urlParameters.headers());

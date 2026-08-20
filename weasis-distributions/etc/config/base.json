@@ -122,13 +122,6 @@
       "category": "FELIX_INSTALL"
     },
     {
-      "code": "felix.auto.start.35",
-      "value": "${dollar}{weasis.codebase.url}/bundle/jackson-annotations-${jackson.an.version}.jar${xz.ext} ${dollar}{weasis.codebase.url}/bundle/jackson-core-${jackson.version}.jar${xz.ext} ${dollar}{weasis.codebase.url}/bundle/jackson-databind-${jackson.version}.jar${xz.ext}",
-      "description": "Jackson databind and annotation",
-      "type": "A",
-      "category": "FELIX_INSTALL"
-    },
-    {
       "code": "felix.auto.start.40",
       "value": "${dollar}{weasis.codebase.url}/bundle/weasis-dicom-explorer-${app.version}.jar${xz.ext}",
       "description": "DICOM explorer",

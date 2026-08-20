@@ -122,13 +122,6 @@
       "category": "FELIX_INSTALL"
     },
     {
-      "code": "felix.auto.start.35",
-      "value": "file:${maven.localRepository}/com/fasterxml/jackson/core/jackson-annotations/${jackson.an.version}/jackson-annotations-${jackson.an.version}.jar file:${maven.localRepository}/com/fasterxml/jackson/core/jackson-core/${jackson.version}/jackson-core-${jackson.version}.jar file:${maven.localRepository}/com/fasterxml/jackson/core/jackson-databind/${jackson.version}/jackson-databind-${jackson.version}.jar",
-      "description": "Jackson databind and annotation",
-      "type": "A",
-      "category": "FELIX_INSTALL"
-    },
-    {
       "code": "felix.auto.start.40",
       "value": "file:${maven.localRepository}/org/weasis/dicom/weasis-dicom-explorer/${app.version}/weasis-dicom-explorer-${app.version}.jar",
       "description": "DICOM explorer",

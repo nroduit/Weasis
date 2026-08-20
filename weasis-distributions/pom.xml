@@ -275,24 +275,6 @@
                   <outputDirectory>${tmp.bundle.dir}</outputDirectory>
                 </artifactItem>
                 <artifactItem>
-                  <groupId>com.fasterxml.jackson.core</groupId>
-                  <artifactId>jackson-databind</artifactId>
-                  <version>${jackson.version}</version>
-                  <outputDirectory>${tmp.bundle.dir}</outputDirectory>
-                </artifactItem>
-                <artifactItem>
-                  <groupId>com.fasterxml.jackson.core</groupId>
-                  <artifactId>jackson-core</artifactId>
-                  <version>${jackson.version}</version>
-                  <outputDirectory>${tmp.bundle.dir}</outputDirectory>
-                </artifactItem>
-                <artifactItem>
-                  <groupId>com.fasterxml.jackson.core</groupId>
-                  <artifactId>jackson-annotations</artifactId>
-                  <version>${jackson.an.version}</version>
-                  <outputDirectory>${tmp.bundle.dir}</outputDirectory>
-                </artifactItem>
-                <artifactItem>
                   <groupId>net.lingala.zip4j</groupId>
                   <artifactId>zip4j</artifactId>
                   <version>${zip4j.version}</version>

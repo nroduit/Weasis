@@ -43,15 +43,6 @@
               <outputDirectory>${project.build.directory}/classes</outputDirectory>
             </configuration>
           </execution>
-          <execution>
-            <id>copy-dependency</id>
-            <goals>
-              <goal>copy-dependencies</goal>
-            </goals>
-            <configuration>
-              <includeArtifactIds>jakarta.json-api,parsson,osgi-resource-locator</includeArtifactIds>
-            </configuration>
-          </execution>
         </executions>
       </plugin>
       <plugin>
@@ -59,12 +50,9 @@
         <artifactId>bnd-maven-plugin</artifactId>
         <configuration>
           <bnd>
-            -includeresource.all: lib/=target/dependency/;lib:=true
             Implementation-Version: ${weasis-dicom-tools.version}
             Export-Package: !org.weasis.dicom.codec.internal,org.weasis.dicom.codec.*,\
             org.weasis.dicom.*,org.dcm4che3.*
-
-            -exportcontents: jakarta.json.*
           </bnd>
         </configuration>
       </plugin>
@@ -93,13 +81,6 @@
           <artifactId>junit</artifactId>
         </exclusion>
       </exclusions>
-    </dependency>
-
-    <!-- Add dependency for loading JsonProvider with dcm4che-json -->
-    <dependency>
-      <groupId>org.glassfish.hk2</groupId>
-      <artifactId>osgi-resource-locator</artifactId>
-      <version>${osgi.resource.locator.version}</version>
     </dependency>
 
     <dependency>

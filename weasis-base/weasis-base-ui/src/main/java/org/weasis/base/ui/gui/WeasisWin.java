@@ -32,8 +32,8 @@ import bibliothek.gui.dock.station.screen.BoundaryRestriction;
 import bibliothek.gui.dock.util.ConfiguredBackgroundPanel;
 import bibliothek.gui.dock.util.DirectWindowProvider;
 import bibliothek.gui.dock.util.DockUtilities;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.formdev.flatlaf.extras.FlatSVGIcon;
+import jakarta.json.JsonException;
 import java.awt.AWTException;
 import java.awt.BorderLayout;
 import java.awt.Component;
@@ -135,6 +135,7 @@ import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.service.UICore;
 import org.weasis.core.api.service.WProperties;
+import org.weasis.core.api.util.JsonUtil;
 import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.api.util.ResourceUtil.ActionIcon;
 import org.weasis.core.api.util.ResourceUtil.LogoIcon;
@@ -811,9 +812,9 @@ public class WeasisWin {
           Release release = getLastRelease();
           if (release != null) {
             Version vOld = AppProperties.getVersion(AppProperties.WEASIS_VERSION);
-            Version vNew = AppProperties.getVersion(release.getVersion());
+            Version vNew = AppProperties.getVersion(release.version());
             if (vNew.compareTo(vOld) > 0) {
-              openBrowser(updateMenuItem, release.getUrl());
+              openBrowser(updateMenuItem, release.url());
             } else {
               GuiExecutor.execute(
                   () ->
@@ -903,10 +904,13 @@ public class WeasisWin {
   }
 
   private Release getRelease(String body) {
-    ObjectMapper mapper = new ObjectMapper();
     try {
-      return mapper.readValue(body, Release.class);
-    } catch (IOException ex) {
+      Release release = Release.fromJson(JsonUtil.readObject(body));
+      if (StringUtil.hasText(release.version())) {
+        return release;
+      }
+      LOGGER.error("No version in the release response: {}", body);
+    } catch (JsonException ex) {
       LOGGER.error("Cannot read the json response", ex);
     }
     return null;
@@ -939,7 +943,7 @@ public class WeasisWin {
     Release release = getLastRelease();
     if (release != null) {
       Version vOld = AppProperties.getVersion(AppProperties.WEASIS_VERSION);
-      Version vNew = AppProperties.getVersion(release.getVersion());
+      Version vNew = AppProperties.getVersion(release.version());
       if (vNew.compareTo(vOld) > 0) {
         GuiExecutor.execute(
             () -> {
@@ -952,7 +956,7 @@ public class WeasisWin {
                   JOptionPane.showConfirmDialog(
                       parent, panel, Messages.getString("update"), JOptionPane.YES_NO_OPTION);
               if (confirm == 0) {
-                openBrowser(parent, release.getUrl());
+                openBrowser(parent, release.url());
               }
               if (dontAskMeAgain.isSelected()) {
                 GuiUtils.getUICore()
