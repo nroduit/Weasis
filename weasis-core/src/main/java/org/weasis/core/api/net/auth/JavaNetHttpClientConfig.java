@@ -42,22 +42,6 @@ public class JavaNetHttpClientConfig {
     return inactivityTimeoutMillis;
   }
 
-  /**
-   * @deprecated renamed to {@link #getConnectTimeoutMillis()}
-   */
-  @Deprecated(since = "4.7.3")
-  public int getConnectTimeout() {
-    return connectTimeoutMillis;
-  }
-
-  /**
-   * @deprecated renamed to {@link #getInactivityTimeoutMillis()}
-   */
-  @Deprecated(since = "4.7.3")
-  public int getReadTimeout() {
-    return inactivityTimeoutMillis;
-  }
-
   public ProxySelector getProxy() {
     return proxySelector;
   }
