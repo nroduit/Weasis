@@ -282,6 +282,11 @@ public class ImageElement extends MediaElement {
     mCache.unpin(this);
   }
 
+  /** {@code true} while at least one holder pinned this image with {@link #pinInCache()}. */
+  public boolean isPinnedInCache() {
+    return mCache.isPinned(this);
+  }
+
   public boolean hasSameSize(ImageElement image) {
     if (image != null) {
       PlanarImage img = getImage();

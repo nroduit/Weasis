@@ -148,15 +148,23 @@ const float SEG_OPACITY_REF_DIST = 0.1;
 // in the LUT by SegmentationVolume.buildSegmentColorLUT(), so no per-bit compositing is needed
 // here. Returns vec4(0) when no segment is present or the overlay is disabled.
 // *************************************************************************************************
+
+// Converts [0,1]³ volume-texture coordinates to the integer voxel coordinates texelFetch needs.
+ivec3 segVoxel(vec3 texCoord) {
+    return ivec3(round(texCoord * vec3(textureSize(segTexture, 0)) - vec3(0.5)));
+}
+
+// Storage ID at a voxel; 0 (no segment) outside the volume.
+uint segIdAt(ivec3 voxel) {
+    ivec3 segSize = textureSize(segTexture, 0);
+    if (any(lessThan(voxel, ivec3(0))) || any(greaterThanEqual(voxel, segSize))) return 0u;
+    return texelFetch(segTexture, voxel, 0).r;
+}
+
 vec4 sampleSegOverlay(vec3 texCoord) {
     if (!segOverlayEnabled || segSegmentCount <= 0) return vec4(0.0);
 
-    // Convert from [0,1]³ volume-texture coordinates to integer voxel coordinates for texelFetch.
-    ivec3 segSize = textureSize(segTexture, 0);
-    ivec3 voxel = ivec3(round(texCoord * vec3(segSize) - vec3(0.5)));
-    if (any(lessThan(voxel, ivec3(0))) || any(greaterThanEqual(voxel, segSize))) return vec4(0.0);
-
-    uint id = texelFetch(segTexture, voxel, 0).r;
+    uint id = segIdAt(segVoxel(texCoord));
     if (id == 0u) return vec4(0.0);
 
     // Single LUT lookup — combination IDs already point to a pre-composited RGBA.
@@ -171,6 +179,155 @@ bool isSegMasked(vec3 texCoord) {
     if (segMaskMode == 0) return false;
     bool inside = sampleSegOverlay(texCoord).a > 0.0;
     return segMaskMode == 1 ? !inside : inside;
+}
+
+// Radius, in voxels, of the central differences giving the segment surface normal. The differences
+// are summed over every radius up to this one rather than taken at a single one: each tap of a
+// binary mask contributes only -1, 0 or +1, so one radius yields a handful of directions and the
+// surface resolves into four flat shades. Summing three radii gives seventeen. Going wider keeps
+// smoothing but starts rounding off features thinner than the radius.
+const int SEG_NORMAL_RADIUS = 3;
+
+// Fixed material weights. The anatomy takes its own from lightingMap, which is indexed by voxel
+// intensity — meaningless for a label — so segments are lit with constants instead.
+//
+// The diffuse response spans [SEG_AMBIENT, 1] and therefore only ever *darkens* the palette
+// colour. Letting it brighten instead makes the shading invisible: the palette is saturated, so
+// any factor above 1 is clipped on the channel that carries the hue, and with a headlight most of
+// a surface faces the viewer. The floor keeps an unlit face readable — a segment is an annotation
+// before it is a lit surface.
+const float SEG_AMBIENT = 0.35;
+const float SEG_SPECULAR = 0.30;
+
+// Occupancy of the *visible* segmentation at a voxel. Visibility matters: a hidden segmentation
+// wrapped around a visible one would otherwise read as solid on both sides of the surface and
+// flatten the gradient to zero, leaving the visible one unshaded.
+float segOccupancy(ivec3 voxel) {
+    uint id = segIdAt(voxel);
+    return id != 0u && texelFetch(segColorMap, ivec2(int(id), 0), 0).a > 0.0 ? 1.0 : 0.0;
+}
+
+// Occupancy difference along one axis, summed over every stencil radius.
+float segAxisDelta(ivec3 voxel, ivec3 axis) {
+    float delta = 0.0;
+    for (int r = 1; r <= SEG_NORMAL_RADIUS; ++r) {
+        delta += segOccupancy(voxel - axis * r) - segOccupancy(voxel + axis * r);
+    }
+    return delta;
+}
+
+// Un-normalised surface normal of the visible segmentation, pointing outwards like gradient()
+// does for the anatomy. Zero-length inside a segment and in empty space, where there is no surface.
+vec3 segNormal(ivec3 voxel) {
+    return vec3(
+        segAxisDelta(voxel, ivec3(1, 0, 0)),
+        segAxisDelta(voxel, ivec3(0, 1, 0)),
+        segAxisDelta(voxel, ivec3(0, 0, 1)));
+}
+
+// Blinn-Phong response of the segment surface, as (diffuse factor, specular addition). The
+// diffuse part is a scalar so the segment keeps its hue — colours are what identify a segment, and
+// tinting them towards the light would cost more than the depth cue gains. The specular part is
+// added as white on top, which is what makes a highlight read as one instead of clipping the hue.
+// Returns (1, 0), i.e. unshaded, when no light is enabled.
+vec2 segLighting(vec3 texCoord, vec3 N) {
+    float diffuseSum = 0.0;
+    float specularSum = 0.0;
+    bool anyLight = false;
+    for (int i = 0; i < 4; ++i) {
+        if (lights[i].enabled) {
+            anyLight = true;
+            vec3 V = normalize(vec3(viewMatrix * lights[i].position) - texCoord);
+            vec3 L = normalize(lights[i].position.xyz - texCoord);
+            // Double sided, as the anatomy is: the ray may enter a segment from either side.
+            vec3 n = dot(L, N) < 0.0 ? -N : N;
+            float diffuseCoeff = max(dot(L, n), 0.0);
+            vec3 H = normalize(L + V);
+            diffuseSum += diffuseCoeff;
+            specularSum +=
+                diffuseCoeff > 0.0 ? pow(max(dot(H, n), 0.0), lights[i].specularPower) : 0.0;
+        }
+    }
+    if (!anyLight) {
+        return vec2(1.0, 0.0);
+    }
+    return vec2(
+        SEG_AMBIENT + (1.0 - SEG_AMBIENT) * min(diffuseSum, 1.0),
+        SEG_SPECULAR * min(specularSum, 1.0));
+}
+
+// Outward normal of the crosshair cut surface, from a central difference of the kept half-space.
+// Derived from isCrosshairCut() itself rather than from the cut mode, so it follows all eighteen
+// half-space, quadrant and octant modes — and any later one — without restating them. Zero when
+// the sample is not within {delta} of a cut plane.
+vec3 crosshairCutNormal(vec3 texCoord, float delta) {
+    if (crosshairCutMode == 0 || !crosshairVisible) {
+        return vec3(0.0);
+    }
+    vec3 dx = vec3(delta, 0.0, 0.0);
+    vec3 dy = vec3(0.0, delta, 0.0);
+    vec3 dz = vec3(0.0, 0.0, delta);
+    return vec3(
+        (isCrosshairCut(texCoord - dx) ? 0.0 : 1.0) - (isCrosshairCut(texCoord + dx) ? 0.0 : 1.0),
+        (isCrosshairCut(texCoord - dy) ? 0.0 : 1.0) - (isCrosshairCut(texCoord + dy) ? 0.0 : 1.0),
+        (isCrosshairCut(texCoord - dz) ? 0.0 : 1.0) - (isCrosshairCut(texCoord + dz) ? 0.0 : 1.0));
+}
+
+// *************************************************************************************************
+// Accumulates the segmentation overlay along the ray, front to back, shared by the three rendering
+// modes. Returns premultiplied RGBA.
+//
+// Lighting follows the global shading toggle and is evaluated once per ray, at the sample that
+// first enters a visible segment — that is where the surface is, and where the normal is defined.
+// The resulting scalar then scales every sample behind it, so a translucent segment is shaded as a
+// whole rather than only on its first slab, and a ray never pays for more than one normal.
+// *************************************************************************************************
+vec4 accumulateSegOverlay(vec3 start, vec3 stepPos, vec3 ditheredRayStep, int sampleCount) {
+    vec4 segAccum = vec4(0.0);
+    vec3 rayPos = start;
+    vec2 lighting = vec2(1.0, 0.0);
+    bool entered = false;
+    bool cameThroughCut = false;
+    float stepLength = length(stepPos);
+
+    for (int count = 0; count < sampleCount; count++) {
+        rayPos += stepPos;
+        vec3 texCoord = rayPos + ditheredRayStep;
+        if (isCrosshairCut(texCoord)) {
+            cameThroughCut = true;
+            continue;
+        }
+        vec4 segColor = sampleSegOverlay(texCoord);
+        if (segColor.a > 0.0) {
+            if (!entered) {
+                entered = true;
+                if (shading) {
+                    // A ray stepping straight out of the cut into the segment is looking at the cut
+                    // plane, not at the segment's own surface: that face is flush with the segment
+                    // interior, where segNormal() is zero, so take the plane's normal instead.
+                    vec3 n = cameThroughCut ? crosshairCutNormal(texCoord, stepLength) : vec3(0.0);
+                    if (dot(n, n) <= 0.0) {
+                        n = segNormal(segVoxel(texCoord));
+                    }
+                    // Still nothing: the ray began inside the segment and there is no surface to
+                    // light. Leaving the colour flat beats lighting it with an arbitrary normal.
+                    if (dot(n, n) > 0.0) {
+                        lighting = segLighting(texCoord, normalize(n));
+                    }
+                }
+            }
+            // Correct the per-voxel opacity for the ray step so the result is independent of the
+            // sampling rate (depthSampleNumber) and the opacity slider stays perceptually usable.
+            float segA = 1.0 - pow(1.0 - segColor.a, 1.0 / (float(depthSampleNumber) * SEG_OPACITY_REF_DIST));
+            float alpha = (1.0 - segAccum.a) * segA;
+            segAccum.rgb += alpha * min(segColor.rgb * lighting.x + lighting.y, vec3(1.0));
+            segAccum.a += alpha;
+            if (segAccum.a >= 0.99) break;
+        } else {
+            cameThroughCut = false;
+        }
+    }
+    return segAccum;
 }
 
 vec4 rayCastingMip(Ray ray, float tmin, float tmax, vec2 uv) {
@@ -229,23 +386,7 @@ vec4 rayCastingMip(Ray ray, float tmin, float tmax, vec2 uv) {
     // Overlay segmentation colours on top of the MIP result (or render them alone in seg-only
     // mode). Skipped in mask modes: the mask shows real voxels, not segment colours.
     if (segMaskMode == 0 && segOverlayEnabled && (pixel.a > 0.0 || segOnly)) {
-        rayPos = start;
-        vec4 segAccum = vec4(0.0);
-        for (int count = 0; count < sampleCount; count++) {
-            rayPos += stepPos;
-            texCoord = rayPos + ditheredRayStep;
-            if (isCrosshairCut(texCoord)) continue;
-            vec4 segColor = sampleSegOverlay(texCoord);
-            if (segColor.a > 0.0) {
-                // Correct the per-voxel opacity for the ray step so the result is independent of the
-                // sampling rate (depthSampleNumber) and the opacity slider stays perceptually usable.
-                float segA = 1.0 - pow(1.0 - segColor.a, 1.0 / (float(depthSampleNumber) * SEG_OPACITY_REF_DIST));
-                float alpha = (1.0 - segAccum.a) * segA;
-                segAccum.rgb += alpha * segColor.rgb;
-                segAccum.a += alpha;
-                if (segAccum.a >= 0.99) break;
-            }
-        }
+        vec4 segAccum = accumulateSegOverlay(start, stepPos, ditheredRayStep, sampleCount);
         if (segOnly) {
             pixel = segAccum;
         } else if (segAccum.a > 0.0) {
@@ -312,24 +453,7 @@ vec4 rayCastingComposite(Ray ray, float tmin, float tmax, vec2 uv) {
 
     // Overlay segmentation colours on top of the composited volume
     if (segMaskMode == 0 && segOverlayEnabled && (pxColor.a > 0.0 || segOnly)) {
-        // Re-trace with fewer samples just for the seg overlay
-        rayPos = start;
-        vec4 segAccum = vec4(0.0);
-        for (int count = 0; count < sampleCount; count++) {
-            rayPos += stepPos;
-            texCoord = rayPos + ditheredRayStep;
-            if (isCrosshairCut(texCoord)) continue;
-            vec4 segColor = sampleSegOverlay(texCoord);
-            if (segColor.a > 0.0) {
-                // Correct the per-voxel opacity for the ray step so the result is independent of the
-                // sampling rate (depthSampleNumber) and the opacity slider stays perceptually usable.
-                float segA = 1.0 - pow(1.0 - segColor.a, 1.0 / (float(depthSampleNumber) * SEG_OPACITY_REF_DIST));
-                float alpha = (1.0 - segAccum.a) * segA;
-                segAccum.rgb += alpha * segColor.rgb;
-                segAccum.a += alpha;
-                if (segAccum.a >= 0.99) break;
-            }
-        }
+        vec4 segAccum = accumulateSegOverlay(start, stepPos, ditheredRayStep, sampleCount);
         if (segOnly) {
             pxColor = segAccum;
         } else if (segAccum.a > 0.0) {
@@ -407,23 +531,7 @@ vec4 rayCastingIsoSurface(Ray ray, float tmin, float tmax, vec2 uv) {
 
     // Overlay segmentation colours on top of the iso-surface result
     if (segMaskMode == 0 && segOverlayEnabled && (pxColor.a > 0.0 || segOnly)) {
-        rayPos = start;
-        vec4 segAccum = vec4(0.0);
-        for (int count = 0; count < sampleCount; count++) {
-            rayPos += stepPos;
-            texCoord = rayPos + ditheredRayStep;
-            if (isCrosshairCut(texCoord)) continue;
-            vec4 segColor = sampleSegOverlay(texCoord);
-            if (segColor.a > 0.0) {
-                // Correct the per-voxel opacity for the ray step so the result is independent of the
-                // sampling rate (depthSampleNumber) and the opacity slider stays perceptually usable.
-                float segA = 1.0 - pow(1.0 - segColor.a, 1.0 / (float(depthSampleNumber) * SEG_OPACITY_REF_DIST));
-                float alpha = (1.0 - segAccum.a) * segA;
-                segAccum.rgb += alpha * segColor.rgb;
-                segAccum.a += alpha;
-                if (segAccum.a >= 0.99) break;
-            }
-        }
+        vec4 segAccum = accumulateSegOverlay(start, stepPos, ditheredRayStep, sampleCount);
         if (segOnly) {
             pxColor = segAccum;
         } else if (segAccum.a > 0.0) {

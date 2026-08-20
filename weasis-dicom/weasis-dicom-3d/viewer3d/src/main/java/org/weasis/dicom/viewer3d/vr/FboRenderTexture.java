@@ -33,11 +33,18 @@ import org.slf4j.LoggerFactory;
  *
  * <ol>
  *   <li>Bind the FBO.
- *   <li>Draw the full-screen quad using the FBO ray-casting program (at logical resolution).
+ *   <li>Draw the full-screen quad using the FBO ray-casting program.
  *   <li>Unbind the FBO and restore the viewport to the physical surface size.
- *   <li>The FBO color-attachment texture is then blitted to the screen by the quad program,
- *       upscaling from logical → physical via {@code GL_LINEAR}.
+ *   <li>The FBO color-attachment texture is then blitted to the screen by the quad program.
  * </ol>
+ *
+ * <p><b>Adaptive resolution.</b> The color attachment is always allocated at the physical surface
+ * size, but only a sub-rectangle of it is ray-cast while the camera is being dragged: the pass then
+ * runs at the logical (AWT) resolution, which on a Retina display is a quarter of the fragments.
+ * The blit scales its texture coordinates by {@link #getRenderScaleX()} so the partially filled
+ * target is upscaled with {@code GL_LINEAR} for the duration of the gesture only, and the frame
+ * that follows the release is ray-cast at full physical resolution. Keeping one full-size
+ * allocation means no texture reallocation on every press and release.
  */
 public class FboRenderTexture extends TextureData {
   private static final Logger LOGGER = LoggerFactory.getLogger(FboRenderTexture.class);
@@ -53,38 +60,59 @@ public class FboRenderTexture extends TextureData {
 
   public FboRenderTexture(View3d view3d) {
     // Use RGBA16F: half-float is sufficient for volume rendering output and halves GPU memory
-    // bandwidth compared to RGBA32F. The FBO is sized at the logical (AWT) resolution; on macOS
-    // Retina the physical surface is 2× per axis (4× pixels), so rendering at logical size cuts
-    // fragment work by 4×. The final blit quad upscales with GL_LINEAR which is virtually free.
-    super(view3d.getWidth(), view3d.getHeight(), PixelFormat.RGBA16F);
+    // bandwidth compared to RGBA32F.
+    super(
+        Math.max(view3d.getSurfaceWidth(), 1),
+        Math.max(view3d.getSurfaceHeight(), 1),
+        PixelFormat.RGBA16F);
     this.view3d = view3d;
   }
 
-  /** Returns the render width in logical (AWT) pixels — same as {@code view3d.getWidth()}. */
-  private int logicalWidth() {
-    int w = view3d.getWidth();
-    return w > 0 ? w : view3d.getSurfaceWidth();
+  /** Allocation width: the physical surface, which is what an idle frame is ray-cast at. */
+  private int surfaceWidth() {
+    int w = view3d.getSurfaceWidth();
+    return w > 0 ? w : Math.max(view3d.getWidth(), 1);
   }
 
-  /** Returns the render height in logical (AWT) pixels — same as {@code view3d.getHeight()}. */
-  private int logicalHeight() {
-    int h = view3d.getHeight();
-    return h > 0 ? h : view3d.getSurfaceHeight();
+  private int surfaceHeight() {
+    int h = view3d.getSurfaceHeight();
+    return h > 0 ? h : Math.max(view3d.getHeight(), 1);
+  }
+
+  /**
+   * Width of the ray-cast pass: the logical (AWT) resolution while the camera is being dragged, the
+   * full physical surface otherwise. Pure function of the current state, so the blit and the
+   * overlay uniforms can call it without depending on when the pass ran.
+   */
+  private int passWidth() {
+    return view3d.camera.isAdjusting() ? Math.clamp(view3d.getWidth(), 1, width) : width;
+  }
+
+  private int passHeight() {
+    return view3d.camera.isAdjusting() ? Math.clamp(view3d.getHeight(), 1, height) : height;
+  }
+
+  /** Fraction of the target ray-cast this frame; the blit scales its texture coordinates by it. */
+  public float getRenderScaleX() {
+    return width > 0 ? passWidth() / (float) width : 1f;
+  }
+
+  public float getRenderScaleY() {
+    return height > 0 ? passHeight() / (float) height : 1f;
   }
 
   @Override
   public void init(GL2ES2 gl) {
     super.init(gl);
-    // Size the FBO at logical (AWT) pixels.
-    this.width = logicalWidth();
-    this.height = logicalHeight();
+    this.width = surfaceWidth();
+    this.height = surfaceHeight();
 
     // --- Colour-attachment texture (bound on unit 3 to avoid disturbing units 0-2) ---
     gl.glActiveTexture(GL.GL_TEXTURE0 + OUTPUT_TEXTURE_UNIT);
     gl.glBindTexture(GL.GL_TEXTURE_2D, getId());
     gl.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_WRAP_S, GL.GL_CLAMP_TO_EDGE);
     gl.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_WRAP_T, GL.GL_CLAMP_TO_EDGE);
-    // GL_LINEAR: the blit quad upscales the logical-resolution FBO to the physical Retina surface.
+    // GL_LINEAR: the blit quad upscales the reduced-resolution pass rendered while interacting.
     gl.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MAG_FILTER, GL.GL_LINEAR);
     gl.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MIN_FILTER, GL.GL_LINEAR);
     gl.glTexImage2D(GL.GL_TEXTURE_2D, 0, internalFormat, width, height, 0, format, type, null);
@@ -106,17 +134,13 @@ public class FboRenderTexture extends TextureData {
 
     // Restore active texture unit to 0
     gl.glActiveTexture(GL.GL_TEXTURE0);
-
-    // Force resize on next render
-    this.width = 1;
-    this.height = 1;
   }
 
   private void resizeTexture(GL2ES2 gl) {
     gl.glActiveTexture(GL.GL_TEXTURE0 + OUTPUT_TEXTURE_UNIT);
     gl.glBindTexture(GL.GL_TEXTURE_2D, getId());
-    this.width = logicalWidth();
-    this.height = logicalHeight();
+    this.width = surfaceWidth();
+    this.height = surfaceHeight();
     gl.glTexImage2D(GL.GL_TEXTURE_2D, 0, internalFormat, width, height, 0, format, type, null);
     gl.glBindTexture(GL.GL_TEXTURE_2D, 0);
     gl.glActiveTexture(GL.GL_TEXTURE0);
@@ -137,21 +161,23 @@ public class FboRenderTexture extends TextureData {
       init(gl);
     }
 
-    if (width != logicalWidth() || height != logicalHeight()) {
+    if (width != surfaceWidth() || height != surfaceHeight()) {
       resizeTexture(gl);
     }
 
-    // Render ray-casting into FBO at logical resolution.
+    // Ray-cast into the FBO, over the whole target when idle and over the logical-resolution
+    // sub-rectangle while interacting. glClear covers the full attachment, so the region outside
+    // the sub-rectangle never holds a stale frame.
     // Units 0 (volTexture 3D), 1 (colorMap), 2 (lightingMap) are already bound by the caller.
     gl.glBindFramebuffer(GL.GL_FRAMEBUFFER, fboId);
-    gl.glViewport(0, 0, width, height);
+    gl.glViewport(0, 0, passWidth(), passHeight());
     gl.glClear(GL.GL_COLOR_BUFFER_BIT);
 
     gl.glDrawArrays(GL.GL_TRIANGLES, 0, View3d.vertexBufferData.length / 2);
 
     gl.glBindFramebuffer(GL.GL_FRAMEBUFFER, 0);
     // Restore viewport to the full physical surface size
-    gl.glViewport(0, 0, view3d.getSurfaceWidth(), view3d.getSurfaceHeight());
+    gl.glViewport(0, 0, surfaceWidth(), surfaceHeight());
   }
 
   @Override

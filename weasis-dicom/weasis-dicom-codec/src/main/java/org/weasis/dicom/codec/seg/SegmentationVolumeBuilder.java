@@ -392,21 +392,22 @@ public final class SegmentationVolumeBuilder {
           SegBinaryMaskWorkaround.reDecodeFrame(
               binaryDecoderWorkaroundDicom, frameIndex, sizeX, sizeY);
     }
-    if (rawMask == null) {
-      rawMask = maskElement.getImage();
+    // A re-decoded frame is owned by this method; a cached one belongs to the shared native image
+    // cache and must stay pinned for as long as its pixels are read.
+    boolean cached = rawMask == null;
+    if (cached) {
+      rawMask = MaskFrames.acquire(maskElement);
     }
     stats.decodeNanos += System.nanoTime() - decodeStart;
     if (rawMask == null || rawMask.width() <= 0 || rawMask.height() <= 0) {
-      if (rawMask != null) ImageConversion.releasePlanarImage(rawMask);
-      maskElement.removeImageFromCache();
+      releaseRawMask(maskElement, rawMask, cached);
       return;
     }
     // Re-align decoded mask to the SEG's declared (Columns, Rows) — handles the highdicom
     // packed-bit binary SEG case where dcm4che delivers a non-square frame transposed.
     PlanarImage maskImage = SegMaskOrientation.normalize(rawMask, sizeX, sizeY, segUid);
     if (maskImage == null) {
-      ImageConversion.releasePlanarImage(rawMask);
-      maskElement.removeImageFromCache();
+      releaseRawMask(maskElement, rawMask, cached);
       return;
     }
     boolean transposed = maskImage != rawMask;
@@ -456,8 +457,17 @@ public final class SegmentationVolumeBuilder {
       if (transposed) {
         maskImage.release();
       }
+      releaseRawMask(maskElement, rawMask, cached);
+    }
+  }
+
+  /** Releases a frame acquired by {@link #stampFrame}, honouring where its pixels came from. */
+  private static void releaseRawMask(
+      DicomImageElement maskElement, PlanarImage rawMask, boolean cached) {
+    if (cached) {
+      MaskFrames.release(maskElement, rawMask);
+    } else if (rawMask != null) {
       ImageConversion.releasePlanarImage(rawMask);
-      maskElement.removeImageFromCache();
     }
   }
 
@@ -470,11 +480,12 @@ public final class SegmentationVolumeBuilder {
   }
 
   private static int safeDim(DicomImageElement el, boolean width) {
-    PlanarImage img = el.getImage();
-    int v = img == null ? 0 : (width ? img.width() : img.height());
-    if (img != null) ImageConversion.releasePlanarImage(img);
-    el.removeImageFromCache();
-    return v;
+    PlanarImage img = MaskFrames.acquire(el);
+    try {
+      return img == null ? 0 : (width ? img.width() : img.height());
+    } finally {
+      MaskFrames.release(el, img);
+    }
   }
 
   /** Median of consecutive sorted projection deltas; falls back to slice thickness or 1 mm. */

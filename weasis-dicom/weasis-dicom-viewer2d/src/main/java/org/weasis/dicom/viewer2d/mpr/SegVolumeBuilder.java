@@ -28,11 +28,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.DicomSeries;
+import org.weasis.dicom.codec.seg.MaskFrames;
 import org.weasis.dicom.codec.seg.SegMaskOrientation;
 import org.weasis.dicom.codec.seg.SegSpecialElement;
 import org.weasis.dicom.codec.seg.SegmentationVolume;
 import org.weasis.opencv.data.PlanarImage;
-import org.weasis.opencv.op.ImageConversion;
 import org.weasis.opencv.seg.RegionAttributes;
 
 /**
@@ -226,10 +226,11 @@ public final class SegVolumeBuilder {
           DicomImageElement maskElement = segSeries.getMedia(ref.frameIndex, null, null);
           if (maskElement == null) continue;
 
-          PlanarImage rawMask = maskElement.getImage();
-          if (rawMask == null || rawMask.width() <= 0 || rawMask.height() <= 0) {
-            if (rawMask != null) ImageConversion.releasePlanarImage(rawMask);
-            maskElement.removeImageFromCache();
+          // Pinned for the whole read: the shared native image cache frees an entry's pixels as
+          // soon as it is evicted, and this loop's own decodes are what drives that eviction.
+          PlanarImage rawMask = MaskFrames.acquire(maskElement);
+          if (rawMask == null) {
+            MaskFrames.release(maskElement, null);
             continue;
           }
           // Re-align decoded mask to the SEG's declared (Columns, Rows). Required for some
@@ -238,34 +239,33 @@ public final class SegVolumeBuilder {
           // below would write each frame rotated by 90° in the volume.
           PlanarImage maskImage = SegMaskOrientation.normalize(rawMask, segCols, segRows, segUid);
           if (maskImage == null) {
-            ImageConversion.releasePlanarImage(rawMask);
-            maskElement.removeImageFromCache();
+            MaskFrames.release(maskElement, rawMask);
             continue;
           }
           boolean transposed = maskImage != rawMask;
+          try {
+            Matrix4d transform =
+                useLpsMapping
+                    ? buildFrameToVoxelTransformViaLps(ref.spatial, imageVolume)
+                    : buildFrameToVoxelTransform(
+                        ref.spatial, volOrigin, volAxisX, volAxisY, volAxisZ, pixelSpacing);
 
-          Matrix4d transform =
-              useLpsMapping
-                  ? buildFrameToVoxelTransformViaLps(ref.spatial, imageVolume)
-                  : buildFrameToVoxelTransform(
-                      ref.spatial, volOrigin, volAxisX, volAxisY, volAxisZ, pixelSpacing);
-
-          if (weighted) {
-            SplatContext sliceCtx =
-                sharedCtx.withTransformAndDim(
-                    transform, new Dimension(maskImage.width(), maskImage.height()));
-            splatBinaryFrame(maskImage, sliceCtx, volSize);
-          } else {
-            // Fallback when accumulators could not be allocated: nearest-neighbor stamping.
-            stampNearestNeighbor(maskImage, transform, volSize, segVolume, segmentNumber);
+            if (weighted) {
+              SplatContext sliceCtx =
+                  sharedCtx.withTransformAndDim(
+                      transform, new Dimension(maskImage.width(), maskImage.height()));
+              splatBinaryFrame(maskImage, sliceCtx, volSize);
+            } else {
+              // Fallback when accumulators could not be allocated: nearest-neighbor stamping.
+              stampNearestNeighbor(maskImage, transform, volSize, segVolume, segmentNumber);
+            }
+            stampedFrames++;
+          } finally {
+            if (transposed) {
+              maskImage.release();
+            }
+            MaskFrames.release(maskElement, rawMask);
           }
-          stampedFrames++;
-
-          if (transposed) {
-            maskImage.release();
-          }
-          ImageConversion.releasePlanarImage(rawMask);
-          maskElement.removeImageFromCache();
         }
 
         if (weighted) {

@@ -606,8 +606,7 @@ public class View2dContainer extends DicomViewerPlugin implements PropertyChange
               // the region may no longer match the image, and the loading message would stay.
               if (view2d.hasPendingSegLoading()
                   || region.containsSopInstanceUIDReference(view.getImage())) {
-                view2d.updateSegmentation();
-                view2d.repaint();
+                view2d.requestSegmentationUpdate();
               }
               if (view2d == pane) {
                 UI.updateDynamicTools(view2d.getSeries());

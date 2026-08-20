@@ -22,6 +22,8 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicReference;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
@@ -30,11 +32,21 @@ import org.junit.jupiter.api.io.TempDir;
 import org.weasis.core.api.net.BodyPart;
 import org.weasis.core.api.net.BodySupplier;
 import org.weasis.core.api.net.MultipartBody;
+import org.weasis.core.api.net.StallTimeoutException;
+import org.weasis.core.api.net.ThrottledUploadServer;
 import org.weasis.core.api.net.WebRequest;
 
 class JavaNetHttpClientTest {
 
+  /** Sized like {@code HttpUtilsTest}: the upload outlasts the timeout, gaps stay far below it. */
+  private static final int UPLOAD_SIZE = 8 << 20;
+
+  private static final int UPLOAD_DRAIN_CHUNK = 64 * 1024;
+  private static final long UPLOAD_DRAIN_PAUSE_MS = 20;
+  private static final int UPLOAD_TIMEOUT_MS = 1_500;
+
   private static HttpServer server;
+  private static ExecutorService serverPool;
   private static String baseUrl;
   private static final AtomicReference<String> LAST_BODY = new AtomicReference<>();
   private static final AtomicReference<String> LAST_METHOD = new AtomicReference<>();
@@ -56,6 +68,8 @@ class JavaNetHttpClientTest {
             os.write(body);
           }
         });
+    serverPool = Executors.newCachedThreadPool();
+    server.setExecutor(serverPool);
     server.start();
     baseUrl = "http://localhost:" + server.getAddress().getPort();
   }
@@ -63,6 +77,7 @@ class JavaNetHttpClientTest {
   @AfterAll
   static void stop() {
     server.stop(0);
+    serverPool.shutdownNow();
   }
 
   private static JavaNetHttpClient newClient() {
@@ -204,6 +219,45 @@ class JavaNetHttpClientTest {
     } finally {
       // Clear flag to avoid leaking interrupt status to other tests.
       Thread.interrupted();
+    }
+  }
+
+  private static JavaNetHttpClient uploadClient() {
+    return new JavaNetHttpClient(
+        new JavaNetHttpClientConfig(2_000, UPLOAD_TIMEOUT_MS, ProxySelector.getDefault()));
+  }
+
+  private static WebRequest uploadRequest(String url) {
+    var request = new WebRequest(WebRequest.Method.POST, url);
+    request.setMultipartBody(uploadBody());
+    return request;
+  }
+
+  private static MultipartBody uploadBody() {
+    var multipart = new MultipartBody("upload-bnd", null);
+    multipart.addBodyPart(
+        new BodyPart(
+            Map.of("Content-Type", "application/octet-stream"),
+            BodySupplier.ofBytes(new byte[UPLOAD_SIZE])));
+    return multipart;
+  }
+
+  @Test
+  void slowUploadOutlivesTheInactivityTimeoutWhileBytesKeepFlowing() throws Exception {
+    // The authenticated STOW-RS path: the budget bounds time without progress, so a healthy
+    // transfer completes however long it takes.
+    try (var upstream = ThrottledUploadServer.draining(UPLOAD_DRAIN_CHUNK, UPLOAD_DRAIN_PAUSE_MS);
+        var response = uploadClient().execute(uploadRequest(upstream.url()))) {
+      assertEquals(200, response.getResponseCode());
+    }
+  }
+
+  @Test
+  void stalledUploadIsAbortedOnceBytesStopFlowing() throws Exception {
+    try (var upstream = ThrottledUploadServer.stalling(UPLOAD_DRAIN_CHUNK)) {
+      var client = uploadClient();
+      var request = uploadRequest(upstream.url());
+      assertThrows(StallTimeoutException.class, () -> client.execute(request));
     }
   }
 }

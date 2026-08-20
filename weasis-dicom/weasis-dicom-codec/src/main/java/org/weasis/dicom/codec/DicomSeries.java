@@ -31,6 +31,7 @@ import org.weasis.core.util.FileUtil;
 import org.weasis.core.util.MathUtil;
 import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.codec.TagD.Level;
+import org.weasis.dicom.codec.seg.SegSpecialElement;
 import org.weasis.dicom.codec.utils.SeriesInstanceList;
 
 public class DicomSeries extends Series<DicomImageElement> {
@@ -187,6 +188,11 @@ public class DicomSeries extends Series<DicomImageElement> {
                 });
 
         for (HiddenSpecialElement element : removed) {
+          if (element instanceof SegSpecialElement seg) {
+            // Frees the canonical and image-aligned rasters now and gives their share of the
+            // segmentation volume budget back, instead of waiting for the SEG to be collected.
+            seg.disposeSegmentationVolume();
+          }
           String sopUID = TagD.getTagValue(element, Tag.SOPInstanceUID, String.class);
           if (sopUID != null) {
             Set<String> referencingSeries = manager.sopRef2Series.get(sopUID);

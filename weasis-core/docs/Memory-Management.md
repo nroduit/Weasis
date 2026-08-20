@@ -313,3 +313,14 @@ warning when the situation first becomes sub-optimal, when an out-of-memory erro
 occurs, and when a volume spills to disk. Programmatically, `ResourceMonitor`
 collects the metrics, `ResourceAdvisor` produces the verdict, and the cumulative
 statistics persist in `~/.weasis/resource-stats.properties`.
+
+Peaks and event counters measure how a *given release* manages memory, so a
+release that changes that invalidates them — otherwise a fixed problem keeps
+driving a sub-optimal verdict forever, since the counters only grow. With
+`weasis.resource.stats.clean.previous.version` (set in `base.json` or pushed by
+the viewer hub, `true` in the distribution), the first launch of a version other
+than the one that wrote the file drops the peaks, uptime and counters. The
+workload descriptors (largest image and volume) and the detected GPU are not
+version-bound and always carry over, so the advisor keeps its picture of the
+user's practice. The same split applies to the **Reset statistics** button of the
+panel.

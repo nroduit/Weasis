@@ -15,29 +15,47 @@ import org.weasis.core.api.net.NetworkUtil;
 /** Configuration for JavaNet HTTP client with timeout and proxy settings. */
 public class JavaNetHttpClientConfig {
 
-  private final int connectTimeout;
-  private final int readTimeout;
+  private final int connectTimeoutMillis;
+  private final int inactivityTimeoutMillis;
   private final ProxySelector proxySelector;
 
   public JavaNetHttpClientConfig() {
     this(
-        NetworkUtil.getUrlConnectionTimeout(),
-        NetworkUtil.getUrlReadTimeout(),
+        NetworkUtil.getUrlConnectTimeoutMillis(),
+        NetworkUtil.getUrlInactivityTimeoutMillis(),
         ProxySelector.getDefault());
   }
 
-  public JavaNetHttpClientConfig(int connectTimeout, int readTimeout, ProxySelector proxySelector) {
-    this.connectTimeout = connectTimeout;
-    this.readTimeout = readTimeout;
+  public JavaNetHttpClientConfig(
+      int connectTimeoutMillis, int inactivityTimeoutMillis, ProxySelector proxySelector) {
+    this.connectTimeoutMillis = connectTimeoutMillis;
+    this.inactivityTimeoutMillis = inactivityTimeoutMillis;
     this.proxySelector = proxySelector;
   }
 
-  public int getConnectTimeout() {
-    return connectTimeout;
+  public int getConnectTimeoutMillis() {
+    return connectTimeoutMillis;
   }
 
+  /** Budget for time without progress, never for the total transfer. */
+  public int getInactivityTimeoutMillis() {
+    return inactivityTimeoutMillis;
+  }
+
+  /**
+   * @deprecated renamed to {@link #getConnectTimeoutMillis()}
+   */
+  @Deprecated(since = "4.7.3")
+  public int getConnectTimeout() {
+    return connectTimeoutMillis;
+  }
+
+  /**
+   * @deprecated renamed to {@link #getInactivityTimeoutMillis()}
+   */
+  @Deprecated(since = "4.7.3")
   public int getReadTimeout() {
-    return readTimeout;
+    return inactivityTimeoutMillis;
   }
 
   public ProxySelector getProxy() {

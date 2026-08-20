@@ -42,6 +42,7 @@ import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPopupMenu;
 import javax.swing.JSeparator;
+import javax.swing.SwingUtilities;
 import org.dcm4che3.data.Tag;
 import org.dcm4che3.img.lut.PresetWindowLevel;
 import org.joml.Vector3d;
@@ -141,6 +142,9 @@ public class View2d extends DefaultView2d<DicomImageElement> {
 
   /** Segmentations whose canonical volume was still building at the last update pass. */
   private volatile List<SpecialElementRegion> loadingSegs = List.of(); // NOSONAR visibility ref
+
+  /** Set between a {@link #requestSegmentationUpdate()} call and the refresh it posts. EDT only. */
+  private boolean segUpdatePending;
 
   protected Vector3d lastCrosshairPosition;
 
@@ -745,6 +749,28 @@ public class View2d extends DefaultView2d<DicomImageElement> {
 
   public void updateSegmentation() {
     updateSegmentation(imageLayer.getSourceImage());
+  }
+
+  /**
+   * Requests a segmentation refresh and repaint, collapsing bursts into a single pass. Each SEG
+   * file of a study notifies twice while it loads (contours parsed, then canonical volume built)
+   * and every pass re-slices <em>all</em> the segmentations that apply to the displayed image, so
+   * on a study holding dozens of SEG files the naive one-refresh-per-notification behaviour is
+   * quadratic and floods the Java2D pipeline with overlay surfaces. Must be called on the EDT.
+   */
+  public void requestSegmentationUpdate() {
+    if (segUpdatePending) {
+      return;
+    }
+    segUpdatePending = true;
+    // Deliberately not GuiExecutor.execute(): the notifications are already delivered on the EDT,
+    // and running inline would refresh once per notification instead of once per burst.
+    SwingUtilities.invokeLater(
+        () -> {
+          segUpdatePending = false;
+          updateSegmentation();
+          repaint();
+        });
   }
 
   private void updateSegmentation(DicomImageElement img) {

@@ -89,7 +89,9 @@ import org.weasis.dicom.codec.SpecialElementReferences;
 import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.TagD.Level;
 import org.weasis.dicom.codec.display.Modality;
+import org.weasis.dicom.codec.seg.SegBuildScheduler;
 import org.weasis.dicom.codec.seg.SegSpecialElement;
+import org.weasis.dicom.codec.seg.SegVisibilityPolicy;
 import org.weasis.dicom.codec.utils.SplittingModalityRules;
 import org.weasis.dicom.codec.utils.SplittingModalityRules.Rule;
 import org.weasis.dicom.codec.utils.SplittingRules;
@@ -989,11 +991,13 @@ public class DicomModel implements TreeModel, DataExplorerModel {
               .toList();
 
       // Build SEG contours asynchronously so a heavy multi-frame SEG never blocks the
-      // import/Q-R session. The work runs silently on the common pool: heavier per-volume
-      // construction (segmentation volume, MPR overlays) is deferred to the viewer
+      // import/Q-R session. The work runs silently on the bounded SEG parsing pool: a study may
+      // hold dozens of SEG files, and each parse walks the per-frame sequence against every image
+      // of the referenced series, so an unbounded fan-out would saturate every core. Heavier
+      // per-volume construction (segmentation volume, MPR overlays) is deferred to the viewer
       // initializers (e.g. MprController#buildSegElementsAsync), so we no longer surface
       // a dedicated loading task in the DICOM explorer's bottom bar.
-      java.util.concurrent.CompletableFuture.runAsync(
+      SegBuildScheduler.submitContourInit(
           () -> {
             try {
               seg.initContours(originalSeries, refSeriesList);
@@ -1045,6 +1049,9 @@ public class DicomModel implements TreeModel, DataExplorerModel {
       Map<String, Set<HiddenSpecialElement>> mapSeries =
           HiddenSeriesManager.getInstance().series2Elements;
       mapSeries.computeIfAbsent(seriesUID, _ -> new CopyOnWriteArraySet<>()).add(hiddenElement);
+      // The series is one segmentation more crowded, which may flip the default visibility of the
+      // ones already loaded: they are imported one by one, so the count is never final until now.
+      SegVisibilityPolicy.invalidate();
 
       String patientPseudoUID = (String) hiddenElement.getTagValue(TagW.PatientPseudoUID);
       if (patientPseudoUID != null) {

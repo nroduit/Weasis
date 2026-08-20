@@ -124,23 +124,26 @@ vec4 computeCrosshairColor(ivec2 pixelCoords, ivec2 imageDims) {
     vec2 screenDir2 = normalize(rawDir2);
     vec2 screenDir3 = normalize(rawDir3);
 
-    // 4. Per-pixel line test.
-    const int ARM = 31; // half-length in pixels
-    const int GAP = 5;  // gap around centre
+    // 4. Per-pixel line test. The metrics are in framebuffer pixels, so they are scaled by
+    //    overlayScale to keep a constant on-screen size when the pass is ray-cast at reduced
+    //    resolution while interacting; the half-width never drops below half a pixel.
+    float arm = 31.0 * overlayScale; // half-length in pixels
+    float gap = 5.0 * overlayScale;  // gap around centre
+    float halfWidth = max(1.5 * overlayScale, 0.5);
 
     vec2 offset = vec2(pixelCoords - centre);
 
     float proj1 = dot(offset, screenDir1);
     float perp1 = abs(dot(offset, vec2(-screenDir1.y, screenDir1.x)));
-    bool  onLine1 = (perp1 <= 1.5) && (abs(proj1) >= float(GAP)) && (abs(proj1) <= float(ARM));
+    bool  onLine1 = (perp1 <= halfWidth) && (abs(proj1) >= gap) && (abs(proj1) <= arm);
 
     float proj2 = dot(offset, screenDir2);
     float perp2 = abs(dot(offset, vec2(-screenDir2.y, screenDir2.x)));
-    bool  onLine2 = (perp2 <= 1.5) && (abs(proj2) >= float(GAP)) && (abs(proj2) <= float(ARM));
+    bool  onLine2 = (perp2 <= halfWidth) && (abs(proj2) >= gap) && (abs(proj2) <= arm);
 
     float proj3 = dot(offset, screenDir3);
     float perp3 = abs(dot(offset, vec2(-screenDir3.y, screenDir3.x)));
-    bool  onLine3 = (perp3 <= 1.5) && (abs(proj3) >= float(GAP)) && (abs(proj3) <= float(ARM));
+    bool  onLine3 = (perp3 <= halfWidth) && (abs(proj3) >= gap) && (abs(proj3) <= arm);
 
     if (onLine1 || onLine2 || onLine3) {
         // Per-arm direction-based colour: mirrors AxisDirection.getDirectionColor().

@@ -38,16 +38,24 @@ import org.weasis.core.api.gui.util.AppProperties;
  * {@link Snapshot} exposes is an all-time figure. It draws no conclusions — interpreting the
  * numbers is the job of {@link ResourceAdvisor}.
  *
+ * <p>Peaks and counters describe how a given release manages memory, so {@link
+ * #CLEAN_PREVIOUS_VERSION_PROPERTY} drops them when the version changes; the workload and graphics
+ * descriptors are not version-bound and always carry over.
+ *
  * <p>The cost is deliberately negligible: a single daemon thread reads a handful of beans every few
  * seconds; the event counters are plain atomics incremented by callers.
  */
 public final class ResourceMonitor {
+
+  public static final String CLEAN_PREVIOUS_VERSION_PROPERTY =
+      "weasis.resource.stats.clean.previous.version";
 
   private static final Logger LOGGER = LoggerFactory.getLogger(ResourceMonitor.class);
   private static final ResourceMonitor INSTANCE = new ResourceMonitor();
   private static final long SAMPLE_INTERVAL_SECONDS = 5;
   private static final long SAVE_INTERVAL_SECONDS = 60;
   private static final String STATS_FILE = "resource-stats.properties"; // NON-NLS
+  private static final String VERSION_KEY = "weasisVersion"; // NON-NLS
 
   private final MemoryMXBean memoryBean = ManagementFactory.getMemoryMXBean();
   private final OperatingSystemMXBean osBean = resolveOsBean();
@@ -58,6 +66,9 @@ public final class ResourceMonitor {
   private final AtomicLong cacheEvictions = new AtomicLong();
   private final AtomicLong outOfMemoryEvents = new AtomicLong();
   private final AtomicLong volumeDiskFallbacks = new AtomicLong();
+
+  // Workload descriptors: what the studies the user opens demand, whatever Weasis did with them.
+  // Unlike the counters above they survive resetStatistics().
   private final AtomicLong largestImageBytes = new AtomicLong();
   private final AtomicInteger largestVolumeSlices = new AtomicInteger();
 
@@ -66,9 +77,9 @@ public final class ResourceMonitor {
   private volatile double nativePeakPressure;
   private volatile double peakGcOverhead;
 
-  // Carried over from previous sessions, fixed for the lifetime of this run.
-  private final long previousSessions;
-  private final long previousUptimeMillis;
+  // Carried over from previous sessions; cleared by resetStatistics().
+  private volatile long previousSessions;
+  private volatile long previousUptimeMillis;
 
   private volatile ResourceAdvisor.Level lastOverallLevel = ResourceAdvisor.Level.COLLECTING;
 
@@ -76,15 +87,13 @@ public final class ResourceMonitor {
 
   private ResourceMonitor() {
     Properties history = loadHistory();
-    previousSessions = parseLong(history, "sessionCount");
-    previousUptimeMillis = parseLong(history, "totalUptimeMillis");
-    heapPeakUsed = parseLong(history, "peakHeapUsed");
-    peakProcessCpuLoad = parseDouble(history, "peakProcessCpuLoad");
-    nativePeakPressure = parseDouble(history, "peakNativePressure");
-    peakGcOverhead = parseDouble(history, "peakGcOverhead");
-    cacheEvictions.set(parseLong(history, "cacheEvictions"));
-    outOfMemoryEvents.set(parseLong(history, "outOfMemoryEvents"));
-    volumeDiskFallbacks.set(parseLong(history, "volumeDiskFallbacks"));
+    if (supersededByUpgrade(history)) {
+      logDiscardedHistory(history);
+    } else {
+      seedMeasuredHistory(history);
+    }
+    // Workload and graphics descriptors outlive both an upgrade and resetStatistics(): they say
+    // what the user opens and on which machine, not what a given version did with it.
     largestImageBytes.set(parseLong(history, "largestImageBytes"));
     largestVolumeSlices.set((int) parseLong(history, "largestVolumeSlices"));
 
@@ -185,6 +194,29 @@ public final class ResourceMonitor {
   }
 
   /**
+   * Clears the measured history so the statistics restart from the current run: uptime, peaks and
+   * event counters. Peaks measured from JVM-wide counters (heap, CPU, GC overhead) are
+   * re-established by the next sample.
+   *
+   * <p>What describes the user rather than the run is kept: the largest image and volume seen, and
+   * the detected graphics adapter. Uptime is cleared together with the counters because it is their
+   * rate denominator — keeping it would divide fresh events by hours of past use and hide them.
+   */
+  public void resetStatistics() {
+    previousSessions = 0;
+    previousUptimeMillis = 0;
+    heapPeakUsed = 0;
+    peakProcessCpuLoad = 0;
+    nativePeakPressure = 0;
+    peakGcOverhead = 0;
+    cacheEvictions.set(0);
+    outOfMemoryEvents.set(0);
+    volumeDiskFallbacks.set(0);
+    lastOverallLevel = ResourceAdvisor.Level.COLLECTING;
+    saveHistory();
+  }
+
+  /**
    * @return an immutable snapshot of the resource metrics; counters and peaks are all-time figures,
    *     {@code uptimeMillis} and {@code gcOverhead} describe the current run.
    */
@@ -267,6 +299,39 @@ public final class ResourceMonitor {
     lastOverallLevel = level;
   }
 
+  private void seedMeasuredHistory(Properties history) {
+    previousSessions = parseLong(history, "sessionCount");
+    previousUptimeMillis = parseLong(history, "totalUptimeMillis");
+    heapPeakUsed = parseLong(history, "peakHeapUsed");
+    peakProcessCpuLoad = parseDouble(history, "peakProcessCpuLoad");
+    nativePeakPressure = parseDouble(history, "peakNativePressure");
+    peakGcOverhead = parseDouble(history, "peakGcOverhead");
+    cacheEvictions.set(parseLong(history, "cacheEvictions"));
+    outOfMemoryEvents.set(parseLong(history, "outOfMemoryEvents"));
+    volumeDiskFallbacks.set(parseLong(history, "volumeDiskFallbacks"));
+  }
+
+  /** Nothing is reported on a fresh installation, where there is no history to discard. */
+  private static void logDiscardedHistory(Properties history) {
+    if (!history.isEmpty()) {
+      LOGGER.info(
+          "Discarding the resource statistics measured by version {}: they no longer describe how "
+              + "{} manages memory",
+          history.getProperty(VERSION_KEY, "?"),
+          AppProperties.WEASIS_VERSION);
+    }
+  }
+
+  /**
+   * True when {@link #CLEAN_PREVIOUS_VERSION_PROPERTY} is enabled and the history was written by
+   * another version. A history with no version stamp predates the stamp itself, hence also counts
+   * as another version.
+   */
+  private static boolean supersededByUpgrade(Properties history) {
+    return Boolean.parseBoolean(System.getProperty(CLEAN_PREVIOUS_VERSION_PROPERTY, "false"))
+        && !AppProperties.WEASIS_VERSION.equals(history.getProperty(VERSION_KEY, ""));
+  }
+
   private static Properties loadHistory() {
     Properties properties = new Properties();
     try {
@@ -287,6 +352,7 @@ public final class ResourceMonitor {
       Path file = statsFile();
       Snapshot s = snapshot();
       Properties properties = new Properties();
+      properties.setProperty(VERSION_KEY, AppProperties.WEASIS_VERSION);
       properties.setProperty("sessionCount", Long.toString(s.sessionCount()));
       properties.setProperty("totalUptimeMillis", Long.toString(s.totalUptimeMillis()));
       properties.setProperty("peakHeapUsed", Long.toString(s.heapPeakUsed()));

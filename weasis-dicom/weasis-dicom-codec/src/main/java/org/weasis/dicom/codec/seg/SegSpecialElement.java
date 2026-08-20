@@ -65,21 +65,6 @@ public class SegSpecialElement extends HiddenSpecialElement
   private static final Logger LOGGER = LoggerFactory.getLogger(SegSpecialElement.class);
 
   /**
-   * Preference key holding the comma-separated, case-insensitive keywords that mark a segmentation
-   * as hidden by default (see {@link #isHiddenByDefault}). An empty value disables the feature.
-   */
-  public static final String HIDE_KEYWORDS_PREF = "weasis.dicom.seg.hide.keywords"; // NON-NLS
-
-  public static final String DEFAULT_HIDE_KEYWORDS =
-      "table removal, tabletop, couch, patient support, bed removal"; // NON-NLS
-
-  /**
-   * Preference key: when {@code true}, every segmentation is hidden when loaded and must be enabled
-   * by the user (Segmentation tool or the view's segmentation button).
-   */
-  public static final String HIDE_ALL_PREF = "weasis.dicom.seg.hide.all"; // NON-NLS
-
-  /**
    * Pluggable scheduler for the asynchronous build of the canonical segmentation volume. The
    * weasis-dicom-explorer module installs a UI-aware executor that surfaces the build as a
    * cancellable task in the explorer's bottom loading panel; in headless contexts the {@link
@@ -196,6 +181,17 @@ public class SegSpecialElement extends HiddenSpecialElement
   private volatile boolean segVolumeUnavailable;
 
   /**
+   * Sticky flag set when {@link SegVolumeCache} disposed this segmentation's volume to stay within
+   * its budget. It stops the paint/scroll passes from immediately rebuilding what was just freed:
+   * without it a study whose volumes do not fit together loops forever, each build evicting the
+   * previous one and firing the update event that schedules the next. The segmentation keeps
+   * rendering through the per-frame contour path. Cleared by an explicit build request (a non-EDT
+   * caller such as MPR or Volume Rendering), {@link #retrySegmentationVolumeBuild()} or {@link
+   * #disposeSegmentationVolume()}.
+   */
+  private volatile boolean segVolumeBudgetEvicted;
+
+  /**
    * Native slice spacing of the SEG (in mm) along {@link #referenceNormal}, captured from
    * PixelMeasuresSequence (SpacingBetweenSlices, fallback SliceThickness) on the first frame that
    * contributes to the {@link #positionMap}. Used to:
@@ -210,10 +206,17 @@ public class SegSpecialElement extends HiddenSpecialElement
   private volatile double segSliceSpacing;
 
   private volatile float opacity = 1.0f;
-  private volatile boolean visible = true;
 
-  /** Ensures the default-visibility classification is applied only on the first contour build. */
-  private volatile boolean defaultVisibilityApplied;
+  /**
+   * The user's own choice, from {@link #setVisible}. {@code null} while this segmentation still
+   * follows the default computed by {@link SegVisibilityPolicy}.
+   */
+  private volatile Boolean visible; // NOSONAR tri-state: null means "follows the default"
+
+  /** Last computed default and the {@link SegVisibilityPolicy#generation()} it was computed at. */
+  private volatile boolean defaultHidden;
+
+  private volatile long defaultGeneration = -1L;
 
   /**
    * Async loading lifecycle. {@link #initContours} flips this to {@code LOADING} on entry and to
@@ -256,6 +259,25 @@ public class SegSpecialElement extends HiddenSpecialElement
   /** Returns the underlying DICOM dataset, or {@code null} if the media reader is missing. */
   private Attributes dicomObject() {
     return mediaIO == null ? null : ((DicomMediaIO) mediaIO).getDicomObject();
+  }
+
+  /**
+   * The mask frames of this segmentation, in frame order, taken from its own reader.
+   *
+   * <p>Never index the {@link DicomSeries} the segmentation was imported into instead: several SEG
+   * instances may share one Series Instance UID — a study storing one VOI per file does exactly
+   * that — and {@code DicomModel} deliberately keeps them in a single series. That series therefore
+   * holds every instance's frames, so an ordinal into it identifies an arbitrary instance's frame
+   * rather than frame <i>n</i> of this one.
+   */
+  private DicomImageElement[] segFrames() {
+    DicomImageElement[] frames =
+        mediaIO instanceof DicomMediaIO reader ? reader.getMediaElement() : null;
+    return frames == null ? new DicomImageElement[0] : frames;
+  }
+
+  private static DicomImageElement frameAt(DicomImageElement[] frames, int frameIndex) {
+    return frameIndex < 0 || frameIndex >= frames.length ? null : frames[frameIndex];
   }
 
   public static DefaultMutableTreeNode buildStructRegionNode(SegRegion<?> contour) {
@@ -387,6 +409,7 @@ public class SegSpecialElement extends HiddenSpecialElement
    *
    * @return the cached canonical volume, or {@code null} when none is cached
    */
+  @Override
   public SegmentationVolume peekCanonicalSegmentationVolume() {
     SoftReference<SegmentationVolume> ref = segVolumeRef;
     return ref == null ? null : ref.get();
@@ -406,6 +429,7 @@ public class SegSpecialElement extends HiddenSpecialElement
     SoftReference<SegmentationVolume> ref = segVolumeRef;
     SegmentationVolume v = ref == null ? null : ref.get();
     if (v != null) {
+      SegVolumeCache.touch(this);
       return v;
     }
     // Never block the EDT: building the canonical volume can take seconds for large multi-frame
@@ -416,7 +440,7 @@ public class SegSpecialElement extends HiddenSpecialElement
       // If the user previously canceled the build, do not silently re-launch it on every
       // scroll / repaint — the SEG stays without a 3D volume until the user explicitly retries
       // via retrySegmentationVolumeBuild().
-      if (segVolumeBuildAborted || segVolumeUnavailable) {
+      if (segVolumeBuildAborted || segVolumeUnavailable || segVolumeBudgetEvicted) {
         return null;
       }
       ensureAsyncBuild();
@@ -426,11 +450,14 @@ public class SegSpecialElement extends HiddenSpecialElement
       ref = segVolumeRef;
       v = ref == null ? null : ref.get();
       if (v != null) {
+        SegVolumeCache.touch(this);
         return v;
       }
       if (segVolumeUnavailable) {
         return null;
       }
+      // An explicit (non-paint) request outweighs a previous budget eviction.
+      segVolumeBudgetEvicted = false;
       DicomSeries series = getMediaReader() == null ? null : getMediaReader().getMediaSeries();
       v = SegmentationVolumeBuilder.buildCanonical(this, series);
       if (v == null) {
@@ -438,13 +465,47 @@ public class SegSpecialElement extends HiddenSpecialElement
       } else {
         segVolumeRef = new SoftReference<>(v);
       }
-      return v;
     }
+    // Outside our own synchronized block, but not necessarily outside segVolumeLock:
+    // getOrBuildAlignedVolume calls this from inside the builder it runs under that lock, and the
+    // monitor is reentrant. SegVolumeCache therefore evicts on its own thread rather than here.
+    if (v != null) {
+      SegVolumeCache.register(this, v.heapBytes());
+    }
+    return v;
+  }
+
+  /**
+   * Drops the cached canonical volume and frees its raster, leaving the segmentation free to
+   * rebuild it on demand. Used by {@link SegVolumeCache} to keep the total bounded.
+   */
+  void releaseCanonicalVolume() {
+    SegmentationVolume v;
+    synchronized (segVolumeLock) {
+      SoftReference<SegmentationVolume> ref = segVolumeRef;
+      v = ref == null ? null : ref.get();
+      segVolumeRef = null;
+      segVolumeBudgetEvicted = true;
+    }
+    SegVolumeCache.remove(this);
+    if (v != null) {
+      v.removeData();
+    }
+  }
+
+  /** A build already runs, or a previous outcome forbids launching one from a paint pass. */
+  private boolean isCanonicalBuildBlocked() {
+    return segVolumeBuildFuture != null
+        || segVolumeBuildAborted
+        || segVolumeUnavailable
+        || segVolumeBudgetEvicted;
   }
 
   /**
    * Schedules a background build of the canonical segmentation volume if none is in flight and the
-   * volume is not already cached. Safe to call from any thread; returns immediately. When the build
+   * volume is not already cached. Safe to call from any thread; returns immediately. The build is
+   * queued behind the global {@link SegBuildScheduler} budget, so a study holding dozens of SEG
+   * files never has more than a handful of volumes under construction at once. When the build
    * completes (successfully or not), the in-flight future is cleared and an {@link
    * ObservableEvent.BasicAction#UPDATE} event is fired on the owning DICOM model so views can
    * repaint and pick up the freshly-built volume on their next call to {@link
@@ -455,7 +516,7 @@ public class SegSpecialElement extends HiddenSpecialElement
     if (ref != null && ref.get() != null) {
       return;
     }
-    if (segVolumeBuildFuture != null || segVolumeBuildAborted || segVolumeUnavailable) {
+    if (isCanonicalBuildBlocked()) {
       return;
     }
     synchronized (segVolumeLock) {
@@ -463,49 +524,101 @@ public class SegSpecialElement extends HiddenSpecialElement
       if (ref != null && ref.get() != null) {
         return;
       }
-      if (segVolumeBuildFuture != null || segVolumeBuildAborted || segVolumeUnavailable) {
+      if (isCanonicalBuildBlocked()) {
         return;
       }
       DicomSeries series = getMediaReader() == null ? null : getMediaReader().getMediaSeries();
       if (series == null) {
         return;
       }
-      CompletableFuture<SegmentationVolume> future =
+      // Publish the in-flight marker before queuing rather than when the build actually starts:
+      // every repaint walks all the SEGs of the patient, so without it each pass would queue the
+      // same build again while it waits for a slot.
+      CompletableFuture<SegmentationVolume> result = new CompletableFuture<>();
+      segVolumeBuildFuture = result;
+      result.whenComplete((vol, err) -> finishAsyncBuild(series, result, vol, err));
+      SegBuildScheduler.submitAsync(() -> startCanonicalBuild(series, result));
+    }
+  }
+
+  /**
+   * Starts the canonical build now that the global budget granted a slot, and pipes its outcome
+   * into the already-published {@code result}. Runs on whichever thread freed the slot and returns
+   * without waiting; the slot is given back as soon as the build settles.
+   */
+  private void startCanonicalBuild(
+      DicomSeries series, CompletableFuture<SegmentationVolume> result) {
+    if (result.isDone()) {
+      // Cancelled or disposed while queued: hand the slot back without starting any work.
+      SegBuildScheduler.release();
+      return;
+    }
+    CompletableFuture<SegmentationVolume> build;
+    try {
+      build =
           volumeBuildExecutor.schedule(
               this, () -> SegmentationVolumeBuilder.buildCanonical(this, series));
-      segVolumeBuildFuture = future;
-      future.whenComplete(
-          (vol, err) -> {
-            synchronized (segVolumeLock) {
-              if (vol != null) {
-                segVolumeRef = new SoftReference<>(vol);
-              } else if (!(err instanceof CancellationException)) {
-                // Nothing to build from: do not re-schedule this build on every paint / scroll.
-                segVolumeUnavailable = true;
-              }
-              segVolumeBuildFuture = null;
-              if (err instanceof CancellationException) {
-                // User aborted the build (or it was cancelled programmatically): remember the
-                // decision so paint/scroll passes do not silently re-launch the same heavy work.
-                segVolumeBuildAborted = true;
-              }
-            }
-            if (err instanceof CancellationException) {
-              // Fully unload the segmentation: drop every per-frame loader, the position map,
-              // segment attributes and the reference normal. The next paint/scroll will see an
-              // empty SEG (getContours returns null) instead of repeatedly re-triggering work
-              // the user just aborted. Done on the EDT to avoid racing with paint reads of the
-              // (non-thread-safe) maps.
-              GuiExecutor.execute(() -> unloadAfterAbort(series));
-            } else {
-              if (err != null) {
-                LOGGER.error("Async build of canonical segmentation volume failed", err);
-              }
-              // Always notify, even when no volume could be built: the views must clear their
-              // "loading" state and fall back to the per-frame contour path.
-              fireSegUpdateEvent();
-            }
-          });
+    } catch (RuntimeException e) {
+      SegBuildScheduler.release();
+      result.completeExceptionally(e);
+      return;
+    }
+    build.whenComplete(
+        (vol, err) -> {
+          SegBuildScheduler.release();
+          if (err == null) {
+            result.complete(vol);
+          } else {
+            result.completeExceptionally(err);
+          }
+        });
+    // Cancelling the published future (dispose, user abort) must reach the running build.
+    result.whenComplete(
+        (_, err) -> {
+          if (err instanceof CancellationException) {
+            build.cancel(true);
+          }
+        });
+  }
+
+  /** Applies the outcome of a canonical build and notifies the views. */
+  private void finishAsyncBuild(
+      DicomSeries series,
+      CompletableFuture<SegmentationVolume> result,
+      SegmentationVolume vol,
+      Throwable err) {
+    synchronized (segVolumeLock) {
+      if (vol != null) {
+        segVolumeRef = new SoftReference<>(vol);
+      } else if (!(err instanceof CancellationException)) {
+        // Nothing to build from: do not re-schedule this build on every paint / scroll.
+        segVolumeUnavailable = true;
+      }
+      if (segVolumeBuildFuture == result) {
+        segVolumeBuildFuture = null;
+      }
+      if (err instanceof CancellationException) {
+        // User aborted the build (or it was cancelled programmatically): remember the decision so
+        // paint/scroll passes do not silently re-launch the same heavy work.
+        segVolumeBuildAborted = true;
+      }
+    }
+    if (vol != null) {
+      SegVolumeCache.register(this, vol.heapBytes());
+    }
+    if (err instanceof CancellationException) {
+      // Fully unload the segmentation: drop every per-frame loader, the position map, segment
+      // attributes and the reference normal. The next paint/scroll will see an empty SEG
+      // (getContours returns null) instead of repeatedly re-triggering work the user just
+      // aborted. Done on the EDT to avoid racing with paint reads of the (non-thread-safe) maps.
+      GuiExecutor.execute(() -> unloadAfterAbort(series));
+    } else {
+      if (err != null) {
+        LOGGER.error("Async build of canonical segmentation volume failed", err);
+      }
+      // Always notify, even when no volume could be built: the views must clear their "loading"
+      // state and fall back to the per-frame contour path.
+      fireSegUpdateEvent();
     }
   }
 
@@ -546,6 +659,7 @@ public class SegSpecialElement extends HiddenSpecialElement
     synchronized (segVolumeLock) {
       segVolumeBuildAborted = false;
       segVolumeUnavailable = false;
+      segVolumeBudgetEvicted = false;
     }
   }
 
@@ -584,6 +698,7 @@ public class SegSpecialElement extends HiddenSpecialElement
     boolean seriesEmptyAfter = false;
     if (set != null) {
       set.remove(this); // NOSONAR SegSpecialElement extends HiddenSpecialElement
+      SegVisibilityPolicy.invalidate(); // the series is one segmentation less crowded
       if (set.isEmpty()) {
         manager.series2Elements.remove(seriesUID);
         seriesEmptyAfter = true;
@@ -633,6 +748,7 @@ public class SegSpecialElement extends HiddenSpecialElement
       // Full reset: a subsequent getOrBuildSegmentationVolume() should be allowed to rebuild.
       segVolumeBuildAborted = false;
       segVolumeUnavailable = false;
+      segVolumeBudgetEvicted = false;
       SoftReference<SegmentationVolume> ref = segVolumeRef;
       if (ref != null) {
         SegmentationVolume v = ref.get();
@@ -641,6 +757,7 @@ public class SegSpecialElement extends HiddenSpecialElement
         }
         segVolumeRef = null;
       }
+      SegVolumeCache.remove(this);
       // Aligned (image-volume-specific) copies are owned by this SEG too: free their native
       // buffers and clear the cache so a later getOrBuildAlignedVolume() rebuilds from scratch.
       // If an active consumer still holds a retain() we log a warning but still free the data
@@ -755,7 +872,20 @@ public class SegSpecialElement extends HiddenSpecialElement
 
   @Override
   public boolean isVisible() {
-    return visible;
+    Boolean chosen = visible;
+    if (chosen != null) {
+      return chosen;
+    }
+    long generation = SegVisibilityPolicy.generation();
+    if (generation != defaultGeneration) {
+      // Recomputed rather than settled on the first answer: both rules read the whole series, whose
+      // segmentations register one by one and only expose their segment labels once parsed. The
+      // generation only moves while the study loads or the preferences change, so a repaint after
+      // that is a single comparison.
+      defaultHidden = SegVisibilityPolicy.isHiddenByDefault(this);
+      defaultGeneration = generation;
+    }
+    return !defaultHidden;
   }
 
   @Override
@@ -820,13 +950,6 @@ public class SegSpecialElement extends HiddenSpecialElement
               fractionalType,
               dicom.getString(Tag.SOPInstanceUID));
 
-      if (!defaultVisibilityApplied) {
-        defaultVisibilityApplied = true;
-        if (isAllHiddenByDefault() || isHiddenByDefault(dicom)) {
-          visible = false;
-        }
-      }
-
       Sequence perFrameSeq = dicom.getSequence(Tag.PerFrameFunctionalGroupsSequence);
       if (perFrameSeq != null) {
         processPerFrameSequence(
@@ -841,14 +964,16 @@ public class SegSpecialElement extends HiddenSpecialElement
       }
 
       refineSegSliceSpacingFromPositionMap();
-      regionPosition.forEach(
-          (region, p) -> region.setMeasurableLayer(getMeasurableLayer(series, p)));
+      regionPosition.forEach((region, p) -> region.setMeasurableLayer(getMeasurableLayer(p)));
     } catch (RuntimeException e) {
       failed = true;
       LOGGER.error("Error initializing SEG contours", e);
       throw e;
     } finally {
       loadState = failed ? LoadState.FAILED : LoadState.READY;
+      // The segment labels the keyword rule matches against only exist now, and the count rule
+      // reads them on every segmentation of the series.
+      SegVisibilityPolicy.invalidate();
     }
   }
 
@@ -909,59 +1034,6 @@ public class SegSpecialElement extends HiddenSpecialElement
         sopInstanceUID, _ -> NEXT_PALETTE_INDEX.getAndAdd(segmentCount));
   }
 
-  private static boolean isAllHiddenByDefault() {
-    return GuiUtils.getUICore().getSystemPreferences().getBooleanProperty(HIDE_ALL_PREF, false);
-  }
-
-  private boolean isHiddenByDefault(Attributes dicom) {
-    List<String> keywords = getHideKeywords();
-    if (keywords.isEmpty()) {
-      return false;
-    }
-    if (matchesAny(dicom.getString(Tag.SeriesDescription), keywords)
-        || matchesAny(dicom.getString(Tag.ContentDescription), keywords)
-        || matchesAny(dicom.getString(Tag.ContentLabel), keywords)) {
-      return true;
-    }
-    return !segAttributes.isEmpty()
-        && segAttributes.values().stream()
-            .allMatch(
-                r ->
-                    matchesAny(r.getLabel(), keywords)
-                        || matchesAny(r.getDescription(), keywords)
-                        || matchesAny(r.getAlgorithmName(), keywords));
-  }
-
-  private static List<String> getHideKeywords() {
-    String pref =
-        GuiUtils.getUICore()
-            .getSystemPreferences()
-            .getProperty(HIDE_KEYWORDS_PREF, DEFAULT_HIDE_KEYWORDS);
-    if (!StringUtil.hasText(pref)) {
-      return List.of();
-    }
-    return Arrays.stream(pref.split(","))
-        .map(SegSpecialElement::normalizeKeyword)
-        .filter(StringUtil::hasText)
-        .toList();
-  }
-
-  private static boolean matchesAny(String value, List<String> keywords) {
-    if (!StringUtil.hasText(value)) {
-      return false;
-    }
-    String normalized = normalizeKeyword(value);
-    return keywords.stream().anyMatch(normalized::contains);
-  }
-
-  /**
-   * Lower-cases and strips all non-alphanumeric characters so that "table removal" matches
-   * "TableRemoval", "Table_Removal" or "table-removal".
-   */
-  private static String normalizeKeyword(String value) {
-    return value.toLowerCase(Locale.ROOT).replaceAll("[^\\p{L}\\p{Nd}]", "");
-  }
-
   private void processPerFrameSequence(
       DicomSeries series,
       List<DicomSeries> refSeriesList,
@@ -980,10 +1052,11 @@ public class SegSpecialElement extends HiddenSpecialElement
     boolean sameFrameOfRef =
         segFrameOfRefUID != null && segFrameOfRefUID.equals(seriesFrameOfRefUID);
 
+    DicomImageElement[] frames = segFrames();
     int index = 0;
     for (Attributes frame : perFrameSeq) {
       index++;
-      DicomImageElement binaryMask = series.getMedia(index - 1, null, null);
+      DicomImageElement binaryMask = frameAt(frames, index - 1);
       if (binaryMask != null) {
         registerFrameLoader(frame, binaryMask, index, kind, maxFractionalValue, regionPosition);
       }
@@ -1339,14 +1412,14 @@ public class SegSpecialElement extends HiddenSpecialElement
         : DicomUtils.getDoubleArrayFromDicomElement(nested, valueTag, null);
   }
 
-  private SegMeasurableLayer<DicomImageElement> getMeasurableLayer(
-      DicomSeries series, FrameRange p) {
-    if (series == null || series.size(null) <= 0 || p == null || p.first < 0 || p.last < 0) {
+  private SegMeasurableLayer<DicomImageElement> getMeasurableLayer(FrameRange p) {
+    if (p == null || p.first < 0 || p.last < 0) {
       return null;
     }
-    DicomImageElement first = series.getMedia(p.first, null, null);
-    DicomImageElement last = series.getMedia(p.last, null, null);
-    DicomImageElement img = series.getMedia(p.middle(), null, null);
+    DicomImageElement[] frames = segFrames();
+    DicomImageElement first = frameAt(frames, p.first);
+    DicomImageElement last = frameAt(frames, p.last);
+    DicomImageElement img = frameAt(frames, p.middle());
     if (img == null || first == null || last == null) {
       return null;
     }

@@ -23,7 +23,6 @@ import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.geometry.ImageOrientation;
 import org.weasis.opencv.data.PlanarImage;
-import org.weasis.opencv.op.ImageConversion;
 
 /**
  * Lazy contour loader that resamples a {@link SegmentationVolume} on the plane of a {@link
@@ -111,17 +110,18 @@ public final class VolumeSliceContourLoader implements LazyContourLoader {
   }
 
   private int[] readDimensions() {
-    PlanarImage planar = image.getImage();
-    if (planar == null) {
-      return null;
-    }
+    // Pinned: a concurrently evicted image reports 0x0 instead of its real size, which would
+    // silently drop the overlay for this slice.
+    PlanarImage planar = MaskFrames.acquire(image);
     try {
+      if (planar == null) {
+        return null;
+      }
       int w = planar.width();
       int h = planar.height();
       return (w > 0 && h > 0) ? new int[] {w, h} : null;
     } finally {
-      ImageConversion.releasePlanarImage(planar);
-      image.removeImageFromCache();
+      MaskFrames.release(image, planar);
     }
   }
 }

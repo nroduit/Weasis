@@ -152,6 +152,22 @@ public final class SegmentationVolume {
   /** Lazily grown {@code [idA][idB] → union id} memo, see {@link #cachedUnionId}. */
   private int[][] unionCache;
 
+  /**
+   * Bounding box of the labeled voxels, maintained while stamping. A segmentation typically fills a
+   * small part of its own grid, so reslicing only the pixels that can hit this box — instead of the
+   * whole grid extent — is what keeps a study holding dozens of SEG files responsive. Empty until
+   * the first label is stamped; {@link #occupancyTracked} goes false for volumes filled through a
+   * path that does not report coordinates, and the full grid extent is used instead.
+   */
+  private int occMinX = Integer.MAX_VALUE;
+
+  private int occMinY = Integer.MAX_VALUE;
+  private int occMinZ = Integer.MAX_VALUE;
+  private int occMaxX = Integer.MIN_VALUE;
+  private int occMaxY = Integer.MIN_VALUE;
+  private int occMaxZ = Integer.MIN_VALUE;
+  private volatile boolean occupancyTracked = true;
+
   // ---- Adaptive storage fields ----
 
   /**
@@ -426,7 +442,30 @@ public final class SegmentationVolume {
     if (x < 0 || x >= size.x || y < 0 || y >= size.y || z < 0 || z >= size.z) {
       return;
     }
+    markOccupied(x, y, z);
     addLabelAt(linearIndex(x, y, z), segmentNumber);
+  }
+
+  /**
+   * Grows the labelled-voxel bounding box. Not atomic: like {@link #segStampCount}, stamping a
+   * given volume runs on a single thread. The parallel writers ({@link #resampleInto}, {@link
+   * #mergeInto}) bypass this and turn tracking off instead.
+   */
+  private void markOccupied(int x, int y, int z) {
+    if (x < occMinX) occMinX = x;
+    if (x > occMaxX) occMaxX = x;
+    if (y < occMinY) occMinY = y;
+    if (y > occMaxY) occMaxY = y;
+    if (z < occMinZ) occMinZ = z;
+    if (z > occMaxZ) occMaxZ = z;
+  }
+
+  /**
+   * Marks the labelled-voxel bounding box unknown, so reslicing falls back to the full grid extent.
+   * Used by the paths that write voxels without reporting their coordinates.
+   */
+  private void clearOccupancyTracking() {
+    occupancyTracked = false;
   }
 
   /** {@link #addLabel} for a voxel whose linear index the caller already holds. */
@@ -684,6 +723,8 @@ public final class SegmentationVolume {
     // Allocate every storage ID the walk can need before it starts. Nothing below then mutates
     // shared state, so the slices can be merged concurrently.
     target.warmUnionCache(mapping.targetIds());
+    // The parallel walk writes voxels without reporting coordinates.
+    target.clearOccupancyTracking();
 
     return IntStream.range(0, size.z)
         .parallel()
@@ -833,6 +874,8 @@ public final class SegmentationVolume {
     }
     IdMapping mapping = mapIdsInto(target, null);
     target.warmUnionCache(mapping.targetIds());
+    // The parallel walk writes voxels without reporting coordinates.
+    target.clearOccupancyTracking();
 
     return IntStream.rangeClosed(box.z0(), box.z1())
         .parallel()
@@ -1102,7 +1145,11 @@ public final class SegmentationVolume {
     // The mask matches the volume's X/Y, so pixel index i of this slice is voxel base + i: the
     // raster walk already holds the linear index that addLabel(x, y, z) would recompute.
     long base = (long) sliceZ * sliceStride;
-    NonZeroPixelConsumer stamp = (i, x, y) -> addLabelAt(base + i, segmentNumber);
+    NonZeroPixelConsumer stamp =
+        (i, x, y) -> {
+          markOccupied(x, y, sliceZ);
+          addLabelAt(base + i, segmentNumber);
+        };
     int stamped = forEachNonZero(mat, stamp);
     if (stamped < 0) {
       stamped = forEachNonZeroGeneric(mat, stamp);
@@ -1221,9 +1268,151 @@ public final class SegmentationVolume {
     int factorU = Math.max(1, (int) Math.ceil(colSpacing / minSegSpacing));
     int factorV = Math.max(1, (int) Math.ceil(rowSpacing / minSegSpacing));
     int factor = Math.clamp(Math.max(factorU, factorV), 1, 4);
+
+    // A segmentation usually covers a small part of the displayed field of view, and a study may
+    // hold dozens of them: sampling the whole image for each one — including the ones the plane
+    // misses entirely — dominates every slice change. Restrict the sweep to the pixels that can
+    // actually land inside this volume.
+    PlaneBox box = planeBounds(imgOrigin, rowDir, colDir, colSpacing, rowSpacing, width, height);
+    if (box == null) {
+      return Collections.emptyMap();
+    }
     int[] raster =
-        sampleImagePlane(imgOrigin, rowDir, colDir, colSpacing, rowSpacing, width, height, factor);
+        sampleImagePlane(
+            imgOrigin, rowDir, colDir, colSpacing, rowSpacing, width, height, factor, box);
     return buildContours(raster, width, height);
+  }
+
+  /** Inclusive pixel bounds of the image-plane region that can sample this volume. */
+  private record PlaneBox(int u0, int u1, int v0, int v1) {}
+
+  /**
+   * Returns the sub-rectangle of the image plane whose pixels map inside this volume's grid, or
+   * {@code null} when the plane misses the volume altogether.
+   *
+   * <p>The pixel → source-voxel map is affine, so the set of pixels satisfying {@code -0.5 ≤ P_i ≤
+   * size_i - 0.5} on all three axes is the image rectangle clipped by six half-planes. Clipping
+   * yields a convex polygon whose bounding box is the answer.
+   */
+  private PlaneBox planeBounds(
+      Vector3d imgOrigin,
+      Vector3d rowDir,
+      Vector3d colDir,
+      double colSpacing,
+      double rowSpacing,
+      int width,
+      int height) {
+    Vector3d o = lpsToVoxel(imgOrigin, new Vector3d());
+    Vector3d stepU =
+        lpsToVoxel(new Vector3d(rowDir).mul(colSpacing).add(imgOrigin), new Vector3d()).sub(o);
+    Vector3d stepV =
+        lpsToVoxel(new Vector3d(colDir).mul(rowSpacing).add(imgOrigin), new Vector3d()).sub(o);
+
+    // Polygon in (u, v) pixel space, starting as the full image rectangle.
+    double[] poly = {-0.5, -0.5, width - 0.5, -0.5, width - 0.5, height - 0.5, -0.5, height - 0.5};
+    // Clip against the labelled region when it is known: a segmentation fills a small part of its
+    // own grid, so this is what actually shrinks the sweep for a SEG sharing the image's grid.
+    boolean occupied = occupancyTracked && occMinX <= occMaxX;
+    if (occupancyTracked && !occupied) {
+      return null; // nothing was ever stamped
+    }
+    int count = 4;
+    for (int axis = 0; axis < 3 && count > 0; axis++) {
+      double a = component(stepU, axis);
+      double b = component(stepV, axis);
+      double c = component(o, axis);
+      double lo = occupied ? occMin(axis) : 0;
+      double hi = occupied ? occMax(axis) : extent(axis) - 1;
+      // P_axis - (lo - 0.5) >= 0
+      double[] clipped = clipHalfPlane(poly, count, a, b, c - lo + 0.5);
+      count = clipped.length / 2;
+      // (hi + 0.5) - P_axis >= 0
+      clipped = clipHalfPlane(clipped, count, -a, -b, hi + 0.5 - c);
+      count = clipped.length / 2;
+      poly = clipped;
+    }
+    if (count == 0) {
+      return null;
+    }
+    double minU = Double.POSITIVE_INFINITY;
+    double maxU = Double.NEGATIVE_INFINITY;
+    double minV = Double.POSITIVE_INFINITY;
+    double maxV = Double.NEGATIVE_INFINITY;
+    for (int i = 0; i < count; i++) {
+      double u = poly[2 * i];
+      double v = poly[2 * i + 1];
+      if (!Double.isFinite(u) || !Double.isFinite(v)) {
+        // Degenerate mapping (zero spacing): fall back to sweeping the whole image.
+        return new PlaneBox(0, width - 1, 0, height - 1);
+      }
+      minU = Math.min(minU, u);
+      maxU = Math.max(maxU, u);
+      minV = Math.min(minV, v);
+      maxV = Math.max(maxV, v);
+    }
+    int u0 = Math.max(0, (int) Math.floor(minU));
+    int u1 = Math.min(width - 1, (int) Math.ceil(maxU));
+    int v0 = Math.max(0, (int) Math.floor(minV));
+    int v1 = Math.min(height - 1, (int) Math.ceil(maxV));
+    return (u0 > u1 || v0 > v1) ? null : new PlaneBox(u0, u1, v0, v1);
+  }
+
+  private static double component(Vector3d v, int axis) {
+    return axis == 0 ? v.x : (axis == 1 ? v.y : v.z);
+  }
+
+  private int extent(int axis) {
+    return axis == 0 ? size.x : (axis == 1 ? size.y : size.z);
+  }
+
+  private int occMin(int axis) {
+    return axis == 0 ? occMinX : (axis == 1 ? occMinY : occMinZ);
+  }
+
+  private int occMax(int axis) {
+    return axis == 0 ? occMaxX : (axis == 1 ? occMaxY : occMaxZ);
+  }
+
+  /**
+   * Sutherland–Hodgman clip of a convex polygon (flat {@code [u0,v0,u1,v1,…]}) against the
+   * half-plane {@code a·u + b·v + c ≥ 0}.
+   */
+  private static double[] clipHalfPlane(double[] poly, int count, double a, double b, double c) {
+    if (count == 0) {
+      return new double[0];
+    }
+    double[] out = new double[(count + 2) * 2];
+    int n = 0;
+    for (int i = 0; i < count; i++) {
+      int j = (i + 1) % count;
+      double ui = poly[2 * i];
+      double vi = poly[2 * i + 1];
+      double uj = poly[2 * j];
+      double vj = poly[2 * j + 1];
+      double di = a * ui + b * vi + c;
+      double dj = a * uj + b * vj + c;
+      if (di >= 0) {
+        out[n++] = ui;
+        out[n++] = vi;
+      }
+      if ((di >= 0) != (dj >= 0)) {
+        double t = di / (di - dj);
+        out[n++] = ui + t * (uj - ui);
+        out[n++] = vi + t * (vj - vi);
+      }
+    }
+    return Arrays.copyOf(out, n);
+  }
+
+  /** Maps an LPS position to this volume's (fractional) voxel coordinates. */
+  private Vector3d lpsToVoxel(Vector3d lps, Vector3d dst) {
+    double dx = lps.x - volumeOrigin.x;
+    double dy = lps.y - volumeOrigin.y;
+    double dz = lps.z - volumeOrigin.z;
+    return dst.set(
+        (dx * volumeAxisX.x + dy * volumeAxisX.y + dz * volumeAxisX.z) / pixelSpacing.x,
+        (dx * volumeAxisY.x + dy * volumeAxisY.y + dz * volumeAxisY.z) / pixelSpacing.y,
+        (dx * volumeAxisZ.x + dy * volumeAxisZ.y + dz * volumeAxisZ.z) / pixelSpacing.z);
   }
 
   private int[] sampleImagePlane(
@@ -1234,7 +1423,8 @@ public final class SegmentationVolume {
       double rowSpacing,
       int width,
       int height,
-      int oversample) {
+      int oversample,
+      PlaneBox box) {
     int[] raster = new int[width * height];
 
     double invSx = 1.0 / pixelSpacing.x;
@@ -1255,9 +1445,9 @@ public final class SegmentationVolume {
       subOffsets[i] = (i + 0.5) / n - 0.5;
     }
 
-    for (int v = 0; v < height; v++) {
+    for (int v = box.v0(); v <= box.v1(); v++) {
       int rowBase = v * width;
-      for (int u = 0; u < width; u++) {
+      for (int u = box.u0(); u <= box.u1(); u++) {
         int combined = 0;
         for (int sv = 0; sv < n; sv++) {
           double vv = v + subOffsets[sv];
@@ -1661,6 +1851,17 @@ public final class SegmentationVolume {
       mappedBuffer.close();
       mappedBuffer = null;
     }
+  }
+
+  /**
+   * Heap held by the voxel raster, in bytes; {@code 0} once disposed or when the storage is
+   * disk-backed. Used to budget how many segmentation volumes may be cached at once.
+   */
+  public long heapBytes() {
+    if (byteData != null) {
+      return totalVoxels();
+    }
+    return shortData != null ? totalVoxels() * 2L : 0L;
   }
 
   /**

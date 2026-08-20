@@ -74,6 +74,10 @@ uniform mat3  crosshairRot;
 uniform bool  crosshairVisible;
 uniform int   crosshairCutMode;
 
+// Ratio of the ray-cast resolution to the on-screen one, so pixel-sized overlays keep a constant
+// apparent size when the pass is rendered at reduced resolution. Always 1.0 on the compute path.
+uniform float overlayScale = 1.0;
+
 // Segmentation overlay
 uniform bool segOverlayEnabled = false;
 // When true, only the segmentation is rendered; the anatomy volume raymarch is skipped.

@@ -24,9 +24,7 @@ import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JSlider;
-import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
-import net.miginfocom.swing.MigLayout;
 import org.weasis.core.api.gui.util.AbstractItemDialogPage;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.Feature;
@@ -46,7 +44,6 @@ import org.weasis.core.ui.pref.PreferenceDialog;
 import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.display.OverlayOp;
-import org.weasis.dicom.codec.seg.SegSpecialElement;
 import org.weasis.dicom.viewer2d.EventManager;
 import org.weasis.dicom.viewer2d.Messages;
 import org.weasis.dicom.viewer2d.PRManager;
@@ -64,9 +61,7 @@ public class ViewerPrefView extends AbstractItemDialogPage {
   private JCheckBox checkBoxWLcolor;
   private JCheckBox checkBoxLevelInverse;
   private JCheckBox checkBoxApplyPR;
-  private JCheckBox checkBoxHideAllSeg;
   private final JButton overlayColor;
-  private final JTextField segHideKeywords = new JTextField();
 
   public ViewerPrefView() {
     super(View2dFactory.NAME, 501);
@@ -171,47 +166,6 @@ public class ViewerPrefView extends AbstractItemDialogPage {
     otherPanel.add(
         GuiUtils.getFlowLayoutPanel(new JLabel(Messages.getString("overlay.color")), overlayColor));
 
-    checkBoxHideAllSeg =
-        new JCheckBox(
-            Messages.getString("ViewerPrefView.seg_hide_all"),
-            GuiUtils.getUICore()
-                .getSystemPreferences()
-                .getBooleanProperty(SegSpecialElement.HIDE_ALL_PREF, false));
-    checkBoxHideAllSeg.setToolTipText(Messages.getString("ViewerPrefView.seg_hide_all_tooltip"));
-    otherPanel.add(
-        GuiUtils.getFlowLayoutPanel(ITEM_SEPARATOR_SMALL, ITEM_SEPARATOR, checkBoxHideAllSeg));
-
-    JLabel lblSegHide =
-        new JLabel(Messages.getString("ViewerPrefView.seg_hide") + StringUtil.COLON);
-    segHideKeywords.setToolTipText(Messages.getString("ViewerPrefView.seg_hide_tooltip"));
-    segHideKeywords.setText(
-        GuiUtils.getUICore()
-            .getSystemPreferences()
-            .getProperty(
-                SegSpecialElement.HIDE_KEYWORDS_PREF, SegSpecialElement.DEFAULT_HIDE_KEYWORDS));
-    JPanel segHidePanel =
-        new JPanel(
-            new MigLayout(
-                "fillx, insets 0 25lp 5lp 5lp", // NON-NLS
-                "[shrink 0]rel[grow,fill]")); // NON-NLS
-    segHidePanel.add(lblSegHide);
-    segHidePanel.add(segHideKeywords);
-
-    boolean keywordsEnabled = !checkBoxHideAllSeg.isSelected();
-    lblSegHide.setEnabled(keywordsEnabled);
-    segHideKeywords.setEnabled(keywordsEnabled);
-    checkBoxHideAllSeg.addItemListener(
-        e -> {
-          boolean enabled = e.getStateChange() != ItemEvent.SELECTED;
-          lblSegHide.setEnabled(enabled);
-          segHideKeywords.setEnabled(enabled);
-        });
-    // Unbounded max width and the same alignmentX as the sibling rows, otherwise the
-    // vertical BoxLayout offsets the row instead of stretching it to the full panel width
-    segHidePanel.setMaximumSize(
-        new Dimension(Short.MAX_VALUE, segHidePanel.getPreferredSize().height));
-    segHidePanel.setAlignmentX(Component.CENTER_ALIGNMENT);
-    otherPanel.add(segHidePanel);
     add(otherPanel);
 
     add(GuiUtils.boxYLastElement(LAST_FILLER_HEIGHT));
@@ -244,12 +198,6 @@ public class ViewerPrefView extends AbstractItemDialogPage {
     eventManager
         .getOptions()
         .putBooleanProperty(WindowOp.P_INVERSE_LEVEL, checkBoxLevelInverse.isSelected());
-    GuiUtils.getUICore()
-        .getSystemPreferences()
-        .setProperty(SegSpecialElement.HIDE_KEYWORDS_PREF, segHideKeywords.getText().trim());
-    GuiUtils.getUICore()
-        .getSystemPreferences()
-        .putBooleanProperty(SegSpecialElement.HIDE_ALL_PREF, checkBoxHideAllSeg.isSelected());
     ImageViewerPlugin<DicomImageElement> view = eventManager.getSelectedView2dContainer();
     if (view != null) {
       view.setMouseActions(eventManager.getMouseActions());
@@ -293,16 +241,6 @@ public class ViewerPrefView extends AbstractItemDialogPage {
     GuiUtils.getUICore()
         .getSystemPreferences()
         .putColorProperty(OverlayOp.OVERLAY_COLOR_KEY, Color.WHITE);
-
-    WProperties systemPreferences = GuiUtils.getUICore().getSystemPreferences();
-    systemPreferences.resetProperty(
-        SegSpecialElement.HIDE_KEYWORDS_PREF, SegSpecialElement.DEFAULT_HIDE_KEYWORDS);
-    segHideKeywords.setText(
-        systemPreferences.getProperty(
-            SegSpecialElement.HIDE_KEYWORDS_PREF, SegSpecialElement.DEFAULT_HIDE_KEYWORDS));
-    systemPreferences.resetProperty(SegSpecialElement.HIDE_ALL_PREF, Boolean.FALSE.toString());
-    checkBoxHideAllSeg.setSelected(
-        systemPreferences.getBooleanProperty(SegSpecialElement.HIDE_ALL_PREF, false));
   }
 
   private void formatSlider(JSlider slider) {

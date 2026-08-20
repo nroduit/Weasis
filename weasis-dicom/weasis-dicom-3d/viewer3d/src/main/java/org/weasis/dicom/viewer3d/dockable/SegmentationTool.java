@@ -48,6 +48,7 @@ import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.SpecialElementRegion;
 import org.weasis.dicom.codec.seg.LazyContourLoader;
+import org.weasis.dicom.codec.seg.MaskFrames;
 import org.weasis.dicom.codec.seg.SegSpecialElement;
 import org.weasis.dicom.viewer2d.SegComponentFactory;
 import org.weasis.dicom.viewer3d.ActionVol;
@@ -133,8 +134,13 @@ public class SegmentationTool extends PluginTool implements SeriesViewerListener
   }
 
   private SegContour getContour(DicomImageElement imageElement, RegionAttributes attributes) {
-    PlanarImage img = imageElement.getImage();
-    if (img != null) {
+    // Pin the frame for the whole lookup: the loaders decode from these pixels, and an eviction
+    // triggered by any concurrent decode would free them under the reader.
+    PlanarImage img = MaskFrames.acquire(imageElement);
+    if (img == null) {
+      return null;
+    }
+    try {
       for (SpecialElementRegion seg : segNodeMap.values()) {
         Set<LazyContourLoader> loaders = seg.getContours(imageElement);
         if (loaders == null || loaders.isEmpty()) {
@@ -149,6 +155,8 @@ public class SegmentationTool extends PluginTool implements SeriesViewerListener
           }
         }
       }
+    } finally {
+      MaskFrames.release(imageElement, img);
     }
     return null;
   }

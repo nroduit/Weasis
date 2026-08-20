@@ -275,6 +275,14 @@
       "category": "LAUNCH"
     },
     {
+      "code": "weasis.resource.stats.clean.previous.version",
+      "value": "true",
+      "description": "If true, the measured resource statistics (peaks, uptime and events) are cleared when the weasis version has changed from the previous launch",
+      "type": "A",
+      "javaType": "BOOLEAN",
+      "category": "LAUNCH"
+    },
+    {
       "code": "weasis.main.ui",
       "value": "weasis-base-ui",
       "description": "Application main user interface bundle. Mandatory with the default launcher.",
