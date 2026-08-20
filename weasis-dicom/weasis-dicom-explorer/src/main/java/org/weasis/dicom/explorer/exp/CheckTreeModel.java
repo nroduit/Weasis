@@ -9,8 +9,6 @@
  */
 package org.weasis.dicom.explorer.exp;
 
-import eu.essilab.lablib.checkboxtree.DefaultTreeCheckingModel;
-import eu.essilab.lablib.checkboxtree.TreeCheckingModel;
 import java.io.File;
 import java.net.URL;
 import java.util.*;
@@ -26,6 +24,8 @@ import org.weasis.core.api.gui.util.GuiUtils.IconColor;
 import org.weasis.core.api.media.data.*;
 import org.weasis.core.api.media.data.TagW.TagType;
 import org.weasis.core.ui.model.GraphicModel;
+import org.weasis.core.ui.util.tree.DefaultTreeCheckingModel;
+import org.weasis.core.ui.util.tree.TreeCheckingModel;
 import org.weasis.core.util.LangUtil;
 import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.codec.DcmMediaReader;

@@ -9,7 +9,6 @@
  */
 package org.weasis.core.ui.util;
 
-import eu.essilab.lablib.checkboxtree.CheckboxTree;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -31,6 +30,7 @@ import org.weasis.core.ui.model.graphic.imp.seg.GroupTreeNode;
 import org.weasis.core.ui.model.graphic.imp.seg.SegContour;
 import org.weasis.core.ui.model.graphic.imp.seg.SegRegion;
 import org.weasis.core.ui.model.utils.bean.MeasureItem;
+import org.weasis.core.ui.util.tree.CheckboxTree;
 
 public class SegRegionTree extends CheckboxTree {
 
