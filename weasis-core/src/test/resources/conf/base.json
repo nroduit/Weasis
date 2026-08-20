@@ -1,0 +1,39 @@
+{
+  "weasisPreferences": [
+    {
+      "code": "felix.cache.rootdir",
+      "value": "${user.dir}/target",
+      "description": "Base directory of the bundle cache, kept inside the build directory so tests never write to the user home",
+      "type": "A",
+      "category": "FELIX_CONFIG"
+    },
+    {
+      "code": "org.osgi.framework.storage",
+      "value": "${felix.cache.rootdir}/weasis-test/cache",
+      "description": "Location of the bundle cache; its parent is the application folder ConfigData creates",
+      "type": "A",
+      "category": "FELIX_CONFIG"
+    },
+    {
+      "code": "org.osgi.framework.storage.clean",
+      "value": "onFirstInit",
+      "description": "Controls whether the bundle cache is flushed the first time the framework is initialized",
+      "type": "A",
+      "category": "FELIX_CONFIG"
+    },
+    {
+      "code": "weasis.name",
+      "value": "Weasis",
+      "description": "Application name",
+      "type": "A",
+      "category": "WEASIS_CONFIG"
+    },
+    {
+      "code": "weasis.profile",
+      "value": "test",
+      "description": "Profile name, isolating the preferences written by the tests",
+      "type": "A",
+      "category": "WEASIS_CONFIG"
+    }
+  ]
+}
