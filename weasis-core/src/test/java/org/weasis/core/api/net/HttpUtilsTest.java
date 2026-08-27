@@ -43,6 +43,17 @@ class HttpUtilsTest {
   private static final int SLOW_CHUNKS = 8;
   private static final int CHUNK_SIZE = 1024;
 
+  /**
+   * An upload big enough to outlast {@link #UPLOAD_TIMEOUT_MS} while the server keeps draining it.
+   * {@link ThrottledUploadServer} bounds its receive buffer so the gap between two upload progress
+   * signals stays far below the timeout even though socket buffering makes that signal bursty.
+   */
+  private static final int UPLOAD_SIZE = 8 << 20;
+
+  private static final int UPLOAD_DRAIN_CHUNK = 64 * 1024;
+  private static final long UPLOAD_DRAIN_PAUSE_MS = 20;
+  private static final int UPLOAD_TIMEOUT_MS = 1_500;
+
   private static HttpServer server;
   private static ExecutorService serverPool;
   private static String baseUrl;
@@ -311,10 +322,48 @@ class HttpUtilsTest {
     }
   }
 
+  private static URLParameters uploadParams() {
+    return URLParameters.builder()
+        .httpPost(true)
+        .connectTimeoutMillis(2_000)
+        .inactivityTimeoutMillis(UPLOAD_TIMEOUT_MS)
+        .build();
+  }
+
+  @Test
+  void slowUploadOutlivesTheInactivityTimeoutWhileBytesKeepFlowing() throws Exception {
+    // The upload takes several times the timeout. Before the stall guard covered the request half,
+    // the response future's deadline aborted this healthy transfer: a STOW-RS send of anything
+    // bigger than the link could carry in one timeout window always failed.
+    try (var upstream = ThrottledUploadServer.draining(UPLOAD_DRAIN_CHUNK, UPLOAD_DRAIN_PAUSE_MS)) {
+      var request = new WebRequest(WebRequest.Method.POST, upstream.url());
+      request.setMultipartBody(dicomMultipart(new byte[UPLOAD_SIZE]));
+      try (HttpStream stream =
+          HttpUtils.getHttpResponse(
+              upstream.url(), uploadParams(), OAuth2ServiceFactory.NO_AUTH, request)) {
+        assertEquals(200, stream.getResponseCode());
+      }
+    }
+  }
+
+  @Test
+  void stalledUploadIsAbortedOnceBytesStopFlowing() throws Exception {
+    try (var upstream = ThrottledUploadServer.stalling(UPLOAD_DRAIN_CHUNK)) {
+      var request = new WebRequest(WebRequest.Method.POST, upstream.url());
+      request.setMultipartBody(dicomMultipart(new byte[UPLOAD_SIZE]));
+      assertThrows(
+          StallTimeoutException.class,
+          () ->
+              HttpUtils.getHttpResponse(
+                  upstream.url(), uploadParams(), OAuth2ServiceFactory.NO_AUTH, request));
+    }
+  }
+
   @Test
   void slowStreamOutlivesTheReadTimeoutWhileDataKeepsFlowing() throws Exception {
     // ~1s of streaming under a 400ms timeout: the timeout bounds a stalled read, not the transfer.
-    URLParameters params = URLParameters.builder().connectTimeout(2_000).readTimeout(400).build();
+    URLParameters params =
+        URLParameters.builder().connectTimeoutMillis(2_000).inactivityTimeoutMillis(400).build();
     try (HttpStream stream =
         HttpUtils.getHttpResponse(baseUrl + "/slow-stream", params, OAuth2ServiceFactory.NO_AUTH)) {
       assertEquals(200, stream.getResponseCode());
@@ -324,7 +373,8 @@ class HttpUtilsTest {
 
   @Test
   void stalledStreamIsAbortedOnceDataStopsFlowing() throws Exception {
-    URLParameters params = URLParameters.builder().connectTimeout(2_000).readTimeout(400).build();
+    URLParameters params =
+        URLParameters.builder().connectTimeoutMillis(2_000).inactivityTimeoutMillis(400).build();
     try (HttpStream stream =
         HttpUtils.getHttpResponse(
             baseUrl + "/stalled-stream", params, OAuth2ServiceFactory.NO_AUTH)) {
@@ -336,7 +386,8 @@ class HttpUtilsTest {
 
   @Test
   void getHttpConnectionFailsOnInvalidHostQuickly() throws Exception {
-    URLParameters fast = URLParameters.builder().connectTimeout(50).readTimeout(200).build();
+    URLParameters fast =
+        URLParameters.builder().connectTimeoutMillis(50).inactivityTimeoutMillis(200).build();
     var url = URI.create("http://127.0.0.1:1/").toURL();
     assertThrows(
         IOException.class,

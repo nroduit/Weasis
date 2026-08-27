@@ -10,8 +10,6 @@
 package org.weasis.dicom.viewer3d.dockable;
 
 import bibliothek.gui.dock.common.CLocation;
-import eu.essilab.lablib.checkboxtree.TreeCheckingEvent;
-import eu.essilab.lablib.checkboxtree.TreeCheckingModel;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.util.ArrayList;
@@ -44,10 +42,13 @@ import org.weasis.core.ui.model.graphic.imp.seg.GroupTreeNode;
 import org.weasis.core.ui.model.graphic.imp.seg.SegContour;
 import org.weasis.core.ui.model.graphic.imp.seg.SegRegion;
 import org.weasis.core.ui.util.*;
+import org.weasis.core.ui.util.tree.TreeCheckingEvent;
+import org.weasis.core.ui.util.tree.TreeCheckingModel;
 import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.SpecialElementRegion;
 import org.weasis.dicom.codec.seg.LazyContourLoader;
+import org.weasis.dicom.codec.seg.MaskFrames;
 import org.weasis.dicom.codec.seg.SegSpecialElement;
 import org.weasis.dicom.viewer2d.SegComponentFactory;
 import org.weasis.dicom.viewer3d.ActionVol;
@@ -63,8 +64,11 @@ import org.weasis.opencv.seg.RegionAttributes;
  */
 public class SegmentationTool extends PluginTool implements SeriesViewerListener, SegRegionTool {
 
-  public static final String BUTTON_NAME =
-      org.weasis.dicom.viewer2d.Messages.getString("segmentation");
+  /**
+   * Named apart from the 2D viewer's segmentation tool: a study can have both open at once, and two
+   * dockables reading "Segmentation" give the user nothing to tell them by.
+   */
+  public static final String BUTTON_NAME = Messages.getString("segmentation.volume");
 
   public enum Type {
     NONE(Messages.getString("segmentation.none")),
@@ -133,8 +137,13 @@ public class SegmentationTool extends PluginTool implements SeriesViewerListener
   }
 
   private SegContour getContour(DicomImageElement imageElement, RegionAttributes attributes) {
-    PlanarImage img = imageElement.getImage();
-    if (img != null) {
+    // Pin the frame for the whole lookup: the loaders decode from these pixels, and an eviction
+    // triggered by any concurrent decode would free them under the reader.
+    PlanarImage img = MaskFrames.acquire(imageElement);
+    if (img == null) {
+      return null;
+    }
+    try {
       for (SpecialElementRegion seg : segNodeMap.values()) {
         Set<LazyContourLoader> loaders = seg.getContours(imageElement);
         if (loaders == null || loaders.isEmpty()) {
@@ -149,6 +158,8 @@ public class SegmentationTool extends PluginTool implements SeriesViewerListener
           }
         }
       }
+    } finally {
+      MaskFrames.release(imageElement, img);
     }
     return null;
   }

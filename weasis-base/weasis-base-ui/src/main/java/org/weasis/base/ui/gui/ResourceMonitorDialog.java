@@ -113,12 +113,16 @@ public class ResourceMonitorDialog extends JDialog {
     addRow(content, "ResourceMonitor.gcOverhead", gcValue);
 
     JButton helpButton = GuiUtils.createHelpButton("../basics/system-resources/"); // NON-NLS
+    JButton resetButton = new JButton(Messages.getString("ResourceMonitor.reset"));
+    resetButton.setToolTipText(Messages.getString("ResourceMonitor.reset.tooltip"));
+    resetButton.addActionListener(e -> resetStatistics());
     JButton copyButton = new JButton(Messages.getString("ResourceMonitor.copyReport"));
     copyButton.addActionListener(e -> copyReport());
     JButton closeButton = new JButton(Messages.getString("WeasisAboutBox.close"));
     closeButton.addActionListener(e -> dispose());
-    content.add(helpButton, "span 2, split 3, gaptop 15");
-    content.add(copyButton, "gapbefore push");
+    content.add(helpButton, "span 2, split 4, gaptop 15");
+    content.add(resetButton, "gapbefore push");
+    content.add(copyButton);
     content.add(closeButton);
 
     setContentPane(content);
@@ -208,6 +212,20 @@ public class ResourceMonitorDialog extends JDialog {
   private static void setEventValue(JLabel label, long count, boolean problematic) {
     label.setText(Long.toString(count));
     label.setForeground(problematic ? levelColor(Level.SUBOPTIMAL) : defaultForeground());
+  }
+
+  private void resetStatistics() {
+    int choice =
+        JOptionPane.showConfirmDialog(
+            this,
+            Messages.getString("ResourceMonitor.reset.confirm"),
+            getTitle(),
+            JOptionPane.YES_NO_OPTION,
+            JOptionPane.WARNING_MESSAGE);
+    if (choice == JOptionPane.YES_OPTION) {
+      ResourceMonitor.getInstance().resetStatistics();
+      refresh();
+    }
   }
 
   private void copyReport() {

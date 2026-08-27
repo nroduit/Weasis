@@ -65,13 +65,6 @@
       "category": "PLUGIN_INSTALL"
     },
     {
-      "code": "weasis.plugins.35",
-      "value": "${dollar}{weasis.codebase.url}/bundle/jackson-annotations-${jackson.an.version}.jar${xz.ext} ${dollar}{weasis.codebase.url}/bundle/jackson-core-${jackson.version}.jar${xz.ext} ${dollar}{weasis.codebase.url}/bundle/jackson-databind-${jackson.version}.jar${xz.ext}",
-      "description": "Jackson databind and annotation",
-      "type": "A",
-      "category": "PLUGIN_INSTALL"
-    },
-    {
       "code": "weasis.plugins.40",
       "value": "${dollar}{weasis.codebase.url}/bundle/weasis-dicom-explorer-${app.version}.jar${xz.ext}",
       "description": "DICOM explorer",
@@ -205,6 +198,14 @@
       "code": "weasis.clean.previous.version",
       "value": "true",
       "description": "If true, the plugin cache is cleared when the weasis version has changed from the previous launch",
+      "type": "A",
+      "javaType": "BOOLEAN",
+      "category": "LAUNCH"
+    },
+    {
+      "code": "weasis.resource.stats.clean.previous.version",
+      "value": "true",
+      "description": "If true, the measured resource statistics (peaks, uptime and events) are cleared when the weasis version has changed from the previous launch",
       "type": "A",
       "javaType": "BOOLEAN",
       "category": "LAUNCH"

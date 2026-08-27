@@ -10,8 +10,6 @@
 package org.weasis.dicom.rt;
 
 import bibliothek.gui.dock.common.CLocation;
-import eu.essilab.lablib.checkboxtree.TreeCheckingEvent;
-import eu.essilab.lablib.checkboxtree.TreeCheckingModel;
 import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.Dimension;
@@ -72,6 +70,8 @@ import org.weasis.core.ui.util.SegRegionTool;
 import org.weasis.core.ui.util.SegRegionTree;
 import org.weasis.core.ui.util.StructToolTipTreeNode;
 import org.weasis.core.ui.util.TreeBuilder;
+import org.weasis.core.ui.util.tree.TreeCheckingEvent;
+import org.weasis.core.ui.util.tree.TreeCheckingModel;
 import org.weasis.core.util.SoftHashMap;
 import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.codec.DicomImageElement;
@@ -636,7 +636,7 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener, S
     if (initPathSelection) {
       return;
     }
-    recordUserToggle(tree, e.getPath());
+    recordUserToggle(tree, e.path());
     persistCurrentSelection(tree);
     updateVisibleNode();
   }

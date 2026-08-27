@@ -88,8 +88,8 @@ class NetworkUtilTest {
 
   @Test
   void timeoutsHaveDefaults() {
-    assertTrue(NetworkUtil.getUrlConnectionTimeout() > 0);
-    assertTrue(NetworkUtil.getUrlReadTimeout() > 0);
+    assertTrue(NetworkUtil.getUrlConnectTimeoutMillis() > 0);
+    assertTrue(NetworkUtil.getUrlInactivityTimeoutMillis() > 0);
   }
 
   @Test

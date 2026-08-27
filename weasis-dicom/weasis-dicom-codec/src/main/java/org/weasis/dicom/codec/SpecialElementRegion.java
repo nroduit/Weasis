@@ -159,6 +159,15 @@ public interface SpecialElementRegion {
   }
 
   /**
+   * Returns the canonical volume only if one is already cached, never building it. {@link
+   * #getContours} uses it to reuse a volume that exists without ever materialising one just to draw
+   * a plane the segmentation already carries a frame for.
+   */
+  default SegmentationVolume peekCanonicalSegmentationVolume() {
+    return null;
+  }
+
+  /**
    * Returns {@code true} when an asynchronous build of the canonical segmentation volume is
    * currently in progress. While a build is in flight, {@link #getOrBuildSegmentationVolume()}
    * returns {@code null} (so the EDT is never blocked) and {@link #getContours} returns {@code
@@ -260,45 +269,52 @@ public interface SpecialElementRegion {
     if (seriesUID != null) {
       boolean fractional = isFractionalSeg();
 
-      // Prefer the 3D segmentation volume reslice path: it produces contours in the queried
-      // image's pixel coordinates regardless of orientation, handles oblique / MPR reformats
-      // and is dramatically faster than the per-frame "graphics" loaders for large SEGs (a
-      // single second-pass canonical stamp is reused across every redraw via the SoftReference
-      // cache in getOrBuildSegmentationVolume()).
+      // An already-built canonical volume is the fastest and the only orientation-independent
+      // source: it produces contours in the queried image's pixel coordinates whatever the plane,
+      // and a single canonical stamp is reused across every redraw. Only peek here — building one
+      // is decided below, once the cheaper paths have had their chance.
       //
       // Fractional SEGs are an exception: the volume builder collapses fractional frames to
       // binary stamps, so for those we keep the per-frame path as the primary source and only
       // use the volume as a last-resort fallback.
-      if (!fractional) {
+      if (!fractional && peekCanonicalSegmentationVolume() != null) {
         Set<LazyContourLoader> volumeContours = lookupByVolume(img);
         if (volumeContours != null) {
           return volumeContours;
         }
-        // The volume is not yet built but a background build is in progress: do NOT fall back
-        // to the position-map path
-        if (isSegmentationVolumeBuilding()) {
-          return null;
-        }
       }
 
-      // Fall back to spatial position-based matching (positionMap). This is the primary path
-      // for fractional SEGs (preserves alpha) and the only path when no 3D volume could be
-      // built (RT structures, single-frame SEGs without a usable canonical grid, ...).
+      // Spatial position-based matching (positionMap), tried before *building* a volume. When the
+      // segmentation carries a frame in this very plane on this very grid — which lookupByPosition
+      // verifies — its per-frame mask is exactly what a reslice would produce, for the cost of one
+      // 2D decode instead of a canonical raster of one byte per voxel of the whole SEG extent.
+      // That raster runs to hundreds of megabytes for a large SEG, times the number of SEG objects
+      // a cardiac study puts in a single series. This is also the primary path for fractional SEGs
+      // (preserves alpha) and the only one when no 3D volume can be built (RT structures,
+      // single-frame SEGs without a usable canonical grid, ...).
       NavigableMap<Double, Set<LazyContourLoader>> positionMap = getPositionMap();
-      if (!positionMap.isEmpty()) {
-        Set<LazyContourLoader> result = lookupByPosition(img, positionMap);
-        if (result != null) {
-          return result;
-        }
+      PositionMatch match =
+          positionMap.isEmpty() ? PositionMatch.NOT_APPLICABLE : lookupByPosition(img, positionMap);
+      if (match.loaders() != null) {
+        return match.loaders();
       }
 
-      // Last-resort fallback for fractional SEGs whose positionMap is not comparable to the
-      // queried image (oblique reslice through a fractional SEG): downgrade to a binary
-      // volume reslice rather than show nothing.
-      if (fractional) {
+      // When the lookup applied, its answer is complete — including "this segmentation has no
+      // frame at this position". Reslicing a volume would answer the same question with a
+      // different sampler, and only after building a full-extent raster for a segmentation that
+      // is not even present on this slice. Scrolling past the ends of each SEG's range would
+      // otherwise migrate them to the volume path one by one, so the overlay would keep changing
+      // between two samplers as the user scrolls. Fractional SEGs still fall through: the volume
+      // is a lossy last resort for them, not an equivalent.
+      if (!match.applicable() || fractional) {
         Set<LazyContourLoader> volumeContours = lookupByVolume(img);
         if (volumeContours != null) {
           return volumeContours;
+        }
+        if (!fractional && isSegmentationVolumeBuilding()) {
+          // A background build is in progress: wait for the repaint it will trigger rather than
+          // showing contours from a path that just declined this image.
+          return null;
         }
       }
 
@@ -354,7 +370,7 @@ public interface SpecialElementRegion {
    *       the legacy {@link TagW#SlicePosition} key is used.
    * </ul>
    */
-  private Set<LazyContourLoader> lookupByPosition(
+  private PositionMatch lookupByPosition(
       DicomImageElement img, NavigableMap<Double, Set<LazyContourLoader>> positionMap) {
     Vector3d segNormal = getReferenceNormal();
     if (segNormal != null) {
@@ -363,7 +379,7 @@ public interface SpecialElementRegion {
         double cos = Math.abs(imgNormal.dot(segNormal));
         if (cos < ORIENTATION_COSINE_OBLIQUE) {
           // Planes are too different; positionMap keys are not comparable.
-          return null;
+          return PositionMatch.NOT_APPLICABLE;
         }
         // The position map returns contour loaders that produce contour points in the SEG mask's
         // *own* pixel grid (Rows × Columns × PixelSpacing of the SEG frame). This is only safe to
@@ -372,12 +388,11 @@ public interface SpecialElementRegion {
         // and same IPP in-plane anchor. When the SEG was resampled to its own canonical grid
         // (typical of highdicom multi-segment objects with empty Derivation Image Sequence) the
         // mask pixel coordinates do not match image pixel coordinates and would render rotated
-        // / translated / mis-scaled. The {@link #getContours} caller already tried the volume
-        // reslice path first (which produces contours in the queried image's pixel coordinates),
-        // so by the time we get here we are either a fractional SEG (preserve alpha) or no
-        // volume could be built — only accept strictly compatible grids.
+        // / translated / mis-scaled. Only accept strictly compatible grids: {@link #getContours}
+        // falls through to the volume reslice (which produces contours in the queried image's
+        // pixel coordinates) for everything this rejects.
         if (!isInPlaneGridCompatible(img)) {
-          return null;
+          return PositionMatch.NOT_APPLICABLE;
         }
         Double key = projectOnNormal(img, segNormal);
         if (key != null) {
@@ -391,9 +406,19 @@ public interface SpecialElementRegion {
           //    frame inside its slab, instead of only the one closest to its centre).
           double segSpacing = getSliceSpacing();
           double imgThickness = imageSliceThickness(img);
-          double tol = Math.max(baseTol, Math.max(segSpacing * 0.5, imgThickness * 0.5));
           // Add a small epsilon to absorb floating-point drift between sign-conventions.
-          return findByTolerance(positionMap, key, tol + 1e-4);
+          double tol = Math.max(baseTol, Math.max(segSpacing * 0.5, imgThickness * 0.5)) + 1e-4;
+          if (isFractionalSeg()) {
+            // No canonical volume represents a fractional SEG, so nothing constrains this path to
+            // a single frame: keep the whole slab so every alpha mask inside it contributes.
+            return PositionMatch.of(findByTolerance(positionMap, key, tol));
+          }
+          // Everywhere else this stands in for the volume reslice (see getContours), which samples
+          // the single nearest voxel plane. Returning the whole slab instead unions several SEG
+          // frames into one image slice and draws a visibly thicker overlay than MPR and the 3D
+          // view show for the same segmentation — an overlapping reconstruction (0.6 mm slices
+          // 0.3 mm apart) widens the tolerance to the neighbours even when the grids match 1:1.
+          return PositionMatch.of(findNearest(positionMap, key, tol));
         }
       }
     }
@@ -405,9 +430,25 @@ public interface SpecialElementRegion {
       loc = TagD.getTagValue(img, Tag.SliceLocation, Double.class);
     }
     if (loc != null) {
-      return findByTolerance(positionMap, loc, POSITION_TOLERANCE);
+      // The legacy key carries no grid guarantee, so a miss here is not authoritative.
+      Set<LazyContourLoader> loaders = findByTolerance(positionMap, loc, POSITION_TOLERANCE);
+      return loaders == null ? PositionMatch.NOT_APPLICABLE : PositionMatch.of(loaders);
     }
-    return null;
+    return PositionMatch.NOT_APPLICABLE;
+  }
+
+  /**
+   * Outcome of a position-map lookup. {@code applicable} says the segmentation's own frames lie in
+   * the queried plane on a compatible grid, so the lookup could answer authoritatively — even when
+   * it found nothing, which then means the segmentation is simply absent from this slice rather
+   * than that another source should be tried.
+   */
+  record PositionMatch(boolean applicable, Set<LazyContourLoader> loaders) {
+    static final PositionMatch NOT_APPLICABLE = new PositionMatch(false, null);
+
+    static PositionMatch of(Set<LazyContourLoader> loaders) {
+      return new PositionMatch(true, loaders);
+    }
   }
 
   /** Projects the image's IPP onto the given (sign-normalized) normal. */
@@ -448,22 +489,16 @@ public interface SpecialElementRegion {
       if (Math.abs(segPs[1] - imgPs[1]) > 1e-3) return false;
     }
 
-    // Mask dimensions must match the displayed image to ensure (mx, my) ≡ (u, v).
-    org.weasis.opencv.data.PlanarImage planar = img.getImage();
-    try {
-      if (planar != null) {
-        int segW = getMaskWidth();
-        int segH = getMaskHeight();
-        if (segW > 0 && planar.width() != segW) return false;
-        if (segH > 0 && planar.height() != segH) return false;
-      }
-    } finally {
-      if (planar != null) {
-        org.weasis.opencv.op.ImageConversion.releasePlanarImage(planar);
-        img.removeImageFromCache();
-      }
-    }
-    return true;
+    // Mask dimensions must match the displayed image to ensure (mx, my) ≡ (u, v). Read from the
+    // header, never by decoding: this runs on the paint path for every segmentation of every
+    // repaint, and decoding here would evict the very image being displayed from the native cache
+    // — and free its pixels — while the view is drawing it.
+    Integer imgW = TagD.getTagValue(img, Tag.Columns, Integer.class);
+    Integer imgH = TagD.getTagValue(img, Tag.Rows, Integer.class);
+    int segW = getMaskWidth();
+    int segH = getMaskHeight();
+    if (segW > 0 && imgW != null && imgW != segW) return false;
+    return segH <= 0 || imgH == null || imgH == segH;
   }
 
   /**
@@ -516,6 +551,25 @@ public interface SpecialElementRegion {
       merged.addAll(s);
     }
     return merged;
+  }
+
+  /**
+   * Returns the loaders of the single position closest to {@code target}, or {@code null} when none
+   * is within {@code tolerance}. Mirrors the nearest-neighbour sampling of {@link
+   * SegmentationVolume#getContoursForImagePlane}, so both paths draw the same contours for the same
+   * image. All the segments alive at that position share the key, so none is lost.
+   */
+  static Set<LazyContourLoader> findNearest(
+      NavigableMap<Double, Set<LazyContourLoader>> map, double target, double tolerance) {
+    Map.Entry<Double, Set<LazyContourLoader>> below = map.floorEntry(target);
+    Map.Entry<Double, Set<LazyContourLoader>> above = map.ceilingEntry(target);
+    double distBelow = below == null ? Double.MAX_VALUE : target - below.getKey();
+    double distAbove = above == null ? Double.MAX_VALUE : above.getKey() - target;
+    // Ties resolve upwards, matching Math.round() in the volume reslice.
+    Map.Entry<Double, Set<LazyContourLoader>> nearest = distAbove <= distBelow ? above : below;
+    return nearest == null || Math.min(distBelow, distAbove) > tolerance
+        ? null
+        : nearest.getValue();
   }
 
   /**

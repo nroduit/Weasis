@@ -1,0 +1,18 @@
+{
+  "weasisPreferences": [
+    {
+      "code": "weasis.name",
+      "value": "Weasis",
+      "description": "Application name",
+      "type": "A",
+      "category": "WEASIS_CONFIG"
+    },
+    {
+      "code": "weasis.profile",
+      "value": "test",
+      "description": "Profile name, isolating the preferences written by the tests",
+      "type": "A",
+      "category": "WEASIS_CONFIG"
+    }
+  ]
+}

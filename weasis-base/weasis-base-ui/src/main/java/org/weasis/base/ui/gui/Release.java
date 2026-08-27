@@ -9,30 +9,17 @@
  */
 package org.weasis.base.ui.gui;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import java.util.Date;
+import jakarta.json.JsonObject;
+import java.time.Instant;
+import org.weasis.core.api.util.JsonUtil;
 
-public class Release {
-  @JsonProperty(value = "date")
-  @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss'Z'")
-  private Date date;
+/** Latest release published by <a href="https://nroduit.github.io/en/api/release">the site</a>. */
+public record Release(Instant date, String version, String url) {
 
-  @JsonProperty(value = "version", required = true)
-  private String version;
-
-  @JsonProperty(value = "url", required = true)
-  private String url;
-
-  public Date getDate() {
-    return date;
-  }
-
-  public String getVersion() {
-    return version;
-  }
-
-  public String getUrl() {
-    return url;
+  static Release fromJson(JsonObject json) {
+    return new Release(
+        JsonUtil.getInstant(json, "date"), // NON-NLS
+        json.getString("version", null), // NON-NLS
+        json.getString("url", null)); // NON-NLS
   }
 }

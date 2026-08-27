@@ -9,6 +9,11 @@
  */
 package org.weasis.core.api.model;
 
+import jakarta.json.Json;
+import jakarta.json.JsonObject;
+import jakarta.json.JsonObjectBuilder;
+import org.weasis.core.api.util.JsonUtil;
+
 public class PerformanceModel {
 
   private String type;
@@ -38,6 +43,20 @@ public class PerformanceModel {
     this.time = time;
     this.rate = rate;
     this.errors = errors;
+  }
+
+  /** Payload sent to the statistic service: the member names are part of that contract. */
+  public JsonObject toJson() {
+    JsonObjectBuilder builder = Json.createObjectBuilder();
+    JsonUtil.addIfPresent(builder, "type", type); // NON-NLS
+    JsonUtil.addIfPresent(builder, "seriesUID", seriesUID); // NON-NLS
+    JsonUtil.addIfPresent(builder, "modality", modality); // NON-NLS
+    builder.add("nbImages", nbImages); // NON-NLS
+    builder.add("size", size); // NON-NLS
+    builder.add("time", time); // NON-NLS
+    JsonUtil.addIfPresent(builder, "rate", rate); // NON-NLS
+    builder.add("errors", errors); // NON-NLS
+    return builder.build();
   }
 
   public int getErrors() {

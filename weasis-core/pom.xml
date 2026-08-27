@@ -18,7 +18,6 @@
 
   <properties>
     <xchart.version>4.0.4</xchart.version>
-    <lablib-checkboxtree.version>4.0</lablib-checkboxtree.version>
     <VectorGraphics2D.version>0.13</VectorGraphics2D.version>
   </properties>
 
@@ -36,20 +35,14 @@
             <configuration>
               <artifactSet>
                 <includes>
-                  <include>eu.essilab:lablib-checkboxtree</include>
                   <include>org.knowm.xchart:xchart</include>
                   <include>de.erichseifert.vectorgraphics2d:VectorGraphics2D</include>
+                  <include>jakarta.json:jakarta.json-api</include>
+                  <include>org.eclipse.parsson:parsson</include>
                 </includes>
               </artifactSet>
               <filters>
                 <!-- The dependency manifests are dropped: the uber jar keeps the manifest of this module -->
-                <filter>
-                  <artifact>eu.essilab:lablib-checkboxtree</artifact>
-                  <excludes>
-                    <exclude>eu/essilab/lablib/checkboxtree/examples/**</exclude>
-                    <exclude>META-INF/MANIFEST.MF</exclude>
-                  </excludes>
-                </filter>
                 <filter>
                   <artifact>org.knowm.xchart:xchart</artifact>
                   <excludes>
@@ -58,6 +51,18 @@
                 </filter>
                 <filter>
                   <artifact>de.erichseifert.vectorgraphics2d:VectorGraphics2D</artifact>
+                  <excludes>
+                    <exclude>META-INF/MANIFEST.MF</exclude>
+                  </excludes>
+                </filter>
+                <filter>
+                  <artifact>jakarta.json:jakarta.json-api</artifact>
+                  <excludes>
+                    <exclude>META-INF/MANIFEST.MF</exclude>
+                  </excludes>
+                </filter>
+                <filter>
+                  <artifact>org.eclipse.parsson:parsson</artifact>
                   <excludes>
                     <exclude>META-INF/MANIFEST.MF</exclude>
                   </excludes>
@@ -90,17 +95,17 @@
       <artifactId>jaxb-osgi</artifactId>
     </dependency>
     <dependency>
-      <groupId>com.fasterxml.jackson.core</groupId>
-      <artifactId>jackson-databind</artifactId>
+      <groupId>jakarta.json</groupId>
+      <artifactId>jakarta.json-api</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.eclipse.parsson</groupId>
+      <artifactId>parsson</artifactId>
+      <scope>runtime</scope>
     </dependency>
     <dependency>
       <groupId>org.weasis.thirdparty</groupId>
       <artifactId>docking-frames</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>eu.essilab</groupId>
-      <artifactId>lablib-checkboxtree</artifactId>
-      <version>${lablib-checkboxtree.version}</version>
     </dependency>
     <dependency>
       <groupId>org.knowm.xchart</groupId>

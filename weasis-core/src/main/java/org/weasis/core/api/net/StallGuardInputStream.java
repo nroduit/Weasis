@@ -13,8 +13,6 @@ import java.io.FilterInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Objects;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -33,12 +31,6 @@ import org.weasis.core.util.StreamUtil;
 public final class StallGuardInputStream extends FilterInputStream {
 
   private static final long IDLE = Long.MIN_VALUE;
-  private static final long MIN_POLL_MS = 200L;
-
-  private static final ScheduledExecutorService WATCHDOG =
-      Executors.newSingleThreadScheduledExecutor(
-          runnable ->
-              Thread.ofPlatform().daemon().name("weasis-stall-watchdog").unstarted(runnable));
 
   private final int stallTimeoutMillis;
   private final long stallNanos;
@@ -55,9 +47,10 @@ public final class StallGuardInputStream extends FilterInputStream {
     super(Objects.requireNonNull(in, "in"));
     this.stallTimeoutMillis = stallTimeoutMillis;
     this.stallNanos = TimeUnit.MILLISECONDS.toNanos(stallTimeoutMillis);
-    long poll = Math.max(MIN_POLL_MS, stallTimeoutMillis / 4L);
+    long poll = StallWatchdog.pollIntervalMillis(stallTimeoutMillis);
     this.watchdog =
-        WATCHDOG.scheduleWithFixedDelay(this::abortIfStalled, poll, poll, TimeUnit.MILLISECONDS);
+        StallWatchdog.EXECUTOR.scheduleWithFixedDelay(
+            this::abortIfStalled, poll, poll, TimeUnit.MILLISECONDS);
   }
 
   @Override

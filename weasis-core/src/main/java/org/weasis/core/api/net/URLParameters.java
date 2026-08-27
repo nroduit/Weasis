@@ -19,12 +19,19 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
-/** HTTP connection parameters for URL requests including headers, timeouts, and caching. */
+/**
+ * HTTP connection parameters for URL requests including headers, timeouts, and caching.
+ *
+ * @param connectTimeoutMillis budget for establishing the connection
+ * @param inactivityTimeoutMillis budget for time without progress, never for the total transfer: it
+ *     bounds a stalled upload chunk, the wait for the response headers and a stalled read of the
+ *     response body, so a slow but healthy transfer of any size completes
+ */
 public record URLParameters(
     Map<String, String> headers,
     long ifModifiedSince,
-    int connectTimeout,
-    int readTimeout,
+    int connectTimeoutMillis,
+    int inactivityTimeoutMillis,
     boolean httpPost,
     boolean useCaches,
     boolean allowUserInteraction) {
@@ -32,11 +39,13 @@ public record URLParameters(
   public static final URLParameters DEFAULT = new URLParameters();
 
   public URLParameters {
-    if (connectTimeout < 0) {
-      throw new IllegalArgumentException("Connect timeout cannot be negative: " + connectTimeout);
+    if (connectTimeoutMillis < 0) {
+      throw new IllegalArgumentException(
+          "Connect timeout cannot be negative: " + connectTimeoutMillis);
     }
-    if (readTimeout < 0) {
-      throw new IllegalArgumentException("Read timeout cannot be negative: " + readTimeout);
+    if (inactivityTimeoutMillis < 0) {
+      throw new IllegalArgumentException(
+          "Inactivity timeout cannot be negative: " + inactivityTimeoutMillis);
     }
     if (ifModifiedSince < 0) {
       throw new IllegalArgumentException(
@@ -57,15 +66,32 @@ public record URLParameters(
     this(
         headers,
         0L,
-        NetworkUtil.getUrlConnectionTimeout(),
-        NetworkUtil.getUrlReadTimeout(),
+        NetworkUtil.getUrlConnectTimeoutMillis(),
+        NetworkUtil.getUrlInactivityTimeoutMillis(),
         httpPost,
         true,
         false);
   }
 
-  public URLParameters(Map<String, String> headers, int connectTimeout, int readTimeout) {
-    this(headers, 0L, connectTimeout, readTimeout, false, true, false);
+  public URLParameters(
+      Map<String, String> headers, int connectTimeoutMillis, int inactivityTimeoutMillis) {
+    this(headers, 0L, connectTimeoutMillis, inactivityTimeoutMillis, false, true, false);
+  }
+
+  /**
+   * @deprecated renamed to {@link #connectTimeoutMillis()}
+   */
+  @Deprecated(since = "4.7.3")
+  public int connectTimeout() {
+    return connectTimeoutMillis;
+  }
+
+  /**
+   * @deprecated renamed to {@link #inactivityTimeoutMillis()}, which is what it always measured
+   */
+  @Deprecated(since = "4.7.3")
+  public int readTimeout() {
+    return inactivityTimeoutMillis;
   }
 
   public static Builder builder() {
@@ -126,8 +152,8 @@ public record URLParameters(
 
     private Map<String, String> headers = Collections.emptyMap();
     private long ifModifiedSince = 0L;
-    private int connectTimeout = NetworkUtil.getUrlConnectionTimeout();
-    private int readTimeout = NetworkUtil.getUrlReadTimeout();
+    private int connectTimeoutMillis = NetworkUtil.getUrlConnectTimeoutMillis();
+    private int inactivityTimeoutMillis = NetworkUtil.getUrlInactivityTimeoutMillis();
     private boolean httpPost = false;
     private boolean useCaches = true;
     private boolean allowUserInteraction = false;
@@ -137,8 +163,8 @@ public record URLParameters(
     Builder(URLParameters parameters) {
       this.headers = parameters.headers;
       this.ifModifiedSince = parameters.ifModifiedSince;
-      this.connectTimeout = parameters.connectTimeout;
-      this.readTimeout = parameters.readTimeout;
+      this.connectTimeoutMillis = parameters.connectTimeoutMillis;
+      this.inactivityTimeoutMillis = parameters.inactivityTimeoutMillis;
       this.httpPost = parameters.httpPost;
       this.useCaches = parameters.useCaches;
       this.allowUserInteraction = parameters.allowUserInteraction;
@@ -154,14 +180,30 @@ public record URLParameters(
       return this;
     }
 
-    public Builder connectTimeout(int connectTimeout) {
-      this.connectTimeout = connectTimeout;
+    public Builder connectTimeoutMillis(int connectTimeoutMillis) {
+      this.connectTimeoutMillis = connectTimeoutMillis;
       return this;
     }
 
-    public Builder readTimeout(int readTimeout) {
-      this.readTimeout = readTimeout;
+    public Builder inactivityTimeoutMillis(int inactivityTimeoutMillis) {
+      this.inactivityTimeoutMillis = inactivityTimeoutMillis;
       return this;
+    }
+
+    /**
+     * @deprecated renamed to {@link #connectTimeoutMillis(int)}
+     */
+    @Deprecated(since = "4.7.3")
+    public Builder connectTimeout(int connectTimeout) {
+      return connectTimeoutMillis(connectTimeout);
+    }
+
+    /**
+     * @deprecated renamed to {@link #inactivityTimeoutMillis(int)}
+     */
+    @Deprecated(since = "4.7.3")
+    public Builder readTimeout(int readTimeout) {
+      return inactivityTimeoutMillis(readTimeout);
     }
 
     public Builder httpPost(boolean httpPost) {
@@ -183,8 +225,8 @@ public record URLParameters(
       return new URLParameters(
           headers,
           ifModifiedSince,
-          connectTimeout,
-          readTimeout,
+          connectTimeoutMillis,
+          inactivityTimeoutMillis,
           httpPost,
           useCaches,
           allowUserInteraction);

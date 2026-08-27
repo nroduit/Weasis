@@ -9,11 +9,11 @@
  */
 package org.weasis.acquire.explorer.gui.model.publish;
 
-import eu.essilab.lablib.checkboxtree.CheckboxTree;
-import eu.essilab.lablib.checkboxtree.TreeCheckingListener;
-import eu.essilab.lablib.checkboxtree.TreeCheckingModel;
 import javax.swing.JScrollPane;
 import org.weasis.core.ui.util.TreeBuilder;
+import org.weasis.core.ui.util.tree.CheckboxTree;
+import org.weasis.core.ui.util.tree.TreeCheckingListener;
+import org.weasis.core.ui.util.tree.TreeCheckingModel;
 
 public class PublishTree extends JScrollPane {
 

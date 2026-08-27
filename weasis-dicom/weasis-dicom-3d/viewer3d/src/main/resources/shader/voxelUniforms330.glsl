@@ -75,6 +75,10 @@ uniform mat3  crosshairRot;
 uniform bool  crosshairVisible;
 uniform int   crosshairCutMode;
 
+// Ratio of the ray-cast resolution to the on-screen one, so pixel-sized overlays keep a constant
+// apparent size when the pass is rendered at reduced resolution (no default here: set via Java).
+uniform float overlayScale;
+
 // Segmentation overlay (no default initializers in GLSL 3.30; set via Java)
 uniform bool segOverlayEnabled;
 // When true, only the segmentation is rendered; the anatomy volume raymarch is skipped.

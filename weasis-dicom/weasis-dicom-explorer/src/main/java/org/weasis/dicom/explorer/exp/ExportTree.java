@@ -9,8 +9,6 @@
  */
 package org.weasis.dicom.explorer.exp;
 
-import eu.essilab.lablib.checkboxtree.CheckboxTree;
-import eu.essilab.lablib.checkboxtree.TreeCheckingModel;
 import java.awt.BorderLayout;
 import java.awt.event.MouseEvent;
 import java.util.HashSet;
@@ -20,6 +18,7 @@ import java.util.Set;
 import javax.swing.JPanel;
 import javax.swing.tree.TreePath;
 import org.weasis.core.ui.util.TreeBuilder;
+import org.weasis.core.ui.util.tree.CheckboxTree;
 import org.weasis.dicom.explorer.DicomModel;
 import org.weasis.dicom.explorer.exp.CheckTreeModel.ToolTipPatientNode;
 import org.weasis.dicom.explorer.exp.CheckTreeModel.ToolTipSeriesNode;
@@ -72,15 +71,13 @@ public class ExportTree extends JPanel {
     checkboxTree.setToolTipText("");
 
     /*
-     At this point checking Paths are supposed to be bound at Series Level but depending on the
-     CheckingMode it may also contain parents treeNode paths.<br>
-     For medical use recommendation is to default select the whole series related to the studies
-     to be analyzed
+     At this point checking paths are supposed to be bound at Series Level but depending on the
+     CheckingMode it may also contain parents treeNode paths. For medical use the recommendation
+     is to default select the whole series related to the studies to be analyzed, so the checking
+     is rebuilt at Study Level.
     */
-    TreeCheckingModel checkingModel = checkTreeModel.getCheckingModel();
     TreePath[] checkingPaths = checkTreeModel.getCheckingPaths();
-    checkboxTree.setCheckingModel(
-        checkingModel); // be aware that checkingPaths is cleared at this point
+    checkboxTree.setCheckingModel(checkTreeModel.getCheckingModel());
 
     if (checkingPaths != null && checkingPaths.length > 0) {
       Set<TreePath> studyPathsSet = new HashSet<>();
@@ -90,11 +87,7 @@ public class ExportTree extends JPanel {
           studyPathsSet.add(checkingPath.getParentPath());
         }
       }
-
-      if (!studyPathsSet.isEmpty()) {
-        TreePath[] studyCheckingPaths = studyPathsSet.toArray(new TreePath[0]);
-        checkboxTree.setCheckingPaths(studyCheckingPaths);
-      }
+      checkboxTree.setCheckingPaths(studyPathsSet.toArray(new TreePath[0]));
 
       List<TreePath> selectedPaths = checkTreeModel.getDefaultSelectedPaths();
       if (!selectedPaths.isEmpty()) {

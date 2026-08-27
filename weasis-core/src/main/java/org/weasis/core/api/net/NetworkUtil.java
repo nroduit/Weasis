@@ -45,12 +45,32 @@ public final class NetworkUtil {
 
   private NetworkUtil() {}
 
-  public static int getUrlConnectionTimeout() {
+  public static int getUrlConnectTimeoutMillis() {
     return StringUtil.getInt(System.getProperty("UrlConnectionTimeout"), 5000);
   }
 
-  public static int getUrlReadTimeout() {
+  /**
+   * Budget for time without progress, not for the total transfer. The {@code UrlReadTimeout}
+   * property keeps its name for backward compatibility.
+   */
+  public static int getUrlInactivityTimeoutMillis() {
     return StringUtil.getInt(System.getProperty("UrlReadTimeout"), 15000);
+  }
+
+  /**
+   * @deprecated renamed to {@link #getUrlConnectTimeoutMillis()}
+   */
+  @Deprecated(since = "4.7.3")
+  public static int getUrlConnectionTimeout() {
+    return getUrlConnectTimeoutMillis();
+  }
+
+  /**
+   * @deprecated renamed to {@link #getUrlInactivityTimeoutMillis()}
+   */
+  @Deprecated(since = "4.7.3")
+  public static int getUrlReadTimeout() {
+    return getUrlInactivityTimeoutMillis();
   }
 
   public static URI getURI(String pathOrUri) {
@@ -116,8 +136,9 @@ public final class NetworkUtil {
   }
 
   private static void configureConnection(URLConnection connection, URLParameters parameters) {
-    connection.setConnectTimeout(parameters.connectTimeout());
-    connection.setReadTimeout(parameters.readTimeout());
+    connection.setConnectTimeout(parameters.connectTimeoutMillis());
+    // SO_TIMEOUT: the JDK already applies this per read, so it is an inactivity budget here too.
+    connection.setReadTimeout(parameters.inactivityTimeoutMillis());
     connection.setAllowUserInteraction(parameters.allowUserInteraction());
     connection.setUseCaches(parameters.useCaches());
     connection.setIfModifiedSince(parameters.ifModifiedSince());

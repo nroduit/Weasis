@@ -9,12 +9,12 @@
  */
 package org.weasis.core.ui.util;
 
-import eu.essilab.lablib.checkboxtree.CheckboxTree;
-import eu.essilab.lablib.checkboxtree.DefaultCheckboxTreeCellRenderer;
 import java.util.Enumeration;
 import javax.swing.JTree;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
+import org.weasis.core.ui.util.tree.CheckboxTree;
+import org.weasis.core.ui.util.tree.DefaultCheckboxTreeCellRenderer;
 
 public class TreeBuilder {
 

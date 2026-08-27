@@ -10,10 +10,6 @@
 package org.weasis.dicom.viewer2d.dockable;
 
 import bibliothek.gui.dock.common.CLocation;
-import eu.essilab.lablib.checkboxtree.CheckboxTree;
-import eu.essilab.lablib.checkboxtree.TreeCheckingEvent;
-import eu.essilab.lablib.checkboxtree.TreeCheckingModel;
-import eu.essilab.lablib.checkboxtree.TreeCheckingModel.CheckingMode;
 import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.FlowLayout;
@@ -49,6 +45,10 @@ import org.weasis.core.ui.model.layer.LayerAnnotation;
 import org.weasis.core.ui.model.layer.LayerItem;
 import org.weasis.core.ui.model.layer.LayerType;
 import org.weasis.core.ui.util.TreeBuilder;
+import org.weasis.core.ui.util.tree.CheckboxTree;
+import org.weasis.core.ui.util.tree.TreeCheckingEvent;
+import org.weasis.core.ui.util.tree.TreeCheckingModel;
+import org.weasis.core.ui.util.tree.TreeCheckingModel.CheckingMode;
 import org.weasis.core.util.LangUtil;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.display.OverlayOp;
@@ -157,8 +157,8 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
 
   private void treeValueChanged(TreeCheckingEvent e) {
     if (!initPathSelection) {
-      TreePath path = e.getPath();
-      boolean selected = e.isCheckedPath();
+      TreePath path = e.path();
+      boolean selected = e.checked();
       Object selObject = path.getLastPathComponent();
       Object parent = null;
       if (path.getParentPath() != null) {

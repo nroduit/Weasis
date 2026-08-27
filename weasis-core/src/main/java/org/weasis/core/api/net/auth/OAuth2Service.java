@@ -9,8 +9,8 @@
  */
 package org.weasis.core.api.net.auth;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.json.JsonException;
+import jakarta.json.JsonObject;
 import java.io.IOException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
@@ -23,6 +23,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.StringJoiner;
 import org.weasis.core.api.net.WebRequest;
+import org.weasis.core.api.util.JsonUtil;
 import org.weasis.core.util.StringUtil;
 
 /**
@@ -31,8 +32,6 @@ import org.weasis.core.util.StringUtil;
  * against the token endpoint.
  */
 public final class OAuth2Service {
-
-  private static final ObjectMapper MAPPER = new ObjectMapper();
 
   private static final String FORM_CONTENT_TYPE = "application/x-www-form-urlencoded";
   private static final String PARAM_CLIENT_ID = "client_id"; // NON-NLS
@@ -177,36 +176,36 @@ public final class OAuth2Service {
   }
 
   private static OAuth2Token parseToken(byte[] body) throws IOException {
-    JsonNode json = MAPPER.readTree(body);
-    JsonNode accessToken = json.get("access_token"); // NON-NLS
-    if (accessToken == null || accessToken.asText().isEmpty()) {
+    JsonObject json;
+    try {
+      json = JsonUtil.readObject(body);
+    } catch (JsonException e) {
+      throw new IOException("Malformed token response: " + errorDetails(body), e);
+    }
+    String accessToken = json.getString("access_token", null); // NON-NLS
+    if (!StringUtil.hasText(accessToken)) {
       throw new IOException("Token response contains no access_token: " + errorDetails(body));
     }
-    JsonNode expiresIn = json.get("expires_in"); // NON-NLS
+    int expiresIn = json.getInt("expires_in", -1); // NON-NLS
     return new OAuth2Token(
-        accessToken.asText(),
-        textOrNull(json, "token_type"), // NON-NLS
-        expiresIn != null && expiresIn.canConvertToInt() ? expiresIn.asInt() : null,
-        textOrNull(json, "refresh_token"), // NON-NLS
-        textOrNull(json, "scope"), // NON-NLS
-        textOrNull(json, "id_token")); // NON-NLS
-  }
-
-  private static String textOrNull(JsonNode json, String field) {
-    JsonNode node = json.get(field);
-    return node == null || node.isNull() ? null : node.asText();
+        accessToken,
+        json.getString("token_type", null), // NON-NLS
+        expiresIn < 0 ? null : expiresIn,
+        json.getString("refresh_token", null), // NON-NLS
+        json.getString("scope", null), // NON-NLS
+        json.getString("id_token", null)); // NON-NLS
   }
 
   /** Extracts RFC 6749 §5.2 error fields when present, else returns a truncated raw body. */
   private static String errorDetails(byte[] body) {
     try {
-      JsonNode json = MAPPER.readTree(body);
-      var error = textOrNull(json, "error"); // NON-NLS
+      JsonObject json = JsonUtil.readObject(body);
+      var error = json.getString("error", null); // NON-NLS
       if (error != null) {
-        var description = textOrNull(json, "error_description"); // NON-NLS
+        var description = json.getString("error_description", null); // NON-NLS
         return description == null ? error : error + " - " + description;
       }
-    } catch (IOException e) {
+    } catch (JsonException e) {
       // Not JSON, fall through to the raw body
     }
     var raw = new String(body, StandardCharsets.UTF_8).strip();

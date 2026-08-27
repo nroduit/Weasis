@@ -14,6 +14,7 @@ import com.jogamp.opengl.GL3ES3;
 import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.BiConsumer;
@@ -22,6 +23,8 @@ import org.slf4j.LoggerFactory;
 
 public class Program {
   private static final Logger LOGGER = LoggerFactory.getLogger(Program.class);
+
+  private static final int LOG_BUFFER_SIZE = 2048;
 
   private final Map<String, Integer> uniformLocations = new HashMap<>();
   private final Map<String, BiConsumer<GL2ES2, Integer>> uniforms = new HashMap<>();
@@ -57,7 +60,8 @@ public class Program {
     }
 
     IntBuffer success = IntBuffer.allocate(1);
-    ByteBuffer openglLog = ByteBuffer.allocate(512);
+    IntBuffer logLength = IntBuffer.allocate(1);
+    ByteBuffer openglLog = ByteBuffer.allocate(LOG_BUFFER_SIZE);
     for (Map.Entry<Integer, String> shader : shaderCode.entrySet()) {
       int shaderId = gl.glCreateShader(shader.getKey());
       shaderIds.put(shader.getKey(), shaderId);
@@ -65,10 +69,8 @@ public class Program {
       gl.glCompileShader(shaderId);
       gl.glGetShaderiv(shaderId, GL2ES2.GL_COMPILE_STATUS, success);
       if (success.get(0) != 1) {
-        gl.glGetShaderInfoLog(shaderId, 512, null, openglLog);
-        LOGGER.warn(
-            "Not success compiled status of shader: {}",
-            new String(openglLog.array(), StandardCharsets.UTF_8));
+        gl.glGetShaderInfoLog(shaderId, LOG_BUFFER_SIZE, logLength, openglLog);
+        LOGGER.error("Cannot compile shader {}: {}", name, readLog(openglLog, logLength));
       }
     }
 
@@ -83,14 +85,22 @@ public class Program {
 
     gl.glGetProgramiv(programId, GL2ES2.GL_LINK_STATUS, success);
     if (success.get(0) != 1) {
-      gl.glGetProgramInfoLog(programId, 512, null, openglLog);
-      LOGGER.warn("Cannot link shader: {}", new String(openglLog.array(), StandardCharsets.UTF_8));
+      gl.glGetProgramInfoLog(programId, LOG_BUFFER_SIZE, logLength, openglLog);
+      LOGGER.error("Cannot link program {}: {}", name, readLog(openglLog, logLength));
     }
 
     for (Map.Entry<Integer, Integer> shaderId : shaderIds.entrySet()) {
       gl.glDetachShader(programId, shaderId.getValue());
       gl.glDeleteShader(shaderId.getValue());
     }
+  }
+
+  // Reads the driver log, which is only valid up to the returned length, and clears the buffer.
+  private static String readLog(ByteBuffer log, IntBuffer length) {
+    int len = Math.clamp(length.get(0), 0, log.capacity());
+    String message = new String(log.array(), 0, len, StandardCharsets.UTF_8).trim();
+    Arrays.fill(log.array(), (byte) 0);
+    return message;
   }
 
   public void allocateUniform(GL2ES2 gl, String uniformName, BiConsumer<GL2ES2, Integer> function) {

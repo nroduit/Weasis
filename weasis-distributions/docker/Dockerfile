@@ -39,14 +39,32 @@ RUN set -eux; \
     savedAptMark="$(apt-mark showmanual)"; \
     apt-get update; \
     apt-get install -y --no-install-recommends wget gnupg; \
-    wget --progress=dot:giga -O /tmp/openjdk.tar.gz ${BINARY_URL}; \
-    wget --progress=dot:giga -O /tmp/openjdk.tar.gz.sig ${BINARY_URL}.sig; \
-    export GNUPGHOME="$(mktemp -d)"; \
-    # gpg: key 843C48A565F8F04B: "Adoptium GPG Key (DEB/RPM Signing Key) <temurin-dev@eclipse.org>" imported
-    gpg --batch --keyserver keyserver.ubuntu.com --recv-keys 3B04D753C9050D9A5D343F39843C48A565F8F04B; \
-    gpg --batch --verify /tmp/openjdk.tar.gz.sig /tmp/openjdk.tar.gz; \
-    rm -rf "${GNUPGHOME}" /tmp/openjdk.tar.gz.sig; \
+    wget --progress=dot:giga --tries=3 --timeout=30 -O /tmp/openjdk.tar.gz ${BINARY_URL}; \
+    wget --progress=dot:giga --tries=3 --timeout=30 -O /tmp/openjdk.tar.gz.sig ${BINARY_URL}.sig; \
+    # The pinned checksum is the authoritative integrity check; verify it first so
+    # the build never depends on a keyserver being reachable.
     echo "${ESUM} */tmp/openjdk.tar.gz" | sha256sum -c -; \
+    export GNUPGHOME="$(mktemp -d)"; \
+    # gpg: key 843C48A565F8F04B: "Adoptium GPG Key (DEB/RPM Signing Key) <temurin-dev@eclipse.org>" imported.
+    # Keyservers time out intermittently (notably under QEMU emulation), so try
+    # several and treat a total failure as a warning rather than a build error.
+    KEY='3B04D753C9050D9A5D343F39843C48A565F8F04B'; \
+    gpg_ok=0; \
+    for ks in keyserver.ubuntu.com keys.openpgp.org pgp.mit.edu; do \
+      for attempt in 1 2; do \
+        if gpg --batch --keyserver "${ks}" --keyserver-options timeout=20 --recv-keys "${KEY}"; then \
+          gpg_ok=1; break; \
+        fi; \
+        sleep 5; \
+      done; \
+      if [ "${gpg_ok}" = 1 ]; then break; fi; \
+    done; \
+    if [ "${gpg_ok}" = 1 ]; then \
+      gpg --batch --verify /tmp/openjdk.tar.gz.sig /tmp/openjdk.tar.gz; \
+    else \
+      echo "WARNING: could not fetch the Adoptium GPG key from any keyserver; relying on the pinned SHA-256 (already verified)."; \
+    fi; \
+    rm -rf "${GNUPGHOME}" /tmp/openjdk.tar.gz.sig; \
     mkdir -p "$JAVA_HOME"; \
     tar --extract \
         --file /tmp/openjdk.tar.gz \

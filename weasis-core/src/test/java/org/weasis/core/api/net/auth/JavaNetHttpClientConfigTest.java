@@ -22,8 +22,8 @@ class JavaNetHttpClientConfigTest {
   void explicitConstructorRetainsValues() {
     var proxy = ProxySelector.getDefault();
     var cfg = new JavaNetHttpClientConfig(1234, 5678, proxy);
-    assertEquals(1234, cfg.getConnectTimeout());
-    assertEquals(5678, cfg.getReadTimeout());
+    assertEquals(1234, cfg.getConnectTimeoutMillis());
+    assertEquals(5678, cfg.getInactivityTimeoutMillis());
     assertSame(proxy, cfg.getProxy());
   }
 

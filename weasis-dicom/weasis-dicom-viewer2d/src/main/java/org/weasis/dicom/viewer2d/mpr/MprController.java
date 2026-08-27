@@ -52,6 +52,7 @@ import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.DicomSeries;
 import org.weasis.dicom.codec.HiddenSeriesManager;
 import org.weasis.dicom.codec.TagD;
+import org.weasis.dicom.codec.seg.SegBuildScheduler;
 import org.weasis.dicom.codec.seg.SegSpecialElement;
 import org.weasis.dicom.codec.seg.SegmentationVolume;
 import org.weasis.dicom.viewer2d.EventManager;
@@ -213,37 +214,36 @@ public class MprController
     }
     attemptedSegs.addAll(elements);
 
-    // Per-segment work is independent and CPU-bound: process in parallel and only mutate the
-    // shared lists once with the collected results.
+    // Per-segment work is independent and CPU-bound, but a study can hold dozens of SEG files and
+    // each build allocates a full image-grid raster: go through the global SEG budget rather than
+    // the common pool, and only mutate the shared lists once with the collected results.
     record SegPair(SegSpecialElement seg, SegmentationVolume vol) {}
     final Volume<?, ?> imageVolume = volume;
     final int total = elements.size();
     final AtomicInteger done = new AtomicInteger();
     List<SegPair> built =
-        elements.parallelStream()
-            .map(
-                seg -> {
-                  try {
-                    DicomSeries segSeries =
-                        seg.getMediaReader() == null ? null : seg.getMediaReader().getMediaSeries();
-                    if (segSeries == null) {
-                      return null;
-                    }
-                    // Reuse the SEG's per-image-volume cached resample when available so a second
-                    // MPR open (or the 3D viewer for the same image volume) does not redo the
-                    // expensive frame splatting.
-                    SegmentationVolume segVolume =
-                        seg.getOrBuildAlignedVolume(
-                            imageVolume, s -> SegVolumeBuilder.build(s, segSeries, imageVolume));
-                    return segVolume == null ? null : new SegPair(seg, segVolume);
-                  } finally {
-                    if (progress != null) {
-                      progress.accept(done.incrementAndGet(), total);
-                    }
-                  }
-                })
-            .filter(Objects::nonNull)
-            .toList();
+        SegBuildScheduler.mapBounded(
+            elements,
+            seg -> {
+              try {
+                DicomSeries segSeries =
+                    seg.getMediaReader() == null ? null : seg.getMediaReader().getMediaSeries();
+                if (segSeries == null) {
+                  return null;
+                }
+                // Reuse the SEG's per-image-volume cached resample when available so a second
+                // MPR open (or the 3D viewer for the same image volume) does not redo the
+                // expensive frame splatting.
+                SegmentationVolume segVolume =
+                    seg.getOrBuildAlignedVolume(
+                        imageVolume, s -> SegVolumeBuilder.build(s, segSeries, imageVolume));
+                return segVolume == null ? null : new SegPair(seg, segVolume);
+              } finally {
+                if (progress != null) {
+                  progress.accept(done.incrementAndGet(), total);
+                }
+              }
+            });
 
     for (SegPair p : built) {
       segElements.add(p.seg());

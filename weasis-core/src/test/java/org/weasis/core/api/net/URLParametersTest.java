@@ -82,8 +82,18 @@ class URLParametersTest {
   @Test
   void timeoutConstructorPreservesValues() {
     URLParameters p = new URLParameters(Map.of(), 1234, 5678);
-    assertEquals(1234, p.connectTimeout());
-    assertEquals(5678, p.readTimeout());
+    assertEquals(1234, p.connectTimeoutMillis());
+    assertEquals(5678, p.inactivityTimeoutMillis());
+  }
+
+  @SuppressWarnings("deprecation")
+  @Test
+  void deprecatedTimeoutAccessorsDelegateToTheRenamedOnes() {
+    URLParameters p = URLParameters.builder().connectTimeout(11).readTimeout(22).build();
+    assertEquals(11, p.connectTimeoutMillis());
+    assertEquals(22, p.inactivityTimeoutMillis());
+    assertEquals(11, p.connectTimeout());
+    assertEquals(22, p.readTimeout());
   }
 
   @Test
@@ -92,16 +102,16 @@ class URLParametersTest {
         URLParameters.builder()
             .headers(Map.of("X", "Y"))
             .ifModifiedSince(10L)
-            .connectTimeout(1000)
-            .readTimeout(2000)
+            .connectTimeoutMillis(1000)
+            .inactivityTimeoutMillis(2000)
             .httpPost(true)
             .useCaches(false)
             .allowUserInteraction(true)
             .build();
     assertEquals(Map.of("X", "Y"), built.headers());
     assertEquals(10L, built.ifModifiedSince());
-    assertEquals(1000, built.connectTimeout());
-    assertEquals(2000, built.readTimeout());
+    assertEquals(1000, built.connectTimeoutMillis());
+    assertEquals(2000, built.inactivityTimeoutMillis());
     assertTrue(built.httpPost());
     assertFalse(built.useCaches());
     assertTrue(built.allowUserInteraction());
@@ -113,8 +123,8 @@ class URLParametersTest {
         URLParameters.builder()
             .headers(Map.of("k", "v"))
             .ifModifiedSince(42L)
-            .connectTimeout(10)
-            .readTimeout(20)
+            .connectTimeoutMillis(10)
+            .inactivityTimeoutMillis(20)
             .httpPost(true)
             .useCaches(false)
             .allowUserInteraction(true)

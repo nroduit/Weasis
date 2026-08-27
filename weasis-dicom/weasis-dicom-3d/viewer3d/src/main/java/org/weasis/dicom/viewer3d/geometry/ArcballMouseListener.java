@@ -124,6 +124,9 @@ public abstract class ArcballMouseListener extends SliderChangeListener implemen
               .fireRotationSync(view3d, new Quaterniond(view3d.getCamera().getRotation()), false);
         }
         view3d.getCamera().init(e.getPoint());
+        // The gesture is over: redraw the source view so it leaves the reduced-resolution
+        // (adjusting) rendering. Synced views get their repaint from the rotation event above.
+        view3d.getJComponent().repaint();
       }
     }
   }

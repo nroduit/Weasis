@@ -117,8 +117,4 @@ public final class UISegmentationVolumeBuildExecutor implements SegmentationVolu
     }
     return null;
   }
-
-  private static String buildTaskMessage(SegSpecialElement seg) {
-    return "Building SEG";
-  }
 }

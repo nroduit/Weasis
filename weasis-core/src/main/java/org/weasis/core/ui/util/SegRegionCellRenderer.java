@@ -9,12 +9,12 @@
  */
 package org.weasis.core.ui.util;
 
-import eu.essilab.lablib.checkboxtree.DefaultCheckboxTreeCellRenderer;
 import java.awt.*;
 import javax.swing.Icon;
 import javax.swing.JTree;
 import javax.swing.UIManager;
 import org.weasis.core.api.gui.util.GuiUtils;
+import org.weasis.core.ui.util.tree.DefaultCheckboxTreeCellRenderer;
 
 /**
  * Renders a segmentation region as a color swatch followed by its label. Unlike the HTML bullet of

@@ -89,13 +89,6 @@
                     <exclude>META-INF/LICENSE.md</exclude>
                   </excludes>
                 </filter>
-                <filter>
-                  <artifact>org.glassfish.hk2:osgi-resource-locator</artifact>
-                  <excludes>
-                    <exclude>META-INF/MANIFEST.MF</exclude>
-                    <exclude>META-INF/LICENSE.md</exclude>
-                  </excludes>
-                </filter>
               </filters>
               <transformers>
                 <!-- preserve SPI/service files so PF4J plugin discovery works -->
@@ -148,13 +141,6 @@
           <artifactId>junit</artifactId>
         </exclusion>
       </exclusions>
-    </dependency>
-
-    <!-- Add dependency for loading JsonProvider with dcm4che-json -->
-    <dependency>
-      <groupId>org.glassfish.hk2</groupId>
-      <artifactId>osgi-resource-locator</artifactId>
-      <version>${osgi.resource.locator.version}</version>
     </dependency>
 
     <dependency>

@@ -9,18 +9,21 @@
  */
 package org.weasis.core.ui.launcher;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonSubTypes;
-import com.fasterxml.jackson.annotation.JsonTypeInfo;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.formdev.flatlaf.extras.FlatSVGIcon;
 import com.formdev.flatlaf.util.SystemInfo;
+import jakarta.json.Json;
+import jakarta.json.JsonArrayBuilder;
+import jakarta.json.JsonException;
+import jakarta.json.JsonObject;
+import jakarta.json.JsonObjectBuilder;
+import jakarta.json.JsonValue;
 import java.awt.Window;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URI;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.Map.Entry;
@@ -44,6 +47,7 @@ import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.service.BundlePreferences;
 import org.weasis.core.api.service.BundleTools;
+import org.weasis.core.api.util.JsonUtil;
 import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.api.util.ResourceUtil.ActionIcon;
 import org.weasis.core.ui.editor.SeriesViewerUI;
@@ -55,6 +59,11 @@ import org.weasis.core.util.StringUtil;
 
 public class Launcher {
   private static final Logger LOGGER = LoggerFactory.getLogger(Launcher.class);
+
+  private static final String LAUNCH_TYPE = "launchType"; // NON-NLS
+  private static final String URI_TYPE = "URI"; // NON-NLS
+  private static final String APPLICATION_TYPE = "Application"; // NON-NLS
+  private static final String URI_KEY = "uri"; // NON-NLS
 
   public enum Compatibility {
     LINUX("Linux"), // NON-NLS
@@ -102,11 +111,6 @@ public class Launcher {
 
   private boolean local = true;
 
-  @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "launchType")
-  @JsonSubTypes({
-    @JsonSubTypes.Type(value = URIConfiguration.class, name = "URI"),
-    @JsonSubTypes.Type(value = ApplicationConfiguration.class, name = "Application")
-  })
   private Configuration configuration;
 
   public String getName() {
@@ -125,7 +129,6 @@ public class Launcher {
     this.iconPath = iconPath;
   }
 
-  @JsonIgnore
   public Icon getIcon() {
     String path = iconPath;
     if (!StringUtil.hasText(path)) {
@@ -151,7 +154,6 @@ public class Launcher {
     return icon;
   }
 
-  @JsonIgnore
   public Icon getResizeIcon(int width, int height) {
     Icon icon = getIcon();
     if (icon instanceof FlatSVGIcon) {
@@ -208,37 +210,35 @@ public class Launcher {
   public abstract static class Configuration {
     protected static final String DICOM_SEL =
         "{dicom:" + Placeholder.DICOM_COPY_FOLDER + "}"; // NON-NLS
-    private final String launchType;
 
     private Path source;
 
-    public Configuration(String launchType) {
-      this.launchType = launchType;
-    }
+    /** Stable discriminator stored in JSON, unlike the localized {@link #getTypeLabel()}. */
+    public abstract String getLaunchType();
 
-    public String getLaunchType() {
-      return launchType;
-    }
+    public abstract String getTypeLabel();
 
-    @JsonIgnore
     public boolean isDicomSelectionAction() {
       return source != null && source.toString().contains(DICOM_SEL);
     }
 
-    @JsonIgnore
     public Path getSource() {
       return source;
     }
 
-    @JsonIgnore
     public void setSource(Path source) {
       this.source = source;
     }
 
-    @JsonIgnore
     public abstract void launch(ImageViewerEventManager<?> eventManager);
 
-    @JsonIgnore
+    protected abstract JsonObject toJson();
+
+    /** Builder seeded with the discriminator, to be completed by the subclass. */
+    protected JsonObjectBuilder jsonBuilder() {
+      return Json.createObjectBuilder().add(LAUNCH_TYPE, getLaunchType());
+    }
+
     protected String resolvePlaceholders(String text, ImageViewerEventManager<?> eventManager) {
       String val = Placeholder.PREFERENCES_PLACEHOLDER.resolvePlaceholders(text, eventManager);
       if (source != null && StringUtil.hasText(val)) {
@@ -252,24 +252,24 @@ public class Launcher {
       return val;
     }
 
-    @JsonIgnore
     void showInvalidField(Window parent) {
-      if (this instanceof URIConfiguration) {
-        LauncherDialog.ShowRequiredValue(parent, Messages.getString("uri"));
-      } else {
-        LauncherDialog.ShowRequiredValue(parent, Messages.getString("application"));
-      }
+      LauncherDialog.ShowRequiredValue(parent, getTypeLabel());
     }
 
-    @JsonIgnore
     public abstract boolean isValid();
   }
 
   public static class URIConfiguration extends Configuration {
     private String uri;
 
-    public URIConfiguration() {
-      super("URI");
+    @Override
+    public String getLaunchType() {
+      return URI_TYPE;
+    }
+
+    @Override
+    public String getTypeLabel() {
+      return Messages.getString("uri");
     }
 
     public String getUri() {
@@ -280,7 +280,14 @@ public class Launcher {
       this.uri = uri;
     }
 
-    @JsonIgnore
+    @Override
+    protected JsonObject toJson() {
+      JsonObjectBuilder builder = jsonBuilder();
+      JsonUtil.addIfPresent(builder, URI_KEY, uri);
+      return builder.build();
+    }
+
+    @Override
     public boolean isDicomSelectionAction() {
       boolean sel = super.isDicomSelectionAction();
       if (sel) {
@@ -318,7 +325,6 @@ public class Launcher {
     private Compatibility compatibility;
 
     public ApplicationConfiguration() {
-      super(Messages.getString("application"));
       if (SystemInfo.isWindows) {
         compatibility = Compatibility.WINDOWS;
       } else if (SystemInfo.isMacOS) {
@@ -326,6 +332,16 @@ public class Launcher {
       } else {
         compatibility = Compatibility.LINUX;
       }
+    }
+
+    @Override
+    public String getLaunchType() {
+      return APPLICATION_TYPE;
+    }
+
+    @Override
+    public String getTypeLabel() {
+      return Messages.getString("application");
     }
 
     public String getBinaryPath() {
@@ -368,7 +384,32 @@ public class Launcher {
       this.compatibility = compatibility;
     }
 
-    @JsonIgnore
+    @Override
+    protected JsonObject toJson() {
+      JsonObjectBuilder builder = jsonBuilder();
+      JsonUtil.addIfPresent(builder, "binaryPath", binaryPath); // NON-NLS
+      if (parameters != null && !parameters.isEmpty()) {
+        JsonArrayBuilder array = Json.createArrayBuilder();
+        parameters.stream().filter(Objects::nonNull).forEach(array::add);
+        builder.add("parameters", array); // NON-NLS
+      }
+      JsonUtil.addIfPresent(builder, "workingDirectory", workingDirectory); // NON-NLS
+      if (environmentVariables != null && !environmentVariables.isEmpty()) {
+        JsonObjectBuilder variables = Json.createObjectBuilder();
+        environmentVariables.forEach(
+            (key, value) -> {
+              if (key != null && value != null) {
+                variables.add(key, value);
+              }
+            });
+        builder.add("environmentVariables", variables); // NON-NLS
+      }
+      if (compatibility != null) {
+        builder.add("compatibility", compatibility.name()); // NON-NLS
+      }
+      return builder.build();
+    }
+
     public boolean isCompatibleWithCurrentSystem() {
       if (compatibility == null) {
         return true;
@@ -382,7 +423,7 @@ public class Launcher {
       }
     }
 
-    @JsonIgnore
+    @Override
     public boolean isDicomSelectionAction() {
       boolean sel = super.isDicomSelectionAction();
       if (sel) {
@@ -405,6 +446,7 @@ public class Launcher {
       return false;
     }
 
+    @Override
     public void launch(ImageViewerEventManager<?> eventManager) {
       if (!StringUtil.hasText(binaryPath)) {
         return;
@@ -507,7 +549,61 @@ public class Launcher {
         + "\n"
         + Messages.getString("launcher.typ")
         + StringUtil.COLON_AND_SPACE
-        + configuration.launchType;
+        + configuration.getTypeLabel();
+  }
+
+  JsonObject toJson() {
+    JsonObjectBuilder builder = Json.createObjectBuilder();
+    JsonUtil.addIfPresent(builder, "name", name); // NON-NLS
+    JsonUtil.addIfPresent(builder, "iconPath", iconPath); // NON-NLS
+    builder.add("enable", enable); // NON-NLS
+    builder.add("button", button); // NON-NLS
+    if (configuration != null) {
+      builder.add("configuration", configuration.toJson()); // NON-NLS
+    }
+    return builder.build();
+  }
+
+  static Launcher fromJson(JsonObject json) {
+    Launcher launcher = new Launcher();
+    launcher.setName(json.getString("name", null)); // NON-NLS
+    launcher.setIconPath(json.getString("iconPath", null)); // NON-NLS
+    launcher.setEnable(json.getBoolean("enable", false)); // NON-NLS
+    launcher.setButton(json.getBoolean("button", false)); // NON-NLS
+    if (json.get("configuration") instanceof JsonObject config) { // NON-NLS
+      launcher.setConfiguration(configurationFromJson(config));
+    }
+    return launcher;
+  }
+
+  /**
+   * Files written before 4.8 may hold a localized discriminator, hence the fallback on the members
+   * themselves.
+   */
+  private static Configuration configurationFromJson(JsonObject json) {
+    String launchType = json.getString(LAUNCH_TYPE, null);
+    boolean uriType =
+        launchType == null ? json.containsKey(URI_KEY) : URI_TYPE.equalsIgnoreCase(launchType);
+    if (uriType) {
+      URIConfiguration config = new URIConfiguration();
+      config.setUri(json.getString(URI_KEY, null));
+      return config;
+    }
+
+    ApplicationConfiguration config = new ApplicationConfiguration();
+    config.setBinaryPath(json.getString("binaryPath", null)); // NON-NLS
+    config.setParameters(JsonUtil.getStringList(json, "parameters")); // NON-NLS
+    config.setWorkingDirectory(json.getString("workingDirectory", null)); // NON-NLS
+    config.setEnvironmentVariables(JsonUtil.getStringMap(json, "environmentVariables")); // NON-NLS
+    String compatibility = json.getString("compatibility", null); // NON-NLS
+    if (StringUtil.hasText(compatibility)) {
+      try {
+        config.setCompatibility(Compatibility.valueOf(compatibility));
+      } catch (IllegalArgumentException e) {
+        LOGGER.warn("Unknown launcher compatibility: {}", compatibility);
+      }
+    }
+    return config;
   }
 
   public static void addNodeActionPerformed(JComboBox<Launcher> comboBox, Type type) {
@@ -573,11 +669,11 @@ public class Launcher {
   static void saveLaunchers(Type type) {
     List<Launcher> list = getLaunchers(type);
     try {
-      File file =
-          BundlePreferences.getFileInDataFolder(AppProperties.CORE_PLUGIN_ID, type.getFilename())
-              .toFile();
-      ObjectMapper mapper = new ObjectMapper();
-      mapper.writeValue(file, list);
+      Path file =
+          BundlePreferences.getFileInDataFolder(AppProperties.CORE_PLUGIN_ID, type.getFilename());
+      JsonArrayBuilder builder = Json.createArrayBuilder();
+      list.forEach(launcher -> builder.add(launcher.toJson()));
+      JsonUtil.write(file, builder.build());
     } catch (IOException e) {
       LOGGER.error("Cannot save the launcher configuration", e);
     }
@@ -664,28 +760,25 @@ public class Launcher {
 
   public static List<Launcher> loadLaunchers(Type type) {
     List<Launcher> list = new ArrayList<>();
-    loadLaunchers(list, ResourceUtil.getResource(type.getFilename()), false);
+    loadLaunchers(list, ResourceUtil.getResource(type.getFilename()).toPath(), false);
     loadLaunchers(
         list,
-        BundlePreferences.getFileInDataFolder(AppProperties.CORE_PLUGIN_ID, type.getFilename())
-            .toFile(),
+        BundlePreferences.getFileInDataFolder(AppProperties.CORE_PLUGIN_ID, type.getFilename()),
         true);
     return list;
   }
 
-  private static void loadLaunchers(List<Launcher> list, File resource, boolean local) {
-    if (resource.canRead()) {
+  private static void loadLaunchers(List<Launcher> list, Path resource, boolean local) {
+    if (Files.isReadable(resource)) {
       try {
-        ObjectMapper mapper = new ObjectMapper();
-        List<Launcher> nodes =
-            mapper.readValue(
-                resource,
-                mapper.getTypeFactory().constructCollectionType(List.class, Launcher.class));
-        for (Launcher node : nodes) {
-          node.setLocal(local);
-          list.add(node);
+        for (JsonValue value : JsonUtil.readArray(resource)) {
+          if (value instanceof JsonObject json) {
+            Launcher node = fromJson(json);
+            node.setLocal(local);
+            list.add(node);
+          }
         }
-      } catch (IOException e) {
+      } catch (IOException | JsonException e) {
         LOGGER.error("Cannot load the launcher configuration", e);
       }
     }
