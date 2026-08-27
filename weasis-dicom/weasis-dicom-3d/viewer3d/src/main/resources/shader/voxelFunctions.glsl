@@ -2,12 +2,23 @@
 // Get voxel value from 3D texture
 // *************************************************************************************************
 
+bool isColorTexture() {
+    return textureDataType == dataTypeRGB8 || textureDataType == dataTypeRGBA8;
+}
+
+vec3 getVoxelColor(vec3 coordinates) {
+    return texture(volTexture, coordinates).rgb;
+}
+
+// Scalar intensity driving the transfer function. A colour volume (fusion, US, XA) has no single
+// meaningful channel, so its luminance is used instead of the red one.
 float getVoxelValue(vec3 coordinates) {
-    return texture(volTexture, coordinates).r;
+    vec4 texel = texture(volTexture, coordinates);
+    return isColorTexture() ? dot(texel.rgb, vec3(0.299, 0.587, 0.114)) : texel.r;
 }
 
 float getOriginalVoxelValue(float texValue) {
-    if (textureDataType == dataTypeByte) {
+    if (textureDataType == dataTypeByte || isColorTexture()) {
         return texValue * 255.0;
     } else if (textureDataType == dataTypeSignedSort) {
         return texValue * 65535.0 - 32768.0;

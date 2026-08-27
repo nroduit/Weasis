@@ -1,11 +1,20 @@
 # Changelog
 
-## [v4.7.2](https://github.com/nroduit/Weasis/tree/v4.7.2) (2026-08-03)
+## [v4.7.3](https://github.com/nroduit/Weasis/tree/v4.7.3) (2026-08-25)
 
-[Full Changelog](https://github.com/nroduit/Weasis/compare/v4.7.1...v4.7.2)
+[Full Changelog](https://github.com/nroduit/Weasis/compare/v4.7.2...v4.7.3)
 
 **Implemented enhancements:**
 
+- Enhance volume rendering: add color texture support and improve mipmapping logic [\#905](https://github.com/nroduit/Weasis/issues/905)
+- Update to dcm4che 5.35.0 [\#903](https://github.com/nroduit/Weasis/issues/903)
+- Volume rendering: add shading capabilities to segmentation objects [\#902](https://github.com/nroduit/Weasis/issues/902)
+- Implement auto-hide for crowded segmentation series to improve visibility. Fixes crash when loading multiple SEG files [\#901](https://github.com/nroduit/Weasis/issues/901)
+- FBO volume rendering: adaptive resolution handling for improved performance [\#900](https://github.com/nroduit/Weasis/issues/900)
+- Improving the management of queries on DICOMweb series [\#898](https://github.com/nroduit/Weasis/issues/898)
+- Enhance DICOM retrieval with series selection and loading placeholders [\#897](https://github.com/nroduit/Weasis/issues/897)
+- Add AreaIcon and TabPlacement classes for enhanced tab management and visual representation [\#895](https://github.com/nroduit/Weasis/issues/895)
+- Add PersonNameCellEditor and PersonNameView for editing DICOM person names in Dicomizer [\#894](https://github.com/nroduit/Weasis/issues/894)
 - Add segmentation region tooltip and visibility toggle functionality [\#885](https://github.com/nroduit/Weasis/issues/885)
 - Add SegRegionCellRenderer for color swatch display in segmentation tree [\#884](https://github.com/nroduit/Weasis/issues/884)
 - Refactor DICOM manifest handling [\#883](https://github.com/nroduit/Weasis/issues/883)
@@ -13,22 +22,49 @@
 - Add segmentation selection controls: Show/Hide all, view button and complete tool listing [\#879](https://github.com/nroduit/Weasis/issues/879)
 - Hide non-relevant segmentations by default \(keyword list and global preference\) [\#878](https://github.com/nroduit/Weasis/issues/878)
 - Refactor Thumbnail rendering to avoid AWT tree lock during icon updates [\#877](https://github.com/nroduit/Weasis/issues/877)
+
+**Fixed bugs:**
+
+- Dicomizer - The first modifier "right" does not appear in the modifiers list in the Anatomic Region popup selection [\#904](https://github.com/nroduit/Weasis/issues/904)
+- STOW-RS export fails on studies that take longer than UrlReadTimeout [\#899](https://github.com/nroduit/Weasis/issues/899)
+- Implement service invalidation for updated authentication methods [\#896](https://github.com/nroduit/Weasis/issues/896)
+- WADO-RS retrieval failed after upgrade to Weasis 4.7.x [\#893](https://github.com/nroduit/Weasis/issues/893)
+- Not able to open the CAG images... The screen remains black [\#890](https://github.com/nroduit/Weasis/issues/890)
+- "Copy images into the local temporary directory" option is not applied [\#887](https://github.com/nroduit/Weasis/issues/887)
+- Fix determining plane from DICOM images when building volume [\#882](https://github.com/nroduit/Weasis/issues/882)
+- Regression after 4.6.6: series no longer loads progressively and the viewer freezes while scrolling large CT series [\#880](https://github.com/nroduit/Weasis/issues/880)
+- Export as lossless transfer syntax is incorrectly setting LossyImageCompression value [\#876](https://github.com/nroduit/Weasis/issues/876)
+
+**Security fixes:**
+
+- Enhance property handling to prevent path injection and ensure safe directory names [\#888](https://github.com/nroduit/Weasis/issues/888)
+
+**Closed issues:**
+
+- ROI Metrics Not showing [\#871](https://github.com/nroduit/Weasis/issues/871)
+- Hounsfield Units measurement does not appear. [\#869](https://github.com/nroduit/Weasis/issues/869)
+
+**Merged pull requests:**
+
+- build: bump the maven group across 1 directory with 7 updates [\#889](https://github.com/nroduit/Weasis/pull/889) ([dependabot[bot]](https://github.com/apps/dependabot))
+- ci: bump the actions group across 1 directory with 2 updates [\#872](https://github.com/nroduit/Weasis/pull/872) ([dependabot[bot]](https://github.com/apps/dependabot))
+
+## [v4.7.2](https://github.com/nroduit/Weasis/tree/v4.7.2) (2026-08-03)
+
+[Full Changelog](https://github.com/nroduit/Weasis/compare/v4.7.1...v4.7.2)
+
+**Implemented enhancements:**
+
 - Add user-configurable default filter mode for DICOM explorer [\#874](https://github.com/nroduit/Weasis/issues/874)
 - Allow adding and editing custom 3D LUTs [\#805](https://github.com/nroduit/Weasis/issues/805)
 
 **Fixed bugs:**
 
-- "Copy images into the local temporary directory" option is not applied [\#887](https://github.com/nroduit/Weasis/issues/887)
-- Fix determining plane from DICOM images when building volume [\#882](https://github.com/nroduit/Weasis/issues/882)
 - Ellipse showing wrong Mean [\#870](https://github.com/nroduit/Weasis/issues/870)
 - Fixed blackening when setting segment opacity in 3D viewer [\#865](https://github.com/nroduit/Weasis/issues/865)
 - Preset changes are only applied after scrolling in multi-view layouts [\#860](https://github.com/nroduit/Weasis/issues/860)
 - Attenuation measurement returns incorrect HU values in v4.7.1 [\#858](https://github.com/nroduit/Weasis/issues/858)
 - Area-based intensity measurement issue [\#855](https://github.com/nroduit/Weasis/issues/855)
-
-**Security fixes:**
-
-- Enhance property handling to prevent path injection and ensure safe directory names [\#888](https://github.com/nroduit/Weasis/issues/888)
 
 **Merged pull requests:**
 

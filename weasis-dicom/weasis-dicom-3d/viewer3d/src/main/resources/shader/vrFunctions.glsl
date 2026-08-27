@@ -136,6 +136,14 @@ vec4 applyTextureColor(float pix){
     return texture(colorMap, vec2(pix, 0.0));
 }
 
+// A colour volume already carries the colour that matters — a fusion blend, a Doppler map — so it
+// keeps its own RGB and takes only the opacity from the preset LUT, which stays driven by the
+// window/level applied to the voxel luminance.
+vec4 applyVoxelColor(vec3 texCoord, float pix) {
+    vec4 color = applyTextureColor(pix);
+    return isColorTexture() ? vec4(getVoxelColor(texCoord), color.a) : color;
+}
+
 // Reference thickness (in normalized volume-texture units) over which a segment's slider opacity is
 // realized. The per-sample seg opacity is corrected to this reference so the rendered result no longer
 // depends on the ray sampling rate; smaller values make the slider ramp up faster.
@@ -338,6 +346,8 @@ vec4 rayCastingMip(Ray ray, float tmin, float tmax, vec2 uv) {
     int sampleCount = int(float(depthSampleNumber) * len);
 
     float mipPix = mipType == mipTypeMin ? 1.0 : 0.0;
+    // Colour of the sample the projection retains, so a colour volume keeps its hue through MIP.
+    vec3 mipColor = vec3(0.0);
     vec3 texCoord = vec3(0.0);
     float pix = 0.0;
 
@@ -358,16 +368,25 @@ vec4 rayCastingMip(Ray ray, float tmin, float tmax, vec2 uv) {
         if (mipType == mipTypeMin) {
             vec4 pixel = applyTextureColor(pix);
             if (pixel.a > 0.01) {
+                if (pix < mipPix && isColorTexture()) {
+                    mipColor = getVoxelColor(texCoord);
+                }
                 mipPix = min(mipPix, pix);
                 sumNb++;
             }
         } else if (mipType == mipTypeMean) {
             vec4 pixel = applyTextureColor(pix);
             if (pixel.a > 0.01) {
+                if (isColorTexture()) {
+                    mipColor += getVoxelColor(texCoord);
+                }
                 mipPix += pix;
                 sumNb++;
             }
         } else {
+            if (pix > mipPix && isColorTexture()) {
+                mipColor = getVoxelColor(texCoord);
+            }
             mipPix = max(mipPix, pix);
             if (mipPix >= 0.99) {
                 break;
@@ -379,8 +398,12 @@ vec4 rayCastingMip(Ray ray, float tmin, float tmax, vec2 uv) {
         mipPix = 0.0;
     } else if (mipType == mipTypeMean) {
         mipPix = sumNb == 0 ? 0.0 : mipPix / float(sumNb);
+        mipColor = sumNb == 0 ? vec3(0.0) : mipColor / float(sumNb);
     }
     vec4 pixel = applyTextureColor(mipPix);
+    if (isColorTexture()) {
+        pixel.rgb = mipColor;
+    }
     pixel.a = min(pixel.a * opacityFactor, 1.0);
 
     // Overlay segmentation colours on top of the MIP result (or render them alone in seg-only
@@ -423,7 +446,7 @@ vec4 rayCastingComposite(Ray ray, float tmin, float tmax, vec2 uv) {
         if (isSegMasked(texCoord)) continue;
         pix = getNormalizedWindowLevel(texCoord);
         //pix = guassianFilter(texCoord, stepSize);
-        vec4 pixel = applyTextureColor(pix);
+        vec4 pixel = applyVoxelColor(texCoord, pix);
         pixel.a = min(pixel.a * opacityFactor, 1.0);
 
         if (pixel.a > 0.0) {
@@ -496,12 +519,12 @@ vec4 rayCastingIsoSurface(Ray ray, float tmin, float tmax, vec2 uv) {
         if (isCrosshairCut(texCoord)) continue;
         if (isSegMasked(texCoord)) continue;
         pix = getNormalizedWindowLevel(texCoord);
-        vec4 pixel = applyTextureColor(pix);
+        vec4 pixel = applyVoxelColor(texCoord, pix);
         bool sign_cur = pix > center;
         if (pixel.a > 0.0) {
             if (sign_cur != prev_sign) {
                 vec3 normalPos = gradient(texCoord, stepSize);
-                vec4 diffuse = applyTextureColor(pix);
+                vec4 diffuse = pixel;
 
                 for (int i = 0; i < 4; ++i) {
                     if (lights[i].enabled) {
@@ -550,9 +573,11 @@ vec4 slice(vec2 uv) {
     origin = (vec4(origin, 1.0) * viewMatrix).xyz + sliceOffset;
     float pix = getNormalizedWindowLevel(origin);
     if (textureSize(colorMap, 0).x > 2) {
-        vec4 pixel = applyTextureColor(pix);
+        vec4 pixel = applyVoxelColor(origin, pix);
         pixel.a = min(pixel.a * opacityFactor, 1.0);
         return pixel;
+    } else if (isColorTexture()) {
+        return vec4(getVoxelColor(origin), 1.0f);
     } else {
         if( applyTextureColor(0.0).r > 0){
             pix = 1.0 - pix;

@@ -64,8 +64,11 @@ import org.weasis.opencv.seg.RegionAttributes;
  */
 public class SegmentationTool extends PluginTool implements SeriesViewerListener, SegRegionTool {
 
-  public static final String BUTTON_NAME =
-      org.weasis.dicom.viewer2d.Messages.getString("segmentation");
+  /**
+   * Named apart from the 2D viewer's segmentation tool: a study can have both open at once, and two
+   * dockables reading "Segmentation" give the user nothing to tell them by.
+   */
+  public static final String BUTTON_NAME = Messages.getString("segmentation.volume");
 
   public enum Type {
     NONE(Messages.getString("segmentation.none")),

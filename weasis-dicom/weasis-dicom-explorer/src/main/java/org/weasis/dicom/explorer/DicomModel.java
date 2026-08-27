@@ -212,6 +212,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
     if (pt == null || Objects.equals(pt, pt2)) {
       return;
     }
+    SegVisibilityPolicy.renamePatient(oldPatientUID, newPatientUID);
     if (pt2 == null) {
       pt2 =
           new MediaSeriesGroupNode(
@@ -506,6 +507,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
       firePropertyChange(
           new ObservableEvent(
               ObservableEvent.BasicAction.REMOVE, DicomModel.this, null, seriesGroup));
+      forgetAnnouncedSegmentations(seriesGroup);
       // remove in the data model
       MediaSeriesGroup studyGroup = getParent(seriesGroup, DicomModel.study);
       removeHierarchyNode(studyGroup, seriesGroup);
@@ -554,8 +556,19 @@ public class DicomModel implements TreeModel, DataExplorerModel {
           group.dispose();
         }
       }
+      SegVisibilityPolicy.forgetPatient((String) patientGroup.getTagValue(TagW.PatientPseudoUID));
       removeHierarchyNode(MediaSeriesGroupNode.rootNode, patientGroup);
       LOGGER.info("Remove Patient: {}", patientGroup);
+    }
+  }
+
+  /** Drops what a transfer announced for a series being removed before it delivered it. */
+  private void forgetAnnouncedSegmentations(MediaSeriesGroup seriesGroup) {
+    MediaSeriesGroup patient = getParent(seriesGroup, DicomModel.patient);
+    if (patient != null) {
+      SegVisibilityPolicy.forgetSeries(
+          (String) patient.getTagValue(TagW.PatientPseudoUID),
+          TagD.getTagValue(seriesGroup, Tag.SeriesInstanceUID, String.class));
     }
   }
 

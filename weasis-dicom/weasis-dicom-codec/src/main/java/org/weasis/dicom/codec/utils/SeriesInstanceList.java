@@ -53,6 +53,15 @@ public class SeriesInstanceList {
     return dicomInstanceMap.size();
   }
 
+  /**
+   * Number of distinct SOP instances, which is fewer than {@link #size()} when the manifest
+   * enumerates a multiframe object frame by frame. This is the number of files the series will
+   * hold, and therefore the number of objects each one parses into.
+   */
+  public int uniqueSopInstanceCount() {
+    return dicomUniqueSopInstanceMap.size();
+  }
+
   public List<SopInstance> getSortedList() {
     ArrayList<SopInstance> sopList = new ArrayList<>(dicomInstanceMap.values());
     Collections.sort(sopList);

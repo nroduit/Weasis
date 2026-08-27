@@ -50,6 +50,7 @@ import org.weasis.core.api.service.AuditLog;
 import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.codec.*;
 import org.weasis.dicom.codec.TagD.Level;
+import org.weasis.dicom.codec.seg.SegVisibilityPolicy;
 import org.weasis.dicom.codec.utils.SeriesInstanceList;
 import org.weasis.dicom.explorer.*;
 import org.weasis.dicom.explorer.Messages;
@@ -217,6 +218,7 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
       downloadErrors = 0;
     }
     this.errors = new AtomicInteger(downloadErrors);
+    announceSegmentations();
     this.thumbnailManager = new ThumbnailManager(dicomSeries, dicomModel, urlParams);
     this.downloadManager =
         new SeriesDownloadManager(
@@ -230,6 +232,30 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
             concurrentDownloads,
             errors,
             seriesInitialized);
+  }
+
+  /**
+   * Tells {@link SegVisibilityPolicy} how many segmentations this transfer will bring, before the
+   * first byte of it arrives. See {@link SegVisibilityPolicy#announce} for why the rule cannot wait
+   * and count them as they land.
+   */
+  private void announceSegmentations() {
+    if (!"SEG".equals(TagD.getTagValue(dicomSeries, Tag.Modality, String.class))) { // NON-NLS
+      return;
+    }
+    MediaSeriesGroup patient = dicomModel.getParent(dicomSeries, DicomModel.patient);
+    if (patient == null) {
+      return;
+    }
+    // A DICOMweb query builds the series before enumerating its instances, so there the count comes
+    // from the series-level attribute; a manifest carries the instance list and no such attribute.
+    Integer related =
+        TagD.getTagValue(dicomSeries, Tag.NumberOfSeriesRelatedInstances, Integer.class);
+    SegVisibilityPolicy.announce(
+        (String) patient.getTagValue(TagW.PatientPseudoUID),
+        TagD.getTagValue(dicomSeries, Tag.SeriesInstanceUID, String.class),
+        TagD.getTagValue(dicomSeries, Tag.SeriesDescription, String.class),
+        Math.max(seriesInstanceList.uniqueSopInstanceCount(), related == null ? 0 : related));
   }
 
   @Override

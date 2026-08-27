@@ -107,12 +107,107 @@ class SegVisibilityPolicyTest {
             "series.alone", Set.of(seg("Table Segmentations")),
             "series.other.patient", Set.of(seg("VOI d")));
 
-    List<HiddenSpecialElement> loaded =
-        SegVisibilityPolicy.elementsOf(
-            series2Elements, List.of("series.crowded", "series.alone", "series.absent"));
+    assertEquals(
+        4,
+        SegVisibilityPolicy.countCrowding(
+            series2Elements,
+            Map.of(),
+            List.of("series.crowded", "series.alone", "series.absent"),
+            List.of()),
+        "the absent series contributes nothing, the others all of it");
+  }
 
-    assertEquals(4, loaded.size(), "the absent series contributes nothing, the others all of it");
-    assertEquals(4, SegVisibilityPolicy.countCrowding(loaded, List.of()));
+  @Test
+  void anAnnouncedSeriesCountsBeforeItHasDeliveredAnything() {
+    // The whole point: over WADO the files arrive one at a time, so counting only what is loaded
+    // leaves the first ones visible for minutes. The manifest already knows there will be 30.
+    Map<String, SegVisibilityPolicy.AnnouncedSegSeries> announced =
+        Map.of("series.downloading", announce("Segmentations CT_Cardiac", 30));
+
+    assertEquals(
+        30,
+        SegVisibilityPolicy.countCrowding(
+            Map.of("series.downloading", Set.of(seg("VOI a"))),
+            announced,
+            List.of("series.downloading"),
+            List.of()),
+        "the announcement stands in for the 29 instances still to come");
+  }
+
+  @Test
+  void aSeriesCountsWhicheverOfLoadedAndAnnouncedIsLarger() {
+    // Announcements are a floor, never a cap: a manifest that under-reports, or a series the user
+    // added files to by hand, must still be counted by what it actually holds.
+    Map<String, Set<HiddenSpecialElement>> series2Elements =
+        Map.of("series.a", Set.of(seg("VOI a"), seg("VOI b"), seg("VOI c")));
+
+    assertEquals(
+        3,
+        SegVisibilityPolicy.countCrowding(
+            series2Elements,
+            Map.of("series.a", announce("Segmentations", 1)),
+            List.of("series.a"),
+            List.of()));
+  }
+
+  @Test
+  void anAnnouncedSeriesTheKeywordsHideIsNotCounted() {
+    // Same exclusion as for loaded segmentations, decided on the only description a manifest
+    // carries: a study announcing 30 table segmentations is not crowded by them.
+    List<String> keywords = SegVisibilityPolicy.hideKeywords("table segmentation");
+
+    assertEquals(
+        0,
+        SegVisibilityPolicy.countCrowding(
+            Map.of(),
+            Map.of("series.table", announce("SEG Table Segmentations", 30)),
+            List.of("series.table"),
+            keywords));
+  }
+
+  @Test
+  void announcingTheSameSeriesTwiceCountsItOnce() {
+    // A manifest re-read, or completed by a QIDO query, announces its series again.
+    String patient = "patient.announce.twice";
+    SegVisibilityPolicy.announce(patient, "series.a", "Segmentations", 4);
+    SegVisibilityPolicy.announce(patient, "series.a", "Segmentations", 4);
+    try {
+      assertEquals(
+          4,
+          SegVisibilityPolicy.countCrowding(
+              Map.of(), SegVisibilityPolicy.announcedOf(patient), List.of("series.a"), List.of()));
+    } finally {
+      SegVisibilityPolicy.forgetPatient(patient);
+    }
+    assertTrue(
+        SegVisibilityPolicy.announcedOf(patient).isEmpty(), "closing the patient forgets it");
+  }
+
+  @Test
+  void renamingThePatientCarriesItsAnnouncementsOver() {
+    // The manifest and the first downloaded instance can disagree on the pseudo UID; DicomModel
+    // then merges the nodes and the segmentations look themselves up under the new one.
+    SegVisibilityPolicy.announce("patient.old", "series.a", "Segmentations", 5);
+    try {
+      SegVisibilityPolicy.renamePatient("patient.old", "patient.new");
+
+      assertTrue(SegVisibilityPolicy.announcedOf("patient.old").isEmpty());
+      assertEquals(
+          5,
+          SegVisibilityPolicy.countCrowding(
+              Map.of(),
+              SegVisibilityPolicy.announcedOf("patient.new"),
+              List.of("series.a"),
+              List.of()));
+    } finally {
+      SegVisibilityPolicy.forgetPatient("patient.old");
+      SegVisibilityPolicy.forgetPatient("patient.new");
+    }
+  }
+
+  private static SegVisibilityPolicy.AnnouncedSegSeries announce(
+      String description, int instances) {
+    return new SegVisibilityPolicy.AnnouncedSegSeries(description, instances);
   }
 
   @Test

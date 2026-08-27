@@ -132,56 +132,80 @@ public final class VolumeBuilder {
     }
 
     public void publishVolumeInOpenGL(List<Mat> slices, int offset) {
-      if (!slices.isEmpty()) {
-        GLContext glContext = OpenglUtils.getDefaultGlContext();
-        glContext.makeCurrent();
+      if (slices.isEmpty()) {
+        return;
+      }
+      GLContext glContext = OpenglUtils.getDefaultGlContext();
+      glContext.makeCurrent();
+      try {
         GL2ES3 gl = glContext.getGL().getGL2ES3();
         gl.glBindTexture(GL2ES2.GL_TEXTURE_3D, volumeBuilder.volTexture.getId());
         GLPixelStorageModes storageModes = new GLPixelStorageModes();
-        storageModes.setPackAlignment(gl, 1); // buffer has not ending row space
-
-        TextureSliceDataBuffer textureSliceData = setTexImage3DBuffer(gl, slices, offset);
-        textureSliceData.releaseMemory();
-
-        storageModes.restore(gl);
+        // Uploads are UNPACK operations: the staging buffer holds tightly packed rows, so any width
+        // whose row size is not a multiple of the default 4-byte alignment (e.g. RGB 8-bit) must
+        // not be padded. Setting the pack alignment here has no effect on glTexSubImage3D.
+        storageModes.setUnpackAlignment(gl, 1);
+        try {
+          setTexImage3DBuffer(gl, slices, offset);
+        } finally {
+          storageModes.restore(gl);
+        }
         gl.glFinish();
+      } finally {
         glContext.release();
       }
     }
 
-    private TextureSliceDataBuffer setTexImage3DBuffer(GL2ES3 gl, List<Mat> slices, int offset) {
+    private void setTexImage3DBuffer(GL2ES3 gl, List<Mat> slices, int offset) {
       DicomVolTexture volTexture = volumeBuilder.volTexture;
       TextureSliceDataBuffer textureSliceData = TextureSliceDataBuffer.toImageData(slices);
-      if (volTexture.getId() <= 0) {
-        volTexture.init(gl);
+      try {
+        if (volTexture.getId() <= 0) {
+          volTexture.init(gl);
+        }
+        // See https://docs.gl/gl4/glTexSubImage3D
+        gl.glTexSubImage3D(
+            GL2ES2.GL_TEXTURE_3D,
+            0,
+            0,
+            0,
+            offset,
+            volTexture.getWidth(),
+            volTexture.getHeight(),
+            slices.size(),
+            volTexture.getFormat(),
+            volTexture.getType(),
+            textureSliceData.buffer());
+        int error;
+        if ((error = gl.glGetError()) != 0) {
+          LOGGER.error(
+              "Cannot load volume ({} images) in OpenGL texture3D. OpenGL error: {}",
+              volTexture.getDepth(),
+              Error.gluErrorString(error));
+          volumeBuilder.hasError = true;
+          volumeBuilder.stop();
+        }
+      } finally {
+        textureSliceData.releaseMemory();
       }
-      // See https://docs.gl/gl4/glTexSubImage3D
-      gl.glTexSubImage3D(
-          GL2ES2.GL_TEXTURE_3D,
-          0,
-          0,
-          0,
-          offset,
-          volTexture.getWidth(),
-          volTexture.getHeight(),
-          slices.size(),
-          volTexture.getFormat(),
-          volTexture.getType(),
-          textureSliceData.buffer());
-      int error;
-      if ((error = gl.glGetError()) != 0) {
-        LOGGER.error(
-            "Cannot load volume ({} images) in OpenGL texture3D. OpenGL error: {}",
-            volTexture.getDepth(),
-            Error.gluErrorString(error));
-        volumeBuilder.hasError = true;
-        volumeBuilder.stop();
-      }
-      return textureSliceData;
     }
 
     @Override
     public void run() {
+      try {
+        loadVolume();
+      } catch (RuntimeException e) {
+        LOGGER.error("Cannot build the 3D volume texture", e);
+        volumeBuilder.hasError = true;
+        volumeBuilder.stop();
+        if (EventManager.getInstance().getSelectedViewPane() instanceof View3d view3d) {
+          view3d.setProgressBar(null);
+          GuiExecutor.execute(view3d::repaint);
+        }
+      }
+    }
+
+    private void loadVolume() {
       DicomVolTexture volTexture = volumeBuilder.volTexture;
       final int size = volTexture.getDepth();
       List<SpecialElementRegion> segList = null;

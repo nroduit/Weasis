@@ -152,7 +152,9 @@ public final class SegVolumeCache {
   public static void touch(SegSpecialElement owner) {
     if (owner != null) {
       synchronized (LOCK) {
-        TRACKED.get(key(owner));
+        // Re-mapping to the same value counts as an access, which moves the entry to the
+        // most-recently-used end of the access-ordered map.
+        TRACKED.computeIfPresent(key(owner), (k, entry) -> entry);
       }
     }
   }

@@ -4,6 +4,8 @@ Thank you for your interest in improving Weasis! This document explains how to r
 
 For a general overview of the ways to contribute (code, documentation, translations, support), see [Get Involved](https://nroduit.github.io/en/get-involved/). For plug-in development, see the [guidelines for Weasis Plug-in Development](https://nroduit.github.io/en/getting-started/guidelines/).
 
+By participating in this project you agree to abide by our [Code of Conduct](.github/CODE_OF_CONDUCT.md). Security issues must be reported privately, following the [Security Policy](.github/SECURITY.md) — never in a public issue, discussion, or pull request.
+
 ## Reporting issues
 
 Before opening an issue:
