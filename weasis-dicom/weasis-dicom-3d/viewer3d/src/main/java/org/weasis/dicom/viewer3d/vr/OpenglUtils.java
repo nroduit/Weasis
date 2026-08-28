@@ -9,6 +9,8 @@
  */
 package org.weasis.dicom.viewer3d.vr;
 
+import com.jogamp.nativewindow.AbstractGraphicsDevice;
+import com.jogamp.nativewindow.NativeWindowFactory;
 import com.jogamp.opengl.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,11 +18,10 @@ import org.slf4j.LoggerFactory;
 public class OpenglUtils {
   private static final Logger LOGGER = LoggerFactory.getLogger(OpenglUtils.class);
 
-  static {
-    GLProfile.initSingleton();
-  }
-
   private static GLContext glContext;
+
+  /** The offscreen drawable backing {@link #glContext}, kept only to release it on shutdown. */
+  private static GLDrawable glDrawable;
 
   /** The profile that was actually negotiated when the shared context was created. */
   private static GLProfile glProfile;
@@ -31,6 +32,10 @@ public class OpenglUtils {
     synchronized (OpenglUtils.class) {
       if (glContext == null) {
         try {
+          GLProfile.initSingleton();
+          // Last resort if the plugin was never stopped: runs before JOGL tears down the native
+          // windowing layer, so the display is released before X11Util force-closes it.
+          NativeWindowFactory.addCustomShutdownHook(false, OpenglUtils::destroy);
           Threading.invoke(
               true,
               () -> {
@@ -51,6 +56,7 @@ public class OpenglUtils {
                     GLDrawableFactory.getFactory(glProfile)
                         .createOffscreenDrawable(null, new GLCapabilities(glProfile), null, 1, 1);
                 drawable.setRealized(true);
+                glDrawable = drawable;
                 glContext = drawable.createContext(null);
                 LOGGER.info("OpenGL context created with profile: {}", glProfile.getName());
               },
@@ -65,6 +71,35 @@ public class OpenglUtils {
       throw new IllegalArgumentException("Unable to initialize an OpenGL context");
     }
     return glContext;
+  }
+
+  /**
+   * Releases the shared context, its offscreen drawable and the display opened for it. Idempotent.
+   *
+   * <p>The drawable is created with a null device, so JOGL opens a dedicated display that the
+   * caller owns. Leaving it open makes JOGL force-close it at JVM shutdown while the GL driver
+   * still holds a live context, which segfaults the driver on Linux.
+   */
+  public static void destroy() {
+    synchronized (OpenglUtils.class) {
+      GLContext context = glContext;
+      GLDrawable drawable = glDrawable;
+      glContext = null;
+      glDrawable = null;
+      glProfile = null;
+      if (context == null) {
+        return;
+      }
+      try {
+        context.destroy();
+        AbstractGraphicsDevice device =
+            drawable.getNativeSurface().getGraphicsConfiguration().getScreen().getDevice();
+        drawable.setRealized(false);
+        device.close();
+      } catch (Exception e) {
+        LOGGER.error("Releasing the OpenGL context", e);
+      }
+    }
   }
 
   /**

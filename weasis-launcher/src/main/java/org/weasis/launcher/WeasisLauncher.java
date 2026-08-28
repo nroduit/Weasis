@@ -1038,7 +1038,9 @@ Starting PF4J Plugins...
     try {
       PluginManager pluginManager = configData.getPluginManager();
       pluginManager.stopPlugins();
-      pluginManager.unloadPlugins();
+      // Do not unload the plugins: closing their class loaders while the other JVM shutdown hooks
+      // are still running breaks the ones that need to load classes to release native resources
+      // (JOGL tearing down the OpenGL context). The JVM is exiting, so there is nothing to reclaim.
 
       // Wake up main thread
       synchronized (this) {
