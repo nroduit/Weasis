@@ -17,7 +17,9 @@ import java.util.Optional;
  *
  * <p>It stays empty until the 3D subsystem initializes OpenGL. {@link ResourceMonitor} persists the
  * last known value across sessions and restores it at startup, so the GPU is shown even on a run
- * where no 3D view was opened.
+ * where no 3D view was opened. The adapters the operating system reports are available separately
+ * from {@link HardwareInfo#graphicsAdapters()}; only OpenGL can tell whether rendering is actually
+ * hardware-accelerated, which is what this holder adds.
  */
 public final class GraphicsInfo {
 

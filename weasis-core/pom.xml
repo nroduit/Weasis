@@ -32,7 +32,7 @@
               <goal>copy-dependencies</goal>
             </goals>
             <configuration>
-              <includeArtifactIds>xchart,VectorGraphics2D,jakarta.json-api,parsson</includeArtifactIds>
+              <includeArtifactIds>xchart,VectorGraphics2D,jakarta.json-api,parsson,oshi-core-ffm,oshi-common</includeArtifactIds>
             </configuration>
           </execution>
         </executions>
@@ -47,6 +47,7 @@
             !org.apache.commons.codec.binary;resolution:=optional,com.madgag.gif.fmsware;resolution:=optional,de.rototor.pdfbox.graphics2d;\
             resolution:=optional,org.apache.pdfbox.pdmodel.*;resolution:=optional,org.scilab.forge.jlatexmath.*;resolution:=optional,\
             org.glassfish.hk2.osgiresourcelocator;resolution:=optional,\
+            org.jspecify.annotations;resolution:=optional,\
             !sun.swing,*
             Export-Package: !org.weasis.core.internal,!org.weasis.core.util,org.weasis.core.*
             -exportcontents: org.knowm.xchart.*,de.erichseifert.*,jakarta.json.*
@@ -91,6 +92,10 @@
     <dependency>
       <groupId>org.weasis.thirdparty</groupId>
       <artifactId>docking-frames</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.github.oshi</groupId>
+      <artifactId>oshi-core-ffm</artifactId>
     </dependency>
     <dependency>
       <groupId>org.knowm.xchart</groupId>
