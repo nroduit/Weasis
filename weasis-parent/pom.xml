@@ -34,6 +34,7 @@
     <xz.version>1.12</xz.version>
 
     <pf4j.version>3.15.0</pf4j.version>
+    <semver4j.version>6.0.0</semver4j.version>
     <slf4j.version>2.0.18</slf4j.version>
     <logback.version>1.6.1</logback.version>
     <dockingframes.version>1.1.7</dockingframes.version>
@@ -395,6 +396,31 @@
         <scope>provided</scope>
       </dependency>
 
+      <!-- pf4j pulls java-semver, superseded by semver4j (see WeasisVersionManager) -->
+      <dependency>
+        <groupId>org.pf4j</groupId>
+        <artifactId>pf4j</artifactId>
+        <version>${pf4j.version}</version>
+        <exclusions>
+          <exclusion>
+            <groupId>com.github.zafarkhaja</groupId>
+            <artifactId>java-semver</artifactId>
+          </exclusion>
+        </exclusions>
+      </dependency>
+      <dependency>
+        <groupId>org.semver4j</groupId>
+        <artifactId>semver4j</artifactId>
+        <version>${semver4j.version}</version>
+        <exclusions>
+          <!-- Annotations only, not needed at runtime -->
+          <exclusion>
+            <groupId>org.jspecify</groupId>
+            <artifactId>jspecify</artifactId>
+          </exclusion>
+        </exclusions>
+      </dependency>
+
       <!--The following dependencies are not required for compilation (required
         when loading the OSGI framework for debugging) -->
       <dependency>
@@ -457,7 +483,11 @@
     <dependency>
       <groupId>org.pf4j</groupId>
       <artifactId>pf4j</artifactId>
-      <version>${pf4j.version}</version>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.semver4j</groupId>
+      <artifactId>semver4j</artifactId>
       <scope>provided</scope>
     </dependency>
     <dependency>

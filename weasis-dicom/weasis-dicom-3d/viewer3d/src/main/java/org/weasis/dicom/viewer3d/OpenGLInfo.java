@@ -9,10 +9,10 @@
  */
 package org.weasis.dicom.viewer3d;
 
-import com.github.zafarkhaja.semver.Version;
 import java.util.Locale;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import org.semver4j.Semver;
 import org.slf4j.LoggerFactory;
 
 public record OpenGLInfo(
@@ -25,18 +25,18 @@ public record OpenGLInfo(
    */
   private static final Pattern GL_VERSION = Pattern.compile("(\\d+)\\.(\\d+)(?:\\.(\\d+))?");
 
-  public Version getVersion() {
+  public Semver getVersion() {
     Matcher matcher = GL_VERSION.matcher(shortVersion());
     if (matcher.find()) {
       String release = matcher.group(3);
-      return Version.of(
+      return Semver.create(
           Integer.parseInt(matcher.group(1)),
           Integer.parseInt(matcher.group(2)),
           release == null ? 0 : Integer.parseInt(release));
     }
     LoggerFactory.getLogger(OpenGLInfo.class)
         .error("Cannot read opengl version {}", shortVersion());
-    return Version.of(0);
+    return Semver.ZERO;
   }
 
   /**
@@ -46,13 +46,13 @@ public record OpenGLInfo(
    * sampler3D}, {@code uint} uniforms and {@code textureSize()} are all guaranteed.
    */
   public boolean isVersionCompliant() {
-    Version minimalVersion = Version.of(3, 3, 0);
+    Semver minimalVersion = Semver.create(3, 3, 0);
     return getVersion().compareTo(minimalVersion) >= 0;
   }
 
   /** Returns true if the OpenGL version is at least 4.3, which is required for compute shaders. */
   public boolean isComputeShaderCapable() {
-    Version minimalVersion = Version.of(4, 3, 0);
+    Semver minimalVersion = Semver.create(4, 3, 0);
     return getVersion().compareTo(minimalVersion) >= 0;
   }
 

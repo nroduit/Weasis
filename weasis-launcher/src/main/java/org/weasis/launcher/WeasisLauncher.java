@@ -24,7 +24,6 @@ import static org.weasis.pref.ConfigData.P_WEASIS_VERSION;
 
 import com.formdev.flatlaf.FlatSystemProperties;
 import com.formdev.flatlaf.util.SystemInfo;
-import com.github.zafarkhaja.semver.Version;
 import java.awt.Desktop;
 import java.awt.Desktop.Action;
 import java.awt.EventQueue;
@@ -70,6 +69,7 @@ import javax.swing.event.HyperlinkEvent;
 import org.pf4j.PluginManager;
 import org.pf4j.PluginState;
 import org.pf4j.PluginWrapper;
+import org.semver4j.Semver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.command.CommandManager;
@@ -372,13 +372,13 @@ Starting PF4J Plugins...
       String val = serverProp.get("prev." + ConfigData.P_WEASIS_SHOW_RELEASE); // NON-NLS
       if (Utils.emptyToTrue(val)) {
         try {
-          Version vOld = Version.parse(versionOld);
-          Version vNew = Version.parse(versionNew);
-          if (vNew.isHigherThan(vOld)) {
+          Semver vOld = new Semver(versionOld);
+          Semver vNew = new Semver(versionNew);
+          if (vNew.isGreaterThan(vOld)) {
             String lastTag = serverProp.get(ConfigData.P_WEASIS_VERSION_RELEASE);
             if (lastTag != null) {
-              vOld = Version.parse(lastTag);
-              if (vNew.isLowerThanOrEquivalentTo(vOld)) {
+              vOld = new Semver(lastTag);
+              if (vNew.isLowerThanOrEqualTo(vOld)) {
                 // Message has been already displayed once.
                 return;
               }

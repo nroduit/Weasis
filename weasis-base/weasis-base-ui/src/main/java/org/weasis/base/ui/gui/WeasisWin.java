@@ -33,7 +33,6 @@ import bibliothek.gui.dock.util.ConfiguredBackgroundPanel;
 import bibliothek.gui.dock.util.DirectWindowProvider;
 import bibliothek.gui.dock.util.DockUtilities;
 import com.formdev.flatlaf.extras.FlatSVGIcon;
-import com.github.zafarkhaja.semver.Version;
 import jakarta.json.JsonException;
 import java.awt.AWTException;
 import java.awt.BorderLayout;
@@ -105,6 +104,7 @@ import javax.swing.RootPaneContainer;
 import javax.swing.ScrollPaneConstants;
 import javax.swing.TransferHandler.DropLocation;
 import javax.swing.WindowConstants;
+import org.semver4j.Semver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.base.ui.Messages;
@@ -811,8 +811,8 @@ public class WeasisWin {
         e -> {
           Release release = getLastRelease();
           if (release != null) {
-            Version vOld = AppProperties.getVersion(AppProperties.WEASIS_VERSION);
-            Version vNew = AppProperties.getVersion(release.version());
+            Semver vOld = AppProperties.getVersion(AppProperties.WEASIS_VERSION);
+            Semver vNew = AppProperties.getVersion(release.version());
             if (vNew.compareTo(vOld) > 0) {
               openBrowser(updateMenuItem, release.url());
             } else {
@@ -942,8 +942,8 @@ public class WeasisWin {
   private void checkReleaseUpdate(Component parent) {
     Release release = getLastRelease();
     if (release != null) {
-      Version vOld = AppProperties.getVersion(AppProperties.WEASIS_VERSION);
-      Version vNew = AppProperties.getVersion(release.version());
+      Semver vOld = AppProperties.getVersion(AppProperties.WEASIS_VERSION);
+      Semver vNew = AppProperties.getVersion(release.version());
       if (vNew.compareTo(vOld) > 0) {
         GuiExecutor.execute(
             () -> {

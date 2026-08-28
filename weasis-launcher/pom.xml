@@ -124,7 +124,7 @@
                   </excludes>
                 </filter>
                 <filter>
-                  <artifact>com.github.zafarkhaja:java-semver</artifact>
+                  <artifact>org.semver4j:semver4j</artifact>
                   <excludes>
                     <exclude>META-INF/MANIFEST.MF</exclude>
                   </excludes>
@@ -152,7 +152,12 @@
     <dependency>
       <groupId>org.pf4j</groupId>
       <artifactId>pf4j</artifactId>
-      <version>${pf4j.version}</version>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.semver4j</groupId>
+      <artifactId>semver4j</artifactId>
+      <scope>compile</scope>
     </dependency>
     <dependency>
       <groupId>com.formdev</groupId>

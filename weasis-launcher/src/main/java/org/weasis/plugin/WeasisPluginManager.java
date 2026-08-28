@@ -26,6 +26,7 @@ import org.pf4j.PluginFactory;
 import org.pf4j.PluginLoader;
 import org.pf4j.PluginState;
 import org.pf4j.PluginWrapper;
+import org.pf4j.VersionManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.pref.ConfigData;
@@ -73,6 +74,11 @@ public class WeasisPluginManager extends DefaultPluginManager {
   @Override
   protected ExtensionFactory createExtensionFactory() {
     return new WeasisExtensionFactory(this);
+  }
+
+  @Override
+  protected VersionManager createVersionManager() {
+    return new WeasisVersionManager();
   }
 
   /**

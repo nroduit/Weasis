@@ -12,7 +12,6 @@ package org.weasis.pref;
 import static java.util.stream.Collectors.*;
 
 import com.formdev.flatlaf.util.SystemInfo;
-import com.github.zafarkhaja.semver.Version;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -29,6 +28,7 @@ import javax.xml.stream.XMLInputFactory;
 import javax.xml.stream.XMLStreamConstants;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
+import org.semver4j.Semver;
 import org.slf4j.LoggerFactory;
 import org.weasis.launcher.FileUtil;
 import org.weasis.launcher.Utils;
@@ -868,8 +868,8 @@ public class ConfigData {
         URI propURI = getLocalPropertiesURI(CONFIG_PROPERTIES_FILE_VALUE);
         AppPreferences localPrefs = new AppPreferences();
         localPrefs.readJson(propURI);
-        Version loc = Version.parse(localPrefs.getValue(P_WEASIS_VERSION));
-        Version min = Version.parse(val);
+        Semver loc = new Semver(localPrefs.getValue(P_WEASIS_VERSION));
+        Semver min = new Semver(val);
         if (loc.compareTo(min) < 0) {
           LOGGER.warn(
               "Start only with the native plug-ins because the version ({}) is lower the minimal version ({}) required remotely",

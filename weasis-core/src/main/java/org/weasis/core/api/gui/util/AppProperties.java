@@ -10,13 +10,13 @@
 package org.weasis.core.api.gui.util;
 
 import com.formdev.flatlaf.util.SystemInfo;
-import com.github.zafarkhaja.semver.Version;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.regex.Pattern;
+import org.semver4j.Semver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.util.FileUtil;
@@ -188,13 +188,11 @@ public final class AppProperties {
   }
 
   /**
-   * Parses a version string and returns a Version object. Handles version strings that may start
-   * with 'v' and contain build information after '-'.
+   * Parses a version string leniently: a leading 'v', a missing patch number and trailing build
+   * information are all accepted. Returns {@link Semver#ZERO} when nothing can be parsed.
    */
-  public static Version getVersion(String version) {
-    if (!StringUtil.hasText(version)) {
-      return Version.of(0);
-    }
-    return Version.parse(version);
+  public static Semver getVersion(String version) {
+    Semver semver = StringUtil.hasText(version) ? Semver.coerce(version) : null;
+    return semver == null ? Semver.ZERO : semver;
   }
 }
