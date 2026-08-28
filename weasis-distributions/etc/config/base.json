@@ -37,6 +37,13 @@
       "category": "PLUGIN_INSTALL"
     },
     {
+      "code": "weasis.plugins.11",
+      "value": "${dollar}{weasis.codebase.url}/bundle/oshi-core-ffm-${oshi.version}.jar${xz.ext} ${dollar}{weasis.codebase.url}/bundle/oshi-common-${oshi.version}.jar${xz.ext}",
+      "description": "OSHI hardware probe (Foreign Function and Memory implementation)",
+      "type": "A",
+      "category": "PLUGIN_INSTALL"
+    },
+    {
       "code": "weasis.plugins.12",
       "value": "${dollar}{weasis.codebase.url}/bundle/weasis-core-${app.version}.jar${xz.ext}",
       "description": "Core",

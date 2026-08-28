@@ -63,7 +63,10 @@ budget = totalPhysicalRAM * percent  -  maxHeap  -  OS_RESERVE
 - **`totalPhysicalRAM`** comes from `com.sun.management.OperatingSystemMXBean`.
   It is **container/cgroup aware** on modern JDKs — inside Docker or Kubernetes
   it returns the cgroup limit, not the host RAM — and works uniformly on macOS,
-  Windows and Linux.
+  Windows and Linux. This is deliberately *not* read from `HardwareInfo`
+  (the OSHI probe behind the resource dashboard): OSHI reports the whole host
+  even inside a container, which would over-size the budget. `HardwareInfo` is
+  only the fallback when the bean is missing.
 - **`percent`** defaults to **50 %** of physical RAM.
 - **`maxHeap`** is subtracted because the heap and the native buffers compete
   for the same physical RAM.

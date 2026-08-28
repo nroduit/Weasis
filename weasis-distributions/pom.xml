@@ -215,6 +215,18 @@
                   <version>${zip4j.version}</version>
                   <outputDirectory>${tmp.bundle.dir}</outputDirectory>
                 </artifactItem>
+                <artifactItem>
+                  <groupId>com.github.oshi</groupId>
+                  <artifactId>oshi-core-ffm</artifactId>
+                  <version>${oshi.version}</version>
+                  <outputDirectory>${tmp.bundle.dir}</outputDirectory>
+                </artifactItem>
+                <artifactItem>
+                  <groupId>com.github.oshi</groupId>
+                  <artifactId>oshi-common</artifactId>
+                  <version>${oshi.version}</version>
+                  <outputDirectory>${tmp.bundle.dir}</outputDirectory>
+                </artifactItem>
 
                 <!-- ===================================== -->
                 <!-- Weasis Core bundle -->

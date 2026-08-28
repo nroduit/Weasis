@@ -9,15 +9,12 @@
  */
 package org.weasis.acquire.explorer.gui.control;
 
+import java.util.Collection;
+import java.util.List;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JPanel;
-import net.samuelcampos.usbdrivedetector.USBDeviceDetectorManager;
-import net.samuelcampos.usbdrivedetector.USBStorageDevice;
-import net.samuelcampos.usbdrivedetector.events.DeviceEventType;
-import net.samuelcampos.usbdrivedetector.events.IUSBDriveListener;
-import net.samuelcampos.usbdrivedetector.events.USBStorageEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.acquire.explorer.AcquireExplorer;
@@ -27,26 +24,26 @@ import org.weasis.acquire.explorer.gui.model.list.ItemListComboBoxModel;
 import org.weasis.acquire.explorer.gui.model.renderer.MediaSourceListCellRenderer;
 import org.weasis.acquire.explorer.media.FileSystemDrive;
 import org.weasis.acquire.explorer.media.MediaSource;
-import org.weasis.core.api.gui.util.GuiExecutor;
+import org.weasis.acquire.explorer.media.RemovableDriveWatcher;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.util.FontItem;
+import org.weasis.core.api.util.HardwareInfo.Drive;
 
-public class BrowsePanel extends JPanel implements IUSBDriveListener {
+public class BrowsePanel extends JPanel implements RemovableDriveWatcher.Listener {
   private static final Logger LOGGER = LoggerFactory.getLogger(BrowsePanel.class);
 
   private final ItemList<MediaSource> mediaSourceList = new ItemList<>();
   private final JComboBox<MediaSource> mediaSourceSelectionCombo = new JComboBox<>();
+  private final transient RemovableDriveWatcher driveWatcher;
 
   public BrowsePanel(AcquireExplorer acquisitionView) {
     setLayout(new BoxLayout(this, BoxLayout.X_AXIS));
     setBorder(GuiUtils.getEmptyBorder(5));
-    try (USBDeviceDetectorManager driveDetector = new USBDeviceDetectorManager(3000)) {
-      acquisitionView.setSystemDrive(new FileSystemDrive(AcquireExplorer.getLastPath()));
-      mediaSourceList.addItem(acquisitionView.getSystemDrive());
-      driveDetector.addDriveListener(this);
-    } catch (Exception e) {
-      LOGGER.warn(e.getMessage(), e);
-    }
+
+    acquisitionView.setSystemDrive(new FileSystemDrive(AcquireExplorer.getLastPath()));
+    mediaSourceList.addItem(acquisitionView.getSystemDrive());
+
+    driveWatcher = new RemovableDriveWatcher(this);
 
     ItemListComboBoxModel<MediaSource> mediaSourceListComboModel =
         new ItemListComboBoxModel<>(mediaSourceList);
@@ -83,37 +80,49 @@ public class BrowsePanel extends JPanel implements IUSBDriveListener {
     return mediaSourceList;
   }
 
+  /** Stops watching the removable drives; called when the acquisition explorer is disposed. */
+  public void close() {
+    driveWatcher.close();
+  }
+
+  /**
+   * Drives already mounted are offered, but the last path the user chose stays selected; only a
+   * drive plugged in afterward is an explicit request to browse it.
+   */
   @Override
-  public void usbDriveEvent(USBStorageEvent event) {
-    LOGGER.debug("USB event: {}", event);
-
-    GuiExecutor.execute(
-        () -> {
-          DeviceEventType eventType = event.getEventType();
-          if (eventType == DeviceEventType.CONNECTED) {
-            addUsbDevice(event.getStorageDevice());
-          } else if (eventType == DeviceEventType.REMOVED) {
-            removeUsbDevice(event.getStorageDevice());
-          }
-        });
+  public void drivesDetected(Collection<Drive> drives) {
+    drives.forEach(drive -> addDrive(drive, false));
   }
 
-  private void addUsbDevice(USBStorageDevice storageDevice) {
-    FileSystemDrive item = new FileSystemDrive(storageDevice.getRootDirectory().getPath());
-    mediaSourceList.addItem(item);
-    mediaSourceSelectionCombo.setSelectedItem(item);
+  @Override
+  public void driveConnected(Drive drive) {
+    addDrive(drive, true);
   }
 
-  private void removeUsbDevice(USBStorageDevice storageDevice) {
-    MediaSource selected = (MediaSource) mediaSourceSelectionCombo.getSelectedItem();
-    String id = storageDevice.getRootDirectory().getPath();
-    mediaSourceList.getList().removeIf(m -> m.getPath().startsWith(id));
-    if (mediaSourceList.isEmpty()) {
-      mediaSourceSelectionCombo.setSelectedItem(null);
+  @Override
+  public void driveDisconnected(Drive drive) {
+    String mount = drive.mount();
+    List<MediaSource> gone =
+        mediaSourceList.getList().stream().filter(m -> m.getPath().startsWith(mount)).toList();
+    if (gone.isEmpty()) {
+      return;
     }
+    MediaSource selected = (MediaSource) mediaSourceSelectionCombo.getSelectedItem();
+    mediaSourceList.removeItems(gone);
+    if (selected == null || selected.getPath().startsWith(mount)) {
+      mediaSourceSelectionCombo.setSelectedIndex(mediaSourceList.isEmpty() ? -1 : 0);
+    }
+  }
 
-    if (selected == null || selected.getPath().startsWith(id)) {
-      mediaSourceSelectionCombo.setSelectedIndex(0);
+  private void addDrive(Drive drive, boolean select) {
+    try {
+      FileSystemDrive item = new FileSystemDrive(drive.mount());
+      mediaSourceList.addItem(item);
+      if (select) {
+        mediaSourceSelectionCombo.setSelectedItem(item);
+      }
+    } catch (IllegalArgumentException e) {
+      LOGGER.warn("Cannot browse the removable drive {}", drive.mount(), e);
     }
   }
 }

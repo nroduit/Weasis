@@ -72,16 +72,28 @@ public final class SystemMemory {
   }
 
   /**
+   * Deliberately read from the JVM bean rather than from {@link HardwareInfo}: the bean honours the
+   * cgroup limit inside a container, where the native probe reports the whole host.
+   *
    * @return the total physical memory in bytes, or 0 when it cannot be determined.
    */
   public static long totalPhysicalMemory() {
-    return OS_BEAN == null ? 0 : OS_BEAN.getTotalMemorySize();
+    long total = OS_BEAN == null ? 0 : OS_BEAN.getTotalMemorySize();
+    return total > 0 ? total : HardwareInfo.totalMemory();
   }
 
   /**
-   * @return the currently free physical memory in bytes, or 0 when it cannot be determined.
+   * Memory the operating system can hand out immediately. {@link HardwareInfo} is preferred over
+   * the JVM bean because it counts the reclaimable page cache, which on Linux accounts for most of
+   * what the bean reports as used.
+   *
+   * @return the available physical memory in bytes, or 0 when it cannot be determined.
    */
-  public static long freePhysicalMemory() {
+  public static long availablePhysicalMemory() {
+    long available = HardwareInfo.availableMemory();
+    if (available > 0) {
+      return available;
+    }
     return OS_BEAN == null ? 0 : OS_BEAN.getFreeMemorySize();
   }
 

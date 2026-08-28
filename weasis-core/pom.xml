@@ -108,6 +108,10 @@
       <artifactId>docking-frames</artifactId>
     </dependency>
     <dependency>
+      <groupId>com.github.oshi</groupId>
+      <artifactId>oshi-core-ffm</artifactId>
+    </dependency>
+    <dependency>
       <groupId>org.knowm.xchart</groupId>
       <artifactId>xchart</artifactId>
       <version>${xchart.version}</version>

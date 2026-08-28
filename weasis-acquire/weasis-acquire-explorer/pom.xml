@@ -20,56 +20,6 @@
     <plugins>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-shade-plugin</artifactId>
-        <executions>
-          <execution>
-            <phase>package</phase>
-            <goals>
-              <goal>shade</goal>
-            </goals>
-            <configuration>
-              <artifactSet>
-                <includes>
-                  <include>net.samuelcampos:usbdrivedetector</include>
-                  <include>com.github.tuupertunut:powershell-lib-java</include>
-                </includes>
-              </artifactSet>
-              <filters>
-                <filter>
-                  <artifact>*:*</artifact>
-                  <excludes>
-                    <exclude>META-INF/*.SF</exclude>
-                    <exclude>META-INF/*.DSA</exclude>
-                    <exclude>META-INF/*.RSA</exclude>
-                  </excludes>
-                </filter>
-                <!-- Drop the dependency manifests: the uber jar keeps the pf4j manifest of this module -->
-                <filter>
-                  <artifact>net.samuelcampos:usbdrivedetector</artifact>
-                  <excludes>
-                    <exclude>META-INF/MANIFEST.MF</exclude>
-                  </excludes>
-                </filter>
-                <filter>
-                  <artifact>com.github.tuupertunut:powershell-lib-java</artifact>
-                  <excludes>
-                    <exclude>META-INF/MANIFEST.MF</exclude>
-                  </excludes>
-                </filter>
-              </filters>
-              <transformers>
-                <transformer
-                  implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
-                <transformer
-                  implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer"/>
-              </transformers>
-              <createDependencyReducedPom>true</createDependencyReducedPom>
-            </configuration>
-          </execution>
-        </executions>
-      </plugin>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-jar-plugin</artifactId>
         <configuration>
           <archive>
@@ -143,11 +93,6 @@
       <artifactId>weasis-base-viewer2d</artifactId>
       <version>${project.version}</version>
       <scope>provided</scope>
-    </dependency>
-    <dependency>
-      <groupId>net.samuelcampos</groupId>
-      <artifactId>usbdrivedetector</artifactId>
-      <version>2.2.1</version>
     </dependency>
   </dependencies>
 </project>

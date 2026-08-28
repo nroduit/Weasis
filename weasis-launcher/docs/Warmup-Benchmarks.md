@@ -383,7 +383,7 @@ cached). "On path?" = loads before a useful first window.
 | `weasis-dicom-codec` | 913 | ~800 (87%) | 2.1 M | 30 | ✅ yes (decode first DICOM) | dcm4che, Parsson, jakarta.json, weasis-dicom-tools, hk2 | **Opt F — do first** |
 | `jogamp` | 2151 | 2149 (99.9%) | 4.6 M | 120 | ❌ no (3D, post-window) | JOGL / gluegen-rt / jocl | max-coverage only; **high risk** (native loading tied to its classloader) |
 | `weasis-dicom-isowriter` | 159 | 153 (96%) | 280 K | 110 | ❌ no (ISO burn, rare) | iso9660-writer, sabre | minor, low priority |
-| `weasis-acquire-explorer` | 99 | 28 (28%) | 236 K | acquire | ❌ no (Dicomizer opts out of AOT) | usbdrivedetector, powershell-lib-java | **skip** |
+| `weasis-acquire-explorer` | 99 | 0 | 236 K | acquire | ❌ no (Dicomizer opts out of AOT) | none (no longer shaded) | **skip** |
 
 Priority: **dicom-codec ≫ jogamp (max coverage, risky) > isowriter (minor) ≫ acquire-explorer (skip)**.
 Only dicom-codec moves first-window time; the rest affect total cached-class count and

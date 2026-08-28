@@ -182,6 +182,7 @@ public class AcquireExplorer extends PluginTool implements DataExplorerView {
 
   @Override
   public void dispose() {
+    browsePanel.close();
     super.closeDockable();
   }
 

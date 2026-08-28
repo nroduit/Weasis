@@ -192,14 +192,24 @@ public final class ResourceAdvisor {
   }
 
   private static Assessment assessCpu(Snapshot s) {
-    if (s.cpuCores() <= FEW_CORES) {
+    int cores = effectiveCores(s);
+    if (cores <= FEW_CORES) {
       return new Assessment(Level.SUBOPTIMAL, Reason.CPU_FEW_CORES);
     }
     double peak = s.peakProcessCpuLoad();
-    if (s.cpuCores() >= ABUNDANT_CORES && peak >= 0 && peak < LOW_CPU_LOAD) {
+    if (cores >= ABUNDANT_CORES && peak >= 0 && peak < LOW_CPU_LOAD) {
       return new Assessment(Level.ABUNDANT, Reason.CPU_MANY_IDLE_CORES);
     }
     return new Assessment(Level.OPTIMAL, Reason.CPU_ADEQUATE);
+  }
+
+  /**
+   * Physical cores when the hardware probe knows them, otherwise the JVM's logical count. Decoding
+   * and reconstruction scale with real cores; hyper-threads inflate the logical count without
+   * providing the same throughput.
+   */
+  private static int effectiveCores(Snapshot s) {
+    return s.physicalCores() > 0 ? s.physicalCores() : s.cpuCores();
   }
 
   private static Recommendation recommend(Snapshot s, Assessment memory, Assessment cpu) {
@@ -215,7 +225,7 @@ public final class ResourceAdvisor {
         ram = recommendRam(s.physicalTotalMemory());
       }
     }
-    int cores = cpu.level() == Level.SUBOPTIMAL ? recommendCores(s.cpuCores()) : 0;
+    int cores = cpu.level() == Level.SUBOPTIMAL ? recommendCores(effectiveCores(s)) : 0;
     return heap == 0 && ram == 0 && cores == 0
         ? NO_RECOMMENDATION
         : new Recommendation(heap, ram, cores);

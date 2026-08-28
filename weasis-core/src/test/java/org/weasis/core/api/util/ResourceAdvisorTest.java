@@ -31,6 +31,7 @@ class ResourceAdvisorTest {
     long heapPeak = 2 * GB; // 50 %
     double nativePeakPressure = 0.60; // activity present
     int cores = 8;
+    int physicalCores = 0; // 0 = the hardware probe is unavailable, so the logical count is used
     double peakCpu = 0.70;
     long physicalTotal = 16 * GB;
     double peakGcOverhead = 0.0;
@@ -49,6 +50,8 @@ class ResourceAdvisorTest {
           0,
           0,
           nativePeakPressure,
+          "",
+          physicalCores,
           cores,
           0,
           peakCpu,
@@ -156,6 +159,18 @@ class ResourceAdvisorTest {
   void fewCoresIsSuboptimalCpu() {
     Builder b = new Builder();
     b.cores = 2;
+    Report report = ResourceAdvisor.evaluate(b.build());
+    assertEquals(Level.SUBOPTIMAL, report.cpu().level());
+    assertEquals(Reason.CPU_FEW_CORES, report.cpu().reason());
+  }
+
+  @Test
+  void physicalCoresOutrankTheLogicalCount() {
+    // Two cores with hyper-threading report four logical processors, but decode throughput
+    // follows the physical ones.
+    Builder b = new Builder();
+    b.physicalCores = 2;
+    b.cores = 4;
     Report report = ResourceAdvisor.evaluate(b.build());
     assertEquals(Level.SUBOPTIMAL, report.cpu().level());
     assertEquals(Reason.CPU_FEW_CORES, report.cpu().reason());
