@@ -34,9 +34,8 @@ public class DicomExplorerFactory implements DataExplorerViewFactory {
   @Override
   public DataExplorerView createDataExplorerView(Map<String, Object> properties) {
     if (explorer == null) {
-      // Get DicomModel instance - implementation depends on how DicomModel is registered
       if (model == null) {
-        model = getDicomModel();
+        model = DicomModel.getApplicationModel();
       }
 
       explorer = new DicomExplorer(model);
@@ -48,14 +47,6 @@ public class DicomExplorerFactory implements DataExplorerViewFactory {
           new ObservableEvent(ObservableEvent.BasicAction.NULL_SELECTION, explorer, null, null));
     }
     return explorer;
-  }
-
-  private DicomModel getDicomModel() {
-    List<?> extensions = GuiUtils.getUICore().getPluginManager().getExtensions(DicomModel.class);
-    if (!extensions.isEmpty()) {
-      return (DicomModel) extensions.getFirst();
-    }
-    return new DicomModel();
   }
 
   public void stop() {

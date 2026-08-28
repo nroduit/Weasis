@@ -106,8 +106,23 @@ import org.weasis.dicom.explorer.wado.DownloadManager;
 import org.weasis.dicom.explorer.wado.LoadRemoteDicomManifest;
 import org.weasis.dicom.explorer.wado.LoadRemoteDicomURL;
 import org.weasis.dicom.explorer.wado.LoadSeries;
+import org.weasis.plugin.SingletonExtension;
 
+/**
+ * Patient/study/series tree of the loaded DICOM objects.
+ *
+ * <p>Two kinds of instances coexist. The extension instance is the <b>application model</b>: the
+ * tree the DICOM Explorer displays and the one the {@code dicom:} commands feed. It must stay
+ * unique, hence {@link SingletonExtension} — a second instance would collect the imported objects
+ * in a tree no view listens to, so the import would succeed while the explorer stays empty. Get it
+ * with {@link #getApplicationModel()}.
+ *
+ * <p>Calling the constructor gives a <b>detached model</b>: a private tree that is never shown in
+ * the explorer, which is what the Q/R dialog holds its C-FIND/QIDO results in. Such a model must
+ * not be registered as the application model.
+ */
 @Extension
+@SingletonExtension
 public class DicomModel implements TreeModel, DataExplorerModel, CommandExtension {
   private static final Logger LOGGER = LoggerFactory.getLogger(DicomModel.class);
 
@@ -184,9 +199,21 @@ public class DicomModel implements TreeModel, DataExplorerModel, CommandExtensio
   private PropertyChangeSupport propertyChange = null;
   private final SplittingRules splittingRules;
 
+  /** Builds a detached model; see {@link #getApplicationModel()} for the explorer's one. */
   public DicomModel() {
     model = new Tree<>(MediaSeriesGroupNode.rootNode);
     splittingRules = new SplittingRules();
+  }
+
+  /** The tree the DICOM Explorer displays and the {@code dicom:} commands feed. */
+  public static DicomModel getApplicationModel() {
+    List<DicomModel> extensions =
+        GuiUtils.getUICore().getPluginManager().getExtensions(DicomModel.class);
+    if (extensions.isEmpty()) {
+      LOGGER.warn("No DicomModel extension found, falling back to a detached model");
+      return new DicomModel();
+    }
+    return extensions.getFirst();
   }
 
   @Override

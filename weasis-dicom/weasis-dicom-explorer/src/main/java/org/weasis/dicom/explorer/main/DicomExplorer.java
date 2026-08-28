@@ -135,7 +135,7 @@ public class DicomExplorer extends PluginTool
     super(NAME, POSITION.WEST, ExtendedMode.NORMALIZED, Insertable.Type.EXPLORER, 20);
 
     // Initialize core model and managers
-    this.model = model != null ? model : new DicomModel();
+    this.model = model != null ? model : DicomModel.getApplicationModel();
     this.paneManager = new DicomPaneManager(this);
     this.splitSeriesManager = new SplitSeriesManager(this);
     this.taskManager = new DicomTaskManager(this);

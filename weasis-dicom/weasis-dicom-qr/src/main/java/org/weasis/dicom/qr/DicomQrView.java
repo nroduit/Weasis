@@ -794,6 +794,7 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
       }
       // props.setProperty(RsQueryParams.P_QUERY_EXT, "&includedefaults=false");
       this.retrieveNode = node;
+      // Detached model: the query results feed this dialog's own tree, not the DICOM Explorer
       RsQuery rsquery = new RsQuery(new DicomModel(), props, p, authMethod, node.getHeaders());
       Runnable runnable =
           () -> {
@@ -831,6 +832,7 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
 
   private void displayResult(DicomState state) {
     List<Attributes> items = state.getDicomRSP();
+    // Detached model: the C-FIND results feed this dialog's own tree, not the DICOM Explorer
     DicomModel dicomModel = new DicomModel();
     if (items != null) {
       for (int i = 0; i < items.size(); i++) {

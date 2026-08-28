@@ -9,6 +9,7 @@
  */
 package org.weasis.core.api.command;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -114,14 +115,44 @@ public class CommandManager {
   }
 
   /**
-   * Parse command string into tokens, respecting quotes
+   * Splits a command line on whitespace, keeping single- or double-quoted segments together and
+   * dropping the quotes. Callers quote the paths they pass, so splitting on whitespace alone hands
+   * the command an argument that still carries its quotes.
    *
    * @param commandString the command string
    * @return array of tokens
    */
   private String[] parseCommandString(String commandString) {
-    // Simple parsing - can be enhanced with proper quote handling
-    return commandString.trim().split("\\s+");
+    List<String> tokens = new ArrayList<>();
+    StringBuilder token = new StringBuilder();
+    char quote = 0;
+    boolean started = false;
+    for (int i = 0; i < commandString.length(); i++) {
+      char c = commandString.charAt(i);
+      if (quote != 0) {
+        if (c == quote) {
+          quote = 0;
+        } else {
+          token.append(c);
+        }
+      } else if (c == '"' || c == '\'') {
+        quote = c;
+        started = true;
+      } else if (Character.isWhitespace(c)) {
+        if (started) {
+          tokens.add(token.toString());
+          token.setLength(0);
+          started = false;
+        }
+      } else {
+        token.append(c);
+        started = true;
+      }
+    }
+    if (started) {
+      tokens.add(token.toString());
+    }
+    return tokens.toArray(new String[0]);
   }
 
   /**
