@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Weasis Team and other contributors.
+ * Copyright (c) 2026 Weasis Team and other contributors.
  *
  * This program and the accompanying materials are made available under the terms of the Eclipse
  * Public License 2.0 which is available at https://www.eclipse.org/legal/epl-2.0, or the Apache
@@ -12,9 +12,6 @@ package org.weasis.dicom.viewer3d.vr;
 import com.jogamp.common.nio.Buffers;
 import com.jogamp.opengl.GL;
 import com.jogamp.opengl.GL2ES2;
-import jakarta.json.Json;
-import jakarta.json.JsonArrayBuilder;
-import jakarta.json.JsonException;
 import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Component;
@@ -26,297 +23,192 @@ import java.nio.IntBuffer;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.Comparator;
+import java.util.EnumSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import javax.swing.Icon;
-import org.joml.Vector4f;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.ActionW;
+import org.weasis.core.api.image.lut.ColorMapJson;
+import org.weasis.core.api.image.lut.ColorMapRegistry;
+import org.weasis.core.api.image.lut.ColorMapRegistry.Origin;
+import org.weasis.core.api.image.lut.ColorMapRegistry.Query;
 import org.weasis.core.api.service.UICore;
-import org.weasis.core.api.util.JsonUtil;
 import org.weasis.core.ui.model.graphic.imp.seg.SegRegion;
+import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.codec.display.Modality;
 import org.weasis.dicom.viewer3d.EventManager;
 import org.weasis.dicom.viewer3d.View3DContainer;
-import org.weasis.dicom.viewer3d.vr.lut.PresetGroup;
-import org.weasis.dicom.viewer3d.vr.lut.PresetPoint;
-import org.weasis.dicom.viewer3d.vr.lut.VolumePreset;
+import org.weasis.opencv.op.lut.colormap.ColorMap;
+import org.weasis.opencv.op.lut.colormap.ColorMapEdits;
+import org.weasis.opencv.op.lut.colormap.ColorMapSampler;
+import org.weasis.opencv.op.lut.colormap.ColorStop;
+import org.weasis.opencv.op.lut.colormap.GradientOpacity;
+import org.weasis.opencv.op.lut.colormap.Lighting;
+import org.weasis.opencv.op.lut.colormap.Material;
+import org.weasis.opencv.op.lut.colormap.Rgba;
 
+/**
+ * A volume rendering preset: the GPU form of a transfer {@link ColorMap} with lighting. The color
+ * texture and the lighting map are sampled from the map over its intensity range.
+ */
 public class Preset extends TextureData {
   private static final Logger LOGGER = LoggerFactory.getLogger(Preset.class);
-  public static final String CUSTOM_PRESETS_FILENAME = "customVolumePresets.json";
-  public static final List<Preset> basicPresets = loadPresets();
-  public static final List<Preset> customPresets =
-      Collections.synchronizedList(new ArrayList<>(loadCustomPresets()));
 
-  private final boolean defaultElement;
-  private final List<PresetGroup> groups;
-  private boolean requiredBuilding;
-  private final byte[] colors;
-  private byte[] invertColors;
+  public static final String BUILTIN_RESOURCE = "/volumeColorMaps.json"; // NON-NLS
+  public static final String LEGACY_CUSTOM_PRESETS_FILENAME = "customVolumePresets.json"; // NON-NLS
+  public static final List<Preset> basicPresets = loadPresets();
+
+  /** Texels of the color texture at most: a wider intensity span is sampled, not enumerated. */
+  static final int MAX_TEXTURE_WIDTH = 4096;
+
+  private final ColorMap colorMap;
   private final String name;
   private final Modality modality;
-  private final boolean custom;
-
+  private final boolean defaultElement;
   private final boolean shade;
   private final float specularPower;
-
+  private final boolean custom;
+  private final boolean preview;
   private final int colorMin;
   private final int colorMax;
+  private final byte[] colors;
+  private byte[] invertColors;
   private final LightingMap lightingMap;
-
+  private boolean requiredBuilding;
   private int id2;
 
-  public Preset(VolumePreset v) {
-    this(
-        Objects.requireNonNull(v).getName(),
-        v.getModality(),
-        v.isDefaultElement(),
-        v.isShade(),
-        v.getSpecularPower(),
-        v.getGroups(),
-        false);
+  private Preset(ColorMap map, boolean custom) {
+    this(map, custom, false);
   }
 
-  public Preset(
-      String name,
-      String modality,
-      boolean defaultElement,
-      boolean shade,
-      float specularPower,
-      List<PresetGroup> groups) {
-    this(name, modality, defaultElement, shade, specularPower, groups, false);
-  }
-
-  public Preset(
-      String name,
-      String modality,
-      boolean defaultElement,
-      boolean shade,
-      float specularPower,
-      List<PresetGroup> groups,
-      boolean custom) {
+  private Preset(ColorMap source, boolean custom, boolean preview) {
     super(256, PixelFormat.RGBA8);
-    this.name = Objects.requireNonNull(name);
-    this.modality = Modality.getModality(modality);
-    this.defaultElement = defaultElement;
-    this.shade = shade;
-    this.specularPower = specularPower;
+    ColorMap map = anchored(Objects.requireNonNull(source));
+    this.colorMap = map;
+    this.preview = preview;
+    this.name = map.name();
+    this.modality =
+        map.modalities().isEmpty()
+            ? Modality.DEFAULT
+            : Modality.getModality(map.modalities().stream().sorted().findFirst().orElseThrow());
+    this.defaultElement = map.defaultForModality();
+    Lighting lighting = map.lighting() != null ? map.lighting() : Lighting.DEFAULT;
+    this.shade = lighting.shade();
+    this.specularPower = lighting.specularPower();
     this.custom = custom;
-
-    this.groups = groups;
-    if (groups.isEmpty() || groups.stream().anyMatch(g -> g.getPoints().length == 0)) {
-      throw new IllegalArgumentException("empty group or point");
-    }
-    this.colorMin = groups.getFirst().getPoints()[0].getIntensity();
-    PresetPoint[] pts = groups.getLast().getPoints();
-    this.colorMax = pts[pts.length - 1].getIntensity();
-    this.width = colorMax - colorMin;
+    this.colorMin = (int) Math.floor(map.firstPosition());
+    this.colorMax = Math.max((int) Math.ceil(map.lastPosition()), colorMin + 1);
+    this.width = Math.min(colorMax - colorMin, MAX_TEXTURE_WIDTH);
     this.colors = new byte[width * 4];
-    this.lightingMap = new LightingMap(hasIdenticalLightingValues() ? 1 : width);
+    this.lightingMap = new LightingMap(hasVaryingMaterial(map) ? width : 1);
     initColors(this, false);
   }
 
-  private boolean hasIdenticalLightingValues() {
-    float amb = 0.2f;
-    float diff = 0.9f;
-    float spec = 0.2f;
-    boolean init = false;
-    for (PresetGroup g : groups) {
-      for (PresetPoint p : g.getPoints()) {
-        if (!init) {
-          if (p.getAmbient() != null) {
-            init = true;
-            amb = PresetPoint.convertFloat(p.getAmbient(), amb);
-            diff = PresetPoint.convertFloat(p.getDiffuse(), diff);
-            spec = PresetPoint.convertFloat(p.getSpecular(), spec);
-          }
-        } else if (p.getAmbient() != null && p.getAmbient() != amb) {
-          return false;
-        } else if (p.getDiffuse() != null && p.getDiffuse() != diff) {
-          return false;
-        } else if (p.getSpecular() != null && p.getSpecular() != spec) {
-          return false;
+  /** Samples of the gradient opacity curve uploaded to the shader. */
+  public static final int GRADIENT_OPACITY_SAMPLES = 32;
+
+  /**
+   * Bound of the visible range that never excludes a sample, for a range touching a texture end.
+   */
+  private static final float UNBOUNDED = 1e30f;
+
+  /**
+   * The gradient opacity curve as {@value #GRADIENT_OPACITY_SAMPLES} factors, or null when the map
+   * has none.
+   */
+  public float[] getGradientOpacityTable() {
+    GradientOpacity gradient =
+        colorMap.lighting() == null ? null : colorMap.lighting().gradientOpacity();
+    return gradient == null ? null : gradient.table(GRADIENT_OPACITY_SAMPLES);
+  }
+
+  /**
+   * Lowest and highest normalized LUT coordinate with a non-zero alpha: samples outside skip the
+   * color and lighting fetches. A range touching a texture end is left open on that side, since
+   * clamped coordinates read that end texel.
+   */
+  public float[] getVisibleRange() {
+    int first = -1;
+    int last = -1;
+    for (int i = 0; i < width; i++) {
+      if (colors[i * 4 + 3] != 0) {
+        if (first < 0) {
+          first = i;
         }
+        last = i;
       }
     }
-    return true;
-  }
-
-  private static int getBestIndex(List<PresetPoint> points, int stepX) {
-    int pos = 0;
-    for (int i = 0; i < points.size(); i++) {
-      PresetPoint val = points.get(i);
-      if (val.getIntensity() <= stepX) {
-        pos = i;
-      } else {
-        break;
-      }
+    if (first < 0) {
+      return new float[] {UNBOUNDED, -UNBOUNDED};
     }
-
-    return pos;
+    float min = first == 0 ? -UNBOUNDED : (float) first / width;
+    float max = last == width - 1 ? UNBOUNDED : (float) (last + 1) / width;
+    return new float[] {min, max};
   }
 
-  private static int getBestColorIndex(List<PresetPoint> points, int stepX) {
-    int pos = 0;
-    for (int i = 0; i < points.size(); i++) {
-      PresetPoint val = points.get(i);
-      if (val.getIntensity() > stepX) {
-        break;
-      }
-      if (val.getRed() != null) {
-        pos = i;
-      }
-    }
-    return pos;
+  // A map without physical values (relative, percent) spans the usual 12-bit range of its modality.
+  private static ColorMap anchored(ColorMap map) {
+    boolean ct = map.modalities().contains(Modality.CT.name());
+    return ct
+        ? ColorMapEdits.anchored(map, "HU", -1024, 3071) // NON-NLS
+        : ColorMapEdits.anchored(map, null, 0, 4095);
   }
 
-  private static PresetPoint getNextColor(List<PresetPoint> points, int stepX, int index) {
-    for (int i = index + 1; i < points.size(); i++) {
-      PresetPoint val = points.get(i);
-      if (val.getIntensity() > stepX && val.getRed() != null) {
-        return val;
-      }
-    }
-    return points.get(index);
+  /** A preset compiled from a declarative map. */
+  public static Preset of(ColorMap map, boolean custom) {
+    return new Preset(map, custom);
   }
 
+  /**
+   * A throw-away preset shown while editing: not in any menu, so the view owning it releases its
+   * GPU textures once it is replaced.
+   */
+  public static Preset preview(ColorMap map) {
+    return new Preset(map, true, true);
+  }
+
+  /** The declarative form of this preset: what the shared editor and the registry work with. */
+  public ColorMap toColorMap() {
+    return colorMap;
+  }
+
+  private static boolean hasVaryingMaterial(ColorMap map) {
+    return map.stops().stream().map(ColorStop::material).filter(Objects::nonNull).distinct().count()
+        > 1;
+  }
+
+  /** Intensity of texel {@code i}: the span is sampled evenly when it exceeds the texture width. */
+  private double intensityAt(int i) {
+    return colorMin + (double) i * (colorMax - colorMin) / width;
+  }
+
+  // Colors and lighting are sampled from the map; "inverse" is a color negative.
   static void initColors(Preset preset, boolean inverse) {
     int width = preset.getWidth();
     if (inverse && preset.invertColors == null) {
       preset.invertColors = new byte[width * 4];
     }
-    List<PresetPoint> points = new ArrayList<>();
-    preset.groups.forEach(g -> points.addAll(Arrays.asList(g.getPoints())));
-
+    ColorMapSampler sampler = preset.colorMap.sampler();
+    byte[] target = inverse ? preset.invertColors : preset.colors;
     for (int i = 0; i < width; i++) {
-      int stepX = i + preset.colorMin;
-
-      float a;
-      int index = getBestIndex(points, stepX);
-      PresetPoint vStart = points.get(index);
-      int val = vStart.getIntensity();
-      if (val == stepX) {
-        a = vStart.getOpacity();
-      } else if (val < stepX && index + 1 < points.size()) {
-        PresetPoint vEnd = points.get(index + 1);
-        a = linearOpacityGradient(vStart, vEnd, stepX);
-      } else {
-        a = 0.0f;
-      }
-
-      float r;
-      float g;
-      float b;
-      float amb;
-      float diff;
-      float spec;
-
-      index = getBestColorIndex(points, stepX);
-      PresetPoint v1 = points.get(index);
-      val = v1.getIntensity();
-      if (val == stepX) {
-        r = PresetPoint.convertFloat(v1.getRed(), 0.0f);
-        g = PresetPoint.convertFloat(v1.getGreen(), 0.0f);
-        b = PresetPoint.convertFloat(v1.getBlue(), 0.0f);
-        amb = PresetPoint.convertFloat(v1.getAmbient(), 0.2f);
-        diff = PresetPoint.convertFloat(v1.getDiffuse(), 0.9f);
-        spec = PresetPoint.convertFloat(v1.getSpecular(), 0.2f);
-      } else if (val < stepX && index + 1 < points.size()) {
-        PresetPoint vEnd = getNextColor(points, stepX, index);
-        Vector4f v = linearColorGradient(v1, vEnd, stepX);
-        r = v.x;
-        g = v.y;
-        b = v.z;
-        v = linearLightingGradient(v1, vEnd, stepX);
-        amb = v.x;
-        diff = v.y;
-        spec = v.z;
-      } else {
-        r = 0.0f;
-        g = 0.0f;
-        b = 0.0f;
-        amb = 0.2f;
-        diff = 0.9f;
-        spec = 0.2f;
-      }
-
-      if (inverse) {
-        preset.invertColors[i * 4] = (byte) Math.round((1 - r) * 255);
-        preset.invertColors[i * 4 + 1] = (byte) Math.round((1 - g) * 255);
-        preset.invertColors[i * 4 + 2] = (byte) Math.round((1 - b) * 255);
-        preset.invertColors[i * 4 + 3] = (byte) Math.round(a * 255);
-      } else {
-        preset.colors[i * 4] = (byte) Math.round(r * 255);
-        preset.colors[i * 4 + 1] = (byte) Math.round(g * 255);
-        preset.colors[i * 4 + 2] = (byte) Math.round(b * 255);
-        preset.colors[i * 4 + 3] = (byte) Math.round(a * 255);
-      }
-
-      preset.lightingMap.setAmbient(i, amb);
-      preset.lightingMap.setDiffuse(i, diff);
-      preset.lightingMap.setSpecular(i, spec);
+      double intensity = preset.intensityAt(i);
+      Rgba c = sampler.sample(intensity);
+      int o = i * 4;
+      target[o] = (byte) (inverse ? 255 - c.red8() : c.red8());
+      target[o + 1] = (byte) (inverse ? 255 - c.green8() : c.green8());
+      target[o + 2] = (byte) (inverse ? 255 - c.blue8() : c.blue8());
+      target[o + 3] = (byte) c.alpha8();
+      Material m = sampler.material(intensity);
+      preset.lightingMap.setAmbient(i, m.ambient());
+      preset.lightingMap.setDiffuse(i, m.diffuse());
+      preset.lightingMap.setSpecular(i, m.specular());
     }
-  }
-
-  public static Vector4f linearColorGradient(PresetPoint vStart, PresetPoint vEnd, int stepX) {
-    int min = vStart.getIntensity();
-    int n = vEnd.getIntensity() - min;
-    if (n <= 1) {
-      // Avoid division by zero; just return the start colour clamped to a valid range
-      return new Vector4f(
-          Math.clamp(vStart.getRed(), 0.0f, 1.0f),
-          Math.clamp(vStart.getGreen(), 0.0f, 1.0f),
-          Math.clamp(vStart.getBlue(), 0.0f, 1.0f),
-          stepX);
-    }
-    float stepR = (vEnd.getRed() - vStart.getRed()) / (n - 1);
-    float stepG = (vEnd.getGreen() - vStart.getGreen()) / (n - 1);
-    float stepB = (vEnd.getBlue() - vStart.getBlue()) / (n - 1);
-
-    int pos = stepX - min;
-    return new Vector4f(
-        Math.clamp(vStart.getRed() + stepR * pos, 0.0f, 1.0f),
-        Math.clamp(vStart.getGreen() + stepG * pos, 0.0f, 1.0f),
-        Math.clamp(vStart.getBlue() + stepB * pos, 0.0f, 1.0f),
-        stepX);
-  }
-
-  public static Vector4f linearLightingGradient(PresetPoint vStart, PresetPoint vEnd, int stepX) {
-    int min = vStart.getIntensity();
-    int n = vEnd.getIntensity() - min;
-    if (n <= 1) {
-      return new Vector4f(
-          Math.clamp(PresetPoint.convertFloat(vStart.getAmbient(), 0.2f), 0.0f, 1.0f),
-          Math.clamp(PresetPoint.convertFloat(vStart.getDiffuse(), 0.9f), 0.0f, 1.0f),
-          Math.clamp(PresetPoint.convertFloat(vStart.getSpecular(), 0.2f), 0.0f, 1.0f),
-          stepX);
-    }
-    float stepA = (vEnd.getAmbient() - vStart.getAmbient()) / (n - 1);
-    float stepD = (vEnd.getDiffuse() - vStart.getDiffuse()) / (n - 1);
-    float stepS = (vEnd.getSpecular() - vStart.getSpecular()) / (n - 1);
-
-    int pos = stepX - min;
-    return new Vector4f(
-        Math.clamp(vStart.getAmbient() + stepA * pos, 0.0f, 1.0f),
-        Math.clamp(vStart.getDiffuse() + stepD * pos, 0.0f, 1.0f),
-        Math.clamp(vStart.getSpecular() + stepS * pos, 0.0f, 1.0f),
-        stepX);
-  }
-
-  public static float linearOpacityGradient(PresetPoint vStart, PresetPoint vEnd, int stepX) {
-    int min = vStart.getIntensity();
-    int n = vEnd.getIntensity() - min;
-    if (n <= 1) {
-      return Math.clamp(vStart.getOpacity(), 0.0f, 1.0f);
-    }
-    float step = (vEnd.getOpacity() - vStart.getOpacity()) / (n - 1);
-    return Math.clamp(vStart.getOpacity() + step * (stepX - min), 0.0f, 1.0f);
   }
 
   @Override
@@ -353,101 +245,138 @@ public class Preset extends TextureData {
   }
 
   public boolean isDefaultForAll() {
-    return modality == Modality.DEFAULT && defaultElement;
+    return defaultElement && modality == Modality.DEFAULT;
   }
 
   public boolean isCustom() {
     return custom;
   }
 
-  public List<PresetGroup> getGroups() {
-    return groups;
+  public boolean isPreview() {
+    return preview;
   }
 
+  public int getColorMin() {
+    return colorMin;
+  }
+
+  public int getColorMax() {
+    return colorMax;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    return this == o
+        || (o instanceof Preset other
+            && custom == other.custom
+            && colorMap.id().equals(other.colorMap.id()));
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(colorMap.id(), custom);
+  }
+
+  // ── catalog ──
+
+  private static final Query CUSTOM_VOLUME_MAPS =
+      new Query(null, true, EnumSet.of(Origin.USER, Origin.IMPORTED), null, null, false);
+
+  /**
+   * Built-in presets and the user's volume maps of the registry, one per id (a user map saved under
+   * a built-in id replaces it), sorted by modality.
+   */
   public static List<Preset> getAllPresets() {
-    List<Preset> all = new ArrayList<>(basicPresets);
-    all.addAll(customPresets);
-    all.sort(
-        Comparator.comparing(
-            o -> (String.format("%03d", o.getModality().ordinal()) + o.getName())));
+    Map<String, Preset> byId = new LinkedHashMap<>();
+    basicPresets.forEach(p -> byId.put(p.colorMap.id(), p));
+    ColorMapRegistry.getInstance()
+        .query(CUSTOM_VOLUME_MAPS)
+        .forEach(map -> byId.put(map.id(), of(map, true)));
+    List<Preset> all = new ArrayList<>(byId.values());
+    all.sort(Comparator.comparing(p -> String.format("%03d", p.modality.ordinal()) + p.name));
     return all;
   }
 
-  public static Path getCustomPresetsPath() {
-    Path prefFolder =
-        Path.of(
-            UICore.getInstance().getSystemPreferences().getProperty("weasis.pref.dir")); // NON-NLS
-    try {
-      Files.createDirectories(prefFolder);
-    } catch (IOException e) {
-      LOGGER.error("Cannot create preferences folder", e);
-    }
-    return prefFolder.resolve(CUSTOM_PRESETS_FILENAME);
+  /** The maps of the built-in presets, for the registry. */
+  public static List<ColorMap> builtInMaps() {
+    return basicPresets.stream().map(Preset::toColorMap).toList();
   }
 
-  public static void saveCustomPresets() {
-    try {
-      JsonArrayBuilder builder = Json.createArrayBuilder();
-      for (Preset p : customPresets) {
-        VolumePreset vp = new VolumePreset();
-        vp.setName(p.getName());
-        vp.setModality(p.getModality().name());
-        vp.setDefaultElement(p.isDefaultElement());
-        vp.setShade(p.isShade());
-        vp.setSpecularPower(p.getSpecularPower());
-        vp.setGroups(p.getGroups().stream().map(PresetGroup::copy).toArray(PresetGroup[]::new));
-        builder.add(vp.toJson());
-      }
-      Path customPresetsPath = getCustomPresetsPath();
-      JsonUtil.write(customPresetsPath, builder.build());
-      UICore.getInstance()
-          .storeRemotePref(customPresetsPath, "application/json;charset=UTF-8"); // NON-NLS
-    } catch (IOException e) {
-      LOGGER.error("Cannot save custom presets", e);
-    }
-  }
-
-  /** Reloads the custom presets from disk, discarding any unsaved in-memory changes. */
-  public static void reloadCustomPresets() {
-    List<Preset> reloaded = loadCustomPresets();
-    synchronized (customPresets) {
-      customPresets.clear();
-      customPresets.addAll(reloaded);
-    }
-  }
-
-  static List<Preset> loadCustomPresets() {
-    List<Preset> presets = new ArrayList<>();
-    Path path = getCustomPresetsPath();
-    if (Files.exists(path)) {
-      try {
-        List<VolumePreset> list =
-            JsonUtil.objects(JsonUtil.readArray(path)).stream()
-                .map(VolumePreset::fromJson)
-                .toList();
-        list.forEach(
-            p -> {
-              try {
-                Preset preset =
-                    new Preset(
-                        p.getName(),
-                        p.getModality(),
-                        p.isDefaultElement(),
-                        p.isShade(),
-                        p.getSpecularPower(),
-                        p.getGroups(),
-                        true);
-                presets.add(preset);
-              } catch (Exception e) {
-                LOGGER.error("Cannot read custom preset {}", p.getName(), e);
-              }
-            });
-      } catch (IOException | JsonException e) {
-        LOGGER.error("Cannot load custom presets", e);
+  /**
+   * The preset flagged as default for the modality, user maps of the registry first, else the first
+   * built-in preset without modality.
+   */
+  public static Preset getDefaultPreset(Modality modality) {
+    if (modality != null) {
+      Optional<ColorMap> registered =
+          ColorMapRegistry.getInstance().defaultVolumeFor(modality.name());
+      if (registered.isPresent()) {
+        return presetOf(registered.get());
       }
     }
-    return presets;
+    Preset defPreset = null;
+    for (Preset p : basicPresets) {
+      if (defPreset == null && p.getModality() == Modality.DEFAULT) {
+        defPreset = p;
+      }
+      if (p.getModality() == modality && p.isDefaultElement()) {
+        defPreset = p;
+        break;
+      }
+    }
+    return defPreset;
   }
+
+  // The built-in preset compiled from that map, else a custom one.
+  private static Preset presetOf(ColorMap map) {
+    return basicPresets.stream()
+        .filter(p -> p.colorMap.equals(map))
+        .findFirst()
+        .orElseGet(() -> of(map, true));
+  }
+
+  static List<Preset> loadPresets() {
+    try (InputStream in = Preset.class.getResourceAsStream(BUILTIN_RESOURCE)) {
+      List<Preset> presets = new ArrayList<>();
+      for (ColorMap map : ColorMapJson.readAll(in)) {
+        presets.add(of(map, false));
+      }
+      presets.sort(Comparator.comparing(p -> String.format("%03d", p.modality.ordinal()) + p.name));
+      return presets;
+    } catch (IOException | RuntimeException e) {
+      LOGGER.error("Cannot read the volume presets", e);
+      return List.of();
+    }
+  }
+
+  /**
+   * Moves a custom preset file of the former format into the registry as user maps, then renames it
+   * so this runs once.
+   */
+  public static void migrateLegacyCustomPresets() {
+    String prefDir =
+        UICore.getInstance().getSystemPreferences().getProperty("weasis.pref.dir"); // NON-NLS
+    if (!StringUtil.hasText(prefDir)) {
+      return;
+    }
+    Path legacy = Path.of(prefDir).resolve(LEGACY_CUSTOM_PRESETS_FILENAME);
+    if (!Files.isRegularFile(legacy)) {
+      return;
+    }
+    try {
+      ColorMapRegistry registry = ColorMapRegistry.getInstance();
+      for (ColorMap map : LegacyVolumePresets.read(legacy)) {
+        registry.saveUserMap(map);
+      }
+      Files.move(
+          legacy, legacy.resolveSibling(LEGACY_CUSTOM_PRESETS_FILENAME + ".migrated")); // NON-NLS
+      LOGGER.info("Migrated the custom volume presets into the color map registry");
+    } catch (IOException | RuntimeException e) {
+      LOGGER.error("Cannot migrate the custom volume presets", e);
+    }
+  }
+
+  // ── GPU ──
 
   @Override
   public void init(GL2ES2 gl) {
@@ -478,7 +407,6 @@ public class Preset extends TextureData {
         format,
         type,
         Buffers.newDirectByteBuffer(inverse ? invertColors : colors).rewind());
-
     lightingMap.init(gl);
   }
 
@@ -489,27 +417,24 @@ public class Preset extends TextureData {
 
   void render(GL2ES2 gl, boolean inverse) {
     if (gl != null) {
-      Preset p = this;
       if (requiredBuilding) {
         this.requiredBuilding = false;
-        if (p.getId() <= 0 || (inverse && (p.invertColors == null || p.id2 <= 0))) {
-          p.init(gl, inverse);
+        if (getId() <= 0 || (inverse && (invertColors == null || id2 <= 0))) {
+          init(gl, inverse);
         }
       }
-
       gl.glActiveTexture(GL.GL_TEXTURE1);
       gl.glTexImage2D(
           GL.GL_TEXTURE_2D,
           0,
-          p.internalFormat,
-          p.width,
-          p.height,
+          internalFormat,
+          width,
+          height,
           0,
-          p.format,
-          p.type,
-          Buffers.newDirectByteBuffer(inverse ? p.invertColors : p.colors).rewind());
-
-      p.lightingMap.update(gl);
+          format,
+          type,
+          Buffers.newDirectByteBuffer(inverse ? invertColors : colors).rewind());
+      lightingMap.update(gl);
     }
   }
 
@@ -522,50 +447,23 @@ public class Preset extends TextureData {
     }
   }
 
+  // ── icons ──
+
   public void drawLutIcon(Graphics2D g2d, Icon icon, int x, int y, int border) {
     int iconWidth = icon.getIconWidth();
     int iconHeight = icon.getIconHeight() - 2 * border;
     boolean inverse =
         EventManager.getInstance().getAction(ActionW.INVERT_LUT).orElseThrow().isSelected();
-    List<PresetPoint> points = new ArrayList<>();
-    groups.forEach(g -> points.addAll(Arrays.asList(g.getPoints())));
-
+    ColorMapSampler sampler = colorMap.sampler();
     int sx = x + border;
     int sy = y + border;
-
     for (int i = 0; i < iconWidth; i++) {
-      float r;
-      float g;
-      float b;
-      int stepX = (width * i / iconWidth) + colorMin;
-
-      int index = getBestColorIndex(points, stepX);
-      PresetPoint v1 = points.get(index);
-      int val = v1.getIntensity();
-      if (val == stepX) {
-        r = PresetPoint.convertFloat(v1.getRed(), 0.0f);
-        g = PresetPoint.convertFloat(v1.getGreen(), 0.0f);
-        b = PresetPoint.convertFloat(v1.getBlue(), 0.0f);
-      } else if (val < stepX) {
-        PresetPoint vEnd = getNextColor(points, stepX, index);
-        Vector4f v = linearColorGradient(v1, vEnd, stepX);
-        r = v.x;
-        g = v.y;
-        b = v.z;
-      } else {
-        r = 0.0f;
-        g = 0.0f;
-        b = 0.0f;
-      }
-
-      if (inverse) {
-        r = 1 - r;
-        g = 1 - g;
-        b = 1 - b;
-      }
+      double intensity = colorMin + (double) i * (colorMax - colorMin) / iconWidth;
+      Rgba c = sampler.sample(intensity);
       g2d.setColor(
-          new Color(
-              Math.clamp(r, 0.0f, 1.0f), Math.clamp(g, 0.0f, 1.0f), Math.clamp(b, 0.0f, 1.0f)));
+          inverse
+              ? new Color(1f - c.red(), 1f - c.green(), 1f - c.blue())
+              : new Color(c.red(), c.green(), c.blue()));
       g2d.drawLine(sx + i, sy, sx + i, sy + iconHeight);
     }
   }
@@ -591,64 +489,6 @@ public class Preset extends TextureData {
         return height;
       }
     };
-  }
-
-  public int getColorMin() {
-    return colorMin;
-  }
-
-  public int getColorMax() {
-    return colorMax;
-  }
-
-  public static Preset getDefaultPreset(Modality modality) {
-    Preset defPreset = null;
-    for (Preset p : basicPresets) {
-      if (defPreset == null && p.getModality() == Modality.DEFAULT) {
-        defPreset = p;
-      }
-      if (p.getModality() == modality && p.isDefaultElement()) {
-        defPreset = p;
-        break;
-      }
-    }
-
-    return defPreset;
-  }
-
-  static List<Preset> loadPresets() {
-    List<Preset> presets = new ArrayList<>();
-    try {
-      List<VolumePreset> list = loadFile("/volumePresets.json"); // NON-NLS
-      list.forEach(
-          p -> {
-            Preset preset = buildPreset(p);
-            if (preset != null) {
-              presets.add(preset);
-            }
-          });
-    } catch (IOException e) {
-      throw new RuntimeException(e);
-    }
-    presets.sort(
-        Comparator.comparing(
-            o -> (String.format("%03d", o.getModality().ordinal()) + o.getName()))); // NON-NLS
-    return presets;
-  }
-
-  static List<VolumePreset> loadFile(String file) throws IOException {
-    try (InputStream in = Preset.class.getResourceAsStream(file)) {
-      return JsonUtil.objects(JsonUtil.readArray(in)).stream().map(VolumePreset::fromJson).toList();
-    }
-  }
-
-  static Preset buildPreset(VolumePreset p) {
-    try {
-      return new Preset(p);
-    } catch (Exception e) {
-      LOGGER.error("Cannot read the preset {}", p.getName(), e);
-    }
-    return null;
   }
 
   public static Map<String, List<SegRegion<?>>> getRegionMap() {

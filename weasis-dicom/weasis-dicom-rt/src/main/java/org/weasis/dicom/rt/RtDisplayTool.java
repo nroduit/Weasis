@@ -30,6 +30,7 @@ import java.util.stream.Collectors;
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JDialog;
 import javax.swing.JLabel;
@@ -52,6 +53,8 @@ import org.weasis.core.api.gui.Insertable;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.JSliderW;
 import org.weasis.core.api.gui.util.WinUtil;
+import org.weasis.core.api.image.OpManager;
+import org.weasis.core.api.image.lut.ColorMapRegistry;
 import org.weasis.core.api.image.util.MeasurableLayer;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.util.ResourceUtil;
@@ -83,6 +86,13 @@ import org.weasis.dicom.codec.seg.LazyContourLoader;
 import org.weasis.dicom.viewer2d.EventManager;
 import org.weasis.dicom.viewer2d.SegRegionLocator;
 import org.weasis.dicom.viewer2d.View2d;
+import org.weasis.dicom.viewer2d.fusion.FusionController;
+import org.weasis.dicom.viewer2d.fusion.FusionOp;
+import org.weasis.dicom.viewer2d.fusion.FusionState;
+import org.weasis.dicom.viewer2d.fusion.FusionWindow;
+import org.weasis.opencv.op.lut.ByteLut;
+import org.weasis.opencv.op.lut.ColorLut;
+import org.weasis.opencv.op.lut.colormap.ColorMap;
 import org.weasis.opencv.seg.RegionAttributes;
 
 /**
@@ -116,6 +126,7 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener, S
   private final JComboBox<StructureSet> comboRtStructureSet = new JComboBox<>();
   private final JComboBox<Plan> comboRtPlan = new JComboBox<>();
   private final JSliderW slider;
+  private final JCheckBox colorwashCheck = new JCheckBox(Messages.getString("colorwash"));
   private final SpinnerProgress progressBar = new SpinnerProgress();
 
   private final StructRegionTree treeStructures;
@@ -256,6 +267,8 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener, S
     dosePanel.add(new JLabel(Messages.getString("dose") + StringUtil.COLON));
     dosePanel.add(txtRtPlanDoseValue);
     dosePanel.add(new JLabel("cGy"));
+    colorwashCheck.addActionListener(e -> applyColorwash(colorwashCheck.isSelected()));
+    dosePanel.add(colorwashCheck);
     headerPanel.add(dosePanel);
 
     // DVH panel
@@ -751,7 +764,70 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener, S
     }
   }
 
+  private Dose selectedDose() {
+    return comboRtPlan.getSelectedItem() instanceof Plan plan ? plan.getFirstDose() : null;
+  }
+
+  /**
+   * Overlays the dose grid of the current plan on the view through the fusion pipeline, colored
+   * with the map flagged as default for RTDOSE (Isodose, percent of the prescription).
+   */
+  private void applyColorwash(boolean enable) {
+    if (!(EventManager.getInstance().getSelectedViewPane() instanceof View2d view)) {
+      return;
+    }
+    if (!enable) {
+      FusionController.applyParam(FusionOp.P_FUSION_ENABLED, Boolean.FALSE);
+      EventManager.getInstance().updateComponentsListener(view);
+      return;
+    }
+    Dose dose = selectedDose();
+    MediaSeries<DicomImageElement> doseSeries = dose == null ? null : dose.getImageSeries();
+    if (doseSeries == null) {
+      colorwashCheck.setSelected(false);
+      return;
+    }
+    ColorMapRegistry registry = ColorMapRegistry.getInstance();
+    ColorMap map =
+        registry
+            .defaultFor("RTDOSE") // NON-NLS
+            .or(() -> registry.findById("weasis.isodose")) // NON-NLS
+            .orElse(null);
+    ByteLut lut = map == null ? ColorLut.GRAY.getByteLut() : registry.byteLut(map);
+    FusionWindow window = map == null ? null : FusionWindow.declaredBy(map, doseSeries, null);
+    if (window == null) {
+      window = FusionController.provisionalWindow(doseSeries);
+    }
+    FusionController.applyState(
+        List.of(view),
+        new FusionState(
+            doseSeries,
+            lut,
+            window,
+            FusionOp.DEFAULT_BASE_OPACITY,
+            FusionOp.DEFAULT_OVERLAY_OPACITY,
+            null));
+    EventManager.getInstance().updateComponentsListener(view);
+  }
+
+  // The check box mirrors whether the view currently blends this plan's dose grid.
+  private void syncColorwash(ViewCanvas<?> viewCanvas) {
+    boolean on = false;
+    Dose dose = selectedDose();
+    if (viewCanvas != null && dose != null) {
+      OpManager disOp = viewCanvas.getDisplayOpManager();
+      boolean enabled =
+          disOp
+              .getParamValue(FusionOp.OP_NAME, FusionOp.P_FUSION_ENABLED, Boolean.class)
+              .orElse(false);
+      Object series = disOp.getParamValue(FusionOp.OP_NAME, FusionOp.P_FUSION_SERIES).orElse(null);
+      on = enabled && series != null && series == dose.getImageSeries();
+    }
+    colorwashCheck.setSelected(on);
+  }
+
   public void updateCanvas(ViewCanvas<?> viewCanvas) {
+    syncColorwash(viewCanvas);
     if (rtSet == null || rtSet.getStructures().isEmpty()) {
       clearTrees();
       return;

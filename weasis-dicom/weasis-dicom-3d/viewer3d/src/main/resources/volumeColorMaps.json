@@ -1,0 +1,2282 @@
+{
+    "schema": 1,
+    "maps": [
+        {
+            "id": "weasis.vr.all.grayscale",
+            "name": "Grayscale",
+            "category": "Volume",
+            "type": "transfer",
+            "default": true,
+            "domain": {
+                "kind": "absolute",
+                "min": 0.0,
+                "max": 3000.0
+            },
+            "bits": 16,
+            "stops": [
+                {
+                    "pos": 0.0,
+                    "color": "#000000",
+                    "alpha": 0.0,
+                    "group": "Default",
+                    "ambient": 0.1,
+                    "diffuse": 0.9,
+                    "specular": 0.2
+                },
+                {
+                    "pos": 512.0,
+                    "color": "#ffffff",
+                    "alpha": 1.0,
+                    "group": "Default",
+                    "ambient": 0.1,
+                    "diffuse": 0.9,
+                    "specular": 0.2
+                },
+                {
+                    "pos": 3000.0,
+                    "color": "#ffffff",
+                    "alpha": 1.0,
+                    "group": "Default",
+                    "ambient": 0.1,
+                    "diffuse": 0.9,
+                    "specular": 0.2
+                }
+            ],
+            "lighting": {
+                "shade": true,
+                "specularPower": 10.0
+            }
+        },
+        {
+            "id": "weasis.vr.ct.grayscale",
+            "name": "Grayscale",
+            "category": "Volume",
+            "type": "transfer",
+            "modality": [
+                "CT"
+            ],
+            "default": true,
+            "domain": {
+                "kind": "absolute",
+                "unit": "HU",
+                "min": -100.0,
+                "max": 3071.0
+            },
+            "bits": 16,
+            "stops": [
+                {
+                    "pos": -100.0,
+                    "color": "#000000",
+                    "alpha": 0.0,
+                    "group": "Default",
+                    "ambient": 0.1,
+                    "diffuse": 0.9,
+                    "specular": 0.2
+                },
+                {
+                    "pos": 500.0,
+                    "color": "#ffffff",
+                    "alpha": 0.875,
+                    "group": "Default",
+                    "ambient": 0.1,
+                    "diffuse": 0.9,
+                    "specular": 0.2
+                },
+                {
+                    "pos": 2047.0,
+                    "color": "#ffffff",
+                    "alpha": 0.875,
+                    "group": "Default",
+                    "ambient": 0.0,
+                    "diffuse": 1.0,
+                    "specular": 1.0
+                },
+                {
+                    "pos": 3071.0,
+                    "color": "#ffffff",
+                    "alpha": 0.875,
+                    "group": "Default",
+                    "ambient": 0.0,
+                    "diffuse": 1.0,
+                    "specular": 1.0
+                }
+            ],
+            "lighting": {
+                "shade": true,
+                "specularPower": 10.0
+            }
+        },
+        {
+            "id": "weasis.vr.ct.fat",
+            "name": "Fat",
+            "category": "Volume",
+            "type": "transfer",
+            "modality": [
+                "CT"
+            ],
+            "domain": {
+                "kind": "absolute",
+                "unit": "HU",
+                "min": -1000.0,
+                "max": 3071.0
+            },
+            "bits": 16,
+            "stops": [
+                {
+                    "pos": -1000.0,
+                    "color": "#4d4dff",
+                    "alpha": 0.0,
+                    "group": "Default",
+                    "ambient": 0.2,
+                    "diffuse": 1.0,
+                    "specular": 0.0
+                },
+                {
+                    "pos": -498.0,
+                    "color": "#4dff4d",
+                    "alpha": 0.0,
+                    "group": "Default",
+                    "ambient": 0.2,
+                    "diffuse": 1.0,
+                    "specular": 0.0
+                },
+                {
+                    "pos": -100.0,
+                    "alpha": 0.0,
+                    "group": "Default"
+                },
+                {
+                    "pos": -99.0,
+                    "color": "#0000ff",
+                    "alpha": 0.15,
+                    "group": "Default",
+                    "ambient": 0.2,
+                    "diffuse": 1.0,
+                    "specular": 0.0
+                },
+                {
+                    "pos": -77.0,
+                    "color": "#00ff00",
+                    "alpha": 0.15,
+                    "group": "Default",
+                    "ambient": 0.2,
+                    "diffuse": 1.0,
+                    "specular": 0.0
+                },
+                {
+                    "pos": -65.0,
+                    "color": "#d5e304",
+                    "alpha": 0.15,
+                    "group": "Default",
+                    "ambient": 0.2,
+                    "diffuse": 1.0,
+                    "specular": 0.0
+                },
+                {
+                    "pos": -60.0,
+                    "alpha": 0.15,
+                    "group": "Default"
+                },
+                {
+                    "pos": -59.0,
+                    "alpha": 0.0,
+                    "group": "Default"
+                },
+                {
+                    "pos": 84.0,
+                    "color": "#ff0000",
+                    "alpha": 0.0,
+                    "group": "Default",
+                    "ambient": 0.2,
+                    "diffuse": 1.0,
+                    "specular": 0.0
+                },
+                {
+                    "pos": 463.0,
+                    "color": "#ff0000",
+                    "alpha": 0.0,
+                    "group": "Default",
+                    "ambient": 0.2,
+                    "diffuse": 1.0,
+                    "specular": 0.0
+                },
+                {
+                    "pos": 659.0,
+                    "color": "#ffe90a",
+                    "alpha": 0.0,
+                    "group": "Default",
+                    "ambient": 0.2,
+                    "diffuse": 1.0,
+                    "specular": 0.0
+                },
+                {
+                    "pos": 2952.0,
+                    "color": "#ff4d4c",
+                    "alpha": 0.0,
+                    "group": "Default",
+                    "ambient": 0.2,
+                    "diffuse": 1.0,
+                    "specular": 0.0
+                },
+                {
+                    "pos": 3071.0,
+                    "color": "#ff4d4c",
+                    "alpha": 0.0,
+                    "group": "Default",
+                    "ambient": 0.2,
+                    "diffuse": 1.0,
+                    "specular": 0.0
+                }
+            ],
+            "lighting": {
+                "shade": false,
+                "specularPower": 1.0
+            }
+        },
+        {
+            "id": "weasis.vr.ct.lungs-transparent",
+            "name": "Lungs (transparent)",
+            "category": "Volume",
+            "type": "transfer",
+            "modality": [
+                "CT"
+            ],
+            "domain": {
+                "kind": "absolute",
+                "unit": "HU",
+                "min": -1000.0,
+                "max": 3071.0
+            },
+            "bits": 16,
+            "stops": [
+                {
+                    "pos": -1000.0,
+                    "color": "#4d4dff",
+                    "alpha": 0.0,
+                    "group": "Default",
+                    "ambient": 0.2,
+                    "diffuse": 1.0,
+                    "specular": 0.0
+                },
+                {
+                    "pos": -600.0,
+                    "color": "#0000ff",
+                    "alpha": 0.0,
+                    "group": "Default",
+                    "ambient": 0.2,
+                    "diffuse": 1.0,
+                    "specular": 0.0
+                },
+                {
+                    "pos": -599.0,
+                    "alpha": 0.15,
+                    "group": "Default"
+                },
+                {
+                    "pos": -530.0,
+                    "color": "#22c712",
+                    "alpha": 0.15,
+                    "group": "Default",
+                    "ambient": 0.2,
+                    "diffuse": 1.0,
+                    "specular": 0.0
+                },
+                {
+                    "pos": -460.0,
+                    "color": "#edff1c",
+                    "alpha": 0.15,
+                    "group": "Default",
+                    "ambient": 0.2,
+                    "diffuse": 1.0,
+                    "specular": 0.0
+                },
+                {
+                    "pos": -400.0,
+                    "color": "#e34106",
+                    "alpha": 0.15,
+                    "group": "Default",
+                    "ambient": 0.2,
+                    "diffuse": 1.0,
+                    "specular": 0.0
+                },
+                {
+                    "pos": -399.0,
+                    "alpha": 0.0,
+                    "group": "Default"
+                },
+                {
+                    "pos": 2952.0,
+                    "color": "#ff4d4d",
+                    "alpha": 0.0,
+                    "group": "Default",
+                    "ambient": 0.2,
+                    "diffuse": 1.0,
+                    "specular": 0.0
+                },
+                {
+                    "pos": 3071.0,
+                    "color": "#ff4d4d",
+                    "alpha": 0.0,
+                    "group": "Default",
+                    "ambient": 0.2,
+                    "diffuse": 1.0,
+                    "specular": 0.0
+                }
+            ],
+            "lighting": {
+                "shade": true,
+                "specularPower": 1.0
+            }
+        },
+        {
+            "id": "weasis.vr.ct.mip",
+            "name": "MIP",
+            "category": "Volume",
+            "type": "transfer",
+            "modality": [
+                "CT"
+            ],
+            "domain": {
+                "kind": "absolute",
+                "unit": "HU",
+                "min": -3024.0,
+                "max": 3071.0
+            },
+            "bits": 16,
+            "stops": [
+                {
+                    "pos": -3024.0,
+                    "color": "#000000",
+                    "alpha": 0.0,
+                    "group": "Default",
+                    "ambient": 0.1,
+                    "diffuse": 0.9,
+                    "specular": 0.2
+                },
+                {
+                    "pos": -700.0,
+                    "color": "#ffffff",
+                    "alpha": 1.0,
+                    "group": "Default",
+                    "ambient": 0.1,
+                    "diffuse": 0.9,
+                    "specular": 0.2
+                },
+                {
+                    "pos": -638.0,
+                    "color": "#ffffff",
+                    "alpha": 0.0,
+                    "group": "Default",
+                    "ambient": 0.1,
+                    "diffuse": 0.9,
+                    "specular": 0.2
+                },
+                {
+                    "pos": 3071.0,
+                    "color": "#ffffff",
+                    "alpha": 1.0,
+                    "group": "Default",
+                    "ambient": 0.1,
+                    "diffuse": 0.9,
+                    "specular": 0.2
+                }
+            ],
+            "lighting": {
+                "shade": true,
+                "specularPower": 10.0
+            }
+        },
+        {
+            "id": "weasis.vr.ct.x-ray",
+            "name": "X-ray",
+            "category": "Volume",
+            "type": "transfer",
+            "modality": [
+                "CT"
+            ],
+            "domain": {
+                "kind": "absolute",
+                "unit": "HU",
+                "min": -3024.0,
+                "max": 3071.0
+            },
+            "bits": 16,
+            "stops": [
+                {
+                    "pos": -3024.0,
+                    "color": "#ffffff",
+                    "alpha": 0.0,
+                    "group": "Default",
+                    "ambient": 0.1,
+                    "diffuse": 0.9,
+                    "specular": 0.2
+                },
+                {
+                    "pos": -200.0,
+                    "alpha": 0.0,
+                    "group": "Default"
+                },
+                {
+                    "pos": 1500.0,
+                    "alpha": 0.05,
+                    "group": "Default"
+                },
+                {
+                    "pos": 3071.0,
+                    "color": "#ffffff",
+                    "alpha": 0.05,
+                    "group": "Default",
+                    "ambient": 0.1,
+                    "diffuse": 0.9,
+                    "specular": 0.2
+                }
+            ],
+            "lighting": {
+                "shade": false,
+                "specularPower": 10.0
+            }
+        },
+        {
+            "id": "weasis.vr.ct.default",
+            "name": "Default",
+            "category": "Volume",
+            "type": "transfer",
+            "modality": [
+                "CT"
+            ],
+            "default": true,
+            "domain": {
+                "kind": "absolute",
+                "unit": "HU",
+                "min": -233.0,
+                "max": 3071.0
+            },
+            "bits": 16,
+            "stops": [
+                {
+                    "pos": -233.0,
+                    "color": "#55ffff",
+                    "alpha": 0.0,
+                    "group": "Skin",
+                    "ambient": 0.28,
+                    "diffuse": 0.774,
+                    "specular": 0.0
+                },
+                {
+                    "pos": -218.0,
+                    "color": "#55ffff",
+                    "alpha": 0.8,
+                    "group": "Skin",
+                    "ambient": 0.28,
+                    "diffuse": 0.774,
+                    "specular": 0.0
+                },
+                {
+                    "pos": -193.0,
+                    "color": "#55ffff",
+                    "alpha": 0.0,
+                    "group": "Skin",
+                    "ambient": 0.28,
+                    "diffuse": 0.774,
+                    "specular": 0.0
+                },
+                {
+                    "pos": 26.0,
+                    "color": "#550000",
+                    "alpha": 0.0,
+                    "group": "Tissue",
+                    "ambient": 0.204,
+                    "diffuse": 0.817,
+                    "specular": 0.806
+                },
+                {
+                    "pos": 77.0,
+                    "color": "#6d0000",
+                    "alpha": 0.715,
+                    "group": "Tissue",
+                    "ambient": 0.194,
+                    "diffuse": 0.806,
+                    "specular": 0.817
+                },
+                {
+                    "pos": 124.0,
+                    "color": "#ffaa00",
+                    "alpha": 0.0,
+                    "group": "Tissue",
+                    "ambient": 0.226,
+                    "diffuse": 1.0,
+                    "specular": 0.774
+                },
+                {
+                    "pos": 140.0,
+                    "color": "#000000",
+                    "alpha": 0.0,
+                    "group": "Default",
+                    "ambient": 0.0,
+                    "diffuse": 1.0,
+                    "specular": 0.0
+                },
+                {
+                    "pos": 147.0,
+                    "color": "#ff8000",
+                    "alpha": 0.309,
+                    "group": "Default",
+                    "ambient": 0.0,
+                    "diffuse": 1.0,
+                    "specular": 0.0
+                },
+                {
+                    "pos": 203.0,
+                    "color": "#ffffb8",
+                    "alpha": 0.595,
+                    "group": "Default",
+                    "ambient": 0.0,
+                    "diffuse": 1.0,
+                    "specular": 0.0
+                },
+                {
+                    "pos": 297.0,
+                    "color": "#ffffff",
+                    "alpha": 1.0,
+                    "group": "Default",
+                    "ambient": 0.0,
+                    "diffuse": 1.0,
+                    "specular": 0.0
+                },
+                {
+                    "pos": 1104.0,
+                    "color": "#fefefe",
+                    "alpha": 0.817,
+                    "group": "Default",
+                    "ambient": 0.0,
+                    "diffuse": 1.0,
+                    "specular": 0.925
+                },
+                {
+                    "pos": 1441.0,
+                    "color": "#ffffff",
+                    "alpha": 0.0,
+                    "group": "Default",
+                    "ambient": 0.0,
+                    "diffuse": 1.0,
+                    "specular": 1.0
+                },
+                {
+                    "pos": 1454.0,
+                    "color": "#39648d",
+                    "alpha": 0.0,
+                    "group": "Metal",
+                    "ambient": 0.131,
+                    "diffuse": 0.879,
+                    "specular": 0.822
+                },
+                {
+                    "pos": 1455.0,
+                    "color": "#39648d",
+                    "alpha": 1.0,
+                    "group": "Metal",
+                    "ambient": 0.131,
+                    "diffuse": 0.879,
+                    "specular": 0.822
+                },
+                {
+                    "pos": 2237.0,
+                    "color": "#39648d",
+                    "alpha": 1.0,
+                    "group": "Metal",
+                    "ambient": 0.131,
+                    "diffuse": 0.879,
+                    "specular": 0.822
+                },
+                {
+                    "pos": 2245.0,
+                    "color": "#39648d",
+                    "alpha": 0.0,
+                    "group": "Metal",
+                    "ambient": 0.131,
+                    "diffuse": 0.879,
+                    "specular": 0.822
+                },
+                {
+                    "pos": 3071.0,
+                    "color": "#39648d",
+                    "alpha": 0.0,
+                    "group": "Metal",
+                    "ambient": 0.131,
+                    "diffuse": 0.879,
+                    "specular": 0.822
+                }
+            ],
+            "lighting": {
+                "shade": true,
+                "specularPower": 14.0
+            }
+        },
+        {
+            "id": "weasis.vr.ct.bones-skin",
+            "name": "Bones & Skin",
+            "category": "Volume",
+            "type": "transfer",
+            "modality": [
+                "CT"
+            ],
+            "domain": {
+                "kind": "absolute",
+                "unit": "HU",
+                "min": -684.0,
+                "max": 3071.0
+            },
+            "bits": 16,
+            "stops": [
+                {
+                    "pos": -684.0,
+                    "color": "#00ffff",
+                    "alpha": 0.0,
+                    "group": "Default",
+                    "ambient": 0.0,
+                    "diffuse": 1.0,
+                    "specular": 0.0
+                },
+                {
+                    "pos": -624.0,
+                    "color": "#14ebec",
+                    "alpha": 0.044,
+                    "group": "Default",
+                    "ambient": 0.0,
+                    "diffuse": 1.0,
+                    "specular": 0.0
+                },
+                {
+                    "pos": -610.0,
+                    "color": "#25dadc",
+                    "alpha": 0.8,
+                    "group": "Default",
+                    "ambient": 0.0,
+                    "diffuse": 1.0,
+                    "specular": 0.0
+                },
+                {
+                    "pos": -560.0,
+                    "color": "#39c6c9",
+                    "alpha": 0.044,
+                    "group": "Default",
+                    "ambient": 0.0,
+                    "diffuse": 1.0,
+                    "specular": 0.0
+                },
+                {
+                    "pos": -515.0,
+                    "color": "#4ab5b9",
+                    "alpha": 0.044,
+                    "group": "Default",
+                    "ambient": 0.0,
+                    "diffuse": 0.999,
+                    "specular": 0.0
+                },
+                {
+                    "pos": -482.0,
+                    "color": "#53acb0",
+                    "alpha": 0.0,
+                    "group": "Default",
+                    "ambient": 0.0,
+                    "diffuse": 0.999,
+                    "specular": 0.0
+                },
+                {
+                    "pos": 97.0,
+                    "color": "#000000",
+                    "alpha": 0.0,
+                    "group": "Default",
+                    "ambient": 0.0,
+                    "diffuse": 0.999,
+                    "specular": 0.0
+                },
+                {
+                    "pos": 114.0,
+                    "color": "#ff0a16",
+                    "alpha": 0.036,
+                    "group": "Default",
+                    "ambient": 0.0,
+                    "diffuse": 1.0,
+                    "specular": 0.0
+                },
+                {
+                    "pos": 305.0,
+                    "color": "#ffff00",
+                    "alpha": 0.416,
+                    "group": "Default",
+                    "ambient": 0.0,
+                    "diffuse": 1.0,
+                    "specular": 1.0
+                },
+                {
+                    "pos": 1615.0,
+                    "color": "#dfdfdf",
+                    "alpha": 0.623,
+                    "group": "Default",
+                    "ambient": 0.0,
+                    "diffuse": 1.0,
+                    "specular": 1.0
+                },
+                {
+                    "pos": 3071.0,
+                    "color": "#dfdfdf",
+                    "alpha": 0.623,
+                    "group": "Default",
+                    "ambient": 0.0,
+                    "diffuse": 1.0,
+                    "specular": 1.0
+                }
+            ],
+            "lighting": {
+                "shade": true,
+                "specularPower": 90.0
+            }
+        },
+        {
+            "id": "weasis.vr.ct.bones",
+            "name": "Bones",
+            "category": "Volume",
+            "type": "transfer",
+            "modality": [
+                "CT"
+            ],
+            "domain": {
+                "kind": "absolute",
+                "unit": "HU",
+                "min": 97.0,
+                "max": 3071.0
+            },
+            "bits": 16,
+            "stops": [
+                {
+                    "pos": 97.0,
+                    "color": "#ff0a16",
+                    "alpha": 0.0,
+                    "group": "Default",
+                    "ambient": 0.0,
+                    "diffuse": 1.0,
+                    "specular": 0.0
+                },
+                {
+                    "pos": 240.0,
+                    "color": "#aa0000",
+                    "alpha": 0.102,
+                    "group": "Default",
+                    "ambient": 0.0,
+                    "diffuse": 1.0,
+                    "specular": 0.0
+                },
+                {
+                    "pos": 275.0,
+                    "color": "#ffff00",
+                    "alpha": 0.595,
+                    "group": "Default",
+                    "ambient": 0.0,
+                    "diffuse": 1.0,
+                    "specular": 1.0
+                },
+                {
+                    "pos": 317.0,
+                    "color": "#ffffff",
+                    "alpha": 0.744,
+                    "group": "Default",
+                    "ambient": 0.0,
+                    "diffuse": 1.0,
+                    "specular": 0.0
+                },
+                {
+                    "pos": 2075.0,
+                    "color": "#ffffff",
+                    "alpha": 0.791,
+                    "group": "Default",
+                    "ambient": 0.0,
+                    "diffuse": 1.0,
+                    "specular": 1.0
+                },
+                {
+                    "pos": 3071.0,
+                    "color": "#ffffff",
+                    "alpha": 0.791,
+                    "group": "Default",
+                    "ambient": 0.0,
+                    "diffuse": 1.0,
+                    "specular": 1.0
+                }
+            ],
+            "lighting": {
+                "shade": true,
+                "specularPower": 90.0
+            }
+        },
+        {
+            "id": "weasis.vr.ct.endoscopy",
+            "name": "Endoscopy",
+            "category": "Volume",
+            "type": "transfer",
+            "modality": [
+                "CT"
+            ],
+            "domain": {
+                "kind": "absolute",
+                "unit": "HU",
+                "min": -1024.0,
+                "max": 3071.0
+            },
+            "bits": 16,
+            "stops": [
+                {
+                    "pos": -1024.0,
+                    "color": "#aa0000",
+                    "alpha": 0.817,
+                    "group": "Tissue",
+                    "ambient": 0.0,
+                    "diffuse": 0.75,
+                    "specular": 0.75
+                },
+                {
+                    "pos": 114.0,
+                    "color": "#aa0000",
+                    "alpha": 0.817,
+                    "group": "Tissue",
+                    "ambient": 0.0,
+                    "diffuse": 0.75,
+                    "specular": 0.75
+                },
+                {
+                    "pos": 182.0,
+                    "color": "#550000",
+                    "alpha": 0.0,
+                    "group": "Tissue",
+                    "ambient": 0.0,
+                    "diffuse": 0.75,
+                    "specular": 0.0
+                },
+                {
+                    "pos": 522.0,
+                    "color": "#000000",
+                    "alpha": 0.0,
+                    "group": "Default",
+                    "ambient": 0.0,
+                    "diffuse": 1.0,
+                    "specular": 0.0
+                },
+                {
+                    "pos": 529.0,
+                    "color": "#ff8000",
+                    "alpha": 0.309,
+                    "group": "Default",
+                    "ambient": 0.0,
+                    "diffuse": 1.0,
+                    "specular": 0.0
+                },
+                {
+                    "pos": 585.0,
+                    "color": "#ffffb8",
+                    "alpha": 0.595,
+                    "group": "Default",
+                    "ambient": 0.0,
+                    "diffuse": 1.0,
+                    "specular": 0.0
+                },
+                {
+                    "pos": 679.0,
+                    "color": "#ffffff",
+                    "alpha": 0.791,
+                    "group": "Default",
+                    "ambient": 0.0,
+                    "diffuse": 0.765,
+                    "specular": 0.765
+                },
+                {
+                    "pos": 2385.0,
+                    "color": "#ffffff",
+                    "alpha": 0.791,
+                    "group": "Default",
+                    "ambient": 0.0,
+                    "diffuse": 1.0,
+                    "specular": 1.0
+                },
+                {
+                    "pos": 3071.0,
+                    "color": "#ffffff",
+                    "alpha": 0.791,
+                    "group": "Default",
+                    "ambient": 0.0,
+                    "diffuse": 1.0,
+                    "specular": 1.0
+                }
+            ],
+            "lighting": {
+                "shade": true,
+                "specularPower": 67.0
+            }
+        },
+        {
+            "id": "weasis.vr.ct.colonoscopy",
+            "name": "Colonoscopy",
+            "category": "Volume",
+            "type": "transfer",
+            "modality": [
+                "CT"
+            ],
+            "domain": {
+                "kind": "absolute",
+                "unit": "HU",
+                "min": -1656.0,
+                "max": 3071.0
+            },
+            "bits": 16,
+            "stops": [
+                {
+                    "pos": -1656.0,
+                    "color": "#000000",
+                    "alpha": 0.0,
+                    "group": "Default",
+                    "ambient": 1.0,
+                    "diffuse": 1.0,
+                    "specular": 0.0
+                },
+                {
+                    "pos": -717.0,
+                    "color": "#ffaa7f",
+                    "alpha": 0.0,
+                    "group": "Default",
+                    "ambient": 0.0,
+                    "diffuse": 1.0,
+                    "specular": 1.0
+                },
+                {
+                    "pos": -360.0,
+                    "color": "#730000",
+                    "alpha": 0.903,
+                    "group": "Default",
+                    "ambient": 0.0,
+                    "diffuse": 1.0,
+                    "specular": 1.0
+                },
+                {
+                    "pos": 237.0,
+                    "color": "#7c523e",
+                    "alpha": 0.954,
+                    "group": "Default",
+                    "ambient": 0.0,
+                    "diffuse": 1.0,
+                    "specular": 1.0
+                },
+                {
+                    "pos": 294.0,
+                    "color": "#885a43",
+                    "alpha": 0.954,
+                    "group": "Default",
+                    "ambient": 0.0,
+                    "diffuse": 1.0,
+                    "specular": 1.0
+                },
+                {
+                    "pos": 723.0,
+                    "color": "#7e3d00",
+                    "alpha": 0.913,
+                    "group": "Default",
+                    "ambient": 0.0,
+                    "diffuse": 1.0,
+                    "specular": 1.0
+                },
+                {
+                    "pos": 853.0,
+                    "color": "#624131",
+                    "alpha": 0.892,
+                    "group": "Default",
+                    "ambient": 0.0,
+                    "diffuse": 1.0,
+                    "specular": 1.0
+                },
+                {
+                    "pos": 1034.0,
+                    "color": "#6a6a6a",
+                    "alpha": 0.0,
+                    "group": "Default",
+                    "ambient": 0.0,
+                    "diffuse": 1.0,
+                    "specular": 1.0
+                },
+                {
+                    "pos": 1687.0,
+                    "color": "#ffaa00",
+                    "alpha": 0.0,
+                    "group": "Default",
+                    "ambient": 0.0,
+                    "diffuse": 1.0,
+                    "specular": 1.0
+                },
+                {
+                    "pos": 3071.0,
+                    "color": "#ffaa00",
+                    "alpha": 0.0,
+                    "group": "Default",
+                    "ambient": 0.0,
+                    "diffuse": 1.0,
+                    "specular": 1.0
+                }
+            ],
+            "lighting": {
+                "shade": true,
+                "specularPower": 70.0
+            }
+        },
+        {
+            "id": "weasis.vr.xa.philips-fluoroscopy",
+            "name": "Philips Fluoroscopy",
+            "category": "Volume",
+            "type": "transfer",
+            "modality": [
+                "XA"
+            ],
+            "domain": {
+                "kind": "absolute",
+                "min": 210.0,
+                "max": 3749.0
+            },
+            "bits": 16,
+            "stops": [
+                {
+                    "pos": 210.0,
+                    "color": "#ffffff",
+                    "alpha": 0.0,
+                    "group": "Default",
+                    "ambient": 1.0,
+                    "diffuse": 0.0,
+                    "specular": 0.0
+                },
+                {
+                    "pos": 1043.0,
+                    "color": "#ffffff",
+                    "alpha": 0.016,
+                    "group": "Default",
+                    "ambient": 1.0,
+                    "diffuse": 0.0,
+                    "specular": 0.0
+                },
+                {
+                    "pos": 1228.0,
+                    "color": "#ffffff",
+                    "alpha": 0.01,
+                    "group": "Default",
+                    "ambient": 1.0,
+                    "diffuse": 0.0,
+                    "specular": 0.0
+                },
+                {
+                    "pos": 1306.0,
+                    "color": "#ffffff",
+                    "alpha": 0.016,
+                    "group": "Default",
+                    "ambient": 1.0,
+                    "diffuse": 0.0,
+                    "specular": 0.0
+                },
+                {
+                    "pos": 1349.0,
+                    "color": "#ffffff",
+                    "alpha": 0.016,
+                    "group": "Default",
+                    "ambient": 1.0,
+                    "diffuse": 0.0,
+                    "specular": 0.0
+                },
+                {
+                    "pos": 1750.0,
+                    "color": "#ffffff",
+                    "alpha": 0.01,
+                    "group": "Default",
+                    "ambient": 1.0,
+                    "diffuse": 0.0,
+                    "specular": 0.0
+                },
+                {
+                    "pos": 2349.0,
+                    "color": "#ffffff",
+                    "alpha": 0.027,
+                    "group": "Default",
+                    "ambient": 1.0,
+                    "diffuse": 0.0,
+                    "specular": 0.0
+                },
+                {
+                    "pos": 3749.0,
+                    "color": "#ffffff",
+                    "alpha": 0.3,
+                    "group": "Default",
+                    "ambient": 1.0,
+                    "diffuse": 0.0,
+                    "specular": 0.0
+                }
+            ],
+            "lighting": {
+                "shade": true,
+                "specularPower": 10.0
+            }
+        },
+        {
+            "id": "weasis.vr.xa.philips",
+            "name": "Philips",
+            "category": "Volume",
+            "type": "transfer",
+            "modality": [
+                "XA"
+            ],
+            "domain": {
+                "kind": "absolute",
+                "min": 2757.0,
+                "max": 9797.0
+            },
+            "bits": 16,
+            "stops": [
+                {
+                    "pos": 2757.0,
+                    "color": "#550000",
+                    "alpha": 0.0,
+                    "group": "Default",
+                    "ambient": 1.0,
+                    "diffuse": 0.0,
+                    "specular": 0.0
+                },
+                {
+                    "pos": 5659.0,
+                    "color": "#9a6800",
+                    "alpha": 1.0,
+                    "group": "Default",
+                    "ambient": 0.999,
+                    "diffuse": 0.41,
+                    "specular": 0.41
+                },
+                {
+                    "pos": 6895.0,
+                    "color": "#ffc800",
+                    "alpha": 1.0,
+                    "group": "Default",
+                    "ambient": 1.0,
+                    "diffuse": 1.0,
+                    "specular": 1.0
+                },
+                {
+                    "pos": 8292.0,
+                    "color": "#ffff00",
+                    "alpha": 1.0,
+                    "group": "Default",
+                    "ambient": 0.999,
+                    "diffuse": 0.632,
+                    "specular": 0.632
+                },
+                {
+                    "pos": 9797.0,
+                    "color": "#ffffff",
+                    "alpha": 0.0,
+                    "group": "Default",
+                    "ambient": 1.0,
+                    "diffuse": 0.0,
+                    "specular": 0.0
+                }
+            ],
+            "lighting": {
+                "shade": true,
+                "specularPower": 41.6
+            }
+        },
+        {
+            "id": "weasis.vr.xa.siemens",
+            "name": "Siemens",
+            "category": "Volume",
+            "type": "transfer",
+            "modality": [
+                "XA"
+            ],
+            "domain": {
+                "kind": "absolute",
+                "min": 449.0,
+                "max": 1525.0
+            },
+            "bits": 16,
+            "stops": [
+                {
+                    "pos": 449.0,
+                    "color": "#550000",
+                    "alpha": 0.0,
+                    "group": "Default",
+                    "ambient": 1.0,
+                    "diffuse": 0.0,
+                    "specular": 0.0
+                },
+                {
+                    "pos": 807.0,
+                    "color": "#ac8300",
+                    "alpha": 1.0,
+                    "group": "Default",
+                    "ambient": 1.0,
+                    "diffuse": 0.516,
+                    "specular": 0.516
+                },
+                {
+                    "pos": 1270.0,
+                    "color": "#ffff00",
+                    "alpha": 1.0,
+                    "group": "Default",
+                    "ambient": 1.0,
+                    "diffuse": 1.0,
+                    "specular": 1.0
+                },
+                {
+                    "pos": 1525.0,
+                    "color": "#ffffff",
+                    "alpha": 0.0,
+                    "group": "Default",
+                    "ambient": 1.0,
+                    "diffuse": 0.0,
+                    "specular": 0.0
+                }
+            ],
+            "lighting": {
+                "shade": true,
+                "specularPower": 41.6
+            }
+        },
+        {
+            "id": "weasis.vr.ct.transparent-skin",
+            "name": "Transparent Skin",
+            "category": "Volume",
+            "type": "transfer",
+            "modality": [
+                "CT"
+            ],
+            "domain": {
+                "kind": "absolute",
+                "unit": "HU",
+                "min": -824.0,
+                "max": 3071.0
+            },
+            "bits": 16,
+            "stops": [
+                {
+                    "pos": -824.0,
+                    "color": "#000000",
+                    "alpha": 0.0,
+                    "group": "Default",
+                    "ambient": 0.0,
+                    "diffuse": 1.0,
+                    "specular": 0.0
+                },
+                {
+                    "pos": -771.0,
+                    "color": "#56463e",
+                    "alpha": 0.0,
+                    "group": "Default",
+                    "ambient": 0.0,
+                    "diffuse": 1.0,
+                    "specular": 0.0
+                },
+                {
+                    "pos": -712.0,
+                    "color": "#ffcfb8",
+                    "alpha": 0.429,
+                    "group": "Default",
+                    "ambient": 0.0,
+                    "diffuse": 1.0,
+                    "specular": 0.0
+                },
+                {
+                    "pos": -696.0,
+                    "color": "#fdc38f",
+                    "alpha": 0.114,
+                    "group": "Default",
+                    "ambient": 0.0,
+                    "diffuse": 1.0,
+                    "specular": 0.0
+                },
+                {
+                    "pos": -542.0,
+                    "color": "#f9ac44",
+                    "alpha": 0.0,
+                    "group": "Default",
+                    "ambient": 0.0,
+                    "diffuse": 1.0,
+                    "specular": 0.0
+                },
+                {
+                    "pos": 14.0,
+                    "color": "#000000",
+                    "alpha": 0.0,
+                    "group": "Default",
+                    "ambient": 0.0,
+                    "diffuse": 1.0,
+                    "specular": 0.0
+                },
+                {
+                    "pos": 66.0,
+                    "color": "#800000",
+                    "alpha": 0.112,
+                    "group": "Default",
+                    "ambient": 0.0,
+                    "diffuse": 1.0,
+                    "specular": 0.0
+                },
+                {
+                    "pos": 108.0,
+                    "color": "#9e3a28",
+                    "alpha": 0.29,
+                    "group": "Default",
+                    "ambient": 0.0,
+                    "diffuse": 1.0,
+                    "specular": 0.0
+                },
+                {
+                    "pos": 149.0,
+                    "color": "#ff5946",
+                    "alpha": 0.428,
+                    "group": "Default",
+                    "ambient": 0.0,
+                    "diffuse": 1.0,
+                    "specular": 0.0
+                },
+                {
+                    "pos": 208.0,
+                    "color": "#ff0000",
+                    "alpha": 0.525,
+                    "group": "Default",
+                    "ambient": 0.0,
+                    "diffuse": 1.0,
+                    "specular": 0.0
+                },
+                {
+                    "pos": 271.0,
+                    "color": "#ffff00",
+                    "alpha": 0.607,
+                    "group": "Default",
+                    "ambient": 0.0,
+                    "diffuse": 1.0,
+                    "specular": 0.0
+                },
+                {
+                    "pos": 333.0,
+                    "color": "#ffffff",
+                    "alpha": 0.875,
+                    "group": "Default",
+                    "ambient": 0.0,
+                    "diffuse": 1.0,
+                    "specular": 1.0
+                },
+                {
+                    "pos": 3071.0,
+                    "color": "#ffffff",
+                    "alpha": 0.875,
+                    "group": "Default",
+                    "ambient": 0.0,
+                    "diffuse": 1.0,
+                    "specular": 1.0
+                }
+            ],
+            "lighting": {
+                "shade": true,
+                "specularPower": 90.0
+            }
+        },
+        {
+            "id": "weasis.vr.ct.skin",
+            "name": "Skin",
+            "category": "Volume",
+            "type": "transfer",
+            "modality": [
+                "CT"
+            ],
+            "domain": {
+                "kind": "absolute",
+                "unit": "HU",
+                "min": -837.0,
+                "max": 3071.0
+            },
+            "bits": 16,
+            "stops": [
+                {
+                    "pos": -837.0,
+                    "color": "#000000",
+                    "alpha": 0.0,
+                    "group": "Default",
+                    "ambient": 0.0,
+                    "diffuse": 1.0,
+                    "specular": 0.0
+                },
+                {
+                    "pos": -698.0,
+                    "color": "#ffcfb8",
+                    "alpha": 0.203,
+                    "group": "Default",
+                    "ambient": 0.0,
+                    "diffuse": 1.0,
+                    "specular": 0.0
+                },
+                {
+                    "pos": -92.0,
+                    "color": "#ff803f",
+                    "alpha": 0.303,
+                    "group": "Default",
+                    "ambient": 0.0,
+                    "diffuse": 1.0,
+                    "specular": 0.303
+                },
+                {
+                    "pos": 1.0,
+                    "color": "#000000",
+                    "alpha": 0.0,
+                    "group": "Default",
+                    "ambient": 0.0,
+                    "diffuse": 1.0,
+                    "specular": 0.0
+                },
+                {
+                    "pos": 36.0,
+                    "color": "#800000",
+                    "alpha": 0.187,
+                    "group": "Default",
+                    "ambient": 0.0,
+                    "diffuse": 1.0,
+                    "specular": 0.0
+                },
+                {
+                    "pos": 76.0,
+                    "color": "#9e3a28",
+                    "alpha": 0.395,
+                    "group": "Default",
+                    "ambient": 0.0,
+                    "diffuse": 1.0,
+                    "specular": 0.0
+                },
+                {
+                    "pos": 120.0,
+                    "color": "#ff5946",
+                    "alpha": 0.556,
+                    "group": "Default",
+                    "ambient": 0.0,
+                    "diffuse": 1.0,
+                    "specular": 0.0
+                },
+                {
+                    "pos": 177.0,
+                    "color": "#ff0000",
+                    "alpha": 0.71,
+                    "group": "Default",
+                    "ambient": 0.0,
+                    "diffuse": 1.0,
+                    "specular": 0.0
+                },
+                {
+                    "pos": 221.0,
+                    "color": "#ffff00",
+                    "alpha": 0.796,
+                    "group": "Default",
+                    "ambient": 0.0,
+                    "diffuse": 1.0,
+                    "specular": 0.25
+                },
+                {
+                    "pos": 320.0,
+                    "color": "#ffffff",
+                    "alpha": 0.875,
+                    "group": "Default",
+                    "ambient": 0.0,
+                    "diffuse": 1.0,
+                    "specular": 0.25
+                },
+                {
+                    "pos": 2047.0,
+                    "color": "#ffffff",
+                    "alpha": 0.875,
+                    "group": "Default",
+                    "ambient": 0.0,
+                    "diffuse": 1.0,
+                    "specular": 1.0
+                },
+                {
+                    "pos": 3071.0,
+                    "color": "#ffffff",
+                    "alpha": 0.875,
+                    "group": "Default",
+                    "ambient": 0.0,
+                    "diffuse": 1.0,
+                    "specular": 1.0
+                }
+            ],
+            "lighting": {
+                "shade": true,
+                "specularPower": 100.0
+            }
+        },
+        {
+            "id": "weasis.vr.ct.myocardium",
+            "name": "Myocardium",
+            "category": "Volume",
+            "type": "transfer",
+            "modality": [
+                "CT"
+            ],
+            "domain": {
+                "kind": "absolute",
+                "unit": "HU",
+                "min": -2016.0,
+                "max": 3071.0
+            },
+            "bits": 16,
+            "stops": [
+                {
+                    "pos": -2016.0,
+                    "color": "#000000",
+                    "alpha": 0.0,
+                    "group": "Default",
+                    "ambient": 1.0,
+                    "diffuse": 1.0,
+                    "specular": 0.0
+                },
+                {
+                    "pos": -343.0,
+                    "color": "#ff8000",
+                    "alpha": 0.0,
+                    "group": "Default",
+                    "ambient": 0.0,
+                    "diffuse": 1.0,
+                    "specular": 0.0
+                },
+                {
+                    "pos": -274.0,
+                    "color": "#000000",
+                    "alpha": 0.0,
+                    "group": "Default",
+                    "ambient": 0.0,
+                    "diffuse": 1.0,
+                    "specular": 0.0
+                },
+                {
+                    "pos": -104.0,
+                    "color": "#3f0000",
+                    "alpha": 0.0,
+                    "group": "Default",
+                    "ambient": 0.0,
+                    "diffuse": 1.0,
+                    "specular": 0.0
+                },
+                {
+                    "pos": -20.0,
+                    "color": "#770000",
+                    "alpha": 0.0,
+                    "group": "Default",
+                    "ambient": 0.0,
+                    "diffuse": 1.0,
+                    "specular": 0.0
+                },
+                {
+                    "pos": 2.0,
+                    "color": "#800000",
+                    "alpha": 0.193,
+                    "group": "Default",
+                    "ambient": 0.0,
+                    "diffuse": 1.0,
+                    "specular": 0.0
+                },
+                {
+                    "pos": 46.0,
+                    "color": "#9e3828",
+                    "alpha": 0.275,
+                    "group": "Default",
+                    "ambient": 0.0,
+                    "diffuse": 1.0,
+                    "specular": 1.0
+                },
+                {
+                    "pos": 108.0,
+                    "color": "#ff0000",
+                    "alpha": 0.331,
+                    "group": "Default",
+                    "ambient": 0.0,
+                    "diffuse": 1.0,
+                    "specular": 1.0
+                },
+                {
+                    "pos": 181.0,
+                    "color": "#ffff00",
+                    "alpha": 0.306,
+                    "group": "Default",
+                    "ambient": 0.0,
+                    "diffuse": 1.0,
+                    "specular": 0.379
+                },
+                {
+                    "pos": 216.0,
+                    "color": "#ff5500",
+                    "alpha": 0.198,
+                    "group": "Default",
+                    "ambient": 0.0,
+                    "diffuse": 1.0,
+                    "specular": 0.295
+                },
+                {
+                    "pos": 233.0,
+                    "color": "#ffffff",
+                    "alpha": 0.0,
+                    "group": "Default",
+                    "ambient": 0.0,
+                    "diffuse": 1.0,
+                    "specular": 0.205
+                },
+                {
+                    "pos": 3071.0,
+                    "color": "#ffffff",
+                    "alpha": 0.0,
+                    "group": "Default",
+                    "ambient": 0.0,
+                    "diffuse": 1.0,
+                    "specular": 0.205
+                }
+            ],
+            "lighting": {
+                "shade": true,
+                "specularPower": 50.8
+            }
+        },
+        {
+            "id": "weasis.vr.ct.heart",
+            "name": "Heart",
+            "category": "Volume",
+            "type": "transfer",
+            "modality": [
+                "CT"
+            ],
+            "domain": {
+                "kind": "absolute",
+                "unit": "HU",
+                "min": -2018.0,
+                "max": 3071.0
+            },
+            "bits": 16,
+            "stops": [
+                {
+                    "pos": -2018.0,
+                    "color": "#000000",
+                    "alpha": 0.0,
+                    "group": "Default",
+                    "ambient": 1.0,
+                    "diffuse": 1.0,
+                    "specular": 0.0
+                },
+                {
+                    "pos": -340.0,
+                    "color": "#ff8000",
+                    "alpha": 0.0,
+                    "group": "Default",
+                    "ambient": 0.0,
+                    "diffuse": 1.0,
+                    "specular": 0.0
+                },
+                {
+                    "pos": -271.0,
+                    "color": "#000000",
+                    "alpha": 0.0,
+                    "group": "Default",
+                    "ambient": 0.0,
+                    "diffuse": 1.0,
+                    "specular": 0.0
+                },
+                {
+                    "pos": -101.0,
+                    "color": "#3f0000",
+                    "alpha": 0.0,
+                    "group": "Default",
+                    "ambient": 0.0,
+                    "diffuse": 1.0,
+                    "specular": 0.0
+                },
+                {
+                    "pos": -17.0,
+                    "color": "#770000",
+                    "alpha": 0.0,
+                    "group": "Default",
+                    "ambient": 0.0,
+                    "diffuse": 1.0,
+                    "specular": 0.0
+                },
+                {
+                    "pos": 5.0,
+                    "color": "#800000",
+                    "alpha": 0.193,
+                    "group": "Default",
+                    "ambient": 0.0,
+                    "diffuse": 1.0,
+                    "specular": 1.0
+                },
+                {
+                    "pos": 109.0,
+                    "color": "#9e3828",
+                    "alpha": 0.306,
+                    "group": "Default",
+                    "ambient": 0.0,
+                    "diffuse": 1.0,
+                    "specular": 1.0
+                },
+                {
+                    "pos": 200.0,
+                    "color": "#ff0000",
+                    "alpha": 0.372,
+                    "group": "Default",
+                    "ambient": 0.0,
+                    "diffuse": 1.0,
+                    "specular": 1.0
+                },
+                {
+                    "pos": 307.0,
+                    "color": "#ffff00",
+                    "alpha": 0.515,
+                    "group": "Default",
+                    "ambient": 0.0,
+                    "diffuse": 1.0,
+                    "specular": 1.0
+                },
+                {
+                    "pos": 398.0,
+                    "color": "#ffffff",
+                    "alpha": 0.76,
+                    "group": "Default",
+                    "ambient": 0.0,
+                    "diffuse": 1.0,
+                    "specular": 1.0
+                },
+                {
+                    "pos": 2064.0,
+                    "color": "#ffffff",
+                    "alpha": 0.8,
+                    "group": "Default",
+                    "ambient": 0.0,
+                    "diffuse": 1.0,
+                    "specular": 0.0
+                },
+                {
+                    "pos": 3071.0,
+                    "color": "#ffffff",
+                    "alpha": 0.8,
+                    "group": "Default",
+                    "ambient": 0.0,
+                    "diffuse": 1.0,
+                    "specular": 0.0
+                }
+            ],
+            "lighting": {
+                "shade": true,
+                "specularPower": 50.8
+            }
+        },
+        {
+            "id": "weasis.vr.ct.lungs",
+            "name": "Lungs",
+            "category": "Volume",
+            "type": "transfer",
+            "modality": [
+                "CT"
+            ],
+            "domain": {
+                "kind": "absolute",
+                "unit": "HU",
+                "min": -950.0,
+                "max": 3071.0
+            },
+            "bits": 16,
+            "stops": [
+                {
+                    "pos": -950.0,
+                    "color": "#ffffff",
+                    "alpha": 0.0,
+                    "group": "Default",
+                    "ambient": 0.0,
+                    "diffuse": 1.0,
+                    "specular": 0.0
+                },
+                {
+                    "pos": -900.0,
+                    "color": "#fbd6a1",
+                    "alpha": 0.6,
+                    "group": "Default",
+                    "ambient": 0.0,
+                    "diffuse": 1.0,
+                    "specular": 0.0
+                },
+                {
+                    "pos": -800.0,
+                    "color": "#f9ac44",
+                    "alpha": 0.5,
+                    "group": "Default",
+                    "ambient": 0.0,
+                    "diffuse": 1.0,
+                    "specular": 0.0
+                },
+                {
+                    "pos": -600.0,
+                    "color": "#800000",
+                    "alpha": 0.286,
+                    "group": "Default",
+                    "ambient": 0.0,
+                    "diffuse": 1.0,
+                    "specular": 0.0
+                },
+                {
+                    "pos": -300.0,
+                    "color": "#000000",
+                    "alpha": 0.0,
+                    "group": "Default",
+                    "ambient": 0.0,
+                    "diffuse": 1.0,
+                    "specular": 0.0
+                },
+                {
+                    "pos": 3071.0,
+                    "color": "#000000",
+                    "alpha": 0.0,
+                    "group": "Default",
+                    "ambient": 0.0,
+                    "diffuse": 1.0,
+                    "specular": 0.0
+                }
+            ],
+            "lighting": {
+                "shade": true,
+                "specularPower": 10.0
+            }
+        },
+        {
+            "id": "weasis.vr.ct.bones-glossy",
+            "name": "Bones (glossy)",
+            "category": "Volume",
+            "type": "transfer",
+            "modality": [
+                "CT"
+            ],
+            "domain": {
+                "kind": "absolute",
+                "unit": "HU",
+                "min": 184.0,
+                "max": 3071.0
+            },
+            "bits": 16,
+            "stops": [
+                {
+                    "pos": 184.0,
+                    "color": "#000000",
+                    "alpha": 0.0,
+                    "group": "Default",
+                    "ambient": 0.0,
+                    "diffuse": 1.0,
+                    "specular": 0.0
+                },
+                {
+                    "pos": 191.0,
+                    "color": "#ff8000",
+                    "alpha": 0.309,
+                    "group": "Default",
+                    "ambient": 0.0,
+                    "diffuse": 1.0,
+                    "specular": 0.0
+                },
+                {
+                    "pos": 247.0,
+                    "color": "#ffffb8",
+                    "alpha": 0.595,
+                    "group": "Default",
+                    "ambient": 0.0,
+                    "diffuse": 1.0,
+                    "specular": 0.0
+                },
+                {
+                    "pos": 341.0,
+                    "color": "#ffffff",
+                    "alpha": 0.791,
+                    "group": "Default",
+                    "ambient": 0.0,
+                    "diffuse": 0.765,
+                    "specular": 0.25
+                },
+                {
+                    "pos": 2047.0,
+                    "color": "#ffffff",
+                    "alpha": 0.791,
+                    "group": "Default",
+                    "ambient": 0.0,
+                    "diffuse": 1.0,
+                    "specular": 1.0
+                },
+                {
+                    "pos": 3071.0,
+                    "color": "#ffffff",
+                    "alpha": 0.791,
+                    "group": "Default",
+                    "ambient": 0.0,
+                    "diffuse": 1.0,
+                    "specular": 1.0
+                }
+            ],
+            "lighting": {
+                "shade": true,
+                "specularPower": 67.0
+            }
+        },
+        {
+            "id": "weasis.vr.mr.angiography",
+            "name": "Angiography",
+            "category": "Volume",
+            "type": "transfer",
+            "modality": [
+                "MR"
+            ],
+            "domain": {
+                "kind": "absolute",
+                "min": -2048.0,
+                "max": 3661.0
+            },
+            "bits": 16,
+            "stops": [
+                {
+                    "pos": -2048.0,
+                    "color": "#000000",
+                    "alpha": 0.0,
+                    "group": "Default",
+                    "ambient": 0.2,
+                    "diffuse": 1.0,
+                    "specular": 0.0
+                },
+                {
+                    "pos": 151.0,
+                    "color": "#000000",
+                    "alpha": 0.0,
+                    "group": "Default",
+                    "ambient": 0.2,
+                    "diffuse": 1.0,
+                    "specular": 0.0
+                },
+                {
+                    "pos": 158.0,
+                    "color": "#bf6000",
+                    "alpha": 0.4375,
+                    "group": "Default",
+                    "ambient": 0.2,
+                    "diffuse": 1.0,
+                    "specular": 0.0
+                },
+                {
+                    "pos": 190.0,
+                    "color": "#ffddbb",
+                    "alpha": 0.580357,
+                    "group": "Default",
+                    "ambient": 0.2,
+                    "diffuse": 1.0,
+                    "specular": 0.0
+                },
+                {
+                    "pos": 201.0,
+                    "color": "#efefef",
+                    "alpha": 0.732143,
+                    "group": "Default",
+                    "ambient": 0.2,
+                    "diffuse": 1.0,
+                    "specular": 0.0
+                },
+                {
+                    "pos": 3661.0,
+                    "color": "#ffffff",
+                    "alpha": 0.741071,
+                    "group": "Default",
+                    "ambient": 0.2,
+                    "diffuse": 1.0,
+                    "specular": 0.0
+                }
+            ],
+            "lighting": {
+                "shade": true,
+                "specularPower": 1.0
+            }
+        },
+        {
+            "id": "weasis.vr.mr.default",
+            "name": "Default",
+            "category": "Volume",
+            "type": "transfer",
+            "modality": [
+                "MR"
+            ],
+            "default": true,
+            "domain": {
+                "kind": "absolute",
+                "min": 0.0,
+                "max": 1024.0
+            },
+            "bits": 16,
+            "stops": [
+                {
+                    "pos": 0.0,
+                    "color": "#000000",
+                    "alpha": 0.0,
+                    "group": "Default",
+                    "ambient": 0.2,
+                    "diffuse": 1.0,
+                    "specular": 0.0
+                },
+                {
+                    "pos": 20.0,
+                    "color": "#2b0000",
+                    "alpha": 0.0,
+                    "group": "Default",
+                    "ambient": 0.2,
+                    "diffuse": 1.0,
+                    "specular": 0.0
+                },
+                {
+                    "pos": 40.0,
+                    "color": "#672514",
+                    "alpha": 0.15,
+                    "group": "Default",
+                    "ambient": 0.2,
+                    "diffuse": 1.0,
+                    "specular": 0.0
+                },
+                {
+                    "pos": 120.0,
+                    "color": "#c79b61",
+                    "alpha": 0.3,
+                    "group": "Default",
+                    "ambient": 0.2,
+                    "diffuse": 1.0,
+                    "specular": 0.0
+                },
+                {
+                    "pos": 220.0,
+                    "color": "#d8d5c9",
+                    "alpha": 0.375,
+                    "group": "Default",
+                    "ambient": 0.2,
+                    "diffuse": 1.0,
+                    "specular": 0.0
+                },
+                {
+                    "pos": 1024.0,
+                    "color": "#ffffff",
+                    "alpha": 0.5,
+                    "group": "Default",
+                    "ambient": 0.2,
+                    "diffuse": 1.0,
+                    "specular": 0.0
+                }
+            ],
+            "lighting": {
+                "shade": true,
+                "specularPower": 1.0
+            }
+        },
+        {
+            "id": "weasis.vr.mr.mip",
+            "name": "MIP",
+            "category": "Volume",
+            "type": "transfer",
+            "modality": [
+                "MR"
+            ],
+            "domain": {
+                "kind": "absolute",
+                "min": 0.0,
+                "max": 2800.0
+            },
+            "bits": 16,
+            "stops": [
+                {
+                    "pos": 0.0,
+                    "color": "#ffffff",
+                    "alpha": 0.0,
+                    "group": "Default",
+                    "ambient": 0.2,
+                    "diffuse": 1.0,
+                    "specular": 0.0
+                },
+                {
+                    "pos": 98.0,
+                    "color": "#ffffff",
+                    "alpha": 0.0,
+                    "group": "Default",
+                    "ambient": 0.2,
+                    "diffuse": 1.0,
+                    "specular": 0.0
+                },
+                {
+                    "pos": 417.0,
+                    "color": "#ffffff",
+                    "alpha": 1.0,
+                    "group": "Default",
+                    "ambient": 0.2,
+                    "diffuse": 1.0,
+                    "specular": 0.0
+                },
+                {
+                    "pos": 2800.0,
+                    "color": "#ffffff",
+                    "alpha": 1.0,
+                    "group": "Default",
+                    "ambient": 0.2,
+                    "diffuse": 1.0,
+                    "specular": 0.0
+                }
+            ],
+            "lighting": {
+                "shade": false,
+                "specularPower": 1.0
+            }
+        },
+        {
+            "id": "weasis.vr.mr.t2-brain",
+            "name": "T2-Brain",
+            "category": "Volume",
+            "type": "transfer",
+            "modality": [
+                "MR"
+            ],
+            "domain": {
+                "kind": "absolute",
+                "min": 0.0,
+                "max": 641.0
+            },
+            "bits": 16,
+            "stops": [
+                {
+                    "pos": 0.0,
+                    "color": "#000000",
+                    "alpha": 0.0,
+                    "group": "Default",
+                    "ambient": 0.3,
+                    "diffuse": 0.6,
+                    "specular": 0.5
+                },
+                {
+                    "pos": 36.0,
+                    "alpha": 0.0,
+                    "group": "Default"
+                },
+                {
+                    "pos": 98.0,
+                    "color": "#f4d631",
+                    "alpha": 0.0,
+                    "group": "Default",
+                    "ambient": 0.3,
+                    "diffuse": 0.6,
+                    "specular": 0.5
+                },
+                {
+                    "pos": 218.0,
+                    "alpha": 0.171429,
+                    "group": "Default"
+                },
+                {
+                    "pos": 412.0,
+                    "color": "#0097ce",
+                    "alpha": 1.0,
+                    "group": "Default",
+                    "ambient": 0.3,
+                    "diffuse": 0.6,
+                    "specular": 0.5
+                },
+                {
+                    "pos": 641.0,
+                    "color": "#ffffff",
+                    "alpha": 1.0,
+                    "group": "Default",
+                    "ambient": 0.3,
+                    "diffuse": 0.6,
+                    "specular": 0.5
+                }
+            ],
+            "lighting": {
+                "shade": true,
+                "specularPower": 40.0
+            }
+        },
+        {
+            "id": "weasis.vr.us.fetal",
+            "name": "Fetal",
+            "category": "Volume",
+            "type": "transfer",
+            "modality": [
+                "US"
+            ],
+            "default": true,
+            "domain": {
+                "kind": "absolute",
+                "min": -10.0,
+                "max": 270.0
+            },
+            "bits": 16,
+            "stops": [
+                {
+                    "pos": -10.0,
+                    "color": "#000000",
+                    "alpha": 0.0,
+                    "group": "Default",
+                    "ambient": 0.1,
+                    "diffuse": 0.9,
+                    "specular": 0.2
+                },
+                {
+                    "pos": 0.0,
+                    "color": "#000000",
+                    "alpha": 0.0,
+                    "group": "Default",
+                    "ambient": 0.1,
+                    "diffuse": 0.9,
+                    "specular": 0.2
+                },
+                {
+                    "pos": 60.0,
+                    "alpha": 0.0,
+                    "group": "Default"
+                },
+                {
+                    "pos": 80.0,
+                    "color": "#8c4026",
+                    "alpha": 0.0,
+                    "group": "Default",
+                    "ambient": 0.1,
+                    "diffuse": 0.9,
+                    "specular": 0.2
+                },
+                {
+                    "pos": 102.0,
+                    "color": "#e19a4a",
+                    "alpha": 0.6,
+                    "group": "Default",
+                    "ambient": 0.1,
+                    "diffuse": 0.9,
+                    "specular": 0.2
+                },
+                {
+                    "pos": 120.0,
+                    "alpha": 0.6,
+                    "group": "Default"
+                },
+                {
+                    "pos": 255.0,
+                    "alpha": 0.8,
+                    "group": "Default"
+                },
+                {
+                    "pos": 270.0,
+                    "color": "#b17a65",
+                    "alpha": 0.8,
+                    "group": "Default",
+                    "ambient": 0.1,
+                    "diffuse": 0.9,
+                    "specular": 0.2
+                }
+            ],
+            "lighting": {
+                "shade": true,
+                "specularPower": 10.0
+            }
+        }
+    ]
+}

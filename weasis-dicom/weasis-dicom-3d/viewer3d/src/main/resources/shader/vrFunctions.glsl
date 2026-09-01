@@ -47,13 +47,28 @@ vec3 blinnPhong(vec3 N, vec3 V, vec3 L, int lightIndex, float pixelValue, vec3 d
     return Ka * light.x + Kd * light.y * diff_coeff + Ks * light.z * spec_coeff;
 }
 
-// On-the-fly gradient approximation.
-vec3 gradient(vec3 uvw, float delta) {
+// Sampling rate the presets' opacity refers to (the default rendering quality).
+const float OPACITY_REFERENCE_SAMPLES = 1024.0;
+
+// On-the-fly gradient approximation (central differences of the windowed value, not normalized).
+vec3 gradientRaw(vec3 uvw, float delta) {
     vec3 pix1;
     pix1.x = getNormalizedWindowLevel(uvw - vec3(delta, 0, 0)) - getNormalizedWindowLevel(uvw + vec3(delta, 0, 0));
     pix1.y = getNormalizedWindowLevel(uvw - vec3(0, delta, 0)) - getNormalizedWindowLevel(uvw + vec3(0, delta, 0));
     pix1.z = getNormalizedWindowLevel(uvw - vec3(0, 0, delta)) - getNormalizedWindowLevel(uvw + vec3(0, 0, delta));
-    return normalize(pix1);
+    return pix1;
+}
+
+vec3 gradient(vec3 uvw, float delta) {
+    return normalize(gradientRaw(uvw, delta));
+}
+
+// Opacity factor for a gradient magnitude in [0, 1], linearly interpolated in the uploaded table.
+float gradientOpacityFactor(float magnitude) {
+    float x = clamp(magnitude, 0.0, 1.0) * float(gradientOpacitySamples - 1);
+    int i = int(floor(x));
+    int j = min(i + 1, gradientOpacitySamples - 1);
+    return mix(gradientOpacity[i], gradientOpacity[j], x - float(i));
 }
 
 Ray makeRay(vec3 origin, vec3 direction) {
@@ -445,14 +460,26 @@ vec4 rayCastingComposite(Ray ray, float tmin, float tmax, vec2 uv) {
         if (isCrosshairCut(texCoord)) continue;
         if (isSegMasked(texCoord)) continue;
         pix = getNormalizedWindowLevel(texCoord);
-        //pix = guassianFilter(texCoord, stepSize);
+        // Empty-space hint: nothing to fetch where the preset has no opacity.
+        if (pix < visibleMin || pix > visibleMax) continue;
         vec4 pixel = applyVoxelColor(texCoord, pix);
-        pixel.a = min(pixel.a * opacityFactor, 1.0);
+        // Presets are authored for the reference sampling rate: keep their opacity per unit length
+        // whatever the current rate, so quality changes do not thicken or thin the rendering.
+        pixel.a = 1.0 - pow(1.0 - min(pixel.a * opacityFactor, 1.0), OPACITY_REFERENCE_SAMPLES / float(depthSampleNumber));
+
+        // One gradient serves both the edge emphasis and the shading.
+        vec3 grad = vec3(0.0);
+        if (pixel.a > 0.0 && (gradientOpacityEnabled || shading)) {
+            grad = gradientRaw(texCoord, stepSize);
+            if (gradientOpacityEnabled) {
+                pixel.a *= gradientOpacityFactor(length(grad));
+            }
+        }
 
         if (pixel.a > 0.0) {
             float alpha = (1.0 - pixel.a) * pxColor.a;
             if (shading) {
-                vec3 normalPos = gradient(texCoord, stepSize);
+                vec3 normalPos = length(grad) > 0.0 ? normalize(grad) : vec3(0.0, 0.0, 1.0);
                 for (int i = 0; i < 4; ++i) {
                     if (lights[i].enabled) {
                         vec3 V = normalize(vec3(viewMatrix * lights[i].position) - texCoord);

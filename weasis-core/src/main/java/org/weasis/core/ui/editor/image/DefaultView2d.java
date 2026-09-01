@@ -113,6 +113,7 @@ import org.weasis.core.util.MathUtil;
 import org.weasis.core.util.StringUtil;
 import org.weasis.opencv.data.PlanarImage;
 import org.weasis.opencv.op.lut.ColorLut;
+import org.weasis.opencv.op.lut.colormap.ColorMap;
 
 /**
  * @author Nicolas Roduit
@@ -211,6 +212,11 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     panner = Optional.ofNullable(panner).orElseGet(() -> new Panner<>(this));
   }
 
+  /** Whether a map synchronized from another view may be applied here; all of them by default. */
+  protected boolean acceptsSynchronizedLut(Object lut) {
+    return true;
+  }
+
   @Override
   public void copyActionWState(HashMap<String, Object> actionsInView) {
     actionsInView.putAll(this.actionsInView);
@@ -244,6 +250,9 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     disOp.setParamValue(FilterOp.OP_NAME, FilterOp.P_KERNEL_DATA, KernelData.NONE);
     disOp.setParamValue(PseudoColorOp.OP_NAME, PseudoColorOp.P_LUT, ColorLut.IMAGE.getByteLut());
     disOp.setParamValue(PseudoColorOp.OP_NAME, PseudoColorOp.P_LUT_INVERSE, false);
+    disOp.setParamValue(WindowOp.OP_NAME, WindowOp.P_OUTPUT_BITS, ColorMap.MIN_BITS);
+    disOp.setParamValue(WindowOp.OP_NAME, WindowOp.P_OUTPUT_RANGE, null);
+    disOp.setParamValue(PseudoColorOp.OP_NAME, PseudoColorOp.P_INPUT_BITS, ColorMap.MIN_BITS);
   }
 
   @Override
@@ -1786,7 +1795,16 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         }
       } else if (command.equals(ActionW.LUT.cmd())) {
         // Apply lookup table (color mapping)
-        if (manager.setParamValue(PseudoColorOp.OP_NAME, PseudoColorOp.P_LUT, entry.getValue())) {
+        if ((this == synch.getView() || acceptsSynchronizedLut(entry.getValue()))
+            && manager.setParamValue(
+                PseudoColorOp.OP_NAME, PseudoColorOp.P_LUT, entry.getValue())) {
+          int bits = WindowOp.outputBitsOf(entry.getValue());
+          manager.setParamValue(WindowOp.OP_NAME, WindowOp.P_OUTPUT_BITS, bits);
+          manager.setParamValue(
+              WindowOp.OP_NAME,
+              WindowOp.P_OUTPUT_RANGE,
+              WindowOp.outputRangeOf(entry.getValue()).orElse(null));
+          manager.setParamValue(PseudoColorOp.OP_NAME, PseudoColorOp.P_INPUT_BITS, bits);
           imageLayer.updateDisplayOperations();
         }
       } else if (command.equals(ActionW.INVERT_LUT.cmd())) {

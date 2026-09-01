@@ -9,12 +9,15 @@
  */
 package org.weasis.dicom.viewer2d;
 
+import java.awt.Component;
 import java.util.Objects;
 import java.util.Optional;
 import javax.swing.Icon;
+import javax.swing.JMenuItem;
 import javax.swing.JPopupMenu;
 import javax.swing.JToggleButton;
 import javax.swing.KeyStroke;
+import org.dcm4che3.data.Tag;
 import org.dcm4che3.img.lut.PresetWindowLevel;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.ComboItemListener;
@@ -26,8 +29,13 @@ import org.weasis.core.api.gui.util.RadioMenuItem;
 import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.api.util.ResourceUtil.ActionIcon;
 import org.weasis.core.ui.editor.image.ImageViewerEventManager;
+import org.weasis.core.ui.editor.image.ViewCanvas;
+import org.weasis.core.ui.editor.image.lut.ColorMapEditorDialog;
+import org.weasis.core.ui.editor.image.lut.ColorMapRadioMenu;
 import org.weasis.core.ui.util.WtoolBar;
+import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.codec.DicomImageElement;
+import org.weasis.dicom.codec.TagD;
 import org.weasis.opencv.op.lut.ByteLut;
 
 public class LutToolBar extends WtoolBar {
@@ -67,19 +75,30 @@ public class LutToolBar extends WtoolBar {
     presetAction.ifPresent(
         objectComboItemListener -> objectComboItemListener.registerActionState(presetButton));
 
-    GroupPopup menuLut = null;
+    ColorMapRadioMenu menuLut = null;
     Optional<ComboItemListener<ByteLut>> lutAction = eventManager.getAction(ActionW.LUT);
     if (lutAction.isPresent()) {
-      menuLut = lutAction.get().createGroupRadioMenu();
+      menuLut = new ColorMapRadioMenu();
+      menuLut.setModel(lutAction.get().getModel());
+      lutAction.get().registerActionState(menuLut);
     }
+    final ColorMapRadioMenu lutMenu = menuLut;
 
     final DropDownButton lutButton =
         new DropDownButton(ActionW.LUT.cmd(), buildLutIcon(), menuLut) {
           @Override
           protected JPopupMenu getPopupMenu() {
+            if (lutMenu != null) {
+              ViewCanvas<DicomImageElement> view = eventManager.getSelectedViewPane();
+              DicomImageElement image = view == null ? null : view.getImage();
+              lutMenu.setModality(
+                  image == null ? null : TagD.getTagValue(image, Tag.Modality, String.class));
+            }
             JPopupMenu menu =
                 (getMenuModel() == null) ? new JPopupMenu() : getMenuModel().createJPopupMenu();
             menu.setInvoker(this);
+            menu.addSeparator();
+            menu.add(buildEditMapsItem(eventManager, this));
             return menu;
           }
         };
@@ -93,6 +112,18 @@ public class LutToolBar extends WtoolBar {
     invertButton.setIcon(ResourceUtil.getToolBarIcon(ActionIcon.INVERSE_LUT));
     eventManager.getAction(ActionW.INVERT_LUT).ifPresent(c -> c.registerActionState(invertButton));
     add(invertButton);
+  }
+
+  /** Menu entry opening the color map editor on the toolbar's viewer. */
+  public static JMenuItem buildEditMapsItem(
+      ImageViewerEventManager<DicomImageElement> eventManager, Component parent) {
+    JMenuItem item =
+        new JMenuItem(
+            org.weasis.core.Messages.getString("ColorMapEditor.edit")
+                + StringUtil.Suffix.THREE_PTS);
+    item.addActionListener(
+        e -> ColorMapEditorDialog.open(parent, new DicomColorMapHost(eventManager)));
+    return item;
   }
 
   private Icon buildLutIcon() {

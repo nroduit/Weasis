@@ -37,6 +37,14 @@ uniform vec3 lightColor;
 uniform bool ditherRay = true;
 uniform float opacityFactor;
 
+// Empty-space hint: normalized LUT coordinates outside [visibleMin, visibleMax] have no opacity.
+uniform float visibleMin = -1e30;
+uniform float visibleMax = 1e30;
+// Opacity factor by normalized gradient magnitude, sampled evenly over [0, 1].
+const int gradientOpacitySamples = 32;
+uniform bool gradientOpacityEnabled = false;
+uniform float gradientOpacity[gradientOpacitySamples];
+
 // Rendering type
 uniform uint renderingType;
 const uint typeComposite = 0x00000000u;

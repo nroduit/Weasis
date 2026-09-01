@@ -128,6 +128,7 @@ import org.weasis.dicom.viewer2d.fusion.FusionController;
 import org.weasis.dicom.viewer2d.fusion.FusionOp;
 import org.weasis.dicom.viewer2d.mpr.MprView.Plane;
 import org.weasis.opencv.data.PlanarImage;
+import org.weasis.opencv.op.lut.ByteLut;
 import org.weasis.opencv.op.lut.WlPresentation;
 
 public class View2d extends DefaultView2d<DicomImageElement> {
@@ -258,6 +259,16 @@ public class View2d extends DefaultView2d<DicomImageElement> {
     actionsInView.put(ActionW.KO_FILTER.cmd(), false);
     actionsInView.put(ActionW.KO_TOGGLE_STATE.cmd(), false);
     actionsInView.put(ActionW.KO_SELECTION.cmd(), ActionState.NoneLabel.NONE);
+  }
+
+  @Override
+  protected boolean acceptsSynchronizedLut(Object lut) {
+    if (lut instanceof ByteLut byteLut && byteLut.source() != null) {
+      DicomImageElement image = getImage();
+      String modality = image == null ? null : TagD.getTagValue(image, Tag.Modality, String.class);
+      return byteLut.source().appliesTo(modality);
+    }
+    return true;
   }
 
   @Override
@@ -466,6 +477,8 @@ public class View2d extends DefaultView2d<DicomImageElement> {
             : null;
     boolean spatialTransformation = actionsInView.get(ActionW.PREPROCESSING.cmd()) != null;
     actionsInView.put(ActionW.PREPROCESSING.cmd(), null);
+    // The palette of a pseudo-color state must not outlive it
+    actionsInView.remove(ActionW.LUT.cmd());
 
     DicomImageElement m = getImage();
     // Reset display parameter

@@ -35,7 +35,6 @@ import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.ExecutorService;
 import javax.swing.SwingUtilities;
 import org.apache.felix.service.command.CommandProcessor;
-import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Tag;
 import org.dcm4che3.img.data.PrDicomObject;
 import org.slf4j.Logger;
@@ -1038,8 +1037,9 @@ public class DicomModel implements TreeModel, DataExplorerModel {
     } else if (hiddenElement instanceof PRSpecialElement pr) {
       PrDicomObject prDicomObject = pr.getPrDicomObject();
       if (StringUtil.hasText(seriesUID) && prDicomObject != null) {
-        Attributes prAttributes = prDicomObject.getDicomObject();
-        HiddenSeriesManager.getInstance().extractReferencedSeries(prAttributes, seriesUID);
+        // Both layers of a blending state count as references, not only a top-level sequence.
+        HiddenSeriesManager.getInstance()
+            .registerReferencedSeries(prDicomObject.getReferencedSeriesSequence(), seriesUID, null);
       }
     } else if (hiddenElement instanceof KOSpecialElement ko) {
       if (StringUtil.hasText(seriesUID)) {

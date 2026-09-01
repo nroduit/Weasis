@@ -14,7 +14,6 @@ import org.weasis.core.api.util.ResourceUtil.ResourcePath;
 public enum DicomResource implements ResourcePath {
   ATTRIBUTES_VIEW("attributes-view.xml"), // NON-NLS
   CALLING_NODES("dicomCallingNodes.xml"),
-  LUTS("luts"), // NON-NLS
   PRESETS("presets.xml"),
   SERIES_SPITTING_RULES("series-splitting-rules.xml"), // NON-NLS
   CGET_SOP_UID("store-tcs.properties"); // NON-NLS

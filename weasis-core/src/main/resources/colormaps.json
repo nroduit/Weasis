@@ -1,0 +1,1731 @@
+{
+  "schema": 1,
+  "maps": [
+    {
+      "id": "weasis.pet-suv",
+      "name": "PET SUV",
+      "category": "Clinical",
+      "tags": [
+        "pet",
+        "suv",
+        "fusion"
+      ],
+      "type": "transfer",
+      "modality": [
+        "PT",
+        "NM"
+      ],
+      "default": true,
+      "domain": {
+        "kind": "absolute",
+        "unit": "SUVbw",
+        "min": 0,
+        "max": 10
+      },
+      "bits": 12,
+      "stops": [
+        {
+          "pos": 0.0,
+          "color": "#000000",
+          "alpha": 0.0
+        },
+        {
+          "pos": 0.1,
+          "alpha": 0.0
+        },
+        {
+          "pos": 1.0,
+          "alpha": 1.0
+        },
+        {
+          "pos": 3.0,
+          "color": "#b40000"
+        },
+        {
+          "pos": 6.0,
+          "color": "#ff8000"
+        },
+        {
+          "pos": 8.5,
+          "color": "#ffff00"
+        },
+        {
+          "pos": 10.0,
+          "color": "#ffffff"
+        }
+      ]
+    },
+    {
+      "id": "weasis.ct-tissues",
+      "name": "CT Tissues",
+      "category": "Clinical",
+      "tags": [
+        "ct",
+        "hu",
+        "tissue"
+      ],
+      "type": "qualitative",
+      "modality": [
+        "CT"
+      ],
+      "domain": {
+        "kind": "fixed",
+        "unit": "HU",
+        "min": -1000,
+        "max": 2000
+      },
+      "bits": 12,
+      "interpolation": "step",
+      "stops": [
+        {
+          "pos": -1000,
+          "color": "#000000",
+          "group": "Air"
+        },
+        {
+          "pos": -900,
+          "color": "#3f6fb0",
+          "group": "Lung"
+        },
+        {
+          "pos": -120,
+          "color": "#e8c547",
+          "group": "Fat"
+        },
+        {
+          "pos": -20,
+          "color": "#b3473f",
+          "group": "Soft tissue"
+        },
+        {
+          "pos": 130,
+          "color": "#e3e0d8",
+          "group": "Calcium"
+        },
+        {
+          "pos": 700,
+          "color": "#ffffff",
+          "group": "Cortical bone"
+        }
+      ]
+    },
+    {
+      "id": "weasis.isodose",
+      "name": "Isodose",
+      "category": "Clinical",
+      "tags": [
+        "rt",
+        "dose"
+      ],
+      "type": "transfer",
+      "modality": [
+        "RTDOSE"
+      ],
+      "domain": {
+        "kind": "percent",
+        "reference": "prescription",
+        "min": 0,
+        "max": 120
+      },
+      "bits": 12,
+      "interpolation": "step",
+      "outside": {
+        "low": "transparent"
+      },
+      "stops": [
+        {
+          "pos": 0,
+          "color": "#000000",
+          "alpha": 0.0
+        },
+        {
+          "pos": 10,
+          "color": "#1f3fff",
+          "alpha": 0.5,
+          "group": "10%"
+        },
+        {
+          "pos": 30,
+          "color": "#00bfff",
+          "group": "30%"
+        },
+        {
+          "pos": 50,
+          "color": "#00ff00",
+          "group": "50%"
+        },
+        {
+          "pos": 70,
+          "color": "#ffff00",
+          "group": "70%"
+        },
+        {
+          "pos": 90,
+          "color": "#ff8000",
+          "group": "90%"
+        },
+        {
+          "pos": 100,
+          "color": "#ff0000",
+          "group": "100%"
+        },
+        {
+          "pos": 110,
+          "color": "#ff00ff",
+          "group": "110%"
+        }
+      ],
+      "default": true
+    },
+    {
+      "id": "weasis.doppler",
+      "name": "Doppler flow",
+      "category": "Clinical",
+      "type": "diverging",
+      "tags": [
+        "us",
+        "doppler",
+        "flow"
+      ],
+      "modality": [
+        "US"
+      ],
+      "domain": {
+        "kind": "relative",
+        "min": 0,
+        "max": 1
+      },
+      "stops": [
+        {
+          "pos": 0,
+          "color": "#00ffff"
+        },
+        {
+          "pos": 0.25,
+          "color": "#0000ff"
+        },
+        {
+          "pos": 0.5,
+          "color": "#000000"
+        },
+        {
+          "pos": 0.75,
+          "color": "#ff0000"
+        },
+        {
+          "pos": 1,
+          "color": "#ffff00"
+        }
+      ]
+    },
+    {
+      "id": "weasis.dicom.hot-iron",
+      "name": "Hot Iron",
+      "category": "DICOM",
+      "tags": [
+        "dicom",
+        "well-known",
+        "pet",
+        "nm"
+      ],
+      "domain": {
+        "kind": "relative",
+        "min": 0,
+        "max": 1
+      },
+      "stops": [
+        {
+          "pos": 0.0,
+          "color": "#000000"
+        },
+        {
+          "pos": 0.4980392156862745,
+          "color": "#fe0000"
+        },
+        {
+          "pos": 0.5019607843137255,
+          "color": "#ff0000"
+        },
+        {
+          "pos": 0.7490196078431373,
+          "color": "#ff7e00"
+        },
+        {
+          "pos": 0.996078431372549,
+          "color": "#fffcfc"
+        },
+        {
+          "pos": 1.0,
+          "color": "#ffffff"
+        }
+      ],
+      "metadata": {
+        "dicom.sopInstanceUID": "1.2.840.10008.9.1",
+        "dicom.contentLabel": "HOT_IRON",
+        "dicom.contentCreator": "DICOM PS3.6"
+      }
+    },
+    {
+      "id": "weasis.dicom.pet",
+      "name": "PET",
+      "category": "DICOM",
+      "tags": [
+        "dicom",
+        "well-known",
+        "pet",
+        "nm"
+      ],
+      "domain": {
+        "kind": "relative",
+        "min": 0,
+        "max": 1
+      },
+      "stops": [
+        {
+          "pos": 0.0,
+          "color": "#000000"
+        },
+        {
+          "pos": 0.00392156862745098,
+          "color": "#000201"
+        },
+        {
+          "pos": 0.12156862745098039,
+          "color": "#003e3d"
+        },
+        {
+          "pos": 0.12549019607843137,
+          "color": "#00413f"
+        },
+        {
+          "pos": 0.24313725490196078,
+          "color": "#007d7b"
+        },
+        {
+          "pos": 0.24705882352941178,
+          "color": "#00807d"
+        },
+        {
+          "pos": 0.25098039215686274,
+          "color": "#017e7f"
+        },
+        {
+          "pos": 0.37254901960784315,
+          "color": "#3f40bd"
+        },
+        {
+          "pos": 0.3764705882352941,
+          "color": "#413fbf"
+        },
+        {
+          "pos": 0.41568627450980394,
+          "color": "#552bd3"
+        },
+        {
+          "pos": 0.4196078431372549,
+          "color": "#5629d5"
+        },
+        {
+          "pos": 0.4980392156862745,
+          "color": "#7e01fd"
+        },
+        {
+          "pos": 0.5019607843137255,
+          "color": "#8000ff"
+        },
+        {
+          "pos": 0.5058823529411764,
+          "color": "#8202fc"
+        },
+        {
+          "pos": 0.5843137254901961,
+          "color": "#aa2aac"
+        },
+        {
+          "pos": 0.5882352941176471,
+          "color": "#ab2ca8"
+        },
+        {
+          "pos": 0.7529411764705882,
+          "color": "#ff8000"
+        },
+        {
+          "pos": 0.8313725490196079,
+          "color": "#ffa850"
+        },
+        {
+          "pos": 0.8352941176470589,
+          "color": "#ffaa55"
+        },
+        {
+          "pos": 0.9137254901960784,
+          "color": "#ffd2a5"
+        },
+        {
+          "pos": 0.9176470588235294,
+          "color": "#ffd4aa"
+        },
+        {
+          "pos": 0.996078431372549,
+          "color": "#fffcfa"
+        },
+        {
+          "pos": 1.0,
+          "color": "#ffffff"
+        }
+      ],
+      "metadata": {
+        "dicom.sopInstanceUID": "1.2.840.10008.9.2",
+        "dicom.contentLabel": "PET",
+        "dicom.contentCreator": "DICOM PS3.6"
+      }
+    },
+    {
+      "id": "weasis.dicom.hot-metal-blue",
+      "name": "Hot Metal Blue",
+      "category": "DICOM",
+      "tags": [
+        "dicom",
+        "well-known",
+        "pet",
+        "nm"
+      ],
+      "domain": {
+        "kind": "relative",
+        "min": 0,
+        "max": 1
+      },
+      "stops": [
+        {
+          "pos": 0.0,
+          "color": "#000000"
+        },
+        {
+          "pos": 0.03137254901960784,
+          "color": "#000010"
+        },
+        {
+          "pos": 0.03529411764705882,
+          "color": "#000011"
+        },
+        {
+          "pos": 0.16470588235294117,
+          "color": "#000053"
+        },
+        {
+          "pos": 0.16862745098039217,
+          "color": "#000054"
+        },
+        {
+          "pos": 0.23137254901960785,
+          "color": "#000074"
+        },
+        {
+          "pos": 0.23529411764705882,
+          "color": "#000075"
+        },
+        {
+          "pos": 0.3333333333333333,
+          "color": "#0000a7"
+        },
+        {
+          "pos": 0.36470588235294116,
+          "color": "#1800b7"
+        },
+        {
+          "pos": 0.3686274509803922,
+          "color": "#1a00b8"
+        },
+        {
+          "pos": 0.4,
+          "color": "#3200c8"
+        },
+        {
+          "pos": 0.403921568627451,
+          "color": "#3400c5"
+        },
+        {
+          "pos": 0.40784313725490196,
+          "color": "#3700c2"
+        },
+        {
+          "pos": 0.41568627450980394,
+          "color": "#3b00bc"
+        },
+        {
+          "pos": 0.4196078431372549,
+          "color": "#3e00b9"
+        },
+        {
+          "pos": 0.42745098039215684,
+          "color": "#4200b3"
+        },
+        {
+          "pos": 0.43137254901960786,
+          "color": "#4500b0"
+        },
+        {
+          "pos": 0.43529411764705883,
+          "color": "#4700ae"
+        },
+        {
+          "pos": 0.4392156862745098,
+          "color": "#4a00ab"
+        },
+        {
+          "pos": 0.4470588235294118,
+          "color": "#4e00a5"
+        },
+        {
+          "pos": 0.45098039215686275,
+          "color": "#5100a2"
+        },
+        {
+          "pos": 0.4588235294117647,
+          "color": "#55009c"
+        },
+        {
+          "pos": 0.4627450980392157,
+          "color": "#580099"
+        },
+        {
+          "pos": 0.4666666666666667,
+          "color": "#5a0096"
+        },
+        {
+          "pos": 0.4823529411764706,
+          "color": "#66087e"
+        },
+        {
+          "pos": 0.48627450980392156,
+          "color": "#690979"
+        },
+        {
+          "pos": 0.4980392156862745,
+          "color": "#720f67"
+        },
+        {
+          "pos": 0.5019607843137255,
+          "color": "#741161"
+        },
+        {
+          "pos": 0.5137254901960784,
+          "color": "#7d174f"
+        },
+        {
+          "pos": 0.5176470588235295,
+          "color": "#80184a"
+        },
+        {
+          "pos": 0.5333333333333333,
+          "color": "#8c2032"
+        },
+        {
+          "pos": 0.5490196078431373,
+          "color": "#982826"
+        },
+        {
+          "pos": 0.5529411764705883,
+          "color": "#9b2923"
+        },
+        {
+          "pos": 0.5647058823529412,
+          "color": "#a42f1a"
+        },
+        {
+          "pos": 0.5686274509803921,
+          "color": "#a63118"
+        },
+        {
+          "pos": 0.5803921568627451,
+          "color": "#af370f"
+        },
+        {
+          "pos": 0.5843137254901961,
+          "color": "#b2380c"
+        },
+        {
+          "pos": 0.6,
+          "color": "#be4000"
+        },
+        {
+          "pos": 0.6078431372549019,
+          "color": "#c64400"
+        },
+        {
+          "pos": 0.611764705882353,
+          "color": "#c94600"
+        },
+        {
+          "pos": 0.615686274509804,
+          "color": "#cd4800"
+        },
+        {
+          "pos": 0.6196078431372549,
+          "color": "#d14900"
+        },
+        {
+          "pos": 0.6313725490196078,
+          "color": "#dd4f00"
+        },
+        {
+          "pos": 0.6352941176470588,
+          "color": "#e05100"
+        },
+        {
+          "pos": 0.6470588235294118,
+          "color": "#ec5700"
+        },
+        {
+          "pos": 0.6509803921568628,
+          "color": "#f05800"
+        },
+        {
+          "pos": 0.6549019607843137,
+          "color": "#f45a00"
+        },
+        {
+          "pos": 0.6588235294117647,
+          "color": "#f75c00"
+        },
+        {
+          "pos": 0.6666666666666666,
+          "color": "#ff6000"
+        },
+        {
+          "pos": 0.6823529411764706,
+          "color": "#ff680c"
+        },
+        {
+          "pos": 0.6862745098039216,
+          "color": "#ff690f"
+        },
+        {
+          "pos": 0.6980392156862745,
+          "color": "#ff6f18"
+        },
+        {
+          "pos": 0.7019607843137254,
+          "color": "#ff711a"
+        },
+        {
+          "pos": 0.7137254901960784,
+          "color": "#ff7723"
+        },
+        {
+          "pos": 0.7176470588235294,
+          "color": "#ff7826"
+        },
+        {
+          "pos": 0.7490196078431373,
+          "color": "#ff883e"
+        },
+        {
+          "pos": 0.7529411764705882,
+          "color": "#ff8941"
+        },
+        {
+          "pos": 0.7647058823529411,
+          "color": "#ff8f4a"
+        },
+        {
+          "pos": 0.7686274509803922,
+          "color": "#ff914c"
+        },
+        {
+          "pos": 0.7803921568627451,
+          "color": "#ff9755"
+        },
+        {
+          "pos": 0.7843137254901961,
+          "color": "#ff9858"
+        },
+        {
+          "pos": 0.8156862745098039,
+          "color": "#ffa870"
+        },
+        {
+          "pos": 0.8196078431372549,
+          "color": "#ffa973"
+        },
+        {
+          "pos": 0.8313725490196079,
+          "color": "#ffaf7c"
+        },
+        {
+          "pos": 0.8352941176470589,
+          "color": "#ffb17e"
+        },
+        {
+          "pos": 0.8470588235294118,
+          "color": "#ffb787"
+        },
+        {
+          "pos": 0.8509803921568627,
+          "color": "#ffb88a"
+        },
+        {
+          "pos": 0.8823529411764706,
+          "color": "#ffc8a2"
+        },
+        {
+          "pos": 0.8862745098039215,
+          "color": "#ffc9a5"
+        },
+        {
+          "pos": 0.8980392156862745,
+          "color": "#ffcfae"
+        },
+        {
+          "pos": 0.9019607843137255,
+          "color": "#ffd1b0"
+        },
+        {
+          "pos": 0.9137254901960784,
+          "color": "#ffd7b9"
+        },
+        {
+          "pos": 0.9176470588235294,
+          "color": "#ffd8bc"
+        },
+        {
+          "pos": 0.9411764705882353,
+          "color": "#ffe4ce"
+        },
+        {
+          "pos": 0.9450980392156862,
+          "color": "#ffe5d2"
+        },
+        {
+          "pos": 0.9568627450980393,
+          "color": "#ffebdb"
+        },
+        {
+          "pos": 0.9607843137254902,
+          "color": "#ffeddf"
+        },
+        {
+          "pos": 0.9647058823529412,
+          "color": "#ffefe2"
+        },
+        {
+          "pos": 0.9686274509803922,
+          "color": "#fff0e5"
+        },
+        {
+          "pos": 0.9725490196078431,
+          "color": "#fff2e8"
+        },
+        {
+          "pos": 0.9764705882352941,
+          "color": "#fff4ec"
+        },
+        {
+          "pos": 0.9882352941176471,
+          "color": "#fffaf5"
+        },
+        {
+          "pos": 0.9921568627450981,
+          "color": "#fffbf9"
+        },
+        {
+          "pos": 1.0,
+          "color": "#ffffff"
+        }
+      ],
+      "metadata": {
+        "dicom.sopInstanceUID": "1.2.840.10008.9.3",
+        "dicom.contentLabel": "HOT_METAL_BLUE",
+        "dicom.contentCreator": "DICOM PS3.6"
+      }
+    },
+    {
+      "id": "weasis.dicom.pet-20-step",
+      "name": "PET 20 Step",
+      "category": "DICOM",
+      "tags": [
+        "dicom",
+        "well-known",
+        "pet",
+        "nm"
+      ],
+      "domain": {
+        "kind": "relative",
+        "min": 0,
+        "max": 1
+      },
+      "stops": [
+        {
+          "pos": 0.0,
+          "color": "#000000"
+        },
+        {
+          "pos": 0.047058823529411764,
+          "color": "#000000"
+        },
+        {
+          "pos": 0.050980392156862744,
+          "color": "#600050"
+        },
+        {
+          "pos": 0.09803921568627451,
+          "color": "#600050"
+        },
+        {
+          "pos": 0.10196078431372549,
+          "color": "#303050"
+        },
+        {
+          "pos": 0.14901960784313725,
+          "color": "#303050"
+        },
+        {
+          "pos": 0.15294117647058825,
+          "color": "#303070"
+        },
+        {
+          "pos": 0.19607843137254902,
+          "color": "#303070"
+        },
+        {
+          "pos": 0.2,
+          "color": "#505080"
+        },
+        {
+          "pos": 0.24705882352941178,
+          "color": "#505080"
+        },
+        {
+          "pos": 0.25098039215686274,
+          "color": "#6060b0"
+        },
+        {
+          "pos": 0.2980392156862745,
+          "color": "#6060b0"
+        },
+        {
+          "pos": 0.30196078431372547,
+          "color": "#7070c0"
+        },
+        {
+          "pos": 0.34901960784313724,
+          "color": "#7070c0"
+        },
+        {
+          "pos": 0.35294117647058826,
+          "color": "#8080e0"
+        },
+        {
+          "pos": 0.396078431372549,
+          "color": "#8080e0"
+        },
+        {
+          "pos": 0.4,
+          "color": "#306030"
+        },
+        {
+          "pos": 0.4470588235294118,
+          "color": "#306030"
+        },
+        {
+          "pos": 0.45098039215686275,
+          "color": "#309030"
+        },
+        {
+          "pos": 0.4980392156862745,
+          "color": "#309030"
+        },
+        {
+          "pos": 0.5019607843137255,
+          "color": "#50c050"
+        },
+        {
+          "pos": 0.5490196078431373,
+          "color": "#50c050"
+        },
+        {
+          "pos": 0.5529411764705883,
+          "color": "#40e040"
+        },
+        {
+          "pos": 0.596078431372549,
+          "color": "#40e040"
+        },
+        {
+          "pos": 0.6,
+          "color": "#e0e050"
+        },
+        {
+          "pos": 0.6470588235294118,
+          "color": "#e0e050"
+        },
+        {
+          "pos": 0.6509803921568628,
+          "color": "#d0d060"
+        },
+        {
+          "pos": 0.6980392156862745,
+          "color": "#d0d060"
+        },
+        {
+          "pos": 0.7019607843137254,
+          "color": "#d0b040"
+        },
+        {
+          "pos": 0.7490196078431373,
+          "color": "#d0b040"
+        },
+        {
+          "pos": 0.7529411764705882,
+          "color": "#d09000"
+        },
+        {
+          "pos": 0.796078431372549,
+          "color": "#d09000"
+        },
+        {
+          "pos": 0.8,
+          "color": "#c06000"
+        },
+        {
+          "pos": 0.8470588235294118,
+          "color": "#c06000"
+        },
+        {
+          "pos": 0.8509803921568627,
+          "color": "#b03000"
+        },
+        {
+          "pos": 0.8980392156862745,
+          "color": "#b03000"
+        },
+        {
+          "pos": 0.9019607843137255,
+          "color": "#ff0000"
+        },
+        {
+          "pos": 0.9490196078431372,
+          "color": "#ff0000"
+        },
+        {
+          "pos": 0.9529411764705882,
+          "color": "#ffffff"
+        },
+        {
+          "pos": 1.0,
+          "color": "#ffffff"
+        }
+      ],
+      "metadata": {
+        "dicom.sopInstanceUID": "1.2.840.10008.9.4",
+        "dicom.contentLabel": "PET_20_STEP",
+        "dicom.contentCreator": "DICOM PS3.6"
+      }
+    },
+    {
+      "id": "weasis.dicom.spring",
+      "name": "Spring",
+      "category": "DICOM",
+      "tags": [
+        "dicom",
+        "well-known",
+        "fmri"
+      ],
+      "domain": {
+        "kind": "relative",
+        "min": 0,
+        "max": 1
+      },
+      "stops": [
+        {
+          "pos": 0.0,
+          "color": "#ff00ff"
+        },
+        {
+          "pos": 1.0,
+          "color": "#ffff00"
+        }
+      ],
+      "metadata": {
+        "dicom.sopInstanceUID": "1.2.840.10008.9.5",
+        "dicom.contentLabel": "SPRING",
+        "dicom.contentCreator": "DICOM PS3.6"
+      }
+    },
+    {
+      "id": "weasis.dicom.summer",
+      "name": "Summer",
+      "category": "DICOM",
+      "tags": [
+        "dicom",
+        "well-known",
+        "fmri"
+      ],
+      "domain": {
+        "kind": "relative",
+        "min": 0,
+        "max": 1
+      },
+      "stops": [
+        {
+          "pos": 0.0,
+          "color": "#00ff00"
+        },
+        {
+          "pos": 0.4980392156862745,
+          "color": "#00c000"
+        },
+        {
+          "pos": 1.0,
+          "color": "#0080fe"
+        }
+      ],
+      "metadata": {
+        "dicom.sopInstanceUID": "1.2.840.10008.9.6",
+        "dicom.contentLabel": "SUMMER",
+        "dicom.contentCreator": "DICOM PS3.6"
+      }
+    },
+    {
+      "id": "weasis.dicom.fall",
+      "name": "Fall",
+      "category": "DICOM",
+      "tags": [
+        "dicom",
+        "well-known",
+        "fmri"
+      ],
+      "domain": {
+        "kind": "relative",
+        "min": 0,
+        "max": 1
+      },
+      "stops": [
+        {
+          "pos": 0.0,
+          "color": "#ffff00"
+        },
+        {
+          "pos": 1.0,
+          "color": "#ff0000"
+        }
+      ],
+      "metadata": {
+        "dicom.sopInstanceUID": "1.2.840.10008.9.7",
+        "dicom.contentLabel": "FALL",
+        "dicom.contentCreator": "DICOM PS3.6"
+      }
+    },
+    {
+      "id": "weasis.dicom.winter",
+      "name": "Winter",
+      "category": "DICOM",
+      "tags": [
+        "dicom",
+        "well-known",
+        "fmri"
+      ],
+      "domain": {
+        "kind": "relative",
+        "min": 0,
+        "max": 1
+      },
+      "stops": [
+        {
+          "pos": 0.0,
+          "color": "#0000ff"
+        },
+        {
+          "pos": 0.4980392156862745,
+          "color": "#007fc0"
+        },
+        {
+          "pos": 1.0,
+          "color": "#7fff80"
+        }
+      ],
+      "metadata": {
+        "dicom.sopInstanceUID": "1.2.840.10008.9.8",
+        "dicom.contentLabel": "WINTER",
+        "dicom.contentCreator": "DICOM PS3.6"
+      }
+    },
+    {
+      "id": "weasis.rainbow",
+      "name": "Rainbow",
+      "category": "Classic",
+      "tags": [
+        "jet"
+      ],
+      "domain": {
+        "kind": "relative",
+        "min": 0,
+        "max": 1
+      },
+      "stops": [
+        {
+          "pos": 0,
+          "color": "#0000ff"
+        },
+        {
+          "pos": 0.25,
+          "color": "#00ffff"
+        },
+        {
+          "pos": 0.5,
+          "color": "#00ff00"
+        },
+        {
+          "pos": 0.75,
+          "color": "#ffff00"
+        },
+        {
+          "pos": 1,
+          "color": "#ff0000"
+        }
+      ]
+    },
+    {
+      "id": "weasis.spectrum",
+      "name": "Spectrum",
+      "category": "Classic",
+      "domain": {
+        "kind": "relative",
+        "min": 0,
+        "max": 1
+      },
+      "stops": [
+        {
+          "pos": 0,
+          "color": "#8000ff"
+        },
+        {
+          "pos": 0.2,
+          "color": "#0000ff"
+        },
+        {
+          "pos": 0.4,
+          "color": "#00ffff"
+        },
+        {
+          "pos": 0.6,
+          "color": "#00ff00"
+        },
+        {
+          "pos": 0.8,
+          "color": "#ffff00"
+        },
+        {
+          "pos": 0.9,
+          "color": "#ff8000"
+        },
+        {
+          "pos": 1,
+          "color": "#ff0000"
+        }
+      ]
+    },
+    {
+      "id": "weasis.fire",
+      "name": "Fire",
+      "category": "Classic",
+      "domain": {
+        "kind": "relative",
+        "min": 0,
+        "max": 1
+      },
+      "stops": [
+        {
+          "pos": 0,
+          "color": "#000000"
+        },
+        {
+          "pos": 0.33,
+          "color": "#ff0000"
+        },
+        {
+          "pos": 0.66,
+          "color": "#ffff00"
+        },
+        {
+          "pos": 1,
+          "color": "#ffffff"
+        }
+      ]
+    },
+    {
+      "id": "weasis.ice",
+      "name": "Ice",
+      "category": "Classic",
+      "domain": {
+        "kind": "relative",
+        "min": 0,
+        "max": 1
+      },
+      "stops": [
+        {
+          "pos": 0,
+          "color": "#000000"
+        },
+        {
+          "pos": 0.33,
+          "color": "#0000ff"
+        },
+        {
+          "pos": 0.66,
+          "color": "#00ffff"
+        },
+        {
+          "pos": 1,
+          "color": "#ffffff"
+        }
+      ]
+    },
+    {
+      "id": "weasis.cool",
+      "name": "Cool",
+      "category": "Classic",
+      "domain": {
+        "kind": "relative",
+        "min": 0,
+        "max": 1
+      },
+      "stops": [
+        {
+          "pos": 0,
+          "color": "#00ffff"
+        },
+        {
+          "pos": 1,
+          "color": "#ff00ff"
+        }
+      ]
+    },
+    {
+      "id": "weasis.bone",
+      "name": "Bone",
+      "category": "Classic",
+      "tags": [
+        "ct"
+      ],
+      "domain": {
+        "kind": "relative",
+        "min": 0,
+        "max": 1
+      },
+      "stops": [
+        {
+          "pos": 0,
+          "color": "#000000"
+        },
+        {
+          "pos": 0.375,
+          "color": "#545a76"
+        },
+        {
+          "pos": 0.75,
+          "color": "#a9c2c2"
+        },
+        {
+          "pos": 1,
+          "color": "#ffffff"
+        }
+      ]
+    },
+    {
+      "id": "weasis.nih",
+      "name": "NIH",
+      "category": "Classic",
+      "tags": [
+        "nm"
+      ],
+      "domain": {
+        "kind": "relative",
+        "min": 0,
+        "max": 1
+      },
+      "stops": [
+        {
+          "pos": 0,
+          "color": "#000000"
+        },
+        {
+          "pos": 0.2,
+          "color": "#0000ff"
+        },
+        {
+          "pos": 0.4,
+          "color": "#00ff00"
+        },
+        {
+          "pos": 0.6,
+          "color": "#ffff00"
+        },
+        {
+          "pos": 0.8,
+          "color": "#ff0000"
+        },
+        {
+          "pos": 1,
+          "color": "#ffffff"
+        }
+      ]
+    },
+    {
+      "id": "weasis.viridis",
+      "name": "Viridis",
+      "category": "Scientific",
+      "tags": [
+        "perceptual"
+      ],
+      "domain": {
+        "kind": "relative",
+        "min": 0,
+        "max": 1
+      },
+      "space": "lab",
+      "stops": [
+        {
+          "pos": 0.0,
+          "color": "#440154"
+        },
+        {
+          "pos": 0.1111111111111111,
+          "color": "#482878"
+        },
+        {
+          "pos": 0.2222222222222222,
+          "color": "#3e4989"
+        },
+        {
+          "pos": 0.3333333333333333,
+          "color": "#31688e"
+        },
+        {
+          "pos": 0.4444444444444444,
+          "color": "#26828e"
+        },
+        {
+          "pos": 0.5555555555555556,
+          "color": "#1f9e89"
+        },
+        {
+          "pos": 0.6666666666666666,
+          "color": "#35b779"
+        },
+        {
+          "pos": 0.7777777777777778,
+          "color": "#6ece58"
+        },
+        {
+          "pos": 0.8888888888888888,
+          "color": "#b5de2b"
+        },
+        {
+          "pos": 1.0,
+          "color": "#fde725"
+        }
+      ]
+    },
+    {
+      "id": "weasis.magma",
+      "name": "Magma",
+      "category": "Scientific",
+      "tags": [
+        "perceptual"
+      ],
+      "domain": {
+        "kind": "relative",
+        "min": 0,
+        "max": 1
+      },
+      "space": "lab",
+      "stops": [
+        {
+          "pos": 0.0,
+          "color": "#000004"
+        },
+        {
+          "pos": 0.1111111111111111,
+          "color": "#180f3d"
+        },
+        {
+          "pos": 0.2222222222222222,
+          "color": "#440f76"
+        },
+        {
+          "pos": 0.3333333333333333,
+          "color": "#721f81"
+        },
+        {
+          "pos": 0.4444444444444444,
+          "color": "#9e2f7f"
+        },
+        {
+          "pos": 0.5555555555555556,
+          "color": "#cd4071"
+        },
+        {
+          "pos": 0.6666666666666666,
+          "color": "#f1605d"
+        },
+        {
+          "pos": 0.7777777777777778,
+          "color": "#fd9668"
+        },
+        {
+          "pos": 0.8888888888888888,
+          "color": "#feca8d"
+        },
+        {
+          "pos": 1.0,
+          "color": "#fcfdbf"
+        }
+      ]
+    },
+    {
+      "id": "weasis.inferno",
+      "name": "Inferno",
+      "category": "Scientific",
+      "tags": [
+        "perceptual"
+      ],
+      "domain": {
+        "kind": "relative",
+        "min": 0,
+        "max": 1
+      },
+      "space": "lab",
+      "stops": [
+        {
+          "pos": 0.0,
+          "color": "#000004"
+        },
+        {
+          "pos": 0.1111111111111111,
+          "color": "#1b0c41"
+        },
+        {
+          "pos": 0.2222222222222222,
+          "color": "#4a0c6b"
+        },
+        {
+          "pos": 0.3333333333333333,
+          "color": "#781c6d"
+        },
+        {
+          "pos": 0.4444444444444444,
+          "color": "#a52c60"
+        },
+        {
+          "pos": 0.5555555555555556,
+          "color": "#cf4446"
+        },
+        {
+          "pos": 0.6666666666666666,
+          "color": "#ed6925"
+        },
+        {
+          "pos": 0.7777777777777778,
+          "color": "#fb9b06"
+        },
+        {
+          "pos": 0.8888888888888888,
+          "color": "#f7d13d"
+        },
+        {
+          "pos": 1.0,
+          "color": "#fcffa4"
+        }
+      ]
+    },
+    {
+      "id": "weasis.plasma",
+      "name": "Plasma",
+      "category": "Scientific",
+      "tags": [
+        "perceptual"
+      ],
+      "domain": {
+        "kind": "relative",
+        "min": 0,
+        "max": 1
+      },
+      "space": "lab",
+      "stops": [
+        {
+          "pos": 0.0,
+          "color": "#0d0887"
+        },
+        {
+          "pos": 0.1111111111111111,
+          "color": "#47039f"
+        },
+        {
+          "pos": 0.2222222222222222,
+          "color": "#7301a8"
+        },
+        {
+          "pos": 0.3333333333333333,
+          "color": "#9c179e"
+        },
+        {
+          "pos": 0.4444444444444444,
+          "color": "#bd3786"
+        },
+        {
+          "pos": 0.5555555555555556,
+          "color": "#d8576b"
+        },
+        {
+          "pos": 0.6666666666666666,
+          "color": "#ed7953"
+        },
+        {
+          "pos": 0.7777777777777778,
+          "color": "#fa9e3b"
+        },
+        {
+          "pos": 0.8888888888888888,
+          "color": "#fdc926"
+        },
+        {
+          "pos": 1.0,
+          "color": "#f0f921"
+        }
+      ]
+    },
+    {
+      "id": "weasis.cividis",
+      "name": "Cividis",
+      "category": "Scientific",
+      "tags": [
+        "perceptual",
+        "colorblind"
+      ],
+      "domain": {
+        "kind": "relative",
+        "min": 0,
+        "max": 1
+      },
+      "space": "lab",
+      "stops": [
+        {
+          "pos": 0.0,
+          "color": "#00224e"
+        },
+        {
+          "pos": 0.1111111111111111,
+          "color": "#123570"
+        },
+        {
+          "pos": 0.2222222222222222,
+          "color": "#3b496c"
+        },
+        {
+          "pos": 0.3333333333333333,
+          "color": "#575d6d"
+        },
+        {
+          "pos": 0.4444444444444444,
+          "color": "#707173"
+        },
+        {
+          "pos": 0.5555555555555556,
+          "color": "#8a8678"
+        },
+        {
+          "pos": 0.6666666666666666,
+          "color": "#a59c74"
+        },
+        {
+          "pos": 0.7777777777777778,
+          "color": "#c3b369"
+        },
+        {
+          "pos": 0.8888888888888888,
+          "color": "#e1cc55"
+        },
+        {
+          "pos": 1.0,
+          "color": "#fee838"
+        }
+      ]
+    },
+    {
+      "id": "weasis.turbo",
+      "name": "Turbo",
+      "category": "Scientific",
+      "tags": [
+        "rainbow",
+        "perceptual"
+      ],
+      "domain": {
+        "kind": "relative",
+        "min": 0,
+        "max": 1
+      },
+      "stops": [
+        {
+          "pos": 0.0,
+          "color": "#30123b"
+        },
+        {
+          "pos": 0.027450980392156862,
+          "color": "#38276d"
+        },
+        {
+          "pos": 0.043137254901960784,
+          "color": "#3c3286"
+        },
+        {
+          "pos": 0.07058823529411765,
+          "color": "#4146ac"
+        },
+        {
+          "pos": 0.09019607843137255,
+          "color": "#4454c3"
+        },
+        {
+          "pos": 0.11372549019607843,
+          "color": "#4664da"
+        },
+        {
+          "pos": 0.1411764705882353,
+          "color": "#4776ee"
+        },
+        {
+          "pos": 0.16862745098039217,
+          "color": "#4687fb"
+        },
+        {
+          "pos": 0.18823529411764706,
+          "color": "#4294ff"
+        },
+        {
+          "pos": 0.20784313725490197,
+          "color": "#3ba0fd"
+        },
+        {
+          "pos": 0.22745098039215686,
+          "color": "#33adf7"
+        },
+        {
+          "pos": 0.24705882352941178,
+          "color": "#2ab9ee"
+        },
+        {
+          "pos": 0.27450980392156865,
+          "color": "#1fc9dd"
+        },
+        {
+          "pos": 0.2901960784313726,
+          "color": "#1ad2d2"
+        },
+        {
+          "pos": 0.30980392156862746,
+          "color": "#18dbc5"
+        },
+        {
+          "pos": 0.32941176470588235,
+          "color": "#19e3b9"
+        },
+        {
+          "pos": 0.35294117647058826,
+          "color": "#22ebaa"
+        },
+        {
+          "pos": 0.3803921568627451,
+          "color": "#35f394"
+        },
+        {
+          "pos": 0.40784313725490196,
+          "color": "#4ef97d"
+        },
+        {
+          "pos": 0.44313725490196076,
+          "color": "#71fe5f"
+        },
+        {
+          "pos": 0.47058823529411764,
+          "color": "#8bff4b"
+        },
+        {
+          "pos": 0.49019607843137253,
+          "color": "#9cfe40"
+        },
+        {
+          "pos": 0.5176470588235295,
+          "color": "#affa37"
+        },
+        {
+          "pos": 0.5450980392156862,
+          "color": "#c1f334"
+        },
+        {
+          "pos": 0.5803921568627451,
+          "color": "#d7e535"
+        },
+        {
+          "pos": 0.6078431372549019,
+          "color": "#e5d938"
+        },
+        {
+          "pos": 0.6274509803921569,
+          "color": "#eecf3a"
+        },
+        {
+          "pos": 0.6549019607843137,
+          "color": "#f7c13a"
+        },
+        {
+          "pos": 0.6745098039215687,
+          "color": "#fbb637"
+        },
+        {
+          "pos": 0.7019607843137254,
+          "color": "#fea431"
+        },
+        {
+          "pos": 0.7372549019607844,
+          "color": "#fd8a26"
+        },
+        {
+          "pos": 0.7764705882352941,
+          "color": "#f66c19"
+        },
+        {
+          "pos": 0.807843137254902,
+          "color": "#ed5510"
+        },
+        {
+          "pos": 0.8274509803921568,
+          "color": "#e7490c"
+        },
+        {
+          "pos": 0.8627450980392157,
+          "color": "#d83706"
+        },
+        {
+          "pos": 0.8980392156862745,
+          "color": "#c52603"
+        },
+        {
+          "pos": 0.9333333333333333,
+          "color": "#af1801"
+        },
+        {
+          "pos": 0.9725490196078431,
+          "color": "#920b01"
+        },
+        {
+          "pos": 1.0,
+          "color": "#7a0403"
+        }
+      ],
+      "metadata": {
+        "source": "Google Turbo colormap (Apache 2.0), Anton Mikhailov 2019"
+      }
+    }
+  ]
+}

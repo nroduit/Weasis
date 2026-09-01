@@ -17,6 +17,8 @@ import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.text.DateFormat;
 import java.util.*;
+import java.util.List;
+import java.util.Optional;
 import javax.swing.ButtonGroup;
 import javax.swing.JPopupMenu;
 import org.dcm4che3.data.Attributes;
@@ -24,7 +26,10 @@ import org.dcm4che3.data.Sequence;
 import org.dcm4che3.data.Tag;
 import org.dcm4che3.img.data.CIELab;
 import org.dcm4che3.img.data.PrDicomObject;
+import org.dcm4che3.img.data.PrDicomObject.BlendingLayer;
+import org.dcm4che3.img.data.PrDicomObject.PresentationStateType;
 import org.dcm4che3.img.lut.PresetWindowLevel;
+import org.dcm4che3.img.lut.VoiLutModule;
 import org.dcm4che3.img.util.DicomObjectUtil;
 import org.dcm4che3.img.util.DicomUtils;
 import org.slf4j.Logger;
@@ -38,8 +43,10 @@ import org.weasis.core.api.image.OpManager;
 import org.weasis.core.api.image.SimpleOpManager;
 import org.weasis.core.api.image.WindowOp;
 import org.weasis.core.api.image.ZoomOp;
+import org.weasis.core.api.image.lut.ColorMapRegistry;
 import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.api.media.data.MediaSeries;
+import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.api.util.ResourceUtil.OtherIcon;
 import org.weasis.core.ui.editor.image.ViewButton;
@@ -59,15 +66,26 @@ import org.weasis.core.ui.util.TitleMenuItem;
 import org.weasis.core.util.EscapeChars;
 import org.weasis.core.util.LangUtil;
 import org.weasis.core.util.MathUtil;
+import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.PRSpecialElement;
 import org.weasis.dicom.codec.PresentationStateReader;
 import org.weasis.dicom.codec.TagD;
+import org.weasis.dicom.codec.utils.DicomColorPalette;
 import org.weasis.dicom.explorer.DicomModel;
 import org.weasis.dicom.explorer.pr.PrGraphicUtil;
+import org.weasis.dicom.viewer2d.fusion.FusionController;
+import org.weasis.dicom.viewer2d.fusion.FusionOp;
+import org.weasis.dicom.viewer2d.fusion.FusionState;
+import org.weasis.dicom.viewer2d.fusion.FusionWindow;
 import org.weasis.opencv.data.PlanarImage;
 import org.weasis.opencv.op.ImageConversion;
+import org.weasis.opencv.op.lut.ByteLut;
+import org.weasis.opencv.op.lut.ColorLut;
 import org.weasis.opencv.op.lut.DefaultWlPresentation;
+import org.weasis.opencv.op.lut.colormap.ColorMap;
+import org.weasis.opencv.op.lut.colormap.ColorMapType;
+import org.weasis.opencv.op.lut.colormap.ColorStop;
 
 /**
  * Manager for DICOM Presentation State (PR) operations.
@@ -116,6 +134,7 @@ public class PRManager {
       applyWindowLevelSettings(context);
       applySpatialTransformations(context);
       applyGraphics(context);
+      applyBlending(context);
     } catch (Exception e) {
       LOGGER.error("Error applying presentation state: {}", e.getMessage(), e);
     }
@@ -191,6 +210,132 @@ public class PRManager {
       actionsInView.put(ActionW.LUT_SHAPE.cmd(), preset.getLutShape());
       actionsInView.put(ActionW.DEFAULT_PRESET.cmd(), true);
     }
+    applyPseudoColorPalette(context, actionsInView);
+  }
+
+  /**
+   * A Blending Softcopy presentation state superimposes a second series on the displayed one: it
+   * becomes the fusion overlay, windowed by its own layer, colored by the state's palette and
+   * blended with the relative opacity. Applied only when the view shows the underlying set.
+   */
+  private static void applyBlending(PresentationContext context) {
+    PrDicomObject pr = context.reader().getPrDicomObject();
+    if (pr == null
+        || pr.getPresentationStateType() != PresentationStateType.BLENDING_SOFTCOPY
+        || pr.getSuperimposedLayer().isEmpty()) {
+      return;
+    }
+    ViewCanvas<DicomImageElement> view = context.view();
+    MediaSeries<DicomImageElement> series = view.getSeries();
+    String seriesUid = TagD.getTagValue(series, Tag.SeriesInstanceUID, String.class);
+    if (pr.getUnderlyingLayer().map(layer -> !layer.references(seriesUid)).orElse(true)) {
+      LOGGER.info(
+          "Blending state {} is applied from its superimposed set: no blending",
+          pr.getPrContentLabel());
+      return;
+    }
+    if (!(series.getTagValue(TagW.ExplorerModel) instanceof DicomModel model)) {
+      return;
+    }
+    BlendingLayer superimposed = pr.getSuperimposedLayer().get();
+    MediaSeries<DicomImageElement> overlay = findSeries(model, superimposed.seriesInstanceUids());
+    if (overlay == null) {
+      LOGGER.warn(
+          "Blending state {}: the superimposed series is not loaded", pr.getPrContentLabel());
+      return;
+    }
+    FusionWindow window = blendingWindow(superimposed, overlay);
+    double opacity = pr.getRelativeOpacity().orElse(FusionOp.DEFAULT_OVERLAY_OPACITY);
+    FusionController.applyState(
+        List.of(view),
+        new FusionState(
+            overlay, blendingPalette(pr), window, FusionOp.DEFAULT_BASE_OPACITY, opacity, null));
+  }
+
+  @SuppressWarnings("unchecked")
+  private static MediaSeries<DicomImageElement> findSeries(DicomModel model, List<String> uids) {
+    for (String uid : uids) {
+      if (model.getSeriesNode(uid) instanceof MediaSeries<?> found) {
+        return (MediaSeries<DicomImageElement>) found;
+      }
+    }
+    return null;
+  }
+
+  // The superimposed layer's window, else the overlay's own default window.
+  private static FusionWindow blendingWindow(
+      BlendingLayer layer, MediaSeries<DicomImageElement> overlay) {
+    VoiLutModule voi = layer.voiLut();
+    if (voi != null && !voi.getWindowCenter().isEmpty() && !voi.getWindowWidth().isEmpty()) {
+      double center = voi.getWindowCenter().getFirst();
+      double width = voi.getWindowWidth().getFirst();
+      DicomImageElement ref = overlay.getMedia(MediaSeries.MEDIA_POSITION.MIDDLE, null, null);
+      return new FusionWindow(
+          center - width / 2.0,
+          center + width / 2.0,
+          1.0,
+          ref == null ? null : ref.getPixelValueUnit());
+    }
+    return FusionController.provisionalWindow(overlay);
+  }
+
+  /**
+   * The palette of a blending state as a uniformly opaque map (DICOM blends with one relative
+   * opacity, not per value): its own data, else the palette its UID refers to, else gray.
+   */
+  private static ByteLut blendingPalette(PrDicomObject pr) {
+    ColorMapRegistry registry = ColorMapRegistry.getInstance();
+    String uid =
+        pr.getPaletteColorLutUid().orElse(pr.getDicomObject().getString(Tag.SOPInstanceUID));
+    Optional<ColorMap> known = registry.findByDicomUid(uid);
+    if (known.isEmpty() && pr.getPaletteColorLut().isPresent()) {
+      String label = pr.getPrContentLabel();
+      ColorMap palette =
+          DicomColorPalette.fromLookupTable(
+                  StringUtil.hasText(label) ? label : Messages.getString("PRManager.pseudo.color"),
+                  pr.getPaletteColorLut().get())
+              .toBuilder()
+              .metadata(ColorMap.META_DICOM_UID, uid)
+              .build();
+      registry.addImported(palette);
+      known = Optional.of(palette);
+    }
+    return known.map(PRManager::opaque).map(registry::byteLut).orElse(ColorLut.GRAY.getByteLut());
+  }
+
+  // Same colors, fully opaque everywhere: the blend's relative opacity is applied by the fusion.
+  private static ColorMap opaque(ColorMap map) {
+    List<ColorStop> colors =
+        map.stops().stream().filter(ColorStop::hasColor).map(s -> s.withAlpha(null)).toList();
+    return map.toBuilder()
+        .type(ColorMapType.TRANSFER)
+        .stops(colors)
+        .alphaStop(map.domain().min(), 1f)
+        .alphaStop(map.domain().max(), 1f)
+        .build();
+  }
+
+  // A Pseudo-Color presentation state colors the P-Values through its palette.
+  private static void applyPseudoColorPalette(
+      PresentationContext context, Map<String, Object> actionsInView) {
+    PrDicomObject pr = context.reader().getPrDicomObject();
+    if (pr == null || pr.getPaletteColorLut().isEmpty()) {
+      return;
+    }
+    String label = pr.getPrContentLabel();
+    String uid = pr.getDicomObject().getString(Tag.SOPInstanceUID);
+    ColorMap palette =
+        DicomColorPalette.fromLookupTable(
+                StringUtil.hasText(label) ? label : Messages.getString("PRManager.pseudo.color"),
+                pr.getPaletteColorLut().get())
+            .toBuilder()
+            .metadata(ColorMap.META_DICOM_UID, uid)
+            .metadata(ColorMap.META_DICOM_LABEL, label)
+            .build();
+    ColorMapRegistry registry = ColorMapRegistry.getInstance();
+    registry.addImported(palette);
+    ColorMap registered = registry.findByDicomUid(uid).orElse(palette);
+    actionsInView.put(ActionW.LUT.cmd(), registry.byteLut(registered));
   }
 
   private static boolean getPixelPaddingValue(ViewCanvas<DicomImageElement> view) {

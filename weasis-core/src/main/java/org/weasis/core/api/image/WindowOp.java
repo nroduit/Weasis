@@ -9,15 +9,21 @@
  */
 package org.weasis.core.api.image;
 
+import java.util.Map;
+import java.util.Optional;
 import org.weasis.core.Messages;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.image.util.WindLevelParameters;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.util.LangUtil;
 import org.weasis.opencv.data.PlanarImage;
+import org.weasis.opencv.op.lut.ByteLut;
 import org.weasis.opencv.op.lut.DefaultWlPresentation;
 import org.weasis.opencv.op.lut.PresentationStateLut;
 import org.weasis.opencv.op.lut.WlPresentation;
+import org.weasis.opencv.op.lut.colormap.ColorMap;
+import org.weasis.opencv.op.lut.colormap.ColorMapDomain;
+import org.weasis.opencv.op.lut.colormap.DomainKind;
 
 /**
  * Operation for applying window/level transformations to medical images. This operation manages
@@ -31,6 +37,35 @@ public class WindowOp extends AbstractOp {
   public static final String P_FILL_OUTSIDE_LUT = "fill.outside.lut";
   public static final String P_APPLY_WL_COLOR = "weasis.color.wl.apply";
   public static final String P_INVERSE_LEVEL = "weasis.level.inverse";
+
+  /**
+   * Bit depth of the windowed output, 8 by default. Above 8 the output is a 16-bit index image over
+   * {@code [0, 2^bits - 1]} for a downstream {@link PseudoColorOp}. (Integer, Optional)
+   */
+  public static final String P_OUTPUT_BITS = "wl.output.bits"; // NON-NLS
+
+  /**
+   * Value range mapped onto the wide output instead of the window, for a color map whose colors are
+   * anchored to physical values; values outside it saturate. ({@link OutputRange}, Optional)
+   */
+  public static final String P_OUTPUT_RANGE = "wl.output.range"; // NON-NLS
+
+  /** The values mapped to the first and last index of a wide output. */
+  public record OutputRange(double min, double max) {
+    public OutputRange {
+      if (!(max > min)) {
+        throw new IllegalArgumentException("Range must have max > min");
+      }
+    }
+
+    public double window() {
+      return max - min;
+    }
+
+    public double level() {
+      return (min + max) / 2.0;
+    }
+  }
 
   private static final String P_PR_ELEMENT = "pr.element";
 
@@ -52,6 +87,7 @@ public class WindowOp extends AbstractOp {
     switch (event.eventType()) {
       case IMAGE_CHANGE -> setParam(P_IMAGE_ELEMENT, event.image());
       case RESET_DISPLAY, SERIES_CHANGE -> handleDisplayReset(event.image());
+      case APPLY_PR -> handlePresentationState(event.params());
       default -> {
         /* no action */
       }
@@ -66,6 +102,32 @@ public class WindowOp extends AbstractOp {
     PlanarImage result =
         imageElement != null ? imageElement.getRenderedImage(source, params) : source;
     params.put(Param.OUTPUT_IMG, result);
+  }
+
+  // A palette carried by the state replaces the map, so the index width must follow it.
+  private void handlePresentationState(Map<String, Object> params) {
+    if (params != null && params.get(PseudoColorOp.P_LUT) instanceof ByteLut lut) {
+      setParam(P_OUTPUT_BITS, outputBitsOf(lut));
+      setParam(P_OUTPUT_RANGE, outputRangeOf(lut).orElse(null));
+    }
+  }
+
+  /** The index width a map compiled for more than 8 bits asks from the window stage. */
+  public static int outputBitsOf(Object lut) {
+    return lut instanceof ByteLut byteLut && byteLut.source() != null
+        ? byteLut.source().bits()
+        : ColorMap.MIN_BITS;
+  }
+
+  /** The physical range a fixed-domain map is indexed over instead of the window. */
+  public static Optional<OutputRange> outputRangeOf(Object lut) {
+    if (lut instanceof ByteLut byteLut
+        && byteLut.source() != null
+        && byteLut.source().domain().kind() == DomainKind.FIXED) {
+      ColorMapDomain domain = byteLut.source().domain();
+      return Optional.of(new OutputRange(domain.min(), domain.max()));
+    }
+    return Optional.empty();
   }
 
   private void handleDisplayReset(ImageElement img) {

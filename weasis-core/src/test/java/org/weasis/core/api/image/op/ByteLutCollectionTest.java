@@ -11,23 +11,14 @@ package org.weasis.core.api.image.op;
 
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Scanner;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.io.TempDir;
-import org.weasis.opencv.op.lut.ByteLut;
 
 class ByteLutCollectionTest {
 
@@ -220,67 +211,6 @@ class ByteLutCollectionTest {
             "empty-file fallback identity ramp, band " + band + " idx " + i);
       }
     }
-  }
-
-  // -- readLutFilesFromResourcesDir -----------------------------------------
-
-  @Test
-  void readLutFilesFromResourcesDir_nullListThrowsNpe() {
-    assertThrows(
-        NullPointerException.class,
-        () -> ByteLutCollection.readLutFilesFromResourcesDir(null, Path.of("/tmp")));
-  }
-
-  @Test
-  void readLutFilesFromResourcesDir_nullFolderIsNoOp() {
-    List<ByteLut> entries = new ArrayList<>();
-
-    assertDoesNotThrow(() -> ByteLutCollection.readLutFilesFromResourcesDir(entries, null));
-
-    assertTrue(entries.isEmpty(), "no entries added for null folder");
-  }
-
-  @Test
-  void readLutFilesFromResourcesDir_nonExistentFolderIsNoOp() {
-    List<ByteLut> entries = new ArrayList<>();
-    Path nonExistent = Path.of("/var/empty/this-path-does-not-exist-xyz");
-
-    assertDoesNotThrow(() -> ByteLutCollection.readLutFilesFromResourcesDir(entries, nonExistent));
-
-    assertTrue(entries.isEmpty());
-  }
-
-  @Test
-  void readLutFilesFromResourcesDir_loadsAndSortsByName(@TempDir Path tempDir) throws IOException {
-    // Write two valid LUT files in non-alphabetical order; result must be sorted by name.
-    Files.writeString(tempDir.resolve("zebra.lut"), "0 0 0\n255 255 255\n");
-    Files.writeString(tempDir.resolve("alpha.lut"), "128 128 128\n");
-    List<ByteLut> entries = new ArrayList<>();
-
-    ByteLutCollection.readLutFilesFromResourcesDir(entries, tempDir);
-
-    assertAll(
-        () -> assertEquals(2, entries.size()),
-        () -> assertEquals("alpha", entries.get(0).name()),
-        () -> assertEquals("zebra", entries.get(1).name()));
-  }
-
-  @Test
-  void readLutFilesFromResourcesDir_unreadableFileSkippedWithoutThrowing(@TempDir Path tempDir)
-      throws IOException {
-    // Garbled content -> ByteLut construction may fail; the loader must swallow the error
-    // and continue with the next file rather than aborting the whole directory.
-    Files.writeString(tempDir.resolve("good.lut"), "0 0 0\n");
-    Files.writeString(tempDir.resolve("bad.lut"), "absolutely not a lut file");
-    List<ByteLut> entries = new ArrayList<>();
-
-    assertDoesNotThrow(() -> ByteLutCollection.readLutFilesFromResourcesDir(entries, tempDir));
-
-    // 'good.lut' should be present; the bad one may be present (with back-filled identity) or
-    // absent depending on parser tolerance — only assert that the good one wasn't lost.
-    assertTrue(
-        entries.stream().anyMatch(b -> "good".equals(b.name())),
-        "good LUT must be loaded even when another file is malformed");
   }
 
   // -- helpers --------------------------------------------------------------

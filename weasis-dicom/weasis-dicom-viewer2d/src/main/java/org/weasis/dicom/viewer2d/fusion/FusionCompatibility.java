@@ -46,7 +46,7 @@ public final class FusionCompatibility {
   private static final Logger LOGGER = LoggerFactory.getLogger(FusionCompatibility.class);
 
   /** Functional/parametric modalities suitable as a fusion overlay. */
-  private static final Set<String> OVERLAY_MODALITIES = Set.of("PT", "NM"); // NON-NLS
+  private static final Set<String> OVERLAY_MODALITIES = Set.of("PT", "NM", "RTDOSE"); // NON-NLS
 
   /** Anatomical modalities suitable as a fusion base. */
   private static final Set<String> ANATOMICAL_MODALITIES = Set.of("CT", "MR"); // NON-NLS

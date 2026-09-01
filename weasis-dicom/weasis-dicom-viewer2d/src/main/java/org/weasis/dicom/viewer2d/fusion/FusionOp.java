@@ -39,6 +39,8 @@ import org.weasis.dicom.viewer2d.mpr.Volume;
 import org.weasis.opencv.data.ImageCV;
 import org.weasis.opencv.data.PlanarImage;
 import org.weasis.opencv.op.lut.ByteLut;
+import org.weasis.opencv.op.lut.colormap.ColorMap;
+import org.weasis.opencv.op.lut.colormap.ColorMapCompiler;
 
 /**
  * Image operation that overlays a PET (or other functional) image onto the current CT/MR image and
@@ -333,6 +335,11 @@ public class FusionOp extends AbstractOp {
    */
   private ByteLutAlpha buildAlphaLut() {
     ByteLut lut = getParam(P_FUSION_LUT, ByteLut.class);
+    ColorMap map = lut == null ? null : lut.source();
+    if (map != null && map.hasAlpha()) {
+      // A transfer map carries its own alpha curve over the window: no built-in ramp.
+      return new ByteLutAlpha(OP_NAME, ColorMapCompiler.toAbgr(map, LUT_SIZE));
+    }
     byte[][] bgr = lut != null && lut.lutTable() != null ? lut.lutTable() : GRAY_LUT;
     return ByteLutAlpha.fromColorLut(
         OP_NAME, bgr, 1.0f, ALPHA_TRANSPARENT_BELOW, ALPHA_OPAQUE_FROM);

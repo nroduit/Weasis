@@ -18,9 +18,11 @@ import java.awt.event.MouseWheelEvent;
 import java.awt.image.DataBuffer;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.function.BiFunction;
 import javax.swing.BoundedRangeModel;
@@ -64,7 +66,7 @@ import org.weasis.core.api.image.ImageOpNode;
 import org.weasis.core.api.image.OpManager;
 import org.weasis.core.api.image.PseudoColorOp;
 import org.weasis.core.api.image.WindowOp;
-import org.weasis.core.api.image.op.ByteLutCollection;
+import org.weasis.core.api.image.lut.ColorMapRegistry;
 import org.weasis.core.api.image.util.KernelData;
 import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.api.media.data.MediaElement;
@@ -102,7 +104,6 @@ import org.weasis.dicom.codec.PresentationStateReader;
 import org.weasis.dicom.codec.SortSeriesStack;
 import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.geometry.ImageOrientation;
-import org.weasis.dicom.codec.utils.DicomResource;
 import org.weasis.dicom.explorer.DicomModel;
 import org.weasis.dicom.explorer.exp.DicomExportAction;
 import org.weasis.dicom.explorer.main.DicomExplorer;
@@ -624,8 +625,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
         setFusionControlsEnabled(selected);
         if (selected) {
           getAction(FusionAction.LUT)
-              .ifPresent(
-                  a -> FusionController.applyParam(FusionOp.P_FUSION_LUT, a.getSelectedItem()));
+              .ifPresent(a -> FusionController.applyLut(a.getSelectedItem()));
           // The series combo is populated without triggering its listener, so push the current
           // selection to the op here; otherwise the overlay has no PET series and stays hidden.
           getAction(FusionAction.SERIES)
@@ -647,10 +647,28 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
       public void itemStateChanged(Object object) {
         FusionController.applyParam(FusionOp.P_FUSION_SERIES, object);
         fusionOverlayOpacity.setModalityLabel(FusionController.modalityOf(object));
+        selectDefaultFusionLut(FusionController.modalityOf(object));
         applyDefaultFusionWindow(object);
         FusionController.buildVolume(object);
       }
     };
+  }
+
+  // The map flagged as default for the overlay's modality (PET SUV, Isodose) takes over.
+  private void selectDefaultFusionLut(String modality) {
+    ColorMapRegistry registry = ColorMapRegistry.getInstance();
+    registry
+        .defaultFor(modality)
+        .map(registry::byteLut)
+        .ifPresent(
+            lut ->
+                getAction(FusionAction.LUT)
+                    .ifPresent(
+                        a -> {
+                          if (Arrays.asList(a.getAllItem()).contains(lut)) {
+                            a.setSelectedItem(lut);
+                          }
+                        }));
   }
 
   /**
@@ -670,12 +688,17 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
         new ComboItemListener<>(FusionAction.LUT, luts) {
           @Override
           public void itemStateChanged(Object object) {
-            FusionController.applyParam(FusionOp.P_FUSION_LUT, object);
+            FusionController.applyLut(object);
           }
         };
-    // PET is a hot-metal palette (monotonic luminance) tuned for PET overlays; use it by default.
+    // The map flagged as PT default (an SUVbw preset), else the hot-metal PET palette.
+    ByteLut preferred =
+        ColorMapRegistry.getInstance()
+            .defaultFor("PT") // NON-NLS
+            .map(ColorMapRegistry.getInstance()::byteLut)
+            .orElse(null);
     for (ByteLut lut : luts) {
-      if ("PET".equals(lut.name())) { // NON-NLS
+      if (lut.equals(preferred) || (preferred == null && "PET".equals(lut.name()))) { // NON-NLS
         action.setSelectedItemWithoutTriggerAction(lut);
         break;
       }
@@ -683,12 +706,68 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
     return action;
   }
 
+  /** Gray plus every 2D map that applies to any modality or to the functional modalities. */
   private static ByteLut[] fusionLutList() {
+    ColorMapRegistry registry = ColorMapRegistry.getInstance();
     List<ByteLut> lutEntries = new ArrayList<>();
     lutEntries.add(ColorLut.GRAY.getByteLut());
-    ByteLutCollection.readLutFilesFromResourcesDir(
-        lutEntries, ResourceUtil.getResource(DicomResource.LUTS).toPath());
+    registry.mapsFor(null).stream().map(registry::byteLut).forEach(lutEntries::add);
+    for (String modality : List.of("PT", "NM", "RTDOSE")) { // NON-NLS
+      registry.mapsFor(modality).stream()
+          .filter(m -> !m.modalities().isEmpty())
+          .map(registry::byteLut)
+          .filter(l -> !lutEntries.contains(l))
+          .forEach(lutEntries::add);
+    }
     return lutEntries.toArray(new ByteLut[0]);
+  }
+
+  /** The identity and gray LUTs, then every color map that applies to {@code modality}. */
+  private static List<ByteLut> lutEntries(String modality) {
+    List<ByteLut> lutEntries = new ArrayList<>();
+    lutEntries.add(ColorLut.IMAGE.getByteLut());
+    lutEntries.add(ColorLut.GRAY.getByteLut());
+    lutEntries.addAll(ColorMapRegistry.getInstance().byteLutsFor(modality));
+    return lutEntries;
+  }
+
+  private String lutMenuModality;
+  private int lutMenuRevision = -1;
+  private List<ByteLut> lutMenuBase = List.of();
+  private ByteLut lutMenuExtra;
+
+  /**
+   * The menus follow the displayed modality and the registry, rebuilt only when either changed; the
+   * map the view shows is always listed, even when synchronized from another modality.
+   */
+  private void refreshLutEntries(
+      ComboItemListener<ByteLut> action, DicomImageElement image, ByteLut shown) {
+    String modality = image == null ? null : TagD.getTagValue(image, Tag.Modality, String.class);
+    int revision = ColorMapRegistry.getInstance().revision();
+    boolean sameBase = revision == lutMenuRevision && Objects.equals(modality, lutMenuModality);
+    if (!sameBase) {
+      lutMenuRevision = revision;
+      lutMenuModality = modality;
+      lutMenuBase = lutEntries(modality);
+    }
+    ByteLut extra = shown != null && !lutMenuBase.contains(shown) ? shown : null;
+    if (sameBase && Objects.equals(extra, lutMenuExtra)) {
+      return;
+    }
+    lutMenuExtra = extra;
+    List<ByteLut> entries = new ArrayList<>(lutMenuBase);
+    if (extra != null) {
+      entries.add(extra);
+    }
+    action.setDataListWithoutTriggerAction(entries.toArray(ByteLut[]::new));
+    if (!sameBase) {
+      getAction(FusionAction.LUT)
+          .ifPresent(a -> a.setDataListWithoutTriggerAction(fusionLutList()));
+    }
+  }
+
+  private static ByteLut selectedLut(ComboItemListener<ByteLut> action) {
+    return action.getSelectedItem() instanceof ByteLut lut ? lut : null;
   }
 
   /**
@@ -875,14 +954,19 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
   }
 
   private ComboItemListener<ByteLut> newLutAction() {
-    List<ByteLut> lutEntries = new ArrayList<>();
-    lutEntries.add(ColorLut.GRAY.getByteLut());
-    ByteLutCollection.readLutFilesFromResourcesDir(
-        lutEntries, ResourceUtil.getResource(DicomResource.LUTS).toPath());
-    // Set default first as the list has been sorted
-    lutEntries.addFirst(ColorLut.IMAGE.getByteLut());
-
-    return new ComboItemListener<>(ActionW.LUT, lutEntries.toArray(new ByteLut[0])) {
+    ColorMapRegistry.getInstance()
+        .addListener(
+            () ->
+                GuiExecutor.execute(
+                    () -> {
+                      ViewCanvas<DicomImageElement> view = getSelectedViewPane();
+                      getAction(ActionW.LUT)
+                          .ifPresent(
+                              a ->
+                                  refreshLutEntries(
+                                      a, view == null ? null : view.getImage(), selectedLut(a)));
+                    }));
+    return new ComboItemListener<>(ActionW.LUT, lutEntries(null).toArray(ByteLut[]::new)) {
 
       @Override
       public void itemStateChanged(Object object) {
@@ -1251,11 +1335,15 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
 
     getAction(ActionW.LUT)
         .ifPresent(
-            a ->
-                a.setSelectedItemWithoutTriggerAction(
-                    dispOp
-                        .getParamValue(PseudoColorOp.OP_NAME, PseudoColorOp.P_LUT)
-                        .orElse(ColorLut.IMAGE.getByteLut())));
+            a -> {
+              ByteLut shown =
+                  dispOp.getParamValue(PseudoColorOp.OP_NAME, PseudoColorOp.P_LUT).orElse(null)
+                          instanceof ByteLut lut
+                      ? lut
+                      : ColorLut.IMAGE.getByteLut();
+              refreshLutEntries(a, view2d.getImage(), shown);
+              a.setSelectedItemWithoutTriggerAction(shown);
+            });
     getAction(ActionW.INVERT_LUT)
         .ifPresent(
             a ->

@@ -494,12 +494,25 @@ public class DicomImageElement extends ImageElement implements DicomElement {
         readParams.setApplyWindowLevelToColorImage((Boolean) params.get(WindowOp.P_APPLY_WL_COLOR));
         readParams.setInverseLut((Boolean) params.get(WindowOp.P_INVERSE_LEVEL));
         readParams.setFillOutsideLutRange((Boolean) params.get(WindowOp.P_FILL_OUTSIDE_LUT));
+        if (imageSource.channels() == 1) {
+          readParams.setOutputBits((Integer) params.get(WindowOp.P_OUTPUT_BITS));
+          applyOutputRange(readParams, params);
+        }
       }
       if (isImageInitialized()) {
         return ImageRendering.getVoiLutImage(imageSource, adapter, readParams);
       }
     }
     return null;
+  }
+
+  // A map anchored to physical values is indexed over its own range, whatever the window is.
+  private static void applyOutputRange(DicomImageReadParam readParams, Map<String, Object> params) {
+    if (params.get(WindowOp.P_OUTPUT_RANGE) instanceof WindowOp.OutputRange range) {
+      readParams.setWindowWidth(range.window());
+      readParams.setWindowCenter(range.level());
+      readParams.setVoiLutShape(LutShape.LINEAR);
+    }
   }
 
   public GeometryOfSlice getSliceGeometry() {

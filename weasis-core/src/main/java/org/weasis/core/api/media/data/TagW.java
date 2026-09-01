@@ -150,6 +150,11 @@ public class TagW {
   public static final TagW SlicePosition = new TagW("SlicePosition", TagType.DOUBLE);
   public static final TagW SuvFactor = new TagW("SUVFactor", TagType.DOUBLE);
 
+  /**
+   * Pixel value that a percent color map takes as 100 %, e.g. the prescribed dose of a dose grid.
+   */
+  public static final TagW PercentReference = new TagW("PercentReference", TagType.DOUBLE);
+
   public static final TagW RootElement = new TagW("RootElement", TagType.STRING);
   public static final TagW FilePath = new TagW("FilePath", TagType.STRING);
   public static final TagW FileName = new TagW("FileName", TagType.STRING);
@@ -197,6 +202,7 @@ public class TagW {
     addTag(SeriesSelected);
     addTag(SlicePosition);
     addTag(SuvFactor);
+    addTag(PercentReference);
     addTag(DirectDownloadFile);
     addTag(DirectDownloadThumbnail);
     addTag(RootElement);

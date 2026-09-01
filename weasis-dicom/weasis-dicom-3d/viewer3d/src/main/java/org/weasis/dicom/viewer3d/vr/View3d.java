@@ -47,6 +47,7 @@ import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 import javax.swing.Action;
 import javax.swing.JCheckBoxMenuItem;
@@ -148,6 +149,7 @@ public class View3d extends VolumeCanvas
 
   private int vertexBuffer;
   protected Preset volumePreset;
+  private final ConcurrentLinkedQueue<Preset> retiredPresets = new ConcurrentLinkedQueue<>();
   private JProgressBar progressBar;
 
   private volatile Vector3d mprCrossHairPosition; // NOSONAR visibility reference
@@ -331,6 +333,10 @@ public class View3d extends VolumeCanvas
       program.destroy(gl);
       quadProgram.destroy(gl);
       texture.destroy(gl);
+      destroyRetiredPresets(gl);
+      if (volumePreset != null && volumePreset.isPreview()) {
+        volumePreset.destroy(gl);
+      }
       SegVolumeTexture svt = segVolumeTexture;
       if (svt != null) {
         // destroy() releases the SegVolumeTexture's retain on the SegmentationVolume.
@@ -647,6 +653,23 @@ public class View3d extends VolumeCanvas
     program.allocateUniform(
         gl, "outputLevelMax", (g, loc) -> g.glUniform1f(loc, volumePreset.getWidth()));
     program.allocateUniform(
+        gl, "visibleMin", (g, loc) -> g.glUniform1f(loc, volumePreset.getVisibleRange()[0]));
+    program.allocateUniform(
+        gl, "visibleMax", (g, loc) -> g.glUniform1f(loc, volumePreset.getVisibleRange()[1]));
+    program.allocateUniform(
+        gl,
+        "gradientOpacityEnabled",
+        (g, loc) -> g.glUniform1i(loc, volumePreset.getGradientOpacityTable() != null ? 1 : 0));
+    program.allocateUniform(
+        gl,
+        "gradientOpacity",
+        (g, loc) -> {
+          float[] table = volumePreset.getGradientOpacityTable();
+          if (table != null) {
+            g.glUniform1fv(loc, table.length, table, 0);
+          }
+        });
+    program.allocateUniform(
         gl,
         "windowWidth",
         (g, loc) ->
@@ -874,8 +897,23 @@ public class View3d extends VolumeCanvas
     gl.glActiveTexture(GL.GL_TEXTURE0);
   }
 
+  // A replaced preview preset belongs to this view only: its textures go at the next frame.
+  private void retire(Preset old, Preset replacement) {
+    if (old != null && old != replacement && old.isPreview()) {
+      retiredPresets.add(old);
+    }
+  }
+
+  private void destroyRetiredPresets(GL2ES2 gl) {
+    Preset retired;
+    while ((retired = retiredPresets.poll()) != null) {
+      retired.destroy(gl);
+    }
+  }
+
   private void render(GL2ES2 gl2) {
     long start = profiler.start();
+    destroyRetiredPresets(gl2);
     gl2.glClear(GL.GL_COLOR_BUFFER_BIT | GL.GL_DEPTH_BUFFER_BIT);
     if (volTexture != null && volTexture.isReadyForDisplay()) {
       int sampleCount = renderingLayer.getQuality();
@@ -1407,6 +1445,7 @@ public class View3d extends VolumeCanvas
   }
 
   public void setVolumePreset(Preset preset) {
+    retire(this.volumePreset, preset);
     this.volumePreset = Objects.requireNonNull(preset);
     volumePreset.setRequiredBuilding(true);
 

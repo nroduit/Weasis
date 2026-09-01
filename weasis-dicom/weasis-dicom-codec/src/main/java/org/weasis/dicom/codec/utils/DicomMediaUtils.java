@@ -481,7 +481,54 @@ public class DicomMediaUtils {
    */
   public static boolean writeFrameGeometry(Taggable taggable, DicomMetaData md, int index) {
     return writePerFrameFunctionalGroupsSequence(taggable, md, index)
-        || writeNmTomoGeometry(taggable, md, index);
+        || writeNmTomoGeometry(taggable, md, index)
+        || writeRtDoseGeometry(taggable, md, index);
+  }
+
+  /**
+   * Derives the per-frame Image Position (Patient) of an RT Dose grid from the Grid Frame Offset
+   * Vector (3004,000C): offsets along the plane normal when relative (first value 0), else absolute
+   * positions along the patient's z axis.
+   *
+   * @param frameIndex zero-based frame index
+   * @return {@code true} when dose grid geometry was found and written
+   */
+  public static boolean writeRtDoseGeometry(Taggable taggable, DicomMetaData md, int frameIndex) {
+    Attributes header = md == null ? null : md.getDicomObject();
+    if (header == null || taggable == null || !"RTDOSE".equals(header.getString(Tag.Modality))) {
+      return false;
+    }
+    double[] iop = header.getDoubles(Tag.ImageOrientationPatient);
+    double[] ipp = header.getDoubles(Tag.ImagePositionPatient);
+    double[] offsets = header.getDoubles(Tag.GridFrameOffsetVector);
+    if (iop == null
+        || iop.length != 6
+        || ipp == null
+        || ipp.length != 3
+        || offsets == null
+        || frameIndex < 0
+        || frameIndex >= offsets.length) {
+      return false;
+    }
+    double[] framePos;
+    if (offsets[0] == 0.0) {
+      Vector3d normal = new Vector3d();
+      new Vector3d(iop[0], iop[1], iop[2]).cross(new Vector3d(iop[3], iop[4], iop[5]), normal);
+      if (normal.lengthSquared() == 0.0) {
+        return false;
+      }
+      normal.normalize();
+      double step = offsets[frameIndex];
+      framePos =
+          new double[] {
+            ipp[0] + normal.x * step, ipp[1] + normal.y * step, ipp[2] + normal.z * step
+          };
+    } else {
+      framePos = new double[] {ipp[0], ipp[1], offsets[frameIndex]};
+    }
+    taggable.setTag(TagD.get(Tag.ImageOrientationPatient), iop);
+    taggable.setTag(TagD.get(Tag.ImagePositionPatient), framePos);
+    return true;
   }
 
   public static boolean writePerFrameFunctionalGroupsSequence(

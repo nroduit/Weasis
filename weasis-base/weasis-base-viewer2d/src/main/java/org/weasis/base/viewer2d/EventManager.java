@@ -35,6 +35,7 @@ import org.weasis.core.api.gui.util.BasicActionState;
 import org.weasis.core.api.gui.util.ComboItemListener;
 import org.weasis.core.api.gui.util.Feature;
 import org.weasis.core.api.gui.util.Filter;
+import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.SliderChangeListener;
 import org.weasis.core.api.gui.util.SliderCineListener;
@@ -45,7 +46,7 @@ import org.weasis.core.api.image.ImageOpNode;
 import org.weasis.core.api.image.OpManager;
 import org.weasis.core.api.image.PseudoColorOp;
 import org.weasis.core.api.image.WindowOp;
-import org.weasis.core.api.image.op.ByteLutCollection;
+import org.weasis.core.api.image.lut.ColorMapRegistry;
 import org.weasis.core.api.image.util.KernelData;
 import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.api.media.data.ImageElement;
@@ -65,8 +66,12 @@ import org.weasis.core.ui.editor.image.SynchEvent;
 import org.weasis.core.ui.editor.image.SynchView;
 import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.editor.image.ZoomToolBar;
+import org.weasis.core.ui.editor.image.lut.ColorMapEditorDialog;
+import org.weasis.core.ui.editor.image.lut.ColorMapRadioMenu;
+import org.weasis.core.ui.editor.image.lut.ViewerColorMapHost;
 import org.weasis.core.ui.model.graphic.Graphic;
 import org.weasis.core.util.LangUtil;
+import org.weasis.core.util.StringUtil;
 import org.weasis.opencv.op.lut.ByteLut;
 import org.weasis.opencv.op.lut.ColorLut;
 import org.weasis.opencv.op.lut.DefaultWlPresentation;
@@ -80,6 +85,8 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
 
   /** The single instance of this singleton class. */
   private static EventManager instance;
+
+  private int lutMenuRevision = -1;
 
   /** The default private constructor to guarantee the singleton property of this class. */
   private EventManager() {
@@ -163,15 +170,30 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
     };
   }
 
-  private ComboItemListener<ByteLut> newLutAction() {
+  private static ByteLut[] lutEntries() {
     List<ByteLut> lutEntries = new ArrayList<>();
+    lutEntries.add(ColorLut.IMAGE.getByteLut());
     lutEntries.add(ColorLut.GRAY.getByteLut());
-    ByteLutCollection.readLutFilesFromResourcesDir(
-        lutEntries, ResourceUtil.getResource("luts").toPath()); // NON-NLS
-    // Set default first as the list has been sorted
-    lutEntries.addFirst(ColorLut.IMAGE.getByteLut());
+    lutEntries.addAll(ColorMapRegistry.getInstance().byteLutsFor(null));
+    return lutEntries.toArray(new ByteLut[0]);
+  }
 
-    return new ComboItemListener<>(ActionW.LUT, lutEntries.toArray(new ByteLut[0])) {
+  // The LUT menu follows the registry: rebuilt only when a map was saved, imported or deleted.
+  private void refreshLutEntries(ComboItemListener<ByteLut> action) {
+    int revision = ColorMapRegistry.getInstance().revision();
+    if (revision != lutMenuRevision) {
+      lutMenuRevision = revision;
+      action.setDataListWithoutTriggerAction(lutEntries());
+    }
+  }
+
+  private ComboItemListener<ByteLut> newLutAction() {
+    ColorMapRegistry.getInstance()
+        .addListener(
+            () ->
+                GuiExecutor.execute(
+                    () -> getAction(ActionW.LUT).ifPresent(this::refreshLutEntries)));
+    return new ComboItemListener<>(ActionW.LUT, lutEntries()) {
       @Override
       public void itemStateChanged(Object object) {
         if (object instanceof ByteLut) {
@@ -628,10 +650,23 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
     if (GuiUtils.getUICore().getSystemPreferences().getBooleanProperty(prop, true)) {
       Optional<ComboItemListener<ByteLut>> lutAction = getAction(ActionW.LUT);
       if (lutAction.isPresent()) {
-        return lutAction
-            .get()
-            .createUnregisteredRadioMenu(
-                ActionW.LUT.getTitle(), ResourceUtil.getIcon(ActionIcon.LUT));
+        ColorMapRadioMenu radioMenu = new ColorMapRadioMenu();
+        radioMenu.setModel(lutAction.get().getModel());
+        JMenu menu =
+            radioMenu.createMenu(ActionW.LUT.getTitle(), ResourceUtil.getIcon(ActionIcon.LUT));
+        menu.addSeparator();
+        JMenuItem edit =
+            new JMenuItem(
+                org.weasis.core.Messages.getString("ColorMapEditor.edit")
+                    + StringUtil.Suffix.THREE_PTS);
+        edit.addActionListener(
+            e -> {
+              ViewCanvas<ImageElement> view = getSelectedViewPane();
+              ColorMapEditorDialog.open(
+                  view == null ? null : view.getJComponent(), new ViewerColorMapHost<>(this));
+            });
+        menu.add(edit);
+        return menu;
       }
     }
     return null;

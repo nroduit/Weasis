@@ -47,6 +47,11 @@ import org.weasis.core.ui.pref.ViewSetting;
 import org.weasis.core.util.StringUtil;
 import org.weasis.opencv.op.lut.ColorLut;
 import org.weasis.opencv.op.lut.WlParams;
+import org.weasis.opencv.op.lut.colormap.ColorMap;
+import org.weasis.opencv.op.lut.colormap.ColorMapCompiler;
+import org.weasis.opencv.op.lut.colormap.ColorMapDomain;
+import org.weasis.opencv.op.lut.colormap.ColorMapSampler;
+import org.weasis.opencv.op.lut.colormap.DomainKind;
 
 public abstract class AbstractInfoLayer<E extends ImageElement> extends DefaultUUID
     implements LayerAnnotation<E> {
@@ -372,6 +377,11 @@ public abstract class AbstractInfoLayer<E extends ImageElement> extends DefaultU
     WlParams p = getWinLeveParameters();
     if (p != null && bound.height > 350) {
       DisplayByteLut lut = getLut(p);
+      ColorMap fixedMap = fixedMap(lut);
+      if (fixedMap != null) {
+        drawFixedLUT(g2, bound, midFontHeight, fixedMap);
+        return;
+      }
       byte[][] table = lut.getByteLut().lutTable();
       float length = table[0].length;
 
@@ -436,6 +446,66 @@ public abstract class AbstractInfoLayer<E extends ImageElement> extends DefaultU
         g2.draw(rect);
       }
     }
+  }
+
+  // A map anchored to physical values is not stretched over the window: null for the others.
+  private static ColorMap fixedMap(DisplayByteLut lut) {
+    ColorMap map = lut.getByteLut().source();
+    if (map == null || map.domain().kind() != DomainKind.FIXED) {
+      return null;
+    }
+    return lut.isInvert() ? map.reversed() : map;
+  }
+
+  /**
+   * Color bar of a fixed-domain map: the bar spans the map's own range, labelled in its unit,
+   * whatever the window is.
+   */
+  private void drawFixedLUT(Graphics2D g2, Rectangle bound, float midFontHeight, ColorMap map) {
+    int length = ColorMapCompiler.BYTE_LUT_ENTRIES;
+    float x = bound.width - 30f - eastButtonsWidth();
+    float y = bound.height / 2f - length / 2f;
+    int separation = 4;
+    float step = length / (float) separation;
+
+    g2.setPaint(Color.BLACK);
+    Rectangle2D.Float rect = new Rectangle2D.Float(x - 2f, y - 2f, 23f, length + 4f);
+    g2.draw(rect);
+
+    g2.setPaint(Color.WHITE);
+    ColorMapDomain domain = map.domain();
+    String unit = StringUtil.hasText(domain.unit()) ? " " + domain.unit() : "";
+    float shiftY = midFontHeight / 2f - g2.getFontMetrics().getDescent();
+    Line2D.Float line = new Line2D.Float();
+    for (int i = 0; i <= separation; i++) {
+      float posY = y + i * step;
+      line.setLine(x - 5f, posY, x - 1f, posY);
+      g2.draw(line);
+      double value = domain.denormalize((separation - i) / (double) separation);
+      String str = DecFormatter.allNumber(value) + unit;
+      FontTools.paintFontOutline(
+          g2, str, x - g2.getFontMetrics().stringWidth(str) - 7, posY + shiftY);
+    }
+    rect.setRect(x - 1f, y - 1f, 21f, length + 2f);
+    g2.draw(rect);
+
+    ColorMapSampler sampler = map.sampler();
+    for (int k = 0; k < length; k++) {
+      double value = domain.denormalize((length - 1 - k) / (double) (length - 1));
+      g2.setPaint(sampler.sample(value).withAlpha(1f).toColor());
+      rect.setRect(x, y + k, 19f, 1f);
+      g2.draw(rect);
+    }
+  }
+
+  private int eastButtonsWidth() {
+    int width = 0;
+    for (ViewButton b : view2DPane.getViewButtons()) {
+      if (b.isVisible() && b.getPosition() == GridBagConstraints.EAST) {
+        width = Math.max(width, b.getIcon().getIconWidth() + 5);
+      }
+    }
+    return width;
   }
 
   private WlParams getWinLeveParameters() {

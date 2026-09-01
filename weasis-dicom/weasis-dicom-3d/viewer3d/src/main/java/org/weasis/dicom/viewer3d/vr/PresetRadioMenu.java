@@ -9,6 +9,7 @@
  */
 package org.weasis.dicom.viewer3d.vr;
 
+import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.EnumMap;
@@ -24,6 +25,8 @@ import javax.swing.JSeparator;
 import org.weasis.core.api.gui.util.GroupRadioMenu;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.RadioMenuItem;
+import org.weasis.core.ui.editor.image.lut.ColorMapEditorDialog;
+import org.weasis.core.util.StringUtil;
 import org.weasis.core.util.StringUtil.Suffix;
 import org.weasis.dicom.codec.display.Modality;
 import org.weasis.dicom.viewer3d.EventManager;
@@ -76,7 +79,31 @@ public class PresetRadioMenu extends GroupRadioMenu<Preset> {
     return new EnumMap<>(menuGroup);
   }
 
+  // The badge depends on the loaded volume, so it is refreshed each time a menu is built.
+  private void refreshCostBadges() {
+    View3d view3d = EventManager.getInstance().getSelectedViewPane() instanceof View3d v ? v : null;
+    for (RadioMenuItem item : itemList) {
+      if (!(item.getUserObject() instanceof Preset preset)) {
+        continue;
+      }
+      PresetCost cost = view3d == null ? null : VolumePresetHost.cost(view3d, preset.toColorMap());
+      if (cost == null) {
+        item.setText(preset.toString());
+        item.setToolTipText(null);
+      } else {
+        item.setText(preset + "  " + cost.badge());
+        item.setToolTipText(
+            Messages.getString("preset.cost")
+                + StringUtil.COLON_AND_SPACE
+                + MessageFormat.format(
+                    Messages.getString("preset.cost.visible"),
+                    Math.round(100.0 * cost.visibleFraction())));
+      }
+    }
+  }
+
   public JPopupMenu createJPopupMenu(Modality curModality) {
+    refreshCostBadges();
     JPopupMenu popupMouseButtons = new JPopupMenu();
     addSubMenu(
         popupMouseButtons, getMenuGroup(), curModality == null ? Modality.DEFAULT : curModality);
@@ -84,6 +111,7 @@ public class PresetRadioMenu extends GroupRadioMenu<Preset> {
   }
 
   public JMenu createMenu(String title, Icon icon, Modality curModality) {
+    refreshCostBadges();
     JMenu menu = new JMenu(title);
     if (icon != null) {
       menu.setIcon(icon);
@@ -114,12 +142,12 @@ public class PresetRadioMenu extends GroupRadioMenu<Preset> {
 
     // ── Edit Volume LUT entry ──
     component.add(new JSeparator());
-    JMenuItem editLutItem = new JMenuItem(Messages.getString("edit.volume.lut") + Suffix.THREE_PTS);
+    JMenuItem editLutItem =
+        new JMenuItem(org.weasis.core.Messages.getString("ColorMapEditor.edit") + Suffix.THREE_PTS);
     editLutItem.addActionListener(
         e -> {
           if (EventManager.getInstance().getSelectedViewPane() instanceof View3d view3d) {
-            VolumeLutEditorDialog dialog = new VolumeLutEditorDialog(view3d);
-            GuiUtils.showCenterScreen(dialog);
+            ColorMapEditorDialog.open(view3d, new VolumePresetHost(view3d));
           }
         });
     component.add(editLutItem);

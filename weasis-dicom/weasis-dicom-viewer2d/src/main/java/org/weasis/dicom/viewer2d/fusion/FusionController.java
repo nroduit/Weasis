@@ -11,6 +11,7 @@ package org.weasis.dicom.viewer2d.fusion;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import org.dcm4che3.data.Tag;
@@ -22,12 +23,15 @@ import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.dicom.codec.DicomImageElement;
+import org.weasis.dicom.codec.HiddenSeriesManager;
+import org.weasis.dicom.codec.HiddenSpecialElement;
 import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.explorer.DicomModel;
 import org.weasis.dicom.viewer2d.EventManager;
 import org.weasis.dicom.viewer2d.mpr.MprView;
 import org.weasis.dicom.viewer2d.mpr.Volume;
 import org.weasis.opencv.op.lut.ByteLut;
+import org.weasis.opencv.op.lut.colormap.ColorMap;
 
 /**
  * Stateless helpers shared by the fusion EventManager actions: they apply a parameter to every pane
@@ -141,6 +145,50 @@ public final class FusionController {
     }
   }
 
+  /**
+   * Selects the overlay color map. A map anchored to physical values also declares the display
+   * window (an SUVbw preset sets an SUVbw window), so it replaces the current one.
+   */
+  public static void applyLut(Object lut) {
+    applyParam(FusionOp.P_FUSION_LUT, lut);
+    ColorMap map = lut instanceof ByteLut byteLut ? byteLut.source() : null;
+    ViewCanvas<DicomImageElement> view = targetViews().isEmpty() ? null : targetViews().getFirst();
+    if (map == null || view == null) {
+      return;
+    }
+    OpManager disOp = view.getDisplayOpManager();
+    @SuppressWarnings("unchecked")
+    MediaSeries<DicomImageElement> series =
+        disOp.getParamValue(FusionOp.OP_NAME, FusionOp.P_FUSION_SERIES).orElse(null)
+                instanceof MediaSeries<?> ms
+            ? (MediaSeries<DicomImageElement>) ms
+            : null;
+    Volume<?, ?> volume =
+        disOp.getParamValue(FusionOp.OP_NAME, FusionOp.P_FUSION_VOLUME).orElse(null)
+                instanceof Volume<?, ?> v
+            ? v
+            : null;
+    FusionWindow declared = FusionWindow.declaredBy(map, series, volume);
+    if (declared != null) {
+      applyParam(FusionOp.P_FUSION_WINDOW, declared);
+    }
+  }
+
+  /** The map behind the overlay LUT of the first target pane, or null. */
+  private static ColorMap currentMap() {
+    if (targetViews().isEmpty()) {
+      return null;
+    }
+    return targetViews()
+                .getFirst()
+                .getDisplayOpManager()
+                .getParamValue(FusionOp.OP_NAME, FusionOp.P_FUSION_LUT)
+                .orElse(null)
+            instanceof ByteLut lut
+        ? lut.source()
+        : null;
+  }
+
   /** Applies a FusionOp parameter to every pane of the current container. */
   public static void applyParam(String propertyName, Object value) {
     // The cached overlays bake in the color LUT, the selected series and the resampled volume, so
@@ -177,7 +225,7 @@ public final class FusionController {
   @SuppressWarnings("unchecked")
   public static FusionWindow provisionalWindow(Object series) {
     return series instanceof MediaSeries<?> ms
-        ? FusionWindow.fromSlice((MediaSeries<DicomImageElement>) ms)
+        ? FusionWindow.fromSlice((MediaSeries<DicomImageElement>) ms, currentMap())
         : null;
   }
 
@@ -204,6 +252,7 @@ public final class FusionController {
     @SuppressWarnings("unchecked")
     MediaSeries<DicomImageElement> overlaySeries = (MediaSeries<DicomImageElement>) selectedSeries;
     buildingVolumes.add(overlaySeries);
+    ColorMap map = currentMap();
     GuiExecutor.execute(FusionController::repaintViews);
     Thread worker =
         new Thread(
@@ -212,7 +261,7 @@ public final class FusionController {
                 Volume<?, ?> volume = FusionVolumeBuilder.build(overlaySeries);
                 if (volume != null) {
                   // Measured here rather than in applyVolume: it scans the voxels.
-                  FusionWindow window = FusionWindow.fromVolume(overlaySeries, volume);
+                  FusionWindow window = FusionWindow.fromVolume(overlaySeries, volume, map);
                   GuiExecutor.execute(() -> applyVolume(overlaySeries, volume, window));
                 }
               } finally {
@@ -288,7 +337,32 @@ public final class FusionController {
         result.add((MediaSeries<DicomImageElement>) ms);
       }
     }
+    for (MediaSeries<DicomImageElement> hidden : hiddenImageSeries(refSeries)) {
+      if (!result.contains(hidden) && FusionCompatibility.isCompatible(refSeries, hidden)) {
+        result.add(hidden);
+      }
+    }
     return result;
+  }
+
+  /**
+   * Image series carried by hidden elements referencing {@code base}, such as the dose grids of an
+   * RT case; they are not children of the study node but can be overlaid all the same.
+   */
+  private static List<MediaSeries<DicomImageElement>> hiddenImageSeries(
+      MediaSeries<DicomImageElement> base) {
+    String uid = TagD.getTagValue(base, Tag.SeriesInstanceUID, String.class);
+    Set<String> linked = HiddenSeriesManager.getInstance().reference2Series.get(uid);
+    if (linked == null || linked.isEmpty()) {
+      return List.of();
+    }
+    return HiddenSeriesManager.getHiddenElementsFromSeries(
+            HiddenSpecialElement.class, linked.toArray(String[]::new))
+        .stream()
+        .map(HiddenSpecialElement::getImageSeries)
+        .filter(Objects::nonNull)
+        .distinct()
+        .toList();
   }
 
   /**

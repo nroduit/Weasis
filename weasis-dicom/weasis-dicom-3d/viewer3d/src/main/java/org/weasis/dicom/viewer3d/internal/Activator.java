@@ -21,8 +21,10 @@ import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.InsertableFactory;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.gui.util.GuiUtils;
+import org.weasis.core.api.image.lut.ColorMapRegistry;
 import org.weasis.core.api.service.BundleTools;
 import org.weasis.dicom.viewer3d.View3DContainer;
+import org.weasis.dicom.viewer3d.vr.Preset;
 
 @Header(name = Constants.BUNDLE_ACTIVATOR, value = "${@class}") // NON-NLS
 public class Activator implements BundleActivator, ServiceListener {
@@ -31,6 +33,8 @@ public class Activator implements BundleActivator, ServiceListener {
 
   @Override
   public void start(final BundleContext bundleContext) {
+    ColorMapRegistry.getInstance().addBuiltIn(Preset.builtInMaps());
+    Preset.migrateLegacyCustomPresets();
     BundleTools.registerExistingComponents(bundleContext, View3DContainer.UI);
 
     // Add listener for getting new service events

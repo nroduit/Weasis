@@ -39,6 +39,8 @@ import org.opencv.imgproc.Imgproc;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.media.data.MediaElement;
+import org.weasis.core.api.media.data.MediaSeries;
+import org.weasis.core.api.media.data.TagW;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.DicomMediaIO;
 import org.weasis.dicom.codec.DicomSeries;
@@ -408,6 +410,28 @@ public class Dose extends RtSpecialElement implements SpecialElementRegion {
     double thickness = RtSet.calculatePlaneThickness(zSet);
     for (IsoDoseRegion isoDoseLayer : isoDoseSet.values()) {
       isoDoseLayer.setThickness(thickness);
+    }
+  }
+
+  @Override
+  public MediaSeries<DicomImageElement> getImageSeries() {
+    return series;
+  }
+
+  /**
+   * Records on the dose frames the raw pixel value that equals the prescribed dose, so a percent
+   * color map can be anchored to it.
+   *
+   * @param rxDoseCGy prescribed dose in cGy, ignored when not positive
+   */
+  void applyPrescriptionReference(double rxDoseCGy) {
+    if (series == null || !(rxDoseCGy > 0.0) || !(doseGridScaling > 0.0)) {
+      return;
+    }
+    double reference = rxDoseCGy / (doseGridScaling * 100.0);
+    series.setTag(TagW.PercentReference, reference);
+    for (DicomImageElement frame : series.getMedias(null, null)) {
+      frame.setTag(TagW.PercentReference, reference);
     }
   }
 

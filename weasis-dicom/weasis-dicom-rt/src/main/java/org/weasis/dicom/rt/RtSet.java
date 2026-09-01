@@ -110,6 +110,10 @@ public class RtSet {
     for (Plan plan : plans) {
       initDoseLuts(plan);
       initIsoDoses(plan);
+      Double rxDose = plan.getRxDose();
+      if (rxDose != null) {
+        plan.getDoses().forEach(dose -> dose.applyPrescriptionReference(rxDose));
+      }
       attachStoredDvhs(plan);
     }
   }
