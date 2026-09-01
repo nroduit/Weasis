@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Build, test, format
 
-Maven multi-module build. Requires **JDK 25+** (CI runs JDK 26 Temurin) and Maven **3.8.1+** (enforced by `maven-enforcer-plugin`). Version is supplied via CI-friendly properties in `weasis-parent/pom.xml`: `${revision}` (default `4.7.0`) and `${changelist}` (default `-SNAPSHOT`).
+Maven multi-module build. Requires **JDK 25+** (CI runs JDK 26 Temurin) and Maven **3.8.1+** (enforced by `maven-enforcer-plugin`). Version is supplied via CI-friendly properties in `weasis-parent/pom.xml`: `${revision}` (currently `4.8.0`) and `${changelist}` (default `-SNAPSHOT`).
 
 ```bash
 # Full build + tests (replicates the CI "Build" job, minus Sonar)
@@ -44,40 +44,77 @@ mvn archetype:generate -DarchetypeCatalog=local   # generate weasis-plugin-{base
 
 ## Architecture
 
-Weasis is an **OSGi application** (Apache Felix 7) packaged as a desktop DICOM viewer. Understanding three things is enough to navigate the codebase:
+Weasis is an **OSGi application** (Apache Felix framework 7, `felix.framework.version` in `weasis-parent/pom.xml`) packaged as a desktop DICOM viewer. Understanding three things is enough to navigate the codebase:
 
 ### 1. Launcher vs. bundles
 
-- `weasis-launcher/` is a **plain JAR**, not an OSGi bundle (see its POM comment). `org.weasis.launcher.AppLauncher` (extends `WeasisLauncher`) bootstraps the Felix framework, sets up logging via Logback to `~/.weasis/log/`, then `AutoProcessor` installs and starts the bundles listed in `weasis-launcher/conf/config.properties`. `EmptyAccessibilityProvider` is wired in via `-Djavax.accessibility.assistive_technologies=...` to suppress AT discovery on launch.
-- Everything under `weasis-core`, `weasis-base/*`, `weasis-dicom/*`, `weasis-acquire/*`, `weasis-imageio/*`, `weasis-opencv/*` is an **OSGi bundle**. Each bundle has an `Activator` in a package ending in `.internal` and is built via `biz.aQute.bnd:bnd-maven-plugin`.
-- The bnd convention used everywhere: `Export-Package: !<groupPkg>.internal, <groupPkg>.*` — anything in `.internal` is bundle-private. Don't add cross-bundle imports of `internal` packages.
+- `weasis-launcher/` is a **plain JAR**, not an OSGi bundle (see its POM comment). `org.weasis.launcher.AppLauncher` (extends `WeasisLauncher`) writes the boot log via Logback to `~/.weasis/log/boot.log`, applies the single-instance rules (`Singleton`), and starts the Felix framework; `WeasisLoader` then runs `AutoProcessor`, which installs and starts the bundles.
+- **Launcher configuration is JSON**, not properties files: `weasis-launcher/conf/base.json` is the default, with `dicomizer.json` and `non-dicom-explorer.json` for the other launchers. Each holds a `weasisPreferences` array of `code` / `value` entries; the bundles to install and start are the `felix.auto.start.<level>` entries. An optional extension file (`felix.extended.config.properties`) adds to or overrides the base file. The launcher loads them into `ConfigData` / `AppPreferences` (`org.weasis.pref`).
+- `EmptyAccessibilityProvider` is wired in via `-Djavax.accessibility.assistive_technologies=...` (set in `weasis-distributions/script/launch-options.sh`) to suppress AT discovery on launch.
+- Everything under `weasis-core`, `weasis-base/*`, `weasis-dicom/*`, `weasis-acquire/*`, `weasis-imageio`, `weasis-opencv/*` is an **OSGi bundle**, built via `biz.aQute.bnd:bnd-maven-plugin` (configured in `weasis-parent/pom.xml`). A bundle's `Activator`, when it has one, lives in a package ending in `.internal`.
+- The bnd convention: `Export-Package: !<groupPkg>.internal, <groupPkg>.*` — anything in `.internal` is bundle-private. Modules without an `.internal` package simply export `<groupPkg>.*`. Don't add cross-bundle imports of `internal` packages. (Exception to fix when touched: `weasis-dicom-3d/viewer3d` has an `internal` package but exports `org.weasis.dicom.viewer3d.*` without excluding it.)
 
 ### 2. Module layering
 
 ```
-weasis-launcher  →  weasis-core  →  weasis-base/*       (generic image viewer)
-                                 →  weasis-dicom/*      (DICOM viewer, codec, explorer, RT, 3D, SR, RT, send, QR, etc.)
-                                 →  weasis-acquire/*    (image acquisition / dicomizer)
+weasis-launcher  →  weasis-core  →  weasis-base/*       (generic image viewer: explorer, ui, viewer2d)
+                                 →  weasis-dicom/*      (DICOM: codec, explorer, viewer2d, 3d, rt, sr, au, wave, qr, send, isowriter, ai-agent)
+                                 →  weasis-acquire/*    (image acquisition / Dicomizer: explorer, editor)
                                  →  weasis-imageio, weasis-opencv  (image/native deps)
 ```
 
-`weasis-core` exposes the **plugin SDK**: API surface lives under `org.weasis.core.api.*` (gui, image, media, model, service, util) and `org.weasis.core.ui.*` (editor, docking, model, dialog, pref, serialize). Downstream viewers extend `DefaultView2d`, `ImageViewerEventManager`, `ImageViewerPlugin`, `SynchView`, etc. — when adding viewer features, expect to touch a base class in `weasis-core` and concrete subclasses in `weasis-base-viewer2d`, `weasis-dicom-viewer2d`, and possibly `weasis-dicom-3d/viewer3d`.
+`weasis-core` exposes the **plugin SDK**: API surface lives under `org.weasis.core.api.*` (command, explorer, gui, image, media, model, net, service, util, vol) and `org.weasis.core.ui.*` (dialog, docking, editor, launcher, model, pref, serialize, tp, util). Downstream viewers extend `DefaultView2d`, `ImageViewerEventManager`, `ImageViewerPlugin`, `SynchView`, etc. — when adding viewer features, expect to touch a base class in `weasis-core` and concrete subclasses in `weasis-base-viewer2d`, `weasis-dicom-viewer2d`, and possibly `weasis-dicom-3d/viewer3d`.
 
 ### 3. UI stack
 
 - Swing + **FlatLaf** themes (`com.formdev:flatlaf*`) for L&F.
 - **MigLayout** for layout — see `weasis-core/docs/MigLayoutModel-Best-Practices.md` for the project's `MigLayoutModel` conventions (weights, grow/shrink priorities) before touching layouts.
-- **DockingFrames** (`org.weasis.thirdparty:docking-frames`) for the dockable viewer/tool windows.
-- DICOM I/O is provided by the external `weasis-dicom-tools` library (`org.weasis.dicom.{mf,op,param,tool,util,web}`); it is excluded from JaCoCo and treated as a third-party dependency.
+- **DockingFrames** (`docking-frames`, `dockingframes.version` in `weasis-parent/pom.xml`) for the dockable viewer/tool windows.
+- DICOM I/O is provided by the external `weasis-dicom-tools` library (`weasis-dicom-tools.version` in `weasis-parent/pom.xml`; packages `org.weasis.dicom.{geom,hp,macro,mf,op,param,ref,tool,util,web}`). Its source is not in this repo; treat it as a third-party dependency.
 
 ## Conventions to respect
 
 - **Spotless will fail the build** if a file is missing the EPL-2.0 OR Apache-2.0 header or isn't Google-Java-Format'd. Run `mvn spotless:apply` before committing. Use `// @formatter:off` / `// @formatter:on` to opt out of formatting for a block.
 - **i18n**: every user-facing module has a `Messages.java` + `messages.properties` pair. Properties files matching `messages*.properties` under `src/main/java/` are picked up as resources by `weasis-parent/pom.xml`. The translated bundles come from the external `weasis-i18n-dist` artifact at distribution time (see `weasis-distributions/pom.xml`), so do not hand-edit non-English `messages_*.properties` files in this repo.
-- **Versions**: never hard-code `4.7.0-SNAPSHOT` in a child POM — always use `${project.parent.version}` or the `${revision}${changelist}` pair. The `flatten-maven-plugin` resolves these into the published POM.
+- **Versions**: never hard-code a version such as `4.8.0-SNAPSHOT` in a child POM — always use `${project.parent.version}` or the `${revision}${changelist}` pair. The `flatten-maven-plugin` resolves these into the published POM.
 - **Native libs (OpenCV / JOGL)**: per-OS native packages live in `weasis-opencv-core-*` and `jogamp-*` bundles. The installer workflow strips out non-target-arch payloads in `build-installer.yml`; if you add a new native bundle, follow that pattern or installers will balloon.
 - **Sonar excludes** (in root `pom.xml`): `Messages.java`, `Activator.java`, `module-info.java`, `package-info.java` are coverage-excluded; `archetype/`, `snap/`, `weasis-distributions/` are analysis-excluded.
 - **Javadoc**: keep it minimal. **Private methods**: one-line comment max, or none if the name and signature are self-explanatory. **Public/protected API**: as compact as possible — one short sentence describing intent, `@param` / `@return` / `@throws` only when they add information the signature doesn't already convey. Never restate the method name in prose, never document obvious getters/setters, never leave `TODO`-style placeholders.
 - **Modern Java (25)**: prefer `java.nio.file.Path` + `java.nio.file.Files` over `java.io.File` and `FileInputStream`/`FileOutputStream`. Use records, pattern matching (`switch`, `instanceof`), sealed types, text blocks, `var` for obvious local types, and `List.of` / `Map.of` / `Stream.toList()` over legacy collection idioms. Favor `Optional` returns over nullable returns at API boundaries; do not wrap fields or parameters in `Optional`.
 - **Code quality**: favor readability and maintainability — small focused methods, expressive names, early returns. Remove redundant code (unused imports/locals, dead branches, duplicated logic, defensive null checks for values that cannot be null, comments that duplicate the code). Prefer extracting a private helper over copy-pasting a block.
 - **Tests**: use **JUnit 6** (`org.junit.jupiter.*`) and **Mockito** only. Do **not** add AssertJ (`org.assertj.*`) — use JUnit's built-in `Assertions` (`assertEquals`, `assertThrows`, `assertAll`, …) for assertions. Tests follow the same Spotless / formatting rules as production code.
+
+## Documentation
+
+Documentation is split by audience; put each piece in exactly one place:
+
+| Where | Audience | Holds |
+|---|---|---|
+| `<module>/docs/*.md` in this repo | developers and contributors | **general concepts only**: purpose, main abstractions and their responsibilities, data flow, coordinate/value conventions, invariants, extension points |
+| User site [nroduit.github.io](https://nroduit.github.io) (separate repo) | users, integrators, administrators | how to use, configure and deploy Weasis |
+| Not in this repo | maintainer | detailed specifications, work items, design history, benchmarks, test procedures |
+
+Rules for `docs/`:
+
+- **Describe the code as it is**, at concept level. No TODO lists, roadmap, status or phase tables, "work in progress" notes, history of how the design was reached, or debates between alternatives.
+- **Keep detail out**: no method-by-method walkthroughs, exhaustive field or constant tables, long code excerpts, or step-by-step algorithm derivations. The code and its Javadoc are the reference for detail; if a doc grows into a specification, cut it back to the concept.
+- **Keep docs in sync with the code**: when a change alters a concept a doc describes, update the doc in the same change. Every class, method or property named in a doc must exist.
+- **Stable file names**: docs are referenced from this file and from each other; do not rename them, and keep relative links between docs valid.
+- **User-facing behavior belongs on the user site**: link to the relevant page (e.g. `https://nroduit.github.io/en/tutorials/mpr/`) instead of duplicating it. Never reference internal hosts, credentials or private resources.
+- Write in English, in Markdown, next to the module the doc describes.
+
+Existing docs:
+
+| Doc | Topic |
+|---|---|
+| `weasis-core/docs/ColorMap-Design.md` | JSON color maps for 2D, fusion and 3D |
+| `weasis-core/docs/Memory-Management.md` | native memory arenas, budgets, caches |
+| `weasis-core/docs/MigLayoutModel-Best-Practices.md` | `MigLayoutModel` layout conventions |
+| `weasis-dicom/weasis-dicom-explorer/docs/Retrieve-Paths.md` | DICOM download transports and shared download layer |
+| `weasis-dicom/weasis-dicom-viewer2d/docs/mpr-architecture.md` | MPR architecture (entry point for the `mpr-*` docs) |
+| `weasis-dicom/weasis-dicom-viewer2d/docs/mpr-coordinate-systems.md` | MPR coordinate spaces |
+| `weasis-dicom/weasis-dicom-viewer2d/docs/mpr-transformations.md` | MPR transforms and rotations |
+| `weasis-dicom/weasis-dicom-viewer2d/docs/mpr-curved.md` | curved MPR (panoramic, cross-sections) |
+| `weasis-dicom/weasis-dicom-viewer2d/docs/fusion-architecture.md` | PET/CT fusion pipeline |
+| `weasis-dicom/weasis-dicom-viewer2d/docs/synch-architecture.md` | view synchronization |
+| `weasis-distributions/docs/Native-Build-Overview.md` | installer build jobs and binary compatibility |

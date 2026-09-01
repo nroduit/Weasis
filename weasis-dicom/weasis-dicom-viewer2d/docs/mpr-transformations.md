@@ -16,40 +16,13 @@ See [mpr-architecture.md](mpr-architecture.md) for the full system overview.
 slice image into VR-Space coordinates `(vr_x, vr_y, vr_z)`, from which voxel values
 are sampled.
 
-### Construction (AXIAL example)
-
-```java
-// Inputs
-int sliceImageSize = volume.getSliceSize();            // diagonal of volSize
-Vector3d volSize   = Vector3d(size).mul(voxelRatio);   // anisotropic extents
-Vector3d center    = volSize × 0.5;                    // VR-space center
-double halfSlice   = sliceImageSize / 2.0;             // isotropic half-extent
-Vector3d crossHair = getCrossHairPosition();           // volume center in slice-space
-Vector3d volCenter = (halfSlice, halfSlice, halfSlice);
-Vector3d crossHairOffset = crossHair − volCenter;      // offset in slice-space
-
-// Convert offset to VR-space (anisotropic conversion)
-Vector3d crossHairOffsetVR = crossHairOffset × (volSize / sliceSize);
-
-// Perpendicular offset: project VR-space offset onto the rotated normal
-Vector3d sliceNormal = rotation.transform(new Vector3d(0, 0, 1));
-double perpendicularOffset = crossHairOffsetVR.dot(sliceNormal);
-
-// Build matrix (read right-to-left):
-matrix = translate(center)                              // 3. Move to VR-space center
-       × rotate(r)                                      // 2. Apply MPR rotation
-       × translate(-halfSlice, -halfSlice, perpOffset)  // 1. Center the slice + depth
-```
-
-### What each step does
+The matrix is read right to left:
 
 | Step | Operation | Effect |
 |------|-----------|-------|
-| 1 | `translate(-halfSlice, -halfSlice, perpOffset)` | Shifts slice origin so pixel `(halfSlice, halfSlice)` → `(0, 0, perpOffset)` |
-| 2 | `rotate(r)` | Applies the view rotation (global rotation + per-plane offset) |
-| 3 | `translate(center)` | Moves result to VR-space volume center |
-
-### Plane-specific variations
+| 1 | `translate(-halfSlice, -halfSlice, perpOffset)` | Centers the slice on the origin and sets its depth: the crosshair offset projected on the rotated slice normal |
+| 2 | `rotate(r)` | Applies the view rotation (global rotation + per-plane offset), then the base plane rotation |
+| 3 | `translate(center)` | Moves the result to the VR-space volume center |
 
 | Plane | Base rotation after `rotate(r)` | Slice normal |
 |---|---|---|
@@ -57,13 +30,9 @@ matrix = translate(center)                              // 3. Move to VR-space c
 | CORONAL | `rotateX(-90°)` then `scale(1, -1, 1)` | (0, 1, 0) |
 | SAGITTAL | `rotateY(90°)` then `rotateZ(90°)` | (1, 0, 0) |
 
-### Important: `getCrossHairPosition()` must return volume center
-
-`getRealVolumeTransformation()` receives `volumeCenter` from `getCrossHairPosition()`.
-This **must** be the raw volume-space center (from `axesControl.getCenter()`),
-**not** a canvas projection. The crosshair offset is computed as
-`crossHair − volCenter`, so if `crossHair` were a canvas projection, the offset
-would be wrong and the slice would be rendered at the wrong depth.
+The `volumeCenter` it receives must be the 3D volume center
+(`MprController.getCrossHairPosition()`), **not** a canvas projection; otherwise the slice is
+rendered at the wrong depth.
 
 ---
 
@@ -71,34 +40,13 @@ would be wrong and the slice would be rendered at the wrong depth.
 
 **Location:** `MprView.getDisplayPointToTexturePointMatrix()`
 
-**Purpose:** Maps 2D canvas coordinates to 3D volume coordinates.
-Used by `setNewCenter()` to convert a mouse position to the new crosshair position
-in volume space.
+**Purpose:** Maps 2D canvas coordinates to 3D volume coordinates. Used through
+`MprView.getVolumeCoordinates()` by `MprController.setNewCenter()` to turn a mouse position
+into the new crosshair position.
 
-### Construction
-
-```java
-Quaterniond r = mprController.getRotation(plane);  // = getViewRotation(plane)
-Vector3d center = axes.getCenter();                // crosshair in slice-space
-double halfSlice = sliceSize / 2.0;
-Vector3d crossHairOffset = center − (halfSlice, halfSlice, halfSlice);
-
-// Perpendicular offset along the rotated normal
-Vector3d sliceNormal = r.transform(planeNormal);
-double perpOffset = crossHairOffset.dot(sliceNormal);
-
-// AXIAL example:
-matrix = T(halfSlice) · R(r) · T(-halfSlice, -halfSlice, perpOffset)
-
-// CORONAL:
-matrix = T(halfSlice) · R(r) · Rx(-90°) · S(1,-1,1) · T(-halfSlice, -halfSlice, perpOffset)
-
-// SAGITTAL:
-matrix = T(halfSlice) · R(r) · Ry(90°) · Rz(90°) · T(-halfSlice, -halfSlice, perpOffset)
-```
-
-This is the same rotation chain as `getRealVolumeTransformation()` but operates
-in isotropic slice-space (not VR-space).
+It uses the same rotation chain as `getRealVolumeTransformation()`, but pivots on the slice
+space center `(halfSlice, halfSlice, halfSlice)`, so its result stays in isotropic slice space
+(not VR-space).
 
 ---
 
@@ -107,58 +55,19 @@ in isotropic slice-space (not VR-space).
 **Location:** `AxesControl.getCenterForCanvas(SliceCanvas, Vector3d)`
 
 **Purpose:** Projects the 3D crosshair position onto a specific view's 2D canvas
-coordinate system. This is the **inverse** of the forward transform's rotation chain.
+coordinate system. This is the **inverse** of the forward transform's rotation chain: the
+point is centered on the origin, rotated by the inverse chain, then shifted back.
 
-### Forward rotation chain (per plane)
-
-| Plane | Forward (canvas → volume) |
-|---|---|
-| AXIAL | `R(viewRot)` |
-| CORONAL | `R(viewRot) · Rx(-90°) · S(1,-1,1)` |
-| SAGITTAL | `R(viewRot) · Ry(90°) · Rz(90°)` |
-
-### Inverse rotation chain (volume → canvas)
-
-| Plane | Inverse |
-|---|---|
-| AXIAL | `R(viewRot)⁻¹` |
-| CORONAL | `S(1,-1,1) · Rx(90°) · R(viewRot)⁻¹` |
-| SAGITTAL | `Rz(-90°) · Ry(-90°) · R(viewRot)⁻¹` |
-
-### Implementation
-
-```java
-private void applyRotationMatrix(Vector3d vector, SliceCanvas canvas) {
-    Plane plane = canvas.getPlane();
-
-    // Step 1: undo view rotation (global rotation + per-plane offset)
-    Quaterniond viewRotation = getViewRotation(plane);
-    new Matrix3d().set(viewRotation).invert().transform(vector);
-
-    // Step 2: undo base plane rotation
-    Quaterniond planeRotation = getRotationForSlice(plane);
-    new Matrix3d().set(planeRotation).invert().transform(vector);
-
-    // Step 3: undo coronal Y-flip
-    if (plane == Plane.CORONAL) {
-        vector.y = -vector.y;
-    }
-}
-```
-
-### Full `getCenterForCanvas()` flow
-
-```java
-Vector3d adjustedCenter = pt − (halfSlice, halfSlice, halfSlice);  // center around origin
-applyRotationMatrix(adjustedCenter, canvas);                       // inverse rotation
-adjustedCenter += (halfSlice, halfSlice, halfSlice);               // restore offset
-// Result: (x, y) are the canvas coordinates, z is the depth (unused for 2D)
-```
+| Plane | Forward (canvas → volume) | Inverse (volume → canvas) |
+|---|---|---|
+| AXIAL | `R(viewRot)` | `R(viewRot)⁻¹` |
+| CORONAL | `R(viewRot) · Rx(-90°) · S(1,-1,1)` | `S(1,-1,1) · Rx(90°) · R(viewRot)⁻¹` |
+| SAGITTAL | `R(viewRot) · Ry(90°) · Rz(90°)` | `Rz(-90°) · Ry(-90°) · R(viewRot)⁻¹` |
 
 ### Critical invariant
 
 The **forward** transform (`getDisplayPointToTexturePointMatrix`) and the
-**inverse** (`getCenterForCanvas` via `applyRotationMatrix`) must use the
+**inverse** (`getCenterForCanvas`) must use the
 **same rotation**: `getViewRotation(plane)`. If one is changed, the other
 must be updated to match. Failing to include the view rotation in the inverse
 causes the crosshair to drift when planes are tilted.
@@ -167,107 +76,29 @@ causes the crosshair to drift when planes are tilted.
 
 ## 4. Rotation Components
 
-### `getViewRotation(plane)` — the full per-view rotation
-
-```java
-Quaterniond all = getGlobalRotation();           // accumulated user tilts
-double offset = -getRotationOffset(plane);       // cancellation for this plane
-return switch (plane) {
-    case AXIAL    -> all.rotateZ(offset);
-    case CORONAL  -> all.rotateY(-offset);
-    case SAGITTAL -> all.rotateX(offset);
-};
-```
-
-When the user tilts the crosshair on view V:
-- `globalRotation` changes (all views affected)
-- `rotationOffset[V]` is set to cancel the effect on V
-- V's `viewRot` becomes identity; other views' `viewRot` becomes non-identity
-
-### `getRotationForSlice(plane)` — base plane orientation
-
-Fixed rotations that orient each plane relative to the volume:
-
-| Plane | Quaternion |
-|---|---|
-| AXIAL | Identity |
-| CORONAL | Rx(-90°) |
-| SAGITTAL | Ry(90°) · Rz(90°) |
-
-These never change. They map the 2D canvas axes (u, v) to the 3D volume axes
-for each anatomical plane.
+- **`AxesControl.getViewRotation(plane)`** — the full per-view rotation: the global rotation
+  (accumulated user tilts) combined with the rotation offset of that plane. When the user tilts
+  the crosshair on view V, the global rotation changes for all views and the offset of V is set
+  to cancel it, so only the other views see the tilt.
+- **`AxesControl.getRotationForSlice(plane)`** — the fixed base plane orientation (Identity,
+  Rx(-90°), Ry(90°) · Rz(90°) for AXIAL, CORONAL, SAGITTAL). It maps the 2D canvas axes (u, v)
+  to the 3D volume axes for each anatomical plane.
 
 ---
 
-## 5. `getCenterAlongAxis()` / `setCenterAlongAxis()` — Scroll Position
+## 5. Scroll Position
 
-Used by `MprAxis.getSliceIndex()` and `setSliceIndex()` for scrolling.
-
-```java
-// Get depth of center along a view's rotated normal:
-double halfSlice = getSliceSize() / 2.0;
-Vector3d axis = getRotatedCanvasAxis(plane);      // globalRotation × canvasAxis
-return center.sub(halfSlice, halfSlice, halfSlice).dot(axis) + halfSlice;
-
-// Set center depth along a view's rotated normal:
-double currentDepth = center.sub(halfSlice, ...).dot(axis);
-double delta = (value - halfSlice) - currentDepth;
-center.add(axis × delta);
-```
-
-`getRotatedCanvasAxis()` correctly uses `globalRotation` to rotate the base
-canvas axis (Z for AXIAL, Y for CORONAL, -X for SAGITTAL).
+`AxesControl.getCenterAlongAxis()` / `setCenterAlongAxis()` read and set the depth of the
+center along a view's normal rotated by the global rotation
+(`getRotatedCanvasAxis()`). `MprAxis.getSliceIndex()` / `setSliceIndex()` use them for
+scrolling.
 
 ---
 
-## 6. `setNewCenter()` — Mouse Position → Volume Center
-
-```java
-protected void setNewCenter(MprView view, Vector3d newCenter) {
-    Vector3d vCenter = view.getVolumeCoordinates(newCenter, false);
-    axesControl.setCenter(vCenter);
-}
-```
-
-1. `newCenter = (pt.x, pt.y, 0)` — mouse position in canvas space
-2. `getVolumeCoordinates()` applies `getDisplayPointToTexturePointMatrix()` — forward transform
-3. Result is in isotropic slice-space — stored directly as the new center
-
-The perpendicular offset in the matrix ensures the correct depth (z) is computed
-from the current center's position relative to the slice plane.
-
----
-
-## 7. Round-Trip Consistency
+## 6. Round-Trip Consistency
 
 The round-trip **mouse click → store center → render slice → crosshair position**
-must be consistent.
-
-### Forward: click at pixel `(px, py)` in AXIAL view
-
-```
-input:   (px, py, 0)                                  // canvas coords
-matrix:  T(h) · R(viewRot) · T(-h, -h, perpOffset)    // forward transform
-output:  new center in slice-space                     // stored by setCenter()
-```
-
-### Inverse: render slice, where does crosshair appear?
-
-```
-getCenterForCanvas(AXIAL):
-  adjusted = center − (h, h, h)
-  R(viewRot)⁻¹ · adjusted                             // inverse rotation
-  result + (h, h, h)
-  → (cx, cy) matches the pixel where the user clicked  ✓
-```
-
-### Rendering verification:
-
-```
-getRealVolumeTransformation():
-  crossHairOffset = center − (h, h, h)
-  offsetVR = crossHairOffset × (volSize / sliceSize)   // slice→VR conversion
-  perpOffset = offsetVR.dot(rotatedNormal)
-  matrix maps pixel (h, h) → VR-center + perpOffset along normal
-  → correct anatomical position  ✓
-```
+must be consistent: a click at a pixel is converted by the forward transform into the new
+center, `getCenterForCanvas()` must project that center back onto the same pixel, and
+`getRealVolumeTransformation()` must map the slice center pixel to the same anatomical
+position.
