@@ -611,6 +611,9 @@
         },
         {
             "id": "weasis.vr.ct.bones-skin",
+            "tags": [
+                "cinematic"
+            ],
             "name": "Bones & Skin",
             "category": "Bone",
             "type": "transfer",
@@ -732,6 +735,9 @@
         },
         {
             "id": "weasis.vr.ct.bones",
+            "tags": [
+                "cinematic"
+            ],
             "name": "Bones",
             "category": "Bone",
             "type": "transfer",
@@ -808,6 +814,9 @@
         },
         {
             "id": "weasis.vr.ct.endoscopy",
+            "tags": [
+                "cinematic"
+            ],
             "name": "Endoscopy",
             "category": "Endoscopy",
             "type": "transfer",
@@ -911,6 +920,9 @@
         },
         {
             "id": "weasis.vr.ct.colonoscopy",
+            "tags": [
+                "cinematic"
+            ],
             "name": "Colonoscopy",
             "category": "Endoscopy",
             "type": "transfer",
@@ -1378,6 +1390,9 @@
         },
         {
             "id": "weasis.vr.ct.skin",
+            "tags": [
+                "cinematic"
+            ],
             "name": "Skin",
             "category": "Soft Tissue & Skin",
             "type": "transfer",
@@ -1638,6 +1653,9 @@
         },
         {
             "id": "weasis.vr.ct.heart",
+            "tags": [
+                "cinematic"
+            ],
             "name": "Heart",
             "category": "Cardiac",
             "type": "transfer",
@@ -1844,6 +1862,9 @@
         },
         {
             "id": "weasis.vr.ct.bones-glossy",
+            "tags": [
+                "cinematic"
+            ],
             "name": "Bones (glossy)",
             "category": "Bone",
             "type": "transfer",
@@ -1920,6 +1941,9 @@
         },
         {
             "id": "weasis.vr.mr.angiography",
+            "tags": [
+                "cinematic"
+            ],
             "name": "Angiography",
             "category": "Vascular",
             "type": "transfer",
@@ -2173,6 +2197,9 @@
         },
         {
             "id": "weasis.vr.us.fetal",
+            "tags": [
+                "cinematic"
+            ],
             "name": "Fetal",
             "type": "transfer",
             "modality": [
@@ -2254,6 +2281,9 @@
         },
         {
             "id": "weasis.vr.ct.aaa",
+            "tags": [
+                "cinematic"
+            ],
             "name": "Aorta (AAA)",
             "category": "Vascular",
             "type": "transfer",
@@ -2312,6 +2342,9 @@
         },
         {
             "id": "weasis.vr.ct.aaa-2",
+            "tags": [
+                "cinematic"
+            ],
             "name": "Aorta (AAA 2)",
             "category": "Vascular",
             "type": "transfer",
@@ -2380,6 +2413,9 @@
         },
         {
             "id": "weasis.vr.ct.bone-soft-tissue",
+            "tags": [
+                "cinematic"
+            ],
             "name": "Bone & Soft Tissue",
             "category": "Bone",
             "type": "transfer",
@@ -2499,6 +2535,9 @@
         },
         {
             "id": "weasis.vr.ct.cardiac",
+            "tags": [
+                "cinematic"
+            ],
             "name": "Cardiac",
             "category": "Cardiac",
             "type": "transfer",
@@ -2557,6 +2596,9 @@
         },
         {
             "id": "weasis.vr.ct.cardiac-2",
+            "tags": [
+                "cinematic"
+            ],
             "name": "Cardiac 2",
             "category": "Cardiac",
             "type": "transfer",
@@ -2779,6 +2821,9 @@
         },
         {
             "id": "weasis.vr.ct.coronary-arteries",
+            "tags": [
+                "cinematic"
+            ],
             "name": "Coronary Arteries",
             "category": "Vascular",
             "type": "transfer",
@@ -2837,6 +2882,9 @@
         },
         {
             "id": "weasis.vr.ct.coronary-arteries-2",
+            "tags": [
+                "cinematic"
+            ],
             "name": "Coronary Arteries 2",
             "category": "Vascular",
             "type": "transfer",
@@ -2900,6 +2948,9 @@
         },
         {
             "id": "weasis.vr.ct.coronary-arteries-3",
+            "tags": [
+                "cinematic"
+            ],
             "name": "Coronary Arteries 3",
             "category": "Vascular",
             "type": "transfer",
@@ -2963,6 +3014,9 @@
         },
         {
             "id": "weasis.vr.ct.bone-cropped-volume",
+            "tags": [
+                "cinematic"
+            ],
             "name": "Bone (cropped volume)",
             "category": "Bone",
             "type": "transfer",
@@ -3016,6 +3070,9 @@
         },
         {
             "id": "weasis.vr.ct.liver-vasculature",
+            "tags": [
+                "cinematic"
+            ],
             "name": "Liver Vasculature",
             "category": "Vascular",
             "type": "transfer",
@@ -3132,6 +3189,9 @@
         },
         {
             "id": "weasis.vr.ct.pulmonary-arteries",
+            "tags": [
+                "cinematic"
+            ],
             "name": "Pulmonary Arteries",
             "category": "Vascular",
             "type": "transfer",

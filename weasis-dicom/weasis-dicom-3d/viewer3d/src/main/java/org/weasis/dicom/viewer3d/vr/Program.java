@@ -109,6 +109,19 @@ public class Program {
     uniforms.put(uniformName, function);
   }
 
+  /**
+   * Registers, under this program, the uniform setters {@code source} already holds for the given
+   * names, so two programs sharing an include set their common uniforms from one definition.
+   */
+  public void shareUniforms(GL2ES2 gl, Program source, String... uniformNames) {
+    for (String name : uniformNames) {
+      BiConsumer<GL2ES2, Integer> setter = source.uniforms.get(name);
+      if (setter != null) {
+        allocateUniform(gl, name, setter);
+      }
+    }
+  }
+
   public void setUniforms(GL2ES2 gl) {
     for (Map.Entry<String, BiConsumer<GL2ES2, Integer>> uniform : uniforms.entrySet()) {
       uniform.getValue().accept(gl, uniformLocations.get(uniform.getKey()));

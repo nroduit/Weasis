@@ -35,6 +35,7 @@ import org.weasis.core.util.StringUtil.Suffix;
 import org.weasis.dicom.codec.display.Modality;
 import org.weasis.dicom.viewer3d.EventManager;
 import org.weasis.dicom.viewer3d.Messages;
+import org.weasis.opencv.op.lut.colormap.ColorMap;
 
 public class PresetRadioMenu extends GroupRadioMenu<Preset> {
 
@@ -83,26 +84,37 @@ public class PresetRadioMenu extends GroupRadioMenu<Preset> {
     return new EnumMap<>(menuGroup);
   }
 
-  // The badge depends on the loaded volume, so it is refreshed each time a menu is built.
+  /** Marks the presets tagged for the cinematic modes next to the rendering-cost dots. */
+  private static final String CINEMATIC_BADGE = "✦";
+
+  // The cost badge depends on the loaded volume, so the labels are refreshed each time a menu is
+  // built.
   private void refreshCostBadges() {
     View3d view3d = EventManager.getInstance().getSelectedViewPane() instanceof View3d v ? v : null;
     for (RadioMenuItem item : itemList) {
       if (!(item.getUserObject() instanceof Preset preset)) {
         continue;
       }
-      PresetCost cost = view3d == null ? null : VolumePresetHost.cost(view3d, preset.toColorMap());
-      if (cost == null) {
-        item.setText(preset.toString());
-        item.setToolTipText(null);
-      } else {
-        item.setText(preset + "  " + cost.badge());
-        item.setToolTipText(
+      ColorMap map = preset.toColorMap();
+      PresetCost cost = view3d == null ? null : VolumePresetHost.cost(view3d, map);
+      boolean cinematic = Preset.isCinematic(map);
+      StringBuilder text = new StringBuilder(preset.toString());
+      List<String> tips = new ArrayList<>();
+      if (cost != null) {
+        text.append("  ").append(cost.badge());
+        tips.add(
             Messages.getString("preset.cost")
                 + StringUtil.COLON_AND_SPACE
                 + MessageFormat.format(
                     Messages.getString("preset.cost.visible"),
                     Math.round(100.0 * cost.visibleFraction())));
       }
+      if (cinematic) {
+        text.append(cost != null ? " " : "  ").append(CINEMATIC_BADGE);
+        tips.add(Messages.getString("preset.cinematic"));
+      }
+      item.setText(text.toString());
+      item.setToolTipText(tips.isEmpty() ? null : String.join("<br>", tips)); // NON-NLS
     }
   }
 

@@ -32,6 +32,11 @@ public class ShaderManager {
 
   public static final String FBO_FRAGMENT_SHADER = "volumeFbo.frag";
 
+  /** Denoise pass of the path tracer, one per rendering path. */
+  public static final String DENOISE_COMPUTE_SHADER = "denoise.comp";
+
+  public static final String DENOISE_FBO_FRAGMENT_SHADER = "denoiseFbo.frag";
+
   private static final SoftCache<String, String> cache = new SoftCache<>();
 
   public static String getCode(String name) {

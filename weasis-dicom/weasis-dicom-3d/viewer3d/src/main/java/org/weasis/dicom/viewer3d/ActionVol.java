@@ -55,6 +55,10 @@ public class ActionVol {
   public static final ToggleButtonListenerValue VOL_SHADING =
       new ToggleButtonListenerValue(Messages.getString("shading"), "vol.shading", 0, 0, null);
 
+  public static final ToggleButtonListenerValue VOL_CINEMATIC =
+      new ToggleButtonListenerValue(
+          Messages.getString("cinematic.lighting"), "vol.cinematic", 0, 0, null);
+
   public static final ToggleButtonListenerValue VOL_PROJECTION =
       new ToggleButtonListenerValue(
           Messages.getString("orthographic.projection"), "vol.projection", 0, 0, null);

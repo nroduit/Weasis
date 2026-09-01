@@ -297,6 +297,190 @@ vec3 crosshairCutNormal(vec3 texCoord, float delta) {
 }
 
 // *************************************************************************************************
+// Cinematic lighting — one directional key light casting shadows through the volume, local ambient
+// occlusion around each lit sample and filmic tone mapping. Shadow and occlusion probes see the
+// volume through the preset opacity only (no gradient opacity, no shading) and march at a coarser
+// step than the view ray: their result is smooth by nature, and that saving is what keeps the mode
+// interactive. Crosshair cuts and segmentation masks are honoured so removed voxels cast nothing.
+// *************************************************************************************************
+
+// Distance, in normalized volume units, a shadow probe travels before the light counts as unblocked.
+const float SHADOW_RAY_LENGTH = 0.5;
+// Reach of the occlusion probes around a sample.
+const float AO_RADIUS = 0.05;
+// Samples fainter than this reuse the shadow and occlusion of the last evaluated one...
+const float CINEMATIC_MIN_ALPHA = 0.02;
+// ...but at most this many visible samples in a row, so faint presets still get lit.
+const int CINEMATIC_REFRESH_INTERVAL = 8;
+
+const float AO_DIAG = 0.57735027;
+const vec3 AO_DIRECTIONS[8] = vec3[8](
+    vec3( AO_DIAG,  AO_DIAG,  AO_DIAG), vec3(-AO_DIAG,  AO_DIAG,  AO_DIAG),
+    vec3( AO_DIAG, -AO_DIAG,  AO_DIAG), vec3(-AO_DIAG, -AO_DIAG,  AO_DIAG),
+    vec3( AO_DIAG,  AO_DIAG, -AO_DIAG), vec3(-AO_DIAG,  AO_DIAG, -AO_DIAG),
+    vec3( AO_DIAG, -AO_DIAG, -AO_DIAG), vec3(-AO_DIAG, -AO_DIAG, -AO_DIAG));
+
+// The world box spans ±texelSize and the texture [0, 1]³ (see rayCasting*): positions shift and
+// scale, directions only scale.
+vec3 worldToTexture(vec3 world) {
+    return (world + texelSize) / (texelSize + texelSize);
+}
+
+vec3 cameraPositionTex() {
+    return worldToTexture((viewMatrix * vec4(0.0, 0.0, 0.0, 1.0)).xyz);
+}
+
+// Unit direction towards the key light in texture space; viewMatrix is the camera-to-world matrix.
+vec3 keyLightDirTex() {
+    vec3 world = mat3(viewMatrix) * keyLightDir;
+    return normalize(world / texelSize);
+}
+
+bool outsideVolume(vec3 pos) {
+    return any(lessThan(pos, vec3(0.0))) || any(greaterThan(pos, vec3(1.0)));
+}
+
+// Opacity of the preset at {pos} over a march step of {stepLength}, zero where a cut or a mask
+// removed the voxel.
+float probeOpacity(vec3 pos, float stepLength) {
+    if (isCrosshairCut(pos) || isSegMasked(pos)) return 0.0;
+    float pix = getNormalizedWindowLevel(pos);
+    if (pix < visibleMin || pix > visibleMax) return 0.0;
+    float a = min(applyTextureColor(pix).a * opacityFactor, 1.0);
+    return 1.0 - pow(1.0 - a, OPACITY_REFERENCE_SAMPLES * stepLength);
+}
+
+// Fraction of the key light reaching {origin}: the transmittance of a coarse march towards it. The
+// start is pushed a little along {n} (the normal facing the light) so a lit surface does not shadow
+// itself with its own boundary voxels.
+float shadowTransmittance(vec3 origin, vec3 L, vec3 n, float jitter) {
+    int steps = max(int(float(shadowSteps) * cinematicScale + 0.5), 4);
+    float s = SHADOW_RAY_LENGTH / float(steps);
+    vec3 pos = origin + n * s * 0.5 + L * s * (0.5 + jitter);
+    float t = 1.0;
+    for (int i = 0; i < steps; ++i) {
+        if (outsideVolume(pos)) break;
+        t *= 1.0 - probeOpacity(pos, s);
+        if (t < 0.02) return 0.0;
+        pos += L * s;
+    }
+    return t;
+}
+
+// Mean transmittance of short probes over the hemisphere around the outward normal {N}: 1 in the
+// open, towards 0 inside a cavity or against a neighbouring structure.
+float ambientOcclusion(vec3 origin, vec3 N, float jitter) {
+    int steps = max(int(float(aoSteps) * cinematicScale + 0.5), 1);
+    float s = AO_RADIUS / float(steps);
+    float open = 0.0;
+    for (int d = 0; d < 8; ++d) {
+        vec3 dir = AO_DIRECTIONS[d];
+        if (dot(dir, N) < 0.0) dir = -dir;
+        vec3 pos = origin + dir * s * (0.5 + jitter);
+        float t = 1.0;
+        for (int i = 0; i < steps; ++i) {
+            if (outsideVolume(pos)) break;
+            t *= 1.0 - probeOpacity(pos, s);
+            pos += dir * s;
+        }
+        open += t;
+    }
+    return open / 8.0;
+}
+
+// ---- Image-based lighting ----------------------------------------------------------------------
+// The environment is described in view space (y up, +z towards the viewer) so it turns with the
+// camera. viewMatrix is the camera-to-world rotation (plus translation), so its transpose brings
+// world vectors to view space. Texture-space normals scale by 1/texelSize on the way to world
+// space, directions by texelSize (the box spans ±texelSize for [0, 1]³).
+
+vec3 normalToView(vec3 n) {
+    return normalize(transpose(mat3(viewMatrix)) * (n / texelSize));
+}
+
+vec3 directionToView(vec3 d) {
+    return normalize(transpose(mat3(viewMatrix)) * (d * texelSize));
+}
+
+// Equirectangular lookup, matching EnvironmentMap.direction() on the Java side.
+vec2 equirectUv(vec3 d) {
+    float u = atan(d.x, d.z) / (2.0 * 3.14159265) + 0.5;
+    float v = acos(clamp(d.y, -1.0, 1.0)) / 3.14159265;
+    return vec2(u, v);
+}
+
+// Irradiance around n from the nine SH coefficients (Ramamoorthi & Hanrahan), already over π.
+vec3 shIrradiance(vec3 n) {
+    const float c1 = 0.429043, c2 = 0.511664, c3 = 0.743125, c4 = 0.886227, c5 = 0.247708;
+    return c1 * envSh[8] * (n.x * n.x - n.y * n.y)
+         + c3 * envSh[6] * n.z * n.z
+         + c4 * envSh[0]
+         - c5 * envSh[6]
+         + 2.0 * c1 * (envSh[4] * n.x * n.y + envSh[7] * n.x * n.z + envSh[5] * n.y * n.z)
+         + 2.0 * c2 * (envSh[3] * n.x + envSh[1] * n.y + envSh[2] * n.z);
+}
+
+// Split-sum environment BRDF (Karis' analytic fit): x scales F0, y is the bias.
+vec2 envBrdf(float NoV, float roughness) {
+    const vec4 c0 = vec4(-1.0, -0.0275, -0.572, 0.022);
+    const vec4 c1 = vec4(1.0, 0.0425, 1.04, -0.04);
+    vec4 r = roughness * c0 + c1;
+    float a004 = min(r.x * r.x, exp2(-9.28 * NoV)) * r.x + r.y;
+    return vec2(-1.04, 1.04) * a004 + r.zw;
+}
+
+// Perceptual roughness matching the Blinn-Phong exponent, so the environment blur follows the
+// shininess the user already controls.
+float envRoughness() {
+    return clamp(sqrt(2.0 / (lights[0].specularPower + 2.0)), 0.05, 1.0);
+}
+
+// Environment light on a sample: diffuse irradiance around n plus the prefiltered reflection,
+// both weighted by the preset material like the key light's terms.
+vec3 environmentLight(vec3 albedo, vec3 n, vec3 V, vec4 material) {
+    vec3 nv = normalToView(n);
+    vec3 vv = directionToView(V);
+    float NoV = max(dot(nv, vv), 1e-4);
+    float roughness = envRoughness();
+    vec3 diffuse = albedo * material.y * shIrradiance(nv);
+    vec3 prefiltered = textureLod(envMap, equirectUv(reflect(-vv, nv)), roughness * envMaxLod).rgb;
+    vec2 brdf = envBrdf(NoV, roughness);
+    vec3 specular = prefiltered * material.z * (0.04 * brdf.x + brdf.y);
+    return envStrength * (diffuse + specular);
+}
+
+// Lit colour of a sample under the key light and, when enabled, the environment. The key light's
+// diffuse and specular are scaled by the shadow; the environment (or the flat ambient without one)
+// by the occlusion. The specular highlight is added untinted so it reads as a highlight on coloured
+// tissue rather than a brighter patch of it. Double sided like blinnPhong(); the cast shadow, not
+// the normal, is what darkens the side facing away from the light.
+vec3 cinematicShade(vec3 albedo, vec3 N, vec3 V, vec3 L, float pix, float shadow, float occlusion) {
+    vec4 material = texture(lightingMap, vec2(pix, 0.0));
+    vec3 n = dot(L, N) < 0.0 ? -N : N;
+    float diff = max(dot(L, n), 0.0);
+    vec3 H = normalize(L + V);
+    float spec = diff > 0.0 ? pow(max(dot(H, n), 0.0), lights[0].specularPower) : 0.0;
+    vec3 indirect = envEnabled
+        ? environmentLight(albedo, n, V, material)
+        : lightColor * albedo * material.x;
+    vec3 diffuse = albedo * material.y * diff * shadow;
+    vec3 specular = vec3(material.z * spec * shadow);
+    return indirect * occlusion + lightColor * (diffuse + specular);
+}
+
+// Shadow and occlusion factors of a sample, each already blended with its strength.
+vec2 cinematicFactors(vec3 texCoord, vec3 N, vec3 L, float jitter) {
+    vec3 n = dot(L, N) < 0.0 ? -N : N;
+    float shadow = shadowStrength > 0.0
+        ? mix(1.0, shadowTransmittance(texCoord, L, n, jitter), shadowStrength) : 1.0;
+    float occlusion = aoStrength > 0.0
+        ? mix(1.0, ambientOcclusion(texCoord, N, jitter), aoStrength) : 1.0;
+    return vec2(shadow, occlusion);
+}
+
+#include "toneMapping.glsl"
+
+// *************************************************************************************************
 // Accumulates the segmentation overlay along the ray, front to back, shared by the three rendering
 // modes. Returns premultiplied RGBA.
 //
@@ -351,6 +535,19 @@ vec4 accumulateSegOverlay(vec3 start, vec3 stepPos, vec3 ditheredRayStep, int sa
         }
     }
     return segAccum;
+}
+
+// Blends the segmentation overlay accumulated along the ray over a rendering result, or replaces
+// it in "segmentation only" mode. segAccum is premultiplied, so it composes without re-scaling.
+vec4 blendSegOverlay(vec4 color, vec4 segAccum) {
+    if (segOnly) {
+        return segAccum;
+    }
+    if (segAccum.a > 0.0) {
+        color.rgb = segAccum.rgb + color.rgb * (1.0 - segAccum.a);
+        color.a = max(color.a, segAccum.a);
+    }
+    return color;
 }
 
 vec4 rayCastingMip(Ray ray, float tmin, float tmax, vec2 uv) {
@@ -424,14 +621,7 @@ vec4 rayCastingMip(Ray ray, float tmin, float tmax, vec2 uv) {
     // Overlay segmentation colours on top of the MIP result (or render them alone in seg-only
     // mode). Skipped in mask modes: the mask shows real voxels, not segment colours.
     if (segMaskMode == 0 && segOverlayEnabled && (pixel.a > 0.0 || segOnly)) {
-        vec4 segAccum = accumulateSegOverlay(start, stepPos, ditheredRayStep, sampleCount);
-        if (segOnly) {
-            pixel = segAccum;
-        } else if (segAccum.a > 0.0) {
-            // segAccum.rgb is already premultiplied, so blend it over without re-scaling by its alpha
-            pixel.rgb = segAccum.rgb + pixel.rgb * (1.0 - segAccum.a);
-            pixel.a = max(pixel.a, segAccum.a);
-        }
+        pixel = blendSegOverlay(pixel, accumulateSegOverlay(start, stepPos, ditheredRayStep, sampleCount));
     }
 
     return pixel;
@@ -451,7 +641,15 @@ vec4 rayCastingComposite(Ray ray, float tmin, float tmax, vec2 uv) {
     vec3 rayPos = start;
     float stepSize = 1.0 / sampleCount;
     vec3 stepPos = (end - start) * stepSize;
-    vec3 ditheredRayStep = ditherRay ? stepPos * dithering(uv) : stepPos;
+    float jitter = dithering(uv);
+    vec3 ditheredRayStep = ditherRay ? stepPos * jitter : stepPos;
+
+    bool cine = shading && cinematic;
+    vec3 keyL = cine ? keyLightDirTex() : vec3(0.0);
+    vec3 cameraTex = cine ? cameraPositionTex() : vec3(0.0);
+    // Shadow and occlusion of the last evaluated sample, reused by the faint ones in between.
+    vec2 cineFactors = vec2(1.0);
+    int sinceEval = CINEMATIC_REFRESH_INTERVAL;
 
     // In "segmentation only" mode the anatomy volume raymarch is skipped entirely.
     for (int count = 0; count < sampleCount && !segOnly; count++) {
@@ -478,7 +676,17 @@ vec4 rayCastingComposite(Ray ray, float tmin, float tmax, vec2 uv) {
 
         if (pixel.a > 0.0) {
             float alpha = (1.0 - pixel.a) * pxColor.a;
-            if (shading) {
+            if (cine) {
+                vec3 N = length(grad) > 0.0 ? normalize(grad) : vec3(0.0, 0.0, 1.0);
+                sinceEval++;
+                if (pixel.a >= CINEMATIC_MIN_ALPHA || sinceEval >= CINEMATIC_REFRESH_INTERVAL) {
+                    cineFactors = cinematicFactors(texCoord, N, keyL, jitter);
+                    sinceEval = 0;
+                }
+                vec3 V = normalize(cameraTex - texCoord);
+                vec3 lit = cinematicShade(pixel.rgb, N, V, keyL, pix, cineFactors.x, cineFactors.y);
+                pxColor.rgb = lit * pixel.a + alpha * pxColor.rgb;
+            } else if (shading) {
                 vec3 normalPos = length(grad) > 0.0 ? normalize(grad) : vec3(0.0, 0.0, 1.0);
                 for (int i = 0; i < 4; ++i) {
                     if (lights[i].enabled) {
@@ -500,17 +708,13 @@ vec4 rayCastingComposite(Ray ray, float tmin, float tmax, vec2 uv) {
             break;
         }
     }
+    if (cine) {
+        pxColor = toneMapPremultiplied(pxColor);
+    }
 
     // Overlay segmentation colours on top of the composited volume
     if (segMaskMode == 0 && segOverlayEnabled && (pxColor.a > 0.0 || segOnly)) {
-        vec4 segAccum = accumulateSegOverlay(start, stepPos, ditheredRayStep, sampleCount);
-        if (segOnly) {
-            pxColor = segAccum;
-        } else if (segAccum.a > 0.0) {
-            // segAccum.rgb is already premultiplied, so blend it over the volume without re-scaling by its alpha
-            pxColor.rgb = segAccum.rgb + pxColor.rgb * (1.0 - segAccum.a);
-            pxColor.a = max(pxColor.a, segAccum.a);
-        }
+        pxColor = blendSegOverlay(pxColor, accumulateSegOverlay(start, stepPos, ditheredRayStep, sampleCount));
     }
 
     if (pxColor.a >= 0.99) {
@@ -530,7 +734,9 @@ vec4 rayCastingIsoSurface(Ray ray, float tmin, float tmax, vec2 uv) {
     vec3 rayPos = start;
     float stepSize = 1.0 / sampleCount;
     vec3 stepPos = (end - start) * stepSize;
-    vec3 ditheredRayStep = ditherRay ? stepPos * dithering(uv) : stepPos;
+    float jitter = dithering(uv);
+    vec3 ditheredRayStep = ditherRay ? stepPos * jitter : stepPos;
+    bool cine = shading && cinematic;
 
     vec3 texCoord = vec3(0.0);
     vec4 pxColor = vec4(0.0);
@@ -553,6 +759,14 @@ vec4 rayCastingIsoSurface(Ray ray, float tmin, float tmax, vec2 uv) {
                 vec3 normalPos = gradient(texCoord, stepSize);
                 vec4 diffuse = pixel;
 
+                if (cine) {
+                    vec3 L = keyLightDirTex();
+                    vec3 V = normalize(cameraPositionTex() - texCoord);
+                    vec2 factors = cinematicFactors(texCoord, normalPos, L, jitter);
+                    pxColor.rgb = cinematicShade(diffuse.rgb, normalPos, V, L, pix, factors.x, factors.y);
+                    pxColor.a = diffuse.a;
+                    break;
+                }
                 for (int i = 0; i < 4; ++i) {
                     if (lights[i].enabled) {
                         vec3 V = normalize(vec3(viewMatrix * lights[i].position) - texCoord);
@@ -578,17 +792,13 @@ vec4 rayCastingIsoSurface(Ray ray, float tmin, float tmax, vec2 uv) {
     if (pxColor.a >= 0.99) {
         pxColor.a = 1.0;
     }
+    if (cine) {
+        pxColor.rgb = toneMap(pxColor.rgb);
+    }
 
     // Overlay segmentation colours on top of the iso-surface result
     if (segMaskMode == 0 && segOverlayEnabled && (pxColor.a > 0.0 || segOnly)) {
-        vec4 segAccum = accumulateSegOverlay(start, stepPos, ditheredRayStep, sampleCount);
-        if (segOnly) {
-            pxColor = segAccum;
-        } else if (segAccum.a > 0.0) {
-            // segAccum.rgb is already premultiplied, so blend it over without re-scaling by its alpha
-            pxColor.rgb = segAccum.rgb + pxColor.rgb * (1.0 - segAccum.a);
-            pxColor.a = max(pxColor.a, segAccum.a);
-        }
+        pxColor = blendSegOverlay(pxColor, accumulateSegOverlay(start, stepPos, ditheredRayStep, sampleCount));
     }
 
     return pxColor;
@@ -611,4 +821,212 @@ vec4 slice(vec2 uv) {
         }
         return vec4(pix, pix, pix, 1.0f);
     }
+}
+
+// *************************************************************************************************
+// Progressive path tracing — one Monte Carlo sample per pixel and frame, averaged into historyMap
+// across frames while the scene stands still. The LUT opacity acts as a density: delta tracking
+// finds the next collision, and each collision either scatters like a surface (Lambert plus a
+// Blinn-Phong highlight, chosen with a probability that grows with the gradient magnitude) or like
+// a cloud (isotropic phase). The key light is gathered at every collision through a ratio-tracked
+// shadow ray; the environment is gathered by the paths that leave the volume. Everything is linear
+// radiance: the display image is tone-mapped from the average, never the average itself.
+// *************************************************************************************************
+
+// Extinction, per unit of normalized volume length, of a fully opaque LUT entry. Bounds the null
+// collision rate: the mean free path of an opaque voxel is a couple of voxels on a 512³ volume.
+const float PT_DENSITY = 256.0;
+// Central-difference half width of the gradient giving the surface normal.
+const float PT_GRADIENT_DELTA = 1.0 / 384.0;
+// Radiance of the key light relative to the environments, whose sky sits around 0.5.
+const float PT_KEY_LIGHT = 2.0;
+// Sky radiance when no environment is selected.
+const float PT_AMBIENT_SKY = 0.3;
+// Bounds the tracking loops whatever the density.
+const int PT_MAX_STEPS = 2048;
+// Depth recorded for a primary ray that met nothing; beyond any distance inside the unit cube.
+const float PT_ESCAPED_DEPTH = 4.0;
+
+uint ptState;
+
+uint ptHash(uint v) {
+    uint state = v * 747796405u + 2891336453u;
+    uint word = ((state >> ((state >> 28u) + 4u)) ^ state) * 277803737u;
+    return (word >> 22u) ^ word;
+}
+
+float ptRand() {
+    ptState = ptHash(ptState);
+    return float(ptState) / 4294967296.0;
+}
+
+void ptSeed(ivec2 pixel, int frame) {
+    ptState = ptHash(uint(pixel.x) * 1973u + uint(pixel.y) * 9277u + uint(frame) * 26699u + 1u);
+}
+
+// Extinction at pos from the LUT opacity; zero where a cut or a mask removed the voxel.
+float ptExtinction(vec3 pos, out vec3 albedo, out float pix) {
+    albedo = vec3(0.0);
+    pix = 0.0;
+    if (isCrosshairCut(pos) || isSegMasked(pos)) return 0.0;
+    pix = getNormalizedWindowLevel(pos);
+    if (pix < visibleMin || pix > visibleMax) return 0.0;
+    vec4 c = applyVoxelColor(pos, pix);
+    albedo = c.rgb;
+    return min(c.a * opacityFactor, 1.0) * PT_DENSITY;
+}
+
+// Distance along dir at which a ray starting inside [0, 1]³ leaves it.
+float ptExitDistance(vec3 origin, vec3 dir) {
+    vec3 inv = 1.0 / dir;
+    vec3 t1 = (vec3(0.0) - origin) * inv;
+    vec3 t2 = (vec3(1.0) - origin) * inv;
+    vec3 tfar = max(t1, t2);
+    return max(min(tfar.x, min(tfar.y, tfar.z)), 0.0);
+}
+
+// Delta tracking: distance to the next real collision, or -1 when the ray leaves the volume first.
+float ptFreeFlight(vec3 origin, vec3 dir, float tmax, float sigmaMax, out vec3 albedo, out float pix) {
+    float t = 0.0;
+    for (int i = 0; i < PT_MAX_STEPS; ++i) {
+        t -= log(max(1.0 - ptRand(), 1e-6)) / sigmaMax;
+        if (t >= tmax) return -1.0;
+        float sigma = ptExtinction(origin + dir * t, albedo, pix);
+        if (ptRand() * sigmaMax < sigma) return t;
+    }
+    return -1.0;
+}
+
+// Ratio tracking: transmittance from origin to the edge of the volume along dir.
+float ptTransmittance(vec3 origin, vec3 dir, float sigmaMax) {
+    float tmax = ptExitDistance(origin, dir);
+    float t = 0.0;
+    float transmittance = 1.0;
+    vec3 albedo;
+    float pix;
+    for (int i = 0; i < PT_MAX_STEPS; ++i) {
+        t -= log(max(1.0 - ptRand(), 1e-6)) / sigmaMax;
+        if (t >= tmax) break;
+        transmittance *= 1.0 - ptExtinction(origin + dir * t, albedo, pix) / sigmaMax;
+        if (transmittance < 0.01) return 0.0;
+    }
+    return transmittance;
+}
+
+// Radiance arriving from outside the volume along a texture-space direction.
+vec3 ptSkyRadiance(vec3 dir) {
+    if (!envEnabled) return lightColor * PT_AMBIENT_SKY;
+    return envStrength * textureLod(envMap, equirectUv(directionToView(dir)), 1.5).rgb;
+}
+
+vec3 ptCosineDirection(vec3 n) {
+    float phi = 6.2831853 * ptRand();
+    float r2 = ptRand();
+    float r = sqrt(r2);
+    vec3 t = normalize(abs(n.x) > 0.9 ? cross(n, vec3(0.0, 1.0, 0.0)) : cross(n, vec3(1.0, 0.0, 0.0)));
+    vec3 b = cross(n, t);
+    return normalize(t * (r * cos(phi)) + b * (r * sin(phi)) + n * sqrt(max(1.0 - r2, 0.0)));
+}
+
+vec3 ptSphereDirection() {
+    float z = 1.0 - 2.0 * ptRand();
+    float phi = 6.2831853 * ptRand();
+    float r = sqrt(max(1.0 - z * z, 0.0));
+    return vec3(r * cos(phi), r * sin(phi), z);
+}
+
+// One radiance sample of the camera ray, premultiplied: alpha is 1 once the primary ray collides.
+// feature receives the denoiser's guides: the normal at the first collision (zero when it
+// scattered like a cloud or the ray escaped) and that collision's distance along the ray.
+vec4 ptTraceSample(Ray ray, float tmin, out vec4 feature) {
+    vec3 pos = clamp(worldToTexture(ray.origin + ray.direction * tmin), 0.0, 1.0);
+    vec3 dir = normalize(ray.direction / texelSize);
+    float sigmaMax = max(ptMaxAlpha * opacityFactor, 0.01) * PT_DENSITY;
+    vec3 L = keyLightDirTex();
+    vec3 radiance = vec3(0.0);
+    vec3 throughput = vec3(1.0);
+    float alpha = 0.0;
+    float tEnd = ptExitDistance(pos, dir);
+    feature = vec4(0.0, 0.0, 0.0, PT_ESCAPED_DEPTH);
+
+    for (int bounce = 0; bounce <= ptMaxBounces; ++bounce) {
+        vec3 albedo;
+        float pix;
+        float t = ptFreeFlight(pos, dir, tEnd, sigmaMax, albedo, pix);
+        if (t < 0.0) {
+            if (bounce > 0) radiance += throughput * ptSkyRadiance(dir);
+            break;
+        }
+        alpha = 1.0;
+        pos += dir * t;
+        vec4 material = texture(lightingMap, vec2(pix, 0.0));
+        vec3 grad = gradientRaw(pos, PT_GRADIENT_DELTA);
+        bool surface = ptRand() < smoothstep(0.02, 0.15, length(grad));
+        vec3 n = surface ? normalize(grad) : vec3(0.0);
+        if (surface && dot(n, dir) > 0.0) n = -n;
+        if (bounce == 0) feature = vec4(n, t);
+
+        // Next-event estimation towards the key light.
+        float transmittance = ptTransmittance(pos, L, sigmaMax);
+        if (transmittance > 0.0) {
+            vec3 light = lightColor * (PT_KEY_LIGHT * transmittance);
+            if (surface) {
+                float diff = max(dot(n, L), 0.0);
+                vec3 H = normalize(L - dir);
+                float spec = diff > 0.0 ? pow(max(dot(H, n), 0.0), lights[0].specularPower) : 0.0;
+                radiance += throughput * light * (albedo * material.y * diff + material.z * spec);
+            } else {
+                // Isotropic phase (1/4π) against the Lambert lobe (1/π) the throughput assumes.
+                radiance += throughput * light * albedo * material.y * 0.25;
+            }
+        }
+
+        throughput *= albedo * material.y;
+        if (surface) {
+            dir = ptCosineDirection(n);
+            pos += n * PT_GRADIENT_DELTA;
+        } else {
+            dir = ptSphereDirection();
+        }
+        if (bounce >= 2) {
+            float survive = max(throughput.r, max(throughput.g, throughput.b));
+            if (ptRand() > survive) break;
+            throughput /= max(survive, 1e-3);
+        }
+        tEnd = ptExitDistance(pos, dir);
+    }
+    return vec4(radiance, alpha);
+}
+
+// Traces one jittered sample for the pixel and folds it, with its features, into the running
+// averages. Returns the linear premultiplied average; the denoise pass tone-maps it for display.
+vec4 pathTrace(vec2 uv, ivec2 pixelCoords, ivec2 imageDims, out vec4 feature) {
+    ptSeed(pixelCoords, frameIndex);
+    vec2 jittered = uv + (vec2(ptRand(), ptRand()) - 0.5) * 2.0 / vec2(imageDims);
+    Ray ray = CreateCameraRay(jittered);
+    float tmin = 0.0;
+    float tmax = 0.0;
+    intersect(ray, tmin, tmax);
+    vec4 result = vec4(0.0);
+    feature = vec4(0.0, 0.0, 0.0, PT_ESCAPED_DEPTH);
+    if (tmax >= tmin) {
+        if (!segOnly) {
+            result = ptTraceSample(ray, max(tmin, 0.0), feature);
+        }
+        // The overlay is deterministic and composes linearly, so averaging it with the samples is
+        // the same as drawing it over the average.
+        if (segMaskMode == 0 && segOverlayEnabled && (result.a > 0.0 || segOnly)) {
+            vec3 start = worldToTexture(ray.origin + tmin * ray.direction);
+            vec3 end = worldToTexture(ray.origin + tmax * ray.direction);
+            int sampleCount = max(int(float(depthSampleNumber) * distance(end, start)), 1);
+            vec3 stepPos = (end - start) / float(sampleCount);
+            result = blendSegOverlay(result, accumulateSegOverlay(start, stepPos, stepPos * ptRand(), sampleCount));
+        }
+    }
+    if (frameIndex > 0) {
+        float weight = 1.0 / float(frameIndex + 1);
+        result = mix(texelFetch(historyMap, pixelCoords, 0), result, weight);
+        feature = mix(texelFetch(featureMap, pixelCoords, 0), feature, weight);
+    }
+    return result;
 }

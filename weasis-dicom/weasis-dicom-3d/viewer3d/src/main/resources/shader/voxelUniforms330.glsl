@@ -55,6 +55,7 @@ const uint typeSlice = 0x00000003u;
 const uint typeSliceAxial = 0x00000004u;
 const uint typeSliceCoronal = 0x00000005u;
 const uint typeSliceSagittal = 0x00000006u;
+const uint typePathTracing = 0x00000007u;
 
 // MIP type
 uniform uint mipType;
@@ -74,6 +75,32 @@ struct LightParameters {
     bool enabled;
 };
 uniform LightParameters lights[4];
+
+// Cinematic lighting: one directional key light casting shadows through the volume, local ambient
+// occlusion and filmic tone mapping on top of the shading. Ignored while shading is off.
+// (no default initializers in GLSL 3.30; all set via Java)
+uniform bool  cinematic;
+// Unit vector towards the key light, in view space (+z towards the viewer).
+uniform vec3  keyLightDir;
+uniform float shadowStrength;
+uniform int   shadowSteps;
+uniform float aoStrength;
+uniform int   aoSteps;
+uniform float exposure;
+// Scale applied to the shadow and occlusion step counts while the camera is being dragged.
+uniform float cinematicScale;
+// Image-based lighting from the environment map bound on unit 6: nine RGB spherical-harmonic
+// coefficients of its irradiance (order L00, L1-1, L10, L11, L2-2, L2-1, L20, L21, L22) and the
+// highest mip level of its roughness-prefiltered radiance.
+uniform bool  envEnabled;
+uniform float envStrength;
+uniform vec3  envSh[9];
+uniform float envMaxLod;
+// Progressive path tracing: index of the frame being accumulated (0 restarts the average held in
+// historyMap on unit 7), the bounce budget and the highest LUT opacity, which bounds the extinction.
+uniform int   frameIndex;
+uniform int   ptMaxBounces;
+uniform float ptMaxAlpha;
 
 const vec3 sliceOffset = vec3(0.5, 0.5, 0.5);
 

@@ -133,6 +133,7 @@ public class View3DContainer extends DicomViewerPlugin
     actions.put(ActionVol.RENDERING_TYPE.cmd(), false);
     actions.put(ActionVol.VOL_OPACITY.cmd(), false);
     actions.put(ActionVol.VOL_SHADING.cmd(), false);
+    actions.put(ActionVol.VOL_CINEMATIC.cmd(), false);
     actions.put(ActionVol.VOL_PROJECTION.cmd(), false);
     actions.put(ActionVol.CROSSHAIR_CUT_MODE.cmd(), false);
     actions.put(ActionVol.SEG_TYPE.cmd(), false);
@@ -164,6 +165,7 @@ public class View3DContainer extends DicomViewerPlugin
           new SyncOption(ActionVol.RENDERING_TYPE),
           new SyncOption(ActionVol.VOL_OPACITY),
           new SyncOption(ActionVol.VOL_SHADING),
+          new SyncOption(ActionVol.VOL_CINEMATIC),
           new SyncOption(ActionVol.VOL_PROJECTION),
           new SyncOption(ActionVol.CROSSHAIR_CUT_MODE),
           new SyncOption(ActionVol.SEG_TYPE));
@@ -483,6 +485,7 @@ public class View3DContainer extends DicomViewerPlugin
         menuRoot.add(new JSeparator());
         GuiUtils.addItemToMenu(menuRoot, manager.getViewTypeMenu(null));
         GuiUtils.addItemToMenu(menuRoot, manager.getShadingMenu(null));
+        GuiUtils.addItemToMenu(menuRoot, manager.getCinematicMenu(null));
         GuiUtils.addItemToMenu(menuRoot, manager.getSProjectionMenu(null));
         menuRoot.add(new JSeparator());
         GuiUtils.addItemToMenu(menuRoot, manager.getMprCutMenu(null));

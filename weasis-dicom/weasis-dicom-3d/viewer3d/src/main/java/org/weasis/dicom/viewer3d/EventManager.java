@@ -105,6 +105,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> {
     setAction(newOpacityAction());
 
     setAction(newVolumeShadingAction());
+    setAction(newVolumeCinematicAction());
     setAction(newVolumeProjection());
     setAction(newAxisRotationAction());
 
@@ -443,6 +444,18 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> {
     };
   }
 
+  private ToggleButtonListener newVolumeCinematicAction() {
+    return new ToggleButtonListener(ActionVol.VOL_CINEMATIC, false) {
+      @Override
+      public void actionPerformed(boolean selected) {
+        firePropertyChange(
+            ActionW.SYNCH.cmd(),
+            null,
+            new SynchEvent(getSelectedViewPane(), action.cmd(), selected));
+      }
+    };
+  }
+
   private ToggleButtonListener newVolumeProjection() {
     return new ToggleButtonListener(ActionVol.VOL_PROJECTION, false) {
       @Override
@@ -584,6 +597,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> {
     viewType.ifPresent(a -> a.setSelectedItemWithoutTriggerAction(rendering.getRenderingType()));
 
     Optional<ToggleButtonListener> volumeLighting = getAction(ActionVol.VOL_SHADING);
+    Optional<ToggleButtonListener> volumeCinematic = getAction(ActionVol.VOL_CINEMATIC);
     Optional<SliderChangeListener> volumeQuality = getAction(ActionVol.VOL_QUALITY);
     Optional<SliderChangeListener> volumeOpacity = getAction(ActionVol.VOL_OPACITY);
     Optional<ToggleButtonListener> volumeProjection = getAction(ActionVol.VOL_PROJECTION);
@@ -591,6 +605,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> {
     Optional<ComboItemListener<CrosshairCutMode>> crosshairCutMode =
         getAction(ActionVol.CROSSHAIR_CUT_MODE);
     volumeLighting.ifPresent(a -> a.setSelectedWithoutTriggerAction(rendering.isShading()));
+    volumeCinematic.ifPresent(a -> a.setSelectedWithoutTriggerAction(rendering.isCinematic()));
     volumeProjection.ifPresent(
         a -> a.setSelectedWithoutTriggerAction(canvas.getCamera().isOrthographicProjection()));
     volumeQuality.ifPresent(a -> a.setSliderValue(rendering.getQuality(), false));
@@ -968,6 +983,20 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> {
             shadingAction
                 .get()
                 .createUnregisteredJCCheckBoxMenuItem(ActionVol.VOL_SHADING.getTitle());
+      }
+    }
+    return menu;
+  }
+
+  public JCheckBoxMenuItem getCinematicMenu(String prop) {
+    JCheckBoxMenuItem menu = null;
+    if (GuiUtils.getUICore().getSystemPreferences().getBooleanProperty(prop, true)) {
+      Optional<ToggleButtonListener> cinematicAction = getAction(ActionVol.VOL_CINEMATIC);
+      if (cinematicAction.isPresent()) {
+        menu =
+            cinematicAction
+                .get()
+                .createUnregisteredJCCheckBoxMenuItem(ActionVol.VOL_CINEMATIC.getTitle());
       }
     }
     return menu;

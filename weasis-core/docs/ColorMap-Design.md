@@ -51,7 +51,7 @@ still read, unknown fields are ignored, and a newer major schema is refused.
 | File | Content |
 |---|---|
 | `weasis-core/src/main/resources/colormaps.json` | Built-in 2D maps (clinical, the PS3.6 well-known DICOM palettes, classic, scientific, single-hue and hot overlays for fusion) |
-| `weasis-dicom/weasis-dicom-3d/viewer3d/src/main/resources/volumeColorMaps.json` | Built-in volume rendering presets (the historical Weasis set, the 3D Slicer CT catalog clipped to the Hounsfield range, MR presets in percent of the volume maximum, PET presets in SUVbw), contributed to the registry by the 3D viewer; `category` names the anatomical group (bone, vascular, cardiac…) |
+| `weasis-dicom/weasis-dicom-3d/viewer3d/src/main/resources/volumeColorMaps.json` | Built-in volume rendering presets (the historical Weasis set, the 3D Slicer CT catalog clipped to the Hounsfield range, MR presets in percent of the volume maximum, PET presets in SUVbw), contributed to the registry by the 3D viewer; `category` names the anatomical group (bone, vascular, cardiac…) and the `cinematic` tag marks the presets whose opaque, well-separated materials suit the cinematic lighting and path tracing modes |
 | `customColorMaps.json` in the preference directory | User maps, 2D and 3D, pushed to the remote preference store |
 
 The legacy `.txt` table is an import format only. A user's former `customVolumePresets.json` is

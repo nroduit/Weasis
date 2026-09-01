@@ -134,8 +134,6 @@ public class VolumeTool extends PluginTool {
         .getAction(ActionVol.VOL_SHADING)
         .ifPresent(
             b -> {
-              JPanel pane = GuiUtils.getFlowLayoutPanel();
-              pane.add(b.createCheckBox(ActionVol.VOL_SHADING.getTitle()));
               JButton btnOptions = new JButton(Messages.getString("more.options"));
               btnOptions.addActionListener(
                   e -> {
@@ -147,6 +145,16 @@ public class VolumeTool extends PluginTool {
               JCheckBox box = b.createCheckBox(ActionVol.VOL_SHADING.getTitle());
               volumePanel.add(
                   GuiUtils.getFlowLayoutPanel(box, GuiUtils.boxHorizontalStrut(10), btnOptions));
+              volumePanel.add(GuiUtils.boxVerticalStrut(gabY));
+            });
+
+    EventManager.getInstance()
+        .getAction(ActionVol.VOL_CINEMATIC)
+        .ifPresent(
+            b -> {
+              volumePanel.add(
+                  GuiUtils.getFlowLayoutPanel(
+                      b.createCheckBox(ActionVol.VOL_CINEMATIC.getTitle())));
               volumePanel.add(GuiUtils.boxVerticalStrut(gabY));
             });
     return volumePanel;

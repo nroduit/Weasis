@@ -137,6 +137,22 @@ public class Preset extends TextureData {
     return gradient == null ? null : gradient.table(GRADIENT_OPACITY_SAMPLES);
   }
 
+  /** Tag marking a map whose opaque, well-separated materials suit the cinematic modes. */
+  public static final String CINEMATIC_TAG = "cinematic"; // NON-NLS
+
+  public static boolean isCinematic(ColorMap map) {
+    return map.tags().contains(CINEMATIC_TAG);
+  }
+
+  /** Highest opacity of the map in {@code [0, 1]}; the path tracer's extinction bound. */
+  public float getMaxAlpha() {
+    int max = 0;
+    for (int i = 0; i < width; i++) {
+      max = Math.max(max, colors[i * 4 + 3] & 0xFF);
+    }
+    return max / 255f;
+  }
+
   /**
    * Lowest and highest normalized LUT coordinate with a non-zero alpha: samples outside skip the
    * color and lighting fetches. A range touching a texture end is left open on that side, since

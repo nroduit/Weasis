@@ -1,0 +1,27 @@
+#version 430
+// Denoise pass of the path tracer (compute path): filters the running average into the display
+// image and redraws the crosshair overlay on top, as volume.comp does for the other modes.
+
+layout (local_size_x = 16, local_size_y = 16) in ;
+layout (rgba32f, binding = 0) uniform image2D outputImage;
+layout (binding = 7) uniform sampler2D historyMap;
+layout (binding = 8) uniform sampler2D featureMap;
+
+#include "voxelUniforms.glsl"
+
+#include "toneMapping.glsl"
+
+#include "denoiseFunctions.glsl"
+
+#include "crosshairOverlay.glsl"
+
+void main() {
+    ivec2 pixelCoords = ivec2(gl_GlobalInvocationID.xy);
+    ivec2 imageDims = imageSize(outputImage);
+    if (pixelCoords.x >= imageDims.x || pixelCoords.y >= imageDims.y) {
+        return;
+    }
+    vec4 pixelVal = toneMapPremultiplied(denoise(pixelCoords));
+    vec4 crosshairColor = computeCrosshairColor(pixelCoords, imageDims);
+    imageStore(outputImage, pixelCoords, crosshairColor.a >= 0.0 ? crosshairColor : pixelVal);
+}

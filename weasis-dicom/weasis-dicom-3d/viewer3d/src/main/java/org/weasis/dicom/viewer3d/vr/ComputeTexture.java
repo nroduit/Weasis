@@ -20,6 +20,13 @@ public class ComputeTexture extends TextureData {
   private final int localSize;
 
   /**
+   * Textures bound on image units 1 and 2 for the path tracer's averages, 0 when not accumulating.
+   */
+  private int accumulationId;
+
+  private int featureId;
+
+  /**
    * @param view3d the 3d view
    * @param localSize the size of the shader block (must match to localSize in compute glsl)
    */
@@ -61,6 +68,11 @@ public class ComputeTexture extends TextureData {
     return size;
   }
 
+  public void setAccumulationTargets(int colorTextureId, int featureTextureId) {
+    this.accumulationId = colorTextureId;
+    this.featureId = featureTextureId;
+  }
+
   @Override
   public void render(GL2ES2 gl) {
     if (gl == null) {
@@ -70,6 +82,15 @@ public class ComputeTexture extends TextureData {
     if (getId() <= 0) {
       init(gl4);
     }
+    if (accumulationId > 0) {
+      gl4.glBindImageTexture(1, accumulationId, 0, false, 0, GL.GL_WRITE_ONLY, GL.GL_RGBA32F);
+      gl4.glBindImageTexture(2, featureId, 0, false, 0, GL.GL_WRITE_ONLY, GL.GL_RGBA32F);
+    }
+    dispatch(gl4);
+  }
+
+  /** Runs the active compute program over the output image. */
+  public void dispatch(GL4 gl4) {
 
     if (width != view3d.getSurfaceWidth() || height != view3d.getSurfaceHeight()) {
       gl4.glActiveTexture(GL.GL_TEXTURE0);

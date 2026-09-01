@@ -21,6 +21,7 @@ public class RenderingLayer<E extends ImageElement> {
   public static final String P_DYNAMIC_QUALITY = "volume.dynamic.quality";
   public static final String P_MAX_TEX_XY = "volume.texture.max.xy";
   public static final String P_MAX_TEX_Z = "volume.texture.max.z";
+  public static final String P_CINEMATIC_QUALITY = "volume.cinematic.quality";
 
   public static final int MAX_QUALITY = 8192;
   public static final int MIN_QUALITY = 128;
@@ -31,6 +32,7 @@ public class RenderingLayer<E extends ImageElement> {
   private int windowWidth;
   private int windowCenter;
   private boolean shading;
+  private boolean cinematic;
 
   private boolean invertLut;
   private int quality;
@@ -47,6 +49,7 @@ public class RenderingLayer<E extends ImageElement> {
     this.windowWidth = 200;
     this.windowCenter = 40;
     this.shading = false;
+    this.cinematic = false;
     this.quality = 1024;
     this.renderingType = RenderingType.COMPOSITE;
     this.enableRepaint = true;
@@ -126,6 +129,18 @@ public class RenderingLayer<E extends ImageElement> {
   public void setShading(boolean shading) {
     if (this.shading != shading) {
       this.shading = shading;
+      fireLayerChanged();
+    }
+  }
+
+  public boolean isCinematic() {
+    return cinematic;
+  }
+
+  /** Cinematic lighting only applies while {@link #isShading()} is on. */
+  public void setCinematic(boolean cinematic) {
+    if (this.cinematic != cinematic) {
+      this.cinematic = cinematic;
       fireLayerChanged();
     }
   }
