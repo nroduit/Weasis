@@ -12,9 +12,15 @@ package org.weasis.dicom.explorer.imp;
 import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
+import java.nio.file.LinkOption;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
+import java.util.stream.Stream;
 import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.BulkData;
 import org.dcm4che3.data.Fragments;
@@ -202,11 +208,11 @@ public class DicomDirLoader {
                 DicomUtils.getIntegerFromDicomElement(instance, Tag.InstanceNumber, null);
             SopInstance sop = seriesInstanceList.getSopInstance(sopInstanceUID, frame);
             if (sop == null) {
-              File file = toFileName(instance, reader);
+              Path file = toFileName(instance, reader);
               if (file != null) {
-                if (file.exists()) {
+                if (Files.exists(file)) {
                   sop = new SopInstance(sopInstanceUID, frame);
-                  sop.setDirectDownloadFile(file.toURI().toString());
+                  sop.setDirectDownloadFile(file.toUri().toString());
                   seriesInstanceList.addSopInstance(sop);
                   if (iconInstance == null) {
                     // Icon Image Sequence (0088,0200). This Icon Image is representative of the
@@ -214,7 +220,7 @@ public class DicomDirLoader {
                     iconInstance = instance.getNestedDataset(Tag.IconImageSequence);
                   }
                 } else {
-                  LOGGER.error("Missing DICOMDIR entry: {}", file.getPath());
+                  LOGGER.error("Missing DICOMDIR entry: {}", file);
                 }
               }
             }
@@ -351,37 +357,104 @@ public class DicomDirLoader {
     return null;
   }
 
-  private File toFileName(Attributes dcmObject, DicomDirReader reader) {
+  /**
+   * Resolves the file referenced by a DICOMDIR record, constrained to the directory owning the
+   * DICOMDIR.
+   *
+   * @return null when Referenced File ID (0004,1500) is absent or points outside that directory
+   */
+  private Path toFileName(Attributes dcmObject, DicomDirReader reader) {
     String[] fileID = dcmObject.getStrings(Tag.ReferencedFileID);
     if (fileID == null || fileID.length == 0) {
       return null;
     }
-    StringBuilder sb = new StringBuilder(fileID[0]);
-    for (int i = 1; i < fileID.length; i++) {
-      sb.append(File.separatorChar).append(fileID[i]);
+    Path baseDir = reader.getFile().toPath().toAbsolutePath().getParent();
+    Path file = resolveInside(baseDir, fileID);
+    if (file == null) {
+      LOGGER.error("Rejecting DICOMDIR entry outside of {}: {}", baseDir, String.join("/", fileID));
+      return null;
     }
-    File file = new File(reader.getFile().getParent(), sb.toString());
-    if (!file.exists()) {
-      // Try to find lower case relative path, it happens sometimes when mounting cdrom on Linux
-      File fileLowerCase = new File(reader.getFile().getParent(), sb.toString().toLowerCase());
-      if (fileLowerCase.exists()) {
-        return fileLowerCase;
-      }
-
-      // Try to find relative path with extension, image file may have it
-      String dcmFilename = file.getName();
-      File[] dcmFileList =
-          file.getParentFile()
-              .listFiles(
-                  (p, name) ->
-                      name.startsWith(dcmFilename + ".")
-                          || name.startsWith(dcmFilename.toLowerCase() + "."));
-      if (dcmFileList != null && dcmFileList.length == 1) {
-        return dcmFileList[0];
-      }
+    if (Files.exists(file)) {
+      return file;
     }
 
-    return file;
+    // Try to find lower case relative path, it happens sometimes when mounting cdrom on Linux
+    Path fileLowerCase = resolveInside(baseDir, toLowerCase(fileID));
+    if (fileLowerCase != null && Files.exists(fileLowerCase)) {
+      return fileLowerCase;
+    }
+
+    // Try to find relative path with extension, image file may have it
+    return findWithExtension(file).orElse(file);
+  }
+
+  /**
+   * Resolves the Referenced File ID components under baseDir. Non-conformant components holding a
+   * separator or a relative segment are tolerated, as long as the result stays inside baseDir, both
+   * lexically and once symbolic links are followed.
+   */
+  private static Path resolveInside(Path baseDir, String[] fileID) {
+    Path file = baseDir;
+    try {
+      for (String component : fileID) {
+        if (component == null) {
+          return null;
+        }
+        file = file.resolve(component);
+      }
+    } catch (InvalidPathException e) {
+      return null;
+    }
+    Path resolved = file.normalize();
+    return resolved.startsWith(baseDir) && isLinkTargetInside(baseDir, resolved) ? resolved : null;
+  }
+
+  /**
+   * Checks the deepest existing ancestor of the resolved path, which is where a symbolic link would
+   * lead out of the file-set without {@link Path#normalize()} ever noticing.
+   */
+  private static boolean isLinkTargetInside(Path baseDir, Path resolved) {
+    try {
+      Path existing = resolved;
+      while (!Files.exists(existing, LinkOption.NOFOLLOW_LINKS)) {
+        existing = existing.getParent();
+        if (existing == null) {
+          return false;
+        }
+      }
+      return existing.toRealPath().startsWith(baseDir.toRealPath());
+    } catch (IOException e) {
+      return false;
+    }
+  }
+
+  private static String[] toLowerCase(String[] fileID) {
+    String[] lowerCase = new String[fileID.length];
+    for (int i = 0; i < fileID.length; i++) {
+      lowerCase[i] = fileID[i] == null ? null : fileID[i].toLowerCase(Locale.ROOT);
+    }
+    return lowerCase;
+  }
+
+  /** Finds the sibling file named after the record plus an extension, when it is unambiguous. */
+  private static Optional<Path> findWithExtension(Path file) {
+    String name = file.getFileName().toString();
+    String lowerCaseName = name.toLowerCase(Locale.ROOT);
+    try (Stream<Path> siblings = Files.list(file.getParent())) {
+      List<Path> matches =
+          siblings
+              .filter(
+                  p -> {
+                    String sibling = p.getFileName().toString();
+                    return sibling.startsWith(name + ".")
+                        || sibling.startsWith(lowerCaseName + ".");
+                  })
+              .limit(2)
+              .toList();
+      return matches.size() == 1 ? Optional.of(matches.getFirst()) : Optional.empty();
+    } catch (IOException e) {
+      return Optional.empty();
+    }
   }
 
   public static DicomDirWriter open(File file) throws IOException {

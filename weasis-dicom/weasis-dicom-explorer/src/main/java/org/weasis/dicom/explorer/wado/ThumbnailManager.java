@@ -252,13 +252,14 @@ public record ThumbnailManager(
     String thumbURL = getWadoRsThumbnailUrl(wadoParameters);
     if (thumbURL == null) {
       thumbURL = (String) dicomSeries.getTagValue(TagW.DirectDownloadThumbnail);
-      if (StringUtil.hasLength(thumbURL)) {
-        if (thumbURL.startsWith(Thumbnail.THUMBNAIL_CACHE_DIR.toString())) {
-          return Path.of(thumbURL);
-        } else {
-          thumbURL = wadoParameters.getBaseURL() + thumbURL;
-        }
+      if (!StringUtil.hasLength(thumbURL)) {
+        // No referenced thumbnail, e.g. a DICOMDIR without Icon Image Sequence
+        return null;
       }
+      if (thumbURL.startsWith(Thumbnail.THUMBNAIL_CACHE_DIR.toString())) {
+        return Path.of(thumbURL);
+      }
+      thumbURL = wadoParameters.getBaseURL() + thumbURL;
     }
 
     URLParameters params = wadoParameters.isWadoRS() ? createWadoRsParams() : urlParams;
