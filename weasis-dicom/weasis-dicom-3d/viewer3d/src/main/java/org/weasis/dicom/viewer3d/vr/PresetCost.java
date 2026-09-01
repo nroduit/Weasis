@@ -9,6 +9,7 @@
  */
 package org.weasis.dicom.viewer3d.vr;
 
+import org.weasis.core.api.image.util.ValueHistogram;
 import org.weasis.opencv.op.lut.colormap.ColorMap;
 import org.weasis.opencv.op.lut.colormap.ColorMapSampler;
 
@@ -33,7 +34,7 @@ public record PresetCost(int level, double visibleFraction) {
   private static final String DOT = "●";
 
   /** Cost of {@code map} on a volume with the given full-range histogram. */
-  public static PresetCost estimate(ColorMap map, VolumeHistogram.Bins bins) {
+  public static PresetCost estimate(ColorMap map, ValueHistogram.Bins bins) {
     double total = bins.total();
     double visible = 0;
     if (total > 0) {

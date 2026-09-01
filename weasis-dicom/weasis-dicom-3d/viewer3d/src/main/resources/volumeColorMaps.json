@@ -4,7 +4,6 @@
         {
             "id": "weasis.vr.all.grayscale",
             "name": "Grayscale",
-            "category": "Volume",
             "type": "transfer",
             "default": true,
             "domain": {
@@ -50,7 +49,6 @@
         {
             "id": "weasis.vr.ct.grayscale",
             "name": "Grayscale",
-            "category": "Volume",
             "type": "transfer",
             "modality": [
                 "CT"
@@ -109,7 +107,7 @@
         {
             "id": "weasis.vr.ct.fat",
             "name": "Fat",
-            "category": "Volume",
+            "category": "Soft Tissue & Skin",
             "type": "transfer",
             "modality": [
                 "CT"
@@ -236,7 +234,7 @@
         {
             "id": "weasis.vr.ct.lungs-transparent",
             "name": "Lungs (transparent)",
-            "category": "Volume",
+            "category": "Lung & Airways",
             "type": "transfer",
             "modality": [
                 "CT"
@@ -331,7 +329,7 @@
         {
             "id": "weasis.vr.ct.mip",
             "name": "MIP",
-            "category": "Volume",
+            "category": "Projection",
             "type": "transfer",
             "modality": [
                 "CT"
@@ -389,7 +387,7 @@
         {
             "id": "weasis.vr.ct.x-ray",
             "name": "X-ray",
-            "category": "Volume",
+            "category": "Projection",
             "type": "transfer",
             "modality": [
                 "CT"
@@ -439,7 +437,6 @@
         {
             "id": "weasis.vr.ct.default",
             "name": "Default",
-            "category": "Volume",
             "type": "transfer",
             "modality": [
                 "CT"
@@ -615,7 +612,7 @@
         {
             "id": "weasis.vr.ct.bones-skin",
             "name": "Bones & Skin",
-            "category": "Volume",
+            "category": "Bone",
             "type": "transfer",
             "modality": [
                 "CT"
@@ -736,7 +733,7 @@
         {
             "id": "weasis.vr.ct.bones",
             "name": "Bones",
-            "category": "Volume",
+            "category": "Bone",
             "type": "transfer",
             "modality": [
                 "CT"
@@ -812,7 +809,7 @@
         {
             "id": "weasis.vr.ct.endoscopy",
             "name": "Endoscopy",
-            "category": "Volume",
+            "category": "Endoscopy",
             "type": "transfer",
             "modality": [
                 "CT"
@@ -915,7 +912,7 @@
         {
             "id": "weasis.vr.ct.colonoscopy",
             "name": "Colonoscopy",
-            "category": "Volume",
+            "category": "Endoscopy",
             "type": "transfer",
             "modality": [
                 "CT"
@@ -1027,7 +1024,7 @@
         {
             "id": "weasis.vr.xa.philips-fluoroscopy",
             "name": "Philips Fluoroscopy",
-            "category": "Volume",
+            "category": "Vascular",
             "type": "transfer",
             "modality": [
                 "XA"
@@ -1120,7 +1117,7 @@
         {
             "id": "weasis.vr.xa.philips",
             "name": "Philips",
-            "category": "Volume",
+            "category": "Vascular",
             "type": "transfer",
             "modality": [
                 "XA"
@@ -1186,7 +1183,7 @@
         {
             "id": "weasis.vr.xa.siemens",
             "name": "Siemens",
-            "category": "Volume",
+            "category": "Vascular",
             "type": "transfer",
             "modality": [
                 "XA"
@@ -1243,7 +1240,7 @@
         {
             "id": "weasis.vr.ct.transparent-skin",
             "name": "Transparent Skin",
-            "category": "Volume",
+            "category": "Soft Tissue & Skin",
             "type": "transfer",
             "modality": [
                 "CT"
@@ -1382,7 +1379,7 @@
         {
             "id": "weasis.vr.ct.skin",
             "name": "Skin",
-            "category": "Volume",
+            "category": "Soft Tissue & Skin",
             "type": "transfer",
             "modality": [
                 "CT"
@@ -1512,7 +1509,7 @@
         {
             "id": "weasis.vr.ct.myocardium",
             "name": "Myocardium",
-            "category": "Volume",
+            "category": "Cardiac",
             "type": "transfer",
             "modality": [
                 "CT"
@@ -1642,7 +1639,7 @@
         {
             "id": "weasis.vr.ct.heart",
             "name": "Heart",
-            "category": "Volume",
+            "category": "Cardiac",
             "type": "transfer",
             "modality": [
                 "CT"
@@ -1772,7 +1769,7 @@
         {
             "id": "weasis.vr.ct.lungs",
             "name": "Lungs",
-            "category": "Volume",
+            "category": "Lung & Airways",
             "type": "transfer",
             "modality": [
                 "CT"
@@ -1848,7 +1845,7 @@
         {
             "id": "weasis.vr.ct.bones-glossy",
             "name": "Bones (glossy)",
-            "category": "Volume",
+            "category": "Bone",
             "type": "transfer",
             "modality": [
                 "CT"
@@ -1924,91 +1921,74 @@
         {
             "id": "weasis.vr.mr.angiography",
             "name": "Angiography",
-            "category": "Volume",
+            "category": "Vascular",
             "type": "transfer",
             "modality": [
                 "MR"
             ],
             "domain": {
-                "kind": "absolute",
-                "min": -2048.0,
-                "max": 3661.0
+                "kind": "percent",
+                "reference": "max",
+                "min": 0.0,
+                "max": 100.0
             },
             "bits": 16,
             "stops": [
                 {
-                    "pos": -2048.0,
+                    "pos": 0.0,
                     "color": "#000000",
                     "alpha": 0.0,
-                    "group": "Default",
                     "ambient": 0.2,
                     "diffuse": 1.0,
                     "specular": 0.0
                 },
                 {
-                    "pos": 151.0,
+                    "pos": 59.0,
                     "color": "#000000",
-                    "alpha": 0.0,
-                    "group": "Default",
-                    "ambient": 0.2,
-                    "diffuse": 1.0,
-                    "specular": 0.0
+                    "alpha": 0.0
                 },
                 {
-                    "pos": 158.0,
+                    "pos": 62.0,
                     "color": "#bf6000",
-                    "alpha": 0.4375,
-                    "group": "Default",
-                    "ambient": 0.2,
-                    "diffuse": 1.0,
-                    "specular": 0.0
+                    "alpha": 0.4375
                 },
                 {
-                    "pos": 190.0,
+                    "pos": 75.0,
                     "color": "#ffddbb",
-                    "alpha": 0.580357,
-                    "group": "Default",
-                    "ambient": 0.2,
-                    "diffuse": 1.0,
-                    "specular": 0.0
+                    "alpha": 0.5804
                 },
                 {
-                    "pos": 201.0,
+                    "pos": 79.0,
                     "color": "#efefef",
-                    "alpha": 0.732143,
-                    "group": "Default",
-                    "ambient": 0.2,
-                    "diffuse": 1.0,
-                    "specular": 0.0
+                    "alpha": 0.7321
                 },
                 {
-                    "pos": 3661.0,
+                    "pos": 100.0,
                     "color": "#ffffff",
-                    "alpha": 0.741071,
-                    "group": "Default",
-                    "ambient": 0.2,
-                    "diffuse": 1.0,
-                    "specular": 0.0
+                    "alpha": 0.7411
                 }
             ],
             "lighting": {
                 "shade": true,
                 "specularPower": 1.0
+            },
+            "metadata": {
+                "source": "3D Slicer volume rendering preset MR-Angio (BSD-style license), re-authored as percent of the volume maximum (the original expects vessels at 150-200 of an 8-bit range)"
             }
         },
         {
             "id": "weasis.vr.mr.default",
             "name": "Default",
-            "category": "Volume",
             "type": "transfer",
             "modality": [
                 "MR"
             ],
             "default": true,
             "domain": {
-                "kind": "absolute",
+                "kind": "percent",
+                "reference": "max",
                 "min": 0.0,
-                "max": 1024.0
+                "max": 100.0
             },
             "bits": 16,
             "stops": [
@@ -2016,52 +1996,46 @@
                     "pos": 0.0,
                     "color": "#000000",
                     "alpha": 0.0,
-                    "group": "Default",
                     "ambient": 0.2,
                     "diffuse": 1.0,
                     "specular": 0.0
                 },
                 {
-                    "pos": 20.0,
+                    "pos": 2.0,
                     "color": "#2b0000",
                     "alpha": 0.0,
-                    "group": "Default",
                     "ambient": 0.2,
                     "diffuse": 1.0,
                     "specular": 0.0
                 },
                 {
-                    "pos": 40.0,
+                    "pos": 3.9,
                     "color": "#672514",
                     "alpha": 0.15,
-                    "group": "Default",
                     "ambient": 0.2,
                     "diffuse": 1.0,
                     "specular": 0.0
                 },
                 {
-                    "pos": 120.0,
+                    "pos": 11.7,
                     "color": "#c79b61",
                     "alpha": 0.3,
-                    "group": "Default",
                     "ambient": 0.2,
                     "diffuse": 1.0,
                     "specular": 0.0
                 },
                 {
-                    "pos": 220.0,
+                    "pos": 21.5,
                     "color": "#d8d5c9",
                     "alpha": 0.375,
-                    "group": "Default",
                     "ambient": 0.2,
                     "diffuse": 1.0,
                     "specular": 0.0
                 },
                 {
-                    "pos": 1024.0,
+                    "pos": 100.0,
                     "color": "#ffffff",
                     "alpha": 0.5,
-                    "group": "Default",
                     "ambient": 0.2,
                     "diffuse": 1.0,
                     "specular": 0.0
@@ -2070,20 +2044,24 @@
             "lighting": {
                 "shade": true,
                 "specularPower": 1.0
+            },
+            "metadata": {
+                "source": "3D Slicer volume rendering preset MR-Default (BSD-style license), positions as percent of the volume maximum (1024 in the original)"
             }
         },
         {
             "id": "weasis.vr.mr.mip",
             "name": "MIP",
-            "category": "Volume",
+            "category": "Projection",
             "type": "transfer",
             "modality": [
                 "MR"
             ],
             "domain": {
-                "kind": "absolute",
+                "kind": "percent",
+                "reference": "max",
                 "min": 0.0,
-                "max": 2800.0
+                "max": 100.0
             },
             "bits": 16,
             "stops": [
@@ -2091,34 +2069,30 @@
                     "pos": 0.0,
                     "color": "#ffffff",
                     "alpha": 0.0,
-                    "group": "Default",
                     "ambient": 0.2,
                     "diffuse": 1.0,
                     "specular": 0.0
                 },
                 {
-                    "pos": 98.0,
+                    "pos": 3.5,
                     "color": "#ffffff",
                     "alpha": 0.0,
-                    "group": "Default",
                     "ambient": 0.2,
                     "diffuse": 1.0,
                     "specular": 0.0
                 },
                 {
-                    "pos": 417.0,
+                    "pos": 14.9,
                     "color": "#ffffff",
                     "alpha": 1.0,
-                    "group": "Default",
                     "ambient": 0.2,
                     "diffuse": 1.0,
                     "specular": 0.0
                 },
                 {
-                    "pos": 2800.0,
+                    "pos": 100.0,
                     "color": "#ffffff",
                     "alpha": 1.0,
-                    "group": "Default",
                     "ambient": 0.2,
                     "diffuse": 1.0,
                     "specular": 0.0
@@ -2127,20 +2101,24 @@
             "lighting": {
                 "shade": false,
                 "specularPower": 1.0
+            },
+            "metadata": {
+                "source": "3D Slicer volume rendering preset MR-MIP (BSD-style license), positions as percent of the volume maximum (2800 in the original)"
             }
         },
         {
             "id": "weasis.vr.mr.t2-brain",
             "name": "T2-Brain",
-            "category": "Volume",
+            "category": "Neuro",
             "type": "transfer",
             "modality": [
                 "MR"
             ],
             "domain": {
-                "kind": "absolute",
+                "kind": "percent",
+                "reference": "max",
                 "min": 0.0,
-                "max": 641.0
+                "max": 100.0
             },
             "bits": 16,
             "stops": [
@@ -2148,44 +2126,38 @@
                     "pos": 0.0,
                     "color": "#000000",
                     "alpha": 0.0,
-                    "group": "Default",
                     "ambient": 0.3,
                     "diffuse": 0.6,
                     "specular": 0.5
                 },
                 {
-                    "pos": 36.0,
-                    "alpha": 0.0,
-                    "group": "Default"
+                    "pos": 5.6,
+                    "alpha": 0.0
                 },
                 {
-                    "pos": 98.0,
+                    "pos": 15.3,
                     "color": "#f4d631",
                     "alpha": 0.0,
-                    "group": "Default",
                     "ambient": 0.3,
                     "diffuse": 0.6,
                     "specular": 0.5
                 },
                 {
-                    "pos": 218.0,
-                    "alpha": 0.171429,
-                    "group": "Default"
+                    "pos": 34.0,
+                    "alpha": 0.171429
                 },
                 {
-                    "pos": 412.0,
+                    "pos": 64.3,
                     "color": "#0097ce",
                     "alpha": 1.0,
-                    "group": "Default",
                     "ambient": 0.3,
                     "diffuse": 0.6,
                     "specular": 0.5
                 },
                 {
-                    "pos": 641.0,
+                    "pos": 100.0,
                     "color": "#ffffff",
                     "alpha": 1.0,
-                    "group": "Default",
                     "ambient": 0.3,
                     "diffuse": 0.6,
                     "specular": 0.5
@@ -2194,12 +2166,14 @@
             "lighting": {
                 "shade": true,
                 "specularPower": 40.0
+            },
+            "metadata": {
+                "source": "3D Slicer volume rendering preset MR-T2-Brain (BSD-style license), positions as percent of the volume maximum (641 in the original)"
             }
         },
         {
             "id": "weasis.vr.us.fetal",
             "name": "Fetal",
-            "category": "Volume",
             "type": "transfer",
             "modality": [
                 "US"
@@ -2276,6 +2250,1222 @@
             "lighting": {
                 "shade": true,
                 "specularPower": 10.0
+            }
+        },
+        {
+            "id": "weasis.vr.ct.aaa",
+            "name": "Aorta (AAA)",
+            "category": "Vascular",
+            "type": "transfer",
+            "modality": [
+                "CT"
+            ],
+            "domain": {
+                "kind": "absolute",
+                "unit": "HU",
+                "min": -1024.0,
+                "max": 3071.0
+            },
+            "bits": 16,
+            "stops": [
+                {
+                    "pos": -1024.0,
+                    "color": "#63391e",
+                    "alpha": 0.0,
+                    "ambient": 0.1,
+                    "diffuse": 0.9,
+                    "specular": 0.2
+                },
+                {
+                    "pos": 144.0,
+                    "color": "#9d5b2f",
+                    "alpha": 0.0
+                },
+                {
+                    "pos": 166.0,
+                    "color": "#e19a4a",
+                    "alpha": 0.6863
+                },
+                {
+                    "pos": 214.0,
+                    "color": "#ffffff",
+                    "alpha": 0.6961
+                },
+                {
+                    "pos": 420.0,
+                    "color": "#ffeff3",
+                    "alpha": 0.8333
+                },
+                {
+                    "pos": 3071.0,
+                    "color": "#d3a8ff",
+                    "alpha": 0.8039
+                }
+            ],
+            "lighting": {
+                "shade": true,
+                "specularPower": 10.0
+            },
+            "metadata": {
+                "source": "3D Slicer volume rendering preset CT-AAA (BSD-style license), clipped to [-1024, 3071] HU"
+            }
+        },
+        {
+            "id": "weasis.vr.ct.aaa-2",
+            "name": "Aorta (AAA 2)",
+            "category": "Vascular",
+            "type": "transfer",
+            "modality": [
+                "CT"
+            ],
+            "domain": {
+                "kind": "absolute",
+                "unit": "HU",
+                "min": -1024.0,
+                "max": 3071.0
+            },
+            "bits": 16,
+            "stops": [
+                {
+                    "pos": -1024.0,
+                    "color": "#592918",
+                    "alpha": 0.0,
+                    "ambient": 0.1,
+                    "diffuse": 0.9,
+                    "specular": 0.2
+                },
+                {
+                    "pos": 130.0,
+                    "color": "#8c4026",
+                    "alpha": 0.0
+                },
+                {
+                    "pos": 145.0,
+                    "color": "#99a0d7",
+                    "alpha": 0.1667
+                },
+                {
+                    "pos": 157.0,
+                    "color": "#e37999",
+                    "alpha": 0.5
+                },
+                {
+                    "pos": 170.0,
+                    "color": "#fdde64",
+                    "alpha": 0.6275
+                },
+                {
+                    "pos": 396.0,
+                    "color": "#ffe2a8",
+                    "alpha": 0.8125
+                },
+                {
+                    "pos": 1579.0,
+                    "color": "#ffd3f4",
+                    "alpha": 0.8125
+                },
+                {
+                    "pos": 3071.0,
+                    "color": "#d3a8ff",
+                    "alpha": 0.8125
+                }
+            ],
+            "lighting": {
+                "shade": true,
+                "specularPower": 10.0
+            },
+            "metadata": {
+                "source": "3D Slicer volume rendering preset CT-AAA2 (BSD-style license), clipped to [-1024, 3071] HU"
+            }
+        },
+        {
+            "id": "weasis.vr.ct.bone-soft-tissue",
+            "name": "Bone & Soft Tissue",
+            "category": "Bone",
+            "type": "transfer",
+            "modality": [
+                "CT"
+            ],
+            "domain": {
+                "kind": "absolute",
+                "unit": "HU",
+                "min": -1024.0,
+                "max": 3071.0
+            },
+            "bits": 16,
+            "stops": [
+                {
+                    "pos": -1024.0,
+                    "color": "#7c2b33",
+                    "alpha": 0.0,
+                    "ambient": 0.1,
+                    "diffuse": 0.9,
+                    "specular": 0.2
+                },
+                {
+                    "pos": -16.0,
+                    "color": "#ba414d",
+                    "alpha": 0.0
+                },
+                {
+                    "pos": 641.0,
+                    "color": "#e7d08d",
+                    "alpha": 0.7157
+                },
+                {
+                    "pos": 3071.0,
+                    "color": "#ffffff",
+                    "alpha": 0.7059
+                }
+            ],
+            "lighting": {
+                "shade": true,
+                "specularPower": 10.0
+            },
+            "metadata": {
+                "source": "3D Slicer volume rendering preset CT-Bone (BSD-style license), clipped to [-1024, 3071] HU"
+            }
+        },
+        {
+            "id": "weasis.vr.ct.bones-transparent",
+            "name": "Bones (transparent)",
+            "category": "Bone",
+            "type": "transfer",
+            "modality": [
+                "CT"
+            ],
+            "domain": {
+                "kind": "absolute",
+                "unit": "HU",
+                "min": -1024.0,
+                "max": 3071.0
+            },
+            "bits": 16,
+            "stops": [
+                {
+                    "pos": -1024.0,
+                    "color": "#4c4cff",
+                    "alpha": 0.0,
+                    "ambient": 0.2,
+                    "diffuse": 1.0,
+                    "specular": 0.0
+                },
+                {
+                    "pos": -1000.0,
+                    "color": "#4c4cff",
+                    "alpha": 0.0
+                },
+                {
+                    "pos": -488.0,
+                    "color": "#4cff4c"
+                },
+                {
+                    "pos": 152.0,
+                    "alpha": 0.0
+                },
+                {
+                    "pos": 279.0,
+                    "alpha": 0.1905
+                },
+                {
+                    "pos": 463.0,
+                    "color": "#ff0000"
+                },
+                {
+                    "pos": 659.0,
+                    "color": "#ffe90a"
+                },
+                {
+                    "pos": 952.0,
+                    "alpha": 0.2
+                },
+                {
+                    "pos": 953.0,
+                    "color": "#ff4c4c"
+                },
+                {
+                    "pos": 3071.0,
+                    "color": "#ff4c4c",
+                    "alpha": 0.2
+                }
+            ],
+            "lighting": {
+                "shade": true,
+                "specularPower": 1.0
+            },
+            "metadata": {
+                "source": "3D Slicer volume rendering preset CT-Bones (BSD-style license), clipped to [-1024, 3071] HU"
+            }
+        },
+        {
+            "id": "weasis.vr.ct.cardiac",
+            "name": "Cardiac",
+            "category": "Cardiac",
+            "type": "transfer",
+            "modality": [
+                "CT"
+            ],
+            "domain": {
+                "kind": "absolute",
+                "unit": "HU",
+                "min": -1024.0,
+                "max": 3071.0
+            },
+            "bits": 16,
+            "stops": [
+                {
+                    "pos": -1024.0,
+                    "color": "#5f2b1a",
+                    "alpha": 0.0,
+                    "ambient": 0.1,
+                    "diffuse": 0.9,
+                    "specular": 0.2
+                },
+                {
+                    "pos": -78.0,
+                    "color": "#8c4026",
+                    "alpha": 0.0
+                },
+                {
+                    "pos": 95.0,
+                    "color": "#e19a4a",
+                    "alpha": 0.2857
+                },
+                {
+                    "pos": 179.0,
+                    "color": "#ffeff3",
+                    "alpha": 0.5536
+                },
+                {
+                    "pos": 260.0,
+                    "color": "#9d0000",
+                    "alpha": 0.8482
+                },
+                {
+                    "pos": 3071.0,
+                    "color": "#d3a8ff",
+                    "alpha": 0.875
+                }
+            ],
+            "lighting": {
+                "shade": true,
+                "specularPower": 10.0
+            },
+            "metadata": {
+                "source": "3D Slicer volume rendering preset CT-Cardiac (BSD-style license), clipped to [-1024, 3071] HU"
+            }
+        },
+        {
+            "id": "weasis.vr.ct.cardiac-2",
+            "name": "Cardiac 2",
+            "category": "Cardiac",
+            "type": "transfer",
+            "modality": [
+                "CT"
+            ],
+            "domain": {
+                "kind": "absolute",
+                "unit": "HU",
+                "min": -1024.0,
+                "max": 3071.0
+            },
+            "bits": 16,
+            "stops": [
+                {
+                    "pos": -1024.0,
+                    "color": "#5b2a19",
+                    "alpha": 0.0,
+                    "ambient": 0.1,
+                    "diffuse": 0.9,
+                    "specular": 0.2
+                },
+                {
+                    "pos": 43.0,
+                    "color": "#8c4026",
+                    "alpha": 0.0
+                },
+                {
+                    "pos": 163.0,
+                    "color": "#eaa30f",
+                    "alpha": 0.4286
+                },
+                {
+                    "pos": 278.0,
+                    "color": "#ffe09f",
+                    "alpha": 0.7768
+                },
+                {
+                    "pos": 1587.0,
+                    "color": "#ffffff",
+                    "alpha": 0.7549
+                },
+                {
+                    "pos": 3071.0,
+                    "color": "#d3a8ff",
+                    "alpha": 0.7549
+                }
+            ],
+            "lighting": {
+                "shade": true,
+                "specularPower": 10.0
+            },
+            "metadata": {
+                "source": "3D Slicer volume rendering preset CT-Cardiac2 (BSD-style license), clipped to [-1024, 3071] HU"
+            }
+        },
+        {
+            "id": "weasis.vr.ct.cardiac-3",
+            "name": "Cardiac 3",
+            "category": "Cardiac",
+            "type": "transfer",
+            "modality": [
+                "CT"
+            ],
+            "domain": {
+                "kind": "absolute",
+                "unit": "HU",
+                "min": -1024.0,
+                "max": 3071.0
+            },
+            "bits": 16,
+            "stops": [
+                {
+                    "pos": -1024.0,
+                    "color": "#002cae",
+                    "alpha": 0.0,
+                    "ambient": 0.1,
+                    "diffuse": 0.9,
+                    "specular": 0.2
+                },
+                {
+                    "pos": -87.0,
+                    "color": "#0040ff",
+                    "alpha": 0.0
+                },
+                {
+                    "pos": 45.0,
+                    "color": "#ff0000",
+                    "alpha": 0.1696
+                },
+                {
+                    "pos": 140.0,
+                    "color": "#ffe4e4",
+                    "alpha": 0.5893
+                },
+                {
+                    "pos": 348.0,
+                    "color": "#ffff40",
+                    "alpha": 0.6071
+                },
+                {
+                    "pos": 1224.0,
+                    "color": "#ffffff",
+                    "alpha": 0.6071
+                },
+                {
+                    "pos": 3071.0,
+                    "color": "#d3a8ff",
+                    "alpha": 0.6161
+                }
+            ],
+            "lighting": {
+                "shade": true,
+                "specularPower": 10.0
+            },
+            "metadata": {
+                "source": "3D Slicer volume rendering preset CT-Cardiac3 (BSD-style license), clipped to [-1024, 3071] HU"
+            }
+        },
+        {
+            "id": "weasis.vr.ct.chest-contrast",
+            "name": "Chest (contrast)",
+            "category": "Soft Tissue & Skin",
+            "type": "transfer",
+            "modality": [
+                "CT"
+            ],
+            "domain": {
+                "kind": "absolute",
+                "unit": "HU",
+                "min": -1024.0,
+                "max": 3071.0
+            },
+            "bits": 16,
+            "stops": [
+                {
+                    "pos": -1024.0,
+                    "color": "#5b2919",
+                    "alpha": 0.0,
+                    "ambient": 0.1,
+                    "diffuse": 0.9,
+                    "specular": 0.2
+                },
+                {
+                    "pos": 67.0,
+                    "color": "#8c4026",
+                    "alpha": 0.0
+                },
+                {
+                    "pos": 251.0,
+                    "color": "#e19a4a",
+                    "alpha": 0.4464
+                },
+                {
+                    "pos": 439.0,
+                    "color": "#ffeff3",
+                    "alpha": 0.625
+                },
+                {
+                    "pos": 3071.0,
+                    "color": "#d3a8ff",
+                    "alpha": 0.6161
+                }
+            ],
+            "lighting": {
+                "shade": true,
+                "specularPower": 10.0
+            },
+            "metadata": {
+                "source": "3D Slicer volume rendering preset CT-Chest-Contrast-Enhanced (BSD-style license), clipped to [-1024, 3071] HU"
+            }
+        },
+        {
+            "id": "weasis.vr.ct.chest-vessels",
+            "name": "Chest Vessels",
+            "category": "Vascular",
+            "type": "transfer",
+            "modality": [
+                "CT"
+            ],
+            "domain": {
+                "kind": "absolute",
+                "unit": "HU",
+                "min": -1024.0,
+                "max": 3071.0
+            },
+            "bits": 16,
+            "stops": [
+                {
+                    "pos": -1024.0,
+                    "color": "#9d522d",
+                    "alpha": 0.0838,
+                    "ambient": 0.2,
+                    "diffuse": 1.0,
+                    "specular": 0.0
+                },
+                {
+                    "pos": 23.0,
+                    "color": "#e19a4a",
+                    "alpha": 0.4286
+                },
+                {
+                    "pos": 439.0,
+                    "color": "#ffeff3",
+                    "alpha": 0.625
+                },
+                {
+                    "pos": 3071.0,
+                    "color": "#d3a8ff",
+                    "alpha": 0.6161
+                }
+            ],
+            "lighting": {
+                "shade": true,
+                "specularPower": 1.0
+            },
+            "metadata": {
+                "source": "3D Slicer volume rendering preset CT-Chest-Vessels (BSD-style license), clipped to [-1024, 3071] HU"
+            }
+        },
+        {
+            "id": "weasis.vr.ct.coronary-arteries",
+            "name": "Coronary Arteries",
+            "category": "Vascular",
+            "type": "transfer",
+            "modality": [
+                "CT"
+            ],
+            "domain": {
+                "kind": "absolute",
+                "unit": "HU",
+                "min": -1024.0,
+                "max": 3071.0
+            },
+            "bits": 16,
+            "stops": [
+                {
+                    "pos": -1024.0,
+                    "color": "#000000",
+                    "alpha": 0.0,
+                    "ambient": 0.2,
+                    "diffuse": 1.0,
+                    "specular": 0.0
+                },
+                {
+                    "pos": 136.0,
+                    "color": "#000000",
+                    "alpha": 0.0
+                },
+                {
+                    "pos": 159.0,
+                    "color": "#292929",
+                    "alpha": 0.2589
+                },
+                {
+                    "pos": 318.0,
+                    "color": "#c3c3c3",
+                    "alpha": 0.5714
+                },
+                {
+                    "pos": 479.0,
+                    "color": "#ffffff",
+                    "alpha": 0.7768
+                },
+                {
+                    "pos": 3071.0,
+                    "color": "#ffffff",
+                    "alpha": 0.9586
+                }
+            ],
+            "lighting": {
+                "shade": false,
+                "specularPower": 1.0
+            },
+            "metadata": {
+                "source": "3D Slicer volume rendering preset CT-Coronary-Arteries (BSD-style license), clipped to [-1024, 3071] HU"
+            }
+        },
+        {
+            "id": "weasis.vr.ct.coronary-arteries-2",
+            "name": "Coronary Arteries 2",
+            "category": "Vascular",
+            "type": "transfer",
+            "modality": [
+                "CT"
+            ],
+            "domain": {
+                "kind": "absolute",
+                "unit": "HU",
+                "min": -1024.0,
+                "max": 3071.0
+            },
+            "bits": 16,
+            "stops": [
+                {
+                    "pos": -1024.0,
+                    "color": "#000000",
+                    "alpha": 0.0,
+                    "ambient": 0.2,
+                    "diffuse": 1.0,
+                    "specular": 0.0
+                },
+                {
+                    "pos": 143.0,
+                    "color": "#000000",
+                    "alpha": 0.0
+                },
+                {
+                    "pos": 145.0,
+                    "color": "#9d0004",
+                    "alpha": 0.1161
+                },
+                {
+                    "pos": 192.0,
+                    "color": "#e87400",
+                    "alpha": 0.5625
+                },
+                {
+                    "pos": 217.0,
+                    "color": "#f8ce9c",
+                    "alpha": 0.7768
+                },
+                {
+                    "pos": 384.0,
+                    "color": "#e8e8ff",
+                    "alpha": 0.8304
+                },
+                {
+                    "pos": 3071.0,
+                    "color": "#fbfbff",
+                    "alpha": 0.8304
+                }
+            ],
+            "lighting": {
+                "shade": true,
+                "specularPower": 1.0
+            },
+            "metadata": {
+                "source": "3D Slicer volume rendering preset CT-Coronary-Arteries-2 (BSD-style license), clipped to [-1024, 3071] HU"
+            }
+        },
+        {
+            "id": "weasis.vr.ct.coronary-arteries-3",
+            "name": "Coronary Arteries 3",
+            "category": "Vascular",
+            "type": "transfer",
+            "modality": [
+                "CT"
+            ],
+            "domain": {
+                "kind": "absolute",
+                "unit": "HU",
+                "min": -1024.0,
+                "max": 3071.0
+            },
+            "bits": 16,
+            "stops": [
+                {
+                    "pos": -1024.0,
+                    "color": "#000000",
+                    "alpha": 0.0,
+                    "ambient": 0.1,
+                    "diffuse": 0.9,
+                    "specular": 0.2
+                },
+                {
+                    "pos": 129.0,
+                    "color": "#000000",
+                    "alpha": 0.0
+                },
+                {
+                    "pos": 130.0,
+                    "color": "#9d0004",
+                    "alpha": 0.0982
+                },
+                {
+                    "pos": 174.0,
+                    "color": "#e87400",
+                    "alpha": 0.6696
+                },
+                {
+                    "pos": 256.0,
+                    "color": "#e2e2e2",
+                    "alpha": 0.8571
+                },
+                {
+                    "pos": 585.0,
+                    "color": "#f7f7f7",
+                    "alpha": 0.8661
+                },
+                {
+                    "pos": 3071.0,
+                    "color": "#fdfdfd",
+                    "alpha": 0.9743
+                }
+            ],
+            "lighting": {
+                "shade": true,
+                "specularPower": 10.0
+            },
+            "metadata": {
+                "source": "3D Slicer volume rendering preset CT-Coronary-Arteries-3 (BSD-style license), clipped to [-1024, 3071] HU"
+            }
+        },
+        {
+            "id": "weasis.vr.ct.bone-cropped-volume",
+            "name": "Bone (cropped volume)",
+            "category": "Bone",
+            "type": "transfer",
+            "modality": [
+                "CT"
+            ],
+            "domain": {
+                "kind": "absolute",
+                "unit": "HU",
+                "min": -1024.0,
+                "max": 3071.0
+            },
+            "bits": 16,
+            "stops": [
+                {
+                    "pos": -1024.0,
+                    "color": "#000000",
+                    "alpha": 0.0,
+                    "ambient": 0.2,
+                    "diffuse": 1.0,
+                    "specular": 0.0
+                },
+                {
+                    "pos": -451.0,
+                    "color": "#000000",
+                    "alpha": 0.0
+                },
+                {
+                    "pos": -450.0,
+                    "color": "#0e0e0e",
+                    "alpha": 1.0
+                },
+                {
+                    "pos": 1050.0,
+                    "color": "#ffffff",
+                    "alpha": 1.0
+                },
+                {
+                    "pos": 3071.0,
+                    "color": "#ffffff",
+                    "alpha": 1.0
+                }
+            ],
+            "lighting": {
+                "shade": false,
+                "specularPower": 1.0
+            },
+            "metadata": {
+                "source": "3D Slicer volume rendering preset CT-Cropped-Volume-Bone (BSD-style license), clipped to [-1024, 3071] HU"
+            }
+        },
+        {
+            "id": "weasis.vr.ct.liver-vasculature",
+            "name": "Liver Vasculature",
+            "category": "Vascular",
+            "type": "transfer",
+            "modality": [
+                "CT"
+            ],
+            "domain": {
+                "kind": "absolute",
+                "unit": "HU",
+                "min": -1024.0,
+                "max": 3071.0
+            },
+            "bits": 16,
+            "stops": [
+                {
+                    "pos": -1024.0,
+                    "color": "#000000",
+                    "alpha": 0.0,
+                    "ambient": 0.2,
+                    "diffuse": 1.0,
+                    "specular": 0.0
+                },
+                {
+                    "pos": 149.0,
+                    "color": "#000000",
+                    "alpha": 0.0
+                },
+                {
+                    "pos": 158.0,
+                    "color": "#804000",
+                    "alpha": 0.4821
+                },
+                {
+                    "pos": 340.0,
+                    "color": "#b1985e",
+                    "alpha": 0.6607
+                },
+                {
+                    "pos": 389.0,
+                    "color": "#dad9d3",
+                    "alpha": 0.8304
+                },
+                {
+                    "pos": 1198.0,
+                    "color": "#ffffff",
+                    "alpha": 0.8393
+                },
+                {
+                    "pos": 3071.0,
+                    "color": "#ffffff",
+                    "alpha": 0.8461
+                }
+            ],
+            "lighting": {
+                "shade": false,
+                "specularPower": 1.0
+            },
+            "metadata": {
+                "source": "3D Slicer volume rendering preset CT-Liver-Vasculature (BSD-style license), clipped to [-1024, 3071] HU"
+            }
+        },
+        {
+            "id": "weasis.vr.ct.muscle",
+            "name": "Muscle",
+            "category": "Soft Tissue & Skin",
+            "type": "transfer",
+            "modality": [
+                "CT"
+            ],
+            "domain": {
+                "kind": "absolute",
+                "unit": "HU",
+                "min": -1024.0,
+                "max": 3071.0
+            },
+            "bits": 16,
+            "stops": [
+                {
+                    "pos": -1024.0,
+                    "color": "#622d1a",
+                    "alpha": 0.0,
+                    "ambient": 0.1,
+                    "diffuse": 0.9,
+                    "specular": 0.2
+                },
+                {
+                    "pos": -155.0,
+                    "color": "#8c4026",
+                    "alpha": 0.0
+                },
+                {
+                    "pos": 218.0,
+                    "color": "#e19a4a",
+                    "alpha": 0.6765
+                },
+                {
+                    "pos": 420.0,
+                    "color": "#ffeff3",
+                    "alpha": 0.8333
+                },
+                {
+                    "pos": 3071.0,
+                    "color": "#d3a8ff",
+                    "alpha": 0.8039
+                }
+            ],
+            "lighting": {
+                "shade": true,
+                "specularPower": 10.0
+            },
+            "metadata": {
+                "source": "3D Slicer volume rendering preset CT-Muscle (BSD-style license), clipped to [-1024, 3071] HU"
+            }
+        },
+        {
+            "id": "weasis.vr.ct.pulmonary-arteries",
+            "name": "Pulmonary Arteries",
+            "category": "Vascular",
+            "type": "transfer",
+            "modality": [
+                "CT"
+            ],
+            "domain": {
+                "kind": "absolute",
+                "unit": "HU",
+                "min": -1024.0,
+                "max": 3071.0
+            },
+            "bits": 16,
+            "stops": [
+                {
+                    "pos": -1024.0,
+                    "color": "#000000",
+                    "alpha": 0.0,
+                    "ambient": 0.2,
+                    "diffuse": 1.0,
+                    "specular": 0.0
+                },
+                {
+                    "pos": -569.0,
+                    "color": "#000000",
+                    "alpha": 0.0
+                },
+                {
+                    "pos": -364.0,
+                    "color": "#654d2e",
+                    "alpha": 0.0714
+                },
+                {
+                    "pos": -245.0,
+                    "color": "#9c5a12",
+                    "alpha": 0.4018
+                },
+                {
+                    "pos": 18.0,
+                    "color": "#d70428",
+                    "alpha": 0.6071
+                },
+                {
+                    "pos": 448.0,
+                    "color": "#c0c0c0",
+                    "alpha": 0.8304
+                },
+                {
+                    "pos": 3071.0,
+                    "color": "#f5f5f5",
+                    "alpha": 0.8378
+                }
+            ],
+            "lighting": {
+                "shade": true,
+                "specularPower": 1.0
+            },
+            "metadata": {
+                "source": "3D Slicer volume rendering preset CT-Pulmonary-Arteries (BSD-style license), clipped to [-1024, 3071] HU"
+            }
+        },
+        {
+            "id": "weasis.vr.ct.soft-tissue",
+            "name": "Soft Tissue",
+            "category": "Soft Tissue & Skin",
+            "type": "transfer",
+            "modality": [
+                "CT"
+            ],
+            "domain": {
+                "kind": "absolute",
+                "unit": "HU",
+                "min": -1024.0,
+                "max": 3071.0
+            },
+            "bits": 16,
+            "stops": [
+                {
+                    "pos": -1024.0,
+                    "color": "#000000",
+                    "alpha": 0.0,
+                    "ambient": 0.2,
+                    "diffuse": 1.0,
+                    "specular": 0.0
+                },
+                {
+                    "pos": -167.0,
+                    "color": "#000000",
+                    "alpha": 0.0
+                },
+                {
+                    "pos": -160.0,
+                    "color": "#0e0e0e",
+                    "alpha": 1.0
+                },
+                {
+                    "pos": 240.0,
+                    "color": "#ffffff",
+                    "alpha": 1.0
+                },
+                {
+                    "pos": 3071.0,
+                    "color": "#ffffff",
+                    "alpha": 1.0
+                }
+            ],
+            "lighting": {
+                "shade": false,
+                "specularPower": 1.0
+            },
+            "metadata": {
+                "source": "3D Slicer volume rendering preset CT-Soft-Tissue (BSD-style license), clipped to [-1024, 3071] HU"
+            }
+        },
+        {
+            "id": "weasis.vr.ct.airways",
+            "name": "Airways",
+            "category": "Lung & Airways",
+            "type": "transfer",
+            "modality": [
+                "CT"
+            ],
+            "domain": {
+                "kind": "absolute",
+                "unit": "HU",
+                "min": -1024.0,
+                "max": 3071.0
+            },
+            "bits": 16,
+            "stops": [
+                {
+                    "pos": -1024.0,
+                    "color": "#3fffff",
+                    "alpha": 0.7151,
+                    "ambient": 0.1,
+                    "diffuse": 0.9,
+                    "specular": 0.2
+                },
+                {
+                    "pos": -900.0,
+                    "color": "#33ffff",
+                    "alpha": 0.7157
+                },
+                {
+                    "pos": -500.0,
+                    "color": "#4c4cff",
+                    "alpha": 0.0
+                },
+                {
+                    "pos": 3071.0,
+                    "color": "#000000",
+                    "alpha": 0.0
+                }
+            ],
+            "lighting": {
+                "shade": true,
+                "specularPower": 10.0
+            },
+            "metadata": {
+                "source": "3D Slicer volume rendering preset CT-Air (BSD-style license), clipped to [-1024, 3071] HU"
+            }
+        },
+        {
+            "id": "weasis.vr.pt.hot",
+            "name": "Hot (SUV)",
+            "type": "transfer",
+            "modality": [
+                "PT"
+            ],
+            "default": true,
+            "domain": {
+                "kind": "absolute",
+                "unit": "SUVbw",
+                "min": 0.0,
+                "max": 12.0
+            },
+            "bits": 16,
+            "stops": [
+                {
+                    "pos": 0.0,
+                    "color": "#000000",
+                    "alpha": 0.0,
+                    "ambient": 0.2,
+                    "diffuse": 0.9,
+                    "specular": 0.0
+                },
+                {
+                    "pos": 1.5,
+                    "color": "#400000",
+                    "alpha": 0.0
+                },
+                {
+                    "pos": 2.5,
+                    "color": "#b00000",
+                    "alpha": 0.25
+                },
+                {
+                    "pos": 4.0,
+                    "color": "#ff2a00",
+                    "alpha": 0.5
+                },
+                {
+                    "pos": 6.0,
+                    "color": "#ff9a00",
+                    "alpha": 0.7
+                },
+                {
+                    "pos": 9.0,
+                    "color": "#ffe64d",
+                    "alpha": 0.85
+                },
+                {
+                    "pos": 12.0,
+                    "color": "#ffffff",
+                    "alpha": 0.9
+                }
+            ],
+            "lighting": {
+                "shade": false,
+                "specularPower": 1.0
+            },
+            "metadata": {
+                "source": "Weasis; SUVbw positions are converted with the SUV factor of the series, else read as a fraction of the volume maximum"
+            }
+        },
+        {
+            "id": "weasis.vr.pt.mip",
+            "name": "MIP (SUV)",
+            "category": "Projection",
+            "type": "transfer",
+            "modality": [
+                "PT"
+            ],
+            "domain": {
+                "kind": "absolute",
+                "unit": "SUVbw",
+                "min": 0.0,
+                "max": 10.0
+            },
+            "bits": 16,
+            "stops": [
+                {
+                    "pos": 0.0,
+                    "color": "#ffffff",
+                    "alpha": 0.0,
+                    "ambient": 0.2,
+                    "diffuse": 0.9,
+                    "specular": 0.0
+                },
+                {
+                    "pos": 1.0,
+                    "color": "#ffffff",
+                    "alpha": 0.0
+                },
+                {
+                    "pos": 3.0,
+                    "color": "#ffffff",
+                    "alpha": 1.0
+                },
+                {
+                    "pos": 10.0,
+                    "color": "#ffffff",
+                    "alpha": 1.0
+                }
+            ],
+            "lighting": {
+                "shade": false,
+                "specularPower": 1.0
+            },
+            "metadata": {
+                "source": "Weasis; use with the MIP rendering type and the inverted LUT for the classic PET projection"
+            }
+        },
+        {
+            "id": "weasis.vr.nm.hot",
+            "name": "Hot (% of max)",
+            "type": "transfer",
+            "modality": [
+                "NM"
+            ],
+            "default": true,
+            "domain": {
+                "kind": "percent",
+                "reference": "max",
+                "min": 0.0,
+                "max": 100.0
+            },
+            "bits": 16,
+            "stops": [
+                {
+                    "pos": 0.0,
+                    "color": "#000000",
+                    "alpha": 0.0,
+                    "ambient": 0.2,
+                    "diffuse": 0.9,
+                    "specular": 0.0
+                },
+                {
+                    "pos": 15.0,
+                    "color": "#400000",
+                    "alpha": 0.0
+                },
+                {
+                    "pos": 25.0,
+                    "color": "#b00000",
+                    "alpha": 0.25
+                },
+                {
+                    "pos": 40.0,
+                    "color": "#ff2a00",
+                    "alpha": 0.5
+                },
+                {
+                    "pos": 60.0,
+                    "color": "#ff9a00",
+                    "alpha": 0.7
+                },
+                {
+                    "pos": 80.0,
+                    "color": "#ffe64d",
+                    "alpha": 0.85
+                },
+                {
+                    "pos": 100.0,
+                    "color": "#ffffff",
+                    "alpha": 0.9
+                }
+            ],
+            "lighting": {
+                "shade": false,
+                "specularPower": 1.0
+            },
+            "metadata": {
+                "source": "Weasis; positions as percent of the volume maximum"
             }
         }
     ]

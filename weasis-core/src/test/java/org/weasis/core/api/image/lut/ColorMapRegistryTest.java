@@ -81,7 +81,7 @@ class ColorMapRegistryTest {
         () -> assertEquals("PET SUV", registry.defaultFor("PT").orElseThrow().name()),
         () -> assertTrue(registry.defaultFor("CT").isEmpty()),
         () -> assertTrue(registry.defaultFor(null).isEmpty()),
-        () -> assertEquals(6, registry.query(Query.ALL.withCategory("scientific")).size()),
+        () -> assertEquals(7, registry.query(Query.ALL.withCategory("scientific")).size()),
         () -> assertEquals(8, registry.query(Query.ALL.withCategory("DICOM")).size()),
         () -> assertEquals(1, registry.query(Query.ALL.withText("suv")).size()),
         () -> assertTrue(registry.query(Query.ALL.withOrigins(EnumSet.of(Origin.USER))).isEmpty()),

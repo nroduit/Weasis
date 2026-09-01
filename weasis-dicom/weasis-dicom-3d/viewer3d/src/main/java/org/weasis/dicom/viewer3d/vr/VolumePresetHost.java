@@ -105,6 +105,11 @@ public class VolumePresetHost implements ColorMapEditorHost {
   }
 
   @Override
+  public boolean isVolume() {
+    return true;
+  }
+
+  @Override
   public ByteLut currentLut() {
     return ColorMapCompiler.toByteLut(view3d.getVolumePreset().toColorMap());
   }
@@ -132,7 +137,9 @@ public class VolumePresetHost implements ColorMapEditorHost {
   public static PresetCost cost(View3d view3d, ColorMap map) {
     DicomVolTexture texture = view3d.getVolTexture();
     Volume<?, ?> volume = texture == null ? null : texture.getVolume();
-    return volume == null ? null : PresetCost.estimate(map, VolumeHistogram.fullRange(volume));
+    return volume == null
+        ? null
+        : PresetCost.estimate(Preset.anchoredTo(map, texture), VolumeHistogram.fullRange(volume));
   }
 
   private static Optional<ComboItemListener<Preset>> presetAction() {

@@ -149,6 +149,7 @@ public class View3d extends VolumeCanvas
 
   private int vertexBuffer;
   protected Preset volumePreset;
+  private Preset renderedPreset;
   private final ConcurrentLinkedQueue<Preset> retiredPresets = new ConcurrentLinkedQueue<>();
   private JProgressBar progressBar;
 
@@ -228,7 +229,8 @@ public class View3d extends VolumeCanvas
 
     this.renderingLayer = new RenderingLayer<>();
     this.volumePreset = Preset.getDefaultPreset(null);
-    volumePreset.setRequiredBuilding(true);
+    this.renderedPreset = volumePreset;
+    renderedPreset.setRequiredBuilding(true);
 
     actionsInView.put(ActionVol.ORIENTATION_CUBE.cmd(), false);
 
@@ -334,8 +336,8 @@ public class View3d extends VolumeCanvas
       quadProgram.destroy(gl);
       texture.destroy(gl);
       destroyRetiredPresets(gl);
-      if (volumePreset != null && volumePreset.isPreview()) {
-        volumePreset.destroy(gl);
+      if (renderedPreset != null && renderedPreset.isPreview()) {
+        renderedPreset.destroy(gl);
       }
       SegVolumeTexture svt = segVolumeTexture;
       if (svt != null) {
@@ -646,25 +648,25 @@ public class View3d extends VolumeCanvas
           g.glUniform1f(
               loc,
               isSegMode()
-                  ? volumePreset.getWidth()
+                  ? renderedPreset.getWidth()
                   : (tex != null ? (float) tex.getLevelMax() : 1f));
         });
     program.allocateUniform(gl, "outputLevelMin", (g, loc) -> g.glUniform1f(loc, 0));
     program.allocateUniform(
-        gl, "outputLevelMax", (g, loc) -> g.glUniform1f(loc, volumePreset.getWidth()));
+        gl, "outputLevelMax", (g, loc) -> g.glUniform1f(loc, renderedPreset.getWidth()));
     program.allocateUniform(
-        gl, "visibleMin", (g, loc) -> g.glUniform1f(loc, volumePreset.getVisibleRange()[0]));
+        gl, "visibleMin", (g, loc) -> g.glUniform1f(loc, renderedPreset.getVisibleRange()[0]));
     program.allocateUniform(
-        gl, "visibleMax", (g, loc) -> g.glUniform1f(loc, volumePreset.getVisibleRange()[1]));
+        gl, "visibleMax", (g, loc) -> g.glUniform1f(loc, renderedPreset.getVisibleRange()[1]));
     program.allocateUniform(
         gl,
         "gradientOpacityEnabled",
-        (g, loc) -> g.glUniform1i(loc, volumePreset.getGradientOpacityTable() != null ? 1 : 0));
+        (g, loc) -> g.glUniform1i(loc, renderedPreset.getGradientOpacityTable() != null ? 1 : 0));
     program.allocateUniform(
         gl,
         "gradientOpacity",
         (g, loc) -> {
-          float[] table = volumePreset.getGradientOpacityTable();
+          float[] table = renderedPreset.getGradientOpacityTable();
           if (table != null) {
             g.glUniform1fv(loc, table.length, table, 0);
           }
@@ -676,7 +678,7 @@ public class View3d extends VolumeCanvas
             g.glUniform1f(
                 loc,
                 isSegMode()
-                    ? volumePreset.getColorMax() - volumePreset.getColorMin()
+                    ? renderedPreset.getColorMax() - renderedPreset.getColorMin()
                     : renderingLayer.getWindowWidth()));
     program.allocateUniform(
         gl,
@@ -685,7 +687,7 @@ public class View3d extends VolumeCanvas
             g.glUniform1f(
                 loc,
                 isSegMode()
-                    ? (volumePreset.getColorMin() + volumePreset.getColorMax()) / 2f
+                    ? (renderedPreset.getColorMin() + renderedPreset.getColorMax()) / 2f
                     : renderingLayer.getWindowCenter()));
 
     if (!useComputeShader) {
@@ -713,8 +715,8 @@ public class View3d extends VolumeCanvas
     if (volTexture != null) {
       volTexture.init(gl);
     }
-    if (volumePreset != null) {
-      volumePreset.init(gl, renderingLayer.isInvertLut());
+    if (renderedPreset != null) {
+      renderedPreset.init(gl, renderingLayer.isInvertLut());
     }
 
     // MPR crosshair uniforms — position in normalized [0,1]³ volume-texture space
@@ -937,7 +939,7 @@ public class View3d extends VolumeCanvas
         program.setUniforms(gl4);
         volTexture.render(gl4);
         if (volumePreset != null) {
-          volumePreset.render(gl4, renderingLayer.isInvertLut());
+          renderedPreset.render(gl4, renderingLayer.isInvertLut());
         }
         // Bind segmentation overlay textures (units 4 and 5)
         bindSegTextures(gl4);
@@ -964,7 +966,7 @@ public class View3d extends VolumeCanvas
         // Bind volume and LUT textures on their expected texture units
         volTexture.render(gl2);
         if (volumePreset != null) {
-          volumePreset.render(gl2, renderingLayer.isInvertLut());
+          renderedPreset.render(gl2, renderingLayer.isInvertLut());
         }
         // Bind segmentation overlay textures (units 4 and 5)
         bindSegTextures(gl2);
@@ -1445,17 +1447,19 @@ public class View3d extends VolumeCanvas
   }
 
   public void setVolumePreset(Preset preset) {
-    retire(this.volumePreset, preset);
     this.volumePreset = Objects.requireNonNull(preset);
-    volumePreset.setRequiredBuilding(true);
+    Preset rendered = preset.forVolume(volTexture);
+    retire(this.renderedPreset, rendered);
+    this.renderedPreset = rendered;
+    rendered.setRequiredBuilding(true);
 
-    PresetWindowLevel defaultPreset = getVolTexture().getDefaultPreset(volumePreset);
+    PresetWindowLevel defaultPreset = getVolTexture().getDefaultPreset(rendered);
     changePresetWindowLevel(defaultPreset);
 
-    renderingLayer.applyVolumePreset(volumePreset, false);
+    renderingLayer.applyVolumePreset(rendered, false);
     eventManager
         .getAction(ActionVol.VOL_SHADING)
-        .ifPresent(a -> a.setSelectedWithoutTriggerAction(volumePreset.isShade()));
+        .ifPresent(a -> a.setSelectedWithoutTriggerAction(rendered.isShade()));
     display();
   }
 
@@ -1469,8 +1473,14 @@ public class View3d extends VolumeCanvas
     eventManager.applyDefaultWindowLevel(this);
   }
 
+  /** The selected preset, as listed in the menus. */
   public Preset getVolumePreset() {
     return volumePreset;
+  }
+
+  /** The preset the view renders: the selected one compiled for the loaded volume. */
+  public Preset getRenderedPreset() {
+    return renderedPreset;
   }
 
   @Override
@@ -2008,8 +2018,8 @@ public class View3d extends VolumeCanvas
           setVolumePreset((Preset) val);
         } else if (command.equals(ActionW.INVERT_LUT.cmd())) {
           if (val instanceof Boolean invertLut) {
-            if (volumePreset != null && renderingLayer.isInvertLut() != invertLut) {
-              volumePreset.setRequiredBuilding(true);
+            if (renderedPreset != null && renderingLayer.isInvertLut() != invertLut) {
+              renderedPreset.setRequiredBuilding(true);
             }
             renderingLayer.setInvertLut(invertLut);
           }

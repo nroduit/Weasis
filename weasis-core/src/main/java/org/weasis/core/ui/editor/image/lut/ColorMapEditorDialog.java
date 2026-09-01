@@ -13,8 +13,11 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Graphics;
+import java.awt.Rectangle;
 import java.awt.Window;
 import java.awt.event.ActionEvent;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
 import java.awt.event.KeyEvent;
@@ -70,6 +73,7 @@ import org.slf4j.LoggerFactory;
 import org.weasis.core.Messages;
 import org.weasis.core.api.gui.util.CollapsiblePanel;
 import org.weasis.core.api.gui.util.GuiUtils;
+import org.weasis.core.api.gui.util.WinUtil;
 import org.weasis.core.api.image.lut.ColorMapRegistry;
 import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.api.util.ResourceUtil.ActionIcon;
@@ -120,6 +124,7 @@ public class ColorMapEditorDialog extends JDialog implements ColorMapCurvePanel.
   private final JComboBox<String> modalityFilter = new JComboBox<>();
   private final JComboBox<String> sourceFilter = new JComboBox<>();
   private final JComboBox<String> categoryFilter = new JComboBox<>();
+  private final JComboBox<String> dimensionFilter = new JComboBox<>();
   private final DefaultListModel<ColorMap> listModel = new DefaultListModel<>();
   private final JList<ColorMap> mapList = new JList<>(listModel);
 
@@ -170,6 +175,7 @@ public class ColorMapEditorDialog extends JDialog implements ColorMapCurvePanel.
   private double histogramMin = Double.NaN;
   private double histogramMax = Double.NaN;
   private boolean lightingColumns;
+  private int advancedGrowth;
   private final JLabel statusLabel = new JLabel(" ");
 
   public ColorMapEditorDialog(Component parent, ColorMapEditorHost host) {
@@ -268,9 +274,14 @@ public class ColorMapEditorDialog extends JDialog implements ColorMapCurvePanel.
     sourceFilter.addItem(Messages.getString("ColorMapEditor.builtin"));
     sourceFilter.addItem(Messages.getString("ColorMapEditor.imported"));
     sourceFilter.addItem(Messages.getString("ColorMapEditor.user"));
+    dimensionFilter.addItem(filterAll);
+    dimensionFilter.addItem(Messages.getString("ColorMapEditor.maps2d"));
+    dimensionFilter.addItem(Messages.getString("ColorMapEditor.maps3d"));
+    dimensionFilter.setSelectedIndex(host.isVolume() ? 2 : 1);
     filters.add(modalityFilter);
     filters.add(sourceFilter, "growx, wrap"); // NON-NLS
-    filters.add(categoryFilter, "span 2, growx"); // NON-NLS
+    filters.add(categoryFilter);
+    filters.add(dimensionFilter, "growx"); // NON-NLS
     panel.add(filters, "growx, wrap"); // NON-NLS
     panel.add(new JLabel(), "wrap"); // NON-NLS
 
@@ -309,20 +320,63 @@ public class ColorMapEditorDialog extends JDialog implements ColorMapCurvePanel.
     modalityFilter.addActionListener(e -> reloadList());
     sourceFilter.addActionListener(e -> reloadList());
     categoryFilter.addActionListener(e -> reloadList());
+    dimensionFilter.addActionListener(e -> reloadList());
     return panel;
   }
 
   private JPanel buildEditorPanel() {
-    JPanel panel =
-        new JPanel(new MigLayout("insets 0 8lp 0 0, fillx", "[grow]", "[][][][]")); // NON-NLS
+    MigLayout layout = new MigLayout("insets 0 8lp 0 0, fillx", "[grow]", "[][][][]"); // NON-NLS
+    JPanel panel = new JPanel(layout);
     panel.add(buildQuickPanel(), "growx, wrap"); // NON-NLS
     panel.add(previewStrip, "growx, h 28lp!, wrap"); // NON-NLS
+    JPanel advancedContent = buildAdvancedPanel();
     CollapsiblePanel advanced =
-        new CollapsiblePanel(
-            Messages.getString("ColorMapEditor.advanced"), buildAdvancedPanel(), false);
+        new CollapsiblePanel(Messages.getString("ColorMapEditor.advanced"), advancedContent, false);
     panel.add(advanced, "growx, wrap"); // NON-NLS
     panel.add(statusLabel, "growx"); // NON-NLS
+    // The curve only gets room when the section is open: let its row take the spare height then,
+    // and enlarge the dialog if the packed height cannot show the graph and the stop table.
+    advancedContent.addComponentListener(
+        new ComponentAdapter() {
+          @Override
+          public void componentShown(ComponentEvent e) {
+            layout.setRowConstraints("[][][grow][]"); // NON-NLS
+            layout.setComponentConstraints(advanced, "grow, hmax 100%, wrap"); // NON-NLS
+            growToFitContent();
+          }
+
+          @Override
+          public void componentHidden(ComponentEvent e) {
+            layout.setRowConstraints("[][][][]"); // NON-NLS
+            layout.setComponentConstraints(advanced, "growx, wrap"); // NON-NLS
+            giveBackAdvancedHeight();
+          }
+        });
     return panel;
+  }
+
+  /** Grows the dialog to its preferred height, within the screen it is on. */
+  private void growToFitContent() {
+    int needed = getPreferredSize().height;
+    if (needed <= getHeight()) {
+      return;
+    }
+    Rectangle screen = WinUtil.getClosedScreenBound(getBounds());
+    int height = screen == null ? needed : Math.min(needed, screen.height);
+    int y =
+        screen == null
+            ? getY()
+            : Math.max(screen.y, Math.min(getY(), screen.y + screen.height - height));
+    advancedGrowth = height - getHeight();
+    setBounds(getX(), y, getWidth(), height);
+  }
+
+  // Undo the growth of the last expansion, but never below what the collapsed content needs.
+  private void giveBackAdvancedHeight() {
+    if (advancedGrowth > 0) {
+      setSize(getWidth(), Math.max(getPreferredSize().height, getHeight() - advancedGrowth));
+      advancedGrowth = 0;
+    }
   }
 
   private JPanel buildQuickPanel() {
@@ -948,7 +1002,11 @@ public class ColorMapEditorDialog extends JDialog implements ColorMapCurvePanel.
       ColorMapRegistry.Query query =
           new ColorMapRegistry.Query(
               modality,
-              null,
+              switch (dimensionFilter.getSelectedIndex()) {
+                case 1 -> Boolean.FALSE;
+                case 2 -> Boolean.TRUE;
+                default -> null;
+              },
               SOURCE_FILTERS.get(Math.max(0, sourceFilter.getSelectedIndex())),
               category,
               filterField.getText().trim(),

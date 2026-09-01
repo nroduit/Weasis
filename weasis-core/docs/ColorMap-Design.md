@@ -50,8 +50,8 @@ still read, unknown fields are ignored, and a newer major schema is refused.
 
 | File | Content |
 |---|---|
-| `weasis-core/src/main/resources/colormaps.json` | Built-in 2D maps (clinical, the PS3.6 well-known DICOM palettes, classic, scientific) |
-| `weasis-dicom/weasis-dicom-3d/viewer3d/src/main/resources/volumeColorMaps.json` | Built-in volume rendering presets, contributed to the registry by the 3D viewer |
+| `weasis-core/src/main/resources/colormaps.json` | Built-in 2D maps (clinical, the PS3.6 well-known DICOM palettes, classic, scientific, single-hue and hot overlays for fusion) |
+| `weasis-dicom/weasis-dicom-3d/viewer3d/src/main/resources/volumeColorMaps.json` | Built-in volume rendering presets (the historical Weasis set, the 3D Slicer CT catalog clipped to the Hounsfield range, MR presets in percent of the volume maximum, PET presets in SUVbw), contributed to the registry by the 3D viewer; `category` names the anatomical group (bone, vascular, cardiac…) |
 | `customColorMaps.json` in the preference directory | User maps, 2D and 3D, pushed to the remote preference store |
 
 The legacy `.txt` table is an import format only. A user's former `customVolumePresets.json` is
@@ -68,9 +68,11 @@ presentation states.
 
 The registry also keeps the user's **favorites**: a set of map ids, not a property of the maps,
 stored in the user file next to the user maps (`setFavorite`, `isFavorite`). The 2D LUT menu
-(`ColorMapRadioMenu`) and the 3D preset menu show favorites at their root instead of in their
-category, modality or origin submenu, each root group under a dim section title and each favorite
-followed by the title of the submenu it comes from; the editor and the menus toggle the flag.
+(`ColorMapRadioMenu`) and the 3D preset menu (`PresetRadioMenu`) show favorites at their root
+instead of in their category, modality or origin submenu, each root group under a dim section
+title and each favorite followed by the title of the submenu it comes from; the editor and the
+menus toggle the flag. The 3D menu lists the presets of a modality with the uncategorized ones
+first and one submenu per category.
 
 ## Data flow
 
@@ -103,6 +105,12 @@ colormaps.json / volumeColorMaps.json / customColorMaps.json / DICOM palette
 - **3D.** `Preset` compiles colors and lighting from the map through the shared sampler; the
   texture width is capped (`Preset.MAX_TEXTURE_WIDTH`), alpha is corrected for the sampling
   rate, and `Preset.getVisibleRange()` lets rays skip samples outside the non-transparent range.
+  The listed presets are compiled once without a volume; a map whose positions depend on the
+  volume is compiled again per view when selected (`Preset.forVolume`, applied by
+  `View3d.setVolumePreset`): a `relative` map spans the volume range, a `percent` map is a
+  fraction of the volume maximum, and SUVbw positions are converted with the SUV factor of the
+  series (read as a fraction of the maximum when there is none). The derived preset is equal to
+  the listed one, so menus keep their selection, and is released like an editor preview.
 - **DICOM exchange.** `DicomColorPalette` turns a Color Palette object into a sampled map and
   writes one back; `DicomMediaIO` registers palettes met while loading; `PRManager` applies the
   palette of a Pseudo-Color Softcopy Presentation State and the superimposed series, palette and
@@ -128,7 +136,11 @@ colormaps.json / volumeColorMaps.json / customColorMaps.json / DICOM palette
 - **Contribute maps**: a bundle calls `ColorMapRegistry.addBuiltIn(...)` with maps read by
   `ColorMapJson`.
 - **Host the editor**: implement `ColorMapEditorHost` (`preview`, `currentLut`, `mapsChanged`,
-  and optionally `valueRange`, `histogram`, `pickValue`, `formats`). Existing hosts:
-  `ViewerColorMapHost` (2D), `DicomColorMapHost` (DICOM viewer), `VolumePresetHost` (3D).
+  and optionally `currentModality`, `isVolume`, `valueRange`, `histogram`, `pickValue`,
+  `formats`). Existing hosts: `ViewerColorMapHost` (2D), `DicomColorMapHost` (DICOM viewer),
+  `VolumePresetHost` (3D). The histogram drawn behind the curve comes from the host: the 2D
+  hosts bin the displayed image (`ValueHistogram`, real values through the modality transform
+  for DICOM) and the 3D host samples the volume (`VolumeHistogram`), both cached at full range
+  and re-binned on the map's domain.
 - **Add a file format**: implement `ColorMapFormat` (`read`, optionally `write`) and return it from
   the host's `formats()`; built-in formats are in `ColorMapFormats`.

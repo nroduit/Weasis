@@ -27,6 +27,7 @@ import java.util.Comparator;
 import java.util.EnumSet;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -45,6 +46,7 @@ import org.weasis.dicom.codec.display.Modality;
 import org.weasis.dicom.viewer3d.EventManager;
 import org.weasis.dicom.viewer3d.View3DContainer;
 import org.weasis.opencv.op.lut.colormap.ColorMap;
+import org.weasis.opencv.op.lut.colormap.ColorMapDomain;
 import org.weasis.opencv.op.lut.colormap.ColorMapEdits;
 import org.weasis.opencv.op.lut.colormap.ColorMapSampler;
 import org.weasis.opencv.op.lut.colormap.ColorStop;
@@ -55,7 +57,9 @@ import org.weasis.opencv.op.lut.colormap.Rgba;
 
 /**
  * A volume rendering preset: the GPU form of a transfer {@link ColorMap} with lighting. The color
- * texture and the lighting map are sampled from the map over its intensity range.
+ * texture and the lighting map are sampled from the map over its intensity range. A map whose
+ * positions depend on the volume (relative, percent of the maximum, SUV units) is compiled again
+ * per view by {@link #forVolume}.
  */
 public class Preset extends TextureData {
   private static final Logger LOGGER = LoggerFactory.getLogger(Preset.class);
@@ -67,6 +71,7 @@ public class Preset extends TextureData {
   /** Texels of the color texture at most: a wider intensity span is sampled, not enumerated. */
   static final int MAX_TEXTURE_WIDTH = 4096;
 
+  private final ColorMap source;
   private final ColorMap colorMap;
   private final String name;
   private final Modality modality;
@@ -88,8 +93,12 @@ public class Preset extends TextureData {
   }
 
   private Preset(ColorMap source, boolean custom, boolean preview) {
+    this(source, anchored(Objects.requireNonNull(source)), custom, preview);
+  }
+
+  private Preset(ColorMap source, ColorMap map, boolean custom, boolean preview) {
     super(256, PixelFormat.RGBA8);
-    ColorMap map = anchored(Objects.requireNonNull(source));
+    this.source = source;
     this.colorMap = map;
     this.preview = preview;
     this.name = map.name();
@@ -152,12 +161,70 @@ public class Preset extends TextureData {
     return new float[] {min, max};
   }
 
-  // A map without physical values (relative, percent) spans the usual 12-bit range of its modality.
+  // Without a volume, a map without physical values spans the usual 12-bit range of its modality.
   private static ColorMap anchored(ColorMap map) {
     boolean ct = map.modalities().contains(Modality.CT.name());
     return ct
         ? ColorMapEdits.anchored(map, "HU", -1024, 3071) // NON-NLS
         : ColorMapEdits.anchored(map, null, 0, 4095);
+  }
+
+  /**
+   * This preset compiled for the loaded volume when its map depends on it, else this preset. A
+   * derived instance is equal to this one, belongs to one view and is retired like a preview.
+   */
+  public Preset forVolume(DicomVolTexture texture) {
+    if (texture == null) {
+      return this;
+    }
+    ColorMap compiled = anchoredTo(source, texture);
+    return compiled.equals(colorMap) ? this : new Preset(source, compiled, custom, true);
+  }
+
+  /**
+   * The map with its positions in the value unit of the volume: a relative map spans the volume
+   * range, a percent map is a fraction of the volume maximum (of the range for the window
+   * reference), SUV positions are divided by the SUV factor of the series and read as a fraction of
+   * the maximum when there is none. Other maps are returned as they are.
+   */
+  public static ColorMap anchoredTo(ColorMap map, DicomVolTexture texture) {
+    ColorMapDomain domain = map.domain();
+    double min = texture.getLevelMin();
+    double max = texture.getLevelMax();
+    if (!(max > min)) {
+      return anchored(map);
+    }
+    String unit = texture.getPixelValueUnit();
+    return switch (domain.kind()) {
+      case RELATIVE -> ColorMapEdits.anchored(map, unit, min, max);
+      case PERCENT ->
+          ColorMapDomain.REFERENCE_WINDOW.equals(domain.reference()) || max <= 0
+              ? ColorMapEdits.anchored(map, unit, min, max)
+              : scaled(map, unit, max / 100.0);
+      case ABSOLUTE, FIXED -> isSuvUnit(domain.unit()) ? suvScaled(map, texture, unit) : map;
+    };
+  }
+
+  private static ColorMap suvScaled(ColorMap map, DicomVolTexture texture, String unit) {
+    Double factor = texture.getSuvFactor();
+    if (factor != null) {
+      return scaled(map, unit, 1.0 / factor);
+    }
+    double max = texture.getLevelMax();
+    double top = map.domain().max();
+    return max > 0 && top > 0 ? scaled(map, unit, max / top) : map;
+  }
+
+  // The positions multiplied by {@code factor}, in the unit of the volume.
+  private static ColorMap scaled(ColorMap map, String unit, double factor) {
+    ColorMapDomain d = map.domain();
+    ColorMap absolute =
+        map.toBuilder().domain(ColorMapDomain.absolute(unit, d.min(), d.max())).build();
+    return ColorMapEdits.rescaled(absolute, d.min() * factor, d.max() * factor);
+  }
+
+  private static boolean isSuvUnit(String unit) {
+    return unit != null && unit.toUpperCase(Locale.ROOT).startsWith("SUV"); // NON-NLS
   }
 
   /** A preset compiled from a declarative map. */
@@ -173,9 +240,12 @@ public class Preset extends TextureData {
     return new Preset(map, true, true);
   }
 
-  /** The declarative form of this preset: what the shared editor and the registry work with. */
+  /**
+   * The declared map, as the registry and the editor know it: the positions of a relative, percent
+   * or SUV map are not those of the compiled texture.
+   */
   public ColorMap toColorMap() {
-    return colorMap;
+    return source;
   }
 
   private static boolean hasVaryingMaterial(ColorMap map) {
@@ -269,12 +339,12 @@ public class Preset extends TextureData {
     return this == o
         || (o instanceof Preset other
             && custom == other.custom
-            && colorMap.id().equals(other.colorMap.id()));
+            && source.id().equals(other.source.id()));
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(colorMap.id(), custom);
+    return Objects.hash(source.id(), custom);
   }
 
   // ── catalog ──
@@ -288,7 +358,7 @@ public class Preset extends TextureData {
    */
   public static List<Preset> getAllPresets() {
     Map<String, Preset> byId = new LinkedHashMap<>();
-    basicPresets.forEach(p -> byId.put(p.colorMap.id(), p));
+    basicPresets.forEach(p -> byId.put(p.source.id(), p));
     ColorMapRegistry.getInstance()
         .query(CUSTOM_VOLUME_MAPS)
         .forEach(map -> byId.put(map.id(), of(map, true)));
@@ -330,7 +400,7 @@ public class Preset extends TextureData {
   // The built-in preset compiled from that map, else a custom one.
   private static Preset presetOf(ColorMap map) {
     return basicPresets.stream()
-        .filter(p -> p.colorMap.equals(map))
+        .filter(p -> p.source.equals(map))
         .findFirst()
         .orElseGet(() -> of(map, true));
   }

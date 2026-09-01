@@ -136,6 +136,19 @@ public class DicomVolTexture extends VolumeTexture implements MediaSeriesGroup {
     return volume.getMinimumAsDouble();
   }
 
+  /** Unit of the voxel values (rescale type, PET units, HU for CT), or null. */
+  public String getPixelValueUnit() {
+    return pixelValueUnit;
+  }
+
+  /** SUVbw per voxel value of the series, or null when it cannot be derived. */
+  public Double getSuvFactor() {
+    return volume.getStack().getMiddleImage().getTagValue(TagW.SuvFactor) instanceof Double f
+            && f > 0
+        ? f
+        : null;
+  }
+
   public double getLevelMax() {
     return volume.getMaximumAsDouble();
   }

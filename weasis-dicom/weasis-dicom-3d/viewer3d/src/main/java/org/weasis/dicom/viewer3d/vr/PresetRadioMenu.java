@@ -17,6 +17,7 @@ import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.TreeMap;
 import javax.swing.Icon;
 import javax.swing.JComponent;
 import javax.swing.JMenu;
@@ -147,7 +148,7 @@ public class PresetRadioMenu extends GroupRadioMenu<Preset> {
       separate(component);
       JMenu modMenu = new JMenu(entry.getKey().toString());
       component.add(modMenu);
-      entry.getValue().forEach(modMenu::add);
+      addGroup(modMenu, entry.getValue());
     }
 
     separate(component);
@@ -191,7 +192,27 @@ public class PresetRadioMenu extends GroupRadioMenu<Preset> {
     }
     separate(component);
     component.add(GuiUtils.createMenuSectionLabel(title));
-    items.forEach(component::add);
+    addGroup(component, items);
+  }
+
+  // Presets without a category come first, the others in one submenu per category.
+  private static void addGroup(JComponent component, List<RadioMenuItem> items) {
+    Map<String, List<RadioMenuItem>> categories = new TreeMap<>();
+    for (RadioMenuItem item : items) {
+      String category =
+          item.getUserObject() instanceof Preset preset ? preset.toColorMap().category() : null;
+      if (category == null) {
+        component.add(item);
+      } else {
+        categories.computeIfAbsent(category, k -> new ArrayList<>()).add(item);
+      }
+    }
+    categories.forEach(
+        (name, presets) -> {
+          JMenu menu = new JMenu(name);
+          presets.forEach(menu::add);
+          component.add(menu);
+        });
   }
 
   // A separator between sections, never at the top nor twice in a row.

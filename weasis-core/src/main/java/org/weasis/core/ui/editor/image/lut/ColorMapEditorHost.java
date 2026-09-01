@@ -28,6 +28,11 @@ public interface ColorMapEditorHost {
     return null;
   }
 
+  /** Whether the host renders volumes, so the editor lists 3D presets first. */
+  default boolean isVolume() {
+    return false;
+  }
+
   /**
    * The LUT shown on the active view now; read once when the editor opens and restored on close
    * when nothing was saved.

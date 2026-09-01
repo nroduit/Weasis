@@ -219,6 +219,634 @@
       ]
     },
     {
+      "id": "weasis.ct-lung-density",
+      "name": "CT Lung Density",
+      "category": "Clinical",
+      "tags": [
+        "ct",
+        "hu",
+        "lung",
+        "emphysema",
+        "aeration"
+      ],
+      "type": "qualitative",
+      "modality": [
+        "CT"
+      ],
+      "domain": {
+        "kind": "fixed",
+        "unit": "HU",
+        "min": -1024,
+        "max": 100
+      },
+      "bits": 12,
+      "interpolation": "step",
+      "stops": [
+        {
+          "pos": -1024,
+          "color": "#d62828",
+          "group": "Emphysema (< -950 HU)"
+        },
+        {
+          "pos": -950,
+          "color": "#f4b400",
+          "group": "Low attenuation (-950 to -850 HU)"
+        },
+        {
+          "pos": -850,
+          "color": "#6e6e6e",
+          "group": "Normally aerated (-850 to -500 HU)"
+        },
+        {
+          "pos": -500,
+          "color": "#bdbdbd",
+          "group": "Poorly aerated (-500 to -100 HU)"
+        },
+        {
+          "pos": -100,
+          "color": "#ffffff",
+          "group": "Non-aerated (> -100 HU)"
+        }
+      ]
+    },
+    {
+      "id": "weasis.ct-calcium",
+      "name": "CT Calcium",
+      "category": "Clinical",
+      "tags": [
+        "ct",
+        "hu",
+        "calcium",
+        "agatston",
+        "fusion"
+      ],
+      "type": "transfer",
+      "modality": [
+        "CT"
+      ],
+      "domain": {
+        "kind": "fixed",
+        "unit": "HU",
+        "min": -200,
+        "max": 1000
+      },
+      "bits": 12,
+      "outside": {
+        "low": "transparent"
+      },
+      "stops": [
+        {
+          "pos": -200,
+          "color": "#000000",
+          "alpha": 0.0
+        },
+        {
+          "pos": 130,
+          "color": "#b4b4b4",
+          "alpha": 0.0
+        },
+        {
+          "pos": 130,
+          "color": "#ffe040",
+          "alpha": 1.0,
+          "group": "130-199 HU"
+        },
+        {
+          "pos": 200,
+          "color": "#ffe040"
+        },
+        {
+          "pos": 200,
+          "color": "#ff9020",
+          "group": "200-299 HU"
+        },
+        {
+          "pos": 300,
+          "color": "#ff9020"
+        },
+        {
+          "pos": 300,
+          "color": "#ff3020",
+          "group": "300-399 HU"
+        },
+        {
+          "pos": 400,
+          "color": "#ff3020"
+        },
+        {
+          "pos": 400,
+          "color": "#c020c0",
+          "group": "400 HU and above"
+        },
+        {
+          "pos": 1000,
+          "color": "#c020c0"
+        }
+      ]
+    },
+    {
+      "id": "weasis.ct-body-composition",
+      "name": "CT Body Composition",
+      "category": "Clinical",
+      "tags": [
+        "ct",
+        "hu",
+        "sarcopenia",
+        "fat",
+        "muscle",
+        "body composition"
+      ],
+      "type": "qualitative",
+      "modality": [
+        "CT"
+      ],
+      "domain": {
+        "kind": "fixed",
+        "unit": "HU",
+        "min": -200,
+        "max": 300
+      },
+      "bits": 12,
+      "interpolation": "step",
+      "stops": [
+        {
+          "pos": -200,
+          "color": "#404040",
+          "group": "Air and lung (< -190 HU)"
+        },
+        {
+          "pos": -190,
+          "color": "#f2c230",
+          "group": "Adipose tissue (-190 to -30 HU)"
+        },
+        {
+          "pos": -29,
+          "color": "#d62828",
+          "group": "Skeletal muscle (-29 to 150 HU)"
+        },
+        {
+          "pos": 151,
+          "color": "#ffffff",
+          "group": "Bone (> 150 HU)"
+        }
+      ]
+    },
+    {
+      "id": "weasis.ct-bone-density",
+      "name": "CT Bone Density",
+      "category": "Clinical",
+      "tags": [
+        "ct",
+        "hu",
+        "osteoporosis",
+        "bone density",
+        "trabecular"
+      ],
+      "type": "qualitative",
+      "modality": [
+        "CT"
+      ],
+      "domain": {
+        "kind": "fixed",
+        "unit": "HU",
+        "min": -200,
+        "max": 400
+      },
+      "bits": 12,
+      "stops": [
+        {
+          "pos": -200,
+          "color": "#000000"
+        },
+        {
+          "pos": 80,
+          "color": "#b4b4b4"
+        },
+        {
+          "pos": 80,
+          "color": "#d62828",
+          "group": "Osteoporosis (< 110 HU)"
+        },
+        {
+          "pos": 110,
+          "color": "#d62828"
+        },
+        {
+          "pos": 110,
+          "color": "#f4b400",
+          "group": "Indeterminate (110 to 160 HU)"
+        },
+        {
+          "pos": 160,
+          "color": "#f4b400"
+        },
+        {
+          "pos": 160,
+          "color": "#2e9e4f",
+          "group": "Normal (> 160 HU)"
+        },
+        {
+          "pos": 400,
+          "color": "#2e9e4f"
+        }
+      ]
+    },
+    {
+      "id": "weasis.t1-map",
+      "name": "T1 Map (Lipari)",
+      "category": "Clinical",
+      "tags": [
+        "mr",
+        "t1",
+        "mapping",
+        "cardiac",
+        "perceptual",
+        "crameri"
+      ],
+      "modality": [
+        "MR"
+      ],
+      "domain": {
+        "kind": "relative",
+        "min": 0,
+        "max": 1
+      },
+      "space": "lab",
+      "stops": [
+        {
+          "pos": 0.0,
+          "color": "#031326"
+        },
+        {
+          "pos": 0.09019607843137255,
+          "color": "#0d3151"
+        },
+        {
+          "pos": 0.12156862745098039,
+          "color": "#163c5f"
+        },
+        {
+          "pos": 0.1607843137254902,
+          "color": "#27496f"
+        },
+        {
+          "pos": 0.18823529411764706,
+          "color": "#365176"
+        },
+        {
+          "pos": 0.21568627450980393,
+          "color": "#43577a"
+        },
+        {
+          "pos": 0.24313725490196078,
+          "color": "#4f5b7b"
+        },
+        {
+          "pos": 0.30980392156862746,
+          "color": "#645e77"
+        },
+        {
+          "pos": 0.4117647058823529,
+          "color": "#83606f"
+        },
+        {
+          "pos": 0.44313725490196076,
+          "color": "#8e616c"
+        },
+        {
+          "pos": 0.5333333333333333,
+          "color": "#b26364"
+        },
+        {
+          "pos": 0.5882352941176471,
+          "color": "#ca675f"
+        },
+        {
+          "pos": 0.6352941176470588,
+          "color": "#dd715f"
+        },
+        {
+          "pos": 0.6901960784313725,
+          "color": "#e98466"
+        },
+        {
+          "pos": 0.7333333333333333,
+          "color": "#ea946f"
+        },
+        {
+          "pos": 0.8274509803921568,
+          "color": "#e5b287"
+        },
+        {
+          "pos": 0.8470588235294118,
+          "color": "#e5b98e"
+        },
+        {
+          "pos": 0.8627450980392157,
+          "color": "#e6be93"
+        },
+        {
+          "pos": 0.9019607843137255,
+          "color": "#eacda5"
+        },
+        {
+          "pos": 1.0,
+          "color": "#fdf5da"
+        }
+      ],
+      "metadata": {
+        "source": "Crameri, F. Scientific colour maps 8 (MIT), lipari, recommended by SCMR for T1 mapping"
+      }
+    },
+    {
+      "id": "weasis.t2-map",
+      "name": "T2 Map (Navia)",
+      "category": "Clinical",
+      "tags": [
+        "mr",
+        "t2",
+        "mapping",
+        "cardiac",
+        "perceptual",
+        "crameri"
+      ],
+      "modality": [
+        "MR"
+      ],
+      "domain": {
+        "kind": "relative",
+        "min": 0,
+        "max": 1
+      },
+      "space": "lab",
+      "stops": [
+        {
+          "pos": 0.0,
+          "color": "#031327"
+        },
+        {
+          "pos": 0.12156862745098039,
+          "color": "#073764"
+        },
+        {
+          "pos": 0.17647058823529413,
+          "color": "#0d497d"
+        },
+        {
+          "pos": 0.22745098039215686,
+          "color": "#16598c"
+        },
+        {
+          "pos": 0.24705882352941178,
+          "color": "#1a5f8f"
+        },
+        {
+          "pos": 0.30196078431372547,
+          "color": "#246c91"
+        },
+        {
+          "pos": 0.34509803921568627,
+          "color": "#2a748e"
+        },
+        {
+          "pos": 0.38823529411764707,
+          "color": "#307a8a"
+        },
+        {
+          "pos": 0.47843137254901963,
+          "color": "#3d8782"
+        },
+        {
+          "pos": 0.5372549019607843,
+          "color": "#47907c"
+        },
+        {
+          "pos": 0.615686274509804,
+          "color": "#579f73"
+        },
+        {
+          "pos": 0.6705882352941176,
+          "color": "#66ac6c"
+        },
+        {
+          "pos": 0.6901960784313725,
+          "color": "#6db169"
+        },
+        {
+          "pos": 0.7333333333333333,
+          "color": "#7fbd68"
+        },
+        {
+          "pos": 0.7490196078431373,
+          "color": "#87c269"
+        },
+        {
+          "pos": 0.7803921568627451,
+          "color": "#9acc70"
+        },
+        {
+          "pos": 0.803921568627451,
+          "color": "#a9d379"
+        },
+        {
+          "pos": 0.8274509803921568,
+          "color": "#b8d985"
+        },
+        {
+          "pos": 0.8862745098039215,
+          "color": "#d7e5a5"
+        },
+        {
+          "pos": 0.9333333333333333,
+          "color": "#e9ecbe"
+        },
+        {
+          "pos": 1.0,
+          "color": "#fcf4d9"
+        }
+      ],
+      "metadata": {
+        "source": "Crameri, F. Scientific colour maps 8 (MIT), navia, recommended by SCMR for T2 mapping"
+      }
+    },
+    {
+      "id": "weasis.fmri-positive",
+      "name": "fMRI Red-Yellow",
+      "category": "Clinical",
+      "tags": [
+        "mr",
+        "fmri",
+        "activation",
+        "overlay",
+        "fusion"
+      ],
+      "type": "transfer",
+      "modality": [
+        "MR"
+      ],
+      "domain": {
+        "kind": "relative",
+        "min": 0,
+        "max": 1
+      },
+      "outside": {
+        "low": "transparent"
+      },
+      "stops": [
+        {
+          "pos": 0.0,
+          "color": "#ff0000",
+          "alpha": 0.0
+        },
+        {
+          "pos": 0.05,
+          "alpha": 1.0
+        },
+        {
+          "pos": 1.0,
+          "color": "#ffff00"
+        }
+      ]
+    },
+    {
+      "id": "weasis.fmri-negative",
+      "name": "fMRI Blue-Lightblue",
+      "category": "Clinical",
+      "tags": [
+        "mr",
+        "fmri",
+        "deactivation",
+        "overlay",
+        "fusion"
+      ],
+      "type": "transfer",
+      "modality": [
+        "MR"
+      ],
+      "domain": {
+        "kind": "relative",
+        "min": 0,
+        "max": 1
+      },
+      "outside": {
+        "low": "transparent"
+      },
+      "stops": [
+        {
+          "pos": 0.0,
+          "color": "#0000ff",
+          "alpha": 0.0
+        },
+        {
+          "pos": 0.05,
+          "alpha": 1.0
+        },
+        {
+          "pos": 1.0,
+          "color": "#00ffff"
+        }
+      ]
+    },
+    {
+      "id": "weasis.cardiac",
+      "name": "Cardiac",
+      "category": "Clinical",
+      "tags": [
+        "nm",
+        "spect",
+        "pet",
+        "perfusion",
+        "cardiac"
+      ],
+      "modality": [
+        "NM",
+        "PT"
+      ],
+      "domain": {
+        "kind": "relative",
+        "min": 0,
+        "max": 1
+      },
+      "stops": [
+        {
+          "pos": 0.0,
+          "color": "#49c103"
+        },
+        {
+          "pos": 0.06274509803921569,
+          "color": "#33de8b"
+        },
+        {
+          "pos": 0.12549019607843137,
+          "color": "#00deff"
+        },
+        {
+          "pos": 0.18823529411764706,
+          "color": "#0084ff"
+        },
+        {
+          "pos": 0.24705882352941178,
+          "color": "#004eff"
+        },
+        {
+          "pos": 0.3137254901960784,
+          "color": "#1010ff"
+        },
+        {
+          "pos": 0.3764705882352941,
+          "color": "#1400e6"
+        },
+        {
+          "pos": 0.4392156862745098,
+          "color": "#2000ce"
+        },
+        {
+          "pos": 0.5019607843137255,
+          "color": "#5a00a5"
+        },
+        {
+          "pos": 0.5647058823529412,
+          "color": "#a50084"
+        },
+        {
+          "pos": 0.6274509803921569,
+          "color": "#de0039"
+        },
+        {
+          "pos": 0.6901960784313725,
+          "color": "#ff2100"
+        },
+        {
+          "pos": 0.792156862745098,
+          "color": "#ff8c00"
+        },
+        {
+          "pos": 0.8117647058823529,
+          "color": "#ffa100"
+        },
+        {
+          "pos": 0.8784313725490196,
+          "color": "#ffef00"
+        },
+        {
+          "pos": 0.9411764705882353,
+          "color": "#b1de0c"
+        },
+        {
+          "pos": 0.9921568627450981,
+          "color": "#5dc605"
+        },
+        {
+          "pos": 0.996078431372549,
+          "color": "#56c504"
+        },
+        {
+          "pos": 1.0,
+          "color": "#49c103"
+        }
+      ]
+    },
+    {
       "id": "weasis.dicom.hot-iron",
       "name": "Hot Iron",
       "category": "DICOM",
@@ -1272,6 +1900,86 @@
       ]
     },
     {
+      "id": "weasis.ge-color",
+      "name": "GE Color",
+      "category": "Classic",
+      "tags": [
+        "nm",
+        "pet"
+      ],
+      "domain": {
+        "kind": "relative",
+        "min": 0,
+        "max": 1
+      },
+      "stops": [
+        {
+          "pos": 0.0,
+          "color": "#000000"
+        },
+        {
+          "pos": 0.24705882352941178,
+          "color": "#00807d"
+        },
+        {
+          "pos": 0.5019607843137255,
+          "color": "#8000ff"
+        },
+        {
+          "pos": 0.7529411764705882,
+          "color": "#ff8000"
+        },
+        {
+          "pos": 1.0,
+          "color": "#ffffff"
+        }
+      ]
+    },
+    {
+      "id": "weasis.stern",
+      "name": "Stern",
+      "category": "Classic",
+      "tags": [
+        "nm",
+        "pet"
+      ],
+      "domain": {
+        "kind": "relative",
+        "min": 0,
+        "max": 1
+      },
+      "stops": [
+        {
+          "pos": 0.0,
+          "color": "#000000"
+        },
+        {
+          "pos": 0.054901960784313725,
+          "color": "#fe0e1b"
+        },
+        {
+          "pos": 0.24705882352941178,
+          "color": "#003f7d"
+        },
+        {
+          "pos": 0.25098039215686274,
+          "color": "#40407f"
+        },
+        {
+          "pos": 0.5019607843137255,
+          "color": "#8080ff"
+        },
+        {
+          "pos": 0.7372549019607844,
+          "color": "#bcbc00"
+        },
+        {
+          "pos": 1.0,
+          "color": "#ffffff"
+        }
+      ]
+    },
+    {
       "id": "weasis.viridis",
       "name": "Viridis",
       "category": "Scientific",
@@ -1726,6 +2434,194 @@
       "metadata": {
         "source": "Google Turbo colormap (Apache 2.0), Anton Mikhailov 2019"
       }
+    },
+    {
+      "id": "weasis.cool-warm",
+      "name": "Cool to Warm",
+      "category": "Scientific",
+      "tags": [
+        "diverging",
+        "difference",
+        "subtraction",
+        "fmri"
+      ],
+      "type": "diverging",
+      "domain": {
+        "kind": "relative",
+        "min": 0,
+        "max": 1
+      },
+      "space": "lab",
+      "stops": [
+        {
+          "pos": 0.0,
+          "color": "#3b4cc0"
+        },
+        {
+          "pos": 0.03529411764705882,
+          "color": "#455cce"
+        },
+        {
+          "pos": 0.10196078431372549,
+          "color": "#5a78e4"
+        },
+        {
+          "pos": 0.16470588235294117,
+          "color": "#6f91f3"
+        },
+        {
+          "pos": 0.24705882352941178,
+          "color": "#8caffe"
+        },
+        {
+          "pos": 0.30196078431372547,
+          "color": "#9fbfff"
+        },
+        {
+          "pos": 0.3411764705882353,
+          "color": "#adc9fd"
+        },
+        {
+          "pos": 0.4235294117647059,
+          "color": "#c8d7f1"
+        },
+        {
+          "pos": 0.49411764705882355,
+          "color": "#dbddde"
+        },
+        {
+          "pos": 0.5647058823529412,
+          "color": "#ecd3c5"
+        },
+        {
+          "pos": 0.611764705882353,
+          "color": "#f3c8b2"
+        },
+        {
+          "pos": 0.6549019607843137,
+          "color": "#f7bca1"
+        },
+        {
+          "pos": 0.7098039215686275,
+          "color": "#f7a98b"
+        },
+        {
+          "pos": 0.7450980392156863,
+          "color": "#f59c7d"
+        },
+        {
+          "pos": 0.8235294117647058,
+          "color": "#ea7a5f"
+        },
+        {
+          "pos": 0.8901960784313725,
+          "color": "#da5947"
+        },
+        {
+          "pos": 1.0,
+          "color": "#b40426"
+        }
+      ],
+      "metadata": {
+        "source": "Moreland, K. Diverging color maps for scientific visualization (2009), smooth cool-warm"
+      }
+    },
+    {
+      "id": "weasis.overlay-green",
+      "name": "Green Overlay",
+      "category": "Overlay",
+      "tags": [
+        "overlay",
+        "fusion",
+        "registration"
+      ],
+      "type": "transfer",
+      "domain": {
+        "kind": "relative",
+        "min": 0,
+        "max": 1
+      },
+      "stops": [
+        {
+          "pos": 0.0,
+          "color": "#000000",
+          "alpha": 0.0
+        },
+        {
+          "pos": 1.0,
+          "color": "#00ff00",
+          "alpha": 1.0
+        }
+      ]
+    },
+    {
+      "id": "weasis.overlay-magenta",
+      "name": "Magenta Overlay",
+      "category": "Overlay",
+      "tags": [
+        "overlay",
+        "fusion",
+        "registration"
+      ],
+      "type": "transfer",
+      "domain": {
+        "kind": "relative",
+        "min": 0,
+        "max": 1
+      },
+      "stops": [
+        {
+          "pos": 0.0,
+          "color": "#000000",
+          "alpha": 0.0
+        },
+        {
+          "pos": 1.0,
+          "color": "#ff00ff",
+          "alpha": 1.0
+        }
+      ]
+    },
+    {
+      "id": "weasis.overlay-hot",
+      "name": "Hot Overlay",
+      "category": "Overlay",
+      "tags": [
+        "overlay",
+        "fusion",
+        "iodine",
+        "perfusion",
+        "parametric"
+      ],
+      "type": "transfer",
+      "domain": {
+        "kind": "relative",
+        "min": 0,
+        "max": 1
+      },
+      "stops": [
+        {
+          "pos": 0.0,
+          "color": "#000000",
+          "alpha": 0.0
+        },
+        {
+          "pos": 0.25,
+          "alpha": 1.0
+        },
+        {
+          "pos": 0.4,
+          "color": "#ff0000"
+        },
+        {
+          "pos": 0.8,
+          "color": "#ffff00"
+        },
+        {
+          "pos": 1.0,
+          "color": "#ffffff"
+        }
+      ]
     }
   ]
 }

@@ -16,6 +16,7 @@ import java.awt.Color;
 import org.junit.jupiter.api.DisplayNameGeneration;
 import org.junit.jupiter.api.DisplayNameGenerator.ReplaceUnderscores;
 import org.junit.jupiter.api.Test;
+import org.weasis.core.api.image.util.ValueHistogram;
 import org.weasis.opencv.op.lut.colormap.ColorMap;
 import org.weasis.opencv.op.lut.colormap.ColorMapDomain;
 import org.weasis.opencv.op.lut.colormap.GradientOpacity;
@@ -25,12 +26,12 @@ import org.weasis.opencv.op.lut.colormap.Lighting;
 class PresetCostTest {
 
   /** 100 bins over -1000..1000 HU: 90 % air below -500, 10 % tissue above. */
-  private static VolumeHistogram.Bins volume() {
+  private static ValueHistogram.Bins volume() {
     double[] counts = new double[100];
     for (int i = 0; i < 100; i++) {
       counts[i] = i < 25 ? 36 : 10.0 / 75 * 10;
     }
-    return new VolumeHistogram.Bins(counts, -1000, 1000);
+    return new ValueHistogram.Bins(counts, -1000, 1000);
   }
 
   private static ColorMap map(double transparentBelow, Lighting lighting) {
@@ -67,7 +68,7 @@ class PresetCostTest {
         () ->
             assertEquals(
                 0,
-                PresetCost.estimate(map(300, null), new VolumeHistogram.Bins(new double[4], 0, 1))
+                PresetCost.estimate(map(300, null), new ValueHistogram.Bins(new double[4], 0, 1))
                     .visibleFraction()));
   }
 }

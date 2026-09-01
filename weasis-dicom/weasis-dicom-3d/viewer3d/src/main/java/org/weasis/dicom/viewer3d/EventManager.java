@@ -696,8 +696,8 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> {
     } else if (ResetTools.WL.equals(action)) {
       if (selectedView2dContainer != null) {
         if (selectedView2dContainer.getSelectedViewCanvas() instanceof View3d view3d) {
-          var volumePreset = view3d.getVolumePreset();
-          PresetWindowLevel defaultPreset = view3d.getVolTexture().getDefaultPreset(volumePreset);
+          PresetWindowLevel defaultPreset =
+              view3d.getVolTexture().getDefaultPreset(view3d.getRenderedPreset());
           updatePreset(ActionW.PRESET.cmd(), defaultPreset, false);
         }
       }

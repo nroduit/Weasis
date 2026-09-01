@@ -14,15 +14,20 @@ import java.awt.Point;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.geom.Point2D;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.WeakHashMap;
 import java.util.function.Consumer;
 import javax.swing.JComponent;
 import javax.swing.SwingUtilities;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.ComboItemListener;
 import org.weasis.core.api.image.lut.ColorMapRegistry;
+import org.weasis.core.api.image.util.ValueHistogram;
+import org.weasis.core.api.image.util.ValueHistogram.Bins;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.ui.editor.image.ImageViewerEventManager;
 import org.weasis.core.ui.editor.image.PixelInfo;
@@ -33,6 +38,10 @@ import org.weasis.opencv.op.lut.colormap.ColorMap;
 
 /** Editor host backed by a viewer's event manager: previews through the LUT action. */
 public class ViewerColorMapHost<E extends ImageElement> implements ColorMapEditorHost {
+
+  // Full-range histogram per image: the editor asks on every range change.
+  private static final Map<ImageElement, Bins> FULL_RANGE =
+      Collections.synchronizedMap(new WeakHashMap<>());
 
   protected final ImageViewerEventManager<E> eventManager;
 
@@ -59,6 +68,49 @@ public class ViewerColorMapHost<E extends ImageElement> implements ColorMapEdito
     if (view != null) {
       eventManager.updateComponentsListener(view);
     }
+  }
+
+  /** The image of the selected view, or null. */
+  protected E currentImage() {
+    ViewCanvas<E> view = eventManager.getSelectedViewPane();
+    return view == null ? null : view.getImage();
+  }
+
+  @Override
+  public Optional<double[]> valueRange() {
+    E image = currentImage();
+    if (image == null) {
+      return Optional.empty();
+    }
+    double min = image.getMinValue(null);
+    double max = image.getMaxValue(null);
+    return max > min ? Optional.of(new double[] {min, max}) : Optional.empty();
+  }
+
+  @Override
+  public double[] histogram(double min, double max, int bins) {
+    E image = currentImage();
+    if (image == null || bins < 1 || !(max > min)) {
+      return null;
+    }
+    Bins full =
+        FULL_RANGE.computeIfAbsent(
+            image,
+            img -> {
+              double[] range = valueRange().orElse(null);
+              return range == null
+                  ? null
+                  : histogramOf(image, range[0], range[1], ValueHistogram.FULL_RANGE_BINS);
+            });
+    return full == null ? null : full.rebin(min, max, bins).counts();
+  }
+
+  /**
+   * Counts of the real values of {@code image} over {@code [min, max]}; the raw pixels here, a
+   * viewer whose images carry a modality transform overrides it.
+   */
+  protected Bins histogramOf(E image, double min, double max, int bins) {
+    return ValueHistogram.of(image.getImage(), min, max, bins);
   }
 
   @Override
