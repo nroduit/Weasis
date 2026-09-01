@@ -66,6 +66,12 @@ filter (modality, volume, origins, category, text, hidden); `revision()` and lis
 rebuild only when something changed. `findByDicomUid` resolves palettes referenced by
 presentation states.
 
+The registry also keeps the user's **favorites**: a set of map ids, not a property of the maps,
+stored in the user file next to the user maps (`setFavorite`, `isFavorite`). The 2D LUT menu
+(`ColorMapRadioMenu`) and the 3D preset menu show favorites at their root instead of in their
+category, modality or origin submenu, each root group under a dim section title and each favorite
+followed by the title of the submenu it comes from; the editor and the menus toggle the flag.
+
 ## Data flow
 
 ```

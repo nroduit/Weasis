@@ -17,6 +17,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.EnumSet;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -37,8 +38,9 @@ import org.weasis.opencv.op.lut.colormap.ColorMapCompiler;
  * The color maps available to the viewers, each with its {@link Origin}: the built-in maps of this
  * bundle, maps contributed by other bundles, maps imported during the session, and the user's own
  * maps kept in {@value #USER_FILE} under the preference directory and mirrored to the remote
- * preference store. A user map shadows any other map with the same id. Menus and lists read through
- * {@link #query(Query)}; {@link #revision()} and listeners tell them when to rebuild.
+ * preference store. A user map shadows any other map with the same id. The same file keeps the ids
+ * of the user's favorite maps, which menus show at their root. Menus and lists read through {@link
+ * #query(Query)}; {@link #revision()} and listeners tell them when to rebuild.
  */
 public final class ColorMapRegistry {
 
@@ -128,6 +130,7 @@ public final class ColorMapRegistry {
   private final List<ColorMap> contributed = new ArrayList<>();
   private final List<ColorMap> imported = new ArrayList<>();
   private final Map<String, ColorMap> userMaps = new LinkedHashMap<>();
+  private final Set<String> favorites = new LinkedHashSet<>();
   private int revision;
 
   /**
@@ -173,8 +176,11 @@ public final class ColorMapRegistry {
   public synchronized void reload() {
     bundled.clear();
     bundled.addAll(loadBuiltIn());
+    ColorMapJson.Document user = loadUser();
     userMaps.clear();
-    loadUser().forEach(map -> userMaps.put(map.id(), map));
+    user.maps().forEach(map -> userMaps.put(map.id(), map));
+    favorites.clear();
+    favorites.addAll(user.favorites());
     changed();
   }
 
@@ -187,15 +193,15 @@ public final class ColorMapRegistry {
     }
   }
 
-  private List<ColorMap> loadUser() {
+  private ColorMapJson.Document loadUser() {
     if (userFile == null || !Files.isRegularFile(userFile)) {
-      return List.of();
+      return ColorMapJson.Document.EMPTY;
     }
     try {
-      return ColorMapJson.readAll(userFile);
+      return ColorMapJson.readDocument(userFile);
     } catch (IOException | RuntimeException e) {
       LOGGER.error("Cannot read user color maps: {}", userFile, e);
-      return List.of();
+      return ColorMapJson.Document.EMPTY;
     }
   }
 
@@ -262,12 +268,30 @@ public final class ColorMapRegistry {
     return true;
   }
 
+  /** Flags or unflags the map of that id as a favorite and persists it with the user maps. */
+  public synchronized void setFavorite(String id, boolean favorite) throws IOException {
+    boolean modified = favorite ? favorites.add(id) : favorites.remove(id);
+    if (modified) {
+      persistUserMaps();
+      changed();
+    }
+  }
+
+  public synchronized boolean isFavorite(ColorMap map) {
+    return map != null && favorites.contains(map.id());
+  }
+
+  /** The ids flagged as favorites, in the order they were added; some may match no map. */
+  public synchronized List<String> favorites() {
+    return List.copyOf(favorites);
+  }
+
   private void persistUserMaps() throws IOException {
     if (userFile == null) {
       return;
     }
     Files.createDirectories(userFile.toAbsolutePath().getParent());
-    ColorMapJson.write(userFile, userMaps.values());
+    ColorMapJson.write(userFile, userMaps.values(), favorites);
     if (remoteStore != null) {
       remoteStore.accept(userFile);
     }

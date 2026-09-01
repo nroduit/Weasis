@@ -194,6 +194,27 @@ class ColorMapJsonTest {
     assertEquals(List.of(FULL, plain), ColorMapJson.readAll(file));
   }
 
+  @Test
+  void envelope_carries_the_favorites_only_when_there_are_some(@TempDir Path dir) throws Exception {
+    Path file = dir.resolve("maps.json");
+    ColorMapJson.write(file, List.of(FULL), List.of("weasis.hot-iron", "user.mine"));
+    ColorMapJson.Document document = ColorMapJson.readDocument(file);
+
+    assertAll(
+        () -> assertEquals(List.of(FULL), document.maps()),
+        () -> assertEquals(List.of("weasis.hot-iron", "user.mine"), document.favorites()),
+        () -> assertEquals(List.of(FULL), ColorMapJson.readAll(file)),
+        () -> assertFalse(ColorMapJson.toEnvelope(List.of(FULL)).containsKey("favorites")),
+        () ->
+            assertTrue(
+                ColorMapJson.readDocument(
+                        new ByteArrayInputStream(
+                            ("[" + ColorMapJson.toJson(FULL) + "]")
+                                .getBytes(StandardCharsets.UTF_8)))
+                    .favorites()
+                    .isEmpty()));
+  }
+
   private static List<ColorMap> read(String text) {
     return ColorMapJson.readAll(new ByteArrayInputStream(text.getBytes(StandardCharsets.UTF_8)));
   }

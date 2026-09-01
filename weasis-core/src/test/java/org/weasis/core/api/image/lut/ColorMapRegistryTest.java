@@ -186,6 +186,36 @@ class ColorMapRegistryTest {
   }
 
   @Test
+  void favorites_persist_with_the_user_maps_and_survive_a_reload() throws Exception {
+    AtomicInteger notified = new AtomicInteger();
+    registry.addListener(notified::incrementAndGet);
+    ColorMap pet = registry.findById("weasis.pet-suv").orElseThrow();
+    ColorMap hot = registry.findById("weasis.dicom.hot-iron").orElseThrow();
+
+    registry.setFavorite(pet.id(), true);
+    registry.setFavorite(hot.id(), true);
+    registry.setFavorite(hot.id(), true);
+
+    assertAll(
+        () -> assertTrue(registry.isFavorite(pet)),
+        () -> assertTrue(registry.isFavorite(hot)),
+        () -> assertFalse(registry.isFavorite(null)),
+        () -> assertEquals(List.of(pet.id(), hot.id()), registry.favorites()),
+        () -> assertEquals(2, notified.get(), "a no-op toggle is not a change"),
+        () -> assertEquals(2, remoteStores.size()),
+        () -> assertTrue(registry.userMaps().isEmpty()));
+
+    ColorMapRegistry reloaded = new ColorMapRegistry(userFile, null);
+    assertEquals(List.of(pet.id(), hot.id()), reloaded.favorites());
+
+    registry.setFavorite(pet.id(), false);
+    assertAll(
+        () -> assertFalse(registry.isFavorite(pet)),
+        () -> assertEquals(List.of(hot.id()), new ColorMapRegistry(userFile, null).favorites()),
+        () -> assertEquals(3, notified.get()));
+  }
+
+  @Test
   void missing_user_file_is_tolerated() {
     var absent = new ColorMapRegistry(dir.resolve("nope.json"), null);
     assertEquals(registry.maps().size(), absent.maps().size());

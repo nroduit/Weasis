@@ -9,6 +9,7 @@
  */
 package org.weasis.core.api.gui.util;
 
+import com.formdev.flatlaf.FlatClientProperties;
 import com.formdev.flatlaf.FlatIconColors;
 import com.formdev.flatlaf.extras.FlatSVGIcon;
 import com.formdev.flatlaf.extras.FlatSVGIcon.ColorFilter;
@@ -53,6 +54,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
 import javax.swing.AbstractAction;
 import javax.swing.AbstractButton;
+import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.Box.Filler;
 import javax.swing.BoxLayout;
@@ -61,6 +63,7 @@ import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JFormattedTextField;
 import javax.swing.JFormattedTextField.AbstractFormatterFactory;
+import javax.swing.JLabel;
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
@@ -259,6 +262,28 @@ public class GuiUtils {
   public static Border getEmptyBorder(int top, int left, int bottom, int right) {
     return new EmptyBorder(
         getScaleLength(top), getScaleLength(left), getScaleLength(bottom), getScaleLength(right));
+  }
+
+  /** A dim, non-interactive title above a group of menu entries. */
+  public static JLabel createMenuSectionLabel(String title) {
+    JLabel label = new JLabel(title);
+    label.putClientProperty(FlatClientProperties.STYLE_CLASS, "small"); // NON-NLS
+    label.setForeground(getMenuHintColor());
+    label.setBorder(
+        BorderFactory.createEmptyBorder(
+            getScaleLength(4), getScaleLength(8), getScaleLength(2), getScaleLength(8)));
+    return label;
+  }
+
+  /** The color of secondary text in menus, such as section titles and hints. */
+  public static Color getMenuHintColor() {
+    Color color = UIManager.getColor("Label.disabledForeground"); // NON-NLS
+    return color == null ? Color.GRAY : color;
+  }
+
+  /** {@code color} as an HTML hex triplet, for inline styling of component text. */
+  public static String toHtmlColor(Color color) {
+    return "#%06x".formatted(color.getRGB() & 0xFFFFFF); // NON-NLS
   }
 
   public static JPanel getFlowLayoutPanel(JComponent... items) {

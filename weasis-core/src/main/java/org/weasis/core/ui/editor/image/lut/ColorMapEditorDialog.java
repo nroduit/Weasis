@@ -100,6 +100,7 @@ public class ColorMapEditorDialog extends JDialog implements ColorMapCurvePanel.
 
   private static final int PREVIEW_DELAY_MS = 90;
   private static final int STRIP_HEIGHT = 14;
+  private static final String FAVORITE_MARK = " \u2605"; // NON-NLS
   private static final int SPINNER_COLUMNS = 7;
   private static final List<Integer> BITS = List.of(8, 12, 16);
 
@@ -127,6 +128,8 @@ public class ColorMapEditorDialog extends JDialog implements ColorMapCurvePanel.
   private final JTextField modalityField = new JTextField(10);
   private final JCheckBox defaultCheck =
       new JCheckBox(Messages.getString("ColorMapEditor.default"));
+  private final JCheckBox favoriteCheck =
+      new JCheckBox(Messages.getString("ColorMapEditor.favorite"));
   private final JComboBox<DomainKind> kindCombo = new JComboBox<>(DomainKind.values());
   private final JTextField unitField = new JTextField(6);
   private final JTextField referenceField = new JTextField(8);
@@ -334,7 +337,8 @@ public class ColorMapEditorDialog extends JDialog implements ColorMapCurvePanel.
 
     panel.add(label("ColorMapEditor.modalities"));
     panel.add(modalityField, "growx"); // NON-NLS
-    panel.add(defaultCheck, "span 2"); // NON-NLS
+    panel.add(defaultCheck);
+    panel.add(favoriteCheck);
 
     panel.add(label("ColorMapEditor.domain"));
     JPanel domain = new JPanel(new MigLayout("insets 0", "[][][][]", "[]")); // NON-NLS
@@ -405,6 +409,7 @@ public class ColorMapEditorDialog extends JDialog implements ColorMapCurvePanel.
     bindText(modalityField, text -> commit(b -> b.modalities(parseModalities(text))));
     defaultCheck.addActionListener(
         e -> commit(b -> b.defaultForModality(defaultCheck.isSelected())));
+    favoriteCheck.addActionListener(e -> toggleFavorite());
     bindCombo(kindCombo, this::applyDomainKind);
     bindText(unitField, text -> commitDomain(d -> withUnit(d, text)));
     bindText(referenceField, text -> commitDomain(d -> withReference(d, text)));
@@ -568,6 +573,17 @@ public class ColorMapEditorDialog extends JDialog implements ColorMapCurvePanel.
     ColorMap anchored =
         ColorMapEdits.anchored(current, current.domain().unit(), range[0], range[1]);
     pushEdit(anchored.toBuilder().lighting(Lighting.DEFAULT).build());
+  }
+
+  // A favorite is a registry fact keyed on the id, not a property of the map: it applies at once.
+  private void toggleFavorite() {
+    try {
+      registry.setFavorite(current.id(), favoriteCheck.isSelected());
+      mapList.repaint();
+    } catch (IOException e) {
+      LOGGER.error("Cannot save favorite color maps", e);
+      statusLabel.setText(e.getMessage());
+    }
   }
 
   private void commit(Consumer<ColorMap.Builder> change) {
@@ -1009,6 +1025,8 @@ public class ColorMapEditorDialog extends JDialog implements ColorMapCurvePanel.
       // Picked values are physical: they only make sense on a map anchored to physical values.
       pickButton.setEnabled(host.canPickValue() && !d.isRelative());
       ColorMapRegistry.Origin origin = registry.origin(current);
+      favoriteCheck.setEnabled(registry.findById(current.id()).isPresent());
+      favoriteCheck.setSelected(registry.isFavorite(current));
       setTitle(
           Messages.getString("ColorMapEditor.title")
               + " - "
@@ -1087,7 +1105,7 @@ public class ColorMapEditorDialog extends JDialog implements ColorMapCurvePanel.
         JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
       super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
       if (value instanceof ColorMap map) {
-        setText(map.name());
+        setText(registry.isFavorite(map) ? map.name() + FAVORITE_MARK : map.name());
         setIcon(
             registry
                 .byteLut(map)

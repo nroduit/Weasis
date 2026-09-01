@@ -655,6 +655,7 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
         JMenu menu =
             radioMenu.createMenu(ActionW.LUT.getTitle(), ResourceUtil.getIcon(ActionIcon.LUT));
         menu.addSeparator();
+        GuiUtils.addItemToMenu(menu, radioMenu.createFavoriteItem());
         JMenuItem edit =
             new JMenuItem(
                 org.weasis.core.Messages.getString("ColorMapEditor.edit")

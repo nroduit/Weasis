@@ -25,6 +25,7 @@ import org.weasis.core.api.gui.util.DropButtonIcon;
 import org.weasis.core.api.gui.util.DropDownButton;
 import org.weasis.core.api.gui.util.GroupPopup;
 import org.weasis.core.api.gui.util.GroupRadioMenu;
+import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.RadioMenuItem;
 import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.api.util.ResourceUtil.ActionIcon;
@@ -98,6 +99,9 @@ public class LutToolBar extends WtoolBar {
                 (getMenuModel() == null) ? new JPopupMenu() : getMenuModel().createJPopupMenu();
             menu.setInvoker(this);
             menu.addSeparator();
+            if (lutMenu != null) {
+              GuiUtils.addItemToMenu(menu, lutMenu.createFavoriteItem());
+            }
             menu.add(buildEditMapsItem(eventManager, this));
             return menu;
           }

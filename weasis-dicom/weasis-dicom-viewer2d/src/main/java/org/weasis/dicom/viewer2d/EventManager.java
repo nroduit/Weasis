@@ -92,6 +92,7 @@ import org.weasis.core.ui.editor.image.SynchView;
 import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.editor.image.ViewerToolBar;
 import org.weasis.core.ui.editor.image.ZoomToolBar;
+import org.weasis.core.ui.editor.image.lut.ColorMapRadioMenu;
 import org.weasis.core.ui.launcher.Launcher;
 import org.weasis.core.ui.model.graphic.Graphic;
 import org.weasis.core.ui.model.utils.bean.PanPoint;
@@ -1879,11 +1880,17 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
     if (GuiUtils.getUICore().getSystemPreferences().getBooleanProperty(prop, true)) {
       Optional<ComboItemListener<ByteLut>> lutAction = getAction(ActionW.LUT);
       if (lutAction.isPresent()) {
-        menu =
-            lutAction
-                .get()
-                .createUnregisteredRadioMenu(
-                    ActionW.LUT.getTitle(), ResourceUtil.getIcon(ActionIcon.LUT));
+        ViewCanvas<DicomImageElement> view = getSelectedViewPane();
+        DicomImageElement image = view == null ? null : view.getImage();
+        ColorMapRadioMenu radioMenu = new ColorMapRadioMenu();
+        radioMenu.setModel(lutAction.get().getModel());
+        radioMenu.setModality(
+            image == null ? null : TagD.getTagValue(image, Tag.Modality, String.class));
+        menu = radioMenu.createMenu(ActionW.LUT.getTitle(), ResourceUtil.getIcon(ActionIcon.LUT));
+        menu.setEnabled(lutAction.get().isActionEnabled());
+        menu.addSeparator();
+        GuiUtils.addItemToMenu(menu, radioMenu.createFavoriteItem());
+        menu.add(LutToolBar.buildEditMapsItem(this, view == null ? null : view.getJComponent()));
       }
     }
     return menu;

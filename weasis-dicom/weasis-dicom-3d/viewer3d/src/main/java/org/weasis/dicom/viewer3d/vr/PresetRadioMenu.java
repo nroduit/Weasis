@@ -9,6 +9,7 @@
  */
 package org.weasis.dicom.viewer3d.vr;
 
+import java.awt.Component;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -25,7 +26,9 @@ import javax.swing.JSeparator;
 import org.weasis.core.api.gui.util.GroupRadioMenu;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.RadioMenuItem;
+import org.weasis.core.api.image.lut.ColorMapRegistry;
 import org.weasis.core.ui.editor.image.lut.ColorMapEditorDialog;
+import org.weasis.core.ui.editor.image.lut.ColorMapRadioMenu;
 import org.weasis.core.util.StringUtil;
 import org.weasis.core.util.StringUtil.Suffix;
 import org.weasis.dicom.codec.display.Modality;
@@ -122,26 +125,38 @@ public class PresetRadioMenu extends GroupRadioMenu<Preset> {
     return menu;
   }
 
-  private static void addSubMenu(
+  // Root: the favorites, the presets of the current modality, then the modality-free ones.
+  private void addSubMenu(
       JComponent component, Map<Modality, List<RadioMenuItem>> map, Modality curModality) {
-    addRootMenu(component, map, curModality);
+    addRootItems(
+        component,
+        org.weasis.core.Messages.getString("ColorMapEditor.favorites"),
+        takeFavorites(map));
     if (curModality != Modality.DEFAULT) {
-      component.add(new JSeparator());
-      addRootMenu(component, map, Modality.DEFAULT);
+      addRootItems(component, curModality.toString(), map.remove(curModality));
+    }
+    addRootItems(
+        component,
+        org.weasis.core.Messages.getString("ColorMapEditor.general"),
+        map.remove(Modality.DEFAULT));
+
+    for (Entry<Modality, List<RadioMenuItem>> entry : map.entrySet()) {
+      if (entry.getValue().isEmpty()) {
+        continue;
+      }
+      separate(component);
+      JMenu modMenu = new JMenu(entry.getKey().toString());
+      component.add(modMenu);
+      entry.getValue().forEach(modMenu::add);
     }
 
-    component.add(new JSeparator());
-    for (Entry<Modality, List<RadioMenuItem>> entry : map.entrySet()) {
-      Modality modality = entry.getKey();
-      JMenu modMenu = new JMenu(modality.toString());
-      component.add(modMenu);
-      for (RadioMenuItem menuItem : entry.getValue()) {
-        modMenu.add(menuItem);
+    separate(component);
+    if (dataModel.getSelectedItem() instanceof Preset preset) {
+      JMenuItem favorite = ColorMapRadioMenu.createFavoriteItem(preset.toColorMap());
+      if (favorite != null) {
+        component.add(favorite);
       }
     }
-
-    // ── Edit Volume LUT entry ──
-    component.add(new JSeparator());
     JMenuItem editLutItem =
         new JMenuItem(org.weasis.core.Messages.getString("ColorMapEditor.edit") + Suffix.THREE_PTS);
     editLutItem.addActionListener(
@@ -153,13 +168,38 @@ public class PresetRadioMenu extends GroupRadioMenu<Preset> {
     component.add(editLutItem);
   }
 
-  private static void addRootMenu(
-      JComponent component, Map<Modality, List<RadioMenuItem>> map, Modality curModality) {
-    List<RadioMenuItem> items = map.remove(curModality);
-    if (items != null) {
-      for (RadioMenuItem menuItem : items) {
-        component.add(menuItem);
+  // Favorites leave their modality group for the root; the groups are replaced, never mutated.
+  private static List<RadioMenuItem> takeFavorites(Map<Modality, List<RadioMenuItem>> map) {
+    ColorMapRegistry registry = ColorMapRegistry.getInstance();
+    List<RadioMenuItem> favorites = new ArrayList<>();
+    for (Entry<Modality, List<RadioMenuItem>> entry : map.entrySet()) {
+      List<RadioMenuItem> rest = new ArrayList<>();
+      for (RadioMenuItem item : entry.getValue()) {
+        boolean favorite =
+            item.getUserObject() instanceof Preset preset
+                && registry.isFavorite(preset.toColorMap());
+        (favorite ? favorites : rest).add(item);
       }
+      entry.setValue(rest);
+    }
+    return favorites;
+  }
+
+  private static void addRootItems(JComponent component, String title, List<RadioMenuItem> items) {
+    if (items == null || items.isEmpty()) {
+      return;
+    }
+    separate(component);
+    component.add(GuiUtils.createMenuSectionLabel(title));
+    items.forEach(component::add);
+  }
+
+  // A separator between sections, never at the top nor twice in a row.
+  private static void separate(JComponent component) {
+    Component[] entries =
+        component instanceof JMenu menu ? menu.getMenuComponents() : component.getComponents();
+    if (entries.length > 0 && !(entries[entries.length - 1] instanceof JSeparator)) {
+      component.add(new JSeparator());
     }
   }
 }

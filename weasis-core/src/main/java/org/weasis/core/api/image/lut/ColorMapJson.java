@@ -47,8 +47,9 @@ import org.weasis.opencv.op.lut.colormap.Rgba;
 
 /**
  * JSON form of a {@link ColorMap}: control points plus metadata, never flat tables. A document is
- * an envelope {@code {"schema": 1, "maps": [...]}}; one bare map object or a bare array (the form
- * before schema 1) is still read. Readers ignore unknown fields and refuse a newer major schema.
+ * an envelope {@code {"schema": 1, "maps": [...]}}, optionally with the ids of the user's favorite
+ * maps; one bare map object or a bare array (the form before schema 1) is still read. Readers
+ * ignore unknown fields and refuse a newer major schema.
  */
 public final class ColorMapJson {
 
@@ -93,9 +94,15 @@ public final class ColorMapJson {
   private static final String CATEGORY = "category"; // NON-NLS
   private static final String TAGS = "tags"; // NON-NLS
   private static final String HIDDEN = "hidden"; // NON-NLS
+  private static final String FAVORITES = "favorites"; // NON-NLS
 
   /** Schema written by this version; a document without one is the pre-schema form. */
   public static final int SCHEMA_VERSION = 1;
+
+  /** A whole document: its maps and the ids it flags as favorites. */
+  public record Document(List<ColorMap> maps, List<String> favorites) {
+    public static final Document EMPTY = new Document(List.of(), List.of());
+  }
 
   private ColorMapJson() {}
 
@@ -200,24 +207,29 @@ public final class ColorMapJson {
 
   /** Reads an envelope, a bare map object or a bare array of maps. */
   public static List<ColorMap> readAll(InputStream in) {
+    return readDocument(in).maps();
+  }
+
+  public static Document readDocument(InputStream in) {
     try (JsonReader reader = Json.createReader(in)) {
       JsonStructure structure = reader.read();
       return switch (structure) {
-        case JsonArray array -> maps(array);
+        case JsonArray array -> new Document(maps(array), List.of());
         case JsonObject object when object.containsKey(MAPS) -> readEnvelope(object);
-        case JsonObject object -> List.of(fromJson(object));
-        default -> List.of();
+        case JsonObject object -> new Document(List.of(fromJson(object)), List.of());
+        default -> Document.EMPTY;
       };
     }
   }
 
-  private static List<ColorMap> readEnvelope(JsonObject envelope) {
+  private static Document readEnvelope(JsonObject envelope) {
     int schema = JsonUtil.getInt(envelope, SCHEMA, SCHEMA_VERSION);
     if (schema > SCHEMA_VERSION) {
       throw new IllegalArgumentException(
           "Color map schema %d is newer than the supported %d".formatted(schema, SCHEMA_VERSION));
     }
-    return envelope.get(MAPS) instanceof JsonArray array ? maps(array) : List.of();
+    List<ColorMap> maps = envelope.get(MAPS) instanceof JsonArray array ? maps(array) : List.of();
+    return new Document(maps, JsonUtil.getStringList(envelope, FAVORITES));
   }
 
   private static List<ColorMap> maps(JsonArray array) {
@@ -226,21 +238,41 @@ public final class ColorMapJson {
 
   /** The envelope of the given maps, at the current schema. */
   public static JsonObject toEnvelope(Collection<ColorMap> maps) {
+    return toEnvelope(maps, List.of());
+  }
+
+  /** The envelope of {@code maps}; the favorites are written only when there are some. */
+  public static JsonObject toEnvelope(Collection<ColorMap> maps, Collection<String> favorites) {
     JsonArrayBuilder array = Json.createArrayBuilder();
     maps.forEach(map -> array.add(toJson(map)));
-    return Json.createObjectBuilder().add(SCHEMA, SCHEMA_VERSION).add(MAPS, array).build();
+    JsonObjectBuilder b = Json.createObjectBuilder().add(SCHEMA, SCHEMA_VERSION).add(MAPS, array);
+    if (!favorites.isEmpty()) {
+      JsonArrayBuilder ids = Json.createArrayBuilder();
+      favorites.forEach(ids::add);
+      b.add(FAVORITES, ids);
+    }
+    return b.build();
   }
 
   public static List<ColorMap> readAll(Path path) throws IOException {
+    return readDocument(path).maps();
+  }
+
+  public static Document readDocument(Path path) throws IOException {
     try (InputStream in = Files.newInputStream(path)) {
-      return readAll(in);
+      return readDocument(in);
     } catch (JsonException e) {
       throw new IOException("Invalid color map file: " + path, e);
     }
   }
 
   public static void write(Path path, Collection<ColorMap> maps) throws IOException {
-    JsonUtil.write(path, toEnvelope(maps));
+    write(path, maps, List.of());
+  }
+
+  public static void write(Path path, Collection<ColorMap> maps, Collection<String> favorites)
+      throws IOException {
+    JsonUtil.write(path, toEnvelope(maps, favorites));
   }
 
   private static JsonObject domainToJson(ColorMapDomain domain) {
