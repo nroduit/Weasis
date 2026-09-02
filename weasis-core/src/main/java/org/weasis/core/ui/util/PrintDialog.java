@@ -42,6 +42,7 @@ public class PrintDialog<I extends ImageElement> extends JDialog {
   private final JCheckBox selectedViewCheckbox =
       new JCheckBox(Messages.getString("PrintDialog.selected_view"));
   private final JComboBox<PrintOptions.DotPerInches> comboBoxDPI = new JComboBox<>();
+  private final MaskingProfileSelector maskingProfile = new MaskingProfileSelector();
   private final ImageViewerEventManager<I> eventManager;
 
   /** Creates new form PrintDialog */
@@ -74,6 +75,7 @@ public class PrintDialog<I extends ImageElement> extends JDialog {
 
     annotationsCheckBox.setSelected(true);
     panel.add(GuiUtils.getFlowLayoutPanel(2, 5, annotationsCheckBox));
+    panel.add(GuiUtils.getFlowLayoutPanel(2, 5, maskingProfile.createLabel(), maskingProfile));
 
     if (layout) {
       panel.add(GuiUtils.getFlowLayoutPanel(2, 5, selectedViewCheckbox));
@@ -124,7 +126,8 @@ public class PrintDialog<I extends ImageElement> extends JDialog {
         singleView ? new ExportLayout<>(selectedView) : new ExportLayout<>(container);
 
     ImagePrint print = new ImagePrint(layout, printOptions);
-    print.print();
+    // PrinterJob renders the pages on this thread, so the mask is bound for the whole job
+    maskingProfile.runMaskedAction(print::print);
     layout.dispose();
   }
 }

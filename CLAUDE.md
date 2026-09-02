@@ -76,6 +76,7 @@ weasis-launcher  →  weasis-core  →  weasis-base/*       (generic image viewe
 
 - **Spotless will fail the build** if a file is missing the EPL-2.0 OR Apache-2.0 header or isn't Google-Java-Format'd. Run `mvn spotless:apply` before committing. Use `// @formatter:off` / `// @formatter:on` to opt out of formatting for a block.
 - **i18n**: every user-facing module has a `Messages.java` + `messages.properties` pair. Properties files matching `messages*.properties` under `src/main/java/` are picked up as resources by `weasis-parent/pom.xml`. The translated bundles come from the external `weasis-i18n-dist` artifact at distribution time (see `weasis-distributions/pom.xml`), so do not hand-edit non-English `messages_*.properties` files in this repo.
+- **DICOM conformance**: follow the DICOM standard (tag semantics, value representations, attribute types and conditions, IOD/module rules). Any intentional deviation — a lenient fallback for malformed or non-conformant files, a vendor-specific workaround, or a choice made for robustness — must carry a short comment stating that it departs from the standard and why (cite the PS3 part/section or the offending vendor/modality when known).
 - **Versions**: never hard-code a version such as `4.8.0-SNAPSHOT` in a child POM — always use `${project.parent.version}` or the `${revision}${changelist}` pair. The `flatten-maven-plugin` resolves these into the published POM.
 - **Native libs (OpenCV / JOGL)**: per-OS native packages live in `weasis-opencv-core-*` and `jogamp-*` bundles. The installer workflow strips out non-target-arch payloads in `build-installer.yml`; if you add a new native bundle, follow that pattern or installers will balloon.
 - **Sonar excludes** (in root `pom.xml`): `Messages.java`, `Activator.java`, `module-info.java`, `package-info.java` are coverage-excluded; `archetype/`, `snap/`, `weasis-distributions/` are analysis-excluded.
@@ -108,6 +109,7 @@ Existing docs:
 | Doc | Topic |
 |---|---|
 | `weasis-core/docs/ColorMap-Design.md` | JSON color maps for 2D, fusion and 3D |
+| `weasis-core/docs/Identity-Masking.md` | display-time identity masking, masking profiles, redaction of burned-in pixels |
 | `weasis-core/docs/Memory-Management.md` | native memory arenas, budgets, caches |
 | `weasis-core/docs/MigLayoutModel-Best-Practices.md` | `MigLayoutModel` layout conventions |
 | `weasis-dicom/weasis-dicom-explorer/docs/Retrieve-Paths.md` | DICOM download transports and shared download layer |

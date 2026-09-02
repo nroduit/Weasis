@@ -38,6 +38,7 @@ import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.image.cv.CvUtil;
+import org.weasis.core.api.media.data.IdentityMask;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.Series;
@@ -60,8 +61,6 @@ import org.weasis.core.ui.util.ColorLayerUI;
 import org.weasis.core.ui.util.DefaultAction;
 import org.weasis.core.ui.util.PrintDialog;
 import org.weasis.core.ui.util.Toolbar;
-import org.weasis.core.util.StringUtil;
-import org.weasis.core.util.StringUtil.Suffix;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.TagD.Level;
@@ -541,8 +540,7 @@ public class MprContainer extends DicomViewerPlugin
 
       String title = TagD.getTagValue(sequence, Tag.PatientName, String.class);
       if (title != null) {
-        this.getDockable().setTitleToolTip(title);
-        this.setPluginName(StringUtil.getTruncatedString(title, 25, Suffix.THREE_PTS));
+        this.setPluginName(() -> IdentityMask.maskText(TagD.get(Tag.PatientName), title));
       }
       view.repaint();
       process =

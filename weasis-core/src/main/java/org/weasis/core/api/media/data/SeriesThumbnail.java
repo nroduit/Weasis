@@ -71,12 +71,26 @@ public class SeriesThumbnail extends Thumbnail
   private final PlayViewButton playBtn;
   private Point dragPressed = null;
   private DragSource dragSource = null;
+  private OpManager opManager;
 
   public SeriesThumbnail(
       final MediaSeries<? extends MediaElement> sequence,
       int thumbnailSize,
       Function<String, Set<ResourceIconPath>> drawIcons) {
+    this(sequence, thumbnailSize, drawIcons, null);
+  }
+
+  /**
+   * @param opManager operations applied to the pixels before scaling, so a thumbnail shows the same
+   *     redacted image as the view; may be null
+   */
+  public SeriesThumbnail(
+      final MediaSeries<? extends MediaElement> sequence,
+      int thumbnailSize,
+      Function<String, Set<ResourceIconPath>> drawIcons,
+      OpManager opManager) {
     super(thumbnailSize);
+    this.opManager = opManager;
     if (sequence == null) {
       throw new IllegalArgumentException("Sequence cannot be null");
     }
@@ -116,7 +130,7 @@ public class SeriesThumbnail extends Thumbnail
      * associated to a explorerModel (stream should be closed at least when closing the application
      * or when free the cache).
      */
-    init(media, series.getTagValue(TagW.ExplorerModel) != null, null);
+    init(media, series.getTagValue(TagW.ExplorerModel) != null, opManager);
   }
 
   @Override
@@ -171,6 +185,11 @@ public class SeriesThumbnail extends Thumbnail
     dragSource.addDragSourceMotionListener(this);
   }
 
+  /** Changes the operations applied when the thumbnail is next built. */
+  public void setOpManager(OpManager opManager) {
+    this.opManager = opManager;
+  }
+
   public void reBuildThumbnail(MediaSeries.MEDIA_POSITION position) {
     reBuildThumbnail(null, position);
   }
@@ -198,7 +217,7 @@ public class SeriesThumbnail extends Thumbnail
        * Do not remove the image from the cache after building the thumbnail when the series is associated to a
        * explorerModel (stream should be closed at least when closing the application or when free the cache).
        */
-      buildThumbnail(media, series.getTagValue(TagW.ExplorerModel) != null, null);
+      buildThumbnail(media, series.getTagValue(TagW.ExplorerModel) != null, opManager);
       revalidate();
       repaint();
     }
@@ -217,7 +236,7 @@ public class SeriesThumbnail extends Thumbnail
         media = series.getFirstSpecialElement();
       }
       removeImageFromCache();
-      buildThumbnail(media, series.getTagValue(TagW.ExplorerModel) != null, null);
+      buildThumbnail(media, series.getTagValue(TagW.ExplorerModel) != null, opManager);
     }
   }
 

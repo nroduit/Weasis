@@ -123,6 +123,8 @@ public class ResourceUtil {
     PLUS("svg/action/plus.svg"), // NON-NLS
     PRINT("svg/action/print.svg"), // NON-NLS
     PREVIOUS("svg/action/previous.svg"), // NON-NLS
+    REDACT("svg/action/redact.svg"), // NON-NLS
+    REDACT_CLEAR("svg/action/redactClear.svg"), // NON-NLS
     RESET("svg/action/reset.svg"), // NON-NLS
     ROTATE_CLOCKWISE("svg/action/rotateClockwise.svg"), // NON-NLS
     ROTATE_COUNTERCLOCKWISE("svg/action/rotateCounterclockwise.svg"), // NON-NLS

@@ -35,12 +35,14 @@ import java.awt.BorderLayout;
 import java.awt.Component;
 import java.util.List;
 import java.util.UUID;
+import java.util.function.Supplier;
 import javax.swing.Icon;
 import javax.swing.JPanel;
 import org.weasis.core.Messages;
 import org.weasis.core.api.explorer.ObservableEvent;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.gui.util.GuiUtils;
+import org.weasis.core.api.media.data.IdentityMask;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.ui.docking.DockableTool;
@@ -52,6 +54,7 @@ import org.weasis.core.ui.editor.ViewerOpenOptions;
 import org.weasis.core.ui.editor.ViewerPlacement;
 import org.weasis.core.ui.editor.ViewerPluginBuilder;
 import org.weasis.core.ui.util.Toolbar;
+import org.weasis.core.util.StringUtil;
 
 public abstract class ViewerPlugin<E extends MediaElement> extends JPanel
     implements SeriesViewer<E> {
@@ -59,6 +62,10 @@ public abstract class ViewerPlugin<E extends MediaElement> extends JPanel
   private final String dockableUID;
   private MediaSeriesGroup groupID;
   private String pluginName;
+  public static final int TITLE_MAX_LENGTH = 25;
+
+  private Supplier<String> identifyingName;
+  private final Runnable maskListener = () -> GuiExecutor.execute(this::onMaskingChanged);
   private final Icon icon;
   private final String tooltips;
   private final DefaultSingleCDockable dockable;
@@ -80,6 +87,7 @@ public abstract class ViewerPlugin<E extends MediaElement> extends JPanel
     this.dockable.setTitleToolTip(tooltips);
     this.dockable.setTitleIcon(titleIcon);
     this.dockable.setFocusComponent(this);
+    IdentityMask.addChangeListener(maskListener);
     this.dockable.setStackable(true);
     this.dockable.setSingleTabShown(true);
     this.dockable.putAction(
@@ -155,8 +163,45 @@ public abstract class ViewerPlugin<E extends MediaElement> extends JPanel
   }
 
   public void setPluginName(String pluginName) {
+    this.identifyingName = null;
     this.pluginName = pluginName;
     this.dockable.setTitleText(pluginName);
+  }
+
+  /**
+   * Sets a title derived from identifying data. A docking title is a stored string rather than
+   * something repainted from the model, so the supplier is retained and re-invoked whenever session
+   * masking changes.
+   *
+   * <p>The tab shows the name truncated to {@value #TITLE_MAX_LENGTH} characters, its tooltip the
+   * full name.
+   *
+   * @param nameSupplier recomputes the full name; must itself honour the active {@link
+   *     IdentityMask}
+   */
+  public void setPluginName(Supplier<String> nameSupplier) {
+    this.identifyingName = nameSupplier;
+    applyIdentifyingName();
+  }
+
+  /** Annotations are painted from the model, so the whole plugin has to be repainted. */
+  private void onMaskingChanged() {
+    applyIdentifyingName();
+    repaint();
+  }
+
+  private void applyIdentifyingName() {
+    if (identifyingName == null) {
+      return;
+    }
+    String fullName = identifyingName.get();
+    this.pluginName =
+        fullName == null
+            ? null
+            : StringUtil.getTruncatedString(
+                fullName, TITLE_MAX_LENGTH, StringUtil.Suffix.THREE_PTS);
+    this.dockable.setTitleText(pluginName);
+    this.dockable.setTitleToolTip(fullName);
   }
 
   /**
@@ -192,6 +237,7 @@ public abstract class ViewerPlugin<E extends MediaElement> extends JPanel
 
   @Override
   public void close() {
+    IdentityMask.removeChangeListener(maskListener);
     GuiExecutor.execute(
         () -> {
           GuiUtils.getUICore().getViewerPlugins().remove(ViewerPlugin.this);

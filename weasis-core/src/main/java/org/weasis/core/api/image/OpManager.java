@@ -23,6 +23,12 @@ import org.weasis.opencv.data.PlanarImage;
  */
 public interface OpManager extends OpEventListener, Copyable<OpManager> {
 
+  /**
+   * Name of the operation burning redaction regions into the pixels, which must also be applied to
+   * any image exported from a view.
+   */
+  String REDACTION_OP_NAME = "Redaction"; // NON-NLS
+
   /** Removes all image operations from the manager. */
   void removeAllImageOperationAction();
 

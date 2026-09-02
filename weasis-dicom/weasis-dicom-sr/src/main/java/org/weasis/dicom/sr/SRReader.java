@@ -18,6 +18,7 @@ import org.dcm4che3.data.Sequence;
 import org.dcm4che3.data.Tag;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.weasis.core.api.media.data.IdentityMask;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.TagUtil;
@@ -390,7 +391,8 @@ public class SRReader {
       html.append("</B>");
       html.append(StringUtil.COLON_AND_SPACE);
       String format = tag.addGMTOffset(null, dicomSR);
-      html.append(tag.getFormattedTagValue(tag.getValue(dcmItems), format));
+      html.append(
+          tag.getFormattedTagValue(IdentityMask.maskValue(tag, tag.getValue(dcmItems)), format));
     }
   }
 

@@ -34,6 +34,7 @@ public class PatientPane extends JPanel
   private static final Dimension STUDY_PANE_SIZE = new Dimension(50, 50);
   private final DicomExplorer explorer;
   private MediaSeriesGroup currentPatient;
+  private boolean titleShown;
 
   public PatientPane(DicomExplorer explorer) {
     this.explorer = Objects.requireNonNull(explorer);
@@ -68,6 +69,7 @@ public class PatientPane extends JPanel
    * @param show true to show the title, false to hide it
    */
   public void showTitle(boolean show) {
+    this.titleShown = show;
     Optional<MediaSeriesGroup> patient = getCurrentPatient();
     if (show && patient.isPresent()) {
       TitledBorder title = GuiUtils.getTitledBorder(patient.get().toString());
@@ -177,5 +179,16 @@ public class PatientPane extends JPanel
     return Arrays.stream(getComponents())
         .filter(StudyPane.class::isInstance)
         .map(StudyPane.class::cast);
+  }
+
+  /**
+   * Re-resolves the patient title and every descendant label after {@link IdentityMask} session
+   * masking changed. These labels are cached strings, so they do not follow a mask on their own.
+   */
+  public void refreshIdentityLabels() {
+    showTitle(titleShown);
+    getStudyPanes().forEach(StudyPane::refreshIdentityLabels);
+    revalidate();
+    repaint();
   }
 }

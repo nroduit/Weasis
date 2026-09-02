@@ -35,7 +35,6 @@ import bibliothek.gui.dock.util.DockUtilities;
 import com.formdev.flatlaf.extras.FlatSVGIcon;
 import com.formdev.flatlaf.util.SystemInfo;
 import jakarta.json.JsonException;
-import java.awt.AWTException;
 import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.Desktop;
@@ -46,10 +45,8 @@ import java.awt.GraphicsConfiguration;
 import java.awt.GraphicsDevice;
 import java.awt.GraphicsEnvironment;
 import java.awt.Insets;
-import java.awt.MouseInfo;
 import java.awt.Point;
 import java.awt.Rectangle;
-import java.awt.Robot;
 import java.awt.Taskbar;
 import java.awt.Taskbar.Feature;
 import java.awt.Toolkit;
@@ -88,9 +85,11 @@ import javax.management.JMException;
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
 import javax.swing.Action;
+import javax.swing.Box;
 import javax.swing.Icon;
 import javax.swing.JCheckBox;
 import javax.swing.JCheckBoxMenuItem;
+import javax.swing.JEditorPane;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JMenu;
@@ -102,6 +101,7 @@ import javax.swing.JPopupMenu;
 import javax.swing.JScrollBar;
 import javax.swing.JScrollPane;
 import javax.swing.JSeparator;
+import javax.swing.JTextPane;
 import javax.swing.KeyStroke;
 import javax.swing.RootPaneContainer;
 import javax.swing.ScrollPaneConstants;
@@ -129,6 +129,9 @@ import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.ShortcutManager;
 import org.weasis.core.api.gui.util.WinUtil;
 import org.weasis.core.api.media.data.Codec;
+import org.weasis.core.api.media.data.IdentityMask;
+import org.weasis.core.api.media.data.MaskingModelRegistry;
+import org.weasis.core.api.media.data.MaskingProfile;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaReader;
 import org.weasis.core.api.media.data.MediaSeries;
@@ -161,10 +164,11 @@ import org.weasis.core.ui.pref.Monitor;
 import org.weasis.core.ui.pref.PreferenceDialog;
 import org.weasis.core.ui.util.ColorLayerUI;
 import org.weasis.core.ui.util.DefaultAction;
+import org.weasis.core.ui.util.MaskingIndicator;
+import org.weasis.core.ui.util.MaskingProfileSelector;
 import org.weasis.core.ui.util.ToolBarContainer;
 import org.weasis.core.ui.util.Toolbar;
 import org.weasis.core.util.StringUtil;
-import org.weasis.core.util.StringUtil.Suffix;
 
 public class WeasisWin {
   private static final Logger LOGGER = LoggerFactory.getLogger(WeasisWin.class);
@@ -173,6 +177,8 @@ public class WeasisWin {
 
   private final JMenu menuFile = new JMenu(Messages.getString("WeasisWin.file"));
   private final JMenu menuView = new JMenu(Messages.getString("WeasisWin.display"));
+  private final JMenu menuTools = new JMenu(Messages.getString("WeasisWin.tools"));
+  private JCheckBoxMenuItem anonymizeMenuItem;
   private final DynamicMenu menuSelectedPlugin =
       new DynamicMenu("") {
 
@@ -238,6 +244,7 @@ public class WeasisWin {
           }
         });
     rootPaneContainer = jFrame;
+    configureMaskingModel();
 
     if (GuiUtils.getUICore()
         .getSystemPreferences()
@@ -294,7 +301,8 @@ public class WeasisWin {
 
     rootPaneContainer.setGlassPane(AppProperties.glassPane);
 
-    frame.setTitle(AppProperties.WEASIS_NAME + " v" + AppProperties.WEASIS_VERSION); // NON-NLS
+    updateTitle();
+    IdentityMask.addChangeListener(() -> GuiExecutor.execute(this::onMaskingChanged));
 
     LogoIcon logoIcon =
         AppProperties.WEASIS_NAME.endsWith("Dicomizer") // NON-NLS
@@ -492,10 +500,9 @@ public class WeasisWin {
         group = treeModel.getParent(s, model.getTreeModelNodeForNewPlugin());
       }
       if (group != null) {
-        String title = group.toString();
+        MediaSeriesGroup titleGroup = group;
         viewer.setGroupID(group);
-        viewer.getDockable().setTitleToolTip(title);
-        viewer.setPluginName(StringUtil.getTruncatedString(title, 25, Suffix.THREE_PTS));
+        viewer.setPluginName(titleGroup::toString);
       }
 
       // Override default plugin icon
@@ -768,6 +775,8 @@ public class WeasisWin {
     menuBar.add(menuFile);
     buildMenuView();
     menuBar.add(menuView);
+    buildMenuTools();
+    menuBar.add(menuTools);
     menuBar.add(menuSelectedPlugin);
     menuSelectedPlugin.addPopupMenuListener();
 
@@ -902,6 +911,8 @@ public class WeasisWin {
         });
     helpMenuItem.add(aboutMenuItem);
     menuBar.add(helpMenuItem);
+    menuBar.add(Box.createHorizontalGlue());
+    menuBar.add(new MaskingIndicator());
     return menuBar;
   }
 
@@ -1124,6 +1135,90 @@ public class WeasisWin {
         };
     explorerMenu.addPopupMenuListener();
     menuView.add(explorerMenu);
+  }
+
+  private void buildMenuTools() {
+    menuTools.removeAll();
+
+    anonymizeMenuItem =
+        new JCheckBoxMenuItem(
+            Messages.getString("WeasisWin.anonymize"), IdentityMask.isSessionMasking());
+    anonymizeMenuItem.setToolTipText(Messages.getString("WeasisWin.anonymize.tip"));
+    anonymizeMenuItem.addActionListener(
+        _ -> {
+          if (!anonymizeMenuItem.isSelected()) {
+            IdentityMask.setSessionMasking(false);
+            return;
+          }
+          MaskingProfile profile = chooseSessionProfile();
+          if (profile == null) {
+            anonymizeMenuItem.setSelected(false);
+          } else {
+            IdentityMask.setSessionMasking(true, profile);
+          }
+        });
+    menuTools.add(anonymizeMenuItem);
+  }
+
+  /**
+   * Asks which profile masks the screen, together with the reminder that anonymization only
+   * substitutes what Weasis reads as a tag: burned-in pixel text and anything a plugin renders on
+   * its own are untouched, so the user must verify before sharing.
+   *
+   * @return the chosen profile, or null when cancelled
+   */
+  private MaskingProfile chooseSessionProfile() {
+    MaskingProfileSelector selector = MaskingProfileSelector.forSession();
+    Object[] message = {
+      anonymizationWarning(), GuiUtils.getFlowLayoutPanel(selector.createLabel(), selector)
+    };
+    int response =
+        JOptionPane.showConfirmDialog(
+            getFrame(),
+            message,
+            Messages.getString("WeasisWin.anonymize"),
+            JOptionPane.OK_CANCEL_OPTION,
+            JOptionPane.WARNING_MESSAGE);
+    return response == JOptionPane.OK_OPTION ? selector.getSelectedProfile() : null;
+  }
+
+  /** The warning as HTML with a clickable Karnak link, wrapped to a readable width. */
+  private static JTextPane anonymizationWarning() {
+    JTextPane pane = GuiUtils.getPanelWithHyperlink(Messages.getString("WeasisWin.anonymize.warn"));
+    pane.putClientProperty(JEditorPane.HONOR_DISPLAY_PROPERTIES, Boolean.TRUE);
+    pane.setOpaque(false);
+    int width = GuiUtils.getScaleLength(460);
+    pane.setSize(width, Short.MAX_VALUE);
+    pane.setPreferredSize(new Dimension(width, pane.getPreferredSize().height));
+    return pane;
+  }
+
+  /** Loads the site ({@value MaskingModelRegistry#CONFIG_PROPERTY}) and user masking documents. */
+  private static void configureMaskingModel() {
+    WProperties preferences = GuiUtils.getUICore().getSystemPreferences();
+    String prefDir = preferences.getProperty("weasis.pref.dir"); // NON-NLS
+    MaskingModelRegistry.getInstance()
+        .configure(
+            preferences.getProperty(MaskingModelRegistry.CONFIG_PROPERTY),
+            StringUtil.hasText(prefDir)
+                ? Path.of(prefDir).resolve(MaskingModelRegistry.USER_FILE)
+                : null);
+  }
+
+  /** Keeps the menu item and the window title in line with session masking, whoever changed it. */
+  private void onMaskingChanged() {
+    if (anonymizeMenuItem != null) {
+      anonymizeMenuItem.setSelected(IdentityMask.isSessionMasking());
+    }
+    updateTitle();
+  }
+
+  private void updateTitle() {
+    String title = AppProperties.WEASIS_NAME + " v" + AppProperties.WEASIS_VERSION; // NON-NLS
+    if (IdentityMask.isSessionMasking()) {
+      title += " — " + MaskingIndicator.label(IdentityMask.sessionProfile());
+    }
+    frame.setTitle(title);
   }
 
   private void buildMenuFile() {

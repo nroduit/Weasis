@@ -112,6 +112,7 @@ import org.weasis.dicom.codec.SortSeriesStack;
 import org.weasis.dicom.codec.SpecialElementRegion;
 import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.display.OverlayOp;
+import org.weasis.dicom.codec.display.RedactionOp;
 import org.weasis.dicom.codec.display.ShutterOp;
 import org.weasis.dicom.codec.display.WindowAndPresetsOp;
 import org.weasis.dicom.codec.geometry.*;
@@ -160,6 +161,8 @@ public class View2d extends DefaultView2d<DicomImageElement> {
     manager.addImageOperationAction(new PseudoColorOp());
     manager.addImageOperationAction(new ShutterOp());
     manager.addImageOperationAction(new OverlayOp());
+    // Redaction regions are in image coordinates: burn them before fusion, zoom and rotation
+    manager.addImageOperationAction(new RedactionOp());
     // Fusion must be after W/L and LUT but before zoom/rotation
     manager.addImageOperationAction(new FusionOp());
     // Report PET SUV statistics for area measurements drawn on the fused CT image.

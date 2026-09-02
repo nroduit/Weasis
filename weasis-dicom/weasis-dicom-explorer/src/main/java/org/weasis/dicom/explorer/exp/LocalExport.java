@@ -66,6 +66,9 @@ import org.weasis.core.api.gui.util.WinUtil;
 import org.weasis.core.api.image.SimpleOpManager;
 import org.weasis.core.api.image.WindowOp;
 import org.weasis.core.api.image.ZoomOp;
+import org.weasis.core.api.media.data.IdentityMask;
+import org.weasis.core.api.media.data.MaskingModelRegistry;
+import org.weasis.core.api.media.data.MaskingProfile;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.Series;
@@ -73,6 +76,7 @@ import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.util.FontItem;
 import org.weasis.core.ui.model.GraphicModel;
 import org.weasis.core.ui.serialize.XmlSerializer;
+import org.weasis.core.ui.util.MaskingProfileSelector;
 import org.weasis.core.util.FileUtil;
 import org.weasis.core.util.LangUtil;
 import org.weasis.core.util.StreamUtil;
@@ -85,6 +89,7 @@ import org.weasis.dicom.codec.DicomElement.DicomExportParameters;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.DicomSeries;
 import org.weasis.dicom.codec.FileExtractor;
+import org.weasis.dicom.codec.Redaction;
 import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.TransferSyntax;
 import org.weasis.dicom.codec.display.WindowAndPresetsOp;
@@ -113,6 +118,10 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
   public static final String IMG_PIXEL_PADDING = "exp.padding"; // NON-NLS
   public static final String IMG_SHUTTER = "exp.shutter"; // NON-NLS
   public static final String IMG_OVERLAY = "exp.overlay"; // NON-NLS
+
+  /** Id of the masking profile applied to image exports; empty for none. */
+  public static final String IMG_MASKING_PROFILE = "exp.masking.profile"; // NON-NLS
+
   public static final String DICOM_TSUID = "exp.dicom.tsuid"; // NON-NLS
   public static final String DICOM_ONLY_RAW = "exp.dicom.only.raw"; // NON-NLS
   public static final String DICOM_NEW_UID = "exp.dicom.new.uid"; // NON-NLS
@@ -356,6 +365,9 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
       options.add(shutterCheckBox);
       options.add(overlayCheckBox);
       options.add(boxKeepNames);
+      MaskingProfileSelector maskingSelector = new MaskingProfileSelector();
+      maskingSelector.setSelectedProfileId(pref.getProperty(IMG_MASKING_PROFILE));
+      options.add(GuiUtils.getFlowLayoutPanel(maskingSelector.createLabel(), maskingSelector));
 
       int response =
           JOptionPane.showOptionDialog(
@@ -376,6 +388,7 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
         pref.setProperty(IMG_PIXEL_PADDING, String.valueOf(paddingCheckBox.isSelected()));
         pref.setProperty(IMG_SHUTTER, String.valueOf(shutterCheckBox.isSelected()));
         pref.setProperty(IMG_OVERLAY, String.valueOf(overlayCheckBox.isSelected()));
+        pref.setProperty(IMG_MASKING_PROFILE, maskingSelector.getSelectedProfileId());
         pref.setProperty(KEEP_INFO_DIR, String.valueOf(boxKeepNames.isSelected()));
       }
     }
@@ -526,6 +539,13 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
     }
   }
 
+  private static MediaSeries<?> seriesOf(DefaultMutableTreeNode node) {
+    return node.getParent() instanceof DefaultMutableTreeNode parent
+            && parent.getUserObject() instanceof MediaSeries<?> series
+        ? series
+        : null;
+  }
+
   private static String instanceFileName(MediaElement img) {
     String iUid = makeFileIDs(TagD.getTagValue(img, Tag.SOPInstanceUID, String.class));
     Integer instance = TagD.getTagValue(img, Tag.InstanceNumber, Integer.class);
@@ -543,6 +563,21 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
   }
 
   protected void writeOther(
+      ExplorerTask task, File exportDir, CheckTreeModel model, Format format, Properties pref) {
+    MaskingProfile profile =
+        MaskingModelRegistry.getInstance()
+            .profile(pref.getProperty(IMG_MASKING_PROFILE, StringUtil.EMPTY_STRING))
+            .orElse(null);
+    if (profile == null) {
+      writeImages(task, exportDir, model, format, pref);
+    } else {
+      // Folder names kept from the patient, study and series labels follow the bound mask
+      IdentityMask.forProfile(profile)
+          .runMasked(() -> writeImages(task, exportDir, model, format, pref));
+    }
+  }
+
+  private void writeImages(
       ExplorerTask task, File exportDir, CheckTreeModel model, Format format, Properties pref) {
     boolean jxl = Format.JPEG_XL == format;
     String qualityKey = jxl ? IMG_JXL_QUALITY : IMG_QUALITY;
@@ -605,6 +640,8 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
 
             SimpleOpManager manager =
                 img.buildSimpleOpManager(img16, padding, shutter, overlay, 1.0);
+            // Regions the user redacted are part of the pixels, whatever the masking profile
+            Redaction.addTo(manager, img, seriesOf(node));
             Optional<PlanarImage> image = manager.getFirstNodeInputImage();
             if (image.isPresent()) {
               PlanarImage rimage = manager.process().orElse(null);

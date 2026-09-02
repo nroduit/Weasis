@@ -12,6 +12,7 @@ package org.weasis.dicom.explorer.print;
 import java.awt.Component;
 import java.awt.FlowLayout;
 import java.awt.Window;
+import java.awt.image.BufferedImage;
 import java.util.List;
 import javax.swing.Box;
 import javax.swing.DefaultComboBoxModel;
@@ -33,6 +34,7 @@ import org.weasis.core.ui.editor.image.ImageViewerEventManager;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.util.ExportLayout;
+import org.weasis.core.ui.util.MaskingProfileSelector;
 import org.weasis.core.ui.util.PrintOptions;
 import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.explorer.Messages;
@@ -123,6 +125,7 @@ public class DicomPrintDialog<I extends ImageElement> extends JDialog {
   private DicomPrintOptionPane optionPane;
   private JComboBox<AbstractDicomNode> printersComboBox;
   private final JComboBox<AbstractDicomNode> comboCallingNode = new JComboBox<>();
+  private final MaskingProfileSelector maskingProfile = new MaskingProfileSelector();
   private final ImageViewerEventManager<I> eventManager;
 
   /** Creates new form DicomPrintDialog */
@@ -193,6 +196,9 @@ public class DicomPrintDialog<I extends ImageElement> extends JDialog {
     optionPane = new DicomPrintOptionPane();
     panel.add(optionPane, "newline, gaptop 10, spanx"); // NON-NLS
 
+    panel.add(maskingProfile.createLabel(), "newline, growx 0, alignx trailing"); // NON-NLS
+    panel.add(maskingProfile, "growx, alignx trailing, gapright 25"); // NON-NLS
+
     JLabel lblCalling = new JLabel(Messages.getString("calling.node") + StringUtil.COLON);
     AbstractDicomNode.loadDicomNodes(
         comboCallingNode, AbstractDicomNode.Type.DICOM_CALLING, UsageType.STORAGE);
@@ -249,8 +255,9 @@ public class DicomPrintDialog<I extends ImageElement> extends JDialog {
         singleView ? new ExportLayout<>(selectedView) : new ExportLayout<>(container);
 
     try {
-      dicomPrint.printImage(
-          dicomPrint.printImage(layout), (DefaultDicomNode) comboCallingNode.getSelectedItem());
+      // Only the rendering needs the mask; the film is sent afterwards
+      BufferedImage film = maskingProfile.runMasked(() -> dicomPrint.printImage(layout));
+      dicomPrint.printImage(film, (DefaultDicomNode) comboCallingNode.getSelectedItem());
     } catch (Exception e) {
       LOGGER.error("DICOM Print Service", e);
       JOptionPane.showMessageDialog(

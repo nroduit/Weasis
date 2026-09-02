@@ -1,0 +1,62 @@
+{
+  "schema": 1,
+  "tags": [
+    { "tag": "weasis:PatientPseudoUID", "category": "DIRECT_ID" }
+  ],
+  "profiles": [
+    {
+      "id": "display",
+      "name": "Display",
+      "offerInExport": true,
+      "shiftsDates": false,
+      "actions": {
+        "DIRECT_ID": "PSEUDONYMIZE",
+        "BIRTH_DATE": "REMOVE",
+        "INSTITUTION": "PSEUDONYMIZE",
+        "FREE_TEXT": "REMOVE"
+      }
+    },
+    {
+      "id": "teaching",
+      "name": "Teaching",
+      "offerInExport": true,
+      "shiftsDates": true,
+      "actions": {
+        "DIRECT_ID": "PSEUDONYMIZE",
+        "DATE": "SHIFT",
+        "BIRTH_DATE": "REMOVE",
+        "INSTITUTION": "PSEUDONYMIZE",
+        "FREE_TEXT": "REMOVE"
+      }
+    },
+    {
+      "id": "publication",
+      "name": "Publication",
+      "offerInExport": true,
+      "shiftsDates": false,
+      "actions": {
+        "DIRECT_ID": "PSEUDONYMIZE",
+        "DATE": "REMOVE",
+        "BIRTH_DATE": "REMOVE",
+        "INSTITUTION": "REMOVE",
+        "DEVICE": "REMOVE",
+        "FREE_TEXT": "REMOVE"
+      }
+    },
+    {
+      "id": "ai-request",
+      "name": "AI request",
+      "offerInExport": false,
+      "shiftsDates": true,
+      "actions": {
+        "DIRECT_ID": "PSEUDONYMIZE",
+        "DATE": "SHIFT",
+        "BIRTH_DATE": "REMOVE",
+        "INSTITUTION": "REMOVE",
+        "FREE_TEXT": "REMOVE"
+      }
+    }
+  ],
+  "sessionProfile": "display",
+  "aiProfile": "ai-request"
+}

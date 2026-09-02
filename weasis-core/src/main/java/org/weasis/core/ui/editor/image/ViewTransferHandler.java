@@ -21,20 +21,18 @@ import javax.swing.JComponent;
 import javax.swing.TransferHandler;
 import org.weasis.core.api.gui.model.ViewModel;
 import org.weasis.core.api.media.data.ImageElement;
-import org.weasis.core.ui.model.layer.LayerItem;
 import org.weasis.core.ui.model.utils.imp.DefaultViewModel;
 import org.weasis.core.ui.util.ImagePrint;
 import org.weasis.opencv.op.ImageConversion;
 
+/**
+ * Copies a rendered view to the clipboard. Identity is masked by the {@link
+ * org.weasis.core.api.media.data.IdentityMask} bound around the export, not by this handler.
+ */
 public class ViewTransferHandler extends TransferHandler implements Transferable {
 
   private static final DataFlavor[] flavors = {DataFlavor.imageFlavor};
   private Image image;
-  private final boolean anonymize;
-
-  public ViewTransferHandler(boolean anonymize) {
-    this.anonymize = anonymize;
-  }
 
   @Override
   public int getSourceActions(JComponent c) {
@@ -52,7 +50,7 @@ public class ViewTransferHandler extends TransferHandler implements Transferable
     image = null;
 
     if (comp instanceof DefaultView2d<?> view2DPane) {
-      RenderedImage imgP = createComponentImage(view2DPane, anonymize);
+      RenderedImage imgP = createComponentImage(view2DPane);
       image = ImageConversion.convertRenderedImage(imgP);
       return this;
     }
@@ -82,15 +80,13 @@ public class ViewTransferHandler extends TransferHandler implements Transferable
     return flavor.equals(DataFlavor.imageFlavor);
   }
 
+  /** Renders {@code canvas} off-screen; annotations follow the mask in force on this thread. */
   public static <E extends ImageElement> RenderedImage createComponentImage(
-      DefaultView2d<E> canvas, boolean anonymize) {
+      DefaultView2d<E> canvas) {
     BufferedImage img =
         new BufferedImage(canvas.getWidth(), canvas.getHeight(), BufferedImage.TYPE_3BYTE_BGR);
     ExportImage<E> exportImage = new ExportImage<>(canvas);
     try {
-      exportImage
-          .getInfoLayer()
-          .setDisplayPreferencesValue(LayerItem.ANONYM_ANNOTATIONS, anonymize);
       exportImage.getInfoLayer().setBorder(3);
       Graphics2D g = img.createGraphics();
       if (g != null) {

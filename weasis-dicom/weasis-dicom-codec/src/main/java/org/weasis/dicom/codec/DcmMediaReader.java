@@ -18,6 +18,7 @@ import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Tag;
 import org.dcm4che3.img.DicomMetaData;
 import org.dcm4che3.img.util.DateTimeUtils;
+import org.weasis.core.api.media.data.IdentityMask;
 import org.weasis.core.api.media.data.MediaReader;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.TagReadable;
@@ -66,8 +67,14 @@ public interface DcmMediaReader extends MediaReader<DicomImageElement> {
   }
 
   static String buildDateTimeWithTimeZone(TagReadable readable, int dateTag, int timeTag) {
-    LocalDate date = TagD.getTagValue(readable, dateTag, LocalDate.class);
-    LocalTime time = TagD.getTagValue(readable, timeTag, LocalTime.class);
+    // Masked individually: a profile may shift the date, and hiding either part hides the whole
+    LocalDate date =
+        masked(dateTag, TagD.getTagValue(readable, dateTag, LocalDate.class), LocalDate.class);
+    LocalTime time =
+        masked(timeTag, TagD.getTagValue(readable, timeTag, LocalTime.class), LocalTime.class);
+    if (date == null && time == null) {
+      return StringUtil.EMPTY_STRING;
+    }
     LocalDateTime dateTime = DateTimeUtils.dateTime(date, time);
     if (dateTime != null) {
       TimeZone timeZone = TagW.getTagValue(readable, TagW.Timezone, TimeZone.class);
@@ -75,6 +82,19 @@ public interface DcmMediaReader extends MediaReader<DicomImageElement> {
       return TagUtil.formatDateTime(zonedDateTime);
     }
     return StringUtil.EMPTY_STRING;
+  }
+
+  /**
+   * A mask may hide the value or, if the tag were classified as an identifier, replace it with a
+   * pseudonym of another type; anything that is no longer a date or a time is treated as hidden.
+   */
+  private static <T> T masked(int tagId, T value, Class<T> type) {
+    TagW tag = TagD.getNullable(tagId, null);
+    if (tag == null) {
+      return value;
+    }
+    Object masked = IdentityMask.maskValue(tag, value);
+    return type.isInstance(masked) ? type.cast(masked) : null;
   }
 
   DicomMetaData getDicomMetaData();

@@ -45,7 +45,10 @@ import org.dcm4che3.img.DicomMetaData;
 import org.dcm4che3.util.TagUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.gui.util.GuiUtils;
+import org.weasis.core.api.media.data.AnonymizationAction;
+import org.weasis.core.api.media.data.IdentityMask;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaReader;
 import org.weasis.core.api.media.data.MediaSeries;
@@ -65,13 +68,13 @@ import org.weasis.core.ui.editor.SeriesViewerListener;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.editor.image.ViewerPlugin;
-import org.weasis.core.ui.model.layer.LayerItem;
 import org.weasis.core.ui.util.TableColumnAdjuster;
 import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.codec.DcmMediaReader;
 import org.weasis.dicom.codec.DicomMediaIO;
 import org.weasis.dicom.codec.DicomSpecialElement;
 import org.weasis.dicom.codec.TagD.Level;
+import org.weasis.dicom.codec.utils.DicomMediaUtils;
 import org.weasis.dicom.explorer.DicomModel;
 import org.weasis.dicom.explorer.Messages;
 import org.weasis.dicom.explorer.wado.DicomManager;
@@ -90,8 +93,11 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
   private final SeriesViewer<?> viewer;
   private MediaElement currentMedia;
   private MediaSeries<?> currentSeries;
-  private boolean anonymize = false;
   private MediaSeries<?> series;
+
+  /** Both tabs render into a cached document, so a masking change has to rebuild them. */
+  private final Runnable maskListener =
+      () -> GuiExecutor.execute(() -> changeDicomInfo(currentSeries, currentMedia));
 
   private JPanel tableContainer;
   private final DefaultTableModel tableModel =
@@ -173,20 +179,26 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
         });
   }
 
+  /** Listens only while displayed, so a closed header window is not retained by the mask. */
+  @Override
+  public void addNotify() {
+    super.addNotify();
+    IdentityMask.addChangeListener(maskListener);
+  }
+
+  @Override
+  public void removeNotify() {
+    IdentityMask.removeChangeListener(maskListener);
+    super.removeNotify();
+  }
+
   @Override
   public void changingViewContentEvent(SeriesViewerEvent event) {
     EVENT type = event.getEventType();
     if (event.getSeriesViewer() == viewer
-        && (EVENT.SELECT.equals(type) || EVENT.LAYOUT.equals(type) || EVENT.ANONYM.equals(type))) {
+        && (EVENT.SELECT.equals(type) || EVENT.LAYOUT.equals(type))) {
       currentMedia = event.getMediaElement();
       currentSeries = event.getSeries();
-      if (event.getSeriesViewer() instanceof ImageViewerPlugin) {
-        ViewCanvas<?> sel =
-            ((ImageViewerPlugin<?>) event.getSeriesViewer()).getSelectedViewCanvas();
-        if (sel != null) {
-          anonymize = sel.getInfoLayer().getDisplayPreferences(LayerItem.ANONYM_ANNOTATIONS);
-        }
-      }
       changeDicomInfo(currentSeries, currentMedia);
     }
   }
@@ -291,7 +303,8 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
       if (holder.vr.isInlineBinary()) {
         values[3] = "binary data"; // NON-NLS
       } else {
-        values[3] = printItem(dcmObj.getStrings(privateCreator, tag));
+        values[3] =
+            maskValue(tag, privateCreator, printItem(dcmObj.getStrings(privateCreator, tag)));
       }
       model.addRow(values);
     }
@@ -322,6 +335,15 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
       }
     }
     return buf.toString();
+  }
+
+  /**
+   * The dump shows the header as it is stored, so it is the one place where an active mask has to
+   * be applied to raw attributes rather than to a display model.
+   */
+  private static String maskValue(int tagId, String privateCreator, String value) {
+    TagW tag = DicomMediaUtils.maskingTag(tagId, privateCreator);
+    return tag == null ? value : IdentityMask.maskText(tag, value);
   }
 
   private static void printSequence(Sequence seq, DefaultTableModel model, Object[] values) {
@@ -385,30 +407,7 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
 
   private void writeItems(DicomData dicomData, TagReadable group, StyledDocument doc) {
     int insertTitle = doc.getLength();
-    boolean exist = false;
-
-    for (TagView t : dicomData.infos) {
-      for (TagW tag : t.getTag()) {
-        if (!anonymize || tag.getAnonymizationType() != 1) {
-          try {
-            Object val = TagUtil.getTagValue(tag, group, currentMedia);
-            if (val != null) {
-              exist = true;
-              doc.insertString(
-                  doc.getLength(), tag.getDisplayedName(), doc.getStyle("normal")); // NON-NLS
-              String format = tag.addGMTOffset(null, series);
-              doc.insertString(
-                  doc.getLength(),
-                  StringUtil.COLON_AND_SPACE + tag.getFormattedTagValue(val, format) + "\n",
-                  doc.getStyle("bold")); // NON-NLS
-              break;
-            }
-          } catch (BadLocationException e) {
-            LOGGER.error("Writing text issue", e);
-          }
-        }
-      }
-    }
+    boolean exist = writeTags(dicomData, group, doc);
     if (exist) {
       try {
         String formatTitle =
@@ -418,6 +417,45 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
         LOGGER.error("Writing text issue", e);
       }
     }
+  }
+
+  /**
+   * Writes the first available tag of each view, honouring the active mask; true if any was
+   * written.
+   */
+  private boolean writeTags(DicomData dicomData, TagReadable group, StyledDocument doc) {
+    IdentityMask mask = IdentityMask.active().orElse(null);
+    boolean exist = false;
+    for (TagView t : dicomData.infos) {
+      for (TagW tag : t.getTag()) {
+        AnonymizationAction action = mask == null ? AnonymizationAction.KEEP : mask.actionFor(tag);
+        if (action == AnonymizationAction.REMOVE) {
+          continue;
+        }
+        Object val = TagUtil.getTagValue(tag, group, currentMedia);
+        if (val == null) {
+          continue;
+        }
+        exist = true;
+        String text =
+            action == AnonymizationAction.CLEAR
+                ? StringUtil.EMPTY_STRING
+                : tag.getFormattedTagValue(
+                    mask == null ? val : mask.apply(tag, val), tag.addGMTOffset(null, series));
+        try {
+          doc.insertString(
+              doc.getLength(), tag.getDisplayedName(), doc.getStyle("normal")); // NON-NLS
+          doc.insertString(
+              doc.getLength(),
+              StringUtil.COLON_AND_SPACE + text + "\n",
+              doc.getStyle("bold")); // NON-NLS
+        } catch (BadLocationException e) {
+          LOGGER.error("Writing text issue", e);
+        }
+        break;
+      }
+    }
+    return exist;
   }
 
   public static void displayHeader(ImageViewerPlugin<?> container) {

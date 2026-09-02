@@ -47,6 +47,7 @@ import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.DataExplorerView;
 import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.gui.util.GuiUtils;
+import org.weasis.core.api.media.data.IdentityMask;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.Series;
@@ -562,7 +563,10 @@ public class WaveView extends JPanel implements SeriesViewerListener {
         float drawY = fontHeight;
         TagW patNameTag = TagD.get(Tag.PatientName);
         g2.drawString(
-            patNameTag.getFormattedTagValue(patient.getTagValue(patNameTag), null), 0, drawY);
+            patNameTag.getFormattedTagValue(
+                IdentityMask.maskValue(patNameTag, patient.getTagValue(patNameTag)), null),
+            0,
+            drawY);
         StringBuilder studyDate =
             new StringBuilder(
                 new TagView(
@@ -572,7 +576,7 @@ public class WaveView extends JPanel implements SeriesViewerListener {
                             Tag.DateOfSecondaryCapture,
                             Tag.SeriesDate,
                             Tag.StudyDate))
-                    .getFormattedText(false, dcm));
+                    .getFormattedText(dcm));
         studyDate.append(" - ");
         studyDate.append(
             new TagView(
@@ -582,33 +586,41 @@ public class WaveView extends JPanel implements SeriesViewerListener {
                         Tag.TimeOfSecondaryCapture,
                         Tag.SeriesTime,
                         Tag.StudyTime))
-                .getFormattedText(false, dcm));
+                .getFormattedText(dcm));
         g2.drawString(studyDate.toString(), midWidth, drawY);
         drawY += fontHeight;
 
         TagW patBirthTag = TagD.get(Tag.PatientBirthDate);
         StringBuilder birthDate =
             new StringBuilder(
-                patBirthTag.getFormattedTagValue(patient.getTagValue(patBirthTag), null));
+                patBirthTag.getFormattedTagValue(
+                    IdentityMask.maskValue(patBirthTag, patient.getTagValue(patBirthTag)), null));
         TagW patSexTag = TagD.get(Tag.PatientSex);
         birthDate.append(" - ");
-        birthDate.append(patSexTag.getFormattedTagValue(patient.getTagValue(patSexTag), null));
+        birthDate.append(
+            patSexTag.getFormattedTagValue(
+                IdentityMask.maskValue(patSexTag, patient.getTagValue(patSexTag)), null));
         g2.drawString(birthDate.toString(), 0, drawY);
         TagW studyDesTag = TagD.get(Tag.StudyDescription);
         g2.drawString(
-            studyDesTag.getFormattedTagValue(study.getTagValue(studyDesTag), "$V:l$40$"), // NON-NLS
+            studyDesTag.getFormattedTagValue(
+                IdentityMask.maskValue(studyDesTag, study.getTagValue(studyDesTag)),
+                "$V:l$40$"), // NON-NLS
             midWidth,
             drawY);
         drawY += fontHeight;
 
         TagW patIDTag = TagD.get(Tag.PatientID);
         g2.drawString(
-            patIDTag.getFormattedTagValue(patient.getTagValue(patIDTag), "ID: $V"), // NON-NLS
+            patIDTag.getFormattedTagValue(
+                IdentityMask.maskValue(patIDTag, patient.getTagValue(patIDTag)),
+                "ID: $V"), // NON-NLS
             0,
             drawY);
         TagW studyAcNbTag = TagD.get(Tag.AccessionNumber);
         g2.drawString(
-            studyAcNbTag.getFormattedTagValue(study.getTagValue(studyAcNbTag), null),
+            studyAcNbTag.getFormattedTagValue(
+                IdentityMask.maskValue(studyAcNbTag, study.getTagValue(studyAcNbTag)), null),
             midWidth,
             drawY);
       }

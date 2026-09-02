@@ -192,8 +192,7 @@ public class DicomMediaIO implements DcmMediaReader {
       readTagsInModalityView(entry.getValue().getCornerInfo(CornerDisplay.BOTTOM_RIGHT).getInfos());
     }
 
-    // TODO init with a profile
-    DicomMediaUtils.enableAnonymizationProfile(true);
+    DicomMediaUtils.classifyTags();
   }
 
   public static final Map<String, DicomSpecialElementFactory> DCM_ELEMENT_FACTORIES =
@@ -573,6 +572,10 @@ public class DicomMediaIO implements DcmMediaReader {
       setTag(TagW.AnatomicRegion, desc.getAnatomicRegion());
 
       TagD.get(Tag.PixelIntensityRelationship).readValue(header, this);
+
+      // Identity that no tag masking can reach: see PixelPrivacy
+      TagD.get(Tag.BurnedInAnnotation).readValue(header, this);
+      TagD.get(Tag.RecognizableVisualFeatures).readValue(header, this);
 
       TagD.get(Tag.Units).readValue(header, this);
       TagD.get(Tag.NumberOfFrames).readValue(header, this);

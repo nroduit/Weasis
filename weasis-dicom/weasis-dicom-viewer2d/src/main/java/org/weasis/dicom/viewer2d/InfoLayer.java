@@ -83,7 +83,6 @@ public class InfoLayer extends AbstractInfoLayer<DicomImageElement> {
   private void initializeDisplayPreferences() {
     displayPreferences.put(LayerItem.ANNOTATIONS, true);
     displayPreferences.put(LayerItem.MIN_ANNOTATIONS, false);
-    displayPreferences.put(LayerItem.ANONYM_ANNOTATIONS, false);
     displayPreferences.put(LayerItem.SCALE, true);
     displayPreferences.put(LayerItem.LUT, false);
     displayPreferences.put(LayerItem.FUSION_LUT, true);
@@ -106,7 +105,6 @@ public class InfoLayer extends AbstractInfoLayer<DicomImageElement> {
 
   private void copyLayerValues(Map<LayerItem, Boolean> prefMap) {
     setLayerValue(prefMap, LayerItem.ANNOTATIONS);
-    setLayerValue(prefMap, LayerItem.ANONYM_ANNOTATIONS);
     setLayerValue(prefMap, LayerItem.IMAGE_ORIENTATION);
     setLayerValue(prefMap, LayerItem.SCALE);
     setLayerValue(prefMap, LayerItem.LUT);
@@ -463,16 +461,14 @@ public class InfoLayer extends AbstractInfoLayer<DicomImageElement> {
     Series series = (Series) view2DPane.getSeries();
     MediaSeriesGroup study = getParent(series, DicomModel.study);
     MediaSeriesGroup patient = getParent(series, DicomModel.patient);
-    boolean anonymize = getDisplayPreferences(LayerItem.ANONYM_ANNOTATIONS);
 
     float drawY =
-        paintTopLeftCorner(
-            g2, modality, patient, study, series, image, fontHeight, hideMin, anonymize);
+        paintTopLeftCorner(g2, modality, patient, study, series, image, fontHeight, hideMin);
     setPosition(Position.TopLeft, border, drawY - fontHeight + GuiUtils.getScaleLength(5));
 
     drawY =
         paintTopRightCorner(
-            g2, modality, patient, study, series, image, bound, fontHeight, hideMin, anonymize);
+            g2, modality, patient, study, series, image, bound, fontHeight, hideMin);
     setPosition(
         Position.TopRight,
         (double) bound.width - border,
@@ -480,7 +476,7 @@ public class InfoLayer extends AbstractInfoLayer<DicomImageElement> {
 
     drawY =
         paintBottomRightCorner(
-            g2, modality, patient, study, series, image, bound, fontHeight, hideMin, anonymize);
+            g2, modality, patient, study, series, image, bound, fontHeight, hideMin);
     setPosition(
         Position.BottomRight, (double) bound.width - border, drawY - GuiUtils.getScaleLength(5));
 
@@ -496,14 +492,13 @@ public class InfoLayer extends AbstractInfoLayer<DicomImageElement> {
       Series series,
       DicomImageElement image,
       int fontHeight,
-      boolean hideMin,
-      boolean anonymize) {
+      boolean hideMin) {
     CornerInfoData corner = modality.getCornerInfo(CornerDisplay.TOP_LEFT);
     float drawY = fontHeight;
 
     for (TagView tagView : corner.getInfos()) {
       if (tagView != null && (hideMin || tagView.containsTag(TagD.get(Tag.PatientName)))) {
-        String text = getFormattedTag(tagView, patient, study, series, image, anonymize);
+        String text = getFormattedTag(tagView, patient, study, series, image);
         if (text != null) {
           FontTools.paintFontOutline(g2, text, border, drawY);
           drawY += fontHeight;
@@ -522,14 +517,13 @@ public class InfoLayer extends AbstractInfoLayer<DicomImageElement> {
       DicomImageElement image,
       Rectangle bound,
       int fontHeight,
-      boolean hideMin,
-      boolean anonymize) {
+      boolean hideMin) {
     CornerInfoData corner = modality.getCornerInfo(CornerDisplay.TOP_RIGHT);
     float drawY = fontHeight;
 
     for (TagView info : corner.getInfos()) {
       if (info != null && (hideMin || info.containsTag(TagD.get(Tag.SeriesDate)))) {
-        String text = getFormattedTag(info, patient, study, series, image, anonymize);
+        String text = getFormattedTag(info, patient, study, series, image);
         if (text != null) {
           FontTools.paintFontOutline(
               g2,
@@ -552,8 +546,7 @@ public class InfoLayer extends AbstractInfoLayer<DicomImageElement> {
       DicomImageElement image,
       Rectangle bound,
       int fontHeight,
-      boolean hideMin,
-      boolean anonymize) {
+      boolean hideMin) {
     float drawY = bound.height - border - GuiUtils.getScaleLength(1.5f);
 
     if (hideMin) {
@@ -562,7 +555,7 @@ public class InfoLayer extends AbstractInfoLayer<DicomImageElement> {
 
       for (int j = infos.length - 1; j >= 0; j--) {
         if (infos[j] != null) {
-          String text = getFormattedTag(infos[j], patient, study, series, image, anonymize);
+          String text = getFormattedTag(infos[j], patient, study, series, image);
           if (text != null) {
             FontTools.paintFontOutline(
                 g2,
@@ -584,21 +577,9 @@ public class InfoLayer extends AbstractInfoLayer<DicomImageElement> {
       MediaSeriesGroup patient,
       MediaSeriesGroup study,
       Series series,
-      DicomImageElement image,
-      boolean anonymize) {
-    for (TagW tag : tagView.getTag()) {
-      if (!anonymize || tag.getAnonymizationType() != 1) {
-        Object value = getTagValue(tag, patient, study, series, image);
-        if (value != null) {
-          String format = tag.addGMTOffset(tagView.getFormat(), series);
-          String str = tag.getFormattedTagValue(value, format);
-          if (StringUtil.hasText(str)) {
-            return str;
-          }
-        }
-      }
-    }
-    return null;
+      DicomImageElement image) {
+    String text = tagView.resolveText(t -> getTagValue(t, patient, study, series, image), series);
+    return StringUtil.hasText(text) ? text : null;
   }
 
   private void paintBottomLeftAnnotations(

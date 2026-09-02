@@ -272,6 +272,15 @@ public class View2dContainer extends DicomViewerPlugin implements PropertyChange
           preferences,
           bundleName,
           componentName,
+          InsertableUtil.getCName(RedactionToolBar.class),
+          key,
+          true)) {
+        toolBars.add(new RedactionToolBar(evtMg, 45));
+      }
+      if (InsertableUtil.getBooleanProperty(
+          preferences,
+          bundleName,
+          componentName,
           InsertableUtil.getCName(Basic3DToolBar.class),
           key,
           true)) {

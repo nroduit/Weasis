@@ -11,6 +11,7 @@ package org.weasis.core.api.media.data;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
@@ -20,13 +21,12 @@ import org.junit.jupiter.api.Test;
 import org.weasis.core.api.media.data.TagW.TagType;
 
 /**
- * Tests {@link TagView#getFormattedText(boolean, TagReadable...)} — the display-time PHI
- * suppression path used by InfoLayer overlays and DICOM-field views.
+ * Tests {@link TagView#getFormattedText(TagReadable...)} with and without a bound {@link
+ * IdentityMask} — the path used by annotation overlays, explorer labels and DICOM-field views.
  *
- * <p>Contract: when {@code anonymize=true} and a tag's {@code anonymizationType == 1}, the tag is
- * skipped (its value never reaches the formatted output). When {@code anonymize=false} the flag is
- * ignored. Multi-tag {@link TagView} acts as an ordered fallback list: the first tag with a
- * non-empty value wins.
+ * <p>Contract: without a mask every value is shown. Under the display profile a {@link
+ * TagCategory#FREE_TEXT} tag is removed and the ordered fallback list moves on to the next tag with
+ * a non-empty value.
  */
 class TagViewAnonymizationTest {
 
@@ -38,126 +38,106 @@ class TagViewAnonymizationTest {
 
   @AfterEach
   void resetFlags() {
-    // Tests below mutate the per-instance anonymization flag; reset so tests in this file remain
+    // Tests below mutate the per-instance category; reset so tests in this file remain
     // independent and don't leak state to other tests that share the static TagW instances.
-    phiTag.setAnonymizationType(0);
-    phiTag2.setAnonymizationType(0);
-    nonPhiTag.setAnonymizationType(0);
+    phiTag.setCategory(TagCategory.OTHER);
+    phiTag2.setCategory(TagCategory.OTHER);
+    nonPhiTag.setCategory(TagCategory.OTHER);
   }
 
-  // -- anonymize=false: flag is ignored -------------------------------------
+  private static String masked(TagView view, TagReadable readable) {
+    return IdentityMask.forProfile(MaskingProfile.display())
+        .callMasked(() -> view.getFormattedText(readable));
+  }
+
+  // -- no mask: every value is shown -------------------------------------------
 
   @Test
-  void getFormattedText_anonymizeFalseReturnsValueEvenForFlaggedTag() {
-    phiTag.setAnonymizationType(1);
+  void getFormattedText_unmaskedReturnsValueEvenForClassifiedTag() {
+    phiTag.setCategory(TagCategory.FREE_TEXT);
     TagView view = new TagView(phiTag);
     TagReadable readable = readableWith(phiTag, "Jane Doe");
 
-    String result = view.getFormattedText(false, readable);
-
-    assertEquals("Jane Doe", result, "anonymize=false bypasses the suppression check");
+    assertEquals("Jane Doe", view.getFormattedText(readable), "no mask, no suppression");
   }
 
-  // -- anonymize=true: flagged tag is suppressed ----------------------------
+  // -- display profile: removed tag is suppressed ------------------------------
 
   @Test
-  void getFormattedText_anonymizeTrueSuppressesFlaggedTag() {
-    phiTag.setAnonymizationType(1);
+  void getFormattedText_maskedSuppressesRemovedTag() {
+    phiTag.setCategory(TagCategory.FREE_TEXT);
     TagView view = new TagView(phiTag);
     TagReadable readable = readableWith(phiTag, "Jane Doe");
 
-    String result = view.getFormattedText(true, readable);
-
-    assertEquals(
-        "",
-        result,
-        "anonymize=true with anonymizationType=1 must suppress the value (return empty)");
+    assertEquals("", masked(view, readable), "a removed tag must not reach the output");
   }
 
   @Test
-  void getFormattedText_anonymizeTrueReturnsValueForNonFlaggedTag() {
-    nonPhiTag.setAnonymizationType(0); // explicit for documentation
+  void getFormattedText_maskedReturnsValueForUnclassifiedTag() {
+    nonPhiTag.setCategory(TagCategory.OTHER); // explicit for documentation
     TagView view = new TagView(nonPhiTag);
     TagReadable readable = readableWith(nonPhiTag, "CT");
 
-    String result = view.getFormattedText(true, readable);
-
-    assertEquals("CT", result, "non-PHI tag is shown even when anonymize=true");
+    assertEquals("CT", masked(view, readable), "an unclassified tag is shown under a mask");
   }
 
-  // -- Multi-tag fallback: flag is evaluated per tag, not per view ---------
+  // -- Multi-tag fallback: the action is evaluated per tag, not per view -------
 
   @Test
-  void getFormattedText_multiTagFallbackSkipsFlaggedAndReturnsNextValue() {
-    // View lists phiTag (flagged) first, then nonPhiTag (not flagged). With anonymize=true the
-    // first is skipped and the loop falls through to the second.
-    phiTag.setAnonymizationType(1);
+  void getFormattedText_multiTagFallbackSkipsRemovedAndReturnsNextValue() {
+    phiTag.setCategory(TagCategory.FREE_TEXT);
     TagView view = new TagView(phiTag, nonPhiTag);
     TagReadable readable = readableWith2(phiTag, "Jane Doe", nonPhiTag, "CT");
 
-    String result = view.getFormattedText(true, readable);
-
-    assertEquals("CT", result, "loop must fall through to the next non-flagged tag");
+    assertEquals("CT", masked(view, readable), "loop must fall through to the next tag");
   }
 
   @Test
-  void getFormattedText_multiTagAllFlaggedReturnsEmpty() {
-    phiTag.setAnonymizationType(1);
-    phiTag2.setAnonymizationType(1);
+  void getFormattedText_multiTagAllRemovedReturnsEmpty() {
+    phiTag.setCategory(TagCategory.FREE_TEXT);
+    phiTag2.setCategory(TagCategory.FREE_TEXT);
     TagView view = new TagView(phiTag, phiTag2);
     TagReadable readable = readableWith2(phiTag, "Jane Doe", phiTag2, "Smith");
 
-    String result = view.getFormattedText(true, readable);
-
-    assertEquals("", result, "no fallback available -> empty string");
+    assertEquals("", masked(view, readable), "no fallback available -> empty string");
   }
 
   @Test
-  void getFormattedText_multiTagReturnsFirstNonEmptyValueWhenNotAnonymizing() {
+  void getFormattedText_multiTagReturnsFirstNonEmptyValueWhenUnmasked() {
     TagView view = new TagView(phiTag, nonPhiTag);
     TagReadable readable = readableWith2(phiTag, "Jane Doe", nonPhiTag, "CT");
 
-    String result = view.getFormattedText(false, readable);
-
-    assertEquals("Jane Doe", result, "without anonymize, first non-empty tag wins");
+    assertEquals("Jane Doe", view.getFormattedText(readable), "first non-empty tag wins");
   }
 
   @Test
   void getFormattedText_multiTagSkipsTagWithEmptyValue() {
-    // phiTag has no value (empty string), nonPhiTag does. With anonymize=false the empty value
-    // is skipped via StringUtil.hasText and the loop continues.
     TagView view = new TagView(phiTag, nonPhiTag);
     TagReadable readable = readableWith2(phiTag, "", nonPhiTag, "CT");
 
-    String result = view.getFormattedText(false, readable);
-
-    assertEquals("CT", result);
+    assertEquals("CT", view.getFormattedText(readable));
   }
 
   @Test
   void getFormattedText_noMatchingValueReturnsEmpty() {
-    // None of the taggables hold the tag's value.
     TagView view = new TagView(phiTag);
     TagReadable readable = mock(TagReadable.class);
     lenient().when(readable.containTagKey(any(TagW.class))).thenReturn(false);
     lenient().when(readable.getTagValue(any(TagW.class))).thenReturn(null);
 
-    String result = view.getFormattedText(false, readable);
-
-    assertEquals("", result);
+    assertEquals("", view.getFormattedText(readable));
   }
 
-  // -- containsTag (sanity: identity respects equals, not anonymization) ---
+  // -- containsTag (sanity: identity respects equals, not classification) -----
 
   @Test
-  void containsTag_remainsConsistentAfterFlagChange() {
+  void containsTag_remainsConsistentAfterCategoryChange() {
     TagView view = new TagView(phiTag);
 
-    phiTag.setAnonymizationType(1);
+    phiTag.setCategory(TagCategory.FREE_TEXT);
 
-    org.junit.jupiter.api.Assertions.assertTrue(
-        view.containsTag(phiTag), "containsTag uses equality (id+keyword), not flag");
-    assertNotEquals(0, phiTag.getAnonymizationType(), "sanity: flag is set");
+    assertTrue(view.containsTag(phiTag), "containsTag uses equality (id+keyword), not category");
+    assertNotEquals(TagCategory.OTHER, phiTag.getCategory(), "sanity: the category is set");
   }
 
   // -- helpers --------------------------------------------------------------

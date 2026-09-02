@@ -41,10 +41,14 @@ import org.opencv.imgcodecs.Imgcodecs;
 import org.weasis.core.Messages;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.GuiUtils;
+import org.weasis.core.api.image.OpManager;
 import org.weasis.core.api.image.SimpleOpManager;
+import org.weasis.core.api.image.ZoomOp;
 import org.weasis.core.api.media.data.ImageElement;
+import org.weasis.core.api.media.data.MaskingProfile;
 import org.weasis.core.api.service.WProperties;
 import org.weasis.core.ui.util.ColorLayerUI;
+import org.weasis.core.ui.util.MaskingProfileSelector;
 import org.weasis.core.util.StringUtil;
 import org.weasis.opencv.data.PlanarImage;
 import org.weasis.opencv.op.ImageConversion;
@@ -101,7 +105,8 @@ public class ScreenshotDialog<I extends ImageElement> extends JDialog {
               + ")",
           false);
 
-  private final JCheckBox anonymize = new JCheckBox(Messages.getString("anonymize"), true);
+  private final MaskingProfileSelector maskingProfile =
+      MaskingProfileSelector.withDefault(MaskingProfile.DISPLAY_ID);
   private final JLabel labelSize =
       new JLabel(Messages.getString("size") + " (%)" + StringUtil.COLON);
   private final JSpinner spinner = new JSpinner();
@@ -155,12 +160,13 @@ public class ScreenshotDialog<I extends ImageElement> extends JDialog {
     clipButton.addActionListener(
         e -> {
           if (viewRadio.isSelected()) {
-            ViewTransferHandler imageTransferHandler =
-                new ViewTransferHandler(anonymize.isSelected());
-            imageTransferHandler.exportToClipboard(
-                viewCanvas.getJComponent(),
-                Toolkit.getDefaultToolkit().getSystemClipboard(),
-                TransferHandler.COPY);
+            ViewTransferHandler imageTransferHandler = new ViewTransferHandler();
+            maskingProfile.runMaskedAction(
+                () ->
+                    imageTransferHandler.exportToClipboard(
+                        viewCanvas.getJComponent(),
+                        Toolkit.getDefaultToolkit().getSystemClipboard(),
+                        TransferHandler.COPY));
           } else {
             I img = viewCanvas.getImage();
             if (img != null) {
@@ -172,6 +178,7 @@ public class ScreenshotDialog<I extends ImageElement> extends JDialog {
                       shutterCheckBox.isSelected(),
                       overlayCheckBox.isSelected(),
                       ratio);
+              addViewRedaction(manager);
               ImageTransferHandler imageTransferHandler = new ImageTransferHandler(manager);
               imageTransferHandler.exportToClipboard(
                   viewCanvas.getJComponent(),
@@ -188,7 +195,8 @@ public class ScreenshotDialog<I extends ImageElement> extends JDialog {
           if (viewRadio.isSelected()) {
             if (viewCanvas instanceof DefaultView2d<I> view2DPane) {
               RenderedImage imgP =
-                  ViewTransferHandler.createComponentImage(view2DPane, anonymize.isSelected());
+                  maskingProfile.runMasked(
+                      () -> ViewTransferHandler.createComponentImage(view2DPane));
               result = ImageConversion.toMat(imgP);
             }
           } else {
@@ -202,6 +210,7 @@ public class ScreenshotDialog<I extends ImageElement> extends JDialog {
                       shutterCheckBox.isSelected(),
                       overlayCheckBox.isSelected(),
                       ratio);
+              addViewRedaction(manager);
               Optional<PlanarImage> inputImage = manager.getFirstNodeInputImage();
               if (inputImage.isPresent()) {
                 Optional<PlanarImage> rimage = manager.process();
@@ -224,6 +233,22 @@ public class ScreenshotDialog<I extends ImageElement> extends JDialog {
     panel.add(GuiUtils.boxYLastElement(ITEM_SEPARATOR));
 
     this.setContentPane(panel);
+  }
+
+  /**
+   * The original image skips the view pipeline, so the redaction regions burned by the view are
+   * copied in, before the zoom that would move them out of image coordinates.
+   */
+  private void addViewRedaction(SimpleOpManager manager) {
+    viewCanvas
+        .getDisplayOpManager()
+        .getNode(OpManager.REDACTION_OP_NAME)
+        .ifPresent(
+            node ->
+                manager.addImageOperationAction(
+                    node.copy(),
+                    SimpleOpManager.Position.BEFORE,
+                    manager.getNode(ZoomOp.OP_NAME).orElse(null)));
   }
 
   private void saveImageFile(PlanarImage image, boolean mustBeReleased) {
@@ -287,14 +312,16 @@ public class ScreenshotDialog<I extends ImageElement> extends JDialog {
     shutterCheckBox.setEnabled(enable);
     overlayCheckBox.setEnabled(enable);
 
-    anonymize.setEnabled(!enable);
+    maskingProfile.setEnabled(!enable);
   }
 
   private JPanel buildViewPanel(boolean dicom) {
     JPanel dataPanel = new JPanel();
     dataPanel.setLayout(new MigLayout("insets 0 25lp 30lp 10lp, fillx", "[grow 0]")); // NON-NLS
     if (dicom) {
-      dataPanel.add(anonymize, GuiUtils.NEWLINE);
+      dataPanel.add(
+          GuiUtils.getHorizontalBoxLayoutPanel(maskingProfile.createLabel(), maskingProfile),
+          GuiUtils.NEWLINE);
     }
     return dataPanel;
   }

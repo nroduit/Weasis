@@ -30,6 +30,7 @@ import org.weasis.core.api.explorer.ObservableEvent;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.WinUtil;
+import org.weasis.core.api.media.data.IdentityMask;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaSeries;
@@ -70,8 +71,18 @@ import org.weasis.dicom.macro.SOPInstanceReference;
 public class SRView extends JScrollPane implements SeriesViewerListener {
 
   private final JTextPane htmlPanel = new JTextPane();
+
   private final Map<String, SRImageReference> map = new HashMap<>();
   private Series<?> series;
+
+  /** The report is rendered once into an HTML document, so a masking change has to rebuild it. */
+  private final Runnable maskListener =
+      () ->
+          GuiExecutor.execute(
+              () ->
+                  displayLimitedDicomInfo(
+                      DicomModel.getFirstSpecialElement(series, DicomSpecialElement.class)));
+
   private KOSpecialElement keyReferences;
 
   public SRView() {
@@ -104,6 +115,7 @@ public class SRView extends JScrollPane implements SeriesViewerListener {
         });
     setPreferredSize(GuiUtils.getDimension(1024, 1024));
     setSeries(series);
+    IdentityMask.addChangeListener(maskListener);
     htmlPanel.setTransferHandler(new SeriesHandler());
   }
 
@@ -167,6 +179,7 @@ public class SRView extends JScrollPane implements SeriesViewerListener {
   }
 
   public void dispose() {
+    IdentityMask.removeChangeListener(maskListener);
     if (series != null) {
       closingSeries(series);
       series = null;

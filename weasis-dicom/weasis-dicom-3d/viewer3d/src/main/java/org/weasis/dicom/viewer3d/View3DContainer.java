@@ -40,6 +40,7 @@ import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.SliderChangeListener;
+import org.weasis.core.api.media.data.IdentityMask;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.service.BundlePreferences;
@@ -390,7 +391,8 @@ public class View3DContainer extends DicomViewerPlugin
       return;
     }
 
-    setPluginName(TagD.getTagValue(series, Tag.PatientName, String.class));
+    String patientName = TagD.getTagValue(series, Tag.PatientName, String.class);
+    setPluginName(() -> IdentityMask.maskText(TagD.get(Tag.PatientName), patientName));
     setSelected(true);
   }
 

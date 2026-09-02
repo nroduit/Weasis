@@ -30,7 +30,6 @@ import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.image.OpManager;
 import org.weasis.core.api.image.WindowOp;
-import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.api.util.ResourceUtil.OtherIcon;
 import org.weasis.core.ui.docking.PluginTool;
@@ -100,7 +99,6 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
     dicomInfo.add(new DefaultMutableTreeNode(LayerItem.ANNOTATIONS, true));
     minAnnotations = new DefaultMutableTreeNode(LayerItem.MIN_ANNOTATIONS, false);
     dicomInfo.add(minAnnotations);
-    dicomInfo.add(new DefaultMutableTreeNode(LayerItem.ANONYM_ANNOTATIONS, false));
     dicomInfo.add(new DefaultMutableTreeNode(LayerItem.SCALE, true));
     dicomInfo.add(new DefaultMutableTreeNode(LayerItem.LUT, true));
     dicomInfo.add(new DefaultMutableTreeNode(LayerItem.FUSION_LUT, true));
@@ -222,14 +220,6 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
                 v.getJComponent().repaint();
               }
             }
-          }
-          if (LayerItem.ANONYM_ANNOTATIONS.equals(item)) {
-            // Send message to listeners, only selected view
-            ViewCanvas<?> v = container.getSelectedViewCanvas();
-            Series<?> series = (Series<?>) v.getSeries();
-            EventManager.getInstance()
-                .fireSeriesViewerListeners(
-                    new SeriesViewerEvent(container, series, v.getImage(), EVENT.ANONYM));
           }
         }
       } else if (drawings.equals(parent) && selObject == crosslines) {

@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -498,6 +499,14 @@ public class TagD extends TagW {
   public static TagW get(String keyword) {
     // Overrides static method in TagW only to force the method readTags() if not initialized
     return tags.get(keyword);
+  }
+
+  /** The hexadecimal key, with {@code @creator} for a private tag, then the keyword. */
+  @Override
+  public List<String> maskingKeys() {
+    String hex = "%08X".formatted(id); // NON-NLS
+    String key = privateCreatorID == null ? hex : hex + "@" + privateCreatorID;
+    return keyword == null ? List.of(key) : List.of(key, keyword);
   }
 
   public static String getKeywordFromTag(int tagID, String privateCreatorID) {

@@ -26,7 +26,6 @@ import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import org.weasis.core.api.gui.Insertable;
 import org.weasis.core.api.gui.util.GuiUtils;
-import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.api.util.ResourceUtil.OtherIcon;
 import org.weasis.core.ui.docking.PluginTool;
@@ -86,7 +85,6 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
     dicomInfo.add(new DefaultMutableTreeNode(LayerItem.ANNOTATIONS, true));
     minAnnotations = new DefaultMutableTreeNode(LayerItem.MIN_ANNOTATIONS, false);
     dicomInfo.add(minAnnotations);
-    dicomInfo.add(new DefaultMutableTreeNode(LayerItem.ANONYM_ANNOTATIONS, false));
     //    dicomInfo.add(new DefaultMutableTreeNode(LayerItem.SCALE, true));
     //    dicomInfo.add(new DefaultMutableTreeNode(LayerItem.LUT, true));
     //    dicomInfo.add(new DefaultMutableTreeNode(LayerItem.IMAGE_ORIENTATION, true));
@@ -176,16 +174,6 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
               if (layer != null && layer.setDisplayPreferencesValue(item, selected)) {
                 v.getJComponent().repaint();
               }
-            }
-            if (LayerItem.ANONYM_ANNOTATIONS.equals(item)) {
-              // Send message to listeners, only selected view
-              ImageViewerPlugin<DicomImageElement> container =
-                  EventManager.getInstance().getSelectedView2dContainer();
-              ViewCanvas<DicomImageElement> v = container.getSelectedViewCanvas();
-              Series<?> series = (Series<?>) v.getSeries();
-              EventManager.getInstance()
-                  .fireSeriesViewerListeners(
-                      new SeriesViewerEvent(container, series, v.getImage(), EVENT.ANONYM));
             }
           }
         }
