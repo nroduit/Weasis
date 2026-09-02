@@ -33,10 +33,12 @@ import bibliothek.gui.dock.util.ConfiguredBackgroundPanel;
 import bibliothek.gui.dock.util.DirectWindowProvider;
 import bibliothek.gui.dock.util.DockUtilities;
 import com.formdev.flatlaf.extras.FlatSVGIcon;
+import com.formdev.flatlaf.util.SystemInfo;
 import jakarta.json.JsonException;
 import java.awt.AWTException;
 import java.awt.BorderLayout;
 import java.awt.Component;
+import java.awt.Desktop;
 import java.awt.Dialog;
 import java.awt.Dimension;
 import java.awt.Frame;
@@ -1437,49 +1439,36 @@ public class WeasisWin {
     } else if (opt.isSet("minimized")) { // NON-NLS
       GuiExecutor.execute(() -> getFrame().setState(Frame.ICONIFIED));
     } else if (opt.isSet("visible")) { // NON-NLS
-      GuiExecutor.execute(
-          () -> {
-            Frame app = getFrame();
-            app.setVisible(true);
-            int state = app.getExtendedState();
-            state &= ~Frame.ICONIFIED;
-            app.setExtendedState(state);
-            app.setVisible(true);
-            /*
-             * Sets the window to be "always on top" instead using toFront() method that does not always bring the
-             * window to the front. It depends on the platform, Windows XP or Ubuntu has the facility to prevent
-             * windows from stealing focus; instead it flashes the taskbar icon.
-             */
-            if (app.isAlwaysOnTopSupported()) {
-              app.setAlwaysOnTop(true);
-
-              try {
-                Thread.sleep(500L);
-                Robot robot = new Robot();
-                Point old = MouseInfo.getPointerInfo().getLocation();
-                Point p = app.getLocationOnScreen();
-                int x = p.x + app.getWidth() / 2;
-                int y = p.y + app.getHeight() / 2;
-                robot.mouseMove(x, y);
-                // Simulate a mouse click
-                robot.mousePress(InputEvent.BUTTON1_MASK);
-                robot.mouseRelease(InputEvent.BUTTON1_MASK);
-                robot.mouseMove(old.x, old.y);
-              } catch (AWTException e1) {
-                // DO nothing
-              } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-              } finally {
-                app.setAlwaysOnTop(false);
-              }
-
-            } else {
-              app.toFront();
-            }
-          });
-
+      GuiExecutor.execute(() -> bringToFront(getFrame()));
     } else {
       opt.usage();
     }
+  }
+
+  /**
+   * Brings the window to the foreground with the mechanism each platform allows. Desktops with
+   * focus-stealing prevention (Windows, GNOME, any Wayland compositor) may only flag the window as
+   * demanding attention: no input is simulated to bypass that.
+   */
+  private static void bringToFront(Frame app) {
+    app.setVisible(true);
+    if (SystemInfo.isMacOS) {
+      Desktop desktop = Desktop.getDesktop();
+      if (desktop.isSupported(Desktop.Action.APP_REQUEST_FOREGROUND)) {
+        desktop.requestForeground(true);
+      }
+    } else if (SystemInfo.isWindows && (app.getExtendedState() & Frame.ICONIFIED) == 0) {
+      // Windows grants the foreground to a window being restored from the taskbar
+      app.setExtendedState(app.getExtendedState() | Frame.ICONIFIED);
+    }
+    app.setExtendedState(app.getExtendedState() & ~Frame.ICONIFIED);
+
+    // Raises the window in the stacking order even when toFront() is refused
+    if (app.isAlwaysOnTopSupported()) {
+      app.setAlwaysOnTop(true);
+      app.setAlwaysOnTop(false);
+    }
+    app.toFront();
+    app.requestFocus();
   }
 }

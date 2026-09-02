@@ -26,8 +26,6 @@ public interface DragGraphic extends Graphic {
 
   Point2D removeHandlePoint(Integer index, MouseEventDouble mouseEvent);
 
-  void moveMouseOverHandlePoint(Integer handlePtIndex, MouseEventDouble event);
-
   Integer moveAndResizeOnDrawing(
       Integer handlePointIndex, Double deltaX, Double deltaY, MouseEventDouble mouseEvent);
 

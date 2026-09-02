@@ -11,8 +11,6 @@ package org.weasis.core.ui.model.graphic.imp.area;
 
 import jakarta.xml.bind.annotation.XmlRootElement;
 import jakarta.xml.bind.annotation.XmlType;
-import java.awt.Point;
-import java.awt.Robot;
 import java.awt.geom.Line2D;
 import java.awt.geom.Path2D;
 import java.awt.geom.Point2D;
@@ -22,7 +20,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import javax.swing.Icon;
-import javax.swing.SwingUtilities;
 import org.weasis.core.Messages;
 import org.weasis.core.api.gui.util.GeomUtil;
 import org.weasis.core.api.image.measure.MeasurementsAdapter;
@@ -30,7 +27,6 @@ import org.weasis.core.api.image.util.MeasurableLayer;
 import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.api.util.ResourceUtil.ActionIcon;
-import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.model.graphic.AbstractDragGraphicArea;
 import org.weasis.core.ui.model.graphic.imp.area.RectangleGraphic.eHandlePoint;
 import org.weasis.core.ui.model.utils.bean.MeasureItem;
@@ -141,77 +137,53 @@ public class ObliqueRectangleGraphic extends AbstractDragGraphicArea {
         Point2D prevPtB = (prevHandlePointList.size() > 1) ? prevHandlePointList.get(1) : null;
 
         if (lineABvalid && GeomUtil.isLineValid(prevPtA, prevPtB) && ptC != null && ptD != null) {
-          double dist = ptC.distance(ptD);
+          double height = GeomUtil.getSignedDistanceToLine(prevPtA, prevPtB, ptD);
           ptC = GeomUtil.getMidPoint(ptA, ptB);
-          ptD = GeomUtil.getPerpendicularPointFromLine(ptA, ptB, ptC, dist);
+          ptD = GeomUtil.getPerpendicularPointFromLine(ptA, ptB, ptC, height);
           setHandlePoint(2, ptC);
           setHandlePoint(3, ptD);
         }
       } else if (handlePointIndex == 2) { // drag point is C (collinear with ab)
         if (lineABvalid && ptC != null) {
-          double abDist = ptA.distance(ptB);
           if (ptD == null) {
-            if (this instanceof EllipseGraphic) {
-              Point2D newPtA = GeomUtil.getPerpendicularPointFromLine(ptA, ptB, ptA, -abDist / 6);
-              Point2D newPtB = GeomUtil.getPerpendicularPointFromLine(ptA, ptB, ptB, -abDist / 6);
-              ptA = newPtA;
-              ptB = newPtB;
-              setHandlePoint(0, ptA);
-              setHandlePoint(1, ptB);
-            }
-            ptC = GeomUtil.getMidPoint(ptA, ptB);
-            ptD = GeomUtil.getPerpendicularPointFromLine(ptA, ptB, ptC, abDist / 3);
-            setHandlePoint(2, ptC);
-            setHandlePoint(3, ptD);
-
-            ViewCanvas<?> graphPane = getDefaultView2d(mouseEvent);
-            if (graphPane != null) {
-              Point mousePt = graphPane.getMouseCoordinatesFromImage(ptD.getX(), ptD.getY());
-              try {
-                mouseEvent.translatePoint(
-                    mousePt.x - mouseEvent.getX(), mousePt.y - mouseEvent.getY());
-                mouseEvent.setImageCoordinates(ptD);
-                SwingUtilities.convertPointToScreen(mousePt, graphPane.getJComponent());
-                new Robot().mouseMove(mousePt.x, mousePt.y);
-                return 3;
-              } catch (Exception e) {
-                // Do nothing
-              }
-            }
-          } else {
-            Point2D ptNext = GeomUtil.getPerpendicularPointToLine(ptA, ptB, ptC);
-            double dist = ptC.distance(ptNext);
-            if (ptA.getX() > ptB.getX()) {
-              dist *= -1;
-            }
-            if (ptNext.getY() > ptC.getY()) {
-              dist *= -1;
-            }
-
-            Point2D prevPtC = (prevHandlePointList.size() > 2) ? prevHandlePointList.get(2) : null;
-            double dist2 = prevPtC == null ? abDist / 3 : prevPtC.distance(ptD);
-            Line2D ab = GeomUtil.getParallelLine(ptA, ptB, dist);
-            ptA = ab.getP1();
-            ptB = ab.getP2();
-            setHandlePoint(0, ptA);
-            setHandlePoint(1, ptB);
+            // Second drawing step: the opposite side follows the cursor from the AB side
             ptC = GeomUtil.getMidPoint(ptA, ptB);
             setHandlePoint(2, ptC);
-            ptD = GeomUtil.getPerpendicularPointFromLine(ptA, ptB, ptC, dist2);
-            setHandlePoint(3, ptD);
+            setHandlePoint(3, oppositeSidePoint(mouseEvent, 0));
+            return 3;
           }
+          // Shifts the whole shape along its normal, keeping its height
+          double height = GeomUtil.getSignedDistanceToLine(ptA, ptB, ptD);
+          Line2D ab =
+              GeomUtil.getParallelLine(ptA, ptB, GeomUtil.getSignedDistanceToLine(ptA, ptB, ptC));
+          ptA = ab.getP1();
+          ptB = ab.getP2();
+          setHandlePoint(0, ptA);
+          setHandlePoint(1, ptB);
+          ptC = GeomUtil.getMidPoint(ptA, ptB);
+          setHandlePoint(2, ptC);
+          setHandlePoint(3, GeomUtil.getPerpendicularPointFromLine(ptA, ptB, ptC, height));
         }
-      } else if (handlePointIndex == 3) { // drag point is D (collinear with cd)
+      } else if (handlePointIndex == 3) { // drag point is D (perpendicular to ab through c)
         if (lineABvalid && ptC != null && ptD != null) {
-          Point2D ptNext = GeomUtil.getPerpendicularPointToLine(ptA, ptB, ptD);
-          double dist = ptD.distance(ptNext);
-          ptD = GeomUtil.getPerpendicularPointFromLine(ptA, ptB, ptC, dist);
-          setHandlePoint(3, ptD);
+          setHandlePoint(
+              3, oppositeSidePoint(mouseEvent, GeomUtil.getSignedDistanceToLine(ptA, ptB, ptD)));
         }
       }
     }
 
     return handlePointIndex;
+  }
+
+  /**
+   * Point of the perpendicular through C at the signed distance of the cursor from AB, so the
+   * opposite side follows the cursor on whichever side it is.
+   */
+  private Point2D oppositeSidePoint(MouseEventDouble mouseEvent, double defaultHeight) {
+    Point2D cursor = mouseEvent == null ? null : mouseEvent.getImageCoordinates();
+    double height =
+        cursor == null ? defaultHeight : GeomUtil.getSignedDistanceToLine(ptA, ptB, cursor);
+    return GeomUtil.getPerpendicularPointFromLine(ptA, ptB, ptC, height);
   }
 
   @Override
@@ -224,8 +196,8 @@ public class ObliqueRectangleGraphic extends AbstractDragGraphicArea {
       polygonPath.moveTo(ptA.getX(), ptA.getY());
       polygonPath.lineTo(ptB.getX(), ptB.getY());
       if (lineCDvalid) {
-        double dist = ptC.distance(ptD);
-        Line2D cd = GeomUtil.getParallelLine(ptA, ptB, dist);
+        Line2D cd =
+            GeomUtil.getParallelLine(ptA, ptB, GeomUtil.getSignedDistanceToLine(ptA, ptB, ptD));
         polygonPath.lineTo(cd.getP2().getX(), cd.getP2().getY());
         polygonPath.lineTo(cd.getP1().getX(), cd.getP1().getY());
       }

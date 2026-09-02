@@ -119,7 +119,6 @@ public class GraphicMouseHandler<E extends ImageElement> extends MouseActionAdap
               int handlePtIndex = dragGraph.getHandlePointIndex(mouseEvt);
 
               if (handlePtIndex >= 0) {
-                dragGraph.moveMouseOverHandlePoint(handlePtIndex, mouseEvt);
                 ds = dragGraph.createResizeDrag(handlePtIndex);
                 newCursor = cursorSet.getEditCursor();
 

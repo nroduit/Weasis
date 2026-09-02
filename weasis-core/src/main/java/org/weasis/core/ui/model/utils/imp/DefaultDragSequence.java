@@ -46,7 +46,10 @@ public class DefaultDragSequence implements Draggable {
 
     lastPoint.setLocation(evt.getImageX(), evt.getImageY());
 
-    if (!graphic.isGraphicComplete()) {
+    if (graphic.isGraphicComplete()) {
+      // Anchor on the handle center so the first drag step brings the handle under the cursor
+      draggedHandlePoint().ifPresent(lastPoint::setLocation);
+    } else {
       if (graphic.getPts().isEmpty()) {
         graphic.getPts().add(evt.getImageCoordinates());
       }
@@ -58,6 +61,13 @@ public class DefaultDragSequence implements Draggable {
       // force index to match actual dragging point
       handlePointIndex = graphic.getPts().size() - 1;
     }
+  }
+
+  private Optional<Point2D> draggedHandlePoint() {
+    List<Point2D> pts = graphic.getPts();
+    return handlePointIndex >= 0 && handlePointIndex < pts.size()
+        ? Optional.ofNullable(pts.get(handlePointIndex))
+        : Optional.empty();
   }
 
   @Override

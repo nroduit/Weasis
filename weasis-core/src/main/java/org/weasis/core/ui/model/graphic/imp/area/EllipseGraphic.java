@@ -103,9 +103,8 @@ public class EllipseGraphic extends ObliqueRectangleGraphic {
 
       polygonPath.moveTo(ptA.getX(), ptA.getY());
       if (lineCDvalid) {
-        double dist = ptC.distance(ptD);
         double a = ptA.distance(ptB) / 2.0;
-        double b = dist / 2.0;
+        double b = GeomUtil.getSignedDistanceToLine(ptA, ptB, ptD) / 2.0;
 
         Point2D ptx = GeomUtil.getPerpendicularPointFromLine(ptA, ptB, ptC, b);
         double widthTwoThirds = a * 4 / 3;

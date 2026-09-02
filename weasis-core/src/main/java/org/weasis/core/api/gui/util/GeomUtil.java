@@ -475,6 +475,16 @@ public final class GeomUtil {
   }
 
   /**
+   * Signed distance from a point to line AB, positive on the side where {@link #getParallelLine}
+   * and {@link #getPerpendicularPointFromLine} place a positive distance.
+   */
+  public static double getSignedDistanceToLine(Point2D ptA, Point2D ptB, Point2D pt) {
+    double abX = ptB.getX() - ptA.getX();
+    double abY = ptB.getY() - ptA.getY();
+    return (abX * (pt.getY() - ptA.getY()) - abY * (pt.getX() - ptA.getX())) / ptA.distance(ptB);
+  }
+
+  /**
    * @param ptA Start of line segment
    * @param ptB End of line segment
    * @param dist Distance from AB line to the parallel CD line <br>

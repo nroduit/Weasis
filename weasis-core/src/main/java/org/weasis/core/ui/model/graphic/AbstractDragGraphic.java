@@ -11,15 +11,11 @@ package org.weasis.core.ui.model.graphic;
 
 import jakarta.xml.bind.annotation.XmlTransient;
 import java.awt.Graphics2D;
-import java.awt.Point;
-import java.awt.Robot;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import javax.swing.SwingUtilities;
-import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.model.utils.Draggable;
 import org.weasis.core.ui.model.utils.imp.DefaultDragSequence;
 import org.weasis.core.ui.model.utils.imp.DragLabelSequence;
@@ -86,35 +82,6 @@ public abstract class AbstractDragGraphic extends AbstractGraphic implements Dra
       return pt;
     }
     return null;
-  }
-
-  /** Adjust the mouse cursor at the center of the handle point */
-  @Override
-  public void moveMouseOverHandlePoint(Integer handlePtIndex, MouseEventDouble event) {
-    ViewCanvas<?> graphPane = getDefaultView2d(event);
-
-    if (graphPane != null) {
-      Point2D handlePt = null;
-
-      if (handlePtIndex >= 0 && handlePtIndex < pts.size()) {
-        handlePt = pts.get(handlePtIndex);
-      }
-
-      if (handlePt != null) {
-        Point mousePt = graphPane.getMouseCoordinatesFromImage(handlePt.getX(), handlePt.getY());
-
-        if (mousePt != null && (event.getX() != mousePt.x || event.getY() != mousePt.y)) {
-          try {
-            event.translatePoint(mousePt.x - event.getX(), mousePt.y - event.getY());
-            event.setImageCoordinates(handlePt);
-            SwingUtilities.convertPointToScreen(mousePt, graphPane.getJComponent());
-            new Robot().mouseMove(mousePt.x, mousePt.y);
-          } catch (Exception e) {
-            // Do nothing
-          }
-        }
-      }
-    }
   }
 
   @Override
