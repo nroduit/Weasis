@@ -28,6 +28,7 @@ import org.dcm4che3.img.util.DicomObjectUtil;
 import org.dcm4che3.img.util.DicomUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.weasis.core.api.gui.util.GeomUtil;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.ui.model.GraphicModel;
@@ -37,6 +38,7 @@ import org.weasis.core.ui.model.graphic.imp.PointGraphic;
 import org.weasis.core.ui.model.graphic.imp.area.EllipseGraphic;
 import org.weasis.core.ui.model.graphic.imp.area.PolygonGraphic;
 import org.weasis.core.ui.model.graphic.imp.area.RectangleGraphic;
+import org.weasis.core.ui.model.graphic.imp.line.ArrowGraphic;
 import org.weasis.core.ui.model.graphic.imp.line.PolylineGraphic;
 import org.weasis.core.ui.model.utils.exceptions.InvalidShapeException;
 import org.weasis.core.ui.serialize.XmlSerializer;
@@ -199,7 +201,8 @@ public class PrGraphicUtil {
       case ELLIPSE -> PrGraphicUtil::buildEllipse;
       case MULTIPOINT -> PrGraphicUtil::buildMultiPoint;
       case RECTANGLE -> PrGraphicUtil::buildRectangle;
-      case RULER, ARROW -> PrGraphicUtil::buildLine;
+      case RULER -> PrGraphicUtil::buildLine;
+      case ARROW -> PrGraphicUtil::buildArrow;
       default -> null;
     };
   }
@@ -363,6 +366,28 @@ public class PrGraphicUtil {
     path.moveTo(data.start().getX(), data.start().getY());
     path.lineTo(data.end().getX(), data.end().getY());
 
+    return createNonEditableGraphic(context, path, false);
+  }
+
+  /** An arrow is editable as a Weasis arrow tool, else a line with a filled head. */
+  private static Graphic buildArrow(BaseGraphicContext context) throws InvalidShapeException {
+    LineData data = validateAndExtractLineData(context);
+    if (data == null) {
+      return null;
+    }
+    if (context.canBeEdited()) {
+      ArrowGraphic graphic = new ArrowGraphic();
+      graphic.buildGraphic(List.of(data.start(), data.end()));
+      context.applyProperties(graphic, false);
+      return graphic;
+    }
+    Path2D path = new Path2D.Double();
+    path.moveTo(data.start().getX(), data.start().getY());
+    path.lineTo(data.end().getX(), data.end().getY());
+    Shape head = GeomUtil.getArrowShape(data.end(), data.start(), 15, 8);
+    if (head != null) {
+      path.append(head, false);
+    }
     return createNonEditableGraphic(context, path, false);
   }
 
@@ -651,12 +676,12 @@ public class PrGraphicUtil {
     }
 
     try {
-      byte[] prBinary = TagW.getTagValue(img, TagW.PresentationModelBirary, byte[].class);
+      byte[] prBinary = TagW.getTagValue(img, TagW.PresentationModelBinary, byte[].class);
       if (prBinary != null) {
         GraphicModel model = XmlSerializer.buildPresentationModel(prBinary);
         if (model != null) {
           img.setTag(TagW.PresentationModel, model);
-          img.setTag(TagW.PresentationModelBirary, null);
+          img.setTag(TagW.PresentationModelBinary, null);
         }
       }
     } catch (Exception e) {

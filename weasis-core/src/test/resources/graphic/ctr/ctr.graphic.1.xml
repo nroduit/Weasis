@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<ctr fill="false" showLabel="true" thickness="1.0" uuid="test.graphic-abcd-123-efg45.1">
+  <paint rgb="000000"/>
+  <pts>
+    <pt x="80.0" y="100.0"/>
+    <pt x="180.0" y="130.0"/>
+    <pt x="20.0" y="160.0"/>
+    <pt x="220.0" y="150.0"/>
+    <pt x="120.0" y="70.0"/>
+    <pt x="120.0" y="190.0"/>
+  </pts>
+</ctr>

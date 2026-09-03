@@ -25,6 +25,7 @@ import java.util.Collections;
 import java.util.List;
 import org.weasis.core.api.gui.util.GUIEntry;
 import org.weasis.core.api.gui.util.KeyActionValue;
+import org.weasis.core.api.image.measure.PlaneGeometry;
 import org.weasis.core.api.image.util.MeasurableLayer;
 import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.api.util.Copyable;
@@ -39,7 +40,13 @@ import org.weasis.core.ui.util.MouseEventDouble;
 
 @XmlJavaTypeAdapter(AbstractGraphic.Adapter.class)
 public interface Graphic extends UUIDable, GUIEntry, KeyActionValue, Copyable<Graphic> {
+  /**
+   * Color of a graphic that does not state one, as in files written before the color was always
+   * stored; it must not change. The color of new graphics is a preference, see {@code
+   * ViewSetting.DEFAULT_LINE_COLOR}.
+   */
   Color DEFAULT_COLOR = Color.YELLOW;
+
   Float DEFAULT_LINE_THICKNESS = 1f;
   Float DEFAULT_FILL_OPACITY = 1f;
   Boolean DEFAULT_LABEL_VISIBLE = Boolean.TRUE;
@@ -51,6 +58,7 @@ public interface Graphic extends UUIDable, GUIEntry, KeyActionValue, Copyable<Gr
   String ACTION_TO_BACK = "toBack";
   String ACTION_REMOVE = "remove"; // NON-NLS
   String ACTION_REMOVE_REPAINT = "remove.repaint";
+  String PROPERTY_ANCHOR = "anchor"; // NON-NLS
 
   Integer HANDLE_SIZE = 6;
   Integer SELECTION_SIZE = 10;
@@ -113,6 +121,11 @@ public interface Graphic extends UUIDable, GUIEntry, KeyActionValue, Copyable<Gr
    * @return Graphic's color
    */
   Paint getColorPaint();
+
+  /** True when a dark halo is painted under the lines so they stand out on any image. */
+  default boolean isOutlined() {
+    return false;
+  }
 
   /**
    * Returns <b>TRUE</b> if the graphic is filled, <b>FALSE</b> otherwise (Default value:
@@ -230,6 +243,30 @@ public interface Graphic extends UUIDable, GUIEntry, KeyActionValue, Copyable<Gr
   void setVariablePointsNumber(Boolean variablePointsNumber);
 
   LayerType getLayerType();
+
+  /** Patient-space position of the handle points, or {@code null} when never anchored. */
+  default SpatialAnchor getAnchor() {
+    return null;
+  }
+
+  /** Sets the patient-space position and fires {@link #PROPERTY_ANCHOR} when it changes. */
+  default void setAnchor(SpatialAnchor anchor) {
+    // Graphics without patient-space support ignore the anchor
+  }
+
+  /** Records the patient-space position of the handle points from the plane they lie on. */
+  default void anchor(PlaneGeometry geometry) {
+    if (geometry != null && isGraphicComplete() && !getPts().isEmpty()) {
+      setAnchor(SpatialAnchor.of(geometry, getPts()));
+    }
+  }
+
+  /** Anchors the graphic on the plane of the view, when the view has a located plane. */
+  default void anchorOn(ViewCanvas<?> view) {
+    if (view != null && view.getMeasurableLayer() != null) {
+      anchor(view.getMeasurableLayer().getPlaneGeometry());
+    }
+  }
 
   void removeAllPropertyChangeListener();
 

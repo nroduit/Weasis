@@ -19,10 +19,12 @@ import javax.swing.ButtonGroup;
 import javax.swing.JComboBox;
 import javax.swing.JFormattedTextField;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JRadioButton;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
+import javax.swing.UIManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.Messages;
@@ -32,7 +34,10 @@ import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaSeries;
+import org.weasis.core.ui.model.graphic.Graphic;
 import org.weasis.core.ui.model.graphic.imp.line.LineGraphic;
+import org.weasis.core.ui.model.layer.LayerType;
+import org.weasis.core.ui.util.ColorLayerUI;
 import org.weasis.core.util.MathUtil;
 import org.weasis.core.util.StringUtil;
 
@@ -90,6 +95,44 @@ public class CalibrationView extends JPanel {
     add(GuiUtils.getFlowLayoutPanel(lblApplyTo, radioButtonSeries, radioButtonImage));
   }
 
+  /** A finished plain measurement line, not one of the tools built on it. */
+  public static boolean accepts(Graphic graphic) {
+    return graphic instanceof LineGraphic line
+        && graphic.getClass() == LineGraphic.class
+        && graphic.getLayerType() == LayerType.MEASURE
+        && line.isGraphicComplete();
+  }
+
+  /**
+   * Asks for the real length of a line and calibrates the image, or the series, with it; the dialog
+   * also offers to go back to pixel units.
+   */
+  public static void showDialog(LineGraphic line, ViewCanvas<?> view) {
+    CalibrationView content = new CalibrationView(line, view, view.isSeriesCalibrationDefault());
+    ColorLayerUI layer = ColorLayerUI.createTransparentLayerUI(view.getJComponent());
+    String apply = Messages.getString("CalibrationView.apply_calibration");
+    String remove = Messages.getString("CalibrationView.remove");
+    Object[] options = {apply, remove, UIManager.getString("OptionPane.cancelButtonText")};
+    int choice =
+        JOptionPane.showOptionDialog(
+            ColorLayerUI.getContentPane(layer),
+            content,
+            Messages.getString("CalibrationView.title"),
+            JOptionPane.DEFAULT_OPTION,
+            JOptionPane.PLAIN_MESSAGE,
+            null,
+            options,
+            apply);
+    if (layer != null) {
+      layer.hideUI();
+    }
+    if (choice == 0) {
+      content.applyNewCalibration();
+    } else if (choice == 1) {
+      content.removeCalibration();
+    }
+  }
+
   public boolean isApplyingToSeries() {
     return radioButtonSeries.isSelected();
   }
@@ -121,8 +164,27 @@ public class CalibrationView extends JPanel {
     }
   }
 
+  /**
+   * Drops the user's calibration: the images get back the calibration of their file, and the
+   * displayed one the calibration of the presentation state applied to the view, if any.
+   */
   public void removeCalibration() {
-    applyCalibration(1.0, Unit.PIXEL);
+    ImageElement image = view2d.getImage();
+    if (image == null) {
+      return;
+    }
+    MediaSeries<?> series = view2d.getSeries();
+    if (radioButtonSeries.isSelected() && series != null) {
+      synchronized (series) {
+        for (Object media : series.getMedias(null, null)) {
+          if (media instanceof ImageElement img && media != image) {
+            view2d.restoreCalibration(img);
+          }
+        }
+      }
+    }
+    view2d.restoreCalibration(image);
+    refreshView(image.getPixelSpacingUnit());
   }
 
   private void applyCalibration(double ratio, Unit unit) {
@@ -151,12 +213,16 @@ public class CalibrationView extends JPanel {
       image.setPixelSizeCalibrationDescription("Modified by user");
       image.setPixelSizeModifiedByUser(true);
 
-      ImageViewerEventManager<?> manager = view2d.getEventManager();
-      if (manager.getSelectedViewPane() == view2d) {
-        manager.getAction(ActionW.SPATIAL_UNIT).ifPresent(c -> c.setSelectedItem(unit));
-      }
-      view2d.getGraphicManager().updateLabels(Boolean.TRUE, view2d);
+      refreshView(unit);
     }
+  }
+
+  private void refreshView(Unit unit) {
+    ImageViewerEventManager<?> manager = view2d.getEventManager();
+    if (manager.getSelectedViewPane() == view2d) {
+      manager.getAction(ActionW.SPATIAL_UNIT).ifPresent(c -> c.setSelectedItem(unit));
+    }
+    view2d.getGraphicManager().updateLabels(Boolean.TRUE, view2d);
   }
 
   public void applyNewCalibration() {

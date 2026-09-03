@@ -32,6 +32,11 @@ public class MeasureItem {
     return measurement;
   }
 
+  /** Stable key of the measurement, see {@link Measurement#getKey()}. */
+  public String getKey() {
+    return measurement.getKey();
+  }
+
   public Object getValue() {
     return value;
   }

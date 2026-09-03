@@ -47,12 +47,15 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.Image2DViewer;
 import org.weasis.core.api.gui.util.ActionW;
-import org.weasis.core.api.gui.util.DecFormatter;
 import org.weasis.core.api.gui.util.GeomUtil;
+import org.weasis.core.api.gui.util.ShortcutManager;
 import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.ui.editor.image.ViewCanvas;
+import org.weasis.core.ui.editor.image.dockable.MeasureTool;
 import org.weasis.core.ui.model.layer.GraphicLayer;
 import org.weasis.core.ui.model.layer.LayerType;
+import org.weasis.core.ui.model.utils.GraphicOutline;
+import org.weasis.core.ui.model.utils.MeasureFormat;
 import org.weasis.core.ui.model.utils.bean.AdvancedShape;
 import org.weasis.core.ui.model.utils.bean.MeasureItem;
 import org.weasis.core.ui.model.utils.bean.Measurement;
@@ -80,6 +83,7 @@ public abstract class AbstractGraphic extends DefaultUUID implements Graphic {
   protected Integer classID;
   protected GraphicLabel graphicLabel;
   protected LayerType layerType = LayerType.DRAW;
+  protected SpatialAnchor anchor;
 
   protected Shape shape;
   protected Boolean selected = DEFAULT_SELECTED;
@@ -104,6 +108,7 @@ public abstract class AbstractGraphic extends DefaultUUID implements Graphic {
     setFilled(graphic.filled);
     setClassID(graphic.classID);
     this.graphicLabel = graphic.graphicLabel == null ? null : graphic.graphicLabel.copy();
+    this.anchor = graphic.anchor == null ? null : graphic.anchor.copy();
 
     this.variablePointsNumber = Objects.isNull(graphic.pointNumber) || graphic.pointNumber < 0;
     List<Point2D> ptsList =
@@ -147,6 +152,19 @@ public abstract class AbstractGraphic extends DefaultUUID implements Graphic {
   @Override
   public List<Point2D> getPts() {
     return pts;
+  }
+
+  @XmlElement(name = "anchor")
+  @Override
+  public SpatialAnchor getAnchor() {
+    return anchor;
+  }
+
+  @Override
+  public void setAnchor(SpatialAnchor anchor) {
+    SpatialAnchor oldAnchor = this.anchor;
+    this.anchor = anchor;
+    firePropertyChange(PROPERTY_ANCHOR, oldAnchor, anchor);
   }
 
   @Override
@@ -411,14 +429,15 @@ public abstract class AbstractGraphic extends DefaultUUID implements Graphic {
 
   @Override
   public void updateLabel(Object source, ViewCanvas<?> view2d) {
-    boolean releasedEvent = false;
+    this.updateLabel(view2d, null, isReleasedEvent(source));
+  }
 
+  /** True for a mouse release or an explicit {@code Boolean.TRUE}, as passed to updateLabel. */
+  protected static boolean isReleasedEvent(Object source) {
     if (source instanceof MouseEvent mouseEvent) {
-      releasedEvent = mouseEvent.getID() == MouseEvent.MOUSE_RELEASED;
-    } else if (source instanceof Boolean boolVal) {
-      releasedEvent = boolVal;
+      return mouseEvent.getID() == MouseEvent.MOUSE_RELEASED;
     }
-    this.updateLabel(view2d, null, releasedEvent);
+    return source instanceof Boolean boolVal && boolVal;
   }
 
   @Override
@@ -432,6 +451,9 @@ public abstract class AbstractGraphic extends DefaultUUID implements Graphic {
     } else if (shape != null) {
       Shape drawingShape = (transform == null) ? shape : transform.createTransformedShape(shape);
 
+      if (isOutlined()) {
+        GraphicOutline.draw(g2d, drawingShape, getStroke(lineThickness));
+      }
       g2d.setPaint(colorPaint);
       g2d.setStroke(getStroke(lineThickness));
       g2d.draw(drawingShape);
@@ -521,14 +543,31 @@ public abstract class AbstractGraphic extends DefaultUUID implements Graphic {
     }
   }
 
+  /**
+   * The user's measurements and drawings get the halo when the preference asks for it. Graphics of
+   * a DICOM presentation state are left as their author styled them (Shadow Style, PS3.3 C.10.7.1),
+   * and so are the overlays of the other layers.
+   */
+  @Override
+  public boolean isOutlined() {
+    LayerType type = getLayerType();
+    return (type == LayerType.MEASURE || type == LayerType.DRAW)
+        && MeasureTool.viewSetting.isOutline();
+  }
+
+  /** Key of the shortcut bound to the tool of this graphic, {@code 0} when it has none. */
   @Override
   public int getKeyCode() {
-    return 0;
+    return shortcutId().map(ShortcutManager.getInstance()::getKeyCode).orElse(0);
   }
 
   @Override
   public int getModifier() {
-    return 0;
+    return shortcutId().map(ShortcutManager.getInstance()::getModifier).orElse(0);
+  }
+
+  private Optional<String> shortcutId() {
+    return GraphicRegistry.getInstance().keyOf(this).map(ShortcutManager::graphicToolId);
   }
 
   @Override
@@ -815,6 +854,9 @@ public abstract class AbstractGraphic extends DefaultUUID implements Graphic {
   }
 
   public void updateLabel(ViewCanvas<?> view2d, Point2D pos, boolean releasedEvent) {
+    if (releasedEvent) {
+      anchorOn(view2d);
+    }
     List<Graphic> selectedGraphics =
         view2d == null ? Collections.emptyList() : view2d.getGraphicManager().getSelectedGraphics();
     boolean isMultiSelection = selectedGraphics.size() > 1;
@@ -834,6 +876,11 @@ public abstract class AbstractGraphic extends DefaultUUID implements Graphic {
 
     if (labelVisible && measList != null && !measList.isEmpty()) {
       List<String> labelList = new ArrayList<>(measList.size());
+      MeasureFormat format =
+          new MeasureFormat(
+              view2d == null ? null : view2d.getMeasurableLayer(),
+              view2d == null ? null : (Unit) view2d.getActionValue(ActionW.SPATIAL_UNIT.cmd()),
+              MeasureTool.viewSetting.getDecimals());
 
       for (MeasureItem item : measList) {
         if (item != null) {
@@ -852,8 +899,8 @@ public abstract class AbstractGraphic extends DefaultUUID implements Graphic {
                 sb.append(item.getLabelExtension());
               }
               sb.append(" : ");
-              if (value instanceof Number number) {
-                sb.append(DecFormatter.allNumber(number));
+              if (value instanceof Number) {
+                sb.append(format.format(item));
                 if (unit != null) {
                   sb.append(" ").append(unit);
                 }

@@ -23,6 +23,7 @@ import static org.weasis.core.ui.model.utils.ImageStatistics.IMAGE_MIN;
 import static org.weasis.core.ui.model.utils.ImageStatistics.IMAGE_PIXELS;
 import static org.weasis.core.ui.model.utils.ImageStatistics.IMAGE_SKEW;
 import static org.weasis.core.ui.model.utils.ImageStatistics.IMAGE_STD;
+import static org.weasis.core.ui.model.utils.ImageStatistics.IMAGE_SUM;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -87,6 +88,17 @@ class ImageRegionStatisticsTest {
     assertEquals(-1018.0, s.get(IMAGE_MAX), EPS);
     assertEquals(-1021.0, s.get(IMAGE_MEAN), EPS);
     assertEquals(-1020.5, s.get(IMAGE_MEDIAN), EPS);
+  }
+
+  @Test
+  void getStatistics_sumIsTheTotalOfTheRealValues() {
+    // Levels 0..6 weighted {1,2,3,4,3,2,1}: 48 stored, 16 pixels; the intercept applies per pixel.
+    assertEquals(
+        48.0, statsFor(new float[] {1, 2, 3, 4, 3, 2, 1}, 0.0, 6.0, 0.0).get(IMAGE_SUM), EPS);
+    assertEquals(
+        48.0 + 16 * 10.0,
+        statsFor(new float[] {1, 2, 3, 4, 3, 2, 1}, 0.0, 6.0, 10.0).get(IMAGE_SUM),
+        EPS);
   }
 
   @Test

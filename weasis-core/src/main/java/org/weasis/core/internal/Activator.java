@@ -48,6 +48,9 @@ import org.weasis.core.ui.editor.FileModel;
 import org.weasis.core.ui.editor.SeriesViewerFactory;
 import org.weasis.core.ui.editor.ViewerPluginBuilder;
 import org.weasis.core.ui.editor.image.dockable.MeasureTool;
+import org.weasis.core.ui.model.graphic.GraphicRegistry;
+import org.weasis.core.ui.model.graphic.GraphicToolProvider;
+import org.weasis.core.ui.model.graphic.profile.MeasurementProfiles;
 import org.weasis.core.ui.model.layer.AbstractInfoLayer;
 import org.weasis.core.util.FileUtil;
 import org.weasis.core.util.PropertiesUtil;
@@ -87,6 +90,7 @@ public class Activator implements BundleActivator, ServiceListener {
     // Initialize keyboard shortcut manager
     ShortcutManager shortcutManager = ShortcutManager.getInstance();
     shortcutManager.registerDefaults();
+    GraphicRegistry.getInstance().registerShortcuts();
     shortcutManager.loadPreferences(prefs);
     shortcutManager.applyToFeatures();
 
@@ -103,8 +107,16 @@ public class Activator implements BundleActivator, ServiceListener {
           }
         });
 
+    GraphicRegistry registry = GraphicRegistry.getInstance();
+    for (ServiceReference<GraphicToolProvider> service :
+        bundleContext.getServiceReferences(GraphicToolProvider.class, null)) {
+      registry.register(bundleContext.getService(service));
+    }
+
     bundleContext.addServiceListener(
-        this, BundleTools.createServiceFilter(Codec.class, SeriesViewerFactory.class));
+        this,
+        BundleTools.createServiceFilter(
+            Codec.class, SeriesViewerFactory.class, GraphicToolProvider.class));
   }
 
   @Override
@@ -114,6 +126,7 @@ public class Activator implements BundleActivator, ServiceListener {
     // Save preferences
     Preferences prefs = BundlePreferences.getDefaultPreferences(bundleContext);
     AbstractInfoLayer.savePreferences(prefs);
+    MeasurementProfiles.restoreUserSettings();
     MeasureTool.viewSetting.savePreferences(prefs);
     ShortcutManager.getInstance().savePreferences(prefs);
     prefs.sync(); // Force to save as PreferencesManager (as specific bundle managing preferences)
@@ -155,6 +168,13 @@ public class Activator implements BundleActivator, ServiceListener {
           codecs.remove(codec);
         }
         // Unget service object and null references.
+        context.ungetService(sRef);
+      }
+    } else if (service instanceof GraphicToolProvider provider) {
+      if (event.getType() == ServiceEvent.REGISTERED) {
+        GraphicRegistry.getInstance().register(provider);
+      } else if (event.getType() == ServiceEvent.UNREGISTERING) {
+        GraphicRegistry.getInstance().unregister(provider);
         context.ungetService(sRef);
       }
     } else if (service instanceof SeriesViewerFactory viewerFactory) {

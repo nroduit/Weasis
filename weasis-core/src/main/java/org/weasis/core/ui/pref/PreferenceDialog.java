@@ -51,7 +51,7 @@ public class PreferenceDialog extends AbstractWizardDialog {
         parentWin,
         Messages.getString("OpenPreferencesAction.title"),
         ModalityType.APPLICATION_MODAL,
-        new Dimension(600, 450));
+        new Dimension(620, 460));
 
     jPanelBottom.add(bottomPrefPanel, 0);
 

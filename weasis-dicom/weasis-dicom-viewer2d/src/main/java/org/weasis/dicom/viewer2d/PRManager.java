@@ -140,6 +140,14 @@ public class PRManager {
     }
   }
 
+  /** Applies only the pixel spacing and the pixel aspect ratio of a presentation state. */
+  public static void applyPixelSpacing(
+      ViewCanvas<DicomImageElement> view, PresentationStateReader reader, DicomImageElement img) {
+    if (isValidInput(view, reader, img)) {
+      new PixelSpacingProcessor(new PresentationContext(view, reader, img)).process();
+    }
+  }
+
   /**
    * Deletes DICOM layers from the graphic manager.
    *

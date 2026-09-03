@@ -46,12 +46,18 @@ PolylineGraphic (on an MPR plane)
 ```
 
 - **Panoramic view.** Shown in place inside the existing MPR container (a 2×2 layout with the
-  three planes). X is the arc-length position along the curve, Y is the volume Z direction.
+  three planes). X is the arc-length position along the curve, Y runs along the normal of the
+  plane the curve was drawn on, so a curve traced on any plane, oblique included, is reformatted
+  correctly.
   Each pixel is an interpolated sample of the source volume taken on the curve. Editing the
   source polyline regenerates the image; removing it unbinds the axis.
 - **Cross-sectional series.** The curve is sampled at the requested spacing (one sample = one
-  cut). Each slab spans the in-plane perpendicular (X) and Z (Y), centered on its sample. The
-  series is registered under the source study in the `DicomModel` and opened in a new viewer tab.
+  cut). Each slab spans the in-plane perpendicular (X) and the drawing plane's normal (Y),
+  centered on its sample. The series is registered under the source study in the `DicomModel`
+  and opened in a new viewer tab.
+- **The curve follows the plane.** The polyline is anchored in patient space, so it survives
+  scrolling and rotation of its view (see the MPR architecture guide, *Graphics across planes*);
+  the live binding recomputes the curve from the polyline whenever it is edited on its plane.
 
 ## Conventions
 

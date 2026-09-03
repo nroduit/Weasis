@@ -106,9 +106,16 @@ public class TagW {
   public static final TagW ThumbnailPath = new TagW("ThumbnailPath", TagType.STRING);
   public static final TagW ExplorerModel =
       new TagW("ExplorerModel", Messages.getString("TagElement.exp_model"), TagType.OBJECT);
-  public static final TagW PresentationModel = new TagW("PesentationModel", TagType.OBJECT);
-  public static final TagW PresentationModelBirary =
-      new TagW("PesentationModelBinary", TagType.BYTE);
+  public static final TagW PresentationModel = new TagW("PresentationModel", TagType.OBJECT);
+  public static final TagW PresentationModelBinary =
+      new TagW("PresentationModelBinary", TagType.BYTE);
+
+  /**
+   * @deprecated use {@link #PresentationModelBinary}.
+   */
+  @Deprecated(since = "4.8.0", forRemoval = true)
+  public static final TagW PresentationModelBirary = PresentationModelBinary;
+
   public static final TagW SplitSeriesNumber =
       new TagW("SplitSeriesNumber", Messages.getString("TagElement.split_no"), TagType.INTEGER);
   public static final TagW SeriesSelected =

@@ -17,21 +17,46 @@ import java.awt.GraphicsEnvironment;
 import java.awt.Rectangle;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.BiConsumer;
+import java.util.stream.Collectors;
 import javax.swing.JSpinner;
 import javax.swing.SpinnerNumberModel;
+import org.osgi.service.prefs.BackingStoreException;
 import org.osgi.service.prefs.Preferences;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.service.BundlePreferences;
 import org.weasis.core.api.util.FontItem;
-import org.weasis.core.ui.editor.image.MeasureToolBar;
 import org.weasis.core.ui.editor.image.dockable.MeasureTool;
 import org.weasis.core.ui.model.graphic.Graphic;
+import org.weasis.core.ui.model.graphic.GraphicRegistry;
+import org.weasis.core.ui.model.graphic.ToolCategory;
 import org.weasis.core.ui.model.utils.ImageStatistics;
+import org.weasis.core.ui.model.utils.MeasureFormat;
 import org.weasis.core.ui.model.utils.bean.Measurement;
 
 public class ViewSetting {
   public static final String PREFERENCE_NODE = "view2d.default";
   public static final FontItem DEFAULT_FONT = FontItem.SMALL_SEMIBOLD;
+  public static final int DEFAULT_DECIMALS = MeasureFormat.AUTO;
+
+  /**
+   * Not "decimals": development builds of 4.8 stored a fixed 2 under that name before the automatic
+   * mode existed, and no release ever wrote it, so the stale value is simply not read.
+   */
+  private static final String DECIMALS_KEY = "valueDecimals"; // NON-NLS
+
+  public static final double DEFAULT_CIRCLE_RADIUS = 5.0;
+
+  /**
+   * Color of new graphics. Cyan, with the outline, keeps the best worst-case contrast over
+   * grayscale images and stays apart from the hot, PET and Doppler color maps, where the former
+   * yellow merges with the image.
+   */
+  public static final Color DEFAULT_LINE_COLOR = Color.CYAN;
+
+  /** Marks preferences whose line color was checked against the default of this generation. */
+  private static final int COLOR_GENERATION = 2;
+
   private FontItem fontItem;
   private boolean drawOnlyOnce;
   private boolean filled;
@@ -40,6 +65,10 @@ public class ViewSetting {
 
   private final SpinnerNumberModel spinnerModel = new SpinnerNumberModel(1, 1, 8, 1);
   private boolean basicStatistics;
+  private int decimals = DEFAULT_DECIMALS;
+  private boolean uprightByDrag;
+  private boolean outline = true;
+  private double circleRadius = DEFAULT_CIRCLE_RADIUS;
   private boolean moreStatistics;
   private final List<Monitor> monitors = new ArrayList<>(2);
 
@@ -48,7 +77,7 @@ public class ViewSetting {
     this.drawOnlyOnce = true;
     this.filled = Graphic.DEFAULT_FILLED;
     this.fillOpacity = Graphic.DEFAULT_FILL_OPACITY;
-    this.lineColor = Graphic.DEFAULT_COLOR;
+    this.lineColor = DEFAULT_LINE_COLOR;
     this.basicStatistics = true;
     this.moreStatistics = true;
     spinnerModel.addChangeListener(
@@ -71,10 +100,13 @@ public class ViewSetting {
       drawOnlyOnce = draw.getBoolean("once", drawOnlyOnce); // NON-NLS
       int lineWidth = draw.getInt("width", Graphic.DEFAULT_LINE_THICKNESS.intValue()); // NON-NLS
       setLineWidth(lineWidth);
-      int rgb = draw.getInt("color", Graphic.DEFAULT_COLOR.getRGB()); // NON-NLS
-      lineColor = new Color(rgb, true);
+      lineColor = storedLineColor(draw);
+      outline = draw.getBoolean("outline", true); // NON-NLS
       filled = draw.getBoolean("fill", Graphic.DEFAULT_FILLED); // NON-NLS
       fillOpacity = draw.getFloat("fillOpacity", Graphic.DEFAULT_FILL_OPACITY); // NON-NLS
+      setDecimals(draw.getInt(DECIMALS_KEY, DEFAULT_DECIMALS));
+      uprightByDrag = draw.getBoolean("upright", false); // NON-NLS
+      setCircleRadius(draw.getDouble("circleRadius", DEFAULT_CIRCLE_RADIUS)); // NON-NLS
 
       Preferences stats = p.node("statistics"); // NON-NLS
       basicStatistics = stats.getBoolean("basic", basicStatistics); // NON-NLS
@@ -90,45 +122,69 @@ public class ViewSetting {
       ImageStatistics.IMAGE_SKEW.setComputed(moreStatistics);
       ImageStatistics.IMAGE_KURTOSIS.setComputed(moreStatistics);
       ImageStatistics.IMAGE_ENTROPY.setComputed(moreStatistics);
+      ImageStatistics.IMAGE_SUM.setComputed(moreStatistics);
 
-      String labels = stats.get("label", null); // NON-NLS
-      if (labels != null) {
-        String[] items = labels.split(",");
-        for (String item : items) {
-          String[] val = item.split(":");
-          if (val.length == 2) {
-            for (Measurement m : ImageStatistics.ALL_MEASUREMENTS) {
-              if (val[0].equals(String.valueOf(m.getId()))) {
-                m.setGraphicLabel(isTrueValue(val[1]));
-                break;
-              }
+      applyLabels(stats.get("label", null), List.of(ImageStatistics.ALL_MEASUREMENTS)); // NON-NLS
+      forEachMeasurementTool(
+          (key, graph) -> {
+            Preferences node = toolNode(p, key, graph);
+            if (node != null) {
+              applyLabels(node.get("label", null), graph.getMeasurementList()); // NON-NLS
             }
-          }
-        }
-      }
+          });
+    }
+  }
 
-      // Forget the Selection Graphic
-      for (int i = 1; i < MeasureToolBar.getMeasureGraphicList().size(); i++) {
-        Graphic graph = MeasureToolBar.getMeasureGraphicList().get(i);
+  /**
+   * The color was always saved, chosen or not, so a stored yellow from before the default changed
+   * tells nothing: it follows the new default once. A yellow picked afterwards is kept.
+   */
+  static Color storedLineColor(Preferences draw) {
+    Color stored = new Color(draw.getInt("color", DEFAULT_LINE_COLOR.getRGB()), true); // NON-NLS
+    boolean formerDefault =
+        draw.getInt("colorGeneration", 1) < COLOR_GENERATION // NON-NLS
+            && stored.equals(Graphic.DEFAULT_COLOR);
+    return formerDefault ? DEFAULT_LINE_COLOR : stored;
+  }
+
+  /** Visits the measurement tools that expose measurements, with their registry key. */
+  private static void forEachMeasurementTool(BiConsumer<String, Graphic> visitor) {
+    GraphicRegistry registry = GraphicRegistry.getInstance();
+    for (ToolCategory category : List.of(ToolCategory.MEASURE, ToolCategory.ADVANCED)) {
+      for (Graphic graph : registry.prototypes(category)) {
         List<Measurement> list = graph.getMeasurementList();
         if (list != null && !list.isEmpty()) {
-          Preferences gpref = p.node(graph.getClass().getSimpleName());
-          labels = gpref.get("label", null); // NON-NLS
-          if (labels != null) {
-            String[] items = labels.split(",");
-            for (String item : items) {
-              String[] val = item.split(":");
-              if (val.length == 2) {
-                for (Measurement m : list) {
-                  if (val[0].equals(String.valueOf(m.getId()))) {
-                    m.setGraphicLabel(isTrueValue(val[1]));
-                    break;
-                  }
-                }
-              }
-            }
-          }
+          registry.keyOf(graph).ifPresent(key -> visitor.accept(key, graph));
         }
+      }
+    }
+  }
+
+  /** Node of a tool: its key, or the class name used before 4.8 when only that one exists. */
+  private static Preferences toolNode(Preferences parent, String key, Graphic graph) {
+    try {
+      if (parent.nodeExists(key)) {
+        return parent.node(key);
+      }
+      String legacy = graph.getClass().getSimpleName();
+      return parent.nodeExists(legacy) ? parent.node(legacy) : null;
+    } catch (BackingStoreException e) {
+      return null;
+    }
+  }
+
+  /** Reads a {@code token:0|1} list where the token is a measurement key or a legacy id. */
+  private static void applyLabels(String labels, List<Measurement> measurements) {
+    if (labels == null || measurements == null) {
+      return;
+    }
+    for (String item : labels.split(",")) {
+      String[] val = item.split(":");
+      if (val.length == 2) {
+        measurements.stream()
+            .filter(m -> m.matches(val[0].trim()))
+            .findFirst()
+            .ifPresent(m -> m.setGraphicLabel(isTrueValue(val[1])));
       }
     }
   }
@@ -181,10 +237,10 @@ public class ViewSetting {
     return "1".equals(val.trim());
   }
 
-  private static void writeLabels(StringBuilder buffer, Measurement m) {
-    buffer.append(m.getId());
-    buffer.append(":");
-    buffer.append(m.getGraphicLabel() ? "1" : "0"); // NON-NLS
+  private static String labels(List<Measurement> measurements) {
+    return measurements.stream()
+        .map(m -> m.getKey() + ":" + (m.getGraphicLabel() ? "1" : "0")) // NON-NLS
+        .collect(Collectors.joining(","));
   }
 
   public void savePreferences(Preferences prefs) {
@@ -197,35 +253,23 @@ public class ViewSetting {
       BundlePreferences.putBooleanPreferences(draw, "once", drawOnlyOnce); // NON-NLS
       BundlePreferences.putIntPreferences(draw, "width", getLineWidth()); // NON-NLS
       BundlePreferences.putIntPreferences(draw, "color", lineColor.getRGB()); // NON-NLS
+      BundlePreferences.putIntPreferences(draw, "colorGeneration", COLOR_GENERATION); // NON-NLS
+      BundlePreferences.putBooleanPreferences(draw, "outline", outline); // NON-NLS
       BundlePreferences.putBooleanPreferences(draw, "fill", filled); // NON-NLS
       BundlePreferences.putFloatPreferences(draw, "fillOpacity", fillOpacity); // NON-NLS
+      BundlePreferences.putIntPreferences(draw, DECIMALS_KEY, decimals);
+      BundlePreferences.putBooleanPreferences(draw, "upright", uprightByDrag); // NON-NLS
+      BundlePreferences.putDoublePreferences(draw, "circleRadius", circleRadius); // NON-NLS
 
       Preferences stats = p.node("statistics"); // NON-NLS
       BundlePreferences.putBooleanPreferences(stats, "basic", basicStatistics); // NON-NLS
       BundlePreferences.putBooleanPreferences(stats, "more", moreStatistics); // NON-NLS
-      StringBuilder buffer = new StringBuilder();
-      writeLabels(buffer, ImageStatistics.ALL_MEASUREMENTS[0]);
-      for (int i = 1; i < ImageStatistics.ALL_MEASUREMENTS.length; i++) {
-        buffer.append(",");
-        writeLabels(buffer, ImageStatistics.ALL_MEASUREMENTS[i]);
-      }
-      BundlePreferences.putStringPreferences(stats, "label", buffer.toString()); // NON-NLS
-
-      // Forget the Selection Graphic
-      for (int i = 1; i < MeasureToolBar.getMeasureGraphicList().size(); i++) {
-        Graphic graph = MeasureToolBar.getMeasureGraphicList().get(i);
-        List<Measurement> list = graph.getMeasurementList();
-        if (list != null && !list.isEmpty()) {
-          Preferences gpref = p.node(graph.getClass().getSimpleName());
-          buffer = new StringBuilder();
-          writeLabels(buffer, list.getFirst());
-          for (int j = 1; j < list.size(); j++) {
-            buffer.append(",");
-            writeLabels(buffer, list.get(j));
-          }
-          BundlePreferences.putStringPreferences(gpref, "label", buffer.toString()); // NON-NLS
-        }
-      }
+      BundlePreferences.putStringPreferences(
+          stats, "label", labels(List.of(ImageStatistics.ALL_MEASUREMENTS))); // NON-NLS
+      forEachMeasurementTool(
+          (key, graph) ->
+              BundlePreferences.putStringPreferences(
+                  p.node(key), "label", labels(graph.getMeasurementList()))); // NON-NLS
     }
   }
 
@@ -280,6 +324,46 @@ public class ViewSetting {
 
   public void setFillOpacity(float fillOpacity) {
     this.fillOpacity = fillOpacity;
+  }
+
+  /**
+   * Decimals of the measured values on the image and in the table: {@link MeasureFormat#AUTO} to
+   * follow the precision of each value, or a fixed number. Copies keep the full precision.
+   */
+  public int getDecimals() {
+    return decimals;
+  }
+
+  public void setDecimals(int decimals) {
+    this.decimals =
+        decimals < 0 ? MeasureFormat.AUTO : Math.min(decimals, MeasureFormat.MAX_DECIMALS);
+  }
+
+  /** True when a dark halo is painted under the lines of measurements and drawings. */
+  public boolean isOutline() {
+    return outline;
+  }
+
+  public void setOutline(boolean outline) {
+    this.outline = outline;
+  }
+
+  /** True when dragging draws an upright rectangle or ellipse and Shift the oblique one. */
+  public boolean isUprightByDrag() {
+    return uprightByDrag;
+  }
+
+  public void setUprightByDrag(boolean uprightByDrag) {
+    this.uprightByDrag = uprightByDrag;
+  }
+
+  /** Radius in millimeters of the circle dropped by a click of the circle tool. */
+  public double getCircleRadius() {
+    return circleRadius;
+  }
+
+  public void setCircleRadius(double circleRadius) {
+    this.circleRadius = circleRadius > 0 ? circleRadius : DEFAULT_CIRCLE_RADIUS;
   }
 
   public boolean isBasicStatistics() {

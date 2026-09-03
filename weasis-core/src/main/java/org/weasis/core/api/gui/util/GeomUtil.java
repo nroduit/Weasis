@@ -17,6 +17,7 @@ import java.awt.geom.Path2D;
 import java.awt.geom.PathIterator;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import org.weasis.core.util.MathUtil;
@@ -691,6 +692,69 @@ public final class GeomUtil {
     path.lineTo(ptI2.getX(), ptI2.getY());
 
     return path;
+  }
+
+  /**
+   * Reduces a polyline to the points that matter, keeping every point farther than the tolerance
+   * from the segment joining its kept neighbours (Douglas-Peucker).
+   */
+  public static List<Point2D> simplify(List<Point2D> points, double tolerance) {
+    if (points == null || points.size() < 3 || tolerance <= 0) {
+      return points == null ? List.of() : new ArrayList<>(points);
+    }
+    boolean[] keep = new boolean[points.size()];
+    keep[0] = true;
+    keep[points.size() - 1] = true;
+    simplify(points, 0, points.size() - 1, tolerance, keep);
+    List<Point2D> result = new ArrayList<>();
+    for (int i = 0; i < points.size(); i++) {
+      if (keep[i]) {
+        result.add(points.get(i));
+      }
+    }
+    return result;
+  }
+
+  private static void simplify(
+      List<Point2D> points, int first, int last, double tolerance, boolean[] keep) {
+    if (last <= first + 1) {
+      return;
+    }
+    Point2D a = points.get(first);
+    Point2D b = points.get(last);
+    double maxDist = -1;
+    int index = -1;
+    for (int i = first + 1; i < last; i++) {
+      Point2D p = points.get(i);
+      double dist =
+          a.equals(b)
+              ? a.distance(p)
+              : Line2D.ptSegDist(a.getX(), a.getY(), b.getX(), b.getY(), p.getX(), p.getY());
+      if (dist > maxDist) {
+        maxDist = dist;
+        index = i;
+      }
+    }
+    if (maxDist > tolerance) {
+      keep[index] = true;
+      simplify(points, first, index, tolerance, keep);
+      simplify(points, index, last, tolerance, keep);
+    }
+  }
+
+  /**
+   * The moving point projected on the horizontal or vertical line through the anchor, whichever is
+   * closer.
+   */
+  public static Point2D snapToAxis(Point2D anchor, Point2D moving) {
+    if (anchor == null || moving == null) {
+      return moving;
+    }
+    double dx = Math.abs(moving.getX() - anchor.getX());
+    double dy = Math.abs(moving.getY() - anchor.getY());
+    return dx >= dy
+        ? new Point2D.Double(moving.getX(), anchor.getY())
+        : new Point2D.Double(anchor.getX(), moving.getY());
   }
 
   public static Rectangle2D getGrowingRectangle(Rectangle2D rect, double growingSize) {

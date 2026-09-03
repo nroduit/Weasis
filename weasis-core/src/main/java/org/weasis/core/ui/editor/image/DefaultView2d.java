@@ -9,6 +9,7 @@
  */
 package org.weasis.core.ui.editor.image;
 
+import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Cursor;
@@ -29,6 +30,7 @@ import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.geom.AffineTransform;
+import java.awt.geom.Path2D;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.beans.PropertyChangeEvent;
@@ -101,6 +103,7 @@ import org.weasis.core.ui.model.layer.LayerAnnotation;
 import org.weasis.core.ui.model.layer.LayerType;
 import org.weasis.core.ui.model.layer.imp.RenderedImageLayer;
 import org.weasis.core.ui.model.utils.Draggable;
+import org.weasis.core.ui.model.utils.GraphicOutline;
 import org.weasis.core.ui.model.utils.bean.GraphicClipboard;
 import org.weasis.core.ui.model.utils.bean.PanPoint;
 import org.weasis.core.ui.model.utils.imp.DefaultViewModel;
@@ -160,6 +163,9 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
   private final PanPoint highlightedPosition = new PanPoint(PanPoint.State.CENTER);
   private final PanPoint startedDragPoint = new PanPoint(PanPoint.State.DRAGSTART);
   private int pointerType = 0;
+  private static final int PROBE_GAP = 4;
+  private static final int PROBE_ARM = 14;
+  private Point2D probePosition;
 
   protected final RenderedImageLayer<E> imageLayer;
 
@@ -1374,6 +1380,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     g2d.translate(-p.getX(), -p.getY());
 
     drawPointer(g2d, pointerType);
+    drawProbe(g2d);
     drawAffineInvariant(g2d);
     if (infoLayer != null) {
       g2d.setFont(getLayerFont());
@@ -1971,6 +1978,34 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
   @Override
   public int getPointerType() {
     return pointerType;
+  }
+
+  @Override
+  public void setProbePosition(Point2D imagePoint) {
+    if (!Objects.equals(probePosition, imagePoint)) {
+      probePosition = imagePoint == null ? null : (Point2D) imagePoint.clone();
+      repaint();
+    }
+  }
+
+  /** Small crosshair, open at its centre so the pixel stays visible, on a dark halo. */
+  private void drawProbe(Graphics2D g2d) {
+    if (probePosition == null) {
+      return;
+    }
+    Point p = getMouseCoordinatesFromImage(probePosition.getX(), probePosition.getY());
+    Object[] oldHints = GuiUtils.setRenderingHints(g2d, true, true, false);
+    Path2D cross = new Path2D.Double();
+    for (int[] d : new int[][] {{1, 0}, {-1, 0}, {0, 1}, {0, -1}}) {
+      cross.moveTo(p.x + d[0] * PROBE_GAP, p.y + d[1] * PROBE_GAP);
+      cross.lineTo(p.x + d[0] * PROBE_ARM, p.y + d[1] * PROBE_ARM);
+    }
+    BasicStroke line = new BasicStroke(1.5f);
+    GraphicOutline.draw(g2d, cross, line);
+    g2d.setPaint(MeasureTool.viewSetting.getLineColor());
+    g2d.setStroke(line);
+    g2d.draw(cross);
+    GuiUtils.resetRenderingHints(g2d, oldHints);
   }
 
   @Override

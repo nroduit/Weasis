@@ -9,9 +9,15 @@
  */
 package org.weasis.core.ui.model;
 
+import jakarta.xml.bind.Marshaller;
+import jakarta.xml.bind.Unmarshaller;
 import jakarta.xml.bind.annotation.XmlAccessType;
 import jakarta.xml.bind.annotation.XmlAccessorType;
+import jakarta.xml.bind.annotation.XmlAnyElement;
+import jakarta.xml.bind.annotation.XmlAttribute;
 import jakarta.xml.bind.annotation.XmlElement;
+import jakarta.xml.bind.annotation.XmlElementRef;
+import jakarta.xml.bind.annotation.XmlElementRefs;
 import jakarta.xml.bind.annotation.XmlElementWrapper;
 import jakarta.xml.bind.annotation.XmlElements;
 import jakarta.xml.bind.annotation.XmlType;
@@ -35,6 +41,9 @@ import javax.swing.JCheckBox;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.w3c.dom.Element;
 import org.weasis.core.Messages;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.GuiUtils;
@@ -43,43 +52,94 @@ import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.service.UICore;
 import org.weasis.core.api.service.WProperties;
 import org.weasis.core.ui.editor.image.Canvas;
-import org.weasis.core.ui.editor.image.MeasureToolBar;
 import org.weasis.core.ui.editor.image.ViewCanvas;
+import org.weasis.core.ui.model.graphic.AbstractGraphic;
 import org.weasis.core.ui.model.graphic.DragGraphic;
 import org.weasis.core.ui.model.graphic.Graphic;
 import org.weasis.core.ui.model.graphic.GraphicLabel;
 import org.weasis.core.ui.model.graphic.GraphicSelectionListener;
 import org.weasis.core.ui.model.graphic.imp.AnnotationGraphic;
+import org.weasis.core.ui.model.graphic.imp.BuiltinGraphicTools;
 import org.weasis.core.ui.model.graphic.imp.PixelInfoGraphic;
 import org.weasis.core.ui.model.graphic.imp.PointGraphic;
 import org.weasis.core.ui.model.graphic.imp.angle.AngleToolGraphic;
 import org.weasis.core.ui.model.graphic.imp.angle.CobbAngleToolGraphic;
 import org.weasis.core.ui.model.graphic.imp.angle.FourPointsAngleToolGraphic;
 import org.weasis.core.ui.model.graphic.imp.angle.OpenAngleToolGraphic;
+import org.weasis.core.ui.model.graphic.imp.area.CircleGraphic;
 import org.weasis.core.ui.model.graphic.imp.area.EllipseGraphic;
 import org.weasis.core.ui.model.graphic.imp.area.ObliqueRectangleGraphic;
 import org.weasis.core.ui.model.graphic.imp.area.PolygonGraphic;
 import org.weasis.core.ui.model.graphic.imp.area.SelectGraphic;
 import org.weasis.core.ui.model.graphic.imp.area.ThreePointsCircleGraphic;
+import org.weasis.core.ui.model.graphic.imp.line.ArrowGraphic;
+import org.weasis.core.ui.model.graphic.imp.line.BidirectionalGraphic;
+import org.weasis.core.ui.model.graphic.imp.line.CardiothoracicRatioGraphic;
+import org.weasis.core.ui.model.graphic.imp.line.FreehandGraphic;
 import org.weasis.core.ui.model.graphic.imp.line.LineGraphic;
 import org.weasis.core.ui.model.graphic.imp.line.LineWithGapGraphic;
 import org.weasis.core.ui.model.graphic.imp.line.ParallelLineGraphic;
 import org.weasis.core.ui.model.graphic.imp.line.PerpendicularLineGraphic;
 import org.weasis.core.ui.model.graphic.imp.line.PolylineGraphic;
+import org.weasis.core.ui.model.graphic.imp.line.RulerGraphic;
 import org.weasis.core.ui.model.layer.GraphicLayer;
 import org.weasis.core.ui.model.layer.GraphicModelChangeListener;
 import org.weasis.core.ui.model.layer.LayerType;
 import org.weasis.core.ui.model.layer.imp.DefaultLayer;
+import org.weasis.core.ui.model.utils.exceptions.InvalidShapeException;
 import org.weasis.core.ui.model.utils.imp.DefaultUUID;
 import org.weasis.core.ui.util.MouseEventDouble;
 
-@XmlType(propOrder = {"referencedSeries", "layers", "models"})
+@XmlType(propOrder = {"referencedSeries", "layers", "serializedGraphics"})
 @XmlAccessorType(XmlAccessType.NONE)
 public abstract class AbstractGraphicModel extends DefaultUUID implements GraphicModel {
+  private static final Logger LOGGER = LoggerFactory.getLogger(AbstractGraphicModel.class);
+
+  /** Format written by this version; a file without the attribute is {@link #LEGACY_VERSION}. */
+  public static final String CURRENT_VERSION = "2.7"; // NON-NLS
+
+  public static final String LEGACY_VERSION = "2.5"; // NON-NLS
 
   private List<ReferencedSeries> referencedSeries;
   private List<GraphicLayer> layers;
   protected List<Graphic> models;
+
+  @XmlAttribute(name = "version")
+  private String version = CURRENT_VERSION;
+
+  /**
+   * The {@code <graphics>} content as JAXB sees it: bound graphics plus the elements of tools
+   * unknown to this installation, which are kept as DOM nodes and written back unchanged.
+   */
+  @XmlElementWrapper(name = "graphics")
+  @XmlElementRefs({
+    @XmlElementRef(type = PointGraphic.class),
+    @XmlElementRef(type = AngleToolGraphic.class),
+    @XmlElementRef(type = AnnotationGraphic.class),
+    @XmlElementRef(type = PixelInfoGraphic.class),
+    @XmlElementRef(type = OpenAngleToolGraphic.class),
+    @XmlElementRef(type = CobbAngleToolGraphic.class),
+    @XmlElementRef(type = ObliqueRectangleGraphic.class),
+    @XmlElementRef(type = EllipseGraphic.class),
+    @XmlElementRef(type = FourPointsAngleToolGraphic.class),
+    @XmlElementRef(type = LineGraphic.class),
+    @XmlElementRef(type = LineWithGapGraphic.class),
+    @XmlElementRef(type = PerpendicularLineGraphic.class),
+    @XmlElementRef(type = ParallelLineGraphic.class),
+    @XmlElementRef(type = PolygonGraphic.class),
+    @XmlElementRef(type = PolylineGraphic.class),
+    @XmlElementRef(type = ThreePointsCircleGraphic.class),
+    @XmlElementRef(type = ArrowGraphic.class),
+    @XmlElementRef(type = BidirectionalGraphic.class),
+    @XmlElementRef(type = FreehandGraphic.class),
+    @XmlElementRef(type = RulerGraphic.class),
+    @XmlElementRef(type = CircleGraphic.class),
+    @XmlElementRef(type = CardiothoracicRatioGraphic.class)
+  })
+  @XmlAnyElement(lax = true)
+  private List<Object> serializedGraphics;
+
+  private final List<Element> unknownGraphics = new ArrayList<>();
 
   private final List<GraphicSelectionListener> selectedGraphicsListeners = new ArrayList<>();
   private final List<GraphicModelChangeListener> modelListeners = new ArrayList<>();
@@ -102,28 +162,66 @@ public abstract class AbstractGraphicModel extends DefaultUUID implements Graphi
     this.models = Collections.synchronizedList(new ArrayList<>());
   }
 
-  @XmlElementWrapper(name = "graphics")
-  @XmlElements({
-    @XmlElement(name = "point", type = PointGraphic.class),
-    @XmlElement(name = "angle", type = AngleToolGraphic.class),
-    @XmlElement(name = "annotation", type = AnnotationGraphic.class),
-    @XmlElement(name = "pixelInfo", type = PixelInfoGraphic.class),
-    @XmlElement(name = "openAngle", type = OpenAngleToolGraphic.class),
-    @XmlElement(name = "cobbAngle", type = CobbAngleToolGraphic.class),
-    @XmlElement(name = "rectangle", type = ObliqueRectangleGraphic.class),
-    @XmlElement(name = "ellipse", type = EllipseGraphic.class),
-    @XmlElement(name = "fourPointsAngle", type = FourPointsAngleToolGraphic.class),
-    @XmlElement(name = "line", type = LineGraphic.class),
-    @XmlElement(name = "lineWithGap", type = LineWithGapGraphic.class),
-    @XmlElement(name = "perpendicularLine", type = PerpendicularLineGraphic.class),
-    @XmlElement(name = "parallelLine", type = ParallelLineGraphic.class),
-    @XmlElement(name = "polygon", type = PolygonGraphic.class),
-    @XmlElement(name = "polyline", type = PolylineGraphic.class),
-    @XmlElement(name = "threePointsCircle", type = ThreePointsCircleGraphic.class)
-  })
   @Override
   public List<Graphic> getModels() {
     return models;
+  }
+
+  /** Format version of the file this model was read from, or the current one for a new model. */
+  public String getVersion() {
+    return version;
+  }
+
+  @SuppressWarnings("unused") // JAXB callback
+  private void beforeUnmarshal(Unmarshaller unmarshaller, Object parent) {
+    version = LEGACY_VERSION;
+  }
+
+  /** Elements of tools unknown to this installation, preserved for the next write. */
+  public List<Element> getUnknownGraphics() {
+    return Collections.unmodifiableList(unknownGraphics);
+  }
+
+  @SuppressWarnings("unused") // JAXB callback
+  private void beforeMarshal(Marshaller marshaller) {
+    version = CURRENT_VERSION;
+    List<Object> all = new ArrayList<>(models.size() + unknownGraphics.size());
+    models.stream().filter(AbstractGraphicModel::isSerializable).forEach(all::add);
+    all.addAll(unknownGraphics);
+    serializedGraphics = all;
+  }
+
+  /** Only graphics of a serializable layer with points belong in the file. */
+  private static boolean isSerializable(Graphic graphic) {
+    GraphicLayer layer = graphic.getLayer();
+    return (layer == null || Boolean.TRUE.equals(layer.getSerializable()))
+        && !graphic.getPts().isEmpty();
+  }
+
+  @SuppressWarnings("unused") // JAXB callback
+  private void afterMarshal(Marshaller marshaller) {
+    serializedGraphics = null;
+  }
+
+  @SuppressWarnings("unused") // JAXB callback
+  private void afterUnmarshal(Unmarshaller unmarshaller, Object parent) {
+    if (serializedGraphics == null) {
+      return;
+    }
+    for (Object item : serializedGraphics) {
+      if (item instanceof AbstractGraphic graphic) {
+        try {
+          graphic.buildGraphic(graphic.getPts());
+          models.add(graphic);
+        } catch (InvalidShapeException e) {
+          LOGGER.warn("Skipping graphic {} with an invalid shape", graphic.getUuid(), e);
+        }
+      } else if (item instanceof Element element) {
+        LOGGER.info("Keeping graphic <{}> of an unknown tool", element.getTagName());
+        unknownGraphics.add(element);
+      }
+    }
+    serializedGraphics = null;
   }
 
   @XmlElementWrapper(name = "layers")
@@ -709,8 +807,7 @@ public abstract class AbstractGraphicModel extends DefaultUUID implements Graphi
 
   public static Graphic drawFromCurrentGraphic(ViewCanvas<?> canvas, Graphic graphicCreator) {
     Objects.requireNonNull(canvas);
-    Graphic newGraphic =
-        Optional.ofNullable(graphicCreator).orElse(MeasureToolBar.selectionGraphic);
+    Graphic newGraphic = Optional.ofNullable(graphicCreator).orElse(BuiltinGraphicTools.SELECTION);
     GraphicLayer layer = getOrBuildLayer(canvas, newGraphic.getLayerType());
 
     if (!layer.getVisible() || !(Boolean) canvas.getActionValue(ActionW.DRAWINGS.cmd())) {

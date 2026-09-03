@@ -41,6 +41,7 @@ import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.image.OpManager;
 import org.weasis.core.api.image.SimpleOpManager;
 import org.weasis.core.api.image.WindowOp;
+import org.weasis.core.api.image.measure.PlaneGeometry;
 import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.TagW;
@@ -50,6 +51,7 @@ import org.weasis.dicom.codec.display.OverlayOp;
 import org.weasis.dicom.codec.display.ShutterOp;
 import org.weasis.dicom.codec.display.WindowAndPresetsOp;
 import org.weasis.dicom.codec.geometry.GeometryOfSlice;
+import org.weasis.dicom.codec.geometry.SlicePlaneGeometry;
 import org.weasis.dicom.codec.utils.Ultrasound;
 import org.weasis.dicom.param.AttributeEditorContext;
 import org.weasis.opencv.data.ImageCV;
@@ -77,10 +79,9 @@ public class DicomImageElement extends ImageElement implements DicomElement {
     initPixelConfiguration();
   }
 
+  @Override
   public void initPixelConfiguration() {
-    this.pixelSizeX = 1.0;
-    this.pixelSizeY = 1.0;
-    this.pixelSpacingUnit = Unit.PIXEL;
+    super.initPixelConfiguration();
 
     double[] val;
     String modality = TagD.getTagValue(mediaIO, Tag.Modality, String.class);
@@ -114,7 +115,6 @@ public class DicomImageElement extends ImageElement implements DicomElement {
        */
       setPixelSize(val[1], val[0]);
       pixelSpacingUnit = Unit.MILLIMETER;
-      pixelSizeModifiedByUser = false;
     }
 
     initPixelValueUnit(modality);
@@ -513,6 +513,22 @@ public class DicomImageElement extends ImageElement implements DicomElement {
       readParams.setWindowCenter(range.level());
       readParams.setVoiLutShape(LutShape.LINEAR);
     }
+  }
+
+  @Override
+  public PlaneGeometry getPlaneGeometry() {
+    GeometryOfSlice geometry = getSliceGeometry();
+    return geometry == null ? null : new SlicePlaneGeometry(geometry, getFrameOfReferenceUID());
+  }
+
+  /** Frame of reference of the image: its own tag, else the one of the reader's data set. */
+  public String getFrameOfReferenceUID() {
+    String uid = TagD.getTagValue(this, Tag.FrameOfReferenceUID, String.class);
+    if (uid == null && getMediaReader() instanceof DcmMediaReader reader) {
+      Attributes dcm = reader.getDicomObject();
+      uid = dcm == null ? null : dcm.getString(Tag.FrameOfReferenceUID);
+    }
+    return uid;
   }
 
   public GeometryOfSlice getSliceGeometry() {

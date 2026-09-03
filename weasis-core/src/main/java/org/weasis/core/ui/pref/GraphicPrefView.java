@@ -9,10 +9,14 @@
  */
 package org.weasis.core.ui.pref;
 
+import java.awt.Component;
+import java.awt.Dimension;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
+import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JSpinner;
+import javax.swing.SpinnerNumberModel;
 import net.miginfocom.swing.MigLayout;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,9 +25,11 @@ import org.weasis.core.api.gui.util.AbstractItemDialogPage;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.JSliderW;
+import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.ui.dialog.PropertiesDialog;
 import org.weasis.core.ui.editor.image.dockable.MeasureTool;
 import org.weasis.core.ui.model.graphic.Graphic;
+import org.weasis.core.util.StringUtil;
 
 public class GraphicPrefView extends AbstractItemDialogPage {
   private static final Logger LOGGER = LoggerFactory.getLogger(GraphicPrefView.class);
@@ -36,6 +42,15 @@ public class GraphicPrefView extends AbstractItemDialogPage {
       new JCheckBox(Messages.getString("PropertiesDialog.fill_shape"));
 
   private final JSliderW sliderOpacity;
+
+  private final JCheckBox checkboxOutline =
+      new JCheckBox(Messages.getString("GraphicPrefView.outline"));
+
+  private final JCheckBox checkboxUpright =
+      new JCheckBox(Messages.getString("GraphicPrefView.upright"));
+
+  private final JSpinner spinnerCircleRadius =
+      new JSpinner(new SpinnerNumberModel(ViewSetting.DEFAULT_CIRCLE_RADIUS, 0.5, 100.0, 0.5));
 
   public GraphicPrefView() {
     super(PAGE_NAME, 702);
@@ -50,23 +65,42 @@ public class GraphicPrefView extends AbstractItemDialogPage {
   }
 
   private void jbInit() {
-    add(GuiUtils.getFlowLayoutPanel(0, ITEM_SEPARATOR_LARGE, checkboxFilled));
     JButton button = MeasureTool.buildLineColorButton(this);
     MeasureTool.viewSetting.initLineWidthSpinner(spinner);
-    JPanel linePane = GuiUtils.getFlowLayoutPanel(button, spinner);
+    JPanel linePane = GuiUtils.getFlowLayoutPanel(button, spinner, checkboxOutline);
     linePane.setBorder(GuiUtils.getTitledBorder(Messages.getString("MeasureToolBar.line")));
     add(linePane);
     add(GuiUtils.boxVerticalStrut(BLOCK_SEPARATOR));
 
-    JPanel shapePane = GuiUtils.getVerticalBoxLayoutPanel();
-    shapePane.add(
-        GuiUtils.getFlowLayoutPanel(ITEM_SEPARATOR_SMALL, ITEM_SEPARATOR, checkboxFilled));
-
-    MigLayout layout2 = new MigLayout("fillx, ins 5lp", "[fill]", ""); // NON-NLS
-    new JPanel(layout2).add(sliderOpacity);
-    shapePane.add(GuiUtils.getHorizontalBoxLayoutPanel(ITEM_SEPARATOR_SMALL, sliderOpacity));
+    // Every element starts on the same left edge; the labels are short, the tooltips and the
+    // help page give the details
+    JPanel shapePane =
+        new JPanel(new MigLayout("ins 5lp, fillx, wrap 1", "[left]", "[]5lp[]")) { // NON-NLS
+          /** As wide as the page, like the block above it, and no taller than its content. */
+          @Override
+          public Dimension getMaximumSize() {
+            return new Dimension(Short.MAX_VALUE, getPreferredSize().height);
+          }
+        };
+    // A MigLayout panel is left-aligned; the page stacks centred blocks and would shift it
+    shapePane.setAlignmentX(Component.CENTER_ALIGNMENT);
+    shapePane.add(checkboxFilled);
+    shapePane.add(sliderOpacity, "growx"); // NON-NLS
+    shapePane.add(checkboxUpright);
+    JLabel radiusLabel =
+        new JLabel(Messages.getString("GraphicPrefView.circle_radius") + StringUtil.COLON);
+    JLabel radiusUnit = new JLabel(Unit.MILLIMETER.getAbbreviation());
+    shapePane.add(radiusLabel, "split 3"); // NON-NLS
+    shapePane.add(spinnerCircleRadius);
+    shapePane.add(radiusUnit);
     shapePane.setBorder(GuiUtils.getTitledBorder(Messages.getString("closed.shape")));
     add(shapePane);
+
+    checkboxOutline.setToolTipText(Messages.getString("GraphicPrefView.outline_tip"));
+    checkboxUpright.setToolTipText(Messages.getString("GraphicPrefView.upright_tip"));
+    String radiusTip = Messages.getString("GraphicPrefView.circle_radius_tip");
+    radiusLabel.setToolTipText(radiusTip);
+    spinnerCircleRadius.setToolTipText(radiusTip);
 
     add(GuiUtils.boxYLastElement(5));
 
@@ -84,6 +118,9 @@ public class GraphicPrefView extends AbstractItemDialogPage {
 
     spinner.setValue(settings.getLineWidth());
     checkboxFilled.setSelected(settings.isFilled());
+    checkboxOutline.setSelected(settings.isOutline());
+    checkboxUpright.setSelected(settings.isUprightByDrag());
+    spinnerCircleRadius.setValue(settings.getCircleRadius());
 
     int opacity = (int) (settings.getFillOpacity() * 100);
     sliderOpacity.setValue(opacity);
@@ -95,16 +132,23 @@ public class GraphicPrefView extends AbstractItemDialogPage {
     ViewSetting settings = MeasureTool.viewSetting;
     settings.setFilled(checkboxFilled.isSelected());
     settings.setFillOpacity(sliderOpacity.getValue() / 100f);
+    settings.setOutline(checkboxOutline.isSelected());
+    settings.setUprightByDrag(checkboxUpright.isSelected());
+    settings.setCircleRadius(((Number) spinnerCircleRadius.getValue()).doubleValue());
     MeasureTool.updateMeasureProperties();
+    MeasureTool.refreshViewLabels();
   }
 
   @Override
   public void resetToDefaultValues() {
     ViewSetting settings = MeasureTool.viewSetting;
     settings.setLineWidth(Graphic.DEFAULT_LINE_THICKNESS.intValue());
-    settings.setLineColor(Graphic.DEFAULT_COLOR);
+    settings.setLineColor(ViewSetting.DEFAULT_LINE_COLOR);
+    settings.setOutline(true);
     settings.setFilled(Graphic.DEFAULT_FILLED);
     settings.setFillOpacity(Graphic.DEFAULT_FILL_OPACITY);
+    settings.setUprightByDrag(false);
+    settings.setCircleRadius(ViewSetting.DEFAULT_CIRCLE_RADIUS);
     initialize();
   }
 }

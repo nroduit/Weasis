@@ -151,6 +151,7 @@ public final class ShortcutManager {
 
   private final PropertyChangeSupport pcs = new PropertyChangeSupport(this);
   private final Map<String, ShortcutEntry> shortcuts = new LinkedHashMap<>();
+  private Preferences loadedNode;
 
   private ShortcutManager() {}
 
@@ -337,6 +338,14 @@ public final class ShortcutManager {
   public static final String ID_GRAPHIC_ANGLE = "graphic.angle";
   public static final String ID_GRAPHIC_POLYGON = "graphic.polygon";
   public static final String ID_GRAPHIC_ANNOTATION = "graphic.annotation";
+
+  /** Ids kept from before every graphic tool had its own shortcut entry. */
+  private static final Map<String, String> LEGACY_GRAPHIC_IDS =
+      Map.of(
+          "weasis.line", ID_GRAPHIC_LINE, // NON-NLS
+          "weasis.angle", ID_GRAPHIC_ANGLE, // NON-NLS
+          "weasis.polyline", ID_GRAPHIC_POLYGON, // NON-NLS
+          "weasis.text", ID_GRAPHIC_ANNOTATION); // NON-NLS
 
   // -- Shortcut IDs: Drawings --
 
@@ -576,32 +585,6 @@ public final class ShortcutManager {
         CATEGORY_VIEWER,
         KeyEvent.VK_F,
         KeyEvent.ALT_MASK);
-
-    // ---- Graphic tool shortcuts (Graphic.getKeyCode() in various subclasses) ----
-    register(
-        ID_GRAPHIC_LINE,
-        Messages.getString("ShortcutManager.dist_measure"),
-        CATEGORY_MEASURES,
-        KeyEvent.VK_D,
-        0);
-    register(
-        ID_GRAPHIC_ANGLE,
-        Messages.getString("ShortcutManager.angle_measure"),
-        CATEGORY_MEASURES,
-        KeyEvent.VK_A,
-        0);
-    register(
-        ID_GRAPHIC_POLYGON,
-        Messages.getString("ShortcutManager.polyline_measure"),
-        CATEGORY_MEASURES,
-        KeyEvent.VK_Y,
-        0);
-    register(
-        ID_GRAPHIC_ANNOTATION,
-        Messages.getString("ShortcutManager.textbox"),
-        CATEGORY_DRAWINGS,
-        KeyEvent.VK_B,
-        0);
 
     // ---- Drawing management shortcuts (DrawingsKeyListeners) ----
     register(
@@ -941,6 +924,32 @@ public final class ShortcutManager {
         id, new ShortcutEntry(id, description, category, context, defaultKeyCode, defaultModifier));
   }
 
+  /** Shortcut id of a graphic tool, from its registry key. */
+  public static String graphicToolId(String toolKey) {
+    String legacy = LEGACY_GRAPHIC_IDS.get(toolKey);
+    return legacy == null ? "graphic." + toolKey : legacy; // NON-NLS
+  }
+
+  /**
+   * Registers the shortcut of a graphic tool unless it already exists; the user's binding is
+   * applied when the preferences were loaded before the tool was registered.
+   */
+  public void registerGraphicTool(
+      String toolKey,
+      String description,
+      String category,
+      int defaultKeyCode,
+      int defaultModifier) {
+    String id = graphicToolId(toolKey);
+    if (shortcuts.containsKey(id)) {
+      return;
+    }
+    register(id, description, category, defaultKeyCode, defaultModifier);
+    if (loadedNode != null) {
+      applyPreference(shortcuts.get(id), loadedNode);
+    }
+  }
+
   /**
    * Registers a shortcut entry with the default {@link ShortcutContext#VIEW_CANVAS} context.
    *
@@ -1144,15 +1153,20 @@ public final class ShortcutManager {
       return;
     }
     Preferences node = prefs.node(getPreferenceNodeName());
+    loadedNode = node;
     for (ShortcutEntry entry : shortcuts.values()) {
-      int kc = node.getInt(entry.getId() + KEY_CODE_SUFFIX, -1);
-      int mod = node.getInt(entry.getId() + MODIFIER_SUFFIX, -1);
-      if (kc >= 0) {
-        entry.setKeyCode(kc);
-      }
-      if (mod >= 0) {
-        entry.setModifier(mod);
-      }
+      applyPreference(entry, node);
+    }
+  }
+
+  private static void applyPreference(ShortcutEntry entry, Preferences node) {
+    int kc = node.getInt(entry.getId() + KEY_CODE_SUFFIX, -1);
+    int mod = node.getInt(entry.getId() + MODIFIER_SUFFIX, -1);
+    if (kc >= 0) {
+      entry.setKeyCode(kc);
+    }
+    if (mod >= 0) {
+      entry.setModifier(mod);
     }
   }
 

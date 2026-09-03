@@ -39,19 +39,20 @@ public class EllipseGraphic extends ObliqueRectangleGraphic {
   public static final Icon ICON = ResourceUtil.getIcon(ActionIcon.DRAW_ELLIPSE);
 
   public static final Measurement AREA =
-      new Measurement(Messages.getString("measure.area"), 1, true, true, true);
+      new Measurement("area", Messages.getString("measure.area"), 1, true, true, true);
   public static final Measurement PERIMETER =
-      new Measurement(Messages.getString("measure.perimeter"), 2, true, true, false);
+      new Measurement("perimeter", Messages.getString("measure.perimeter"), 2, true, true, false);
   public static final Measurement CENTER_X =
-      new Measurement(Messages.getString("measure.centerx"), 3, true, true, false);
+      new Measurement("center.x", Messages.getString("measure.centerx"), 3, true, true, false);
   public static final Measurement CENTER_Y =
-      new Measurement(Messages.getString("measure.centery"), 4, true, true, false);
+      new Measurement("center.y", Messages.getString("measure.centery"), 4, true, true, false);
   public static final Measurement WIDTH =
-      new Measurement(Messages.getString("measure.width"), 5, true, true, false);
+      new Measurement("width", Messages.getString("measure.width"), 5, true, true, false);
   public static final Measurement HEIGHT =
-      new Measurement(Messages.getString("measure.height"), 6, true, true, false);
+      new Measurement("height", Messages.getString("measure.height"), 6, true, true, false);
   public static final Measurement ORIENTATION =
-      new Measurement(Messages.getString("measure.orientation"), 7, true, true, false);
+      new Measurement(
+          "orientation", Messages.getString("measure.orientation"), 7, true, true, false);
 
   protected static final List<Measurement> MEASUREMENT_LIST = new ArrayList<>();
 

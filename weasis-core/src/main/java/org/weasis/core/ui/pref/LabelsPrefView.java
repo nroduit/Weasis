@@ -12,13 +12,13 @@ package org.weasis.core.ui.pref;
 import java.awt.GridLayout;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Stream;
 import javax.swing.BoxLayout;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
@@ -29,13 +29,16 @@ import org.weasis.core.api.gui.util.AbstractItemDialogPage;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.util.FontItem;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
-import org.weasis.core.ui.editor.image.MeasureToolBar;
 import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.editor.image.ViewerPlugin;
 import org.weasis.core.ui.editor.image.dockable.MeasureTool;
 import org.weasis.core.ui.model.GraphicModel;
 import org.weasis.core.ui.model.graphic.Graphic;
+import org.weasis.core.ui.model.graphic.GraphicRegistry;
+import org.weasis.core.ui.model.graphic.ToolCategory;
+import org.weasis.core.ui.model.graphic.imp.area.SelectGraphic;
 import org.weasis.core.ui.model.utils.ImageStatistics;
+import org.weasis.core.ui.model.utils.MeasureFormat;
 import org.weasis.core.ui.model.utils.bean.Measurement;
 import org.weasis.core.util.StringUtil;
 
@@ -43,15 +46,14 @@ public class LabelsPrefView extends AbstractItemDialogPage {
   private final JPanel panelList = new JPanel();
   private final JComboBox<Graphic> comboBoxTool;
   private final JComboBox<FontItem> fontItemJComboBox;
+  private final JComboBox<Object> decimalsCombo = new JComboBox<>();
   private final Map<JCheckBox, Measurement> map;
 
   public LabelsPrefView() {
     super(MeasureTool.LABEL_PREF_NAME, 710);
     this.map = HashMap.newHashMap(ImageStatistics.ALL_MEASUREMENTS.length);
 
-    ArrayList<Graphic> tools = new ArrayList<>(MeasureToolBar.getMeasureGraphicList());
-    tools.removeFirst();
-    this.comboBoxTool = new JComboBox<>(tools.toArray(Graphic[]::new));
+    this.comboBoxTool = new JComboBox<>(measurementTools().toArray(Graphic[]::new));
     this.fontItemJComboBox = new JComboBox<>(FontItem.values());
 
     jbInit();
@@ -65,6 +67,17 @@ public class LabelsPrefView extends AbstractItemDialogPage {
             ITEM_SEPARATOR_SMALL, ITEM_SEPARATOR_LARGE, jLabelSize, fontItemJComboBox);
     panelFont.setBorder(GuiUtils.getTitledBorder(Messages.getString("LabelPrefView.font")));
     add(panelFont);
+
+    JLabel decimalsLabel =
+        new JLabel(Messages.getString("LabelPrefView.decimals") + StringUtil.COLON);
+    decimalsCombo.addItem(Messages.getString("LabelPrefView.decimals_auto"));
+    for (int i = 0; i <= MeasureFormat.MAX_DECIMALS; i++) {
+      decimalsCombo.addItem(i);
+    }
+    selectDecimals(MeasureTool.viewSetting.getDecimals());
+    add(
+        GuiUtils.getFlowLayoutPanel(
+            ITEM_SEPARATOR_SMALL, ITEM_SEPARATOR_LARGE, decimalsLabel, decimalsCombo));
 
     JPanel panelShape = new JPanel();
     panelShape.setLayout(new BoxLayout(panelShape, BoxLayout.Y_AXIS));
@@ -118,6 +131,15 @@ public class LabelsPrefView extends AbstractItemDialogPage {
     getProperties().setProperty(PreferenceDialog.KEY_HELP, "draw-measure/#preferences"); // NON-NLS
   }
 
+  private static List<Graphic> measurementTools() {
+    GraphicRegistry registry = GraphicRegistry.getInstance();
+    return Stream.concat(
+            registry.prototypes(ToolCategory.MEASURE).stream(),
+            registry.prototypes(ToolCategory.ADVANCED).stream())
+        .filter(g -> !(g instanceof SelectGraphic) && !g.getMeasurementList().isEmpty())
+        .toList();
+  }
+
   private void selectTool(Graphic graph) {
     if (graph != null) {
       panelList.removeAll();
@@ -147,10 +169,19 @@ public class LabelsPrefView extends AbstractItemDialogPage {
     selectTool((Graphic) comboBoxTool.getSelectedItem());
   }
 
+  private void selectDecimals(int decimals) {
+    decimalsCombo.setSelectedIndex(
+        decimals < 0 ? 0 : Math.min(decimals, MeasureFormat.MAX_DECIMALS) + 1);
+  }
+
   @Override
   public void closeAdditionalWindow() {
     ViewSetting settings = MeasureTool.viewSetting;
     settings.setFontItem((FontItem) Objects.requireNonNull(fontItemJComboBox.getSelectedItem()));
+    settings.setDecimals(
+        decimalsCombo.getSelectedItem() instanceof Integer decimals
+            ? decimals
+            : MeasureFormat.AUTO);
 
     List<ViewerPlugin<?>> viewerPlugins = GuiUtils.getUICore().getViewerPlugins();
     synchronized (viewerPlugins) {
@@ -171,8 +202,10 @@ public class LabelsPrefView extends AbstractItemDialogPage {
   @Override
   public void resetToDefaultValues() {
     MeasureTool.viewSetting.setFontItem(ViewSetting.DEFAULT_FONT);
+    MeasureTool.viewSetting.setDecimals(ViewSetting.DEFAULT_DECIMALS);
+    selectDecimals(ViewSetting.DEFAULT_DECIMALS);
     initialize();
-    MeasureToolBar.getMeasureGraphicList()
+    measurementTools()
         .forEach(
             g -> {
               List<Measurement> list = g.getMeasurementList();

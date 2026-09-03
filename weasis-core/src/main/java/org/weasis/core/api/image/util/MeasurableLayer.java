@@ -15,6 +15,7 @@ import java.awt.geom.Rectangle2D;
 import java.util.List;
 import java.util.Optional;
 import org.weasis.core.api.image.measure.MeasurementsAdapter;
+import org.weasis.core.api.image.measure.PlaneGeometry;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.opencv.data.PlanarImage;
 
@@ -51,6 +52,11 @@ public interface MeasurableLayer {
    * @return measurement adapter, or null if unavailable
    */
   MeasurementsAdapter getMeasurementAdapter(Unit displayUnit);
+
+  /** Position of the layer's image in patient space, or {@code null} when unknown. */
+  default PlaneGeometry getPlaneGeometry() {
+    return null;
+  }
 
   /**
    * Returns the measurement adapter with default pixel units.

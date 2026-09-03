@@ -233,6 +233,29 @@ public interface ViewCanvas<E extends ImageElement>
 
   void registerDefaultListeners();
 
+  /**
+   * Marks a position of the image with a small crosshair, for instance the pixel a chart is
+   * pointing at; {@code null} removes the mark.
+   *
+   * @param imagePoint position in the coordinates of the graphics
+   */
+  default void setProbePosition(Point2D imagePoint) {
+    // No mark by default
+  }
+
+  /**
+   * Gives an image back the calibration it has without the user's one: the image's own, and for the
+   * displayed image whatever the view applies on top of it.
+   */
+  default void restoreCalibration(ImageElement image) {
+    image.initPixelConfiguration();
+  }
+
+  /** True when a manual calibration applies to the whole series unless the user says otherwise. */
+  default boolean isSeriesCalibrationDefault() {
+    return false;
+  }
+
   void copyActionWState(HashMap<String, Object> actionsInView);
 
   ImageViewerEventManager<E> getEventManager();

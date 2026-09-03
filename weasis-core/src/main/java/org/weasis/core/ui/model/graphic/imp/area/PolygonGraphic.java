@@ -30,7 +30,6 @@ import java.util.Optional;
 import java.util.Set;
 import javax.swing.Icon;
 import org.weasis.core.Messages;
-import org.weasis.core.api.gui.util.ShortcutManager;
 import org.weasis.core.api.image.measure.MeasurementsAdapter;
 import org.weasis.core.api.image.util.MeasurableLayer;
 import org.weasis.core.api.image.util.Unit;
@@ -53,30 +52,45 @@ public class PolygonGraphic extends AbstractDragGraphicArea {
   public static final Icon ICON = ResourceUtil.getIcon(ActionIcon.DRAW_POLYGON);
 
   public static final Measurement AREA =
-      new Measurement(Messages.getString("measure.area"), 1, true, true, true);
+      new Measurement("area", Messages.getString("measure.area"), 1, true, true, true);
   public static final Measurement PERIMETER =
-      new Measurement(Messages.getString("measure.perimeter"), 2, true, true, false);
+      new Measurement("perimeter", Messages.getString("measure.perimeter"), 2, true, true, false);
   public static final Measurement WIDTH =
-      new Measurement(Messages.getString("measure.width"), 3, true, true, false);
+      new Measurement("width", Messages.getString("measure.width"), 3, true, true, false);
   public static final Measurement HEIGHT =
-      new Measurement(Messages.getString("measure.height"), 4, true, true, false);
+      new Measurement("height", Messages.getString("measure.height"), 4, true, true, false);
   public static final Measurement TOP_LEFT_POINT_X =
-      new Measurement(Messages.getString("measure.topx"), 5, true, true, false);
+      new Measurement("topleft.x", Messages.getString("measure.topx"), 5, true, true, false);
   public static final Measurement TOP_LEFT_POINT_Y =
-      new Measurement(Messages.getString("measure.topy"), 6, true, true, false);
+      new Measurement("topleft.y", Messages.getString("measure.topy"), 6, true, true, false);
   public static final Measurement CENTROID_X =
-      new Measurement(Messages.getString("measure.centerx"), 7, true, true, false);
+      new Measurement("center.x", Messages.getString("measure.centerx"), 7, true, true, false);
   public static final Measurement CENTROID_Y =
-      new Measurement(Messages.getString("measure.centery"), 8, true, true, false);
+      new Measurement("center.y", Messages.getString("measure.centery"), 8, true, true, false);
   public static final Measurement WIDTH_OMBB =
       new Measurement(
-          Messages.getString("measure.width") + " (OMBB)", 9, false, true, false); // NON-NLS
+          "ombb.width",
+          Messages.getString("measure.width") + " (OMBB)",
+          9,
+          false,
+          true,
+          false); // NON-NLS
   public static final Measurement LENGTH_OMBB =
       new Measurement(
-          Messages.getString("measure.length") + " (OMBB)", 10, false, true, false); // NON-NLS
+          "ombb.length",
+          Messages.getString("measure.length") + " (OMBB)",
+          10,
+          false,
+          true,
+          false); // NON-NLS
   public static final Measurement ORIENTATION_OMBB =
       new Measurement(
-          Messages.getString("measure.orientation") + " (OMBB)", 10, false, true, false); // NON-NLS
+          "ombb.orientation",
+          Messages.getString("measure.orientation") + " (OMBB)",
+          11,
+          false,
+          true,
+          false); // NON-NLS
 
   protected static final List<Measurement> MEASUREMENT_LIST = new ArrayList<>();
 
@@ -112,16 +126,6 @@ public class PolygonGraphic extends AbstractDragGraphicArea {
   @Override
   public String getUIName() {
     return Messages.getString("MeasureToolBar.polygon");
-  }
-
-  @Override
-  public int getKeyCode() {
-    return ShortcutManager.getInstance().getKeyCode(ShortcutManager.ID_GRAPHIC_POLYGON);
-  }
-
-  @Override
-  public int getModifier() {
-    return ShortcutManager.getInstance().getModifier(ShortcutManager.ID_GRAPHIC_POLYGON);
   }
 
   @Override

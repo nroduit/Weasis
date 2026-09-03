@@ -181,7 +181,22 @@ line the user is interacting with.
 
 ---
 
-## 8. Rules for Contributors
+## 8. Graphics across planes
+
+A graphic drawn on an MPR view is anchored in patient space like any graphic drawn on a located
+image (see `weasis-core/docs/Measurement-Tools.md`): the reslice element carries the orientation
+and position of its plane, so the anchor is set when the drawing is released.
+
+`MprGraphicStore`, owned by `MprController`, keeps every anchored graphic of the volume. When a
+view changes plane, `MprAxis` rebuilds the view's model from the store: a graphic whose points lie
+in the new plane (within half the slice thickness) is placed back, editable, at the projection of
+its anchor; a graphic that crosses the plane is shown as marks where its segments intersect it,
+on the non-serializable `FOOTPRINT` layer. Editing or removing a graphic in one view updates the
+marks of the other two. A volume without patient geometry (stacked, not rectified) keeps the
+previous behaviour: the model of each exact plane is kept aside and restored when that plane
+comes back.
+
+## 9. Rules for Contributors
 
 - **Rotation consistency.** The forward transform (display → texture,
   `MprView.getDisplayPointToTexturePointMatrix()`) and the inverse (texture → display,

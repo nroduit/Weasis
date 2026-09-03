@@ -31,6 +31,7 @@ import org.weasis.core.api.image.WindowOp;
 import org.weasis.core.api.image.ZoomOp;
 import org.weasis.core.api.image.cv.CvUtil;
 import org.weasis.core.api.image.measure.MeasurementsAdapter;
+import org.weasis.core.api.image.measure.PlaneGeometry;
 import org.weasis.core.api.image.util.ImageLayer;
 import org.weasis.core.api.image.util.MeasurableLayer;
 import org.weasis.core.api.image.util.Unit;
@@ -470,6 +471,12 @@ public class RenderedImageLayer<E extends ImageElement> extends DefaultUUID
       displayImage = disOpManager.process();
       fireImageChanged();
     }
+  }
+
+  @Override
+  public PlaneGeometry getPlaneGeometry() {
+    E image = getSourceImage();
+    return image == null ? null : image.getPlaneGeometry();
   }
 
   @Override

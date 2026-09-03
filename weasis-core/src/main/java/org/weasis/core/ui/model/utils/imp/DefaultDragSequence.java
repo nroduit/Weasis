@@ -109,6 +109,8 @@ public class DefaultDragSequence implements Draggable {
         graphic.setResizeOrMoving(Boolean.FALSE);
         graphic.setShape(null, mouseEvent);
         graphic.buildShape(mouseEvent);
+        // Some graphics (annotations) do not update their label on release, so anchor here
+        graphic.anchorOn(graphic.getDefaultView2d(mouseEvent));
         if (mouseEvent.getClickCount() == 2 && !mouseEvent.isConsumed()) {
           ViewCanvas<?> graphPane = graphic.getDefaultView2d(mouseEvent);
           if (graphPane != null) {

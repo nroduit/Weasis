@@ -32,6 +32,7 @@ import org.weasis.core.api.image.WindowOp;
 import org.weasis.core.api.image.ZoomOp;
 import org.weasis.core.api.image.cv.CvUtil;
 import org.weasis.core.api.image.measure.MeasurementsAdapter;
+import org.weasis.core.api.image.measure.PlaneGeometry;
 import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.api.util.ResourceMonitor;
 import org.weasis.core.api.util.SystemMemory;
@@ -168,8 +169,25 @@ public class ImageElement extends MediaElement {
     return pixelSizeY <= pixelSizeX ? 1.0 : pixelSizeY / pixelSizeX;
   }
 
+  /** Position of the image in patient space, or {@code null} when the image has none. */
+  public PlaneGeometry getPlaneGeometry() {
+    return null;
+  }
+
   public double getPixelSize() {
     return Math.min(pixelSizeX, pixelSizeY);
+  }
+
+  /**
+   * Sets the pixel size, its unit and its origin back to what the image itself provides; without
+   * such information the image is measured in pixels.
+   */
+  public void initPixelConfiguration() {
+    this.pixelSizeX = 1.0;
+    this.pixelSizeY = 1.0;
+    this.pixelSpacingUnit = Unit.PIXEL;
+    this.pixelSizeCalibrationDescription = null;
+    this.pixelSizeModifiedByUser = false;
   }
 
   public void setPixelSize(double pixelSize) {

@@ -44,7 +44,8 @@ public class DrawPrefView extends AbstractItemDialogPage {
 
     initialize();
 
-    List<AbstractItemDialogPage> childPages = List.of(new GraphicPrefView(), new LabelsPrefView());
+    List<AbstractItemDialogPage> childPages =
+        List.of(new GraphicPrefView(), new ProfilePrefView(), new LabelsPrefView());
     childPages.forEach(p -> addSubPage(p, _ -> dialog.showPage(p.getTitle()), menuPanel));
   }
 

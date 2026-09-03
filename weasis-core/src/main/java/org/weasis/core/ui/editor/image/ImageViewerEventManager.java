@@ -36,6 +36,7 @@ import org.weasis.core.api.gui.util.ComboItemListener;
 import org.weasis.core.api.gui.util.DecFormatter;
 import org.weasis.core.api.gui.util.Feature;
 import org.weasis.core.api.gui.util.Filter;
+import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.ShortcutManager;
 import org.weasis.core.api.gui.util.SliderChangeListener;
@@ -54,6 +55,10 @@ import org.weasis.core.ui.editor.image.SynchData.SyncState;
 import org.weasis.core.ui.editor.image.dockable.MeasureTool;
 import org.weasis.core.ui.launcher.Launcher;
 import org.weasis.core.ui.model.graphic.Graphic;
+import org.weasis.core.ui.model.graphic.GraphicRegistry;
+import org.weasis.core.ui.model.graphic.ToolCategory;
+import org.weasis.core.ui.model.graphic.profile.MeasurementProfileRegistry;
+import org.weasis.core.ui.model.graphic.profile.MeasurementProfiles;
 import org.weasis.core.ui.model.utils.bean.PanPoint;
 import org.weasis.core.ui.model.utils.imp.DefaultViewModel;
 import org.weasis.core.ui.pref.ZoomSetting;
@@ -457,6 +462,37 @@ public abstract class ImageViewerEventManager<E extends ImageElement> implements
             new SynchEvent(getSelectedViewPane(), action.cmd(), selected));
       }
     };
+  }
+
+  /** Measurement palette fed by the {@link GraphicRegistry} and refreshed when it changes. */
+  protected ComboItemListener<Graphic> newMeasurementAction() {
+    return newToolAction(ActionW.DRAW_MEASURE, ToolCategory.MEASURE);
+  }
+
+  /** Drawing palette fed by the {@link GraphicRegistry} and refreshed when it changes. */
+  protected ComboItemListener<Graphic> newDrawAction() {
+    return newToolAction(ActionW.DRAW_GRAPHICS, ToolCategory.DRAW);
+  }
+
+  private static ComboItemListener<Graphic> newToolAction(
+      Feature<ComboItemListener<Graphic>> action, ToolCategory category) {
+    ComboItemListener<Graphic> listener =
+        new ComboItemListener<>(
+            action, MeasurementProfiles.activeTools(category).toArray(new Graphic[0])) {
+          @Override
+          public void itemStateChanged(Object object) {
+            // Do nothing
+          }
+        };
+    Runnable refresh =
+        () ->
+            GuiExecutor.execute(
+                () ->
+                    listener.setDataListWithoutTriggerAction(
+                        MeasurementProfiles.activeTools(category).toArray(new Graphic[0])));
+    GraphicRegistry.getInstance().addListener(refresh);
+    MeasurementProfileRegistry.getInstance().addListener(refresh);
+    return listener;
   }
 
   protected static ComboItemListener<Graphic> newMeasurementAction(Graphic[] graphics) {
@@ -869,7 +905,7 @@ public abstract class ImageViewerEventManager<E extends ImageElement> implements
     if (drawAction.isPresent() && drawAction.get().isActionEnabled()) {
       for (Object obj : drawAction.get().getAllItem()) {
         if (obj instanceof Graphic g) {
-          if (g.getKeyCode() == keyEvent && g.getModifier() == modifiers) {
+          if (keyEvent != 0 && g.getKeyCode() == keyEvent && g.getModifier() == modifiers) {
             ImageViewerPlugin<E> view = getSelectedView2dContainer();
             if (view != null) {
               final ViewerToolBar<?> toolBar = view.getViewerToolBar();

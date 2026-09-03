@@ -27,8 +27,8 @@ import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.ui.docking.ExtToolFactory;
 import org.weasis.core.ui.editor.image.ImageViewerEventManager;
-import org.weasis.core.ui.editor.image.MeasureToolBar;
 import org.weasis.core.ui.model.graphic.Graphic;
+import org.weasis.core.ui.model.graphic.imp.BuiltinGraphicTools;
 
 /**
  * @author Yannick LARVOR
@@ -101,7 +101,7 @@ public class EditionToolFactory extends ExtToolFactory<ImageElement> {
         new ComboItemListener<>(
             DRAW_EDITION,
             new Graphic[] {
-              MeasureToolBar.selectionGraphic, CalibrationPanel.CALIBRATION_LINE_GRAPHIC
+              BuiltinGraphicTools.SELECTION, CalibrationPanel.CALIBRATION_LINE_GRAPHIC
             }) {
 
           @Override

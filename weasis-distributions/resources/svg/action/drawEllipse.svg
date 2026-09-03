@@ -1,6 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <svg width="22" height="22" version="1.1" viewBox="0 0 22 22" xmlns="http://www.w3.org/2000/svg">
- <g fill="none">
-  <ellipse cx="11" cy="11" rx="9.2665" ry="6.2665" fill="none" stroke="#6e6e6e" stroke-width="1.467" style="paint-order:fill markers stroke"/>
+ <g fill="none" stroke-width="1.467">
+  <path d="M18.12 13.206A7.8 5.4 0 0 1 13.206 16.18" stroke="#6e6e6e"/>
+  <path d="M8.794 16.18A7.8 5.4 0 0 1 3.88 13.206" stroke="#6e6e6e"/>
+  <path d="M3.88 8.794A7.8 5.4 0 0 1 18.12 8.794" stroke="#6e6e6e"/>
+  <path d="M5.405 11L16.595 11" stroke="#6e6e6e" stroke-dasharray="1.6 1.6"/>
+  <rect x="1.728" y="9.528" width="2.944" height="2.944" stroke="#389fd6" style="paint-order:stroke fill markers"/>
+  <rect x="17.328" y="9.528" width="2.944" height="2.944" stroke="#389fd6" style="paint-order:stroke fill markers"/>
+  <rect x="9.528" y="14.928" width="2.944" height="2.944" stroke="#389fd6" style="paint-order:stroke fill markers"/>
  </g>
 </svg>

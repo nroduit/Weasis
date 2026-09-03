@@ -27,6 +27,7 @@ import org.weasis.core.api.image.util.MeasurableLayer;
 import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.api.util.ResourceUtil.ActionIcon;
+import org.weasis.core.ui.editor.image.dockable.MeasureTool;
 import org.weasis.core.ui.model.graphic.AbstractDragGraphicArea;
 import org.weasis.core.ui.model.graphic.imp.area.RectangleGraphic.eHandlePoint;
 import org.weasis.core.ui.model.utils.bean.MeasureItem;
@@ -44,19 +45,20 @@ public class ObliqueRectangleGraphic extends AbstractDragGraphicArea {
   public static final Icon ICON = ResourceUtil.getIcon(ActionIcon.DRAW_RECTANGLE);
 
   public static final Measurement AREA =
-      new Measurement(Messages.getString("measure.area"), 1, true, true, true);
+      new Measurement("area", Messages.getString("measure.area"), 1, true, true, true);
   public static final Measurement PERIMETER =
-      new Measurement(Messages.getString("measure.perimeter"), 2, true, true, false);
+      new Measurement("perimeter", Messages.getString("measure.perimeter"), 2, true, true, false);
   public static final Measurement CENTER_X =
-      new Measurement(Messages.getString("measure.centerx"), 5, true, true, false);
+      new Measurement("center.x", Messages.getString("measure.centerx"), 5, true, true, false);
   public static final Measurement CENTER_Y =
-      new Measurement(Messages.getString("measure.centery"), 6, true, true, false);
+      new Measurement("center.y", Messages.getString("measure.centery"), 6, true, true, false);
   public static final Measurement WIDTH =
-      new Measurement(Messages.getString("measure.width"), 7, true, true, false);
+      new Measurement("width", Messages.getString("measure.width"), 7, true, true, false);
   public static final Measurement HEIGHT =
-      new Measurement(Messages.getString("measure.height"), 8, true, true, false);
+      new Measurement("height", Messages.getString("measure.height"), 8, true, true, false);
   public static final Measurement ORIENTATION =
-      new Measurement(Messages.getString("measure.orientation"), 9, true, true, false);
+      new Measurement(
+          "orientation", Messages.getString("measure.orientation"), 9, true, true, false);
 
   protected static final List<Measurement> MEASUREMENT_LIST = new ArrayList<>();
 
@@ -79,6 +81,9 @@ public class ObliqueRectangleGraphic extends AbstractDragGraphicArea {
   // estimate if line segments are valid or not
   protected boolean lineABvalid;
   protected boolean lineCDvalid;
+
+  /** True while the shape is being created axis-aligned from its diagonal. */
+  private boolean axisAlignedCreation;
 
   public ObliqueRectangleGraphic() {
     super(POINTS_NUMBER);
@@ -128,6 +133,12 @@ public class ObliqueRectangleGraphic extends AbstractDragGraphicArea {
 
     handlePointIndex = super.moveAndResizeOnDrawing(handlePointIndex, deltaX, deltaY, mouseEvent);
 
+    if (handlePointIndex == 1 && isAxisAlignedCreation(mouseEvent)) {
+      axisAlignedCreation = true;
+      alignToAxes(mouseEvent.getImageCoordinates());
+      return handlePointIndex;
+    }
+
     if (handlePointIndex >= 0 && handlePointIndex < getHandlePointListSize()) {
       updateTool();
 
@@ -173,6 +184,41 @@ public class ObliqueRectangleGraphic extends AbstractDragGraphicArea {
     }
 
     return handlePointIndex;
+  }
+
+  /**
+   * The first drag is either the first side of an oblique shape or the diagonal of a classic,
+   * axis-aligned one drawn in one go. Shift selects the mode that is not the preferred one.
+   */
+  private boolean isAxisAlignedCreation(MouseEventDouble mouseEvent) {
+    return mouseEvent != null
+        && mouseEvent.isShiftDown() != isUprightByDrag()
+        && (getHandlePointListSize() == 2 || axisAlignedCreation);
+  }
+
+  protected boolean isUprightByDrag() {
+    return MeasureTool.viewSetting.isUprightByDrag();
+  }
+
+  /** Places B, C and D so that A and the cursor are opposite corners of an upright rectangle. */
+  private void alignToAxes(Point2D cursor) {
+    Point2D a = getHandlePoint(0);
+    if (a == null || cursor == null) {
+      return;
+    }
+    Point2D b = new Point2D.Double(cursor.getX(), a.getY());
+    Point2D c = GeomUtil.getMidPoint(a, b);
+    setHandlePoint(1, b);
+    setHandlePoint(2, c);
+    setHandlePoint(3, new Point2D.Double(c.getX(), cursor.getY()));
+  }
+
+  @Override
+  public void setResizeOrMoving(Boolean value) {
+    super.setResizeOrMoving(value);
+    if (!Boolean.TRUE.equals(value)) {
+      axisAlignedCreation = false;
+    }
   }
 
   /**

@@ -12,6 +12,9 @@ package org.weasis.core.ui.model.graphic.imp.line;
 import jakarta.xml.bind.annotation.XmlRootElement;
 import jakarta.xml.bind.annotation.XmlType;
 import java.awt.Shape;
+import java.awt.geom.AffineTransform;
+import java.awt.geom.Ellipse2D;
+import java.awt.geom.Line2D;
 import java.awt.geom.Path2D;
 import java.awt.geom.Point2D;
 import java.util.ArrayList;
@@ -21,15 +24,21 @@ import java.util.Objects;
 import java.util.Optional;
 import javax.swing.Icon;
 import org.weasis.core.Messages;
+import org.weasis.core.api.gui.util.GeomUtil;
 import org.weasis.core.api.image.measure.MeasurementsAdapter;
 import org.weasis.core.api.image.util.MeasurableLayer;
 import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.api.util.ResourceUtil.ActionIcon;
+import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.model.graphic.AbstractDragGraphic;
+import org.weasis.core.ui.model.graphic.imp.PathConversion;
+import org.weasis.core.ui.model.utils.Draggable;
+import org.weasis.core.ui.model.utils.bean.AdvancedShape;
 import org.weasis.core.ui.model.utils.bean.MeasureItem;
 import org.weasis.core.ui.model.utils.bean.Measurement;
 import org.weasis.core.ui.model.utils.exceptions.InvalidShapeException;
+import org.weasis.core.ui.model.utils.imp.DefaultDragSequence;
 import org.weasis.core.ui.util.MouseEventDouble;
 
 @XmlType(name = "polyline")
@@ -41,7 +50,7 @@ public class PolylineGraphic extends AbstractDragGraphic {
   public static final Icon ICON = ResourceUtil.getIcon(ActionIcon.DRAW_POLYLINE);
 
   public static final Measurement LINE_LENGTH =
-      new Measurement(Messages.getString("measure.length"), 5, true, true, true);
+      new Measurement("length", Messages.getString("measure.length"), 5, true, true, true);
 
   protected static final List<Measurement> MEASUREMENT_LIST = new ArrayList<>();
 
@@ -55,6 +64,115 @@ public class PolylineGraphic extends AbstractDragGraphic {
 
   public PolylineGraphic(PolylineGraphic graphic) {
     super(graphic);
+  }
+
+  @Override
+  public Draggable createResizeDrag(Integer i) {
+    return isGraphicComplete() ? super.createResizeDrag(i) : new ClosingDragSequence(this, i);
+  }
+
+  /** True when the cursor is on the first handle, at the handle size of the view. */
+  public boolean isOnFirstPoint(MouseEventDouble mouseEvent) {
+    return isNearFirstPoint(mouseEvent, 1.0);
+  }
+
+  /** True when the cursor is within {@code factor} handle sizes of the first point. */
+  public boolean isNearFirstPoint(MouseEventDouble mouseEvent, double factor) {
+    if (mouseEvent == null || pts.isEmpty() || pts.getFirst() == null) {
+      return false;
+    }
+    AffineTransform transform = getAffineTransform(mouseEvent);
+    double scale = transform == null ? 1 : GeomUtil.extractScalingFactor(transform);
+    return pts.getFirst().distance(mouseEvent.getImageCoordinates())
+        <= HANDLE_SIZE * 1.5 * factor / scale;
+  }
+
+  /** True while drawing when releasing or clicking now would close the path. */
+  protected boolean isClosingPreview(MouseEventDouble mouseEvent) {
+    return !isGraphicComplete() && pts.size() >= 4 && isOnFirstPoint(mouseEvent);
+  }
+
+  /** Last point of the path proper, before the one following the cursor. */
+  protected Point2D previewTail() {
+    return pts.get(pts.size() - 2);
+  }
+
+  /** The open path, plus a dashed closing segment and a ring on the first point when closing. */
+  protected Shape buildPath(MouseEventDouble mouseEvent) {
+    Optional<Point2D> first = pts.stream().findFirst();
+    if (first.isEmpty() || first.get() == null) {
+      return null;
+    }
+    Path2D path = new Path2D.Double(Path2D.WIND_NON_ZERO, pts.size());
+    path.moveTo(first.get().getX(), first.get().getY());
+    for (Point2D pt : pts) {
+      if (pt == null) {
+        break;
+      }
+      path.lineTo(pt.getX(), pt.getY());
+    }
+    if (!isClosingPreview(mouseEvent)) {
+      return path;
+    }
+    Point2D start = first.get();
+    Point2D tail = previewTail();
+    AdvancedShape preview = new AdvancedShape(this, 3);
+    preview.addShape(path);
+    preview.addShape(new Line2D.Double(tail, start), getDashStroke(lineThickness), true);
+    double r = HANDLE_SIZE * 1.5;
+    preview.addScaleInvShape(
+        new Ellipse2D.Double(start.getX() - r, start.getY() - r, 2 * r, 2 * r),
+        start,
+        getStroke(lineThickness),
+        false);
+    return preview;
+  }
+
+  /**
+   * Closes the path being drawn into a polygon when the click lands on the first point: the point
+   * following the cursor is dropped and the polyline is replaced by a polygon in the view.
+   */
+  public boolean closeOnFirstPoint(MouseEventDouble mouseEvent) {
+    if (pts.size() < 4 || !isOnFirstPoint(mouseEvent)) {
+      return false;
+    }
+    ViewCanvas<?> view = getDefaultView2d(mouseEvent);
+    if (view == null) {
+      return false;
+    }
+    pts.removeLast();
+    setPointNumber(pts.size());
+    setResizeOrMoving(Boolean.FALSE);
+    buildShape(mouseEvent);
+    try {
+      PathConversion.replace(view, this, PathConversion.close(this));
+    } catch (InvalidShapeException e) {
+      return false;
+    }
+    mouseEvent.consume();
+    return true;
+  }
+
+  /** The default drawing sequence, plus closing the path on a click on its first point. */
+  private static final class ClosingDragSequence extends DefaultDragSequence {
+
+    private final PolylineGraphic polyline;
+
+    ClosingDragSequence(PolylineGraphic polyline, Integer handlePointIndex) {
+      super(polyline, handlePointIndex);
+      this.polyline = polyline;
+    }
+
+    @Override
+    public Boolean completeDrag(MouseEventDouble mouseEvent) {
+      if (mouseEvent != null
+          && mouseEvent.getClickCount() == 1
+          && !polyline.isGraphicComplete()
+          && polyline.closeOnFirstPoint(mouseEvent)) {
+        return Boolean.TRUE;
+      }
+      return super.completeDrag(mouseEvent);
+    }
   }
 
   @Override
@@ -103,23 +221,7 @@ public class PolylineGraphic extends AbstractDragGraphic {
 
   @Override
   public void buildShape(MouseEventDouble mouseEvent) {
-    Shape newShape = null;
-    Optional<Point2D> firstHandlePoint = pts.stream().findFirst();
-
-    if (firstHandlePoint.isPresent()) {
-      Point2D p = firstHandlePoint.get();
-      Path2D polygonPath = new Path2D.Double(Path2D.WIND_NON_ZERO, pts.size());
-      polygonPath.moveTo(p.getX(), p.getY());
-
-      for (Point2D pt : pts) {
-        if (pt == null) {
-          break;
-        }
-        polygonPath.lineTo(pt.getX(), pt.getY());
-      }
-      newShape = polygonPath;
-    }
-    setShape(newShape, mouseEvent);
+    setShape(buildPath(mouseEvent), mouseEvent);
     updateLabel(mouseEvent, getDefaultView2d(mouseEvent));
   }
 

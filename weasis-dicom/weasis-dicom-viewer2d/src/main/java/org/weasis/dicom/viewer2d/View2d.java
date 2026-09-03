@@ -39,7 +39,6 @@ import java.util.Optional;
 import java.util.Set;
 import javax.swing.JDialog;
 import javax.swing.JMenuItem;
-import javax.swing.JOptionPane;
 import javax.swing.JPopupMenu;
 import javax.swing.JSeparator;
 import javax.swing.SwingUtilities;
@@ -66,6 +65,7 @@ import org.weasis.core.api.image.WindowOp;
 import org.weasis.core.api.image.util.ImageLayer;
 import org.weasis.core.api.image.util.MeasurableLayer;
 import org.weasis.core.api.image.util.Unit;
+import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.service.AuditLog;
@@ -87,10 +87,12 @@ import org.weasis.core.ui.editor.image.ViewSynchData;
 import org.weasis.core.ui.model.AbstractGraphicModel;
 import org.weasis.core.ui.model.graphic.DragGraphic;
 import org.weasis.core.ui.model.graphic.Graphic;
+import org.weasis.core.ui.model.graphic.imp.PathConversion;
 import org.weasis.core.ui.model.graphic.imp.area.PolygonGraphic;
 import org.weasis.core.ui.model.graphic.imp.area.RectangleGraphic;
 import org.weasis.core.ui.model.graphic.imp.line.LineGraphic;
 import org.weasis.core.ui.model.graphic.imp.line.LineWithGapGraphic;
+import org.weasis.core.ui.model.graphic.imp.line.PolylineGraphic;
 import org.weasis.core.ui.model.graphic.imp.seg.SegContour;
 import org.weasis.core.ui.model.layer.GraphicLayer;
 import org.weasis.core.ui.model.layer.LayerType;
@@ -190,6 +192,27 @@ public class View2d extends DefaultView2d<DicomImageElement> {
           .orElseGet(List::of);
     }
     return List.of();
+  }
+
+  /**
+   * The calibration of the file, then the Presentation Pixel Spacing of the presentation state
+   * applied to this view when it covers the displayed image (PS3.3 C.10.4).
+   */
+  @Override
+  public void restoreCalibration(ImageElement image) {
+    image.initPixelConfiguration();
+    if (image == getImage()
+        && image instanceof DicomImageElement dicomImage
+        && getActionValue(ActionW.PR_STATE.cmd()) instanceof PRSpecialElement pr
+        && PresentationStateReader.isImageApplicable(pr, dicomImage)) {
+      PRManager.applyPixelSpacing(this, new PresentationStateReader(pr), dicomImage);
+    }
+  }
+
+  /** The images of a DICOM series share their geometry. */
+  @Override
+  public boolean isSeriesCalibrationDefault() {
+    return true;
   }
 
   @Override
@@ -1355,28 +1378,36 @@ public class View2d extends DefaultView2d<DicomImageElement> {
         popupMenu.add(item);
         popupMenu.add(new JSeparator());
 
+        if (graphicComplete && graph instanceof PolylineGraphic polyline) {
+          JMenuItem closePath = new JMenuItem(Messages.getString("View2d.close_path"));
+          closePath.addActionListener(
+              e -> {
+                try {
+                  PathConversion.replace(View2d.this, polyline, PathConversion.close(polyline));
+                } catch (InvalidShapeException ex) {
+                  LOGGER.warn("Cannot close the path", ex);
+                }
+              });
+          popupMenu.add(closePath);
+          popupMenu.add(new JSeparator());
+        } else if (graphicComplete && graph instanceof PolygonGraphic polygon) {
+          JMenuItem openPath = new JMenuItem(Messages.getString("View2d.open_path"));
+          openPath.addActionListener(
+              e -> {
+                try {
+                  PathConversion.replace(View2d.this, polygon, PathConversion.open(polygon));
+                } catch (InvalidShapeException ex) {
+                  LOGGER.warn("Cannot open the path", ex);
+                }
+              });
+          popupMenu.add(openPath);
+          popupMenu.add(new JSeparator());
+        }
+
         if (graphicComplete && graph instanceof LineGraphic lineGraphic) {
 
           final JMenuItem calibMenu = new JMenuItem(Messages.getString("View2d.chg_calib"));
-          calibMenu.addActionListener(
-              e -> {
-                String title = Messages.getString("View2d.clibration");
-                CalibrationView calibrationDialog =
-                    new CalibrationView(lineGraphic, View2d.this, true);
-                ColorLayerUI layer = ColorLayerUI.createTransparentLayerUI(View2d.this);
-                int res =
-                    JOptionPane.showConfirmDialog(
-                        ColorLayerUI.getContentPane(layer),
-                        calibrationDialog,
-                        title,
-                        JOptionPane.OK_CANCEL_OPTION);
-                if (layer != null) {
-                  layer.hideUI();
-                }
-                if (res == JOptionPane.OK_OPTION) {
-                  calibrationDialog.applyNewCalibration();
-                }
-              });
+          calibMenu.addActionListener(e -> CalibrationView.showDialog(lineGraphic, View2d.this));
           popupMenu.add(calibMenu);
           popupMenu.add(new JSeparator());
         }

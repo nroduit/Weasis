@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<bidirectional fill="false" showLabel="true" thickness="1.0" uuid="test.graphic-abcd-123-efg45.1">
+  <paint rgb="000000"/>
+  <pts>
+    <pt x="0.0" y="0.0"/>
+    <pt x="100.0" y="0.0"/>
+    <pt x="50.0" y="25.0"/>
+    <pt x="50.0" y="-25.0"/>
+  </pts>
+</bidirectional>

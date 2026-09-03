@@ -11,12 +11,14 @@ package org.weasis.core.ui.editor.image;
 
 import java.awt.Cursor;
 import java.awt.Rectangle;
+import java.awt.Toolkit;
 import java.awt.event.MouseEvent;
 import java.awt.geom.AffineTransform;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import javax.swing.SwingUtilities;
 import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.ComboItemListener;
@@ -29,7 +31,9 @@ import org.weasis.core.ui.model.AbstractGraphicModel;
 import org.weasis.core.ui.model.GraphicModel;
 import org.weasis.core.ui.model.graphic.DragGraphic;
 import org.weasis.core.ui.model.graphic.Graphic;
+import org.weasis.core.ui.model.graphic.imp.BuiltinGraphicTools;
 import org.weasis.core.ui.model.graphic.imp.area.SelectGraphic;
+import org.weasis.core.ui.model.graphic.imp.line.LineGraphic;
 import org.weasis.core.ui.model.utils.Draggable;
 import org.weasis.core.ui.model.utils.imp.DefaultDragSequence;
 import org.weasis.core.ui.util.MouseEventDouble;
@@ -37,6 +41,10 @@ import org.weasis.core.ui.util.MouseEventDouble;
 public class GraphicMouseHandler<E extends ImageElement> extends MouseActionAdapter {
   private final ViewCanvas<E> vImg;
   private Draggable ds;
+
+  /** The graphic being created by the current drag sequence, if it is a new one. */
+  private Graphic created;
+
   private final CursorSet cursorSet;
 
   public GraphicMouseHandler(ViewCanvas<E> vImg) {
@@ -88,6 +96,9 @@ public class GraphicMouseHandler<E extends ImageElement> extends MouseActionAdap
     }
 
     Cursor newCursor = cursorSet.getDrawingCursor();
+    if (ds == null) {
+      created = null;
+    }
 
     GraphicModel graphicList = vImg.getGraphicManager();
     // Avoid any dragging on selection when Shift Button is Down
@@ -156,6 +167,7 @@ public class GraphicMouseHandler<E extends ImageElement> extends MouseActionAdap
               AbstractGraphicModel.drawFromCurrentGraphic(
                   vImg, (Graphic) (item instanceof Graphic ? item : null));
           if (graph instanceof DragGraphic dragGraphic) {
+            created = graph;
             ds = dragGraphic.createResizeDrag();
             if (!(graph instanceof SelectGraphic)) {
               vImg.getGraphicManager().setSelectedGraphic(Collections.singletonList(graph));
@@ -243,6 +255,7 @@ public class GraphicMouseHandler<E extends ImageElement> extends MouseActionAdap
     }
 
     if (ds.completeDrag(mouseEvt)) {
+      calibrateIfRequested(e);
       vImg.getEventManager()
           .getAction(ActionW.DRAW_ONLY_ONCE)
           .filter(ToggleButtonListener::isSelected)
@@ -250,10 +263,10 @@ public class GraphicMouseHandler<E extends ImageElement> extends MouseActionAdap
               a -> {
                 vImg.getEventManager()
                     .getAction(ActionW.DRAW_MEASURE)
-                    .ifPresent(c -> c.setSelectedItem(MeasureToolBar.selectionGraphic));
+                    .ifPresent(c -> c.setSelectedItem(BuiltinGraphicTools.SELECTION));
                 vImg.getEventManager()
                     .getAction(ActionW.DRAW_GRAPHICS)
-                    .ifPresent(c -> c.setSelectedItem(MeasureToolBar.selectionGraphic));
+                    .ifPresent(c -> c.setSelectedItem(BuiltinGraphicTools.SELECTION));
               });
       ds = null;
     }
@@ -277,6 +290,19 @@ public class GraphicMouseHandler<E extends ImageElement> extends MouseActionAdap
 
     vImg.getJComponent()
         .setCursor(Optional.ofNullable(newCursor).orElse(cursorSet.getDrawingCursor()));
+  }
+
+  /**
+   * A measurement line drawn with the menu shortcut key held (Ctrl, Cmd on macOS) is a line over an
+   * object of known length: its calibration dialog opens as soon as it is drawn.
+   */
+  private void calibrateIfRequested(MouseEvent e) {
+    Graphic graphic = created;
+    created = null;
+    int shortcutMask = Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx();
+    if ((e.getModifiersEx() & shortcutMask) != 0 && CalibrationView.accepts(graphic)) {
+      SwingUtilities.invokeLater(() -> CalibrationView.showDialog((LineGraphic) graphic, vImg));
+    }
   }
 
   private static Cursor getCursor(

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="22" height="22" version="1.1" viewBox="0 0 22 22" xmlns="http://www.w3.org/2000/svg">
+ <g fill="none" stroke-width="1.467">
+  <path d="M13.4 4.2C10 1.6 3.6 2.6 3.2 7.4C2.9 10.6 6.6 11 6.2 14C5.7 17.6 11.6 20.6 16.4 17.6L18.4 16.2 15.9 4.9z" fill="#389fd6" fill-opacity="0.22" stroke="none"/>
+  <path d="M13.4 4.2C10 1.6 3.6 2.6 3.2 7.4C2.9 10.6 6.6 11 6.2 14C5.7 17.6 11.6 20.6 16.4 17.6" stroke="#6e6e6e" stroke-linecap="round"/>
+  <path d="M18.3 13.9 16.9 7.5" stroke="#389fd6" stroke-dasharray="2.2 1.5"/>
+  <circle cx="15.9" cy="4.9" r="2.6" stroke="#389fd6"/>
+  <rect x="16.928" y="14.728" width="2.944" height="2.944" stroke="#389fd6" style="paint-order:stroke fill markers"/>
+ </g>
+</svg>

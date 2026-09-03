@@ -30,6 +30,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.GeomUtil;
 import org.weasis.core.ui.model.graphic.Graphic;
+import org.weasis.core.ui.model.utils.GraphicOutline;
 import org.weasis.core.util.MathUtil;
 
 public class AdvancedShape implements Shape {
@@ -125,14 +126,21 @@ public class AdvancedShape implements Shape {
     Paint paint = graphic.getColorPaint();
     boolean filled = graphic.getFilled();
 
+    // Every halo first, so that none darkens a line of the same graphic
+    if (graphic.isOutlined()) {
+      for (BasicShape item : shapeList) {
+        Shape drawingShape = screenShape(item, transform);
+        if (drawingShape != null) {
+          GraphicOutline.draw(g2d, drawingShape, item.stroke);
+        }
+      }
+    }
+
     for (BasicShape item : shapeList) {
       if (item.isVisible()) {
-        Shape drawingShape = item.getRealShape();
+        Shape drawingShape = screenShape(item, transform);
 
         if (drawingShape != null) {
-          if (transform != null) {
-            drawingShape = transform.createTransformedShape(drawingShape);
-          }
           Paint itemPaint = item.getColorPaint();
           g2d.setPaint(itemPaint == null ? paint : itemPaint);
           g2d.setStroke(item.stroke);
@@ -153,6 +161,11 @@ public class AdvancedShape implements Shape {
 
     g2d.setPaint(oldPaint);
     g2d.setStroke(oldStroke);
+  }
+
+  private static Shape screenShape(BasicShape item, AffineTransform transform) {
+    Shape real = item.isVisible() ? item.getRealShape() : null;
+    return real == null || transform == null ? real : transform.createTransformedShape(real);
   }
 
   /**
