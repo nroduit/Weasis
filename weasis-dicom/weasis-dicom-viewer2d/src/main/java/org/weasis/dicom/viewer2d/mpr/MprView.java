@@ -647,8 +647,8 @@ public class MprView extends View2d implements SliceCanvas, ViewProgress {
   protected void addCrossline(MprAxis axis) {
     Pair<MprAxis, MprAxis> pair = mprController.getCrossAxis(axis);
     if (pair != null) {
-      DicomImageElement imageElement = axis.getImageElement();
-      if (imageElement == null) {
+      Vector3d center = mprController.getCrossHairPosition(axis);
+      if (axis.getImageElement() == null || center == null) {
         return;
       }
 
@@ -659,7 +659,6 @@ public class MprView extends View2d implements SliceCanvas, ViewProgress {
       if (LangUtil.nullToFalse((Boolean) actionsInView.get(SHOW_CROSS_CENTER))) {
         centerGap = 0;
       }
-      Vector3d center = mprController.getCrossHairPosition(axis);
       Point2D centerPt = new Point2D.Double(center.x, center.y);
       processImage(pair.first(), layer, axis, false, centerPt, centerGap);
       processImage(pair.second(), layer, axis, true, centerPt, centerGap);

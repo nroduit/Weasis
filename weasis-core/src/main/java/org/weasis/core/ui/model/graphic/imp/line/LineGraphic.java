@@ -81,7 +81,7 @@ public class LineGraphic extends AbstractDragGraphic {
     super(POINTS_NUMBER);
   }
 
-  public LineGraphic(LineGraphic graphic) {
+  public LineGraphic(LineGraphic graphic) { // NOSONAR see initCopy()
     super(graphic);
   }
 

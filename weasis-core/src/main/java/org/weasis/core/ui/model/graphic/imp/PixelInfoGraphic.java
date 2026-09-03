@@ -53,7 +53,7 @@ public class PixelInfoGraphic extends AnnotationGraphic {
     super();
   }
 
-  public PixelInfoGraphic(PixelInfoGraphic graphic) {
+  public PixelInfoGraphic(PixelInfoGraphic graphic) { // NOSONAR see initCopy()
     super(graphic);
   }
 

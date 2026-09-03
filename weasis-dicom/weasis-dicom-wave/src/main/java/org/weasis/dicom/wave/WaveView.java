@@ -277,6 +277,9 @@ public class WaveView extends JPanel implements SeriesViewerListener {
 
   private void displayECG(DicomSpecialElement media) throws Exception {
     removeAll();
+    if (media == null) {
+      return;
+    }
     DicomMediaIO dicomImageLoader = media.getMediaReader();
     Attributes attributes = dicomImageLoader.getDicomObject();
     if (attributes != null) {

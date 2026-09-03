@@ -88,7 +88,7 @@ public class ObliqueRectangleGraphic extends AbstractDragGraphicArea {
     super(POINTS_NUMBER);
   }
 
-  public ObliqueRectangleGraphic(ObliqueRectangleGraphic graphic) {
+  public ObliqueRectangleGraphic(ObliqueRectangleGraphic graphic) { // NOSONAR see initCopy()
     super(graphic);
   }
 

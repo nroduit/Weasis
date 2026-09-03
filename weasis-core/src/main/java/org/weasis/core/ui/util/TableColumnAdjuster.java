@@ -100,7 +100,7 @@ public class TableColumnAdjuster {
             + jtable.getTableHeader().getHeight()
             + GuiUtils.insetHeight(tableContainer);
     int width = jtable.getColumnModel().getTotalColumnWidth();
-    tableContainer.setPreferredSize(new Dimension(width, height));
+    tableContainer.setPreferredSize(new Dimension(width, height)); // NOSONAR container is required
     tableContainer.add(jtable.getTableHeader(), BorderLayout.PAGE_START);
     tableContainer.add(jtable, BorderLayout.CENTER);
     pack(jtable);

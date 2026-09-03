@@ -72,7 +72,8 @@ public final class SegComponentFactory {
       segs.addAll(
           HiddenSeriesManager.getHiddenElementsFromSeries(clazz, list.toArray(new String[0])));
     }
-    Object media = dcmSeries.getMedia(MEDIA_POSITION.FIRST, null, null);
+    // A null series yields a null UID, so hasText() above already returned
+    Object media = dcmSeries.getMedia(MEDIA_POSITION.FIRST, null, null); // NOSONAR
     if (media instanceof DicomImageElement img) {
       String patientPseudoUID = (String) img.getTagValue(TagW.PatientPseudoUID);
       if (StringUtil.hasText(patientPseudoUID)) {

@@ -105,7 +105,7 @@ public class FourPointsAngleToolGraphic extends AbstractDragGraphic {
     super(POINTS_NUMBER);
   }
 
-  public FourPointsAngleToolGraphic(FourPointsAngleToolGraphic graphic) {
+  public FourPointsAngleToolGraphic(FourPointsAngleToolGraphic graphic) { // NOSONAR see initCopy()
     super(graphic);
   }
 

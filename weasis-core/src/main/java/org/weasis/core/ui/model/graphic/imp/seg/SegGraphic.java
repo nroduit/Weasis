@@ -51,7 +51,7 @@ public class SegGraphic extends AbstractGraphic implements GraphicArea {
     updateLabel(null, null);
   }
 
-  public SegGraphic(SegGraphic graphic) {
+  public SegGraphic(SegGraphic graphic) { // NOSONAR see initCopy()
     super(graphic);
   }
 

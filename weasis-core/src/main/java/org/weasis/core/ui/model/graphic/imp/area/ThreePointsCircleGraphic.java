@@ -71,7 +71,7 @@ public class ThreePointsCircleGraphic extends AbstractDragGraphicArea {
     super(POINTS_NUMBER);
   }
 
-  public ThreePointsCircleGraphic(ThreePointsCircleGraphic graphic) {
+  public ThreePointsCircleGraphic(ThreePointsCircleGraphic graphic) { // NOSONAR see initCopy()
     super(graphic);
   }
 

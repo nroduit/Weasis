@@ -9,6 +9,7 @@
  */
 package org.weasis.dicom.viewer2d;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -530,7 +531,7 @@ public class DicomSynchManager extends SynchManager<DicomImageElement> {
   protected List<ViewCanvas<DicomImageElement>> getSiblingViews(
       ImageViewerPlugin<DicomImageElement> viewerPlugin, ViewCanvas<DicomImageElement> viewPane) {
     if (viewPane == null || viewPane.getSeries() == null) {
-      return Collections.emptyList();
+      return new ArrayList<>();
     }
     List<ViewCanvas<DicomImageElement>> views = viewerPlugin.getImagePanels();
     views.remove(viewPane);

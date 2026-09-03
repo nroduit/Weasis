@@ -122,6 +122,7 @@ public class VolImageIO implements DcmMediaReader {
     MprController controller = mprAxis.getMprView().mprController;
     Vector3d volumeCenter = controller.getCrossHairPosition();
     int extend = mprAxis.getThicknessExtension();
+    PlanarImage image;
     if (extend > 0 && !mprAxis.isAdjusting()) {
       double position = controller.getCrossHairPosition(mprAxis).z;
       List<PlanarImage> sources = new ArrayList<>();
@@ -139,12 +140,14 @@ public class VolImageIO implements DcmMediaReader {
           sources.add(slice);
         }
       }
-
-      PlanarImage image = mipStack(sources, volumeCenter);
-      image.setReleasedAfterProcessing(false);
-      return image;
+      image = mipStack(sources, volumeCenter);
+    } else {
+      image = getSlice(volumeCenter);
     }
-    PlanarImage image = getSlice(volumeCenter);
+
+    if (image == null) {
+      return null;
+    }
     image.setReleasedAfterProcessing(false);
     return image;
   }
