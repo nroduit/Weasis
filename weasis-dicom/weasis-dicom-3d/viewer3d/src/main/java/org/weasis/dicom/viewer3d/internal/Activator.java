@@ -24,6 +24,7 @@ import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.image.lut.ColorMapRegistry;
 import org.weasis.core.api.service.BundleTools;
 import org.weasis.dicom.viewer3d.View3DContainer;
+import org.weasis.dicom.viewer3d.vr.OpenglUtils;
 import org.weasis.dicom.viewer3d.vr.Preset;
 
 @Header(name = Constants.BUNDLE_ACTIVATOR, value = "${@class}") // NON-NLS
@@ -51,6 +52,9 @@ public class Activator implements BundleActivator, ServiceListener {
   @Override
   public void stop(BundleContext bundleContext) {
     GuiUtils.getUICore().closeSeriesViewerType(View3DContainer.class);
+    // Must happen here rather than from a JVM shutdown hook: JOGL still needs to load classes to
+    // tear the context down, and the bundle class loaders are closed once the framework is stopped.
+    OpenglUtils.destroy();
   }
 
   @Override
