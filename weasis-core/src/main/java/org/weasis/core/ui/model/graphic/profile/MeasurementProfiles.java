@@ -82,6 +82,11 @@ public final class MeasurementProfiles {
     overlay().restore();
   }
 
+  /** Changes the user's own settings under the active profile, which stays laid over them. */
+  public static void changeUserSettings(Runnable change) {
+    overlay().changeUserSettings(change);
+  }
+
   /**
    * Applies the palettes of a profile to a viewer type, and its defaults, labels and statistics
    * over the user's settings; the sections it does not state show the user's own again.

@@ -37,6 +37,8 @@ final class ProfileOverlay {
   /** The settings the profile replaced, by target; several tools may share one measurement. */
   private final Map<Object, Held<?>> held = new LinkedHashMap<>();
 
+  private MeasurementProfile active;
+
   private record Held<T>(Supplier<T> getter, Consumer<T> setter, T own, T applied) {
     void restore() {
       if (Objects.equals(getter.get(), applied)) {
@@ -58,6 +60,7 @@ final class ProfileOverlay {
   /** Applies the defaults, labels and statistics of a profile over the user's settings. */
   synchronized void apply(MeasurementProfile profile) {
     restore();
+    active = profile;
     if (profile == null) {
       return;
     }
@@ -70,6 +73,18 @@ final class ProfileOverlay {
   synchronized void restore() {
     held.values().forEach(Held::restore);
     held.clear();
+    active = null;
+  }
+
+  /**
+   * Changes the user's own settings with the profile taken off, then lays it over them again, so
+   * the change becomes the user's and the profile also covers tools registered in the meantime.
+   */
+  synchronized void changeUserSettings(Runnable change) {
+    MeasurementProfile profile = active;
+    restore();
+    change.run();
+    apply(profile);
   }
 
   /** Writes a value over a setting, keeping the user's value from the first time it is replaced. */

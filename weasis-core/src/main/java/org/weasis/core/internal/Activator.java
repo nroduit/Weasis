@@ -101,6 +101,7 @@ public class Activator implements BundleActivator, ServiceListener {
         });
 
     GraphicRegistry registry = GraphicRegistry.getInstance();
+    registry.addListener(() -> MeasureTool.viewSetting.applyLabelsOfNewTools(prefs));
     for (ServiceReference<GraphicToolProvider> service :
         bundleContext.getServiceReferences(GraphicToolProvider.class, null)) {
       registry.register(bundleContext.getService(service));

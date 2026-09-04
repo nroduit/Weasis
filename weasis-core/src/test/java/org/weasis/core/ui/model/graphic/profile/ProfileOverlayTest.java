@@ -162,6 +162,27 @@ class ProfileOverlayTest {
   }
 
   @Test
+  void a_user_change_under_a_profile_becomes_the_users_and_the_profile_stays() {
+    overlay.apply(radiography);
+    overlay.changeUserSettings(
+        () -> {
+          assertFalse(angle.getGraphicLabel(), "made on the user's settings");
+          length.setGraphicLabel(false);
+        });
+    assertTrue(angle.getGraphicLabel(), "the profile is laid over again");
+    overlay.restore();
+    assertAll(
+        () -> assertFalse(length.getGraphicLabel()), () -> assertFalse(angle.getGraphicLabel()));
+  }
+
+  @Test
+  void a_user_change_without_a_profile_is_simply_applied() {
+    overlay.changeUserSettings(() -> angle.setGraphicLabel(true));
+    overlay.restore();
+    assertTrue(angle.getGraphicLabel());
+  }
+
+  @Test
   void restoring_gives_back_what_is_saved_as_the_users_preferences() {
     setting.setLineColor(Color.MAGENTA);
     overlay.apply(radiography);

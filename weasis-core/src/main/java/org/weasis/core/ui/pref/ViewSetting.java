@@ -16,7 +16,11 @@ import java.awt.GraphicsDevice;
 import java.awt.GraphicsEnvironment;
 import java.awt.Rectangle;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
 import javax.swing.JSpinner;
@@ -30,6 +34,7 @@ import org.weasis.core.ui.editor.image.dockable.MeasureTool;
 import org.weasis.core.ui.model.graphic.Graphic;
 import org.weasis.core.ui.model.graphic.GraphicRegistry;
 import org.weasis.core.ui.model.graphic.ToolCategory;
+import org.weasis.core.ui.model.graphic.profile.MeasurementProfiles;
 import org.weasis.core.ui.model.utils.ImageStatistics;
 import org.weasis.core.ui.model.utils.MeasureFormat;
 import org.weasis.core.ui.model.utils.bean.Measurement;
@@ -71,6 +76,8 @@ public class ViewSetting {
   private double circleRadius = DEFAULT_CIRCLE_RADIUS;
   private boolean moreStatistics;
   private final List<Monitor> monitors = new ArrayList<>(2);
+  // Tools whose stored labels are applied; a plugin tool registered later is not among them yet
+  private final Set<String> labelledTools = ConcurrentHashMap.newKeySet();
 
   public ViewSetting() {
     this.fontItem = DEFAULT_FONT;
@@ -125,13 +132,35 @@ public class ViewSetting {
       ImageStatistics.IMAGE_SUM.setComputed(moreStatistics);
 
       applyLabels(stats.get("label", null), List.of(ImageStatistics.ALL_MEASUREMENTS)); // NON-NLS
-      forEachMeasurementTool(
-          (key, graph) -> {
-            Preferences node = toolNode(p, key, graph);
-            if (node != null) {
-              applyLabels(node.get("label", null), graph.getMeasurementList()); // NON-NLS
-            }
-          });
+      labelledTools.clear();
+      forEachMeasurementTool((key, graph) -> applyToolLabels(p, key, graph));
+    }
+  }
+
+  /**
+   * Applies the stored labels of the tools registered since the preferences were applied, such as
+   * those of a plugin started after the core; the tools already labelled keep the current choice.
+   */
+  public void applyLabelsOfNewTools(Preferences prefs) {
+    if (prefs == null) {
+      return;
+    }
+    Preferences p = prefs.node(ViewSetting.PREFERENCE_NODE);
+    Map<String, Graphic> added = new LinkedHashMap<>();
+    forEachMeasurementTool(added::put);
+    labelledTools.retainAll(added.keySet());
+    added.keySet().removeAll(labelledTools);
+    if (!added.isEmpty()) {
+      MeasurementProfiles.changeUserSettings(
+          () -> added.forEach((key, graph) -> applyToolLabels(p, key, graph)));
+    }
+  }
+
+  private void applyToolLabels(Preferences parent, String key, Graphic graph) {
+    labelledTools.add(key);
+    Preferences node = toolNode(parent, key, graph);
+    if (node != null) {
+      applyLabels(node.get("label", null), graph.getMeasurementList()); // NON-NLS
     }
   }
 
