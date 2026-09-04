@@ -11,7 +11,9 @@ package org.weasis.core.ui.editor.image;
 
 import static org.weasis.core.ui.editor.image.ViewCanvas.ZOOM_TYPE_CMD;
 
+import java.awt.MouseInfo;
 import java.awt.Point;
+import java.awt.PointerInfo;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
@@ -19,6 +21,7 @@ import java.beans.PropertyChangeListener;
 import java.util.Map;
 import java.util.Optional;
 import javax.swing.JComponent;
+import javax.swing.SwingUtilities;
 import org.weasis.core.api.gui.model.ViewModel;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.SliderChangeListener;
@@ -50,6 +53,30 @@ public interface Canvas {
    * @param viewModel the view model, never null
    */
   void setViewModel(ViewModel viewModel);
+
+  /**
+   * The handler that owns the drawing sequence of this canvas, {@code null} when it has none. The
+   * key listeners go through it so that a drawing in progress keeps Escape and Backspace for
+   * itself.
+   */
+  default GraphicMouseHandler<?> getGraphicMouseHandler() {
+    return null;
+  }
+
+  /**
+   * Cursor position in image coordinates, or {@code null} when the pointer is not over this canvas.
+   * A paste triggered from the keyboard lands there, as one triggered from the menu does.
+   */
+  default Point2D getCursorImagePoint() {
+    JComponent component = getJComponent();
+    PointerInfo info = MouseInfo.getPointerInfo();
+    if (info == null || component == null || !component.isShowing()) {
+      return null;
+    }
+    Point point = info.getLocation();
+    SwingUtilities.convertPointFromScreen(point, component);
+    return component.contains(point) ? getImageCoordinatesFromMouse(point.x, point.y) : null;
+  }
 
   Object getActionValue(String action);
 

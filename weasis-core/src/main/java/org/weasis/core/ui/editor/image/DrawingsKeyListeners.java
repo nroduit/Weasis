@@ -14,6 +14,7 @@ import java.awt.event.KeyListener;
 import java.util.Objects;
 import org.weasis.core.api.gui.util.ShortcutManager;
 import org.weasis.core.ui.model.GraphicModel;
+import org.weasis.core.ui.model.utils.bean.GraphicClipboard;
 
 public class DrawingsKeyListeners implements KeyListener {
   private final Canvas canvas;
@@ -22,8 +23,31 @@ public class DrawingsKeyListeners implements KeyListener {
     this.canvas = Objects.requireNonNull(canvas);
   }
 
+  /**
+   * The keys a drawing in progress owns: they are evaluated before the common display shortcuts, so
+   * that Escape cancels the draft instead of resetting the display. Returns true when the event was
+   * handled here.
+   */
+  public boolean handleDrawingKeys(KeyEvent e) {
+    GraphicMouseHandler<?> handler = canvas.getGraphicMouseHandler();
+    if (handler == null || !handler.isDrawing()) {
+      return false;
+    }
+    ShortcutManager sm = ShortcutManager.getInstance();
+    if (sm.matches(ShortcutManager.ID_DRAW_CANCEL_DRAWING, e)) {
+      return handler.cancelDrawing();
+    }
+    if (sm.matches(ShortcutManager.ID_DRAW_REMOVE_LAST_VERTEX, e)) {
+      return handler.removeLastVertex();
+    }
+    return false;
+  }
+
   @Override
   public void keyPressed(KeyEvent e) {
+    if (e.isConsumed() || handleDrawingKeys(e)) {
+      return;
+    }
     ShortcutManager sm = ShortcutManager.getInstance();
     GraphicModel graphicManager = canvas.getGraphicManager();
     if (sm.matches(ShortcutManager.ID_DRAW_DELETE, e)) {
@@ -32,6 +56,8 @@ public class DrawingsKeyListeners implements KeyListener {
       graphicManager.setSelectedGraphic(null);
     } else if (sm.matches(ShortcutManager.ID_DRAW_SELECT_ALL, e)) {
       graphicManager.setSelectedAllGraphics();
+    } else {
+      handleClipboardKeys(sm, e);
     }
     // FIXME arrows is already used with pan!
     // else if (e.getKeyCode() == KeyEvent.VK_LEFT) {
@@ -46,6 +72,25 @@ public class DrawingsKeyListeners implements KeyListener {
     // else if (e.getKeyCode() == KeyEvent.VK_DOWN) {
     // layerModel.moveSelectedGraphics(0, 1);
     // }
+  }
+
+  /** Cut, copy, paste and duplicate; a paste lands where the cursor last was on this view. */
+  private void handleClipboardKeys(ShortcutManager sm, KeyEvent e) {
+    if (!(canvas instanceof ViewCanvas<?> view)) {
+      return;
+    }
+    if (sm.matches(ShortcutManager.ID_DRAW_COPY, e)) {
+      GraphicEditActions.copy(view);
+    } else if (sm.matches(ShortcutManager.ID_DRAW_CUT, e)) {
+      GraphicEditActions.cut(view);
+    } else if (sm.matches(ShortcutManager.ID_DRAW_PASTE_IN_PLACE, e)) {
+      GraphicEditActions.paste(view, GraphicClipboard.PasteMode.IN_PLACE, null);
+    } else if (sm.matches(ShortcutManager.ID_DRAW_PASTE, e)) {
+      GraphicEditActions.paste(
+          view, GraphicClipboard.defaultPasteMode(), view.getCursorImagePoint());
+    } else if (sm.matches(ShortcutManager.ID_DRAW_DUPLICATE, e)) {
+      GraphicEditActions.duplicate(view);
+    }
   }
 
   @Override

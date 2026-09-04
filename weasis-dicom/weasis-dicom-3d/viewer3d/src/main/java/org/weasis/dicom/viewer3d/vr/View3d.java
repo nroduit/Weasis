@@ -2132,6 +2132,11 @@ public class View3d extends VolumeCanvas
   }
 
   @Override
+  public GraphicMouseHandler<DicomImageElement> getGraphicMouseHandler() {
+    return graphicMouseHandler;
+  }
+
+  @Override
   public JPopupMenu buildGraphicContextMenu(MouseEvent evt, List<Graphic> selected) {
     return null;
   }

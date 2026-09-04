@@ -94,7 +94,8 @@ public class FreehandGraphic extends PolylineGraphic {
     List<Point2D> simplified = GeomUtil.simplify(pts, SIMPLIFY_TOLERANCE);
     setResizeOrMoving(Boolean.FALSE);
     if (simplified.size() < 2 || (close && simplified.size() < 3)) {
-      fireRemoveAction();
+      // Still an incomplete graphic at this point: only the draft removal drops it
+      fireRemoveDraftAction();
       return false;
     }
     setPts(simplified);

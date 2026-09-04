@@ -67,7 +67,7 @@ class ProfileOverlayTest {
                             }
                           };
                       return new GraphicToolDescriptor(
-                          key, ToolCategory.ADVANCED, () -> tool, null, null, null, 0, 0);
+                          key, ToolCategory.ADVANCED, () -> tool, null, null, null, 0, 0, 2);
                     })
                 .toList());
     return registry;

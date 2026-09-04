@@ -30,6 +30,8 @@ import javax.swing.JComponent;
  * @param shortcutKeyCode default key selecting the tool, {@code 0} when it has none; the user
  *     changes it in the shortcut preferences
  * @param shortcutModifier modifier mask of the default key
+ * @param minPoints vertices the graphic cannot go below when one is removed; two for an open path,
+ *     three for a closed one, more for a tool that needs it
  */
 public record GraphicToolDescriptor(
     String key,
@@ -39,9 +41,14 @@ public record GraphicToolDescriptor(
     String hideProperty,
     Function<GraphicToolContext, JComponent> panel,
     int shortcutKeyCode,
-    int shortcutModifier) {
+    int shortcutModifier,
+    int minPoints) {
 
   public static final String HIDE_PROPERTY_PREFIX = "weasis.tool."; // NON-NLS
+
+  /** Vertices below which a variable-point graphic is no longer a shape. */
+  public static final int DEFAULT_MIN_POINTS = 2;
+
   private static final Pattern KEY = Pattern.compile("[a-z0-9]+([.-][a-z0-9]+)*");
 
   public GraphicToolDescriptor {
@@ -54,18 +61,29 @@ public record GraphicToolDescriptor(
     if (hideProperty == null) {
       hideProperty = HIDE_PROPERTY_PREFIX + key;
     }
+    if (minPoints < DEFAULT_MIN_POINTS) {
+      minPoints = DEFAULT_MIN_POINTS;
+    }
   }
 
   /** Descriptor whose XML type is the prototype class when it carries an {@code XmlRootElement}. */
   public static GraphicToolDescriptor of(
       String key, ToolCategory category, Supplier<Graphic> prototype) {
     return new GraphicToolDescriptor(
-        key, category, prototype, xmlTypeOf(prototype.get()), null, null, 0, 0);
+        key, category, prototype, xmlTypeOf(prototype.get()), null, null, 0, 0, DEFAULT_MIN_POINTS);
   }
 
   public GraphicToolDescriptor withHideProperty(String property) {
     return new GraphicToolDescriptor(
-        key, category, prototype, xmlType, property, panel, shortcutKeyCode, shortcutModifier);
+        key,
+        category,
+        prototype,
+        xmlType,
+        property,
+        panel,
+        shortcutKeyCode,
+        shortcutModifier,
+        minPoints);
   }
 
   public GraphicToolDescriptor withPanel(Function<GraphicToolContext, JComponent> panelFactory) {
@@ -77,12 +95,26 @@ public record GraphicToolDescriptor(
         hideProperty,
         panelFactory,
         shortcutKeyCode,
-        shortcutModifier);
+        shortcutModifier,
+        minPoints);
   }
 
   public GraphicToolDescriptor withShortcut(int keyCode, int modifier) {
     return new GraphicToolDescriptor(
-        key, category, prototype, xmlType, hideProperty, panel, keyCode, modifier);
+        key, category, prototype, xmlType, hideProperty, panel, keyCode, modifier, minPoints);
+  }
+
+  public GraphicToolDescriptor withMinPoints(int min) {
+    return new GraphicToolDescriptor(
+        key,
+        category,
+        prototype,
+        xmlType,
+        hideProperty,
+        panel,
+        shortcutKeyCode,
+        shortcutModifier,
+        min);
   }
 
   public boolean hasPanel() {

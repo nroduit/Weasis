@@ -108,7 +108,7 @@ public final class BuiltinGraphicTools implements GraphicToolProvider {
         measure(CTR, "ctr", CardiothoracicRatioGraphic::new) // NON-NLS
             .withPanel(ctx -> panel(new CardiothoracicRatioPanel(), ctx)),
         measure(FREEHAND, "freehand", FreehandGraphic::new), // NON-NLS
-        advanced(POLYGON, "polygon", PolygonGraphic::new), // NON-NLS
+        advanced(POLYGON, "polygon", PolygonGraphic::new).withMinPoints(3), // NON-NLS
         draw(DRAW_SELECT, "selection", () -> SELECTION), // NON-NLS
         draw(DRAW_LINE, "line", LineGraphic::new), // NON-NLS
         draw(DRAW_POLYLINE, "polyline", PolylineGraphic::new), // NON-NLS

@@ -114,6 +114,11 @@ public class PolygonGraphic extends AbstractDragGraphicArea {
   }
 
   @Override
+  public boolean isClosedPath() {
+    return true;
+  }
+
+  @Override
   public PolygonGraphic copy() {
     return new PolygonGraphic(this);
   }

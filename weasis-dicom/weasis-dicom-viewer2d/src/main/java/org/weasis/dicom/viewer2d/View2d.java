@@ -37,10 +37,8 @@ import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import javax.swing.JDialog;
 import javax.swing.JMenuItem;
 import javax.swing.JPopupMenu;
-import javax.swing.JSeparator;
 import javax.swing.SwingUtilities;
 import org.dcm4che3.data.Tag;
 import org.dcm4che3.img.lut.PresetWindowLevel;
@@ -70,10 +68,9 @@ import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.service.AuditLog;
 import org.weasis.core.api.util.FontTools;
-import org.weasis.core.ui.dialog.MeasureDialog;
-import org.weasis.core.ui.editor.image.CalibrationView;
 import org.weasis.core.ui.editor.image.ContextMenuHandler;
 import org.weasis.core.ui.editor.image.DefaultView2d;
+import org.weasis.core.ui.editor.image.GraphicEditActions;
 import org.weasis.core.ui.editor.image.ImageViewerEventManager;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.editor.image.MouseActions;
@@ -85,14 +82,11 @@ import org.weasis.core.ui.editor.image.ViewButton;
 import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.editor.image.ViewSynchData;
 import org.weasis.core.ui.model.AbstractGraphicModel;
-import org.weasis.core.ui.model.graphic.DragGraphic;
 import org.weasis.core.ui.model.graphic.Graphic;
-import org.weasis.core.ui.model.graphic.imp.PathConversion;
 import org.weasis.core.ui.model.graphic.imp.area.PolygonGraphic;
 import org.weasis.core.ui.model.graphic.imp.area.RectangleGraphic;
 import org.weasis.core.ui.model.graphic.imp.line.LineGraphic;
 import org.weasis.core.ui.model.graphic.imp.line.LineWithGapGraphic;
-import org.weasis.core.ui.model.graphic.imp.line.PolylineGraphic;
 import org.weasis.core.ui.model.graphic.imp.seg.SegContour;
 import org.weasis.core.ui.model.layer.GraphicLayer;
 import org.weasis.core.ui.model.layer.LayerType;
@@ -100,9 +94,6 @@ import org.weasis.core.ui.model.utils.bean.PanPoint;
 import org.weasis.core.ui.model.utils.bean.PanPoint.State;
 import org.weasis.core.ui.model.utils.exceptions.InvalidShapeException;
 import org.weasis.core.ui.model.utils.imp.DefaultViewModel;
-import org.weasis.core.ui.util.ColorLayerUI;
-import org.weasis.core.ui.util.MouseEventDouble;
-import org.weasis.core.ui.util.TitleMenuItem;
 import org.weasis.core.util.LangUtil;
 import org.weasis.core.util.MathUtil;
 import org.weasis.dicom.codec.DicomImageElement;
@@ -1263,180 +1254,14 @@ public class View2d extends DefaultView2d<DicomImageElement> {
   }
 
   public JPopupMenu buildGraphicContextMenu(final MouseEvent evt, final List<Graphic> selected) {
-    if (selected != null) {
-      final JPopupMenu popupMenu = new JPopupMenu();
-      TitleMenuItem itemTitle = new TitleMenuItem(Messages.getString("View2d.selection"));
-      popupMenu.add(itemTitle);
-      popupMenu.addSeparator();
-      boolean graphicComplete = true;
-      if (selected.size() == 1) {
-        final Graphic graph = selected.getFirst();
-        if (graph instanceof final DragGraphic dragGraphic) {
-          if (!dragGraphic.isGraphicComplete()) {
-            graphicComplete = false;
-          }
-          if (dragGraphic.getVariablePointsNumber()) {
-            if (graphicComplete) {
-              /*
-               * Convert mouse event point to real image coordinate point (without geometric
-               * transformation)
-               */
-              final MouseEventDouble mouseEvt =
-                  new MouseEventDouble(
-                      View2d.this,
-                      MouseEvent.MOUSE_RELEASED,
-                      evt.getWhen(),
-                      16,
-                      0,
-                      0,
-                      0,
-                      0,
-                      1,
-                      true,
-                      1);
-              mouseEvt.setSource(View2d.this);
-              mouseEvt.setImageCoordinates(getImageCoordinatesFromMouse(evt.getX(), evt.getY()));
-              final int ptIndex = dragGraphic.getHandlePointIndex(mouseEvt);
-              if (ptIndex >= 0) {
-                JMenuItem menuItem = new JMenuItem(Messages.getString("View2d.rmv_pt"));
-                menuItem.addActionListener(e -> dragGraphic.removeHandlePoint(ptIndex, mouseEvt));
-                popupMenu.add(menuItem);
-
-                menuItem = new JMenuItem(Messages.getString("View2d.draw_pt"));
-                menuItem.addActionListener(
-                    e -> {
-                      dragGraphic.forceToAddPoints(ptIndex);
-                      MouseEventDouble evt2 =
-                          new MouseEventDouble(
-                              View2d.this,
-                              MouseEvent.MOUSE_PRESSED,
-                              evt.getWhen(),
-                              16,
-                              evt.getX(),
-                              evt.getY(),
-                              evt.getXOnScreen(),
-                              evt.getYOnScreen(),
-                              1,
-                              true,
-                              1);
-                      graphicMouseHandler.mousePressed(evt2);
-                    });
-                popupMenu.add(menuItem);
-                popupMenu.add(new JSeparator());
-              }
-            } else if (graphicMouseHandler.getDragSequence() != null
-                && Objects.equals(dragGraphic.getPtsNumber(), Graphic.UNDEFINED)) {
-              final JMenuItem item2 = new JMenuItem(Messages.getString("View2d.stop_draw"));
-              item2.addActionListener(
-                  e -> {
-                    MouseEventDouble event =
-                        new MouseEventDouble(View2d.this, 0, 0, 16, 0, 0, 0, 0, 2, true, 1);
-                    graphicMouseHandler.getDragSequence().completeDrag(event);
-                    graphicMouseHandler.mouseReleased(event);
-                  });
-              popupMenu.add(item2);
-              popupMenu.add(new JSeparator());
-            }
-          }
-        }
-      }
-
-      if (graphicComplete) {
-        JMenuItem menuItem = new JMenuItem(Messages.getString("View2d.delete_sel"));
-        menuItem.addActionListener(
-            e -> View2d.this.getGraphicManager().deleteSelectedGraphics(View2d.this, true));
-        popupMenu.add(menuItem);
-
-        menuItem = new JMenuItem(Messages.getString("View2d.cut"));
-        menuItem.addActionListener(
-            e -> {
-              DefaultView2d.GRAPHIC_CLIPBOARD.setGraphics(selected);
-              View2d.this.getGraphicManager().deleteSelectedGraphics(View2d.this, false);
-            });
-        popupMenu.add(menuItem);
-        menuItem = new JMenuItem(Messages.getString("View2d.copy"));
-        menuItem.addActionListener(e -> DefaultView2d.GRAPHIC_CLIPBOARD.setGraphics(selected));
-        popupMenu.add(menuItem);
-        popupMenu.add(new JSeparator());
-      }
-
-      // TODO separate AbstractDragGraphic and ClassGraphic for properties
-      final ArrayList<DragGraphic> list = new ArrayList<>();
-      for (Graphic graphic : selected) {
-        if (graphic instanceof DragGraphic dragGraphic) {
-          list.add(dragGraphic);
-        }
-      }
-
-      if (selected.size() == 1) {
-        final Graphic graph = selected.get(0);
-        JMenuItem item = new JMenuItem(Messages.getString("View2d.to_front"));
-        item.addActionListener(e -> graph.toFront());
-        popupMenu.add(item);
-        item = new JMenuItem(Messages.getString("View2d.to_back"));
-        item.addActionListener(e -> graph.toBack());
-        popupMenu.add(item);
-        popupMenu.add(new JSeparator());
-
-        if (graphicComplete && graph instanceof PolylineGraphic polyline) {
-          JMenuItem closePath = new JMenuItem(Messages.getString("View2d.close_path"));
-          closePath.addActionListener(
-              e -> {
-                try {
-                  PathConversion.replace(View2d.this, polyline, PathConversion.close(polyline));
-                } catch (InvalidShapeException ex) {
-                  LOGGER.warn("Cannot close the path", ex);
-                }
-              });
-          popupMenu.add(closePath);
-          popupMenu.add(new JSeparator());
-        } else if (graphicComplete && graph instanceof PolygonGraphic polygon) {
-          JMenuItem openPath = new JMenuItem(Messages.getString("View2d.open_path"));
-          openPath.addActionListener(
-              e -> {
-                try {
-                  PathConversion.replace(View2d.this, polygon, PathConversion.open(polygon));
-                } catch (InvalidShapeException ex) {
-                  LOGGER.warn("Cannot open the path", ex);
-                }
-              });
-          popupMenu.add(openPath);
-          popupMenu.add(new JSeparator());
-        }
-
-        if (graphicComplete && graph instanceof LineGraphic lineGraphic) {
-
-          final JMenuItem calibMenu = new JMenuItem(Messages.getString("View2d.chg_calib"));
-          calibMenu.addActionListener(e -> CalibrationView.showDialog(lineGraphic, View2d.this));
-          popupMenu.add(calibMenu);
-          popupMenu.add(new JSeparator());
-        }
-      }
-
-      if (!list.isEmpty()) {
-        JMenuItem properties = new JMenuItem(Messages.getString("View2d.draw_prop"));
-        properties.addActionListener(
-            e -> {
-              ColorLayerUI layer = ColorLayerUI.createTransparentLayerUI(View2d.this);
-              JDialog dialog = new MeasureDialog(View2d.this, list);
-              ColorLayerUI.showCenterScreen(dialog, layer);
-            });
-        popupMenu.add(properties);
-      }
-      return popupMenu;
-    }
-    return null;
+    return GraphicEditActions.buildGraphicContextMenu(this, evt, selected, graphicMouseHandler);
   }
 
   public JPopupMenu buildContextMenu(final MouseEvent evt) {
     JPopupMenu popupMenu = buildLeftMouseActionMenu();
     int count = popupMenu.getComponentCount();
 
-    if (DefaultView2d.GRAPHIC_CLIPBOARD.hasGraphics()) {
-      JMenuItem menuItem = new JMenuItem(Messages.getString("View2d.paste_draw"));
-      menuItem.addActionListener(e -> copyGraphicsFromClipboard());
-      popupMenu.add(menuItem);
-    }
+    GraphicEditActions.addPasteItems(popupMenu, this, evt);
     count = addSeparatorToPopupMenu(popupMenu, count);
 
     if (eventManager instanceof EventManager manager) {

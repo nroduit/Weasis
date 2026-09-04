@@ -189,6 +189,17 @@ public final class GraphicRegistry {
     }
   }
 
+  /**
+   * Vertices the graphic cannot go below when one is removed, from the descriptor of the tool that
+   * produced it; {@link GraphicToolDescriptor#DEFAULT_MIN_POINTS} when no tool claims it.
+   */
+  public int minPointsOf(Graphic graphic) {
+    return keyOf(graphic)
+        .flatMap(this::descriptor)
+        .map(GraphicToolDescriptor::minPoints)
+        .orElse(GraphicToolDescriptor.DEFAULT_MIN_POINTS);
+  }
+
   /** Classes to bind in the presentation XML context, without duplicates. */
   public List<Class<?>> xmlTypes() {
     synchronized (entries) {

@@ -64,6 +64,17 @@ public interface Graphic extends UUIDable, GUIEntry, KeyActionValue, Copyable<Gr
   Integer SELECTION_SIZE = 10;
   Integer UNDEFINED = -1;
 
+  /**
+   * Colour of what is drawn over the image without being part of the graphic: a midpoint handle
+   * waiting to become a vertex, the preview of the segment that would close a path. It is neither
+   * the black and white of the real handles nor a colour a measurement is normally given, so an
+   * affordance is never read as something that was drawn or measured.
+   */
+  Color EDIT_HINT_COLOR = new Color(255, 77, 210);
+
+  /** Behind {@link #EDIT_HINT_COLOR}, so a hint stays readable on a bright image. */
+  Color EDIT_HINT_HALO_COLOR = new Color(0, 0, 0, 160);
+
   default List<MeasureItem> computeMeasurements(
       MeasurableLayer layer, boolean releaseEvent, Unit displayUnit) {
     return Collections.emptyList();
@@ -175,6 +186,16 @@ public interface Graphic extends UUIDable, GUIEntry, KeyActionValue, Copyable<Gr
   void removePropertyChangeListener(PropertyChangeListener propertychangelistener);
 
   void fireRemoveAction();
+
+  /**
+   * Removes the graphic from its model even when it is still being drawn.
+   *
+   * <p>{@link #fireRemoveAction()} ignores an incomplete graphic on purpose: it is also called from
+   * {@code buildShape}, which runs on every drag, and must not drop what the user is in the middle
+   * of placing. Cancelling a draft, or discarding a trace too small to be a shape, is the opposite
+   * situation and goes through here.
+   */
+  void fireRemoveDraftAction();
 
   void toFront();
 

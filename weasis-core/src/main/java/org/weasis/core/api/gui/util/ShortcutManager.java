@@ -352,6 +352,21 @@ public final class ShortcutManager {
   public static final String ID_DRAW_DELETE = "draw.delete";
   public static final String ID_DRAW_DESELECT_ALL = "draw.deselectAll";
   public static final String ID_DRAW_SELECT_ALL = "draw.selectAll";
+  public static final String ID_DRAW_CANCEL_DRAWING = "draw.cancelDrawing";
+  public static final String ID_DRAW_REMOVE_LAST_VERTEX = "draw.removeLastVertex";
+  public static final String ID_DRAW_COPY = "draw.copy";
+  public static final String ID_DRAW_CUT = "draw.cut";
+  public static final String ID_DRAW_PASTE = "draw.paste";
+  public static final String ID_DRAW_PASTE_IN_PLACE = "draw.pasteInPlace";
+  public static final String ID_DRAW_DUPLICATE = "draw.duplicate";
+
+  /**
+   * Mask of the menu shortcuts of the platform: Ctrl on Windows and Linux, Cmd on macOS. The
+   * bindings are stored per operating system, so a shortcut registered with it keeps the modifier
+   * the user expects on each one.
+   */
+  public static final int MENU_SHORTCUT_MASK =
+      SystemInfo.isMacOS ? KeyEvent.META_MASK : KeyEvent.CTRL_MASK;
 
   // -- Shortcut IDs: Pan --
   public static final String ID_PAN_LEFT = "pan.left";
@@ -605,6 +620,48 @@ public final class ShortcutManager {
         CATEGORY_DRAWINGS,
         KeyEvent.VK_A,
         KeyEvent.CTRL_MASK);
+    register(
+        ID_DRAW_CANCEL_DRAWING,
+        Messages.getString("ShortcutManager.cancel_drawing"),
+        CATEGORY_DRAWINGS,
+        KeyEvent.VK_ESCAPE,
+        0);
+    register(
+        ID_DRAW_REMOVE_LAST_VERTEX,
+        Messages.getString("ShortcutManager.remove_last_vertex"),
+        CATEGORY_DRAWINGS,
+        KeyEvent.VK_BACK_SPACE,
+        0);
+    register(
+        ID_DRAW_COPY,
+        Messages.getString("ShortcutManager.copy_graphics"),
+        CATEGORY_DRAWINGS,
+        KeyEvent.VK_C,
+        MENU_SHORTCUT_MASK);
+    register(
+        ID_DRAW_CUT,
+        Messages.getString("ShortcutManager.cut_graphics"),
+        CATEGORY_DRAWINGS,
+        KeyEvent.VK_X,
+        MENU_SHORTCUT_MASK);
+    register(
+        ID_DRAW_PASTE,
+        Messages.getString("ShortcutManager.paste_graphics"),
+        CATEGORY_DRAWINGS,
+        KeyEvent.VK_V,
+        MENU_SHORTCUT_MASK);
+    register(
+        ID_DRAW_PASTE_IN_PLACE,
+        Messages.getString("ShortcutManager.paste_graphics_in_place"),
+        CATEGORY_DRAWINGS,
+        KeyEvent.VK_V,
+        MENU_SHORTCUT_MASK | KeyEvent.SHIFT_MASK);
+    register(
+        ID_DRAW_DUPLICATE,
+        Messages.getString("ShortcutManager.duplicate_graphics"),
+        CATEGORY_DRAWINGS,
+        KeyEvent.VK_D,
+        MENU_SHORTCUT_MASK | KeyEvent.SHIFT_MASK);
 
     // ---- Pan with keyboard (PannerListener.keyPressed()) ----
     register(

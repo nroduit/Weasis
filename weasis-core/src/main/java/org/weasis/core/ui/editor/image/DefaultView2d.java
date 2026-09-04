@@ -91,7 +91,6 @@ import org.weasis.core.api.util.FontItem;
 import org.weasis.core.ui.docking.DockableTool;
 import org.weasis.core.ui.editor.image.SynchData.SyncState;
 import org.weasis.core.ui.editor.image.dockable.MeasureTool;
-import org.weasis.core.ui.model.AbstractGraphicModel;
 import org.weasis.core.ui.model.GraphicModel;
 import org.weasis.core.ui.model.graphic.DragGraphic;
 import org.weasis.core.ui.model.graphic.Graphic;
@@ -1965,6 +1964,11 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
   }
 
   @Override
+  public GraphicMouseHandler<E> getGraphicMouseHandler() {
+    return graphicMouseHandler;
+  }
+
+  @Override
   public void keyTyped(KeyEvent e) {}
 
   @Override
@@ -2096,25 +2100,14 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     return viewButtons;
   }
 
+  /**
+   * @deprecated use {@link GraphicEditActions#paste(ViewCanvas, GraphicClipboard.PasteMode,
+   *     java.awt.geom.Point2D)}, which pastes where the user is looking and re-anchors on the
+   *     target.
+   */
+  @Deprecated(since = "4.8.0", forRemoval = true)
   protected void copyGraphicsFromClipboard() {
-    List<Graphic> graphs = DefaultView2d.GRAPHIC_CLIPBOARD.getGraphics();
-    if (graphs != null) {
-      Rectangle2D area = getViewModel().getModelArea();
-      if (graphs.stream().anyMatch(g -> !g.getBounds(null).intersects(area))) {
-        int option =
-            JOptionPane.showConfirmDialog(
-                this,
-                "At least one graphic is outside the image.\n Do you want to continue?"); // NON-NLS
-        if (option != JOptionPane.YES_OPTION) {
-          return;
-        }
-      }
-
-      graphs.forEach(g -> AbstractGraphicModel.addGraphicToModel(this, g.copy()));
-
-      // Repaint all because labels are not drawn
-      repaint();
-    }
+    GraphicEditActions.paste(this, GraphicClipboard.PasteMode.IN_PLACE, null);
   }
 
   public static Cursor getNewCursor(int type) {

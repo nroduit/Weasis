@@ -110,7 +110,12 @@ public abstract class AbstractGraphic extends DefaultUUID implements Graphic {
     this.graphicLabel = graphic.graphicLabel == null ? null : graphic.graphicLabel.copy();
     this.anchor = graphic.anchor == null ? null : graphic.anchor.copy();
 
-    this.variablePointsNumber = Objects.isNull(graphic.pointNumber) || graphic.pointNumber < 0;
+    // A completed path has pointNumber == pts.size(), so the flag cannot be recomputed from it:
+    // carrying it over is what keeps the copy editable
+    this.variablePointsNumber =
+        Objects.requireNonNullElseGet(
+            graphic.variablePointsNumber,
+            () -> Objects.isNull(graphic.pointNumber) || graphic.pointNumber < 0);
     List<Point2D> ptsList =
         graphic.pts.stream()
             .filter(Objects::nonNull)
@@ -543,6 +548,11 @@ public abstract class AbstractGraphic extends DefaultUUID implements Graphic {
     }
   }
 
+  @Override
+  public void fireRemoveDraftAction() {
+    firePropertyChange(ACTION_REMOVE, null, this);
+  }
+
   /**
    * The user's measurements and drawings get the halo when the preference asks for it. Graphics of
    * a DICOM presentation state are left as their author styled them (Shadow Style, PS3.3 C.10.7.1),
@@ -712,11 +722,16 @@ public abstract class AbstractGraphic extends DefaultUUID implements Graphic {
         Optional.ofNullable(mouseEvent).map(MouseEventDouble::getImageCoordinates).orElse(null);
 
     if (mousePoint != null && !pts.isEmpty() && !layer.getLocked()) {
+      AffineTransform transform = getAffineTransform(mouseEvent);
       double minHandleDistance = Double.MAX_VALUE;
-      double maxHandleDistance =
-          HANDLE_SIZE * 1.5 / GeomUtil.extractScalingFactor(getAffineTransform(mouseEvent));
+      double maxHandleDistance = HANDLE_SIZE * 1.5 / GeomUtil.extractScalingFactor(transform);
+      // Only a handle that is drawn can be grabbed: a thinned-out vertex would otherwise be
+      // resized where the user expects to move the whole graphic
+      List<Integer> drawn = thinnedHandleIndexes(transform);
+      int count = drawn == null ? pts.size() : drawn.size();
 
-      for (int index = 0; index < pts.size(); index++) {
+      for (int i = 0; i < count; i++) {
+        int index = drawn == null ? i : drawn.get(i);
         Point2D handlePoint = pts.get(index);
         double handleDistance =
             Optional.ofNullable(handlePoint).map(mousePoint::distance).orElse(Double.MAX_VALUE);
@@ -943,7 +958,7 @@ public abstract class AbstractGraphic extends DefaultUUID implements Graphic {
       double halfSize = size / 2;
 
       ArrayList<Point2D> handlePts = new ArrayList<>(pts.size());
-      for (Point2D pt : pts) {
+      for (Point2D pt : visibleHandlePoints(transform)) {
         if (pt != null) {
           handlePts.add(new Point2D.Double(pt.getX(), pt.getY()));
         }
@@ -970,7 +985,36 @@ public abstract class AbstractGraphic extends DefaultUUID implements Graphic {
 
       g2d.setPaint(oldPaint);
       g2d.setStroke(oldStroke);
+
+      if (this instanceof DragGraphic dragGraphic) {
+        MidpointHandles.paint(g2d, dragGraphic, transform);
+      }
     }
+  }
+
+  /**
+   * Indexes of the vertex handles kept at this scale, or {@code null} when they are all kept. A
+   * path whose vertices crowd each other on screen is thinned so the view stays readable; this is a
+   * display rule only, the point list is untouched and zooming in brings the handles back.
+   */
+  private List<Integer> thinnedHandleIndexes(AffineTransform transform) {
+    if (!Boolean.TRUE.equals(variablePointsNumber) || pts.size() <= 2) {
+      return null;
+    }
+    List<Integer> visible =
+        MidpointHandles.visibleVertices(pts, GeomUtil.extractScalingFactor(transform));
+    return visible.size() == pts.size() ? null : visible;
+  }
+
+  /** Vertex handles to draw at this scale. */
+  private List<Point2D> visibleHandlePoints(AffineTransform transform) {
+    List<Integer> visible = thinnedHandleIndexes(transform);
+    if (visible == null) {
+      return pts;
+    }
+    List<Point2D> points = new ArrayList<>(visible.size());
+    visible.forEach(i -> points.add(pts.get(i)));
+    return points;
   }
 
   /**

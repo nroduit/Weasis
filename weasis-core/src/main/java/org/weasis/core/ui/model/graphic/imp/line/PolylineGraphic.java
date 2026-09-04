@@ -118,13 +118,19 @@ public class PolylineGraphic extends AbstractDragGraphic {
     Point2D tail = previewTail();
     AdvancedShape preview = new AdvancedShape(this, 3);
     preview.addShape(path);
-    preview.addShape(new Line2D.Double(tail, start), getDashStroke(lineThickness), true);
+    // The closing segment and the ring are not part of the path yet: they answer "click here and
+    // it closes", so they carry the edit hint colour rather than the colour of the graphic
+    preview
+        .addShape(new Line2D.Double(tail, start), getDashStroke(lineThickness), true)
+        .setColorPaint(EDIT_HINT_COLOR);
     double r = HANDLE_SIZE * 1.5;
-    preview.addScaleInvShape(
-        new Ellipse2D.Double(start.getX() - r, start.getY() - r, 2 * r, 2 * r),
-        start,
-        getStroke(lineThickness),
-        false);
+    preview
+        .addScaleInvShape(
+            new Ellipse2D.Double(start.getX() - r, start.getY() - r, 2 * r, 2 * r),
+            start,
+            getStroke(lineThickness),
+            false)
+        .setColorPaint(EDIT_HINT_COLOR);
     return preview;
   }
 
@@ -291,6 +297,7 @@ public class PolylineGraphic extends AbstractDragGraphic {
   }
 
   @Override
+  @Deprecated(since = "4.8.0", forRemoval = true)
   public void forceToAddPoints(Integer fromPtIndex) {
     if (getVariablePointsNumber() && fromPtIndex >= 0 && fromPtIndex < pts.size()) {
       if (fromPtIndex < pts.size() - 1) {

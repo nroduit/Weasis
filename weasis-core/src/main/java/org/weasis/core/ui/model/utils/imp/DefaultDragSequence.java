@@ -63,6 +63,17 @@ public class DefaultDragSequence implements Draggable {
     }
   }
 
+  /**
+   * Points the sequence back at the last vertex, after the point list was changed under it — as
+   * when the last placed vertex of a drawing in progress is dropped.
+   */
+  public void syncToLastPoint() {
+    handlePointIndex = graphic.getPts().size() - 1;
+    if (handlePointIndex >= 0) {
+      lastPoint.setLocation(graphic.getPts().get(handlePointIndex));
+    }
+  }
+
   private Optional<Point2D> draggedHandlePoint() {
     List<Point2D> pts = graphic.getPts();
     return handlePointIndex >= 0 && handlePointIndex < pts.size()

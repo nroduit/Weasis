@@ -514,6 +514,13 @@ public interface ViewCanvas<E extends ImageElement>
   }
 
   default void defaultKeyPressed(ImageViewerEventManager<?> eventManager, KeyEvent e) {
+    // A drawing in progress owns Escape and Backspace: cancelling the draft comes before the
+    // display reset of the common shortcuts, which this view canvas is the first to receive.
+    if (getDrawingsKeyListeners().handleDrawingKeys(e)) {
+      e.consume();
+      return;
+    }
+
     ShortcutManager sm = ShortcutManager.getInstance();
     int keyCode = e.getKeyCode();
     int modifiers = e.getModifiers();

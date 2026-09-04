@@ -58,6 +58,12 @@ public abstract class AbstractDragGraphic extends AbstractGraphic implements Dra
     return Optional.ofNullable(resizingOrMoving).orElse(Boolean.FALSE);
   }
 
+  /**
+   * @deprecated Rotating the point list to resume a drawing silently reorders the vertices of a
+   *     closed outline. Use {@link #insertHandlePoint(int, Point2D)} to add a vertex and {@link
+   *     #resumeDrawing()} to continue an open path.
+   */
+  @Deprecated(since = "4.8.0", forRemoval = true)
   @Override
   public void forceToAddPoints(Integer fromPtIndex) {
     if (variablePointsNumber && fromPtIndex >= 0 && fromPtIndex < pts.size()) {
@@ -73,9 +79,95 @@ public abstract class AbstractDragGraphic extends AbstractGraphic implements Dra
   }
 
   @Override
+  public boolean isClosedPath() {
+    return false;
+  }
+
+  @Override
+  public int getMinPoints() {
+    return GraphicRegistry.getInstance().minPointsOf(this);
+  }
+
+  /** Number of segments: one less than the vertices, and one more on a closed path. */
+  @Override
+  public int getSegmentCount() {
+    int size = pts.size();
+    if (size < 2) {
+      return 0;
+    }
+    return isClosedPath() ? size : size - 1;
+  }
+
+  /**
+   * The two vertices of a segment, {@code null} when the index is not a segment of this path. The
+   * last segment of a closed path is the one joining the last vertex back to the first.
+   */
+  @Override
+  public Point2D[] getSegment(int segmentIndex) {
+    if (segmentIndex < 0 || segmentIndex >= getSegmentCount()) {
+      return null;
+    }
+    Point2D start = pts.get(segmentIndex);
+    Point2D end = pts.get((segmentIndex + 1) % pts.size());
+    return start == null || end == null ? null : new Point2D[] {start, end};
+  }
+
+  @Override
+  public boolean canRemoveHandlePoint(Integer index) {
+    return variablePointsNumber
+        && index != null
+        && index >= 0
+        && index < pts.size()
+        && pts.size() > getMinPoints();
+  }
+
+  /**
+   * Inserts a vertex on the given segment and returns its index, or {@link #UNDEFINED} when the
+   * segment does not belong to this path. The vertex of the closing segment of a closed path is
+   * appended after the last one, so the outline keeps its order.
+   */
+  @Override
+  public int insertHandlePoint(int segmentIndex, Point2D point) {
+    if (!variablePointsNumber || point == null || segmentIndex < 0) {
+      return UNDEFINED;
+    }
+    Point2D[] segment = getSegment(segmentIndex);
+    if (segment == null) {
+      return UNDEFINED;
+    }
+    int index = segmentIndex + 1;
+    pts.add(index, new Point2D.Double(point.getX(), point.getY()));
+    if (!Objects.equals(pointNumber, UNDEFINED)) {
+      pointNumber = pts.size();
+    }
+    return index;
+  }
+
+  /** Midpoint of a segment in image coordinates, {@code null} when it is not a segment. */
+  @Override
+  public Point2D getSegmentMidPoint(int segmentIndex) {
+    Point2D[] segment = getSegment(segmentIndex);
+    if (segment == null) {
+      return null;
+    }
+    return new Point2D.Double(
+        (segment[0].getX() + segment[1].getX()) / 2.0,
+        (segment[0].getY() + segment[1].getY()) / 2.0);
+  }
+
+  /** Reopens the point count so the draw sequence appends to the end of an open path. */
+  @Override
+  public boolean resumeDrawing() {
+    if (!variablePointsNumber || isClosedPath() || pts.size() < 2) {
+      return false;
+    }
+    setPointNumber(UNDEFINED);
+    return true;
+  }
+
+  @Override
   public Point2D removeHandlePoint(Integer index, MouseEventDouble mouseEvent) {
-    // To keep a valid shape, do not remove when there are 2 points left.
-    if (variablePointsNumber && pts.size() > 2 && index >= 0 && index < pts.size()) {
+    if (canRemoveHandlePoint(index)) {
       Point2D pt = pts.remove(index.intValue());
       pointNumber = pts.size();
       buildShape(mouseEvent);
