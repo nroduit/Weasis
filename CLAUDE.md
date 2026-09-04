@@ -118,6 +118,7 @@ Existing docs:
 | `weasis-core/docs/Measurement-Tools.md` | graphic tool registry, measurement keys, presentation XML compatibility, headless measurement service |
 | `weasis-core/docs/Memory-Management.md` | native memory arenas, budgets, caches |
 | `weasis-core/docs/MigLayoutModel-Best-Practices.md` | `MigLayoutModel` layout conventions |
+| `weasis-core/docs/Shortcut-Management.md` | shortcut registry and contexts, `KeyBinding`, dispatch tables, menu accelerators, mouse button matching |
 | `weasis-dicom/weasis-dicom-codec/docs/Window-Presets.md` | configured window/level presets: order, model, layers, anatomy matching |
 | `weasis-dicom/weasis-dicom-explorer/docs/Retrieve-Paths.md` | DICOM download transports and shared download layer |
 | `weasis-dicom/weasis-dicom-viewer2d/docs/mpr-architecture.md` | MPR architecture (entry point for the `mpr-*` docs) |

@@ -978,8 +978,13 @@ public final class ShortcutManager {
       ShortcutContext context,
       int defaultKeyCode,
       int defaultModifier) {
-    shortcuts.put(
-        id, new ShortcutEntry(id, description, category, context, defaultKeyCode, defaultModifier));
+    ShortcutEntry entry =
+        new ShortcutEntry(id, description, category, context, defaultKeyCode, defaultModifier);
+    shortcuts.put(id, entry);
+    // A shortcut registered after the preferences were loaded, by a plugin, gets the user's binding
+    if (loadedNode != null) {
+      applyPreference(entry, loadedNode);
+    }
   }
 
   /** Shortcut id of a graphic tool, from its registry key. */
@@ -988,10 +993,7 @@ public final class ShortcutManager {
     return legacy == null ? "graphic." + toolKey : legacy; // NON-NLS
   }
 
-  /**
-   * Registers the shortcut of a graphic tool unless it already exists; the user's binding is
-   * applied when the preferences were loaded before the tool was registered.
-   */
+  /** Registers the shortcut of a graphic tool unless it already exists. */
   public void registerGraphicTool(
       String toolKey,
       String description,
@@ -1003,9 +1005,6 @@ public final class ShortcutManager {
       return;
     }
     register(id, description, category, defaultKeyCode, defaultModifier);
-    if (loadedNode != null) {
-      applyPreference(shortcuts.get(id), loadedNode);
-    }
   }
 
   /**
