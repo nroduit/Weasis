@@ -9,8 +9,14 @@
  */
 package org.weasis.core.api.image.util;
 
+import java.util.List;
+import org.opencv.core.Core;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
+import org.opencv.core.MatOfFloat;
+import org.opencv.core.MatOfInt;
+import org.opencv.core.Scalar;
+import org.opencv.imgproc.Imgproc;
 import org.weasis.opencv.data.PlanarImage;
 
 /** Bin counts of single-channel values, computed once over a full range and re-binned on demand. */
@@ -73,31 +79,50 @@ public final class ValueHistogram {
     if (image == null) {
       return null;
     }
-    double[] counts = new double[bins];
     Mat mat = image.toMat();
     if (mat.empty() || mat.channels() != 1) {
       return null;
     }
-    Mat asFloat = new Mat();
-    try {
-      mat.convertTo(asFloat, CvType.CV_32F);
-      float[] values = new float[(int) asFloat.total()];
-      asFloat.get(0, 0, values);
-      bin(values, min, max, counts);
-    } finally {
-      asFloat.release();
-    }
+    double[] counts = new double[bins];
+    accumulate(mat, min, max, counts);
     return new Bins(counts, min, max);
   }
 
-  /** Adds each value to the bin covering it; values outside {@code [min, max]} are ignored. */
-  public static void bin(float[] values, double min, double max, double[] counts) {
-    int bins = counts.length;
-    double scale = bins / (max - min);
-    for (float v : values) {
-      if (v >= min && v <= max) {
-        counts[Math.min(bins - 1, (int) ((v - min) * scale))]++;
+  /**
+   * Adds the values of a single-channel image to the bins covering {@code [min, max]}; values
+   * outside are ignored.
+   */
+  public static void accumulate(Mat mat, double min, double max, double[] counts) {
+    int depth = mat.depth();
+    boolean direct = depth == CvType.CV_8U || depth == CvType.CV_16U || depth == CvType.CV_32F;
+    Mat values = direct ? mat : new Mat();
+    Mat hist = new Mat();
+    Mat atMax = new Mat();
+    try {
+      if (!direct) {
+        mat.convertTo(values, CvType.CV_32F);
       }
+      Imgproc.calcHist(
+          List.of(values),
+          new MatOfInt(0),
+          new Mat(),
+          hist,
+          new MatOfInt(counts.length),
+          new MatOfFloat((float) min, (float) max));
+      float[] binned = new float[counts.length];
+      hist.get(0, 0, binned);
+      for (int i = 0; i < binned.length; i++) {
+        counts[i] += binned[i];
+      }
+      // The range of calcHist excludes its upper bound, which belongs to the last bin here
+      Core.compare(values, new Scalar(max), atMax, Core.CMP_EQ);
+      counts[counts.length - 1] += Core.countNonZero(atMax);
+    } finally {
+      if (!direct) {
+        values.release();
+      }
+      hist.release();
+      atMax.release();
     }
   }
 }

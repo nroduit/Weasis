@@ -23,6 +23,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Locale;
+import java.util.Random;
 import java.util.stream.Stream;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -100,6 +101,33 @@ class RedactionRendererTest {
         () -> assertEquals(3, RedactionRenderer.median(new double[] {9, 1, 3})),
         () -> assertEquals(2.5, RedactionRenderer.median(new double[] {4, 1, 2, 3})),
         () -> assertEquals(0, RedactionRenderer.median(new double[0])));
+  }
+
+  @Test
+  @DisplayName("the median read from counts per level is the median of the sorted samples")
+  void medianFromCounts() {
+    var random = new Random(5);
+    for (int size : new int[] {1, 2, 7, 500, 501}) {
+      double[] samples = new double[size];
+      float[] counts = new float[256];
+      for (int i = 0; i < size; i++) {
+        int level = random.nextInt(256);
+        samples[i] = level;
+        counts[level]++;
+      }
+      assertEquals(
+          RedactionRenderer.median(samples), RedactionRenderer.median(counts), "n=" + size);
+    }
+    assertEquals(0, RedactionRenderer.median(new float[256]));
+    assertEquals(127.5, RedactionRenderer.median(countsOf(0, 255)));
+  }
+
+  private static float[] countsOf(int... levels) {
+    float[] counts = new float[256];
+    for (int level : levels) {
+      counts[level]++;
+    }
+    return counts;
   }
 
   @Test

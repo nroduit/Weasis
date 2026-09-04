@@ -27,7 +27,6 @@ import org.dcm4che3.img.stream.ImageDescriptor;
 import org.dcm4che3.util.UIDUtils;
 import org.joml.Vector3d;
 import org.opencv.core.Core.MinMaxLocResult;
-import org.opencv.core.CvType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
@@ -154,8 +153,6 @@ public class CurvedMprImageIO implements DcmMediaReader {
 
     LOGGER.info("Output: {}x{} px, height={}mm", widthPx, heightPx, sliceSizeMm);
 
-    int cvType = volume.getCvType();
-    ImageCV dst = new ImageCV(heightPx, widthPx, cvType);
     Vector3d normal = axis.getPlaneNormal();
 
     // Diagnostic logging
@@ -174,39 +171,26 @@ public class CurvedMprImageIO implements DcmMediaReader {
         String.format("%.3f", midPerp.y),
         String.format("%.3f", midPerp.z));
 
-    // For each point along the curve (horizontal axis of panoramic)
-    for (int i = 0; i < widthPx; i++) {
-      Vector3d curvePoint = sampledPoints.get(i);
-
-      // For each pixel in the vertical direction (along the plane normal)
-      for (int j = 0; j < heightPx; j++) {
-        double offset = j - heightPx / 2.0;
-        double sampleX = (curvePoint.x + normal.x * offset) / voxelRatio.x;
-        double sampleY = (curvePoint.y + normal.y * offset) / voxelRatio.y;
-        double sampleZ = (curvePoint.z + normal.z * offset) / voxelRatio.z;
-
-        Number value = volume.getInterpolatedValueFromSource(sampleX, sampleY, sampleZ, 0);
-        if (value != null) {
-          setPixelValue(dst, j, i, value, cvType);
-        }
-      }
-    }
+    // Column: a point along the curve; row: the offset along the plane normal
+    int rows = heightPx;
+    ImageCV dst =
+        VolumeSampler.sample(
+            volume,
+            widthPx,
+            heightPx,
+            (column, row, voxel) -> {
+              Vector3d curvePoint = sampledPoints.get(column);
+              double offset = row - rows / 2.0;
+              voxel.set(
+                  (curvePoint.x + normal.x * offset) / voxelRatio.x,
+                  (curvePoint.y + normal.y * offset) / voxelRatio.y,
+                  (curvePoint.z + normal.z * offset) / voxelRatio.z);
+            });
 
     LOGGER.info("Generated CPR panoramic image");
 
     setDicomTags(widthPx, heightPx);
     return dst;
-  }
-
-  static void setPixelValue(ImageCV dst, int row, int col, Number value, int cvType) {
-    int depth = CvType.depth(cvType);
-    switch (depth) {
-      case CvType.CV_8U, CvType.CV_8S -> dst.put(row, col, value.byteValue());
-      case CvType.CV_16U, CvType.CV_16S -> dst.put(row, col, value.shortValue());
-      case CvType.CV_32S -> dst.put(row, col, value.intValue());
-      case CvType.CV_32F -> dst.put(row, col, value.floatValue());
-      case CvType.CV_64F -> dst.put(row, col, value.doubleValue());
-    }
   }
 
   /**

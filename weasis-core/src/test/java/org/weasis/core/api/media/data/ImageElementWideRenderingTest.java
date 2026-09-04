@@ -17,13 +17,8 @@ import static org.junit.jupiter.api.Assumptions.assumeTrue;
 import static org.mockito.Mockito.CALLS_REAL_METHODS;
 import static org.mockito.Mockito.mock;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.stream.Stream;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayNameGeneration;
 import org.junit.jupiter.api.DisplayNameGenerator.ReplaceUnderscores;
@@ -31,6 +26,7 @@ import org.junit.jupiter.api.Test;
 import org.opencv.core.CvType;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.image.WindowOp;
+import org.weasis.core.api.image.cv.OpenCvTestLoader;
 import org.weasis.opencv.data.ImageCV;
 import org.weasis.opencv.data.PlanarImage;
 
@@ -39,7 +35,7 @@ class ImageElementWideRenderingTest {
 
   @BeforeAll
   static void loadOpenCV() {
-    assumeTrue(tryLoadOpenCV(), "OpenCV native library unavailable, skipping");
+    assumeTrue(OpenCvTestLoader.tryLoad(), "OpenCV native library unavailable, skipping");
   }
 
   @Test
@@ -105,36 +101,5 @@ class ImageElementWideRenderingTest {
     out.toMat().get(0, 0, index);
 
     assertArrayEquals(new short[] {0, (short) 65535}, index);
-  }
-
-  private static boolean tryLoadOpenCV() {
-    String os = System.getProperty("os.name", "").toLowerCase();
-    String libFile =
-        os.contains("win")
-            ? "opencv_java.dll"
-            : os.contains("mac") ? "libopencv_java.dylib" : "libopencv_java.so";
-    Path opencvModules =
-        Path.of(System.getProperty("user.dir")).getParent().resolve("weasis-opencv");
-    if (!Files.isDirectory(opencvModules)) {
-      return false;
-    }
-    try (Stream<Path> dirs = Files.list(opencvModules)) {
-      List<Path> candidates =
-          dirs.filter(Files::isDirectory)
-              .map(d -> d.resolve("target").resolve("classes").resolve(libFile))
-              .filter(Files::isRegularFile)
-              .toList();
-      for (Path lib : candidates) {
-        try {
-          System.load(lib.toAbsolutePath().toString());
-          return true;
-        } catch (Throwable ignore) {
-          // wrong architecture or incompatible binary: try the next candidate
-        }
-      }
-    } catch (IOException e) {
-      return false;
-    }
-    return false;
   }
 }

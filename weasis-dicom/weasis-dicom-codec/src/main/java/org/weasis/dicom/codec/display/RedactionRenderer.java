@@ -16,6 +16,8 @@ import java.util.List;
 import org.opencv.core.Core;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
+import org.opencv.core.MatOfFloat;
+import org.opencv.core.MatOfInt;
 import org.opencv.core.MatOfPoint;
 import org.opencv.core.Point;
 import org.opencv.core.Rect;
@@ -94,6 +96,62 @@ public final class RedactionRenderer {
   }
 
   private static Scalar medianPerChannel(Mat roi, Mat sampleMask) {
+    int depth = roi.depth();
+    return depth == CvType.CV_8U || depth == CvType.CV_16U
+        ? medianFromHistogram(roi, sampleMask)
+        : medianFromSamples(roi, sampleMask);
+  }
+
+  // Integer levels: the masked histogram of a channel holds its sorted samples, with no copy
+  private static Scalar medianFromHistogram(Mat roi, Mat sampleMask) {
+    int levels = roi.depth() == CvType.CV_8U ? 1 << 8 : 1 << 16;
+    double[] median = new double[Math.min(roi.channels(), 4)];
+    Mat hist = new Mat();
+    try {
+      float[] counts = new float[levels];
+      for (int c = 0; c < median.length; c++) {
+        Imgproc.calcHist(
+            List.of(roi),
+            new MatOfInt(c),
+            sampleMask,
+            hist,
+            new MatOfInt(levels),
+            new MatOfFloat(0, levels));
+        hist.get(0, 0, counts);
+        median[c] = median(counts);
+      }
+    } finally {
+      hist.release();
+    }
+    return new Scalar(median);
+  }
+
+  /** The median of the samples counted per level: the mean of the two middle ones when even. */
+  static double median(float[] countPerLevel) {
+    long total = 0;
+    for (float count : countPerLevel) {
+      total += (long) count;
+    }
+    if (total == 0) {
+      return 0;
+    }
+    long upperRank = total / 2;
+    long lowerRank = total % 2 == 1 ? upperRank : upperRank - 1;
+    int lower = -1;
+    long seen = 0;
+    for (int level = 0; level < countPerLevel.length; level++) {
+      seen += (long) countPerLevel[level];
+      if (lower < 0 && seen > lowerRank) {
+        lower = level;
+      }
+      if (seen > upperRank) {
+        return (lower + level) / 2.0;
+      }
+    }
+    return lower;
+  }
+
+  private static Scalar medianFromSamples(Mat roi, Mat sampleMask) {
     int channels = roi.channels();
     Mat values = new Mat();
     roi.convertTo(values, CvType.CV_64FC(channels));

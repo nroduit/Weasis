@@ -129,28 +129,21 @@ public class CrossSectionImageIO implements DcmMediaReader {
   private PlanarImage generateSlice() {
     int widthPx = Math.max(1, (int) Math.round(widthMm / pixelMm));
     int heightPx = Math.max(1, (int) Math.round(heightMm / pixelMm));
-    int cvType = volume.getCvType();
-    ImageCV dst = new ImageCV(heightPx, widthPx, cvType);
-
     Vector3d voxelRatio = volume.getVoxelRatio();
-
-    for (int j = 0; j < heightPx; j++) {
-      // Y axis = plane normal (orthogonal to the drawing plane).
-      double vOffset = j - heightPx / 2.0;
-      for (int i = 0; i < widthPx; i++) {
-        // X axis = perp (in-plane, perpendicular to the curve tangent).
-        double hOffset = i - widthPx / 2.0;
-        double wx = center.x + perp.x * hOffset + normal.x * vOffset;
-        double wy = center.y + perp.y * hOffset + normal.y * vOffset;
-        double wz = center.z + perp.z * hOffset + normal.z * vOffset;
-        Number value =
-            volume.getInterpolatedValueFromSource(
-                wx / voxelRatio.x, wy / voxelRatio.y, wz / voxelRatio.z, 0);
-        if (value != null) {
-          CurvedMprImageIO.setPixelValue(dst, j, i, value, cvType);
-        }
-      }
-    }
+    // X axis = perp (in-plane, perpendicular to the curve tangent); Y axis = plane normal
+    ImageCV dst =
+        VolumeSampler.sample(
+            volume,
+            widthPx,
+            heightPx,
+            (column, row, voxel) -> {
+              double hOffset = column - widthPx / 2.0;
+              double vOffset = row - heightPx / 2.0;
+              voxel.set(
+                  (center.x + perp.x * hOffset + normal.x * vOffset) / voxelRatio.x,
+                  (center.y + perp.y * hOffset + normal.y * vOffset) / voxelRatio.y,
+                  (center.z + perp.z * hOffset + normal.z * vOffset) / voxelRatio.z);
+            });
 
     HEADER_CACHE.remove(this);
     tags.put(TagD.get(Tag.Columns), widthPx);

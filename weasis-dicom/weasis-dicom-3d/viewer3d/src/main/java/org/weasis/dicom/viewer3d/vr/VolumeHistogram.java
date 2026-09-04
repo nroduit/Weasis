@@ -11,7 +11,6 @@ package org.weasis.dicom.viewer3d.vr;
 
 import java.util.Map;
 import java.util.WeakHashMap;
-import org.opencv.core.CvType;
 import org.opencv.core.Mat;
 import org.weasis.core.api.image.util.ValueHistogram;
 import org.weasis.core.api.image.util.ValueHistogram.Bins;
@@ -47,28 +46,19 @@ public final class VolumeHistogram {
     double[] counts = new double[bins];
     int slices = volume.getSizeZ();
     int stride = Math.max(1, slices / SLICES);
-    Mat asFloat = new Mat();
-    try {
-      for (int z = 0; z < slices; z += stride) {
-        PlanarImage slice = volume.getAxialSlice(z);
-        if (slice == null) {
-          continue;
-        }
-        try {
-          Mat mat = slice.toMat();
-          if (mat.empty() || mat.channels() != 1) {
-            continue;
-          }
-          mat.convertTo(asFloat, CvType.CV_32F);
-          float[] values = new float[(int) asFloat.total()];
-          asFloat.get(0, 0, values);
-          ValueHistogram.bin(values, min, max, counts);
-        } finally {
-          slice.release();
-        }
+    for (int z = 0; z < slices; z += stride) {
+      PlanarImage slice = volume.getAxialSlice(z);
+      if (slice == null) {
+        continue;
       }
-    } finally {
-      asFloat.release();
+      try {
+        Mat mat = slice.toMat();
+        if (!mat.empty() && mat.channels() == 1) {
+          ValueHistogram.accumulate(mat, min, max, counts);
+        }
+      } finally {
+        slice.release();
+      }
     }
     return new Bins(counts, min, max);
   }

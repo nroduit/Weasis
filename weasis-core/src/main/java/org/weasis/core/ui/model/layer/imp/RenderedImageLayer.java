@@ -15,10 +15,13 @@ import java.awt.RenderingHints;
 import java.awt.Shape;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Rectangle2D;
+import java.awt.image.BufferedImage;
+import java.awt.image.DataBufferByte;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Supplier;
+import org.opencv.core.CvType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.image.AffineTransformOp;
@@ -63,6 +66,7 @@ public class RenderedImageLayer<E extends ImageElement> extends DefaultUUID
   private OpManager preprocessing;
   private E sourceImage;
   private Optional<PlanarImage> displayImage;
+  private transient PaintBuffer paintBuffer;
   private Boolean visible = true;
   private boolean enableDispOperations = true;
   private Point offset;
@@ -240,7 +244,7 @@ public class RenderedImageLayer<E extends ImageElement> extends DefaultUUID
         g2d.setRenderingHint(
             RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
       }
-      g2d.drawImage(ImageConversion.toBufferedImage(currentImage), 0, 0, null);
+      g2d.drawImage(getPaintImage(currentImage), 0, 0, null);
     } catch (Exception e) {
       LOGGER.error("Cannot draw the image", e);
       if ("java.io.IOException: closed".equals(e.getMessage())) { // NON-NLS
@@ -257,6 +261,40 @@ public class RenderedImageLayer<E extends ImageElement> extends DefaultUUID
       CvUtil.runGarbageCollectorAndWait(200);
     }
     g2d.setClip(clip);
+  }
+
+  /** The Java2D image of a display image, kept so that a repaint converts nothing. */
+  private record PaintBuffer(PlanarImage source, BufferedImage image) {}
+
+  private BufferedImage getPaintImage(PlanarImage image) {
+    PaintBuffer buffer = paintBuffer;
+    if (buffer == null || buffer.source() != image) {
+      buffer = new PaintBuffer(image, toPaintImage(image, buffer == null ? null : buffer.image()));
+      paintBuffer = buffer;
+    }
+    return buffer.image();
+  }
+
+  // 8-bit gray and BGR have a standard Java2D type with the memory layout of the Mat: the pixels
+  // are copied as they are, into the previous image when it still fits.
+  private static BufferedImage toPaintImage(PlanarImage image, BufferedImage previous) {
+    int type;
+    if (image.type() == CvType.CV_8UC1) {
+      type = BufferedImage.TYPE_BYTE_GRAY;
+    } else if (image.type() == CvType.CV_8UC3) {
+      type = BufferedImage.TYPE_3BYTE_BGR;
+    } else {
+      return ImageConversion.toBufferedImage(image);
+    }
+    boolean reusable =
+        previous != null
+            && previous.getType() == type
+            && previous.getWidth() == image.width()
+            && previous.getHeight() == image.height();
+    BufferedImage result =
+        reusable ? previous : new BufferedImage(image.width(), image.height(), type);
+    image.get(0, 0, ((DataBufferByte) result.getRaster().getDataBuffer()).getData());
+    return result;
   }
 
   public void drawImageForPrinter(Graphics2D g2d, double viewScale, Canvas canvas) {
@@ -411,6 +449,7 @@ public class RenderedImageLayer<E extends ImageElement> extends DefaultUUID
   public void dispose() {
     sourceImage = null;
     displayImage = Optional.empty();
+    paintBuffer = null;
     listenerList.clear();
     opListeners.clear();
   }
@@ -469,7 +508,16 @@ public class RenderedImageLayer<E extends ImageElement> extends DefaultUUID
         disOpManager.setFirstNode(getSourceRenderedImage());
       }
       displayImage = disOpManager.process();
+      invalidatePaintBuffer();
       fireImageChanged();
+    }
+  }
+
+  // An op may return the same image object with new content: the identity check is not enough
+  private void invalidatePaintBuffer() {
+    PaintBuffer buffer = paintBuffer;
+    if (buffer != null) {
+      paintBuffer = new PaintBuffer(null, buffer.image());
     }
   }
 
