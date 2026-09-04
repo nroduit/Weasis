@@ -12,7 +12,6 @@ package org.weasis.base.viewer2d;
 import java.awt.event.ActionEvent;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
-import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
@@ -23,7 +22,6 @@ import javax.swing.Action;
 import javax.swing.JComponent;
 import javax.swing.JMenu;
 import javax.swing.JSeparator;
-import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
 import org.osgi.framework.BundleContext;
 import org.osgi.service.prefs.Preferences;
@@ -40,6 +38,7 @@ import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.gui.util.ComboItemListener;
 import org.weasis.core.api.gui.util.Filter;
 import org.weasis.core.api.gui.util.GuiUtils;
+import org.weasis.core.api.gui.util.ShortcutManager;
 import org.weasis.core.api.gui.util.SliderChangeListener;
 import org.weasis.core.api.gui.util.SliderCineListener;
 import org.weasis.core.api.media.data.ImageElement;
@@ -477,7 +476,9 @@ public class View2dContainer extends ImageViewerPlugin<ImageElement>
         };
     DefaultAction printStd =
         new DefaultAction(title, ResourceUtil.getIcon(ActionIcon.PRINT), event);
-    printStd.putValue(Action.ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_P, 0));
+    printStd.putValue(
+        Action.ACCELERATOR_KEY,
+        ShortcutManager.getInstance().getKeyStroke(ShortcutManager.ID_VIEWER_PRINT));
     actions.add(printStd);
     return actions;
   }

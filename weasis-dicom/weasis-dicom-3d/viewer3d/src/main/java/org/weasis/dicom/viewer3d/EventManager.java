@@ -25,7 +25,6 @@ import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
 import javax.swing.JRadioButtonMenuItem;
-import javax.swing.KeyStroke;
 import org.dcm4che3.img.lut.PresetWindowLevel;
 import org.joml.Quaterniond;
 import org.osgi.framework.BundleContext;
@@ -38,6 +37,7 @@ import org.weasis.core.api.gui.util.BasicActionState;
 import org.weasis.core.api.gui.util.ComboItemListener;
 import org.weasis.core.api.gui.util.DecFormatter;
 import org.weasis.core.api.gui.util.GuiUtils;
+import org.weasis.core.api.gui.util.KeyBinding;
 import org.weasis.core.api.gui.util.ShortcutManager;
 import org.weasis.core.api.gui.util.SliderChangeListener;
 import org.weasis.core.api.gui.util.ToggleButtonListener;
@@ -185,8 +185,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> {
 
       @Override
       public void mouseReleased(MouseEvent e) {
-        int buttonMask = getButtonMask();
-        if (!e.isConsumed() && (e.getModifiers() & buttonMask) != 0) {
+        if (!e.isConsumed() && isBoundButton(e)) {
           View3d view3d = getView3d(e);
           if (view3d != null) {
             view3d.getCamera().setAdjusting(false);
@@ -493,14 +492,10 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> {
 
   @Override
   public void keyPressed(KeyEvent e) {
-    int keyEvent = e.getKeyCode();
-    int modifiers = e.getModifiers();
-
-    if (ShortcutManager.getInstance()
-        .matches(ShortcutManager.ID_VIEWER_ESCAPE, keyEvent, modifiers)) {
+    if (ShortcutManager.getInstance().matches(ShortcutManager.ID_VIEWER_ESCAPE, e)) {
       resetDisplay();
     } else {
-      triggerDrawingToolKeyEvent(keyEvent, modifiers);
+      triggerDrawingToolKeyEvent(e.getKeyCode(), KeyBinding.modifiersOf(e));
     }
   }
 
@@ -861,7 +856,8 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> {
         for (final ResetTools action : ResetTools.values()) {
           final JMenuItem item = new JMenuItem(action.toString());
           if (ResetTools.ALL.equals(action)) {
-            item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0));
+            item.setAccelerator(
+                ShortcutManager.getInstance().getKeyStroke(ShortcutManager.ID_VIEWER_ESCAPE));
           }
           item.addActionListener(e -> reset(action));
           menu.add(item);

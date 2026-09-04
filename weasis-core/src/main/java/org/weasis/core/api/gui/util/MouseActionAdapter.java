@@ -19,10 +19,6 @@ import java.awt.event.MouseWheelListener;
 public abstract class MouseActionAdapter
     implements MouseListener, MouseWheelListener, MouseMotionListener {
 
-  // Define in java.awt.event.InputEvent, could change if extra modifier bits are added
-  static final int JDK_1_3_MODIFIERS = (1 << 6) - 1;
-  static final int HIGH_MODIFIERS = -(1 << 14);
-
   protected int buttonMaskEx = 0;
   protected int lastPosition = 0;
   private boolean inverse = false;
@@ -66,16 +62,15 @@ public abstract class MouseActionAdapter
     return buttonMaskEx;
   }
 
-  public int getButtonMask() {
-    int buttonMask =
-        (buttonMaskEx & InputEvent.BUTTON1_DOWN_MASK) != 0 ? InputEvent.BUTTON1_MASK : 0;
-    if ((buttonMaskEx & InputEvent.BUTTON2_DOWN_MASK) != 0) {
-      buttonMask |= InputEvent.BUTTON2_MASK;
-    }
-    if ((buttonMaskEx & InputEvent.BUTTON3_DOWN_MASK) != 0) {
-      buttonMask |= InputEvent.BUTTON3_MASK;
-    }
-    return buttonMask;
+  /**
+   * True when the button pressed or released by the event is one this adapter is bound to. This is
+   * the test to use in {@code mouseReleased}, where the extended modifiers no longer hold the
+   * button.
+   */
+  public boolean isBoundButton(MouseEvent e) {
+    int button = e.getButton();
+    return button != MouseEvent.NOBUTTON
+        && (buttonMaskEx & InputEvent.getMaskForButton(button)) != 0;
   }
 
   public void setButtonMaskEx(int buttonMask) {

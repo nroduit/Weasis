@@ -106,9 +106,7 @@ public abstract class ArcballMouseListener extends SliderChangeListener implemen
   public void mouseReleased(MouseEvent e) {
     releaseWinLevelAdapter();
     int modifier = e.getModifiersEx();
-    if (basicState.isActionEnabled()
-        && !e.isConsumed()
-        && (e.getModifiers() & getButtonMask()) != 0) {
+    if (basicState.isActionEnabled() && !e.isConsumed() && isBoundButton(e)) {
       int mask = InputEvent.CTRL_DOWN_MASK;
 
       View3d view3d = getView3d(e);

@@ -54,6 +54,7 @@ import org.weasis.core.api.explorer.DataExplorerView;
 import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.gui.util.ShortcutManager;
+import org.weasis.core.api.gui.util.ShortcutTable;
 import org.weasis.core.api.gui.util.WinUtil;
 import org.weasis.core.api.media.data.Codec;
 import org.weasis.core.api.media.data.MediaElement;
@@ -294,15 +295,14 @@ public final class UICore {
       return null;
     }
 
+    private final ShortcutTable<Integer> tabShifts =
+        new ShortcutTable<Integer>()
+            .on(ShortcutManager.ID_DOCKING_NEXT_TAB, 1)
+            .on(ShortcutManager.ID_DOCKING_PREV_TAB, -1);
+
     @Override
     public boolean keyPressed(DockElement element, KeyEvent event) {
-      ShortcutManager sm = ShortcutManager.getInstance();
-      if (sm.matches(ShortcutManager.ID_DOCKING_NEXT_TAB, event)) {
-        return shift(element, 1);
-      } else if (sm.matches(ShortcutManager.ID_DOCKING_PREV_TAB, event)) {
-        return shift(element, -1);
-      }
-      return false;
+      return tabShifts.find(event).map(delta -> shift(element, delta)).orElse(false);
     }
 
     @Override

@@ -12,7 +12,6 @@ package org.weasis.dicom.viewer2d;
 import java.awt.Component;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseWheelEvent;
 import java.awt.image.DataBuffer;
@@ -25,6 +24,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.BiFunction;
+import java.util.function.Consumer;
 import javax.swing.BoundedRangeModel;
 import javax.swing.ButtonGroup;
 import javax.swing.DefaultComboBoxModel;
@@ -55,7 +55,9 @@ import org.weasis.core.api.gui.util.Feature;
 import org.weasis.core.api.gui.util.Filter;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.gui.util.GuiUtils;
+import org.weasis.core.api.gui.util.KeyBinding;
 import org.weasis.core.api.gui.util.RadioMenuItem;
+import org.weasis.core.api.gui.util.ShortcutActions;
 import org.weasis.core.api.gui.util.ShortcutManager;
 import org.weasis.core.api.gui.util.SliderChangeListener;
 import org.weasis.core.api.gui.util.SliderCineListener;
@@ -151,6 +153,8 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
   private static EventManager instance;
 
   // Opacity actions are kept typed so their title can follow the real modality of each fused layer.
+  private final ShortcutActions dicomShortcuts = buildDicomShortcuts();
+  private final ShortcutActions mprShortcuts = buildMprShortcuts();
   private final FusionOpacityListener fusionBaseOpacity;
   private final FusionOpacityListener fusionOverlayOpacity;
 
@@ -1051,79 +1055,80 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
 
   @Override
   public void keyPressed(KeyEvent e) {
-    if (!commonDisplayShortcuts(e)) {
-      int keyEvent = e.getKeyCode();
-      int modifiers = e.getModifiers();
-      boolean isMpr = selectedView2dContainer instanceof MprContainer;
-      ShortcutManager sm = ShortcutManager.getInstance();
+    if (commonDisplayShortcuts(e) || dicomShortcuts.dispatch(e)) {
+      return;
+    }
+    if (selectedView2dContainer instanceof MprContainer && mprShortcuts.dispatch(e)) {
+      return;
+    }
+    int keyEvent = e.getKeyCode();
+    int modifiers = KeyBinding.modifiersOf(e);
+    keyPreset(keyEvent, modifiers);
+    triggerDrawingToolKeyEvent(keyEvent, modifiers);
+  }
 
-      if (sm.matches(ShortcutManager.ID_DICOM_PREV_STUDY, keyEvent, modifiers)) {
-        moveStudy(ListPosition.PREVIOUS);
-      } else if (sm.matches(ShortcutManager.ID_DICOM_NEXT_STUDY, keyEvent, modifiers)) {
-        moveStudy(ListPosition.NEXT);
-      } else if (sm.matches(ShortcutManager.ID_DICOM_PREV_SERIES, keyEvent, modifiers)) {
-        moveSeries(ListPosition.PREVIOUS);
-      } else if (sm.matches(ShortcutManager.ID_DICOM_NEXT_SERIES, keyEvent, modifiers)) {
-        moveSeries(ListPosition.NEXT);
-      } else if (sm.matches(ShortcutManager.ID_DICOM_PREV_PATIENT, keyEvent, modifiers)) {
-        movePatient(ListPosition.PREVIOUS);
-      } else if (sm.matches(ShortcutManager.ID_DICOM_NEXT_PATIENT, keyEvent, modifiers)) {
-        movePatient(ListPosition.NEXT);
-      } else if (sm.matches(ShortcutManager.ID_DICOM_FIRST_STUDY, keyEvent, modifiers)) {
-        moveStudy(ListPosition.FIRST);
-      } else if (sm.matches(ShortcutManager.ID_DICOM_LAST_STUDY, keyEvent, modifiers)) {
-        moveStudy(ListPosition.LAST);
-      } else if (sm.matches(ShortcutManager.ID_DICOM_FIRST_SERIES, keyEvent, modifiers)) {
-        moveSeries(ListPosition.FIRST);
-      } else if (sm.matches(ShortcutManager.ID_DICOM_LAST_SERIES, keyEvent, modifiers)) {
-        moveSeries(ListPosition.LAST);
-      } else if (sm.matches(ShortcutManager.ID_DICOM_FIRST_PATIENT, keyEvent, modifiers)) {
-        movePatient(ListPosition.FIRST);
-      } else if (sm.matches(ShortcutManager.ID_DICOM_LAST_PATIENT, keyEvent, modifiers)) {
-        movePatient(ListPosition.LAST);
-      } else if (sm.matches(ShortcutManager.ID_DICOM_TOGGLE_SEG, keyEvent, modifiers)) {
-        SegComponentFactory.toggleSegmentationsVisibility(selectedView2dContainer);
-      } else if (isMpr
-          && (sm.matches(ShortcutManager.ID_MPR_RECENTER, keyEvent, modifiers)
-              || sm.matches(ShortcutManager.ID_MPR_RECENTER_ALL, keyEvent, modifiers))) {
-        if (selectedView2dContainer.getSelectedViewCanvas() instanceof MprView mprView) {
-          mprView.recenterAxis(
-              sm.matches(ShortcutManager.ID_MPR_RECENTER_ALL, keyEvent, modifiers));
-        }
-      } else if (isMpr
-          && (sm.matches(ShortcutManager.ID_MPR_TOGGLE_CENTER, keyEvent, modifiers)
-              || sm.matches(ShortcutManager.ID_MPR_TOGGLE_CENTER_ALL, keyEvent, modifiers))) {
-        if (selectedView2dContainer.getSelectedViewCanvas() instanceof MprView mprView) {
-          boolean showCenter = MprView.getViewProperty(mprView, MprView.SHOW_CROSS_CENTER);
-          mprView.showCrossCenter(
-              !showCenter,
-              sm.matches(ShortcutManager.ID_MPR_TOGGLE_CENTER_ALL, keyEvent, modifiers));
-        }
-      } else if (isMpr
-          && (sm.matches(ShortcutManager.ID_MPR_TOGGLE_CROSS_LINES, keyEvent, modifiers)
-              || sm.matches(ShortcutManager.ID_MPR_TOGGLE_CROSS_LINES_ALL, keyEvent, modifiers))) {
-        if (selectedView2dContainer.getSelectedViewCanvas() instanceof MprView mprView) {
-          boolean showCrossLines = MprView.getViewProperty(mprView, MprView.HIDE_CROSSLINES);
-          mprView.showCrossLines(
-              showCrossLines,
-              sm.matches(ShortcutManager.ID_MPR_TOGGLE_CROSS_LINES_ALL, keyEvent, modifiers));
-        }
-      } else if (isMpr && sm.matches(ShortcutManager.ID_MPR_CYCLE_MIP, keyEvent, modifiers)) {
-        if (selectedView2dContainer.getSelectedViewCanvas() instanceof MprView mprView) {
-          MprController controller = mprView.getMprController();
-          if (controller != null) {
-            ComboItemListener<MipView.Type> mipCombo = controller.getMipTypeOption();
-            MipView.Type currentType = (MipView.Type) mipCombo.getSelectedItem();
-            MipView.Type[] types = MipView.Type.values();
-            int nextIndex = (currentType.ordinal() + 1) % types.length;
-            mipCombo.setSelectedItemWithoutTriggerAction(types[nextIndex]);
-            controller.updateAllViews();
-          }
-        }
-      } else {
-        keyPreset(keyEvent, modifiers);
-        triggerDrawingToolKeyEvent(keyEvent, modifiers);
-      }
+  private ShortcutActions buildDicomShortcuts() {
+    return new ShortcutActions()
+        .on(ShortcutManager.ID_DICOM_PREV_STUDY, () -> moveStudy(ListPosition.PREVIOUS))
+        .on(ShortcutManager.ID_DICOM_NEXT_STUDY, () -> moveStudy(ListPosition.NEXT))
+        .on(ShortcutManager.ID_DICOM_PREV_SERIES, () -> moveSeries(ListPosition.PREVIOUS))
+        .on(ShortcutManager.ID_DICOM_NEXT_SERIES, () -> moveSeries(ListPosition.NEXT))
+        .on(ShortcutManager.ID_DICOM_PREV_PATIENT, () -> movePatient(ListPosition.PREVIOUS))
+        .on(ShortcutManager.ID_DICOM_NEXT_PATIENT, () -> movePatient(ListPosition.NEXT))
+        .on(ShortcutManager.ID_DICOM_FIRST_STUDY, () -> moveStudy(ListPosition.FIRST))
+        .on(ShortcutManager.ID_DICOM_LAST_STUDY, () -> moveStudy(ListPosition.LAST))
+        .on(ShortcutManager.ID_DICOM_FIRST_SERIES, () -> moveSeries(ListPosition.FIRST))
+        .on(ShortcutManager.ID_DICOM_LAST_SERIES, () -> moveSeries(ListPosition.LAST))
+        .on(ShortcutManager.ID_DICOM_FIRST_PATIENT, () -> movePatient(ListPosition.FIRST))
+        .on(ShortcutManager.ID_DICOM_LAST_PATIENT, () -> movePatient(ListPosition.LAST))
+        .on(
+            ShortcutManager.ID_DICOM_TOGGLE_SEG,
+            () -> SegComponentFactory.toggleSegmentationsVisibility(selectedView2dContainer));
+  }
+
+  /** Only dispatched while the selected container is an MPR. */
+  private ShortcutActions buildMprShortcuts() {
+    return new ShortcutActions()
+        .on(ShortcutManager.ID_MPR_RECENTER, () -> onMprView(v -> v.recenterAxis(false)))
+        .on(ShortcutManager.ID_MPR_RECENTER_ALL, () -> onMprView(v -> v.recenterAxis(true)))
+        .on(ShortcutManager.ID_MPR_TOGGLE_CENTER, () -> onMprView(v -> toggleCrossCenter(v, false)))
+        .on(
+            ShortcutManager.ID_MPR_TOGGLE_CENTER_ALL,
+            () -> onMprView(v -> toggleCrossCenter(v, true)))
+        .on(
+            ShortcutManager.ID_MPR_TOGGLE_CROSS_LINES,
+            () -> onMprView(v -> toggleCrossLines(v, false)))
+        .on(
+            ShortcutManager.ID_MPR_TOGGLE_CROSS_LINES_ALL,
+            () -> onMprView(v -> toggleCrossLines(v, true)))
+        .on(ShortcutManager.ID_MPR_CYCLE_MIP, () -> onMprView(EventManager::cycleMipType));
+  }
+
+  private void onMprView(Consumer<MprView> action) {
+    if (selectedView2dContainer.getSelectedViewCanvas() instanceof MprView mprView) {
+      action.accept(mprView);
+    }
+  }
+
+  private static void toggleCrossCenter(MprView mprView, boolean allViews) {
+    boolean showCenter = MprView.getViewProperty(mprView, MprView.SHOW_CROSS_CENTER);
+    mprView.showCrossCenter(!showCenter, allViews);
+  }
+
+  private static void toggleCrossLines(MprView mprView, boolean allViews) {
+    boolean hidden = MprView.getViewProperty(mprView, MprView.HIDE_CROSSLINES);
+    mprView.showCrossLines(hidden, allViews);
+  }
+
+  private static void cycleMipType(MprView mprView) {
+    MprController controller = mprView.getMprController();
+    if (controller != null) {
+      ComboItemListener<MipView.Type> mipCombo = controller.getMipTypeOption();
+      MipView.Type currentType = (MipView.Type) mipCombo.getSelectedItem();
+      MipView.Type[] types = MipView.Type.values();
+      mipCombo.setSelectedItemWithoutTriggerAction(
+          types[(currentType.ordinal() + 1) % types.length]);
+      controller.updateAllViews();
     }
   }
 
@@ -1793,13 +1798,14 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
         menu.setEnabled(rotateAction.get().isActionEnabled());
 
         if (rotateAction.get().isActionEnabled()) {
+          ShortcutManager sm = ShortcutManager.getInstance();
           JMenuItem menuItem = new JMenuItem(ActionW.RESET.getTitle());
           menuItem.addActionListener(e -> rotateAction.get().setSliderValue(0));
           menu.add(menuItem);
           menuItem = new JMenuItem(Messages.getString("View2dContainer.-90"));
           menuItem.setIcon(ResourceUtil.getIcon(ActionIcon.ROTATE_COUNTERCLOCKWISE));
           GuiUtils.applySelectedIconEffect(menuItem);
-          menuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_L, InputEvent.ALT_DOWN_MASK));
+          menuItem.setAccelerator(sm.getKeyStroke(ShortcutManager.ID_VIEWER_ROTATE_LEFT));
           menuItem.addActionListener(
               e ->
                   rotateAction
@@ -1809,7 +1815,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
           menuItem = new JMenuItem(Messages.getString("View2dContainer.+90"));
           menuItem.setIcon(ResourceUtil.getIcon(ActionIcon.ROTATE_CLOCKWISE));
           GuiUtils.applySelectedIconEffect(menuItem);
-          menuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_R, InputEvent.ALT_DOWN_MASK));
+          menuItem.setAccelerator(sm.getKeyStroke(ShortcutManager.ID_VIEWER_ROTATE_RIGHT));
           menuItem.addActionListener(
               e ->
                   rotateAction
@@ -1834,8 +1840,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
                         Messages.getString("View2dContainer.flip_h"),
                         ResourceUtil.getIcon(ActionIcon.FLIP));
             GuiUtils.applySelectedIconEffect(menuItem);
-            menuItem.setAccelerator(
-                KeyStroke.getKeyStroke(KeyEvent.VK_F, InputEvent.ALT_DOWN_MASK));
+            menuItem.setAccelerator(sm.getKeyStroke(ShortcutManager.ID_VIEWER_FLIP_HORIZONTAL));
             menu.add(menuItem);
           }
         }

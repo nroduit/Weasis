@@ -16,8 +16,6 @@ import java.awt.FlowLayout;
 import java.awt.FontMetrics;
 import java.awt.Graphics2D;
 import java.awt.GridBagConstraints;
-import java.awt.event.InputEvent;
-import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Line2D;
@@ -42,7 +40,6 @@ import javax.swing.JPopupMenu;
 import javax.swing.JProgressBar;
 import javax.swing.JRadioButtonMenuItem;
 import javax.swing.JSpinner;
-import javax.swing.KeyStroke;
 import javax.swing.SpinnerNumberModel;
 import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
@@ -64,6 +61,7 @@ import org.weasis.core.api.gui.util.DecFormatter;
 import org.weasis.core.api.gui.util.GeomUtil;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.gui.util.GuiUtils;
+import org.weasis.core.api.gui.util.ShortcutManager;
 import org.weasis.core.api.image.OpManager;
 import org.weasis.core.api.image.WindowOp;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
@@ -859,20 +857,19 @@ public class MprView extends View2d implements SliceCanvas, ViewProgress {
    * Shows the MPR settings popup anchored at ({@code x}, {@code y}) relative to {@code invoker}.
    */
   public void showMprPopup(Component invoker, int x, int y) {
+    ShortcutManager sm = ShortcutManager.getInstance();
     JPopupMenu popupMenu = new JPopupMenu();
     JMenu menu = new JMenu(Messages.getString("all.views"));
 
     if (getCenterMode() != 2) {
       JMenuItem item = new JMenuItem(Messages.getString("center"));
       item.addActionListener(e -> recenterAxis(false));
-      item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_X, InputEvent.ALT_DOWN_MASK));
+      item.setAccelerator(sm.getKeyStroke(ShortcutManager.ID_MPR_RECENTER));
       popupMenu.add(item);
 
       item = new JMenuItem(Messages.getString("center"));
       item.addActionListener(e -> recenterAxis(true));
-      item.setAccelerator(
-          KeyStroke.getKeyStroke(
-              KeyEvent.VK_X, InputEvent.CTRL_DOWN_MASK | InputEvent.ALT_DOWN_MASK));
+      item.setAccelerator(sm.getKeyStroke(ShortcutManager.ID_MPR_RECENTER_ALL));
       menu.add(item);
     }
 
@@ -882,15 +879,13 @@ public class MprView extends View2d implements SliceCanvas, ViewProgress {
       JCheckBoxMenuItem boxMenuItem =
           new JCheckBoxMenuItem(Messages.getString("show.center.crosshair"), showCenter);
       boxMenuItem.addActionListener(e -> showCrossCenter((JCheckBoxMenuItem) e.getSource(), false));
-      boxMenuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_C, InputEvent.ALT_DOWN_MASK));
+      boxMenuItem.setAccelerator(sm.getKeyStroke(ShortcutManager.ID_MPR_TOGGLE_CENTER));
       popupMenu.add(boxMenuItem);
 
       showCenter = getAllViewsProperty(SHOW_CROSS_CENTER);
       boxMenuItem = new JCheckBoxMenuItem(boxMenuItem.getText(), showCenter);
       boxMenuItem.addActionListener(e -> showCrossCenter((JCheckBoxMenuItem) e.getSource(), true));
-      boxMenuItem.setAccelerator(
-          KeyStroke.getKeyStroke(
-              KeyEvent.VK_C, InputEvent.CTRL_DOWN_MASK | InputEvent.ALT_DOWN_MASK));
+      boxMenuItem.setAccelerator(sm.getKeyStroke(ShortcutManager.ID_MPR_TOGGLE_CENTER_ALL));
       menu.add(boxMenuItem);
     }
 
@@ -898,15 +893,13 @@ public class MprView extends View2d implements SliceCanvas, ViewProgress {
     JCheckBoxMenuItem boxMenuItem =
         new JCheckBoxMenuItem(Messages.getString("show.crosshair"), showCrossLines);
     boxMenuItem.addActionListener(e -> showCrossLines((JCheckBoxMenuItem) e.getSource(), false));
-    boxMenuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_V, InputEvent.ALT_DOWN_MASK));
+    boxMenuItem.setAccelerator(sm.getKeyStroke(ShortcutManager.ID_MPR_TOGGLE_CROSS_LINES));
     popupMenu.add(boxMenuItem);
 
     showCrossLines = !getAllViewsProperty(HIDE_CROSSLINES);
     boxMenuItem = new JCheckBoxMenuItem(boxMenuItem.getText(), showCrossLines);
     boxMenuItem.addActionListener(e -> showCrossLines((JCheckBoxMenuItem) e.getSource(), true));
-    boxMenuItem.setAccelerator(
-        KeyStroke.getKeyStroke(
-            KeyEvent.VK_V, InputEvent.CTRL_DOWN_MASK | InputEvent.ALT_DOWN_MASK));
+    boxMenuItem.setAccelerator(sm.getKeyStroke(ShortcutManager.ID_MPR_TOGGLE_CROSS_LINES_ALL));
     menu.add(boxMenuItem);
 
     menu.addSeparator();

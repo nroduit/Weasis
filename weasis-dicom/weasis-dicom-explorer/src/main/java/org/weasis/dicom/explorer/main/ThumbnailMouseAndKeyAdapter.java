@@ -28,6 +28,7 @@ import javax.swing.SwingUtilities;
 import org.dcm4che3.data.Tag;
 import org.weasis.core.api.explorer.DataExplorerView;
 import org.weasis.core.api.gui.util.GuiUtils;
+import org.weasis.core.api.gui.util.ShortcutActions;
 import org.weasis.core.api.gui.util.ShortcutManager;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaSeries;
@@ -58,6 +59,7 @@ public class ThumbnailMouseAndKeyAdapter extends MouseAdapter implements KeyList
   private final DicomSeries series;
   private final DicomModel dicomModel;
   private final LoadSeries loadSeries;
+  private final ShortcutActions shortcuts = buildShortcuts();
 
   public ThumbnailMouseAndKeyAdapter(
       DicomSeries series, DicomModel dicomModel, LoadSeries loadSeries) {
@@ -90,26 +92,24 @@ public class ThumbnailMouseAndKeyAdapter extends MouseAdapter implements KeyList
 
   @Override
   public void keyPressed(KeyEvent e) {
-    DicomExplorer explorer = getDicomExplorer();
-    explorer.ensurePatientComboSelection();
-    SeriesSelectionModel selList = explorer.getSelectionList();
-    ShortcutManager sm = ShortcutManager.getInstance();
+    getDicomExplorer().ensurePatientComboSelection();
+    shortcuts.dispatch(e);
+  }
 
-    if (sm.matches(ShortcutManager.ID_EXPLORER_OPEN, e)) {
-      handleEnterKey(e, selList);
-    } else if (sm.matches(ShortcutManager.ID_EXPLORER_SELECT_NEXT, e)) {
-      selList.selectNext();
-    } else if (sm.matches(ShortcutManager.ID_EXPLORER_SELECT_PREVIOUS, e)) {
-      selList.selectPrevious();
-    } else if (sm.matches(ShortcutManager.ID_EXPLORER_SELECT_LAST, e)
-        || sm.matches(ShortcutManager.ID_EXPLORER_SELECT_LAST_ALT, e)) {
-      selList.selectLast();
-    } else if (sm.matches(ShortcutManager.ID_EXPLORER_SELECT_FIRST, e)
-        || sm.matches(ShortcutManager.ID_EXPLORER_SELECT_FIRST_ALT, e)) {
-      selList.selectFirst();
-    } else if (sm.matches(ShortcutManager.ID_EXPLORER_SELECT_ALL, e)) {
-      selList.selectAll();
-    }
+  private ShortcutActions buildShortcuts() {
+    return new ShortcutActions()
+        .on(ShortcutManager.ID_EXPLORER_OPEN, e -> handleEnterKey(e, selection()))
+        .on(ShortcutManager.ID_EXPLORER_SELECT_NEXT, () -> selection().selectNext())
+        .on(ShortcutManager.ID_EXPLORER_SELECT_PREVIOUS, () -> selection().selectPrevious())
+        .on(ShortcutManager.ID_EXPLORER_SELECT_LAST, () -> selection().selectLast())
+        .on(ShortcutManager.ID_EXPLORER_SELECT_LAST_ALT, () -> selection().selectLast())
+        .on(ShortcutManager.ID_EXPLORER_SELECT_FIRST, () -> selection().selectFirst())
+        .on(ShortcutManager.ID_EXPLORER_SELECT_FIRST_ALT, () -> selection().selectFirst())
+        .on(ShortcutManager.ID_EXPLORER_SELECT_ALL, () -> selection().selectAll());
+  }
+
+  private SeriesSelectionModel selection() {
+    return getDicomExplorer().getSelectionList();
   }
 
   @Override

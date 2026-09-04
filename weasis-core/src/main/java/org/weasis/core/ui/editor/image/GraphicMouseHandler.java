@@ -411,12 +411,9 @@ public class GraphicMouseHandler<E extends ImageElement> extends MouseActionAdap
 
   @Override
   public void mouseReleased(MouseEvent e) {
-    int buttonMask = getButtonMask();
-
-    // Check if extended modifier of mouse event equals the current buttonMask
-    // Note that extended modifiers are not triggered in mouse released
-    // Also asserts that Mouse adapter is not disable
-    if ((e.getModifiers() & buttonMask) == 0) {
+    // The extended modifiers no longer hold the released button, so the button itself is tested.
+    // Also asserts that the mouse adapter is not disabled.
+    if (!isBoundButton(e)) {
       return;
     }
 

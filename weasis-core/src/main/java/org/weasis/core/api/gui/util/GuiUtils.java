@@ -23,7 +23,6 @@ import java.awt.ComponentOrientation;
 import java.awt.Container;
 import java.awt.Desktop;
 import java.awt.Dimension;
-import java.awt.Event;
 import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.Graphics;
@@ -36,6 +35,7 @@ import java.awt.RenderingHints;
 import java.awt.Window;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.io.File;
 import java.io.IOException;
@@ -639,7 +639,7 @@ public class GuiUtils {
       item.setMnemonic((char) mnemonic);
     }
     if (acceleratorKey != 0) {
-      item.setAccelerator(KeyStroke.getKeyStroke(acceleratorKey, Event.CTRL_MASK));
+      item.setAccelerator(KeyStroke.getKeyStroke(acceleratorKey, InputEvent.CTRL_DOWN_MASK));
     }
     return item;
   }

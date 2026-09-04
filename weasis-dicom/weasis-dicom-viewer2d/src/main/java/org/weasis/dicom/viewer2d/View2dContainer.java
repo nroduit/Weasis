@@ -11,7 +11,6 @@ package org.weasis.dicom.viewer2d;
 
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
-import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
@@ -23,7 +22,6 @@ import javax.swing.JComponent;
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
 import javax.swing.JSeparator;
-import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
 import org.dcm4che3.data.Tag;
 import org.osgi.framework.BundleContext;
@@ -42,6 +40,7 @@ import org.weasis.core.api.gui.util.BasicActionState;
 import org.weasis.core.api.gui.util.ComboItemListener;
 import org.weasis.core.api.gui.util.Filter;
 import org.weasis.core.api.gui.util.GuiUtils;
+import org.weasis.core.api.gui.util.ShortcutManager;
 import org.weasis.core.api.gui.util.SliderChangeListener;
 import org.weasis.core.api.gui.util.ToggleButtonListener;
 import org.weasis.core.api.media.data.MediaSeries;
@@ -854,7 +853,9 @@ public class View2dContainer extends DicomViewerPlugin implements PropertyChange
                       SwingUtilities.getWindowAncestor(View2dContainer.this), title, eventManager);
               ColorLayerUI.showCenterScreen(dialog, layer);
             });
-    printStd.putValue(Action.ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_P, 0));
+    printStd.putValue(
+        Action.ACCELERATOR_KEY,
+        ShortcutManager.getInstance().getKeyStroke(ShortcutManager.ID_VIEWER_PRINT));
     actions.add(printStd);
 
     final String title2 = Messages.getString("View2dContainer.dcm_print");
