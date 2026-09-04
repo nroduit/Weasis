@@ -42,6 +42,7 @@ interpolation and one stop per entry.
 | `FusionOp`, `FusionWindow`, `FusionController` | weasis-dicom-viewer2d, `org.weasis.dicom.viewer2d.fusion` | Overlay alpha and window from the map |
 | `Preset`, `VolumePresetHost`, `PresetCost`, `LegacyVolumePresets` | weasis-dicom-3d, `org.weasis.dicom.viewer3d.vr` | Volume rendering presets compiled from maps |
 | `DicomColorPalette` | weasis-dicom-codec, `org.weasis.dicom.codec.utils` | Color Palette IOD read and write |
+| `SrgbInputProfile` | weasis-dicom-codec, `org.weasis.dicom.codec.utils` | sRGB Input Device profile written in the ICC Profile module |
 
 ## JSON files
 
@@ -112,9 +113,12 @@ colormaps.json / volumeColorMaps.json / customColorMaps.json / DICOM palette
   series (read as a fraction of the maximum when there is none). The derived preset is equal to
   the listed one, so menus keep their selection, and is released like an editor preview.
 - **DICOM exchange.** `DicomColorPalette` turns a Color Palette object into a sampled map and
-  writes one back; `DicomMediaIO` registers palettes met while loading; `PRManager` applies the
-  palette of a Pseudo-Color Softcopy Presentation State and the superimposed series, palette and
-  opacity of a Blending Softcopy Presentation State.
+  writes one back, with the sRGB profile of `SrgbInputProfile` in the mandatory ICC Profile module
+  (PS3.3 C.11.15 asks for an Input Device profile, which the platform sRGB profile is not);
+  `DicomMediaIO` registers palettes met while loading; `PRManager` applies the palette of a
+  Pseudo-Color Softcopy Presentation State and the superimposed series, palette and opacity of a
+  Blending Softcopy Presentation State. The profile of a palette that is read is ignored: there is
+  no color management stage in the display chain.
 
 ## Conventions and invariants
 

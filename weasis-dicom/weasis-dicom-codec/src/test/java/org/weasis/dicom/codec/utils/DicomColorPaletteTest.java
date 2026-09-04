@@ -16,6 +16,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.awt.Color;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.List;
 import org.dcm4che3.data.Attributes;
@@ -62,7 +63,12 @@ class DicomColorPaletteTest {
                 ds.getInts(Tag.RedPaletteColorLookupTableDescriptor),
                 "8 bits in the Color Palette IOD"),
         () -> assertEquals(256, ds.getBytes(Tag.RedPaletteColorLookupTableData).length),
-        () -> assertTrue(ds.getBytes(Tag.ICCProfile).length > 0, "ICC Profile module (M)"),
+        () -> assertArrayEquals(SrgbInputProfile.data(), ds.getBytes(Tag.ICCProfile)),
+        () ->
+            assertEquals(
+                "scnr",
+                new String(ds.getBytes(Tag.ICCProfile), 12, 4, StandardCharsets.US_ASCII),
+                "Input Device class, PS3.3 C.11.15.1.1"),
         () -> assertEquals("SRGB", ds.getString(Tag.ColorSpace)),
         () -> assertFalse(ds.contains(Tag.SpecificCharacterSet), "ASCII text"),
         () -> assertTrue(DicomColorPalette.isColorPalette(ds)));

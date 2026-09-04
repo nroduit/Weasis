@@ -9,8 +9,6 @@
  */
 package org.weasis.dicom.codec.utils;
 
-import java.awt.color.ColorSpace;
-import java.awt.color.ICC_Profile;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
@@ -34,9 +32,9 @@ import org.weasis.opencv.op.lut.colormap.ColorMapCompiler;
 /**
  * DICOM Color Palette objects (PS3.3 A.58) as color maps. Import yields a sampled map with the
  * palette's label, description, creator and UID as metadata; export writes the map's colors as a
- * Color Palette IOD (PS3.3 A.58): 256 entries of 8 bits, as the IOD requires, with an sRGB ICC
- * profile. Alpha, physical domains, modality scope and a resolution above 8 bits have no DICOM form
- * and are dropped.
+ * Color Palette IOD (PS3.3 A.58): 256 entries of 8 bits, as the IOD requires, with the sRGB Input
+ * Device profile the ICC Profile module requires. Alpha, physical domains, modality scope and a
+ * resolution above 8 bits have no DICOM form and are dropped.
  */
 public final class DicomColorPalette {
 
@@ -119,7 +117,7 @@ public final class DicomColorPalette {
 
   /**
    * The Color Palette object of a map (PS3.3 A.58): 256 entries of 8 bits, one byte each, and the
-   * sRGB ICC profile the colors are expressed in. Reuses the map's DICOM UID when it has one, so a
+   * sRGB profile the colors are expressed in. Reuses the map's DICOM UID when it has one, so a
    * re-exported palette, a well-known one included, keeps its identity.
    */
   public static Attributes toAttributes(ColorMap map) {
@@ -147,7 +145,7 @@ public final class DicomColorPalette {
     ds.setBytes(Tag.RedPaletteColorLookupTableData, VR.OW, bgr[2]);
     ds.setBytes(Tag.GreenPaletteColorLookupTableData, VR.OW, bgr[1]);
     ds.setBytes(Tag.BluePaletteColorLookupTableData, VR.OW, bgr[0]);
-    ds.setBytes(Tag.ICCProfile, VR.OB, SrgbProfile.DATA);
+    ds.setBytes(Tag.ICCProfile, VR.OB, SrgbInputProfile.data());
     ds.setString(Tag.ColorSpace, VR.CS, "SRGB"); // NON-NLS
     return ds;
   }
@@ -168,13 +166,7 @@ public final class DicomColorPalette {
     return cs.substring(0, Math.min(cs.length(), MAX_LABEL_LENGTH)).trim();
   }
 
-  // 8-bit values spread over 16 bits (v * 257), little endian, as the descriptor announces.
   private static boolean isAscii(String text) {
     return text == null || text.chars().allMatch(c -> c < 128);
-  }
-
-  // Loaded on first export only
-  private static final class SrgbProfile {
-    static final byte[] DATA = ICC_Profile.getInstance(ColorSpace.CS_sRGB).getData();
   }
 }
