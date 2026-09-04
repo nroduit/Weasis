@@ -9,9 +9,9 @@
  */
 package org.weasis.dicom.codec.utils;
 
+import java.awt.color.ColorSpace;
+import java.awt.color.ICC_Profile;
 import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Locale;
@@ -34,13 +34,18 @@ import org.weasis.opencv.op.lut.colormap.ColorMapCompiler;
 /**
  * DICOM Color Palette objects (PS3.3 A.58) as color maps. Import yields a sampled map with the
  * palette's label, description, creator and UID as metadata; export writes the map's colors as a
- * 16-bit palette. Alpha, physical domains and modality scope have no DICOM form and are dropped.
+ * Color Palette IOD (PS3.3 A.58): 256 entries of 8 bits, as the IOD requires, with an sRGB ICC
+ * profile. Alpha, physical domains, modality scope and a resolution above 8 bits have no DICOM form
+ * and are dropped.
  */
 public final class DicomColorPalette {
 
   public static final String DEFAULT_CREATOR = "Weasis"; // NON-NLS
   private static final int MAX_LABEL_LENGTH = 16;
-  private static final int ENTRY_SCALE_16 = 257;
+  private static final int ENTRIES = 256;
+  // The Color Palette IOD constrains the Palette Color LUT entries to 8 bits (PS3.3 A.58.3)
+  private static final int BITS = 8;
+  private static final String UTF_8 = "ISO_IR 192"; // NON-NLS
 
   /** File format registered in the editor by the DICOM viewer. */
   public static final ColorMapFormat FORMAT =
@@ -113,36 +118,37 @@ public final class DicomColorPalette {
   }
 
   /**
-   * The Color Palette object of a map: {@value ColorMapCompiler#BYTE_LUT_ENTRIES} entries, or 4096
-   * for a map wider than 8 bits, stored as 16-bit values. Reuses the map's DICOM UID when it has
-   * one, so a re-exported palette keeps its identity.
+   * The Color Palette object of a map (PS3.3 A.58): 256 entries of 8 bits, one byte each, and the
+   * sRGB ICC profile the colors are expressed in. Reuses the map's DICOM UID when it has one, so a
+   * re-exported palette, a well-known one included, keeps its identity.
    */
   public static Attributes toAttributes(ColorMap map) {
     Objects.requireNonNull(map, "Map cannot be null");
-    int entries = map.bits() > ColorMap.MIN_BITS ? 4096 : ColorMapCompiler.BYTE_LUT_ENTRIES;
-    byte[][] bgr = ColorMapCompiler.toBgr(map, entries);
+    byte[][] bgr = ColorMapCompiler.toBgr(map, ENTRIES);
+    String description = map.metadata().getOrDefault(ColorMap.META_DICOM_DESCRIPTION, map.name());
+    String creator = map.metadata().getOrDefault(ColorMap.META_DICOM_CREATOR, DEFAULT_CREATOR);
     Attributes ds = new Attributes();
+    if (!isAscii(description) || !isAscii(creator)) {
+      ds.setString(Tag.SpecificCharacterSet, VR.CS, UTF_8);
+    }
     ds.setString(Tag.SOPClassUID, VR.UI, UID.ColorPaletteStorage);
     ds.setString(
         Tag.SOPInstanceUID,
         VR.UI,
         UIDUtils.createUIDIfNull(map.metadata().get(ColorMap.META_DICOM_UID)));
+    ds.setInt(Tag.InstanceNumber, VR.IS, 1);
     ds.setString(Tag.ContentLabel, VR.CS, contentLabel(map));
-    ds.setString(
-        Tag.ContentDescription,
-        VR.LO,
-        map.metadata().getOrDefault(ColorMap.META_DICOM_DESCRIPTION, map.name()));
-    ds.setString(
-        Tag.ContentCreatorName,
-        VR.PN,
-        map.metadata().getOrDefault(ColorMap.META_DICOM_CREATOR, DEFAULT_CREATOR));
-    int[] descriptor = {entries == 65536 ? 0 : entries, 0, 16};
+    ds.setString(Tag.ContentDescription, VR.LO, description);
+    ds.setString(Tag.ContentCreatorName, VR.PN, creator);
+    int[] descriptor = {ENTRIES, 0, BITS};
     ds.setInt(Tag.RedPaletteColorLookupTableDescriptor, VR.US, descriptor);
     ds.setInt(Tag.GreenPaletteColorLookupTableDescriptor, VR.US, descriptor);
     ds.setInt(Tag.BluePaletteColorLookupTableDescriptor, VR.US, descriptor);
-    ds.setBytes(Tag.RedPaletteColorLookupTableData, VR.OW, words(bgr[2]));
-    ds.setBytes(Tag.GreenPaletteColorLookupTableData, VR.OW, words(bgr[1]));
-    ds.setBytes(Tag.BluePaletteColorLookupTableData, VR.OW, words(bgr[0]));
+    ds.setBytes(Tag.RedPaletteColorLookupTableData, VR.OW, bgr[2]);
+    ds.setBytes(Tag.GreenPaletteColorLookupTableData, VR.OW, bgr[1]);
+    ds.setBytes(Tag.BluePaletteColorLookupTableData, VR.OW, bgr[0]);
+    ds.setBytes(Tag.ICCProfile, VR.OB, SrgbProfile.DATA);
+    ds.setString(Tag.ColorSpace, VR.CS, "SRGB"); // NON-NLS
     return ds;
   }
 
@@ -163,11 +169,12 @@ public final class DicomColorPalette {
   }
 
   // 8-bit values spread over 16 bits (v * 257), little endian, as the descriptor announces.
-  private static byte[] words(byte[] values) {
-    ByteBuffer buffer = ByteBuffer.allocate(values.length * 2).order(ByteOrder.LITTLE_ENDIAN);
-    for (byte v : values) {
-      buffer.putShort((short) ((v & 0xFF) * ENTRY_SCALE_16));
-    }
-    return buffer.array();
+  private static boolean isAscii(String text) {
+    return text == null || text.chars().allMatch(c -> c < 128);
+  }
+
+  // Loaded on first export only
+  private static final class SrgbProfile {
+    static final byte[] DATA = ICC_Profile.getInstance(ColorSpace.CS_sRGB).getData();
   }
 }

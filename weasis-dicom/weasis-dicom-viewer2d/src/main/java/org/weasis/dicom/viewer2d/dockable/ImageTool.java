@@ -13,6 +13,7 @@ import bibliothek.gui.dock.common.CLocation;
 import com.formdev.flatlaf.extras.FlatSVGIcon;
 import java.awt.Component;
 import java.text.DecimalFormat;
+import java.util.Optional;
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
@@ -25,21 +26,26 @@ import javax.swing.JSpinner;
 import javax.swing.JToggleButton;
 import javax.swing.border.Border;
 import javax.swing.text.NumberFormatter;
+import org.dcm4che3.data.Tag;
 import org.weasis.core.api.gui.Insertable;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.CollapsiblePanel;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.JSliderW;
+import org.weasis.core.api.gui.util.SliderChangeListener;
 import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.api.util.ResourceUtil.ActionIcon;
 import org.weasis.core.api.util.ResourceUtil.OtherIcon;
 import org.weasis.core.ui.docking.PluginTool;
 import org.weasis.core.ui.editor.image.ImageViewerEventManager;
+import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.codec.DicomImageElement;
+import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.viewer2d.EventManager;
 import org.weasis.dicom.viewer2d.Messages;
 import org.weasis.dicom.viewer2d.ResetTools;
+import org.weasis.dicom.viewer2d.WindowPresetActions;
 import org.weasis.dicom.viewer2d.fusion.FusionAction;
 
 public class ImageTool extends PluginTool {
@@ -173,6 +179,42 @@ public class ImageTool extends PluginTool {
     return framePanel;
   }
 
+  /**
+   * NM images get Lower and Upper Window Level sliders instead of Window and Level (IHE RAD TF-2
+   * 4.16.4.2.2.3.3); the panel follows the modality of the selected image.
+   */
+  private static void addWindowBounds(
+      ImageViewerEventManager<DicomImageElement> manager,
+      JPanel parent,
+      JPanel wlSliders,
+      int gap) {
+    Optional<SliderChangeListener> window = manager.getAction(ActionW.WINDOW);
+    Optional<SliderChangeListener> level = manager.getAction(ActionW.LEVEL);
+    if (window.isEmpty() || level.isEmpty()) {
+      return;
+    }
+    WindowBoundsPanel bounds = new WindowBoundsPanel(window.get(), level.get(), gap);
+    parent.add(bounds);
+    Runnable switchMode =
+        () -> {
+          boolean nm = isNuclearMedicine(manager.getSelectedViewPane());
+          if (bounds.isVisible() != nm || wlSliders.isVisible() == nm) {
+            bounds.setVisible(nm);
+            wlSliders.setVisible(!nm);
+            parent.revalidate();
+          }
+        };
+    // The Window and Level models change whenever another image is selected
+    window.get().getSliderModel().addChangeListener(_ -> switchMode.run());
+    level.get().getSliderModel().addChangeListener(_ -> switchMode.run());
+    switchMode.run();
+  }
+
+  static boolean isNuclearMedicine(ViewCanvas<DicomImageElement> view) {
+    DicomImageElement image = view == null ? null : view.getImage();
+    return image != null && "NM".equals(TagD.getTagValue(image, Tag.Modality, String.class));
+  }
+
   public static JPanel getWindowLevelPanel(
       ImageViewerEventManager<DicomImageElement> manager, Border hspace, boolean all) {
     int gabY = 7;
@@ -180,14 +222,15 @@ public class ImageTool extends PluginTool {
     winLevelPanel.setBorder(
         BorderFactory.createCompoundBorder(
             hspace, GuiUtils.getTitledBorder(Messages.getString("ImageTool.wl"))));
+    JPanel wlSliders = GuiUtils.getVerticalBoxLayoutPanel();
     manager
         .getAction(ActionW.WINDOW)
         .ifPresent(
             sliderItem -> {
               JSliderW windowSlider = sliderItem.createSlider(0, true);
               GuiUtils.setPreferredWidth(windowSlider, 100);
-              winLevelPanel.add(windowSlider);
-              winLevelPanel.add(GuiUtils.boxVerticalStrut(gabY));
+              wlSliders.add(windowSlider);
+              wlSliders.add(GuiUtils.boxVerticalStrut(gabY));
             });
 
     manager
@@ -196,9 +239,11 @@ public class ImageTool extends PluginTool {
             sliderItem -> {
               JSliderW levelSlider = sliderItem.createSlider(0, true);
               GuiUtils.setPreferredWidth(levelSlider, 100);
-              winLevelPanel.add(levelSlider);
-              winLevelPanel.add(GuiUtils.boxVerticalStrut(gabY));
+              wlSliders.add(levelSlider);
+              wlSliders.add(GuiUtils.boxVerticalStrut(gabY));
             });
+    winLevelPanel.add(wlSliders);
+    addWindowBounds(manager, winLevelPanel, wlSliders, gabY);
 
     manager
         .getAction(ActionW.PRESET)
@@ -208,7 +253,11 @@ public class ImageTool extends PluginTool {
               JComboBox<?> presetComboBox = comboItem.createCombo(160);
               presetComboBox.setMaximumRowCount(10);
               winLevelPanel.add(
-                  GuiUtils.getHorizontalBoxLayoutPanel(5, presetsLabel, presetComboBox));
+                  GuiUtils.getHorizontalBoxLayoutPanel(
+                      5,
+                      presetsLabel,
+                      presetComboBox,
+                      WindowPresetActions.saveCurrentButton(manager)));
               winLevelPanel.add(GuiUtils.boxVerticalStrut(gabY));
             });
 

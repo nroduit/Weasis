@@ -69,7 +69,12 @@ public class DicomImageElement extends ImageElement implements DicomElement {
 
   public static final List<LutShape> DEFAULT_LUT_FUNCTIONS =
       List.of(
-          LutShape.LINEAR, LutShape.SIGMOID, LutShape.SIGMOID_NORM, LutShape.LOG, LutShape.LOG_INV);
+          LutShape.LINEAR,
+          LutShape.LINEAR_EXACT,
+          LutShape.SIGMOID,
+          LutShape.SIGMOID_NORM,
+          LutShape.LOG,
+          LutShape.LOG_INV);
   private DicomImageAdapter adapter = null;
   private Collection<LutShape> lutShapeCollection = null;
 
@@ -506,12 +511,13 @@ public class DicomImageElement extends ImageElement implements DicomElement {
     return null;
   }
 
-  // A map anchored to physical values is indexed over its own range, whatever the window is.
+  // A map anchored to physical values is indexed over exactly its own range, whatever the window
+  // is: LINEAR_EXACT, as DICOM LINEAR would end one unit short.
   private static void applyOutputRange(DicomImageReadParam readParams, Map<String, Object> params) {
     if (params.get(WindowOp.P_OUTPUT_RANGE) instanceof WindowOp.OutputRange range) {
       readParams.setWindowWidth(range.window());
       readParams.setWindowCenter(range.level());
-      readParams.setVoiLutShape(LutShape.LINEAR);
+      readParams.setVoiLutShape(LutShape.LINEAR_EXACT);
     }
   }
 

@@ -9,8 +9,11 @@
  */
 package org.weasis.acquire.explorer.gui.central.meta.panel;
 
+import java.awt.Component;
 import java.awt.Font;
 import java.awt.Insets;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashSet;
@@ -20,8 +23,10 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.swing.ButtonGroup;
 import javax.swing.DefaultComboBoxModel;
+import javax.swing.DefaultListCellRenderer;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
+import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
 import javax.swing.JRadioButton;
@@ -42,6 +47,7 @@ import org.weasis.dicom.ref.AnatomicBuilder.CategoryBuilder;
 import org.weasis.dicom.ref.AnatomicItem;
 import org.weasis.dicom.ref.AnatomicModifier;
 import org.weasis.dicom.ref.AnatomicRegion;
+import org.weasis.dicom.ref.RegionGroup;
 
 public class AnatomicRegionView extends JPanel {
 
@@ -49,6 +55,8 @@ public class AnatomicRegionView extends JPanel {
 
   private JComboBox<CategoryBuilder> comboBox1;
   private JComboBox<AnatomicItem> comboBox2;
+  // Filter of the regions by area; null = every area
+  private final JComboBox<RegionGroup> areaCombo = new JComboBox<>();
 
   private final ButtonGroup ratioGroup = new ButtonGroup();
   private final JRadioButton radioButtonSeries =
@@ -85,7 +93,7 @@ public class AnatomicRegionView extends JPanel {
   }
 
   void jbInit() {
-    setLayout(new MigLayout("wrap 2, insets 0", "[right][grow]", "[]10[]10[]20[]")); // NON-NLS
+    setLayout(new MigLayout("wrap 2, insets 0", "[right][grow]", "[]10[]10[]10[]20[]")); // NON-NLS
     CategoryBuilder[] sortedCategories =
         AnatomicBuilder.getCategoryMap().keySet().stream()
             .sorted(Comparator.comparing(CategoryBuilder::toString))
@@ -93,6 +101,22 @@ public class AnatomicRegionView extends JPanel {
     comboBox1 = new JComboBox<>(sortedCategories);
     comboBox1.setSelectedItem(Category.SURFACE);
     comboBox1.addActionListener(_ -> updateComboBox2());
+
+    areaCombo.addItem(null);
+    Arrays.stream(RegionGroup.values()).forEach(areaCombo::addItem);
+    areaCombo.setRenderer(
+        new DefaultListCellRenderer() {
+          @Override
+          public Component getListCellRendererComponent(
+              JList<?> list, Object value, int index, boolean selected, boolean focus) {
+            super.getListCellRendererComponent(list, value, index, selected, focus);
+            setText(
+                value instanceof RegionGroup g ? g.getLabel() : Messages.getString("all.areas"));
+            return this;
+          }
+        });
+    areaCombo.setToolTipText(Messages.getString("area.tip"));
+    areaCombo.addActionListener(_ -> updateComboBox2());
 
     // Create the second combo box
     comboBox2 = new SearchableComboBox<>();
@@ -123,13 +147,16 @@ public class AnatomicRegionView extends JPanel {
     add(new JLabel("Category" + StringUtil.COLON), "right"); // NON-NLS
     add(comboBox1, "growx"); // NON-NLS
 
+    add(new JLabel(Messages.getString("area") + StringUtil.COLON), "right"); // NON-NLS
+    add(areaCombo, "growx"); // NON-NLS
+
     add(new JLabel("Region" + StringUtil.COLON), "right"); // NON-NLS
     add(comboBox2, "growx 500"); // NON-NLS
 
     List<Object> list = Stream.of(AnatomicModifier.values()).collect(Collectors.toList());
     modifierGroup.setModel(list, false, false);
     modifiersDropdown.setToolTipText(Messages.getString("select.modifiers"));
-    add(modifiersDropdown, "cell 1 2, span"); // NON-NLS
+    add(modifiersDropdown, "cell 1 3, span"); // NON-NLS
 
     add(lblApplyTo, "span, split 3, right, gaptop 20"); // NON-NLS
     add(radioButtonSeries);
@@ -153,8 +180,30 @@ public class AnatomicRegionView extends JPanel {
   }
 
   void updateComboBox2() {
-    List<AnatomicItem> list = AnatomicBuilder.getCategoryItems(getSelectedCategory());
+    RegionGroup area = (RegionGroup) areaCombo.getSelectedItem();
+    Object selected = comboBox2.getSelectedItem();
+    List<AnatomicItem> list =
+        AnatomicBuilder.getCategoryItems(getSelectedCategory()).stream()
+            .filter(item -> area == null || new AnatomicRegion(item).isIn(area))
+            .toList();
     comboBox2.setModel(new DefaultComboBoxModel<>(list.toArray(new AnatomicItem[0])));
+    if (selected != null && list.contains(selected)) {
+      comboBox2.setSelectedItem(selected);
+    }
+  }
+
+  /** Selects the area filter, null for every area; for the tests. */
+  void selectArea(RegionGroup area) {
+    areaCombo.setSelectedItem(area);
+  }
+
+  /** The regions offered by the Region combo; for the tests. */
+  List<AnatomicItem> offeredRegions() {
+    List<AnatomicItem> items = new ArrayList<>();
+    for (int i = 0; i < comboBox2.getItemCount(); i++) {
+      items.add(comboBox2.getItemAt(i));
+    }
+    return items;
   }
 
   public boolean isApplyingToSeries() {

@@ -25,6 +25,7 @@ import org.junit.jupiter.api.DisplayNameGeneration;
 import org.junit.jupiter.api.DisplayNameGenerator.ReplaceUnderscores;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import org.weasis.core.api.image.lut.ColorMapRegistry;
 import org.weasis.opencv.op.lut.colormap.ColorMap;
 import org.weasis.opencv.op.lut.colormap.ColorMapCompiler;
 import org.weasis.opencv.op.lut.colormap.ColorMapDomain;
@@ -45,7 +46,7 @@ class DicomColorPaletteTest {
           .build();
 
   @Test
-  void attributes_describe_a_16_bit_color_palette_object() {
+  void attributes_describe_a_conformant_color_palette_object() {
     Attributes ds = DicomColorPalette.toAttributes(HOT);
 
     assertAll(
@@ -54,10 +55,16 @@ class DicomColorPaletteTest {
         () -> assertEquals("HOT IRON _TEST_", ds.getString(Tag.ContentLabel)),
         () -> assertEquals("Hot iron (test)", ds.getString(Tag.ContentDescription)),
         () -> assertEquals("Tester", ds.getString(Tag.ContentCreatorName)),
+        () -> assertEquals(1, ds.getInt(Tag.InstanceNumber, 0), "Type 1"),
         () ->
             assertArrayEquals(
-                new int[] {256, 0, 16}, ds.getInts(Tag.RedPaletteColorLookupTableDescriptor)),
-        () -> assertEquals(512, ds.getBytes(Tag.RedPaletteColorLookupTableData).length),
+                new int[] {256, 0, 8},
+                ds.getInts(Tag.RedPaletteColorLookupTableDescriptor),
+                "8 bits in the Color Palette IOD"),
+        () -> assertEquals(256, ds.getBytes(Tag.RedPaletteColorLookupTableData).length),
+        () -> assertTrue(ds.getBytes(Tag.ICCProfile).length > 0, "ICC Profile module (M)"),
+        () -> assertEquals("SRGB", ds.getString(Tag.ColorSpace)),
+        () -> assertFalse(ds.contains(Tag.SpecificCharacterSet), "ASCII text"),
         () -> assertTrue(DicomColorPalette.isColorPalette(ds)));
   }
 
@@ -83,14 +90,33 @@ class DicomColorPaletteTest {
   }
 
   @Test
-  void a_re_exported_palette_keeps_its_uid_and_a_wide_map_gets_4096_entries() {
+  void a_re_exported_palette_keeps_its_uid_and_a_wide_map_is_resampled_to_8_bits() {
     ColorMap wide = HOT.toBuilder().bits(12).metadata(ColorMap.META_DICOM_UID, "1.2.3.4").build();
     Attributes ds = DicomColorPalette.toAttributes(wide);
 
     assertEquals("1.2.3.4", ds.getString(Tag.SOPInstanceUID));
-    assertArrayEquals(
-        new int[] {4096, 0, 16}, ds.getInts(Tag.BluePaletteColorLookupTableDescriptor));
-    assertEquals(4096, DicomColorPalette.fromAttributes(ds).orElseThrow().stops().size());
+    assertArrayEquals(new int[] {256, 0, 8}, ds.getInts(Tag.BluePaletteColorLookupTableDescriptor));
+    assertEquals(256, DicomColorPalette.fromAttributes(ds).orElseThrow().stops().size());
+  }
+
+  @Test
+  void a_well_known_palette_is_exported_with_its_registered_uid() {
+    ColorMap hotIron =
+        new ColorMapRegistry(null, null).findByDicomUid("1.2.840.10008.1.5.1").orElseThrow();
+    Attributes ds = DicomColorPalette.toAttributes(hotIron);
+
+    assertAll(
+        () -> assertEquals("1.2.840.10008.1.5.1", ds.getString(Tag.SOPInstanceUID)),
+        () -> assertEquals("HOT_IRON", ds.getString(Tag.ContentLabel)));
+  }
+
+  @Test
+  void non_ascii_text_declares_utf_8() {
+    ColorMap map = HOT.toBuilder().metadata(ColorMap.META_DICOM_CREATOR, "Rémi^Müller").build();
+    Attributes ds = DicomColorPalette.toAttributes(map);
+
+    assertEquals("ISO_IR 192", ds.getString(Tag.SpecificCharacterSet));
+    assertEquals("Rémi^Müller", ds.getString(Tag.ContentCreatorName));
   }
 
   @Test

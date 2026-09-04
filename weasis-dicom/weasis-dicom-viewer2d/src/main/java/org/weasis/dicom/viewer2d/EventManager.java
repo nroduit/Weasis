@@ -89,6 +89,7 @@ import org.weasis.core.ui.editor.image.SynchEvent;
 import org.weasis.core.ui.editor.image.SynchManager;
 import org.weasis.core.ui.editor.image.SynchView;
 import org.weasis.core.ui.editor.image.ViewCanvas;
+import org.weasis.core.ui.editor.image.ViewerPlugin;
 import org.weasis.core.ui.editor.image.ViewerToolBar;
 import org.weasis.core.ui.editor.image.ZoomToolBar;
 import org.weasis.core.ui.editor.image.lut.ColorMapRadioMenu;
@@ -102,6 +103,7 @@ import org.weasis.dicom.codec.PRSpecialElement;
 import org.weasis.dicom.codec.PresentationStateReader;
 import org.weasis.dicom.codec.SortSeriesStack;
 import org.weasis.dicom.codec.TagD;
+import org.weasis.dicom.codec.display.WindowPresetRegistry;
 import org.weasis.dicom.codec.geometry.ImageOrientation;
 import org.weasis.dicom.explorer.DicomModel;
 import org.weasis.dicom.explorer.exp.DicomExportAction;
@@ -412,7 +414,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
             } else {
               if (oldPreset != null) {
                 for (PresetWindowLevel preset : newPresetList) {
-                  if (preset.getName().equals(oldPreset.getName())) {
+                  if (preset.isSamePreset(oldPreset)) {
                     newPreset = preset;
                     break;
                   }
@@ -578,6 +580,8 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
   }
 
   private ComboItemListener<PresetWindowLevel> newPresetAction() {
+    WindowPresetRegistry.getInstance()
+        .addListener(() -> GuiExecutor.execute(this::refreshConfiguredPresets));
     return new ComboItemListener<>(ActionW.PRESET, null) {
 
       @Override
@@ -585,6 +589,31 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
         updatePreset(getActionW().cmd(), object);
       }
     };
+  }
+
+  /** Re-reads the presets of every displayed image after the preset documents changed. */
+  private void refreshConfiguredPresets() {
+    List<ViewerPlugin<?>> viewerPlugins = GuiUtils.getUICore().getViewerPlugins();
+    synchronized (viewerPlugins) {
+      for (final ViewerPlugin<?> p : viewerPlugins) {
+        if (p instanceof View2dContainer viewer) {
+          for (ViewCanvas<DicomImageElement> v : viewer.getImagePanels()) {
+            DicomImageElement image = v.getImage();
+            if (image != null) {
+              boolean pixelPadding =
+                  v.getDisplayOpManager()
+                      .getParamValue(
+                          WindowOp.OP_NAME, ActionW.IMAGE_PIX_PADDING.cmd(), Boolean.class)
+                      .orElse(true);
+              PrDicomObject pr =
+                  PRManager.getPrDicomObject(v.getActionValue(ActionW.PR_STATE.cmd()));
+              image.getPresetList(new DefaultWlPresentation(pr, pixelPadding), true);
+            }
+          }
+        }
+      }
+    }
+    updateComponentsListener(getSelectedViewPane());
   }
 
   private ComboItemListener<LutShape> newLutShapeAction() {
@@ -1708,6 +1737,8 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
             ritem.setAccelerator(KeyStroke.getKeyStroke(preset.getKeyCode(), 0));
           }
         }
+        menu.addSeparator();
+        menu.add(WindowPresetActions.saveCurrentItem(this, menu));
       }
     }
     return menu;

@@ -46,7 +46,7 @@ class DicomWellKnownPalettesTest {
     }
     for (int p = 0; p < LABELS.size(); p++) {
       String label = LABELS.get(p);
-      String uid = "1.2.840.10008.9." + (p + 1);
+      String uid = "1.2.840.10008.1.5." + (p + 1);
       ColorMap map = registry.findByDicomUid(uid).orElseThrow(() -> new AssertionError(label));
       JsonArray table = reference.getJsonArray(label);
       byte[][] bgr = ColorMapCompiler.toBgr(map, table.size());

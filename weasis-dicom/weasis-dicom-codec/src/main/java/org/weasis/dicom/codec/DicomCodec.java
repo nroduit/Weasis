@@ -10,10 +10,12 @@
 package org.weasis.dicom.codec;
 
 import java.net.URI;
+import java.nio.file.Path;
 import java.util.Hashtable;
 import javax.imageio.spi.IIOServiceProvider;
 import org.dcm4che3.data.SpecificCharacterSet;
 import org.dcm4che3.img.DicomImageReaderSpi;
+import org.dcm4che3.img.lut.PresetWindowLevel;
 import org.dcm4che3.util.UIDUtils;
 import org.osgi.service.component.ComponentContext;
 import org.osgi.service.component.annotations.Activate;
@@ -26,6 +28,10 @@ import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.media.data.Codec;
 import org.weasis.core.api.media.data.MediaReader;
+import org.weasis.core.api.service.WProperties;
+import org.weasis.core.util.StringUtil;
+import org.weasis.dicom.codec.display.WindowPresetJson;
+import org.weasis.dicom.codec.display.WindowPresetRegistry;
 import org.weasis.imageio.codec.ImageioUtil;
 
 @org.osgi.service.component.annotations.Component(service = Codec.class)
@@ -122,11 +128,28 @@ public class DicomCodec implements Codec<DicomImageElement> {
     for (IIOServiceProvider p : dcm4cheCodecs) {
       ImageioUtil.registerServiceProvider(p);
     }
+
+    configureWindowPresets();
+  }
+
+  /** Loads the site and user preset documents and supplies them to the renderer. */
+  private static void configureWindowPresets() {
+    WProperties preferences = GuiUtils.getUICore().getSystemPreferences();
+    String prefDir = preferences.getProperty("weasis.pref.dir"); // NON-NLS
+    WindowPresetRegistry registry = WindowPresetRegistry.getInstance();
+    registry.configure(
+        preferences.getProperty(WindowPresetRegistry.CONFIG_PROPERTY),
+        StringUtil.hasText(prefDir)
+            ? Path.of(prefDir).resolve(WindowPresetRegistry.USER_FILE)
+            : null,
+        path -> GuiUtils.getUICore().storeRemotePref(path, WindowPresetJson.CONTENT_TYPE));
+    PresetWindowLevel.setModalityPresetProvider(registry);
   }
 
   @Deactivate
   protected void deactivate(ComponentContext context) {
     LOGGER.info("Deactivate DicomCodec");
+    PresetWindowLevel.setModalityPresetProvider(null);
     for (IIOServiceProvider p : dcm4cheCodecs) {
       ImageioUtil.deregisterServiceProvider(p);
     }

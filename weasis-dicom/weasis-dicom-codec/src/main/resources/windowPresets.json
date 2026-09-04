@@ -1,0 +1,116 @@
+{
+  "schema": 1,
+  "presets": [
+    {
+      "id": "weasis.ct.brain",
+      "name": "Brain",
+      "modality": ["CT"],
+      "window": 80,
+      "level": 40,
+      "domain": {"kind": "absolute", "unit": "HU"},
+      "key": "3",
+      "when": {"preferBodyPart": ["HEAD"]}
+    },
+    {
+      "id": "weasis.ct.stroke",
+      "name": "Stroke",
+      "modality": ["CT"],
+      "window": 40,
+      "level": 40,
+      "domain": {"kind": "absolute", "unit": "HU"},
+      "when": {"preferBodyPart": ["HEAD"]}
+    },
+    {
+      "id": "weasis.ct.subdural",
+      "name": "Subdural",
+      "modality": ["CT"],
+      "window": 200,
+      "level": 75,
+      "domain": {"kind": "absolute", "unit": "HU"},
+      "when": {"preferBodyPart": ["HEAD"]}
+    },
+    {
+      "id": "weasis.ct.temporal-bones",
+      "name": "Temporal bones",
+      "modality": ["CT"],
+      "window": 2800,
+      "level": 600,
+      "domain": {"kind": "absolute", "unit": "HU"},
+      "when": {"preferBodyPart": ["HEAD"]}
+    },
+    {
+      "id": "weasis.ct.head-neck",
+      "name": "Head and neck soft tissue",
+      "modality": ["CT"],
+      "window": 375,
+      "level": 40,
+      "domain": {"kind": "absolute", "unit": "HU"},
+      "when": {"preferBodyPart": ["HEAD", "NECK"]}
+    },
+    {
+      "id": "weasis.ct.mediastinum",
+      "name": "Mediastinum",
+      "modality": ["CT"],
+      "window": 350,
+      "level": 50,
+      "domain": {"kind": "absolute", "unit": "HU"},
+      "key": "5",
+      "when": {"preferBodyPart": ["CHEST"]}
+    },
+    {
+      "id": "weasis.ct.lung",
+      "name": "Lung",
+      "modality": ["CT"],
+      "window": 1500,
+      "level": -600,
+      "domain": {"kind": "absolute", "unit": "HU"},
+      "key": "7",
+      "when": {"preferBodyPart": ["CHEST"]}
+    },
+    {
+      "id": "weasis.ct.abdomen",
+      "name": "Abdomen",
+      "modality": ["CT"],
+      "window": 400,
+      "level": 50,
+      "domain": {"kind": "absolute", "unit": "HU"},
+      "key": "4",
+      "when": {"preferBodyPart": ["ABDOMEN"]}
+    },
+    {
+      "id": "weasis.ct.liver",
+      "name": "Liver",
+      "modality": ["CT"],
+      "window": 150,
+      "level": 30,
+      "domain": {"kind": "absolute", "unit": "HU"},
+      "when": {"preferBodyPart": ["ABDOMEN"]}
+    },
+    {
+      "id": "weasis.ct.angio",
+      "name": "Angio",
+      "modality": ["CT"],
+      "window": 600,
+      "level": 200,
+      "domain": {"kind": "absolute", "unit": "HU"}
+    },
+    {
+      "id": "weasis.ct.spine",
+      "name": "Spine soft tissue",
+      "modality": ["CT"],
+      "window": 250,
+      "level": 50,
+      "domain": {"kind": "absolute", "unit": "HU"},
+      "when": {"preferBodyPart": ["SPINE"]}
+    },
+    {
+      "id": "weasis.ct.bone",
+      "name": "Bone",
+      "modality": ["CT"],
+      "window": 1800,
+      "level": 400,
+      "domain": {"kind": "absolute", "unit": "HU"},
+      "key": "6"
+    }
+  ]
+}

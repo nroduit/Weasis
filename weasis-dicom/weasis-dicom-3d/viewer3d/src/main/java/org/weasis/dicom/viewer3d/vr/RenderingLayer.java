@@ -208,7 +208,9 @@ public class RenderingLayer<E extends ImageElement> {
       return 0;
     }
     return switch (lutShape.getFunctionType()) {
-      case LINEAR -> 0;
+      // Deviation: the shader has a single linear ramp; LINEAR_EXACT (PS3.3 C.11.2.1.3.2) only
+      // shifts it by half a value, which is invisible on the interpolated volume.
+      case LINEAR, LINEAR_EXACT -> 0;
       case SIGMOID -> 1;
       case SIGMOID_NORM -> 2;
       case LOG -> 3;

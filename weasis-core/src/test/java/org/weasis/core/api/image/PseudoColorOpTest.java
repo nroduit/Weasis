@@ -105,6 +105,20 @@ class PseudoColorOpTest {
     assertSame(src, process(src, null, false, 12));
   }
 
+  @Test
+  void color_source_is_not_mapped_again() throws Exception {
+    ImageCV src = new ImageCV(1, 1, CvType.CV_8UC3);
+    src.put(0, 0, new byte[] {10, 20, 30});
+
+    PlanarImage inverted = process(src, ColorMapCompiler.toByteLut(RAMP), true, 8);
+    byte[] pixels = new byte[3];
+    inverted.toMat().get(0, 0, pixels);
+
+    assertAll(
+        () -> assertSame(src, process(src, ColorMapCompiler.toByteLut(RAMP), false, 8)),
+        () -> assertArrayEquals(new byte[] {(byte) 245, (byte) 235, (byte) 225}, pixels));
+  }
+
   private static byte[] run(ImageCV src, ByteLut lut, boolean invert, int bits) throws Exception {
     PlanarImage out = process(src, lut, invert, bits);
     assertEquals(CvType.CV_8UC3, out.type());

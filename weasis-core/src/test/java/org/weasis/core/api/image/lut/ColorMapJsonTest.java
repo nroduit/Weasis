@@ -61,7 +61,7 @@ class ColorMapJsonTest {
           .stop(10, Color.RED)
           .outside(new OutsideColors(Rgba.TRANSPARENT, new Rgba(1f, 1f, 1f, 128 / 255f), null))
           .lighting(new Lighting(false, 20f, GradientOpacity.edgeEmphasis(0.5f)))
-          .metadata(ColorMap.META_DICOM_UID, "1.2.840.10008.9.1")
+          .metadata(ColorMap.META_DICOM_UID, "1.2.840.10008.1.5.1")
           .metadata(ColorMap.META_DICOM_LABEL, "HOT_IRON")
           .build();
 

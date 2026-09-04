@@ -14,7 +14,6 @@ import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.encoder.PatternLayoutEncoder;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.rolling.RollingFileAppender;
-import java.io.File;
 import java.nio.file.Path;
 import java.util.Dictionary;
 import java.util.Hashtable;
@@ -43,7 +42,7 @@ import org.weasis.core.api.service.AuditLog;
 import org.weasis.core.api.service.BundlePreferences;
 import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.api.service.WProperties;
-import org.weasis.core.api.util.ResourceUtil;
+import org.weasis.core.api.util.ResourceMonitor;
 import org.weasis.core.ui.editor.FileModel;
 import org.weasis.core.ui.editor.SeriesViewerFactory;
 import org.weasis.core.ui.editor.ViewerPluginBuilder;
@@ -74,12 +73,6 @@ public class Activator implements BundleActivator, ServiceListener {
     bundleContext.addServiceListener(this, BundleTools.createServiceFilter(Codec.class));
 
     initLoggerAndAudit(properties);
-
-    // FIXME do not use system property
-    File file = ResourceUtil.getResource("presets.xml");
-    if (file.canRead()) {
-      System.setProperty("dicom.presets.path", file.getPath());
-    }
 
     registerCommands(bundleContext);
     Preferences prefs = BundlePreferences.getDefaultPreferences(bundleContext);
@@ -130,6 +123,7 @@ public class Activator implements BundleActivator, ServiceListener {
     MeasureTool.viewSetting.savePreferences(prefs);
     ShortcutManager.getInstance().savePreferences(prefs);
     prefs.sync(); // Force to save as PreferencesManager (as specific bundle managing preferences)
+    ResourceMonitor.getInstance().shutdown();
 
     Path dataFolder = AppProperties.getBundleDataFolder(bundleContext);
     if (dataFolder != null) {

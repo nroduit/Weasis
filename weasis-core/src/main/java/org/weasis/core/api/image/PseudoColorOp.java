@@ -88,6 +88,11 @@ public final class PseudoColorOp extends AbstractOp {
     if (lutTable == null) {
       return source;
     }
+    // A color source (true color, or gray colored by a Supplemental Palette) has no gray level
+    // for a color map to map: applying it per channel would distort the colors
+    if (source.channels() > 1) {
+      return invertLut ? ImageTransformer.invertLUT(source.toImageCV()) : source;
+    }
     if (isWideSource(source)) {
       return applyWide(source, lutTable, invertLut);
     }

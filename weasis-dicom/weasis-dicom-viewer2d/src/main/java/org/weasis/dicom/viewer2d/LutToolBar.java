@@ -58,6 +58,7 @@ public class LutToolBar extends WtoolBar {
             JPopupMenu menu =
                 (getMenuModel() == null) ? new JPopupMenu() : getMenuModel().createJPopupMenu();
             menu.setInvoker(this);
+            addSaveItem(menu, eventManager, this);
             if (getMenuModel() instanceof GroupRadioMenu) {
               for (RadioMenuItem item :
                   ((GroupRadioMenu<?>) getMenuModel()).getRadioMenuItemListCopy()) {
@@ -116,6 +117,13 @@ public class LutToolBar extends WtoolBar {
     invertButton.setIcon(ResourceUtil.getToolBarIcon(ActionIcon.INVERSE_LUT));
     eventManager.getAction(ActionW.INVERT_LUT).ifPresent(c -> c.registerActionState(invertButton));
     add(invertButton);
+  }
+
+  /** Appends the entry saving the current window/level as a user preset. */
+  private static void addSaveItem(
+      JPopupMenu menu, ImageViewerEventManager<DicomImageElement> eventManager, Component parent) {
+    menu.addSeparator();
+    menu.add(WindowPresetActions.saveCurrentItem(eventManager, parent));
   }
 
   /** Menu entry opening the color map editor on the toolbar's viewer. */

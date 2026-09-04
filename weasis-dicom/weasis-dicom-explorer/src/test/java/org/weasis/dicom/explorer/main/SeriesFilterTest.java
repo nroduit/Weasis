@@ -9,6 +9,7 @@
  */
 package org.weasis.dicom.explorer.main;
 
+import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -63,6 +64,23 @@ class SeriesFilterTest {
     SeriesFilter studyDesc = new SeriesFilter();
     studyDesc.setText("neuro");
     assertTrue(studyDesc.test(series("MR", 1, "Scan", null), study("NEURO PROTOCOL")));
+  }
+
+  @Test
+  void text_mode_matches_the_resolved_anatomy_and_its_region_groups() {
+    SeriesFilter chest = new SeriesFilter();
+    chest.setText("chest");
+    SeriesFilter liver = new SeriesFilter();
+    liver.setText("liver");
+    SeriesFilter extremity = new SeriesFilter();
+    extremity.setText("lower extremity");
+
+    assertAll(
+        () -> assertTrue(chest.test(series("CT", 1, "Scan", "LUNG"), study("x")), "lung in chest"),
+        () -> assertTrue(chest.test(series("CT", 2, "Scan", "CHESTABDPELVIS"), study("x"))),
+        () -> assertFalse(chest.test(series("CT", 3, "Scan", "LIVER"), study("x"))),
+        () -> assertTrue(liver.test(series("CT", 4, "Scan", "liver"), study("x"))),
+        () -> assertTrue(extremity.test(series("MR", 5, "Scan", "KNEE"), study("x"))));
   }
 
   @Test
