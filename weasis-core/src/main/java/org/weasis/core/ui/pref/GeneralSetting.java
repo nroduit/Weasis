@@ -53,6 +53,7 @@ public class GeneralSetting extends AbstractItemDialogPage {
             new ShortcutPrefView(),
             new ScreenPrefView(),
             new ProxyPrefView(),
+            new MaskingPrefView(),
             new LoggingPrefView(),
             new LauncherPrefView());
     childPages.forEach(p -> addSubPage(p, a -> dialog.showPage(p.getTitle()), menuPanel));

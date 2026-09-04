@@ -41,10 +41,17 @@ import org.weasis.core.util.StringUtil;
  */
 public record IdentityMask(TagPolicy policy, Pseudonymizer pseudonymizer, int dateShiftDays) {
 
-  /** Resolves the action to apply to a tag. */
-  @FunctionalInterface
+  /** Resolves the action to apply to a tag, or to a whole category. */
   public interface TagPolicy {
     AnonymizationAction actionFor(TagW tag);
+
+    /**
+     * The action for a kind of information no tag carries, such as a region burned into the pixels.
+     * A policy that does not classify by category keeps everything.
+     */
+    default AnonymizationAction actionFor(TagCategory category) {
+      return AnonymizationAction.KEEP;
+    }
   }
 
   /**
@@ -175,6 +182,18 @@ public record IdentityMask(TagPolicy policy, Pseudonymizer pseudonymizer, int da
     return ScopedValue.where(ACTIVE, this).call(task);
   }
 
+  /** The profile this mask applies, when it was built from one. */
+  public Optional<MaskingProfile> profile() {
+    return policy instanceof MaskingProfile maskingProfile
+        ? Optional.of(maskingProfile)
+        : Optional.empty();
+  }
+
+  /** What this mask does to a kind of information, used by the regions burned over the pixels. */
+  public AnonymizationAction actionFor(TagCategory category) {
+    return policy.actionFor(category);
+  }
+
   public AnonymizationAction actionFor(TagW tag) {
     return policy.actionFor(tag);
   }
@@ -281,6 +300,18 @@ public record IdentityMask(TagPolicy policy, Pseudonymizer pseudonymizer, int da
 
   /** Mask that applies {@code action} to every tag — mostly useful for tests and fixed profiles. */
   public static IdentityMask uniform(AnonymizationAction action) {
-    return new IdentityMask(tag -> action, saltedPseudonymizer(new byte[0]), 0);
+    TagPolicy policy =
+        new TagPolicy() {
+          @Override
+          public AnonymizationAction actionFor(TagW tag) {
+            return action;
+          }
+
+          @Override
+          public AnonymizationAction actionFor(TagCategory category) {
+            return action;
+          }
+        };
+    return new IdentityMask(policy, saltedPseudonymizer(new byte[0]), 0);
   }
 }

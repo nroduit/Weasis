@@ -198,6 +198,12 @@ public class DicomPrintDialog<I extends ImageElement> extends JDialog {
 
     panel.add(maskingProfile.createLabel(), "newline, growx 0, alignx trailing"); // NON-NLS
     panel.add(maskingProfile, "growx, alignx trailing, gapright 25"); // NON-NLS
+    ViewCanvas<?> printedView = eventManager.getSelectedViewPane();
+    panel.add(
+        MaskingProfileSelector.createReviewWarning(
+            printedView == null ? null : printedView.getImage(),
+            printedView == null ? null : printedView.getSeries()),
+        "newline, span, alignx leading"); // NON-NLS
 
     JLabel lblCalling = new JLabel(Messages.getString("calling.node") + StringUtil.COLON);
     AbstractDicomNode.loadDicomNodes(

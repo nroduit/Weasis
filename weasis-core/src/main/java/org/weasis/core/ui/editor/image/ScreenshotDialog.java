@@ -225,6 +225,14 @@ public class ScreenshotDialog<I extends ImageElement> extends JDialog {
           saveImageFile(result, mustBeReleased);
         });
 
+    panel.add(
+        GuiUtils.getFlowLayoutPanel(
+            FlowLayout.LEADING,
+            0,
+            ITEM_SEPARATOR_SMALL,
+            MaskingProfileSelector.createReviewWarning(
+                viewCanvas.getImage(), viewCanvas.getSeries())));
+
     getRootPane().setDefaultButton(saveButton);
     saveButton.addActionListener(evt -> doClose());
     panel.add(

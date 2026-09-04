@@ -17,10 +17,14 @@ import javax.swing.DefaultListCellRenderer;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JList;
+import javax.swing.UIManager;
 import org.weasis.core.Messages;
 import org.weasis.core.api.media.data.IdentityMask;
 import org.weasis.core.api.media.data.MaskingModelRegistry;
 import org.weasis.core.api.media.data.MaskingProfile;
+import org.weasis.core.api.media.data.MediaElement;
+import org.weasis.core.api.media.data.MediaSeries;
+import org.weasis.core.api.media.data.PixelReviewAdvisor;
 import org.weasis.core.util.StringUtil;
 
 /**
@@ -88,6 +92,18 @@ public class MaskingProfileSelector extends JComboBox<MaskingProfile> {
   public JLabel createLabel() {
     JLabel label = new JLabel(Messages.getString("masking.profile") + StringUtil.COLON_AND_SPACE);
     label.setLabelFor(this);
+    return label;
+  }
+
+  /**
+   * A warning that the pixels of that image may carry identity no profile can hide, shown only when
+   * they may and nothing is burned over them yet. Never blocks: locally the user decides.
+   */
+  public static JLabel createReviewWarning(MediaElement image, MediaSeries<?> series) {
+    JLabel label = new JLabel(Messages.getString("masking.review"));
+    label.setIcon(UIManager.getIcon("OptionPane.warningIcon")); // NON-NLS
+    label.setToolTipText(Messages.getString("masking.review.tip"));
+    label.setVisible(PixelReviewAdvisor.review(image, series));
     return label;
   }
 

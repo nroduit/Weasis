@@ -71,6 +71,7 @@ import org.weasis.core.api.media.data.MaskingModelRegistry;
 import org.weasis.core.api.media.data.MaskingProfile;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaSeries;
+import org.weasis.core.api.media.data.PixelReviewAdvisor;
 import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.util.FontItem;
@@ -368,6 +369,13 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
       MaskingProfileSelector maskingSelector = new MaskingProfileSelector();
       maskingSelector.setSelectedProfileId(pref.getProperty(IMG_MASKING_PROFILE));
       options.add(GuiUtils.getFlowLayoutPanel(maskingSelector.createLabel(), maskingSelector));
+      ReviewedImage reviewed = reviewedMedia();
+      if (reviewed != null) {
+        // The series carries the modality the verdict needs: without it only an explicit
+        // BurnedInAnnotation could raise the warning
+        options.add(
+            MaskingProfileSelector.createReviewWarning(reviewed.media(), reviewed.series()));
+      }
 
       int response =
           JOptionPane.showOptionDialog(
@@ -560,6 +568,25 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
       }
     }
     return iUid;
+  }
+
+  /**
+   * An image of a checked series whose pixels may carry identity nothing hides, with its series.
+   */
+  private record ReviewedImage(MediaElement media, MediaSeries<?> series) {}
+
+  /** The first checked series to review, or null when none needs it. */
+  private ReviewedImage reviewedMedia() {
+    for (TreePath path : exportTree.getCheckTreeModel().getCheckingPaths()) {
+      if (path.getLastPathComponent() instanceof DefaultMutableTreeNode node
+          && node.getUserObject() instanceof Series<?> series) {
+        MediaElement media = series.getMedia(MediaSeries.MEDIA_POSITION.MIDDLE, null, null);
+        if (PixelReviewAdvisor.review(media, series)) {
+          return new ReviewedImage(media, series);
+        }
+      }
+    }
+    return null;
   }
 
   protected void writeOther(

@@ -76,6 +76,13 @@ public class PrintDialog<I extends ImageElement> extends JDialog {
     annotationsCheckBox.setSelected(true);
     panel.add(GuiUtils.getFlowLayoutPanel(2, 5, annotationsCheckBox));
     panel.add(GuiUtils.getFlowLayoutPanel(2, 5, maskingProfile.createLabel(), maskingProfile));
+    ViewCanvas<I> view = eventManager.getSelectedViewPane();
+    panel.add(
+        GuiUtils.getFlowLayoutPanel(
+            2,
+            5,
+            MaskingProfileSelector.createReviewWarning(
+                view == null ? null : view.getImage(), view == null ? null : view.getSeries())));
 
     if (layout) {
       panel.add(GuiUtils.getFlowLayoutPanel(2, 5, selectedViewCheckbox));

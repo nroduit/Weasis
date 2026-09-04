@@ -28,6 +28,7 @@ import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.media.data.Codec;
 import org.weasis.core.api.media.data.MediaReader;
+import org.weasis.core.api.media.data.PixelReviewAdvisor;
 import org.weasis.core.api.service.WProperties;
 import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.codec.display.WindowPresetJson;
@@ -130,6 +131,8 @@ public class DicomCodec implements Codec<DicomImageElement> {
     }
 
     configureWindowPresets();
+    // Only the codec can tell whether pixels may carry identity: the dialogs of the core ask it
+    PixelReviewAdvisor.install(Redaction::requiresReview);
   }
 
   /** Loads the site and user preset documents and supplies them to the renderer. */

@@ -31,5 +31,10 @@ public enum TagCategory {
   /** Operator-typed text, where anything at all may end up. */
   FREE_TEXT,
   /** Everything else; never masked. */
-  OTHER
+  OTHER;
+
+  /** Localized name, shown wherever a user chooses what a region or a tag carries. */
+  public String displayName() {
+    return org.weasis.core.Messages.getString("TagCategory." + name());
+  }
 }

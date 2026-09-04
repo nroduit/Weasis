@@ -69,6 +69,8 @@ import org.weasis.core.api.image.WindowOp;
 import org.weasis.core.api.image.lut.ColorMapRegistry;
 import org.weasis.core.api.image.util.KernelData;
 import org.weasis.core.api.image.util.Unit;
+import org.weasis.core.api.media.data.IdentityMask;
+import org.weasis.core.api.media.data.MaskingModelRegistry;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.Series;
@@ -225,6 +227,11 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
             "PT"); // NON-NLS
     setAction(fusionBaseOpacity);
     setAction(fusionOverlayOpacity);
+
+    // The regions of the device library depend on the mask in force and on the document itself
+    IdentityMask.addChangeListener(() -> GuiExecutor.execute(RedactionToolBar::refreshOpenViews));
+    MaskingModelRegistry.getInstance()
+        .addListener(() -> GuiExecutor.execute(RedactionToolBar::refreshOpenViews));
 
     final BundleContext context = AppProperties.getBundleContext(this.getClass());
     Preferences prefs = BundlePreferences.getDefaultPreferences(context);

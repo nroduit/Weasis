@@ -28,6 +28,7 @@ import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.viewer2d.EventManager;
+import org.weasis.dicom.viewer2d.RedactionCommands;
 import org.weasis.dicom.viewer2d.View2dContainer;
 import org.weasis.dicom.viewer2d.mpr.MprContainer;
 
@@ -43,6 +44,13 @@ public class Activator implements BundleActivator, ServiceListener {
     dict.put(CommandProcessor.COMMAND_SCOPE, "dcmview2d"); // NON-NLS
     dict.put(CommandProcessor.COMMAND_FUNCTION, EventManager.functions.toArray(new String[0]));
     bundleContext.registerService(EventManager.class.getName(), EventManager.getInstance(), dict);
+
+    Dictionary<String, Object> redact = new Hashtable<>();
+    redact.put(CommandProcessor.COMMAND_SCOPE, "redact"); // NON-NLS
+    redact.put(
+        CommandProcessor.COMMAND_FUNCTION, RedactionCommands.functions.toArray(new String[0]));
+    bundleContext.registerService(
+        RedactionCommands.class.getName(), new RedactionCommands(), redact);
 
     BundleTools.registerExistingComponents(bundleContext, View2dContainer.UI);
 
