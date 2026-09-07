@@ -198,6 +198,7 @@ public final class VolumeBuilder {
         LOGGER.error("Cannot build the 3D volume texture", e);
         volumeBuilder.hasError = true;
         volumeBuilder.stop();
+        volumeBuilder.volTexture.markLoadFinished();
         if (EventManager.getInstance().getSelectedViewPane() instanceof View3d view3d) {
           view3d.setProgressBar(null);
           GuiExecutor.execute(view3d::repaint);
@@ -309,6 +310,7 @@ public final class VolumeBuilder {
         view3d.setProgressBar(null);
         volTexture.notifyFullyLoaded();
       }
+      volTexture.markLoadFinished();
     }
   }
 }

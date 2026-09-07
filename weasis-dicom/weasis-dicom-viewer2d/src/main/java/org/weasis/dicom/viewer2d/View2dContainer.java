@@ -68,7 +68,6 @@ import org.weasis.core.ui.editor.image.ImageViewerEventManager;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.editor.image.MeasureToolBar;
 import org.weasis.core.ui.editor.image.RotationToolBar;
-import org.weasis.core.ui.editor.image.ScreenshotToolBar;
 import org.weasis.core.ui.editor.image.SynchView;
 import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.editor.image.ViewerToolBar;
@@ -201,15 +200,6 @@ public class View2dContainer extends DicomViewerPlugin implements PropertyChange
                 .filter(ExportToolBar.class::isInstance)
                 .findFirst();
         b.ifPresent(toolBars::add);
-      }
-      if (InsertableUtil.getBooleanProperty(
-          preferences,
-          bundleName,
-          componentName,
-          InsertableUtil.getCName(ScreenshotToolBar.class),
-          key,
-          true)) {
-        toolBars.add(new ScreenshotToolBar<>(evtMg, 9));
       }
       if (InsertableUtil.getBooleanProperty(
           preferences,

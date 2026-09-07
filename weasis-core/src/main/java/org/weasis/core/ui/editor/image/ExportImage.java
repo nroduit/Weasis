@@ -15,6 +15,7 @@ import java.awt.Graphics2D;
 import java.awt.Paint;
 import java.awt.Stroke;
 import java.awt.event.MouseEvent;
+import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.util.List;
@@ -26,11 +27,14 @@ import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.MouseActionAdapter;
 import org.weasis.core.api.image.ImageOpNode;
 import org.weasis.core.api.image.SimpleOpManager;
+import org.weasis.core.api.image.WindowOp;
 import org.weasis.core.api.image.util.ImageLayer;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.util.FontItem;
 import org.weasis.core.ui.model.graphic.Graphic;
 import org.weasis.core.ui.model.layer.LayerItem;
+import org.weasis.core.ui.model.layer.LayerType;
+import org.weasis.core.util.LangUtil;
 
 /**
  * A non-interactive view used for printing and exporting images.
@@ -56,12 +60,22 @@ public class ExportImage<E extends ImageElement> extends DefaultView2d<E> {
 
   private double imagePrintingResolution = 1.0;
 
+  private boolean crosslines = true;
+
   /**
    * Creates an export view that captures the visual state of the given {@code sourceView}.
    *
    * @param sourceView the canvas whose image, operations, zoom, and annotations are copied
    */
   public ExportImage(ViewCanvas<E> sourceView) {
+    this(sourceView, null);
+  }
+
+  /**
+   * Creates an export view of {@code sourceView} showing what {@code profile} selects, or what the
+   * source shows when it is {@code null}.
+   */
+  public ExportImage(ViewCanvas<E> sourceView, DisplayProfile profile) {
     super(sourceView.getEventManager(), null);
     this.sourceView = sourceView;
 
@@ -98,9 +112,54 @@ public class ExportImage<E extends ImageElement> extends DefaultView2d<E> {
         "origin.center.offset",
         new Point2D.Double(model.getModelOffsetX(), model.getModelOffsetY()));
 
+    imageLayer.setVisible(sourceView.getImageLayer().getVisible());
+    if (profile != null) {
+      applyProfile(profile);
+    }
+
     // Do not use setSeries() because the view will be reset
     this.series = sourceView.getSeries();
     setImage(sourceView.getImage());
+  }
+
+  private void applyProfile(DisplayProfile profile) {
+    imageLayer.setVisible(profile.image());
+    SimpleOpManager operations = imageLayer.getDisplayOpManager();
+    operations.setParamValue(
+        DisplayProfile.OVERLAY_OP, DisplayProfile.OVERLAY_SHOW, profile.overlay());
+    operations.setParamValue(
+        DisplayProfile.SHUTTER_OP, DisplayProfile.SHUTTER_SHOW, profile.shutter());
+    operations.setParamValue(
+        WindowOp.OP_NAME, ActionW.IMAGE_PIX_PADDING.cmd(), profile.pixelPadding());
+    infoLayer.setVisible(profile.annotations());
+    for (LayerItem item : DisplayProfile.CAPTURE_ITEMS) {
+      infoLayer.setDisplayPreferencesValue(item, profile.annotationItems().contains(item));
+    }
+    actionsInView.put(ActionW.DRAWINGS.cmd(), profile.drawings());
+    crosslines = profile.crosslines();
+  }
+
+  @Override
+  public void drawLayers(
+      Graphics2D g2d, AffineTransform transform, AffineTransform inverseTransform) {
+    if (crosslines) {
+      super.drawLayers(g2d, transform, inverseTransform);
+      return;
+    }
+    // The cross-lines live in the shared graphic model, so they are skipped here, not removed
+    if (LangUtil.nullToTrue((Boolean) actionsInView.get(ActionW.DRAWINGS.cmd()))) {
+      Object[] oldRenderingHints =
+          GuiUtils.setRenderingHints(g2d, true, false, requiredTextAntialiasing());
+      g2d.translate(0.5, 0.5);
+      for (Graphic graphic : graphicManager.getAllGraphics()) {
+        if (graphic.getLayer().getVisible()
+            && graphic.getLayer().getType() != LayerType.CROSSLINES) {
+          graphic.paint(g2d, transform);
+        }
+      }
+      g2d.translate(-0.5, -0.5);
+      GuiUtils.resetRenderingHints(g2d, oldRenderingHints);
+    }
   }
 
   public double getImagePrintingResolution() {

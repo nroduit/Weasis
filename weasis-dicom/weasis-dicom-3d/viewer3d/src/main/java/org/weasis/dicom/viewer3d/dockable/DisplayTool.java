@@ -54,6 +54,11 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
 
   public static final String BUTTON_NAME = Messages.getString("display");
 
+  /** The annotation items this tool offers, in their order; captures offer the same. */
+  public static final List<LayerItem> ANNOTATION_ITEMS =
+      List.of(
+          LayerItem.ANNOTATIONS, LayerItem.MIN_ANNOTATIONS, LayerItem.WINDOW_LEVEL, LayerItem.ZOOM);
+
   private final JCheckBox applyAllViews =
       new JCheckBox(Messages.getString("apply.all.views"), true);
   private final CheckboxTree tree;
@@ -82,16 +87,13 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
     tree.getCheckingModel().setCheckingMode(CheckingMode.SIMPLE);
 
     dicomInfo = new DefaultMutableTreeNode(DICOM_ANNOTATIONS, true);
-    dicomInfo.add(new DefaultMutableTreeNode(LayerItem.ANNOTATIONS, true));
-    minAnnotations = new DefaultMutableTreeNode(LayerItem.MIN_ANNOTATIONS, false);
-    dicomInfo.add(minAnnotations);
-    //    dicomInfo.add(new DefaultMutableTreeNode(LayerItem.SCALE, true));
-    //    dicomInfo.add(new DefaultMutableTreeNode(LayerItem.LUT, true));
-    //    dicomInfo.add(new DefaultMutableTreeNode(LayerItem.IMAGE_ORIENTATION, true));
-    dicomInfo.add(new DefaultMutableTreeNode(LayerItem.WINDOW_LEVEL, true));
-    dicomInfo.add(new DefaultMutableTreeNode(LayerItem.ZOOM, true));
-    //    dicomInfo.add(new DefaultMutableTreeNode(LayerItem.ROTATION, true));
-    //    dicomInfo.add(new DefaultMutableTreeNode(LayerItem.PIXEL, true));
+    for (LayerItem item : ANNOTATION_ITEMS) {
+      DefaultMutableTreeNode node = new DefaultMutableTreeNode(item, false);
+      if (item == LayerItem.MIN_ANNOTATIONS) {
+        minAnnotations = node;
+      }
+      dicomInfo.add(node);
+    }
     rootNode.add(dicomInfo);
     //    drawings = new DefaultMutableTreeNode(ActionW.DRAWINGS, true);
     //    rootNode.add(drawings);

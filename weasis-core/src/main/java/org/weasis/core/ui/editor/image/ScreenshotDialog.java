@@ -19,6 +19,7 @@ import com.formdev.flatlaf.util.SystemFileChooser.FileNameExtensionFilter;
 import java.awt.FlowLayout;
 import java.awt.Toolkit;
 import java.awt.Window;
+import java.awt.image.BufferedImage;
 import java.awt.image.RenderedImage;
 import java.io.File;
 import java.util.Objects;
@@ -47,7 +48,10 @@ import org.weasis.core.api.image.ZoomOp;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MaskingProfile;
 import org.weasis.core.api.service.WProperties;
+import org.weasis.core.ui.editor.image.export.CaptureScope;
+import org.weasis.core.ui.editor.image.export.FrameGrabber;
 import org.weasis.core.ui.util.ColorLayerUI;
+import org.weasis.core.ui.util.DisplayProfileSelector;
 import org.weasis.core.ui.util.MaskingProfileSelector;
 import org.weasis.core.util.StringUtil;
 import org.weasis.opencv.data.PlanarImage;
@@ -107,6 +111,7 @@ public class ScreenshotDialog<I extends ImageElement> extends JDialog {
 
   private final MaskingProfileSelector maskingProfile =
       MaskingProfileSelector.withDefault(MaskingProfile.DISPLAY_ID);
+  private final DisplayProfileSelector displayProfile;
   private final JLabel labelSize =
       new JLabel(Messages.getString("size") + " (%)" + StringUtil.COLON);
   private final JSpinner spinner = new JSpinner();
@@ -121,6 +126,7 @@ public class ScreenshotDialog<I extends ImageElement> extends JDialog {
         .addChangeListener(
             e -> setImageSize((Integer) ((SpinnerNumberModel) e.getSource()).getValue()));
     this.viewCanvas = Objects.requireNonNull(viewCanvas);
+    this.displayProfile = new DisplayProfileSelector(() -> viewCanvas);
     initComponents();
     pack();
   }
@@ -151,16 +157,31 @@ public class ScreenshotDialog<I extends ImageElement> extends JDialog {
 
     setImageSize(100);
     boolean dicom = viewCanvas.getPanner() == null;
-    panel.add(GuiUtils.getFlowLayoutPanel(FlowLayout.LEADING, 0, ITEM_SEPARATOR_SMALL, viewRadio));
-    panel.add(GuiUtils.getHorizontalBoxLayoutPanel(buildViewPanel(dicom)));
-    panel.add(GuiUtils.getFlowLayoutPanel(FlowLayout.LEADING, 0, ITEM_SEPARATOR_SMALL, imageRadio));
-    panel.add(GuiUtils.getHorizontalBoxLayoutPanel(buildImagePanel(dicom)));
+    if (isView2d()) {
+      panel.add(
+          GuiUtils.getFlowLayoutPanel(FlowLayout.LEADING, 0, ITEM_SEPARATOR_SMALL, viewRadio));
+      panel.add(GuiUtils.getHorizontalBoxLayoutPanel(buildViewPanel(dicom)));
+      panel.add(
+          GuiUtils.getFlowLayoutPanel(FlowLayout.LEADING, 0, ITEM_SEPARATOR_SMALL, imageRadio));
+      panel.add(GuiUtils.getHorizontalBoxLayoutPanel(buildImagePanel(dicom)));
+    } else {
+      // A rendered view (3D) has no original image to export: only the view as displayed
+      panel.add(GuiUtils.getHorizontalBoxLayoutPanel(buildViewPanel(dicom)));
+    }
 
     JButton clipButton = new JButton(Messages.getString("clipboard"));
     clipButton.addActionListener(
         e -> {
-          if (viewRadio.isSelected()) {
-            ViewTransferHandler imageTransferHandler = new ViewTransferHandler();
+          if (!isView2d()) {
+            BufferedImage captured = captureDisplayed();
+            if (captured != null) {
+              Toolkit.getDefaultToolkit()
+                  .getSystemClipboard()
+                  .setContents(ViewTransferHandler.transferable(captured), null);
+            }
+          } else if (viewRadio.isSelected()) {
+            ViewTransferHandler imageTransferHandler =
+                new ViewTransferHandler(displayProfile.getSelection().apply(viewCanvas));
             maskingProfile.runMaskedAction(
                 () ->
                     imageTransferHandler.exportToClipboard(
@@ -192,11 +213,16 @@ public class ScreenshotDialog<I extends ImageElement> extends JDialog {
         e -> {
           boolean mustBeReleased = false;
           PlanarImage result = null;
-          if (viewRadio.isSelected()) {
+          if (!isView2d()) {
+            BufferedImage captured = captureDisplayed();
+            result = captured == null ? null : ImageConversion.toMat(captured);
+          } else if (viewRadio.isSelected()) {
             if (viewCanvas instanceof DefaultView2d<I> view2DPane) {
               RenderedImage imgP =
                   maskingProfile.runMasked(
-                      () -> ViewTransferHandler.createComponentImage(view2DPane));
+                      () ->
+                          ViewTransferHandler.createComponentImage(
+                              view2DPane, displayProfile.getSelection().apply(view2DPane)));
               result = ImageConversion.toMat(imgP);
             }
           } else {
@@ -257,6 +283,22 @@ public class ScreenshotDialog<I extends ImageElement> extends JDialog {
                     node.copy(),
                     SimpleOpManager.Position.BEFORE,
                     manager.getNode(ZoomOp.OP_NAME).orElse(null)));
+  }
+
+  private boolean isView2d() {
+    return viewCanvas instanceof DefaultView2d<?>;
+  }
+
+  /**
+   * Paints a view that cannot be re-rendered off-screen, under the selected masking and display
+   * profiles.
+   */
+  private BufferedImage captureDisplayed() {
+    FrameGrabber grabber =
+        new FrameGrabber(
+            CaptureScope.VIEW, viewCanvas, null, maskingProfile.getSelectedProfile(), 1.0);
+    grabber.setDisplayProfile(displayProfile.getSelection());
+    return grabber.grab();
   }
 
   private void saveImageFile(PlanarImage image, boolean mustBeReleased) {
@@ -321,11 +363,18 @@ public class ScreenshotDialog<I extends ImageElement> extends JDialog {
     overlayCheckBox.setEnabled(enable);
 
     maskingProfile.setEnabled(!enable);
+    displayProfile.setEnabled(!enable);
   }
 
   private JPanel buildViewPanel(boolean dicom) {
     JPanel dataPanel = new JPanel();
     dataPanel.setLayout(new MigLayout("insets 0 25lp 30lp 10lp, fillx", "[grow 0]")); // NON-NLS
+    if (DisplayProfile.supports(viewCanvas)) {
+      dataPanel.add(
+          GuiUtils.getHorizontalBoxLayoutPanel(
+              displayProfile.createLabel(), displayProfile, displayProfile.getEditButton()),
+          GuiUtils.NEWLINE);
+    }
     if (dicom) {
       dataPanel.add(
           GuiUtils.getHorizontalBoxLayoutPanel(maskingProfile.createLabel(), maskingProfile),

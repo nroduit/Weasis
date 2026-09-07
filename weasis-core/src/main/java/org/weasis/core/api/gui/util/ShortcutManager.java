@@ -307,6 +307,9 @@ public final class ShortcutManager {
 
   // -- Shortcut IDs: Viewer --
   public static final String ID_VIEWER_PRINT = "viewer.print";
+  public static final String ID_VIEWER_SCREENSHOT = "viewer.screenshot";
+  public static final String ID_VIEWER_EXPORT_ANIMATION = "viewer.exportAnimation";
+  public static final String ID_VIEWER_RECORD = "viewer.record";
   public static final String ID_VIEWER_ESCAPE = "viewer.escape";
   public static final String ID_VIEWER_ZOOM_OUT = "viewer.zoomOut";
   public static final String ID_VIEWER_ZOOM_IN = "viewer.zoomIn";
@@ -483,6 +486,25 @@ public final class ShortcutManager {
         CATEGORY_VIEWER,
         KeyEvent.VK_P,
         0);
+    int captureModifier = KeyBinding.MENU_SHORTCUT_MASK | InputEvent.SHIFT_DOWN_MASK;
+    register(
+        ID_VIEWER_SCREENSHOT,
+        Messages.getString("ShortcutManager.screenshot"),
+        CATEGORY_VIEWER,
+        KeyEvent.VK_S,
+        captureModifier);
+    register(
+        ID_VIEWER_EXPORT_ANIMATION,
+        Messages.getString("ShortcutManager.export_animation"),
+        CATEGORY_VIEWER,
+        KeyEvent.VK_A,
+        captureModifier);
+    register(
+        ID_VIEWER_RECORD,
+        Messages.getString("ShortcutManager.record"),
+        CATEGORY_VIEWER,
+        KeyEvent.VK_R,
+        captureModifier);
     register(
         ID_VIEWER_ESCAPE,
         Messages.getString("ShortcutManager.reset_view"),

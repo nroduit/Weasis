@@ -95,6 +95,10 @@ public class ResourceUtil {
     EXPORT_CLIPBOARD("svg/action/exportClipboard.svg"), // NON-NLS
     EXPORT_DICOM("svg/action/exportDicom.svg"), // NON-NLS
     EXPORT_IMAGE("svg/action/exportImage.svg"), // NON-NLS
+    CAPTURE("svg/action/capture.svg"), // NON-NLS
+    SCREENSHOT("svg/action/screenshot.svg"), // NON-NLS
+    EXPORT_ANIMATION("svg/action/exportAnimation.svg"), // NON-NLS
+    RECORD("svg/action/record.svg"), // NON-NLS
     EXPORT_ANNOTATIONS("svg/action/exportAnnotations.svg"), // NON-NLS
     FILTER("svg/action/filter.svg"), // NON-NLS
     FLIP("svg/action/flip.svg"), // NON-NLS

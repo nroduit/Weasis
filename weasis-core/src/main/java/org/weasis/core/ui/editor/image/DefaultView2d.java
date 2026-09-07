@@ -107,7 +107,6 @@ import org.weasis.core.ui.model.utils.bean.GraphicClipboard;
 import org.weasis.core.ui.model.utils.bean.PanPoint;
 import org.weasis.core.ui.model.utils.imp.DefaultViewModel;
 import org.weasis.core.ui.pref.Monitor;
-import org.weasis.core.ui.util.DefaultAction;
 import org.weasis.core.ui.util.MouseEventDouble;
 import org.weasis.core.ui.util.TitleMenuItem;
 import org.weasis.core.util.LangUtil;
@@ -2041,12 +2040,9 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
   @Override
   public List<Action> getExportActions() {
     List<Action> list = new ArrayList<>();
-    DefaultAction exportAction =
-        new DefaultAction(
-            ActionW.EXPORT_VIEW.getTitle(),
-            ActionW.EXPORT_VIEW.getIcon(),
-            _ -> ScreenshotDialog.showDialog(this));
-    list.add(exportAction);
+    list.add(
+        CaptureAction.SCREENSHOT.action(
+            ActionW.EXPORT_VIEW.getTitle(), _ -> ScreenshotDialog.showDialog(this)));
     return list;
   }
 

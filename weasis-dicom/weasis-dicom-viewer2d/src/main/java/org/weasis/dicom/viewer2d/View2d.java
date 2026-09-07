@@ -37,6 +37,7 @@ import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import javax.swing.Action;
 import javax.swing.JMenuItem;
 import javax.swing.JPopupMenu;
 import javax.swing.SwingUtilities;
@@ -68,6 +69,7 @@ import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.service.AuditLog;
 import org.weasis.core.api.util.FontTools;
+import org.weasis.core.ui.editor.image.CaptureAction;
 import org.weasis.core.ui.editor.image.ContextMenuHandler;
 import org.weasis.core.ui.editor.image.DefaultView2d;
 import org.weasis.core.ui.editor.image.GraphicEditActions;
@@ -81,6 +83,10 @@ import org.weasis.core.ui.editor.image.SynchEvent;
 import org.weasis.core.ui.editor.image.ViewButton;
 import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.editor.image.ViewSynchData;
+import org.weasis.core.ui.editor.image.export.AnimationExportDialog;
+import org.weasis.core.ui.editor.image.export.CineSourceBuilder;
+import org.weasis.core.ui.editor.image.export.FrameSourceBuilder;
+import org.weasis.core.ui.editor.image.export.RecorderSourceBuilder;
 import org.weasis.core.ui.model.AbstractGraphicModel;
 import org.weasis.core.ui.model.graphic.Graphic;
 import org.weasis.core.ui.model.graphic.imp.area.PolygonGraphic;
@@ -108,6 +114,7 @@ import org.weasis.dicom.codec.display.OverlayOp;
 import org.weasis.dicom.codec.display.RedactionOp;
 import org.weasis.dicom.codec.display.ShutterOp;
 import org.weasis.dicom.codec.display.WindowAndPresetsOp;
+import org.weasis.dicom.codec.export.DicomScSinkFactory;
 import org.weasis.dicom.codec.geometry.*;
 import org.weasis.dicom.codec.geometry.ImageOrientation.Plan;
 import org.weasis.dicom.codec.geometry.PatientOrientation.Biped;
@@ -1294,5 +1301,33 @@ public class View2d extends DefaultView2d<DicomImageElement> {
       popupMenu.add(close);
     }
     return popupMenu;
+  }
+
+  @Override
+  public List<Action> getExportActions() {
+    List<Action> actions = new ArrayList<>(super.getExportActions());
+    eventManager
+        .getAction(ActionW.SCROLL_SERIES)
+        .filter(cine -> cine.getSliderMax() > cine.getSliderMin())
+        .ifPresent(
+            cine ->
+                actions.add(
+                    animationAction(CaptureAction.ANIMATION, new CineSourceBuilder(this, cine))));
+    actions.add(
+        animationAction(
+            CaptureAction.RECORD,
+            new RecorderSourceBuilder(eventManager.getSelectedView2dContainer() != null)));
+    return actions;
+  }
+
+  private Action animationAction(CaptureAction kind, FrameSourceBuilder builder) {
+    return kind.action(
+        builder.title(),
+        _ ->
+            AnimationExportDialog.showDialog(
+                builder,
+                this,
+                eventManager.getSelectedView2dContainer(),
+                DicomScSinkFactory.defaultSinks(getSeries(), builder.title())));
   }
 }

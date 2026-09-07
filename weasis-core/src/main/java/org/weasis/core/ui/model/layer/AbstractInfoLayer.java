@@ -92,6 +92,7 @@ public abstract class AbstractInfoLayer<E extends ImageElement> extends DefaultU
   protected boolean useGlobalPreferences;
 
   private final Map<Position, Point2D> positions = new EnumMap<>(Position.class);
+  private Map<LayerItem, Boolean> captureOverride;
 
   protected AbstractInfoLayer(ViewCanvas<E> view2DPane) {
     this(view2DPane, true);
@@ -314,8 +315,27 @@ public abstract class AbstractInfoLayer<E extends ImageElement> extends DefaultU
     return Optional.ofNullable(getName()).orElse(getType().getDefaultName());
   }
 
+  /**
+   * Shows the given items, and the layer when {@code shown}, instead of the view and global
+   * preferences until the returned action runs: for the paint of one capture, which must not change
+   * what any view shows.
+   */
+  public Runnable overrideForCapture(boolean shown, Map<LayerItem, Boolean> items) {
+    boolean previousVisible = visible;
+    Map<LayerItem, Boolean> previous = captureOverride;
+    visible = shown;
+    captureOverride = new EnumMap<>(items);
+    return () -> {
+      visible = previousVisible;
+      captureOverride = previous;
+    };
+  }
+
   @Override
   public boolean getDisplayPreferences(LayerItem item) {
+    if (captureOverride != null && captureOverride.containsKey(item)) {
+      return captureOverride.get(item);
+    }
     if (useGlobalPreferences && applyToAllView.get()) {
       return Optional.ofNullable(defaultDisplayPreferences.get(item)).orElse(Boolean.FALSE);
     }

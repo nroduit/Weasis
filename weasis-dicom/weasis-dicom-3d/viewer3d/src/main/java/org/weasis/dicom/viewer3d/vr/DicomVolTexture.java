@@ -52,6 +52,7 @@ public class DicomVolTexture extends VolumeTexture implements MediaSeriesGroup {
   private final PropertyChangeSupport changeSupport;
   private final Vector3d scale;
   private final Volume<?, ?> volume;
+  private boolean loadFinished;
   private final PropertyChangeListener crossHairRelay;
 
   private String pixelValueUnit;
@@ -255,6 +256,19 @@ public class DicomVolTexture extends VolumeTexture implements MediaSeriesGroup {
 
   public void notifyPartiallyLoaded() {
     firePropertyChange(this, DicomVolTextureFactory.PARTIALLY_LOADED, this);
+  }
+
+  /**
+   * Marks the upload as ended, successfully or not. The flag is raised on the EDT, after the
+   * listeners of an already queued {@link #notifyFullyLoaded()} have reset the views.
+   */
+  public void markLoadFinished() {
+    GuiExecutor.execute(() -> loadFinished = true);
+  }
+
+  /** Whether the upload has ended; always read on the EDT. */
+  public boolean isLoadFinished() {
+    return loadFinished;
   }
 
   public boolean isReadyForDisplay() {

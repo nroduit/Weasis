@@ -645,7 +645,8 @@ public class View3DContainer extends DicomViewerPlugin
 
   @Override
   public List<Action> getExportActions() {
-    return null;
+    var selected = getSelectedViewCanvas();
+    return selected == null ? null : selected.getExportActions();
   }
 
   @Override

@@ -32,7 +32,24 @@ import org.weasis.opencv.op.ImageConversion;
 public class ViewTransferHandler extends TransferHandler implements Transferable {
 
   private static final DataFlavor[] flavors = {DataFlavor.imageFlavor};
+  private final DisplayProfile profile;
   private Image image;
+
+  public ViewTransferHandler() {
+    this(null);
+  }
+
+  /** A clipboard content holding {@code image}, captured beforehand. */
+  public static Transferable transferable(Image image) {
+    ViewTransferHandler handler = new ViewTransferHandler();
+    handler.image = image;
+    return handler;
+  }
+
+  /** Copies views showing what {@code profile} selects, or as displayed when {@code null}. */
+  public ViewTransferHandler(DisplayProfile profile) {
+    this.profile = profile;
+  }
 
   @Override
   public int getSourceActions(JComponent c) {
@@ -50,7 +67,7 @@ public class ViewTransferHandler extends TransferHandler implements Transferable
     image = null;
 
     if (comp instanceof DefaultView2d<?> view2DPane) {
-      RenderedImage imgP = createComponentImage(view2DPane);
+      RenderedImage imgP = createComponentImage(view2DPane, profile);
       image = ImageConversion.convertRenderedImage(imgP);
       return this;
     }
@@ -83,9 +100,18 @@ public class ViewTransferHandler extends TransferHandler implements Transferable
   /** Renders {@code canvas} off-screen; annotations follow the mask in force on this thread. */
   public static <E extends ImageElement> RenderedImage createComponentImage(
       DefaultView2d<E> canvas) {
+    return createComponentImage(canvas, null);
+  }
+
+  /**
+   * Renders {@code canvas} off-screen showing what {@code profile} selects, or what the view shows
+   * when it is {@code null}; annotations follow the mask in force on this thread.
+   */
+  public static <E extends ImageElement> RenderedImage createComponentImage(
+      DefaultView2d<E> canvas, DisplayProfile profile) {
     BufferedImage img =
         new BufferedImage(canvas.getWidth(), canvas.getHeight(), BufferedImage.TYPE_3BYTE_BGR);
-    ExportImage<E> exportImage = new ExportImage<>(canvas);
+    ExportImage<E> exportImage = new ExportImage<>(canvas, profile);
     try {
       exportImage.getInfoLayer().setBorder(3);
       Graphics2D g = img.createGraphics();

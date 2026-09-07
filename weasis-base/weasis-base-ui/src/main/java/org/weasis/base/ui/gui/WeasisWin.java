@@ -162,6 +162,7 @@ import org.weasis.core.ui.launcher.Launcher;
 import org.weasis.core.ui.launcher.Launcher.Type;
 import org.weasis.core.ui.pref.Monitor;
 import org.weasis.core.ui.pref.PreferenceDialog;
+import org.weasis.core.ui.util.CaptureButton;
 import org.weasis.core.ui.util.ColorLayerUI;
 import org.weasis.core.ui.util.DefaultAction;
 import org.weasis.core.ui.util.MaskingIndicator;
@@ -675,6 +676,7 @@ public class WeasisWin {
         }
       }
       selectedPlugin = null;
+      GuiUtils.getUICore().setSelectedPlugin(null);
       return;
     }
     if (selectedPlugin == plugin) {
@@ -687,6 +689,7 @@ public class WeasisWin {
       oldPlugin.setSelected(false);
     }
     selectedPlugin = plugin;
+    GuiUtils.getUICore().setSelectedPlugin(plugin);
     menuSelectedPlugin.setText(selectedPlugin.getName());
 
     SeriesViewerUI.updateTools(oldPlugin, selectedPlugin, false);
@@ -912,6 +915,9 @@ public class WeasisWin {
     helpMenuItem.add(aboutMenuItem);
     menuBar.add(helpMenuItem);
     menuBar.add(Box.createHorizontalGlue());
+    menuBar.add(
+        new CaptureButton(
+            () -> selectedPlugin == null ? List.of() : selectedPlugin.getExportActions()));
     menuBar.add(new MaskingIndicator());
     return menuBar;
   }

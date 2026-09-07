@@ -113,6 +113,7 @@ Existing docs:
 
 | Doc | Topic |
 |---|---|
+| `weasis-core/docs/Animation-Export.md` | APNG / GIF / DICOM SC export of 3D rotations, cine loops and recordings |
 | `weasis-core/docs/ColorMap-Design.md` | JSON color maps for 2D, fusion and 3D |
 | `weasis-core/docs/Identity-Masking.md` | display-time identity masking, masking profiles, redaction of burned-in pixels |
 | `weasis-core/docs/Measurement-Tools.md` | graphic tool registry, measurement keys, presentation XML compatibility, headless measurement service |

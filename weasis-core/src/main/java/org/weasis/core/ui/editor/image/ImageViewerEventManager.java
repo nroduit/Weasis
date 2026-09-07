@@ -9,6 +9,7 @@
  */
 package org.weasis.core.ui.editor.image;
 
+import java.awt.event.ActionEvent;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
@@ -853,6 +854,9 @@ public abstract class ImageViewerEventManager<E extends ImageElement> implements
         .on(ShortcutManager.ID_VIEWER_ESCAPE, this::resetDisplay)
         .on(ActionW.CINESTART.cmd(), this::toggleCine)
         .on(ShortcutManager.ID_VIEWER_PRINT, this::showPrintDialog)
+        .on(ShortcutManager.ID_VIEWER_SCREENSHOT, () -> capture(CaptureAction.SCREENSHOT))
+        .on(ShortcutManager.ID_VIEWER_EXPORT_ANIMATION, () -> capture(CaptureAction.ANIMATION))
+        .on(ShortcutManager.ID_VIEWER_RECORD, () -> capture(CaptureAction.RECORD))
         .on(ShortcutManager.ID_VIEWER_SCROLL_UP, () -> scroll(-1))
         .on(ShortcutManager.ID_VIEWER_SCROLL_UP_FAST, () -> scroll(-10))
         .on(ShortcutManager.ID_VIEWER_SCROLL_DOWN, () -> scroll(1))
@@ -904,6 +908,20 @@ public abstract class ImageViewerEventManager<E extends ImageElement> implements
                 cine.start();
               }
             });
+  }
+
+  /** Runs the capture of that kind the selected view offers, if any. */
+  private void capture(CaptureAction kind) {
+    ViewCanvas<E> view = getSelectedViewPane();
+    if (view == null) {
+      return;
+    }
+    kind.find(view.getExportActions())
+        .ifPresent(
+            a ->
+                a.actionPerformed(
+                    new ActionEvent(
+                        view.getJComponent(), ActionEvent.ACTION_PERFORMED, kind.name())));
   }
 
   private void showPrintDialog() {

@@ -84,8 +84,11 @@ import org.weasis.core.api.util.FontItem;
 import org.weasis.core.api.util.FontTools;
 import org.weasis.core.ui.editor.image.*;
 import org.weasis.core.ui.editor.image.DefaultView2d.ZoomType;
+import org.weasis.core.ui.editor.image.export.AnimationExportDialog;
+import org.weasis.core.ui.editor.image.export.RecorderSourceBuilder;
 import org.weasis.core.ui.model.graphic.Graphic;
 import org.weasis.core.ui.model.graphic.imp.seg.SegRegion;
+import org.weasis.core.ui.model.layer.AbstractInfoLayer;
 import org.weasis.core.ui.model.layer.LayerAnnotation;
 import org.weasis.core.ui.model.layer.LayerItem;
 import org.weasis.core.ui.model.layer.LayerType;
@@ -94,6 +97,7 @@ import org.weasis.core.util.LangUtil;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.DicomSeries;
 import org.weasis.dicom.codec.SpecialElementRegion;
+import org.weasis.dicom.codec.export.DicomScSinkFactory;
 import org.weasis.dicom.codec.geometry.PatientOrientation;
 import org.weasis.dicom.codec.seg.SegBuildScheduler;
 import org.weasis.dicom.codec.seg.SegSpecialElement;
@@ -111,7 +115,9 @@ import org.weasis.dicom.viewer3d.InfoLayer3d;
 import org.weasis.dicom.viewer3d.Messages;
 import org.weasis.dicom.viewer3d.OpenGLInfo;
 import org.weasis.dicom.viewer3d.View3DFactory;
+import org.weasis.dicom.viewer3d.dockable.DisplayTool;
 import org.weasis.dicom.viewer3d.dockable.SegmentationTool.Type;
+import org.weasis.dicom.viewer3d.export.RotationSourceBuilder;
 import org.weasis.dicom.viewer3d.geometry.Axis;
 import org.weasis.dicom.viewer3d.geometry.Camera;
 import org.weasis.dicom.viewer3d.geometry.View;
@@ -124,7 +130,8 @@ public class View3d extends VolumeCanvas
     implements ViewCanvas<DicomImageElement>,
         RenderingLayerChangeListener<DicomImageElement>,
         GLEventListener,
-        ViewProgress {
+        ViewProgress,
+        LiveCaptureView {
 
   private static final org.slf4j.Logger LOGGER = org.slf4j.LoggerFactory.getLogger(View3d.class);
 
@@ -175,10 +182,13 @@ public class View3d extends VolumeCanvas
   private final RenderProfiler profiler = new RenderProfiler(this);
 
   /** Frames a path-traced scene accumulates before the view stops re-rendering itself. */
-  private static final int PATH_TRACING_FRAMES = 512;
+  public static final int PATH_TRACING_FRAMES = 512;
 
   /** Running average of the path tracer, allocated on first use. */
   private final AccumulationBuffers accumulation = new AccumulationBuffers();
+
+  /** Set while an export captures the view, to keep the convergence message out of the frames. */
+  private boolean capturing;
 
   /** Index of the path-traced frame being rendered; 0 restarts the average. */
   private int frameIndex;
@@ -517,7 +527,7 @@ public class View3d extends VolumeCanvas
    * preview shown then is not accumulating.
    */
   private void drawPathTracingProgress(Graphics2D g2d) {
-    if (!isPathTracingFrame() || frameIndex >= PATH_TRACING_FRAMES) {
+    if (capturing || !isPathTracingFrame() || frameIndex >= PATH_TRACING_FRAMES) {
       return;
     }
     String msg =
@@ -977,6 +987,48 @@ public class View3d extends VolumeCanvas
 
   private boolean isPathTracingFrame() {
     return renderingLayer.getRenderingType() == RenderingType.PATH_TRACING && !camera.isAdjusting();
+  }
+
+  /** Whether the volume and its segmentation overlay have finished loading. */
+  public boolean isLoadFinished() {
+    return volTexture != null && volTexture.isLoadFinished() && !segBuildRunning;
+  }
+
+  /** Whether the view renders a progressive path-traced image. */
+  public boolean isPathTracing() {
+    return renderingLayer.getRenderingType() == RenderingType.PATH_TRACING;
+  }
+
+  /** Samples averaged into the current path-traced image, or 0 when the scene changed since. */
+  public int getAccumulatedSamples() {
+    return isPathTracingFrame() && sceneFingerprint == computeSceneFingerprint() ? frameIndex : 0;
+  }
+
+  public void setCapturing(boolean capturing) {
+    this.capturing = capturing;
+  }
+
+  @Override
+  public List<LayerItem> getCaptureItems() {
+    return DisplayTool.ANNOTATION_ITEMS;
+  }
+
+  @Override
+  public Runnable beginCapture(DisplayProfile profile) {
+    boolean wasCapturing = capturing;
+    capturing = true;
+    Runnable restoreLayer = () -> {};
+    if (profile != null && infoLayer instanceof AbstractInfoLayer<?> layer) {
+      Map<LayerItem, Boolean> items = new EnumMap<>(LayerItem.class);
+      DisplayTool.ANNOTATION_ITEMS.forEach(
+          item -> items.put(item, profile.annotationItems().contains(item)));
+      restoreLayer = layer.overrideForCapture(profile.annotations(), items);
+    }
+    Runnable restore = restoreLayer;
+    return () -> {
+      restore.run();
+      capturing = wasCapturing;
+    };
   }
 
   private RenderingType effectiveRenderingType() {
@@ -2045,7 +2097,36 @@ public class View3d extends VolumeCanvas
 
   @Override
   public List<Action> getExportActions() {
-    return null;
+    if (volTexture == null) {
+      return null;
+    }
+    ImageViewerPlugin<DicomImageElement> container = eventManager.getSelectedView2dContainer();
+    RecorderSourceBuilder recorder = new RecorderSourceBuilder(container != null);
+    return List.of(
+        CaptureAction.SCREENSHOT.action(
+            ActionW.EXPORT_VIEW.getTitle(), _ -> ScreenshotDialog.showDialog(this)),
+        CaptureAction.ANIMATION.action(
+            Messages.getString("rotation.export"), _ -> showAnimationExport()),
+        CaptureAction.RECORD.action(
+            recorder.title(),
+            _ ->
+                AnimationExportDialog.showDialog(
+                    recorder,
+                    this,
+                    container,
+                    DicomScSinkFactory.defaultSinks(volTexture.getSeries(), recorder.title()))));
+  }
+
+  private void showAnimationExport() {
+    if (volTexture == null) {
+      return;
+    }
+    RotationSourceBuilder builder = new RotationSourceBuilder(this);
+    AnimationExportDialog.showDialog(
+        builder,
+        this,
+        eventManager.getSelectedView2dContainer(),
+        DicomScSinkFactory.defaultSinks(volTexture.getSeries(), builder.title()));
   }
 
   public MouseActionAdapter getMouseAdapter(String command) {

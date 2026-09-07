@@ -42,6 +42,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Locale.Category;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Properties;
 import javax.management.InstanceNotFoundException;
 import javax.management.JMException;
@@ -93,6 +94,7 @@ public final class UICore {
   private final CControl dockingControl;
   private final CContentArea baseArea;
   private final CWorkingArea mainArea;
+  private volatile ViewerPlugin<?> selectedPlugin;
 
   private final List<Codec<MediaElement>> codecPlugins;
   private final WProperties systemPreferences;
@@ -445,6 +447,16 @@ public final class UICore {
 
   public List<ViewerPlugin<?>> getViewerPlugins() {
     return viewerPlugins;
+  }
+
+  /** The viewer whose tab is selected in the main window. */
+  public Optional<ViewerPlugin<?>> getSelectedPlugin() {
+    return Optional.ofNullable(selectedPlugin);
+  }
+
+  /** Called by the main window only, which owns the selection. */
+  public void setSelectedPlugin(ViewerPlugin<?> plugin) {
+    this.selectedPlugin = plugin;
   }
 
   public List<Toolbar> getExplorerPluginToolbars() {
