@@ -99,8 +99,11 @@ uniform float envMaxLod;
 // Progressive path tracing: index of the frame being accumulated (0 restarts the average held in
 // historyMap on unit 7), the bounce budget and the highest LUT opacity, which bounds the extinction.
 uniform int   frameIndex;
+uniform int   ptSamples;
 uniform int   ptMaxBounces;
 uniform float ptMaxAlpha;
+uniform bool  ptGridEnabled;
+uniform ivec3 ptGridSize;
 
 const vec3 sliceOffset = vec3(0.5, 0.5, 0.5);
 

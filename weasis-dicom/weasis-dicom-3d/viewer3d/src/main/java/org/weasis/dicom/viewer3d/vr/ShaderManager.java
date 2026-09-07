@@ -32,6 +32,14 @@ public class ShaderManager {
 
   public static final String FBO_FRAGMENT_SHADER = "volumeFbo.frag";
 
+  /** Path tracing pass, one per rendering path; a program of its own so each links fast. */
+  public static final String PATH_TRACING_COMPUTE_SHADER = "pathTracing.comp";
+
+  public static final String PATH_TRACING_FBO_FRAGMENT_SHADER = "pathTracingFbo.frag";
+
+  /** Bake of the path tracer's per-block extinction bounds, see {@link MajorantMap}. */
+  public static final String MAJORANT_BAKE_FRAGMENT_SHADER = "majorantBake.frag";
+
   /** Denoise pass of the path tracer, one per rendering path. */
   public static final String DENOISE_COMPUTE_SHADER = "denoise.comp";
 

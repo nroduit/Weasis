@@ -94,11 +94,16 @@ uniform bool  envEnabled = false;
 uniform float envStrength = 1.0;
 uniform vec3  envSh[9];
 uniform float envMaxLod = 5.0;
-// Progressive path tracing: index of the frame being accumulated (0 restarts the average held in
-// historyMap on unit 7), the bounce budget and the highest LUT opacity, which bounds the extinction.
+// Progressive path tracing: samples per pixel already averaged (0 restarts the average held in
+// historyMap on unit 7), samples this frame adds, the bounce budget and the highest LUT opacity,
+// which bounds the extinction. With ptGridEnabled the bound is refined per block of the baked
+// majorant map on unit 11, whose level 0 spans ptGridSize blocks over the volume.
 uniform int   frameIndex = 0;
+uniform int   ptSamples = 1;
 uniform int   ptMaxBounces = 4;
 uniform float ptMaxAlpha = 1.0;
+uniform bool  ptGridEnabled = false;
+uniform ivec3 ptGridSize = ivec3(1);
 
 const vec3 sliceOffset = vec3(0.5, 0.5, 0.5);
 

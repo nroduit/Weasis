@@ -6,6 +6,7 @@ layout (local_size_x = 16, local_size_y = 16) in ;
 layout (rgba32f, binding = 0) uniform image2D outputImage;
 layout (binding = 7) uniform sampler2D historyMap;
 layout (binding = 8) uniform sampler2D featureMap;
+layout (binding = 12) uniform sampler2D momentMap;
 
 #include "voxelUniforms.glsl"
 

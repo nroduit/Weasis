@@ -10,11 +10,10 @@
 //
 // Sampler units are assigned from Java via glUniform1i.
 
+// The path tracer is a program of its own, pathTracingFbo.frag, built from the same includes: linked
+// together, the two took the NVIDIA linker three times as long as they take apart.
+
 layout (location = 0) out vec4 fragColor;
-// Linear running average of the path tracer (colour attachment 1, only attached in that mode).
-layout (location = 1) out vec4 accumColor;
-// Averaged first-hit normal and depth guiding the denoise pass (colour attachment 2).
-layout (location = 2) out vec4 featureColor;
 
 in vec2 quadCoordinates;
 
@@ -26,6 +25,8 @@ uniform sampler2D segColorMap;  // unit 5 — set from Java
 uniform sampler2D envMap;       // unit 6 — set from Java
 uniform sampler2D historyMap;   // unit 7 — set from Java
 uniform sampler2D featureMap;   // unit 8 — set from Java
+uniform sampler2D momentMap;    // unit 12 — set from Java
+uniform sampler3D majorantMap;  // unit 11 — set from Java
 
 #include "voxelUniforms330.glsl"
 
@@ -50,14 +51,7 @@ void main() {
     ivec2 pixelCoords = ivec2(gl_FragCoord.xy);
 
     vec4 pixelVal = vec4(0.0);
-    accumColor = vec4(0.0);
-    featureColor = vec4(0.0);
-    if (renderingType == typePathTracing) {
-        // The display image is produced by the denoise pass (denoiseFbo.frag) that follows.
-        accumColor = pathTrace(uv, pixelCoords, viewportDims, featureColor);
-        fragColor = vec4(0.0);
-        return;
-    } else if (renderingType >= typeSlice) {
+    if (renderingType >= typeSlice) {
         pixelVal = slice(uv);
     } else {
         float tmin = 0.0;

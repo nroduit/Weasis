@@ -21,6 +21,10 @@ public class RenderingLayer<E extends ImageElement> {
   public static final String P_DYNAMIC_QUALITY = "volume.dynamic.quality";
   public static final String P_MAX_TEX_XY = "volume.texture.max.xy";
   public static final String P_MAX_TEX_Z = "volume.texture.max.z";
+
+  /** Set to false to trace with the global extinction bound instead of the majorant grid. */
+  public static final String P_MAJORANT_GRID = "weasis.3d.pt.grid"; // NON-NLS
+
   public static final String P_CINEMATIC_QUALITY = "volume.cinematic.quality";
 
   public static final int MAX_QUALITY = 8192;

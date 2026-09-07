@@ -87,6 +87,11 @@ public class Preset extends TextureData {
   private final LightingMap lightingMap;
   private boolean requiredBuilding;
   private int id2;
+  private byte[] alphaRange;
+  private int alphaRangeId;
+
+  /** Unit of the {@link AlphaRangeTable} texture the path tracer bounds its extinction with. */
+  public static final int ALPHA_RANGE_UNIT = 10;
 
   private Preset(ColorMap map, boolean custom) {
     this(map, custom, false);
@@ -151,6 +156,16 @@ public class Preset extends TextureData {
       max = Math.max(max, colors[i * 4 + 3] & 0xFF);
     }
     return max / 255f;
+  }
+
+  /**
+   * Highest opacity over any interval of the normalized coordinate, see {@link AlphaRangeTable}.
+   */
+  byte[] getAlphaRangeTable() {
+    if (alphaRange == null) {
+      alphaRange = AlphaRangeTable.build(colors, width);
+    }
+    return alphaRange;
   }
 
   /**
@@ -523,7 +538,36 @@ public class Preset extends TextureData {
           type,
           Buffers.newDirectByteBuffer(inverse ? invertColors : colors).rewind());
       lightingMap.update(gl);
+      bindAlphaRange(gl);
     }
+  }
+
+  // The alpha of the map does not change with the inverse, so the table is uploaded once.
+  private void bindAlphaRange(GL2ES2 gl) {
+    gl.glActiveTexture(GL.GL_TEXTURE0 + ALPHA_RANGE_UNIT);
+    if (alphaRangeId <= 0) {
+      IntBuffer buf = IntBuffer.allocate(1);
+      gl.glGenTextures(1, buf);
+      alphaRangeId = buf.get(0);
+      gl.glBindTexture(GL.GL_TEXTURE_2D, alphaRangeId);
+      gl.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MIN_FILTER, GL.GL_NEAREST);
+      gl.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MAG_FILTER, GL.GL_NEAREST);
+      gl.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_WRAP_S, GL.GL_CLAMP_TO_EDGE);
+      gl.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_WRAP_T, GL.GL_CLAMP_TO_EDGE);
+      gl.glTexImage2D(
+          GL.GL_TEXTURE_2D,
+          0,
+          GL.GL_R8,
+          AlphaRangeTable.BINS,
+          AlphaRangeTable.BINS,
+          0,
+          GL2ES2.GL_RED,
+          GL.GL_UNSIGNED_BYTE,
+          Buffers.newDirectByteBuffer(getAlphaRangeTable()).rewind());
+    } else {
+      gl.glBindTexture(GL.GL_TEXTURE_2D, alphaRangeId);
+    }
+    gl.glActiveTexture(GL.GL_TEXTURE0);
   }
 
   @Override
@@ -532,6 +576,10 @@ public class Preset extends TextureData {
     if (id2 != 0) {
       gl.glDeleteTextures(1, new int[] {id2}, 0);
       id2 = 0;
+    }
+    if (alphaRangeId != 0) {
+      gl.glDeleteTextures(1, new int[] {alphaRangeId}, 0);
+      alphaRangeId = 0;
     }
   }
 

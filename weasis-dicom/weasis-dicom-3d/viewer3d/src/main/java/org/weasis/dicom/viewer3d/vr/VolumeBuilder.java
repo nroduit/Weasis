@@ -14,6 +14,7 @@ import com.jogamp.opengl.GL2ES3;
 import com.jogamp.opengl.GLContext;
 import com.jogamp.opengl.util.GLPixelStorageModes;
 import java.awt.Dimension;
+import java.nio.Buffer;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -135,58 +136,68 @@ public final class VolumeBuilder {
       if (slices.isEmpty()) {
         return;
       }
-      GLContext glContext = OpenglUtils.getDefaultGlContext();
-      glContext.makeCurrent();
-      try {
-        GL2ES3 gl = glContext.getGL().getGL2ES3();
-        gl.glBindTexture(GL2ES2.GL_TEXTURE_3D, volumeBuilder.volTexture.getId());
-        GLPixelStorageModes storageModes = new GLPixelStorageModes();
-        // Uploads are UNPACK operations: the staging buffer holds tightly packed rows, so any width
-        // whose row size is not a multiple of the default 4-byte alignment (e.g. RGB 8-bit) must
-        // not be padded. Setting the pack alignment here has no effect on glTexSubImage3D.
-        storageModes.setUnpackAlignment(gl, 1);
-        try {
-          setTexImage3DBuffer(gl, slices, offset);
-        } finally {
-          storageModes.restore(gl);
-        }
-        gl.glFinish();
-      } finally {
-        glContext.release();
-      }
-    }
-
-    private void setTexImage3DBuffer(GL2ES3 gl, List<Mat> slices, int offset) {
-      DicomVolTexture volTexture = volumeBuilder.volTexture;
       TextureSliceDataBuffer textureSliceData = TextureSliceDataBuffer.toImageData(slices);
       try {
-        if (volTexture.getId() <= 0) {
-          volTexture.init(gl);
-        }
-        // See https://docs.gl/gl4/glTexSubImage3D
-        gl.glTexSubImage3D(
-            GL2ES2.GL_TEXTURE_3D,
-            0,
-            0,
-            0,
-            offset,
-            volTexture.getWidth(),
-            volTexture.getHeight(),
-            slices.size(),
-            volTexture.getFormat(),
-            volTexture.getType(),
-            textureSliceData.buffer());
-        int error;
-        if ((error = gl.glGetError()) != 0) {
-          LOGGER.error(
-              "Cannot load volume ({} images) in OpenGL texture3D. OpenGL error: {}",
-              volTexture.getDepth(),
-              Error.gluErrorString(error));
-          volumeBuilder.hasError = true;
-          volumeBuilder.stop();
+        // The path tracer's bounds are folded in from the staging buffer before it goes to the GPU.
+        volumeBuilder
+            .volTexture
+            .getMajorantGrid()
+            .accumulate(
+                textureSliceData.buffer(),
+                CvType.channels(slices.getFirst().type()),
+                offset,
+                slices.size());
+        GLContext glContext = OpenglUtils.getDefaultGlContext();
+        glContext.makeCurrent();
+        try {
+          GL2ES3 gl = glContext.getGL().getGL2ES3();
+          gl.glBindTexture(GL2ES2.GL_TEXTURE_3D, volumeBuilder.volTexture.getId());
+          GLPixelStorageModes storageModes = new GLPixelStorageModes();
+          // Uploads are UNPACK operations: the staging buffer holds tightly packed rows, so any
+          // width whose row size is not a multiple of the default 4-byte alignment (e.g. RGB
+          // 8-bit) must not be padded. Setting the pack alignment here has no effect on
+          // glTexSubImage3D.
+          storageModes.setUnpackAlignment(gl, 1);
+          try {
+            setTexImage3DBuffer(gl, textureSliceData.buffer(), slices.size(), offset);
+          } finally {
+            storageModes.restore(gl);
+          }
+          gl.glFinish();
+        } finally {
+          glContext.release();
         }
       } finally {
         textureSliceData.releaseMemory();
+      }
+    }
+
+    private void setTexImage3DBuffer(GL2ES3 gl, Buffer data, int sliceCount, int offset) {
+      DicomVolTexture volTexture = volumeBuilder.volTexture;
+      if (volTexture.getId() <= 0) {
+        volTexture.init(gl);
+      }
+      // See https://docs.gl/gl4/glTexSubImage3D
+      gl.glTexSubImage3D(
+          GL2ES2.GL_TEXTURE_3D,
+          0,
+          0,
+          0,
+          offset,
+          volTexture.getWidth(),
+          volTexture.getHeight(),
+          sliceCount,
+          volTexture.getFormat(),
+          volTexture.getType(),
+          data);
+      int error;
+      if ((error = gl.glGetError()) != 0) {
+        LOGGER.error(
+            "Cannot load volume ({} images) in OpenGL texture3D. OpenGL error: {}",
+            volTexture.getDepth(),
+            Error.gluErrorString(error));
+        volumeBuilder.hasError = true;
+        volumeBuilder.stop();
       }
     }
 
@@ -302,6 +313,9 @@ public final class VolumeBuilder {
       LOGGER.info(
           "Loading 3D texture time: {} ms",
           Duration.between(timeStarted, Instant.now()).toMillis());
+      if (!volumeBuilder.hasError) {
+        volTexture.getMajorantGrid().complete();
+      }
       volumeBuilder.completed = true;
       MemoryManager.getInstance().unregister(volumeBuilder.stagingConsumer);
       ResourceMonitor.getInstance().recordVolume(volTexture.getDepth());

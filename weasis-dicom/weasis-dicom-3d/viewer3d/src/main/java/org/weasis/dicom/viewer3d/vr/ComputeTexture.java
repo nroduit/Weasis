@@ -25,6 +25,7 @@ public class ComputeTexture extends TextureData {
   private int accumulationId;
 
   private int featureId;
+  private int momentId;
 
   /**
    * @param view3d the 3d view
@@ -68,9 +69,11 @@ public class ComputeTexture extends TextureData {
     return size;
   }
 
-  public void setAccumulationTargets(int colorTextureId, int featureTextureId) {
+  public void setAccumulationTargets(
+      int colorTextureId, int featureTextureId, int momentTextureId) {
     this.accumulationId = colorTextureId;
     this.featureId = featureTextureId;
+    this.momentId = momentTextureId;
   }
 
   @Override
@@ -85,6 +88,7 @@ public class ComputeTexture extends TextureData {
     if (accumulationId > 0) {
       gl4.glBindImageTexture(1, accumulationId, 0, false, 0, GL.GL_WRITE_ONLY, GL.GL_RGBA32F);
       gl4.glBindImageTexture(2, featureId, 0, false, 0, GL.GL_WRITE_ONLY, GL.GL_RGBA32F);
+      gl4.glBindImageTexture(3, momentId, 0, false, 0, GL.GL_WRITE_ONLY, GL.GL_RG32F);
     }
     dispatch(gl4);
   }

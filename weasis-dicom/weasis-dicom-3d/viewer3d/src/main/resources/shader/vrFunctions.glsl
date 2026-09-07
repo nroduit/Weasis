@@ -823,14 +823,23 @@ vec4 slice(vec2 uv) {
     }
 }
 
+#include "ptConvergence.glsl"
+
 // *************************************************************************************************
-// Progressive path tracing — one Monte Carlo sample per pixel and frame, averaged into historyMap
-// across frames while the scene stands still. The LUT opacity acts as a density: delta tracking
-// finds the next collision, and each collision either scatters like a surface (Lambert plus a
-// Blinn-Phong highlight, chosen with a probability that grows with the gradient magnitude) or like
-// a cloud (isotropic phase). The key light is gathered at every collision through a ratio-tracked
-// shadow ray; the environment is gathered by the paths that leave the volume. Everything is linear
-// radiance: the display image is tone-mapped from the average, never the average itself.
+// Progressive path tracing — Monte Carlo samples per pixel averaged into historyMap across frames
+// while the scene stands still. The LUT opacity acts as a density: delta tracking finds the next
+// collision, and each collision scatters like a surface (Lambert plus a Blinn-Phong highlight) or
+// like a cloud (isotropic phase), chosen with a probability that grows with the gradient magnitude.
+// The key light and the environment are both gathered at every collision through ratio-tracked
+// shadow rays, the environment as its cosine-weighted mean around the normal so only the visibility
+// stays stochastic; the lighting of a collision blends the two lobes by that same probability, so
+// the choice only steers the continuation. Everything is linear radiance: the display image is
+// tone-mapped from the average, never the average itself.
+//
+// Two random sources: the decisions that shape a path (pixel jitter, lobe choice, roulette and the
+// scattering direction) come from a padded 2D Sobol sequence with hash-based Owen scrambling
+// (Burley 2020), which converges faster than white noise and leaves the denoiser blue-ish noise;
+// the tracking loops, which draw an unbounded number of values, use a hash.
 // *************************************************************************************************
 
 // Extinction, per unit of normalized volume length, of a fully opaque LUT entry. Bounds the null
@@ -844,10 +853,15 @@ const float PT_KEY_LIGHT = 2.0;
 const float PT_AMBIENT_SKY = 0.3;
 // Bounds the tracking loops whatever the density.
 const int PT_MAX_STEPS = 2048;
+// Blocks of the majorant grid a ray may cross before its walk gives up.
+const int PT_MAX_BLOCKS = 512;
 // Depth recorded for a primary ray that met nothing; beyond any distance inside the unit cube.
 const float PT_ESCAPED_DEPTH = 4.0;
 
 uint ptState;
+uint ptSampleIndex;
+uint ptPixelSeed;
+uint ptPair;
 
 uint ptHash(uint v) {
     uint state = v * 747796405u + 2891336453u;
@@ -855,13 +869,61 @@ uint ptHash(uint v) {
     return (word >> 22u) ^ word;
 }
 
+// White noise for the tracking loops.
 float ptRand() {
     ptState = ptHash(ptState);
     return float(ptState) / 4294967296.0;
 }
 
-void ptSeed(ivec2 pixel, int frame) {
-    ptState = ptHash(uint(pixel.x) * 1973u + uint(pixel.y) * 9277u + uint(frame) * 26699u + 1u);
+void ptSeed(ivec2 pixel, int sampleIndex) {
+    ptPixelSeed = ptHash(uint(pixel.x) * 1973u + uint(pixel.y) * 9277u + 1u);
+    ptState = ptHash(ptPixelSeed + uint(sampleIndex) * 26699u);
+    ptSampleIndex = uint(sampleIndex);
+    ptPair = 0u;
+}
+
+uint ptReverseBits(uint x) {
+    x = ((x & 0x55555555u) << 1u) | ((x & 0xAAAAAAAAu) >> 1u);
+    x = ((x & 0x33333333u) << 2u) | ((x & 0xCCCCCCCCu) >> 2u);
+    x = ((x & 0x0F0F0F0Fu) << 4u) | ((x & 0xF0F0F0F0u) >> 4u);
+    x = ((x & 0x00FF00FFu) << 8u) | ((x & 0xFF00FF00u) >> 8u);
+    return (x << 16u) | (x >> 16u);
+}
+
+// Nested uniform (Owen) scramble of a base-2 sequence value by a hash: each bit is flipped by a
+// function of the more significant ones (Laine–Karras permutation on the reversed bits).
+uint ptOwenScramble(uint x, uint seed) {
+    x = ptReverseBits(x);
+    x ^= x * 0x3d20adeau;
+    x += seed;
+    x *= (seed >> 16u) | 1u;
+    x ^= x * 0x05526c56u;
+    x ^= x * 0x53a22864u;
+    return ptReverseBits(x);
+}
+
+// Second Sobol dimension of index i; the first one is its bit reversal.
+uint ptSobolSecond(uint i) {
+    uint y = 0u;
+    uint v = 1u << 31u;
+    for (int b = 0; b < 32 && i != 0u; ++b) {
+        if ((i & 1u) != 0u) y ^= v;
+        i >>= 1u;
+        v ^= v >> 1u;
+    }
+    return y;
+}
+
+// Next 2D low-discrepancy point of the sample. Each pair of dimensions is the 2D Sobol sequence
+// under its own per-pixel shuffle and scrambles, so pairs are decorrelated while every pixel still
+// sees a stratified prefix of the sequence as the samples accumulate.
+vec2 ptLds2() {
+    uint seed = ptHash(ptPixelSeed + ptPair * 0x9E3779B9u);
+    ptPair++;
+    uint index = ptOwenScramble(ptSampleIndex, seed);
+    uint x = ptOwenScramble(ptReverseBits(index), ptHash(seed + 1u));
+    uint y = ptOwenScramble(ptSobolSecond(index), ptHash(seed + 2u));
+    return vec2(x, y) / 4294967296.0;
 }
 
 // Extinction at pos from the LUT opacity; zero where a cut or a mask removed the voxel.
@@ -885,14 +947,137 @@ float ptExitDistance(vec3 origin, vec3 dir) {
     return max(min(tfar.x, min(tfar.y, tfar.z)), 0.0);
 }
 
+// ---- Majorant map -------------------------------------------------------------------------------
+// The global bound sigmaMax is the extinction of the most opaque LUT entry: through air or faint
+// tissue, delta tracking at that rate takes hundreds of null collisions that each cost a volume
+// and a LUT fetch and yield nothing. The majorant map holds, baked for the current preset and
+// window, the highest LUT alpha of each block of the volume, zero wherever the preset leaves the
+// block transparent, and on its level 2 the highest alpha of each 4×4×4 group of blocks. A ray
+// walks the blocks it crosses, leaps over the empty groups, skips the empty blocks and tracks the
+// others at their own bound.
+
+// Blocks per axis a coarse cell of the map spans, and its mip level.
+const int PT_COARSE_SPAN = 4;
+const int PT_COARSE_LEVEL = 2;
+
+// Extinction bound of a block. Until the map of the volume is baked, a single placeholder block
+// carries the global bound.
+float ptBlockMajorant(ivec3 block, float sigmaMax) {
+    if (!ptGridEnabled) return sigmaMax;
+    float alpha = texelFetch(majorantMap, block, 0).r;
+    return min(min(alpha * opacityFactor, 1.0) * PT_DENSITY, sigmaMax);
+}
+
+// Whether the coarse cell holding the block bounds nothing at all.
+bool ptCoarseEmpty(ivec3 block) {
+    return ptGridEnabled && texelFetch(majorantMap, block / PT_COARSE_SPAN, PT_COARSE_LEVEL).r <= 0.0;
+}
+
+// Distance along the ray at which it leaves the coarse cell holding the block.
+float ptCoarseExit(vec3 origin, vec3 dir, ivec3 block) {
+    vec3 cell = float(PT_COARSE_SPAN) / vec3(ptGridSize);
+    vec3 lo = vec3(block / PT_COARSE_SPAN) * cell;
+    vec3 inv = 1.0 / vec3(
+        abs(dir.x) < 1e-8 ? 1e-8 : dir.x,
+        abs(dir.y) < 1e-8 ? 1e-8 : dir.y,
+        abs(dir.z) < 1e-8 ? 1e-8 : dir.z);
+    vec3 t1 = (lo - origin) * inv;
+    vec3 t2 = (lo + cell - origin) * inv;
+    vec3 tfar = max(t1, t2);
+    return min(tfar.x, min(tfar.y, tfar.z));
+}
+
+// Position of a ray in the block grid: the block it is in and the distances along the ray at which
+// it entered it and will leave it, both bounded by the distance the ray is followed for.
+struct GridWalk {
+    ivec3 block;
+    ivec3 step;
+    vec3 tNext;
+    vec3 tDelta;
+    float tEnter;
+    float tExit;
+};
+
+// The walk from distance t0 along the ray; the block is taken a hair beyond t0 so a start on a
+// boundary lands in the block being entered.
+GridWalk ptGridStart(vec3 origin, vec3 dir, float tmax, float t0) {
+    ivec3 size = ptGridSize;
+    vec3 cell = 1.0 / vec3(size);
+    GridWalk w;
+    vec3 p = origin + dir * (t0 + 1e-5);
+    w.block = clamp(ivec3(floor(p * vec3(size))), ivec3(0), size - 1);
+    w.step = ivec3(sign(dir));
+    vec3 safeDir = vec3(
+        abs(dir.x) < 1e-8 ? 1e-8 : dir.x,
+        abs(dir.y) < 1e-8 ? 1e-8 : dir.y,
+        abs(dir.z) < 1e-8 ? 1e-8 : dir.z);
+    w.tDelta = abs(cell / safeDir);
+    vec3 boundary = (vec3(w.block) + max(vec3(w.step), vec3(0.0))) * cell;
+    w.tNext = (boundary - origin) / safeDir;
+    // An axis the ray does not move along is never crossed.
+    if (abs(dir.x) < 1e-8) w.tNext.x = 1e30;
+    if (abs(dir.y) < 1e-8) w.tNext.y = 1e30;
+    if (abs(dir.z) < 1e-8) w.tNext.z = 1e30;
+    w.tEnter = t0;
+    w.tExit = min(min(w.tNext.x, min(w.tNext.y, w.tNext.z)), tmax);
+    return w;
+}
+
+// Steps into the next block; false once the ray has left the grid or covered tmax.
+bool ptGridAdvance(inout GridWalk w, float tmax) {
+    if (w.tExit >= tmax) return false;
+    if (w.tNext.x <= w.tNext.y && w.tNext.x <= w.tNext.z) {
+        w.block.x += w.step.x;
+        w.tNext.x += w.tDelta.x;
+    } else if (w.tNext.y <= w.tNext.z) {
+        w.block.y += w.step.y;
+        w.tNext.y += w.tDelta.y;
+    } else {
+        w.block.z += w.step.z;
+        w.tNext.z += w.tDelta.z;
+    }
+    if (any(lessThan(w.block, ivec3(0))) || any(greaterThanEqual(w.block, ptGridSize))) return false;
+    w.tEnter = w.tExit;
+    w.tExit = min(min(w.tNext.x, min(w.tNext.y, w.tNext.z)), tmax);
+    return true;
+}
+
+// Moves the walk to the next block with a bound, leaping over the coarse cells that have none.
+// False once the ray has left the grid or covered tmax first.
+bool ptNextSegment(inout GridWalk w, vec3 origin, vec3 dir, float tmax, float sigmaMax, out float sigmaBlock) {
+    sigmaBlock = 0.0;
+    for (int i = 0; i < PT_MAX_BLOCKS; ++i) {
+        if (ptCoarseEmpty(w.block)) {
+            float tLeave = ptCoarseExit(origin, dir, w.block);
+            if (tLeave >= tmax) return false;
+            w = ptGridStart(origin, dir, tmax, tLeave);
+            continue;
+        }
+        sigmaBlock = ptBlockMajorant(w.block, sigmaMax);
+        if (sigmaBlock > 0.0) return true;
+        if (!ptGridAdvance(w, tmax)) return false;
+    }
+    return false;
+}
+
 // Delta tracking: distance to the next real collision, or -1 when the ray leaves the volume first.
 float ptFreeFlight(vec3 origin, vec3 dir, float tmax, float sigmaMax, out vec3 albedo, out float pix) {
-    float t = 0.0;
-    for (int i = 0; i < PT_MAX_STEPS; ++i) {
-        t -= log(max(1.0 - ptRand(), 1e-6)) / sigmaMax;
-        if (t >= tmax) return -1.0;
-        float sigma = ptExtinction(origin + dir * t, albedo, pix);
-        if (ptRand() * sigmaMax < sigma) return t;
+    albedo = vec3(0.0);
+    pix = 0.0;
+    GridWalk w = ptGridStart(origin, dir, tmax, 0.0);
+    int steps = 0;
+    for (int b = 0; b < PT_MAX_BLOCKS; ++b) {
+        float sigmaBlock;
+        if (!ptNextSegment(w, origin, dir, tmax, sigmaMax, sigmaBlock)) return -1.0;
+        float t = w.tEnter;
+        while (steps < PT_MAX_STEPS) {
+            ++steps;
+            t -= log(max(1.0 - ptRand(), 1e-6)) / sigmaBlock;
+            if (t >= w.tExit) break;
+            float sigma = ptExtinction(origin + dir * t, albedo, pix);
+            if (ptRand() * sigmaBlock < sigma) return t;
+        }
+        if (steps >= PT_MAX_STEPS || !ptGridAdvance(w, tmax)) return -1.0;
     }
     return -1.0;
 }
@@ -900,44 +1085,57 @@ float ptFreeFlight(vec3 origin, vec3 dir, float tmax, float sigmaMax, out vec3 a
 // Ratio tracking: transmittance from origin to the edge of the volume along dir.
 float ptTransmittance(vec3 origin, vec3 dir, float sigmaMax) {
     float tmax = ptExitDistance(origin, dir);
-    float t = 0.0;
     float transmittance = 1.0;
     vec3 albedo;
     float pix;
-    for (int i = 0; i < PT_MAX_STEPS; ++i) {
-        t -= log(max(1.0 - ptRand(), 1e-6)) / sigmaMax;
-        if (t >= tmax) break;
-        transmittance *= 1.0 - ptExtinction(origin + dir * t, albedo, pix) / sigmaMax;
-        if (transmittance < 0.01) return 0.0;
+    GridWalk w = ptGridStart(origin, dir, tmax, 0.0);
+    int steps = 0;
+    for (int b = 0; b < PT_MAX_BLOCKS; ++b) {
+        float sigmaBlock;
+        if (!ptNextSegment(w, origin, dir, tmax, sigmaMax, sigmaBlock)) break;
+        float t = w.tEnter;
+        while (steps < PT_MAX_STEPS) {
+            ++steps;
+            t -= log(max(1.0 - ptRand(), 1e-6)) / sigmaBlock;
+            if (t >= w.tExit) break;
+            transmittance *= 1.0 - ptExtinction(origin + dir * t, albedo, pix) / sigmaBlock;
+            if (transmittance < 0.01) return 0.0;
+        }
+        if (steps >= PT_MAX_STEPS || !ptGridAdvance(w, tmax)) break;
     }
     return transmittance;
 }
 
-// Radiance arriving from outside the volume along a texture-space direction.
-vec3 ptSkyRadiance(vec3 dir) {
+// Cosine-weighted mean of the environment radiance around a texture-space normal.
+vec3 ptEnvDiffuse(vec3 n) {
     if (!envEnabled) return lightColor * PT_AMBIENT_SKY;
-    return envStrength * textureLod(envMap, equirectUv(directionToView(dir)), 1.5).rgb;
+    return envStrength * shIrradiance(normalToView(n));
 }
 
-vec3 ptCosineDirection(vec3 n) {
-    float phi = 6.2831853 * ptRand();
-    float r2 = ptRand();
-    float r = sqrt(r2);
+// Mean environment radiance over the sphere: the DC term of the irradiance over π.
+vec3 ptEnvMean() {
+    if (!envEnabled) return lightColor * PT_AMBIENT_SKY;
+    return envStrength * 0.886227 * envSh[0];
+}
+
+vec3 ptCosineDirection(vec3 n, vec2 u) {
+    float phi = 6.2831853 * u.x;
+    float r = sqrt(u.y);
     vec3 t = normalize(abs(n.x) > 0.9 ? cross(n, vec3(0.0, 1.0, 0.0)) : cross(n, vec3(1.0, 0.0, 0.0)));
     vec3 b = cross(n, t);
-    return normalize(t * (r * cos(phi)) + b * (r * sin(phi)) + n * sqrt(max(1.0 - r2, 0.0)));
+    return normalize(t * (r * cos(phi)) + b * (r * sin(phi)) + n * sqrt(max(1.0 - u.y, 0.0)));
 }
 
-vec3 ptSphereDirection() {
-    float z = 1.0 - 2.0 * ptRand();
-    float phi = 6.2831853 * ptRand();
+vec3 ptSphereDirection(vec2 u) {
+    float z = 1.0 - 2.0 * u.x;
+    float phi = 6.2831853 * u.y;
     float r = sqrt(max(1.0 - z * z, 0.0));
     return vec3(r * cos(phi), r * sin(phi), z);
 }
 
 // One radiance sample of the camera ray, premultiplied: alpha is 1 once the primary ray collides.
-// feature receives the denoiser's guides: the normal at the first collision (zero when it
-// scattered like a cloud or the ray escaped) and that collision's distance along the ray.
+// feature receives the denoiser's guides: the normal at the first collision, scaled by how much of
+// a surface it is (zero for a cloud or an escaped ray), and that collision's distance along the ray.
 vec4 ptTraceSample(Ray ray, float tmin, out vec4 feature) {
     vec3 pos = clamp(worldToTexture(ray.origin + ray.direction * tmin), 0.0, 1.0);
     vec3 dir = normalize(ray.direction / texelSize);
@@ -953,44 +1151,51 @@ vec4 ptTraceSample(Ray ray, float tmin, out vec4 feature) {
         vec3 albedo;
         float pix;
         float t = ptFreeFlight(pos, dir, tEnd, sigmaMax, albedo, pix);
-        if (t < 0.0) {
-            if (bounce > 0) radiance += throughput * ptSkyRadiance(dir);
-            break;
-        }
+        // An escaping path adds nothing: the environment was gathered at its last collision.
+        if (t < 0.0) break;
         alpha = 1.0;
         pos += dir * t;
         vec4 material = texture(lightingMap, vec2(pix, 0.0));
         vec3 grad = gradientRaw(pos, PT_GRADIENT_DELTA);
-        bool surface = ptRand() < smoothstep(0.02, 0.15, length(grad));
-        vec3 n = surface ? normalize(grad) : vec3(0.0);
-        if (surface && dot(n, dir) > 0.0) n = -n;
-        if (bounce == 0) feature = vec4(n, t);
+        float gradLength = length(grad);
+        float surfaceness = smoothstep(0.02, 0.15, gradLength);
+        vec3 n = gradLength > 1e-6 ? grad / gradLength : vec3(0.0);
+        if (dot(n, dir) > 0.0) n = -n;
+        if (bounce == 0) feature = vec4(n * surfaceness, t);
+        vec3 scatterAlbedo = albedo * material.y;
+        vec2 u = ptLds2();
+        bool surface = u.x < surfaceness;
 
-        // Next-event estimation towards the key light.
-        float transmittance = ptTransmittance(pos, L, sigmaMax);
-        if (transmittance > 0.0) {
-            vec3 light = lightColor * (PT_KEY_LIGHT * transmittance);
-            if (surface) {
-                float diff = max(dot(n, L), 0.0);
-                vec3 H = normalize(L - dir);
-                float spec = diff > 0.0 ? pow(max(dot(H, n), 0.0), lights[0].specularPower) : 0.0;
-                radiance += throughput * light * (albedo * material.y * diff + material.z * spec);
-            } else {
-                // Isotropic phase (1/4π) against the Lambert lobe (1/π) the throughput assumes.
-                radiance += throughput * light * albedo * material.y * 0.25;
-            }
+        // Key light: both lobes, blended by the surface probability, under one shadow ray.
+        float keyTransmittance = ptTransmittance(pos, L, sigmaMax);
+        if (keyTransmittance > 0.0) {
+            vec3 light = lightColor * (PT_KEY_LIGHT * keyTransmittance);
+            float diff = max(dot(n, L), 0.0);
+            vec3 H = normalize(L - dir);
+            float spec = diff > 0.0 ? pow(max(dot(H, n), 0.0), lights[0].specularPower) : 0.0;
+            vec3 surfaceTerm = scatterAlbedo * diff + material.z * spec;
+            // Isotropic phase (1/4π) against the Lambert lobe (1/π) the throughput assumes.
+            vec3 cloudTerm = scatterAlbedo * 0.25;
+            radiance += throughput * light * mix(cloudTerm, surfaceTerm, surfaceness);
         }
 
-        throughput *= albedo * material.y;
-        if (surface) {
-            dir = ptCosineDirection(n);
-            pos += n * PT_GRADIENT_DELTA;
-        } else {
-            dir = ptSphereDirection();
+        // Environment: its mean over the lobe, seen through one ratio-tracked ray in a direction
+        // drawn from that lobe, which the path then continues along.
+        vec2 v = ptLds2();
+        vec3 next = surface ? ptCosineDirection(n, v) : ptSphereDirection(v);
+        float envTransmittance = ptTransmittance(pos, next, sigmaMax);
+        if (envTransmittance > 0.0) {
+            vec3 env = ptEnvMean();
+            if (surfaceness > 0.0) env = mix(env, ptEnvDiffuse(n), surfaceness);
+            radiance += throughput * scatterAlbedo * envTransmittance * env;
         }
+
+        throughput *= scatterAlbedo;
+        dir = next;
+        if (surface) pos += n * PT_GRADIENT_DELTA;
         if (bounce >= 2) {
             float survive = max(throughput.r, max(throughput.g, throughput.b));
-            if (ptRand() > survive) break;
+            if (u.y > survive) break;
             throughput /= max(survive, 1e-3);
         }
         tEnd = ptExitDistance(pos, dir);
@@ -998,35 +1203,75 @@ vec4 ptTraceSample(Ray ray, float tmin, out vec4 feature) {
     return vec4(radiance, alpha);
 }
 
-// Traces one jittered sample for the pixel and folds it, with its features, into the running
-// averages. Returns the linear premultiplied average; the denoise pass tone-maps it for display.
-vec4 pathTrace(vec2 uv, ivec2 pixelCoords, ivec2 imageDims, out vec4 feature) {
-    ptSeed(pixelCoords, frameIndex);
-    vec2 jittered = uv + (vec2(ptRand(), ptRand()) - 0.5) * 2.0 / vec2(imageDims);
-    Ray ray = CreateCameraRay(jittered);
-    float tmin = 0.0;
-    float tmax = 0.0;
-    intersect(ray, tmin, tmax);
-    vec4 result = vec4(0.0);
-    feature = vec4(0.0, 0.0, 0.0, PT_ESCAPED_DEPTH);
-    if (tmax >= tmin) {
-        if (!segOnly) {
-            result = ptTraceSample(ray, max(tmin, 0.0), feature);
-        }
-        // The overlay is deterministic and composes linearly, so averaging it with the samples is
-        // the same as drawing it over the average.
-        if (segMaskMode == 0 && segOverlayEnabled && (result.a > 0.0 || segOnly)) {
-            vec3 start = worldToTexture(ray.origin + tmin * ray.direction);
-            vec3 end = worldToTexture(ray.origin + tmax * ray.direction);
-            int sampleCount = max(int(float(depthSampleNumber) * distance(end, start)), 1);
-            vec3 stepPos = (end - start) / float(sampleCount);
-            result = blendSegOverlay(result, accumulateSegOverlay(start, stepPos, stepPos * ptRand(), sampleCount));
+// Segmentation overlay along a camera ray through the volume, jittered by a step.
+vec4 ptSegOverlay(Ray ray, float tmin, float tmax) {
+    vec3 start = worldToTexture(ray.origin + tmin * ray.direction);
+    vec3 end = worldToTexture(ray.origin + tmax * ray.direction);
+    int sampleCount = max(int(float(depthSampleNumber) * distance(end, start)), 1);
+    vec3 stepPos = (end - start) / float(sampleCount);
+    return accumulateSegOverlay(start, stepPos, stepPos * ptRand(), sampleCount);
+}
+
+// Traces ptSamples jittered samples for the pixel and folds them, with their features and
+// moments, into the running averages; a pixel already converged keeps its averages untouched.
+// Returns the linear premultiplied average; the denoise pass tone-maps it for display.
+vec4 pathTrace(vec2 uv, ivec2 pixelCoords, ivec2 imageDims, out vec4 feature, out vec2 moment) {
+    vec4 history = vec4(0.0);
+    vec2 historyMoment = vec2(0.0);
+    if (frameIndex > 0) {
+        history = texelFetch(historyMap, pixelCoords, 0);
+        historyMoment = texelFetch(momentMap, pixelCoords, 0).rg;
+        if (ptConverged(history, historyMoment)) {
+            feature = texelFetch(featureMap, pixelCoords, 0);
+            moment = historyMoment;
+            return history;
         }
     }
+    int samples = max(ptSamples, 1);
+    bool overlayWanted = segMaskMode == 0 && segOverlayEnabled;
+    // The overlay is deterministic and composes linearly, so averaging it with the samples is the
+    // same as drawing it over the average; one march per frame serves every sample of the pixel.
+    bool overlayTraced = false;
+    vec4 overlay = vec4(0.0);
+    vec4 sum = vec4(0.0);
+    vec4 featureSum = vec4(0.0);
+    float squareSum = 0.0;
+    for (int s = 0; s < samples; ++s) {
+        // Indexed by the pixel's own count, so a pixel that paused keeps a stratified prefix.
+        ptSeed(pixelCoords, int(historyMoment.y) + s);
+        vec2 jittered = uv + (ptLds2() - 0.5) * 2.0 / vec2(imageDims);
+        Ray ray = CreateCameraRay(jittered);
+        float tmin = 0.0;
+        float tmax = 0.0;
+        intersect(ray, tmin, tmax);
+        vec4 result = vec4(0.0);
+        vec4 sampleFeature = vec4(0.0, 0.0, 0.0, PT_ESCAPED_DEPTH);
+        if (tmax >= tmin) {
+            if (!segOnly) {
+                result = ptTraceSample(ray, max(tmin, 0.0), sampleFeature);
+            }
+            if (overlayWanted && (result.a > 0.0 || segOnly)) {
+                if (!overlayTraced) {
+                    overlay = ptSegOverlay(ray, tmin, tmax);
+                    overlayTraced = true;
+                }
+                result = blendSegOverlay(result, overlay);
+            }
+        }
+        sum += result;
+        featureSum += sampleFeature;
+        float luminance = ptLuminance(result);
+        squareSum += luminance * luminance;
+    }
+    float count = float(samples);
+    vec4 result = sum / count;
+    feature = featureSum / count;
+    moment = vec2(squareSum / count, count);
     if (frameIndex > 0) {
-        float weight = 1.0 / float(frameIndex + 1);
-        result = mix(texelFetch(historyMap, pixelCoords, 0), result, weight);
+        float weight = count / (historyMoment.y + count);
+        result = mix(history, result, weight);
         feature = mix(texelFetch(featureMap, pixelCoords, 0), feature, weight);
+        moment = vec2(mix(historyMoment.x, moment.x, weight), historyMoment.y + count);
     }
     return result;
 }

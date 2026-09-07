@@ -54,7 +54,8 @@ public class Program {
     }
   }
 
-  public void init(GL2ES2 gl) {
+  /** Compiles and links once; safe to call from a shared context on another thread. */
+  public synchronized void init(GL2ES2 gl) {
     if (programId != null) {
       return;
     }
@@ -122,6 +123,14 @@ public class Program {
     }
   }
 
+  /**
+   * Registers every uniform setter of {@code source} under this program, for a program built from
+   * the same includes; a uniform the shader does not use resolves to no location and is skipped.
+   */
+  public void shareAllUniforms(GL2ES2 gl, Program source) {
+    source.uniforms.forEach((name, setter) -> allocateUniform(gl, name, setter));
+  }
+
   public void setUniforms(GL2ES2 gl) {
     for (Map.Entry<String, BiConsumer<GL2ES2, Integer>> uniform : uniforms.entrySet()) {
       uniform.getValue().accept(gl, uniformLocations.get(uniform.getKey()));
@@ -137,7 +146,7 @@ public class Program {
     return programId != null ? programId : 0;
   }
 
-  public void destroy(GL2ES2 gl) {
+  public synchronized void destroy(GL2ES2 gl) {
     if (programId != null) {
       for (final Map.Entry<Integer, Integer> shaderId : shaderIds.entrySet()) {
         gl.glDetachShader(programId, shaderId.getValue());

@@ -1,11 +1,10 @@
 #version 430
+// Ray-cast volume rendering (composite, MIP, iso-surface, slices). The path tracer is a program of
+// its own, pathTracing.comp, built from the same includes: linked together, the two took the
+// NVIDIA linker three times as long as they take apart.
 
 layout (local_size_x = 16, local_size_y = 16) in ;
 layout (rgba32f, binding = 0) uniform image2D outputImage;
-// Linear running average of the path tracer, written next to the display image it is tone-mapped into.
-layout (rgba32f, binding = 1) uniform image2D accumImage;
-// Averaged first-hit normal and depth guiding the denoise pass.
-layout (rgba32f, binding = 2) uniform image2D featureImage;
 layout (binding = 0) uniform sampler3D volTexture;
 layout (binding = 1) uniform sampler2D colorMap;
 layout (binding = 2) uniform sampler2D lightingMap;
@@ -14,6 +13,8 @@ layout (binding = 5) uniform sampler2D segColorMap;
 layout (binding = 6) uniform sampler2D envMap;
 layout (binding = 7) uniform sampler2D historyMap;
 layout (binding = 8) uniform sampler2D featureMap;
+layout (binding = 12) uniform sampler2D momentMap;
+layout (binding = 11) uniform sampler3D majorantMap;
 
 #include "voxelUniforms.glsl"
 
@@ -37,13 +38,7 @@ void main() {
     uv.y = (float(pixelCoords.y * 2 - imageDims.y) / imageDims.y);
 
     vec4 pixelVal = vec4(0);
-    if (renderingType == typePathTracing) {
-        // The display image is produced by the denoise pass (denoise.comp) that follows.
-        vec4 feature;
-        imageStore(accumImage, pixelCoords, pathTrace(uv, pixelCoords, imageDims, feature));
-        imageStore(featureImage, pixelCoords, feature);
-        return;
-    } else if (renderingType >= typeSlice) {
+    if (renderingType >= typeSlice) {
         pixelVal = slice(uv);
     } else {
         // Volume Rendering

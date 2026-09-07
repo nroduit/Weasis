@@ -59,11 +59,12 @@ public class FboRenderTexture extends TextureData {
   private int fboId = -1;
 
   /**
-   * Textures on colour attachments 1 and 2 for the path tracer's averages, 0 when not accumulating.
+   * Textures on colour attachments 1 to 3 for the path tracer's averages, 0 when not accumulating.
    */
   private int accumulationId;
 
   private int featureId;
+  private int momentId;
 
   public FboRenderTexture(View3d view3d) {
     // Use RGBA16F: half-float is sufficient for volume rendering output and halves GPU memory
@@ -159,9 +160,11 @@ public class FboRenderTexture extends TextureData {
    *
    * @param gl the current OpenGL 4 context
    */
-  public void setAccumulationTargets(int colorTextureId, int featureTextureId) {
+  public void setAccumulationTargets(
+      int colorTextureId, int featureTextureId, int momentTextureId) {
     this.accumulationId = colorTextureId;
     this.featureId = featureTextureId;
+    this.momentId = momentTextureId;
   }
 
   @Override
@@ -182,7 +185,7 @@ public class FboRenderTexture extends TextureData {
     // the sub-rectangle never holds a stale frame.
     // Units 0 (volTexture 3D), 1 (colorMap), 2 (lightingMap) are already bound by the caller.
     gl.glBindFramebuffer(GL.GL_FRAMEBUFFER, fboId);
-    attachAccumulation(gl, accumulationId, featureId);
+    attachAccumulation(gl, accumulationId, featureId, momentId);
     gl.glViewport(0, 0, passWidth(), passHeight());
     gl.glClear(GL.GL_COLOR_BUFFER_BIT);
 
@@ -195,16 +198,21 @@ public class FboRenderTexture extends TextureData {
 
   // The averages are only attached while path tracing: a smaller placeholder would shrink the
   // framebuffer's renderable area to its own size.
-  private void attachAccumulation(GL2ES2 gl, int colorId, int featId) {
+  private void attachAccumulation(GL2ES2 gl, int colorId, int featId, int momId) {
     gl.glFramebufferTexture2D(
         GL.GL_FRAMEBUFFER, GL2ES2.GL_COLOR_ATTACHMENT1, GL.GL_TEXTURE_2D, colorId, 0);
     gl.glFramebufferTexture2D(
         GL.GL_FRAMEBUFFER, GL2ES2.GL_COLOR_ATTACHMENT2, GL.GL_TEXTURE_2D, featId, 0);
+    gl.glFramebufferTexture2D(
+        GL.GL_FRAMEBUFFER, GL2ES2.GL_COLOR_ATTACHMENT3, GL.GL_TEXTURE_2D, momId, 0);
     gl.getGL2ES3()
         .glDrawBuffers(
-            colorId > 0 ? 3 : 1,
+            colorId > 0 ? 4 : 1,
             new int[] {
-              GL.GL_COLOR_ATTACHMENT0, GL2ES2.GL_COLOR_ATTACHMENT1, GL2ES2.GL_COLOR_ATTACHMENT2
+              GL.GL_COLOR_ATTACHMENT0,
+              GL2ES2.GL_COLOR_ATTACHMENT1,
+              GL2ES2.GL_COLOR_ATTACHMENT2,
+              GL2ES2.GL_COLOR_ATTACHMENT3
             },
             0);
   }
@@ -215,7 +223,7 @@ public class FboRenderTexture extends TextureData {
    */
   public void renderDenoisePass(GL2ES2 gl) {
     gl.glBindFramebuffer(GL.GL_FRAMEBUFFER, fboId);
-    attachAccumulation(gl, 0, 0);
+    attachAccumulation(gl, 0, 0, 0);
     gl.glViewport(0, 0, width, height);
     gl.glDrawArrays(GL.GL_TRIANGLES, 0, View3d.vertexBufferData.length / 2);
     gl.glBindFramebuffer(GL.GL_FRAMEBUFFER, 0);

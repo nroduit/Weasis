@@ -1,18 +1,22 @@
 // denoiseFunctions.glsl
 // Edge-aware spatial filter over the path tracer's running average, run after every accumulated
-// frame. The temporal part of the denoising is the average itself; this pass hides the noise of
-// the first frames and fades out as they accumulate, so the converged image is never blurred.
+// frame. The temporal part of the denoising is the average itself; this pass hides the noise
+// while a pixel's standard error is still high and fades out with it: the tolerance vanishes
+// with the error, so a pixel that has converged is blended with its equals only.
 //
 // Requires: historyMap (linear premultiplied average), featureMap (averaged first-hit normal in
-// xyz, depth in w) and the frameIndex uniform holding the number of frames averaged so far.
+// xyz, depth in w) and momentMap (squared-luminance mean and sample count, see ptConvergence.glsl).
 
-// Frames after which the average is shown as is.
-const int DENOISE_FRAMES = 96;
+#include "ptConvergence.glsl"
+
 // Half width of the filter window, in pixels.
 const int DENOISE_RADIUS = 3;
-// Colour difference, in linear units, that halves a tap's weight on the first frame; it shrinks
-// with the square root of the frame count, as the noise does.
-const float DENOISE_COLOR_SIGMA = 0.5;
+// Colour difference that halves a tap's weight, as a multiple of the pixel's standard error: a
+// difference explained by the noise of the two means passes, a real edge does not.
+const float DENOISE_COLOR_SIGMA = 3.0;
+// Tolerance assumed before the error estimate is trustworthy: half a unit for a lone sample,
+// shrinking with the square root of the count as the noise does.
+const float DENOISE_PRIOR_SIGMA = 0.5;
 // Depth difference, in normalized volume units, that halves a tap's weight.
 const float DENOISE_DEPTH_SIGMA = 0.03;
 
@@ -32,12 +36,11 @@ float denoiseFeatureWeight(vec4 f, vec4 g) {
 
 vec4 denoise(ivec2 p) {
     vec4 c = texelFetch(historyMap, p, 0);
-    if (frameIndex >= DENOISE_FRAMES) {
-        return c;
-    }
+    vec2 m = texelFetch(momentMap, p, 0).rg;
     vec4 f = texelFetch(featureMap, p, 0);
     ivec2 dims = textureSize(historyMap, 0);
-    float sigmaC = DENOISE_COLOR_SIGMA / sqrt(float(max(frameIndex, 1)));
+    float sigmaC = max(
+        DENOISE_COLOR_SIGMA * ptStandardError(c, m), DENOISE_PRIOR_SIGMA / sqrt(max(m.y, 1.0)));
     float spatial = 2.0 * float(DENOISE_RADIUS * DENOISE_RADIUS) * 0.5;
     vec4 sum = vec4(0.0);
     float weightSum = 0.0;

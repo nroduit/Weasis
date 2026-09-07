@@ -8,6 +8,7 @@ in vec2 quadCoordinates;
 
 uniform sampler2D historyMap;   // unit 7 — set from Java
 uniform sampler2D featureMap;   // unit 8 — set from Java
+uniform sampler2D momentMap;    // unit 12 — set from Java
 
 #include "voxelUniforms330.glsl"
 

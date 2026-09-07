@@ -9,6 +9,7 @@
  */
 package org.weasis.dicom.viewer3d.vr;
 
+import com.jogamp.opengl.GL2ES2;
 import java.awt.Dimension;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
@@ -54,6 +55,7 @@ public class DicomVolTexture extends VolumeTexture implements MediaSeriesGroup {
   private final Volume<?, ?> volume;
   private boolean loadFinished;
   private final PropertyChangeListener crossHairRelay;
+  private final MajorantGrid majorantGrid;
 
   private String pixelValueUnit;
 
@@ -62,6 +64,7 @@ public class DicomVolTexture extends VolumeTexture implements MediaSeriesGroup {
     super(size, pixelFormat);
     this.volume = v;
     this.changeSupport = Objects.requireNonNull(changeSupport);
+    this.majorantGrid = new MajorantGrid(width, height, depth);
 
     tags = new HashMap<>();
     tagID = v.getStack().getSeries().getTagID();
@@ -156,6 +159,17 @@ public class DicomVolTexture extends VolumeTexture implements MediaSeriesGroup {
 
   public Volume<?, ?> getVolume() {
     return volume;
+  }
+
+  /** Block bounds of the voxel values, complete once the upload has ended without error. */
+  public MajorantGrid getMajorantGrid() {
+    return majorantGrid;
+  }
+
+  @Override
+  public void destroy(GL2ES2 gl) {
+    majorantGrid.destroy(gl);
+    super.destroy(gl);
   }
 
   @Override
