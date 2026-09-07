@@ -21,7 +21,9 @@ import static org.mockito.Mockito.when;
 
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayNameGeneration;
 import org.junit.jupiter.api.DisplayNameGenerator.ReplaceUnderscores;
@@ -80,6 +82,15 @@ class PresetTest {
   }
 
   @Test
+  void each_modality_has_at_most_one_built_in_default() {
+    Map<Modality, Long> defaults =
+        Preset.basicPresets.stream()
+            .filter(Preset::isDefaultElement)
+            .collect(Collectors.groupingBy(Preset::getModality, Collectors.counting()));
+    defaults.forEach((modality, count) -> assertEquals(1L, count, modality.name()));
+  }
+
+  @Test
   void legacy_custom_file_converts_to_user_volume_maps() throws Exception {
     Path file = Path.of("src/test/resources/legacyVolumePresets.json");
     List<ColorMap> maps = LegacyVolumePresets.read(file);
@@ -123,7 +134,7 @@ class PresetTest {
         Preset.basicPresets.stream()
             .filter(p -> p.getModality() == Modality.CT)
             .map(p -> p.toColorMap().category())
-            .collect(java.util.stream.Collectors.toSet());
+            .collect(Collectors.toSet());
     assertAll(
         () -> assertEquals(0.715f, airways.sample(-1000).alpha(), 0.01f, "air stays opaque"),
         () -> assertEquals(0f, airways.sample(0).alpha(), "tissue transparent"),

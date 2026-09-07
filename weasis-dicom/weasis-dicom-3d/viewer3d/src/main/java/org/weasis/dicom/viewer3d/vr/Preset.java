@@ -509,7 +509,9 @@ public class Preset extends TextureData {
           init(gl, inverse);
         }
       }
+      // Bound on every frame: the texture outlives the GL context of a closed view.
       gl.glActiveTexture(GL.GL_TEXTURE1);
+      gl.glBindTexture(GL.GL_TEXTURE_2D, inverse ? id2 : getId());
       gl.glTexImage2D(
           GL.GL_TEXTURE_2D,
           0,
