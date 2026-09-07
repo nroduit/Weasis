@@ -20,9 +20,11 @@ import org.joml.Math;
 import org.joml.Matrix3d;
 import org.joml.Matrix4d;
 import org.joml.Quaterniond;
+import org.joml.Quaterniondc;
 import org.joml.Vector2d;
 import org.joml.Vector2i;
 import org.joml.Vector3d;
+import org.joml.Vector3dc;
 import org.joml.Vector4d;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.GuiUtils;
@@ -38,7 +40,7 @@ public class Camera {
   public static final double SCALE_MIN = 1.0 / SCALE_MAX;
   static final double INITIAL_FOV = 45;
   static final double DEFAULT_ZOOM = 1;
-  static final Vector3d POSITION_ZERO = new Vector3d();
+  static final Vector3dc POSITION_ZERO = new Vector3d();
 
   private final VolumeCanvas renderer;
   private boolean isAdjusting = false;
@@ -62,7 +64,7 @@ public class Camera {
   Matrix4d projectionMatrix = null;
   Matrix4d viewProjectionMatrix = null;
   private boolean orthographicProjection;
-  private Axis rotationAxis = Axis.Z;
+  private final AxisTwist twist = new AxisTwist();
 
   public Camera(VolumeCanvas renderer) {
     this(renderer, getDefaultOrientation());
@@ -148,13 +150,14 @@ public class Camera {
     }
   }
 
-  public void set(Vector3d position, Quaterniond rotation, double zoom) {
+  public void set(Vector3dc position, Quaterniondc rotation, double zoom) {
     set(position, rotation, zoom, true);
   }
 
-  public void set(Vector3d position, Quaterniond rotation, double zoom, boolean repaint) {
+  public void set(Vector3dc position, Quaterniondc rotation, double zoom, boolean repaint) {
     this.position.set(position);
     this.rotation.set(rotation);
+    twist.sync(this.rotation);
     updateRotationAction();
 
     setZoomFactor(zoom, repaint);
@@ -260,37 +263,22 @@ public class Camera {
     }
   }
 
+  /** Sets the twist about the rotation axis, in the volume frame like the rotation export. */
   public void setRotation(int degree) {
-    Vector3d angles = getEulerAnglesXYZ();
-    if (rotationAxis == Axis.X) {
-      if (degree >= 180) {
-        angles.x = Math.toRadians(degree - 360.0);
-      } else {
-        angles.x = Math.toRadians(degree);
-      }
-    } else if (rotationAxis == Axis.Y) {
-      if (degree >= 270) {
-        angles.y = Math.toRadians(degree - 360.0);
-      } else if (degree > 90) {
-        angles.y = Math.toRadians(180.0 - degree);
-      } else {
-        angles.y = Math.toRadians(degree);
-      }
-    } else {
-      if (degree >= 180) {
-        angles.z = Math.toRadians(degree - 360.0);
-      } else {
-        angles.z = Math.toRadians(degree);
-      }
-    }
-    Quaterniond quat = new Quaterniond().rotationXYZ(angles.x, angles.y, angles.z);
-    rotation.set(quat);
+    twist.apply(rotation, degree);
+    updateCameraTransform();
+  }
 
+  /** Adopts an orientation coming from another view, without touching the shared slider. */
+  public void setRotation(Quaterniondc rotation) {
+    this.rotation.set(rotation);
+    twist.sync(this.rotation);
     updateCameraTransform();
   }
 
   public void resetRotation() {
     rotation.set(getDefaultOrientation().rotation());
+    twist.sync(rotation);
     updateRotationAction();
     updateCameraTransform();
   }
@@ -338,6 +326,7 @@ public class Camera {
                 .mul(ndcToArcBall(boundlessScreenCoordToNDC(prevMousePos, dimensions)))
                 .mul(rotation))
         .normalize();
+    twist.sync(rotation);
     updateRotationAction();
 
     prevMousePos.x = p.getX();
@@ -396,35 +385,19 @@ public class Camera {
   }
 
   public Axis getRotationAxis() {
-    return rotationAxis;
+    return twist.axis();
   }
 
   public void setRotationAxis(Axis rotationAxis) {
-    this.rotationAxis = rotationAxis;
+    twist.setAxis(rotationAxis, rotation);
   }
 
-  public Vector3d getEulerAnglesXYZ() {
-    Vector3d angles = new Vector3d();
-    rotation.getEulerAnglesXYZ(angles);
-    return angles;
-  }
-
+  /** Twist of the orientation about the rotation axis, in radians within [-π, π]. */
   public double getCurrentAxisRotation() {
-    Vector3d angles = getEulerAnglesXYZ();
-    if (rotationAxis == Axis.X) {
-      return angles.x;
-    } else if (rotationAxis == Axis.Y) {
-      return angles.y;
-    } else {
-      return angles.z;
-    }
+    return twist.angle();
   }
 
   public int getCurrentAxisRotationInDegrees() {
-    int rotationAngle = (int) Math.round(Math.toDegrees(getCurrentAxisRotation()));
-    if (rotationAngle < 0) {
-      rotationAngle = (rotationAngle + 360) % 360;
-    }
-    return rotationAngle;
+    return twist.degrees();
   }
 }

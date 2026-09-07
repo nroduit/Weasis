@@ -11,8 +11,8 @@ package org.weasis.dicom.viewer3d.geometry;
 
 import static org.weasis.dicom.viewer3d.geometry.Camera.getQuaternion;
 
-import org.joml.Quaterniond;
-import org.joml.Vector3d;
+import org.joml.Quaterniondc;
+import org.joml.Vector3dc;
 import org.weasis.dicom.codec.geometry.PatientOrientation.Biped;
 import org.weasis.dicom.viewer3d.Messages;
 
@@ -25,10 +25,10 @@ public enum CameraView implements View {
   LEFT(Biped.L.getFullName(), getQuaternion(-90, 0, -90)),
   RIGHT(Biped.R.getFullName(), getQuaternion(-90, 0, 90));
 
-  private Quaterniond rotation;
-  private String title;
+  private final Quaterniondc rotation;
+  private final String title;
 
-  CameraView(String title, Quaterniond rotation) {
+  CameraView(String title, Quaterniondc rotation) {
     this.title = title;
     this.rotation = rotation;
   }
@@ -38,7 +38,7 @@ public enum CameraView implements View {
   }
 
   @Override
-  public Vector3d position() {
+  public Vector3dc position() {
     return Camera.POSITION_ZERO;
   }
 
@@ -53,7 +53,7 @@ public enum CameraView implements View {
   }
 
   @Override
-  public Quaterniond rotation() {
+  public Quaterniondc rotation() {
     return rotation;
   }
 

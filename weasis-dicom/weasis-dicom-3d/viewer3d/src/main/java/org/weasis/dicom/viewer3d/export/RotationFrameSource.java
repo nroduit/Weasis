@@ -22,11 +22,11 @@ import org.weasis.dicom.viewer3d.vr.View3d;
 /**
  * Turns the volume around one axis and captures each step.
  *
- * <p>The sweep rotates the camera quaternion by a fixed delta rather than going through {@link
- * Camera#setRotation(int)}, whose Euler mapping mirrors angles above 90 degrees on the Y axis and
- * so would not produce a smooth turn. The camera is also kept out of its adjusting state for every
- * captured frame, since while adjusting the renderer ray-casts a sub-rectangle and upscales it,
- * which is visibly soft.
+ * <p>The sweep rotates the start pose by a fixed delta about the chosen axis of the volume, the
+ * same axis the rotation slider turns about, rather than going through {@link
+ * Camera#setRotation(int)}, whose integer degrees would quantize the turn. The camera is also kept
+ * out of its adjusting state for every captured frame, since while adjusting the renderer ray-casts
+ * a sub-rectangle and upscales it, which is visibly soft.
  *
  * <p>Nothing is captured before the volume has finished loading: a partial volume would show, and
  * the end of the load resets the camera and the preset of the view. The start pose is therefore
@@ -118,7 +118,7 @@ public class RotationFrameSource implements FrameSource {
         .set(
             start.position(),
             new Quaterniond(start.rotation())
-                .rotateAxis(sweepAngle(index, frameCount, pingPong, sweep), axisVector()),
+                .rotateAxis(sweepAngle(index, frameCount, pingPong, sweep), axis.direction()),
             start.zoom(),
             false);
     view.display();
@@ -145,14 +145,6 @@ public class RotationFrameSource implements FrameSource {
       return sweep * phase;
     }
     return frameCount == 1 ? 0.0 : sweep * index / (frameCount - 1);
-  }
-
-  private Vector3d axisVector() {
-    return switch (axis) {
-      case X -> new Vector3d(1, 0, 0);
-      case Y -> new Vector3d(0, 1, 0);
-      case Z -> new Vector3d(0, 0, 1);
-    };
   }
 
   @Override

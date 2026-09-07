@@ -2547,8 +2547,7 @@ public class View3d extends VolumeCanvas
           // re-applying here would only trigger a redundant repaint. Targets adopt the full 3D
           // rotation that the integer slider angle cannot represent.
           if (!isSource) {
-            camera.getRotation().set(quat);
-            camera.updateCameraTransform();
+            camera.setRotation(quat);
           }
         } else if (command.equals(ActionW.RESET.cmd())) {
           reset();
