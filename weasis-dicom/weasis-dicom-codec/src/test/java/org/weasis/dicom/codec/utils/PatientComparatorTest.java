@@ -136,6 +136,43 @@ class PatientComparatorTest {
   }
 
   @Test
+  void setName_dropsEmptyTrailingComponentsAndGroups() {
+    PatientComparator comp = new PatientComparator(new Attributes());
+
+    assertAll(
+        () -> {
+          comp.setName("Doe^Jane^^^");
+          assertEquals("DOE^JANE", comp.getName());
+        },
+        () -> {
+          comp.setName("Doe^Jane^^^ ");
+          assertEquals("DOE^JANE", comp.getName(), "trailing blanks then separators");
+        },
+        () -> {
+          comp.setName("Doe^Jane==");
+          assertEquals("DOE^JANE", comp.getName(), "empty ideographic and phonetic groups");
+        },
+        () -> {
+          comp.setName("Doe^Jane^^^=Doe^Jane^^^");
+          assertEquals("DOE^JANE=DOE^JANE", comp.getName(), "each group is normalized");
+        },
+        () -> {
+          comp.setName("Doe^^Middle");
+          assertEquals("DOE^^MIDDLE", comp.getName(), "inner empty components are significant");
+        });
+  }
+
+  @Test
+  void identity_trailingSeparatorsDoNotSplitTheSamePatient() {
+    // The pseudo-UID must be identical whether the source encodes the empty trailing PN components
+    // or not, otherwise the same patient is reported as inconsistent between DICOM objects.
+    PatientComparator padded = new PatientComparator(buildAttrs("MR-001", null, "Doe^Jane^^^"));
+    PatientComparator plain = new PatientComparator(buildAttrs("MR-001", null, "Doe^Jane"));
+
+    assertEquals(plain.getName(), padded.getName());
+  }
+
+  @Test
   void setPatientId_nullResolvesToNoValueConstant() {
     PatientComparator comp = new PatientComparator(new Attributes());
 
