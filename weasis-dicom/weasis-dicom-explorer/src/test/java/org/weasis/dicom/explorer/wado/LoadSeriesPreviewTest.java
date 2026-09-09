@@ -16,10 +16,12 @@ import static org.mockito.Mockito.when;
 import com.sun.net.httpserver.HttpServer;
 import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.IntStream;
 import org.dcm4che3.data.Tag;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
@@ -106,10 +108,12 @@ class LoadSeriesPreviewTest {
   void queuing_series_never_waits_for_their_previews() throws Exception {
     WadoParameters wado = new WadoParameters("arc", baseUrl, false, null, null, null, true);
 
+    // Built before timing: on a cold JVM, creating the mocks alone can exceed the server delay.
+    List<LoadSeries> seriesList =
+        IntStream.range(0, SERIES_COUNT).mapToObj(i -> loadSeries("SE" + i, wado)).toList();
+
     long start = System.nanoTime();
-    for (int i = 0; i < SERIES_COUNT; i++) {
-      loadSeries("SE" + i, wado).startDownloadImageReference(wado);
-    }
+    seriesList.forEach(s -> s.startDownloadImageReference(wado));
     long queuingMs = elapsedMs(start);
     assertTrue(
         queuingMs < SERVER_DELAY_MS,
