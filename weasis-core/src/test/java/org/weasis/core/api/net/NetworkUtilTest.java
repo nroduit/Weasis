@@ -90,6 +90,7 @@ class NetworkUtilTest {
   void timeoutsHaveDefaults() {
     assertTrue(NetworkUtil.getUrlConnectTimeoutMillis() > 0);
     assertTrue(NetworkUtil.getUrlInactivityTimeoutMillis() > 0);
+    assertTrue(NetworkUtil.getUrlResponseTimeoutMillis() > 0);
   }
 
   @Test

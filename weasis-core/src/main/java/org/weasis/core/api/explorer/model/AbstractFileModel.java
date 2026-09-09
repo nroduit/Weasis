@@ -40,7 +40,7 @@ public abstract class AbstractFileModel implements TreeModel, DataExplorerModel 
     Usage: %s:close (-a | ([-g UID]... [-s UID]...))
       -a --all         close all series
       -g --group=UID   close a group from its UID
-      -s --series=UID   close an series/image from its UID
+      -s --series=UID   close a series/image from its UID
       -? --help        show help
     """;
 

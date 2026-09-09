@@ -43,17 +43,20 @@ class URLParametersTest {
   void canonicalConstructorRejectsNegativeTimeouts() {
     assertThrows(
         IllegalArgumentException.class,
-        () -> new URLParameters(Map.of(), 0L, -1, 100, false, true, false));
+        () -> new URLParameters(Map.of(), 0L, -1, 100, 100, false, true, false));
     assertThrows(
         IllegalArgumentException.class,
-        () -> new URLParameters(Map.of(), 0L, 100, -1, false, true, false));
+        () -> new URLParameters(Map.of(), 0L, 100, -1, 100, false, true, false));
+    assertThrows(
+        IllegalArgumentException.class,
+        () -> new URLParameters(Map.of(), 0L, 100, 100, -1, false, true, false));
   }
 
   @Test
   void canonicalConstructorRejectsNegativeIfModifiedSince() {
     assertThrows(
         IllegalArgumentException.class,
-        () -> new URLParameters(Map.of(), -1L, 100, 100, false, true, false));
+        () -> new URLParameters(Map.of(), -1L, 100, 100, 100, false, true, false));
   }
 
   @Test
@@ -104,6 +107,7 @@ class URLParametersTest {
             .ifModifiedSince(10L)
             .connectTimeoutMillis(1000)
             .inactivityTimeoutMillis(2000)
+            .responseTimeoutMillis(3000)
             .httpPost(true)
             .useCaches(false)
             .allowUserInteraction(true)
@@ -112,6 +116,7 @@ class URLParametersTest {
     assertEquals(10L, built.ifModifiedSince());
     assertEquals(1000, built.connectTimeoutMillis());
     assertEquals(2000, built.inactivityTimeoutMillis());
+    assertEquals(3000, built.responseTimeoutMillis());
     assertTrue(built.httpPost());
     assertFalse(built.useCaches());
     assertTrue(built.allowUserInteraction());

@@ -43,12 +43,12 @@ See [How to build Weasis](https://nroduit.github.io/en/getting-started/building-
 * [API for building custom plug-ins](https://nroduit.github.io/en/basics/customize/build-plugins/) via the Weasis plug-in archetype
 * [Embedded DICOM viewer in CD/DVD](https://nroduit.github.io/en/tutorials/dicom-export/index.html#cddvd-image) or other portable media
 * Dicomizer module to convert standard images, videos, PDFs and STL meshes into DICOM files
-* [AI-assisted and quantitative imaging workflows](https://weasis.org/en/tutorials/dicom-artificial-intelligence/)
+* [AI-assisted and quantitative imaging workflows](https://nroduit.github.io/en/tutorials/dicom-artificial-intelligence/)
 
 ## Connectivity & Interoperability
 Weasis supports every common DICOM transport and authentication standard, fitting into existing clinical infrastructure — PACS, VNA, EHR, RIS, and HIS — in two complementary ways:
 
-* **Server-side, via a gateway** such as [ViewerHub](https://weasis.org/en/viewer-hub/) — recommended for clean, centralized integration: the gateway brokers PACS / DICOMweb access, handles authentication and manifest generation, and exposes a single endpoint to the viewer.
+* **Server-side, via a gateway** such as [ViewerHub](https://nroduit.github.io/en/viewer-hub/) — recommended for clean, centralized integration: the gateway brokers PACS / DICOMweb access, handles authentication and manifest generation, and exposes a single endpoint to the viewer.
 * **Client-side**, by configuring **DICOM nodes and DICOMweb sources** directly in Weasis — useful for standalone workstations, smaller sites, or when no gateway is available.
 * **Classic DIMSE** — Query/Retrieve (C-FIND, C-GET, C-MOVE) and Store (C-STORE).
 * **DICOMweb** — [QIDO-RS, WADO-RS and STOW-RS](https://nroduit.github.io/en/tutorials/dicomweb-config) over HTTPS, configurable per source.

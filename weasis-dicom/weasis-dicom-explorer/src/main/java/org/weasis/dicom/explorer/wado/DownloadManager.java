@@ -282,11 +282,13 @@ public class DownloadManager {
   /** Downloads the manifest, decompressing it if needed, and returns a local file to parse. */
   private static Path downloadManifest(URI uri) throws IOException {
     String path = uri.getPath();
+    // The manifest is generated on the fly: its first byte gets twice the inactivity budget, which
+    // is what bounds the wait for the headers on an HttpURLConnection.
     URLParameters urlParameters =
         new URLParameters(
             manifestAcceptHeaders(),
-            StringUtil.getInt(System.getProperty("UrlConnectionTimeout"), 7000),
-            StringUtil.getInt(System.getProperty("UrlReadTimeout"), 15000) * 2);
+            NetworkUtil.getUrlConnectTimeoutMillis(),
+            NetworkUtil.getUrlInactivityTimeoutMillis() * 2);
     ClosableURLConnection urlConnection = NetworkUtil.getUrlConnection(uri.toURL(), urlParameters);
 
     LOGGER.info("Downloading manifest: {}", path);

@@ -153,9 +153,14 @@ public class RsQueryResult extends AbstractQueryResult {
    * send.
    */
   public static URLParameters jsonQueryParameters(Map<String, String> headers) {
-    Map<String, String> jsonHeaders = new HashMap<>(headers);
+    return jsonQueryParameters(new URLParameters(headers));
+  }
+
+  /** Same as {@link #jsonQueryParameters(Map)}, keeping the timeouts of {@code parameters}. */
+  public static URLParameters jsonQueryParameters(URLParameters parameters) {
+    Map<String, String> jsonHeaders = new HashMap<>(parameters.headers());
     jsonHeaders.put("Accept", "application/dicom+json"); // NON-NLS
-    return new URLParameters(jsonHeaders);
+    return parameters.toBuilder().headers(jsonHeaders).build();
   }
 
   public static List<Attributes> parseJSON(
@@ -195,8 +200,7 @@ public class RsQueryResult extends AbstractQueryResult {
         "%s/studies/%s/series?0020000E=%s&includefield=00201209" // NON-NLS
             .formatted(dicomWebBaseUrl, studyUID, seriesUID);
     try {
-      for (Attributes series :
-          parseJSON(url, authMethod, jsonQueryParameters(urlParameters.headers()))) {
+      for (Attributes series : parseJSON(url, authMethod, jsonQueryParameters(urlParameters))) {
         // Match the exact series in case the server ignores the query filter.
         if (seriesUID.equals(series.getString(Tag.SeriesInstanceUID))) {
           return DicomUtils.getIntegerFromDicomElement(

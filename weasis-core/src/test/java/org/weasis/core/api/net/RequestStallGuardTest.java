@@ -10,6 +10,7 @@
 package org.weasis.core.api.net;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -57,6 +58,67 @@ class RequestStallGuardTest {
     var error = assertThrows(ExecutionException.class, guarded::get);
     assertInstanceOf(StallTimeoutException.class, error.getCause());
     assertTrue(pending.isCancelled(), "the upstream exchange must be cancelled");
+  }
+
+  @Test
+  void aBodylessRequestWaitsOnTheResponseBudgetNotTheStallBudget() throws Exception {
+    // A GET has no publisher to refresh the clock: server think-time must not count as a stall.
+    var guard = new RequestStallGuard(TIMEOUT_MS, 20_000);
+    var pending = new CompletableFuture<String>();
+    var guarded = guard.guard(pending);
+    Thread.sleep(TIMEOUT_MS * 3L);
+    assertFalse(guarded.isDone(), "the inactivity budget must not bound the response headers");
+    pending.complete("headers");
+    assertEquals("headers", guarded.get());
+  }
+
+  @Test
+  void aBodylessPublisherLeavesTheExchangeOnTheResponseBudget() throws Exception {
+    // HTTP/1.1 never subscribes to an empty publisher, so its completion cannot end the upload
+    // phase: a GET sent with noBody() must not be pinned to the stall budget.
+    var guard = new RequestStallGuard(TIMEOUT_MS, 20_000);
+    var publisher = HttpRequest.BodyPublishers.noBody();
+    assertSame(publisher, guard.track(publisher));
+    var pending = new CompletableFuture<String>();
+    var guarded = guard.guard(pending);
+    Thread.sleep(TIMEOUT_MS * 3L);
+    assertFalse(guarded.isDone(), "a GET must wait for its headers on the response budget");
+    pending.complete("headers");
+    assertEquals("headers", guarded.get());
+  }
+
+  @Test
+  void aResponseThatNeverArrivesFailsOnTheResponseBudget() {
+    var guard = new RequestStallGuard(20_000, TIMEOUT_MS);
+    var pending = new CompletableFuture<String>();
+    var error = assertThrows(ExecutionException.class, guard.guard(pending)::get);
+    var cause = assertInstanceOf(StallTimeoutException.class, error.getCause());
+    assertTrue(cause.getMessage().contains("No response headers"), cause.getMessage());
+    assertTrue(pending.isCancelled(), "the upstream exchange must be cancelled");
+  }
+
+  @Test
+  void aResponseBudgetThatIsNotPositiveWaitsIndefinitely() throws Exception {
+    var guard = new RequestStallGuard(TIMEOUT_MS, 0);
+    var pending = new CompletableFuture<String>();
+    var guarded = guard.guard(pending);
+    Thread.sleep(TIMEOUT_MS * 3L);
+    assertFalse(guarded.isDone(), "an unset response budget must never abort the wait");
+    pending.complete("late");
+    assertEquals("late", guarded.get());
+  }
+
+  @Test
+  void aSentBodyHandsTheExchangeOverToTheResponseBudget() throws Exception {
+    var guard = new RequestStallGuard(TIMEOUT_MS, 20_000);
+    var pending = new CompletableFuture<String>();
+    var guarded = guard.guard(pending);
+    // Publishing the whole body ends the upload phase; the server may then think for a long time.
+    guard.track(HttpRequest.BodyPublishers.ofString("payload")).subscribe(new NoOpSubscriber());
+    Thread.sleep(TIMEOUT_MS * 3L);
+    assertFalse(guarded.isDone(), "a fully sent body must not be aborted on the stall budget");
+    pending.complete("accepted");
+    assertEquals("accepted", guarded.get());
   }
 
   @Test

@@ -39,6 +39,7 @@ public class JavaNetHttpClient {
 
   private final HttpClient sharedClient;
   private final Duration inactivityTimeout;
+  private final int responseTimeoutMillis;
 
   public JavaNetHttpClient() {
     this(new JavaNetHttpClientConfig());
@@ -51,10 +52,11 @@ public class JavaNetHttpClient {
             HttpClient.Redirect.NORMAL,
             config.getProxy());
     this.inactivityTimeout = Duration.ofMillis(config.getInactivityTimeoutMillis());
+    this.responseTimeoutMillis = config.getResponseTimeoutMillis();
   }
 
   private RequestStallGuard newStallGuard() {
-    return new RequestStallGuard((int) inactivityTimeout.toMillis());
+    return new RequestStallGuard((int) inactivityTimeout.toMillis(), responseTimeoutMillis);
   }
 
   /**
