@@ -1417,7 +1417,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
   public void close(String[] argv) throws IOException {
     final String[] usage = {
       "Close DICOM files", // NON-NLS
-      "Usage: dicom:close  (-a | ([-y UID]... [-s UID]...))", // NON-NLS
+      "Usage: dicom:close (-a | ([-y UID]... [-s UID]...))", // NON-NLS
       "  -a --all           close all the patients", // NON-NLS
       "  -p --patient=ID    close a patient from its patient ID", // NON-NLS
       "  -y --study=UID     close a study, UID is Study Instance UID", // NON-NLS

@@ -1201,10 +1201,6 @@ public final class ShortcutManager {
   public String generateHtmlPage() {
     List<ShortcutEntry> entries = getShortcutList();
     String lang = Locale.getDefault().toLanguageTag();
-    String helpBaseUrl =
-        GuiUtils.getUICore()
-            .getSystemPreferences()
-            .getProperty("weasis.help.online", "https://weasis.org/en/tutorials/"); // NON-NLS
     Map<String, String> categoryTopics = buildCategoryDocTopics();
 
     StringBuilder html = new StringBuilder(4096);
@@ -1321,8 +1317,8 @@ public final class ShortcutManager {
         .append(escapeHtml(Messages.getString("ShortcutManager.html.subtitle")))
         .append("</div>\n");
     html.append("<div class=\"doc-bar\"><a href=\"")
-        .append(escapeHtml(helpBaseUrl))
-        .append("index.html\" target=\"_blank\">↗ ")
+        .append(escapeHtml(GuiUtils.getOnlineHelpUrl("index.html"))) // NON-NLS
+        .append("\" target=\"_blank\">↗ ")
         .append(escapeHtml(Messages.getString("ShortcutManager.html.online_doc")))
         .append("</a></div>\n");
 
@@ -1335,7 +1331,7 @@ public final class ShortcutManager {
     for (Map.Entry<String, List<ShortcutEntry>> group : byCategory.entrySet()) {
       html.append("<div class=\"category\">\n");
       html.append("<h2>").append(escapeHtml(group.getKey()));
-      appendDocLink(html, helpBaseUrl, categoryTopics.get(group.getKey()));
+      appendDocLink(html, categoryTopics.get(group.getKey()));
       html.append("</h2>\n");
       html.append("<table>\n");
       html.append("<tr><th>")
@@ -1374,7 +1370,7 @@ public final class ShortcutManager {
     }
 
     // ---- Non-modifiable shortcuts section ----
-    appendFixedShortcutsSection(html, helpBaseUrl);
+    appendFixedShortcutsSection(html);
 
     html.append("<footer>")
         .append(escapeHtml(Messages.getString("ShortcutManager.html.footer")))
@@ -1414,7 +1410,7 @@ public final class ShortcutManager {
    *   <li>Mouse and combined interaction shortcuts (key + mouse, drag &amp; drop, click gestures)
    * </ul>
    */
-  private static void appendFixedShortcutsSection(StringBuilder html, String helpBaseUrl) {
+  private static void appendFixedShortcutsSection(StringBuilder html) {
     // ---- Non-modifiable keyboard shortcuts ----
     html.append("<div class=\"fixed-section\">\n");
     html.append("<h2>")
@@ -1458,7 +1454,7 @@ public final class ShortcutManager {
 
     html.append("<h3>")
         .append(escapeHtml(Messages.getString("ShortcutManager.html.dicom_2d_viewer")));
-    appendDocLink(html, helpBaseUrl, "dicom-2d-viewer"); // NON-NLS
+    appendDocLink(html, "dicom-2d-viewer"); // NON-NLS
     html.append("</h3>\n");
     html.append("<table>\n");
     html.append("<tr><th>")
@@ -1497,7 +1493,7 @@ public final class ShortcutManager {
     html.append("</table>\n");
 
     html.append("<h3>").append(escapeHtml(Messages.getString("ShortcutManager.html.mpr_viewer")));
-    appendDocLink(html, helpBaseUrl, "mpr"); // NON-NLS
+    appendDocLink(html, "mpr"); // NON-NLS
     html.append("</h3>\n");
     html.append("<table>\n");
     html.append("<tr><th>")
@@ -1512,7 +1508,7 @@ public final class ShortcutManager {
     html.append("</table>\n");
 
     html.append("<h3>").append(escapeHtml(Messages.getString("ShortcutManager.html.graphics")));
-    appendDocLink(html, helpBaseUrl, "draw-measure"); // NON-NLS
+    appendDocLink(html, "draw-measure"); // NON-NLS
     html.append("</h3>\n");
     html.append("<table>\n");
     html.append("<tr><th>")
@@ -1540,7 +1536,7 @@ public final class ShortcutManager {
 
     html.append("<h3>")
         .append(escapeHtml(Messages.getString("ShortcutManager.ctx.dicom_explorer")));
-    appendDocLink(html, helpBaseUrl, "dicom-explorer"); // NON-NLS
+    appendDocLink(html, "dicom-explorer"); // NON-NLS
     html.append("</h3>\n");
     html.append("<table>\n");
     html.append("<tr><th>")
@@ -1612,14 +1608,12 @@ public final class ShortcutManager {
    * Uses the same URL pattern as {@link GuiUtils#createHelpActionListener}.
    *
    * @param html the StringBuilder to append to
-   * @param helpBaseUrl the base help URL
    * @param topic the tutorial topic path, or {@code null} to skip
    */
-  private static void appendDocLink(StringBuilder html, String helpBaseUrl, String topic) {
-    if (topic != null && helpBaseUrl != null) {
+  private static void appendDocLink(StringBuilder html, String topic) {
+    if (topic != null) {
       html.append(" <a class=\"doc-link\" href=\"")
-          .append(escapeHtml(helpBaseUrl))
-          .append(escapeHtml(topic))
+          .append(escapeHtml(GuiUtils.getOnlineHelpUrl(topic)))
           .append("\" target=\"_blank\">↗</a>");
     }
   }

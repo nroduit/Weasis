@@ -19,6 +19,7 @@ import ch.qos.logback.core.rolling.RollingFileAppender;
 import ch.qos.logback.core.rolling.SizeBasedTriggeringPolicy;
 import ch.qos.logback.core.util.FileSize;
 import java.io.File;
+import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.AppProperties;
@@ -46,6 +47,9 @@ public class AuditLog {
       "%d{dd.MM.yyyy HH:mm:ss.SSS} *%-5level* [%thread] %logger{36}: %msg%ex{3}%n"; // NON-NLS
 
   public static final String LOG_LOGGERS = "org.apache.sling.commons.log.names";
+
+  /** Third-party loggers that trace every native call at DEBUG; never let them below INFO. */
+  private static final List<String> VERBOSE_THIRD_PARTY_LOGGERS = List.of("oshi"); // NON-NLS
 
   public static final String MARKER_PERF = "*PERF*"; // NON-NLS
   public static final String LOG_CLASSES = "org.apache.sling.commons.log.classes";
@@ -91,8 +95,10 @@ public class AuditLog {
     String limit = prefs.getProperty(AuditLog.LOG_STACKTRACE_LIMIT);
     PatternLayoutEncoder encoder = AuditLog.getPatternLayoutEncoder(loggerContext, pattern, limit);
 
-    ch.qos.logback.classic.Logger logger =
-        (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME);
+    ch.qos.logback.classic.Logger logger = loggerContext.getLogger(Logger.ROOT_LOGGER_NAME);
+    Level level = Level.toLevel(prefs.getProperty(AuditLog.LOG_LEVEL), Level.INFO);
+    logger.setLevel(level);
+    capVerboseThirdPartyLoggers(loggerContext, level);
     AuditLog.createOrUpdateConsoleAppender(loggerContext, logger, encoder);
 
     if (StringUtil.hasText(prefs.getProperty(AuditLog.LOG_FILE))) {
@@ -103,6 +109,11 @@ public class AuditLog {
     } else {
       logger.detachAppender(AuditLog.NAME_ROLLING_FILES);
     }
+  }
+
+  private static void capVerboseThirdPartyLoggers(LoggerContext loggerContext, Level rootLevel) {
+    Level capped = rootLevel.isGreaterOrEqual(Level.INFO) ? rootLevel : Level.INFO;
+    VERBOSE_THIRD_PARTY_LOGGERS.forEach(name -> loggerContext.getLogger(name).setLevel(capped));
   }
 
   public static void createOrUpdateConsoleAppender(

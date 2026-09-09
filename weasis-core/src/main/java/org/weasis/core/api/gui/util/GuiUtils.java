@@ -41,6 +41,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -632,7 +633,7 @@ public class GuiUtils {
    * ...)} confirmations where the user must understand the implications of the choice.
    *
    * @param message the message to display
-   * @param helpTopic the documentation topic appended to {@code weasis.help.online}
+   * @param helpTopic the documentation topic, resolved by {@link #getOnlineHelpUrl(String)}
    * @return a JPanel ready to be passed to a JOptionPane
    */
   public static JPanel buildHelpMessagePanel(String message, String helpTopic) {
@@ -648,14 +649,43 @@ public class GuiUtils {
     return panel;
   }
 
+  /**
+   * Builds the URL of an online documentation topic for the running version.
+   *
+   * <p>The documentation site serves several Weasis releases from the same pages and selects one
+   * from a {@code v} query parameter, so the running version is appended here rather than being
+   * baked into {@code weasis.help.online}: that property is a base path the topic is concatenated
+   * onto, so a query string placed on it would end up before the topic and be lost.
+   *
+   * <p>The parameter is inserted before any fragment, because topics may carry one (for instance
+   * {@code dicom-3d-viewer/#lut-editor}).
+   *
+   * @param topic the documentation topic to open, or {@code null} for the documentation root
+   * @return the URL to open in a browser
+   */
+  public static String getOnlineHelpUrl(String topic) {
+    String url =
+        getUICore()
+                .getSystemPreferences()
+                .getProperty(
+                    "weasis.help.online", "https://nroduit.github.io/en/tutorials/") // NON-NLS
+            + (topic == null ? "" : topic);
+    String version = AppProperties.WEASIS_VERSION;
+    if (!StringUtil.hasText(version) || "0.0.0".equals(version)) { // NON-NLS
+      return url;
+    }
+    int fragment = url.indexOf('#');
+    String path = fragment < 0 ? url : url.substring(0, fragment);
+    String anchor = fragment < 0 ? "" : url.substring(fragment);
+    return path
+        + (path.indexOf('?') < 0 ? '?' : '&')
+        + "v=" // NON-NLS
+        + URLEncoder.encode(version, StandardCharsets.UTF_8)
+        + anchor;
+  }
+
   public static ActionListener createHelpActionListener(JButton jButtonHelp, String topic) {
-    return _ -> {
-      GuiUtils.openInDefaultBrowser(
-          jButtonHelp,
-          URI.create(
-              GuiUtils.getUICore().getSystemPreferences().getProperty("weasis.help.online")
-                  + topic));
-    };
+    return _ -> GuiUtils.openInDefaultBrowser(jButtonHelp, URI.create(getOnlineHelpUrl(topic)));
   }
 
   public static int getMaxLength(Rectangle bounds) {

@@ -802,7 +802,7 @@ public class WeasisWin {
             Messages.getString("WeasisWin.online"), ResourceUtil.getIcon(ActionIcon.HELP));
     GuiUtils.applySelectedIconEffect(websiteMenuItem);
     websiteMenuItem.addActionListener(
-        e -> openBrowser(websiteMenuItem, preferences.getProperty("weasis.help.online")));
+        e -> openBrowser(websiteMenuItem, GuiUtils.getOnlineHelpUrl(null)));
     helpMenuItem.add(websiteMenuItem);
     helpMenuItem.add(new JSeparator());
 
@@ -1424,7 +1424,7 @@ public class WeasisWin {
   public void ui(String[] argv) {
     final String[] usage = {
       "Manage user interface", // NON-NLS
-      "Usage: weasis:ui (-q | -v)", // NON-NLS
+      "Usage: weasis:ui (-q | -v | -m)", // NON-NLS
       "  -q --quit        shutdown Weasis", // NON-NLS
       "  -v --visible     set window on top", // NON-NLS
       "  -m --minimized   minimize the window", // NON-NLS
