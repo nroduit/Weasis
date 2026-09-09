@@ -251,7 +251,7 @@ public record ThumbnailManager(
   private Path downloadDirectThumbnail(WadoParameters wadoParameters, AuthMethod authMethod) {
     String thumbURL = getWadoRsThumbnailUrl(wadoParameters);
     if (thumbURL == null) {
-      thumbURL = (String) dicomSeries.getTagValue(TagW.DirectDownloadThumbnail);
+      thumbURL = (String) dicomSeries.getTagValue(TagW.DirectDownloadThumbnail); // NOSONAR not null
       if (!StringUtil.hasLength(thumbURL)) {
         // No referenced thumbnail, e.g. a DICOMDIR without Icon Image Sequence
         return null;

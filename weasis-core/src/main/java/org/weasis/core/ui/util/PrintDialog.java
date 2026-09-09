@@ -11,7 +11,6 @@ package org.weasis.core.ui.util;
 
 import java.awt.FlowLayout;
 import java.awt.Window;
-import java.util.List;
 import java.util.Objects;
 import javax.swing.BoxLayout;
 import javax.swing.DefaultComboBoxModel;
@@ -107,8 +106,9 @@ public class PrintDialog<I extends ImageElement> extends JDialog {
     ViewCanvas<I> selectedView = eventManager.getSelectedViewPane();
     boolean singleView = selectedViewCheckbox.isSelected();
 
-    List<ViewCanvas<I>> views = container == null ? List.of() : container.getImagePanels();
-    if (views.isEmpty() || (singleView && selectedView == null)) {
+    if (container == null
+        || container.getImagePanels().isEmpty()
+        || (singleView && selectedView == null)) {
       JOptionPane.showMessageDialog(
           WinUtil.getValidComponent(this),
           Messages.getString("PrintDialog.no_print"),

@@ -40,7 +40,7 @@ public class NonEditableGraphic extends AbstractGraphic {
     updateLabel(null, null);
   }
 
-  public NonEditableGraphic(NonEditableGraphic graphic) {
+  public NonEditableGraphic(NonEditableGraphic graphic) { // NOSONAR see initCopy()
     super(graphic);
   }
 

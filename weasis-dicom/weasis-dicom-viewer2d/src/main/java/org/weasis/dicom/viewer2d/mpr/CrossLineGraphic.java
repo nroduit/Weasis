@@ -34,7 +34,7 @@ public class CrossLineGraphic extends LineWithGapGraphic {
     super();
   }
 
-  public CrossLineGraphic(CrossLineGraphic graphic) {
+  public CrossLineGraphic(CrossLineGraphic graphic) { // NOSONAR see initCopy()
     super(graphic);
   }
 

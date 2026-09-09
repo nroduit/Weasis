@@ -56,7 +56,7 @@ public class CobbAngleToolGraphic extends OpenAngleToolGraphic {
     super(POINTS_NUMBER);
   }
 
-  public CobbAngleToolGraphic(CobbAngleToolGraphic graphic) {
+  public CobbAngleToolGraphic(CobbAngleToolGraphic graphic) { // NOSONAR see initCopy()
     super(graphic);
   }
 

@@ -77,7 +77,7 @@ public class AngleToolGraphic extends AbstractDragGraphic {
     super(POINTS_NUMBER);
   }
 
-  public AngleToolGraphic(AngleToolGraphic graphic) {
+  public AngleToolGraphic(AngleToolGraphic graphic) { // NOSONAR see initCopy()
     super(graphic);
   }
 

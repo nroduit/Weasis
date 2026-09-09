@@ -72,7 +72,7 @@ public class PerpendicularLineGraphic extends AbstractDragGraphic {
     super(POINTS_NUMBER);
   }
 
-  public PerpendicularLineGraphic(PerpendicularLineGraphic graphic) {
+  public PerpendicularLineGraphic(PerpendicularLineGraphic graphic) { // NOSONAR see initCopy()
     super(graphic);
   }
 

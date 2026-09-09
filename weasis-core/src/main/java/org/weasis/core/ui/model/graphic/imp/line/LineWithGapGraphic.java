@@ -47,7 +47,7 @@ public class LineWithGapGraphic extends AbstractDragGraphic {
     super(POINTS_NUMBER);
   }
 
-  public LineWithGapGraphic(LineWithGapGraphic graphic) {
+  public LineWithGapGraphic(LineWithGapGraphic graphic) { // NOSONAR see initCopy()
     super(graphic);
   }
 

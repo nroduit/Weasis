@@ -76,7 +76,7 @@ public class ParallelLineGraphic extends AbstractDragGraphic {
     super(POINTS_NUMBER);
   }
 
-  public ParallelLineGraphic(ParallelLineGraphic graphic) {
+  public ParallelLineGraphic(ParallelLineGraphic graphic) { // NOSONAR see initCopy()
     super(graphic);
   }
 

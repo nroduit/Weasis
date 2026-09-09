@@ -941,7 +941,7 @@ public class TagD extends TagW {
      * (0x3d) characters.
      */
     StringBuilder buf = new StringBuilder();
-    String[] names = name.split("=");
+    String[] names = name.split("="); // NOSONAR hasText does the job
     for (int k = 0; k < names.length; k++) {
       if (k > 0) {
         buf.append("=");

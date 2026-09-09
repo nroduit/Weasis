@@ -96,7 +96,7 @@ public class OpenAngleToolGraphic extends AbstractDragGraphic {
     super(pointsNumber);
   }
 
-  public OpenAngleToolGraphic(OpenAngleToolGraphic graphic) {
+  public OpenAngleToolGraphic(OpenAngleToolGraphic graphic) { // NOSONAR see initCopy()
     super(graphic);
   }
 

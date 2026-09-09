@@ -72,7 +72,7 @@ public class AnnotationGraphic extends AbstractDragGraphic {
     super(POINTS_NUMBER);
   }
 
-  public AnnotationGraphic(AnnotationGraphic annotationGraphic) {
+  public AnnotationGraphic(AnnotationGraphic annotationGraphic) { // NOSONAR see initCopy()
     super(annotationGraphic);
   }
 
