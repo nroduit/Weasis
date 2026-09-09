@@ -17,7 +17,6 @@
 
   <properties>
     <xchart.version>4.0.4</xchart.version>
-    <lablib-checkboxtree.version>4.0</lablib-checkboxtree.version>
     <VectorGraphics2D.version>0.13</VectorGraphics2D.version>
   </properties>
 
@@ -33,7 +32,7 @@
               <goal>copy-dependencies</goal>
             </goals>
             <configuration>
-              <includeArtifactIds>scribejava-core,scribejava-java8,lablib-checkboxtree,xchart,VectorGraphics2D</includeArtifactIds>
+              <includeArtifactIds>xchart,VectorGraphics2D,jakarta.json-api,parsson,oshi-core-ffm,oshi-common</includeArtifactIds>
             </configuration>
           </execution>
         </executions>
@@ -43,15 +42,15 @@
         <artifactId>bnd-maven-plugin</artifactId>
         <configuration>
           <bnd>
-            -includeresource: @target/dependency/lablib-checkboxtree-${lablib-checkboxtree.version}.jar!/!(eu/essilab/lablib/checkboxtree/examples/*)
-            -includeresource.all: lib/=target/dependency/;filter:=!lablib*.jar;lib:=true
+            -includeresource.all: lib/=target/dependency/;lib:=true
             Import-Package: org.slf4j;version=!,ch.qos.logback.*;version=!,\
             !org.apache.commons.codec.binary;resolution:=optional,com.madgag.gif.fmsware;resolution:=optional,de.rototor.pdfbox.graphics2d;\
             resolution:=optional,org.apache.pdfbox.pdmodel.*;resolution:=optional,org.scilab.forge.jlatexmath.*;resolution:=optional,\
+            org.glassfish.hk2.osgiresourcelocator;resolution:=optional,\
+            org.jspecify.annotations;resolution:=optional,\
             !sun.swing,*
             Export-Package: !org.weasis.core.internal,!org.weasis.core.util,org.weasis.core.*
-            -exportcontents: com.github.scribejava.*,eu.essilab.lablib.checkboxtree.*,\
-            org.knowm.xchart.*,de.erichseifert.*
+            -exportcontents: org.knowm.xchart.*,de.erichseifert.*,jakarta.json.*
           </bnd>
         </configuration>
       </plugin>
@@ -82,39 +81,21 @@
       <artifactId>jaxb-osgi</artifactId>
     </dependency>
     <dependency>
-      <groupId>com.github.scribejava</groupId>
-      <artifactId>scribejava-core</artifactId>
-      <version>${scribejava.version}</version>
-      <exclusions>
-        <exclusion>
-          <groupId>com.fasterxml.jackson.core</groupId>
-          <artifactId>jackson-databind</artifactId>
-        </exclusion>
-      </exclusions>
+      <groupId>jakarta.json</groupId>
+      <artifactId>jakarta.json-api</artifactId>
     </dependency>
     <dependency>
-      <groupId>com.github.scribejava</groupId>
-      <artifactId>scribejava-java8</artifactId>
-      <version>${scribejava.version}</version>
-      <exclusions>
-        <exclusion>
-          <groupId>com.fasterxml.jackson.core</groupId>
-          <artifactId>jackson-databind</artifactId>
-        </exclusion>
-      </exclusions>
-    </dependency>
-    <dependency>
-      <groupId>com.fasterxml.jackson.core</groupId>
-      <artifactId>jackson-databind</artifactId>
+      <groupId>org.eclipse.parsson</groupId>
+      <artifactId>parsson</artifactId>
+      <scope>runtime</scope>
     </dependency>
     <dependency>
       <groupId>org.weasis.thirdparty</groupId>
       <artifactId>docking-frames</artifactId>
     </dependency>
     <dependency>
-      <groupId>eu.essilab</groupId>
-      <artifactId>lablib-checkboxtree</artifactId>
-      <version>${lablib-checkboxtree.version}</version>
+      <groupId>com.github.oshi</groupId>
+      <artifactId>oshi-core-ffm</artifactId>
     </dependency>
     <dependency>
       <groupId>org.knowm.xchart</groupId>

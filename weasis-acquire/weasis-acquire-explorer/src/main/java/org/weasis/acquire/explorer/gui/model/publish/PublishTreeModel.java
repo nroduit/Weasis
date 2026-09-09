@@ -9,8 +9,6 @@
  */
 package org.weasis.acquire.explorer.gui.model.publish;
 
-import eu.essilab.lablib.checkboxtree.DefaultTreeCheckingModel;
-import eu.essilab.lablib.checkboxtree.TreeCheckingModel;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -21,6 +19,8 @@ import javax.swing.tree.TreePath;
 import org.weasis.acquire.explorer.AcquireManager;
 import org.weasis.acquire.explorer.AcquireMediaInfo;
 import org.weasis.acquire.explorer.core.bean.SeriesGroup;
+import org.weasis.core.ui.util.tree.DefaultTreeCheckingModel;
+import org.weasis.core.ui.util.tree.TreeCheckingModel;
 
 public class PublishTreeModel {
   private final DefaultTreeModel model;

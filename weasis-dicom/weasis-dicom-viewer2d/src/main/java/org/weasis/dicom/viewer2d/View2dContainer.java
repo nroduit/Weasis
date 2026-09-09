@@ -70,7 +70,6 @@ import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.editor.image.MeasureToolBar;
 import org.weasis.core.ui.editor.image.RotationToolBar;
 import org.weasis.core.ui.editor.image.ScreenshotToolBar;
-import org.weasis.core.ui.editor.image.SynchData;
 import org.weasis.core.ui.editor.image.SynchView;
 import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.editor.image.ViewerToolBar;
@@ -103,10 +102,6 @@ import org.weasis.dicom.viewer2d.dockable.ImageTool;
 
 public class View2dContainer extends DicomViewerPlugin implements PropertyChangeListener {
   private static final Logger LOGGER = LoggerFactory.getLogger(View2dContainer.class);
-
-  // Unmodifiable list of the default synchronization elements
-  public static final List<SynchView> DEFAULT_SYNCH_LIST =
-      List.of(SynchView.DEFAULT_STACK, SynchView.DEFAULT_TILE);
 
   public static final MigLayoutModel VIEWS_2x1_r1xc2_dump =
       new MigLayoutModel(
@@ -452,6 +447,8 @@ public class View2dContainer extends DicomViewerPlugin implements PropertyChange
         GuiUtils.addItemToMenu(menuRoot, manager.getCineMenu(null));
         GuiUtils.addItemToMenu(menuRoot, manager.getSortStackMenu(null));
         menuRoot.add(new JSeparator());
+        GuiUtils.addItemToMenu(menuRoot, manager.getViewportLayoutMenu(null));
+        menuRoot.add(new JSeparator());
         menuRoot.add(manager.getResetMenu(null));
       }
     }
@@ -675,10 +672,32 @@ public class View2dContainer extends DicomViewerPlugin implements PropertyChange
       Boolean enableFilter,
       boolean forceUpdate,
       boolean updateAll) {
-    ViewCanvas<DicomImageElement> selectedView = getSelectedViewCanvas();
+
+    var selectedView = getSelectedViewCanvas();
+    var viewport = getSelectedViewportPane();
 
     if (updatedKOSelection != null && selectedView instanceof View2d view2d) {
-      if (SynchData.Mode.TILE.equals(this.getSynchView().getSynchData().getMode())) {
+      if (viewport != null && viewport.isTiled()) {
+        boolean koRemoved =
+            selectedView.getSeries() != null
+                && !DicomModel.getKoSpecialElements(selectedView.getSeries())
+                    .contains(updatedKOSelection);
+        if (koRemoved) {
+          // The KO element has been deleted from the model: clear the stale reference and the
+          // filter on every canvas of the tiled pane, then refresh the tiles
+          for (ViewCanvas<DicomImageElement> view : viewport.getAllViewCanvases()) {
+            if (view instanceof View2d v) {
+              KOManager.updateKOFilter(view, null, false, -1, false);
+              v.updateKOButtonVisibleState();
+            }
+          }
+          selectedView
+              .getEventManager()
+              .getAction(ActionW.KO_FILTER)
+              .ifPresent(a -> a.setSelected(false));
+          EventManager.getInstance().updateKeyObjectComponentsListener(selectedView);
+          return;
+        }
 
         selectedView
             .getEventManager()
@@ -701,10 +720,13 @@ public class View2dContainer extends DicomViewerPlugin implements PropertyChange
         boolean koFilterActive =
             LangUtil.nullToFalse((Boolean) selectedView.getActionValue(ActionW.KO_FILTER.cmd()));
         if (updateAll && koFilterActive) {
-          List<ViewCanvas<DicomImageElement>> viewList = getImagePanels(true);
-          for (ViewCanvas<DicomImageElement> view : viewList) {
-            updateKoView(updatedKOSelection, enableFilter, forceUpdate, view);
-            ((View2d) view).updateKOButtonVisibleState();
+          // Scoped to the tiled viewport: its canvases share one series and are isolated from
+          // cross-view synchronization
+          for (ViewCanvas<DicomImageElement> view : viewport.getAllViewCanvases()) {
+            if (view instanceof View2d v) {
+              updateKoView(updatedKOSelection, enableFilter, forceUpdate, view);
+              v.updateKOButtonVisibleState();
+            }
           }
         } else {
           view2d.updateKOButtonVisibleState();
@@ -794,7 +816,7 @@ public class View2dContainer extends DicomViewerPlugin implements PropertyChange
 
   @Override
   public Class<?> getSeriesViewerClass() {
-    return view2dClass;
+    return VIEWPORT_CLASS;
   }
 
   @Override
@@ -804,7 +826,8 @@ public class View2dContainer extends DicomViewerPlugin implements PropertyChange
 
   @Override
   public List<Action> getExportActions() {
-    return selectedImagePane == null ? null : selectedImagePane.getExportActions();
+    var selected = getSelectedViewCanvas();
+    return selected == null ? null : selected.getExportActions();
   }
 
   @Override
@@ -839,11 +862,6 @@ public class View2dContainer extends DicomViewerPlugin implements PropertyChange
             });
     actions.add(printStd2);
     return actions;
-  }
-
-  @Override
-  public List<SynchView> getSynchList() {
-    return DEFAULT_SYNCH_LIST;
   }
 
   @Override

@@ -55,7 +55,6 @@ import org.weasis.core.ui.editor.image.ImageViewerEventManager;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.editor.image.MouseActions;
 import org.weasis.core.ui.editor.image.SequenceHandler;
-import org.weasis.core.ui.editor.image.SynchData;
 import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.editor.image.ViewerPlugin;
 import org.weasis.core.ui.model.graphic.DragGraphic;
@@ -471,15 +470,13 @@ public class View2d extends DefaultView2d<ImageElement> {
     @SuppressWarnings("unchecked")
     private boolean addSeriesToCurrentView(
         Series<?> seq, ImageViewerPlugin<ImageElement> selPlugin) {
-      if (selPlugin != null
-          && SynchData.Mode.TILE.equals(selPlugin.getSynchView().getSynchData().getMode())) {
-        selPlugin.addSeries((MediaSeries<ImageElement>) seq);
-        return true;
-      }
-      setSeries((MediaSeries<ImageElement>) seq);
-      // Getting the focus has a delay and so it will trigger the view selection later
-      if (selPlugin != null && selPlugin.isContainingView(View2d.this)) {
+      if (selPlugin != null && Boolean.TRUE.equals(selPlugin.isContainingView(View2d.this))) {
+        // A drop on a tile assigns the series to its whole viewport
+        selPlugin.setSeriesToView(View2d.this, (MediaSeries<ImageElement>) seq);
+        // Getting the focus has a delay and so it will trigger the view selection later
         selPlugin.setSelectedImagePaneFromFocus(View2d.this);
+      } else {
+        setSeries((MediaSeries<ImageElement>) seq);
       }
       return true;
     }

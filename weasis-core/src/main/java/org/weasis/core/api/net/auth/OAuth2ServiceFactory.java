@@ -9,12 +9,6 @@
  */
 package org.weasis.core.api.net.auth;
 
-import com.github.scribejava.core.builder.ServiceBuilder;
-import com.github.scribejava.core.builder.api.DefaultApi20;
-import com.github.scribejava.core.extractors.OAuth2AccessTokenJsonExtractor;
-import com.github.scribejava.core.extractors.TokenExtractor;
-import com.github.scribejava.core.model.OAuth2AccessToken;
-import com.github.scribejava.core.oauth.OAuth20Service;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import org.slf4j.Logger;
@@ -38,18 +32,18 @@ public final class OAuth2ServiceFactory {
   public static final DefaultAuthMethod KEYCLOAK_TEMPLATE = createKeycloakTemplate();
 
   private static final String PORT_PREF_KEY = "weasis.auth.back.port"; // NON-NLS
-  private static final Map<String, OAuth20Service> services = new ConcurrentHashMap<>();
+  private static final Map<String, OAuth2Service> services = new ConcurrentHashMap<>();
 
   private OAuth2ServiceFactory() {}
 
-  public static OAuth20Service getService(AuthMethod authMethod) {
+  public static OAuth2Service getService(AuthMethod authMethod) {
     int port = GuiUtils.getUICore().getSystemPreferences().getIntProperty(PORT_PREF_KEY, 0);
     return getService(authMethod, port);
   }
 
-  public static OAuth20Service getService(AuthMethod authMethod, int port) {
+  public static OAuth2Service getService(AuthMethod authMethod, int port) {
     String serviceKey = authMethod.getUid() + ":" + port; // NON-NLS
-    return services.computeIfAbsent(serviceKey, uid -> createOAuth20Service(authMethod, port));
+    return services.computeIfAbsent(serviceKey, uid -> createService(authMethod, port));
   }
 
   /**
@@ -81,7 +75,7 @@ public final class OAuth2ServiceFactory {
         new AuthProvider(Messages.getString("no.authentication"), null, null, null, false),
         AuthRegistration.empty()) {
       @Override
-      public OAuth2AccessToken getToken() {
+      public OAuth2Token getToken() {
         return null;
       }
     };
@@ -113,7 +107,7 @@ public final class OAuth2ServiceFactory {
         AuthRegistration.of(null, null, "openid", null)); // NON-NLS
   }
 
-  private static OAuth20Service createOAuth20Service(AuthMethod authMethod, int port) {
+  private static OAuth2Service createService(AuthMethod authMethod, int port) {
     var registration = authMethod.getAuthRegistration();
     var provider = authMethod.getAuthProvider();
     if (registration == null || provider == null) {
@@ -122,51 +116,12 @@ public final class OAuth2ServiceFactory {
       return null;
     }
 
-    var builder =
-        new ServiceBuilder(registration.clientId())
-            .apiSecret(registration.clientSecret())
-            .httpClient(new JavaNetHttpClient())
-            .defaultScope(registration.scope())
-            .userAgent(System.getProperty("http.agent"));
-
+    String callbackUrl = null;
     if (!registration.isClientCredentialsGrant()) {
       // Authorization-code grant needs a loopback redirect URI for the browser callback.
       int actualPort = port <= 0 ? SocketUtil.findAvailablePort() : port;
-      builder
-          .callback(CALLBACK_URL + actualPort)
-          .responseType(registration.getAuthorizationGrantType());
+      callbackUrl = CALLBACK_URL + actualPort;
     }
-    return builder.build(new OAuth2Api(provider));
-  }
-
-  /** OAuth2 API implementation for custom providers. */
-  static final class OAuth2Api extends DefaultApi20 {
-    private final AuthProvider provider;
-
-    OAuth2Api(AuthProvider provider) {
-      this.provider = provider;
-    }
-
-    @Override
-    public String getAccessTokenEndpoint() {
-      return provider.tokenUri();
-    }
-
-    @Override
-    public String getAuthorizationBaseUrl() {
-      return provider.authorizationUri();
-    }
-
-    @Override
-    public String getRevokeTokenEndpoint() {
-      return provider.revokeTokenUri();
-    }
-
-    @Override
-    public TokenExtractor<OAuth2AccessToken> getAccessTokenExtractor() {
-      return provider.openId()
-          ? OpenIdJsonTokenExtractor.instance()
-          : OAuth2AccessTokenJsonExtractor.instance();
-    }
+    return new OAuth2Service(provider, registration, callbackUrl, new JavaNetHttpClient());
   }
 }

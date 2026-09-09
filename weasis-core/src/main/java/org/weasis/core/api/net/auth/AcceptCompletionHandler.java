@@ -9,7 +9,6 @@
  */
 package org.weasis.core.api.net.auth;
 
-import com.github.scribejava.core.oauth.OAuth20Service;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.StringReader;
@@ -34,10 +33,10 @@ public class AcceptCompletionHandler implements AcceptCallbackHandler {
   private static final String HTTP_OK = "HTTP/1.1 200 OK\r\n";
   private static final String HTTP_NOT_FOUND = "HTTP/1.1 404 Not Found\r\n";
 
-  private final OAuth20Service service;
+  private final OAuth2Service service;
   private String code;
 
-  public AcceptCompletionHandler(OAuth20Service service) {
+  public AcceptCompletionHandler(OAuth2Service service) {
     this.service = service;
   }
 
@@ -64,7 +63,7 @@ public class AcceptCompletionHandler implements AcceptCallbackHandler {
   }
 
   @Override
-  public OAuth20Service service() {
+  public OAuth2Service service() {
     return service;
   }
 

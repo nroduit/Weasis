@@ -233,6 +233,7 @@ public final class ResourceMonitor {
     }
 
     MemoryManager memoryManager = MemoryManager.getInstance();
+    HardwareInfo.Cpu cpu = HardwareInfo.cpu().orElse(null);
     return new Snapshot(
         uptime,
         previousUptimeMillis + uptime,
@@ -243,11 +244,13 @@ public final class ResourceMonitor {
         memoryManager.getUsedNativeMemory(),
         memoryManager.getNativeBudget(),
         nativePeakPressure,
+        cpu == null ? "" : cpu.name(),
+        cpu == null ? 0 : cpu.physicalCores(),
         Runtime.getRuntime().availableProcessors(),
         osBean == null ? -1 : osBean.getProcessCpuLoad(),
         peakProcessCpuLoad,
         SystemMemory.totalPhysicalMemory(),
-        SystemMemory.freePhysicalMemory(),
+        SystemMemory.availablePhysicalMemory(),
         gcCount,
         gcTime,
         Math.min(1.0, gcTime / (double) uptime),
@@ -415,7 +418,9 @@ public final class ResourceMonitor {
    * Immutable set of resource metrics. Memory values are in bytes, CPU loads are fractions in
    * {@code [0, 1]} ({@code -1} when unavailable). Peaks, counters and workload figures are all-time
    * (accumulated across sessions); {@code uptimeMillis} and {@code gcOverhead} describe the current
-   * run.
+   * run. {@code cpuName} and {@code physicalCores} come from {@link HardwareInfo} and are empty or
+   * {@code 0} when the native probe is unavailable, while {@code cpuCores} is the JVM's logical
+   * count and is always set.
    */
   public record Snapshot(
       long uptimeMillis,
@@ -427,11 +432,13 @@ public final class ResourceMonitor {
       long nativeUsed,
       long nativeBudget,
       double nativePeakPressure,
+      String cpuName,
+      int physicalCores,
       int cpuCores,
       double processCpuLoad,
       double peakProcessCpuLoad,
       long physicalTotalMemory,
-      long physicalFreeMemory,
+      long physicalAvailableMemory,
       long gcCount,
       long gcTimeMillis,
       double gcOverhead,

@@ -9,19 +9,16 @@
  */
 package org.weasis.dicom.viewer3d.vr.lut;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
+import jakarta.json.Json;
+import jakarta.json.JsonArrayBuilder;
+import jakarta.json.JsonObject;
+import jakarta.json.JsonObjectBuilder;
 import java.util.Arrays;
+import org.weasis.core.api.util.JsonUtil;
 
 public class PresetGroup {
-  @JsonProperty("name")
   private String name;
-
-  @JsonProperty("point")
   PresetPoint[] points;
-
-  public PresetGroup() {
-    // Used by Jackson
-  }
 
   public PresetGroup(String name, PresetPoint[] points) {
     this.name = name;
@@ -48,5 +45,22 @@ public class PresetGroup {
     PresetPoint[] copiedPoints =
         Arrays.stream(points).map(PresetPoint::copy).toArray(PresetPoint[]::new);
     return new PresetGroup(name, copiedPoints);
+  }
+
+  public JsonObject toJson() {
+    JsonObjectBuilder builder = Json.createObjectBuilder();
+    JsonUtil.addIfPresent(builder, "name", name); // NON-NLS
+    JsonArrayBuilder array = Json.createArrayBuilder();
+    Arrays.stream(points).map(PresetPoint::toJson).forEach(array::add);
+    builder.add("point", array); // NON-NLS
+    return builder.build();
+  }
+
+  public static PresetGroup fromJson(JsonObject json) {
+    PresetPoint[] points =
+        JsonUtil.objects(json.getJsonArray("point")).stream() // NON-NLS
+            .map(PresetPoint::fromJson)
+            .toArray(PresetPoint[]::new);
+    return new PresetGroup(json.getString("name", null), points); // NON-NLS
   }
 }

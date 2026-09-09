@@ -12,7 +12,6 @@ package org.weasis.dicom.au;
 import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import javax.swing.JComponent;
@@ -35,7 +34,6 @@ import org.weasis.core.api.util.ResourceUtil.OtherIcon;
 import org.weasis.core.ui.editor.SeriesViewerUI;
 import org.weasis.core.ui.editor.image.ImageViewerEventManager;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
-import org.weasis.core.ui.editor.image.SynchView;
 import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.pref.LauncherToolBar;
 import org.weasis.core.ui.util.Toolbar;
@@ -59,8 +57,6 @@ public class AuContainer extends DicomViewerPlugin implements PropertyChangeList
           1,
           AuView.class.getName());
   private static final List<MigLayoutModel> LAYOUT_LIST = List.of(DEFAULT_VIEW);
-
-  private static final List<SynchView> SYNCH_LIST = Collections.emptyList();
 
   public static final SeriesViewerUI UI = new SeriesViewerUI(AuContainer.class);
 
@@ -317,11 +313,6 @@ public class AuContainer extends DicomViewerPlugin implements PropertyChangeList
   @Override
   public void selectLayoutPositionForAddingSeries(List<MediaSeries<DicomImageElement>> seriesList) {
     // Do it in addSeries()
-  }
-
-  @Override
-  public List<SynchView> getSynchList() {
-    return SYNCH_LIST;
   }
 
   @Override

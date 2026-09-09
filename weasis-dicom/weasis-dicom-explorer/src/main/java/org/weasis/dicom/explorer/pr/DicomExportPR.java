@@ -9,7 +9,6 @@
  */
 package org.weasis.dicom.explorer.pr;
 
-import eu.essilab.lablib.checkboxtree.TreeCheckingModel;
 import java.awt.Window;
 import java.util.ArrayList;
 import java.util.Enumeration;
@@ -29,6 +28,7 @@ import org.weasis.core.api.gui.util.AbstractItemDialogPage;
 import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.media.data.TagW;
+import org.weasis.core.ui.util.tree.TreeCheckingModel;
 import org.weasis.dicom.codec.DicomSeries;
 import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.display.Modality;

@@ -10,7 +10,6 @@
 package org.weasis.core.api.net.auth;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 
@@ -32,12 +31,5 @@ class JavaNetHttpClientConfigTest {
   void defaultConstructorPicksNonNullValues() {
     var cfg = new JavaNetHttpClientConfig();
     assertNotNull(cfg.getProxy());
-  }
-
-  @Test
-  void createDefaultConfigReturnsFreshInstance() {
-    var cfg = new JavaNetHttpClientConfig(1, 2, ProxySelector.getDefault());
-    var other = cfg.createDefaultConfig();
-    assertInstanceOf(JavaNetHttpClientConfig.class, other);
   }
 }

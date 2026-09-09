@@ -9,15 +9,7 @@
  */
 package org.weasis.core.api.net.auth;
 
-import com.github.scribejava.core.httpclient.multipart.BodyPartPayload;
-import com.github.scribejava.core.httpclient.multipart.ByteArrayBodyPartPayload;
-import com.github.scribejava.core.httpclient.multipart.MultipartPayload;
-import com.github.scribejava.core.model.OAuthAsyncRequestCallback;
-import com.github.scribejava.core.model.OAuthRequest;
-import com.github.scribejava.core.model.Response;
-import com.github.scribejava.core.model.Verb;
 import java.io.ByteArrayOutputStream;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
@@ -26,35 +18,24 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Path;
 import java.time.Duration;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
-import java.util.stream.Collectors;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.weasis.core.api.net.BodyPart;
+import org.weasis.core.api.net.HttpResponseStream;
 import org.weasis.core.api.net.HttpUtils;
+import org.weasis.core.api.net.MultipartBody;
 import org.weasis.core.api.net.RequestStallGuard;
-import org.weasis.core.api.net.StallGuardInputStream;
-import org.weasis.core.util.StringUtil;
+import org.weasis.core.api.net.WebRequest;
 
-/** HTTP client implementation using Java's {@link HttpClient} for ScribeJava OAuth integration. */
-public class JavaNetHttpClient implements com.github.scribejava.core.httpclient.HttpClient {
-
-  private static final Logger LOGGER = LoggerFactory.getLogger(JavaNetHttpClient.class);
+/** Executes {@link WebRequest}s with Java's {@link HttpClient}, including multipart bodies. */
+public class JavaNetHttpClient {
 
   private static final String CRLF = "\r\n";
   private static final String BOUNDARY_PREFIX = "--";
-  private static final String HEADER_USER_AGENT = "User-Agent";
   private static final String HEADER_CONTENT_TYPE = "Content-Type";
   private static final String DEFAULT_FORM_CONTENT_TYPE = "application/x-www-form-urlencoded";
-  private static final String MULTIPART_CT_PREFIX = "multipart/form-data; boundary=";
 
   private final HttpClient sharedClient;
   private final Duration inactivityTimeout;
@@ -76,146 +57,27 @@ public class JavaNetHttpClient implements com.github.scribejava.core.httpclient.
     return new RequestStallGuard((int) inactivityTimeout.toMillis());
   }
 
-  @Override
-  public void close() {
-    // HttpClient is managed externally, no cleanup required
-  }
-
   /**
-   * Serializes {@code payload} into an in-memory body and applies it to {@code builder} as a POST,
-   * setting the multipart Content-Type declared by the payload. Shared with the no-auth STOW-RS
-   * path in {@link HttpUtils}. The body is routed through {@code stallGuard} so a slow upload is
-   * only aborted once it stops progressing.
+   * Executes the request and returns the response, both halves guarded against stalled transfers
+   * rather than capped by a whole-exchange deadline, so a large send or retrieve on a slow link is
+   * only aborted when the data actually stops flowing.
    */
-  public static void applyMultipart(
-      HttpRequest.Builder builder, MultipartPayload payload, RequestStallGuard stallGuard) {
-    builder.POST(stallGuard.track(MultipartEncoder.applyTo(builder, payload)));
-  }
-
-  @Override
-  public <T> Future<T> executeAsync(
-      String userAgent,
-      Map<String, String> headers,
-      Verb httpVerb,
-      String completeUrl,
-      byte[] bodyContents,
-      OAuthAsyncRequestCallback<T> callback,
-      OAuthRequest.ResponseConverter<T> converter) {
-    return doExecuteAsync(
-        userAgent, headers, httpVerb, completeUrl, bodyContents, callback, converter);
-  }
-
-  @Override
-  public <T> Future<T> executeAsync(
-      String userAgent,
-      Map<String, String> headers,
-      Verb httpVerb,
-      String completeUrl,
-      MultipartPayload bodyContents,
-      OAuthAsyncRequestCallback<T> callback,
-      OAuthRequest.ResponseConverter<T> converter) {
-    return doExecuteAsync(
-        userAgent, headers, httpVerb, completeUrl, bodyContents, callback, converter);
-  }
-
-  @Override
-  public <T> Future<T> executeAsync(
-      String userAgent,
-      Map<String, String> headers,
-      Verb httpVerb,
-      String completeUrl,
-      String bodyContents,
-      OAuthAsyncRequestCallback<T> callback,
-      OAuthRequest.ResponseConverter<T> converter) {
-    return doExecuteAsync(
-        userAgent, headers, httpVerb, completeUrl, bodyContents, callback, converter);
-  }
-
-  @Override
-  public <T> Future<T> executeAsync(
-      String userAgent,
-      Map<String, String> headers,
-      Verb httpVerb,
-      String completeUrl,
-      File bodyContents,
-      OAuthAsyncRequestCallback<T> callback,
-      OAuthRequest.ResponseConverter<T> converter) {
-    return doExecuteAsync(
-        userAgent, headers, httpVerb, completeUrl, bodyContents.toPath(), callback, converter);
-  }
-
-  @Override
-  public Response execute(
-      String userAgent,
-      Map<String, String> headers,
-      Verb httpVerb,
-      String completeUrl,
-      byte[] bodyContents)
-      throws InterruptedException, ExecutionException, IOException {
-    return doExecute(userAgent, headers, httpVerb, completeUrl, bodyContents);
-  }
-
-  @Override
-  public Response execute(
-      String userAgent,
-      Map<String, String> headers,
-      Verb httpVerb,
-      String completeUrl,
-      MultipartPayload multipartPayloads)
-      throws InterruptedException, ExecutionException, IOException {
-    return doExecute(userAgent, headers, httpVerb, completeUrl, multipartPayloads);
-  }
-
-  @Override
-  public Response execute(
-      String userAgent,
-      Map<String, String> headers,
-      Verb httpVerb,
-      String completeUrl,
-      String bodyContents)
-      throws InterruptedException, ExecutionException, IOException {
-    return doExecute(userAgent, headers, httpVerb, completeUrl, bodyContents);
-  }
-
-  @Override
-  public Response execute(
-      String userAgent,
-      Map<String, String> headers,
-      Verb httpVerb,
-      String completeUrl,
-      File bodyContents)
-      throws InterruptedException, ExecutionException, IOException {
-    return doExecute(userAgent, headers, httpVerb, completeUrl, bodyContents.toPath());
-  }
-
-  private <T> CompletableFuture<T> doExecuteAsync(
-      String userAgent,
-      Map<String, String> headers,
-      Verb httpVerb,
-      String completeUrl,
-      Object bodyContents,
-      OAuthAsyncRequestCallback<T> callback,
-      OAuthRequest.ResponseConverter<T> converter) {
-
+  public HttpResponseStream execute(WebRequest request) throws IOException {
     var stallGuard = newStallGuard();
-    var request =
-        createRequestBuilder(userAgent, headers, httpVerb, completeUrl, bodyContents, stallGuard)
-            .build();
-
-    return stallGuard
-        .guard(sharedClient.sendAsync(request, HttpResponse.BodyHandlers.ofInputStream()))
-        .thenApply(httpResponse -> processAsyncResponse(httpResponse, callback, converter))
-        .exceptionally(
-            throwable -> {
-              var cause = unwrap(throwable);
-              LOGGER.warn("Async HTTP request to {} failed", completeUrl, cause);
-              if (callback != null) {
-                callback.onThrowable(cause);
-              }
-              // Propagate the failure so Future.get() throws ExecutionException(cause) instead of
-              // silently returning null and hiding the underlying error.
-              throw cause instanceof RuntimeException re ? re : new CompletionException(cause);
-            });
+    var httpRequest = createRequestBuilder(request, stallGuard).build();
+    var future =
+        stallGuard.guard(
+            sharedClient.sendAsync(httpRequest, HttpResponse.BodyHandlers.ofInputStream()));
+    try {
+      return new HttpResponseStream(future.get(), (int) inactivityTimeout.toMillis());
+    } catch (InterruptedException e) {
+      future.cancel(true);
+      Thread.currentThread().interrupt();
+      throw new IOException("Request interrupted", e);
+    } catch (ExecutionException e) {
+      var cause = unwrap(e.getCause());
+      throw cause instanceof IOException io ? io : new IOException("Request failed", cause);
+    }
   }
 
   private static Throwable unwrap(Throwable t) {
@@ -227,233 +89,85 @@ public class JavaNetHttpClient implements com.github.scribejava.core.httpclient.
     return current;
   }
 
-  private Response doExecute(
-      String userAgent,
-      Map<String, String> headers,
-      Verb httpVerb,
-      String completeUrl,
-      Object bodyContents)
-      throws IOException {
-
-    var stallGuard = newStallGuard();
-    var request =
-        createRequestBuilder(userAgent, headers, httpVerb, completeUrl, bodyContents, stallGuard)
-            .build();
-
-    var future =
-        stallGuard.guard(
-            sharedClient.sendAsync(request, HttpResponse.BodyHandlers.ofInputStream()));
-    try {
-      return toResponse(future.get());
-    } catch (InterruptedException e) {
-      future.cancel(true);
-      Thread.currentThread().interrupt();
-      throw new IOException("Request interrupted", e);
-    } catch (ExecutionException e) {
-      var cause = unwrap(e.getCause());
-      throw cause instanceof IOException io ? io : new IOException("Request failed", cause);
-    }
-  }
-
   /**
-   * The body is guarded against stalled reads rather than capped by a request deadline, so a large
-   * retrieve on a slow link is only aborted when the data actually stops flowing.
+   * Serializes {@code body} into an in-memory POST body on {@code builder}, setting the multipart
+   * Content-Type declared by the body. Shared with the no-auth STOW-RS path in {@link HttpUtils}.
+   * The body is routed through {@code stallGuard} so a slow upload is only aborted once it stops
+   * progressing.
    */
-  private Response toResponse(HttpResponse<InputStream> httpResponse) {
-    return new Response(
-        httpResponse.statusCode(),
-        httpResponse.version().toString(),
-        parseHeaders(httpResponse),
-        StallGuardInputStream.wrap(httpResponse.body(), (int) inactivityTimeout.toMillis()));
-  }
-
-  private <T> T processAsyncResponse(
-      HttpResponse<InputStream> httpResponse,
-      OAuthAsyncRequestCallback<T> callback,
-      OAuthRequest.ResponseConverter<T> converter) {
-    try {
-      @SuppressWarnings("unchecked")
-      T result = converter == null ? (T) httpResponse : converter.convert(toResponse(httpResponse));
-      if (callback != null) {
-        callback.onCompleted(result);
-      }
-      return result;
-    } catch (IOException e) {
-      LOGGER.warn(
-          "Failed to process async HTTP response (status={})", httpResponse.statusCode(), e);
-      // Surface the failure via the future so callers see the real cause instead of a null result.
-      throw new UncheckedIOException(e);
-    }
+  public static void applyMultipart(
+      HttpRequest.Builder builder, MultipartBody body, RequestStallGuard stallGuard) {
+    builder.POST(stallGuard.track(MultipartEncoder.applyTo(builder, body)));
   }
 
   private static HttpRequest.Builder createRequestBuilder(
-      String userAgent,
-      Map<String, String> headers,
-      Verb httpVerb,
-      String completeUrl,
-      Object bodyContents,
-      RequestStallGuard stallGuard) {
-    var requestBuilder = HttpRequest.newBuilder(URI.create(completeUrl));
-    if (StringUtil.hasText(userAgent)) {
-      requestBuilder.setHeader(HEADER_USER_AGENT, userAgent);
-    }
+      WebRequest request, RequestStallGuard stallGuard) {
+    var builder = HttpRequest.newBuilder(URI.create(request.getUrl()));
     boolean callerSetContentType = false;
-    if (headers != null) {
-      for (var entry : headers.entrySet()) {
-        requestBuilder.setHeader(entry.getKey(), entry.getValue());
-        if (HEADER_CONTENT_TYPE.equalsIgnoreCase(entry.getKey())) {
-          callerSetContentType = true;
-        }
+    for (var entry : request.getHeaders().entrySet()) {
+      builder.setHeader(entry.getKey(), entry.getValue());
+      if (HEADER_CONTENT_TYPE.equalsIgnoreCase(entry.getKey())) {
+        callerSetContentType = true;
       }
     }
-    // Match scribejava's JDKHttpClient: default to form-urlencoded for body-bearing verbs.
-    // Without this, providers like Google reject the token request with "Invalid JSON payload".
-    if (!callerSetContentType && httpVerb.isPermitBody() && needsFormContentType(bodyContents)) {
-      requestBuilder.setHeader(HEADER_CONTENT_TYPE, DEFAULT_FORM_CONTENT_TYPE);
+    var method = request.getMethod();
+    var multipart = request.getMultipartBody();
+    byte[] body = request.getBody();
+    HttpRequest.BodyPublisher publisher;
+    if (multipart != null && method.permitsBody()) {
+      publisher = MultipartEncoder.applyTo(builder, multipart);
+    } else if (body != null && method.permitsBody()) {
+      // Default to form-urlencoded: providers like Google reject token requests without it.
+      if (!callerSetContentType) {
+        builder.setHeader(HEADER_CONTENT_TYPE, DEFAULT_FORM_CONTENT_TYPE);
+      }
+      publisher = HttpRequest.BodyPublishers.ofByteArray(body);
+    } else {
+      publisher = HttpRequest.BodyPublishers.noBody();
     }
-    setBody(requestBuilder, bodyContents, httpVerb, stallGuard);
-    return requestBuilder;
+    builder.method(method.name(), stallGuard.track(publisher));
+    return builder;
   }
 
-  private static boolean needsFormContentType(Object bodyContents) {
-    // MultipartPayload sets its own Content-Type in MultipartEncoder; files/paths shouldn't be
-    // declared as form-urlencoded.
-    return bodyContents instanceof byte[] || bodyContents instanceof String || bodyContents == null;
-  }
-
-  public static Map<String, String> parseHeaders(HttpResponse<?> response) {
-    return response.headers().map().entrySet().stream()
-        .collect(
-            Collectors.toMap(
-                Map.Entry::getKey,
-                e -> String.join(", ", e.getValue()),
-                (existing, replacement) -> existing,
-                () -> new TreeMap<>(String.CASE_INSENSITIVE_ORDER)));
-  }
-
-  private static void setBody(
-      HttpRequest.Builder requestBuilder,
-      Object bodyContents,
-      Verb httpVerb,
-      RequestStallGuard stallGuard) {
-    if (!httpVerb.isPermitBody()) {
-      requestBuilder.method(httpVerb.name(), HttpRequest.BodyPublishers.noBody());
-      return;
-    }
-
-    var publisher =
-        switch (bodyContents) {
-          case null -> {
-            if (httpVerb.isRequiresBody()) {
-              throw new IllegalArgumentException("Body content is required but null");
-            }
-            yield HttpRequest.BodyPublishers.noBody();
-          }
-          case byte[] bytes -> HttpRequest.BodyPublishers.ofByteArray(bytes);
-          case String str ->
-              HttpRequest.BodyPublishers.ofByteArray(str.getBytes(StandardCharsets.UTF_8));
-          case Path path -> MultipartEncoder.filePublisher(path);
-          case MultipartPayload multi -> MultipartEncoder.applyTo(requestBuilder, multi);
-          default ->
-              throw new IllegalArgumentException(
-                  "Unsupported body type: " + bodyContents.getClass());
-        };
-    requestBuilder.method(httpVerb.name(), stallGuard.track(publisher));
-  }
-
-  /** Encodes a {@link MultipartPayload} into a single byte-array body. */
+  /** Encodes a {@link MultipartBody} into a single byte-array body. */
   private static final class MultipartEncoder {
 
     private MultipartEncoder() {}
 
-    static HttpRequest.BodyPublisher filePublisher(Path path) {
-      try {
-        return HttpRequest.BodyPublishers.ofFile(path);
-      } catch (IOException e) {
-        throw new UncheckedIOException("Failed to read file: " + path, e);
-      }
-    }
-
     /** Sets the multipart Content-Type and returns the encoded body, left for the caller to set. */
-    static HttpRequest.BodyPublisher applyTo(
-        HttpRequest.Builder requestBuilder, MultipartPayload payload) {
-      var parts = new ArrayList<BodySupplier<InputStream>>();
-      collectParts(parts, payload);
+    static HttpRequest.BodyPublisher applyTo(HttpRequest.Builder builder, MultipartBody body) {
       try {
-        byte[] body = serialize(parts);
-        requestBuilder.setHeader(HEADER_CONTENT_TYPE, resolveContentType(payload));
-        return HttpRequest.BodyPublishers.ofByteArray(body);
+        byte[] content = serialize(body);
+        builder.setHeader(HEADER_CONTENT_TYPE, body.contentType());
+        return HttpRequest.BodyPublishers.ofByteArray(content);
       } catch (IOException e) {
         throw new UncheckedIOException("Failed to prepare multipart payload", e);
       }
     }
 
-    /** Honors the payload's own Content-Type (e.g. STOW-RS multipart/related), else form-data. */
-    private static String resolveContentType(MultipartPayload payload) {
-      var headers = payload.getHeaders();
-      if (headers != null) {
-        for (var entry : headers.entrySet()) {
-          if (HEADER_CONTENT_TYPE.equalsIgnoreCase(entry.getKey())
-              && StringUtil.hasText(entry.getValue())) {
-            return entry.getValue();
-          }
-        }
-      }
-      return MULTIPART_CT_PREFIX + payload.getBoundary();
-    }
-
-    private static byte[] serialize(List<BodySupplier<InputStream>> parts) throws IOException {
+    private static byte[] serialize(MultipartBody body) throws IOException {
       var out = new ByteArrayOutputStream();
-      for (var supplier : parts) {
-        try (var in = supplier.get()) {
+      String boundary = body.getBoundary();
+      List<BodyPart> parts = body.getBodyParts();
+      for (var part : parts) {
+        write(out, renderBoundaryAndHeaders(part, boundary));
+        try (InputStream in = part.getContent().get()) {
           in.transferTo(out);
         }
+        write(out, CRLF);
       }
+      write(out, BOUNDARY_PREFIX + boundary + BOUNDARY_PREFIX);
       return out.toByteArray();
     }
 
-    private static void collectParts(
-        List<BodySupplier<InputStream>> parts, MultipartPayload payload) {
-      if (payload.getPreamble() != null) {
-        parts.add(BodySupplier.ofString(payload.getPreamble() + CRLF));
-      }
-      var bodyParts = payload.getBodyParts();
-      if (bodyParts.isEmpty()) {
-        parts.add(BodySupplier.empty());
-        return;
-      }
-      String boundary = payload.getBoundary();
-      for (var bodyPart : bodyParts) {
-        parts.add(BodySupplier.ofString(renderBoundaryAndHeaders(bodyPart, boundary)));
-        appendContent(parts, bodyPart);
-        parts.add(BodySupplier.ofString(CRLF));
-      }
-      parts.add(BodySupplier.ofString(BOUNDARY_PREFIX + boundary + BOUNDARY_PREFIX));
-      if (payload.getEpilogue() != null) {
-        parts.add(BodySupplier.ofString(CRLF + payload.getEpilogue()));
-      }
-    }
-
-    private static String renderBoundaryAndHeaders(BodyPartPayload bodyPart, String boundary) {
+    private static String renderBoundaryAndHeaders(BodyPart part, String boundary) {
       var buf = new StringBuilder().append(BOUNDARY_PREFIX).append(boundary).append(CRLF);
-      var headers = bodyPart.getHeaders();
-      if (headers != null) {
-        headers.forEach((k, v) -> buf.append(k).append(": ").append(v).append(CRLF));
-      }
+      part.getHeaders().forEach((k, v) -> buf.append(k).append(": ").append(v).append(CRLF));
       return buf.append(CRLF).toString();
     }
 
-    private static void appendContent(
-        List<BodySupplier<InputStream>> parts, BodyPartPayload bodyPart) {
-      switch (bodyPart) {
-        case MultipartPayload multi -> collectParts(parts, multi);
-        case ByteArrayBodyPartPayload b ->
-            parts.add(BodySupplier.ofBytes(b.getPayload(), b.getOff(), b.getLen()));
-        case FileBodyPartPayload f -> parts.add(f.getPayload());
-        default ->
-            throw new IllegalArgumentException(
-                "Unsupported body part type: " + bodyPart.getClass());
-      }
+    private static void write(ByteArrayOutputStream out, String text) throws IOException {
+      out.write(text.getBytes(StandardCharsets.UTF_8));
     }
   }
 }

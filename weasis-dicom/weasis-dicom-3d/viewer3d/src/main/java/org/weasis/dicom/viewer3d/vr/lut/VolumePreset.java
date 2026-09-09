@@ -9,27 +9,20 @@
  */
 package org.weasis.dicom.viewer3d.vr.lut;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
+import jakarta.json.Json;
+import jakarta.json.JsonArrayBuilder;
+import jakarta.json.JsonObject;
+import jakarta.json.JsonObjectBuilder;
 import java.util.Arrays;
 import java.util.List;
+import org.weasis.core.api.util.JsonUtil;
 
 public class VolumePreset {
-  @JsonProperty(value = "name", required = true)
   private String name;
-
-  @JsonProperty(value = "modality", required = true)
   private String modality;
-
-  @JsonProperty("default")
   private boolean defaultElement;
-
-  @JsonProperty(value = "group", required = true)
-  public PresetGroup[] groups;
-
-  @JsonProperty("shade")
+  public PresetGroup[] groups = new PresetGroup[0];
   private boolean shade;
-
-  @JsonProperty(value = "specularPower", required = true)
   private float specularPower;
 
   public String getName() {
@@ -74,6 +67,34 @@ public class VolumePreset {
 
   public void setGroups(PresetGroup[] groups) {
     this.groups = groups;
+  }
+
+  public JsonObject toJson() {
+    JsonObjectBuilder builder = Json.createObjectBuilder();
+    JsonUtil.addIfPresent(builder, "name", name); // NON-NLS
+    JsonUtil.addIfPresent(builder, "modality", modality); // NON-NLS
+    builder.add("default", defaultElement); // NON-NLS
+    builder.add("shade", shade); // NON-NLS
+    builder.add("specularPower", JsonUtil.decimal(specularPower)); // NON-NLS
+    JsonArrayBuilder array = Json.createArrayBuilder();
+    Arrays.stream(groups).map(PresetGroup::toJson).forEach(array::add);
+    builder.add("group", array); // NON-NLS
+    return builder.build();
+  }
+
+  /** Numbers and booleans may be quoted, as they are in the bundled presets. */
+  public static VolumePreset fromJson(JsonObject json) {
+    VolumePreset preset = new VolumePreset();
+    preset.name = json.getString("name", null); // NON-NLS
+    preset.modality = json.getString("modality", null); // NON-NLS
+    preset.defaultElement = JsonUtil.getBoolean(json, "default", false); // NON-NLS
+    preset.shade = JsonUtil.getBoolean(json, "shade", false); // NON-NLS
+    preset.specularPower = JsonUtil.getFloat(json, "specularPower", 0f); // NON-NLS
+    preset.groups =
+        JsonUtil.objects(json.getJsonArray("group")).stream() // NON-NLS
+            .map(PresetGroup::fromJson)
+            .toArray(PresetGroup[]::new);
+    return preset;
   }
 
   public List<PresetGroup> getGroups() {

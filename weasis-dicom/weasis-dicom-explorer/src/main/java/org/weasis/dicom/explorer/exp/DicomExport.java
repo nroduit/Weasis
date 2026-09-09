@@ -9,8 +9,6 @@
  */
 package org.weasis.dicom.explorer.exp;
 
-import eu.essilab.lablib.checkboxtree.TreeCheckingModel;
-import eu.essilab.lablib.checkboxtree.TreeCheckingModel.CheckingMode;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Window;
@@ -33,6 +31,8 @@ import org.weasis.core.api.gui.util.AbstractWizardDialog;
 import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.PageItem;
+import org.weasis.core.ui.util.tree.TreeCheckingModel;
+import org.weasis.core.ui.util.tree.TreeCheckingModel.CheckingMode;
 import org.weasis.dicom.codec.DicomSeries;
 import org.weasis.dicom.explorer.DicomModel;
 import org.weasis.dicom.explorer.LocalPersistence;

@@ -18,28 +18,11 @@
   <build>
     <plugins>
       <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-dependency-plugin</artifactId>
-        <executions>
-          <execution>
-            <id>copy-dependency</id>
-            <goals>
-              <goal>copy-dependencies</goal>
-            </goals>
-            <configuration>
-              <includeArtifactIds>usbdrivedetector,powershell-lib-java</includeArtifactIds>
-            </configuration>
-          </execution>
-        </executions>
-      </plugin>
-      <plugin>
         <groupId>biz.aQute.bnd</groupId>
         <artifactId>bnd-maven-plugin</artifactId>
         <configuration>
           <bnd>
-            -includeresource.all: lib/=target/dependency/;lib:=true
             Export-Package: org.weasis.acquire.explorer.*
-            -exportcontents:net.samuelcampos.usbdrivedetector.*
           </bnd>
         </configuration>
       </plugin>
@@ -108,11 +91,6 @@
       <artifactId>weasis-base-viewer2d</artifactId>
       <version>${project.version}</version>
       <scope>provided</scope>
-    </dependency>
-    <dependency>
-      <groupId>net.samuelcampos</groupId>
-      <artifactId>usbdrivedetector</artifactId>
-      <version>2.2.1</version>
     </dependency>
   </dependencies>
 </project>

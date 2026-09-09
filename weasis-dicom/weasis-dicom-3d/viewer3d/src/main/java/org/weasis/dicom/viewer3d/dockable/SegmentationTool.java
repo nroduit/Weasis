@@ -10,8 +10,6 @@
 package org.weasis.dicom.viewer3d.dockable;
 
 import bibliothek.gui.dock.common.CLocation;
-import eu.essilab.lablib.checkboxtree.TreeCheckingEvent;
-import eu.essilab.lablib.checkboxtree.TreeCheckingModel;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.util.ArrayList;
@@ -44,6 +42,8 @@ import org.weasis.core.ui.model.graphic.imp.seg.GroupTreeNode;
 import org.weasis.core.ui.model.graphic.imp.seg.SegContour;
 import org.weasis.core.ui.model.graphic.imp.seg.SegRegion;
 import org.weasis.core.ui.util.*;
+import org.weasis.core.ui.util.tree.TreeCheckingEvent;
+import org.weasis.core.ui.util.tree.TreeCheckingModel;
 import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.SpecialElementRegion;

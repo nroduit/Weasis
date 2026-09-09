@@ -9,8 +9,6 @@
  */
 package org.weasis.core.api.net;
 
-import com.github.scribejava.core.model.OAuthRequest;
-import com.github.scribejava.core.model.Verb;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
@@ -101,7 +99,7 @@ public final class NetworkUtil {
   }
 
   public static HttpStream getHttpResponse(
-      String url, URLParameters urlParameters, AuthMethod authMethod, OAuthRequest authRequest)
+      String url, URLParameters urlParameters, AuthMethod authMethod, WebRequest authRequest)
       throws IOException {
     if (HttpUtils.isNoAuthRequired(authMethod)) {
       return prepareConnection(URI.create(url).toURL().openConnection(), urlParameters);
@@ -109,7 +107,10 @@ public final class NetworkUtil {
     var request =
         Objects.requireNonNullElseGet(
             authRequest,
-            () -> new OAuthRequest(urlParameters.httpPost() ? Verb.POST : Verb.GET, url));
+            () ->
+                new WebRequest(
+                    urlParameters.httpPost() ? WebRequest.Method.POST : WebRequest.Method.GET,
+                    url));
     return HttpUtils.executeAuthenticatedRequest(request, urlParameters, authMethod);
   }
 

@@ -12,11 +12,9 @@ package org.weasis.dicom.explorer.imp;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.mockito.Mockito.mock;
 
 import java.io.File;
 import java.io.IOException;
-import java.lang.reflect.Method;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -188,7 +186,7 @@ class DicomDirTraversalTest {
     return rec;
   }
 
-  /** Walks the DICOMDIR the way DicomDirLoader does, then calls its private toFileName(). */
+  /** Walks the DICOMDIR the way DicomDirLoader does, then resolves the IMAGE record. */
   private static Path resolveInstanceFile(Path dicomdir) throws Exception {
     try (DicomDirReader reader = new DicomDirReader(dicomdir.toFile())) {
       Attributes record = reader.findFirstRootDirectoryRecordInUse(true);
@@ -198,12 +196,9 @@ class DicomDirTraversalTest {
       assertNotNull(record, "no IMAGE record found in the crafted DICOMDIR");
       assertEquals(RecordType.IMAGE.name(), record.getString(Tag.DirectoryRecordType));
 
-      Method toFileName =
-          DicomDirLoader.class.getDeclaredMethod(
-              "toFileName", Attributes.class, DicomDirReader.class);
-      toFileName.setAccessible(true);
-      // The method uses no instance state; mock() avoids the DicomModel-dependent constructor.
-      return (Path) toFileName.invoke(mock(DicomDirLoader.class), record, reader);
+      return new DicomDirFileResolver(dicomdir)
+          .resolve(record.getStrings(Tag.ReferencedFileID))
+          .orElse(null);
     }
   }
 }

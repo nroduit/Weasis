@@ -9,36 +9,20 @@
  */
 package org.weasis.dicom.viewer3d.vr.lut;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
+import jakarta.json.Json;
+import jakarta.json.JsonObject;
+import jakarta.json.JsonObjectBuilder;
+import org.weasis.core.api.util.JsonUtil;
 
 public class PresetPoint {
-  @JsonProperty(value = "intensity", required = true)
   private int intensity;
-
-  @JsonProperty(value = "opacity", required = true)
   private float opacity;
-
-  @JsonProperty("red")
   private Float red;
-
-  @JsonProperty("green")
   private Float green;
-
-  @JsonProperty("blue")
   private Float blue;
-
-  @JsonProperty("specular")
   private Float specular;
-
-  @JsonProperty("ambient")
   private Float ambient;
-
-  @JsonProperty("diffuse")
   private Float diffuse;
-
-  public PresetPoint() {
-    // Used by Jackson
-  }
 
   public PresetPoint(
       int intensity,
@@ -125,6 +109,32 @@ public class PresetPoint {
 
   public PresetPoint copy() {
     return new PresetPoint(intensity, opacity, red, green, blue, specular, ambient, diffuse);
+  }
+
+  public JsonObject toJson() {
+    JsonObjectBuilder builder =
+        Json.createObjectBuilder()
+            .add("intensity", intensity) // NON-NLS
+            .add("opacity", JsonUtil.decimal(opacity)); // NON-NLS
+    JsonUtil.addIfPresent(builder, "red", red); // NON-NLS
+    JsonUtil.addIfPresent(builder, "green", green); // NON-NLS
+    JsonUtil.addIfPresent(builder, "blue", blue); // NON-NLS
+    JsonUtil.addIfPresent(builder, "specular", specular); // NON-NLS
+    JsonUtil.addIfPresent(builder, "ambient", ambient); // NON-NLS
+    JsonUtil.addIfPresent(builder, "diffuse", diffuse); // NON-NLS
+    return builder.build();
+  }
+
+  public static PresetPoint fromJson(JsonObject json) {
+    return new PresetPoint(
+        JsonUtil.getInt(json, "intensity", 0), // NON-NLS
+        JsonUtil.getFloat(json, "opacity", 0f), // NON-NLS
+        JsonUtil.getFloat(json, "red"), // NON-NLS
+        JsonUtil.getFloat(json, "green"), // NON-NLS
+        JsonUtil.getFloat(json, "blue"), // NON-NLS
+        JsonUtil.getFloat(json, "specular"), // NON-NLS
+        JsonUtil.getFloat(json, "ambient"), // NON-NLS
+        JsonUtil.getFloat(json, "diffuse")); // NON-NLS
   }
 
   public static float convertFloat(Float val, float defaultValue) {

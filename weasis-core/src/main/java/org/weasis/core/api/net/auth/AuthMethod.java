@@ -9,8 +9,6 @@
  */
 package org.weasis.core.api.net.auth;
 
-import com.github.scribejava.core.model.OAuth2AccessToken;
-
 /** OAuth2-based authentication method providing token management and configuration access. */
 public interface AuthMethod {
 
@@ -32,7 +30,7 @@ public interface AuthMethod {
    *
    * @return OAuth2 access token, or {@code null} if authentication fails
    */
-  OAuth2AccessToken getToken();
+  OAuth2Token getToken();
 
   /**
    * @return authentication registration details
@@ -66,6 +64,6 @@ public interface AuthMethod {
    */
   default boolean hasValidToken() {
     var token = getToken();
-    return token != null && !token.getAccessToken().isEmpty();
+    return token != null && !token.accessToken().isEmpty();
   }
 }

@@ -17,8 +17,6 @@ import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import com.github.scribejava.core.model.OAuth2AccessToken;
-import com.github.scribejava.core.oauth.OAuth20Service;
 import java.io.IOException;
 import java.lang.reflect.Method;
 import java.util.Map;
@@ -27,11 +25,16 @@ import java.util.concurrent.atomic.AtomicReference;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
+import org.weasis.core.api.net.auth.OAuth2Service.Pkce;
 
 class DefaultAuthMethodTest {
 
   private static final AuthProvider PROVIDER =
       new AuthProvider("Test", "https://auth", "https://token", null, false);
+
+  private static OAuth2Token token(String accessToken, String refreshToken) {
+    return new OAuth2Token(accessToken, "Bearer", 3600, refreshToken, null, null);
+  }
 
   @Test
   void constructorAcceptsExplicitUid() {
@@ -72,7 +75,7 @@ class DefaultAuthMethodTest {
     var method = new DefaultAuthMethod("u", PROVIDER, AuthRegistration.empty());
     var tokenField = DefaultAuthMethod.class.getDeclaredField("token");
     tokenField.setAccessible(true);
-    tokenField.set(method, Mockito.mock(OAuth2AccessToken.class));
+    tokenField.set(method, token("at", null));
     method.resetToken();
     assertNull(tokenField.get(method));
   }
@@ -82,8 +85,8 @@ class DefaultAuthMethodTest {
     var method = new DefaultAuthMethod("u", PROVIDER, AuthRegistration.empty());
     method.setCode("refresh-token");
 
-    var service = Mockito.mock(OAuth20Service.class);
-    var refreshed = Mockito.mock(OAuth2AccessToken.class);
+    var service = Mockito.mock(OAuth2Service.class);
+    var refreshed = token("at", "refresh-token");
     Mockito.when(service.refreshAccessToken("refresh-token")).thenReturn(refreshed);
 
     try (MockedStatic<OAuth2ServiceFactory> mocked =
@@ -98,7 +101,7 @@ class DefaultAuthMethodTest {
     var method = new DefaultAuthMethod("u", PROVIDER, AuthRegistration.empty());
     method.setCode("refresh-token");
 
-    var service = Mockito.mock(OAuth20Service.class);
+    var service = Mockito.mock(OAuth2Service.class);
     Mockito.when(service.refreshAccessToken(Mockito.anyString()))
         .thenThrow(new RuntimeException("nope"));
 
@@ -106,8 +109,7 @@ class DefaultAuthMethodTest {
         Mockito.mockStatic(OAuth2ServiceFactory.class)) {
       mocked.when(() -> OAuth2ServiceFactory.getService(method)).thenReturn(service);
       // authenticate() is invoked next; with no service available the IOException is logged and
-      // null
-      // is returned.
+      // null is returned.
       mocked.when(() -> OAuth2ServiceFactory.getService(method)).thenReturn(null);
       assertNull(method.getToken());
     }
@@ -123,9 +125,9 @@ class DefaultAuthMethodTest {
     var registration =
         AuthRegistration.of("client", "secret", "scope", null, AuthRegistration.CLIENT_CREDENTIALS);
     var method = new DefaultAuthMethod("u", PROVIDER, registration);
-    var service = Mockito.mock(OAuth20Service.class);
-    var token = Mockito.mock(OAuth2AccessToken.class);
-    Mockito.when(service.getAccessTokenClientCredentialsGrant()).thenReturn(token);
+    var service = Mockito.mock(OAuth2Service.class);
+    var token = token("at", null);
+    Mockito.when(service.getClientCredentialsToken()).thenReturn(token);
 
     try (MockedStatic<OAuth2ServiceFactory> mocked =
         Mockito.mockStatic(OAuth2ServiceFactory.class)) {
@@ -133,7 +135,7 @@ class DefaultAuthMethodTest {
       assertSame(token, method.getToken());
     }
     // No browser flow should have been triggered.
-    Mockito.verify(service, Mockito.never()).createAuthorizationUrlBuilder();
+    Mockito.verify(service, Mockito.never()).buildAuthorizationUrl(Mockito.anyMap(), Mockito.any());
     Mockito.verify(service, Mockito.never()).refreshAccessToken(Mockito.any());
   }
 
@@ -142,9 +144,9 @@ class DefaultAuthMethodTest {
     var registration =
         AuthRegistration.of("c", "s", null, null, AuthRegistration.CLIENT_CREDENTIALS);
     var method = new DefaultAuthMethod("u", PROVIDER, registration);
-    var service = Mockito.mock(OAuth20Service.class);
-    Mockito.when(service.getAccessTokenClientCredentialsGrant())
-        .thenThrow(new RuntimeException("upstream rejected"));
+    var service = Mockito.mock(OAuth2Service.class);
+    Mockito.when(service.getClientCredentialsToken())
+        .thenThrow(new IOException("upstream rejected"));
 
     try (MockedStatic<OAuth2ServiceFactory> mocked =
         Mockito.mockStatic(OAuth2ServiceFactory.class)) {
@@ -161,7 +163,7 @@ class DefaultAuthMethodTest {
   void refreshExistingTokenSwallowsRuntimeException() throws Exception {
     var method = new DefaultAuthMethod("u", PROVIDER, AuthRegistration.empty());
     method.setCode("rt");
-    var service = Mockito.mock(OAuth20Service.class);
+    var service = Mockito.mock(OAuth2Service.class);
     Mockito.when(service.refreshAccessToken("rt")).thenThrow(new RuntimeException("boom"));
 
     try (MockedStatic<OAuth2ServiceFactory> mocked =
@@ -176,11 +178,11 @@ class DefaultAuthMethodTest {
   }
 
   @Test
-  void refreshExistingTokenSwallowsInterruptedExceptionAndRestoresFlag() throws Exception {
+  void refreshExistingTokenSwallowsIoException() throws Exception {
     var method = new DefaultAuthMethod("u", PROVIDER, AuthRegistration.empty());
     method.setCode("rt");
-    var service = Mockito.mock(OAuth20Service.class);
-    Mockito.when(service.refreshAccessToken("rt")).thenThrow(new InterruptedException("stop"));
+    var service = Mockito.mock(OAuth2Service.class);
+    Mockito.when(service.refreshAccessToken("rt")).thenThrow(new IOException("stop"));
 
     try (MockedStatic<OAuth2ServiceFactory> mocked =
         Mockito.mockStatic(OAuth2ServiceFactory.class)) {
@@ -189,7 +191,6 @@ class DefaultAuthMethodTest {
       m.setAccessible(true);
       m.invoke(method);
       assertNull(getInternalToken(method));
-      assertTrue(Thread.interrupted(), "Thread interrupt flag should have been re-set");
     }
   }
 
@@ -243,8 +244,12 @@ class DefaultAuthMethodTest {
   @Test
   void createCallbackHandlerExtractsPortFromCallbackUrl() throws Exception {
     var method = new DefaultAuthMethod("u", PROVIDER, AuthRegistration.empty());
-    var service = Mockito.mock(OAuth20Service.class);
-    Mockito.when(service.getCallback()).thenReturn(OAuth2ServiceFactory.CALLBACK_URL + "12345");
+    var service =
+        new OAuth2Service(
+            PROVIDER,
+            AuthRegistration.empty(),
+            OAuth2ServiceFactory.CALLBACK_URL + "12345",
+            new JavaNetHttpClient());
     try (MockedStatic<OAuth2ServiceFactory> mocked =
         Mockito.mockStatic(OAuth2ServiceFactory.class)) {
       mocked.when(() -> OAuth2ServiceFactory.getService(method)).thenReturn(service);
@@ -257,33 +262,12 @@ class DefaultAuthMethodTest {
   }
 
   @Test
-  void exchangeAndRefreshReturnsNullWhenAccessTokenIsNull() throws Exception {
-    var method = new DefaultAuthMethod("u", PROVIDER, AuthRegistration.empty());
-    var service = Mockito.mock(OAuth20Service.class);
-    @SuppressWarnings("unchecked")
-    java.util.concurrent.Future<OAuth2AccessToken> future =
-        Mockito.mock(java.util.concurrent.Future.class);
-    Mockito.when(future.get(Mockito.anyLong(), Mockito.any())).thenReturn(null);
-    Mockito.when(service.getAccessTokenAsync("c")).thenReturn(future);
-
-    Method m =
-        DefaultAuthMethod.class.getDeclaredMethod(
-            "exchangeAndRefresh", OAuth20Service.class, String.class);
-    m.setAccessible(true);
-    assertNull(m.invoke(method, service, "c"));
-  }
-
-  @Test
   void exchangeAndRefreshSwallowsExceptions() throws Exception {
     var method = new DefaultAuthMethod("u", PROVIDER, AuthRegistration.empty());
-    var service = Mockito.mock(OAuth20Service.class);
-    Mockito.when(service.getAccessTokenAsync(Mockito.anyString()))
+    var service = Mockito.mock(OAuth2Service.class);
+    Mockito.when(service.exchangeAuthorizationCode(Mockito.anyString(), Mockito.any()))
         .thenThrow(new RuntimeException("boom"));
-    Method m =
-        DefaultAuthMethod.class.getDeclaredMethod(
-            "exchangeAndRefresh", OAuth20Service.class, String.class);
-    m.setAccessible(true);
-    assertNull(m.invoke(method, service, "c"));
+    assertNull(invokeExchangeAndRefresh(method, service, "c", Pkce.generate()));
   }
 
   @Test
@@ -300,32 +284,7 @@ class DefaultAuthMethodTest {
 
   @Test
   void waitForAuthorizationCodeReturnsCodeWhenHandlerProvidesOne() throws Exception {
-    var responseHandler =
-        new AcceptCallbackHandler() {
-          private volatile String code;
-
-          @Override
-          public Optional<String> code() {
-            return Optional.ofNullable(code);
-          }
-
-          @Override
-          public void code(String c) {
-            this.code = c;
-          }
-
-          @Override
-          public OAuth20Service service() {
-            return Mockito.mock(OAuth20Service.class);
-          }
-
-          @Override
-          public void completed(
-              java.nio.channels.AsynchronousSocketChannel r, AsyncCallbackServerHandler a) {}
-
-          @Override
-          public void failed(Throwable t, AsyncCallbackServerHandler a) {}
-        };
+    var responseHandler = stubResponseHandler(null, null);
     var server = new AsyncCallbackServerHandler(0, responseHandler);
     // pre-populate the code so the loop returns immediately
     responseHandler.code("auth-code");
@@ -345,21 +304,12 @@ class DefaultAuthMethodTest {
   @Test
   void exchangeAndRefreshHappyPathReturnsAccessTokenAndStoresRefreshToken() throws Exception {
     var method = new DefaultAuthMethod("u", PROVIDER, AuthRegistration.empty());
-    var service = Mockito.mock(OAuth20Service.class);
+    var service = Mockito.mock(OAuth2Service.class);
+    var initial = token("at", "rt-1");
+    var pkce = Pkce.generate();
+    Mockito.when(service.exchangeAuthorizationCode("auth-code", pkce)).thenReturn(initial);
 
-    var initial = Mockito.mock(OAuth2AccessToken.class);
-    Mockito.when(initial.getRefreshToken()).thenReturn("rt-1");
-    @SuppressWarnings("unchecked")
-    java.util.concurrent.Future<OAuth2AccessToken> future =
-        Mockito.mock(java.util.concurrent.Future.class);
-    Mockito.when(future.get(Mockito.anyLong(), Mockito.any())).thenReturn(initial);
-    Mockito.when(service.getAccessTokenAsync("auth-code")).thenReturn(future);
-
-    Method m =
-        DefaultAuthMethod.class.getDeclaredMethod(
-            "exchangeAndRefresh", OAuth20Service.class, String.class);
-    m.setAccessible(true);
-    var result = m.invoke(method, service, "auth-code");
+    var result = invokeExchangeAndRefresh(method, service, "auth-code", pkce);
     assertSame(initial, result);
     assertEquals("rt-1", method.getCode());
     Mockito.verify(service, Mockito.never()).refreshAccessToken(Mockito.any());
@@ -368,55 +318,26 @@ class DefaultAuthMethodTest {
   @Test
   void exchangeAndRefreshReturnsAccessTokenWhenNoRefreshTokenReturned() throws Exception {
     // Google occasionally omits refresh_token (e.g. when the user has already granted consent).
-    // The flow must succeed using the access token directly instead of failing with
-    // "The refreshToken cannot be null or empty".
+    // The flow must succeed using the access token directly.
     var method = new DefaultAuthMethod("u", PROVIDER, AuthRegistration.empty());
-    var service = Mockito.mock(OAuth20Service.class);
+    var service = Mockito.mock(OAuth2Service.class);
+    var initial = token("at", null);
+    var pkce = Pkce.generate();
+    Mockito.when(service.exchangeAuthorizationCode("auth-code", pkce)).thenReturn(initial);
 
-    var initial = Mockito.mock(OAuth2AccessToken.class);
-    Mockito.when(initial.getRefreshToken()).thenReturn(null);
-    @SuppressWarnings("unchecked")
-    java.util.concurrent.Future<OAuth2AccessToken> future =
-        Mockito.mock(java.util.concurrent.Future.class);
-    Mockito.when(future.get(Mockito.anyLong(), Mockito.any())).thenReturn(initial);
-    Mockito.when(service.getAccessTokenAsync("auth-code")).thenReturn(future);
-
-    Method m =
-        DefaultAuthMethod.class.getDeclaredMethod(
-            "exchangeAndRefresh", OAuth20Service.class, String.class);
-    m.setAccessible(true);
-    var result = m.invoke(method, service, "auth-code");
+    var result = invokeExchangeAndRefresh(method, service, "auth-code", pkce);
     assertSame(initial, result);
     assertNull(method.getCode());
     Mockito.verify(service, Mockito.never()).refreshAccessToken(Mockito.any());
   }
 
   @Test
-  void exchangeAndRefreshHandlesInterruptedException() throws Exception {
-    var method = new DefaultAuthMethod("u", PROVIDER, AuthRegistration.empty());
-    var service = Mockito.mock(OAuth20Service.class);
-    Mockito.when(service.getAccessTokenAsync(Mockito.anyString()))
-        .thenAnswer(
-            inv -> {
-              throw new InterruptedException("stop");
-            });
-    Method m =
-        DefaultAuthMethod.class.getDeclaredMethod(
-            "exchangeAndRefresh", OAuth20Service.class, String.class);
-    m.setAccessible(true);
-    assertNull(m.invoke(method, service, "c"));
-    assertTrue(Thread.interrupted(), "interrupt flag must be re-set");
-  }
-
-  @Test
   void openAuthorizationUrlInvokesBrowserWithBuiltUrl() throws Exception {
     var method =
         new DefaultAuthMethod("u", PROVIDER, AuthRegistration.of("c", "s", "scope", "aud"));
-    var service = Mockito.mock(OAuth20Service.class);
-    var builder = Mockito.mock(com.github.scribejava.core.oauth.AuthorizationUrlBuilder.class);
-    Mockito.when(service.createAuthorizationUrlBuilder()).thenReturn(builder);
-    Mockito.when(builder.additionalParams(Mockito.anyMap())).thenReturn(builder);
-    Mockito.when(builder.build()).thenReturn("https://example/auth?x=1");
+    var service = Mockito.mock(OAuth2Service.class);
+    Mockito.when(service.buildAuthorizationUrl(Mockito.anyMap(), Mockito.any()))
+        .thenReturn("https://example/auth?x=1");
 
     AtomicReference<java.net.URL> openedUrl = new AtomicReference<>();
     try (MockedStatic<org.weasis.core.api.gui.util.GuiUtils> mocked =
@@ -433,22 +354,21 @@ class DefaultAuthMethodTest {
               });
 
       Method m =
-          DefaultAuthMethod.class.getDeclaredMethod("openAuthorizationUrl", OAuth20Service.class);
+          DefaultAuthMethod.class.getDeclaredMethod(
+              "openAuthorizationUrl", OAuth2Service.class, Pkce.class);
       m.setAccessible(true);
-      m.invoke(method, service);
+      m.invoke(method, service, Pkce.generate());
     }
     assertNotNull(openedUrl.get());
     assertEquals("https://example/auth?x=1", openedUrl.get().toString());
   }
 
   @Test
-  void performOAuthFlowReturnsNullWhenAuthCodeMissing() throws Exception {
+  void performOAuthFlowExchangesCodeProvidedByCallbackHandler() throws Exception {
     var method = new DefaultAuthMethod("u", PROVIDER, AuthRegistration.empty());
-    var service = Mockito.mock(OAuth20Service.class);
-    var builder = Mockito.mock(com.github.scribejava.core.oauth.AuthorizationUrlBuilder.class);
-    Mockito.when(service.createAuthorizationUrlBuilder()).thenReturn(builder);
-    Mockito.when(builder.additionalParams(Mockito.anyMap())).thenReturn(builder);
-    Mockito.when(builder.build()).thenReturn("https://example/auth");
+    var service = Mockito.mock(OAuth2Service.class);
+    Mockito.when(service.buildAuthorizationUrl(Mockito.anyMap(), Mockito.any()))
+        .thenReturn("https://example/auth");
 
     var responseHandler = stubResponseHandler(service, null);
     var server = new AsyncCallbackServerHandler(0, responseHandler);
@@ -467,13 +387,9 @@ class DefaultAuthMethodTest {
       m.setAccessible(true);
       // Make handler return code immediately so the polling loop exits on the first iteration.
       responseHandler.code("the-code");
-      var initial = Mockito.mock(OAuth2AccessToken.class);
-      Mockito.when(initial.getRefreshToken()).thenReturn("rt");
-      @SuppressWarnings("unchecked")
-      java.util.concurrent.Future<OAuth2AccessToken> future =
-          Mockito.mock(java.util.concurrent.Future.class);
-      Mockito.when(future.get(Mockito.anyLong(), Mockito.any())).thenReturn(initial);
-      Mockito.when(service.getAccessTokenAsync("the-code")).thenReturn(future);
+      var initial = token("at", "rt");
+      Mockito.when(service.exchangeAuthorizationCode(Mockito.eq("the-code"), Mockito.any()))
+          .thenReturn(initial);
 
       var result = m.invoke(method, server);
       assertSame(initial, result);
@@ -483,8 +399,9 @@ class DefaultAuthMethodTest {
   @Test
   void performOAuthFlowSwallowsExceptionsFromOpenAuthorizationUrl() throws Exception {
     var method = new DefaultAuthMethod("u", PROVIDER, AuthRegistration.empty());
-    var service = Mockito.mock(OAuth20Service.class);
-    Mockito.when(service.createAuthorizationUrlBuilder()).thenThrow(new RuntimeException("oops"));
+    var service = Mockito.mock(OAuth2Service.class);
+    Mockito.when(service.buildAuthorizationUrl(Mockito.anyMap(), Mockito.any()))
+        .thenThrow(new RuntimeException("oops"));
     var responseHandler = stubResponseHandler(service, null);
     var server = new AsyncCallbackServerHandler(0, responseHandler);
     Method m =
@@ -494,7 +411,7 @@ class DefaultAuthMethodTest {
     assertNull(m.invoke(method, server));
   }
 
-  private static AcceptCallbackHandler stubResponseHandler(OAuth20Service service, String code) {
+  private static AcceptCallbackHandler stubResponseHandler(OAuth2Service service, String code) {
     return new AcceptCallbackHandler() {
       private volatile String c = code;
 
@@ -509,7 +426,7 @@ class DefaultAuthMethodTest {
       }
 
       @Override
-      public OAuth20Service service() {
+      public OAuth2Service service() {
         return service;
       }
 
@@ -522,10 +439,19 @@ class DefaultAuthMethodTest {
     };
   }
 
-  private static OAuth2AccessToken getInternalToken(DefaultAuthMethod method) throws Exception {
+  private static OAuth2Token getInternalToken(DefaultAuthMethod method) throws Exception {
     var f = DefaultAuthMethod.class.getDeclaredField("token");
     f.setAccessible(true);
-    return (OAuth2AccessToken) f.get(method);
+    return (OAuth2Token) f.get(method);
+  }
+
+  private static Object invokeExchangeAndRefresh(
+      DefaultAuthMethod method, OAuth2Service service, String code, Pkce pkce) throws Exception {
+    Method m =
+        DefaultAuthMethod.class.getDeclaredMethod(
+            "exchangeAndRefresh", OAuth2Service.class, String.class, Pkce.class);
+    m.setAccessible(true);
+    return m.invoke(method, service, code, pkce);
   }
 
   @SuppressWarnings("unchecked")

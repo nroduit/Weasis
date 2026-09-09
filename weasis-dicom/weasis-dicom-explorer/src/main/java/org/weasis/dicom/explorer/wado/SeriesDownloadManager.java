@@ -17,6 +17,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -871,14 +872,16 @@ public class SeriesDownloadManager {
         if (writeInCache) {
           Path tempFile = createTempFile();
           LOGGER.debug("Copying DICOM instance {} to {}", localFile, tempFile.getFileName());
-          try (InputStream in = Files.newInputStream(localFile)) {
-            if (FileUtil.writeStream(
-                    new DicomSeriesProgressMonitor(dicomSeries, in, false), tempFile, false)
-                >= 0) {
-              // Interrupted or truncated copy: do not ingest a partial instance.
-              FileUtil.delete(tempFile);
-              return;
-            }
+          try {
+            // One bulk transfer: the OS copy routine uses large requests on a network share
+            Files.copy(localFile, tempFile, StandardCopyOption.REPLACE_EXISTING);
+          } catch (IOException e) {
+            FileUtil.delete(tempFile);
+            throw e;
+          }
+          if (loadSeries.isCancelled()) {
+            FileUtil.delete(tempFile);
+            return;
           }
           file = moveToExportDir(tempFile);
         }

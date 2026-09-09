@@ -9,7 +9,6 @@
  */
 package org.weasis.core.api.net.auth;
 
-import com.github.scribejava.core.oauth.OAuth20Service;
 import java.nio.channels.AsynchronousSocketChannel;
 import java.nio.channels.CompletionHandler;
 import java.util.Optional;
@@ -34,5 +33,5 @@ public interface AcceptCallbackHandler
   /**
    * @return the OAuth2 service used for authentication
    */
-  OAuth20Service service();
+  OAuth2Service service();
 }

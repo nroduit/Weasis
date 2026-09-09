@@ -113,9 +113,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> {
     setAction(newInverseLutAction());
     setAction(newSegmentationMode());
     setAction(newLayoutAction(View2dContainer.DEFAULT_LAYOUT_LIST.toArray(new MigLayoutModel[0])));
-    setAction(newSynchAction(View3DContainer.DEFAULT_SYNCH_LIST.toArray(new SynchView[0])));
-    getAction(ActionW.SYNCH)
-        .ifPresent(a -> a.setSelectedItemWithoutTriggerAction(View3DContainer.SYNCH_VOLUME));
+    setAction(newSynchAction(View3DContainer.SYNCH_VOLUME));
     // Register SYNCH_MODE so the toolbar Synchronize checkbox is actually bound to something.
     // The 2D EventManager does the same; the 3D class previously omitted it, leaving the
     // toolbar item inert.
@@ -513,10 +511,6 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> {
       Optional<ComboItemListener<MigLayoutModel>> layoutAction = getAction(ActionW.LAYOUT);
       if (oldContainer == null
           || !oldContainer.getClass().equals(selectedView2dContainer.getClass())) {
-        synchAction.ifPresent(
-            a ->
-                a.setDataListWithoutTriggerAction(
-                    selectedView2dContainer.getSynchList().toArray(new SynchView[0])));
         layoutAction.ifPresent(
             a ->
                 a.setDataListWithoutTriggerAction(

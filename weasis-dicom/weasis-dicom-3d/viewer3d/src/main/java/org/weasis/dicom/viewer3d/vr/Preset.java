@@ -9,18 +9,19 @@
  */
 package org.weasis.dicom.viewer3d.vr;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
 import com.jogamp.common.nio.Buffers;
 import com.jogamp.opengl.GL;
 import com.jogamp.opengl.GL2ES2;
+import jakarta.json.Json;
+import jakarta.json.JsonArrayBuilder;
+import jakarta.json.JsonException;
 import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.IntBuffer;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -37,6 +38,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.service.UICore;
+import org.weasis.core.api.util.JsonUtil;
 import org.weasis.core.ui.model.graphic.imp.seg.SegRegion;
 import org.weasis.dicom.codec.display.Modality;
 import org.weasis.dicom.viewer3d.EventManager;
@@ -385,9 +387,7 @@ public class Preset extends TextureData {
 
   public static void saveCustomPresets() {
     try {
-      ObjectMapper mapper = new ObjectMapper();
-      mapper.enable(SerializationFeature.INDENT_OUTPUT);
-      List<VolumePreset> volumePresets = new ArrayList<>();
+      JsonArrayBuilder builder = Json.createArrayBuilder();
       for (Preset p : customPresets) {
         VolumePreset vp = new VolumePreset();
         vp.setName(p.getName());
@@ -396,10 +396,10 @@ public class Preset extends TextureData {
         vp.setShade(p.isShade());
         vp.setSpecularPower(p.getSpecularPower());
         vp.setGroups(p.getGroups().stream().map(PresetGroup::copy).toArray(PresetGroup[]::new));
-        volumePresets.add(vp);
+        builder.add(vp.toJson());
       }
       Path customPresetsPath = getCustomPresetsPath();
-      mapper.writeValue(customPresetsPath.toFile(), volumePresets);
+      JsonUtil.write(customPresetsPath, builder.build());
       UICore.getInstance()
           .storeRemotePref(customPresetsPath, "application/json;charset=UTF-8"); // NON-NLS
     } catch (IOException e) {
@@ -421,8 +421,10 @@ public class Preset extends TextureData {
     Path path = getCustomPresetsPath();
     if (Files.exists(path)) {
       try {
-        ObjectMapper objectMapper = new ObjectMapper();
-        List<VolumePreset> list = objectMapper.readValue(path.toFile(), new TypeReference<>() {});
+        List<VolumePreset> list =
+            JsonUtil.objects(JsonUtil.readArray(path)).stream()
+                .map(VolumePreset::fromJson)
+                .toList();
         list.forEach(
             p -> {
               try {
@@ -440,7 +442,7 @@ public class Preset extends TextureData {
                 LOGGER.error("Cannot read custom preset {}", p.getName(), e);
               }
             });
-      } catch (IOException e) {
+      } catch (IOException | JsonException e) {
         LOGGER.error("Cannot load custom presets", e);
       }
     }
@@ -635,8 +637,9 @@ public class Preset extends TextureData {
   }
 
   static List<VolumePreset> loadFile(String file) throws IOException {
-    ObjectMapper objectMapper = new ObjectMapper();
-    return objectMapper.readValue(Preset.class.getResourceAsStream(file), new TypeReference<>() {});
+    try (InputStream in = Preset.class.getResourceAsStream(file)) {
+      return JsonUtil.objects(JsonUtil.readArray(in)).stream().map(VolumePreset::fromJson).toList();
+    }
   }
 
   static Preset buildPreset(VolumePreset p) {

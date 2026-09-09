@@ -30,6 +30,7 @@ import org.weasis.base.ui.Messages;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.GuiUtils.IconColor;
 import org.weasis.core.api.util.GraphicsInfo;
+import org.weasis.core.api.util.HardwareInfo;
 import org.weasis.core.api.util.ResourceAdvisor;
 import org.weasis.core.api.util.ResourceAdvisor.Assessment;
 import org.weasis.core.api.util.ResourceAdvisor.Level;
@@ -64,6 +65,7 @@ public class ResourceMonitorDialog extends JDialog {
   private final JLabel diskFallbackValue = new JLabel();
   private final JLabel gcValue = new JLabel();
 
+  private final JLabel ramValue = new JLabel();
   private final JLabel largestImageValue = new JLabel();
   private final JLabel largestVolumeValue = new JLabel();
 
@@ -77,12 +79,16 @@ public class ResourceMonitorDialog extends JDialog {
     Snapshot first = ResourceMonitor.getInstance().snapshot();
 
     addSection(content, "ResourceMonitor.hardware");
+    String machine = HardwareInfo.computerModel();
+    if (StringUtil.hasText(machine)) {
+      addRow(content, "ResourceMonitor.machine", new JLabel(machine));
+    }
     addRow(content, "ResourceMonitor.os", new JLabel(systemDescription()));
-    addRow(
-        content,
-        "ResourceMonitor.cpuCores",
-        new JLabel(Integer.toString(Runtime.getRuntime().availableProcessors())));
-    addRow(content, "ResourceMonitor.physicalRam", new JLabel(bytes(first.physicalTotalMemory())));
+    if (StringUtil.hasText(first.cpuName())) {
+      addRow(content, "ResourceMonitor.processor", new JLabel(first.cpuName()));
+    }
+    addRow(content, "ResourceMonitor.cpuCores", new JLabel(coreText(first)));
+    addRow(content, "ResourceMonitor.physicalRam", ramValue);
     addRow(content, "ResourceMonitor.heapMax", new JLabel(bytes(first.heapMax())));
     addRow(content, "ResourceMonitor.nativeBudget", new JLabel(bytes(first.nativeBudget())));
     addGpuRows(content);
@@ -159,6 +165,7 @@ public class ResourceMonitorDialog extends JDialog {
     recommendationValue.setForeground(
         report.recommendation().isEmpty() ? defaultForeground() : levelColor(Level.SUBOPTIMAL));
 
+    ramValue.setText(ramText(snapshot));
     uptimeValue.setText(uptimeText(snapshot));
     evictionsValue.setText(Long.toString(snapshot.cacheEvictions()));
     // Color an event red only when it is the signal currently driving a suboptimal verdict;
@@ -243,19 +250,27 @@ public class ResourceMonitorDialog extends JDialog {
     StringBuilder sb = new StringBuilder();
     sb.append("Weasis - ").append(Messages.getString("ResourceMonitor.title")).append('\n');
     sb.append("=================================\n");
+    String machine = HardwareInfo.computerModel();
+    if (StringUtil.hasText(machine)) {
+      sb.append(label("ResourceMonitor.machine")).append(machine).append('\n');
+    }
     sb.append(label("ResourceMonitor.os")).append(systemDescription()).append('\n');
-    sb.append(label("ResourceMonitor.cpuCores")).append(s.cpuCores()).append('\n');
-    sb.append(label("ResourceMonitor.physicalRam"))
-        .append(bytes(s.physicalTotalMemory()))
-        .append('\n');
+    if (StringUtil.hasText(s.cpuName())) {
+      sb.append(label("ResourceMonitor.processor")).append(s.cpuName()).append('\n');
+    }
+    sb.append(label("ResourceMonitor.cpuCores")).append(coreText(s)).append('\n');
+    sb.append(label("ResourceMonitor.physicalRam")).append(ramText(s)).append('\n');
     sb.append(label("ResourceMonitor.heapMax")).append(bytes(s.heapMax())).append('\n');
     sb.append(label("ResourceMonitor.nativeBudget")).append(bytes(s.nativeBudget())).append('\n');
+    for (HardwareInfo.GraphicsAdapter adapter : HardwareInfo.graphicsAdapters()) {
+      sb.append(label("ResourceMonitor.gpu")).append(adapterText(adapter)).append('\n');
+    }
     GraphicsInfo.get()
         .ifPresent(
             gpu ->
-                sb.append(label("ResourceMonitor.gpu"))
-                    .append(gpu.renderer())
-                    .append(gpu.softwareRendered() ? " (software)" : "")
+                sb.append(label("ResourceMonitor.openglVersion"))
+                    .append(gpu.glVersion())
+                    .append(gpu.softwareRendered() ? " (software)" : "") // NON-NLS
                     .append('\n'));
     sb.append(label("ResourceMonitor.uptime")).append(uptimeText(s)).append('\n');
     sb.append('\n');
@@ -334,6 +349,33 @@ public class ResourceMonitorDialog extends JDialog {
     return sb.toString();
   }
 
+  /** Physical cores when the probe knows them, always the logical count the JVM sees. */
+  private static String coreText(Snapshot s) {
+    if (s.physicalCores() <= 0) {
+      return Integer.toString(s.cpuCores());
+    }
+    return s.physicalCores()
+        + " "
+        + Messages.getString("ResourceMonitor.cores.physical")
+        + " / "
+        + s.cpuCores()
+        + " "
+        + Messages.getString("ResourceMonitor.cores.logical");
+  }
+
+  private static String ramText(Snapshot s) {
+    String total = bytes(s.physicalTotalMemory());
+    if (s.physicalAvailableMemory() <= 0) {
+      return total;
+    }
+    return total
+        + "  ("
+        + bytes(s.physicalAvailableMemory())
+        + ' '
+        + Messages.getString("ResourceMonitor.available")
+        + ')';
+  }
+
   private static String uptimeText(Snapshot s) {
     return duration(s.uptimeMillis())
         + "  ("
@@ -362,24 +404,38 @@ public class ResourceMonitorDialog extends JDialog {
     panel.add(value);
   }
 
+  /**
+   * The adapters come from the hardware probe and are always known; only OpenGL can say whether
+   * rendering is hardware-accelerated, so that row stays empty until a 3D view has been opened.
+   */
   private static void addGpuRows(JPanel panel) {
+    for (HardwareInfo.GraphicsAdapter adapter : HardwareInfo.graphicsAdapters()) {
+      addRow(panel, "ResourceMonitor.gpu", new JLabel(adapterText(adapter)));
+    }
     GraphicsInfo.get()
         .ifPresentOrElse(
             gpu -> {
-              JLabel renderer = new JLabel(gpu.renderer());
+              JLabel renderer = new JLabel(gpu.glVersion());
               if (gpu.softwareRendered()) {
                 renderer.setText(
-                    gpu.renderer() + " - " + Messages.getString("ResourceMonitor.gpuSoftware"));
+                    gpu.glVersion() + " - " + Messages.getString("ResourceMonitor.gpuSoftware"));
                 renderer.setForeground(IconColor.ACTIONS_RED.getColor());
               }
-              addRow(panel, "ResourceMonitor.gpu", renderer);
-              addRow(panel, "ResourceMonitor.openglVersion", new JLabel(gpu.glVersion()));
+              addRow(panel, "ResourceMonitor.openglVersion", renderer);
             },
             () ->
                 addRow(
                     panel,
-                    "ResourceMonitor.gpu",
+                    "ResourceMonitor.openglVersion",
                     new JLabel(Messages.getString("ResourceMonitor.gpuNotAssessed"))));
+  }
+
+  private static String adapterText(HardwareInfo.GraphicsAdapter adapter) {
+    String text = adapter.name();
+    if (StringUtil.hasText(adapter.vendor()) && !text.contains(adapter.vendor())) {
+      text = adapter.vendor() + ' ' + text;
+    }
+    return adapter.videoMemory() > 0 ? text + " - " + bytes(adapter.videoMemory()) : text;
   }
 
   private static String levelKey(Level level) {
@@ -420,12 +476,11 @@ public class ResourceMonitorDialog extends JDialog {
   }
 
   private static String systemDescription() {
-    return System.getProperty("os.name")
-        + ' '
-        + System.getProperty("os.version")
-        + " ("
-        + System.getProperty("os.arch")
-        + ')';
+    String system = HardwareInfo.operatingSystem();
+    if (!StringUtil.hasText(system)) {
+      system = System.getProperty("os.name") + ' ' + System.getProperty("os.version");
+    }
+    return system + " (" + System.getProperty("os.arch") + ')';
   }
 
   private static String bytes(long value) {

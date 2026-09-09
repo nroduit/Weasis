@@ -9,10 +9,6 @@
  */
 package org.weasis.core.api.net;
 
-import com.github.scribejava.core.httpclient.multipart.MultipartPayload;
-import com.github.scribejava.core.model.OAuthRequest;
-import com.github.scribejava.core.model.Verb;
-import com.github.scribejava.core.oauth.OAuth20Service;
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.ProxySelector;
@@ -25,7 +21,6 @@ import java.net.http.HttpResponse;
 import java.time.Duration;
 import java.util.Map;
 import java.util.Objects;
-import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -42,6 +37,9 @@ public final class HttpUtils {
 
   // Use a shared client to enable connection pooling (Keep-Alive) and avoid handshake overhead
   private static final HttpClient SHARED_CLIENT = buildHttpClient();
+
+  // Shared executor for authenticated requests (multipart support, stall-guarded bodies)
+  private static final JavaNetHttpClient AUTH_CLIENT = new JavaNetHttpClient();
 
   private HttpUtils() {}
 
@@ -93,7 +91,7 @@ public final class HttpUtils {
   }
 
   public static HttpStream getHttpResponse(
-      String url, URLParameters urlParameters, AuthMethod authMethod, OAuthRequest authRequest)
+      String url, URLParameters urlParameters, AuthMethod authMethod, WebRequest authRequest)
       throws IOException {
     return getHttpResponse(SHARED_CLIENT, url, urlParameters, authMethod, authRequest);
   }
@@ -103,10 +101,10 @@ public final class HttpUtils {
       String url,
       URLParameters urlParameters,
       AuthMethod authMethod,
-      OAuthRequest authRequest)
+      WebRequest authRequest)
       throws IOException {
     if (isNoAuthRequired(authMethod)) {
-      MultipartPayload multipart = authRequest == null ? null : authRequest.getMultipartPayload();
+      MultipartBody multipart = authRequest == null ? null : authRequest.getMultipartBody();
       if (multipart != null) {
         return sendMultipartRequest(client, url, urlParameters, multipart);
       }
@@ -117,16 +115,22 @@ public final class HttpUtils {
     var request =
         Objects.requireNonNullElseGet(
             authRequest,
-            () -> new OAuthRequest(urlParameters.httpPost() ? Verb.POST : Verb.GET, url));
+            () ->
+                new WebRequest(
+                    urlParameters.httpPost() ? WebRequest.Method.POST : WebRequest.Method.GET,
+                    url));
     return executeAuthenticatedRequest(request, urlParameters, authMethod);
   }
 
-  public static AuthResponse executeAuthenticatedRequest(
-      OAuthRequest request, URLParameters urlParameters, AuthMethod authMethod) throws IOException {
+  public static HttpResponseStream executeAuthenticatedRequest(
+      WebRequest request, URLParameters urlParameters, AuthMethod authMethod) throws IOException {
     applyHeaders(urlParameters.headers(), request::addHeader);
-    var service = getOAuth20Service(authMethod);
-    service.signRequest(authMethod.getToken(), request);
-    return new AuthResponse(runInterruptibly(() -> service.execute(request), "Authentication"));
+    var token = authMethod == null ? null : authMethod.getToken();
+    if (token == null) {
+      throw new IOException("Cannot get an access token with " + authMethod);
+    }
+    request.addHeader("Authorization", "Bearer " + token.accessToken()); // NON-NLS
+    return AUTH_CLIENT.execute(request);
   }
 
   static boolean isNoAuthRequired(AuthMethod authMethod) {
@@ -134,7 +138,7 @@ public final class HttpUtils {
   }
 
   private static HttpStream sendMultipartRequest(
-      HttpClient client, String url, URLParameters urlParameters, MultipartPayload multipart)
+      HttpClient client, String url, URLParameters urlParameters, MultipartBody multipart)
       throws IOException {
     var builder = HttpRequest.newBuilder().uri(URI.create(url));
     applyHeaders(urlParameters.headers(), builder::header);
@@ -292,30 +296,9 @@ public final class HttpUtils {
     void set(String name, String value);
   }
 
-  private static <T> T runInterruptibly(Callable<T> task, String what) throws IOException {
-    try {
-      return task.call();
-    } catch (InterruptedException e) {
-      Thread.currentThread().interrupt();
-      throw new StreamIOException(what + " interrupted", e);
-    } catch (IOException e) {
-      throw e;
-    } catch (Exception e) {
-      throw new StreamIOException(what + " failed", e);
-    }
-  }
-
   private static void validateResponseStatus(int statusCode) throws IOException {
     if (statusCode != HttpURLConnection.HTTP_OK) {
       throw new IOException("HTTP request failed with status code: " + statusCode);
     }
-  }
-
-  private static OAuth20Service getOAuth20Service(AuthMethod authMethod) throws IOException {
-    var service = OAuth2ServiceFactory.getService(authMethod);
-    if (service == null) {
-      throw new IOException("Invalid authentication method: " + authMethod);
-    }
-    return service;
   }
 }

@@ -9,7 +9,6 @@
  */
 package org.weasis.dicom.qr;
 
-import eu.essilab.lablib.checkboxtree.CheckboxTree;
 import java.awt.BorderLayout;
 import java.awt.Component;
 import java.util.Objects;
@@ -18,6 +17,7 @@ import javax.swing.event.TreeExpansionEvent;
 import javax.swing.event.TreeExpansionListener;
 import javax.swing.tree.DefaultMutableTreeNode;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
+import org.weasis.core.ui.util.tree.CheckboxTree;
 import org.weasis.dicom.explorer.DicomModel;
 import org.weasis.dicom.explorer.exp.ExportTree;
 

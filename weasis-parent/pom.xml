@@ -14,7 +14,7 @@
   <properties>
     <!-- force command line arguments settings to set version -->
     <!-- $ mvn clean install -Drevision=4.2.2 -Dchangelist=-SNAPSHOT -->
-    <revision>4.7.4</revision>
+    <revision>4.8.0</revision>
     <changelist>-SNAPSHOT</changelist>  <!-- Remove "-SNAPSHOT" for release -->
 
     <java-version>25</java-version>
@@ -25,7 +25,7 @@
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 
     <app.version>${revision}${changelist}</app.version>
-    <base.minimal.version>4.7.0</base.minimal.version>
+    <base.minimal.version>4.8.0</base.minimal.version>
     <i18n.version>4.0.0-SNAPSHOT</i18n.version>
     <weasis.releasenotes>https://github.com/nroduit/Weasis/blob/master/CHANGELOG.md#v473-2026-08-25</weasis.releasenotes>
 
@@ -54,15 +54,14 @@
     <weasis.core.img.version>5.0.0</weasis.core.img.version>
     <weasis.opencv.native.version>5.0.0-dcm</weasis.opencv.native.version>
     <weasis.opencv.pkg.version>5.0.0-dcm</weasis.opencv.pkg.version>
-    <osgi.resource.locator.version>3.0.0</osgi.resource.locator.version>
     <jaxb.osgi.version>4.0.3</jaxb.osgi.version>
     <xml.bind-api.version>4.0.5</xml.bind-api.version>
     <joml.version>1.10.9</joml.version>
     <jogamp.version>2.6.0</jogamp.version>
-    <jackson.version>2.22.1</jackson.version>
-    <jackson.an.version>2.22</jackson.an.version>
-    <scribejava.version>8.3.3</scribejava.version>
+    <jakarta.json.version>2.1.3</jakarta.json.version>
+    <parsson.version>1.1.7</parsson.version>
     <zip4j.version>2.11.6</zip4j.version>
+    <oshi.version>7.6.0</oshi.version>
 
     <junit-bom.version>6.1.2</junit-bom.version>
     <mockito.version>5.23.0</mockito.version>
@@ -533,11 +532,30 @@
           </exclusion>
         </exclusions>
       </dependency>
+      <!-- JSON-P API and its provider: embedded in and exported by the weasis-core bundle -->
       <dependency>
-        <groupId>com.fasterxml.jackson.core</groupId>
-        <artifactId>jackson-databind</artifactId>
-        <version>${jackson.version}</version>
-        <scope>provided</scope>
+        <groupId>jakarta.json</groupId>
+        <artifactId>jakarta.json-api</artifactId>
+        <version>${jakarta.json.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.eclipse.parsson</groupId>
+        <artifactId>parsson</artifactId>
+        <version>${parsson.version}</version>
+      </dependency>
+      <!-- Hardware and removable-drive probe, embedded in the weasis-core bundle. The FFM variant
+        calls the OS through java.lang.foreign, so it needs no JNA. -->
+      <dependency>
+        <groupId>com.github.oshi</groupId>
+        <artifactId>oshi-core-ffm</artifactId>
+        <version>${oshi.version}</version>
+        <exclusions>
+          <!-- Annotations only, not needed at runtime -->
+          <exclusion>
+            <groupId>org.jspecify</groupId>
+            <artifactId>jspecify</artifactId>
+          </exclusion>
+        </exclusions>
       </dependency>
       <dependency>
         <groupId>net.lingala.zip4j</groupId>
