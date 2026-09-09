@@ -378,15 +378,8 @@
     },
     {
       "code": "weasis.help.online",
-      "value": "https://nroduit.github.io/en/tutorials/",
+      "value": "https://weasis.org/en/tutorials/",
       "description": "The online tutorial",
-      "type": "A",
-      "category": "DOC"
-    },
-    {
-      "code": "weasis.help.shortcuts",
-      "value": "https://nroduit.github.io/en/basics/shortcuts",
-      "description": "Provides a list of available shortcuts.",
       "type": "A",
       "category": "DOC"
     },
@@ -469,6 +462,14 @@
       "value": "table removal, tabletop, couch, patient support, bed removal",
       "description": "Comma-separated keywords to hide segmentations by default (case, spaces, underscores and hyphens are ignored when matching)",
       "type": "F",
+      "category": "DICOM"
+    },
+    {
+      "code": "weasis.import.dicom.network.cache",
+      "value": "true",
+      "description": "Copy DICOM files imported from a network share (SMB/NFS mount, UNC path) or an optical disc into the local cache, so that images are read from the slow medium only once",
+      "type": "F",
+      "javaType": "BOOLEAN",
       "category": "DICOM"
     },
     {

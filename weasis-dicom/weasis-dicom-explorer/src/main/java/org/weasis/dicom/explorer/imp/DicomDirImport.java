@@ -13,11 +13,14 @@ import com.formdev.flatlaf.util.SystemFileChooser;
 import com.formdev.flatlaf.util.SystemInfo;
 import java.awt.Dialog;
 import java.io.File;
+import java.io.IOException;
 import java.net.URI;
+import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
+import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
+import java.util.stream.Stream;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JOptionPane;
@@ -29,6 +32,7 @@ import org.weasis.core.api.gui.util.AbstractItemDialogPage;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.WinUtil;
 import org.weasis.core.api.net.URIUtils;
+import org.weasis.core.api.util.HardwareInfo;
 import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.api.util.ResourceUtil.OtherIcon;
 import org.weasis.core.util.StringUtil;
@@ -38,6 +42,8 @@ import org.weasis.dicom.explorer.wado.LoadSeries;
 
 public class DicomDirImport extends AbstractItemDialogPage implements ImportDicom {
   private static final Logger LOGGER = LoggerFactory.getLogger(DicomDirImport.class);
+  private static final List<String> DICOMDIR_NAMES =
+      List.of("DICOMDIR", "dicomdir", "DICOMDIR.", "dicomdir."); // NON-NLS
 
   private static final String LAST_DICOM_DIR = "lastDicomDir";
   private final JTextField textField = new JTextField();
@@ -201,48 +207,82 @@ public class DicomDirImport extends AbstractItemDialogPage implements ImportDico
     return loadSeries;
   }
 
-  private static void addFiles(List<File> dvs, File folder) {
-    if (folder.canRead()) {
-      File[] files = folder.listFiles();
-      if (files != null) {
-        Collections.addAll(dvs, files);
+  /**
+   * Finds the DICOMDIR of the inserted media: optical discs first, then removable drives, as the
+   * operating system reports them. Network drives and fixed disks are never probed, so a
+   * disconnected share cannot stall the detection.
+   *
+   * @return the DICOMDIR file, or null when no media holds one
+   */
+  public static File getDcmDirFromMedia() {
+    for (Path mount : mediaMounts()) {
+      Path dicomdir = findDicomDir(mount);
+      if (dicomdir != null) {
+        return dicomdir.toFile();
       }
+    }
+    return null;
+  }
+
+  private static List<Path> mediaMounts() {
+    List<Path> mounts = new ArrayList<>();
+    if (HardwareInfo.isAvailable()) {
+      HardwareInfo.opticalDrives().forEach(d -> addMount(mounts, d.mount()));
+      HardwareInfo.removableDrives().forEach(d -> addMount(mounts, d.mount()));
+    } else {
+      legacyMediaDirectories().forEach(dir -> addMount(mounts, dir));
+    }
+    return mounts;
+  }
+
+  private static void addMount(List<Path> mounts, String mount) {
+    try {
+      Path path = Path.of(mount);
+      if (!mounts.contains(path)) {
+        mounts.add(path);
+      }
+    } catch (InvalidPathException e) {
+      LOGGER.debug("Ignoring mount point {}", mount);
     }
   }
 
-  public static File getDcmDirFromMedia() {
-    final List<File> dvs = new ArrayList<>();
-    try {
-      if (SystemInfo.isWindows) {
-        dvs.addAll(Arrays.asList(File.listRoots()));
-      } else if (SystemInfo.isMacOS) {
-        addFiles(dvs, new File("/Volumes"));
-      } else {
-        addFiles(dvs, new File("/media"));
-        addFiles(dvs, new File("/mnt"));
-        String user = System.getProperty("user.name", "local"); // NON-NLS
-        addFiles(dvs, new File("/media/" + user));
-        addFiles(dvs, new File("/run/media/" + user));
-      }
-    } catch (Exception e) {
-      LOGGER.error("Error when reading device directories: {}", e.getMessage());
-    }
-
-    Collections.reverse(dvs);
-    String[] dicomdir = {"DICOMDIR", "dicomdir", "DICOMDIR.", "dicomdir."}; // NON-NLS
-
-    for (File drive : dvs) {
-      // Detect read-only media
-      if (drive.canRead() && !drive.isHidden()) {
-        for (String s : dicomdir) {
-          File f = new File(drive, s);
-          if (f.canRead() && !f.canWrite()) {
-            return f;
-          }
-        }
+  /**
+   * The DICOMDIR at the root of a mount, tolerating the lower-case and dotted names of some media.
+   */
+  static Path findDicomDir(Path mount) {
+    for (String name : DICOMDIR_NAMES) {
+      Path candidate = mount.resolve(name);
+      if (Files.isReadable(candidate)) {
+        return candidate;
       }
     }
-
     return null;
+  }
+
+  /** Where desktop environments mount media, when the hardware probe cannot list the drives. */
+  private static List<String> legacyMediaDirectories() {
+    List<String> dirs = new ArrayList<>();
+    if (SystemInfo.isWindows) {
+      for (File root : File.listRoots()) {
+        dirs.add(root.getPath());
+      }
+    } else if (SystemInfo.isMacOS) {
+      addChildren(dirs, "/Volumes"); // NON-NLS
+    } else {
+      String user = System.getProperty("user.name", "local"); // NON-NLS
+      addChildren(dirs, "/run/media/" + user); // NON-NLS
+      addChildren(dirs, "/media/" + user); // NON-NLS
+      addChildren(dirs, "/media"); // NON-NLS
+      addChildren(dirs, "/mnt"); // NON-NLS
+    }
+    return dirs;
+  }
+
+  private static void addChildren(List<String> dirs, String directory) {
+    try (Stream<Path> children = Files.list(Path.of(directory))) {
+      children.filter(Files::isDirectory).map(Path::toString).forEach(dirs::add);
+    } catch (IOException | RuntimeException e) {
+      LOGGER.debug("Cannot list {}", directory);
+    }
   }
 }

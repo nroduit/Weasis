@@ -13,14 +13,11 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.file.Files;
-import java.nio.file.InvalidPathException;
-import java.nio.file.LinkOption;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 import java.util.Optional;
-import java.util.stream.Stream;
 import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.BulkData;
 import org.dcm4che3.data.Fragments;
@@ -39,13 +36,16 @@ import org.dcm4che3.util.UIDUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
+import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.MediaSeriesGroupNode;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.media.data.Thumbnail;
+import org.weasis.core.api.util.NetworkFileSystems;
 import org.weasis.core.ui.editor.image.ViewerPlugin;
+import org.weasis.core.util.FileUtil;
 import org.weasis.dicom.codec.DicomSeries;
 import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.TagD.Level;
@@ -70,6 +70,7 @@ public class DicomDirLoader {
   private final WadoParameters wadoParameters;
   private final boolean writeInCache;
   private final File dcmDirFile;
+  private final DicomDirFileResolver resolver;
 
   public DicomDirLoader(File dcmDirFile, DataExplorerModel explorerModel, boolean writeInCache) {
     if (dcmDirFile == null || !dcmDirFile.canRead() || !(explorerModel instanceof DicomModel)) {
@@ -78,6 +79,7 @@ public class DicomDirLoader {
     this.dicomModel = (DicomModel) explorerModel;
     this.writeInCache = writeInCache;
     this.dcmDirFile = dcmDirFile;
+    this.resolver = new DicomDirFileResolver(dcmDirFile.toPath());
     wadoParameters = new WadoParameters("", true);
     seriesList = new ArrayList<>();
   }
@@ -86,7 +88,9 @@ public class DicomDirLoader {
     Attributes dcmPatient;
     MediaSeriesGroup patient = null;
 
-    try (DicomDirReader reader = new DicomDirReader(dcmDirFile)) {
+    Path stagedCopy = stageDicomDir();
+    try (DicomDirReader reader =
+        new DicomDirReader(stagedCopy == null ? dcmDirFile : stagedCopy.toFile())) {
       dcmPatient = findFirstRootDirectoryRecordInUse(reader);
 
       while (dcmPatient != null) {
@@ -97,6 +101,8 @@ public class DicomDirLoader {
       }
     } catch (IOException e) {
       LOGGER.error("Cannot read DICOMDIR !", e);
+    } finally {
+      FileUtil.delete(stagedCopy);
     }
 
     if (patient != null) {
@@ -208,19 +214,15 @@ public class DicomDirLoader {
                 DicomUtils.getIntegerFromDicomElement(instance, Tag.InstanceNumber, null);
             SopInstance sop = seriesInstanceList.getSopInstance(sopInstanceUID, frame);
             if (sop == null) {
-              Path file = toFileName(instance, reader);
+              Path file = resolver.resolve(instance.getStrings(Tag.ReferencedFileID)).orElse(null);
               if (file != null) {
-                if (Files.exists(file)) {
-                  sop = new SopInstance(sopInstanceUID, frame);
-                  sop.setDirectDownloadFile(file.toUri().toString());
-                  seriesInstanceList.addSopInstance(sop);
-                  if (iconInstance == null) {
-                    // Icon Image Sequence (0088,0200). This Icon Image is representative of the
-                    // Image. Only a single Item is permitted in this Sequence.
-                    iconInstance = instance.getNestedDataset(Tag.IconImageSequence);
-                  }
-                } else {
-                  LOGGER.error("Missing DICOMDIR entry: {}", file);
+                sop = new SopInstance(sopInstanceUID, frame);
+                sop.setDirectDownloadFile(file.toUri().toString());
+                seriesInstanceList.addSopInstance(sop);
+                if (iconInstance == null) {
+                  // Icon Image Sequence (0088,0200). This Icon Image is representative of the
+                  // Image. Only a single Item is permitted in this Sequence.
+                  iconInstance = instance.getNestedDataset(Tag.IconImageSequence);
                 }
               }
             }
@@ -358,102 +360,25 @@ public class DicomDirLoader {
   }
 
   /**
-   * Resolves the file referenced by a DICOMDIR record, constrained to the directory owning the
-   * DICOMDIR.
+   * dcm4che reads DICOMDIR records with unbuffered random access: on a network share or optical
+   * media the file is first copied locally in one bulk transfer.
    *
-   * @return null when Referenced File ID (0004,1500) is absent or points outside that directory
+   * @return the local copy to delete afterwards, or null when the DICOMDIR is read in place
    */
-  private Path toFileName(Attributes dcmObject, DicomDirReader reader) {
-    String[] fileID = dcmObject.getStrings(Tag.ReferencedFileID);
-    if (fileID == null || fileID.length == 0) {
+  private Path stageDicomDir() {
+    Path source = dcmDirFile.toPath();
+    if (!NetworkFileSystems.isSlowRandomAccess(source)) {
       return null;
     }
-    Path baseDir = reader.getFile().toPath().toAbsolutePath().getParent();
-    Path file = resolveInside(baseDir, fileID);
-    if (file == null) {
-      LOGGER.error("Rejecting DICOMDIR entry outside of {}: {}", baseDir, String.join("/", fileID));
-      return null;
-    }
-    if (Files.exists(file)) {
-      return file;
-    }
-
-    // Try to find lower case relative path, it happens sometimes when mounting cdrom on Linux
-    Path fileLowerCase = resolveInside(baseDir, toLowerCase(fileID));
-    if (fileLowerCase != null && Files.exists(fileLowerCase)) {
-      return fileLowerCase;
-    }
-
-    // Try to find relative path with extension, image file may have it
-    return findWithExtension(file).orElse(file);
-  }
-
-  /**
-   * Resolves the Referenced File ID components under baseDir. Non-conformant components holding a
-   * separator or a relative segment are tolerated, as long as the result stays inside baseDir, both
-   * lexically and once symbolic links are followed.
-   */
-  private static Path resolveInside(Path baseDir, String[] fileID) {
-    Path file = baseDir;
+    Path copy = null;
     try {
-      for (String component : fileID) {
-        if (component == null) {
-          return null;
-        }
-        file = file.resolve(component);
-      }
-    } catch (InvalidPathException e) {
+      copy = Files.createTempFile(AppProperties.FILE_CACHE_DIR, "dicomdir_", ".tmp"); // NON-NLS
+      Files.copy(source, copy, StandardCopyOption.REPLACE_EXISTING);
+      return copy;
+    } catch (IOException e) {
+      LOGGER.warn("Cannot copy {} locally, reading it in place", source, e);
+      FileUtil.delete(copy);
       return null;
-    }
-    Path resolved = file.normalize();
-    return resolved.startsWith(baseDir) && isLinkTargetInside(baseDir, resolved) ? resolved : null;
-  }
-
-  /**
-   * Checks the deepest existing ancestor of the resolved path, which is where a symbolic link would
-   * lead out of the file-set without {@link Path#normalize()} ever noticing.
-   */
-  private static boolean isLinkTargetInside(Path baseDir, Path resolved) {
-    try {
-      Path existing = resolved;
-      while (!Files.exists(existing, LinkOption.NOFOLLOW_LINKS)) {
-        existing = existing.getParent();
-        if (existing == null) {
-          return false;
-        }
-      }
-      return existing.toRealPath().startsWith(baseDir.toRealPath());
-    } catch (IOException e) {
-      return false;
-    }
-  }
-
-  private static String[] toLowerCase(String[] fileID) {
-    String[] lowerCase = new String[fileID.length];
-    for (int i = 0; i < fileID.length; i++) {
-      lowerCase[i] = fileID[i] == null ? null : fileID[i].toLowerCase(Locale.ROOT);
-    }
-    return lowerCase;
-  }
-
-  /** Finds the sibling file named after the record plus an extension, when it is unambiguous. */
-  private static Optional<Path> findWithExtension(Path file) {
-    String name = file.getFileName().toString();
-    String lowerCaseName = name.toLowerCase(Locale.ROOT);
-    try (Stream<Path> siblings = Files.list(file.getParent())) {
-      List<Path> matches =
-          siblings
-              .filter(
-                  p -> {
-                    String sibling = p.getFileName().toString();
-                    return sibling.startsWith(name + ".")
-                        || sibling.startsWith(lowerCaseName + ".");
-                  })
-              .limit(2)
-              .toList();
-      return matches.size() == 1 ? Optional.of(matches.getFirst()) : Optional.empty();
-    } catch (IOException e) {
-      return Optional.empty();
     }
   }
 

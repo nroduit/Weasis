@@ -12,12 +12,12 @@ package org.weasis.core.api.media.data;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.nio.file.attribute.FileTime;
 import java.util.Objects;
 import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.weasis.core.api.net.URIUtils;
 import org.weasis.core.util.FileUtil;
 
 public class FileCache {
@@ -34,11 +34,11 @@ public class FileCache {
   }
 
   public boolean isLocalFile() {
-    return reader.getUri().getScheme().startsWith("file"); // NON-NLS
+    return URIUtils.isFileURI(reader.getUri());
   }
 
   public boolean isElementInMemory() {
-    return reader.getUri().getScheme().startsWith("data"); // NON-NLS
+    return "data".equals(reader.getUri().getScheme()); // NON-NLS
   }
 
   public Optional<Path> getOriginalFile() {
@@ -47,7 +47,7 @@ public class FileCache {
       originalFile = originalTempFile;
     } else if (isLocalFile()) {
       try {
-        originalFile = Paths.get(reader.getUri());
+        originalFile = URIUtils.toPath(reader.getUri());
       } catch (Exception e) {
         LOGGER.error("Cannot convert uri to file: {}", reader.getUri(), e);
       }
