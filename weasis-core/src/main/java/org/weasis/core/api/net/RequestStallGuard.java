@@ -14,6 +14,7 @@ import java.nio.ByteBuffer;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Flow;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
@@ -23,42 +24,64 @@ import java.util.concurrent.atomic.AtomicLong;
  * completes on the headers, so a plain {@code future.get(timeout)} silently makes the timeout cover
  * connection setup, the whole request-body upload and the redirect chain. A large STOW-RS send on a
  * slow link then fails even while every byte is flowing. Handing each body chunk to the HTTP client
- * refreshes the clock here, so only a genuine stall aborts the request; once the body is sent the
- * same budget covers the wait for the response headers.
+ * refreshes the clock here, so only a genuine stall aborts the request.
+ *
+ * <p>The wait for the response headers gets its own, far more generous budget: the client has
+ * nothing left to send, so no progress signal exists until the server answers, and server
+ * think-time is not a stall. Assembling a WADO-RS bulk retrieve of a large series routinely takes
+ * minutes before the first byte, which the inactivity budget alone would abort. A request without a
+ * body — every GET — is in that phase from the start.
  *
  * <p>This is the upload counterpart of {@link StallGuardInputStream}.
  */
 public final class RequestStallGuard {
 
   private final int stallTimeoutMillis;
+  private final int responseTimeoutMillis;
   private final long stallNanos;
+  private final long responseNanos;
   private final AtomicLong lastProgressNanos = new AtomicLong(System.nanoTime());
+  private final AtomicBoolean uploading = new AtomicBoolean();
 
-  /** A timeout that is not positive disables the guard. */
+  /** Applies the same budget to the upload and to the response headers. */
   public RequestStallGuard(int stallTimeoutMillis) {
+    this(stallTimeoutMillis, stallTimeoutMillis);
+  }
+
+  /** A budget that is not positive leaves the matching phase unguarded. */
+  public RequestStallGuard(int stallTimeoutMillis, int responseTimeoutMillis) {
     this.stallTimeoutMillis = stallTimeoutMillis;
+    this.responseTimeoutMillis = responseTimeoutMillis;
     this.stallNanos = TimeUnit.MILLISECONDS.toNanos(Math.max(0, stallTimeoutMillis));
+    this.responseNanos = TimeUnit.MILLISECONDS.toNanos(Math.max(0, responseTimeoutMillis));
   }
 
   /**
-   * Wraps {@code delegate} so every chunk taken by the HTTP client refreshes the progress clock.
+   * Wraps {@code delegate} so every chunk taken by the HTTP client refreshes the progress clock,
+   * and marks the exchange as uploading until the body is fully published. A publisher without
+   * content is returned as is: HTTP/1.1 never subscribes to it, so its completion could not be
+   * observed and the exchange would wait for the headers on the stall budget.
    */
   public HttpRequest.BodyPublisher track(HttpRequest.BodyPublisher delegate) {
-    return stallTimeoutMillis > 0 ? new ProgressPublisher(delegate) : delegate;
+    if (stallTimeoutMillis <= 0 || delegate.contentLength() == 0) {
+      return delegate;
+    }
+    uploading.set(true);
+    return new ProgressPublisher(delegate);
   }
 
   /**
-   * Returns a future that fails with {@link StallTimeoutException} once nothing has progressed for
-   * the stall timeout, cancelling the exchange. The clock starts here, so time spent building the
-   * request (serializing a multipart payload) never counts against it.
+   * Returns a future that fails with {@link StallTimeoutException} once the current phase has made
+   * no progress within its budget, cancelling the exchange. The clock starts here, so time spent
+   * building the request (serializing a multipart payload) never counts against it.
    */
   public <T> CompletableFuture<T> guard(CompletableFuture<T> future) {
-    if (stallTimeoutMillis <= 0) {
+    if (stallTimeoutMillis <= 0 && responseTimeoutMillis <= 0) {
       return future;
     }
     lastProgressNanos.set(System.nanoTime());
     var guarded = new CompletableFuture<T>();
-    long poll = StallWatchdog.pollIntervalMillis(stallTimeoutMillis);
+    long poll = StallWatchdog.pollIntervalMillis(shortestBudgetMillis());
     var watchdog =
         StallWatchdog.EXECUTOR.scheduleWithFixedDelay(
             () -> abortIfStalled(guarded), poll, poll, TimeUnit.MILLISECONDS);
@@ -81,11 +104,27 @@ public final class RequestStallGuard {
     return guarded;
   }
 
-  private void abortIfStalled(CompletableFuture<?> guarded) {
-    if (System.nanoTime() - lastProgressNanos.get() >= stallNanos) {
-      guarded.completeExceptionally(
-          new StallTimeoutException("Request made no progress for " + stallTimeoutMillis + " ms"));
+  /** Polls fast enough for whichever phase has the tighter budget. */
+  private int shortestBudgetMillis() {
+    if (stallTimeoutMillis <= 0) {
+      return responseTimeoutMillis;
     }
+    return responseTimeoutMillis <= 0
+        ? stallTimeoutMillis
+        : Math.min(stallTimeoutMillis, responseTimeoutMillis);
+  }
+
+  private void abortIfStalled(CompletableFuture<?> guarded) {
+    boolean upload = uploading.get();
+    long budgetNanos = upload ? stallNanos : responseNanos;
+    if (budgetNanos <= 0 || System.nanoTime() - lastProgressNanos.get() < budgetNanos) {
+      return;
+    }
+    guarded.completeExceptionally(
+        new StallTimeoutException(
+            upload
+                ? "Request made no progress for " + stallTimeoutMillis + " ms"
+                : "No response headers received for " + responseTimeoutMillis + " ms"));
   }
 
   /**
@@ -112,7 +151,9 @@ public final class RequestStallGuard {
 
             @Override
             public void onSubscribe(Flow.Subscription subscription) {
+              // A redirect or a stale-connection retry replays the body: back on the stall budget.
               lastProgressNanos.set(System.nanoTime());
+              uploading.set(true);
               subscriber.onSubscribe(subscription);
             }
 
@@ -124,12 +165,15 @@ public final class RequestStallGuard {
 
             @Override
             public void onError(Throwable throwable) {
+              uploading.set(false);
               subscriber.onError(throwable);
             }
 
             @Override
             public void onComplete() {
+              // The body is out; what remains is server think-time, on the response budget.
               lastProgressNanos.set(System.nanoTime());
+              uploading.set(false);
               subscriber.onComplete();
             }
           });

@@ -69,6 +69,7 @@ final class ManifestModelBuilder {
           Tag.SeriesTime,
           Tag.SeriesDescription,
           Tag.ReferringPhysicianName);
+  private static final String THUMBNAIL_MODE = "thumbnailMode"; // NON-NLS
   private static final String SOP_INSTANCE_UID_KEY =
       TagD.getKeywordFromTag(Tag.SOPInstanceUID, null);
   private static final String SOP_CLASS_UID_KEY = TagD.getKeywordFromTag(Tag.SOPClassUID, null);
@@ -95,7 +96,18 @@ final class ManifestModelBuilder {
             arcID, wadoURL, onlySopUID, additionalParameters, overrideList, webLogin, wadoRs);
     params.wadoUri = getWadoUrl(wadoURL);
     params.bulkSeriesRetrieve = isBulkSeriesRetrieve(source, wadoRs);
+    registerThumbnailService(source, wadoURL);
     return wadoParameters;
+  }
+
+  /**
+   * Records which service serves the thumbnails of the archive, from the {@code thumbnailMode}
+   * attribute (see {@link ThumbnailMode}). It falls back to the {@code weasis.dicom.thumbnail.mode}
+   * system property when absent, and an absent mode leaves Weasis probing the services.
+   */
+  static void registerThumbnailService(AttributeSource source, String baseUrl) {
+    ThumbnailServiceRegistry.configure(
+        baseUrl, TagUtil.getTagAttribute(source, THUMBNAIL_MODE, null));
   }
 
   /**

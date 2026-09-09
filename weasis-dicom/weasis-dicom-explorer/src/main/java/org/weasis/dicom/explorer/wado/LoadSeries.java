@@ -24,6 +24,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import javax.swing.JProgressBar;
@@ -47,6 +48,7 @@ import org.weasis.core.api.net.NetworkUtil;
 import org.weasis.core.api.net.URLParameters;
 import org.weasis.core.api.net.auth.AuthMethod;
 import org.weasis.core.api.service.AuditLog;
+import org.weasis.core.api.util.ThreadUtil;
 import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.codec.*;
 import org.weasis.dicom.codec.TagD.Level;
@@ -133,6 +135,13 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
   private final AtomicInteger errors;
   private volatile boolean hasError = false;
   private final AtomicBoolean seriesInitialized = new AtomicBoolean(false);
+
+  /**
+   * Previews are fetched off the thread that queues the series: an archive slow to render a
+   * thumbnail must not delay the downloads the user is waiting for.
+   */
+  private static final ExecutorService PREVIEW_LOADER =
+      ThreadUtil.newFixedDaemonThreadPool(4, "Thumbnail Preview"); // NON-NLS
 
   private final ThumbnailManager thumbnailManager;
   private final SeriesDownloadManager downloadManager;
@@ -524,12 +533,14 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
       final SopInstance instance = sopList.get(sopList.size() / 2);
 
       thumbnailManager.createSeriesThumbnail(this, progressBar);
-      thumbnailManager.loadThumbnail(instance, wadoParameters, authMethod);
+      PREVIEW_LOADER.execute(
+          () -> thumbnailManager.loadThumbnail(instance, wadoParameters, authMethod));
     } else if (Boolean.TRUE.equals(dicomSeries.getTagValue(SERIES_BULK_RETRIEVE))) {
       // Series-level bulk retrieve: no instance list yet. Show the progress thumbnail and fetch a
-      // preview through the DICOMweb thumbnail service (WADO-URI fallback) before downloading.
+      // preview through the thumbnail services of the archive while the series downloads.
       thumbnailManager.createSeriesThumbnail(this, progressBar);
-      thumbnailManager.loadSeriesThumbnail(wadoParameters, authMethod);
+      PREVIEW_LOADER.execute(
+          () -> thumbnailManager.loadSeriesThumbnail(wadoParameters, authMethod));
     }
   }
 

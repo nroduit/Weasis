@@ -457,6 +457,9 @@ public class MagicMimeEntry {
           ret.append('\n');
         } else if (cn == 'r') { // NON-NLS
           ret.append('\r');
+        } else if (cn == 'x' && isHexPair(s, indx + 1)) { // NON-NLS
+          ret.append((char) Integer.parseInt(s.substring(indx + 1, indx + 3), 16));
+          indx += 2;
         } else if (cn >= '\60' && cn <= '\67') {
           int escape = cn - '0';
           indx++;
@@ -494,5 +497,12 @@ public class MagicMimeEntry {
       indx++;
     }
     return new String(ret);
+  }
+
+  /** {@code \xHH} escapes encode the bytes of a signature outside ASCII, e.g. PNG or JP2. */
+  private static boolean isHexPair(String s, int from) {
+    return from + 1 < s.length()
+        && Character.digit(s.charAt(from), 16) >= 0
+        && Character.digit(s.charAt(from + 1), 16) >= 0;
   }
 }

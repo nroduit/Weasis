@@ -24,14 +24,19 @@ import java.util.Objects;
  *
  * @param connectTimeoutMillis budget for establishing the connection
  * @param inactivityTimeoutMillis budget for time without progress, never for the total transfer: it
- *     bounds a stalled upload chunk, the wait for the response headers and a stalled read of the
- *     response body, so a slow but healthy transfer of any size completes
+ *     bounds a stalled upload chunk and a stalled read of the response body, so a slow but healthy
+ *     transfer of any size completes
+ * @param responseTimeoutMillis budget for the wait between the request being sent and the response
+ *     headers arriving; 0 waits indefinitely. Honoured by the {@link HttpUtils} client only: a
+ *     {@link java.net.HttpURLConnection} from {@link NetworkUtil} bounds that wait by the
+ *     inactivity budget, as its read timeout applies to the first byte too
  */
 public record URLParameters(
     Map<String, String> headers,
     long ifModifiedSince,
     int connectTimeoutMillis,
     int inactivityTimeoutMillis,
+    int responseTimeoutMillis,
     boolean httpPost,
     boolean useCaches,
     boolean allowUserInteraction) {
@@ -46,6 +51,10 @@ public record URLParameters(
     if (inactivityTimeoutMillis < 0) {
       throw new IllegalArgumentException(
           "Inactivity timeout cannot be negative: " + inactivityTimeoutMillis);
+    }
+    if (responseTimeoutMillis < 0) {
+      throw new IllegalArgumentException(
+          "Response timeout cannot be negative: " + responseTimeoutMillis);
     }
     if (ifModifiedSince < 0) {
       throw new IllegalArgumentException(
@@ -68,6 +77,7 @@ public record URLParameters(
         0L,
         NetworkUtil.getUrlConnectTimeoutMillis(),
         NetworkUtil.getUrlInactivityTimeoutMillis(),
+        NetworkUtil.getUrlResponseTimeoutMillis(),
         httpPost,
         true,
         false);
@@ -75,7 +85,15 @@ public record URLParameters(
 
   public URLParameters(
       Map<String, String> headers, int connectTimeoutMillis, int inactivityTimeoutMillis) {
-    this(headers, 0L, connectTimeoutMillis, inactivityTimeoutMillis, false, true, false);
+    this(
+        headers,
+        0L,
+        connectTimeoutMillis,
+        inactivityTimeoutMillis,
+        NetworkUtil.getUrlResponseTimeoutMillis(),
+        false,
+        true,
+        false);
   }
 
   /**
@@ -154,6 +172,7 @@ public record URLParameters(
     private long ifModifiedSince = 0L;
     private int connectTimeoutMillis = NetworkUtil.getUrlConnectTimeoutMillis();
     private int inactivityTimeoutMillis = NetworkUtil.getUrlInactivityTimeoutMillis();
+    private int responseTimeoutMillis = NetworkUtil.getUrlResponseTimeoutMillis();
     private boolean httpPost = false;
     private boolean useCaches = true;
     private boolean allowUserInteraction = false;
@@ -165,6 +184,7 @@ public record URLParameters(
       this.ifModifiedSince = parameters.ifModifiedSince;
       this.connectTimeoutMillis = parameters.connectTimeoutMillis;
       this.inactivityTimeoutMillis = parameters.inactivityTimeoutMillis;
+      this.responseTimeoutMillis = parameters.responseTimeoutMillis;
       this.httpPost = parameters.httpPost;
       this.useCaches = parameters.useCaches;
       this.allowUserInteraction = parameters.allowUserInteraction;
@@ -187,6 +207,11 @@ public record URLParameters(
 
     public Builder inactivityTimeoutMillis(int inactivityTimeoutMillis) {
       this.inactivityTimeoutMillis = inactivityTimeoutMillis;
+      return this;
+    }
+
+    public Builder responseTimeoutMillis(int responseTimeoutMillis) {
+      this.responseTimeoutMillis = responseTimeoutMillis;
       return this;
     }
 
@@ -227,6 +252,7 @@ public record URLParameters(
           ifModifiedSince,
           connectTimeoutMillis,
           inactivityTimeoutMillis,
+          responseTimeoutMillis,
           httpPost,
           useCaches,
           allowUserInteraction);

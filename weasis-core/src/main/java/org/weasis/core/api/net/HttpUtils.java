@@ -142,7 +142,9 @@ public final class HttpUtils {
       throws IOException {
     var builder = HttpRequest.newBuilder().uri(URI.create(url));
     applyHeaders(urlParameters.headers(), builder::header);
-    var stallGuard = new RequestStallGuard(urlParameters.inactivityTimeoutMillis());
+    var stallGuard =
+        new RequestStallGuard(
+            urlParameters.inactivityTimeoutMillis(), urlParameters.responseTimeoutMillis());
     JavaNetHttpClient.applyMultipart(builder, multipart, stallGuard);
     var response =
         send(client, builder.build(), HttpResponse.BodyHandlers.ofInputStream(), stallGuard);
@@ -167,7 +169,11 @@ public final class HttpUtils {
 
     var response =
         sendWithStaleConnectionRetry(
-            client, request, bodyHandler, urlParameters.inactivityTimeoutMillis());
+            client,
+            request,
+            bodyHandler,
+            urlParameters.inactivityTimeoutMillis(),
+            urlParameters.responseTimeoutMillis());
     // POST responses (e.g. STOW-RS 202/409) carry meaningful non-200 codes the caller inspects.
     if (!post) {
       validateResponseStatus(response.statusCode());
@@ -177,10 +183,11 @@ public final class HttpUtils {
 
   /**
    * Bounds the exchange by time without progress rather than by total duration. The request body
-   * keeps the clock alive while it is being uploaded, and once it is sent the same budget covers
-   * the wait for the response headers; the response body is guarded separately by {@link
+   * keeps the clock alive while it is being uploaded; once it is sent, the wait for the response
+   * headers runs on the separate response budget, which server think-time on a large WADO-RS
+   * retrieve legitimately consumes. The response body is guarded separately by {@link
    * StallGuardInputStream}. Buffering body handlers complete only once the body has been read, so
-   * for those small control-plane responses the budget also covers the download.
+   * for those small control-plane responses the response budget also covers the download.
    */
   private static <S> HttpResponse<S> send(
       HttpClient client,
@@ -216,12 +223,17 @@ public final class HttpUtils {
       HttpClient client,
       HttpRequest request,
       HttpResponse.BodyHandler<S> bodyHandler,
-      int inactivityTimeoutMillis)
+      int inactivityTimeoutMillis,
+      int responseTimeoutMillis)
       throws IOException {
     IOException last = null;
     for (int attempt = 0; attempt <= STALE_RETRY_ATTEMPTS; attempt++) {
       try {
-        return send(client, request, bodyHandler, new RequestStallGuard(inactivityTimeoutMillis));
+        return send(
+            client,
+            request,
+            bodyHandler,
+            new RequestStallGuard(inactivityTimeoutMillis, responseTimeoutMillis));
       } catch (IOException e) {
         last = e;
         if (!isIdempotent(request) || !isStaleConnectionFailure(e)) {
@@ -298,7 +310,7 @@ public final class HttpUtils {
 
   private static void validateResponseStatus(int statusCode) throws IOException {
     if (statusCode != HttpURLConnection.HTTP_OK) {
-      throw new IOException("HTTP request failed with status code: " + statusCode);
+      throw new HttpStatusException(statusCode);
     }
   }
 }

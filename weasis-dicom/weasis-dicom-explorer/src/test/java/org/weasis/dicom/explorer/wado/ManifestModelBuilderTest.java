@@ -9,6 +9,7 @@
  */
 package org.weasis.dicom.explorer.wado;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -17,12 +18,12 @@ import org.junit.jupiter.api.Test;
 import org.weasis.core.api.media.data.AttributeSource;
 
 /**
- * Tests the series-level bulk-retrieve opt-in decision in {@link
- * ManifestModelBuilder#isBulkSeriesRetrieve}. The opt-in only applies to {@code DICOM_WEB}
- * manifests and is driven by the {@code seriesRetrieve} arcQuery attribute.
+ * Tests the arcQuery options read from a manifest: the series-level bulk-retrieve opt-in ({@code
+ * seriesRetrieve}, only for {@code DICOM_WEB} manifests) and the thumbnail service configuration
+ * ({@code thumbnailMode}).
  *
- * <p>The {@code weasis.dicom.web.series.bulk} system-property fallback is intentionally not
- * exercised here: mutating a process-global property would break under the parallel test runner.
+ * <p>The system-property fallbacks are intentionally not exercised here: mutating a process-global
+ * property would break under the parallel test runner.
  */
 class ManifestModelBuilderTest {
 
@@ -31,6 +32,24 @@ class ManifestModelBuilderTest {
     Map<String, String> attributes =
         seriesRetrieve == null ? Map.of() : Map.of("seriesRetrieve", seriesRetrieve);
     return attributes::get;
+  }
+
+  @Test
+  void theThumbnailModeAttributeConfiguresTheArchive() {
+    String baseUrl = "http://arc-manifest/dicomweb";
+    AttributeSource source = Map.of("thumbnailMode", "WADO_URI")::get;
+
+    ManifestModelBuilder.registerThumbnailService(source, baseUrl);
+
+    assertEquals(ThumbnailMode.WADO_URI, ThumbnailServiceRegistry.configuredMode(baseUrl));
+  }
+
+  @Test
+  void anArchiveWithoutThumbnailModeKeepsProbingTheServices() {
+    String baseUrl = "http://arc-manifest-default/dicomweb";
+    ManifestModelBuilder.registerThumbnailService(source(null), baseUrl);
+
+    assertEquals(ThumbnailMode.AUTO, ThumbnailServiceRegistry.configuredMode(baseUrl));
   }
 
   @Test

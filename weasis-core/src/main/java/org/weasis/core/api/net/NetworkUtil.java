@@ -58,6 +58,16 @@ public final class NetworkUtil {
   }
 
   /**
+   * Budget for the wait between the request being sent and the response headers arriving. Server
+   * think-time is not a stall: assembling a WADO-RS bulk retrieve of a large series legitimately
+   * takes minutes before the first byte, so this is far more generous than {@link
+   * #getUrlInactivityTimeoutMillis()}. Set {@code UrlResponseTimeout} to 0 to wait indefinitely.
+   */
+  public static int getUrlResponseTimeoutMillis() {
+    return StringUtil.getInt(System.getProperty("UrlResponseTimeout"), 300000);
+  }
+
+  /**
    * @deprecated renamed to {@link #getUrlConnectTimeoutMillis()}
    */
   @Deprecated(since = "4.7.3")

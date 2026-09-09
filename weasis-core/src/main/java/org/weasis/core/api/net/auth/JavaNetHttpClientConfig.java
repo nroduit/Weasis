@@ -17,6 +17,7 @@ public class JavaNetHttpClientConfig {
 
   private final int connectTimeoutMillis;
   private final int inactivityTimeoutMillis;
+  private final int responseTimeoutMillis;
   private final ProxySelector proxySelector;
 
   public JavaNetHttpClientConfig() {
@@ -28,8 +29,21 @@ public class JavaNetHttpClientConfig {
 
   public JavaNetHttpClientConfig(
       int connectTimeoutMillis, int inactivityTimeoutMillis, ProxySelector proxySelector) {
+    this(
+        connectTimeoutMillis,
+        inactivityTimeoutMillis,
+        NetworkUtil.getUrlResponseTimeoutMillis(),
+        proxySelector);
+  }
+
+  public JavaNetHttpClientConfig(
+      int connectTimeoutMillis,
+      int inactivityTimeoutMillis,
+      int responseTimeoutMillis,
+      ProxySelector proxySelector) {
     this.connectTimeoutMillis = connectTimeoutMillis;
     this.inactivityTimeoutMillis = inactivityTimeoutMillis;
+    this.responseTimeoutMillis = responseTimeoutMillis;
     this.proxySelector = proxySelector;
   }
 
@@ -40,6 +54,11 @@ public class JavaNetHttpClientConfig {
   /** Budget for time without progress, never for the total transfer. */
   public int getInactivityTimeoutMillis() {
     return inactivityTimeoutMillis;
+  }
+
+  /** Budget for the wait between the request being sent and the response headers arriving. */
+  public int getResponseTimeoutMillis() {
+    return responseTimeoutMillis;
   }
 
   public ProxySelector getProxy() {

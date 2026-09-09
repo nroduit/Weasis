@@ -695,9 +695,9 @@ public class ConfigData {
 
         urlConnection.setRequestProperty("Accept", "application/xml"); // NON-NLS
         urlConnection.setConnectTimeout(
-            Integer.parseInt(System.getProperty("UrlConnectionTimeout", "1000"))); // NON-NLS
+            Integer.parseInt(System.getProperty("UrlConnectionTimeout", "3000"))); // NON-NLS
         urlConnection.setReadTimeout(
-            Integer.parseInt((System.getProperty("UrlReadTimeout", "2000")))); // NON-NLS
+            Integer.parseInt((System.getProperty("UrlReadTimeout", "7000")))); // NON-NLS
 
         if (urlConnection instanceof HttpURLConnection httpURLConnection) {
           if (httpURLConnection.getResponseCode() != HttpURLConnection.HTTP_OK) {
