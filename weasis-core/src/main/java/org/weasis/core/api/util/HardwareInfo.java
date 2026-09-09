@@ -62,6 +62,10 @@ public final class HardwareInfo {
   /** OSHI's Linux mount-scan exclusion list, whose default hides {@code /run}. */
   private static final String LINUX_PATH_EXCLUDES = "oshi.os.linux.filesystem.path.excludes";
 
+  /** File systems of optical media. */
+  private static final Set<String> OPTICAL_FILE_SYSTEMS =
+      Set.of("iso9660", "udf", "cd9660", "cdfs"); // NON-NLS
+
   /** Virtual file systems that are never user media, whatever they are mounted on. */
   private static final Set<String> PSEUDO_FILE_SYSTEMS =
       Set.of(
@@ -100,6 +104,13 @@ public final class HardwareInfo {
 
   /** A mounted volume: {@code name} is its label when it has one, otherwise its mount point. */
   public record Drive(String name, String mount, String type, long totalBytes, long freeBytes) {}
+
+  /**
+   * A mount point as the operating system reports it. {@code description} is the drive type on
+   * Windows ({@code Network drive}, {@code CD-ROM}, ...) and {@code local} is false for network
+   * file systems (the {@code MNT_LOCAL} flag on macOS, the file system type elsewhere).
+   */
+  public record Volume(String mount, String type, String description, boolean local) {}
 
   private HardwareInfo() {}
 
@@ -235,6 +246,49 @@ public final class HardwareInfo {
       }
     }
     return drives;
+  }
+
+  /**
+   * Lists the mounted optical discs (CD, DVD, Blu-ray), the media DICOM file-sets are usually
+   * shipped on. Windows reports the drive type, Linux and macOS the file system type.
+   *
+   * @return the optical drives, empty when there is none or when the probe is unavailable.
+   */
+  public static List<Drive> opticalDrives() {
+    List<Drive> drives = new ArrayList<>();
+    for (Volume volume : mountedVolumes()) {
+      if (isOptical(volume.type(), volume.description())) {
+        drives.add(
+            new Drive(volume.mount(), volume.mount(), volume.type(), 0, 0)); // sizes not needed
+      }
+    }
+    return drives;
+  }
+
+  /** Applies the optical-media rule of {@link #opticalDrives()} to one mounted volume. */
+  static boolean isOptical(String type, String description) {
+    return lower(description).contains("cd-rom") // NON-NLS
+        || OPTICAL_FILE_SYSTEMS.contains(lower(type));
+  }
+
+  /**
+   * Lists every mount point, network shares and optical media included, so callers can tell how a
+   * path is reached. Enumerating costs a WMI query on Windows, so cache the answer.
+   *
+   * @return the mounted volumes, empty when the probe is unavailable.
+   */
+  public static List<Volume> mountedVolumes() {
+    List<OSFileStore> stores =
+        probe(
+            system -> system.getOperatingSystem().getFileSystem().getFileStores(false), List.of());
+    List<Volume> volumes = new ArrayList<>(stores.size());
+    for (OSFileStore store : stores) {
+      if (StringUtil.hasText(store.getMount())) {
+        volumes.add(
+            new Volume(store.getMount(), store.getType(), store.getDescription(), store.isLocal()));
+      }
+    }
+    return volumes;
   }
 
   /** Applies the removability rule of {@link #removableDrives()} to one mounted volume. */

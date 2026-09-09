@@ -12,12 +12,12 @@ package org.weasis.core.ui.util;
 import java.awt.datatransfer.DataFlavor;
 import java.net.URI;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.weasis.core.api.net.URIUtils;
 import org.weasis.core.util.StringUtil;
 
 /**
@@ -63,7 +63,7 @@ public final class UriListFlavor {
 
   private static Optional<Path> uriToPath(String uriString) {
     try {
-      return Optional.of(Paths.get(new URI(uriString)));
+      return Optional.of(URIUtils.toPath(new URI(uriString)));
     } catch (Exception e) {
       LOGGER.error("Failed to convert URI to Path: {}", uriString, e);
       return Optional.empty();

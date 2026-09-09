@@ -12,6 +12,9 @@ package org.weasis.dicom.explorer.imp;
 import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -33,13 +36,16 @@ import org.dcm4che3.util.UIDUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
+import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.MediaSeriesGroupNode;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.media.data.Thumbnail;
+import org.weasis.core.api.util.NetworkFileSystems;
 import org.weasis.core.ui.editor.image.ViewerPlugin;
+import org.weasis.core.util.FileUtil;
 import org.weasis.dicom.codec.DicomSeries;
 import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.TagD.Level;
@@ -64,6 +70,7 @@ public class DicomDirLoader {
   private final WadoParameters wadoParameters;
   private final boolean writeInCache;
   private final File dcmDirFile;
+  private final DicomDirFileResolver resolver;
 
   public DicomDirLoader(File dcmDirFile, DataExplorerModel explorerModel, boolean writeInCache) {
     if (dcmDirFile == null || !dcmDirFile.canRead() || !(explorerModel instanceof DicomModel)) {
@@ -72,6 +79,7 @@ public class DicomDirLoader {
     this.dicomModel = (DicomModel) explorerModel;
     this.writeInCache = writeInCache;
     this.dcmDirFile = dcmDirFile;
+    this.resolver = new DicomDirFileResolver(dcmDirFile.toPath());
     wadoParameters = new WadoParameters("", true);
     seriesList = new ArrayList<>();
   }
@@ -80,7 +88,9 @@ public class DicomDirLoader {
     Attributes dcmPatient;
     MediaSeriesGroup patient = null;
 
-    try (DicomDirReader reader = new DicomDirReader(dcmDirFile)) {
+    Path stagedCopy = stageDicomDir();
+    try (DicomDirReader reader =
+        new DicomDirReader(stagedCopy == null ? dcmDirFile : stagedCopy.toFile())) {
       dcmPatient = findFirstRootDirectoryRecordInUse(reader);
 
       while (dcmPatient != null) {
@@ -91,6 +101,8 @@ public class DicomDirLoader {
       }
     } catch (IOException e) {
       LOGGER.error("Cannot read DICOMDIR !", e);
+    } finally {
+      FileUtil.delete(stagedCopy);
     }
 
     if (patient != null) {
@@ -202,19 +214,15 @@ public class DicomDirLoader {
                 DicomUtils.getIntegerFromDicomElement(instance, Tag.InstanceNumber, null);
             SopInstance sop = seriesInstanceList.getSopInstance(sopInstanceUID, frame);
             if (sop == null) {
-              File file = toFileName(instance, reader);
+              Path file = resolver.resolve(instance.getStrings(Tag.ReferencedFileID)).orElse(null);
               if (file != null) {
-                if (file.exists()) {
-                  sop = new SopInstance(sopInstanceUID, frame);
-                  sop.setDirectDownloadFile(file.toURI().toString());
-                  seriesInstanceList.addSopInstance(sop);
-                  if (iconInstance == null) {
-                    // Icon Image Sequence (0088,0200). This Icon Image is representative of the
-                    // Image. Only a single Item is permitted in this Sequence.
-                    iconInstance = instance.getNestedDataset(Tag.IconImageSequence);
-                  }
-                } else {
-                  LOGGER.error("Missing DICOMDIR entry: {}", file.getPath());
+                sop = new SopInstance(sopInstanceUID, frame);
+                sop.setDirectDownloadFile(file.toUri().toString());
+                seriesInstanceList.addSopInstance(sop);
+                if (iconInstance == null) {
+                  // Icon Image Sequence (0088,0200). This Icon Image is representative of the
+                  // Image. Only a single Item is permitted in this Sequence.
+                  iconInstance = instance.getNestedDataset(Tag.IconImageSequence);
                 }
               }
             }
@@ -351,37 +359,27 @@ public class DicomDirLoader {
     return null;
   }
 
-  private File toFileName(Attributes dcmObject, DicomDirReader reader) {
-    String[] fileID = dcmObject.getStrings(Tag.ReferencedFileID);
-    if (fileID == null || fileID.length == 0) {
+  /**
+   * dcm4che reads DICOMDIR records with unbuffered random access: on a network share or optical
+   * media the file is first copied locally in one bulk transfer.
+   *
+   * @return the local copy to delete afterwards, or null when the DICOMDIR is read in place
+   */
+  private Path stageDicomDir() {
+    Path source = dcmDirFile.toPath();
+    if (!NetworkFileSystems.isSlowRandomAccess(source)) {
       return null;
     }
-    StringBuilder sb = new StringBuilder(fileID[0]);
-    for (int i = 1; i < fileID.length; i++) {
-      sb.append(File.separatorChar).append(fileID[i]);
+    Path copy = null;
+    try {
+      copy = Files.createTempFile(AppProperties.FILE_CACHE_DIR, "dicomdir_", ".tmp"); // NON-NLS
+      Files.copy(source, copy, StandardCopyOption.REPLACE_EXISTING);
+      return copy;
+    } catch (IOException e) {
+      LOGGER.warn("Cannot copy {} locally, reading it in place", source, e);
+      FileUtil.delete(copy);
+      return null;
     }
-    File file = new File(reader.getFile().getParent(), sb.toString());
-    if (!file.exists()) {
-      // Try to find lower case relative path, it happens sometimes when mounting cdrom on Linux
-      File fileLowerCase = new File(reader.getFile().getParent(), sb.toString().toLowerCase());
-      if (fileLowerCase.exists()) {
-        return fileLowerCase;
-      }
-
-      // Try to find relative path with extension, image file may have it
-      String dcmFilename = file.getName();
-      File[] dcmFileList =
-          file.getParentFile()
-              .listFiles(
-                  (p, name) ->
-                      name.startsWith(dcmFilename + ".")
-                          || name.startsWith(dcmFilename.toLowerCase() + "."));
-      if (dcmFileList != null && dcmFileList.length == 1) {
-        return dcmFileList[0];
-      }
-    }
-
-    return file;
   }
 
   public static DicomDirWriter open(File file) throws IOException {
