@@ -30,7 +30,7 @@
     <sonar.java.target>${java-version}</sonar.java.target>
 
     <sonar.scm.provider>git</sonar.scm.provider>
-    <sonar.links.homepage>https://weasis.org</sonar.links.homepage>
+    <sonar.links.homepage>https://github.com/nroduit/Weasis</sonar.links.homepage>
     <sonar.links.ci>https://github.com/nroduit/Weasis/actions</sonar.links.ci>
     <sonar.links.scm>https://github.com/nroduit/Weasis</sonar.links.scm>
     <sonar.links.issue>https://github.com/nroduit/Weasis/issues</sonar.links.issue>

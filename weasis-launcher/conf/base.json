@@ -378,7 +378,7 @@
     },
     {
       "code": "weasis.help.online",
-      "value": "https://weasis.org/en/tutorials/",
+      "value": "https://nroduit.github.io/en/tutorials/",
       "description": "The online tutorial",
       "type": "A",
       "category": "DOC"

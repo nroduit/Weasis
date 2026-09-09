@@ -114,7 +114,7 @@ jobs:
             -Dsonar.coverage.jacoco.xmlReportPaths=tests/target/site/jacoco-aggregate/jacoco.xml \
             -Dsonar.coverage.exclusions='**/Messages.java,**/Activator.java,**/module-info.java,**/package-info.java' \
             -Dsonar.cpd.exclusions='**/Messages.java' \
-            -Dsonar.links.homepage=https://weasis.org \
+            -Dsonar.links.homepage=https://github.com/nroduit/Weasis \
             -Dsonar.links.ci=https://github.com/nroduit/Weasis/actions \
             -Dsonar.links.scm=https://github.com/nroduit/Weasis \
             -Dsonar.links.issue=https://github.com/nroduit/Weasis/issues \
