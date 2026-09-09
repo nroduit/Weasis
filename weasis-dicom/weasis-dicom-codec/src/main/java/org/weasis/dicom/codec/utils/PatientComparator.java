@@ -25,7 +25,8 @@ import org.weasis.dicom.codec.TagD;
 public class PatientComparator {
 
   /** Empty components at the end of a component group, and empty groups at the end of the name. */
-  private static final Pattern TRAILING_PN_SEPARATORS = Pattern.compile("\\^+(?==)|[\\^=]+$");
+  private static final Pattern TRAILING_PN_SEPARATORS =
+      Pattern.compile("\\^+(?==)|[\\^=]+$"); // NOSONAR only the second alternative is anchored
 
   private String issuerOfPatientID;
   private String patientId;

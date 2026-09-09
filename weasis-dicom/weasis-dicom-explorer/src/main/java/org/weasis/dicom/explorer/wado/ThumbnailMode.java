@@ -40,7 +40,7 @@ public enum ThumbnailMode {
       return AUTO;
     }
     try {
-      return valueOf(value.trim().toUpperCase(Locale.ROOT));
+      return valueOf(value.trim().toUpperCase(Locale.ROOT)); // NOSONAR hasText checks null
     } catch (IllegalArgumentException e) {
       LOGGER.warn("Unknown thumbnail mode '{}', using {}", value, AUTO);
       return AUTO;
