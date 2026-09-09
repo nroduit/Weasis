@@ -56,8 +56,8 @@ public class RemovableDriveWatcher implements AutoCloseable {
   private final Listener listener;
   private final ScheduledExecutorService scheduler;
 
-  /** Last known drives, keyed by mount point; replaced wholesale on each poll. */
-  private volatile Map<String, Drive> drives = Map.of();
+  /** Last known drives, keyed by mount point; only the polling thread touches it. */
+  private Map<String, Drive> drives = Map.of();
 
   /**
    * Distinguishes the startup listing from a later hot-plug; only the polling thread touches it.
