@@ -288,6 +288,17 @@ public class SRView extends JScrollPane implements SeriesViewerListener {
       }
 
       if (!addLayer) {
+        // The layer is rebuilt from the clicked reference every time.
+        //
+        // There used to be an early `return` here when the layer already
+        // held as many graphics as the reference: `if (imgRef.getGraphics()
+        // .size() == size) return;`. The count says nothing about WHICH
+        // graphics are present, so a second click on a different reference
+        // whose graphics happened to have the same count as the previous
+        // one did nothing at all - the first click's graphics stayed on
+        // screen and the new ones were never added ("first click sticks").
+        // A count match is not an identity match, so the shortcut is
+        // removed and the layer is always cleared and refilled.
         List<Graphic> models = modelList.getModels();
         int size = 0;
         synchronized (models) {
@@ -297,10 +308,6 @@ public class SRView extends JScrollPane implements SeriesViewerListener {
               size++;
             }
           }
-        }
-
-        if (imgRef.getGraphics().size() == size) {
-          return;
         }
 
         if (size > 0) {
