@@ -29,8 +29,8 @@ import org.weasis.dicom.codec.geometry.GeometryOfSlice;
  * point belongs to a slice when its distance to the slice plane is at most half the slice spacing.
  * A planar graphic whose points all lie in the slice is drawn as the matching 2D graphic (POLYLINE,
  * POLYGON, ELLIPSE, POINT, MULTIPOINT). A graphic crossing the slice contributes the intersections
- * of its segments with the plane, drawn as points. An ELLIPSOID is approximated by the axis end
- * points and axis crossings that fall in the slice.
+ * of its segments with the plane, drawn as points. The section of an ELLIPSOID by the slice plane
+ * is computed exactly and drawn as a closed outline.
  */
 final class SRScoordProjector {
 
@@ -116,7 +116,10 @@ final class SRScoordProjector {
         }
         yield points(axisHits(pts, dist, tol), geometry, color, thickness);
       }
-      case ELLIPSOID -> points(axisHits(pts, dist, tol), geometry, color, thickness);
+      case ELLIPSOID ->
+          n == 6 && hasValidAxes(pts)
+              ? ellipsoidSection(pts, dist, geometry, color, thickness)
+              : points(axisHits(pts, dist, tol), geometry, color, thickness);
       default -> null;
     };
   }
@@ -172,6 +175,69 @@ final class SRScoordProjector {
       }
     }
     return list;
+  }
+
+  /** True when the six points define three axes of non-zero length. */
+  static boolean hasValidAxes(Vector3d[] pts) {
+    for (int i = 0; i < 3; i++) {
+      if (new Vector3d(pts[2 * i + 1]).sub(pts[2 * i]).lengthSquared() < 1e-12) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  /** Number of vertices of the outline approximating the section of an ellipsoid. */
+  static final int SECTION_VERTICES = 72;
+
+  /**
+   * Exact section of an ellipsoid by the slice plane. The six points are the end points of three
+   * orthogonal axes. In the coordinates where the ellipsoid is the unit sphere, the plane cuts a
+   * circle whose points are mapped back to patient space and projected on the slice.
+   *
+   * @return the closed outline, or null when the plane misses the ellipsoid
+   */
+  static Graphic ellipsoidSection(
+      Vector3d[] pts, double[] dist, GeometryOfSlice geometry, Color color, float thickness) {
+    Vector3d center = new Vector3d(pts[0]).add(pts[1]).mul(0.5);
+    Vector3d[] axes = new Vector3d[3];
+    for (int i = 0; i < 3; i++) {
+      axes[i] = new Vector3d(pts[2 * i + 1]).sub(pts[2 * i]).mul(0.5);
+    }
+    Vector3d normal = geometry.getNormal();
+    // Plane in unit-sphere coordinates s: m.s + d = 0
+    double d = (dist[0] + dist[1]) / 2.0;
+    Vector3d m = new Vector3d(axes[0].dot(normal), axes[1].dot(normal), axes[2].dot(normal));
+    double m2 = m.lengthSquared();
+    if (m2 < 1e-12 || d * d > m2) {
+      return null;
+    }
+    Vector3d s0 = new Vector3d(m).mul(-d / m2);
+    double radius = Math.sqrt(1.0 - d * d / m2);
+    Vector3d mUnit = new Vector3d(m).normalize();
+    Vector3d seed = Math.abs(mUnit.x) < 0.9 ? new Vector3d(1, 0, 0) : new Vector3d(0, 1, 0);
+    Vector3d e1 = new Vector3d(seed).cross(mUnit).normalize();
+    Vector3d e2 = new Vector3d(mUnit).cross(e1).normalize();
+
+    List<Point2D> outline = new ArrayList<>(SECTION_VERTICES + 1);
+    for (int k = 0; k <= SECTION_VERTICES; k++) {
+      double theta = 2 * Math.PI * (k % SECTION_VERTICES) / SECTION_VERTICES;
+      Vector3d s =
+          new Vector3d(s0)
+              .add(new Vector3d(e1).mul(radius * Math.cos(theta)))
+              .add(new Vector3d(e2).mul(radius * Math.sin(theta)));
+      Vector3d x =
+          new Vector3d(center)
+              .add(new Vector3d(axes[0]).mul(s.x))
+              .add(new Vector3d(axes[1]).mul(s.y))
+              .add(new Vector3d(axes[2]).mul(s.z));
+      Point2D p2 = geometry.getImagePosition(x);
+      if (p2 == null) {
+        return null;
+      }
+      outline.add(p2);
+    }
+    return build(POLYLINE, outline, color, thickness, true);
   }
 
   private static List<Point2D> toImage(Vector3d[] pts, GeometryOfSlice geometry) {

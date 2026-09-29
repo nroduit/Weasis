@@ -111,6 +111,100 @@ class SRScoordProjectorTest {
     assertBounds(g, 20, 30, 40, 20);
   }
 
+  private static Attributes ellipsoid(float cx, float cy, float cz, float a, float b, float c) {
+    return scoord3d(
+        "ELLIPSOID",
+        cx - a,
+        cy,
+        cz,
+        cx + a,
+        cy,
+        cz,
+        cx,
+        cy - b,
+        cz,
+        cx,
+        cy + b,
+        cz,
+        cx,
+        cy,
+        cz - c,
+        cx,
+        cy,
+        cz + c);
+  }
+
+  @Test
+  void ellipsoid_section_is_exact_on_every_slice_it_spans() {
+    // Semi-axes 20, 10 and 5 mm, centered on (-60, -60, 50); slices are 2 mm apart at z = 50
+    Attributes item = ellipsoid(-60, -60, 50, 20, 10, 5);
+
+    Graphic center = project(item, FOR);
+    assertNotNull(center);
+    assertBounds(center, 20, 30, 40, 20);
+
+    // 3 mm above the center the section shrinks by sqrt(1 - (3/5)^2) = 0.8
+    GeometryOfSlice above =
+        new GeometryOfSlice(
+            new Vector3d(1, 0, 0),
+            new Vector3d(0, 1, 0),
+            new Vector3d(-100, -100, 53),
+            new Vector3d(1, 1, 2),
+            2.0,
+            new Vector3d(256, 256, 20));
+    Graphic upper = SRScoordProjector.project(item, above, FOR, Color.MAGENTA, 1f);
+    assertNotNull(upper);
+    assertBounds(upper, 24, 32, 32, 16);
+
+    GeometryOfSlice outside =
+        new GeometryOfSlice(
+            new Vector3d(1, 0, 0),
+            new Vector3d(0, 1, 0),
+            new Vector3d(-100, -100, 56),
+            new Vector3d(1, 1, 2),
+            2.0,
+            new Vector3d(256, 256, 20));
+    assertNull(SRScoordProjector.project(item, outside, FOR, Color.MAGENTA, 1f));
+  }
+
+  @Test
+  void ellipsoid_section_follows_a_tilted_ellipsoid() {
+    // Axes rotated 45 degrees in the xz plane: the axial section through the center is still an
+    // ellipse whose x extent is the 45-degree cut of the first and third axes
+    float s = (float) (10 / Math.sqrt(2));
+    Attributes item =
+        scoord3d(
+            "ELLIPSOID",
+            -60 - s,
+            -60,
+            50 - s,
+            -60 + s,
+            -60,
+            50 + s,
+            -60,
+            -70,
+            50,
+            -60,
+            -50,
+            50,
+            -60 + s,
+            -60,
+            50 - s,
+            -60 - s,
+            -60,
+            50 + s);
+
+    Graphic g = project(item, FOR);
+
+    assertNotNull(g);
+    Rectangle2D b = g.getShape().getBounds2D();
+    assertEquals(40, b.getCenterX(), 1e-3);
+    assertEquals(40, b.getCenterY(), 1e-3);
+    assertEquals(
+        20, b.getWidth(), 0.05, "section of two equal 10 mm axes is a 10 mm radius circle");
+    assertEquals(20, b.getHeight(), 0.05);
+  }
+
   @Test
   void a_different_frame_of_reference_is_ignored() {
     Attributes item = scoord3d("POINT", 0, 0, 50);
