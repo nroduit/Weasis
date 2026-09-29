@@ -10,10 +10,15 @@
 package org.weasis.dicom.sr;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import org.weasis.core.ui.model.graphic.Graphic;
 import org.weasis.dicom.macro.SOPInstanceReference;
 
+/**
+ * The target of a clickable link in the rendered report: a referenced SOP instance (image, waveform
+ * or any composite object) and, for an SCOORD item, the graphics to draw on that image.
+ */
 public class SRImageReference {
   private SOPInstanceReference sopInstanceReference;
   private List<Graphic> graphics;
@@ -33,6 +38,10 @@ public class SRImageReference {
     }
   }
 
+  public boolean hasGraphics() {
+    return graphics != null && !graphics.isEmpty();
+  }
+
   public SOPInstanceReference getSopInstanceReference() {
     return sopInstanceReference;
   }
@@ -41,10 +50,12 @@ public class SRImageReference {
     this.sopInstanceReference = sopInstanceReference;
   }
 
+  /** The graphics to overlay, never null. */
   public List<Graphic> getGraphics() {
-    return graphics;
+    return graphics == null ? Collections.emptyList() : graphics;
   }
 
+  /** The node identifier (e.g. "1.4.1") of the content item that produced this link. */
   public String getNodeLevel() {
     return nodeLevel;
   }

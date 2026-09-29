@@ -12,10 +12,19 @@ package org.weasis.dicom.sr;
 import java.awt.Color;
 import java.time.LocalDateTime;
 import java.time.temporal.TemporalAccessor;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.stream.Collectors;
+import java.util.stream.DoubleStream;
+import java.util.stream.IntStream;
 import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Sequence;
 import org.dcm4che3.data.Tag;
+import org.dcm4che3.data.UID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.media.data.IdentityMask;
@@ -34,8 +43,36 @@ import org.weasis.dicom.macro.Code;
 import org.weasis.dicom.macro.SOPInstanceReference;
 import org.weasis.dicom.macro.SeriesAndInstanceReference;
 
+/**
+ * Renders a DICOM Structured Report (PS3.3 C.17) as HTML for {@link SRView}.
+ *
+ * <p>The content tree is first built in memory so that every content item gets its positional
+ * identifier (root is {@code 1}, children are numbered from 1 in sequence order, PS3.3 C.17.3.2.5).
+ * By-reference items and the SELECTED FROM targets of SCOORD items are resolved through that index,
+ * whether the target appears before or after the referencing item.
+ *
+ * <p>Two kinds of hyperlinks are emitted:
+ *
+ * <ul>
+ *   <li>{@code #<id>}: jumps to the anchor of content item {@code <id>} inside the document.
+ *   <li>{@value #LINK_PREFIX}{@code <key>}: opens the referenced SOP instance registered under
+ *       {@code <key>} in the {@link SRImageReference} map given to {@link
+ *       #readDocumentGeneralModule(StringBuilder, Map)}.
+ * </ul>
+ */
 public class SRReader {
   private static final Logger LOGGER = LoggerFactory.getLogger(SRReader.class);
+
+  /** Prefix of the hyperlinks that open a referenced object (image, waveform, composite). */
+  public static final String LINK_PREFIX = "weasis-sr:"; // NON-NLS
+
+  /** Name of the graphic layer holding the SCOORD outlines drawn on a referenced image. */
+  public static final String SCOORD_LAYER_NAME = "SCOORD [DICOM]"; // NON-NLS
+
+  static final String CONTAINER = "CONTAINER"; // NON-NLS
+  static final String IMAGE = "IMAGE"; // NON-NLS
+  static final String SCOORD = "SCOORD"; // NON-NLS
+  static final String WAVEFORM = "WAVEFORM"; // NON-NLS
 
   private final DicomSpecialElement dicomSR;
   private final Attributes dcmItems;
@@ -46,6 +83,17 @@ public class SRReader {
     }
     this.dicomSR = dicomSR;
     this.dcmItems = dicomSR.getMediaReader().getDicomObject();
+  }
+
+  /**
+   * Builds a reader on raw attributes.
+   *
+   * @param dicomSR the special element, used for the time zone of DICOM times; may be null
+   * @param attributes the SR dataset, never null
+   */
+  public SRReader(DicomSpecialElement dicomSR, Attributes attributes) {
+    this.dicomSR = dicomSR;
+    this.dcmItems = Objects.requireNonNull(attributes);
   }
 
   public MediaElement getDicom() {
@@ -63,322 +111,137 @@ public class SRReader {
     return null;
   }
 
+  /**
+   * Renders the whole document.
+   *
+   * @param html receives the HTML
+   * @param map receives the link targets, keyed by the {@code <key>} part of the hyperlinks
+   */
   public void readDocumentGeneralModule(StringBuilder html, Map<String, SRImageReference> map) {
-    if (dcmItems != null) {
-      SRDocumentContentModule content = new SRDocumentContentModule(dcmItems);
-      addCodeMeaning(html, content.getConceptNameCode(), "<h1>", "</h1>"); // NON-NLS
+    if (dcmItems == null) {
+      return;
+    }
+    SRDocumentContentModule content = new SRDocumentContentModule(dcmItems);
+    addCodeMeaning(html, content.getConceptNameCode(), "<h1>", "</h1>"); // NON-NLS
+    writeDocumentOrigin(html);
+    writeDocumentHeader(html, content);
+    html.append("<hr size=2>"); // NON-NLS
 
-      String instName = dcmItems.getString(Tag.InstitutionName);
-      String instDepName = dcmItems.getString(Tag.InstitutionalDepartmentName);
-      String stationName = dcmItems.getString(Tag.StationName);
-      LocalDateTime contentDateTime = TagD.dateTime(Tag.ContentDateAndTime, dcmItems);
+    ContentNode root = buildTree(dcmItems);
+    Map<String, ContentNode> index = new HashMap<>();
+    indexTree(root, index);
+    for (ContentNode child : root.children) {
+      html.append("<BR>");
+      writeAnchor(html, child.id);
+      html.append("<B>").append(child.id).append(" </B>"); // NON-NLS
+      Code code = child.content.getConceptNameCode();
+      addCodeMeaning(html, code, "<B>", "</B>"); // NON-NLS
+      writeValue(html, child, false, code == null, index, map);
+      html.append("<BR>");
+      writeChildren(html, child, index, map);
+    }
+  }
+
+  // ================================================================================
+  // Document header
+  // ================================================================================
+
+  private void writeDocumentOrigin(StringBuilder html) {
+    String instName = dcmItems.getString(Tag.InstitutionName);
+    String instDepName = dcmItems.getString(Tag.InstitutionalDepartmentName);
+    String stationName = dcmItems.getString(Tag.StationName);
+    LocalDateTime contentDateTime = TagD.dateTime(Tag.ContentDateAndTime, dcmItems);
+    if (instName != null) {
+      html.append(Messages.getString("SRReader.by"));
+      html.append(" ");
+      html.append(EscapeChars.forHTML(instName));
+      if (instDepName != null) {
+        html.append(" (");
+        html.append(EscapeChars.forHTML(instDepName));
+        html.append(")");
+      }
+    }
+    if (stationName != null) {
       if (instName != null) {
-        html.append(Messages.getString("SRReader.by"));
         html.append(" ");
-        html.append(instName);
-        if (instDepName != null) {
-          html.append(" (");
-          html.append(instDepName);
-          html.append(")");
-        }
+        html.append(Messages.getString("SRReader.on"));
+        html.append(" ");
       }
-      if (stationName != null) {
-        if (instName != null) {
-          html.append(" ");
-          html.append(Messages.getString("SRReader.on"));
-          html.append(" ");
-        }
-        html.append(stationName);
+      html.append(EscapeChars.forHTML(stationName));
+    }
+    if (contentDateTime != null) {
+      if (instName != null || stationName != null) {
+        html.append(", ");
       }
-      if (contentDateTime != null) {
-        if (instName != null || stationName != null) {
-          html.append(", ");
+      html.append(TagUtil.formatDateTime(contentDateTime));
+    }
+    if (instName != null || stationName != null || contentDateTime != null) {
+      html.append("<BR>");
+    }
+  }
+
+  private void writeDocumentHeader(StringBuilder html, SRDocumentContentModule content) {
+    html.append("<table border=\"0\" width=\"100%\" cellspacing=\"5\">"); // NON-NLS
+
+    html.append("<tr align=\"left\" valign=\"top\"><td width=\"33%\" >"); // NON-NLS
+    html.append("<font size=\"+1\">"); // NON-NLS
+    html.append(Messages.getString("SRReader.patient"));
+    html.append("</font>"); // NON-NLS
+    html.append("<BR>");
+    writeItem(Tag.PatientName, html);
+    html.append("<BR>");
+    writeItem(Tag.PatientID, html);
+    html.append("<BR>");
+    writeItem(Tag.PatientBirthDate, html);
+    html.append("<BR>");
+    writeItem(Tag.PatientSex, html);
+
+    html.append("</td><td width=\"33%\" >"); // NON-NLS
+    html.append("<font size=\"+1\">"); // NON-NLS
+    html.append(Messages.getString("SRReader.study"));
+    html.append("</font>"); // NON-NLS
+    html.append("<BR>");
+    writeStudyDateTime(html);
+    html.append("<BR>");
+    writeItem(Tag.StudyID, html);
+    html.append("<BR>");
+    writeItem(Tag.AccessionNumber, html);
+    html.append("<BR>");
+    writeItem(Tag.ReferringPhysicianName, html);
+
+    html.append("</td><td width=\"33%\" >"); // NON-NLS
+    html.append("<font size=\"+1\">"); // NON-NLS
+    html.append(Messages.getString("SRReader.report_status"));
+    html.append("</font><BR>"); // NON-NLS
+    writeItem(Tag.CompletionFlag, html);
+    html.append("<BR>");
+    writeItem(Tag.VerificationFlag, html);
+    html.append("<BR>");
+    if (dcmItems.containsValue(Tag.PreliminaryFlag)) {
+      writeItem(Tag.PreliminaryFlag, html);
+      html.append("<BR>");
+    }
+    writeTemplate(html, content.getContentTemplate());
+    writeVerifyingObservers(html);
+    html.append("</td></tr>"); // NON-NLS
+
+    html.append("</table>"); // NON-NLS
+  }
+
+  private static void writeTemplate(StringBuilder html, Attributes template) {
+    if (template != null) {
+      String tid = template.getString(Tag.TemplateIdentifier);
+      if (StringUtil.hasText(tid)) {
+        html.append("<B>");
+        html.append(Messages.getString("SRReader.template"));
+        html.append("</B>");
+        html.append(StringUtil.COLON_AND_SPACE);
+        String resource = template.getString(Tag.MappingResource);
+        if (StringUtil.hasText(resource)) {
+          html.append(EscapeChars.forHTML(resource)).append(" ");
         }
-        html.append(TagUtil.formatDateTime(contentDateTime));
-      }
-      if (instName != null || stationName != null || contentDateTime != null) {
+        html.append(EscapeChars.forHTML(tid));
         html.append("<BR>");
-      }
-
-      html.append("<table border=\"0\" width=\"100%\" cellspacing=\"5\">"); // NON-NLS
-
-      html.append("<tr align=\"left\" valign=\"top\"><td width=\"33%\" >"); // NON-NLS
-      html.append("<font size=\"+1\">Patient</font>"); // NON-NLS
-      html.append("<BR>");
-      writeItem(Tag.PatientName, html);
-      html.append("<BR>");
-      writeItem(Tag.PatientID, html);
-      html.append("<BR>");
-      writeItem(Tag.PatientBirthDate, html);
-      html.append("<BR>");
-      writeItem(Tag.PatientSex, html);
-
-      html.append("</td><td width=\"33%\" >"); // NON-NLS
-      html.append("<font size=\"+1\">"); // NON-NLS
-      html.append(Messages.getString("SRReader.study"));
-      html.append("</font>"); // NON-NLS
-      html.append("<BR>");
-      writeStudyDateTime(html);
-      html.append("<BR>");
-      writeItem(Tag.StudyID, html);
-      html.append("<BR>");
-      writeItem(Tag.AccessionNumber, html);
-      html.append("<BR>");
-      writeItem(Tag.ReferringPhysicianName, html);
-
-      html.append("</td><td width=\"33%\" >"); // NON-NLS
-      html.append("<font size=\"+1\">"); // NON-NLS
-      html.append(Messages.getString("SRReader.report_status"));
-      html.append("</font><BR>"); // NON-NLS
-      writeItem(Tag.CompletionFlag, html);
-      html.append("<BR>");
-      writeItem(Tag.VerificationFlag, html);
-      html.append("<BR>"); // NON-NLS
-      writeVerifyingObservers(html);
-      html.append("</td></tr>"); // NON-NLS
-
-      html.append("</table>"); // NON-NLS
-      html.append("<hr size=2>"); // NON-NLS
-      Sequence cts = content.getContent();
-      if (cts != null) {
-        for (int i = 0; i < cts.size(); i++) {
-          SRDocumentContent c = new SRDocumentContent(cts.get(i));
-          html.append("<BR>");
-          html.append("<B>");
-          String level = "1." + (i + 1);
-          html.append(level);
-          html.append(" </B>"); // NON-NLS
-          Code code = c.getConceptNameCode();
-          addCodeMeaning(html, code, "<B>", "</B>"); // NON-NLS
-          convertContentToHTML(html, c, false, code == null, map, level);
-          html.append("<BR>");
-          addContent(html, c, map, level);
-        }
-      }
-    }
-  }
-
-  private static void convertContentToHTML(
-      StringBuilder html,
-      SRDocumentContent c,
-      boolean continuous,
-      boolean noCodeName,
-      Map<String, SRImageReference> map,
-      String level) {
-    if (c != null) {
-      html.append("<A name=\""); // NON-NLS
-      html.append(level);
-      html.append("\"<></A>"); // NON-NLS
-      String type = c.getValueType();
-
-      if ("TEXT".equals(type)) {
-        html.append(continuous || noCodeName ? " " : StringUtil.COLON_AND_SPACE);
-        convertTextToHTML(html, c.getTextValue());
-      } else if ("CODE".equals(type)) {
-        html.append(continuous || noCodeName ? " " : StringUtil.COLON_AND_SPACE);
-        addCodeMeaning(html, c.getConceptCode(), null, null);
-      } else if ("PNAME".equals(type)) {
-        html.append(continuous || noCodeName ? " " : StringUtil.COLON_AND_SPACE);
-        convertTextToHTML(html, TagD.getDicomPersonName(c.getPersonName()));
-      } else if ("NUM".equals(type)) {
-        html.append(continuous || noCodeName ? " " : " = ");
-        Attributes val = c.getMeasuredValue();
-        if (val != null) {
-          html.append(val.getDouble(Tag.NumericValue, 0.0));
-          Attributes item = val.getNestedDataset(Tag.MeasurementUnitsCodeSequence);
-          if (item != null) {
-            Code unit = new Code(item);
-            if (!"1".equals(unit.getCodeValue())) {
-              html.append(" ");
-              addCodeMeaning(html, unit, null, null);
-            }
-          }
-        }
-      } else if ("CONTAINER".equals(type)) {
-        return;
-      } else if ("IMAGE".equals(type)) {
-        html.append(continuous || noCodeName ? " " : StringUtil.COLON_AND_SPACE);
-        SRImageReference imgRef = getReferencedImage(map, level, c.getAttributes());
-        if (imgRef != null) {
-          html.append("<a href=\"http://"); // NON-NLS
-          html.append(level);
-          html.append("\">");
-          html.append(Messages.getString("SRReader.show_img")); // NON-NLS
-          html.append("</a>"); // NON-NLS
-        }
-      } else if ("DATETIME".equals(type)) {
-        html.append(continuous || noCodeName ? " " : StringUtil.COLON_AND_SPACE);
-        html.append(c.getDateTime());
-      } else if ("DATE".equals(type)) {
-        html.append(continuous || noCodeName ? " " : StringUtil.COLON_AND_SPACE);
-        html.append(c.getDate());
-      } else if ("TIME".equals(type)) {
-        html.append(continuous || noCodeName ? " " : StringUtil.COLON_AND_SPACE);
-        html.append(c.getTime());
-      } else if ("UIDREF".equals(type)) {
-        html.append(continuous || noCodeName ? " " : StringUtil.COLON_AND_SPACE);
-        convertTextToHTML(html, c.getUID());
-      } else if ("COMPOSITE".equals(type)) {
-        Sequence sequenceElt = c.getAttributes().getSequence(Tag.ReferencedSOPSequence);
-        if (sequenceElt != null && !sequenceElt.isEmpty()) {
-          html.append(continuous || noCodeName ? " " : StringUtil.COLON_AND_SPACE);
-          for (Attributes attributes : sequenceElt) {
-            SOPInstanceReference sopRef = new SOPInstanceReference(attributes);
-            html.append(sopRef.getReferencedSOPClassUID());
-            html.append(" (SOP Instance UID"); // NON-NLS
-            html.append(StringUtil.COLON_AND_SPACE);
-            html.append(sopRef.getReferencedSOPInstanceUID());
-            html.append(")");
-          }
-        }
-      } else if ("SCOORD".equals(type)) {
-        Attributes graphicsItems = c.getAttributes();
-        Sequence sc = c.getContent();
-        if (sc != null) {
-          for (Attributes attributes : sc) {
-            SRDocumentContent c2 = new SRDocumentContent(attributes);
-            String id = getReferencedContentItemIdentifier(c2.getReferencedContentItemIdentifier());
-            SRImageReference imgRef;
-            if (id == null) {
-              imgRef = getReferencedImage(map, level, attributes);
-              id = level;
-            } else {
-              imgRef = map.get(id);
-              if (imgRef == null) {
-                imgRef = new SRImageReference(id);
-                map.put(id, imgRef);
-              }
-            }
-
-            if (imgRef != null) {
-              try {
-                Graphic graphic =
-                    PrGraphicUtil.buildGraphic(
-                        graphicsItems, Color.MAGENTA, false, 1, 1, false, null, true);
-                if (graphic != null) {
-                  imgRef.addGraphic(graphic);
-                }
-              } catch (InvalidShapeException e) {
-                LOGGER.error("Cannot build graphic from SR", e);
-              }
-
-              html.append(continuous || noCodeName ? " " : StringUtil.COLON_AND_SPACE); // NON-NLS
-
-              html.append("<a href=\"http://"); // NON-NLS
-              html.append(id);
-              html.append("\">");
-              html.append(graphicsItems.getString(Tag.GraphicType));
-              html.append("</a>"); // NON-NLS
-            }
-          }
-        }
-
-        // } else if ("TCOORD".equals(type)) {
-        // html.append(continuous || noCodeName ? " " : StringUtil.COLON_AND_SPACE);
-        // // TODO
-        // } else if ("WAVEFORM".equals(type)) {
-        // html.append(continuous || noCodeName ? " " : StringUtil.COLON_AND_SPACE);
-        // // TODO
-      } else if (type != null) {
-        html.append("<i>");
-        html.append(type);
-        html.append(" ");
-        html.append(Messages.getString("SRReader.tag_missing"));
-        html.append("</i>");
-      }
-
-      int[] refs = c.getReferencedContentItemIdentifier();
-      if (refs != null) {
-        html.append(Messages.getString("SRReader.content_ref")).append(StringUtil.COLON_AND_SPACE);
-        String id = getReferencedContentItemIdentifier(refs);
-        html.append("<a href=\"#"); // NON-NLS
-        html.append(id);
-        html.append("\">");
-        html.append(Messages.getString("SRReader.node"));
-        html.append(" ");
-        html.append(id);
-        html.append("</a>"); // NON-NLS
-      }
-    }
-  }
-
-  private static SRImageReference getReferencedImage(
-      Map<String, SRImageReference> map, String level, Attributes attributes) {
-    Attributes item = attributes.getNestedDataset(Tag.ReferencedSOPSequence);
-    if (item == null) {
-      return null;
-    }
-    SRImageReference imgRef = map.computeIfAbsent(level, k -> new SRImageReference(level));
-    if (imgRef.getSopInstanceReference() == null) {
-      imgRef.setSopInstanceReference(new SOPInstanceReference(item));
-    }
-    return imgRef;
-  }
-
-  private static String getReferencedContentItemIdentifier(int[] refs) {
-    if (refs != null) {
-      StringBuilder r = new StringBuilder();
-      for (int j = 0; j < refs.length - 1; j++) {
-        r.append(refs[j]);
-        r.append('.');
-      }
-      if (refs.length - 1 >= 0) {
-        r.append(refs[refs.length - 1]);
-      }
-      return r.toString();
-    }
-    return null;
-  }
-
-  private static void addContent(
-      StringBuilder html, SRDocumentContent c, Map<String, SRImageReference> map, String level) {
-    Sequence cts = c.getContent();
-    if (cts != null) {
-      boolean continuity = "CONTINUOUS".equals(c.getContinuityOfContent());
-      if (!continuity) {
-        html.append("<OL>");
-      }
-      for (int i = 0; i < cts.size(); i++) {
-        SRDocumentContent srContent = new SRDocumentContent(cts.get(i));
-        html.append(continuity ? " " : "<LI>");
-        Code code = null;
-        if (!continuity) {
-          code = srContent.getConceptNameCode();
-          addCodeMeaning(html, code, "<B>", "</B>");
-        }
-        String level2 = level + "." + (i + 1);
-        convertContentToHTML(html, srContent, continuity, code == null, map, level2);
-        addContent(html, srContent, map, level2);
-        html.append(continuity ? " " : "</LI>");
-      }
-      if (!continuity) {
-        html.append("</OL>");
-      }
-    }
-  }
-
-  private static void addCodeMeaning(
-      StringBuilder html, Code code, String startTag, String endTag) {
-    if (code != null) {
-      if (startTag != null) {
-        html.append(startTag);
-      }
-      html.append(EscapeChars.forHTML(code.getCodeMeaning()));
-      if (endTag != null) {
-        html.append(endTag);
-      }
-    }
-  }
-
-  private static void convertTextToHTML(StringBuilder html, String text) {
-    if (text != null) {
-      String[] lines = EscapeChars.convertToLines(text);
-      if (lines.length > 0) {
-        html.append(EscapeChars.forHTML(lines[0]));
-        for (int i = 1; i < lines.length; i++) {
-          html.append("<BR>");
-          html.append(EscapeChars.forHTML(lines[i]));
-        }
       }
     }
   }
@@ -390,9 +253,11 @@ public class SRReader {
       html.append(tag.getDisplayedName());
       html.append("</B>");
       html.append(StringUtil.COLON_AND_SPACE);
-      String format = tag.addGMTOffset(null, dicomSR);
+      String format = dicomSR == null ? null : tag.addGMTOffset(null, dicomSR);
       html.append(
-          tag.getFormattedTagValue(IdentityMask.maskValue(tag, tag.getValue(dcmItems)), format));
+          EscapeChars.forHTML(
+              tag.getFormattedTagValue(
+                  IdentityMask.maskValue(tag, tag.getValue(dcmItems)), format)));
     }
   }
 
@@ -427,15 +292,510 @@ public class SRReader {
             html.append(" - ");
             String name = TagD.getDicomPersonName(v.getString(Tag.VerifyingObserverName));
             if (name != null) {
-              html.append(name);
+              html.append(EscapeChars.forHTML(name));
               html.append(", ");
             }
             String org = v.getString(Tag.VerifyingOrganization);
             if (org != null) {
-              html.append(org);
+              html.append(EscapeChars.forHTML(org));
             }
             html.append("<BR>");
           }
+        }
+      }
+    }
+  }
+
+  // ================================================================================
+  // Content tree
+  // ================================================================================
+
+  /** A content item with its positional identifier, e.g. "1.4.1" (PS3.3 C.17.3.2.5). */
+  static final class ContentNode {
+    final SRDocumentContent content;
+    final String id;
+    final ContentNode parent;
+    final List<ContentNode> children = new ArrayList<>();
+
+    ContentNode(SRDocumentContent content, String id, ContentNode parent) {
+      this.content = content;
+      this.id = id;
+      this.parent = parent;
+    }
+
+    boolean isValueType(String type) {
+      return type.equals(content.getValueType());
+    }
+  }
+
+  /** Builds the tree of the dataset: the root content item is node "1". */
+  static ContentNode buildTree(Attributes root) {
+    ContentNode rootNode = new ContentNode(new SRDocumentContent(root), "1", null);
+    addChildren(rootNode);
+    return rootNode;
+  }
+
+  private static void addChildren(ContentNode node) {
+    Sequence cts = node.content.getContent();
+    if (cts != null) {
+      for (int i = 0; i < cts.size(); i++) {
+        ContentNode child =
+            new ContentNode(new SRDocumentContent(cts.get(i)), node.id + "." + (i + 1), node);
+        node.children.add(child);
+        addChildren(child);
+      }
+    }
+  }
+
+  static void indexTree(ContentNode node, Map<String, ContentNode> index) {
+    index.put(node.id, node);
+    for (ContentNode child : node.children) {
+      indexTree(child, index);
+    }
+  }
+
+  /** Follows a by-reference item to its target; a by-value item resolves to itself. */
+  private static ContentNode resolveTarget(ContentNode node, Map<String, ContentNode> index) {
+    if (node.content.isByReference()) {
+      ContentNode target = index.get(node.content.getReferencedContentItemNodeId());
+      if (target == null) {
+        LOGGER.debug(
+            "SR content item {} references the missing node {}",
+            node.id,
+            node.content.getReferencedContentItemNodeId());
+      }
+      return target;
+    }
+    return node;
+  }
+
+  private static boolean isReferencedImage(ContentNode node) {
+    return node != null
+        && node.isValueType(IMAGE)
+        && node.content.getReferencedSOPInstance() != null;
+  }
+
+  /**
+   * Finds the IMAGE items an SCOORD applies to. The standard requires one or more SELECTED FROM
+   * children of value type IMAGE, given by value or by reference. Two lenient fallbacks cover
+   * common non-conformant documents: a Referenced Content Item Identifier set directly on the
+   * SCOORD item, and an SCOORD nested under the IMAGE item it belongs to.
+   */
+  static List<ContentNode> resolveImageTargets(ContentNode scoord, Map<String, ContentNode> index) {
+    List<ContentNode> targets = new ArrayList<>();
+    for (ContentNode child : scoord.children) {
+      ContentNode target = resolveTarget(child, index);
+      if (isReferencedImage(target) && !targets.contains(target)) {
+        targets.add(target);
+      }
+    }
+    if (targets.isEmpty()) {
+      String refId = scoord.content.getReferencedContentItemNodeId();
+      if (refId != null) {
+        ContentNode target = index.get(refId);
+        if (isReferencedImage(target)) {
+          targets.add(target);
+        }
+      }
+    }
+    if (targets.isEmpty()) {
+      for (ContentNode p = scoord.parent; p != null; p = p.parent) {
+        if (isReferencedImage(p)) {
+          targets.add(p);
+          break;
+        }
+      }
+    }
+    if (targets.isEmpty()) {
+      LOGGER.debug("SR SCOORD item {} has no resolvable IMAGE reference", scoord.id);
+    }
+    return targets;
+  }
+
+  // ================================================================================
+  // Content rendering
+  // ================================================================================
+
+  private static void writeChildren(
+      StringBuilder html,
+      ContentNode node,
+      Map<String, ContentNode> index,
+      Map<String, SRImageReference> map) {
+    if (node.children.isEmpty()) {
+      return;
+    }
+    boolean continuity = "CONTINUOUS".equals(node.content.getContinuityOfContent()); // NON-NLS
+    if (!continuity) {
+      html.append("<OL>");
+    }
+    for (ContentNode child : node.children) {
+      html.append(continuity ? " " : "<LI>");
+      writeAnchor(html, child.id);
+      Code code = null;
+      if (!continuity) {
+        code = child.content.getConceptNameCode();
+        addCodeMeaning(html, code, "<B>", "</B>");
+      }
+      writeValue(html, child, continuity, code == null, index, map);
+      writeChildren(html, child, index, map);
+      html.append(continuity ? " " : "</LI>");
+    }
+    if (!continuity) {
+      html.append("</OL>");
+    }
+  }
+
+  private static void writeAnchor(StringBuilder html, String id) {
+    html.append("<a name=\"").append(id).append("\"></a>"); // NON-NLS
+  }
+
+  private static String separator(boolean continuous, boolean noCodeName) {
+    return continuous || noCodeName ? " " : StringUtil.COLON_AND_SPACE;
+  }
+
+  private static void writeValue(
+      StringBuilder html,
+      ContentNode node,
+      boolean continuous,
+      boolean noCodeName,
+      Map<String, ContentNode> index,
+      Map<String, SRImageReference> map) {
+    SRDocumentContent c = node.content;
+    String type = c.getValueType();
+    if (type == null) {
+      if (c.isByReference()) {
+        writeByReference(html, node, index);
+      }
+      return;
+    }
+    if (c.getReferencedContentItemIdentifier() != null) {
+      // Not allowed by PS3.3 C.17.3.2.5 on a by-value item: keep the value, ignore the reference
+      LOGGER.debug(
+          "SR content item {} ({}) carries a Referenced Content Item Identifier", node.id, type);
+    }
+    String sep = separator(continuous, noCodeName);
+
+    switch (type) {
+      case "TEXT" -> { // NON-NLS
+        html.append(sep);
+        convertTextToHTML(html, c.getTextValue());
+      }
+      case "CODE" -> { // NON-NLS
+        html.append(sep);
+        addCodeMeaning(html, c.getConceptCode(), null, null);
+      }
+      case "PNAME" -> { // NON-NLS
+        html.append(sep);
+        convertTextToHTML(html, TagD.getDicomPersonName(c.getPersonName()));
+      }
+      case "NUM" -> { // NON-NLS
+        html.append(continuous || noCodeName ? " " : " = ");
+        writeNumericValue(html, c);
+      }
+      case CONTAINER -> {
+        // Children are written by writeChildren()
+      }
+      case IMAGE -> writeImage(html, node, sep, map);
+      case "COMPOSITE" -> writeComposite(html, node, sep, map, false); // NON-NLS
+      case WAVEFORM -> writeComposite(html, node, sep, map, true);
+      case SCOORD -> writeScoord(html, node, sep, index, map);
+      case "SCOORD3D" -> writeScoord3D(html, c, sep); // NON-NLS
+      case "TCOORD" -> writeTcoord(html, c, sep); // NON-NLS
+      case "DATETIME" -> { // NON-NLS
+        html.append(sep);
+        writeTemporal(html, TagD.getDicomDateTime(c.getDateTimeString()), c.getDateTimeString());
+      }
+      case "DATE" -> { // NON-NLS
+        html.append(sep);
+        writeTemporal(html, TagD.getDicomDate(c.getDateString()), c.getDateString());
+      }
+      case "TIME" -> { // NON-NLS
+        html.append(sep);
+        writeTemporal(html, TagD.getDicomTime(c.getTimeString()), c.getTimeString());
+      }
+      case "UIDREF" -> { // NON-NLS
+        html.append(sep);
+        convertTextToHTML(html, c.getUID());
+      }
+      default -> {
+        html.append(sep);
+        html.append("<i>");
+        html.append(EscapeChars.forHTML(type));
+        html.append(" ");
+        html.append(Messages.getString("SRReader.tag_missing"));
+        html.append("</i>");
+      }
+    }
+  }
+
+  private static void writeByReference(
+      StringBuilder html, ContentNode node, Map<String, ContentNode> index) {
+    String refId = node.content.getReferencedContentItemNodeId();
+    ContentNode target = resolveTarget(node, index);
+    html.append(" <i>");
+    String relationship = node.content.getRelationshipType();
+    if (StringUtil.hasText(relationship)) {
+      html.append(EscapeChars.forHTML(relationship)).append(" ");
+    }
+    html.append(Messages.getString("SRReader.content_ref")).append("</i>");
+    html.append(StringUtil.COLON_AND_SPACE);
+    if (target == null) {
+      html.append(Messages.getString("SRReader.node")).append(" ").append(refId);
+      html.append(" (").append(Messages.getString("SRReader.ref_missing")).append(")");
+    } else {
+      html.append("<a href=\"#").append(refId).append("\">"); // NON-NLS
+      html.append(Messages.getString("SRReader.node")).append(" ").append(refId);
+      html.append("</a>"); // NON-NLS
+      Code code = target.content.getConceptNameCode();
+      if (code != null) {
+        html.append(" ");
+        addCodeMeaning(html, code, "<B>", "</B>");
+      }
+    }
+  }
+
+  private static void writeNumericValue(StringBuilder html, SRDocumentContent c) {
+    boolean hasValue = false;
+    Attributes val = c.getMeasuredValue();
+    if (val != null) {
+      String[] values = val.getStrings(Tag.NumericValue);
+      if (values == null || values.length == 0) {
+        // Floating Point Value (0040,A161) carries values that DS cannot represent
+        double[] fp = val.getDoubles(Tag.FloatingPointValue);
+        if (fp != null && fp.length > 0) {
+          values = DoubleStream.of(fp).mapToObj(String::valueOf).toArray(String[]::new);
+        }
+      }
+      if (values != null && values.length > 0) {
+        html.append(
+            EscapeChars.forHTML(
+                Arrays.stream(values).map(String::trim).collect(Collectors.joining(", "))));
+        hasValue = true;
+        Code unit = Code.getNestedCode(val, Tag.MeasurementUnitsCodeSequence);
+        // UCUM "1" means "no units"
+        if (unit != null && !"1".equals(unit.getCodeValue())) {
+          html.append(" ");
+          String meaning = unit.getCodeMeaning();
+          html.append(
+              EscapeChars.forHTML(StringUtil.hasText(meaning) ? meaning : unit.getCodeValue()));
+        }
+      }
+    }
+    Code qualifier = c.getNumericValueQualifierCode();
+    if (qualifier != null) {
+      if (hasValue) {
+        html.append(" ");
+      }
+      addCodeMeaning(html, qualifier, "<i>", "</i>");
+    }
+  }
+
+  private static void writeTemporal(StringBuilder html, TemporalAccessor value, String raw) {
+    String text = value == null ? null : TagUtil.formatDateTime(value);
+    if (!StringUtil.hasText(text)) {
+      text = raw;
+    }
+    if (text != null) {
+      html.append(EscapeChars.forHTML(text));
+    }
+  }
+
+  private static void writeImage(
+      StringBuilder html, ContentNode node, String sep, Map<String, SRImageReference> map) {
+    SOPInstanceReference sop = node.content.getReferencedSOPInstance();
+    if (sop == null) {
+      return;
+    }
+    html.append(sep);
+    registerReference(map, node.id, sop);
+    appendLink(html, node.id, Messages.getString("SRReader.show_img"));
+    int[] frames = sop.getReferencedFrameNumber();
+    if (frames != null && frames.length > 0) {
+      html.append(" (").append(Messages.getString("SRReader.frame")).append(" ");
+      html.append(IntStream.of(frames).mapToObj(String::valueOf).collect(Collectors.joining(", ")));
+      html.append(")");
+    }
+  }
+
+  private static void writeComposite(
+      StringBuilder html,
+      ContentNode node,
+      String sep,
+      Map<String, SRImageReference> map,
+      boolean waveform) {
+    Sequence seq = node.content.getReferencedSOPSequence();
+    if (seq == null || seq.isEmpty()) {
+      return;
+    }
+    html.append(sep);
+    int n = 0;
+    for (Attributes item : seq) {
+      if (n > 0) {
+        html.append("<BR>");
+      }
+      SOPInstanceReference sop = new SOPInstanceReference(item);
+      String key = linkKey(node.id, n);
+      registerReference(map, key, sop);
+      html.append(EscapeChars.forHTML(sopClassName(sop.getReferencedSOPClassUID())));
+      html.append(" ");
+      appendLink(
+          html, key, Messages.getString(waveform ? "SRReader.show_wave" : "SRReader.show_obj"));
+      if (waveform) {
+        int[] channels = item.getInts(Tag.ReferencedWaveformChannels);
+        if (channels != null && channels.length > 1) {
+          html.append(" (").append(Messages.getString("SRReader.channels")).append(" ");
+          List<String> pairs = new ArrayList<>();
+          for (int i = 0; i + 1 < channels.length; i += 2) {
+            pairs.add(channels[i] + "/" + channels[i + 1]);
+          }
+          html.append(String.join(", ", pairs)).append(")");
+        }
+      }
+      String uid = sop.getReferencedSOPInstanceUID();
+      if (StringUtil.hasText(uid)) {
+        html.append(" <font size=\"-2\">").append(uid).append("</font>"); // NON-NLS
+      }
+      n++;
+    }
+  }
+
+  private static void writeScoord(
+      StringBuilder html,
+      ContentNode node,
+      String sep,
+      Map<String, ContentNode> index,
+      Map<String, SRImageReference> map) {
+    String graphicType = node.content.getGraphicType();
+    String label = StringUtil.hasText(graphicType) ? graphicType : SCOORD;
+    html.append(sep);
+    List<ContentNode> targets = resolveImageTargets(node, index);
+    if (targets.isEmpty()) {
+      html.append(EscapeChars.forHTML(label));
+      html.append(" <i>(").append(Messages.getString("SRReader.no_img_ref")).append(")</i>");
+      return;
+    }
+    int n = 0;
+    for (ContentNode target : targets) {
+      if (n > 0) {
+        html.append(", ");
+      }
+      String key = linkKey(node.id, n);
+      SRImageReference ref = registerReference(map, key, target.content.getReferencedSOPInstance());
+      // One graphic instance per image: a graphic belongs to a single graphic model
+      ref.addGraphic(buildGraphic(node));
+      appendLink(html, key, label);
+      n++;
+    }
+  }
+
+  private static Graphic buildGraphic(ContentNode scoord) {
+    try {
+      return PrGraphicUtil.buildGraphic(
+          scoord.content.getAttributes(), Color.MAGENTA, false, 1, 1, false, null, true);
+    } catch (InvalidShapeException e) {
+      LOGGER.error("Cannot build graphic from SR item {}", scoord.id, e);
+    }
+    return null;
+  }
+
+  private static void writeScoord3D(StringBuilder html, SRDocumentContent c, String sep) {
+    html.append(sep);
+    String graphicType = c.getGraphicType();
+    html.append(EscapeChars.forHTML(StringUtil.hasText(graphicType) ? graphicType : "SCOORD3D"));
+    float[] data = c.getGraphicData();
+    int points = data == null ? 0 : data.length / 3;
+    html.append(" <i>3D, ").append(points).append(" "); // NON-NLS
+    html.append(Messages.getString("SRReader.points")).append("</i>");
+  }
+
+  private static void writeTcoord(StringBuilder html, SRDocumentContent c, String sep) {
+    html.append(sep);
+    String range = c.getTemporalRangeType();
+    html.append(EscapeChars.forHTML(StringUtil.hasText(range) ? range : "TCOORD"));
+    int[] samples = c.getReferencedSamplePositions();
+    double[] offsets = c.getReferencedTimeOffsets();
+    String[] dateTimes = c.getReferencedDateTime();
+    if (samples != null && samples.length > 0) {
+      html.append(StringUtil.COLON_AND_SPACE);
+      html.append(
+          IntStream.of(samples).mapToObj(String::valueOf).collect(Collectors.joining(", ")));
+      html.append(" ").append(Messages.getString("SRReader.samples"));
+    } else if (offsets != null && offsets.length > 0) {
+      html.append(StringUtil.COLON_AND_SPACE);
+      html.append(
+          DoubleStream.of(offsets).mapToObj(String::valueOf).collect(Collectors.joining(", ")));
+      html.append(" s"); // NON-NLS
+    } else if (dateTimes != null && dateTimes.length > 0) {
+      html.append(StringUtil.COLON_AND_SPACE);
+      for (int i = 0; i < dateTimes.length; i++) {
+        if (i > 0) {
+          html.append(", ");
+        }
+        writeTemporal(html, TagD.getDicomDateTime(dateTimes[i]), dateTimes[i]);
+      }
+    }
+  }
+
+  // ================================================================================
+  // Helpers
+  // ================================================================================
+
+  /** Key of the n-th link of a content item: the node id, then "id/1", "id/2"... */
+  static String linkKey(String nodeId, int n) {
+    return n == 0 ? nodeId : nodeId + "/" + n;
+  }
+
+  private static SRImageReference registerReference(
+      Map<String, SRImageReference> map, String key, SOPInstanceReference sop) {
+    SRImageReference ref = map.computeIfAbsent(key, SRImageReference::new);
+    if (sop != null) {
+      ref.setSopInstanceReference(sop);
+    }
+    return ref;
+  }
+
+  private static void appendLink(StringBuilder html, String key, String text) {
+    html.append("<a href=\"").append(LINK_PREFIX).append(key).append("\">"); // NON-NLS
+    html.append(EscapeChars.forHTML(text));
+    html.append("</a>"); // NON-NLS
+  }
+
+  static String sopClassName(String sopClassUID) {
+    if (!StringUtil.hasText(sopClassUID)) {
+      return "";
+    }
+    String name = UID.nameOf(sopClassUID);
+    return StringUtil.hasText(name) && !"?".equals(name) ? name : sopClassUID;
+  }
+
+  private static void addCodeMeaning(
+      StringBuilder html, Code code, String startTag, String endTag) {
+    if (code != null) {
+      String meaning = code.getCodeMeaning();
+      if (!StringUtil.hasText(meaning)) {
+        meaning = code.getCodeValue();
+      }
+      if (meaning == null) {
+        return;
+      }
+      if (startTag != null) {
+        html.append(startTag);
+      }
+      html.append(EscapeChars.forHTML(meaning));
+      if (endTag != null) {
+        html.append(endTag);
+      }
+    }
+  }
+
+  private static void convertTextToHTML(StringBuilder html, String text) {
+    if (text != null) {
+      String[] lines = EscapeChars.convertToLines(text);
+      if (lines.length > 0) {
+        html.append(EscapeChars.forHTML(lines[0]));
+        for (int i = 1; i < lines.length; i++) {
+          html.append("<BR>");
+          html.append(EscapeChars.forHTML(lines[i]));
         }
       }
     }
